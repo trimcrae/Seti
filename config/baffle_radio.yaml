@@ -18,6 +18,10 @@ radio:
     # accepted as complete.  Kept below VizieR's sync-mode output limit.
     max_rows_per_tile: 40000
     tap_retries: 3
+    # Consecutive tile failures of ONE error class (ADQL_SYNTAX / CONNECT_TIMEOUT /
+    # OTHER) that abort the pull: a broken query or a throttled service, not five
+    # unlucky tiles.  Run 34048836401 spent 5.5 h failing every tile 3/3.
+    max_consecutive_tile_failures: 5
 
   targets:
     parallax_min_mas: 20.0            # d < 50 pc

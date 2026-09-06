@@ -8,6 +8,7 @@ here rather than only on the runner.
 from __future__ import annotations
 
 import json
+import re
 
 import numpy as np
 import pandas as pd
@@ -329,12 +330,21 @@ def test_run_radio_stage_end_to_end_with_injected_fetchers(tmp_path):
     cands = pd.read_csv(tmp_path / "candidates.csv")
     assert list(cands["source_id"]) == [1]
     assert cands.iloc[0]["best_aperture_arcsec"] == 204.0
-    # A second run reloads the checkpoints instead of calling the fetcher again.
+    # A second run (or a resume from a downloaded artifact, which is the same
+    # thing: tiles/<key>.parquet present) reloads the checkpoints instead of
+    # calling the fetcher again, and the ledger says FROM_CHECKPOINT.
     n_calls = len(calls)
     s2 = R.run_radio_stage(cfg, tmp_path, lotss_fetcher=lotss_fetcher,
                            target_fetcher=target_fetcher, max_targets=1)
-    assert s2["tiles"]["n_from_checkpoint"] >= s["tiles"]["QUERY_OK"]
+    assert s2["tiles"]["FROM_CHECKPOINT"] == s["tiles"]["QUERY_OK"] == s2["tiles"]["n_from_checkpoint"]
+    assert s2["tiles"]["QUERY_OK"] == 0
     assert len(calls) - n_calls == 1                      # only the failed tile is retried
+    led2 = json.loads((tmp_path / "tiles_ledger.json").read_text())
+    st2 = {e["key"]: e for e in led2["tiles"]}
+    assert st2["t100_070"]["status"] == "FROM_CHECKPOINT" and st2["t100_070"]["from_checkpoint"]
+    assert st2["t100_070"]["n_rows"] > 0
+    assert st2["t098_070"]["status"] == "QUERY_FAILED"
+    assert s2["verdict_code"] == R.VERDICT_CANDIDATES
 
 
 def test_a_failed_tile_next_to_a_target_masks_it_rather_than_making_a_void(tmp_path):
@@ -390,12 +400,19 @@ def test_a_raising_fetcher_records_query_failed_and_no_data_reached(tmp_path):
                           target_fetcher=lambda rcfg: _targets())
     assert s["verdict_code"] == R.VERDICT_NO_DATA
     assert s["verdict"].startswith(R.VERDICT_NO_DATA)
-    assert s["tiles"]["QUERY_FAILED"] == s["tiles"]["n_tiles"] > 0
+    assert "403" in s["verdict"]                          # the first error text is in the verdict
+    # Eight tiles planned; five consecutive failures of one class abort the
+    # pull and the other three are ledgered as not attempted.
+    assert s["tiles"]["n_tiles"] == 8
+    assert s["tiles"]["QUERY_FAILED"] == 5
+    assert s["tiles"]["NOT_ATTEMPTED_AFTER_ABORT"] == 3
     assert s["tiles"]["QUERY_OK"] == 0
+    assert s["tiles"]["failed_by_class"] == {"OTHER": 5}
+    assert s["acquisition_abort"]["aborted"] and s["acquisition_abort"]["n_consecutive"] == 5
     assert s["n_candidates"] == 0
     led = json.loads((tmp_path / "tiles_ledger.json").read_text())
-    assert all(e["status"] == "QUERY_FAILED" for e in led["tiles"])
-    assert all("403" in e["error"] for e in led["tiles"])
+    failed = [e for e in led["tiles"] if e["status"] == "QUERY_FAILED"]
+    assert len(failed) == 5 and all("403" in e["error"] for e in failed)
     assert (tmp_path / "summary.json").exists()
     assert not any((tmp_path / "tiles").glob("*.parquet"))
 
@@ -423,6 +440,266 @@ def test_prepare_targets_cuts_regions_flags_etz_and_sorts_by_parallax():
     assert not bool(t.loc[t["source_id"] == 1, "is_etz"].iloc[0])
     # 1000 mas/yr for 1.5 yr = 1.5" east, divided by cos(50).
     assert (t.loc[0, "ra"] - t.loc[0, "ra_gaia"]) * 3600 * np.cos(np.radians(50)) == pytest.approx(1.5, rel=1e-3)
+
+
+# ---------------------------------------------------------------------------
+# Column quoting -- the failure of run 34048836401
+# ---------------------------------------------------------------------------
+#: LoTSS DR2 column names exactly as TAPVizieR's TAP_SCHEMA.columns serves
+#: them: already double-quoted.  (The bright tier hit the same thing on
+#: AKARI / IRAS / Hipparcos / 2MASS, run 34048837928.)
+LOTSS_SCHEMA_AS_SERVED = ['"Source"', '"RAJ2000"', '"e_RAJ2000"', '"DEJ2000"', '"e_DEJ2000"',
+                          '"Speak"', '"e_Speak"', '"Stotal"', '"e_Stotal"', '"Maj"', '"Min"',
+                          '"PA"', '"rms"', '"Type"', '"Mosaic"', '"Nmosaic"', '"Masked"']
+LOTSS_UCDS = ["meta.id;meta.main", "pos.eq.ra;meta.main", "stat.error;pos.eq.ra",
+              "pos.eq.dec;meta.main", "stat.error;pos.eq.dec", "phot.flux.density;em.radio",
+              "stat.error", "phot.flux.density;em.radio", "stat.error", "phys.angSize",
+              "phys.angSize", "pos.posAng", "instr.det.noise", "meta.code", "meta.id",
+              "meta.number", "meta.code"]
+LOTSS_UNITS = ["", "deg", "arcsec", "deg", "arcsec", "mJy/beam", "mJy/beam", "mJy", "mJy",
+               "arcsec", "arcsec", "deg", "mJy/beam", "", "", "", ""]
+
+
+def _assert_each_column_once_and_never_empty(adql: str, columns: tuple[str, ...]):
+    assert '""' not in adql, adql
+    select = adql.split(" FROM ")[0].replace("SELECT TOP 40000 ", "")
+    toks = select.split(", ")
+    for c in columns:
+        hits = [t for t in toks if t == c or t == f'"{c}"']
+        assert len(hits) == 1, (c, toks)
+    for t in toks:
+        assert re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*|"[^"]+"', t), t
+
+
+def test_tile_query_from_the_quoted_schema_vizier_serves_has_no_empty_identifier():
+    """Feed the column list exactly as served -- quoted strings -- through the
+    same path the run uses (pick_columns -> build_tile_query)."""
+    cols = pd.DataFrame({"column_name": LOTSS_SCHEMA_AS_SERVED, "ucd": LOTSS_UCDS,
+                         "unit": LOTSS_UNITS})
+    c = R.pick_columns(cols)
+    assert (c["ra_col"], c["dec_col"], c["flux_col"], c["flux_unit"]) == (
+        "RAJ2000", "DEJ2000", "Stotal", "mJy")
+    assert all('"' not in str(v) for v in (c["ra_col"], c["dec_col"], c["flux_col"]))
+    disc = {"table": '"J/A+A/659/A1/lotss_dr2"', **{k: c[k] for k in ("ra_col", "dec_col", "flux_col")}}
+    q = R.build_tile_query(disc, R.tile_bounds(100, 70, 2.0), 40000)
+    _assert_each_column_once_and_never_empty(q, ("RAJ2000", "DEJ2000", "Stotal"))
+    assert 'FROM "J/A+A/659/A1/lotss_dr2" WHERE RAJ2000 >= 200.0 AND RAJ2000 < 202.0' in q
+    assert q.count('"J/A+A/659/A1/lotss_dr2"') == 1
+    # Quoting is idempotent: names that arrive still quoted are quoted once, not twice.
+    disc_q = {"table": "J/A+A/659/A1/lotss_dr2", "ra_col": '"RAJ2000"', "dec_col": '"DEJ2000"',
+              "flux_col": '"Stotal"'}
+    assert R.build_tile_query(disc_q, R.tile_bounds(100, 70, 2.0), 40000) == q
+    # An empty identifier is refused by logical name, never emitted.
+    with pytest.raises(RuntimeError, match="dec"):
+        R.build_tile_query({"table": "t", "ra_col": "RAJ2000", "dec_col": '""'},
+                           R.tile_bounds(100, 70, 2.0), 40000)
+    # No flux column: the SELECT has two columns and the veto is simply off.
+    q2 = R.build_tile_query({"table": "t", "ra_col": "RAJ2000", "dec_col": "DEJ2000"},
+                            R.tile_bounds(100, 70, 2.0), 40000)
+    assert q2.startswith("SELECT TOP 40000 RAJ2000, DEJ2000 FROM t WHERE")
+
+
+def test_discover_lotss_records_bare_names_and_what_was_served(monkeypatch):
+    """The whole discovery path with VizieR's TAP_SCHEMA answers replayed."""
+    queries = []
+
+    def fake_run_vizier(query, **kw):
+        queries.append(query)
+        if "TAP_SCHEMA.tables" in query:
+            return pd.DataFrame({"table_name": ["J/A+A/659/A1/gaus", "J/A+A/659/A1/lotss_dr2"],
+                                 "description": ["Gaussian components", "LoTSS DR2 sources"]})
+        if "TAP_SCHEMA.columns" in query:
+            assert "J/A+A/659/A1/lotss_dr2" in query
+            return pd.DataFrame({"column_name": LOTSS_SCHEMA_AS_SERVED, "ucd": LOTSS_UCDS,
+                                 "unit": LOTSS_UNITS, "datatype": ["double"] * 17,
+                                 "description": [""] * 17})
+        raise AssertionError(f"unexpected query {query}")
+
+    monkeypatch.setattr(R.bright, "run_vizier", fake_run_vizier)
+    disc = R.discover_lotss(R.load_radio_config())
+    assert disc["status"] == "DISCOVERED" and disc["route"] == "vizier"
+    assert disc["table"] == '"J/A+A/659/A1/lotss_dr2"' and disc["table_bare"] == "J/A+A/659/A1/lotss_dr2"
+    assert (disc["ra_col"], disc["dec_col"], disc["flux_col"]) == ("RAJ2000", "DEJ2000", "Stotal")
+    assert disc["flux_unit"] == "mJy" and disc["flux_to_jy"] == 1e-3
+    assert disc["names_as_served"][:2] == ['"Source"', '"RAJ2000"']    # evidence, verbatim
+    assert "RAJ2000" in disc["columns"] and '"RAJ2000"' not in disc["columns"]
+    assert '""' not in disc["example_query"]
+    assert disc["degraded_reasons"] == [] and not disc["degraded"]
+    assert len([q for q in queries if "TAP_SCHEMA.tables" in q]) == 1       # VizieR answered: no ASTRON call
+    # The fetcher built on it composes the same valid query and normalises the
+    # result whatever spelling the TAP result comes back with.
+    seen = {}
+
+    def fake_sync(url, adql):
+        seen["q"] = adql
+        return pd.DataFrame({"RAJ2000": [200.5], "DEJ2000": [50.5], "Stotal": [1500.0]})
+
+    monkeypatch.setattr(R, "_run_sync", fake_sync)
+    df = R.make_lotss_fetcher(disc, R.load_radio_config())(R.tile_bounds(100, 70, 2.0))
+    _assert_each_column_once_and_never_empty(seen["q"], ("RAJ2000", "DEJ2000", "Stotal"))
+    assert list(df.columns) == ["ra", "dec", "flux_jy"] and df["flux_jy"].iloc[0] == pytest.approx(1.5)
+
+
+def test_discover_lotss_falls_back_to_astron_and_says_so(monkeypatch):
+    def fake_run_vizier(query, **kw):
+        if "tapvizier" in kw.get("url", ""):
+            raise RuntimeError("vizier down")
+        if "TAP_SCHEMA.tables" in query:
+            return pd.DataFrame({"table_name": ["lotss_dr2.main_sources", "lotss_dr2.gaussians"],
+                                 "description": ["", ""]})
+        return pd.DataFrame({"column_name": ["ra", "dec", "total_flux"],
+                             "ucd": ["pos.eq.ra", "pos.eq.dec", "phot.flux.density"],
+                             "unit": ["deg", "deg", "Jy"], "datatype": ["double"] * 3,
+                             "description": [""] * 3})
+
+    monkeypatch.setattr(R.bright, "run_vizier", fake_run_vizier)
+    disc = R.discover_lotss(R.load_radio_config())
+    assert disc["status"] == "DISCOVERED" and disc["route"] == "astron"
+    assert disc["table"] == "lotss_dr2.main_sources"
+    assert (disc["ra_col"], disc["dec_col"], disc["flux_col"]) == ("ra", "dec", "total_flux")
+    assert disc["flux_to_jy"] == 1.0
+    assert any("fallback route astron" in r for r in disc["degraded_reasons"]) and disc["degraded"]
+    assert disc["ledger"][0]["status"] == "QUERY_FAILED"
+
+
+# ---------------------------------------------------------------------------
+# Fail fast on syntax, back off on throttling
+# ---------------------------------------------------------------------------
+def test_an_adql_syntax_error_is_not_retried(monkeypatch):
+    from pyvo.dal.exceptions import DALQueryError
+    calls, sleeps = [], []
+
+    def bad_sync(url, adql):
+        calls.append(adql)
+        raise DALQueryError('Incorrect ADQL query:  Encountered "\\"\\"". Was expecting one of: "," "FROM"')
+
+    monkeypatch.setattr(R, "_run_sync", bad_sync)
+    monkeypatch.setattr(R, "_sleep", sleeps.append)
+    with pytest.raises(R.TileQueryError) as ei:
+        R.query_tile("https://example/tap", 'SELECT "" FROM x', "t", retries=3)
+    assert ei.value.error_class == R.ERR_ADQL_SYNTAX
+    assert ei.value.query == 'SELECT "" FROM x' and ei.value.attempts == 1
+    assert len(calls) == 1 and sleeps == []
+
+
+def test_a_connect_timeout_backs_off_10_30_90(monkeypatch):
+    from requests.exceptions import ConnectTimeout
+    calls, sleeps = [], []
+
+    def slow_sync(url, adql):
+        calls.append(adql)
+        raise ConnectTimeout("HTTPSConnectionPool(host='tapvizier.cds.unistra.fr', port=443): "
+                             "Max retries exceeded")
+
+    monkeypatch.setattr(R, "_run_sync", slow_sync)
+    monkeypatch.setattr(R, "_sleep", sleeps.append)
+    with pytest.raises(R.TileQueryError) as ei:
+        R.query_tile("https://example/tap", "SELECT 1", "t", retries=3)
+    assert ei.value.error_class == R.ERR_CONNECT_TIMEOUT
+    assert sleeps == [10.0, 30.0, 90.0] and len(calls) == 4
+    # ...and a transient failure that clears is returned normally.
+    n = {"k": 0}
+
+    def flaky(url, adql):
+        n["k"] += 1
+        if n["k"] < 3:
+            raise ConnectTimeout("timed out")
+        return pd.DataFrame({"a": [1]})
+
+    monkeypatch.setattr(R, "_run_sync", flaky)
+    assert len(R.query_tile("u", "SELECT 1", "t", retries=3)) == 1
+
+
+def test_classify_error_reads_the_runner_log_texts():
+    assert R.classify_error(RuntimeError(
+        'DALQueryError: Incorrect ADQL query:  Encountered "\\"\\"". Was expecting one of: "," "FROM"')) == R.ERR_ADQL_SYNTAX
+    assert R.classify_error(RuntimeError(
+        "DALFormatError: ConnectTimeout: HTTPSConnectionPool(host='tapvizier.cds.unistra.fr', "
+        "port=443): Max retries exceeded")) == R.ERR_CONNECT_TIMEOUT
+    assert R.classify_error(ValueError("fetcher returned no 'ra' column")) == R.ERR_OTHER
+    assert R.classify_error(R.TileQueryError(R.ERR_ADQL_SYNTAX, "x")) == R.ERR_ADQL_SYNTAX
+
+
+def test_five_consecutive_syntax_failures_abort_the_pull_in_seconds(tmp_path):
+    """The 5.5-hour run, replayed: every tile fails with the same syntax
+    error.  Now the fifth aborts; the ledger names the class, the first
+    error and its query, and the summary is NO_DATA_REACHED with that text."""
+    import time
+    n = {"calls": 0}
+
+    def lotss_fetcher(tile):
+        n["calls"] += 1
+        raise R.TileQueryError(R.ERR_ADQL_SYNTAX,
+                               'DALQueryError: Incorrect ADQL query:  Encountered "\\"\\"".',
+                               query='SELECT TOP 40000 ""RAJ2000"" FROM "J/A+A/659/A1/lotss_dr2"')
+
+    rng = np.random.default_rng(4)
+    targets = pd.DataFrame({"source_id": range(40), "ra": rng.uniform(150, 250, 40),
+                            "dec": rng.uniform(30, 60, 40), "parallax": 30.0})
+    t0 = time.monotonic()
+    s = R.run_radio_stage({"radio": _cfg()}, tmp_path, lotss_fetcher=lotss_fetcher,
+                          target_fetcher=lambda rcfg: targets)
+    assert time.monotonic() - t0 < 30
+    assert n["calls"] == 5
+    assert s["verdict_code"] == R.VERDICT_NO_DATA
+    assert "Incorrect ADQL" in s["verdict"] and "ADQL_SYNTAX" in s["verdict"]
+    ab = s["acquisition_abort"]
+    assert ab["aborted"] and ab["error_class"] == R.ERR_ADQL_SYNTAX and ab["n_consecutive"] == 5
+    assert '""RAJ2000""' in ab["first_error"]["query"]
+    assert s["tiles"]["QUERY_FAILED"] == 5
+    assert s["tiles"]["NOT_ATTEMPTED_AFTER_ABORT"] == s["tiles"]["n_tiles"] - 5 > 0
+    led = json.loads((tmp_path / "tiles_ledger.json").read_text())
+    failed = [e for e in led["tiles"] if e["status"] == "QUERY_FAILED"]
+    assert all(e["error_class"] == R.ERR_ADQL_SYNTAX and '""' in e["query"] for e in failed)
+    assert (tmp_path / "summary.json").exists() and (tmp_path / "voids.csv").exists()
+    # Failures of DIFFERENT classes do not accumulate into one streak.
+    n["calls"] = 0
+    classes = [R.ERR_ADQL_SYNTAX, R.ERR_CONNECT_TIMEOUT]
+
+    def alternating(tile):
+        n["calls"] += 1
+        raise R.TileQueryError(classes[n["calls"] % 2], "boom")
+
+    cfg = {"radio": _cfg(lotss=dict(_cfg()["lotss"], max_consecutive_tile_failures=3))}
+    s2 = R.run_radio_stage(cfg, tmp_path / "b", lotss_fetcher=alternating,
+                           target_fetcher=lambda rcfg: targets.head(3))
+    assert not s2["acquisition_abort"]["aborted"]
+    assert s2["tiles"]["QUERY_FAILED"] == s2["tiles"]["n_tiles"]
+
+
+def test_a_resumed_run_keeps_its_checkpoints_when_the_service_then_dies(tmp_path):
+    """resume_from_run_id downloads tiles/*.parquet; if VizieR then fails on
+    every remaining tile the checkpointed ones are still screened and the
+    verdict is DEGRADED, not NO_DATA."""
+    cfg = {"radio": _cfg(lotss=dict(_cfg()["lotss"], max_consecutive_tile_failures=1))}
+    field = uniform_field(2000.0, FIELD_RA, FIELD_DEC, 2.6, 1.6, seed=5, hole_arcsec=210.0)
+    tiles = R.bin_sources_into_tiles(field, 2.0)
+    # "Downloaded artifact": every tile except the four outermost in RA (ix 98
+    # and 101, two Dec rows each), which no target or control reaches into.
+    (tmp_path / "tiles").mkdir(parents=True)
+    withheld = {k for k in tiles if k.startswith(("t098_", "t101_"))}
+    assert len(withheld) == 4
+    for k, df in tiles.items():
+        if k not in withheld:
+            df.to_parquet(tmp_path / "tiles" / f"{k}.parquet", index=False)
+    calls = []
+
+    def dead(tile):
+        calls.append(tile["key"])
+        raise R.TileQueryError(R.ERR_CONNECT_TIMEOUT, "ConnectTimeout")
+
+    s = R.run_radio_stage(cfg, tmp_path, lotss_fetcher=dead, target_fetcher=lambda rcfg: _targets())
+    assert s["tiles"]["FROM_CHECKPOINT"] == 4 and s["tiles"]["n_rows_total"] > 0
+    assert calls == ["t098_069"]                          # aborted on the first live failure
+    assert s["tiles"]["QUERY_FAILED"] == 1 and s["tiles"]["NOT_ATTEMPTED_AFTER_ABORT"] == 3
+    assert s["acquisition_abort"]["aborted"]
+    assert any("acquisition aborted" in r for r in s["degraded_reasons"])
+    # The checkpointed sky is still screened: the hole is found, the verdict
+    # is not NO_DATA, and the abort is on record in the summary.
+    assert s["verdict_code"] == R.VERDICT_CANDIDATES
+    assert s["n_targets_in_footprint"] == 1
+    summ = json.loads((tmp_path / "summary.json").read_text())
+    assert summ["acquisition_abort"]["error_class"] == R.ERR_CONNECT_TIMEOUT
 
 
 def test_config_file_and_defaults_agree_on_every_key():

@@ -103,9 +103,17 @@ import numpy as np
 import pandas as pd
 from scipy.special import gammaincc
 
-from ..vigil.acquire import QueryResult, run_tap
+from . import bright
+from .bright import _adql_col, _unquote, discover_columns, resolve_aliases, select_list
 
 CHANNEL = "baffle_radio"
+
+STATUS_OK = "QUERY_OK"
+STATUS_ZERO = "QUERY_RETURNED_ZERO_ROWS"
+STATUS_FAILED = "QUERY_FAILED"
+STATUS_TRUNCATED = "QUERY_TRUNCATED"
+STATUS_FROM_CHECKPOINT = "FROM_CHECKPOINT"
+STATUS_NOT_ATTEMPTED = "NOT_ATTEMPTED_AFTER_ABORT"
 ARCSEC_PER_RAD = 206264.80624709636
 AU_ARCSEC = 206265.0           # 1 AU at d AU subtends AU_ARCSEC / d arcsec
 
@@ -136,6 +144,9 @@ DEFAULTS: dict = {
         "astron_table_hint": "lotss",
         "max_rows_per_tile": 40000,
         "tap_retries": 3,
+        # Consecutive tile failures of one error class that abort the pull:
+        # a broken query or a throttled service, not five unlucky tiles.
+        "max_consecutive_tile_failures": 5,
     },
     "targets": {
         "parallax_min_mas": 20.0,
@@ -694,82 +705,156 @@ def screen_targets(targets_df: pd.DataFrame, sources_by_tile: dict, cfg: dict,
 # --------------------------------------------------------------------------
 # Runner-side acquisition: discovery, tiles, targets
 # --------------------------------------------------------------------------
-def _quote(name: str) -> str:
-    return name if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) else f'"{name}"'
+# Column handling is the bright tier's (``seti.baffle.bright``): TAPVizieR's
+# TAP_SCHEMA.columns serves column names ALREADY double-quoted ('"RAJ2000"'),
+# and the first radio run (34048836401) quoted them again, emitting
+# ``""RAJ2000""`` -- which the parser reads as an empty identifier
+# (``Encountered '""'``) -- on every one of 200 tiles for 5.5 hours.  Every
+# discovered name is now stored bare and quoted exactly once, at composition
+# time, by ``_adql_col``; an empty identifier is refused by name.
+
+#: canonical -> catalogue spellings (matched case-insensitively, quotes stripped)
+LOTSS_ALIASES: dict[str, tuple[str, ...]] = {
+    "ra": ("RAJ2000", "RA_ICRS", "RA", "_RAJ2000", "RAdeg", "RA_deg"),
+    "dec": ("DEJ2000", "DE_ICRS", "DEC", "DE", "_DEJ2000", "DEdeg", "DEC_deg", "Dec"),
+    "flux": ("Stotal", "Total_flux", "Ftotal", "TotalFlux", "Sint", "S_total", "Flux_total",
+             "Fint", "Flux"),
+}
+
+ERR_ADQL_SYNTAX = "ADQL_SYNTAX"
+ERR_CONNECT_TIMEOUT = "CONNECT_TIMEOUT"
+ERR_OTHER = "OTHER"
+TIMEOUT_BACKOFF_S = (10.0, 30.0, 90.0)
+_sleep = _time.sleep            # monkeypatched by the tests
 
 
-def _quote_table(name: str) -> str:
-    return name if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", name) else f'"{name}"'
+class TileQueryError(RuntimeError):
+    """A tile query that ended in failure, with its error class and the query text."""
+
+    def __init__(self, error_class: str, message: str, query: str = "", attempts: int = 0):
+        super().__init__(message)
+        self.error_class = error_class
+        self.query = query
+        self.attempts = attempts
 
 
-_RA_NAMES = ("raj2000", "ra_icrs", "ra", "_raj2000", "radeg", "ra_deg")
-_DEC_NAMES = ("dej2000", "de_icrs", "dec", "de", "_dej2000", "dedeg", "dec_deg")
-_FLUX_NAMES = ("stotal", "total_flux", "ftotal", "totalflux", "sint", "s_total", "flux_total",
-               "fint", "flux")
+def classify_error(exc: BaseException) -> str:
+    """ADQL syntax (never retryable) / connect timeout (back off) / other."""
+    ec = getattr(exc, "error_class", None)
+    if ec in (ERR_ADQL_SYNTAX, ERR_CONNECT_TIMEOUT, ERR_OTHER):
+        return ec
+    text = repr(exc)
+    if "Incorrect ADQL" in text or "DALQueryError" in text:
+        return ERR_ADQL_SYNTAX
+    if ("ConnectTimeout" in text or "timed out" in text or "Timeout" in text
+            or "ConnectionError" in text or "Connection refused" in text):
+        return ERR_CONNECT_TIMEOUT
+    return ERR_OTHER
+
+
+def _adql_table(name: str) -> str:
+    """A table reference quoted exactly once (``"J/A+A/659/A1/lotss_dr2"``)."""
+    bare = _unquote(name)
+    if not bare:
+        raise ValueError("empty table identifier")
+    return bare if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", bare) else f'"{bare}"'
+
+
+def _run_sync(url: str, adql: str) -> pd.DataFrame:
+    """One synchronous TAP query (a seam the tests replace)."""
+    import pyvo
+    return pyvo.dal.TAPService(url).run_sync(adql).to_table().to_pandas()
+
+
+def query_tile(url: str, adql: str, label: str, retries: int = 3) -> pd.DataFrame:
+    """Run one tile query, retrying only what can succeed on retry.
+
+    * ``DALQueryError`` / "Incorrect ADQL": the query text is wrong and will be
+      wrong again -- raised at once, no retry, no sleep.
+    * connect timeouts: VizieR is throttling; back off 10 s, 30 s, 90 s.
+    * anything else: 3 s x attempt.
+    Raises :class:`TileQueryError` carrying the error class and the query.
+    """
+    last: BaseException | None = None
+    max_attempts = max(int(retries), 1)
+    attempt = 0
+    while attempt < max_attempts:
+        try:
+            return _run_sync(url, adql)
+        except Exception as exc:                                  # noqa: BLE001
+            last = exc
+            ec = classify_error(exc)
+            attempt += 1
+            print(f"[{CHANNEL}] {label} attempt {attempt}/{max_attempts} [{ec}]: {exc!r}"[:600],
+                  flush=True)
+            if ec == ERR_ADQL_SYNTAX:
+                raise TileQueryError(ec, repr(exc)[:800], adql, attempt) from exc
+            if ec == ERR_CONNECT_TIMEOUT:
+                # Throttling gets the whole 10 / 30 / 90 s schedule even when
+                # tap_retries is smaller than that.
+                max_attempts = max(max_attempts, len(TIMEOUT_BACKOFF_S) + 1)
+                if attempt >= max_attempts:
+                    break
+                _sleep(TIMEOUT_BACKOFF_S[min(attempt - 1, len(TIMEOUT_BACKOFF_S) - 1)])
+            else:
+                if attempt >= max_attempts:
+                    break
+                _sleep(3.0 * attempt)
+    raise TileQueryError(classify_error(last), repr(last)[:800], adql, attempt)
+
+
+_FLUX_UCD_HINTS = ("tot", "int")
 
 
 def pick_columns(columns_df: pd.DataFrame) -> dict:
     """Choose RA / Dec / total-flux columns from a TAP_SCHEMA.columns result.
 
-    UCD first (``pos.eq.ra;meta.main`` etc.), then a ranked name list; every
-    choice is returned with the reason so the ledger shows what was used.
-    Nothing is chosen that was not in ``columns_df``.
+    Alias table first (``LOTSS_ALIASES`` via the bright tier's
+    ``resolve_aliases``: case-insensitive, quote-stripped), UCD second
+    (``pos.eq.ra`` / ``pos.eq.dec`` / ``phot.flux`` preferring a total or
+    integrated flux over a peak).  Every returned name is BARE; nothing is
+    returned that was not in ``columns_df``.
     """
+    empty = {"ra_col": None, "dec_col": None, "flux_col": None, "flux_unit": None,
+             "reason": "no columns seen"}
     if columns_df is None or len(columns_df) == 0:
-        return {"ra_col": None, "dec_col": None, "flux_col": None, "flux_unit": None,
-                "reason": "no columns seen"}
+        return empty
     df = columns_df.copy()
     df.columns = [c.lower() for c in df.columns]
-    names = [str(x) for x in df["column_name"]]
+    names = [_unquote(x) for x in df["column_name"]]
     ucds = [str(x).lower() if x is not None else "" for x in df.get("ucd", [""] * len(df))]
-    units = [str(x) if x is not None else "" for x in df.get("unit", [""] * len(df))]
+    units = [_unquote(x) if x is not None else "" for x in df.get("unit", [""] * len(df))]
     lower = [n.lower() for n in names]
-
-    def by_ucd(prefix, main=True):
-        hits = [i for i, u in enumerate(ucds) if u.startswith(prefix)]
-        if main:
-            m = [i for i in hits if "meta.main" in ucds[i]]
-            if m:
-                return m[0]
-        return hits[0] if hits else None
-
-    def by_name(cands):
-        for c in cands:
-            if c in lower:
-                return lower.index(c)
-        return None
-
+    res = resolve_aliases(names, LOTSS_ALIASES)
     reasons = []
-    i_ra = by_ucd("pos.eq.ra")
-    if i_ra is not None:
-        reasons.append(f"ra by ucd {ucds[i_ra]}")
+
+    def by_ucd(prefix):
+        hits = [i for i, u in enumerate(ucds) if u.startswith(prefix)]
+        main = [i for i in hits if "meta.main" in ucds[i]]
+        return (main or hits or [None])[0]
+
+    chosen = {}
+    for key, prefix in (("ra", "pos.eq.ra"), ("dec", "pos.eq.dec")):
+        if key in res:
+            chosen[key] = res[key]
+            reasons.append(f"{key} by alias ({res[key]})")
+        else:
+            i = by_ucd(prefix)
+            chosen[key] = names[i] if i is not None else None
+            reasons.append(f"{key} by ucd ({names[i]})" if i is not None else f"{key} NOT FOUND")
+    if "flux" in res:
+        chosen["flux"] = res["flux"]
+        reasons.append(f"flux by alias ({res['flux']})")
     else:
-        i_ra = by_name(_RA_NAMES)
-        reasons.append("ra by name" if i_ra is not None else "ra NOT FOUND")
-    i_dec = by_ucd("pos.eq.dec")
-    if i_dec is not None:
-        reasons.append(f"dec by ucd {ucds[i_dec]}")
-    else:
-        i_dec = by_name(_DEC_NAMES)
-        reasons.append("dec by name" if i_dec is not None else "dec NOT FOUND")
-    # Flux: integrated / total flux density, not the peak.
-    fl = [i for i, u in enumerate(ucds) if "phot.flux" in u and "stat.error" not in u
-          and "peak" not in lower[i] and not lower[i].startswith("e_")]
-    tot = [i for i in fl if "tot" in lower[i] or "int" in lower[i]]
-    if tot:
-        i_flux = tot[0]
-        reasons.append(f"flux by ucd {ucds[i_flux]} ({names[i_flux]})")
-    elif fl:
-        i_flux = fl[0]
-        reasons.append(f"flux by ucd {ucds[i_flux]} ({names[i_flux]})")
-    else:
-        i_flux = by_name(_FLUX_NAMES)
-        reasons.append("flux by name" if i_flux is not None else "flux NOT FOUND")
-    return {"ra_col": names[i_ra] if i_ra is not None else None,
-            "dec_col": names[i_dec] if i_dec is not None else None,
-            "flux_col": names[i_flux] if i_flux is not None else None,
-            "flux_unit": units[i_flux] if i_flux is not None else None,
-            "reason": "; ".join(reasons)}
+        fl = [i for i, u in enumerate(ucds) if "phot.flux" in u and "stat.error" not in u
+              and "peak" not in lower[i] and not lower[i].startswith("e_")]
+        tot = [i for i in fl if any(h in lower[i] for h in _FLUX_UCD_HINTS)]
+        i = (tot or fl or [None])[0]
+        chosen["flux"] = names[i] if i is not None else None
+        reasons.append(f"flux by ucd ({names[i]})" if i is not None else "flux NOT FOUND")
+    unit = units[lower.index(chosen["flux"].lower())] if chosen["flux"] else None
+    return {"ra_col": chosen["ra"], "dec_col": chosen["dec"], "flux_col": chosen["flux"],
+            "flux_unit": unit, "reason": "; ".join(reasons)}
 
 
 def flux_to_jy_factor(unit: str | None) -> tuple[float, str]:
@@ -785,56 +870,78 @@ def flux_to_jy_factor(unit: str | None) -> tuple[float, str]:
     return 1e-3, f"unit '{u}' not recognised; ASSUMED mJy (LoTSS native)"
 
 
+def _pick_table(names: list[str]) -> str:
+    """Prefer a main / source table over a Gaussian-component or mosaic list."""
+    def score(n: str) -> tuple:
+        nl = n.lower()
+        return (("gaus" in nl) or ("mosaic" in nl) or ("component" in nl),
+                -(("main" in nl) + ("source" in nl) + ("dr2" in nl)), len(nl))
+    return sorted(names, key=score)[0]
+
+
 def discover_lotss(cfg: dict) -> dict:
     """Find the LoTSS DR2 source table and its columns at run time.
 
-    VizieR first (catalogue ``J/A+A/659/A1``), then ASTRON.  Returns a dict
-    with ``status`` (``DISCOVERED`` / ``NOT_DISCOVERED``), the chosen
-    ``service`` / ``table`` / columns, ``degraded`` (True when the fallback
-    route had to be used or the flux column is missing) and the full ledger.
+    VizieR first (``TAP_SCHEMA.tables LIKE '%659/A1%'``, then the bright
+    tier's ``discover_columns`` on the chosen table), ASTRON second.  Every
+    name is stored bare (``ra_col`` etc.), the table quoted once (``table``),
+    and what TAP_SCHEMA served is kept verbatim (``names_as_served``) so the
+    next run's evidence is on disk.  ``status`` is ``DISCOVERED`` or
+    ``NOT_DISCOVERED``; ``degraded_reasons`` lists a fallback route, a
+    missing flux column, or an assumed unit.
     """
     lc = cfg.get("lotss", DEFAULTS["lotss"])
     retries = int(lc.get("tap_retries", 3))
-    out: dict = {"status": "NOT_DISCOVERED", "service": None, "table": None,
-                 "ra_col": None, "dec_col": None, "flux_col": None, "flux_unit": None,
-                 "flux_to_jy": None, "degraded": False, "degraded_reasons": [],
-                 "ledger": [], "tables_seen": []}
+    out: dict = {"status": "NOT_DISCOVERED", "service": None, "route": None, "table": None,
+                 "table_bare": None, "ra_col": None, "dec_col": None, "flux_col": None,
+                 "flux_unit": None, "flux_to_jy": None, "degraded": False,
+                 "degraded_reasons": [], "ledger": [], "tables_seen": [],
+                 "columns": [], "names_as_served": [], "discovery_route": None}
     routes = [("vizier", lc.get("vizier_tap", VIZIER_TAP),
                f"table_name LIKE '%{lc.get('vizier_catalogue_hint', '659/A1')}%'"),
               ("astron", lc.get("astron_tap", ASTRON_TAP),
                f"table_name LIKE '%{lc.get('astron_table_hint', 'lotss')}%'")]
     for route, url, like in routes:
         q = f"SELECT table_name, description FROM TAP_SCHEMA.tables WHERE {like}"
-        r = run_tap(url, q, label=f"lotss_tables@{route}", retries=retries, async_first=False)
-        out["ledger"].append(r.to_ledger())
-        if r.status != "OK" or r.data is None or not len(r.data):
+        entry = {"label": f"lotss_tables@{route}", "service": url, "query": q}
+        try:
+            tdf = bright.run_vizier(q, retries=min(retries, 2), label=entry["label"], url=url)
+        except Exception as exc:                                  # noqa: BLE001
+            entry.update({"status": "QUERY_FAILED", "error": repr(exc)[:500]})
+            out["ledger"].append(entry)
             continue
-        tdf = r.data.copy()
-        tdf.columns = [c.lower() for c in tdf.columns]
-        names = [str(x) for x in tdf["table_name"]]
+        tdf = tdf.rename(columns={c: c.lower() for c in tdf.columns})
+        names = [_unquote(x) for x in tdf.get("table_name", []) if _unquote(x)]
+        entry.update({"status": "OK" if names else "QUERY_RETURNED_ZERO_ROWS",
+                      "n_rows": int(len(tdf))})
+        out["ledger"].append(entry)
         out["tables_seen"].extend({"route": route, "table": n} for n in names)
-        # Prefer a main / source table over anything looking like a mosaic or
-        # a Gaussian-component list.
-        def score(n: str) -> tuple:
-            nl = n.lower()
-            return (("gaus" in nl) or ("mosaic" in nl) or ("component" in nl),
-                    -(("main" in nl) + ("source" in nl) + ("dr2" in nl)), len(nl))
-        table = sorted(names, key=score)[0]
-        cq = ("SELECT column_name, ucd, unit, description FROM TAP_SCHEMA.columns "
-              f"WHERE table_name = '{table}'")
-        c = run_tap(url, cq, label=f"lotss_columns@{route}", retries=retries, async_first=False)
-        out["ledger"].append(c.to_ledger())
-        if c.status != "OK" or c.data is None:
+        if not names:
             continue
-        cols = pick_columns(c.data)
-        out["columns_seen"] = [str(x) for x in c.data[c.data.columns[0]]][:400]
-        out["column_choice_reason"] = cols["reason"]
+        table_bare = _pick_table(names)
+        table = _adql_table(table_bare)
+        disc = discover_columns(table, url)
+        out["ledger"].append({"label": f"lotss_columns@{route}", "service": url,
+                              "route": disc.get("route"), "n_columns": len(disc["names"]),
+                              "errors": disc.get("errors", [])})
+        if not disc["names"]:
+            out["degraded_reasons"].append(f"{route}: no columns discovered for {table}")
+            continue
+        cdf = pd.DataFrame({"column_name": disc["names"],
+                            "ucd": [disc["meta"].get(n, {}).get("ucd", "") for n in disc["names"]],
+                            "unit": [disc["meta"].get(n, {}).get("unit", "") for n in disc["names"]]})
+        cols = pick_columns(cdf)
+        out.update({"columns": disc["names"][:400],
+                    "names_as_served": disc.get("names_as_served", []),
+                    "discovery_route": disc.get("route"),
+                    "column_choice_reason": cols["reason"]})
         if not cols["ra_col"] or not cols["dec_col"]:
             out["degraded_reasons"].append(f"{route}: RA/Dec columns not identified in {table}")
             continue
         out.update({"status": "DISCOVERED", "service": url, "route": route, "table": table,
-                    "ra_col": cols["ra_col"], "dec_col": cols["dec_col"],
-                    "flux_col": cols["flux_col"], "flux_unit": cols["flux_unit"]})
+                    "table_bare": table_bare, "ra_col": cols["ra_col"],
+                    "dec_col": cols["dec_col"], "flux_col": cols["flux_col"],
+                    "flux_unit": cols["flux_unit"]})
         if cols["flux_col"]:
             fac, why = flux_to_jy_factor(cols["flux_unit"])
             out["flux_to_jy"], out["flux_unit_decision"] = fac, why
@@ -844,28 +951,54 @@ def discover_lotss(cfg: dict) -> dict:
             out["degraded_reasons"].append("no flux column: bright-source veto disabled")
         if route != "vizier":
             out["degraded_reasons"].append(f"LoTSS reached through fallback route {route}")
+        try:
+            out["example_query"] = build_tile_query(out, tile_bounds(100, 70, 2.0), 40000)
+        except Exception as exc:                                  # noqa: BLE001
+            out["degraded_reasons"].append(f"query composition failed: {exc!r}")
+            out["status"] = "NOT_DISCOVERED"
+            continue
         break
     out["degraded"] = bool(out["degraded_reasons"]) and out["status"] == "DISCOVERED"
     return out
 
 
-def build_tile_query(disc: dict, tile: dict, max_rows: int) -> str:
-    cols = [_quote(disc["ra_col"]), _quote(disc["dec_col"])]
+def resolved_columns(disc: dict) -> dict[str, str]:
+    """``{logical: actual}`` for the SELECT list, flux only when discovered."""
+    res = {"ra": disc.get("ra_col") or "", "dec": disc.get("dec_col") or ""}
     if disc.get("flux_col"):
-        cols.append(_quote(disc["flux_col"]))
-    ra, dec = _quote(disc["ra_col"]), _quote(disc["dec_col"])
-    return (f"SELECT TOP {int(max_rows)} {', '.join(cols)} FROM {_quote_table(disc['table'])} "
+        res["flux"] = disc["flux_col"]
+    return res
+
+
+def build_tile_query(disc: dict, tile: dict, max_rows: int) -> str:
+    """One tile's ADQL from bare discovered names, each quoted at most once.
+
+    ``select_list`` refuses an empty identifier by naming the logical column,
+    which is the guard the first run lacked.
+    """
+    res = resolved_columns(disc)
+    select = select_list(res, required=("ra", "dec"))
+    ra, dec = _adql_col(res["ra"], "ra"), _adql_col(res["dec"], "dec")
+    return (f"SELECT TOP {int(max_rows)} {select} FROM {_adql_table(disc['table'])} "
             f"WHERE {ra} >= {tile['ra_min']} AND {ra} < {tile['ra_max']} "
             f"AND {dec} >= {tile['dec_min']} AND {dec} < {tile['dec_max']}")
 
 
 def normalise_sources(df: pd.DataFrame, disc: dict) -> pd.DataFrame:
-    """Rename the discovered columns to ``ra``, ``dec``, ``flux_jy``."""
-    out = pd.DataFrame({"ra": pd.to_numeric(df[disc["ra_col"]], errors="coerce"),
-                        "dec": pd.to_numeric(df[disc["dec_col"]], errors="coerce")})
-    if disc.get("flux_col") and disc["flux_col"] in df.columns:
+    """Rename the discovered columns to ``ra``, ``dec``, ``flux_jy``.
+
+    The result's column spellings may differ in case or quoting from what
+    TAP_SCHEMA served, so they are matched the way the aliases are.
+    """
+    res = resolve_aliases(df.columns, {"ra": (disc["ra_col"],), "dec": (disc["dec_col"],),
+                                       "flux": (disc.get("flux_col") or "\x00",)})
+    if "ra" not in res or "dec" not in res:
+        raise ValueError(f"result lacks {disc['ra_col']}/{disc['dec_col']}: {list(df.columns)[:20]}")
+    out = pd.DataFrame({"ra": pd.to_numeric(df[res["ra"]], errors="coerce"),
+                        "dec": pd.to_numeric(df[res["dec"]], errors="coerce")})
+    if "flux" in res:
         fac = float(disc.get("flux_to_jy") or 1e-3)
-        out["flux_jy"] = pd.to_numeric(df[disc["flux_col"]], errors="coerce") * fac
+        out["flux_jy"] = pd.to_numeric(df[res["flux"]], errors="coerce") * fac
     else:
         out["flux_jy"] = np.nan
     return out.dropna(subset=["ra", "dec"]).reset_index(drop=True)
@@ -874,9 +1007,10 @@ def normalise_sources(df: pd.DataFrame, disc: dict) -> pd.DataFrame:
 def make_lotss_fetcher(disc: dict, cfg: dict):
     """A ``fetcher(tile) -> DataFrame(ra, dec, flux_jy)`` over the discovered table.
 
-    Raises on QUERY_FAILED so the tile loop records it; returns an empty frame
-    for QUERY_RETURNED_ZERO_ROWS.  ``TOP max_rows`` makes the row cap visible
-    in the query text, and a result that hits it is flagged as truncated by the
+    Raises :class:`TileQueryError` (with its error class) so the tile loop can
+    tell a syntax error from throttling; returns an empty frame for
+    QUERY_RETURNED_ZERO_ROWS.  ``TOP max_rows`` makes the row cap visible in
+    the query text, and a result that hits it is flagged as truncated by the
     tile loop rather than accepted as complete.
     """
     lc = cfg.get("lotss", DEFAULTS["lotss"])
@@ -885,13 +1019,10 @@ def make_lotss_fetcher(disc: dict, cfg: dict):
 
     def fetch(tile: dict) -> pd.DataFrame:
         q = build_tile_query(disc, tile, max_rows)
-        r: QueryResult = run_tap(disc["service"], q, label=f"lotss_tile@{tile['key']}",
-                                 retries=retries, async_first=False)
-        if r.status == "QUERY_FAILED":
-            raise RuntimeError(r.error or "QUERY_FAILED")
-        if r.data is None or not len(r.data):
+        df = query_tile(disc["service"], q, label=f"lotss_tile@{tile['key']}", retries=retries)
+        if df is None or not len(df):
             return pd.DataFrame({"ra": [], "dec": [], "flux_jy": []})
-        return normalise_sources(r.data, disc)
+        return normalise_sources(df, disc)
 
     fetch.max_rows = max_rows                          # type: ignore[attr-defined]
     return fetch
@@ -973,29 +1104,48 @@ def _write_json(path: Path, obj: dict) -> None:
 
 
 def acquire_tiles(tiles: list[dict], fetcher, tiles_dir: Path, max_rows: int | None = None,
-                  ) -> tuple[dict[str, pd.DataFrame], list[dict]]:
-    """Fetch (or reload from checkpoint) every planned tile; never stop on one."""
+                  max_consecutive_failures: int = 5) -> tuple[dict[str, pd.DataFrame], list[dict], dict]:
+    """Fetch (or reload from checkpoint) every planned tile.
+
+    One failed tile never stops the run -- but ``max_consecutive_failures``
+    consecutive failures of the SAME error class do: that is a broken query or
+    a throttled service, not five unlucky tiles, and the first run spent 5.5 h
+    finding that out one tile at a time.  On abort the remaining tiles are
+    ledgered ``NOT_ATTEMPTED_AFTER_ABORT`` and the returned ``abort`` record
+    carries the error class, the first error text and its query.
+
+    A tile present as ``tiles/<key>.parquet`` (this run's or a resumed
+    artifact's) is reused without a query and ledgered ``FROM_CHECKPOINT``.
+    """
     tiles_dir.mkdir(parents=True, exist_ok=True)
     sources: dict[str, pd.DataFrame] = {}
     ledger: list[dict] = []
+    abort: dict = {"aborted": False}
     t_start = _time.monotonic()
+    streak_class, streak_n, first_error = None, 0, None
     for k, tile in enumerate(tiles):
         path = tiles_dir / f"{tile['key']}.parquet"
         entry = {"key": tile["key"], "ra_min": tile["ra_min"], "ra_max": tile["ra_max"],
                  "dec_min": tile["dec_min"], "dec_max": tile["dec_max"],
                  "n_targets": tile.get("n_targets", 0), "from_checkpoint": False,
-                 "n_rows": 0, "status": None, "error": "", "elapsed_s": 0.0,
-                 "truncated": False}
+                 "n_rows": 0, "status": None, "error": "", "error_class": "", "query": "",
+                 "elapsed_s": 0.0, "truncated": False}
+        # A checkpoint needs no query, so it is reused even after an abort:
+        # a resumed artifact's tiles must survive the service dying again.
         if path.exists():
             try:
                 df = pd.read_parquet(path)
                 entry.update({"from_checkpoint": True, "n_rows": int(len(df)),
-                              "status": "QUERY_OK" if len(df) else "QUERY_RETURNED_ZERO_ROWS"})
+                              "status": STATUS_FROM_CHECKPOINT})
                 sources[tile["key"]] = df
                 ledger.append(entry)
                 continue
             except Exception as exc:                          # noqa: BLE001
                 entry["error"] = f"checkpoint unreadable, refetching: {exc!r}"
+        if abort["aborted"]:
+            entry["status"] = STATUS_NOT_ATTEMPTED
+            ledger.append(entry)
+            continue
         t0 = _time.monotonic()
         try:
             df = fetcher(tile)
@@ -1006,32 +1156,53 @@ def acquire_tiles(tiles: list[dict], fetcher, tiles_dir: Path, max_rows: int | N
             if "flux_jy" not in df.columns:
                 df["flux_jy"] = np.nan
             entry["n_rows"] = int(len(df))
-            entry["status"] = "QUERY_OK" if len(df) else "QUERY_RETURNED_ZERO_ROWS"
+            entry["status"] = STATUS_OK if len(df) else STATUS_ZERO
             cap = max_rows if max_rows is not None else getattr(fetcher, "max_rows", None)
             if cap is not None and len(df) >= int(cap):
                 entry["truncated"] = True
-                entry["status"] = "QUERY_TRUNCATED"
+                entry["status"] = STATUS_TRUNCATED
             df.to_parquet(path, index=False)
             sources[tile["key"]] = df
+            streak_class, streak_n = None, 0
         except Exception as exc:                              # noqa: BLE001
-            entry["status"] = "QUERY_FAILED"
-            entry["error"] = repr(exc)[:500]
-            print(f"[{CHANNEL}] tile {tile['key']} failed: {entry['error']}")
+            ec = classify_error(exc)
+            entry.update({"status": STATUS_FAILED, "error": repr(exc)[:800], "error_class": ec,
+                          "query": str(getattr(exc, "query", ""))[:2000]})
+            print(f"[{CHANNEL}] tile {tile['key']} failed [{ec}]: {entry['error'][:300]}",
+                  flush=True)
+            if first_error is None:
+                first_error = {"key": tile["key"], "error_class": ec, "error": entry["error"],
+                               "query": entry["query"]}
+            streak_n = streak_n + 1 if ec == streak_class else 1
+            streak_class = ec
+            if streak_n >= int(max_consecutive_failures):
+                abort.update({"aborted": True, "after_tile": tile["key"], "error_class": ec,
+                              "n_consecutive": streak_n, "first_error": first_error,
+                              "reason": (f"{streak_n} consecutive tile failures of class {ec}; "
+                                         f"first: {first_error['error'][:300]}")})
+                print(f"[{CHANNEL}] ABORTING acquisition: {abort['reason']}", flush=True)
         entry["elapsed_s"] = round(_time.monotonic() - t0, 2)
         ledger.append(entry)
         if (k + 1) % 50 == 0:
-            n_ok = sum(1 for e in ledger if e["status"] in ("QUERY_OK", "QUERY_TRUNCATED"))
+            n_ok = sum(1 for e in ledger if e["status"] in (STATUS_OK, STATUS_TRUNCATED,
+                                                             STATUS_FROM_CHECKPOINT))
             print(f"[{CHANNEL}] tiles {k + 1}/{len(tiles)}: {n_ok} with rows "
-                  f"({_time.monotonic() - t_start:.0f} s)")
-    return sources, ledger
+                  f"({_time.monotonic() - t_start:.0f} s)", flush=True)
+    if first_error is not None:
+        abort.setdefault("first_error", first_error)
+    return sources, ledger, abort
 
 
 def _ledger_counts(ledger: list[dict]) -> dict:
     out = {"n_tiles": len(ledger)}
-    for s in ("QUERY_OK", "QUERY_RETURNED_ZERO_ROWS", "QUERY_FAILED", "QUERY_TRUNCATED"):
+    for s in (STATUS_OK, STATUS_FROM_CHECKPOINT, STATUS_ZERO, STATUS_FAILED, STATUS_TRUNCATED,
+              STATUS_NOT_ATTEMPTED):
         out[s] = sum(1 for e in ledger if e.get("status") == s)
-    out["n_from_checkpoint"] = sum(1 for e in ledger if e.get("from_checkpoint"))
+    out["n_from_checkpoint"] = out[STATUS_FROM_CHECKPOINT]
+    out["n_with_rows"] = out[STATUS_OK] + out[STATUS_FROM_CHECKPOINT] + out[STATUS_TRUNCATED]
     out["n_rows_total"] = int(sum(int(e.get("n_rows", 0)) for e in ledger))
+    classes = [e.get("error_class") for e in ledger if e.get("status") == STATUS_FAILED]
+    out["failed_by_class"] = {c: classes.count(c) for c in sorted(set(classes))}
     return out
 
 
@@ -1088,9 +1259,16 @@ def run_radio_stage(cfg: dict | None, out_dir, *, lotss_fetcher=None, target_fet
     tiles = plan_tiles(targets, tile_deg, pad_deg=neighbourhood_radius_deg(rcfg)) if len(targets) else []
     sources: dict[str, pd.DataFrame] = {}
     ledger: list[dict] = []
+    abort: dict = {"aborted": False}
     if fetcher is not None and tiles:
-        sources, ledger = acquire_tiles(tiles, fetcher, out / "tiles")
+        sources, ledger, abort = acquire_tiles(
+            tiles, fetcher, out / "tiles",
+            max_consecutive_failures=int(rcfg.get("lotss", {}).get(
+                "max_consecutive_tile_failures", 5)))
     summary["tiles"] = {"tile_deg": tile_deg, "n_planned": len(tiles), **_ledger_counts(ledger)}
+    summary["acquisition_abort"] = abort
+    if abort.get("aborted"):
+        summary["degraded_reasons"].append("acquisition aborted: " + str(abort.get("reason", "")))
     _write_json(out / "tiles_ledger.json", {"written_utc": _now(), "tile_deg": tile_deg,
                                             "counts": summary["tiles"], "tiles": ledger})
     n_failed = summary["tiles"].get("QUERY_FAILED", 0)
@@ -1102,7 +1280,8 @@ def run_radio_stage(cfg: dict | None, out_dir, *, lotss_fetcher=None, target_fet
 
     # Statistic --------------------------------------------------------------------
     n_rows = summary["tiles"].get("n_rows_total", 0)
-    bad_tiles = {e["key"] for e in ledger if e.get("status") in ("QUERY_FAILED", "QUERY_TRUNCATED")}
+    bad_tiles = {e["key"] for e in ledger
+                 if e.get("status") in (STATUS_FAILED, STATUS_TRUNCATED, STATUS_NOT_ATTEMPTED)}
     if len(targets) and n_rows:
         voids, counters = screen_targets(targets, sources, rcfg, bad_tiles=bad_tiles)
     else:
@@ -1126,8 +1305,17 @@ def run_radio_stage(cfg: dict | None, out_dir, *, lotss_fetcher=None, target_fet
     # Verdict --------------------------------------------------------------------
     if n_rows == 0 or not len(targets):
         code = VERDICT_NO_DATA
-        why = ("no LoTSS rows reached" if len(targets) else
-               f"no targets ({summary['targets'].get('status')})")
+        if not len(targets):
+            why = f"no targets ({summary['targets'].get('status')})"
+        elif abort.get("aborted"):
+            fe = abort.get("first_error") or {}
+            why = (f"acquisition aborted after {abort.get('n_consecutive')} consecutive "
+                   f"{abort.get('error_class')} failures; first error at {fe.get('key')}: "
+                   f"{fe.get('error', '')[:300]}")
+        elif summary["discovery"] and summary["discovery"].get("status") == "NOT_DISCOVERED":
+            why = "LoTSS table not discovered on any TAP route"
+        else:
+            why = "no LoTSS rows reached"
         text = f"{code}: {why}"
     elif summary["n_candidates"]:
         code = VERDICT_CANDIDATES
@@ -1167,20 +1355,33 @@ def run_probe(cfg: dict | None, out_dir) -> dict:
         hw = float(pc.get("half_width_deg", 0.05))
         tile = {"key": "probe", "ra_min": float(pc["ra"]) - hw, "ra_max": float(pc["ra"]) + hw,
                 "dec_min": float(pc["dec"]) - hw, "dec_max": float(pc["dec"]) + hw}
+        rec["resolved"] = {"table": disc["table"], "ra": disc["ra_col"], "dec": disc["dec_col"],
+                           "flux": disc["flux_col"], "flux_unit": disc["flux_unit"],
+                           "flux_to_jy": disc["flux_to_jy"], "route": disc["route"],
+                           "discovery_route": disc["discovery_route"],
+                           "names_as_served": disc["names_as_served"]}
         q = build_tile_query(disc, tile, 5000)
-        r = run_tap(disc["service"], q, label="lotss_probe_box",
-                    retries=int(rcfg.get("lotss", {}).get("tap_retries", 2)), async_first=False)
-        rec["probe_query"] = r.to_ledger()
-        if r.status == "OK" and r.data is not None:
-            df = normalise_sources(r.data, disc)
+        t0 = _time.monotonic()
+        pq = {"label": "lotss_probe_box", "service": disc["service"], "query": q}
+        try:
+            raw = query_tile(disc["service"], q, label="lotss_probe_box",
+                             retries=int(rcfg.get("lotss", {}).get("tap_retries", 2)))
+            df = normalise_sources(raw, disc)
+            pq.update({"status": STATUS_OK if len(df) else STATUS_ZERO, "n_rows": int(len(df)),
+                       "columns_returned": [str(c) for c in raw.columns][:20]})
             area = (2 * hw) ** 2 * math.cos(math.radians(float(pc["dec"])))
             rec["probe_box"] = {"n_rows": int(len(df)), "area_deg2": area,
                                 "density_per_deg2": float(len(df) / area) if area else None,
                                 "flux_jy_max": float(np.nanmax(df["flux_jy"])) if len(df) and
                                 df["flux_jy"].notna().any() else None,
                                 "head": df.head(5).to_dict(orient="records")}
-        rec["verdict"] = ("PROBE_OK" if r.status == "OK" else
-                          f"PROBE_QUERY_{r.status}")
+        except Exception as exc:                                  # noqa: BLE001
+            pq.update({"status": STATUS_FAILED, "error": repr(exc)[:800],
+                       "error_class": classify_error(exc)})
+        pq["elapsed_s"] = round(_time.monotonic() - t0, 2)
+        rec["probe_query"] = pq
+        rec["verdict"] = ("PROBE_OK" if pq["status"] == STATUS_OK else
+                          f"PROBE_QUERY_{pq['status']}")
     else:
         rec["verdict"] = "NO_DATA_REACHED: LoTSS table not discovered on any route"
     rec["finished_utc"] = _now()

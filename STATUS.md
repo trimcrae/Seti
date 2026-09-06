@@ -101,6 +101,47 @@ whole system's waste was concentrated. The data route is the one that
 actually worked for TAILINGS (Data Central cloud FITS), with the same
 runtime schema discovery and `DEGRADED_SOURCE` reporting.
 
+**FIRST REAL RUN, FALLOUT, 2026-09-06 09:42 ET (run 34036759185, 7 min).**
+GALAH DR4 answered on the first route (395,752 rows, all 30 elements): 101,928
+cool dwarfs and 78,344 giants screened over 11–12 n-capture elements. Verdict
+`DEGRADED_SOURCE (no rv/fiber columns); FISSION_PATTERN_CANDIDATES_PENDING_VET`:
+**0 dwarf survivors**, **2 giant survivors** at lower weight. Reading the run
+found four things the synthetic population could not, each now a fix in flight:
+
+1. **GALAH's quoted errors understate the real scatter.** The shuffled-element
+   null put its 99.9th percentile at ln LR 17.0 (dwarfs) and 9.7 (giants)
+   against 2.3 offline, so the threshold self-raised as designed — but at the
+   cost of sensitivity. Fix: per-element error floors at the measured peer
+   scatter (Nd 0.16, Ce 0.28, La 0.22 dex in dwarfs), then recalibrate.
+2. **Both giant survivors fit fission badly and win only because the natural
+   templates fit worse**: χ² of the fission model 229.7 on 9 elements and 52.5
+   on 8. Both are carried by La (+1.17 and +1.04 dex against a template
+   prediction of +0.3). Fix: an absolute goodness-of-fit gate
+   (`UNEXPLAINED_BY_ALL_TEMPLATES`, never a candidate), a heavy-peak coherence
+   veto (two of La/Ce/Nd must each carry the sign), and a La-vs-C/N/Teff
+   regression among giants, because the La II lines sit in CN-blended regions
+   of cool-giant spectra.
+3. **78% of the dwarfs are `INSUFFICIENT`** (n-capture lines too weak to be
+   unflagged), so the injected-sensitivity table was capped at ~20% and read as
+   blind at 1 dex. Fix: sensitivity conditioned on testable stars, with the
+   testable fraction reported beside it.
+4. Two thirds of the above-threshold dwarfs fell to `low_snr_or_flagged` or
+   `single_element_driver` — the leave-one-out test is doing what it was built
+   for.
+
+Both giants are recorded as *pending vet*, not as candidates, and the honest
+reading is a La measurement systematic until the vet says otherwise.
+
+**Prior-art sweeps, read.** `metronomelit`: 478 verbatim abstracts across 38
+queries, one decoy-free hit — eRO-QPE2, quasi-periodic X-ray eruptions from a
+galactic nucleus — which is not a flare-timing search on stars. `lanternlit`:
+79 abstracts plus the Kipping & Teachey citation tree, **zero** hits tying an
+artificial narrow line to the planet's eclipse phase. `falloutlit`: 74 fetches,
+12 of 18 id-title checks verified; Whitmire & Wright 1980 (Icarus 42, 149) has
+25 citing works on Crossref and no executed search among them. Each sweep is
+evidence of absence from arXiv, not proof; the docs keep the "to be verified"
+wording until the concept scans are complete.
+
 **Novelty is stated as unverified in all three docs** until each channel's
 prior-art sweep (`metronomelit`, `lanternlit`, `falloutlit` — verbatim arXiv
 abstracts, id-vs-title checks, decoy-aware concept scans) has run on the

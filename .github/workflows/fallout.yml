@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: "Stage (probe|acquire|screen|assess|all)"
+        description: "Stage (probe|acquire|screen|assess|vet|all); vet re-vets the committed candidates_*.csv offline"
         required: false
         default: "all"
       surveys:
@@ -143,10 +143,15 @@ jobs:
             results/fallout/screen.json \
             results/fallout/summary.json \
             results/fallout/REPORT.md \
+            results/fallout/vet.json \
             results/fallout/candidates_galah_dwarf.csv \
             results/fallout/candidates_galah_giant.csv \
+            results/fallout/vetted_galah_dwarf.csv \
+            results/fallout/vetted_galah_giant.csv \
             results/fallout/candidates_apogee_dwarf.csv \
-            results/fallout/candidates_apogee_giant.csv
+            results/fallout/candidates_apogee_giant.csv \
+            results/fallout/vetted_apogee_dwarf.csv \
+            results/fallout/vetted_apogee_giant.csv
       - uses: actions/upload-artifact@v4
         if: always()
         with:

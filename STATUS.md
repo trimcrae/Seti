@@ -19,7 +19,7 @@ and **S14, the fission-product pattern** (marked "covered by midden", which
 was wrong — MIDDEN searches the *lines* of Tc/Pm/actinides, not the stable
 multi-element residue). A third question fell out of asking what the JWST
 archive can test that no laser search ever has. All three were built in
-parallel, offline-tested (108 new tests, full suite green), wired into the
+parallel, offline-tested (121 new tests, full suite green), wired into the
 CLI (`seti metronome|lantern|fallout`), the channel index and the taxonomy,
 and are dispatched on the runner from `main`. None has a committed result
 yet; every row in `docs/channels.md` says **Pending** and means it.

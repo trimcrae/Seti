@@ -326,7 +326,7 @@ Crawford & Schulze-Makuch 2024) argues the sociology and the geometry of a
 could cloak our transit with a laser, which is family C from the inside. The
 runner-side sweep `scripts/bafflelit_fetch.py` (`bafflelit.yml`) fetches the
 record verbatim and scans it with decoys so that this paragraph can be
-checked rather than believed; its result is recorded in `STATUS.md`.
+checked rather than believed; its result is recorded in `STATUS.md` (read 2026-09-06: no catalogue search for stellar mid-IR deficits, no source-count-hole search at stars, no zoo-hypothesis observable in the record; the nearest neighbours are Lacki 2019 "Sunscreen" and Kipping & Teachey 2016, both about the concealer's own light).
 
 ---
 

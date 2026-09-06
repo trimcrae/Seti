@@ -82,9 +82,41 @@ fallout:
     amp_max: 100.0
     n_amp: 40
     n_amp_2d: 26
-    systematic_floor_dex: 0.05 # sigma = sqrt(reported^2 + floor^2)
+    systematic_floor_dex: 0.05 # sigma = sqrt(max(reported, floor)^2 + this^2)
     error_default_dex: 0.15    # when a catalogue gives no per-element error
+    # THE ERROR MODEL (from the first real run, 2026-09-06): GALAH's quoted
+    # per-element errors understate the measured peer-residual scatter by 2-4x
+    # (dwarfs: Ce 0.28, La 0.22, Nd 0.16, Rb 0.40, Sr 0.34, Eu 0.32 dex), and
+    # the shuffled null's q0.999 came out at ln LR 17 against 2.3 on a synthetic
+    # population. Every element's error is therefore floored at that sample's
+    # measured peer scatter of that element (LOOM's sqrt(reduced chi2)
+    # rescaling, per element); floors and inflation ratios go to summary.json.
+    error_floor_mode: peer_scatter   # peer_scatter | none
     min_elements: 5
+    # ABSOLUTE GOODNESS OF FIT: a star whose BEST model has reduced chi2 above
+    # this is UNEXPLAINED_BY_ALL_TEMPLATES -- counted and listed separately,
+    # never a fission candidate. (The first run's two giant "survivors" had
+    # chi2_f = 230 on 9 elements: they won against worse models, they did not fit.)
+    max_reduced_chi2: 3.0
+    # HEAVY-PEAK COHERENCE: at least this many of these elements must be
+    # individually >= this many sigma UP, so one hot element (La at +1.2 dex,
+    # in both first-run survivors) cannot carry the pattern.
+    heavy_peak_elements: [La, Ce, Nd]
+    heavy_peak_min_coherent: 2
+    heavy_peak_sigma: 2.0
+    # TESTABLE: the pattern is decidable only with >= min_elements measured AND
+    # >= this many of the heavy-peak elements; completeness is reported on
+    # testable stars, with the testable fraction next to it (79,690 of 101,928
+    # dwarfs were INSUFFICIENT on the first run).
+    min_heavy_measured: 2
+    # LA IN COOL GIANTS: the La II lines sit in CN-blended regions. Among
+    # giants the La residual is regressed on Teff, logg, [C/Fe], [N/Fe], vsini;
+    # if it tracks C/N (|rho| >= la_cn_corr_min) or anti-correlates with Teff,
+    # La is unreliable below la_cn_teff_max and a La-carried preference there is
+    # vetoed (la_cn_blend). If the diagnostic cannot be computed, La is
+    # distrusted, not trusted.
+    la_cn_teff_max: 4800.0
+    la_cn_corr_min: 0.2
     # ln likelihood ratios (Delta chi2 = 2 lr). lr_min is a FLOOR: the working
     # threshold is max(lr_min, shuffled-null quantile) -- see null below.
     lr_min: 8.0                # fission vs best natural mixture

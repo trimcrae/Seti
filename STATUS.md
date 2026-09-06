@@ -46,6 +46,35 @@ nearby (ϖ > 20 mas) stars are flagged with their own denominators. Every row
 in `docs/channels.md` says **Pending** until the runs land; what they say is
 recorded below when they do.
 
+**Prior art, read (run 34047603440, 13:07 ET, 116 fetches, 0 failures,
+223 abstracts scanned).** Group 1 (mid-IR *deficit* searches): ten regex
+hits, none a stellar catalogue search — transition-disk cavities ("infrared
+deficit" at 10 µm inside a disk), solar umbral physics, T-dwarf methane,
+white-dwarf collision-induced absorption, and one black-hole-binary SED
+paper. **No published search selects stars for flux below the photosphere.**
+Group 2 (zoo-hypothesis tests): Forgan 2011 (1105.2497) and 2017
+(1608.08770) verified by id and are sociological/geometric; "A direct
+communication proposal to test the Zoo Hypothesis" (1509.03652) proposes
+*messaging*, not an observation; "The Recursive Panopticon Hypothesis" and
+"Some Thoughts on the Future of Technosignature Searches" (the phrase
+"deliberately concealed" fires there) are the nearest neighbours and neither
+names a catalogue observable. The arXiv id `2401.01532` assumed for Crawford
+& Schulze-Makuch 2024 resolves to "Generating New Spacetimes through Zermelo
+Navigation" — **wrong id, must not be cited**; the title search found no
+arXiv entry, so that paper is cited by journal reference only. Group 3
+(occulters): Kipping & Teachey 2016 (1603.08928) is the cloaking precedent
+(family C, from the inside); the Planet Nine searches in WISE/NEOWISE
+(Meisner 2017/2018), AKARI and IRAS+AKARI are the parallax/motion baseline
+for S39 — a grey 1-AU screen at 1 000 AU is a 130 Jy 100-µm source moving
+400″ a year, four orders of magnitude above what those searches could see,
+which is the exclusion `docs/baffle.md` §1(B1) states. Group 4 (radio
+voids): every hit is ARCADE-2 background or radio-shadow jargon from other
+fields; **no search for source-count holes at stars.** Group 5
+(concealment): Lacki 2019 "Sunscreen" (1807.00077, galaxies partially
+cloaked in Dyson spheres) and Kipping & Teachey are the only concealment
+observables in the record, both for the *concealer's own* light. The novelty
+position of §5 in `docs/baffle.md` stands as written.
+
 ### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
 
 The charter ranks novelty first, and after 35 channels the taxonomy in

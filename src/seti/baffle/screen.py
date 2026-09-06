@@ -48,10 +48,10 @@ VETO_ORDER = (
     "w1_only_methane_like", "w2_only_single_band",
     "saturated", "poor_wise_phot_qual", "poor_tmass_phot_qual", "wise_artifact",
     "extended", "bad_profile_fit", "wise_variable", "gaia_variable", "lpv_colour",
-    "crowded_match", "blend_flux_theft", "multi_peak",
+    "crowded_match", "blend_flux_theft", "multi_peak", "ks_too_bright_for_g",
 )
 DEFERRED_VETOES = ("lpv_colour",)
-REPORT_FLAGS = ("bad_astrometry", "high_pm_epoch_risk")
+REPORT_FLAGS = ("bad_astrometry", "high_pm_epoch_risk", "gks_photospheric", "gks_unmeasured")
 
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_DEGRADED = "DEGRADED_SOURCE"
@@ -71,6 +71,10 @@ DEFAULT_SCREEN_CFG = {
     "blend_radius_arcsec": 8.0, "ipd_frac_multi_peak_max": 10, "non_single_star_max": 0,
     "ruwe_report": 1.4, "pm_report_mas_yr": 300.0, "etz_ecl_lat_deg": 0.264,
     "nearby_parallax_mas": 20.0,
+    # (G - Ks) consistency: a contaminated Ks is too bright for the star's G by
+    # the same amount it is too bright relative to W1; a screen is not.
+    "gks": {"veto_min_mag": 0.2, "veto_nsig": 3.0, "consistency_tol_mag": 0.25,
+            "photospheric_max_mag": 0.1, "photospheric_nsig": 2.0},
     "missing": {"b_min_deg": 10.0, "ks_min": 5.0, "ks_max": 11.0, "tmass_ph_qual_ok": "AAA",
                 "babs_bin_deg": 10.0, "g_bin_mag": 1.0},
 }
@@ -214,6 +218,14 @@ def veto_table(df: pd.DataFrame, cfg: dict | None = None,
     v["multi_peak"] = ((_num(df, "ipd_frac_multi_peak") > float(c["ipd_frac_multi_peak_max"]))
                        | (np.nan_to_num(_num(df, "non_single_star"), nan=0.0)
                           > float(c["non_single_star_max"])))
+    gk = c["gks"]
+    rg, sg = _num(df, "resid_gks"), _num(df, "sig_gks")
+    r1 = _num(df, "resid_w1")
+    v["ks_too_bright_for_g"] = ((rg > float(gk["veto_min_mag"])) & (sg > float(gk["veto_nsig"]))
+                                & (np.abs(rg + r1) < float(gk["consistency_tol_mag"])))
+    v["gks_photospheric"] = ((np.abs(rg) < float(gk["photospheric_max_mag"]))
+                             & (np.abs(sg) < float(gk["photospheric_nsig"])))
+    v["gks_unmeasured"] = ~np.isfinite(rg)
     v["bad_astrometry"] = _num(df, "ruwe") > float(c["ruwe_report"])
     pm = np.hypot(np.nan_to_num(_num(df, "pmra"), nan=0.0), np.nan_to_num(_num(df, "pmdec"), nan=0.0))
     v["high_pm_epoch_risk"] = pm > float(c["pm_report_mas_yr"])

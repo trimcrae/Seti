@@ -53,13 +53,19 @@ def true_ksw2(jk):
     return true_ksw1(jk) - 0.02
 
 
+def true_gks(bp_rp):
+    """(G - Ks) vs (BP - RP) for the synthetic dwarfs."""
+    return 1.25 * np.asarray(bp_rp, dtype=float) - 0.2
+
+
 def make_population(n: int = 20000, seed: int = 11, sigma: float = 0.03) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     jk = rng.uniform(0.12, 0.95, n)
     ks = rng.uniform(6.5, 12.0, n)
-    plx = rng.uniform(2.0, 30.0, n)
+    bp_rp = 0.6 + 2.0 * jk
+    g = ks + true_gks(bp_rp) + rng.normal(0, sigma, n)   # G follows Ks: a consistent SED
     mg = 4.5 + 6.0 * jk                                   # dwarfs
-    g = mg - 5.0 * np.log10(plx / 100.0)
+    plx = 100.0 * 10 ** ((mg - g) / 5.0)                  # parallax from the absolute magnitude
     df = pd.DataFrame({
         "source_id": np.arange(1, n + 1, dtype=np.int64),
         "ra": rng.uniform(0, 360, n), "dec": rng.uniform(-30, 30, n),
@@ -68,7 +74,7 @@ def make_population(n: int = 20000, seed: int = 11, sigma: float = 0.03) -> pd.D
         "parallax": plx, "parallax_error": 0.02, "parallax_over_error": plx / 0.02,
         "pmra": rng.normal(0, 15, n), "pmdec": rng.normal(0, 15, n), "ruwe": 1.0,
         "phot_g_mean_mag": g, "phot_bp_mean_mag": g + 0.3, "phot_rp_mean_mag": g - 0.4,
-        "bp_rp": 0.6 + 2.0 * jk, "phot_variable_flag": "NOT_AVAILABLE",
+        "bp_rp": bp_rp, "phot_variable_flag": "NOT_AVAILABLE",
         "non_single_star": 0, "ipd_frac_multi_peak": 0, "phot_bp_rp_excess_factor": 1.2,
         "random_index": np.arange(n), "is_locus_sample": True,
         "wise_angular_distance": 0.3, "wise_number_of_neighbours": 1, "wise_number_of_mates": 0,
@@ -335,7 +341,8 @@ def test_report_only_flags_do_not_veto(population, locus):
     row = res["candidates"].iloc[0]
     assert bool(row["bad_astrometry"]) and bool(row["high_pm_epoch_risk"])
     assert row["pm_total_mas_yr"] == pytest.approx(np.hypot(400.0, 100.0))
-    assert res["report_flags"] == {"bad_astrometry": 1, "high_pm_epoch_risk": 1}
+    assert res["report_flags"] == {"bad_astrometry": 1, "high_pm_epoch_risk": 1,
+                                   "gks_photospheric": 1, "gks_unmeasured": 0}
 
 
 def test_etz_and_nearby_flags_and_denominators(population, locus):
@@ -381,6 +388,42 @@ def test_verdict_tokens():
     assert S.combine_verdicts("NO_DATA_REACHED", "NO_DATA_REACHED") == "NO_DATA_REACHED"
     assert S.combine_verdicts("NO_MIDIR_DEFICIT_SURVIVOR", "NO_DATA_REACHED") == \
         "NO_MIDIR_DEFICIT_SURVIVOR | NO_DATA_REACHED"
+
+
+def test_gks_locus_recovers_the_relation_per_zone(population, locus):
+    for key in ("dwarf@plane", "dwarf@offplane", "all@all"):
+        assert locus.has(key, "gks"), key
+        b = locus.bins[key]["gks"]
+        centers = np.asarray(b["centers"])
+        assert len(centers) >= 10
+        # interior bins: the edge bins are half-populated and sit off-centre by the slope
+        assert np.max(np.abs(np.asarray(b["median"])[1:-1] - true_gks(centers[1:-1]))) < 0.02
+    r = L.residuals(population, locus, LOCUS_CFG)
+    assert np.isfinite(r["resid_gks"]).mean() > 0.99
+    assert abs(np.median(r["resid_gks"])) < 0.01
+    assert 0.35 < np.median(np.abs(r["sig_gks"])) < 1.2     # conservative sigma, as for W1
+    # a locus without gks bins gives NaN residuals, never a crash
+    bare = L.Locus(bins={c: {b: v for b, v in bb.items() if b != "gks"} for c, bb in locus.bins.items()})
+    assert np.isnan(L.gks_residuals(population.head(5), bare, LOCUS_CFG)[0]).all()
+
+
+def test_a_contaminated_ks_is_vetoed_ks_too_bright_for_g_but_a_screen_is_not(population, locus):
+    idx = _pick_clean_star(population)
+    # a 2MASS blend: every 2MASS band 0.5 mag too bright, WISE untouched -> the
+    # same -0.5 in Ks-W1 AND +0.5 in G-Ks
+    df = population.copy()
+    for c in ("j_m", "h_m", "ks_m"):
+        df.loc[idx, c] -= 0.5
+    res = _screen(df, locus)
+    assert len(res["candidates"]) == 0
+    row = res["vetoed"].iloc[0]
+    assert row["first_veto"] == "ks_too_bright_for_g" and row["resid_gks"] > 0.4
+    assert res["counters"]["ks_too_bright_for_g"] == 1
+    # a real mid-IR deficit leaves G-Ks photospheric
+    res2 = _screen(_inject(population, idx, 0.5, 0.5), locus)
+    cand = res2["candidates"]
+    assert len(cand) == 1 and bool(cand.iloc[0]["gks_photospheric"]) and not bool(cand.iloc[0]["gks_unmeasured"])
+    assert res2["report_flags"]["gks_photospheric"] == 1
 
 
 # ---------------------------------------------------------------------------

@@ -55,6 +55,12 @@ locus:
   w3_snr_min: 5.0                  # W3 residuals only where w3snr > this ...
   w3_err_max: 0.2                  # ... or, where the mirror serves NO w3snr (it does not), w3mpro_error < this
   tail_sigmas: [3.0, 5.0]          # tail-asymmetry report thresholds
+  gks:                             # (G - Ks) vs (BP - RP) locus, per class AND per zone
+    bin_width: 0.05                #   (the reddening vector runs close to the intrinsic locus)
+    x_min: -0.5
+    x_max: 4.5
+    min_per_bin: 25
+    plane_b_deg: 10.0              #   'plane' |b| < this, else 'offplane'
 
 screen:
   sig_min: 5.0                     # sig_w1 < -sig_min AND sig_w2 < -sig_min
@@ -85,6 +91,12 @@ screen:
   pm_report_mas_yr: 300.0          # high_pm_epoch_risk: report, keep
   etz_ecl_lat_deg: 0.264           # Earth Transit Zone flag
   nearby_parallax_mas: 20.0        # nearby flag (d < 50 pc)
+  gks:                             # ks_too_bright_for_g: a 2MASS blend, not a screen
+    veto_min_mag: 0.2              #   resid_gks > this ...
+    veto_nsig: 3.0                 #   ... at > this sigma ...
+    consistency_tol_mag: 0.25      #   ... and |resid_gks + resid_w1| < this (both driven by Ks)
+    photospheric_max_mag: 0.1      # gks_photospheric (note): |resid_gks| < this ...
+    photospheric_nsig: 2.0         #   ... and |sig_gks| < this: the screen-like signature
   missing:
     b_min_deg: 10.0
     ks_min: 5.0
@@ -130,6 +142,32 @@ vet:
   w3_deficit_mag: -0.30              # resid_w3 below this: w3_deficit_consistent (note)
   w3_err_max: 0.2
   include_deferred_lpv: true         # vet the deferred_lpv.csv rows too
+  unwise_flux_system: "vega"         # unWISE FW1/FW2 are VEGA nanomaggies (Schlafly+2019): mag = 22.5 - 2.5 log10(F)
+  zeropoint_check_max_mag: 0.3       # |median(unWISE - CatWISE)| or |median(CatWISE - AllWISE)| above this -> *_zeropoint_suspect, no vote
+  indep_err_floor_mag: 0.02          # error floor on the independent W1/W2 photometry
+  gaia_2mass_radius_arcsec: 4.0      # unresolved_in_2mass: a Gaia source within this ...
+  gaia_2mass_dg_max: 4.0             # ... with G < G_cand + this (a 4-mag-fainter red neighbour still adds tenths in Ks)
+  tmass:
+    table: '"II/246/out"'            # 2MASS PSC: Bflg / Cflg / Xflg / prox / pxCntr
+    radius_arcsec: 3.0
+    epoch: 2000.0
+    close_pair_arcsec: 6.0           # tmass_close_pair (note): prox < this
+    xmatch_catalogue: "vizier:II/246/out"
+  irsa_allwise:
+    table: "allwise_p3as_psd"        # IRSA route for w1sat / w2sat (VizieR II/328 does not serve them)
+    url: "https://irsa.ipac.caltech.edu/TAP"
+    radius_arcsec: 3.0
+  hires_ks:                          # independent higher-resolution Ks (the deciding test)
+    radius_arcsec: 1.5
+    epoch: 2010.0
+    contaminated_min_mag: 0.2        # Ks_hires - Ks_2MASS >= this ...
+    consistency_tol_mag: 0.2         # ... and within this of -resid_w1 -> tmass_ks_contaminated
+    confirm_tol_mag: 0.1             # |Ks_hires - Ks_2MASS| < this -> ks_confirmed_hires (SURVIVES)
+    surveys:
+      vvv: {table: "", discover_like: "%VVV%", prefer: ['"II/376/vvv2"', '"II/348/vvv2"']}
+      gps: {table: '"II/316/gps6"'}
+      vhs: {table: '"II/367/vhs_dr5"'}
+      las: {table: '"II/319/las9"'}
   missing:
     radius_close_arcsec: 6.0         # wise_source_present_within_6as
     radius_far_arcsec: 15.0          # wise_source_present_6_to_15as / no_wise_source_within_15as

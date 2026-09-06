@@ -187,6 +187,50 @@ K_s 5–11, AAA, non-variable cuts (353 ETZ, 993 within 50 pc) are being
 re-tested by direct positional match against AllWISE, CatWISE and unWISE in
 the same vet, which measures the *real* absence rate.
 
+**VET, run 34054735689 (15:23 ET; 25 min, 8 upload queries, 0 failures):
+`NO_MIDIR_DEFICIT_SURVIVOR | TRULY_MISSING_COUNTERPARTS_PENDING (n=2)`.**
+The W3 locus now fits (34,988 stars; +5σ tail 400, −5σ tail 7). Of the 137
+deficit rows (135 + 2 deferred): 19 `DEBLENDED_COMPONENT` (AllWISE `nb > 1`
+or active deblend — the Gaia mirror never carried that record), 15
+`ALLWISE_PHOTOMETRY_WRONG` (CatWISE2020 puts them on the photosphere), 1
+`W3_INCONSISTENT` (W3 excess on a W1/W2-deficit star), **0 survive**, and
+102 `INCONCLUSIVE` — for a reason the table makes plain: every unWISE
+residual sits at +2.35 (W1) / +2.97 (W2) mag, exactly the AB→Vega offset
+applied the wrong way, so unWISE voted "excess" against CatWISE's "deficit"
+on every star and the independent class became `ambiguous`. A bug, being
+fixed with a self-check (the median unWISE − CatWISE offset must be ~0 or
+unWISE does not vote). What CatWISE itself says of the 102 is the real
+content: median residuals −0.34 (W1) and −0.39 (W2), 57 with both below
+−0.3 mag at high significance — the same frames as AllWISE, so the same
+answer, and the survivors' SED is grey (W1 ≈ W2 ≈ W3 on a photosphere that
+is ~0.4 mag fainter than K_s says). Physically that is either the screen or
+**a 2MASS blend that WISE resolves**: 2MASS sums a ~3″ pair into one K_s,
+AllWISE's PSF fit gives the star its own flux, and the star then looks
+K_s-bright, W-faint, grey. 26 of the 102 already carry `crowded_field`; 76
+of the 135 lie at |b| < 5°. The deciding tests are being added: the 2MASS
+PSC blend and contamination flags (`Bflg`, `Cflg`, `prox`), Gaia
+neighbours at 2MASS resolution (4″, any magnitude), an **independent
+higher-resolution K_s** from UKIDSS GPS / VVV / VHS / LAS (if it is fainter
+than 2MASS by the deficit, 2MASS was contaminated; if it agrees, the deficit
+is in the star), and a no-network G − K_s versus BP − RP consistency
+residual for every screened star (a contaminated K_s makes G − K_s too red
+by the same amount as the W deficit; a screen leaves it photospheric).
+
+The missing track, re-tested by direct position on 2,341 stars (988 within
+50 pc, 353 ETZ, 1,000 random controls): 2,218 have an AllWISE source within
+6″, 113 within 6–15″ (the astrometric offsets of saturated bright stars),
+**10 have none within 15″ — and every one of the 10 has its nearest AllWISE
+entry 20–60″ away carrying diffraction-spike / halo flags** (`DdDD`,
+`HHHH`, …). Eight are present in CatWISE or unWISE; the two absent from all
+three (Gaia DR3 2858629802997575936, K_s 8.0, an M dwarf at 32 pc with
+155 mas/yr — itself at the W1 saturation limit; and 3209766056875171712,
+K_s 9.0, 250 pc) sit beside `DdDD` / `DDdD` fragments, the signature of a
+bright star's artefact region where all three catalogues suppress
+detections, or of a saturated primary whose own entry was lost. The
+control absence rate is 0.4 % before that check; the "missing" fraction of
+8 % in the cross-match table was the cross-match, not the sky. A
+bright-star-within-3′ check closes the two in the next run.
+
 ### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
 
 The charter ranks novelty first, and after 35 channels the taxonomy in

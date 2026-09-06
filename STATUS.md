@@ -231,6 +231,50 @@ control absence rate is 0.4 % before that check; the "missing" fraction of
 8 % in the cross-match table was the cross-match, not the sky. A
 bright-star-within-3′ check closes the two in the next run.
 
+**VET v2 + PATCH, run 34057027633 (16:07 ET, 3 h 55 min — 18 min of vet
+uploads, 3 h 20 min of NEOWISE fetches for the patch stage): `MIDIR_DEFICIT_
+CANDIDATES_SURVIVE_VET (n=0, no_hires_ks=9) | NO_TRULY_MISSING_COUNTERPART`.**
+The unWISE zero point was the AB→Vega offset applied to fluxes that are
+already Vega (`unwise_e_w1 ≈ 0.0005` in the table proved the flux branch ran);
+fixed, with a naming-proof self-check (median unWISE − CatWISE per band must
+be ~0 or unWISE does not vote; it now is). The new no-network G − K_s test
+did the most work: **61 of the 135 first-pass candidates fail
+`ks_too_bright_for_g`** at the screen — their K_s is too bright for their G
+by the same amount their W1/W2 are too faint, which is a contaminated 2MASS
+K_s, not a shadow — leaving 74 for the vet: 5 `BLEND` (a Gaia source within
+4″), 9 `DEBLENDED_COMPONENT` (AllWISE `nb > 1`), 18 `ALLWISE_PHOTOMETRY_
+WRONG` (CatWISE photospheric), 2 `KS_CONTAMINATED` (UKIDSS GPS / VHS K_s
+fainter than 2MASS by the deficit — the deciding test, where it exists), 31
+`INCONCLUSIVE` (CatWISE neither confirms nor clears), 9 `SURVIVES_VET_NO_
+HIRES_KS` (CatWISE confirms the deficit, no higher-resolution K_s covers
+them: VVV had no X-Match route configured, LAS returned nothing, GPS and VHS
+answered for 35). Missing track: of the 10 stars without an AllWISE source
+within 15″, 8 are `ARTEFACT_REGION_OR_SATURATED` (6 beside a W1 < 6 star
+within 3′, 3 at their own saturation limit) and 2 are present in CatWISE or
+unWISE — **no truly missing counterpart**; that track is closed.
+
+The 9 went to the patch geometry, and the geometry closed them. Read with
+`patches.csv` beside `vetted_candidates.csv`: **five have NEOWISE light
+curves with reduced χ² of 731, 2 758, 873, 7 589 and 27 675 over 21 visits**
+(own offsets from the AllWISE epoch down to −0.64 mag) — strongly variable
+in the mid-IR, which no passive screen is; two sit in the Magellanic Clouds
+(l 303°, b −44.6°, 14 Gaia sources within 10″; l 279°, b −36°, 525
+neighbours within 10′) where NEOWISE and 2MASS are confusion-limited, and the
+one `MODULATED` verdict there (5.7σ, null p 5 × 10⁻⁴) is
+`modulation_degenerate` with the geometry-agnostic odd/even control at
+5.2σ — the scan-direction systematic, not the parallax phase; Gaia DR3
+512945405846907904 carries resid_gks = +0.91 at 14.7σ against a W deficit of
+−1.20, the contaminated-K_s signature by 0.04 mag outside the veto's window;
+and the single `ISOLATED_DEFICIT` with a constant own series (Gaia DR3
+228086063620072832, 7.4 kpc, b = −6.2°) is a threshold-edge object
+(−0.300 / −0.315 against a floor of 0.30) whose G − K_s residual (+0.19,
+3.2σ, summing with resid_w1 to −0.11) is contamination-consistent. These
+rules — NEOWISE constancy, confusion, the G − K_s window, the threshold edge
+— are being folded into a post-patch `final_verdict` in the assess stage so
+the pipeline says this itself. **Zero survivors of the mid-IR funnel across
+~30 million Gaia stars with 2MASS and AllWISE counterparts, complete to
+0.5-mag two-band deficits at 91 %.**
+
 ### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
 
 The charter ranks novelty first, and after 35 channels the taxonomy in

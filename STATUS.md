@@ -10,6 +10,42 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### The warden's fence, 2026-09-06: BAFFLE (S38)
+
+A new question from the user: *if the zoo hypothesis is right, the wardens
+may be preparing to shield our own future Dyson swarm and other
+technosignatures from other stars — how would they do it, how would we see
+it, and is it there?* `docs/baffle.md` works the first two through. The
+enclosing shell is excluded by the CMB dipole; a grey directional screen at
+< 3 000 AU is a tens-of-kJy Planck source on a parallax ellipse and is
+excluded by the compact-source catalogues; active camouflage and source-side
+beaming leave nothing here. What survives as *searchable* is the cheapest
+design — a passive, band-selective screen on the Sun→observer line — and it
+is searchable because of a theorem: Lorentz reciprocity. A screen that stops
+our 10 µm reaching star X stops X's 10 µm reaching us. So the observable is a
+star **fainter than its photosphere in W1 and W2** with normal J/H/K_s (no
+dust can do this: extinction is transparent in the infrared, not opaque),
+inside a sharp-edged patch of radius R/d that moves on an annual parallax
+ellipse; or, for a radio screen, a hole in LoTSS source counts at a nearby
+star. Signature S38 in the taxonomy; S39 (the grey screen's own waste heat)
+listed as unsearchable at catalogue level with the numbers that say why.
+
+Built in parallel and offline-tested: `seti.baffle` (`acquire` — Gaia DR3 ×
+2MASS × AllWISE through the PM-propagated archive cross-match with in-archive
+pre-selection and a 0.5 % locus subsample, under the CENOTAPH acquisition
+discipline; `locus` — empirical K_s − W_b versus J − K_s per luminosity
+class; `screen` — two-band deficit ≥ 0.3 mag at ≥ 5σ and thirteen named
+vetoes with counters, the LPV epoch-mismatch residue *deferred* rather than
+dropped; `patch` — top-hat coherence, the (d, R) scan with the parallax
+phase predicted by the ecliptic geometry, the constant-deficit test on the
+star's own NEOWISE series; `radio` — Poisson voids in LoTSS DR2 around every
+Gaia star within 50 pc, with four control positions per star as the
+empirical null), plus the `missing` track (bright 2MASS stars with no AllWISE
+source at all) and the prior-art sweep `bafflelit`. ETZ (|β| < 0.264°) and
+nearby (ϖ > 20 mas) stars are flagged with their own denominators. Every row
+in `docs/channels.md` says **Pending** until the runs land; what they say is
+recorded below when they do.
+
 ### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
 
 The charter ranks novelty first, and after 35 channels the taxonomy in

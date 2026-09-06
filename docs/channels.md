@@ -15,7 +15,7 @@ exist but no run has committed results. Every CLI command is
 cron is noted. All channels are unit-tested offline under `tests/` (the suite
 is network-guarded: see `tests/conftest.py`).
 
-Index compiled 2026-09-01 from the files on `main` (rows for METRONOME, LANTERN and FALLOUT added 2026-09-06); re-verify a verdict
+Index compiled 2026-09-01 from the files on `main` (rows for METRONOME, LANTERN, FALLOUT and BAFFLE added 2026-09-06); re-verify a verdict
 against the result file before quoting it elsewhere.
 
 ## Waste heat and energy budget
@@ -54,6 +54,7 @@ against the result file before quoting it elsewhere.
 | **MIDDEN** (`midden`) | Whitmire & Wright 1980 nuclear-waste signature: Tc / Pm / actinide lines in photospheres that are not AGB or S-type | ESO HARPS/FEROS via ObsCore TAP; VizieR; NIST ASD | `midden --stage {verify-lines,targets,acquire,score,all}`, `midden-deep` | `midden.yml`, `midden-deepdive.yml` | `midden.md` | `results/midden/REPORT.md`: no population-level Tc excess (178 spectra, 99 stars); the one flag, HD 217522, is roAp rare-earth blending and is not claimed |
 | **LANTERN** (`lantern`) | A narrow emission line that is present out of secondary eclipse and *vanishes* while the planet is occulted (S28a): a planet-side monochromatic source, across every public JWST exoplanet time series | MAST JWST `x1dints` (NIRSpec, NIRCam, NIRISS, MIRI) × NASA Exoplanet Archive ephemerides | `lantern {probe,inventory,screen,assess,selftest}` (or `python -m seti.lantern.run`) | `lantern.yml` | `lantern.md` | `results/lantern/inventory.json`: `INVENTORIED` — 148 hosts, 2,867 JWST time-series observations matched to ephemerides, 7,287 `x1dints` products (6,157 public, 1.12 TB); screen shards running |
 | **FALLOUT** (`fallout`) | The stable *residue* of fission (S14): the two-humped fission-yield abundance vector ([Nd/Ba] ≫ 0, [Eu/Nd] < 0, [Mo/Zr] > 0) in cool dwarfs, against the best natural s + r mixture in a Teff-matched peer frame | GALAH DR4 allstar (Data Central cloud FITS, the route that worked for TAILINGS); APOGEE DR17 optional | `fallout --stage {probe,acquire,screen,assess,all}` (or `python -m seti.fallout.run`) | `fallout.yml` | `fallout.md` | `results/fallout/summary.json`: `DEGRADED_SOURCE (...); NO_FISSION_PATTERN` — 101,928 dwarfs (20% testable) and 78,344 giants (98% testable), 0 survivors after the vet stage, 29 `UNEXPLAINED_BY_ALL_TEMPLATES` listed; dwarf completeness < 2% at +1 dex Nd, giant 68%. Next: the Pb/Ag/Pd-carrying high-resolution compilations |
+| **BAFFLE** (`baffle`) | The zoo-hypothesis warden's fence (S38): a star whose W1 *and* W2 sit ≥ 0.3 mag below the empirical photospheric locus with normal J/H/K_s — the reciprocal shadow of a band-selective screen on the Sun→star line — then patch coherence (top-hat deficit of radius R/d around it), annual-parallax modulation of the patch edge, and the constant-deficit test on the star's own NEOWISE series; plus the fully-opaque limit (bright 2MASS stars with no AllWISE source) and a radio-void search around nearby stars in LoTSS DR2. ETZ and nearby stars flagged with their own denominators | Gaia DR3 × 2MASS × AllWISE via the archive's PM-propagated cross-match (in-archive pre-selection, 0.5 % locus subsample); NEOWISE single exposures (IRSA); LoTSS DR2 (VizieR TAP) | `baffle --stage {probe,acquire,screen,patch,radio,assess,all}` (or `python -m seti.baffle.run`); `python -m seti.baffle.radio --stage {probe,run}` | `baffle.yml`, `baffle-radio.yml`, `bafflelit.yml` | `baffle.md` | **Pending**: built and offline-tested 2026-09-06; first runs dispatched from `main`, nothing committed yet |
 
 ## Kinematics and geometry
 
@@ -122,6 +123,7 @@ were run for:
 | `necrolit` | Novelty check for the necrosignature taxonomy in `necrosignatures.md` (S-numbered signatures cited by RUST, KNELL, VIGIL, EMBER, SHROUD, CENOTAPH, TOCSIN) | `necrolit.yml` |
 | `farir_docs`, `farir_stats`, `catrecon` | AKARI-FIS / IRAS far-IR instrument documentation, measured crossmatch systematics and catalogue metadata (CENOTAPH leg 3, EMBER) | `farir-params.yml`, `catrecon.yml` |
 | `survey_recon` | Live probe of what can feed TOCSIN and LOOM while Rubin is dark (`substitute-surveys.md`) | `survey-recon.yml` |
+| `bafflelit` | Prior-art sweep for BAFFLE: mid-IR *deficit* searches, zoo/planetarium-hypothesis observational tests, outer-solar-system occulter/parallax searches, radio voids at stars, concealment arguments (`scripts/bafflelit_fetch.py`) | `bafflelit.yml` |
 | `metronomelit`, `lanternlit`, `falloutlit` | Prior-art sweeps for METRONOME, LANTERN and FALLOUT (`scripts/<name>_fetch.py`; run as the `lit` job of each channel's workflow) | `metronome.yml`, `lantern.yml`, `fallout.yml` |
 
 ## Gaps this index exposed

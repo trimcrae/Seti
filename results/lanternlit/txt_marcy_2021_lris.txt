@@ -1,0 +1,1806 @@
+arXiv:2103.09915v4 [math.FA] 25 Oct 2021
+
+R EVERSE H ÖLDER , M INKOWSKI , A ND H ANNER I NEQUALITIES
+F OR M ATRICES
+
+Victoria M Chayes
+Department of Mathematics
+Rutgers University
+Piscataway, NJ 08854
+vc362@math.rutgers.edu
+
+October 27, 2021
+
+A BSTRACT
+We examine a number of known inequalities for Lp functions with reverse representations for
+s < 1 with complex matrices under the p-norms ||X||p = Tr[(X ∗ X)p/2 ]1/p , and similarly defined
+quasinorm or antinorm quantities ||X||s = Tr[(X ∗ X)s/2 ]1/s . Analogous to the reverse Hölder and
+reverse Minkowski for Lp functions, it has recently been shown that for A, B ∈ Mn×n (C) such that
+|B| is invertible, ||AB||1 ≥ ||A||s ||B||s/(s−1) and for A, B positive semidefinite that ||A + B||s ≥
+||A||s + ||B||s . We comment on variational representations of these inequalities. A third very
+important inequality is Hanner’s inequality ||f +g||pp +||f −g||pp ≥ (||f ||p +||g||p )p +|||f ||p −||g||p |p
+in the 1 ≤ p ≤ 2 range, with the inequality reversing for p ≥ 2. The analogue inequality has been
+proven to hold matrices in certain special cases. No reverse Hanner has established for functions
+or matrices considering ranges with s < 1. We develop a reverse Hanner inequality for functions,
+and show that it holds for matrices under special conditions; it is sufficient but not necessary for
+C +D, C −D ≥ 0. We also extend certain related singular value rearrangement inequalities that were
+previously known in the 1 ≤ p ≤ 3 range to the s < 1 range. Finally, we use the same techniques to
+characterize the previously unstudied equality case: we show that there is equality when p 6= 1, 2 if
+and only if |D| = k|C|, which is directly analogous to the Lp equality condition.
+Keywords Hanner’s Inequality · Reverse Holder Inequality · Reverse Minkowski Inequality ·
+p-Schatten Norm · Uniform Convexity · Matrix Inequality · Majorization
+
+1
+
+Introduction
+
+........
+It is of great interest to generalize equalities known for Lp functions to complex matrices. The Hölder and Minkowski
+inequalities are well-known inequalities that are fundamental to the study of Lp spaces. The p-Schatten norm
+||X||p = Tr[(X ∗ X)p/2 ]1/p is known to also satisfy these inequalities when p ≥ 1. Using the technique of majorization,
+[3] first established a reverse Minkowski inequality,
+||A + B||s ≥ ||A||s + ||B||s
+
+(1.1)
+
+for A, B > 0 and s < 1, and in [3] [20] a reverse Hölder Inequality
+||AB||1 ≥ ||A||s ||B||r
+
+(1.2)
+
+s
+with B invertible, 0 < s < 1, and r = s−1
+. This comes from the more general inequality
+
+||||AB|r |||1/r ≥ ||||A|p |||1/p ||||B|q |||1/q
+for r, p > 0 , q < 0, and 1r = p1 + 1q , where ||| · ||| is any unitarily invariant norm.
+
+(1.3)
+
+O CTOBER 27, 2021
+
+........The p-norm notably has the dual representation
+||A||p =
+
+sup
+
+| Tr[AB ∗ ]|.
+
+(1.4)
+
+B : ||B||q =1
+
+where p > 1, p1 + 1q = 1.
+We establish using Holder’s inequality a dual representation of the quasinorm (0 < s0 < 1) and antinorm (0 < s0 )
+||A||s =
+
+inf
+
+B : ||B||r =1
+
+||AB ∗ ||1 =
+
+inf
+
+B : ||B||r =1
+
+Tr[|AB ∗ |]
+
+(1.5)
+
+s
+where here s < 1, and r = s−1
+. We then show how this can be used to independently establish Equation (1.1), as well
+as other inequalities that can be derived from variational representations both for Hölder and reverse Hölder inequalities.
+
+........It has also been of great interest to extend Hanner’s Inequality for Lp spaces
+||f + g||pp + ||f − g||pp ≥ (||f ||p + ||g||p )p + |||f ||p − ||g||p |p
+for 1 ≤ p ≤ 2 to the non-communative analogue in C
+
+(1.6)
+
+p
+
+||X + Y ||pp + ||X − Y ||pp ≥ (||X||p + ||Y ||p )p + |||X||p − ||Y ||p |p .
+
+(1.7)
+
+........Hanner’s inequality was originally proven as a simpler manner of proving uniform convexity of Lp spaces, and in
+fact establishes the exact modulus of smoothness and convexity. The generalization to C p convexity was first addressed
+in [21], and the optimal coefficients of 2-uniform smoothness convexity were determined in [1]. However, the question
+of a general Hanner’s Inequality holding remained open, and has only been proven in the following special cases:
+1. In [17] (McCarthy, 1967): for all X, Y ∈ Mn×n (C) such that ||X||p = ||Y ||p , and all ranges of p. Note the
+proof for 1 ≤ p ≤ 2 given in [17] is incorrect and corrected in [14].
+2. In [21] (Tomczak-Jaegermann 1974): for all X, Y ∈ Mn×n (C) and p = 2k.
+3. In [1] (Ball, Carlen, Lieb 1994): for all X, Y ∈ Mn×n (C) and 1 ≤ p ≤ 4/3, and p ≥ 4; and for X + Y, X −
+Y ≥ 0 and all ranges of p.
+4. In [7] (Chayes, 2020): for all self-adjoint X, Y ∈ Mn×n (C) such that the anticommutator {X, Y } =
+XY + Y X = 0, and all ranges of p.
+........Hanner’s inequality can be seen as a correction term for the Minkowski inequality. Therefore, after examining the
+reverse Minkowski inequality, it is natural to ask if a Hanner-like inequality can also be established for s < 1. We prove
+the following new inequalities for this range:
+Theorem 1.1. Let x, y ∈ Rn . Then
+s
+
+||x + y||ss + ||x − y||ss ≤ (||x||s + ||y||s )s + ||x||s − ||y||s ,
+
+(1.8)
+
+for 0 < s < 1, with the inequality reversing when s < 0.
+For 0 < s < 1, this reverse inequality for vectors implies a reverse Hanner for s-integrable functions f, g by applying
+dominated convergence to pointwise limits of simple functions approximating f, g from below. For s < 0, a reverse
+Hanner for general s-integrable functions can be shown with the original convexity argument used by Hanner [9].
+........For the matrix case, we establish
+Theorem 1.2. Let C + D, C − D ≥ 0. Then
+||C + D||ss + ||C − D||ss . ≤ (||C||s + ||D||s )s + (||C||s − ||D||s )s
+
+(1.9)
+
+for 0 < s < 1, with the inequality reversing when s < 0. There is equality only if C and D commute. However,
+the relationship of Equation (1.9) may not occur for general self-adjoint X, Y . In particular, if one does not have
+||X ± Y ||ss ≤ ||X + ±YDiag ||ss for 0 < s < 1 and reversing for s < 0, or neither ||XDiag ||s ≤ ||Y ||s nor ||YDiag ||s ≤
+||X||s holds, then the relationship may not hold.
+........Letting σ↑ (X) and σ↓ (X) denote the singular values of X in ascending and descending order respectively, we can
+also examine the singular value rearrangement inequalities first studied in [5] as a potential method to extend the known
+cases of Hanner’s Inequality to matrices. While it was proven in [7] that these inequalities could not be extended to all
+matrices, and hence could not be used to extend Hanner’s Inequality to matrices, they are still of interest to investigate.
+We show that under the same conditions that the inequalities are known to hold for 1 ≤ p ≤ 3, we can also establish
+inequalities for s < 1:
+2
+
+O CTOBER 27, 2021
+
+Theorem 1.3. Let C, D ∈ Mn×n (C) with C ≥ |D| ≥ 0 and σn (C) ≥ σ1 (D). Then
+||C + D||ss + ||C − D||ss ≥ ||σ↑ (C) + σ↓ (D)||ss + ||σ↑ (C) − σ↓ (D)||ss
+
+(1.10)
+
+for 0 < s < 1, with the inequality reversing for s < 0.
+Theorem 1.4. Let C, D ∈ Mn×n (C) with C ≥ D ≥ 0. Then
+||C + D||ss + ||C − D||ss ≤ ||σ↑ (C) + σ↑ (D)||ss + ||σ↑ (C) − σ↑ (D)||ss
+
+(1.11)
+
+for 0 < s < 1, with the inequality reversing for s < 0.
+For each of the theorems, the conditions on C and D are necessary.
+........Finally, while the rest of this paper deals with inequalities for values s < 1, the techniques developed can be used
+to prove new properties for expressions in the p ≥ 1 range. In particular, we are able to use the same techniques to
+characterize for the first time the necessary conditions for equality in Hanner’s inequality for positive semidefinite
+matrices:
+Theorem 1.5. For two matrices C, D ∈ Mn×n (C) that are self-adjoint with C + D, C − D ≥ 0, then
+||C + D||pp + ||C − D||pp = (||C||p + ||D||p )p + (||C||p − ||D||p )p )
+
+(1.12)
+
+for p > 1, p 6= 2 if and only if |D| = kC. For any two matrices C, D ∈ Mn×n (C) and 1 < p ≤ 34 or p > 4,
+||C + D||pp + ||C − D||pp = (||C||p + ||D||p )p + (||C||p − ||D||p )p )
+
+(1.13)
+
+if and only if |D| = k|C|.
+........We give a background to majorization and prove foundational lemmas for the rest of the paper in Section 2,
+comment on reverse Hölder and Minkowski inequalities in Section 3, examine reverse Hanner in Section 4, singular
+value rearrangement inequalities in Section 5, and address the equality case for Hanner’s inequality in Section 6. We
+use the following notation: σ(X) denotes the singular values of a matrix X in descending order unless otherwise
+indicated; for a vector x, [x] := [Diag(x)] is the matrix with the vector along the diagonal; and for a matrix X,
+XDiag := [Diag(Xii )] is the matrix with only non-zero entries of the diagonal elements of X.
+
+2
+
+Majorization Background And Equality Characterizations
+
+........Let a, b ∈ Rn with components labeled in descending order a1 ≥ · · · ≥ an and b1 ≥ · · · ≥ bn . Then b weakly
+majorizes a, written a ≺w b, when
+k
+k
+X
+X
+ai ≤
+bi ,
+1≤k≤n
+(2.1)
+i=1
+
+i=1
+
+and majorizes a ≺ b when the final inequality is an equality. Weak log majorization a ≺w(log) b is similarly defined
+for non-negative vectors as
+k
+k
+Y
+Y
+ai ≤
+bi ,
+1≤k≤n
+(2.2)
+i=1
+
+i=1
+
+with log majorization a ≺(log) b when the final inequality is an equality. Note that it is not necessary that the vectors a
+and b be in descending order for majorization or log majorization—majorization is explicitly defined with respect the
+the rearrangements of the values in descending order. We assume that vectors are labelled in descending order wholly
+for ease of notation.
+........Majorization can be characterized by doubly stochastic matrices as follows: there is majorization a ≺ b if and only
+if there exists a double stochastic matrix D such that a = Db. There is weak majorization a ≺w b for non-negative
+vectors a and b if and only if there exists a doubly substochastic matrix K such that a = Kb [10] [16].
+........To see the relationship to convexity, we return the most vital property of majorization. Suppose a ≺w b. Then for
+any function φ : R → R that is increasing and convex on the domain containing all elements of a and b,
+n
+X
+
+φ(ai ) ≤
+
+i=1
+
+n
+X
+
+φ(bi ).
+
+i=1
+
+If a ≺ b, the ‘increasing’ requirement can be dropped [10] [11] [22] [23].
+........One can immediately see that a power identity follows:
+3
+
+(2.3)
+
+O CTOBER 27, 2021
+
+s
+s
+Lemma 2.1. Let a, b ∈ R+
+n . Suppose a ≺w b. Then a ≺w b for all s ≥ 1.
+
+The majorization identity proven by the author in [7] will also be of use to us:
+Lemma 2.2. Let x ≺w y, and a ≺w b be non-negative vectors labeled in descending order. Then xa ≺w yb.
+........We will need the following theorem as well to characterize equality cases of majorization with strictly convex
+functions; an analogous theorem for log majorization was proven in [12].
+Pn
+Pn
+Theorem 2.3. Let φ : R → R be a strictly convex function. Then a ≺ b and i=1 φ(ai ) = i=1 φ(bi ) implies
+a = Θb for some permutation matrix Θ.
+Proof. Let a ≺ b. Then a = Db for some doubly stochastic matrix D. By Birkhoff’s theorem [2], D can be written as
+Pk
+Pk
+the weighted sum of permutation matrices D = i=1 pi Θi , with 0 ≤ pi ≤ 1 and i=1 pi = 1. For a strictly convex
+φ, then
+
+
+n
+k
+n
+X
+X
+X
+φ
+pj bji  <
+φ(bi ),
+(2.4)
+i=1
+
+j=1
+
+i=1
+
+if D is not a pure permutation matrix.
+........Finally, there are many known majorization relationships that matrices hold that we will make use of throughout
+the proofs of our theorems. We will need the well-known majorization relationship between a Hermitian matrix’s
+diagonal elements and its eigenvalues:
+Theorem 2.4. Schur [19]; Mirsky [18] Let X ∈ Mn×n (C) be a self-adjoint matrix with diagonal elements x :=
+(x11 , . . . , xnn ). Then
+x ≺ λ(X)
+(2.5)
+and the relationship between the singular values of products of matrices:
+Theorem 2.5. (Horn [15]; Gel’fand and Naimark [8]) Let A, B ∈ Mn×n (C). Then
+σ↑ (A)σ↓ (B) ≺(log) σ(AB) ≺(log) σ(A)σ(B).
+
+(2.6)
+
+With these tools, we are ready to prove the main theorems of the paper.
+
+3
+
+Comments On Reverse Hölder And Minkowski Inequalities For Matrices
+
+........We first show that a dual representation for quasinorms holds:
+s
+Lemma 3.1. Let A ∈ Mn×n (C) be invertible, s < 1, and r = s−1
+. Then
+||A||s =
+
+inf
+
+B : ||B||r =1
+
+||AB ∗ ||1 =
+
+inf
+
+B : ||B||r =1
+
+Tr[|AB|]
+
+(3.1)
+
+and there exists a matrix B such that the infimum is reached.
+Proof. Without loss of generality, we can address the case where A, B > 0: as || · ||1 is unitarily invariant, then by
+polar decomposition,
+||AB ∗ ||1 = ||U |A||B|V ∗ ||1 = |||A||B|||1
+(3.2)
+For all B > 0, ||B||r = 1, by the Araki-Lieb-Thirring inequality and Reverse Hölder for matrices, we have
+1
+
+Tr[|AB|] = Tr[(BA2 B) 2 ] ≥ Tr[B 1/2 AB 1/2 ] = Tr[AB] ≥ ||A||s ||B||r = ||A||s
+
+(3.3)
+
+What remains is finding a suitible matrix such that the infimum is reached. We claim that
+B=
+
+As−1
+||A||ss−1
+
+(3.4)
+
+does this.
+........We note that B > 0, and
+
+Pn
+(s−1)/s
+s−1 s/(s−1) (s−1)/s
+)
+( i=1 λi (A)s )
+i=1 (λi (A)
+= Pn
+= 1.
+Pn
+(s−1)/s
+(s−1)/s
+( i=1 λi (A)s )
+( i=1 λi (A)s )
+
+Pn
+||B||r =
+
+4
+
+(3.5)
+
+O CTOBER 27, 2021
+
+Then as
+Tr[AB] = ||A||1−s
+Tr[AAs−1 ] =
+s
+
+Pn
+
+s
+i=1 λ(A)
+=
+Pn
+(s−1)/s
+( i=1 λi (A)s )
+
+n
+X
+
+!1/s
+λi (A)
+
+s
+
+= ||A||s
+
+(3.6)
+
+i=1
+
+we see the infimum is reached as desired.
+This allows us to prove quickly reverse Minkowski without the need for majorization:
+Proof. Proof of Equation (1.1)
+........Using the representation of Lemma 3.1 and Theorem 1.2,
+||A + B||s = Tr[(A + B)Y ] = Tr[AY ] + Tr[BY ] ≥ ||A||s ||Y ||r + ||B||s ||Y ||r = ||A||s + ||B||s
+
+(3.7)
+
+........We now comment on variational formulations for both Hölder and reverse Hölder inequalities. The remainder of
+this section originated in a correspondence with J.C. Bourin; the author thanks him for his remarks, and for permission
+to include the following propositions and proofs.
+........For α > 0, t 7→ k|At ZB t |α k is a log-convex function on (−∞, ∞). This is equivalent (see [4][Corollary 3.2]) to
+the general Hölder inequality with any unitarily invariant norm ||| · ||| for the functional X 7→ ||||X|α ||| and congugate
+p
+exponents p > 1, q = p−1
+,
+||||XY |α ||| ≤ ||||X|αp |||1/p ||||Y |αq |||1/q .
+0
+
+Of course, as for functions, we have an equality for any A ≥ 0 and X = A
+||||X 0 Y 0 |α ||| = ||||X 0 |αp |||1/p ||||Y 0 |αq |||1/q =
+
+1/p
+
+(3.8)
+0
+
+,Y =A
+
+1/q
+
+:
+
+1
+1
+||||X 0 |αp ||| + ||||Y 0 |αq |||.
+p
+q
+
+Thus we can state the following variational version of (3.8):
+p
+Proposition 3.2. Let A ∈ Mn×n (C), α > 0, p > 1, q = p−1
+. Then, for all unitarily invariant norms,
+
+
+n
+o
+1
+1
+||||A|α ||| = min ||||B|αp |||1/p ||||C|αq |||1/q = min
+||||B|αp ||| + ||||C|αq ||| .
+A=BC
+A=BC
+p
+q
+
+(3.9)
+
+(3.10)
+
+Another slight variation is the following (clearly with Z = I, we have(3.8)):
+p
+Proposition 3.3. Let X, Y ∈ Mn×n (C), α > 0, p > 1, q = p−1
+. Then, for all unitarily invariant norms,
+
+
+n
+o
+1
+1
+α
+αp 1/p
+−1
+αq 1/q
+αp
+−1
+αq
+||||XY | ||| =
+inf
+||||XZ| ||| ||||Z Y | |||
+=
+inf
+||||XZ| ||| + ||||Z Y | ||| .
+Z invertible
+Z invertible p
+q
+(3.11)
+If X, Y are both invertible, then any decompostion XY = BC is achieved with some invertible Z, B = XZ,
+C = Z −1 Y , hence Proposition 1.1 entails Proposition 1.2 and the infimum is a minimum.
+........Proposition 3.2 still holds for infinite dimensional operators but Proposition 3.3 does not hold for infinite dimensional operators: For instance if X is a rank one projection and Y is the identity, then
+
+
+1
+1
+Tr |XY | = 1 and
+inf
+||||XZ|αp ||| + ||||Z −1 Y |αq ||| = ∞.
+(3.12)
+Z invertible p
+q
+−p
+........Next, one supposes that 0 < p < 1, and let r = p−1
+. Then from (3.8) one may derive the reverse Holder
+inequality:
+||||XY |α ||| ≥ ||||X|αp |||1/p ||||Y |−αr |||−1/r .
+(3.13)
+
+where for a noninvertible Y we define (by continuity) k|Y |−r k−1/r = 0. We have an obvious equality case, for any
+A > 0 and X 0 = A1/p , Y 0 = A−1/r , and thus we can state:
+−p
+Proposition 3.4. Let A ∈ Mn×n (C) be invertible, α > 0, 0 < p < 1, r = p−1
+. Then, for all unitarily invariant norms,
+
+
+n
+o
+1
+1
+||||A|α ||| = max ||||B|αp |||1/p ||||C|−αr |||−1/r = max
+||||B|αp ||| − ||||C|−αr ||| .
+(3.14)
+A=BC
+A=BC
+p
+r
+5
+
+O CTOBER 27, 2021
+
+........Further direct proofs of Reverse Hölder can be found in [20] and with similar methods, in an unpublished
+manuscript of Bourin-Hiai (the ArXiv version of [3] ), which we will not repeat here; the key observation is the
+majorization of Theorem 2.5. One can further take a refinement of Araki and the Gel’fand-Naimark log-majorizations
+for r ∈ (0, 1) and A, B > 0 of
+||||A1/r B 1/r |r ||| ≥ |||AB||| ≥ |||Ar B r |1/r ||| ≥ |||[σ↓ (A)][σ↑ (B)]|||.
+
+(3.15)
+
+We use this relation to derive the next corollary. We denote by Aβ0 B the geometric mean of two positive matrices,
+Aβ0 B := exp({log A + log B}/2).
+
+(3.16)
+
++
+
+Corollary 3.4.1. For every invertible A, B ∈ Mn×n (C) and every k = 1, . . . , n,
+( k
+)1/2k ( k
+)1/2k
+k
+Y
+Y
+1X
+λj (A β0 B) ≥
+.
+λj (A)
+λn+1−j (B)
+k j=1
+j=1
+j=1
+
+(3.17)
+
+Proof. As remarked above we have
+||||Ar B r |1/r ||| ≥ |||Ap |||1/p |||B q |||1/q
+1
+1
+p + q
+
+for all unitarily invariant norms, 0 < p < 1,
+limr&0 |Ar B r |1/r = exp(log A + log B), and thus
+
+(3.18)
+
+= 1, and r ∈ (0, 1). The Lie-Trotter formula says that
+
+||| exp(log A + log B)||| ≥ |||Ap |||1/p |||B q |||1/q .
+Letting ||| · ||| = k −1 k · k(k) (the Ky Fan norm) and p & 0 (q & −∞) we obtain
+( k
+)1/k ( k
+)1/k
+k
+Y
+Y
+1X
+λj (exp(log A + log B)) ≥
+λj (A)
+λn+1−j (B)
+k j=1
+j=1
+j=1
+
+(3.19)
+
+(3.20)
+
+for k = 1, . . . , n. The result follows by replacing A, B by A1/2 , B 1/2 .
+
+4
+
+The Reverse Hanner Inequalities For Functions And Matrices
+
+........There are many ways to show that a reverse Hanner inequality holds for functions and matrices. It should be noted
+that the original proof of Hanner’s inequality using a convexity argument does apply in the s < 1 case. We will use a
+new method involving the Talyor expansions of both sides of the inequality, because this is the methodology needed for
+the matrix case.
+Proof. Proof of Theorem 1.1.
+........We will assume without loss of generality by labling choice that ||x||s > ||y||s ; then the ||x||s = ||y||s case can
+be deduced through continuity. We can expand the Taylor series
+(||x||s + r||y||s )s + (||x||s − r||y||s )s = 2
+
+∞
+X
+(s)2k
+k=0
+
+(2k)!
+
+s−2k 2k
+||y||2k
+r .
+s ||x||s
+
+(4.1)
+
+where (s)k = s(s − 1) . . . (s + 1 − k) denotes the rising Pochhammer symbol.
+........This Taylor series will always converge at r = 1, the first coefficient is always positive, and afterwards when
+0 < s < 1 all coefficients are negative, and when s < 0 all coefficients are positive. We will let S2k (r) indicate the kth
+partial sum–ie when we have k + 1 terms terminating at r2k .
+........We define
+F (r) = ||x + ry||ss + ||x − ry||ss =
+
+n
+X
+
+|xi + ryi |s + |xi − ryi |s .
+
+(4.2)
+
+i=1
+
+We see that
+n
+X
+
+dk
+F (r) = (s)k
+yik sgn(xi + ryi )k |xi + ryi |s−k + (−1)k sgn(xi − ryi )k |xi − ryi |s−k
+drk
+i=1
+
+6
+
+(4.3)
+
+O CTOBER 27, 2021
+
+k
+
+k
+
+d
+d
+We claim that when 0 < s < 1, dr
+k F (r) ≤ 0 for 0 < r < 1, and when s < 0, dr k F (r) ≥ 0. To see this, we see that in
+k
+
+d
+both cases, when k is odd, dr
+k F (r)|r=0 = 0. When k is even, we have the simplified representation
+n
+X
+
+dk
+F
+(r)
+=
+(s)
+yik |xi + ryi |s−k + |xi − ryi |s−k .
+k
+k
+dr
+i=1
+
+(4.4)
+
+Clearly, this will always match the sign of (s)k : so it is negative when 0 < s < 1, and positive when 0 < s. Therefore,
+dk
+F (r) must also have the desired sign when k is odd.
+dr k
+........We will first consider the 0 < s < 1 case. We claim that
+F (r)
+r=1
+
+≤ S2k (r)
+
+(4.5)
+
+r=1
+
+for all k. We will prove this by looking at the 2kth derivative.
+........Clearly,
+d2k
+s−2k
+S2k (r) = s(2n) ||y||2k
+.
+s ||x||s
+dr2k
+
+(4.6)
+
+n
+X
+d2k
+s−2k
+=
+2(s)
+yi2k |xi |s−2k ≤ 2(s)n ||y||2k
+F
+(r)
+2k
+s ||x||s
+r=0
+dr2k
+i=1
+
+(4.7)
+
+We see that
+
+2k+1
+
+d
+by application of Holder’s reverse inequality, and noting that (s)2k is negative. As dr
+2k+1 F (r) ≤ 0, this inequality
+must continue to hold for the full desired range of r. Taking the limit of the partial sums proves the theorem.
+
+........When s < 0, the same proof can be repeated, with the inequalities throughout reversing because (s)2k is
+positive.
+........Extending this matrices requires only the majorization of Theorem 2.4:
+Proof. Proof of Theorem 1.2 We will give the proof for 0 < s < 1; the proof for s < 0 proceeds similarly. Once
+more we assume ||C||s > ||D||s . The primary methodology in this section will be a full term-by-term comparison
+of Taylor representations of Tr[(C + rD)s + (C − rD)s ] and (||C||s + r||D||s )s + (||C||s + r||D||s )s . Clearly, as
+||C||s > ||D||s , the latter’s Taylor series is convergent at r = 1.
+........For a positive matrix X and 0 < s < 1, for positive normalization constant cs we have
+
+Z ∞
+1
+1
+s
+X = cs
+−
+ts dt
+t
+t+X
+0
+
+(4.8)
+
+Making the standard substitution H = C + t, K = H −1/2 DH −1/2 then using the fact that (I ± K)−1 can be written
+as a power series, we see that
+
+Z ∞ 
+1
+1
+1
+s
+s
+−
+−
+||C + rD||s + ||C − rD||s = cs
+Tr
+ts dt
+(4.9)
+t
+t + C + rD t + C − rD
+0
+!
+!
+Z ∞
+∞
+X
+1
+−1/2
+= cs
+Tr
+−H
+K 2k r2k H −1/2 tp dt
+(4.10)
+t
+0
+k=0
+
+Then as C + D, C − D ≥ 0, it is clear that
+H −1/2
+
+∞
+X
+
+!
+K 2k
+
+H −1/2 =
+
+k=0
+
+1
+1
++
+t+C +D t+C −D
+
+(4.11)
+
+is indeed a valid representation, and so the lefthand side can be expressed as a Taylor series that is also convergent at
+r = 1. We can proceed to examine the two Taylor series term by term.
+........We first write out the Taylor series representation
+(||C||s + r||D||s )s + (||C||s − r||D||s )s = 2
+
+∞
+X
+(s)2k
+k=0
+
+7
+
+2k!
+
+s−2k 2k
+||D||2k
+r .
+s ||C||s
+
+(4.12)
+
+O CTOBER 27, 2021
+
+Note that like in the vector case, the first coefficient is always positive, and afterwards the coefficients are always
+negative.
+........For ||C + rD||ss + ||C − rD||ss , we use the trace to explicitly write out derivatives
+d
+=0
+= s Tr[(C + rD)s−1 D − (C − rD)s−1 D]
+Tr[(C + rD)s + (C − rD)s ]
+dr
+r=0
+r=0
+"
+
+k #
+Z ∞
+dk
+1
+s−1
+k+1
+s
+s
+t
+Tr (1 + (−1)
+)
+= −scs k!
+Tr[(C + rD) + (C − rD) ]
+D
+dt
+drk
+C +t
+r=0
+0
+We note
+"
+Tr
+
+1
+D
+(1 + (−1)k+1 )
+C +t
+
+k #
+=
+
+
+0
+2 Tr
+
+(4.13)
+(4.14)
+
+k is odd
+
+
+1
+C+t D
+
+k 
+
+(4.15)
+
+k is even
+
+so we only need to concern ourselves with even k.
+........We choose the basis such that D is diagonal. We now claim that
+"
+"
+2k #
+2k #
+1
+1
+Tr
+D
+≥ Tr
+D
+C +t
+CDiag + t
+
+(4.16)
+
+Without loss of generality, we can assume that D is invertible. We re-arrange
+"
+2k #
+
+k 
+1
+−1/2
+−1
+−1/2
+Tr
+D
+= Tr (C + t)
+D(C + t) D(C + t)
+C +t
+
+(4.17)
+
+........This is in the form of the special function
+Ψ(A, B, K)q,r,s := Tr
+
+s i
+h q
+q
+B 2 KAp K ∗ B 2
+
+(4.18)
+
+whose convexity and concavity properties have been studied in great detail (see [6], [24] for a full treatment). In
+particular, it was proven in [13] for A, B, ≥ 0 and any invertible K that Ψ is jointly convex in A and B when
+−1 ≤ q ≤ p ≤ 0 and s > 0. We choose A = B = (C + t), q = p = −1, and K = D. Then the right hand side of
+Equation 4.17 is convex in C + t, and hence replacing (C + t) with (C + t)Diag = CDiag + t will only decrease the trace.
+........By direct integration
+"
+Z ∞
+scs (2k)!
+ts−1 Tr
+0
+
+1
+CDiag + t
+
+2k #
+D
+
+dt = (s)2k
+
+n
+X
+
+|cii |s−2k λi (D)2k
+
+(4.19)
+
+i=1
+
+≥ (s)2k
+
+n
+X
+s
+s−2k s−2k
+(cii
+)
+
+! s−2k
+s
+
+i=1
+
+2n
+X
+s
+(λi (D)2k ) 2k
+
+! 2k
+s
+(4.20)
+
+i=1
+
+= (s)2k ||CDiag ||s−2k
+||D||2k
+s
+s
+
+(4.21)
+
+≥ (s)2k ||C||ss−2k ||D||2k
+s
+
+(4.22)
+
+When doubled and divided by the appropriate factorial, Line 4.22 is precisely the 2kth coefficient in the power series
+expansion in Equation (4.12). Recalling the negative sign, we compare term-by-term the Taylor series at r = 1, and we
+see that the inequality
+||C + D||pp + ||C − D||pp ≤ (||C||p + ||D||p )p + (||C||p − ||D||p )p
+
+(4.23)
+
+must hold.
+........When D ≥ 0, the proof simplifies to one entirely reliant on majorization. We note that for a positive matrix X, by
+majorization gives ||XDiag ||ss ≥ ||X||ss for 0 < s < 1, and hence ||XDiag ||s ≥ ||X||s . Furthermore, for 0 < s < 1, the
+function
+(x + y)s + |x − y|s
+(4.24)
+is strictly decreasing in x for fixed y when x ≤ y, and strictly increasing in x when x > y.
+8
+
+O CTOBER 27, 2021
+
+........We consider C + D, C − D in the basis where C is diagonal. Then we note as C + DDiag , C − DDiag ≥ 0, we
+have ||C||s ≥ ||DDiag ||s ≥ ||D||s . Then treating ||DDiag ||s and the x of Equation (4.24), and applying first majorization
+then Theorem 1.1
+||C + D||ss + ||C − D||ss ≤ ||C + DDiag ||ss + ||C − DDiag ||ss
+(4.25)
+s
+s
+≤ (||C||s + ||DDiag ||s ) + (||C||s − ||DDiag ||s )
+(4.26)
+≤ (||C||s + ||D||s )s + (||C||s − ||D||s )s
+(4.27)
+The fact that Equation (4.24) is strictly decreasing means that a requirement for equality is D = DDiag , or that C and D
+commute.
+........When s < 0, we now have ||XDiag ||ss ≤ ||X||ss , and the structure of Equation (4.24) reverses: it is now strictly
+increasing in x for fixed y when x ≤ y, and strictly decreasing in x when x > y. Then the arguments of Lines
+(4.25)-(4.27) are reversed, once more with equality requiring D = DDiag .
+........We note in this simplified proof that we only leveraged the positivity condition C + D, C − D ≥ 0 and D ≥ 0
+to guarantee the correct relationship between ||C ± D||ss ≤ ||C + ±DDiag ||s and ||C||s ≥ ||DDiag ||s ≥ ||D||s for
+0 < s < 1, reversing when s < 0. For any X, Y whose norms fulfill those inequalities, the above proof still holds.
+However, we can use the following incredibly useful property of 2×2 self-adjoint matrices to construct counterexamples:
+Lemma 4.1. Let A ∈ M2×2 (C) be a self-adjoint matrix with eigenvalues (λ1 (A), λ2 (A)). Let b ∈ R2 . Then we can
+uniquely establish the matrix B with eigenvalues b of
+
+
+x1 x2
+B=
+(4.28)
+x2 x3
+up to |x2 | with just the selection of one desired eigenvalue of the matrix A + B, provided that λ1 (A) 6= λ2 (A),
+λ1 (B) 6= λ2 (B), and the chosen eigenvalue λi (A + B) satisfies λ2 (A) + λ2 (B) ≤ λi (A + B) ≤ λ1 (A) + λ1 (B),
+and either λi (A + B) ≥ λ1 (A) + λ2 (B), λ2 (A) + λ1 (B) or λi (A + B) ≤ λ1 (A) + λ2 (B), λ2 (A) + λ1 (B)
+Proof. We first comment on where our conditions come from: if A or B is a multiple of the identity, A and B must
+commute, which determines λi (A + B) = λi (A) + λi (B), so we are not free to choose λi (A + B). If λi (A + B) does
+not satisfy λ2 (A) + λ2 (B) ≤ λi (A + B) ≤ λ1 (A) + λ1 (B), then λ(A + B) ≺ λ(A) + λ(B) is violated, which we
+also know cannot be true, so no matrices A and B exist with those eigenvalue relationships. Finally, we know from the
+re-arrangement of the same majoriazation identity that λ(A + B)  λ↑ (A) + λ↓ (B). The third condition enforces this,
+with the two possibilities reflecting the choices i = 1, 2 and λ1 (A) + λ2 (B) ≥ λ2 (A) + λ1 (B) or vice-versa.
+........Without loss of generality, we assume we are in a basis such that A = [λ(A)]. There are three free coordinates for
+B in this basis, and the fourth is determined by self-adjointness. To find them, we must solve the system of equations
+
+
+x1 − λ1 (B)
+x2
+det
+= 0,
+(4.29)
+x2
+x3 − λ1 (B)
+
+
+x1 − λ2 (B)
+x2
+=0
+(4.30)
+det
+x2
+x3 − λ2 (B)
+
+
+x1 + λ1 (A) − λi (A + B)
+x2
+det
+=0
+(4.31)
+x2
+x3 + λ2 (A) − λi (A + B)
+This can be directly solved, with the single solution that satisfies majorization conditions and hence represents an
+admissible matrix B of
+λ1 (A)(λ2 (A) + λ1 (B) + λ2 (B)) + λ1 (B)λ2 (B)
+x1 =
+λ1 (A) − λ2 (A)
+(4.32)
+λi (A + B)(λi (A + B) − λ1 (A) − λ2 (A) − λ1 (B) − λ2 (B))
++
+λ1 (A) − λ2 (A)
+x2 = RootOf(zz(λ1 (A) − λ2 (A))2 +
+(λ( A) + λ1 (B) − λi (A + B))(λ2 (A) + λ2 (B) − λi (A + B))∗
+(λ1 (A) + λ2 (B) − λi (A + B))(λ2 (A) + λ1 (B) − λi (A + B))
+λ2 (A)(λ1 (A) + λ1 (B) + λ2 (B)) + λ1 (B)λ2 (B)
+x3 = −
+λ1 (A) − λ2 (A)
+λi (A + B)(λi (A + B) − λ1 (A) − λ2 (A) − λ1 (B) − λ2 (B))
++
+λ1 (A) − λ2 (A)
+9
+
+(4.33)
+
+(4.34)
+
+O CTOBER 27, 2021
+
+Figure 1: Comparison of Line (4.37) as a function of 0 < t < π for self-adjoint matrices A, B with λ(A) = (−3, −5.5),
+λ(B) = (3.4, −5.6).
+Note that x2 exists only when the quantity
+(λ( A) + λ1 (B) − λi (A + B))(λ2 (A) + λ2 (B) − λi (A + B))∗
+(λ1 (A) + λ2 (B) − λi (A + B))(λ2 (A) + λ1 (B) − λi (A + B))
+
+(4.35)
+
+is negative. The requirement λ2 (A) + λ2 (B) ≤ λi (A + B) ≤ λ1 (A) + λ1 (B) ensures that the first term in the product
+is positive, and the second term is negative. The requirement either λi (A + B) ≥ λ1 (A) + λ2 (B), λ2 (A) + λ1 (B)
+or the opposite enforces that the third and fourth terms are the same sign, so x2 is defined. Finally, we see that this
+expression implies our choice of x2 is unique up to |x2 |.
+........With Lemma 4.1, we can easily calculate the full range of possible eigenvalues λ(A + B) and λ(A − B) for 2 × 2
+self-adjoint matrices with pre-determined eigenvalues. It turns out that these eigenvalues will depend on x1 , x3 , and
+|x2 |, which now are unique. Therefore, the full picture for Hanner-like inequalities for 2 × 2 self-adjoint matrices can
+be determined by calculating the eigenvalues of
+
+ 
+
+
+
+λ1 (A)
+0
+cos(t) − sin(t)
+λ1 (B)
+0
+cos(t) sin(t)
+±
+(4.36)
+0
+λ2 (A)
+sin(t) cos(t)
+0
+λ2 (B)
+− sin(t) cos(t)
+with 0 ≤ t ≤ π. Setting up Mathematica code that allows for the manual manipulation of λ(A) and λ(B) then plotting
+||A + Bt ||ss + ||A − Bt ||ss − (||λ(A)||s + ||λ(B)||s )s − ||λ(A)||s − ||λ(B)||s
+
+s
+
+(4.37)
+
+reveals that, for example, the choice of λ(A) = (−3, −5.5), λ(B) = (3.4, −5.6) has the property that the sign of Line
+(4.37) depends on t. Figure (4) shows this plot dependent on t for various values of s.
+
+5
+
+Singular Value Rearrangement Inequalities
+
+Proof. Proof of Theorem 1.3
+10
+
+O CTOBER 27, 2021
+
+........Without loss of generality we assume that C + D, C − D > 0; then a limiting argument extends to the positive
+semidefinite case. For a positive matrix X with positive normalization constant ks we can use spectral calculus to write
+
+ R∞ 
+1
+s 1
+
+c
+t
+dt 0 < s < 1
+−
+s
+
+
+ R0∞  t t+X
+1
+s
+−1 < s < 0
+X s = cs 0 t t+X dt
+(5.1)
+
+|s|
+
+
+R
+
+∞
+1
+c
+¯
+s−s
+dt s < −1
+s 0 t¯
+t+X
+where s and s will be used to indicate the floor and ceiling of s respectively.
+¯
+........For −1 < s < 0 and 0 < s < 1, we can make the standard substitution H = C + t, K = H −1/2 DH −1/2 then
+using the fact that (I ± K)−1 can be written as a power series, to write
+!
+!
+∞
+∞
+X
+X
+1
+1
+−1/2
+k k
+−1/2
+−1/2
+k
++
+=H
+(−1) K
+H
++H
+K
+H −1/2
+(5.2)
+t+C +D t+C −D
+k=0
+k=0
+!
+∞
+X
+−1/2
+2k
+=H
+K
+H −1/2
+(5.3)
+k=0
+
+........To each term, we can apply the majorization identities Theorem 2.5 and Lemmas 2.1 and 2.2,
+n
+X
+Tr[H −1/2 K 2k H −1/2 ] ≤
+(σi (H −1 )σi (K))2k
+≤
+=
+
+i=1
+n
+X
+i=1
+n
+X
+
+(5.4)
+
+σi (H −1 )2k+1 σi (D)2k
+
+(5.5)
+
+σn+1−i (C + t)2k+1 σi (D)2k .
+
+(5.6)
+
+i=1
+
+........Combining each term back into the analogous expansion for (t + σ↑ (C) + σ↓ (D))−1 + (t + σ↑ (C) − σ↓ (D))−1 ,
+we conclude that 
+
+
+
+1
+1
+1
+1
+Tr
++
+≤ Tr
++
+,
+(5.7)
+t+C +D t+C −D
+t + σ↑ (C) + σ↓ (D) t + σ↑ (C) − σ↓ (D)
+and the theorem follows.
+........For the s < −1 case, we will return to the methodology of a term-by-term comparison of the derivatives of
+F (r) = Tr[(C + rD)s + (C − rD)s ] and the Taylor representations of ||σ↑ (C) + rσ↓ (D)||s + ||σ↑ (C) − rσ↓ (D)||s
+as introduced in the proof of Theorem 1.1. Clearly, as σn (C) ≥ σ1 (D), the latter’s Taylor series is convergent at r = 1.
+It also has the property of only having nonzero even coefficients, which are non-negative. We calculate
+"
+
+k+|s|
+
+k+|s| #
+Z ∞
+¯
+¯
+dk
+1
+1
+1
+1
+k
+s−s
+k
+F (r) = (−1) cs
+D
++ (−1)
+D
+dt
+t¯ Tr
+k
+dr
+t + C + rD
+t + C + rD
+t + C − rD
+t + C − rD
+0
+(5.8)
+k
+
+d
+........We once more deduce the property that dr
+k F (r) ≥ 0 for all k, and that
+"
+
+k+|s| #
+Z ∞
+k
+¯
+1
+1
+d
+s−s
+F (r) r=0 = 2cs
+t¯ Tr
+D
+dt
+k
+dr
+t+C
+t+C
+0
+Z ∞
+n 
+
+X
+≤ 2cs
+t¯s−s
+σi ((C + t)−1 )k+|¯s|+1 σi (D)k+|¯s| dt
+0
+
+Z ∞
+= 2cs
+0
+
+t¯s−s
+
+i=1
+n
+X
+
+σi (D)k+|¯s|
+(σn+1−i (C) + t)k+|¯s|+1
+i=1
+
+(5.9)
+(5.10)
+
+!
+dt
+
+(5.11)
+
+where we can now see that Line (5.11) is the integral representation of the 2kth Taylor coefficient of ||σ↑ (C) +
+rσ↓ (D)||s + ||σ↑ (C) − rσ↓ (D)||s . The same partial sums argument yields the desired inequality.
+........When the conditions on C and D are not met, the method used to find counterexamples when the conditions of
+Thereom (1.2) do not hold can also be used to produce counterexamples to the rearrangement inequality.
+11
+
+O CTOBER 27, 2021
+
+Proof. Proof of Theorem 1.4
+........It is proven in [5] that
+
+
+
+
+1
+1
+1
+1
+Tr
++
+≥ Tr
++
+t+C +D t+C −D
+t + σ(C) + σ(D) t + σ(C) − σ(D)
+
+(5.12)
+
+for all t. Therefore, a direct application of the integral representations for 0 < s < 1 and −1 < s < 0 yield the desired
+inequality. For s < −1, we apply the same Taylor expansion method as in Theorem 1.3, now noting that
+
+
+"
+!k0
+
+k0 #
+k0 /2k0
+1/2
+1/2
+k0 /2k0
+1
+1
+1
+1
+1
+1
+
+Tr
+= Tr 
+D
+D
+(5.13)
+t+C
+t+C
+t+C
+t+C
+t+C
+t+C
+
+!k0 
+(k0 +1)/2k0
+(k0 +1)/2k0
+1
+1
+
+≥ Tr 
+D
+(5.14)
+t+C
+t+C
+=
+
+n
+X
+
+σ
+
+i=1
+
+≥
+=
+
+n
+X
+i=1
+n
+X
+
+σi
+
+!2k0
+0
+0
+1 (k +1)/2k 1/2
+D
+t+C
+!2k0
+0
+0
+
+2k0
+1 (k +1)/2k
+σn+1−i D1/2
+t+C
+
+(5.15)
+
+(5.16)
+
+0
+
+σi (D)k
+.
+(σi (C) + t)k0 +1
+i=1
+
+(5.17)
+
+........To see that the conditions on C and D are necessary, take D unitary and C > I. Then σ↑ (D) = σ↓ (D), and
+as Theorem 1.4 holds. Examples can easily be found such that it holds strictly, so the inequality of Theorem 1.3 is
+violated.
+
+6
+
+The Hanner Equality Cases For Matrices
+
+Proof. Proof of Theorem 1.5 We once again use a full term-by-term comparison of the Taylor series of Tr[(C + rD)p +
+(C − rD)p ] and (||C||p + r||D||p )p + (||C||p + r||D||p )p . Now we use the integral representation for a positive matrix
+X and 1 < p < 2, with positive normalization constant cp ,
+
+Z ∞
+X
+1
+1 p
+X p = cp
++
+−
+t dt.
+(6.1)
+t2
+t+X
+t
+0
+........Once more, the Taylor series converges and the coefficients of Tr[(C +rD)p +(C −rD)p ] can be directly calculated
+to only have nonzero even terms, and for said terms to here be greater than or equal to (p)2k ||CDiag ||p−2k
+||D||2k
+p
+p which
+p−2k
+2k
+in turn is greater than or equal to (p)2k ||C||p
+||D||p .
+........To see that there is equality if and only if |D| = kC, the final noted inequality leverages that ||C||p ≥ ||CDiag ||p
+implies ||C||p−2k
+≤ ||CDiag ||p−2k
+. In fact, by as |x|p is strictly convex for 1 < p < 2 we have by Theorem 2.3
+p
+p
+||C||p > ||CDiag ||p when C 6= CDiag . This immediately implies that there can only be equality when C and D commute.
+........In the commuting case,
+||C + D||pp + ||C − D||pp = ||λi (C) + λki (D)||pp + ||λi (C) − λki (D)||pp
+= ||λi (C) + |λki (D)|||pp + ||λi (C) − |λki (D)|||pp
+
+(6.2)
+(6.3)
+
+It was proven by Hanner originally in [9] that there is equality in the application of Hanner’s inequality to sequences as
+above if and only if they are multiples of one another. Returning to the matrix expression, this gives the requirement on
+D that c|D| = C.
+........To establish the equality case for C + D, C − D ≥ 0 when p > 2, we must use the following dual representation:
+letting q be the dual index of p, we see that
+
+
+
+
+
+C D
+C D
+X Y
+p
+p 1/p
+(||C + D||p + ||C − D||p )
+=
+= Tr
+,
+(6.4)
+D C
+D C
+Y X
+p
+12
+
+O CTOBER 27, 2021
+
+where
+
+
+X
+Y
+
+Y
+X
+
+
+= 1,
+
+(6.5)
+
+q
+
+
+and in fact is also positive semidefinite and commutes with
+
+C
+D
+
+
+D
+. We therefore calculate
+C
+
+(||C + D||pp + ||C − D||pp )1/p = 2 Tr[CX + DY ]
+
+(6.6)
+
+≤ 2(||C||p ||X||q + ||D||p ||Y ||q )
+
+
+
+||C||p ||D||p
+||X||q ||Y ||q
+= Tr
+||D||p ||C||p
+||Y ||q ||X||q
+
+
+
+
+||X||q ||Y ||q
+||C||p ||D||p
+≤
+||Y ||q ||X||q q
+||D||p ||C||p p
+
+
+||C||p ||D||p
+≤
+||D||p ||C||p p
+
+(6.7)
+(6.8)
+(6.9)
+(6.10)
+
+where the inequality from Line (6.9) to Line (6.10) leverages that 1 ≤ q ≤ 2, and hence
+1 = ||X + Y ||qq + ||X − Y ||qq ≥ (||X||q + ||Y ||q )q + (||X||q − ||Y ||q )q .
+
+(6.11)
+
+........For there to be equality in Hanner’s Inequality, there must be equality in each of Lines (6.6-6.10). In particular,
+this means as we have just proven that Y = c|X|. We can change to a block diagonal basis to represent the original
+commutation was
+ 
+
+
+C +D
+0
+X +Y
+0
+,
+= 0.
+(6.12)
+0
+C −D
+0
+X −Y
+or
+[X + Y, C + D] = 0,
+[X − Y, C − D] = 0.
+(6.13)
+When X and Y commute, then [X + Y, X − Y ] = 0, and therefore [C + D, C − D] = 0. We write this out explicitly
+to see
+(C + D)(C − D) = (C − D)(C + D)
+2
+
+2
+
+(6.14)
+2
+
+⇒ C + DC − CD − D = C − DC + CD − D
+⇒ [C, D] = −[D, C] = 0.
+
+2
+
+(6.15)
+(6.16)
+
+Then repeating the argument of the commuting case with Hanner’s inequality for sequences before, there is once more
+equality if and only if c|D| = C.
+........For arbitrary C, D, we may first without loss of generality assume that C, D are self-adjoint; otherwise we would
+apply the standard doubling technique noting the equality holds if and only if it holds for
+
+
+
+
+0 C
+0 D
+b
+b
+C=
+,
+D=
+.
+(6.17)
+C∗ 0
+C∗ 0
+Hanner’s inequality is deduced in the p ≥ 4 range using the fact that
+
+ 2
+ 2
+
+C D
+C + D2 CD + DC
+=
+,
+D C
+CD + DC C 2 + D2
+p
+p/2
+
+(6.18)
+
+and taking the dual representation with a positive semidefinite and commuting block matrix. As a Hermitian matrix and
+its square are mutually diagonalizable, we note that
+"
+2 
+#
+
+ 
+
+C D
+X Y
+C D
+X Y
+,
+=0
+iff
+,
+= 0,
+(6.19)
+D C
+Y X
+D C
+Y X
+and therefore we can draw the same conclusion [C, D] = 0 from [X, Y ] = 0. Again by Hanner’s inequality on `p , then
+c|D| = |C|. For the 1 ≤ p ≤ 34 , there can equality in Hanner’s inequality for operators u, v once more only if there is
+equality for the dual operators φ associated with (u + v) and ψ associated with (u − v). These dual operators once
+more can be represented in this case by a commuting block matrix, and the commutation argument is repeated.
+........We note that although we do not formulate the equality case for s < 1, that the same Taylor expansion argument
+holds using integral representations for s < 1, so this theorem can also be applied to X + Y, X − Y ≥ 0, s < 1, s 6= 0.
+13
+
+O CTOBER 27, 2021
+
+Acknowledgements
+This research was funded by the NDSEG Fellowship, Class of 2017. Thank you to my advisor, Professor Eric Carlen,
+for bringing my attention to the problem and providing me with a background to the subject. Thank you to Professor
+Jean-Christophe Bourin for discussion on the variational representations.
+
+References
+[1] Ball, K., Carlen, E.A., Lieb, E.H.: Sharp uniform convexity and smoothness inequalities for trace norms.
+Inventiones mathematicae 115(1), 463–482 (1994). DOI 10.1007/BF01231769. URL https://doi.org/10.
+1007/BF01231769
+[2] Birkhoff, G.: Tres observaciones sobre el algebra lineal. Univ. Nac. Tucuman, Ser. A 5, 147–154 (1946)
+[3] Bourin, J.C., Hiai, F.: Jensen and minkowski inequalities for operator means and anti-norms. Linear Algebra
+and its Applications 456, 22–53 (2014). DOI https://doi.org/10.1016/j.laa.2014.05.030. URL https://www.
+sciencedirect.com/science/article/pii/S0024379514003218. Special Issue on Matrix Functions
+[4] Bourin, J.C., Lee, E.Y.: Matrix inequalities from a two variables functional. International Journal of Mathematics 27(09), 1650071 (2016). DOI 10.1142/S0129167X16500713. URL https://doi.org/10.1142/
+S0129167X16500713
+[5] Carlen, E., Lieb, E.H.: Some matrix rearrangement inequalities. Annali di Matematica Pura ed Applicata 185(5), S315–S324 (2006). DOI 10.1007/s10231-004-0147-z. URL https://doi.org/10.1007/
+s10231-004-0147-z
+[6] Carlen, E.A., Frank, R.L., Lieb, E.H.: Inequalities for quantum divergences and the Audenaert–Datta conjecture.
+Journal of Physics A: Mathematical and Theoretical 51(48), 483001 (2018)
+[7] Chayes, V.M.: Matrix rearrangement inequalities revisited. Mathematical Inequalities and Applications 24(2),
+431–444 (2021). DOI dx.doi.org/10.7153/mia-2021-24-30
+[8] Gel’fand, I.M., Naimark, M.A.: The relation between the unitary representations of the complex unimodular
+group and its unitary subgroup. Izv. Akad. Nauk SSSR Ser. Mat. 14(3), 239–260 (1950)
+[9] Hanner, O.: On the uniform convexity of L p and l p. Ark. Mat. 3(3), 239–244 (1956). DOI 10.1007/BF02589410.
+URL https://doi.org/10.1007/BF02589410
+[10] Hardy, G.H., Littlewood, J.E., Pólya, G.: Some simple inequalities satisfied by convex functions. Messenger Math.
+58, 145–152 (1929). URL https://ci.nii.ac.jp/naid/10009422169/en/
+[11] Hardy, G.H., Polya, G.: Inequalities. Cambridge : Cambridge University Press (1934). Bibliography: p. [300]-314
+[12] Hiai, F.: Equality cases in matrix norm inequalities of Golden-Thompson type. Linear and Multilinear
+Algebra 36(4), 239–249 (1994). DOI 10.1080/03081089408818297. URL https://doi.org/10.1080/
+03081089408818297
+[13] Hiai, F.: Concavity of certain matrix trace and norm functions. ii. Linear Algebra and its Applications 496,
+193 – 220 (2016). DOI https://doi.org/10.1016/j.laa.2015.12.032. URL http://www.sciencedirect.com/
+science/article/pii/S0024379516000628
+[14] Hirzallah, O., Kittaneh, F.: Non-commutative clarkson inequalities for unitarily invariant norms. Pacific J. Math
+202(2), 363–369 (2002)
+[15] Horn, A.: On the singular values of a product of completely continuous operators. Proceedings of the National
+Academy of Sciences of the United States of America 36(7), 374 (1950)
+[16] Marshall, A.W., Olkin, I., Arnold, B.C.: Inequalities: Theory of Majorization and Its Applications, 2 edn. Springer,
+New York (2011)
+[17] McCarthy, C.: c_ p cp. Isr. J. Math. 5, 249–271 (1967)
+[18] Mirsky, L.: Inequalities for normal and hermitian matrices. Duke Math. J. 24(4), 591–599 (1957). DOI
+10.1215/S0012-7094-57-02467-5. URL https://doi.org/10.1215/S0012-7094-57-02467-5
+[19] Schur, I.: Uber eine klasse von mittelbildungen mit anwendungen auf die determinantentheorie. Sitzungsberichte
+der Berliner Mathematischen Gesellschaft 22(9-20), 51 (1923)
+[20] Shi, G.: Variational representations related to quantum renyi relative entropies. Linear Algebra and its Applications
+610, 257–273 (2021). DOI https://doi.org/10.1016/j.laa.2020.10.001. URL https://www.sciencedirect.
+com/science/article/pii/S0024379520304729
+14
+
+O CTOBER 27, 2021
+
+[21] Tomczak-Jaegermann, N.: The moduli of smoothness and convexity and the Rademacher averages of the trace
+classes S p (1 ≤ p ≤ ∞)∗ . Studia Mathematica 50(2), 163–182 (1974). URL http://eudml.org/doc/217886
+[22] Tomić, M.: Théoreme de gauss relatif au centre de gravité et son application. Bull. Soc. Math. Phys. Serbie 1,
+31–40 (1949)
+[23] Weyl, H.: Inequalities between two types of eigenvalues of a linear transformation. Proceedings of the National
+Academy of Sciences of the United States of America 35(7), 408–411 (1949)
+[24] Zhang, H.: From Wigner-Yanase-Dyson conjecture to Carlen-Frank-Lieb conjecture. Advances in Mathematics
+365, 107053 (2020). DOI https://doi.org/10.1016/j.aim.2020.107053. URL http://www.sciencedirect.com/
+science/article/pii/S0001870820300785
+
+15
+
+

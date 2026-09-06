@@ -1,0 +1,356 @@
+{
+  "channel": "baffle_radio",
+  "stage": "run",
+  "started_utc": "2026-09-06T23:14:01+00:00",
+  "config": {
+    "lotss": {
+      "vizier_tap": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+      "vizier_catalogue_hint": "659/A1",
+      "astron_tap": "https://vo.astron.org/tap",
+      "astron_table_hint": "lotss",
+      "max_rows_per_tile": 40000,
+      "tap_retries": 3,
+      "max_consecutive_tile_failures": 5
+    },
+    "targets": {
+      "parallax_min_mas": 20.0,
+      "parallax_over_error_min": 10.0,
+      "max_rows": 200000,
+      "regions": [
+        {
+          "name": "13h",
+          "ra_min": 100.0,
+          "ra_max": 280.0,
+          "dec_min": 22.0,
+          "dec_max": 72.0
+        },
+        {
+          "name": "0h",
+          "ra_min": 325.0,
+          "ra_max": 30.0,
+          "dec_min": 12.0,
+          "dec_max": 42.0
+        }
+      ],
+      "etz_ecliptic_lat_deg": 0.264,
+      "propagate_pm_to_epoch": 2017.5
+    },
+    "tile_deg": 4.0,
+    "apertures_arcsec": [
+      30.0,
+      60.0,
+      120.0,
+      204.0,
+      300.0,
+      600.0
+    ],
+    "annulus_in_arcsec": 480.0,
+    "annulus_out_arcsec": 1200.0,
+    "min_annulus_density_per_deg2": 300.0,
+    "bright_source_jy": 1.0,
+    "bright_source_radius_arcsec": 1800.0,
+    "min_expected_count": 8.0,
+    "p_min": 1e-05,
+    "baffle_distances_au": [
+      500.0,
+      1000.0,
+      2000.0,
+      5000.0,
+      10000.0
+    ],
+    "n_phase": 8,
+    "control_offset_arcsec": 2700.0
+  },
+  "degraded_reasons": [
+    "no flux column: bright-source veto disabled"
+  ],
+  "targets": {
+    "status": "OK",
+    "n_raw": 7404,
+    "n_after_region_cut": 7404,
+    "query": "SELECT TOP 200000 source_id, ra, dec, parallax, parallax_over_error, pmra, pmdec, ruwe, phot_g_mean_mag, bp_rp FROM gaiadr3.gaia_source WHERE parallax > 20.0 AND parallax_over_error > 10.0 AND (((ra >= 100.0 AND ra <= 280.0) AND dec >= 22.0 AND dec <= 72.0) OR ((ra >= 325.0 OR ra <= 30.0) AND dec >= 12.0 AND dec <= 42.0))",
+    "n_used": 7404,
+    "n_etz": 8
+  },
+  "discovery": {
+    "status": "DISCOVERED",
+    "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+    "route": "vizier",
+    "table": "\"J/A+A/659/A134/list\"",
+    "table_bare": "J/A+A/659/A134/list",
+    "ra_col": "RAJ2000",
+    "dec_col": "DEJ2000",
+    "flux_col": null,
+    "flux_unit": null,
+    "flux_to_jy": null,
+    "degraded": true,
+    "degraded_reasons": [
+      "no flux column: bright-source veto disabled"
+    ],
+    "ledger": [
+      {
+        "label": "lotss_tables@vizier",
+        "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+        "query": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%659/A1%'",
+        "status": "OK",
+        "n_rows": 42
+      },
+      {
+        "label": "lotss_columns@vizier",
+        "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+        "route": "TAP_SCHEMA:\"J/A+A/659/A134/list\"",
+        "n_columns": 12,
+        "errors": []
+      }
+    ],
+    "tables_seen": [
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A111/tablea1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A111/tablea4"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A122/table23"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A126/table"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A126/tablea1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A126/tablea2"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A131/table1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A131/table2"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A134/list"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A134/stars"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A135/tablea1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A135/tablea2"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A136/list"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A13/table1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A13/table2"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A13/table3"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A13/table4"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A13/table5"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A13/table6"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A13/table7"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A13/table8"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A144/table10"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A144/table6"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A144/table7"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A144/table9"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A144/tablec1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A145/refs"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A145/table2"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A145/tablea12"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A145/tablea34"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A145/tablea56"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A145/tablec1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A14/table1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A166/block1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A166/block2"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A166/block3"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A167/table1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A17/tableg1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A181/jplusdr1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A183/tableb1"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A188/ulx-xmm9"
+      },
+      {
+        "route": "vizier",
+        "table": "J/A+A/659/A1/catalog"
+      }
+    ],
+    "columns": [
+      "recno",
+      "Star",
+      "RAJ2000",
+      "DEJ2000",
+      "Nx",
+      "Obs.date",
+      "bFreq",
+      "BFreq",
+      "dFreq",
+      "size",
+      "FileName",
+      "Title"
+    ],
+    "names_as_served": [
+      "\"recno\"",
+      "\"Star\"",
+      "\"RAJ2000\"",
+      "\"DEJ2000\"",
+      "\"Nx\""
+    ],
+    "discovery_route": "TAP_SCHEMA:\"J/A+A/659/A134/list\"",
+    "column_choice_reason": "ra by alias (RAJ2000); dec by alias (DEJ2000); flux NOT FOUND",
+    "example_query": "SELECT TOP 40000 RAJ2000, DEJ2000 FROM \"J/A+A/659/A134/list\" WHERE RAJ2000 >= 200.0 AND RAJ2000 < 202.0 AND DEJ2000 >= 50.0 AND DEJ2000 < 52.0"
+  },
+  "tiles": {
+    "tile_deg": 4.0,
+    "n_planned": 819,
+    "n_tiles": 819,
+    "QUERY_OK": 2,
+    "FROM_CHECKPOINT": 0,
+    "QUERY_RETURNED_ZERO_ROWS": 817,
+    "QUERY_FAILED": 0,
+    "QUERY_TRUNCATED": 0,
+    "NOT_ATTEMPTED_AFTER_ABORT": 0,
+    "n_from_checkpoint": 0,
+    "n_with_rows": 2,
+    "n_rows_total": 10,
+    "failed_by_class": {}
+  },
+  "funnel": {
+    "n_targets": 7404,
+    "n_etz": 8,
+    "n_targets_in_footprint": 0,
+    "n_etz_in_footprint": 0,
+    "outside_footprint_or_masked": 7404,
+    "bright_radio_source_mask": 0,
+    "low_expected_count": 0,
+    "not_significant": 0,
+    "n_masked_by_bad_tile": 0,
+    "n_candidates": 0,
+    "n_etz_candidates": 0,
+    "n_control_positions": 29616,
+    "n_control_evaluated": 0,
+    "n_control_fired": 0,
+    "n_controls_masked_by_bad_tile": 0,
+    "control_false_void_rate": NaN,
+    "n_trials_per_position": 0,
+    "apertures_arcsec": [
+      30.0,
+      60.0,
+      120.0,
+      204.0,
+      300.0,
+      600.0
+    ],
+    "p_min": 1e-05
+  },
+  "verdict": "DEGRADED_SOURCE (no flux column: bright-source veto disabled)",
+  "verdict_code": "DEGRADED_SOURCE",
+  "acquisition_abort": {
+    "aborted": false
+  },
+  "n_targets_in_footprint": 0,
+  "n_etz": 8,
+  "n_etz_in_footprint": 0,
+  "control_false_void_rate": NaN,
+  "n_trials_per_position": 0,
+  "n_candidates": 0,
+  "finished_utc": "2026-09-06T23:20:55+00:00"
+}

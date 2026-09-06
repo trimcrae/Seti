@@ -73,7 +73,7 @@ DEFAULT_SCREEN_CFG = {
     "nearby_parallax_mas": 20.0,
     # (G - Ks) consistency: a contaminated Ks is too bright for the star's G by
     # the same amount it is too bright relative to W1; a screen is not.
-    "gks": {"veto_min_mag": 0.2, "veto_nsig": 3.0, "consistency_tol_mag": 0.25,
+    "gks": {"veto_min_mag": 0.15, "veto_nsig": 3.0, "consistency_tol_mag": 0.35,
             "photospheric_max_mag": 0.1, "photospheric_nsig": 2.0},
     "missing": {"b_min_deg": 10.0, "ks_min": 5.0, "ks_max": 11.0, "tmass_ph_qual_ok": "AAA",
                 "babs_bin_deg": 10.0, "g_bin_mag": 1.0},

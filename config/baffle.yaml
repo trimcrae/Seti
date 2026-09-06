@@ -92,9 +92,9 @@ screen:
   etz_ecl_lat_deg: 0.264           # Earth Transit Zone flag
   nearby_parallax_mas: 20.0        # nearby flag (d < 50 pc)
   gks:                             # ks_too_bright_for_g: a 2MASS blend, not a screen
-    veto_min_mag: 0.2              #   resid_gks > this ...
+    veto_min_mag: 0.15             #   resid_gks > this ...  (0.2 missed +0.188 at 3.2 sigma, run 34057027633)
     veto_nsig: 3.0                 #   ... at > this sigma ...
-    consistency_tol_mag: 0.25      #   ... and |resid_gks + resid_w1| < this (both driven by Ks)
+    consistency_tol_mag: 0.35      #   ... and |resid_gks + resid_w1| < this (0.25 missed 0.29 on 512945405846907904)
     photospheric_max_mag: 0.1      # gks_photospheric (note): |resid_gks| < this ...
     photospheric_nsig: 2.0         #   ... and |sig_gks| < this: the screen-like signature
   missing:
@@ -174,6 +174,19 @@ vet:
     nearest_radius_arcsec: 60.0      # nearest AllWISE source (cc_flags) for the absent group
     n_control: 1000                  # uniform random control of the non-nearby / non-ETZ rows
     seed: 20260906
+
+# --- final verdict (src/seti/baffle/final.py): vet + patch folded together in `assess` ---
+final:
+  own_chi2_max: 5.0                # NEOWISE_VARIABLE: own_flat_chi2 above this on >= min_own_visits
+  min_own_visits: 6
+  modulation_degenerate_ratio: 0.8 # MODULATION_DEGENERATE: alternation_control_sig >= this x modulation_sig
+  max_neighbours_10arcmin: 300     # CONFUSION_LIMITED: Gaia sources within the 10' patch search radius ...
+  plane_b_deg: 2.0                 #   ... or |b| < this with gaia_n_10as >= plane_gaia_n_10as_min
+  plane_gaia_n_10as_min: 8
+  ks_resid_min: 0.15               # KS_CONTAMINATION_CONSISTENT: resid_gks > this at > ks_nsig ...
+  ks_nsig: 3.0
+  ks_consistency_tol: 0.35         #   ... and |resid_gks + resid_w1| < this
+  threshold_edge_margin: 0.05      # THRESHOLD_EDGE: |resid_w1|, |resid_w2| < screen.resid_min + this
 
 # --- read by src/seti/baffle/radio.py (another module; keys documented there).
 #     Leave EMPTY to defer to config/baffle_radio.yaml; anything set here

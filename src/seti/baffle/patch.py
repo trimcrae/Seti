@@ -86,7 +86,7 @@ MJD_2024_END = 60310.0        # 2024-01-01 (used only to label the span)
 DAYS_PER_YEAR = 365.25
 
 VERDICTS = ("MODULATED", "COHERENT_PATCH", "ISOLATED_DEFICIT", "NOT_COHERENT",
-            "INSUFFICIENT_NEIGHBOURS", "FETCH_FAILED")
+            "NEOWISE_VARIABLE", "INSUFFICIENT_NEIGHBOURS", "FETCH_FAILED")
 
 DEFAULTS: dict[str, Any] = {
     "search_radius_arcmin": 10.0,
@@ -107,6 +107,10 @@ DEFAULTS: dict[str, Any] = {
     "modulation_null_p_max": 1.0e-3,
     "min_own_visits": 6,
     "own_chi2_max": 3.0,
+    # NEOWISE_VARIABLE: X's own light curve is strongly variable about a constant
+    # (a passive screen is constant); run 34057027633 had five survivors with
+    # own_flat_chi2 of 731-27675 on 21 visits.
+    "own_variable_chi2_max": 5.0,
     "own_offset_max": 0.15,
     "w1_saturation_mag": 8.0,
     "fallback_locus": {"w1": 0.05, "w2": 0.03, "scatter": 0.06},
@@ -943,7 +947,7 @@ _VERDICT_COUNTER = {
     "MODULATED": "n_modulated", "COHERENT_PATCH": "n_coherent_patch",
     "ISOLATED_DEFICIT": "n_isolated_deficit", "NOT_COHERENT": "n_not_coherent",
     "INSUFFICIENT_NEIGHBOURS": "n_insufficient_neighbours",
-    "FETCH_FAILED": "n_fetch_failed_verdict",
+    "FETCH_FAILED": "n_fetch_failed_verdict", "NEOWISE_VARIABLE": "n_neowise_variable",
 }
 
 
@@ -959,6 +963,15 @@ def _verdict(row: dict, pc: dict) -> str:
                 and row["profile_shape"] == "tophat")
     if modulated:
         return "MODULATED"
+    # A star whose own NEOWISE series is strongly variable about a constant is a
+    # mid-IR variable, not a screened photosphere -- UNLESS the field modulates
+    # coherently with it (returned above: at R ~ 1 AU the star itself switches
+    # annually with its edge neighbours, and that is the geometric signature).
+    n_vis = row.get("own_neowise_n_visits", 0) or 0
+    chi2 = row.get("own_flat_chi2", float("nan"))
+    if (n_vis >= int(pc["min_own_visits"]) and chi2 is not None and np.isfinite(chi2)
+            and chi2 > float(pc.get("own_variable_chi2_max", 5.0))):
+        return "NEOWISE_VARIABLE"
     if coherent:
         return "COHERENT_PATCH"
     no_patch = (row["n_deficit_total"] <= max(1, int(0.05 * row["n_neighbours"]))
@@ -997,6 +1010,7 @@ def run_patch_stage(candidates: pd.DataFrame, out_dir, cfg: dict, *, neighbour_f
     profiles: dict[str, Any] = {}
     counters = {"n_assessed": 0, "n_fetch_failed": 0, "n_coherent_patch": 0, "n_modulated": 0,
                 "n_own_constant": 0, "n_isolated_deficit": 0, "n_not_coherent": 0,
+                "n_neowise_variable": 0,
                 "n_insufficient_neighbours": 0}
     cands = candidates.reset_index(drop=True)
     if limit is not None:

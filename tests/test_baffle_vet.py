@@ -26,6 +26,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from seti.baffle import final as F
 from seti.baffle import locus as L
 from seti.baffle import run as R
 from seti.baffle import vet as V
@@ -860,3 +861,193 @@ def test_workflow_has_the_vet_step_and_commit_paths():
         assert f"results/baffle/{f}" in text
     assert "vet-only" in doc["jobs"] and "seti.baffle.run --stage vet" in text
     assert "vet" in doc[True]["workflow_dispatch"]["inputs"]["stage"]["description"]
+
+
+# ---------------------------------------------------------------------------
+# final verdict: vet + patch folded together (seti.baffle.final)
+# ---------------------------------------------------------------------------
+def _vetted_rows(n=1):
+    return pd.DataFrame({
+        "source_id": np.arange(1, n + 1, dtype=np.int64), "ra": 10.0, "dec": 5.0, "l": 120.0, "b": 30.0,
+        "phot_g_mean_mag": 12.0, "ks_m": 10.0, "resid_w1": -0.6, "resid_w2": -0.6,
+        "resid_gks": 0.02, "sig_gks": 0.4, "gaia_n_10as": 1, "vet_verdict": "SURVIVES_VET",
+        "ks_confirmed_hires": True, "hires_status": "matched"})
+
+
+def _patch_rows(n=1, **kw):
+    base = {"source_id": np.arange(1, n + 1, dtype=np.int64), "status": "OK", "n_neighbours": 120,
+            "n_deficit_total": 2, "n_deficit_inside": 2, "coherence_p": 0.5, "profile_shape": "flat",
+            "own_status": "OK", "own_neowise_n_visits": 21, "own_flat_chi2": 1.2, "own_constant": True,
+            "modulation_sig": 0.5, "modulation_null_p": 0.6, "alternation_control_sig": 0.3,
+            "modulation_degenerate": False, "patch_verdict": "ISOLATED_DEFICIT"}
+    base.update(kw)
+    return pd.DataFrame(base)
+
+
+def _final(v, p, cfg=None):
+    t, rep = F.final_verdicts(v, p, cfg or R.load_baffle_config(None))
+    return t.iloc[0]["final_verdict"], t.iloc[0]["final_flags"], rep
+
+
+def test_final_survives_all_paths_and_the_no_hires_variant():
+    v, p = _vetted_rows(), _patch_rows()
+    assert _final(v, p)[0] == "SURVIVES_ALL"                                       # isolated + own constant
+    assert _final(v, _patch_rows(patch_verdict="COHERENT_PATCH"))[0] == "SURVIVES_ALL"
+    assert _final(v, _patch_rows(patch_verdict="MODULATED", modulation_sig=6.0,
+                                 alternation_control_sig=1.0))[0] == "SURVIVES_ALL"
+    v2 = v.assign(vet_verdict="SURVIVES_VET_NO_HIRES_KS", ks_confirmed_hires=False, hires_status="missing")
+    assert _final(v2, p)[0] == "SURVIVES_ALL_NO_HIRES_KS"
+    # isolated deficit WITHOUT own constancy, or a NOT_COHERENT patch, does not survive
+    assert _final(v, _patch_rows(own_constant=False))[0] == "PATCH_NOT_COHERENT"
+    assert _final(v, _patch_rows(patch_verdict="NOT_COHERENT"))[0] == "PATCH_NOT_COHERENT"
+    assert _final(v, None)[0] == "PATCH_UNAVAILABLE"
+    assert _final(v.assign(vet_verdict="BLEND"), p)[0] == "VET_NOT_SURVIVING"
+    _, _, rep = _final(v, p)
+    assert rep["n_survive_all"] == 1 and rep["verdict_counts"]["SURVIVES_ALL"] == 1
+    assert rep["survivors"][0]["source_id"] == 1 and rep["n_with_patch"] == 1
+    assert F.final_deficit_verdict(rep) == "MIDIR_DEFICIT_CANDIDATES_SURVIVE_ALL (n=1, no_hires_ks=0)"
+    assert F.final_deficit_verdict({"n_survive_all": 0, "n_survive_all_no_hires_ks": 0}) == "NO_MIDIR_DEFICIT_SURVIVOR"
+
+
+@pytest.mark.parametrize("vet_kw,patch_kw,rule", [
+    ({}, {"own_flat_chi2": 731.0}, "NEOWISE_VARIABLE"),
+    ({}, {"own_flat_chi2": 731.0, "own_neowise_n_visits": 3}, None),          # too few visits
+    ({}, {"own_flat_chi2": 731.0, "patch_verdict": "MODULATED", "modulation_sig": 6.0,
+          "alternation_control_sig": 1.0}, None),                                  # coherent modulation: not variability
+    ({}, {"patch_verdict": "MODULATED", "modulation_sig": 5.67, "alternation_control_sig": 5.25,
+          "modulation_degenerate": True}, "MODULATION_DEGENERATE"),
+    ({}, {"patch_verdict": "MODULATED", "modulation_sig": 6.0, "alternation_control_sig": 4.9,
+          "modulation_degenerate": False}, "MODULATION_DEGENERATE"),           # >= 0.8 x
+    ({}, {"n_neighbours": 525}, "CONFUSION_LIMITED"),
+    ({"b": 1.2, "gaia_n_10as": 8}, {}, "CONFUSION_LIMITED"),
+    ({"b": 1.2, "gaia_n_10as": 5}, {}, None),
+    ({"resid_gks": 0.91, "sig_gks": 14.7, "resid_w1": -1.20, "resid_w2": -1.15}, {},
+     "KS_CONTAMINATION_CONSISTENT"),
+    ({"resid_gks": 0.188, "sig_gks": 3.2, "resid_w1": -0.300, "resid_w2": -0.315}, {},
+     "KS_CONTAMINATION_CONSISTENT"),
+    ({"resid_gks": 0.188, "sig_gks": 2.5, "resid_w1": -0.300, "resid_w2": -0.315,
+      "ks_confirmed_hires": False, "hires_status": "missing", "vet_verdict": "SURVIVES_VET_NO_HIRES_KS"},
+     {}, "THRESHOLD_EDGE"),
+    ({"resid_gks": 0.6, "sig_gks": 9.0, "resid_w1": -1.2, "resid_w2": -1.2}, {}, None),  # not consistent
+])
+def test_each_final_rule_has_a_case(vet_kw, patch_kw, rule):
+    v, p = _vetted_rows().assign(**vet_kw), _patch_rows(**patch_kw)
+    verdict, flags, rep = _final(v, p)
+    if rule is None:
+        assert verdict == "SURVIVES_ALL" and flags == ""
+    else:
+        assert verdict == rule and rule in flags.split(";")
+        assert rep["rule_counts_any"][rule] == 1 and rep["rule_counts_first"][rule] == 1
+
+
+def test_threshold_edge_survives_only_with_a_confirming_hires_ks():
+    v = _vetted_rows().assign(resid_w1=-0.31, resid_w2=-0.32, resid_gks=0.02, sig_gks=0.3)
+    p = _patch_rows()
+    verdict, flags, rep = _final(v, p)
+    assert verdict == "SURVIVES_ALL" and flags == "THRESHOLD_EDGE"
+    assert rep["n_threshold_edge_rescued_by_hires_ks"] == 1
+    v2 = v.assign(vet_verdict="SURVIVES_VET_NO_HIRES_KS", ks_confirmed_hires=False, hires_status="missing")
+    assert _final(v2, p)[0] == "THRESHOLD_EDGE"
+    # all rules are recorded even when a higher-precedence one gives the verdict
+    v3 = v.assign(resid_gks=0.5, sig_gks=8.0, resid_w1=-0.6, resid_w2=-0.6)
+    verdict, flags, _ = _final(v3, _patch_rows(own_flat_chi2=50.0, n_neighbours=800))
+    assert verdict == "NEOWISE_VARIABLE"
+    assert flags == "NEOWISE_VARIABLE;CONFUSION_LIMITED;KS_CONTAMINATION_CONSISTENT"
+
+
+def test_final_config_and_empty_inputs():
+    c = F._cfg({"final": {"own_chi2_max": 9.0}, "screen": {"resid_min": 0.4}})
+    assert c["own_chi2_max"] == 9.0 and c["resid_min"] == 0.4
+    t, rep = F.final_verdicts(pd.DataFrame(columns=["source_id"]), None)
+    assert rep["n_candidates"] == 0 and rep["n_survive_all"] == 0 and len(t) == 0
+    conf = R.load_baffle_config(None)
+    assert conf["final"]["max_neighbours_10arcmin"] == 300 and conf["screen"]["gks"]["veto_min_mag"] == 0.15
+    assert conf["screen"]["gks"]["consistency_tol_mag"] == 0.35
+
+
+def test_assess_folds_vet_and_patch_into_summary(cands, locus, tmp_path, monkeypatch):
+    _seed_screen_outputs(tmp_path, cands, locus)
+    sky = _sky_all_confirm(pd.concat([cands, pd.read_csv(tmp_path / "deferred_lpv.csv")],
+                                     ignore_index=True), locus)
+    for sid in make_missing(n=40, seed=2)["source_id"].astype(int):
+        sky.allwise[sid] = {"w1": 8.0, "w2": 8.0, "cc_flags": "0000", "offset_arcsec": 0.5}
+    sky.allwise[424242] = {"absent": True}
+    R.baffle_run(None, stage="vet", out_root=tmp_path, gaia_fetcher=sky.gaia, matchers=sky.matchers())
+    vetted = pd.read_csv(tmp_path / "vetted_candidates.csv")
+    assert len(vetted) == 6
+    # no patches.csv yet: the verdict stays the post-vet one and there is no final block
+    s0 = R.baffle_run(None, stage="assess", out_root=tmp_path)
+    assert "final" not in s0 and s0["verdict"].startswith("MIDIR_DEFICIT_CANDIDATES_SURVIVE_VET (n=6")
+    # a patch table: one variable, one confusion-limited, one isolated+constant survivor
+    pr = _patch_rows(n=6)
+    pr["source_id"] = vetted["source_id"].to_numpy()
+    pr.loc[0, "own_flat_chi2"] = 2758.0
+    pr.loc[1, "n_neighbours"] = 722
+    pr.loc[2, "patch_verdict"] = "NOT_COHERENT"
+    pr.loc[3, ["patch_verdict", "modulation_sig", "alternation_control_sig", "modulation_degenerate"]] = \
+        ["MODULATED", 5.67, 5.25, True]
+    pr.loc[4, "own_constant"] = False
+    pr.to_csv(tmp_path / "patches.csv", index=False)
+    s = R.baffle_run(None, stage="assess", out_root=tmp_path)
+    f = s["final"]
+    assert s["verdict"] == "MIDIR_DEFICIT_CANDIDATES_SURVIVE_ALL (n=1, no_hires_ks=0) | NO_TRULY_MISSING_COUNTERPART"
+    assert s["verdict_after_vet"].startswith("MIDIR_DEFICIT_CANDIDATES_SURVIVE_VET (n=6")
+    assert f["verdict_counts"]["SURVIVES_ALL"] == 1 and f["rule_counts_any"]["NEOWISE_VARIABLE"] == 1
+    assert f["rule_counts_any"]["CONFUSION_LIMITED"] == 1 and f["verdict_counts"]["MODULATION_DEGENERATE"] == 1
+    assert f["verdict_counts"]["PATCH_NOT_COHERENT"] == 2
+    fc = pd.read_csv(tmp_path / "final_candidates.csv")
+    assert len(fc) == 6 and set(fc["final_verdict"]) == {"SURVIVES_ALL", "NEOWISE_VARIABLE", "CONFUSION_LIMITED",
+                                                          "MODULATION_DEGENERATE", "PATCH_NOT_COHERENT"}
+    assert int(fc.loc[fc["final_verdict"] == "SURVIVES_ALL", "source_id"].iloc[0]) == int(vetted.loc[5, "source_id"])
+    j = json.loads((tmp_path / "summary.json").read_text())
+    assert j["final"]["verdict_deficit_final"] == "MIDIR_DEFICIT_CANDIDATES_SURVIVE_ALL (n=1, no_hires_ks=0)"
+
+
+_REAL_NINE = {512945405846907904, 5614363936337639936, 4310678737370850304, 4688980831219164416,
+              2030018186567867904, 508762038981840896, 504860009654887808, 4661535234258618624,
+              228086063620072832}
+
+
+def test_assess_only_on_the_real_run_34057027633_outputs(tmp_path):
+    """The measured numbers on the committed results of run 34057027633."""
+    import shutil
+
+    src = Path("results/baffle")
+    if not (src / "vetted_candidates.csv").exists() or not (src / "patches.csv").exists():
+        pytest.skip("no committed vet + patch outputs")
+    vetted = pd.read_csv(src / "vetted_candidates.csv")
+    if set(pd.to_numeric(vetted["source_id"]).astype(int)) != _REAL_NINE:
+        pytest.skip("results/baffle/ has moved on from run 34057027633")
+    for name in ("screen.json", "vet.json", "missing_vet.json", "patch.json", "vetted_candidates.csv",
+                 "patches.csv", "locus.json"):
+        if (src / name).exists():
+            shutil.copy(src / name, tmp_path / name)
+    s = R.baffle_run(None, stage="assess", out_root=tmp_path)
+    f = s["final"]
+    assert s["verdict"] == "NO_MIDIR_DEFICIT_SURVIVOR | NO_TRULY_MISSING_COUNTERPART"
+    assert f["n_survive_all"] == 0 and f["n_survive_all_no_hires_ks"] == 0
+    assert f["rule_counts_any"] == {"NEOWISE_VARIABLE": 5, "MODULATION_DEGENERATE": 1,
+                                    "CONFUSION_LIMITED": 9, "KS_CONTAMINATION_CONSISTENT": 4,
+                                    "THRESHOLD_EDGE": 0}
+    assert f["rule_counts_first"] == {"NEOWISE_VARIABLE": 5, "MODULATION_DEGENERATE": 1,
+                                      "CONFUSION_LIMITED": 3, "KS_CONTAMINATION_CONSISTENT": 0,
+                                      "THRESHOLD_EDGE": 0}
+    fc = pd.read_csv(tmp_path / "final_candidates.csv").set_index("source_id")
+    assert fc.loc[512945405846907904, "final_flags"] == "NEOWISE_VARIABLE;CONFUSION_LIMITED;KS_CONTAMINATION_CONSISTENT"
+    assert fc.loc[4661535234258618624, "final_verdict"] == "MODULATION_DEGENERATE"
+    assert fc.loc[228086063620072832, "final_flags"] == "CONFUSION_LIMITED;KS_CONTAMINATION_CONSISTENT"
+    assert (tmp_path / "final_candidates.csv").exists() and len(fc) == 9
+
+
+def test_workflow_has_the_assess_only_job():
+    import yaml
+
+    text = Path(".github/workflows/baffle.yml").read_text()
+    doc = yaml.safe_load(text)
+    job = doc["jobs"]["assess-only"]
+    assert "stage == 'assess'" in job["if"]
+    runs = " ".join(s.get("run", "") for s in job["steps"])
+    assert "seti.baffle.run --stage assess" in runs and "scripts/commit_results.sh" in runs
+    assert "results/baffle/final_candidates.csv" in runs and "results/baffle/summary.json" in runs
+    assert "download-artifact" not in str(job)
+    assert "stage != 'assess'" in doc["jobs"]["plan"]["if"] and "stage != 'assess'" in doc["jobs"]["screen"]["if"]

@@ -168,7 +168,7 @@ DEFAULTS: dict = {
     "w3_excess_mag": 0.5,
     "w3_deficit_mag": -0.30,
     "w3_err_max": 0.2,
-    "gks": {"veto_min_mag": 0.2, "veto_nsig": 3.0, "consistency_tol_mag": 0.25,
+    "gks": {"veto_min_mag": 0.15, "veto_nsig": 3.0, "consistency_tol_mag": 0.35,
             "photospheric_max_mag": 0.1, "photospheric_nsig": 2.0},
     "include_deferred_lpv": True,
     "missing": {"radius_close_arcsec": 6.0, "radius_far_arcsec": 15.0,

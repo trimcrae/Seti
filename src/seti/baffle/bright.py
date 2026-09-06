@@ -140,9 +140,11 @@ TMASS_ALIASES: dict[str, tuple[str, ...]] = {
     "h_m": ("hmag", "h_m"), "e_h": ("e_hmag", "h_msigcom", "h_cmsig"),
     "ks_m": ("kmag", "ksmag", "ks_m", "k_m"),
     "e_ks": ("e_kmag", "e_ksmag", "ks_msigcom", "k_msigcom", "k_cmsig"),
-    "tmass_qflg": ("qflg", "ph_qual"), "tmass_rflg": ("rflg", "rd_flg"),
-    "tmass_bflg": ("bflg", "bl_flg"), "tmass_cflg": ("cflg", "cc_flg"),
-    "tmass_xflg": ("xflg", "gal_contam"), "tmass_aflg": ("aflg", "mp_flg"),
+    # X-Match serves Qfl / Rfl / X for the same flags (run 34048837928).
+    "tmass_qflg": ("qflg", "qfl", "ph_qual"), "tmass_rflg": ("rflg", "rfl", "rd_flg"),
+    "tmass_bflg": ("bflg", "bfl", "bl_flg"), "tmass_cflg": ("cflg", "cfl", "cc_flg"),
+    "tmass_xflg": ("xflg", "x", "gal_contam"), "tmass_aflg": ("aflg", "mp_flg"),
+    "tmass_angdist": ("angdist",),
 }
 HIP_ALIASES: dict[str, tuple[str, ...]] = {
     "hip": ("hip",),
@@ -314,7 +316,9 @@ def resolve_aliases(colnames, aliases: dict[str, tuple[str, ...]]) -> dict[str, 
     """canonical -> actual column name, for every canonical with a hit."""
     lookup: dict[str, str] = {}
     for c in colnames:
-        lookup.setdefault(_norm(c), str(c))
+        bare = _unquote(c)
+        if bare:
+            lookup.setdefault(_norm(bare), bare)
     out = {}
     for canonical, cands in aliases.items():
         for cand in cands:
@@ -335,8 +339,44 @@ def normalise_columns(df: pd.DataFrame, aliases: dict[str, tuple[str, ...]],
     return out[want].copy(), res
 
 
-def _adql_col(name: str) -> str:
-    return name if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) else f'"{name}"'
+def _unquote(name) -> str:
+    """Strip one layer of surrounding double quotes and whitespace.
+
+    TAPVizieR's TAP_SCHEMA.columns serves ``column_name`` ALREADY double-quoted
+    (``'"RAJ2000"'``; run 34048837928).  Every discovered name is stored bare
+    and quoted exactly once, at composition time, by :func:`_adql_col`.
+    """
+    n = str(name).strip()
+    if len(n) >= 2 and n[0] == '"' and n[-1] == '"':
+        n = n[1:-1].strip()
+    return n
+
+
+def _adql_col(name: str, logical: str = "") -> str:
+    """One ADQL column reference: plain names bare, anything else quoted once.
+
+    Raises on an empty identifier -- an empty ``""`` in a SELECT list is the
+    exact text VizieR rejected with ``Encountered '""'`` and it must never be
+    emitted; the message names the logical column so the ledger says which.
+    """
+    bare = _unquote(name)
+    if not bare:
+        raise ValueError(f"empty column identifier for logical column {logical or '?'!r}")
+    return bare if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", bare) else f'"{bare}"'
+
+
+def select_list(resolved: dict[str, str], required: tuple[str, ...] = (),
+                prefix: str = "") -> str:
+    """Compose a SELECT list from ``{logical: actual}``; fail loudly on a hole."""
+    missing = [k for k in required if not _unquote(resolved.get(k, ""))]
+    if missing:
+        raise RuntimeError(f"required columns not resolved: {missing} (resolved: {resolved})")
+    parts = []
+    for logical, actual in resolved.items():
+        if not _unquote(actual):
+            raise RuntimeError(f"logical column {logical!r} resolved to an empty identifier")
+        parts.append(prefix + _adql_col(actual, logical))
+    return ", ".join(dict.fromkeys(parts))
 
 
 def _tap(url: str = VIZIER_TAP):
@@ -390,16 +430,17 @@ def discover_columns(table: str, url: str = VIZIER_TAP) -> dict:
             continue
         if len(df):
             df = _lower(df)
-            out["names"] = [str(x) for x in df["column_name"]]
-            out["meta"] = {str(r["column_name"]): {"ucd": str(r.get("ucd", "")),
-                                                   "unit": str(r.get("unit", "")),
-                                                   "datatype": str(r.get("datatype", ""))}
+            out["names"] = [_unquote(x) for x in df["column_name"] if _unquote(x)]
+            out["meta"] = {_unquote(r["column_name"]): {"ucd": str(r.get("ucd", "")),
+                                                        "unit": str(r.get("unit", "")),
+                                                        "datatype": str(r.get("datatype", ""))}
                            for _, r in df.iterrows()}
+            out["names_as_served"] = [str(x) for x in df["column_name"]][:5]
             out["route"] = f"TAP_SCHEMA:{form}"
             return out
     try:
         df = run_vizier(f"SELECT TOP 1 * FROM {table}", retries=2, label=f"top1:{table}", url=url)
-        out["names"] = [str(c) for c in df.columns]
+        out["names"] = [_unquote(c) for c in df.columns if _unquote(c)]
         out["route"] = "SELECT TOP 1 *"
     except Exception as exc:  # noqa: BLE001
         out["errors"].append(f"top1: {exc!r}")
@@ -453,10 +494,10 @@ class VizierSliceFetcher:
 
     def __call__(self, ra_lo: float, ra_hi: float, label: str) -> pd.DataFrame:
         self._discover()
-        ra_col = self.resolved[self.ra_key]
-        select = ", ".join(_adql_col(v) for v in dict.fromkeys(self.resolved.values()))
+        ra_col = _adql_col(self.resolved[self.ra_key], self.ra_key)
+        select = select_list(self.resolved, required=(self.ra_key,))
         q = (f"SELECT TOP {self.row_limit} {select} FROM {self.table} "
-             f"WHERE {_adql_col(ra_col)} >= {ra_lo} AND {_adql_col(ra_col)} < {ra_hi}")
+             f"WHERE {ra_col} >= {ra_lo} AND {ra_col} < {ra_hi}")
         return run_vizier(q, label=label, url=self.url)
 
 
@@ -489,11 +530,12 @@ class VizierUploadMatcher:
         self._discover()
         if "tmass_ra" not in self.resolved or "tmass_dec" not in self.resolved:
             raise RuntimeError(f"{self.table}: RA/Dec not resolved from {self.discovery['names'][:40]}")
-        ra_c, de_c = self.resolved["tmass_ra"], self.resolved["tmass_dec"]
-        select = ", ".join(f"t.{_adql_col(v)}" for v in dict.fromkeys(self.resolved.values()))
+        ra_c = _adql_col(self.resolved["tmass_ra"], "tmass_ra")
+        de_c = _adql_col(self.resolved["tmass_dec"], "tmass_dec")
+        select = select_list(self.resolved, required=("tmass_ra", "tmass_dec"), prefix="t.")
         q = (f"SELECT u.source_id, {select} FROM TAP_UPLOAD.targets AS u "
-             f"JOIN {self.table} AS t ON 1 = CONTAINS(POINT('ICRS', t.{_adql_col(ra_c)}, "
-             f"t.{_adql_col(de_c)}), CIRCLE('ICRS', u.ra, u.dec, {radius_arcsec / 3600.0}))")
+             f"JOIN {self.table} AS t ON 1 = CONTAINS(POINT('ICRS', t.{ra_c}, "
+             f"t.{de_c}), CIRCLE('ICRS', u.ra, u.dec, {radius_arcsec / 3600.0}))")
         up = Table({"source_id": positions["source_id"].to_numpy(np.int64),
                     "ra": positions["ra"].to_numpy(float), "dec": positions["dec"].to_numpy(float)})
         return run_vizier(q, uploads={"targets": up}, label=label, url=self.url)
@@ -533,8 +575,8 @@ def default_hip_fetcher_factory(cfg_hip: dict, url: str = VIZIER_TAP):
         need = ("hip", "hip_ra", "hip_dec", "hpmag")
         if any(k not in res for k in need):
             raise RuntimeError(f"{table}: columns not resolved: {res} from {disc['names'][:40]}")
-        select = ", ".join(_adql_col(v) for v in dict.fromkeys(res.values()))
-        q = (f"SELECT {select} FROM {table} WHERE {_adql_col(res['hpmag'])} < "
+        select = select_list(res, required=need)
+        q = (f"SELECT {select} FROM {table} WHERE {_adql_col(res['hpmag'], 'hpmag')} < "
              f"{float(cfg_hip.get('hp_max', 3.5))}")
         df = run_vizier(q, label=label, url=url)
         # RArad/DErad: VizieR serves degrees, the native file is radians.  Trust
@@ -873,22 +915,70 @@ def acquire_tmass(cfg: dict, out_dir: Path, ledger: list, tmass_fetcher,
     if not frames:
         return pd.DataFrame(), stats
     raw = pd.concat(frames, ignore_index=True)
-    raw = raw.dropna(subset=["tmass_ra", "tmass_dec"], how="any") if "tmass_ra" in raw else raw
-    # Re-select the nearest counterpart locally (an upload cone can return several).
-    raw["source_id"] = pd.to_numeric(raw["source_id"], errors="coerce").astype("Int64")
+    stats["columns_attached"] = [c for c in raw.columns]
+    return attach_tmass(raw, pos, radius), stats
+
+
+def attach_tmass(raw: pd.DataFrame, pos: pd.DataFrame, radius_arcsec: float) -> pd.DataFrame:
+    """One 2MASS row per target from raw (already canonical-named) match rows.
+
+    Tolerant by design: ``source_id`` is cast to int64 whatever the transport
+    returned it as (X-Match echoes the upload as float/str); an ABSENT flag
+    column is unknown, never bad; the closest counterpart per target wins,
+    by the service's own ``angDist`` where present and by a locally computed
+    separation otherwise (and always within ``radius_arcsec``).
+    """
+    if not len(raw) or "source_id" not in raw.columns:
+        return pd.DataFrame()
+    raw = raw.copy()
+    raw["source_id"] = pd.to_numeric(raw["source_id"], errors="coerce")
     raw = raw.dropna(subset=["source_id"])
-    raw["source_id"] = raw["source_id"].astype(np.int64)
-    p = pos.set_index("source_id")
+    raw["source_id"] = raw["source_id"].round().astype(np.int64)
+    for c in ("tmass_ra", "tmass_dec", "j_m", "e_j", "h_m", "e_h", "ks_m", "e_ks", "tmass_angdist"):
+        raw[c] = pd.to_numeric(raw[c], errors="coerce") if c in raw.columns else np.nan
+    p = pos.drop_duplicates("source_id").set_index("source_id")
     raw = raw[raw["source_id"].isin(p.index)]
     if not len(raw):
-        return pd.DataFrame(), stats
-    sep = separation_arcsec(p.loc[raw["source_id"], "ra"].to_numpy(),
-                            p.loc[raw["source_id"], "dec"].to_numpy(),
-                            raw["tmass_ra"].to_numpy(float), raw["tmass_dec"].to_numpy(float))
+        return pd.DataFrame()
+    have_pos = np.isfinite(raw["tmass_ra"].to_numpy(float)) & np.isfinite(raw["tmass_dec"].to_numpy(float))
+    sep = np.full(len(raw), np.nan)
+    if have_pos.any():
+        sub = raw[have_pos]
+        sep[have_pos] = separation_arcsec(p.loc[sub["source_id"], "ra"].to_numpy(),
+                                          p.loc[sub["source_id"], "dec"].to_numpy(),
+                                          sub["tmass_ra"].to_numpy(float), sub["tmass_dec"].to_numpy(float))
+    ang = raw["tmass_angdist"].to_numpy(float)
+    sep = np.where(np.isfinite(ang), ang, sep)
     raw = raw.assign(tmass_sep_arcsec=sep)
-    raw = raw[raw["tmass_sep_arcsec"] <= radius].sort_values("tmass_sep_arcsec")
-    raw = raw.drop_duplicates("source_id").reset_index(drop=True)
-    return raw, stats
+    raw = raw[np.isfinite(raw["tmass_sep_arcsec"]) & (raw["tmass_sep_arcsec"] <= radius_arcsec)]
+    raw = raw.sort_values("tmass_sep_arcsec", kind="stable").drop_duplicates("source_id")
+    return raw.reset_index(drop=True)
+
+
+def tmass_quality_masks(work: pd.DataFrame, cfg_tmass: dict) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """(quality_ok, quality_known, read1_flag) from whatever flag columns arrived.
+
+    A missing ``Qflg``/``Rflg`` column, or an empty value, is UNKNOWN: the row
+    keeps its photometry and ``tmass_qual_known`` says so.  Only a present
+    letter outside ``ph_qual_ok`` rejects the row.
+    """
+    n = len(work)
+    ok_letters = set(str(cfg_tmass.get("ph_qual_ok", "ABCD")))
+
+    def _clean(col: str) -> list[str]:
+        if col not in work.columns:
+            return [""] * n
+        vals = work[col].tolist()
+        return ["" if (v is None or (isinstance(v, float) and np.isnan(v))) else str(v).strip()
+                for v in vals]
+
+    q = _clean("tmass_qflg")
+    known = np.array([len(v) >= 3 and v.lower() not in ("nan", "<na>", "none") for v in q])
+    q_ok = np.array([(not k) or (v[0] in ok_letters and v[2] in ok_letters)
+                     for v, k in zip(q, known, strict=False)])
+    r = _clean("tmass_rflg")
+    read1 = np.array([len(v) >= 3 and v[2] == "1" for v in r])
+    return q_ok, known, read1
 
 
 def _propagate_targets(targets: pd.DataFrame, to_epoch: float):
@@ -1461,16 +1551,16 @@ def run_bright_stage(cfg: dict, out_dir, *, gaia_fetcher=None, tmass_fetcher=Non
             work[c] = np.nan
     for c in ("j_m", "e_j", "h_m", "e_h", "ks_m", "e_ks"):
         work[c] = pd.to_numeric(work.get(c, np.nan), errors="coerce")
-    qflg = work["tmass_qflg"].astype(str) if "tmass_qflg" in work else pd.Series([""] * len(work))
-    ok_letters = set(str(cfg["tmass"].get("ph_qual_ok", "ABCD")))
-    q_ok = qflg.map(lambda s: len(s) >= 3 and s[0] in ok_letters and s[2] in ok_letters
-                    if isinstance(s, str) and s not in ("nan", "<NA>") else False).to_numpy(bool)
+    q_ok, q_known, read1_flag = tmass_quality_masks(work, cfg["tmass"])
     work["tmass_qual_ok"] = q_ok
+    work["tmass_qual_known"] = q_known
     work["has_tmass"] = np.isfinite(work["ks_m"].to_numpy(float)) & np.isfinite(work["j_m"].to_numpy(float)) & q_ok
-    rflg = work["tmass_rflg"].astype(str) if "tmass_rflg" in work else pd.Series([""] * len(work))
-    read1_flag = rflg.map(lambda s: isinstance(s, str) and len(s) >= 3 and s[2] == "1").to_numpy(bool)
     work["tmass_read1_regime"] = (work["ks_m"].to_numpy(float) < float(cfg["tmass"].get("read1_ks_max", 4.0))) | read1_flag
     summary["n_with_2mass"] = int(work["has_tmass"].sum())
+    summary["n_with_2mass_photometry"] = int((np.isfinite(work["ks_m"].to_numpy(float))
+                                              & np.isfinite(work["j_m"].to_numpy(float))).sum())
+    summary["n_with_2mass_quality_unknown"] = int((work["has_tmass"] & ~q_known).sum())
+    summary["n_rejected_2mass_quality"] = int((np.isfinite(work["ks_m"].to_numpy(float)) & ~q_ok).sum())
     summary["n_with_2mass_read1_regime"] = int((work["has_tmass"] & work["tmass_read1_regime"]).sum())
 
     # 4. Mid-IR ----------------------------------------------------------------
@@ -1591,8 +1681,8 @@ def probe_bright(cfg: dict, out_dir, *, url: str = VIZIER_TAP, gaia_fetcher=None
                           "units": {k: disc["meta"].get(v, {}).get("unit") for k, v in res.items()},
                           "errors": disc["errors"]})
             if ra_key in res:
-                ra_col = _adql_col(res[ra_key])
-                select = ", ".join(_adql_col(v) for v in dict.fromkeys(res.values()))
+                ra_col = _adql_col(res[ra_key], ra_key)
+                select = select_list(res, required=(ra_key,))
                 q = f"SELECT TOP 5 {select} FROM {table} WHERE {ra_col} >= 100 AND {ra_col} < 101"
                 t0 = time.monotonic()
                 df = run_vizier(q, retries=2, label=f"probe:{key}", url=url)

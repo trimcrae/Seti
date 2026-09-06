@@ -191,10 +191,14 @@ class FakeArchive:
         })
 
     # -- 2MASS (upload cone) ---------------------------------------------
+    xmatch_style = False
+
     def tmass(self, positions: pd.DataFrame, radius_arcsec: float, label: str) -> pd.DataFrame:
         self.calls.append(label)
         if "tmass" in self.fail:
             raise RuntimeError("VizieR upload refused")
+        if self.xmatch_style:
+            return self._tmass_xmatch(positions, radius_arcsec)
         cat = self.sky[self.sky["has_2mass"]]
         cra, cde = self.pos["tmass"]
         cat_pos = pd.DataFrame({"ra": cra[cat.index], "dec": cde[cat.index]})
@@ -210,6 +214,28 @@ class FakeArchive:
             "Kmag": rows["ks"].to_numpy(), "e_Kmag": rows["e_ks"].to_numpy(),
             "Qflg": rows["qflg"].to_numpy(), "Rflg": rows["rflg"].to_numpy(),
             "Bflg": "111", "Cflg": "000", "Xflg": 0, "Aflg": 0,
+        })
+
+    def _tmass_xmatch(self, positions: pd.DataFrame, radius_arcsec: float) -> pd.DataFrame:
+        """Exactly the CDS X-Match CSV columns of run 34048837928, source_id as float."""
+        cat = self.sky[self.sky["has_2mass"]]
+        cra, cde = self.pos["tmass"]
+        cat_pos = pd.DataFrame({"ra": cra[cat.index], "dec": cde[cat.index]})
+        m = match_within(positions, cat_pos, radius_arcsec)
+        rows = cat.iloc[m["cat_index"].to_numpy()]
+        pi = m["pos_index"].to_numpy()
+        return pd.DataFrame({
+            "angDist": m["sep_arcsec"].to_numpy(),
+            "source_id": positions["source_id"].to_numpy()[pi].astype(float),
+            "ra": positions["ra"].to_numpy()[pi], "dec": positions["dec"].to_numpy()[pi],
+            "2MASS": ["J" + str(i) for i in rows["source_id"]],
+            "RAJ2000": cat_pos["ra"].to_numpy()[m["cat_index"]],
+            "DEJ2000": cat_pos["dec"].to_numpy()[m["cat_index"]],
+            "errHalfMaj": 0.06, "errHalfMin": 0.06, "errPosAng": 90,
+            "Jmag": rows["j"].to_numpy(), "Hmag": rows["j"].to_numpy() - 0.1, "Kmag": rows["ks"].to_numpy(),
+            "e_Jmag": rows["e_j"].to_numpy(), "e_Hmag": 0.03, "e_Kmag": rows["e_ks"].to_numpy(),
+            "Qfl": rows["qflg"].to_numpy(), "Rfl": rows["rflg"].to_numpy(), "X": 0,
+            "MeasureJD": 2451000.5,
         })
 
     # -- AKARI (RA slice) --------------------------------------------------
@@ -585,6 +611,130 @@ def test_hipparcos_failure_is_recorded_not_fatal(cfg, tmp_path):
     assert s["brightest_300_not_covered"] is True
     assert "hipparcos:QUERY_FAILED" in s["verdict"]
     assert s["n_targets"] == 300
+
+
+# --------------------------------------------------------------------------
+# Regressions from runner run 34048837928 (NO_DATA_REACHED)
+# --------------------------------------------------------------------------
+# TAP_SCHEMA.columns on TAPVizieR serves column names ALREADY double-quoted.
+AKARI_SCHEMA = ['"objID"', '"objName"', '"errMaj"', '"errMin"', '"errPA"', '"S09"', '"e_S09"',
+                '"q_S09"', '"S18"', '"e_S18"', '"q_S18"', '"f09"', '"f18"', '"Ndet"',
+                '"RAJ2000"', '"DEJ2000"']
+IRAS_SCHEMA = ['"recno"', '"IRAS"', '"RA1950"', '"DE1950"', '"Major"', '"Minor"', '"PosAng"',
+               '"NHcon"', '"Fnu_12"', '"e_Fnu_12"', '"q_Fnu_12"', '"Fnu_25"', '"e_Fnu_25"',
+               '"q_Fnu_25"', '"Fnu_60"', '"q_Fnu_60"', '"Fnu_100"', '"q_Fnu_100"', '"Var"',
+               '"Confuse"', '"Cirr3"']
+HIP_SCHEMA = ['"recno"', '"HIP"', '"RArad"', '"e_RArad"', '"DErad"', '"Plx"', '"e_Plx"',
+              '"pmRA"', '"pmDE"', '"Hpmag"', '"B-V"', '"e_B-V"', '"V-I"']
+TMASS_SCHEMA = ['"RAJ2000"', '"DEJ2000"', '"2MASS"', '"Jmag"', '"e_Jmag"', '"Hmag"', '"e_Hmag"',
+                '"Kmag"', '"e_Kmag"', '"Qflg"', '"Rflg"', '"Bflg"', '"Cflg"', '"Xflg"', '"Aflg"']
+
+
+def _assert_valid_adql_select(select: str):
+    assert '""' not in select, select
+    assert select and not select.startswith(",") and ",," not in select
+    for tok in select.split(", "):
+        tok = tok.split(".")[-1]
+        assert re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*|"[^"]+"', tok), tok
+
+
+@pytest.mark.parametrize("schema,aliases,ra_key,expect", [
+    (AKARI_SCHEMA, bright.AKARI_ALIASES, "akari_ra", ("RAJ2000", "S09", "e_S09", "q_S18")),
+    (IRAS_SCHEMA, bright.IRAS_ALIASES, "iras_ra", ("RA1950", "Fnu_12", "e_Fnu_12", "q_Fnu_25")),
+    (HIP_SCHEMA, bright.HIP_ALIASES, "hip_ra", ("HIP", "RArad", "Hpmag", '"B-V"')),
+    (TMASS_SCHEMA, bright.TMASS_ALIASES, "tmass_ra", ('"2MASS"', "Kmag", "Qflg")),
+], ids=["akari", "iras", "hipparcos", "tmass"])
+def test_quoted_schema_names_compose_a_valid_select(schema, aliases, ra_key, expect):
+    res = bright.resolve_aliases(schema, aliases)
+    assert ra_key in res and all('"' not in v for v in res.values())
+    select = bright.select_list(res, required=(ra_key,))
+    _assert_valid_adql_select(select)
+    for e in expect:
+        assert e in select.split(", "), (e, select)
+    # Quoting is idempotent: an already-quoted name is quoted exactly once.
+    assert bright._adql_col('"B-V"') == '"B-V"' and bright._adql_col('"RAJ2000"') == "RAJ2000"
+    assert bright._adql_col("2MASS") == '"2MASS"'
+
+
+def test_slice_fetcher_query_from_quoted_schema_has_no_empty_identifier(monkeypatch):
+    seen = {}
+
+    def fake_discover(table, url=None):
+        return {"table": table, "names": [bright._unquote(c) for c in AKARI_SCHEMA],
+                "meta": {}, "route": "TAP_SCHEMA", "errors": []}
+
+    def fake_run(query, **kw):
+        seen["q"] = query
+        return pd.DataFrame({"S09": [1.0]})
+
+    monkeypatch.setattr(bright, "discover_columns", fake_discover)
+    monkeypatch.setattr(bright, "run_vizier", fake_run)
+    f = bright.VizierSliceFetcher('"II/297/irc"', bright.AKARI_ALIASES, "akari_ra")
+    f(0.0, 30.0, "akari_ra00")
+    q = seen["q"]
+    assert '""' not in q and 'FROM "II/297/irc" WHERE RAJ2000 >= 0.0 AND RAJ2000 < 30.0' in q
+    assert "S09, e_S09, q_S09" in q
+
+
+def test_discover_columns_strips_the_quotes_tap_schema_serves(monkeypatch):
+    def fake_run(query, **kw):
+        assert "TAP_SCHEMA.columns" in query
+        return pd.DataFrame({"column_name": ['"RAJ2000"', '"B-V"'], "ucd": ["pos.eq.ra", ""],
+                             "unit": ["deg", "mag"], "datatype": ["double", "float"],
+                             "description": ["", ""]})
+
+    monkeypatch.setattr(bright, "run_vizier", fake_run)
+    d = bright.discover_columns('"I/311/hip2"')
+    assert d["names"] == ["RAJ2000", "B-V"] and d["meta"]["RAJ2000"]["unit"] == "deg"
+    assert d["names_as_served"] == ['"RAJ2000"', '"B-V"']
+
+
+def test_empty_identifier_is_refused_loudly():
+    with pytest.raises(ValueError, match="hpmag"):
+        bright._adql_col('""', "hpmag")
+    with pytest.raises(RuntimeError, match="akari_ra"):
+        bright.select_list({"s09": "S09"}, required=("akari_ra",))
+    with pytest.raises(RuntimeError, match="q_s09"):
+        bright.select_list({"s09": "S09", "q_s09": '""'})
+
+
+def test_xmatch_columns_attach_and_absent_flags_are_unknown(cfg):
+    """Exactly the X-Match CSV header of run 34048837928; source_id as float."""
+    raw = pd.DataFrame({
+        "angDist": [0.4, 2.1, 0.2], "source_id": [11.0, 11.0, 12.0],
+        "ra": [10.0, 10.0, 20.0], "dec": [1.0, 1.0, 2.0],
+        "2MASS": ["J1", "J1b", "J2"], "RAJ2000": [10.0001, 10.0006, 20.00005],
+        "DEJ2000": [1.0, 1.0, 2.0], "errHalfMaj": 0.06, "errHalfMin": 0.06, "errPosAng": 90,
+        "Jmag": [5.0, 9.0, 4.0], "Hmag": [4.8, 8.8, 3.7], "Kmag": [4.6, 8.6, 3.5],
+        "e_Jmag": 0.03, "e_Hmag": 0.03, "e_Kmag": [0.03, 0.05, 0.25],
+        "Qfl": ["AAA", "AAA", "EAB"], "Rfl": ["222", "222", "111"], "X": 0, "MeasureJD": 2451000.5,
+    })
+    df, res = bright.normalise_columns(raw, bright.TMASS_ALIASES, keep=("source_id",))
+    assert res["tmass_qflg"] == "Qfl" and res["tmass_rflg"] == "Rfl" and res["tmass_xflg"] == "X"
+    pos = pd.DataFrame({"source_id": [11, 12, 13], "ra": [10.0, 20.0, 30.0], "dec": [1.0, 2.0, 3.0]})
+    att = bright.attach_tmass(df, pos, 3.0)
+    assert att["source_id"].dtype == np.int64 and att["source_id"].tolist() == [12, 11]
+    assert att.loc[att["source_id"] == 11, "tmass_id"].iloc[0] == "J1"      # closest by angDist
+    q_ok, known, read1 = bright.tmass_quality_masks(att, cfg["tmass"])
+    assert known.all() and q_ok.tolist() == [False, True] and read1.tolist() == [True, False]
+    # No flag column at all: unknown, not bad.
+    q_ok2, known2, _ = bright.tmass_quality_masks(att.drop(columns=["tmass_qflg", "tmass_rflg"]),
+                                                   cfg["tmass"])
+    assert q_ok2.all() and not known2.any()
+
+
+def test_xmatch_style_2mass_route_gives_a_2mass_anchor_end_to_end(cfg, tmp_path):
+    sky = make_sky(n=400, seed=13)
+    arch = FakeArchive(sky, cfg)
+    arch.xmatch_style = True
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        s = bright.run_bright_stage(cfg, tmp_path, gaia_fetcher=arch.gaia, tmass_fetcher=arch.tmass,
+                                    akari_fetcher=arch.akari, iras_fetcher=arch.iras)
+    assert s["n_with_2mass"] >= 395 and s["n_with_2mass_quality_unknown"] == 0
+    assert s["verdict"] == VERDICT_NULL
+    cols = s["acquisition"]["tmass"]["columns_attached"]
+    assert "tmass_qflg" in cols and "tmass_angdist" in cols and "source_id" in cols
 
 
 # --------------------------------------------------------------------------

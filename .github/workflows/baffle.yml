@@ -58,6 +58,13 @@ on:
         description: "Cap on candidates handed to the patch stage"
         required: false
         default: "200"
+      run_radio:
+        description: >-
+          Run the LoTSS radio-void stage inside this job (true/false). Default
+          false: baffle-radio.yml is the standalone route and the pull is ~2 h;
+          repeating it here only lengthens the screen job.
+        required: false
+        default: "false"
 
 permissions:
   contents: write
@@ -202,7 +209,8 @@ jobs:
         run: |
           python -m seti.baffle.run --stage patch \
             --max-patch-objects ${{ github.event.inputs.max_patch_objects || '200' }}
-      - name: Radio (another module, guarded)
+      - name: Radio (another module, guarded; opt-in)
+        if: ${{ github.event.inputs.run_radio == 'true' }}
         run: python -m seti.baffle.run --stage radio
       - name: Assess
         run: |
@@ -296,7 +304,9 @@ jobs:
               python -m seti.baffle.run --stage patch \
                 --max-patch-objects ${{ github.event.inputs.max_patch_objects || '200' }}
             fi
-            python -m seti.baffle.run --stage radio
+            if [ "${{ github.event.inputs.run_radio }}" = "true" ]; then
+              python -m seti.baffle.run --stage radio
+            fi
             python -m seti.baffle.run --stage assess
           fi
       - name: Commit results

@@ -148,7 +148,18 @@ Organised by *what the residue physically is*, not by wavelength.
   LAMOST LRS and SDSS/BOSS *cover* 4238–4297 Å but at R≈1,500–2,500 against a
   required R>30,000 — the blue coverage is illusory.
   *(covered by the existing `midden` channel)*
-* **S14 Fission-product pattern** in a photosphere. *(covered by `midden`)*
+* **S14 Fission-product pattern** in a photosphere. → **FALLOUT** — *built
+  2026-09-06 (`docs/fallout.md`).* MIDDEN searches the *lines* of the
+  short-lived species (Tc, Pm, actinides); FALLOUT searches the *stable
+  residue*: the two-humped fission-yield mass distribution after every decay
+  has run — a light peak (Sr, Y, Zr, Mo, Ru), a heavy peak (Ba, La, Ce, Nd), a
+  valley at Ag–Te, almost nothing at Eu and beyond, and no Pb. As an abundance
+  *vector* it is [Nd/Ba] ≫ 0 with [Eu/Nd] < 0 and [Mo/Zr] > 0, which the
+  s-process ([Nd/Ba] < 0) and the r-process ([Eu/Nd] > 0) cannot both fake.
+  The test is a likelihood ratio of that vector against the best natural
+  s + r mixture in a Teff-matched peer frame, and it is only a pattern if
+  removing any one element leaves it standing — which is what separates it
+  from TAILINGS' single-element anomaly. *(the line search remains `midden`)*
 * **S15 Twin-pair refractory excess** beyond any engulfed-planet mass budget.
   → TAILINGS stage 4
 * **S16 Orphaned industrial gases + decay clock.** CF₄ (τ≈50 kyr) : SF₆ (≈3 kyr)
@@ -205,7 +216,30 @@ Organised by *what the residue physically is*, not by wavelength.
 * **S26 A photospheric flag** — the cheapest galaxy-visible, Myr-durable marker
   a dying civilization could leave. *(the deliberate reading of S12)*
 * **S27 Mathematically patterned transits.** *(adjacent to `dimming`)*
-* **S28 Structure in timing series.**
+* **S28 Structure in timing series.** → **METRONOME** — *built 2026-09-06
+  (`docs/metronome.md`).* Read on the one public event list large enough to
+  test it: the catalogued stellar flares of Kepler and TESS (>10⁵ events on
+  >10⁴ stars, with peak times). Natural flares are stochastic; rotational
+  modulation makes them at most quasi-periodic with large jitter. The
+  observable is not the flare but the *timing regularity* of the events on
+  one star — a strict clock with jitter far below anything rotation
+  produces. The null resamples each star's own observing windows, so the
+  30-min cadence, quarter gaps and sector boundaries are in the null by
+  construction; the vetoes are the rotation period and its harmonics, the
+  spacecraft's own periods, events shared by many stars in one cadence
+  (momentum dumps), and catalogued periodic variables whose cycles a flare
+  finder chops into "flares".
+* **S28a Planet-origin monochromatic emission, gated by eclipse.** → **LANTERN**
+  — *built 2026-09-06 (`docs/lantern.md`).* A narrow (unresolved) emission
+  feature in a JWST exoplanet time series that is present outside secondary
+  eclipse and *absent* while the planet is behind its star. Stellar lines,
+  detector features and instrument artefacts do not care whether the planet
+  is occulted, so a line whose flux tracks the planet's visibility has a
+  planet-side origin, and a monochromatic one is a laser or beacon. During
+  transit the same line must be *constant* in-vs-out, which is the second
+  phase reference. This is the eclipse-gated, phase-resolved form of optical
+  laser SETI, run over every public JWST transit and eclipse time series
+  rather than the one-planet out-of-transit scan in `jwst_bio`.
 * **S29 Monuments at stable points.** → **LOOM** — *built 2026-07-30
   (`docs/loom.md`).* Read at solar-system scale: a mean-motion resonance, a
   Trojan point or a quasi-satellite orbit is where an object parks if it means to

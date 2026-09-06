@@ -1,0 +1,188 @@
+# METRONOME channel — every selection / rejection threshold in one place.
+#
+# Signature S28 (docs/necrosignatures.md §2.VI): "structure in timing series".
+# Do any star's catalogued flares occur on a STRICT CLOCK?  Natural flares are
+# Poisson-like; the only natural quasi-periodicity (rotational modulation of
+# flare visibility) has a phase jitter of order a tenth of a cycle.  A pulsed
+# transmitter / duty-cycled engine / beacon is a clock with jitter far below
+# that.  The observable is timing regularity, not the events themselves.
+#
+# Table ids below are PREFERRED seeds.  The probe stage lists every table under
+# each id in VizieR's TAP_SCHEMA, reads the real column names, resolves the
+# roles it needs, and falls back to the keyword search when the seed is dead.
+# Nothing is queried by a column name that was not seen in TAP_SCHEMA.columns.
+
+catalogues:
+  kepler_yang2019:
+    mission: kepler
+    preferred: "J/ApJS/241/29"          # Yang & Liu 2019, ApJS 241, 29 (162,262 flares / 3,420 stars)
+    keywords: ["flare", "Kepler"]
+    enabled: true
+  kepler_davenport2016:
+    mission: kepler
+    preferred: "J/ApJ/829/23"           # Davenport 2016, ApJ 829, 23 — cross-check catalogue
+    keywords: ["flare", "Kepler"]
+    enabled: true
+  tess_pietras2022:
+    mission: tess
+    preferred: "J/ApJ/935/143"          # Pietras et al. 2022, ApJ 935, 143 (~140k flares / ~25k stars)
+    keywords: ["flare", "TESS"]
+    enabled: true
+  tess_gunther2020:
+    mission: tess
+    preferred: "J/AJ/159/60"            # Günther et al. 2020, AJ 159, 60
+    keywords: ["flare", "TESS"]
+    enabled: true
+  tess_tu2020:
+    mission: tess
+    preferred: "J/ApJS/253/35"          # brief's id for Tu et al.; DISCOVERED at runtime, may resolve elsewhere
+    keywords: ["superflare", "TESS"]
+    enabled: true
+
+rotation_catalogues:
+  kepler:
+    - {name: mcquillan2014, preferred: "J/ApJS/211/24", keywords: ["rotation", "Kepler"]}
+    - {name: santos2021, preferred: "J/ApJS/255/17", keywords: ["rotation", "Kepler"]}
+    - {name: reinhold2013, preferred: "J/A+A/560/A4", keywords: ["rotation", "Kepler"]}
+  tess:
+    # No single dominant TESS rotation catalogue; discovery by keyword.
+    - {name: tess_rotation_discovered, preferred: "", keywords: ["rotation period", "TESS"]}
+
+# Per-star positions for the cone crossmatches (shortlist only)
+position_tables:
+  kepler: ["V/133/kic"]
+  tess: ["IV/39/tic82", "IV/38/tic"]
+
+# Periodic-variable contamination: a pulsator's cycles chopped into "flares"
+variability_catalogues:
+  vsx:
+    table: "B/vsx/vsx"
+    period_patterns: ["^period$", "^per$"]
+    type_patterns: ["^type$", "^vtype$"]
+  gaia_dr3_vari:
+    table: "I/358/vclassre"
+    period_patterns: ["^period$", "^pf$", "^p_?f$"]
+    type_patterns: ["^class$", "^best_?class_?name$", "^type$"]
+  ztf_chen2020:
+    table: "J/ApJS/249/18"
+    period_patterns: ["^per$", "^period$"]
+    type_patterns: ["^type$", "^class$"]
+cone_radius_arcsec: 3.0
+
+windows:
+  # Data-driven windows from the density of EVERY event in a catalogue.
+  # Tenth-day bins; an empty run is a gap when it is >= min_gap_days long AND
+  # the catalogue's mean rate predicts >= min_expected_in_gap events in it
+  # (an e^-20 fluke at worst).  Kepler's inter-quarter gaps are ~1-3 d and its
+  # monthly downlinks ~1 d; at ~10^2 events/day both resolve.  A sparse
+  # catalogue resolves only its long gaps (the window label records the
+  # effective minimum gap).  Below min_events_for_data_driven the published
+  # Kepler quarter table (approximate) is used instead.
+  bin_days: 0.1
+  min_gap_days: 0.5
+  min_expected_in_gap: 20.0
+  min_events_for_data_driven: 2000
+  pad_days: 0.5
+  # A window with no events where the star's own rate predicts >= this many is
+  # presumed unobserved (module failure / not on silicon) and dropped.  Stated
+  # approximation: it slightly weakens the evidence against a clock that fell
+  # silent for a window.
+  drop_expected: 5.0
+  cadence_days:
+    kepler: 0.020434       # 29.42-min long cadence
+    tess: 0.0013889        # 2-min
+
+cross_star:
+  # Epochs at which anomalously many DISTINCT stars have an event are
+  # spacecraft (momentum dumps, Argabrightenings, scattered light), removed
+  # from every star BEFORE any star is scanned.
+  bin_days:
+    kepler: 0.0409         # two long cadences
+    tess: 0.0069           # five 2-min cadences
+  min_stars: 5
+  tail_p: 1.0e-6
+
+scan:
+  n_min: 8                 # events per star after declustering + cross-star removal
+  decluster_gap_days: 0.1  # complex/sympathetic flares within 2.4 h are one event
+  min_period_days: 0.2
+  n_cadences_min: 10       # a peak time cannot define a clock finer than ~10 cadences
+  max_period_days: 400.0
+  span_fraction_max: 0.3333  # fewer than three cycles is a trend, not a clock
+  oversample: 5.0
+  m_max: 4                 # H-test harmonics; a delta in phase fills all of them
+  chunk: 8192
+  refine_points: 41
+  refine_halfwidth_steps: 2.0
+  phase_window: 0.05       # f_in_window = fraction within ±0.05 cycle of the clock phase
+  gap_tol: 0.05            # waiting time counts as an integer number of periods within this
+  harmonic_walk_tol: 0.02
+  harmonic_walk_max: 12    # must exceed the small primes: a duty-0.25 clock can peak at P/7
+
+null:
+  # Besag & Clifford (1991) sequential Monte Carlo: stop at h_stop exceedances
+  # or n_max trials.  An ordinary star stops after ~20 trials; a star nothing
+  # exceeds runs the full n_max and its p is Gumbel-extrapolated (flagged).
+  h_stop: 10
+  n_max: 2000
+  n_min_trials: 20
+  budget_s: 300.0
+  # Loose Bonferroni screen: rate 0.3 overstates the H tail (0.4 is the
+  # single-trial value), so a star screened out here could not have been
+  # significant under the empirical null either.
+  screen_rate: 0.3
+  screen_p_max: 0.5
+  n_shuffle: 100
+  shuffle_min_gaps: 4
+  # A star whose Q / jitter already fail the WATCH thresholds (vet: below)
+  # can never rank above tier `none`, whatever its p, so its null is capped at
+  # n_max_not_clock trials.  Exact restatement of the tier condition, not a
+  # heuristic; it keeps a catalogue of rotation-modulated stars from spending
+  # the whole budget on p-values that cannot change a tier.
+  n_max_not_clock: 200
+  Q_watch: 0.6
+  jitter_watch: 0.12
+
+vet:
+  rotation_ratios: [1.0, 0.5, 0.33333, 0.25, 2.0, 3.0]
+  rotation_tol: 0.03
+  cadence_harmonics: [1.0, 2.0, 3.0, 0.5, 0.33333]
+  cadence_tol: 0.02
+  variable_harmonics: [1.0, 0.5, 0.33333, 2.0, 3.0]
+  variable_tol: 0.03
+  fdr_alpha: 0.05
+  fdr_alpha_watch: 0.25
+  shuffle_alpha: 0.05
+  # STRICT clock quality (candidate / interest).  Rotational modulation with
+  # rate ∝ 1+cos gives jitter ~0.15-0.3 in units of P; a 30-min-cadence clock
+  # at P = 1 d cannot do worse than ~0.006.  The assess stage reports where
+  # these sit against the measured natural distribution (calibration block).
+  Q_min: 0.85
+  jitter_max: 0.05
+  gap_frac_min: 0.6
+  gap_min_count: 4
+  # LOOSE quality (watch)
+  Q_watch: 0.6
+  jitter_watch: 0.12
+  energy_p_max: 0.01
+  instrumental_periods:
+    kepler:
+      long_cadence: 0.020434
+      momentum_dump: 3.0            # reaction-wheel desaturation, ~every 3 d
+      monthly_downlink: 31.0
+      quarter: 93.0
+    tess:
+      cadence_2min: 0.0013889
+      cadence_10min: 0.0069444
+      cadence_200s: 0.0023148
+      ffi_30min: 0.0208333
+      momentum_dump_early: 3.5      # 2.5-4.5 d in early sectors
+      orbit: 13.7
+      sector: 27.4
+  # The brief mentioned a "6.02 h" Kepler systematic; it could not be verified
+  # here and is NOT applied.  Add it under kepler: above if a source is found.
+
+acquire:
+  chunk_rows: 50000
+  max_rows: 0                       # 0 = no cap
+  rotation_max_rows: 0

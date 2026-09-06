@@ -1016,6 +1016,12 @@ def _cmd_figures(args, cfg):
         print(f"wrote {p}")
 
 
+def _cmd_metronome(args, cfg):
+    from .metronome.run import main as _metronome_main
+
+    return _metronome_main(list(args.rest))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="seti", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2112,6 +2118,25 @@ def main(argv=None):
 
     p = sub.add_parser("figures")
     p.set_defaults(func=_cmd_figures)
+
+    # --- 2026-09-06: three new channels, each also runnable as
+    #     `python -m seti.<channel>.run` (which is what their workflows call).
+    p = sub.add_parser("metronome",
+                       help="METRONOME (S28): strict clocks in catalogued flare timing; "
+                            "flags are passed through to seti.metronome.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_metronome)
+
+    from .lantern.run import register as _register_lantern
+    _register_lantern(sub)
+
+    from .fallout.run import _add_arguments as _fallout_args
+    from .fallout.run import _cmd_fallout
+    p = sub.add_parser("fallout",
+                       help="FALLOUT (S14): the fission-product abundance PATTERN in "
+                            "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
+    _fallout_args(p)
+    p.set_defaults(func=_cmd_fallout)
 
     args = parser.parse_args(argv)
     cfg = load_config()

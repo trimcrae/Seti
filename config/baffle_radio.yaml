@@ -1,0 +1,65 @@
+# BAFFLE / radio — a hole in the LoTSS DR2 source counts around a nearby star.
+# Read by seti.baffle.radio.load_radio_config(); a caller that merges this into
+# the full BAFFLE config passes cfg["radio"].  Every key has the same default
+# in seti.baffle.radio.DEFAULTS, so a missing file degrades to these values.
+
+radio:
+  lotss:
+    vizier_tap: "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    # The LoTSS DR2 source catalogue is VizieR J/A+A/659/A1 (Shimwell+2022).
+    # The table and column names are DISCOVERED from TAP_SCHEMA at run time;
+    # this is only the LIKE pattern used to find it.
+    vizier_catalogue_hint: "659/A1"
+    # Fallback, used only when VizieR discovery fails (recorded as DEGRADED_SOURCE).
+    astron_tap: "https://vo.astron.org/tap"
+    astron_table_hint: "lotss"
+    # TOP cap per tile query.  A 2 deg tile holds ~4k rows at 900/deg2, a 4 deg
+    # tile ~15k; a tile that hits the cap is flagged QUERY_TRUNCATED, never
+    # accepted as complete.  Kept below VizieR's sync-mode output limit.
+    max_rows_per_tile: 40000
+    tap_retries: 3
+
+  targets:
+    parallax_min_mas: 20.0            # d < 50 pc
+    parallax_over_error_min: 10.0
+    max_rows: 200000
+    # Coarse LoTSS DR2 sky (Shimwell+2022 Fig. 1), generous on every edge.
+    # This is only a PRE-CUT: the 8'-20' annulus density decides membership,
+    # and a star with density < min_annulus_density_per_deg2 is
+    # outside_footprint_or_masked, never a void.
+    regions:
+      - {name: "13h", ra_min: 100.0, ra_max: 280.0, dec_min: 22.0, dec_max: 72.0}
+      - {name: "0h",  ra_min: 325.0, ra_max: 30.0,  dec_min: 12.0, dec_max: 42.0}
+    # Earth Transit Zone (Heller & Pudritz 2016): |ecliptic latitude| < 0.264 deg.
+    etz_ecliptic_lat_deg: 0.264
+    # Gaia DR3 positions (2016.0) are moved to the LoTSS DR2 mid-epoch.
+    propagate_pm_to_epoch: 2017.5
+
+  # Catalogue tiles (deg).  Also settable from the workflow input tile_deg.
+  tile_deg: 2.0
+
+  # Aperture radii (arcsec).  204" = 1 AU seen at 1000 AU.
+  apertures_arcsec: [30.0, 60.0, 120.0, 204.0, 300.0, 600.0]
+  # Local density comes from this annulus, in the same catalogue, so mosaic
+  # depth variations are absorbed.
+  annulus_in_arcsec: 480.0            # 8'
+  annulus_out_arcsec: 1200.0          # 20'
+  min_annulus_density_per_deg2: 300.0
+  # LoTSS DR2 completeness drops near bright sources: veto within 30' of > 1 Jy.
+  bright_source_jy: 1.0
+  bright_source_radius_arcsec: 1800.0
+  # No void is meaningful where fewer than this many sources are expected.
+  min_expected_count: 8.0
+  # Candidate threshold on the Bonferroni-corrected Poisson probability
+  # p_trials = min(1, P(N <= n | lambda) x n_trials).
+  p_min: 1.0e-5
+  # The annual parallactic ellipse of a screen at these distances (AU) is
+  # sampled at n_phase phases; every centre x aperture is one trial.
+  baffle_distances_au: [500.0, 1000.0, 2000.0, 5000.0, 10000.0]
+  n_phase: 8
+  # Controls: the same statistic at four positions this far from the target
+  # (+-RA, +-Dec), which sample the same mosaics.
+  control_offset_arcsec: 2700.0       # 45'
+
+  # The probe stage's tiny box query (inside the 13h field).
+  probe: {ra: 200.0, dec: 50.0, half_width_deg: 0.05}

@@ -394,6 +394,88 @@ the 18 title-verified full-text targets remain unresolved (Cowley 2004,
 Korotin 2015, Rekhi 2025, Karinkuzhi 2021, Hansen 2018, Prantzos 2020) and are
 recorded as such in `verification.json`, not dropped.
 
+## 4b. The high-resolution tier — where the vector can actually be decided
+
+The v2 GALAH run (calibrated errors: shuffled-null q0.999 = 4.1 / 3.9, floor
+8 governs; 10 dwarfs and 21 giants above threshold, 0 survivors, 29
+unexplained; La clean of C/N/Teff, ρ < 0.1) says two things. The **dwarf
+sample cannot test the hypothesis**: 20% testable, LR+LOO completeness 1.5%
+even at Nd +1.04 dex (giants: 98% testable, 37% at +0.78, 68% at +1.04). And
+**no GALAH element separates fission from an s + r mixture decisively** —
+the vector is a shape argument over elements all three processes make. Per
+`CLAUDE.md` the question changes: *where* can the elements that decide it be
+measured?
+
+* **Pb** — the s-process makes it (the strong component ends at ²⁰⁸Pb;
+  GCE s-fraction ≥ 0.85); fission never does (no fragment reaches A = 208).
+  An s-process star with Nd up has Pb up; a fission-polluted star has Pb at
+  the scaled-solar level or below. A **Pb upper limit below the
+  s-prediction is evidence for fission-not-s.**
+* **Ag, Pd** (and Cd, Sn) — the fission valley, ~1000× below the peaks. The
+  r-process is not suppressed there (solar Ag is 80% r), so an r-process
+  enrichment that reproduces the heavy peak brings Ag/Pd with it; fission
+  does not. Metal-poor stars carry a known weak-r spread at Sr–Ag, so the
+  valley is always compared against the **r template at free amplitude**,
+  never against solar.
+* **Eu** — fission makes almost none; the r-process makes most.
+
+`src/seti/fallout/hires.py` runs these as stages `hires-probe`,
+`hires-acquire`, `hires-screen`, `hires-assess` (`hires-all`) on the public
+literature compilations that carry them — **JINAbase** (Abohalima & Frebel
+2018, ApJS 238, 36; VizieR `J/ApJS/238/36`, ~1,900 metal-poor stars, up to
+~20 n-capture elements, limits flagged) and the **Hypatia Catalog** (Hinkel
+et al. 2014, AJ 148, 54; VizieR `J/AJ/148/54`, a newer release preferred if
+discovery finds one). Tables are discovered on VizieR TAP at runtime, scored
+by element content and stellar parameters, and **joined on the star name
+when a catalogue is split into element groups**; `[X/H]`, `[X/Fe]` and
+log ε columns are all recognised and converted; VizieR `l_` limit flags become
+censored values; per-element counts and upper-limit counts are recorded.
+
+Three things are specific to this tier:
+
+* **Censored likelihood.** An upper limit *u* enters as
+  −2 ln Φ((u − prediction)/σ): a prediction far above the limit is heavily
+  penalised, one far below costs nothing; a lower limit is the mirror image.
+  Tests: a Pb limit far below the s-prediction raises the fission preference
+  (a loose limit changes nothing); a Pb detection at the s level kills it;
+  an r-II star with Ag/Pd up classifies r, not fission; an injected fission
+  star with Pb and Ag limits classifies fission and survives leave-one-out.
+* **Literature heterogeneity.** Compilations mix analyses. Duplicate entries
+  are collapsed to one row per star (detections beat limits; the tightest
+  limit otherwise); the star-to-star scatter of duplicates per element is
+  measured and becomes the error floor where it exceeds the peer scatter
+  (`error_model[...].source = "duplicate_scatter"`); and a star whose own
+  entries disagree by more than 0.3 dex in a pattern element is
+  `literature_heterogeneity`-vetoed.
+* **The decisive ratios per star** — [Pb/Nd], [Ag/Nd], [Pd/Nd], [Eu/Nd] —
+  are reported with their limit sense (`<`, `>`) for every survivor and every
+  unexplained star, in `hires_summary.json` and `HIRES_REPORT.md`. Templates
+  at a_f = 3: fission [Pb/Nd] −0.60, s +0.10; fission [Ag/Nd] −0.60,
+  r +0.19; fission [Eu/Nd] −0.26, r +0.20.
+
+The templates are the same ENDF/JEFF chain yields and Arlandini/Bisterzo
+decompositions extended to Rh, Pd, Ag, Cd, Sn, Gd, Tb, Dy, Ho, Er, Yb, Hf,
+Os, Ir, Pt, Pb, Th, U (Th/U r-only; Pb s-fraction 0.85 from the GCE value,
+Travaglio et al. 2001 / Bisterzo 2014). The goodness-of-fit gate,
+leave-one-out and heavy-peak coherence apply unchanged. The tier is a
+separate workflow job (`fallout-hires`, dispatch input `tier: hires` or
+`both`) with its own commit-back; outputs are `hires_probe.json`,
+`hires_acquisition.json`, `hires_screen.json`, `hires_summary.json`,
+`hires_candidates_<source>.csv`, `HIRES_REPORT.md`, and the GALAH `REPORT.md`
+gains a section whenever `hires_summary.json` is present.
+
+**Honest limits of this tier.** Discovery is untested against the live
+VizieR schema from the sandbox: the column conventions of `J/ApJS/238/36` and
+`J/AJ/148/54` are inferred, and the first dispatch is a `hires-probe` whose
+`hires_probe.json` lists every table and column found. The compilations are
+inhomogeneous in Teff scale, NLTE treatment and line lists in ways the
+duplicate scatter can only partly capture; a survivor is a *target for a
+homogeneous re-analysis of the source spectra*, nothing more. JINAbase is
+metal-poor and r-dominated by construction, so its Pb and Ag/Pd limits test
+fission-versus-*r* far more often than fission-versus-*s*; Hypatia is the
+solar-neighbourhood, s-relevant sample but carries Pb/Ag/Pd in a small subset,
+which the per-element counts will state.
+
 ## 5. Interpretation ladder
 
 1. **Instrumental / systematic** — a flagged core element, the pattern
@@ -432,7 +514,7 @@ be written up.
 
 ## 7. Files
 
-`src/seti/fallout/{__init__,yields,pattern,acquire,run}.py`,
+`src/seti/fallout/{__init__,yields,pattern,acquire,hires,run}.py`,
 `config/fallout.yaml`, `tests/test_fallout.py`,
 `.github/workflows/fallout.yml` (jobs `fallout`, `falloutlit`),
 `scripts/falloutlit_fetch.py`, `results/fallout/`, `results/falloutlit/`.

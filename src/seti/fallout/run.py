@@ -46,7 +46,10 @@ from . import pattern as P
 from . import yields as Y
 
 CHANNEL = "fallout"
-STAGES: tuple[str, ...] = ("probe", "acquire", "screen", "assess", "vet", "all")
+#: GALAH tier first; the high-resolution tier (JINAbase / Hypatia; Pb, Ag, Pd,
+#: Eu with censored limits) runs as its own stages and its own workflow job.
+STAGES: tuple[str, ...] = ("probe", "acquire", "screen", "assess", "vet", "all",
+                           "hires-probe", "hires-acquire", "hires-screen", "hires-assess", "hires-all")
 
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_DEGRADED = "DEGRADED_SOURCE"
@@ -760,6 +763,14 @@ def write_report(out_dir: Path, summary: dict) -> Path:
             L.append("- vetoes: " + ", ".join(f"{k} {v}" for k, v in vv.items()
                                               if k not in ("first_veto", "n_pass")))
         L.append("")
+    hs = out_dir / "hires_summary.json"
+    if hs.exists():
+        try:
+            from . import hires as H
+
+            L.append(H.report_section(json.loads(hs.read_text()), heading_level=2))
+        except Exception as exc:  # noqa: BLE001
+            L.append(f"## High-resolution tier\n\n(hires_summary.json present but unreadable: {exc!r})\n")
     L.append("## What a survivor still has to pass\n")
     L.append("Nothing here is a detection. A survivor is a *target*: the Ba II, La II, Ce II, Nd II "
              "and Eu II lines must be re-measured from the raw HERMES spectrum against Teff-matched "
@@ -788,9 +799,16 @@ def fallout_run(cfg: Config | None = None, *, stage: str = "all", surveys: str |
     cfg = cfg or load_config()
     block = block if block is not None else load_block(cfg)
     out = _out_dir(cfg, out_dir)
+    inject = inject or {}
+
+    if stage.startswith("hires-"):
+        from . import hires as H
+
+        src = [s.strip().upper() for s in surveys.split(",") if s.strip()] if surveys else None
+        return H.hires_run(block, out, src, stage, max_rows=max_rows, inject=inject)
+
     sv_list = [s.strip().upper() for s in (surveys or ",".join(block.get("surveys") or ["GALAH"])).split(",")
                if s.strip()]
-    inject = inject or {}
 
     if stage == "probe":
         return stage_probe(block, out, sv_list, route_probe_fn=inject.get("route_probe_fn"))
@@ -824,7 +842,8 @@ def fallout_run(cfg: Config | None = None, *, stage: str = "all", surveys: str |
 def _add_arguments(p: argparse.ArgumentParser) -> None:
     p.add_argument("--stage", choices=STAGES, default="all")
     p.add_argument("--surveys", default=None,
-                   help="comma-separated surveys (default: config/fallout.yaml surveys)")
+                   help="comma-separated surveys (default: config/fallout.yaml surveys); for the "
+                        "hires-* stages, comma-separated compilations (JINABASE,HYPATIA)")
     p.add_argument("--max-rows", type=int, default=None, help="row cap for the catalogue pull")
     p.add_argument("--cache-dir", default=None, help="where the bulk FITS is streamed to")
     p.add_argument("--out-dir", default=None, help="override results/fallout/")

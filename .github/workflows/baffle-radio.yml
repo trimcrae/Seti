@@ -41,6 +41,13 @@ on:
         description: "Catalogue tile size in degrees"
         required: false
         default: "2"
+      resume_from_run_id:
+        description: >-
+          Download a prior run's baffle-radio-run artifact first, so its
+          checkpointed LoTSS tiles are reused and only the missing/failed ones
+          are re-queried (a timed-out pull resumes instead of restarting).
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -60,6 +67,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      - name: Fetch a prior run's checkpointed tiles
+        if: ${{ inputs.resume_from_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: baffle-radio-run
+          run-id: ${{ inputs.resume_from_run_id }}
+          github-token: ${{ github.token }}
+          path: results/baffle_radio/
+      - name: Count resumed tiles
+        if: ${{ inputs.resume_from_run_id != '' }}
+        run: ls results/baffle_radio/tiles/ 2>/dev/null | wc -l
       - name: Offline gate — the statistic must behave on this runner
         run: python -m pytest tests/test_baffle_radio.py -q -p no:cacheprovider
       - name: Run (${{ inputs.stage }})

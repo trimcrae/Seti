@@ -35,7 +35,7 @@ DEFAULT_LOCUS_CFG = {
     "rchi2_quantile": 0.95, "poe_min": 5.0,
     "giant_mg_max": 2.5, "giant_bp_rp_min": 0.9, "blue_bp_rp_max": 0.4,
     "jk_bin_width": 0.05, "jk_min": -0.2, "jk_max": 1.4, "min_per_bin": 25,
-    "w3_snr_min": 5.0, "tail_sigmas": [3.0, 5.0],
+    "w3_snr_min": 5.0, "w3_err_max": 0.2, "tail_sigmas": [3.0, 5.0],
 }
 
 
@@ -65,6 +65,19 @@ def absolute_g(g: np.ndarray, parallax_mas: np.ndarray) -> np.ndarray:
         out = g + 5.0 * np.log10(p / 100.0)
     out[~(p > 0)] = np.nan
     return out
+
+
+def w3_usable(df: pd.DataFrame, cfg: dict | None = None) -> np.ndarray:
+    """W3 is usable where ``w3snr > w3_snr_min``, OR — when the mirror serves no
+    ``w3snr`` at all (the Gaia DR1 AllWISE mirror does not; run 34053752510
+    returned NaN for every row) — where ``w3mpro_error < w3_err_max``."""
+    c = _cfg(cfg)
+    snr = _num(df, "w3snr")
+    err = _num(df, "w3mpro_error")
+    w3 = _num(df, "w3mpro")
+    by_snr = snr > float(c["w3_snr_min"])
+    by_err = ~np.isfinite(snr) & (err < float(c["w3_err_max"]))
+    return np.isfinite(w3) & (by_snr | by_err)
 
 
 def luminosity_class(df: pd.DataFrame, cfg: dict | None = None) -> pd.Series:
@@ -203,7 +216,7 @@ def fit_locus(sample: pd.DataFrame, cfg: dict | None = None, *,
     jk = _num(df, "j_m") - _num(df, "ks_m")
     ks = _num(df, "ks_m")
     cls = luminosity_class(df, c).to_numpy().astype(str)
-    w3ok = _num(df, "w3snr") > float(c["w3_snr_min"])
+    w3ok = w3_usable(df, c)
     bins: dict = {}
     n_by_class: dict = {}
     for lc in list(LUM_CLASSES) + ["all"]:
@@ -240,7 +253,7 @@ def residuals(df: pd.DataFrame, locus: Locus, cfg: dict | None = None) -> pd.Dat
     out["jk"] = jk
     out["lum_class"] = cls
     e_ks = np.where(np.isfinite(e_ks), e_ks, 0.0)
-    w3ok = _num(out, "w3snr") > float(c["w3_snr_min"])
+    w3ok = w3_usable(out, c)
     for band in BANDS:
         w = _num(out, f"{band}mpro")
         e_w = _num(out, f"{band}mpro_error")
@@ -277,4 +290,4 @@ def tail_asymmetry(df: pd.DataFrame, cfg: dict | None = None) -> dict:
 
 __all__ = ["BANDS", "DEFAULT_LOCUS_CFG", "LUM_CLASSES", "Locus", "absolute_g",
            "fit_locus", "locus_quality_mask", "luminosity_class", "residuals",
-           "tail_asymmetry", "wise_qual_letters"]
+           "tail_asymmetry", "w3_usable", "wise_qual_letters"]

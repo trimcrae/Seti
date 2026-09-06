@@ -14,6 +14,11 @@ Stages
              sensitivity.  Writes ``candidates.csv``, ``vetoed.csv``,
              ``deferred_lpv.csv``, ``missing_candidates.csv``, ``screen.json``
              and ``summary.json``.
+``vet``      per-candidate archive checks (``seti.baffle.vet``): Gaia
+             neighbours, AllWISE proper, CatWISE / unWISE against the same
+             locus, W3 consistency; the missing-track direct match.  Writes
+             ``vet.json``, ``vet_table.csv``, ``vetted_candidates.csv``,
+             ``missing_vet.json``, ``missing_vet.csv``.
 ``patch``    ``from .patch import run_patch_stage`` (another agent's module);
              ``run_patch_stage(candidates_df, out_dir, cfg) -> dict`` merged
              under ``summary["patch"]`` and written to ``patch.json``.
@@ -59,7 +64,7 @@ from .locus import (
 )
 
 CHANNEL = "baffle"
-STAGES = ("probe", "acquire", "screen", "patch", "radio", "assess")
+STAGES = ("probe", "acquire", "screen", "vet", "patch", "radio", "assess")
 TRACKS = ("deficit", "missing")
 
 DEFAULTS: dict = {
@@ -77,6 +82,7 @@ DEFAULTS: dict = {
                for k, v in scr.DEFAULT_SCREEN_CFG.items()},
     "sensitivity": {"inject_mags": [0.2, 0.3, 0.5, 1.0], "max_stars": 20000},
     "output": {"max_vetoed_rows": 50000},
+    "vet": {},                      # seti.baffle.vet.DEFAULTS fills every key
     "radio": {},
     "patch": {"max_objects": 200},
 }
@@ -391,16 +397,33 @@ def stage_screen(conf: dict, out: Path, *, neighbours: pd.DataFrame | None = Non
 
 
 # ---------------------------------------------------------------------------
+# vet
+# ---------------------------------------------------------------------------
+def stage_vet(conf: dict, out: Path, *, gaia_fetcher=None, matchers=None) -> dict:
+    from .vet import run_vet_stage
+
+    rep = run_vet_stage(conf, out, gaia_fetcher=gaia_fetcher, matchers=matchers,
+                        locus_cfg=conf.get("locus"))
+    stage_assess(conf, out, quiet=True)
+    return rep
+
+
+# ---------------------------------------------------------------------------
 # patch / radio (other agents' modules, guarded)
 # ---------------------------------------------------------------------------
-def _load_candidates(out: Path) -> pd.DataFrame:
-    p = out / "candidates.csv"
-    if not p.exists() or p.stat().st_size == 0:
-        return pd.DataFrame()
-    try:
-        return pd.read_csv(p)
-    except pd.errors.EmptyDataError:
-        return pd.DataFrame()
+def _load_candidates(out: Path) -> tuple[pd.DataFrame, str]:
+    """``vetted_candidates.csv`` when the vet has run, else ``candidates.csv``."""
+    for name in ("vetted_candidates.csv", "candidates.csv"):
+        p = out / name
+        if not p.exists():
+            continue
+        if p.stat().st_size == 0:
+            return pd.DataFrame(), name
+        try:
+            return pd.read_csv(p), name
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame(), name
+    return pd.DataFrame(), "none"
 
 
 def stage_patch(conf: dict, out: Path, *, max_objects: int | None = None) -> dict:
@@ -413,7 +436,7 @@ def stage_patch(conf: dict, out: Path, *, max_objects: int | None = None) -> dic
         _write(out / "patch.json", rep)
         print(f"[baffle] patch: {rep['error']}", flush=True)
         return rep
-    cands = _load_candidates(out)
+    cands, cand_source = _load_candidates(out)
     cfg = _deep_update(conf, {"patch": {"max_objects": int(max_objects)}}) \
         if max_objects is not None else conf
     if max_objects is not None and len(cands) > int(max_objects):
@@ -425,7 +448,7 @@ def stage_patch(conf: dict, out: Path, *, max_objects: int | None = None) -> dic
     except Exception as exc:                                        # noqa: BLE001
         rep = {"status": "FAILED", "error": repr(exc)}
     rep.update(stage="patch", generated_utc=_now(), n_candidates_in=int(len(cands)),
-               seconds=round(_time.time() - t0, 1))
+               candidates_source=cand_source, seconds=round(_time.time() - t0, 1))
     _write(out / "patch.json", rep)
     stage_assess(conf, out, quiet=True)
     return rep
@@ -486,10 +509,19 @@ def stage_assess(conf: dict, out: Path, *, quiet: bool = False) -> dict:
             scr.deficit_verdict(acq_summary["deficit"]["acquisition_verdict"], 0, 0),
             scr.missing_verdict(acq_summary["missing"]["acquisition_verdict"], 0, 0))
         summary["note"] = "no screen.json on disk: nothing has been screened"
-    for sect in ("patch", "radio"):
+    for sect in ("vet", "missing_vet", "patch", "radio"):
         p = out / f"{sect}.json"
         if p.exists():
             summary[sect] = _read_json(p)
+    summary["verdict_screen"] = verdict
+    vet = summary.get("vet") or {}
+    if isinstance(vet, dict) and vet.get("verdict_deficit_after_vet"):
+        # the ledger keeps the query log; the summary keeps the verdict and counters
+        summary["vet"] = {k: v for k, v in vet.items() if k != "ledger"}
+        mv = (summary.get("missing_vet") or {}).get("missing_vet_verdict") if isinstance(
+            summary.get("missing_vet"), dict) else None
+        summary["verdict_after_vet"] = scr.combine_verdicts(vet["verdict_deficit_after_vet"], mv)
+        verdict = summary["verdict_after_vet"]
     summary["verdict"] = verdict
     summary["files"] = sorted(p.name for p in out.iterdir()
                               if p.is_file() and p.suffix in (".json", ".csv"))
@@ -508,7 +540,8 @@ def stage_assess(conf: dict, out: Path, *, quiet: bool = False) -> dict:
 def baffle_run(cfg=None, stage: str = "all", tracks=None, *, shard: int = 0, n_shards: int = 1,
                dec_band_index=None, g_max: float | None = None, out_root=None,
                max_patch_objects: int | None = None, runner=None, neighbours=None,
-               assume_columns: bool = False, run_sensitivity: bool = True) -> dict:
+               assume_columns: bool = False, run_sensitivity: bool = True,
+               gaia_fetcher=None, matchers=None) -> dict:
     """Run one stage, a comma list, or all of them.  Returns the last report."""
     conf = load_baffle_config(cfg)
     if g_max is not None:
@@ -526,6 +559,8 @@ def baffle_run(cfg=None, stage: str = "all", tracks=None, *, shard: int = 0, n_s
                                 assume_columns=assume_columns)
         elif s == "screen":
             rep = stage_screen(conf, out, neighbours=neighbours, run_sensitivity=run_sensitivity)
+        elif s == "vet":
+            rep = stage_vet(conf, out, gaia_fetcher=gaia_fetcher, matchers=matchers)
         elif s == "patch":
             rep = stage_patch(conf, out, max_objects=max_patch_objects)
         elif s == "radio":
@@ -549,7 +584,7 @@ def _stage_arg(value: str) -> str:
 def add_arguments(p: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """The stage flags, shared by ``python -m seti.baffle.run`` and ``seti baffle``."""
     p.add_argument("--stage", default="all", type=_stage_arg, metavar="STAGE",
-                   help="probe|acquire|screen|patch|radio|assess|all or a comma list")
+                   help="probe|acquire|screen|vet|patch|radio|assess|all or a comma list")
     p.add_argument("--tracks", default="deficit,missing",
                    help="comma-separated: deficit,missing")
     p.add_argument("--shard", type=int, default=0, help="acquire shard index")
@@ -602,4 +637,4 @@ if __name__ == "__main__":                                          # pragma: no
 
 __all__ = ["CHANNEL", "DEFAULTS", "STAGES", "TRACKS", "Locus", "add_arguments", "assemble_sample",
            "baffle_run", "build_parser", "load_baffle_config", "main", "merged_ledger", "stage_acquire",
-           "stage_assess", "stage_patch", "stage_probe", "stage_radio", "stage_screen"]
+           "stage_assess", "stage_patch", "stage_probe", "stage_radio", "stage_screen", "stage_vet"]

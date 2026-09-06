@@ -3,12 +3,112 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-01.
+next. Last updated: 2026-09-06.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
+
+The charter ranks novelty first, and after 35 channels the taxonomy in
+`docs/necrosignatures.md` still carried two signatures nobody here or, as far
+as the record shows, anywhere had built: **S28, structure in timing series**,
+and **S14, the fission-product pattern** (marked "covered by midden", which
+was wrong — MIDDEN searches the *lines* of Tc/Pm/actinides, not the stable
+multi-element residue). A third question fell out of asking what the JWST
+archive can test that no laser search ever has. All three were built in
+parallel, offline-tested (108 new tests, full suite green), wired into the
+CLI (`seti metronome|lantern|fallout`), the channel index and the taxonomy,
+and are dispatched on the runner from `main`. None has a committed result
+yet; every row in `docs/channels.md` says **Pending** and means it.
+
+**METRONOME — clocks in flare timing (`docs/metronome.md`).** The public
+Kepler and TESS flare catalogues (Yang & Liu 2019: 162,262 flares on 3,420
+stars; Pietras+2022, Günther+2020, Davenport 2016, Tu+2020) are event lists
+with peak times. Natural flares are stochastic; the only natural
+quasi-periodicity is rotational modulation of visibility, with jitter of a
+tenth of a cycle or more. A pulsed transmitter, a duty-cycled engine or a
+beacon is a clock with jitter far below that. The observable is the *timing
+regularity* of catalogued events — a point-process search that a periodogram
+cannot see (a 1% duty-cycle clock contributes no Fourier power to a light
+curve). Per star: an H-test/Rayleigh scan over trial periods, clock quality
+Q and jitter, a null that resamples the star's **own observing windows** (so
+the 30-min cadence, quarter gaps and sector boundaries are in the null by
+construction) and a second null that shuffles the empirical waiting times.
+Named vetoes with counters: `rotation_alias` (P_rot and harmonics from
+McQuillan+2014 / Santos+2021), `cadence_alias` (the spacecraft's own periods),
+`cross_star_coincidence` (momentum dumps — epochs shared by many stars are
+removed before the scan), `periodic_variable` (VSX / Gaia vari / ZTF: an RR
+Lyrae whose cycles a flare finder chopped up is recovered as a perfect clock
+and then rejected, by test), `jitter_too_large`. Measured offline: a strict
+clock in Kepler Q2–Q8 windows recovered to < 0.1% in P with p < 10⁻⁶; 30
+Poisson stars → 0 candidates; a rotationally modulated star is coherent but
+fails on jitter. Floor: N ≥ 8 events, P ≥ 0.2 d, P ≤ span/3.
+
+**LANTERN — the line that vanishes at eclipse (`docs/lantern.md`).** Across
+every public JWST exoplanet time series (NIRSpec, NIRCam, NIRISS, MIRI
+`x1dints` from MAST, ephemerides from the Exoplanet Archive): is there an
+unresolved emission feature present out of secondary eclipse and **absent
+while the planet is behind its star**? Stellar lines, detector features and
+artefacts do not care whether the planet is occulted, so a line whose flux
+tracks the planet's visibility is planet-side, and a monochromatic one is a
+laser or a beacon. During transit the same line must be constant in-vs-out —
+the second phase reference. The one-planet, out-of-transit-only scan in
+`jwst_bio` is the in-house precedent; Kipping & Teachey 2016 proposed lasers
+during transit; every executed optical-SETI line search is single-epoch and
+phase-agnostic. Building the detector found five real defects offline, each
+now pinned by a test (a running-median continuum that failed on steep
+continua; a line-series error taken from side-window *spread* that was
+stellar structure and suppressed every SNR tenfold; a continuum series that
+shared noise with the subtraction window; a quadratic that extrapolated
+across a wide continuum hole; a clip that ran away with unmasked noise).
+Final synthetic performance: a 2% line → `candidate` at 185σ with the
+in-eclipse residual at 1.7σ; a constant stellar line, a cosmic-ray spike, a
+14-pixel band, a null and a ramp-with-late-eclipse are all rejected with
+named vetoes. Data-path risks, stated: products are 0.1–1+ GB each (streamed
+one at a time, deleted, `max_file_gb` skips and records `too_large`); a 30k-
+integration SOSS stack may reach several GB in memory; proprietary products
+are counted, not fetched.
+
+**FALLOUT — the fission residue (`docs/fallout.md`).** After every decay has
+run, fission leaves a two-humped element pattern: a light peak (Zr, Mo, Ru),
+a heavy peak (Ba, La, Ce, Nd), a valley at Ag–Te, almost nothing at Eu, no
+Pb. From ENDF/B-VII.1 chain yields at a 1 Myr horizon (Zr 36.7, Mo 24.6,
+Nd 20.7, Ru 17.5, Ba 13.0, Ce 12.1, La 6.4, Eu 0.58 per 100 fissions) folded
+against Asplund+2021 solar, the vector is [Nd/Ba] ≫ 0 with [Eu/Nd] < 0 and
+[Mo/Zr] > 0 — the s-process gives [Nd/Ba] < 0 and the r-process [Eu/Nd] > 0,
+so neither, nor their mixture, reproduces it. The screen fits each GALAH DR4
+cool dwarf (log g > 4, 4500–6300 K, where diffusion cannot make heavy-element
+peculiarity) as solar + fission against solar + best s/r/s+r mixture, in a
+Teff/logg/[Fe/H]-matched peer frame (TAILINGS' machinery, reused), and it is
+only a pattern if **removing any one element leaves it standing** — the
+leave-one-out test that separates this from TAILINGS' one-element anomaly.
+Vetoes: `s_process_star`, `r_process_star`, `young_ba_enhancement` (La/Ce
+anchor the heavy peak; Ba is reported but not load-bearing),
+`nlte_saturated_lines`, `low_snr_or_flagged`, `single_element_driver`.
+Sensitivity, measured offline on a 240,000-star synthetic dwarf population
+with GALAH's per-element errors: complete for ≳ 1 dex Nd enrichment with the
+full shape, half-complete near +0.7 dex, blind below ~0.4 dex; the
+shuffled-element null puts the 99.9th percentile of the likelihood ratio at
+2.3 against a floor of 8, and exactly one of 240,000 clean dwarfs crossed it
+before being removed by the leave-one-out veto. The honest scale of the
+proposal is in the doc: doubling a G dwarf's Nd needs ~6 × 10²¹ kg of fission
+product, ~10¹¹ times humanity's spent-fuel inventory — a civilization that ran
+fission at planetary throughput for a geological age, or a star into which a
+whole system's waste was concentrated. The data route is the one that
+actually worked for TAILINGS (Data Central cloud FITS), with the same
+runtime schema discovery and `DEGRADED_SOURCE` reporting.
+
+**Novelty is stated as unverified in all three docs** until each channel's
+prior-art sweep (`metronomelit`, `lanternlit`, `falloutlit` — verbatim arXiv
+abstracts, id-vs-title checks, decoy-aware concept scans) has run on the
+runner and been read. **Next actions:** (1) read the three lit sweeps and
+narrow any claim they touch; (2) read the first `summary.json` of each; a
+`NO_DATA_REACHED` or `DEGRADED_SOURCE` is a data-path fault to fix, not a sky
+statement; (3) anything at `interest` or above goes to light-curve / spectrum
+inspection before it is called anything.
 
 ### Rubin is snowed in: SKY_STOPPED, settled 2026-08-25
 

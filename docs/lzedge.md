@@ -86,14 +86,77 @@ answer is set by the tail.  With the soft cut the density at
 v_min(δ = 380 keV) is 3× below the sharp cut; with a (v_esc − v)^2.5 tail it
 is 100× below.
 
-## 4. Novelty status
+## 4. Novelty status — read from the record (2026-09-07)
 
-PENDING the record (`results/lzlit/followups.json`, INSPIRE `refersto`).  The
-specific claims to check against every follow-up: use of the event *date* as
-a datum (a live-time-weighted likelihood, not a modulation curve); a measured
-(Gaia) escape speed with its tail-shape degeneracy rather than an assumed
-cut-off; the LMC-boosted tail at the edge and the phase it predicts; and the
-seasonal exposure of the other experiments' high-energy windows.
+`results/lzlit/` holds the LZ paper's LaTeX source (tables, supplement) and the
+text of every paper INSPIRE lists as citing it (19 by 7 September) plus the
+halo-kinematics literature. What each follow-up does with the *astrophysics*
+and with the *date*:
+
+| Paper | Model | Halo | Uses the event date? | v_esc treatment | LMC tail | Sideband |
+|---|---|---|---|---|---|---|
+| Freese & Theodosopoulos 2609.01583 | Higgsino iDM | SHM | no | fixed | no | no |
+| Su, Yang & Yang 2609.01475 | iDM in LZ + CRESST | SHM | no | fixed | no | no |
+| "Higgsino above the sea of fog" 2609.01504 | Higgsino | SHM (v0 220, vesc 540) + Smith-Orlik LMC halo integral, "rough" | notes June peak "not far from" the event | fixed | yes, rough (δ → 480–500 keV) | no |
+| Wu, Zhang & Zhu 2609.01590 | Higgsino + Fermi-LAT | SHM | no | fixed | no | no |
+| Lou & Lu 2609.01592 | fermionic absorption | — | no | — | no | no |
+| Yin 2609.01892 | PQ high-scale SUSY | SHM | no | fixed | no | no |
+| Nomura 2609.02505 | Z2 Higgs partner | SHM | no | fixed | no | no |
+| Di Mauro 2609.02608 | iDM model building | SHM, one-harmonic v_E(t) | **explicitly not**: "we do not combine the event date… a rigorous timing analysis would have to convolve the predicted rate with the actual LZ live-time distribution" | fixed 544 | mentioned | mentioned |
+| Pospelov & Ramani 2609.02775 | Higgsino solar capture | — | no | — | no | no (IceCube: δ > 566 keV excludes the thermal Higgsino) |
+| Visinelli 2609.02807 | PQ-origin iDM | SHM | no | fixed | mentioned | mentioned |
+| Yamashita 2609.02868 | inelastic dark photon | SHM | no | fixed | no | no |
+| 2609.04144 | electroweak iDM signatures | SHM | no | fixed | no | no |
+| **Higgsino sideband 2609.04175** | Higgsino, fixed Z-exchange σ | SHM, **v_esc = 544 / 567 / 610**, + **LMC boosted Gaussian** (\|v_b\| = 570, σ_b = 100, cut 200, w = 0.26 %, 0.6 %) and a digitised Smith-Orlik integral | no (year-averaged v_lab) | scanned upward; "as low as 480 km/s" noted in one sentence as relieving the tension | yes | **yes**: N_SB per window event 3.2–7.6 (SHM), 3.6–10.1 (LMC) |
+| **McCabe 2609.04181** | iDM shape fit | SHM, **v_esc = 544 fixed**; "how deviations from it would change these results… we leave for future work" | **yes**: density evaluated on the date, ν integrated over 27 Mar 2023 – 1 Apr 2024 with uniform live time | fixed | no | implicit (window 125–400 keV) |
+| Atmospheric-ν up-scattering 2609.04185 | background | — | no | — | no | no |
+| Axion portal 2609.04186 | axion portal | SHM | no | fixed | no | no |
+| Dent & Newstead 2609.04673 | exothermic iDM | SHM (v_lab 250, averaged) | no | fixed | no | yes (0 events in 350–680 keV) |
+| Exothermic DM at LZ 2609.05204 | exothermic | SHM | no | fixed | mentioned | yes |
+| Xenon excitation 2609.05291 | inelastic nuclear excitation | SHM + LMC "M1" + stream | no | fixed | yes (moderate enhancement) | mentioned |
+
+So, as of 7 September: the event **date** enters exactly one likelihood
+(McCabe's, uniform live time, SHM at 544 km/s); the **escape speed** is either
+fixed at 544 or scanned *upward* (04175); the **LMC** admixture is used by
+04175 (Higgsino only), 01504 (rough) and 05291; the **sideband** is used by
+04175, 04673 and 05204. **Nobody integrates over the measured escape speeds**
+— and the measurements sit *below* the conventional value: 484.6 +17.8/−7.4
+(Necib & Lin 2022, Gaia eDR3), 497 ± 8 (Koppelman & Helmi 2021), 521 +46/−30
+(Roche et al. 2024, Gaia DR3), 528 +24/−25 (Deason et al. 2019), against
+580 ± 63 (Monari et al. 2018) and the RAVE-2007 544 that Baxter et al. (2021)
+recommend and LZ, McCabe and everyone else adopt. Nobody compares halo models
+by evidence given the event, and nobody inverts the event into a statement
+about the local escape speed. Those three are this channel's claims:
+
+1. **Joint energy × date × sideband likelihood over the measured halo tail.**
+   The same three-factor likelihood for every halo model — sharp / soft /
+   power-law tails, each Gaia escape-speed measurement integrated over its
+   uncertainty, and the 04175 LMC admixture — with the cross section
+   marginalised under a physical ceiling.
+2. **Evidence per halo model.** A single event that must be (i) at the edge
+   for its energy, (ii) at the peak of the year for its date, and (iii) not
+   accompanied by sideband events prefers a *lower* escape speed: the sideband
+   count per window event at the fitted splitting falls from ≈ 5 at 544 km/s
+   to < 1 near 490 km/s (04175 noted the direction; here it is the quantity
+   that ranks the Gaia measurements).
+3. **The inverse: the escape speed from the event.** Under the inelastic
+   reading, the event's own likelihood of v_esc (marginalised over m_χ, δ, σ)
+   is a measurement — to be compared with the stellar ones.
+
+Plus the pure-kinematics *reachability calendar* (§3), which no paper states,
+and the isotope dependence of the edge (Xe-136's threshold is 20 km/s below
+Xe-129's).
+
+**Not novel, and not claimed:** the modulation amplitude at the edge (McCabe,
+Di Mauro), the LMC extending δ_max (01504, 04175), the sideband as an upper
+bound on δ for the Higgsino (04175), the exothermic alternative (04673, 05204).
+
+**Data release:** the paper's "Data Release" is not yet public; the only
+LZ HEPData record linked from lz.lbl.gov (155182) is the 2025 4.2 t yr SI
+result (HEPData itself returns 403 to the runner). The efficiency curve used
+here is the paper's own description (96 % plateau 14–250 keV, 50 % at 5.4 and
+269.9 keV); 04175 digitised Fig. S2 and its sideband numbers agree with ours
+to ~30 %.
 
 ## 5. Contamination model (what would make this analysis wrong)
 

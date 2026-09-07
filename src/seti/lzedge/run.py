@@ -301,9 +301,95 @@ def stage_posterior(cfg: dict, out: pathlib.Path, halos_only: list[str] | None =
     return summary
 
 
+def _quantiles(cdf: np.ndarray, grid: np.ndarray, probs) -> list[float]:
+    return [float(np.interp(p, cdf, grid)) for p in probs]
+
+
+def _asym_gaussian_weights(grid: np.ndarray, centre: float, plus: float, minus: float) -> np.ndarray:
+    """Two-piece Gaussian weights for a v_esc measurement quoted as centre (+plus / -minus)."""
+    sig = np.where(grid >= centre, plus, minus)
+    w = np.exp(-0.5 * ((grid - centre) / sig) ** 2)
+    return w / np.sum(w)
+
+
+def stage_vesc_marginal(cfg: dict, out: pathlib.Path) -> dict:
+    """The delta posterior with the escape speed integrated over a *measurement*:
+
+        P(delta | event, measurement) ∝ ∫ dv_esc P(v_esc | measurement) L(delta, v_esc),
+
+    for each measurement listed under ``vesc_measurements`` in config, at the
+    masses in ``posterior.m_chi_gev``, one-component SHM with the chosen tail
+    (config ``vesc_tail``: sharp / soft / power).  Also the probability that
+    the event is kinematically reachable at all on its date, per measurement."""
+    ev, run, win, sc = cfg["event"], cfg["run"], cfg["window"], cfg["scan"]
+    E_obs, t_obs = float(ev["energy_keV"]), ev["date"]
+    eff = Efficiency.from_table(win["efficiency"])
+    live = LiveTime.uniform(run["start"], run["end"], run["live_days"])
+    sig_ref, sig_sys = float(ev["sigma_stat_keV"]), float(ev.get("sigma_sys_keV", 0.0))
+
+    def sigma_fn(E):
+        return K.resolution_sigma_keV(E, sig_ref, E_obs)
+
+    pc = cfg.get("posterior", {})
+    sigma_ceiling = float(pc.get("sigma_ceiling_cm2", 1e-37))
+    masses = pc.get("m_chi_gev", sc["m_chi_gev"])
+    d = pc.get("delta_keV", sc["delta_keV"])
+    deltas = np.arange(d["min"], d["max"] + 0.5 * d["step"], d["step"])
+    tail = cfg.get("vesc_tail", {"tail": "sharp"})
+    v0 = float(cfg.get("vesc_v0_kms", 238.0))
+    meas = cfg.get("vesc_measurements", {})
+    vgrid = np.arange(float(cfg.get("vesc_grid", {}).get("min", 440.0)),
+                      float(cfg.get("vesc_grid", {}).get("max", 660.0)) + 0.1,
+                      float(cfg.get("vesc_grid", {}).get("step", 10.0)))
+    t0 = time.time()
+    # likelihood table L[v_esc, m, delta] (marginal over sigma_n with the ceiling), computed once
+    like = np.zeros((len(vgrid), len(masses), len(deltas)))
+    reach = np.zeros((len(vgrid), len(masses)))
+    for i, vesc in enumerate(vgrid):
+        halo = shm_tail(v0=v0, v_esc=float(vesc), tail=tail.get("tail", "sharp"), k=tail.get("k", 2.0))
+        vmax = float(vesc) + v_lab_speed_kms(t_obs, v0)
+        for j, m in enumerate(masses):
+            reach[i, j] = 1.0 if float(K.v_min_kms(E_obs, m, 0.0)) <= vmax else 0.0
+            for k_, delta in enumerate(deltas):
+                model = EventModel(halo, float(m), float(delta), eff, v0_kms=v0)
+                pl = profile_likelihood(model, live, E_obs, t_obs, sigma_fn, sig_sys, sc.get("livetime_step_days", 3.0))
+                mu1 = pl["mean_rate_livetime"] * run["exposure_tonne_year"]
+                mu_max = mu1 * (sigma_ceiling / 1e-45)
+                occam = 1.0 - math.exp(-mu_max) if mu_max < 50 else 1.0
+                like[i, j, k_] = pl["profile"] * occam
+        print(f"  vesc {vesc:.0f}: {time.time() - t0:.0f}s")
+    results = {}
+    for name, spec in meas.items():
+        w = _asym_gaussian_weights(vgrid, float(spec["v_esc"]), float(spec["plus"]), float(spec["minus"]))
+        per_mass = {}
+        for j, m in enumerate(masses):
+            post = np.einsum("i,ik->k", w, like[:, j, :])
+            evidence = float(np.sum(post) * (deltas[1] - deltas[0]) if len(deltas) > 1 else np.sum(post))
+            if post.max() <= 0:
+                per_mass[str(m)] = None
+                continue
+            pn = post / np.sum(post)
+            cdf = np.cumsum(pn)
+            q = _quantiles(cdf, deltas, (0.5, 0.16, 0.84, 0.025, 0.975))
+            per_mass[str(m)] = {"best_delta_keV": float(deltas[int(np.argmax(post))]),
+                                "delta_median_keV": q[0], "delta_68_keV": [q[1], q[2]],
+                                "delta_95_keV": [q[3], q[4]],
+                                "p_elastic_reachable": float(np.sum(w * reach[:, j])),
+                                "evidence": evidence,
+                                "posterior": [(float(dd), float(pp)) for dd, pp in zip(deltas, pn, strict=True)]}
+        results[name] = {"measurement": spec, "per_mass": per_mass}
+    summary = {"tail": tail, "v0_kms": v0, "vesc_grid": [float(x) for x in vgrid], "masses": masses,
+               "sigma_ceiling_cm2": sigma_ceiling, "measurements": results,
+               "elapsed_s": round(time.time() - t0, 1)}
+    (out / "vesc_marginal.json").write_text(json.dumps(summary, indent=1))
+    np.save(out / "vesc_like.npy", like)
+    return summary
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="lzedge")
-    ap.add_argument("--stage", default="all", choices=["kinematics", "scan", "tails", "posterior", "all"])
+    ap.add_argument("--stage", default="all",
+                    choices=["kinematics", "scan", "tails", "posterior", "vesc", "all"])
     ap.add_argument("--config", default=None)
     ap.add_argument("--out", default="results/lzedge")
     ap.add_argument("--halos", default=None, help="comma-separated subset of halo_models")
@@ -323,6 +409,9 @@ def main(argv: list[str] | None = None) -> int:
     if a.stage in ("posterior", "all"):
         s = stage_posterior(cfg, out, a.halos.split(",") if a.halos else None)
         print(f"posterior: {s['n_rows']} rows in {s['elapsed_s']}s")
+    if a.stage in ("vesc", "all"):
+        s = stage_vesc_marginal(cfg, out)
+        print(f"vesc: {len(s['measurements'])} measurements in {s['elapsed_s']}s")
     return 0
 
 

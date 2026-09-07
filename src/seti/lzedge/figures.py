@@ -155,10 +155,35 @@ def fig_scan_map(out: pathlib.Path, m_chi: float = 1000.0) -> pathlib.Path | Non
     return p
 
 
+def fig_vesc_posterior(out: pathlib.Path, m_chi: float = 1000.0) -> pathlib.Path | None:
+    f = out / "vesc_marginal.json"
+    if not f.exists():
+        return None
+    s = json.loads(f.read_text())
+    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    for name, res in s["measurements"].items():
+        pm = res["per_mass"].get(str(m_chi)) or res["per_mass"].get(str(int(m_chi)))
+        if not pm:
+            continue
+        d = [x[0] for x in pm["posterior"]]
+        p = [x[1] for x in pm["posterior"]]
+        ms = res["measurement"]
+        ax.plot(d, p, lw=1.6, label=f"{name}: v_esc = {ms['v_esc']:.0f} +{ms['plus']:.0f} -{ms['minus']:.0f}")
+    ax.set_xlabel("mass splitting δ [keV]")
+    ax.set_ylabel("P(δ | event, v_esc measurement)")
+    ax.set_title(f"δ posterior with the escape speed integrated over each measurement, m_χ = {m_chi:.0f} GeV, {s['tail']['tail']} tail")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    p = out / "vesc_posterior.png"
+    fig.savefig(p, dpi=150)
+    plt.close(fig)
+    return p
+
+
 def make_all(cfg: dict, out: pathlib.Path) -> list[pathlib.Path]:
     out.mkdir(parents=True, exist_ok=True)
     made = [fig_tails(cfg, out), fig_modulation(cfg, out), fig_calendar(cfg, out)]
-    m = fig_scan_map(out)
-    if m is not None:
-        made.append(m)
+    for extra in (fig_scan_map(out), fig_vesc_posterior(out)):
+        if extra is not None:
+            made.append(extra)
     return made

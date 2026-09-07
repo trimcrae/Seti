@@ -316,3 +316,18 @@ def test_cross_experiment_accounting_respects_window_and_calendar():
     assert abs(by["all-year wide"]["seasonal_factor"] - 1.0) < 0.05
     assert by["winter wide"]["seasonal_factor"] < 0.5           # the edge signal is a summer signal
     assert by["low window"]["expected_seasonal"] == 0.0         # a window below the recoil energies is blind
+
+
+def test_lmc_tail_component_is_head_on_and_fastest_in_june():
+    from seti.lzedge.earth import stream_peak_date
+    from seti.lzedge.halo import lmc_tail
+    from seti.lzedge.run import build_halo
+    h = lmc_tail(shm(238.0, 544.0), speed_kms=500.0, sigma_kms=60.0, fraction=0.01)
+    assert abs(h.total_fraction - 1.0) < 1e-12
+    vl = v_lab_kms("2023-06-16", 238.0)
+    assert h.eta(vl)(850.0) > 0.0 and shm(238.0, 544.0).eta(vl)(850.0) == 0.0
+    pk, _, vp, _ = stream_peak_date((0.0, -500.0, 0.0), 2023)
+    assert pk.month in (5, 6) and 740 < vp < 790
+    hb = build_halo("x", {"type": "shm_lmc", "v0": 238.0, "v_esc": 544.0, "lmc_speed": 500.0,
+                          "lmc_sigma": 60.0, "lmc_fraction": 0.01})
+    assert hb.v_max(vl) == pytest.approx(hb.v_grid_max)

@@ -23,7 +23,7 @@ import yaml
 
 from . import kinematics as K
 from .earth import extremal_dates, galactic_lb_deg, v_lab_kms, v_lab_speed_kms, year_grid
-from .halo import shm, shm_plus_plus, shm_tail
+from .halo import lmc_tail, shm, shm_plus_plus, shm_tail
 from .rate import Efficiency
 from .timing import (
     EventModel,
@@ -46,6 +46,14 @@ def build_halo(name: str, spec: dict):
     if t == "shmpp":
         return shm_plus_plus(v0=spec["v0"], v_esc=spec["v_esc"], eta_s=spec.get("eta_sausage", 0.2),
                              beta=spec.get("beta", 0.9), name=name)
+    if t == "shm_tail":
+        return shm_tail(v0=spec["v0"], v_esc=spec["v_esc"], tail=spec.get("tail", "sharp"),
+                        k=spec.get("k", 2.0), v_join=spec.get("v_join"), name=name)
+    if t == "shm_lmc":
+        base = shm(v0=spec["v0"], v_esc=spec["v_esc"], name="round")
+        return lmc_tail(base, speed_kms=spec["lmc_speed"], sigma_kms=spec["lmc_sigma"],
+                        fraction=spec["lmc_fraction"], direction=tuple(spec.get("lmc_direction", (0.0, -1.0, 0.0))),
+                        name=name)
     raise ValueError(f"unknown halo type {t!r}")
 
 

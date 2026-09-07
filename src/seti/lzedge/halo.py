@@ -391,6 +391,20 @@ def with_stream(base: Halo, mean_xyz, sigma: float, fraction: float, v_esc: floa
     return Halo(comps, name=f"{base.name}+{name}")
 
 
+def lmc_tail(base: Halo, speed_kms: float, sigma_kms: float, fraction: float,
+             direction=(0.0, -1.0, 0.0), name: str = "lmc") -> Halo:
+    """``base`` plus an unbound LMC-boosted component: a Gaussian in velocity space
+    with bulk speed ``speed_kms`` along ``direction`` in the Galactic frame
+    (default head-on against Galactic rotation, so it is fastest in the lab in
+    June like the halo wind), isotropic dispersion ``sigma_kms`` and density
+    fraction ``fraction``.  No escape-sphere truncation: these particles are not
+    bound to the Milky Way."""
+    d = np.asarray(direction, dtype=float)
+    d = d / np.linalg.norm(d)
+    return with_stream(base, mean_xyz=tuple(speed_kms * d), sigma=sigma_kms, fraction=fraction,
+                       v_esc=None, name=name)
+
+
 def g_dimensionless(g_s_per_km):
     """g̃ = c ∫ f/v d³v, dimensionless."""
     return np.asarray(g_s_per_km, dtype=float) * C_KMS

@@ -82,7 +82,7 @@ solar neighbourhood, and three facts about that population are available from
 astronomy rather than from convention.  First, the local escape speed has been
 measured from halo stars, and most measurements sit \emph{below} 544\kms:
 $484.6^{+17.8}_{-7.4}$ \citep{NecibLin2022vesc}, $497\pm8$
-\citep{KoppelmanHelmi2021vesc}, $521^{+46}_{-30}$ \citep{Roche2024vesc} and
+\citep{Koppelmanvesc}, $521^{+46}_{-30}$ \citep{Roche2024vesc} and
 $528^{+24}_{-25}$\kms \citep{Deason2019vesc}, against $580\pm63$\kms
 \citep{Monari2018vesc} and the RAVE value of 544\kms adopted by
 \citet{Baxter2021conventions}.  Second, the shape of the tail near the escape speed
@@ -131,7 +131,7 @@ $5\times10^{-3}$.
 \emph{Soft cut and power-law tail.}  The sharp cut is an artefact of the model.  The
 stellar fits from which $\vesc$ is inferred use $f(v)\propto(\vesc-v)^k$ near the edge,
 with $k$ between 1 and 3 and strongly degenerate with $\vesc$
-\citep{Deason2019vesc,KoppelmanHelmi2021vesc}; we implement that tail joined
+\citep{Deason2019vesc,Koppelmanvesc}; we implement that tail joined
 continuously to the Maxwellian at $0.8\vesc$, and the King-like soft cut
 $\exp(-v^2/v_0^2)-\exp(-\vesc^2/v_0^2)$ as an intermediate case.  For anisotropic
 components (the Sausage of SHM$^{++}$, \citealt{Evans2019shmpp}) and for the
@@ -209,26 +209,36 @@ into the empty 350--600\keV band (\BestSideband sideband events per window event
 the posterior maximum, 2.4 at 370\keV, 10 at 380\keV).  Including the sideband
 therefore moves the one-sigma splitting from the 370--400\keV of
 \citet{McCabe2026seasonal} to \DeltaOneShmLz\keV; our sideband count at
-$\delta=377$\keV, \SidebandAt377 per window event, agrees with the 4.9 of
+$\delta=377$\keV, \SidebandAtEdge per window event, agrees with the 4.9 of
 \citet{HiggsinoSideband2026} to the accuracy their digitised efficiency and our
 described one allow.
 
-The inferred splitting tracks the adopted escape speed almost one-to-one: at
-$\vesc=500\kms$ the posterior peaks at \DeltaBestShmVescLow\keV
-(\DeltaOneShmVescLow), at 600\kms at \DeltaBestShmVescHigh\keV
-(\DeltaOneShmVescHigh), and with the Sausage of SHM$^{++}$ (528\kms) at
-\DeltaBestShmPp\keV (\DeltaOneShmPp).  Integrating over the published measurements
-instead of fixing a value (Fig.~\ref{fig:vesc}) gives, at 1\,TeV, a median splitting
-of \DeltaMedNecibLin2022Dr2\keV (\DeltaSixtyEightNecibLin2022Dr2 at 68\,\%) for the
-Gaia eDR3 value of \citet{NecibLin2022vesc}, \DeltaMedKoppelmanHelmi2021\keV
-(\DeltaSixtyEightKoppelmanHelmi2021) for \citet{KoppelmanHelmi2021vesc},
-\DeltaMedRoche2024GaiaDr3\keV (\DeltaSixtyEightRoche2024GaiaDr3) for the Gaia DR3
-profile of \citet{Roche2024vesc}, \DeltaMedDeason2019GaiaDr2\keV
-(\DeltaSixtyEightDeason2019GaiaDr2) for \citet{Deason2019vesc}, and
-\DeltaMedMonari2018GaiaDr2\keV (\DeltaSixtyEightMonari2018GaiaDr2) for
-\citet{Monari2018vesc}.  The number every model-building paper needs, the splitting,
-is thus a function of which stellar measurement one believes, over a range of
-some 50\keV that is wider than any of the quoted statistical intervals.
+At a fixed escape speed the posterior maximum moves with it: \DeltaBestShmVescLow\keV
+(\DeltaOneShmVescLow) at $\vesc=500\kms$, \DeltaBestShmVescHigh\keV
+(\DeltaOneShmVescHigh) at 600\kms, \DeltaBestShmPp\keV (\DeltaOneShmPp) with the
+Sausage of SHM$^{++}$ at 528\kms.  Integrating over each published measurement
+instead (Fig.~\ref{fig:vesc}) shows what is robust and what is not.  The mode is
+\DeltaModeKoppelman\keV for \citet{Koppelmanvesc},
+\DeltaModeNecib\keV for \citet{NecibLin2022vesc},
+\DeltaModeDeason\keV for \citet{Deason2019vesc},
+\DeltaModeRoche\keV for \citet{Roche2024vesc} and
+\DeltaModeMonari\keV for \citet{Monari2018vesc}: the same value, because
+for every halo it is the point where the spectral peak reaches the sideband.  The
+68\,\% intervals share a long lower tail (\DeltaSixtyEightKoppelman\keV,
+\DeltaSixtyEightDeason\keV, \DeltaSixtyEightMonari\keV), set by
+the slowly rising energy factor and the log-uniform cross-section prior.  What the
+escape speed governs is the upper tail: the 95\,\% upper bound on $\delta$ at 1\,TeV
+is \DeltaNinetyFiveUpperKoppelman\keV for \citet{Koppelmanvesc},
+\DeltaNinetyFiveUpperNecib\keV for \citet{NecibLin2022vesc},
+\DeltaNinetyFiveUpperDeason\keV for \citet{Deason2019vesc},
+\DeltaNinetyFiveUpperRoche\keV for \citet{Roche2024vesc},
+\DeltaNinetyFiveUpperRave\keV for the RAVE value and
+\DeltaNinetyFiveUpperMonari\keV for \citet{Monari2018vesc}.  A model that
+needs $\delta\gtrsim370$\keV at 1\,TeV to suppress a fixed cross section, as the
+thermal Higgsino does through $Z$ exchange \citep{HiggsinoSideband2026}, is therefore
+outside the 95\,\% region for the two precise Gaia measurements and inside it only for
+the loosest; the independent exclusion of the same model by solar capture
+\citep{PospelovRamani2026} does not depend on the halo at all.
 
 \subsection{The date}
 On 16~June~2023 the laboratory moved through the halo 0.4\kms below its annual
@@ -253,7 +263,7 @@ Marginalised over mass (log-uniform over 200\,GeV--10\,TeV), splitting (uniform 
 halo models given the event differ by less than a factor of two
 (Fig.~\ref{fig:evidence}): \EvidShmLz for the conventional halo, \EvidShmPp for
 SHM$^{++}$, \EvidShmVescLow and \EvidShmVescHigh for $\vesc=500$ and 600\kms, and
-\EvidShmLmc026 and \EvidShmLmc060 for the LMC admixtures, relative to the best.
+\EvidShmLmcLow and \EvidShmLmcHigh for the LMC admixtures, relative to the best.
 A single event cannot rank the tails: a larger escape speed is compensated by a
 larger splitting, and the three factors are satisfied at the shifted edge.  The
 LMC admixture opens a qualitatively different region rather than a better fit: a
@@ -266,31 +276,45 @@ with a Higgsino-like ceiling of $10^{-39}$\,cm$^2$ it is gone.
 \subsection{The escape speed from the event}
 Read the other way, with a flat prior on $\vesc$ between 440 and 640\kms and
 $m_\chi$, $\delta$, $\sigma_n$ marginalised, the event's own likelihood of the local
-escape speed (Fig.~\ref{fig:vesc_inverse}) has a median of \VescMedian\kms, a
-68\,\% interval of \VescSixtyEight\kms and a 95\,\% lower bound of
-\VescNinetyFiveLower\kms.  \TODO{interpret once run: flat or informative?}  The
-stellar measurements are consistent with it at every value they take.
+escape speed (Fig.~\ref{fig:vesc_inverse}) is flat: it varies by $\pm5\,\%$ across the
+range, its median (\VescMedian\kms) and 68\,\% interval (\VescSixtyEight\kms) are
+those of the prior, and the posteriors conditioned on each stellar measurement
+reproduce that measurement.  The reason is the degeneracy of the previous section:
+whatever the escape speed, there is a splitting at which the energy, the date and the
+sideband are all satisfied.  A single event at the kinematic edge is a measurement of
+$\delta$ given the halo, not of the halo; the halo enters as a systematic on
+$\delta$, of order 50\keV at 1\,TeV across the published measurements, and a
+second event with a different energy or date is what would begin to lift it.
 
 \subsection{Other experiments}
 No published search other than LZ's has a nuclear-recoil window that reaches
 248\keV with a tonne-scale exposure: XENON100's effective-field-theory search
 stops at 240\keV with 7.6\,kg-years, and the XENONnT and PandaX-4T results end
-below 100\keV.  LZ's own first run (December 2021 to May 2022) fell entirely in the
-months when an edge signal is off or rising; for the models of
-Table~\ref{tab:post} its expected count is below \TODO{x} of the WS2024 one per unit
-exposure.  The seasonal accounting matters for the confirmation exposures now
-being planned: an exposure that runs from October to March tests nothing.
+below 100\keV.  LZ's own first run used the same 3--600\,phd S1$c$ range in its
+effective-field-theory search \citep{LZ2024eftSR1} but ran from 23~December~2021 to
+12~May~2022, the months when an edge signal is weakest; at the posterior maxima
+its sensitivity per unit exposure was \WsTwentyTwoRelShmVescLow--\WsTwentyTwoRelShmVescHigh
+of WS2024's, so its null result (0.9\,t\,yr, no candidate) is a weaker constraint
+than its exposure suggests but not an absent one.  The effect grows steeply toward
+the edge: within 20\keV of $\delta_{\max}$ a December--May run tests nothing, which
+is the consideration for the confirmation exposures now being planned.
 
 \section{Predictions}
 For each halo model the same likelihood fixes, up to the Poisson uncertainty of one
 count, when and where the next events must come.  Under the conventional halo at
-the posterior maximum the signal is above one tenth of its annual peak from
-\TODO{date} to \TODO{date}; the recoil energies are confined to
-\TODO{range}; and one event per 2.84\,t\,yr implies \TODO{n} events in LZ's
-projected 1000 live days, of which \TODO{f} in the sideband if the efficiency
-plateau extends.  Under the LMC admixture the season is shorter and the energies
-narrower.  Two or three further events with dates would separate the halo models
-that one event cannot.
+its posterior maximum ($\delta=\DeltaBestShmLz$\keV, 1\,TeV) the window rate is
+above one tenth of its annual peak from \SeasonStartShmLz to \SeasonEndShmLz and
+peaks on 31~May; 90\,\% of the recoils on the peak date fall between
+\ERangeShmLz\keV, a quarter of them above the 270\keV window edge; and one event
+per 2.84\,t\,yr implies \NThousandShmLz window events in LZ's projected 1000 live
+days with \NSbThousandShmLz in the 350--600\keV sideband if the efficiency plateau
+extends.  With $\vesc=500\kms$ the season contracts to
+\SeasonStartShmVescLow--\SeasonEndShmVescLow and the sideband yield to
+\NSbThousandShmVescLow; with the LMC admixture the season lengthens (the fast
+component is on all year) and the sideband yield is \NSbThousandShmLmcLow.  Two or
+three further events, with their dates and energies, would separate the halo models
+that one event cannot: the sideband count, the summer concentration and the
+presence of recoils above 300\keV are the discriminants.
 
 \section{Systematics}\label{sec:sys}
 \emph{Live time.}  LZ reports 220 live days between 27~March 2023 and 1~April~2024

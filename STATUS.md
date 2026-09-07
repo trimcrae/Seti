@@ -14,52 +14,70 @@ verdict, see **[docs/channels.md](docs/channels.md)**.
 
 A new question from the user, outside the technosignature channels: LUX-ZEPLIN
 (arXiv:2609.02823, 1 Sep) reports one event consistent with a 248 ± 23 ± 23 keV
-nuclear recoil in 2.84 t yr (WS2024, recorded 16 June 2023), 2.6σ global, in a
-window extended to ≈ 270 keV for EFT and inelastic spectra. *Is there an
-analysis worth a paper, and is there public data?* Ten theory papers appeared
-within five days (Higgsino, kinematic edge, seasonal, dark photon, PQ, axion
-portal, fermionic absorption, iDM in LZ+CRESST, Higgsino sideband,
-atmospheric-neutrino up-scattering); their shared reading is an endothermic
-recoil with the mass splitting pushed to the kinematic limit set by the halo
-escape speed. That hands the question to astronomy: an edge recoil is a
-measurement of the fastest local dark matter — the part of the velocity
-distribution the sharp-cut Maxwellian misrepresents by construction, that Gaia
-has measured through halo stars (escape speed and tail shape), and that the
-Large Magellanic Cloud is predicted to dominate. None of the ten works from the
-measured tail; the event's *date* is used by none as a live-time-weighted
-datum. `docs/lzedge.md` has the claim and method.
+nuclear recoil in 2.84 t yr (WS2024, 27 Mar 2023 – 1 Apr 2024, 4.71 t; recorded
+21:22:39 UTC 16 June 2023), 2.6σ global, in a window extended to 5.4–270 keV
+for EFT and inelastic spectra. *Is there an analysis worth a paper, and is
+there public data?* The record was fetched over three runner sweeps
+(`results/lzlit/`: the paper's LaTeX source with supplement and tables, the
+19 papers INSPIRE lists as citing it, the halo-kinematics literature). The
+paper's "Data Release" is not yet public (HEPData 155182, linked from
+lz.lbl.gov, is the 2025 4.2 t yr record; HEPData 403s the runner).
 
-Built and offline-tested (25 tests): `seti.lzedge` — inelastic kinematics, the
-lab velocity through the halo by date (peak 1 June; the event fell 15 days
-after it, 0.4 km/s below the peak), halo models with arbitrary high-speed
-components (truncated Maxwellian in closed form, anisotropic Gaussians with the
-escape-sphere cap integrated exactly, isotropic components with sharp / soft /
-Gaia-style power-law tails, an unbound LMC-boosted component), xenon recoil
-spectra, the single-event timing Bayes factor R(t_obs)/⟨R⟩_livetime, the
-profile likelihood with the cross section profiled and the energy-scale
-systematic marginalised, a marginal over log σ up to a physical ceiling (the
-profile alone runs to the grid edge, where one event would need 10⁻³⁴ cm²),
-the *reachability calendar* (for δ = 385 keV at 1 TeV a 248 keV recoil is
-kinematically possible only between 21 April and 12 July; never for
-δ ≥ 390 keV under LZ's halo), a δ posterior with the escape speed integrated
-over each published measurement, the cross-experiment seasonal-exposure
-accounting (XENON100's 6.6–240 keV window stops below the event; LZ's own
-WS2022 ran December–May, the off-season for an edge signal), figures and a
-manuscript scaffold whose numbers are generated. First numbers with placeholder
-window and live time: the energy likelihood at 248 keV rises ≈ 800× from
-elastic to δ ≈ 360 keV; at 1 TeV the marginal posterior peaks at δ = 380 keV
-(σ_n ≈ 10⁻³⁸ cm²; 1σ 370–385) with a 10⁻³⁷ cm² ceiling, or δ = 365 keV with a
-Higgsino-like 10⁻³⁹ cm² ceiling; the timing Bayes factor is 2.7–4 at the edge;
-the tail shape alone moves the density at v_min(δ = 380 keV) by two orders of
-magnitude between the sharp cut and a (v_esc − v)^2.5 tail.
+**Novelty map (`docs/lzedge.md` §4).** All 19 follow-ups read an endothermic
+recoil with the splitting near the kinematic edge. The event *date* enters one
+likelihood (McCabe 2609.04181, uniform live time, v_esc fixed at 544, "how
+deviations from it would change these results… future work"); Di Mauro
+2609.02608 declines to use it; the Higgsino-sideband paper 2609.04175 scans
+v_esc upward (544/567/610) and adds an LMC boosted Gaussian for the Higgsino
+only; nobody integrates over the *measured* escape speeds, which are mostly
+below 544: 484.6 +17.8/−7.4 (Necib & Lin 2022), 497 ± 8 (Koppelman & Helmi
+2021), 521 +46/−30 (Roche 2024), 528 +24/−25 (Deason 2019), 580 ± 63 (Monari
+2018) — all verified from the fetched texts.
 
-**Record fetch (`lzlit.yml`, run 34075988511, dispatched 10:20 PM ET 6 Sep)
-in progress**: the paper, every citing paper (INSPIRE), the prior high-energy
-searches, the Gaia escape-speed and LMC-tail literature, and the LZ HEPData /
-Zenodo / collaboration data pages. Every placeholder in `config/lzedge.yaml`
-(window, efficiency, live-time calendar, event time, halo parameters, v_esc
-summaries, LMC fraction) is replaced from that record before any number is
-quoted; the novelty map against the follow-ups is written from it.
+**Built (`seti.lzedge`, 27 offline tests, CI green) and run
+(`results/lzedge/`).** The same three-factor likelihood for every halo model —
+energy on the date of the event (resolution and the ±23 keV scale systematic
+marginalised), the date against the live time (R(t_obs)/⟨R⟩_live), and LZ's
+empty 350–600 keV sideband as a Poisson factor — with the cross section
+marginalised under a 10⁻³⁷ cm² ceiling; halo models: sharp / soft /
+power-law tails, SHM++, v_esc 500/544/600, the 2609.04175 LMC admixture
+(0.26 %, 0.6 %), and the six published escape-speed measurements integrated
+over their uncertainties. What came out:
+
+* **The sideband, not the edge, sets the splitting.** Under LZ's own halo the
+  1 TeV posterior peaks at δ = 350 keV (1σ 330–360), 30 keV below McCabe's
+  370–400: for δ ≳ 330 the spectral peak μδ/m_N enters the empty sideband
+  (0.23 sideband events per window event at 350, 2.4 at 370, 10 at 380; our
+  6.1 at 377 vs 04175's 4.9). With the escape speed integrated over each
+  measurement the *mode* is 330 keV for all six; the measurement governs the
+  95 % upper bound: 339 keV (Koppelman-Helmi, Necib-Lin), 362 (Deason), 373
+  (Roche), 380 (RAVE/LZ), 394 (Monari). A model needing δ ≳ 370 keV at 1 TeV
+  (the thermal Higgsino via Z exchange) is outside the 95 % region for the
+  two precise Gaia measurements.
+* **The date factor** is 4.3 at the conventional halo's posterior maximum
+  (1.0 for elastic scattering), and 2.7–4.8 at δ = 370 keV across plausible
+  live-time masks (uniform 3.4). The reachability calendar: at 1 TeV a 248 keV
+  recoil is possible all year for δ ≤ 360, 30 Jan–1 Oct for 370, 22 Mar–12 Aug
+  for 380, 21 Apr–12 Jul for 385, never for ≥ 390 keV (v_esc 544).
+* **The event cannot measure the escape speed.** Its own likelihood of v_esc is
+  flat to ±5 % over 440–640 km/s and the six measurement-conditioned
+  evidences agree within 2 %; a larger v_esc is absorbed into a larger δ. The
+  halo evidences differ by < 2× (LMC admixtures 1.0/0.97, SHM++ 0.68, SHM 0.65,
+  v_esc 500/600 0.64); the LMC admixture opens a distinct region (200 GeV,
+  δ ≈ 410 keV, nothing in the sideband, date factor 6) that needs
+  4.5 × 10⁻³⁸ cm² and vanishes under a 10⁻³⁹ ceiling.
+* **Predictions.** One event per 2.84 t yr → 4.5 window events in LZ's 1000
+  live days with 1.8–2.7 in the sideband; 90 % of recoils on the peak date in
+  158–376 keV; the window rate above a tenth of its peak from 26 Jan to 8 Oct
+  (v_esc 544) or 2 Mar to 29 Aug (v_esc 500); LZ's Dec–May first run kept
+  84–97 % of the annual-mean sensitivity per unit exposure at these splittings.
+
+Manuscript draft in `paper/lzedge/` (numbers generated into `numbers.tex`,
+figures in `results/lzedge/figures/`). Honest framing: nothing here is a
+detection claim; every statement is conditional on the event being an
+endothermic recoil, and the one astrophysical null — the event does not
+measure v_esc — is reported as such, with the splitting's dependence on the
+adopted measurement as the deliverable.
 
 ### The warden's fence, 2026-09-06: BAFFLE (S38)
 

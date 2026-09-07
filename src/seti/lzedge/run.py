@@ -21,7 +21,7 @@ import numpy as np
 import yaml
 
 from . import kinematics as K
-from .earth import extremal_dates, galactic_lb_deg, v_lab_kms, v_lab_speed_kms
+from .earth import extremal_dates, galactic_lb_deg, v_lab_kms, v_lab_speed_kms, year_grid
 from .halo import shm, shm_plus_plus, shm_tail
 from .rate import Efficiency
 from .timing import EventModel, LiveTime, modulation_summary, timing_bayes_factor
@@ -40,6 +40,28 @@ def build_halo(name: str, spec: dict):
         return shm_plus_plus(v0=spec["v0"], v_esc=spec["v_esc"], eta_s=spec.get("eta_sausage", 0.2),
                              beta=spec.get("beta", 0.9), name=name)
     raise ValueError(f"unknown halo type {t!r}")
+
+
+def reachability_calendar(E_keV: float, m_chi_gev: float, delta_keV: float, v_esc: float,
+                          v0_kms: float, year: int, n: int = 366) -> dict:
+    """Dates on which a recoil of E_keV is kinematically reachable: v_min(E) <= v_esc + v_lab(t).
+
+    Pure kinematics plus the escape-sphere edge — no rate, no efficiency, no
+    cross section.  Returns the on-fraction of the year and the first/last
+    reachable dates (None if never / always)."""
+    vmin = float(K.v_min_kms(E_keV, m_chi_gev, delta_keV))
+    grid = year_grid(year, n)
+    vmax = np.array([v_esc + v_lab_speed_kms(t, v0_kms) for t in grid])
+    ok = vmin <= vmax
+    frac = float(np.mean(ok))
+    if frac == 0.0:
+        return {"fraction": 0.0, "first": None, "last": None, "v_min_kms": vmin}
+    if frac == 1.0:
+        return {"fraction": 1.0, "first": None, "last": None, "v_min_kms": vmin}
+    # the reachable set is one arc around the June peak; report its edges
+    idx = np.where(ok)[0]
+    return {"fraction": frac, "first": grid[int(idx[0])].date().isoformat(),
+            "last": grid[int(idx[-1])].date().isoformat(), "v_min_kms": vmin}
 
 
 def stage_kinematics(cfg: dict, out: pathlib.Path) -> dict:
@@ -62,6 +84,10 @@ def stage_kinematics(cfg: dict, out: pathlib.Path) -> dict:
                 row[f"{name}_v_max_kms"] = vmax
                 row[f"{name}_allowed_at_event"] = bool(row["v_min_at_event_kms"] <= vmax)
                 row[f"{name}_E_max_keV"] = K.max_recoil_energy_keV(vmax, m, delta)
+                cal = reachability_calendar(E, m, float(delta), spec["v_esc"], spec["v0"], int(t_obs[:4]))
+                row[f"{name}_reachable_fraction_of_year"] = cal["fraction"]
+                row[f"{name}_reachable_first"] = cal["first"]
+                row[f"{name}_reachable_last"] = cal["last"]
             rows.append(row)
     ceilings = {}
     for name, (h, spec) in halos.items():

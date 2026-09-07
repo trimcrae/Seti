@@ -265,3 +265,15 @@ def test_tail_shape_changes_the_edge_but_not_the_bulk():
     assert g_sharp(v_edge) > g_soft(v_edge) > 0.0
     assert g_sharp(v_edge) > g_pow(v_edge) > 0.0
     assert g_sharp(v_edge + 60.0) == 0.0 and g_pow(v_edge + 60.0) == 0.0
+
+
+def test_reachability_calendar_opens_a_window_around_june_at_the_edge():
+    from seti.lzedge.run import reachability_calendar
+    always = reachability_calendar(248.0, 1000.0, 300.0, 544.0, 238.0, 2023)
+    assert always["fraction"] == 1.0
+    never = reachability_calendar(248.0, 1000.0, 450.0, 544.0, 238.0, 2023)
+    assert never["fraction"] == 0.0
+    edge = reachability_calendar(248.0, 1000.0, 380.0, 544.0, 238.0, 2023)
+    assert 0.0 < edge["fraction"] < 1.0
+    assert edge["first"] < "2023-06-01" < edge["last"]
+    assert edge["first"] <= "2023-06-16" <= edge["last"]

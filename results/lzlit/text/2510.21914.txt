@@ -1,0 +1,1232 @@
+                                               The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                          https://doi.org/10.3847/1538-4357/ae60fd
+
+
+                                                                                How to Build an Empirical Speed Distribution
+                                                                                 for Dark Matter in the Solar Neighborhood
+                                                        Tal Shpigel ,1 Dylan Folsom ,1 Mariangela Lisanti ,1, 2 Lina Necib ,3 Mark Vogelsberger ,3, 4 and Lars Hernquist                     5
+
+                                                              1 Department of Physics, Princeton University, Princeton, NJ 08544, USA; talshpigel@princeton.edu, dfolsom@princeton.edu
+                                                                                2 Center for Computational Astrophysics, Flatiron Institute, New York, NY 10010, USA
+                                                    3 Physics Department and Kavli Institute for Astrophysics and Space Research, Massachusetts Institute of Technology, Cambridge, MA 02139, USA
+                                                   4 The NSF AI Institute for Artificial Intelligence and Fundamental Interactions, Massachusetts Institute of Technology, Cambridge, MA 02139, USA
+                                                                           5 Center for Astrophysics, Harvard & Smithsonian, 60 Garden Street, Cambridge, MA 02138, USA
+
+                                                                          Received 2025 December 17; revised 2026 April 13; accepted 2026 April 14; published 2026 May 19
+
+                                                                                                             Abstract
+arXiv:2510.21914v2 [astro-ph.GA] 10 Jun 2026
+
+
+
+
+                                                        The dark matter flux in a direct detection experiment depends on its local speed distribution. This distribution
+                                                        has been inferred from simulations of Milky Way–like galaxies, but such models serve only as proxies, given that
+                                                        no simulation directly captures the detailed evolution of our own Galaxy. This motivates alternative approaches
+                                                        that obtain this distribution directly from observations. In this work, we utilize 98 Milky Way analogs from the
+                                                        TNG50 simulation to develop and validate a procedure for inferring the dark matter speed distribution using the
+                                                        kinematics of nearby stars. We find that the dark matter that originated from old mergers, plus that from recent
+                                                        nonluminous accretions, is well described by a Maxwell–Boltzmann speed distribution centered at the local
+                                                        standard-of-rest velocity. Meanwhile, recently accreted dark matter from massive mergers has speeds that can
+                                                        be traced from the associated stellar debris of these events. The stellar populations systematically underestimate
+                                                        the velocity dispersion of their dark matter counterparts, but a simple kinematic boost brings the two into good
+                                                        alignment. Using the TNG50 host galaxies, we demonstrate that combining these two contributions provides an
+                                                        accurate reconstruction of the local dark matter speeds. As an application of the procedure to our own Galaxy,
+                                                        we utilize stellar kinematic data from Gaia to quantify how the dark matter remnants from the Milky Way’s last
+                                                        major merger impact its speed distribution in the solar neighborhood.
+                                                        Unified Astronomy Thesaurus concepts: Galactic archaeology (2178); Dark matter (353); Galaxy accretion
+                                                        (575); Milky Way dynamics (1051)
+
+                                                                        1. Introduction                                        (2020) for a review. These ex situ stellar populations are
+                                                  Characterizing the speed distribution of dark matter (DM)                    thought to originate from previous galactic accretion events.
+                                               near the Sun is crucial to interpret the data from direct detec-                   One approach to model the local DM speed distribution is
+                                               tion experiments, which search for DM interactions in terres-                   to simulate the formation of galaxies like the MW in a cosmo-
+                                               trial detector targets (see, e.g., Jungman et al. (1996); Freese                logical setting. This has been done in both DM-only (Wojtak
+                                               et al. (2013) for reviews). Variations in the assumed speed                     et al. 2005; Hansen et al. 2006; Vogelsberger et al. 2008, 2009;
+                                               distribution can impact the expected number of interaction                      Green 2010; Kuhlen et al. 2010; Vogelsberger & Zavala 2013;
+                                               events in these experiments, affecting the interpretation of a                  Bozorgnia & Bertone 2017) and fully hydrodynamical (Ling
+                                               signal as well as inferred constraints. Knowledge of the local                  et al. 2010; Tissera et al. 2010; Pillepich et al. 2014; Bo-
+                                               DM speed distribution is essential to reduce this source of                     zorgnia et al. 2016; Butsky et al. 2016; Kelso et al. 2016;
+                                               uncertainty (Del Nobile 2014; Green 2017).                                      Sloane et al. 2016; Bozorgnia & Bertone 2017; Bozorgnia
+                                                  The DM phase-space distribution near the Sun is a product                    et al. 2020; Hryczuk et al. 2020; Poole-McKenzie et al. 2020;
+                                               of the Milky Way’s (MW’s) evolutionary history. In the cur-                     Lawrence et al. 2023; Nuñez-Castiñeyra et al. 2023; Staudt
+                                               rent cosmological paradigm, DM halos grow hierarchically                        et al. 2024) contexts. These simulations can be used to char-
+                                               by accreting smaller satellite systems that are tidally disrupted               acterize the halo-to-halo variance in the local DM speeds
+                                               by the host galaxy’s gravitational field (White & Rees 1978;                    by sampling many possible formation histories. Using the
+                                               Springel et al. 2008; Klypin et al. 2011). DM debris from the                   largest high-resolution suite of simulated MW-like galaxies
+                                               earliest mergers, whose time since accretion is many times its                  to date, Folsom et al. (2025a) showed that the ensemble of DM
+                                               orbital timescale, should reach a quasi-equilibrium state with                  speed distributions is well modeled by a Maxwell–Boltzmann
+                                               a speed distribution described by a Maxwell–Boltzmann dis-                      distribution. However, they found that the distributions for
+                                               tribution (Drukier et al. 1986). However, DM that is accreted                   individual galaxies do deviate from this model, especially at
+                                               more recently will not be relaxed and may retain kinematic                      the high-speed tails. Where our own Galaxy falls on this
+                                               signatures of the merger from which it originated (Diemand                      spectrum of possibilities remains an open question.
+                                               et al. 2008). In the MW’s stellar population, there is evidence                    Current simulation efforts are trying to produce MW-like
+                                               for such unequilibrated kinematic structure; groups of stars                    galaxies whose formation histories are in better alignment
+                                               with particular chemical abundances and orbital dynamics ap-                    with our own Galaxy (e.g., McAlpine et al. 2022; Rey et al.
+                                               pear differently in this chemodynamical space from the stars                    2023; Buch et al. 2024), but the challenge of this task mo-
+                                               thought to have formed in the MW itself—see, e.g., Helmi                        tivates complementary efforts to obtain the DM speed dis-
+                                                                                                                               tribution directly from observations. This can be done by
+
+                                                                                                                          1
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                          Shpigel et al.
+
+harnessing the correlation between the kinematics of ex situ                     Belokurov et al. 2018; Helmi et al. 2018), believed to be the
+stars and the DM that is accreted from the same merger. For                      MW’s last major merger. We find that the GSE-contributed
+instance, Herzog-Arbeitman et al. (2018), using the Eris hy-                     DM is modestly slower than the local standard-of-rest speed.
+drodynamic simulation (Guedes et al. 2011), demonstrated                         The mode of the resulting speed distribution is 11 km s−1
+that the oldest and most metal-poor halo stars trace the ve-                     slower than that of the Maxwell–Boltzmann-only model, re-
+locities of the relaxed DM, as both would have originated                        sulting in an ∼20% suppression to the high-speed tail.
+from the earliest mergers. Furthermore, stellar substructure,                       This paper is organized as follows. Section 2 introduces
+such as debris flows (Lisanti & Spergel 2012), also exhibits                     the TNG50 simulation, the criteria used to select the sam-
+similar kinematic features to their corresponding DM dis-                        ple of MW analogs, the methodology for tracking the origin
+tributions, a finding supported by the work of Lisanti et al.                    of DM and stellar particles in the solar neighborhood, and
+(2015) using the Via Lactea simulation (Diemand et al. 2008)                     the selection of analyzed mergers. Section 3 presents the
+and stellar tagging catalog from Rashkov et al. (2012). This                     core results of the study, focusing on the kinematic correla-
+correspondence between stellar and DM velocities has been                        tions between DM and stellar components within the selected
+further confirmed by Necib et al. (2019b), both for the relaxed                  merger sample, and the reconstruction of the local DM speed
+component and present-day debris flows, using two different                      distribution. Section 4 applies our formalism to the MW and
+simulated halos from the FIRE suite (Hopkins et al. 2018).6                      discusses the implications for direct detection experiments.
+   As detailed in Necib et al. (2019b), an empirical approach                    Finally, Section 5 summarizes the main conclusions of the
+to reconstructing the local DM speed distribution requires                       study and their broader implications. The Appendices pro-
+considering different subpopulations of DM, as defined by                        vide an expanded discussion of the DM–merger association
+merger origin. Focusing on DM accreted from luminous                             procedure, the offset in velocity dispersion between stars and
+mergers, they demonstrated that the oldest DM (with accre-                       DM, the GSE observational data, and other supplementary
+tion redshift 𝑧acc ≳ 3) is well traced by the most metal-poor                    figures.
+stars. DM from later mergers (𝑧 acc ≲ 3) may be traced by
+intermediate-metallicity stars; this is especially true if the                                              2. Methodology
+DM is in velocity substructure, such as debris flow, but less
+so for the most recent accretions that leave behind streams.                                                2.1. MW Analogs
+In this paper, we build on the work of Necib et al. (2019b) in                      The IllustrisTNG project7 (Nelson et al. 2019b) comprises
+several key ways. First, we vastly increase the sample size of                   a suite of magnetohydrodynamic cosmological simulations
+MW analogs studied and also use a separate galaxy forma-                         that utilize the moving-mesh code AREPO (Springel 2010).
+tion model. Second, we account for the contribution of DM                        The sample of MW analogs used in this work is taken from
+from nonluminous mergers and diffuse accretion (Wang et al.                      the highest-resolution simulation in this suite, TNG50 (Nel-
+2011; Sawala et al. 2015; Angulo & White 2010), which we                         son et al. 2019a; Pillepich et al. 2019), which covers a vol-
+refer to as “dark accretion” throughout.                                         ume of (51.7 Mpc) 3 from early times (redshift 127) to the
+   In particular, we use a sample of 98 MW-like galaxies                         present day, taking cosmological parameters as measured by
+from the TNG50 simulation (Pillepich et al. 2019; Nelson                         the Planck Collaboration et al. (2016). The mass resolution of
+et al. 2019a) and find that the DM in the solar neighborhood                     a DM (star) particle in TNG50 is 4.5 × 105 (∼8.5 × 104 ) M⊙ .
+can be modeled as two distinct components: a background                          Details regarding the IllustrisTNG Project can be found in
+that follows a Maxwell–Boltzmann distribution peaking at                         Nelson et al. (2019b); here, we only focus on those elements
+the local standard-of-rest speed and a population originat-                      that are most relevant for this study.
+ing from recent, high-mass accretion events. The former is                          At each saved time step (“snapshot”) of the simulation,
+the combination of DM accreted from the oldest luminous                          structures are found within the volume using a Friends-of-
+mergers, as well as that from dark accretion. By combining                       Friends (FoF) clustering algorithm (Davis et al. 1985) that
+a Maxwell–Boltzmann model with a stellar-informed model                          is run only on the DM particles. Other particle types (gas,
+for the merger component, we demonstrate how to reconstruct                      stars, and black holes) are associated with the FoF group of
+the total DM speed distribution in the solar neighborhood,                       the nearest DM particle. The resulting FoF groups typically
+accounting for the contribution of dark accretion. These find-                   consist of a central halo and its neighboring substructure, but
+ings, validated on simulation data, establish a practical frame-                 the groups can include multiple systems if the central ha-
+work for building a complete empirical speed distribution for                    los are close enough. Further, the FoF algorithm does not
+the local DM.                                                                    require that the particles in the resulting groups be gravita-
+   As a first application of this technique, we update previous                  tionally bound. Therefore, the Subfind algorithm (Springel
+empirical distributions for the local DM (Necib et al. 2019a;                    et al. 2001; Dolag et al. 2009) is used to determine the bound
+Zhu et al. 2024). Our result accounts for both dark accre-                       structures (i.e., DM halos) within each FoF group at each
+tion, as well as the Gaia Sausage–Enceladus merger (GSE;                         snapshot. Since this is done on a snapshot-by-snapshot basis,
+                                                                                 the same physical object will be given different Subfind IDs
+                                                                                 at each snapshot. The Sublink algorithm identifies persistent
+ 6 Using six halos from the Auriga project (Grand et al. 2017), Bozorgnia
+                                                                                 physical halos from the Subfind catalog, tracking when Sub-
+  et al. (2019) did not find a correlation between old stars and the total
+  DM distribution. This is likely because they did not separate out the
+                                                                                 find halos merge with each other and are disrupted, resulting
+  DM contributions from more recent mergers when making the compari-
+  son (Lisanti & Necib 2018).
+                                                                                  7 The IllustrisTNG data are available online at https://tng-project.org/.
+
+
+
+                                                                             2
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                         Shpigel et al.
+
+in a “merger tree” that traces the assembly of the Subfind                      2021, 2024).9 The goal is to determine the origin of the DM
+halos. Subfind provides a total mass 𝑀dyn for each halo,                        and star simulation particles that are located within this vol-
+which includes all particles bound to the halo but excludes                     ume in order to reconstruct the merger history near the solar
+mass bound to satellite halos. The contribution to 𝑀dyn that                    neighborhood of the host galaxy.
+comes from star particles is denoted 𝑀★.                                           The tracking procedure for star particles follows that of
+  MW analogs are selected from the Subfind catalog for                          Folsom et al. (2025b). To review, mergers are first extracted
+the present-day snapshot following the procedure outlined                       from the Sublink trees for each MW analog. Next, each star
+in Folsom et al. (2025b). To summarize, MW analogs are                          particle is tracked across all simulation snapshots, recording
+defined as those halos that                                                     the subhalos to which it is bound to over time. Ex situ stars
+                                                                                are identified as those that form outside of the MW analog
+   1. have 𝑀★ within 4 × 1010 M⊙ and 7.3 × 1010 M⊙ ,                            and that are bound to a merger for at least one snapshot.10
+   2. are farther than 500 kpc from any halo with 𝑀dyn larger                   These stars are associated with the mergers to which they are
+      than that of the candidate MW, and                                        bound for the greatest number of snapshots. The definition of
+                                                                                ex situ chosen by Folsom et al. (2025b) prioritizes the purity
+   3. are farther than 1 Mpc from any halo with 𝑀dyn >                          of the sample, ensuring that the ex situ stars can be identified
+      1013 M⊙ .                                                                 with a contributing merger.
+                                                                                   Tracking the origin of DM particles in the ROI carries
+   The first criterion selects galaxies with stellar masses that                additional challenges relative to the stars. This is because the
+are comparable to that of the MW, based on 68% confidence                       DM halo surrounding a satellite galaxy is more extended than
+intervals quoted in the literature (Flynn et al. 2006; McMillan                 its stellar component, so it is easier to miss a satellite’s more
+2011; Licquia & Newman 2015; Bland-Hawthorn & Gerhard                           loosely bound DM particles or to misidentify DM from the
+2016; Licquia & Newman 2016; McMillan 2017; Cautun                              host as belonging to the subhalo. The DM tracking algorithm
+et al. 2020). The next criterion ensures that the MW ana-                       used here is designed to minimize these effects. For each DM
+log is not too close to a larger galaxy, excluding interacting                  particle, we find the first snapshot where Subfind considers it
+galaxies residing in close pairs or groups. This does still                     bound to the host MW. This is labeled as the accretion redshift,
+allow for an M31-like partner, as it is 760 kpc away (Patel                     𝑧acc , for that particle. If 𝑧 acc is within the first 2 Gyr of the
+et al. 2017; Kafle et al. 2018; Li et al. 2021; Benisty et al.                  simulation’s start, we do not reconstruct the particle’s history
+2022; Villanueva-Domingo et al. 2023; Sawala et al. 2023;                       any further. If not, then we consider the 2 Gyr preceding the
+Lee 2023). The last criterion removes galaxies that reside                      accretion redshift.11 The DM is associated with a subhalo
+near galaxy clusters, as the Local Group is characterized by                    if it is bound to it for more than 70% of the snapshots in
+its relative isolation and the absence of large galaxy groups in                this window. Those particles that do not satisfy this criterion
+its proximity (Karachentsev 2005). Applying these selection                     remain unassociated. Appendix A discusses this algorithm
+criteria yields a final sample of 98 MW-like galaxies. The                      in more detail, including robustness tests for the choice of
+MW analogs in this sample have peak dynamical masses of                         parameters. Varying the lookback time from 0.5 to 3 Gyr and
+1.16+0.51        12
+      −0.28 × 10 M ⊙ .
+                        8
+                                                                                the snapshot fraction from 10% to 90% does not significantly
+   While these selection criteria permit certain features of the                affect the results.
+Local Group, such as a Large Magellanic Cloud–like satellite                       Once the origin of each simulation star and DM particle
+or an M31-like partner halo, these are not requirements of                      in the ROI is identified, we divide the particles into three
+our selection. Further, the O (10 Mpc)-scale environment of                     categories based on infall time and the mass of their associated
+the TNG50 simulation is modestly dissimilar from that of the                    merger:
+Local Group. For example, the simulation volume contains
+two Virgo-mass galaxy clusters, with 𝑀dyn ≳ 1014 M⊙ . The                       1. Traceable. DM particles with 𝑧acc < 3 that originated
+MW itself is ∼16 Mpc away from the Virgo cluster, but 81%                         from a “Traceable” merger, defined as a merger with an
+of the MW analogs in TNG50 are within 16 Mpc of one of                            infall halo mass of 𝑀dyn ≥ 109 M⊙ that contributes more
+these large clusters, and three analogs are close enough to the                   than 10% of the DM in the ROI.
+largest cluster to be in its FoF group. Therefore, the results of
+                                                                                2. Young Untraceable. DM particles with 𝑧acc < 3 that are
+this analysis must be interpreted with the understanding that
+                                                                                  not Traceable. This population can arise from late-time
+the simulated environments do not exactly reproduce such
+Local Group features, which may bias the formation histories
+of the MW analogs.                                                               9 Note that the simulated galaxies are generically of different sizes from
+                                                                                   the MW, which is itself anomalously compact; see Hammer et al. (2007);
+            2.2. Tracking of DM and Star Particles                                 Bovy & Rix (2013); Licquia et al. (2016); Boardman et al. (2020); Tsukui
+                                                                                   et al. (2025). The resulting speed distributions at 8 kpc are therefore not
+  For each host galaxy, we define the region of inter-                             indicative of the MW’s speed distribution (Folsom et al. 2025a).
+est (ROI) to be a cylindrical shell spanning galactocentric                     10 There is, however, ambiguity in ∼1% of cases (Folsom et al. 2025b).
+
+radii 𝑟 ∈ [6, 10] kpc and height |𝑧| ≤ 2 kpc from the disk                      11 Because stars form over the course of the simulation, this 2 Gyr time
+
+midplane, chosen to be centered around the Sun’s location                          window would induce a bias if the algorithm were to be naı̈vely applied
+in our Galaxy, 𝑅 ⊙ ∼ 8 kpc (GRAVITY Collaboration et al.                           to the stellar component. Stars formed within 2 Gyr of a merger’s infall
+                                                                                   may not appear as bound to that merger for long enough and would be
+                                                                                   incorrectly categorized as unassociated. Therefore, we do not apply this
+                                                                                   algorithm to stars and instead use the algorithm from Folsom et al. (2025b)
+ 8 Throughout this work, we quote the median, 16th, and 84th percentiles.          described above.
+
+                                                                            3
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                               Shpigel et al.
+
+
+
+
+Figure 1. (Left) Fraction of DM in the solar annulus (6–10 kpc in cylindrical radius and height |𝑧| ≤ 2 kpc) originating from Traceable mergers
+vs. the fraction accreted prior to redshift 3 (Old Untraceable DM), across the 98 MW analogs. Points are colored by the number of Traceable
+mergers and shaped by the presence (star markers) or absence (circle markers) of a GSE-like event in that galaxy’s history. Marginal histograms
+show the distribution of each quantity across the sample, given the number of Traceable mergers. For systems with one Traceable merger,
+58+12                                                               +15                                    +11
+   −17 % of the DM in the solar annulus is Old Untraceable, while 18 −5 % is Traceable. The remaining 21 −12 % is contributed after redshift three
+but lacks a substantial population of luminous tracers (Young Untraceable). (Right) Speed distributions for the three DM components in the
+solar annulus: Old Untraceable (yellow), Young Untraceable (magenta), and Traceable (blue). The solid line represents the median probability
+density, while shaded regions indicate the 16th–84th percentile range across the sample. While the Young Untraceable component exhibits
+greater halo-to-halo variance and is biased toward higher speeds, it typically represents a small fraction of the total Untraceable DM, such that
+the combined distribution is well described by a Maxwell–Boltzmann profile. The Traceable component can be modeled using the kinematics
+of the associated stellar debris. The DM components (Old Untraceable, Young Untraceable, and Traceable) are defined in Section 2.2.
+  dark accretion as well as from luminous mergers that do                    the MW. For illustrative purposes, however, we do identify
+  not contribute a substantial fraction of DM to the local                   those MW analogs that have a GSE-like merger. The GSE is
+  neighborhood.                                                              thought to be the most recent major merger experienced by the
+                                                                             MW, occurring 8–10 Gyr ago and depositing ∼108 –109 M⊙
+3. Old Untraceable. DM particles with 𝑧acc > 3, consisting of                of stars primarily to the inner 30 kpc of the Galaxy (Deason
+  early-time dark accretion and early luminous mergers, both                 et al. 2018; Helmi et al. 2018; Myeong et al. 2018; Gallart
+  of which have had sufficient time to virialize in the inner-               et al. 2019; Lancaster et al. 2019; Necib et al. 2019a; Bonaca
+  most regions of the MW halo. Both “Untraceable” compo-                     et al. 2020; Feuillet et al. 2021; Iorio & Belokurov 2021;
+  nents may include contributions from low-mass subhalos                     Montalbán et al. 2021; Naidu et al. 2021).
+  with insufficiently resolved stellar populations.                             In our simulations, a merger is classified as GSE-like if it
+Though we do not do so here, the DM from early luminous
+                                                                                1. contributes more than 50% of all ex situ stars in the
+mergers may be directly modeled using metal-poor stars, as
+                                                                                   volume |𝑧| ∈ [9, 15] kpc and
+shown by Herzog-Arbeitman et al. (2018) and Necib et al.
+(2019b).                                                                        2. exhibits a stellar velocity anisotropy 𝛽 > 0.5 for the
+   The criteria used to select the Traceable component identify                    stars within the volume |𝑧| ∈ [9, 15] kpc,
+large mergers that contribute debris to the ROI, so that this
+component may be traced by stars that are stripped from the                  where the velocity anisotropy is defined in terms of the galac-
+same events. Indeed, every Traceable merger contributes at                   tocentric spherical velocity components:
+least 186 star particles (∼1.6×107 M⊙ ) to the ROI. In practice,
+the requirement that a merger contributes more than 10% of                                                    𝜎𝜙2 + 𝜎𝜃2
+the DM in the ROI already restricts the sample to relatively                                        𝛽 =1−                 .                     (1)
+                                                                                                                 2𝜎𝑟2
+massive systems; even without imposing the 𝑀dyn ≥ 109 M⊙
+cut, Traceable mergers have peak masses of 8+14          10
+                                                −5 × 10 M ⊙ .                These selection criteria reflect observations of the GSE stellar
+                                                                             debris, which accounts for more than 50% of the ex situ
+              2.3. Identifying GSE-like Mergers                              stars within a height 𝑧 ∈ [9, 15] kpc of the Galactic plane
+  For the primary results of this work, we do not require that               and exhibits significant radial velocity anisotropy (Deason
+the TNG50 galaxies have merger histories resembling that of                  et al. 2018; Myeong et al. 2018; Lancaster et al. 2019; Necib
+                                                                        4
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                 Shpigel et al.
+
+et al. 2019a; Iorio & Belokurov 2021; Naidu et al. 2021).               the other two components, and they are also biased toward
+We choose this spatial footprint because it is a region in              higher values. However, it typically contributes a small frac-
+the MW within which the GSE’s stellar contribution is most              tion relative to the Old Untraceable contribution, so the speed
+significant (Naidu et al. 2020), and it was also used in previous       distribution of the total (Old and Young) Untraceable com-
+studies by Fattahi et al. (2019). Also, while our GSE-like              ponent does not typically exhibit these large non-Maxwellian
+mergers tend to be more recently accreted than the GSE itself,          features.
+with infall times of 6+3
+                      −2 Gyr ago, adding in a requirement that
+the merger be before a redshift of 1 does not significantly                               3.1. Untraceable Components
+change the results.                                                        Given that the Untraceable components contain contribu-
+                           3. Results
+                                                                        tions from dark accretion, it is difficult to model them directly
+                                                                        using stellar tracers. Therefore, we use a simple analytic pa-
+   This section characterizes the local speed distribution of           rameterization to describe this DM distribution. We model
+accreted DM in the MW analogs of TNG50. We divide the                   the speed distribution of the combined Untraceable popula-
+DM into the three components described in Section 2: Old                tion in each halo with a Maxwell–Boltzmann profile,
+Untraceable, Young Untraceable, and Traceable. The analysis                                                                  !
+proceeds in three parts. First, we show that the Untraceable                                                 4𝑣 2        𝑣2
+components together follow a Maxwell–Boltzmann distribu-                           𝑓 (𝑣) = SHM(𝑣|𝑣 0 ) = √ 3 exp − 2 ,                (2)
+tion; second, we demonstrate a procedure for modeling the                                                     𝜋𝑣 0       𝑣0
+Traceable component by its associated stellar debris; and fi-
+nally, we combine these results to reconstruct the total local          which we label as the standard halo model (SHM).12 The free
+DM speed distribution.                                                  parameter of the model, 𝑣 0 , is estimated as
+   Figure 1 summarizes the fractions of the three DM compo-                                       √︄
+nents and their speed distributions across the 98 MW analogs.                                        𝐺 𝑀 (< 𝑅 ⊙ )
+                                                                                            𝑣0 =                  ,             (3)
+The left panel shows the fraction of the DM in the ROI con-                                                𝑅⊙
+tributed by Old Untraceable mergers versus the fraction con-
+sidered Traceable, with histograms on the top and right edges           where 𝐺 is Newton’s constant and 𝑀 (< 𝑅 ⊙ ) is the mass
+indicating the marginal distributions of these values, split            enclosed within a radius 𝑅 ⊙ = 8 kpc, the midpoint of the
+up by the number of Traceable mergers. The markers in                   ROI. We choose this value to correspond to the predicted
+the central panel are colored according to this number and              circular speed in the halo at the solar radius, assuming a
+are shaped according to the presence (star marker) or ab-               spherically symmetric gravitational potential.
+sence (circle marker) of a GSE-like event in the analog’s                  To quantify the agreement between the exact speed distri-
+history. Across the full sample, 70 out of 98 analogs (71%)             bution and this parameterization, we use the Earth mover’s
+host one or more Traceable mergers. Among these 70 sys-                 distance (EMD),
+tems, 37 (53%) have exactly one Traceable merger, 28 (40%)                                         ∫
+have two, and 5 (7%) have three, corresponding to an average                       EMD( 𝑓1 , 𝑓2 ) = |𝐹1 (𝑣) − 𝐹2 (𝑣)| d𝑣 ,      (4)
+of 1.1 Traceable mergers per halo across the sample.
+   The MW itself is characterized by a major merger, the
+GSE, which occurred ∼8–10 Gyr ago. In our sample, 26                    where 𝑓1 and 𝑓2 are speed distributions and 𝐹1 and 𝐹2 are their
+MW analogs have a GSE-like Traceable merger. Of these,                  respective cumulative distribution functions. Intuitively, the
+the GSE-like merger is usually the only Traceable merger,               EMD represents the minimum “work” required to transform
+with only 9 analogs (35% of GSE-hosting halos) having a                 one probability distribution into the other, where “work” is the
+second. In the MW analogs with one Traceable merger, most               amount of probability that must be moved times the distance
+of the DM in the ROI (58+12                               +15           it is moved in speed space. The EMD, therefore, has units of
+                            −17 %) is Old Untraceable. 18 −5 %
+of the DM is contributed by its Traceable merger, and the               speed. This metric is indicative of shifts in the mean value
+remaining 21+11                                                         of the speed distribution, where the probability density is
+                −12 % is Young Untraceable. Requiring that the
+single Traceable merger be considered GSE-like does not                 highest, and should be understood as a rough measurement
+meaningfully impact these fractions. This is expected, since            of the similarity of the distributions. In particular, the EMD
+selecting GSE analogs among these halos amounts to a cut on             is not very sensitive to changes at the high-speed tail, as the
+the merger’s kinematics rather than on the merger history per           work required to shift this portion of the speed distributions
+se, and it is the merger history that sets the DM composition.          is proportional to the probability density there.
+   The right panel of Figure 1 shows the speed distributions of            Figure 2 shows the sum of the Old and Young Untrace-
+the three components across all 98 MW analogs. In each bin,             able speed distributions for three example MW analogs with
+the solid line indicates the median value for the probability           increasing fractions of Young Untraceable DM (3%, 25%,
+density 𝑓 (𝑣) for each of the three components, individually            and 52%, respectively).13 The speed distributions for the Old
+normalized to an integral of unity, and the shaded region indi-
+cates the 16th–84th percentile range across the sample. The             12 While it is common to truncate the SHM at the galactic escape speed, we
+speed distributions for Traceable DM (blue), Young Untrace-               do not implement such a truncation for simplicity.
+able DM (magenta), and Old Untraceable DM (yellow) are                  13 Note that the first and last cases are outliers in terms of their Young Un-
+
+shown. The speed distributions of the Young Untraceable                   traceable fractions; the second case is more typical for the one Traceable
+component exhibit large halo-to-halo variance compared to                 merger population.
+
+                                                                    5
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                         Shpigel et al.
+
+
+
+
+Figure 2. Stacked speed distributions of the Old Untraceable (yellow) and Young Untraceable (magenta) DM components in the solar annulus for
+three representative MW analogs (each containing one GSE-like Traceable merger) with varying Young Untraceable fractions. The SHM (black
+curve) is shown for each halo as a Maxwell–Boltzmann distribution with scale velocity 𝑣 0 set by the mass enclosed within the solar radius.
+When the Young Untraceable fraction is small, as in the left panel, the combined distribution is well described by the SHM, yielding an EMD
+of 9 km s−1 between the SHM and the Untraceable DM. For the middle and right panels, the EMD values increase to 14 km s−1 and 28 km s−1 ,
+respectively, reflecting the growing deviations from a Maxwell–Boltzmann shape as the Young Untraceable fraction becomes larger.
+                                                                         𝑣 0 set by Equation 3. For the leftmost panel, which has the
+                                                                         smallest Young Untraceable fraction, the combined Old and
+                                                                         Young Untraceable distribution closely matches the SHM,
+                                                                         with an EMD between the two of 9 km s−1 . For the two
+                                                                         other panels, with intermediate and high Young Untraceable
+                                                                         fractions, the SHM does a poorer job of modeling the distri-
+                                                                         bution, and the EMD increases to 14 km s−1 and 28 km s−1 ,
+                                                                         respectively.
+                                                                            Figure 3 shows the EMD values between the SHM and
+                                                                         the speed distribution of the Old Untraceable component
+                                                                         alone (solid yellow) and the combined distribution of Old
+                                                                         and Young Untraceable components (dashed purple), across
+                                                                         all 98 MW analogs. The Old Untraceable component, which
+                                                                         is likely virialized and well phase mixed, has an EMD of
+                                                                         13+8
+                                                                            −6
+                                                                               km s−1 relative to the SHM, with the largest deviation be-
+                                                                         ing 43 km s−1 . The Young Untraceable component alone (not
+                                                                         shown in the figure) deviates much more strongly from the
+                                                                         SHM parameterization, with an EMD of 65+52              −1
+                                                                                                                       −32 km s , with
+                                                                         the most discrepant halo 230 km s−1 from the SHM. When
+                                                                         the Untraceable components are taken together, the SHM re-
+Figure 3. EMDs between the SHM and the speed distribution of the         mains a good model; the distributions are 13+13−6
+                                                                                                                            km s−1 from
+Old Untraceable DM (solid yellow) or the Untraceable components          the SHM, with a maximum discrepancy of 41 km s−1 . These
+combined (dashed purple). The Old Untraceable component on its           distances are similar to the distance between the SHM and the
+own is well described by a Maxwell–Boltzmann, with an EMD of             Old Untraceable component alone, indicating that the typi-
+13+8
+  −6
+      km s−1 , while the Young Untraceable component alone (not          cally small Young Untraceable fraction in most MW analogs
+shown in the figure) is not, lying 65+52       −1 from the SHM.          does not significantly affect one’s ability to model the com-
+                                      −32 km s
+However, since the Young Untraceable component is typically a            bined Untraceable populations of DM with the SHM.
+small fraction of the DM in the solar annulus, combining the Old
+and Young Untraceable components together is still well modeled
+                                                                                            3.2. Traceable Component
+by the SHM, with an EMD of 13+13−6
+                                    km s−1 .
+                                                                            We next consider the DM and stellar debris deposited by
+                                                                         Traceable mergers. Figure 4 compares the speed distributions
+Untraceable DM (yellow) and Young Untraceable DM (ma-                    of Traceable DM (blue) and the corresponding stars (solid
+genta) populations are stacked such that the top edge of the             orange) for the same three MW analogs shown in Figure 2. In
+filled histogram is the distribution for the total Untraceable           all three halos, the DM is peaked toward higher speeds than
+population. The SHM (solid black) is shown for each halo as              the stars, indicating that the stellar speeds provide a biased
+a Maxwell–Boltzmann distribution with characteristic speed               model for the Traceable DM distributions. Therefore, we
+                                                                     6
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                 Shpigel et al.
+
+
+
+
+Figure 4. Speed distributions of Traceable DM (filled blue) and stars accreted from the same merger (solid orange) for the Traceable merger in
+each of the three MW analogs from Figure 2. In each case, the stars underpredict the DM speed. To correct for this, we boost the dispersion
+of the stellar tracers according to Equation 5, giving the boosted stellar distribution (dashed orange). Before the boost, the EMDs between the
+DM and stellar speed distributions are 49, 48, and 40 km s−1 for the left, middle, and right panels, respectively. The boosted stellar distribution
+more closely traces the DM distribution, and the resulting EMDs are reduced to 4, 5, and 5 km s−1 , respectively.
+develop a procedure for modifying the stellar speeds to better                 mean. The resulting boosted velocities, 𝑣 b , better trace the
+trace the DM.                                                                  DM speed distribution.
+   To assess this discrepancy within the full sample of MW-                      For each Traceable merger, we define a one-parameter
+like galaxies, Figure 5 compares the mean velocities (𝑣¯ 𝑖 , in                boosted stellar velocity as follows:
+the top row) and velocity dispersions (𝜎𝑖 , in the bottom row)
+for each spherical component 𝑖 ∈ {𝑟, 𝜙, 𝜃} of the debris de-                                        Δ𝜎 + 𝜎𝑖★ ★
+                                                                                              𝑣 b𝑖 =
+                                                                                                                         
+                                                                                                              𝑣 𝑖 − 𝑣¯ ★𝑖 + 𝑣¯ ★𝑖 ,               (5)
+posited by the Traceable mergers. In each panel, the quantity                                          𝜎𝑖★
+for the Traceable DM is shown on the vertical axis, while the                                               1 ∑︁  DM               
+corresponding quantity for the stars is shown on the horizon-                                     with Δ𝜎 =         𝜎𝑖 − 𝜎𝑖★                      (6)
+                                                                                                            3 𝑖
+tal axis. The distribution across all 108 Traceable mergers
+is shown in the background (blue), with the GSE-like merg-
+                                                                               and 𝑖 ∈ {𝑟, 𝜙, 𝜃}. This boost keeps the mean value for each
+ers (star markers) highlighted.
+                                                                               component of the stellar velocity fixed, but increases the dis-
+   Generally, the mean velocity of the Traceable DM (𝑣¯ DM )
+                                                                               persion by Δ𝜎 = 34+10          −1
+                                                                                                     −11 km s , the characteristic offset be-
+is in agreement with the mean velocity for the stars con-
+                                                                               tween DM and stellar velocity dispersions. The DM and
+tributed by the same merger (𝑣¯ ★), with 𝑣¯ ★ − 𝑣¯ DM =
+                                                                               stellar debris from these mergers frequently corotates with
+(−1+5        +16 +4
+     −3 , −15 −34 , 0 −6 ) km s
+                                −1 for the components (𝑣 , 𝑣 , 𝑣 ).
+                                                              𝑟  𝜙 𝜃
+                                                                               the stellar disk, with mean 𝑣 𝜙 displaced from zero toward
+In contrast, the velocity dispersions for the DM (𝜎 DM ) are                   positive velocities. As a result, simply increasing the dis-
+systematically higher than those of the stars (𝜎★), for which                  persions without taking care to maintain a fixed mean would
+we see (𝜎 DM − 𝜎★) = (27+10                  +17      +14
+                                     −11 , 38 −14 , 38 −12 ) km s
+                                                                  −1 for
+                                                                               result in poorer agreement between the DM and boosted stars.
+(𝜎𝑟 , 𝜎𝜙 , 𝜎𝜃 ). This is especially true for the GSE-like merg-                   The corresponding speed distributions for the boosted stars
+ers, which select for radially biased stellar distributions. For               are shown in Figure 4 (dashed orange), and the agreement
+these mergers, the 𝜎𝜙★ tends to be much smaller than the 𝜎𝜙DM ,                is evident. While the EMDs between the uncorrected stellar
+even more so than the typical merger.                                          speed distributions and the DM speed distributions are 49,
+   The systematic offset arises from differences in how quickly                48, and 40 km s−1 for the left, middle, and right panels,
+the two components are stripped from the infalling merger.                     respectively, the boosted stars are only 4, 5, and 5 km s−1
+The stars, which are deeper in a satellite’s potential well, tend              away from the corresponding DM distributions, respectively.
+to get stripped later in the merging process and are deposited                    Figure 6 shows the result of this boost across the sam-
+toward the center of the MW. The associated DM, on the                         ple of 108 Traceable mergers. The EMD between the DM
+other hand, is stripped from the infalling merger sooner and                   speed distributions and the uncorrected stars (solid orange) is
+deposited at higher orbital energies. Especially for late-time                 47+19   km s−1 , with a maximum EMD of 111 km s−1 . The
+                                                                                  −15
+mergers, when the MW’s potential well is deepest and allows                    EMD between the DM speed distributions and the boosted
+for such large differences in orbital energy, this biases the                  stars (dashed orange) is shown, and the agreement is much
+DM speed distribution to higher speeds relative to stars from                  better, as the EMDs are reduced to 10+11        −1 with a maxi-
+                                                                                                                       −5 km s
+the same merger, resulting in systematically broader velocity                                    −1
+                                                                               mum of 55 km s . These results show that the boosted stellar
+dispersions for the DM. This effect is studied in more detail in               distribution is a good model for the Traceable DM speeds. In-
+ Appendix B. Due to these systematic discrepancies in veloc-                   deed, it is an improvement upon the SHM (solid black), which
+ity dispersions, we implement a boost to the stellar velocities                exhibits an EMD of 18+16         −1 to the Traceable DM speed
+to increase the observed dispersion while maintaining a fixed                                          −8 km s
+                                                                               distribution.
+                                                                           7
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                     Shpigel et al.
+
+
+
+
+Figure 5. Correlation between stellar and DM kinematics for the 108 Traceable mergers. The top row shows the mean galactocentric velocities
+𝑣¯ 𝑖 for each of the spherical components, 𝑖 ∈ {𝑟, 𝜙, 𝜃}, while the bottom row shows the velocity dispersion in each of these components. In
+each panel, the horizontal axis shows the value for the stars contributed by each merger, while the vertical axis shows the value for the DM
+contributed by the same merger. Equality is indicated by the dashed gray line, such that probability density along this line indicates good
+agreement between the DM and the stellar tracers. The probability density across the full sample of mergers is shown in the background (blue,
+with darker indicating higher probability), with the GSE-like mergers highlighted using star markers. Across the sample, the DM and stars have
+similar mean velocities, with a difference in 𝑣¯ 𝑖 of (−1+5      +16 +4
+                                                         −3 , −15 −34 , 0 −6 ) km s
+                                                                                    −1 for (𝑣 , 𝑣 , 𝑣 ). The velocity dispersions, on the other hand, are
+                                                                                             𝑟   𝜙 𝜃
+                                                   +10      −1
+shifted: the DM exhibits an offset of Δ𝜎 = 34−11 km s with respect to the stars, for Δ𝜎 the directionally averaged difference in dispersions
+(Equation 6). The dispersions are particularly discrepant (Δ𝜎 = 43+11                  −1
+                                                                             −10 km s ) for the GSE-like mergers, which are chosen based on their
+radially biased stars and have lower stellar tangential dispersions relative to the overall population of mergers. The offset in dispersions biases
+the stellar tracers to predict lower speeds for the DM, as seen in Figure 4, which is corrected for by Equation 5.
+                       3.3. Total Local DM                                      Traceable merger and one in which they are sampled from the
+   With an understanding of the Untraceable DM (Section 3.1)                    distribution of values extracted from TNG50.
+and the Traceable DM (Section 3.2) components, we are                              We neglect uncertainty due to the determination of
+equipped to reconstruct the total DM speed distribution in                      𝑣 0 (Equation 3), as it is well constrained for the MW (Baxter
+the ROI. We highlight two parameters for this reconstruction                    et al. 2021). In the case of analogs with multiple Traceable
+that are difficult to obtain observationally: (i) the boost factor              mergers, we further neglect the uncertainty in the relative
+to correct the distribution of stellar tracers, Δ𝜎 (Equation 5),                weight of each and instead divide the fraction 𝑤 tr according
+and (ii) the fraction of DM in the solar neighborhood traced                    to the total stellar mass of each merger at infall, 𝑚★, such
+by these stars, 𝑤 tr . To illustrate the impact of the uncertainties            that each Traceable merger is given a weight 𝑤 tr 𝑚★/𝑀★, for
+in these parameters, we perform two versions of the analy-                      𝑀★ the sum of all 𝑚★ values. In general, the inferred rela-
+sis, one in which these values are fixed to the truth for each                  tive weight 𝑚★/𝑀★ is 14+23  −6
+                                                                                                                percentage points from the true
+                                                                                value. If the relative weight is instead determined by the
+
+                                                                           8
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                  Shpigel et al.
+
+                                                                            Old Untraceable DM (yellow), Young Untraceable DM (ma-
+                                                                            genta), and Traceable DM (blue), such that the outer enve-
+                                                                            lope of the histogram is the exact speed distribution, summed
+                                                                            across all components. The inferred total speed distribution
+                                                                            according to Equation 7 (dashed green) is shown, with all
+                                                                            parameters (𝑤 tr , 𝑣 0 , 𝑚★, and Δ𝜎) fixed to their true values.
+                                                                            The resulting distribution has an EMD of 10 km s−1 from the
+                                                                            exact distribution. However, these parameters are not easily
+                                                                            determined in realistic observational settings. As such, we
+                                                                            wish to sample over possible values for them. To this end, we
+                                                                            construct probability distributions for 𝑤 tr and Δ𝜎 from the
+                                                                            simulation data.
+                                                                               From the left panel of Figure 1, it is clear that 𝑤 tr is sensi-
+                                                                            tive to the number of Traceable mergers; in halos with more
+                                                                            Traceable mergers, more DM is contributed by Traceable
+                                                                            mergers. Therefore, the probability distribution for 𝑤 tr used
+                                                                            in this reconstruction is equal to the distribution observed in
+                                                                            the simulation conditioned on the number of Traceable merg-
+                                                                            ers (i.e., the marginal distribution shown at the top edge of the
+                                                                            figure). The halo in Figure 7 has a single Traceable merger,
+                                                                            so 𝑤 tr is sampled from the 18+15  −5
+                                                                                                                  % range corresponding to
+Figure 6. EMDs between the speed distributions of Traceable DM              this distribution, constructed from the 37 single-merger MW
+and the stars accreted from the same merger, across all 108 Traceable       analogs.
+mergers. The EMD between the DM and the uncorrected stellar                    As for Δ𝜎, the sampled distribution is the 43+11   −10 km s
+                                                                                                                                             −1
+
+distributions (solid orange) is 47+19     km s−1 . The EMDs, after          range obtained for the 26 GSE-like mergers, as the Trace-
+                                      −15
+applying the boost described in Equation 5 to the stellar velocities,       able merger in this halo is itself GSE-like. Were the merger
+are shown as Boosted stars (dashed orange). The boost reduces               not GSE-like, we would use the full sample of 108 mergers,
+the EMD to 10+11          −1                                                which has Δ𝜎 in the range 34+10           −1
+                                                                                                             −11 km s . Since there are no
+                 −5 km s , indicating that the boosted stars serve as
+better tracers for the underlying DM speed distribution. The boosted
+                                                                            additional Traceable mergers in this halo, 𝑚★/𝑀★ = 1, and
+                                                                            the only contribution to 𝑤 tr comes from this GSE-like merger.
+stellar tracer model is also better than the SHM (solid black), which
+                                                                               To account for the uncertainty in these two parameters, we
+has an EMD of 18+16  −8 km s
+                             −1 from the DM speed distribution.
+                                                                            consider each of the 37 × 26 = 962 combinations of 𝑤 tr and
+                                                                            Δ𝜎 and construct an inferred speed distribution from every
+stellar mass within the ROI from each merger, the inferred                  choice. This is a maximally conservative approach, since it
+relative weight is 19+31 −11 % points from the true fraction. This          does not assume any correlation between the two. At each
+suggests that using 𝑚★/𝑀★ at infall provides a reasonable                   point along the horizontal axis in the left panel of Figure 7, the
+approximation for each merger’s contribution to 𝑤 tr . The                  median probability density across these distributions (solid
+discrepancy induced by this approximation is modest relative                green) is shown, and the 16th–84th percentile range (shaded
+to the uncertainty arising from the dispersion offset between               green) is indicated as a band. The EMD for these reconstruc-
+DM and stars (Section 3.2) and does not dominate the recon-                 tions is 8+3       −1
+                                                                                        −2 km s , comparable to the 10 km s
+                                                                                                                              −1 found using
+struction. In principle, the stellar mass–halo mass relation                the true values of the parameters.
+and differences in tidal stripping as the mergers orbit their                  The right panel of Figure 7 shows the results of this re-
+host will change the true value of this fraction, and we refer              construction across the subsample of 70 MW analogs with
+the interested reader to Necib et al. (2019b) for a more careful            Traceable mergers.14 The EMD between the exact speed dis-
+study of this relative weighting.                                           tributions and the reconstructions performed with all param-
+   The total speed distribution 𝑓tot (𝑣) is constructed as a                eters fixed to their true values (dashed green) is 10+6−4 km s .
+                                                                                                                                            −1
+weighted sum of the modeled components,                                     For each halo, we also sample over the uncertainties in 𝑤 tr
+                                             ∑︁ 𝑚★                          and Δ𝜎 as we did for ID 550149. As in the worked example,
+   𝑓tot (𝑣) = (1 − 𝑤 tr ) SHM(𝑣|𝑣 0 ) + 𝑤 tr           𝑓 b (𝑣) . (7)        we set the possible values of 𝑤 tr equal to the values produced
+                                         # mergers
+                                                   𝑀★
+                                                                            by the halos with the same number of Traceable mergers.
+The first term corresponds to the Maxwell–Boltzmann distri-                 Further, when modeling a GSE-like merger, the Δ𝜎 is sam-
+bution of Equation 2 with 𝑣 0 set by Equation 3. The second                 pled from the values for all GSE-like mergers; otherwise, it
+term is a sum of the speed distributions 𝑓 b (𝑣) for each Trace-            is sampled from the full distribution of Δ𝜎 values. For each
+able merger, which are in turn constructed as a Gaussian                    MW analog, this gives a range of EMDs corresponding to the
+kernel density estimation of the boosted stellar velocities, 𝑣★b ,          distance between the exact speed distribution and the 𝑓tot (𝑣)
+defined in Equation 5.
+   The left panel of Figure 7 shows this construction on an
+                                                                            14 The 28 analogs with no Traceable mergers have an EMD of 10+5 km s −1
+example halo, ID 550149, the MW analog presented in the                                                                                  −4
+                                                                              from their reconstruction, though this reconstruction consists only of a
+central panels of Figure 2 and Figure 4. The full speed distri-               Maxwell–Boltzmann component, with no stellar tracer component.
+bution is broken down into the three constituent components:
+                                                                        9
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                Shpigel et al.
+
+
+
+
+Figure 7. Full reconstruction of the local DM speed distribution. (Left) Speed distributions of the Traceable (blue), Young Untraceable (magenta),
+and Old Untraceable (yellow) components in the solar annulus for an example MW analog, stacked such that the outer envelope is the total exact
+DM speed distribution. The reconstructions are comprised of a Maxwell–Boltzmann distribution and an empirical distribution derived from
+accreted stars according to Equation 7. The reconstruction that uses the true values for the Traceable DM fraction (𝑤 tr ) and the boost applied
+to the stellar tracers (Δ𝜎, Equation 5) is shown in light dashed green and has an EMD of 10 km s−1 from the exact speed distribution. The
+solid dark green band indicates the 16th–84th percentile range across all reconstructions, sampling over the uncertainty induced by varying
+these parameters. Even with this uncertainty, the sampled distributions closely match the exact DM distribution, with an EMD between them of
+8+3       −1
+  −2 km s . The SHM alone (not shown here) aligns well with the reconstructions for this example. (Right) Distribution of EMDs between the
+exact speed distributions and the reconstructions across all 70 MW analogs with Traceable mergers, for models using the true values of Δ𝜎 and
+𝑤 tr (dashed light green) and those that sample the uncertainty in these parameters (solid dark green). The true-value models are 10+6   −4 km s
+                                                                                                                                                 −1
+
+away from the exact speed distributions, while accounting for uncertainty in the parameters modestly inflates these EMDs to 11−4 km s .+6      −1
+
+These results indicate that the model provides a good fit, even when accounting for uncertainty in the parameters. We also compare the exact
+distributions to the SHM alone (solid black), which yields an EMD of 14+15  −6
+                                                                                km s−1 . This shows that the SHM provides a reasonable overall
+approximation, but the inference of the speed distribution improves when including a model of the Traceable component.
+model. The choice of Δ𝜎 and 𝑤 tr does not strongly impact the                    ligible fraction of the DM in the ROI. For halos with espe-
+recovered EMDs; the distribution of recovered EMDs in each                       cially large Young Untraceable fraction, the reconstructions
+galaxy typically has a width of ∼2–4 km s−1 (16th–84th per-                      become ∼10 km s−1 farther from the exact distribution be-
+centile). Sampling over all reconstructions15 for all 70 MW                      cause the Young Untraceable component is particularly non-
+analogs with traceable mergers yields the Sampled EMD dis-                       Maxwellian. However, the uncertainty in the reconstruction
+tribution (solid green) in Figure 7, which has a typical EMD                     parameters (Δ𝜎, 𝑤 tr ) is larger than the variation induced by
+of 11+6         −1
+      −4 km s , providing a modestly worse—though still                          the Young Untraceable DM; as such, the Sampled EMDs are
+comparable—reconstruction than the true parameter values.                        largely insensitive to the Young Untraceable fraction.
+Together, these two distributions indicate that the reconstruc-
+tion is still well determined when the exact values of 𝑤 tr and                                         4. Discussion
+Δ𝜎 are unknown, suggesting that the method is applicable to                         This section applies the formalism developed in Section 2
+observational data.                                                              and Section 3 to our own Galaxy. Figure 8 presents the re-
+   For comparison, the right panel of Figure 7 also compares                     construction of the local DM speed distribution for the MW
+the exact speed distribution to the SHM alone (solid black).                     in the Galactocentric frame. As in Section 3.1, we describe
+The SHM achieves a median EMD of 14+15       −6
+                                                km s−1 , which                   the Untraceable DM with the SHM (black), with scale veloc-
+demonstrates that while it provides a reasonable overall ap-                     ity set to the local standard-of-rest speed 𝑣 0 = 238 km s−1
+proximation to the exact distributions, the reconstruction does                  (Reid & Brunthaler 2004; Bland-Hawthorn & Gerhard 2016;
+improve once the Traceable components are explicitly mod-                        Baxter et al. 2021; GRAVITY Collaboration et al. 2021). We
+eled. This is true even in halos with one Traceable merger,                      neglect uncertainty in this parameter, as it is estimated to
+when the Young Untraceable fraction comprises a nonneg-                          be only 1.5 km s−1 (Baxter et al. 2021). The shaded gray
+                                                                                 band indicates uncertainty in the Untraceable DM fraction,
+15 Note that the number of possible reconstructions varies from analog to
+                                                                                 described below.
+   analog. We have ensured that each analog contributes the same amount
+                                                                                    Though many individual mergers are thought to contribute
+   of probability density to the Sampled curve in Figure 7.                      to the MW’s ex situ stellar population, by far the largest
+                                                                                 contribution around the Sun is from the GSE merger (Helmi
+                                                                            10
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                              Shpigel et al.
+
+                                                                                lines indicate the 16th–84th percentiles of these samples. As
+                                                                                described in Section 3.2, we apply a correction factor to these
+                                                                                stellar velocities to give a prediction for the GSE-contributed
+                                                                                DM. The values of Δ𝜎 are taken from the GSE-like mergers
+                                                                                in TNG50. The boosted stellar distribution (dashed orange),
+                                                                                constructed using this boost, is shown with uncertainty from
+                                                                                sampling over both Δ𝜎 and 𝑤 tr .
+                                                                                   The total reconstructed speed distribution, formed by com-
+                                                                                bining the SHM and the boosted stellar component, is shown
+                                                                                as a green band that samples over both model parameters,
+                                                                                where at each point along the horizontal axis, we have shaded
+                                                                                the 16th–84th percentiles of the reconstructions. These sam-
+                                                                                pled distributions have an EMD of 6+5  −3 km s
+                                                                                                                               −1 from the SHM,
+
+                                                                                indicating that the model incorporating GSE stars is similar to
+                                                                                the Maxwell–Boltzmann-only model. In contrast, construct-
+                                                                                ing the total speed distribution without applying the boost
+                                                                                to the stellar velocities yields an EMD of 17+11           −1
+                                                                                                                                  −6 km s , as
+                                                                                the unboosted GSE stellar speeds are typically much slower
+                                                                                than 𝑣 0 . Even after the boost is applied, the GSE stars are
+                                                                                generally slower than 𝑣 0 , leading to a suppression of the prob-
+                                                                                ability on the high-speed tail from the (1 − 𝑤 tr ) weighting of
+Figure 8. Projected local DM speed distribution for the MW in
+                                                                                the SHM. Due to this effect, the 95th percentile of DM speed
+the Galactocentric frame. The SHM with 𝑣 0 = 238 km s−1 is
+                                                                                is 467+5−5
+                                                                                           km s−1 for our model, compared to 470 km s−1 for
+shown (solid black), as well as high-eccentricity ex situ stars selected
+                                                                                the SHM alone.
+from the Ostdiek et al. (2020) catalog as a model for the GSE stellar
+                                                                                   We can compare our final results to other predictions in
+debris (solid orange). These GSE stars are boosted using the Δ𝜎                 the literature for the local DM speed distribution. For ex-
+values extracted from GSE-like mergers in TNG50 (dashed orange).                ample, Necib et al. (2019b) and Zhu et al. (2024) sought to
+Each of these speed distributions has further uncertainty induced by            model the DM arising specifically from the luminous mergers,
+𝑤 tr , the relative weighting of the SHM and the stellar tracers, taken         including the GSE, using ex situ stars as tracers. In the Galac-
+from the single Traceable merger halos in the simulation. Summing               tocentric frame, we find that the stellar debris from the GSE
+these two components yields the full reconstructions (solid green),             is slower than the 238 km s−1 local standard-of-rest speed in
+which lie 6+5 −3 km s
+                      −1 from an SHM-only model.
+                                                                                the MW, with a mode stellar speed of 90 km s−1 —compared
+                                                                                to 150 km s−1 and 170 km s−1 for Necib et al. (2019b) and
+et al. 2018; Myeong et al. 2018; Naidu et al. 2020). Therefore,                 Zhu et al. (2024), respectively. When we use the boosted stel-
+we take the GSE to be the only Traceable merger in our Galaxy                   lar model, our mode speed increases to 140+13    −12 km s
+                                                                                                                                          −1 (see
+
+and assume that no other merger contributes more than 10%                       Figure 8), comparable to the previously published results.
+of the local DM. To model this component, we select GSE-                           Because we include the contribution of dark accretion in
+contributed stars from the catalog of Ostdiek et al. (2020),                    the total DM distribution, we can compare the final result to
+which consists of stars from the Gaia DR2 dataset (Gaia                         the SHM++ model (Evans et al. 2019), which adds an analytic
+Collaboration et al. 2018) flagged by a neural network as                       model for the GSE to the SHM. Evans et al. (2019) estimate
+likely being ex situ based on their kinematics. To isolate the                  that the DM fraction in the solar neighborhood due to the GSE
+GSE population from this sample, we apply an eccentricity                       is ∼10%–30%, consistent with the prediction for 𝑤 tr (13%–
+cut of 𝑒 > 0.7 and a spatial cut (𝑟 ∈ [6, 10] kpc, |𝑧| ≤                        33%) that we obtain from TNG50. In the Galactocentric
+2 kpc) (Naidu et al. 2020). We have tested alternative GSE                      frame, their GSE model has larger velocity dispersions than
+selections and confirmed that this choice yields a stellar speed                our reconstruction (see Figure C1), but its speed distribution
+distribution consistent with the literature (Evans et al. 2019;                 is still peaked below the local standard-of-rest speed. We
+Necib et al. 2019a; Lancaster et al. 2019; Necib et al. 2020;                   note that the high dispersion of their GSE model results in a
+O’Hare et al. 2020; Zhu et al. 2024). While we take this to                     total DM distribution in the heliocentric frame that is slightly
+be a first approximation to the speed distribution of the GSE                   faster than predicted for the isotropic SHM. In contrast, our
+debris, a more detailed clustering analysis of the Ostdiek                      total distribution is peaked below the SHM when boosted to
+et al. (2020) stars in this region would refine this analysis by                the heliocentric frame.
+reducing contamination from, e.g., high-𝛼 disk stars, which                                             5. Conclusions
+may contribute a modest (∼25 km s−1 ) prograde rotation
+in our GSE sample. See Appendix C for a more detailed                              In this paper, we have studied how to empirically build
+discussion.                                                                     a model for the local distribution of DM speeds. Using a
+   The resulting speed distribution for the GSE stars is shown                  sample of 98 MW analogs from the TNG50 simulation, we
+in Figure 8 (solid orange), where it is normalized by the weight                demonstrated how to model the contribution of DM from both
+parameter 𝑤 tr drawn from the distribution of single Traceable                  dark accretion and luminous mergers in the solar neighbor-
+merger MW analogs in TNG50 (see Section 3.3). The thinner                       hood, defined as the cylindrical shell 𝑟 ∈ [6, 10] kpc and
+                                                                                |𝑧| ≤ 2 kpc. Our results demonstrate that the contribution
+                                                                           11
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                               Shpigel et al.
+
+from dark accretion, as well as early (𝑧 acc > 3) luminous              els for the MW DM speed distribution are available online.16
+mergers, can be modeled as a Maxwellian. Additionally, the              The results of this work motivate improved reconstructions
+stellar debris from recent and significant luminous mergers             for the velocity distributions of GSE stars in the solar region,
+can reliably trace the corresponding DM.                                which can be used to continue improving the reconstruction
+   This is the first study showing how to properly treat the            of the local DM speed distribution.
+contribution of dark accretion to the solar neighborhood. We               This work focuses only on the DM speed distribution, rather
+accounted for the DM that originated from early-accretion               than a directionally sensitive velocity distribution. This is
+events, as well as late-time accretion from smaller mergers.            sufficient for predicting the scattering rates in an isotropic
+In general, the former has time to virialize and is, per se,            detector material, but the directional information provided
+well modeled today by a Maxwell–Boltzmann distribution.                 by the stellar tracers may be leveraged by an anisotropic DM
+The latter can exhibit more variation in its speed distribu-            detector. Indeed, Figure 5 suggests that many mergers deposit
+tions. However, in most cases, it is subdominant to the early-          debris with nonzero azimuthal velocity, contrary to the typical
+accretion events, such that the Maxwellian continues to be              assumption of isotropy. Implications of this will be explored
+a good model for the total speed distribution of these two              in further work.
+contributions, with typical EMDs of 13+13  −6
+                                              km s−1 from the              This paper develops a set prescription for how to build an
+Maxwellian model. This confirms that this “Untraceable”                 empirical speed distribution, verifying it with a large sample
+component of the local DM can be modeled with this param-               of MW-like systems from TNG50. These results motivate fur-
+eterization.                                                            ther study to stress-test the procedure on increasingly large
+   For the remainder of the DM, which comes from large merg-            samples of MW-like systems with improved resolution, as
+ers that deposit significant amounts of debris into the ROI, the        well as variation on the subgrid feedback prescriptions. The
+speed distribution can be reconstructed using the kinematics            latter is likely an important source of systematic uncertainty
+of the stars from these mergers. However, the stellar debris            that should be accounted for when using empirical speed dis-
+from these larger mergers is systematically slower than the             tributions in direct detection analyses. In terms of the overall
+corresponding “Traceable” DM. This is because the DM is                 methodology, the conclusions of our work are consistent with
+stripped from the infalling mergers first and is deposited at           the prior work of Necib et al. (2019b), which studied two
+higher orbital energies. Despite this discrepancy, the veloci-          galaxies using FIRE-2 physics (Wetzel et al. 2016), as well as
+ties of the DM and stellar populations are strongly correlated.         the results in the recent work by Zhang et al. (2026), which
+Applying a boost to its velocity dispersion (Equation 5) en-            expands the sample size to five FIRE-2 MW-like simulations,
+ables the stellar debris to serve as a good model for the non-          studying the five mergers in each galaxy that contribute the
+Maxwellian component of the DM speed distribution, with                 most stars to the solar annulus.
+an EMD of 10+11 −5 km s
+                         −1 between the DM and boosted stars.              Zhang et al. (2026) expands upon the prior work in FIRE-
+   We combined these results to reconstruct the total local             2 by considering the contribution of dark accretion. They
+DM speed distribution by adding the stellar-based model for             find—in agreement with our study—that the Untraceable
+the Traceable component to the Maxwell–Boltzmann model                  component is well modeled by a Maxwellian distribution,
+for the Untraceable background. As shown in Figure 7, this              even though the FIRE-2 halos form later than the halos here
+reconstruction yields strong agreement with the exact distri-           and have therefore not had as long for their DM to equilibrate.
+butions across all 70 MW analogs that have stellar tracers,             This may be due to the short dynamical timescales in the inner
+even when accounting for uncertainty in the relative weight-            galaxy.
+ing of the Maxwell–Boltzmann and Traceable components of                   We find a modest offset between the ex situ stellar velocity
+the model. Sampling over this uncertainty produces models               dispersions and the Traceable DM counterparts, on the order
+with median EMDs of 11+6      −4 km s
+                                      −1 from the exact speed           of a few tens of kilometers per second. This is in contrast with
+distribution. Importantly, the same agreement holds for the             both Necib et al. (2019b) and Zhang et al. (2026), who find
+subset of analogs that experienced GSE-like mergers, indi-              a tighter correlation between the two distributions for GSE-
+cating that our conclusions are consistent with expectations            like mergers. The difference between the FIRE-2 and TNG50
+for the MW’s accretion history.                                         results can be attributed to multiple effects, both numerical
+   Finally, in Section 4, we applied this approach to the               and physical, which are challenging to disentangle at this
+MW itself. Tracers for the GSE DM are taken to be high-                 stage.
+eccentricity ex situ stars from the catalog of Ostdiek et al.              On the numerical side, the Latte suite of FIRE-2 has a
+(2020). While the GSE stars themselves are slower than the              higher resolution than TNG50, with over an order of mag-
+SHM Maxwellian, with a median speed of 180 km s−1 (rather               nitude lower mass per simulation particle. Results from
+than the ∼260 km s−1 expected from the local standard-of-               Lilie et al. (2026) suggest that DM speed distributions around
+rest velocity), applying our correction factor to the tracers’          our ROI may be resolution-dependent, and it is yet unclear
+velocities yields a median speed of ∼220 km s−1 for the GSE-            whether TNG50 has sufficient resolution for convergence.
+contributed DM, with the exact value set by the correction              Further, Zhang et al. (2026) find that the correlation between
+factor used. As a result, incorporating the empirical speed             DM and stellar speed distributions degrades with lower reso-
+distribution of the GSE stars only modestly modifies the pre-           lution. Additionally, the work in FIRE-2 uses the Rockstar
+diction set by the SHM alone, at least for the DM speed. It
+also leads to a modest ∼20% suppression on the high-speed
+                                                                        16 https://github.com/Tal-Shpigel/stellar-dm-velocity-distributions
+tail compared to the pure Maxwellian. The resulting mod-
+
+
+                                                                   12
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                       Shpigel et al.
+
+halo-finding algorithm for defining DM halos rather than Sub-             National Science Foundation grant PHY-2210452. The com-
+find, which may affect how well DM can be traced through                  putations in this paper were run on the FASRC cluster sup-
+the simulation history.                                                   ported by the FAS Division of Science Research Computing
+   Physically, the local environment of the two simulations               Group at Harvard University. The IllustrisTNG simulations
+differs, as the TNG50 cosmological volume holds two large                 were undertaken with compute time awarded by the Gauss
+clusters, while the FIRE-2 halos are simulated as zoom-ins                Centre for Supercomputing (GCS) under GCS Large-Scale
+with more isolated initial conditions. This denser environ-               Projects GCS-ILLU and GCS-DWAR on the GCS share of
+ment likely biases the TNG50 halos to form earlier than those             the supercomputer Hazel Hen at the High Performance Com-
+in FIRE-2, resulting in more concentrated halos at the present            puting Center Stuttgart (HLRS), as well as on the machines
+day. This concentration is exacerbated by the baryonic feed-              of the Max Planck Computing and Data Facility (MPCDF) in
+back physics, as FIRE-2 has a more aggressive prescription                Garching, Germany.
+for baryonic feedback, which generally yields less dense ha-                This report was prepared as an account of work sponsored
+los. Both of these will affect tidal disruption of satellites that        by an agency of the United States Government. Neither the
+are orbiting the host systems and the resulting distribution of           United States Government nor any agency thereof, nor any of
+orbital energies for the DM and stars.                                    their employees, makes any warranty, express or implied, or
+   In general, it is beneficial to vary over these possible sys-          assumes any legal liability or responsibility for the accuracy,
+tematics by considering many possible simulations. As the                 completeness, or usefulness of any information, apparatus,
+sample size of simulated galaxies increases, the connection               product, or process disclosed, or represents that its use would
+between a merger’s DM and stars will be probed in more                    not infringe privately owned rights. Reference herein to any
+depth and with increasing statistical power. Further, simula-             specific commercial product, process, or service by trade
+tions performed at higher resolution will be able to identify             name, trademark, manufacturer, or otherwise does not neces-
+smaller mergers than those considered here, allowing more                 sarily constitute or imply its endorsement, recommendation,
+of the MW’s known mergers to be traced. Advancing hand-                   or favoring by the United States Government or any agency
+in-hand with these computational efforts, future observational            thereof. The views and opinions of authors expressed herein
+surveys of the stellar halo, such as 4MOST (Helmi et al. 2019),           do not necessarily state or reflect those of the United States
+WEAVE (Jin et al. 2024), and the LSST (Ivezić et al. 2019),              Government or any agency thereof.
+will yield more information about the Galaxy’s merger his-
+tory. These efforts will ensure that a detailed empirical model                                 Data availability
+can be borne out to further improve the precision with which                 All data used in this work are publicly available at
+one may infer the local DM speed distribution.                            https://tng-project.org/. The inferred MW DM speed distribu-
+                                                                          tions presented in Figure 8 and Section 4, as well as a Jupyter
+                                                                          Notebook to use these data, are available at https://github.
+                      Acknowledgments                                     com/Tal-Shpigel/stellar-dm-velocity-distributions and pre-
+  We thank Carlos Blanco, Akaxia Cruz, Andreas Thoyas,                    served on Zenodo at doi:10.5281/zenodo.19024864.
+and Xiuyuan Zhang for useful conversations. M.L. and D.F.
+are supported by the Department of Energy (DOE) under                                              ORCID iDs
+Award No. DE-SC0007968. M.L. is also supported by the                     Tal Shpigel https://orcid.org/0009-0003-5629-5848
+Simons Investigator in Physics Award. D.F. is additionally                Dylan Folsom https://orcid.org/0000-0002-1544-1381
+supported by the Joseph H. Taylor Graduate Student Fellow-                Mariangela Lisanti https://orcid.org/0000-0002-8495-8659
+ship. L.N. is supported by the Sloan Fellowship and the                   Lina Necib https://orcid.org/0000-0003-2806-1414
+NSF CAREER award 2337864. This work was performed in                      Mark Vogelsberger https://orcid.org/0000-0001-8593-7692
+part at the Aspen Center for Physics, which is supported by               Lars Hernquist https://orcid.org/0000-0001-6950-1629
+
+
+
+
+                                                                     13
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                               Shpigel et al.
+
+
+
+
+Figure A1. Spatial distribution of DM particles in MW 550149, focusing on the Traceable merger highlighted in the middle panel of Figure 4.
+This merger’s DM particles are shown 2 Gyr before infall (left), at infall (middle), and 2 Gyr after infall (right). All panels display the same
+pool of 58,541 DM particles that Subfind identifies as bound to the merger 2 Gyr before infall, subsampled such that they are more visible
+in this image. We apply the DM tracking algorithm to divide the particles into three categories: tagged to this merger (blue filled circles),
+untagged (gray unfilled circles), and tagged to another merger (orange triangles). The host MW is indicated by a point (purple) with its virial
+radius shown as a circle (dashed purple). Of the selected particles, 96% are tagged to this merger, 4% are not tagged to any merger, and < 0.1%
+are tagged to another merger. This example demonstrates that the tracking procedure robustly associates the majority of DM particles with their
+correct merger, with very few left untagged or mistagged. Note that this figure assesses the completeness of the algorithm rather than the purity,
+as particles that are not bound to this merger 2 Gyr before infall are not shown.
+
+
+
+         Appendix A. Merger Tagging Systematics                                merger’s infall (i.e., the snapshot closest to 1 Gyr before
+   This Appendix presents systematic checks of the DM–                         infall, plus or minus one snapshot) that are tagged to the
+merger tagging algorithm introduced in Section 2.2. Recall                     merger by the algorithm.
+that the procedure identifies DM particles that are contributed
+by a given merger by considering a fixed time interval before                2. Purity is the fraction of DM particles tagged to a merger
+the particle is bound to the MW, requiring that the particle                   that are bound to the merger in any of the three snapshots,
+remain bound to the subhalo for a sufficient fraction of the                   1 Gyr before infall (again, plus or minus one snapshot).
+snapshots within that time window. Our fiducial choice of
+parameters is a time window of 2 Gyr, and we require that                      Algorithms with low completeness are more likely to leave
+a particle be bound to its merger for 70% of the snapshots                   the least-bound DM as untagged. These loosely bound DM
+within this window.                                                          particles will generally be deposited at the highest orbital en-
+   For reference, Figure A1 illustrates the performance of this              ergies and have the highest present-day speeds. Therefore, an
+fiducial choice for a single merger, showing the positions of                algorithm with low completeness will likely underestimate a
+a subsample of DM particles at different times relative to the               merger’s contribution to the high-speed tail. On the other
+merger’s infall time (from left to right: 2 Gyr before infall,               hand, algorithms with low purity lead to reconstructions for
+at infall, and 2 Gyr after infall), projected onto a coordi-                 a merger’s DM speed distribution that are contaminated by
+nate system centered at the location of the MW. We show DM                   particles from a different merger, resulting in unpredictable bi-
+particles that are tagged to the merger (blue filled circles), par-          ases to the speed distribution. Ideally, the algorithm will have
+ticles that are not tagged to any merger (gray unfilled circles),            high completeness and purity, but optimizing for one often
+and particles tagged to a different merger (orange triangles).               comes at the cost of the other; more selective algorithms will
+In this case, the algorithm correctly tags approximately 96%                 have higher purity, but lower completeness, and vice versa for
+of the particles that are bound to the subhalo 2 Gyr before                  less restrictive algorithms. Since the low-completeness case
+infall, fails to tag about 4%, and mistags fewer than 0.1%.                  introduces a bias that is easier to predict and understand, we
+This example demonstrates that our fiducial algorithm cor-                   prioritize purity, but still aim for high completeness in our
+rectly finds most of the merger debris and, importantly, does                choice of tagging algorithm.
+so with extremely low contamination.                                           Figure A2 summarizes how the purity and completeness
+   To quantify this more systematically, we consider the com-                vary due to the choice of algorithmic parameters. We test
+pleteness and the purity of this choice of algorithm parame-                 nine different combinations of lookback time window (from
+ters. These are assessed based on the Subfind halos 1 Gyr                    0.5 to 3.0 Gyr) and the required fraction of snapshots for
+before infall:                                                               which a DM particle must be bound to a subhalo (from 10%
+1. Completeness is the fraction of DM particles bound to the                 to 90%); each parameter point is labeled by these values.
+  merger halo in any of the three snapshots 1 Gyr before the                 For each choice of these parameters, we calculate the purity
+                                                                       14
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                             Shpigel et al.
+
+                                                                               as more particles are incorrectly tagged as belonging to the
+                                                                               merger. Conversely, increasing the required bound fraction
+                                                                               or extending the lookback time improves purity but excludes
+                                                                               some legitimately bound particles, thus lowering complete-
+                                                                               ness. The fiducial choice adopted in this work, 2.0 Gyr/70%,
+                                                                               provides an optimal balance along this trade-off, achieving
+                                                                               a median purity of 0.99 and a completeness of 0.79. This
+                                                                               combination ensures that nearly all tagged particles are truly
+                                                                               bound to the merger, while retaining a sufficient sample size
+                                                                               to characterize the merger’s kinematics.
+                                                                                  Figure A3 tests the sensitivity of our reconstruction results
+                                                                               to these parameter variations. The left panel shows the distri-
+                                                                               bution of EMDs between the exact DM speed distribution and
+                                                                               the sampled reconstruction (the solid green line in the right
+                                                                               panel of Figure 7) for each parameter set. While some choices
+                                                                               of algorithm parameters result in greater EMDs—indicating
+                                                                               worse speed distribution reconstruction—our fiducial choice
+                                                                               is among the best-performing algorithms, and the differences
+                                                                               between our choice and the other best-performing choices are
+                                                                               minimal.
+                                                                                  The right panel of Figure A3 shows the distribution of
+Figure A2. Median purity and completeness across all 98 MW                     the boost factor Δ𝜎, as defined in Equation 6, for each pa-
+analogs for nine combinations of merger-tracking parameters (see               rameter choice. These boosts are consistently biased toward
+Section 2.2). Each point shows the median values computed over                 ∼30 km s−1 , indicating that the offset is a real physical effect
+all mergers with peak mass above 109 M⊙ . Completeness is defined              and not the result of our tagging procedure.
+as the fraction of particles bound to the merger before infall that are           Though these diagnostics are largely insensitive to the
+tagged to the merger, while purity is the fraction of particles tagged         choice of parameters used, we caution that 𝑤 tr does exhibit
+to the merger that are present in the halo before infall. The combi-           fairly large variations. The TNG50 halos are rapidly assem-
+nations vary the lookback time window (1–3 Gyr) and the required               bling around a redshift of 3, which is 2 Gyr after the start of
+fraction of snapshots for which a DM particle must be bound to a               the simulation. Algorithms with a smaller time window than
+subhalo (50%–90%); they are labeled by these two parameters. The               this threshold can resolve mergers earlier in the simulation
+blue marker with red edge (2.0 Gyr/70%) denotes the fiducial choice            history, meaning less DM is classified as Old Untraceable,
+adopted in this work, which maximizes purity while maintaining a               and more is considered either Traceable or Young Untrace-
+completeness above 0.75.                                                       able. This is purely due to a choice in the threshold between
+                                                                               “Old” and “Young” and does not meaningfully impact the
+                                                                               physics presented in this work.
+and completeness across all mergers with peak masses above                        These results demonstrate that our reconstruction method
+109 M⊙ and report the medians.                                                 is largely insensitive to the specific parameter choice. The
+  As stated above, there is a trade-off between purity and com-                fiducial 2.0 Gyr/70% choice performs comparably to the best
+pleteness: relaxing the tagging criteria—by requiring that a                   alternatives, producing low EMDs and stable boost factors
+particle be bound to a merger for fewer snapshots—raises                       while maintaining high purity and completeness. For these
+completeness, since a larger fraction of a merger’s particles                  reasons, we adopt this configuration for the analysis presented
+are recovered. However, this comes at the cost of lower purity,                in the main text.
+
+
+
+
+                                                                          15
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                             Shpigel et al.
+
+
+
+
+Figure A3. Comparison of reconstruction performance across the nine merger-tracking parameter sets, labeled by the time window (in Gyr) and
+the fraction of snapshots that a particle must be bound to be considered tagged (as a percentage). (Left) Distribution of EMDs between the exact
+DM speed distributions and the sampled–Δ𝜎, 𝑤 tr reconstructions (see Figure 7) for all Traceable mergers across the 98 MW analogs. While
+low-purity choices of parameters (i.e., those with smaller time windows or less restrictive fractions) tend to have larger EMDs—and therefore
+less accurate reconstructions—our fiducial choice is among the most accurate, with a few comparable algorithms. (Right) Distribution of the
+boost factor Δ𝜎 (Equation 6) across all Traceable mergers for each parameter set. The results here are qualitatively the same regardless of the
+choice of DM tagging parameters. There is consistently an offset between the DM and stellar velocity dispersions, suggesting that this offset is
+a physical result and not due to our tagging procedure.
+
+
+
+          Appendix B. DM and Stellar Dispersions                            to regions deeper in the potential well, with lower orbital
+   Section 3 showed that the DM associated with a particu-                  energies.
+lar merger tends to have a larger velocity dispersion than the                 This difference in orbital energies is most distinct for late-
+corresponding stellar debris, as highlighted in Figure 5. This              infall mergers, when the host potential is particularly deep.
+Appendix investigates the origin of this effect. This offset                Mergers occurring early in a halo’s assembly typically exhibit
+arises because DM is stripped from the merging subhalos                     smaller offsets between the DM and stars. This is shown in
+first and is left at larger galactocentric radii and higher orbital         Figure B2, which plots the boost factor Δ𝜎 for a given merger
+energies than the stars. The stars, being more tightly bound,               against its infall time. The results are shown for all Traceable
+remain in the subhalo for longer and are deposited deeper in                mergers, and GSE-like mergers are highlighted with star-
+the MW’s potential well, with lower orbital energies. This dif-             shaped markers. Most of the TNG50 halos assemble early
+ference yields DM speed distributions that are biased higher                and have accreted ∼60% of their DM by a lookback time of
+than those of the stars.                                                    11 Gyr ago (redshift ∼ 2.5). The mergers that occur after this
+   Figure B1 illustrates this effect. We model the potential                time exhibit greater offsets between their DM and stars, with
+well of each host galaxy using its enclosed mass 𝑀 (𝑟), with                Δ𝜎 = 15+6            −1
+                                                                                       −7 km s . However, very early mergers tend to
+                                                                            show smaller offsets, as the hosts’ potential wells have not yet
+                                                                            reached their full depth. For these mergers, Δ𝜎 = 9+2         −1
+                                                                                                                                  −5 km s .
+                                  𝐺 𝑀 (𝑟)
+                         𝜙(𝑟) =                               (B1)             This also gives a physical mechanism to explain why we
+                                     𝑟                                      find bigger offsets between a merger’s stellar and DM debris
+                                                                            compared to Necib et al. (2019b) and Zhang et al. (2026).
+for each of the 98 MW analogs at redshift zero (solid red, with
+                                                                            The FIRE-2 halos used in these works assemble more slowly
+shaded regions indicating the 16th–84th percentiles across the
+                                                                            than those in TNG50, lowering Δ𝜎 for more recent mergers
+hosts). For each Traceable merger, we compute the galacto-
+                                                                            and yielding better agreement between the FIRE-2 DM and
+centric spherical radius enclosing half of its stellar debris,
+  ★ (dashed blue), and half of its DM debris, 𝑟 DM (dashed                  stars. Furthermore, the baryonic feedback prescription tends
+𝑟 1/2                                               1/2                     to produce shallower potential wells in FIRE-2 than in TNG50
+green), and find that the stars are deposited 6+4
+                                                −3 kpc from the             (e.g., Hussein et al. 2025), which would further reduce Δ𝜎.
+galactic center, while the DM is 36+19−14 kpc from the galactic
+center. This demonstrates that the stellar debris is deposited
+at systematically smaller radii than the DM, corresponding
+                                                                      16
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                       Shpigel et al.
+
+
+
+
+Figure B1. Gravitational potential per unit mass, 𝜙(𝑟), at redshift
+                                                                                  Figure B2. Boost factor Δ𝜎 as a function of the infall time for
+zero across our 98 MW analogs (solid red, with shaded regions
+                                                                                  all Traceable mergers (circles). GSE-like mergers are highlighted
+indicating 16th–84th percentiles across the analogs). The vertical
+                                                                                  separately (stars). Mergers with earlier infall times tend to show
+bands indicate the galactocentric spherical radii that enclose half of
+                  DM , green) and half of the stellar debris (𝑟 ★ , blue).        smaller dispersion offsets. Those with infall times greater than
+the DM debris (𝑟 1/2                                            1/2               11 Gyr have a median offset of 9+2         −1
+                                                                                                                    −5 km s , while those with infall
+The stars are deposited at radii of 6+4−3 kpc, while the DM is further            times less than 11 Gyr have a median offset of 15+6          −1
+                                                                                                                                      −7 km s . This
+from the galactic center, at 36+19
+                                −14 kpc. The DM debris typically has              trend is consistent with the mechanism highlighted in Figure B1.
+higher orbital energy and exhibits a larger velocity dispersion than
+                                                                                  When mergers fall in earlier, both their DM and stars are deposited
+the stellar debris, yielding the offset shown in Figure 5.
+                                                                                  at smaller radii because the MW itself was smaller, reducing the
+                                                                                  difference in potential energies and thus the dispersion offset.
+               Appendix C. GSE Stellar Sample
+   This Appendix describes the data used for the GSE stellar                      lowing the procedure of Lane et al. (2022).17 In particular,
+distribution in Section 4 and Figure 8. We provide an ac-                         we use galpy (Bovy 2015) to compute actions through the
+count of the source catalog, our subselection of GSE stars,                       Stäckel fudge method of Binney (2012) and Mackereth &
+and compare the results to other selections performed in the                      Bovy (2018). This approach locally approximates the ax-
+literature.                                                                       isymmetric MWPotential2014 potential (Bovy 2015) as a
+   Ostdiek et al. (2020) produced a catalog of accreted stars                     Stäckel function, with focal length estimated according to
+from the Gaia DR2 dataset (Gaia Collaboration et al. 2018).                       Sanders (2012). This allows us to compute orbital eccentric-
+They train a deep learning classifier on mock Gaia catalogs                       ities from the Gaia phase-space data.
+produced from the FIRE-2 simulation, such that their classi-                         We consider stars within the solar annulus ROI (𝑟 ∈
+fier is able to transfer chemodynamical correlations derived                      [6, 10] kpc, |𝑧| ≤ 2 kpc) in Galactocentric coordinates. A
+from the simulation to real-world data. This deep learning                        complete analysis for identifying the GSE stars in this region
+technique is advantageous, as extracting ex situ stars from                       would require performing a Gaussian mixture analysis, or
+a sample containing many in situ MW stars using simple                            other clustering method, similar to what was done by Necib
+chemodynamical cuts is prone to contamination from the disk                       et al. (2020) with the same catalog. While such an analysis
+and in situ stellar halo (Lane et al. 2022; Carrillo et al. 2024;                 is beyond the scope of this work, as a first approximation, we
+Deason & Belokurov 2024). The catalog produced by Ost-                            impose an eccentricity cut of 𝑒 > 0.7, in keeping with the rec-
+diek et al. (2020) reproduces known ex situ structures such                       ommendation of Naidu et al. (2020). This recommendation is
+as the GSE, Helmi streams, and Nyx. This makes it a natural                       also supported by the findings of Lane et al. (2022), who sug-
+starting point for constructing a sample of GSE stars.                            gest using an eccentricity cut to achieve a high-completeness
+   The neural network classifier outputs a score, 𝑆, that cor-                    selection, which we find suitable given that Ostdiek et al.
+responds to the likelihood that a star is accreted; it ranges                     (2020) already provide a high-purity population of ex situ
+from 0 to 1 for the least and most likely accreted stars, re-                     stars. The resulting distributions of radial, azimuthal, and
+spectively. We use a likelihood cut of 𝑆 > 0.75, which                            polar velocities are shown in Figure C1, where we compare
+Ostdiek et al. (2020) show most accurately reproduces the
+ex situ stellar speed distribution. Using the 6D phase-space
+                                                                                  17 See https://github.com/jamesmlane/mw-dfs for an implementation of this
+information of these stars, we compute their eccentricity fol-
+                                                                                    method, which we applied to the Gaia DR2 data.
+
+
+                                                                             17
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                    Shpigel et al.
+
+
+
+
+Figure C1. Velocity distributions of Gaia DR2 GSE stars selected with eccentricity 𝑒 > 0.7 and restricted to the ROI (black histograms), shown
+in spherical coordinates: radial (𝑣 𝑟 , left), azimuthal (𝑣 𝜙 , center), and polar (𝑣 𝜃 , right). For comparison, we show results from previous studies:
+Necib et al. (2019a, solid yellow), Lancaster et al. (2019, dashed turquoise), Evans et al. (2019, dashed-dotted blue), Necib et al. (2020, solid
+orange), and O’Hare et al. (2020, dotted green). The distributions of our selected GSE stars are largely consistent with those reported in earlier
+works.
+our selection (black histograms) to others in the literature,                                                References
+namely Necib et al. (2019a, solid yellow), Lancaster et al.
+(2019, dashed turquoise), Evans et al. (2019, dashed-dotted                     Angulo, R. E., & White, S. D. M. 2010, MNRAS, 401, 1796,
+blue), Necib et al. (2020, solid orange), and O’Hare et al.                       doi: 10.1111/j.1365-2966.2009.15742.x
+(2020, dotted green). Our distributions are broadly consis-                     Baxter, D., Bloch, I. M., Bodnia, E., et al. 2021, EPJC, 81, 907,
+tent with these results, though we recover a modest prograde
+                                                                                  doi: 10.1140/epjc/s10052-021-09655-y
+motion to the GSE stars, with 𝑣 𝜙 = 25+50
+                                        −55
+                                            km s−1 . This is pos-
+sibly due to contamination from the high-𝛼 disk, which does                     Belokurov, V., Erkal, D., Evans, N. W., Koposov, S. E., & Deason,
+contribute stars to the ROI with ex situ likelihood 𝑆 > 0.75                      A. J. 2018, MNRAS, 478, 611, doi: 10.1093/mnras/sty982
+in the Ostdiek et al. (2020) sample. These stars tend to be                     Benisty, D., Vasiliev, E., Evans, N. W., et al. 2022, ApJ, 928, L5,
+on circular orbits, so the eccentricity cut removes the major-                    doi: 10.3847/2041-8213/ac5c42
+ity of them; 62% of the stars in the ROI are removed by the                     Binney, J. 2012, MNRAS, 426, 1324,
+eccentricity selection, and the majority of these are prograde.
+                                                                                  doi: 10.1111/j.1365-2966.2012.21757.x
+   It is important to note that the recommendation of Naidu
+et al. (2020) is not solely an eccentricity cut, but includes                   Bland-Hawthorn, J., & Gerhard, O. 2016, ARA&A, 54, 529,
+cuts to excise the high-𝛼 disk, in situ halo, and Sagittarius                     doi: 10.1146/annurev-astro-081915-023441
+dwarf (Ibata et al. 1994). We neglect these additional cuts                     Boardman, N., Zasowski, G., Newman, J. A., et al. 2020, MNRAS,
+because (i) the Ostdiek et al. (2020) sample does not contain                     498, 4943, doi: 10.1093/mnras/staa2731
+the metallicity information required to completely remove the
+                                                                                Bonaca, A., Conroy, C., Cargile, P. A., et al. 2020, ApJ, 897, L18,
+high-𝛼 disk and in situ halo components and (ii) the Sagittar-
+ius dwarf is not expected to have deposited many stars within                     doi: 10.3847/2041-8213/ab9caa
+our ROI, as its debris is primarily at Galactocentric radii                     Bovy, J. 2015, ApJS, 216, 29, doi: 10.1088/0067-0049/216/2/29
+𝑟 ≳ 15 kpc (e.g., Johnson et al. 2020). We also checked more                    Bovy, J., & Rix, H.-W. 2013, ApJ, 779, 115,
+stringent eccentricity cuts and found that the resulting veloc-                   doi: 10.1088/0004-637X/779/2/115
+ity distributions are similar, though with narrower azimuthal
+                                                                                Bozorgnia, N., & Bertone, G. 2017, IJMPA, 32, 1730016,
+velocity dispersions (i.e., lower 𝜎𝜙 ). Because the choice of
+𝑒 > 0.7 yields distributions most similar to those recovered                      doi: 10.1142/S0217751X17300162
+elsewhere in the literature, we adopt it as our fiducial case.                  Bozorgnia, N., Fattahi, A., Cerdeño, D. G., et al. 2019, JCAP, 2019,
+   The velocity anisotropy of the adopted GSE sample pro-                         045, doi: 10.1088/1475-7516/2019/06/045
+vides an additional diagnostic of its orbital structure. We find                Bozorgnia, N., Fattahi, A., Frenk, C. S., et al. 2020, JCAP, 2020,
+a value of 𝛽 = 0.86, consistent with the highly radial nature
+                                                                                  036, doi: 10.1088/1475-7516/2020/07/036
+of the GSE stars. This result is in good agreement with other
+studies of the GSE (Deason et al. 2018; Myeong et al. 2018;                     Bozorgnia, N., Calore, F., Schaller, M., et al. 2016, JCAP, 2016,
+Lancaster et al. 2019; Necib et al. 2019a; Iorio & Belokurov                      024, doi: 10.1088/1475-7516/2016/05/024
+2021; Naidu et al. 2021).                                                       Buch, D., Nadler, E. O., Wechsler, R. H., & Mao, Y.-Y. 2024, ApJ,
+                                                                                  971, 79, doi: 10.3847/1538-4357/ad554c
+                                                                                Butsky, I., Macciò, A. V., Dutton, A. A., et al. 2016, MNRAS, 462,
+                                                                                  663, doi: 10.1093/mnras/stw1688
+
+                                                                          18
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                                Shpigel et al.
+
+Carrillo, A., Deason, A. J., Fattahi, A., Callingham, T. M., &                Helmi, A. 2020, ARA&A, 58, 205,
+  Grand, R. J. J. 2024, MNRAS, 527, 2165,                                        doi: 10.1146/annurev-astro-032620-021917
+  doi: 10.1093/mnras/stad3274                                                 Helmi, A., Babusiaux, C., Koppelman, H. H., et al. 2018, Natur,
+Cautun, M., Benı́tez-Llambay, A., Deason, A. J., et al. 2020,                    563, 85, doi: 10.1038/s41586-018-0625-x
+  MNRAS, 494, 4291, doi: 10.1093/mnras/staa1017                               Helmi, A., Irwin, M., Deason, A., et al. 2019, Msngr, 175, 23,
+Davis, M., Efstathiou, G., Frenk, C. S., & White, S. D. M. 1985,                 doi: 10.18727/0722-6691/5120
+  ApJ, 292, 371, doi: 10.1086/163168                                          Herzog-Arbeitman, J., Lisanti, M., Madau, P., & Necib, L. 2018,
+Deason, A. J., & Belokurov, V. 2024, NewAR, 99, 101706,                          PhRvL, 120, 041102, doi: 10.1103/PhysRevLett.120.041102
+  doi: 10.1016/j.newar.2024.101706                                            Hopkins, P. F., Wetzel, A., Kereš, D., et al. 2018, MNRAS, 480,
+Deason, A. J., Belokurov, V., Koposov, S. E., & Lancaster, L. 2018,              800, doi: 10.1093/mnras/sty1690
+  ApJ, 862, L1, doi: 10.3847/2041-8213/aad0ee                                 Hryczuk, A., Karukes, E., Roszkowski, L., & Talia, M. 2020, JHEP,
+Del Nobile, E. 2014, AdHEP, 2014, 1, doi: 10.1155/2014/604914                    2020, 81, doi: 10.1007/JHEP07(2020)081
+Diemand, J., Kuhlen, M., Madau, P., et al. 2008, Natur, 454, 735,             Hussein, A., Necib, L., Kaplinghat, M., et al. 2025, preprint, arXiv,
+  doi: 10.1038/nature07153                                                       doi: 10.48550/arXiv.2501.14868
+Dolag, K., Borgani, S., Murante, G., & Springel, V. 2009,                     Ibata, R. A., Gilmore, G., & Irwin, M. J. 1994, Natur, 370, 194,
+  MNRAS, 399, 497, doi: 10.1111/j.1365-2966.2009.15034.x                         doi: 10.1038/370194a0
+Drukier, A. K., Freese, K., & Spergel, D. N. 1986, PhRvD, 33,                 Iorio, G., & Belokurov, V. 2021, MNRAS, 502, 5686,
+  3495, doi: 10.1103/PhysRevD.33.3495                                            doi: 10.1093/mnras/stab005
+                                                                              Ivezić, Ž., Kahn, S. M., Tyson, J. A., et al. 2019, ApJ, 873, 111,
+Evans, N. W., O’Hare, C. A. J., & McCabe, C. 2019, PhRvD, 99,
+                                                                                 doi: 10.3847/1538-4357/ab042c
+  023012, doi: 10.1103/PhysRevD.99.023012
+                                                                              Jin, S., Trager, S. C., Dalton, G. B., et al. 2024, MNRAS, 530,
+Fattahi, A., Belokurov, V., Deason, A. J., et al. 2019, MNRAS, 484,
+                                                                                 2688, doi: 10.1093/mnras/stad557
+  4471, doi: 10.1093/mnras/stz159
+                                                                              Johnson, B. D., Conroy, C., Naidu, R. P., et al. 2020, ApJ, 900, 103,
+Feuillet, D. K., Sahlholdt, C. L., Feltzing, S., & Casagrande, L.
+                                                                                 doi: 10.3847/1538-4357/abab08
+  2021, MNRAS, 508, 1489, doi: 10.1093/mnras/stab2614
+                                                                              Jungman, G., Kamionkowski, M., & Griest, K. 1996, PhR, 267,
+Flynn, C., Holmberg, J., Portinari, L., Fuchs, B., & Jahreiß, H.
+                                                                                 195, doi: 10.1016/0370-1573(95)00058-5
+  2006, MNRAS, 372, 1149,
+                                                                              Kafle, P. R., Sharma, S., Lewis, G. F., Robotham, A. S. G., &
+  doi: 10.1111/j.1365-2966.2006.10911.x
+                                                                                 Driver, S. P. 2018, MNRAS, 475, 4043,
+Folsom, D., Blanco, C., Lisanti, M., et al. 2025a, PhRvL, 135,
+                                                                                 doi: 10.1093/mnras/sty082
+  211004, doi: 10.1103/wmpq-mw4h
+                                                                              Karachentsev, I. D. 2005, AJ, 129, 178, doi: 10.1086/426368
+Folsom, D., Lisanti, M., Necib, L., et al. 2025b, ApJ, 983, 119,
+                                                                              Kelso, C., Savage, C., Valluri, M., et al. 2016, JCAP, 2016, 071,
+  doi: 10.3847/1538-4357/adbe31
+                                                                                 doi: 10.1088/1475-7516/2016/08/071
+Freese, K., Lisanti, M., & Savage, C. 2013, RvMP, 85, 1561,
+                                                                              Klypin, A. A., Trujillo-Gomez, S., & Primack, J. 2011, ApJ, 740,
+  doi: 10.1103/RevModPhys.85.1561
+                                                                                 102, doi: 10.1088/0004-637X/740/2/102
+Gaia Collaboration, Brown, A. G. A., Vallenari, A., et al. 2018,
+                                                                              Kuhlen, M., Weiner, N., Diemand, J., et al. 2010, JCAP, 2010, 030,
+  A&A, 616, A1, doi: 10.1051/0004-6361/201833051
+                                                                                 doi: 10.1088/1475-7516/2010/02/030
+Gallart, C., Bernard, E. J., Brook, C. B., et al. 2019, NatAs, 3, 932,        Lancaster, L., Koposov, S. E., Belokurov, V., Evans, N. W., &
+  doi: 10.1038/s41550-019-0829-5                                                 Deason, A. J. 2019, MNRAS, 486, 378,
+Grand, R. J. J., Gómez, F. A., Marinacci, F., et al. 2017, MNRAS,               doi: 10.1093/mnras/stz853
+  467, 179, doi: 10.1093/mnras/stx071                                         Lane, J. M. M., Bovy, J., & Mackereth, J. T. 2022, MNRAS, 510,
+GRAVITY Collaboration, Abuter, R., Amorim, A., et al. 2021,                      5119, doi: 10.1093/mnras/stab3755
+  A&A, 647, A59, doi: 10.1051/0004-6361/202040208                             Lawrence, G. E., Duffy, A. R., Blake, C. A., & Hopkins, P. F. 2023,
+GRAVITY Collaboration, Abd El Dayem, K., Abuter, R., et al.                      MNRAS, 524, 2606, doi: 10.1093/mnras/stac2447
+  2024, A&A, 692, A242, doi: 10.1051/0004-6361/202452274                      Lee, A. J. 2023, ApJ, 956, 15, doi: 10.3847/1538-4357/acee69
+Green, A. M. 2010, JCAP, 2010, 034,                                           Li, S., Riess, A. G., Busch, M. P., et al. 2021, ApJ, 920, 84,
+  doi: 10.1088/1475-7516/2010/10/034                                             doi: 10.3847/1538-4357/ac1597
+—. 2017, JPhG, 44, 084001, doi: 10.1088/1361-6471/aa7819                      Licquia, T. C., & Newman, J. A. 2015, ApJ, 806, 96,
+Guedes, J., Callegari, S., Madau, P., & Mayer, L. 2011, ApJ, 742,                doi: 10.1088/0004-637X/806/1/96
+  76, doi: 10.1088/0004-637X/742/2/76                                         —. 2016, ApJ, 831, 71, doi: 10.3847/0004-637X/831/1/71
+Hammer, F., Puech, M., Chemin, L., Flores, H., & Lehnert, M. D.               Licquia, T. C., Newman, J. A., & Bershady, M. A. 2016, ApJ, 833,
+  2007, ApJ, 662, 322, doi: 10.1086/516727                                       220, doi: 10.3847/1538-4357/833/2/220
+Hansen, S. H., Moore, B., Zemp, M., & Stadel, J. 2006, JCAP,                  Lilie, E., Rose, J. C., Lisanti, M., et al. 2026, ApJ, 1002, 168,
+  2006, 014, doi: 10.1088/1475-7516/2006/01/014                                  doi: 10.3847/1538-4357/ae5c9b
+
+                                                                         19
+The Astrophysical Journal, 1003:102 (18pp), 2026 May 20                                                                               Shpigel et al.
+
+Ling, F. S., Nezri, E., Athanassoula, E., & Teyssier, R. 2010, JCAP,        Rashkov, V., Madau, P., Kuhlen, M., & Diemand, J. 2012, ApJ,
+   2010, 012, doi: 10.1088/1475-7516/2010/02/012                              745, 142, doi: 10.1088/0004-637X/745/2/142
+Lisanti, M., & Necib, L. 2018, preprint, arXiv,                             Reid, M. J., & Brunthaler, A. 2004, ApJ, 616, 872,
+   doi: 10.48550/arXiv.1812.04114                                             doi: 10.1086/424960
+Lisanti, M., & Spergel, D. N. 2012, PDU, 1, 155,                            Rey, M. P., Agertz, O., Starkenburg, T. K., et al. 2023, MNRAS,
+   doi: 10.1016/j.dark.2012.10.007                                            521, 995, doi: 10.1093/mnras/stad513
+Lisanti, M., Spergel, D. N., & Madau, P. 2015, ApJ, 807, 14,
+                                                                            Sanders, J. 2012, MNRAS, 426, 128,
+   doi: 10.1088/0004-637X/807/1/14
+                                                                              doi: 10.1111/j.1365-2966.2012.21698.x
+Mackereth, J. T., & Bovy, J. 2018, PASP, 130, 114501,
+                                                                            Sawala, T., Teeriaho, M., & Johansson, P. H. 2023, MNRAS, 521,
+   doi: 10.1088/1538-3873/aadcdd
+                                                                              4863, doi: 10.1093/mnras/stad883
+McAlpine, S., Helly, J. C., Schaller, M., et al. 2022, MNRAS, 512,
+   5823, doi: 10.1093/mnras/stac295                                         Sawala, T., Frenk, C. S., Fattahi, A., et al. 2015, MNRAS, 448,
+McMillan, P. J. 2011, MNRAS, 414, 2446,                                       2941, doi: 10.1093/mnras/stu2753
+   doi: 10.1111/j.1365-2966.2011.18564.x                                    Sloane, J. D., Buckley, M. R., Brooks, A. M., & Governato, F.
+—. 2017, MNRAS, 465, 76, doi: 10.1093/mnras/stw2759                           2016, ApJ, 831, 93, doi: 10.3847/0004-637X/831/1/93
+Montalbán, J., Mackereth, J. T., Miglio, A., et al. 2021, NatAs, 5,        Springel, V. 2010, ARA&A, 48, 391,
+   640, doi: 10.1038/s41550-021-01347-7                                       doi: 10.1146/annurev-astro-081309-130914
+Myeong, G. C., Evans, N. W., Belokurov, V., Sanders, J. L., &               Springel, V., White, S. D. M., Tormen, G., & Kauffmann, G. 2001,
+   Koposov, S. E. 2018, ApJ, 856, L26,                                        MNRAS, 328, 726, doi: 10.1046/j.1365-8711.2001.04912.x
+   doi: 10.3847/2041-8213/aab613                                            Springel, V., Wang, J., Vogelsberger, M., et al. 2008, MNRAS, 391,
+Naidu, R. P., Conroy, C., Bonaca, A., et al. 2020, ApJ, 901, 48,
+                                                                              1685, doi: 10.1111/j.1365-2966.2008.14066.x
+   doi: 10.3847/1538-4357/abaef4
+                                                                            Staudt, P. G., Bullock, J. S., Boylan-Kolchin, M., et al. 2024, JCAP,
+—. 2021, ApJ, 923, 92, doi: 10.3847/1538-4357/ac2d2d
+                                                                              2024, 022, doi: 10.1088/1475-7516/2024/08/022
+Necib, L., Lisanti, M., & Belokurov, V. 2019a, ApJ, 874, 3,
+                                                                            Tissera, P. B., White, S. D. M., Pedrosa, S., & Scannapieco, C.
+   doi: 10.3847/1538-4357/ab095b
+Necib, L., Lisanti, M., Garrison-Kimmel, S., et al. 2019b, ApJ,               2010, MNRAS, 406, 922,
+   883, 27, doi: 10.3847/1538-4357/ab3afc                                     doi: 10.1111/j.1365-2966.2010.16777.x
+Necib, L., Ostdiek, B., Lisanti, M., et al. 2020, ApJ, 903, 25,             Tsukui, T., Wisnioski, E., Bland-Hawthorn, J., & Freeman, K.
+   doi: 10.3847/1538-4357/abb814                                              2025, MNRAS, 540, 3493, doi: 10.1093/mnras/staf604
+Nelson, D., Pillepich, A., Springel, V., et al. 2019a, MNRAS, 490,          Villanueva-Domingo, P., Villaescusa-Navarro, F., Genel, S., et al.
+   3234, doi: 10.1093/mnras/stz2306                                           2023, PhRvD, 107, 103003, doi: 10.1103/PhysRevD.107.103003
+Nelson, D., Springel, V., Pillepich, A., et al. 2019b, ComAC, 6, 2,         Vogelsberger, M., White, S. D. M., Helmi, A., & Springel, V. 2008,
+   doi: 10.1186/s40668-019-0028-x                                             MNRAS, 385, 236, doi: 10.1111/j.1365-2966.2007.12746.x
+Nuñez-Castiñeyra, A., Nezri, E., Mollitor, P., Devriendt, J., &           Vogelsberger, M., & Zavala, J. 2013, MNRAS, 430, 1722,
+   Teyssier, R. 2023, JCAP, 2023, 012,                                        doi: 10.1093/mnras/sts712
+   doi: 10.1088/1475-7516/2023/05/012
+                                                                            Vogelsberger, M., Helmi, A., Springel, V., et al. 2009, MNRAS,
+O’Hare, C. A. J., Evans, N. W., McCabe, C., Myeong, G., &
+                                                                              395, 797, doi: 10.1111/j.1365-2966.2009.14630.x
+   Belokurov, V. 2020, PhRvD, 101, 023006,
+                                                                            Wang, J., Navarro, J. F., Frenk, C. S., et al. 2011, MNRAS, 413,
+   doi: 10.1103/PhysRevD.101.023006
+                                                                              1373, doi: 10.1111/j.1365-2966.2011.18220.x
+Ostdiek, B., Necib, L., Cohen, T., et al. 2020, A&A, 636, A75,
+   doi: 10.1051/0004-6361/201936866                                         Wetzel, A. R., Hopkins, P. F., Kim, J.-h., et al. 2016, ApJ, 827,
+Patel, E., Besla, G., & Mandel, K. 2017, MNRAS, 468, 3428,                    L23, doi: 10.3847/2041-8205/827/2/L23
+   doi: 10.1093/mnras/stx698                                                White, S. D. M., & Rees, M. J. 1978, MNRAS, 183, 341,
+Pillepich, A., Kuhlen, M., Guedes, J., & Madau, P. 2014, ApJ, 784,            doi: 10.1093/mnras/183.3.341
+   161, doi: 10.1088/0004-637X/784/2/161                                    Wojtak, R., Lokas, E. L., Gottlöber, S., & Mamon, G. A. 2005,
+Pillepich, A., Nelson, D., Springel, V., et al. 2019, MNRAS, 490,             MNRAS, 361, L1, doi: 10.1111/j.1745-3933.2005.00054.x
+   3196, doi: 10.1093/mnras/stz2338                                         Zhang, X., Thoyas, A., Necib, L., Wetzel, A., & Arora, A. 2026,
+Planck Collaboration, Ade, P. A. R., Aghanim, N., et al. 2016,                preprint, arXiv, doi: 10.48550/arXiv.2603.25783
+   A&A, 594, A13, doi: 10.1051/0004-6361/201525830                          Zhu, H., Guo, R., Shen, J., et al. 2024, ApJ, 974, 167,
+Poole-McKenzie, R., Font, A. S., Boxer, B., et al. 2020, JCAP,
+                                                                              doi: 10.3847/1538-4357/ad6b17
+   2020, 016, doi: 10.1088/1475-7516/2020/11/016
+
+
+
+
+                                                                       20
+

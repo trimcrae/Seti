@@ -61,42 +61,52 @@ halo_models:
     v0: 238.0
     v_esc: 600.0
     rho: 0.3
-  shm_lmc_placeholder:           # PLACEHOLDER LMC-boosted tail: Besla+2019 abstract (700-900 km/s in the lab,
-    type: shm_lmc                # June peak); fraction and dispersion to be read from the fetched texts
+  shm_lmc_026:                   # SHM + LMC boosted Gaussian exactly as arXiv:2609.04175 eq. (1):
+    type: shm_lmc                # |v_b| = 570 km/s along the LMC's velocity direction (cos beta = -0.70 to the
+    v0: 238.0                    # Sun's), sigma_b = 100 km/s, hard cut |v - v_b| < 200 km/s, w = 0.26 %
+    v_esc: 544.0                 # (Smith-Orlik+2023 present-day kappa_LMC; Besla+2019 ~0.2 %)
+    lmc_speed: 570.0
+    lmc_sigma: 100.0
+    lmc_cut: 200.0
+    lmc_fraction: 0.0026
+    rho: 0.3
+  shm_lmc_060:                   # the same with w = 0.6 % (2609.04175's upper value; Auriga 0.6 +0.4 -0.4 %)
+    type: shm_lmc
     v0: 238.0
     v_esc: 544.0
-    lmc_speed: 500.0             # Galactic-frame bulk speed, head-on against rotation
-    lmc_sigma: 60.0
-    lmc_fraction: 0.01
+    lmc_speed: 570.0
+    lmc_sigma: 100.0
+    lmc_cut: 200.0
+    lmc_fraction: 0.006
     rho: 0.3
 
 sideband:                         # LZ's empty high-energy sideband (SupplementalMaterial.tex: HE SB
-  use: true                      # 800 < S1c < 1700 phd, ~350-680 keV per Dent & Newstead 2609.04673; 0 science events)
-  E_lo_keV: 350.0
-  E_hi_keV: 680.0
+  use: true                      # 800 < S1c < 1700 phd; ~350-590 keV NR per 2609.04175 (2.3 phd/keV), 350-680 per
+  E_lo_keV: 350.0                # 2609.04673; 0 science events). Spectra die well below the upper edge.
+  E_hi_keV: 600.0
   plateau_efficiency: 0.96       # assumes the plateau extends (as 2609.04673 does); the 270-350 keV gap is unconstrained
   observed_window_events: 1.0
 
 posterior:
   sigma_ceiling_cm2: 1.0e-37   # log-uniform prior on sigma_n up to here; Z-exchange (Higgsino-like) is ~1e-39
-  m_chi_gev: [100, 200, 500, 1000, 3000, 10000]
-  delta_keV: {min: 0.0, max: 480.0, step: 5.0}
+  m_chi_gev: [200, 500, 1000, 3000, 10000]
+  delta_keV: {min: 0.0, max: 480.0, step: 10.0}
 
 scan:
   m_chi_gev: [50, 100, 200, 500, 1000, 3000, 10000]
   delta_keV: {min: 0.0, max: 460.0, step: 10.0}
-  livetime_step_days: 3.0
+  livetime_step_days: 6.0
   year_samples: 73
 
 # Escape-speed measurements to integrate over (PLACEHOLDER values from memory:
 # replace with the numbers read from results/lzlit/ text before quoting).
 vesc_tail: {tail: sharp}
 vesc_v0_kms: 238.0
-vesc_grid: {min: 440.0, max: 660.0, step: 10.0}
-vesc_measurements:               # values from search-engine snippets 2026-09-07; VERIFY against results/lzlit/text
-  deason2019_gaia_dr2:   {v_esc: 528.0, plus: 24.0, minus: 25.0, source: "arXiv:1901.02016 (snippet, unverified)"}
-  necib_lin2022_edr3:    {v_esc: 445.0, plus: 25.0, minus: 8.0,  source: "arXiv:2102.02211 (snippet, unverified)"}
-  roche2024_gaia_dr3:    {v_esc: 521.0, plus: 46.0, minus: 30.0, source: "arXiv:2402.00108 (snippet, unverified)"}
-  monari2018_gaia_dr2:   {v_esc: 580.0, plus: 63.0, minus: 63.0, source: "arXiv:1807.04565 (snippet, unverified)"}
-  koppelman_helmi2021:   {v_esc: 497.0, plus: 40.0, minus: 8.0,  source: "arXiv:2006.16283 PLACEHOLDER from memory"}
-  lz_assumed:            {v_esc: 544.0, plus: 1.0,  minus: 1.0,  source: "Baxter+2021 convention, no uncertainty"}
+vesc_grid: {min: 440.0, max: 640.0, step: 10.0}
+vesc_measurements:               # VERIFIED 2026-09-07 against results/lzlit/text
+  deason2019_gaia_dr2:   {v_esc: 528.0, plus: 24.0, minus: 25.0, source: "arXiv:1901.02016 abstract: 528 +24 -25 km/s"}
+  koppelman_helmi2021:   {v_esc: 497.0, plus: 8.0,  minus: 8.0,  source: "arXiv:2006.16283 abstract: 497 +8 -8 km/s (5D sample)"}
+  necib_lin2022_dr2:     {v_esc: 484.6, plus: 17.8, minus: 7.4,  source: "arXiv:2102.02211 abstract: 484.6 +17.8 -7.4 km/s (three bound components)"}
+  roche2024_gaia_dr3:    {v_esc: 521.0, plus: 46.0, minus: 30.0, source: "arXiv:2402.00108 text: v_esc(r_sun) = 521 +46 -30 km/s"}
+  monari2018_gaia_dr2:   {v_esc: 580.0, plus: 63.0, minus: 63.0, source: "arXiv:1807.04565 abstract: 580 +- 63 km/s"}
+  rave2007_lz_assumed:   {v_esc: 544.0, plus: 40.0, minus: 30.0, source: "Baxter+2021 (arXiv:2105.00599) Table: 544 km/s, 90% range 498-608 (Smith+2007 RAVE); +-1sigma approximated from the 90% range"}

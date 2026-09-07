@@ -1,0 +1,613 @@
+                                                                                   PHYSICAL REVIEW LETTERS 135, 211004 (2025)
+
+                                                                      Dark Matter Velocity Distributions for Direct Detection:
+                                                                     Astrophysical Uncertainties Are Smaller Than They Appear
+
+                                                              Dylan Folsom         ,1, ∗ Carlos Blanco ,2, 1, 3, † Mariangela Lisanti        ,1, 4 Lina Necib      ,5
+                                                                                      Mark Vogelsberger ,5 and Lars Hernquist                6
+                                                                         1 Department of Physics, Princeton University, Princeton, NJ 08544, USA
+                                                      2 Institute for Gravitation and the Cosmos, The Pennsylvania State University, University Park, PA 16802, USA
+                                                   3 Stockholm University and The Oskar Klein Centre for Cosmoparticle Physics, Alba Nova, 10691 Stockholm, Sweden
+                                                                  4 Center for Computational Astrophysics, Flatiron Institute, New York, NY 10010, USA
+                                                                     5 Department of Physics and Kavli Institute for Astrophysics and Space Research,
+
+                                                                            Massachusetts Institute of Technology, Cambridge, MA 02139, USA
+                                                            6 Center for Astrophysics, Harvard & Smithsonian, 60 Garden Street, Cambridge, MA 02138, USA
+
+
+                                                                      (Received 28 May 2025; accepted 27 October 2025; published 20 November 2025)
+arXiv:2505.07924v2 [hep-ph] 6 Apr 2026
+
+
+
+
+                                                           The sensitivity of direct detection experiments depends on the phase-space distribution of dark matter near the
+                                                        Sun, which can be modeled theoretically using cosmological hydrodynamical simulations of Milky Way–like
+                                                        galaxies. However, capturing the halo-to-halo variation in the local dark matter speeds—a necessary step for
+                                                        quantifying the astrophysical uncertainties that feed into experimental results—requires a sufficiently large sample
+                                                        of simulated galaxies, which has been a challenge. In this Letter, we quantify this variation with nearly 100 Milky
+                                                        Way–like galaxies from the TNG50 simulation, the largest sample to date at this resolution. Moreover, we
+                                                        introduce a novel phase-space scaling procedure that endows every system with a reference frame that accurately
+                                                        reproduces the local standard-of-rest speed of our Galaxy, providing a principled way of extrapolating the
+                                                        simulation results to real-world data. The ensemble of predicted speed distributions is well characterized by the
+                                                        standard halo model, a Maxwell–Boltzmann distribution truncated at the escape speed, though the individual
+                                                        distributions can deviate from it, especially at high speeds. The dark matter–nucleon cross section limits placed
+                                                        by these speed distributions vary by ∼60% about the median. This places the 1𝜎 astrophysical uncertainty at or
+                                                        below the level of the systematic uncertainty of current ton-scale detectors, even down to the energy threshold.
+                                                        The predicted uncertainty remains unchanged when subselecting on those TNG50 galaxies with merger histories
+                                                        similar to the Milky Way. Tabulated speed distributions, as well as Maxwell–Boltzmann fits, are provided for use
+                                                        in computing direct detection bounds or projecting sensitivities.
+
+                                                        DOI: 10.1103/wmpq-mw4h
+
+
+                                            Introduction—Direct detection experiments seek to discover               typically boosting DM speeds closer to the SHM prediction,
+                                         dark matter (DM) through its interactions with a terrestrial                but often discrepancies at the high-speed tail remain [17–30].
+                                         detector (see, e.g., Refs. [1–3]). The scattering rate depends              Because of this predicted variability, constraints on the DM–
+                                         on both particle physics quantities, such as the interaction                nucleon interaction cross section are thought to have large
+                                         cross section, and astrophysical quantities, such as the DM                 uncertainty, especially for low-mass DM, where only high-
+                                         speed distribution at the solar position. Uncertainties on the              speed material produces detectable signals.
+                                         latter are assumed to be significant, but are rarely included in               Simulated halos may have unreasonable DM speed distribu-
+                                         experimental results [4–6], as they depend on the complicated               tions if their disk properties differ from those of our Galaxy,
+                                         evolution of the Milky Way (MW) halo. The standard halo                     which is anomalously compact for its stellar mass [31–34]. A
+                                         model (SHM) simply assumes that DM near the Sun is equi-                    deeper potential would increase the circular speed of the disk
+                                         librated, following a Maxwell–Boltzmann speed distribution                  and the DM speed near the Sun. Finding a simulated MW-
+                                         truncated at the Galactic escape speed [7–9]. Quantifying                   like halo that closely reproduces our Galaxy’s disk properties
+                                         deviations from the SHM is necessary to robustly interpret                  necessitates a large sample size, which is difficult given the
+                                         experimental sensitivities.                                                 computational expense of such simulations. Moreover, the
+                                            Cosmological simulations provide useful models for MW-                   rarity of finding a close match to the Galaxy makes it challeng-
+                                         like halos. Originally, DM-only simulations of such halos                   ing to fully characterize the expected halo-to-halo variance for
+                                         recovered speed distributions that underpredicted the mean DM               systems with different evolutionary histories.
+                                         speed relative to the SHM in the solar neighborhood [10–17].                   This Letter uses TNG50 [35, 36] to study a suite of 98
+                                         Later, hydrodynamical simulations showed that the addition                  MW-like galaxies—the largest to date at this resolution. We
+                                         of baryons deepens the gravitational potential of the galaxy,               implement a scaling of the simulated phase space, compressing
+                                                                                                                     the halos in position space, which correspondingly brings the
+                                                                                                                     circular speeds of each in line with observations, allowing for
+                                                                                                                     principled comparisons to the MW. Additionally, because the
+                                         ∗ Contact author: dfolsom@princeton.edu
+                                         † NASA Einstein Fellow
+                                                                                                                     merger histories of the galaxies in this suite are known, we
+
+
+                                                                                                                 1
+                                       PHYSICAL REVIEW LETTERS 135, 211004 (2025)
+
+can test how the resulting speed distribution depends on the
+presence of a Gaia Sausage–Enceladus (GSE) event [37–39]
+and the Large Magellanic Cloud (LMC), two major events in the
+Galaxy’s history. We show that, even when accounting for the
+halo-to-halo variance arising from different merger histories,
+the astrophysical uncertainty on direct detection limits is at
+or below the level of current experimental uncertainties for a
+characteristic ton-scale detector, e.g., Refs. [40–42].
+    Simulated Milky Way–like galaxies—We use the highest-
+resolution simulation of the IllustrisTNG suite, TNG50 [35, 36],
+which spans a volume of (51.7 Mpc) 3 . Halos are identified
+with SubFind [43, 44] and given a total mass (𝑀dyn ) and a               FIG. 1. Average speed of stars in the disk plane (at heights |𝑧| < 1 kpc)
+stellar mass (𝑀★). From this catalog, we select MW-like halos            plotted as a function of cylindrical radius 𝑟 cyl . The blue solid line
+that (1) have a stellar mass consistent with observations of the         indicates the median, evaluated binwise, of the TNG50 sample, while
+MW, viz. (4–7.3) × 1010 M⊙ , (2) are more than 500 kpc from              the shaded region indicates the 16th–84th percentile containment in
+any halo with larger 𝑀dyn , and (3) are more than 1 Mpc from             each bin. The dashed gray horizontal and vertical lines correspond
+                                                                         to the local standard-of-rest speed (𝑣 LSR = 238 km s−1 ) and the solar
+any halo with 𝑀dyn > 1013 M⊙ , as in Sec. 2.2 of Ref. [45].
+                                                                         radius (𝑅⊙ = 8.3 kpc), respectively. The Galaxy has a particularly
+The latter two requirements ensure the local environment of              compact stellar distribution. As such, 𝑣 LSR is 40 km s−1 faster than
+the MW-like halos is relatively empty, while still allowing              the median of the TNG50 galaxies at 𝑅⊙ . The scaling procedure
+for M31-like companions. We consider all particles near the              developed in this Letter corrects for this, boosting stellar speeds closer
+MW-like halos, not only those which SubFind assigns to the               to 𝑣 LSR at 𝑅⊙ . The pink vertical band brackets the 16th–84th percentile
+halo. The 98 halos satisfying these criteria are presented in            of the simulated galaxies after scaling, with a marker at the median.
+Ref. [45], along with a discussion of their merger histories.
+    TNG50 produces exponential disk lengths 𝑅 𝑑 = 4.4+3.2 −1.8 kpc
+                                                                         that an observer is located at 𝑅⊙ in an arbitrary TNG50 galaxy
+for MW-like systems [46, 47], consistent with the observed               and inferring the DM speed distribution from the simulated
+𝑅 𝑑 ∼ 4–8.5 kpc [47, 48]. However, the MW is thought to have             particles at this radius will yield slower DM speeds relative to
+a more compact disk than other galaxies of its mass [31–34, 49]          what should be expected for the MW. One naı̈ve solution is to
+(though see Ref. [50]), with 𝑅 𝑑 = 1.7–2.9 kpc [31, 47, 51–53],          place the observer in the simulated halo at some radius 𝑟 ≠ 𝑅⊙
+which is infrequently reproduced in TNG50 [46, 47, 54, 55].              in a way that scales with the size of the system (e.g., Ref. [25]).
+    Because the stellar mass distributions in the TNG50 sample           However, this still rarely gives stellar speeds comparable to
+are extended relative to the MW, stars in these galaxies are             𝑣 LSR , as can be seen from Fig. 1.
+typically slower than the local standard-of-rest (LSR) speed,                Previous works have approached this challenge differently.
+𝑣 LSR = 238 ± 1.5 km s−1 [5, 53, 56, 57]. Figure 1 shows the             Reference [29], which studied one MW-like galaxy from the
+average speed of simulated stars near the disk plane (|𝑧| < 1 kpc)       Latte suite [65, 66], introduced a boost to the observer’s frame
+as a function of cylindrical radius 𝑟 cyl . The 𝑧 axis is parallel       to match 𝑣 LSR . While the correction was small, this procedure
+to the angular momentum of stars and star-forming gas within             corresponds to a transformation that does not conserve energy.
+twice the stellar half-mass radius [47]. The blue line indicates         Reference [24] selected galaxies from the EAGLE [67, 68] and
+the median across the sample of MW-like galaxies, evaluated              APOSTLE [69, 70] projects, requiring that they closely match
+binwise, while the blue shaded region marks the 16th and                 the Galaxy’s rotation curve. While principled, this selection
+84th percentiles. At the solar radius, 𝑅⊙ = 8.3 kpc [57, 58],            reduced ∼60 halos to 14.
+the average stellar speed in TNG50 is 198+20  −14 km s
+                                                       −1 (16, 50,           We aim to preserve the full sample of 98 MW-like systems in
+                                                                         TNG50 while bringing them into alignment with the observed
+84th percentile), 40 km s−1 slower than 𝑣 LSR . While some
+                                                                         properties of our Galaxy in the solar neighborhood. Therefore,
+discrepancy is expected due to asymmetric drift [59, 60], this
+                                                                         we perform an energy-conserving scaling to both position and
+effect is on the order of a few kilometers per second for most
+                                                                         velocity coordinates as follows:
+populations in the MW’s disk [61–64], and the TNG50 stellar
+speeds are too low to be explained by this effect alone.                     1. With Newton’s constant 𝐺, define the mass inside 𝑅⊙ as
+    The concerns outlined here apply to any simulation. Mod-
+                                                                                       𝑀LSR = 𝑣 2LSR 𝑅⊙ /𝐺 = 1.09 × 1011 M⊙ .                  (1)
+eling subgrid baryonic physics is often a source of systematic
+uncertainty, especially for baryonic mass distributions, but any             2. For each simulated halo, find the radius 𝑅𝑀 that encloses
+simulation that accurately reproduces observed spiral galaxy                    a mass equal to 𝑀LSR , and
+scaling relations will produce compact MW-like galaxies only
+as outliers, as the MW itself is not typical.                                3. scale phase space so 𝑅𝑀 ↦→ 𝑅⊙ , conserving energy,
+    Scaling phase space—Because of the discrepancy between                                                      √︂
+                                                                                              𝑅⊙                   𝑅𝑀
+stellar speeds in the TNG50 sample and the observed solar                               r ↦→     r and v ↦→           v            (2)
+speed, these systems will not make realistic predictions for                                 𝑅𝑀                    𝑅⊙
+the DM distribution in our Galaxy. For example, assuming                        for simulated positions r and velocities v.
+
+
+                                                                     2
+                                          PHYSICAL REVIEW LETTERS 135, 211004 (2025)
+
+                                                                               and 567 ± 43 km s−1 , respectively (see Appendix B). Like for
+                                                                               the stars, the unscaled DM speeds are too slow, with best-fit
+                                                                               𝑣 0 for the unscaled halos 25 km s−1 below 𝑣 LSR . After scaling,
+                                                                               the speed distributions are in better agreement with the SHM,
+                                                                               with a best-fit 𝑣 0 only 2 km s−1 away from 𝑣 LSR . This is
+                                                                               expected, as the scaling is designed to recover a mean speed
+                                                                               close to 𝑣 LSR . We note, however, that the individual halos’ speed
+                                                                               distributions are not necessarily Maxwellian: the distributions
+                                                                               of the cylindrical velocity components have excess kurtosis
+                                                                               (−0.40+0.17           +0.20         +0.13
+                                                                                        −0.14 , −0.11 −0.23 , −0.02 −0.15 ) for (𝑣 𝑟 , 𝑣 𝜙 , 𝑣 𝑧 ).
+                                                                                  We have validated this procedure by comparing the distribu-
+FIG. 2. DM speed distributions around 𝑅⊙ , both before (blue) and              tion of scaled halos to the unscaled halos with 𝑅𝑀 ∼ 𝑅⊙ , i.e.,
+after (pink) scaling the simulated halos. The shaded bands are                 those that are already as compact as the MW. For this subset,
+binwise containment regions, bracketing the 16th–84th percentile of            both the DM densities and the speed distributions in the solar
+the distributions. The solid blue and pink lines show best-fit truncated       annulus are consistent with those for the full sample of scaled
+Maxwell–Boltzmann probability distributions (see text) for the scaled          galaxies, see Fig. 5. Additionally, our prediction for the DM
+and unscaled halos, respectively, and the black dashed line indicates
+                                                                               speed distribution is consistent with results from the burstier
+the SHM prediction. The DM particles in the scaled halos have higher
+speeds, corresponding to their more compact mass distributions. With           FIRE-2 model [71], but only once appropriate care is taken to
+these higher speeds, the scaled halos better recover the SHM’s peak at         match the observed circular speed (see Appendix A).
+𝑣 LSR , though their shapes are, in general, non-Maxwellian.                      Implications for direct detection—The changes to the phase-
+                                                                               space distribution of DM around 𝑅⊙ induce changes in the
+Any scaling of positions and velocities of this form is purely                 elastic DM–nucleon recoil spectrum. We compute the recoil
+a change in units: it preserves the collisionless Boltzmann                    spectrum using the wimprates package [72], which we mod-
+equation and therefore the evolution of the distribution function,             ify to accept distributions other than the SHM. The speed
+as well as the expression for circular speed assumed in Eq. (1)                distributions are boosted to the reference frame of Earth on
+(see Appendix A).                                                              March 9, 2000, as per Refs. [5, 73, 74]. The resulting recoil
+    The particular choice of 𝑅𝑀 ↦→ 𝑅⊙ ensures that the leading-                spectra are passed through an approximation to the XENON1T
+order evolution of the distribution function is equivalent to that             search pipeline provided in Ref. [75], which emulates the
+expected for the MW. Consider the gravitational potential 𝜙(𝑟)                 analysis of 1 ton-yr of exposure from the XENON Collabora-
+under a multipole expansion. After scaling, the monopole term                  tion [40], including background and detector response models.
+evaluated at 𝑅⊙ is 𝜙(𝑅⊙ ) = 𝐺 𝑀LSR /𝑅⊙ , as inferred for the                   This pipeline constrains the DM–nucleon cross section 𝜎SI
+MW. The higher-order terms of 𝜙 reflect the merger histories                   that would exceed the modeled detector background at 90%
+of individual halos and contribute to the variance we measure.                 confidence limit (C.L.). The search region in recoil energy—
+    Because 92% of halos in the TNG50 sample have enclosed                     i.e., recoil energies that are reconstructed with at least 1%
+masses at 𝑅⊙ below 𝑀LSR , distances are typically shortened,                   efficiency—is from 2.25 to 58 keV.
+with scale factor 𝑅⊙ /𝑅𝑀 = 0.72+0.13     −0.08 . This compression
+                                                                                  The top panel of Fig. 3 shows the 90% C.L. on the cross
+increases the mass enclosed at 𝑅⊙ , yielding the correct 𝜙, and                section for DM–nucleon scattering for the XENON1T exper-
+the boost in speeds corresponding to this new potential recovers               iment, as a function of the DM mass 𝑚 𝜒 . The shaded gray
+𝑣 LSR . The vertical pink line in Fig. 1 shows the range of average            region indicates the bound set by the SHM, with a width set by
+stellar speeds at 𝑅⊙ in the TNG50 galaxies after scaling; it is                observational uncertainty in the local DM density 𝜌 𝜒 = 0.3–
+231+6     km s−1 , in better agreement with the MW.                            0.6 GeV cm−3 [76]. The blue band is the 16th–84th percentile
+      −15
+    The DM speeds at 𝑅⊙ exhibit a similar shift, shown in Fig. 2.              containment region for the equivalent constraints set using the
+For each halo, we construct the speed distribution from DM                     DM densities and speeds directly from TNG50, and the pink
+particles in the solar annulus, the cylindrical region where                   band shows this after the aforementioned scaling. The lower
+|𝑟 cyl − 𝑅⊙ | < 1 kpc and |𝑧| < 1 kpc. The shaded regions                      panel shows the difference between these constraints and the
+span the 16th–84th percentiles of the distributions, computed                  prediction from the SHM with 𝜌 𝜒 fixed to 0.4 GeV cm−3 , di-
+binwise, for the halos before (blue) and after (pink) scaling.                 vided by the SHM prediction. The unscaled limits grow weaker
+The black dashed curve is the SHM (including a cutoff at the                   than the SHM prediction at low DM masses and the uncertainty
+escape speed 544 km s−1 ), and the vertical dashed gray line                   in the limit (i.e., the width of the shaded 1𝜎 inclusion region)
+indicates the peak of the distribution at 𝑣 0 ≡ 𝑣 LSR = 238 km s−1 .           grows large in this regime. In contrast, the limits set using
+As containment regions, the shaded areas are not themselves                    the scaled halos show a smaller uncertainty and are in better
+probability distributions. To guide the eye, solid lines indicate              agreement with the SHM. Specifically, the 1𝜎 containment
+truncated Maxwell–Boltzmann distributions fit to the TNG50                     region for 𝜎SI upper limits at 𝑚 𝜒 = 5 GeV 𝑐 −2 ranges 56%
+sample before and after scaling. The best-fit 𝑣 0 value is                     (123%) below (above) the median for the unscaled phase-space
+213 ± 19 km s−1 for the unscaled halos and 240 ± 11 km s−1 for                 distributions, shrinking to 39% (73%) in the scaled case.
+the scaled halos, with a best-fit 𝑣 esc value of 510 ± 46 km s−1                  The DM density sets the normalization of the sensitivity
+
+
+                                                                           3
+                                          PHYSICAL REVIEW LETTERS 135, 211004 (2025)
+
+                                                                              induce changes to the predicted scattering rate.
+                                                                                 Restricting merger history—The large sample of halos allows
+                                                                              us to determine the effects of the merger history on the speed
+                                                                              distributions. We select one group of 32 halos that have had a
+                                                                              GSE-like merger and another group of 11 halos with LMC-like
+                                                                              satellites. Here, GSE-like mergers are identified as those that
+                                                                              deposit stars with highly radially biased velocities that comprise
+                                                                              50% of the ex situ stars (defined as in Ref. [45]) within vertical
+                                                                              distance |𝑧| ∈ [9, 15] kpc [38, 78–83]. LMC-like satellites
+                                                                              are those with mass 𝑀dyn > 1011 M⊙ within the MW’s virial
+                                                                              radius (the 𝑅dyn defined in Ref. [45]). Figure 4 shows the speed
+                                                                              distribution for those galaxies with a GSE (yellow band) and
+                                                                              with an LMC (purple band). Although the distributions for
+                                                                              these two subsamples are consistent with the overall population
+                                                                              (bracketed by the pink lines) to within 1𝜎, there are systematic
+                                                                              shifts between them. In particular, the halos with an LMC-
+                                                                              like satellite have slightly more support at the high-speed
+                                                                              tail of the distribution, with 0.6+0.4−0.4 % of DM particles at
+                                                                              or above the SHM escape speed, compared to 0.1+0.7        −0.1 % in
+                                                                              the overall population. This is consistent with results from
+FIG. 3. DM–nucleon spin independent cross section limits (90%                 Refs. [84–86]. In contrast, halos with a GSE-like merger yield
+C.L.) as a function of DM mass 𝑚 𝜒 , as derived from simulated DM             slightly less support on the high-speed tail, with 0.2+0.3   −0.2 %
+halos (blue), compared to the predictions from the SHM (shown in              of DM particles at or above 544 km s−1 , though these halos
+gray, with the spread set by uncertainty in the local DM density 𝜌 𝜒 ).       are otherwise consistent with the overall population. This
+The lower panel shows the fractional difference of the above curves           behavior differs from what was observed by Ref. [26] using
+relative to the SHM with a fiducial choice of 𝜌 𝜒 = 0.4 GeV cm−3 . The
+pink curves show limits derived from the same halos after phase-space
+                                                                              the Auriga simulations [87], although their sample consisted
+scaling. While the overall normalization scales with 𝜌 𝜒 , variations         of only four halos with GSE-like events and thus may not
+in 𝜌 𝜒 do not change the shape of the limit. The weakening of the             have captured the full range of possibilities. In an upcoming
+unscaled limit at 𝑚 𝜒 ≲ 10 GeV 𝑐 −2 arises because the DM speed               study, we will compare the exact speed distributions from
+distribution is systematically slower than the SHM, an effect that            TNG50 with versions derived from GSE stellar debris (e.g.,
+scaling corrects for.                                                         Refs. [81, 88, 89]).
+                                                                                 Conclusions—This Letter provides an updated and state-of-
+curves in Fig. 3, with higher 𝜌 𝜒 leading to more stringent                   the-art theoretical prediction for the local speed distribution of
+limits. The unscaled halos are less compact, have lower                       the Milky Way, derived from the largest set of simulated galaxies
+𝜌 𝜒 , and set weaker limits than their scaled counterparts (see
+Appendix A for more detail on the DM densities). Beyond
+𝑚 𝜒 ∼ 25 GeV 𝑐 −2 , most DM scattering events deposit enough
+energy to be detected, regardless of their speed. Therefore,
+uncertainty in 𝜎SI is primarily from 𝜌 𝜒 , which leads to a 33%
+spread of the 1𝜎 containment region. Below this mass, the
+uncertainty is primarily from the speed distribution. As seen in
+Fig. 2, the unscaled speed distributions fall off much faster than
+the SHM at high speeds, while the scaled distributions still have
+support near the escape speed of the halo. The deficit of high-
+speed DM in the unscaled halos leads to a weakening of the 𝜎SI
+limit, as there are few scattering events that deposit energies
+above the detector threshold. The scaled speed distributions,
+however, do not suffer this deficit, and the 𝜎SI limit better                 FIG. 4. Scaled DM speed distributions for MW-like halos in the
+matches that set by the SHM.                                                  sample with GSEs (yellow) and with LMCs (purple). For comparison,
+   We note that this analysis may not resolve small-scale DM                  the solid pink lines outline the shaded pink region from Fig. 2 and
+                                                                              bracket the range for all scaled halos. The bands correspond to the
+streams or other local velocity structures because (1) we con-
+                                                                              16th–84th percentile containment. The inset focuses in on the high-
+struct the speed distribution as an azimuthal average of particles            speed tail, with the dashed and dotted black lines indicating the only
+within an annulus around the galactic center, and (2) the simula-             two halos that experienced both a GSE and LMC event. A GSE (LMC)
+tions are subject to a 288 pc softening length. Additionally, we              event biases the high-speed tail to lower (higher) values, although the
+neglect the gravitational effect of the Sun, which can focus the              shifts are relatively small and largely contained within the halo-to-halo
+local DM phase space [77]. These assumptions can potentially                  uncertainty of the full sample.
+
+
+                                                                          4
+                                       PHYSICAL REVIEW LETTERS 135, 211004 (2025)
+
+to date at its resolution. We performed a physically motivated              Data availability—The data that support the findings of this
+scaling of the positions and velocities of the particles in 98 MW-       article are openly available [90].
+like halos in the TNG50 simulation to better reproduce the local
+circular speed 𝑣 LSR in our Galaxy. This scaling dramatically
+increased the number of MW-like halos that could be used to
+construct DM speed distributions and which could be robustly
+compared to the observationally motivated SHM. In general,                [1] D. G. Cerdeno and A. M. Green, Direct detection of WIMPs,
+                                                                              in Particle Dark Matter: Observations, Models and Searches
+the ensemble of recovered distributions exhibited excellent                   (Cambridge University Press, Cambridge, England, 2010).
+agreement with the SHM, even though the individual halos’                 [2] T. Lin, Sub-GeV dark matter models and direct detection, in Dark
+distributions are not always well fit by a Maxwell–Boltzmann                  Matter, Les Houches Summer School 2021 (SciPost, 2022).
+parametrization. The corresponding 1𝜎 uncertainty from                    [3] T.-T. Yu, TASI lectures: a dark matter primer, in The Frontiers
+halo-to-halo variance is comparable to, and sometimes less                    of Particle Theory (2025).
+than, the systematic experimental uncertainty for experiments             [4] C. McCabe, Astrophysical uncertainties of dark matter direct
+such as LUX-ZEPLIN and XENON1T. Subselecting on those                         detection experiments, Phys. Rev. D 82, 023530 (2010).
+                                                                          [5] D. Baxter et al., Recommended conventions for reporting results
+galaxies with merger histories similar to the Milky Way did                   from direct dark matter searches, Eur. Phys. J. C 81, 907 (2021).
+not significantly affect the uncertainty range. These results             [6] J. Aalbers et al., A next-generation liquid xenon observatory for
+motivate renewed efforts to model other sources of experimental               dark matter and neutrino physics, J. Phys. G 50, 013001 (2023).
+uncertainty, such as the form factors and detector response               [7] I. Wasserman, Possibility of detecting heavy neutral fermions in
+functions near threshold, which had previously been thought to                the Galaxy, Phys. Rev. D 33, 2071 (1986).
+be subdominant.                                                           [8] A. K. Drukier, K. Freese, and D. N. Spergel, Detecting cold
+   Appendix B presents tabulated distributions and analytic                   dark-matter candidates, Phys. Rev. D 33, 3495 (1986).
+                                                                          [9] K. Freese, J. Frieman, and A. Gould, Signal modulation in
+parametrizations for computing bounds or sensitivities for                    cold-dark-matter detection, Phys. Rev. D 37, 3388 (1988).
+existing and future direct detection experiments. See Appendix           [10] R. Wojtak, E. L. Lokas, S. Gottlöber, and G. A. Mamon, Radial
+B and Ref. [90] for our own data products, including the                      velocity moments of dark matter haloes, Mon. Not. R. Astron.
+individual halos’ DM speed distributions and densities, as well               Soc. 361, L1 (2005).
+as a global fit to the DM speed distribution inferred for the MW.        [11] S. H. Hansen, B. Moore, M. Zemp, and J. Stadel, A universal
+All IllustrisTNG data are publicly available [91].                            velocity distribution of relaxed collisionless structures, J. Cosmol.
+                                                                              Astropart. Phys. 01 (2006), 014.
+                                                                         [12] M. Vogelsberger, S. D. M. White, A. Helmi, and V. Springel, The
+   Acknowledgements—We thank Akaxia Cruz, Jonah Rose,                         fine-grained phase-space structure of cold dark matter haloes,
+Sandip Roy, and Tal Shpigel for useful conversations. The work                Mon. Not. R. Astron. Soc. 385, 236 (2008).
+of C.B. was supported in part by NASA through the NASA                   [13] M. Vogelsberger, A. Helmi, V. Springel, S. D. M. White, J. Wang,
+Hubble Fellowship Program Grant No. HST-HF2-51451.001-A                       C. S. Frenk, A. Jenkins, A. Ludlow, and J. F. Navarro, Phase-
+awarded by the Space Telescope Science Institute, which is                    space structure in the local dark matter distribution and its
+operated by the Association of Universities for Research in                   signature in direct detection experiments, Mon. Not. R. Astron.
+Astronomy, Inc., for NASA, under Contract No. NAS5-26555,                     Soc. 395, 797 (2009).
+                                                                         [14] M. Kuhlen, N. Weiner, J. Diemand, P. Madau, B. Moore, D. Potter,
+as well as by the European Research Council under Grant No.                   J. Stadel, and M. Zemp, Dark matter direct detection with non-
+742104. M.L. and D.F. are supported by the Department of                      Maxwellian velocity structure, J. Cosmol. Astropart. Phys. 02
+Energy (DOE) under Award No. DE-SC0007968. M.L. is also                       (2010), 030.
+supported by the Simons Investigator in Physics Award. D.F.              [15] A. M. Green, Dependence of direct detection signals on the
+is additionally supported by the Joseph H. Taylor Graduate                    WIMP velocity distribution, J. Cosmol. Astropart. Phys. 10
+Student Fellowship. L.N. is supported by the Sloan Fellow-                    (2010), 034.
+ship, the NSF CAREER No. 2337864, and NSF Award No.                      [16] M. Vogelsberger and J. Zavala, Direct detection of self-interacting
+                                                                              dark matter, Mon. Not. R. Astron. Soc. 430, 1722 (2013).
+2307788. L.H. acknowledges support from the Simons Foun-                 [17] N. Bozorgnia and G. Bertone, Implications of hydrodynamical
+dation through the “Learning the Universe” collaboration. The                 simulations for the interpretation of direct dark matter searches,
+computations in this paper were run on the FASRC cluster                      Int. J. Mod. Phys. A 32, 1730016 (2017).
+supported by the FAS Division of Science Research Computing              [18] F. S. Ling, E. Nezri, E. Athanassoula, and R. Teyssier, Dark
+Group at Harvard University. The IllustrisTNG simulations                     matter direct detection signals inferred from a cosmological
+were undertaken with compute time awarded by the Gauss                        N-body simulation with baryons, J. Cosmol. Astropart. Phys. 02
+Centre for Supercomputing (GCS) under GCS Large-Scale                         (2010), 012.
+                                                                         [19] P. B. Tissera, S. D. M. White, S. Pedrosa, and C. Scannapieco,
+Projects GCS-ILLU and GCS-DWAR on the GCS share of the                        Dark matter response to galaxy formation, Mon. Not. R. Astron.
+supercomputer Hazel Hen at the High Performance Computing                     Soc. 406, 922 (2010).
+Center Stuttgart (HLRS), as well as on the machines of the Max           [20] A. Pillepich, M. Kuhlen, J. Guedes, and P. Madau, The distribu-
+Planck Computing and Data Facility (MPCDF) in Garching,                       tion of dark matter in the Milky Way’s disk, Astrophys. J. 784,
+Germany.                                                                      161 (2014).
+                                                                         [21] I. Butsky, A. V. Macciò, A. A. Dutton, L. Wang, A. Obreja,
+                                                                              G. S. Stinson, C. Penzo, X. Kang, B. W. Keller, and J. Wadsley,
+
+
+
+                                                                     5
+                                           PHYSICAL REVIEW LETTERS 135, 211004 (2025)
+
+     NIHAO project II: Halo shape, phase-space density and velocity                  of the Milky Way’s inner stellar halo and thick disk, Nature (Lon-
+     distribution of dark matter in galaxy formation simulations, Mon.               don) 563, 85 (2018).
+     Not. R. Astron. Soc. 462, 663 (2016).                                      [38] V. Belokurov, D. Erkal, N. W. Evans, S. E. Koposov, and A. J.
+[22] C. Kelso, C. Savage, M. Valluri, K. Freese, G. S. Stinson, and                  Deason, Co-formation of the disc and the stellar halo, Mon. Not.
+     J. Bailin, The impact of baryons on the direct detection of dark                R. Astron. Soc. 478, 611 (2018).
+     matter, J. Cosmol. Astropart. Phys. 08 (2016), 071.                        [39] A. J. Deason and V. Belokurov, Galactic archaeology with Gaia,
+[23] J. D. Sloane, M. R. Buckley, A. M. Brooks, and F. Governato,                    New Astron. Rev. 99, 101706 (2024).
+     Assessing astrophysical uncertainties in direct detection with             [40] E. Aprile et al., (XENON Collaboration), Dark matter search
+     galaxy simulations, Astrophys. J. 831, 93 (2016).                               results from a one ton-year exposure of XENON1T, Phys. Rev.
+[24] N. Bozorgnia, F. Calore, M. Schaller, M. Lovell, G. Bertone,                    Lett. 121, 111302 (2018).
+     C. S. Frenk, R. A. Crain, J. F. Navarro, J. Schaye, and T. Theuns,         [41] E. Aprile et al., (XENON Collaboration), First dark matter search
+     Simulated Milky Way analogues: Implications for dark matter                     with nuclear recoils from the XENONnT Experiment, Phys. Rev.
+     direct searches, J. Cosmol. Astropart. Phys. 05 (2016), 024.                    Lett. 131, 041003 (2023).
+[25] R. Poole-McKenzie, A. S. Font, B. Boxer, I. G. McCarthy,                   [42] J. Aalbers et al., (LZ Collaboration), Dark matter search results
+     S. Burdin, S. G. Stafford, and S. T. Brown, Informing dark matter               from 4.2 tonne-years of exposure of the LUX-ZEPLIN (LZ)
+     direct detection limits with the ARTEMIS simulations, J. Cosmol.                Experiment, Phys. Rev. Lett. 135, 011802 (2025).
+     Astropart. Phys. 11 (2020), 016.                                           [43] V. Springel, S. D. M. White, G. Tormen, and G. Kauffmann,
+[26] N. Bozorgnia, A. Fattahi, C. S. Frenk, A. Cheek, D. G. Cerdeño,                Populating a cluster of galaxies – I. Results at 𝑧 = 0, Mon. Not.
+     F. A. Gómez, R. J. J. Grand, and F. Marinacci, The dark mat-                   R. Astron. Soc. 328, 726 (2001).
+     ter component of the Gaia radially anisotropic substructure, J.            [44] K. Dolag, S. Borgani, G. Murante, and V. Springel, Substructures
+     Cosmol. Astropart. Phys. 07 (2020), 036.                                        in hydrodynamical cluster simulations, Mon. Not. R. Astron. Soc.
+[27] A. Hryczuk, E. Karukes, L. Roszkowski, and M. Talia, Impact                     399, 497 (2009).
+     of uncertainties in the halo velocity profile on direct detection of       [45] D. Folsom, M. Lisanti, L. Necib, D. Horta, M. Vogelsberger, and
+     sub-GeV dark matter, J. High Energy Phys. 07 (2020), 081.                       L. Hernquist, Cosmological simulations of stellar halos with Gaia
+[28] A. Nuñez-Castiñeyra, E. Nezri, P. Mollitor, J. Devriendt, and                 Sausage–Enceladus analogs: Two sausages, one bun?, Astrophys.
+     R. Teyssier, Cosmological simulations of the same spiral galaxy:                J. 983, 119 (2025).
+     Connecting the dark matter distribution of the host halo with the          [46] D. Sotillo-Ramos, A. Pillepich, M. Donnari, D. Nelson, L. Eisert,
+     subgrid baryonic physics, J. Cosmol. Astropart. Phys. 05 (2023),                V. Rodriguez-Gomez, G. Joshi, M. Vogelsberger, and L. Hern-
+     012.                                                                            quist, The merger and assembly histories of Milky Way- and
+[29] G. E. Lawrence, A. R. Duffy, C. A. Blake, and P. F. Hopkins,                    M31-like galaxies with TNG50: Disc survival through mergers,
+     Gusts in the headwind: Uncertainties in direct dark matter                      Mon. Not. R. Astron. Soc. 516, 5404 (2022).
+     detection, Mon. Not. R. Astron. Soc. 524, 2606 (2023).                     [47] A. Pillepich, D. Sotillo-Ramos, R. Ramesh, D. Nelson, C. Engler,
+[30] P. G. Staudt, J. S. Bullock, M. Boylan-Kolchin, D. Kirkby,                      V. Rodriguez-Gomez, M. Fournier, M. Donnari, V. Springel, and
+     A. Wetzel, and X. Ou, Sliding into DM: Determining the local                    L. Hernquist, Milky Way and Andromeda analogues from the
+     dark matter density and speed distribution using only the local                 TNG50 simulation, Mon. Not. R. Astron. Soc. 535, 1721 (2024).
+     circular speed of the galaxy, J. Cosmol. Astropart. Phys. 08               [48] D. A. Gadotti, Structural properties of pseudo-bulges, classical
+     (2024), 022.                                                                    bulges and elliptical galaxies: A Sloan Digital Sky Survey
+[31] F. Hammer, M. Puech, L. Chemin, H. Flores, and M. D. Lehnert,                   perspective, Mon. Not. R. Astron. Soc. 393, 1531 (2009).
+     The Milky Way, an exceptionally quiet galaxy: Implications for             [49] J. Bovy and H.-W. Rix, A direct dynamical measurement of the
+     the formation of spiral galaxies, Astrophys. J. 662, 322 (2007).                Milky Way’s disk surface density profile, disk scale length, and
+[32] T. C. Licquia, J. A. Newman, and M. A. Bershady, Does the                       dark matter profile at 4 kpc ≲ 𝑅 ≲ 9 kpc, Astrophys. J. 779, 115
+     Milky Way obey spiral galaxy scaling relations?, Astrophys. J.                  (2013).
+     833, 220 (2016).                                                           [50] J. Lian, G. Zasowski, B. Chen, J. Imig, T. Wang, N. Boardman,
+[33] N. Boardman, G. Zasowski, J. A. Newman, B. Andrews,                             and X. Liu, The broken-exponential radial structure and larger
+     C. Fielder, M. Bershady, J. Brinkmann, N. Drory, D. Krishnarao,                 size of the Milky Way galaxy, Nat. Astron. 8, 1302 (2024).
+     R. R. Lane, T. Mackereth, K. Masters, and G. S. Stringfellow,              [51] M. Jurić et al., The Milky Way tomography with SDSS. I. Stellar
+     Are the Milky Way and Andromeda unusual? A comparison                           number density distribution, Astrophys. J. 673, 864 (2008).
+     with Milky Way and Andromeda analogues, Mon. Not. R. Astron.               [52] H.-W. Rix and J. Bovy, The Milky Way’s stellar disk. Mapping
+     Soc. 498, 4943 (2020).                                                          and modeling the Galactic disk, Astron. Astrophys. Rev. 21, 61
+[34] T. Tsukui, E. Wisnioski, J. Bland-Hawthorn, and K. Freeman,                     (2013).
+     The emergence of galactic thin and thick discs across cosmic               [53] J. Bland-Hawthorn and O. Gerhard, The Galaxy in context:
+     history, Mon. Not. R. Astron. Soc. 540, 3493 (2025).                            Structural, kinematic, and integrated properties, Annu. Rev.
+[35] D. Nelson, A. Pillepich, V. Springel, R. Pakmor, R. Weinberger,                 Astron. Astrophys. 54, 529 (2016).
+     S. Genel, P. Torrey, M. Vogelsberger, F. Marinacci, and L. Hern-           [54] S. Varma, M. Huertas-Company, A. Pillepich, D. Nelson,
+     quist, First results from the TNG50 simulation: Galactic outflows               V. Rodriguez-Gomez, A. Dekel, S. M. Faber, P. Iglesias-Navarro,
+     driven by supernovae and black hole feedback, Mon. Not. R.                      D. C. Koo, and J. Primack, The building up of observed stellar
+     Astron. Soc. 490, 3234 (2019).                                                  scaling relations of massive galaxies and the connection to black
+[36] A. Pillepich, D. Nelson, V. Springel, R. Pakmor, P. Torrey,                     hole growth in the TNG50 simulation, Mon. Not. R. Astron. Soc.
+     R. Weinberger, M. Vogelsberger, F. Marinacci, S. Genel, A. van                  509, 2654 (2022).
+     der Wel, and L. Hernquist, First results from the TNG50 simula-            [55] Y. Rosas-Guevara, S. Bonoli, M. Dotti, D. Izquierdo-Villalba,
+     tion: The evolution of stellar and gaseous discs across cosmic                  A. Lupi, T. Zana, M. Bonetti, D. Nelson, V. Springel, L. Hern-
+     time, Mon. Not. R. Astron. Soc. 490, 3196 (2019).                               quist, and M. Vogelsberger, The evolution of the barred galaxy
+[37] A. Helmi, C. Babusiaux, H. H. Koppelman, D. Massari, J. Vel-                    population in the TNG50 simulation, Mon. Not. R. Astron. Soc.
+     janoski, and A. G. A. Brown, The merger that led to the formation               512, 5339 (2022).
+
+
+                                                                            6
+                                          PHYSICAL REVIEW LETTERS 135, 211004 (2025)
+
+[56] M. J. Reid and A. Brunthaler, The proper motion of Sagittarius           [74] C. A. J. O’Hare, N. W. Evans, C. McCabe, G. Myeong, and
+     A*. II. The mass of Sagittarius A*, Astrophys. J. 616, 872 (2004).            V. Belokurov, Velocity substructure from Gaia and direct searches
+[57] R. Abuter et al., (GRAVITY Collaboration), Improved GRAVITY                   for dark matter, Phys. Rev. D 101, 023006 (2020).
+     astrometric accuracy from modeling optical aberrations, Astron.          [75] E. Aprile et al., (XENON Collaboration), An approximate likeli-
+     Astrophys. 647, A59 (2021).                                                   hood for nuclear recoil searches with XENON1T data, Eur. Phys.
+[58] K. Abd El Dayem et al., (GRAVITY Collaboration), Improving                    J. C 82, 989 (2022).
+     constraints on the extended mass distribution in the Galactic            [76] P. F. de Salas and A. Widmark, Dark matter local density deter-
+     Center with stellar orbits, Astron. Astrophys. 692, A242 (2024).              mination: Recent observations and future prospects, Rep. Prog.
+[59] J. Binney and S. Tremaine, Jeans equations for axisymmetric                   Phys. 84, 104901 (2021).
+     systems, in Galactic Dynamics, Princeton Series in Astrophysics,         [77] S. K. Lee, M. Lisanti, A. H. G. Peter, and B. R. Safdi, Effect of
+     edited by D. N. Spergel (Princeton University Press, Princeton,               gravitational focusing on annual modulation in dark-matter direct-
+     NJ, 2008) Chap. 4.8.2, 2nd ed.                                                detection experiments, Phys. Rev. Lett. 112, 011301 (2014).
+[60] J. Bovy, The asymmetric drift and the Sun’s motion, in Dynam-            [78] A. J. Deason, V. Belokurov, S. E. Koposov, and L. Lancaster,
+     ics and Astrophysics of Galaxies (Princeton University Press,                 Apocenter pile-up: Origin of the stellar halo density break,
+     Princeton, NJ, 2026, in press.) Chap. 10.3.1.                                 Astrophys. J. 862, L1 (2018).
+[61] R. Schönrich, J. Binney, and W. Dehnen, Local kinematics and            [79] G. C. Myeong, N. W. Evans, V. Belokurov, J. L. Sanders, and
+     the local standard of rest, Mon. Not. R. Astron. Soc. 403, 1829               S. E. Koposov, The Milky Way halo in action space, Astrophys.
+     (2010).                                                                       J. 856, L26 (2018).
+[62] D. Kawata, J. Bovy, N. Matsunaga, and J. Baba, Galactic rotation         [80] L. Lancaster, S. E. Koposov, V. Belokurov, N. W. Evans, and
+     from Cepheids with Gaia DR2 and effects of non-axisymmetry,                   A. J. Deason, The halo’s ancient metal-rich progenitor revealed
+     Mon. Not. R. Astron. Soc. 482, 40 (2019).                                     with BHB stars, Mon. Not. R. Astron. Soc. 486, 378 (2019).
+[63] S. Põder, M. Benito, J. Pata, R. Kipper, H. Ramler, G. Hütsi,          [81] L. Necib, M. Lisanti, and V. Belokurov, Inferred evidence for
+     I. Kolka, and G. F. Thomas, A Bayesian estimation of the Milky                dark matter kinematic substructure with SDSS-Gaia, Astrophys.
+     Way’s circular velocity curve using Gaia DR3, Astron. Astrophys.              J. 874, 3 (2019).
+     676, A134 (2023).                                                        [82] A. Fattahi, V. Belokurov, A. J. Deason, C. S. Frenk, F. A. Gómez,
+[64] X. Ou, L. Necib, A. Wetzel, A. Frebel, J. Bailin, and M. Oeur, De-            R. J. J. Grand, F. Marinacci, R. Pakmor, and V. Springel, The
+     coding the Galactic twirl: The downfall of Milky Way-mass galax-              origin of galactic metal-rich stellar halo components with highly
+     ies rotation curves in the FIRE simulations, arXiv:2503.05877.                eccentric orbits, Mon. Not. R. Astron. Soc. 484, 4471 (2019).
+[65] A. R. Wetzel, P. F. Hopkins, J.-h. Kim, C.-A. Faucher-Giguère,          [83] G. Iorio and V. Belokurov, Chemo-kinematics of the Gaia RR
+     D. Kereš, and E. Quataert, Reconciling dwarf galaxies with                   Lyrae: The halo and the disc, Mon. Not. R. Astron. Soc. 502,
+     ΛCDM cosmology: Simulating a realistic population of satellites               5686 (2021).
+     around a Milky Way-mass galaxy, Astrophys. J. 827, L23 (2016).           [84] G. Besla, A. H. G. Peter, and N. Garavito-Camargo, The highest-
+[66] A. Wetzel et al., Public data release of the FIRE-2 cosmological              speed local dark matter particles come from the Large Magellanic
+     zoom-in simulations of galaxy formation, Astrophys. J. Suppl.                 Cloud, J. Cosmol. Astropart. Phys. 11 (2019), 013.
+     Ser. 265, 44 (2023).                                                     [85] K. Donaldson, M. S. Petersen, and J. Peñarrubia, Effects on the
+[67] J. Schaye et al., The EAGLE project: Simulating the evolution                 local dark matter distribution due to the Large Magellanic Cloud,
+     and assembly of galaxies and their environments, Mon. Not. R.                 Mon. Not. R. Astron. Soc. 513, 46 (2022).
+     Astron. Soc. 446, 521 (2015).                                            [86] A. Smith-Orlik, N. Ronaghi, N. Bozorgnia, M. Cautun, A. Fattahi,
+[68] R. A. Crain, J. Schaye, R. G. Bower, M. Furlong, M. Schaller,                 G. Besla, C. S. Frenk, N. Garavito-Camargo, F. A. Gómez, R. J. J.
+     T. Theuns, C. Dalla Vecchia, C. S. Frenk, I. G. McCarthy, J. C.               Grand, F. Marinacci, and A. H. G. Peter, The impact of the Large
+     Helly, A. Jenkins, Y. M. Rosas-Guevara, S. D. M. White, and                   Magellanic Cloud on dark matter direct detection signals, J.
+     J. W. Trayford, The EAGLE simulations of galaxy formation:                    Cosmol. Astropart. Phys. 10 (2023), 070.
+     Calibration of subgrid physics and model variations, Mon. Not.           [87] R. J. J. Grand, F. A. Gómez, F. Marinacci, R. Pakmor, V. Springel,
+     R. Astron. Soc. 450, 1937 (2015).                                             D. J. R. Campbell, C. S. Frenk, A. Jenkins, and S. D. M. White,
+[69] T. Sawala, C. S. Frenk, A. Fattahi, J. F. Navarro, R. G. Bower,               The Auriga project: The properties and formation mechanisms
+     R. A. Crain, C. Dalla Vecchia, M. Furlong, John. C. Helly,                    of disc galaxies across cosmic time, Mon. Not. R. Astron. Soc.
+     A. Jenkins, K. A. Oman, M. Schaller, J. Schaye, T. Theuns,                    467, 179 (2017).
+     J. Trayford, and S. D. M. White, The APOSTLE simulations:                [88] N. W. Evans, C. A. J. O’Hare, and C. McCabe, Refinement of
+     Solutions to the Local Group’s cosmic puzzles, Mon. Not. R.                   the standard halo model for dark matter searches in light of the
+     Astron. Soc. 457, 1931 (2016).                                                Gaia sausage, Phys. Rev. D 99, 023012 (2019).
+[70] A. Fattahi, J. F. Navarro, T. Sawala, C. S. Frenk, K. A. Oman,           [89] H. Zhu, R. Guo, J. Shen, J. Liu, C. Liu, X.-X. Xue, L. Zhang, and
+     R. A. Crain, M. Furlong, M. Schaller, J. Schaye, T. Theuns,                   S. Mao, Deciphering the kinematic substructure of local dark
+     and A. Jenkins, The APOSTLE project: Local Group kinematic                    matter with LAMOST K giants, Astrophys. J. 974, 167 (2024).
+     mass constraints and simulation candidate selection, Mon. Not.           [90] D. Folsom, folsomde/dm velocity distributions: v1.1, Zenodo
+     R. Astron. Soc. 457, 844 (2016).                                              (2025).
+[71] P. F. Hopkins et al., FIRE-2 simulations: Physics versus numerics        [91] https://tng-project.org/.
+     in galaxy formation, Mon. Not. R. Astron. Soc. 480, 800 (2018).          [92] S. Garrison-Kimmel, A. Wetzel, P. F. Hopkins, R. Sanderson,
+[72] J. Aalbers, B. Pelssers, J. R. Angevaare, and K. D. Morå, Jel-               K. El-Badry, A. Graus, T. K. Chan, R. Feldmann, M. Boylan-
+     leAalbers/wimprates: v0.5.0, Zenodo (2023).                                   Kolchin, C. C. Hayward, J. S. Bullock, A. Fitts, J. Samuel,
+[73] C. McCabe, The Earth’s velocity for direct detection experiments,             C. Wheeler, D. Kereš, and C.-A. Faucher-Giguère, Star formation
+     J. Cosmol. Astropart. Phys. 02 (2014), 027.                                   histories of dwarf galaxies in the FIRE simulations: Dependence
+                                                                                   on mass and Local Group environment, Mon. Not. R. Astron.
+                                                                                   Soc. 489, 4574 (2019).
+
+
+
+                                                                          7
+                                           PHYSICAL REVIEW LETTERS 135, 211004 (2025)
+
+                                                                 End Matter
+  Appendix A: Validation of procedure—The evolution of a                       These arguments hold regardless of the value of 𝛼, and one
+phase-space distribution function 𝑓 (x, v; 𝑡) is described by the           is free to choose
+                                                                                        √︁      any value for 𝛼. The choice taken in this
+collisionless Boltzmann equation, which takes the form                      work, 𝛼 = 𝑅⊙ /𝑅𝑀 , ensures that the enclosed mass at 𝑥˜ = 𝑅⊙
+                                                                            is 𝑀LSR and therefore ensures that the leading-order term in
+                    𝜕𝑓     𝜕𝑓   𝜕𝜙 𝜕 𝑓
+                       +v·    −   ·    =0                        (A1)       𝜙˜ is consistent from halo to halo. To verify that this scaling
+                    𝜕𝑡     𝜕x 𝜕x 𝜕v                                         procedure still produces reasonable DM distribution functions,
+for particles evolving under a Hamiltonian 𝐻 = 12 𝑣 2 + 𝜙(x, 𝑡).            we compare the unscaled halos that are most MW-like, which
+Consider a point Q = (x, v) under a coordinate transformation               undergo minimal scaling (𝛼 ∼ 1), to the set of all 98 halos
+such that Q ↦→ Q̃ = ( x̃, ṽ) = (𝛼2 x, 𝛼 −1 v), with tildes indi-           with scaling applied. The results of this test are shown in Fig. 5.
+cating quantities evaluated in the new coordinate system. To                The left panel of Fig. 5 is formatted as Fig. 2, but with the
+ensure that ṽ is the time derivative of x̃, we must also take              unscaled distributions (blue) restricted to halos with 𝛼 ∼ 1.
+𝑡˜ = 𝛼3 𝑡.                                                                  Specifically, the unscaled distributions show the seven halos
+    By conservation of probability, 𝑓˜( Q̃) = 𝛼 −3 𝑓 (Q), from the          with |𝑅𝑀 /𝑅⊙ − 1| < 0.125. Though the overall distributions of
+Jacobian of this coordinate transformation. Specifically, the               unscaled and scaled halos differ (as seen in Fig. 2), the scaled
+nonzero entries of the Jacobian matrix are                                  halos more closely match the most MW-like unscaled halos.
+                                                                               Further, we reproduce the speed distribution from Ref. [30]
+             𝜕𝑥 𝑖                            𝜕𝑣 𝑖
+                    = 𝛿𝑖 𝑗 𝛼 −2   and               = 𝛿𝑖 𝑗 𝛼 ,   (A2)       (shown in black in Fig. 5), who use 12 FIRE-2 galaxies [71, 92]
+             𝜕 𝑥˜ 𝑗                          𝜕 𝑣˜ 𝑗                         to develop an inference pipeline for the local speed distribution
+                                                                            of a MW-like galaxy, taking the local circular speed as an input.
+with 𝛿𝑖 𝑗 the Kronecker delta. From this, we can immediately
+                                                                            Their final prediction lies within the halo-to-halo variance of
+determine how the first two terms transform:
+                                                                            the TNG50 result. Although the statistics of the FIRE-2 sample
+ 𝜕 𝑓˜            𝜕𝑓         𝜕 𝑓˜                     𝜕𝑓                   are limited, this suggests that the conclusions of our Letter may
+          = 𝛼 −6      , ṽ·         = (𝛼 −1 v) · 𝛼 −5      . (A3)           not be highly sensitive to the details of the subgrid model.
+  𝜕 𝑡˜ Q̃        𝜕𝑡 Q       𝜕 x̃ Q̃                   𝜕x Q
+                                                                               The scaling procedure does modify 𝜌 𝜒 , the spatially av-
+  For the third term, let 𝜙 be the gravitational potential. The             eraged DM density within the solar annulus, as it brings
+potential d𝜙 sourced by a mass d𝑚 at position x′ is                         particles toward the center of the halo. Prior to scaling,
+                                      𝐺 d𝑚                                  𝜌 𝜒 = 0.37+0.05
+                                                                                         −0.06
+                                                                                               GeV cm−3 ; after scaling, this increases to
+                           d𝜙(x) =            .                  (A4)       0.51−0.07 GeV cm−3 . These values—both before and after
+                                                                                  +0.13
+                                     |x′ − x|
+                                                                            scaling—are consistent with MW observations, which range
+In scaled coordinates, with the mass at position x̃′ , this becomes         from 0.3 to 0.6 GeV cm−3 [76]. The full distributions are
+                                                                            plotted in the right panel of Fig. 5, where 𝜌 𝜒 is shown before
+                     𝐺 d𝑚        𝐺 d𝑚
+       ˜ x̃) =
+      d𝜙(                     =            = 𝛼 −2 d𝜙(x) .        (A5)       scaling (blue) and after scaling (pink). The dashed blue shows
+                   | x̃′ − x̃| 𝛼2 |x′ − x|                                  the subset of unscaled halos with |𝑅𝑀 /𝑅⊙ − 1| < 0.125, and
+This holds for all masses, so                                               again this distribution is in agreement with the scaled halos.
+                                                                               Finally, we also verify that the monopole term of 𝜙 sets the
+           𝜕 𝜙˜ 𝜕 𝑓˜            𝜕𝜙   −2 𝜕 𝑓                             average speeds found in the simulation, and, therefore, that
+       −       ·        = − 𝛼 −4      · 𝛼        ,               (A6)
+           𝜕 x̃ 𝜕 ṽ Q̃          𝜕x Q      𝜕v Q                             correcting this term should yield speeds comparable to 𝑣 LSR .
+                                                                            This is shown in Fig. 6, which plots the average speeds of stars
+and each term in Eq. (A1) transforms with a factor of 𝛼 −6 .                in the solar annulus of the unscaled TNG50 halos against 𝑀,
+   As such, the form of the collisionless Boltzmann equation                the mass enclosed within 𝑅⊙ . For reference, the local standard-
+is unchanged in the new coordinate system: 𝑓˜ is out of equi-               of-rest speed is shown as√︁a dashed gray horizontal line and a
+librium (i.e., 𝑓˜ has nonzero time derivative) if and only if 𝑓             solid black line indicates 𝐺 𝑀/𝑅⊙ , the speed predicted by the
+is out of equilibrium, and an observer using the transformed                monopole term of 𝜙. Average speeds follow this prediction
+coordinate system will observe gravitational evolution under 𝜙˜             to within ∼3% on average. These deviations may be caused
+proceeding as in the original coordinate system. Additionally,              by higher-order terms in the potential or out-of-equilibrium
+for a system with mass 𝑀 enclosed at a radius 𝑅, an observer                effects. Therefore, accounting for the discrepancy between the
+in the transformed coordinate system will measure this mass                 simulated masses within 𝑅⊙ and the 𝑀LSR inferred for the MW
+to be enclosed within√︁ a radius 𝑅˜ = 𝛼2 𝑅. The circular speed at           should yield good models for the DM speed in the MW.
+this radius is 𝑣(𝑅) = 𝐺 𝑀/𝑅, as in Eq. (1), and the observer                   Appendix B: Recommendations for direct detection—Here,
+will see                                                                    we provide expressions for the TNG50 DM distributions that
+                      √︂        √︂                                          can be used as an input to further studies, both on a halo-by-halo
+                         𝐺 𝑀        𝐺𝑀
+             𝑣˜ ( 𝑅)
+                  ˜ =         =          = 𝛼 −1 𝑣(𝑅) ,      (A7)            level and for the overall population of MW-like galaxies.
+                          𝑅˜        𝛼2 𝑅                                       Numerical interpolators for the exact speed distributions are
+consistent with the transformation assumed for 𝑣˜ .                         available online [90]. For each halo, we provide the DM density
+
+
+                                                                        8
+                                          PHYSICAL REVIEW LETTERS 135, 211004 (2025)
+
+
+
+
+FIG. 5. Probability distributions for DM speed (left) and density (𝜌 𝜒 , right) around 𝑅⊙ . The left panel shows the pink scaled-halo band
+exactly as in Fig. 2, but the blue distribution representing the unscaled halos now only includes those with the smallest scaling factors, where
+|𝑅𝑀 /𝑅⊙ − 1| < 0.125. The right panel shows, in blue, the distribution of 𝜌 𝜒 values for the unscaled halos, the full distribution with a solid line,
+and the least-scaled halos drawn with a dashed line. The pink solid line indicates the distribution for the scaled halos, and the shaded gray region
+indicates measurements of 𝜌 𝜒 in the MW [76]. In both panels, the resulting distribution of scaled halos is compatible with the most MW-like
+unscaled halos. The left panel also shows (in black) the 1𝜎 band for the speed distribution inferred for the MW from Ref. [30], which uses the
+FIRE-2 simulations. It agrees with our scaled distribution, suggesting that the conclusions of this Letter may be insensitive to the choice of
+subgrid model. Additionally, we show scaled speed distributions for two individual halos that over- and underestimate the high-speed tail relative
+to the SHM in dashed and dotted pink, respectively, to emphasize that individual halos have non-Maxwellian speed distributions.
+
+                                                                             Maxwell–Boltzmann distribution to extract 𝑣 0 and 𝑣 esc . This
+                                                                             bootstrapping technique quantifies the statistical uncertainty in
+                                                                             fit parameters for the individual halos, which is typically on
+                                                                             the order of 1 km s−1 in 𝑣 0 and 5 km s−1 in 𝑣 esc . These values
+                                                                             are tabulated in the repository linked above, but we caution
+                                                                             that the exact speed distributions are not always well modeled
+                                                                             by this functional form. For example, the left panel of Fig. 5
+                                                                             shows an individual halo’s speed distribution in dashed (dotted)
+                                                                             pink that significantly over- (under-) predicts the high-speed
+                                                                             tail with respect to its parametric fit.
+                                                                                 An estimate for the globally preferred values of 𝑣 0 and 𝑣 esc
+FIG. 6. For each MW-like galaxy, this shows the average speed of             is determined by fitting a bivariate Gaussian distribution to
+stars in an annulus around the solar radius (the same region used in         the collection of all 98 000 sets of best-fit 𝑣 0 and 𝑣 esc . The
+Fig. 2), compared to the total mass 𝑀 enclosed within 𝑅⊙ . The speeds        result of this Gaussian fit is reported in Table I, where the
+lag ∼20 km s−1 behind 𝑣 LSR (shown in dashed gray), and they correlate       means and standard deviations for 𝑣 0 and 𝑣 esc are given in
+with the square root of the enclosed √︁
+                                     mass as expected, staying along         the first two columns of the table, and the third column is the
+the solid black curve which denotes 𝐺 𝑀/𝑅⊙ .                                 Pearson correlation coefficient, i.e. the covariance normalized
+                                                                             by the product of the individual standard deviations. The full
+around 𝑅⊙ . We also provide parametric speed distributions, in               covariance matrix can be reconstructed from these values. For
+the form of a truncated Maxwell–Boltzmann,                                   readers interested in a single DM distribution to use for the
+                                 !                                           MW, our recommendation is to use the values in this table, as
+                   2          𝑣2                                             they marginalize over the halo-to-halo variance present in the
+    𝑓fit (𝑣) = 4𝜋𝑣 𝑘 exp − 2 Θ(𝑣 esc − 𝑣),         with      (B1)            TNG50 sample.
+                              𝑣0
+                    "                                  !#
+                                                                            TABLE I. Best-fit values and uncertainty for the parameters of Eq. (B1).
+   −1         2 3/2      𝑣 esc     2 𝑣 esc      𝑣 esc 2
+  𝑘 = (𝜋𝑣 0 )        erf         −√        exp − 2         , (B2)            These are fit across the entire simulated sample, marginalizing over
+                          𝑣0        𝜋 𝑣0          𝑣0                         the halo-to-halo variance. For reference, recall that the SHM has
+                                                                             𝑣 0 = 238 km s−1 and 𝑣 esc = 544 km s−1 . The third column is the
+where Θ is the Heaviside step function, erf is the Gauss error               Pearson correlation coefficient, which (with the standard deviation on
+function, 𝑣 0 is the peak speed, and 𝑣 esc is the truncation speed.          the individual parameters) determines the full covariance matrix.
+  For each simulated halo, we generate an ensemble of 10,000                         Sample         𝑣 0 (km s−1 )    𝑣 esc (km s−1 )    Correlation
+speed distributions by randomly sampling (with replacement)                  TNG50, unscaled          213 ± 19          510 ± 46           0.75
+DM speeds in the solar annulus. For each of these random                       TNG50, scaled          240 ± 11          567 ± 43           0.60
+samples, we perform a maximum likelihood fit to a truncated
+
+
+
+                                                                         9
+

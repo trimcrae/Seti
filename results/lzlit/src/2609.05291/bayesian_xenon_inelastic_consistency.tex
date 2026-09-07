@@ -1,0 +1,577 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.35cm]{geometry}
+\usepackage{jheppub}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+%\usepackage[hidelinks]{hyperref}
+\usepackage{mathrsfs} 
+%\usepackage{graphicx}   
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.25em}
+\setlist[itemize]{leftmargin=2em,itemsep=0.25em,topsep=0.4em}
+\setlist[enumerate]{leftmargin=2.2em,itemsep=0.25em,topsep=0.4em}
+\renewcommand{\arraystretch}{1.2}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\keVnr}{\mathrm{keV}_{\rm nr}}
+\newcommand{\ER}{E_R}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\vmin}{v_{\min}}
+\newcommand{\Xe}{\mathrm{Xe}}
+\newcommand{\TODO}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand*{\tss}[1]{\textcolor{cyan}{[ *** TSS: #1 *** ]}}
+
+
+\title{Inelastic from the Other Side: Xenon Excitation Signals in Light of the LZ High-Recoil Event}
+\author[1,2,3]{Guanhua Gu}
+\author[1]{Lingfeng Li}
+\author[1,4]{Shao-Song Tang}
+\author[5]{Yongheng Xu}
+\affiliation[1]{Department of Physics and Institute of Theoretical Physics, Nanjing Normal University, Nanjing, Jiangsu 210023, China}
+\affiliation[2]{Institute of Theoretical Physics, Chinese Academy of Sciences, Beijing 100190, P. R. China}
+\affiliation[3]{School of Physical Sciences, University of Chinese Academy of Sciences, Beijing 100049, P. R. China}
+\affiliation[4]{School of Physical Science and Technology, Xinjiang University,Urumqi 830046, China}
+\affiliation[5]{Fysikkbygningen, Sem S{\ae}landsvei 24, N-0371,Oslo, Norway}
+
+\emailAdd{guguanhua@itp.ac.cn}
+\emailAdd{l.f.li165@gmail.com}
+\emailAdd{3581951393@qq.com}
+\emailAdd{yongheng.xu@fys.uio.no}
+
+
+\abstract
+{The LUX-ZEPLIN (LZ) experiment recently reported a single event consistent with a nuclear recoil of $E_{\rm NR}\sim248\pm23\,(\mathrm{stat})\pm23\,(\mathrm{syst})$~keV in an extended-energy search. We study the accompanying inelastic-xenon channel, $\chi+\Xe\to\chi+\Xe^{*}$, which provides a complementary test of DM interpretations of such high-recoil events. Using the non-relativistic effective-field-theory (NREFT) framework with shell-model nuclear-transition inputs, we compute the inelastic-xenon rates for representative scenarios including inelastic dark matter and accelerated DM populations. We also simulate their S1--S2 responses, with detector modeling validated against public LZ data. The nuclear de-excitation adds an electromagnetic component shifting the signal toward the electronic-recoil band and, in some cases, toward clustered backgrounds from isotopes. We therefore construct a schematic, physics-motivated background model and perform a simplified statistical analysis. For many benchmarks, the inelastic-xenon rate is $\mathcal{O}(0.1)$ of the elastic rate or below, suggesting that substantially larger exposures are required before this companion channel becomes observable. Our results illustrate the importance of isotope-induced background structures in the extended-energy region and extend the phenomenology of inelastic-xenon signatures to a wider range of DM scenarios.}
+
+\begin{document}
+\maketitle
+
+
+
+
+\section{Introduction}
+\label{sec:introduction}
+Dark matter (DM) constitutes most of the matter in the universe, with evidence accumulated from observations including the cosmic microwave background (CMB)~\cite{Planck:2018vyg,ACT:2025fju,SPT-3G:2025bzu}, galactic dynamics~\cite{Iocco:2015xga}, and gravitational lensing~\cite{Clowe:2006eq}. Its particle nature remains unknown. Direct-detection experiments search for DM scattering in terrestrial targets, with the leading sensitivities currently provided by liquid-xenon experiments~\cite{LZ:2019sgr,PandaX:2024qfu,XENON:2025vwd}.
+
+The recent report of an event consistent with a high-energy nuclear recoil (NR) with $E_{\rm NR}\sim248$~keV by LZ~\cite{LZ2026} motivates interpretations beyond conventional elastic spin-independent (SI) scattering of standard Galactic-halo DM. This event has motivated many studies from various perspectives~\cite{Freese:2026sga,Wu:2026nhi,Fan:2026kxx,Lou:2026idn,Su:2026rwz,Visinelli:2026kgt,Yamashita:2026ump,Yin:2026jnn,DiMauro:2026ldr,Nomura:2026qyq,Smirnov:2026aqk,Unwin:2026rdp,McCabe:2026crm,Jeesun:2026vzo,Rodd:2026tyn,Chattopadhyay:2026ryw,Du:2026guj}. At such recoil energies the momentum transfer is large and nuclear coherence is substantially reduced~\cite{Catena:2015uha}. The absence of a corresponding excess at lower recoil energies makes an interpretation within the conventional elastic SI scenario more difficult. At such a large momentum transfer, the same DM-nucleus interaction can also excite the xenon nucleus, followed by prompt electromagnetic de-excitation~\cite{Ejiri:1993ndv,Belli:1991mx,Avignone:2000ui,Bernabei:2000qn,Baudis:2013bba,XMASS-I:2014lnb,McCabe:2015eia,Vergados:2016ytt,XMASS:2018hgt,Arcadi:2019hrw,XENON:2020fgj,Dutta:2022tav,Bednyakov:2023pwi}. Such inelastic-xenon channels may provide an additional consistency test of a high-$E_{\rm NR}$ DM interpretation. Of particular interest are $^{129}\Xe$ and $^{131}\Xe$, whose lowest excited states lie at $39.6$ and $80.2$~keV, respectively~\cite{Arcadi:2019hrw,Baudis:2013bba}. To avoid ambiguity with inelastic dark matter, we refer to DM scattering that excites the xenon nucleus, DM + Xe $\to$ DM + Xe$^{*}$, as inelastic-xenon scattering throughout this work.
+
+The accompanying inelastic-xenon signal can provide an additional test of DM scenarios that produce large $E_{\rm NR}$. Its interpretation, however, is more complicated than suggested by earlier phenomenological studies, which did not incorporate the structured isotope backgrounds relevant to the extended S1--S2 region considered here. At higher energies, isotope-induced and activation backgrounds can form localized structures that overlap substantially with the predicted inelastic-xenon signal. Their decay and de-excitation chains, together with modified recombination and its fluctuations in liquid xenon, further broaden and shift these populations in the S1--S2 plane. The corresponding isotope abundances can also depend strongly on the calibration history and data-taking period. These effects make a reliable background prediction difficult: the information provided in the recent extended-energy-range LZ study~\cite{LZ2026} does not yet allow a definitive external background fit over the full region relevant here.
+
+We therefore do not attempt a precision reinterpretation of the present data, limited by the currently public information. Instead, we construct a tentative signal-plus-background framework to estimate where accompanying inelastic-xenon events could become observable and how they may affect the interpretation of a high-$E_{\rm NR}$ DM signal. The purpose is also to motivate improved experimental modeling and searches in this region, as well as more complete nuclear-response calculations for excited xenon states and other direct-detection targets. %We first consider representative WIMP interactions and then discuss alternative mechanisms capable of producing large nuclear recoils, including inelastic dark matter (iDM) and accelerated DM populations. 
+
+
+
+
+
+
+\section{Physics of DM-Nuclei Scattering}
+\label{sec:signal_model}
+We consider a massive DM particle $\chi$ scattering from a xenon nucleus, including both elastic scattering, $\chi+{}^{A}\Xe\rightarrow\chi+{}^{A}\Xe$, and inelastic nuclear scattering, $\chi+{}^{A}\Xe\rightarrow\chi+{}^{A}\Xe^{*}$. The latter is particularly relevant for $^{129}\Xe$ and $^{131}\Xe$, whose first excited states lie at $E^{*}=39.6$ and $80.2$~keV, respectively~\cite{Baudis:2013bba,Arcadi:2019hrw}. We describe the DM--nucleon interaction using the non-relativistic effective-field-theory (NREFT) framework proposed in Ref.~\cite{Fan:2010gt}, with the operator basis and nuclear-response formalism developed in Refs.~\cite{Fitzpatrick:2012ix,Anand:2013yka}. The conventional SI and SD interactions correspond to $\mathcal O_1$ and $\mathcal O_4$, respectively. In this framework, the Galilean-invariant operators are built from $\bm q$, $\bm S_\chi$, $\bm S_N$, and the transverse relative velocity $\bm v^\perp$. With the convention $\bm q=\bm p_\chi'-\bm p_\chi$, it can be written at the nuclear level as
+\begin{equation}
+\bm v^\perp=\bm v+\frac{\bm q}{2\mu}+\frac{E^{*}}{q^2}\bm q,
+\qquad
+\bm v^\perp\cdot\bm q=0,
+\label{eq:vperp_definition}
+\end{equation}
+where $\mu$ is the DM--nucleus reduced mass. For $E^{*}=0$, this expression reduces to the usual form for elastic DM--nucleus scattering. The corresponding minimum velocity is $v_{\min}=q/(2\mu)+E^{*}/q$.
+
+
+The DM interaction is defined initially at the nucleon level, but nuclear excitation probes how this perturbation acts on the many-body xenon state. At leading order, the relevant nuclear operators are obtained by promoting the one-body DM-nucleon operators to operators acting on each nucleon in the nucleus. 
+Here we follow the treatment of the one-body density matrix (OBDM) from Ref.~\cite{Arcadi:2019hrw}, which is more compatible with the NREFT framework of DM-nucleon interaction. In this case, the nuclear transition matrix elements are then combined with the DM response to obtain the scattering amplitude. Schematically,
+\begin{equation} 
+\left\langle |\mathcal M_{\rm eff}|^2\right\rangle = \sum_X R_X\!\left(v^{\perp\,2},q^2\right)\, W_X(q), \label{eq:general_inelastic_response} 
+\end{equation} 
+where $R_X$ contains the NR-EFT coefficients and DM kinematics, while $W_X$ is constructed from the nuclear transition matrix elements. Here, $X$ labels the different nuclear response channels; the isospin indices are suppressed for notational simplicity. The explicit decomposition can be found in Refs.~\cite{Anand:2013yka,Arcadi:2019hrw} . We use the published xenon OBDMEs and response inputs of Refs.~\cite{Arcadi:2019hrw}, obtained from shell-model calculations including \texttt{Nushell@MSU}~\cite{Brown:2014bhl}, and have verified that they reproduce the published inelastic responses. From now on, we assume isoscalar interactions.
+
+
+\section{Simulation of Event Responses}
+\label{sec:signal_background}
+For the present detector-level study, we assume that the prompt de-excitation photon from $^{129,131}{\rm Xe}$ is fully absorbed sufficiently close to the nuclear recoil vertex that the two deposits are reconstructed as a single event. We simulate the NR and photon energy deposits with a customized \texttt{NEST} code~\cite{Szydagis:2011tk,Szydagis:2022ikv} and combine their detector responses at the event level. \footnote{The high energy photon from de-excitation may further introduce exotic signals. We defer this possibility to future work.} Because the photon produces an ER-like ionization cascade, the additional $39.6$ or $80.2$~keV energy deposition moves the inelastic population away from the ordinary NR band and toward the ER region, while retaining a response slightly different from an electron-initiated ER. %The ER and NR responses are validated against the extended-energy LZ calibration of Ref.~\cite{LZ:2026}.
+
+The more difficult ingredient is to estimate background distribution in the extended S1--S2 region with public likelihood available. The previous extended-energy LZ analysis of Ref.~\cite{LZ:2023lvz} reaches substantially higher recoil energies than the standard WIMP search, but the released event information covers only a restricted part of the S1--S2 plane. The extended-energy region also contains important xenon-isotope backgrounds, including electron capture of $^{125}{\rm I}$ and $^{127}{\rm Xe}$, and double electron capture of $^{124}{\rm Xe}$. These components have been studied by LZ, particularly during and after DD calibration~\cite{LZ:2024wvs}, with related measurements reported by PandaX and Xenon~\cite{PandaX-4T:2024fls,XENON:2022evz}. They produce localized or structured spectral features, which potentially overlap with the inelastic-xenon signal region and cannot be represented by a smooth extrapolation of the low-energy ER background. Such difficulties are not stressed in previous inelastic DM--nucleus scattering literature. 
+
+Mapping these backgrounds into the S1--S2 plane is further complicated by atomic de-excitation cascades. For example, $^{125}{\rm I}$ decay redistributes its energy among internal-conversion and Auger electrons and low-energy X-rays through a multi-step cascade~\cite{Alotiby:2019fjj,Tee:2019taa}. Although the dominant transition rates are known, the complete exclusive cascade is less well constrained. Existing liquid-xenon analyses generally report one-dimensional reconstructed-energy spectra rather than dedicated two-dimensional S1--S2 templates for these components~\cite{LZ:2024wvs,PandaX-4T:2024fls,XENON:2022evz}, which introduces additional uncertainty when constructing an external detector-level model. Their activities are also time dependent: $^{133}{\rm Xe}$ and $^{125}{\rm I}$ depend strongly on the neutron-calibration history, whereas $^{124}{\rm Xe}$ double-electron capture follows the natural xenon abundance. In particular, $^{125}{\rm I}$ is produced through $^{124}{\rm Xe}$ neutron activation and is subsequently removed by the getter system~\cite{LZ:2019sgr}. Current public information is therefore insufficient to determine these isotope activities uniquely for an arbitrary high-energy analysis window, and we use a schematic background model to assess their impact on the inelastic-xenon signal.
+
+We first construct the continuum background likelihood using NEST simulations and the background decomposition of Ref.~\cite{LZ2026}, adopting the corresponding detector-response setup. For the isotope-induced structures at higher energies, we estimate the event-rate ranges of the $^{125}{\rm I}$ and $^{124}{\rm Xe}$ components from Ref.~\cite{LZ:2024wvs}.\footnote{We neglect the broad $^{133}{\rm Xe}$ $\beta$-decay background at $E_{\rm ER}\gtrsim80$~keV because of its short lifetime. The corresponding contribution can be strongly reduced by excluding data taken within $\sim 60$ days after DD calibration~\cite{LZ:2024wvs}.} A simplified spectrum of Auger electrons and photons from $^{125}{\rm I}$ is constructed using the measured Auger-electron spectrum~\cite{Alotiby:2019fjj}. Following Ref.~\cite{LZ2026}, we model this effect with $Q_y/Q_\beta=0.81$. With this choice, the projected yields of the leading components $^{125}{\rm I}$ and $^{124}{\rm Xe}$ are simultaneously in reasonable agreement with Ref.~\cite{LZ2026} fits, as summarized in Table~\ref{tab:isotope_comp}.
+\begin{table}[h!]
+    \centering
+  \begin{tabular}{lccccc}
+    \toprule
+    Process & Global yield &  Predicted ROI
+            & LZ Fit~\cite{LZ2026}  \\
+    \midrule
+    $^{125}\mathrm{I}$   & 2811 $\pm$ 610 &  6.5 $\pm$ 1.4 
+                          & $9.8 \pm 2.3$  \\
+    $^{124}\mathrm{Xe}$ & 784 $\pm$ 112  & 14.8 $\pm$ 2.1
+                          & $22.6 \pm 5.0$ \\
+    \bottomrule
+  \end{tabular}
+    \caption{The comparison of background event yields in the region of interest (ROI) from our projection and that of Ref.~\cite{LZ2026}. The projected isotope yield is estimated from~\cite{LZ:2024wvs} with $Q_y/Q_\beta =0.81$ imposed for simulation.}
+    \label{tab:isotope_comp}
+\end{table}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{fig/Background_Likelihood.png}
+    \caption{The background likelihood we adopt for this work in the S1--S2 plane. We also show our ER band in solid blue curves, together with the ER band from Ref.~\cite{LZ2026} in dashed cyan curves. The NR band from our simulation (solid red curves) and Ref.~\cite{LZ2026} (dashed orange) are also shown together. In addition, we add a central line for photonic signals from our simulation as the solid purple curve slightly below the ER band. The gray box indicates the LZ region of interest.}
+    \label{fig:bkg}
+\end{figure}
+
+Given the uncertainties in the isotope activities, cascade modeling, and detector response, we treat the resulting background likelihood as an empirical template rather than a precision reconstruction of the experimental background model. Its purpose is to illustrate how the high-energy background structures affect the visibility of inelastic-xenon signals in different DM scenarios. A reliable fit over the full extended-energy region would require dedicated experimental data, a more complete treatment of the isotope decays and de-excitation cascades, and improved detector-level simulations, which are beyond the scope of this work.
+
+
+\section{Inelastic-Xenon Signals from Different DM Scenarios}
+\label{sec:results}
+We present results for several classes of dark-matter scenarios capable of producing large nuclear-recoil energies, including WIMP scattering through representative NREFT operators, inelastic dark matter (iDM), and accelerated DM populations. Our focus is on the accompanying inelastic-Xe signal associated with nuclear excitation. Although this channel need not provide the dominant sensitivity for discovery, it offers a complementary consistency test of a high-$E_{\rm NR}$ DM interpretation and may become increasingly useful with larger exposures. The study also motivates dedicated experimental analyses with improved high-energy background modeling, as well as further nuclear-theory calculations of excitation channels for xenon and other target isotopes used in direct-detection experiments. Given that~\cite{LZ2026} has conducted a statistical analysis for many elastic scattering scenarios, we adopt a conservative statistical treatment and focus instead on the implications of the inelastic-xenon signal. 
+
+
+\subsection{WIMP with Spin-(in)dependent Interactions with Standard Halo Model (SHM)}
+\label{ssec:vanilla_results}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.45\linewidth]{fig/elastic_vs_inelastic/O6_100_vs_1000.png}
+    \includegraphics[width=0.45\linewidth]{fig/elastic_vs_inelastic/O1_100_vs_1000.png}
+    \includegraphics[width=0.45\linewidth]{fig/elastic_vs_inelastic/O4_100_vs_1000.png}
+    \includegraphics[width=0.45\linewidth]{fig/elastic_vs_inelastic/O10_100_vs_1000.png}
+    \caption{The expected recoil spectrum for NREFT operators for $m_{\chi}= 100$~GeV and $m_{\chi}= 1$~TeV upto the high $E_{\rm NR}$ region. The curve stands for the total elastic rate contributed by all xenon isotopes. The cyan(orange) curve stands for $^{129(131)} {\rm Xe}$ inelastic-xenon rates, while solid(dashed) curves stand for $m_\chi=$1~TeV(100~GeV), respectively. The benchmarks of $\mathcal{O}_6$ (upper-left), $\mathcal{O}_1$ (upper-right), $\mathcal{O}_4$ (lower-left), and $\mathcal{O}_{10}$ (lower-right) are shown. In all plots the NREFT cutoff scales are set to be~1~TeV.}
+    \label{fig:pdsigma_NREFT}
+\end{figure}
+
+We first study the results from the WIMP case with NREFT cutoff scales set to 1~TeV. A Standard Halo Model (SHM) with a local velocity dispersion of 220~km/s and an escape velocity cutoff of 544~km/s is used. We annually average the rate, which is a good approximation given that the LZ exposure spans approximately one year. We first present the representative differential event rate from NREFT operators in Fig.~\ref{fig:pdsigma_NREFT}, with inelastic-xenon rates from $^{129} {\rm Xe}$ and $^{131} {\rm Xe}$ rescaled accordingly for proper display. In the upper-left panel, $\mathcal{O}_6$ is of special interest for its preference for a high $E_{\rm NR}$, leading to high local significances in the latest LZ analysis in the form of their $\textbf{L}_{4,20}$ and partly $\textbf{L}_{10}$.\footnote{We note that the results for the interesting operator $\mathcal{O}_{7,13}$ are not available at the current stage due to the missing form factors in the public code.} We see that with $|\boldsymbol{q}|^4$ dependence, the elastic interaction $E_{\rm NR}$ distribution peaks around 200~keV and extends to $\sim 1$~MeV when $m_\chi=$1~TeV, while the rate has a cutoff around 100~keV for the $m_\chi=100$~GeV benchmark due to inefficient energy transfer from the lighter DM particle to the $\mathcal{O}(100)$~GeV xenon nucleus. Both inelastic-xe interactions also show a peaked structure, with the corresponding maximum reached at lower $E_{\rm NR}\sim 100$~keV, and drop sharply at higher energies. At even higher energies up to $\sim 1$~MeV, the rate goes through several features with subdominant contributions to the overall rates. The results of $\mathcal{O}_{1,4,10}$ are also shown.
+
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{12pt}
+    
+    \begin{tabular}{c|ccc}
+        \hline
+        $m_\chi$ [GeV]
+        & $\mathcal{O}_4$
+        & $\mathcal{O}_6$
+        & $\mathcal{O}_{10}$ \\
+        \hline
+
+        90 %89
+        & $0.095\;(0.0091)$
+        & $0.135\;(0.0195)$
+        & $0.142\;(0.0165)$ \\
+        
+        300 %298
+        & $0.156\;(0.0358)$
+        & $0.121\;(0.0384)$
+        & $0.177\;(0.0469)$ \\
+        
+        1000
+        & $0.173\;(0.0481)$
+        & $0.112\;(0.0421)$
+        & $0.179\;(0.0568)$ \\
+        
+        \hline
+    \end{tabular}
+\caption{
+    Ratio of the inelastic scattering rates on $^{129}$Xe and $^{131}$Xe
+    relative to the elastic scattering rate for the SHM.
+    Each entry is shown as
+    $R_{129}/R_{\rm elastic}\,
+    (R_{131}/R_{\rm elastic})$. And the recoil-energy integration range is
+        $10 \leq E_R \leq 260~\mathrm{keV}$. In all possible cases, the inelastic-xenon rates from $\mathcal{O}_1$ are always significantly lower ($<10^{-4}$ of elastic ones) and are always ignored.
+    }    
+    \label{tab:SHM_inelastic_elastic_ratio}
+\end{table}
+
+As shown in~\cite{Arcadi:2019hrw}, the overall inelastic-xenon scattering rate is only of $\mathcal{O}(0.1)$ or smaller for all operators we consider. The integrated inelastic vs. elastic interaction rates for various WIMP benchmarks are listed in Table~\ref{tab:SHM_inelastic_elastic_ratio}, with contributions from the two xenon isotopes separated. In Fig.~\ref{fig:inelastic_signal_WIMP_1}, we present the benchmark inelastic-xenon scattering of $m_\chi=$ 1~TeV with $\mathcal{O}_6$ in the S1--S2 plane. The continuous ER with isotope-induced backgrounds is also shown. 
+
+
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{fig/Inelastic_SIgnal_O6.png}
+    \caption{The zoomed-in view of inelastic-xenon scattering signal regions in the S1--S2 plane for WIMP benchmarks, together with background likelihoods. Red and orange contours denote the $^{129}$Xe and $^{131}$Xe inelastic signals, respectively. For each isotope, the inner and outer contours enclose 68\% and 95\% of the simulated events, respectively. We see that the NR response, combined with ER-like energy deposit from the de-excitation photon, moves the signal away from the main ER band and becomes more visible. However, they may overlap with the large $^{125}{\rm I}$ and $^{124}{\rm Xe}$ contributions and may be potentially affected by the $^{133}\rm{Xe}$ contribution, which is not included in this plot due to its short lifetime.}
+    \label{fig:inelastic_signal_WIMP_1}
+\end{figure}
+
+
+
+The recent LZ result is motivated by a single high-energy NR event~\cite{LZ2026}. For each WIMP benchmark considered below, we therefore fix the expected elastic signal yield in the LZ exposure to one event, which in turn fixes the corresponding DM--nucleon cross section $\sigma_{\chi N}$. The predicted inelastic-xenon rate is typically only $\mathcal{O}(0.1)$ of the elastic rate for the operators considered here, so an accompanying inelastic-xenon event is not expected at the present exposure. We therefore use the current event only to set the normalization and study the corresponding inelastic-xenon signal at a larger exposure of $200$~tonne-year, representative of future multi-tonne xenon experiments such as DARWIN~\cite{DARWIN:2016hyl} and PandaX-xT~\cite{PANDA-X:2024dlo}.
+
+To quantify the effect of the inelastic-xenon component, we compare the profiled likelihood including the predicted signal with the background-only likelihood. Since the absolute value of the likelihood depends on statistical fluctuations of the sparse high-energy background, we normalize the likelihood shift to the spread obtained from background-only pseudo-experiments. We adopt the profiled likelihood $\mathscr{L}$ definition in~\cite{Cowan:2010js}.\footnote{We choose background yields from $^{124,131}{\rm Xe}$, $^{214} {\rm Pb}$, and ${^125}{\rm I}$ as nuisance parameters.} We then define the log-likelihood shift schematically as
+\begin{equation}
+\Delta \ln\mathscr{L}
+\equiv -\langle\log\mathscr{L}(S+B)-\log\mathscr{L}(B)\rangle~,
+\end{equation}
+averaged over mock samples. Its size is then characterized by the natural log-likelihood spread evaluated over background-only realizations ($\sigma_{\ln\mathscr{L},0}$). The ratio $\Delta\ln\mathscr{L}/\sigma_{\ln\mathscr{L},0}$ is used here only as a convenient and intuitive indicator of how strongly the predicted inelastic-xenon signal can shift the likelihood. Numerically, we find all log likelihood distributions are sufficiently gaussian, making $\Delta\ln\mathscr{L}/\sigma_{\ln\mathscr{L},0}$ can be interpreted an approximation of local significance from the inelastic-xenon signal.
+
+
+The results for WIMP benchmarks are shown in Table~\ref{tab:stat_WIMP}, projected to a 200 tonne-year exposure with the same detector setup. To avoid large background uncertainty, only signals with S1$<$800 and S2$<10^5$ are included. For the $1~{\rm TeV}$ benchmarks, all three operators give negative likelihood shifts, indicating that the predicted inelastic-xenon population makes a downward fluctuation toward a background-like configuration less probable. The effect is largest for $\mathcal O_4$ and $\mathcal O_{10}$, which partly reflects their larger inelastic-xenon yields, while $\mathcal O_6$ gives a more moderate shift. For $m_\chi=90~{\rm GeV}$, the total inelastic rates are reduced but remain of a comparable order. Nevertheless, the likelihood shifts become almost negligible. The lighter DM mass moves the recoil spectrum to lower $E_{\rm NR}$, where the accompanying inelastic-xenon population lies much closer to the dominant ER band and therefore overlaps more strongly with the background. The resulting loss of morphological discrimination is more important than the modest reduction in the total event rate.
+
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{c|ccc}
+\hline
+$m_\chi$ & $\mathcal O_4$ & $\mathcal O_6$ & $\mathcal O_{10}$ \\
+\hline
+$1~{\rm TeV}$ & $-6.9$ & $-3.1$ & $-6.4$ \\
+$90~{\rm GeV}$ & $-0.04$ & $-0.03$ & $-0.005$ \\
+\hline
+\end{tabular}
+\caption{Expected normalized profiled log-likelihood shift, $\Delta\ln\mathscr{L}/\sigma_{\ln\mathscr{L},0}$, induced by the inelastic-xenon signal for different WIMP benchmarks in the SHM. For each benchmark, the DM--nucleon cross section is normalized such that one elastic-scattering event is expected in the current LZ exposure, and the corresponding predictions are extrapolated to exposures of $200$ tonne-year. Here $\Delta\ln\mathscr{L}$ is the mean profiled log-likelihood shift between the signal-plus-background and background-only hypotheses, while $\sigma_{\ln\mathscr{L},0}$ denotes the spread obtained from background-only pseudo-experiments. The quoted ratio is an indicator of the relative likelihood impact of the inelastic-xenon component, rather than a statistical significance.}
+\label{tab:stat_WIMP}
+\end{table}
+
+
+\subsection{High-velocity dark-matter subpopulations}
+\label{ssec:high_velocity_subpopulation}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.48\linewidth]{fig/S1_vs_SHM/O6.png}
+    \includegraphics[width=0.48\linewidth]{fig/LMC_vs_SHM/O6.png}
+    \includegraphics[width=0.48\linewidth]{fig/S1_vs_SHM/O10.png}
+    \includegraphics[width=0.48\linewidth]{fig/LMC_vs_SHM/O10.png}
+    \caption{Similar to Fig.~\ref{fig:pdsigma_NREFT} but for accelerated DM scenarios. Here we consider the case of halo models including LMC (Model 1 or M1 from~\cite{Besla:2019xbx}) and stellar stream cases. In all plots, we show SHM results in dashed curves for comparison. {\bf LEFT: }The stellar stream model. {\bf RIGHT: }The LMC model.{\bf TOP: } $\mathcal{O}_6$ results. {\bf BOTTOM: } $\mathcal{O}_{10}$ results.}
+    \label{fig:dsigmadE_Acc_1}
+\end{figure}
+
+A subdominant high-velocity DM population can substantially enhance the rate of large-$E_{\rm NR}$ events while contributing only a small fraction of the local DM density. We therefore consider representative accelerated Galactic subpopulations in addition to the standard halo model, using the Large Magellanic Cloud (LMC) contribution~\cite{Besla:2019xbx,Reynoso-Cordova:2024xqz} and cold stellar streams~\cite{OHare:2018trr,Buch:2019aiw} as two benchmark scenarios. 
+
+The nearby LMC halo provides a broad high-velocity contribution that can extend beyond the nominal SHM cutoff, while a cold stream produces a narrower feature in velocity space. In the following, we use the corresponding velocity distributions of Model 1 described in Refs.~\cite{Besla:2019xbx,OHare:2018trr} and focus only on their impact on the high-recoil and accompanying inelastic-Xe signals. For the stellar stream, we model the Galactic-frame velocity distribution as a narrow component centered at the stellar stream S1, making up 10\% of the local dark matter density~\cite{OHare:2018trr}. 
+
+We present the $dR/dE_{\rm NR}$ plots for WIMP benchmark cases in~Fig.~\ref{fig:dsigmadE_Acc_1}. Compared to the results from SHM, both LMC and stellar stream cases show a moderate enhancement in the scattering rate, mainly in the high-$E_{\rm NR}$ region, with the LMC having greater impact. None are drastic enough to change the shape of the major peak of elastic scattering. For inelastic scattering, the effects are more apparent for the $\gtrsim 300$~keV range. Numerically, we find that neither of the two scenarios will significantly change the statistical interpretations compared to their SHM counterparts. %The longer high-velocity tail of dark matter velocity also \TODO{!} of the statistical interpretation of the log likelihood shift in terms of $\Delta\ln\mathscr{L}/\sigma_{\ln\mathscr{L},0}$. Table~\ref{tab:likelihood_ACC} shows the $\Delta\ln\mathscr{L}/\sigma_{\ln\mathscr{L},0}$ value induced from inelastic-xenon signals for a 200 tonne-year exposure with fixed NR signal yield similar to the procedure in Sec.~\ref{ssec:vanilla_results}. \TODO{!} For more results, see App.~\ref{app:number}.
+
+
+
+\subsection{Inelastic dark matter}
+\label{ssec:idm}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.48\linewidth]{fig/elastic_vs_iDM/delta300/O6.png}
+    \includegraphics[width=0.48\linewidth]{fig/elastic_vs_iDM/delta_300/O6.png}
+    \caption{Similar to Fig.~\ref{fig:pdsigma_NREFT} but for different iDM benchmarks with $\delta=+300$~keV (left) and $\delta=-300$~keV. Both benchmarks assume $m_\chi=1~{\rm TeV}$.}
+    \label{fig:dsigmadE_iDM_1}
+\end{figure}
+Inelastic dark matter (iDM) provides another simple mechanism for enhancing the high-$E_{\rm NR}$ population. We consider scattering between two nearby dark-sector states, $\chi_1 N\rightarrow\chi_2 N$, with mass splitting $\delta\equiv m_{\chi_2}-m_{\chi_1}$~\cite{Tucker-Smith:2001myb,Tucker-Smith:2004mxa,Chang:2008gd,Graham:2010ca}. The minimum incoming velocity required for a nuclear recoil $E_{\rm NR}$ is
+\begin{equation}
+v_{\min}(E_{\rm NR})=\frac{1}{\sqrt{2m_N E_{\rm NR}}}\left|\frac{m_NE_{\rm NR}}{\mu}+\delta\right|~.
+\end{equation}
+For exothermic scattering with $\delta<0$, the released energy can be converted into nuclear recoil energy, shifting the spectrum toward larger $E_{\rm NR}$~\cite{Tucker-Smith:2001myb,Tucker-Smith:2004mxa,Chang:2008gd,Graham:2010ca}. In particular, the kinematics favor a characteristic recoil scale
+\begin{equation}
+E_{\rm NR}^{\rm peak}
+\simeq
+|\delta|\frac{\mu}{m_N},
+\end{equation}
+which approaches $|\delta|$ for sufficiently heavy dark matter scattering on xenon. A splitting of order $\mathcal{O}(100)\,{\rm keV}$ can therefore naturally populate the high-recoil region without requiring an anomalously large incoming velocity. This possibility has also been considered recently in connection with high-energy xenon recoil events~\cite{An:2025bby}.
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.48\linewidth]{iDM_Signal_minus300.png}
+    \includegraphics[width=0.48\linewidth]{iDM_Signal_plus300.png}
+    \caption{Similar to Fig.~\ref{fig:inelastic_signal_WIMP_1} but from $\delta=-300$ (left) and $\delta=+300$~keV (right) iDM models with 1~TeV mass. The red (white) contours are from $^{129(131)}{\rm {Xe}}$ isotopes. The ER band from our background simulation is also shown as solid and dashed blue curves.}
+    \label{fig:signal_iDM_1}
+\end{figure}
+We first show the $dR/dE_{\rm NR}$ distribution for representative iDM benchmarks with high $m_\chi$ and $|\delta|=300 $~keV case in Fig.~\ref{fig:dsigmadE_iDM_1}, some of which are preferred by the LZ2026 high-$E_{\rm NR}$ study even without any spin and $|\boldsymbol{q}|$ dependence~\cite{LZ2026}. The $\delta =+300 $~keV endothermic case gives a very narrow peak around the $E_{\rm NR} =300$~keV region, making the scenario also kinematically preferable for reproducing the high $E_{\rm NR}$ event, although a much smaller NREFT cutoff scale will be needed. The low expected $E_{\rm NR}$ that can be probed leaves the signals closer to the ER band, as apparent in the left panel of Fig.~\ref{fig:signal_iDM_1}. The corresponding integrated inelastic-to-elastic rate ratio for $E_{\rm NR} \in [10,260]$~keV becomes too small to be relevant. For the $\delta=-300$~keV exothermic case, the distribution peak strongly shifts to the high-$E_{\rm NR}$ region. For inelastic-xenon scatterings with exothermic iDM, the enhancement is more drastic but with a double-peak structure. The major contribution to the interaction rate comes from the regions of $E_{\rm NR} \gtrsim 500~$keV. The corresponding inelastic-xenon scatterings of high $E_{\rm NR}$ give rise to signals with their S1 larger than 800.
+
+\begin{table}[h!]
+    \centering
+    
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{12pt}
+    
+    \begin{tabular}{c|ccc}
+        \hline
+        $\delta m$ [keV]
+        & $\mathcal{O}_4$
+        & $\mathcal{O}_6$
+        & $\mathcal{O}_{10}$ \\
+        \hline
+
+        $+300$
+        & $<10^{-4}\;(<10^{-4})$
+        & $<10^{-4}\;(<10^{-4})$
+        & $<10^{-4}\;(<10^{-4})$ \\
+        
+        $+50$
+        & $0.0462\;(0.0106)$
+        & $0.0425\;(0.0121)$
+        & $0.0597\;(0.0145)$ \\
+        
+        $-50$
+        & $0.327\;(0.136)$
+        & $0.195\;(0.0986)$
+        & $0.320\;(0.144)$ \\
+        
+        
+        $-300$
+        & $0.0355\;(0.0560)$
+        & $0.0681\;(0.0889)$
+        & $0.0642\;(0.0907)$ \\
+        
+        \hline
+    \end{tabular}
+    \caption{
+    Ratio of the inelastic scattering rates on $^{129}$Xe and $^{131}$Xe
+    relative to the elastic scattering rate for inelastic dark matter
+    with $m_\chi = 1000~\mathrm{GeV}$ in the SHM.
+    Each entry is shown as
+    $R_{129}/R_{\rm elastic}\,
+    (R_{131}/R_{\rm elastic})$.
+    The recoil-energy integration range is
+    $10 \leq E_R \leq 260~\mathrm{keV}$.
+    }
+    \label{tab:SHM_iDM_inelastic_elastic_ratio}
+\end{table}
+
+We present the log-likelihood shift from the inelastic-xenon signals for the projected 200 tonne-year exposure scenario in Table~\ref{tab:idm_likelihood}. We consider a representative DM mass of $m_\chi=1~{\rm TeV}$ and several mass splittings $\delta=\pm 50$ and $-300$~keV. We do not show the $\delta=+300~{\rm keV}$ benchmark, for which the inelastic-xenon rate is too small to be relevant for our setup. Among the three remaining benchmarks, the $\delta=-50$~keV case shows the largest likelihood shift and therefore the best potential for an accompanying inelastic-xenon signal. The $\delta=+50$~keV scenario is less favorable because the endothermic kinematics suppress the inelastic rate. For $\delta=-300$~keV, the recoil spectrum is pushed to substantially higher $E_{\rm NR}$, so most of the inelastic-xenon population appears at large S1 and falls outside the region we consider, resulting in a negligible likelihood shift. However, the signal could be relevant for studies with a further extended energy range.
+
+
+\begin{table}[t]
+\centering
+\begin{tabular}{cccc}
+\hline
+$\delta$ [keV] & $+50$ & $-50$ & $-300$  \\
+\hline
+  & -1.9  & -4.0 &  -0.07 \\
+\hline
+\end{tabular}
+\caption{Similar to Table~\ref{tab:stat_WIMP} but for representative iDM benchmarks with $m_\chi=1~{\rm TeV}$.}
+\label{tab:idm_likelihood}
+\end{table}
+
+
+
+
+\section{Conclusion}
+\label{sec:conclusion}
+The recent observation of a $\sim 248$~keV $E_{\rm NR}$ event by the LZ collaboration~\cite{LZ2026} has stimulated a wide range of proposals for dark-matter scenarios capable of producing such a high recoil energy. We focus on the accompanying and less discussed signal from inelastic excitations of the xenon nucleus, $\chi+{}^{A}\Xe\rightarrow\chi+{}^{A}\Xe^{*}$, followed by prompt photon de-excitation. Since the recoil energies needed to explain the observed event lie well above the excitation thresholds of $^{129}\Xe$ and $^{131}\Xe$, such inelastic-xenon interactions are a natural consequence of many dark-matter interpretations in this energy range. In this work, we have studied the inelastic-xenon scattering channel by combining the NREFT framework with published nuclear transition inputs and computed the inelastic-xenon differential rates. Their two-dimensional S1--S2 responses for a broad set of DM scenarios, including representative WIMP cases, accelerated DM subpopulations, and iDM are also simulated. In all cases, we consider a set of NREFT interactions. These signal predictions, which have not been systematically provided in previous literature, are a central outcome of this paper. On the background side, we constructed a schematic, empirically motivated description of the high-energy region, paying particular attention to the structured and time-dependent contributions from $^{125}{\rm I}$ and $^{124}{\rm Xe}$.
+
+Our results indicate that a reliable search for inelastic-xenon interactions hinges crucially on understanding the isotope-induced background clusters and the ER band calibration in the extended-energy region. Because these structures may overlap substantially with the predicted signal and cannot be modeled by a smooth extrapolation of the low-energy background, dedicated experimental measurements of their time-dependent activities, decay and de-excitation cascades, and detector response will be essential. 
+
+Finally, we find that many scenarios compatible with the high-$E_{\rm NR}$ event do not produce a large inelastic-xenon rate, typically suppressing it to $\mathcal{O}(0.1)$ level of the corresponding elastic rate or below. Inspired by the current excess, a considerably larger exposure potentially of order $200~\mathrm{tonne\,yr}$ may be required for this channel to become experimentally informative and to provide
+a useful complementary diagnostic of a high-recoil dark-matter signal.
+
+\section*{Acknowledgment}
+We thank Chih-Ting Lu, Liang Liang Su, Lei Wu, and Wen-Na Yang for helpful discussions. We also thank Wen-Na Yang for helping to set up the OBDME codes.
+
+\bibliographystyle{jhep}
+\bibliography{ref}
+
+\appendix
+
+
+
+\section{Simplified Isotope Cascade Models}
+\label{app:isotope}
+\subsection{Model of $^{125} {\rm I}$}
+\label{sapp:I125}
+The $^{125}{\rm I}$ electron-capture background contains both an atomic vacancy and the excited nuclear state $^{125}{\rm Te}^\ast$ of 35.5~keV. A complete event-by-event atomic cascade is complicated and is not uniquely fixed by the available inclusive electron and X-ray measurements, especially in liquid Xenon experiments. We therefore use a simplified cascade model intended only to retain the leading photon--electron structure relevant for the S1--S2 response. In particular, we treat the relaxation of the initial atomic vacancy and the subsequent $^{125}{\rm Te}^{*}$ de-excitation as two independent steps. This approximation is motivated by the fact that atomic relaxation occurs much faster than the $1.48$~ns lifetime of the nuclear excited state~\cite{Alotiby:2019fjj}.
+
+The initial electron capture occurs predominantly from the $K$, $L$, and $M$ shells, whose branching fractions are well measured. The corresponding branches are summarized in Table~\ref{tab:i125_ec}. The quoted visible energies contain both the $35.5$~keV nuclear excitation and the atomic-vacancy energy. We neglect the remaining sub-percent capture channels. 
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{cccc}
+\hline
+EC shell & Branching fraction & State after EC & $E_{X^{-1}}$\\
+\hline
+$K$ & $80.11\%$ & $^{125}{\rm Te}^{*}+K^{-1}$ & $31.8$~keV \\
+$L$ & $15.61\%$ & $^{125}{\rm Te}^{*}+L^{-1}$ & $4.9$~keV \\
+$M$ & $3.49\%$ & $^{125}{\rm Te}^{*}+M^{-1}$ & $1.0$~keV \\
+\hline
+\end{tabular}
+\caption{Initial $^{125}{\rm I}$ electron-capture branches used in the toy cascade. After capture, the daughter contains an excited $^{125}{\rm Te}^{*}$ nucleus together with an atomic vacancy of a particular shell noted as $X^{-1}$.}
+\label{tab:i125_ec}
+\end{table}
+
+We next assign a small number of representative fates to each atomic vacancy, as summarized in Table~\ref{tab:i125_vacancy}. For a $K$ vacancy, the measured Te fluorescence yield is approximately $\omega_K\simeq0.85$--$0.88$~\cite{Alotiby:2019fjj}. We therefore use $f_K=0.88$ as the tentative probability for emission of a representative $K$ X-ray with $\sim32$~keV~\cite{Bowe1952}. The remaining non-radiative component is represented by a single KLL Auger electron with $E_{\rm KLL}\simeq22.7$~keV, with the detailed Auger-electron spectrum simplified in our treatment. The measured $K$-X-ray and KLL spectra contain several nearby lines, but resolving this fine structure is unnecessary for the present detector-level study~\cite{Alotiby:2019fjj}. For an $L$ vacancy, the microscopic fluorescence branching in liquid xenon is less certain for our purposes. The fluorescence probability associated with an $L^{-1}$ vacancy is typically small, $f_L\lesssim0.1$~\cite{XrayDBXe}. Here we take $f_L=0.1$ as a schematic benchmark and represent the radiative branch by an $L$ X-ray with $E_L\simeq3.8$~keV. For the much smaller $M$-shell contribution we simply take $f_M=f_L$ as the $ad~hoc$ $M$-shell photon rate for simplicity, which does not significantly contradict the X-ray measurement~\cite{XrayDBXe}.
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{cccc}
+\hline
+Vacancy  & Probability & Explicit particle \\
+\hline
+$K^{-1}$ &  $f_K\simeq0.88$ & $\gamma_K$($\sim$32 keV) + Radiation-like dump\\
+          & $1-f_K$ & $e_{\rm KLL}$($\sim$23 keV) + Radiation-like dump \\
+$L^{-1}$  & $f_L\simeq 0.1$ & $\gamma_L$($\sim$3.8 keV)+ Radiation-like dump \\
+          & $1-f_L$ &  Radiation-like dump \\
+$M^{-1}$  & $f_M\simeq 0.1$ & $\gamma_M$($\sim$1.0 keV) \\
+          & $1-f_M$ &  Radiation-like dump \\
+\hline
+\end{tabular}
+\caption{Simplified atomic-vacancy relaxation treatment. Any vacancy energy not carried by the explicitly generated photon or Auger electron is deposited locally as an radiation-like component in which 80\% of energy are emitted in the form of photons. The parameters $f_L$ and $f_M$ should be regarded as effective cascade parameters rather than microscopic fluorescence yields.}
+\label{tab:i125_vacancy}
+\end{table}
+
+The $35.5$~keV nuclear excitation is treated separately. The direct photon branch is well measured and accounts for $6.68\%$ monochromatic decays. The dominant internal-conversion channel is K-shell conversion, with a branching fraction close to $80\%$, producing a conversion electron with $E_{\rm CE}\simeq3.7$~keV together with a new $K^{-1}$ vacancy suggested by $^{125}{\rm Te}^*$ decay measurement~\cite{Bowe1952}. This vacancy is then passed through exactly the same $K$-vacancy de-excitation in Table~\ref{tab:i125_vacancy}. The remaining internal-conversion channels, dominated by the $L$ and $M$ shells, account for approximately $13.3\%$ of the nuclear de-excitations. To avoid introducing additional poorly constrained cascade branches, we treat their full energy as a local Radiation-like deposition. The resulting nuclear branches are summarized in Table~\ref{tab:i125_te}.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ccc}
+\hline
+Branch & Probability & Toy-model final state \\
+\hline
+direct $\gamma$ & $6.68\%$ & $\gamma_{\rm Te^\ast}(35.5~{\rm keV})$ \\
+$K$-IC & $\simeq80\%$ & $e_{\rm CE}(\sim 3.7~{\rm keV})+K^{-1}$ \\
+Outer-shell IC & $\simeq13\%$ & Radiation-like dump \\
+\hline
+\end{tabular}
+\caption{Simplified treatment of the $35.5$~keV $^{125}{\rm Te}^{*}$ nuclear de-excitation. IC and CE denote internal conversion and conversion electron, respectively.}
+\label{tab:i125_te}
+\end{table}
+
+After each explicitly generated X-ray, Auger electron, or conversion electron, the remaining energy required by energy conservation is assigned to a local Radiation-like component with most energy emitted in photons. In practice, we found the ratio of $E_{\rm photon}/E_{\rm electron} = 0.8/0.2$ works with the latest LZ data and is applied to all cascade branches as the final ``energy dump". This is an over-simplified approximation to the unresolved low-energy cascades in liquid xenon. Moreover, we expect some degeneracies between such cascade uncertainty and the phenomenological charge-yield correction introduced in Sec.~\ref{sec:signal_background}. Changing $f_L$ or $f_M$ changes the fraction of the decay energy initially assigned to photons and electrons, while the subsequent $Q_y/Q_\beta$ prescription redistributes the detector-level charge and light yields. These two ingredients should therefore not be interpreted as independent precision measurements, while the best solution remains to be calibrated by data.
+
+
+\subsection{Model of $^{124} {\rm Xe}$}
+\label{sapp:Xe124}
+For $^{124}{\rm Xe}$ double-electron capture, we start from the shell-combination branching fractions and reconstructed energies reported in Ref.~\cite{LZ:2024wvs}. That analysis is primarily formulated in terms of the total reconstructed energy of single-site events, whereas our purpose requires an approximate decomposition into photon- and electron-like energy deposits in order to generate the S1--S2 response. We therefore keep the published capture-mode branching fractions and total visible energies, but further resolve the associated atomic vacancies using the same simplified treatment introduced above.
+
+Similar to the approach in App.~\ref{sapp:I125}, we treat the de-excitation of each vacancy separately as listed in Table.~\ref{tab:xe124_vacancy}. For example, each $K^{-1}$ vacancy will have a probability of $\sim 0.90$ to give an X-ray photon~\cite{XrayDBXe}, while the remaining $10\%$ of the vacancy is treated as a local radiation-like deposit the same as in Sec.~\ref{sapp:I125}. Similar rules but with different probabilities and energies apply to $L^{-1}$ and $M^{-1}$ vacancies with corresponding parameters suggested by X-ray measurements~\cite{XrayDBXe}.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{cccc}
+\hline
+Vacancy  & Probability & Explicit particle \\
+\hline
+$K^{-1}$ &  $f_K\simeq0.9$ & $\gamma_K$($\sim$30 keV) + Radiation-like dump\\
+          & $1-f_K$ & $e_{\rm KLL}$($\sim$23 keV) + Radiation-like dump \\
+$L^{-1}$  & $f_L\simeq 0.06$ & $\gamma_L$($\sim$4 keV)+ Radiation-like dump \\
+          & $1-f_L$ &  Radiation-like dump \\
+$M^{-1}$ and others  & $1-f_M \sim 1$ &  Radiation-like dump \\
+\hline
+\end{tabular}
+\caption{Simplified vacancy treatment used for the $^{124}{\rm Xe}$ double-electron-capture background.}
+\label{tab:xe124_vacancy}
+\end{table}
+
+
+Inner-shell capture and the associated Auger and internal-conversion cascades can have a different charge yield from ordinary $\beta$-induced ER events. Motivated by the enhanced recombination observed for xenon electron-capture populations~\cite{LZ:2025hud} and emphasized in the recent extended-energy LZ analysis~\cite{LZ2026}, we introduce a phenomenological relative charge-yield parameter $Q_y/Q_\beta=0.81$. Event by event, the number of electrons is modified according to
+\begin{equation}
+N_e'=0.81N_e,
+\end{equation}
+while the removed charge quanta are transferred to the photon channel,
+\begin{equation}
+N_\gamma'=N_\gamma+N_e-N_e'.
+\end{equation}
+This approximately preserves the total number of quanta while shifting the event toward larger light yield and smaller charge yield. The modified $N_\gamma'$ and $N_e'$ are then converted to $S1_c$ and $S2_c$ using the corresponding LZ $g_1$ and $g_2$ parameters. The correction therefore mainly changes the location of each isotope population in the S1--S2 plane and does not alter its total normalization.
+
+
+
+% The total $^{125}{\rm I}$ and $^{124}{\rm Xe}$ event numbers are obtained by extrapolating the published time-dependent rates to an exposure of $2.8$~tonne-year~\cite{LZ:2024wvs}. We use the midpoint of the resulting upper and lower estimates as the baseline normalization and determine the acceptance of the analysis region directly from the generated two-dimensional templates. The choice $Q_y/Q_\beta=0.8$ should be regarded as a phenomenological model for the response of inner-shell vacancies and Auger/internal-conversion cascades, rather than as a modification of the general ER response. Its purpose is to reproduce more realistically the displacement of these isotope-induced event clusters relative to the ordinary ER band while keeping their total event rates fixed.
+
+
+
+
+
+% which includes ER and NR components relevant at lower energies, including $^{222}{\rm Rn}$, $^{85}{\rm Kr}$, solar-neutrino and neutrino-induced backgrounds. We write the detector-level model schematically as
+% \begin{equation}
+% B(S1,S2)=\sum_k \alpha_k B_k^{\rm sim}(S1,S2),
+% \label{eq:background_components}
+% \end{equation}
+% where $B_k^{\rm sim}$ contains both the continuous backgrounds and the isotope-specific components described above. Where public data are available, the normalizations and detector-response nuisance parameters are calibrated by maximizing their likelihood against the LZ samples,
+% \begin{equation}
+% \{\widehat{\alpha}_k,\widehat{\boldsymbol\theta}\}
+% =\operatorname*{arg\,max} \mathcal L_{\rm cal}
+% \left(\{\alpha_k\},\boldsymbol\theta\mid\mathcal D_{\rm LZ}\right).
+% \label{eq:background_calibration}
+% \end{equation}
+% where $\boldsymbol{\theta}$ stands for detector nuisance parameters. Numerical test shows good agreement on the previous LZ dataset~\cite{LZ:2024zvo}.
+
+% As a cross-check, we repeat the calibration against the extended-energy data of Ref.~\cite{LZ:2023lvz}, using the detector configuration of Ref.~\cite{LZ:2022ysc} to account for run-dependent changes such as the drift field. Good agreement is obtained within the region actually covered by the public data.
+
+
+\section{Further Numerical Results for Various DM Scenarios}
+\label{app:number}
+
+
+
+\begin{table}[h!]
+    \centering
+    
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{12pt}
+    
+    \begin{tabular}{l|ccc}
+        \hline
+        Model
+        & $\mathcal{O}_4$
+        & $\mathcal{O}_6$
+        & $\mathcal{O}_{10}$ \\
+        \hline
+        
+        S1
+        & $0.182\;(0.0587)$
+        & $0.114\;(0.0483)$
+        & $0.185\;(0.0671)$ \\
+        
+        LMC M1
+        & $0.201\;(0.0707)$
+        & $0.117\;(0.0534)$
+        & $0.195\;(0.0770)$ \\
+        
+        % LMC M2
+        % & $0.208\;(0.0742)$
+        % & $0.118\;(0.0545)$
+        % & $0.199\;(0.0794)$ \\
+        
+        \hline
+    \end{tabular}
+        \caption{
+    Ratio of the inelastic scattering rates on $^{129}$Xe and $^{131}$Xe
+    relative to the elastic scattering rate for different dark-matter
+    velocity distributions at $m_\chi=1~\mathrm{TeV}$.
+    Each entry is shown as
+    $R_{129}/R_{\rm elastic}\,
+    (R_{131}/R_{\rm elastic})$.
+    The recoil-energy integration range is
+    $10 \leq E_R \leq 260~\mathrm{keV}$. In all case the $\mathcal{O}_1$ rate is $<10^{-4}$ and no longer relevant.
+    }
+    \label{tab:LMC_S1_inelastic_elastic_ratio}
+\end{table}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.48\linewidth]{fig/elastic_vs_iDM/delta_300/O1.png}
+    \includegraphics[width=0.48\linewidth]{fig/elastic_vs_iDM/delta300/O1.png}\\
+    \includegraphics[width=0.48\linewidth]{fig/elastic_vs_iDM/delta_300/O4.png}
+    \includegraphics[width=0.48\linewidth]{fig/elastic_vs_iDM/delta300/O4.png}\\
+    \includegraphics[width=0.48\linewidth]{fig/elastic_vs_iDM/delta_300/O10.png}
+    \includegraphics[width=0.4\linewidth]{fig/elastic_vs_iDM/delta300/O10.png}\\
+    \caption{Similar to Fig.~\ref{fig:dsigmadE_iDM_1} but for different operators. {}}
+    \label{fig:dsigmadE_iDM_2}
+\end{figure}
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.48\textwidth]{fig/S1_vs_SHM/O1.png}
+    \includegraphics[width=0.48\textwidth]{fig/S1_vs_SHM/O4.png}\\
+    \includegraphics[width=0.48\textwidth]{fig/S1_vs_SHM/O6.png}
+    \includegraphics[width=0.48\textwidth]{fig/S1_vs_SHM/O10.png}
+
+    \caption{Similar to Fig.~\ref{fig:dsigmadE_Acc_1} but for different operators. Here we consider the case of stellar stream cases. The panels show
+    $\mathcal O_1$, $\mathcal O_4$, $\mathcal O_6$, and
+    $\mathcal O_{10}$.}
+    \label{fig:dsigmadE_Acc_2}
+\end{figure}
+
+
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=0.48\textwidth]{fig/LMC_vs_SHM/O1.png}
+    \includegraphics[width=0.48\textwidth]{fig/LMC_vs_SHM/O4.png}\\
+    \includegraphics[width=0.48\textwidth]{fig/LMC_vs_SHM/O6.png}
+    \includegraphics[width=0.48\textwidth]{fig/LMC_vs_SHM/O10.png}
+
+    \caption{Similar to Fig.~\ref{fig:dsigmadE_Acc_1} but for different operators. Here we consider the case of the LMC M1
+    case~\cite{Besla:2019xbx}. }
+    \label{fig:dsigmadE_Acc_3}
+\end{figure}
+
+\end{document}

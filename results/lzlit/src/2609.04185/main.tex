@@ -1,0 +1,255 @@
+\documentclass[prd,10pt,twocolumn,nofootinbib,preprint,superscriptaddress]{revtex4}
+\pdfoutput=1
+%\usepackage[utf8]{inputenc}
+%%%%%%%%%%%%%%%%%%
+\usepackage{feynmp}
+\DeclareGraphicsRule{*}{mps}{*}{}
+%%%%%%%%%%%%%%%%%%
+\usepackage{amsmath, amssymb, amsthm, graphicx, fancyhdr,epsfig, slashed, mathrsfs}
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\usepackage{subfigure}
+\usepackage{tikzsymbols}
+\usepackage{natbib}
+\usepackage{float}
+%\usepackage{xcolor}
+\usepackage{lipsum}
+\usepackage{mathtools} 
+%\usepackage[para]{footmisc}
+\usepackage{setspace}
+\usepackage[normalem]{ulem}
+\usepackage{tabularx}
+%\captionsetup[figure]{font={stretch=1.0}} 
+\usepackage{tikz,xcolor,hyperref}
+\usepackage{cancel}
+%========================================================
+\hypersetup{
+     colorlinks=true,
+     citecolor    = blue,
+     linkcolor= blue
+}
+
+
+\definecolor{lime}{HTML}{A6CE39}
+\DeclareRobustCommand{\orcidicon}{
+	\begin{tikzpicture}
+	\draw[lime, fill=lime] (0,0) 
+	circle [radius=0.2] 
+	node[white] {{\fontfamily{qag}\selectfont \tiny ID}};
+	\draw[white, fill=white] (-0.0625,0.095) 
+	circle [radius=0.007];
+	\end{tikzpicture}
+	\hspace{-2mm}
+}
+
+\foreach \x in {A, ..., Z}{\expandafter\xdef\csname orcid\x\endcsname{\noexpand\href{https://orcid.org/\csname orcidauthor\x\endcsname}
+			{\noexpand\orcidicon}}
+}
+\def\d{\mathrm{d}}
+\newcommand{\nuc}{\mathcal{N}}
+\newcommand{\qt}{\left|\mathbf{q}\right|}
+%=======================
+\newcommand{\orcidauthorA}{0009-0005-2344-9286} % For author A
+\newcommand{\orcidauthorB}{0000-0002-1229-7951} % For author B
+\newcommand{\orcidauthorC}{} % For author C
+%----------------------------
+\def\bl#1{\textcolor{blue}{#1}}
+\newcommand{\sk}[1]{\textcolor{red}{[ #1]}}
+%=========================================================
+\begin{document}
+
+%========================================================
+\title{Atmospheric neutrino up-scattering explanation of LZ 2026 excess }
+
+\author{Sk Jeesun\orcidA}
+\email{jeesun@sjtu.edu.cn}
+\affiliation{State Key Laboratory of Dark Matter Physics, Tsung-Dao Lee Institute $\&$ School of Physics and Astronomy, Shanghai Jiao Tong University, Shanghai 200240, China}
+\affiliation{Key Laboratory for Particle Astrophysics and Cosmology (MOE) $\&$ Shanghai Key Laboratory for Particle Physics and Cosmology, Shanghai Jiao Tong University, Shanghai 200240, China}
+\author{Anirban Majumdar\orcidB}
+\email{anirban19@iiserb.ac.in}
+\affiliation{Department of Physics, Indian Institute of Science Education and Research - Bhopal,
+Bhopal Bypass Road, Bhauri, Bhopal 462066, India}
+
+
+\begin{abstract}
+The recent observation of an isolated nuclear recoil at $248\pm 23\pm 23$ keV energy by LUX-ZEPLIN (LZ) experiment has motivated the community to look for a new physics explanation, as the Standard model background estimation fails to accomodate that.
+Most of the existing literature hitherto considers a galactic halo dark matter with a heavier partner. 
+In this work, we traverse the alternate route of atmospheric neutrino ($\nu$) up-scattering, thus producing a massive beyond standard model (BSM) particle $\chi$.
+The kinematic requirement of such a scattering poses a cut off in the lower recoil energies providing an explanation of the unique isolated event at such a higher recoil energy.
+Such up-scattering with the nucleons ($\nuc$), $\nu \nuc\to \chi \nuc$ can be naturally realized in sterile neutrino models, though we keep our analysis generic without specifying $\chi$.
+We identify the region of parameter space that can produce such an isolated event 
+assuming a scalar mediator with mass $m_\phi$ and coupling $y_{\chi,q}$.
+For example, with $m_\chi\sim1$ GeV, and $\sqrt{y_\chi y_q}/m_\phi=2 \times 10^{-2}$ GeV$^{-1}$ can satisfy such an excess of events while remaining allowed by other existing constraints as well.
+\end{abstract}
+
+\maketitle
+
+Despite the remarkable success of the Standard model (SM) of particle physics, many natural phenomena are yet to be resolved \cite{ParticleDataGroup:2026mpi}.
+Such shortcomings of SM include dark matter \cite{Cirelli:2024ssz}, neutrino mass \cite{T2K:2011ypd}, the strong CP problem etc. 
+For these reasons, the quest for beyond standard model (BSM) physics persists for almost half a century.
+The ton-scale dark matter (DM) detectors \cite{PandaX-II:2017hlx,XENON:2020kmp,
+LUX-ZEPLIN:2018poe,DEAP:2019yzn}, though originally proposed to identify DM, have served as a powerful strategy to exclude or constrain many such low energy BSM scenarios and strengthened our understanding of the SM neutrino sector.
+The recent observation by LUX-ZEPLIN (LZ) experiment has suggested an isolated nuclear recoil event around  
+$248\pm 23\pm 23$ keV recoil energy ($T_{\mathcal{N}}$) \cite{LZ:2026axp}.
+Interestingly, the origin of such an excess event remains unresolved 
+from our known background arising from the SM interactions.
+The most dominant background for direct detection experiments is the solar neutrinos, which are accumulated below $T_{\mathcal{N}}\lesssim 10$ keV \cite{LZ:2026axp}.
+And above $T_{\mathcal{N}}\gtrsim 100$ keV, events due to
+the atmospheric neutrinos, mostly arising from pion decay, are too suppressed.
+Since the standard weak interactions can not explain such an event at high recoil energy, this strongly points toward BSM interactions.
+
+The characteristic feature of this unknown event also make its quite distinct from the events arising from BSM scenarios with a continuous falling rate with recoil energy.
+To explain the absence of any such BSM excess events in low recoil energy inelastic dark matter (DM) models are proposed \cite{Visinelli:2026kgt,Yamashita:2026ump,DiMauro:2026ldr,Lou:2026idn}. 
+In such scenarios, the lighter DM component scatters with a nucleon to produce a heavier dark state.
+This poses a lower cutoff on the recoil energy and thus can well explain such a feature.
+On the contrary, in this paper we propose 
+an alternative explanation of such an excess by BSM interactions of neutrinos.
+The existence of neutrino masses is indeed a strong indication of BSM physics, and
+many well-motivated BSM scenarios propose dark particles to explain the neutrino mass issue.
+Neutrinos undergoing elastic scattering (e.g. $\nu \nuc \to \nu \nuc$) through any BSM interactions can in principle induce excess events \cite{DeRomeri:2022twg}.
+However, such scatterings exhibit higher recoil events in the lower $T_\nuc$ and the required interaction rate to produce one event in high $T_\nuc\sim 250$ keV is ruled out from low energy ($T_\nuc\lesssim 30$ keV) observations \cite{DeRomeri:2022twg, Ahmed:2026knn}.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=1\linewidth]{events.pdf}
+    \caption{Nuclear recoil events spectrum at LZ for the benchmark
+$m_\chi = 2$~GeV and $\sqrt{y_\chi y_q}/m_\phi = 0.25$~GeV$^{-1}$.
+The blue curve shows the total SM neutrino background (solar,
+DSNB and atmospheric). The black curve shows the
+BSM up-scattering contribution $\nu \nuc \to \chi \nuc$. The magenta star marks the LZ event observed at
+$T_\nuc = 248$~keV~\cite{LZ:2026axp}. Grey shaded bands indicate recoil
+energies outside the signal region of interest.}
+\label{fig:events}
+\end{figure}
+
+
+In this work we consider, the upscattering of $\nu$ to a heavier dark particle $\chi$ with mass $m_\chi$ (e.g. $\nu \nuc \to \chi \nuc$).
+Such scenario is well explored for  neutrino scattering events \cite{Brdar:2018qqj,Chen:2021uuw, Candela:2024ljb} and also in light DM absorption searches \cite{Dror:2019onn,Dror:2019dib,Dror:2020czw} when $\chi$ can dposit its mass to recoil energy.
+However, for our scenario $\chi$ can be any generic BSM particle, not necessarily DM. 
+The striking feature of such $\nu$ up-scattering to massive state is that, only neutrinos with energy $\gtrsim m_\chi$ can undergo such scattering and produce the recoil.
+Naturally the recoil spectra will be suppressed to higher $T_\nuc$ as the incoming $\nu$ flux decreases with energy.
+Hence it can well explain the peaked event at $T_\nuc \sim 250$ keV due to the atmospheric $\nu$ scattering.
+
+To realize such a scenario we consider the following BSM lagrangian,
+\begin{equation}
+\label{eq:effective-lagrangian}
+     \mathcal{L}_{\rm BSM} \supset y_\chi \overline{\chi}\, P_L \,\nu_\ell \phi + y_q\overline{q}q \phi + \mathrm{H.c.},
+\end{equation}
+where $\phi$ is the scalar mediator with mass $m_\phi$. $y_{\chi,q}$ describe respective Yukawa couplings with $\chi$ and quarks $q~(u,d)$.
+One can also consider other type of mediators with different Lorentz structure giving rise to different event rates.
+However, for simplicity, in this work we restrict our analysis only to scalar mediators. 
+The qualitative feature for other mediators remain same and one can easily extend our analysis to other mediator types.
+The differential cross-section of $\nu-\nuc$ scattering is given by~\cite{Candela:2024ljb},
+\begin{eqnarray}
+    \dfrac{\d \sigma_{\nu \mathcal{N}}}{\d T_\mathcal{N}} (E_\nu, T_\mathcal{N}) &=& \dfrac{m_\mathcal{N} C_S^4}{4\pi (m_\phi^2 + 2m_\mathcal{N} T_\mathcal{N})^2} F^2(\qt^2)  \nonumber\\&& 
+     \left(1 + \dfrac{T_\mathcal{N}}{2 m_\mathcal{N}}\right) \left(\dfrac{m_\mathcal{N} T_\mathcal{N}}{E_\nu^2} + \dfrac{m_\chi^2}{2 E_\nu^2}\right),~~ \label{eq:cross-section-scalar-CEvNS}
+\end{eqnarray}
+where for nuclear form factor we adopt Klein-Nystrand (KN) parametrization, which is read as~\cite{Klein:1999qj},
+\begin{eqnarray}
+    F_W(\qt^2) =  \dfrac{3\, j_1(\qt R_A)}{\qt R_A (1 + a^2 \qt^2)} .\end{eqnarray}
+Here, $j_1(x) = \sin(x)/x^2 - \cos(x)/x$ stands as the spherical Bessel function of order one while $R_A = 1.23 \,A^{1/3}~\mathrm{fm}$ signifies  nuclear radius. $A=131$ is the mass number of the Xe atom and $a = 0.7~\mathrm{fm}$ is the screening depth.
+On the other hand,
+the factor $C_s$ encodes the mapping of elementary quark level interactions to nuclear level scattering given by \cite{Candela:2024ljb},
+\begin{eqnarray}
+    C_S^2 = y_\chi y_q \left( Z \sum_{q = u, d} \dfrac{m_p}{m_q} f_{T_q}^{(p)} + N \sum_{q = u,d} \dfrac{m_n}{m_q} f_{T_q}^{(n)} \right)
+\end{eqnarray}
+with $Z$ ($m_p$) and $N = A - Z$ ($m_n$) being the number (mass) of protons and neutrons, respectively, while $m_q$ are light quark masses. $f_{T_q}^{(p)}$ are hadronic structure functions, and the numerical values of these quantities adopted in this work are~\cite{DelNobile:2021wmp}
+%
+\begin{equation}
+f_{T_u}^{p}=0.026,\quad
+f_{T_d}^{p}=0.038,\quad
+f_{T_u}^{n}=0.018,\quad
+f_{T_d}^{n}=0.056.
+\end{equation}
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=1\linewidth]{param_space.pdf}
+    \caption{90\% CL region of the $(m_\chi,\, \sqrt{y_\chi y_q}/m_\phi)$ plane
+(red) in which atmospheric neutrino up-scattering accounts for the
+LZ excess, defined by $R_I = 1$ event in $202\text{--}296$~keV while
+respecting the low energy requirement
+$R_{II} < 10^{-3} R_{\rm BKG}$ over $5.4\text{--}202$~keV. The region
+closes below $m_\chi \sim 0.7$~GeV, where the kinematic threshold
+falls into the low recoil window and the excess events are excluded
+by the $R_{II}$ criterion, and above $m_\chi \sim 2$~GeV, where the
+atmospheric neutrino flux above $E_\nu^{\rm min}$ is too suppressed
+to yield one event.}
+\label{fig:param-space}
+\end{figure}
+
+Compared to the elastic scattering of neutrino, the expected spectra of such up-scattering has a strong dependence on the produced BSM particle $\chi$.
+The minimum (maximum) recoil energy is given by,
+\begin{widetext}
+\begin{eqnarray}
+      T_{\mathcal{N}}^{\rm min/max}  = \dfrac{2m_{\nuc}{(E_{\nu}^{\mathrm{max}})}^{2} - m_\chi^2\left(E_{\nu}^{\mathrm{max}} + m_{\nuc}\right) \pm E_{\nu}^{\mathrm{max}}\sqrt{4m_{\nuc}^2 {(E_{\nu}^\mathrm{max})}^{2} - 4m_{\nuc} m_\chi^2 \left(E_{\nu}^{\mathrm{max}} + m_{\nuc}\right) + m_\chi^4}}{2m_{\nuc}\left(2E_{\nu}^{\mathrm{max}} + m_{\nuc}\right)}.
+\end{eqnarray}
+\end{widetext}
+The dependence of the kinematic cut off (of $T_\nuc$) on $m_\chi$  has an interesting consequence. To produce a particle with $m_\chi=2$ GeV and $E_\nu^{\max}\sim$ few GeV (above which the flux is suppressed), the minimum recoil energy is $\sim 200$ keV. 
+This indeed explains the absence of any tail-like spectrum at lower recoil energies.
+On the other hand, such a scattering is also forbidden for solar (DSNB) neutrinos with energy $\ll m_\chi$.
+The recoil spectrum is  given by,
+\begin{widetext}
+    \begin{eqnarray}
+   \frac{\d R}{\d T_\nuc} = t_{\rm exp}\mathcal{E}N_T~   \int_{E_{\nu}^{\mathrm{min}}}^{E_{\nu}^{\mathrm{max}}} \mathrm{d}E_\nu ~\sum_{\ell} ~\dfrac{\mathrm{d}\Phi_{\nu_{\ell}}}{\mathrm{d} E_\nu}~ \dfrac{\mathrm{d}\sigma_{\nu_{\ell} \mathcal{A}}}{\mathrm{d}T_\nuc} ~ \Theta(T_\nuc-T_\nuc^{\mathrm{min}})~\Theta(T_\nuc^{\mathrm{max}}-T_\nuc),
+\end{eqnarray}
+where we consider all different components on $\nu$ flux with all three flavors. 
+$t_{\rm exp}$ and $N_A$ signify time of exposure and number of target nucleus.
+$E_{\nu}^{\mathrm{max}}$ denotes the maximum energy of each component and $E_{\nu}^{\mathrm{min}}$ describes the minimum energy required to up-scatter, 
+\begin{eqnarray}
+    E_{\nu}^{\mathrm{min}} (T_\nuc) = \dfrac{1}{2} \left(T_\nuc + \sqrt{2 m_\nuc T_\nuc + (T_\nuc)^2}\right) \left(1 + \dfrac{m_\chi^2}{2 m_\nuc T_\nuc}\right).
+\end{eqnarray}
+\end{widetext}
+The event rate for our region of interest is given by
+\begin{eqnarray}
+    R_{I}=~\int_{202{\rm ~keV}}^{296{\rm ~keV}} \mathrm{d}T_\nuc~ \frac{\d R}{\d T_\nuc}.
+\end{eqnarray}
+To explain the observed event, we require
+$R_{I}=1$.
+To prevent any excess events in other energy ranges, we also impose the criterion,
+\begin{eqnarray}
+    R_{II}=~\int_{5.4{\rm ~keV}}^{202{\rm ~keV}} \mathrm{d}T_\nuc~ \frac{\d R}{\d T_\nuc}< 10^{-4} R_{\rm BKG}.
+\end{eqnarray}
+$R_{\rm BKG}=1713$ stands as the SM background in the low recoil energy range \cite{LZ:2026axp}.
+This crude cut on the excess events in lower recoil energy ensures that we BSM events in that range remain negligible. 
+
+The predicted recoil spectrum for a representative benchmark parameter of $m_\chi = 2$~GeV and $\sqrt{y_\chi y_q}/m_\phi = 0.25$~GeV$^{-1}$ is shown in
+Fig.~\ref{fig:events}. While the SM neutrino background falls steeply and is
+further suppressed by the Helm form factor zero near $T_\nuc \simeq 90$~keV, the
+up-scattering contribution switches on only above $T_\nuc^{\rm min}$ and peaks
+almost where the LZ event is observed. Below $T_\nuc^{\rm min}$ i.e. at the low energy tail, up-scattering contribution generates no events.
+
+
+The region of parameter space that accounts for the observed event is presented
+in Fig.~\ref{fig:param-space}. The band is closed from all sides: for
+$m_\chi \lesssim 0.7$~GeV the kinematic threshold moves into the low recoil
+window and the associated events violate our $R_{II}$ criterion, whereas for
+$m_\chi \gtrsim 2$~GeV the atmospheric flux above $E_\nu^{\rm min}$ becomes too
+small to yield a single event. Within this
+window, the required coupling strength $\sqrt{y_\chi y_q}/m_\phi$ grows with $m_\chi$ to
+compensate for the shrinking flux, and remains consistent with all existing
+constraints discussed below.
+
+
+High energy colliders like LHC  so far set the strongest constraint on such BSM operator ($y_\chi y_q/m_\phi^2$) through mono-jet signals (i.e. $pp\to \chi+\Bar{\nu}$+jet) \cite{ATLAS:2020uiq}.
+However, the center of mass energy (COM) considered in the  LHC analysis was taken $\sqrt{s}=$13\,TeV  and thus models featuring mediator $m_\phi\lesssim 13$\,TeV can not be realized in the EFT approach. On the other hand, light mediators with mass $\ll \sqrt{s}$ will be produced on-shell and % thus only the mediator electron coupling (e.g. $y_q$) can be constrained, leaving the mediator $\chi$ coupling (e.g. $y_\chi$) \gred{and mass} free. 
+thus the LHC constraints do not apply for our low energy scenario. 
+A similar argument holds for other searches with higher COM energies.
+%radiative $Z$ decays \cite{}.
+Astrophysical constraints  like supernova cooling \cite{Lin:2025mez} and  meson decay constraints \cite{Liu:2025lbw} also do not hold for $m_\chi\gtrsim 800$ MeV.
+
+In this work, we demonstrate that atmospheric neutrino conversion to a heavy dark fermion through a BSM scalar mediator can in principle explain the single isolated nuclear recoil event observed by LZ.
+The heavy final state $\chi$ with mass $\sim$GeV, imposes a kinematic cutoff in the lower recoil energies, mimicking an isolated BSM event. 
+Indeed, a single event is insufficient to pin down uniquely the microscopic BSM physics. 
+In the near future, other direct search facilities with extremely low backgrounds can offer an ideal test of this explanation.
+Larger detectors like KamLAND \cite{KamLAND:2021gvi} and Borexino \cite{BOREXINO:2021efb} can also probe the best-fit parameter space identified here, which we keep for our future work.
+
+{\it Acknowledgement.} SJ thanks Xiaoyong Chu and ICTP-AP, Beijing, for arranging an academic visit where this work was accomplished.
+SJ acknowledges financial support from the National Natural Science Foundation of China (12425506 and 12375101) and State Key Laboratory of Dark Matter Physics.
+
+%===============================
+\bibliography{ref}
+\bibliographystyle{JHEP}
+
+\end{document}

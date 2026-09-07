@@ -1,0 +1,1940 @@
+                                                  Prepared for submission to JINST
+
+
+
+
+                                                  The Design, Implementation, and Performance of the LZ
+                                                  Calibration Systems
+
+
+                                                  The LZ Collaboration
+                                                  J. Aalbers1,2 D.S. Akerib1,2 A.K. Al Musalhi3 F. Alder3 C.S. Amarasinghe4,5 A. Ames1,2
+arXiv:2406.12874v3 [physics.ins-det] 5 Sep 2024
+
+
+
+
+                                                  T.J. Anderson1,2 N. Angelides6 H.M. Araújo6 J.E. Armstrong7 M. Arthurs1,2 A. Baker6
+                                                  S. Balashov8 J. Bang9 E.E. Barillier5,40 J.W. Bargemann4 K. Beattie10 T. Benson11
+                                                  A. Bhatti7 A. Biekert12,10 T.P. Biesiadzinski1,2 H.J. Birch5,40 E. Bishop13 G.M. Blockinger14
+                                                  B. Boxer15 C.A.J. Brew8 P. Brás16 S. Burdin17 M. Buuck1,2 M.C. Carmona-Benitez18
+                                                  M. Carter17 A. Chawla19 H. Chen10 J.J. Cherwinka11 Y.T. Chin18 N.I. Chott20
+                                                  M.V. Converse21 A. Cottle3 G. Cox22 D. Curran22 C.E. Dahl23,24 A. David3 J. Delgaudio22
+                                                  S. Dey25 L. de Viveiros18 L. Di Felice6 C. Ding9 J.E.Y. Dobson26 E. Druszkiewicz21
+                                                  S.R. Eriksen27 A. Fan1,2 N.M. Fearon25 N. Fieldhouse25 S. Fiorucci10 H. Flaecher27
+                                                  E.D. Fraser17 T.M.A. Fruth28 R.J. Gaitskell9 A. Geffre22 J. Genovesi20 C. Ghag3
+                                                  R. Gibbons12,10 S. Gokhale29 J. Green25 M.G.D.van der Grinten8 J.J. Haiston20 C.R. Hall7
+                                                  S. Han1,2 E. Hartigan-O’Connor9 S.J. Haselschwardt10 M.A. Hernandez5,40 S.A. Hertel30
+                                                  G. Heuermann5 G.J. Homenides31 M. Horn22 D.Q. Huang5,32 D. Hunt25 E. Jacquet6
+                                                  R.S. James∗3 J. Johnson15 A.C. Kaboth19 A.C. Kamaha32 M. Kannichankandy14
+                                                  D. Khaitan21 A. Khazov8 I. Khurana3 J. Kim4 Y.D. Kim35 J. Kingston15 R. Kirk9 D. Kodroff
+                                                  10,18 L. Korley5 E.V. Korolkova33 H. Kraus25 S. Kravitz34 L. Kreczko27 V.A. Kudryavtsev33
+
+                                                  D.S. Leonard35 K.T. Lesko10 C. Levy14 J. Lin12,10 A. Lindote16 R. Linehan1,2
+                                                  W.H. Lippincott4 M.I. Lopes16 W. Lorenzon5 C. Lu9 S. Luitz1 P.A. Majewski8
+                                                  A. Manalaysay10 R.L. Mannino36 C. Maupin22 M.E. McCarthy21 G. McDowell5
+                                                  D.N. McKinsey12,10 J. McLaughlin23 J.B. Mclaughlin3 R. McMonigle14 E.H. Miller1,2
+                                                  E. Mizrachi36,7 A. Monte4 M.E. Monzani1,2,37 J.D. Morales Mendoza1,2 E. Morrison20
+                                                  B.J. Mount38 M. Murdy30 A.St.J. Murphy13 A. Naylor33 H.N. Nelson4 F. Neves16
+                                                  A. Nguyen13 J.A. Nikoleyczik11 I. Olcina12,10 K.C. Oliver-Mallory6 J. Orpwood33
+                                                  K.J. Palladino25 J. Palmer19 N.J. Pannifer27 N. Parveen14 S.J. Patton10 B. Penning5,40
+                                                  G. Pereira16 E. Perry3 T. Pershing36 A. Piepke31 Y. Qie21 J. Reichenbacher20 C.A. Rhyne9
+                                                  Q. Riffard10 G.R.C. Rischbieter5 H.S. Riyat13 R. Rosero29 T. Rushton33 D. Rynders22
+                                                  D. Santone19 A.B.M.R. Sazzad31 R.W. Schnee20 S. Shaw13 T. Shutt1,2 J.J. Silk7 C. Silva16
+                                                  G. Sinev20 J. Siniscalco3 R. Smith12,10 V.N. Solovov16 P. Sorensen10 J. Soria12,10
+                                                  I. Stancu31 A. Stevens3,6 K. Stifter24 B. Suerfu12,10 T.J. Sumner6 M. Szydagis14
+                                                  W.C. Taylor9 D.R. Tiedt22 M. Timalsina10,20 Z. Tong6 D.R. Tovey33 J. Tranter33 M. Trask4
+                                                  M. Tripathi15 D.R. Tronstad20 A. Vacheret6 A.C. Vaitkus9 O. Valentino6 V. Velan10
+                                                     ∗ Also at The University of Melbourne, School of Physics, 701 Melbourne, VIC 3010, Australia
+A. Wang1,2 J.J. Wang31 Y. Wang12,10 J.R. Watson12,10 R.C. Webb39 L. Weeldreyer31
+T.J. Whitis4 M. Williams5 W.J. Wisniewski1 F.L.H. Wolfs21 S. Woodford17
+D. Woodward10,18 C.J. Wright27 Q. Xia10 X. Xiang29 J. Xu36 M. Yeh29 E.A. Zweig32
+1 SLAC National Accelerator Laboratory, Menlo Park, CA 94025-7015, USA
+
+2 Kavli Institute for Particle Astrophysics and Cosmology, Stanford University, Stanford, CA 94305-4085
+
+ USA
+3 University College London (UCL), Department of Physics and Astronomy, London WC1E 6BT, UK
+
+4 University of California, Santa Barbara, Department of Physics, Santa Barbara, CA 93106-9530, USA
+
+5 University of Michigan, Randall Laboratory of Physics, Ann Arbor, MI 48109-1040, USA
+
+6 Imperial College London, Physics Department, Blackett Laboratory, London SW7 2AZ, UK
+
+7 University of Maryland, Department of Physics, College Park, MD 20742-4111, USA
+
+8 STFC Rutherford Appleton Laboratory (RAL), Didcot, OX11 0QX, UK
+
+9 Brown University, Department of Physics, Providence, RI 02912-9037, USA
+
+10 Lawrence Berkeley National Laboratory (LBNL), Berkeley, CA 94720-8099, USA
+
+11 University of Wisconsin-Madison, Department of Physics, Madison, WI 53706-1390, USA
+
+12 University of California, Berkeley, Department of Physics, Berkeley, CA 94720-7300, USA
+
+13 University of Edinburgh, SUPA, School of Physics and Astronomy, Edinburgh EH9 3FD, UK
+
+14 University at Albany (SUNY), Department of Physics, Albany, NY 12222-0100, USA
+
+15 University of California, Davis, Department of Physics, Davis, CA 95616-5270, USA
+
+16 Laboratório de Instrumentação e Física Experimental de Partículas (LIP), University of Coimbra, P-3004
+
+ 516 Coimbra, Portugal
+17 University of Liverpool, Department of Physics, Liverpool L69 7ZE, UK
+
+18 Pennsylvania State University, Department of Physics, University Park, PA 16802-6300, USA
+
+19 Royal Holloway, University of London, Department of Physics, Egham, TW20 0EX, UK
+
+20 South Dakota School of Mines and Technology, Rapid City, SD 57701-3901, USA
+
+21 University of Rochester, Department of Physics and Astronomy, Rochester, NY 14627-0171, USA
+
+22 South Dakota Science and Technology Authority (SDSTA), Sanford Underground Research Facility, Lead,
+
+ SD 57754-1700, USA
+23 Northwestern University, Department of Physics & Astronomy, Evanston, IL 60208-3112, USA
+
+24 Fermi National Accelerator Laboratory (FNAL), Batavia, IL 60510-5011, USA
+
+25 University of Oxford, Department of Physics, Oxford OX1 3RH, UK
+
+26 King’s College London,
+
+27 University of Bristol, H.H. Wills Physics Laboratory, Bristol, BS8 1TL, UK
+
+28 The University of Sydney, School of Physics, Physics Road, Camperdown, Sydney, NSW 2006, Australia
+
+29 Brookhaven National Laboratory (BNL), Upton, NY 11973-5000, USA
+
+30 University of Massachusetts, Department of Physics, Amherst, MA 01003-9337, USA
+
+31 University of Alabama, Department of Physics & Astronomy, Tuscaloosa, AL 34587-0324, USA
+
+32 University of California, Los Angeles, Department of Physics & Astronomy, Los Angeles, CA 90095-1547,
+
+ USA
+33 University of Sheffield, Department of Physics and Astronomy, Sheffield S3 7RH, UK
+
+34 University of Texas at Austin, Department of Physics, Austin, TX 78712-1192, USA
+
+35 IBS Center for Underground Physics (CUP), Yuseong-gu, Daejeon, Korea
+
+36 Lawrence Livermore National Laboratory (LLNL), Livermore, CA 94550-9698, USA
+
+37 Vatican Observatory, Castel Gandolfo, V-00120, Vatican City State
+38 Black Hills State University, School of Natural Sciences, Spearfish, SD 57799-0002, USA
+
+39 Texas A&M University, Department of Physics and Astronomy, College Station, TX 77843-4242, USA
+
+40 University of Zurich, Department of Physics, University of Zurich, 8057 Zurich, Switzerland
+
+
+ E-mail: akamaha@physics.ucla.edu, qingxia@lbl.gov
+
+Abstract: LUX-ZEPLIN (LZ) is a tonne-scale experiment searching for direct dark matter
+interactions and other rare events. It is located at the Sanford Underground Research Facility (SURF)
+in Lead, South Dakota, USA. The core of the LZ detector is a dual-phase xenon time projection
+chamber (TPC), designed with the primary goal of detecting Weakly Interacting Massive Particles
+(WIMPs) via their induced low energy nuclear recoils. Surrounding the TPC, two veto detectors
+immersed in an ultra-pure water tank enable reducing background events to enhance the discovery
+potential. Intricate calibration systems are purposely designed to precisely understand the responses
+of these three detector volumes to various types of particle interactions and to demonstrate LZ’s
+ability to discriminate between signals and backgrounds. In this paper, we present a comprehensive
+discussion of the key features, requirements, and performance of the LZ calibration systems, which
+play a crucial role in enabling LZ’s WIMP-search and its broad science program. The thorough
+description of these calibration systems, with an emphasis on their novel aspects, is valuable for
+future calibration efforts in direct dark matter and other rare-event search experiments.
+Contents
+
+1   Introduction                                                                                    1
+
+2   Overview of the LZ Detectors and of the Calibration Systems                                     2
+
+3   Dispersed Source Calibration                                                                    4
+    3.1 Xenon Circulation System                                                                    4
+    3.2 Dispersed Sources                                                                           5
+    3.3 Dispersed Source Injection and Dose Control                                                 7
+
+4   External Rod Source Calibration                                                                12
+    4.1 Design and Implementation                                                                  12
+         4.1.1 Design                                                                              12
+         4.1.2 Implementation                                                                      14
+    4.2 CSD Neutron and Gamma Rod Sources                                                          16
+         4.2.1 AmLi Sources                                                                        16
+         4.2.2 AmBe Sources                                                                        19
+         4.2.3 Gamma Rod Sources                                                                   19
+
+5   Deuterium-Deuterium Neutron Source Calibration                                                 21
+
+6   Photoneutron Source (YBe) Calibration                                                          26
+
+7   Detector Optical Calibrations                                                                  28
+    7.1 Xe LED Calibration System                                                                  28
+    7.2 OD Optical Calibration System                                                              31
+
+8   Conclusions                                                                                    33
+
+
+
+
+1   Introduction
+
+The nature of dark matter remains one of the biggest mysteries of modern physics. Despite multiple
+astronomical and cosmological observations indicating that dark matter constitutes ∼ 85% of the
+total mass in the universe [1–5], it has not been directly detected so far. Weakly Interacting Massive
+Particles (WIMPs), arising from various theories beyond the Standard Model [6–8], remain one of
+the most promising dark matter particle candidates [9–11]. These WIMPs, along with other dark
+matter particle candidates [12, 13], are searched for with colliders, telescopes and underground-
+based experiments using different approaches and detection technologies [8, 14].
+     The LUX-ZEPLIN (LZ) experiment utilizes a dual-phase xenon time projection chamber
+(TPC) technology aided by two surrounding veto detectors to reject numerous backgrounds while
+
+
+
+
+                                                –1–
+primarily looking for low energy nuclear recoil signals from dark matter particles interacting inside
+the detector. Xenon recoils from particle interactions in the TPC yield two signatures: the emission
+of a prompt light signal followed by a delayed/secondary scintillation signal produced by charge
+extracted from the interaction site. In order to make an unambiguous WIMP dark matter detection
+or set stringent limits on their interactions in LZ, a rigorous calibration system is implemented
+to understand the entire range of predicted WIMP signatures (light and charge) and that of their
+backgrounds. The responses of the surrounding veto volumes to all particle interactions are also
+carefully studied to optimize the background veto efficiency of these detectors and to enhance the
+TPC discovery capability.
+     In addition to detecting WIMP dark matter through their nuclear recoils (NR) in xenon [15], the
+LZ TPC detector can also be used for other rare-event searches [16, 17]. These include observation
+of 8 B solar neutrinos through low energy coherent elastic neutrino-nucleus scattering (CE𝜈NS)
+signals, measurements of electromagnetic properties of solar neutrinos, and detection of other dark
+matter candidates such as solar axions and dark photons via low energy electronic recoil (ER)
+signals [18]. The broad LZ science program also encompasses measuring effective field theory NR
+couplings for dark matter [19], searching for neutrinoless double-beta decay (0𝜈𝛽𝛽) of 136 Xe [20],
+and looking for rare decays of other xenon isotopes. Therefore, the TPC response to nuclear recoils
+of energy ranging from <2 keV𝑛𝑟 ∗ [21, 22] to ∼240 keV𝑛𝑟 [23, 24] and electronic recoils of energy
+beyond the 𝑄 𝛽𝛽 of 136 Xe = 2,458 keV𝑒𝑒 † [20, 25] needs to be characterized using the LZ calibration
+systems.
+     This paper is a comprehensive documentation of the source calibration systems for LZ,
+including the science goals, design, implementation, and performance of each calibration system.
+In section 2, an overview of the LZ detectors and their calibration systems is presented. This section
+also describes a list of calibration sources that will be used throughout the entirety of LZ operation.
+Sections 3 - 6 provide detailed descriptions of the functionality and performance of the sources
+and the calibration systems: the dispersed source injection (SI) system, the external rod calibration
+source deployment (CSD) system, the deuterium-deuterium (DD) neutron generator system, and the
+photo-neutron (YBe) delivery system. Section 7 describes the calibrations of LZ’s photomultiplier
+tubes (PMTs) in the TPC and veto detectors using light-emitting diodes (LEDs) for monitoring their
+respective gains and the stability of their light response over time.
+
+2   Overview of the LZ Detectors and of the Calibration Systems
+
+LZ is a low-background experiment [26] located 4,850 feet underground at the Sanford Underground
+Research Facility (SURF) [27] to benefit from the rock overburden for cosmogenic background
+reduction. The experiment is optimized to look for WIMPs with masses above ∼10 GeV/c2 [17,
+28, 29], as demonstrated by its first results [15]. Its detectors are organized in a nested structure as
+shown in Figure 1. The central TPC is a cylindrical barrel of approximately 1.5 m diameter and
+1.5 m height, lined with reflective PTFE. The active volume, consisting of 7 tonnes of liquid xenon
+(LXe) contained between the gate and cathode electrodes and the PTFE wall, is viewed by 494
+3-inch VUV sensitive PMTs installed in arrays at the top and bottom of the TPC [30]. The TPC
+    ∗ nuclear recoil equivalent energy
+    † electron equivalent recoil energy
+
+
+
+
+                                                 –2–
+Figure 1: Overview of LZ detectors consisting of the central TPC detector (1) surrounded by
+the Skin detector (4) and the OD (5) volumes. The OD is filled with gadolinium-loaded liquid
+scintillator and viewed by OD PMTs (6). All three detectors are enclosed in a water tank (2) filled
+with high purity water. The PMT arrays (3) monitoring the TPC xenon volume are also shown.
+
+
+is enclosed in a radio-pure double-walled titanium cryostat vessel [31, 32] which is surrounded by
+the "Skin" and the outer detector (OD), both designed to provide veto signals for rejecting internal
+and external backgrounds. The Skin detector, containing ∼2 tonnes of LXe instrumented with 93
+1-inch and 38 2-inch PMTs, is located between the outside of the TPC’s PTFE walls and the inner
+cryostat vessel (ICV). The OD system is made of a set of acrylic tanks containing approximately 17
+tonnes of gadolinium-loaded (0.1% by mass) liquid scintillator (GdLS) [33]. These acrylic tanks
+were designed with custom cut-out holes to enable external calibration source deployment conduits
+to be as close to the TPC as possible. The entire detector assembly is located in a tank filled with
+238 tonnes of ultra-pure water to mitigate against residual cosmogenic backgrounds and neutrons
+from the ambient environment. The water tank has 120 8-inch PMTs mounted on stainless steel
+frames to detect OD signals and Cherenkov light in the water.
+      Particles interacting in the active xenon TPC region can deposit a portion of their energy which
+is transferred into prompt scintillation light and ionization electrons. The prompt scintillation light
+can be detected within 100 ns and is referred to as S1. The ionization electrons drift under an
+applied uniform electric field to the liquid surface where they are extracted by a stronger electric
+field and produce a secondary scintillation in the xenon gas, called S2. Both the S1 and S2 light
+signals are detected by the PMTs in the top and bottom arrays. The ratio of S2 to S1 differentiates
+interactions with a xenon nucleus (producing a nuclear recoil) from interactions with the atomic
+electrons (producing an electronic recoil). A variety of calibration sources are used to understand the
+micro-physics of particle interactions inside the TPC, the Skin, and the OD, as well as the position
+and time dependence of these detector responses. Table 1 summarizes these sources per category,
+their half-lives, their purposes and their deployment methods. The activities at procurement will be
+discussed for each source individually. Figure 2 shows the hardware and deployment methods for
+category A-E sources, designed according to the sources’ physical size, form factors, and production
+
+
+
+
+                                                –3–
+           Isotope           Particle species used   Energy (keV)            Half-life   Deployment
+                                                                             𝑡1/2
+           83m Kr (83 Rb)    IC, AE, x-ray, 𝛾        32.1 and 9.4            1.83 h      Internal
+      A    131m Xe (131 I)   𝛾, x-ray                163.9                   11.8 d
+           220 Rn (228 Th)   𝛼, 𝛽, 𝛾                 various [34]            55.6 s
+           3H                𝛽                       0 – 18.6                12.3 y      Internal
+      B    14 C              𝛽                       0 – 156.4               5730 y
+           241 AmLi          (𝛼, 𝑛)                  (5638, 0 − 1500)        433 y
+           241 AmBe          (𝛼, 𝑛)                  (5638, 0 − 11 × 103 )   433 y
+           57 Co             𝛾                       122                     272 d       External
+      C    228 Th            𝛾                       2615                    1.91 y
+           22 Na             𝛾                       511, 1275               2.60 y
+           54 Mn             𝛾                       835                     312 d
+           88 YBe            (𝛾, 𝑛)                  (1836, 152)             107 d       External
+      D    88 YMg            𝛾                       1836                    107 d
+           DD                n                       2450                    −
+      E    D-Reflector       n                       270 - 420               −           External
+           H-Reflector       n                       10 - 200                −
+      F    241 Am            𝛼                       5638                    433 y       External
+
+Table 1: A list of calibration sources used by LZ for the TPC, Skin, and OD detector calibrations.
+Category A isotopes are generator sources whose parent isotopes are shown in the brackets. The
+category C-E isotopes are used for calibrations of all three detectors while category A and B isotopes
+are only used for TPC calibrations. The category F isotope is used for calibrating the monitoring
+PMT located in the dark box of the OD Optical Calibration System. The abbreviations IC and
+AE refer to internal conversion electrons and Auger electrons produced by the 83m Kr source. The
+energy (keV) refers to particle energies relevant for the calibration of LZ and is not a complete list of
+decay energies. The energies quoted in the parentheses correspond to those of the particle species
+from the previous column.
+
+
+mechanism. The category F consists of a sealed 241 Am source inside a YAP:Ce crystal [35], which
+is used for calibrating the PMT in the dark box of the OD Optical Calibration System. Details about
+each calibration system will be discussed in the following sections.
+
+3     Dispersed Source Calibration
+
+3.1       Xenon Circulation System
+The LZ xenon circulation system is discussed in detail in reference [29]. Only its relevant features
+to the dispersed/gaseous source calibration are highlighted here. The main feature is the continuous
+circulation of the xenon through a commercial hot zirconium getter (model PS5-MGT50-R from
+SAES) [36] to remove electronegative impurities. During Science Run 1 (SR1), with the LZ flow
+rate of ∼400 slpm (standard liters per minute), the entire xenon payload is transported through the
+
+
+
+
+                                                     –4–
+Figure 2: A schematic of the calibration deployment methods used for category A-E isotopes in
+Table 1 (items are not shown to scale). Due to the variation in the physical size, form factors, and
+production mechanism of the calibration sources, different hardware and deployment methods are
+required.
+
+
+getter every 3 days. The getter is also critical for the removal of methane-based radioactive gaseous
+sources after their deployment for electronic recoil calibrations, as will be discussed in section 3.3.
+As the purification takes place in the gas-phase, xenon has to be continuously evaporated and
+condensed. Condensation and evaporation happen in the liquid xenon tower, which features a heat
+exchanger for efficient liquid-gas interface handling. The circulation is driven by two all-metal
+diaphragm gas compressors (model A2-5/15 from Fluitron) [37]. The purified and re-condensed
+xenon is delivered into the bottom of the ICV via two transfer lines. One feeds the TPC directly;
+the other allows flow into the Skin. Cryovalves allow the flow into these regions to be adjusted. At
+the top of the TPC, LXe spills over a set of six weirs. The spillover is collected in three drain lines
+which combine into one transfer line, returning the liquid in the circulation system for purification.
+     Gaseous sources for internal calibrations can be injected/pushed into the circulation flow path
+before or after the getter, as required by the source type. They then flow into the main circulation
+system and enter the TPC at controlled dose via seven LXe inlet ports beneath the TPC, as will be
+detailed below.
+
+3.2   Dispersed Sources
+
+LZ uses several gaseous calibration radioisotopes which are injected (pushed by flowing high
+pressure xenon gas) into the main xenon circulation system. The circulation flow then carries the
+injected radioactivity to the condensing stage, and finally with the LXe into the TPC volume itself.
+This deployment of calibration isotopes directly into the TPC volume is desired for several reasons,
+
+
+
+
+                                                –5–
+including 1) overcoming the self-shielding of the LXe target to external radiation; 2) providing a
+calibration with a spatial uniformity; 3) observing how injected activities mix within the TPC to
+improve understanding of background radioisotope flow and mixing. The five dispersed sources
+used in LZ are listed in Table 1 as categories A and B. The 3 H and 14 C isotopes are stored in
+pressurized cylinders as either 3 H- or 14 C-labeled CH4 mixed with Xe carrier gas. The 83m Kr,
+131m Xe, and 220 Rn isotopes are produced by progenitor nuclei, which are solid materials that decay
+
+into these species. These latter three are referred to as “generator” sources, while the former two
+are referred to as “bottle” sources.
+      The generator sources must completely retain the parent isotope (to prevent a long-lived isotope
+contaminating the plumbing of either the injection panel or the circulation system) while allowing
+efficient transport of the gaseous daughter calibration isotope. In each of the generator sources, the
+daughter is a noble element, aiding its escape from the parent materials, and allowing the calibration
+gas to be injected into the circulation path upstream of the getter (which allows noble radioisotopes
+through).
+      An example generator plumbing assembly is shown in Figure 3. Each assembly can be
+interchanged with another assembly, simplifying planning and operations. The parent material is
+housed within a central 1/2-inch stainless steel (Grade 316) tee, accessible via a 1/2-inch metal
+face-seal (VCR) cap. This central volume is bounded on either side by sintered-nickel filters (3 nm
+pore size) [38] to mitigate any granular transport of parent material. The entire assembly is bounded
+by two manual locking diaphragm valves [39] which allow mounting to the injection panel via 1/4-
+inch VCR seals. The 1/2-inch access port is typically locked in place to prevent loosening during
+shipping, and the entire assembly is otherwise welded as a single element to eliminate opportunities
+for leaks to develop. Each generator source has a different mechanism for storing the parent isotope
+within the central tee as discussed below.
+
+              Generator Plumbing Assembly         228Th   ➞ 220Rn    83Rb   ➞ 83mKr   131I   ➞ 131mXe
+
+
+
+
+Figure 3: An example generator plumbing assembly along with three sets of parent material.
+The plumbing assembly is standardized such that any assembly can be mounted in any generator
+bay on the source injection panel shown in Figure 4. The assembly is welded as one piece to
+the extent possible, including the 3 nm pore-size sinter filters on either side of the 1/2-inch VCR
+access port. Various active parent materials can be installed via this access port: a platinum disk
+with electroplated 228 Th for 220 Rn generation, several charcoal pieces dosed with 83 Rb for 83m Kr
+generation, and a VCR gasket combined with a sintered “cup” which retains 131 I-dosed NaH2 PO4
+grains for 131m Xe generation.
+
+
+
+
+                                                –6–
+      For the 220 Rn source, the 228 Th parent material is procured from Eckert & Ziegler [40],
+electroplated onto a platinum disk designed to fit inside the generator’s 1/2-inch tee. The platinum
+disk is suspended on one end of a threaded rod whose other end is screwed into the 1/2-inch VCR
+cap. The 55.6 second half-life of 220 Rn necessitates continuous, high-rate flow of Xe gas through the
+generator during a calibration run. This flow enables a sufficient fraction of the 220 Rn to reach the
+getter before its decay into getter-capturable daughters. Because of its many daughters, 220 Rn could
+be a useful tool for mapping flow in the TPC. The delayed coincidences between 220 Rn→216 Po and
+212 Bi→208 Tl pairs, separated by 145 ms and 3.05 min, respectively, can be used for flow-mapping
+
+in the TPC LXe. Additionally, the broad beta decay spectrum of 212 Pb is useful in calibrating ER
+response.
+      In the case of 83m Kr, high surface-area charcoal [41] is bound to a stainless steel support using
+low-outgassing epoxy [42]. The 83 Rb parent material is procured from NIDC [43] suspended in an
+HCl solution, which is deposited onto the charcoal at µL volume scales. No 83 Rb loss is observed
+after an initial high-temperature bake. The branching ratio for 83 Rb decay to 83m Kr is 78% [44], but
+due to its relatively short half-life, much of the daughter 83m Kr fails to escape the charcoal substrate
+before decay. As a result, the maximum outgassed 83m Kr activity is typically 10% of the parent 83 Rb
+activity. The 83m Kr source is useful as a low energy monoenergetic source (a “standard candle”)
+for calibrating position-dependent light and charge signal (S1 and S2) collection efficiencies. It is
+also useful for the measurement of “electron lifetime", which characterizes the survival probability
+of ionization electrons as they drift towards the gas phase to produce the S2 signal [29, 45]. The
+electron lifetime is a gauge of the liquid xenon purity; a higher electron lifetime is observed in purer
+xenon [15]. Moreover, 83m Kr can be used for understanding LXe flow and probing mixing on a few
+hours timescale, as discussed in section 3.3. Lastly, 83m Kr can also be utilized to derive the electric
+field map in the TPC through measuring the ratio of the S1 amplitudes of its two decays (at 9.4 keV
+and at 32.1 keV) [46].
+      The 131m Xe generator technology is created for LZ, anticipating that the LXe mixing timescale
+within the TPC may be quite long (hours or days), and that a monoenergetic source with a half-
+life longer than 83m Kr (𝑡1/2 =1.83 h) may be desired. The parent 131 I material is procured in the
+form of pre-dosed grains of NaH2 PO4 salt, distributed by Cardinal Health for thyroid diagnostic
+measurements [47]. The salt grains are removed from their medical gelatin capsule and placed
+into a sintered metal ‘cup’ bonded to a 1/2-inch VCR gasket [48]. The sintered cup has an average
+pore size of 300 nm and can safely hold the granular material within the central tee (the 3 nm
+filter elements remain in place as well). The 131m Xe source serves similar purposes as 83m Kr (for
+understanding signal efficiencies, electron lifetime, and LXe flow), but its long half-life makes it
+the preferred option when LXe mixing timescales are long (days rather than hours). Though its
+half-life is relatively long, the 𝛾 decay energy (∼164 keV) of 131m Xe is beyond the WIMP energy
+region of interest and is consequently easily removed as a background for a science search.
+
+3.3   Dispersed Source Injection and Dose Control
+The LZ gaseous source injection system, shown in Figure 4, is designed to push a precisely
+controlled quantity of gaseous radioactivity into LZ circulation. It was successfully tested before
+LZ operations began. In addition to the primary goal of precise dose control, this system also allows
+for the injection of a wide range of fractions of either parent activity (e.g., 131 I or 83 Rb activity) or
+
+
+
+
+                                                  –7–
+stored bottle activity in the case of CH4 -based sources. The panel uses Xe as a carrier gas to transport
+the injected activity. The carrier gas cylinder is re-filled as needed by cryopumping Xe directly
+from the main circulation path at a low flow rate, controlled through a dedicated cryopumping mass
+flow controller (MFC).
+
+
+
+
+Figure 4: Simplified diagram of the source injection panel, highlighting various regions with
+corresponding colors. The green region is used for dosing 83m Kr and CH4 -based sources, and
+serves as a flow through path for the other gaseous sources. Gas flow through the panel is at
+the scale of a few to several hundred standard cc per minute, set either by a fixed flow restriction
+or by variable mass flow controllers (MFCs). Numerous pneumatic valves (not indicated in the
+schematic) set the source and flow path.
+
+     The panel is designed around several isotope-specific methods of dose control. A variety of
+control methods are required due to the variety of calibration isotope half-lives. The 220 Rn isotope,
+with the shortest half-life, is injected using a continuous fast flow through its generator assembly to
+enable a sufficient fraction to pass the getter before decaying, on its way from the source injection
+panel to the main xenon circulation system and into the TPC. In this case, the rate of this constant
+flow (typically of O (100) sccm scale) sets an average flow time from the generator to the circulation,
+and thereby the fraction of the 220 Rn which survives to reach circulation. As shown in Figure 5 (left
+panel), this method can robustly control the activity leaving the panel over more than four orders
+of magnitude. The typical 220 Rn injection time in LZ is about three hours, resulting in a maximum
+220 Rn activity of ∼50 Hz. Once the injection is stopped, 220 Rn decays quickly, leaving behind ∼30
+
+Hz of 212 Pb which is used for our ER calibration.
+
+
+
+
+                                                 –8–
+                                                              220Rn                                                                    83mKr                                                 Gelatin Capsule Model    131mXe
+                                                                                                             100                                                                             Gelatin Capsules
+                             104
+
+
+
+
+                                                                             Activity [fraction of parent]
+
+
+
+
+                                                                                                                                                    Activity [fraction of parent]
+                                                                                                                    Control        Max: 0.1                                                  Sinter Capsule Model
+220Rn+ 216Po Activity [Bq]
+
+
+
+                                                                                                                    Region                                                     10-3
+                             103                                                                             10-1                                                                            Sinter Capsules
+                             102                                                                                                                                               10-4
+                                                                                                             10-2
+                             101
+                             100                                                                             10-3                                                              10-5
+
+                             10-1            Transport Model (Eff. 0.163)
+                                                                                                             10-4                                                               10-6
+                             10-2            Measured
+                             10-3                                                                            10-5                                                              10-7
+                                    0   20       40      60      80    100                                      0   20   40   60   80 100 120 140                                      100      101      102         103   104
+                                Control: Carrier Gas Flow [SCCM]                                             Control: Carrier Gas Amount [SCC]                                         Control: Build-up Time [minutes]
+
+
+Figure 5: Results of dosing control studies performed on a system test version of the source injection
+panel. In each panel, the x-axis represents the ‘control parameter’ used during injection to set the
+injected activity. A 220 Rn injection proceeds by a continuous flow of the Xe carrier gas through the
+generator, with the carrier gas flow rate setting the 220 Rn fraction which escapes the injection panel
+and reaches the getter before decaying. The 220 Rn figure shows the equilibrium activity increases
+exponentially with the carrier gas flow rate, which can be described by a transport model from
+reference [49]. This allows us to control the total number of 220 Rn events by adjusting the duration
+of the injection. For 131m Xe and 83m Kr, the injected activity is measured as a fraction of the parent
+material’s activity at the time of the injection. In both cases, there is a maximum-possible activity
+to inject: approximately 10% for 83m Kr and 0.1% for 131m Xe (a product of the branching fraction
+and the gas emanation efficiency). The 83m Kr injected activity is controlled by pushing only a
+small fraction of the generator activity out of the generator assembly, with carrier gas flow quantity
+measured in standard cc. The comparatively long half-life of 131m Xe (and the shorter half-life of
+its parent 131 I) motivates a dose control strategy based on pumping out the generator contents and
+then waiting a build-up time specific to the desired 131m Xe activity.
+
+
+
+     The isotope with the next-shortest half-life is 83m Kr, which exhibits a strong specific activity
+gradient along the length of the few-cm generator plumbing. This gradient results from the 83m Kr
+diffusion distance being cm-scale over the timescale of 83m Kr decay. This activity gradient within
+the generator plumbing greatly aids the dosing control, thanks to the exponential tail of the (roughly
+Gaussian) specific activity distribution. A small and carefully metered flow of the Xe carrier gas
+can push out from the generator a specific portion of that exponential activity distribution. As a
+result, a linear control of the carrier gas flow results in an approximate logarithmic control of the
+83m Kr dose. This is accomplished using a low-flow MFC which can control the carrier gas flow at
+
+the level of several standard cc. As seen in Figure 5 (central panel) showing measurements from a
+system test, this procedure allows injection control over 3−4 orders of magnitude. Typical injections
+of 83m Kr contain activities between 100-200 Bq, which strikes a balance between the number of
+decays needed for analysis and limitations on activity from event pileup. The obtained event rate
+is sufficient to study LXe flow and probing mixing as demonstrated in Figure 6, which depicts two
+examples of flow states using 83m Kr. In the Example Flow State 1, 83m Kr first appears above the
+cathode directly above each of the seven LXe inlet ports. Much of this activity disperses below the
+cathode before greater mixing occurs. In the example Flow State 2 the 83m Kr undergoes significant
+mixing below the cathode before subsequently crossing the cathode as a diffuse and asymmetric
+
+
+
+
+                                                                                                                              –9–
+                                         Example Flow State 1
+
+
+
+
+                                                                 ( pause in data-taking )
+                                         Example Flow State 2
+
+
+
+
+Figure 6: Examples of studying LXe flow in the TPC using injected 83m Kr. Example Flow State
+1 shows the first 83m Kr injection taken in LZ, which required tuning of the data acquisition (DAQ)
+settings to optimize data rates. The grey band represents a gap in data taking to change the DAQ
+settings. The second flow state “Flow state 2” is purposefully optimized to increase the calibration
+source convective mixing efficiency.
+
+
+distribution.
+      The 131m Xe isotope has a comparatively long half-life (11.86 days) and its 131 I parent has
+a shorter 8.03 day half-life. This short half-life of the parent allows precise dose control by
+first cryopumping out any gaseous generator contents, and then waiting some specific time (from
+minutes to days) for the desired 131m Xe activity to build up within the generator. After this specific
+build-up-time, the gaseous contents of the generator are flushed without requiring precise control.
+This method allows control over at least 3 orders of magnitude. Two different capsules were tested
+to store 131m Xe in the source generator. The medical gelatin capsule containing the 131 I-dosed
+salt into the VCR head of the generator is labeled as “Gelatin Capsules” in Figure 5 (right panel).
+Because of the multi-bar range of pressures experienced by the sources in the injection panel, the
+gelatin capsule broke within the generator during the test. The sinter cup was thus adopted in
+order to contain the 131 I powder. This data is labeled as “Sinter Capsules” in the same figure. The
+characteristic activity range of 131m Xe which is injected in the TPC to yield useful statistics for the
+ER calibration is ∼ 1 − 2 Bq .
+     For the bottle sources, the CH4 -based sources (3 H-labeled CH4 or CH3 T, and 14 C-labeled CH4 )
+are mixed with roughly 1 bara (absolute pressure) of Xe carrier gas and stored in cylinders. Their
+dosing control is accomplished by bleeding out a small fraction of this stored gas mixture until
+the pressure in a ‘dose volume’ portion of the panel (highlighted in green in Figure 4) reaches the
+
+
+
+
+                                                – 10 –
+desired pressure. This slow flow is accomplished using a dedicated small-diameter constriction
+(2 sccm at 35 psid differential), and the dose volume pressure is measured using a high-precision
+capacitance manometer. After the dose volume achieves its goal pressure, the contents of the dose
+volume are flushed into circulation.
+     The precision dose control is important to mitigate against risks associated with injecting
+excessive radioactivity, especially long-lived isotopes like CH4 -based sources, into the TPC. The
+system described above enables us to carefully proceed with a staged approach for these sources,
+starting with small test dose injections before the main calibration in LZ. Successful control of
+the injected activity was demonstrated at the end of SR1 (which lasted between 23 Dec. 2021
+and 11 May 2022). A staged injection approach was used to perform a tritiated methane (CH3 T)
+calibration, with a small test injection followed by a main injection; this is shown in Figure 7.
+
+                                                                 Events per hour
+ Events per hour
+
+
+
+
+                         Removal time constant = 78.2 +/- 2.9 hours                                 Background Event Rate
+                   102                                                             102
+
+
+
+
+                   10                                                              10
+                          test injection             full injection
+
+
+
+
+                     1                                                               1
+
+
+                   04/19       04/21       04/23   04/25    04/27                  06/27
+                                                                                   04/28    06/29      07/01    07/03       07/05    07/06
+                                                                                                                                    Date
+
+
+Figure 7: A low-activity test injection of tritiated methane (CH3 T) followed by the main injection
+for an ER calibration in 2022. The removal time constant for CH3 T is 78.2 ± 2.9 hours, measured
+by fitting an exponential to the time profile of the measured CH3 T event rate in the TPC. The
+exponential fit to the data is represented by the blue line in the plot. The right half shows the normal
+background event rate during the science run when all the tritium has been removed. The grey band
+represents the time gap between the tritium calibration and the science run.
+
+     Unique among the dispersed sources, the CH4 -based sources must be actively removed from
+circulation due to their long half-lives of many years (the gaseous activity of the three generator
+sources simply decays in place within the detector). This removal is accomplished using the heated
+zirconium getter mentioned in Section 3.1. The CH3 T removal time constant (𝜏) in LZ has been
+observed to range from ∼65 – 85 hours depending on circulation rate, getter temperature, and the
+LXe mixing state within the central TPC. This removal time constant is consistent with the value
+
+
+
+
+                                                                                   – 11 –
+obtained from pure methane removal using the xenon sampling system during the commissioning
+phase. An important aspect of the CH4 -based source injection hardware is the use of a CH4
+purifier [50] within the injection panel. This purifier removes gaseous species (including free
+hydrogen and hydrocarbons heavier than CH4 ) which can contain the long-lived calibration isotope
+and which can linger for long times on cold detector surfaces. The use of this purifier stage is
+therefore essential to the safe use of CH4 -based sources in a low-background experiment. For
+tritium injections in particular, CH3 T is used instead of molecular tritium (T2 ). Due to the larger
+molecular size and lower diffusion constant and solubility [51], CH3 T is easier to remove and less
+likely to diffuse into plastic detector components, which would contaminate the LXe during the
+WIMP search run. The removal time constant of CH3 T from xenon circulating through the getter
+at a flow rate of 380 slpm was measured in the first science run to be 78.2 ± 2.9 hours, as shown in
+Figure 7. From the same figure, it can also be observed that the background rate post-injection in
+July is consistent with the background rate from a benchmark run pre-injection in mid-April.
+
+
+4     External Rod Source Calibration
+
+4.1     Design and Implementation
+The external Calibration Source Deployment (CSD) system in LZ lowers neutron and gamma rod
+sources in three tubes that are positioned in the vacuum space between the inner and the outer
+cryostat vessels. Each tube is connected to an independent deployment system described below.
+As a source is deployed at different depths inside the calibration tube, it can generate signals in
+various regions in the OD, TPC, and Skin detectors. This provides calibrations of the detectors’
+energy scale (i.e., the observed PMT light signals to energy depositions in these detectors) and the
+spatial dependence of that energy scale, as well as the inter-detector timing measurements between
+the OD, the Skin, and the TPC. These timing measurements are critical for applying veto selections
+that are based on timing to remove background events.
+
+4.1.1    Design
+There are three CSD units spaced 120◦ apart, to provide detector response calibrations at different
+azimuthal angles. Each CSD unit has two main components: a bottom portion made of a ∼ 6 m
+long rigid stainless steel CSD tube located ∼12 cm from the TPC wall (in the inter-space between
+the inner and outer cryostat vessels), and a top portion containing the “CSD head” which controls
+the operation of the system. This top portion is caged in protective frames seated on the deck
+above the water tank, and it is coupled to the bottom tube through a 6-way connection piece and
+bellows, as shown in Figure 8. The 6-way connector provides a connection to a vacuum port, a
+pressure gauge to read the vacuum level inside the tube, a N2 line used for purging air inside the
+CSD tube to mitigate against airborne radon, and a pressure relief valve. The bellows allow slight
+mechanical adjustment of the system during its installation and help mitigate thermal contraction
+of the calibration tube when it is cooled down to cryogenic temperatures.
+     Each CSD head independently controls a CSD system during source deployment. As such, all
+three units can be operated simultaneously to deploy the sources to various 𝑧-positions in calibration
+tubes as required. Calibration sources need to be deployed to a precision of ± 5 mm, and the system
+
+
+
+
+                                               – 12 –
+needs to deploy sources to the same 𝑧-position repeatedly. This has been achieved by the intricate
+design of the CSD head shown in Figure 8 (left). The CSD head consists of a 3D-printed source
+deployment wheel, a lever which guides a ∼6 m long filament inside the tube, a high gear-ratio
+stepper motor [52] that controls the winding and unwinding of the filament via the filament drum
+connected to its shaft, and a ferromagnetic source holder connected to the filament that screws onto
+the calibration sources. The CSD heads are further equipped with end-switches which are activated
+when there is a sudden change in the filament tension. This typically happens when the rod source
+reaches either the very bottom of its deployment range or the very top of the deployment range.
+Upon an end-switch trigger, the system is programmed to reverse direction by 10,000 motor steps
+(corresponding to ∼ 4 cm) and then abort further movement. The end-switch can also be triggered
+by irregular unspooling of the filament during deployment, providing a safety measure to prevent
+the system from operating beyond its physical limits.
+     The temperature of the stepper motors is monitored by thermometers that are permanently fixed
+to the motors. During operation of the CSD units, it is important to mitigate any temperature rises
+that might compromise the 3D printed components. In addition to the thermometry and a software
+protocol that switches off the power to the system in case of overheating, each CSD unit has a
+temperature switch incorporated in the stepper motor electrical circuit that physically disconnects
+the power to a specific stepper motor above a preset temperature of 100 ◦ C.
+
+
+
+
+Figure 8: Left: CAD drawing of the main components of the CSD system caged in its protective
+frame: (1) Tee-Piece containing the deployment mechanics; (2) Source connection chamber with
+deployment wheel and filament lever; (3) 6-way connection piece with N2 purge, pressure relief,
+and vacuum valves; (4) Laser position feedback system. Right: the internal deployment system
+concealed within the T-piece (1) including a stepper motor (5), a deployment wheel (6), a filament
+drum (7), a lever (8) and a calibration source (9).
+
+
+
+
+                                              – 13 –
+     At the top of the CSD head is a laser light monitoring system that reads out the depth of the
+source inside the calibration tube. The laser light is reflected from a photo-reflective surface of the
+source holder, providing optical position feedback. The laser system ensures that the position of the
+source is determined by an in-situ measurement, providing a primary and separate determination
+of source coordinates in addition to using the stepper motor.
+     A major concern one needs to mitigate against is the breaking of the filament holding the
+source. Extensive tests have been performed on various types of deployment filaments to ensure
+that they can suspend the weight of a source within a defined safety margin. The maximum weight
+allowed for each source is ∼150 g. Stress tests and fatigue tests have been conducted on filaments,
+to determine characteristics such as elasticity and tensile strength. In addition, a spring-shaped
+3D printed shock absorber is placed at the bottom of each calibration tube to absorb the impact in
+case a source detaches from the filament and falls to the bottom of the CSD tube. Furthermore,
+the calibration source holder on the CSD head is made from a ferro-magnetic material which is
+thread locked to the source during deployment, allowing easy retrieval of the source with a magnet
+whenever needed.
+
+4.1.2   Implementation
+The on-site installation of these units involves various steps to optimize their performance. Each of
+the three CSD units is built up in its support frame and coupled to the connecting flange at the top
+of the calibration tube. The frame contains support bars that are adjustable in the 𝑥-𝑦 plane and in
+height (𝑧), and a laser adjustment plate controls the angle at which laser light enters the calibration
+tube. A separate CSD electronics unit houses the field-programmable gate array (FPGA) board
+that enables remote computer control of the source deployment. It provides power to the CSD
+motors, the data transfer between the CSD units, and the LZ slow control system [53]. Figure 9
+shows a picture of the three CSD units taken before their installation on-site. A check is performed
+post-installation of each CSD unit by taking a position reading with no source connected to the
+system. This returns the expected distance from the laser sensor to the shock absorber that sits at
+the bottom of the calibration tube. Non-radioactive dummy sources and actual sources are also
+deployed at various depths to ensure mm accuracy in recorded positions.
+     During the source deployment, the CSD relies on optical position feedback of the laser to
+achieve a ∼mm position accuracy. A crucial element for optimal performance is the precise
+alignment of the laser with the CSD tube, as any misalignment from the laser could cause a
+misreading of the source position. We established a “laser alignment calibration protocol” which
+consists of producing a series of pre-calibrated "deployment curves" for each CSD unit. Each curve
+represents the deployment distance measured versus the number of steps the motor is driven and
+confirms the alignment of the laser. An approximately linear relationship is obtained from these
+deployment curves as shown in Figure 10, with a slight discrepancy noted when a newly-installed
+source is deployed downward and upward for the first time. This is indicative of the changing tensile
+properties of the filament during the deployment process. Upon characterizing this deployment
+alignment curve, any problematic regions or errant readings are able to be easily identified, and the
+laser is finely re-positioned to rectify erratic readings. The ∼ 0 mm position in the LZ coordinate
+system is at the cathode, and the highest position (∼ 6,000 mm) is about a meter above the water
+tank, ensuring a full coverage of the TPC and top OD acrylic tanks. The bottom of the CSD tube is
+
+
+
+
+                                                – 14 –
+                       Figure 9: The three CSD units fully assembled before their installation at SURF.
+
+
+∼1000 mm above the bottom of the side OD acrylic tanks, not allowing their full coverage. Future
+experiments could benefit from an extended source tube to cover the entire range of all detectors,
+including the OD.
+
+                       6000                                                                        6000
+                                                               Deployment Down                                                                      CSD1
+                       5000                                    Deployment Up                       5000                                             CSD2
+                                                                                                                                                    CSD3
+                       4000                                                                        4000
+     z-position (mm)
+
+
+
+
+                                                                                 z-position (mm)
+
+
+
+
+                       3000 Top of OD Acrylic Tank                                                 3000 Top of OD Acrylic Tank
+                               Top of ICV                                                                  Top of ICV
+                       2000                                                                        2000
+
+                       1000                                                                        1000
+                               Cathode                                                                     Cathode
+                          0                                                                           0
+                           0        250     500   750   1000    1250   1500   1750                     0        250     500   750   1000   1250   1500   1750
+                                             Step Count (x1000)                                                          Step Count (x1000)
+
+Figure 10: Left: Relationship between the physical measurement of steps from the stepper motor
+and the laser’s 𝑧-position reading for a deployment of a non-radioactive dummy source down and
+up the calibration tube. A discrepancy between the two deployments is observed when the source
+is first installed, due to the filament adjusting to the new weight. Right: Deployment alignment
+curves for three CSDs when the filament is fully stretched, showing achieved deployment positions
+for a full range of desired heights for calibrations. The positions of the TPC cathode, ICV and top
+OD acrylic tanks are marked on both plots.
+
+    Figure 11 illustrates the detector response to a 228 Th source deployed by the CSD to a position
+of 70 cm above the cathode. The reconstructed 𝑧-position of its response in the TPC peaks at
+
+
+
+
+                                                                              – 15 –
+𝑧 = 70.1± 0.7 cm and demonstrates a successful source deployment to the target location.
+
+                                                           20                                                      5000   200
+Z [cm]
+
+
+
+
+                                                                                                                                                                            140
+         140                                                    120
+                                                           18                                                      4500
+                                                                                                                                                                            120
+         120                                               16 100                                                  4000   150
+                                                           14    80                                                3500                                                     100
+         100
+                                                           12                                                      3000   100
+         80                                                      60                                                                                                         80
+                                                           10                                                      2500
+                                                                 40
+         60                                                8                                                       2000    50                                               60
+                                                           6     20                                                1500
+         40                                                                                                                                                                 40
+                                                           4      0                                                1000     0
+         20                                                                                                                                                                 20
+                                                           2                                                       500
+                                                                −20
+          0                                                0                                                       0      −50
+               0    10   20   30   40   50   60     70                0   50   100   150   200   250   300   350                80   90   100 110 120 130 140 150 160 170
+                                                  R [cm]                                                 θ [deg]                                                  R [cm]
+
+
+Figure 11: Reconstructed positions of events in the TPC (left), Skin (middle) and OD (right)
+induced by a 228 Th source deployed to a position of 70 cm above the TPC cathode level in the
+CSD tube. The x- and y-axes have different scales for the three plots to accommodate the varying
+dimensions of the three detectors. The x-axis of the middle plot represents the angle (𝜃), not the
+radius (R), because the Skin’s width in the radial direction is much narrower compared to that of
+the TPC and the OD.
+
+
+
+4.2                CSD Neutron and Gamma Rod Sources
+
+4.2.1               AmLi Sources
+
+To calibrate the TPC nuclear recoil response and the neutron tagging efficiency of the OD and the
+Skin veto system, LZ utilizes several neutron sources. AmLi sources made of a mixture of 241 Am
+𝛼-radioactivity and 7 Li produce low-energy neutrons emission via nuclear (𝛼, 𝑛) reactions. These
+sources are used for low energy NR calibration, since their maximum neutron energy of ∼1.5 MeV
+results in nuclear recoils depositing up to ∼45 keV𝑛𝑟 of energy, close to the maximum nuclear recoil
+energy in the standard WIMP analysis [15].
+     AmLi sources with sufficiently low neutron emission rate (that can avoid pile-up of overlapping
+events in the LZ detector) are not commercially available and therefore are custom-made by the LZ
+collaboration. Three such sources are developed, assembled and characterized. The making of the
+sources and extensive tests to meet the stringent design goals are described in detail in reference
+[54] and are briefly describe here. The 241 Am is obtained from Eckert & Ziegler [40] in the form of
+Am(NO3 )3 in nitric acid solution. After adjusting the concentration of the procured solution, it is
+centrally deposited on a 0.1 mm gold foil by drops of 10 µL. The gold foil holder is then placed on
+a hotplate inside a fume hood and heated to evaporate the nitric acid solvent. The gold foil with the
+deposited 241 Am is then wrapped in a 0.75 mm lithium foil to sandwich the 241 Am. This process
+is carried out inside a glove box filled with argon to prevent the lithium foil from oxidizing. The
+wrapped foil mixture is then encapsulated in three nested metal capsules: two inner epoxy-sealed
+tungsten shielding capsules intended for suppressing the gamma-radiation emitted following 241 Am
+𝛼-decays, and an outer stainless-steel cylinder cover designed to integrate in the CSD system.
+The encapsulated sources are then leak tested by soaking them into nitric acid per the ISO-9978
+standard [55]. Any leakage of the americium into the acid would result in a distinct 59 keV peak
+in a gamma screening detector. Results of the screening of the soak acid from all three sources
+
+
+
+
+                                                                                     – 16 –
+show no evidence of leakage. A limit of < 5.0 mBq at 90% confidence level is placed on the 241 Am
+activity leaked out of the source capsules, corresponding to a fractional limit of < 5.3 × 10−11 .
+
+      After the successful leak testing of the sources, the sources are calibrated for their neutron and
+gamma emission rates before being shipped to SURF. The neutron emission rates are determined
+with a setup consisting of four RS-P4-0813 3 He proportional tube counters [56] suspended in
+a water tank, with water used as moderator for fast neutrons. The emitted gamma-spectra are
+carefully studied using measurement data from a high-purity germanium detector and thorough
+Monte Carlo simulations. The obtained 241 Am activity, gamma emission rates, neutron emission
+rates, gamma-to-neutron ratio, and neutron yields of the three sources are tabulated in Table 2.
+Figure 12 (left) shows a picture of the manufactured AmLi sources, and Figure 13 shows the S1
+and S2 signal distribution induced by AmLi neutrons from a 170 live hour run in LZ. In SR1,
+these sources not only played an essential role in calibrating the TPC NR response, but also in
+facilitating measurements of neutron backgrounds by determining the neutron tagging efficiency of
+the veto systems. Moreover, a combined tritium and AmLi dataset was used to evaluate the signal
+efficiency that was used in the WIMP-search analysis [15]. The OD neutron tagging efficiency was
+determined through the inter-detector coincidence induced by a neutron in the TPC and its capture
+signal in the OD. After subtracting accidental coincidences between the TPC and OD caused by
+high-energy gammas and neutrons from the calibration source, as well as background radioactivity
+seen by the OD, the position-averaged single scatter AmLi neutron tagging efficiency was measured
+to be 89 ± 3% [15] using the Skin and OD combined. However, background neutrons come from
+(𝛼, 𝑛) reactions and fission processes in detector materials, and they are thus accompanied by 𝛾-rays.
+The AmLi neutrons do not have a correlated prompt gamma emission. This may result in a lower
+tagging efficiency for AmLi neutrons as compared to background neutrons (i.e., an overestimate
+of the number of background neutrons). This systematic did not affect the SR1 results, since zero
+neutrons are observed in the relatively short exposure, but it will be a factor for future science runs
+with longer exposures. An (𝛼, 𝑛) source with correlated gammas, such as the americium-beryllium
+source, which mimics more closely the background neutrons, is therefore considered for improving
+the calibration of the neutron tagging efficiency.
+
+
+  Source      241 Am           𝛾-ray             Neutron           𝛾-to-neutron      Neutron yield
+              activity         emission          emission rate     ratio             [n/106 𝛼]
+              [MBq]            rate [Hz]         [Hz]
+  AmLi-1      31.2 ± 1.4       368 ± 59          18 ± 2            20 ± 4            0.59 ± 0.06
+  AmLi-2      20.3 ± 1.0       239 ± 38          9±1               26 ± 5            0.45 ± 0.04
+  AmLi-3      27.0 ± 1.2       318 ± 51          12 ± 1            30 ± 6            0.46 ± 0.04
+  Total       79.0 ± 2.0       925 ± 87          39 ± 3
+
+
+Table 2: Individual AmLi source’s 241 Am activity, gamma emission rate, neutron emission rate,
+gamma-to-neutron emission ratio, and neutron yield [54].
+
+
+
+
+                                                – 17 –
+Figure 12: Left: Three custom-made AmLi sources used in LZ. The gold-americium-lithium matrix
+is encapsulated in nested tungsten and stainless steel capsules, which are designed to integrate with
+the CSD system and provide gamma-radiation suppression. The welds on the outer stainless-steel
+capsules are visible in the picture. Right: Two customized AmBe sources from Eckert & Ziegler
+designed for LZ. The stainless steel threaded capsules were designed to integrate in the CSD system
+and shield against low energy gammas from 241 Am decay.
+
+
+
+
+Figure 13: Detector response to the AmLi source in LZ. The solid (dashed) blue line is the median
+(90-10% quantiles) of a flat ER distribution modelled using nest 2.3.7 [57]. The solid (dashed)
+red line is the median (90-10% quantiles) of an NR band fitted to the AmLi data using a skewed
+Gaussian distribution [58]. The dashed grey lines are contours of constant energies. Only data
+points within 5-sigma of the fitted AmLi distribution are shown.
+
+
+
+
+                                               – 18 –
+4.2.2   AmBe Sources
+
+In addition to AmLi sources, americium-beryllium (AmBe) neutron sources have been planned
+for deployment in the CSD system. Neutrons emitted from AmBe sources have energies of up to
+∼11 MeV, which can produce xenon recoils of up to ∼330 keVnr in the TPC, enabling the calibration
+of a wider range of NR energy signals. In non-standard WIMP analyses, such as EFT (Effective
+Field Theory) analyses where WIMP recoil spectra exhibit substantial rates in the energy range well
+beyond the AmLi source endpoint energy [19, 59], higher energy neutron sources like AmBe are
+useful for calibrating the detector’s NR response.
+     The AmBe sources can also be used to cross-check measurements of the NR detection efficiency
+in the standard WIMP analysis and improve the neutron tagging efficiency measurement in the OD,
+which is crucial for vetoing neutron backgrounds. The prompt 4.4 MeV gammas, emitted alongside
+the neutron ∼ 58% of the time [60, 61] through the AmBe reaction 𝛼+9 Be →13 C∗ →12 C + n + 𝛾, can
+provide a powerful signature for tagging the neutron as they provide signals in coincidences among
+the OD and Skin veto detectors and the TPC. Additionally, as mentioned in section 4.2.1, high
+energy gammas from the 241 Am decay can be mistaken for those generated by neutron captures in
+the OD, resulting in accidental TPC-OD coincidences that have to be corrected to determine the OD
+tagging efficiency. Hence, an AmBe source producing fewer gamma backgrounds for a comparable
+neutron rate is important for verifying the measurement results and constrain their uncertainty.
+Beryllium has the highest neutron yield among the light elements for (𝛼, 𝑛) reactions [62] and
+therefore the 241 Am(𝛼, 𝑛)9 Be has a lower gamma-to-neutron ratio compared to 241 Am(𝛼, 𝑛)7 Li. In
+principle, with a lower 241 Am activity (e.g 50 µCi), a ×3 neutron yield (e.g 102 n/s) than the three
+AmLi sources can be achieved while greatly reducing the gamma rate. The reduced gamma rate is
+also important for the calibration of the TPC as it can reduce the contamination of neutron events
+with activity from the associated gammas.
+     We have obtained a ∼ 130 µCi custom-made AmBe source from Eckert & Ziegler (see Figure 12
+(right)) and performed preliminary calibrations using that source. In addition, we are exploring
+other AmBe source designs that have lower activities and/or utilize external tagging of the 4.4 MeV
+gamma for more precise neutron selection which will optimize the neutron tagging efficiency
+measurement and the TPC NR calibration in LZ.
+
+
+4.2.3   Gamma Rod Sources
+
+The external gamma sources used in LZ are commercial rod sources procured from Eckert &
+Ziegler. Because LZ is a low-background experiment with a typical trigger rate of ∼ 15 Hz during
+science searches [63], the source activities needed for the gamma calibration do not need to be very
+high (< 150 Hz in all three detectors). The geometry of the sources is custom-designed in order to
+be integrated with the CSD system. Each source is made by sealing a small amount of radioactive
+salts in the tip of a ∼50 g, 15.9 mm diameter × 74.9 mm acrylic rod. The weight of the source is
+well within the suspension capacity of the CSD and makes it easy to deploy during the calibration.
+The inactive end of the source has an M4 tapped hole to mate the source holder on the CSD head.
+Figure 14 shows four types of sources deployed in LZ that emit 𝛾-rays of different characteristic
+energies: 57 Co, 54 Mn, 22 Na, and 228 Th.
+
+
+
+
+                                               – 19 –
+Figure 14: Picture of 57 Co, 54 Mn, 22 Na, and 228 Th 𝛾-ray sources that are deployed in LZ for high
+energy ER calibrations.
+
+
+      These sources are used in LZ to characterize the TPC detector response to high energy ER
+signals such as 0𝜈𝛽𝛽 of 136 Xe and gamma backgrounds from detector materials or the rock of
+the experimental cavern. Once the energy scale is well understood from the calibration, we can
+measure the rates of background components by fitting their mono-energetic peaks at high energies
+and extrapolate their contributions to the low energy range relevant for the WIMP search [26].
+      The energy spectra in the TPC, Skin, and OD produced by three of these gamma sources, 54 Mn
+(835 keV), 22 Na (511 keV from positron-electron annihilation and 1274 keV), and 228 Th (primarily
+for 2615 keV), spanning the ∼500-2700 keV𝑒𝑒 energy range, are shown in Figure 15. The mean
+free path for 122 keV 𝛾-rays from 57 Co is < 3 mm in LXe [64] and thus only a small fraction of
+these gammas can make it into the TPC; they are mostly stopped in the skin region. Therefore,
+57 Co is mainly used for the Skin and OD energy calibrations in normal operations. During the
+
+commissioning of the LZ detector, the 57 Co source was positioned above the liquid surface and
+provided calibration data for the TPC liquid leveling, complementing leveling data taken by the
+weir precision sensors and Skin PMTs. As the attenuation of the 𝛾-rays from 57 Co is smaller in the
+gas phase, the leveling of the liquid surface could be calibrated using induced S2s from this source.
+At a constant gate-anode voltage ΔV, the pulse width of an S2 varies inversely with the distance
+between the liquid level and the anode grid. By adjusting the tilt of the detector and observing
+the S2 distributions using the 57 Co source, the detector was iteratively leveled using these in-situ
+measurements.
+      The Skin and OD energy calibrations are crucial for understanding the response of the veto
+systems and are carried out by deploying gamma sources at multiple 𝑧- and 𝜃- positions in the
+CSD tubes. For the OD, the position scan is necessary as its complex geometry and material
+components with different optical properties can cause photon detection efficiency to vary greatly
+by the location of particle interaction. For the Skin, besides its geometry that affects light collection,
+its large electric field variations (a factor of >100 higher at the top and bottom compared to the
+center, according to simulations) can result in largely different light yield at different locations.
+The comprehensive calibration using sources of different energies at various locations provide
+essential information for correcting the location-dependent detector response. Beside high-energy
+
+
+
+
+                                                 – 20 –
+Figure 15: Measured energy spectra from 22 Na (511 keV from positron-electron annihilation and
+1274 keV gammas), 54 Mn (835 keV), and 228 Th (2615 keV) in the TPC (left), Skin (middle) and OD
+(right). Only single scatter events are plotted. The energy range for the 228 Th data is different from
+the range used for the 22 Na and 54 Mn data. Data are taken using the above three gamma sources
+positioned at 𝑧=70 cm above the TPC cathode. Spectral peaks from these sources are reconstructed
+at their expected values.
+
+
+ER calibration, these gamma sources were also used for timing measurements among the three
+detectors. This inter-detector timing is then used to provide input for vetoing all backgrounds, using
+coincidence signals in the Skin and OD.
+
+
+5   Deuterium-Deuterium Neutron Source Calibration
+
+Besides neutron sources deployed through the CSD, LZ also utilizes an Adelphi Technology
+deuterium-deuterium (DD) neutron generator [65] to produce neutrons for TPC calibrations and
+for cross-checking OD tagging efficiency. For the TPC, the DD source is used for NR calibration
+up to the 74 keV𝑛𝑟 endpoint, DAQ trigger efficiency measurements, the evaluation of the single
+scatter reconstruction efficiency, and the NR light and charge yields at low energies as described in
+reference [15].
+     The neutron production process from the DD generator is as follows: First, the deuterium is
+ionized and turned into plasma by a microwave (the generator has a viewing window which can be
+
+
+
+
+                                                – 21 –
+examined to check for successful plasma production). Afterwards, a high voltage is applied to a
+titanium-coated copper target, drawing the deuterium ions into it. Initial D+ ions embed into the
+target and form titanium deuteride. Subsequent waves of D+ ions then fuse with the embedded
+ions and release neutrons via the D+D→3 He+n reaction. The DD generator is able to produce
+configurable neutron energy distributions through operations in three different modes: the Direct
+DD, the D-Reflector, and the H-Reflector [66–70]. The DD generator is deployed outside the water
+tank, and neutrons are collimated and transmitted to the OCV through 2.7 m long nitrogen purged
+conduits (see Figures 16 and 17). There are two conduits: one is horizontal to the ground and
+delivers neutrons 3 cm below the liquid xenon surface inside the TPC, while the other is angled
+downwards at 20 degrees from the horizontal to maximize the length of neutron path inside the
+liquid xenon and the 𝑧 separation of multiple scatter events to facilitate light and charge yield
+measurements from NR interactions [17]. Both conduits are made of polyvinyl chloride and are
+arranged in a Y-shape (see Figure 2) with a narrow branch (of 4.9 cm inner diameter) joined in the
+middle of a straight wider branch (of 14.6 cm inner diameter). The narrow branch is used to deliver
+neutrons in the Direct mode, while the wider branch is used for Reflector modes, since the rates of
+neutrons reaching the TPC in Reflector modes are lower. The generator itself is fixed on a portable
+Ekko lift [71] to facilitate its movement between the conduits and their branches. The conduits are
+connected to a plumbing system that enables them to be filled with deionized water (for external
+background shielding) when the generator is not in operation. In preparation for the DD calibration,
+the water in the conduits is drained by flushing it with nitrogen. The conduits experience buoyancy
+in the water tank during this process, so special care is taken to ensure excessive upward pressure
+is not applied to the acrylic tanks. We monitor OD liquid level metrics during conduit draining and
+filling, and performs water leak-in checks of the conduits after each DD run. The use of structural
+supports and careful selection of materials and geometries to dissipate forces over large areas also
+mitigates the risk of damage to the acrylic tanks, and are recommended for future experiments.
+      The Direct mode sends monoenergetic 2.45 MeV neutrons down the conduit to the TPC,
+directly from the neutron production surface at the center of the generator head. In the Direct mode,
+the neutron production is pulsed to suppress the ER background rate and enables the selection of
+events coincident with neutron production. Coupled with the narrow profile of the DD conduit in
+drift time (70 µs wide), a stringent S2 timing cut can be applied; thereby making the DD effective in
+studying sub-threshold S1 events and S2-only events by reducing electron-train background noise
+through time tagging [72]. Neutron pulsing is achieved by turning the plasma on and off within
+the main generator chamber. The timing of neutron production is determined by measuring plasma
+intensity through a viewing window on the chamber. During the SR1 calibration, the Direct mode
+operated at a pulse frequency of 150 Hz with a pulse width of 50 µs. With this setup, 15 neutrons
+per second are delivered into the TPC. This Direct mode, characterized by high intensity, a single
+energy, and low ER background rate, made it a suitable source for conducting the search for the
+Migdal effect (a nuclear recoil interaction accompanied by atomic ionization) [73].
+      The D-Reflector (H-Reflector) mode reflects neutrons from the production surface at selected
+scattering angles off a deuterium-based (hydrogen-based) active scintillator to send neutrons from
+a desired lower energy spectrum into the TPC, each with a per-neutron time-of-flight (ToF) based
+energy tag. The ToF is obtained by measuring the time difference between the S1 pulse obtained in
+the TPC and the light signal obtained from the PMT coupled to the scintillator in the D-Reflector
+
+
+
+
+                                               – 22 –
+Figure 16: A CAD drawing of DD neutron generator deployment in the LZ experiment with respect
+to the horizontal conduit. In the Direct mode, monoenergetic 2.45 MeV neutrons are directly sent
+down the conduit. The angled conduit is 90◦ off from the horizontal conduit, which is presented in
+Figure 2 but not shown here. During calibration, the generator surrounded by borated polyethylene
+(BPE) is positioned outside the water tank on a portable lift. The neutron beam is collimated by the
+nitrogen-purged conduits which traverses the water tank and the OD.
+
+
+
+                                                    140
+                                                                                                         Number of events / cm 2
+                   60
+
+                   40                               120
+                                                                                                       101
+                   20                               100
+          y [cm]
+
+
+
+
+                                                z [cm]
+
+
+
+
+                    0                                    80
+
+                   20                                    60
+
+                                                         40                                            100
+                   40
+                                                                          Conduit Profile
+                   60                                    20               Radial cut (< 67.8 cm)
+                                                                          TPC
+
+                        80   60     40     20   0             80   60     40         20            0
+                                  x [cm]                                x [cm]
+Figure 17: Reconstructed positions of events from the Direct mode DD calibration data in the
+Cartesian 𝑥, 𝑦, 𝑧 coordinates of the TPC. Events that are more than 5 cm away (dotted red line)
+from the TPC wall and between 129 cm and 142 cm above the cathode are used for DD neutron
+analysis. The neutron beam is collimated by a 4.9 cm diameter conduit and its profile is shown as
+the dashed purple line.
+
+
+
+
+                                                         – 23 –
+(or H-Reflector) mode. The D-Reflector consists of a 7.6 cm diameter, 7.6 cm tall cylindrical
+aluminum cell filled with deuterated benzene liquid scintillator [74] coupled to a 3-inch PMT [75].
+The H-Reflector consists of a cuboid 10 cm × 15 cm × 2.5 cm plastic scintillator [76] coupled to
+a 2-inch PMT [77]. The D- and H-Reflectors are oriented with respect to the neutron generator’s
+production surface and LZ neutron conduit to select for neutrons scattering into the LZ TPC at
+particular angles. Hence, the energy spectrum of Reflector modes can be customized by adjusting
+the geometric configuration. The D-Reflector mode selects neutrons recoiling off deuterium atoms
+at a 135◦ angle, sending a peaked neutron spectrum at 349 ± 3 keV with FWHM of 79 ± 2 keV
+into the detector. The H-Reflector mode selects neutrons recoiling off hydrogen atoms between 78◦
+and 85◦ , sending a low energy (10 – 200 keV) spectrum of ToF-tagged neutrons into the detector.
+Both Reflector spectra were measured using ToF tests at an LZ test facility before the DD generator
+was shipped to SURF, as shown in Figure 18. These Reflector modes are successfully used to
+calibrate the low energy response of LZ down to a few keV, and the result from the D-Reflector
+mode measurement is shown in Figure 19. This is the first time a DD Reflector mode measurement
+has been made in a tonne-scale liquid xenon detector. The ToF-tagged neutrons delivered by the
+Reflector modes with known incident energies are useful for low-energy neutron calibration down
+to a few keV and for efficiency measurement. Reducing incident neutron energy allows for the
+time separation of progressively closer separated scatters in position. The separation of the two S1
+signals within a double-scatter event in the TPC enables a direct measurement of the light yield
+from the first energy deposition. The energy deposited in the first scatter can be reconstructed using
+the known (tagged) initial neutron energy and the observed scattering angle. Thus, the low-energy
+light and charge yield measurements are improved.
+
+
+
+                                              0.6
+                                                               Observed H-Reflector ToF-measured spectrum over Background
+                                                               Observed D-Reflector ToF-measured spectrum over Background
+                                              0.5
+              isotropically generated at DD
+                Events/keV/10 8 neutron
+
+
+
+
+                                              0.4
+
+                                              0.3
+
+                                              0.2
+
+                                              0.1
+
+                                              0.0
+                                                 0   100         200           300           400          500           600
+                                                           ToF-measured neutron energy [keV]
+
+Figure 18: Measured time of flight (ToF) neutron energy of the D- (blue) and H- (red) Reflector
+modes in a test setup before their use in LZ. The energy spectrum of each Reflector mode can be
+tuned by the geometric configuration.
+
+
+
+
+                                                                          – 24 –
+                                                                                         4.5
+                                                350 keV neutron                                              Run time: 45 hours, #Events :1140
+            14                                  [425,584] ns
+                                                Fit to data
+            12                                                                           4.0
+
+            10
+
+
+
+
+                                                                    log 10 (S2c [phd])
+                                                                                         3.5
+counts/ns
+
+
+
+
+             8
+
+             6                                                                           3.0
+                                                                                                                  D-reflector, 425<ToF<584 ns
+             4                                                                                                    Flat ER 10-90%
+                                                                                         2.5                      Flat NR 10-90%
+                                                                                                                  1, 2, 3σ D-reflector expectation
+             2
+                                                                                                 1.9 keVee            4.1 keVee             6.4 keVee
+                                                                                                 10 keVnr             20 keVnr              30 keVnr
+             0                                                                           2.0
+              200   300   400     500     600       700       800                           0   10               20               30                 40
+                          Time of Flight [ns]                                                                S1c [phd]
+
+Figure 19: Left: Time of flight (ToF) distribution of neutron events from the D-Reflector calibration
+in the LZ experiment. The peak is at 505 ± 2 ns, which corresponds to a neutron kinetic energy of
+349 ± 3 keV. This is close to the desired 350 keV neutrons with a ToF of ∼500 ns given the distance
+between the generator and the TPC. Events within the green box are selected for the analysis based
+on expected ToF of neutron events from the D-Reflector. Right: Detector response to D-Reflector
+events with ToF between 425 and 584 ns as indicated by the green box on the left plot. The solid
+red (blue) line is the median of a flat NR (ER) distribution and the dashed red (blue) lines are the
+10-90% quantiles modelled using nest 2.3.7 [57]. The dashed grey lines are contours of constant
+energies. Purple contours are the expected S1 and S2 distribution of neutrons from the D-reflector.
+Most events are within the contours as expected.
+
+
+
+     The DD Direct and the two Reflector modes each have a custom neutron shielding structure
+surrounding the generator, made of 5% borated polyethylene (BPE). The purpose of the Direct
+mode shielding is to reduce the entry of neutrons into the cavern. The Reflector mode shielding
+is additionally designed to screen out all secondary-scattered neutrons from entering the LZ TPC
+via the conduit. In DD fusion, gamma production is suppressed, and the gamma-to-neutron ratio
+is ∼ 10−7 [78]. However, bremsstrahlung radiation and neutron interactions with the generator
+material can produce secondary x-rays. During Direct mode calibration runs, the DD generator
+housing is additionally surrounded by a 6 mm thick lead shield to reduce X-ray and gamma fluxes
+from the generator. The Reflector mode, in contrast, demands minimal material near the generator
+production surface. Nearby material could induce secondary scatters of higher-energy neutrons
+into the Reflectors or down the LZ conduits, with a similar ToF to the target low-energy neutrons.
+Therefore, instead of a full shield, only a 6 mm Pb plate is placed at the conduit entrance outside
+the water tank. A 10 inch Bonner sphere [79] and a plastic scintillator [76] are mounted under
+the DD generator platform to continuously monitor neutron intensity during all calibration runs.
+Measuring the neutron intensity emitted by the generator not only provides the neutron count
+entering the detector for detection efficiency studies, but also serves as a safety interlock that will
+shut down the generator if the dose rate exceeds the radiation safety benchmark of 0.5 mrem/hour.
+
+
+
+
+                                                                  – 25 –
+6   Photoneutron Source (YBe) Calibration
+
+Understanding the low energy detection efficiency of the LZ TPC is essential to achieving high
+sensitivities to low-mass (< 10 GeV) dark matter and CE𝜈NS from solar 8 B neutrinos [21, 22].
+LZ utilizes a photoneutron source based on the (𝛾, 𝑛) reaction of yttrium-beryllium (YBe) [80]
+to calibrate nuclear recoil responses in this low energy range. The neutron energy from the YBe
+photonuclear reaction is 152.3±3.7 keV [81], leading to a ∼4.6 keV𝑛𝑟 end-point recoil energy from
+elastic scattering on xenon nuclei. The detector response to nuclear recoils below this energy is
+especially interesting as it covers the energy range of 8 B neutrinos (< 2 keV𝑛𝑟 ).
+
+
+
+
+Figure 20: Left: CAD drawing for the YBe photo-neutron source assembly. The 88 Y sealed source
+is sandwiched between 9 Be disks to generate neutrons. The tungsten shielding reduces the number
+of 88 Y 𝛾-rays that can enter the detector. Middle: YBe source inside the tungsten shielding placed
+next to a five-dollar bill for scale. Right: Layout of the top part of the OD and water tank. The
+custom cut-out (orange) in the acrylic vessels (purple and green) through which the YBe source is
+deployed is shown.
+
+     The source consists of three 9 Be metal disks with 24 µm nickel plating surrounding the 88 Y
+sealed source to generate neutrons, as shown in Figure 20 (left). Only ∼1 neutron is produced
+per 104 𝛾-rays emitted by 88 Y decays due to the small production cross-section [80], so gamma
+shielding around the YBe source is necessary to increase the neutron-to-gamma ratio entering the
+TPC. This shielding is provided by a tungsten cone with tungsten disks stacked on top of the 9 Be
+disks. The tungsten cone containing the YBe source is placed inside a larger tungsten shielding
+block of 20 cm diameter and 20 cm height, as shown in Figure 20 (left and middle). Two nitrile
+rubber O-rings between the tungsten cone and the block guarantee a water-tight seal necessary for
+the source deployment inside the water tank. During the calibration, the top of the water tank is
+opened and the YBe source assembly is deployed with a crane to the top of the outer cryostat vessel
+through a custom cut-out in the center of the top OD acrylic vessel (marked in orange in Figure 20
+(right)). This deployment location is chosen for mechanical stability and proximity to the TPC.
+After the calibration, the YBe source assembly is lifted out and replaced with an acrylic cylinder
+containing GdLS referred to as the “GdLS plug”. A picture of this plug is shown in Figure 21.
+The GdLS plug is kept in place and swapped for the YBe source only during calibration runs. This
+design makes the photoneutron source as close to the TPC as possible during the calibration, while
+
+
+
+
+                                              – 26 –
+maintaining the background neutron tagging ability of the OD when the calibration campaign is
+finished. The water tank opening time for the YBe source deployment is minimized to mitigate
+against air ingress, which could cause water contamination and an OD background rate increase.
+The ingress can be further reduced in the future by building a high-flow nitrogen purge system to
+prevent air entry during the exchange of the GdLS plug and the YBe source.
+
+
+
+
+Figure 21: Deployment of the GdLS plug – a small cylindrical acrylic tank with neutral buoyancy.
+It is used to fill the cut-out during the science run and is only replaced with the YBe source during
+calibrations.
+
+     In order to better understand the impact of gamma backgrounds from 88 Y on the YBe data
+analysis, a yttrium-magnesium (YMg) gamma source is also deployed in LZ. YMg does not produce
+any neutrons because the excitation energy required to produce free neutrons emission in Mg is
+higher than the 88 Y gamma energy [82]. However, the 𝛾-ray attenuation properties of magnesium
+and beryllium are the same to within ∼5% [64], meaning the amount of 𝛾-rays from 88 Y emitted
+by the YMg source is similar to that from the YBe source. Shortly after the YBe calibration in
+LZ, beryllium metal disks were swapped out for magnesium metal disks and the tungsten block
+containing the YMg source was deployed to the same cut-out location in the OD. Almost no
+events from the YMg source were observed in the energy region of interest for neutrons emitted
+by the YBe source, confirming that events observed in the YBe calibration data are indeed low-
+energy photoneutrons produced by the source. About 200 single scatter neutrons were detected
+after all analysis cuts from a 112 live hour YBe run, and the measured detector response to these
+neutrons matches well with the expectation from simulations [83, 84]. This is the first photoneutron
+calibration data set to have been taken in a tonne-scale detector and enabled the calibration of the
+8 B solar neutrino energy region. A dedicated publication of the YBe data analysis and its results is
+
+in preparation [84]. The spatial distributions of the selected YBe single scatter events are shown in
+Figure 22. Their homogeneous radial profile is in accordance with the source deployment location,
+which is right above the top center of the OCV enveloping the TPC. This is in contrast to the profile
+
+
+
+
+                                               – 27 –
+of events from a CSD source, which is asymmetrical and biased toward the side tube in which the
+source is deployed.
+
+
+
+
+Figure 22: Reconstructed positions of 200 events from the YBe calibration data in the Cartesian
+coordinates of the TPC. Left: 𝑥 vs. 𝑦 distribution. The red contour in the left plot represents the
+radial selection cut applied to the data. Right: 𝑧 vs. R2 distribution. The majority of YBe events
+appear in the top few cm underneath the liquid-gas interface (marked by the orange line in the
+right plot) since neutrons from the YBe source located on top of the OCV can only penetrate a
+few centimeters into the liquid xenon. The gap between the liquid-gas surface and the events is the
+result of the drift time selection.
+
+
+
+7     Detector Optical Calibrations
+
+In order to obtain accurate detector response signals induced in PMTs during the data collection
+described in section 3 - 6, the PMTs themselves should be regularly calibrated to account for any
+time variation in their performance. This section discusses the optical PMT calibration systems in
+LZ, which are divided according to the volumes the PMTs monitor: the Xe PMT system (including
+both the TPC and Skin detectors) and the OD PMT system. These systems focus on calibrating the
+TPC, Skin and OD PMT response, the PMT stability over time, and the optical properties of the
+OD acrylic tank and the GdLS.
+
+7.1    Xe LED Calibration System
+The LZ Xe PMT system consists of 494 and 131 VUV PMTs from Hamamatsu [85] viewing the
+TPC and the Skin xenon volume, respectively. The calibration of these PMTs relies on an LED
+system built to monitor their performance and the stability of their light response. There are 78
+LEDs through the two detectors, installed such that they properly illuminate the entirety of each
+detector volume. In the TPC, there are 24 LEDs mounted uniformly between PMTs in both the
+top and bottom arrays (totalling 48 LEDs) via through-holes in the titanium mounting structure.
+Each LED is enclosed in a PTFE cover to preserve the reflectivity of the PTFE lining on each array.
+LEDs in the Skin are further subdivided into two components, the Top Side Skin Array (TSSA)
+
+
+
+
+                                              – 28 –
+Figure 23: A diagram showing the full Xe LED Calibration System. Signal from a primary pulser
+can simultaneously drive up to 24 of the 78 LEDs installed throughout the TPC and Xe skin. The
+primary pulser also acts as an event trigger for the digital data collectors (DDCs) via the LZ data
+acquisition (DAQ) system. Note that the LEDs do not protrude into the TPC, and that skin and
+dome PMTs are excluded from this diagram.
+
+
+LEDs located just below the liquid/gas xenon interface outside of the TPC, and the Bottom Side
+Skin Array (BSSA) LEDs looking up, as indicated in Figure 23. The TSSA is fitted with twelve
+LEDs installed above the titanium mounting structure of the top Skin PMTs. The LEDs are pointed
+downwards and are covered by PTFE sheets, which helps to diffuse light into the Skin. There are
+twelve BSSA LEDs which are pointed upwards to calibrate the top skin PMTs. They are fixed in
+the PTFE housing surrounding the bottom skin PMTs. Additionally, there are six LEDs pointed
+downwards to calibrate the PMTs that view the LXe below the bottom PMT array, known as the
+"dome" region.
+     The LEDs used in the Xe LED calibrations system [86] emit blue light with a wavelength
+of 470 nm. A visible light is critical in reducing systematics by minimizing the probability of
+producing additional photoelectrons per incoming photon via the double photoelectron emission
+effect [87]. A diagram of the full Xe LED system is shown in Figure 23. The LEDs are individually
+driven by pulse generators [88] as shown in the Figure. A single primary pulse generator acts to
+synchronize LED light emission with the LZ data acquisition system by sending a 100 ns width
+pulse to trigger data collection surrounding the pulse emission. A simultaneous pulse from the
+primary pulse generator is sent to six secondary pulse generators. Each of these six secondary
+pulse generators has four outputs, allowing for the simultaneous operation of 24 individual LEDs.
+In order to distribute these 24 pulser outputs to the entire set of 78 LEDs, the outputs of the pulsers
+are connected to a set of four multiplexer (MUX) units shared between the pulsers. A single MUX
+unit consists of a Mainframe Switch Unit [89] and six Multiplexer Cards [90]. In total, these four
+MUX units distribute 24 pulser inputs across 96 output channels. From these outputs, 78 channels
+
+
+
+
+                                                – 29 –
+are used for operating LEDs, and the remaining 18 are kept as spares. With independent control
+over each pulse generator output, up to 24 LEDs can be switched on simultaneously and each one
+with different pulse settings. Both the secondary pulsers and the MUX units are remotely operated
+through connection to the LZ slow control system, where pulse settings are chosen and distributed
+depending on the specific requirements of a calibration.
+     The primary application of the Xe LED calibration system is to measure the response of PMTs
+and monitor their performance over time. LEDs are used to measure PMT gain and Afterpulsing
+Ratio (APR), which are a calibration of the single photoelectron (sphe) response and a measurement
+of contaminants in the PMT vacuum space, respectively. The PMT signal yield, or PMT gain,
+is normalized across all PMTs in a given system. The gain, defined as the average number
+of photoelectrons generated through electron multiplication after a single incoming photon, is
+a function of the operating voltage of the PMT. For the TPC PMTs, the HV bias is adjusted
+such that they operate at a gain of 2·106 e/sphe. To calibrate the PMT gain, LEDs are driven
+at low amplitudes such that the observed signal is dominated by single-photons. Additionally,
+following a sufficiently large pulse, contaminant ions in the PMT can produce secondary ionization
+(afterpulses). Afterpulses are indistinguishable from standard PMT pulses and can interfere with
+the proper classification of events within the TPC. Proper calibration of the frequency and typical
+area of these afterpulses is an important prerequisite to understanding the signal output of a PMT.
+For afterpulsing measurements, the LEDs are driven at a higher voltage, with typical pulse areas
+of 100 photons per PMT. Example results from each measurement can be seen in Figure 24. For
+both measurements, the LEDs are pulsed at 1 kHz with a pulse width of 10 ns. In the TPC,
+simultaneous operation of four LEDs (two top, two bottom) is sufficient to cover all PMTs. During
+skin calibrations, all 24 side skin LEDs are operated simultaneously to uniformly illuminate the
+TSSA and BSSA PMTs. Similarly, all six dome LEDs are operated during dome PMT calibrations.
+
+
+                                                                                                                                   2.00
+                                                                    Fit window
+                                                                    Double Gaussian Fit                                            1.75
+                         103                                        Single Photon Peak
+                                                                                                                                                                   N2+/O2+
+                                                                                                                                                H+/H2+
+
+
+
+
+                                                                    Gain = 2.02e+06 ± 9e+03                                        1.50
+                                                                                                                                                           N+/O+
+
+
+
+
+                                                                    Fit: σ = 2.38 mVns
+                                                                                                                                                                                         Xe++
+   Counts/0.5 mVns bin
+
+
+
+
+                                                                                                                                                He+
+
+
+
+
+                                                                                                                                                                                                            Xe+
+                                                                                                                                                                             Ar+
+
+
+
+
+                                                                    σ/x0 = 0.29
+                                                                                                                 Amplitude [phd]
+
+
+
+
+                                                                    Two Photon Peak
+                                                                                                                                   1.25
+                                                                    (coincident pulses, not DPE)
+                         102                                        Area = 7.1% of SPHE peak                                       1.00
+                                                                    9328 LED Pulses
+                                                                                                                                   0.75
+
+                         10   1                                                                                                    0.50
+                                                                                                                                   0.25
+                                                                                                                                   0.00
+                         100 0     5      10     15     20     25         30         35            40                                     0.0    0.5     1.0       1.5             2.0          2.5   3.0         3.5   4.0
+                                  Pulse Area (out of PMT base across 25 Ω) [mVns]                                                                                     Time [µs]
+
+
+Figure 24: Left: A regular calibration of the Xe PMT system includes the per-PMT measurements
+of gain. PMT gain is determined through a double-Gaussian fit to the PhE pulse area spectrum
+from LED generated light. Right: Calibration of the afterpulsing ratio (APR). High intensity LED
+pulses are used to induce afterpulses in each PMT. Traces from many LED pulses (shown above)
+are co-added. APR is then measured as the ratio of the total area of each ion population to the
+combined area of the primary LED pulses. The timing of a single afterpulse for a particular ion is
+given by its mass, and shown by the yellow shaded bands.
+
+
+
+
+                                                                                                        – 30 –
+     The LED system is also used to calibrate the DAQ electronics system. First, the split output
+of the primary pulser allows for a measurement of the timing offset between all Xe PMT signals
+and the event trigger. Next, the LED system assists in validating the zero-suppression algorithm
+used to remove periods of data containing only baseline noise, which produces per-channel PMT
+waveforms of Pulse-Only Digitization (PODs). Finally, the DAQ sphe digitization efficiency is
+measured by determining the fraction of single photo-electrons whose signal amplitude exceeds the
+POD digitization threshold. This is achieved by approximating the distribution of sphe amplitudes
+as a Gaussian (see Figure 24). Each of these calibrations is completed by generating pulsed
+single-photons from the LED system.
+     The Xe LED calibration was used extensively to monitor the long-term stability of the Xe PMTs
+during SR1. The average gain of the 482 operational TPC PMTs was measured to be stable within
+1% during SR1, which spanned a five month period. Periodic optical calibrations will continue into
+future science runs of LZ in order to track both the health of individual PMTs and the large-scale
+trends of the Xe PMT system.
+
+7.2   OD Optical Calibration System
+The LZ OD PMT system consists of 120 8-inch PMTs mounted on a cylindrical array of 20 ladders
+inside the water tank with six PMTs on each ladder, as seen in Figure 1. An Optical Calibration
+
+
+
+
+Figure 25: Left: A CAD drawing of the cross-section of the OD, showing the side acrylic tanks and
+the OD PMTs mounted on their ladders. The three nominal heights of the 10 azimuthal positions
+of the optical fiber injection points are labeled 1-3. Additionally, two injection points under the
+bottom acrylic tank are labeled 4 and 5. Right: A photo of the bottom OD PMT array showing one
+of the injection points.
+
+System (OCS), designed to monitor the optical properties of the OD down to 150 keV (which is the
+relevant energy range for neutron tagging with the OD), is used to calibrate the OD PMT gain/sphe
+
+
+
+
+                                              – 31 –
+response and afterpulsing. The OCS uses duplex optical fibers to inject pulses of light produced by
+LEDs into the OD at 35 locations. Thirty injection points are evenly distributed within the OD PMT
+array (10 azimuthal positions at 3 heights as shown in Figure 25). Five injection points are located
+beneath the four side acrylic tanks directing light upwards into the tanks. Four of the injection
+points are positioned in the center of the four acrylic tanks’ base to monitor the optical properties
+of the liquid scintillator. The last one is located in the rim of one of the acrylic tanks and is used
+to monitor the optical properties of the acrylic which constitutes the vessel. For the 30 injection
+points situated within the PMT array, LEDs of 435 nm are used to match the peak wavelength and
+quantum efficiency of the OD PMTs. Only one of the cores of the duplex fiber is used to inject light
+into the detector. The other core is available for potential future upgrades or in case of damage to
+the first core. The transmission of light through the acrylic is wavelength dependent, so 435 nm and
+450 nm LEDs are used for the four injection points located beneath the scintillator tanks to monitor
+scintillator degradation. A 390 nm and 435 nm pair of LEDs is used to monitor the absorption of UV
+light and degradation of the acrylic tanks. Both cores of the duplex fibers are used for the upward
+facing injection points to send light in different directions. Monitoring the optical properties of the
+scintillator and acrylic is paramount to check if light collection during science runs is consistent.
+
+
+
+
+Figure 26: An overview of the OD Optical Calibration System, with eight LED pulsers on one
+Optical Calibration Card (OCC) and five OCCs in the VME crate. Lines with arrows show fibre
+routes with labels representing numbers of fibers from LEDs with corresponding wavelengths [91].
+Labels 1-3 represent the three heights for the ten azimuthal positions, while Label 4-5 denote the
+injection points to monitor the bottom acrylic tanks, as shown in Figure 25.
+
+     The OCS electronics consist of five custom optical calibration cards. Each card consists of
+an FPGA controlled motherboard housing eight custom-made LED pulser boards and two custom-
+made photo-diode boards. Light from the LED pulser is divided using a three-way optical coupler
+into a photo-diode input and two outputs on the front panel, allowing the intensity of injected light
+to be monitored. Light is fed from the rack housing the OCS electronics to the positions within the
+water tank via duplex optical fibers. The layout of the system can be seen in Figure 26. This layout
+
+
+
+
+                                                – 32 –
+allows each individual LED to be controlled separately, with the capability to pulse multiple LEDs
+simultaneously to reach greater intensities of light.
+      The intensity of light produced by the OCS is monitored in two ways: through the FPGA
+controlled photo-diode boards and via an 8-inch Hamamatsu R5912 PMT [92], which is installed
+in a rack mounted dark box close to the OCS electronics. This PMT is identical to those used in the
+OD. The stability of this PMT is also monitored, using a YAP:Ce pulser unit which produces light
+pulses corresponding to five thousand photo-electrons with a rate of 20 counts/s [35]. The intensity
+of light produced by the OCS can be compared against light produced by the unit to monitor the
+stability of the light produced by the OCS. The OCS is controlled using the LZ slow control system,
+allowing a user to define a pulse configuration using a graphical user interface.
+      The OCS was extensively tested during LZ commissioning and met all initial design
+requirements [91]. It was then used to calibrate the gain/sphe response of the OD PMTs while
+monitoring their afterpulsing rates over time. During SR1, an average gain drift across all OD PMTs
+of +0.6% was observed, demonstrating the stability of the OD system. No optical degradation (of
+the acrylic nor of the liquid scintillator) was observed in the OD during our continuous monitoring.
+
+
+8   Conclusions
+
+In this paper, we described the technical details of the LZ calibration systems. We performed
+extensive quality assurance checks and performance tests on all these systems to ensure they
+achieve the intended science goals. A number of novel features and technologies implemented in
+the calibration systems that improved their overall performance are worth emphasizing.
+      We developed a dispersed source injection system with precise dose control. It enables the
+injection of a wide range of gaseous source activity into the detector through the circulation system.
+A CH4 purifier installed in the dispersed source injection system allows the removal of gaseous
+species containing tritium that can stay on cold detector surfaces for a long time. The use of this
+purifier ensures safe tritium calibrations and avoids issues such as unexpected amount of residual
+tritium observed in other experiments [93, 94].
+      Facilitated by a laser feedback system, the CSD system for deploying external rod sources
+to different 𝑧-positions in three calibration tubes, is able to achieve mm-precision. Using the
+CSD gamma sources, we were able to calibrate the energy scale and inter-detector timing among
+TPC, Skin, and OD for particle interactions taking place at various locations. We designed and
+manufactured novel AmLi neutron sources with low neutron emission rates that are not commercially
+available. These AmLi sources are used to calibrate the detector response to nuclear recoils and
+measure neutron tagging efficiency of the OD.
+      A DD neutron generator with high neutron-to-gamma ratio and configurable neutron energy
+via Direct and Reflector modes was implemented in LZ. It was the first use of neutron Reflector
+modes in a large scale detector calibration. Moreover, a novel, custom-made photon-neutron (YBe)
+source was deployed for the first time in a noble liquid dark matter experiment to calibrate the
+detector response to neutrons with energy depositions below 4.6 keV𝑛𝑟 in LXe. The calibration
+data obtained from this source is critical for future measurements of the coherent scattering of 8 B
+solar neutrinos with xenon nuclei in the LZ detector.
+
+
+
+
+                                               – 33 –
+     We also implemented a state-of-the-art optical calibration system to monitor the TPC, Skin and
+OD PMT gains and their stability over time, as well as the optical properties of the OD acrylic tank
+and the GdLS. This is to ensure an accurate understanding of the detector response signals induced
+in the PMTs in these three different volumes during data collection; enhancing LZ background
+rejection capability and its signal discovery power.
+     Overall, the design and implementation of the hardware documented in this paper as well as
+the calibration data presented therein, are crucial for the published and future LZ science results.
+They also provide important guidance for future calibrations in rare-event searching experiments
+employing similar detector technologies.
+
+
+Acknowledgments
+
+The research supporting this work took place in part at SURF in Lead, South Dakota. Some of the
+isotopes used in this research was supplied by the U.S. Department of Energy Isotope Program,
+managed by the Office of Isotope R&D and Production. Funding for this work is supported
+by the U.S. Department of Energy, Office of Science, Office of High Energy Physics under
+Contract Numbers DE-AC02-05CH11231, DE-SC0020216, DE- SC0012704, DE-SC0010010,
+DE-AC02-07CH11359, DE-SC0012161, DE-SC0015910, DE-SC0014223, DE-SC0010813, DE-
+SC0009999, DE-NA0003180, DE-SC0011702, DE-SC0010072, DE-SC0015708, DE-SC0006605,
+DE-SC0008475, DE-SC0019193, DE-FG02-10ER46709, UW PRJ82AJ, DE-SC0013542, DE-
+AC02-76SF00515, DE-SC0018982, DE-SC0019066, DE-SC0015535, DE-SC0019319, DE-AC52-
+07NA27344, DOE-SC0012447, DE-SC0024225, & DE-SC0024114. This research was also
+supported by U.S. National Science Foundation (NSF); the UKRI’s Science & Technology Facilities
+Council under award numbers ST/M003744/1, ST/M003655/1, ST/M003639/1, ST/M003604/1,
+ST/M003779/1,ST/M003469/1, ST/M003981/1, ST/N000250/1, ST/N000269/1, ST/N000242/1,
+ST/N000331/1, ST/N000447/1, ST/N000277/1, ST/N000285/1, ST/S000801/1, ST/S000828/1,
+ST/N000739/1, ST/S000879/1, ST/S000933/1, ST/N000844/1, ST/S000747/1, ST/S000666/1,
+ST/R003181/1; Portuguese Foundation for Science and Technology (FCT) under award numbers
+PTDC/FIS-PAR/2831/2020; the Institute for Basic Science, Korea (budget number IBS-R016-
+D1). We acknowledge additional support from the STFC Boulby Underground Laboratory in
+the U.K., the GridPP [95, 96] and IRIS Collaborations, in particular at Imperial College London
+and additional support by the University College London (UCL) Cosmoparticle Initiative, and by
+the ARC Centre of Excellence for Dark Matter Particle Physics, and the University of Zurich. We
+acknowledge additional support from the Center for the Fundamental Physics of the Universe, Brown
+University. K.T. Lesko acknowledges the support of Brasenose College and Oxford University. The
+LZ Collaboration acknowledges key contributions of Dr. Sidney Cahn, Yale University, in the
+production of calibration sources. This research used resources of the National Energy Research
+Scientific Computing Center, a DOE Office of Science User Facility supported by the Office of
+Science of the U.S. Department of Energy under Contract No. DE-AC02- 05CH11231. We
+gratefully acknowledge support from GitLab through its GitLab for Education Program. The
+University of Edinburgh is a charitable body, registered in Scotland, with the registration number
+SC005336. The assistance of SURF and its personnel in providing physical access and general
+logistical and technical support is acknowledged. We acknowledge the South Dakota Governor’s
+
+
+
+
+                                              – 34 –
+office, the South Dakota Community Foundation, the South Dakota State University Foundation, and
+the University of South Dakota Foundation for use of xenon. We also acknowledge the University of
+Alabama for providing xenon. For the purpose of open access, the authors have applied a Creative
+Commons Attribution (CC BY) licence to any Author Accepted Manuscript version arising from
+this submission.
+
+
+References
+
+ [1] Y. Sofue and V. Rubin, Rotation Curves of Spiral Galaxies, Annual Review of Astronomy and
+     Astrophysics 39 (2001) 137.
+ [2] PLANCK collaboration, Planck 2018 results. VI. Cosmological parameters, Astron. Astrophys. 641
+     (2020) A6.
+ [3] BOSS collaboration, The clustering of galaxies in the SDSS-III Baryon Oscillation Spectroscopic
+     Survey: baryon acoustic oscillations in the Data Releases 10 and 11 Galaxy samples, Mon. Not. Roy.
+     Astron. Soc. 441 (2014) 24.
+ [4] D. Clowe et al., A Direct Empirical Proof of the Existence of Dark Matter, Astrophys. J. Lett. 648
+     (2006) L109.
+ [5] W. Hu and S. Dodelson, Cosmic Microwave Background Anisotropies, Ann. Rev. Astron. Astrophys.
+     40 (2002) 171.
+ [6] G. Bertone and D. Hooper, History of dark matter, Rev. Mod. Phys. 90 (2018) 045002.
+ [7] J. Billard et al., Direct detection of dark matter – APPEC committee report, Rept. Prog. Phys. 85
+     (2022) 056201.
+ [8] D.S. Akerib et al., Snowmass2021 Cosmic Frontier Dark Matter Direct Detection to the Neutrino Fog,
+     in Snowmass 2021, 3, 2022 [2203.08084].
+ [9] G. Arcadi et al., The waning of the WIMP? A review of models, searches, and constraints, Eur. Phys.
+     J. C 78 (2018) 1.
+[10] B.W. Lee and S. Weinberg, Cosmological Lower Bound on Heavy-Neutrino Masses, Phys. Rev. Lett.
+     39 (1977) 165.
+[11] G. Bertone, D. Hooper and J. Silk, Particle dark matter: Evidence, candidates and constraints, Phys.
+     Rept. 405 (2005) 279.
+[12] P. Barnes, Z. Johnson, A. Pierce and B. Shakya, Simple hidden sector dark matter, Phys. Rev. D 102
+     (2020) 075019.
+[13] S. Das, A Mini Review on Dark Mater: Cosmological Perspective, Springer Proc. Phys. 277 (2022)
+     725.
+[14] L. Roszkowski, E.M. Sessolo and S. Trojanowski, WIMP dark matter candidates and
+     searches—current status and future prospects, Rept. Prog. Phys. 81 (2018) 066201.
+[15] LZ collaboration, First Dark Matter Search Results from the LUX-ZEPLIN (LZ) Experiment, Phys.
+     Rev. Lett. 131 (2023) 041002.
+[16] LZ collaboration, New constraints on ultraheavy dark matter from the LZ experiment, arXiv (2024)
+     [2402.08865].
+[17] LZ collaboration, LUX-ZEPLIN (LZ) Technical Design Report, arXiv (2017) [1703.09144].
+
+
+
+
+                                                 – 35 –
+[18] LZ collaboration, Search for new physics in low-energy electron recoils from the first LZ exposure,
+     Physical Review D 108 (2023) 072006.
+[19] LZ collaboration, First Constraints on WIMP-Nucleon Effective Field Theory Couplings in an
+     Extended Energy Region From LUX-ZEPLIN, arXiv (2023) [2312.02030].
+[20] LZ collaboration, Projected sensitivity of the LUX-ZEPLIN experiment to the 0𝜈𝛽𝛽 decay of 136 𝑋𝑒,
+     Phys. Rev. C 102 (2020) 014602.
+[21] PANDAX collaboration, Search for Solar B8 Neutrinos in the PandaX-4T Experiment Using
+     Neutrino-Nucleus Coherent Scattering, Phys. Rev. Lett. 130 (2023) 021802.
+[22] XENON collaboration, Search for Coherent Elastic Scattering of Solar 8 B Neutrinos in the XENON1T
+     Dark Matter Experiment, Phys. Rev. Lett. 126 (2021) 091301.
+[23] XENON collaboration, Effective field theory search for high-energy nuclear recoils using the
+     XENON100 dark matter detector, Phys. Rev. D 96 (2017) 042004.
+[24] LUX collaboration, Constraints on effective field theory couplings using 311.2 days of LUX data,
+     Phys. Rev. D 104 (2021) 062005.
+[25] M. Redshaw, E. Wingfield, J. McDaniel and E.G. Myers, Mass and double-beta-decay Q value of
+     Xe-136, Phys. Rev. Lett. 98 (2007) 053003.
+[26] LZ collaboration, Background determination for the LUX-ZEPLIN dark matter experiment, Phys. Rev.
+     D 108 (2023) 012010.
+[27] J. Heise, The Sanford Underground Research Facility, in Snowmass 2021, 3, 2022 [2203.08293].
+[28] LZ collaboration, LUX-ZEPLIN (LZ) Conceptual Design Report, 1509.02910.
+[29] LZ collaboration, The LUX-ZEPLIN (LZ) Experiment, Nucl. Instrum. Meth. A 953 (2020) 163047.
+[30] C.H. Faham, V.M. Gehman, A. Currie, A. Dobi, P. Sorensen and R.J. Gaitskell, Measurements of
+     wavelength-dependent double photoelectron emission from single photons in VUV-sensitive
+     photomultiplier tubes, JINST 10 (2015) P09010.
+[31] LZ collaboration, Identification of Radiopure Titanium for the LZ Dark Matter Experiment and Future
+     Rare Event Searches, Astropart. Phys. 96 (2017) 1.
+[32] LZ collaboration, The LUX-ZEPLIN (LZ) radioactivity and cleanliness control programs, Eur. Phys.
+     J. C 80 (2020) 1.
+[33] S. Haselschwardt et al., A liquid scintillation detector for radioassay of gadolinium-loaded liquid
+     scintillator for the LZ Outer Detector, Nucl. Instrum. Meth. A 937 (2019) 148.
+[34] F. Jörg, S. Li, J. Schreiner, H. Simgen and R.F. Lang, Characterization of a 220 Rn source for
+     low-energy electronic recoil calibration of the XENONnT detector, J. Instrum. 18 (2023) P11009.
+[35] M. Kobayashi et al., YAlO3 : Ce-Am light pulsers as a gain monitor for undoped CsI detectors in a
+     magnetic field, Nucl. Instrum. Meth. A 337 (1994) 355.
+[36] “MegaTorr PS5 Rare Gas Purifiers.” https://www.entegris.com/shop/en/USD/products/
+     gas-filtration-and-purification/gas-purifiers/
+     MegaTorr-PS5-Rare-Gas-Purifiers/p/GateKeeperMGTHeatedGetterGasPurifiers.
+[37] “Fluitron Inc., Ivyland, Pennsylvania, USA.” http://fluitron.com.
+[38] “Entegris Wafergard WG3NSMJJ2.” https://www.entegris.com/shop/en/USD/products/
+     gas-filtration-and-purification/gas-filters/in-line-nickel-gas-filters/
+
+
+
+
+                                                  – 36 –
+     Wafergard-III-NF-Micro-In-line-Gas-Filters/p/
+     WafergardIIINFMicroInLineGasFilters.
+[39] “Swagelok 6LVV-DPLBW4-P.”
+     https://products.swagelok.com/en/c/mto-base-product/p/6LVV-DPLBW4-P.
+[40] “Eckert & Ziegler.” https://www.ezag.com/home/products/isotope_products/.
+[41] “Calgon OVC 4x8 Coconut Granular Activated Carbon.”
+     https://www.calgoncarbon.com/products/ovc/.
+[42] “Master Bond Supreme 10AOHT-LO epoxy.”
+     https://www.masterbond.com/tds/supreme-10aoht-lo.
+[43] “National Isotope Development Center.” https://www.isotopes.gov.
+[44] V. Hannen et al., Limits on the release of Rb isotopes from a zeolite based 83𝑚 Kr calibration source
+     for the XENON project, J. Instrum. 6 (2011) P10013–P10013.
+[45] M.K. Sharma Timalsina and J. Reichenbacher, Calibrations for the Improved Search for Dark Matter
+     with the LZ (LUX-ZEPLIN) Experiment, Ph.D. thesis, 2022.
+[46] LUX collaboration, 83m Kr calibration of the 2013 LUX dark matter search, Phys. Rev. D 96 (2017)
+     112009.
+[47] “Cardinal Health.” https://www.cardinalhealth.com/en.html.
+[48] “Entegris Gasketgard WGPM0GGT4.” https:
+     //www.entegris.com/shop/en/USD/products/gas-filtration-and-purification/
+     gas-filters/in-line-stainless-steel-gas-filters/
+     Gasketgard-In-line-Gasket-Filters/p/GasketgardInLineGasketFilters.
+[49] C.D. Nedlik, Calibration Of The Lux-Zeplin Dual-Phase Xenon Time Projection Chamber With
+     Internally Injected Radioisotopes, Ph.D. thesis, Massachusetts U., Amherst, 2022.
+[50] “SAES MC1.”
+     http://www.saespuregas.com/Library/specifications-brochures/MC1_spec.pdf.
+[51] H. Miyake, M. Matsuyama, K. Ashida and K. Watanabe, Permeation, diffusion, and solution of
+     hydrogen isotopes, methane, and inert gases in/through tetrafluoroethylene and polyethylene, J. Vac.
+     Sci. Technol. A 1 (1983) 1447.
+[52] “Maxon gear.” https://www.maxongroup.com/maxon/view/product/110339.
+[53] LZ collaboration, The LUX-ZEPLIN (LZ) Experiment, Nucl. Instrum. Meth. A 953 (2020) 163047.
+[54] A.B.M.R. Sazzad, J. Busenitz, A. Piepke, S. Poudel, H. Trewin and A. LeViness, Design and
+     characterization of AmLi neutron sources for the LZ experiment, JINST 18 (2023) P05006.
+[55] “ISO9978:2020 Radiation protection - Sealed sources - Leakage test methods.”
+     https://www.iso.org/standard/70598.html.
+[56] “Reuter-Stokes RS-P4-0813.”
+     https://www.bakerhughes.com/reuterstokes/industry/about-reuterstokes.
+[57] M. Szydagis, N. Barry, K. Kazkaz, J. Mock, D. Stolp, M. Sweany et al., NEST: a comprehensive
+     model for scintillation yield in liquid xenon, Journal of Instrumentation 6 (2011) P10002.
+[58] LUX collaboration, Discrimination of electronic recoils from nuclear recoils in two-phase xenon time
+     projection chambers, Phys. Rev. D 102 (2020) 112002.
+
+
+
+
+                                                  – 37 –
+[59] LUX collaboration, Effective field theory analysis of the first LUX dark matter search, Phys. Rev. D
+     103 (2021) 122005.
+[60] Z. Liu, J. Chen, P. Zhu, Y. Li and G. Zhang, The 4.438MeV gamma to neutron ratio for the Am–Be
+     neutron source, Appl. Radiat. Isot. 65 (2007) 1318.
+[61] K. Geiger and L. Van Der Zwan, Radioactive neutron source spectra from 9Be (𝛼, n) cross section
+     data, Nuclear Instruments and Methods 131 (1975) 315.
+[62] G.N. Vlaskin, Y.S. Khomyakov and V.I. Bulanenko, Neutron Yield of the Reaction (alpha, n) on Thick
+     Targets Comprised of Light Elements, Atomic Energy 117 (2015) 357.
+[63] LZ collaboration, The Data Acquisition System of the LZ Dark Matter Detector: FADR, in
+     preparation .
+[64] M. Berger et al., XCOM: Photon Cross Sections Database (version 1.5), 2010.
+     https://dx.doi.org/10.18434/T48G6X.
+[65] “Adelphi Technology.” http://www.adelphitech.com/.
+[66] LUX collaboration, Low-energy (0.7-74 keV) nuclear recoil calibration of the LUX dark matter
+     experiment using D-D neutron scattering kinematics, arXiv (2016) [1608.05381].
+[67] J.R. Verbus et al., Proposed low-energy absolute calibration of nuclear recoils in a dual-phase noble
+     element TPC using D-D neutron scattering kinematics, Nucl. Instrum. Meth. A 851 (2017) 68.
+[68] J.R. Verbus, An Absolute Calibration of Sub-1 keV Nuclear Recoils in Liquid Xenon Using D-D
+     Neutron Scattering Kinematics in the LUX Detector, Ph.D. thesis, 2016. 10.7301/Z01G0JQ7.
+[69] D. Huang, Ultra-Low Energy Calibration of the LUX and LZ Dark Matter Detectors, Ph.D. thesis,
+     2020. 10.26300/zvs6-fx07.
+[70] W. Taylor, Neutron Calibrations and Activation Signals in Low-Background Liquid Xenon Dark
+     Matter Detectors, Ph.D. thesis, 2022. 10.26300/bnyz-bn18.
+[71] “Ekko lift EA15B.” https://www.ekkolifts.com/product-page/
+     ekko-ea15b-semi-electric-straddle-stacker-3300lbs-cap-119-4-height.
+[72] LUX collaboration, Improved Dark Matter Search Sensitivity Resulting from LUX Low-Energy
+     Nuclear Recoil Calibration, arXiv (2022) [2210.058591].
+[73] M. Ibe, W. Nakano, Y. Shoji and K. Suzuki, Migdal Effect in Dark Matter Direct Detection
+     Experiments, JHEP 03 (2018) 194.
+[74] “Eljen EJ-315.” https://eljentechnology.com/products/liquid-scintillators/ej-315.
+[75] “ETEL PMT model 9821KEB.”
+     https://eljentechnology.com/products/liquid-scintillators/ej-31https:
+     //et-enterprises.com/products/photomultipliers/product/p9821b-series.
+[76] “Eljen EJ-200.” https://eljentechnology.com/products/plastic-scintillators/
+     ej-200-ej-204-ej-208-ej-212.
+[77] “ETEL PMT model 9266KFLB53.”
+     https://et-enterprises.com/products/photomultipliers/product/p9266b-series.
+[78] F. Cecil, D. Cole, F. Wilkinson III and S. Medley, Measurement and application of dd𝛾, dt𝛾 and
+     d3he𝛾 reactions at low energy, "Nucl. Instrum. Meth. B" 10 (1985) 411.
+[79] “Ludlum Model 42-30H Neutron Detector.”
+     https://ludlums.com/products/all-products/product/model-42-30h.
+
+
+
+
+                                                  – 38 –
+[80] J.I. Collar, Applications of an 88𝑌 /𝐵𝑒 photo-neutron calibration source to Dark Matter and Neutrino
+     Experiments, Phys. Rev. Lett. 110 (2013) 211101.
+[81] G.F. Knoll, Radiation detection and measurement, John Wiley & Sons (2010).
+[82] Handbook on Photonuclear Data for Applications Cross-sections and Spectra, no. 1178 in TECDOC
+     Series, IAEA, Vienna (2000).
+[83] LZ collaboration, Simulations of events for the LUX-ZEPLIN (LZ) dark matter experiment, Astropart.
+     Phys. 125 (2021) .
+[84] LZ collaboration, LUX-ZEPLIN (LZ) YBe neutron analysis, in preparation .
+[85] “Hamamatsu Photomultiplier tubes R11410-20 model.” https://www.hamamatsu.com/us/en/
+     product/optical-sensors/pmt/pmt_tube-alone/head-on-type/R11410-20.html.
+[86] “Everlight 264-7SUBC-S400-A4 model.”
+     https://en.everlight.com/visible_led/category-lamp_led/3mm_round_type__264/.
+[87] C. Faham, V. Gehman, A. Currie, A. Dobi, P. Sorensen and R. Gaitskell, Measurements of
+     wavelength-dependent double photoelectron emission from single photons in VUV-sensitive
+     photomultiplier tubes, J. Instrum. 10 (2015) P09010–P09010.
+[88] “Stanford Research System Pulse Generator DDG645 model.” https://www.valuetronics.com/
+     product/dg645-stanford-research-generator-used?gclid=CjwKCAjw8symBhAqEiwAaTA_
+     _GNyBGxY0QQuOlDZCx5KjbFnDxfrqUkU0Qx1jS52OMGKvL1z3FZdchoCPWcQAvD_BwE.
+[89] “Keysight 34972A.” https://www.keysight.com/us/en/product/34972A/
+     lxi-data-acquisition-data-logger-switch-unit.html.
+[90] “Keysight 34905A.” https://www.keysight.com/us/en/product/34905A/
+     2-ghz-dual-1-4-rf-mux-50-ohm-module.html.
+[91] W. Turner, A. Baxter, H. Birch, B. Boxer, S. Burdin, E. Fraser et al., Optical calibration system for the
+     LUX-ZEPLIN (LZ) outer detector, Nucl. Instrum. Meth. A 1010 (2021) 165551.
+[92] “Hamamatsu Photomultiplier tubes R5912 model.”
+     https://hep.hamamatsu.com/eu/en/products/R5912.html.
+[93] XENON collaboration, Search for New Physics in Electronic Recoil Data from XENONnT, Phys. Rev.
+     Lett. 129 (2022) 161805.
+[94] PANDAX collaboration, Dark Matter Search Results from the PandaX-4T Commissioning Run, Phys.
+     Rev. Lett. 127 (2021) 261802.
+[95] GridPP collaboration, GridPP: development of the UK computing Grid for particle physics, J. Phys.
+     G: Nuclear and Particle Physics 32 (2005) N1.
+[96] D. Britton, A. Cass, P. Clarke, J. Coles, D. Colling, A. Doyle et al., GridPP: the UK grid for particle
+     physics, Phil. Trans. R. Soc. A.2447–2457 367 (2009) 2447–2457.
+
+
+
+
+                                                   – 39 –
+

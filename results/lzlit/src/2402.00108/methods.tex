@@ -1,0 +1,55 @@
+\section{Methods} \label{sec:methods}
+In this Section, we present our approach to modeling the tail of the stellar speed distribution, the likelihood for a given set of observed data (speeds of stars in one bin of Galactocentric radius), and the method for obtaining posterior distributions of the model parameters.  The speed distribution will be modeled as the combination of one or more ``bound component(s)" corresponding to kinematic structures that are gravitationally bound to the Galaxy, and an outlier distribution which models both unbound and potentially mismeasured stars. Here we focus on the methodology, while Section~\ref{sec:modeling} will discuss the different parametric models including the single power law Eq. \ref{eq:powerlaw}, the 2-component power law  Eq. \ref{eq:powerlaw2} and the newly introduced ``stretched exponential power law."
+
+\subsection{Bound component}
+We first describe the parametric modeling of a single bound component, i.e. an approximately isotropic distribution of stars bound to the Milky Way. 
+Let us assume that in a given bin of Galactocentric radius, the tail of the speed distribution for these bound stars is described by $g(v \mid \mathbf{\theta})$ (see Eq.~\ref{eq:powerlaw}), where $\mathbf{\theta}$ is a vector of model parameters including the escape velocity $\vesc$, and $g$ is defined on $[0,v_{\mathrm{esc}}]$ as we expect the distribution of bound stars to be zero at speeds higher than $\vesc$ \citep{Leonard1990}. In the next section, we will consider different functional forms for $g$ with various motivations. 
+
+In \cite{Koppelman2021} and \cite{Necib2022methods}, the probability of observing a star labelled $\alpha$ with a speed $v_\alpha$ and a Gaussian measurement uncertainty $\sigma_\alpha$ is given by the convolution 
+\begin{equation}\label{eq:convolution}
+    p_\alpha\left(v_\alpha \mid \mathbf{\theta}\right) = C_\alpha(\mathbf{\theta}) \int_0^{v_{\mathrm{esc}}} d v \,\frac{e^{-\frac{\left(v-v_\alpha\right)^2}{2 \sigma_\alpha^2}}}{\sqrt{2 \pi \sigma_\alpha^2}}\,g(v \mid \mathbf{\theta})
+\end{equation}
+where $C_\alpha(\theta)$ is a normalization constant obtained by integrating over the \textit{data region} $[v_{\mathrm{min}},\infty]$ such that
+\begin{equation}\label{eq:normalizeprob}
+    \int_{v_\mathrm{min}}^{\infty} d v_\alpha\,p_\alpha\left(v_\alpha \mid \mathbf{\theta}\right) = 1\,.
+\end{equation}
+However, in this work we utilize a strict quality cut on stellar speed uncertainties $\sigma_{\alpha} / v_\alpha \leq 1\%$. In the limit of vanishing relative uncertainty, the probability distribution Eq. \ref{eq:convolution} reduces to 
+\begin{equation}\label{eq:low_uncertainty}
+p_\alpha (v_\alpha \mid \theta) = g(v_\alpha \mid \mathbf{\theta})
+\end{equation}
+with the appropriate normalization according to Eq. \ref{eq:normalizeprob}, where the upper limit becomes $\vesc$ since $g$ has support on $[0,v_{\mathrm{esc}}]$. We utilize the approximation Eq. \ref{eq:low_uncertainty} in the present analysis.
+
+\subsection{Outliers}
+Following \cite{williams:2017} and \cite{Necib2022methods}, we include a wide Gaussian outlier distribution, corresponding to unbound stars that are not modeled by the distribution $g(v \mid \mathbf{\theta})$ or stars with potentially mismeasured speeds. The probability for a star $\alpha$ to be drawn from this outlier distribution is modeled as 
+\begin{equation}\label{eq:outlier}
+    p_\alpha^{\mathrm{out}}\left(v_\alpha \mid \sigma_{\mathrm{out}}\right)=A \exp \left(-\frac{v_\alpha^2}{2\left[\sigma_{\mathrm{out}}^2+\sigma_{ \alpha}^2\right]}\right)
+\end{equation}
+where the dispersion of the outlier distribution $\sigma_{\mathrm{out}}$ is treated as an additional model parameter. We add the measurement uncertainty in quadrature to the dispersion of the underlying outlier distribution as these quantities are independent, however $\sigma_\alpha\ll \sigma_{\mathrm{out}}$  so this addition has little impact. Furthermore, due to the high quality cuts imposed in Sec. \ref{sec:data}, we expect a small degree of outlier contamination in our sample. We again normalize this distribution over the \textit{data region} $[v_\mathrm{min},\infty]$, finding 
+\begin{equation}
+    A^{-1}=\sqrt{\frac{\pi}{2}\left(\sigma_{\mathrm{out}}^2+\sigma_{\alpha}^2\right)} \,\mathrm{erfc}\left(\frac{v_{\min }}{ \sqrt{2\left(\sigma_{\mathrm{out}}^2+\sigma_{\alpha}^2\right)}}\right) .
+\end{equation}
+
+\subsection{Parameter estimation}
+For a bound kinematic structure modeled by the distribution $g(v \mid \mathbf{\theta})$ and an outlier component modeled by Eq. \ref{eq:outlier}, the likelihood for a star $\alpha$ with speed $v_\alpha$ and measurement uncertainty $\sigma_\alpha$ to be drawn from the combined distribution is 
+\begin{equation}
+    \mathcal{L}_\alpha=(1-f_\mathrm{out})\, p_\alpha\left(v_\alpha \mid \mathbf{\theta}\right)+f_\mathrm{out} \,p_\alpha^{\mathrm{out}}\left(v_\alpha \mid \sigma_{\mathrm{out}}\right)
+\end{equation}
+where $f_\mathrm{out}$ is the fraction of the integrated distribution contributed by the outlier model, and the probability $p_\alpha$ implicitly depends on the model choice $g(v \mid \mathbf{\theta})$. Had we instead wished to model a combination of $Q$ different bound components each with speed distribution $g_i(v \mid \mathbf{\theta}_i)$ and a parameter $f_i$ describing the fractional contribution of that component to the total distribution, then the likelihood for a single star would take the form
+\begin{equation}\label{eq:multiple_components}
+    \mathcal{L}_\alpha^{Q}=(1-f_\mathrm{out})\, \left[\sum_{i =1}^Q f_i\, p_\alpha^i\left(v_\alpha \mid \mathbf{\theta}_i \right)\right]+f_\mathrm{out} \,p_\alpha^{\mathrm{out}}\left(v_\alpha \mid \sigma_{\mathrm{out}}\right)
+\end{equation}
+where $p_\alpha^i$ denotes the probability distribution in Eq. \ref{eq:convolution}, reducing to $g_i(v \mid \mathbf{\theta}_i)$ in the limit of vanishing relative speed uncertainties. In this notation, the 2 and 3-component power law models of \cite{Necib2022methods,Necib2022} would have $Q = 2$ or $3$ and each $g_i$ described by the single power law Eq. \ref{eq:powerlaw} with unique slope $k_i$ but a common escape velocity $\vesc$.
+
+For a set of $N$ stars observed with speeds and Gaussian uncertainties on those speeds $\{(v_\alpha, \sigma_\alpha)\}_{\alpha = 1,\dots,N}$, and a chosen set of model parameters $\mathbf{\theta}$ (or $\{\theta_i\}_{i\in 1,\dots ,Q}$), the log-likelihood would be
+\begin{equation}
+    \log \mathcal{L} = \sum_{\alpha=1}^N \log \mathcal{L}_\alpha.
+\end{equation}
+The goal of this analysis is to estimate the posterior distribution of the parameters $\sigma_{\rm{out}}, f_{\rm{out}}$, and $\mathbf{\theta}$ (or $\{\theta_i\}_{i\in 1\dots Q}$), focusing in particular on the parameter $\vesc$. In practice we utilize an implementation\footnote{Code is provided at \url{https://github.com/CianMRoche/MCJulia.jl}, and is a modified version of an earlier implementation available at \url{https://github.com/mktranstrum/MCJulia.jl}.} of the affine-invariant Markov chain Monte Carlo algorithm of \cite{AIMCMC} since it is more efficient in skewed parameter spaces, and work in the \texttt{julia} programming language \citep{julia}, primarily to reduce computational time.
+
+\subsection{Model selection}
+The above parameter estimation procedure will be performed for different models of the bound component(s), each detailed in the next section, and we will compare the goodness of fit of these models in part via the Akaike information criterion (AIC; \cite{AIC}), defined as
+\begin{equation}\label{eq:AIC}
+    \rm{AIC} = 2s - 2\log(\mathcal{L}_{\rm{max}})
+\end{equation}
+where $s$ is the number of model parameters (for one bound component, it is the number of elements in the vector $\mathbf{\theta}$ plus an additional 2 outlier parameters) and $\log(\mathcal{L}_{\rm{max}})$ is the maximum of the log-likelihood of the model for a given set of data. To compare models $A$ and $B$ one may calculate the $\rm{AIC}$ for each model. Then $\Delta\rm{AIC} \equiv \rm{AIC}_B - \rm{AIC}_A$ positive implies model $A$ is preferred, and conversely $\Delta\rm{AIC}$ negative implies model $B$ is preferred. 
+

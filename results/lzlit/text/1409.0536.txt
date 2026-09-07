@@ -1,0 +1,1930 @@
+                                                    A Model Independent Approach to Inelastic Dark Matter Scattering
+
+                                                                        G. Barello, Spencer Chang, and Christopher A. Newby
+                                                 Department of Physics and Institute of Theoretical Science, University of Oregon, Eugene, Oregon 97403
+
+                                                        We present a model independent analysis of inelastic dark matter transitions at direct detection
+                                                     experiments by modifying the elastic methodology of Fitzpatrick, et al. By analyzing the kinematics
+                                                     of inelastic transitions, we find the relevant variables to describe these scattering processes, the
+                                                     primary change being a modification of the ~v ⊥ variable. Taking this into account, we list the relevant
+                                                     scattering matrix elements and modify the Mathematica package of Anand, et al. to calculate the
+                                                     necessary form factors. As an application, we determine the matrix elements of inelastic scattering
+                                                     for spin transitions between a fermion to fermion, scalar to vector, and scalar to scalar. Finally, we
+                                                     consider fits to the DAMA/LIBRA annual modulation signal for the magnetic inelastic dark matter
+                                                     scenario as well as a model independent scan over relativistic operators, constraining them with
+                                                     limits from direct detection experiments. In the magnetic inelastic dark matter scenario or if the
+                                                     dark matter couples through relativistic operators involving only protons, we find that experiments
+arXiv:1409.0536v1 [hep-ph] 1 Sep 2014
+
+
+
+
+                                                     with xenon and germanium targets can have consistently small rates. However, limits from iodine
+                                                     experiments are much more constraining, leaving small regions of allowed parameter space. We
+                                                     point out that existing uncertainties in the iodine quenching factor strongly affects the constraints,
+                                                     motivating further study to pin down the correct values.
+
+                                                     PACS numbers:
+
+
+                                                         I.   INTRODUCTION                                 ular, Ref. [12] has provided a systematic study of the
+                                                                                                           effective description of nonrelativistic, elastic scattering
+                                           Dark matter direct detection experiments are an am-             and a Mathematica package to generate the necessary
+                                        bitious effort to observe galactic dark matter scattering          form factors [13]. A notable success of this approach was
+                                        off of nuclear targets [1] as a means to study dark mat-           the discovery of nuclear responses beyond the standard
+                                        ter’s interactions with normal matter. Beginning with              spin-independent and spin-dependent responses that are
+                                        the early experiments in the eighties, there has been              currently analyzed by experiments. Thus, model inde-
+                                        steady progress to increasing sensitivity. Planned exper-          pendent approaches have the benefit of larger applicabil-
+                                        iments in the future will push this frontier [2], giving           ity, pointing out all of the regions where experiments can
+                                        us hope that such interactions will be confirmed soon.             be sensitive — see [14–18] for some recent work in this
+                                        Such a discovery would give important insights into the            direction.
+                                        fundamental nature of dark matter and its place in the                In this paper, we extend this work by considering the
+                                        Standard Model of particle physics.                                modifications necessary to describe inelastic transitions
+                                           The experimental challenges of direct detection are             of the dark matter particle. Such transitions have im-
+                                        many. Finding conclusive evidence is a tall order, as              portant kinematic effects and were originally proposed
+                                        demonstrated by several recent experimental anomalies,             and studied for scattering to a heavier dark matter state
+                                        the most famous being the annual modulation signal seen            [4, 19] and then later extended to the “down scatter-
+                                        by DAMA [3], which appear to be in conflict with the null          ing” case [20–22]. We will investigate the modifications
+                                        results of other experiments. However, whether a dark              to Ref. [12] that must be made to properly treat inelas-
+                                        matter scenario is consistent with existing limits and ex-         tic scattering in a model-independent fashion. As we
+                                        cesses depends strongly on the form of its interactions            will show, this requires a straightforward reorganization
+                                        with the nucleus. For each interaction, the relative sensi-        of the basis of scattering matrix-elements. This has the
+                                        tivities of different experiments can vary wildly, leading         added benefit that we were able to suitably modify the
+                                        to the hope of a scenario consistent with all of the existing      Mathematica package [13] to calculate the form factors
+                                        data. Another reason to study the allowed interactions             for inelastic scattering.
+                                        is that certain interactions may have distinctive features            To illustrate the utility of this methodology, we will
+                                        in the signal that allow better background separation.             demonstrate how the inelastic transitions between parti-
+                                        These reasons highlight the importance of exploring the            cles of spin 1/2 to 1/2, 0 to 1, and 0 to 0 can be treated
+                                        full landscape of possible interactions. Some examples of          in a standard basis of nonrelativistic matrix elements.
+                                        the studied possibilities include inelastic transitions [4],       We do so by considering the relativistic operators be-
+                                        dark matter form factors [5, 6], dark matter-nucleus res-          tween such particles that can be mediated by spin 0 or
+                                        onances [7], and isospin-violating dark matter [8–10].             1 particles. Using these results, we perform a reanal-
+                                           Given the large range of possible scattering interac-           ysis of the magnetic inelastic dark matter scenario [23]
+                                        tions allowed by dark matter theories, it has proven use-          and perform a model independent scan over the relativis-
+                                        ful to study the phenomenology of dark matter scatter-             tic operators to determine scenarios which could explain
+                                        ing in a model independent fashion [11, 12]. In partic-            the DAMA/LIBRA signal. For the magnetic inelastic
+                                                                                                                                  2
+
+                           χ1(⃗p )     χ2(⃗p ′)                    which have also been considered in the literature [20–
+                                                                   22]. In certain theories, the elastic scattering process is
+                                                                   forbidden or suppressed [24, 25], making these inelastic
+                                                                   transitions the leading way to detect dark matter scat-
+      ⃗q ≡ p⃗ ′ − p⃗ = ⃗k − ⃗k ′          δ ≡ mχ 2 − mχ 1          tering. For a survey of such theories, see [4, 26–29].
+                                                                      The modifications of a nonzero splitting δ on the kine-
+                           N (⃗k )     N (⃗k ′)                    matics is straightforward. To leading order in the non-
+                                                                   relativistic expansion, δ is the additional energy required
+                                                                   to make the transition occur. Thus, given the scaling
+FIG. 1: Inelastic scattering of dark matter off of a nucleon       of kinetic energy, we expect situations where the split-
+with our conventions for the kinematic variables.                  ting scales as δ ∼ O(v 2 ) to have a consistent velocity
+                                                                   expansion. Since dark matter in our galaxy have speeds
+                                                                   v ∼ 10−3 c, this means that we should   consider splittings
+dark matter scenario and for operators which couple the                                              mχ
+                                                                   in the range δ ∼ 100 keV 100 GeV        .
+dark matter to protons only, we find the constraints from             Now, we adapt the analysis of [12] to inelastic scat-
+xenon detectors can be weakened to allow some opera-               tering in order to determine the relevant degrees of free-
+tors to survive, while germanium detectors have an ex-             dom that characterize the effective field theory in a ve-
+tremely weak sensitivity. However, a stringent constraint          locity expansion. One approach would be to start with
+comes from iodine targets, like those used by COUPP                the relativistic kinematics and take the nonrelativistic
+and KIMS. A large uncertainty in this analysis is the              limit. Although this gives the same result, as we show
+quenching factor of iodine. Depending on the values we             in Appendix A, we find that it is simpler to proceed
+assume, the constraints from KIMS, XENON, and LUX                  from the constraints of Galilean invariance where ve-
+can change by a large amount, due to changes in the                locities receive a common shift. This determines that
+recoil spectra. Another uncertainty is the lack of form            there are two relevant vectors that are boost invariant,
+factors for cesium and tungsten. Given these uncertain-           ~v ≡ ~vχ1 −~vNin = p~/mχ1 − ~k/mN and ~q = p~ 0 − p~ = ~k − ~k 0 ,
+ties, we find that DAMA explanations are constrained               while the boost invariant scalars are the particle masses
+but not ruled out yet, which should be resolved by the             and δ. Note that p~ 0 − p~ is not exactly Galilean invariant;
+next round of experimental releases.                               due to the mass difference δ, it is invariant to leading
+   The outline of the rest of the paper is as follows. In          order in the velocity expansion and thus is a consistent
+section II, we discuss the kinematics of inelastic scat-           approximation at first order. Throughout this discussion,
+tering to determine the relevant kinematic variables. In           we are working in this expansion and will cavalierly use
+section III we discuss the modifications to the operators          equalities for expressions if they are equal to the same
+needed to describe dark matter inelastic transitions. In           order in the expansion.
+section IV, as an application of this formalism, we fit the           At this point, it is useful to construct an orthogonal
+annual modulation signal at DAMA/LIBRA and discuss                 basis of these vectors. To do so, consider the scattering
+the constraints from other experiments. In section V,              in the center-of-mass frame, where ~vχ1 = mµχN ~v , ~vNin =
+we conclude. Finally, in the appendices, we give further              µN
+                                                                                                                    1
+
+details on the nonrelativistic limit of the kinematics and         −m  N
+                                                                         ~
+                                                                         v , and µ N is the  reduced  mass  between  χ1 and N .
+matrix elements of inelastic scattering.                           The initial energy in this frame, expanded to second order
+                                                                   in velocities, is
+
+                                                                                                 1
+II.     VARIABLES FOR INELASTIC KINEMATICS                                       Ein ≈ mχ1 + mN + µN v 2 .                      (2)
+                                                                                                 2
+   To begin, we need to determine the correct variables to        After scattering, the momentum vectors are p~ 0 = p~ + ~q
+describe inelastic scattering. To do so, we need to under-        and ~k 0 = ~k − ~q. Expanding the final energy to the same
+stand the kinematic modifications of an inelastic transi-         order, we find
+tion for nonrelativistic scattering. We are interested in
+scattering events of the type                                                                   1                   1 ~
+                                                                    Eout = mχ2 + mN +                |~p + ~q |2 +     |k − ~q |2
+                                                                                              2mχ2                 2mN
+                     p ) N (~k ) → χ2 (~
+                 χ1 (~                 p 0 ) N (~k 0 )      (1)                                                                 (3)
+                                                                                                  |~q |2
+where χ1 is the incoming dark matter particle, χ2 is the                   ≈ Ein + δ + ~v · ~q +         .
+                                                                                                  2µN
+outgoing particle, and N is a nucleon in the target nu-
+cleus, see Fig. 1. There is a mass splitting between the          To reach the final form, we treated all momenta as order v
+two particles δ = mχ2 − mχ1 . Positive δ was the first            and δ as order v 2 . Thus, we find that energy conservation
+case to be considered originally [4], which pointed out           requires
+that this has the important effects of favoring scattering
+off of heavier nuclei and increasing the annual modula-                                              |~q |2
+tion fraction. Negative δ leads to exothermic transitions                            δ + ~v · ~q +          = 0.                (4)
+                                                                                                     2µN
+                                                                                                                                   3
+
+Using this constraint, one can easily show that                     where S  ~χ,N are the spin operators for the dark matter
+                                                                    and nucleon. In [12], operator O2 was not considered
+           ⊥              ~q      δ          ⊥       δ              since it doesn’t appear in the nonrelativistic reduction of
+         ~vinel ≡ ~v +       +        ~q = ~vel +        ~q   (5)
+                         2µN   |~q |2             |~q |2            the scattering matrix elements of relativistic operators,
+                                                                    and we find the same result here. Thus, the important
+is perpendicular to ~q. Here we see that the inelastic kine-        operators are at most linear in ~vinel ⊥             ⊥
+                                                                                                               . Since ~vinel differs
+                                                       ⊥
+matics alters this vector from the elastic version ~vel   by                              ⊥
+                                                                    from the elastic ~v by just a shift in ~q, we will later find
+a new piece proportional to δ. This new term is entirely            that this linearity allows one to utilize the form factors
+consistent with the velocity expansion.                             provided by the Mathematica package [13].
+   As a consistency check, notice that Eq. 4 requires                   There are two other modifications to the elastic case
+                                                                    that we will find. First of all, δ can be a coefficient mul-
+                                1 |~q |2
+                    |~v | ≥              +δ .                 (6)   tiplying the operators when one reduces from relativistic
+                              |~q | 2µN                             operators. The second effect is that ~q no longer has to
+                                                                    appear in the combination of i~q, as can be seen by the ex-
+If we write the momentum
+                   √        transfer in terms of the en-                           ⊥
+                                                                    pression for ~vinel . In the elastic case, this was guaranteed
+ergy recoil |~q | = 2mN ER , we find that the minimum
+                                                                    by the interaction being Hermitian. Since conjugation
+velocity for scattering is
+                                                                    swaps initial and final states, this acts as time reversal,
+                                                                         T
+                             1    mN ER                             i~q −→ i~q. However, for the inelastic case, the initial and
+             vmin = √                   +δ                    (7)   final states are not the same particle, so this is no longer
+                           2mN ER  µN
+                                                                    required by the interaction. In general, the inelastic op-
+which reproduces the well known result in the literature            erators in Eq. 8 may have arbitrary complex coefficients,
+[4].                                                                as long as they appear in appropriate Hermitian conju-
+                                                                    gate pairs in the Hamiltonian. This was not the case
+                                                                    for elastic operators because Hermiticity requires them
+ III.    INELASTIC SCATTERING OPERATORS                             to have real coefficients.
+
+   Now that we know the correct variables to describe in-
+elastic kinematics, we can now list the allowed matrix el-
+                                                                            A.    Form Factors for Inelastic Scattering
+ements for inelastic, nonrelativistic dark matter-nucleon
+scattering. To leading order in the velocity expansion, we
+found that the only modification is that ~v ⊥ is changed              Now, one must use these nucleon-dark matter opera-
+from the elastic case. Thus, the operators that are al-             tors to determine the matrix elements within the target
+lowed are the same as in [12] with ~v ⊥ → ~vinel ⊥
+                                                     . Listing      nucleus. We will give a brief summary here, giving more
+                                                                                                                          ⊥
+these in the same numbering scheme, we have                         details in Appendix C. Since inelasticity modifies ~vinel ,
+                                                                  we should examine how this affects the nuclear response.
+                        ⊥ 2              ~        ~q       ⊥        First of all, by introducing the target velocity ~vT , we
+O1 = 1χ 1N , O2 = (vinel ) , O3 = iSN ·                × ~vinel ,   rewrite
+                                                 mN
+                                            
+       ~χ · S
+            ~ N , O5 = iS~χ ·    ~q     ⊥
+O4 = S                              × ~vinel   ,                      ⊥            ~q
+                                mN                                  ~vel = ~v +                                                    (9)
+                                                                              2µN
+         ~χ · ~q     ~N · ~q
+                                                                                             !
+O6 = S               S            ,                                               p~    ~k            1                  1 ~ ~ 0 
+              mN          mN                                            =            −           +         p 0 − p~ ) +
+                                                                                                          (~                k−k
+                                                                                 mχ1   mN            2mχ1               2mN
+     ~N · ~vinel
+O7 = S      ⊥           ~χ · ~vinel
+                 , O8 = S      ⊥
+                                    ,                                      1
+                                                                        ≈    (~vχ + ~vχ2 − ~vNin − ~vNout )
+                                                                         2 1
+      ~χ · S
+O9 = iS       ~N × ~q    , O10 = iS   ~N · ~q ,                            1
+                   mN                     mN                            = (~vχ1 + ~vχ2 − ~vTin − ~vTout )
+                                                                           2
+                                                                             1
+       ~χ · ~q , O12 = S                                                   + [(~vTin − ~vNin ) + (~vTout − ~vNout )]
+                                                   
+O11 = iS                       ~χ · S  ~N × ~v ⊥ ,
+           mN                                  inel                          2
+                                                                            ⊥
+                                                                     ≡ ~vel T +~
+                                                                                  vnuc .
+                        ~N · ~q
+       
+O13 = i S~χ · ~vinel
+                ⊥
+                        S              ,
+                              mN                                                                                ⊥
+                                                                 Thus for each nucleon in the nucleus, ~vel    is equal to the
+         ~χ · ~q
+                                     
+                         ~N · ~v ⊥ ,                                           ⊥
+O14 = i S               S       inel
+                                                                    target’s ~vel plus a term, ~vnuc , that is dependent on the
+                mN                                                  nucleon’s relative velocity to the nucleus. Similarly, for
+                                              
+          ~χ · ~q          ~N × ~vinel
+                                     ⊥       ~q                     the inelastic velocity, we have
+O15 = − S                 (S             )·          ,
+                 mN                         mN
+                                                                                          ⊥        ⊥
+                                                              (8)                       ~vinel = ~vinel T +~
+                                                                                                           vnuc                 (10)
+                                                                                                                                         4
+
+where                                                                     Ref. [23] is that the form factors can now be reliably
+                                                                          computed by a modification of the Mathematica note-
+       ⊥          1                                      δ
+     ~vinel T =     (~vχ1 + ~vχ2 − ~vTin − ~vTout ) +        ~q,   (11)   book [13]. Again, for details on how to implement these
+                  2                                   |~q |2              inelastic modifications to the form factor calculation, see
+                                                                          Appendix C.
+Since the nucleus and dark matter scattering is also in the
+nonrelativistic limit, the same kinematic considerations
+                            ⊥
+from before show that ~vinel   T is perpendicular to ~ q and
+thus we can now interpret ~q as the momentum transfer                              B. Relativistic Matrix Elements for
+from χ1 to the target nucleus.                                                     Fermion-Fermion Inelastic Transitions
+                                       ⊥
+   The reason for the separation of ~vinel T into target and
+relative parts is that the nuclear form-factors only depend                  As a first application of this formalism, lets analyze
+on interactions with nucleons, so only ~vnuc is an operator.              the case where χ1,2 are both spin 1/2 fermions. We start
+The five nucleon interactions are [12]:                                   with the relativistic operators that would generate such
+                                                                          scattering off of a nucleon. We list the same twenty op-
+                                                                          erators of [13] in Table I for inelastic scattering [47]. Fac-
+             O1N = 1N ,                           ~N ,
+                                  O2N = −2~vnuc · S                       tors of i are set up so that if Ψ2 = Ψ1 , the operator is
+             ~N
+             O      ~              ~N
+                                   O                                      Hermitian, thus allowing a convenient comparison to the
+               3 = 2SN ,             4 = −~vnuc , and              (12)
+                                                                          elastic case by taking δ = 0. The third column is the non-
+             ~N
+             O              ~N .
+                     vnuc × S
+               5 = 2i~                                                    relativistic limit of the matrix element after multiplying
+                                                                          by 1/(4mN mχ ) to get to standard nonrelativistic nor-
+ which correspond to different types of nucleon responses.                malization. This matrix element is then decomposed in
+ O1N corresponds to the charge interaction, O2N to the ax-                the final column in the basis of the fifteen nonrelativistic
+ ial charge interaction, O ~ N to the axial vector interaction,
+                             3                                            operators of Eq. 10.
+  ~ N
+ O4 to the vector magnetic interaction, and O           ~ N to the           When calculating the matrix elements, we do not find
+                                                          5
+ vector electric interaction. Note that the explicit depen-                                        ⊥                               ⊥
+                                                                          explicit terms with ~vinel  , instead we get terms of ~vel . This
+ dence on the inelastic nature of the scattering is not in                                                              δ
+                                                                          is because the additional term of |~q |2 ~q has momentum
+ the operators but in the coefficients. For a more detailed               factors in the denominator, which shouldn’t appear in a
+ discussion of the nuclear form factors see [12].                         matrix element of a contact operator. However, many of
+                            ⊥
+    For our cases, since ~vinel only appears linearly (see Ta-                                 ⊥              ⊥         ~ which are equiva-
+                                                                          these factors of ~vel   appear as ~vel ·(~q × S)
+ bles I-III), we merely have to incorporate the change of                           ⊥          ~                                       ⊥ ~
+   ⊥          ⊥                                                           lent to ~vinel ·(~q× S). The other terms are of the form ~vel  ·S
+~vel T → ~  vinel T in the Mathematica notebook [13]. In
+ calculating the matrix elements squared, this results in
+                                                                                                     ⊥       δ        ~
+                                                                          which we rewrite as (~vinel − |~q |2 ~q) · S. Writing the matrix
+                                        ⊥       2                                                    ⊥
+ terms which are proportional to |~vinel     T | . This has the           elements in terms of ~vinel    is convenient since it minimizes
+ simple form                                                              cross terms in the matrix element squared. Note that
+                                                 2                      in operators 18 and 19 there are additional terms pro-
+             ⊥       2        2     1         δ                           portional to δ which are new nontrivial contributions to
+          |~vinel T | = |~vT | −        +            |~q |2
+                                   2µT     |~q |2                         the scattering amplitude. Amusingly, these contributions
+                       = |~vT |2 − vmin
+                                    2
+                                                                   (13)   come from terms of |~qδ|2 ~q dotted into ~q, canceling the |~q |2
+                                        T
+                                                                          term in the denominator. As a final check, we see that
+where ~vT = ~vχ1 − ~vTin and µT is the χ1 -nucleus reduced                when we take δ = 0 we recover the elastic results in [13].
+mass. In the second form, we have written the subtracted                     In Fig. 2, we plot some examples for the energy recoil
+term as vmin T , the minimum speed to scatter off of the                  spectra for these fermion operators in arbitrary units. In
+nucleus with energy ER , which is the nucleus version of                  this figure, we are assuming iodine scattering with equal
+Eq. 7. Note that for upscattering (δ > 0) this leads to                   couplings to protons and neutrons with a dark matter
+a suppression of this factor and for both signs of δ, this                mass mχ = 70 GeV and mass splitting δ = 120 keV. In
+term goes to zero at the minimum incoming velocity.                       solid lines, we have our predicted rates. As a comparison,
+   The power of this formalism is that it gives the correct               we show in dashed lines an incorrect spectra if we had
+variables in which to characterize inelastic scattering and               taken the elastic form factors but still integrated from the
+thus is helpful for understanding results that are at first               correct minimum velocity for inelastic scattering, vmin T .
+surprising. As an example, in Ref. [23], an inelastic dark                Notice that the correct spectra is always smaller than the
+                                                                                                                                     ⊥    2
+matter model was analyzed that had a magnetic dipole                      incorrect spectra which reflects the vanishing of |~vinel     T|
+interaction with the nucleus. For the scattering of this                  on threshold. We chose these operators (7, 9, 13, 19) be-
+dark matter dipole off of the nucleus charge, peculiar                    cause they illustrate that the inelastic modifications to
+terms involving δ/|~v |2 , δ/ER are found. In that paper,                 the form factors can in some cases significantly alter the
+these terms were only discovered by a systematic expan-                   shape and normalization of the spectra. In addition, we
+sion. However, in terms of this discussion, these terms                   found these differences to be quite sensitive to the choice
+are just due to the contribution from the δ dependent                     of target nuclei and isospin structure of the nucleon cou-
+            ⊥       2
+terms of |~vinel T | . Of course, the main improvement on                 plings.
+                                                                                                                                                                                           5
+
+                                                                             Nonrelativistic Limit × 4m 1 m
+                                                                                                                                                             P
+        Index         Relativistic Operator
+                                                                                                                          N    χ                                    i ci Oi
+
+          1                    χ̄2 χ1 N̄ N                                                           1χ 1N                                                          O1
+          2                 iχ̄2 χ1 N̄ γ 5 N                                                      i mq~ · S
+                                                                                                          ~N                                                        O10
+                                                                                                      N
+
+          3                 iχ̄2 γ 5 χ1 N̄ N                                                           q
+                                                                                                       ~
+                                                                                                  −i m · S ~χ                                               −m
+                                                                                                                                                             mχ
+                                                                                                                                                               N
+                                                                                                                                                                 O11
+                                                                                                        χ
+
+          4                χ̄2 γ 5 χ1 N̄ γ 5 N                                       −( mq~ · S
+                                                                                              ~χ )( q~ · S
+                                                                                                   m
+                                                                                                         ~N )                                               −m
+                                                                                                                                                             m
+                                                                                                                                                               N
+                                                                                                                                                                 O6
+                                                                                               χ               N                                                     χ
+
+          5                χ̄2 γ µ χ1 N̄ γµ N                                                        1χ 1N                                                          O1
+                                                                                                 q |2                                           q |2
+                                                                                                                                                                                      
+                                                                                                |~                                             |~
+                                             ν                                                        1 1
+                                                                                              2mN mM χ N                                     2mN mM
+                                                                                                                                                        O1 + 4m
+                                                                                                                                                              mχ
+                                                                                                                                                                N
+                                                                                                                                                                  O4
+          6            χ̄2 γ µ χ1 N̄ iσµν mq          N                                                                                                       
+                                                                                  q
+                                                                                  ~
+                                               M
+                                                                        +2       mχ
+                                                                                     ~χ + i~v ⊥
+                                                                                    ×S       inel               · mq~         ~N
+                                                                                                                             ×S               −m2mN     mN
+                                                                                                                                                        mχ
+                                                                                                                                                           O6 + O3
+                                                                                                                         M                          M
+                                                                                       ~N · (~v ⊥ − δ 2 q~)
+                                                                                     −2S                                                                               
+                                                                                               inel |~
+                                                                                                     q|
+          7              χ̄2 γ µ χ1 N̄ γµ γ 5 N                                                                                            −2 O7 + i m Nδ
+                                                                                                                                                      q |2
+                                                                                                                                                     |~
+                                                                                                                                                           O10 − m
+                                                                                                                                                                 m
+                                                                                                                                                                   N
+                                                                                                                                                                     O9
+                                                                                                   ~N × q~ )
+                                                                                            ~ χ · (S                                                                               χ
+                                                                                         +2iS          m             χ
+                                              ν                                                                                                              2mN
+          8          iχ̄2 γ µ χ1 N̄ iσµν mq           γ5N                                         2i mq~       ~N
+                                                                                                              ·S                                             mM
+                                                                                                                                                                 O10
+                                              M                                                          M
+                                                                                                         2                                              2                             
+                                                                                                    |~
+                                                                                                     q|                                          |~
+                                                                                                                                                  q|                          4m
+                                                                                        1χ 1N− 2m m                                          − 2m m                 O1 + m χ O4
+          9            χ̄2 iσ µν mqν     χ1 N̄ γµ N                                               χ
+                                                                                                          M                                      χ         M                  N
+
+                                                                     −2 m × SN + i~vinel · mq~ × S
+                                                                          q
+                                                                          ~
+                                                                                                                                                + 2m
+                                     M                                         ~     ⊥              ~χ                                                N
+                                                                                                                                                    m
+                                                                                                                                                          (O6 + O5 )
+                                                                           N                   M                                                     M                
+                                                                                                                                                  2
+                                                       α                                                                                                q |2
+                                                                                               
+                                                                                                                                               4mN     |~
+         10       χ̄2 iσ µν mqν χ1 N̄ iσµα mq              N             4 mq~ × S~χ ·    q
+                                                                                          ~
+                                                                                         mM
+                                                                                             ×S~N
+                                                                                                                                               m 2     m  2  O4 − O 6
+                               M                       M                     M                                                                    M                 N
+                                                                                        
+                                                                                                                                                                4mN
+         11          χ̄2 iσ µν mqν χ1 N̄ γµ γ 5 N                            4i mq~ × S~χ · S
+                                                                                            ~N
+                                                                                                                                                                mM
+                                                                                                                                                                    O9
+                                   M                                                               M
+                                                                                                                                                 q |2
+                                                                                                                                                                                      
+                                                                                                                                                |~          mN
+                                                      α
+                                                                    h            2                                       i                 − m2           mχ
+                                                                                                                                                               O10 + 4O12
+                                                                         |~
+                                                                          q|
+         12      iχ̄2 iσ µν mqν χ1 N̄ iσµα mq              γ5N     − im m                     ⊥ ·
+                                                                                         − 4~vinel             q
+                                                                                                               ~  ~χ
+                                                                                                                 ×S             q
+                                                                                                                                ~  ~N
+                                                                                                                                  ·S              M
+                             M                        M                  χ       M                            mM               mM                               4m2
+                                                                                                                                                            − m2N O15
+                                                                                                                                                                  M
+                                                                                              ⊥ − δ q
+                                                                                         2 ~vinel           ~ ·S ~χ                                                 
+                                                                                                       q |2
+                                                                                                      |~
+         13              χ̄2 γ µ γ 5 χ1 N̄ γµ N                                                                                            2 O8 + O9 + i m Nδ
+                                                                                                                                                            q |2
+                                                                                                                                                           |~
+                                                                                                                                                                 O11
+                                                                                              ~χ · S ~N ×      q
+                                                                                                               ~
+                                                                                         +2iS                mN
+                                                  ν
+                                                                                                                
+         14          χ̄2 γ µ γ 5 χ1 N̄ iσµν mq         N                                  4iS~χ ·    q
+                                                                                                     ~
+                                                                                                         mM
+                                                                                                           ×S~N                                             − 4m
+                                                                                                                                                              m
+                                                                                                                                                                 N
+                                                                                                                                                                   O9
+                                                  M                                                                                                                  M
+
+         15             χ̄2 γ µ γ 5 χ1 N̄ γµ γ 5 N                                              −4S~χ · S~N                                                     −4O4
+                                                  ν
+                                                                                                                                                                       
+                                                                                                                                              4mN
+         16        iχ̄2 γ µ γ 5 χ1 N̄ iσµν mq         γ5N                    4i mq~           ~N ~v
+                                                                                             ·S     ⊥
+                                                                                                    inel − |~
+                                                                                                             δ
+                                                                                                            q |2
+                                                                                                                      ~χ
+                                                                                                                 q~ · S                       mM
+                                                                                                                                                         O13 − i m Nδ
+                                                                                                                                                                  q |2
+                                                                                                                                                                 |~
+                                                                                                                                                                       O6
+                                                  M                                  M
+                                                                                                                                                             2mN
+         17          iχ̄2 iσ µν mqν γ 5 χ1 N̄ γµ N                                                2i mq~       ~χ
+                                                                                                              ·S                                             mM
+                                                                                                                                                                 O11
+                                   M                                                                     M                                                                        
+                                                                                     q |2
+                                                                                     h
+                                                                                    |~
+                                                                                                                                       i      m2             q |2
+                                                                                                                                                            |~
+                                                                   ~χ · q~
+                                                                   S                     im       ⊥ ·( q
+                                                                                            − 4~vinel   ~   ~N )
+                                                                                                           ×S
+                                                                                                                                               N
+                                                                                                                                                                  O11 + 4O15
+                                                           α           m            N mM               mM                                     m2            m2
+         18      iχ̄2 iσ µν mqν γ 5 χ1 N̄ iσµα mq              N              M                                                                M               N
+                             M                             M                             ~χ · ( q~ × S~N )
+                                                                                −4 mδ S        m                                                  −i 4m Nδ
+                                                                                                                                                           O9
+                                                                                              M                M                                      m2
+                                                                                                                                                       M
+                                                                                                                                                                  
+                                                                                                                                              4mN
+                                                                         −4i mq~               ~χ ~v ⊥ − δ 2 q~ · S
+                                                                                              ·S    inel |~
+                                                                                                          q|
+                                                                                                                  ~N                         −m     O14 − i m Nδ
+                                                                                                                                                             q |2
+                                                                                                                                                            |~
+                                                                                                                                                                  O6
+         19        iχ̄2 iσ µν mqν γ 5 χ1 N̄ γµ γ 5 N                                     M                                                        M
+                                 M                                                                   ~χ · S
+                                                                                                          ~N
+                                                                                              −i m4δ S                                                      −i m4δ O4
+                                                                                                     M                                                               M
+                                                       α                                                                                                        4m2
+         20     χ̄2 iσ µν mqν γ 5 χ1 N̄ iσµα mq            γ5N                            4 mq~      ~χ q~
+                                                                                                    ·S m
+                                                                                                                     ~N
+                                                                                                                    ·S                                          m2
+                                                                                                                                                                  N
+                                                                                                                                                                    O6
+                           M                           M                                       M               M                                                  M
+
+
+TABLE I: Relativistic operators for inelastic transitions between two fermions χ1,2 , their matrix element in the nonrelativistic
+limit multiplied by a factor of 1/(4mχ mN ), and their expansion in the basis of allowed scattering matrix-elements.
+
+
+C.    Relativistic Matrix Elements for Scalar-Vector                                                       nonrelativistic normalization for the nucleons.
+                  Inelastic Transitions                                                                       All of these matrix elements are in the form of M =
+                                                                                                           X~ ·~, where ~ is the polarization vector of the spin 1 dark
+   An additional novelty of inelastic scattering is that it                                                matter particle (which we take to be real for notational
+allows transitions between dark matter particles of dif-                                                   simplicity). Depending on whether the spin 1 particle is
+ferent spin. In this section, we consider the case where                                                   in the initial or final state, we
+                                                                                                                                           Phave to average or sum over
+this transition is between a scalar Φ and a vector V µ .                                                   these polarizations. Since pol i j = δ ij , we have for
+Such nearly degenerate states have been shown to occur                                                     the spin-summed (or averaged) matrix element squared
+in models where the dark matter is composite [27, 28] due                                                                     (
+                                                                                                                                 1 ~ 2
+to a hyperfine splitting in the dark sector. In Table II,                                                                        3 |X| spin 1 in initial state
+                                                                                                                    |M | =
+                                                                                                                        2                                      .     (14)
+we list eight Hermitian operators which can be mediated                                                                             ~ 2 spin 1 in final state
+                                                                                                                                   |X|
+by either spin 0 or 1 mediators. For the third column, we
+list the matrix element’s nonrelativistic limit after mul-                                                 This form allows us to treat these matrix elements with
+tiplying by a factor of 1/(2mN ) to go to the standard                                                     our basis of nonrelativistic operators in the following way.
+                                                                                                                                                                                   6
+
+                                                                              Nonrelativistic Limit × 2m1
+                                                                                                                                                           P
+                     Index   Relativistic Operator
+                                                                                                                        N                                      i ci Oi
+                                      ↔
+                                            
+                                                                                                                                                           mN
+                      1      m
+                              1
+                                    Φ ∂ µ V µ N̄ N                                              i mq~ · ~
+                                                                                                        ε                                                     O
+                                                                                                                                                           mM 11
+                               M                                                                    M
+
+                                                                                                                                                        mN
+                      2         1
+                                  ∂ (ΦV µ ) N̄ N
+                               mM µ
+                                                                                                i mq~   ·~ε                                                 O
+                                                                                                                                                        mM 11
+                                                                    h                              M           i                                                   
+                                                                                      2mN δ
+                      3            ΦV µ N̄ γµ N              1
+                                                             2
+                                                               ε·
+                                                               ~           ⊥ −
+                                                                        2~vinel         q |2
+                                                                                       |~
+                                                                                             −m
+                                                                                              mχ
+                                                                                                N            q
+                                                                                                             ~
+                                                                                                            mN
+                                                                                                                        ε · ( mq~ × S
+                                                                                                                     − i~           ~N )              i
+                                                                                                                                           O8 − O 9 + 2   2mN δ
+                                                                                                                                                            q |2
+                                                                                                                                                           |~
+                                                                                                                                                                 −m
+                                                                                                                                                                  mχ
+                                                                                                                                                                    N
+                                                                                                                                                                        O11
+                                                                                                                              N
+                                     ↔
+                                            
+                                                                                                                                                           mN
+                      4       i
+                             mM
+                                    Φ ∂ µ V µ N̄ γ 5 N                                  − mq~      ε mq~ · S
+                                                                                                  ·~       ~N                                             −m  O6
+                                                                                             M          N                                                       M
+
+                                                                                                                                                           mN
+                      5       i
+                                ∂ (ΦV µ ) N̄ γ 5 N
+                             mM µ
+                                                                                        − mq~ · ~
+                                                                                                ε mq~ · S
+                                                                                                        ~N                                                −m   O6
+                                                                                            M       N                                                        M
+
+                      6           ΦV µ N̄ γµ γ 5 N                                             ~N · ~
+                                                                                             −2S    ε                                                       −2O4
+                                                 ν                                                                                                           mN
+                      7       ΦV µ N̄ iσµν mq         N                            ε · ( mq~ × S
+                                                                                 2i~           ~N )                                                       −2 m   O9
+                                                 M                                         M                                                                 M
+                                                ν
+                                                                        h                           i                                         h                             i
+                      8      iΦV µ N̄ iσµν mq        γ5N                    ⊥ − 2mN δ − mN
+                                                                     ε · 2~vinel
+                                                                    i~                              q
+                                                                                                    ~   q
+                                                                                                        ~  ~N
+                                                                                                          ·S                               mN
+                                                                                                                                                    2O13 − i |~q |2 − m
+                                                                                                                                                              2mN δ     N
+                                                                                                                                                                            O6
+                                                M                                   q |2
+                                                                                   |~        mχ   mN mM                                    mM                         m  χ
+
+
+TABLE II: The inelastic relativistic operators for a transition from a dark matter particle of spin 0 to a spin 1 particle, Φ → V µ ,
+their matrix element in the nonrelativistic limit after multiplying by a factor of 1/(2mN ), and then their decomposition in the
+basis of allowed scattering matrix elements. This final step of replacing the spin 1 polarization vector ~ with S ~χ , is valid if we
+multiply the final matrix element squared by a correction factor ccorr in Eq. 16.
+
+
+                             Iodine Spectra for Fermion Operators                                             we can write it in the same operator basis as the fermion
+                     10
+                                              Op.7                                                            case. These correction factors are accounted for in the
+                      8                                                                                       additions we made to the Mathematica package of [13].
+   arbitrary units
+
+
+
+
+                      6
+                                       Op.19                                                                     D.      Relativistic Matrix Elements for Scalar-Scalar
+                                                                                                                                    Inelastic Transitions
+                      4
+                                          Op.9
+                      2                                                                                          As one more example, we analyze the case of a dark
+                               Op.13
+                                                                                                              matter scattering process with a transition from a spin 0
+                      0                                                                                       particle Φ1 to another spin 0 particle Φ2 . In Table III,
+                      20       30        40           50       60           70          80                    we list seven operators between these two scalars which
+                                                     keVnr                                                    can be mediated by either spin 0 or 1 mediators. For the
+                                                                                                              third column, we list the matrix element’s nonrelativistic
+                                                                                                              limit after multiplying by a factor of 1/(2mN ) to go to the
+FIG. 2:        Sample iodine scattering spectra with equal                                                    standard nonrelativistic normalization for the nucleons.
+couplings to protons and neutrons for fermion operators
+7, 9, 13, 19. The dark matter parameters are mχ = 70 GeV
+and δ = 120 keV. In solid are our predicted curves while
+                                                                                                                      IV.     FITTING DAMA/LIBRA’S ANNUAL
+dashed curves show incorrect spectra from combining elastic
+                                                                                                                                 MODULATION SIGNAL
+form factors with the inelastic velocity threshold.
+
+                                                                                                                 In this section we present fits to the DAMA/LIBRA
+                                   ~χ , we would have
+If we just naively replace ~ with S                                                                          annual modulation signal [3] while also considering con-
+                                                                                                              straints from XENON10 [30], XENON100 [31], LUX [32],
+                         1      X                         sχ (sχ + 1) ~ 2                                     CDMS [33], COUPP [34], and KIMS [35]. Unfortunately,
+|M |2 =                                S i S j X i∗ X j =            |X| .
+                      2sχ + 1 spins,i,j χ χ                    3                                              we cannot be inclusive in our consideration of constraints.
+                                                                                                              In particular we cannot derive limits from other direct
+                                                                                                 (15)         detection experiments such as CRESST (CaWO4 ) [36]
+                                                                                                              or fully analyze KIMS (CsI) which could be sensitive to
+Thus, we can use the same operator basis where we                                                             the preferred parameter spaces. This is because tung-
+naively replace ~ with S  ~χ by multiplying the final result                                                 sten and cesium form factors are not yet available in the
+by a correction factor                                                                                        Mathematica package [13], so we cannot treat them at
+              (                                                                                               the same level. However, KIMS most recent analysis [35]
+                       1                                                                                      claims any scenario involving iodine scattering to explain
+                  sχ (sχ +1) spin 1 in initial state
+      ccorr =           3
+                                                     .                                                        the DAMA modulation is incompatible with their data,
+                   sχ (sχ +1) spin 1 in final state      (16)                                                 which considering only iodine scattering, is mostly accu-
+                                                                                                              rate, but there are some exceptions. As we will demon-
+Thus, in the final column of Table II, we decompose the                                                       strate, KIMS limits are strongly dependent on the iodine
+                                              ~χ , so that
+matrix element under this replacement of ~ → S                                                               quenching factors which have some large uncertainties at
+                                                                                                                                                  7
+
+                                                               Nonrelativistic Limit × 2m1
+                                                                                                                           P
+        Index         Relativistic Operator
+                                                                                                N                              i ci O i
+
+          1                  Φ2 Φ1 N̄ N                                          1χ 1N                                         O1
+          2                Φ2 Φ1 iN̄ γ 5 N                                     i mq~ · S
+                                                                                       ~N                                    O10
+                                                                                   N
+                               ↔
+                                      
+                      1                                                          mχ                                          m
+          3          mM
+                            iΦ2 ∂ µ Φ1 N̄ γ µ N                               2 m 1χ 1N                                    2 m χ O1
+                                                                                   M                                          M
+                           ↔
+                                                                                                                                         
+                                                                      m                                          m
+          4        1
+                  mM
+                        iΦ2 ∂ µ Φ1 N̄ γ µ γ 5 N                −4 m χ            ⊥ − δ q
+                                                                               ~vinel  q |2
+                                                                                      |~
+                                                                                               ~N
+                                                                                            ~ ·S              −4 m χ       O7 + i m Nδ
+                                                                                                                                   q |2
+                                                                                                                                  |~
+                                                                                                                                        O10
+                                                                          M                                       M
+
+                    1                                                                   ~N                                mN
+          5        m
+                        ∂µ (Φ2 Φ1 ) N̄ γ µ γ 5 N                             − m2i q~ · S                              −2 m  O10
+                   M                                                            M                                              M
+                           ↔
+                                  
+                                                ν
+                                                                                    
+                                                        m                        ~N + mχ 2 |~                 mχ                mχ mN
+          6      1
+                mM
+                      iΦ 2 ∂ µ Φ1   N iσµν mq N                ⊥ ·
+                                                      4i m χ ~vinel       m
+                                                                           q
+                                                                           ~
+                                                                              ×S          m m
+                                                                                              q |2 1 χ 1 N   mN m2
+                                                                                                                    q |2 O 1 − 4 m
+                                                                                                                   |~              2  O3
+                                                M         M                M                N   M                M                 M
+                         ↔
+                               
+                                              ν                               m                                            mχ mN
+          7      i
+                mM
+                      iΦ2 ∂ µ Φ1 N iσµν γ 5 mq N                           4i m χ mq~ · S
+                                                                                        ~N                             4    m2
+                                                                                                                                 O10
+                                                  M                            M    M                                         M
+
+
+TABLE III: The inelastic relativistic operators for a transition between dark matter particles both of spin 0, Φ1 → Φ2 , their
+matrix element in the nonrelativistic limit after multiplying by a factor of 1/(2mN ), and then their decomposition in the basis
+of allowed scattering matrix elements.
+
+
+the moment. Given all of these caveats, we will find some                        quenching factor shifts the nuclear recoil energies that
+allowed regions on parameter space but expect these sce-                         are relevant to DAMA to higher energies, so even though
+narios to be tested in the near future.                                          there is no suppression at xenon targets for scattering
+                                                                                 due to kinematics, the energy range could be outside of
+                                                                                 the acceptance range for LUX and XENON100 (this is
+                                                                                 more important for LUX as it has a smaller acceptance
+                A.     Experimental Input
+                                                                                 window). We find that a smaller quenching factor gen-
+                                                                                 erally requires a larger value of δ to fit the DAMA data
+   To analyze the direct detection signal, we take a dark                        which leads to a suppression of scattering at lighter tar-
+matter density ρ = 0.3 GeV/cm3 [37] and a Maxwell-                               gets like the germanium at CDMS. These considerations
+Boltzmann velocity distribution with parameters v0 =                             mean that an uncertainty in the quenching factor has
+220 km/s [38] and vesc = 550 km/s [39]. For DAMA,                                profound consequences for constraining signals seen in
+since inelastic kinematics favors scattering off of heavier                      direct detection experiments.
+targets, we only consider scattering off of the iodine nu-
+clei in the NaI crystals. We calculated the shift in the                            As limits, we first consider the xenon scattering lim-
+best fit points due to Na for operator 2 and found only                          its in recent analyses by XENON100 [31] and LUX [32].
+a 0.07% change in the best fit mM , and a 0.01% shift                            For XENON100’s analysis, there was an exposure of
+in χ2 , so decided not to include Na in the full analy-                          7.6 × 103 kg · days and the acceptance we used was ex-
+sis. We found the modulation rate for scattering off of                          tracted from the hard discrimination cut of Fig. 1 in [31]
+iodine alone and determined the point in (mχ , δ, mM )                           used in their maximum gap analysis. This acceptance
+parameter space which minimized a χ2 fit against the                             range is 2 to 43.3 keVnr , though we extended their ac-
+DAMA/LIBRA data [3]. For our χ2 , we used the first                              ceptance window to 50 keVnr assuming the acceptance
+12 bins of their data, which corresponds to an energy                            didn’t change in the last 6.7 keVnr . They observed two
+range of 2-8 keVee . Later on, when we plot the 2D                               events, which we take to be all signal, giving a Pois-
+parameter space (δ, 1/mM ), we will show contours for                            son 90% C.L. limit of 5.32 events. LUX’s analysis had
+∆χ2 = 2.3, 5.99 representing the 68, 95% C. L. region for                        1.0 × 104 kg · days of exposure and used a 99.6% efficiency
+two degrees of freedom (d.o.f.).                                                 after a 50% NR acceptance in an energy range of 10-36
+   An important parameter in our fits is the quenching                           keVnr (the low energy, 0-10 keVnr , efficiency isn’t 99.6%
+factor we adopt for iodine in NaI. The quenching factor Q                        but can be found in the efficiency curve after the sin-
+determines the relationship between the measured energy                          gle scattering requirements have been accounted for in
+in electron equivalents, keVee , and the original energy im-                     Fig. 1 of [32]). They observed one event, which we take
+parted to the nucleus keVnr , keVee = Q×keVnr . Because                          to be all signal, leading to a Poisson 90% C.L. limit of
+of this, a good measurement of the quenching factor is                           3.89 events. As both XENON100 and LUX experiments
+necessary to determine the mass splitting and dark mat-                          were primarily searching for elastic dark matter, their
+ter mass which best fits the DAMA/LIBRA modulation                               energy ranges weren’t conducive to a search for inelastic
+signal as well as determining the constraints from other                         dark matter which favors higher nuclear recoil energies,
+experiments. For NaI, the value for iodine’s quenching                           leading to weakened sensitivities. To be sensitive to these
+factor QI = 0.09 [40] is widely used, however a more                             high energy scatters, we also consider an older XENON10
+recent paper [41] reports a measurement of QI = 0.04.                            analysis that was focused on inelastic dark matter [30].
+We will consider both values for iodine’s quenching fac-                         This XENON10 analysis had an exposure of 316 kg·days,
+tor in what follows and denote it by QNaI . A smaller                            with an extended energy range of 75-250 keVnr that has
+                                                                                                                        8
+
+a high efficiency ∼ 32%, after applying software cuts and      value of QI ∼ 0.05 for CsI too. The recent paper only
+nuclear recoil acceptance. They saw no events in their ex-     measured CsI doped with sodium, which is not the same
+tended range. Since the advantage of this analysis over        as the KIMS detectors which are doped with thallium.
+the more recent xenon experiments is its extended energy       However, in light of the new measurement and since the
+range and not its exposure we chose to constrain models        earlier measurement [43] found similar quenching factors
+if they predict more than 2.3 events (the 90% C.L. limit       for detectors of different doping, a value of QI ∼ 0.05 for
+with no observed events) in this 75-250 keVnr range.           the KIMS detectors seems reasonable. Thus, we consider
+   We looked at the constraints from CDMS inelastic dark       both values in the following analysis and to differentiate
+matter search from their germanium detectors [33] as           it from the iodine quenching factor for NaI, we denote
+well. Due to the lighter mass of germanium relative            it as QCsI . As another reminder, we emphasize that we
+to xenon, we expected its limits would be suppressed           cannot perform this analysis with cesium scattering, so
+relative to xenon limits. This CDMS analysis had 970           all our constraints from the KIMS experiment are assum-
+kg·days of exposure, and even with perfect acceptance          ing only iodine recoils. Thus, the KIMS limits should get
+the exclusions for all operators were & 1000 times weaker      stronger with cesium scattering, but we unfortunately do
+than the limits from the xenon experiments. Thus we            not know how large of an effect this is.
+decided not to include any more details for germanium             One other issue we need to consider is the running time
+detectors.                                                     of these experiments, since large modulation can lead to
+   An important constraint comes from COUPP which              order one changes in the scattering rate throughout the
+employs a CF3 I target [34]. We considered scattering of       year. We use the average scattering rate for XENON100,
+the dark matter off of the iodine as well as the fluorine,     COUPP, and KIMS since their exposure was accumu-
+but not the carbon as its form factor isn’t available in the   lated over a year, for LUX we use the maximum rate
+Mathematica package. However, due to carbon’s light            since its exposure was obtained during the summer, and
+mass, it shouldn’t give a significant contribution except      for XENON10 we average over its run from October to
+for small mass splittings. Our analysis of the COUPP           February.
+data proceeds similarly to our analysis of the xenon ex-
+periments. COUPP had three runs with i) exposures of
+70.6 kg·days and an energy threshold of 7.8 keVnr , ii)
+88.5 kg·days with an energy threshold of 11 keVnr , and         B.   Reanalysis of Magnetic Inelastic Dark Matter
+iii) 394 kg·days with an energy threshold of 15.5 keVnr .
+We considered only single bubble events for which there           In this section, we revisit the case of magnetic inelas-
+was a total efficiency of 79.1%, and we used the step-         tic dark matter where the transition is mediated by a
+function efficiency model [42] for the iodine nucleation       magnetic dipole transition [23]
+efficiency which rises to 100% above 40 keVnr . Note that
+we didn’t observe a significant shift in the derived lim-                         µχ
+                                                                             L=      χ̄2 σ µν χ1 Fµν + h.c.          (17)
+its when using the other parameterized efficiencies [42].                          2
+COUPP saw a total of 13 events for all three energy
+thresholds after time-isolation cuts. Considering these        Theoretically this scenario is appealing since the tensor
+as signal gives a Poisson 90% C.L. limit of 18.96 events.      operator vanishes for Majorana fermions, naturally lead-
+In all cases, we integrated scatters up to 200 keVnr which     ing to an inelastic transition. Furthermore, iodine has a
+covers the range of allowed scatters.                          large dipole moment relative to most other heavy nuclear
+   The last experiment we consider is KIMS [35] which          targets, mitigating xenon and tungsten constraints [23].
+has a CsI target. Their analysis has 90% C.L. limits           As mentioned earlier, the form factors used for these sce-
+on the dark matter scattering rate in eight bins ranging       narios were highly uncertain [23], but we can now reliably
+from 3-11 keVee . For the purposes of constraining op-         calculate them with our modification of the Mathematica
+erators we consider a scenario ruled out if the predicted      code. Note that cesium does have a large dipole moment
+rate in any of these eight bins is larger than the stated      as well, but since it isn’t implemented in the Mathemat-
+limit for that bin. Because KIMS uses CsI there is a dif-      ica notebook, we unfortunately have to neglect its scat-
+ferent quenching factor for the iodine than the one for        tering contribution.
+NaI crystals. In [43] the quenching factor is measured            To calculate the form factor for the dipole transition,
+to be ∼ 0.10 over a range of 20 to 120 keVnr . However,        we use the following coefficients for the fermion operators
+similar to NaI, recent results [44] have pointed to a lower    9 and 10 involving protons and neutrons
+                                                                                                                                9
+
+                                                      90%      90%                 90%  90%    90%        90%
+            QNaI mχ (GeV) δ(keV) mM (GeV) χ2 /d.o.f. rXENON10 rXENON100           rLUX rCOUPP rKIMS,0.10 rKIMS,0.05
+                                                 Magnetic Inelastic Dark Matter
+            0.09    58.0    111.7     3209       0.97       0.0002       17.500    67.5    1.39      1.17       0.08
+            0.04    122.7   179.3     1096       0.82       0.2943        0.284     0.0    1.32      0.97       0.93
+
+TABLE IV: This table presents the best fit parameters to the DAMA/LIBRA data for the magnetic dipole transition operator
+and its χ2 /d.o.f. value. For these operators, the couplings are defined in Eq. 18. The final five columns give normalized limits,
+with the ratio of predicted to 90% C.L. allowed counts for XENON10, XENON100, LUX, and COUPP and the largest ratio of
+the KIMS bins counts/kg·days/keV over the 90% C.L. limit (this limit is presented for two different iodine quenching factors
+for KIMS, QCsI ). There is a fit for two values of the iodine quenching factor for NaI QNaI = 0.09, 0.04. Due to data taking
+conditions, the values for the XENON100, COUPP, and KIMS columns use the average yearly rate, the rate for LUX was the
+maximum, and the rate for XENON10 was averaged from October to February.
+
+
+
+
+                                                                                             qα
+                                                                                               
+                            1        µν qν                   mM            µν qν
+                    LMIDM = 2 χ̄2 iσ       χ1 p̄γµ p + 0.9          χ̄2 iσ         χ1 p̄iσµα    p
+                           q           mM                  mN q 2             mM             mM
+                                                                                              qα
+                                                                                                   
+                                                              mM             µν qν
+                                                      − 0.96          χ̄2 iσ        χ1 n̄iσµα     n .                        (18)
+                                                             mN q 2            mM             mM
+
+
+
+The relative coefficients are set by the proton and neutron          lar to iodine, the scattering off xenon will be roughly
+magnetic moments being 2.8 and −1.91 nuclear magne-                  in the same range of nuclear recoil energies. This ex-
+tons, respectively. Given the overall normalization, the             plains why the LUX constraints are noticeably weaker
+relationship between our mM and the dark matter dipole               for QNaI = 0.04, since its acceptance goes to zero above
+moment is 1/mM = eµχ .                                               ∼ 36 keVnr while XENON100’s goes up to 50 keVnr .
+   The best fit points in this parameter space are shown             This acceptance helps to make XENON100 competitive
+in Table IV for the two choices of quenching factor,                 despite its smaller exposure.
+QNaI = 0.09, 0.04. The χ2 /d.o.f. for our fit to DAMA is
+shown, with a d.o.f. = 9, showing a very nice goodness
+of fit. The final six columns show the normalized lim-
+its, r, from xenon and iodine experiments so that r val-
+ues above 1 are constrained at 90% C.L. For XENON10,
+XENON100, LUX, and COUPP experiments, r is the ra-                      To show this effect, we look at the best fit spectra for
+tio of predicted events over the number of events allowed            magnetic inelastic dark matter with different QNaI val-
+at 90% C.L. (2.3, 5.32, 3.89, and 18.96 respectively). For           ues. We saw that XENON100 and LUX were a strong
+KIMS, in each bin from 3-11 keVee we take the predicted              constraint for the larger value of the quenching factor,
+bin rate divided by the 90% C.L. limit on the rate in                but the constraints for QNaI = 0.04 were much weaker.
+that bin, with r being the largest of these bin ratios. We           This is directly related to the location of the scattering
+list KIMS constraints where we assume two values of the              spectrum relative to the experimental acceptance win-
+quenching factor QCsI = 0.10 and 0.05 for CsI. Notice                dows as shown in Fig. 3. For QNaI = 0.09, the peak of the
+that for QNaI = 0.04, the scenario is narrowly excluded              spectrum is well covered by both experiments, leading to
+by COUPP while being unconstrained by the other ex-                  the stringent constraints. However, for QNaI = 0.04, the
+periments.                                                           peak scattering is missed by both experiments, with LUX
+                                                                     having no sensitivity. Given these high energy events, we
+                                                                     also checked the constraints from XENON10’s inelastic
+                     Xenon Constraints                               dark matter analysis [30] which extended to much higher
+                                                                     energies. In Fig. 3 and Table IV, one can see that this
+   The strength of the LUX or XENON100 limit depends                 XENON10 constraint is slightly stronger for the smaller
+strongly on the value of QNaI we choose. For the stan-               iodine quenching factor, but is still not able to constrain
+dard value QNaI = 0.09, the 2 − 6 keVee energy range of              this scenario due to its low exposure. On the other hand,
+DAMA’s modulation spectra is ∼ 22 − 67 keVnr . With                  in existing XENON100 or LUX data there are about
+the lower value of QNaI = 0.04 this changes to a much                ∼ 100 events at high energy, so we encourage an ex-
+higher range of 50−150 keVnr . For inelastic dark matter,            tension of their analysis to energies above 50 keVnr . If
+the modulated and unmodulated spectra span roughly                   the background in this region can be kept under control,
+the same energy bins and since xenon’s mass is simi-                 they would have a high sensitivity to this scenario.
+                                                                                                                                               10
+
+                           Xe Spectrum for Magnetic IDM                                                   Xe Spectrum for Magnetic IDM
+                                    QNaI = 0.09                                                                    QNaI = 0.04
+
+              0.0020                                                                        0.00025
+                                                                Predicted                   0.00020
+
+
+
+
+                                                                               cpdkgkeV
+ cpdkgkeV
+
+
+
+
+              0.0015
+                                                                XENON10
+                                                                                            0.00015
+              0.0010                                            XENON100
+                                                                                            0.00010
+                                                                LUX
+              0.0005                                                                        0.00005
+              0.0000                                                                        0.00000
+                       0       50      100        150     200                                         0       50      100     150        200
+                                      keVnr                                                                          keVnr
+
+FIG. 3: These figures shows the xenon scattering spectrum for the best fit to DAMA’s signal for magnetic inelastic dark matter
+for two choices of QNaI . The black curve is the expected spectrum while the orange (blue, orange-dashed) curve is the accepted
+spectrum for XENON100 (LUX, XENON10). Note that for QNaI = 0.09 the peak is visible to both XENON100 and LUX, but
+for QNaI = 0.04 both these experiments’ acceptances are too low at high energy to see a significant number of events.
+
+
+                                Iodine Constraints                     quenching factor to 0.05, the spectrum shifts to lower
+                                                                       values again leading to a rate that is almost constrained
+                                                                       in the first bin with a smaller normalized limit, r. Given
+   As expected, the constraints from other iodine detec-               the uncertainties, we consider both CsI quenching factors
+tors are very stringent for most inelastic dark matter sce-            in presenting KIMS limits. However, if the same physics
+narios since this is a direct comparison of the same target.           leads to the quenching factors of NaI and CsI to be of
+For COUPP constraints, changing QNaI hardly affects                    similar size, we find that KIMS becomes a more robust
+the constraints. The energy thresholds of the COUPP                    constraint.
+runs are not too high to lose many low energy events
+                                                                          Up to these quenching factor issues, iodine targets still
+and the acceptance at high energy means that COUPP
+                                                                       provide the most model independent constraints on sce-
+is sensitive to essentially all of the iodine scattering rele-
+                                                                       narios where iodine scattering explains the DAMA signal.
+vant for DAMA. This explains why COUPP is the best
+                                                                       For these cases, the only way to suppress scattering is to
+constraint on DAMA both in terms of sensitivity and
+                                                                       have higher modulation amplitude. Since COUPP and
+robustness from quenching factor uncertainties.
+                                                                       KIMS both ran over a year, this can lead to a modest
+   For KIMS, if the iodine quenching values used by the                drop in sensitivity which explains why the higher δ point
+DAMA and KIMS experiments, QNaI = 0.09, QCsI =                         has weaker constraints.
+0.10 are correct, the best fit point for magnetic inelas-
+tic dark matter is ruled out. These constraints show a
+strong dependence on the quenching factor values cho-
+sen. As the recent work of [41] and [44] shows, the cor-                    Combined Limit Plots for Magnetic Inelastic Dark Matter
+rect values are not pinned down yet and could be sig-
+nificantly smaller. This is especially relevant to KIMS                   Although the best fit points for magnetic inelastic dark
+constraints, since the scattering spectrum can be sub-                 matter are ruled out conclusively by COUPP, there can
+stantially shifted in energy, allowing much weaker con-                be viable regions of parameter space which maintain a de-
+straints for some choices of the quenching factors. As                 cent fit to DAMA. To search for these we fix the best fit
+an illustration, we show in the four plots of Fig. 4 how               dark matter mass and then explored the remaining two
+the spectra at KIMS shifts as we change the two quench-                dimensional parameter space in (δ, mM ). For DAMA,
+ing factors. In the upper left plot, we see that for the               the 68, 95% C.L. parameter estimation regions were com-
+quenching factors QNaI = 0.09, QCsI = 0.10, the best fit               puted relative to the best fit χ2 . As can be seen in the left
+point is constrained in the lowest KIMS bin. However,                  plot of Fig. 5, if QNaI = 0.09, the constraints from LUX
+in the upper right plot, changing to QCsI = 0.05, we                   and XENON100 are strong and rule out all of the DAMA
+see that the spectrum shifts to energy bins below their                parameter space. However, for the case of QNaI = 0.04,
+threshold, giving no constraint. In general, such a com-               the right plot of Fig. 5 shows that the constraints from all
+bination of quenching factors leads to particular weak                 experiments weaken as one moves to higher values of the
+limits from KIMS due to the scattering moving below                    mass splitting, leading to a sliver of the 68% C.L. DAMA
+threshold. In the bottom left, the benchmark point with                region which is not constrained and a significant region
+QNaI = 0.04, QCsI = 0.10, leads to a mild constraint in                allowed at 95% C.L. That XENON10 and the iodine ex-
+the 6 keVee bin. In the bottom right, changing the CsI                 periments slowly fall off with increasing mass splitting
+                                                                                                                                    11
+
+                                 KIMS Spectrum for Magnetic IDM                        KIMS Spectrum for Magnetic IDM
+                                    QNaI = 0.09, QCsI = 0.10                              QNaI = 0.09, QCsI = 0.05
+
+                         0.025                                                 0.025
+                         0.020                                                 0.020
+            cpdêkgêkeV
+
+
+
+
+                                                                  cpdêkgêkeV
+                         0.015                                                 0.015
+                         0.010                                                 0.010
+                         0.005                                                 0.005
+                         0.000                                                 0.000
+                                  4        6           8    10                          4        6           8    10
+                                               keVee                                                 keVee
+                                 KIMS Spectrum for Magnetic IDM                        KIMS Spectrum for Magnetic IDM
+                                    QNaI = 0.04, QCsI = 0.10                              QNaI = 0.04, QCsI = 0.05
+
+                         0.025                                                 0.025
+                         0.020                                                 0.020
+            cpdêkgêkeV
+
+
+
+
+                                                                  cpdêkgêkeV
+                         0.015                                                 0.015
+                         0.010                                                 0.010
+                         0.005                                                 0.005
+                         0.000                                                 0.000
+                                  4        6           8    10                          4        6           8    10
+                                               keVee                                                 keVee
+
+FIG. 4: This figure shows the KIMS energy spectrum for scattering events for magnetic inelastic dark matter at different QNaI ’s
+and QCsI ’s. The blue points are the best fit points predicted rates and the black lines are the 90% limits in each KIMS bin
+[35]. Notice that the peak can shift from lower to higher energies as the quenching factors vary causing significant changes to
+the limit.
+
+
+shows how these experiments are mostly being weakened                      by a dimensionful coupling λ to describe the effective
+by increasing modulation and not a change in the energy                    operator in the Lagrangian. For the fermion operators,
+spectrum.                                                                  we took this coupling to be λ = 1/m2M , so that mM
+   In Fig. 6, we show the modulation spectra for the best                  characterizes the scale of the effective operator. For the
+fit point and an unconstrained point with the DAMA                         bosonic cases, we instead take λ = 1/mM . Thus the
+data points for comparison. We see that the increase                       parameters we varied were the dark matter mass mχ ,
+in mass splitting leads to a degradation in the χ2 but                     the dimensional coupling parameter mM , and the mass
+still has a good fit to the DAMA spectra. Note that                        splitting δ.
+the values of 1/mM required are quite reasonable since                        To narrow our survey and to specifically avoid the
+the magnetic moment of a particle should be of order a                     stringent constraints of xenon target experiments, we
+dark matter “magneton” = e/(2mχ ), so that 1/mM ∼                          only considered operators whose transition probabilities
+e2 /(2mχ ) = 5 × 10−4 ( 100mGeV
+                            χ
+                                ). The required magnetic                   for iodine were significantly (≥ 10 times) enhanced over
+moment seems to be similar to those seen in the nucleon                    xenon. These operators were identified by examining the
+sector and thus it seems plausible that this part of param-                ratio of iodine’s transition probability to xenon’s at the
+eter space could appear generically in a complete model                    minimum velocity for iodine (see Eq. 7), as it is higher
+of magnetic inelastic dark matter.                                         than the minimum velocity for xenon scattering. This
+                                                                           ratio was plotted, for a specific value of mχ with the cou-
+                                                                           pling mM set to 1, on the (δ, ER ) plane with ER the
+      C.   General Model Independent Analysis                              nuclear recoil energy. The operators’ coupling to nucle-
+                                                                           ons was varied between pure proton, pure neutron, equal
+   Now, we consider a more general model independent                       coupling to proton and neutron, and equal but opposite
+search for consistent scenarios that explain the DAMA                      couplings. We found that only pure coupling to pro-
+annual modulation signal. We performed a survey of the                     tons significantly favored iodine over xenon and further
+relativistic operators listed in Tables I-III by analyzing                 that all iodine-enhanced operators had some contribution
+the scattering when only one operator is turned on at a                    from the nucleon spin O ~ N , see Eq. 12. Since iodine’s nu-
+                                                                                                     3
+time. Depending on the operator, we need to multiply                       cleus has an unpaired proton while xenon has an unpaired
+                                                                                                                                                                                   12
+
+                                          Magnetic IDM with QNaI = 0.09                                                            Magnetic IDM with QNaI = 0.04
+                     0.0007 0.0007
+                              0.0006
+                                                                                                             0.0014 0.0014
+                     0.0006   0.0005                                                                                  0.0012
+                              0.0004                                                                         0.0012
+                                                                                                                      0.0010
+                              0.0003
+                     0.0005 0.0002                                                                           0.0010 0.0008
+
+
+
+
+                                                                                                1êmM HGeVL
+        1êmM HGeVL
+
+                              0.0001
+                                    100   105   110   115   120    125                                                         176 178 180 182 184 186 188 190
+
+                     0.0004                                                                                  0.0008
+
+                     0.0003                                                                                  0.0006
+
+                                                                                                             0.0004
+                     0.0002
+                                                                                                             0.0002
+                     0.0001
+
+                                                                  d HkeVL                                                                               d HkeVL
+                              0           20          40          60       80     100     120                       100             120             140          160   180   200
+
+
+
+FIG. 5: This figure shows the combined limits plots for magnetic inelastic dark matter. The DM masses used are those listed
+with the corresponding operator in Table IV. Constraints from LUX (blue), XENON100 (orange), XENON10 (orange dashed),
+KIMS (QCsI = 0.05 magenta solid, QCsI = 0.10 magenta dashed) and COUPP (black) are also shown, with the 90% C.L. limits
+listed in section IV.
+
+                                                                                        Magnetic IDM with QNaI = 0.04
+                                                                          0.04
+
+                                                                          0.03
+                                                       Sm HcpdêkgêkeVL
+
+
+
+
+                                                                          0.02
+
+                                                                          0.01
+
+                                                                          0.00
+
+                                                                         -0.01
+                                                                              0            2                 4                 6                  8
+                                                                                                        keVee
+
+FIG. 6: This shows the magnetic inelastic dark matter modulation amplitudes with the DAMA data points for comparison.
+The plot assumes a iodine quenching factor QNaI = 0.04 and has both the best-fit modulation amplitude in blue and a sample
+unconstrained fit in orange. The parameter values for the best fit are (mχ , δ, mM ) = (122.7 GeV, 179.3 keV, 1096 GeV) and
+χ2 /d.o.f. = 0.82 and for the unconstrained point are (mχ , δ, mM ) = (122.7 GeV, 184.5 keV, 952 GeV) and χ2 /d.o.f. = 1.17.
+
+
+neutron, this explains why the sensitivity is enhanced if                                                    the normalized limits, r, from xenon and iodine experi-
+we only couple to the proton [45]. As a check that this                                                      ments so that r values above 1 are constrained at 90%
+method for selecting operators finds all relevant ones, we                                                   C.L. For XENON100, LUX, and COUPP experiments, r
+also performed a full analysis for several other operators                                                   is the ratio of predicted events over the number of events
+and nucleon couplings and found the results matched our                                                      allowed at 90% C.L. (5.32, 3.89, and 18.96 respectively).
+predictions from this selection process. Note that our in-                                                   For KIMS, in each bin from 3-11 keVee we take the pre-
+ability to treat cesium in KIMS is particularly important                                                    dicted bin rate divided by the 90% C.L. limit on the rate
+for coupling to proton spin, since cesium also has an un-                                                    in that bin, with r being the largest of these bin ratios.
+paired proton. On the other hand, tungsten isotopes only                                                     We list KIMS constraints where we assume two values
+have unpaired neutrons, so we expect that their rates                                                        of the quenching factor QCsI = 0.10 and 0.05 for CsI.
+would be suppressed much like xenon targets.                                                                 Notice that there are a few operators which are narrowly
+                                                                                                             excluded by COUPP while being unconstrained by the
+   The best fit points in this parameter space is shown in                                                   other experiments.
+Tables V and VI for the two choices of quenching factor
+of QNaI = 0.09, 0.04. The χ2 /d.o.f. for our fit to DAMA                                                        Even though we’ve discussed how XENON10 is sensi-
+is shown, with a d.o.f. = 9, showing a reasonable good-                                                      tive to much higher energy scatters than XENON100 or
+ness of fit for all operators. The final five columns show                                                   LUX, we find that it generically sets weaker constraints
+                                                                                                                             13
+
+                                                             90%                   90%  90%    90%        90%
+             Op. # QNaI mχ (GeV) δ(keV) mM (GeV) χ2 /d.o.f. rXENON100             rLUX rCOUPP rKIMS,0.10 rKIMS,0.05
+                                                     Spin 1/2 → 1/2 Transition
+                     0.09    44.2    59.0     15.9         1.08         0.049     0.130    3.28      2.27      0.21
+                2
+                     0.04    84.6    103.2    17.4         1.03         0.006     0.014    4.23      2.50      2.16
+                     0.09    40.8    57.0      0.5         1.15         0.030     0.082    2.77      2.08      0.06
+                4
+                     0.04    61.8     0.0      1.0         1.01         0.035     0.072   10.30      5.17      4.30
+                     0.09    55.3    108.3     1.6         0.97         0.017     0.053    1.41      1.09      0.11
+                7
+                     0.04   111.8    163.2     1.5         0.97         0.001     0.000    1.81      1.22      1.12
+                     0.09    44.2    59.0      7.8         1.08         0.049     0.130    3.28      2.27      0.21
+                8
+                     0.04    84.6    103.2     8.3         1.03         0.006     0.014    4.23      2.50      2.16
+                     0.09    47.4    69.0      4.6         1.01        40.420 117.900      3.00      2.19      0.21
+                9
+                     0.04    95.1    135.1     4.0         0.99         1.791     2.847    2.79      1.83      1.59
+                     0.09    40.9    53.2      2.5         1.06         0.111     0.284    3.12      2.21      0.09
+               10
+                     0.04    62.4     0.0      3.7         1.00         0.156     0.282   12.67      5.26      4.34
+                     0.09    50.8    96.6      5.8         1.11         0.042     0.119    1.72      1.29      0.10
+               11
+                     0.04    85.5    106.4     7.7         1.03         0.032     0.056    4.26      2.44      2.10
+                     0.09    56.1    110.9    19.6         0.96        13.640    55.640    1.32      1.08      0.08
+               13
+                     0.04   112.6    170.7    15.6         0.94         0.751     0.015    1.42      0.97      0.92
+                     0.09    50.8    96.6      5.8         1.11         0.042     0.119    1.72      1.29      0.10
+               14
+                     0.04    85.5    106.4     7.7         1.03         0.032     0.056    4.26      2.44      2.10
+                     0.09    54.3    106.0    49.6         1.02         0.021     0.069    1.49      1.15      0.10
+               15
+                     0.04   102.7    146.8    54.3         1.00         0.005     0.006    2.47      1.60      1.44
+                     0.09    52.6    97.5      0.6         1.02         0.045     0.139    1.66      1.23      0.09
+               19
+                     0.04    99.9    137.7     0.7         1.01         0.012     0.015    2.18      1.36      1.20
+                     0.09    40.8    57.0      2.5         1.15         0.030     0.082    2.77      2.08      0.06
+               20
+                     0.04    61.8     0.0      3.9         1.01         0.035     0.072   10.30      5.17      4.30
+
+TABLE V: This table presents the best fit parameters to the DAMA/LIBRA data for each fermionic operator for which iodine
+showed an enhancement over xenon, considering proton coupling only, and their χ2 /d.o.f. value. For these fermion operators,
+the coupling is λ = 1/m2M . The final five columns give normalized limits, with the ratio of predicted to 90% C.L. allowed
+counts for XENON100, LUX, and COUPP and the largest ratio of the KIMS bins counts/kg·days/keV over the 90% C.L. limit
+(this limit is presented for two different iodine quenching factors for KIMS, QCsI ). Each operator has a fit for two values of
+the iodine quenching factor for NaI QNaI = 0.09, 0.04. Due to data taking conditions, the values for the XENON100, COUPP,
+and KIMS columns uses the average yearly rate, and the rate for LUX was the maximum.
+
+
+for this model independent analysis due to its lower expo-                 Combined Limit Plots for Relativistic Operators
+sure. In a few cases, the limits of XENON10 were similar
+or just a bit larger than XENON100, for example fermion
+operators 7, 15, and 19, spin 0 to 1 operators 6, and spin            Although the best fit points are ruled out conclusively
+0 to 0 operator 4, but they were not large enough to be             by COUPP, we still find viable regions of parameter space
+constraining. Because these constraints were not strong             which maintain a decent fit to DAMA, similar to the case
+enough to rule out any best fit points, we chose not to             of magnetic inelastic dark matter. For some of the op-
+include the XENON10 limits in our tables or figures for             erators, we found that the DAMA regions could stretch
+this model independent survey.                                      far into the high δ region of parameter space. The result-
+                                                                    ing increase in modulation can lead to consistency with
+                                                                    the COUPP and KIMS constraints. The fermion oper-
+                                                                    ators which have such an allowed region are operator 2
+                                                                    for QNaI = 0.09, operator 7 for both quenching factors,
+                                                                    operator 9 for QNaI = 0.04, 11 for QNaI = 0.09, 13 for
+                                                                    QNaI = 0.04, 15 with both quenching factors, and 19 with
+                                                                                                                            14
+
+                                                             90%               90%  90%    90%        90%
+             Op. # QNaI mχ (GeV) δ(keV) mM (GeV) χ2 /d.o.f. rXENON100         rLUX rCOUPP rKIMS,0.10 rKIMS,0.05
+                                                     Spin 0 → 1 Transition
+                     0.09    40.8    57.0      0.5       1.15         0.030   0.082        2.77       2.08       0.06
+                4
+                     0.04    61.8     0.0      1.0       1.01         0.035   0.072    10.30          5.17       4.30
+                     0.09    40.8    57.0      0.5       1.15         0.030   0.082        2.77       2.08       0.06
+                5
+                     0.04    61.8     0.0      1.0       1.01         0.035   0.072    10.30          5.17       4.30
+                     0.09    54.3    106.0    22.6       1.02         0.021   0.069        1.49       1.15       0.10
+                6
+                     0.04   102.7    146.8    14.3       1.00         0.005   0.006        2.47       1.60       1.44
+                     0.09    50.8    96.6      1.4       1.11         0.042   0.119        1.72       1.29       0.10
+                7
+                     0.04    85.5    106.4     1.6       1.03         0.032   0.056        4.26       2.44       2.10
+                                                     Spin 0 → 0 Transition
+                     0.09    44.2    58.2      1.0       1.08         0.049   0.127        3.32       2.29       0.21
+                2
+                     0.04    84.6    103.3     1.1       1.03         0.005   0.013        4.21       2.49       2.15
+                     0.09    56.6    108.7     1.0       0.99         0.011   0.041        1.48       1.16       0.10
+                4
+                     0.04   115.6    166.7     1.3       0.96         0.001   0.000        1.76       1.21       1.12
+                     0.09    44.2    58.2      1.0       1.08         0.049   0.127        3.32       2.29       0.21
+                5
+                     0.04    84.6    103.3     1.1       1.03         0.005   0.013        4.21       2.49       2.15
+                     0.09    44.2    58.2      3.7       1.08         0.049   0.127        3.32       2.29       0.21
+                7
+                     0.04    84.6    103.3     4.5       1.03         0.005   0.013        4.21       2.49       2.15
+
+TABLE VI: This table presents the best fit parameters to the DAMA/LIBRA data for each bosonic operator for which iodine
+showed an enhancement over xenon, considering proton coupling only, and their χ2 /d.o.f. value. For these bosonic operators,
+the coupling is λ = 1/mM . The final five columns give normalized limits, with the ratio of predicted to 90% C.L. allowed
+counts for XENON100, LUX, and COUPP and the largest ratio of the KIMS bins counts/kg·days/keV over the 90% C.L. limit
+(this limit is presented for two different iodine quenching factors for KIMS, QCsI ). Each operator has a fit for two values of
+the iodine quenching factor for NaI QNaI = 0.09, 0.04. Due to data taking conditions, the values for the XENON100, COUPP,
+and KIMS columns uses the average yearly rate, and the rate for LUX was the maximum.
+
+
+both quenching factors. Also the scalar to scalar opera-                              V.    CONCLUSIONS
+tor 4 has a consistent region for both quenching factors.
+For these operators, we have plotted the allowed regions             We have shown that a nonrelativistic effective field the-
+in Fig. 7 and 8. One again can see that the key to avoid-         ory for the inelastic scattering of dark matter off a nu-
+ing constraints is moving to higher δ. Thus, the allowed          cleus is a straightforward extension of elastic scattering.
+spectra at DAMA will again generically be at slightly             The modifications revolve around the Galilean-invariant,
+higher energy with a slight reduction in the overall am-          incoming dark matter velocity. Due to the inelastic kine-
+plitude, similar to what was seen in Fig. 6. In this list         matics, the components of the incident velocity that are
+of allowed operators, we ignored degeneracies in scatter-         perpendicular to the momentum transfer ~q have a new
+ing form factors where we have the families i) fermion 2,         piece that depends on the mass splitting δ
+fermion 8, scalar 2, and scalar 5, ii) fermion 11, fermion
+14, and scalar to vector 7, iii) fermion 15 and scalar to                          ⊥               ~q      δ
+vector 6. These families share allowed parameter space,                          ~vinel ≡ ~v +        +        ~q.        (19)
+                                                                                                  2µN   |~q |2
+although different values for mM are required to get the
+same rate. Interestingly, some operators whose best fit           This variable change motivates a new basis of scattering
+                                                                                                         ⊥
+values are only narrowly ruled out remain ruled out in            matrix elements written in terms of ~vinel . As an applica-
+these two dimensional scans. For instance, fermion op-            tion, we have shown how inelastic transitions of a fermion
+erators 4, 10, 20 and scalar to scalar operator 7 have            to fermion, scalar to scalar, and scalar to vector can be
+reasonable constraints for QNaI = 0.09. In these cases,           written in terms of this basis. Finally, since the nuclear
+the form factors do not allow good DAMA fits to per-              matrix elements for most cases only depend linearly on
+sist to higher δ thus making it impossible to avoid the           this velocity, we were able to modify the Mathematica
+constraints.                                                      code [13] to generate the form factors for inelastic scat-
+                                                                  tering processes. Thus, our work extends the framework
+                                                                  of [12] so that inelastic dark matter transitions can now
+                                                                                                                      15
+
+be treated in a model independent fashion.                                      Acknowledgements
+   Armed with our effective field theory, we then cre-
+ated several fits to the DAMA/LIBRA annual modula-              We would like to thank G. Kribs for useful discussions
+tion. We considered both the scenario of magnetic in-        and I. Yavin for comments on our draft. We would like
+elastic dark matter as well as a model independent sur-      to especially thank A.L. Fitzpatrick for both clarifica-
+vey looking at individual relativistic operators. Due to     tions of his work and comments on our draft. S.C. was
+the strong constraints from XENON100 and LUX, in the         supported in part by the Department of Energy under
+model independent scan, we considered choices for the        grant de-sc0009945 and C.N. was supported in part by
+nucleon couplings that would enhance iodine scattering       the Department of Energy under grant de-sc0011640.
+over xenon. This led us to consider operators involving
+only couplings to protons that are sensitive to the pro-
+ton spin. CDMS constraints by comparison are signifi-
+                                                                    Appendix A: Relativistic Derivation of
+cantly weaker due to germanium’s lighter mass and even
+                                                                     Nonrelativistic Velocity Operators
+smaller proton spin. However, we showed that there are
+significant constraints from the iodine experiments KIMS
+and COUPP, which provide a mostly model-independent             As mentioned earlier, there are two ways of construct-
+constraint. These limits are thus harder to avoid; we find   ing the velocity degrees of freedom used in our nonrela-
+that they can only be weakened by enhanced modulation        tivistic field theory: starting with Galilean invariant op-
+or by uncertainties in the iodine quenching factors, which   erators and orthogonalizing them or starting with the
+affect the KIMS limits.                                      relativistic kinematics and reducing to the nonrelativis-
+   For the case of magnetic inelastic dark and for some      tic limit. Here we derive the results shown in section II
+of the relativistic operators involving only proton cou-     using the second method.
+plings, we found that scenarios could be consistent with        To begin, we have the four four-momenta of Fig. 1 from
+the DAMA fit and existing constraints. However, we           which we need to construct Galilean invariant velocities.
+would like to stress that we are not able to definitively    As there are ten constraints; one from energy conserva-
+claim a consistent explanation of the DAMA signal. First     tion, three from momentum conservation, four from mass
+of all, due to lack of implementation, we could not treat    constraints, and two from rotational invariance; we only
+scattering off of cesium or tungsten, which are relevant     need two velocity operators. Using a little foresight, we
+for KIMS and CRESST. Cs in particular has an un-             define three velocities
+paired proton and should lead to stronger constraints
+from KIMS. Hopefully in a future update of the note-                    ~vN ≡ ~vNin − ~vNout ,
+book [13], these elements could be included. Second,                            mχ1 + mχ2
+                                                                          ~vχ ≡             (~vχ2 − ~vχ1 ), and     (A1)
+we only tested the relativistic operators using our effec-                         2mN
+tive field theory. No models explaining these interactions                  ⊥   1
+were considered and thus in a complete model may run                     ~vel ≡ (~vχ2 + ~vχ1 − ~vNout − ~vNin ).
+                                                                                2
+into difficulties when confronted with other dark matter
+constraints. However, it would be interesting to look at     and expect to find one relationship between them beyond
+complete models realizing these scenarios, which we leave    the orthogonality relations so as to have a total of six de-
+to future work. In particular, the magnetic inelastic dark   grees of freedom. The mass factor in front of the relative
+matter scenario should be straightforward to build in a      DM velocity is so that in the elastic limit ~vχ → ~vN . We
+                                                                                       ⊥
+model, since the required coupling structure is through      also chose the form for ~vel which is perpendicular to the
+the standard electromagnetic couplings.                      momentum transfer in the elastic limit and because the
+   In the near future, these models should be definitively   velocities have good quantum numbers under P , T , and
+tested from direct detection experiments alone. To do        hermitian conjugation.
+so, one high priority is resolving the current uncertainty      Now that we have our three velocities, we need to or-
+in iodine quenching factors so as to both pin down the       thogonalize them. We begin with Lorentz invariant com-
+DAMA parameter space and firm up the constraints from        binations:
+KIMS. Existing data at XENON100 and LUX at energies
+above 50 keVnr should also be reanalyzed which will en-
+hance sensitivities to scenarios when the iodine quenching                 (p + k)2 = (p0 + k 0 )2 ,
+factor is low. Finally, iodine target experiments are the                 (p − k 0 )2 = (p0 − k)2 ,
+most robust tool to rule out or discover these scenarios.
+In particular, COUPP’s next analysis should give us a                           k 02 = (p + k − p0 )2 , and         (A2)
+definitive answer whether iodine scattering scenarios are                 (p − p0 )2 = (k − k 0 )2 ,
+a consistent explanation of DAMA’s annual modulation
+signal.                                                      which we take the nonrelativistic limit of to obtain
+                                                                                                                                          16
+
+
+
+  − (mχ1 + mN )2 − mχ1 mN (~vχ1 − ~vNin )2 = −(mχ2 + mN )2 − mχ2 mN (~vχ2 − ~vNout )2 ,
+  − (mχ1 − mN )2 + mχ1 mN (~vχ1 − ~vNout )2 = −(mχ2 − mN )2 + mχ2 mN (~vχ2 − ~vNin )2 ,
+                                                                                                                                        (A3)
+  − (mχ1 + mN − mχ2 )2 − mχ1 mN (~vχ1 − ~vNin )2 + mχ1 mχ2 (~vχ1 − ~vχ2 )2 + mχ2 mN (~vχ2 − ~vNin )2 = −m2N , and
+  − (mχ1 − mχ2 )2 + mχ1 mχ2 (~vχ1 − ~vχ2 )2 = m2N (~vNin − ~vNout )2 .
+
+
+
+   From these relations we can substitute in the velocities               as order v and δ as order v 2 , so the final forms for the
+from Eq. A1 and solve for their dot products. These are,                  velocity operators are, with ~vN → ~q/mN ,
+with the replacement mχ2 → mχ1 + δ,
+
+                                                                                        ~q                                    δ
+~vN · ~vχ = vχ2 ,                                                                ⊥
+                                                                               ~vN =       , ~vχ⊥ = 0, and ~vinel
+                                                                                                             ⊥        ⊥
+                                                                                                                  = ~vel +        ~q,   (A7)
+                                                                                      mN                                  |~q |2
+        ⊥
+                δ   (δ + 2mχ1 ) + m2N vχ2
+                                  2
+~vN · ~vel =−                             , and
+                      mN (δ + 2mχ1 )2
+                                                                          so we only have two velocity-like operators. As a check,
+                                          ⊥ 2
+                                                            
+        ⊥
+                δ   (δ + 2mχ1 )2 vN
+                                  2
+                                    + 4(vel ) + 8 + 4m2N vχ2              these variables agree with section II.
+~vχ · ~vel =−                                                  .
+                               8mN (δ + 2mχ1 )2
+                                                                (A4)
+
+   Also, because of the degrees of freedom and our choice                    Appendix B: Reduction of Relativistic Operators
+                                           2
+of velocities there is a relation between vN and vχ2 . This is
+obtained from the last momentum-conservation equation
+of Eq. A2 and is                                                             In this paper we have written the nonrelativistic re-
+                                                                          duction of many relativistic operators, but there are
+                                                                          other possibilities not considered here (mainly interac-
+            4mχ1 (mχ1 + δ)m2N 2                                           tions with spin 2 and beyond mediators). To help with
+                             vχ = δ 2 + m2N vN
+                                             2
+                                               .                (A5)      the reduction of these other operators, we have included
+              (2mχ1 + δ)2
+                                                                          a series of reductions for the prototypical elements of a
+  The final, orthogonal velocities are given by                           relativistic field theory. See [46] for similar results.
+                                                                             We concern ourselves with the spinor contractions
+               ⊥
+             ~vN = ~vN ,
+                                    ⊥
+                            ~vχ · ~vN                                                                ψ̄2 γ 5 ψ1 ,   ψ̄2 γµ γ 5 ψ1 ,
+             ~vχ⊥ = ~vχ −             ~v ⊥ , and                                          ψ̄2 ψ1 ,
+                              (~vN )2 N
+                                 ⊥                              (A6)
+                                           ⊥
+                                                                                          ψ̄2 σµν ψ1 , and ψ̄2 σµν γ 5 ψ1 ,
+              ⊥        ⊥   ~v ⊥ · ~v ⊥ ⊥ ~vel  · ~vχ⊥ ⊥
+            ~vinel = ~vel − el ⊥ 2N ~vN −            ~v .
+                             |~vN |        |~vχ⊥ |2 χ
+                                                                          where σµν ≡ 2i [γµ , γν ].
+  As stated in section II, we are treating all momenta                     In the nonrelativistic limit these become
+
+
+
+                                                                      √ √
+                                                            ψ̄2 ψ1 ≃ 2 m1 m2 1ψ ,                                                       (B1)
+                                                                 √ √                   ~ψ ,
+                                                   ψ̄2 γ 5 ψ1 ≃ 2 m1 m2 (~v1 − ~v2 ) · S                                                (B2)
+                                                           √ √                               ~ψ δ 0 ),
+                                          ψ̄2 γµ γ 5 ψ1 ≃ 2 m1 m2 (2Sψi δµi − (~v1 + ~v2 ) · S   µ                                      (B3)
+                             √     √ 
+                                 m1 m2 4ijk Sψk δµi δνj + i(δµ0 δνa − δµa δν0 ) −2iaik (~v1 + ~v2 )i Sψk + (~v1 − ~v2 )a , and
+                                                                                                                         
+              ψ̄2 σµν ψ1 ≃                                                                                                              (B4)
+                                 √ √ 
+               ψ̄2 σµν γ 5 ψ1 ≃ − m1 m2 4iSψi (δµ0 δνi − δµi δν0 ) + abc δµa δνb −2icid (~v1 + ~v2 )i Sψd + (~v1 − ~v2 )c .
+                                                                                                                          
+                                                                                                                                        (B5)
+
+
+
+  In these equations 1ψ is the unit operator in spin-space,               ~v1 is the velocity of the incoming ψ1 particle, ~v2 is the
+                                                                                                                                             17
+
+velocity of the outgoing ψ2 particle, S ~ψ is the spin oper-                    to lowest order in p~.
+ator for the ψ particle, gµν is the metric tensor, and ijk
+is the Levi-Civita symbol. These reductions rely on ψ1
+in the initial state and ψ2 in the final state (not their an-
+                                                                                     Appendix C: Transition Amplitude in Nuclear
+tiparticles) and that the only difference in these particles                                       Response Basis
+is the mass (m1 and m2 for initial and final respectively).
+One can also use the Gordon identity,
+                                                                                   Since the effective field theory for inelastic dark mat-
+               1                                                                ter is so similar to the effective field theory for elastic
+ ψ̄1 γµ ψ2 = √ √ ψ̄1 (p1µ + p2µ + iσµν q ν )ψ2 , (B6)
+            2 m1 m2                                                             dark matter, it can be easy to overlook some of the im-
+                                                                                portant differences. The change in the Galilean-invariant
+for the vector interaction.                                                     incoming dark matter velocity is stressed above, but the
+  Another useful result is the nonrelativistic limit for the                    possible complex nature for the coefficients of the non-
+time-like component of the momentum transfer, which is                          relativistic operators Eq. 8 is another modification. To
+                                                                                highlight both of these effects we reproduce the relevant
+                          mχ1 2                                                 results for the squared matrix element, following [13].
+              q0 ≃ δ +       (~vχ2 − ~vχ2 1 ), or                                  First we write our Lagrangian as
+                           2                                       (B7)
+                     mN 2
+              q0 ≃                 2
+                        (~vNin − ~vN     ).                                                                          15
+                      2              out                                                                           X X
+                                                                                                           L=                  cτi Oi ,   (C1)
+These relations are sometimes needed for the preservation                                                         τ =0,1 i=1
+of Galilean invariance but can be easy to overlook.
+   To reduce operators for spin 1 particles we must take                        where τ characterizes the isospin structure of the cou-
+into account the polarization of a nonrelativistic vector                       pling, allowing different couplings to protons and neu-
+boson. This is given by                                                         trons. We then calculate the transition amplitude, by
+                                                                                averaging over initial spins and summing over outgoing
+                                 p~                                             spins, and expand in the basis of the nuclear responses,
+                     ε0λ (~
+                          p) ≃      · ~ελ (~0)
+                                m                                  (B8)         giving
+                          p) ≃ ~ελ (~0),
+                     ~ελ (~
+
+
+                                                                                        (
+                             1       1       X                      4π      X X
+                                                   |M|2nuclear =
+                          2jχ + 1 2jN + 1                         2jN + 1 τ =0,1 0
+                                             spins                               τ =0,1
+                             ∞                           2
+                                                    2 |~
+                                                       q|
+                                  
+                                    ττ0
+                            X
+                                            ⊥
+                                   RM   (|~vinel T| ,      )hjN ||MJ;τ (q)||jN ihjN ||MJ;τ 0 (q)||jN i
+                                                      m2N
+                          J=0,2,...
+
+                                      |~q |2 τ τ 0 ⊥              q |2
+                                                               2 |~
+                                 +          RΦ 00 (|~
+                                                    v inel T |  ,      )hjN ||Φ00J;τ (q)||jN ihjN ||Φ00J;τ 0 (q)||jN i
+                                      m2N                         m2N
+                                 |~q |2 τ τ 0                  2 |~ q |2
+                                                                                                                              
+                                                      ⊥                             00
+                              + 2 RΦ00 M (|~vinel T | , 2 )hjN ||ΦJ;τ (q)||jN ihjN ||MJ;τ 0 (q)||jN i
+                                 mN                               mN
+                              ∞        2
+                                        |~q | τ τ 0 ⊥              2 |~ q |2
+                              X                                                                                                 
+                                                                                         0                       0
+                          +                     R     (|~
+                                                        v inel T |   ,       )hj N || Φ̃ J;τ (q)||j N ihj N ||Φ̃ J;τ 0 (q)||jN i          (C2)
+                                        m2N Φ̃0                        m2N
+                            J=2,4,...
+                              ∞
+                                                            2 |~q |2
+                                      
+                                           ττ0
+                              X
+                                                    ⊥
+                          +            RΣ    00 (|~
+                                                  vinel T  | ,         )hjN ||Σ00J;τ (q)||jN ihjN ||Σ00J;τ 0 (q)||jN i
+                                                                m2N
+                             J=1,3,...
+
+                                          0
+                                           ⊥             |~q |2
+                                    ττ
+                                 + RΣ0 (|~
+                                         vinel   2
+                                               T| ,             )hjN ||Σ0J;τ (q)||jN ihjN ||Σ0J;τ 0 (q)||jN i
+                                                         m2N
+                                      |~q |2 τ τ 0 ⊥          |~q |2
+                                 +        2 R∆ (|~vinel T |2 , 2 )hjN ||∆J;τ (q)||jN ihjN ||∆J;τ 0 (q)||jN i
+                                      mN                      mN
+                                                                                                      )
+                                  |~q |2 τ τ 0 ⊥         q |2
+                                                      2 |~                             0
+                                 + 2 R∆Σ0 (|~vinel T | , 2 )hjN ||∆J;τ (q)||jN ihjN ||ΣJ;τ 0 (q)||jN i .
+                                  mN                    mN
+
+
+
+This result is expanded in spherical harmonics leading to                       the nuclear operators M, ∆, Σ0 , Σ00 , Φ̃0 , Φ00 . The inelastic
+                                                                                                                                                             18
+
+kinematics does not modify these operators, so we do                              are solely in the R coefficients
+not reproduce their expressions. Instead, the changes
+
+
+
+
+                    |~q |2                                        |~q |2 τ τ 0 ∗                                                   |~q |2 τ τ 0 ∗
+                                                                                                                                                
+        0                                0    jχ (jχ + 1)                                    τ τ 0∗
+    ττ
+   RM  (|~vT |2 ,          , δ) = cτ1 c1τ ∗ +                             c     c      +   c  c          |~
+                                                                                                          v T  |2
+                                                                                                                  −   v 2
+                                                                                                                               (δ)  +     c  c
+                    m2N                            3              m2N 5 5                    8 8                        min T
+                                                                                                                                       m2N 11 11
+                    |~q |2    1 |~q |2 τ τ 0 ∗ jχ (jχ + 1) τ                           |~q |2                      |~q |2 0
+                                                                                                                             
+    ττ0                                                                                                     0
+  RΦ  00 (|~ vT |2 , 2 , δ) =       2   c3 c3 +                            c12 − 2 cτ15                  cτ12∗ − 2 cτ15∗
+                    mN        4 mN                          12                         mN                          mN
+                         2                                                               2
+                    |~q |                                                           |~q |
+                                                                                                      
+  ττ0                                      0       jχ (jχ + 1) τ                                     0
+ RΦ00 M (|~  vT |2 , 2 , δ) = Re cτ3 c1τ ∗ +                           c12 − 2 cτ15 cτ11∗
+                    mN                                    3                         mN
+                 2 |~ q |2    jχ (jχ + 1) τ τ 0 ∗ |~q |2 τ τ 0 ∗
+                                                                                     
+    ττ0
+  RΦ̃0 (|~vT | , 2 , δ) =                         c12 c12 + 2 c13 c13
+                    mN              12                           mN
+                          2           2
+                    |~  |       |~  |                               1) τ τ 0 ∗ |~q |2  τ τ 0 ∗
+                                                                        
+    ττ  0
+                 2    q       1   q      τ τ ∗  0      j  (j
+                                                         χ χ    +                                                    τ τ 0∗
+                                                                                                                            
+  RΣ00 (|~vT | , 2 , δ) =               c    c     +                       c     c      +           c    c      +  c   c
+                    mN        4 m2N 10 10                    12               4 4
+                                                                                             m2N 4 6                 6 4
+
+                                 |~q |4                                  |~q |2
+                                                                                                                             
+                                               0                0                          0
+                              + 4 cτ6 c6τ ∗ + cτ12 cτ12∗ + 2 cτ13 cτ13∗ |~vT |2 − vmin                           2
+                                                                                                                             
+                                                                                                                      T  (δ)
+                                 mN                                      mN
+                    |~q |2    1 |~q |2 τ τ 0 ∗
+                                                                                                                         
+    ττ0                                                  τ τ 0∗
+                                                                                                     jχ (jχ + 1) τ τ 0 ∗
+  RΣ  0 (|~  vT |2 , 2 , δ) =             c   c     +   c  c         |~v T    | 2
+                                                                                   −  v 2
+                                                                                                (δ)   +                       c4 c4
+                    mN        8 m2N 3 3                  7 7                            min T
+                                                                                                                 12
+                                 |~q |2                                 |~q |2                         |~q |2 0            |~q |2
+                                                                                                                                                        
+                                               0      1                                         0                                     0
+                              + 2 cτ9 c9τ ∗ +                cτ12 − 2 cτ15                   cτ12∗ − 2 cτ15∗ + 2 cτ14 cτ14∗ |~vT |2 − vmin           2
+                                                                                                                                                            
+                                                                                                                                                       T (δ)
+                                 mN                   2                 mN                             mN                  mN
+                    |~q |2    jχ (jχ + 1) |~q |2 τ τ 0 ∗
+                                                                                  
+    ττ0                                                                          0
+  R∆      (|~vT |2 , 2 , δ) =                           c c + cτ8 cτ8 ∗
+                    mN                3            m2N 5 5
+   ττ0              |~q |2    jχ (jχ + 1) h τ τ 0 ∗                         0
+                                                                                i
+  R∆Σ   0 (|~vT |2 , 2 , δ) =                  Re c5 c4 − cτ8 cτ9 ∗ .
+                    mN                3
+                                                                                                                                                             (C3)
+
+
+
+                         ⊥       2
+Here we have expanded |~vinel T | as in Eq. 13 to show the                        inelastic dark matter operators can produce complex co-
+dependence on δ, and we have also included the appropri-                          efficients for their nonrelativistic counterparts.
+ate complex conjugation of the coefficients as relativistic
+
+
+
+
+ [1] M. W. Goodman and E. Witten, Phys.Rev. D31, 3059                             [10] V. Cirigliano, M. L. Graesser, G. Ovanesyan, and I. M.
+     (1985).                                                                           Shoemaker (2013), 1311.5886.
+ [2] P. Cushman, C. Galbiati, D. McKinsey, H. Robertson,                          [11] J. Fan, M. Reece, and L.-T. Wang, JCAP 1011, 042
+     T. Tait, et al. (2013), 1310.8327.                                                (2010), 1008.1591.
+ [3] R. Bernabei, P. Belli, F. Cappella, V. Caracciolo,                           [12] A. L. Fitzpatrick, W. Haxton, E. Katz, N. Lubbers, and
+     S. Castellano, et al., Eur.Phys.J. C73, 2648 (2013),                              Y. Xu, JCAP 1302, 004 (2013), 1203.3542.
+     1308.5109.                                                                   [13] N. Anand, A. L. Fitzpatrick, and W. Haxton (2013),
+ [4] D. Tucker-Smith and N. Weiner, Phys.Rev. D64, 043502                              1308.6288.
+     (2001), hep-ph/0101138.                                                      [14] A. L. Fitzpatrick, W. Haxton, E. Katz, N. Lubbers, and
+ [5] S. Chang, A. Pierce, and N. Weiner, JCAP 1001, 006                                Y. Xu (2012), 1211.2818.
+     (2010), 0908.3192.                                                           [15] M. Cirelli, E. Del Nobile, and P. Panci, JCAP 1310, 019
+ [6] B. Feldstein, A. L. Fitzpatrick, and E. Katz, JCAP 1001,                          (2013), 1307.5955.
+     020 (2010), 0908.2991.                                                       [16] M. I. Gresham and K. M. Zurek, Phys.Rev. D89, 123521
+ [7] Y. Bai and P. J. Fox, JHEP 0911, 052 (2009), 0909.2900.                           (2014), 1401.3739.
+ [8] S. Chang, J. Liu, A. Pierce, N. Weiner, and I. Yavin,                        [17] R. Catena and P. Gondolo (2014), 1405.2637.
+     JCAP 1008, 018 (2010), 1004.0697.                                            [18] V. Gluscevic and A. H. G. Peter (2014), 1406.7008.
+ [9] J. L. Feng, J. Kumar, D. Marfatia, and D. Sanford,                           [19] D. Tucker-Smith and N. Weiner, Phys.Rev. D72, 063509
+     Phys.Lett. B703, 124 (2011), 1102.4331.                                           (2005), hep-ph/0402065.
+                                                                                                                               19
+
+[20] D. P. Finkbeiner, T. R. Slatyer, N. Weiner, and I. Yavin,        D86, 052001 (2012), 1204.3094.
+     JCAP 0909, 037 (2009), 0903.1037.                           [35] S. Kim, H. Bhang, J. Choi, W. Kang, B. Kim, et al.,
+[21] R. Essig, J. Kaplan, P. Schuster, and N. Toro, Submitted         Phys.Rev.Lett. 108, 181301 (2012), 1204.2646.
+     to Physical Review D (2010), 1004.0691.                     [36] G. Angloher, M. Bauer, I. Bavykina, A. Bento, C. Bucci,
+[22] P. W. Graham, R. Harnik, S. Rajendran, and                       et al., Eur.Phys.J. C72, 1971 (2012), 1109.0702.
+     P. Saraswat, Phys.Rev. D82, 063512 (2010), 1004.0937.       [37] J. Bovy and S. Tremaine, Astrophys.J. 756, 89 (2012),
+[23] S. Chang, N. Weiner, and I. Yavin, Phys.Rev. D82,                1205.4033.
+     125011 (2010), 1007.4200.                                   [38] F. J. Kerr and D. Lynden-Bell, Mon.Not.Roy.Astron.Soc.
+[24] T. Han and R. Hempfling, Phys.Lett. B415, 161 (1997),            221, 1023 (1986).
+     hep-ph/9708264.                                             [39] M. C. Smith, G. Ruchti, A. Helmi, R. Wyse, J. Fulbright,
+[25] L. J. Hall, T. Moroi, and H. Murayama, Phys.Lett.                et al., Mon.Not.Roy.Astron.Soc. 379, 755 (2007), astro-
+     B424, 305 (1998), hep-ph/9712515.                                ph/0611671.
+[26] Y. Cui, D. E. Morrissey, D. Poland, and L. Randall,         [40] R. Bernabei, P. Belli, V. Landoni, F. Montecchia,
+     JHEP 0905, 076 (2009), 0901.0557.                                W. Di Nicolantonio, et al., Phys.Lett. B389, 757 (1996).
+[27] D. S. Alves, S. R. Behbahani, P. Schuster, and J. G.        [41] J. Collar, Phys.Rev. C88, 035806 (2013), 1302.0796.
+     Wacker, Phys.Lett. B692, 323 (2010), 0903.3945.             [42] E. Behnke et al. (COUPP Collaboration), Phys.Rev.
+[28] D. E. Kaplan, G. Z. Krnjaic, K. R. Rehermann, and C. M.          D88, 021101 (2013), 1304.6001.
+     Wells, JCAP 1005, 021 (2010), 0909.0753.                    [43] H. Park, D. Choi, J. Choi, I. Hahn, M. Hwang, et al.,
+[29] K. Kumar, A. Menon, and T. M. Tait, JHEP 1202, 131               Nucl.Instrum.Meth. A491, 460 (2002), nucl-ex/0202014.
+     (2012), 1111.2336.                                          [44] J. Collar, N. Fields, E. Fuller, M. Hai, T. Hossbach, et al.
+[30] J. Angle et al. (XENON10 Collaboration), Phys.Rev.               (2014), 1407.7524.
+     D80, 115005 (2009), 0910.3698.                              [45] J. Kopp, T. Schwetz, and J. Zupan, JCAP 1002, 014
+[31] E. Aprile et al. (XENON100 Collaboration),                       (2010), 0912.4264.
+     Phys.Rev.Lett. 109, 181301 (2012), 1207.5988.               [46] J. Kumar and D. Marfatia, Phys.Rev. D88, 014035
+[32] D. Akerib et al. (LUX Collaboration), Phys.Rev.Lett.             (2013), 1305.1611.
+     112, 091303 (2014), 1310.8214.                              [47] Our operator 20 has one less factor of i due to a typo in
+[33] Z. Ahmed et al. (CDMS-II Collaboration, CDMS Collab-             [13].
+     oration), Phys.Rev. D83, 112002 (2011), 1012.5078.
+[34] E. Behnke et al. (COUPP Collaboration), Phys.Rev.
+                                                                                                                                                                                       20
+
+                                             Fermion Op. 2 with QNaI = 0.09                                                      Fermion Op. 7 with QNaI = 0.09
+                                                                                                             1.0
+                                0.15
+                     0.14       0.14
+                                                                                                                         0.9
+
+
+                                0.13                                                                                     0.8
+
+                                0.12
+                     0.12                                                                                    0.8         0.7
+                                0.11
+
+                                0.10                                                                                     0.6
+
+                     0.10
+
+
+
+
+                                                                                                1êmM HGeVL
+        1êmM HGeVL
+
+                                0.09
+                                                                                                                         0.5
+                                0.08
+                                       85         90          95       100                                   0.6           100      105    110      115     120
+                     0.08
+
+                     0.06
+                                                                                                             0.4
+                     0.04
+
+                     0.02                                                                                    0.2
+
+                                                                     d HkeVL                                                                          d HkeVL
+                            0               20          40             60        80     100   120                   0          20              40          60       80    100   120
+
+
+                                            Fermion Op. 7 with QNaI = 0.04                                                       Fermion Op. 9 with QNaI = 0.04
+                     1.0                                                                                    0.40        0.40
+                                0.9
+
+                                                                                                                        0.38
+                                0.8                                                                         0.35        0.36
+
+                                                                                                                        0.34
+                     0.8        0.7
+                                                                                                            0.30        0.32
+
+                                                                                                                        0.30
+                                0.6
+                                                                                               1êmM HGeVL
+        1êmM HGeVL
+
+
+
+
+                                                                                                                        0.28
+                                                                                                            0.25
+                                0.5                                                                                            156 158 160 162 164 166 168 170
+                     0.6           150      155   160   165    170   175   180
+
+                                                                                                            0.20
+
+                                                                                                            0.15
+                     0.4
+                                                                                                            0.10
+
+                     0.2                                                                                    0.05
+
+                                                                   d HkeVL                                                                                d HkeVL
+                           0                      50                 100              150     200                   0                 50                   100           150     200
+
+
+                                            Fermion Op. 11 with QNaI = 0.09                                                      Fermion Op. 13 with QNaI = 0.04
+                     0.25                                                                                    0.10
+                                0.24                                                                                    0.09
+                                0.23
+                                                                                                                        0.08
+                                0.22
+                                                                                                                        0.07
+                                0.21
+                                                                                                             0.08
+                     0.20       0.20
+                                                                                                                        0.06
+                                0.19
+        1êmM HGeVL
+
+
+
+
+                                                                                               1êmM HGeVL
+
+
+
+
+                                                                                                                        0.05
+                                0.18
+
+                                0.17                                                                         0.06       0.04
+                                    100 102 104 106 108 110 112                                                             150 155 160 165 170 175 180
+
+                     0.15
+
+                                                                                                             0.04
+
+                     0.10
+                                                                                                             0.02
+
+
+
+                                                                     d HkeVL                                                                              d HkeVL
+                            0               20          40             60        80     100   120                   0                     50               100           150     200
+
+
+
+FIG. 7: This figure shows the combined limits plots for operators which have an unconstrained region that fits the DAMA
+signal. The DM masses used are those listed with the corresponding operator in Table V. Constraints from LUX (blue),
+XENON100 (orange), KIMS (QCsI = 0.05 magenta solid, QCsI = 0.10 magenta dashed) and COUPP (black) are also shown,
+with the 90% C.L. limits listed in section IV.
+                                                                                                                                                                                  21
+
+                                          Fermion Op. 15 with QNaI = 0.09                                                          Fermion Op. 15 with QNaI = 0.04
+                     0.030                                                                                    0.030     0.030
+                               0.030
+                                                                                                                        0.028
+
+                                                                                                                        0.026
+                     0.025     0.025
+                                                                                                              0.025     0.024
+
+                               0.020                                                                                    0.022
+
+                                                                                                                        0.020
+
+
+
+
+                                                                                                 1êmM HGeVL
+        1êmM HGeVL
+
+                     0.020     0.015
+                                                                                                              0.020     0.018
+                                    100     105         110         115     120                                              150    155   160     165   170    175
+
+
+
+
+                     0.015                                                                                    0.015
+
+
+                     0.010                                                                                    0.010
+
+
+                     0.005                                                                                    0.005
+
+                                                                          d HkeVL                                                                         d HkeVL
+                               0          20             40                 60       80   100   120                     0                 50                  100     150   200
+
+
+                                         Fermion Op. 19 with QNaI = 0.09                                                         Fermion Op. 19 with QNaI = 0.04
+                     2.5                                                                                      2.5
+                                                                                                                        1.8
+                               2.4
+
+
+                               2.2                                                                                      1.7
+
+
+                               2.0
+                                                                                                                        1.6
+                     2.0                                                                                      2.0
+                               1.8
+                                                                                                                        1.5
+                                                                                                 1êmM HGeVL
+        1êmM HGeVL
+
+
+
+
+                               1.6
+                                                                                                                        1.4
+                                   100      105         110         115        120                                         150      155     160         165     170
+
+                     1.5                                                                                      1.5
+
+
+
+
+                     1.0                                                                                      1.0
+
+
+
+
+                                                                     d HkeVL                                                                            d HkeVL
+                           0           20           40                    60         80   100   120                 0                50                       100     150   200
+
+
+                                          Scalar Op. 4 with QNaI = 0.09                                                            Scalar Op. 4 with QNaI = 0.04
+                                                                                                              1.0
+                               1.3                                                                                      1.0
+
+
+                     1.4       1.2                                                                                      0.9
+                                                                                                              0.9
+                               1.1                                                                                      0.8
+
+
+                     1.2       1.0
+                                                                                                              0.8       0.7
+                                                                                                 1êmM HGeVL
+        1êmM HGeVL
+
+
+
+
+                               0.9                                                                                      0.6
+                                  100     105     110         115     120      125                            0.7          150 155 160 165 170 175 180
+
+
+                     1.0
+                                                                                                              0.6
+
+                     0.8                                                                                      0.5
+
+
+                                                                                                              0.4
+
+                                                                     d HkeVL                                                                            d HkeVL
+                           0           20           40                    60         80   100   120                 0                50                       100     150   200
+
+
+
+FIG. 8: This figure shows the combined limits plots for the remaining operators which have an unconstrained region that fits
+the DAMA signal. The DM masses used are those listed with the corresponding operator in Tables V, VI. Constraints from
+LUX (blue), XENON100 (orange), KIMS (QCsI = 0.05 magenta solid, QCsI = 0.10 magenta dashed) and COUPP (black) are
+also shown, with the 90% C.L. limits listed in section IV.
+

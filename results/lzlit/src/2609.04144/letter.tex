@@ -1,0 +1,842 @@
+%\RequirePackage{fix-cm}
+\documentclass[aps,prd,10pt,twocolumn,amsmath,superscriptaddress,amssymb,showpacs,floatfix,bibnotes,longbibliography]{revtex4-2}
+
+\pdfoutput=1
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{amsfonts,amsmath,amssymb,bm,bbm,mathrsfs}
+\usepackage{color}
+\usepackage{url}
+\usepackage{float}
+\usepackage{slashed}
+\usepackage{enumitem}
+\usepackage{leftindex}
+\usepackage[compat=1.1.0]{tikz-feynman}
+\usepackage{feynmp-auto}
+\usepackage[capitalise]{cleveref}
+\usepackage{braket}
+
+\bibliographystyle{apsrev4-1}
+
+
+\newcommand{\DM}{\chi}
+\newcommand{\GeV}{\mathrm{GeV}}
+\newcommand{\TeV}{\mathrm{TeV}}
+\newcommand{\keV}{\mathrm{keV}}
+\newcommand{\cm}{\mathrm{cm}}
+\newcommand{\sigSI}{\sigma_{\rm SI}}
+\newcommand{\sigZ}{\sigma_{Z}^{\rm inel}}
+\newcommand{\mchi}{m_\chi}
+\newcommand{\deltaDM}{\delta}
+\newcommand{\yuk}{y}
+
+
+\hypersetup{
+    pdfnewwindow=true,      % links in new window
+    colorlinks=true,       % false: boxed links; true: colored links
+    linkcolor=blue,          % color of internal links
+    citecolor=blue,        % color of links to bibliography
+    filecolor=blue,      % color of file links
+    urlcolor=blue        % color of external links
+}
+
+\newcommand{\orcid}[1]{\begingroup
+  \!\hypersetup{hidelinks}\href{https://orcid.org/#1}{\includegraphics[width=10pt]{./figures/orcid.pdf}\!\!} \endgroup}
+
+\newcommand{\appropto}{\mathrel{\vcenter{
+  \offinterlineskip\halign{\hfil$##$\cr
+    \propto\cr\noalign{\kern2pt}\sim\cr\noalign{\kern-2pt}}}}}
+
+\setlength{\abovecaptionskip}{0pt}
+
+
+
+\DeclareMathOperator{\arccot}{arccot}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\title{Inelastic Signatures of Electroweak Dark Matter}
+
+\author{Juri Smirnov \orcid{0000-0002-3082-0929}\,}
+\email{juri.smirnov@liverpool.ac.uk}
+\affiliation{Department of Mathematical Sciences, 
+\href{https://ror.org/04xs57h96}{University of Liverpool}, Liverpool, L69 7ZL, United Kingdom}
+
+\author{Spencer~Griffith \orcid{0009-0002-1988-0768}\,}
+\email{griffith.1037@osu.edu}
+\affiliation{Center for Cosmology and AstroParticle Physics (CCAPP), \href{https://ror.org/00rs6vg23}{Ohio State University}, Columbus, OH 43210}
+\affiliation{Department of Physics, \href{https://ror.org/00rs6vg23}{Ohio State University}, Columbus, OH 43210}
+
+\author{John F. Beacom \orcid{0000-0002-0005-2631}\,}
+\email{beacom.7@osu.edu}
+\affiliation{Center for Cosmology and AstroParticle Physics (CCAPP), \href{https://ror.org/00rs6vg23}{Ohio State University}, Columbus, OH 43210}
+\affiliation{Department of Physics, \href{https://ror.org/00rs6vg23}{Ohio State University}, Columbus, OH 43210}
+\affiliation{Department of Astronomy, \href{https://ror.org/00rs6vg23}{Ohio State University}, Columbus, OH 43210}
+
+\date{3 September 2026}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{abstract}
+Minimal electroweak dark matter (DM) extended by a Majorana (M) and a
+Dirac (D) multiplet coupled through Higgs interactions provides a
+predictive framework for high-energy inelastic nuclear recoils. We show
+that this setup can account for the type of event recently reported by
+the LUX-ZEPLIN (LZ) Collaboration. At the custodial point, electroweak
+symmetry breaking induces a neutral-state splitting $\delta$ and an
+off-diagonal $Z$ interaction. For the coupled multiplets
+$3_M2_D$, $5_M4_D$, $7_M6_D$, $9_M8_D$, $11_M10_D$, and $13_M12_D$,
+both the splitting and the leading inelastic interaction are universal
+at fixed $(m_\chi,y)$, independent of the electroweak representation.
+The observed high recoil energy points to splittings of a few hundred
+keV, while the fixed $Z$-mediated rate allows us to determine a
+mass-dependent $\delta_{\rm LZ}(m_\chi)$ by requiring one expected
+inelastic event in the LZ exposure, with a two-sided 90\% Poisson band.
+This defines a universal region in the $(m_\chi,y)$ plane. Intersecting
+it with the representation-dependent thermal relic trajectories selects
+a benchmark for each multiplet. The corresponding electroweak
+representation then predicts a correlated loop-induced elastic
+spin-independent signal at lower recoil energies.
+\end{abstract}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.98\columnwidth]{figures/SpectraFeynman.png}
+    \caption{Recoil spectra for our benchmark models.  For each multiplet, the solid line is the tree-level inelastic contribution, while the dashed line is the loop-induced elastic contribution.  The LZ observation is shown by the blue band.}
+    \label{fig:spectra}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Among dark matter (DM) models based on weakly interacting massive particles, electroweak multiplet DM is particularly attractive because both the relic abundance and direct-detection signatures are largely fixed by Standard Model (SM) gauge interactions~\cite{Steigman:1984ac, Bertone:2004pz, Steigman:2012nb, Arcadi:2017kky, Roszkowski:2017nbc, Cirelli:2024ssz}. For sufficiently heavy multiplets, nonperturbative Sommerfeld enhancement and bound-state formation complicate determination of the thermal relic abundance, but these effects have been well examined for a wide variety of models~\cite{Hisano:2003ec, Hisano:2004ds, Hisano:2006nn, Arkani-Hamed:2008hhe, Cassel:2009wt, March-Russell:2008klu, vonHarling:2014kha, An:2016gad, Mitridate:2017izz}.
+
+Minimal dark matter (MDM) is, as the name suggests, a minimal implementation of electroweak dark matter. In this scenario, a single $SU(2)_L$ multiplet is added to the SM and all interactions arise from the gauge invariance of the augmented Lagrangian~\cite{Cirelli:2005uq, Cirelli:2007xd, Cirelli:2018iax}. This provides an exceptional level of predictive power since there are no free parameters introduced. In particular, the DM mass is dictated by the thermal freeze-out abundance, while the interaction strength with nucleons needed to predict direct detection signals is determined by the multiplet size. Constraints from direct detection experiments rule out even (Dirac) multiplets~\cite{Goodman:1984dc, CDMS:2005rss}, while odd (Majorana) multiplets up the the 13-plet remain viable and detectable in next generation experiments~\cite{Bottaro:2021snn, Bloch:2024suj, Baudis:2024jnk, PANDA-X:2024dlo}. Notably, MDM can be either a scalar or fermion, in this work we focus on the fermion case.
+
+While MDM is compelling due to its simplicity, it does leave out one key interaction. In the pure MDM model with fermionic DM, there are no Higgs-mediated couplings. While this is perfectly acceptable, it does beg the question: is there a minimal way to bring all the interactions of the electroweak sector into play and thus put DM on a more even footing with SM particles?
+
+
+
+
+This can be accomplished by adding both a Dirac (D) {\it and} a Majorana (M) multiplet to the SM. If the Majorana and Dirac multiplets are of adjacent size (e.g., $3_M 2_D$), then a Higgs coupling between the two multiplets is permitted. Such models have been studied in particular cases (see, e.g., Refs.~\cite{Mahbubani:2005pt, DEramo:2007anh, Enberg:2007rp, Cohen:2011ec, Cheung:2013dua, Calibbi:2015nha, Freitas:2015hsa, Banerjee:2016hsk,Dedes:2014hga, Freitas:2015hsa, Beneke:2016jpw,Tait:2016qbg}). Reference~\cite{LopezHonorez:2017zrd} is more general and there it was shown that the two multiplets, regardless of size, generally mix to a series of Majorana multiplets after electroweak symmetry breaking. Notably, the only coupling to the $Z$ is off-diagonal between the different multiplets.  We call this Higgs-coupled MDM (HC-MDM).
+
+In the HC-MDM scenario, the calculation of the freeze-out abundance is significantly complicated (compared to the MDM case) by a rich landscape of interactions between the Majorana and Dirac multiplets, leading to complicated bound state phenomenology. In Ref.~\cite{GriffithSmirnov2026}, we developed a generalized framework for determining the relic abundance of HC-MDM. We found that the mixed systems
+$3_M2_D$, $5_M4_D$, $7_M6_D$, $9_M8_D$, $11_M10_D$, and $13_M12_D$ admit thermal relic solutions
+over a broad mass range extending from the TeV scale to ${\cal O}(100~\TeV)$.
+At the custodial point $m_M=m_D$ and $y_1=-y_2$ (discussed in Sec.~\ref{sec:Higgs-coupled minimal dark matter}), the tree-level Higgs coupling of the lightest
+neutral state to nucleons vanishes, and the conventional elastic direct-detection signal is dominated by
+electroweak loops. This leads to the approximately horizontal spin-independent cross-section bands in Ref.~\cite{GriffithSmirnov2026}.
+
+The recent LUX-ZEPLIN (LZ) search in an extended nuclear-recoil energy window provides a qualitatively new probe
+of this setup. Using a $2.84$ ton-year exposure and recoil energies up to approximately
+$270~\keV$, LZ reported an event of interest reconstructed at
+$248\pm 23_{\rm stat}\pm 23_{\rm sys}~\keV$~\cite{LZ:2026axp}.
+The maximum local significance across the tested elastic and inelastic effective-field-theory
+models reaches $3.4\sigma$, with a global significance of $2.6\sigma$.
+While this is far from a discovery, the event lies in a region with very low expected background
+and motivates considering a variety of particle-physics interpretations~\cite{Su:2026rwz, Fan:2026kxx, Freese:2026sga, Wu:2026nhi, Lou:2026idn, Nomura:2026qyq, Yin:2026jnn, DiMauro:2026ldr, Pospelov:2026ewn, Visinelli:2026kgt, Yamashita:2026ump}.
+
+A standard elastic spin-independent WIMP interpretation is strongly disfavored due to the expected spectrum. For heavy dark matter, a $248~\keV$ xenon recoil is kinematically accessible, but the nuclear form factor strongly suppresses the high-momentum-transfer tail. Increasing the elastic cross section enough to produce an event near $248~\keV$ generically predicts a much larger population of lower-energy nuclear recoils that have not been observed.
+
+By contrast, endothermic inelastic dark matter naturally suppresses the low-energy spectrum. This has recently been emphasized for a nearly pure Higgsino, whose off-diagonal $Z$ coupling produces inelastic scattering between two neutral Majorana states with a splitting of order a few hundred keV~\cite{Fan:2026kxx, Freese:2026sga, Wu:2026nhi, Yin:2026jnn, DiMauro:2026ldr, Pospelov:2026ewn}.
+
+We show here that the same mechanism is present more generally in HC-MDM. The important additional feature is that, in HC-MDM, the Yukawa coupling that generates the neutral-state splitting also controls the thermal relic prediction. 
+The observed high recoil energy points to an inelastic splitting of
+order a few hundred keV. Because the $Z$-mediated interaction strength
+is fixed, we determine the splitting more precisely by matching the
+expected inelastic rate to the single observed LZ event. Combining the
+resulting universal rate-matched relation with the thermal relic
+trajectory then selects the dark-matter mass and Yukawa coupling.
+Then, given the mass and Yukawa strength, one can determine the size of the HC-MDM multiplets, which gives the loop-induced elastic scattering cross section (up to QCD uncertainties).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Higgs-coupled minimal dark matter}
+\label{sec:Higgs-coupled minimal dark matter}
+
+We consider the HC-MDM Lagrangian for fermionic DM
+\begin{align}
+& {\cal L} \supset
+D(i\slashed{D}-m_D)D
++\frac12 M(i\slashed{D}-m_M)M \\ \nonumber  
+& -y_1 D M H^\ast
+-y_2 D M H
++\mathrm{h.c.},
+\label{eq:lag}
+\end{align}
+where $M$ is a Majorana multiplet with hypercharge $Y_M=0$, while $D$ is a Dirac multiplet
+with $Y_D=1/2$. Determination of the hypercharge for each multiplet is dictated by the requirement that a multiplet generically have an electically neutral component to constitute DM and the relation
+\begin{equation}
+    Q=T_3+Y
+    \label{eq:gell-mann}
+\end{equation}. We focus on the series
+\begin{equation}
+3_M2_D,\quad
+5_M4_D,\quad
+7_M6_D,\quad
+9_M8_D,\quad
+11_M10_D,\quad
+13_M12_D.
+\end{equation}
+The singlet-doublet system $1_M2_D$ is not included in the present analysis.
+
+Following Ref.~\cite{GriffithSmirnov2026}, we work at the custodial point
+\begin{equation}
+m_M=m_D\equiv m_\chi,\qquad
+y_1=-y_2\equiv y.
+\label{eq:custodial}
+\end{equation}
+At this point the tree-level diagonal Higgs coupling of the lightest neutral state vanishes,
+which strongly suppresses ordinary Higgs-mediated elastic scattering as required to conform to experimental constraints (see Refs.~\cite{Tait:2016qbg, LopezHonorez:2017zrd} for a detailed discussion of the custodial point and considerations for departures from this point and the results for direct-detection).
+
+The thermal relic abundance nevertheless depends on $y$ because Higgs exchange changes the
+long-range potentials, the annihilation rates, and the bound-state formation rates in the early universe (before electroweak symmetry breaking) which are relevant for determining the relic abundance.
+For each multiplet pair we therefore have an externally computed thermal trajectory
+\begin{equation}
+m_\chi = m_{\rm th}^{(R_M,R_D)}(y),
+\label{eq:mthermal}
+\end{equation}
+where $R_M$, $R_D$ are the representation sized of the Majorana and Dirac multiplets, obtained from the full Sommerfeld-enhanced and bound-state-improved freezeout calculation of
+Ref.~\cite{GriffithSmirnov2026}. A more detailed discussion of the general HC-MDM model is provided in Refs.~\cite{LopezHonorez:2017zrd, GriffithSmirnov2026}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Broken-phase neutral states and universal inelastic $Z$ scattering}
+
+The direct-detection phenomenology relevant for the LZ high-energy event requires the theory
+after electroweak symmetry breaking. A useful feature of the sequence considered here is that
+the phenomenology of the neutral-state is universal (not depending on the multiplet sizes).
+
+Let the Dirac multiplet have isospin
+\begin{equation}
+j_D=n-\frac12,
+\end{equation}
+so that the neighboring Majorana multiplet has $j_M=n=j_D+1/2$. Since the Dirac multiplet has
+$Y_D=1/2$, its electrically neutral component ($D^0$) has $T_3=-1/2$. The neutral Higgs component that
+couples it to the neutral Majorana component ($M^0$) has $T_3=+1/2$. The relevant Clebsch--Gordan coefficient is
+\begin{equation}
+\left\langle
+j_D,-\frac12;\frac12,+\frac12
+\middle|
+j_D+\frac12,0
+\right\rangle
+=
+\sqrt{\frac{j_D+1/2}{2j_D+1}}
+=
+\frac{1}{\sqrt2}.
+\label{eq:universalCG}
+\end{equation}
+Thus the neutral Yukawa Clebsch is independent of $j_D$, and hence of the multiplet representation.
+
+The neutral mass matrix for every
+$(2n+1)_M(2n)_D$ model in the sequence is therefore
+(see Ref.~\cite{LopezHonorez:2017zrd})
+\begin{equation}
+{\cal M}_0=
+\begin{pmatrix}
+m_M & y_1v/2 & y_2v/2\\
+y_1v/2 & 0 & m_D\\
+y_2v/2 & m_D & 0
+\end{pmatrix}.
+\label{eq:massmatrix}
+\end{equation}
+At the custodial point of Eq.~\eqref{eq:custodial}, it is useful to define
+\begin{equation}
+D_\pm=
+\frac{\psi^0\pm\widetilde\psi^0}{\sqrt2}.
+\end{equation}
+In the $(M,D_-,D_+)$ basis, and imposing the custodial constraints, the neutral mass matrix becomes
+\begin{equation}
+{\cal M}_0=
+\begin{pmatrix}
+m_\chi & yv/\sqrt2 & 0\\
+yv/\sqrt2 & -m_\chi & 0\\
+0 & 0 & m_\chi
+\end{pmatrix}_{(M,D_-,D_+)}.
+\label{eq:massmatrixcustodial}
+\end{equation}
+The state $D_+$ therefore decouples exactly from the other neutral
+states and has mass $m_\chi$. The remaining $(M,D_-)$ block has signed
+eigenvalues
+\begin{equation}
+\lambda_\pm=\pm M_\ast,
+\qquad
+M_\ast=
+\sqrt{m_\chi^2+\frac12y^2v^2}.
+\end{equation}
+After the usual Majorana phase redefinition, both corresponding
+physical states have mass $M_\ast$. The neutral spectrum therefore
+consists of one state at $m_\chi$ and two degenerate states at
+$M_\ast$, separated by
+\begin{equation}
+\delta(m_\chi,y)
+=
+\sqrt{m_\chi^2+\frac12y^2v^2}-m_\chi
+\simeq
+\frac{y^2v^2}{4m_\chi},
+\,
+yv\ll m_\chi.
+\label{eq:splitting}
+\end{equation}
+Equation~\eqref{eq:splitting} is universal for the complete
+$3_M2_D$--$13_M12_D$ sequence.
+
+The same universality applies to the neutral gauge interaction.
+The two neutral Weyl components of the hypercharged Dirac multiplet
+have $T_3=\mp1/2$, independently of the total isospin $j_D$.
+After electroweak symmetry breaking and rotation to the physical
+neutral gauge bosons, their coupling to the $Z$ is
+\begin{equation}
+{\cal L}_Z=
+\frac{g}{2c_W}Z_\mu
+\left[
+\widetilde\psi^{0\dagger}\bar\sigma^\mu\widetilde\psi^0
+-
+\psi^{0\dagger}\bar\sigma^\mu\psi^0
+\right].
+\end{equation}
+In the $D_\pm$ basis this becomes purely off diagonal,
+\begin{equation}
+{\cal L}_Z=
+-\frac{g}{2c_W}Z_\mu
+\left[
+D_+^\dagger\bar\sigma^\mu D_-
++
+D_-^\dagger\bar\sigma^\mu D_+
+\right].
+\label{eq:universalZ}
+\end{equation}
+Thus the $Z$ couples the light state $D_+$ directly to the
+$D_-$ direction in the heavy neutral sector.
+
+We now introduce the physical mass eigenstates. We identify
+\begin{equation}
+\chi_1\equiv D_+,
+\qquad
+m_{\chi_1}=m_\chi,
+\end{equation}
+while $\chi_2$ and $\chi_3$ denote the two eigenstates obtained by
+diagonalizing the $(M,D_-)$ block,
+\begin{equation}
+m_{\chi_2}=m_{\chi_3}=M_\ast=m_\chi+\delta.
+\end{equation}
+Writing
+\begin{equation}
+D_-=
+U_{D_-2}\chi_2+U_{D_-3}\chi_3,
+\end{equation}
+unitarity of the neutral-state rotation implies
+\begin{equation}
+|U_{D_-2}|^2+|U_{D_-3}|^2=1.
+\label{eq:Dminusunitarity}
+\end{equation}
+Because $\chi_2$ and $\chi_3$ are degenerate at the custodial point,
+both final states are kinematically accessible with the same
+inelastic splitting. Summing inclusively over the excited neutral
+states therefore gives the full pseudo-Dirac neutral-current
+strength,
+\begin{equation}
+\sum_{a=2,3}
+|g_{\chi_1\chi_a Z}|^2
+=
+\left(\frac{g}{2c_W}\right)^2.
+\label{eq:inclusiveZstrength}
+\end{equation}
+The leading tree-level direct-detection process should consequently
+be understood as
+\begin{equation}
+\chi_1+N\rightarrow\chi_{2,3}+N,
+\label{eq:inelproc}
+\end{equation}
+with the two excited states experimentally indistinguishable for the
+present purpose.
+
+The corresponding inclusive neutron cross section is therefore
+representation independent and equal to the pseudo-Dirac
+neutral-current value,
+\begin{equation}
+\sigma_n^{\rm inel}
+\simeq
+\frac{G_F^2\mu_n^2}{8\pi}
+\simeq
+1.9\times10^{-39}\ {\rm cm^2},
+\label{eq:sigmainel}
+\end{equation}
+where
+ $\mu_n= m_\chi m_n/(m_\chi+m_n)$ 
+is the DM-neutron reduced mass. For the heavy
+dark-matter masses considered here, $\mu_n\simeq m_n$.
+
+The central consequence is that, at fixed $(m_\chi,y)$, both the
+neutral-state splitting and the inclusive tree-level inelastic
+scattering strength are independent of $(R_M,R_D)$. Representation
+dependence enters only through the thermal relic trajectory and
+through the separate loop-induced elastic signal discussed below.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Inelastic xenon recoil spectrum}
+
+For endothermic scattering with splitting $\delta>0$, the minimum incident velocity required to
+produce a nuclear recoil $E_R$ is
+\begin{equation}
+v_{\rm min}(E_R)=
+\frac{1}{\sqrt{2m_AE_R}}
+\left(
+\frac{m_AE_R}{\mu_{\chi A}}+\delta
+\right),
+\label{eq:vmin}
+\end{equation}
+where $m_A$ is the nuclear mass and $\mu_{\chi A}$ is the dark-matter nucleus reduced mass.
+Unlike elastic scattering, $v_{\rm min}$ has a minimum at finite recoil energy,
+\begin{equation}
+E_R^\star=
+\frac{\mu_{\chi A}}{m_A}\delta.
+\label{eq:estar}
+\end{equation}
+For the heavy HC-MDM candidates considered here, $m_\chi\gg m_{\rm Xe}$ and therefore
+$\mu_{\chi A}\simeq m_A$. In this limit,
+\begin{equation}
+E_R^\star\simeq\delta.
+\label{eq:estarheavy}
+\end{equation}
+
+The differential recoil spectrum is set by the fixed neutral-current interaction,
+the endothermic kinematics in Eq.~\eqref{eq:vmin}, the xenon nuclear response, and the DM halo
+velocity distribution. Schematically,
+\begin{equation}
+\frac{dR}{dE_R}
+=
+\frac{\rho_\chi}{m_\chi}
+\sum_A f_A
+\frac{\sigma_A^0}{2\mu_{\chi A}^2}
+F_A^2(E_R)\,
+\eta\!\left(v_{\rm min}(E_R)\right),
+\label{eq:rate}
+\end{equation}
+where $f_A$ is the natural xenon isotope abundance, $F_A(E_R)$ is the nuclear form factor, and
+$\eta(v_{\rm min})$ is the standard halo integral. For vector $Z$ exchange the coherent weak charge is
+\begin{equation}
+Q_V(A,Z)=
+(A-Z)-(1-4\sin^2\theta_W)Z,
+\end{equation}
+and the zero-momentum nucleus cross section is
+\begin{equation}
+\sigma_A^0=
+\sigma_n^{\rm inel}
+\frac{\mu_{\chi A}^2}{\mu_{\chi n}^2}
+Q_V^2.
+\label{eq:sigmaA}
+\end{equation}
+
+Equations~\eqref{eq:splitting}, \eqref{eq:universalZ}, and \eqref{eq:rate} show that, at fixed
+$(m_\chi,y)$, the leading high-energy xenon signal is the same for every multiplet in the sequence.
+There is no explicit dependence on $R_M$ or $R_D$ in the splitting or in the leading off-diagonal
+$Z$ interaction. The representation dependence enters later through the thermal relic trajectory determination of $m_\chi$
+and through the separate loop-induced elastic signal which explicitly depends on the representation.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{LZ selects a universal relation between $m_\chi$ and $y$}
+
+%++++++++++++++++FIGURE+++++++++++++++++%
+\begin{figure*}[t]
+\includegraphics[width=0.98\textwidth]{./figures/mass_ranges.pdf}
+\caption{Thermal masses and spin-independent cross sections on nucleons for the multiplet combinations considered here. The bars span the parameter space from a negligible Higgs coupling ($y$) to $y=1$. The points selected by the LZ event (Fig.~\ref{fig:mass-y}) are indicated by stars. Dots indicate the pure Majorana case corresponding to a given multiplet (e.g., the 3-plet for the $3_M2_D$ case) for comparison. The red-shaded regions are excluded by unitarity of the $s$-wave cross sections.  The gray, blue, and green shaded regions indicate the neutrino floor, the LZ, and PandaX-4T exclusion regions respectively~\cite{LZ:2024zvo, PandaX:2024qfu}. The dashed blue and green lines indicate the projected XLZD and PandaX-xT 200 ton-year 90\% C.L. exclusion sensitivities, respectively~\cite{Baudis:2024jnk, PANDA-X:2024dlo}.}
+\label{fig:mass ranges}
+\end{figure*}
+%++++++++++++++++++++++++++++++++++++++%
+
+LZ reports a single event reconstructed at
+\begin{equation}
+E_R=248\pm23_{\rm stat}\pm23_{\rm sys}~\keV,
+\label{eq:LZeventenergy}
+\end{equation}
+within an extended nuclear-recoil analysis window of
+$5.4~\keV<E_R<270~\keV$ and an exposure of
+$2.84~{\rm tonne\,yr}$~\cite{LZ:2026axp}. The large recoil energy immediately points
+towards an inelastic splitting of order a few hundred keV. In the heavy
+dark-matter limit the minimum of the inelastic velocity threshold occurs
+at $E_R^\star\simeq\delta$, as shown in Eq.~\eqref{eq:estarheavy}.
+However, identifying $\delta$ directly with the reconstructed recoil
+energy is not sufficient for the present model. The tree-level
+$Z$-mediated inelastic cross section is fixed and large, so the observed
+event rate requires the scattering to occur close to the high-velocity
+tail of the Galactic dark-matter distribution.
+
+We therefore determine the preferred splitting from the event rate
+rather than directly from the recoil energy. For each dark-matter mass
+we calculate the expected number of inelastic xenon recoils,
+\begin{equation}
+N_{\rm inel}(m_\chi,\delta)
+=
+{\cal E}_{\rm LZ}
+\int_{5.4~\keV}^{270~\keV}
+dE_R\,
+\frac{dR_{\rm inel}}{dE_R}
+(m_\chi,\delta),
+\label{eq:NinelLZ}
+\end{equation}
+where ${\cal E}_{\rm LZ}=2.84~{\rm tonne\,yr}$.
+The differential rate includes the Standard Halo Model velocity
+distribution with its Galactic escape-speed cutoff, the natural xenon
+isotope abundances, and the nuclear form factor. We use the universal
+off-diagonal $Z$ interaction derived above, with
+$\sigma_n^{\rm inel}\simeq1.9\times10^{-39}~{\rm cm^2}$.
+At this stage we do not fold in the full detector response or reconstruct
+the LZ likelihood, so Eq.~\eqref{eq:NinelLZ} should be understood as a
+rate-level estimate.
+
+For every value of $m_\chi$, we define the central LZ-selected splitting
+implicitly by
+\begin{equation}
+N_{\rm inel}
+\left(
+m_\chi,\delta_{\rm LZ}(m_\chi)
+\right)
+=1.
+\label{eq:deltaLZrate}
+\end{equation}
+Unlike the simple approximation $\delta_{\rm LZ}\simeq E_R$, the
+rate-selected splitting is mildly mass dependent. This dependence
+arises both from the dark-matter flux, which scales as $1/m_\chi$, and
+from the mass dependence of the inelastic kinematics. Over the mass
+range relevant for the HC-MDM thermal solutions, the resulting central
+splitting remains of order $350$--$380~\keV$. The predicted recoil
+spectra nevertheless populate the vicinity of the observed
+$248~\keV$ event because the position of a measured recoil need not
+coincide with the mass splitting itself.
+
+To illustrate the statistical uncertainty associated with observing
+only one event, we also construct a conservative rate band using the
+two-sided $90\%$ Poisson interval for the expected mean, assuming
+negligible background,
+\begin{equation}
+0.05 < \mu < 4.70.
+\label{eq:LZPoissonBand}
+\end{equation}
+%
+For each $m_\chi$, the lower and upper boundaries of the splitting band
+are obtained by solving
+\begin{align}
+N_{\rm inel}
+\left(m_\chi,\delta_{\rm LZ}^{-}(m_\chi)\right)
+&=4.70,
+\\
+N_{\rm inel}
+\left(m_\chi,\delta_{\rm LZ}^{+}(m_\chi)\right)
+&=0.05.
+\label{eq:deltaLZband}
+\end{align}
+Since the inelastic rate decreases rapidly with increasing splitting,
+the larger allowed event rate corresponds to the lower boundary in
+$\delta$, and vice versa. This band should not be interpreted as a
+replacement for the experimental likelihood, but provides a useful
+estimate of the statistical width implied by a single observed event.
+
+The mass-dependent splitting can then be mapped directly onto the
+Yukawa coupling using Eq.~\eqref{eq:splitting}. The exact relation is
+\begin{equation}
+y_{\rm LZ}(m_\chi)
+=
+\frac{
+\sqrt{
+4m_\chi\delta_{\rm LZ}(m_\chi)
++
+2\delta_{\rm LZ}^2(m_\chi)
+}
+}{v},
+\label{eq:yLZexact}
+\end{equation}
+with corresponding upper and lower curves obtained by replacing
+$\delta_{\rm LZ}$ by $\delta_{\rm LZ}^{\pm}$. Since
+$\delta_{\rm LZ}\ll m_\chi$ throughout the parameter space of interest,
+\begin{equation}
+y_{\rm LZ}(m_\chi)
+\simeq
+\frac{
+2\sqrt{
+m_\chi\delta_{\rm LZ}(m_\chi)
+}
+}{v}.
+\label{eq:yLZ}
+\end{equation}
+The high-energy LZ event therefore selects a universal,
+rate-normalized band in the $(m_\chi,y)$ plane. The representation
+dependence enters only when this universal curve is intersected with
+the different thermal relic trajectories
+$m_\chi=m_{\rm th}^{(R_M,R_D)}(y)$.
+
+Numerically, we evaluate the inelastic rate on a grid in $m_\chi$
+and solve Eq.~\eqref{eq:NinelLZ} for the splitting $\delta$ at each
+mass. The central relation uses $N_{\rm inel}=1$, while the boundaries
+of the band use the two-sided $90\%$ Poisson limits in
+Eq.~\eqref{eq:LZPoissonBand}. We interpolate the resulting
+$\delta_{\rm LZ}(m_\chi)$ relation and map it onto
+$y_{\rm LZ}(m_\chi)$ using Eq.~\eqref{eq:yLZexact}. The intersections
+with the thermal trajectories
+$m_\chi=m_{\rm th}^{(R_M,R_D)}(y)$, discussed below, are then determined numerically for
+each multiplet pair.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Intersection with the thermal relic trajectory}
+
+The central prediction follows by combining the universal LZ band with the representation-dependent
+thermal relic calculation. For a given multiplet pair, the relic abundance fixes
+\begin{equation}
+m_\chi=m_{\rm th}^{(R_M,R_D)}(y).
+\end{equation}
+The allowed mass ranges for each multiplet pair along with their spin-independent cross section were calculated in Ref.~\cite{GriffithSmirnov2026} and are shown in Fig.~\ref{fig:mass ranges}.
+
+Meanwhile, the LZ recoil requires
+%
+\begin{equation}
+\delta\!\left[m_{\rm th}^{(R_M,R_D)}(y),y\right]
+=
+\delta_{\rm LZ}\!\left(m_{\rm th}^{(R_M,R_D)}(y)\right).
+\end{equation}
+%
+Equivalently, one solves
+\begin{equation}
+y=
+y_{\rm LZ}\!\left(m_{\rm th}^{(R_M,R_D)}(y)\right).
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.98\columnwidth]{figures/LZ.png}
+    \caption{Universal relation between the dark-matter mass and Yukawa coupling selected by the LZ high-energy recoil. For each $m_\chi$, the central curve is obtained by solving $N_{\rm inel}(m_\chi,\delta_{\rm LZ})=1$ in the $2.84~{\rm tonne\,yr}$ LZ exposure and the $5.4~\keV<E_R<270~\keV$ recoil window, and then mapping $\delta_{\rm LZ}(m_\chi)$ onto $y_{\rm LZ}(m_\chi)$. The shaded region corresponds to the exact two-sided $90\%$ Poisson interval for one observed event, mapped through the same rate calculation. The representation-dependent thermal relic trajectories from Ref.~\cite{GriffithSmirnov2026} are superimposed, and their intersections with the universal LZ band select the benchmark region for each HC-MDM multiplet.}
+    \label{fig:mass-y}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The universal LZ band is therefore intersected by six different thermal trajectories. Each
+intersection selects a model-dependent region
+\begin{equation}
+\left\{
+y_\star,\,
+m_{\chi,\star}
+\right\}_{(R_M,R_D)}.
+\end{equation}
+This construction is illustrated by Fig.~\ref{fig:mass-y}. The inelastic interaction itself is
+universal, while the location at which a given model samples the LZ band is fixed by its thermal
+freezeout dynamics.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Correlated prediction for the elastic signal}
+
+Once the LZ event and relic abundance select $m_{\chi,\star}$ and $y_\star$, the conventional
+low-energy elastic direct-detection signal is essentially fixed.
+
+At the custodial point, the tree-level Higgs-exchange contribution to spin-independent elastic
+scattering vanishes. The remaining signal is dominated by electroweak loops and is approximately
+the corresponding pure-MDM result,
+\begin{equation}
+\sigma_{\rm SI}^{\rm loop}
+\simeq
+\sigma_{\rm SI}^{\rm MDM}(R_M).
+\label{eq:sigloop}
+\end{equation}
+The mass dependence is weak for $m_\chi\gg m_N$, and the main hierarchy is set by the electroweak
+representation.
+
+This leads to a correlated two-channel prediction: a high-energy inelastic $Z$-mediated recoil
+together with a low-energy loop-induced elastic recoil.
+
+The existing HC-MDM direct-detection plot, Fig.~\ref{fig:mass ranges}, can therefore be repurposed directly. Each horizontal
+representation band currently spans the full thermal mass range as $y$ is varied. The LZ
+high-energy event selects a particular value $y_\star$, and therefore a particular point
+$m_{\chi,\star}$ on that band. These points in the mass ranges are denoted by a star. The corresponding vertical coordinate is the predicted
+loop-induced elastic cross section.
+
+The predicted benchmarks are
+
+\begin{center}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{cc@{\hspace{3pt}}c@{\hspace{3pt}}ccc}
+\hline\hline
+Model
+& $y_\star$
+& \shortstack{$m_{\chi,\star}$\\$[\TeV]$}
+& \shortstack{$\delta_\star$\\$[\keV]$}
+& \shortstack{$\sigma_{\rm SI}^{\rm loop}$\\$[\cm^2]$}
+& $N_{\rm el}$\\
+\hline
+%
+$3_M2_D$
+& $5.95\times10^{-3}$
+& $1.44$
+& $372.0$
+& $1.26\times10^{-47}$
+& $0.51$\\
+
+$5_M4_D$
+& $1.37\times10^{-2}$
+& $7.58$
+& $377.3$
+& $1.12\times10^{-46}$
+& $0.78$\\
+
+$7_M6_D$
+& $2.33\times10^{-2}$
+& $22.23$
+& $370.8$
+& $4.45\times10^{-46}$
+& $1.19$\\
+
+$9_M8_D$
+& $3.43\times10^{-2}$
+& $49.08$
+& $363.5$
+& $1.22\times10^{-45}$
+& $1.47$\\
+
+$11_M10_D$
+& $4.45\times10^{-2}$
+& $83.81$
+& $357.5$
+& $2.60\times10^{-45}$
+& $1.81$\\
+
+$13_M12_D$
+& $5.52\times10^{-2}$
+& $131.14$
+& $351.8$
+& $5.02\times10^{-45}$
+& $2.36$\\
+\hline \hline
+\end{tabular}
+\end{center}
+
+Here $N_{\rm el}$ denotes the expected number of raw loop-induced
+elastic recoil events in the LZ exposure of $2.84~{\rm tonne\,yr}$,
+integrated over the nuclear-recoil energy window
+$5.4~\keV<E_R<270~\keV$. The corresponding inelastic yield is
+$N_{\rm inel}\simeq1$ for each benchmark by construction.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Phenomenological implications}
+
+The proposed interpretation is substantially more predictive than a generic inelastic dark-matter
+fit. The inelastic cross section is set by the electroweak neutral current, the splitting is fixed by
+the same Yukawa interaction that modifies thermal freezeout, and the elastic scattering signal is
+determined by the representation-dependent electroweak loops.
+
+The different multiplets are therefore experimentally distinguishable despite the universality
+of the high-energy interaction. The same universal inelastic LZ band is sampled at different
+$(m_\chi,y)$ points because the thermal trajectories differ by representation, while the accompanying
+elastic signal rises strongly with representation. 
+
+Notably, Fig.~\ref{fig:mass ranges} shows that the lower-dimensional models can have elastic cross sections near or below the neutrino floor. However, for each multiplet pair the LZ band intersects the thermal relic trajectory at the lower end of the thermal mass range. Therefore, we find that to be consistent with the LZ result, the elastic scattering cross sections {\it must} lie above the the neutrino floor. This is demonstrated by the location of the LZ-selected points in Fig.~\ref{fig:mass ranges}. Furthermore, for the $11_M 10_D$ and especially the $13_M 12_D$ combinations, this portion of the mass range is disfavored by a lack of observed elastic scattering events. The $9_M 8_D$ case also exhibits some pressure from negative direct-detection results. Therefore, the LZ result strongly favors the $3_M 2_D$, $5_M4_D$, and $7_M6_D$ scenarios, all of which are testeable by next generation direct detection efforts.
+
+If the LZ high-energy event persists with additional exposure, several tests become possible:
+\begin{enumerate}[leftmargin=1.5em]
+\item The high-energy recoil spectrum should follow the characteristic endothermic shape implied by
+      Eqs.~\eqref{eq:vmin}--\eqref{eq:rate}.
+\item The preferred $(m_\chi,y)$ region should coincide with the intersection of the universal
+      LZ band and the corresponding thermal HC-MDM trajectory.
+\item A correlated elastic signal should emerge at low recoil energy with a strength fixed by the
+      representation (this may require next generation direct detection experiments).
+\item The relative size of the inelastic and elastic channels can discriminate between different
+      multiplet combinations.
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{Discussion}
+
+A central simplification of the present analysis is that the inelastic direct-detection signal is
+universal across the complete multiplet sequence. The neutral Higgs Clebsch is exactly
+$1/\sqrt2$ for $j_D\otimes1/2\rightarrow j_D+1/2$ with neutral external states, while the
+neutral-current charge of the hypercharged Dirac component is fixed by $Q=0$ and $Y=\pm1/2$.
+Consequently, neither the leading splitting in Eq.~\eqref{eq:splitting} nor the leading
+off-diagonal $Z$ interaction in Eq.~\eqref{eq:universalZ} depends on the total electroweak
+representation. 
+
+A second issue is the relation between the broken-phase spectrum and the freezeout calculation.
+The relic-density analysis is performed primarily in the unbroken electroweak limit, while the
+direct-detection signal depends on sub-MeV splittings generated after electroweak symmetry breaking.
+Because these splittings are negligible compared with the freezeout temperature for the heavy
+multiplets considered here, they should not modify the thermal calculation significantly, but this
+should be checked quantitatively.
+
+Finally, the LZ event is presently a single-event excess with modest global significance.
+Therefore, we note that while this finding is not evidence for HC-MDM, HC-MDM is a an extremely simple and well motivated model which can easily account for this observation. Instead, the measured recoil energy identifies the relevant
+few-hundred-keV splitting scale, while the observed event normalization determines the
+rate-selected relation $\delta_{\rm LZ}(m_\chi)$. Combining this relation with the thermal relic
+trajectories exposes a previously unexplored correlation between inelastic scattering, thermal
+freezeout, and the conventional elastic signal. The resulting benchmark spectra naturally populate
+the vicinity of the observed $248~\keV$ recoil, providing an independent spectral consistency check
+of the rate-matched construction.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Conclusions}
+
+We have shown that Higgs-coupled minimal dark matter provides a
+natural inelastic interpretation of the LZ $248~\keV$ nuclear-recoil
+event~\cite{LZ:2026axp}. At the custodial point, Higgs-induced mixing
+produces a light neutral state and a degenerate excited neutral sector,
+separated by a splitting of a few hundred keV, while the $Z$
+interaction connects the two sectors off diagonally. This naturally
+suppresses low-energy inelastic scattering while allowing high-energy
+xenon recoils.
+
+The key new feature is that the high-energy inelastic signal is universal (independent of multiplet size), whereas thermal freezeout
+is not. The neutral Clebsch-Gordon coefficient, pseudo-Dirac splitting, and leading off-diagonal $Z$ interaction are
+independent of representation, so the observed LZ recoil defines one common band in
+$(m_\chi,y)$ space.
+For each multiplet pair, the observed relic abundance supplies a different trajectory
+$m_\chi=m_{\rm th}^{(R_M,R_D)}(y)$. Their intersection fixes
+$(m_\chi,y)$ up to the present experimental uncertainty. The electroweak representation then
+predicts a correlated loop-induced elastic cross section in the conventional low-energy recoil
+window.
+
+If the LZ event persists, this framework predicts not only additional high-energy inelastic events
+but also a representation-dependent elastic signal. The combination provides a direct way to test
+and potentially distinguish the electroweak multiplet structure of thermal dark matter.
+
+Finally, we note that the same bound state and Sommerfeld effects that complicate the relic abundance computation can also lead to a rich indirect detection signature including lines from bound state formation. The photon energy and flux of these features is dependent on $m_\chi$ as well as the representation sizes. However, a detailed computation of these signatures is extremely complicated. Selecting preferred masses for each representation combination may allow for a more detailed prediction of indirect detection signatures to complement direct detection efforts. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{Acknowledgments}
+
+SG and JFB were supported by National Science Foundation Grant Nos.\ PHY-2310018 and PHY-2609870. JS was supported by the UK Research and Innovation Future Leader Fellowship MR/Y018656/1. The authors used LLMs for assistance with language and editing. All scientific content and numerical results were independently developed and verified by the authors.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+\twocolumngrid
+\bibliography{bibliography}
+
+\end{document}

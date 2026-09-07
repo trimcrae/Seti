@@ -1,0 +1,430 @@
+\documentclass[reprint,superscriptaddress,preprintnumbers,amsmath,amssymb,aps,prd,tightenlines,longbibliography,nofootinbib]{revtex4-2}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{amsmath,amssymb,bm,subdepth}
+\usepackage[colorlinks=true
+,urlcolor=blue
+,anchorcolor=blue
+,citecolor=blue
+,filecolor=blue
+,linkcolor=red
+,menucolor=blue
+,linktocpage=true
+,pdfproducer=medialab
+,pdfa=true
+]{hyperref}
+\usepackage{mathtools}
+
+\def\BS#1{{\color{red}{ [#1 -- BS] }}}
+\def\nr#1{{\color{orange}{ [#1 -- NR] }}}
+\def\trs#1{{\color{blue}{ [#1 -- TRS] }}}
+\def\wlx#1{{\color{magenta}{ [#1 -- WLX] }}}
+
+% Letter-style run-in em-dash section headings
+\makeatletter
+\def\section{\@ifstar\rs@star\rs@nostar}
+\def\rs@nostar#1{\par\addvspace{5pt plus 2pt}\noindent{\itshape #1}.---\nobreak\ignorespaces}
+\def\rs@star#1{\par\addvspace{5pt plus 2pt}\noindent{\itshape #1}.---\nobreak\ignorespaces}
+\makeatother
+
+\begin{document}
+
+\title{Confronting the Higgsino Interpretation of the \\LZ Event with the High-Energy Sideband}
+
+\author{Nicholas L. Rodd}
+\affiliation{Theory Group, Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA}
+\affiliation{Leinweber Institute for Theoretical Physics, University of California, Berkeley, CA 94720, USA}
+
+\author{Benjamin R. Safdi}
+\affiliation{Theory Group, Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA}
+\affiliation{Leinweber Institute for Theoretical Physics, University of California, Berkeley, CA 94720, USA}
+
+\author{Tracy R.~Slatyer}
+\affiliation{Center for Theoretical Physics – a Leinweber Institute, Massachusetts Institute of Technology,
+Cambridge, MA 02139, USA}
+
+\author{Weishuang Linda Xu}
+\affiliation{Kavli Institute for Particle Astrophysics \& Cosmology, Stanford University, Stanford, CA 94305, USA}
+\affiliation{Particle Theory Group, SLAC National Accelerator Laboratory, Stanford, CA 94305, USA}
+
+\begin{abstract}
+The LZ experiment has reported a single 248 keV nuclear recoil event in their $2.84$\,ton-yr exposure on a xenon target. The absence of lower nuclear recoil events is naturally explained by inelastically scattering dark matter (DM), for which the nuclear recoil energy spectra are shifted upwards from zero. Excitingly, the observed rate and spectra are consistent with a thermal $1.1$\,TeV higgsino that explains all of DM with a mass splitting $\delta \sim 370 - 490$\,keV between the two lowest-lying Majorana states, with the range depending on the underlying DM velocity distribution. In this work, however, we show that higgsino DM with these properties would generically produce more higher-energy recoil events in a high-energy sideband along the LZ $S1c$ energy axis, while the LZ experiment reports no events in that bin. This suggests a possible tension which could be further explored by the LZ Collaboration, as the acceptance in that bin is not public.
+%While this may put in tension the higgsino interpretation of the signal; we hope this motivates a reassessment by the LZ Collaboration, as the acceptance in that bin is not public.
+We further show that a non-thermal $\sim$500 GeV higgsino may evade the sideband constraint and that future experiments using heavy targets can potentially test the higgsino interpretation of the event either way.  
+\end{abstract}
+
+\maketitle
+
+The higgsino stands as arguably the most compelling weakly interacting massive particle (WIMP) dark matter (DM) candidate.
+It can emerge naturally as the lightest supersymmetric particle (LSP) in split-spectrum supersymmetry (SUSY) models with $R$-parity~\cite{Wells:2003tf,Giudice:2004tc,Arkani-Hamed:2004ymt,Hall:2011jd,Arvanitaki:2012ps,Arkani-Hamed:2012fhg,Co:2021ion}, and with a mass of $m_\chi \simeq 1.1\,$TeV it explains the observed DM abundance as a conventional thermal relic~\cite{Bottaro:2022one}.
+The higgsino is an especially interesting target given the gamma-ray searches that disfavored other simple WIMPs including the wino and other minimal DM candidates~\cite{Fan:2013faa,Cohen:2013ama,Rodd:2024qsi,Safdi:2025sfs}. In contrast, due to its lack of strong  Sommerfeld enhancement in its annihilation, the higgsino remains essentially untested in indirect detection as well as in colliders.
+This could change with the upcoming Cherenkov Telescope Array Observatory (CTAO), which could start to probe the thermal higgsino as early as this year with their northern site and then more strongly in the 2030's with the inclusion of their southern array~\cite{Rinchiuso:2020skh,Rodd:2024qsi,Abe:2025lci}.  Intriguingly, there may even be tentative evidence for higgsino annihilation in data from the \textit{Fermi} Large Area Telescope~\cite{Dessert:2022evk}.  
+In this work we address whether a thermal higgsino could explain the single nuclear-recoil (NR) event detected by the LUX-ZEPLIN (LZ) detector using 2.84\,ton-yr of exposure~\cite{LZ:2026axp}; the event has a recoil energy $E_R = 248 \pm 23 \pm 23$\,keV (stat.\,+\,sys.) in a region of the $500 < S1c < 600$\,phd projection with an expected $0.0106 \pm 0.0008$ background events.
+
+The higgsino multiplet consists of two neutral Majorana mass eigenstates alongside a heavier set of charged mass eigenstates; the two neutral eigenstates are split in mass by $\delta$. In split-spectrum SUSY models, $\delta \simeq m_Z^2 (s_W^2 / M_1 + c_W^2 /M_2)$, with $\theta_W$ the Weinberg angle, $m_Z$ the $Z$-boson mass, and $M_1$ and $M_2$ the bino and wino soft masses, respectively.  Scattering through $Z$-exchange allows the lighter Majorana state to convert to its heavier cousin, {\it i.e.} the scattering is inelastic, so the initial DM must have kinetic energy sufficient to excite the splitting $\delta$ for the process to be kinematically feasible. This implies that for $1.1$\,TeV higgsinos, $Z$-exchange scattering is only possible for splittings $\delta$ at the level of several hundred keV, given that DM velocities in the Milky Way are on the order of a few hundred km/s and below.
+If $\delta$ is too large then the dominant scattering is elastic and loop-induced, with cross-section $\sigma \sim 10^{-49}$\,cm$^2$~\cite{Bottaro:2022one}, which is well into the neutrino fog~\cite{Chen:2019gtm,Hill:2014yxa,Nagata:2014wma,OHare:2021utq}.  
+
+With the higgsino mass fixed at the thermal value $m_\chi \simeq 1.1$\,TeV, the only free parameter of the model is the Majorana splitting $\delta$; from this value, all other direct detection observables, such as the rate and recoil spectrum, can be determined. Thus it is a \textit{highly non-trivial} consistency check to verify that there exist values of $\delta$ that can explain the scattering rate implied by the LZ event while still predicting an energy recoil spectrum consistent with the data. The main unknown, as we elaborate upon below, is the high-velocity tail of the DM velocity distribution in the Milky Way.
+
+In this Letter we make three important points regarding the higgsino interpretation of the LZ NR event. 
+(i) We show that the higgsino DM model may provide a consistent, simultaneous explanation of the data rate and spectra, given $\delta \sim (370,490)$\,keV.
+The exact value of the splitting depends on unknown aspects of the high-velocity tail of the Milky Way's DM velocity distribution, such as the possible contribution of a high-velocity sub-component from the Large Magellanic Cloud (LMC).  (ii) The predicted recoil spectrum peaks at
+$E_R^* = \mu_A \delta / m_A \sim 354$\,keV, depending on the velocity distribution, with $m_A$ the target nucleus mass and $\mu_A$ the DM-nucleus reduced mass. This is {\it above} the LZ region of interest (ROI), which has an upper edge of roughly 270\,keV. In particular, we find that under the higgsino interpretation LZ should have recorded 
+multiple ($\sim$3--10) additional events within the high-energy sideband $800 < S1c < 1700$\,phd, with $S1c$ the corrected scintillation signal in photons detected (phd) and the NR light yield being $\sim$$2.3$\,phd/keV~\cite{LZ:2026axp}, so that the high-energy sideband correspond to roughly $350$--$590$\,keV NR.   We show that this conclusion is largely robust to variation of the DM model and the possible inclusion of an LMC sub component.  
+
+Note that the high-energy sideband exists to calibrate multiple scatter, single ionization (MSSI) background events; it is specifically chosen to be a region where a traditional WIMP {\it does not} contribute counts. Ironically, we find that the high-energy sideband is precisely the place where a higgsino signal could be verified. A central caveat to our results, however, is that LZ does not publish the acceptance for WIMP-like events in this sideband; we assume unit acceptance, but if that is substantially lower it would relieve the tension we point out. 
+(iii) If our assumption for the acceptance in the high-energy sideband is correct, we find that there is essentially only one model variant that evades tension with the sideband test.
+If the DM abundance is determined non-thermally, then the higgsino mass can be lower than the standard thermal value, and we find this alleviates the tension; for example, if the higgsino mass is $m_\chi \simeq 500$\,GeV, then $E_R^\star$
+is around $290$\,keV, which is close to the upper edge of the LZ ROI. Thus in this case, even for the Standard Halo Model (SHM), the model can explain the event in the signal region without producing a large number of events in the high-energy sideband.
+
+The one scenario that evades a tension with the high-energy sideband test may be tested with upcoming experiments that use heavier nuclei.
+Inelastic scattering requires a minimum incident speed $v_{\rm min} = \sqrt{2\delta/\mu_A}$, which falls as the nuclear mass and thus the reduced mass grows.
+As an example, if we take the SHM scattering on xenon at the splitting required to explain the LZ event, $\delta \sim 393$\,keV, $v_{\rm min} \simeq 801$ km/s, while the lab-frame cutoff velocity is $v_{\rm esc} + v_{\rm lab} \simeq 833$\,km/s in June, assuming $v_{\rm esc} \simeq 567$ km/s~\cite{Folsom:2025lly}.
+Thus, the entire xenon signal is carried by the last $\sim$30\,km/s of the velocity distribution, precisely where the SHM is least reliable.
+On tungsten, lead, and uranium the larger reduced mass lowers $v_{\rm min}$ to $\sim$690, 656 and 619 km/s, respectively, where the lab-frame velocity distribution is less uncertain.  
+Crucially, scenarios with lower-mass higgsinos push xenon {\it further} onto the high-velocity tails while leaving the heavy targets probing a much less extreme part of the tail of the velocity distribution. We find, for example, that ten expected events with a PbWO$_4$ detector requires 12--119 kg-yr of exposure across the halo models and nuclear responses we consider, so that the projected 0.17 ton-year {exposure} of RES-NOVA~\cite{RES-NOVA:2026} should rule {out} or confirm the higgsino explanation of the LZ event.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Fitting the higgsino model to the LZ ROI data}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+We compute the detection rate for a natural xenon target with the full time-dependent $v_{\rm lab}(t)$ averaged over the year. We digitize the detection efficiency in the ROI from the LZ paper's Fig.~S2~\cite{LZ:2026axp}.
+For the SHM velocity distribution, we follow~\cite{Baxter:2021pqo} by default; we take the velocity dispersion to be $v_0 = 238$ km/s, the escape velocity 544\,km/s, and the local DM density $\rho = 0.3$\,GeV/cm$^3$.
+(For more discussion see, {\it e.g.},~\cite{Safdi:2022xkm}).
+We explore the impact of two larger escape velocities, 567\,km/s and 610\,km/s motivated by~\cite{Folsom:2025lly}.
+The DM-nucleus scattering cross-section is reviewed in the Appendix, where we also note a factor of four discrepancy with the literature.
+
+
+The nuclear form factor $F$ plays a crucial role in determining the scattering rates on xenon. The recoils that matter here lie at $q \simeq 1.2$--$1.6$ fm$^{-1}$ on xenon, around and beyond the second diffraction minimum.  We use two form factors to assess the systematic uncertainty from its mismodeling. Our fiducial response is the Helm parameterization in its standard Lewin--Smith form~\cite{Lewin:1995rx}. 
+As a cross-check we use the large-scale shell-model form factor from~\cite{Vietze:2014vsa}, which we refer to as the Vietze form factor.
+LZ compute their spectra with WimPyDD on the one-body density matrices of Refs.~\cite{Anand:2013yka,LZ:2026axp}; the response implied by their Fig.~1 agrees with the Vietze form factor, so we take the Vietze form factor fit as LZ's response and use it up to recoil energies of $600$\,keV.
+We weight xenon isotopes by their natural abundances.
+Note that no shell-model response is available for W, Pb or U, so the heavy-target rate projections use the Helm form factors only.
+
+Under the higgsino model assumption with the Helm response and our fiducial SHM, we predict $N_{\rm ROI} \simeq 79$ events in LZ's ROI at $\delta = 350$ keV but only $N_{\rm ROI} \simeq 1$ at $\delta = 377$ keV.
+To understand how this varies with our model choices, in Tab.~\ref{tab:ff} we show $\delta_1$, the splitting required to obtain one event in the signal ROI, for various combinations of the escape velocity and form factor.
+What is also shown there is how many events the scenario predicts above the one in the signal band, and specifically how many would appear in the high-energy sideband.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+ & \multicolumn{3}{c}{Helm (fiducial)} & \multicolumn{3}{c}{Vietze (LZ)} \\
+Halo & $\delta_1$ [keV] & $N_{>}$ & $N_{\rm SB}$ & $\delta_1$ [keV] & $N_{>}$ & $N_{\rm SB}$ \\
+\midrule
+SHM $v_\textrm{esc} =544\,$km/s & $377$ & $8.3$ & $4.9$ & $371$ & $7.3$ & $3.7$ \\
+SHM $v_\textrm{esc} = 567\,$km/s & $393$ & $10.3$ & $6.6$ & $387$ & $8.6$ & $4.7$ \\
+SHM $v_\textrm{esc} = 610\,$km/s & $423$ & $12.7$ & $8.8$ & $415$ & $9.8$ & $5.8$ \\
+LMC $w=0.26\%$ & $484$ & $7.9$ & $5.8$ & $472$ & $6.1$ & $3.6$ \\
+LMC $w=0.60\%$ & $492$ & $13.7$ & $10.1$ & $480$ & $10.5$ & $6.3$ \\
+\bottomrule
+\end{tabular}
+\caption{For various scenarios, the value of $\delta$ that provides one event in the LZ signal ROI ($\delta_1$), together with how many events are predicted above the signal region ($N_{>}$), and the expected number in the sideband ($N_{\rm SB}$).
+Results are shown for the Helm and Vietze form factors.
+We show results for our fiducial SHM with three values of the escape velocity, as well as an SHM plus LMC admixture model, with $w$ the fraction of DM in the LMC sub-component.
+}
+\label{tab:ff}
+\end{table}
+
+The LMC plays an important role in our analysis because it is thought to potentially provide a high-velocity tail to the local DM velocity distribution above the lab-frame escape velocity. 
+In particular, simulations of Milky Way analogues hosting an LMC-like satellite find
+$0.6^{+0.4}_{-0.4}\%$ of the local DM is above the SHM escape speed, against $0.1^{+0.7}_{-0.1}\%$ for the full simulated
+sample, including those without an LMC~\cite{Folsom:2025lly}. Thus, there is a preference for a high-velocity population in simulations with an LMC.
+(Note, however, that the SHM alone with $v_{\rm esc} = 567$\,km/s already places $0.5\%$ of the halo above $544$\,km/s.) 
+Ref.~\cite{Smith-Orlik:2023kyu}
+estimates that $0.008$--$2.8\%$ of the local DM originates in the LMC across their halos at LMC pericentre, falling to $0.26\%$ for the halo they re-simulate at the present day, consistent with the $\sim\!0.2\%$ of Ref.~\cite{Besla:2019xbx}. We accordingly test two values of $w$, defined as the fraction of DM in an LMC component, chosen as $0.26\%$ and $0.6\%$.
+
+As a concrete model of the LMC high-velocity sub-component, we add a second velocity distribution to the SHM, boosted onto a bulk velocity $\mathbf{v}_b$ in the Galactic frame:
+\begin{equation}
+\begin{split}
+f(\mathbf{v}) &= (1-w)\, f_{\rm SHM}(\mathbf{v}) + w\, f_{\rm LMC}(\mathbf{v}) \,, \\
+f_{\rm LMC}(\mathbf{v}) &\propto e^{-|\mathbf{v}-\mathbf{v}_b|^2/\sigma_b^2},
+\Theta\!\left(v_{\rm cut} - |\mathbf{v}-\mathbf{v}_b|\right)\!.
+\end{split}
+\label{eq:mix}
+\end{equation}
+We take fiducial values $|\mathbf{v}_b| = 570$\,km/s (oriented at $\cos\beta = -0.71$ to the Sun's velocity~\cite{Besla:2019xbx,Smith-Orlik:2023kyu}), $\sigma_b = 100$\,km/s, $v_{\rm cut} = 200$ km/s, and for the SHM we retain our fiducial $v_\textrm{esc} = 544$\,km/s. This gives a lab-frame $v_{\rm max} = 982$\,km/s in June, close to the $\simeq\!950$ km/s maximum seen in simulations~\cite{Smith-Orlik:2023kyu}, and reproduces the local densities above $800$ and $850$ km/s computed in~\cite{Besla:2019xbx} for $w \simeq 0.3$--$0.4\%$. 
+%{in the Earth frame, which is the frame of their table\trs{last part of sentence ``which is the frame of their table'' is unclear, suggest removing it or else clarifying which specific table}.
+% Note that the two thresholds imply somewhat different $w$, because this Gaussian's $800$--$900$ km/s tail is shallower than the simulated one. 
+We also consider an alternate approach of taking the numerical velocity distributions directly from simulations~\cite{Smith-Orlik:2023kyu} and find similar results, discussed later in the text.
+As shown in Tab.~\ref{tab:ff}, the addition of an LMC component raises the preferred $\delta_1$, but also generally the expected events in the sideband.
+
+
+The LZ analysis commented on the allowed range of $\delta$, but their results are not directly applicable to the higgsino case.
+In particular, LZ reported a two-sided $90\%$ interval for the
+isoscalar $\mathcal{O}_1$ operator at $m_\chi = 1$\,TeV, ending at $\delta = 350$\,keV, which is the last point of their scan~\cite{LZ:2026axp}. 
+
+Comparing the higgsino to the isoscalar case requires a conversion of the cross section, because the $Z$ couples to the weak charge $Q_W = N - (1-4 s_W^2)Z$ rather than
+coherently to all nucleons (here $N$ is the number of neutrons and $Z$ is the atomic number).
+With $1-4s_W^2 \simeq 0.075$ the proton contribution
+nearly cancels, and on natural xenon $Q_W^2/A^2 \simeq 0.311$, where $A=N+Z$ is the atomic mass number.
+The per-neutron cross section in the limit of a small mass splitting is given by \cite{Essig:2007az}:
+\begin{align}
+\sigma_{n\chi} = \frac{G_F^2}{2\pi} \mu_{\chi n}^2.
+\end{align}
+We note that this cross section exceeds that used elsewhere in the literature by a factor of 4 \cite{Nagata:2014wma,Bramante:2016rdh}.
+%,Freese:2026sga,Fan:2026kxx}.
+% this point was also noted by Ref.~\cite{Pospelov:2026SolarCapture}.
+We discuss this calculation in more detail in App.~B.
+For $m_\chi \gg 1$\,GeV, this corresponds to $\sigma_{n \chi} \simeq 7.3\times 10^{-39}$\,cm$^2$, so in the isoscalar convention the equivalent per-nucleon cross section becomes  $\sigma_{n\chi} Q_W^2/A^2 \simeq
+2.3\times10^{-39}$\,cm$^2$. 
+
+At every point on the LZ collaboration's grid,
+the higgsino then lies {\it above} the upper edge of the preferred cross section range, by nearly a factor
+of $4$ at a mass splitting of $350$\,keV. The factor-of-4 difference in the cross section is relevant here; without that correction, the higgsino would fall just inside that range at the maximum mass splitting $\delta \simeq 350$\,keV. 
+% (consistent with Ref.~\cite{Freese:2026higgsino}).
+At the larger cross section we adopt, matching the cross section observed by LZ requires a higher mass splitting to sufficiently suppress the scattering rate. A smaller local DM density would move the results in the same direction as a smaller cross section, allowing for a smaller mass splitting; a larger local DM density would have the reverse effect.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{fig1.pdf}
+\caption{(Top) The LZ science sample in the $S1c$--$S2c$ plane,
+digitized from Figs.~4 and~S4 of Ref.~\cite{LZ:2026axp} (black: in-ROI events; grey: the rest of the sample).
+The black box is the signal ROI, the red box the high-energy
+sideband ($800 < S1c < 1700$ phd, $10^{2.75} < S2c < 10^{4.3}$) in which LZ report zero events, and the shaded strip between them carries no published count data. The gold star is
+the $248$\,keV event. Green is the predicted higgsino signal at $\delta = 377$ keV (SHM, $v_{\rm esc} = 544$ km/s, Helm), placed on the NR median and shaded by rate: $11\%$
+falls in the ROI, $36\%$ in the gap, and $53\%$ in the sideband.
+(Middle) The form factor, $F^2(E_R)$, for natural xenon as a function of $E_R$, shown for the two models we consider.
+(Bottom) Recoil spectra in $2.84$\,ton-yr for our fiducial SHM and SHM + LMC mixture model.
+No sideband acceptance is applied. This figure illustrates that given the one observed count in the signal ROI, we would expect more counts in the high-energy sideband, unless the acceptance in that sideband is small.}
+\label{fig:fig1}
+\end{figure*}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Inelastic higgsinos predict higher-recoil events}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The differential rate per unit detector mass in a target with isotope mass fractions $\xi_i$ is
+%
+\begin{equation}
+\frac{dR}{dE_R}
+= \frac{\rho_\chi}{2m_\chi}\sum_i \xi_i\,
+\frac{\sigma^0_{A_i}}{\mu_{A_i}^2}\,F_i^2(E_R)\,
+\eta\big(v_{\rm min}^i(E_R),t\big),
+\label{eq:rate}
+\end{equation}
+%
+where $\rho_\chi$ is the local DM density, $\sigma^0_A$ is the zero-momentum cross section, $F$ is the nuclear form factor, and $\eta(v_{\rm min},t) = \int_{v > v_{\rm min}} d^3v\, f(\mathbf{v},t)/v$ is the mean inverse speed of the lab-frame distribution.
+All of the model
+dependence beyond the halo sits in
+%
+\begin{equation}
+\begin{split}
+v_{\rm min}(E_R)
+&= \frac{1}{\sqrt{2 m_A E_R}}\left(\frac{m_A E_R}{\mu_A} + \delta\right)
+\\
+&= \sqrt{\frac{\delta}{2\mu_A}}
+\left(\sqrt{\frac{E_R}{E_R^\star}} + \sqrt{\frac{E_R^\star}{E_R}}\right) \!,
+\end{split}
+\end{equation}
+%
+which is minimized at the kinematic recoil scale
+$E_R^\star = \mu_A \delta / m_A$, where
+$v_{\rm min} = \sqrt{2\delta/\mu_A}$.
+Given a $\delta$, a velocity distribution, and a form factor we are thus able to compute $dR/dE_R$ as a function of recoil energy, which is what we illustrate in Fig.~\ref{fig:fig1} for our fiducial choices of velocity distributions and mass splittings.
+In that figure we use~\eqref{eq:rate} and adopt a year-averaged value for $\eta(v_{\rm min},t)$, to account for the variation of $\mathbf{v}_{\rm lab}(t)$.
+We convolve the predicted rate  with LZ's ROI
+efficiency and with a Gaussian energy response of width
+$\sigma_E(E_R) = [(23\,\mathrm{keV})^2 E_R/248\,\mathrm{keV}
++ (0.093\,E_R)^2]^{1/2}$.  
+
+
+The upper panel in Fig.~\ref{fig:fig1} shows the distribution of events observed by LZ as digitized from their paper~\cite{LZ:2026axp} in the $S1c$-$S2c$ plane, with the signal ROI and the high-energy sidebands highlighted in black and red, respectively; the $\sim$248 keV NR event of interest is shown by a gold star. In green we show the distribution of events expected for the fiducial SHM scenario.  Strikingly, the ratio of events expected in the high-energy sideband to the signal ROI is around 5 to 1 (53\% to 11\% of the total events, respectively). Barring a much lower efficiency for DM-induced NRs in the sideband ROI, this implies a {\it tension} with the higgsino interpretation of the 248 keV event. 
+
+The middle panel of Fig.~\ref{fig:fig1} shows the two form factors we consider in this work as a function of $E_R$ in the signal ROI and the high-energy sideband. These form factors are important in deriving the lower panel, which illustrates the differential spectrum expected as a function of $E_R$ for our fiducial SHM and SHM plus LMC velocity distributions. In both cases we predict more events in the high-energy sideband than in the signal ROI.  
+
+
+It is worth asking how robust this tension is, assuming a high acceptance in the high-energy sideband.
+For our fiducial halo model and with a single observed event, the $68\%$ Poisson interval (computed following~\cite{Feldman:1997qc}) on the in-ROI count maps onto $\delta = 372$--$380$ keV and $N_{\rm SB} = 3.2$--$7.6$,  comparable in width to the largest systematic we quantify.
+Here $N_{\rm SB}$ is the number of side-band expected counts, as in Tab.~\ref{tab:ff}.
+A further source of uncertainty is the energy scale.
+LZ's $\pm 9.3\%$ systematic is a coherent calibration shift rather than a per-event resolution, and it can move the event energy, the ROI edge, and the sideband boundaries together; because $E_R^\star = 339$\,keV falls close to the sideband's lower edge, $N_{\rm SB}$ is highly sensitive to the exact location of the sideband edge.
+Varying over the systematic shifts $N_{\rm SB}$ over the range $2.3$--$7.1$ at $\pm 1\sigma$.
+The choice of halo profile can also impact the results, as already highlighted in Tab.~\ref{tab:ff} (where we also show the impact of the form factor).
+As seen in the table, varying the escape velocity over our fiducial range $v_{\rm esc} = 544$--$610$\,km/s yields $N_{\rm SB} = 4.9$--$8.8$.
+The escape velocity could extend to $640$\,km/s~\cite{Monari:2018ckf}, which would push the number of events to $9.2$.
+If instead it were as low as $480$\,km/s~\cite{Necib:2021yhq,Necib:2021vxr}, then the expected sideband events would drop to $0.8$; this would reduce the tension, although in total there would be $2.4$ expected events above the signal ROI, with events expected in the gap visible in Fig.~\ref{fig:fig1}.
+If we reduce the SHM velocity dispersion from 238\,km/s to 220\,km/s, the counts reduce from $N_B = 4.9$ to $3.4$.
+Changing the DM density over the range $\rho_\chi = 0.25$--$0.6$ GeV/cm$^3$ (cf.~\cite{deSalas:2020hbh}) shifts the sideband events to $4.4$--$7.3$, and if we instead shift the mass $m_\chi = 1.0$--$1.2$\,TeV, the range is $4.2$--$5.5$.
+We return to the LMC in a moment, but from the above other than a small sideband acceptance, the only path to reducing the tension appears to be a low escape velocity.
+Other variations to the velocity distribution may also relieve the tension, such as if the halo has a degree of corotation with the baryonic disk~\cite{Folsom:2026dqs}.
+
+
+Finally, we describe the LMC variants we test, demonstrating that they also do not help the higgsino avoid a tension with the sideband. First, we test the boosted Gaussian in~\eqref{eq:mix} at $w = 0.26\%$ and $0.6\%$ with both nuclear responses, which give $\delta = 472$--$492$\,keV and $N_{\rm SB} = 3.6$--$10.1$. Second, we test a digitization of the
+simulated $\eta(v_{\rm min})$ of Ref.~\cite{Smith-Orlik:2023kyu}, whose tail is larger than our Gaussian's at these abundances and which gives $N_{\rm SB} = 15$--$25$.
+Third, we vary the shape of the fast component at fixed abundance: soft
+exponential cutoffs in place of the hard truncation, a King profile, no truncation at
+all, $v_{\rm cut} = 100$--$300$ km/s, $\sigma_b = 50$--$150$ km/s,
+$|\mathbf{v}_b| = 450$--$640$ km/s, $\cos\beta = -0.3$ to $-0.9$, and cold streams.
+Across this grid $N_{\rm SB}$ spans roughly $1$--$27$ at $w = 0.26\%$; the low end
+requires a bulk speed near $450$ km/s, well below what the simulations find. Choices consistent with Refs.~\cite{Besla:2019xbx,Smith-Orlik:2023kyu} give
+$4$--$10$ expected sideband counts. Fourth, we scan the fast fraction $w$ itself, and here we find that $N_{\rm SB}$ is not
+monotonic: a smaller fast component forces a smaller $\delta$, and there is a window in
+which the sideband tension is partially relieved. That window is not at the LMC's expected abundance, however, but rather one to two orders of magnitude below.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Confirming the higgsino explanation with heavier targets}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The dependence of the scattering rate on the high-velocity tail can be relieved by going to heavier targets. 
+The xenon scattering rate can vary enormously as we modify the high-velocity tail of the distribution as discussed in the previous section, precisely because we rely on being close to the endpoint of the distribution to suppress the inelastic higgsino scattering rate to a level consistent with observations.  However, heavier nuclear targets -- such as tungsten, lead, and uranium -- allow access to more of the velocity distribution for a given $\delta$, and consequently their scattering rates are much less sensitive to uncertainties in the velocity distribution, moving by only a factor of a few under similar variations.
+
+For our fiducial SHM explanation of the LZ event, the calculated scattering rates are
+$1.5\times10^{-3}$, $3.1\times10^{-3}$ and $5.6\times10^{-3}$ per kg per day on W, Pb and
+U, respectively, compared with $7.0\times10^{-6}$ on Xe. A heavy target therefore achieves sensitivity to the same $\delta$ without relying solely on the last $\sim$$30$\,km/s of the velocity distribution.
+
+The exposures required to test the higgsino explanation with heavier targets are therefore relatively small. To reach ten expected recoils, we need $14$\,kg-yr of PbWO$_4$ or
+$28$ kg-yr of CaWO$_4$ under the SHM, and $12$--$29$\,kg-yr of PbWO$_4$ across the
+$(v_{\rm esc},\delta_1)$ pairs of Table~\ref{tab:ff}, rising to $66$--$145$\,kg-yr under
+the LMC-like mixtures (since these require higher mass splittings to match the LZ data). This is potentially within reach of the RES-NOVA experiment, which has operated a $13$\,g archaeological-lead PbWO$_4$ prototype over
+$2.5$ keV--$1$ MeV~\cite{RES-NOVA:2026}. The experiment projects $0.17$ ($2.4$)\,ton-yr exposures, and we project that under the higgsino hypothesis they would see $\sim$$120$ ($\sim$$1800$) raw recoils under
+the SHM and $12$--$26$ ($170$--$370$) under the LMC-like mixtures. Existing heavy-target
+data do not yet appear to have the required reach: we find that CRESST-II Phase 1's $730$ kg-days of CaWO$_4$ expects only $0.70$
+raw recoils under the higgsino hypothesis with the SHM and $0.07$--$0.16$ under the LMC mixtures. Similarly, the recasts of
+PandaX-4T and PICO-60 onto the higgsino line by~\cite{Graham:2024hah}
+exclude $\delta \lesssim 260$ keV under the SHM and $\lesssim 340$ keV with an
+LMC-boosted tail, below the splittings of interest here.  A 500 GeV higgsino that evades the LZ high-energy sideband test we present here has  at least as favorable a raw-count outlook at RES-NOVA as the 1.1 TeV higgsino, though its softer spectrum places even less of the signal above the discrimination threshold discussed below.
+
+Note, however, that the numbers above are raw coherent recoil counts with no  efficiency estimate or background modeling, and we are not aware of a detailed Vietze-type calculation for W, Pb or U, so we use the Helm form factor for every heavy target. Further, the signal does not sit where the discrimination is best. On PbWO$_4$ the kinematic scale is $E_R^\star = 334$ keV on lead, but the spectrum peaks at $189$ keV once the form
+factor is folded in, and $90\%$ of the expected events are between $110$ and $365$ keV. Only $1.9$--$4.5\%$ of the signal lies above the $420$ keV threshold at which the collaboration report full 
+e$^-/\gamma$--NR separation, and a tiny fraction, $0.13$--$0.45\%$, above the $600$ keV threshold where any signal is expected to be relatively
+background-free. The reach for this model is therefore likely to be set by the discrimination and
+background of PbWO$_4$ between $150$ and $400$ keV. Modeling this is beyond the scope of this work.
+
+There is also a possible interesting ``luminous dark matter'' signal from photons emitted from the excitation of the heavier state as the higgsino traverses the Earth \cite{Graham:2024hah}. While existing constraints do not probe the parameter space of interest, the splittings preferred by our analysis of LZ data were found to be testable with 10 years of JUNO data \cite{Graham:2024hah}, and a preliminary calculation shows that one year of JUNO data could already approach sensitivity to  splittings comparable to our fiducial values, using the one-sided 90\% confidence criterion of \cite{Graham:2024hah}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+The thermal higgsino has one free parameter, the mass splitting $\delta$, which determines the rate and the spectrum simultaneously.
+So, the one in-window event observed by LZ {\it predicts} the spectrum at higher energies. Across the systematic variations we test, the higgsino model consistently predicts multiple DM-induced NR events in the high-energy sideband, $800<S1c<1700$~phd, that LZ report
+empty~\cite{LZ:2026axp}. We cannot discount the possibility, however, that this is due to a low acceptance for these events.  Accounting for an LMC-like fast-velocity component does not appear to relieve the tension, though as we show in the Appendix lowering the higgsino mass closer to 500 GeV, which requires a non-standard cosmology, could relieve the tension. The most important actionable item from our paper is for the LZ Collaboration to themselves perform a joint analysis in the context of the higgsino model for events in the high-energy sideband and in the signal ROI. 
+Additionally, we show that the higgsino model with the best-fit $\delta$ can be probed by scattering experiments on heavier targets, such as tungsten and lead: $12$--$29$\,kg-yr of
+PbWO$_4$ under the SHM, $59$--$119$\,kg-yr for a velocity distribution with a LMC-like component.  The RES-NOVA project~\cite{RES-NOVA:2026} in particular plans to acquire the necessary exposure to perform this test. 
+
+Beyond the challenge in explaining the lack of counts in the high-energy sideband, we note that such a small $\delta$ for the higgsino may also bring about theoretical issues, albeit much less jarring than the observational ones we focus on in this work, if the theory is expected to undergo grand unification in the ultraviolet. This is because the splitting $\delta$ is not a free parameter in the context of split SUSY. It is generated, in particular, by integrating out the bino and wino, leading to $\delta\simeq m_Z^2(s_W^2/M_1+c_W^2/M_2)$, so if the LZ event is from a higgsino its recoil energy measures the electroweak gaugino masses. Small splittings mean heavy gauginos: for same-sign masses $\delta=380$--$470$\,keV requires $M_2\geq14$--$17$\,PeV, or $M_1=M_2=18$--$22$\,PeV for a common mass, though opposite signs or phases allow cancellations and leave $M_2$ free. Such a spectrum affects the unification of couplings. Only the wino and the higgsino alter the gauge running coefficients $b_1-b_2$ at one loop, so $M_2$ fixes the scale at which $\alpha_1$ and $\alpha_2$ meet. At two loops, we find that $M_{\rm GUT} \propto M_2^{-1/4}$, with $M_{\rm GUT} \sim 10^{15}$\,GeV for $M_2 \sim 20$\,PeV.
+The low unification scale is naively a problem because of proton decay in the context of a grand unified ultraviolet completion; additional threshold corrections would likely be needed to raise the masses of the proton-decay-generating fields. 
+This danger was noted before at one loop for related spectra with a light
+higgsino and heavy gauginos in Refs.~\cite{Cheung:2005ba,Jeong:2017rrs}. 
+
+
+\emph{Note added.}---LZ posted their analysis to the
+arXiv~\cite{LZ:2026axp}  with a public data release while this Letter was
+under review; the release gives the NEST parameters, the in-window
+efficiency of Fig.~S2 ($50\%$ points at $5.4$ and $269.9$\,keV) and the
+confidence intervals, but no further information on the higher-energy region.
+Five analyses of the
+event appeared on 2~September 2026. Ref.~\cite{Fan:2026higgsino} finds
+$\delta\simeq300$--$380$\,keV under a SHM and notes that
+an LMC-like tail pushes $\delta$ toward $500$\,keV.  They also  give the one-loop gauge running for this split SUSY spectrum.
+Ref.~\cite{Freese:2026higgsino} finds that the fixed-coupling cross
+section approaches LZ's published $\mathcal{O}_1$ interval at
+$\delta\simeq350$\,keV; Ref.~\cite{Wu:2026higgsino} finds a best fit at
+$324$\,keV with an Einasto profile, using Eddington inversion to obtain the velocity distribution;
+Ref.~\cite{Su:2026inelastic} fits a generic vector-mediated state and
+points to tungsten-based experiments for a future test; and Ref.~\cite{Lou:2026absorption} interprets the
+event as absorption of a $247$\,MeV fermion and reports a significant
+tension with their  recasting of KamLAND results. 
+
+Six further interpretation papers appeared on 3~September 2026.
+Ref.~\cite{Pospelov:2026SolarCapture} calculates constraints from neutrino observations of the Sun with IceCube, based on higgsinos (accelerated by the Sun's gravity to velocities $\simeq1400$\,km/s) being captured by scattering on iron and uranium, and subsequently annihilating. They find that the thermal higgsino can be excluded for $\delta\lesssim506$\,keV from tree-level up-scattering and
+$\lesssim566$\,keV once the loop-induced spin-dependent channel is
+included. The internal tension we have identified in the data is independent of and complementary to this constraint; however, lower DM masses that alleviate the tension with the higher-energy data may also weaken this solar limit, since IceCube's bound weakens for lower-energy neutrinos. We have also demonstrated that a high-velocity tail for the DM distribution can push the preferred splitting to higher values that will have less tension with the solar bounds, but achieving a preferred splitting over 566 keV at $m_\chi=1.1$\,TeV would require a larger effect from the high-velocity tail than any models we have tested in this work, and this might also be expected to enhance the tension with a lack of events in the high-energy control bin.  Note that Ref.~\cite{Pospelov:2026SolarCapture} also independently addresses the factor of four cross-section discrepancy that we discuss in the Appendix; their result agrees with ours.
+
+Ref.~\cite{Yin:2026PQSUSY}
+embeds $\delta\simeq0.28$--$0.35$\,MeV in high-scale SUSY and finds the
+same low unification crossing that we do.
+Ref.~\cite{DiMauro:2026KinematicEdge} obtains $\delta\simeq371$\,keV for
+the thermal higgsino, matching our calculation with the Vietz form factor at $v_{\rm
+esc}=544$\,km/s, and tests it with the gamma-ray line.
+Refs.~\cite{Nomura:2026Z2Partner,Visinelli:2026PQInelastic,Yamashita:2026InelasticDP}
+consider inelastic DM with mass in the range $380$--$600$\,GeV and mass splittings
+$\delta\simeq316$--$350$\,keV, inside the lower-mass window that appears to alleviate the tension with our
+sideband test.
+
+
+\textit{Acknowledgments.}
+%
+NLR appreciated conversations with Ciaran O'Hare and Jayden Newstead.
+We acknowledge the use of ChatGPT and Claude in helping prepare the numerical results and in cross checking the calculations provided in this work.
+The research of NLR was supported by the Office of High Energy Physics of the U.S. Department of Energy under contract DE-AC02-05CH11231.
+BRS is supported in part by the DOE award DESC0025293. 
+BRS acknowledges support from the Alfred P. Sloan Foundation. TRS' work is supported by the Simons Foundation (Grant Number 929255, T.R.S) and by the U.S. Department of Energy, Office of Science, Office of High Energy Physics of U.S. Department of Energy under grant contract Number DE-SC0012567. The work of WLX
+was supported by the Kavli Institute for Particle Astrophysics and Cosmology, and by the
+U.S. Department of Energy under contract DE-AC02-76SF00515.
+
+
+\appendix
+
+\makeatletter
+\par\addvspace{6pt plus 2pt}\noindent{\itshape Appendix A: Higgsinos away from the thermal mass}---\nobreak\ignorespaces
+\makeatother
+%
+If the higgsino is all of the DM by non-thermal production, then $m_\chi$ may be treated as a free parameter. In Tab.~\ref{tab:mass} we display the relevant LZ-window quantities for benchmark masses $m_\chi = 500$ GeV--$100$ TeV at $v_{\rm esc} = 567$ km/s with the Helm response.
+Over more than two decades in mass $\delta$ moves only from $359$ to $446$ keV, $\delta_{\rm max}$ saturates at $446$\,keV because $\mu_A \to m_{\rm Xe}$, and $v_{\rm min}$ at the surviving point stays between $739$ and $799$\,km/s at every mass. 
+Note also that for $m_\chi \geq 500$ GeV the event energy alone would prefer $\delta = 248$--$309$\,keV ($E_R^* = 248$\,keV), always \emph{below} the $\delta$ that gives the right rate, so the event sits below the kinematic scale of the predicted spectrum. The predicted counts above the signal window at the $\delta$ that give one count, across the two responses and $v_{\rm esc} = 544$--$567$\,km/s, are $1.0$--$2.0$ at $500$\,GeV ($0.2$--$0.7$ in the high-energy sideband), $5.0$--$7.3$ at $800$\,GeV ($2.3$--$4.3$) and $9.1$--$12.3$ at $2.5$ TeV ($5.5$--$8.6$), so the sideband test impacts every SHM-tail higgsino above $\sim\!800$\,GeV. The $500$\,GeV benchmark is much less constrained by this, and we have not solved for the mass at which the transition occurs.  
+
+\begin{table}[b]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{rrrrrr}
+\toprule
+$m_\chi$\,[GeV] & $\mu_A$\,[GeV] & $\delta_{\rm max}$\,[keV] & $\delta_1$\,[keV] & $E_R^*$ & $v_{\rm min}$\,[km/s] \\
+\midrule
+$500$ & $98.3$ & $359$ & $349$ & $281$ & $799$ \\
+$1100$ & $110.1$ & $402$ & $377$ & $339$ & $784$ \\
+$2500$ & $116.6$ & $426$ & $387$ & $369$ & $773$ \\
+$5000$ & $119.4$ & $436$ & $389$ & $380$ & $765$ \\
+$10^4$ & $120.8$ & $442$ & $387$ & $383$ & $759$ \\
+$10^5$ & $122.1$ & $446$ & $371$ & $370$ & $739$ \\
+\bottomrule
+\end{tabular}
+\caption{Higgsinos that are all of the DM at benchmark masses $m_\chi \neq 1.1$ TeV, on xenon, for LZ's $2.84$\,tonne-yr, $v_{\rm esc} = 544$ km/s, and the Helm response. Energies in keV; $E_R^*$ and $v_{\rm min}$ are evaluated at $\delta_1$, with $\delta_1$ the splitting that gives one expected count in the signal ROI.}
+\label{tab:mass}
+\end{table}
+
+\par\addvspace{6pt plus 2pt}\noindent{\itshape Appendix B: The higgsino-nucleus scattering cross section}---\nobreak\ignorespaces
+\makeatother
+%
+The cross section for higgsino-nucleus inelastic scattering, in the elastic limit where the mass splitting is small, is stated in Refs.~\cite{Nagata:2014wma,Bramante:2016rdh} to be:
+\begin{align}
+\sigma_\text{inelastic} = \frac{G_F^2}{8\pi} \mu^2 \left[N - (1 -4 s^2_W) Z \right]^2, 
+\end{align}
+where $\mu$ is the reduced mass of the nucleus-higgsino system, $Z$ is the atomic number and $N$ is the number of neutrons. However, this calculation is complicated by the Majorana nature of the higgsino states. 
+
+To clarify the counting of degrees of freedom, it is helpful to note that in the limit of zero mass splitting, we may view the higgsino as a $SU(2)$ doublet of a charged Dirac fermion and a neutral Dirac fermion. The doublet has weak isospin $T^3=\pm 1/2$ and hypercharge $Y=1$, working in the convention where $Q=T^3 + Y/2$. We can compute the scattering of the neutral fermion off a nucleus at tree level; if we convert to the basis of Majorana fermions (which will be split in mass by the mass splitting), the tree-level scattering will be purely off-diagonal between the Majorana states, and so the off-diagonal scattering cross section must match up with the full scattering cross section for the neutral Dirac fermion. 
+
+Ref.~\cite{Essig:2007az}, working in the same hypercharge convention, finds that the cross section for a chiral electroweakly-interacting DM particle is:
+\begin{align}
+\sigma = \frac{G_F^2}{2\pi} \mu^2 \left[ N - (1 -4 s^2_W) Z \right]^2 \bar{Y}^2, 
+\end{align}
+where $\bar{Y}=\frac{1}{2}(Y_L + Y_R)$ and $Y_L, Y_R$ are respectively the hypercharges of the left- and right-handed components of the multiplet. In the case of vector DM where $Y_L=Y_R$, $\bar{Y}=Y_L=Y_R$ and for the higgsino $\bar{Y}=1$. This result thus disagrees with Refs.~\cite{Nagata:2014wma,Bramante:2016rdh} by a factor of 4.
+
+As there is no controversy about the relative coupling to protons and neutrons, we can focus on the case of neutrons alone to cross-check this factor of 4. In our convention, the neutron has hypercharge $Y=1/2$ and $T^3=-1/2$, and the neutral component of the higgsino multiplet also has $T^3=-1/2$.
+
+
+The contribution to the vector coupling for an uncharged left-handed fermion field $f$ with isospin $T^3$ is $-g T^3/(2 c_W)$ (e.g.~\cite{ParticleDataGroup:2026mpi}); thus for the neutron this coupling is $g/(4 c_W)$. For the higgsino, there is an equal contribution from the right-handed component, so the coupling becomes $g/(2c_W)$. The neutron also has an axial vector coupling $-g/(4c_W)$; however, this term gives a spin-dependent cross section which will not be coherently enhanced. The spin-independent matrix element is then:
+\begin{align} i \mathcal{M} & = 2 (-g/(4 c_W))^2 \bar{n}(p') \gamma^\mu n(p) \frac{-i g_{\mu \nu}}{(p' - p)^2 - m_Z^2}  \nonumber \\
+& \bar{\chi}(k') \gamma^\nu \chi(k). \end{align} 
+We can compute the unpolarized squared matrix element as usual and find:
+\begin{align} |\mathcal{M}|^2  & = 4 (-g/(4 c_W))^4 \frac{1}{m_Z^4} (4 m_n m_\chi)^2 \nonumber \\
+& = (G_F/\sqrt{2})^2 (4 m_n m_\chi)^2, \end{align}
+% \begin{align} |\mathcal{M}|^2  & = 4 (-g/(4 c_W))^4 \frac{1}{m_Z^4} ((2 m_n) (2 m_\chi))^2 \nonumber \\
+% & = (G_F/\sqrt{2})^2 ((2 m_n) (2 m_\chi))^2 \end{align} 
+where we use $G_F/\sqrt{2} = g^2/(8 m_W^2) = g^2/(8 c_W^2 m_Z^2)$. Consequently the cross section becomes:
+\begin{align}\frac{d\sigma}{d\Omega} & = \frac{1}{64\pi^2 s} |\mathcal{M}|^2 \nonumber \\
+\Rightarrow \sigma & = \frac{(4 m_n m_\chi)^2}{16\pi (m_\chi + m_n)^2}   \frac{G_F^2}{2}  =  \frac{1}{\pi} \mu_{n\chi}^2   \frac{G_F^2}{2}. \end{align} 
+This is in agreement with the result of Ref.~\cite{Essig:2007az}.
+
+\bibliographystyle{utphys}
+\bibliography{refs}
+
+\end{document}

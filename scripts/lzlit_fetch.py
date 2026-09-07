@@ -64,8 +64,9 @@ DATA = OUT / "data"
 for d in (OUT, TEXT, SRC, META, DATA):
     d.mkdir(parents=True, exist_ok=True)
 
-UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Seti-lzlit/1.1 (mailto:trimcrae@gmail.com)",
-      "Accept": "application/json, text/html, application/pdf, */*"}
+UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0",
+      "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,application/pdf;q=0.9,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.5"}
 PAUSE = float(os.environ.get("LZLIT_PAUSE", "3.0"))
 TRIES = int(os.environ.get("LZLIT_TRIES", "3"))
 DRYRUN = os.environ.get("LZLIT_DRYRUN", "") == "1"
@@ -296,6 +297,13 @@ PAGES: dict[str, str] = {
     "lz_lbl_data_release.html": "https://lz.lbl.gov/data-release/",
     "lz_lbl_preprint_260901.pdf": "https://lz.lbl.gov/wp-content/uploads/sites/6/2026/08/LZ_Preprint_260901_Dark_Matter_EFT_Nuclear_Recoil_Search_at_Higher_Energies.pdf",
     "hepdata_ins2841863.json": "https://www.hepdata.net/record/ins2841863?format=json",
+    "hepdata_155182.html": "https://www.hepdata.net/record/155182",
+    "hepdata_155182.json": "https://www.hepdata.net/record/155182?format=json",
+    "hepdata_155182_nowww.json": "https://hepdata.net/record/155182?format=json",
+    "hepdata_ins3199115.json": "https://www.hepdata.net/record/ins3199115?format=json",
+    "hepdata_155182_submission.json": "https://www.hepdata.net/download/submission/155182/1/json",
+    "hepdata_155182_submission.yaml": "https://www.hepdata.net/download/submission/155182/1/yaml",
+    "inspire_3199115_full.json": "https://inspirehep.net/api/literature/3199115",
 }
 
 

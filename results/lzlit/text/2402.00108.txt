@@ -1,0 +1,1645 @@
+                                                 Draft version June 1, 2026
+                                                 Typeset using LATEX twocolumn style in AASTeX631
+
+
+
+
+                                                                      The Escape Velocity Profile of the Milky Way from Gaia DR3
+                                                            Cian Roche     ,1 Lina Necib     ,1, 2 Tongyan Lin      ,3 Xiaowei Ou       ,1 and Tri Nguyen   1, 2
+
+
+                                                                    1 Department of Physics and MIT Kavli Institute for Astrophysics and Space Research,
+
+                                                                                    77 Massachusetts Avenue, Cambridge, MA 02139, USA
+                                                                       2 The NSF AI Institute for Artificial Intelligence and Fundamental Interactions,
+
+                                                                                    77 Massachusetts Avenue, Cambridge, MA 02139, USA
+                                                                    3 Department of Physics, University of California San Diego, La Jolla, CA 92093, USA
+arXiv:2402.00108v2 [astro-ph.GA] 28 May 2026
+
+
+
+
+                                                                                                        ABSTRACT
+                                                         The escape velocity profile of the Milky Way offers a crucial and independent measurement of its
+                                                       underlying mass distribution and dark matter properties. Using a sample of stars from the third data
+                                                       release of Gaia with 6D kinematics and strict quality cuts, we obtain an escape velocity profile of
+                                                       the Milky Way from 4 kpc to 11 kpc in Galactocentric radius. To infer the escape velocity in radial
+                                                       bins, we model the tail of the stellar speed distribution with both traditional power law models and
+                                                       a new functional form that we introduce. While power law models tend to rely on extrapolation to
+                                                       high speeds, we find our new functional form gives the most faithful representation of the observed
+                                                       distribution. Using this for the escape velocity profile, we constrain the properties of the Milky Way’s
+                                                       dark matter halo modeled as a Navarro-Frenck-White profile. Combined with constraints from the
+                                                                                                                                                       +6.2
+                                                       circular velocity at the solar position, we obtain a concentration and mass of cDM   200c = 13.9−4.3 and
+                                                       M200c = 0.55−0.14 × 10 M⊙ . This corresponds to a total Milky Way mass of M200c = 0.64+0.15
+                                                         DM          +0.15     12
+                                                                                                                                                         −0.14 ×
+                                                       1012 M⊙ , which is on the low end of the historic range of the Galaxy’s mass, but in line with other
+                                                       recent estimates.
+
+
+                                                       Unified Astronomy Thesaurus concepts: Milky Way dynamics (1051); Stellar kinematics (1608); Galaxy
+                                                                                             stellar halos (598)
+
+                                                                1. INTRODUCTION                                      Many methods have been used to measure the MW
+                                                 The earliest hints of the existence of Dark Matter                mass, and to a lesser extent the density profile of DM:
+                                               (DM) came from the dynamics of stars and galaxies                   the circular velocity of the MW (Nesti & Salucci 2013;
+                                               (Zwicky 1933; Rubin & Ford 1970). These observations                de Salas et al. 2019; Eilers et al. 2019; Ou et al. 2023;
+                                               provided the first evidence that galaxies are surrounded            Jiao et al. 2023; Wang et al. 2023; Zhou et al. 2023),
+                                               by DM halos extending more than an order of magnitude               the population and motion of satellites (Barber et al.
+                                               past the visible matter (Ostriker et al. 1974; Einasto              2013; Cautun et al. 2014; Patel et al. 2018; Callingham
+                                               et al. 1974). In the Milky Way, the DM halo dominates               et al. 2019; Sohn et al. 2018; Watkins et al. 2019; Fritz
+                                               the mass of the Galaxy, and is expected to be ∼ 1-2                 et al. 2020), stellar streams (Gibbons et al. 2014; Küpper
+                                               orders of magnitudes larger in mass than the baryonic               et al. 2015; Dierickx & Loeb 2017; Vasiliev et al. 2021),
+                                               (stars and gas) component. However, many of its de-                 and the escape velocity of the MW (Piffl et al. 2014;
+                                               tailed properties have thus far not been well understood.           Williams et al. 2017; Banik & Zhao 2018; Monari et al.
+                                               Insight into both the total mass and density profile of             2018; Deason et al. 2019; Koppelman & Helmi 2021;
+                                               the DM halo is extremely valuable for galactic dynam-               Necib & Lin 2022a; Prudil et al. 2022). The escape ve-
+                                               ics and studies of DM, informing our understanding of               locity, in particular, gives a measure of the gravitational
+                                               baryonic feedback (Tollet et al. 2016; Lazar et al. 2020),          potential at a given location, and can be used to con-
+                                               the particle nature of DM (Spergel & Steinhardt 2000;               strain the DM potential when combined with models of
+                                               Tulin & Yu 2018; Lisanti et al. 2019; Nadler et al. 2019,           the baryonic mass. It is typically extracted by modeling
+                                               2021), and indirect detection of DM (Cirelli et al. 2011;           the tail of the stellar speed distribution. Due to a lack
+                                               Slatyer 2018; Rinchiuso et al. 2021).                               of data, earlier studies focused on the local escape ve-
+                                                                                                                   locity in the solar neighborhood (Leonard & Tremaine
+2
+
+1990; Smith et al. 2007). In this paper, we produce pre-           large uncertainties on the escape velocity estimates; this
+cise measurements of the escape velocity over a range              degeneracy can be exacerbated by small sample sizes
+of Galactocentric radii, in order to obtain an escape ve-          or if the underlying distribution deviates from a single
+locity profile and thus inform the DM potential over a             power law. To reduce such uncertainties on vesc , pre-
+wider range. We revisit prior power law models for the             vious work in the literature adopted an array of either
+tail of the speed distribution, and also introduce a new,          theoretically or numerically (based on cosmological sim-
+more robust functional form.                                       ulations) motivated priors on the slope k. Such choices
+   Our analysis is made possible with the signifi-                 affect the final measurement of the escape velocity, and
+cant improvements in the third data release from                   ideally one would require a model that best fits the data
+Gaia (Gaia DR3). The Gaia space mission (Gaia Col-                 without the need to adopt strong priors.
+laboration et al. 2016a,b, 2018, 2021) has revolution-               Motivated by the discovery of the Gaia-Sausage-
+ized the field of MW astronomy, from studies of streams            Enceladus (GSE) (Helmi et al. 2018; Belokurov et al.
+(Malhan et al. 2018; Price-Whelan & Bonaca 2018;                   2018) merger that has contributed a large fraction of
+Helmi 2020; Chandra et al. 2023), dust (Green et al.               the ex-situ stars in the MW (see e.g. Necib et al. 2019;
+2019; Lallement et al. 2019; Leike et al. 2020), disk res-         Naidu et al. 2020b), and arguing for the need to address
+onances (Kawata et al. 2018; Trick et al. 2021), to the            the issues above, Necib & Lin (2022b) adopted a two-
+discovery of previously unknown merging events (Helmi              component power law, generalizing Eq. 1 but with two
+et al. 2018; Belokurov et al. 2018; Necib et al. 2020;             different slopes k1 and k2 ,
+Naidu et al. 2020a), and more. The latest data release
+of the Gaia mission includes positions, parallax, proper           g(v | vesc , k1 , k2 ) ∝(1 − fS )g(v | vesc , k1 )                  (2)
+motions, and radial velocities of an astounding 33 mil-                                    + fS g(v | vesc , k2 ),      v ∈ [vmin , vesc ]
+lion stars (Gaia Collaboration et al. 2023; Katz et al.
+                                                                   where fS is an additional parameter that controls the
+2022). The six-dimensional features of this large dataset
+                                                                   relative fraction of the power laws. Based on this new
+allow us to finally probe detailed dynamics of the MW
+                                                                   functional form, Necib & Lin (2022a) computed the es-
+at a few kpc from the solar position, enabling more pre-
+                                                                   cape velocity of the MW at the position of the Sun using
+cise and reliable determinations of the escape velocity
+                                                                   the early Gaia data release 3 (eDR3) (Gaia Collabora-
+profile. Gaia DR3, in particular, has a significant ad-
+                                                                   tion et al. 2021).
+vantage over DR2 in that it includes many more sources
+                                                                      The two-component model in Necib & Lin (2022b)
+at large distances from the Sun with line-of-sight veloc-
+                                                                   provided a more general functional form, allowing for a
+ities.
+                                                                   better fit to data containing substructure. Indeed, Necib
+   Even with excellent data, estimating the escape ve-
+                                                                   & Lin (2022a) showed using the Akaike information cri-
+locity crucially relies on modeling the tail of the stellar
+                                                                   terion (AIC; Akaike (1974)), that the two-component
+speed distribution. Leonard & Tremaine (1990) intro-
+                                                                   model is preferred at lower vmin , but that at higher vmin
+duced a power-law model, with a distribution given by
+                                                                   it was not distinguishable from a single component. This
+      g(v | vesc , k) ∝ (vesc − v)k ,   v ∈ [vmin , vesc ]   (1)   affirms the presence of a deviation from the single power
+                                                                   law away from vesc . The model further addressed the de-
+where vesc is the escape velocity, k is the slope of the           generacy and the issue of strong priors on the slope k:
+power law, and vmin is a lower speed cutoff which reflects         with the modified distribution, it was possible to obtain
+the fact that we only model the tail of the speed distri-          a good fit to the data and robust measurement of vesc
+bution for stars at a given Galactocentric
+                                         R vesc radius. The        with wide priors on the slopes.
+overall normalization is set such that vmin     dv g(v) = 1.          In this work, we aim at further investigating models
+This functional form has been the basis of most of the             for the tail of the speed distribution, adapting to the
+escape velocity measurements in the MW for the last few            improved quality and increased statistics of the data in
+decades. However, escape velocity estimates based upon             Gaia DR3. We reconsider the single power law and two-
+this modeling (Smith et al. 2007; Piffl et al. 2014; Monari        component power law models, and obtain the first two-
+et al. 2018; Deason et al. 2019; Koppelman & Helmi                 component power law escape velocity profile using this
+2021; Necib & Lin 2022a) face various challenges such              extended dataset. With the improved dataset, we find
+as small sample sizes, degeneracy of parameters, system-           that there remains a number of issues in using these
+atic uncertainties in model selection, and the choice of           power-law models: they can predict a high vesc relative
+strong prior distributions on the fitting parameters.              to the fastest stars in the dataset, results can be sensi-
+  The functional form in Eq. 1 exhibits a strong degen-            tive to the choice of vmin , and some parameters corre-
+eracy between the two parameters vesc and k, leading to            lated with the escape velocity can remain unconverged
+                                                                                                                             3
+
+
+
+                        Gaia DR3
+                        vesc                         1.0      2.0         3.0     4.0
+                  600                                             log10 (N)
+   Speed [km/s]
+
+
+
+
+                  500
+
+
+                  400
+
+
+                  300
+
+                         4          5           6             7               8         9        10           11
+                                                    Galactocentric radius [kpc]
+
+Figure 1. High-speed and high-quality sample of stars in Gaia DR3 with 6D kinematics, and the derived escape velocity profile
+at 68% (boxes) and 95% (whiskers) confidence intervals. Medians marked with a horizontal line. Escape velocities shown here
+are obtained by binning the data into 1 kpc bins and fitting the speed distributions above vmin = 310 km s−1 with the stretched
+exponential power law model introduced in this paper. Contours correspond to the logarithm of the number of stars at that
+speed and Galactocentric radius, labelled N.
+
+even with wide priors. Motivated by these challenges,               6, we use the escape velocity data to constrain the DM
+we introduce a new functional form that allows for a                density profile and total mass of the Milky Way.
+steeper rise in the speed distribution away from vesc ,
+                                                                                            2. DATA
+while keeping a power law cutoff near vesc . We find that
+this new form most closely tracks the fastest stars and                To evaluate the escape velocity of the Milky Way,
+gives the most stable results. With each of these models,           we use the third catalog from the Gaia space mission
+we obtain independent escape velocity measurements in               (Gaia DR3) (Gaia Collaboration et al. 2016a, 2023),
+1 kpc-wide bins from 4 kpc to 11 kpc in Galactocentric              which contains ∼ 33 million stars with 6D kinematics,
+radius. We use the resulting escape velocity profile to fit         an increase of about a factor of five from the previous
+the DM density profile, and combine this with a circular            release of Gaia eDR3 (Gaia Collaboration et al. 2021).
+velocity measurement from Eilers et al. (2019) to obtain            As we are interested in modeling the tail of the speed
+an updated measurement of the MW mass.                              distribution, we extract a high-quality sample of stars
+  The remainder of this paper is organized as follows: In           from this catalog in order to avoid stars with contami-
+Section 2, we present the selection criteria for the high-          nated radial velocities and/or unphysical parallax mea-
+quality sample of Gaia DR3 data used to obtain our                  surements. Such contaminants could bias escape veloc-
+escape velocity profile and Milky Way halo constraints.             ity estimates toward higher values since these analyses
+In Section 3 we describe the general modeling approach              are sensitive to the fastest star in the sample (see e.g.
+for the tail of the stellar speed distribution, and in Sec-         Koppelman & Helmi (2021)).
+tion 4 we present the different models for this speed                  To obtain a high quality sample, we follow the selec-
+distribution. These models include the previously stud-             tion criteria of Marchetti et al. (2022), imposing qual-
+ied one and two-component power laws, as well as the                ity cuts on parallax measurements, renormalized unit
+new model we introduce in this work, the “stretched ex-             weight error (RUWE), number of transits used to calcu-
+ponential power law.” In Section 5, we show the results             late the radial velocity of the source, and signal-to-noise
+of applying these three models to the Gaia DR3 data,                ratio. We do however demand higher-quality signal to
+presenting the escape velocity as a function of the radial          noise ratios of 10 (as opposed to 5) in line with Katz
+distance and validating the modeling. Finally in Section            et al. (2022), which found a large number of spurious
+                                                                    radial velocity measurements near the Solar position at
+4
+
+low signal-to-noise, and parallaxes with at most 10% er-                the shape of the high-speed tail; these choices are en-
+ror (as opposed to 20%) to reduce the contamination                     abled by the improved statistics of Gaia DR3. The So-
+of stars across radial bins. For parallax measurements,                 lar position used in this analysis is x⊙ = −8.122 kpc
+we apply a zero-point correction according to Lindegren                 (GRAVITY Collaboration et al. 2018), y⊙ = 0 kpc, and
+et al. (2021) and choose not to include those stars for                 z⊙ = 0.0208 kpc (Bennett & Bovy 2018) in Galactocen-
+which a zero-point-corrected and positive parallax is un-               tric coordinates. For the Solar peculiar velocity vector
+available. Note that an alternative implementation of                   we use v⊙ = (12.9, 245.6, 7.78) km s−1 (Drimmel & Pog-
+the cut on parallax percentage errors would be a “bin                   gio 2018).
+membership” cut whereby a star only be included in the                     The cuts we utilize result in one of the highest-quality
+analysis if it is a member of its hosting radial bin at some            6D kinematics datasets used for the escape velocity mea-
+chosen confidence level. In the present analysis, such a                surements to date. It is also the largest, containing
+cut would be too restrictive and reduce statistics away                 12, 317 stars above a speed of 300 km s−1 , compared to
+from the solar position due to the limitations of parallax              the 3, 932 within 1 kpc of the solar position of Necib &
+measurements. This may lead to some leakage of stars                    Lin (2022a), and the 2, 067 in the 6D kinematics sam-
+near bin edges across radial bins, but since the escape                 ple of Koppelman & Helmi (2021). We represent this
+velocity is not expected to vary significantly over dis-                selection of stars in Gaia DR3 in Figure 1, along with
+tances ≲ 0.5 kpc, we do not expect this to appreciably                  one of the escape velocity profiles obtained in this paper,
+bias results as is shown in Fig. A1, in which we repeated               discussed in detail in Sec. 5.
+our analysis with a shift in the binning.                                  In Figure 1, one can note some general features of the
+  We also require that the derived percentage error on                  data. First, there is a slight overdensity of high velocity
+the speed be less than 1% since large errors can signif-                stars near the solar position. This excess may be due to a
+icantly modify the shape of the tail of the distribution.               larger number of spurious radial velocity measurements
+In some works such as Piffl et al. (2014); Monari et al.                in this region (Katz et al. 2022), as this feature appears
+(2018), only the retrograde stars in the sample are mod-                primarily close to the solar position.
+eled to avoid disk contamination, but following Necib &                    Second, the speed of the fastest stars generally de-
+Lin (2022a) we can also remove disk stars via high min-                 creases from ∼ 4.5 to 12 kpc, partly as a result of the
+imum speed cuts, here not considering stars with speeds                 increasing Galactic potential. At Galactocentric radii
+below 300 km s−1 , or by choosing more flexible models                  smaller than 4 kpc, however, there is a decrease in statis-
+that can account for the presence of additional velocity                tics resulting from parallax quality cuts, leading to fewer
+components.                                                             high speed stars. In general, the number of observed
+  The cuts are summarized as follows:                                   stars in each radial bin is modulated by the Gaia se-
+                                                                        lection function, which is typically modeled as a func-
+      - RUWE ≤ 1.4
+                                                                        tion of magnitude and sky position (Everall & Boubert
+      - RV NB TRANSITS ≥ 10
+                                                                        2021), or a combined metric of both parameters such
+      - RV EXPECTED SIG TO NOISE ≥ 10
+                                                                        as the median magnitude of a patch of sky (Cantat-
+      - Positive zero-point-corrected parallax ϖ−ϖzp > 0
+                                                                        Gaudin et al. 2023). Assuming no significant correla-
+      - Parallax error: σϖ /(ϖ − ϖzp ) ≤ 10%
+                                                                        tions between completeness and speed, we expect the
+      - Minimum speed: v ≥ 300 km s−1
+                                                                        shape of the speed distribution in a given radial bin is
+      - Speed error: σv /v ≤ 1%
+                                                                        not strongly biased by the selection function. However,
+   The data processing pipeline1 used to calculate the                  even if the selection function impacts the detailed shape
+stellar kinematics and associated uncertainties in Galac-               of the distribution, our goal is to extract the cutoff of
+tocentric coordinates is similar to that of Necib & Lin                 the speed distribution and not its exact shape.
+(2022a), with the addition of the zero-point correc-                       One can also note over and under-densities in the
+tion of parallaxes and stricter quality cuts. In par-                   contours from 7 − 8 kpc at speeds close to and below
+ticular, we use sources with parallax errors of 10% or                  300 km s−1 . The source of this feature is the resonant
+less (rather than 20%) to reflect the finer radial binning              band structure of the speed distribution of the Milky
+used in this analysis (1 kpc bins as opposed to 2 kpc),                 Way (Antoja et al. 2018), and in fact there are other par-
+and percentage speed errors of at most 1% (rather than                  allel bands which are simply not visible in this limited
+5%) because speed measurement errors can dominate                       data sample. Over and under-densities at certain Galac-
+                                                                        tocentric radii cannot be modeled by simple power law
+    1 Pipeline and data products are available at https://doi.org/10.
+                                                                        distributions, and thus fits to single power laws could
+     5281/zenodo.8088365.                                               lead to biased escape velocity estimates. This already
+                                                                                                                             5
+
+suggests the need for models that are robust to the pres-          with the appropriate normalization according to Eq. 4,
+ence of such features.                                             where the upper limit becomes vesc since g has support
+                                                                   on [0, vesc ]. We utilize the approximation Eq. 5 in the
+                         3. METHODS                                present analysis.
+  In this Section, we present our approach to modeling
+                                                                                           3.2. Outliers
+the tail of the stellar speed distribution, the likelihood
+for a given set of observed data (speeds of stars in one bin         Following Williams et al. (2017) and Necib & Lin
+of Galactocentric radius), and the method for obtaining            (2022b), we include a wide Gaussian outlier distribu-
+posterior distributions of the model parameters. The               tion, corresponding to unbound stars that are not mod-
+speed distribution will be modeled as the combination              eled by the distribution g(v | θ) or stars with potentially
+of one or more “bound component(s)” corresponding to               mismeasured speeds. The probability for a star α to be
+kinematic structures that are gravitationally bound to             drawn from this outlier distribution is modeled as
+the Galaxy, and an outlier distribution which models                                                          vα2
+                                                                                                                    
+                                                                            out
+both unbound and potentially mismeasured stars. Here                       pα (vα | σout ) = A exp −        2 + σ2 ]       (6)
+                                                                                                        2 [σout    α
+we focus on the methodology, while Section 4 will dis-
+                                                                   where the dispersion of the outlier distribution σout is
+cuss the different parametric models including the sin-
+                                                                   treated as an additional model parameter. We add the
+gle power law Eq. 1, the 2-component power law Eq. 2
+                                                                   measurement uncertainty in quadrature to the disper-
+and the newly introduced “stretched exponential power
+                                                                   sion of the underlying outlier distribution as these quan-
+law.”
+                                                                   tities are independent, however σα ≪ σout so this addi-
+                 3.1. Bound component                              tion has little impact. Furthermore, due to the high
+                                                                   quality cuts imposed in Sec. 2, we expect a small degree
+  We first describe the parametric modeling of a sin-
+                                                                   of outlier contamination in our sample. We again nor-
+gle bound component, i.e. an approximately isotropic
+                                                                   malize this distribution over the data region [vmin , ∞],
+distribution of stars bound to the Milky Way. Let us
+                                                                   finding
+assume that in a given bin of Galactocentric radius, the                                                              !
+tail of the speed distribution for these bound stars is
+                                                                              r
+                                                                        −1       π 2       2
+                                                                                                            vmin
+described by g(v | θ) (see Eq. 1), where θ is a vector                A =         (σ + σα ) erfc p                      . (7)
+                                                                                 2 out                       2 + σ2 )
+                                                                                                        2 (σout    α
+of model parameters including the escape velocity vesc ,
+and g is defined on [0, vesc ] as we expect the distribu-                         3.3. Parameter estimation
+tion of bound stars to be zero at speeds higher than vesc            For a bound kinematic structure modeled by the dis-
+(Leonard & Tremaine 1990). In the next section, we                 tribution g(v | θ) and an outlier component modeled by
+will consider different functional forms for g with vari-          Eq. 6, the likelihood for a star α with speed vα and mea-
+ous motivations.                                                   surement uncertainty σα to be drawn from the combined
+  In Koppelman & Helmi (2021) and Necib & Lin                      distribution is
+(2022b), the probability of observing a star labelled α
+with a speed vα and a Gaussian measurement uncer-                    Lα = (1 − fout ) pα (vα | θ) + fout pout
+                                                                                                          α (vα | σout )   (8)
+tainty σα is given by the convolution                              where fout is the fraction of the integrated distribution
+                          Z vesc      (v−v )2
+                                     − 2σ2α
+                                                                   contributed by the outlier model, and the probability pα
+                                     e    α
+                                                                   implicitly depends on the model choice g(v | θ). Had
+   pα (vα | θ) = Cα (θ)            dv p           g(v | θ)   (3)
+                           0              2πσα2                    we instead wished to model a combination of Q dif-
+                                                                   ferent bound components each with speed distribution
+where Cα (θ) is a normalization constant obtained by               gi (v | θi ) and a parameter fi describing the fractional
+integrating over the data region [vmin , ∞] such that              contribution of that component to the total distribution,
+                Z ∞                                                then the likelihood for a single star would take the form
+                     dvα pα (vα | θ) = 1 .            (4)                            " Q                 #
+                  vmin                                               Q
+                                                                                      X
+                                                                   Lα = (1−fout )        fi pα (vα | θi ) +fout pout
+                                                                                             i
+                                                                                                                 α (vα | σout )
+However, in this work we utilize a strict quality cut on                             i=1
+stellar speed uncertainties σα /vα ≤ 1%. In the limit of                                                                (9)
+vanishing relative uncertainty, the probability distribu-          where piα denotes the probability distribution in Eq. 3,
+tion Eq. 3 reduces to                                              reducing to gi (v | θi ) in the limit of vanishing rela-
+                                                                   tive speed uncertainties. In this notation, the 2 and 3-
+                  pα (vα | θ) = g(vα | θ)                    (5)   component power law models of Necib & Lin (2022b,a)
+6
+
+would have Q = 2 or 3 and each gi described by the sin-                     using single component power laws, but still have re-
+gle power law Eq. 1 with unique slope ki but a common                       maining limitations, as discussed in Sec. 4.3. We then
+escape velocity vesc .                                                      introduce an alternative more robust functional form
+  For a set of N stars observed with speeds and Gaussian                    which addresses these issues in Sec. 4.4. We summarize
+uncertainties on those speeds {(vα , σα )}α=1,...,N , and a                 the priors used for all models in this paper in Sec. 4.5.
+chosen set of model parameters θ (or {θi }i∈1,...,Q ), the
+log-likelihood would be                                                                    4.1. Single power law (1PL)
+                                                                              The model proposed by Leonard & Tremaine (1990)
+                                 N
+                                 X                                          is that of a single power law,3 such that the tail of
+                       log L =         log Lα .                 (10)
+                                                                            the speed distribution of a collection of stars at simi-
+                                 α=1
+                                                                            lar Galactocentric radius follows
+The goal of this analysis is to estimate the poste-
+rior distribution of the parameters σout , fout , and θ (or                                  g(v | vesc , k) ∝ (vesc − v)k ,            (12)
+{θi }i∈1...Q ), focusing in particular on the parameter vesc .
+                                                                            as in Eq. 1. This distribution can be understood in
+In practice we utilize an implementation2 of the affine-
+                                                                            the following way: Assuming that Jeans theorem (Jeans
+invariant Markov chain Monte Carlo algorithm of Good-
+                                                                            1915) holds, and that the velocities are isotropic, the
+man & Weare (2010) since it is more efficient in skewed
+                                                                            asymptotic distribution function of the speeds of the
+parameter spaces, and work in the julia programming
+                                                                            stars is g(v | ϵ, k) ∝ ϵk for some index k where ϵ =
+language (Bezanson et al. 2017), primarily to reduce
+                                                                            −(Φ + v 2 /2) is the total (potential + kinetic) energy
+computational time.
+                                                                            (Kochanek 1996; Smith et al. 2007). We can identify Φ
+                                                                                     2
+                      3.4. Model selection                                  with −vesc /2 yielding
+                                                                                                                2
+  The above parameter estimation procedure will be                                          g(v | vesc , k) ∝ (vesc − v 2 )k .          (13)
+performed for different models of the bound compo-
+nent(s), each detailed in the next section, and we will                     The behavior of this distribution for v close to vesc is
+compare the goodness of fit of these models in part via                     then approximated by Eq. 12. Therefore, this single
+the Akaike information criterion (AIC; Akaike (1974)),                      power law model of Leonard & Tremaine (1990) can be
+defined as                                                                  understood as the v → vesc limit of the speed distri-
+                AIC = 2s − 2 log(Lmax )            (11)                     bution of an isotropic system for which Jeans’ theorem
+                                                                            holds. Eq. 12 is the distribution if both radial (line-of-
+where s is the number of model parameters (for one                          sight) and tangential (on-sky) velocities are known. If
+bound component, it is the number of elements in the                        only radial velocities are used, the power law is modified
+vector θ plus an additional 2 outlier parameters) and                       to kr = k + 1, an approach taken in Piffl et al. (2014).
+log(Lmax ) is the maximum of the log-likelihood of the                      If only tangential velocities are known, then kt = k + 21
+model for a given set of data. To compare models A                          (Monari et al. 2018; Koppelman & Helmi 2021).
+and B one may calculate the AIC for each model. Then                           For analyses using the power-law model, vesc is highly
+∆AIC ≡ AICB − AICA positive implies model A is pre-                         correlated with the slope parameter k, leading to large
+ferred, and conversely ∆AIC negative implies model B                        uncertainties on the resulting escape velocity estimates.
+is preferred.                                                               To avoid this, priors of various ranges and shapes have
+                                                                            been placed on k with various motivations, which we
+                 4. MODELING THE TAIL                                       now summarize briefly.
+  We now examine the different models g(v | θ) that                            Leonard & Tremaine (1990) argues for k ∈ [1, 2], with
+have been used in the literature to describe bound kine-                    k = 1 for a collisionally relaxed system and k = 1.5
+matic components in the tail of the local speed distribu-                   for an isolated system that has undergone violent re-
+tion. We summarize the limitations and prior choices of                     laxation, and Kochanek (1996) adopts k ∈ [0.5, 2.5]
+the single power law model in Sec. 4.1, then turn to re-                    to widen the previously proposed prior range. There
+cent developments with multiple power law components                        have also been many prior ranges motivated by different
+in Sec. 4.2. These ameliorate some of the challenges in                     suites of cosmological simulations: Smith et al. (2007)
+                                                                            adopts k ∈ [2.7, 4.7] based on simulations outlined in
+    2 Code is provided at https://github.com/CianMRoche/MCJulia.
+
+     jl, and is a modified version of an earlier implementation available     3 Note that when originally proposed, this model was not used with
+     at https://github.com/mktranstrum/MCJulia.jl.                             an outlier distribution.
+                                                                                                                         7
+
+Abadi et al. (2006), Piffl et al. (2014) and Monari et al.     may significantly bias the determination of the escape
+(2018) argue for k ∈ [2.3, 3.7] based on the Aquarius          velocity, in particular if using the single power law model
+suite (Springel et al. 2008; Scannapieco et al. 2009), and     (Eq. 12) with a low vmin such as 300 km s−1 .
+Deason et al. (2019) investigates the signature of GSE-          Motivated by these considerations, Necib & Lin
+like mergers in the Auriga suite (Grand et al. 2017) and       (2022b) proposed to model the local speed distribution
+concludes that an appropriate range is k ∈ [1, 2.5].           as a sum of multiple bound kinematic components, each
+   Furthermore, the shape of the prior distribution for        described by Eq. 12 with independent slope but com-
+both vesc and k varies across these works. For example         mon vesc , allowing for more robust estimates of the es-
+a uniform prior in log(vesc ) is often (but not always) cho-   cape velocity. Via Eq. 9, the likelihood for a single star
+sen to favor lower values of vesc , and Smith et al. (2007)    α assuming a sum of two power law components with
+adopts priors in vesc and k derived from Jeffreys’ rules       common vesc takes the form
+(Jeffreys 1961). In Koppelman & Helmi (2021) a local
+                                                                  L2α = (1 − fout ) (1 − fS ) pα (vα | vesc , k)
+                                                                                   
+value of k is obtained and its posterior treated as a prior
+                                                                         + fS pα (vα | vesc , kS ) + fout pout
+                                                                                                  
+distribution for determining vesc at other Galactocen-                                                     α (vα | σout )
+tric radii. Since the escape velocity is highly correlated                                                             (14)
+with the k parameter, the chosen prior distribution can        where each pα implicitly uses the simple power law
+strongly influence the escape velocity estimate.               model Eq. 12. kS and fS are the power law slope and
+   In these works, and as described in Sec. 3, it has also     fractional contribution of the substructure component,
+been necessary to set some lower bound on the speed            respectively. Hereafter we will often refer to the single
+vmin in order to model only the tail of the distribution.      power law and 2-component power law models as “1PL”
+vmin is typically chosen close to 300 km s−1 (but lower        and “2PL”, respectively.
+in the pre-Gaia era due to limited statistics) to balance        Applying this approach to the Gaia eDR3 dataset,
+the statistical constraining power of the sample and the       Necib & Lin (2022a) found that at low vmin (∼
+fact that Eq. 12 is expected to model the tail of the dis-     320 km s−1 ) a two-component model was largely favored
+tribution only. The escape velocities obtained by these        over a single bound component, whereas at vmin ≳
+analyses are typically of the order 500 km s−1 , and it is     360 km s−1 the single component model was slightly
+not clear that Eq. 12 should hold over such a large range      preferred, but the different models were not meaning-
+of speeds, due to the presence of kinematic substructure,      fully distinguishable via the AIC. The three-component
+disk contamination, and the fact that this expression is       model was also found not to be distinguishable from the
+obtained perturbatively in a neighborhood of vesc . Some       two-component, and as a result in this article we con-
+of these issues were addressed in Koppelman & Helmi            sider at most 2 bound components.
+(2021) and Necib & Lin (2022a) by implementing ag-                        4.3. Limitations of the 2PL model
+gressive cuts on disk stars, and furthermore in Necib &
+                                                                  While Necib & Lin (2022a) found that the 2PL model
+Lin (2022a) by repeating the modeling at different vmin ,
+                                                               provided a better fit to the Gaia eDR3 data, it remained
+where it was demonstrated that the 1PL modeling was
+                                                               the case that high values of k were preferred for one
+not stable to the choice of vmin .
+                                                               of the bound components, and even with a high prior
+   Since there exist different choices for priors on k and
+                                                               limit of k = 20 the marginal distribution for k remained
+for vmin which affect the resulting vesc , the 1PL model
+                                                               unconverged. The 3-component model also exhibited
+may be inappropriate for robust estimation of escape ve-
+                                                               the same convergence issues, suggesting that the source
+locities. When strict priors on k are not employed, the
+                                                               of the problem is a systematic effect of the modeling
+resulting escape velocities are highly uncertain due to
+                                                               close to vmin , where there is a steeply rising distribution
+the strong parameter correlations. As a result, alterna-
+                                                               of stars.
+tive models have been investigated; this is the subject
+                                                                  In Fig. 2, we illustrate the 1PL and 2PL models for
+of the following Section.
+                                                               fixed vesc . In particular, we show how the various slope
+                                                               parameters affect the resulting speed distributions. Here
+          4.2. Multiple power law components                   one can see that the 1PL model would be heavily con-
+  The Milky Way contains kinematic substructure such           strained by a steep distribution close to vmin . This would
+as the GSE (Helmi et al. 2018; Belokurov et al. 2018),         favor high k and thus strongly inform the vesc estimate.
+and this substructure comprises a significant portion of       The 2PL model takes a step towards describing these
+the speed distribution (Necib et al. 2019). It was demon-      separate parts of the distribution near vmin and vesc by
+strated in Grand et al. (2019); Necib & Lin (2022b) that       allowing for different power law behaviors. However, its
+the presence of kinematic substructures such as the GSE        flexibility saturates at about k ≃ 15, indicating that
+8
+
+                                  1PL                   2PL, vary k                   2PL, vary kS                    SEPL, vary β
+               10−1
+                             2        3         4        5      10        15            2       3          4               2                3
+               10      −2             k                          k                              kS                                 β
+g(|~v |) [km s−1 ]−1
+
+
+
+
+               10−3
+
+
+               10−4                                 kS = 2.0                      k = 15.0
+                                                    fS = 0.3                      fS = 0.3                       τ = 120 [km s−1]
+               10−5
+                            400           500            400          500              400           500                400                 500
+                            speed [km s−1 ]             speed [km s−1 ]                speed [km s−1 ]                 speed [km s−1 ]
+
+Figure 2. Shape comparison of the single power law model (1PL), two-component power law model (2PL) and the stretched
+exponential power law model (SEPL). All models shown have vesc = 500 km s−1 . In the 1PL model, the power law index k
+describes both the steepness of the distribution away from vesc and the shape of the cutoff near vesc , leading to highly correlated
+fits for vesc and k. The 2PL model mitigates this with the introduction of an additional power law-component with index kS .
+In the SEPL model, the parameter β controls the exponential rise of the distribution away from vesc while the behavior near
+vesc is a power law with index γ = 1.
+
+continuing to increase the upper prior limit further will                      the shape of the distribution which is not well-modeled
+not be sufficient.                                                             by the single power law and is not accounted for by the
+   Assuming the problem lies only in disk contamina-                           statistical uncertainties of parameter estimation.
+tion or the inability to model substructure, one approach                        Given these limitations, it is thus desirable to de-
+would be to increase vmin until this steeply rising feature                    velop a model that can both closely track the cutoff of a
+disappears or until the distribution is indistinguishable                      continuous kinematic distribution (i.e., the fastest non-
+from the 1PL fit, as made precise by the AIC (Eq. 11).                         outlier star, accounting for measurement errors) and ac-
+However, if we wish to apply this analysis across many                         count for the steeply rising distribution at lower speeds,
+Galactocentric radii, this would require the tuning of                         without tuning vmin .
+vmin in each radial bin based on some arbitrary conver-
+gence or stability criterion. One could replace the vmin
+                                                                                    4.4. Stretched exponential power law (SEPL)
+cut by only using the fastest N stars in each radial bin
+as in Koppelman & Helmi (2021), but the choice of an                              We now introduce a new functional form, motivated
+appropriate N is again challenging. As discussed ear-                          by the challenges of fitting the data to a single or two-
+lier, the number of stars in each radial bin is affected by                    component power law model. In both cases, the data
+the selection function and quality cuts such as parallax                       tends to be fit by increasingly high power law slopes k
+error, with far fewer stars in the 4 − 5 kpc bin compared                      unless a prior range or strict vmin are set. These steep
+to the 7 − 8 kpc bin, for example. Since the statistics                        power laws can lead to unreliable extrapolation past the
+vary greatly across Galactocentric radii, N would again                        data region and large vesc estimates. The fundamental
+require a tuning in each bin.                                                  reason is that the steepness of the distribution is corre-
+   Even with a high vmin , both the 1PL and 2PL models                         lated with the shape of the cutoff near vesc in power law
+can estimate potentially unreliable escape velocities past                     distributions. This indicates the need for a model where
+the data region (i.e. much faster than the fastest star                        the steep rise in the distribution away from vesc is not
+observed) depending on the data features. For example,                         tied to the shape of the cutoff close to vesc .
+it is observed in Koppelman & Helmi (2021) that beyond                            We use these facts as motivation to introduce a model
+the solar position, escape velocity estimates based on the                     that grows exponentially away from vesc , but maintains
+1PL model curiously rise with Galactocentric radius,                           the characteristics of a power law close to vesc . This is
+contrary to the expected shape in realistic potentials.                        similar to the motivation for the 2PL model, but allows
+The speed distributions are reported to become steeper                         for a steeper rise at lower speeds. A general distribution
+with Galactocentric radius, and since vesc is positively                       satisfying these requirements is
+correlated with the slope k, this leads to higher vesc .
+This feature suggests some radially-dependent effect in
+                                                                                                                 "              β #
+                                                                                                                      vesc − v
+                                                                                    g(v | θ) ∝ (vesc − v)γ exp                          .         (15)
+                                                                                                                          τ
+                                                                                                                                           9
+
+Close to vmin , this distribution rises as a stretched ex-                 Table 1. Prior distributions for the power law and
+ponential with index β and scale τ . Very close to vesc ,                  stretched exponential power law models. The notation
+this distribution gives a power law with index γ, with                     U(a, b) refers to a uniform prior distribution from a to b
+                                                                           and U log (c, d) refers to a uniform prior in the log of that
+lower γ giving a more sharp cutoff at vesc . Since we
+                                                                           parameter from c to d.
+wish to avoid extrapolation of vesc beyond the data re-
+gion, we find that choosing a low γ = 1 gives results for
+                                                                                    Model              Parameter          Prior
+vesc that most closely track the fastest non-outlier star
+in the data region. We refer to this model with γ = 1 as                    1-component                   vesc       U(0, 1000)
+a “stretched exponential power law”4 (SEPL), with the                       power law (1PL)                k         U(0.1, 20.0)
+form                                                                        2-component                   vesc       U(0, 1000)
+                                                                            power law (2PL)                 k        U(0.1, 20.0)
+                                "          β #
+                                   vesc − v
+      g(v | θ) ∝ (vesc − v) exp                  ,    (16)                                                kS         U(0.1, k)
+                                       τ
+                                                                                                           fS        U(0, 1)
+where vesc , β, and the scale τ are treated as free param-                  Stretched exponential         vesc       U(0, 700)
+eters. Here β and τ have limited impact on the precise                      power law (SEPL)               β         U(1, 3.5)
+shape of the cutoff at speeds very close to vesc , but al-                                                 τ         U(80, 1000)
+low for greater flexibility in describing the data at speeds
+where statistics are greatest. The choice of γ = 1 in Eq.                   Outlier model                 fout       U log (10−6 , 1)
+16 is further validated in Sec. 5 by repeating the anal-                                                  σout       U log (600, 3000)
+ysis for γ ∈ {1, 2, 3} and additionally with γ as a free
+parameter with a wide uniform prior.
+  We demonstrate the shape of the SEPL model and
+compare it to the power law models in Fig. 2. Here we                    exponential nature can cause numerical overflow issues
+show a fixed scale τ , although when fitting we leave this               in some parts of the parameter space, though this does
+scale as a free parameter. The SEPL model mimics a                       not represent any unphysical nature of the modeling. As
+valuable feature of the 2-component model, which is to                   a result, note that the maximum of the uniform escape
+describe the tail as the transition between two distinct                 velocity prior is lower than that of the power law mod-
+behaviors (here exponential to power law), but more                      els, but this upper limit is still significantly higher than
+readily accounts for the steep rise, and ideally further                 existing estimates of vesc and is never informative for
+reduces the correlation of any improperly converged pa-                  the resulting posterior distributions in this paper.
+rameters with vesc .
+
+                          4.5. Priors                                              5. ESCAPE VELOCITY RESULTS
+   Since the choice of priors in the power law models is                    We now apply the fitting procedure outlined in Sec.
+a subject of significant uncertainty, we adopt wide uni-                 3 to the high-quality DR3 dataset of Sec. 2, using the
+form priors on all parameters of the bound component                     1PL, 2PL and SEPL models of Sec. 4. We perform the
+models, and in line with Necib & Lin (2022b), we choose                  fit for each model in 1kpc radial bins from 4 − 11 kpc.
+uniform priors on the logarithm of the outlier distribu-                    In Figure 3, we show the data and the best-fit speed
+tion parameters. A summary is given in Table 1. The                      distribution for each model, taking a representative ra-
+prior limits of the power law models are also chosen in                  dial bin of 8 − 9 kpc and vmin of 310 km s−1 . The fits at
+line with Necib & Lin (2022b), where we maintain the                     all Galactocentric radii can be found in the Appendix,
+choice that k should label the behavior close to vmin in                 Fig. A2. The corner plots corresponding to the fits at
+all cases, but remain agnostic to the interpretation of                  8 − 9 kpc are also available in the Appendix (Figs. A3,
+each component.                                                          A4, A5).
+   The prior limits in the case of the SEPL model are                       In Figure 3, it can also be seen that the 1PL model
+chosen such that any combination yields a distribution                   results in a best-fit vesc which is well beyond the fastest
+that can be reliably normalized according to Eq. 4; the                  star in the sample. Here the shape of the distribution
+                                                                         at lower speeds is dictating the behavior of the high-
+  4 The stretched exponential usually is written with a negative sign    speed tail, with an unreliable extrapolation of the dis-
+   in the exponent, but we wish to model an exponential rise toward      tribution’s shape to speeds where there is no data. The
+   vmin away from vesc , and so we make use of this name in a slightly   best fits for the 2PL model perform better, since the ad-
+   non-standard way.                                                     ditional model parameters allow for more flexibility in
+10
+
+
+
+
+Figure 3. Comparison of fits to high-speed distribution of stars using the 1PL, 2PL and SEPL models, shown for a representative
+radial bin of 8 − 9 kpc and at a vmin of 310 km s−1 . The fits at all Galactocentric radii can be found in the appendix. The arrow
+in the 1PL panel indicates that the escape velocity and its 68% confidence interval are very large and not visible on these axes.
+The vertical position of the vesc markers does not encode any information.
+
+modeling both the lower-speed and fastest stars. How-               in the 5 − 6 kpc bin, and when statistics degrade as at
+ever, the 2PL model can also yield a vesc estimate far              high Galactocentric radius.
+from the data region, relying again on strong assump-
+tions about the shape of the distribution at high speeds.                      5.1. Advantages of the SEPL model
+This effect is most pronounced for the power law mod-
+                                                                       Using the AIC (Eq. 11) to compare the different
+els at large Galactocentric radius, as seen in Fig. A2.
+                                                                    models reveals that the SEPL and 2PL are not statis-
+Finally, the SEPL fits exhibit sharper cutoffs near vesc ,
+                                                                    tically distinguishable (|∆AIC| ≲ 5) and that the 1PL
+while simultaneously describing the steep rise of the dis-
+                                                                    is strongly disfavored (|∆AIC| ≃ 10 − 100). Despite the
+tribution close to vmin . The SEPL escape velocity esti-
+                                                                    fact that the SEPL and 2PL have similar measures of
+mate thus relies less on extrapolation of the speed dis-
+                                                                    goodness-of-fit, there are a number of reasons to favor
+tribution, and is very close to the observed cutoff in the
+                                                                    the SEPL as our fiducial result. We discuss below the
+distribution. The advantages of using the SEPL are dis-
+                                                                    advantages of using the SEPL model, but note that in
+cussed in more detail in Sec. 5.1.
+                                                                    our final results for MW halo properties we will also
+  These features are also apparent when comparing the
+                                                                    consider vesc obtained with 2PL model to illustrate the
+escape velocity profile of each model, as in the top panel
+                                                                    model dependence.
+of Fig. 4. The 1PL model confidently overestimates the
+                                                                       As discussed above, the SEPL model gives results for
+escape velocities, and increases unphysically with Galac-
+                                                                    vesc that rely less on extrapolation beyond the data re-
+tocentric radius from 6 − 9 kpc. The 2PL model esti-
+                                                                    gion. This is preferable to the overestimation seen in the
+mates lower escape velocities and relies less on an un-
+                                                                    power law models (on the order of hundreds of km s−1 at
+reliable extrapolation beyond the data region, at least
+                                                                    high Galactocentric radius) as it is an approach informed
+at small Galactocentric radius. However, at and beyond
+                                                                    more by the data than assumptions about the tail shape.
+the Solar position, the 2PL fit produces similar results
+                                                                    In light of this discussion, one might ask whether it is
+to the 1PL model and the escape velocity estimates be-
+                                                                    appropriate to use the speed of the fastest star as an es-
+come poorly constrained. The SEPL fitting typically
+                                                                    timator for vesc . The difficulty of this approach is that
+results in the lowest estimates for the escape velocity, as
+                                                                    it does not account for outliers or statistical fluctuations
+the distribution can exhibit a sharper cutoff at the edge
+                                                                    near the tail, and degrades significantly in low statistics
+of the data region. Unlike the profiles of the power law
+                                                                    regimes such as at high Galactocentric radius. Using the
+models, the SEPL profile is consistent with monotoni-
+                                                                    SEPL model with a cutoff in the distribution accounts
+cally decreasing with radius, which is a necessary feature
+                                                                    for these effects, and results in larger uncertainties on
+of a physical escape velocity profile. The SEPL escape
+                                                                    vesc in radial bins with limited statistics or outliers.
+velocities are most uncertain when it is challenging to
+                                                                       In addition, using the SEPL model mitigates one of
+distinguish between bound and outlier distributions as
+                                                                    the issues seen in power law models: the power law slope
+                                                                                                                                          11
+
+
+
+
+                                                        Gaia DR3 escape velocity profile
+                    900
+                                1PL          2PL         SEPL
+
+
+                    800
+      vesc [km/s]
+
+
+
+
+                    700
+
+
+                    600
+
+
+                    500
+                          vmin = 310 [km/s]
+                    400
+                                5                  6                7                         8                9             10
+                                                            Galactocentric radius [kpc]
+
+                                    Stability with vmin                                                  SEPL index test
+               1000                                                                     700
+                                    1PL        2PL          SEPL                                         γ = 1 (SEPL)       γ=3
+                                                                                                         γ=2                γ free
+                    900                                 7-8 [kpc]                       650
+
+                    800                                                                 600
+ vesc [km/s]
+
+
+
+
+                                                                          vesc [km/s]
+
+
+
+
+                    700                                                                 550
+
+                    600                                                                 500
+
+                    500                                                                 450
+                                                                                              vmin = 310 [km/s]
+                    400                                                                 400
+                          320         340      360       380        400                              6                  8            10
+                                          vmin [km/s]                                             Galactocentric radius [kpc]
+
+Figure 4. (Top) The escape velocity profile of the high-quality Gaia DR3 sample as obtained via the single power law (1PL),
+2-component power law (2PL) and stretched exponential power law (SEPL) models, each at vmin = 310 km s−1 . (Bottom left)
+The stability of each model’s escape velocity estimate with increasing vmin , shown here for the representative radial bin of
+7 − 8 kpc. (Bottom right) Repeating the analysis with the SEPL model using different power law exponents γ at high-speed
+extreme, including the case in which γ is treated as a fit parameter. All bands correspond to 68% confidence intervals.
+12
+
+that governs the low-speed behavior, k, is often both            ing γ below 1 to give an even sharper cutoff would not
+unconverged and correlated with vesc . In the Appendix,          substantially impact our results, since there are limited
+Fig. A6 shows the degree to which the model parame-              statistics to distinguish such low values of γ. For ex-
+ters of the 1PL, 2PL and SEPL are correlated with vesc           ample, comparing the γ = 1 and γ = 2 cases we see
+as a function of Galactocentric radius. In both the 1PL          these profiles are already largely consistent within 1σ,
+and 2PL models, k exhibits a high correlation coefficient        but with the γ = 2 case systematically above γ = 1.
+with vesc , and it can be seen in the representative corner         Lastly, we test the consistency of the escape velocity
+plots Fig. A3 and A4 that this parameter is unconverged          profile with an alternative radial binning (but the same
+even with a large prior range. This suggests that the            bin width), offset by 0.5 kpc from the fiducial bins. This
+marginal distribution for vesc is in fact not reliable in this   is shown in the Appendix Fig. A1 for both 2PL and
+case, as it is correlated with an unconverged parameter.         SEPL models. The offset escape velocity profiles exhibit
+We find the β parameter in the SEPL model is some-               the same features as the fiducial profiles, confirming that
+times similarly unconverged, in part because the upper           bin membership uncertainty has a small effect on the
+prior limit is set to avoid numerical overflow. However,         resulting escape velocity results.
+it is uncorrelated with the escape velocity and thus does
+not pose the same problem as the power law models.                         5.2. Comparison with previous work
+There is one radial bin (5 − 6 kpc) in which there is
+                                                                    For our final results, we consider the 2PL and SEPL
+meaningful correlation between β and vesc , but this is
+                                                                 models with the fiducial radial bins, and a default power
+accompanied by a large uncertainty on the vesc estimate
+                                                                 law index of γ = 1 for SEPL. We take vmin = 310 km s−1
+of the SEPL, and so does not significantly bias results
+                                                                 as the default because this maintains a large sample
+of DM halo parameter fitting in Sec. 6.
+                                                                 size while still remaining above the typically chosen
+   The lower left panel of Fig. 4 shows the result of in-
+                                                                 300 km s−1 to avoid disk contamination. Furthermore,
+creasing vmin for the three models considered in this pa-
+                                                                 as discussed above, the power law models perform less
+per. For the power law models, the results for vesc be-
+                                                                 well at high vmin given the lower statistics.
+come highly uncertain at high vmin as the statistics of the
+                                                                    In Figure 5, we present the comparison of the 2PL
+sample degrade, with both models estimating an escape
+                                                                 and SEPL escape velocity profiles with individual mea-
+velocity ∼ 150 km s−1 above the SEPL and low-vmin 2PL
+                                                                 surements and profiles from the literature. We find an
+measurements. We find that the SEPL model gives re-
+                                                                 escape velocity of 486+10−5 km s
+                                                                                                   −1
+                                                                                                      for the SEPL model
+sults that are more stable to the choice of vmin than                     +69      −1
+                                                                 and 539−34 km s for the 2PL model in the 8 − 9 kpc
+the power law models. This can be explained by the
+                                                                 bin, which is largely consistent with previous work ob-
+greater flexibility in the SEPL for describing the rise to-
+                                                                 taining vesc near the solar radius. For the Necib & Lin
+ward vmin , which better describes the features observed
+                                                                 (2022a) result, the escape velocity is consistent within
+in the data. Using the AIC to compare the models, the
+                                                                 1σ for the SEPL measurement and ∼ 1.5σ for the 2PL
+SEPL and 2PL results are indistinguishable at all vmin
+                                                                 measurement, but the escape velocity found in this work
+while all three models (1PL, 2PL, SEPL) become indis-
+                                                                 is larger by ∼ 20−30 km s−1 . This is likely higher due to
+tinguishable for high vmin , consistent with expectations
+                                                                 the larger statistics of Gaia DR3 as compared to eDR3,
+given the limited statistics.
+                                                                 allowing for stricter quality cuts and thus a more reliable
+   We also consider the more general form of the SEPL,
+                                                                 discrimination between outlier and bound distributions,
+Eq. 15, with various choices of the power law index γ.
+                                                                 in addition to speed distributions which are filled closer
+The lower right panel of Fig. 4 shows fit results with
+                                                                 to the escape velocity.
+different fixed γ = 2, 3 as well as with γ as a free param-
+                                                                    Compared to the measurements of Deason et al.
+eter. Larger γ values give distributions with shallower
+                                                                 (2019) and Koppelman & Helmi (2021) near the solar
+cutoffs in the tail, which tend to result in higher vesc
+                                                                 radius, our vesc estimates are consistent. Note that the
+values. The SEPL with γ a free parameter reproduces
+                                                                 values cannot be compared directly, since the analysis of
+the behavior of the 2PL model close to vesc , in particular
+                                                                 Deason et al. (2019) utilizes an ansatz about the shape of
+rising and becoming more uncertain past the solar posi-
+                                                                 the escape velocity profile, and the results of Koppelman
+tion. This feature could be due to the reduced number
+                                                                 & Helmi (2021) are obtained using a 4 kpc radial bin
+of stars above vmin in these bins, and the “overshooting”
+                                                                 (horizontal bar), compared to our results in 1 kpc bins.
+issue of the power law models discussed in Section 4.3.
+                                                                 The vesc parameter is known to be correlated with the
+We use γ = 1 since it results in the lowest values of vesc
+                                                                 fastest star in the distribution being fit, and if using a
+in this comparison, consistent with our desire to avoid
+                                                                 wide radial bin, one will likely preferentially fit the high-
+extrapolating beyond the data region. Further reduc-
+                                                                 speed stars which are expected to come from the small-
+                                                                                                                              13
+
+
+
+
+                                2PL (this work)                      Necib&Lin 22             Koppelman+20 (r )
+                                SEPL (this work)                     Monari+18                Koppelman+20 (inferred)
+                 700                                                 Deason+19
+   vesc [km/s]
+
+
+
+
+                 600
+
+
+
+                 500
+
+
+                           vmin = 310 [km/s]
+                 400
+                       4             5             6           7            8             9              10              11
+                                                         Galactocentric radius [kpc]
+
+                 800            vesc (SEPL)            NFW-only                           cDM        +12.0
+                                                                                           200c = 9.0−6.5
+                                                                                                       +0.69
+                                Baryon-only            Total MW                           MDM                   12
+                                                                                            200c = 0.70−0.25 ×10 M
+                 700
+
+                 600
+   vesc [km/s]
+
+
+
+
+                 500
+
+                 400
+
+                 300
+
+                 200
+                       4             5             6           7            8             9              10              11
+                                                         Galactocentric radius [kpc]
+
+Figure 5. (Top) stretched exponential power law (SEPL) and 2-component power law (2PL) escape velocity profiles along
+with comparable results from the literature. Bands and error bars correspond to 68% confidence intervals. Horizontal error
+bars for isolated results represent the Galactocentric radius range of sources used for that result. The escape velocities shown
+from the literature do not include any corrections motivated by simulations. (Bottom) Best fit of the NFW dark matter halo to
+the escape velocity profile, using SEPL escape velocity profile and assuming a known baryonic content of the Milky Way. The
+NFW halo parameters MDM              DM
+                           200c and c200c represent the virial mass and concentration of the dark matter halo. The SEPL profile
+is shown at 68% (boxes) and 95% (whiskers) confidence intervals. The baryon-only and NFW-only profiles show the escape
+velocity if the MW consisted of only those components, respectively.
+14
+
+est radii. Examining the horizontal error bars of Fig.         large range in Galactocentric radii used for the infer-
+5, it is plausible that the Koppelman & Helmi (2021)           ence.
+measurement is more appropriately compared with the
+2PL or SEPL measurements at the lower radii of ∼ 6−7                  6. MILKY WAY HALO CONSTRAINTS
+kpc.
+  Turning to the escape velocity profile, the key feature
+of the SEPL escape velocity profile is that it trends to-             6.1. From escape velocity to dark matter
+ward lower vesc at large Galactocentric radii, consistent        The escape velocity profile of an isolated, finite, and
+with expectation. This is in contrast to fits with power       spherical mass distribution    is related to its potential
+law models, which exhibit a significant rise at and be-                                 p
+                                                               Φ(|⃗r|) via vesc (|⃗r|) = 2Φ(|⃗r|). In practice, however,
+yond the solar position. Our results with the 2PL model        the Milky Way is neither isolated nor spherical. It is
+are similar to the profile of Koppelman & Helmi (2021),        therefore necessary to choose a distance at which we
+which exhibits approximately the same rise in vesc at          consider a star to be unbound, the choice of which is
+large Galactocentric radii. Note that in Koppelman &           somewhat arbitrary. To remain consistent with the lit-
+Helmi (2021), in order to obtain what we label as the          erature (Deason et al. 2019; Necib & Lin 2022a), we
+“inferred profile” (Fig. 5), first a fit is performed using    choose 2R200c as this limiting radius, where R200c is the
+stars within 2 kpc of the solar position. Then using the       radius within which the galaxy’s mean density is 200
+posterior for k in this local fit as a prior on k, escape      times the critical density of the universe
+velocity fits are obtained in 0.5 kpc bins from 4 − 11 kpc,
+giving an escape velocity profile assuming the power law                                       3H 2
+                                                                                       ρc =         ,                 (17)
+slope is consistent across Galactocentric radii. We also                                       8πG
+show the profile of Monari et al. (2018), which was ob-
+                                                               where H is the Hubble constant, and G is the Newton’s
+tained using Gaia DR2 with independent fits to vesc and
+                                                               constant of gravity. In this work, we adopt a Hubble
+k in radial bins, using a bootstrap method to account
+                                                               constant of H = 70 km s−1 Mpc−1 (although slightly dif-
+for uncertainties in bin membership and speed. It does
+                                                               ferent from recent measurements (Planck Collaboration
+not exhibit a significant trend due to the large uncer-
+                                                               et al. 2016), this value is chosen for consistency with
+tainties resulting from the relatively small statistics of
+                                                               prior analyses). With this assumption, the escape ve-
+Gaia DR2, but also gives high vesc estimates at large
+                                                               locity is related to the gravitational potential via
+Galactocentric radii. These features suggest that power
+                                                                                       p
+law modeling does not reliably describe the high-speed                       vesc (r) = 2|Φ(r) − Φ(2R200c )|        (18)
+tail, at least at larger radii.
+  Note that Williams et al. (2017) also fit an escape ve-      which we evaluate with cylindrical radius (r) in the plane
+locity profile using data from the Sloan Digital Sky Sur-      of the disk for axisymmetric potentials. One can then
+vey (Ahn et al. 2012), but the modelling was performed         obtain the relationship between the potential and den-
+in a distinct manner from this work and the other pa-          sity profile via Poisson’s equation, establishing the link
+pers discussed in this section. In particular, Williams        between vesc (r) and ρ(r).
+et al. (2017) makes an ansatz for the radial dependence           To recover the density profile of the DM, it is necessary
+of the escape velocity profile, fits the ansatz to data over   to model the density profiles of each of the Milky Way
+a wide range of radial values simultaneously, and then         components, namely the bulge, thin disk, thick disk, and
+uses the result to obtain the escape velocity at the so-       DM halo. In this work, we adopt model I of Pouliasis,
+lar position. The paper infers a local escape velocity of      E. et al. (2017), which we show in Table 2, to stay con-
+vesc (r⊙ ) = 521+46
+                −30 km s
+                         −1
+                            , consistent with previous esti-   sistent with previous studies (Deason et al. 2019; Necib
+mates at that position (Monari et al. 2018; Deason et al.      & Lin 2022a).
+2019; Koppelman & Helmi 2021) and the SEPL and 2PL                We consider the Navarro-Frenck-White (NFW) profile
+inference of this work at the ∼ 1σ level, and consistent       (Navarro et al. 1996, 1997) for the DM component, with
+with the local estimates of Necib & Lin (2022a) at the         density profile given by
+∼ 2σ level. Additionally, in Prudil et al. (2022) the 1PL                                           ρ0
+modelling approach was applied to speed data from RR                             ρ(r) =                     2 ,     (19)
+                                                                                          r
+Lyrae stars from 4 − 12 kpc to obtain a measurement of                                    Rs       1 + Rrs
+vesc (r⊙ ) = 512+94
+                 −37 km s
+                          −1
+                             , which is consistent with all
+                                                               where ρ0 is the normalization and Rs is the scale radius.
+measurements discussed here, likely in part due to the
+                                                               This profile can be formulated in terms of the equivalent
+                                                               pair of parameters MDM 200c (DM mass within a sphere of
+                                                                                                                                   15
+
+                 Table 2. Chosen values for the modeling of different Milky Way components, for the purpose
+                 of obtaining a mass profile from an escape velocity profile. The notation U(a, b) refers to a
+                 uniform prior distribution from a to b.
+
+                  Component               Model                Parameter        Symbol             Value
+                  Bulge              Plummer profile          Mass            Mbulge          1.067 × 1010 M⊙
+                                     (Plummer 1911)           Scale radius    b                        0.3 kpc
+
+                  Thin disk      Miyamoto-Nagai profile       Mass            Mthin disk      3.944 × 1010 M⊙
+                                (Miyamoto & Nagai 1975)       Scale radius    rthin disk               5.3 kpc
+                                                              Scale height    zthin disk              0.25 kpc
+
+                  Thick disk     Miyamoto-Nagai profile       Mass            Mthick disk     3.944 × 1010 M⊙
+                                (Miyamoto & Nagai 1975)       Scale radius    rthick disk              2.6 kpc
+                                                              Scale height    zthick disk              0.8 kpc
+
+                  DM halo             NFW profile             Mass            MDM
+                                                                                200c          U(1010 , 1013 )M⊙
+                                   (Navarro et al. 1996)      Concentration   cDM
+                                                                               200c               U(0.1, 50.0)
+
+
+
+
+radius R200c ) and concentration cDM
+                                   200c = R200c /Rs . The          parameter space due to the vesc measurements of both
+relation between these parameters is given by integrat-            the SEPL and 2PL models are shown in Fig. 6. It can be
+ing the density profile to obtain                                  seen that both models yield consistent constraints, but
+                   Z R200c                                         those of the 2PL model are more uncertain and biased
+            DM
+          M200c =          4πr2 ρ(r)dr                             toward slightly higher masses, likely due to overestima-
+                    0
+                                                    (20)         tion and the large uncertainty on vesc beyond the solar
+                          3               c                        position for this model.
+                 = 4πρ0 Rs ln(1 + c) −
+                                         1+c                          To obtain stronger constraints on the NFW parame-
+                                                                   ter space, previous works have combined escape velocity
+wherein c is used as a shorthand for cDM 200c . The priors
+                                                                   constraints with those of circular velocity measurements
+on MDM
+    200c and  cDM
+               200c used in fitting are shown   in Table 2.
+                                                                   (Piffl et al. 2014; Monari et al. 2018; Deason et al. 2019;
+           6.2. Milky Way Halo Parameters                          Koppelman & Helmi 2021; Necib & Lin 2022a). This is
+   We now obtain the halo parameters for the Milky                 because the escape velocity probes the large-scale mass
+Way by simultaneously fitting the entire escape veloc-             of the Milky Way, whereas circular velocity measure-
+ity profile for a given speed distribution model, such             ments are sensitive to the enclosed mass at that position.
+as the SEPL or 2PL. We use the full vesc posterior at              With the same baryonic model from Table 2, in line with
+each Galactocentric radius to evaluate the likelihood of           Necib & Lin (2022a) we also include the circular veloc-
+a given set of DM halo parameters at that radius, and              ity measurement at the solar position of Eilers et al.
+assume that each measurement in the profile is indepen-            (2019),5 namely vcirc (r⊙ ) = 230+10−10 km s
+                                                                                                               −1
+                                                                                                                  . Our com-
+dent such that the total likelihood is the product of the          bined vesc and vcirc constraints on the NFW parameter
+individual evaluations of the posteriors. The theoretical          space are shown in Fig. 6. We obtain a final mass esti-
+                                                                                                             +0.15
+escape velocity values at each radius for a given MDM              mate for the DM halo of MDM                         12
+                                                                                                 200c = 0.55−0.14 × 10 M⊙ ,
+                                                       200c
+and cDM                                                            which corresponds to a total Milky Way mass of M200c =
+      200c are obtained by modeling the galaxy as the
+combination of this NFW halo and the baryonic compo-               0.64+0.15       12
+                                                                        −0.14 × 10 M⊙ with this baryonic model.
+
+nents shown in Table 2, performed using galpy (Bovy
+2015).                                                               5 More recent studies,    such as Ou et al. (2023), have produced
+   We perform the fits using emcee (Foreman-Mackey                    new measurements of the circular velocity based on Gaia DR3.
+et al. 2013) which is also an affine-invariant Markov                 However, we adopt the older study of Eilers et al. (2019) for two
+                                                                      reasons: First, it is consistent with Necib & Lin (2022a), enabling
+Chain Monte Carlo sampler. The best fit to the SEPL                   a more direct comparison, and second, recent studies have shown
+escape velocity profile is shown in Fig. 5, and the shaded            a significant decline in the rotation curve at large Galactocentric
+band is the 68% confidence interval. We also show the                 radii that remains to be addressed. We try to avoid such a result
+                                                                      affecting our measurements until a full understanding of the new
+decomposition of the best fit profile into the baryon-only            circular velocity curves is established.
+and NFW-only components. Constraints on the NFW
+16
+
+                                                                            40
+                                       vesc constraint (2PL)                                             vcirc (r ) =230+10
+                                                                                                                        −10 [km/s]
+         50                            vesc constraint (SEPL)                                            vesc constraint (SEPL)
+                                                                                                         Combined constraint
+         40                                                                 30
+                                   0.70+0.69
+                                       −0.25
+                           MDM   =           ×1012 M                                               MDM         +0.15    12
+                                                                                                    200c = 0.55−0.14 ×10 M
+                            200c   0.70+1.00
+                                       −0.27
+         30
+  200c
+
+
+
+
+                                                                     200c
+                                                                                                                       +6.23
+                                                                                                          cDM
+ cDM
+
+
+
+
+                                                                    cDM
+                                                                            20                             200c = 13.89−4.34
+                                   9.0+12.0
+                                      −6.5
+                           cDM   =
+                            200c   11.8+19.7
+                                       −9.4
+         20
+                                                                            10
+         10
+
+          0                                                                  0
+              0          1           2                          3             0.0          0.5          1.0                          1.5
+                           DM     12                                                           DM    12
+                         M200c [10 M ]                                                      M200c [10 M ]
+Figure 6. Left: Constraints on the parameter space of the NFW halo of the Milky Way, as obtained via the escape velocity
+measurements of both the two-component power law (2PL) and stretched exponential power law (SEPL) models. Right:
+Combined constraints on the Milky Way NFW halo parameters due to the SEPL escape velocity constraints and the circular
+velocity constraint at the solar position of Eilers et al. (2019). Contours correspond to 68% and 95% confidence.
+
+  A comparison of Milky Way mass estimates obtained                    in the data. The multi-component power law model is
+by fitting both escape velocity and local circular velocity            motivated by the presence of kinematic substructure,
+measurements is shown in Fig. 7. Here it can be seen                   and provides a much better fit. However, with the high
+that the mass estimates obtained via the SEPL model-                   quality data of Gaia DR3 and a large range of radii,
+ing and 2PL modeling are consistent, though the 2PL                    we found even the two-component power law tends to
+results are less constrained. Furthermore, these results               systematically predict higher vesc . This is particularly
+are consistent with those of Necib & Lin (2022a) which                 noticeable at positions beyond the solar radius, where
+were obtained via a 2PL measurement of vesc within                     the power law models give a rising escape velocity pro-
+2 kpc of the solar position using Gaia eDR3 data. The                  file. Furthermore the vesc result is highly correlated with
+results are also consistent with the uncorrected Koppel-               the slope of the distribution at low speeds, which is often
+man & Helmi (2021) mass estimate; the correction is                    an unconverged parameter in the fits.
+motivated by simulations and amounts to increasing all                    Motivated by the above issues with the power law
+escape velocity estimates by 10%. Our results support                  models, we introduced an empirical model which we
+the trend of analyses in recent years based on escape ve-              call the “stretched exponential power law” (SEPL). This
+locity modeling, which tend to find a lighter Milky Way                model was motivated by the same features that multi-
+of mass ∼ 0.5 − 1 × 1012 M⊙ . This is likely due to the                component power laws aimed to capture, such as a dif-
+“overshooting” of the 1PL inflating vesc measurements                  ferent behavior near vesc and near vmin . However, in this
+in earlier work.                                                       case, there is more freedom for a steep rise in the dis-
+                                                                       tribution near vmin , while the profile near vesc remains
+                   7. CONCLUSIONS                                      that of a power law. The escape velocity profile obtained
+  In this paper, we have measured an escape velocity                   using this new model is less susceptible to the issue of
+profile of the Milky Way from 4 − 11 kpc using a sample                overestimating vesc , and gives a falling profile past the
+of high-speed stars from Gaia DR3 with 6D kinematics                   solar position, consistent with expectation. This model
+and strict quality cuts. Following Necib & Lin (2022b),                is empirically motivated, and future work may improve
+we considered single and multi-component power laws to                 this modeling as data quality and statistics improve or
+model the tail of the stellar speed distribution and ex-               by studying its application to simulations.
+tract escape velocities. Similar to Necib & Lin (2022a),                  Using the resulting escape velocity profile, we con-
+we found that a single power law fit does not provide a                strained the DM halo parameters of the Milky Way,
+good fit to the tail and that it often significantly overes-           in particular its virial mass, by assuming a model of
+timates the escape velocity compared to the fastest star               the baryonic content consistent with the literature. By
+                                                                                                                            17
+
+        Smith+07                                                     the past; however, as mentioned above, recent estimates
+                                                                     trend below 1012 M⊙ . Interestingly, some measurements
+          Piffl+14                                                   of masses inferred via other probes such as the rotation
+                                                                     curve of the inner Milky Way (Ou et al. 2023; Sylos
+       Monari+18
+                                                                     Labini et al. 2023; Jiao et al. 2023; Zhou et al. 2023)
+      Deason+19                                                      and comparing the Milky Way satellite population to
+                                                                     simulations (Barber et al. 2013; Cautun et al. 2014; Pa-
+       Grand+19
+                                                                     tel et al. 2018) have also trended downward in the past
+  Koppelman+20                                                       decade. This sits in contrast to some recent Galaxy
+  Koppelman+20                                                       mass estimates obtained using tracer stars (Shen et al.
+        (vesc + 10%)                                                 2022) and satellite dwarfs (Fritz et al. 2020; Slizewski
+     Necib&Lin22                                                     et al. 2022), which suggest an intermediate-mass Milky
+  Roche+24: 2PL                                                      Way (∼ 1.4 × 1012 M⊙ ). Other probes such as phase
+        (This Work)
+                                       Arrows imply a correction
+                                                                     space distribution modeling (Li et al. 2020; Callingham
+Roche+24: SEPL                          motivated by simulations
+                                                                     et al. 2019) and modeling the orbital dynamics of globu-
+        (This Work)
+                                                                     lar clusters (Sohn et al. 2018; Watkins et al. 2019; Wang
+                       0.5     1.0       1.5                   2.0   et al. 2022) exhibit no clear trend. See Wang et al.
+                                      12
+                             M200c [10 M]                           (2020) and Sawala et al. (2023) for reviews of the Milky
+                                                                     Way mass obtained by various methods. These results
+Figure 7. Milky Way total mass estimates obtained via                together paint a picture of a Milky Way whose mass is
+escape velocity modeling along with circular velocity con-           close to 1012 M⊙ , although with some disagreement to
+straints. We compare results from the literature with those
+                                                                     within a factor ≲ 2. As observations continue to rapidly
+of this work. All error bars correspond to 68% confidence in-
+tervals, and arrows imply corrections to the inferred escape         improve, a unified understanding of these different facets
+velocities motivated by simulations.                                 of the Milky Way’s dynamics will be essential to ulti-
+                                                                     mately pinning down the characteristics and history of
+                                                                     our Galaxy.
+combining constraints with a complementary circular
+velocity measurement, we find a total virial mass for
+                                  +0.15
+the Milky Way of M200c = 0.64−0.14      × 1012 M⊙ using                            ACKNOWLEDGEMENTS
+the SEPL model for speed distributions. We obtain
+                                                                       This work has made use of data from the Euro-
+consistent but less constrained estimates using the 2PL
+                                                                     pean Space Agency (ESA) mission Gaia (https://www.
+model. This Milky Way mass is found to be consistent
+                                                                     cosmos.esa.int/gaia), processed by the Gaia Data Pro-
+with recent measurements in the literature using power
+                                                                     cessing and Analysis Consortium (DPAC, https://www.
+law models, albeit on the lighter end, following the re-
+                                                                     cosmos.esa.int/web/gaia/dpac/consortium). Funding
+cent trend with such analyses. This trend may result
+                                                                     for the DPAC has been provided by national institu-
+from the improvement in data as well as more modeling
+                                                                     tions, in particular the institutions participating in the
+techniques that account for substructure in the speed
+                                                                     Gaia Multilateral Agreement. TL acknowledges support
+distribution. It has also been demonstrated in Kravtsov
+                                                                     from the US Department of Energy Office of Science un-
+& Winney (2024) that a massive satellite galaxy such
+                                                                     der Award No. DE-SC0022104. The authors also thank
+as the Large Magellanic Cloud can lead to the devel-
+                                                                     Philip Harris for valuable discussions.
+opment of a high-velocity tail in the host, which would
+bias mass inferences made using stellar speeds. As a                   Software: Python (Van Rossum & Drake 2009),
+result, future modelling may require more sophisticated              numpy (Harris et al. 2020), scipy (Virtanen et al.
+Milky Way system mass models, or may utilize compar-                 2020), astropy (Astropy Collaboration et al. 2013, 2018),
+isons to simulated Milky Way analogs including massive               jupyter (Kluyver et al. 2016), corner.py (Foreman-
+companions (Buch et al. 2024).                                       Mackey 2016), emcee (Foreman-Mackey et al. 2013),
+  Apart from the escape velocity, the mass of the                    Galpy (Bovy 2015). The implementation of the affine-
+Milky Way has been inferred by numerous methods,                     invariant Markov chain Monte Carlo algorithm of Good-
+each resulting in estimates distributed roughly between              man & Weare (2010) in the julia programming lan-
+0.5 − 2 × 1012 M⊙ over the past decade (Wang et al.                  guage (Bezanson et al. 2017) can be found at https:
+2020). Masses inferred via escape velocities have consti-            //github.com/CianMRoche/MCJulia.jl which is forked
+tuted some of the larger estimates in this population in             from https://github.com/mktranstrum/MCJulia.jl.
+18
+
+                                                        REFERENCES
+Abadi, M. G., Navarro, J. F., & Steinmetz, M. 2006,             de Salas, P. F., Malhan, K., Freese, K., Hattori, K., &
+ Monthly Notices of the Royal Astronomical Society, 365,          Valluri, M. 2019, JCAP, 2019, 037,
+ 747, doi: 10.1111/j.1365-2966.2005.09789.x                       doi: 10.1088/1475-7516/2019/10/037
+Ahn, C. P., Alexandroff, R., Allende Prieto, C., et al. 2012,   Deason, A. J., Fattahi, A., Belokurov, V., et al. 2019,
+ ApJS, 203, 21, doi: 10.1088/0067-0049/203/2/21                   Monthly Notices of the Royal Astronomical Society, 485,
+Akaike, H. 1974, IEEE Transactions on Automatic Control,          3514
+  19, 716                                                       Dierickx, M. I. P., & Loeb, A. 2017, The Astrophysical
+Antoja, T., Helmi, A., Romero-Gómez, M., et al. 2018,            Journal, 847, 42, doi: 10.3847/1538-4357/aa8767
+ Nature, 561, 360, doi: 10.1038/s41586-018-0510-7               Drimmel, R., & Poggio, E. 2018, Research Notes of the
+Astropy Collaboration, Robitaille, T. P., Tollerud, E. J.,        AAS, 2, 210, doi: 10.3847/2515-5172/aaef8b
+  et al. 2013, A&A, 558, A33,                                   Eilers, A.-C., Hogg, D. W., Rix, H.-W., & Ness, M. K.
+  doi: 10.1051/0004-6361/201322068                                2019, ApJ, 871, 120, doi: 10.3847/1538-4357/aaf648
+Astropy Collaboration, Price-Whelan, A. M., Sipőcz, B. M.,     Einasto, J., Kaasik, A., & Saar, E. 1974, Nature, 250, 309,
+  et al. 2018, AJ, 156, 123, doi: 10.3847/1538-3881/aabc4f        doi: 10.1038/250309a0
+Banik, I., & Zhao, H. 2018, MNRAS, 473, 419,                    Everall, A., & Boubert, D. 2021, Monthly Notices of the
+                                                                  Royal Astronomical Society, 509, 6205,
+  doi: 10.1093/mnras/stx2350
+                                                                  doi: 10.1093/mnras/stab3262
+Barber, C., Starkenburg, E., Navarro, J. F., McConnachie,
+                                                                Foreman-Mackey, D. 2016, The Journal of Open Source
+  A. W., & Fattahi, A. 2013, Monthly Notices of the Royal
+                                                                  Software, 1, 24, doi: 10.21105/joss.00024
+  Astronomical Society, 437, 959,
+                                                                Foreman-Mackey, D., Hogg, D. W., Lang, D., & Goodman,
+  doi: 10.1093/mnras/stt1959
+                                                                  J. 2013, PASP, 125, 306, doi: 10.1086/670067
+Belokurov, V., Erkal, D., Evans, N. W., Koposov, S. E., &
+                                                                Fritz, T. K., Di Cintio, A., Battaglia, G., Brook, C., &
+  Deason, A. J. 2018, MNRAS, 478, 611,
+                                                                  Taibi, S. 2020, Monthly Notices of the Royal
+  doi: 10.1093/mnras/sty982
+                                                                  Astronomical Society, 494, 5178,
+Bennett, M., & Bovy, J. 2018, Monthly Notices of the
+                                                                  doi: 10.1093/mnras/staa1040
+  Royal Astronomical Society, 482, 1417,
+                                                                Gaia Collaboration, Prusti, T., de Bruijne, J. H. J., et al.
+  doi: 10.1093/mnras/sty2813
+                                                                  2016a, A&A, 595, A1, doi: 10.1051/0004-6361/201629272
+Bezanson, J., Edelman, A., Karpinski, S., & Shah, V. B.
+                                                                Gaia Collaboration, Brown, A. G. A., Vallenari, A., et al.
+  2017, SIAM review, 59, 65.
+                                                                  2016b, A&A, 595, A2, doi: 10.1051/0004-6361/201629512
+  https://doi.org/10.1137/141000671
+                                                                —. 2018, A&A, 616, A1, doi: 10.1051/0004-6361/201833051
+Bovy, J. 2015, The Astrophysical Journal Supplement
+                                                                —. 2021, A&A, 649, A1, doi: 10.1051/0004-6361/202039657
+  Series, 216, 29, doi: 10.1088/0067-0049/216/2/29
+                                                                Gaia Collaboration, Vallenari, A., Brown, A. G. A., et al.
+Buch, D., Nadler, E. O., Wechsler, R. H., & Mao, Y.-Y.            2023, A&A, 674, A1, doi: 10.1051/0004-6361/202243940
+  2024, arXiv e-prints, arXiv:2404.08043,                       Gibbons, S. L. J., Belokurov, V., & Evans, N. W. 2014,
+  doi: 10.48550/arXiv.2404.08043                                  Monthly Notices of the Royal Astronomical Society, 445,
+Callingham, T. M., Cautun, M., Deason, A. J., et al. 2019,        3788, doi: 10.1093/mnras/stu1986
+  Monthly Notices of the Royal Astronomical Society, 484,       Goodman, J., & Weare, J. 2010, Communications in
+  5453, doi: 10.1093/mnras/stz365                                 Applied Mathematics and Computational Science, 5, 65,
+Cantat-Gaudin, T., Fouesneau, M., Rix, H.-W., et al. 2023,        doi: 10.2140/camcos.2010.5.65
+  A&A, 669, A55, doi: 10.1051/0004-6361/202244784               Grand, R. J. J., Deason, A. J., White, S. D. M., et al. 2019,
+Cautun, M., Frenk, C. S., van de Weygaert, R., Hellwing,          MNRAS, 487, L72, doi: 10.1093/mnrasl/slz092
+  W. A., & Jones, B. J. T. 2014, Monthly Notices of the         Grand, R. J. J., Gómez, F. A., Marinacci, F., et al. 2017,
+  Royal Astronomical Society, 445, 2049,                          MNRAS, 467, 179, doi: 10.1093/mnras/stx071
+  doi: 10.1093/mnras/stu1849                                    GRAVITY Collaboration, Abuter, R., Amorim, A., et al.
+Chandra, V., Naidu, R. P., Conroy, C., et al. 2023, ApJ,          2018, A&A, 615, L15, doi: 10.1051/0004-6361/201833718
+  951, 26, doi: 10.3847/1538-4357/accf13                        Green, G. M., Schlafly, E., Zucker, C., Speagle, J. S., &
+Cirelli, M., Corcella, G., Hektor, A., et al. 2011, JCAP, 03,     Finkbeiner, D. 2019, ApJ, 887, 93,
+  051, doi: 10.1088/1475-7516/2012/10/E01                         doi: 10.3847/1538-4357/ab5362
+                                                                                                                        19
+
+Harris, C. R., Millman, K. J., van der Walt, S. J., et al.     Monari, G., Famaey, B., Carrillo, I., et al. 2018, A&A, 616,
+  2020, Nature, 585, 357, doi: 10.1038/s41586-020-2649-2         L9, doi: 10.1051/0004-6361/201833748
+Helmi, A. 2020, ARA&A, 58, 205,                                Nadler, E. O., Gluscevic, V., Boddy, K. K., & Wechsler,
+  doi: 10.1146/annurev-astro-032620-021917                       R. H. 2019, Astrophys. J. Lett., 878, 32,
+Helmi, A., Babusiaux, C., Koppelman, H. H., et al. 2018,         doi: 10.3847/2041-8213/ab1eb2
+  Nature, 563, 85, doi: 10.1038/s41586-018-0625-x              Nadler, E. O., et al. 2021, Phys. Rev. Lett., 126, 091101,
+Jeans, J. H. 1915, Monthly Notices of the Royal                  doi: 10.1103/PhysRevLett.126.091101
+  Astronomical Society, 76, 70, doi: 10.1093/mnras/76.2.70     Naidu, R. P., Conroy, C., Bonaca, A., et al. 2020a, ApJ,
+Jeffreys, H. 1961, Oxford Univ. Press                            901, 48, doi: 10.3847/1538-4357/abaef4
+Jiao, Y., Hammer, F., Wang, H., et al. 2023, arXiv e-prints,   —. 2020b, ApJ, 901, 48, doi: 10.3847/1538-4357/abaef4
+  arXiv:2309.00048, doi: 10.48550/arXiv.2309.00048             Navarro, J. F., Frenk, C. S., & White, S. D. M. 1996, ApJ,
+Katz, D., Sartoretti, P., Guerrier, A., et al. 2022, arXiv       462, 563, doi: 10.1086/177173
+  e-prints, arXiv:2206.05902,                                  —. 1997, ApJ, 490, 493, doi: 10.1086/304888
+  doi: 10.48550/arXiv.2206.05902                               Necib, L., & Lin, T. 2022a, ApJ, 926, 189,
+Kawata, D., Baba, J., Ciucǎ, I., et al. 2018, MNRAS, 479,       doi: 10.3847/1538-4357/ac4244
+  L108, doi: 10.1093/mnrasl/sly107                             —. 2022b, ApJ, 926, 188, doi: 10.3847/1538-4357/ac4243
+Kluyver, T., Ragan-Kelley, B., Pérez, F., et al. 2016, in     Necib, L., Lisanti, M., & Belokurov, V. 2019, ApJ, 874, 3,
+  Positioning and Power in Academic Publishing: Players,         doi: 10.3847/1538-4357/ab095b
+  Agents and Agendas, ed. F. Loizides & B. Schmidt, IOS        Necib, L., Ostdiek, B., Lisanti, M., et al. 2020, Nature
+  Press, 87 – 90                                                 Astronomy, 4, 1078, doi: 10.1038/s41550-020-1131-2
+Kochanek, C. S. 1996, ApJ, 457, 228, doi: 10.1086/176724       Nesti, F., & Salucci, P. 2013, Journal of Cosmology and
+Koppelman, & Helmi. 2021, A&A, 649, A136,                        Astroparticle Physics, 2013, 016,
+  doi: 10.1051/0004-6361/202038777                               doi: 10.1088/1475-7516/2013/07/016
+Kravtsov, A., & Winney, S. 2024, arXiv e-prints,               Ostriker, J. P., Peebles, P. J. E., & Yahil, A. 1974, ApJL,
+  arXiv:2405.06017, doi: 10.48550/arXiv.2405.06017               193, L1, doi: 10.1086/181617
+Küpper, A. H. W., Balbinot, E., Bonaca, A., et al. 2015,      Ou, X., Eilers, A.-C., Necib, L., & Frebel, A. 2023, arXiv
+  The Astrophysical Journal, 803, 80,                            e-prints, arXiv:2303.12838,
+  doi: 10.1088/0004-637X/803/2/80                                doi: 10.48550/arXiv.2303.12838
+Lallement, R., Babusiaux, C., Vergely, J. L., et al. 2019,     Patel, E., Besla, G., Mandel, K., & Sohn, S. T. 2018, The
+  A&A, 625, A135, doi: 10.1051/0004-6361/201834695               Astrophysical Journal, 857, 78,
+Lazar, A., Bullock, J. S., Boylan-Kolchin, M., et al. 2020,      doi: 10.3847/1538-4357/aab78f
+  MNRAS, 497, 2393, doi: 10.1093/mnras/staa2101                Piffl, T., Binney, J., McMillan, P. J., et al. 2014, MNRAS,
+Leike, R. H., Glatzle, M., & Enßlin, T. A. 2020, A&A, 639,       445, 3133, doi: 10.1093/mnras/stu1948
+  A138, doi: 10.1051/0004-6361/202038169                       Planck Collaboration, Ade, P. A. R., Aghanim, N., et al.
+Leonard, P. J. T., & Tremaine, S. 1990, ApJ, 353, 486,           2016, A&A, 594, A13, doi: 10.1051/0004-6361/201525830
+  doi: 10.1086/168638                                          Plummer, H. C. 1911, MNRAS, 71, 460,
+Li, Z.-Z., Qian, Y.-Z., Han, J., et al. 2020, The                doi: 10.1093/mnras/71.5.460
+  Astrophysical Journal, 894, 10,                              Pouliasis, E., Di Matteo, P., & Haywood, M. 2017, A&A,
+  doi: 10.3847/1538-4357/ab84f0                                  598, A66, doi: 10.1051/0004-6361/201527346
+Lindegren, L., Bastian, U., Biermann, M., et al. 2021,         Price-Whelan, A. M., & Bonaca, A. 2018, ApJL, 863, L20,
+  A&A, 649, A4, doi: 10.1051/0004-6361/202039653                 doi: 10.3847/2041-8213/aad7b5
+Lisanti, M., Moschella, M., Outmezguine, N. J., & Slone,       Prudil, Z., Koch-Hansen, A. J., Lemasle, B., et al. 2022,
+  O. 2019, Phys. Rev. D, 100, 083009,                            A&A, 664, A148, doi: 10.1051/0004-6361/202142251
+  doi: 10.1103/PhysRevD.100.083009                             Rinchiuso, L., Macias, O., Moulin, E., Rodd, N. L., &
+Malhan, K., Ibata, R. A., & Martin, N. F. 2018, MNRAS,           Slatyer, T. R. 2021, Phys. Rev. D, 103, 023011,
+  481, 3442, doi: 10.1093/mnras/sty2474                          doi: 10.1103/PhysRevD.103.023011
+Marchetti, T., Evans, F. A., & Rossi, E. M. 2022, Monthly      Rubin, V. C., & Ford, W. Kent, J. 1970, ApJ, 159, 379,
+  Notices of the Royal Astronomical Society, 515, 767,           doi: 10.1086/150317
+  doi: 10.1093/mnras/stac1777                                  Sawala, T., Teeriaho, M., & Johansson, P. H. 2023,
+Miyamoto, M., & Nagai, R. 1975, PASJ, 27, 533                    MNRAS, 521, 4863, doi: 10.1093/mnras/stad883
+20
+
+Scannapieco, C., White, S. D. M., Springel, V., & Tissera,      Tulin, S., & Yu, H.-B. 2018, Phys. Rept., 730, 1,
+   P. B. 2009, Monthly Notices of the Royal Astronomical          doi: 10.1016/j.physrep.2017.11.004
+   Society, 396, 696, doi: 10.1111/j.1365-2966.2009.14764.x     Van Rossum, G., & Drake, F. L. 2009, Python 3 Reference
+Shen, J., Eadie, G. M., Murray, N., et al. 2022, ApJ, 925, 1,
+                                                                  Manual (Scotts Valley, CA: CreateSpace)
+   doi: 10.3847/1538-4357/ac3a7a
+                                                                Vasiliev, E., Belokurov, V., & Erkal, D. 2021, MNRAS, 501,
+Slatyer, T. R. 2018, in Theoretical Advanced Study
+                                                                  2279, doi: 10.1093/mnras/staa3673
+   Institute in Elementary Particle Physics: Anticipating
+   the Next Discoveries in Particle Physics, 297–353,           Virtanen, P., Gommers, R., Oliphant, T. E., et al. 2020,
+   doi: 10.1142/9789813233348 0005                                Nature Methods, 17, 261, doi: 10.1038/s41592-019-0686-2
+Slizewski, A., Dufresne, X., Murdock, K., et al. 2022, ApJ,     Wang, H.-F., Chrobáková, Ž., López-Corredoira, M., &
+   924, 131, doi: 10.3847/1538-4357/ac390b                        Sylos Labini, F. 2023, ApJ, 942, 12,
+Smith, M. C., Ruchti, G. R., Helmi, A., et al. 2007, Monthly      doi: 10.3847/1538-4357/aca27c
+   Notices of the Royal Astronomical Society, 379, 755
+                                                                Wang, J., Hammer, F., & Yang, Y. 2022, MNRAS, 510,
+Sohn, S. T., Watkins, L. L., Fardal, M. A., et al. 2018, The
+                                                                  2242, doi: 10.1093/mnras/stab3258
+   Astrophysical Journal, 862, 52,
+   doi: 10.3847/1538-4357/aacd0b                                Wang, W., Han, J., Cautun, M., Li, Z., & Ishigaki, M. N.
+Spergel, D. N., & Steinhardt, P. J. 2000, Phys. Rev. Lett.,       2020, Science China Physics, Mechanics & Astronomy,
+   84, 3760, doi: 10.1103/PhysRevLett.84.3760                     63, 109801, doi: 10.1007/s11433-019-1541-6
+Springel, V., Wang, J., Vogelsberger, M., et al. 2008,          Watkins, L. L., van der Marel, R. P., Sohn, S. T., & Evans,
+   MNRAS, 391, 1685,                                              N. W. 2019, ApJ, 873, 118,
+   doi: 10.1111/j.1365-2966.2008.14066.x                          doi: 10.3847/1538-4357/ab089f
+Sylos Labini, F., Chrobáková, Ž., Capuzzo-Dolcetta, R., &
+                                                                Williams, A. A., Belokurov, V., Casey, A. R., & Evans,
+   López-Corredoira, M. 2023, ApJ, 945, 3,
+                                                                  N. W. 2017, Monthly Notices of the Royal Astronomical
+   doi: 10.3847/1538-4357/acb92c
+Tollet, E., Macciò, A. V., Dutton, A. A., et al. 2016,           Society, 468, 2359, doi: 10.1093/mnras/stx508
+   MNRAS, 456, 3542, doi: 10.1093/mnras/stv2856                 Zhou, Y., Li, X., Huang, Y., & Zhang, H. 2023, ApJ, 946,
+Trick, W. H., Fragkoudi, F., Hunt, J. A. S., Mackereth,           73, doi: 10.3847/1538-4357/acadd9
+   J. T., & White, S. D. M. 2021, MNRAS, 500, 2645,             Zwicky, F. 1933, Helvetica Physica Acta, 6, 110
+   doi: 10.1093/mnras/staa3317
+                                                                                                                              21
+
+
+                                                         APPENDIX
+
+
+  The Figures in this Appendix are organized as follows: Fig. A1 contains a test of an alternative radial binning to
+produce 2PL and SEPL escape velocity profiles. Fig. A2 is a collection of the speed distributions at all Galactocentric
+radii considered here and the corresponding 1PL, 2PL and SEPL fits. Fig. A3, A4 and A5 are the corner plots
+corresponding to the fits shown in Fig. 3. Fig. A6 shows the correlation between best-fit model parameters for
+the 1PL, 2PL and SEPL models and the escape velocity as a function of galactocentric radius. The correlation is
+calculated as the absolute value of the Pearson product-moment correlation coefficient using the numpy function
+corrcoef (Harris et al. 2020).
+
+                                    Gaia DR3 escape velocity profile: Radial bin test
+               700
+                                                2PL (fiducial bins)         SEPL (fiducial bins)
+
+               650                              2PL (offset bins)           SEPL (offset bins)
+
+
+               600
+ vesc [km/s]
+
+
+
+
+               550
+
+               500
+
+               450
+                     vmin = 310 [km/s]
+               400
+                           5             6                 7                 8                   9               10
+                                                    Galactocentric radius [kpc]
+
+Figure A1. Stretched exponential power law (SEPL) and two-component power law (2PL) escape velocity fits to Gaia DR3
+data from 4 − 11 kpc in the fiducial 1 kpc-wide radial bins (circles, error bars) and in bins offset by 0.5 kpc (squares, bands),
+both with vmin = 310 km s−1 . Error bars and bands represent 68% confidence intervals.
+22
+
+
+
+
+Figure A2. Escape velocity fits using the power law (1PL), two-component power law (2PL) and stretched exponential power
+law (SEPL) at vmin = 310 km s−1 at all Galactocentric radii considered in this work. All bands and error bars represent 68%
+confidence intervals. Vertical position of vesc markers do not encode any information.
+                                                                                                                             23
+
+             vesc = 880.18+80.86
+                          −121.31                                          vesc = 716.51+91.31
+                                                                                        −104.05
+
+
+
+
+                                                  +2.58                                                          +3.85
+                                         k = 15.91−3.82                                                 k = 14.58−5.50
+
+
+
+
+                                                                     16
+       16
+
+
+
+
+                                                                 8 12
+   k
+
+
+
+
+                                                                   k
+       12
+        8
+
+
+
+
+                                                                      4
+                                          8
+                0
+                     0
+                           0
+                                0
+
+
+
+
+                                               12
+
+                                                     16
+
+
+
+
+                                                                                                      4
+                                                                                                           8
+                                                                                0
+
+                                                                                       0
+
+                                                                                             0
+
+
+
+
+                                                                                                               12
+                                                                                                                    16
+              60
+                    70
+                         80
+                                90
+
+
+
+
+                                                                              60
+
+                                                                                     75
+
+                                                                                            90
+                         vesc                    k                                   vesc                      k
+Figure A3. Single power law (1PL) fit to Gaia DR3 data in the 8 − 9 kpc radial bin and with vmin = 310 km s−1 (left) and
+vmin = 400 km s−1 (right). We do not show the outlier fraction fout and distribution width σout , as the outlier distribution is
+consistent with zero in this radial bin.
+24
+
+               vesc = 536.34+59.84
+                            −31.07
+
+
+
+
+                                                  +3.28
+                                         k = 15.27−3.91
+         16
+ k
+         12
+         8
+
+
+
+
+                                                                              +1.69
+                                                                  kSubs = 3.65−1.02
+         12
+ kSubs
+         8
+         4
+
+
+
+
+                                                                                                         +0.08
+                                                                                             fSubs = 0.67−0.11
+   2 4 6 8
+ 0. 0. 0. 0.
+      fSubs
+
+
+
+
+                                         8
+
+
+
+
+                                                                                              2
+                                                                                                    4
+                                                                                                         6
+                                                                                                              8
+               0
+                   0
+                        0
+                               0
+                                   0
+
+
+
+                                               12
+
+                                                      16
+
+
+
+                                                                    4
+
+                                                                          8
+                                                                                  12
+           48
+                   56
+                        64
+                             72
+                                   80
+
+
+
+
+                                                                                             0.
+                                                                                                  0.
+                                                                                                        0.
+                                                                                                             0.
+
+
+                        vesc                      k                       kSubs                      fSubs
+Figure A4. Two-component power law (2PL) fit to Gaia DR3 data in the 8 − 9 kpc radial bin and with vmin = 310 km s−1 .
+Outlier distribution parameters not shown as the outlier distribution is consistent with 0 in this bin.
+                                                                                                                          25
+
+                                       +9.94
+                          vesc = 486.26−5.43
+
+
+
+
+                                                                  +0.54
+                                                          β = 2.34−0.49
+                   0
+                 3.
+             β
+                   5
+                 2.
+                   0
+                 2.
+
+
+
+
+                                                                                      τ = 117.99+11.53
+                   5
+                 1.
+
+
+
+
+                                                                                                −16.18
+                    0
+                 14
+             τ
+                   0
+                 12
+                    0
+                 10
+
+
+
+
+                                                       5
+                                                       0
+                                                       5
+                                                       0
+                           0
+                                  0
+                                         0
+                                                0
+                                                       0
+
+
+
+
+                                                                                          0
+
+                                                                                                 0
+
+                                                                                                        0
+                        46
+                               48
+                                      50
+                                             52
+                                                    54
+                                                    1.
+                                                    2.
+                                                    2.
+                                                    3.
+
+
+
+                                                                                       10
+
+                                                                                              12
+
+                                      vesc                         β                            τ    14
+Figure A5. Stretched exponential power law (SEPL) fit to Gaia DR3 data in the 8−9 kpc radial bin and with vmin = 310 km s−1 .
+Outlier distribution parameters not shown as the outlier distribution is consistent with 0 in this bin.
+26
+
+                                          | Correlation with vesc | for each model
+
+     k     0.82              0.83              0.82             0.80              0.98             0.96              0.94
+
+
+     k     0.74              0.89              0.81             0.41              0.37             0.43              0.66
+
+ kS        0.76              0.77              0.32             0.76              0.95             0.90              0.78
+
+ fS        0.10              0.09              0.43             0.14              0.36             0.44              0.34
+
+
+  β        0.09              0.60              0.24             0.04              0.35             0.22              0.01
+
+     τ     0.75              0.93              0.97             0.85              0.25             0.09              0.28
+
+         [4.0, 5.0]       [5.0, 6.0]        [6.0, 7.0]       [7.0, 8.0]        [8.0, 9.0]       [9.0, 10.0]      [10.0, 11.0]
+                                                         Radial bin [kpc]
+
+Figure A6. Correlations between vesc and other model parameters. First row is the 1-component power law (1PL) correlations,
+next 3 rows are 2-component power law (2PL), and final two rows are correlations with the stretched exponential (SEPL) model
+parameters. Outlier model correlations not shown, as they exhibit no significant difference across models. Black outlines indicate
+parameters which are often not properly converged, and their correlations with the parameter of interest, vesc .
+

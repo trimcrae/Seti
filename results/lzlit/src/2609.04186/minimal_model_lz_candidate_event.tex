@@ -1,0 +1,565 @@
+\documentclass[notitlepage,floats,aps,nofootinbib,preprintnumbers,twocolumn,prl,10pt,balancelastpage]{revtex4-1}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{hyperref}
+\hypersetup{colorlinks,citecolor=blue}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{subfigure}
+\usepackage{nicefrac}
+\usepackage{mathrsfs}
+\usepackage{mdframed}
+\usepackage{ulem}
+\usepackage{units}
+\usepackage{slashed}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\beq{\begin{equation}\begin{aligned}}
+\def\eeq{\end{aligned}\end{equation}}
+\def\OO{\mathcal{O}}
+\def\dd{{\rm d}}
+
+
+\newcommand{\Lag}{\mathcal L}
+\newcommand{\Ocal}{\mathcal O}
+\newcommand{\vmin}{v_{\rm min}}
+\newcommand{\slz}{\sigma_{\rm local}}
+\newcommand{\sglob}{\sigma_{\rm global}}
+\newcommand{\GCP}{\mathrm{GCP}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\qv}{\vec{q}\,}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+
+\title{Axion Portal Dark Matter and the LUX-ZEPLIN High-Recoil  Event}
+
+\author{James Unwin}
+\affiliation{Department of Physics, University of Illinois  Chicago, Chicago, IL 60607, USA}
+
+\begin{abstract}
+ LUX-ZEPLIN (LZ)  has reported one event compatible with a
+$248\,\mathrm{keV}$ nuclear recoil.
+While initial attention has focused on inelastic dark matter, that
+interpretation depends sensitively on the uncertain high-speed tail of the
+Galactic halo.  We develop instead an elastic realization of the
+pseudoscalar-pseudoscalar interaction
+$\Lag_4=(\bar\chi i\gamma^5\chi)(\bar N i\gamma^5N)$, whose contact templates
+give one of the largest local significances identified by LZ.  The minimal model presented involves primarily Dirac fermion dark matter, and a complex scalar leading to a pseudoscalar mediator. The minimal gauge-invariant UV completion also requires a single multi-TeV vector-like heavy quark.
+ A representative model which realizes thermal freeze-out has 
+$m_\chi=400~{\rm GeV}$ and $m_a=1~{\rm GeV}$. The simplest model breaks from the isoscalar/isovector assumption, and the response-level recoil spectrum lies
+between LZ's elastic $\Ocal_4^v$ and contact $\Lag_4^v$ templates, suggesting
+a local significance of $2.6$-$3.2\sigma$.
+\end{abstract}
+\maketitle
+
+
+
+
+\section{Introduction} 
+
+\vspace{-3mm}
+
+The LUX-ZEPLIN (LZ) Collaboration recently reported a candidate dark matter event with \cite{LZ:2026axp}
+\begin{align}
+ E_R&=248\pm23_{\rm stat}\pm23_{\rm sys}\ \mathrm{keV},\nonumber\\[-2pt]
+ Q&\equiv|\bm q|=\sqrt{2m_{\rm Xe}E_R}\simeq246\,\mathrm{MeV}.
+ \label{eq:event}
+\end{align}
+%
+Compared to a set of reference Lagrangian models \cite{Anand:2013yka}, the largest local significance corresponds to $3.4\sigma$, with a  global significance of $2.6\sigma$.
+%
+Several dark matter interpretations quickly appeared~\cite{Lou:2026idn,Su:2026rwz,Yamashita:2026ump,Fan:2026kxx,Freese:2026sga,Wu:2026nhi,Yamashita:2026ump,Yin:2026jnn,DiMauro:2026ldr,Visinelli:2026kgt}.
+Particular attention has been paid to inelastic dark matter, especially relating to thermal Higgsino dark matter
+\cite{Fan:2026kxx,Freese:2026sga,Wu:2026nhi,Yamashita:2026ump,Yin:2026jnn,DiMauro:2026ldr,Visinelli:2026kgt}.
+%
+ While elegant, the specific thermal Higgsino appears excluded by IceCube limits on high-energy neutrinos from dark matter capture and annihilation in the Sun \cite{Pospelov:2026ewn}. More generally, inelastic dark matter remains an interesting possibility, however it is limited by the fact that the rate is sensitive to the uncertainties in the high-speed tail of the Galactic halo.  This motivates elastic mechanisms that harden the recoil spectrum through the interaction.
+
+
+LZ tested the twenty Lorentz-invariant WIMP-nucleon interactions for benchmark masses ranging from $10~{\rm GeV}$ to $4~\mathrm{TeV}$.
+%
+Of the candidate Lagrangians 
+\beq
+\Lag_4^i=d_4^N(\bar\chi i\gamma^5\chi)(\bar N i\gamma^5N)
+\eeq is particularly attractive as it has a minimal CP-conserving
+pseudoscalar completion.
+%
+For $m_\chi=200\,{\rm GeV}$--$4\,\mathrm{TeV}$,  the  $\Lag_4^i$ templates correspond to local significances of
+$3.0$-$3.2\sigma$, with the largest due to $\Lag_4^v$ at
+$m_\chi=400{\rm GeV}$, while $\Lag_4^s$ reaches $3.1\sigma$.  Here $s$ and $v$ indicate the nucleon couplings are isoscalar or isovector.  The $\Lag_4^i$ Lagrangian term can be recast as a nonrelativistic operator via the matching  $\Lag_4 \rightarrow -d_4^N\frac{m_N}{m_\chi}\Ocal_6$ with \cite{Anand:2013yka}
+\beq
+ \Ocal_6&=\left(\bm S_\chi\!\cdot\!\frac{\bm q}{m_N}\right)
+ \left(\bm S_N\!\cdot\!\frac{\bm q}{m_N}\right),
+\eeq
+In what follows, we present a UV completion of the above operator in terms of the axion portal  \cite{Nomura:2008ru}, show that it can simultaneously reproduce both the LZ event and the observed dark matter abundance via thermal freeze-out.
+
+\section{pNGB realisation of $\mathcal L_4$}
+%
+We supplement the Standard Model with a gauge singlet complex scalar
+$ \Phi=(1/\sqrt2)(f+\rho)e^{ia/f}$
+alongside a Dirac fermion $\chi$ with interaction Lagrangian
+\beq
+ \Lag_\chi=-y_\chi\Phi\bar\chi_L\chi_R+\mathrm{h.c.}
+\label{eq:Phi}\eeq
+A U(1)$_X$ forbid a bare Dirac mass, which is broken by the VEV of $\Phi$.  After symmetry breaking, $ m_\chi=y_\chi f/\sqrt2$ and $g_\chi\equiv m_\chi/f$ with
+\beq
+ \Lag_\chi=-m_\chi\left(1+\frac{\rho}{f}\right)
+ \bar\chi e^{i\gamma^5a/f}\chi .
+ \label{eq:nonlinear-mass}
+\eeq
+The state $a$ is identified as the pseudoscalar mediator. The scalar $\rho$ can also act as a mediator, but we assume
+$m_\rho+m_a>2m_\chi$, so that $\chi\bar\chi\to a\rho$ is closed and $\rho$
+does not affect the leading freeze-out or pseudoscalar-scattering processes.
+Its mixing with the Higgs nevertheless produces the subleading
+spin-independent interaction discussed below.
+%
+The pseudoscalar mass $m_a$ is initially massless, being the Goldstone boson of the broken $U(1)_X$ symmetry.
+%
+The potential for $a$  is generated
+only by terms that explicitly break $U(1)_X$, which we introduce via a real, soft spurion 
+\begin{equation}
+ V_{\rm br}=-\mu^3(\Phi+\Phi^\dagger),
+ \label{eq:softmass}
+\end{equation}
+leading to the bare contribution
+$m_{a,0}^2=\sqrt2\mu^3/f$.  Below we denote the physical mass, including
+radiative corrections, by $m_a^2=m_{a,0}^2+\delta m_a^2$.
+ Equation~\eqref{eq:softmass} selects
+one CP-preserving vacuum, so it produces neither spontaneous CP violation nor
+stable domain walls. 
+For real $\mu^3>0$, the explicit-breaking potential is
+\[
+ V_{\rm br}=-\sqrt2\,\mu^3(f+\rho)\cos(a/f),
+\]
+and has a single physical minimum at $\langle a\rangle=0$ up to periodicity
+$a\simeq a+2\pi f$.  Moreover, both $a$ and
+$\bar\psi i\gamma^5\psi$ are CP odd, so the products
+$a\bar\chi i\gamma^5\chi$ and $a\bar u i\gamma^5u$ are CP even.  Real
+new-sector couplings therefore introduce no new CP-violating phase and generate
+no EDM, chromo-EDM, or Weinberg operator in the CP-symmetric limit.
+
+We now specify the couplings of the pseudoscalar mediator to the Standard Model. 
+%
+An isoscalar coupling, with $g_u=g_d$, is attractive since it has a similar recoil spectrum to the contact operator (as we discuss in Section 4).
+% 
+However, reproducing the LZ event in the isoscalar case requires large couplings
+and for $2\,\mathrm{TeV}$ messengers, their explicit symmetry-breaking couplings generate 
+$|\delta m_a|\sim20$--$25\,\mathrm{GeV}$, so a $1\,\mathrm{GeV}$ mediator
+requires a 1\% tuning of $m_a^2$. Moreover, $g_u=g_d$
+must hold at the few-percent level to prevent the pion pole from reappearing.
+We therefore focus on the $u$-only portal: it requires only one vector-like
+messenger and preserves the radiative motivation for a GeV-scale pseudoscalar.
+
+
+
+
+
+For simplicity, we assume that the only coupling is via the up-quark bilinear
+\begin{equation}
+ \Lag_a^u=-g_u a\bar u i\gamma^5u.
+ \label{eq:uonly}
+\end{equation}
+%
+The above interaction holds below the scale of electroweak symmetry breaking, it arises from the gauge-invariant dimension-five operator \(ia\,\bar q_{1L}\widetilde H u_R+\mathrm{h.c.}\). Such a dimension five operator can be generated by integrating out a vector-like Dirac \(U\) messenger.
+%
+%
+This structure can be enforced by an approximate $Z_2^u$ symmetry under
+which $U_{L,R}$, $q_{1L}$, and $u_R$ are odd, while all other fields are
+even.  The down-quark Yukawa and CKM mixing then arise from small
+$Z_2^u$-breaking spurions, which induce correspondingly suppressed
+couplings to other quarks.
+
+
+Introduce one vector-like Dirac up-type messenger,
+$U=(U_L,U_R)$, with $U_{L,R}\sim(\bm3,\bm1,2/3)$.
+The CP-invariant messenger Lagrangian is
+\begin{equation}
+ \Lag_U=-M_U\bar UU-y_L\bar q_{1L}\widetilde H U_R
+ -iy_RA\bar U_Lu_R+\mathrm{h.c.}
+ \label{eq:messenger}
+\end{equation}
+where
+$ A\equiv\frac{\Phi-\Phi^\dagger}{i\sqrt2}
+ =(f+\rho)\sin(a/f)$.
+Integrating out $U$ gives the gauge-invariant operator
+\beq
+ \Lag_{\rm eff}=i\frac{y_Ly_R}{M_U}A
+ (\bar q_{1L}\widetilde Hu_R)+\mathrm{h.c.}
+\eeq
+with $g_u=\frac{y_Ly_Rv}{\sqrt2M_U}$.
+%
+%
+The $y_R$ interaction breaks $U(1)_X$ and generates a mass correction
+\begin{equation}
+ |\delta m_a|\sim
+ \left(\frac{N_cy_R^2M_U^2}{8\pi^2}\right)^{1/2}
+ \simeq1.2\,{\rm GeV}
+ \left(\frac{y_R}{3.2\times10^{-3}}\right)
+ \left(\frac{M_U}{2\,{\rm TeV}}\right).
+ \label{eq:visiblemass}
+\end{equation}
+The interaction responsible for the LZ signal also contributes to the
+mediator mass.  If the mediator is made heavier, a stronger coupling is
+needed to maintain the observed scattering rate, which in turn generates an
+even larger mass correction.  Avoiding this feedback naturally favors
+$m_a\lesssim1$-$2\,{\rm GeV}$.  Moreover, for $m_a<3m_{\pi^0}\simeq0.405\,{\rm GeV}$ the mediator can become long-lived, and
+beam-dump and cosmological considerations are constraining.  Thus we focus on the
+natural and phenomenologically safer range $m_a\sim0.5$--$2\,{\rm GeV}$.
+
+
+
+The generic renormalisable portal $\lambda_{\Phi H}|\Phi|^2|H|^2$ mixes the radial mode with
+the Higgs, with 
+\beq
+\theta_{h\rho}\simeq\lambda_{\Phi H}fv/(m_\rho^2-m_h^2)
+\eeq at $m_\rho=1$ TeV this gives $\theta_{h\rho}\simeq0.074\lambda_{\Phi H}$. This leads to a coherent scattering cross-section of order 
+\beq
+\sigma_{\rm SI}\simeq6\times10^{-47}~{\rm cm}^2~(\lambda_{\Phi H}/0.1)^2(1~{\rm TeV}/m_\rho)^4
+\eeq
+Existing spin-independent limits \cite{LZ:2024zvo} at $m_\chi=400$ GeV require $|\lambda_{\Phi H}|\lesssim0.07(m_\rho/1~{\rm TeV})^2$.  To avoid exclusion, we require that this mixed quartic be suitably small; notably, couplings of $\mathcal{O}(0.01)$ are commonplace in the Standard Model. 
+%
+Moreover, the $\rho$-mediated scattering may provide a secondary discovery channel in next-generation direct detection experiments, such as XLZD \cite{XLZD:2024nsu}.
+
+
+\vspace{-2mm}
+\section{Modified recoil spectrum}
+\vspace{-1mm}
+
+The momentum dependence of the quark--nucleon matching is described by
+\begin{equation}
+ \langle N|\bar u i\gamma^5u|N\rangle
+ =\bar g_u^N(Q^2)\,\bar N i\gamma^5N .
+ \label{eq:formfactor-def}
+\end{equation}
+At the momentum of the LZ event, $Q_0=246\,\mathrm{MeV}$, representative
+matching gives \cite{Bishara:2017pfq}:
+$ \bar g_u^{p,n}(Q_0^2)\simeq(+44,-41)$.
+Exchange of the mediator then gives
+\begin{equation}
+ d_4^N(Q^2)=
+ \frac{g_\chi g_u\,\bar g_u^N(Q^2)}{m_a^2+Q^2}.
+ \label{eq:d4matching}
+\end{equation}
+Using the public xenon $\Sigma''$ nuclear responses implemented in
+\textsc{WIMpy\_NREFT}~\cite{Anand:2013yka}, an indicative one-event
+normalization requires
+\[
+ d_{4,\mathrm{req}}^{(42)}(Q_0^2)
+ \simeq(2\text{--}4)\times10^{-3}\,\mathrm{GeV}^{-2},
+\]
+where the superscript denotes $|\bar g_u^N|=42$.  Equivalently,
+\begin{align}
+ g_\chi g_u\simeq{}&7.6\times10^{-5}
+ \left(\frac{d_{4,\mathrm{req}}^{(42)}}
+ {3\times10^{-3}\,\mathrm{GeV}^{-2}}\right)
+ \left(\frac{m_a^2+Q_0^2}{1.06\,\mathrm{GeV}^2}\right).
+ \label{eq:LZnorm}
+\end{align}
+This estimate carries nuclear-response and detector-normalization
+uncertainties and is not a replacement for the LZ likelihood.
+
+The up-quark pseudoscalar density contains an isovector component that can
+create a virtual neutral pion.  The pion propagator therefore contributes
+$(Q^2+m_{\pi^0}^2)^{-1}$ to the scattering amplitude
+\cite{Bishara:2017pfq}.  Keeping the leading one-body pole contribution gives
+\begin{equation}
+ \frac{dR}{dE_R}\propto
+ \frac{Q^4}
+ {(Q^2+m_{\pi}^2)^2(m_a^2+Q^2)^2}
+ W_{\Sigma''}(Q^2)\,\eta(v_{\min}),
+ \label{eq:polespectrum}
+\end{equation}
+up to the isotope sum and the smaller non-pole terms; here
+$m_\pi=m_{\pi^0}=134.98\,\mathrm{MeV}$.  The explicit $Q^4$ ensures that the
+rate still vanishes at threshold.  For $Q\gtrsim m_\pi$, however, the pion
+propagator compensates this rise, so the spectrum saturates and subsequently
+falls with the halo integral and nuclear response.
+
+In Fig.~\ref{fig:spectra} evaluate the true-recoil spectra over
+the complete LZ analysis window, $5.4<E_R<269.9\,{\rm keV}$, using
+\textsc{WIMpy\_NREFT}~\cite{WIMpy}.  This package supplies the public
+$^{129}{\rm Xe}$ and $^{131}{\rm Xe}$ response functions,
+as well as the recoil kinematics, Standard Halo Model velocity
+integral, and conversion of proton and neutron NREFT coefficients into
+$dR/dE_R$~\cite{Fitzpatrick:2012ix}. 
+ Each spectrum is then multiplied by a
+digitized interpolation of the NR efficiency published in Fig.~S2 of
+Ref.~\cite{LZ:2026axp}. 
+Fig.~\ref{fig:spectra} specifically shows the resulting unit-normalized spectrum for
+$m_\chi=400\,\mathrm{GeV}$, together with the elastic $\Ocal_4^v$ and contact
+$\Lag_4^v$ templates.  The pion-pole spectrum contains
+fewer low-energy recoils than $\Ocal_4^v$, but is softer than contact
+$\Lag_4^v$.  Each curve has unit integral over the displayed range, so its
+height represents the conditional recoil-energy distribution rather than an
+absolute event rate.
+
+
+Observe that the $u$-only model has a similar structure to the isovector due to the presence of the pion pole, while the isoscalar more closely matches the contact operator (but requires $\sim1$\% finetuning in $m_a$ to realise.) Moreover, the models considered here are sandwiched by two benchmark models of the LZ sudy  \cite{LZ:2026axp}.   The LZ analysis found a local significant of $2.6\sigma$ for elastic $\Ocal_4^v$ (with $\delta=0$) and $3.2\sigma$ for the contact operator
+$\Lag_4^v$, therefore suggest the template-level bracket for the local significance of the $u$-only (and isovector) models is
+\[
+ 2.6\lesssim Z_{\mathrm{loc}}\lesssim3.2 .
+\]
+ A precise significance statement would require a full likelihood analysis and is beyond the scope of this work.
+
+\begin{figure}[t]
+ \centering
+ \includegraphics[width=\columnwidth]{l4_recoil_shapes_isospin.pdf}
+ \caption{Unit-normalized recoil spectra relevant for the LZ event. Model parameters are fixed as in Eq.~(\ref{benchmark}), in particular, the dark matter mass is $400\,\mathrm{GeV}$ and pseudoscalar mediator $1$ GeV.
+ The published nuclear-recoil efficiency is applied, but the full detector response is not included.}
+ \label{fig:spectra}
+\end{figure}
+
+
+
+
+
+For the central normalization in Eq.~\eqref{eq:LZnorm}, a representative point
+is
+\beq
+ m_\chi &=400~{\rm GeV} \hspace{11mm}
+ m_a=1~{\rm GeV}\\
+f&=294~{\rm GeV}  \hspace{12mm}  g_\chi =1.36,\\
+ M_U&=2\,{\rm TeV} \hspace{16mm} g_u=5.6\times10^{-5}\\
+y_L &= 0.20  \hspace{18mm} y_R = 3.2\times10^{-3}.
+ \label{benchmark}
+\eeq
+QCD pair production gives the leading collider test on the heavy coloured mediators.
+This benchmark model lies above the $1.53\,{\rm TeV}$ Run-2 limit \cite{ATLAS:2024zlo}.
+
+\section{Thermal freeze-out}
+\vspace{-3mm}
+
+
+For $m_a<m_\chi$ and $m_\rho+m_a>2m_\chi$, annihilation involving the
+radial mode is kinematically forbidden.  The dominant freeze-out process is
+therefore $ \chi\bar\chi\to aa$,
+while annihilation into Standard Model quarks is negligible because of the
+small coupling $g_u$.  Expanding the nonlinear mass term gives
+\begin{equation}
+ \Lag_\chi\supset
+ -g_\chi a\bar\chi i\gamma^5\chi
+ +\frac{g_\chi^2}{2m_\chi}a^2\bar\chi\chi+\cdots .
+ \label{eq:annihilation-interactions}
+\end{equation}
+The annihilation amplitude receives contributions from $t$- and $u$-channel
+$\chi$ exchange together with the four-point interaction in
+Eq.~\eqref{eq:annihilation-interactions}; all three contributions must be
+retained to respect the nonlinear symmetry.  For a CP-conserving
+pseudoscalar interaction, parity and Bose symmetry forbid an $s$-wave
+transition into two identical pseudoscalars.  The leading annihilation rate
+is consequently $p$ wave, $ \sigma v_{\rm rel}
+ =b(r)v_{\rm rel}^2+\mathcal O(v_{\rm rel}^4)$, with
+\beq
+ b(r)=\frac{g_\chi^4}{384\pi m_\chi^2}\sqrt{1-r^2}
+ \left[2+\frac{r^8}{(2-r^2)^4}\right],
+ \label{eq:annihilation}
+\eeq
+where $r=m_a/m_\chi$.  In the limit relevant here
+$r\ll1$ and this reduces to
+$b(0)=g_\chi^4/(192\pi m_\chi^2)$.
+
+For a symmetric Dirac population, defining
+$n=n_\chi+n_{\bar\chi}$, the Boltzmann equation is
+\begin{equation}
+ \dot n+3Hn
+ =-\frac{1}{2}\langle\sigma v_{\rm rel}\rangle
+ \left(n^2-n_{\rm eq}^2\right).
+ \label{eq:boltzmann}
+\end{equation}
+ Since
+$\langle v_{\rm rel}^2\rangle\simeq6/x$, with
+$x=m_\chi/T$, one has
+$\langle\sigma v_{\rm rel}\rangle\simeq6b/x$.  Numerically solving
+Eq.~\eqref{eq:boltzmann}, with $x_f\simeq26$ and
+$g_*\simeq90$, and requiring $\Omega_\chi h^2\simeq0.12$ gives
+\begin{equation}
+ \begin{aligned}
+ g_\chi&\simeq1.36
+ \left(\frac{m_\chi}{400\,{\rm GeV}}\right)^{1/2},
+ \nonumber\\[-2pt]
+ f=\frac{m_\chi}{g_\chi}
+ &\simeq294\,{\rm GeV}
+ \left(\frac{m_\chi}{400\,{\rm GeV}}\right)^{1/2}.
+ \end{aligned}
+ \label{eq:thermal}
+\end{equation}
+Consistent with the benchmark of eq.~(\ref{benchmark}). We leave a full parameter scan to future work.
+Notably, the $p$-wave suppression also makes
+late-time annihilation much smaller than at freeze-out.
+
+
+\section{Concluding remarks}
+\vspace{-3mm}
+
+
+While the LZ observation is only a single event with a $2.6\sigma$ global significance and
+may still be background, there remains the prospect that it could be the first laboratory signal of dark matter.
+%
+  If it recurs, $\Lag_4$ provides a notably economical
+elastic interpretation.  
+%
+The pion pole inherent to the isovector and $u$-only realisations makes the recoil
+spectrum softer than contact $\Lag_4$ but harder than elastic $\Ocal_4$.
+The corresponding LZ template models  \cite{LZ:2026axp} thus bound the local significance to be
+$2.6\lesssim Z_{\rm loc}\lesssim3.2$, a full likelihood analysis would be needed to obtain a precise value.
+
+Additional LZ data can determine whether the recoil spectrum follows the
+ contact profile, the pion-pole, or an inelastic threshold.  Notably, the latter is especially sensitive to the halo
+tail, whereas the present proposal is elastic and predicts target-dependent recoil rates. 
+Future experiments, such as XLZD  \cite{XLZD:2024nsu} and a dedicated high-recoil CRESST analysis  \cite{Angloher:2025fzw}, will
+provide further insights. Moreover, the specific model outlined here requires $\sim2$ TeV coloured states, which are potentially accessible at near-future colliders and which provide a complementary probe of this scenario.
+
+
+
+\section{Acknowledgements.}~Claude \& Codex aided in the numerical analysis.
+
+
+
+\begin{thebibliography}{99}
+
+\bibitem{LZ:2026axp}
+D.~S.~Akerib \textit{et al.} [LZ],
+%``Search for dark matter particle interactions in an extended nuclear recoil energy window with the LUX-ZEPLIN (LZ) experiment,''
+[arXiv:2609.02823].
+
+
+\bibitem{Anand:2013yka}
+N.~Anand, A.~L.~Fitzpatrick and W.~C.~Haxton,
+%``Weakly interacting massive particle-nucleus elastic scattering response,''
+Phys. Rev. C \textbf{89}, no.6, 065501 (2014)
+%doi:10.1103/PhysRevC.89.065501
+[arXiv:1308.6288].
+
+\bibitem{Lou:2026idn}
+Y.~Lou and C.~T.~Lu,
+%``Fermionic Dark Matter Absorption and the High-Energy Event in LUX-ZEPLIN,''
+[arXiv:2609.01592].
+
+
+\bibitem{Su:2026rwz}
+L.~Su, J.~M.~Yang and W.~N.~Yang,
+%``Inelastic Dark Matter Signature at High Recoil Energy in LUX-ZEPLIN and CRESST,''
+[arXiv:2609.01475].
+
+
+\bibitem{Fan:2026kxx}
+J.~Fan and M.~Reece,
+%``Higgsino Above the Sea of Fog,''
+[arXiv:2609.01504].
+
+\bibitem{Freese:2026sga}
+K.~Freese and D.~P.~Theodosopoulos,
+%``Higgsino Dark Matter Interpretation of the LUX-ZEPLIN 248 keV Nuclear-Recoil Event,''
+[arXiv:2609.01583].
+
+\bibitem{Wu:2026nhi}
+L.~Wu, Y.~Zhang and B.~Zhu,
+%``TeV Higgsino Dark Matter from LZ Nuclear Recoil to Fermi-LAT Gamma Rays,''
+[arXiv:2609.01590].
+
+\bibitem{Yamashita:2026ump}
+K.~Yamashita,
+%``Inelastic Dark Photon Dark Matter for the LUX-ZEPLIN High-Recoil Event and the Galactic Halo Gamma-Ray Excess,''
+[arXiv:2609.02868].
+
+\bibitem{Visinelli:2026kgt}
+L.~Visinelli,
+%``A Peccei--Quinn Origin for Inelastic Electroweak Dark Matter after LUX-ZEPLIN,''
+[arXiv:2609.02807].
+
+\bibitem{Yin:2026jnn}
+W.~Yin,
+%``A PQ-Symmetric High-Scale SUSY Interpretation of the LZ High-Energy Recoil,''
+[arXiv:2609.01892].
+
+\bibitem{DiMauro:2026ldr}
+M.~Di Mauro,
+%``Dark Matter at the Kinematic Edge: Interpreting the 248 keV LZ Nuclear-Recoil Candidate,''
+[arXiv:2609.02608].
+
+\bibitem{Pospelov:2026ewn}
+M.~Pospelov and H.~Ramani,
+%``Strong Constraints on Higgsino Dark Matter from Solar Capture,''
+[arXiv:2609.02775].
+
+\bibitem{Nomura:2008ru}
+Y.~Nomura and J.~Thaler,
+%``Dark Matter through the Axion Portal,''
+Phys. Rev. D \textbf{79}, 075008 (2009)
+%doi:10.1103/PhysRevD.79.075008
+[arXiv:0810.5397].
+
+\bibitem{LZ:2024zvo}
+J.~Aalbers \textit{et al.} [LZ],
+%``Dark Matter Search Results from 4.2{\,}{\,}Tonne-Years of Exposure of the LUX-ZEPLIN (LZ) Experiment,''
+Phys. Rev. Lett. \textbf{135}, no.1, 011802 (2025)
+%doi:10.1103/4dyc-z8zf
+[arXiv:2410.17036 [hep-ex]].
+
+
+\bibitem{XLZD:2024nsu}
+J.~Aalbers \textit{et al.} [XLZD],
+%``The XLZD Design Book: towards the next-generation liquid xenon observatory for dark matter and neutrino physics,''
+Eur. Phys. J. C \textbf{85}, no.10, 1192 (2025)
+%doi:10.1140/epjc/s10052-025-14810-w
+[arXiv:2410.17137].
+
+\bibitem{Bishara:2017pfq}
+F.~Bishara, J.~Brod, B.~Grinstein and J.~Zupan,
+%``From quarks to nucleons in dark matter direct detection,''
+JHEP \textbf{11}, 059 (2017)
+%doi:10.1007/JHEP11(2017)059
+[arXiv:1707.06998].
+
+\bibitem{ATLAS:2024zlo}
+G.~Aad \textit{et al.} [ATLAS],
+%``Search for pair-produced vectorlike quarks coupling to light quarks in the lepton plus jets final state using 13~TeV pp collisions with the ATLAS detector,''
+Phys. Rev. D \textbf{110}, no.5, 052009 (2024)
+%doi:10.1103/PhysRevD.110.052009
+[arXiv:2405.19862].
+
+
+\bibitem{Abe:2018emu}
+T.~Abe, M.~Fujiwara and J.~Hisano,
+%``Loop corrections to dark matter direct detection in a pseudoscalar mediator dark matter model,''
+JHEP \textbf{02}, 028 (2019)
+%doi:10.1007/JHEP02(2019)028
+[arXiv:1810.01039].
+
+
+
+
+\bibitem{Angloher:2025fzw}
+G.~Angloher, \textit{et al.} [CRESST],
+%S.~Banik, A.~Bento, A.~Bertolini, R.~Breier, C.~Bucci, J.~Burkhart, L.~Canonica, F.~Casadei and E.~R.~Cipelli, \textit{et al.}
+%``The CRESST experiment towards the next generation of sub GeV direct dark matter detection,''
+Commun. Phys. \textbf{9}, no.1, 163 (2026)
+%doi:10.1038/s42005-025-02476-5
+[arXiv:2505.01183].
+
+
+\bibitem{WIMpy}
+B.~J.~Kavanagh and T.~D.~P.~Edwards, WIMpy NREFT v1.2 [Computer Software] (2024).
+%doi:10.5281/zenodo.1230503. 
+Available at: \begin{verbatim} https://github.com/bradkav/WIMpy_NREFT \end{verbatim}
+
+\bibitem{Fitzpatrick:2012ix}
+A.~L.~Fitzpatrick, W.~Haxton, E.~Katz, N.~Lubbers and Y.~Xu,
+%``The Effective Field Theory of Dark Matter Direct Detection,''
+JCAP \textbf{02}, 004 (2013)
+%doi:10.1088/1475-7516/2013/02/004
+[arXiv:1203.3542].
+
+
+\end{thebibliography}
+
+
+\end{document}
+

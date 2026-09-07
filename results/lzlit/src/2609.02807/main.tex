@@ -1,0 +1,445 @@
+\documentclass[aps,prd,reprint,preprintnumbers,superscriptaddress,nofootinbib,floatfix]{revtex4-2}
+
+\usepackage{amsmath,amssymb,amsfonts,bm}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\newcommand{\UNISA}{\affiliation{Dipartimento di Fisica ``E.R.\ Caianiello'', Universit\`a degli Studi di Salerno, Via Giovanni Paolo II 132, 84084 Fisciano (SA), Italy}}
+\newcommand{\INFNSA}{\affiliation{Istituto Nazionale di Fisica Nucleare, Gruppo Collegato di Salerno, Sezione di Napoli, Via Giovanni Paolo II 132, 84084 Fisciano (SA), Italy}}
+
+\newcommand{\dchi}{\delta_\chi}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\kms}{\,\mathrm{km\,s^{-1}}}
+
+\begin{document}
+
+\title{A Peccei--Quinn Origin for Inelastic Electroweak Dark Matter after LUX-ZEPLIN}
+
+\author{Luca Visinelli}
+\email{lvisinelli@unisa.it}
+\UNISA
+\INFNSA
+
+\date{\today}
+
+\begin{abstract}
+The LUX-ZEPLIN (LZ) experiment has reported one nuclear recoil event reconstructed at $E_R=248\pm23_{\rm stat}\pm23_{\rm sys}{\rm\,keV}$ in a search extending to $E_R\simeq270{\rm\,keV}$. We investigate an inelastic electroweak (EW) doublet interpretation in which spontaneous Peccei-Quinn (PQ) breaking leaves a residual parity that stabilizes the lighter neutral state and generates the Majorana splitting. A PQ-charged singlet fermion acquires its Majorana mass from the PQ-breaking vacuum expectation value and, after being integrated out, induces the dimension-five operator that splits a vectorlike EW doublet. A minimal KSVZ colored sector supplies the QCD anomaly. For a representative PQ-breaking scale $v_S=4.4\times10^{11}{\rm\,GeV}$ and Majorana mass $M_N\simeq50{\rm\,TeV}$, the relation $M_N=y_Sv_S/\sqrt{2}$ gives $y_S\simeq1.6\times10^{-7}$, while the splitting relevant for LZ requires a Higgs-doublet Yukawa coupling $y\simeq0.023$. In a standard thermal history, the EW doublet constitutes only a subcomponent of the dark matter. A rate estimate probing the high velocity tail gives representative benchmarks with $M_D=286.9$, $376.1$, and $509.1{\rm\,GeV}$, $\delta_\chi\simeq307-348{\rm\,keV}$, and $\xi_\chi\simeq0.068-0.214$, each yielding an order-one LZ event count under the standard thermal assumption. The remaining abundance is supplied by the QCD axion through vacuum misalignment for suitable $v_S$ and initial angle. The excited state has a radiative lifetime of order $3\times10^{-2}{\rm\,s}$ and a decay length of order $20{\rm\,km}$, leaving the LZ topology as a single nuclear recoil while enabling a complementary luminous signal after terrestrial upscattering.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+Weakly interacting massive particles (WIMPs) and the QCD axion are two of the best-developed particle-physics approaches to dark matter (DM). The QCD axion follows from the Peccei--Quinn (PQ) solution of the strong-CP problem~\cite{Peccei:1977hh,Peccei:1977ur,Weinberg:1977ma,Wilczek:1977pj} and is naturally light in invisible-axion realizations~\cite{Kim:1979if, Shifman:1979if, Dine:1981rt, Zhitnitsky:1980tq}. A hypercharged Dirac electroweak (EW) doublet is excluded as ordinary halo DM by its diagonal $Z$ coupling, while a small Majorana splitting renders the neutral current off diagonal and the scattering endothermic~\cite{Tucker-Smith:2001myb, Tucker-Smith:2004mxa}. This pseudo-Dirac mechanism is realized for Higgsinos with heavy gauginos and more generally for hypercharged EW multiplets~\cite{Nagata:2014wma,Barello:2014uda,Bramante:2016rdh}. Endothermic kinematics suppresses the conventional low-energy recoil spectrum and can instead populate the high-recoil region, with the rate controlled by the fastest particles in the local DM distribution.
+
+The LZ Collaboration has performed a dedicated search using a $2.84$ tonne-year exposure and extending the nuclear-recoil interval from $5.4$\,keV to $269.9$\,keV~\cite{LZ:2026axp}. One event, recorded on 16 June 2023 in a region of low expected background, has properties consistent with a $248\pm23_{\rm stat}\pm23_{\rm sys}$\,keV xenon recoil. Across the effective interactions and inelastic families tested, the maximum local significance is $3.4\sigma$ and the global significance after the look-elsewhere correction is $2.6\sigma$. The event is not evidence for DM, but its high recoil energy makes it particularly sensitive to endothermic scattering with a splitting of a few hundred keV. Several interpretations of the event include inelastic scenarios, Higgsino realizations, and alternative absorption mechanisms~\cite{Su:2026rwz, Fan:2026kxx,Freese:2026sga,Wu:2026nhi,Lou:2026idn,DiMauro:2026ldr,Pospelov:2026ewn,Yin:2026jnn, Chattopadhyay:2026ryw}. The high-energy LZ sideband can place significant tension on a thermal Higgsino-like interpretation, while the near-threshold regime implies a pronounced seasonal dependence of the scattering rate and related EW multiplets define correlated thermal trajectories in the mass--splitting plane~\cite{Rodd:2026tyn,McCabe:2026crm,Smirnov:2026aqk}.
+
+In this work we consider a PQ completion of the same low energy inelastic structure. Spontaneous PQ breaking leaves a residual parity that stabilizes the lighter EW state and generates the Majorana mass of a heavy neutral singlet. Integrating out this singlet induces the dimension-five operator that splits a vectorlike EW doublet, while a minimal KSVZ colored pair supplies the QCD anomaly~\cite{Kim:1979if,Shifman:1979if}. The resulting weak current is analogous to that of a nearly pure Higgsino, but the splitting originates from a PQ-generated singlet mass rather than from heavy EW gauginos. Our focus is complementary to studies of the low-energy inelastic phenomenology itself: the aim is to embed the pseudo-Dirac structure in a PQ completion and to connect the WIMP interpretation to a mixed axion--WIMP cosmology. Related multicomponent axion--WIMP constructions include mixed axion--neutralino cosmologies~\cite{Baer:2011hx,Bae:2013hma} and non-supersymmetric models in which residual PQ symmetries stabilize a massive DM component~\cite{Dasgupta:2013cwa,Longas:2023bvq}. We focus on representative thermal subcomponent benchmarks centered on the kinematic intersection between an order-one LZ rate and the reconstructed recoil energy. The points $M_D=286.9$, 376.1, and 509.1\,GeV illustrate a regime in which standard EW freeze-out supplies about $7$--$21\%$ of the DM and the QCD axion can provide the complementary abundance through vacuum misalignment. A representative value $v_S\simeq4.4\times10^{11}$\,GeV gives the required axion abundance for an initial misalignment angle of order unity.
+
+For this branch, the fixed EW interaction and a splitting of a few hundred keV can yield an order-one LZ event rate once the thermal fraction and endothermic suppression are included. More generally, an approximately continuous standard thermal branch extends toward the $\sim1.1$\,TeV mass at which the EW doublet can account for essentially all of the DM, with increasing $M_D$ compensated by a correspondingly larger inelastic splitting. The mixed composition is not required by the particle-physics construction. We also examine the radiative decay of the excited state and complementary signatures from terrestrial upscattering, solar capture, and collider production.
+
+\section{PQ completion of a weak doublet}
+\label{sec:model}
+
+We consider the Standard Model (SM) Higgs doublet $H$, a complex SM-singlet scalar $S$ that spontaneously breaks the PQ symmetry, two left-handed Weyl doublets $D,D^c$, a neutral singlet fermion $N$, and a vectorlike colored KSVZ pair $\mathcal Q,\mathcal Q^c$. We define the scalar vacuum expectation values by
+\begin{equation}
+    \langle H^0\rangle=\frac{v}{\sqrt{2}}\,,\qquad
+    \langle S\rangle=\frac{v_S}{\sqrt{2}}\,,
+    \label{eq:vevs}
+\end{equation}
+with $v=246$\,GeV. All SM fields, including $H$, are neutral under $U(1)_{\rm PQ}$. The gauge quantum numbers, PQ charges, and transformation properties under the residual parity are summarized in Table~\ref{tab:charges}. Writing the fermion doublets as
+\begin{equation}
+    D=\begin{pmatrix}D^0\\
+    D^-\end{pmatrix}\,,\qquad D^c=\begin{pmatrix}D^+\\
+    D^{c0}\end{pmatrix}\,,
+\end{equation}
+the interactions relevant for the EW dark sector are
+\begin{equation}
+    \mathcal L_{\rm dark} = - M_DD\!\cdot\!D^c -\frac{y_S}{2}SNN -y\,NH\!\cdot\!D +\mathrm{h.c.}\,,
+    \label{eq:darklag}
+\end{equation}
+where the dot denotes the antisymmetric $SU(2)_L$ contraction. The charge assignment in Table~\ref{tab:charges} allows all terms in Eq.~\eqref{eq:darklag} while forbidding a bare Majorana mass $NN$ and the Yukawa interaction $NH^\dagger D^c$. After PQ breaking, the singlet acquires the Majorana mass
+\begin{equation}
+    M_N=\frac{y_Sv_S}{\sqrt{2}}.
+    \label{eq:MN}
+\end{equation}
+The vectorlike doublet mass $M_D$ is PQ invariant and remains independent of the PQ-breaking scale.
+
+The QCD anomaly is generated by the KSVZ fermions through
+\begin{equation}
+    \mathcal L_{\rm KSVZ} = -y_{\mathcal Q}S\mathcal Q\mathcal Q^c+\mathrm{h.c.},
+    \label{eq:KSVZ}
+\end{equation}
+which gives $M_{\mathcal Q}=y_{\mathcal Q}v_S/\sqrt{2}$ after PQ breaking. The colored fermions are vectorlike under the SM gauge group but chiral under $U(1)_{\rm PQ}$ and generate the QCD anomaly required for the axion solution~\cite{Kim:1979if,Shifman:1979if}. With the down-type gauge quantum numbers chosen in Table~\ref{tab:charges}, PQ-invariant mixing between $\mathcal Q$ and the SM right-handed down-type quarks is allowed and makes the KSVZ fermion unstable. We assume this mixing to be sufficiently small that it does not affect the EW dark sector phenomenology.
+
+In the normalization of Table~\ref{tab:charges}, the color anomaly coefficient has magnitude $|C_{ag}|=2$. Since the field acquiring the PQ-breaking vacuum expectation value has $X_S=2$, the physical domain-wall number is $N_{\rm DW}=1$, and the physical axion decay constant equals $v_S$ in this normalization. The vacuum expectation value of $S$ leaves invariant the transformation $e^{i\pi X_{\rm PQ}}$, defining a residual $\mathbb Z_2$ parity. The fields $N,D,D^c$ are odd under this symmetry, while the SM and KSVZ fields are even. The lightest state in the EW dark sector is consequently stable. This residual parity follows directly from the PQ charge assignment and links the stability of the WIMP component to the same symmetry whose spontaneous breaking produces the QCD axion. In the PQ-broken phase, tree-level elimination of $N$ before expanding $S$ about its vacuum expectation value gives the PQ-invariant interaction $y^2(H\!\cdot\!D)^2/(2y_SS)$. Expanding about $\langle S\rangle=v_S/\sqrt{2}$ and taking $M_N\gg M_D,v$ gives~\cite{Nagata:2014wma, Dedes:2016odh}
+\begin{equation}
+    \mathcal L_{\rm eff}\supset -M_DD\!\cdot\!D^c + \frac{y^2}{2M_N}(H\!\cdot\!D)^2 +\mathrm{h.c.},
+    \label{eq:Leff}
+\end{equation}
+which is the operator origin of the pseudo-Dirac splitting.
+
+\begin{table}[t]
+    \centering
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{lccccc}
+    \toprule
+    Field & $SU(3)_c$ & $SU(2)_L$ & $U(1)_Y$ & $X_{\rm PQ}$ & $\mathbb Z_2$ \\
+    \midrule
+    $H$              & ${\bf1}$           & ${\bf2}$ & $+1/2$ & $0$  & $+$ \\
+    $S$              & ${\bf1}$           & ${\bf1}$ & $0$    & $+2$ & $+$ \\
+    $N$              & ${\bf1}$           & ${\bf1}$ & $0$    & $-1$ & $-$ \\
+    $D$              & ${\bf1}$           & ${\bf2}$ & $-1/2$ & $+1$ & $-$ \\
+    $D^c$            & ${\bf1}$           & ${\bf2}$ & $+1/2$ & $-1$ & $-$ \\
+    $\mathcal Q$     & ${\bf3}$           & ${\bf1}$ & $-1/3$ & $0$  & $+$ \\
+    $\mathcal Q^c$   & $\overline{\bf3}$  & ${\bf1}$ & $+1/3$ & $-2$ & $+$ \\
+    \bottomrule
+    \end{tabular}
+    \caption{Field content and quantum numbers of the KSVZ realization. All SM fields are neutral under $U(1)_{\rm PQ}$ and even under the residual $\mathbb Z_2$. The fermions $N,D,D^c$ are odd, while the KSVZ fermions are even.}
+    \label{tab:charges}
+\end{table}
+We take $M_D,M_N,y$ real. After PQ and EW breaking, define
+\begin{equation}
+    m \equiv \frac{yv}{\sqrt{2}}\,.
+\end{equation}
+The neutral mass matrix in the basis $(N,D^0,D^{c0})$ is
+\begin{equation}
+    \mathcal M_0=
+    \begin{pmatrix}
+    M_N&m&0\\
+    m&0&M_D\\
+    0&M_D&0
+    \end{pmatrix}\,.
+    \label{eq:M0}
+\end{equation}
+For $M_N\gg M_D,v$, tree-level matching to Eq.~\eqref{eq:Leff} gives
+\begin{equation}
+    \mathcal M_{\rm eff} =
+    \begin{pmatrix}
+    -m^2/M_N&M_D\\
+    M_D&0
+    \end{pmatrix}\,.
+    \label{eq:Meff}
+\end{equation}
+The two light neutral Majorana mass eigenstates are, up to phase conventions and corrections suppressed by $m/M_N$ and $\dchi/M_D$,
+\begin{align}
+    \chi_{1L} &\simeq \frac{D^0+D^{c0}}{\sqrt{2}} +\mathcal O\!\left(\frac{m}{M_N}\right)N\,,\\
+    \chi_{2L} &\simeq i\,\frac{D^0-D^{c0}}{\sqrt{2}} +\mathcal O\!\left(\frac{m}{M_N}\right)N\,,
+    \label{eq:chieigenstates}
+\end{align}
+with masses
+\begin{align}
+    m_{\chi_1} &=M_D-\frac{m^2}{2M_N}+\cdots\,,\\
+    m_{\chi_2} &=M_D+\frac{m^2}{2M_N}+\cdots\,.
+\end{align}
+This leads to the mass splitting
+\begin{equation}
+    \dchi\equiv m_{\chi_2}-m_{\chi_1} = \frac{y^2v^2}{2M_N}\left[1+\mathcal O\!\left(\frac{M_D^2}{M_N^2}\right)\right]\,.
+    \label{eq:master}
+\end{equation}
+In the limit relevant for the phenomenology below, $\chi_1 \equiv \chi$ and $\chi_2$ are the two Majorana components of an almost pure neutral vectorlike doublet, while their singlet admixtures are parametrically of order $m/M_N$ and with the lightest mass
+\begin{equation}
+    m_\chi =M_D-\frac{\dchi}{2} \simeq M_D\,.
+    \label{eq:mchidef}
+\end{equation}
+
+For the central rate benchmark, $M_N=50$\,TeV and $\dchi=328.5$\,keV give $y\simeq2.33\times10^{-2}$ and hence $m=yv/\sqrt{2}\simeq4.05$\,GeV. The singlet admixture of either light state is of order
+\begin{equation}
+    \frac{m}{\sqrt{2}M_N}\simeq5.7\times10^{-5},
+\end{equation}
+so the two light states are, to excellent accuracy, pure EW-doublet Majorana fermions. Across the representative range $\dchi=307.1$--$347.8$\,keV one finds $y\simeq(2.25$--$2.40)\times10^{-2}$. We adopt $M_N=50$\,TeV and $v_S=4.4\times10^{11}$\,GeV as representative choices for the mixed axion--WIMP benchmark, for which $y_S\simeq1.61\times10^{-7}$. The LZ recoil kinematics constrain the combination $y^2/M_N=2\dchi/v^2$, rather than $M_N$ or $v_S$ individually, while the axion abundance fixes a relation between $v_S$ and the initial misalignment angle. The charged Dirac state has tree-level mass $M_D$ and is lifted above the lightest neutral state by an EW radiative correction of order a few tenths of a GeV for the $M_D=286.9$--$509.1$\,GeV benchmarks, approaching about $0.35$\,GeV in the heavy-doublet limit~\cite{Thomas:1998wy,Ibe:2023dcu}.
+
+The small fermionic Yukawa couplings in this benchmark do not introduce a perturbativity problem between $M_N$ and the PQ scale. In particular, $y\simeq2.3\times10^{-2}$ and $y_S\simeq1.6\times10^{-7}$ give negligible additional contributions to the running of the Higgs quartic~\cite{Abe:2019wku, Wang:2018lhk, Cheng:2019qbd}. We do not require absolute EW-vacuum stability up to $v_S$. The scalar potential also allows the portal interaction $\lambda_{HS}|H|^2|S|^2$; for a high PQ-breaking scale an unsuppressed portal introduces the usual EW hierarchy problem of non-supersymmetric axion completions~\cite{Allison:2014hna, Blasi:2024mtc}. Moreover, the portal is not protected by the imposed symmetries and is radiatively generated~\cite{Blasi:2024mtc}. In the present model the $N$--$D$ sector communicates the two scalar sectors through the small Yukawa couplings, with contributions parametrically of order $y^2y_S^2/(16\pi^2)$. We do not attempt to solve the remaining high-scale naturalness problem, which we assume to be controlled by the ultraviolet completion.
+
+\section{DM inelastic scattering in xenon}
+\label{sec:dd}
+
+At momentum transfers well below $M_N$, the relevant neutral states are the two Majorana fermions $\chi_1$ and $\chi_2$ in Eq.~\eqref{eq:chieigenstates}. Since they arise predominantly from the two neutral components of the vectorlike EW doublet, the diagonal vector current of the underlying Dirac state becomes, at leading order, an off-diagonal Majorana current,
+\begin{equation}
+    \mathcal L_Z=i\frac{g}{2c_W} \left[1+\mathcal O\!\left(\frac{m^2}{M_N^2},\frac{\dchi^2}{M_D^2}\right)\right]Z_\mu\bar\chi_2\gamma^\mu\chi_1\,.
+    \label{eq:Zcurrent}
+\end{equation}
+This is the same leading neutral-current structure that governs inelastic scattering of a nearly pure Higgsino~\cite{Fan:2026kxx, Freese:2026sga, Wu:2026nhi, Smirnov:2026aqk}. In the present construction the weak-scale scattering phenomenology is analogous, while the Majorana splitting originates from PQ breaking rather than from heavy EW gauginos. Defining the weak nuclear charge $Q_W=(A-Z)-(1-4s_W^2)Z$ and the normalized weak form factor by $Q_WF_W(q)=(A-Z)F_n(q)-(1-4s_W^2)ZF_p(q)$, the vectorlike EW doublet current in Eq.~\eqref{eq:Zcurrent} gives the zero-momentum nuclear cross section
+\begin{equation}
+    \sigma_A^0 = \frac{G_F^2\mu_{\chi A}^2}{2\pi}Q_W^2\,,
+    \label{eq:sigmaA}
+\end{equation}
+where $\mu_{\chi A}\equiv m_\chi m_A/(m_\chi+m_A)$. The differential cross section in terms of the nuclear recoil momentum $q=(2m_AE_R)^{1/2}$ is
+\begin{equation}
+    \frac{\dd\sigma_A}{\dd E_R} = \frac{G_F^2m_A}{4\pi v_{\rm rel}^2}Q_W^2F_W^2(q)\,.
+    \label{eq:dsigma}
+\end{equation}
+We use the vectorlike doublet normalization of Refs.~\cite{Essig:2007az, Pospelov:2026ewn, Rodd:2026tyn}, which follows directly from the full off-diagonal neutral current of the vectorlike EW doublet. The interaction strength is fixed by the EW neutral current, while the normalization of the event rate depends on the local doublet fraction $\xi_\chi^{\rm loc}$ rather than on an adjustable WIMP--nucleon coupling.
+
+For the endothermic transition $\chi_1 A\to\chi_2 A$, with $\dchi>0$, nonrelativistic energy and momentum conservation require a minimum incident speed for a given recoil energy~\cite{Tucker-Smith:2001myb,Tucker-Smith:2004mxa},
+\begin{equation}
+    v_{\min}(E_R)=\frac{1}{\sqrt{2m_AE_R}} \left(\frac{m_AE_R}{\mu_{\chi A}}+\dchi\right)\,.
+    \label{eq:vmin}
+\end{equation}
+The function $v_{\min}(E_R)$ reaches its absolute minimum threshold for upscattering $v_{\min}^\star$ at the recoil energy
+\begin{equation}
+    E_R^\star=\frac{\mu_{\chi A}}{m_A}\dchi,\qquad v_{\min}^\star=\sqrt{\frac{2\dchi}{\mu_{\chi A}}}\,.
+    \label{eq:estar}
+\end{equation}
+At fixed incident speed, the kinematically allowed recoil energies lie between
+\begin{equation}
+    E_R^\pm(v)=\frac{\mu_{\chi A}^2v^2}{2m_A} \left(1\pm\sqrt{1-\frac{2\dchi}{\mu_{\chi A}v^2}}\right)^2.
+    \label{eq:endpoints}
+\end{equation}
+These relations determine the kinematic support of the recoil spectrum rather than the location of its maximum. For $E_R\simeq250$\,keV in xenon, the momentum transfer is $q\simeq0.25$\,GeV, where the weak nuclear form factor is already in the diffractive regime. The large value of $v_{\min}^\star$ and the recoil interval in Eq.~\eqref{eq:endpoints} show why sensitivity to splittings of a few hundred keV requires both a heavy target and acceptance at large recoil energy.
+
+LZ provides two-sided intervals for an inelastic $O_1^s$ interaction at $m_\chi=1$\,TeV and an approximate conversion from equal proton/neutron scalar normalization to the weak vector charge,
+\begin{equation}
+    \sigma_V^{N,\,\rm lim}\simeq\sigma_{\rm SI}^{N,\,\rm lim} \left[\frac{A}{(A-Z)-(1-4s_W^2)Z}\right]^2 \simeq3.2\,\sigma_{\rm SI}^{N,\,\rm lim}\,,
+    \label{eq:lzconversion}
+\end{equation}
+for xenon~\cite{LZ:2026axp}. The corresponding zero-momentum neutron cross section is
+\begin{equation}
+    \sigma_n^Z=\frac{G_F^2\mu_{\chi n}^2}{2\pi} \simeq 7.43\times10^{-39}\,\mathrm{cm^2}\,,
+    \label{eq:sigman}
+\end{equation}
+for $m_\chi\gg m_n$~\cite{Pospelov:2026ewn}. The indicative upper limit on the local doublet fraction is then
+\begin{equation}
+    \xi_{\chi,\max} = \frac{\sigma_V^{N,\,90\%,\,\rm up}}{\sigma_n^Z}\,.
+\end{equation}
+The resulting values from the published LZ interval are shown in Table~\ref{tab:lzread}.
+
+\begin{table}[t]
+    \centering
+    \begin{tabular}{cccc}
+    \toprule
+    $\dchi$ & $\sigma_{\rm SI}^{90\%,\,\rm up}$ & $\sigma_{\rm weak}^{90\%,\,\rm up}$ & $\xi_{\chi,\max}$\\
+    $({\rm\,keV})$ & $(\mathrm{cm^2})$ & $(\mathrm{cm^2})$ & \\
+    \midrule
+    250 & $1.1\times10^{-42}$ & $3.5\times10^{-42}$ & $4.7\times10^{-4}$\\
+    300 & $7.5\times10^{-42}$ & $2.4\times10^{-41}$ & $3.2\times10^{-3}$\\
+    330 & $1.0\times10^{-40}$ & $3.2\times10^{-40}$ & $4.3\times10^{-2}$\\
+    350 & $6.0\times10^{-40}$ & $1.9\times10^{-39}$ & $0.26$\\
+    \bottomrule
+    \end{tabular}
+    \caption{Upper branches of the two-sided $90\%$ confidence interval read from Fig.~S7 of Ref.~\cite{LZ:2026axp} for $m_\chi=1$\,TeV. The vector-normalized cross sections are obtained using Eq.~\eqref{eq:lzconversion}, and $\xi_{\chi,\max}$ follows by comparison with the fixed EW cross section in Eq.~\eqref{eq:sigman}.}
+    \label{tab:lzread}
+\end{table}
+
+For a standard thermal doublet at $m_\chi=1$\,TeV, Eq.~\eqref{eq:thermal} gives $\xi_\chi\simeq0.83$. With the vectorlike-doublet normalization in Eq.~\eqref{eq:sigman}, the approximate conversion in Table~\ref{tab:lzread} lies above the published upper interval throughout the tabulated range; even at $\dchi=350$\,keV the corresponding limit is $\xi_{\chi,\max}\simeq0.26$. A thermal TeV-scale doublet would require a splitting still closer to the terrestrial kinematic endpoint. This conclusion differs quantitatively from recasts employing the smaller neutron normalization and illustrates the importance of using the vectorlike EW-doublet cross section consistently~\cite{Pospelov:2026ewn}. Since the published LZ interval is given for an $O_1^s$ response at a fixed reference mass, we do not use this approximate conversion to determine a preferred splitting or significance.
+
+At the momentum transfers relevant here, proton and neutron density profiles, xenon isotope composition, and diffraction zeros can modify the recoil spectrum~\cite{Anand:2013yka}. A quantitative comparison with LZ consequently requires the isotope-dependent weak nuclear responses, detector response, and likelihood, rather than a simple rescaling of the $O_1^s$ interval. This is especially important when small changes in the tail velocity distribution or in the WIMP mass can produce large changes in the expected rate. Equation~\eqref{eq:lzconversion} nevertheless provides a useful estimate of the relevant parameter region and normalization.
+
+\section{Interpretation of the LZ rate}
+\label{sec:rate}
+
+To estimate whether the fixed weak interaction can produce an observable yield in the thermal subcomponent regime, we calculate
+\begin{equation}
+    \frac{\dd R}{\dd E_R}=\frac{\xi_\chi^{\rm loc}\rho_0}{m_\chi} \sum_i\frac{x_i}{\overline m_A}\int_{v>v_{\min}}\dd^3v\,f_{\rm lab}(\bm v,t)\,v\frac{\dd\sigma_{A_i}}{\dd E_R}\,,
+    \label{eq:rate}
+\end{equation}
+where $x_i$ is the natural xenon number fraction and $\overline m_A=\sum_i x_im_{A_i}$. We adopt the Standard Halo Model (SHM) parameters $\rho_0=0.3{\rm\,GeV}\,\mathrm{cm}^{-3}$, $v_0=238\kms$, and $v_{\rm esc}=544\kms$ used by LZ~\cite{LZ:2026axp}. For the rate-level calculation we approximate the magnitude of the laboratory velocity relative to the Galactic frame by
+\begin{equation}
+    v_E(t)=254\kms+15\kms\cos[\omega(t-t_0)]\,,
+    \label{eq:vEarth}
+\end{equation}
+with $t_0$ corresponding to the annual maximum in early June. We include the natural xenon isotopes separately, with isotope-dependent weak charges and Helm form factors. For the benchmarks below we set $\xi_\chi^{\rm loc}=\xi_\chi^{\rm th}$. Defining the annual-averaged recoil spectrum by $\overline{\dd R/\dd E_R}=T^{-1}\int_0^T\dd t\,\dd R/\dd E_R$, the signal count for an exposure of $\mathcal E=2.84\,{\rm tonne\,yr}$ is estimated as
+\begin{equation}
+    \label{eq:Nsig}
+    N_{\rm sig} =\mathcal E \int_{5.4\,{\rm\,keV}}^{269.9\,{\rm\,keV}} \dd E_R\, \epsilon_{\rm LZ}(E_R) \overline{\frac{\dd R}{\dd E_R}}\,.
+\end{equation}
+The detector efficiency $\epsilon_{\rm LZ}(E_R)$ is approximated from Fig.~S2 of Ref.~\cite{LZ:2026axp}: it rises linearly from 50\% at 5.4\,keV to 96\% at 14\,keV, is taken to be constant at 96\% between 14 and 250\,keV, and decreases linearly to 50\% at 269.9\,keV.
+
+Representative points near the recoil energy of the LZ event are shown in Table~\ref{tab:targets}. For each value of $M_D$, the splitting is chosen such that the simplified calculation gives $N_{\rm sig}=1$ after setting $\xi_\chi^{\rm loc}=\xi_\chi^{\rm th}$. The fixed weak interaction requires substantial kinematic suppression, placing the benchmarks near $v_{\min}^\star\simeq800\kms$. We combine the quoted statistical and systematic uncertainties of the reconstructed LZ recoil in quadrature, $\sigma_E=\sqrt{23^2+23^2}\simeq32.5$\,keV, and choose the three benchmarks where the $N_{\rm sig}=1$ thermal branch intersects the kinematic loci $E_R^\star=248-\sigma_E$, $248$, and $248+\sigma_E$\,keV for $^{131}$Xe. These points are not measurements or likelihood intervals in $(M_D,\dchi)$.
+
+\begin{table}[t]
+    \centering
+    \begin{tabular}{ccccccc}
+    \toprule
+    $M_D$ & $\dchi$ & $\xi_\chi^{\rm th}$ & $E_R^\star$
+    & $v_{\min}^\star$ & $N_{\rm sig}$ & $y$\\
+    $({\rm GeV})$ & $({\rm keV})$ & & $({\rm keV})$
+    & $(\kms)$ & & \\
+    \midrule
+    286.9 & 307.1 & 0.068 & 215.5 & 803.0 & 1.00 & 0.0225\\
+    376.1 & 328.5 & 0.117 & 248.0 & 800.5 & 1.00 & 0.0233\\
+    509.1 & 347.8 & 0.214 & 280.5 & 796.9 & 1.00 & 0.0240\\
+    \bottomrule
+    \end{tabular}
+    \caption{Representative points on the standard-thermal $N_{\rm sig}=1$ branch. The three masses correspond to the intersections with $E_R^\star=248-\sigma_E$, $248$, and $248+\sigma_E$\,keV for $^{131}$Xe, where $\sigma_E=32.5$\,keV combines the quoted statistical and systematic recoil-energy uncertainties in quadrature. The last column gives $y$ for $M_N=50$\,TeV; $v_S=4.4\times10^{11}$\,GeV corresponds to $y_S\simeq1.61\times10^{-7}$.}
+    \label{tab:targets}
+\end{table}
+
+Figure~\ref{fig:thermalbranch} makes explicit the degeneracy between the doublet abundance and the endothermic suppression. Along the standard thermal branch, increasing $M_D$ raises $\xi_\chi^{\rm th}$, while a larger splitting moves the scattering farther into the high-velocity tail and keeps the expected LZ count at order unity. The central intersection occurs at $(M_D,\dchi)\simeq(376.1\,{\rm GeV},328.5\,{\rm keV})$, with $\xi_\chi^{\rm th}\simeq0.117$. The lower and upper black points bracket the $1\sigma$ recoil energy band only in this kinematic sense; in particular, the upper point has $E_R^\star$ slightly above the analysis endpoint, which does not remove its recoil support inside the accepted window.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{delta_branch.pdf}
+    \caption{Standard thermal $N_{\rm sig}=1$ branch in the $(M_D,\dchi)$ plane for the LZ calculation. The color scale gives $\xi_\chi^{\rm th}=(M_D/1.1\,{\rm TeV})^2$, assuming standard radiation dominated freeze-out and $\xi_\chi^{\rm loc}=\xi_\chi^{\rm th}$. The gray band is the kinematic locus $E_R^\star=248\pm32.5$\,keV for $^{131}$Xe. The dashed curve marks the central value. The black points are the three benchmarks in Table~\ref{tab:targets}. The gray band is not a confidence region in model parameters. The vertical line marks the $\sim1.1$\,TeV standard thermal scale at which a pure EW doublet can account for essentially all of the DM.}
+    \label{fig:thermalbranch}
+\end{figure}
+
+The rate is strongly concentrated near the annual maximum and becomes negligible during part of the year, a characteristic feature of the near-threshold interpretation~\cite{McCabe:2026crm}. The resulting time dependence is highly non-sinusoidal even though Eq.~\eqref{eq:vEarth} uses a single harmonic for the laboratory speed. The occurrence of the candidate on 16 June is compatible with the expected phase, but a single event date contains essentially no modulation information. This is also the regime in which the SHM is least reliable. Small changes in $v_{\rm esc}$ or $v_0$ can shift the splitting required for an order-one rate by several keV. Simulations further indicate that the Large Magellanic Cloud can contribute to the fastest local DM population, including particles above the nominal Milky Way escape speed~\cite{Besla:2019xbx}. Such a component would increase the rate at fixed $(M_D,\dchi,\xi_\chi^{\rm loc})$ and extend the kinematic reach to larger splittings. Its density, direction, and phase cannot in general be reproduced by a simple change of $v_{\rm esc}$. The points in Table~\ref{tab:targets} should consequently be regarded as SHM benchmarks rather than astrophysics-independent estimates. For the middle benchmark, the maximum SHM laboratory speed gives a lower recoil endpoint of about 174\,keV for $^{131}$Xe. The conventional low-energy WIMP window is kinematically avoided, and the relevant signal lies primarily in the extended high-recoil selection.
+
+
+\section{The excited state and the LZ event}
+\label{sec:decay}
+
+The inelastic collision creates the heavier Majorana state $\chi_2$. Its fate determines whether the event contains only a nuclear recoil or also a delayed electromagnetic deposit. For the few-hundred-keV splittings relevant here, a charged-current loop induces the radiative transition $\chi_2\to\chi_1\gamma$, whose rate scales as $\dchi^3$. In the pure-doublet limit the corresponding decay length is~\cite{Graham:2024syw}
+\begin{equation}
+    \ell_{\chi_2}\simeq7.46\,\mathrm{km} \left(\frac{v_2}{400\kms}\right)\left(\frac{400{\rm\,keV}}{\dchi}\right)^3\,.
+    \label{eq:decaylength}
+\end{equation}
+The same gauge loop is present in the non-supersymmetric doublet considered here, with corrections from singlet mixing suppressed in the benchmark limit.
+
+The lifetime in the rest frame corresponding to Eq.~\eqref{eq:decaylength} is
+\begin{equation}
+    \label{eq:lifetime}
+    \tau_{\chi_2}\simeq1.87\times10^{-2}\,\mathrm{s}\left(\frac{400{\rm\,keV}}{\dchi}\right)^3.
+\end{equation}
+For the central benchmark, $\dchi\simeq328.5$\,keV gives $\tau_{\chi_2}\simeq3.38\times10^{-2}$\,s. At the kinematic threshold, particles in the final state move with the center-of-mass velocity. For xenon this gives
+\begin{equation}
+    \label{eq:v2star}
+    v_2^\star\simeq\frac{m_\chi}{m_\chi+m_A}v_{\min}^\star\simeq604\kms\,,
+\end{equation}
+corresponding to $\ell_{\chi_2}\simeq20$\,km. Even taking the full detector dimension as the path available after the scatter, the probability for the excited state to decay before leaving the active xenon is bounded by
+\begin{equation}
+    \label{eq:ptpc}
+    P_{\rm TPC}\lesssim\frac{1.5\,\mathrm{m}}{\ell_{\chi_2}} \simeq7.4\times10^{-5}\left(\frac{20.4\,\mathrm{km}}{\ell_{\chi_2}}\right)\,,
+\end{equation}
+where the LZ active xenon time projection chamber is approximately $1.5$\,m in both diameter and height~\cite{LZ:2019sgr}. The probability of decay in the immediately surrounding veto volumes is also negligible on this scale. The $\chi_2$ produced by the candidate interaction leaves LZ long before radiating. Its decay does not add $\dchi$ to the reconstructed recoil energy, generate a prompt electronic recoil partner, or normally activate the veto. Treating the event as a single nuclear recoil is self-consistent. The photon energy is
+\begin{equation}
+    \label{eq:egamma}
+    E_\gamma=\frac{m_{\chi_2}^2-m_{\chi_1}^2}{2m_{\chi_2}}=\dchi\left[1+\mathcal O\!\left(\frac{\dchi}{m_\chi}\right)\right]\,,
+\end{equation}
+so a decay occurring inside a detector would appear as a narrow electronic recoil line near 328.5\,keV, with only a small Doppler broadening. The short lifetime on Galactic and cosmological scales also prevents an appreciable primordial halo population of $\chi_2$.
+
+Local production can instead occur when $\chi_1$ upscatters from a heavy terrestrial nucleus and the resulting $\chi_2$ traverses a detector before decaying~\cite{Feldstein:2010su,Eby:2019mgs}. The hierarchy $R_{\rm det}\ll\ell_{\chi_2}\ll R_\oplus$ is well satisfied for the representative benchmarks. Heavy elements such as Pb, Th, and U extend the kinematic reach beyond xenon, while large scintillator detectors provide the volume required to observe the photon~\cite{Graham:2024syw}. Borexino data and the KamLAND, SNO+, and JUNO programs are complementary to LZ~\cite{Eby:2019mgs,Graham:2024syw}. The luminous signal is physically distinct from the LZ nuclear recoil: the collisional rate counts upscattering inside the active xenon, whereas the luminous rate counts terrestrial upscattering followed by decay inside a photon-sensitive volume. Both rates scale linearly with the local fraction $\xi_\chi^{\rm loc}$, but depend differently on target composition, geometry, and the high-velocity distribution. A reanalysis of large scintillator data for a line near 307--348\,keV, including its sidereal-daily modulation, would provide an independent test of the same inelastic splitting~\cite{Eby:2019mgs,Graham:2024syw}.
+
+\section{Cosmological status}
+\label{sec:cosmology}
+
+The model contains two cold DM components whose relic abundances originate from distinct cosmological mechanisms. The EW doublet is produced thermally and undergoes conventional freeze-out, whereas the QCD axion is produced nonthermally through vacuum misalignment. The resulting cosmology is a mixed axion--WIMP scenario in which the two components share a microscopic origin in PQ breaking but acquire their relic abundances through independent early-Universe histories.
+
+At freeze-out, the neutral-neutral and charged-neutral mass splittings are both much smaller than $T_f\simeq M_D/25$. EW interactions maintain chemical equilibrium among $\chi_1$, $\chi_2$, and the charged states, so the nearly degenerate multiplet undergoes the standard coannihilation freeze-out~\cite{Gondolo:1990dk, Griest:1990kh, Cirelli:2005uq, Nagata:2014wma},
+\begin{equation}
+\label{eq:boltzmann}
+    \dot n+3Hn=-\langle\sigma_{\rm eff}v\rangle \left(n^2-n_{\rm eq}^2\right)\,,
+\end{equation}
+where
+\begin{equation}
+    \label{eq:sigmaeff}
+    \langle\sigma_{\rm eff}v\rangle =\sum_{i,j}\langle\sigma_{ij}v\rangle \frac{n_i^{\rm eq}n_j^{\rm eq}}{(n^{\rm eq})^2}.
+\end{equation}
+Gauge annihilations and coannihilations dominate. Since $\dchi$ and the charged neutral splitting are both much smaller than $T_f$, the standard doublet result already includes efficient coannihilation among $\chi_1$, $\chi_2$, and $\chi^\pm$~\cite{Griest:1990kh,Gondolo:1990dk,Cirelli:2005uq,Nagata:2014wma}. The dimension-five interactions generated by the heavy singlet give negligible corrections to freeze-out because $y^2/M_N=2\dchi/v^2$ is too small to compete with the EW gauge channels. Equation~\eqref{eq:thermal} is not a model identity: it assumes the standard radiation dominated thermal history, entropy conservation after freeze-out, and no additional near-degenerate states. In the present benchmark the singlet lies at $M_N=50$\,TeV and the PQ/KSVZ states are much heavier, so no additional coannihilation partner is present. A precision relic-density calculation should include the physical charged--neutral spectrum and EW Sommerfeld corrections, while non-standard pre-BBN cosmologies, including kination, low-temperature reheating, entropy injection, or late production, can modify the mapping between $M_D$ and $\xi_\chi$ more substantially~\cite{Cirelli:2005uq, Hisano:2006nn, Nagata:2014wma, Visinelli:2015eka}.
+
+For a nearly pure weak doublet and $M_D\lesssim1.1$\,TeV, coannihilation gives the approximate thermal fraction~\cite{Cirelli:2005uq,Nagata:2014wma}
+\begin{equation}
+    \label{eq:thermal}
+    \xi_\chi^{\rm th}\simeq\left(\frac{M_D}{1.1{\rm\,TeV}}\right)^2
+    \simeq0.068\text{--}0.214\,,
+\end{equation}
+where the last step holds for the benchmark values in Table~\ref{tab:targets}. The corresponding relic abundance is $\Omega_\chi h^2\simeq0.12\,\xi_\chi^{\rm th}\simeq0.0082$--$0.0257$, so the EW component is underabundant and the complementary component is supplied by the QCD axion. For pre-inflationary PQ breaking, vacuum misalignment gives~\cite{Preskill:1982cy,Abbott:1982af,Dine:1982ah,Borsanyi:2016ksw}
+\begin{equation}
+    \Omega_a h^2\simeq0.12\,\theta_i^2\mathcal F(\theta_i)
+    \left(\frac{v_S}{5\times10^{11}{\rm\,GeV}}\right)^{1.165},
+    \label{eq:misalignment}
+\end{equation}
+where $\theta_i$ is the initial misalignment angle and $\mathcal F(\theta_i)$ accounts for anharmonic corrections~\cite{Visinelli:2009zm}. The thermal doublet benchmarks require $\Omega_a h^2\simeq0.09$--$0.11$. For $v_S=4.4\times10^{11}$\,GeV this is obtained for an initial angle of order unity, while $M_N=50$\,TeV corresponds to $y_S\simeq1.61\times10^{-7}$.
+
+The WIMP and axion abundances are not generated by a common freeze-out process: $\Omega_\chi$ is determined predominantly by EW annihilation and coannihilation, whereas $\Omega_a$ is set by vacuum misalignment and controlled by $v_S$ and the initial axion displacement~\cite{Arias:2012az, Marsh:2015xka}. The PQ symmetry nevertheless links the two sectors at the particle-physics level, since the same vacuum expectation value that fixes the axion decay constant generates the heavy singlet mass responsible for the inelastic splitting. The benchmark consequently realizes a genuine mixed axion--WIMP DM scenario in which the two relic components have independent cosmological origins but a common microscopic origin in PQ breaking. For the direct detection calculation we assume that the local WIMP fraction follows its cosmological value, $\xi_\chi^{\rm loc}=\xi_\chi^{\rm th}$. This is a conventional approximation for cold collisionless components rather than an identity, and the two fractions should remain distinct in a global analysis. Since the LZ rate is proportional to $\xi_\chi^{\rm loc}$, departures from this assumption directly rescale the expected yield without modifying the underlying inelastic cross section.
+
+The abundance partition adopted here assumes a standard thermal history for the EW doublet and standard pre-inflationary misalignment for the axion. The colored scale in Fig.~\ref{fig:thermalbranch} should be read as the standard thermal fraction rather than as a fundamental prediction of the PQ construction. Non-standard pre-BBN evolution, including an early matter dominated epoch, modified expansion rate, late entropy injection, or nonthermal production, can alter the WIMP abundance and the onset or dilution of axion oscillations~\cite{Visinelli:2009kt,Arias:2012az,Marsh:2015xka}. Such possibilities would change the quantitative relation between $(M_D,v_S,\theta_i)$ and $\Omega_{\rm DM}$ without altering the PQ origin of the inelastic splitting.
+
+The two components are also subject to distinct additional cosmological consistency conditions. On the axion side, the minimal KSVZ anomaly sector has $N_{\rm DW}=1$. While a post-inflationary PQ transition does not produce a stable string--wall network and is viable, we adopt a pre-inflationary history for the benchmark so that the axion abundance is described by the homogeneous angle $\theta_i$ in Eq.~\eqref{eq:misalignment}. Inflationary fluctuations then generate axion isocurvature perturbations. For small fluctuations,
+\begin{equation}
+    \label{eq:isocurvature}
+    \mathcal P_S\simeq \left(\frac{\Omega_a}{\Omega_{\rm DM}}\right)^2\left(\frac{H_{\rm inf}}{\pi v_S\theta_i}\right)^2\,,
+\end{equation}
+which is constrained by CMB data~\cite{Planck:2018jri}. For the central mixed benchmark $\Omega_a/\Omega_{\rm DM}\simeq0.88$ and $v_S\simeq4.4\times10^{11}$\,GeV, the isocurvature constraint is not suppressed by a small axion fraction~\cite{Marsh:2015xka, DiLuzio:2020wdo}.
+
+The EW component has a separate cosmological constraint. The lifetime in Eq.~\eqref{eq:lifetime} is much shorter than one second, so after freeze-out the excited neutral state rapidly decays through $\chi_2\to\chi_1\gamma$, while the charged state decays still faster through the soft-pion channel. The fractional energy release in the neutral transition is only $\dchi/m_\chi\sim8\times10^{-7}$. These decays occur well before primordial nucleosynthesis and leave no appreciable cosmological population of excited or charged states. The radiative decay is consequently important for terrestrial experimental signatures but does not generate a late electromagnetic-energy-injection problem for the thermal WIMP component considered here.
+
+\section{Complementarity with other searches}
+\label{sec:complementarity}
+
+\subsection{Terrestrial collisional searches}
+
+Complementary experiments probe different aspects of the same inelastic parameter region, but their sensitivity cannot be inferred from exposure alone. Endothermic scattering is favored by heavy nuclei and acceptance at large recoil energy, while for the splittings considered here the event rate is concentrated near the annual maximum of the laboratory speed. LZ combines a multi-tonne xenon target with acceptance up to $269.9$\,keV and directly probes the representative benchmarks in Table~\ref{tab:targets}. Earlier LZ, XENON1T/XENONnT, and PandaX analyses were optimized primarily for standard low-energy WIMP searches~\cite{LZ:2024zvo,XENON:2025vwd,PandaX:2024qfu}, so their published limits cannot in general be compared by a simple rescaling of exposure.
+
+The high-energy events identified in the published LZ, PandaX-4T, and XENONnT WIMP samples provide an additional cross-check~\cite{An:2025bby}. Their recoil energies, selections, and background systematics are not identical to those of the dedicated LZ high-recoil analysis. Extending the xenon experiments to a common high-recoil window would test whether a spectrum normalized to the LZ event predicts compatible event populations elsewhere. A future multi-tonne xenon observatory would further improve this test through increased exposure and dedicated high-recoil acceptance~\cite{Aalbers:2022dzr}.
+
+Heavier nuclei provide complementary kinematic reach. The PICO-60 CF$_3$I exposure contains iodine and is sensitive to inelastic scattering over a broad recoil-energy range; despite its smaller exposure, the heavy iodine target extends sensitivity toward larger splittings~\cite{PICO:2023uff}. Lead provides still greater kinematic reach. The RES-NOVA PbWO$_4$ cryogenic calorimeter has recently been used to probe large splitting inelastic DM over an extended recoil energy range~\cite{Alloni:2026xdf}. Heavy element paleodetectors provide another complementary strategy, exploiting ancient minerals containing nuclei such as Pb to accumulate inelastic-scattering tracks over geological timescales~\cite{Graham:2026ivn}; their long integration time also makes them sensitive to the time history of the high-velocity DM population, including possible contributions associated with the Large Magellanic Cloud. Tungsten in CRESST provides an even heavier target and can probe regions approaching the kinematic endpoint, while the LZ comparison shows that xenon remains more sensitive over much of the lower splitting region~\cite{LZ:2026axp}. For the present model, these comparisons require the appropriate weak nuclear charge, isotope composition, detector response, and local subcomponent fraction rather than a direct use of published isoscalar limits.
+
+\subsection{Solar capture and neutrino telescopes}
+
+DM falling into the solar gravitational potential reaches a local speed
+\begin{equation}
+    w^2(r)=u^2+v_{\rm esc}^2(r)\,,
+    \label{eq:sunvelocity}
+\end{equation}
+where $u$ is its speed far from the Sun~\cite{Gould:1987ir, Nussinov:2009ft,Blennow:2015hzp,Catena:2018vzc}. Endothermic scattering on a nuclear species $i$ is kinematically allowed only if
+\begin{equation}
+    \dchi<\frac{1}{2}\mu_{\chi i}w^2\,,
+    \label{eq:capturecondition}
+\end{equation}
+while gravitational capture additionally requires sufficient energy loss for the outgoing state to remain bound. For the central benchmark, the minimum speeds for scattering on $^{56}$Fe and $^{58}$Ni are about $1.14\times10^3\kms$ and $1.12\times10^3\kms$, respectively. Such speeds are reached in the solar interior, so scattering remains kinematically open and preferentially involves heavy and trace heavy elements.
+
+Solar capture is potentially the most important existing complementary constraint on the representative benchmarks. For a $1$\,TeV spin-independent inelastic candidate, IceCube limits can exceed terrestrial bounds at splittings above a few hundred keV, with the result depending strongly on the thermalization of the captured population~\cite{Catena:2018vzc}. A recent analysis specialized to a nearly pure full-density $1.08$\,TeV EW doublet finds that repeated tree-level inelastic scattering alone requires approximately $\dchi\gtrsim506$\,keV, with the bound strengthened to about $\dchi\gtrsim566$\,keV when subsequent elastic slowing is efficient~\cite{Pospelov:2026ewn}. These limits cannot be applied directly to the present $M_D=286.9$--$509.1$\,GeV benchmarks, since the assumed local fractions span $\xi_\chi^{\rm loc}\simeq0.068$--$0.214$ and the subsequent evolution depends on repeated inelastic scattering and on the smaller elastic channels, including Higgs-mediated and EW-loop contributions. Writing the capture rate as $C_\odot(\xi_\chi^{\rm loc})=\xi_\chi^{\rm loc}C_\odot(1)$, the annihilation rate is
+\begin{equation}
+    \Gamma_A=\frac{C_\odot}{2}\tanh^2\!\left(t_\odot\sqrt{C_\odot C_A}\right),
+    \label{eq:solarann}
+\end{equation}
+so that $\Gamma_A\propto\xi_\chi^{\rm loc}$ in capture--annihilation equilibrium and $\Gamma_A\propto(\xi_\chi^{\rm loc})^2$ far from equilibrium. The annihilation channels remain predominantly EW gauge bosons, but a dedicated calculation at the actual masses and local fractions considered here is required before the benchmarks can be regarded as globally viable.
+
+\subsection{Collider and indirect searches}
+
+The charged partner is lifted above the neutral state by the EW radiative correction and, for the resulting few-hundred-MeV splitting, decays predominantly through a soft charged pion~\cite{Thomas:1998wy, Ibe:2023dcu}. The collider phenomenology of such compressed EW doublets has been studied using disappearing-track and soft displaced-track signatures~\cite{Mahbubani:2017gjh, Fukuda:2017jmk, Fukuda:2019kbp}. Current ATLAS searches for compressed Higgsino-like spectra exclude chargino masses below $126$\,GeV for splittings between $0.3$ and $2$\,GeV~\cite{ATLAS:2025lhc}, while the CMS search with low-momentum isolated tracks excludes chargino masses up to 185\,GeV for a representative splitting of $0.55$\,GeV and probes splittings between 0.28 and 1.15\,GeV at $m_{\chi^\pm}=100$\,GeV~\cite{CMS:2026ias}. The 286.9--509.1\,GeV benchmarks considered here are not excluded by these searches. A direct application of the simplified-model efficiencies nevertheless requires care, since the physical charged-neutral splitting, lifetime, branching fractions, and production channels must be evaluated for the vectorlike doublet spectrum of the present model.
+
+Halo annihilation proceeds predominantly into EW gauge bosons~\cite{Bertone:2004pz, Hooper:2007qk, Cirelli:2005uq, Nagata:2014wma}. Relative to a single component thermal doublet, the corresponding gamma-ray and cosmic ray fluxes are suppressed by the square of the local abundance fraction, $(\xi_\chi^{\rm loc})^2\simeq0.0046$--$0.046$~\cite{Baum:2016oow}. Solar annihilation has a different scaling: if capture and annihilation reach equilibrium, the annihilation rate is set by the capture rate and carries only one power of $\xi_\chi^{\rm loc}$~\cite{Baum:2016oow, Catena:2018vzc}. Solar neutrino constraints should be treated separately from conventional halo indirect searches.
+
+\section{Discussion and conclusions}
+\label{sec:conclusions}
+
+The LZ high-recoil search makes pseudo-Dirac EW DM testable in a regime largely outside conventional WIMP analyses. In the model considered here, a single PQ-breaking scalar sets the QCD axion scale and generates the Majorana mass of a heavy neutral singlet. Integrating out this singlet splits a vectorlike EW doublet, while a minimal KSVZ colored pair supplies the QCD anomaly and the residual PQ parity stabilizes the lighter neutral state. The construction is more predictive than a generic inelastic operator: the neutral-current coupling is fixed by the EW quantum numbers, the thermal WIMP abundance follows approximately from gauge annihilation and coannihilation once the doublet mass is specified, and the excited state has a calculable radiative decay.
+
+The LZ interval reported already provides a useful normalization check. For a thermal $1$\,TeV doublet with $\xi_\chi\simeq0.83$, the approximate vector conversion lies above the published upper interval throughout the tabulated range, including at $\dchi=350$\,keV. A doublet near its thermal mass, $M_D\simeq1.1$\,TeV, can constitute essentially the full DM abundance at the level of standard freeze-out, with the LZ rate pushed toward the extreme kinematic endpoint. Such a thermal Higgsino interpretation may be in tension with the absence of events in the higher-energy LZ sideband~\cite{Rodd:2026tyn}. The precise terrestrial splitting depends sensitively on the halo distribution and detector response, while the solar capture results discussed below provide an additional and potentially decisive constraint on this full density endpoint.
+
+The lighter thermal subcomponent branch provides a different realization. Figure~\ref{fig:thermalbranch} follows the thermal $N_{\rm sig}=1$ requirement and identifies the representative points $M_D=286.9$, $376.1$, and $509.1$\,GeV with $\dchi=307.1$, $328.5$, and $347.8$\,keV, with the thermal fractions $\xi_\chi\simeq0.068$, $0.117$, and $0.214$, and their minimum speeds near $800\kms$. The excited state decay clarifies the LZ topology rather than complicating it. For the central benchmark the lifetime is about $3.4\times10^{-2}$\,s and the threshold decay length is about $20$\,km, compared with an active xenon dimension of order $1.5$\,m. The same long laboratory decay length provides a complementary opportunity in large scintillator detectors, where terrestrial upscattering followed by $\chi_2\to\chi_1\gamma$ can generate a narrow electronic recoil line in the benchmark range 307--348\,keV.
+
+The broader experimental comparison is essential. Independent high recoil analyses in PandaX-4T and XENONnT would test whether a xenon spectrum is reproduced with different backgrounds and times. Iodine and tungsten targets extend the kinematic reach, while collider production tests the EW multiplet independently of the Galactic velocity distribution. Solar capture may provide the most important complementary constraint: gravitational acceleration in the Sun reopens inelastic scattering on heavy elements, and in capture--annihilation equilibrium the resulting neutrino flux carries only one power of the local WIMP fraction. Existing full-density TeV-scale Higgsino results cannot be transferred directly to the present 286.9--509.1\,GeV benchmarks, but they motivate a dedicated calculation of capture, thermalization, annihilation, and neutrino production.
+
+The cosmological interpretation depends on which thermal branch is considered. For the representative $M_D=286.9$--509.1\,GeV benchmarks, standard freeze-out supplies about 7--21\% of the observed DM density. The QCD axion already present in the KSVZ completion can naturally provide the complementary component: for the representative choice $v_S\simeq4.4\times10^{11}$\,GeV, standard pre-inflationary misalignment yields the required abundance for an initial angle of order unity. The two relic densities arise from independent production mechanisms even though their particle physics origin is linked by the same PQ-breaking vacuum expectation value, leading to a mixed axion--WIMP cosmology. Note that the result obtained extends toward the thermal doublet mass, $M_D\simeq1.1$\,TeV, where $\chi$ can account for all of the DM. Conversely, a lighter doublet could constitute all of the DM only in a non-standard cosmological history that enhances its abundance.
+
+The appropriate claim is consequently narrow and testable. The LZ event motivates a PQ-generated pseudo-Dirac EW doublet whose recoil kinematics, fixed weak normalization, excited-state decay, and thermal abundance are mutually consistent at rate level. For the representative $\mathcal{O}(100{\rm\,GeV})$ standard thermal branch, the same construction realizes mixed axion--WIMP DM. A TeV-scale branch can be predominantly WIMP DM at the level of freeze-out, but existing solar capture and IceCube results strongly motivate testing that endpoint and the entire subdominant branch with a dedicated calculation. The analysis neither increases the published LZ significance nor establishes global viability.
+
+\begin{acknowledgments}
+We thank Michael Zantedeschi for reading a preliminary version of the draft. We also acknowledge Yi-Fu Cai for the hospitality at the University of Science and Technology of China, where this work was carried out. This work was supported by the Istituto Nazionale di Fisica Nucleare (INFN) through the Commissione Scientifica Nazionale 4 (CSN4) Iniziativa Specifica ``Quantum Universe'' (QGSKY), QUAX, and Virgo.
+\end{acknowledgments}
+
+\appendix
+
+\section{Halo and rate conventions}
+\label{app:rate}
+
+For completeness, the Galactic-frame distribution used for Table~\ref{tab:targets} is the truncated Maxwellian
+\begin{equation}
+    f_{\rm gal}(\bm u)= \frac{e^{-u^2/v_0^2}}{N_{\rm esc}\pi^{3/2}v_0^3}\Theta(v_{\rm esc}-u),
+\end{equation}
+where $z=v_{\rm esc}/v_0$ and
+\begin{equation}
+    N_{\rm esc}=\operatorname{erf}(z)-\frac{2z}{\sqrt{\pi}}e^{-z^2}.
+\end{equation}
+The laboratory-frame distribution is $f_{\rm lab}(\bm v,t)=f_{\rm gal}(\bm v+\bm v_E(t))$, with $\bm v_E(t)$ evaluated using the annual velocity prescription described in Sec.~\ref{sec:rate}. Defining the mean inverse speed
+\begin{equation}
+    \eta(v_{\min},t)= \int_{v>v_{\min}}\frac{\dd^3v}{v}f_{\rm lab}(\bm v,t),
+\end{equation}
+Eqs.~\eqref{eq:dsigma} and \eqref{eq:rate} give
+\begin{equation}
+    \frac{\dd R}{\dd E_R} = \frac{\xi_\chi^{\rm loc}\rho_0}{m_\chi}\sum_i\frac{x_i}{\overline m_A}\frac{G_F^2m_{A_i}}{4\pi}Q_{W,i}^2F_{W,i}^2(q_i)\eta\!\left(v_{\min,i},t\right),
+\label{eq:appendixrate}
+\end{equation}
+where $q_i=\sqrt{2m_{A_i}E_R}$, $\overline m_A=\sum_i x_i m_{A_i}$, and $x_i$ denotes the natural number fraction of isotope $i$. The isotope sum contains all naturally occurring xenon isotopes, $A=124,126,128,129,130,131,132,134,136$, with $\sum_i x_i=1$. The count $N_{\rm sig}$ is obtained after applying the recoil-window efficiency described in Sec.~\ref{sec:rate} and averaging the recoil spectrum over a year. Equation~\eqref{eq:appendixrate} makes explicit that the predicted count scales linearly with the assumed local fraction $\xi_\chi^{\rm loc}$.
+
+\bibliographystyle{apsrev4-1}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,142 @@
+\section{Simulations}
+\label{sec: simulations}
+
+In this work we use the magneto-hydrodynamical simulations of MW mass halos from the Auriga project~\citep{Grand:2016mgo}. The original Auriga simulation suite includes 30 cosmological zoom-in simulations of isolated MW-mass halos, selected from a $100^3$~Mpc$^3$ periodic cube (L100N1504) from the EAGLE project~\cite{Schaye2015,Crain2015}. The simulations were performed using the moving-mesh code Arepo~\citep{Springel2010} and use a galaxy formation subgrid model which includes metal cooling, black hole formation, AGN and supernova feedback, star formation, and background UV/X-ray photoionisation radiation~\cite{Grand:2016mgo}. Planck-2015~\citep{Planck:2015fie} cosmological parameters are used for the simulations: $\Omega_{m}=0.307$, $\Omega_{\rm bar}=0.048$, $H_0=67.77~{\rm km~s^{-1}~Mpc^{-1}}$. We use the standard resolution level (Level 4) of the simulations with DM particle mass, $m_{\rm DM} \sim 3\times 10^5~\Msun$, baryonic mass element, $m_b=5\times10^4~\Msun$, and the Plummer equivalent gravitational softening, $\epsilon=370$~pc~\citep{Power:2002sw,Jenkins2013}. The Auriga simulations reproduce the observed stellar masses, sizes, rotation curves, star formation rates and metallicities of present day MW-mass galaxies.
+
+
+
+
+\subsection{Selection criteria for MW-LMC analogues}
+\label{sec: selection criteria}
+
+
+
+To study the effect of the LMC on the local DM distribution, we first need to select simulated LMC analogues that have properties similar to the observed LMC. The LMC has just passed its first pericenter approach $\sim 50$~Myr ago~\cite{Besla:2007kf}.  
+We will therefore use the properties of the LMC, at or close to its first pericenter passage. 
+The present day stellar mass of the LMC from observations is $\sim 2.7 \times 10^9~\Msun$~\cite{vanderMarel:2002kq}, the LMC's first pericenter distance was at $\sim 48$~kpc~\cite{Besla:2007kf}, and its speed at pericenter with respect to the MW was $340 \pm 19$~km/s~\cite{Salem_2015}. The current speed of the LMC with respect to the MW's center is $321 \pm 24$~km/s~\cite{Kallivayalil:2013xb}.
+
+
+The large phase-space of potential MW-LMC interactions makes it difficult to find an exact analogue in cosmological simulations, especially when we are dealing with only 30 MW-mass halos. To improve these chances, we not only consider present day matches, but follow back in time the history of the simulated MW analogues to find if a MW-LMC like interaction took place since redshift $z=1$ (i.e.~within the last 8 Gyrs). 
+From the 30 Auriga halos, we first identify those that have an LMC analogue using the following criteria: (i) stellar mass\footnote{The stellar mass of the LMC analogue is the mass of all the stars associated with the LMC-like satellite as identified by the SUBFIND algorithm~\cite{Springel:2000qu}.} of the LMC analogue is $>5 \times 10^8~\Msun$, and (ii) distance of the LMC analogue from host at first pericenter is in the range of $[40, 60]$~kpc. With these criteria, we identify 15 MW-LMC analogues, which we study at the simulation snapshot (i.e.~output in time) closest to the LMC's first pericenter approach. We consider this snapshot as a proxy for the present day MW-LMC system. Notice that the average time between the simulation snapshots is $\sim 150$~Myr, so it is difficult to precisely obtain the present day snapshot for the 15 MW-LMC analogues. This large snapshot spacing is a limitation of the cosmological simulation approach, and we discuss below how we address this limitation.
+
+
+In table~\ref{tab:peri}, we list some of the properties of the 15 MW-LMC analogues. The first two columns of the table show the halo ID of the MW-LMC analogues and the corresponding Auriga ID of the MW halos hosting the LMC. The next five columns list the properties of the analogues at the snapshot closest to LMC's first pericenter approach. From left to right, these include the distance of the LMC analogues from host, $r_{\rm LMC}$, the lookback time, $t_{\rm LB}$, the stellar mass of the MW  analogues, $M_{\ast}^{\rm MW}$, the virial mass\footnote{Virial mass is defined here as the mass enclosed within a spherical radius where the mean enclosed matter density is 200 times the critical density of the Universe.}  of the MW analogues, $M_{200}^{\rm MW}$, and the stellar mass of the LMC analogues, $M_{\ast}^{\rm LMC}$. The last column  lists the virial mass of the LMC analogues at infall, $M_{\rm Infall}^{\rm LMC}$. The speed of the LMC analogues with respect to the center of the MW analogues is in the range of $[205, 376]$~km/s at the snapshot closest to first pericenter approach.
+
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|}
+\hline
+\multirow{2}{*}{Halo ID} & \multirow{2}{*}{Auriga ID} & $r_{\rm LMC}$ & $t_{\rm LB}$ & $M_\ast^{\rm MW}$ & $M_{200}^{\rm MW}$ & {$M_\ast^{\rm LMC}$} & $M^{\rm LMC}_{\rm Infall}$  \, \\
+ &  & [kpc] & [Gyr]  & [$10^{9}~\Msun$] & [$10^{11}~\Msun$] & [$10^9~\Msun$] & $[10^{11}~\Msun]$\ \\ 
+ \hline
+       1 & Au-1 & 53.1 & 5.1 & $15$ & $4.0$ & $0.66$ & 0.31 \\
+       2 & Au-7 & 49.2 & 4.2 & $23$ & $9.3$ & $0.56$ & 0.31\\
+       3 & Au-12 & 49.4 & 4.6 & $33$ & $11$ & $0.79$ & 0.34 \\
+       4 & Au-13 & 45.8 & 6.7 & $26$ & $9.5$ & $2.4$ & 0.82 \\
+       5  & Au-13 & 56.7 & 7.4 & $16$ & $7.2$ & $3.1$ & 1.8\\
+       6 & Au-14 & 45.6 & 6.7  & $37$ & $13$ & $3.3$ & 1.1\\
+       7 & Au-14 & 49.9 & 2.3 & $93$ & $16$ & $0.99$ & 0.32\\
+       8 & Au-17 & 54.0 & 7.1 & $50$ & $8.9$ & $0.85$ & 0.36\\
+       9 & Au-19 & 40.9 & 6.2 & $18$ & $6.6$ & $1.6$ & 0.73\\
+       10 & Au-19 & 50.8 & 5.4 & $21$ & $12$ & $9.1$ & 3.3\\
+       11 & Au-21 & 55.5 & 3.3 & $67$ & $17$ & $4.8$ & 1.5\\
+       12 & Au-23 & 41.0 & 5.9 & $60$ & $16$ & $2.5$ & 1.4\\
+       13 & Au-25 & 43.2 & 1.0 & $37$ & $12$ & $15$ & 3.2\\
+       14 & Au-27 & 58.9 & 6.3 & $56$ & $16$ & $1.0$ & 0.84\\
+       15 & Au-30 & 56.0 & 6.3 & $73$ & $9.7$ & $2.5$ & 1.2\\
+\hline
+\end{tabular}
+\caption{\label{tab:peri}Properties of the 15 MW-LMC analogues. The first two columns list the halo ID and Auriga ID of the analogues. The 3rd-7th columns list the properties of the analogues at the simulation snapshot closest to LMC's first pericenter approach: distance of the LMC analogues from host, $r_{\rm LMC}$, lookback time, $t_{\rm LB}$, stellar mass of the MW  analogues, $M_{\ast}^{\rm MW}$, virial mass of the MW analogues, $M_{200}^{\rm MW}$, and the stellar mass of the LMC analogues, $M_{\ast}^{\rm LMC}$. The last column lists the LMC's virial mass at infall, $M^{\rm LMC}_{\rm Infall}$.}
+\end{table}
+
+
+The halo mass of the actual LMC at infall is estimated to be $\sim(1-3) \times 10^{11}~\Msun$~\cite{Moster:2012fv, Laporte:2016vuu, Penarrubia:2015hqa, Erkal:2019}. As it can be seen from the last column of table~\ref{tab:peri}, five of our selected LMC analogues have $M_{\rm Infall}^{\rm LMC} \lesssim 0.4 \times 10^{11}~\Msun$. A related parameter of interest  is the ratio of the halo mass of LMC at infall to the MW halo mass. For five of the MW-LMC analogues, $M_{\rm Infall}^{\rm LMC}/M_{200}^{\rm MW}\lesssim 0.05$, which is about 3 times smaller than the LMC to MW mass ratio estimate from observations. These LMC analogues may have a smaller overall impact on their host halos, contribute less DM particles in the Solar neighborhood, and cause a less significant reflex motion~\cite{Gomez:2014tda, Peterson_2020_MNRAS, Donaldson:2021byu} in the MW analogues. However, we note that 
+it is difficult to directly compare the halo masses of the LMC analogues from cosmological simulations with estimates from earlier studies based on observations, since those typically assume fixed mass in time or even a point mass. We therefore include the LMC analogues with the smaller halo mass at infall in our study to increase our sample size. In section~\ref{sec: DM density}, we discuss the implications of the smaller LMC to MW mass ratio for the number of DM particles from the LMC in our local neighborhood.
+
+To study in more detail how the LMC affects the local DM distribution at different times in its orbit, we  select  one MW-LMC analogue, halo 13 corresponding to the Auriga 25 halo (hereafter Au-25) and its LMC analogue, for further study. This system has the second largest LMC halo mass at infall, close to the upper limit of the range estimated from observations. As a consequence, it also has a large $M_{\rm Infall}^{\rm LMC}/M_{200}^{\rm MW}=0.27$. We rerun the simulation for halo 13 with finer snapshots close to the LMC's pericenter approach. The average time between snapshots near pericenter in this new run is $\sim 10$~Myr. We consider four representative snapshots for halo 13: 
+\emph{Iso.}~is the snapshot which takes place when the MW and the LMC analogues are maximally separated (i.e.~first apocenter before infall) at $\sim 2.83$~Gyr before the present day snapshot, acting as our proxy for an isolated MW; \emph{Peri.}~is the simulation equivalent of the point of closest approach (pericenter) of the LMC at $\sim 133$~Myr before the present day snapshot; \emph{Pres.}~is the closest snapshot to the present day separation of the observed MW and LMC system; and \emph{Fut.}~is a proxy for the MW-LMC system at a future point in time, $\sim 175$~Myr after the present day snapshot. 
+ 
+ In table~\ref{tab:snapshots}, we summarize the description of these four snapshots, specify their times relative to the present day snapshot, and list the distance of the LMC analogue from host at each snapshot. The distance and speed of the LMC analogue with respect to its host at the present day snapshot are $\sim 50$~kpc and 317~km/s, respectively, which are remarkably close matches to the observed values\footnote{Notice that the distance of the LMC analogue at its pericentre approach is smaller than the value inferred from observations.}. Notice that when we refer to the ``present day'' snapshot for the re-simulated halo 13 throughout this work, we are referring to the \emph{Pres.}~snapshot. 
+
+   \begin{table}[t]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+      \hline
+       Snapshot & Description & $t-t_{\rm Pres.}$~[Gyr] & $r_{\rm LMC}$~[kpc] \\
+       \hline
+       Iso. & Isolated MW analogue & $-2.83$ & 384  \\
+       Peri. & LMC's first pericenter approach & $-0.133$ & 32.9\\
+       Pres.  & Present day MW-LMC analogue & 0 & 50.6 \\
+       Fut. & Future MW-LMC analogue & 0.175 & 80.3\\
+      \hline
+    \end{tabular}
+\caption{Description of the four representative snapshots in halo 13, their times relative to the present day snapshot, and the distance of the LMC analogue from host at each snapshot.
+}
+\label{tab:snapshots}
+\end{table}
+
+
+In the rest of this paper we present some general results for the 15 selected MW-LMC analogues at the snapshot closest to the LMC's first pericenter approach, and then focus on halo 13 to study how the LMC impacts the local DM distribution during its orbit around the MW.
+
+
+
+
+\subsection{Matching the Sun-LMC geometry}
+\label{sec: Sun-LMC Geometry}
+
+
+
+The geometry of the observed Sun-LMC system is such that the LMC is predominantly moving in the opposite direction of the Solar motion. This leads to large relative speeds of the particles originating from the LMC with respect to the Sun, and results in a boost in the DM velocity distribution in the Solar region~\cite{Besla:2019xbx}. Ref.~\cite{Besla:2019xbx} showed that matching the Sun-LMC geometry in their idealized simulations to the observed geometry is crucial for an accurate understanding of LMC's impact on the local DM distribution.
+
+
+In the simulations, the position of the Sun is not specified a priori and the LMC analogues have different phase-space coordinates compared to the real MW-LMC system. Therefore, we need to choose a position for the Sun in each MW analogue based on a set of criteria for obtaining a match to the observed Sun-LMC geometry. We would also like to explore to what extent it is critical to match the exact Sun-LMC geometry in the simulations in order to have a significant effect on the local DM velocity distribution. In this section, we first discuss our procedure for obtaining all possible positions for the Sun in the simulations that approximately match the Sun-LMC geometry in observations. We next discuss how we specify the ``best fit'' Sun's position in the simulations that provides the best match to the observed Sun-LMC geometry.
+
+
+Figure~\ref{fig: geometry} shows the observed geometry of the Sun-LMC system in the Galactocentric reference frame defined in the following way. The origin of the reference frame is on the Galactic center, the $x_g$ and $y_g$ axes are aligned with the Sun's orbital  plane, the $x_g$-axis points from the Sun towards the Galactic center, the $y_g$-axis is in the direction of the Galactic rotation, and the $z_g$-axis is towards the North Galactic Pole. The directions of the Sun's position, ${\bf r}_{\rm Sun}$, Sun's velocity, ${\bf v}_{\rm Sun}$, LMC's position, ${\bf r}_{\rm LMC}$, LMC's velocity, ${\bf v}_{\rm LMC}$, and the orbital angular momentum of the LMC, ${\bf L}_{\rm LMC}$, are specified in the diagram.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[scale=0.2]{graphics/GeometryFig.pdf}
+    \caption{Diagram showing  the observed Sun-LMC geometry. The blue and red vectors specify the directions of the position, ${\bf r}_{\rm Sun}$, and velocity, ${\bf v}_{\rm Sun}$, of the Sun, while the light blue and orange vectors specify the directions of the position, ${\bf r}_{\rm LMC}$, and velocity, ${\bf v}_{\rm LMC}$, of the LMC. The angle $\alpha$, between ${\bf r}_{\rm LMC}$ and ${\bf v}_{\rm Sun}$, and the angle $\beta$, between ${\bf v}_{\rm LMC}$ and ${\bf v}_{\rm Sun}$ are specified. The dashed green vector shows the direction of the orbital angular momentum of the LMC, ${\bf L}_{\rm LMC}$. The orbital planes of the Sun and the LMC, which are nearly perpendicular, are also shown. 
+    }
+    \label{fig: geometry}
+\end{figure}
+
+
+
+ In the simulations, we define the center of the MW and LMC analogues to be the position of the particle (star, gas, DM, or black hole) in each halo that has the lowest gravitational potential energy. The velocity of the MW and LMC analogues in the simulation reference frame is defined as  the centre of mass velocity of all bound particles to each halo, obtained using the SUBFIND algorithm~\cite{Springel:2000qu}. The position and velocity of the LMC analogue are then found with respect to the center of the MW analogue.
+
+
+To find the possible positions for the Sun in the simulations that match the observed Sun-LMC geometry, we could impose a set of constraints on the angular coordinates of both the position and velocity vectors of the LMC analogues as seen from the Solar position in the simulation. However, the position and velocity vectors of the LMC analogues can change rapidly when the satellite is close to its pericentric approach. Thus, a better criterion for finding the Sun's position and the orientation of its orbital plane in the simulations is to ensure that the orbital plane of the LMC analogue makes the same angle with the Sun's orbital plane  as in observations.
+
+
+We therefore proceed as follows to match the observed Sun-LMC geometry in the simulations. First, we choose a stellar disk orientation by requiring that the angle between the  angular momentum of the stellar disk and the orbital angular momentum of the LMC analogue, ${\bf L}_{\rm LMC}^{\rm sim}$, is the same as the observed MW-LMC pair. As seen in figure~\ref{fig: geometry}, the LMC's orbital angular momentum inferred from observations is nearly perpendicular to the angular momentum of the stellar disk. Hence, we can vary the latter on nearly  a full circle, resulting in multiple allowed stellar disk orientations for the simulated MW analogue. In particular, given the direction of ${\bf L}_{\rm LMC}^{\rm sim}$, we numerically solve for the direction of the disk's angular momentum by varying one of its angular coordinates every $10^\circ$, and finding the other angular coordinate such that it matches the observed MW-LMC orientation. Due to this sampling, the number of the allowed disk orientations we find varies from $\sim 20$ to over 30, depending on the MW-LMC analogue. Notice that these disk orientations are not necessarily aligned with the actual stellar disk of the MW analogue, but we consider them since they match the observed MW-LMC geometry, which is important for our study. 
+
+Previous studies using the EAGLE and APOSTLE simulations show that the stellar disk does not have a significant effect on the local DM velocity distribution~\cite{Bozorgnia:2016ogo, Schaller:2016uot}. However, using idealized simulations refs.~\cite{Petersen:2016vck, Donaldson:2021byu} find that the presence of the stellar disk and its non-axisymmetric evolution  lead to secular processes, which  
+can boost the local DM velocity distribution. 
+We note that a number of Auriga halos have a small  DM component rotating with the stellar disk due to accretion events~\cite{Gomez:2017yzr}, but those halos are not part of our MW-LMC analogue sample. 
+
+
+
+In the next step, we find the Sun's position with respect to the center of the MW analogue for each allowed disk orientation by requiring that the angles between the LMC's orbital angular momentum and the Sun's position and velocity vectors are as close as possible to the observed values. From these first two steps, we obtain the position and velocity vectors of the Sun for each allowed disk orientation. Therefore, for each halo we obtain multiple allowed positions for the Sun, due to the multiple allowed disk orientations. In section~\ref{sec: halo integrals}, we will study how the MW-LMC interaction signatures vary depending on these  Sun’s positions.
+
+We next proceed to find the best fit Sun's position. As seen in figure~\ref{fig: geometry}, 
+the Sun's position vector is nearly along the same direction as the angular momentum of the LMC, and therefore varies only slightly for different disk orientations. On the other hand, the Sun's velocity vector varies on nearly a full circle, requiring further matching to observations. We define the cosine angles, 
+\begin{align}
+   \cos\alpha &\equiv \hat{\textbf{v}}_{\rm Sun}^{\rm sim} \cdot \hat{\textbf{r}}_{\rm LMC}^{\rm sim}\; , \nn \\ 
+    \cos\beta &\equiv  \hat{\textbf{v}}_{\rm Sun}^{\rm sim} \cdot \hat{\textbf{v}}_{\rm LMC}^{\rm sim} \; ,
+    \label{eq: cosine angles}
+\end{align}
+where $\hat{\textbf{v}}_{\rm Sun}^{\rm sim}$ is in the direction of the velocity of the Sun with respect to center of the MW analogue, while $\hat{\textbf{r}}_{\rm LMC}^{\rm sim}$ and $\hat{\textbf{v}}_{\rm LMC}^{\rm sim}$ are in the directions of the position and velocity vectors of the LMC analogue with respect to the center of the MW analogue. 
+In the last step, we select the orientation that leads to the closest match with the observed values for the cosine angles,
+\begin{align}
+    \hat{\textbf{v}}_{\rm Sun}^{\rm obs} \cdot \hat{\textbf{r}}_{\rm LMC}^{\rm obs} &= -0.835\; , \nn\\
+    \hat{\textbf{v}}_{\rm Sun}^{\rm obs} \cdot \hat{\textbf{v}}_{\rm LMC}^{\rm obs} &= -0.709 \, . 
+    \label{eq: best fit cosine angles}
+\end{align}
+The best fit Sun's velocity vector in the simulations is found by choosing the values of $\cos\alpha$ and $\cos\beta$  that minimize the sum of the squared differences with the values obtained from observations, given in eq.~\eqref{eq: best fit cosine angles}. This, in turn, determines the best fit Sun's position.
+
+
+
+
+

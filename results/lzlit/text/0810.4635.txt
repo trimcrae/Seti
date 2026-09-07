@@ -1,0 +1,956 @@
+                                                        Muon simulation codes MUSIC and MUSUN for
+                                                                    underground physics
+                                                                                       V. A. Kudryavtsev 1 ,
+arXiv:0810.4635v1 [physics.comp-ph] 25 Oct 2008
+
+
+
+
+                                                   Department of Physics and Astronomy, University of Sheffield, Sheffield S3 7RH, UK
+
+                                                                                             Abstract
+
+                                                             The paper describes two Monte Carlo codes dedicated to muon simulations:
+                                                         MUSIC (MUon SImulation Code) and MUSUN (MUon Simulations UNderground).
+                                                         MUSIC is a package for muon transport through matter. It is particularly useful for
+                                                         propagating muons through large thickness of rock or water, for instance from the
+                                                         surface down to underground/underwater laboratory. MUSUN is designed to use
+                                                         the results of muon transport through rock/water to generate muons in or around
+                                                         underground laboratory taking into account their energy spectrum and angular
+                                                         distribution.
+
+
+                                                  Keywords: Muons; Muon interactions; Muon transport; Muons underground; Muon-
+                                                  induced background
+                                                  PACS: 14.60.Ef, 25.30.Mr, 24.10.Lx, 95.85.Ry
+                                                    1
+                                                      Corresponding author; address: Department of Physics and Astronomy, University of Sheffield,
+                                                  Sheffield S3 7RH, UK, e-mail: v.kudryavtsev@sheffield.ac.uk
+
+
+
+
+                                                                                                 1
+1    Introduction
+Muon transport through matter plays an important role in many areas of particle and
+astroparticle physics. Cosmic-ray muons are detected at large depths underground and
+underwater (here and hereafter we use the term underwater that includes also under-ice
+experiments). They are used to study the energy spectrum and composition of primary
+cosmic rays and calculations of their fluxes, energy and angular distributions are the key
+element of this research (see, for instance, Refs. [1, 2, 3, 4, 5].
+Experiments with high-energy muon neutrino beams from accelerators require accurate
+simulations of muon transport from the point of neutrino interaction to the detector.
+Similarly, neutrino telescopes are detecting (or expecting to detect) muons from atmo-
+spheric and astrophysical neutrinos, and three-dimensional propagation of muons from
+their production point to the detector is crucial for the interpretation of experimental
+data [6, 7, 8].
+Cosmic-ray muons are also a background in experiments looking for rare events at low
+and high energies deep underground or underwater. Atmospheric down-going muons can
+be erroneously reconstructed as upward-going muons that mimic neutrino-induced events
+in a search for astrophysical neutrinos at GeV-TeV energies or in an atmospheric neu-
+trino detection for neutrino oscillation studies. Cosmic-ray muons also produce secondary
+neutrons (with MeV-GeV energies) by interacting with rock. These neutrons can mimic
+low-energy (keV-MeV) events in detectors looking for WIMP (Weakly Interacting Massive
+Particle) dark matter, neutrinoless double-beta decay and neutrinos (solar, geophysical,
+supernova neutrinos, etc.) (see Ref. [9] for a review and Refs. [10, 11, 12, 13] for example
+calculations of muon-induced neutron fluxes underground) . High-energy (GeV) neutrons
+from muons can produce events with a signature similar to proton decay.
+There are a few more applications from different areas of science. A morphological re-
+construction of mountains and natural caves using atmospheric muons was suggested in
+Ref. [14]. A search for hidden chambers in pyramids was discussed in Ref. [15]. A ‘muon
+radiography’ using multiple scattering of cosmic-ray muons was proposed recently [16] to
+discriminate between low-A and high-A materials in cargo.
+All applications mentioned above require accurate calculations of muon spectra and scat-
+tering beyond a slab of material. Most of them involve muon transport through large
+thickness of matter. Hence the CPU time should be reduced to a minimum without
+compromising the accuracy of calculations.
+Several Monte Carlo codes are able to transport muons through matter with high accuracy.
+The codes can be split in two categories: (i) multipurpose particle transport codes, such as
+GEANT4 [17] and FLUKA [18], and (ii) codes developed specifically for muon propagation
+through large thickness of material, such as PROPMU [19], MUSIC [20, 21], MUM [22]
+and MMC [23].
+Significant progress has recently been achieved in the development of the multipurpose
+transport codes for particle physics applications. The codes have become faster, more ro-
+bust, flexible and accurate. However, their flexibility requires a good knowledge of physics
+and programming skills from a user. GEANT4, for instance, is designed as a powerful
+toolkit but a good knowledge of the code including models and programming language is
+
+
+                                             2
+needed to use it properly. Significant efforts and time are required to become familiar with
+such a toolkit. These codes are absolutely necessary when simulating events consisting
+of many particles that should be produced, transported and detected practically at the
+same time. Meanwhile, some tasks, for instance muon transport through a homogeneous
+material, may be accomplished without using multipurpose codes. If a user is interested in
+transporting muons without following secondary particles produced by them, it is enough
+to consider accurately only muon interactions and muon energy losses neglecting the fate
+of secondaries. This is the idea implemented in specially developed muon transport codes.
+In this paper we describe the three-dimensional muon propagation code MUSIC. Although
+the first version of the code was released in 1997 [20] and several modification were re-
+ported since then [21], we believe that the recent developments and improvements made
+to the code and the variety of applications should be described in a separate paper. The
+second part of the paper is dedicated to the code MUSUN written to sample muons un-
+derground [11] or underwater [24] using the results of muon transport carried out with
+MUSIC.
+
+
+2    Muon transport through large thickness of matter:
+     MUSIC
+The first version of MUSIC (MUon SImulation Code), written in FORTRAN, has been
+released in 1997 [20]. It has been used in the interpretation of data from the LVD ex-
+periment in the Gran Sasso Laboratory, namely in the reconstruction of the muon energy
+spectrum at surface from the measured depth – vertical muon intensity relation [3] and in
+the evaluation of the fraction of prompt muons in the high-energy muon flux [4]. Several
+improvements have been done to the code and new features have become available since
+then. The basic features of the code and improvements are described below.
+The code takes into account the energy losses of muons due to four processes: ionisation
+(using Bethe-Bloch formula) including knock-on electron production, bremsstrahlung (or
+braking radiation), electron-positron pair production and muon-nucleus inelastic scatter-
+ing (or photonuclear interactions). The cross-section of bremsstrahlung was taken from
+Ref. [25] in the first version of MUSIC with an option to use the cross-section from Refs.
+[26, 27]. The effect of different cross-sections on the MUSIC results was studied in Ref.
+[20]. The correction to the Born approximation (Coulomb correction) for bremsstrahlung
+cross-section was not taken into account. It was shown [27] that this correction does not
+exceed 1% even for heavy nuclei. The pair production cross-section was taken from Ref.
+[28] in the first version of MUSIC. New parameterisation of the pair production on atomic
+electrons [29] has been implemented in the second version of the code [21]. Original pa-
+rameterisation of muon inelastic scattering cross-section [30] has been complemented by
+a more accurate treatment suggested in Ref. [31]. An option has been added to calcu-
+late this cross-section using the deep-inelastic scattering formalism and nucleon structure
+functions suggested in Ref. [32]. The ALLM parameterisations [33] of structure functions
+have been implemented. The default options in MUSIC (the recommended cross-sections)
+are: (i) bremsstrahlung – Ref. [25]; (ii) pair production – Refs. [28, 29]; (iii) inelastic
+scattering – Ref. [31]. All results presented here have been obtained with this set of
+
+
+                                             3
+cross-sections.
+Muon interaction cross-sections are calculated in MUSIC at the beginning of the first run
+(or by the code developer) for all elements present in a material and specified by a user,
+and are averaged using the weights (a fraction of each element by mass) provided by the
+user.
+There are two major versions of MUSIC existing and developed in parallel: (i) ‘standard’,
+dedicated for muon transport through large thickness of matter; (ii) ‘thin slab’, developed
+for muon transport through thin slabs of materials.
+The standard version of MUSIC considers all interaction processes stochastically if the
+fraction of energy lost by a muon in the interaction exceeds a pre-defined value of a
+parameter, vcut (see Ref. [20] for the full code description and tests). The value of vcut
+can vary from 10−5 to 1 and can be set by a user but the recommended value taken
+as a compromise between the accuracy of the code and its speed, is 10−3 as in the first
+version of the code [20]. The program evaluates the mean free path of a muon between
+two subsequent interactions (with v > vcut ) using the sum of integrated cross-sections,
+where integrals are computed between vcut and 1. Then it samples the real path of the
+muon to the next interaction using a random number generator from the CERN library
+(RANLUX). Another random number determines the type of the interaction. The third
+random number is used to select the fraction of muon energy lost in the interaction v. Then
+the code calculates the continuous energy losses of the muon between the two interactions,
+i.e. mean energy losses due to the four aforementioned processes with v < vcut . Mean
+energy loss due to ionisation is computed using Bethe-Bloch formula for v < vcut . Knock-
+on electron production is added to stochastic processes at v ≥ vcut including corrections
+to the ionisation energy loss due to e-diagrams for muon bremsstrahlung on an electron
+suggested in Ref. [25]. In this process the photon is emitted by the electron and is
+accompanied by the high-energy recoiling electron.
+Muon deflection due to multiple Coulomb scattering in the plane perpendicular to the
+initial muon direction is calculated between every two interactions with v ≥ vcut [20]. The
+process is treated in the Gaussian approximation [34] that was also used in Ref. [19]. More
+accurate treatment of muon angular deviation in the framework of Molière theory results
+in a similar distribution of muon scattering angles beyond the large thickness of rock with
+a small increase of the mean deflection angle [20]. However, the original Molière theory
+was developed for angular deviation only and does not provide the lateral displacement
+that is sometimes more important from the experimental point of view (for instance, for
+muon bundles underground).
+Although multiple Coulomb scattering dominates over stochastic processes in the muon
+deflection [20], muon deviation due to other interactions is also taken into account in
+MUSIC. The angular deviation due to muon inelastic scattering is computed using double-
+differential cross-section [30]. The muon scattering angle due to bremsstrahlung and pair
+production is calculated following the parameterisations suggested in Ref. [35] (see also
+Ref. [20] for detailed description).
+Note that the muon transport code MUM [22] is one-dimensional and does not take into
+account muon deflection in the plane perpendicular to the initial direction. The code
+MMC [23] considers only muon deviation due to multiple scattering and not many details
+
+
+                                            4
+or results are given in the original paper [23]. PROPMU [19] also treats only multiple
+scattering. Muon transport codes MUSIC, MUM and MMC were found to agree with each
+other giving similar muon energy distributions beyond large thickness of rock or water
+and similar muon survival probabilities [22]. MUSIC and PROPMU are in agreement for
+muon transport in rock [20] but results obtained with PROPMU in water were found to
+be different from those obtained with MUSIC and MUM [22].
+The MUSIC code allows the transport of muons with energies up to 107 GeV. All muons
+are considered to be ultrarelativistic. If the total muon energy becomes smaller than the
+muon mass, the muon is considered to be stopped. The code consists of two files and is
+arranged as consecutive calls to two or three subroutines written in FORTRAN from the
+‘main’ user program. The call to the first subroutine is optional: it allows calculation
+of the muon cross-sections and energy losses and can be done at the beginning of the
+first run. The files with cross-sections and energy losses can also be supplied by the
+author. The call to the second subroutine allows reading the muon cross-sections from
+the computer disk. A single call to the third subroutine transports one muon with given
+initial parameters (energy, coordinates and direction cosines) to a specified distance in
+a material with previously calculated cross-sections. The code (the third subroutine)
+returns the muon parameters at the end of the muon path in the material. If the muon
+has stopped before reaching the end of the material, the zero value for the muon energy is
+returned together with approximate coordinates of the point where the muon has stopped.
+A special version of MUSIC (‘thin slab’) has been developed for muon transport through
+thin slabs of materials. Originally it has been written for water as part of the software for
+the ANTARES experiment [8]. This version has been aimed at providing muon energy,
+position and direction at the end of every small segment of muon path in water and at
+passing the muon energy loss at the segment to another part of software that generated
+Cherenkov photons. Since then this version has also been used to estimate muon deflection
+in high-A materials (iron, lead and uranium) for possible security applications (searching
+for hidden high-A materials, like uranium, in cargo) [36]. The ‘standard’ version of
+MUSIC, in the absence of stochastic interactions on the small segment, always returns the
+mean value for continuous energy loss at the end of the segment. In the ‘thin slab’ version
+the cut that separates stochastic and continuous parts of the energy loss is reduced to 1
+MeV, meaning that practically all muon interactions are stochastic. The ionisation energy
+loss is calculated using Landau distribution (call to a function from the CERN library).
+This version of the code allows the transport of muons with energies up to 109 GeV but
+without taking into account the LPM effect. Both versions of MUSIC (standard and thin
+slab) give consistent results for thick slabs of matter but the ‘thin slab’ version is more
+CPU consuming because of the lower value of vcut . The thin slab version gives more
+accurate results for energy spectra and angular deviation beyond thin slabs of material.
+Although the energy loss due to muon pair production by muons is not included in the
+code because of its small value compared to the electron-positron pair production, there
+is a possibility to generate muon pairs along the muon path [21].
+A few results from muon transport through standard rock (Z=11, A=22, ρ = 2.65 g/cm3 )
+and pure water are shown in Figures 1-3. Muons with initial energies ranging from
+102 GeV to 107 GeV were transported through 15 km w. e. of standard rock and water
+and their energies at different depths (distances from initial point) were recorded. 105
+
+
+                                             5
+muons were propagated for each value of initial energy. This means that for a survival
+probability (defined as a probability for a muon with a certain initial energy to traverse
+a pre-defined distance) of 0.01, the statistical error is about 3%. Survival probabilities
+as functions of muon energy at surface for different depths are presented in Figure 1 for
+standard rock (black solid curves) and water (red dashed curves). Numbers to the right
+from each solid curve show the depths in km w. e. for standard rock. Survival probability
+curves for water are shifted to the right (for small depths) or to the left (for depths larger
+than 2 km w. e.) relative to those for standard rock. This behaviour is due to the presence
+of hydrogen in water. Hydrogen has the ratio of Z/A ≈ 1 whereas most other materials
+have Z/A ≤ 0.5. Ionisation energy loss is proportional to Z/A whereas energy losses due
+to pair production and bremsstrahlung are approximately proportional to Z(Z + 1)/A.
+At low muon energies (below 1 TeV) and small depths ionisation energy loss dominates
+over other processes, muon energy losses in water are bigger than in standard rock and
+muon survival probability for a fixed initial energy is smaller in water than in standard
+rock. At intermediate depths (between 1 and 3 km w. e.) the muon survival probabilities
+in water are smaller for low energies and bigger for higher energies compared to standard
+rock. At large depths (high muon energies) the energy loss due to pair production and
+bremsstrahlung dominate over ionisation and the muon survival probabilities in water are
+bigger than those in standard rock for all energies.
+Muon energy spectra at vertical at different depths in standard rock (black solid curves)
+and water (red dashed curves) are presented in Figure 2. Numbers above the curves for
+standard rock show the depth in km w. e. The spectra have been calculated by convoluting
+muon energy distributions underground obtained with MUSIC, with muon energy spectra
+at surface taken in the form that fits the data from the LVD experiment [3, 4] (for full
+description of the procedure see Section 3 below). Curves for water are shifted above or
+below those for standard rock due to the presence of hydrogen in water (see discussion
+above).
+MUSIC has been extensively tested against experimental data. It has first been used in
+the analysis of muon intensities measured by the LVD experiment [3, 4]. Since there are
+several factors that affect the calculation of muon intensity underground (muon cross-
+sections, muon energy spectrum at surface, slant depth distribution and rock composi-
+tion), comparison between measured and calculated muon intensities does not provide
+an accurate test of the muon transport code. In fact the energy spectrum of muons at
+surface has been reconstructed from the measured intensities assuming that other factors
+are known. However, the fact that measured intensities agree with simulations over a
+large range of zenith angles and slant depths, provides a strong evidence for the validity
+of the muon transport code.
+Depth – vertical muon intensity relation (muon intensity at vertical as a function of depth)
+is shown in Figure 3 for standard rock and water. Muon intensities have been calculated
+by integrating muon energy spectra underground over energy. The simulated curves agree
+well with the measurements both in rock (black triangles – compilation of data points
+from Ref. [37]) and water (blue open circles – [6], blue filled circles – [7]).
+A comprehensive comparison of calculated (using MUSIC) muon intensities underground
+with measurements has been done in Ref. [38]. Data points were found to be scattered
+symmetrically around the calculated depth–intensity curve showing the overall consistency
+
+
+                                              6
+of the muon transport. Large spread of data around simulations may be explained by the
+complexity of factors involved in data interpretation, such as, rock composition, procedure
+of data conversion to standard rock etc.
+Muon intensities and mean muon energies, calculated with the MUSIC transport code and
+the LVD parameterisation for the muon spectrum at surface [3, 4] (for full description of
+the procedure see Section 3 below) are given in Table 1 for standard rock and water.
+MUSIC has been used in the analysis of SNO [39] and MACRO [5] data. The code has
+also been applied for the calculation of expected background induced by cosmic-ray muons
+in deep underground experiments, such as KamLAND, Super-Kamiokande, etc.
+Comparison of energy losses as calculated by MUSIC, GEANT4 and FLUKA is discussed
+in Ref. [40]. All codes agree well in calculating energy distributions for high-energy
+muons transported through small and large slabs of materials. Figure 4 shows the energy
+spectrum of muons with initial energy of 2 TeV transported through 3 km of water us-
+ing MUSIC, GEANT4 [41] and FLUKA. Distributions look very similar except for small
+difference at high energies. The survival probability is equal to 0.779 (MUSIC), 0.793
+(GEANT4) and 0.756 (FLUKA) with a statistical error of about 0.001. The mean energy
+of survived muons is 323 GeV (MUSIC), 317 GeV (GEANT4) and 344 GeV (FLUKA).
+Figures 5 and 6 show distributions of angular deviation and lateral displacement, re-
+spectively, for muons with initial energy of 2 TeV transported through 3 km of water.
+GEANT4 predicts larger number of muons to be scattered to high angles and moved to
+large distances in the plane perpendicular to the muon direction. The mean scattering
+angle is equal to 0.22◦ (MUSIC) and 0.27◦ (GEANT4), whereas the mean displacement in
+the plane perpendicular to the initial muon direction is found to be 2.6 metres (MUSIC)
+and 3.3 metres (GEANT4). Unfortunately it is practically impossible to obtain data on
+high-energy muon scattering beyond very large thicknesses of matter to test codes, since
+the lateral separation of muon bundles underground is largely dominated by the scattering
+angle of the muon parent in the atmosphere at the interaction point where this parent is
+produced.
+Similar transport code has also been developed for tau-leptons: TAUSIC (TAU Simulation
+Code).
+
+
+3    Simulations of muons in underground laboratories
+     using MUSUN
+MUSUN (MUon Simulations UNderground) is the muon generator useful for sampling
+muons in underground laboratories according to their energy spectrum and angular dis-
+tribution. It uses the results of muon transport through matter carried out with MUSIC,
+convoluted with the muon energy spectrum and angular distribution at surface.
+At the first stage muons with various initial energies (from 100 GeV to 107 GeV with a
+step of ∆ log E = 0.025) are propagated through matter and their energy distributions at
+distances from the initial point ranging from 100 m w. e. to 15000 m w. e. are written
+on the computer disk for further processing. This is usually done by the code developer
+following instructions from a user about the rock composition and other possible specific
+
+
+                                            7
+features such as mountain profile etc. In a standard version of MUSUN the vertical
+depth should be more than 500 m w. e. There is no strict upper limit for the vertical
+depth, but the maximum slant depth should not exceed 15 km w. e. At larger depths
+neutrino-induced muon flux dominates over atmospheric muons and the calculation of the
+atmospheric muon intensity is not required.
+In a simple version of MUSUN, the flat profile is assumed for the surface above the
+underground site (the curvature of the Earth is taken into account but other possible
+fluctuations of the slant depth are ignored).
+After muon transport the differential muon intensities underground, Iµ (Eµ , X, cos θ), are
+calculated using the equation:
+                                           Z ∞
+                                                                    dIµ0 (Eµ0 , cos θ⋆ )
+                    Iµ (Eµ , X, cos θ) =         P (Eµ , X, Eµ0 )                        dEµ0   (1)
+                                           0                              dEµ0
+       dI   (E   ,cos θ ⋆ )
+where µ0 dEµ0µ0        is the muon spectrum at sea level at zenith angle θ⋆ (zenith angle at
+surface, θ⋆ , is calculated from the zenith angle underground, θ, taking into account the
+curvature of the Earth), and P (Eµ , X, Eµ0 ) is the probability for a muon with an initial
+energy at surface Eµ0 to have an energy Eµ at a depth X.
+The energy spectrum at sea level can be taken either according to the parameterisation
+proposed by Gaisser [1] (modified for large zenith angles [3]) or following the best fit to
+the ‘depth – vertical muon intensity’ relation measured by the LVD experiment [3]. The
+first parameterisation [1] has the power index of the primary all-nucleon spectrum 2.70,
+while the second one [3] uses the index of 2.77 with the normalisation to the absolute
+flux measured by LVD. For small depths (less than 2–3 km w. e.) that correspond to low
+muon energies at surface (less than 1 TeV) it is recommended to use the original Gaisser’s
+parameterisation with an additional factor that takes into account muon decay in the
+atmosphere [42] if necessary. For larger depths the LVD parametrisation is the preferred
+option since it agrees with experimental data of the LVD [3] and MACRO experiments
+[2].
+The ratio of prompt muons (from charmed particle decay) to pions is recommended to
+be set to 10−4 , which is well below an upper limit set by the LVD experiment [4]. Note,
+however, that prompt muon flux does not affect much muon intensities even at large
+depths.
+To calculate integral muon intensity for normalisation, an integration of Iµ (Eµ , X, cos θ)
+over dEµ and cos θ is carried out.
+MUSUN offers the choice of the muon energy spectrum (as described above), the fraction
+of prompt muons, the vertical depth of the laboratory, the range of zenith and azimuthal
+angles, and the range of energies. No additional muon propagation is required for different
+options. Different types of rocks (rock compositions), however, require separate muon
+transport.
+MUSUN is organised as a set of subroutines written in FORTRAN that are called from
+the user-defined ’main’ program. The first call is made to a subroutine that calculates
+differential and integrated muon intensities for a specific vertical depth (assuming flat
+surface). The intensity as a function of energy and zenith angle is stored in the computer
+
+                                                       8
+memory as a two-dimensional array. Subsequent calls to a ’sampling’ subroutine return
+muon parameters (energy and direction cosines) sampled following energy and zenith angle
+distribution. Azimuthal angle is sampled randomly as evenly distributed between 0 and
+2π since the assumption of the flat surface leads to the spherical symmetry. The muon
+charge is generated according to the ratio measured for high-energy muons µ+ /µ− ≈ 1.3.
+For practical purposes (for instance, when these muons are used in multipurpose event
+generators GEANT4 or FLUKA) it is useful to generate muons on the surface of a rectan-
+gular parallelepiped or a sphere with predefined dimensions. MUSUN offers a possibility
+to generates muon positions on the surface of a rectangular parallelepiped with dimensions
+specified by the user.
+Muon parameters are written on the disk and can be passed later on to the multipurpose
+event generators.
+Several underground laboratories (for instance, LNGS at Gran Sasso and LSM at Modane)
+are located in the transport tunnels under mountains with complex mountain profiles. For
+these labs special versions of the MUSUN code have been developed that took into account
+the slant depth distribution as seen from the underground laboratory. Here we present
+a few graphs with the results of muon production using MUSUN for the Gran Sasso
+Laboratory.
+Figure 7 shows the azimuthal distribution of single muon intensities in the underground
+Gran Sasso Laboratory for zenith angles up to 60◦ as measured by LVD [4, 43] (data
+points with error bars) and generated with MUSUN (dashed curve). Good agreement is
+seen over the whole range of angles and intensities. Similar conclusion has been achieved
+in Ref. [44] when comparing azimuthal distributions for the whole range of zenith angles.
+Figure 8 shows the energy spectrum of muons at Gran Sasso as generated with MUSUN.
+This spectrum looks different from Figure 2 because the number of muons is given here
+per energy bin which is constant on the logarithmic scale but increases with energy on
+the linear scale, whereas in Figure 2 the spectrum is given per constant energy bin on the
+linear scale (1 GeV). The mean muon energy at the Gran Sasso Laboratory is calculated
+as 273 GeV, in good agreement with the measured value of 270 ± 3 (stat.) ±18 (syst.)
+GeV [45]. A lego plot of the number of generated muons versus zenith and azimuthal
+angles is presented in Figure 9.
+At present the versions of the MUSUN code exist for the underground sites at Gran Sasso
+(LNGS), Modane (LSM), Boulby and Soudan. It has been used to study muon-induced
+neutron background for experiments looking for rare events, such as WIMPs (see, for
+instance, [11, 12, 46, 13, 47, 48]).
+
+
+4    Conclusions
+The two Monte Carlo codes MUSIC and MUSUN dedicated to muon simulations have
+been described. MUSIC, a package for muon transport through matter, can be used for
+propagating muons through large thickness of rock or water, for instance from the surface
+down to underground/underwater laboratory. It can also be implemented in the event
+generators for large underwater/under-ice neutrino telescopes or other neutrino detectors.
+
+
+                                            9
+MUSUN uses the results of muon transport through rock/water to generate muons in or
+around underground laboratory taking into account their energy spectrum and angular
+distribution. Various tests showed good agreement of the codes’ results with experimental
+data and other packages.
+Since there are several versions of both codes the author finds impractical to submit
+all of them to the code library. Any specific version can be obtained by request to
+v.kudryavtsev@sheffield.ac.uk. There is a possibility to adapt the codes to specific needs
+of a user as was done on several occasions in the past.
+
+
+5    Acknowledgments
+Many recent improvements to the codes have been carried out as part of the ILIAS
+integrating activity (Contract No. RII3-CT-2004-506222) in the framework of the EU
+FP6 programme in Astroparticle Physics. The author is grateful to Dr. M. Robinson for
+providing results of GEANT4 simulations. The author wishes to thank Drs. P. Antonioli,
+C. Ghetti, E.V. Korolkova and G. Sartorelli who contributed to the original version of the
+MUSIC code and initial tests.
+
+
+References
+[1] T.K. Gaisser, Cosmic Rays and Particle Physics (Cambridge University Press, 1990).
+
+[2] M. Ambrosio et al. (MACRO Collaboration). Phys. Rev. D 52 (1995) 3793.
+
+[3] M. Aglietta et al. (The LVD Collaboration). Phys. Rev. D 58 (1998) 092005.
+
+[4] M. Aglietta et al. (The LVD Collaboration). Phys. Rev. D 60 (1999) 112001.
+
+[5] M. Aglietta et al. (The MACRO and the EAS-TOP Collaborations). Astroparticle
+    Phys. 20 (2004) 641.
+
+[6] I.A. Belolaptikov et al. Astroparticle Phys. 7 (1997) 263.
+
+[7] E. Andres et al. Astroparticle Phys. 13 (2001) 1.
+
+[8] J. Brunner (for the ANTARES collaboration). In: Proc. of the VLVnT Workshop on
+    Technical Aspects of a Very Large Volume Neutrino Telescope in the Mediterrenean
+    Sea (Amsterdam, The Netherlands, 5-8 October 2003) p. 109.
+
+[9] J.A. Formaggio, C.J. Martoff. Ann. Rev. Nucl. Part. Sci. 54 (2004) 361.
+
+[10] Y.-F. Wang et al. Phys. Rev. D 64 (2001) 013012.
+
+[11] V.A. Kudryavtsev, N.J.C. Spooner, J.E. McMillan. Nucl. Instrum. and Meth. in
+    Phys. Res. A 505 (2003) 688.
+
+[12] M.J. Carson et al. Astroparticle Phys. 21 (2004) 667.
+
+
+                                            10
+[13] H.M. Araújo, V.A. Kudryavtsev, N.J.C. Spooner, T.J. Sumner. Nucl. Instrum. and
+    Meth. in Phys. Res. A 545 (2005) 398.
+
+[14] E. Caffau, F. Coren, G. Giannini. Nucl. Instrum. and Meth. in Phys. Res. A 385
+    (1997) 480.
+
+[15] L.W. Alvarez. Science 6 (1970) 832.
+
+[16] L.J. Schultz et al. Nucl. Instrum. and Meth. in Phys. Res. A 519 (2004) 687.
+
+[17] S. Agostinelli et al. (GEANT4 Collaboration). Nucl. Instrum. and Meth. in Phys.
+    Res. A 506 (2003) 250.
+
+[18] A. Fassò, A. Ferrari, J. Ranft, P.R. Sala. FLUKA: a multi-particle transport code,
+    CERN-2005-10 (2005), INFN/TC-05/11, SLAC-R-773; A. Fassò et al., Computing in
+    High Energy and Nuclear Physics 2003 Conference (CHEP2003), La Jolla, CA, USA,
+    March 24-28, 2003, (paper MOMT005) eConf C0303241, hep-ph/0306267.
+
+[19] P. Lipari, T. Stanev. Phys. Rev. D 44 (1991) 3543.
+
+[20] P. Antonioli, C. Ghetti, E.V. Korolkova, V.A. Kudryavtsev, G. Sartorelli. Astropar-
+    ticle Phys. 7 (1997) 357.
+
+[21] V.A. Kudryavtsev, E.V. Korolkova and N.J.C. Spooner. Phys. Lett. B 471 (1999)
+    251.
+
+[22] I.A. Sokalski, E.V. Bugaev, S.I. Klimushin. Phys. Rev. D 64 (2001) 074015.
+
+[23] D. Chirkin, W. Rhode, hep-ph/0407075.
+
+[24] V.A. Kudryavtsev et al. Phys. Lett. B 494 (2000) 175.
+
+[25] S.R. Kelner, R.P. Kokoulin, A.A. Petrukhin. Preprint MEPhI 024-95 (195); S.R.
+    Kelner, R.P. Kokoulin, A.A. Petrukhin. Phys. At. Nucl. 60 (1997) 576.
+
+[26] L.B. Bezrukov, E.V. Bugaev. In: Proc. 17th Intern. Cosmic Ray Conf. (Paris, 1981),
+    Vol. 7, p. 102.
+
+[27] Yu.M. Andreev, E.V. Bugaev. Phys. Rev. D 55 (1997) 1233.
+
+[28] R.P. Kokoulin, A.A. Petrukhin. In: Proc. 12th Intern. Cosmic Ray Conf. (Hobart,
+    1971), Vol. 6, p. 2436.
+
+[29] S.R. Kelner. Phys. At. Nucl. 61 (1998) 448.
+
+[30] L.B. Bezrukov, E.V. Bugaev. Sov. J. Nucl. Phys. 32 (1980) 635; 33 (1981) 847.
+
+[31] E.V. Bugaev, Yu.V. Shlepin. Phys. Rev. D 67 (2003) 034027.
+
+[32] S.I. Dutta, M.H. Reno, I. Sarcevic, D. Seckel. Phys. Rev. D 63 (2001) 094020.
+
+[33] H. Abramowicz, E. Levin, A. Levy., U. Maor. Phys. Lett. B 269 (1991) 465. H.
+    Abramowicz, A. Levy. Preprint DESY 97-251 (1997); hep-ph/9712415.
+
+
+                                           11
+[34] B. Rossi. High energy particles (Prentice Hall, Englewood Cliffs, NJ, 1952).
+
+[35] A. van Ginneken. Nucl. Istrum. and Meth. in Phys. Res. A 251 (1986) 21.
+
+[36] M.S. Mitra, P.K. Sarkar, V.A. Kudryavtsev. Submitted to Nucl. Instrum. and Meth.
+    in Phys. Res. A.
+
+[37] M. Crouch. In Proc. of the 20th International Cosmic Ray Conference (Moscow,
+    USSR, 1987) Vol. 6, p. 165.
+
+[38] A. Tang, G. Horton-Smith, V.A. Kudryavtsev, A. Tonazzo. Phys. Rev. D 74 (2006)
+    053007.
+
+[39] C.E. Waltham (for the SNO Collaboration). In: Proc. of the 27th International
+    Cosmic Ray Conference (Hamburg, Germany, 7-15 August 2001) p. 991.
+
+[40] A. Lindote et al. Paper in preparation.
+
+[41] Results from simulations using GEANT4 have been provided by Dr. Matthew Robin-
+    son (University of Sheffield).
+
+[42] A. Dar. Phys. Rev. Lett. 51 (1983) 227.
+
+[43] M. Aglietta et al. Phys. Atom. Nucl. 66 (2003) 123.
+
+[44] V.A. Kudryavtsev, L. Pandola, V. Tomasello. Eur. Phys. J. A36 (2008) 171.
+
+[45] M. Ambrosio et al. (MACRO Collaboration). Astroparticle Phys. 19 (2003) 313.
+
+[46] M.J. Carson et al. Nucl. Instrum. and Meth. in Phys. Res. A 546 (2005) 509.
+
+[47] H. Wulandari et al. In: Proc. of the 5th International Workshop on the Identification
+    of Dark Matter (Edinburgh, UK, 6-10 September 2004) p. 477; H. Wulandari et al.,
+    hep-ph/0401032.
+
+[48] H.M. Araújo et al. Astroparticle Phys. 29 (2008) 471.
+
+
+
+
+                                           12
+Table 1: Muon intensities and mean energies at various depths underground for standard
+rock and water calculated using the MUSIC code for muon transport and the LVD pa-
+rameterisation for the muon spectrum at surface [3, 4]. Flat surface relief was assumed
+but the curvature of the Earth was taken into account. Column 1 – depth, X, in kilo-
+metres of water equivalent, km w. e.; column 2 – vertical muon intensity in standard
+rock, Iµvert ; column 3 – mean muon energy for the muon flux in standard rock at vertical,
+Eµvert ; column 4 – global intensity (integrated over solid angle for a spherical detector)
+in standard rock for flat surface, Iµ ; column 5 – mean muon energy for the global muon
+flux in standard rock, Eµ ; column 6 – vertical muon intensity in water (ice); column 7
+– mean muon energy for the muon flux in water at vertical; column 8 – global intensity
+(integrated over solid angle for a spherical detector) in water (ice) for flat surface; column
+9 – mean muon energy for the global muon flux in water.
+
+
+
+                          Standard rock                                  Water
+   X          Iµvert       Eµvert       Iµ       Eµ       Iµvert      Eµvert        Iµ        Eµ
+ km w.e.   cm s sr−1
+             −2 −1
+                           GeV      cm−2 s−1     GeV   cm s sr−1
+                                                         −2 −1
+                                                                      GeV        cm−2 s−1     GeV
+   0.5      1.06 × 10−5      69    2.07 × 10−5    93    7.86 × 10−6    80      1.58 × 10−5    111
+   1.0      1.47 × 10−6     120    2.56 × 10−6   150    1.14 × 10−6   144      2.09 × 10−6    186
+   2.0      1.38 × 10−7     197    1.99 × 10−7   225    1.22 × 10−7   246      1.90 × 10−7    291
+   3.0      2.56 × 10−8     248    3.09 × 10−8   271    2.61 × 10−8   322      3.53 × 10−8    362
+   4.0      6.16 × 10−9     284    6.38 × 10−9   301    7.40 × 10−9   379      8.81 × 10−9    412
+   5.0      1.70 × 10−9     308    1.53 × 10−9   319    2.44 × 10−9   421      2.58 × 10−9    447
+   6.0     5.06 × 10−10     324   4.02 × 10−10   332   8.78 × 10−10   453      8.32 × 10−10   474
+   7.0     1.58 × 10−10     335   1.12 × 10−10   341   3.35 × 10−10   477      2.87 × 10−10   492
+   8.0     5.07 × 10−11     344   3.23 × 10−11   347   1.33 × 10−10   495      1.03 × 10−10   506
+   9.0     1.67 × 10−11     349   9.61 × 10−12   351   5.41 × 10−11   508      3.84 × 10−11   516
+  10.0     5.55 × 10−12     351   2.91 × 10−12   353   2.24 × 10−11   519      1.46 × 10−11   524
+
+
+
+
+                                                 13
+                              1
+ Muon survival probability
+
+
+
+                             0.9
+
+                             0.8
+
+                             0.7   0.5 1   2        3   4    5 6      7   8    9   10
+
+
+                             0.6
+
+                             0.5
+
+                             0.4
+
+                             0.3
+
+                             0.2
+
+                             0.1
+
+                              0                 3                4             5             6        7
+                                           10               10            10            10       10
+                                                        Muon energy at surface, GeV
+
+Figure 1: Survival probabilities as functions of muon energy at surface for different depths
+(from 0.5 to 10 km w. e.) in standard rock (black solid curves) and water (red dashed
+curves). Numbers to the right from each solid curve show the depths in km w. e. for
+standard rock. Survival probability curves for water are shifted to the right (for small
+depths) or to the left (for depths larger than 1 km w. e.) relative to those for standard
+rock.
+
+
+
+
+                                                                 14
+-1
+
+
+
+
+                                                    0.5
+  Vertical muon intensity, cm s sr GeV
+
+
+
+                                               -7
+                                         10
+                                               -8   1
+-1
+
+
+
+
+                                         10
+                                               -9   2
+-2 -1
+
+
+
+
+                                         10
+                                              -10   3
+                                         10         4
+                                              -11   5
+                                         10         6
+                                              -12
+                                                    7
+                                         10
+                                                    8
+                                              -13
+                                                    9
+                                         10         10
+                                              -14
+                                         10
+                                              -15
+                                         10
+                                              -16
+                                         10
+                                              -17
+                                         10
+                                              -18
+                                         10
+                                              -19
+                                         10
+                                              -20
+                                         10                         2         3           4        5
+                                                          10   10        10          10       10
+                                                                                  Muon energy, GeV
+
+Figure 2: Muon energy spectra at vertical at different depths in standard rock (black solid
+curves) and water (red dashed curves). Numbers above the curves for standard rock show
+the depth in km w. e. Curves for water are shifted above or below corresponding curves
+for standard rock.
+
+
+
+
+                                                                        15
+-1
+  Vertical muon intensity, cm s sr
+
+
+
+                                           -5
+-2 -1
+
+
+
+
+                                     10
+                                           -6
+                                     10
+                                           -7
+                                     10
+                                           -8
+                                     10
+                                           -9
+                                     10
+                                          -10
+                                     10
+                                          -11
+                                     10                                   Water
+                                          -12
+                                     10
+                                          -13                             Rock
+                                     10
+                                          -14
+                                     10
+                                                2   4   6        8   10   12
+                                                        Vertical depth, km w. e.
+
+Figure 3: Depth – vertical muon intensity relation (muon intensity at vertical as a function
+of depth) for standard rock and water. The data points for standard rock (black triangles)
+are from the compilation of experimental results [37]. The data points for water are from
+the Baikal [6] (blue open circles) and AMANDA [7] (blue filled circles) experiments.
+
+
+
+
+                                                            16
+                          10 6
+       Number of events
+
+
+
+                                   Black solid - MUSIC
+                                   Red dashed - GEANT4
+                          10 5     Blue dotted - FLUKA
+
+
+                          10 4
+
+
+                          10 3
+
+
+                          10 2
+
+
+                          10
+
+
+                           1
+                               0     200    400     600        800         1000
+                                                   Muon energy, GeV
+
+Figure 4: Energy distribution of muons with initial energy of 2 TeV transported through 3
+km of water using MUSIC (black solid curve), GEANT4 (red dahsed curve) and FLUKA
+(blue dotted curve).
+
+
+
+
+                                              17
+       Number of events
+
+
+
+                          10 6
+                                                   Black solid - MUSIC
+                                                   Red dashed - GEANT4
+                          10 5
+
+
+                          10 4
+
+
+                          10 3
+
+
+                          10 2
+
+
+                          10
+
+
+                           1
+                               0   0.5   1   1.5   2        2.5   3   3.5   4   4.5   5
+                                                   Scattering angle, degrees
+
+Figure 5: Distribution of angular deviation for muons with initial energy of 2 TeV trans-
+ported through 3 km of water using MUSIC (black solid curve) and GEANT4 (red dahsed
+curve).
+
+
+
+
+                                                       18
+      Number of events
+
+
+
+                         10 6
+                                                   Black solid - MUSIC
+                                                   Red dashed - GEANT4
+                         10 5
+
+
+                         10 4
+
+
+                         10 3
+
+
+                         10 2
+
+
+                         10
+
+
+                          1
+                              0   2   4   6   8        10 12 14 16 18 20
+                                          Lateral displacement, metres
+
+Figure 6: Distribution of lateral displacement for muons with initial energy of 2 TeV
+transported through 3 km of water using MUSIC (black solid curve) and GEANT4 (red
+dahsed curve).
+
+
+
+
+                                                  19
+                                       -9
+                                x 10
+-1
+
+
+
+
+                                0.14
+  Muon intensity, cm s degree
+
+
+
+
+                                0.12
+-2 -1
+
+
+
+
+                                 0.1
+
+
+                                0.08
+
+
+                                0.06
+
+
+                                0.04
+
+
+                                0.02
+
+
+                                   0
+                                        0   50   100 150 200 250 300 350
+                                                   Azimuthal angle, degrees
+
+Figure 7: Azimuthal distribution of single muon intensities in the underground Gran Sasso
+Laboratory for zenith angles up to 60◦ as measured by LVD [4, 43] (data points with error
+bars) and generated with MUSUN (dashed curve). LVD acceptance as a function of zenith
+and azimuthal angles has been taken into account when generating muons. Azimuthal
+angle is calculated in the LVD reference system [3, 4, 43].
+
+
+
+                                                      20
+ Number of muons
+
+
+
+
+                   10 4
+
+
+
+                   10 3
+
+
+
+                   10 2
+
+
+
+                   10
+
+
+
+                    1
+                                      2             3        4        5
+                        1   10   10            10       10       10
+                                           Muon energy, GeV
+
+Figure 8: Energy spectrum of muons as generated by MUSUN for the underground Gran
+Sasso Laboratory.
+
+
+
+
+                                          21
+                    160
+ Number of events
+
+
+
+
+                    140
+                    120
+                    100
+                    80
+                    60
+                    40
+                    20
+                     0
+                      350
+                        300
+                          250                                                             1
+                             200                                                    0.9
+                        Az                                            0.6   0.7 0.8
+                               150                                0.5
+                           im    100                    0.3   0.4                   gle
+                            ut                  0.1 0.2                  i t h an
+                              h,         50 0
+                                                                   fz en
+                                   de       0
+                                                        o s i ne o
+                                     g                C
+
+Figure 9: A lego plot of the number of generated muons (using MUSUN) as a function
+of zenith and azimuthal angles in the Hall A of the underground Gran Sasso Laboratory.
+Azimuthal angle is calculated in the LVD reference system [3, 4, 43].
+
+
+
+
+                                                 22
+

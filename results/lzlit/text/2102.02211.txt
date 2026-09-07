@@ -1,0 +1,1526 @@
+                                                Draft version February 5, 2021
+                                                Typeset using LATEX twocolumn style in AASTeX63
+
+
+
+
+                                                Substructure at High Speed II: The Local Escape Velocity and Milky Way Mass with Gaia DR2
+                                                                                          Lina Necib1, 2, 3 and Tongyan Lin4
+                                                        1 Walter Burke Institute for Theoretical Physics, California Institute of Technology, Pasadena, CA 91125, USA
+                                                       2 Center for Cosmology, Department of Physics and Astronomy, University of California, Irvine, CA 92697, USA
+                                                          3 Observatories of the Carnegie Institution for Science, 813 Santa Barbara St., Pasadena, CA 91101, USA
+                                                                   4 Department of Physics, University of California San Diego, La Jolla, CA 92093, USA
+arXiv:2102.02211v1 [astro-ph.GA] 3 Feb 2021
+
+
+
+
+                                                                                                       ABSTRACT
+                                                       Measuring the escape velocity of the Milky Way is critical in obtaining the mass of the Milky
+                                                     Way, understanding the dark matter velocity distribution, and building the dark matter density
+                                                     profile. In Necib & Lin (2021), we introduced a strategy to robustly measure the escape velocity.
+                                                     Our approach takes into account the presence of kinematic substructures by modeling the tail of the
+                                                     stellar distribution with multiple components, including the stellar halo and the debris flow called the
+                                                     Gaia Sausage (Enceladus). In doing so, we can test the robustness of the escape velocity measurement
+                                                     for different definitions of the “tail” of the velocity distribution, and the consistency of the data with
+                                                     different underlying models. In this paper, we apply this method to the second data release of Gaia
+                                                     and find that a model with at least two components is preferred. Based on a fit with three bound
+                                                     components to account for the disk, relaxed halo, and the Gaia Sausage, we find the escape velocity of
+                                                     the Milky Way at the solar position to be vesc = 484.6+17.8−7.4 km/s. Assuming a Navarro-Frenck-White
+                                                     dark matter profile, and taken in conjunction with a recent measurement of the circular velocity at
+                                                     the solar position of vc = 230 ± 10 km/s, we find a Milky Way concentration of c200 = 13.8+6.0  −4.3 and a
+                                                     mass of M200 = 7.0+1.9−1.2 × 1011
+                                                                                       M  , which is considerably  lighter than previous measurements.
+
+                                                               1. INTRODUCTION                                    curred 6 to 10 billion years ago between a galaxy with a
+                                                Since the initial discovery of dark matter (DM)                   stellar mass of ∼ 108−9 M and the Milky Way (Myeong
+                                              (Zwicky 1933), estimating the total mass and density                et al. 2018; Deason et al. 2018; Lancaster et al. 2018).
+                                              profile of the Milky Way has been of crucial importance,            This substructure is kinematically distinct from the stel-
+                                              providing a window into estimating the mass of the un-              lar halo, with stars on extremely radial orbits (Deason
+                                              seen DM. Various methods have been suggested to tackle              et al. 2018), and shifts the peak of the stellar speed dis-
+                                              this question, from modeling the density distributions              tribution to lower values compared to the Standard Halo
+                                              of the different Galactic components (Caldwell & Os-                Model (Necib et al. 2019a).
+                                              triker 1981), to the study of the fastest moving stars                In Necib & Lin (2021), we introduced a method to
+                                              (Alexander 1982), to fitting the local escape velocity of           account for the presence of kinematic substructures in
+                                              the stars as a way to constrain the local gravitational             measurements of the escape velocity. Our work builds
+                                              potential (Leonard & Tremaine 1990), to more complex                on the approach of Leonard & Tremaine (1990), which
+                                              methods that involve using large stream structures such             modeled the tail of the stellar speed distribution as
+                                              as the Sagittarius stream to constrain the Milky Way                          f (v) ∝ (vesc − v)k ,      vmin < v < vesc   (1)
+                                              potential at large distances (Gibbons et al. 2014; Dier-
+                                              ickx & Loeb 2017).                                                  where vesc is the escape velocity, k is the slope, and vmin
+                                                In recent years, a number of new phase-space struc-               is an arbitrary speed above which we define the “tail”
+                                              tures have been discovered, which speaks to the success             of the distribution. Many papers have used this for-
+                                              of hierarchical structure formation (White & Rees 1978)             mulation to infer the local escape velocity by fitting for
+                                              and also suggests the need to re-examine methods to ex-             the parameters vesc and k with various datasets and as-
+                                              tract the Milky Way mass. One of the many discoveries               sumptions (Smith et al. 2007; Piffl et al. 2014; Monari
+                                              pioneered by Gaia was the Gaia Sausage or Gaia Ence-                et al. 2018; Deason et al. 2019; Koppelman & Helmi
+                                              ladus (Belokurov et al. 2018; Helmi et al. 2018), which             2020). These studies have found large correlations be-
+                                              we will refer to as the Sausage in the remainder of this            tween vesc and k, and subsequently large errors on the
+                                              paper. The Sausage is the remnant of a merger that oc-              escape velocity measurements. In order to reduce the er-
+2
+
+ror bars associated with vesc , works such as Leonard &         used in Sec. 2, present the analysis and discuss best fit
+Tremaine (1990); Smith et al. (2007); Piffl et al. (2014);      results in Sec. 3, and study implications for the mass of
+Monari et al. (2018); Deason et al. (2019) argue for im-        the Milky Way in Sec. 4.
+posing prior ranges on k based on simulations. However,
+Grand et al. (2019) and Necib & Lin (2021) showed that                                  2. DATA
+this approach can lead to underestimates of the escape
+                                                                   We use Gaia DR2 and focus on the subset of stars
+velocity if the prior range on k is too low, or overesti-
+                                                                with radial velocity measurements (Gaia Collaboration
+mates of vesc if the prior range on k is too high compared
+                                                                et al. 2016, 2018) such that we can reconstruct the stellar
+to the Milky Way.
+                                                                speed. This subset is already a rather local sample of
+   In Necib & Lin (2021), hereafter Paper I, we devel-
+                                                                stars, but in order to restrict to a local measurement
+oped a strategy for measuring vesc that does not rely on
+                                                                of the escape velocity, we implement a Galactocentric
+artificial prior ranges, and that accounts for the pres-
+                                                                distance cut of rGC ∈ [7.0, 9.0] kpc.
+ence of substructure by including multiple bound com-
+                                                                   We define the distance measurement as the inverse of
+ponents following Eq. (1). In particular, the choice of a
+                                                                the measured parallax (1/$). In order to make sure
+rather low vmin = 300 km/s is standard in the literature
+                                                                this assumption is valid, we also implement a cut on the
+in order to increase statistics, but it is not clear that
+                                                                parallax error, such that the fractional parallax error for
+the speed distribution for v > vmin can be described by
+                                                                each star is less than 10%. We use Bovy (2011) to an-
+only one power-law component. For instance, in simu-
+                                                                alytically transform the proper motions and the radial
+lated halos with major mergers, the speed distribution
+                                                                velocities of Gaia into Galactocentric Cartesian coor-
+can deviate significantly from the power-law form due to
+                                                                dinates, using the Local Standard of Rest (U, V, W ) =
+substructure (Grand et al. 2019). Since it is known that
+                                                                (11.1, 239.08, 7.25) km/s (Schönrich et al. 2010). We
+the Sausage contributes a large fraction of non-disk stars
+                                                                assume the position of the Sun in these coordinates is
+in the solar neighborhood (Necib et al. 2019a,b), there
+                                                                (−8.12, 0, 0.02) kpc (Bennett & Bovy 2019).
+is strong motivation to include multiple components in
+                                                                   Of the stars passing the cuts above, the majority have
+modeling the speed distribution.
+                                                                fractional errors on the measured speed of (∆v)/v < 5%
+   To test the idea that vesc measurements might be bi-
+                                                                while a small number have fractional errors as large as
+ased by kinematic substructures, in Paper I we gener-
+                                                                10% (see App. A). In Paper I, we showed with mock
+ated mock data that contains two components following
+                                                                data that parameter values could be robustly inferred
+Eq. (1), with a common vesc but different k. We at-
+                                                                with datasets where measurement errors are capped at
+tributed these to a “relaxed” stellar halo component,
+                                                                5% or 20 km/s, but that results might become biased
+which has a larger slope k ∼ 2-4, and to a Sausage com-
+                                                                if errors become larger than 10%. In this paper, we
+ponent, with a lower slope kS = 1. These slopes are
+                                                                therefore place a cut of (∆v)/v ≤ 5% on the data sample
+based on the analytic arguments of Deason et al. (2019)
+                                                                to ensure the data is of comparable quality as the mocks
+for tracer populations with different levels of velocity
+                                                                tested in Paper I. For the entire stellar sample where the
+anisotropy. When vmin is low, we found that a single-
+                                                                fractional speed error is ≤ 5%, we find 1862 stars with
+component fit to the mock data tends to overestimate
+                                                                measured speed greater than or equal 300 km/s. This
+vesc and also give larger error bars on vesc , but as vmin is
+                                                                sample size decreases to 161 stars for v > 400 km/s.
+increased the single-component fit will converge to the
+                                                                   In previous works such as Monari et al. (2018); Dea-
+correct value. A key conclusion of Paper I is that a ro-
+                                                                son et al. (2019), only retrograde stars were modeled in
+bust inference of vesc requires testing fit dependence on
+                                                                order to avoid contamination from the disk. However,
+vmin and on the number of components.
+                                                                retrograde data also yields lower statistics, with only 442
+   In this work, we use the methods developed in Paper I
+                                                                stars above 300 km/s and 66 above 400 km/s, making
+to estimate the escape velocity of the Milky Way at the
+                                                                it more difficult to draw strong conclusions from such
+solar position. We perform the analysis on the second
+                                                                a small sample. Instead, with the analysis pipeline of
+data release of Gaia (Gaia DR2) subset that includes
+                                                                Paper I, we can easily account for possible disk contam-
+line-of-sight velocity measurements and passes the qual-
+                                                                ination by introducing an additional component in the
+ity cuts of Sec. 2, as well as the subset of this sample with
+                                                                model. We will therefore consider two sets of analyses:
+stars on retrograde motion. We test for the dependence
+                                                                with the Gaia DR2 subset as discussed above, where
+of vesc on both vmin and number of components in order
+                                                                one of the components in our fit may be attributed to
+to ensure that the model selection is self-consistent and
+                                                                the disk, and with the subset of retrograde stars only.
+that results are robust to changes in data selection. This
+                                                                As we will see below, in fitting only the retrograde stars
+paper is organized as follows: we discuss the datasets
+                                                                we are not able to obtain a robust estimate of vesc .
+                                                                                                                                                                                                           3
+                   10−1                                                               10−1                                                               10−1
+                            N =1862                     Data                                   N =1862                     Data                                   N =1862                     Data
+                            vmin =300 km/s              Halo                                   vmin =300 km/s              Halo                                   vmin =300 km/s              Disk
+                   10−2                                 Outliers
+                                                                                      10−2                                 Outliers
+                                                                                                                                                         10−2                                 Outliers
+  f (|~v |) [km/s]−1
+
+
+
+
+                                                                     f (|~v |) [km/s]−1
+
+
+
+
+                                                                                                                                        f (|~v |) [km/s]−1
+                                                        Sum                                                                Sausage                                                            Halo
+                   10−3                                                               10−3                                 Sum                           10−3                                 Sausage
+                                                                                                                                                                                              Sum
+                   10−4                                                               10−4                                                               10−4
+
+                   10−5                                                               10−5                                                               10−5
+
+                   10−6                                                               10−6                                                               10−6
+                      300      400     500      600    700     800                       300      400     500      600    700     800                       300      400     500      600    700     800
+                                        |~v | [km/s]                                                       |~v | [km/s]                                                       |~v | [km/s]
+
+
+Figure 1. Best fit results obtained from the full Gaia data with one (left), two (middle), and three (right) bound components.
+The bound components are labeled with decreasing k as Disk, Halo, and Sausage for convenience and in line with our expectation
+for how different components might behave, but the specific assignment cannot be determined from the fit. The solid lines are
+the best fit distributions, while the shaded regions are the 68% containment regions obtained from the posteriors of the model
+parameters. The single-component model does not give a good fit to the data, while the results of the two- and three-component
+fits are largely consistent with each other and fit the data well.
+
+                                         3. RESULTS                                                                                                          3.1. All Data
+  We first briefly summarize the analysis pipeline, while                                                            We begin with the entire dataset satisfying the qual-
+the complete details can be found in Paper I. We model                                                           ity cuts of Sec. 2 and with vmin = 300 km/s. Because
+the stellar speed distribution above vmin with one, two,                                                         of the possibility of disk contamination, we consider up
+or three bound components, as well as an outlier com-                                                            to three bound components. We will refer to the com-
+ponent to account for unbound stars. Each of the bound                                                           ponents in order of decreasing k as the Disk, Halo, and
+components has a common vesc while the outlier distri-                                                           Sausage for convenience, but note that in this analysis
+bution can extend above vesc . Explicitly, the likelihood                                                        we cannot empirically determine a physical origin for
+function for a single star is                                                                                    each of the bound components.
+                                                       X                                                             Fig. 1 shows the best fit distributions obtained with
+ L = f pout (vobs |σout )+(1−f )                             fi pi (vobs |vesc , ki ), (2)                       one, two, or three bound components. First, we see that
+                                                        i                                                        the single component fit (left panel) is not sufficient to
+                                                                                                                 describe the data. This is due to the fact that the fit
+where vobs is the observed speed, fi the fractional contri-                                                      for the bound component is anchored at the low end
+bution of the i-th component to the bound stars, and pi                                                          |~v | ∼ 300 km/s, where there is a steep slope or high
+is the distribution of the i-th bound component. To ob-                                                          k. This leads to an underestimate of the number of
+tain pi , we consider Eq. (1) with vesc and ki and convolve                                                      stars at v ∼ 400 km/s, which is partially compensated
+it with the measurement error for that star. The bound                                                           for by increasing the outlier fraction, ultimately leading
+components are ordered such that ki > ki+1 when there                                                            to an overestimate of the number of stars at |~v | > 500
+are multiple components. To describe unbound out-                                                                km/s. In Paper I, we showed that when the underlying
+lier stars, we assume pout is a Gaussian function with                                                           model contains multiple bound components, a single-
+a dispersion of σout and that f is the outlier fraction.                                                         component fit will bias vesc towards larger values. In-
+Although the three component fit was not discussed in                                                            deed, for this fit we found vesc = 735.9+50.5
+                                                                                                                                                          −63.4 km/s.
+Paper I, it is a natural extension to include another com-                                                           Meanwhile, we see that the two and three compo-
+ponent with the same vesc but a third slope k3 and an                                                            nent models do provide good fits to the data and con-
+associated fraction f3 . For the total likelihood, we sum                                                        sistent results. The two function fit yields vesc =
+over all stars in the dataset.                                                                                   519.6+17.4
+                                                                                                                        −15.6 km/s and the three function fit yields vesc =
+   We used the Markov Chain Monte Carlo emcee                                                                    484.6+17.8
+                                                                                                                        −7.4 km/s, which are consistent within two stan-
+(Foreman-Mackey et al. 2013) to find the best fit pa-                                                            dard deviations. In both fits, we expect that the first
+rameters, using 200 walkers, 500 steps for the burnin                                                            component, or the highest k component, will correspond
+stage, and 2000 steps for each run. We assume linear                                                             to any disk contamination which drops steeply in v. In-
+priors in ki and fi and log priors in f, σout . We take a                                                        deed, we find that the result for k = k1 pushes up against
+theory prior that is uniform in 1/vesc in order to favor                                                         our default prior of ki ∈ [0.1, 15] on the upper end; in-
+lower vesc ; note that for our main results, we find that                                                        creasing the prior range to ki ∈ [0.1, 20], we still find
+the vesc posteriors are sharply peaked, such that this                                                           a result that pushes at the edge of the prior. The re-
+prior has a negligible effect on the results.
+4
+
+                          1000
+                                 Single Function         Three Functions       Gaia Data
+                                                                               Err=5.0%
+                           900   Two Functions
+
+                           800
+            vesc [km/s]
+
+
+
+                           700
+
+                           600
+
+                           500
+                                   N =1862          N =769           N =425            N =250             N =161
+                           400
+                                 300               325             350               375                400
+                                                               vmin [km/s]
+
+Figure 2. Posteriors in the escape velocity for different values of vmin , from fitting the dataset satisfying quality cuts and
+fractional speed error ≤ 5%. The posteriors for the single-component fits (shaded blue) drift with vmin for vmin < 375 km/s,
+suggesting the need for an additional component in the fit. The posterior distributions for the two-component fit (shaded red)
+are much more stable with vmin . For vmin = 300 km/s only, we show the posterior from a three-component fit (shaded green
+and dashed). The labels N indicate the number of stars in each sample.
+
+sulting slope for this disk component is k = 18.41+1.15
+                                                     −1.94
+and k = 18.81+0.84
+                −1.45 for the two and three function fits,                    0
+respectively. While it is expected that the disk distri-
+bution drops sharply for |~v | & 300 km/s, it might be                     −25
+concerning to have a fit pushing against the prior here.
+Therefore, we next turn to the dependence of our results
+                                                                           −50
+                                                                     AIC
+
+
+
+
+on vmin . Studying the fit dependence with increasing                                                          Gaia Data
+vmin will provide additional tests of robustness as well                                                        Err=5.0%
+                                                                           −75
+as further eliminate the disk contamination.
+  Our      analysis    is   repeated    for   vmin      ∈                                                       AIC2 - AIC1
+                                                                           −100
+[300, 235, 350, 375, 400] km/s. As shown in Paper I, this                                                       AIC3 - AIC2
+provides a consistency test for the underlying model;                                                           AIC3 - AIC1
+                                                                           −125
+a vesc posterior which drifts with vmin suggests that
+the model is missing some important component. In                              300    320       340      360       380        400
+Fig. 2, we show the posterior distribution of the es-                                            vmin [km/s]
+cape velocity for the single and two component fits for
+different values of vmin . As vmin increases, vesc in the          Figure 3. We use the ∆AIC to compare goodness-of-fit be-
+single-component fit drifts towards lower values, con-             tween models with different numbers of bound components.
+verging towards similar results for vmin = 375 km/s and            The plot shows results using the full Gaia dataset, and the
+vmin = 400 km/s. This indicates that additional com-               subscript indicates number of components in the fit. When
+                                                                   ∆AIC is negative, the first model is preferred.
+ponents are needed to describe the data below |~v | ∼ 375
+km/s, but that it is dominated by a single component
+for vmin ≥ 375 km/s. Indeed, the posterior distributions           fit and vmin = 300 km/s. This result is consistent
+for the two-component fit are much more stable with                with the posteriors for single and two-component fits
+vmin and consistent with the single component fit for              at larger vmin . (We do not show the posteriors for the
+vmin ≥ 375 km/s. However, for vmin = 300 km/s the                  3-component fit and vmin ≥ 325 km/s because those
+2-component posterior is peaked at higher vesc values,             are largely unconstrained, indicating that we have too
+suggesting that a third component might be present.                many degenerate parameters.)
+Thus, we also show the posterior for the 3-component                  In order to compare goodness-of-fit with different
+                                                                   numbers of bound components, we calculate the AIC
+                                                                                                                                5
+
+(Akaike 1974) as discussed in Paper I. The AIC is de-                           10−1
+fined as AIC = 2s − 2 log(L̂) where s is the number                                      N =442                      Data
+of model parameters and log(L̂) is the maximum log                                       vmin =300 km/s              Halo
+                                                                                10−2                                 Outliers
+likelihood. To compare models, we compute the differ-
+
+
+
+
+                                                               f (|~v |) [km/s]−1
+ence ∆AICab = AICa − AICb between fits with a or                                                                     Sausage
+b bound components, where the model with the lowest                             10−3                                 Sum
+AIC is preferred. We show the resulting ∆AIC in Fig. 3,
+where we compare the model with one, two, and three                             10−4
+components. For vmin = 300 km/s, where we expect
+a large disk contamination, we find that the two and                            10−5
+three component models are strongly preferred over a
+single function case. This is visible from the first panel
+of Fig. 1, where a single bound component clearly does                          10−6
+                                                                                   300      400     500      600    700     800
+not describe the data as well. As expected however, the
+single function is preferred for vmin ≥ 375 km/s. This                                               |~v | [km/s]
+is because at high |~v | the distribution is dominated by
+a single distribution, and extra model parameters are         Figure 4. Two function fit only to the retrograde stars sat-
+                                                              isfying quality cuts and with fractional speed errors capped
+penalized. It is interesting to see that the three function
+                                                              at 5%. The bound components and outlier population are
+fit is marginally better than the two function fit only       much more poorly constrained than the fits to all stars, and
+for vmin = 300 km/s, beyond which it leads to an over-        we do not obtain a robust vesc result.
+fit. This implies that the data is determined by three
+components for vmin = 300 km/s, but that the disk is          range of slopes in simulations with Sausage-like mergers,
+largely subdominant past vmin = 325 km/s.                     kS ∈ [1, 2.5], as obtained by Deason et al. (2019). In the
+   From this discussion, we see a consistent story emerge:    same fit, the fractional contributions of the Halo and
+there is a sharply peaked component of stars near |~v | ∼     Sausage are 0.43+0.08            +0.13
+                                                                                 −0.15 and 0.22−0.08 , respectively. This
+300 km/s, along with two other bound components that          leads to the Sausage component being 0.34−0.12+0.20
+                                                                                                                   of these
+dominate at higher speeds. A single component domi-           non-disk stars for |~v | > 300 km/s. Using the values
+nates the tail for |~v | > 375 km/s. These could already be   of the best fit slopes, we find that the Sausage compo-
+seen in the three-component fit shown in Fig. 1, but is       nent rises to 0.59+0.21
+                                                                                  −0.17 of non-disk stars for |~v | > 350
+further supported by studying fit dependence with vmin        km/s. This is consistent with the Sausage fraction ob-
+and the ∆AIC. We conclude that a single-component             tained in the two-component fit with vmin = 350 km/s,
+model is not a self-consistent description of the data for    fS = 0.75+0.07
+                                                                         −0.13 . These fractional contributions are im-
+low vmin . Our analysis allows us to identify the “tails”     portant in understanding the composition of the DM dis-
+where a single or two-component fit is actually robust.       tribution and impacts predicted signals in DM searches,
+In Sec. 3.3, we will summarize the key results for vesc       which was studied in Necib et al. (2018, 2019c).
+and also compare with previous studies.
+   It is important to note that our framework only shows                                    3.2. Retrograde Data
+that this data is better modeled by multiple components
+                                                                We next perform the same analysis with retrograde
+with power law distributions. It cannot show that each
+                                                              stars only. Previous studies have applied this cut on
+component has a distinct physical origin. Doing so re-
+                                                              the data to avoid disk contamination. Similarly, here
+quires further studies. Nevertheless, the behavior of the
+                                                              we consider a fit with two bound components since we
+different components appears to be consistent with con-
+                                                              do not expect any disk contribution for vmin = 300
+tributions from the Disk, relaxed Halo component, and
+                                                              km/s. We show the resulting fit in Fig. 4, where we
+Sausage, and here we summarize the fit results for those
+                                                              see that the 68% containment region (shaded bands) for
+components. Additional results can be found in App. B.
+                                                              all the components is much larger compared to the fit
+   As mentioned in Paper I, we do not have a priori in-
+                                                              to all stars in Fig. 1. It is expected that the uncer-
+formation about which component is the Halo and which
+                                                              tainties on the components should be larger given that
+is the Sausage; the labels of Fig. 1 are based on the as-
+                                                              the statistics is about 2.5 times lower, but the spread
+sumption that the Sausage has the lowest slope k. Work-
+                                                              in the bands here reflects more than that. Focusing on
+ing with that assumption, we find that the posterior on
+                                                              the tail of the bound components, we see that there is
+the slope of the Sausage is kS = 0.88+0.81
+                                       −0.49 from the three
+                                                              significantly more spread in vesc and in fact the fit gives
+function fit at vmin = 300 km/s. This is similar to the
+                                                              vesc = 710.3+216.5
+                                                                           −177.9 km/s.
+6
+
+    Dataset    Functions    vmin        vesc       M200,tot
+                           [km/s]     [km/s]      [1011 M ]                                     3 Func, vmin = 300 km/s
+    All data      3         300     484.6+17.8     7.0+1.9                                      2 Func, vmin = 350 km/s
+                                         −7.4         −1.2               0.03
+                                                                                                1 Func, vmin = 375 km/s
+    All data      2         350     498.1+63.9
+                                         −16.0     7.7+2.6
+                                                      −1.5
+                                                                                                Retrograde, vmin = 300 km/s
+    All data      1         375     515.1+113.3
+                                         −25.0     8.8+3.9
+                                                      −2.0
+                                                                         0.02
+
+
+
+
+                                                                  a.u.
+Table 1. Best fit values of the escape velocity at the solar
+position, as well as the total mass of the Milky Way obtained
+through the assumptions of Sec. 4.                                       0.01
+
+
+    The reason for the much larger uncertainty in vesc here
+                                                                         0.00
+is due to the difficulty in constraining the outlier pop-
+ulation. In particular, with the dataset in Fig. 4, it is                       400         600            800            1000
+difficult to distinguish whether the stars with speeds of                                      vesc [km/s]
+500-600 km/s are likely to come from the outlier com-
+ponent or the bound components. We can further un-              Figure 5. Posteriors for vesc from fits to all data with 1, 2, or
+derstand this outlier confusion by looking at the escape        3 bound components, and from a fit to retrograde data with
+velocity posterior, which is shown in Fig. 5. Here we           2 bound components. Full data posterior distributions have
+see that the posterior for the 2-component fit to retro-        been normalized to unity, while the retrograde data has been
+grade stars is actually double-peaked. One peak is at low       multiplied by a factor of 6 to clarify the non-convergence of
+vesc , at values roughly consistent with fits to all stars.     the posterior. For each of fits to all data, we selected the
+                                                                lowest vmin valid for that number of components. For the
+Meanwhile, the peak at high vesc is correlated with a
+                                                                retrograde data, we do not obtain a convergent result.
+lower outlier fraction, where those high speed stars near
+|~v | ∼ 600 km/s can also partly be modeled with the
+bound components.                                               see that the results for 1, 2, or 3 bound components are
+    As a result, taking vesc = 710.3+216.5                      also all consistent with each other.
+                                     −177.9 km/s for ret-
+rograde stars is not a robust result. In App. C, we                Previous studies all used a single function of the form
+show the fit to retrograde stars for different vmin and         of Eq. (1). To deal with a large degeneracy in vesc and k,
+see similar results with non-convergent fit results and         they typically impose an artificial prior on the slope k.
+double-peaked posteriors. This is expected since the            Piffl et al. (2014); Monari et al. (2018) adopt a prior of
+outlier confusion cannot be removed with larger vmin .          k ∈ [2.3, 3.7], obtained using cosmological simulations
+In fact, the larger number of high-speed stars in the full      and finding the slopes of the tail of the halo stars in
+data sample helps pin down the outlier component and            their Milky Way realizations. Meanwhile, Deason et al.
+thus also vesc of the bound components. With limited            (2019) used a lower prior of k ∈ [1, 2.5] given that cos-
+statistics in the retrograde sample, modeling the tail of       mological simulations with merger events similar to the
+a distribution is particularly sensitive to shot noise in       Gaia Sausage had slopes in that range. These priors
+the outliers. Furthermore, applying a cut for retrograde        strongly affect the measured escape velocity, giving rise
+motion might be shaping the sample such that it is not          to nonconvergent results as can be seen in the corner
+kinematically complete. The possible presence of addi-          plot of Deason et al. (2019).
+tional kinematic structures was studied in Paper I by the          As discussed in Paper I, the use of a single function
+introduction of small peaked structures, and we found           where the fit requires two leads to an averaging of the
+that it could strongly bias the results. Given these fac-       slopes k. For example, in vmin = 350 km/s where the
+tors, we will consider the fit to all of the data as our        two function fit suffices, we find two components with
+main result.                                                    k = 12.72+4.09                   +1.29
+                                                                            −3.92 and kS = 1.34−0.51 , while a single func-
+                                                                                           +4.45
+                                                                tion fit yields k = 8.13−3.68 . One can see in this case
+          3.3. Comparison with previous results                 that although kS is indeed within the range suggested
+  The main results for vesc are summarized in Fig. 5            by Deason et al. (2019), using a single function fit and
+and Table 1. For these fits, we selected the lowest vmin        a limited prior in k can artificially inflate the escape
+that was consistent with the number of bound compo-             velocity value.
+nents in the fit. This was determined by the lowest                Given this, it is not surprising that our results for vesc
+vmin ∈ [300, 325, 350, 375, 400] km/s that yielded con-         are lower than previous studies. Deason et al. (2019)
+vergent and stable results. From Fig. 5 and Table 1, we         finds vesc = 528+24 −25 km/s with a prior range of k ∈
+                                                                                                                           7
+
+[1, 2.5], while Monari et al. (2018) finds vesc = 580 ± 63              30
+km/s with a prior range of k ∈ [2.3, 3.7]. Our results                                                        vesc (r )
+are consistent with a recent study by Koppelman &                       25                                    vcirc (r )
+Helmi (2020). From an analysis including radial ve-
+locities and without imposing a prior in k, they find                   20
+vesc = 497+53−20 km/s where the quoted errors are the
+
+
+
+
+                                                                 c200
+99% confidence intervals. Using a larger sample of stars                15
+with only tangential velocities, they report a lower limit
+of vesc = 497+40
+               −24 km/s at the solar radius, again giving               10
+the 99% confidence interval.
+                                                                         5
+           4. MASS OF THE MILKY WAY                                      11.4    11.6       11.8       12.0       12.2
+   The escape velocity at a certain radius is related to                                log10 (M200 ) [M ]
+the gravitational potential Φ. Therefore, measurement
+of the escape velocity can translate to a measurement of     Figure 6. Mass and concentration of the DM halo, con-
+the mass of the Milky Way, once profiles of the differ-      strained by the circular velocity measurement (blue) from
+ent mass components     are assumed. For an isolated halo    Eilers et al. (2019), and by the escape velocity (red) studied
+                                                             in this work. For vesc we take the posterior from the three-
+          p
+vesc (r) = 2|Φ(r)|, but in practice we must select a lim-
+iting radius beyond which stars can become unbound. A        function fit and vmin = 300 km/s. The contours are 68% and
+                                                             95% CL, and the black lines show the combined constraints.
+more realistic assumption is that stars are bound within
+a few times r200 , where r200 is the radius at which the
+galaxy’s mass is 200 times the critical mass of the uni-       To translate the posterior distribution of vesc ,
+verse. For ease of comparison, we will adopt the same        marginalized over all other parameters, into a posterior
+definition as Deason et al. (2019)pby taking the limiting    in the enclosed mass-concentration M200 − c200 space,
+radius as 2r200 , with vesc (r ) = 2|Φ(r ) − Φ(2r200 )|.     we use galpy (Bovy 2015) to compute the escape ve-
+   To recover the mass of the Milky Way, we make the         locity of the summed potentials assumed above in a grid
+following assumptions on the different baryonic and DM       of M200 and c200 . We then plot the PDF of each point in
+components, similarly to Deason et al. (2019), which         M200 and c200 using the interpolated version of the es-
+assumes model I of Pouliasis et al. (2017):                  cape velocity posterior distribution, and show in Fig. 6
+                                                             the 68% and 95% containment regions based on vesc .
+   • The bulge is modeled as a Plummer profile (Plum-        Similarly, we overlay constraints based on the circular
+     mer 1911) of mass Mbulge = 1.067 × 1010 M and           velocity vcirc = 230±10 km/s from Eilers et al. (2019).
+     a scale radius b = 0.3 kpc.                             This is important as the escape velocity gives informa-
+                                                             tion on the mass of the Milky Way at large distances,
+   • The thin disk is modeled as a Miyamoto-                 while the circular velocity constrains it within the solar
+     Nagai profile (Miyamoto & Nagai 1975) of mass           circle.
+     Mthin disk = 3.944 × 1010 M , a scale radius              We now compare our findings to the literature. We
+     rthin disk = 5.3 kpc, and a height radius of            define the total mass of the Milky Way as the mass con-
+     zthin disk = 0.25 kpc.                                  tained within r200 of the DM halo, in addition to the
+                                                             baryons, including the bulge, thin, and thick disk as de-
+   • The thick disk is modeled as Miyamoto-Nagai pro-        scribed above. In Fig. 7, we show the results for the total
+     file of mass Mthick disk = 3.944 × 1010 M , a scale     mass based on the four analyses summarized in Sec. 3.3.
+     radius rthick disk = 2.6 kpc, and a height radius of    For analyses with higher vmin , the errors on the escape
+     zthick disk = 0.8 kpc.                                  velocity increases, as explicitly shown in Table 1. This
+                                                             leads to an increase in the error estimate of the mass of
+   • The Dark Matter profile is modeled as an Navarro-       the Milky Way.
+     Frenk-White (NFW) (Navarro et al. 1996) profile           For reference, we also show the masses found by
+     of mass M200 and concentration parameter c200 ,         Monari et al. (2018); Deason et al. (2019); Koppelman
+     which we will fit for. We take the Hubble con-          & Helmi (2020). We note there is a small difference in
+     stant H = 70 km s−1 Mpc−1 , the matter abun-            convention, where Monari et al. (2018) and Koppelman
+     dance ΩM = 0.3 (Ade et al. 2016), and the over-         & Helmi (2020) define the escape velocity cutoff as 3r340
+     density taken with respect to the critical mass of      and not 2r200 as we do, although we do not expect more
+     the universe.
+8
+
+                             800
+                                                                                                                                                                                                                           troduce a ∼ 20% error on the mass estimate. Drop-
+                                                                                                                                                                                                                           ping the error on the circular velocity from 10 km/s to
+
+
+
+
+                                                                                                                                  Retrograde, vmin = 300 km/s
+                             750                                                                                                                                                                                           5 km/s would reduce this error down to ∼ 15%. The
+                             700                                                                                                                                                                                           choice of baryonic model also affects the estimate of
+                                                                                                                                                                                                                           the total mass of the Milky Way. More explicitly, if
+
+
+
+
+                                                                                                    1 Func, vmin = 375 km/s
+                                                                     2 Func, vmin = 350 km/s
+     vesc [km/s]
+
+
+
+
+                                    3 Func, vmin = 300 km/s
+
+
+                             650
+                                                                                                                                                                                                                           we were to adopt the baryonic model used in Piffl et al.
+
+
+
+
+                                                                                                                                                                                                       Koppelman+ (2020)
+                                                                                                                                                                   Monari+ (2018)
+
+                                                                                                                                                                                     Deason+ (2019)
+                             600                                                                                                                                                                                           (2014) (which is based on Xue et al. (2008)), we find
+                                                                                                                                                                                                                           M200,tot = 6.4+1.3        11
+                                                                                                                                                                                                                                            −0.9 × 10 M , or a ∼ 10% difference
+                             550
+                                                                                                                                                                                                                           from the value we quote above. A better understanding
+                             500                                                                                                                                                                                           of the baryonic model of the Milky Way as well as a
+                             450
+                                                                                                                                                                                                                           more accurate measurement of the circular velocity are
+                                                                                                                                                                                                                           therefore important in improving the total Milky Way
+                                                                                                                                                                                                                           mass estimates. Similarly, using a contracted NFW pro-
+                             12.4                                                                                                                                                                                          file due to the presence of baryons (Schaller et al. 2015)
+                                                                                                                                     Retrograde, vmin = 300 km/s
+
+
+
+
+                                                                                                                                                                                                                           would also change the total mass estimate substantially;
+                                                                                                                                                                                                       Koppelman+ (2020)
+                             12.3
+                                                                                                                                                                                                                           Piffl et al. (2014) used both the regular and contracted
+                                                                                                                                                                    Monari+ (2018)
+    log10 (M200,tot ) [M ]
+
+
+
+
+                             12.2
+                                                                                                        1 Func, vmin = 375 km/s
+
+
+
+
+                                                                                                                                                                                                                           NFW profiles and found a difference of ∼ 50%.
+                                                                          2 Func, vmin = 350 km/s
+                                           3 Func, vmin = 300 km/s
+
+
+
+
+                             12.1
+                                                                                                                                                                                      Deason+ (2019)
+
+
+
+
+                             12.0
+                                                                                                                                                                                                                                             5. CONCLUSIONS
+                                                                                                                                                                                                                             In this paper, we applied a new analysis pipeline for
+                             11.9
+                                                                                                                                                                                                                           constraining vesc that accounts for the presence of kine-
+                             11.8                                                                                                                                                                                          matic substructure in the stellar speed distribution. Our
+                                                                                                                                                                                                                           work is motivated by the discovery of the Gaia Sausage-
+                             11.7
+                                                                                                                                                                                                                           Enceladus, as well as by the need to improve the ro-
+                                                                                                                                                                                                                           bustness of vesc fits, which can be very sensitive to the
+Figure 7. Best fit values of the escape velocity (top) and
+total mass (bottom) of the Milky Way for the different anal-                                                                                                                                                               definition of the “tail” of the velocity distribution. We
+yses discussed in Sec. 3. The analyses of the full data is the                                                                                                                                                             introduce a forward model that allows for multiple power
+most robust, and tends to be lower than previous measure-                                                                                                                                                                  law components in the tail of the stellar velocity distri-
+ments; it is within a single standard deviation of Deason et al.                                                                                                                                                           bution, and showed that repeating the analysis for vmin
+(2019) and Koppelman & Helmi (2020) and lower than mea-                                                                                                                                                                    and number of components allows us to robustly deter-
+surements by Monari et al. (2018). The result based on the                                                                                                                                                                 mine vesc . Details of this pipeline and examples with
+retrograde data is shown for completeness, but that analysis
+                                                                                                                                                                                                                           mock datasets can be found in Paper I.
+did not give a robust vesc (see Fig. 4). We show the escape
+velocity measurement of Koppelman & Helmi (2020) where                                                                                                                                                                       We found that at least two bound components is pre-
+we divide their errors by 3, as they quote 99% confidence                                                                                                                                                                  ferred in fits to the Gaia data for stars with speeds
+intervals while we quote 68%. For the mass measurement,                                                                                                                                                                    v > 325 km/s. These components are suggestive of a
+Koppelman & Helmi (2020) multiply the escape velocity es-                                                                                                                                                                  Sausage-Enceladus component and a relaxed stellar halo
+timate by 10%, motivated by the findings of (Grand et al.                                                                                                                                                                  component, but more study is needed to understand if
+2019) for potential biases. The mass plotted above is the one                                                                                                                                                              the components truly have different physical origin or if
+corrected with this factor.
+                                                                                                                                                                                                                           a multi-component model simply provides a more flex-
+                                                                                                                                                                                                                           ible fitting framework. With this multi-component fit,
+than a few percent difference due to this effect. We find                                                                                                                                                                  our result for vesc is lower than previous measurements
+that our analysis consistently shows a lower mass of the                                                                                                                                                                   in the literature. On the other hand, previous works
+Milky Way than previous studies, although it is within a                                                                                                                                                                   assumed a single power law component for the tail, and
+single standard deviation of the result from Deason et al.                                                                                                                                                                 we have shown that assuming a single component where
+(2019). Note that we include the result from the retro-                                                                                                                                                                    the data prefers more can lead to systematically higher
+grade data for completeness, and to show that even the                                                                                                                                                                     vesc values.
+non-convergent result for vesc still translates to a some-                                                                                                                                                                   Using our results for vesc , we determined the total
+what consistent total mass.                                                                                                                                                                                                mass of the Milky Way, finding a value of the concen-
+  As can be seen in Fig. 6, the circular velocity mea-                                                                                                                                                                     tration of c200 = 13.8+6.0
+                                                                                                                                                                                                                                                    −4.3 and a total mass of M200 =
+surement plays an important role in constraining the                                                                                                                                                                          +1.9      11
+                                                                                                                                                                                                                           7.0−1.2 × 10 M . Our result for the total mass is lower
+mass of the Milky Way. For example, the current un-                                                                                                                                                                        than those of previous studies relying on the escape ve-
+certainties on both the circular and escape velocities in-                                                                                                                                                                 locity to obtain the mass of the Galaxy. However, they
+                                                                                                                            9
+
+are more consistent with methods based on the distri-                       ACKNOWLEDGEMENTS
+bution function of globular clusters (e.g. Eadie & Jurić       We are grateful to I. Moult for early discussions and
+(2019)) and matching satellites of the Milky Way with        collaboration on the project, and to M. Lisanti for help-
+their simulation counterparts (e.g. Patel et al. (2018)).    ful feedback. We would also like to thank L. Anderson,
+Wang et al. (2020) provides a review of all these meth-      A. Bonaca, G. Collin, A. Deason, P. Hopkins, A. Ji, and
+ods, which shows a large scatter in the mass estimates       J. Johnson for helpful conversations.
+ranging from ∼ (0.5−2)×1012 M . Our method provides             This work was performed in part at Aspen Center for
+the most robust measurement relying on the escape ve-        Physics, which is supported by National Science Founda-
+locity at the location of the Sun.                           tion grant PHY-1607611. This research used resources
+  Along with a better understanding of the baryonic          of the National Energy Research Scientific Computing
+components of the Milky Way, the dark matter profile,        Center (NERSC), a U.S. Department of Energy Office of
+and the local circular velocity, other effects are impor-    Science User Facility operated under Contract No. DE-
+tant to evaluate in order to improve Milky Way mass          AC02-05CH11231. LN is supported by the DOE under
+estimates. In particular, many of the existing estimates     Award Number DESC0011632, the Sherman Fairchild
+assume a relaxed equilibrated halo between the location      fellowship, the University of California Presidential fel-
+of the Sun and the edge of the Galaxy. The presence of       lowship, and the fellowship of theoretical astrophysics at
+satellites, streams, and the evidence of the active merger   Carnegie Observatories. TL is supported by an Alfred
+history of the Milky Way would suggest otherwise. It is      P. Sloan Research Fellowship and Department of Energy
+therefore crucial to pair our pipeline, applied at differ-   (DOE) grant DE-SC0019195.
+ent distances from the Galactic center, with a better           This work has made use of data from the Euro-
+understanding of the halo at larger radii. A combined        pean Space Agency (ESA) mission Gaia (https://www.
+approach will help build a complete and coherent picture     cosmos.esa.int/gaia), processed by the Gaia Data Pro-
+of the Milky Way potential, and constrain the shape of       cessing and Analysis Consortium (DPAC, https://www.
+the dark matter halo.                                        cosmos.esa.int/web/gaia/dpac/consortium). Funding
+                                                             for the DPAC has been provided by national institu-
+                                                             tions, in particular the institutions participating in the
+                                                             Gaia Multilateral Agreement.
+
+
+                                                     REFERENCES
+Ade, P., et al. 2016, Astron. Astrophys., 594, A13           Foreman-Mackey, D., Hogg, D. W., Lang, D., & Goodman,
+Akaike, H. 1974, IEEE Transactions on Automatic Control,       J. 2013, PASP, 125, 306
+  19, 716                                                    Gaia Collaboration, Brown, A. G. A., Vallenari, A., et al.
+Alexander, J. B. 1982, MNRAS, 201, 579                         2018, ArXiv e-prints, arXiv:1804.09365
+Belokurov, V., Erkal, D., Evans, N. W., Koposov, S. E., &    Gaia Collaboration, Prusti, T., de Bruijne, J. H. J., et al.
+  Deason, A. J. 2018, MNRAS, 478, 611                          2016, A&A, 595, A1
+Bennett, M., & Bovy, J. 2019, MNRAS, 482, 1417               Gibbons, S. L. J., Belokurov, V., & Evans, N. W. 2014,
+Bovy, J. 2011, PhD thesis, copyright - Database copyright
+                                                               MNRAS, 445, 3788
+  ProQuest LLC; ProQuest does not claim copyright in the
+                                                             Grand, R. J. J., Deason, A. J., White, S. D. M., et al. 2019,
+  individual underlying works; Last updated - 2016-06-04
+                                                               MNRAS, 487, L72
+Bovy, J. 2015, The Astrophysical Journal Supplement
+                                                             Helmi, A., Babusiaux, C., Koppelman, H. H., et al. 2018,
+  Series, 216, 29
+                                                               Nature, 563, 85
+Caldwell, J. A. R., & Ostriker, J. P. 1981, ApJ, 251, 61
+Deason, A. J., Belokurov, V., Koposov, S. E., & Lancaster,   Koppelman, H. H., & Helmi, A. 2020, arXiv e-prints,
+  L. 2018, ApJ, 862, L1                                        arXiv:2006.16283
+Deason, A. J., Fattahi, A., Belokurov, V., et al. 2019,      Lancaster, L., Koposov, S. E., Belokurov, V., Evans, N. W.,
+  MNRAS, 485, 3514                                             & Deason, A. J. 2018, ArXiv e-prints, arXiv:1807.04290
+Dierickx, M. I. P., & Loeb, A. 2017, ApJ, 847, 42            Leonard, P. J. T., & Tremaine, S. 1990, ApJ, 353, 486
+Eadie, G., & Jurić, M. 2019, ApJ, 875, 159                  Miyamoto, M., & Nagai, R. 1975, PASJ, 27, 533
+Eilers, A.-C., Hogg, D. W., Rix, H.-W., & Ness, M. K.        Monari, G., Famaey, B., Carrillo, I., et al. 2018, A&A, 616,
+  2019, ApJ, 871, 120                                          L9
+10
+
+Myeong, G. C., Evans, N. W., Belokurov, V., Sand ers,        Schaller, M., Frenk, C. S., Bower, R. G., et al. 2015,
+  J. L., & Koposov, S. E. 2018, ApJ, 863, L28                  Monthly Notices of the Royal Astronomical Society, 451,
+Navarro, J. F., Frenk, C. S., & White, S. D. M. 1996, ApJ,     1247
+  462, 563
+                                                             Schönrich, R., Binney, J., & Dehnen, W. 2010, MNRAS,
+Necib, L., & Lin, T. 2021
+                                                               403, 1829
+Necib, L., Lisanti, M., & Belokurov, V. 2019a, ApJ, 874, 3
+Necib, L., Lisanti, M., Garrison-Kimmel, S., et al. 2018,    Smith, M. C., Ruchti, G. R., Helmi, A., et al. 2007,
+  arXiv e-prints, arXiv:1810.12301                             MNRAS, 379, 755
+Necib, L., Ostdiek, B., Lisanti, M., et al. 2019b, arXiv     Wang, W., Han, J., Cautun, M., Li, Z., & Ishigaki, M. N.
+  e-prints, arXiv:1907.07681                                   2020, Science China Physics, Mechanics, and Astronomy,
+—. 2019c, arXiv e-prints, arXiv:1907.07190                     63, 109801
+Patel, E., Besla, G., Mandel, K., & Sohn, S. T. 2018, ApJ,
+                                                             White, S. D. M., & Rees, M. J. 1978, Mon. Not. Roy.
+  857, 78
+                                                               Astron. Soc., 183, 341
+Piffl, T., Scannapieco, C., Binney, J., et al. 2014, A&A,
+  562, doi:10.1051/0004-6361/201322531                       Xue, X. X., Rix, H. W., Zhao, G., et al. 2008, ApJ, 684,
+Plummer, H. C. 1911, MNRAS, 71, 460                            1143
+Pouliasis, E., Di Matteo, P., & Haywood, M. 2017, A&A,       Zwicky, F. 1933, Helvetica Physica Acta, 6, 110
+  598, A66
+                                                                                                                       11
+
+
+                                                         APPENDIX
+
+
+                                                  A. DATA SELECTION
+  For the data sample in the main text, we apply Galactocentric distance cuts as well as parallax error cuts. For the
+remaining stars, we show the distribution of the errors on the measured speeds in Fig. S1. The cut placed in the main
+text of ∆v/v < 0.05 only removes a small fraction of the entire data sample, while the typical errors in the retrograde
+sample are larger. We account for the error in individual stars in the likelihood, as discussed in Necib & Lin (2021).
+
+                                                                              800
+                                            All Stars
+                             800            Retrograde Stars
+                                                                              600
+                             600
+                   N Stars
+
+
+
+
+                                                                    N Stars
+                                                                              400
+                             400
+
+                             200                                              200
+
+
+                               0                                                0
+                                   0   20         40           60                   0.00   0.05       0.10
+                                       ∆v [km/s]                                             (∆v)/v
+
+Figure S1. The top panel shows the distribution of speed errors in the entire Gaia sample satisfying distance and parallax
+error cuts, while the bottom panel shows the distribution of fractional speed error.
+12
+
+                                       B. CORNER PLOTS FOR ANALYSES IN MAIN TEXT
+                                                                                  B.1. Corner plots for vmin = 300 km/s
+
+                                                                          vesc = 735.88+50.54
+                                                                                       −63.42
+
+
+
+
+                                                                                                         +1.40
+                                                                                                k = 18.09−2.46
+                                              18
+                                              15
+                            k
+                                              12    9
+
+
+
+
+                                                                                                                                  +0.18
+                                                                                                                   log(f ) = −1.70−0.21
+                                 25 .40 .55 .70 .85 2.8 2.4 2.0 1.6 1.2
+                                    5 5 5 5 − − − − −
+                           log(f )
+
+
+
+
+                                                                                                                                                            +0.07
+                                                                                                                                            log(σout) = 5.46−0.07
+                           log(σout)
+                                     5.
+
+
+                                                                            0
+                                                                            0
+                                                                            0
+                                                                            0
+                                                                            0
+                                                                                                9
+                                                                                                    12
+                                                                                                         15
+                                                                                                              18
+
+                                                                                                                   8
+                                                                                                                        4
+                                                                                                                             0
+                                                                                                                                  6
+                                                                                                                                        2
+                                                                                                                                       25
+                                                                                                                                                40
+                                                                                                                                                     55
+                                                                                                                                                          70
+                                                                                                                                                               85
+                                                                          50
+                                                                          60
+                                                                          70
+                                                                          80
+                                                                          90
+
+
+
+
+                                                                                                                   2.
+                                                                                                                        2.
+                                                                                                                             2.
+                                                                                                                                  1.
+                                                                                                                                       1.
+                                                                                                                                         5.
+                                                                                                                                               5.
+                                                                                                                                                    5.
+                                                                                                                                                         5.
+                                                                                                                                                              5.
+                                                                                                                   −
+                                                                                                                       −
+                                                                                                                           −
+                                                                                                                               −
+                                                                                                                                     −
+
+                                                                                 vesc                    k                 log(f )               log(σout)
+
+Figure S2. Corner plot for the single component fit of the full Gaia data, with vmin = 300 km/s, and a cap of 5% on the
+measured fractional error of the speeds. The contours correspond to 68% and 95% containment.
+                                                                                                                                                                       13
+                               vesc = 519.63+17.35
+                                            −15.53
+
+
+
+
+                                                              +1.15
+                                                     k = 18.41−1.94
+                          .5
+                      17
+               k
+                          .0
+                      15
+                         .5
+                      12
+
+
+
+
+                                                                                     +0.22
+                                                                      log(f ) = −3.19−0.22
+                         .0
+                      10
+                          5
+                          2.
+                    −
+               log(f )
+                          0
+                          3.
+                    −
+                          5
+                          3.
+                    −
+
+
+
+
+                                                                                                             +0.11
+                                                                                             log(σout) = 5.95−0.10
+                          0
+                          4.
+                    −
+                          4
+                          6.
+              log(σout)
+                          2
+                          6.
+                          0
+                          6.
+                          8
+                          5.
+
+
+
+
+                                                                                                                                 +0.41
+                                                                                                                     kSubs = 2.69−0.39
+                          6
+                          5.
+                          0
+                          4.
+              kSubs
+                          2
+                          3.
+                          4
+                          2.
+                          6
+
+
+
+
+                                                                                                                                                          +0.03
+                                                                                                                                              fSubs = 0.52−0.04
+                      0.  1.
+                          64
+                          56
+              fSubs
+                      0.
+                          48
+                      0.
+                          40
+                      0.
+                          32
+                      0.
+
+
+                               0
+                                    0
+                                           0
+                                                    0
+                                                   .0
+                                                   .5
+                                                   .0
+                                                   .5
+
+
+                                                                       0
+                                                                            5
+                                                                                 0
+                                                                                      5
+
+                                                                                             6
+                                                                                                 8
+                                                                                                      0
+                                                                                                           2
+                                                                                                                4
+
+                                                                                                                     6
+                                                                                                                          4
+                                                                                                                               2
+                                                                                                                                    0
+
+                                                                                                                                         32
+                                                                                                                                                40
+                                                                                                                                                      48
+                                                                                                                                                             56
+                                                                                                                                                                  64
+                               48
+                                    52
+                                          56
+                                                60
+
+
+
+
+                                                                      4.
+                                                                           3.
+                                                                                3.
+                                                                                      2.
+
+                                                                                           5.
+                                                                                                 5.
+                                                                                                      6.
+                                                                                                           6.
+                                                                                                                6.
+
+                                                                                                                     1.
+                                                                                                                          2.
+                                                                                                                               3.
+                                                                                                                                    4.
+                                                10
+                                                12
+                                                15
+                                                17
+
+
+
+
+                                                                                                                                         0.
+                                                                                                                                              0.
+                                                                                                                                                     0.
+                                                                                                                                                           0.
+                                                                                                                                                                  0.
+                                                                      −
+                                                                          −
+                                                                              −
+                                                                                   −
+
+
+
+
+                                         vesc              k                log(f )               log(σout)                kSubs                     fSubs
+
+Figure S3. Corner plot for the two component fit of the full Gaia data, with vmin = 300 km/s, and a cap of 5% on the
+measured fractional error of the speeds. The contours correspond to 68% and 95% containment.
+14
+                         vesc = 484.60+17.81
+                                      −7.37
+
+
+
+
+                                                             +0.84
+                                                    k = 18.81−1.45
+                 18
+      k
+                 16
+                 14
+
+
+
+
+                                                                                    +0.21
+                                                                     log(f ) = −3.24−0.22
+                   4 2
+                 2. 1
+           −
+                  8
+     log(f )
+                 2.
+           −
+                  2
+                 3.
+           −
+                  6
+                 3.
+           −
+
+
+
+
+                                                                                                              +0.11
+                                                                                              log(σout) = 5.96−0.09
+                  0
+                 4.
+           −
+                  4
+                 6.
+     log(σout)
+                  2
+                 6.
+                  0
+                 6.
+                  8
+                 5.
+
+
+
+
+                                                                                                                                  +0.81
+                                                                                                                      kSubs = 0.88−0.49
+                  0
+                 4.
+                  2
+                 3.
+     kSubs
+                  4
+                 2.
+                  6
+                 1.
+                  8
+
+
+
+
+                                                                                                                                                           +0.13
+                 0.
+
+
+
+
+                                                                                                                                               fSubs = 0.22−0.08
+                 60
+             0.
+                 45
+             0.
+     fSubs
+                 30
+             0.
+                 15
+             0.
+
+
+
+
+                                                                                                                                                                                +1.57
+                                                                                                                                                                       k3 = 4.42−0.95
+                 16
+                 12
+     k3
+                  8
+
+
+
+
+                                                                                                                                                                                                 +0.08
+                                                                                                                                                                                        f3 = 0.43−0.15
+                  4
+                 60
+             0.
+                 45
+             0.
+     f3
+                 30
+             0.
+                 15
+             0.
+
+                         0
+
+                             0
+
+                                   0
+
+                                         0
+                                               12
+                                                    14
+                                                         16
+                                                              18
+
+
+                                                                     0
+                                                                          6
+                                                                               2
+                                                                                     8
+                                                                                         4
+
+                                                                                                 8
+                                                                                                      0
+                                                                                                          2
+                                                                                                               4
+
+                                                                                                                      8
+                                                                                                                           6
+                                                                                                                                4
+                                                                                                                                     2
+                                                                                                                                          0
+
+                                                                                                                                                15
+                                                                                                                                                      30
+                                                                                                                                                             45
+                                                                                                                                                                  60
+                                                                                                                                                                   4
+                                                                                                                                                                         8
+                                                                                                                                                                             12
+                                                                                                                                                                                  16
+
+
+                                                                                                                                                                                        15
+                                                                                                                                                                                             30
+                                                                                                                                                                                                   45
+                                                                                                                                                                                                         60
+                    44
+
+                             48
+
+                                  52
+
+                                         56
+
+
+
+
+                                                                     4.
+                                                                          3.
+                                                                               3.
+                                                                                    2.
+                                                                                         2.
+
+                                                                                               5.
+                                                                                                     6.
+                                                                                                          6.
+                                                                                                               6.
+
+                                                                                                                      0.
+                                                                                                                           1.
+                                                                                                                                2.
+                                                                                                                                     3.
+                                                                                                                                          4.
+
+                                                                                                                                               0.
+                                                                                                                                                     0.
+                                                                                                                                                           0.
+                                                                                                                                                                  0.
+
+
+
+
+                                                                                                                                                                                        0.
+                                                                                                                                                                                             0.
+                                                                                                                                                                                                  0.
+                                                                                                                                                                                                        0.
+                                                                     −
+                                                                         −
+                                                                             −
+                                                                                 −
+                                                                                     −
+
+
+
+
+                                  vesc                    k                log(f )                 log(σout)                kSubs                    fSubs                   k3               f3
+
+Figure S4. Corner plot for the three component fit of the full Gaia data, with vmin = 300 km/s, and a cap of 5% on the
+measured fractional error of the speeds.The contours correspond to 68% and 95% containment.
+                                                                                                                                                                15
+
+                                                 B.2. Corner plot for vmin = 350 km/s and 2-component fit
+
+                                 vesc = 498.15+63.87
+                                              −15.58
+
+
+
+
+                                                                +4.09
+                                                       k = 12.72−3.92
+                          16
+                          12
+               k
+                          8
+
+
+
+
+                                                                                        +0.19
+                                                                         log(f ) = −1.98−0.21
+                          4
+                          5
+                          1.
+                    −
+                          0
+               log(f )
+                          3.
+                    −
+                          5
+                          4.
+                    −
+                          0
+                          6.
+                    −
+
+
+
+
+                                                                                                                +0.11
+                                                                                                log(σout) = 5.98−0.10
+                          5
+                          7.
+                    −
+                          2
+                          7.
+              log(σout)
+                          8
+                          6.
+                          4
+                          6.
+                          0
+                          6.
+
+
+
+
+                                                                                                                                    +1.29
+                                                                                                                        kSubs = 1.34−0.51
+                          6
+                          5.
+                          9 12
+              kSubs
+                          6
+                          3
+
+
+
+
+                                                                                                                                                        +0.07
+                                                                                                                                            fSubs = 0.75−0.13
+                          8
+                          0.
+              fSubs
+                          6
+                          0.
+                          4
+                          0.
+                          2
+                          0.
+                                 0
+
+                                     0
+
+                                           0
+
+                                                  0
+
+                                                       4
+                                                           8
+                                                               12
+                                                                    16
+
+
+                                                                          5
+                                                                              0
+                                                                                   5
+                                                                                            0
+
+                                                                                         5. 5
+                                                                                            6
+                                                                                            0
+                                                                                            4
+                                                                                            8
+                                                                                            2
+
+                                                                                                                        3
+                                                                                                                            6
+                                                                                                                                 9
+                                                                                                                                12
+
+
+
+                                                                                                                                             2
+                                                                                                                                                 4
+                                                                                                                                                      6
+                                                                                                                                                           8
+                            45
+
+                                     60
+
+                                          75
+
+                                                 90
+
+
+
+
+                                                                         7.
+                                                                              6.
+                                                                                   4.
+                                                                                        3.
+                                                                                         1.
+
+                                                                                         6.
+                                                                                         6.
+                                                                                         6.
+                                                                                         7.
+
+
+
+
+                                                                                                                                            0.
+                                                                                                                                                 0.
+                                                                                                                                                      0.
+                                                                                                                                                           0.
+                                                                         −
+                                                                           −
+                                                                                −
+                                                                                    −
+                                                                                         −
+
+
+
+
+                                          vesc                 k               log(f )               log(σout)               kSubs               fSubs
+
+Figure S5. Corner plot for the two component fit of the full Gaia data, with vmin = 350 km/s, and a cap of 5% on the
+measured fractional error of the speeds. The contours correspond to 68% and 95% containment.
+16
+
+                                        B.3. Corner plot for vmin = 375 km/s and 1-component fit
+
+                                                                                   +113.25
+                                                                      vesc = 515.05−25.01
+
+
+
+
+                                                                                                     +3.01
+                                                                                             k = 2.04−0.76
+
+
+                                             16
+                                             12
+                            k
+                                                  8
+                                                  4
+
+
+
+                                                                                                                              +0.19
+                                                                                                               log(f ) = −1.55−0.20
+                                 75 .00 .25 .50 3.0 2.5 2.0 1.5 1.0
+                                                − − − − −
+                           log(f )
+
+
+
+
+                                                                                                                                                        +0.11
+                                                                                                                                        log(σout) = 5.98−0.10
+                           log(σout)
+                                    6 6 6
+                                     5.
+
+                                                              0
+
+                                                                          0
+
+                                                                                0
+
+                                                                                       0
+
+
+                                                                                             4
+                                                                                                 8
+                                                                                                     12
+                                                                                                          16
+
+                                                                                                               0
+                                                                                                                    5
+                                                                                                                         0
+                                                                                                                              5
+                                                                                                                                   0
+
+                                                                                                                                          75
+                                                                                                                                               00
+                                                                                                                                                    25
+                                                                                                                                                         50
+                                                            45
+
+                                                                        60
+
+                                                                              75
+
+                                                                                     90
+
+
+
+
+                                                                                                               3.
+                                                                                                                    2.
+                                                                                                                         2.
+                                                                                                                              1.
+                                                                                                                                   1.
+
+                                                                                                                                         5.
+                                                                                                                                              6.
+                                                                                                                                                   6.
+                                                                                                                                                        6.
+                                                                                                               −
+                                                                                                                −
+                                                                                                                     −
+                                                                                                                          −
+
+                                                                              vesc                                             −
+                                                                                                     k               log(f )                  log(σout)
+
+Figure S6. Corner plot for the single component fit of the full Gaia data, with vmin = 375 km/s, and a cap of 5% on the
+measured fractional error of the speeds. The contours correspond to 68% and 95% containment.
+                                                                                                                        17
+
+                                          C. ANALYSIS WITH RETROGRADE DATA
+  In the main text, we found robust and self-consistent results for vesc when fitting the Gaia dataset (satisfying some
+quality cuts). We are not able to find robust results when fitting retrograde stars only. In Fig. S7, we see that the
+vesc posteriors are non-convergent in all cases, and there is no clear trend in the results with vmin . As described in the
+main text and can be seen in Fig. 4, there are far fewer retrograde stars with speeds above 500 km/s, and the outlier
+population is not as well constrained, leading to outlier confusion and the double-peaked posteriors.
+
+
+                         1000
+                                   Single Function         Two Functions       Gaia Retrograde Data
+                                                                               Err=5.0%
+                             800
+           vesc [km/s]
+
+
+
+
+                             600
+
+
+                                     N =442           N =285          N =172         N =95            N =66
+                             400
+                                   300               325            350             375             400
+                              15
+
+
+                              10
+                         k
+
+
+
+
+                               5
+
+
+                               0
+                                   300               325             350            375             400
+                                                                 vmin [km/s]
+
+Figure S7. From fitting the retrograde data only. Posteriors in escape velocity and k for different values of vmin , with
+single-component or two-component fits.
+

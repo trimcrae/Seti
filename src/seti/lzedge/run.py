@@ -51,10 +51,11 @@ def build_halo(name: str, spec: dict):
         return shm_tail(v0=spec["v0"], v_esc=spec["v_esc"], tail=spec.get("tail", "sharp"),
                         k=spec.get("k", 2.0), v_join=spec.get("v_join"), name=name)
     if t == "shm_lmc":
+        from .halo import LMC_DIRECTION
         base = shm(v0=spec["v0"], v_esc=spec["v_esc"], name="round")
         return lmc_tail(base, speed_kms=spec["lmc_speed"], sigma_kms=spec["lmc_sigma"],
-                        fraction=spec["lmc_fraction"], direction=tuple(spec.get("lmc_direction", (0.0, -1.0, 0.0))),
-                        name=name)
+                        fraction=spec["lmc_fraction"], direction=tuple(spec.get("lmc_direction", LMC_DIRECTION)),
+                        cut_kms=spec.get("lmc_cut"), name=name)
     raise ValueError(f"unknown halo type {t!r}")
 
 
@@ -308,6 +309,15 @@ def stage_posterior(cfg: dict, out: pathlib.Path, halos_only: list[str] | None =
                           "by_mass": by_m}
     for r in rows:
         r["marginal_rel_global"] = r[key] / gmax if gmax > 0 else None
+    # evidence per halo: mean of the marginal over the (m, delta) grid (log-uniform in m, uniform in delta)
+    evid = {}
+    for name in per_halo:
+        rr = [r for r in rows if r["halo"] == name]
+        evid[name] = float(np.mean([r[key] for r in rr])) if rr else 0.0
+    emax = max(evid.values()) if evid else 0.0
+    for name in per_halo:
+        per_halo[name]["evidence"] = evid[name]
+        per_halo[name]["evidence_rel_best"] = evid[name] / emax if emax > 0 else None
     with (out / "posterior.csv").open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
         w.writeheader()
@@ -383,10 +393,27 @@ def stage_vesc_marginal(cfg: dict, out: pathlib.Path) -> dict:
                     sb_factor = math.exp(-(sb_rate / pl["mean_rate_livetime"]) * sbc.get("observed_window_events", 1.0))
                 like[i, j, k_] = pl["profile"] * occam * sb_factor
         print(f"  vesc {vesc:.0f}: {time.time() - t0:.0f}s")
+    # the inverse question: the event's own likelihood of the escape speed, L(v_esc) = mean over (m, delta)
+    ev_v = np.mean(like, axis=(1, 2))
+    ev_v_n = ev_v / np.sum(ev_v) if np.sum(ev_v) > 0 else ev_v
+    cdf_v = np.cumsum(ev_v_n)
+    inverse = {"vesc_grid": [float(x) for x in vgrid], "likelihood_norm": [float(x) for x in ev_v_n],
+               "flat_prior_median_kms": _quantiles(cdf_v, vgrid, (0.5,))[0],
+               "flat_prior_68_kms": _quantiles(cdf_v, vgrid, (0.16, 0.84)),
+               "flat_prior_95_lower_kms": _quantiles(cdf_v, vgrid, (0.05,))[0]}
     results = {}
     for name, spec in meas.items():
         w = _asym_gaussian_weights(vgrid, float(spec["v_esc"]), float(spec["plus"]), float(spec["minus"]))
-        per_mass = {}
+        post_v = w * ev_v
+        zv = float(np.sum(post_v))
+        per_mass = {"_vesc_posterior": None}
+        if zv > 0:
+            pv = post_v / zv
+            cv = np.cumsum(pv)
+            per_mass["_vesc_posterior"] = {"evidence": zv / float(np.sum(w)) if np.sum(w) > 0 else None,
+                                           "median_kms": _quantiles(cv, vgrid, (0.5,))[0],
+                                           "v68_kms": _quantiles(cv, vgrid, (0.16, 0.84)),
+                                           "posterior": [(float(a), float(b)) for a, b in zip(vgrid, pv, strict=True)]}
         for j, m in enumerate(masses):
             post = np.einsum("i,ik->k", w, like[:, j, :])
             evidence = float(np.sum(post) * (deltas[1] - deltas[0]) if len(deltas) > 1 else np.sum(post))
@@ -403,8 +430,13 @@ def stage_vesc_marginal(cfg: dict, out: pathlib.Path) -> dict:
                                 "evidence": evidence,
                                 "posterior": [(float(dd), float(pp)) for dd, pp in zip(deltas, pn, strict=True)]}
         results[name] = {"measurement": spec, "per_mass": per_mass}
+    emax = max((r["per_mass"]["_vesc_posterior"] or {}).get("evidence") or 0.0 for r in results.values()) if results else 0.0
+    for r in results.values():
+        vp = r["per_mass"]["_vesc_posterior"]
+        if vp and vp.get("evidence") is not None:
+            vp["evidence_rel_best"] = vp["evidence"] / emax if emax > 0 else None
     summary = {"tail": tail, "v0_kms": v0, "vesc_grid": [float(x) for x in vgrid], "masses": masses,
-               "sigma_ceiling_cm2": sigma_ceiling, "measurements": results,
+               "sigma_ceiling_cm2": sigma_ceiling, "measurements": results, "inverse": inverse,
                "elapsed_s": round(time.time() - t0, 1)}
     (out / "vesc_marginal.json").write_text(json.dumps(summary, indent=1))
     np.save(out / "vesc_like.npy", like)

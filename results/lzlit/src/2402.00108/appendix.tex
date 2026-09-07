@@ -1,0 +1,49 @@
+\appendix
+\renewcommand{\thefigure}{A\arabic{figure}}
+\setcounter{figure}{0}
+The Figures in this Appendix are organized as follows: Fig. \ref{fig:offsetbins} contains a test of an alternative radial binning to produce 2PL and SEPL escape velocity profiles. Fig. \ref{fig:modelcompALL} is a collection of the speed distributions at all Galactocentric radii considered here and the corresponding 1PL, 2PL and SEPL fits. Fig. \ref{fig:corner1PL}, \ref{fig:corner2PL} and \ref{fig:cornerSEPL} are the corner plots corresponding to the fits shown in Fig. \ref{fig:modelcomp3panel}. Fig. \ref{fig:correlation} shows the correlation between best-fit model parameters for the 1PL, 2PL and SEPL models and the escape velocity as a function of galactocentric radius. The correlation is calculated as the absolute value of the Pearson product-moment correlation coefficient using the \textsc{numpy} function \texttt{corrcoef} \citep{numpy:2020}.
+
+\begin{figure*}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{media/profile_offsetbins_vmin310.0_verr0.01_N5000.pdf}
+    \caption{Stretched exponential power law (SEPL) and two-component power law (2PL) escape velocity fits to \Gaia~DR3 data from $4-11\,\rm{kpc}$ in the fiducial $1\,\rm{kpc}$-wide radial bins (circles, error bars) and in bins offset by $0.5\,\rm{kpc}$ (squares, bands), both with $\vmin=310\,\rm{km\,s^{-1}}$. Error bars and bands represent $68\%$ confidence intervals.}
+    \label{fig:offsetbins}
+\end{figure*}
+
+\begin{figure*}
+    \centering
+    \includegraphics[height = 0.9\textheight]{media/modelcompALL_r_4.0_11.0_vmin_310.0_verrcut_0.01_N_5000.png}
+    \caption{Escape velocity fits using the power law (1PL), two-component power law (2PL) and stretched exponential power law (SEPL) at $\vmin = 310\,\rm{km\,s^{-1}}$ at all Galactocentric radii considered in this work. All bands and error bars represent $68\%$ confidence intervals. Vertical position of $\vesc$ markers do not encode any information.} 
+    \label{fig:modelcompALL}
+\end{figure*}
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=0.48\textwidth]{media/corner_plot_r_8.0_9.0_z_0.0_15.0_verrcut0.01percent_vmin310_1func_N5000.pdf}
+    \includegraphics[width=0.48\textwidth]{media/corner_plot_r_8.0_9.0_z_0.0_15.0_verrcut0.01percent_vmin400_1func_N5000.pdf}
+    \caption{
+    Single power law (1PL) fit to  \Gaia~DR3 data in the $8-9\,\rm{kpc}$ radial bin and with $\vmin=310\,\rm{km\,s^{-1}}$ (left) and $\vmin=400\,\rm{km\,s^{-1}}$ (right). 
+   We do not show the outlier fraction $f_{\rm{out}}$ and distribution width $\sigma_{\rm{out}}$, as the outlier distribution is consistent with zero in this radial bin. }
+    \label{fig:corner1PL}
+\end{figure*}
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{media/corner_plot_r_8.0_9.0_z_0.0_15.0_verrcut0.01percent_vmin310_N5000.pdf}
+    \caption{Two-component power law (2PL) fit to \Gaia~DR3 data in the $8-9\,\rm{kpc}$ radial bin and with $\vmin=310\,\rm{km\,s^{-1}}$. Outlier distribution parameters not shown as the outlier distribution is consistent with 0 in this bin.}
+    \label{fig:corner2PL}
+\end{figure*}
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=0.8\textwidth]{media/corner_plot_r_8.0_9.0_z_0.0_15.0_verrcut0.01percent_vmin310_cutoff_powerlaw_varscale_fixpowerlaw_N5000.pdf}
+    \caption{Stretched exponential power law (SEPL) fit to \Gaia~DR3 data in the $8-9\,\rm{kpc}$ radial bin and with $\vmin=310\,\rm{km\,s^{-1}}$. Outlier distribution parameters not shown as the outlier distribution is consistent with 0 in this bin.}
+    \label{fig:cornerSEPL}
+\end{figure*}
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\textwidth]{media/corr_array_vmin310.0_verr0.01.pdf}
+  \caption{Correlations between $v_{\rm{esc}}$ and other model parameters. First row is the 1-component power law (1PL) correlations, next 3 rows are 2-component power law (2PL), and final two rows are correlations with the stretched exponential (SEPL) model parameters. Outlier model correlations not shown, as they exhibit no significant difference across models. Black outlines indicate parameters which are often not properly converged, and their correlations with the parameter of interest, $\vesc$.}
+  \label{fig:correlation}
+\end{figure*}

@@ -1,0 +1,403 @@
+                                               Astronomy & Astrophysics manuscript no. vesc                                                                                          c ESO 2018
+                                               August 28, 2018
+
+
+                                                                                                           Letter to the Editor
+
+
+                                                   The escape speed curve of the Galaxy obtained from Gaia DR2
+                                                                   implies a heavy Milky Way
+                                                  G. Monari1 , B. Famaey2 , I. Carrillo1 , T. Piffl1 , M. Steinmetz1 , R. F. G. Wyse3, 4 , F. Anders1 , C. Chiappini1 , and K.
+                                                                                                             Janßen1
+
+                                                     1
+                                                       Leibniz-Institut fuer Astrophysik Potsdam (AIP) An der Sternwarte 16, 14482 Potsdam, Germany
+                                                       e-mail: gmonari@aip.de
+                                                     2
+                                                       Université de Strasbourg, Observatoire astronomique de Strasbourg, CNRS UMR 7550, 11 rue de l’Université, 67000 Strasbourg,
+                                                       France
+arXiv:1807.04565v2 [astro-ph.GA] 27 Aug 2018
+
+
+
+
+                                                     3
+                                                       Department of Physics & Astronomy, Johns Hopkins University, Baltimore, MD 21218, USA
+                                                     4
+                                                       Leverhulme Trust Visiting Professor, University of Edinburgh, UK
+                                                    Received xxx; accepted yyy
+
+                                                                                                                  ABSTRACT
+
+                                                    We measure the escape speed curve of the Milky Way based on the analysis of the velocity distribution of ∼ 2850 counter-rotating
+                                                    halo stars from the Gaia Data Release 2. The distances were estimated through the StarHorse code, and only stars with distance
+                                                    errors smaller than 10% were used in the study. The escape speed curve is measured at Galactocentric radii ranging from ∼ 5 kpc to
+                                                    ∼ 10.5 kpc. The local Galactic escape at the Sun’s position is estimated to be ve (r ) = 580±63 km s−1 , and it rises towards the Galactic
+                                                    centre. Defined as the minimum speed required to reach three virial radii, our estimate of the escape speed as a function of radius
+                                                                                                                                                                            +0.68
+                                                    implies for a Navarro-Frenk-White profile and local circular velocity of 240 km s−1 a dark matter mass M200 = 1.28−0.50       × 1012 M and
+                                                                                         +2.94                                                                                  +0.64
+                                                    a high concentration c200 = 11.09−1.79 . Assuming the mass-concentration relation of ΛCDM, we obtain M200 = 1.55−0.51 × 1012 M
+                                                    and c200 = 7.93+0.33                                           −1
+                                                                    −0.27 for a local circular velocity of 228 km s .
+
+                                                    Key words. Galaxy: kinematics and dynamics – Galaxy: fundamental parameters
+
+
+
+                                               1. Introduction                                                            stars and found that their chemistry is compatible with that of the
+                                                                                                                          stellar halo. Watkins et al. (2018) used a mass estimator based on
+                                               While much progress has been made in recent years regarding                the kinematics of halo globular clusters to find a virial mass of
+                                               our understanding of the formation of galaxies, the very ba-               1.67+0.79      12
+                                                                                                                               −0.50 × 10 M . Finally, Posti & Helmi (2018) also used the
+                                               sic fundamental parameters of our own Galaxy are still very                kinematics of globular clusters to fit a two-component distribu-
+                                               poorly known. Of these fundamental parameters, the mass of                 tion function in action space as well as the Galactic potential
+                                               our Galaxy is perhaps the most important, and it is still unknown          including a prolate Navarro-Frenk-White (NFW) halo, to find a
+                                               within a factor of four (Bland-Hawthorn & Gerhard 2016). This              slightly lower value for the virial mass.
+                                               parameter is of particular interest because it provides a test for
+                                               the current Λ cold dark matter (ΛCDM) paradigm, and the valid-                 Here, our new estimate of the Milky Way mass will be made
+                                               ity of recipes such as abundance matching (e.g. Behroozi et al.            through measuring the escape speed curve of the Galaxy at
+                                               2013).                                                                     Galactocentric radii ranging from ∼ 5 kpc to ∼ 10.5 kpc based
+                                                                                                                          on Gaia DR2. Since the escape speed directly measures the dif-
+                                                    The primary objective of the cornerstone Gaia mission (Gaia           ference between the local potential and that in the outskirts of
+                                               Collaboration et al. 2018) is to allow us to build a detailed dy-          the Galaxy, it allows us to constrain its total mass based on lo-
+                                               namical model of the Galaxy, including all of its components,              cal measurements. In doing this, we follow up on the previous
+                                               and to provide us insight into its structure, its formation, and           studies by Leonard & Tremaine (1990), Kochanek (1996), Smith
+                                               its evolutionary history. Before building such a detailed and ex-          et al. (2007), and Piffl et al. (2014, hereafter P14).
+                                               haustive model, we can already take advantage of the accuracy,
+                                               quality, and extent of the data provided by the Gaia Data Release              The general idea is to use a simple model for the tail of the
+                                               2 (DR2) to determine the fundamental parameters of the Galaxy              velocity distribution of halo stars at a given radius, based on a
+                                               such as its virial mass more accurately than ever before. Sev-             truncated power law (Leonard & Tremaine 1990) motivated by
+                                               eral recent studies have tried to estimate this parameter through          simulations (Smith et al. 2007, P14). Based on a model for the
+                                               various methods: Fritz et al. (2018) found that a virial mass of at        baryonic distribution of the Milky Way, the virial mass of the
+                                               least 1.6×1012 M would be needed to keep a reasonable number               Galaxy can be adjusted to best fit the escape speed curve. In Sec-
+                                               of satellite dwarf galaxies bound. Hattori et al. (2018) assumed           tion 2 we present our selection of Gaia DR2 stars. The method
+                                               that extremely high velocity stars with chemical properties sim-           for estimating the escape speed is then presented in Section 3,
+                                               ilar to those of the Galactic halo are bound to the Galaxy and             and the results are summarized in Section 4. The corresponding
+                                               showed that the virial mass should be higher than 1.4 × 1012 M .           virial mass of the Galaxy dark matter halo is presented in Sec-
+                                               Hawkins & Wyse (2018) also studied a sample of hyper-velocity              tion 5, and we conclude in Section 6.
+
+                                                                                                                                                                       Article number, page 1 of 5
+                                                               A&A proofs: manuscript no. vesc
+
+2. Data                                                                         the (ve , k) space, so that we do not need to determine it. For the a
+                                                                                priori probabilities we chose P(ve ) ∝ 1/ve and P(k) uniform, as
+We used stars from the Gaia DR2 with line-of-sight (l.o.s.) veloc-              in Leonard & Tremaine (1990).
+ity information. Following Marchetti et al. (2018), we selected                     Since we are interested mostly in ve , we finally marginalized
+only stars with the following Gaia flags:                                       along k to obtain the probability density of ve ,
+ – ASTROMETRIC_GOF_AL < 3;                                                                           Z 3.7
+ – ASTROMETRIC_EXCESS_NOISE_SIG ≤ 2;                                            P(ve |vi=1,...,N ) =       P(ve , k|vi=1,...,N ) dk,              (3)
+ – −0.23 ≤ MEAN_VARPI_FACTOR_AL ≤ 0.32;                                                           2.3
+ – VISIILITY_PERIODS_USED > 8;
+ – RV_NB_TRANSITS > 5.                                                          where the range of marginalisation is obtained from P14, as ex-
+                                                                                plained above.
+We used new distance estimates (Anders et al. in prep.) obtained                    However, at this stage, equation (2) does not consider the un-
+with the StarHorse code (Queiroz et al. 2018), which combines                   certainty on the individual stellar parameters (r and v). Hence, in
+multiband photometric information (APASS, 2MASS, and All-                       order to obtain a robust result, we used a Monte Carlo or boot-
+WISE) and the Gaia astrometric information with a Bayesian                      strap technique, repeating the scheme detailed below 100 times.
+approach, accounting for the global Gaia DR2 parallax zero-
+point shift of -0.029 mas (Lindegren et al. 2018; Arenou et al.                  – For each star in the sample, we drew a random distance,
+2018). Based on these distances and on the Gaia DR2 astrome-                       proper motion, and l.o.s. velocity from Gaussians with
+try and l.o.s. velocities, we computed the Galactocentric cylin-                   means and dispersions (the quantity and its uncertainty)
+drical positions (R, z, φ) and velocities (vR , vφ , vz ) of these stars.          given by the StarHorse code and the Gaia catalogue; from
+For this, we assumed a distance of the Sun from the centre of                      these, we computed r and v assuming for the transformation
+the Galaxy of r = 8.34 kpc, a circular velocity at the Sun of                      the same Galactic parameters as were used in Section 2, and
+vc (r ) = 240 km s−1 (Reid et al. 2014), and a peculiar solar mo-                  negligible uncertainties on the positions on the sky of the
+tion of (U , V , W ) = (11.1, 12.24, 7.25) km s−1 , as estimated                   stars.
+by Schönrich et al. (2010). Of these stars we selected only those                – We used only stars with drawn random distance smaller than
+that counter-rotate, that is, stars with vφ < 0, in order to ensure                5 kpc in order to have a sample of stars with Bayesian dis-
+that the kinematic tail is representative of stellar halo-type stars.              tance estimates dominated by the Gaia parallax information,
+We checked that reflecting vφ for these stars around vφ = 0, we                    and not by the photometry; considering the parallax shift,
+obtain the kind of kinematics typical of the stellar halo, with ve-                99% of the stars in Gaia DR2 with l.o.s. velocities and par-
+locity dispersions of ∼ 140 km s−1 (e.g. Battaglia et al. 2005).                   allax errors better than 10% are found inside ∼ 5 kpc, and
+     Of these stars, we selected only those with distance er-                      inside the same sphere, 90% of the stars have parallax error
+rors smaller than 10 per cent. We√then computed their Galac-                       smaller than ∼ 10 %; the typical size of the samples obtained
+                                                                                   in this way is ∼ 2850 stars.
+tocentric spherical distance r = R2 + z2 and the speed v =
+q                                                                                – We resampled the data set obtained in this way with replace-
+  v2R + v2φ + v2z . However, we did not simply combine the observ-                 ment, so that each time some stars are randomly excluded
+able quantities, but used a Monte Carlo technique (explained be-                   and some stars are repeated more times in the sample.
+low), which allowed us to achieve better estimates of the r and v                – We binned the data into bins of size 0.6 kpc, with the in-
+uncertainties than a simple propagation of errors.                                 nermost bin centred at r = 5.34 kpc and the outermost at
+                                                                                   r = 10.14 kpc.
+                                                                                 – For the i-th iteration (and resampling), we calculated for
+3. Methods                                                                         each bin the escape velocity vie and its uncertainty σie =
+                                                                                   max(vie − vi16 , vi84 − vie ), where vi16 and vi84 are the 16th and
+As in P14, we assumed that the velocities v of stars in the kine-
+                                                                                   84th percentiles of the ve distribution.
+matic tail of the halo are distributed according to a power law,
+with a truncation at the escape velocity ve (Leonard & Tremaine                 We then estimated ve for each r-bin as the median of the vie esti-
+1990),                                                                          mates of each iteration, and its uncertainty as the sum in quadra-
+                                                                                ture of the square root of the mean σie2 and of the standard devia-
+                 (k + 1)(ve − v)k /(ve − vcut ), v ≤ ve ,
+               (
+f (v|ve , k) =                                                (1)               tion of the values vie . The error bars obtained in this way contain
+                 0,                              v > ve ,                       a systematic component because the top of the error bar for each
+where vcut corresponds to a lower cut in v that defines the fast                bin always depends critically on the fastest star that can be in-
+stars that should be distributed as in equation (1). We note that ve            cluded in the sample in one of the 100 Monte Carlo realisations.
+and k depend in general on the position in the Galaxy. Both vcut
+and typical values of k can be read off simulations. In particular,             4. Escape speed curve
+P14 have shown from simulations that the typical range for k is
+2.3 < k < 3.7 and that stars follow this power law for vcut ∼                   In Fig. 1 we show the histograms in different r-bins for one re-
+250 km s−1 .                                                                    alisation of r and v of the sample in order to check that a power
+    The Bayes theorem can be used to show that the probabil-                    law is a reasonable description of the velocity distribution. We
+ity of the model parameters (ve , k), given N stars with velocity               overplot f (v|ve , k), where ve is derived for those particular bins,
+determination vi (for the i-th star) is                                         and k = 3 (the mean between k = 2.3 and k = 3.7, used for
+                                                                                the marginalisation to obtain the ve probability distribution func-
+                                          N
+                               P(ve )P(k)Πi=1 f (vi |ve , k)                    tion).
+P(ve , k|vi=1,...,N ) = R R                                          ,    (2)       In the left panel of Fig. 2, we show the results of the anal-
+                                         N
+                              P(ve )P(k)Πi=1 f (vi |ve , k) dve dk
+                                                                                ysis in different bins (black dots with error bars). Only the bins
+where the uncertainty on the determination of vi is neglected for               that contain at least ten stars in each resampling were consid-
+the moment, and the denominator is the same for all the points in               ered. The escape velocity curve decreases with r, as expected in
+Article number, page 2 of 5
+                  G. Monari et al.: The escape speed curve of the Galaxy obtained from Gaia DR2 implies a heavy Milky Way
+
+
+
+
+Fig. 1. Histograms in different r-bins for one realisation of r and v of the sample, compared with f (v|ve , k) (blue line), where ve is derived for that
+particular bin and k = 3.
+
+
+any reasonable Galactic potential (see below). The value of the               r alone, that is, Φ(r). The escape speed can in this case be mod-
+escape velocity at the Sun is                                                 elled as ve,∞ (r) or as
+ve (r ) = 580 ± 63 km s−1 .                                            (4)                   p
+                                                                              ve,340 (r) =       2|Φ(r) − Φ(3r340 )|,                                (7)
+The error bar increases for the farthest bins, especially the outer-
+most bins that are less densely populated.                                    the latter being more meaningful in a cosmological context. We
+     We then compared the results obtained with the StarHorse                 kept the Irrgang model III disc and bulge potentials fixed and
+code with the distance estimates by McMillan (2018). We used                  varied the parameters of the NFW halo, which we chose to de-
+the same counter-rotating stars as selected in Section 2, but with            scribe with its ‘virial’ mass M200 and its concentration c200 , both
+the velocities v and radii r, computed with the new distances.                estimated at r200 , the radius where the average density of the
+The results in different bins are also shown in Fig. 2 with red               dark halo reaches 200 times the critical density ρc . As an ad-
+dots and associated error bars. The results for all bins are very             ditional constraint, we imposed that the circular velocity at the
+similar to the results obtained with the StarHorse distances.                 Sun is vc (r ) = 240 km s−1 , as in the assumptions that we used
+The escape velocity at the Sun is estimated in this case to be                to transform l.o.s. velocities and proper motions to v. We obtain
+ve (r ) = 593 ± 76 km s−1 . However, the farthest bins do not                 a fit using a χ2 minimisation, with the points weighted according
+contain enough stars to perform the analysis. With the McMil-                 to their error bars. The best-fit model corresponds to the orange
+lan distances it is not possible to go very far from the Sun be-              line and orange 1σ error bands in the left panel of Fig. 3. The er-
+cause the distance quality degrades rapidly and the bins in our               ror bands are obtained using the χ2 statistics. The best-fit model
+sample rapidly become empty, while the multiband photometric                  has M200 = 0.97+0.47                                +3.41
+                                                                                                 −0.36 × 10 M and c200 = 12.63−2.09 if the fit is
+                                                                                                           12
+
+information used in StarHorse allows us to achieve accurate                   made assuming the ve,∞ interpretation of the escape speed, and
+                                                                                                                            +2.94
+distances deeper inside the Galaxy.                                           M200 = 1.28+0.68
+                                                                                            −0.50 ×10 M and c200 = 11.09−1.79 if the fit is made
+                                                                                                       12
+
+                                                                              with the more realistic ve,340 (shown in the figure).
+                                                                                   However, N-body simulations in ΛCDM cosmology display
+5. Dark matter halo mass and concentration                                    a relation between the halo concentrations and their mass (Dut-
+The escape velocity is in principle defined as the velocity nec-              ton & Macciò 2014),
+essary to bring a star to infinity. If Φ(x) is the potential of the
+Galaxy at some position x, and Φ → 0 at infinity, then                        log10 (c200 ) = 0.905 − 0.101 log10 (M200 /[1012 h−1 M ]),             (8)
+          p
+ve,∞ (x) = 2|Φ(x)|.                                             (5)           where h = H/(100 km s−1 Mpc−1 ). We repeated the fit using
+                                                                              this relation. In this case, the relation between M200 and c200
+However, it is unphysical to think that stars faster than ve derived
+                                                                              no longer guarantees that vc = 240 km s−1 at R . We note
+in the previous section can reach infinity; they will instead turn
+                                                                              that the value of the circular velocity at the solar circle is de-
+around beyond some very large distance. On the basis of sim-
+                                                                              generate with the actual peculiar velocity of the Sun, so that a
+ulations, P14 chose this distance to be 3r340 , where r340 is the
+                                                                              lower value of the circular velocity and a higher value of V
+spherical radius within which the average density of the whole
+                                                                              (e.g. Bovy et al. 2015) are still compatible with our assump-
+Galaxy is equal to 340 times the critical density at redshift 0,
+                                                                              tions. The fit is shown in the right panel of Fig. 3 with the blue
+ρc = 3H 2 /8πG,                                                        (6)    line and blue 1σ error bands. The best-fit model in this case is
+                                                                              M200 = 1.16+0.47
+                                                                                            −0.38 × 10
+                                                                                                       12
+                                                                                                          M and c200 = 8.17+0.33
+                                                                                                                             −0.28 in the ve,∞ in-
+where we take H = 73 km s Mpc . The distance 3r340 ap-
+                                   −1      −1
+                                                                              terpretation, and M200 = 1.55+0.64    × 1012
+                                                                                                                           M  , c200 = 7.93+0.33
+proximates the virial radius of the Galaxy.                                                                   −0.51                           −0.27
+                                                                              in the more realistic ve,340 interpretation. In the former case,
+    To model the escape speed, we used the Milky Way potential                the circular speed is still well behaved in the Galaxy and cor-
+model III of Irrgang et al. (2013), which fits a number of observ-            responds to vc (r ) = 228 km s−1 . Such a high mass for the
+ables of the Milky Way. As our estimates of the escape speed                  Milky Way dark matter halo is expected from abundance match-
+depend only on the spherical radius, we computed the Irrgang                  ing. Behroozi et al. (2013) estimated that log(M200 ) ≃ 12.25
+potential only within the Galactic plane1 , so that it depends on             should correspond to a stellar mass of between 3 × 1010 M and
+1
+    The escape speed estimated in the Galactic plane or towards the           5.5 × 1010 M .
+Galactic pole at a fixed r can differ by a few tens of km s−1 , which             Finally, in Fig. 4 we show with a blue line the fit to the es-
+is included in the error bars of our estimate of the escape speed.            cape velocity points that we obtained with a quasi-isothermal
+                                                                                                                            Article number, page 3 of 5
+                                                      A&A proofs: manuscript no. vesc
+
+                                                                         2017). The escape speed varies from ∼ 650 km s−1 at ∼ 5 kpc to
+                                                                         ∼ 550 km s−1 at 10.5 kpc. The uncertainty in the determination
+                                                                         of ve (r ) is quite large despite the relatively large stellar sample,
+                                                                         mainly because this uncertainty takes into account the errors in
+                                                                         position and velocity of the stars in the analysis, and treats the
+                                                                         possibility that they might be bound or not in the Galactic poten-
+                                                                         tial with a bootstrap technique without excluding stars on arbi-
+                                                                         trary criteria. Moreover, our determination of the escape speed at
+                                                                         the Sun and at other radii in the Galaxy is ‘local’ (i.e. performed
+                                                                         in small radial bins), meaning that the estimates do not require
+                                                                         any velocity rescaling that assumes a Galactic potential a priori
+                                                                         (see P14); this introduces a bias in the result. Our determination
+                                                                         of ve (r ) is slightly larger than but agrees well with what P14
+                                                                         determined based on stars from the RAVE survey, within the er-
+                                                                         ror bars. Our result also agrees with the finding by Hattori et al.
+Fig. 2. Escape speed at different radii r in the Milky Way obtained      (2018), who reported that the escape speed in the solar neigh-
+with the StarHorse code (black points), and McMillan distances (red      bourhood is expected to be of the order of ∼ 600 km s−1 .
+points) and their error bars obtained using the procedure explained in        We have modelled the escape speed data points obtained us-
+Section 3.                                                               ing simple forms for the Galactic potential, including a fixed disc
+                                                                         and bulge, by fitting a number of observables and a dark halo
+                                                                         specified by the free parameters for the fit. The escape speed can
+potential for the dark halo of the form
+                                                                         be interpreted either as the velocity necessary to bring a star to
+       v20                                                             infinity from a location in the Galaxy, or, more realistically, to
+Φh =       log r2 + rc2 .                                         (9)    a typical radius very far from the Galactic centre, motivated by
+       2                                                                 cosmological simulations. The latter is chosen to be 3r340 (as in
+The fit was obtained using ve,340 (Φh diverges at infinity) and          P14). In the latter way, and fixing the circular velocity of the
+                                                                         Galaxy at 240 km s−1 at the Sun, M200 = 1.28+0.68            12
+                                                                                                                            −0.50 × 10 M .
+imposing that vc (r ) = 240 km s−1 . The best fit corresponds to
+                                                                              With this fit imposing the local circular velocity at
+v0 = 176+22−22 km s
+                     −1
+                         and rc = 4.7+2.1
+                                      −3.8 kpc (the error bars are       240 km s−1 , we find a slightly more concentrated halo than in
+not shown in Fig. 4). This fit corresponds to a high halo mass
+                                                                         ΛCDM simulations. However, when we performed the fit impos-
+M200 = 1.74+0.72        12
+             −0.58 × 10 M , as expected for a pseudo-isothermal          ing the ΛCDM relation between halo masses and concentrations,
+sphere with a density decreasing slowly as r−2 in the outer parts.       we find a higher halo mass (M200 = 1.55+0.64            12
+                                                                                                                      −0.51 × 10 M ), a con-
+We also compared our escape speed curve with the ve,340 values                                     +0.33
+                                                                         centration c200 = 7.93−0.27 (e.g. Kruijssen et al. 2018), and still
+obtained from the halo model fitting the Milky Way gas dynam-
+                                                                         a reasonable circular velocity curve. We also fit models consist-
+ics by Englmaier & Gerhard (2006), with v0 = 235 km s−1 and
+                                                                         ing of the same disc and bulge potentials, but including cored
+rc = 10.7 kpc, which gives a too high a value for the escape
+                                                                         pseudo-isothermal dark halos. In this case, the only interpreta-
+speed if no cut-off on the r−2 is applied in the outer halo.
+                                                                         tion for the escape velocity is the velocity to bring a star at 3r340 ,
+    The analysis we performed in Section 4 can also be per-
+                                                                         and we find M200 = 1.74 × 1012 M , with a large core radius
+formed by keeping the exponent k fixed. In this case, a larger ve
+                                                                         rc = 4.7 kpc. In the future, we aim to determine whether such a
+is obtained for larger k because of the correlation between these
+                                                                         measurement is compatible with alternative models (e.g. Famaey
+two parameters, as has been shown by Leonard & Tremaine
+                                                                         et al. 2007)
+(1990). To check that our estimates are consistent with such an
+                                                                              The high estimated mass of the Milky Way can be compared
+alternative method, we derived ve for a fixed value k = 2.3 and
+                                                                         with recent estimates of the total mass of the Local Group based
+k = 3.7, the extremes of the k-range used in our marginalisation.
+                                                                         on the timing argument (Peñarrubia et al. 2016), which sets the
+The ve points obtained in this way are either shifted at lower
+                                                                         total mass to ∼ 2.64+0.42
+                                                                                                 −0.38 × 10
+                                                                                                            12
+                                                                                                               M . The heavy Milky Way im-
+or higher values, for k = 2.3 and 3.7 respectively, leaving the
+                                                                         plied by our work seems in accordance with recent estimates of
+global shape of the curve unchanged. Fitting ve,∞ and ve,340 to
+                                                                         the mass of M31, yielding a lower mass than previously thought
+these points, we then find models that are safely included within
+                                                                         (0.8 ± 0.1 × 1012 M , Kafle et al. 2018), which leaves room for
+the error bands on mass and concentration given above.
+                                                                         an increased Milky Way mass.
+                                                                              A caveat of this work is that the distance determination
+6. Discussion and conclusions                                            for stars using Gaia stellar parameters is still an ongoing pro-
+                                                                         cess, and the distances and velocities of the stars could un-
+We have calculated the escape speed curve of the Milky Way in            dergo modifications, especially at large distances (e.g. because
+a wide range of Galactocentric spherical radii using stars from          of the magnitude-dependent offset in the Gaia G magnitudes, see
+the second data release of Gaia with line-of-sight velocities. The       Casagrande & VandenBerg 2018). A dynamical caveat is that the
+distances of these stars were computed using the StarHorse               analysis with which we estimated the escape velocities is based
+pipeline, which allows determining accurate and precise dis-             on distribution functions and assumes phase-mixing for the kine-
+tances even for stars very far from the Sun thanks to its treatment      matic tail of the stellar halo, which is not guaranteed. However,
+of the extinction, especially in the central regions of the Galaxy.      the choice of the velocity distribution is motivated by simula-
+We used stars with distance estimates better than 10% at a dis-          tions, and the comparison of the derived distribution functions
+tance of less than 6 kpc that are counter-rotating in order to have      with the histograms of the velocity distribution of the halo stars
+a stellar halo sample that is not contaminated by the disc.              that we performed shows that this description is reasonable. Fi-
+     In the solar neighbourhood we estimated the escape speed            nally, the models of the Milky Way potential that we presented
+ve (r ) = 580 ± 63 km s−1 (in 1σ agreement with Williams et al.          here are rather simple and do not take into account a number of
+Article number, page 4 of 5
+                  G. Monari et al.: The escape speed curve of the Galaxy obtained from Gaia DR2 implies a heavy Milky Way
+
+
+
+
+Fig. 3. Left panel: Fit to the escape velocity points assuming ve,340 , and obtained using the disc and bulge potential of model III of Irrgang et al.
+(2013), and a dark halo of M200 = 1.28 × 1012 M and c200 = 11.09 (orange line and uncertainty bands). Right panel: Same as in the left panel, but
+for M200 = 1.55 × 1012 M and c200 = 7.93 (blue line and uncertainty bands) when the ΛCDM relation between M200 and c200 is assumed. The
+orange and blue bands represent the 1σ uncertainties of the models.
+
+
+                                                                              Acknowledgements. We thank Paul McMillan for useful discussions. RFGW
+                                                                              thanks her sister, Katherine Barber, for support, and the Leverhulme Trust for
+                                                                              a Visiting Professorship at the University of Edinburgh, held while this work
+                                                                              was being completed. We thank the E-Science and Supercomputing Group at
+                                                                              Leibniz Institute for Astrophysics Potsdam (AIP) for their support with run-
+                                                                              ning the StarHorse code on AIP cluster resources. This work has made use
+                                                                              of data from the European Space Agency (ESA) mission Gaia (https://www.
+                                                                              cosmos.esa.int/gaia), processed by the Gaia Data Processing and Anal-
+                                                                              ysis Consortium (DPAC, https://www.cosmos.esa.int/web/gaia/dpac/
+                                                                              consortium). Funding for the DPAC has been provided by national institutions,
+                                                                              in particular the institutions participating in the Gaia Multilateral Agreement.
+
+
+
+                                                                              References
+                                                                              Arenou, F., Luri, X., Babusiaux, C., et al. 2018, ArXiv e-prints
+                                                                                  [arXiv:1804.09375]
+                                                                              Battaglia, G., Helmi, A., Morrison, H., et al. 2005, MNRAS, 364, 433
+Fig. 4. Same as in Fig. 2, but for the isothermal best fit model, with v0 =   Behroozi, P. S., Wechsler, R. H., & Conroy, C. 2013, ApJ, 770, 57
+                                                                              Bland-Hawthorn, J. & Gerhard, O. 2016, ARA&A, 54, 529
+176 km s−1 and rc = 4.7kpc (blue line), compared with the model of            Bovy, J., Bird, J. C., García Pérez, A. E., et al. 2015, ApJ, 800, 83
+Englmaier & Gerhard with v0 = 235 km s−1 and rc = 10.7 kpc (orange            Casagrande, L. & VandenBerg, D. A. 2018, MNRAS[arXiv:1806.01953]
+                                                                              Cole, D. R. & Binney, J. 2017, MNRAS, 465, 798
+line).                                                                        Dutton, A. A. & Macciò, A. V. 2014, MNRAS, 441, 3359
+                                                                              Englmaier, P. & Gerhard, O. 2006, Celestial Mechanics and Dynamical Astron-
+                                                                                  omy, 94, 369
+                                                                              Famaey, B., Bruneton, J.-P., & Zhao, H. 2007, MNRAS, 377, L79
+                                                                              Fritz, T. K., Carrera, R., & Battaglia, G. 2018, ArXiv e-prints
+issues, such as the fact that the dark halo should self-consistently              [arXiv:1805.07350]
+                                                                              Gaia Collaboration, Brown, A. G. A., Vallenari, A., et al. 2018, ArXiv e-prints
+adapt its shape to the bulge and disc potential (e.g. Cole & Bin-                 [arXiv:1804.09365]
+ney 2017) and that the fit could be performed leaving the disc                Hattori, K., Valluri, M., Bell, E. F., & Roederer, I. U. 2018, ArXiv e-prints
+and bulge parameters free. Such detailed modelling is beyond                      [arXiv:1805.03194]
+                                                                              Hawkins, K. & Wyse, R. F. G. 2018, ArXiv e-prints [arXiv:1806.07907]
+the scope of this paper, however. Finally, spectroscopic follow-              Irrgang, A., Wilcox, B., Tucker, E., & Schiefelbein, L. 2013, A&A, 549, A137
+                                                                              Kafle, P. R., Sharma, S., Lewis, G. F., Robotham, A. S. G., & Driver, S. P. 2018,
+up of the stars we used in this analysis might be used to study                   MNRAS, 475, 4043
+whether their properties are compatible with the chemical prop-               Kochanek, C. S. 1996, ApJ, 457, 228
+erties of the stellar halo (e.g. Hawkins & Wyse 2018).                        Kruijssen, J. M. D., Pfeffer, J. L., Reina-Campos, M., Crain, R. A., & Bastian,
+                                                                                  N. 2018, MNRAS[arXiv:1806.05680]
+                                                                              Leonard, P. J. T. & Tremaine, S. 1990, ApJ, 353, 486
+    In conclusion, the uncertainties in the measurements of the               Lindegren, L., Hernandez, J., Bombrun, A., et al. 2018, ArXiv e-prints
+escape velocity (and of the corresponding dark halo masses) are                   [arXiv:1804.09366]
+quite large, mostly because we were realistic and considered the              Marchetti, T., Rossi, E. M., & Brown, A. G. A. 2018, ArXiv e-prints
+                                                                                  [arXiv:1804.10607]
+uncertainties on both distance and velocity of the stars, and be-             McMillan, P. J. 2018, ArXiv e-prints [arXiv:1806.00426]
+cause we lack information on whether high-velocity stars are                  Peñarrubia, J., Gómez, F. A., Besla, G., Erkal, D., & Ma, Y.-Z. 2016, MNRAS,
+                                                                                  456, L54
+bound or unbound in the Galactic potential. Nevertheless, our                 Piffl, T., Scannapieco, C., Binney, J., et al. 2014, A&A, 562, A91
+estimate of the escape speed curve for a wide range of Galac-                 Posti, L. & Helmi, A. 2018, ArXiv e-prints [arXiv:1805.01408]
+                                                                              Queiroz, A. B. A., Anders, F., Santiago, B. X., et al. 2018, MNRAS, 476, 2556
+tocentric radii in the Milky Way conclusively implies a massive               Reid, M. J., Menten, K. M., Brunthaler, A., et al. 2014, ApJ, 783, 130
+Galaxy M200 > 1012 M , especially when considering the mass-                  Schönrich, R., Binney, J., & Dehnen, W. 2010, MNRAS, 403, 1829
+                                                                              Smith, M. C., Ruchti, G. R., Helmi, A., et al. 2007, MNRAS, 379, 755
+concentration relation of ΛCDM, in agreement with other recent                Watkins, L. L., van der Marel, R. P., Sohn, S. T., & Evans, N. W. 2018, ArXiv
+estimates using independent methods, both dynamical and using                     e-prints [arXiv:1804.11348]
+                                                                              Williams, A. A., Belokurov, V., Casey, A. R., & Evans, N. W. 2017, MNRAS,
+chemical tagging (e.g. Hawkins & Wyse 2018). It also agrees                       468, 2359
+with typical abundance-matching expectations.
+                                                                                                                               Article number, page 5 of 5
+

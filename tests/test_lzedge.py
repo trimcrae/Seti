@@ -277,3 +277,42 @@ def test_reachability_calendar_opens_a_window_around_june_at_the_edge():
     assert 0.0 < edge["fraction"] < 1.0
     assert edge["first"] < "2023-06-01" < edge["last"]
     assert edge["first"] <= "2023-06-16" <= edge["last"]
+
+
+def test_profile_likelihood_prefers_the_edge_and_marginalises_the_scale_systematic():
+    from seti.lzedge.timing import (
+        energy_density_marginal_sys,
+        profile_likelihood,
+        seasonal_background_factor,
+    )
+    h = shm(238.0, 544.0)
+    eff = Efficiency.flat(5.0, 270.0)
+    live = LiveTime.uniform("2023-03-01", "2024-04-30", 220.0)
+
+    def sig(E):
+        return K.resolution_sigma_keV(E, 23.0, 248.0)
+
+    el = profile_likelihood(EventModel(h, 1000.0, 0.0, eff), live, 248.0, "2023-06-16", sig, 23.0, 7.0)
+    ed = profile_likelihood(EventModel(h, 1000.0, 360.0, eff), live, 248.0, "2023-06-16", sig, 23.0, 7.0)
+    assert ed["profile"] > 100 * el["profile"] > 0
+    m = EventModel(h, 1000.0, 360.0, eff)
+    p0 = energy_density_marginal_sys(m, 248.0, "2023-06-16", sig, 0.0)
+    p1 = energy_density_marginal_sys(m, 248.0, "2023-06-16", sig, 23.0)
+    assert p0 > 0 and p1 > 0 and abs(p1 / p0 - 1.0) < 0.6
+    # a muon-like seasonal background claims at most a per-cent timing factor
+    assert abs(seasonal_background_factor("2023-06-16", 0.02) - 1.0) < 0.03
+
+
+def test_cross_experiment_accounting_respects_window_and_calendar():
+    from seti.lzedge.crossexp import HighEnergySearch, expected_counts
+    h = shm(238.0, 544.0)
+    searches = [
+        HighEnergySearch("all-year wide", 5.0, 300.0, 1.0, "2023-01-01", "2024-01-01"),
+        HighEnergySearch("winter wide", 5.0, 300.0, 1.0, "2023-11-01", "2024-01-31"),
+        HighEnergySearch("low window", 5.0, 60.0, 1.0, "2023-01-01", "2024-01-01"),
+    ]
+    res = expected_counts(lambda eff: EventModel(h, 1000.0, 370.0, eff), 1e-40, searches, step_days=7.0)
+    by = {r["search"]: r for r in res}
+    assert abs(by["all-year wide"]["seasonal_factor"] - 1.0) < 0.05
+    assert by["winter wide"]["seasonal_factor"] < 0.5           # the edge signal is a summer signal
+    assert by["low window"]["expected_seasonal"] == 0.0         # a window below the recoil energies is blind

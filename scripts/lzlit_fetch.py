@@ -170,6 +170,15 @@ BY_ID: dict[str, dict] = {
         "title": "Muon Flux"},
     "borexino2019_muon_modulation": {"id": "1808.04207", "src": False,
         "title": "muon"},
+    # --- added 2026-09-07 after the first sweep ------------------------------
+    "lmc_high_speed_flux_high_mass_2025": {"id": "2511.21841", "src": True,
+        "title": "High Speed Flux"},
+    "lmc_annihilation_2025": {"id": "2509.13540", "src": False,
+        "title": "Large Magellanic Cloud"},
+    "garavito2019_lmc_wake": {"id": "1902.05089", "src": False,
+        "title": "Wake"},
+    "lux_eft_2020": {"id": "2003.11141", "src": False,
+        "title": "Effective Field Theory"},
 }
 
 # Papers whose arXiv id is not certain: resolved by title search, so the id

@@ -443,6 +443,46 @@ def stage_vesc_marginal(cfg: dict, out: pathlib.Path) -> dict:
     return summary
 
 
+def stage_sensitivity(cfg: dict, out: pathlib.Path) -> dict:
+    """How much the date factor depends on the unknown live-time mask, and a
+    cross-check of the sideband count against arXiv:2609.04175 (N_SB = 4.9 per
+    window event at delta = 377 keV, SHM 544, Helm, sideband ~350-590 keV)."""
+    ev, run, win, sc = cfg["event"], cfg["run"], cfg["window"], cfg["scan"]
+    t_obs = ev["date"]
+    eff = Efficiency.from_table(win["efficiency"])
+    spec = cfg["halo_models"]["shm_lz"]
+    halo = build_halo("shm_lz", spec)
+    masks = {
+        "uniform_27mar2023_1apr2024": LiveTime.uniform(run["start"], run["end"], run["live_days"]),
+        "late_start_1jun2023": LiveTime.uniform("2023-06-01", run["end"], run["live_days"]),
+        "early_end_31dec2023": LiveTime.uniform(run["start"], "2023-12-31", run["live_days"]),
+        "summer_half_duty": LiveTime.from_rows([(run["start"], "2023-05-15", 1.0), ("2023-05-15", "2023-08-15", 0.5),
+                                               ("2023-08-15", run["end"], 1.0)]),
+        "winter_half_duty": LiveTime.from_rows([(run["start"], "2023-10-15", 1.0), ("2023-10-15", "2024-02-15", 0.5),
+                                               ("2024-02-15", run["end"], 1.0)]),
+        "calibration_weeks_removed": LiveTime.from_rows([(run["start"], "2023-06-05", 1.0), ("2023-06-05", "2023-06-12", 0.0),
+                                                        ("2023-06-12", run["end"], 1.0)]),
+    }
+    rows = []
+    for m in (1000.0,):
+        for delta in (300.0, 340.0, 360.0, 370.0, 377.0, 380.0):
+            model = EventModel(halo, m, delta, eff, v0_kms=spec["v0"])
+            entry = {"m_chi_gev": m, "delta_keV": delta}
+            for name, live in masks.items():
+                tb = timing_bayes_factor(model, live, t_obs, sc.get("livetime_step_days", 6.0))
+                entry[f"timing_{name}"] = tb["bayes_factor_timing"]
+            live0 = masks["uniform_27mar2023_1apr2024"]
+            r_win = timing_bayes_factor(model, live0, t_obs, sc.get("livetime_step_days", 6.0))["mean_rate_livetime"]
+            for lo, hi, tag in ((350.0, 590.0, "04175_350_590"), (350.0, 600.0, "ours_350_600"), (350.0, 680.0, "dent_350_680")):
+                sb = sideband_expectation(model, live0, lo, hi, 0.96, sc.get("livetime_step_days", 6.0))
+                entry[f"sideband_per_event_{tag}"] = sb / r_win if r_win > 0 else None
+            rows.append(entry)
+    summary = {"rows": rows, "reference_04175": {"delta1_keV": 377, "N_SB_helm": 4.9, "N_SB_vietze": 3.7,
+                                                  "sideband_keV": [350, 590]}}
+    (out / "sensitivity.json").write_text(json.dumps(summary, indent=1))
+    return summary
+
+
 def stage_numbers(cfg: dict, out: pathlib.Path, paper_dir: pathlib.Path | None = None) -> dict:
     """Write paper/lzedge/numbers.tex from the committed results (missing stages -> TODO macros)."""
     ev, run = cfg["event"], cfg["run"]
@@ -476,6 +516,15 @@ def stage_numbers(cfg: dict, out: pathlib.Path, paper_dir: pathlib.Path | None =
             if bm:
                 macros[f"DeltaBest{key}"] = f"{bm['best_delta_keV']:.0f}"
                 macros[f"DeltaOne{key}"] = f"{bm['delta_1sigma_keV'][0]:.0f}--{bm['delta_1sigma_keV'][1]:.0f}"
+    ss = out / "sensitivity.json"
+    if ss.exists():
+        srows = json.loads(ss.read_text())["rows"]
+        row = next((x for x in srows if x["delta_keV"] == 370.0), srows[-1])
+        vals = [v for k, v in row.items() if k.startswith("timing_")]
+        macros["TimingMaskMin"] = f"{min(vals):.1f}"
+        macros["TimingMaskMax"] = f"{max(vals):.1f}"
+        macros["SidebandAt377"] = f"{row.get('sideband_per_event_04175_350_590', float('nan')):.1f}" if row["delta_keV"] == 377.0 else \
+            f"{next(x for x in srows if x['delta_keV'] == 377.0)['sideband_per_event_04175_350_590']:.1f}"
     vs = out / "vesc_marginal.json"
     if vs.exists():
         sv = json.loads(vs.read_text())
@@ -505,7 +554,7 @@ def stage_numbers(cfg: dict, out: pathlib.Path, paper_dir: pathlib.Path | None =
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="lzedge")
     ap.add_argument("--stage", default="all",
-                    choices=["kinematics", "scan", "tails", "posterior", "vesc", "numbers", "figures", "all"])
+                    choices=["kinematics", "scan", "tails", "posterior", "vesc", "sensitivity", "numbers", "figures", "all"])
     ap.add_argument("--config", default=None)
     ap.add_argument("--out", default="results/lzedge")
     ap.add_argument("--halos", default=None, help="comma-separated subset of halo_models")
@@ -528,6 +577,9 @@ def main(argv: list[str] | None = None) -> int:
     if a.stage in ("vesc", "all"):
         s = stage_vesc_marginal(cfg, out)
         print(f"vesc: {len(s['measurements'])} measurements in {s['elapsed_s']}s")
+    if a.stage in ("sensitivity", "all"):
+        s = stage_sensitivity(cfg, out)
+        print("sensitivity:", json.dumps(s["rows"][-2], indent=None))
     if a.stage in ("figures", "all"):
         from .figures import make_all
         made = make_all(cfg, out / "figures")

@@ -5,25 +5,37 @@
 # replaced by the numbers read from arXiv:2609.02823 (results/lzlit/) before a
 # result is quoted.
 
+# Verified 2026-09-07 against the arXiv:2609.02823 source (results/lzlit/src/2609.02823/):
+#   analysis.tex: 220 live days between 27 March 2023 and 1 April 2024; FV 4.71 +- 0.08 t;
+#   WS ROI S1c 3-600 phd, S2c 10^2.75-10^4.15 phd; NR efficiency averages 96% between
+#   14 and 250 keV, crosses 50% at 5.4 keV and 269.9 keV (SupplementalMaterial.tex,
+#   Fig. S2); the event: 248 +- 23 (stat) +- 23 (sys) keV, S1c 540.1 phd, S2c 9268 phd,
+#   recorded 21:22:39 UTC on 16 June 2023; halo: SHM with the Baxter+2021 conventions.
 event:
   energy_keV: 248.0
   sigma_stat_keV: 23.0
   sigma_sys_keV: 23.0            # energy-scale systematic, treated as a shift nuisance
-  date: "2023-06-16"             # PLACEHOLDER precision: day; the paper may give the time
+  date: "2023-06-16"
+  time_utc: "2023-06-16T21:22:39"
+  s1c_phd: 540.1
+  s2c_phd: 9268.0
 
-run:                              # LZ WS2024
-  start: "2023-03-01"            # PLACEHOLDER: "March 2023"
-  end: "2024-04-30"              # PLACEHOLDER: "April 2024"
+run:                              # LZ WS2024 as used in arXiv:2609.02823
+  start: "2023-03-27"
+  end: "2024-04-01"
   live_days: 220.0
-  exposure_tonne_year: 2.84      # the extended-window analysis exposure
-  fiducial_tonne: 5.5
+  exposure_tonne_year: 2.84      # 4.71 t x 220 d
+  fiducial_tonne: 4.71
 
-window:                           # extended nuclear-recoil window, PLACEHOLDER edges
-  E_lo_keV: 5.0
-  E_hi_keV: 270.0
-  efficiency:                    # PLACEHOLDER flat; replace with the paper's curve
-    - [5.0, 1.0]
-    - [270.0, 1.0]
+window:                           # extended nuclear-recoil window (50% points 5.4 and 269.9 keV)
+  E_lo_keV: 5.4
+  E_hi_keV: 290.0
+  efficiency:                    # from the text of Fig. S2: 96% plateau 14-250 keV, 50% at 269.9 keV;
+    - [5.4, 0.50]                # the roll-off above 250 keV is the S1c < 600 phd ROI edge.
+    - [14.0, 0.96]               # Replace with the Data Release table when it is reached.
+    - [250.0, 0.96]
+    - [269.9, 0.50]
+    - [290.0, 0.0]
   resolution_scaling: sqrt       # sigma(E) = sigma_stat * sqrt(E / E_event)
 
 halo_models:

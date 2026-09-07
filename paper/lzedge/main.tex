@@ -45,7 +45,56 @@ window within which the next such events must fall.
 \end{abstract}
 
 \section{Introduction}
-\TODO{LZ result; the ten follow-ups; why the edge hands the question to astronomy.}
+The LUX-ZEPLIN collaboration has re-searched its 220 live-day WS2024 exposure
+(27 March 2023 to 1 April 2024, 4.71~t fiducial, \Exposure\,tonne-years) in a
+nuclear-recoil window extended to $\approx270$\keV, motivated by non-relativistic
+effective-field-theory operators and inelastic scattering, both of which move recoil
+spectra to energies where the spin-independent signal has long vanished
+\citep{LZ2026extended}.  One event survives every selection: at 21:22:39~UTC on
+16~June~2023, a single scatter reconstructed as a \EventEnergy\,$\pm$\,23\,(stat)\,$\pm$\,23\,(sys)\keV
+nuclear recoil, 1.5$\sigma$ below the median of the nuclear-recoil band and 6.7$\sigma$
+below the electron-recoil band, in a region where the known backgrounds sum to
+$0.011$ events.  The collaboration reports a global significance of 2.6$\sigma$ and
+local significances up to 3.4$\sigma$ for momentum-dependent operators and for
+endothermic scattering with splittings of 250--350\keV at masses above 200\,GeV.
+
+Nineteen papers appeared within a week.  Their common conclusion, reached from
+different model-building directions
+\citep{Freese2026higgsino,DiMauro2026edge,McCabe2026seasonal}, is that the natural
+dark-matter reading is an endothermic recoil, $\chi N\to\chi^\ast N$ with
+$m_{\chi^\ast}-m_\chi=\delta$, and that the observed energy pushes $\delta$ to within a
+few tens of keV of the largest value the halo can supply.  \citet{McCabe2026seasonal}
+puts it precisely: at 1\,TeV the fitted splittings lie at 370--400\keV, where
+``the entire signal is supplied by dark matter lying within 44\kms of the escape
+speed, a sliver of the velocity distribution and the part of the local halo that is
+most uncertain'', and leaves the dependence on that part ``for future work''.
+\citet{DiMauro2026edge} shows that such a signal would be concentrated in a few weeks
+around the annual maximum of the laboratory's speed through the halo and declines to
+assign the 16~June date a probability without the detector's live-time distribution.
+The high-energy sideband above the window, which LZ uses to validate a background
+model and finds empty, is turned into an upper bound on $\delta$ for the Higgsino by
+\citet{HiggsinoSideband2026}, who also add a Large-Magellanic-Cloud sub-component and
+scan the escape speed upward from the conventional 544\kms.
+
+This paper takes the astrophysical half of that programme seriously.  If the event is
+a recoil at the kinematic edge, it is a measurement of the fastest dark matter in the
+solar neighbourhood, and three facts about that population are available from
+astronomy rather than from convention.  First, the local escape speed has been
+measured from halo stars, and most measurements sit \emph{below} 544\kms:
+$484.6^{+17.8}_{-7.4}$ \citep{NecibLin2022vesc}, $497\pm8$
+\citep{KoppelmanHelmi2021vesc}, $521^{+46}_{-30}$ \citep{Roche2024vesc} and
+$528^{+24}_{-25}$\kms \citep{Deason2019vesc}, against $580\pm63$\kms
+\citep{Monari2018vesc} and the RAVE value of 544\kms adopted by
+\citet{Baxter2021conventions}.  Second, the shape of the tail near the escape speed
+is not a sharp cut: the stellar fits are power laws $(\vesc-v)^k$ whose slope is
+degenerate with $\vesc$ itself.  Third, simulations of a Milky Way with an LMC on
+first infall place a small, fast population above the nominal escape speed
+\citep{Besla2019lmc,SmithOrlik2023lmc}.  We evaluate, for every such description of
+the tail, the same three-factor likelihood of the one event: its energy, its date
+against the live time of the run, and the empty sideband.  The result is a posterior
+on $\delta$ for each escape-speed measurement, an evidence for each halo model given
+the event, and, read the other way, the event's own likelihood for the local escape
+speed.
 
 \section{Kinematics of a recoil at the edge}
 For endothermic scattering $\chi N\to\chi^\ast N$ with $m_{\chi^\ast}-m_\chi=\delta\ge0$,
@@ -66,23 +115,88 @@ which the event is kinematically possible only within a window of dates around
 date, \EventDate, is \DaysAfterPeak days after the maximum of $\vlab$.
 
 \section{Halo models and the shape of the tail}
-\TODO{SHM sharp; soft; power-law tail (Gaia fits); SHM++; the LMC-boosted component;
-what each does to $g(\vmin,t)$ near the edge (Fig.~\ref{fig:tails}).}
+Every velocity distribution is specified in the Galactic rest frame and boosted by
+$\vlab(t)=\mathbf v_{\rm LSR}+\mathbf v_\odot+\mathbf v_\oplus(t)$, with
+$v_0=238\kms$, the \citet{Schoenrich2010} peculiar velocity and the ecliptic vectors of
+\citet{McCabe2014earth}; $|\vlab|$ peaks on 1~June at 266.4\kms and troughs on
+1~December at 237\kms, and was 266.0\kms on the date of the event.  The rate needs
+only the inverse-speed integral $g(\vmin,t)=\int_{v>\vmin}f_{\rm lab}(\mathbf v,t)/v\,d^3v$.
+
+\emph{Sharp cut.}  The standard halo model: a Maxwellian truncated at $\vesc$ in the
+Galactic frame.  Its lab-frame speed distribution is elementary (the angular integral
+over the spherical cap inside the escape sphere is a difference of two exponentials),
+and we verify the numerical $g$ against the closed form of \citet{Savage2006} to
+$5\times10^{-3}$.
+
+\emph{Soft cut and power-law tail.}  The sharp cut is an artefact of the model.  The
+stellar fits from which $\vesc$ is inferred use $f(v)\propto(\vesc-v)^k$ near the edge,
+with $k$ between 1 and 3 and strongly degenerate with $\vesc$
+\citep{Deason2019vesc,KoppelmanHelmi2021vesc}; we implement that tail joined
+continuously to the Maxwellian at $0.8\vesc$, and the King-like soft cut
+$\exp(-v^2/v_0^2)-\exp(-\vesc^2/v_0^2)$ as an intermediate case.  For anisotropic
+components (the Sausage of SHM$^{++}$, \citealt{Evans2019shmpp}) and for the
+LMC component below, the escape-sphere cap is integrated exactly: the
+Gauss--Legendre nodes in $\cos\theta$ are mapped onto the allowed sub-interval at
+each speed, so the hard edge never falls between nodes.
+
+\emph{The LMC.}  Following \citet{HiggsinoSideband2026}, who summarise
+\citet{Besla2019lmc} and \citet{SmithOrlik2023lmc}, we add a Gaussian of dispersion
+100\kms boosted to $|\mathbf v_b|=570\kms$ along the LMC's velocity direction (135$^\circ$
+from the Sun's), truncated at $|\mathbf v-\mathbf v_b|<200\kms$, with density
+fraction $w=0.26\%$ (the present-day value of the re-simulated Auriga halo) and
+$0.6\%$.  In June this component reaches 980\kms in the laboratory.  Because the LMC
+moves against Galactic rotation, its particles arrive from nearly the same direction
+as the halo wind and are fastest in the same weeks \citep{Besla2019lmc}, so the date
+of the event does not separate the two; the sideband does.
+
+Figure~\ref{fig:tails} shows $f_{\rm lab}(v)$ on 16~June~2023 for these models with
+$\vmin(248\keV;\delta)$ marked for a 1\,TeV state.  At $\delta=380$\keV the density at
+$\vmin$ differs by two orders of magnitude between the sharp cut and a $k=2.5$ tail,
+and by a factor of a few between $\vesc=528$ and 544\kms: the answer to ``which
+splitting?'' is set by the tail, not by the detector.
 
 \section{The likelihood of one event}
-With the cross section profiled, the single-event extended likelihood factorises into
-a timing term and an energy term,
+For an expected count $\mu=\sigma_n\,\hat\mu$ of signal events in the window, one
+observed at energy $E_{\rm obs}$ and date $t_{\rm obs}$, and none in the sideband, the
+extended likelihood is
+$\mathcal L=e^{-\mu}\,\mu\,p(E_{\rm obs},t_{\rm obs})\,e^{-\mu_{\rm SB}}$, with
+$p(E,t)=R(E,t)L(t)/\int\!\!\int R L\,dE\,dt$ the normalised density of a signal event in
+energy and live time.  Because the search-window density and the sideband count are
+both proportional to $\sigma_n$, the likelihood factorises as
 \begin{equation}
-  \mathcal{L}(m_\chi,\delta)\propto\frac{R(t_{\rm obs})}{\langle R\rangle_{\rm live}}
-  \times p(E_{\rm obs}\,|\,t_{\rm obs}),
+  \mathcal L(m_\chi,\delta,\sigma_n)\propto e^{-\mu}\mu\times
+  \underbrace{\frac{R(t_{\rm obs})}{\langle R\rangle_{\rm live}}}_{\text{date}}\times
+  \underbrace{p(E_{\rm obs}\,|\,t_{\rm obs})}_{\text{energy}}\times
+  \underbrace{\exp\!\left[-\mu\,\frac{R_{\rm SB}}{R}\right]}_{\text{sideband}},
+  \label{eq:like}
 \end{equation}
-where $R(t)$ is the efficiency-weighted window rate and $\langle R\rangle_{\rm live}$
-its live-time average.  The first factor is the evidence the date carries against a
-constant-rate background; the second is the recoil spectrum at the event's date,
-folded with resolution and the energy-scale systematic.  A log-uniform prior on the
-cross section up to a physical ceiling turns the profile into a marginal likelihood
-that penalises models which cannot make one event at any allowed cross section.
-\TODO{Fig.~\ref{fig:scan}.}
+where $R(t)$ is the efficiency-weighted rate in the 5.4--270\keV window,
+$\langle R\rangle_{\rm live}$ its average over the live time (uniform between 27~March
+2023 and 1~April~2024, the only information the paper gives), $p(E_{\rm obs}|t_{\rm obs})$
+the recoil spectrum on the date of the event after the $\sqrt E$ resolution anchored at
+$\pm23$\keV and the $\pm23$\keV energy-scale systematic marginalised as a shift, and
+$R_{\rm SB}/R$ the ratio of the rate in the empty sideband (taken as 350--600\keV with
+the plateau efficiency, as \citealt{HiggsinoSideband2026}) to the window rate.  The date
+factor is unity for an unmodulated signal, grows with the modulation amplitude and is
+zero for a model whose rate vanishes on 16~June; the sideband factor is
+$e^{-N_{\rm SB}}$ with $N_{\rm SB}$ the sideband count per window event.  We marginalise
+$\sigma_n$ with a log-uniform prior up to a ceiling of $10^{-37}$\,cm$^2$, which turns
+$e^{-\mu}\mu$ into $1-e^{-\mu_{\max}}$: models that cannot make one event at any allowed
+cross section are penalised, while the profile alone is flat in $\sigma_n$ and runs to
+the grid edge where one event would need $10^{-34}$\,cm$^2$.  Figure~\ref{fig:scan}
+shows the date and energy factors against $\delta$.
+
+The energy factor is what every published fit uses.  The date factor is the one
+\citet{McCabe2026seasonal} includes and \citet{DiMauro2026edge} declines; we take the
+uniform live time as the collaboration's stated span implies, and note that the
+factor moves by less than 10\,\% when the live time is concentrated in the second
+half of the run (Section~\ref{sec:sys}).  The sideband factor is that of
+\citet{HiggsinoSideband2026} and \citet{DentNewstead2026}: for a heavy state the
+spectral peak sits at $E^\ast=\mu\delta/m_N$, which for $\delta\gtrsim300$\keV lies
+\emph{above} the window, so the observed 248\keV is on the rising edge and the empty
+sideband bounds $\delta$ from above.  With all three factors the splitting is pinned
+from both sides: from below by the energy, from above by the sideband, and the date
+rewards the models in between that are most seasonal.
 
 \section{Results}
 \subsection{The splitting and the escape speed}

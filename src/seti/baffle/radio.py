@@ -124,13 +124,16 @@ VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_DEGRADED = "DEGRADED_SOURCE"
 VERDICT_NO_SURVIVOR = "NO_RADIO_VOID_SURVIVOR"
 VERDICT_CANDIDATES = "RADIO_VOID_CANDIDATES_PENDING_VET"
+VERDICT_AT_CONTROL_RATE = "RADIO_VOIDS_AT_CONTROL_RATE"
 
 VETO_FOOTPRINT = "outside_footprint_or_masked"
 VETO_BRIGHT = "bright_radio_source_mask"
+VETO_MOSAIC = "mosaic_edge_or_masked"
 VETO_LOW_EXPECTED = "low_expected_count"
 VETO_NOT_SIGNIFICANT = "not_significant"
 VETO_NONE = "none"
-VETO_ORDER = (VETO_FOOTPRINT, VETO_BRIGHT, VETO_LOW_EXPECTED, VETO_NOT_SIGNIFICANT)
+VETO_ORDER = (VETO_FOOTPRINT, VETO_BRIGHT, VETO_MOSAIC, VETO_LOW_EXPECTED, VETO_NOT_SIGNIFICANT)
+EVALUATED = (VETO_NONE, VETO_NOT_SIGNIFICANT)      # positions the statistic was computed at
 
 GAIA_EPOCH = 2016.0
 LOTSS_DR2_MID_EPOCH = 2017.5   # DR2 observations span 2014 - 2020
@@ -173,6 +176,20 @@ DEFAULTS: dict = {
     "baffle_distances_au": [500.0, 1000.0, 2000.0, 5000.0, 10000.0],
     "n_phase": 8,
     "control_offset_arcsec": 2700.0,     # 45'
+    # Survey-hole veto: sources within the annulus outer radius from more than
+    # this many mosaics (a mosaic boundary), or with a mean masked fraction
+    # above this (a masked region), cannot host a void.
+    "max_annulus_mosaics": 1,
+    "max_annulus_maskfract": 0.1,
+    # Targets closer than this share one void (binaries); the excess
+    # statistic counts unique positions.
+    "dedupe_radius_arcsec": 120.0,       # 2'
+    # The candidate count is compared with the control rate x evaluated
+    # positions; only an excess with P(N >= n_obs | n_exp) below this is a
+    # candidate set rather than the null.
+    "p_excess_min": 0.01,
+    "nearby_parallax_min_mas": 40.0,     # the "< 25 pc" subset
+    "min_subset_controls": 100,          # below this a subset uses the global rate
     "probe": {"ra": 200.0, "dec": 50.0, "half_width_deg": 0.05},
 }
 
@@ -465,7 +482,7 @@ def _gather_local(sources_by_tile: dict, ra: float, dec: float, radius_deg: floa
         if df is not None and len(df):
             parts.append(df)
     if not parts:
-        return pd.DataFrame({"ra": [], "dec": [], "flux_jy": []})
+        return pd.DataFrame({"ra": [], "dec": [], "flux_jy": [], "mosaic": [], "maskfract": []})
     df = pd.concat(parts, ignore_index=True)
     sep = angular_separation_arcsec(ra, dec, df["ra"].to_numpy(float), df["dec"].to_numpy(float))
     return df.loc[sep <= radius_deg * 3600.0].reset_index(drop=True)
@@ -503,10 +520,27 @@ def void_statistics(sources_df: pd.DataFrame, ra: float, dec: float, cfg: dict) 
                  "best_phase": float("nan"), "best_dx_arcsec": float("nan"),
                  "best_dy_arcsec": float("nan"), "best_n_obs": -1,
                  "best_lambda": float("nan"), "p_raw": float("nan"),
-                 "p_trials": float("nan"), "n_sources_in_reach": int(sra.size)}
+                 "p_trials": float("nan"), "n_sources_in_reach": int(sra.size),
+                 "annulus_mosaics": "", "n_annulus_mosaics": 0,
+                 "annulus_maskfract_mean": float("nan")}
     for r in apertures:
         out[f"n_x_{int(r)}"] = int(np.count_nonzero(sep < r)) if sra.size else 0
         out[f"lambda_{int(r)}"] = float(density * aperture_area_deg2(r))
+
+    # Survey-structure record: which mosaic(s) the sources within the annulus
+    # outer radius belong to, and how masked they are.  A void at a mosaic
+    # boundary or in a masked region is a hole in the survey, not in the sky.
+    within = sep < r_out
+    if sources_df is not None and sra.size and "mosaic" in sources_df.columns:
+        mos = pd.Series(np.asarray(sources_df["mosaic"], dtype=object)[within])
+        mos = mos[mos.notna() & (mos.astype(str).str.strip() != "") & (mos.astype(str) != "None")]
+        names = sorted(set(mos.astype(str)))
+        out["annulus_mosaics"] = ";".join(names)
+        out["n_annulus_mosaics"] = len(names)
+    if sources_df is not None and sra.size and "maskfract" in sources_df.columns:
+        mf = np.asarray(sources_df["maskfract"], dtype=float)[within]
+        if np.isfinite(mf).any():
+            out["annulus_maskfract_mean"] = float(np.nanmean(mf))
 
     if density < min_density:
         out["veto"] = VETO_FOOTPRINT
@@ -521,6 +555,12 @@ def void_statistics(sources_df: pd.DataFrame, ra: float, dec: float, cfg: dict) 
             if np.isfinite(fmax) and fmax > bright_jy:
                 out["veto"] = VETO_BRIGHT
                 return out
+
+    if (out["n_annulus_mosaics"] > int(cfg.get("max_annulus_mosaics", 1))
+            or (np.isfinite(out["annulus_maskfract_mean"])
+                and out["annulus_maskfract_mean"] > float(cfg.get("max_annulus_maskfract", 0.1)))):
+        out["veto"] = VETO_MOSAIC
+        return out
 
     usable = [r for r in apertures if density * aperture_area_deg2(r) >= min_lam]
     if not usable:
@@ -622,6 +662,15 @@ def screen_targets(targets_df: pd.DataFrame, sources_by_tile: dict, cfg: dict,
                 "n_controls_masked_by_bad_tile": 0,
                 "control_false_void_rate": float("nan"),
                 "n_trials_per_position": 0, "apertures_arcsec": apertures}
+    # Targets closer than dedupe_radius share one void (binaries such as
+    # 1425970202160161536 / 1425970958074499328, 0.1' apart, in run
+    # 34066710402); every row keeps its own statistic, the excess counts
+    # unique positions.
+    cluster_ids = cluster_positions(targets_df["ra"], targets_df["dec"],
+                                    float(cfg.get("dedupe_radius_arcsec", 120.0)))
+    cluster_size = np.bincount(cluster_ids) if cluster_ids.size else np.empty(0, int)
+    counters["n_unique_positions"] = int(cluster_size.size)
+    counters["n_targets_in_multiples"] = int((cluster_size[cluster_ids] > 1).sum())
     rows = []
     t0 = _time.monotonic()
     for i, t in enumerate(targets_df.itertuples(index=False)):
@@ -638,7 +687,8 @@ def screen_targets(targets_df: pd.DataFrame, sources_by_tile: dict, cfg: dict,
         is_etz = bool(getattr(t, "is_etz", False))
         rec = {"source_id": getattr(t, "source_id", i), "ra": ra, "dec": dec,
                "parallax_mas": float(getattr(t, "parallax", float("nan"))),
-               "is_etz": is_etz}
+               "is_etz": is_etz, "cluster_id": int(cluster_ids[i]),
+               "n_in_cluster": int(cluster_size[cluster_ids[i]])}
         rec.update({k: v for k, v in st.items() if k not in ("ra", "dec")})
         counters["n_trials_per_position"] = max(counters["n_trials_per_position"], st["n_trials"])
         if is_etz:
@@ -699,6 +749,8 @@ def screen_targets(targets_df: pd.DataFrame, sources_by_tile: dict, cfg: dict,
         rank = np.searchsorted(allc, pt, side="right")
         emp = np.where(np.isfinite(pt), (rank + 1) / (allc.size + 1), np.nan)
         voids["p_empirical_control"] = emp
+    if len(voids):
+        voids = candidate_geometry(voids)
     return voids, counters
 
 
@@ -717,8 +769,14 @@ def screen_targets(targets_df: pd.DataFrame, sources_by_tile: dict, cfg: dict,
 LOTSS_ALIASES: dict[str, tuple[str, ...]] = {
     "ra": ("RAJ2000", "RA_ICRS", "RA", "_RAJ2000", "RAdeg", "RA_deg"),
     "dec": ("DEJ2000", "DE_ICRS", "DEC", "DE", "_DEJ2000", "DEdeg", "DEC_deg", "Dec"),
-    "flux": ("Stotal", "Total_flux", "Ftotal", "TotalFlux", "Sint", "S_total", "Flux_total",
-             "Fint", "Flux"),
+    # VizieR J/A+A/659/A1/catalog (run 34066710402) serves the total flux as
+    # SpeakTot (mJy) and the peak as Speak (mJy/beam).  Total is preferred;
+    # the peak is a recorded fallback.
+    "flux": ("SpeakTot", "Stotal", "Total_flux", "Ftotal", "TotalFlux", "Sint", "S_total",
+             "Flux_total", "Fint", "Flux"),
+    "flux_peak": ("Speak", "Peak_flux", "Fpeak", "Spk"),
+    "mosaic": ("Mosaic", "Mosaic_ID", "MosaicID"),
+    "maskfract": ("MaskFract", "Masked_Fraction", "MaskedFraction"),
 }
 
 ERR_ADQL_SYNTAX = "ADQL_SYNTAX"
@@ -842,6 +900,7 @@ def pick_columns(columns_df: pd.DataFrame) -> dict:
             i = by_ucd(prefix)
             chosen[key] = names[i] if i is not None else None
             reasons.append(f"{key} by ucd ({names[i]})" if i is not None else f"{key} NOT FOUND")
+    flux_is_peak = False
     if "flux" in res:
         chosen["flux"] = res["flux"]
         reasons.append(f"flux by alias ({res['flux']})")
@@ -850,11 +909,26 @@ def pick_columns(columns_df: pd.DataFrame) -> dict:
               and "peak" not in lower[i] and not lower[i].startswith("e_")]
         tot = [i for i in fl if any(h in lower[i] for h in _FLUX_UCD_HINTS)]
         i = (tot or fl or [None])[0]
-        chosen["flux"] = names[i] if i is not None else None
-        reasons.append(f"flux by ucd ({names[i]})" if i is not None else "flux NOT FOUND")
-    unit = units[lower.index(chosen["flux"].lower())] if chosen["flux"] else None
+        if i is not None:
+            chosen["flux"] = names[i]
+            reasons.append(f"flux by ucd ({names[i]})")
+        elif "flux_peak" in res:
+            chosen["flux"], flux_is_peak = res["flux_peak"], True
+            reasons.append(f"flux: PEAK used as fallback ({res['flux_peak']})")
+        else:
+            chosen["flux"] = None
+            reasons.append("flux NOT FOUND")
+
+    def unit_of(col):
+        return units[lower.index(col.lower())] if col else None
+
+    for key in ("mosaic", "maskfract"):
+        chosen[key] = res.get(key)
+        reasons.append(f"{key} by alias ({res[key]})" if key in res else f"{key} not served")
     return {"ra_col": chosen["ra"], "dec_col": chosen["dec"], "flux_col": chosen["flux"],
-            "flux_unit": unit, "reason": "; ".join(reasons)}
+            "flux_unit": unit_of(chosen["flux"]), "flux_is_peak": flux_is_peak,
+            "flux_peak_col": res.get("flux_peak"), "mosaic_col": chosen["mosaic"],
+            "maskfract_col": chosen["maskfract"], "reason": "; ".join(reasons)}
 
 
 def flux_to_jy_factor(unit: str | None) -> tuple[float, str]:
@@ -895,7 +969,9 @@ def discover_lotss(cfg: dict) -> dict:
     retries = int(lc.get("tap_retries", 3))
     out: dict = {"status": "NOT_DISCOVERED", "service": None, "route": None, "table": None,
                  "table_bare": None, "ra_col": None, "dec_col": None, "flux_col": None,
-                 "flux_unit": None, "flux_to_jy": None, "degraded": False,
+                 "flux_unit": None, "flux_to_jy": None, "flux_is_peak": False,
+                 "flux_peak_col": None, "mosaic_col": None, "maskfract_col": None,
+                 "degraded": False,
                  "degraded_reasons": [], "ledger": [], "tables_seen": [],
                  "columns": [], "names_as_served": [], "discovery_route": None}
     routes = [("vizier", lc.get("vizier_tap", VIZIER_TAP),
@@ -942,14 +1018,22 @@ def discover_lotss(cfg: dict) -> dict:
         out.update({"status": "DISCOVERED", "service": url, "route": route, "table": table,
                     "table_bare": table_bare, "ra_col": cols["ra_col"],
                     "dec_col": cols["dec_col"], "flux_col": cols["flux_col"],
-                    "flux_unit": cols["flux_unit"]})
+                    "flux_unit": cols["flux_unit"], "flux_is_peak": cols["flux_is_peak"],
+                    "flux_peak_col": cols["flux_peak_col"], "mosaic_col": cols["mosaic_col"],
+                    "maskfract_col": cols["maskfract_col"]})
         if cols["flux_col"]:
             fac, why = flux_to_jy_factor(cols["flux_unit"])
             out["flux_to_jy"], out["flux_unit_decision"] = fac, why
             if "ASSUMED" in why:
                 out["degraded_reasons"].append(f"flux unit assumed mJy for {cols['flux_col']}")
+            if cols["flux_is_peak"]:
+                out["degraded_reasons"].append(
+                    f"peak flux {cols['flux_col']} used for the bright-source veto (no total)")
         else:
             out["degraded_reasons"].append("no flux column: bright-source veto disabled")
+        for key in ("mosaic_col", "maskfract_col"):
+            if not cols[key]:
+                out["degraded_reasons"].append(f"no {key[:-4]} column: survey-hole veto partial")
         if route != "vizier":
             out["degraded_reasons"].append(f"LoTSS reached through fallback route {route}")
         try:
@@ -966,8 +1050,10 @@ def discover_lotss(cfg: dict) -> dict:
 def resolved_columns(disc: dict) -> dict[str, str]:
     """``{logical: actual}`` for the SELECT list, flux only when discovered."""
     res = {"ra": disc.get("ra_col") or "", "dec": disc.get("dec_col") or ""}
-    if disc.get("flux_col"):
-        res["flux"] = disc["flux_col"]
+    for logical, key in (("flux", "flux_col"), ("mosaic", "mosaic_col"),
+                         ("maskfract", "maskfract_col")):
+        if disc.get(key):
+            res[logical] = disc[key]
     return res
 
 
@@ -992,7 +1078,9 @@ def normalise_sources(df: pd.DataFrame, disc: dict) -> pd.DataFrame:
     TAP_SCHEMA served, so they are matched the way the aliases are.
     """
     res = resolve_aliases(df.columns, {"ra": (disc["ra_col"],), "dec": (disc["dec_col"],),
-                                       "flux": (disc.get("flux_col") or "\x00",)})
+                                       "flux": (disc.get("flux_col") or "\x00",),
+                                       "mosaic": (disc.get("mosaic_col") or "\x00",),
+                                       "maskfract": (disc.get("maskfract_col") or "\x00",)})
     if "ra" not in res or "dec" not in res:
         raise ValueError(f"result lacks {disc['ra_col']}/{disc['dec_col']}: {list(df.columns)[:20]}")
     out = pd.DataFrame({"ra": pd.to_numeric(df[res["ra"]], errors="coerce"),
@@ -1002,6 +1090,14 @@ def normalise_sources(df: pd.DataFrame, disc: dict) -> pd.DataFrame:
         out["flux_jy"] = pd.to_numeric(df[res["flux"]], errors="coerce") * fac
     else:
         out["flux_jy"] = np.nan
+    if "mosaic" in res:
+        m = df[res["mosaic"]]
+        m = m.str.decode("utf-8") if m.dtype == object and len(m) and isinstance(m.iloc[0], bytes) else m
+        out["mosaic"] = m.astype(str).str.strip()
+    else:
+        out["mosaic"] = None
+    out["maskfract"] = (pd.to_numeric(df[res["maskfract"]], errors="coerce")
+                        if "maskfract" in res else np.nan)
     return out.dropna(subset=["ra", "dec"]).reset_index(drop=True)
 
 
@@ -1105,7 +1201,8 @@ def _write_json(path: Path, obj: dict) -> None:
 
 
 def acquire_tiles(tiles: list[dict], fetcher, tiles_dir: Path, max_rows: int | None = None,
-                  max_consecutive_failures: int = 5) -> tuple[dict[str, pd.DataFrame], list[dict], dict]:
+                  max_consecutive_failures: int = 5, required_columns: tuple[str, ...] = (),
+                  ) -> tuple[dict[str, pd.DataFrame], list[dict], dict]:
     """Fetch (or reload from checkpoint) every planned tile.
 
     One failed tile never stops the run -- but ``max_consecutive_failures``
@@ -1136,11 +1233,20 @@ def acquire_tiles(tiles: list[dict], fetcher, tiles_dir: Path, max_rows: int | N
         if path.exists():
             try:
                 df = pd.read_parquet(path)
-                entry.update({"from_checkpoint": True, "n_rows": int(len(df)),
-                              "status": STATUS_FROM_CHECKPOINT})
-                sources[tile["key"]] = df
-                ledger.append(entry)
-                continue
+                # A checkpoint pulled before a column was discovered (run
+                # 34066710402's tiles have no SpeakTot / Mosaic / MaskFract)
+                # would make every veto that needs it silently partial: stale.
+                missing = [c for c in required_columns
+                           if c not in df.columns or (len(df) and df[c].isna().all())]
+                if missing and len(df):
+                    entry["error"] = f"checkpoint stale (lacks {missing}), refetching"
+                    entry["checkpoint_stale"] = True
+                else:
+                    entry.update({"from_checkpoint": True, "n_rows": int(len(df)),
+                                  "status": STATUS_FROM_CHECKPOINT})
+                    sources[tile["key"]] = df
+                    ledger.append(entry)
+                    continue
             except Exception as exc:                          # noqa: BLE001
                 entry["error"] = f"checkpoint unreadable, refetching: {exc!r}"
         if abort["aborted"]:
@@ -1261,11 +1367,16 @@ def run_radio_stage(cfg: dict | None, out_dir, *, lotss_fetcher=None, target_fet
     sources: dict[str, pd.DataFrame] = {}
     ledger: list[dict] = []
     abort: dict = {"aborted": False}
+    disc_rec = summary["discovery"] or {}
+    required = tuple(col for col, key in (("flux_jy", "flux_col"), ("mosaic", "mosaic_col"),
+                                          ("maskfract", "maskfract_col")) if disc_rec.get(key))
     if fetcher is not None and tiles:
         sources, ledger, abort = acquire_tiles(
             tiles, fetcher, out / "tiles",
             max_consecutive_failures=int(rcfg.get("lotss", {}).get(
-                "max_consecutive_tile_failures", 5)))
+                "max_consecutive_tile_failures", 5)),
+            required_columns=required)
+    summary["tiles_required_columns"] = list(required)
     summary["tiles"] = {"tile_deg": tile_deg, "n_planned": len(tiles), **_ledger_counts(ledger)}
     summary["acquisition_abort"] = abort
     if abort.get("aborted"):
@@ -1290,6 +1401,9 @@ def run_radio_stage(cfg: dict | None, out_dir, *, lotss_fetcher=None, target_fet
                                            "n_targets_in_footprint": 0, "n_etz": 0,
                                            **{v: 0 for v in VETO_ORDER},
                                            "control_false_void_rate": float("nan")}
+    excess = assess_voids(voids, rcfg) if len(voids) else {"all": excess_over_control(None, rcfg)}
+    if len(voids):
+        voids["excess_significant"] = bool(excess["all"]["excess_significant"])
     voids.to_csv(out / "voids.csv", index=False)
     cands = voids.loc[voids["is_candidate"]] if len(voids) else pd.DataFrame()
     cands.to_csv(out / "candidates.csv", index=False)
@@ -1300,6 +1414,8 @@ def run_radio_stage(cfg: dict | None, out_dir, *, lotss_fetcher=None, target_fet
     summary["control_false_void_rate"] = counters.get("control_false_void_rate")
     summary["n_trials_per_position"] = counters.get("n_trials_per_position", 0)
     summary["n_candidates"] = int(counters.get("n_candidates", 0))
+    summary["n_unique_void_positions"] = int(excess["all"].get("n_observed", 0))
+    summary["excess"] = excess
     if len(cands):
         summary["candidates"] = cands.head(50).to_dict(orient="records")
 
@@ -1318,19 +1434,9 @@ def run_radio_stage(cfg: dict | None, out_dir, *, lotss_fetcher=None, target_fet
         else:
             why = "no LoTSS rows reached"
         text = f"{code}: {why}"
-    elif summary["n_candidates"]:
-        code = VERDICT_CANDIDATES
-        text = (f"{code}: {summary['n_candidates']} of {summary['n_targets_in_footprint']} "
-                f"in-footprint targets; control false-void rate "
-                f"{summary['control_false_void_rate']}")
-    elif summary["degraded_reasons"]:
-        code = VERDICT_DEGRADED
-        text = f"{code} ({'; '.join(summary['degraded_reasons'])})"
     else:
-        code = VERDICT_NO_SURVIVOR
-        text = (f"{code}: {summary['n_targets_in_footprint']} in-footprint targets, "
-                f"none below p_trials < {rcfg.get('p_min')} with lambda >= "
-                f"{rcfg.get('min_expected_count')}")
+        code, text = verdict_from_excess(excess, summary["degraded_reasons"],
+                                         summary["n_targets_in_footprint"], rcfg)
     summary["verdict_code"] = code
     summary["verdict"] = text
     summary["finished_utc"] = _now()
@@ -1340,6 +1446,234 @@ def run_radio_stage(cfg: dict | None, out_dir, *, lotss_fetcher=None, target_fet
                                             k: v for k, v in counters.items()
                                             if isinstance(v, (int, float))}},
                                        default=str))
+    return summary
+
+
+# --------------------------------------------------------------------------
+# Unique positions, the excess over the control rate, candidate geometry
+# --------------------------------------------------------------------------
+def cluster_positions(ra, dec, radius_arcsec: float) -> np.ndarray:
+    """Union-find clusters of positions within ``radius_arcsec`` of each other
+    (transitively); returns a cluster id per input, numbered in order of
+    first appearance.  KD-tree on unit vectors, so 40k targets is instant."""
+    from scipy.spatial import cKDTree
+    ra_r = np.radians(np.asarray(ra, dtype=float))
+    dec_r = np.radians(np.asarray(dec, dtype=float))
+    n = ra_r.size
+    if n == 0:
+        return np.empty(0, dtype=int)
+    xyz = np.column_stack([np.cos(dec_r) * np.cos(ra_r), np.cos(dec_r) * np.sin(ra_r),
+                           np.sin(dec_r)])
+    chord = 2.0 * math.sin(0.5 * math.radians(float(radius_arcsec) / 3600.0))
+    parent = np.arange(n)
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for a, b in cKDTree(xyz).query_pairs(chord):
+        ra_, rb = find(a), find(b)
+        if ra_ != rb:
+            parent[max(ra_, rb)] = min(ra_, rb)
+    roots = np.array([find(i) for i in range(n)])
+    _, ids = np.unique(roots, return_inverse=True)
+    # renumber in order of first appearance
+    order = {}
+    out = np.empty(n, dtype=int)
+    for i, r in enumerate(ids):
+        out[i] = order.setdefault(int(r), len(order))
+    return out
+
+
+def poisson_excess_p(n_obs: int, n_exp: float) -> float:
+    """P(N >= n_obs | n_exp): the regularised lower incomplete gamma
+    gammainc(n_obs, n_exp); 1 for n_obs = 0."""
+    from scipy.special import gammainc
+    if n_obs <= 0:
+        return 1.0
+    if not np.isfinite(n_exp) or n_exp <= 0:
+        return 0.0
+    return float(gammainc(float(n_obs), float(n_exp)))
+
+
+def excess_over_control(voids: pd.DataFrame, cfg: dict, mask=None, global_rate=None,
+                        label: str = "all") -> dict:
+    """Is the candidate count more than the control rate predicts?
+
+    Everything is counted at UNIQUE positions (``cluster_id``): a binary
+    whose two components share one void is one void.  Within a subset the
+    control rate comes from that subset's own controls when there are at
+    least ``min_subset_controls`` evaluated, else from ``global_rate``
+    (recorded in ``control_rate_source``).  ``p_excess`` = P(N >= n_obs |
+    n_exp); the set is a candidate set only below ``p_excess_min``.
+    """
+    p_min = float(cfg.get("p_excess_min", 0.01))
+    min_ctrl = int(cfg.get("min_subset_controls", 100))
+    out = {"label": label, "n_targets": 0, "n_positions_evaluated": 0, "n_duplicates_merged": 0,
+           "n_control_evaluated": 0, "n_control_fired": 0, "control_false_void_rate": None,
+           "control_rate_source": "none", "n_expected_from_control": None, "n_observed": 0,
+           "n_observed_rows": 0, "p_excess": None, "excess_significant": False,
+           "p_excess_min": p_min}
+    if voids is None or not len(voids):
+        return out
+    sub = voids if mask is None else voids.loc[np.asarray(mask, dtype=bool)]
+    out["n_targets"] = int(len(sub))
+    if "cluster_id" not in sub.columns:
+        sub = sub.assign(cluster_id=np.arange(len(sub)))
+    ev = sub.loc[sub["veto"].isin(EVALUATED)]
+    if not len(ev):
+        return out
+    # One representative per position: the row with the smallest p_trials.
+    rep = ev.sort_values("p_trials", kind="stable").drop_duplicates("cluster_id")
+    out["n_positions_evaluated"] = int(len(rep))
+    out["n_duplicates_merged"] = int(len(ev) - len(rep))
+    out["n_observed_rows"] = int(ev["is_candidate"].sum())
+    out["n_observed"] = int(rep["is_candidate"].sum())
+    n_ce = int(rep["n_control_evaluated"].sum()) if "n_control_evaluated" in rep else 0
+    n_cf = int(rep["n_control_fired"].sum()) if "n_control_fired" in rep else 0
+    out["n_control_evaluated"], out["n_control_fired"] = n_ce, n_cf
+    rate = None
+    if n_ce >= min_ctrl:
+        rate, out["control_rate_source"] = n_cf / n_ce, "subset"
+    elif global_rate is not None and np.isfinite(global_rate):
+        rate, out["control_rate_source"] = float(global_rate), "global"
+    elif n_ce > 0:
+        rate, out["control_rate_source"] = n_cf / n_ce, "subset_small"
+    out["control_false_void_rate"] = rate
+    if rate is None:
+        # Nothing to calibrate against: a void cannot be called the null.
+        out["excess_significant"] = out["n_observed"] > 0
+        return out
+    n_exp = rate * out["n_positions_evaluated"]
+    out["n_expected_from_control"] = float(n_exp)
+    out["p_excess"] = poisson_excess_p(out["n_observed"], n_exp)
+    out["excess_significant"] = bool(out["n_observed"] > 0 and out["p_excess"] < p_min)
+    return out
+
+
+def assess_voids(voids: pd.DataFrame, cfg: dict) -> dict:
+    """The excess statistic for every target, the ETZ subset and the < 25 pc subset."""
+    if voids is None or not len(voids):
+        return {"all": excess_over_control(voids, cfg)}
+    allx = excess_over_control(voids, cfg, label="all")
+    g = allx["control_false_void_rate"]
+    etz = voids["is_etz"].astype(bool).to_numpy() if "is_etz" in voids else np.zeros(len(voids), bool)
+    plx = voids["parallax_mas"].to_numpy(float) if "parallax_mas" in voids else np.full(len(voids), np.nan)
+    near = plx > float(cfg.get("nearby_parallax_min_mas", 40.0))
+    return {"all": allx,
+            "etz": excess_over_control(voids, cfg, mask=etz, global_rate=g, label="etz"),
+            "nearby_lt_25pc": excess_over_control(voids, cfg, mask=near, global_rate=g,
+                                                  label="nearby_lt_25pc")}
+
+
+def candidate_geometry(voids: pd.DataFrame) -> pd.DataFrame:
+    """Where the best under-density sits relative to the star.
+
+    ``best_offset_arcsec`` is the distance of the best centre from X (up to
+    206265"/500 AU = 413" on the grid); ``star_inside_best_aperture`` says
+    whether X is inside that aperture at all, and ``n_at_star_best_aperture``
+    is the count in the same aperture centred on X --- a void that is only
+    there when the aperture is slid off the star is the survey's structure,
+    not the star's.
+    """
+    v = voids.copy()
+    dx = v["best_dx_arcsec"].to_numpy(float)
+    dy = v["best_dy_arcsec"].to_numpy(float)
+    r = v["best_aperture_arcsec"].to_numpy(float)
+    off = np.hypot(dx, dy)
+    v["best_offset_arcsec"] = off
+    v["star_inside_best_aperture"] = np.where(np.isfinite(r), off < r, False)
+    n_at = np.full(len(v), -1)
+    for k, rr in enumerate(r):
+        col = f"n_x_{int(rr)}" if np.isfinite(rr) else None
+        if col and col in v.columns:
+            n_at[k] = int(v[col].iloc[k])
+    v["n_at_star_best_aperture"] = n_at
+    cra, cdec = [], []
+    for ra, dec, ddx, ddy in zip(v["ra"], v["dec"], dx, dy, strict=True):
+        if np.isfinite(ddx) and np.isfinite(ddy):
+            a, b = offset_position(ra, dec, ddx, ddy)
+        else:
+            a, b = float("nan"), float("nan")
+        cra.append(a)
+        cdec.append(b)
+    v["void_centre_ra"], v["void_centre_dec"] = cra, cdec
+    return v
+
+
+def verdict_from_excess(excess: dict, degraded_reasons: list, n_in_footprint: int,
+                        rcfg: dict) -> tuple[str, str]:
+    """The verdict once data were reached: an excess over the control rate is
+    a candidate set; voids at the control rate are the null, stated as such."""
+    ex = excess.get("all", {}) if excess else {}
+    n_obs = int(ex.get("n_observed", 0) or 0)
+    n_exp = ex.get("n_expected_from_control")
+    p = ex.get("p_excess")
+    n_exp_s = f"{n_exp:.2f}" if isinstance(n_exp, (int, float)) and n_exp is not None else "n/a"
+    p_s = f"{p:.3g}" if isinstance(p, (int, float)) and p is not None else "n/a"
+    if n_obs and ex.get("excess_significant"):
+        code = VERDICT_CANDIDATES
+        why = ("no control rate available" if n_exp is None else
+               f"excess over the control rate: p_excess={p_s} < {ex.get('p_excess_min')}")
+        text = (f"{code} (n_obs={n_obs} unique void positions, n_exp={n_exp_s}, "
+                f"p_excess={p_s}; {why})")
+    elif n_obs:
+        code = VERDICT_AT_CONTROL_RATE
+        text = (f"{code} (n_obs={n_obs}, n_exp={n_exp_s}, p_excess={p_s}; "
+                f"{ex.get('n_positions_evaluated')} unique positions evaluated, control "
+                f"false-void rate {ex.get('control_false_void_rate')}; "
+                f"{ex.get('n_duplicates_merged')} duplicate positions merged)")
+    elif degraded_reasons:
+        code = VERDICT_DEGRADED
+        text = f"{code} ({'; '.join(degraded_reasons)})"
+    else:
+        code = VERDICT_NO_SURVIVOR
+        text = (f"{code}: {n_in_footprint} in-footprint targets, none below p_trials < "
+                f"{rcfg.get('p_min')} with lambda >= {rcfg.get('min_expected_count')}")
+    return code, text
+
+
+def run_assess(cfg: dict | None, out_dir) -> dict:
+    """Re-derive the excess statistic, the candidate list and the verdict from
+    an existing ``voids.csv`` -- no archive access, so a finished run's
+    summary can be refreshed after a change in the statistic.  The vetoes
+    that need the catalogue (mosaic / MaskFract / bright source) cannot be
+    re-applied here; the summary says so.
+    """
+    rcfg = _radio_cfg(cfg)
+    out = Path(out_dir)
+    vpath = out / "voids.csv"
+    if not vpath.exists():
+        raise FileNotFoundError(f"{vpath} not found; run the stage first")
+    voids = pd.read_csv(vpath)
+    if "cluster_id" not in voids.columns:
+        cid = cluster_positions(voids["ra"], voids["dec"], float(rcfg.get("dedupe_radius_arcsec", 120.0)))
+        voids["cluster_id"] = cid
+        voids["n_in_cluster"] = np.bincount(cid)[cid]
+    voids = candidate_geometry(voids)
+    voids["is_candidate"] = voids["veto"].eq(VETO_NONE)
+    excess = assess_voids(voids, rcfg)
+    voids["excess_significant"] = bool(excess["all"]["excess_significant"])
+    spath = out / "summary.json"
+    summary = json.loads(spath.read_text()) if spath.exists() else {"channel": CHANNEL}
+    summary["excess"] = excess
+    summary["n_candidates"] = int(excess["all"]["n_observed_rows"])
+    summary["n_unique_void_positions"] = int(excess["all"]["n_observed"])
+    n_fp = int(summary.get("n_targets_in_footprint") or voids["veto"].ne(VETO_FOOTPRINT).sum())
+    code, text = verdict_from_excess(excess, summary.get("degraded_reasons", []), n_fp, rcfg)
+    summary["verdict_code"], summary["verdict"] = code, text
+    summary["assessed_utc"] = _now()
+    summary["assess_note"] = ("assess re-derived the excess statistic and verdict from voids.csv; "
+                              "vetoes that need the catalogue (mosaic_edge_or_masked, "
+                              "bright_radio_source_mask) are as the run left them")
+    cands = voids.loc[voids["is_candidate"]]
+    summary["candidates"] = cands.head(50).to_dict(orient="records")
+    voids.to_csv(vpath, index=False)
+    cands.to_csv(out / "candidates.csv", index=False)
+    _write_json(spath, summary)
+    print(f"[{CHANNEL}] assess: {text}")
     return summary
 
 
@@ -1395,7 +1729,8 @@ def run_probe(cfg: dict | None, out_dir) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m seti.baffle.radio",
                                  description="BAFFLE radio: LoTSS DR2 voids around nearby stars")
-    ap.add_argument("--stage", choices=("probe", "run"), default="run")
+    ap.add_argument("--stage", choices=("probe", "run", "assess"), default="run",
+                    help="assess re-derives the excess statistic and verdict from voids.csv")
     ap.add_argument("--max-targets", type=int, default=0, help="0 = all")
     ap.add_argument("--tile-deg", type=float, default=None)
     ap.add_argument("--out", default="results/baffle_radio")
@@ -1407,6 +1742,9 @@ def main(argv=None) -> int:
     if a.stage == "probe":
         rec = run_probe(cfg, a.out)
         return 0 if not str(rec["verdict"]).startswith("NO_DATA") else 1
+    if a.stage == "assess":
+        run_assess(cfg, a.out)
+        return 0
     summary = run_radio_stage(cfg, a.out, max_targets=a.max_targets or None)
     return 0 if summary["verdict_code"] != VERDICT_NO_DATA else 1
 

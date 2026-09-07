@@ -524,7 +524,10 @@ def test_discover_lotss_records_bare_names_and_what_was_served(monkeypatch):
     assert disc["names_as_served"][:2] == ['"Source"', '"RAJ2000"']    # evidence, verbatim
     assert "RAJ2000" in disc["columns"] and '"RAJ2000"' not in disc["columns"]
     assert '""' not in disc["example_query"]
-    assert disc["degraded_reasons"] == [] and not disc["degraded"]
+    # This (invented) schema has Mosaic but no MaskFract: the survey-hole veto
+    # is partial, and that is a recorded degradation, not silence.
+    assert disc["degraded_reasons"] == ["no maskfract column: survey-hole veto partial"]
+    assert disc["degraded"] and disc["mosaic_col"] == "Mosaic" and disc["maskfract_col"] is None
     assert len([q for q in queries if "TAP_SCHEMA.tables" in q]) == 1       # VizieR answered: no ASTRON call
     # The fetcher built on it composes the same valid query and normalises the
     # result whatever spelling the TAP result comes back with.
@@ -537,7 +540,9 @@ def test_discover_lotss_records_bare_names_and_what_was_served(monkeypatch):
     monkeypatch.setattr(R, "_run_sync", fake_sync)
     df = R.make_lotss_fetcher(disc, R.load_radio_config())(R.tile_bounds(100, 70, 2.0))
     _assert_each_column_once_and_never_empty(seen["q"], ("RAJ2000", "DEJ2000", "Stotal"))
-    assert list(df.columns) == ["ra", "dec", "flux_jy"] and df["flux_jy"].iloc[0] == pytest.approx(1.5)
+    assert list(df.columns) == ["ra", "dec", "flux_jy", "mosaic", "maskfract"]
+    assert df["flux_jy"].iloc[0] == pytest.approx(1.5)
+    assert df["mosaic"].isna().all() and df["maskfract"].isna().all()   # not served here
 
 
 def test_discover_lotss_falls_back_to_astron_and_says_so(monkeypatch):
@@ -700,6 +705,276 @@ def test_a_resumed_run_keeps_its_checkpoints_when_the_service_then_dies(tmp_path
     assert s["n_targets_in_footprint"] == 1
     summ = json.loads((tmp_path / "summary.json").read_text())
     assert summ["acquisition_abort"]["error_class"] == R.ERR_CONNECT_TIMEOUT
+
+
+# ---------------------------------------------------------------------------
+# Run 34066710402: the served columns, the survey-hole veto, the excess
+# ---------------------------------------------------------------------------
+#: J/A+A/659/A1/catalog as TAPVizieR served it on 2026-09-07 (quoted).
+LOTSS_CATALOG_SERVED = ['"recno"', '"Source"', '"RAJ2000"', '"e_RAJ2000"', '"DEJ2000"',
+                        '"e_DEJ2000"', '"Speak"', '"e_Speak"', '"SpeakTot"', '"e_SpeakTot"',
+                        '"Maj"', '"e_Maj"', '"Min"', '"e_Min"', '"DCMaj"', '"e_DCMaj"', '"DCMin"',
+                        '"e_DCMin"', '"PA"', '"e_PA"', '"DCPA"', '"e_DCPA"', '"Islrms"', '"SCode"',
+                        '"Mosaic"', '"Npoint"', '"MaskFract"']
+LOTSS_CATALOG_UNITS = {"RAJ2000": "deg", "DEJ2000": "deg", "Speak": "mJy/beam",
+                       "SpeakTot": "mJy", "e_SpeakTot": "mJy", "Islrms": "mJy/beam"}
+
+
+def _catalog_columns_df(units=True):
+    names = [R._unquote(c) for c in LOTSS_CATALOG_SERVED]
+    return pd.DataFrame({"column_name": LOTSS_CATALOG_SERVED,
+                         "ucd": [""] * len(names),
+                         "unit": [LOTSS_CATALOG_UNITS.get(n, "") if units else "" for n in names],
+                         "datatype": ["double"] * len(names), "description": [""] * len(names)})
+
+
+def test_the_served_catalog_resolves_total_flux_mosaic_and_maskfract():
+    """The exact column list of run 34066710402, on which `flux NOT FOUND`
+    was recorded: SpeakTot is the total flux, Speak the peak."""
+    c = R.pick_columns(_catalog_columns_df())
+    assert (c["ra_col"], c["dec_col"], c["flux_col"], c["flux_unit"]) == (
+        "RAJ2000", "DEJ2000", "SpeakTot", "mJy")
+    assert not c["flux_is_peak"] and c["flux_peak_col"] == "Speak"
+    assert (c["mosaic_col"], c["maskfract_col"]) == ("Mosaic", "MaskFract")
+    assert R.flux_to_jy_factor(c["flux_unit"])[0] == 1e-3
+    # Without the unit served, mJy is assumed and said so.
+    c2 = R.pick_columns(_catalog_columns_df(units=False))
+    assert c2["flux_col"] == "SpeakTot" and "ASSUMED" in R.flux_to_jy_factor(c2["flux_unit"])[1]
+    # Only the peak served: it is used and flagged.
+    peak_only = _catalog_columns_df()
+    peak_only = peak_only.loc[~peak_only["column_name"].str.contains("SpeakTot")]
+    c3 = R.pick_columns(peak_only)
+    assert c3["flux_col"] == "Speak" and c3["flux_is_peak"]
+    # The tile query carries all five columns, each once, none empty.
+    disc = {"table": '"J/A+A/659/A1/catalog"', "ra_col": c["ra_col"], "dec_col": c["dec_col"],
+            "flux_col": c["flux_col"], "mosaic_col": c["mosaic_col"],
+            "maskfract_col": c["maskfract_col"]}
+    q = R.build_tile_query(disc, R.tile_bounds(100, 70, 2.0), 40000)
+    _assert_each_column_once_and_never_empty(q, ("RAJ2000", "DEJ2000", "SpeakTot", "Mosaic",
+                                                 "MaskFract"))
+    # ...and the result is normalised to ra/dec/flux_jy/mosaic/maskfract.
+    raw = pd.DataFrame({"RAJ2000": [200.1], "DEJ2000": [50.1], "SpeakTot": [1200.0],
+                        "Mosaic": ["P200+50"], "MaskFract": [0.02]})
+    df = R.normalise_sources(raw, dict(disc, flux_to_jy=1e-3))
+    assert list(df.columns) == ["ra", "dec", "flux_jy", "mosaic", "maskfract"]
+    assert df["flux_jy"].iloc[0] == pytest.approx(1.2) and df["mosaic"].iloc[0] == "P200+50"
+
+
+def test_discover_lotss_on_the_served_catalog_records_peak_total_and_mosaic(monkeypatch):
+    def fake_run_vizier(query, **kw):
+        if "TAP_SCHEMA.tables" in query:
+            return pd.DataFrame({"table_name": ['"J/A+A/659/A1/catalog"'], "description": [""]})
+        return _catalog_columns_df()
+
+    monkeypatch.setattr(R.bright, "run_vizier", fake_run_vizier)
+    d = R.discover_lotss(R.load_radio_config())
+    assert d["status"] == "DISCOVERED" and d["table"] == '"J/A+A/659/A1/catalog"'
+    assert (d["flux_col"], d["flux_unit"], d["flux_to_jy"]) == ("SpeakTot", "mJy", 1e-3)
+    assert (d["mosaic_col"], d["maskfract_col"], d["flux_peak_col"]) == ("Mosaic", "MaskFract", "Speak")
+    assert d["degraded_reasons"] == []
+    assert "SpeakTot, Mosaic, MaskFract" in d["example_query"]
+
+
+def _field_with_survey_columns(mosaic_of, maskfract=0.0, seed=5):
+    df = uniform_field(2000.0, FIELD_RA, FIELD_DEC, 2.6, 1.6, seed=seed, hole_arcsec=210.0)
+    df["mosaic"] = [mosaic_of(r, d) for r, d in zip(df["ra"], df["dec"], strict=True)]
+    df["maskfract"] = maskfract
+    return df
+
+
+def test_a_mosaic_boundary_or_a_masked_region_is_a_survey_hole_not_a_void():
+    cfg = _cfg()
+    # One mosaic everywhere: the hole is a candidate and the record says which mosaic.
+    one = _field_with_survey_columns(lambda r, d: "P200+50")
+    st = R.void_statistics(one, FIELD_RA, FIELD_DEC, cfg)
+    assert st["veto"] == R.VETO_NONE
+    assert st["annulus_mosaics"] == "P200+50" and st["n_annulus_mosaics"] == 1
+    assert st["annulus_maskfract_mean"] == pytest.approx(0.0)
+    # A boundary through the annulus (RA split): vetoed, both names recorded.
+    two = _field_with_survey_columns(lambda r, d: "P199+50" if r < FIELD_RA else "P201+50")
+    st2 = R.void_statistics(two, FIELD_RA, FIELD_DEC, cfg)
+    assert st2["veto"] == R.VETO_MOSAIC
+    assert st2["annulus_mosaics"] == "P199+50;P201+50" and st2["n_annulus_mosaics"] == 2
+    # A masked region: vetoed on the mean MaskFract.
+    masked = _field_with_survey_columns(lambda r, d: "P200+50", maskfract=0.25)
+    st3 = R.void_statistics(masked, FIELD_RA, FIELD_DEC, cfg)
+    assert st3["veto"] == R.VETO_MOSAIC and st3["annulus_maskfract_mean"] == pytest.approx(0.25)
+    # The boundary far outside the annulus does not matter.
+    far = _field_with_survey_columns(lambda r, d: "P199+50" if r < FIELD_RA - 1.0 else "P201+50")
+    assert R.void_statistics(far, FIELD_RA, FIELD_DEC, cfg)["veto"] == R.VETO_NONE
+    # Fields without the columns (older tiles) are simply not vetoed on them.
+    plain = uniform_field(2000.0, FIELD_RA, FIELD_DEC, 2.6, 1.6, seed=5, hole_arcsec=210.0)
+    stp = R.void_statistics(plain, FIELD_RA, FIELD_DEC, cfg)
+    assert stp["veto"] == R.VETO_NONE and stp["n_annulus_mosaics"] == 0
+    # The veto is a funnel counter through screen_targets.
+    tiles = R.bin_sources_into_tiles(two, cfg["tile_deg"])
+    voids, counters = R.screen_targets(_targets(), tiles, cfg)
+    assert counters[R.VETO_MOSAIC] == 1 and counters["n_candidates"] == 0
+    assert voids.iloc[0]["veto"] == R.VETO_MOSAIC
+
+
+def test_cluster_positions_merges_a_binary_and_nothing_else():
+    ra = np.array([251.911915, 251.908708, 200.0, 200.0, 200.0])
+    dec = np.array([53.056093, 53.057672, 50.0, 50.02, 50.5])
+    cid = R.cluster_positions(ra, dec, 120.0)
+    assert cid[0] == cid[1]                      # the 0.1' binary of run 34066710402
+    assert cid[2] == cid[3] and cid[2] != cid[4] # 72" apart merged; 30' apart not
+    assert len(set(cid)) == 3
+    assert list(cid) == [0, 0, 1, 1, 2]
+    assert R.cluster_positions([], [], 120.0).size == 0
+
+
+def _synthetic_voids(n=4951, n_cand=7, rate=0.00141, seed=0, dup_pairs=1):
+    """A voids table shaped like run 34066710402: n evaluated targets, n_cand
+    candidates, controls firing at `rate`, and `dup_pairs` binaries."""
+    rng = np.random.default_rng(seed)
+    # A grid, not a scatter: 4951 random positions over the 13h field contain
+    # a dozen accidental pairs within 2', and the test wants exactly one.
+    i = np.arange(n)
+    ra = 110.0 + (i % 100) * 1.5
+    dec = 30.0 + (i // 100) * 0.6
+    plx = rng.uniform(20, 60, n)
+    v = pd.DataFrame({"source_id": np.arange(n), "ra": ra, "dec": dec, "parallax_mas": plx,
+                      "is_etz": False, "veto": R.VETO_NOT_SIGNIFICANT, "is_candidate": False,
+                      "p_trials": rng.uniform(1e-4, 1, n), "best_dx_arcsec": 0.0,
+                      "best_dy_arcsec": 0.0, "best_aperture_arcsec": 600.0, "n_x_600": 20,
+                      "n_control_evaluated": 4, "n_control_fired": 0})
+    fired = rng.random(4 * n) < rate
+    v["n_control_fired"] = fired.reshape(n, 4).sum(axis=1)
+    v.loc[:n_cand - 1, ["veto", "is_candidate", "p_trials"]] = [R.VETO_NONE, True, 1e-7]
+    for k in range(dup_pairs):                      # a binary: duplicate candidate 0
+        dup = v.iloc[[k]].copy()
+        dup["source_id"] = 10_000 + k
+        dup["ra"] = dup["ra"] + 0.001
+        v = pd.concat([v, dup], ignore_index=True)
+    v["cluster_id"] = R.cluster_positions(v["ra"], v["dec"], 120.0)
+    return v
+
+
+def test_seven_voids_at_a_control_rate_of_seven_are_the_null():
+    cfg = _cfg()
+    v = _synthetic_voids()
+    ex = R.excess_over_control(v, cfg)
+    assert ex["n_positions_evaluated"] == 4951 and ex["n_duplicates_merged"] == 1
+    assert ex["n_observed"] == 7 and ex["n_observed_rows"] == 8      # the binary counted once
+    assert ex["control_rate_source"] == "subset"
+    assert ex["control_false_void_rate"] == pytest.approx(ex["n_control_fired"] / ex["n_control_evaluated"])
+    assert 3 < ex["n_expected_from_control"] < 12
+    assert ex["p_excess"] == pytest.approx(
+        1 - poisson.cdf(6, ex["n_expected_from_control"]), rel=1e-9)
+    assert ex["p_excess"] > 0.01 and not ex["excess_significant"]
+    code, text = R.verdict_from_excess({"all": ex}, [], 4951, cfg)
+    assert code == R.VERDICT_AT_CONTROL_RATE
+    assert "n_obs=7" in text and "p_excess=" in text and "1 duplicate positions merged" in text
+    # 30 voids against ~7 expected is an excess.
+    v30 = _synthetic_voids(n_cand=30)
+    ex30 = R.excess_over_control(v30, cfg)
+    assert ex30["p_excess"] < 1e-6 and ex30["excess_significant"]
+    assert R.verdict_from_excess({"all": ex30}, [], 4951, cfg)[0] == R.VERDICT_CANDIDATES
+    # No controls at all: a void cannot be called the null.
+    v0 = _synthetic_voids(n=50, n_cand=1)
+    v0["n_control_evaluated"] = 0
+    v0["n_control_fired"] = 0
+    ex0 = R.excess_over_control(v0, cfg)
+    assert ex0["control_rate_source"] == "none" and ex0["excess_significant"]
+    assert R.poisson_excess_p(0, 5.0) == 1.0 and R.poisson_excess_p(3, 0.0) == 0.0
+
+
+def test_subsets_use_their_own_controls_or_the_global_rate():
+    cfg = _cfg()
+    v = _synthetic_voids()
+    v.loc[v.index[:5], "is_etz"] = True
+    ex = R.assess_voids(v, cfg)
+    assert set(ex) == {"all", "etz", "nearby_lt_25pc"}
+    assert ex["etz"]["n_targets"] == 5 and ex["etz"]["control_rate_source"] == "global"
+    assert ex["etz"]["control_false_void_rate"] == ex["all"]["control_false_void_rate"]
+    near = ex["nearby_lt_25pc"]
+    assert near["control_rate_source"] == "subset"
+    assert near["n_positions_evaluated"] == int((v.drop_duplicates("cluster_id")["parallax_mas"] > 40).sum())
+    assert near["n_observed"] <= ex["all"]["n_observed"]
+
+
+def test_candidate_geometry_says_whether_the_star_is_in_the_hole():
+    v = pd.DataFrame({"ra": [253.40978, 200.0], "dec": [56.058052, 50.0],
+                      "best_dx_arcsec": [175.492603, 0.0], "best_dy_arcsec": [-361.958251, 0.0],
+                      "best_aperture_arcsec": [600.0, 204.0], "n_x_600": [5, 30], "n_x_204": [1, 0]})
+    g = R.candidate_geometry(v)
+    assert g["best_offset_arcsec"].iloc[0] == pytest.approx(402.3, abs=0.5)
+    assert bool(g["star_inside_best_aperture"].iloc[0]) and g["n_at_star_best_aperture"].iloc[0] == 5
+    assert g["best_offset_arcsec"].iloc[1] == 0.0 and g["n_at_star_best_aperture"].iloc[1] == 0
+    assert R.angular_separation_arcsec(253.40978, 56.058052, g["void_centre_ra"].iloc[0],
+                                       g["void_centre_dec"].iloc[0]) == pytest.approx(402.3, abs=0.5)
+    # A 500 AU grid extreme can put the centre up to 206265/500 = 413" away.
+    assert g["best_offset_arcsec"].iloc[0] < R.AU_ARCSEC / 500.0
+
+
+def test_assess_stage_refreshes_summary_and_candidates_from_voids_csv(tmp_path):
+    v = _synthetic_voids()
+    v.drop(columns=["cluster_id"]).to_csv(tmp_path / "voids.csv", index=False)
+    (tmp_path / "summary.json").write_text(json.dumps(
+        {"channel": "baffle_radio", "n_targets_in_footprint": 4951, "degraded_reasons": [],
+         "verdict_code": "RADIO_VOID_CANDIDATES_PENDING_VET", "verdict": "old"}))
+    s = R.run_assess({"radio": _cfg()}, tmp_path)
+    assert s["verdict_code"] == R.VERDICT_AT_CONTROL_RATE
+    assert s["excess"]["all"]["n_observed"] == 7 and s["n_unique_void_positions"] == 7
+    assert s["n_candidates"] == 8 and "assess_note" in s
+    c = pd.read_csv(tmp_path / "candidates.csv")
+    assert len(c) == 8 and not c["excess_significant"].any()
+    assert {"cluster_id", "n_in_cluster", "best_offset_arcsec", "star_inside_best_aperture",
+            "n_at_star_best_aperture", "void_centre_ra"} <= set(c.columns)
+    assert c["n_in_cluster"].max() == 2
+    assert R.main(["--stage", "assess", "--out", str(tmp_path)]) == 0
+
+
+def test_a_checkpoint_pulled_without_the_survey_columns_is_stale_and_refetched(tmp_path):
+    """Resuming from run 34066710402's artifact: its tiles have no SpeakTot /
+    Mosaic / MaskFract.  With those now discovered, such a checkpoint must be
+    re-fetched, not reused into a silently partial veto."""
+    field = uniform_field(2000.0, FIELD_RA, FIELD_DEC, 2.6, 1.6, seed=5, hole_arcsec=210.0)
+    field["mosaic"] = "P200+50"
+    field["maskfract"] = 0.0
+    tiles = R.bin_sources_into_tiles(field, 2.0)
+    (tmp_path / "tiles").mkdir(parents=True)
+    old, fresh = "t100_070", "t099_070"
+    tiles[old].drop(columns=["mosaic", "maskfract"]).to_parquet(tmp_path / "tiles" / f"{old}.parquet")
+    tiles[fresh].to_parquet(tmp_path / "tiles" / f"{fresh}.parquet")
+    calls = []
+
+    def fetcher(tile):
+        calls.append(tile["key"])
+        return tiles.get(tile["key"], pd.DataFrame({"ra": [], "dec": [], "flux_jy": [],
+                                                    "mosaic": [], "maskfract": []}))
+
+    plan = R.plan_tiles(_targets(), 2.0, pad_deg=R.neighbourhood_radius_deg(_cfg()))
+    src, led, abort = R.acquire_tiles(plan, fetcher, tmp_path / "tiles",
+                                      required_columns=("flux_jy", "mosaic", "maskfract"))
+    st = {e["key"]: e for e in led}
+    assert old in calls and fresh not in calls
+    assert st[old]["status"] == "QUERY_OK" and st[old].get("checkpoint_stale") is True
+    assert "stale" in st[old]["error"]
+    assert st[fresh]["status"] == "FROM_CHECKPOINT"
+    assert "mosaic" in src[old].columns
+    assert "mosaic" in pd.read_parquet(tmp_path / "tiles" / f"{old}.parquet").columns
+    # Without a requirement (older discovery, or an injected fetcher) it is reused.
+    calls.clear()
+    src2, led2, _ = R.acquire_tiles(plan, fetcher, tmp_path / "tiles")
+    assert calls == [] or all(k not in (old, fresh) for k in calls)
+
+
+def test_the_end_to_end_summary_carries_the_excess_block(tmp_path):
+    cfg = {"radio": _cfg()}
+    field = uniform_field(2000.0, FIELD_RA, FIELD_DEC, 2.6, 1.6, seed=5, hole_arcsec=210.0)
+    tiles = R.bin_sources_into_tiles(field, 2.0)
+    s = R.run_radio_stage(cfg, tmp_path, lotss_fetcher=lambda t: tiles.get(
+        t["key"], pd.DataFrame({"ra": [], "dec": [], "flux_jy": []})),
+        target_fetcher=lambda rcfg: _targets())
+    ex = s["excess"]["all"]
+    assert ex["n_observed"] == 1 and ex["n_expected_from_control"] == 0.0
+    assert ex["p_excess"] == 0.0 and ex["excess_significant"]
+    assert s["verdict_code"] == R.VERDICT_CANDIDATES and "n_obs=1" in s["verdict"]
+    c = pd.read_csv(tmp_path / "candidates.csv")
+    assert bool(c["excess_significant"].iloc[0]) and c["best_offset_arcsec"].iloc[0] == 0.0
+    assert bool(c["star_inside_best_aperture"].iloc[0]) and c["n_at_star_best_aperture"].iloc[0] == 0
 
 
 def test_config_file_and_defaults_agree_on_every_key():

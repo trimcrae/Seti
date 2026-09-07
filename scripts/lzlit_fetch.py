@@ -179,6 +179,10 @@ BY_ID: dict[str, dict] = {
         "title": "Wake"},
     "lux_eft_2020": {"id": "2003.11141", "src": False,
         "title": "Effective Field Theory"},
+    "lmc_directional_2026": {"id": "2606.12535", "src": True,
+        "title": "Directional dark matter signatures of the Large Magellanic Cloud"},
+    "empirical_speed_distribution_2025": {"id": "2510.21914", "src": True,
+        "title": "Empirical Speed Distribution"},
 }
 
 # Papers whose arXiv id is not certain: resolved by title search, so the id

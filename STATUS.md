@@ -275,6 +275,47 @@ the pipeline says this itself. **Zero survivors of the mid-IR funnel across
 ~30 million Gaia stars with 2MASS and AllWISE counterparts, complete to
 0.5-mag two-band deficits at 91 %.**
 
+**FINAL ASSESS, run 34068258637 (19:56 ET, 1 min): the pipeline now says it
+itself — `NO_MIDIR_DEFICIT_SURVIVOR | NO_TRULY_MISSING_COUNTERPART`.** The
+post-patch rules on the nine: 5 `NEOWISE_VARIABLE`, 1 `MODULATION_DEGENERATE`,
+3 `CONFUSION_LIMITED` (first-fired); as flags, `CONFUSION_LIMITED` fires on
+all nine — every one sits in a plane or Cloud field with 590–744 Gaia sources
+within 10′, which is stated so the rule is not read as tuned to the two
+Magellanic stars — and `KS_CONTAMINATION_CONSISTENT` on four. 0 `SURVIVES_
+ALL`, 0 `SURVIVES_ALL_NO_HIRES_KS`. `results/baffle/final_candidates.csv`
+carries every rule per star.
+
+**RADIO, three runs.** Run 34048836401 (13:30 ET) ground 5.5 h to its ceiling
+with every LoTSS tile failing — TAPVizieR serves column names already
+double-quoted and the tile query quoted them again into an empty identifier,
+then burned three retries per tile against connect timeouts; run 34066251264
+(19:13 ET, 7 min) had the fix but matched the catalogue hint `659/A1` to 42
+unrelated A&A 659 tables and picked a star list (`DEGRADED_SOURCE`, 10
+rows); run **34066710402 (19:22 ET, 50 min)** read `J/A+A/659/A1/catalog`:
+568 tiles of 4°, 250 empty (outside the DR2 sky), 1 connect timeout (masked,
+5 targets and 22 controls with it), **4,305,976 LoTSS sources** — the whole
+DR2 catalogue. Targets: 7,404 Gaia stars within 50 pc in the two region
+boxes, **4,951 in the footprint** by the annulus-density test (none of the
+8 ETZ stars is). Statistic: Poisson void probability in apertures 30″–600″
+at the annual set of baffle centres for d = 500–10⁴ AU (123 trials per
+star, Bonferroni-corrected), against the local density from an 8′–20′
+annulus; four control positions 45′ away per star as the empirical null.
+**7 stars pass p < 10⁻⁵; the control false-void rate is 0.00141
+(28 of 19,829 control positions), which predicts 7.0.** All seven are
+10′-radius under-densities at the 500 AU grid extreme (the aperture centre
+displaced 166″–385″ from the star), in mosaic regions whose local density is
+300–570 deg⁻², a third to two thirds of LoTSS's nominal depth; two are the
+same void seen from both members of a 0.1′ binary. The bright-source veto
+was disabled because the flux column (`SpeakTot`, served) was not in the
+alias table, and `MaskFract` / `Mosaic` were not read. The next run carries
+the flux alias, a mosaic-edge/mask veto, a pair dedupe, and an
+excess-over-control test as the verdict (`RADIO_VOIDS_AT_CONTROL_RATE`
+unless the excess is significant). The reading already stands: **the radio
+sky at 144 MHz has holes at nearby stars exactly as often as it has holes
+anywhere else.** Reach, honestly: at LoTSS depth a 1 AU screen is detectable
+only inside ~730 AU after the trials factor; this is a near-zone test on
+27 % of the northern sky.
+
 ### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
 
 The charter ranks novelty first, and after 35 channels the taxonomy in

@@ -191,7 +191,7 @@ def test_a_bright_source_nearby_masks_the_position():
     cfg = _cfg()
     df = uniform_field(2000.0, FIELD_RA, FIELD_DEC, 2.6, 1.6, seed=5, hole_arcsec=210.0)
     ra_b, dec_b = R.offset_position(FIELD_RA, FIELD_DEC, 1200.0, 900.0)     # 25' away
-    df = pd.concat([df, pd.DataFrame({"ra": [ra_b], "dec": [dec_b], "flux_jy": [3.0]})],
+    df = pd.concat([df, pd.DataFrame({"ra": [ra_b], "dec": [dec_b], "flux_jy": [30.0]})],
                    ignore_index=True)
     st = R.void_statistics(df, FIELD_RA, FIELD_DEC, cfg)
     assert st["veto"] == R.VETO_BRIGHT

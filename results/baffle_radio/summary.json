@@ -1,11 +1,11 @@
 {
   "channel": "baffle_radio",
   "stage": "run",
-  "started_utc": "2026-09-06T23:14:01+00:00",
+  "started_utc": "2026-09-06T23:23:26+00:00",
   "config": {
     "lotss": {
       "vizier_tap": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
-      "vizier_catalogue_hint": "659/A1",
+      "vizier_catalogue_hint": "659/A1/",
       "astron_tap": "https://vo.astron.org/tap",
       "astron_table_hint": "lotss",
       "max_rows_per_tile": 40000,
@@ -62,7 +62,8 @@
     "control_offset_arcsec": 2700.0
   },
   "degraded_reasons": [
-    "no flux column: bright-source veto disabled"
+    "no flux column: bright-source veto disabled",
+    "1/819 tiles QUERY_FAILED"
   ],
   "targets": {
     "status": "OK",
@@ -76,8 +77,8 @@
     "status": "DISCOVERED",
     "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
     "route": "vizier",
-    "table": "\"J/A+A/659/A134/list\"",
-    "table_bare": "J/A+A/659/A134/list",
+    "table": "\"J/A+A/659/A1/catalog\"",
+    "table_bare": "J/A+A/659/A1/catalog",
     "ra_col": "RAJ2000",
     "dec_col": "DEJ2000",
     "flux_col": null,
@@ -91,183 +92,19 @@
       {
         "label": "lotss_tables@vizier",
         "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
-        "query": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%659/A1%'",
+        "query": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%659/A1/%'",
         "status": "OK",
-        "n_rows": 42
+        "n_rows": 1
       },
       {
         "label": "lotss_columns@vizier",
         "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
-        "route": "TAP_SCHEMA:\"J/A+A/659/A134/list\"",
-        "n_columns": 12,
+        "route": "TAP_SCHEMA:\"J/A+A/659/A1/catalog\"",
+        "n_columns": 27,
         "errors": []
       }
     ],
     "tables_seen": [
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A111/tablea1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A111/tablea4"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A122/table23"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A126/table"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A126/tablea1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A126/tablea2"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A131/table1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A131/table2"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A134/list"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A134/stars"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A135/tablea1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A135/tablea2"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A136/list"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A13/table1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A13/table2"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A13/table3"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A13/table4"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A13/table5"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A13/table6"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A13/table7"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A13/table8"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A144/table10"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A144/table6"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A144/table7"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A144/table9"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A144/tablec1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A145/refs"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A145/table2"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A145/tablea12"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A145/tablea34"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A145/tablea56"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A145/tablec1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A14/table1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A166/block1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A166/block2"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A166/block3"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A167/table1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A17/tableg1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A181/jplusdr1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A183/tableb1"
-      },
-      {
-        "route": "vizier",
-        "table": "J/A+A/659/A188/ulx-xmm9"
-      },
       {
         "route": "vizier",
         "table": "J/A+A/659/A1/catalog"
@@ -275,62 +112,79 @@
     ],
     "columns": [
       "recno",
-      "Star",
+      "Source",
       "RAJ2000",
+      "e_RAJ2000",
       "DEJ2000",
-      "Nx",
-      "Obs.date",
-      "bFreq",
-      "BFreq",
-      "dFreq",
-      "size",
-      "FileName",
-      "Title"
+      "e_DEJ2000",
+      "Speak",
+      "e_Speak",
+      "SpeakTot",
+      "e_SpeakTot",
+      "Maj",
+      "e_Maj",
+      "Min",
+      "e_Min",
+      "DCMaj",
+      "e_DCMaj",
+      "DCMin",
+      "e_DCMin",
+      "PA",
+      "e_PA",
+      "DCPA",
+      "e_DCPA",
+      "Islrms",
+      "SCode",
+      "Mosaic",
+      "Npoint",
+      "MaskFract"
     ],
     "names_as_served": [
       "\"recno\"",
-      "\"Star\"",
+      "\"Source\"",
       "\"RAJ2000\"",
-      "\"DEJ2000\"",
-      "\"Nx\""
+      "\"e_RAJ2000\"",
+      "\"DEJ2000\""
     ],
-    "discovery_route": "TAP_SCHEMA:\"J/A+A/659/A134/list\"",
+    "discovery_route": "TAP_SCHEMA:\"J/A+A/659/A1/catalog\"",
     "column_choice_reason": "ra by alias (RAJ2000); dec by alias (DEJ2000); flux NOT FOUND",
-    "example_query": "SELECT TOP 40000 RAJ2000, DEJ2000 FROM \"J/A+A/659/A134/list\" WHERE RAJ2000 >= 200.0 AND RAJ2000 < 202.0 AND DEJ2000 >= 50.0 AND DEJ2000 < 52.0"
+    "example_query": "SELECT TOP 40000 RAJ2000, DEJ2000 FROM \"J/A+A/659/A1/catalog\" WHERE RAJ2000 >= 200.0 AND RAJ2000 < 202.0 AND DEJ2000 >= 50.0 AND DEJ2000 < 52.0"
   },
   "tiles": {
     "tile_deg": 4.0,
     "n_planned": 819,
     "n_tiles": 819,
-    "QUERY_OK": 2,
+    "QUERY_OK": 568,
     "FROM_CHECKPOINT": 0,
-    "QUERY_RETURNED_ZERO_ROWS": 817,
-    "QUERY_FAILED": 0,
+    "QUERY_RETURNED_ZERO_ROWS": 250,
+    "QUERY_FAILED": 1,
     "QUERY_TRUNCATED": 0,
     "NOT_ATTEMPTED_AFTER_ABORT": 0,
     "n_from_checkpoint": 0,
-    "n_with_rows": 2,
-    "n_rows_total": 10,
-    "failed_by_class": {}
+    "n_with_rows": 568,
+    "n_rows_total": 4305976,
+    "failed_by_class": {
+      "CONNECT_TIMEOUT": 1
+    }
   },
   "funnel": {
     "n_targets": 7404,
     "n_etz": 8,
-    "n_targets_in_footprint": 0,
+    "n_targets_in_footprint": 4951,
     "n_etz_in_footprint": 0,
-    "outside_footprint_or_masked": 7404,
+    "outside_footprint_or_masked": 2453,
     "bright_radio_source_mask": 0,
     "low_expected_count": 0,
-    "not_significant": 0,
-    "n_masked_by_bad_tile": 0,
-    "n_candidates": 0,
+    "not_significant": 4944,
+    "n_masked_by_bad_tile": 5,
+    "n_candidates": 7,
     "n_etz_candidates": 0,
     "n_control_positions": 29616,
-    "n_control_evaluated": 0,
-    "n_control_fired": 0,
-    "n_controls_masked_by_bad_tile": 0,
-    "control_false_void_rate": NaN,
-    "n_trials_per_position": 0,
+    "n_control_evaluated": 19829,
+    "n_control_fired": 28,
+    "n_controls_masked_by_bad_tile": 22,
+    "control_false_void_rate": 0.0014120732260830098,
+    "n_trials_per_position": 123,
     "apertures_arcsec": [
       30.0,
       60.0,
@@ -341,16 +195,360 @@
     ],
     "p_min": 1e-05
   },
-  "verdict": "DEGRADED_SOURCE (no flux column: bright-source veto disabled)",
-  "verdict_code": "DEGRADED_SOURCE",
+  "verdict": "RADIO_VOID_CANDIDATES_PENDING_VET: 7 of 4951 in-footprint targets; control false-void rate 0.0014120732260830098",
+  "verdict_code": "RADIO_VOID_CANDIDATES_PENDING_VET",
   "acquisition_abort": {
-    "aborted": false
+    "aborted": false,
+    "first_error": {
+      "key": "t055_040",
+      "error_class": "CONNECT_TIMEOUT",
+      "error": "TileQueryError(\"DALFormatError: ConnectTimeout: HTTPSConnectionPool(host='tapvizier.cds.unistra.fr', port=443): Max retries exceeded with url: /TAPVizieR/tap/sync (Caused by ConnectTimeoutError(<HTTPSConnection(host='tapvizier.cds.unistra.fr', port=443) at 0x7f9d78329bd0>, 'Connection to tapvizier.cds.unistra.fr timed out. (connect timeout=None)'))\")",
+      "query": "SELECT TOP 40000 RAJ2000, DEJ2000 FROM \"J/A+A/659/A1/catalog\" WHERE RAJ2000 >= 220.0 AND RAJ2000 < 224.0 AND DEJ2000 >= 70.0 AND DEJ2000 < 74.0"
+    }
   },
-  "n_targets_in_footprint": 0,
+  "n_targets_in_footprint": 4951,
   "n_etz": 8,
   "n_etz_in_footprint": 0,
-  "control_false_void_rate": NaN,
-  "n_trials_per_position": 0,
-  "n_candidates": 0,
-  "finished_utc": "2026-09-06T23:20:55+00:00"
+  "control_false_void_rate": 0.0014120732260830098,
+  "n_trials_per_position": 123,
+  "n_candidates": 7,
+  "candidates": [
+    {
+      "source_id": 1427329718223532800,
+      "ra": 253.40977977691486,
+      "dec": 56.05805156259906,
+      "parallax_mas": 41.38287155104118,
+      "is_etz": false,
+      "n_annulus": 89,
+      "annulus_density_per_deg2": 303.53121289668616,
+      "bright_source_max_jy": NaN,
+      "n_trials": 41,
+      "best_aperture_arcsec": 600.0,
+      "best_d_au": 500.0,
+      "best_phase": 0.0,
+      "best_dx_arcsec": 175.4926034516366,
+      "best_dy_arcsec": -361.95825051477635,
+      "best_n_obs": 0,
+      "best_lambda": 26.48809523809524,
+      "p_raw": 3.1359303042568634e-12,
+      "p_trials": 1.285731424745314e-10,
+      "n_sources_in_reach": 288,
+      "n_x_30": 0,
+      "lambda_30": 0.06622023809523811,
+      "n_x_60": 0,
+      "lambda_60": 0.26488095238095244,
+      "n_x_120": 0,
+      "lambda_120": 1.0595238095238098,
+      "n_x_204": 0,
+      "lambda_204": 3.0620238095238097,
+      "n_x_300": 0,
+      "lambda_300": 6.62202380952381,
+      "n_x_600": 5,
+      "lambda_600": 26.48809523809524,
+      "veto": "none",
+      "masked_by_bad_tile": false,
+      "is_candidate": true,
+      "control_+ra_veto": "outside_footprint_or_masked",
+      "control_+ra_p_trials": NaN,
+      "control_-ra_veto": "not_significant",
+      "control_-ra_p_trials": 1.0,
+      "control_+dec_veto": "not_significant",
+      "control_+dec_p_trials": 1.0,
+      "control_-dec_veto": "none",
+      "control_-dec_p_trials": 3.1857805170121723e-09,
+      "n_control_evaluated": 3,
+      "n_control_fired": 1,
+      "control_min_p_trials": 3.1857805170121723e-09,
+      "p_empirical_control": 0.00035715703004087466
+    },
+    {
+      "source_id": 1091437471514933504,
+      "ra": 122.14749834505538,
+      "dec": 63.71742966928088,
+      "parallax_mas": 25.422709542467896,
+      "is_etz": false,
+      "n_annulus": 112,
+      "annulus_density_per_deg2": 381.97186342054886,
+      "bright_source_max_jy": NaN,
+      "n_trials": 82,
+      "best_aperture_arcsec": 600.0,
+      "best_d_au": 500.0,
+      "best_phase": 0.375,
+      "best_dx_arcsec": -363.29781614353624,
+      "best_dy_arcsec": -73.62079705044663,
+      "best_n_obs": 1,
+      "best_lambda": 33.333333333333336,
+      "p_raw": 1.146128309741985e-13,
+      "p_trials": 9.398252139884276e-12,
+      "n_sources_in_reach": 338,
+      "n_x_30": 0,
+      "lambda_30": 0.08333333333333334,
+      "n_x_60": 0,
+      "lambda_60": 0.33333333333333337,
+      "n_x_120": 0,
+      "lambda_120": 1.3333333333333335,
+      "n_x_204": 0,
+      "lambda_204": 3.8533333333333335,
+      "n_x_300": 1,
+      "lambda_300": 8.333333333333334,
+      "n_x_600": 18,
+      "lambda_600": 33.333333333333336,
+      "veto": "none",
+      "masked_by_bad_tile": false,
+      "is_candidate": true,
+      "control_+ra_veto": "not_significant",
+      "control_+ra_p_trials": 0.3994337085284587,
+      "control_-ra_veto": "outside_footprint_or_masked",
+      "control_-ra_p_trials": NaN,
+      "control_+dec_veto": "not_significant",
+      "control_+dec_p_trials": 0.0684683776703771,
+      "control_-dec_veto": "not_significant",
+      "control_-dec_p_trials": 1.0,
+      "n_control_evaluated": 3,
+      "n_control_fired": 0,
+      "control_min_p_trials": 0.0684683776703771,
+      "p_empirical_control": 0.00035715703004087466
+    },
+    {
+      "source_id": 1091558761391163776,
+      "ra": 121.8896522517103,
+      "dec": 64.87701268108644,
+      "parallax_mas": 24.044870534318836,
+      "is_etz": false,
+      "n_annulus": 91,
+      "annulus_density_per_deg2": 310.35213902919594,
+      "bright_source_max_jy": NaN,
+      "n_trials": 41,
+      "best_aperture_arcsec": 600.0,
+      "best_d_au": 500.0,
+      "best_phase": 0.25,
+      "best_dx_arcsec": -385.12535075782694,
+      "best_dy_arcsec": 144.60914151241812,
+      "best_n_obs": 4,
+      "best_lambda": 27.083333333333336,
+      "p_raw": 4.517462218331158e-08,
+      "p_trials": 1.8521595095157747e-06,
+      "n_sources_in_reach": 258,
+      "n_x_30": 0,
+      "lambda_30": 0.06770833333333334,
+      "n_x_60": 0,
+      "lambda_60": 0.27083333333333337,
+      "n_x_120": 0,
+      "lambda_120": 1.0833333333333335,
+      "n_x_204": 1,
+      "lambda_204": 3.1308333333333334,
+      "n_x_300": 7,
+      "lambda_300": 6.770833333333334,
+      "n_x_600": 28,
+      "lambda_600": 27.083333333333336,
+      "veto": "none",
+      "masked_by_bad_tile": false,
+      "is_candidate": true,
+      "control_+ra_veto": "not_significant",
+      "control_+ra_p_trials": 0.3144108260063362,
+      "control_-ra_veto": "outside_footprint_or_masked",
+      "control_-ra_p_trials": NaN,
+      "control_+dec_veto": "not_significant",
+      "control_+dec_p_trials": 0.09258626683592007,
+      "control_-dec_veto": "outside_footprint_or_masked",
+      "control_-dec_p_trials": NaN,
+      "n_control_evaluated": 2,
+      "n_control_fired": 0,
+      "control_min_p_trials": 0.09258626683592007,
+      "p_empirical_control": 0.0020238898368982895
+    },
+    {
+      "source_id": 1425970202160161536,
+      "ra": 251.91191535567677,
+      "dec": 53.05609269116338,
+      "parallax_mas": 22.196119769068513,
+      "is_etz": false,
+      "n_annulus": 119,
+      "annulus_density_per_deg2": 405.8451048843332,
+      "bright_source_max_jy": NaN,
+      "n_trials": 82,
+      "best_aperture_arcsec": 600.0,
+      "best_d_au": 500.0,
+      "best_phase": 0.25,
+      "best_dx_arcsec": 357.2171711882986,
+      "best_dy_arcsec": 183.5500043117804,
+      "best_n_obs": 5,
+      "best_lambda": 35.41666666666667,
+      "p_raw": 2.236192081475458e-10,
+      "p_trials": 1.8336775068098754e-08,
+      "n_sources_in_reach": 325,
+      "n_x_30": 0,
+      "lambda_30": 0.08854166666666669,
+      "n_x_60": 0,
+      "lambda_60": 0.35416666666666674,
+      "n_x_120": 1,
+      "lambda_120": 1.416666666666667,
+      "n_x_204": 3,
+      "lambda_204": 4.094166666666667,
+      "n_x_300": 7,
+      "lambda_300": 8.854166666666668,
+      "n_x_600": 29,
+      "lambda_600": 35.41666666666667,
+      "veto": "none",
+      "masked_by_bad_tile": false,
+      "is_candidate": true,
+      "control_+ra_veto": "outside_footprint_or_masked",
+      "control_+ra_p_trials": NaN,
+      "control_-ra_veto": "not_significant",
+      "control_-ra_p_trials": 1.0,
+      "control_+dec_veto": "not_significant",
+      "control_+dec_p_trials": 1.0,
+      "control_-dec_veto": "not_significant",
+      "control_-dec_p_trials": 0.0066267049207928315,
+      "n_control_evaluated": 3,
+      "n_control_fired": 0,
+      "control_min_p_trials": 0.0066267049207928315,
+      "p_empirical_control": 0.0009921028612246518
+    },
+    {
+      "source_id": 1425970958074499328,
+      "ra": 251.90870804013812,
+      "dec": 53.057672198063656,
+      "parallax_mas": 22.168425436051155,
+      "is_etz": false,
+      "n_annulus": 120,
+      "annulus_density_per_deg2": 409.25556795058804,
+      "bright_source_max_jy": NaN,
+      "n_trials": 82,
+      "best_aperture_arcsec": 600.0,
+      "best_d_au": 500.0,
+      "best_phase": 0.25,
+      "best_dx_arcsec": 357.20581085474373,
+      "best_dy_arcsec": 183.5685652183282,
+      "best_n_obs": 5,
+      "best_lambda": 35.714285714285715,
+      "p_raw": 1.7293071014870753e-10,
+      "p_trials": 1.4180318232194017e-08,
+      "n_sources_in_reach": 326,
+      "n_x_30": 0,
+      "lambda_30": 0.0892857142857143,
+      "n_x_60": 0,
+      "lambda_60": 0.3571428571428572,
+      "n_x_120": 1,
+      "lambda_120": 1.4285714285714288,
+      "n_x_204": 3,
+      "lambda_204": 4.128571428571428,
+      "n_x_300": 7,
+      "lambda_300": 8.928571428571429,
+      "n_x_600": 29,
+      "lambda_600": 35.714285714285715,
+      "veto": "none",
+      "masked_by_bad_tile": false,
+      "is_candidate": true,
+      "control_+ra_veto": "outside_footprint_or_masked",
+      "control_+ra_p_trials": NaN,
+      "control_-ra_veto": "not_significant",
+      "control_-ra_p_trials": 1.0,
+      "control_+dec_veto": "not_significant",
+      "control_+dec_p_trials": 1.0,
+      "control_-dec_veto": "not_significant",
+      "control_-dec_p_trials": 0.0066267049207928315,
+      "n_control_evaluated": 3,
+      "n_control_fired": 0,
+      "control_min_p_trials": 0.0066267049207928315,
+      "p_empirical_control": 0.0009921028612246518
+    },
+    {
+      "source_id": 1674429597762762880,
+      "ra": 209.70586461398673,
+      "dec": 69.24515300497173,
+      "parallax_mas": 22.025616048395115,
+      "is_etz": false,
+      "n_annulus": 92,
+      "annulus_density_per_deg2": 313.76260209545086,
+      "bright_source_max_jy": NaN,
+      "n_trials": 41,
+      "best_aperture_arcsec": 600.0,
+      "best_d_au": 500.0,
+      "best_phase": 0.375,
+      "best_dx_arcsec": -166.17506072090708,
+      "best_dy_arcsec": 382.71952062338937,
+      "best_n_obs": 1,
+      "best_lambda": 27.380952380952383,
+      "p_raw": 3.6444369123701766e-11,
+      "p_trials": 1.4942191340717725e-09,
+      "n_sources_in_reach": 259,
+      "n_x_30": 0,
+      "lambda_30": 0.06845238095238096,
+      "n_x_60": 0,
+      "lambda_60": 0.27380952380952384,
+      "n_x_120": 0,
+      "lambda_120": 1.0952380952380953,
+      "n_x_204": 1,
+      "lambda_204": 3.165238095238095,
+      "n_x_300": 2,
+      "lambda_300": 6.845238095238096,
+      "n_x_600": 19,
+      "lambda_600": 27.380952380952383,
+      "veto": "none",
+      "masked_by_bad_tile": false,
+      "is_candidate": true,
+      "control_+ra_veto": "not_significant",
+      "control_+ra_p_trials": 1.0,
+      "control_-ra_veto": "none",
+      "control_-ra_p_trials": 8.219053835903581e-10,
+      "control_+dec_veto": "outside_footprint_or_masked",
+      "control_+dec_p_trials": NaN,
+      "control_-dec_veto": "not_significant",
+      "control_-dec_p_trials": 1.0,
+      "n_control_evaluated": 3,
+      "n_control_fired": 1,
+      "control_min_p_trials": 8.219053835903581e-10,
+      "p_empirical_control": 0.0007539981745307353
+    },
+    {
+      "source_id": 1094309013631601280,
+      "ra": 127.87096745418717,
+      "dec": 68.43318717298511,
+      "parallax_mas": 20.82795330606657,
+      "is_etz": false,
+      "n_annulus": 168,
+      "annulus_density_per_deg2": 572.9577951308233,
+      "bright_source_max_jy": NaN,
+      "n_trials": 82,
+      "best_aperture_arcsec": 600.0,
+      "best_d_au": 500.0,
+      "best_phase": 0.0,
+      "best_dx_arcsec": 166.14608396657346,
+      "best_dy_arcsec": 252.62852348121177,
+      "best_n_obs": 16,
+      "best_lambda": 50.00000000000001,
+      "p_raw": 2.0424168906349307e-08,
+      "p_trials": 1.6747818503206431e-06,
+      "n_sources_in_reach": 465,
+      "n_x_30": 0,
+      "lambda_30": 0.12500000000000003,
+      "n_x_60": 0,
+      "lambda_60": 0.5000000000000001,
+      "n_x_120": 0,
+      "lambda_120": 2.0000000000000004,
+      "n_x_204": 0,
+      "lambda_204": 5.78,
+      "n_x_300": 4,
+      "lambda_300": 12.500000000000002,
+      "n_x_600": 33,
+      "lambda_600": 50.00000000000001,
+      "veto": "none",
+      "masked_by_bad_tile": false,
+      "is_candidate": true,
+      "control_+ra_veto": "not_significant",
+      "control_+ra_p_trials": 1.0,
+      "control_-ra_veto": "not_significant",
+      "control_-ra_p_trials": 1.0,
+      "control_+dec_veto": "outside_footprint_or_masked",
+      "control_+dec_p_trials": NaN,
+      "control_-dec_veto": "not_significant",
+      "control_-dec_p_trials": 1.0,
+      "n_control_evaluated": 3,
+      "n_control_fired": 0,
+      "control_min_p_trials": 1.0,
+      "p_empirical_control": 0.0020238898368982895
+    }
+  ],
+  "finished_utc": "2026-09-07T00:13:26+00:00"
 }

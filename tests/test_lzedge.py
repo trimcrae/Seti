@@ -11,10 +11,13 @@ from seti.lzedge import kinematics as K
 from seti.lzedge.earth import extremal_dates, v_lab_kms, v_lab_speed_kms
 from seti.lzedge.halo import (
     Gaussian,
+    Isotropic,
     Maxwellian,
     eta_shm_analytic,
+    profile_sharp_maxwellian,
     shm,
     shm_plus_plus,
+    shm_tail,
     with_stream,
 )
 from seti.lzedge.kinematics import trapz
@@ -236,3 +239,29 @@ def test_stream_peak_date_reproduces_the_halo_wind_for_a_static_component():
     pk2, _, vp2, _ = stream_peak_date((0.0, 500.0, 0.0), 2023)
     assert 150 < abs((pk2 - pk).days) < 215
     assert 260 < vp2 < 285
+
+
+def test_isotropic_sharp_profile_reproduces_the_closed_form_maxwellian():
+    v0, vesc = 238.0, 544.0
+    vl = v_lab_kms("2023-06-16", v0)
+    grid = np.arange(0.0, 1000.0, 1.0)
+    fm = Maxwellian(v0=v0, v_esc=vesc).lab_speed_distribution(vl, grid)
+    fi = Isotropic(profile=profile_sharp_maxwellian(v0), v_esc=vesc).lab_speed_distribution(vl, grid)
+    sel = fm > 1e-4 * fm.max()
+    assert np.max(np.abs(fi[sel] - fm[sel]) / fm[sel]) < 3e-3
+    assert abs(trapz(fi, grid) - 1.0) < 2e-3
+
+
+def test_tail_shape_changes_the_edge_but_not_the_bulk():
+    vl = v_lab_kms("2023-06-16", 238.0)
+    g_sharp = shm_tail(tail="sharp").eta(vl)
+    g_soft = shm_tail(tail="soft").eta(vl)
+    g_pow = shm_tail(tail="power", k=2.0).eta(vl)
+    assert g_soft(100.0) == pytest.approx(g_sharp(100.0), rel=0.03)
+    assert g_pow(100.0) == pytest.approx(g_sharp(100.0), rel=0.05)
+    # near the edge the sharp cut keeps the most weight, the soft cut and the
+    # (v_esc - v)^2 tail progressively less
+    v_edge = 544.0 + float(np.linalg.norm(vl)) - 40.0
+    assert g_sharp(v_edge) > g_soft(v_edge) > 0.0
+    assert g_sharp(v_edge) > g_pow(v_edge) > 0.0
+    assert g_sharp(v_edge + 60.0) == 0.0 and g_pow(v_edge + 60.0) == 0.0

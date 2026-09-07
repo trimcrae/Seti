@@ -65,5 +65,22 @@ radio:
   # (+-RA, +-Dec), which sample the same mosaics.
   control_offset_arcsec: 2700.0       # 45'
 
+  # Survey-hole veto (mosaic_edge_or_masked): sources within the annulus
+  # outer radius drawn from more than one LoTSS mosaic (a mosaic boundary),
+  # or with mean MaskFract above the threshold (a masked region).  Run
+  # 34066710402's seven "voids" were all 600" under-densities at the 500 AU
+  # grid extreme in 300-570/deg2 annuli -- survey structure.
+  max_annulus_mosaics: 1
+  max_annulus_maskfract: 0.1
+  # Targets within this of each other share one void (binaries); the excess
+  # statistic counts unique positions.
+  dedupe_radius_arcsec: 120.0         # 2'
+  # The candidate count vs control rate x evaluated positions: P(N >= n_obs |
+  # n_exp) below this is an excess (RADIO_VOID_CANDIDATES_PENDING_VET),
+  # otherwise the count is the null (RADIO_VOIDS_AT_CONTROL_RATE).
+  p_excess_min: 0.01
+  nearby_parallax_min_mas: 40.0       # the < 25 pc subset
+  min_subset_controls: 100            # below this a subset uses the global control rate
+
   # The probe stage's tiny box query (inside the 13h field).
   probe: {ra: 200.0, dec: 50.0, half_width_deg: 0.05}

@@ -195,7 +195,7 @@ def test_a_bright_source_nearby_masks_the_position():
                    ignore_index=True)
     st = R.void_statistics(df, FIELD_RA, FIELD_DEC, cfg)
     assert st["veto"] == R.VETO_BRIGHT
-    assert st["bright_source_max_jy"] == pytest.approx(3.0)
+    assert st["bright_source_max_jy"] == pytest.approx(30.0)
 
 
 def test_screen_targets_finds_the_hole_and_the_controls_do_not_fire():

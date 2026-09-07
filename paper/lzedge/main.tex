@@ -1,0 +1,117 @@
+% The LZ 248 keV nuclear-recoil candidate as a measurement of the fastest local
+% dark matter: escape speed, tail shape, the Large Magellanic Cloud, and the
+% date of the event.
+%
+% All quantitative results are generated into numbers.tex by
+% `python -m seti.lzedge.run --stage numbers`; nothing numerical is typed here.
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,graphicx,natbib,booktabs,hyperref,siunitx,xspace,xcolor}
+\newcommand{\TODO}[1]{\textcolor{red}{[#1]}}
+\newcommand{\vmin}{v_{\rm min}\xspace}
+\newcommand{\vesc}{v_{\rm esc}\xspace}
+\newcommand{\vlab}{v_{\rm lab}\xspace}
+\newcommand{\keV}{\,\mathrm{keV}\xspace}
+\newcommand{\kms}{\,\mathrm{km\,s^{-1}}\xspace}
+\bibliographystyle{plainnat}
+\input{numbers}
+
+\title{The LUX-ZEPLIN 248\,keV recoil as a measurement of the fastest local dark matter:
+escape speed, tail shape, the Large Magellanic Cloud, and the date of the event}
+\author{[Author list]}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+LUX-ZEPLIN has reported one event consistent with a \EventEnergy\keV nuclear recoil in
+\Exposure\,tonne-years, recorded on \EventDate, in an analysis window extended to
+reach effective-field-theory and inelastic dark-matter spectra.  The follow-up
+literature agrees that an endothermic recoil with a mass splitting $\delta$ close to
+the kinematic limit set by the halo escape speed is the natural dark-matter reading.
+We take that reading at its word: a recoil at the kinematic edge is carried by the
+few tens of \si{km/s} of the velocity distribution just below $\vesc+\vlab$, i.e.\ by
+the part of the local dark matter that Gaia has measured through halo stars and
+that the Large Magellanic Cloud is predicted to dominate.  We compute the joint
+likelihood of the event's energy \emph{and date} as a function of $(m_\chi,\delta)$
+for the sharp-cut Maxwellian used by the collaboration, for soft and power-law
+tails, for the published escape-speed measurements integrated over their
+uncertainties, and for an LMC-boosted tail.  \TODO{results sentence: delta
+posterior per measurement; timing Bayes factor; LMC phase; predictions}.  The
+date alone carries a Bayes factor of \TimingBFbest against a constant-rate
+background at the best-fit splitting, and the same models predict the seasonal
+window within which the next such events must fall.
+\end{abstract}
+
+\section{Introduction}
+\TODO{LZ result; the ten follow-ups; why the edge hands the question to astronomy.}
+
+\section{Kinematics of a recoil at the edge}
+For endothermic scattering $\chi N\to\chi^\ast N$ with $m_{\chi^\ast}-m_\chi=\delta\ge0$,
+the minimum speed for a recoil of energy $E_R$ off a nucleus of mass $m_N$ is
+\begin{equation}
+  \vmin(E_R)=\frac{1}{\sqrt{2m_NE_R}}\left(\frac{m_NE_R}{\mu}+\delta\right),
+\end{equation}
+with $\mu$ the reduced mass; it is smallest, $\sqrt{2\delta/\mu}$, at
+$E_R^\ast=\mu\delta/m_N$.  For a heavy state scattering on xenon the event's
+energy fixes $\vmin(\EventEnergy\keV)=\VminElastic\kms$ at $\delta=0$ and adds
+$\delta/\sqrt{2m_NE_R}\simeq\VminPerHundredKeV\kms$ per \SI{100}{keV} of splitting.
+The lab frame sees no particle faster than $\vesc+\vlab(t)$, so for a given halo the
+largest splitting compatible with the event on its date is
+$\delta_{\max}=\DeltaMaxLZ\keV$ (\SI{1}{TeV}, $\vesc=\VescLZ\kms$).  Because $\vlab$
+changes by $\pm\VlabAmp\kms$ through the year, there is a band of splittings for
+which the event is kinematically possible only within a window of dates around
+1~June: the \emph{reachability calendar} (Fig.~\ref{fig:calendar}).  The event's
+date, \EventDate, is \DaysAfterPeak days after the maximum of $\vlab$.
+
+\section{Halo models and the shape of the tail}
+\TODO{SHM sharp; soft; power-law tail (Gaia fits); SHM++; the LMC-boosted component;
+what each does to $g(\vmin,t)$ near the edge (Fig.~\ref{fig:tails}).}
+
+\section{The likelihood of one event}
+With the cross section profiled, the single-event extended likelihood factorises into
+a timing term and an energy term,
+\begin{equation}
+  \mathcal{L}(m_\chi,\delta)\propto\frac{R(t_{\rm obs})}{\langle R\rangle_{\rm live}}
+  \times p(E_{\rm obs}\,|\,t_{\rm obs}),
+\end{equation}
+where $R(t)$ is the efficiency-weighted window rate and $\langle R\rangle_{\rm live}$
+its live-time average.  The first factor is the evidence the date carries against a
+constant-rate background; the second is the recoil spectrum at the event's date,
+folded with resolution and the energy-scale systematic.  A log-uniform prior on the
+cross section up to a physical ceiling turns the profile into a marginal likelihood
+that penalises models which cannot make one event at any allowed cross section.
+\TODO{Fig.~\ref{fig:scan}.}
+
+\section{Results}
+\subsection{The splitting and the escape speed}
+\TODO{Table of $\delta$ posteriors per measurement (Fig.~\ref{fig:vesc}).}
+\subsection{The date}
+\TODO{Timing Bayes factor; the seasonal window; the muon-modulation non-alternative.}
+\subsection{The Large Magellanic Cloud}
+\TODO{The LMC-boosted tail: reach, phase, amplitude.}
+\subsection{Other experiments}
+\TODO{Windows that reach the edge; calendars; expected counts.}
+
+\section{Predictions}
+\TODO{When and at what energy the next events must come, per model.}
+
+\section{Conclusions}
+\TODO{}
+
+\begin{figure}\centering
+\includegraphics[width=.9\linewidth]{figures/calendar.png}
+\caption{Reachability calendar.  \TODO{}}\label{fig:calendar}\end{figure}
+\begin{figure}\centering
+\includegraphics[width=.9\linewidth]{figures/tails.png}
+\caption{The high-speed tail on the event date.  \TODO{}}\label{fig:tails}\end{figure}
+\begin{figure}\centering
+\includegraphics[width=.9\linewidth]{figures/scan_map.png}
+\caption{Timing Bayes factor and energy density at 248\,keV.  \TODO{}}\label{fig:scan}\end{figure}
+\begin{figure}\centering
+\includegraphics[width=.9\linewidth]{figures/vesc_posterior.png}
+\caption{$\delta$ posterior with the escape speed integrated over each measurement.  \TODO{}}\label{fig:vesc}\end{figure}
+
+\bibliography{refs}
+\end{document}

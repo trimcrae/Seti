@@ -231,6 +231,8 @@ def test_stream_peak_date_reproduces_the_halo_wind_for_a_static_component():
     pk, tr, vp, vt = stream_peak_date((0.0, 0.0, 0.0), 2023)
     assert (pk.month, pk.day <= 4) == (6, True) or (pk.month == 5 and pk.day >= 29)
     assert vp > vt and abs(vp - v_lab_speed_kms(pk)) < 1e-9
-    # a component co-moving with the Sun is slow in the lab frame and peaks half a year away
-    pk2, _, vp2, _ = stream_peak_date((11.1, 250.24, 7.25), 2023)
-    assert vp2 < 31.0 and abs((pk2 - pk).days) > 150
+    # a component overtaking the Sun along rotation is fastest in the lab when the halo
+    # wind is slowest: its peak sits half a year from the wind's, near 1 December
+    pk2, _, vp2, _ = stream_peak_date((0.0, 500.0, 0.0), 2023)
+    assert 150 < abs((pk2 - pk).days) < 215
+    assert 260 < vp2 < 285

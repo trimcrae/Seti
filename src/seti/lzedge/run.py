@@ -14,6 +14,7 @@ import argparse
 import csv
 import datetime as dt
 import json
+import math
 import pathlib
 import time
 
@@ -24,7 +25,13 @@ from . import kinematics as K
 from .earth import extremal_dates, galactic_lb_deg, v_lab_kms, v_lab_speed_kms, year_grid
 from .halo import shm, shm_plus_plus, shm_tail
 from .rate import Efficiency
-from .timing import EventModel, LiveTime, modulation_summary, timing_bayes_factor
+from .timing import (
+    EventModel,
+    LiveTime,
+    modulation_summary,
+    profile_likelihood,
+    timing_bayes_factor,
+)
 
 
 def load_cfg(path: str | None = None) -> dict:
@@ -213,9 +220,90 @@ def stage_tails(cfg: dict, out: pathlib.Path) -> dict:
     return summary
 
 
+def stage_posterior(cfg: dict, out: pathlib.Path, halos_only: list[str] | None = None) -> dict:
+    """Profile likelihood over (m_chi, delta) per halo model, sigma_n profiled, the
+    energy-scale systematic marginalised.  Normalised per halo to its maximum, and
+    across halos to the global maximum, so the tables read as likelihood ratios."""
+    ev, run, win, sc = cfg["event"], cfg["run"], cfg["window"], cfg["scan"]
+    E_obs, t_obs = float(ev["energy_keV"]), ev["date"]
+    eff = Efficiency.from_table(win["efficiency"])
+    live = LiveTime.uniform(run["start"], run["end"], run["live_days"])
+    sig_ref, sig_sys = float(ev["sigma_stat_keV"]), float(ev.get("sigma_sys_keV", 0.0))
+
+    def sigma_fn(E):
+        return K.resolution_sigma_keV(E, sig_ref, E_obs)
+
+    pc = cfg.get("posterior", {})
+    sigma_ceiling = float(pc.get("sigma_ceiling_cm2", 1e-37))
+    masses = pc.get("m_chi_gev", sc["m_chi_gev"])
+    d = pc.get("delta_keV", sc["delta_keV"])
+    deltas = np.arange(d["min"], d["max"] + 0.5 * d["step"], d["step"])
+    rows = []
+    t0 = time.time()
+    for name, spec in cfg["halo_models"].items():
+        if halos_only and name not in halos_only:
+            continue
+        halo = build_halo(name, spec)
+        for m in masses:
+            for delta in deltas:
+                model = EventModel(halo, float(m), float(delta), eff, v0_kms=spec["v0"],
+                                   rho_gev_cm3=spec.get("rho", 0.3))
+                pl = profile_likelihood(model, live, E_obs, t_obs, sigma_fn, sig_sys,
+                                        sc.get("livetime_step_days", 3.0))
+                mu1 = pl["mean_rate_livetime"] * run["exposure_tonne_year"]     # events at 1e-45 cm²
+                sig1 = 1e-45 / mu1 if mu1 > 0 else None
+                # marginal over log sigma with a log-uniform prior up to the ceiling:
+                # ∫ dμ/μ e^{-μ} μ p(E,t) ∝ p(E,t) (1 - e^{-μ_max}),  μ_max = events at the ceiling
+                mu_max = mu1 * (sigma_ceiling / 1e-45)
+                occam = 1.0 - math.exp(-mu_max) if mu_max < 50 else 1.0
+                rows.append({"halo": name, "m_chi_gev": m, "delta_keV": float(delta),
+                             "timing": pl["timing"], "energy_per_keV": pl["energy"], "profile": pl["profile"],
+                             "sigma_n_for_one_event_cm2": sig1,
+                             "events_at_ceiling": mu_max,
+                             "marginal": pl["profile"] * occam,
+                             "physical": bool(sig1 is not None and sig1 <= sigma_ceiling)})
+        print(f"  posterior {name}: {len(rows)} rows, {time.time() - t0:.0f}s")
+        (out / "posterior.json").write_text(json.dumps(rows, indent=1))
+    key = "marginal"
+    gmax = max(r[key] for r in rows) if rows else 0.0
+    per_halo = {}
+    for name in {r["halo"] for r in rows}:
+        rr = [r for r in rows if r["halo"] == name]
+        hmax = max(r[key] for r in rr)
+        best = max(rr, key=lambda r: r[key])
+        # delta interval at fixed mass where the marginal is within e^-0.5 (1 sigma) and e^-2 (2 sigma) of the best
+        by_m = {}
+        for m in masses:
+            rm = [r for r in rr if r["m_chi_gev"] == m]
+            mm = max(r[key] for r in rm) if rm else 0.0
+            if mm <= 0:
+                by_m[str(m)] = None
+                continue
+            d1 = [r["delta_keV"] for r in rm if r[key] >= mm * math.exp(-0.5)]
+            d2 = [r["delta_keV"] for r in rm if r[key] >= mm * math.exp(-2.0)]
+            bm = max(rm, key=lambda r: r[key])
+            by_m[str(m)] = {"best_delta_keV": bm["delta_keV"], "sigma_n_at_best_cm2": bm["sigma_n_for_one_event_cm2"],
+                            "delta_1sigma_keV": [min(d1), max(d1)], "delta_2sigma_keV": [min(d2), max(d2)],
+                            "max_marginal_rel_global": mm / gmax if gmax > 0 else None}
+        per_halo[name] = {"best": best, "max_marginal_rel_global": hmax / gmax if gmax > 0 else None,
+                          "by_mass": by_m}
+    for r in rows:
+        r["marginal_rel_global"] = r[key] / gmax if gmax > 0 else None
+    with (out / "posterior.csv").open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+    summary = {"n_rows": len(rows), "per_halo": per_halo, "elapsed_s": round(time.time() - t0, 1),
+               "sigma_sys_keV": sig_sys, "sigma_ceiling_cm2": sigma_ceiling,
+               "note": "marginal = profile x (1 - exp(-events at the ceiling)): a log-uniform prior on "
+                       "sigma_n up to the ceiling; profile alone is flat in sigma_n and runs to the grid edge"}
+    (out / "posterior_summary.json").write_text(json.dumps(summary, indent=2))
+    return summary
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="lzedge")
-    ap.add_argument("--stage", default="all", choices=["kinematics", "scan", "tails", "all"])
+    ap.add_argument("--stage", default="all", choices=["kinematics", "scan", "tails", "posterior", "all"])
     ap.add_argument("--config", default=None)
     ap.add_argument("--out", default="results/lzedge")
     ap.add_argument("--halos", default=None, help="comma-separated subset of halo_models")
@@ -232,6 +320,9 @@ def main(argv: list[str] | None = None) -> int:
     if a.stage in ("tails", "all"):
         s = stage_tails(cfg, out)
         print(f"tails: {s['n_rows']} rows in {s['elapsed_s']}s")
+    if a.stage in ("posterior", "all"):
+        s = stage_posterior(cfg, out, a.halos.split(",") if a.halos else None)
+        print(f"posterior: {s['n_rows']} rows in {s['elapsed_s']}s")
     return 0
 
 

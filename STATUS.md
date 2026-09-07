@@ -3,12 +3,63 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-06.
+next. Last updated: 2026-09-07.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### The LZ 248 keV recoil at the kinematic edge, 2026-09-07: LZEDGE
+
+A new question from the user, outside the technosignature channels: LUX-ZEPLIN
+(arXiv:2609.02823, 1 Sep) reports one event consistent with a 248 ± 23 ± 23 keV
+nuclear recoil in 2.84 t yr (WS2024, recorded 16 June 2023), 2.6σ global, in a
+window extended to ≈ 270 keV for EFT and inelastic spectra. *Is there an
+analysis worth a paper, and is there public data?* Ten theory papers appeared
+within five days (Higgsino, kinematic edge, seasonal, dark photon, PQ, axion
+portal, fermionic absorption, iDM in LZ+CRESST, Higgsino sideband,
+atmospheric-neutrino up-scattering); their shared reading is an endothermic
+recoil with the mass splitting pushed to the kinematic limit set by the halo
+escape speed. That hands the question to astronomy: an edge recoil is a
+measurement of the fastest local dark matter — the part of the velocity
+distribution the sharp-cut Maxwellian misrepresents by construction, that Gaia
+has measured through halo stars (escape speed and tail shape), and that the
+Large Magellanic Cloud is predicted to dominate. None of the ten works from the
+measured tail; the event's *date* is used by none as a live-time-weighted
+datum. `docs/lzedge.md` has the claim and method.
+
+Built and offline-tested (25 tests): `seti.lzedge` — inelastic kinematics, the
+lab velocity through the halo by date (peak 1 June; the event fell 15 days
+after it, 0.4 km/s below the peak), halo models with arbitrary high-speed
+components (truncated Maxwellian in closed form, anisotropic Gaussians with the
+escape-sphere cap integrated exactly, isotropic components with sharp / soft /
+Gaia-style power-law tails, an unbound LMC-boosted component), xenon recoil
+spectra, the single-event timing Bayes factor R(t_obs)/⟨R⟩_livetime, the
+profile likelihood with the cross section profiled and the energy-scale
+systematic marginalised, a marginal over log σ up to a physical ceiling (the
+profile alone runs to the grid edge, where one event would need 10⁻³⁴ cm²),
+the *reachability calendar* (for δ = 385 keV at 1 TeV a 248 keV recoil is
+kinematically possible only between 21 April and 12 July; never for
+δ ≥ 390 keV under LZ's halo), a δ posterior with the escape speed integrated
+over each published measurement, the cross-experiment seasonal-exposure
+accounting (XENON100's 6.6–240 keV window stops below the event; LZ's own
+WS2022 ran December–May, the off-season for an edge signal), figures and a
+manuscript scaffold whose numbers are generated. First numbers with placeholder
+window and live time: the energy likelihood at 248 keV rises ≈ 800× from
+elastic to δ ≈ 360 keV; at 1 TeV the marginal posterior peaks at δ = 380 keV
+(σ_n ≈ 10⁻³⁸ cm²; 1σ 370–385) with a 10⁻³⁷ cm² ceiling, or δ = 365 keV with a
+Higgsino-like 10⁻³⁹ cm² ceiling; the timing Bayes factor is 2.7–4 at the edge;
+the tail shape alone moves the density at v_min(δ = 380 keV) by two orders of
+magnitude between the sharp cut and a (v_esc − v)^2.5 tail.
+
+**Record fetch (`lzlit.yml`, run 34075988511, dispatched 10:20 PM ET 6 Sep)
+in progress**: the paper, every citing paper (INSPIRE), the prior high-energy
+searches, the Gaia escape-speed and LMC-tail literature, and the LZ HEPData /
+Zenodo / collaboration data pages. Every placeholder in `config/lzedge.yaml`
+(window, efficiency, live-time calendar, event time, halo parameters, v_esc
+summaries, LMC fraction) is replaced from that record before any number is
+quoted; the novelty map against the follow-ups is written from it.
 
 ### The warden's fence, 2026-09-06: BAFFLE (S38)
 

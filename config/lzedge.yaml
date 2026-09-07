@@ -1,0 +1,57 @@
+# LZEDGE — the LZ 248 keV nuclear-recoil candidate at the kinematic edge.
+#
+# Every number that describes the event, the run and the halo lives here.
+# Values marked PLACEHOLDER are what the press record supports and are to be
+# replaced by the numbers read from arXiv:2609.02823 (results/lzlit/) before a
+# result is quoted.
+
+event:
+  energy_keV: 248.0
+  sigma_stat_keV: 23.0
+  sigma_sys_keV: 23.0            # energy-scale systematic, treated as a shift nuisance
+  date: "2023-06-16"             # PLACEHOLDER precision: day; the paper may give the time
+
+run:                              # LZ WS2024
+  start: "2023-03-01"            # PLACEHOLDER: "March 2023"
+  end: "2024-04-30"              # PLACEHOLDER: "April 2024"
+  live_days: 220.0
+  exposure_tonne_year: 2.84      # the extended-window analysis exposure
+  fiducial_tonne: 5.5
+
+window:                           # extended nuclear-recoil window, PLACEHOLDER edges
+  E_lo_keV: 5.0
+  E_hi_keV: 270.0
+  efficiency:                    # PLACEHOLDER flat; replace with the paper's curve
+    - [5.0, 1.0]
+    - [270.0, 1.0]
+  resolution_scaling: sqrt       # sigma(E) = sigma_stat * sqrt(E / E_event)
+
+halo_models:
+  shm_lz:                        # Baxter+2021 conventions used by LZ
+    type: shm
+    v0: 238.0
+    v_esc: 544.0
+    rho: 0.3
+  shm_pp:                        # Evans, O'Hare & McCabe 2019
+    type: shmpp
+    v0: 233.0
+    v_esc: 528.0
+    eta_sausage: 0.2
+    beta: 0.9
+    rho: 0.55
+  shm_vesc_low:                  # Gaia DR3 low end (Roche+2024-like), PLACEHOLDER value
+    type: shm
+    v0: 238.0
+    v_esc: 500.0
+    rho: 0.3
+  shm_vesc_high:                 # high end of the Gaia posteriors, PLACEHOLDER value
+    type: shm
+    v0: 238.0
+    v_esc: 600.0
+    rho: 0.3
+
+scan:
+  m_chi_gev: [50, 100, 200, 500, 1000, 3000, 10000]
+  delta_keV: {min: 0.0, max: 460.0, step: 10.0}
+  livetime_step_days: 3.0
+  year_samples: 73

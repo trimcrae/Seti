@@ -209,6 +209,11 @@ BY_ID: dict[str, dict] = {
     "xenon1t2018_1ty": {"id": "1805.12562", "src": False, "title": "XENON1T"},
     "pandax4t2021_si": {"id": "2107.13438", "src": False, "title": "PandaX-4T"},
     "mccabe2014_earth_velocity": {"id": "1312.1355", "src": True, "title": "Earth"},
+    # --- follow-ups named in 2609.04673's bibliography ------------------------
+    "fu_2609.01590_higgsino_fermi": {"id": "2609.01590", "src": True, "title": "Higgsino"},
+    "fu_2609.02775_solar_capture": {"id": "2609.02775", "src": True, "title": "Solar Capture"},
+    "fu_2609.02505_z2_higgs_partner": {"id": "2609.02505", "src": True, "title": "Partner"},
+    "fu_2609.01892_pq_susy": {"id": "2609.01892", "src": True, "title": "PQ"},
 }
 
 # Papers whose arXiv id is not certain: resolved by title search, so the id

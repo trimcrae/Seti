@@ -331,3 +331,22 @@ def test_lmc_tail_component_is_head_on_and_fastest_in_june():
     hb = build_halo("x", {"type": "shm_lmc", "v0": 238.0, "v_esc": 544.0, "lmc_speed": 500.0,
                           "lmc_sigma": 60.0, "lmc_fraction": 0.01})
     assert hb.v_max(vl) == pytest.approx(hb.v_grid_max)
+
+
+def test_sideband_expectation_is_small_for_an_edge_model_and_large_for_an_unbound_tail():
+    from seti.lzedge.halo import lmc_tail
+    from seti.lzedge.timing import sideband_expectation
+    eff = Efficiency.from_table([[5.4, 0.5], [14.0, 0.96], [250.0, 0.96], [269.9, 0.5], [290.0, 0.0]])
+    live = LiveTime.uniform("2023-03-27", "2024-04-01", 220.0)
+    edge = EventModel(shm(238.0, 544.0), 1000.0, 370.0, eff)
+    r_win = timing_bayes_factor(edge, live, "2023-06-16", 7.0)["mean_rate_livetime"]
+    sb = sideband_expectation(edge, live, 350.0, 680.0, 0.96, 7.0)
+    # even the bound halo reaches the sideband at delta = 370 (E+ ~ 560 keV at v_max in June),
+    # so the empty sideband is a real upper constraint on the splitting
+    assert r_win > 0 and 0.0 < sb / r_win < 5.0
+    boosted = EventModel(lmc_tail(shm(238.0, 544.0), 700.0, 80.0, 0.05), 1000.0, 370.0, eff)
+    sb2 = sideband_expectation(boosted, live, 350.0, 680.0, 0.96, 7.0)
+    assert sb2 > sb                                     # an unbound tail puts more rate in the sideband
+    low = EventModel(shm(238.0, 544.0), 1000.0, 200.0, eff)
+    r_low = timing_bayes_factor(low, live, "2023-06-16", 7.0)["mean_rate_livetime"]
+    assert sideband_expectation(low, live, 350.0, 680.0, 0.96, 7.0) / r_low < sb / r_win

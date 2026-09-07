@@ -346,6 +346,76 @@ temperature — and those are different questions.
 
 ---
 
+## 8. What the search found (2026-09-06/07)
+
+Every number below is read from a committed result file named in
+`STATUS.md`, where each run is logged with its run id and what was learned
+from it.
+
+**Mid-infrared deficits (the primary funnel).** Acquisition was complete by
+construction: 36 declination bands, every chunk `QUERY_OK`, 417,589
+deficit-track rows against an archive COUNT(*) of 417,589 and 602,383
+missing-track rows against 602,383. The population screened is the ~30
+million Gaia G < 15 stars with a 2MASS and an AllWISE counterpart; the
+empirical locus rests on 86,475 locus-grade stars. The tails behaved as the
+physics demands — W1 at +5σ holds 13 stars, at −5σ none — and the funnel
+went 2,055 two-band deficits → 135 after the catalogue vetoes → 74 after the
+G − K_s contamination test (61 stars whose K_s is too bright for their G by
+the same amount their W1/W2 are too faint: a contaminated 2MASS K_s) → 9
+after the vet (Gaia neighbours at 2MASS resolution, the AllWISE deblending
+record, independent CatWISE2020 and unWISE photometry, 2MASS blend flags,
+UKIDSS/VHS K_s where it exists, W3 consistency) → **0** after the geometry:
+five of the nine are strongly variable in their own NEOWISE series (reduced
+χ² 731–27,675 over 21 visits; a passive screen is constant), one is a
+`MODULATED` verdict in the LMC whose geometry-agnostic odd/even control is
+as strong as the parallax-phased signal, three are confusion-limited plane
+or Cloud fields, and the one isolated constant deficit sits at the
+threshold edge with a contamination-consistent G − K_s. Completeness to an
+injected two-band deficit, after the same vetoes: 35 % at 0.3 mag, 91 % at
+0.5, 92 % at 1.0.
+
+**The fully-opaque limit.** 8.2 % of bright 2MASS stars have no entry in
+Gaia's AllWISE neighbourhood table, a fraction that rises to 39 % at G 4–5
+and 14 % at |b| < 10°: the cross-match's behaviour on saturated and crowded
+sources, not the sky. Re-tested by direct position on 2,341 stars (988
+within 50 pc, 353 in the ETZ, 1,000 controls), 10 lack an AllWISE source
+within 15″; eight sit in a bright star's artefact region or at their own
+saturation limit, two are present in CatWISE or unWISE. **No truly missing
+counterpart.**
+
+**The brightest stars (AKARI/IRAS tier).** 36,735 stars with G < 7.5,
+29,080 with a 2MASS anchor and 9–25 µm photometry, including 132 of the 169
+ETZ stars and 1,996 of the 2,495 within 50 pc; K_s − [9] locus scatter
+0.09 mag; excess tails of hundreds of stars at +5σ, deficit tails of a
+handful, all single-band and near the AKARI limit. **Zero candidates.** The
+13 stars with no AKARI or IRAS entry at all were closed by WISE W3/W4:
+nine show a normal 12/22 µm photosphere (survey coverage gaps along the
+ecliptic and the southern sky), three are tenth-of-a-magnitude offsets
+under halo flags, one is a K_s = 2.3 star fragmented into diffraction-spike
+artefacts.
+
+**Radio voids (LoTSS DR2).** The whole DR2 catalogue (4.3 million sources)
+around 4,943 Gaia stars within 50 pc in the footprint: seven stars pass the
+10⁻⁵ void test, and the same statistic fires at four control positions per
+star often enough to predict seven. The holes are 10′-radius under-densities
+in shallow or edge mosaics, displaced from the star to the extreme of the
+500 AU offset grid. **The radio sky has holes at nearby stars exactly as
+often as anywhere else.** Reach, honestly: a 1 AU screen is detectable at
+LoTSS depth only inside ~730 AU after the trials factor, on 27 % of the
+northern sky; the ETZ stars within 50 pc fall outside the DR2 footprint.
+
+**What this says about the premise.** The cheapest passive design — a
+band-selective screen on the Sun→observer line, at either end — is not in
+place toward any of ~30 million stars at 3–5 µm, ~29,000 of the brightest at
+9–25 µm, or ~5,000 nearby stars at 144 MHz, to the sensitivities stated. Per
+the charter that is not a paper; it is a reason to change the question: what
+remains for a warden are families C and E (active camouflage, source-side
+intervention — invisible from here by construction) and a grey B1 screen
+beyond ~10⁴ AU at the CMB temperature, which is a question for time-domain
+sub-millimetre maps, not catalogues.
+
+---
+
 ## 7. Files
 
 | | |

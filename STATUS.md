@@ -316,6 +316,29 @@ anywhere else.** Reach, honestly: at LoTSS depth a 1 AU screen is detectable
 only inside ~730 AU after the trials factor; this is a near-zone test on
 27 % of the northern sky.
 
+**RADIO, fourth run (34069675444, 20:23 ET, 63 min) and fifth (34074142157,
+21:47 ET, 4 min, resumed from the fourth's tile checkpoints): `RADIO_VOIDS_
+AT_CONTROL_RATE (n_obs=6, n_exp=4.50, p_excess=0.297)`.** The fourth run
+carried the flux column and the mosaic record and its two new vetoes
+removed every target (49 % of in-footprint stars have a > 1 Jy LoTSS source
+within 30′; two overlapping mosaics within 20′ is the norm; MaskFract's
+median is 0.47) — thresholds set before seeing the data, recalibrated from
+it: 5 Jy, three-plus mosaics, MaskFract off. The fifth run: 4,951 in
+footprint, 247 masked by a > 5 Jy source, 404 at a mosaic edge, 3,873 unique
+positions evaluated (427 binary duplicates merged), **6 unique voids at
+p < 10⁻⁵ against 4.50 expected from 15 firings at 12,907 control
+positions, p_excess = 0.30**; within 25 pc, 1 against 0.30; no ETZ star
+within 50 pc lies in the DR2 footprint. **The radio funnel is closed at the
+control rate.** BAFFLE is complete as built: mid-IR (all-sky, ~30 M stars),
+bright tier (29,080 stars at 9–25 µm), missing-counterpart limit, and radio
+(4,951 nearby stars at 144 MHz) — zero survivors in each, with the
+sensitivities stated in `docs/baffle.md` §8. Per the charter this changes
+the question, not the venue: the passive band-selective screen is not in
+use toward anything reachable; what a warden could still be using is
+active camouflage, source-side beaming, or a grey screen at ~10⁴ AU at the
+CMB temperature — the last a time-domain sub-millimetre question, not a
+catalogue one.
+
 ### Three new questions, 2026-09-06: METRONOME, LANTERN, FALLOUT
 
 The charter ranks novelty first, and after 35 channels the taxonomy in

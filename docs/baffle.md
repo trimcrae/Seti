@@ -395,12 +395,14 @@ under halo flags, one is a K_s = 2.3 star fragmented into diffraction-spike
 artefacts.
 
 **Radio voids (LoTSS DR2).** The whole DR2 catalogue (4.3 million sources)
-around 4,943 Gaia stars within 50 pc in the footprint: seven stars pass the
-10⁻⁵ void test, and the same statistic fires at four control positions per
-star often enough to predict seven. The holes are 10′-radius under-densities
-in shallow or edge mosaics, displaced from the star to the extreme of the
-500 AU offset grid. **The radio sky has holes at nearby stars exactly as
-often as anywhere else.** Reach, honestly: a 1 AU screen is detectable at
+around 4,951 Gaia stars within 50 pc in the footprint (247 masked by a
+> 5 Jy source within 30′, 404 at a mosaic edge, binaries merged to 3,873
+unique positions): six unique positions pass the 10⁻⁵ void test against
+4.5 expected from the same statistic at 12,907 control positions
+(p = 0.30); within 25 pc, one against 0.3. The holes are 10′-radius
+under-densities in shallow or edge mosaics, displaced from the star to the
+extreme of the 500 AU offset grid. **The radio sky has holes at nearby
+stars exactly as often as anywhere else.** Reach, honestly: a 1 AU screen is detectable at
 LoTSS depth only inside ~730 AU after the trials factor, on 27 % of the
 northern sky; the ETZ stars within 50 pc fall outside the DR2 footprint.
 

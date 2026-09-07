@@ -183,6 +183,12 @@ BY_ID: dict[str, dict] = {
         "title": "Directional dark matter signatures of the Large Magellanic Cloud"},
     "empirical_speed_distribution_2025": {"id": "2510.21914", "src": True,
         "title": "Empirical Speed Distribution"},
+    "necib_lin2022_substructure_ii": {"id": "2102.02211", "src": True,
+        "title": "Local Escape Velocity"},
+    "donaldson2022_lmc_local": {"id": "2111.15440", "src": True,
+        "title": "Large Magellanic Cloud"},
+    "lamost2025_escape_curve": {"id": "2510.18227", "src": False,
+        "title": "Escape Velocity"},
 }
 
 # Papers whose arXiv id is not certain: resolved by title search, so the id

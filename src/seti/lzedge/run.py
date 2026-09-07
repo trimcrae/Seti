@@ -582,7 +582,7 @@ def main(argv: list[str] | None = None) -> int:
         print("sensitivity:", json.dumps(s["rows"][-2], indent=None))
     if a.stage in ("figures", "all"):
         from .figures import make_all
-        made = make_all(cfg, out / "figures")
+        made = make_all(cfg, out, out / "figures")
         print("figures:", ", ".join(p.name for p in made))
     if a.stage in ("numbers", "all"):
         m = stage_numbers(cfg, out)

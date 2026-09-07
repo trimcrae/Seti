@@ -136,3 +136,42 @@ def date_percentile_under_model(model: EventModel, livetime: LiveTime, t_obs,
     p /= p.sum()
     r_obs = model.rate(t_obs)
     return float(np.sum(p[r <= r_obs]))
+
+
+def seasonal_background_factor(t, amplitude: float = 0.02, peak_month_day=(7, 5)) -> float:
+    """1 + A cos(2π (t - t_peak)/yr): the underground muon flux's seasonal
+    modulation (per-cent amplitude, early-July maximum at northern mid-latitude
+    sites).  The timing factor a muon-induced background could claim."""
+    d = to_datetime(t)
+    peak = dt.datetime(d.year, peak_month_day[0], peak_month_day[1], tzinfo=dt.timezone.utc)
+    phase = 2.0 * np.pi * (d - peak).total_seconds() / (365.25 * 86400.0)
+    return float(1.0 + amplitude * np.cos(phase))
+
+
+def energy_density_marginal_sys(model: EventModel, E_obs: float, t, sigma_fn, sigma_sys_keV: float,
+                                n: int = 9) -> float:
+    """p(E_obs | t) with the energy-scale systematic marginalised as a Gaussian
+    shift of the observed energy (Gauss–Hermite quadrature, ``n`` nodes)."""
+    if sigma_sys_keV <= 0:
+        return float(model.observed_energy_density(E_obs, t, sigma_fn)[0])
+    x, w = np.polynomial.hermite_e.hermegauss(n)
+    shifts = sigma_sys_keV * x
+    dens = model.observed_energy_density(E_obs + shifts, t, sigma_fn)
+    return float(np.sum(w * dens) / np.sum(w))
+
+
+def profile_likelihood(model: EventModel, livetime: LiveTime, E_obs: float, t_obs, sigma_fn,
+                       sigma_sys_keV: float = 0.0, step_days: float = 3.0) -> dict:
+    """The single-event extended likelihood with the cross section profiled out.
+
+    L = e^{-mu} mu p(E, t | model); the profile over mu (i.e. over sigma_n)
+    sits at mu = 1, so up to a constant L_prof = [R(t_obs)/<R>_L] x p(E_obs | t_obs).
+    Returns the two factors and their product, or zeros when the model gives
+    no rate on the event date."""
+    tb = timing_bayes_factor(model, livetime, t_obs, step_days)
+    r_obs = tb["rate_at_event"]
+    if r_obs <= 0 or tb["mean_rate_livetime"] <= 0:
+        return {"timing": 0.0, "energy": 0.0, "profile": 0.0, **tb}
+    pE = energy_density_marginal_sys(model, E_obs, t_obs, sigma_fn, sigma_sys_keV) / r_obs
+    return {"timing": tb["bayes_factor_timing"], "energy": pE,
+            "profile": tb["bayes_factor_timing"] * pE, **tb}

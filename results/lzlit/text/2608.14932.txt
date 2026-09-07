@@ -1,0 +1,1854 @@
+                                          On M2-, M5-, and D3-branes from 12d anomalies:
+                                          an equivariant perspective on duality
+
+
+
+                                          Kiril Hristova,b,c and Pedro Vicente Martod
+                                          a
+                                            Faculty of Physics, Sofia University, J. Bourchier Blvd. 5, 1164 Sofia, Bulgaria 1
+                                          b
+                                            INRNE, Bulgarian Academy of Sciences, Tsarigradsko Chaussee 72, 1784 Sofia, Bulgaria
+                                          c
+                                            School of Mathematics and Physics, University of Queensland,
+                                            St Lucia, Brisbane, Queensland 4072, Australia 2
+                                          d
+                                            Institute for Theoretical Physics, Utrecht University, 3584 CE Utrecht, The Netherlands
+
+
+                                          Abstract: We revisit the twelve-dimensional anomaly polynomial that has long been
+arXiv:2608.14932v1 [hep-th] 14 Aug 2026
+
+
+
+
+                                          known to govern M5-brane worldvolume theories, together with its more recently proposed
+                                          D3-brane counterpart. We show that these constructions naturally fit into the framework
+                                          of equivariant integration, allowing the anomaly inflow formulas to be rewritten entirely in
+                                          terms of equivariant volumes. In particular, we use the fact that the Bott–Cattaneo formula
+                                          for the integral of powers of the global angular form on S 2k emerges from the equivariant
+                                          Euler-class integration of Ck , with two copies glued antipodally at the north and south
+                                          poles of the sphere. Building on this perspective, we generalize the anomaly construction
+                                          to include both electrically and magnetically charged branes, thereby incorporating M2-
+                                          branes as well as a dual formulation of D3-branes. This provides a unified framework
+                                          encompassing a number of classical results together with several recent developments, and
+                                          offers a natural interpretation of the recently proposed M2/M5 duality, [1], in terms of an
+                                          AGT-like correspondence. Remarkably, it also leads to a direct reinterpretation of constant-
+                                          map contributions in topological string theory as manifestations of M-theory anomalies.
+
+
+
+
+                                              1
+                                                  on leave
+                                              2
+                                                  visiting
+Contents
+
+1 Inroduction and summary of results                                                         1
+
+2 Equivariant volumes and the Bott–Cattaneo formula                                          7
+  2.1 Equivariant volumes of Cn and S 2                                                      7
+  2.2 Bott–Cattaneo and even-dimensional spheres                                             8
+  2.3 Odd-dimensional spheres                                                               11
+
+3 M-theory: M5- and M2-brane anomalies                                                      12
+  3.1 M5-branes                                                                             12
+  3.2 M2-branes and topological strings                                                     14
+
+4 Type IIB: D3-brane anomalies                                                              18
+  4.1 Magnetic D3-branes                                                                    18
+  4.2 Electric D3-branes                                                                    19
+  4.3 Comments on general X ∥ and Z ⊥ = C(SE5 )                                             20
+
+5 Discussion and outlook                                                                    22
+
+A Equivariant geometry                                                                      24
+  A.1 Equivariant volumes and characteristic classes                                        24
+  A.2 Some non-trivial examples of local threefolds                                         26
+
+
+
+
+1   Inroduction and summary of results
+
+A recurring theme in holography is that protected observables of brane worldvolume the-
+ories can be described in terms of geometric data of the ambient spacetime. Rather than
+requiring a direct analysis of the interacting worldvolume theory, quantities such as super-
+symmetric partition functions, indices, and on-shell actions can often be recast as topolog-
+ical or equivariant quantities and evaluated by localization. This perspective has appeared
+in a variety of seemingly distinct settings, suggesting a common geometric framework un-
+derlying many exact results. The purpose of this paper is to make this connection explicit
+for M2-, M5-, and D3-branes. In particular, we formulate several such constructions in
+terms of equivariant volumes and use this perspective to clarify the recently proposed
+relation between M2- and M5-brane partition functions, [1].
+     A classical realization of this viewpoint is provided by anomaly inflow, see [2] for a re-
+cent review. The anomalies of a p-brane worldvolume theory are encoded in a (p + 3)-form
+anomaly polynomial, whose inflow is generated by bulk Chern–Simons-like couplings [3–6].
+For M5-branes, this construction was developed by Harvey, Minasian and Moore [7], and
+
+
+
+
+                                            –1–
+has since become an important tool for extracting exact ’t Hooft anomalies of supersym-
+metric field theories obtained from wrapped M5-branes [8–10] and, more recently, wrapped
+D3-branes in type IIB [11].1 Closely related structures also govern the Cardy limit of
+superconformal indices on compact Sasaki–Einstein backgrounds [12–19]. As we explain
+below, these constructions admit a natural interpretation in terms of equivariant integra-
+tion, in which the anomaly polynomial becomes a higher-dimensional geometric object
+whose reductions give rise to several lower-dimensional observables.
+     A complementary development has emerged from the gravitational path integral it-
+self. Beginning with the gravitational-block description of holographic on-shell actions
+and black-hole entropies [20–22], equivariant localization has been extended to a broad
+class of supergravity theories and spacetime dimensions [23–26], including formulations in
+terms of local patches and boundary contributions [27–29]. From a complementary geo-
+metric perspective, equivariant localization has also been developed for non-compact toric
+Calabi–Yau cones [30, 31], see also [32, 33]. Together, these developments point toward
+a common geometric language relating anomaly inflow, holographic localization, and toric
+geometry.
+     The same geometric perspective emerges on the M2-brane side from equivariant topo-
+logical strings. It was observed that higher-derivative N = 2 supergravity reproduces the
+perturbative finite-N Sb3 partition functions of ABJM-like theories [34–36]. A formulation
+in terms of equivariant volumes was developed in [37] and applied to M2-brane partition
+functions in [38], relating to the extensive literature on supersymmetric localization in three
+dimensions, [39–51] and [52–63]. Motivated by these developments, Ref. [1] proposed that
+the anomaly polynomial and the topological-string free energy admit a common equivari-
+ant description, providing further evidence for the M2/M5 relation conjectured by Chen,
+Dorey, Moriyama, Mouland and Sanli [64], 2 itself inspired by earlier studies of giant gravi-
+ton expansions [66–68]. In this work, we develop this perspective further by showing that
+the underlying anomaly constructions can themselves be formulated directly in terms of
+equivariant volumes, thereby placing these developments within a unified geometric frame-
+work.
+     Concretely, the central object of this paper is the anomaly 12-form I12 , integrated over
+a twelve-dimensional extension space Y12 satisfying ∂Y12 = M11 (or ∂ 2 Y12 = M10 in type
+IIB). We denote the resulting zero-form by
+
+                                            I0 := πY ∗ (I12 ) ,                                        (1.1)
+
+where πY : Y12 → pt is the projection to a point. Throughout this paper, the pushforward
+   1
+      Here and in the following, we use the term anomaly in the sense of anomaly-inflow data: characteristic-
+class polynomials encoding the dependence of a brane worldvolume theory on background gauge and gravi-
+tational fields. This terminology does not imply an uncancelled anomaly in the underlying ten-dimensional
+string theory. In particular, while the local ten-dimensional anomalies of type IIB cancel, its D-branes pos-
+sess non-trivial anomaly-inflow polynomials. The twelve-dimensional form proposed below should therefore
+be understood as an extension of the characteristic-class data governing the D3-brane, rather than as a
+ten-dimensional anomaly polynomial of type IIB itself.
+    2
+      See also [65] for an older proposal with a similar flavor.
+
+
+
+
+                                                   –2–
+is understood equivariantly, namely through the localization formula
+                                        Z         X α|p
+                             πY ∗ (α) =      αT =            ,                                   (1.2)
+                                         Y12        eT (Np )
+                                                       p∈Y
+
+
+where the sum runs over the isolated fixed points, eT (Np ) denotes the equivariant Euler
+class of the normal bundle to the fixed point, and α is an arbitrary characteristic form.
+     We interpret I0 as the leading contribution to the (log of the) protected partition
+function in the regime of small equivariant parameters, corresponding for example to the
+Cardy limit of the M5-brane index or to the perturbative sector of the M2-brane free
+energy. 3
+     Suppose now that the extension space factorizes as
+
+                                        Y12 ∼
+                                            = Zd × X12−d ,                                       (1.3)
+
+and let
+                            πZ : Y12 → X12−d ,          πX : Y12 → Zd ,                          (1.4)
+denote the natural projections. These define intermediate equivariant classes
+
+                            I12−d = πZ∗ (I12 ) ,       Id = πX∗ (I12 ) ,                         (1.5)
+
+while the full equivariant pushforward factorizes as
+
+                           πY ∗ = (πX→pt )∗ ◦ πZ∗ = (πZ→pt )∗ ◦ πX∗ ,                            (1.6)
+
+whenever such a product decomposition exists.
+     Although mathematically elementary, this factorization acquires a natural physical
+interpretation for brane systems. The intermediate forms obtained by partial pushforward
+naturally encode characteristic data of lower-dimensional effective descriptions, related to
+the consistent truncations of supergravity and string theory, see e.g. [69–71]. The anomaly
+polynomial is built from the field strength carrying the corresponding brane charge, and the
+associated flux distinguishes electric and magnetic descriptions. For magnetically charged
+branes, the flux is measured through a sphere linking the brane, so the first pushforward
+is naturally performed over the transverse directions. For electrically charged branes, the
+field strength instead fills the worldvolume, making it natural to integrate first over the
+parallel directions. Throughout this paper we adopt the convention of performing the first
+equivariant pushforward along the directions threaded by the corresponding form field.
+  3
+    Due to varying conventions, we are not going to attempt giving a precise normalization here between
+I0 and log Z for any of the underlying partition functions.
+
+
+
+
+                                                –3–
+     Schematically, the two realizations of the equivariant anomaly polynomial are summa-
+rized by
+                                            I12
+                                      Z                          Z
+
+
+                   el                                                  mag
+                  I12−d (µel ; ω)                                     I12−d (Nmag ; ω)      (1.7)
+
+                       X                                                          X
+
+
+                  I0el (µel ; ω, ϵ)                                  I0mag (Nmag ; ω, ϵ)
+where ω and ϵ denote the equivariant parameters associated with the factors Zd and X12−d ,
+respectively. Importantly, supersymmetry dictates that the full 12d geometry satisfies an
+equivariant Calabi-Yau condition for the first Chern class, 4
+                                           X      X
+                              cT1 (Y12 ) =   ϵi −   ωα = 0 .                        (1.8)
+                                                  i         α
+
+The two resulting zero-forms are generally interpreted as partition function of two different
+brane systems that in addition belong to different thermodynamic ensembles, see [72–75].
+The left branch describes an electric realization, in which one fixes the chemical potential
+µel conjugate to the brane charge, whereas the right branch gives the magnetic description
+at fixed charge Nmag . We shall refer to the correspondence between the two lower corners
+of Diagram (1.7) as an equivariant electric/magnetic duality. It is important to emphasize
+that at this stage this is not a duality between the underlying microscopic theories (even
+though it is natural to hypothesize that it holds at exact quantum level), but between two
+complementary polarizations of the same equivariant anomaly computation. The emerging
+picture is clearly reminiscent of the AGT correspondence and its generalizations, [76, 77].
+     The M2/M5 system provides a clean realization of this picture. The two descriptions
+are obtained from the same equivariant twelve-dimensional geometry,
+
+                                          Y12 = Z4 × X8 ,                                   (1.9)
+
+but with different interpretations of the two factors:
+                                                                        (⊥)
+                                 M2 (electric):         Y12 = C2 × X8         ,
+                                                               (∥)
+                                                                                           (1.10)
+                              M5 (magnetic):            Y12 = X8 × S 4 .
+
+The compact sphere S 4 and its local equivariant model C2 are related through the Bott–
+Cattaneo formula, so that both constructions evaluate to the same equivariant character-
+istic classes, but in different polarizations of the geometry. Consequently, although the
+microscopic M2- and M5-brane theories are distinct, the protected quantities computed
+from the anomaly polynomial satisfy the correspondence
+
+                            I0M2 (µM2 ; ω, ϵ)     ←→        I0M5 (NM5 ; ω, ϵ) ,            (1.11)
+  4
+   To match some common conventions in the literature, we have implicitly introduced an additional
+minus sign for the equivariant parameters of Z.
+
+
+
+
+                                                      –4–
+which is precisely the relation established in [1] between the perturbative M2-brane parti-
+tion function and the Cardy limit of the M5-brane index. The present work identifies this
+relation as the first example of a more general equivariant electric/magnetic duality, ex-
+pected whenever two electromagnetically dual brane systems can be described by different
+polarizations of the same equivariant anomaly polynomial.
+Aim of this paper. The present work has two main goals. The first is to reformulate the
+reduction I12 −→ I0 directly at the level of the M-theory anomaly polynomial,
+
+                                    M      1 3
+                                   I12 =    E + E 4 ∧ I8 ,                              (1.12)
+                                           6 4
+with I8 the 8-derivative term that completes the effective action, [5–7]. We show that
+the compact equivariant pushforward over a sphere reproduces the classical Bott–Cattaneo
+formula for the global angular form [78], see (2.9), and explain how this identity follows nat-
+urally from equivariant localization. The sphere is viewed as the gluing of two equivariant
+copies of Ck centered at the north and south poles, carrying opposite equivariant param-
+eters. The Bott–Cattaneo formula is then recovered by summing the two fixed-point con-
+tributions, in complete agreement with the localization picture reviewed in Section 3.1.2 of
+[79]. This provides an equivariant interpretation of the Harvey–Minasian–Moore anomaly
+inflow construction for M5-branes and, more importantly, extends immediately to non-
+compact geometries, e.g. where only a single equivariant fixed point contributes.
+     The resulting M2-brane computation is one of the central observations of this work.
+Performing the equivariant pushforward over the (Euclidean) AdS4 directions produces
+an eight-form anomaly polynomial I8M2 on the transverse Calabi–Yau fourfold. We show
+that this polynomial agrees precisely with the equivariant characteristic-class expression
+governing the perturbative constant-map sector of the topological-string partition function
+derived in [37, 38]. In this way, a quantity previously obtained from equivariant topological
+strings is recovered directly from the classical M-theory anomaly polynomial. This agree-
+ment strongly suggests that the perturbative topological-string partition function should
+be viewed as a quantum refinement of the underlying classical anomaly integral.
+
+     Our second goal is to show that the same equivariant framework extends naturally
+to type IIB string theory. Motivated by the anomaly-inflow construction of Bah, Bonetti,
+Minasian and Weck [11], we argue that we should consider the twelve-dimensional form
+
+                                      IIB     1
+                                     I12  =     E6 ∧ E6 ,                               (1.13)
+                                              2
+relevant specifically for D3-branes. Because the type IIB five-form field strength is self-
+dual, D3-branes admit both magnetic (N -ensemble) and electric (µ-ensemble) descriptions.
+
+
+
+
+                                              –5–
+The corresponding equivariant pushforwards are summarized schematically by
+
+                                                   IIB
+                                                  I12
+                                                                      Z
+                                         X
+
+                      I6D3 (µ; ϵ)                                          I6D3 (N ; ω)        (1.14)
+
+                            Z                   Legendre                          X
+
+
+                     I0D3 (µ; ω, ϵ)                                       I0D3 (N ; ω, ϵ)
+
+                                             inverse Legendre
+
+where
+                                                   (∥)      (⊥)
+                                         Y12 = X6 × Z6            ,                            (1.15)
+is decomposed into worldvolume and transverse Calabi–Yau threefolds. The two descrip-
+tions lead to 5
+                               µ2 CZ (ω)                 N 2 CX (ϵ)
+                  I0D3 (µ) = −           ,   I0D3 (N ) =            ,          (1.16)
+                               2 CX (ϵ)                   2 CZ (ω)
+which are related by a Legendre transform exchanging the two ensembles. The quanti-
+ties CX , CZ featuring prominently above are simply the equivariant pushforwards of the
+identity class on the respective manifolds, see (2.3), which can be considered as the most
+basic building blocks of any explicit calculation. These expressions reproduce the large-N
+partition functions of N = 4 SYM and any other theory of D3-branes on toric Calabi-Yau
+cones. In the N -ensemble they recover the well-known relation between a-maximization
+and Sasakian volume minimization, see [80–91], while in the µ-ensemble they coincide with
+the extremization principle proposed in [30, 31].
+     Finally, the D3-brane construction provides a useful consistency check of the general
+equivariant electric/magnetic correspondence proposed in this paper. Unlike the M2/M5
+system, where the electric and magnetic descriptions relate distinct brane theories, the two
+descriptions now arise from the same self-dual D3-brane and are therefore related simply
+by a Legendre transform. However, we still observe a leftover electric/magnetic duality
+when the worldvolume and transverse equivariant geometries are identified,
+
+                                        X=Z ,            ϵi = ωi .                             (1.17)
+
+In this case diagrams (1.7) and (1.14) coincide, and one finds a direct relation
+
+                                I0D3 (N ; ϵ, ϵ) = I0D3 (µ = ±i N ; ϵ, ϵ) ,                     (1.18)
+
+which may be viewed as the D3 counterpart of the M2/M5 correspondence. It would be
+interesting to extend this correspondence to the non-conformal branes in type IIB, which
+would be a natural continuation of the present work.
+  5
+   In section 4.3 we have included a brief discussion on how the main results below can be unpacked to
+match the usual cubic polynomials that appear more often in literature.
+
+
+
+
+                                                  –6–
+Outline. The rest of the paper is organized as follows. In Section 2 we set up conventions
+for the equivariant volume of toric Calabi–Yau cones and rederive the Bott–Cattaneo for-
+mula equivariantly, following [79]. We emphasize the similarities and differences between
+integration on even and odd spheres and their distinct relation to equivariant volume cal-
+culations, relevant respectively for the M5 and D3 branes. In Section 3 we carry out the
+M5- and M2-brane anomaly-polynomial integrals from the M-theory polynomial, reviewing
+and completing the derivation of [1]. In Section 4 we perform the analogous calculation
+for D3-branes in both the electric and magnetic frames. We conclude in Section 5 with a
+discussion of open problems. An appendix collects our conventions and explicit examples
+for equivariant characteristic classes, following [1, 37].
+Note added. While this paper was being finalized, several interesting references ap-
+peared: [92–95]. They all touch on closely related subjects and are in agreement with the
+present results where they overlap, but their starting points are different, and therefore
+the present work can be considered complementary. We have included further comments
+in the concluding section.
+
+2       Equivariant volumes and the Bott–Cattaneo formula
+
+We collect here some equivariant geometry facts used throughout the paper, following
+[30, 37], and use them to give a self-contained equivariant derivation of the classical Bott–
+Cattaneo integration formula [78] for global angular forms on even-dimensional sphere
+bundles. We also comment on the odd-dimensional sphere case, which is conceptually
+different.
+
+2.1      Equivariant volumes of Cn and S 2
+For a toric Kähler quotient of complex dimension d = n − r,
+
+                                                 X = Cn //U (1)r ,                                       (2.1)
+
+the equivariant volume is, 6 in the conventions of [37],
+                                                         r                  i
+                                                                   e xi λ
+                                   Z                 I
+                                             T
+                                            ωλ
+                                                         Y dϕa
+    VX (λ, ϵ) := (πX→pt )∗ (1) =        e        =                Qn            ,   xi = ϵi + ϕa Qai ,   (2.2)
+                                    X                JK a=1 2πi      i=1 xi
+
+
+where ωλT is the equivariant completion of the symplectic form ωλ = a λa ϕa , see [30], and
+                                                                      P
+
+Qai are the GLSM charges defining the quotient. The contour is fixed by the Jeffrey–Kirwan
+(JK) prescription, or equivalently by equivariant localization onto the fixed points. See
+[37] for more details. The equivariant volume (2.2) is a generating function for equivariant
+intersection numbers, and in turn characteristic classes. In particular, differentiation with
+respect to the Kähler parameters inserts powers of the equivariant Chern roots xi , see the
+Appendix for more details. In the simplest case when there are no insertions, evaluating
+    6
+    Note that we use the terminology equivariant volume somewhat incorrectly, referring more generally to
+a generating function.
+
+
+
+
+                                                         –7–
+the equivariant volume at vanishing Kähler parameters corresponds to the equivariant
+pushforward of the identity class (which was dubbed mesonic volume in [37]):
+
+                                CX (ϵ) := (πX→pt )∗ (1) = V(λ = 0, ϵ) .                           (2.3)
+
+       The simplest example is X = Cn , for which there is no gauging (r = 0) and therefore
+                                                                   i
+                                                      eϵi λ
+                                        VCn (λ, ϵ) = Qn                  .                        (2.4)
+                                                              i=1 ϵi
+
+As the simplest compact example, consider S 2 ≃ CP1 , realized as the U (1) quotient of
+C2 with GLSM charges Q = (1, 1). Evaluating (2.2) by residues at the two fixed points
+(x1 = 0 and x2 = 0) gives
+                                            2             1
+                                       eωλ − e−ωλ
+                         VS 2 (λ, ω) =            ,                     ω := ϵ2 − ϵ1 .            (2.5)
+                                           ω
+The two terms are precisely the contributions of the north and south poles, where the
+tangent space is locally identified with C carrying equivariant weights ±ω, respectively.
+Equation (2.5) therefore makes manifest that the equivariant volume of S 2 is obtained by
+gluing two local copies of C with opposite equivariant weights, while keeping the (redun-
+dant) Kähler parameters independent. Note that the description of VS 2 in terms of VC
+implicitly involved a reparametrization of the equivariant parameters ϵi into the weights of
+the toric action at the north/ south pole fixed points, ω = ±(ϵ2 − ϵ1 ).
+
+2.2     Bott–Cattaneo and even-dimensional spheres
+The global angular form e2k is an SO(2k + 1)-invariant differential form on the unit sphere
+bundle S(E) of an oriented rank-(2k + 1) vector bundle E,
+
+                                R2k+1 −→ E                     S 2k −→ S(E)
+                                         ↓π                             ↓π                        (2.6)
+                                         B                              B
+
+normalized such that 7                      Z
+                                                       e2k = 2 .                                  (2.7)
+                                                S 2k
+Since E has odd rank, its Euler class vanishes identically and the global angular form is
+closed,
+                                       de2k = 0 .                                    (2.8)
+The Bott–Cattaneo formula gives the fiber integrals of arbitrary powers of the global an-
+gular form [6, 7, 78],
+                       Z                           Z
+                                2s+1
+                         (e2k )                s
+                                     = 2 pk (E) ,       (e2k ) 2s = 0 ,             (2.9)
+                         S 2k                                          S 2k
+   7
+    Here and in the formula below, we use the integral sign instead of the pushforward notation in order
+to emphasize that this corresponds to an ordinary, non-equivariant, integration.
+
+
+
+
+                                                       –8–
+where pk (E) denotes the k-th Pontryagin class of E.
+     The global angular form provides a differential-form representative of the transgression
+of the Thom class of the vector bundle, which will provide a useful physical interpretation
+in the next section. Choosing a Thom form U (E) with compact support in the fiber
+directions, one may write away from the zero section
+
+                                          U (E) = d(ρ e2k ) ,                                     (2.10)
+
+where e2k is implicitly pulled back to E \ B and ρ(r) is a smooth radial cutoff function.
+The Euler class of E is then obtained by restricting the Thom class to the zero section,
+
+                                          e(E) = s∗ U (E) .                                       (2.11)
+
+This relation provides the link between the global angular form and the Euler class ap-
+pearing in the original version of the Bott–Cattaneo formula, [78].
+    We now want to rederive the Bott-Cattaneo formula using the equivariant volume
+discussed previously. Following [79], we argue that this amounts to equivariant integration
+of the Euler class of the sphere itself, e(T S 2k ). Concretely, we can simply take the case
+k = 1, such that for S 2 we can imediately use (2.5),
+                                                          
+                                                        2 ω 2s , m = 2s + 1 ,
+                2 m                  m
+      π∗ (e(T S ))     = (∂λ1 + ∂λ2 ) VS 2 (λ, ω)       =                             (2.12)
+                                                    λ=0
+                                                           0,       m = 2s .
+                                                          
+
+Equation (2.12) may be viewed as the simplest equivariant incarnation of the Bott–Cattaneo
+formula. In the non-equivariant limit ω → 0 it reduces to the familiar identity S 2 e(T S 2 ) =
+                                                                                 R
+
+χ(S 2 ) = 2 for m = 1, while all higher powers vanish because their ordinary differential-form
+degree exceeds the dimension of the manifold. At finite equivariant parameters, however,
+the higher odd powers remain non-trivial and evaluate to the polynomial 2ω 2s , reflecting the
+fact that the equivariant Euler class is an element of equivariant cohomology rather than
+ordinary de Rham cohomology [79]. 8 Intiuitively, this is analogous to the result encapsu-
+lated in the Bott–Cattaneo formula (2.9), which produces a non-trivial result even when
+the rank of a given power of the global angular form exceeds the dimension of the sphere
+S 2k over which it is integrated. This is only possible if the volume form on S 2k is gauged
+over the base manifold and there is a non-trivial SO(2k + 1) connection. This ensures that
+e2s+1
+ 2k    has legs on the base manifold and its integral over the sphere is non-vanishing. The
+relation between both computations is explained more clearly below.
+     The same gluing construction extends naturally to higher even-dimensional spheres.
+Although S 2k with k > 1 is not itself a toric Kähler manifold, and hence the integral
+representation (2.2) does not apply globally, each of the two neighborhoods of the north
+and south poles is equivariantly modeled on Ck . As in the S 2 example, the full sphere is
+   8
+    Although (e(T S 2 ))m,T has total degree larger than the real dimension of S 2 for m > 1, equivariant
+integration remains well-defined because the equivariant Euler class is a polynomial in the equivariant
+parameters with coefficients in ordinary differential forms. The localization theorem computes the corre-
+sponding pushforward exactly from the contributions of the two fixed points, yielding (2.12).
+
+
+
+
+                                                 –9–
+therefore reconstructed by gluing these two local patches with opposite equivariant weights,
+following the argument outlined in [79, Section 3.1.2]. In particular, S 2k with its standard
+U (1)k action admits two fixed points, the north and south poles, where we regard T S 2k |p =
+⊕j Lj as a sum of complex line bundles.
+     Let us then define
+                                    X                        k
+                                                             Y
+                            Dk :=          ∂λi1 · · · ∂λik =   ∂ λi ,                   (2.13)
+                                          i1 <···<ik                   i=1
+
+which inserts the equivariant top Chern class cTk = eT (T Ck ). Acting with (Dk )m on the
+equivariant volume of Ck and summing the two pole contributions with the relative sign
+(−1)k induced by the orientation reversal of the fiber allows us to define
+               
+π∗ (e(T S 2k ))m := [(Dk )m VCk (λ; ω1 , ..., ωk )]λ=0 + (−1)k [(Dk )m VCk (λ; −ω1 , ..., −ωk )]λ=0
+                                           
+                                           2(ω1 · · · ωk )2s , m = 2s + 1,
+                                       =                                                      (2.14)
+                                              0,                m = 2s,
+                                           
+
+where we have written the equivariant parameters as ωi to emphasize the analogy with the
+S 2 example.9
+     The relation between (2.14) and the classical Bott–Cattaneo formula follows from
+Chern–Weil theory. We need to assume that that structure group of E is reduced to the
+maximal torus U (1)k ⊂ SO(2k + 1), such that after complexification E splits locally into
+complex line bundles L1 ⊕ · · · ⊕ Lk , whose Chern roots are represented by the equivariant
+parameters ωi . Under the Chern–Weil homomorphism,
+                                                           Fi
+                                                 ωi 7−→       ,                                          (2.15)
+                                                           2π
+with Fi the curvature of Li , symmetric polynomials in the ωi are mapped to the corre-
+sponding characteristic classes of E. In particular,
+
+                                         (ω1 · · · ωk )2 7−→ pk (E) .                                    (2.16)
+
+Applying the Chern–Weil map to (2.14) therefore immediately yields (2.9), which is pre-
+cisely the Bott–Cattaneo formula, [78], later used by Harvey, Minasian and Moore in the
+derivation of the M5-brane anomaly polynomial [7].
+     The mapping (2.16) also explains how the result of the equivariant integration (2.14),
+dependent only on equivariant parameters, is translated into a genuine differential form
+resulting from the Bott-Cattaneo formula. To understand this, one can view the parameters
+ωi as the equivariant completion of each field strength Fi evaluated at a fixed point.10
+   9
+    As in the S 2 example, we have the identity π∗ (e(T S 2k )) = 2, which is the equivariant generalization of
+the normalization defined in (2.7) for the integral of the global angular
+                                                                     !     form over the fiber S 2k .
+  10                                                             0 xi
+       Restricting to the maximal torus, we can write Fi =            , with xi a 2-form, as xi 7→ xi + ωi ; this
+                                                                −xi 0
+reduces to ωi when evaluated at a fixed point.
+
+
+
+
+                                                       – 10 –
+     We stress that (2.14) is fundamentally an identity in equivariant cohomology and does
+not rely on the compactness of the fiber. Once expressed in terms of equivariant pushfor-
+wards, the same computation extends immediately to non-compact geometries, where only
+the relevant fixed-point contributions remain. This observation will be the starting point
+for our equivariant treatment of M2-branes in the following sections, and has already been
+extensively used in [79].
+
+2.3    Odd-dimensional spheres
+We now follow the analogous construction for even-dimensional spheres, emphasizing the
+important differences. This is of notable use when discussing the D3-brane picture. The
+global angular form e2k−1 is an SO(2k)-invariant differential form on the unit sphere bundle
+of an oriented rank-2k vector bundle,
+
+                              R2k −→ E                    S 2k−1 −→ S(E)
+                                     ↓π                              ↓π                            (2.17)
+                                     B                               B
+
+with normalization                        Z
+                                                     e2k−1 = 2 .                                   (2.18)
+                                            S 2k−1
+In contrast to the previous case, the Euler class of an even-rank bundle need not vanish,
+and the angular form is not closed. Instead, it obeys
+
+                                         de2k−1 = −π ∗ e(E) ,                                      (2.19)
+
+up to convention-dependent sign. Therefore there is no direct analogue of the Bott–
+Cattaneo identities for powers of a closed angular form. Rather, the odd sphere bundle is
+naturally viewed as the boundary of the disk bundle,
+
+                                           S(E) = ∂D(E),                                           (2.20)
+
+and the angular form is again obtained as the transgression of the Thom form,
+
+                                         U (E) = d(ρ e2k−1 ) ,                                     (2.21)
+
+where e2k−1 is implicitly pulled back to E \ B and ρ(r) is a smooth radial cutoff function.
+The Euler class is again recovered from the Thom class through
+
+                                           e(E) = s∗ U (E) .                                       (2.22)
+
+    This perspective naturally replaces fiber integrals over the odd-dimensional sphere by
+integrals of characteristic classes over the corresponding disk bundle, which is of course in
+one higher dimension. In the equivariant setting, we are then lead to perform equivariant
+pushforward over the cone 11
+                                        C(S 2k−1 ) ≃ Ck ,                              (2.23)
+  11
+    Since the boundary does not contribute to equivariant integration, there is no distinction between the
+disk and the cone for the present purposes.
+
+
+
+
+                                                 – 11 –
+where the equivariant Euler class of the tangent bundle T Ck enters naturally through
+localization. Fully explicitly, we evaluate
+                                           
+                            2 π∗ (e(T Ck ))m = 2 (ω1 · · · ωk )m−1 ,            (2.24)
+
+where the prefactor was included to keep the normalization in (2.19). This provides the
+equivariant analog of the Bott–Cattaneo construction for even-dimensional sphere bundles,
+implicitly using once again the Chern-Weil map, see (2.15)-(2.16). In particular, note that
+in this case the result is non-vanishing for even values of the power m, in contrast with
+(2.9). This will be crucial when discussing the anomaly polynomial of type IIB theory.
+
+Summary
+The relation between the two main constructions so far can be summarized as follows:
+
+                       Even-dim.                                  Odd-dim.
+                     S 2k ⊂ R2k+1                               C(S 2k−1 ) ≃ Ck
+                                   Z                                   Z                (2.25)
+        X                                            m
+                          k m
+                 π∗ (e(T C ))     7→                            k m
+                                               (e2k ) 2 π∗ e(T C ))    7→       (e2k−1 )m
+                                σ       S 2k                               S 2k−1
+      σ=NP, SP
+
+
+3     M-theory: M5- and M2-brane anomalies
+
+The anomaly inflow for spacetime-filling M2- and M5-branes in eleven-dimensional super-
+gravity is encoded in the twelve-form [5–7]
+
+                                 M       1
+                                I12 =      E4 ∧ E4 ∧ E4 + E4 ∧ I8 ,                          (3.1)
+                                         6
+where
+                                    1
+                                        p1 (T M )2 − 4p2 (T M ) ,
+                                                               
+                               I8 =                                                    (3.2)
+                                   192
+is the familiar eight-form constructed from the Pontryagin classes of the eleven-dimensional
+spacetime tangent bundle, M = M11 . In the original M5-brane construction, to which we
+turn now, the four-form E4 encodes the topology of the bundle transverse to the brane and
+provides the differential-form representative entering the anomaly-inflow construction.
+
+3.1     M5-branes
+Consider a stack of NM5 coincident M5-branes with six-dimensional worldvolume B6 . The
+local geometry near the branes is described by the rank-five normal bundle R5 ,→ M11 −→
+B6 with the M5-branes sitting at the origin of each fiber. We are thus clearly in the setting
+described in subsection 2.2.
+    The M5-brane are magnetically charged under the M-theory three-form potential and
+therefore source NM5 units of G4 flux through the linking four-sphere,
+                                       Z
+                                     1
+                                           G4 = NM5 .                                   (3.3)
+                                    2π S 4
+
+
+
+
+                                                   – 12 –
+The main observation of [6, 7] is that the above magnetic charge leads to a singular flux,
+with the singularity removed by excising a tubular neighborhood of the stack of branes,
+such that M11 acquires a boundary, ∂M11 = M10 .
+    If r denotes a radial function away from the M5-branes, the four-form flux then takes
+the form
+                                    G4
+                                        = −ρ E4 + . . . ,                            (3.4)
+                                    2π
+where ρ is a bump function interpolating between a constant in the tubular neighborhood
+and zero in the far-away region. The ellipses stand for possible subleading terms in the
+small r limit, and E4 is a closed and globally defined four-form on M10 .
+    In the anomaly inflow construction this flux is represented geometrically by the four-
+form 12
+                                             NM5
+                                       E4 =        e4 ,                              (3.5)
+                                               2
+where e4 is the global angular form on the sphere bundle S 4 ,→ M10 −→ B6 . At this stage
+we can also notice the immediate relation between the four-form flux above and the Thom
+form, c.f. (2.10).
+     The main observation here is that the same construction admits a natural equivariant
+description, which was essentially already spelled out in subsection 2.2. The equivariant lo-
+calization of the S 4 fiber is controlled by its two fixed points, whose local neighborhoods are
+modeled by C2 , as in (2.14). To fully relate with the notation we used in the Introduction,
+we should identify
+                                   M5      (∥)     (⊥)
+                                 Y12   = X8 × Z4 ≃ X8 × S 4 .                              (3.6)
+where X8 is an auxiliary space formally extending the spacetime B6 , ∂X8 = B6 . We can
+thus use the ansatz
+                                           NM5
+                                     E4 =      e(T S 4 ) ,                            (3.7)
+                                             2
+following the logic of the previous section. We can then use the intermediate results
+
+                                                                       (NM5 )3
+                        πZ∗ (E4 ) = NM5 ,           πZ∗ ((E4 )3 ) =            (ω1 ω2 )2 ,                    (3.8)
+                                                                         4
+to arrive at the result 13
+
+    I8M5 := πZ∗ I12M
+                     
+
+              3                                                                                               (3.9)
+                                                                           
+            NM5         2  NM5 1 2    2
+                                                    2         2
+          =     (ω1 ω2 ) +       ω + ω2 − p1 (T X8 ) − (ω1 ω2 ) − p2 (T X8 ) .
+             24             48 4 1
+  12
+      The present conventions might differ slightly from some of the previous literature, due to the normal-
+                                                           R
+ization in (2.7). For a clearer comparison, note that S 4 E4 = NM5 .
+   13
+      In order to derive the correct result we note that the split in (3.6) produces the identities, [5], p1 (T Y ) =
+p1 (T Z) + p1 (T X), p2 (T Y ) = p2 (T Z) + p2 (T X) + p1 (T Z)p1 (T X). In addition, as reviewed in detail in the
+Appendix, the equivariant pushforward over the Pontryagin classes of the tangent bundle of Z involves
+additional derivatives of the equivariant volume, on top of the derivatives coming from the Euler-class
+integration discussed in the previous section.
+
+
+
+
+                                                      – 13 –
+Under the Chern-Weil map, (2.15)-(2.16), this reproduces the standard M5-brane anomaly
+polynomial obtained already in [7]. 14 An analogous 8-form also underlies the anomaly
+analysis of six-dimensional N = (1, 0) SCFTs, including the conformal matter theories
+engineered from M5-branes probing ADE singularities, which also admit F-theory realiza-
+tions. [98, 99] Their anomaly polynomials can be obtained by anomaly matching on the
+tensor branch and, in appropriate cases, from M-theory anomaly inflow [98]. It would be
+interesting to extend the equivariant integration framework to these examples as well.
+     The advantage of the equivariant formulation is that it allows us to abandon the
+compact sphere representative and perform the same computation directly on non-compact
+toric spaces. In particular, the natural next step, which was discussed in more detail
+recently, [1], is to integrate the anomaly polynomial on an arbitrary toric Calabi-Yau four-
+fold, X = X8 :
+                               3
+                             NM5                   NM5 X X
+ I0M5 = (πX→pt )∗ I8M5 =         (ω1 ω2 )2 CX (ε)+     k1 k3 − ω1 ω2 k2X − k4X CX (ε) , (3.10)
+                                                                              
+                              24                    24
+subject to the equivariant Calabi–Yau condition, (1.8)
+                                          X
+                                k1X (ε) =   ϵi = ω1 + ω2 .                                          (3.11)
+                                                   i
+
+See Appendix A for the definition of kpX (ε) in terms of equivariant Chern numbers. This
+provides the equivariant completion of the M5 anomaly computation. In particular, for
+X = C × Ỹ , with Ỹ a resolved toric Calabi–Yau threefold, it reproduces the Cardy-limit
+Sasaki–Einstein index discussed in more detail in [1]. In Appendix A.2 we have included
+some additional examples for resolutions of cones over five-dimensional Sasakian spaces, if
+the reader is interested in explicitly unpacking the above more condensed formulas.
+
+3.2    M2-branes and topological strings
+The M2-brane realization provides the second, and conceptually more recent, interpretation
+of the same twelve-dimensional anomaly polynomial. In this case the relevant near-horizon
+geometry is described by a Calabi–Yau fourfold cone N8 = C(SE7 ), or, more generally,
+by a smooth toric Calabi–Yau resolution X8 . The four-dimensional factor entering the
+anomaly polynomial is now the Euclidean continuation of the AdS4 factor associated with
+the M2-brane worldvolume theory. Topologically this space is trivial and we can represent
+it equivariantly by
+                                        Z4 ≃ C2 ,                                   (3.12)
+whose U (1)2 action provides the equivariant parameters entering the computation. Thus,
+for M2-branes the order is exchanged with respect to the M5 case:
+                                    M2       (∥)       (⊥)
+                                  Y12  = Z4 × X8             ≃ C2 × X8 .                            (3.13)
+  14
+    The coefficients above correspond to the classical inflow result and capture the leading large-N contri-
+bution. The exact anomaly coefficients of the interacting ANM5 −1 (2, 0) theory involve the index-theoretic
+                                 3
+combinations proportional to (NM5  − 1, NM5 − 1) [96–98].
+
+
+
+
+                                                   – 14 –
+       The M2-brane charge is measured by the flux through the internal space,
+                                    Z
+                                         ∗G4 ∼ NM2 ,                                                 (3.14)
+                                             SE7
+
+whereas in the grand-canonical ensemble one fixes the chemical potential µM2 conjugate to
+NM2 , corresponding to the AdS4 component of the four-form flux,
+
+                                          G4 ∼ i µM2 volEAdS4 .                                      (3.15)
+
+By the conventions adopted here, the first pushforward of I12 is therefore performed over
+the equivariant (Euclidean) AdS4 factor, followed by the integration over the transverse
+Calabi–Yau fourfold X. Thus the two brane systems are described by very closely related
+equivariant integration problems, 15 with different choices of which factor is treated as the
+first integration space.
+     The equivariant formulation naturally implements the µ-ensemble by the following
+ansatz for the four-form 16
+                                          µM2
+                                    E4 =       e(T C2 ) .                              (3.16)
+                                          2πi
+The compact Bott–Cattaneo integration appearing in the M5 computation is now replaced
+by the non-compact equivariant pushforward on a single fixed-point. Explicitly,
+
+                   πZ∗ (e(T C2 ))m = ∂λ1 ∂λ2 VC2 (λ, ω)     = (ω1 ω2 )m−1 ,
+                                  
+                                                                                       (3.17)
+                                                                  λ=0
+
+where ω1,2 are the equivariant parameters of Z4             ≃ C2 , see (2.4). Applying this equivariant
+reduction to the twelve-form (3.1) gives the intermediate eight-form 17
+       2πi I8M2 := 2πi πZ∗ (I12
+                             M
+                                )
+           µ3M2                                                                                      (3.18)
+                                                                            
+                         2  µM2 1 2    2
+                                                     2         2
+        =−       (ω1 ω2 ) +       ω + ω2 − p1 (T X8 ) − (ω1 ω2 ) − p2 (T X8 ) ,
+           24π 2             48 4 1
+where equivariant Calabi–Yau condition again imposes (3.11). Note that a particular com-
+bination of two equivariant parameters ω1,2 is eventually identified with the thermal circle
+of Euclidean AdS4 in global coordinates, which imposes a further constraint. Although
+important for the specific match with the dual S 3 partition function and the M2/M5 corre-
+spondence, which were more carefully discussed in [1], we will not explicitly need to utilize
+this here.
+     The remaining pushforward over X8 is now identical to the one appearing in the M5
+calculation:
+       −2πi I0M2 (µ) = −2πi (πX→pt )∗ I8M2
+                          µ3M2                     µM2  X X                                        (3.19)
+                                       2                              X     X
+                     =−         (ω ω
+                                  1 2 )  C X (ϵ) +      k k
+                                                         1 3 − ω  ω k
+                                                                 1 2 2  − k 4 CX (ϵ) ,
+                          24π 2                     24
+  15
+     Note that in the absence of magnetic charge, we have no singular behavior of G4 , which means the
+subtleties regarding the excision of a tubular region valid in the M5 description is no longer needed for the
+stack of M2-branes.
+  16
+     The factor of i is already present in G4 above from the Euclidean continuation of AdS4 , and we choose
+the 2π normalization conventionally in order to agree with the one in [1].
+  17
+     Apart from the normalization, the remaining calculation coincides exactly with the one leading to (3.9),
+except in this case we only have a single copy of C2 .
+
+
+
+
+                                                   – 15 –
+which reproduces the finite-N M2-brane free energies obtained in [38], and further discussed
+in [1]. Note that the result follows directly from the anomaly polynomial and equivariant
+geometry. The result (3.19) also agrees with the supersymmetric M-theory action computed
+in [95] in the µ ensemble directly from 11-dimensional localization, including the overall
+factor of CX (ϵ) for the equivariant volume of X8 .
+     We emphasize that this result is insensitive to metric deformations of the toric manifold
+under consideration. In particular, it already incorporates the results for the M2 brane free-
+energies when the near-horizon geometry is (Euclidean) AdS4 with an S 3 or squashed S 3
+boundary, the difference amounting to distinct choices of the equivariant parameters ω1 , ω2
+for the toric action on the Z4 factor, which can be found for instance in [38].
+
+Topological strings
+On the other hand, the same expression (3.19) was previously obtained from a completely
+different perspective. In the equivariant topological-string formulation developed in [37, 38],
+the perturbative grand-canonical M2-brane partition function is governed by the constant-
+map sector of the topological string on the toric Calabi–Yau fourfold X8 . The perturbative
+free energy takes the form
+                                                          ∞
+                               FXtop,pert (λ, ε; gs ) =
+                                                          X
+                                                                gs2(g−1) Ng,0
+                                                                          X
+                                                                              (λ, ε),      (3.20)
+                                                          g=0
+
+where λ denotes the redundant Kähler parameters introduced in (2.2). For the mesonic
+twist relevant to the M2-brane partition function one sets18
+
+                                                   λi = µ̃ ,                               (3.21)
+
+so that all dependence on the geometry is encoded in the equivariant parameters εi , while
+the free energy becomes a cubic polynomial in the chemical potential µ̃. More precisely, the
+genus-zero contribution is cubic in µ̃, the genus-one contribution is linear, and all higher-
+genus constant maps contribute only µ̃-independent constants. Note that the chemical
+potential µ̃ is conjugate to the exact M2-brane charge, not to the bare number NM2 that
+quantizes the flux ∗G4 , [37], which explains the different notation. We come back to this
+point below.
+     The remarkable observation of [38] (see also [50]) is that these first two terms already
+reproduce the complete perturbative finite-N M2-brane free energy. From the present point
+of view this result admits a simple geometric interpretation. Equation (3.19) shows that
+exactly the same cubic and linear dependence follows directly from the classical M-theory
+anomaly polynomial through two successive equivariant pushforwards,
+                                           M
+                                          I12 −→ I8M2 −→ I0M2 ,                            (3.22)
+
+without any reference to topological strings.
+ 18
+      This is the universal parametrization discussed in [37], which amounts to choosing
+
+
+
+
+                                                    – 16 –
+    The leading term follows immediately. The cubic contribution is simply the equivariant
+volume of the Calabi–Yau fourfold,
+
+                           (µM2 )3 (πX→pt )∗ (1) = (µM2 )3 CX (ε),                    (3.23)
+
+which is precisely the genus-zero constant-map contribution of [38, Eq. (2.18)], upto nor-
+malization. The linear term is equally natural. Using the supersymmetry condition (3.11),
+the second line of (3.19) becomes
+  µM2  X X                             µM2 h                                      i
+        k1 k3 − ω1 ω2 k2X − k4X CX (ε) =       (ω1 + ω2 )cX
+                                                          3 (ε) − ω  ω cX
+                                                                    1 2 2 (ε) − c X
+                                                                                  4 , (3.24)
+   24                                     24
+where we used cX     X
+                p = kp CX . The first two terms reproduce exactly the genus-one constant-
+map invariants identified in [38], while the final contribution, proportional to the Euler
+characteristic,
+                                       cX
+                                        4 = χ(X) ,                                   (3.25)
+accounts for the familiar quantum shift of the M2-brane charge, [37, 100]
+                                                    χ(X)
+                                  NM2 → NM2 −            ,                            (3.26)
+                                                     24
+which arises from the precise canonical relation between the Kähler parameters and the
+chemical potential, µ̃. In particular, the number of M2-branes with the above constant
+shift is the precise charge which is conjugate to µ̃.
+      The significance of this agreement extends well beyond a consistency check. The
+computation presented here is entirely classical: it starts from the anomaly polynomial
+and uses only equivariant characteristic classes together with equivariant pushforwards.
+By contrast, the derivation of [37, 38] is intrinsically quantum (though constant maps
+still relate to classical geometry), being formulated as a worldsheet genus expansion of
+the topological string. Nevertheless, the two constructions terminate in exactly the same
+equivariant expression.
+      This viewpoint also places the present results in a broader historical context. Already
+in the work of Harvey, Moore and Minasian [7], the same 12d anomaly was shown, after
+compactification on a Calabi–Yau threefold, to determine the central charges governing
+the entropy of MSW black strings, [101]. Through the OSV conjecture [102], these same
+characteristic classes reappear in the topological-string partition function. The relation
+uncovered here may therefore be viewed as the M2-brane analogue of this classical corre-
+spondence: once formulated equivariantly, the anomaly polynomial already contains the
+complete perturbative information captured by the constant-map sector of the topological
+string.
+      A conceptual picture thus emerges. The anomaly polynomial appears to define a classi-
+cal equivariant theory, while the topological-string partition function furnishes its quantum
+completion. The constant maps correspond to the semiclassical approximation encoded by
+the classical anomaly integral, whereas higher-genus constant maps and worldsheet instan-
+tons should be interpreted as genuine quantum corrections to this underlying equivariant
+geometry. We hope to explore this connection further in future work.
+
+
+
+
+                                           – 17 –
+4        Type IIB: D3-brane anomalies
+
+The D3-brane case combines the two viewpoints encountered for M2- and M5-branes into
+a single framework. Because the type IIB five-form field strength is self-dual,
+
+                                                 F5 = ∗F5 ,                                             (4.1)
+
+the anomaly polynomial admits both a magnetic description, in which the flux is measured
+through the transverse five-sphere, and an electric description, in which F5 is identified
+with the AdS5 volume form. These two descriptions are physically equivalent, but they
+correspond to the two opposite choices of equivariant pushforward introduced in the Intro-
+duction.
+    The anomaly-inflow analysis of Bah, Bonetti, Minasian and Weck [11] is naturally
+formulated in terms of the eleven-form 19
+                                           1
+                                    I11 = E5 ∧ dE5 ,                                 (4.2)
+                                           4
+where E5 = ND3 e5 is the global angular form of the SO(6) normal bundle, analogous
+to the M5-brane construction except for the odd dimensionality. Since E5 is not closed,
+see subsection 2.3, we write dE5 =: E6 and Stokes’ theorem allows one to rewrite the
+corresponding anomaly integral as a bulk integral over the 6d disk bounded by the five-
+sphere,                      Z         Z              
+                                             1
+                                 I11 =         E6 ∧ E6 .                          (4.3)
+                              S5        D6   2
+         Motivated by this observation, throughout this section we regard
+                                             IIB     1
+                                            I12  =     E6 ∧ E6                                          (4.4)
+                                                     2
+as the fundamental equivariant object, completely analogous to the M-theory twelve-form
+ M , except it is strictly applicable to D3-branes and no other type IIB objects. We remind
+I12
+the reader that in what follows we consider the setup
+                                                     (∥)      (⊥)
+                                           Y12 = X6 × Z6            .                                   (4.5)
+
+Notice that, although we explicitly used S 5 and its cone when arguing about the anomaly
+polynomial, in what follows we are going to relax this condition and allow for both X and
+Z to be arbitrary toric Calabi-Yau three-folds, or equivalently resolutions of cones over
+toric Sasakian five-folds.
+
+4.1       Magnetic D3-branes
+In analogy to the M5-brane case, and in accordance with the discussion in subsection 2.3,
+for the magnetic description of the D3-branes one identifies E6 with the equivariant Euler
+class of the tangent bundle of the transverse space, Z6 ≡ C3 ,
+
+                                           E6 = ND3 e(T C3 ) ,                                          (4.6)
+    19
+     Note the different normalization due to the different conventions for the global angular forms used here,
+c.f. subsection 2.3.
+
+
+
+
+                                                   – 18 –
+where ND3 is the number of D3-branes. 20 Once again, the tangent bundle may be de-
+composed as a sum of complex line bundles. In what follows, we will denote by ωi the
+equivariant parameters of the toric action on Z6 , and by ϵi the ones for the toric action on
+X6 .
+     The first equivariant pushforward therefore gives
+                                             N2
+                                                   Z
+                           mag          IIB
+                                                         e(T C3 )2 .
+                                                                 
+                          I6 = πZ∗ I12 =                                                 (4.7)
+                                               2 C3
+
+Using the identity (2.24), one immediately obtains
+
+                                           N2               N2
+                                 I6mag =      ω1 ω2 ω3 =          .                               (4.8)
+                                           2             2 CZ (ω)
+
+For a general toric Calabi–Yau threefold Z, which we cannot directly do in this magnetic
+case since it requires a change in the ansatz (4.6), we still expect to recover the latter
+answer. This corresponds to the familiar inverse-volume relation for the Sasakian volume,
+underlying a-maximization [80, 81, 83, 103, 104], where CZ above is directly proportional
+to the Sasakian volume, see [30].
+    One can view this result as a genuine 6-form over the base manifold (more precisely, the
+evaluation at a fixed point of the equivariant completion thereof) by invoking the Chern-
+Weil correspondence argued for around eq. (2.15). In this way one recovers the relation
+between the D3-brane anomaly polynomial and c3 (E), the third Chern class of the normal
+bundle (or R-symmetry bundle), commonly written in the literature, see e.g. [11].
+    Performing the second equivariant pushforward over an auxiliary toric threefold X
+therefore gives
+                                               N 2 CX (ϵ)
+                                   I0D3 (N ) =            ,                            (4.9)
+                                                2 CZ (ω)
+as anticipated in the introduction.
+
+4.2    Electric D3-branes
+The electric description is completely parallel to the M2-brane computation. Instead of
+fixing the magnetic flux through the transverse sphere, one works in the grand-canonical
+ensemble and from self-duality identifies 21
+
+                                           E6 = i µ e(T C3 ) ,                                   (4.10)
+
+where X6 ≃ C3 is the six-dimensional extension of Euclidean AdS5 .
+   The first equivariant pushforward is therefore
+
+                                              µ2            µ2  1
+                         I6el = πX∗ I12
+                                     IIB
+                                         
+                                           = − ϵ1 ϵ2 ϵ3 = −          ,                           (4.11)
+                                              2             2 CX (ϵ)
+  20
+     In this section we are only dealing with D3-branes, which means that the brane number ND3 and the
+chemical potential µD3 are conjugate to each other, unlike NM5 and µM2 in the previous section. For this
+reason, henceforth, we drop the D3 index from both quantities.
+  21
+     The factor of i comes from the Euclidean continuation, in analogy to the M2-brane discussion.
+
+
+
+
+                                                 – 19 –
+and the second pushforward over the internal Calabi–Yau threefold gives
+
+                                                  µ2 CZ (ω)
+                                   I0D3 (µ) = −             .                            (4.12)
+                                                  2 CX (ϵ)
+
+     Passing from the grand-canonical to the canonical ensemble by a Legendre transform
+yields
+                                             N 2 CX (ϵ)
+                                 I0D3 (N ) =            ,                         (4.13)
+                                              2 CZ (ω)
+which reproduces the magnetic answer we already derived, (4.9).
+     The D3-brane system therefore provides a particularly transparent realization of the
+general picture advocated in this paper. The magnetic and electric descriptions correspond
+to the two possible orders of equivariant pushforward of the same twelve-form I12  IIB , exactly
+
+mirroring the M5- and M2-brane constructions discussed in the previous sections. The
+difference is that, owing to the self-duality of F5 , the two descriptions are not merely dual
+but physically equivalent. In this sense, the D3-brane computation provides the simplest
+example of the general principle that a single higher-dimensional equivariant anomaly poly-
+nomial can encode distinct lower-dimensional brane partition functions, depending only on
+which directions are integrated out first.
+
+Topological strings for D3 brane models
+We also note that the results here also agree with the picture advocated in [38], based also
+on [30, 31], for the relation between the partition function of D3 brane models and the
+topological string expansion; namely if we inverse Laplace transform (4.8), we obtain an
+equivariant constant map of second degree with the mesonic twist λi = µ̃. Explicitly,
+                                    Z
+                         I0 (N ) = dµ̃ exp 2CZ (ω)µ̃2 − 2N µ̃ ,
+                           D3
+                                                                
+                                                                                      (4.14)
+                                                       top,pert
+where N is directly the number of D3-branes, and FZ,(2)         (λmes. = µ̃, ω) ≡ 2 CZ (ω)µ̃2
+relates to the second order term in the equivariant topological string expansion [38].
+     This complements the arguments from the previous section that the 12d anomaly
+polynomial, depending only on quantities that characterise the classical geometry of the
+brane system, captures the data in topological string constant maps.
+
+4.3   Comments on general X ∥ and Z ⊥ = C(SE5 )
+                                                                                (⊥)
+As noted above, the Euler-class ansatz for E4 in the magnetic case for Z6 = C3 does
+not extend to arbitrary integration manifolds. Nevertheless, we claim that the form of the
+anomaly polynomials (4.8) and (4.11), as well as the final answers for I0 , hold for any toric
+Calabi–Yau. The preceding analysis provides evidence for this expectation. In the electric
+                                                                                          (⊥)
+description, the second pushforward in (4.12) is well defined for an arbitrary internal Z6 .
+By electric-magnetic self-duality of D3-branes, its Legendre transform must coincide with
+                                                                         (⊥)
+the magnetic description, in which the first pushforward is over the Z6 and the second
+                                   (∥)
+over an auxiliary toric threefold X6 . Thus, although the magnetic ansatz (4.6) cannot be
+
+
+
+
+                                            – 20 –
+formulated directly for an arbitrary Calabi–Yau, the self-consistency between the electric
+and magnetic descriptions bypasses this obstruction.
+     For readers that find the above discussion somewhat abstract, here we briefly unpack
+the compact notations used so far. Even though at first sight it might be perplexing, the
+following general identity holds for the mesonic equivariant volume of an arbitrary CY
+threefold, Z:                                                  
+                                                                vi
+                     1       X                      X
+                          =        cijk ωi ωj ωk :=       det  v j  ωi ωj ωk ,    (4.15)
+                                                               
+                   CZ (ω)                                        k
+                             i,j,k                  i,j,k      v
+where the latter equality can be seen as the definition of the anomaly (or Chern-Simons)
+coefficients cijk that (sometimes upto normalizations) appear both in supergravity and
+in field theory literature, see [105–107]. The vectors v i define the underlying toric fan,
+the cokernel of the GLSM charges Q, see the Appendix for more details. The reason for
+the above equation is simply the fact that the mesonic equivariant volume matches with
+the Sasakian volume of the underlying space, [30, 80, 83]. The resulting cubic anomaly
+coefficients precisely agree with those of the D3-brane worldvolume theory derived in [104]
+for any toric SE5 manifold, as proven in [81, 103]. In addition, we have presented several
+common examples of Sasakian cones in Appendix A.2, including the resolved conifold, C,
+and resolutions of the cones over Y p,q and Lp,q,r manifolds, where one can find more explicit
+details about how to read off the cubic coefficients cijk from the toric geometry.
+
+On choices of X (∥)
+We finish with a comment on the choice of worldvolume directions X (∥) . Since we have
+so far only looked at direct product of the two manifolds, X and Z, we can look at cases
+where the spacetime background does not feature magnetic charges. A prominent class
+of solutions of this kind are the Gutowski-Reall black holes and generalizations, [108–
+110], whose holographic dual is simply the superconformal index of the D3-brane theory,
+[111, 112]. The construction of the extension space X in this case is straightforward, since
+we need to extend the product of a circle S 1 with a three-sphere, S 3 . The natural choice
+in out setting is to simply take the product of the two cones, X (∥) = C × C2 , [1, 19]. We
+should further keep notice of the equivariant parameter associated with the thermal circle
+(we can call it ϵ3 , leaving ϵ1,2 for the S 3 directions), which by supersymmetry is fixed to
+a constant, ϵ3 = ±2πi, see [19]. In the N -ensemble, for example, we then simply arrive at
+the following general formula,
+                                                       P
+                                      2 C (ϵ)        2
+                                    N    X        N     i,j,k cijk ωi ωj ωk
+                        I0D3 (N ) =            =                            .          (4.16)
+                                     2 CZ (ω)      2         2πi ϵ1 ϵ2
+
+This expression (up to varying conventions) correctly reproduces the known grand-canonical
+entropy function of the supersymmetric black holes in AdS5 , and the dual large-N super-
+conformal indices, [113–116]. The generalization to X = C × C2 /Zp , which corresponds to
+Lens space indices, is straightforward.
+
+
+
+
+                                           – 21 –
+    We expect that a generalization of our ansatz can accommodate backgrounds with
+non-trivial magnetic fluxes through non-trivial cycles. We plan to return to this point,
+together with the other interesting directions mentioned below.
+
+5   Discussion and outlook
+
+We have shown that the anomaly-polynomial integrals underlying the partition functions
+of M2-, M5-, and D3-brane systems admit a unified reformulation in terms of equivariant
+volumes and equivariant Euler-class integrals. From this viewpoint, the classical Bott–
+Cattaneo formula for sphere bundles appears as the compact prototype of a more general
+equivariant construction: the fiber integral is reproduced by gluing the local contributions
+from the fixed points, with opposite equivariant parameters. This perspective explains the
+relation between the M5-brane anomaly-inflow computation and the M2-brane equivari-
+ant topological-string description found in [1], and extends naturally to D3-branes, where
+the same equivariant structure underlies the relation between a-maximization and volume
+minimization.
+     Several aspects of this framework deserve further investigation.
+Equivariant localization and supergravity. The recent progress on equivariant local-
+ization of supersymmetric supergravity actions suggests that the equivariant integrals stud-
+ied here should admit a direct interpretation from the corresponding eleven-dimensional
+and type IIB supergravity path integrals. At present, however, the precise relation between
+these two approaches remains to be established. In particular, the recent localization re-
+sults of [93–95] involve a careful treatment of boundary contributions but some conjectural
+simplifications involving holographic renormalization remain unproven. Conversely, the
+equivariant-volume approach provides a natural mathematical framework for defining in-
+tegrals over the non-compact spaces that arise in these problems. Establishing the precise
+equivalence between supergravity localization including holographic renormalization and
+equivariant anomaly integrals should provide a first-principles derivation of the formulas
+appearing throughout this work.
+From classical anomalies to quantum partition functions. A particularly intrigu-
+ing aspect of the present construction is that the starting point is entirely classical: the
+twelve-dimensional anomaly polynomial is a characteristic class determined by the classical
+supergravity fields and the brane charges (even though it does incorporate higher-derivative
+corrections in supergravity). Nevertheless, after equivariant integration it reproduces quan-
+tities that are usually regarded as genuinely quantum, such as the perturbative part of
+supersymmetric partition functions and, on the M2-brane side, the constant-map sector of
+equivariant topological strings.
+     This suggests that anomaly inflow may provide more than a computational shortcut
+for known protected quantities. Rather, it may identify the geometric origin of the univer-
+sal quantum contributions that survive in the large-N limit. In particular, the agreement
+between the M-theory anomaly integral and the constant-map contribution of the topo-
+logical string indicates that the equivariant anomaly polynomial captures the part of the
+
+
+
+
+                                           – 22 –
+quantum partition function which is insensitive to the detailed enumerative geometry, while
+the remaining instanton sectors should correspond to further geometric data beyond the
+characteristic classes appearing in the present construction.
+    Understanding whether the full quantum partition functions can be organized as an
+equivariant completion of the anomaly polynomial, with constant maps providing the lead-
+ing universal piece, is an interesting open problem. Such a perspective could provide a
+bridge between anomaly inflow, equivariant localization, and the enumerative structures of
+topological string theory.
+Beyond factorized flat brane geometries. The anomaly polynomials considered in
+this paper, (1.12) and (1.13), are the natural inflow polynomials associated with M-theory
+and type IIB brane systems in the setups of interest here. Our analysis has focused on con-
+figurations where the relevant geometry admits a simple factorization into transverse and
+worldvolume equivariant directions. More general brane configurations, such as wrapped
+branes, defects, and intersecting brane systems, involve additional geometric data associ-
+ated with the embedding, twisting, and localized degrees of freedom. In the M5-brane case,
+systematic anomaly inflow constructions for wrapped configurations have been developed
+in [8–10], and analogous structures appear for D3-brane systems in [11]. We expect that
+all M-brane systems are still described by the same 12d anomaly, but different E4 ansätze
+and underlying manifolds, while more general IIB systems will also require a more general
+set of 12 anomaly forms, see [93]. It is interesting to repeat here our observation that
+our electric brane calculations (ignoring the subleading piece in the M-theroy description)
+eventually could be matched with the extremization procedure in [30, 31]. We expect that
+this continues to be the case for wrapped brane configurations, discussed there.
+Exact duality pattern? The structural similarity between the M2/M5 relation discussed
+in Section 3 and the electric/magnetic D3-brane relation of Section 4 suggests that these ex-
+amples may be manifestations of a broader organizing principle. In both cases, apparently
+different brane partition functions arise from different interpretations of the same higher-
+dimensional equivariant integral: directions that play the role of transverse geometry in
+one description become part of the effective worldvolume geometry in another.
+     This structure has an AGT-like flavor, in the sense that a single higher-dimensional
+object admits different lower-dimensional realizations depending on the order in which
+equivariant pushforwards are performed. Exploring whether similar structures persist for
+more general (including non-conformal) brane systems in type IIB and beyond, is a nat-
+ural direction for future work. What is perhaps most important is the investigation of
+whether further perturbative and non-perturbative corrections (genuinely quantum from
+the geometric point of view) also obey the suggested dualities here, or the present obser-
+vations hold simply at the level of classical geometry (which still gives finite N results, as
+discussed).
+
+
+
+
+                                           – 23 –
+Acknowledgments
+
+We would like to thank Yi Pang and Gabriele Tartaglino-Mazzucchelli for useful comments
+on the draft. K.H. is supported in part by the Bulgarian NSF grant KP-06-N88/1. P.V.M.
+is supported by the Netherlands Organisation for Scientific Research (NWO) under the
+VICI grant VI.C.202.104. K.H. would like to thank the Raybould fellowship and the
+School of Mathematics and Physics in UQ for the financial support and hospitality, as well
+as the organizers of the GGI program ”Pathways to Quantum Black Holes” in Florence
+and the ”Eurostrings 2026” conference in Athens for the financial support and stimulating
+environment.
+
+A     Equivariant geometry
+
+This appendix summarizes the equivariant-geometric conventions used throughout the pa-
+per, following [1, 30, 37], and collects a number of identities used repeatedly in the main
+text.
+
+A.1    Equivariant volumes and characteristic classes
+Let
+                                            X = Cn //U (1)r
+be a smooth toric Calabi–Yau manifold of complex dimension d = n − r. The action of
+the U (1)r torus is described in terms of a matrix of integer charges Qai with i = 1, . . . , n
+and a = 1, . . . , r, corresponding to an embedding of U (1)r into the larger torus U (1)n . Its
+equivariant volume is defined by
+                                             r                      i
+                                                            exi λ
+                            Z           I
+                                 T
+                                             Y dϕa
+              VX (λ, ε) =       eωλ =                      Qn           ,   xi = εi + ϕa Qai ,   (A.1)
+                            X            JK a=1      2πi     i=1 xi
+
+where the contour is specified by the Jeffrey–Kirwan prescription. In addition, we can
+define a map v : Rn → Rn−r as the cokernel of Q, i.e.
+
+                                              vαi Qai = 0 .                                      (A.2)
+
+It can be proven, c.f. [37], that the function VX (λ, ϵ) depends only on the combinations
+
+                                             να (ϵ) := vαi ϵi                                    (A.3)
+
+which can be regarded as equivariant parameters for the quotient torus U (1)n /U (1)r ∼
+                                                                                      =
+U (1)n−r . We give some non-trivial examples of this construction in App. A.2.
+    The equivariant intersection numbers are obtained by differentiation with respect to
+the (redundant) Kähler parameters,
+
+                                                       ∂ p VX
+                                CiX1 ···ip (ε) :=                       ,                        (A.4)
+                                                    ∂λi1 · · · ∂λip λ=0
+
+
+
+
+                                                    – 24 –
+while the mesonic equivariant volume is simply
+                                   CX (ε) := (πX→pt )∗ (1) = VX (0, ε).                                 (A.5)
+   The xi appearing above denote the equivariant Chern roots of a complex vector bundle
+E. The total Chern and Pontryagin classes are
+                            Y                        Y
+                     c(E) =   (1 + xi ) ,     p(E) =   (1 + x2i ) .               (A.6)
+                                         i                                  i
+       Consequently,
+                              X                     X                             X
+                       c1 =       xi ,       c2 =         xi xj ,          c3 =           xi xj xk ,    (A.7)
+                              i                     i<j                           i<j<k
+
+and
+                              p1 = c21 − 2c2 ,            p2 = c22 − 2c1 c3 + 2c4 .                     (A.8)
+       Explicitly, the equivariant Chern numbers are 22
+                                             X
+                                    cX
+                                     p (ε) =      CiX1 ···ip (ε),                                       (A.9)
+                                                    i1 <···<ip
+
+and it is convenient to normalize them by the equivariant volume,
+                                                             cX
+                                                              p (ε)
+                                              kpX (ε) :=            .                                  (A.10)
+                                                             CX (ε)
+       For a toric Calabi–Yau manifold (without imposing yet an equivariant condition) one
+has                                                         X
+                                              k1X (ε) =             εi ,                               (A.11)
+                                                              i
+which is simply the equivariant form of the Calabi–Yau condition c1 (T X) = 0.
+    The equivariant Pontryagin classes are expressed in terms of the normalized equivariant
+Chern numbers (A.10) as
+                   pX                X      2    X
+                                                      
+                    1 (ε) = CX (ε) (k1 (ε)) − 2k2 (ε) ,
+                                                                                     (A.12)
+                   pX                X    2     X      X         X
+                                                                      
+                    2 (ε) = CX (ε) (k2 (ε) − 2k1 (ε)k3 (ε) + 2k4 (ε) .
+
+       For C2 , where Q = 0, one straightforwardly finds
+                                       ϵ1 + ϵ2
+                          c1 (T C2 ) =          ,   c2 (T C2 ) = 1 ,                                   (A.13)
+                                         ϵ1 ϵ2
+                                       ϵ2 + ϵ22
+                          p1 (T C2 ) = 1        ,   p2 (T C2 ) = ϵ1 ϵ2 .                               (A.14)
+                                         ϵ1 ϵ2
+    Similarly, for C3 ,
+                      ϵ1 + ϵ2 + ϵ3                    ϵ1 ϵ2 + ϵ1 ϵ3 + ϵ2 ϵ3
+         c1 (T C3 ) =                , c2 (T C3 ) =                           , c3 (T C3 ) = 1 , (A.15)
+                         ϵ1 ϵ2 ϵ3                             ϵ1 ϵ2 ϵ3
+                      ϵ2 + ϵ22 + ϵ23                      (ϵ1 ϵ2 )2 + (ϵ1 ϵ3 )2 + (ϵ2 ϵ3 )2
+        p1 (T C3 ) = 1                ,    p2 (T C3 ) =                                     .    (A.16)
+                         ϵ1 ϵ2 ϵ3                                      ϵ1 ϵ2 ϵ3
+One can reconstruct analogous expressions for any Cn simply using the general form of the
+equivariant volume, c.f. (2.4).
+  22
+       We drop the superscript T in what follows.
+
+
+
+
+                                                     – 25 –
+A.2     Some non-trivial examples of local threefolds
+There is a potentially confusing point that cannot be simply illustrated on the Cm examples
+due to their topological triviality. The equivariant parameters ϵ are in general redundant
+and overparametrize the equivariant volume, see the statement above (A.3). One then finds
+meaningful additional constraints among the parameters, dubbed mesonic constraints in
+[37], see [87, 88], that simply amount to imposing 23
+                                          !    ∂
+                                       ϵi =       log V(λ, ϵ)     .                                  (A.17)
+                                              ∂λi             λ=0
+Alternatively, we can skip this step and directly change basis to a set of faithful equivariant
+parameters, νi , as in (A.3). Below we give explicitly the example of the conifold C, as well
+as the cones over the Sasakian spaces Y p,q and Lp,q,r , which often appear in holographic
+applications.
+
+Resolved conifold, C(T 1,1 )
+A prototipical example is the resolved conifold, C, which is a threefold corresponding to
+the resolution of the cone over T 1,1 , obtained as a symplectic quotient of C4 . The theory
+of multiple D3-branes on the conifold is known as Klebanov-Witten theory, [117]. In this
+construction, c.f. (2.2), the GLSM charges are given by
+                                      QC = (1      1   −1      − 1) .                                (A.18)
+It admits two related resolutions, see [37] and further details in [50], and for concreteness
+we pick one of them:
+                                2          3           4            1            3          4
+                                                                                                       !
+                    1        eλ (ϵ2 −ϵ1 )+λ (ϵ3 +ϵ1 )+λ (ϵ4 +ϵ1 ) eλ (ϵ1 −ϵ2 )+λ (ϵ3 +ϵ2 )+λ (ϵ4 +ϵ2 )
+   VC (λ, ϵ) =                                                   −                                        .
+                (ϵ2 − ϵ1 )          (ϵ3 + ϵ1 )(ϵ4 + ϵ1 )                 (ϵ3 + ϵ2 )(ϵ4 + ϵ2 )
+                                                                                                       (A.19)
+It is then straightforward to find the mesonic volume, (2.3),
+                                                      P4
+                                                         i=1 ϵi
+                           CC (ϵ) =                                            .                       (A.20)
+                                     (ϵ1 + ϵ3 )(ϵ2 + ϵ3 )(ϵ1 + ϵ4 )(ϵ2 + ϵ4 )
+However, at this stage we should observe that the equivariant parameter ϵ are not associated
+with the remaining toric action on the conifold itself, but with the original C4 geometry.
+In order to compare with both supergravity and field theory results, we need to impose
+the constraints (A.17), which in this case can be shown to simplify to a single additional
+relation, [37],
+                                              ϵ1 ϵ2 = ϵ3 ϵ4 .                                          (A.21)
+Remarkably, imposing this additional constraint leads to the following identity,24
+                                                                        
+                                                                         vi
+        1                                                  1 X          j
+             = ϵ1 ϵ2 ϵ3 + ϵ1 ϵ2 ϵ4 + ϵ1 ϵ3 ϵ4 + ϵ2 ϵ3 ϵ4 =         det  v  ϵi ϵj ϵk ,              (A.22)
+      CC (ϵ)                                               6
+                                                             i,j,k      vk
+  23
+     Note that we can relax the condition that the right hand side below is evaluated at vanishing λ-
+parameters, but this does not amount to a change in the equation itself.
+  24
+     This can be seen, for instance, by setting (ϵ1 ϵ2 )2 = (ϵ3 ϵ4 )2 = i ϵi when writing out the denominator
+                                                                       Q
+
+of CC (ϵ); this identity is then explicit.
+
+
+
+
+                                                  – 26 –
+such that the cubic coefficients defined in (4.15) are given by
+
+                                    c123 = c124 = c134 = c234 = 1 ,                               (A.23)
+
+and permutations; where we made use of the toric fan vectors, [37],
+                                              
+                                         110
+                                       1 0 1
+                                 vC =          .                                                (A.24)
+                                              
+                                       1 1 1
+                                         100
+    Alternatively, we can pass to faithful variables νi via the change of variables (A.3),
+
+                     ν1 = ϵ1 + ϵ2 + ϵ3 + ϵ4 ,          ν2 = ϵ1 + ϵ3 ,   ν3 = ϵ2 + ϵ3 .            (A.25)
+
+The mesonic equivariant volume then simply becomes
+                                                ν1
+                           CC (ν) =                            ,                                  (A.26)
+                                    ν2 ν3 (ν1 − ν2 )(ν1 − ν3 )
+where the dependence on the fourth variable in the ϵ-parametrization automatically disap-
+pears, without the need of imposing (A.17).
+
+Resolved C(Y p,q )
+More briefly, we can extend the conifold example to the general class of cones over Y p,q
+spaces, defined by the GLSM charge vector, [118–120]
+
+                                  Q = (p       p   −p+q         − p − q) ,                        (A.27)
+
+where p > q ≥ 0 (q = 0 is the limit to the conifold example), gcd(p, q) = 1. We then find
+the equivariant volume is given by
+                                       2           3                    4
+                                  eλ (ϵ2 −ϵ1 )+λ (pϵ3 +(p−q)ϵ1 )/p+λ (pϵ4 +(p+q)ϵ1 )/p
+                          p
+            V(λ, ϵ) =
+                      (ϵ2 − ϵ1 )        (pϵ3 + (p − q)ϵ1 )(pϵ4 + (p + q)ϵ1 )
+                                           1            3                   4
+                                                                                                  (A.28)
+                                       eλ (ϵ1 −ϵ2 )+λ (pϵ3 +(p−q)ϵ2 )/p+λ (pϵ4 +(p+q)ϵ2 )/p 
+                                     −                                                        ,
+                                            (pϵ3 + (p − q)ϵ2 )(pϵ4 + (p + q)ϵ2 )
+which reproduces the answer for the conifold in the case (p = 1, q = 0). For the cone over
+any Y p,0 , the equivariant volume takes the same form as in (A.19) (in the chosen resolution),
+since the corresponding GLSM charge is just a rescaling by p of (A.18), leaving the defining
+condition of the toric fan vectors (A.2) unchanged. For general p and q the toric fan is
+given by                                                 
+                                         1 (p − q)    0
+                                      1      0    (p − q)
+                                  v=                      ,                           (A.29)
+                                                         
+                                      1      p       p 
+                                         1    0       0
+such that
+
+      c123 = p2 − q 2 ,     c124 = (p − q)2 ,      c134 = p(p − q) ,        c234 = p(p − q) ,     (A.30)
+
+and permutations.
+
+
+
+
+                                                   – 27 –
+Resolved C(Lp,q,r )
+A further generalization is picking the GLSM charge vector, [121, 122]
+
+                              Q = (p       q     −r    r − p − q = −s) ,                            (A.31)
+
+where q ≥ p > 0, p + q > r > 0, and (p, q) coprime with (r, s) above are coprime leading
+to the equivariant volume
+                                       2                3                 4
+                              p2 eλ (pϵ2 −qϵ1 )/p+λ (pϵ3 +rϵ1 )/p+λ (pϵ4 +(p+q−r)ϵ1 )/p
+                     1
+      V(λ, ϵ) =
+                (pϵ2 − qϵ1 )            (pϵ3 + rϵ1 )(pϵ4 + (p + q − r)ϵ1 )
+                                           1                 3                 4
+                                                                                                    (A.32)
+                                   q 2 eλ (qϵ1 −pϵ2 )/q+λ (qϵ3 +rϵ2 )/q+λ (qϵ4 +(p+q−r)ϵ2 )/q 
+                                 −                                                              .
+                                             (qϵ3 + rϵ2 )(pϵ4 + (p + q − r)ϵ2 )
+
+This reporduces the answer for Y p,q when taking the appropriate restriction of parameters.
+The toric fan in this case is given by
+                                                
+                                            1r 0
+                                          1 0 r 
+                                       v=        ,                                (A.33)
+                                                
+                                          1 p q 
+                                            100
+
+such that
+                c123 = r(p + q − r) ,          c124 = r2 ,       c134 = qr ,       c234 = pr ,      (A.34)
+and permutations.
+
+References
+
+  [1] K. Hristov, Indices of M5 and M2 branes at finite N from equivariant volumes, and a new
+      duality, arXiv:2604.06343.
+  [2] L. Alvarez-Gaume and M. A. Vazquez-Mozo, Anomalies and the Green-Schwarz
+      Mechanism. 2024. arXiv:2211.06467.
+  [3] M. J. Duff, J. T. Liu, and R. Minasian, Eleven-dimensional origin of string/string duality:
+      a one-loop test*, Nucl. Phys. B 452 (1995) 261–282, [hep-th/9506126].
+  [4] E. Witten, On flux quantization in M -theory and the effective action, J. Geom. Phys. 22
+      (1997) 1–13, [hep-th/9609122].
+  [5] E. Witten, Five-brane effective action in M -theory., J. Geom. Phys. 22 (1997) 103–133,
+      [hep-th/9610234].
+  [6] D. Freed, J. A. Harvey, R. Minasian, and G. W. Moore, Gravitational anomaly cancellation
+      for M theory five-branes, Adv. Theor. Math. Phys. 2 (1998) 601–618, [hep-th/9803205].
+  [7] J. A. Harvey, R. Minasian, and G. W. Moore, NonAbelian tensor multiplet anomalies,
+      JHEP 09 (1998) 004, [hep-th/9808060].
+  [8] I. Bah, F. Bonetti, R. Minasian, and E. Nardoni, Class S Anomalies from M-theory Inflow,
+      Phys. Rev. D 99 (2019), no. 8 086020, [arXiv:1812.04016].
+
+
+
+
+                                                   – 28 –
+ [9] I. Bah, F. Bonetti, R. Minasian, and E. Nardoni, Anomaly Inflow for M5-branes on
+     Punctured Riemann Surfaces, JHEP 06 (2019) 123, [arXiv:1904.07250].
+[10] I. Bah, F. Bonetti, R. Minasian, and E. Nardoni, Anomalies of QFTs from M-theory and
+     Holography, JHEP 01 (2020) 125, [arXiv:1910.04166].
+[11] I. Bah, F. Bonetti, R. Minasian, and P. Weck, Anomaly Inflow Methods for SCFT
+     Constructions in Type IIB, JHEP 02 (2021) 116, [arXiv:2002.10466].
+[12] H.-C. Kim and S. Kim, M5-branes from gauge theories on the 5-sphere, JHEP 05 (2013)
+     144, [arXiv:1206.6339].
+[13] B. Assel, D. Cassani, L. Di Pietro, Z. Komargodski, J. Lorenzen, and D. Martelli, The
+     Casimir Energy in Curved Space and its Supersymmetric Counterpart, JHEP 07 (2015)
+     043, [arXiv:1503.05537].
+[14] N. Bobev, M. Bullimore, and H.-C. Kim, Supersymmetric Casimir Energy and the Anomaly
+     Polynomial, JHEP 09 (2015) 142, [arXiv:1507.08553].
+[15] F. Brünner, D. Regalado, and V. P. Spiridonov, Supersymmetric Casimir energy and
+     SL(3, Z) transformations, JHEP 07 (2017) 041, [arXiv:1611.03831].
+[16] J. Nahmgoong, 6d superconformal Cardy formulas, JHEP 02 (2021) 092,
+     [arXiv:1907.12582].
+[17] K. Ohmori and L. Tizzano, Anomaly matching across dimensions and supersymmetric
+     Cardy formulae, JHEP 12 (2022) 027, [arXiv:2112.13445].
+[18] S. M. Hosseini, K. Hristov, and A. Zaffaroni, Rotating multi-charge spindles and their
+     microstates, JHEP 07 (2021) 182, [arXiv:2104.11249].
+[19] D. Cassani, A. Ruipérez, and E. Turetta, Higher-derivative corrections to flavoured BPS
+     black hole thermodynamics and holography, JHEP 05 (2024) 276, [arXiv:2403.02410].
+[20] S. M. Hosseini, K. Hristov, and A. Zaffaroni, Gluing gravitational blocks for AdS black
+     holes, JHEP 12 (2019) 168, [arXiv:1909.10550].
+[21] P. Benetti Genolini, J. M. Perez Ipiña, and J. Sparks, Localization of the action in
+     AdS/CFT, JHEP 10 (2019) 252, [arXiv:1906.11249].
+[22] P. Benetti Genolini, J. P. Gauntlett, and J. Sparks, Equivariant Localization in
+     Supergravity, Phys. Rev. Lett. 131 (2023), no. 12 121602, [arXiv:2306.03868].
+[23] P. Benetti Genolini, J. P. Gauntlett, Y. Jiao, A. Lüscher, and J. Sparks, Equivariant
+     localization for D = 4 gauged supergravity, JHEP 08 (2025) 211, [arXiv:2412.07828].
+[24] P. Benetti Genolini, J. P. Gauntlett, Y. Jiao, A. Lüscher, and J. Sparks, Localization and
+     attraction, JHEP 05 (2024) 152, [arXiv:2401.10977].
+[25] P. Benetti Genolini, F. Gaar, J. P. Gauntlett, and J. Sparks, Equivariant localization for
+     higher derivative supergravity, arXiv:2604.08656.
+[26] M. Galli, C. Kennedy, P. Raina, and G. Tartaglino-Mazzucchelli, Superform Approach to
+     Equivariant Localization in Supergravity, arXiv:2605.17919.
+[27] D. Cassani, A. Ruipérez, and E. Turetta, Localization of the 5D supergravity action and
+     Euclidean saddles for the black hole index, JHEP 12 (2024) 086, [arXiv:2409.01332].
+[28] E. Colombo, V. Dimitrov, D. Martelli, and A. Zaffaroni, Equivariant localization in
+     supergravity in odd dimensions, arXiv:2502.15624.
+
+
+
+
+                                             – 29 –
+[29] E. Colombo, V. Dimitrov, D. Martelli, and A. Zaffaroni, Patch-wise localization with
+     Chern-Simons forms in five dimensional supergravity, arXiv:2511.13824.
+[30] D. Martelli and A. Zaffaroni, Equivariant localization and holography, Lett. Math. Phys.
+     114 (2024), no. 1 15, [arXiv:2306.03891].
+[31] E. Colombo, F. Faedo, D. Martelli, and A. Zaffaroni, Equivariant volume extremization and
+     holography, JHEP 01 (2024) 095, [arXiv:2309.04425].
+[32] N. Nekrasov, N. Piazzalunga, and M. Zabzine, Shifts of prepotentials (with an appendix by
+     Michele Vergne), SciPost Phys. 12 (2022), no. 5 177, [arXiv:2111.07663].
+[33] L. Cassia, N. Piazzalunga, and M. Zabzine, From equivariant volumes to equivariant
+     periods, Adv. Theor. Math. Phys. 27 (2023), no. 4 961–1064, [arXiv:2211.13269].
+[34] N. Bobev, A. M. Charles, K. Hristov, and V. Reys, Higher-derivative supergravity, AdS4
+     holography, and black holes, JHEP 08 (2021) 173, [arXiv:2106.04581].
+[35] K. Hristov, 4d N = 2 supergravity observables from Nekrasov-like partition functions, JHEP
+     02 (2022) 079, [arXiv:2111.06903].
+[36] K. Hristov, ABJM at finite N via 4d supergravity, JHEP 10 (2022) 190,
+     [arXiv:2204.02992].
+[37] L. Cassia and K. Hristov, Constant maps in equivariant topological strings and geometric
+     modeling of fluxes, J. Phys. A 58 (2025), no. 49 495201, [arXiv:2502.20444].
+[38] L. Cassia and K. Hristov, M2-brane partition functions and HD supergravity from
+     equivariant volumes, JHEP 03 (2026) 100, [arXiv:2508.21619].
+[39] A. Kapustin, B. Willett, and I. Yaakov, Exact Results for Wilson Loops in Superconformal
+     Chern-Simons Theories with Matter, JHEP 03 (2010) 089, [arXiv:0909.4559].
+[40] N. Drukker, M. Marino, and P. Putrov, From weak to strong coupling in ABJM theory,
+     Commun. Math. Phys. 306 (2011) 511–563, [arXiv:1007.3837].
+[41] N. Hama, K. Hosomichi, and S. Lee, SUSY Gauge Theories on Squashed Three-Spheres,
+     JHEP 05 (2011) 014, [arXiv:1102.4716].
+[42] M. Marino and P. Putrov, ABJM theory as a Fermi gas, J. Stat. Mech. 1203 (2012)
+     P03001, [arXiv:1110.4066].
+[43] Y. Hatsuda, M. Marino, S. Moriyama, and K. Okuyama, Non-perturbative effects and the
+     refined topological string, JHEP 09 (2014) 168, [arXiv:1306.1734].
+[44] T. Nosaka, Instanton effects in ABJM theory with general R-charge assignments, JHEP 03
+     (2016) 059, [arXiv:1512.02862].
+[45] Y. Hatsuda, ABJM on ellipsoid and topological strings, JHEP 07 (2016) 026,
+     [arXiv:1601.02728].
+[46] S. M. Chester, R. R. Kalloor, and A. Sharon, Squashing, Mass, and Holography for 3d
+     Sphere Free Energy, JHEP 04 (2021) 244, [arXiv:2102.05643].
+[47] S. Geukens and J. Hong, Subleading analysis for S3 partition functions of N = 2
+     holographic SCFTs, JHEP 06 (2024) 190, [arXiv:2405.00845].
+[48] N. Kubo, T. Nosaka, and Y. Pang, Exact large N expansion of mass deformed ABJM theory
+     on squashed sphere, JHEP 02 (2025) 106, [arXiv:2411.07334].
+
+
+
+
+                                            – 30 –
+[49] N. Bobev, P.-J. De Smet, J. Hong, V. Reys, and X. Zhang, An Airy tale at large N, JHEP
+     07 (2025) 123, [arXiv:2502.04606].
+[50] K. Hristov, N. Kubo, and Y. Pang, S 3 partition functions and Equivariant CY4 / CY3
+     correspondence from Quantum curves, arXiv:2603.19159.
+[51] J. Hong, Constants in Sequences of M2-brane Partition Functions, arXiv:2608.04204.
+[52] S. Kim, The Complete superconformal index for N=6 Chern-Simons theory, Nucl. Phys. B
+     821 (2009) 241–284, [arXiv:0903.4172]. [Erratum: Nucl.Phys.B 864, 884 (2012)].
+[53] A. Kapustin and B. Willett, “Generalized Superconformal Index for Three Dimensional
+     Field Theories.” 6, 2011.
+[54] C. Beem, T. Dimofte, and S. Pasquetti, Holomorphic Blocks in Three Dimensions, JHEP
+     12 (2014) 177, [arXiv:1211.1986].
+[55] F. Benini and A. Zaffaroni, A topologically twisted index for three-dimensional
+     supersymmetric theories, JHEP 07 (2015) 127, [arXiv:1504.03698].
+[56] F. Benini, K. Hristov, and A. Zaffaroni, Black hole microstates in AdS4 from
+     supersymmetric localization, JHEP 05 (2016) 054, [arXiv:1511.04085].
+[57] S. M. Hosseini and A. Zaffaroni, Large N matrix models for 3d N = 2 theories: twisted
+     index, free energy and black holes, JHEP 08 (2016) 064, [arXiv:1604.03122].
+[58] S. M. Hosseini and N. Mekareeya, Large N topologically twisted index: necklace quivers,
+     dualities, and Sasaki-Einstein spaces, JHEP 08 (2016) 089, [arXiv:1604.03397].
+[59] S. M. Hosseini and A. Zaffaroni, The large N limit of topologically twisted indices: a direct
+     approach, JHEP 12 (2022) 025, [arXiv:2209.09274].
+[60] N. Bobev, J. Hong, and V. Reys, Large N partition functions of the ABJM theory, JHEP
+     02 (2023) 020, [arXiv:2210.09318].
+[61] N. Bobev, S. Choi, J. Hong, and V. Reys, Superconformal indices of 3d N = 2 SCFTs and
+     holography, JHEP 10 (2024) 121, [arXiv:2407.13177].
+[62] M. Inglese, D. Martelli, and A. Pittelli, The spindle index from localization, J. Phys. A 57
+     (2024), no. 8 085401, [arXiv:2303.14199].
+[63] E. Colombo, S. M. Hosseini, D. Martelli, A. Pittelli, and A. Zaffaroni, Microstates of
+     Accelerating and Supersymmetric AdS4 Black Holes from the Spindle Index, Phys. Rev.
+     Lett. 133 (2024), no. 3 031603, [arXiv:2404.07173].
+[64] H.-Y. Chen, N. Dorey, S. Moriyama, R. Mouland, and C. Sanli, An M2/M5 Duality from
+     the Giant Graviton Expansion, arXiv:2601.17114.
+[65] A. Batrachenko, M. J. Duff, and J. X. Lu, The Membrane at the end of the (de Sitter)
+     universe, Nucl. Phys. B 762 (2007) 95–111, [hep-th/0212186].
+[66] D. Gaiotto and J. H. Lee, The giant graviton expansion, JHEP 08 (2024) 025,
+     [arXiv:2109.02545].
+[67] Y. Imamura, Finite-N superconformal index via the AdS/CFT correspondence, PTEP 2021
+     (2021), no. 12 123B05, [arXiv:2108.12090].
+[68] H. Hayashi, T. Nosaka, and T. Okazaki, M2-M5 giant graviton expansions, JHEP 12 (2024)
+     109, [arXiv:2409.13239].
+
+
+
+
+                                             – 31 –
+[69] M. Cvetic, H. Lu, and C. N. Pope, Consistent Kaluza-Klein sphere reductions, Phys. Rev. D
+     62 (2000) 064028, [hep-th/0003286].
+[70] K. Lee, C. Strickland-Constable, and D. Waldram, Spheres, generalised parallelisability and
+     consistent truncations, Fortsch. Phys. 65 (2017), no. 10-11 1700048, [arXiv:1401.3360].
+[71] D. Cassani, G. Josse, M. Petrini, and D. Waldram, Systematics of consistent truncations
+     from generalised geometry, JHEP 11 (2019) 017, [arXiv:1907.06730].
+[72] S. A. Kurlyand and A. A. Tseytlin, Type IIB supergravity action on M5×X5 solutions,
+     Phys. Rev. D 106 (2022), no. 8 086017, [arXiv:2206.14522].
+[73] M. Beccaria and A. A. Tseytlin, Comments on ABJM free energy on S3 at large N and
+     perturbative expansions in M-theory and string theory, Nucl. Phys. B 994 (2023) 116286,
+     [arXiv:2306.02862].
+[74] F. F. Gautason and J. van Muiden, Ensembles in M-theory and holography, JHEP 11
+     (2025) 078, [arXiv:2505.21633].
+[75] N. Bobev, F. F. Gautason, and J. van Muiden, Holographic Tests of the µ Ensemble,
+     arXiv:2607.06493.
+[76] L. F. Alday, D. Gaiotto, and Y. Tachikawa, Liouville Correlation Functions from
+     Four-dimensional Gauge Theories, Lett. Math. Phys. 91 (2010) 167–197,
+     [arXiv:0906.3219].
+[77] B. Le Floch, A slow review of the AGT correspondence, J. Phys. A 55 (2022), no. 35
+     353002, [arXiv:2006.14025].
+[78] R. Bott and A. S. Cattaneo, Integral Invariants of 3-Manifolds, eprint arXiv:dg-ga/9710001
+     (Oct., 1997) dg–ga/9710001, [dg-ga/9710001].
+[79] S. M. Hosseini, K. Hristov, Y. Tachikawa, and A. Zaffaroni, Anomalies, Black strings and
+     the charged Cardy formula, JHEP 09 (2020) 167, [arXiv:2006.08629].
+[80] D. Martelli, J. Sparks, and S.-T. Yau, The Geometric dual of a-maximisation for Toric
+     Sasaki-Einstein manifolds, Commun. Math. Phys. 268 (2006) 39–65, [hep-th/0503183].
+[81] A. Butti and A. Zaffaroni, R-charges from toric diagrams and the equivalence of
+     a-maximization and Z-minimization, JHEP 11 (2005) 019, [hep-th/0506232].
+[82] A. Butti and A. Zaffaroni, From toric geometry to quiver gauge theory: The Equivalence of
+     a-maximization and Z-minimization, Fortsch. Phys. 54 (2006) 309–316, [hep-th/0512240].
+[83] D. Martelli, J. Sparks, and S.-T. Yau, Sasaki-Einstein manifolds and volume minimisation,
+     Commun. Math. Phys. 280 (2008) 611–673, [hep-th/0603021].
+[84] A. Amariti, C. Klare, and M. Siani, The Large N Limit of Toric Chern-Simons Matter
+     Theories and Their Duals, JHEP 10 (2012) 019, [arXiv:1111.1723].
+[85] C. Couzens, J. P. Gauntlett, D. Martelli, and J. Sparks, A geometric dual of
+     c-extremization, JHEP 01 (2019) 212, [arXiv:1810.11026].
+[86] J. P. Gauntlett, D. Martelli, and J. Sparks, Toric geometry and the dual of c-extremization,
+     JHEP 01 (2019) 204, [arXiv:1812.05597].
+[87] S. M. Hosseini and A. Zaffaroni, Proving the equivalence of c-extremization and its
+     gravitational dual for all toric quivers, JHEP 03 (2019) 108, [arXiv:1901.05977].
+
+
+
+
+                                            – 32 –
+ [88] S. M. Hosseini and A. Zaffaroni, Geometry of I-extremization and black holes microstates,
+      JHEP 07 (2019) 174, [arXiv:1904.04269].
+ [89] J. P. Gauntlett, D. Martelli, and J. Sparks, Toric geometry and the dual of I-extremization,
+      JHEP 06 (2019) 140, [arXiv:1904.04282].
+ [90] J. P. Gauntlett, D. Martelli, and J. Sparks, Fibred GK geometry and supersymmetric AdS
+      solutions, JHEP 11 (2019) 176, [arXiv:1910.08078].
+ [91] A. Boido, J. P. Gauntlett, D. Martelli, and J. Sparks, Gravitational Blocks, Spindles and
+      GK Geometry, Commun. Math. Phys. 403 (2023), no. 2 917–1003, [arXiv:2211.02662].
+ [92] D. Cassani and E. Turetta, The black hole at the end of the cone: localizing the anomaly
+      polynomial on toric geometries, arXiv:2606.16986.
+ [93] C. Couzens, A. Lüscher, and J. Sparks, Ten-dimensional localization, arXiv:2607.05529.
+ [94] P. Benetti Genolini, F. Gaar, J. P. Gauntlett, J. Park, and J. Sparks, Odd-Dimensional
+      Localization in Supergravity, arXiv:2607.07621.
+ [95] P. Benetti Genolini, F. Gaar, J. P. Gauntlett, J. Park, and J. Sparks, Airy functions from
+      quantum M-theory, arXiv:2607.07255.
+ [96] K. A. Intriligator, Anomaly matching and a Hopf-Wess-Zumino term in 6d, N=(2,0) field
+      theories, Nucl. Phys. B 581 (2000) 257–273, [hep-th/0001205].
+ [97] P. Yi, Anomaly of (2,0) theories, Phys. Rev. D 64 (2001) 106006, [hep-th/0106165].
+ [98] K. Ohmori, H. Shimizu, Y. Tachikawa, and K. Yonekura, Anomaly polynomial of general 6d
+      SCFTs, PTEP 2014 (2014), no. 10 103B07, [arXiv:1408.5572].
+ [99] M. Del Zotto, J. J. Heckman, A. Tomasiello, and C. Vafa, 6d Conformal Matter, JHEP 02
+      (2015) 054, [arXiv:1407.6359].
+[100] O. Bergman and S. Hirano, Anomalous radius shift in AdS(4)/CFT(3), JHEP 07 (2009)
+      016, [arXiv:0902.1743].
+[101] J. M. Maldacena, A. Strominger, and E. Witten, Black hole entropy in M theory, JHEP 12
+      (1997) 002, [hep-th/9711053].
+[102] H. Ooguri, A. Strominger, and C. Vafa, Black hole attractors and the topological string,
+      Phys. Rev. D 70 (2004) 106007, [hep-th/0405146].
+[103] S. Lee and S.-J. Rey, Comments on anomalies and charges of toric-quiver duals, JHEP 03
+      (2006) 068, [hep-th/0601223].
+[104] S. Benvenuti, L. A. Pando Zayas, and Y. Tachikawa, Triangle anomalies from Einstein
+      manifolds, Adv. Theor. Math. Phys. 10 (2006), no. 3 395–432, [hep-th/0601054].
+[105] E. Witten, Anti de Sitter space and holography, Adv. Theor. Math. Phys. 2 (1998) 253–291,
+      [hep-th/9802150].
+[106] Y. Tachikawa, Five-dimensional supergravity dual of a-maximization, Nucl. Phys. B 733
+      (2006) 188–203, [hep-th/0507057].
+[107] K. Hristov, S. Khandelwal, Y. Pang, and G. Tartaglino-Mazzucchelli, Holographic origin of
+      a-maximization and higher-derivative AdS5 /CFT4 , arXiv:2511.22546.
+[108] J. B. Gutowski and H. S. Reall, General supersymmetric AdS(5) black holes, JHEP 04
+      (2004) 048, [hep-th/0401129].
+
+
+
+
+                                             – 33 –
+[109] Z. W. Chong, M. Cvetic, H. Lu, and C. N. Pope, General non-extremal rotating black holes
+      in minimal five-dimensional gauged supergravity, Phys. Rev. Lett. 95 (2005) 161301,
+      [hep-th/0506029].
+[110] H. K. Kunduri, J. Lucietti, and H. S. Reall, Supersymmetric multi-charge AdS(5) black
+      holes, JHEP 04 (2006) 036, [hep-th/0601156].
+[111] J. Kinney, J. M. Maldacena, S. Minwalla, and S. Raju, An Index for 4 dimensional super
+      conformal theories, Commun. Math. Phys. 275 (2007) 209–254, [hep-th/0510251].
+[112] C. Romelsberger, Counting chiral primaries in N = 1, d=4 superconformal field theories,
+      Nucl. Phys. B 747 (2006) 329–353, [hep-th/0510060].
+[113] S. M. Hosseini, K. Hristov, and A. Zaffaroni, An extremization principle for the entropy of
+      rotating BPS black holes in AdS5 , JHEP 07 (2017) 106, [arXiv:1705.05383].
+[114] A. Cabo-Bizet, D. Cassani, D. Martelli, and S. Murthy, Microscopic origin of the
+      Bekenstein-Hawking entropy of supersymmetric AdS5 black holes, JHEP 10 (2019) 062,
+      [arXiv:1810.11442].
+[115] S. Choi, J. Kim, S. Kim, and J. Nahmgoong, Large AdS black holes from QFT,
+      arXiv:1810.12067.
+[116] F. Benini and E. Milan, Black Holes in 4D N =4 Super-Yang-Mills Field Theory, Phys.
+      Rev. X 10 (2020), no. 2 021037, [arXiv:1812.09613].
+[117] I. R. Klebanov and E. Witten, Superconformal field theory on three-branes at a Calabi-Yau
+      singularity, Nucl. Phys. B 536 (1998) 199–218, [hep-th/9807080].
+[118] J. P. Gauntlett, D. Martelli, J. F. Sparks, and D. Waldram, A New infinite class of
+      Sasaki-Einstein manifolds, Adv. Theor. Math. Phys. 8 (2004), no. 6 987–1000,
+      [hep-th/0403038].
+[119] D. Martelli and J. Sparks, Toric geometry, Sasaki-Einstein manifolds and a new infinite
+      class of AdS/CFT duals, Commun. Math. Phys. 262 (2006) 51–89, [hep-th/0411238].
+[120] S. Benvenuti, S. Franco, A. Hanany, D. Martelli, and J. Sparks, An Infinite family of
+      superconformal quiver gauge theories with Sasaki-Einstein duals, JHEP 06 (2005) 064,
+      [hep-th/0411264].
+[121] M. Cvetic, H. Lu, D. N. Page, and C. N. Pope, New Einstein-Sasaki spaces in five and
+      higher dimensions, Phys. Rev. Lett. 95 (2005) 071101, [hep-th/0504225].
+[122] A. Butti, D. Forcella, and A. Zaffaroni, The Dual superconformal theory for L**pqr
+      manifolds, JHEP 09 (2005) 018, [hep-th/0505220].
+
+
+
+
+                                             – 34 –
+

@@ -1,0 +1,18 @@
+% Common command/macro compatibility for imported article chapters
+\newcommand{\isequi}[1]{\underset{#1}{\sim}}
+\definecolor{darkbrown}{rgb}{0.787,0.26,0.187}
+\definecolor{alizarin}{rgb}{0.82,0.1,0.26}
+\definecolor{mygray}{gray}{0.5}
+\newcommand{\Rho}{\mathrm{P}}
+% Integral macros used in multiple chapters
+\DeclareSymbolFont{usualmathcal}{OMS}{cmsy}{m}{n}
+\DeclareSymbolFontAlphabet{\mathcal}{usualmathcal}
+\DeclareSymbolFont{rmlargesymbols}{OMX}{mdbch}{m}{n}
+\DeclareMathSymbol{\thesisintop}{\mathop}{rmlargesymbols}{82}
+\DeclareMathSymbol{\thesisointop}{\mathop}{rmlargesymbols}{72}
+\let\intop\thesisintop
+\let\ointop\thesisointop
+\renewcommand{\int}{\intop\nolimits}
+\renewcommand{\oint}{\ointop\nolimits}
+\newcommand{\rmint}{\int}
+\DeclareMathOperator*{\rint}{\ThisStyle{\hstretch{1.3}{\rotatebox{18}{$\SavedStyle\!\rmint\!$}}}}

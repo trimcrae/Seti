@@ -1,0 +1,2679 @@
+                                          Pure gravity OPE density for genus-two
+                                          handlebody in AdS3
+
+
+                                                                 a,b                    b
+                                          Saptaswa Ghosh               and Sounak Pal
+                                          a Centre for High Energy Physics, Indian Institute of Science, C.V. Raman Avenue, Banga-
+arXiv:2608.16985v1 [hep-th] 17 Aug 2026
+
+
+
+
+                                           lore 560012, India.
+                                          b Indian Institute of Technology, Gandhinagar, Gujarat-382055, India
+
+
+                                           E-mail: ghoshsaptaswa22@gmail.com, palsounak@iitgn.ac.in
+
+                                          Abstract: In this work, we compute the operator product expansion density for the
+                                          genus-two handlebody by exploiting its duality with extremal conformal field theories
+                                          [1]. Using a Poincaré construction, we analytically determine the first- and second-
+                                          order corrections in the pinching parameter to the genus-two OPE density through a
+                                          direct inversion of the partition function. As a consistency check, we also compute the
+                                          genus-one density within the same Poincaré framework and find perfect agreement with
+                                          the result obtained from the lightcone bootstrap analysis [2]. It is known that, at genus
+                                          one, the OPE density of extremal CFTs exhibits a negativity pathology for states lying
+                                          just above the black-hole threshold. We show that this pathology continues to persist
+                                          at genus two, despite the emergence of a nontrivial inversion kernel. In particular,
+                                          the OPE density associated with states of both odd and even spin ji remains negative
+                                          within a very narrow band above the black-hole threshold. We further analyze the
+                                          sharp transition from large positive to large negative values of the OPE density across
+                                          a curve along which the density vanishes.
+Contents
+1 Introduction                                                                      1
+
+2 Genus-two handlebody in separating degeneration and the extremal
+  CFT                                                              5
+  2.1 Brief review of ECFT and partition function at g = 2         5
+
+3 Mapping class group at genus-two                                                 11
+  3.1 Connection to diagonal subgroup                                              14
+  3.2 Actual mapping class group is larger than Sp(4, Z)                           15
+
+4 Fake partition function and OPE density in handlebody: relation to
+  MWK                                                                    17
+  4.1 Density of states for the MWK partition function: direct inversion 18
+
+5 Constructing the genus-two OPE density                                           23
+  5.1 Numerical evaluation of handlebody OPE density                               29
+
+6 Conclusion and future outlooks                                                   33
+
+A Rademacher expansion of (holomorphic) modular integrals: a general
+  strategy                                                           36
+  A.1 Rademacher contour for OPE density in CFT                      39
+
+B Performing the modular sum                                                       43
+
+
+
+
+1   Introduction
+The problem of formulating a consistent theory of gravity has remained one of the
+central challenges in theoretical physics for several decades. While many attempts
+have been made in certain cases, the construction of tractable and well-defined models
+of quantum gravity continues to present notable obstacles. Much of the progress has
+occurred in lower-dimensional settings, where simplifications enable explicit compu-
+tations. A particularly important achievement in this regard was the formulation of
+
+
+
+                                        –1–
+Jackiw–Teitelboim (JT) gravity in two dimensions [3–9], which has served as an im-
+portant testing ground for the connections between gravity, quantum field theory, and
+random matrix models. The rich field of two-dimensional gravity has also been studied
+in aspects of de-Sitter space [10–12]. Recent studies regarding factorization puzzle has
+considered the end-of-world brane insertions with correlations between them, in lower
+dimensions [13, 14]. Complementary insights have also arisen from the AdS/CFT
+correspondence, which provides a non-perturbative definition of quantum gravity in
+terms of conformal field theories. In recent years, there has been a surge of interest
+in two-dimensional gravity and its deformations, with important contributions to the
+computation of partition functions [15], spectral densities, and observables in both per-
+turbative and non-perturbative regimes. Several approaches have been used to compute
+partition functions and spectral form factors (SFF) [16, 17] with integrable irrelevant
+deformations (such as T T̄ deformations[18, 19]) [20–27]. While SFFs has been calcu-
+lated for triple-scaled Sachdev-Ye-Kitaev (SYK) models [28, 29] (JT gravity) and its
+cousins, recently complexity and SFF in double-scaled SYK (DSSYK) models has also
+grown certain interest [30–32].
+
+
+By contrast, the situation in three spacetime dimensions is considerably more intri-
+cate. Pure Einstein gravity in three dimensions is non-dynamical: it admits no local
+propagating degrees of freedom, such as gravitational waves, and hence is dramatically
+simpler than its higher-dimensional counterparts. This feature suggests that three-
+dimensional gravity may admit a formulation as a topological quantum field theory
+(TQFT) [33–37], in which the dynamical content is encoded in edge modes associated
+with asymptotic boundaries [38, 39]. Nevertheless, despite this apparent simplification,
+a complete quantum treatment of three-dimensional gravity remains elusive, in sharp
+contrast to the large amount of progress achieved in JT gravity. Apart from this, advo-
+cating the problem of bulk factorization in 3D gravity, certain edge state calculations
+for bulk factorization has been done in [40].
+
+
+     A central obstruction arises from the tension between locality and consistency con-
+ditions in the holographic dual description. Whereas ensemble averages provide an
+effective description in JT gravity, in three dimensions, one encounters strong con-
+straints from modular invariance and the operator product expansion. In particular,
+solving the crossing equations in the holographic large-c regime is a hard problem,
+and explicit solutions are extremely rare [2]. Over the past few years, notable efforts
+have been devoted to quantizing three-dimensional gravity which can be described as a
+topological field theory (TFT) within the framework of the AdS/CFT correspondence
+
+
+
+                                         –2–
+[41].1 Yet, the precise status of the dual boundary CFT remains a mystery. Motivated
+by the important lessons of two-dimensional gravity, it has been conjectured that the
+dual description is not merely a single large-c CFT, but rather an ensemble of chaotic
+large-c CFTs [44–51]. Despite many important advances in this direction, no explicit
+example of a unitary, large-c chaotic CFT with a sparse light spectrum and full Virasoro
+symmetry has yet been constructed. Different type of ensembles also produce the 3D
+gravity partition function on the genus-one topolgy [52–54]. There is a recent surge of
+interest towards describing the 3D gravity theory using Random-matrix theory (RMT)
+descriptions [55, 56]. Recently, some calculations involving ensemble of rational con-
+formal field theories (RCFTs) for reproducing the dual gravity theory in 3D has been
+done in [57–61].
+
+    In recent times, significant progress has been achieved by reinterpreting AdS3 quan-
+tum gravity in terms of TQFT [1, 16, 36, 37, 62–68], emphasizing bulk formulations
+rather than conventional boundary approaches. This perspective opens up a new route
+to computing observables directly in the bulk, circumventing some of the challenges
+associated with boundary CFT constructions. It uses irrational conformal field theory
+(Liouville CFT) techniques [69–73]. Further explorations of this line of thought have
+appeared in [74], with related work including the development of simplicial 3D gravity
+models based on BCFT data [74, 75].
+
+     The study of two-dimensional conformal field theories (2d CFTs) through their
+partition functions acquires new depth at genus two. While the torus partition func-
+tion organises the spectrum and is constrained by modular invariance under P SL(2, Z),
+the genus-two partition function depends on a higher-dimensional moduli space and is
+constrained by invariance under the Siegel modular group Sp(4, Z) [41]. This enlarged
+symmetry mixes contributions across different operator channels and probes informa-
+tion beyond the spectrum, tying together conformal dimensions and operator product
+expansion (OPE) data. A key feature of genus-two surfaces is the presence of dis-
+tinct degeneration limits. In the separating degeneration, the surface splits into two
+tori connected by a thin tube, and the partition function reduces to a sum over in-
+termediate states weighted by OPE coefficients. In the non-separating degeneration,
+a handle pinches off, corresponding to a sum over operators propagating in a long
+channel. These limits provide a physical interpretation: light operators dominate the
+partition function near the boundary of moduli space, while modular invariance de-
+termines how this data extends to the interior. The genus-two surfaces has geometric
+
+  1
+      Certain supersymmetric computations are also performed in super virasoro TQFT [42, 43].
+
+
+
+
+                                               –3–
+interpretation, possibly in terms of multicentered black holes [76, 77]. It is useful not to
+picture several Schwarzschild-like objects sitting at different spatial locations as pure
+3D gravity has no local gravitational propagating degrees of freedom. Hence, all the
+interesting information is global or topological. Multi-black-hole spacetimes can be
+constructed as quotients of AdS3 for an appropriate discrete subgroup Γ ∈ P SL(2, R).
+The resulting geometry can have asymptotic AdS regions (which can be more than
+one), connected through a common interior. Each exterior can be framed locally as
+an ordinary BTZ exterior. This is exactly the geometry of the classic multi-black-hole
+solutions. Therefore, when we calculate the density of such multicentered black hole
+spacetimes, it constrain the data of the underlying CFT spectrum.
+
+
+     In this work, we explore these questions by focusing on the genus-two partition
+function [1] and its implications for OPE densities in irrational CFTs and their gravi-
+tational duals [78]. Our aim is to clarify how modular invariance constrains the exten-
+sion from light to heavy data and to investigate whether the negative genus-one density
+around the black-hole threshold persists in the genus-two separating channel. For the
+genus-one case, negative densities of states have been found for odd spins around the
+black-hole threshold for pure gravity [78, 79], although the heavy spectrum shows the
+universal Cardy scaling. Several proposals have been made to address this issue [78–81],
+including orbifold singularities and Seifert manifolds [64]. In this work, we compute
+the handlebody OPE density in the separating degeneration, using direct inversion
+and state the difference with the obtained density via the Rademacher circle method
+[78, 82, 83]. The explicit sign check is restricted to representative nonzero-spin states in
+the local s = 1 approximation and does not prove positivity of the complete genus-two
+density. Recently, in [84] genus-two OPE density for a generic CFT has been studied.
+
+
+Our paper is organised as follows. In Section 2, we describe the g = 2 handlebody
+partition function for extremal conformal field theory (ECFT). We also describe the
+seed kernel over which we need to sum its images. In Section 3, we proceed to perform
+this sum over the modular images using the Poincaré series. After performing the sum,
+in Section 4, we find the OPE density for 2d ECFTs on g = 1 using direct inversion.
+Finally, we comment on the OPE density for pure gravity for Euclidean saddles at
+genus-two in Section 5. Section 6 consists of a conclusion and a few possible future
+outlooks. Finally, in Appendix A we derive a generic formula using the Rademacher
+method for finding the OPE density. In Appendix B we demonstrate the sum over
+modular images. We also cast a few specific cases of Kloosterman sum in a table.
+
+
+
+                                           –4–
+2     Genus-two handlebody in separating degeneration and the
+      extremal CFT
+In this section, we primarily collect all the necessary ingredients to compute the genus-
+two handlebody density. As a primary simplification, we work near the separating
+degeneration and retain the block-diagonal modular subgroup relevant in this limit.
+
+2.1   Brief review of ECFT and partition function at g = 2
+
+
+
+
+             Figure 1: A genus-two handlebody in pure gravity in AdS3 .
+
+In this section, we briefly review the genus-two partition function of an ECFT, which
+comprises of Eisenstein series. The most notable example of ECFT is the Monster CFT
+[85–87] at central charge c = 24, constructed by Frenkel–Lepowsky–Meurman, whose
+partition function is the famous modular j-function. Apart from this case, the exact
+form of the partition function for extremal CFT(s) at higher central charges remains an
+open question. Their existence would provide a concrete microscopic definition of pure
+AdS3 gravity, while their non-existence would place significant and precise constraints
+on the landscape of consistent theories of quantum gravity.
+
+To proceed with ECFTs, the main claim was that the existence of ECFTs with central
+charge c = 24k, k = 1, 2, 3, · · · , has a pure gravity dual in the bulk [1]. To begin with,
+the holomorphic part of the handlebody partition function at genus-two (The pictorial
+description of such genus-two handlebody is given in Fig. (1)) for pure gravity is given
+by,
+                                X
+                   Zh.b =               det(CΩ + D)−2k ZSaddle (k, γ · Ω)              (2.1)
+                           γ∈Map(Σ2 )
+
+
+
+where, the summand with loop-corrections are given by,
+                                                            1
+                         ZSaddle (k, Ω) = ekS0 (Ω)+S1 (Ω)+ k S2 (Ω)+···               (2.2)
+
+
+
+
+                                             –5–
+and γ is the mapping class group (MCG) transformation for genus-two Riemann sur-
+faces. It is the group of all the gauge transformations modulo small gauge transforma-
+tions. As we will describe later, it is generated by the dehn-twists along the non-trivial
+cycles of the genus-g Riemann surface. The MCG is represented by a larger set than
+of Sp(2g, Z) transformations (for genus-g surfaces) for g ≥ 2, while the period matrix
+(Ω) for genus-g Riemann surface is given by ,
+                                                               
+                                                 Ω11      Ω12
+                                     Ω=                                                                  (2.3)
+                                                 Ω12      Ω22
+
+alongwith k 1−ℓ Sℓ (Ω) is the ℓ-loop free-energy correction in the partition function in
+(2.1). Now, for k = 1 ECFT, we have, by [1],
+
+                              F (Ω)12
+                  eS0 (Ω) =           ;          χ10 (Ω) = Igusa cusp form .                             (2.4)
+                              χ10 (Ω)
+
+χ10 (Ω) given by the following expression,
+
+                                            10
+                                            Y
+                              χ10 (Ω) =                θ2 [δ, ϵ](0|Ω) ,                                  (2.5)
+                                          (δ,ϵ) even
+
+
+where,
+                                                         
+ |θ[δ, ϵ](z, τ )| = exp − πδ · Imτ · δ − 2πδ · Imz                        |θ(z + δ · z + ϵ|τ )|
+                                                                          |      P
+                                                                                  {z          }
+                                                              exp[−iπδ·z·δ−2πiδ·z]   x∈Zg exp[πix·τ ·x+2πix·z]
+
+                                                                                                         (2.6)
+
+Now, this is a Siegel modular form of weight (10,0) and the corresponding modular
+invariant norm is given by,
+
+                         ||χ10 (Ω)|| = 2−12 (det Im(Ω))5 | χ10 (Ω)| .                                    (2.7)
+
+Now, using the Schottky parametrization F (Ω) is given by the following expression,
+
+                                                ∞
+                                              Y Y
+                                 F (Ω) =                   (1 − qΓm )                                    (2.8)
+                                            Γ prim. m=1
+
+
+
+
+                                               –6–
+whose solution in genus-two is given by [1] 2 ,
+
+          F (Ω)                   (2πiΩ12 )2                  (2πiΩ12 )4 h
+Q∞           m )2 (1 − sm )2
+                             =1 +            Ê      Ê
+                                                2,Ω11 2,Ω22 +              − 2(Ê2,Ω11 )2 Ê2,Ω22
+  m=1 (1 − q                          4                           3
+                                − 2Ê2,Ω11 (Ê2,Ω22 ) 2 + 48(Ê2,Ω11 )2 (Ê2,Ω22 )2 − 10(Ê2,Ω11 )2 Ê4,Ω22
+                                                                           i
+                                − 10(Ê2,Ω22 ) Ê4,Ω11 − 5Ê4,Ω11 Ê4,Ω22 + O(Ω612 )
+                                              2
+
+
+                                                                                                   (2.9)
+
+where, Êk is the normalized Eisenstein series of modular weight k and q = e2πiτ . For
+further details on Schottky parametrization in this context, we refer the reader to [1].
+Therefore, combining everything, using (2.2) and in the near separating degeneration
+(as shown in Fig. 2) i.e Ω12 → 0 limit, the fake CFT partition function at genus two
+   g=2
+(Zfake ) is given by [1],
+                                       "
+                         g=2
+       ZSaddle (k, Ω) = Zfake =G(Ω)k ϵ−2k Zvir (τ1 )Zvir (τ2 )
+                                                                                          #      (2.10)
+                                          2
+                                     ϵ
+                                 −      2
+                                          ∂τ1 Zvir (τ1 )∂τ2 Zvir (τ2 ) + O(ϵ4 ) + · · ·
+                                   48kπ
+
+where, the modular parameters as the entries of the period matrix mentioned in (2.3)
+is given by [88],
+
+                                        ϵ2
+                            Ω11 = τ1 +     Ê2 (q2 ) + · · ·
+                                       2πi
+                                        ϵ2                                                       (2.11)
+                            Ω22 = τ2 +     Ê2 (q1 ) + · · · ,
+                                       2πi
+                                    ϵ
+                            Ω12 =     (1 + Ê2 (q1 )Ê2 (q2 )ϵ2 + · · · )
+                                  2πi
+with the following definition of the normalized Eisenstein series,
+                                     B2l               B2l     4l
+                    Ê2l (q) := −         E2l (q) = −      +       q + O(q 2 ) ,
+                                    (2l)!             (2l)! (2l)!
+                                                        ∞                                        (2.12)
+                                                    4l X
+                                    E2l (q) = 1 −          σ2l−1 (n)q n .
+                                                   B2l n=1
+   2
+    where Êτ,n denotes the n-th Eisenstein series En (τ ) with the constant term removed, and nor-
+malized so that,
+                                         ∞
+                                        X    m n−1 q m
+                                Ên,ρ =              m
+                                                       , q = e2πiτ .
+                                        m=1
+                                              1 −  q
+
+
+
+
+                                                –7–
+Figure 2: Genus-two surface in the separating degeneration breaks into two one-genus
+surfaces where the middle cycle is pinched off.
+
+
+B2l are the Bernoulli numbers along with σ2l−1 (n) = d|n d2l−1 are the divisor functions
+                                                      P
+3
+  . Also note that, while writing the (2.10), we have inverted the expressions in (2.11),
+especially the expression of Ω12 and rewritten everything in terms of the series expansion
+of the small parameter ϵ (pinching parameter) in the separating degeneration limit.
+Hence, we can get,
+
+                                       2 E2 (Ω11 )E2 (Ω22 )
+                            h                                                i
+                                                                     4
+                     ϵ = Ω12 1 − (Ω12 )                     + O(Ω12 ) + · · · ,
+                                               144                                      (2.14)
+                                   E2 (τ1 )E2 (τ2 )
+                     G(Ω) = 1 − ϵ2                  + O(ϵ4 ) + · · · .
+                                          72
+                              
+ At the leading order O 1/ϵ2 , we have two copies of the decomposed genus-one parti-
+tion function for separating degeneration as shown in Fig. (2). The genus-one vacuum
+Virasoro character relevant for the genus-one partition function is given by,
+
+                                             ∞
+                                        −k
+                                             Y                            q −k+1/24
+                        Zvir (τ ) = q            (1 − q n )−1 = (1 − q)             .   (2.15)
+                                             n=2
+                                                                             η(q)
+
+Now, the handlebody fake partition function in (2.10) can be compactly written in
+the next-to-leading (in the leading order, the genus-two surface is the product of two
+
+  3
+      The generating function for the Bernoulli numbers is
+
+                                                       ∞
+                                                 t   X     t2l
+                                               t
+                                                   =   B2l     .                        (2.13)
+                                              e −1         2l!
+                                                       l=0
+
+
+
+
+                                                     –8–
+genus-one surfaces) order in ϵ (using (2.15)) as follows,
+   g=2                 1
+  Zfake ({q1 , q2 }) = 2 Zvir (q1 )Zvir (q2 )
+                      ϵ                                                          !
+                          −k+1/24 −k+1/24                   Q2
+                  1      q1         q2                           Z   (q
+                                                                  vir i )E  (q
+                                                                           2 i )
+         +                                    Σ(q1 )Σ(q2 ) − i=1                   ×Anti hol.
+           144 × 48        η(q1 )     η(q2 )                        72
+           |                                    {z                               }
+                                             seed
+
+                                                                       + Modular Images
+                                                                                     (2.16)
+with the following definitions,
+                       "                                 #
+               Σ(qi ) = (1 − qi ) E2 (qi ) − (24k − 1) − qi ,          i = 1, 2 .            (2.17)
+
+Now, the seed term is at order O(ϵ0 ). The above seed expression is general in k
+and we need to sum over the Mapping class group (MCG) to fix the modular images
+contribution at genus-two separating degeneration limit. In obtaining (2.16) we have
+used the following differential,
+                             d                                      G2 (τ )
+                     −4πi      ln[η(τ )] = G2 (τ ) ,    E2 (τ ) =                            (2.18)
+                            dτ                                      2ζ(2)
+
+where the Riemann zeta function is given by
+                                         Z ∞ x−1
+                                      1      u
+                           ζ(x) :=                du .                                       (2.19)
+                                    Γ(x) 0 eu − 1
+Now, we sum over modular images γ, rendering the partition function modular invari-
+ant at this specific order in the pinching parameter expansion. The O(1/ϵ2 ) part is
+easy, as it is just a product of two g = 1 contributions and hence one needs to perform
+two independent sums over the P SL(2, Z) parameters on each of the two Zvir factors.
+The sum over the modular image on the next term, i.e. the seed term appearing at
+O(ϵ0 ), is more involved, and we now discuss it in detail. First, we rewrite the seed term
+for generic q1 and q2 in the following way,
+
+          " 2
+           Y q −k+1/24                                     
+               i
+   seed :=              (1 − qi ) E2 (q) − (24k − 1) − qi
+           i=1
+               η(qi )2
+                 Q2                        #                                                 (2.20)
+                       Z vir (qi )E2 (qi )
+               − i=1                         × Anti hol. + Modular Images                .
+                           72                               |    {z     }
+                                                           summed over Sp(4, Z) images
+
+
+
+
+                                              –9–
+Now, one needs to sum over the mapping class group of the genus-two handlebody to
+render the gravity partition function. Before performing the sum, we write down a
+general term of the sum. It can be casted as (for τ1 = τ2 = τ ),
+                            1       X
+  E(n, m, s1 , w) =                    Im(τ ) (q)−n (q̄)−m
+                      Im(τ )|η(τ )|4 γ
+                                                                                                        (2.21)
+                                     ×               E2s1 (τ )E2w (τ̄ )           ; ∀s1 , w ∈ 0, 1, 2
+                                                     |      {z       }
+                                         extra piece for genus-two handlebody γ
+
+One should note that there is a qualitative difference of Eisenstein series terms in com-
+parison to the genus-one computation of summing over the MCG. Now, to perform the
+modular sum and seperate the inequivalent modular images, we compute the modular
+transformation of the summand itself (To cure overcounting of the same saddles). The
+modular tranformation is given by the following relations. The modular transforma-
+tions for the Dedekind eta function is given by,
+                                 !
+                          aτ + b
+                       η           = ξ(a, b, c, d)(cτ + d)1/2 η(τ )                 (2.22)
+                          cτ + d
+
+where the prefactor ξ(a, b, c, d) is given by,
+
+                                                                  c−1
+                                                                              !!            !!
+                         iπ( a+d −s(d,c)− 41 )
+                                                                  X       n            dn
+       ξ(a, b, c, d) := e    12c                 ;   s(d, c) :=                                         (2.23)
+                                                                  n=1
+                                                                          c             c
+
+s(d, c) is known as the Dedekind sum. Also the modular transformation of G2 (τ ) is
+given by,
+                                   
+                             aτ + b
+                        G2            = (cτ + d)2 G2 (τ ) + · · ·          (2.24)
+                             cτ + d
+Hence, the modular sum in (2.21) after the generic modular transformation using the
+definitions of the elliptic nome, can be written as follows,
+
+
+                    E2s1 (τ )E2w (τ̄ ) X
+E(n, m, s1 , w) =                          |cτ + d|2s1 +2w−2 exp (2πκ Im(γ · τ ) + 2πiµ Re(γ · τ ))
+                       |η(τ )|2        c,d
+                                                                                                        (2.25)
+
+where κ = m + n and µ = m − n. A natural question is why, although the genus-two
+MCG is larger than Sp(4, Z), the calculation uses P SL(2, Z) × P SL(2, Z). The reason
+
+
+
+                                                     – 10 –
+is that we work near the separating degeneration, where the middle cycle becomes
+a thin tube and the genus-two Riemann surface splits into two tori. At the order
+considered here, the explicit calculation is therefore restricted to the block-diagonal
+subgroup P SL(2, Z) × P SL(2, Z) that preserves this degeneration; it is not the full
+Sp(4, Z) modular sum. We return to this point in Section 3.
+Furthermore, for τ := x′ + iy ′ one can show that,
+
+                                              y′
+                          Im(γ · τ ) =                     .
+                                      (cx′ + d)2 + c2 y ′2
+                                                                                   (2.26)
+                                      a          cx′ + d
+                          Re(γ · τ ) = −                        .
+                                      c c((cx′ + d)2 + c2 y 2 )
+
+Considering, the whole fake partition function as the product of the seed operators, the
+exact form of the partition function at k = 2, can be obtained using (2.20) explicitly
+for different elliptic nomes, q1 and q2 .
+Now, using the same description for the genus-two handlebody as of torus, and noting
+that the characters are perturbatively known in the expansion of the modular param-
+eter of the intermediate torus, one can systematically exploit modular invariance at
+each order of the expansion. Before pursuing this analysis, however, it is important to
+recall that the mapping class group (MCG) of genus-two Riemann surfaces is given by
+extended Sp(4, Z). In the gravitational context, the MCG must be gauged after quanti-
+zation. Accordingly, at the beginning of the next section we first review the structure of
+the genus-two MCG, and then proceed to perform the sum over saddle points associated
+with the handlebody contribution, generated by the large diffeomorphisms.
+
+
+3   Mapping class group at genus-two
+
+Before turning to the explicit discussion of the genus-two modular sum, let us recall the
+structure of the mapping class group of a genus-two Riemann surface. As established
+in previous works, this group is isomorphic to the symplectic group Sp(4, Z). In the
+present analysis, the detailed properties of genus-two conformal blocks are not required,
+since our primary concern is with the simplest three-dimensional bulk filling of the
+genus-two boundary surface. This role is played by the genus-two handlebody, which
+furnishes the natural and most elementary filling consistent with the action of the
+mapping class group. One should also note that here we work near the separating
+degeneration, where the handlebody contribution is the focus of our approximation.
+Pictorially, the genus-one a cycle and b cycles are shown in Fig. (3). For the genus-two
+case the mapping class group and modular transformations are described below.
+
+
+
+                                          – 11 –
+Figure 3: A genus one and a genus-two Riemann surface (handlebody). A genus-
+two Riemann surface can be prepared by sewing two one-punctured genus-one surfaces
+along the joining cycle.
+
+Genus-two mapping class group
+The genus-two period matrix has a positive-definite imaginary part. The modular
+transformation matrix M, which acts on the periods, preserves the canonical intersec-
+tion form MT JM = J, with
+
+                                                                     
+                 AB                         0 −Ih                      A   Ã
+      M=                           J=                               M    =              (3.1)
+                 C D                        Ih 0                       B   B̃
+where, we assume that the entries A, B, C, and D are all h × h matrices. The modular
+action on the genus-two period matrix is more involved than in the genus-one case.
+The mapping class group is given by Map(Σ2 ), which is not same as Sp(4, Z) and we
+will discuss the reason in this section at the end. The Sp(4, Z) action on the period
+matrix is,
+                             Ω → (AΩ + B)(CΩ + D)−1 .                                   (3.2)
+where Ω is the period matrix and A, B, C, D are integer matrices satisfying AT D −
+C T B = I2 , AT C = C T A, and B T D = DT B. Hence, after computing the partition
+function explicitly we discuss briefly the genus-two mapping class group. In addition
+to the two canonical pairs of cycles on the genus-two surface, we denote the separating
+cycle by c1 . At genus two, there are two holomorphic differentials, and their periods
+are written as follows:
+
+         Z                   Z                          Z               Z
+                ωj = δij ,         ωj = Ωij ,                ω1 = 1 ,        ω2 = −1.   (3.3)
+           ai                 bi                        c1              c1
+
+
+
+
+                                             – 12 –
+• Modular Sp(4, Z): We now describe how the modular parameters transform under
+modular transformations. The genus-two period matrix is given by,
+                                              
+                                       Ω11 Ω12
+                                Ω=                                        (3.4)
+                                       Ω12 Ω22
+where Ωij ’s in the leading order pinching limit of the middle torus of the genus-two
+surface, are defined in (2.11). In the pinching limit, the relevant modular action is
+generated by the left and right modular groups.
+
+We describe the actions of the generators of the left and right modular groups on the
+modular parameters as follows:
+
+Action of the left modular group The left modular group comprises ⟨S1 , T1 ⟩ and
+similarly the right modular group. Under the action of the left modular group the
+modular parameters change in the following way,
+                                              1        ϵ
+                                S1 : τ1 → −      , ϵ→− .                             (3.5)
+                                              τ1      τ1
+and Ωij ’s change according to,
+                               1                Ω12                   Ω212
+                    Ω11 → −       ,   Ω12 → −       ,   Ω22 → Ω22 −                  (3.6)
+                              Ω11               Ω11                   Ω11
+where, the action of T1 is similar to (3.11). In the separating degeneration limit, we re-
+strict attention not to the full Sp(4, Z), but to its block-diagonal subgroup P SL(2, Z)×
+P SL(2, Z). Similar to what we have discussed above the right modular group action is
+given below.
+Action of the right modular group Similarly under the right modular group action
+generated by,⟨S2 , T2 ⟩:
+                                              1        ϵ
+                                S2 : τ2 → −      , ϵ→− .                             (3.7)
+                                              τ2      τ2
+and Ωij ’s change as [88],
+                               1                Ω12                   Ω212
+                    Ω22 → −       ,   Ω12 → −       ,   Ω11 → Ω11 −                  (3.8)
+                              Ω22               Ω22                   Ω22
+Now after knowing the behaviour of the modular parameters under the modular trans-
+form, we proceed to effectively show the connection to P SL(2, Z).
+
+
+
+
+                                          – 13 –
+3.1    Connection to diagonal subgroup
+In this section, we describe the action of the block-diagonal P SL(2, Z) × P SL(2, Z)
+subgroup. Symbolically, we perform the following sum,
+                                    X              g=2
+                    mod
+                  Zfake :=                       Zfake (γ1 · τ1 , γ2 · τ2 )     (3.9)
+                              (γ1 ,γ2 )∈P SL(2,Z)×P SL(2,Z)
+
+Here we describe how to perform the sum for modular-S transform. The P SL(2, Z)
+transformation matrix is given by,
+                                    
+                                    ab
+                             γ :=      ; ad − bc = 1.                    (3.10)
+                                    cd
+
+Translations τ → τ + 1 are done by the matrix,
+                                         
+                                          11
+                                    T =                                               (3.11)
+                                          01
+
+and its powers. Now we have the following,
+                                −1          
+                            n   [d ]c [r]c,d
+                γc,d,m,n = T ·                 · T m = T n · γc,d,0,0 · T m .
+                                  c     d
+
+For the above decomposition from now on we write the short notation of γc,d,0,0 replacing
+by γc,d . Hence the set of P SL(2, Z) elements without duplication are given by,
+
+      P SL(2, Z) = {T n }n∈Z ∪ {T n · γc,d · T m | c ≥ 1, d ∈ (Z/cZ)∗ , m, n ∈ Z} .   (3.12)
+
+Hence, the modular transformation matrix γc,d can be written as,
+                                       −1          
+                                       [d ]c [r]c,d
+                              γc,d :=                                                 (3.13)
+                                         c     d
+
+We also have ad ≡ 1(mod c) and a is a multiplicative inverse of d and hence we can
+write a as,
+
+                           a = [d−1 ]c + cn;       n being an integer.                (3.14)
+
+One should note that to find the gravity partition function we need to sum over all the
+left cosets of Sp(4, Z) modulo the stabilizer at the cusp (Γ∞ ). For a Sp(4, Z) matrix γ
+is generalised from its P SL(2, Z) definition and is given by,
+                                                 
+                                             AB
+                                     γ :=           ;                             (3.15)
+                                             C D
+
+
+
+
+                                               – 14 –
+where, A, B, C, D are matrices. satisfying the following properties,
+                                                         
+                            T                        0 I2
+                          γ Jγ = J,         J=              .                                    (3.16)
+                                                    −I2 0
+
+with I2 defining 2 × 2 identity matrices. Now, the expression for the stabilizer at the
+cusp is given by,
+                                                       
+                                    A B
+                          Γ∞ =                  ∈ Sp(4, Z)                       (3.17)
+                                    0 (AT )−1
+
+It is also called the maximal parabolic subgroup of Sp(4, Z), that stabilizes the cusp at
+i∞. Having all the ingredients in hand we perform the modular sum in appendix B.
+The result of the total partition function is given by,
+       g=2                     g=2
+      Zgrav (τ1 = τ2 = τ ) := Zfake (τ1 = τ2 = τ ) + Modular images (E(κ, µ, s1 , w))            (3.18)
+
+Before commenting on the handlebody OPE density for pure gravity in AdS3 at genus-
+two, we find the handlebody OPE density in ECFT using the direct inversion of the
+partition function. Instead of directly using the modular bootstrap at genus-two we
+perturbatively construct the genus-two density using the lower genus (genus-one) OPE
+data. Hence, before directly jumping to the genus-two data we primarily focus on
+genus-one OPE data and then build the OPE density of genus-two using that (lower
+genus) information in the later sections.
+
+3.2     Actual mapping class group is larger than Sp(4, Z)
+Before proceeding, in this subsection we comment on why the mapping class group
+at genus-two is larger than the Sp(4, Z). Let the conformal boundary of the three-
+dimensional surface has a bulk which can be considered as closed Riemann surface of
+genus g and is given by, Σg . Choose a canonical basis of one-cycles{a1 , . . . , ag , b1 , . . . , bg },
+with the following choice of the intersection pairing,
+
+                             ai ∩ bj = δij ,      ai ∩ aj = bi ∩ bj = 0.                         (3.19)
+
+An empty handlebody Hg is the simplest three-manifold whose boundary is Σg . For
+a reference handlebody, one may choose the cycles ai to be contractible in the bulk.
+Equivalently ai ’s can be written as,
+
+                                               ai = ∂Di ,                                        (3.20)
+
+where each Di is a disk in the bulk handlebody. Thus a handlebody filling is not
+specified only by the abstract boundary surface. One must also specify which system
+
+
+
+                                                – 15 –
+Figure 4: Picture depicting a genus-two surface with marked cycles. c1 is the sepa-
+rating curve. If one pinches along c1 , as its a separating degeneration, the genus-two
+surface degenerates into two genus-one surfaces.
+
+
+of boundary cycles becomes contractible in the bulk. Different choices of contractible
+cycles can therefore correspond to different semiclassical gravitational saddles in the
+gravity theory. Now, the mapping class group of Σg is given by,
+
+                                                 Diff + (Σg )
+                                      Map(Σg ) =                                                  (3.21)
+                                                 Diff 0 (Σg )
+hence, it consists of orientation-preserving diffeomorphisms modulo those, which are
+continuously connected to the identity. Now, to describe why the Sp(4, Z) is not enough,
+as the mapping class group of the genus-two surface, we introduce the concept of the
+Torelli subgroup. It is given by the kernel of the following map,
+
+                                     σ : Map(Σ2 ) → Sp(4, Z).                                     (3.22)
+
+For genus-one surface the Torelli subgroup is trivial. But for higher genus (g ≥ 2)
+surfaces it is non-trivial due to the separating curves (c1 -cycle for genus-two). The
+genus-two surface has the first homology as4 ,
+
+                                           H1 (Σ2 , Z) ∼ Z4 .                                     (3.23)
+
+ Now, the c1 -cycle has a separating curve rendering to [c1 ] = 0. Hence, it can be
+represented by c1 = (0, 0, 0, 0)T . Therefore, it is possible to generate non-trivial large
+diffeomorphisms along the c1 −cycle as shown in Fig. (4), which are not continuously
+   4
+    As it has four independent non-trivial cycles for Dehn twists generated by a1 , a2 , b1 , b2 and under
+abelianization by the commutator the first fundamental group π1 has four independent cycles.
+
+
+
+
+                                                 – 16 –
+connected to identity. Hence, it is a part of mapping class group. However, homologi-
+cally it is trivial because,
+
+                                         Tc1 [γ] = [c1 ] + n[c1 ] = [c1 ]                              (3.24)
+
+where, Tc1 is the dehn-twist along the curve c1 . Though, Tc1 is a non trivial element,
+σ · [Tc1 ] is homologically trivial. Therefore, it is a non-trivial element of the mapping
+class group, but beyond the regime of Sp(4, Z). Next, we proceed to comment on the
+genus-one density of state.
+Comments on genus-one density of states: At genus one, the torus partition
+function can be decomposed into Virasoro characters and inverted to obtain the primary
+density in fixed-spin sectors. The MWK Poincaré construction gives a continuous
+density with the expected Cardy growth, but it can become negative in odd-spin sectors
+near the black-hole threshold [15, 78, 79]. Since a compact genus-two crossing kernel
+is not presently available, we use the corresponding genus-one inversion kernel as the
+building block of the separating-channel construction. The detailed derivation is given
+in the next section.
+
+
+4     Fake partition function and OPE density in handlebody:
+      relation to MWK
+
+The aim of this section is to identify the genus-two analogue of the MWK vacuum seed
+and then use it to extract the handlebody OPE density. At genus one the MWK par-
+tition function is obtained by summing the vacuum contribution over modular images,
+                           X
+    ZMWK (τ, τ̄ ) =                     Z0,1 (γ · τ, γ · τ̄ ),   Z0,1 (γ · τ, γ · τ̄ ) = |χ0 (γ · τ )|2 . (4.1)
+                      γ∈Γ∞ \P SL(2,Z)
+
+
+The same modular image γ acts on both the holomorphic and anti-holomorphic factors.
+Thus ZMWK is not the product of two independent chiral Poincaré sums. This distinc-
+tion is important at genus two, because the gravity object we want is the same-saddle
+completion, not a holomorphically factorized ECFT partition function.
+    For an extremal CFT with c = 24k (with k ≥ 2), the holomorphic handlebody
+contribution is generated by the fake partition function,
+                                        X
+                        hol
+                       Zh.b. =                     det(CΩ + D)−2k Zfake (k, γ · Ω).                      (4.2)
+                                 γ∈Γ∞ \Sp(4,Z)
+
+
+
+
+                                                      – 17 –
+Here Zfake is the handlebody saddle seed. The MWK-like non-chiral gravity completion
+is therefore given by,
+        grav
+                        X
+      Zg=2   (Ω, Ω̄) =         | det(CΩ + D)|−4k Zfake (k, γ · Ω) Zfake (k, γ · Ω). (4.3)
+                          γ∈Γ∞ \Sp(4,Z)
+
+
+The genus-two MWK-type completion constitutes a more robust non-chiral (same sad-
+                                                                           hol   hol
+dle) completion than the original factorized chiral construction, Zh.b.        Zh.b. . In the later
+case the sum has mixing between different saddles and has more information. Such a
+product would sum holomorphic and anti-holomorphic images independently, whereas
+the MWK construction keeps the same image in both sectors. Now, near the separat-
+ing degeneration, the fake genus-two vacuum character reduces to two torus vacuum
+characters sewn by the pinching parameter, ϵ,
+
+                                                   ϵ2
+                                                                                       
+     (2)                  −2                                                          4
+   χ0 (Ω, k = 1) = G(Ω)ϵ       χ0 (τ1 )χ0 (τ2 ) −      ∂τ χ0 (τ1 )∂τ2 χ0 (τ2 ) + O(ϵ ) . (4.4)
+                                                  48π 2 1
+
+Non-vacuum characters have the same sewing structure. Their leading behaviour is
+given by,
+
+                                              ϵh−2k χh (τ1 )χh (τ2 ).
+
+The corresponding subleading terms follow from the same sewing expansion.5 We first
+review the genus-one MWK density in a form that will be copied in the separating
+degeneration of genus-two calculation. The review is included only to fix notation and
+to clarify where the primary density differs from the full density with descendants.
+
+4.1      Density of states for the MWK partition function: direct inversion
+In this section we derive the genus-one primary density associated with the MWK
+partition function by stripping off the Virasoro descendant contribution, equivalently
+the one-loop factor. We therefore define the reduced partition function as,
+
+                                 ZMWK (τ, τ̄ ) =       |η(τ )|2       ZMWK (τ, τ̄ ).                      (4.5)
+                                                       | {z }
+                                                    one-loop factor
+
+   5
+       For k = 1,
+
+                                                            ϵ2
+                                                                                                   
+              (2)
+             χh (Ω, k = 1) = ϵh−2k G(Ω) χh (τ1 )χh (τ2 ) −      ∂τ χh (τ1 )∂ τ   χ h (τ2 ) + O(ϵ 4
+                                                                                                   )  .
+                                                           48π 2 1             2
+
+
+
+
+For a general CFT, the genus-two partition function is a sum over genus-two conformal blocks weighted
+by |Cijℓ |2 . This is why genus two probes OPE data rather than only the spectrum.
+
+
+
+
+                                                     – 18 –
+Equation (4.5) expresses the MWK partition function as a sum over the modular images
+                                       
+                                        ab
+of the vacuum contribution. Here γ =          ∈ P SL(2, Z), ad − bc = 1,acts on the
+                                         cd
+torus modulus as
+                                                    aτ + b
+                                           γτ =            .                                        (4.6)
+                                                    cτ + d
+Now, Using the modular property,
+
+                                 η(γτ ) = ν(γ)(cτ + d)1/2 η(τ ),                                    (4.7)
+
+with, the transformation matrix given as,
+                          
+                          ab                                             aτ + b
+                     γ=         ∈ P SL(2, Z),                    γτ =           ,                   (4.8)
+                           cd                                            cτ + d
+
+we can express (4.5) as,
+                                     X
+           ZMWK (τ, τ̄ ) =                     (cτ + d)−1/2 (cτ̄ + d)−1/2 Zvac (γτ, γ τ̄ ),         (4.9)
+                             γ∈Γ∞ \P SL(2,Z)
+
+where,
+                                                               1
+                                                               X
+              Zvac (τ, τ̄ ) = q −ĉ q̄ −ĉ (1 − q)(1 − q̄) =        (−1)ℓ+ℓ̄ q −ĉ+ℓ q̄ −ĉ+ℓ̄ .   (4.10)
+                                                               ℓ,ℓ̄=0
+
+The sum in (4.9) is taken over the coset space, Γ∞ \P SL(2, Z), where, (Γ∞ ) is the
+parabolic subgroup that leaves the cusp point in the fundamental domain of the genus-
+one surface (τ = i∞) invariant, generated by the modular transformation (T : τ 7→
+τ + 1). Thus, elements that differ only by a (T n ) transformation are identified, avoiding
+an overcounting of the same bulk saddles. Equivalently, the inequivalent modular
+images can be labelled by relatively prime integers ((c, d)), with (gcd(c, d) = 1) and
+((c, d) ∼ (−c, −d)) in (P SL(2, Z)). Each term therefore represents a distinct modular
+image of the vacuum virasoro character, or equivalently a distinct (AdS3 ) solid-torus
+saddle.
+Schematically (4.9) defines the sum over modular images over the vacuum partition
+function at genus-one. The reduced primary density is defined through the Fourier-
+Laplace transform,
+                                Z
+                             X
+             ZMWK (τ, τ̄ ) =       de ρMWK
+                                       prim (e, j) e
+                                                    2πijx−2πey
+                                                               ,  τ = x + iy.        (4.11)
+                               j∈Z
+
+
+
+
+                                                 – 19 –
+Equivalently, the density can be extracted using the inverse transform
+                        Z σ+i∞          Z1
+                     1
+     ρMWK
+      prim (e, j) =            dy e2πey    dx e−2πijx ZMWK (x + iy, x − iy).                      (4.12)
+                    2πi σ−i∞             0
+
+Now, σ is chosen in such a way such that all the poles of the integrand falls into the
+right of it. Now, Substituting the Poincaré series representation (4.10) into the inversion
+formula (4.12) and explicitly writing the elliptic nome in terms of the exponential, gives
+the following expression,
+                               1                   ∞ X
+                               X
+                                           ℓ+ℓ̄
+                                                   X                   1
+    ZMWK (x + iy, x − iy) =         (−1)                           p
+                               ℓ,ℓ̄=0              c=1     d∈Z
+                                                                    Dc,d (x, y)
+                                                         (c,d)=1                                  (4.13)
+                                                                                             
+                                              2πiaJ   2πi(cx + d)J     2πyE
+                                  × exp             −               −             ,
+                                                c      cDc,d (x, y)   Dc,d (x, y)
+where
+
+                              Dc,d (x, y) = (cx + d)2 + c2 y 2 ,                                  (4.14)
+
+and we introduced the shorthand
+
+                             E ≡ 2ĉ − (ℓ + ℓ̄),                J ≡ ℓ − ℓ̄.                       (4.15)
+
+Now, further on we rewrite the sum over (c, d) in terms of the standard parametrization,
+
+                                 c = s,            d = −r + sN,                                   (4.16)
+
+with,
+
+                    s ≥ 1,      0 ≤ r < s,               (r, s) = 1,          N ∈ Z.              (4.17)
+
+In terms of these variables, the partition function becomes
+                                          1
+                                          X                     ∞ X X
+                                                                X
+                                                         ℓ+ℓ̄
+             ZMWK (x + iy, x − iy) =              (−1)                           Hr,s,N (x, y),   (4.18)
+                                          ℓ,ℓ̄=0                s=1 0≤r<s N ∈Z
+                                                                    (r,s)=1
+
+where, the summand can be expressed as,
+                           1
+    Hr,s,N (x, y) = p
+                     Dr,s (x + N, y)
+                                                                                                (4.19)
+                             2πiaJ 2πi(r − s(x + N ))J        2πyE
+                     × exp         +                   −                   ,
+                               s     sDr,s (x + N, y)    Dr,s (x + N, y)
+
+
+
+                                               – 20 –
+with
+
+                                         Dr,s (x, y) = (r − sx)2 + s2 y 2 .                     (4.20)
+
+Substituting this expression into the inverse transform (4.12), we obtain the following
+expression of the reduced density,
+                     1           ∞ X Z σ+i∞               X 1
+                                                              Z
+                 1  X           X
+ ρMWK
+  prim (e, j) =        (−1)ℓ+ℓ̄                  dy e2πey        dx e−2πijx Hr,s,N (x, y).
+                2πi             s=1 0≤r<s σ−i∞            N ∈Z 0
+                           ℓ,ℓ̄=0
+                                                (r,s)=1
+                                                                                                (4.21)
+Now, from the definition of (4.19), it is very transparent that, the integrand depends
+on the combination, x+N − rs . Hence, it is therefore convenient to introduce the shifted
+variables as follows,
+                                                  r
+                                    t=x+N − .                                      (4.22)
+                                                  s
+After this change of variables in (4.21), the x-integral becomes
+   X 1
+       Z
+            dx e−2πijx Hr,s,N (x, y)
+   N ∈Z    0
+                               Z N −r/s+1                                                       (4.23)
+                                               e−2πijt
+                                                                                         
+          2πi
+              (aJ−jr)
+                        X                                       2πiJt          2πyE
+   =e      s                                dt p         exp − 2 2        −                 .
+                        N ∈Z    N −r/s        s t2 + y 2      s (t + y 2 ) s2 (t2 + y 2 )
+
+Using the identity,
+                                    [
+                                        [N + a, N + a + 1] = R,         ∀a ∈ R,                 (4.24)
+                                 N ∈Z
+
+Thus, the original sum over integer translates is unfolded into an ordinary Fourier
+transform over the real line. After including the remaining inverse Laplace transform
+over y, the reduced density is expressed in terms of a two-dimensional integral over t
+and y, with all dependence on the data (r, s) appearing through an overall phase and
+the s-dependent kernel. the sum over N combines into a Fourier transform over the
+full real line. Now, incorporating the integral over y we can write,
+               Z σ+i∞          Z∞
+                                      e−2πijt
+                                                                                 
+   2πi
+       (aJ−jr)            2πey                          2πiJt          2πyE
+  e s                 dy e         dt p         exp − 2 2         −                 . (4.25)
+                σ−i∞            −∞   s t2 + y 2       s (t + y 2 ) s2 (t2 + y 2 )
+For performing the remaining y integral, now introduce the variables
+                                                    βL                 βR
+                                         y − it =      ,    y + it =      ,                     (4.26)
+                                                    2π                 2π
+
+
+
+                                                       – 21 –
+in terms of which the exponent is diagonal. Now with the following introduction of
+new variables,
+                         e+j                 e−j
+                    u=       ,          v=       ,         A = E + J,        B = E − J,       (4.27)
+                          2                   2
+we can finally express the result of the integral as follows,
+
+                   2 Z 2πσ+i∞
+                                                                  4π 2 A
+                                                                           
+    1         1                          1                                  B
+                            dβL dβR √         exp uβL + vβR − 2           +
+    2s       2πi    2πσ−i∞
+                                        βL βR                       s   βL βR
+                         q                q                                               (4.28)
+                                Au                 Bv
+                1  cosh  4π   − s 2   cosh  4π   −  s 2
+             =            √                  √            Θ(u)Θ(v).
+               2πs          u                  v
+
+where, Θ(u/v) defines the standard Heaviside step function. Finally, the reduced pri-
+mary density defined in (4.21) takes the form,
+                                       1               ∞
+                                                                                          √
+                                                                                                
+                               1       X               X K(j, ℓ − ℓ̄; s)         4π p
+  ρMWK
+   prim (e, j) =           p               (−1) ℓ+ℓ̄
+                                                                           cosh √    e + j ĉ − ℓ
+                      4π    e2 − j 2 ℓ,ℓ̄=0       s=1
+                                                            s                     2s
+                                                        
+                                   4π p          p
+                         × cosh √           e − j ĉ − ℓ̄ ,
+                                    2s
+                                                                                              (4.29)
+
+where the Kloosterman sum is given by,
+                                                                       
+                                                X          2πi
+                                   K(j, m; s) =       exp      (am − jr)                      (4.30)
+                                                0≤r<s
+                                                            s
+                                               (r,s)=1
+
+is the corresponding Kloosterman sum. This is the density for Virasoro primaries. The
+MWK density given in (4.29) matches exactly with the modular bootstrap result in [2].
+If one instead inverts the unstripped MWK partition function, the Virasoro descendants
+must be included as the contribution, which leads to the total density including the
+descendants as follows,
+                                                                       
+        MWK
+                      X
+                                        MWK               1
+      ρfull (e, j) =       p(N )p(N̄ ) ρprim e − N − N̄ + , j − N + N̄ ,         (4.31)
+                                                         12
+                           N,N̄ ≥0
+
+where, p(N ) is the partition number. We will now apply the same logic to the genus-two
+handlebody in separating degeneration limit. Now, in the next section we proceed to
+compute the genus-two OPE density, using the data found for the genus-one scenario.
+
+
+
+                                                       – 22 –
+5   Constructing the genus-two OPE density
+We now construct the density in the separating channel. The logic has three steps.
+First, the genus-two handlebody is written as a modular completion of the fake seed.
+Second, near the separating degeneration this completion reduces to two torus modular
+sums, corrected order by order in the pinching parameter. Third, after stripping the
+universal Virasoro descendants, the Fourier-Laplace coefficients give the reduced OPE
+density. The formal holomorphic handlebody completion is given above in (2.1). For
+the computation of gravity density, we propose the corresponding same-saddle, MWK-
+type completion given by,
+                       X
+       g=2
+     Zgrav (Ω, Ω̄) :=          |det(CΩ + D)|−4k Zfake (k, γ · Ω) Zfake (k, γ · Ω). (5.1)
+                      γ∈Γ∞ \Sp(4,Z)
+
+
+This is the formal genus-two analogue of MWK: the same modular image appears in
+the two chiral sectors. An independently factorized holomorphic × anti-holomorphic
+sum would define a different object.
+The Poincaré sum should be viewed as a sum over distinct modular images of one
+seed saddle. The quotient by Γ∞ removes transformations that leave the seed partition
+function unchanged, while the same-saddle prescription correlates the holomorphic and
+anti-holomorphic parts of each saddle. This correlation is essential: summing the two
+chiral sectors independently would include pairs that do not arise from a single bulk
+saddle, which intrinsically has more information .
+For the explicit calculation, we now specialize to the separating degeneration and eval-
+uate the block-diagonal subgroup contribution. We write
+                                                                             ϵ
+      Ω11 = τ1 + O(ϵ2 ),         Ω22 = τ2 + O(ϵ2 ),             Ω12 = ν =       + O(ϵ3 ).   (5.2)
+                                                                            2πi
+In this limit the relevant modular action is the block-diagonal subgroup
+
+                                      P SL(2, Z) × P SL(2, Z),
+
+with the following,
+                               
+                        ai b i
+                  γi =            ,        αi := ci τi + di ,       ∆γ := α1 α2 .           (5.3)
+                         ci d i
+
+The sewing parameter transforms as,
+                                                                     ϵ
+                  det(CΩ + D) = ∆γ + O(ϵ2 ),                ϵγ =       + O(ϵ3 ).            (5.4)
+                                                                    ∆γ
+
+
+
+                                               – 23 –
+The fake seed has the expansion,
+                                                            X
+                                   Zfake (k, Ω) = ϵ−2k            ϵ2n Fn (τ1 , τ2 ).                           (5.5)
+                                                            n≥0
+
+
+For k = 1, Eq. (2.10) gives,
+
+    F0 (τ1 , τ2 ) = Zvir (τ1 )Zvir (τ2 ),
+                         1                                       1                                             (5.6)
+    F1 (τ1 , τ2 ) = −        ∂τ 1 Zvir (τ 1 )∂τ 2 Z vir (τ 2 ) −    E2 (τ1 )E2 (τ2 )Zvir (τ1 )Zvir (τ2 ).
+                      48π 2                                      72
+For the density calculation below, we specialize to k = 2, so c = 48, ĉ = (c − 1)/24 =
+47/24, and A0 = −47/24, and use the explicit k = 2 seed polynomial given in Eq. (5.26);
+no general-k extrapolation of F1 is assumed.
+
+Substituting the separating expansion into the modular image gives,
+
+    det(CΩ + D)−2k ϵ−2k+2n
+                    γ      Fn (γ1 · τ1 , γ2 · τ2 ) = ϵ−2k+2n ∆−2n
+                                                              γ   Fn (γ1 · τ1 , γ2 · τ2 ).                     (5.7)
+
+Thus the determinant cancels the leading sewing pole, and the n-th order term keeps
+only the residual weight ∆−2n
+                          γ   . The same-saddle expansion can therefore be written as
+                                                          X
+                               g=2
+                              Zgrav (Ω, Ω̄) = |ϵ|−4k             ϵ2n ϵ̄2m Zn,m (τi , τ̄i ),                    (5.8)
+                                                         n,m≥0
+
+with
+                                  X
+  Zn,m (τi , τ̄i ) =                                 ∆−2n ¯ −2m Fn (γ1 · τ1 , γ2 · τ2 ) F̄m (γ1 · τ̄1 , γ2 · τ̄2 ).
+                                                          ∆
+                                                      γ     γ
+                       γ∈Γ∞ \[P SL(2,Z)×P SL(2,Z)]
+                                                                                                               (5.9)
+                                            g=2
+For the formal full completion, the object Zgrav is modular covariant rather than scalar
+invariant:
+                           g=2
+                          Zgrav (γ · Ω, γ · Ω̄) = |det(CΩ + D)|4k Zgrav
+                                                                   g=2
+                                                                        (Ω, Ω̄).                             (5.10)
+
+A modular invariant is obtained by multiplying by (det Im Ω)2k :
+                                 g=2
+                                Zgrav (Ω, Ω̄) := (det Im Ω)2k Zgrav
+                                                               g=2
+                                                                    (Ω, Ω̄).                                 (5.11)
+
+The distinction between covariance and invariance is only a matter of modular weight.
+The factor (det Im Ω)2k supplies the opposite weight and therefore converts the holo-
+morphic normalization used in the calculation into a scalar modular invariant object.
+
+
+
+                                                       – 24 –
+Near the separating cusp this factor is a finite polynomial in ϵ and ϵ̄, so it reshuffles
+nearby sewing orders but does not alter the inversion kernel derived below.
+    The determinant factor only modifies the density by a finite order-mixing operation
+in the pinching expansion.6
+                                                2k
+                                                                                      (ϵ + ϵ̄)2r
+                                                                      
+                                       2k
+                                                X
+                                                           r        2k
+                      (det Im Ω)            =          (−1)              (y1 y2 )2k−r            + ··· .          (5.12)
+                                                 r=0
+                                                                     r                 (4π)2r
+
+We now strip the two genus-one descendant factors and define the following,
+                                                                2
+                                                                Y
+                                   An,m (τi , τ̄i ) :=                |η(τi )|2 Zn,m (τi , τ̄i ).                 (5.13)
+                                                                i=1
+
+The reduced density is the Fourier-Laplace coefficient of this object:
+          X
+              Z                                    2
+                                                   Y
+ An,m =          de1 de2 ρn,m (e1 , j1 ; e2 , j2 )   e2πiji xi e−2πei yi , τi = xi + iyi . (5.14)
+              j1 ,j2 ∈Z                                               i=1
+
+Equivalently,
+                                       2
+                                             "         Z σi +i∞                      Z1                    #
+                                       Y          1
+         ρn,m (e1 , j1 ; e2 , j2 ) =                                  dyi e2πei yi        dxi e−2πiji xi An,m .   (5.15)
+                                       i=1
+                                                 2πi     σi −i∞                      0
+
+Equation (5.15) can be understood directly from the spectral decomposition. For each
+torus, the integration over xi transforms (the partition function) the states with a
+definite integer spin ji , whereas the inverse Laplace transform in yi picks out states
+with fixed energy ei . The factor |η(τi )|2 strips off the universal contribution coming
+from Virasoro descendants. Consequently, ρn,m captures the OPE data associated with
+primary states only, rather than the complete spectrum including descendants. One
+could, in principle, keep the descendant contribution explicitly. Doing so, however,
+makes the inversion substantially more involved, since it introduces additional sums
+over partition numbers, as described in the previous section.
+   6
+       Near the separating cusp,
+
+                                                                         (ϵ + ϵ̄)2
+                                             det Im Ω = y1 y2 −                    + ··· ,
+                                                                           16π 2
+and therefore
+                                                  2k
+                                                                                      (ϵ + ϵ̄)2r
+                                                                      
+                                                  X                 2k
+                           (det Im Ω)2k =               (−1)r            (y1 y2 )2k−r            + ··· .
+                                                  r=0
+                                                                     r                 (4π)2r
+This is the content of the scalar-invariant correction (5.12). Since it only mixes finitely many neigh-
+boring orders, we first compute the reduced density associated with Zn,m .
+
+
+
+
+                                                                – 25 –
+The stripped seed coefficients are defined by
+                                             X
+                 η(τ1 )η(τ2 )Fn (τ1 , τ2 ) =   fn (ℓ1 , ℓ2 ) q1−ĉ+ℓ1 q2−ĉ+ℓ2 ,
+                                                                   ℓ1 ,ℓ2 ≥0
+                                                                     X                                                               (5.16)
+                       η̄(τ̄1 )η̄(τ̄2 )F̄m (τ̄1 , τ̄2 ) =                        f¯m (ℓ̄1 , ℓ̄2 ) q̄1−ĉ+ℓ̄1 q̄2−ĉ+ℓ̄2 .
+                                                                   ℓ̄1 ,ℓ̄2 ≥0
+
+For each torus, set
+
+       Ai = −ĉ + ℓi ,              Bi = −ĉ + ℓ̄i ,                   Ei = Ai + Bi ,                      Ji = Ai − Bi .            (5.17)
+
+Then the two tori factorize after the inverse transform:
+                                XX                                                  2
+                                                                                    Y
+                                                  fn (ℓ1 , ℓ2 )f¯m (ℓ̄1 , ℓ̄2 )
+                                                                                                                             
+  ρn,m (e1 , j1 ; e2 , j2 ) =                                                             Rn,m ei , ji | −ĉ + ℓi , −ĉ + ℓ̄i .
+                                ℓ1 ,ℓ2 ℓ̄1 ,ℓ̄2                                     i=1
+
+                                                                                                                                     (5.18)
+
+Here Rn,m is the one-torus Rademacher kernel contributing to the (n, m) order correc-
+tion. The kernel is given by the following expression,
+                            ∞                                          
+                           X
+                                               −1−2n−2m (1)        A B
+      Rn,m (e, j | A, B) =     K(j, A − B; s) s        Rn,m e, j | 2 , 2 .     (5.19)
+                           s=1
+                                                                  s s
+
+where, K(j, J; s) be the Kloosterman sum,
+                                           
+                X                rj a(r, s)J
+ K(j, J; s) :=       exp 2πi − +                ,                                               a(r, s)r ≡ −1               (mod s). (5.20)
+               0≤r<s
+                                  s     s
+                   (r,s)=1
+
+and the primitive local kernel is given by,
+                           Z σ+i∞            Z∞
+                        1                                             1               1
+    (1)
+  Rn,m (e, j | A, B) =             dy e2πey
+                                                 dx e−2πijx (x + iy)− 2 −2n (x − iy)− 2 −2m
+                       2πi σ−i∞               −∞
+                                                               
+                                2πix(A − B) 2πy(A + B)
+                       × exp −                 −                  .
+                                    x2 + y 2         x2 + y 2
+                                                                                        (5.21)
+
+The master formula divides the problem into two pieces. The coefficients fn f¯m contain
+the polar seed data, whereas Rn,m transforms each polar term to the heavy spectrum
+required by modular covariance. The integer s labels inequivalent modular images
+(or saddles): the Kloosterman sum combines their phases, and the factor s−1−2n−2m
+increasingly suppresses large-s images at higher sewing order. For j < 0 one uses
+
+
+
+                                                                  – 26 –
+the reflection (j, J, n, m) 7→ (−j, −J, m, n), while the j = 0 sector requires the usual
+regularized prescription. Equivalently,
+
+                    (1)                          (−1)n+m 2n 2m (1)
+                   Rn,m (e, j | A, B) =                    ∂ ∂ R (e, j | A, B).                   (5.22)
+                                                 (4π 2 )n+m A B 0,0
+
+Moreover, the derivative representation is useful because no new integral is needed at
+every order. Differentiating with respect to the left and right polar energies A and B
+generates the extra denominator powers associated with ϵ2n ϵ̄2m . All higher kernels can
+therefore be derived from the leading kernel, provided that the derivatives are taken
+before the rescaling A, B 7→ A/s2 , B/s2 and the same regularization scheme is kept.
+
+Leading contribution. For (n = m = 0) and j ̸= 0, the kernel for a fixed polar pair
+(A, B) is given by,
+                                               ∞
+                                                                                        √
+                                                                                             
+                                  1            X K(j, A − B; s)                4π p
+   R0,0 (e, j | A, B) =    p                                             cosh √    e + j −A
+                          4π  e2 − j 2 s=1       s                              2s
+                                                                                                  (5.23)
+                                                √
+                                                  
+                                     4π p
+                           × cosh √        e − j −B ,
+                                      2s
+with the appropriate analytic continuation when A or B is non-negative. The j = 0
+sector requires a separate regularized prescription.
+Since F0 = Zvir (τ1 )Zvir (τ2 ) and η(τ )Zvir (τ ) = (1 − q)q −ĉ , the torus vacuum combination
+is,
+                                      1
+                                      X
+                                           (−1)ℓ+ℓ̄ R0,0 e, j | −ĉ + ℓ, −ĉ + ℓ̄ .
+                                                                                 
+                     ρ0 (e, j) =                                                                  (5.24)
+                                      ℓ,ℓ̄=0
+
+
+Hence, the leading genus-two density therefore factorizes as,
+
+                               ρ0,0 (e1 , j1 ; e2 , j2 ) = ρ0 (e1 , j1 )ρ0 (e2 , j2 ).            (5.25)
+
+This factorization implies that any sign problem present in a genus-one factor is in-
+herited by the leading separating contribution. At this pinching limit the thin tube
+(i.e the ϵ-cycle) carries only the vacuum sewing contribution, so the two handles do
+not yet exchange nontrivial data. This explains the factorization of density (5.25) at
+leading order. It also gives an immediate diagnostic of unitarity: if one torus factor is
+negative while the other is positive, their genus-two product is negative, and increasing
+the genus alone cannot remove the genus-one pathology at this order. Therefore it
+can be inferred that perturbatively the pathology may not be cured. We will be more
+
+
+
+                                                     – 27 –
+precise about those issues next.
+
+     First correction. For k = 2, the first correction is controlled by F1 . After
+stripping the eta factors,
+                                    1     X
+     η(τ1 )η(τ2 )F1 (τ1 , τ2 ) =              Cα q1A0 +rα1 q2A0 +rα2 E2 (q1 )sα1 E2 (q2 )sα2 . (5.26)
+                                 144 · 96 α∈P
+                                                              2
+
+
+Although (5.26) looks compact, it is just a formal expression. Each label α specifies
+a monomial, the shifts rαi move the energies on the two tori, and the exponents sαi
+determine whether an E2 series is present or not. Expanding that series introduces
+the non-negative integers ui , after which every term can be inverted with the same
+one-torus kernel. For compactness, define N1 = (144 · 96)−1 . Here A0 = −ĉ = −47/24,
+and the finite set P2 contains the data for the k = 2 polynomial F1 .7 With
+          X
+E2 (q)s =     cs (u)q u ,  c0 (u) = δu,0 ,  c1 (0) = 1,   c1 (u) = −24σ1 (u) (u > 0),
+                u≥0
+                                                                                                                        (5.28)
+the inverse transform gives,
+           Gk=2 (e1 , j1 , e2 , j2 ; ϵ, ϵ̄) = |ϵ|−8 ρ0,0 + ϵ2 ρ1,0 + ϵ̄2 ρ0,1 + O(ϵ4 , ϵ2 ϵ̄2 , ϵ̄4 ) .
+                                                                                                    
+                                                                                                                        (5.29)
+The two linear corrections are given by,
+                                          1
+                                        X X                                        2
+                                                                                 X Y
+    ρ1,0 (e1 , j1 ; e2 , j2 ) = N1                        Cα (−1)ℓ̄1 +ℓ̄2                      csαi (ui )
+                                       α∈P2 ℓ̄1 ,ℓ̄2 =0                        u1 ,u2 ≥0 i=1
+                                                                                                                        (5.30)
+                                                              2
+                                                              Y                                                
+                                                          ×         R1,0 ei , ji A0 + rαi + ui , A0 + ℓ̄i ,
+                                                              i=1
+
+                                        1
+                                      X X                                        2
+                                                                               X Y
+                                                                    ℓ1 +ℓ2
+  ρ0,1 (e1 , j1 ; e2 , j2 ) = N1                      C̄β (−1)                               csβi (vi )
+                                     β∈P2 ℓ1 ,ℓ2 =0                          v1 ,v2 ≥0 i=1
+                                                                                                                        (5.31)
+                                                                  2
+                                                                  Y                                             
+                                                           ×            R0,1 ei , ji A0 + ℓi , A0 + rβi + vi .
+                                                                  i=1
+   7
+       The tuples (Cα , rα1 , rα2 , sα1 , sα2 ) are
+ P2 = {(385, 0, 0, 1, 1), (−385, 1, 0, 1, 1), (−385, 0, 1, 1, 1), (385, 1, 1, 1, 1), (47, 0, 0, 1, 0), (−47, 1, 0, 1, 0)
+            , (−23, 0, 1, 1, 0), (23, 1, 1, 1, 0), (47, 0, 0, 0, 1), (−23, 1, 0, 0, 1), (−47, 0, 1, 0, 1), (23, 1, 1, 0, 1),
+            (2209, 0, 0, 0, 0), (−1081, 1, 0, 0, 0), (−1081, 0, 1, 0, 0), (529, 1, 1, 0, 0)}.
+                                                                                                                          (5.27)
+
+
+
+
+                                                                  – 28 –
+The kernels are derivatives of the primitive leading kernel,
+                                 ∞
+                      1 X                       2 (1)
+ R1,0 (e, j|A, B) = − 2     K(j, A − B; s) s−3 ∂A R0,0 (e, j|A, B)                 ,
+                     4π s=1                                        A=A/s2 , B=B/s2
+                                 ∞                                                                         (5.32)
+                      1 X                           (1)
+ R0,1 (e, j|A, B) = − 2     K(j, A − B; s) s−3 ∂B2 R0,0 (e, j|A, B)                 .
+                     4π s=1                                         A=A/s2 , B=B/s2
+
+
+The derivatives act only on the primitive contour kernel, not on the Kloosterman phase.
+At the next mixed order,
+
+                                           X                     X          2
+                                                                            Y
+        ρ1,1 (e1 , j1 ; e2 , j2 ) = N12            Cα C̄β                           csαi (ui )csβi (vi )
+                                          α,β∈P2            u1 ,u2 ,v1 ,v2 ≥0 i=1
+                                                                                                           (5.33)
+                                      2
+                                      Y                                                               
+                                  ×         R1,1 ei , ji A0 + rαi + ui , A0 + rβi + vi .
+                                      i=1
+
+
+This term enters at order ϵ2 ϵ̄2 ; at fourth order it must be combined with the F2 F 0
+and F0 F 2 sectors. The two coefficients ρ1,0 and ρ0,1 are the first corrections in the
+holomorphic and anti-holomorphic sewing parameters, respectively. They need not
+agree at fixed spin because they differentiate opposite energies. Their exchange under
+simultaneous spin reflection is therefore a structural consequence of the computation,
+rather than an additional assumption about the spectrum.
+
+5.1   Numerical evaluation of handlebody OPE density
+One of the primary goal of the article is to see whether the higher genus corrections to
+the density can cure the negativity of the spectrum near the black hole threshold. Our
+finding suggests that near the black hole threshold there exists a small region where
+the negativity still exists for the corrections ρ1,0 , ρ0,1 . Negativity of ρ0,1 appears for the
+one of the odd spin sector and the energy is chosen in the vicinity of the |j| as depicted
+in Fig. (5).
+     To resolve the sign of the individual sewing coefficients, we parameterize the ener-
+gies by their distance from the BTZ threshold,
+
+                                     δi = ei − |ji | > 0,               i = 1, 2.                          (5.34)
+
+The results below were obtained for k = 2 using the kernel, polar seed support, Kloost-
+erman cutoff smax = 20, Eisenstein cutoff NE2 = 20, and 80-digit working precision. In
+the present implementation smax is the cutoff on the Kloosterman sum. Moreover, for
+k = 2, the Eisenstein-mode sums cannot, in general, be initiated from the prescribed
+
+
+
+                                                       – 29 –
+Figure 5: Figure depicting the light and heavy states (above the black hole threshold).
+The censored region contains only light operators. The heavy operator OPE density
+shows Cardy scaling.
+
+lower limit. Their lower limits must instead be adjusted according to the powers ap-
+pearing in each term so that no spurious imaginary contributions arise in the density
+coefficients. Alternatively, one may retain the original summation ranges and construct
+suitable combinations of the density coefficients using complex conjugation and spin
+reflection. These combinations yield a physically sensible real-valued density. We find
+numerically that the two prescriptions lead to the same qualitative conclusions, partic-
+ularly regarding the occurrence and location of negative-density regions. We also check
+the convergence of the series by taking higher cut-off value and observe that the series
+converges very fast. Negative entries are shaded in red. From the numerical analysis,
+we comes up with following observations. First, the negative bands move closer to
+the black hole threshold as the positive odd spin is increased. At fixed δ2 = 10−2 ,
+the (j1 , j2 ) = (1, 2) sector changes sign between δ1 = 10−6 and 10−4 , the (3, 2) sec-
+tor between 10−10 and 10−8 , and the (5, 2) sector between 10−12 and 10−10 . Second,
+simultaneous spin reflection implements as follows,
+                                              (F F )              (F F )
+      ρ1,0 (j1 , j2 ) = ρ0,1 (−j1 , −j2 ),   ρ1,11 1 (j1 , j2 ) = ρ1,11 1 (−j1 , −j2 ).   (5.35)
+
+ Third, mixed orientations can make both first-order chiral coefficients negative, as oc-
+curs for (j1 , j2 ) = (2, −2) and (−2, 2) in Table (2). By contrast, the F1 F 1 contribution
+to ρ1,1 is positive at every point listed here. This last observation is a numerical state-
+ment on the scanned domain, not a positivity theorem. In particular, the complete
+fourth-order coefficient also requires the presently unavailable F2 F 0 and F0 F 2 contri-
+butions. In Fig. (6), we provide a quantitative plot for the positive-negative transition
+of density coefficient ρ1,0 . As noted above, the zero-density condition defines a locus
+
+
+
+                                             – 30 –
+Figure 6: Plot depicting the nature of OPE density coefficient ρ1,0 for different choices
+of δi with fixed j1 = 1, j2 = 2. We plot the signed logarithm z ≡ sgn(ρ1,0 ) log (1 + |ρ1,0 |).
+Thus, z > 0 corresponds to ρ1,0 > 0, z < 0 corresponds to ρ1,0 < 0, and z = 0
+corresponds to ρ1,0 = 0. The orange region represents positive density, the blue region
+represents negative density, and the pale-yellow band indicates the transition between
+regions of large positive and large negative density. The black line marks the zero-
+density boundary.
+
+
+in the (− log δ1 , − log δ2 ) plane. In Fig. (7), we display the numerically determined
+boundary separating the regions of large positive and large negative density.
+
+
+
+
+   Figure 7: Figure depicting the zero density boundary for fixed (j1 = 1, j2 = 2).
+
+
+
+
+                                            – 31 –
+                                                                                                 (F F )
+ j1    j2         δ1           δ2              ρ0,0              ρ1,0             ρ0,1          ρ1,11 1
+ 1     1 10−10              10−10     2.79762×1017      3.49089×1016     2.58039×10−12 1.08130×10−13
+ 1     1 10−8                10−4    −6.09309×1014     −3.20933×1013            2.58333 1.08259×10−1
+ 1     1 10−6                10−2    −6.17194×1014     −3.72042×1013       2.88920×106   1.21747×105
+ 1     2 10−8                10−2    −8.16016×1018     −1.01989×1018       2.95532×10 6
+                                                                                         2.60188×105
+ 1     2 10−6                10−2    −6.31602×1017     −8.57537×1016       2.95535×109   2.60191×108
+ 1     2 10−4                10−2     1.78529×1018      1.54166×1017      2.95869×1012  2.60499×1011
+ 2     2 10−8                10−2     2.17704×1020      4.49519×1019       3.05842×10 9
+                                                                                         5.67794×108
+ 3     2 10−10               10−2    −2.56275×1022     −7.51681×1021       6.68433×108   1.88245×108
+ 3     2 10−8                10−2     1.60861×1021      4.23067×1020      6.68433×1011  1.88246×1011
+ 5     2 10−12               10−2    −1.67204×1025     −7.86952×1024       3.66004×10 9
+                                                                                         1.73238×109
+ 5     2 10−10               10−2     6.12011×1023      2.94144×1023      3.66004×1012  1.73238×1012
+
+Table 1: Table showing data for positive spin density coefficient The last column is the
+F1 F 1 contribution, ρ1,1 , to the second order correction, rather than the full fourth-order
+coefficient.
+
+                                                                                                 (F F )
+  j1        j2         δ1       δ2              ρ0,0              ρ1,0              ρ0,1        ρ1,11 1
+ −1     −2        10−8        10−2    −8.16016×1018       2.95532×106     −1.01989×1018    2.60188×105
+ −3     −2       10−10        10−2    −2.56275×1022       6.68433×108     −7.51681×1021    1.88245×108
+ −5     −2       10−12        10−2    −1.67204×1025       3.66004×109     −7.86952×1024    1.73238×109
+  1     −2        10−8        10−2    −8.16016×1018      2.85369×1016     −3.95553×107     2.76361×104
+ −1      2        10−8        10−2    −8.16016×1018     −3.95553×107       2.85369×1016    2.76361×104
+  2     −2       10−10        10−2     1.98618×1021     −7.55545×1018     −4.09348×107     7.57555×104
+ −2      2       10−10        10−2     1.98618×1021     −4.09348×107      −7.55545×1018    7.57555×104
+  2      3       10−10        10−2     4.31797×1023      1.36779×1023       6.64910×108    1.87087×108
+ −2     −3       10−10        10−2     4.31797×1023       6.64910×108      1.36779×1023    1.87087×108
+
+Table 2: Table showing density coefficient data for reflected and mixed spin config-
+uration. Simultaneous spin reflection exchanges ρ1,0 and ρ0,1 while leaving the partial
+ρ1,1 invariant.
+
+
+Stability of zero-density curve Since the truncated Kloosterman sum contains
+oscillatory contributions, it is natural to ask whether the zero-density locus remains
+stable as the cutoff is increased. Establishing this stability is important for determining
+whether the observed sign change is a genuine feature of the density rather than an
+artifact of truncating the sum. To test this, we consider the representative choice
+j1 = 1, j2 = 2, and fix δ2 = 10−2 . For each value of the Kloosterman cutoff smax , we
+
+
+
+                                                       – 32 –
+Figure 8: Dependence of the critical value δ1,crit on the Kloosterman cutoff smax for
+j1 = 1, j2 = 2, and δ2 = 10−2 . The dashed horizontal line denotes the mean obtained
+from the high-cutoff values smax ∈ {8, 12, 16, 20, 24, 30}, while the shaded band indicates
+their minimum-to-maximum variation.
+
+
+numerically determine the critical value δ1,crit satisfying
+                                                                    
+                                         ρ1,0 δ1,crit , δ2 ; j1 , j2 = 0.
+
+    As shown in Fig. (8), the critical value approaches a stable plateau as smax is
+increased. Averaging over the high-cutoff values gives
+
+                            1            X
+               δ 1,crit =                                  δ1,crit (smax ) = 6.23049 × 10−6 .   (5.36)
+                            6
+                                smax ∈{8,12,16,20,24,30}
+
+
+Over the same set of cutoffs, the critical values lie within
+
+                            6.22620 × 10−6 ≤ δ1,crit ≤ 6.23294 × 10−6 .
+
+The total variation is approximately 0.11% of the mean value. We therefore conclude
+that the zero-density crossing is stable under increasing smax and is not produced by a
+low-cutoff truncation.
+
+
+6    Conclusion and future outlooks
+
+Motivated by the case study of calculating the OPE density above the black hole
+threshold at genus-one, we try to find out for higher genus whether the problem of non-
+unitarity of the spectrum has already been resolved or still remains. In the following,
+we list the main findings of our paper.
+
+
+
+                                                     – 33 –
+• We introspect the description of extremal conformal field theories on g = 2 rie-
+  mann surfaces. Using the techniques of sewing two riemann surfaces we figured
+  out using modular invariance, how does the light spectrum (above the black hole
+  threshold) looks like in gravity. The problem of negative density of states is not
+  there for genus-two. Using the Rademacher methods we managed to find the ex-
+  act form of the spectral density above the black hole threshold. We also showed
+  the cardy growth of the spectrum for heavy primaries at genus-two.
+
+• We note that, in the separating degeneration limit, the genus-two geometry ef-
+  fectively factorizes into the product of two genus-one topologies connected by a
+  long tube. At least for splitted topologies with lower genus, connected by a thin
+  long tube is easier for computing the genus-two OPE density rather than exploit-
+  ing the full modular invariance of the dumbell and sunrise channel equality via
+  crossing equation.
+  In particular, we show that the OPE density associated with the genus-two han-
+  dlebody admits a decomposition into a suitable combination of genus-one densi-
+  ties. Mathematically, at the next order in the pinching parameter, the genus-two
+  contribution does not factorise into the products of genus-one data, and instead
+  becomes two genus-one surfaces connected by a thin tube with the gluing param-
+  eter controlling the interaction between the two sectors.
+  Thus, in the separating limit, the complicated genus-two OPE density is described
+  by simpler genus-one building blocks, providing a description of the handlebody
+  contribution. Though, there are many non-handlebody instanton configuration
+  is possible at genus-two, it is certainly important to exploit the total modular
+  invariance and use modular bootstrap techniques to find the gravity OPE density
+  similar to [84]. We also show explicitly in the numerics that for very fine bands
+  above the black hole threshold, we get the negativity. The negativity in genus-one
+  density of state hence also persists in genus-two. This pathology of negativity,
+  is not cured in genus-two. However, to strongly comment on this one needs to
+  perform dumbell-sunrise channel bootstrap non-perturbatively. Apart from this
+  we also showed explicitly, that the Rademacher contour prescription described in
+  detail in appendix (A) renders different density than the obtained density from
+  the direct inversion using the inverse laplace transform.
+  Future Outlooks. Below we state some important future directions as follows,
+
+• Spectral analysis: An immediate question concerns the issues of non-unitarity
+  and discreteness of the spectrum. These problems are not yet resolved, and
+  consequently, multiple possible resolutions remain open. In close analogy with
+
+
+
+                                     – 34 –
+  the genus-one case, one option is to incorporate orbifold singularities. Another
+  natural extension is to include non-handlebody instantons at genus two. From this
+  perspective, it is particularly compelling to analyze the spectrum extracted from
+  the partition function by exploiting modular invariance in the degeneration limit.
+  A further avenue of interest is the spectral analysis of the genus-two partition
+  function itself, with particular emphasis on establishing bounds on the spectral
+  gap associated with the lowest primary operators.
+
+• Functional bootstrap: It is important to investigate genus-two density of
+  state using functional bootstrap, i.e writing the bootstrap equation on sphere
+  with twist operator insertions, resembling the different higher genus structure.
+
+• Matrix model description: An important future direction is to reproduce
+  the spectral density obtained from the gravitational analysis directly from the
+  proposed matrix model for pure three-dimensional gravity. In particular, one
+  should verify that the matrix model topological recursion has a spectral curve
+  which reproduces non-planar higher loop correlators, as the genus-two partition
+  function as well as the density of states. Establishing this agreement would
+  provide a novel consistency check of the matrix model duality and will clarify
+  how much of the matrix model descriptions knew about the bulk topologies.
+
+• Performing the Sp(4, Z) sum:A crucial aspect of a consistent genus-two for-
+  mulation for extracting the OPE density is the implementation of full modular
+  invariance under the total modular group Sp(4, Z). In many approaches, one
+  cosiders the diagonal subgroup P SL(2, Z) ⊂ Sp(4, Z), corresponding to the sep-
+  arating degeneration limit where the genus-two surface factorizes into two tori.
+  This suggests that physical quantities can be expressed in terms of Siegel modular
+  forms and written as sums over the full Sp(4, Z) modular group. Such a formu-
+  lation would naturally incorporate both separating and non-separating contribu-
+  tions, avoiding reliance on degeneration limits Developing computational methods
+  directly on the Siegel upper half-space, without invoking factorization, is therefore
+  an important direction toward uncovering the complete modular structure.
+
+• Non-Handlebody instantons: In this paper, we have computed the density
+  of states arising from handlebody geometries, which constitute a seperate class of
+  saddles admitting a simple geometric description in terms of contractible cycles.
+  While these configurations capture an important subset of contributions, they are
+  still subleading.
+
+
+
+                                      – 35 –
+Acknowledgements
+We thank Arpan Bhattacharyya for many useful discussions throughout the course of
+the project. S.P. (PMRF ID: 1703278) is supported by the Prime Minister’s Research
+Fellowship of the Government of India. Research of S.G. is supported by ANRF grant
+ANRF/ARG/2025/001338/PS. We would like to thank ChatGPT 5.6 and Codex for
+enormous help in writing the Mathematica code and formatting the draft.
+
+
+A     Rademacher expansion of (holomorphic) modular integrals:
+      a general strategy
+Let us assume a weakly holomorphic modular form of SL(2, Z) with weight w,
+
+                               f (γ · τ ) = g(γ)(cτ + d)w f (τ )                   (A.1)
+
+Assume, the modular form has polar part and correspondingly has the following Fourier
+
+
+
+
+Figure 9: Ford circles obtained from farey sequences with sigularity at every rs ,where
+(r, s) are co-prime to each other within the interval (0, 21 )
+
+decomposition,
+                                         M
+                                         X                  X
+                              f (τ ) =         p−µ q −µ +         pn q n           (A.2)
+                                         µ=1                n≥0
+
+Main goal: The main goal of (Hardy-Ramanujan-) Rademacher expansion is deter-
+mine all the Fourier coefficient for n ≥ 0 from the polar part of the expansion. At first
+notice, the Fourier coefficients can be extracted straightforwardly from the Cauchy
+integral formula,
+    • In τ variable the integral takes the form,
+                                    Z
+                              pn =     f (τ )e−2πiτ n dτ, τ = x + iy               (A.3)
+                                         Γ
+
+
+
+
+                                               – 36 –
+Figure 10: Here in the left figure we show the effective Rademacher contour C01 which
+comes from each of the ford circles shown in the right. The ford cirlces are obtained
+from the Farey sequence.
+
+
+Now assuming the function is holomorphic in the upper half plane, the contour in q-
+plane maps to x ∈ [0, 1] in τ -plane and we choose the imaginary part to be 1 (it does
+not matter what we choose, confirmed from the holomorphicity). Therefore the integral
+becomes,
+                                     Z i+1
+                                pn =       dτ f (τ ) e−2πinτ .                   (A.4)
+                                        i
+
+However a straightforward integral gives divergences. So the question is how one can
+find the convergent piece out of it. Rademacher’s idea was to deform the contour in
+such a way that the resulting integral gives a convergent result, all thanks to the holo-
+morphic (and periodicity) nature of the modular function.
+
+Farey dissection and Rademacharisation: Enlarge the contour until it touches the
+real line. The contour deforms into a union of Ford-circle arcs Γr/s around each reduced
+rationals r/s (Farey dissection) with s ≤ N . All the Ford circles centers at τ = rs + i 2s12
+with radius 2s12 as desribed in Fig. (9) and Fig. (10). Effectively, we replace the straight
+line contour with union of the arcs of the Ford circles. Therefore the Fourier coefficients
+become,
+                                             Z
+                                    X
+                           pn =                    f (τ ) e−2πinτ dτ                   (A.5)
+                                  r/s ∈ FN      Γr/s
+                                0<r≤s,(r,s)=1
+                                    s≤N
+
+
+
+
+                                            – 37 –
+Now straighten the each arc by the following modular map,
+                                   
+                              a b
+                      γr/s =          ∈ SL(2, Z), gcd(r, s) = 1                                  (A.6)
+                               s −r
+after using the modular transformation properties the integral becomes,
+    Z                     N               Z                                 
+               −2πiτ n
+                         X    X
+                                     −1           −2πinτ         −w   aτ + b
+       f (τ )e         →            g (γ)    dτ e        (sτ − r) f
+                         s=1 0<r≤s,        Γ
+                                                                      sτ − r
+                                                     r/s
+                              (r,s)=1
+                        N
+                        X   M
+                          X X
+                                                           Z
+                    =                      p−µ g −1 (γ)        dτ (sτ − r)−w
+                          s=1 0<r≤s, µ=1
+                              (r,s)=1
+                                                                                                 (A.7)
+                                                         
+                                           aτ + b
+                             × exp −2πiµ            − 2πinτ
+                                           sτ − r
+                      N
+                      X   M
+                        X X
+                                      Z
+                    =       p−µ g (γ) dτ (sτ − r)−w
+                                 −1
+
+                          s=1 0<r≤s, µ=1
+                              (r,s)=1
+                                                                             
+                                                          a     1
+                                            × exp −2πiµ     −           − 2πinτ
+                                                          s s(sτ − r)
+Now, do the following change of variable, sτ − r = izs (which sends every Ford circle to
+the origin with radius one.), we have ,
+         N                M            Z z2 (r,s,N )                                    
+   1−w
+        X
+              w−2
+                   X X
+                                  −1                     −w − 2πi (nr+µa)       2πµ 2πnz
+  i         s                p−µ g (γ)               dz z e s             exp      + 2
+        s=1       0<r≤s, µ=1            z1 (r,s,N )
+                                                                                 z   s
+                (r,s)=1
+                                                                                                 (A.8)
+As we take, N → ∞, the Rademacher contour almost encircles the full Ford circles
+except the point z = 0 (in τ -plane τ = r/s). Now again doing the following change of
+variable which maps the circle to a vertical straight line with Re(t) = 2π, z = 2πt , we
+have,
+                                                              
+                N        M                                       Z 2π+i∞
+                                                                                        2n
+                                                    2πi
+                                                                             w−2 µt+ 4π
+               X        X          X
+                                          −1       − s (nr+µa) 
+                                                              
+    − (2πi)1−w     sw−2     p−µ       g    (γ) e                      dt t   e     ts2
+
+                s=1          µ=1           0<r≤s,                              2π−i∞
+                                           (r,s)=1
+                    M                    →∞
+                                        NX                                              √ 
+                    X                       1                 √                        4π µn
+    = −(2πi)  2−w
+                          p−µ µ   1−w
+                                              Kg (n, µ, s) (2π µn)w−1 I1−w                   ,
+                    µ=1                 s=1
+                                            s                                            s
+                                                                                                 (A.9)
+
+
+
+
+                                                     – 38 –
+where, Kg (· · · ) is the generalized Kloosterman sum defined as,
+                                                          2πi
+                                           X
+                            Kg (n, µ, s) =     g −1 (γ) e− s (nr+µa)                                (A.10)
+                                                   0<r≤s,
+                                                   (r,s)=1
+
+A.1           Rademacher contour for OPE density in CFT
+In this section we describe how to compute the density of states using the Rademacher
+contour deformation. For a detailed description of the method we refer the reader to
+appendix (A). The question we want to ask is the following: for a given isolated oper-
+ator (h0 , h̄0 ), such that h0 + h̄0 < 2ĉ8 , what would be the implications of the density
+dhh̄ on the left side?
+
+      Let’s first focus on the LHS of the bootstrap equation.
+                                            τ̄ →x−iy
+      X                                              X
+          dhh̄ e2πiτ (h−ĉ) e−2πiτ̄ (h̄−ĉ) −−−−→      dj∆ e2πijx e−2πy e , with, j = h − h̄,       (A.11)
+                                         τ →x+iy
+       h,h̄                                          j,∆
+
+Formally, the OPE density can be found as,
+               X dj∆ ε+i∞
+                     Z                                Z ε+i∞
+                               −2πye+2πye′         1                     ′
+                             e              dy =              aj (y)e2πye dy
+               ∆
+                  2πi ε−i∞                       2πi ε−i∞
+                                              Z ε+i∞
+                    X                      1                     ′
+               =⇒      dje δ(e − e′ ) =               aj (y)e2πye dy                                (A.12)
+                    ∆
+                                         2πi ε−i∞
+                              Z ε+i∞
+                           1
+               =⇒ dje =                aj (y)e2πye dy
+                          2πi ε−i∞
+There is a relation for each pair of positive coprimes (r, s). Now parametrizing these
+in terms of spin and conformal dimensions of the operators in the spectrum we achieve
+(from the RHS),
+
+                   b
+                     y           aτ +b
+                            2πi( sτ −r ) 0
+                                                        aτ̄ +b
+                                        (h −ĉ) −2πi( sτ̄  −r ) 0
+                                                                (h −ĉ)
+        H(x, y) =      ′
+                           e                   e
+                     y
+                                                   a        1                      a    1
+                = (sx − r)2 + s2 y 2 e2πi( s − s(sτ −r) )(h0 −ĉ) e−2πi( s − s(sτ̄ −r) )(h̄0 −ĉ)
+                                        b
+                                                                              
+                                                        2πi h0 −ĉ     h̄0 −ĉ
+                             2       2 2 b 2πi as J − s sτ −r − sτ̄ −r                              (A.13)
+                                        
+                = (sx − r) + s y e                   e
+                                                                  sx−r               2πyE
+                                         b      a    − 2πi                    J −
+                = (sx − r)2 + s2 y 2 e2πi s J e s (sx−r)2 +s2 y2 e (sx−r)2 +s2 y2
+                  
+                                           b
+                    2b         r 2        2       2πia
+                                                                 2πi(r−sx)
+                                                                                 J −   2πyE
+                =s        x−          +y         e s J e s((r−sx)2 +s2 y2 ) e (r−sx)2 +s2 y2
+                               s
+  8
+      with ĉ = c−1
+                 24
+
+
+
+
+                                                     – 39 –
+where we used,
+
+                       y
+         y′ =                      , e = ∆ − 2ĉ, E := ∆0 − 2ĉ, J := h0 − h̄0                                  (A.14)
+                (sx − r)2 + s2 y 2
+
+alongwith ∆0 = h0 + h̄0 and ĉ = c−1
+                                  24
+                                     . The main goal of this section is to find the density
+of the light states which are conical defects and well below the blackhole threshold
+exploiting the modular invariance. Now, we can recast the sum as,
+
+                                                    ∞
+                                                    X
+                                                          aj (y)e2πijx = H(x, y)                                (A.15)
+                                                   j=−∞
+
+
+
+Now, using the fourier analysis and the modular invariance we can extract the OPE
+coefficient as (we extract the modular coefficient with a generic power b ∈ Z of the
+integrand i.e (x2 + y 2 )b ),
+
+                                                            Z1
+                                              aj (y) : =           H(x, y)e−2πijx dx                            (A.16)
+                                                              0
+
+
+As it can be seen, it has similar form of (A.4), which can be evaluated using the
+technology of Rademacher contours as mentioned in the Appendix (A), deforming the
+straightline contour into sum of ford circle we get, Hence, deforming the straightline
+contour into sum of ford circle we get,
+
+                      Z1                                      N             Z
+                                                              X X
+                                              −2πijx
+                               H(x, y) e               dx →                        dxe−2πijx H(x, y)            (A.17)
+                           0                                  s=1 0<r≤s,    Γr/s
+                                                                  (r,s)=1
+
+
+
+Now doing the following change of variable, sx − r = is(z − y), we get,
+
+        N                                    Z z2
+                                                                                          z−y       2πyE
+                          2πi as J−2πij rs                                         − 2π         J
+        X X
+    i                 e                             dz (−1)b s2b (z 2 − 2yz)b e s2 z2 −2yz e s2 (z2 −2yz) e2πj(z−y)
+        s=1 0<r≤s,                            z1
+            (r,s)=1
+                                                                                                                (A.18)
+
+Now unfolding the circle to a vertical straight line by the following transformation:
+
+
+
+                                                                  – 40 –
+z = 2πt and sending N → ∞ we get,
+                          Z σ+i∞                             bb 
+                                                        4π 2
+                                                    
+                   b 2b         dt 2πj ( 2πt −y)         yt
+        − 2π(−1) s                 e                  1−
+                           σ−i∞
+                                t2                       t2
+                                                          π
+                                                      !
+                                   2π 2πt − y                           πt2
+                                                                                 
+                                                             2πy
+                        × exp − 2 4π2               J exp                      E
+                                   s t2 1 − yt   π
+                                                              s 2 4π 2 (π − yt)
+
+                       Z σ+i∞                  2 b           b                  (A.19)
+                              dt        2π     4π           y t
+        = −2π(−1)b s2b         2
+                                 e2πj ( t −y)    2
+                                                        1−
+                        σ−i∞
+                              t                 t           π
+                                                !                         !
+                                  t 2π − yt J                  yt2      E
+                        × exp                      exp −
+                                 2π yt                   2π 1 − yt
+                                                                      2
+                                      π
+                                         − 1 s2                    π
+                                                                        s
+
+Therefore the Fourier coefficient is given by,
+                     b X∞
+                  1
+      aj (y) =               s2b K(j, J, s)×
+                 4π 2 s=1
+                Z σ+i∞
+             1            dw j ( w1 −2πy)
+                               e          (4πyw − 1)b
+            2πi σ−i∞ w2+2b
+                                 2                                                                 (A.20)
+                                                                  8yπ 3 w2 E
+                                                                           
+                                  4π w(1 − 2πyw) J
+                         × exp                             exp −
+                                     4πyw − 1         s2         4πyw − 1 s2
+                     b X∞
+                  1
+             =      2
+                             s2b K(j, J, s)ds (y, E, J)
+                 4π      s=1
+
+It is instructive to analyze the large ω limit, more precisely, ωκ+ ≫ 1. In this limit,
+ds (y, E, J) becomes ( with, κ± = −(E ± J)),
+                     Z                                   2
+                                                                                  8yπ 3 w2
+                                                                                            
+                  1      dw j ( w1 −2πy)           b     2π w(κ− − κ+ )
+ds (y, E, J) =                e          (4πyw − 1) exp                   exp              κ+
+                 2πi    w2+2b                              4πyw − 1              4πyw − 1
+                      Z
+                                                                           2π 2 w κ−
+                                                                                       
+                κ+ 1      dw j ( w1 −2πy)                   2 κ+
+ ωκ+ ≫1      π
+                                                                
+           − 2y                                      b
+ −−−−→ e                        e         (4πyw − 1) exp 2π w 2 exp
+                  2πi    w2+2b                                 s         4πyw − 1 s2
+                                                                                   (A.21)
+
+As evident from (A.21), ds (y, E, J) = ds=1 (y, E, J)                             . Therefore, formally the
+                                                                  E→ E2 , J→ J2
+                                                                      s      s
+OPE density is given by,
+                                             ∞
+                                           b X
+                                     1
+                    d(j, e) =                      s2b K(j, J, s) L−1
+                                                                   y→e ds (y, E, J)                 (A.22)
+                                    4π 2     s=1
+
+
+
+
+                                                   – 41 –
+Now using (A.12) we can explicitly compute aj (y) as follows,
+           Z 2π1 +i∞                    b                                                          
+                       −b −2b   4πuy − 1            4π 2 u2 (−2πEuy−2πJuy+J)+j (−8π 2 u2 y 2 +6πuy−1)   −i
+aj (y) : =            4 π           2
+                                            exp                           u(4πuy−1)                     u2
+                                                                                                           du
+               1
+                 −i∞
+                                   u
+              2π
+           Z 2π1 +i∞                     b
+                                                           −2π 2 uκ−
+                              
+                       −b −2b   4πuy − 1       1
+                                              (u −2πy)j 1−4πuy 2π 2 κ+ u −i
+         =            4 π           2
+                                            e            e           e          2
+                                                                                  du, with, κ± = −(E ± J)
+               1
+                 −i∞
+                                   u                                           u
+              2π
+                 Z 1                                             !t                !q
+           X 2π +i∞ 4−b π −2b  4πuy − 1 b                   j        −2π  2
+                                                                              uκ −       2     −i
+         =                              2
+                                                  e−2πyj                              e2π κ+ u 2 du
+            t,q
+                   1
+                     −i∞
+                           t!q!        u                      u        1 − 4πuy                u
+                   2π
+
+
+
+
+                                                                                           (A.23)
+In the last line we assumed u to be large and approximated exponential appropriately.
+Now, using the following integral identity,
+    Z 2π1 +i∞
+                   uα                       (−κ+ )−α+β−1
+                                                                                        
+ 1                          2π 2 κ+ u                                                 π
+                          e           du = α+β+1 2α−β+2 β · Γ(β − α)1 F1 β; β − α; κ+
+2πi 1 −i∞ (4πuy − 1)β                     2     π       y                             2y
+         2π
+
+                                                                                           (A.24)
+Hence, the fourier coefficient is given by,
+            X j t e−2πyj (−2π 2 κ− )q (−κ+ )−α+β−1
+   aj (y) =
+             t,q
+                         q! t!        2α+β+1 π 2α−β+2 y β
+                                                            
+                                                          π                                (A.25)
+                        × Γ(β − α)1 F1 β; β − α; κ+
+                                                          2y
+                                                                     α=q−t−2−2b,β=−b+q
+
+
+
+Now, we can write the result of our density of state at g = 1 by performing inverse
+Laplace transform9 as (for b = − 21 ),
+                                    √      √      √  √                   !
+                       1               2πj    κ− +   κ+        √       √
+ ρs=1
+  −1/2;E,J (e, j) = p 2       sinh                      − 2πη ( κ− − κ+ )
+                     e − j2                   η
+                                        √      √      √  √                   !
+                                          2πj    κ− − κ+          √      √
+                               − sinh                     − 2πη ( κ− + κ+ )
+                                                 η
+                                                                                           (A.27)
+   9
+       While performing the inverse Laplace transform we use the identity,
+                                                  (2π)m−1 Θ(e − j)(e − j)m−1
+                                            
+                                 exp(−2πjy)
+                          L−1          m
+                                               =                                            (A.26)
+                                     y                      Γ(m)
+
+
+
+
+                                                – 42 –
+             qp
+where, η :=        e2 − j 2 + e. Now, this is very specific to s = 1, further we need to
+sum over r, s i.e the Rademacher parametrization10 and the sum is given by,
+                                          N
+                                                               r     a[r,s]
+                                                        e2πi(− s j+ s J ) ρs=1
+                                          X X
+                    ρb;E,J (e, j) : =                                      (b; E , J )
+                                                                                       (e, j) s2b
+                                                                                      s2 s2
+                                          s=1 0<r≤s,
+                                              (r,s)=1                                               (A.29)
+                                          X∞
+                                      =         K(j, J, s)s2b × ρs=1
+                                                                 (b; E , J )
+                                                                             (e, j)
+                                                                              s2 s2
+                                          s=1
+
+
+The generic s terms are obtained from the s = 1 case via scaling the (E, J) :→ ( sE2 , sJ2 )
+defined before. Though we consider a single operator above the BTZ threshold one can
+generailze it to a density of operators or multiple operators to extract the OPE density
+of light operators. One can show that the sum is actually covergent and divergent both
+for different scenario(s). We cast it in Table (3). We used the Möbius µ function and
+Euler totient ϕ function for performing the sums. From the Table (3), it is evident that
+the scalar operator density (which we mainly focus on) below the black hole threshold
+is convergent only in certain cases. Maintaining a nonzero spin for operators above
+the threshold yields a more substantial, nonvanishing, and convergent OPE density.
+We checked numerically that, while the closed form is absent for the Kloosterman sum
+for more higher spins (J), they are more convergent for scalar OPE density below the
+threshold. As we have the basic OPE density found from the modular invariance of
+CFT partition function, we now proceed to comment on the light state OPE density
+for gravity for genus two euclidean geometries.
+
+
+B        Performing the modular sum
+
+Following [15], we can rewrite the sum in (2.25) as follows,
+                             X
+       Ẽ(κ, µ, s1 , w) :=         |cτ + d|2s1 +2w−1 exp(2πκ Im(γ · τ ) + 2πiµ Re(γ · τ )),
+                             c,d
+                                             X X X                                                   (B.1)
+                       = e2π(κy+iµx) +                             S(c, d′ , n),
+                                                c>0 d′ ∈Z/cZ n∈Z
+
+  10
+       Now using the following identity,
+                                                                    ∞
+                                     ( 12 z)ν               1 2
+                                                                 X       ( 12 z)ν+2n
+                       Iν (z) :=               F
+                                              0 1 −; ν + 1; 4 z  =                                  (A.28)
+                                    Γ(ν + 1)                       n=0
+                                                                       Γ(ν + n + 1) n!
+
+one can also cast the result in terms of modified Bessel function.
+
+
+
+
+                                                        – 43 –
+where the first term comes from the c = 0, d = 1 and the remaining summand is given
+by,
+                                       1
+         S(c, d′ , n) : =                                                                                     (B.2)
+                            |c(τ + n) + d′ |2s1 +2w−1
+                                                                                                     !!
+                                         2πκy               a       cx + d
+                       × exp                     ′
+                                                     + 2πiµ   −                                               (B.3)
+                                    |c(τ + n) + d |2        c c(|c(τ + n) + d′ |2 )
+
+Now the sum written in (B.1) can be performed and is given by the following expres-
+sion:11
+                                                X
+                  Ẽ(κ, µ, s̃) := e2π(κy+iµx) +   e2πin̂x En̂ (s̃, κ, µ)      (B.4)
+                                                                     n̂
+
+with the following fourier summand,
+
+                                    ∞                                     ∞
+                                                                                                         !
+                                    X                                     X
+                 En̂ (s̃, κ, µ) =         Ip,n̂ (s̃, κ, µ)y 1−p−s̃              c−2(p+s̃) K(−n̂, µ; c) ,      (B.5)
+                                    p=0                                   c=1
+                                                                     |               {z              }
+                                                                                      T
+
+where we consider,
+                                                   s̃ := 1 − s1 − w                                           (B.6)
+alongwith, the Kloosterman sum defined as,
+                                                                                            !
+                                                                   −n̂d + µd−1
+                                                   X            
+                         K(−n̂, µ; c) =                    exp 2πi                               .            (B.7)
+                                                         ∗
+                                                                        c
+                                                d∈(Z/cZ)
+
+We also have the integral present in the sum can be written as [15],
+                                       Z∞
+                                 (2π)p
+             Ip,n̂ (s̃, κ, µ) :=           dT e2πin̂T y (1 + T 2 )−p−s̃ (κ − iµT )p                           (B.8)
+                                   p!   −∞
+
+One should note that it is independent of x. Now we discuss a few cases,
+       • Case-1: n̂ = 0 mode with µ = 0
+                                                                  p p+1/2
+                                                                p2 π      Γ(s̃ + p − 21 )
+                                    Ip,0 (s̃, κ, µ = 0) = κ                                                   (B.9)
+                                                                           p! Γ(s̃ + p)
+         for this case, we can cast the sum over c in the parantheses in (B.15) as [15],
+                                     ∞
+                                     X                                    ζ(−(p + s̃) − 3)
+                                           c−2+p+s̃ K(0, 0; c) =                                             (B.10)
+                                     c=1
+                                                                          ζ(−2 − (p + s̃))
+  11
+       For details we refer the reader to [15].
+
+
+
+
+                                                           – 44 –
+   • Case-2: n̂ = 0 mode with µ = ±1
+                                             1+p
+                                                  p−1                                      
+                              pπ 
+                                       p Γ    2
+                                                   Γ  2
+                                                         +  s̃         p−1        p      1 2
+     Ip,0 (s̃, κ, ±1) = cos        (2π)                         2 F1       + s̃, − + s̃; ; κ
+                              2               p! Γ(p + s̃)               2        2      2
+                                 p
+                                    p                                    
+                   pπ       Γ     Γ 2 + s̃               p p         3
+     + pκ sin            (2π)p 2                2 F1 1 − ,       + s̃; ; κ2
+                     2          p! Γ(p + s̃)               2 2         2
+                                                                                        (B.11)
+
+   • Case-3: n̂ = 0 mode with µ = ±2
+
+                             π 3/2 κp (2π)p sec(π(p + s̃)) 2 F1 1−p , − p2 ; −p − s̃ + 23 ; κ12
+                                                                                                
+                                                                  2
+        Ip,0 (s̃, κ, ±2) = −
+                                              p! Γ −p − s̃ + 32 Γ(p + s̃)
+                                                                
+
+           iπ(2π)p (−iκ)2(p+s̃) − (iκ)2(p+s̃) κ−3p−4s̃+1 csc(2π(p + s̃))Γ(p + 2s̃ − 1)
+                                                 
+        +
+                                          p! Γ(−p)Γ(2(p + s̃))
+                                                                                
+                                             p−1         p                  1 1
+                                    × 2 F1         + s̃, + s̃; p + s̃ + ; 2           for p ̸= 0
+                                               2         2                  2 κ
+           √ Γ(s̃ − 1/2)
+        = π                     for p = 0,
+                     Γ(s̃)
+                                                                                                 (B.12)
+
+for this case, we can cast the sum over d in the parantheses in (B.15) as
+
+                   S(0, ±2; c) = µ(c);              c ∈ Odd integers
+                                                                                                  (B.13)
+                                      = µ(c) + 2µ(c/2);               c ∈ even integers,
+
+where µ(c) is known as the Möbius function. Now the whole sum over c can be written
+as ,
+                           ∞
+                           X                               ∞
+                                                           X
+                                      −2(p+s̃)
+                T :=              c              µ(c) +              c−2(p+s̃) [µ(c) + 2µ(c/2)]
+                       codd =1                            ceven =2
+                                                                !                                 (B.14)
+                           1
+                    =              1 + 21−2p−2s̃
+                      ζ(2(s̃ + p))
+
+Therefore we get the following answer for the sum:
+
+                           ∞                                    ∞
+                                                                                            !
+                           X                                    X
+        En̂ (s̃, κ, µ) =         Ip,n̂ (s̃, κ, µ)y 1−p−s̃              c−2(p+s̃) K(−n̂, µ; c) ,   (B.15)
+                           p=0                                  c=1
+
+
+
+
+                                                      – 45 –
+                   Parameter(s)                Summand           Resulting Sum
+                                               P∞         −4          ζ(3)
+             j = 0, J = 0, s1 = 0, w = 1        s=1 ϕ(s) s
+                                                                      ζ(4)
+                                               P∞          −6         ζ(5)
+             j = 0, J = 0, s1 = 1, w = 1         s=1 ϕ(s) s
+                                                                      ζ(6)
+                                               P∞          −6         ζ(5)
+             j = 0, J = 0, s1 = 2, w = 0         s=1 ϕ(s) s
+                                                                      ζ(6)
+                                               P∞          −8         ζ(7)
+             j = 0, J = 0, s1 = 2, w = 1         s=1 ϕ(s) s
+                                                                      ζ(8)
+                                              P∞           −10        ζ(9)
+             j = 0, J = 0, s1 = 2, w = 2         s=1 ϕ(s) s
+                                                                     ζ(10)
+                                               P∞          −4           1
+             j = 0, J = 1, s1 = 0, w = 1         s=1 µ(s) s
+                                                                      ζ(4)
+                                               P∞          −6           1
+             j = 0, J = 1, s1 = 1, w = 1         s=1 µ(s) s
+                                                                      ζ(6)
+                                               P∞          −6           1
+             j = 0, J = 1, s1 = 2, w = 0         s=1 µ(s) s
+                                                                      ζ(6)
+                                               P∞          −8           1
+             j = 0, J = 1, s1 = 2, w = 1         s=1 µ(s) s
+                                                                      ζ(8)
+                                              P∞           −10          1
+             j = 0, J = 1, s1 = 2, w = 2         s=1 µ(s) s
+                                                                     ζ(10)
+
+             Table 3: Modular sum for different choices of the parameters.
+
+For p = 0, n̂ = 0 we can write,
+                          √
+                    y 1−s̃ π Γ(s̃−1/2)
+                                   Γ(s̃)
+                                           ζ(−s̃−3)
+                                           ζ(−s̃−2)
+                                                    ,         for µ = 0
+                     √
+                   
+                   
+                        π Γ(s̃−1/2)
+                                            1
+                                    y 1−s̃ ζ(2s̃)                 for µ = ±1
+                   
+   E0 (s̃, κ, µ) =           Γ(s̃)                          !                       (B.16)
+                    √ Γ(s̃−1/2)          1−s̃ 1      1−2s̃
+                    π Γ(s̃) × y ζ(2s̃) 1 + 2                      for µ = ±2
+                   
+                   
+                   
+
+Therefore,
+                   E2s (τ )E2w (τ̄ )
+   E(κ, µ, s, w) =                   ×   e2π(κy+iµx) + E0 (1 − s − w, κ, µ)
+                      |η(τ )|2
+                                                                                !   (B.17)
+                                                      + finite n̂ corrections
+
+For n̂ = 0 and s1 ∈ 0, 1, 2 and w ∈ 0, 1, 2 only the sum is finite while s1 = 0, w = 0.
+Otherwise it encounters a power-law divergence. A few values of the sum are casted
+in Table (3). While it is important to investigate what happens for large n̂, we leave
+it as an important future direction.
+
+
+
+                                             – 46 –
+References
+
+ [1] X. Yin, Partition Functions of Three-Dimensional Pure Gravity, Commun. Num.
+     Theor. Phys. 2 (2008) 285–324 [0710.2129].
+ [2] N. Benjamin, H. Ooguri, S.-H. Shao and Y. Wang, Light-cone modular bootstrap and
+     pure gravity, Phys. Rev. D 100 (2019), no. 6, 066029 [1906.04184].
+ [3] R. Jackiw, Lower Dimensional Gravity, Nucl. Phys. B 252 (1985) 343–356.
+ [4] C. Teitelboim, Gravitation and Hamiltonian Structure in Two Space-Time Dimensions,
+     Phys. Lett. B 126 (1983) 41–45.
+ [5] J. M. Maldacena, The Large N limit of superconformal field theories and supergravity,
+     Adv. Theor. Math. Phys. 2 (1998) 231–252 [hep-th/9711200].
+ [6] L. V. Iliesiu and G. J. Turiaci, The statistical mechanics of near-extremal black holes,
+     JHEP 05 (2021) 145 [2003.02860].
+ [7] L. V. Iliesiu, On 2D gauge theories in Jackiw-Teitelboim gravity, 1909.05253.
+ [8] U. Moitra, S. K. Sake and S. P. Trivedi, Jackiw-Teitelboim gravity in the second order
+     formalism, JHEP 10 (2021) 204 [2101.00596].
+ [9] P. Nayak, A. Shukla, R. M. Soni, S. P. Trivedi and V. Vishal, On the Dynamics of
+     Near-Extremal Black Holes, JHEP 09 (2018) 048 [1802.09547].
+[10] K. Okuyama, De Sitter JT gravity from double-scaled SYK, 2505.08116.
+[11] H. Verlinde and M. Zhang, SYK correlators from 2D Liouville-de Sitter gravity, JHEP
+     05 (2025) 053 [2402.02584].
+[12] H. Verlinde, Double-scaled SYK, chords and de Sitter gravity, JHEP 03 (2025) 076
+     [2402.00635].
+[13] D. Wang, Z. Wang and Z. Wei, Wormholes with ends of the world, JHEP 09 (2025)
+     166 [2504.12278].
+[14] A. Blommaert, L. V. Iliesiu and J. Kruthoff, Gravity factorized, JHEP 09 (2022) 080
+     [2111.07863].
+[15] A. Maloney and E. Witten, Quantum Gravity Partition Functions in Three
+     Dimensions, JHEP 02 (2010) 029 [0712.0155].
+[16] J. S. Cotler, G. Gur-Ari, M. Hanada, J. Polchinski, P. Saad, S. H. Shenker,
+     D. Stanford, A. Streicher and M. Tezuka, Black Holes and Random Matrices, JHEP 05
+     (2017) 118 [1611.04650], [Erratum: JHEP 09, 002 (2018)].
+[17] K. Okuyama and K. Sakai, Spectral form factor in the τ -scaling limit, JHEP 04 (2023)
+     123 [2301.04773].
+
+
+
+
+                                           – 47 –
+[18] A. Cavaglià, S. Negro, I. M. Szécsényi and R. Tateo, T T̄ -deformed 2D Quantum Field
+     Theories, JHEP 10 (2016) 112 [1608.05534].
+[19] F. A. Smirnov and A. B. Zamolodchikov, On space of integrable quantum field theories,
+     Nucl. Phys. B 915 (2017) 363–383 [1608.05499].
+[20] R. Conti, S. Negro and R. Tateo, Conserved currents and TT̄s irrelevant deformations
+     of 2D integrable field theories, JHEP 11 (2019) 120 [1904.09141].
+[21] D. J. Gross, J. Kruthoff, A. Rolph and E. Shaghoulian, Hamiltonian deformations in
+     quantum mechanics, T T̄ , and the SYK model, Phys. Rev. D 102 (2020), no. 4, 046019
+     [1912.06132].
+[22] N. Brizio, T. Morone and R. Tateo, A note on TT deformations and boundaries. 2026.
+     2410.20947.
+[23] S. Chakraborty and A. Mishra, T T and JT deformations in quantum mechanics,
+     JHEP 11 (2020) 099 [2008.01333].
+[24] S. Chakraborty and A. Hashimoto, Weighted average over the Narain moduli space as
+     a TT¯ deformation of the CFT target space, Phys. Rev. D 105 (2022), no. 8, 086018
+     [2109.10382].
+[25] A. Bhattacharyya, S. Ghosh and S. Pal, Aspects of TT¯+JT¯ deformed Schwarzian:
+     From gravity partition function to late-time spectral form factor, Phys. Rev. D 110
+     (2024), no. 12, 126015 [2309.16658].
+[26] S. Ebert, H.-Y. Sun and Z. Sun, T T -deformed free energy of the Airy model, JHEP 08
+     (2022) 026 [2202.03454].
+[27] A. Bhattacharyya, S. Ghosh, S. Pal and A. Vinod, Wormholes in finite cutoff JT
+     gravity: A study of baby universes and (Krylov) complexity, 2502.13208.
+[28] A. Kitaev, A Simple Model of Quantum Holography, Part 1, Apr., 2015. Talk at KITP,
+     University of California, Santa Barbara, April 7, 2015.
+[29] A. Kitaev, A Simple Model of Quantum Holography, Part 2, May, 2015. Talk at KITP,
+     University of California, Santa Barbara, May 27, 2015.
+[30] A. Goel, V. Narovlansky and H. Verlinde, Semiclassical geometry in double-scaled
+     SYK, JHEP 11 (2023) 093 [2301.05732].
+[31] S. E. Aguilar-Gutierrez, R. N. Das, J. Erdmenger and Z.-Y. Xian, Probing the chaos to
+     integrability transition in double-scaled SYK, JHEP 06 (2026) 109 [2601.09801].
+[32] S. E. Aguilar-Gutierrez, Symmetry sectors in chord space and relational holography in
+     the DSSYK. Lessons from branes, wormholes, and de Sitter space, JHEP 10 (2025) 044
+     [2506.21447].
+
+
+
+
+                                           – 48 –
+[33] V. Mikhaylov, Teichmüller TQFT vs. Chern-Simons theory, JHEP 04 (2018) 085
+     [1710.04354].
+[34] M. Atiyah, Topological quantum field theories, Inst. Hautes Etudes Sci. Publ. Math. 68
+     (1989) 175–186.
+[35] E. Witten, Three-Dimensional Gravity Revisited, 0706.3359.
+[36] S. Collier, L. Eberhardt and M. Zhang, 3d gravity from Virasoro TQFT: Holography,
+     wormholes and knots, SciPost Phys. 17 (2024) 134 [2401.13900].
+[37] C. Yan, More on torus wormholes in 3d gravity, JHEP 11 (2023) 039 [2305.10494].
+[38] A. Belaey, T. G. Mertens and T. Tappeiner, Quantum group origins of edge states in
+     double-scaled SYK, 2503.20691.
+[39] A. Blommaert, T. G. Mertens, H. Verschelde and V. I. Zakharov, Edge State
+     Quantization: Vector Fields in Rindler, JHEP 08 (2018) 196 [1801.09910].
+[40] T. G. Mertens, J. Simón and G. Wong, A proposal for 3d quantum gravity and its bulk
+     factorization, JHEP 06 (2023) 134 [2210.14196].
+[41] S. Collier, L. Eberhardt and M. Zhang, Solving 3d gravity with Virasoro TQFT,
+     SciPost Phys. 15 (2023), no. 4, 151 [2304.13650].
+[42] A. Bhattacharyya, S. Ghosh, P. Nandi and S. Pal, 3D N = 1 supergravity from
+     Virasoro TQFT: gravitational partition function and Out-of-time-order correlator,
+     JHEP 02 (2025) 027 [2408.01538].
+[43] L. Eberhardt, The Super Virasoro Minimal String from 3d Supergravity, 2604.26038.
+[44] J. de Boer, D. Liska and B. Post, Multiboundary wormholes and OPE statistics, JHEP
+     10 (2024) 207 [2405.13111].
+[45] J. Chandra, S. Collier, T. Hartman and A. Maloney, Semiclassical 3D gravity as an
+     average of large-c CFTs, JHEP 12 (2022) 069 [2203.06511].
+[46] A. Belin, J. de Boer, D. L. Jafferis, P. Nayak and J. Sonner, Approximate CFTs and
+     Random Tensor Models, 2308.03829.
+[47] D. L. Jafferis, L. Rozenberg, D. Sarkar and D. Wang, On random matrix statistics of
+     3d gravity, JHEP 08 (2026) 014 [2512.05045].
+[48] D. L. Jafferis, L. Rozenberg and G. Wong, 3d gravity as a random ensemble, JHEP 02
+     (2025) 208 [2407.02649].
+[49] D. L. Jafferis, L. Rozenberg and D. Wang, Open-closed 3d gravity as a random
+     ensemble, JHEP 10 (2025) 228 [2506.19817].
+[50] T. Hartman, Triangulating quantum gravity in AdS3 , 2507.12696.
+
+
+
+
+                                          – 49 –
+[51] J. de Boer, J. Kames-King and B. Post, Surgery and statistics in 3D gravity, JHEP 08
+     (2026) 001 [2506.04151].
+[52] A. Maloney and E. Witten, Averaging over Narain moduli space, JHEP 10 (2020) 187
+     [2006.04855].
+[53] N. Afkhami-Jeddi, H. Cohn, T. Hartman and A. Tajdini, Free partition functions and
+     an averaged holographic duality, JHEP 01 (2021) 130 [2006.04839].
+[54] N. Benjamin, C. A. Keller, H. Ooguri and I. G. Zadeh, Narain to Narnia, Commun.
+     Math. Phys. 390 (2022), no. 1, 425–470 [2103.15826].
+[55] G. Di Ubaldo and E. Perlmutter, AdS3 /RMT2 duality, JHEP 12 (2023) 179
+     [2307.03707].
+[56] J. Boruch, G. Di Ubaldo, F. M. Haehl, E. Perlmutter and M. Rozali,
+     Modular-Invariant Random Matrix Theory and AdS3 Wormholes, Phys. Rev. Lett. 135
+     (2025), no. 12, 121602 [2503.00101].
+[57] A. Castro, M. R. Gaberdiel, T. Hartman, A. Maloney and R. Volpato, The Gravity
+     Dual of the Ising Model, Phys. Rev. D 85 (2012) 024032 [1111.1987].
+[58] A. Barbar, A. Dymarsky and A. D. Shapere, Global Symmetries, Code Ensembles, and
+     Sums over Geometries, Phys. Rev. Lett. 134 (2025), no. 15, 151603 [2310.13044].
+[59] A. Dymarsky and A. Shapere, Bulk derivation of TQFT gravity, 2405.20366.
+[60] A. Dymarsky, A solvable model of 3d quantum gravity, 2605.12590.
+[61] A. Barbar, Automorphism-weighted ensembles from TQFT gravity, 2511.04311.
+[62] A. Belin, S. Collier, L. Eberhardt, D. Liska and B. Post, A universal sum over
+     topologies in 3d gravity, SciPost Phys. 21 (2026) 017 [2601.07906].
+[63] B. Post and I. Tsiares, A non-rational Verlinde formula from Virasoro TQFT, JHEP
+     04 (2025) 015 [2411.07285].
+[64] C. Yan, Puzzles in 3D Off-Shell Geometries via VTQFT, 2502.16686.
+[65] N. Aghaei, M. Pawelkiewicz and J. Teschner, Quantisation of super Teichmüller theory,
+     Commun. Math. Phys. 353 (2017), no. 2, 597–631 [1512.02617].
+[66] N. Aghaei, M. K. Pawelkiewicz and M. Yamazaki, Towards Super Teichmüller Spin
+     TQFT, Adv. Theor. Math. Phys. 26 (2022), no. 2, 245–294 [2008.09829].
+[67] H. Poghosyan and G. Sarkissian, Comments on fusion matrix in N=1 super Liouville
+     field theory, Nucl. Phys. B 909 (2016) 458–479 [1602.07476].
+[68] S. Takahashi, Anyon condensation in Virasoro TQFT: wormhole factorization, JHEP
+     06 (2025) 243 [2412.11486].
+
+
+
+
+                                          – 50 –
+[69] Y. Nakayama, Liouville field theory: A Decade after the revolution, Int. J. Mod. Phys.
+     A 19 (2004) 2771–2930 [hep-th/0402009].
+[70] A. B. Zamolodchikov and A. B. Zamolodchikov, Liouville field theory on a
+     pseudosphere, hep-th/0101152.
+[71] B. Ponsot and J. Teschner, Liouville bootstrap via harmonic analysis on a noncompact
+     quantum group, hep-th/9911110.
+[72] P. Suchanek, Elliptic recursion for 4-point superconformal blocks and bootstrap in N=1
+     SLFT, JHEP 02 (2011) 090 [1012.2974].
+[73] V. A. Belavin, On the N=1 super Liouville four-point functions, Nucl. Phys. B 798
+     (2008) 423–442 [0705.1983].
+[74] L.-Y. Hung and Y. Jiang, Building up quantum spacetimes with BCFT Legos,
+     2404.00877.
+[75] H. Geng, L.-Y. Hung and Y. Jiang, It from ETH: multi-interval entanglement and
+     replica wormholes from large-c BCFT ensemble, JHEP 07 (2026) 262 [2505.20385].
+[76] D. R. Brill, Multi - black hole geometries in (2+1)-dimensional gravity, Phys. Rev. D
+     53 (1996) 4133–4176 [gr-qc/9511022].
+[77] Y. Cai and J. T. Liu, Towards the construction of multi-centered black holes in AdS,
+     JHEP 10 (2022) 059 [2205.14008].
+[78] L. F. Alday and J.-B. Bae, Rademacher Expansions and the Spectrum of 2d CFT,
+     JHEP 11 (2020) 134 [2001.00022].
+[79] L. F. Alday, J.-B. Bae, N. Benjamin and C. Jorge-Diaz, On the Spectrum of Pure
+     Higher Spin Gravity, JHEP 12 (2020) 001 [2009.01830].
+[80] J.-B. Bae, K. Lee and S. Lee, Bootstrapping Pure Quantum Gravity in AdS3,
+     1610.05814.
+[81] N. Benjamin, S. Collier and A. Maloney, Pure Gravity and Conical Defects, JHEP 09
+     (2020) 034 [2004.14428].
+[82] G. Lopes Cardoso, S. Nampuri and M. Rosselló, Rademacher Expansion of a Siegel
+     Modular Form for N = 4 Counting, Annales Henri Poincare 25 (2024), no. 9,
+     4065–4120 [2112.10023].
+[83] M. M. Baccianti, J. Chandra, L. Eberhardt, T. Hartman and S. Mizera, Rademacher
+     expansion of modular integrals, SciPost Phys. 19 (2025), no. 4, 103 [2501.13827].
+[84] D. Simmons-Duffin and Y. Xu, A genus-2 crossing equation in d ≥ 2, 2511.07569.
+[85] M. R. Gaberdiel and R. Volpato, Mathieu Moonshine and Orbifold K3s, Contrib.
+     Math. Comput. Sci. 8 (2014) 109–141 [1206.5143].
+[86] D. Gaiotto, Monster symmetry and Extremal CFTs, JHEP 11 (2012) 149 [0801.0988].
+
+
+
+
+                                          – 51 –
+[87] D. Gaiotto and X. Yin, Genus two partition functions of extremal conformal field
+     theories, JHEP 08 (2007) 029 [0707.3437].
+[88] M. P. Tuite, Genus two meromorphic conformal field theory, in Moonshine Workshop.
+     10, 1999. math/9910136.
+
+
+
+
+                                          – 52 –
+

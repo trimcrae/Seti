@@ -1,0 +1,72 @@
+% HQNN software stack (TikZ).
+% Body-font text (rmfamily, 10pt, upright), uniform box sizes per layer,
+% consistent borders, triangular arrow tips. Width <= 8.33cm (single column).
+\begingroup
+% Palette from Fig 8: classical = green, quantum = orange (matches Fig 8 semantics)
+\definecolor{layG}{RGB}{125,125,125}
+\definecolor{clO}{RGB}{38,200,110}
+\definecolor{clOf}{RGB}{216,245,229}
+\definecolor{qnG}{RGB}{255,167,51}
+\definecolor{qnGf}{RGB}{255,239,218}
+\tikzset{
+  layer/.style={draw=layG, line width=1.0pt, rounded corners=9pt, fill=white},
+  obox/.style={draw=clO, line width=1.1pt, rounded corners=5pt, fill=clOf,
+               align=center, inner sep=3pt, font=\rmfamily},
+  gbox/.style={draw=qnG, line width=1.1pt, rounded corners=5pt, fill=qnGf,
+               align=center, inner sep=3pt, font=\rmfamily},
+  flow/.style={black!80, line width=1.1pt, -{Triangle[length=2.2mm,width=2.4mm]}},
+}
+\begin{tikzpicture}[x=1cm,y=1cm, every node/.style={font=\rmfamily}]
+% ---------------------------------------------------------------- Applications
+\draw[layer] (0.05,11.3) rectangle (7.95,12.75);
+\node[font=\rmfamily\bfseries] at (4.0,12.33) {Applications};
+\node[align=center, font=\rmfamily\small] at (4.0,11.72) {Time-Series Forecasting, Image Classification,\\ Physics-Informed CFD, Planning and Logistics};
+\draw[flow] (4.0,11.3) -- (4.0,11.0);
+% ---------------------------------------------------------------- Algorithms
+\draw[layer] (0.05,8.45) rectangle (7.95,10.95);
+\node[font=\rmfamily\bfseries] at (4.0,10.55) {Algorithms};
+\shade[left color=clOf, right color=qnGf, rounded corners=5pt, draw=layG,
+       line width=1.0pt] (0.5,8.75) rectangle (7.5,10.15);
+\node[font=\rmfamily\bfseries] at (4.0,9.87) {Hybrid};
+\node[obox, minimum width=2.3cm, minimum height=0.7cm, font=\rmfamily\bfseries]
+  at (2.0,9.3) {Classical};
+\node[gbox, minimum width=2.3cm, minimum height=0.7cm, font=\rmfamily\bfseries]
+  at (6.0,9.3) {Quantum};
+\draw[flow] (3.2,9.42) to[bend left=22] (4.8,9.42);
+\draw[flow] (4.8,9.18) to[bend left=22] (3.2,9.18);
+% ---------------------------------------------------------------- API
+\draw[layer] (0.05,5.65) rectangle (7.95,8.15);
+\node[font=\rmfamily\bfseries] at (4.0,7.75) {API};
+\node[obox, minimum width=2.3cm, minimum height=1.3cm]
+  at (2.0,6.65) {TensorFlow,\\Torch, Jax};
+\node[gbox, minimum width=2.3cm, minimum height=1.3cm]
+  at (6.0,6.65) {Qiskit,\\PennyLane,\\TQml};
+\draw[flow] (2.0,8.95) -- (2.0,7.35);
+\draw[flow] (6.0,8.95) -- (6.0,7.35);
+% ---------------------------------------------------------------- Backends
+\draw[layer] (0.05,2.55) rectangle (7.95,5.35);
+\node[font=\rmfamily\bfseries] at (4.0,4.95) {Backends};
+\node[obox, minimum width=2.1cm, minimum height=1.5cm]
+  at (1.45,3.65) {BLAS,\\LAPACK,\\cuBLAS};
+\node[obox, minimum width=2.1cm, minimum height=1.5cm]
+  at (4.0,3.65) {{\bfseries Simulation:}\\Tensor Net,\\State Vector};
+\node[gbox, minimum width=2.1cm, minimum height=1.5cm]
+  at (6.55,3.65) {OpenQASM,\\Pulse\\Schedules};
+\draw[flow] (1.7,5.95) .. controls (1.55,5.4) and (1.45,5.0) .. (1.45,4.45);
+\draw[flow] (5.7,5.95) .. controls (5.35,5.25) and (4.85,4.85) .. (4.45,4.45);
+\draw[flow] (6.3,5.95) .. controls (6.45,5.4) and (6.55,5.0) .. (6.55,4.45);
+\draw[flow] (2.91,3.65) -- (2.54,3.65);
+% ---------------------------------------------------------------- Hardware
+\draw[layer] (0.05,-0.3) rectangle (7.95,2.25);
+\node[font=\rmfamily\bfseries] at (4.0,1.85) {Hardware};
+\node[obox, minimum width=2.1cm, minimum height=1.0cm]
+  at (1.45,0.7) {CPU, GPU};
+\node[gbox, minimum width=4.3cm, minimum height=1.0cm]
+  at (5.4,0.7) {Ion Traps, Rydbergs,\\Superconducting, Photonics};
+\draw[flow] (1.45,2.85) -- (1.45,1.25);
+\draw[flow] (6.55,2.85) .. controls (6.5,2.4) and (6.2,1.8) .. (6.0,1.27);
+% ---------------------------------------------------------------- feedback loop
+\draw[black!80, line width=1.1pt, rounded corners=5pt] (7.95,0.7) -- (8.28,0.7) -- (8.28,11.99);
+\draw[flow] (8.28,12.0) -- (7.97,12.0);
+\end{tikzpicture}%
+\endgroup

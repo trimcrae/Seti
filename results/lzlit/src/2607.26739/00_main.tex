@@ -1,0 +1,179 @@
+\documentclass[a4paper,11pt]{article}
+\pdfoutput=1
+\usepackage{jheppub}
+\setcounter{tocdepth}{2}
+
+% **************************************************
+% Packages
+% **************************************************
+\usepackage[T1]{fontenc}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{slashed}
+\usepackage[table]{xcolor}
+\usepackage{tablefootnote}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[labelformat=simple]{subcaption}
+\renewcommand\thesubfigure{(\alph{subfigure})}
+\usepackage{dsfont}
+\usepackage{upgreek}
+\usepackage{textgreek}
+\usepackage{cancel}
+\usepackage{tikz}
+\usepackage{hyperref}
+% **************************************************
+
+
+% **************************************************
+% Colors
+% **************************************************
+\colorlet{origcolor}{.}
+\definecolor{gray65}{gray}{.65}
+\definecolor{ctcolorblack}{gray}{0}
+\definecolor{ctcolorgray}{gray}{.5}
+\definecolor{ctcolorgraylight}{gray}{.8}
+\definecolor{ctcolorgraylighter}{gray}{.95}
+% **************************************************
+
+% **************************************************
+% Table options
+% **************************************************
+\newcommand{\hdashline}{\arrayrulecolor{gray65}\midrule\arrayrulecolor{origcolor}}
+% **************************************************
+
+% **************************************************
+% Definitions used for .pgf from Matplotlib
+% **************************************************
+\def\mathdefault#1{#1}
+% **************************************************
+
+% **************************************************
+% Listing Format
+% **************************************************
+\usepackage{listings}	
+	\lstset{
+		backgroundcolor=\color{ctcolorgraylighter},
+		linewidth=\textwidth,
+		xleftmargin=10pt,
+		captionpos=b,
+		showspaces=false,
+		showstringspaces=false,
+		showtabs=false,
+		tabsize=4,
+		basicstyle=\footnotesize\ttfamily,
+		frame=leftline,
+		framerule=3pt,
+		framexleftmargin=4pt,
+		rulecolor=\color{ctcolorgraylight},
+		numbers=left,
+		numberstyle=\footnotesize\sffamily\color{ctcolorgray},
+		numbersep=15pt,
+		literate={~}{{\fontfamily{ptm}\selectfont \textasciitilde}}1
+	}
+% **************************************************
+
+
+% **************************************************
+% Shortcuts
+% **************************************************
+% Terminal
+\newcommand{\prompt}[1]{
+\vskip 0.25truecm
+\noindent
+\quad{\tt MG5\_aMC>}\ {\tt ~#1}
+\vskip 0.25truecm
+\noindent}
+% Codes
+\newcommand{\madgraph}{\texttt{MadGraph5\_aMC@NLO}}
+\newcommand{\mgshort}{\texttt{MG5\_aMC}}
+\newcommand{\madsons}{\texttt{MadSONS}}
+\newcommand{\madonia}{\texttt{MadOnia}}
+\newcommand{\helacphegas}{\texttt{HELAC-PHEGAS}} 
+\newcommand{\helaconia}{\texttt{HELAC-Onia}}
+\newcommand{\ufo}{\textsc{UFO}}
+\newcommand{\lhe}{\texttt{LHE}}
+\newcommand{\pythiaeight}{\texttt{Pythia}~v8.315}
+\newcommand{\pythia}{\texttt{Pythia}}
+\newcommand{\sherpa}{\texttt{Sherpa}}
+\newcommand{\herwig}{\texttt{Herwig}}
+% Mathematical
+\newcommand\ident{{\cal I}}
+\newcommand\Ione{\ident_1}
+\newcommand\Itwo{\ident_2}
+\newcommand\swave{\ensuremath{\mathrm{S}}}
+\newcommand\pwave{\ensuremath{\mathrm{P}}}
+\newcommand\dwave{\ensuremath{\mathrm{D}}}
+\renewcommand{\d}{\mathrm{d}}
+\newcommand{\e}{\mathrm{e}}
+% Text
+\newcommand\swavetxt{\swave-wave}
+\newcommand\pwavetxt{\pwave-wave}
+\newcommand\dwavetxt{\dwave-wave}
+% **************************************************
+
+
+% **************************************************
+% Title page
+% **************************************************
+\title{
+Automated NRQCD and NRQED simulations of quarkonium and leptonium production with P-wave states and physical-mass effects
+}
+\author{Luca Maxia,}
+\emailAdd{maxia@lpthe.jussieu.fr}
+\author{Hua-Sheng Shao,}
+\emailAdd{huasheng.shao@lpthe.jussieu.fr}
+\author{and Lukas Simon}
+\emailAdd{lsimon@lpthe.jussieu.fr}
+
+\affiliation{Laboratoire de Physique Th\'eorique et Hautes Energies (LPTHE), UMR 7589, Sorbonne Universit\'e et CNRS, 4 place Jussieu, 75252 Paris Cedex 05, France}
+% **************************************************
+
+% **************************************************
+% Astract
+% **************************************************
+\abstract{
+We present the {\madsons} module, which extends the \madgraph\ framework by providing a fully automated solution for the simulation of arbitrary tree-level production processes involving non-relativistic bound states. More specifically, we focus on the production of quarkonia and leptonia in non-relativistic QCD and QED, respectively. This work constitutes the next step in the programme initiated in ref.~\cite{ColpaniSerri:2025vdz}, where the colour and spin projectors required for \swavetxt\ states were first incorporated into \madgraph. In the present development, we implement the remaining projectors associated with orbital and total angular momentum, thereby enabling the event generation of processes involving \pwavetxt\ states. The derivatives required for the orbital-angular-momentum projection are evaluated using dual numbers. In addition, we implement a momentum-reshuffling procedure that accounts for physical bound-state mass effects in the phase space. The resulting framework applies to a wide range of collider environments while remaining compatible with standard multi-purpose Monte Carlo event generators for parton showering and hadronisation. As a first phenomenological application, we revisit $J/\psi + \psi(2\swave)$ production at the LHC and obtain an improved description of the LHCb data.
+}
+% **************************************************
+
+
+% **************************************************
+% Manuscript
+% **************************************************
+\begin{document} 
+\maketitle
+\flushbottom
+
+\input{01_introduction}
+
+\input{02_theory}
+
+\input{03_implementation}
+
+\input{04_benchmarks}
+
+\input{05_quarkonium}
+
+\input{06_leptonium}
+
+\input{07_conclusions}
+
+\input{acknowledgements}
+
+\appendix
+
+\input{A_setup}
+% **************************************************
+
+% **************************************************
+% The bibliography
+% **************************************************
+\bibliographystyle{JHEP} 
+\bibliography{references}
+% **************************************************
+
+\end{document}

@@ -1,0 +1,2388 @@
+                                            Towards the Impossibility of Imperfectly Complete Key Agreement
+                                                                      in the QROM
+                                                        Fuyuki Kitagawa∗1 , Ryo Nishimaki†1 , Ági Villányi‡2 , Takashi Yamakawa§1
+                                                                                        1
+                                                                                          NTT, Tokyo, Japan
+                                                                  2
+                                                                      Massachusetts Institute of Technology, Cambridge, MA, USA
+arXiv:2608.17610v1 [quant-ph] 18 Aug 2026
+
+
+
+
+                                                                                             Abstract
+                                                      We make progress towards the impossibility of imperfectly complete quantum-computation,
+                                                  classical-communication (QCCC) key agreement by constructing the first unconditional attacks
+                                                  on quantum key agreement in the following restricted settings.
+                                                      In the two-message setting, we assume that Alice makes only classical queries to the oracle in
+                                                  the first round and that her message to Bob is classical, but otherwise both parties may perform
+                                                  arbitrary quantum computation, make quantum queries, and send a quantum state in the second
+                                                  round. Our attack and analysis are based on the heavy-query learning techniques from Austrin
+                                                  et al. (CRYPTO 2022) and the reprogramming techniques of Katz and Sela (arXiv 2401.14319).
+                                                      In the round-independent setting, we show that the attack of Barak and Mahmoody (CRYPTO
+                                                  2009; J. Cryptology 2017) can be extended to multiple rounds when Alice and Bob share classical
+                                                  communication and make only classical queries in all but the final round. In both settings, the
+                                                  attacker is computationally unbounded and makes poly(λ) queries to recover the key whenever
+                                                  each honest query bound is at most poly(λ) and the valid agreement probability is inverse-
+                                                  polynomial. As a consequence, we rule out imperfectly correct quantum public-key encryption
+                                                  for classical messages whose length is bounded by a polynomial in λ in the QROM when key
+                                                  generation has classical oracle access, even if encryption, decryption, and the ciphertext are
+                                                  quantum. In particular, the one-bit case applies to the imperfectly correct PKE obtained from
+                                                  two-round OSP by Bartusek and Khurana (CRYPTO 2025) whenever the classical OSP sender
+                                                  makes only classical random-oracle queries.
+
+
+                                            Contents
+                                            1 Introduction                                                                                             2
+                                              1.1 Our Results . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .        3
+                                              1.2 Discussion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       5
+                                              1.3 Acknowledgements . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .           6
+                                              1.4 Related Work . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .         6
+                                              1.5 Organization . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .         7
+
+                                            2 Technical Overview                                                                                       7
+                                              2.1 The Two-Message Attack and QPKE Application . . . . . . . . . . . . . . . . . . . .                  7
+                                              2.2 The Multi-Round Attack . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .           8
+                                              ∗
+                                                fuyuki.kitagawa@ntt.com
+                                              †
+                                                ryo.nishimaki@ntt.com
+                                              ‡
+                                                agivilla@mit.edu
+                                              §
+                                                takashi.yamakawa@ntt.com
+
+
+                                                                                                  1
+3 Preliminaries                                                                                      8
+  3.1 Random Oracles and Query Algorithms . . . . . . . . . . . . . . . . . . . . . . . . .          8
+  3.2 Partial Oracles and Reprogramming . . . . . . . . . . . . . . . . . . . . . . . . . . .        9
+  3.3 External Lemmas . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   10
+  3.4 Public Key Cryptography with Quantum Parties . . . . . . . . . . . . . . . . . . . .          11
+       3.4.1 Two-Message Key Agreement . . . . . . . . . . . . . . . . . . . . . . . . . . .        11
+       3.4.2 Multi-Round Key Agreement with a Classical-Query Prefix . . . . . . . . . .            12
+       3.4.3 Quantum Public-Key Encryption . . . . . . . . . . . . . . . . . . . . . . . . .        14
+
+4 Conditional Resampling and Heavy-Query Learning                                              15
+  4.1 The Heavy-Query Attacker . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+  4.2 The Conditioned View of the First Round . . . . . . . . . . . . . . . . . . . . . . . . 15
+
+5 Reprogramming Attacks                                                                             17
+  5.1 The Two-Message attacker . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    17
+  5.2 The Multi-Round Attack . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    23
+      5.2.1 Classical Views of the Prefix . . . . . . . . . . . . . . . . . . . . . . . . . . .     23
+      5.2.2 The Barak–Mahmoody Learner . . . . . . . . . . . . . . . . . . . . . . . . . .          24
+      5.2.3 Conditioned Prefix Resampling . . . . . . . . . . . . . . . . . . . . . . . . . .       27
+      5.2.4 The Multi-Round attacker . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      28
+
+6 Applications                                                                                      34
+
+
+1    Introduction
+Merkle studied key agreement as a way for two parties with no shared secret to communicate securely
+over an insecure channel. His puzzle protocol allows the two parties to establish a key while requiring
+a passive eavesdropper to make quadratically more queries to a random oracle [Mer78]. Subsequent
+work showed that, for classical protocols, this quadratic gap is optimal under both perfect and
+imperfect completeness. Impagliazzo and Rudich ruled out a super-polynomial gap [IR89], and
+Barak and Mahmoody proved a tight quadratic upper bound, including when the honest parties
+need not agree with certainty [BMG17].
+    It is natural to ask whether these results can be extended to the quantum setting, in which
+parties are allowed to make queries to the oracle in superposition. This is known as the quantum
+random-oracle model (QROM) [BDF+ 11] and quantum variants of Merkle’s approach, and key
+agreement in the QROM more broadly, have been studied in several works [BS08, BHK+ 19]. The
+model we consider in this work was introduced by Austrin et al. [ACC+ 22] as quantum-computation,
+classical-communication (QCCC). In a QCCC protocol, the parties may perform arbitrary quantum
+computation, retain quantum states, and query the random oracle in superposition, but every
+message they exchange is classical.
+    In 2018, Hosoyamada and Yamakawa asked whether QCCC key agreement in the QROM
+can achieve a super-polynomial gap between the query complexities of the honest parties and the
+eavesdropper [HY18, Section 6]. Assuming perfect completeness, Austrin et al. gave an unconditional
+quadratic-query classical attack when one party is classical [ACC+ 22]. For general QCCC protocols,
+their Polynomial Compatibility Conjecture yields a classical attack whose query complexity is
+polynomial in the honest parties’ query bounds; unconditionally, they obtained an attack using
+exponentially many queries.
+
+
+
+                                                  2
+    Li, Li, Li, and Liu subsequently obtained unconditional attacks in a sequence of increasingly
+general, perfectly complete settings. They first treated QPKE with classical-query key generation,
+while also proving a separate imperfect-correctness result for oracle-free decryption [LLLL24]. They
+then allowed logarithmically many quantum key-generation queries unconditionally and formulated
+a conjecture for the general case [LLLL25]. Their later work removed both restrictions for perfectly
+complete QPKE with classical keys and either classical or quantum ciphertexts [LLLL26a]. Most
+recently, they gave an unconditional, round-independent attack on every perfectly complete QCCC
+key-agreement protocol. The honest parties may query the oracle in superposition in every round,
+while the eavesdropper makes only classical queries [LLLL26b].
+    What remains open is imperfectly complete QCCC key agreement when the honest parties
+may make arbitrary quantum queries. Even a classical-query attack in this setting would face
+a serious obstacle identified by Austrin et al. Their Simulation Conjecture asserts, informally,
+that a classical algorithm whose query complexity is polynomial in the oracle’s input length can
+approximate the acceptance probability of any quantum algorithm with the same type of query
+bound, on most random oracles. It follows from the Aaronson-Ambainis conjecture on influential
+variables of bounded low-degree polynomials [AA14]. Austrin et al. showed that, if the Simulation
+Conjecture is false, then there exists an imperfectly complete QCCC protocol secure against every
+classical eavesdropper whose query complexity is polynomial in the security parameter. A fully
+general classical attack would therefore require substantial progress on this simulation problem. The
+barrier leaves room, however, for quantum-query attacks and for attacks that restrict the honest
+parties’ quantum queries. We pursue both possibilities in this work.
+    Before this work, no unconditional impossibility result was known for imperfectly correct QCCC
+key agreement in the QROM with unrestricted quantum oracle access, even for two-message protocols.
+The two-message setting also captures quantum public-key encryption (QPKE) through a standard
+key-agreement protocol: Alice sends her public key, Bob responds with an encryption of a uniformly
+random bit, and Alice recovers the shared bit by decrypting. If the ciphertext is quantum, then the
+second message in this protocol is quantum as well. Bouaziz-Ermann et al. extended the conjectural
+approach to this more general setting [BEGVV24]. Our two-message result gives an unconditional
+attack when Alice’s first-stage oracle queries and first message are classical, and therefore addresses
+an open case not covered by the perfectly complete impossibility results.
+
+1.1   Our Results
+We prove unconditional attacks that do not assume perfect completeness, where the attacker is a
+query-bounded, computationally unbounded party.
+   For a key-agreement protocol Π, let
+
+                                     αΠ (λ) := Pr[KA = KB ̸= ⊥]
+
+denote its valid agreement probability. Our bounds are meaningful whenever αΠ is nonnegligible.
+Thus they apply in a substantially broader regime than negligible completeness error: the honest
+parties need only agree on a valid key with inverse-polynomial probability, rather than with
+probability 1 − negl(λ).
+   We begin with two-message protocols. Before sending the first message, Alice queries the oracle
+only classically, although her remaining computation and retained state may be quantum. Bob
+may return a quantum message, and both Bob and Alice’s final algorithm may query the oracle in
+superposition. Let qA,1 , qB , and qA,2 bound the number of queries in Alice’s first stage, Bob’s stage,
+and Alice’s final stage, respectively.
+
+
+                                                   3
+Theorem 1.1 (Two-message attack, informal). Let Π be a protocol of the form above with valid
+agreement probability α > 0. There is a computationally unbounded quantum attacker that recovers
+Bob’s key with probability greater than α/2 using
+
+                                   qA,1 max{1, 2qB + qA,2 }4
+                                                                      !
+                                 O                           + qA,2
+                                             α4
+
+random-oracle queries. Its queries before Bob’s response are classical; its queries after intercepting
+the response may be quantum.
+
+    Consequently, no family of such protocols with honest query bounds at most poly(λ) and
+inverse-polynomial valid agreement is secure against computationally unbounded attackers making
+poly(λ) queries. If Alice is entirely classical and Bob’s response is classical, the attack is a passive
+classical eavesdropping attack.
+    In the multi-round setting, we allow for a classical-communication prefix of arbitrary length.
+The parties may run quantum algorithms and store quantum states, but all oracle queries made
+before the final round must be classical. Bob next sends one possibly quantum message, and Alice
+performs her final computation. These last two stages may query the oracle in superposition. Let
+qA,pre and qB,pre bound the parties’ total prefix queries, and let qB,q and qA,fin bound their final-stage
+queries.
+
+Theorem 1.2 (Multi-round attack, informal). Let Πmr be a protocol of the form above with valid
+agreement probability α > 0. There is a computationally unbounded online quantum attacker that
+recovers Bob’s key with probability greater than α/2 using
+
+                    max{1, qA,pre } max{1, qB,pre } max{1, 2qB,q + qA,fin }6
+                                                                                        !
+                  O                                                          + qA,fin
+                                             α6
+
+random-oracle queries. Its queries during the classical prefix are classical, and the bound has no
+additional dependence on the number of prefix rounds.
+
+    As an application, we consider quantum public-key encryption for classical messages whose
+length is bounded by a polynomial in λ. The public and secret keys are classical, and key generation
+has classical oracle access. Encryption, decryption, and the ciphertext itself may be quantum.
+
+Theorem 1.3 (QPKE attack, informal). No QPKE scheme for classical messages whose length
+is bounded by a polynomial in λ, with classical-query key generation, negligible correctness error,
+and honest query bounds at most poly(λ), is query-bounded IND-CPA secure. In fact, for every
+polynomial p, there is a computationally unbounded quantum attacker making poly(λ) queries whose
+IND-CPA advantage is at least
+                                        1     1
+                                          −      − negl(λ).
+                                        2 p(λ)
+    Moreover, the multi-round theorem gives an interactive key-generation variant of QPKE. Namely,
+suppose that ordinary key generation is replaced by an arbitrary classical-communication setup
+phase between the decrypting and encrypting parties. The parties may perform quantum local
+computation and retain quantum states, but both make only classical random-oracle queries during
+this phase. Viewing the setup as the classical prefix and the challenge ciphertext as Bob’s final
+message, the multi-round attack applies without any dependence on the number of setup rounds.
+The reduction fixes two distinct messages and turns the scheme into key agreement in the natural
+way. Alice generates and sends the public key; Bob encrypts one of the two messages and takes its
+
+                                                    4
+                         Oracle access
+   Result                                        Correctness                   Status
+                Gen          Enc         Dec
+[ACC+ 22]        Q            Q          Q         perfect     Conjectural
+[BEGVV24]        Q            Q          –         perfect     Conjectural
+[LLLL24]         C            Q          Q         perfect     Unconditional
+[LLLL24]         C            Q          –        imperfect    Unconditional
+[LLLL25]      Q (log.)        Q          Q         perfect     Unconditional for O(log λ) Gen queries;
+                                                               conjectural otherwise
+[LLLL26a]        Q            Q          Q         perfect     Unconditional
+This work        C            Q          Q        imperfect    Unconditional
+
+Table 1: Comparison of QPKE impossibility results in the QROM. Here C and Q denote classical
+and quantum random-oracle access, respectively, and – denotes oracle-free decryption. The two
+rows for [LLLL24] separate its perfect-correctness result from its imperfect-correctness result, which
+requires oracle-free decryption.
+
+
+index as his key; Alice decrypts and recovers the index. Recovering Bob’s key is therefore equivalent
+to guessing which message was encrypted.
+    Finally, we obtain the following corollary.
+
+Corollary 1.4 (Two-round OSP consequence, informal). The PKE obtained from a negligibly
+incorrect two-round OSP protocol by the transformation of Bartusek and Khurana is not query-
+bounded IND-CPA secure in the QROM, provided that the classical OSP sender makes only classical
+random-oracle queries and the honest query bounds are polynomial.
+
+1.2   Discussion
+We note that our key-agreement model and security notion are different from prior work. In
+classical random-oracle key agreement, a passive eavesdropper can copy the public transcript
+and is commonly required to be unable to recover an honest party’s key [BMG17]. Here Bob’s
+final message may be quantum and therefore cannot in general be copied. Moreover, unlike the
+Classical Communication One Quantum Message (CC1QM) security notion of Bouaziz-Ermann
+et al. [BEGVV24, Definition 3.1], our success condition asks only that the attacker recover Bob’s
+key. It does not require the attacker to provide Alice with a replacement state that makes her
+output the same non-abort key. Thus our attack objective is weaker, while security against our
+interception key-recovery experiment is correspondingly stronger: every successful CC1QM attack
+yields a successful interception key-recovery attack, but the converse need not hold. This does not
+by itself break the full CC1QM condition for a quantum final message. It is nevertheless sufficient
+for our QPKE application, because the IND-CPA challenge ciphertext is transferred to the attacker
+and need not be returned to Alice.
+    Moreover, our result crucially relies on the fact that the early oracle queries are classical. Once
+the complete classical query-answer transcript is fixed, the party’s residual state depends only on
+that transcript, while all unqueried oracle values remain uniform. This makes it possible to resample
+a conditioned view and then apply random reprogramming. With quantum queries, a party may
+instead be entangled with many oracle values in superposition, and there is no classical transcript
+that both determines the residual state and leaves the remaining oracle values independent and
+uniform. Measuring the query register generally changes the execution, while keeping it coherent
+
+
+                                                  5
+does not yield the classically sampled reprogramming set needed by Lemma 3.4. Extending our result
+to quantum queries in the prefix would therefore require novel techniques for handling quantum
+oracle interactions, and we leave this as future work.
+
+1.3   Acknowledgements
+This research was conducted while AV was a summer intern at NTT Social Informatics Laboratories
+in Tokyo. AV is very grateful to NTT and the organizers of the internship for the opportunity and
+their generous hospitality.
+    We acknowledge the use of AI in the production of this paper. The proof ideas for the two-round
+setting were human-generated, while GPT-5.6 Sol Extra-Hard Thinking assisted in formalizing.
+When attempting to generalize to the multi-round setting, GPT-5.6 Sol Extra-Hard Thinking
+formalized an attack by extending Barak-Mahmoody. The authors take full responsibility for the
+correctness of this work.
+
+1.4   Related Work
+Oblivious state preparation. Bartusek and Khurana introduced oblivious state preparation
+(OSP). They showed that two-round OSP implies one-bit CPA-secure PKE with classical key
+generation, decryption, keys, and ciphertexts, but quantum encryption [BK25, Theorem 7.9]. They
+also reduced OSP to perfectly complete key agreement, thereby ruling out perfectly correct OSP in
+the QROM [BK25, Corollary 7.7]. In their relativizing OSP-to-PKE transformation, the classical
+OSP sender becomes the key generator. Our theorem therefore attacks the resulting PKE even
+when its correctness error is negligible rather than zero, provided that the sender queries the random
+oracle classically.
+
+Quantum public-key encryption. Under the Polynomial Compatibility Conjecture, Bouaziz-
+Ermann et al. handled protocols with a final quantum message. Their result assumes perfect
+completeness and no oracle queries by Alice after she receives that message, so its QPKE application
+requires oracle-free decryption [BEGVV24]. Our two-message theorem instead permits imperfect
+completeness and quantum oracle queries in Alice’s final computation, at the cost of requiring
+classical queries in her first stage.
+    Li et al. proved a complementary sequence of QPKE impossibility results. Their first paper
+unconditionally rules out perfectly complete QPKE with classical keys and ciphertexts when key
+generation has classical oracle access. It separately rules out imperfectly correct, classical-key
+QPKE with possibly quantum ciphertexts in any oracle model, provided that decryption is oracle-
+free [LLLL24]. Their next paper allows logarithmically many quantum key-generation queries
+unconditionally and gives a conjectural result beyond that range [LLLL25]. Their 2026 result
+removes both the conjecture and the key-generation restriction for perfectly complete QPKE with
+classical keys and either classical or quantum ciphertexts [LLLL26a]. Our result keeps the classical-
+query restriction on key generation, but allows imperfect correctness and unrestricted quantum
+oracle queries by encryption and decryption.
+
+Many-round key agreement. In a recent preprint, Li et al. give an unconditional attack
+against perfectly complete, arbitrary-round QCCC key agreement with unrestricted quantum oracle
+queries [LLLL26b]. All communication in their model is classical, and their eavesdropper makes
+only classical queries. Our multi-round theorem makes a different tradeoff: it tolerates imperfect
+
+
+
+                                                  6
+completeness and a final quantum message, but it requires classical oracle access during the prefix
+and uses a quantum attacker after the prefix.
+
+1.5   Organization
+Section 2 explains the two attacks and the QPKE application. Section 3 defines the query model,
+partial oracles, and the key-agreement and QPKE security notions, and recalls the external lemmas
+used in the proofs. Section 4 constructs the heavy-query learner for the two-message setting and
+defines Alice’s conditioned first-round view. Section 5 proves the two-round and multi-round
+theorems. Finally, Section 6 derives the classical-eavesdropping, QPKE, and OSP consequences.
+
+
+2     Technical Overview
+2.1   The Two-Message Attack and QPKE Application
+We consider two-round key agreement in the QROM with the following syntax. Both Alice and Bob
+are quantum algorithms but Alice may make only classical queries to the oracle and her message
+to Bob must be classical. Alice first makes at most qA,1 queries to the random oracle H to obtain
+query, answer pairs TA , and sends her message m1 to Bob, retaining a residual state SA . Bob then
+makes his queries to H, outputs a key KB and then sends his possibly quantum message ψ to Alice,
+who then outputs a key KA .
+     Eve proceeds as follows. After receiving Alice’s first message m1 , Eve looks for an input that
+is likely to occur in the transcript of Alice’s first round, conditioned on m1 and all oracle answers
+Eve has learned so far. Whenever this conditional probability exceeds δ, Eve queries the input and
+adds the answer to a partial oracle h, where h is defined such that it agrees with H on all points
+in its domain, which we denote by Dom(h). We stop the procedure after qA,1 /δ 2 queries; the
+probability of reaching this cutoff is at most δ. If this learning phase is successful, then every point
+outside Dom(h) appears in a fresh conditioned Alice transcript with probability at most δ.
+     Although Alice’s queries in the first round are classical, she may retain a quantum state. However,
+once Alice’s message and full query transcript are fixed, her residual state depends only on those
+classical random variables, while all unqueried oracle values remain uniform. Conditioned on (m1 , h),
+Eve can therefore prepare a distribution over Alice’s views, which we denote by ωm1 ,h , and use it to
+sample a new view
+                                             (TA′ , SA
+                                                     ′
+                                                       ) ← ωm1 ,h .
+Eve then intercepts Bob’s response Ψ and runs Alice’s final algorithm on SA        ′ and Ψ, using a
+
+reprogrammed oracle H[TA′ ], which is defined to agree with TA′ on all points inside of Dom(TA′ ), and
+with H everywhere else.
+    The analysis of the two-message attack combines two ingredients. The first ingredient is the
+heavy-query bound of Austrin et al. [ACC+ 22, Lemma 3.4], in the form recalled by Katz and
+Sela [KS24, Lemma 4], which lets Eve learn the heavy inputs before we invoke reprogramming. The
+second is the random reprogramming lemma in the form stated by Katz and Sela [KS24, Lemma 3].
+The lemma bounds the effect of reprogramming an oracle on a random set: if each point belongs to
+that set with probability
+                       √ at most δ, then the acceptance probability of a q-query quantum algorithm
+changes by at most 2q δ.
+    The QPKE application uses the standard reduction from QPKE to key agreement used in prior
+QROM impossibility work [BEGVV24, LLLL24]. Alice generates (pk, sk) and sends pk. Fix two
+distinct messages m0 , m1 . Bob chooses a uniform bit b, encrypts mb , and takes b as his key; Alice
+decrypts and maps m0 , m1 back to their indices. The resulting agreement probability is at least
+
+                                                   7
+the scheme’s minimum correct-decryption probability. In the IND-CPA game, Eve preprocesses
+pk, treats the challenge ciphertext as Bob’s response, and uses its recovered key as the guess for b.
+Interception success p therefore yields IND-CPA advantage at least p − 1/2. Because the ciphertext
+is transferred rather than copied, encryption, decryption, and the ciphertext may all be quantum.
+Only key generation needs classical oracle access.
+
+2.2   The Multi-Round Attack
+For the multi-round result, we treat the entire classical-query prefix as an auxiliary classical protocol.
+The parties’ local computations and residual states may be quantum, but their messages and
+oracle queries during the prefix are classical. Since we do not impose a computational bound, an
+exact simulator can sample these classical actions from their induced distributions and record the
+corresponding conditional residual states. We can therefore apply the Barak–Mahmoody learner
+to the simulated classical views and then map its guarantees back to the parties’ actual query
+transcripts and residual quantum states [BMG17].
+    Conditioned on the public transcript m and the partial oracle h learned by Eve, the parties’
+prefix views are close to the product of their marginals, and no input outside Dom(h) is likely to
+appear in Alice’s prefix query transcript. This product guarantee does not yet include the random
+oracle used in the final round. Since every prefix query is classical, after the two query transcripts are
+fixed, the unqueried oracle values remain uniform and the residual states have no further dependence
+on them. We use this fact to sample independent prefix views together with a consistent oracle
+and show that the resulting state is close to the real conditioned state. These steps are given in
+Sections 5.2.1 to 5.2.3.
+    Eve can then sample a fresh Alice prefix view, intercept Bob’s final message, and run Alice’s
+final computation from the sampled residual state. Since the learner’s query bound depends only on
+the total numbers of prefix queries made by Alice and Bob, the attack has no additional dependence
+on the number of prefix rounds.
+
+
+3     Preliminaries
+Let λ ∈ N be the security parameter, and let n, ℓ : N → N>0 be functions bounded above by a
+polynomial in λ. Define
+
+                   Xλ = {0, 1}n(λ) ,     Yλ = {0, 1}ℓ(λ) ,    Hλ = {H : Xλ → Yλ }.
+
+For any finite set R, we write r ← R for a uniformly random element of R. In particular, H ← Hλ
+denotes a uniformly random function. When λ is clear, we omit the subscript. When representing
+the sampled oracle by a classical register, H has orthonormal basis {|H⟩H : H ∈ H}. For a probability
+mass function or subprobability mass function π, we write
+
+                                       Supp(π) := {z : π(z) > 0}
+
+for its support.
+
+3.1   Random Oracles and Query Algorithms
+Definition 3.1 (Oracle quantum algorithms). A quantum oracle algorithm Q = {Qλ }λ∈N is a
+family of quantum circuits. We write I for its input register, X for its n(λ)-qubit query register,
+
+
+
+                                                    8
+Y for its ℓ(λ)-qubit response register, and Z for all remaining work registers. The circuit family
+depends only on λ. For H ∈ Hλ , a query applies the unitary
+
+                               UH |x⟩X |y⟩Y |z⟩Z = |x⟩X |y ⊕ H(x)⟩Y |z⟩Z .
+
+The algorithm alternates oracle-independent operations with applications of UH . For fixed λ, let
+q(Qλ ) denote its worst-case number of oracle queries; we sometimes abbreviate this to q(Q).
+   An algorithm has classical oracle access if each query is made on a classical input x, the answer
+H(x) is returned classically, and the ordered list of query-answer pairs can be recorded without
+changing the execution. The rest of the computation and the residual state may be quantum.
+
+    We use the standard classical-quantum representation of a state that is classical on one register.
+If C is a classical register with finite alphabet C and S is a quantum register, then
+
+                                       ρCS =
+                                               X
+                                                     p(c)|c⟩⟨c|C ⊗ σS|c ,
+                                               c∈C
+
+where p is a probability distribution and, whenever p(c) > 0, σS|c is the normalized state of S
+obtained by measuring C in the computational basis and observing c. Explicitly, writing Pc = |c⟩⟨c|C ,
+
+                                         p(c) = Tr[(Pc ⊗ IS )ρCS ]
+
+and, for p(c) > 0,
+                                           TrC [(Pc ⊗ IS )ρCS (Pc ⊗ IS )]
+                                  σS|c =                                  .
+                                                       p(c)
+
+3.2    Partial Oracles and Reprogramming
+Definition 3.2 (Partial oracle). For any λ ∈ N, fix X = Xλ , Y = Yλ , and H = Hλ . A partial oracle
+is a function h : Dom(h) → Y, where Dom(h) ⊆ X . We denote the size of h by |h| = | Dom(h)|. We
+write h ⪯ H when a full oracle H ∈ H extends h, meaning that H(x) = h(x) for every x ∈ Dom(h).
+Define
+                                    H(h) = {H ∈ H : h ⪯ H}.
+Two partial oracles h and τ are consistent if they agree on the intersection of their domains. For
+consistent h and τ , define
+                              H(h, τ ) = {H ∈ H : h ⪯ H, τ ⪯ H}.
+The notation H ← Unif(H(h)), and similarly H ← Unif(H(h, τ )), means that H is sampled
+uniformly from the indicated set.
+
+    An ordered transcript τ = ((x1 , y1 ), . . . , (xt , yt )) is consistent when xi = xj implies yi = yj . A
+consistent transcript defines the partial oracle τ (xi ) = yi . Repeated queries may be retained in the
+ordered list, while Dom(τ ) denotes the set of distinct queried points. We write |τ | = t for the length
+of the ordered list, including repetitions.
+
+Definition 3.3 (Reprogrammed oracle). For an oracle H and a consistent transcript τ (equivalently,
+a partial oracle), define
+                                          τ (x), x ∈ Dom(τ ),
+                                        (
+                             H[τ ](x) =
+                                          H(x), x ∈ / Dom(τ ).
+
+
+
+                                                        9
+For another internally consistent transcript τ ′ , which need not be consistent with τ , successive
+reprogramming is defined so that the second transcript overwrites the first on their common domain:
+                                             
+                                             τ (x),    x ∈ Dom(τ ′ ),
+                                              ′
+                                             
+                          H[τ ][τ ′ ](x) =    τ (x),    x ∈ Dom(τ ) \ Dom(τ ′ ),
+                                             
+                                                        x∈/ Dom(τ ) ∪ Dom(τ ′ ).
+                                             
+                                             H(x),
+
+
+3.3   External Lemmas
+Below we recall the two prior results used in our reprogramming attack.
+   The first is the random reprogramming lemma in the form used by Katz and Sela [KS24,
+Lemma 3], itself a restatement of a result by Alagic et al. [ABKM22, Lemma 3].
+
+Lemma 3.4 (Random reprogramming lemma). Let D be a distinguisher in the following game.
+
+ 1. D outputs a full function F0 : X → Y and a possibly inefficient randomized classical algorithm
+    C whose output is a partial function R. Let
+
+                                        ε = max Pr [x ∈ Dom(R)].
+                                               x∈X R←C
+
+
+ 2. The challenger samples R ← C, sets F1 = F0 [R], chooses b ← {0, 1}, and gives D quantum
+    oracle access to Fb .
+
+ 3. The oracle access is removed. The challenger reveals the random coins used by C, and D outputs
+    a bit.
+
+If D makes at most q challenge-oracle queries, then
+                                                                             √
+                     |Pr[D outputs 1 | b = 1] − Pr[D outputs 1 | b = 0]| ≤ 2q ε.
+
+    The restriction that C is classical is deliberate. Its only role is to sample the classical partial
+function R, and the game later reveals the random coins used for that sample. In our applications,
+C samples a classical query transcript, while D separately prepares any residual quantum state
+conditioned on the revealed transcript. Thus C never simulates Alice’s quantum state. Allowing C
+itself to retain quantum state would also require a different game interface, since revealing classical
+random coins would no longer specify its complete internal state.
+    The second is the following heavy-query counting lemma of Austrin et al. [ACC+ 22, Lemma 3.4],
+in the form recalled by Katz and Sela [KS24, Lemma 4].
+
+Lemma 3.5 (Heavy-query bound). Let L, z1 , x1 , . . . , zq , xq be correlated random variables, where L
+ranges over subsets of a universe U, each xi ∈ U, and the xi ’s are pairwise distinct. Conditioned on
+a history z1 , x1 , . . . , zi , call xi δ-heavy if
+
+                                     Pr[xi ∈ L | z1 , x1 , . . . , zi ] ≥ δ.
+
+Let S be the set of δ-heavy points among the xi ’s. Then
+
+                                                            E[|L|]
+                                               E[|S|] ≤            .
+                                                              δ
+
+
+
+                                                       10
+3.4     Public Key Cryptography with Quantum Parties
+We now define the protocols used throughout the paper. We note that the two-message model
+in Definition 3.6 is close to the CC1QM model of Bouaziz-Ermann et al. [BEGVV24], with one
+additional restriction: before sending her first message, Alice has only classical oracle access.
+
+3.4.1     Two-Message Key Agreement
+Definition 3.6 (Two-message key agreement with a classical first message). A two-message key-
+agreement protocol with a classical first message and a possibly quantum response is a tuple of oracle
+quantum algorithms Π = (A1 , B, A2 ) with the following syntax relative to Hλ .
+
+  • AH1 (1 ) has classical oracle access and outputs (TA , M1 , SA ). Here M1 is a classical first
+          λ
+
+    message, SA is Alice’s residual register, and TA is the complete ordered classical query-answer
+    transcript of A1 .
+
+  • B H (1λ , M1 ) has quantum oracle access and outputs a possibly quantum message register Ψ and
+    a classical key KB ∈ Kλ ∪ {⊥}.
+
+  • AH
+     2 (1 , SA , Ψ) has quantum oracle access and outputs a classical key KA ∈ Kλ ∪ {⊥}.
+         λ
+
+
+Other than access to the common random oracle, Alice and Bob initially share no state or correlated
+randomness. We assume worst-case bounds
+
+                             |TA | ≤ qA,1 ,     q(B) ≤ qB ,      q(A2 ) ≤ qA,2 .
+
+The protocol is the following experiment, denoted by RealΠ (1λ ):
+
+  1. Sample H ← Hλ .
+
+  2. Run (TA , M1 , SA ) ← AH
+                            1 (1 ), and send the classical message M1 to Bob.
+                                λ
+
+
+  3. Run (Ψ, KB ) ← BH (1λ , M1 ), and send the message register Ψ to Alice.
+
+               2 (1 , SA , Ψ).
+  4. Run KA ← AH   λ
+
+
+The valid agreement probability is
+
+                                   αΠ (λ) :=      Pr     [KA = KB ̸= ⊥].
+                                               RealΠ (1λ )
+
+We use the following notions of completeness and security for such a protocol:
+
+ (i) Completeness. The protocol has completeness error ϵc (λ) if
+
+                                               αΠ (λ) ≥ 1 − ϵc (λ).
+
+      We say the protocol is correct if ϵc is negligible.
+
+(ii) Security. The protocol is interception key-recovery secure, as defined in Definition 3.8, if, for
+     every polynomially query-bounded attacker E,
+
+                                                 Π,E (λ) ≤ negl(λ).
+                                              AdvIntKR                                             (1)
+
+
+
+                                                       11
+Definition 3.7 (Intercepting attacker). An intercepting-attacker is a pair E = (E1 , E2 ). Its first
+stage receives Alice’s classical message, may query the oracle before Bob generates his response,
+and outputs a possibly quantum state ZE . Its second stage receives ZE together with Bob’s message
+register and outputs a guess for the classical key.
+
+Definition 3.8 (Interception key-recovery experiment). Let E = (E1 , E2 ) be any polynomially
+query-bounded intercepting-attacker: its computation may be unbounded, but its two stages together
+make at most poly(λ) random-oracle queries. The experiment IntKRΠ,E (1λ ) is:
+
+ 1. Sample H ← Hλ .
+
+ 2. Run (TA , M1 , SA ) ← AH
+                           1 (1 ) and reveal M1 to E1 .
+                               λ
+
+
+ 3. Run ZE ← E1H (1λ , M1 ).
+
+ 4. Run (Ψ, KB ) ← BH (1λ , M1 ) and transfer Ψ to E2 .
+
+ 5. Run K ∗ ← E2H (1λ , ZE , Ψ). The experiment outputs 1 iff K ∗ = KB ̸= ⊥.
+
+Define
+                                   Π,E (λ) := Pr[IntKRΠ,E (1 ) = 1].
+                                AdvIntKR                    λ
+
+
+
+3.4.2     Multi-Round Key Agreement with a Classical-Query Prefix
+We also consider protocols with an arbitrary classical-communication prefix. During the prefix,
+both parties query the oracle only classically, although their other computations and residual states
+may be quantum. In the final round, Bob sends a possibly quantum message, after which Alice
+performs her final computation. This communication pattern is similar to the CC1QM pattern
+of Bouaziz-Ermann et al. [BEGVV24, Definition 11], except that we additionally require classical
+oracle access during the prefix.
+
+Definition 3.9 (Multi-round key agreement with a classical-query prefix). A key-agreement protocol
+with a classical prefix and one final possibly quantum message is a tuple of oracle quantum algorithms
+
+                                 Πmr = (Ai )ri=1 , (Bi )r−1
+                                                                       
+                                                        i=1 , Bq , Afin .
+
+Here r ≥ 1 is the number of messages that Alice sends during the classical prefix. To simplify the
+indexing, we assume that Alice sends both the first and last prefix messages. The honest experiment,
+denoted RealΠmr (1λ ), is:
+
+ 1. Sample H ← Hλ . Alice and Bob begin in an oracle-independent product state ρA,0 ⊗ ρB,0 .
+
+ 2. For i = 1, . . . , r, Alice runs Ai on her current residual register and the public transcript so
+    far, makes only classical oracle queries, sends a classical message M2i−1 , and retains her new
+    residual register. If i < r, Bob proceeds analogously: he runs Bi , makes only classical oracle
+    queries, sends a classical message M2i , and retains his new residual register.
+
+ 3. Let
+                                          M = (M1 , . . . , M2r−1 )
+    be the complete classical prefix transcript. Let TA and TB be the complete ordered query-answer
+    transcripts accumulated by Alice and Bob during the prefix, and let SA and SB be their residual
+    quantum registers at its end.
+
+                                                   12
+  4. Bob runs
+                                        (Ψ, KB ) ← BqH (1λ , M, SB ),
+    where Ψ is a possibly quantum message register and KB ∈ Kλ ∪ {⊥} is classical.
+
+  5. After receiving Ψ, Alice runs
+                                              fin (1 , M, SA , Ψ).
+                                        KA ← AH     λ
+
+
+    Here KA ∈ Kλ ∪ {⊥} is classical.
+
+Write
+                             qA,pre := max |TA |,             qB,pre := max |TB |,
+and let qB,q and qA,fin bound the quantum-oracle queries made by Bq and Afin , respectively. The
+valid agreement probability is
+
+                                αΠmr (λ) :=       Pr        [KA = KB ̸= ⊥].
+                                              RealΠmr (1λ )
+
+We use the following notions of completeness and security for such a protocol:
+
+ (i) Completeness. The protocol has completeness error ϵc (λ) if
+
+                                              αΠmr (λ) ≥ 1 − ϵc (λ).
+
+    We say the protocol is correct if ϵc is negligible.
+
+(ii) Security. The protocol is online interception key-recovery secure, as defined in Definition 3.10,
+     if, for every computationally unbounded attacker E making at most poly(λ) random-oracle
+     queries, restricted to classical queries during the prefix but allowed quantum queries after
+     receiving Ψ,
+                                        AdvIntKR,mr
+                                            Πmr ,E  (λ) ≤ negl(λ).                                 (2)
+
+Definition 3.10 (Online interception experiment). The experiment IntKRmr
+                                                                      Πmr ,E (1 ) proceeds as
+                                                                               λ
+
+follows.
+
+  1. Sample H ← Hλ and initialize the parties and Eve.
+
+  2. Run the honest classical prefix. After each public message, activate Eve on the transcript so
+     far and its retained state; during these activations Eve may make classical oracle queries and
+     update its state.
+
+  3. Run BqH on Bob’s residual register. Transfer its message register Ψ to Eve and retain Bob’s
+     key KB .
+
+  4. Eve may make quantum oracle queries and outputs a classical key guess K ∗ . The experiment
+     outputs 1 iff K ∗ = KB ̸= ⊥.
+
+Define
+                              AdvIntKR,mr
+                                 Πmr ,E   (λ) := Pr[IntKRmr
+                                                         Πmr ,E (1 ) = 1].
+                                                                  λ
+
+
+
+
+                                                       13
+3.4.3    Quantum Public-Key Encryption
+We consider classical public and secret keys, classical messages whose length is bounded by a
+polynomial in λ, and possibly quantum encryption, decryption, and ciphertexts. We allow imperfect
+correctness but require Gen to query the random oracle only classically. Our security experiment
+is the corresponding query-bounded IND-CPA experiment: the attacker may perform unbounded
+computation but is charged for its oracle queries. When Gen, Dec, and the ciphertext are classical
+but Enc may be quantum, the µ(λ) = 1 case is exactly the PKE syntax used by Bartusek and
+Khurana [BK25, Definition 7.8].
+
+Definition 3.11 (QPKE with classical-query key generation). Let µ : N → N be any polynomial-time
+computable function satisfying 1 ≤ µ(λ) ≤ p(λ) for some polynomial p, and let Mλ = {0, 1}µ(λ) . A
+quantum public-key encryption scheme Σ = (Gen, Enc, Dec) for the message spaces {Mλ }λ∈N , in the
+QROM with oracle family Hλ , has the following syntax.
+
+  • (pk, sk) ← GenH (1λ ) outputs a classical public key and secret key. The algorithm has classical
+    random-oracle access, and its complete ordered query-answer transcript can be recorded as TGen .
+
+  • C ← EncH (1λ , pk, m), for m ∈ Mλ , uses quantum random-oracle access and outputs a possibly
+    quantum ciphertext register C.
+
+  • m
+    b ← DecH (1λ , sk, C) uses quantum random-oracle access and outputs m
+                                                                        b ∈ Mλ ∪ {⊥}.
+
+Write qGen , qEnc , and qDec for the respective worst-case query bounds. Define the minimum correct-
+decryption probability
+
+            αΣ (λ) := min Pr DecH (1λ , sk, C) = m :
+                               
+                      m∈Mλ
+
+                                H ← Hλ , (pk, sk) ← GenH (1λ ), C ← EncH (1λ , pk, m) .
+                                                                                      
+
+
+The scheme has correctness error ϵc (λ) if αΣ (λ) ≥ 1 − ϵc (λ).
+
+Definition 3.12 (Query-bounded IND-CPA security). For a two-stage attacker D = (D0 , D1 ), the
+experiment INDΣ,D (1λ ) is:
+
+  1. Sample H ← Hλ and (pk, sk) ← GenH (1λ ).
+
+  2. Run (ZD , m0 , m1 ) ← D0H (1λ , pk), where ZD is a possibly quantum state and m0 , m1 ∈ Mλ .
+
+  3. Sample b ← {0, 1}, run C ← EncH (1λ , pk, mb ), and transfer C to D1 .
+
+  4. Run b′ ← D1H (1λ , ZD , C). The experiment outputs 1 iff b′ = b.
+
+Define
+                                                                        1
+                            AdvIND-CPA (λ) := Pr[INDΣ,D (1λ ) = 1] −      .
+                               Σ,D
+                                                                        2
+The scheme is query-bounded IND-CPA secure if this advantage is negligible for every computationally
+unbounded attacker making at most poly(λ) random-oracle queries. This differs from standard
+computational IND-CPA only in the attacker’s resource bound. Because encryption is public, the
+experiment does not need a separate encryption oracle.
+
+
+
+
+                                                  14
+4     Conditional Resampling and Heavy-Query Learning
+4.1      The Heavy-Query Attacker
+The following procedure is the findTranscript heavy-query attacker of Katz and Sela [KS24,
+Section 3 and Lemma 5] adapted to our setting. Its cutoff analysis is precisely their application of
+the heavy-query counting bound of Austrin et al. [ACC+ 22].
+   Throughout this subsection, probabilities are taken over
+
+                                 H ← H,         (TA , M1 , SA ) ← AH
+                                                                   1 (1 ).
+                                                                       λ
+
+
+For a first-message value m1 and a partial oracle h, let
+
+                                      Em1 ,h := {M1 = m1 , h ⪯ H}.
+
+Whenever Pr[Em1 ,h ] > 0, define
+
+                                 pm1 ,h (x) := Pr[x ∈ Dom(TA ) | Em1 ,h ].                             (3)
+
+Define
+                          Heavyδ (m1 , h) := {x ∈ X \ Dom(h) : pm1 ,h (x) > δ}.
+Fix a total order ≺ on X .
+
+                  δ (1 , m1 )
+Algorithm 1: LearnH   λ
+
+Input: Security parameter 1λ , first message m1 , oracle access to H, threshold δ, and bound qA,1 .
+Output: A partial
+                  oracle h or ⊥.
+Nmax ← qA,1 /δ 2 ; h ← ∅
+while Heavyδ (m1 , h) ̸= ∅ do
+   if | Dom(h)| ≥ Nmax then return ⊥
+   Let x be the ≺-least point in Heavyδ (m1 , h)
+   Query H(x) and set h ← h ∪ {x 7→ H(x)}
+end while
+return h
+    A pair (m1 , h) is reachable if
+
+                                Pr[M1 = m1 , LearnH
+                                                  δ (1 , m1 ) = h] > 0.
+                                                      λ
+
+
+    As in the Katz-Sela attacker, fixing the order ≺ makes every next query a deterministic function
+of (m1 , h). Hence, for every reachable pair (m1 , h) and every oracle H,
+
+                                       δ (1 , m1 ) = h
+                                  LearnH   λ
+                                                           ⇐⇒      h ⪯ H.
+
+We refer to this equivalence as the deterministic-output property of Learn.
+
+4.2      The Conditioned View of the First Round
+For every reachable pair (m1 , h), let ωm1 ,h denote the conditional state of Alice’s view after the first
+round (TA , SA ) given Em1 ,h . Write
+
+                                      µm1 ,h (τ ) = Pr[TA = τ | Em1 ,h ]
+
+
+
+                                                     15
+for its transcript marginal. Explicitly, for every τ with µm1 ,h (τ ) > 0, let σm1 ,τ be the corresponding
+conditional state of SA given (M1 , TA ) = (m1 , τ ). Then
+
+                             ωm1 ,h =                   µm1 ,h (τ )|τ ⟩⟨τ |TA ⊗ σm1 ,τ .
+                                            X
+
+                                             τ:
+                                        µm1 ,h (τ )>0
+
+
+The notation (TA′ , SA ′ ) ← ω
+                               m1 ,h means that we prepare a new instance of this state: sample
+τ ← µm1 ,h , place τ in TA , and prepare SA
+                          ′               ′ in the state σ
+                                                          m1 ,τ . By the deterministic-output property,
+the events Em1 ,h and {M1 = m1 , Learnδ (1 , m1 ) = h} coincide for every reachable pair.
+                                        H λ
+
+
+Lemma 4.1 (Katz-Sela heavy-query attacker). For every 0 < δ < 1, with probability at least 1 − δ
+                                                 δ (1 , M1 ) outputs a partial oracle h =
+over the real execution of the first round, LearnH   λ                                  ̸ ⊥. On every
+nonabort execution,                                  l         m
+                                         | Dom(h)| ≤ qA,1 /δ 2
+
+                 / Dom(h),
+and, for every x ∈
+                                           Pr
+                                      ′ ,S ′ )←ω
+                                                        [x ∈ Dom(TA′ )] ≤ δ.
+                                    (TA   A     M1 ,h
+
+
+Proof. The argument is a restatement, in our notation, of the proof of Katz and Sela [KS24,
+Lemma 5]; we include it explicitly for completeness. The residual register SA plays no role in the
+counting argument and is simply prepared together with its sampled transcript.
+    The second claim is immediate upon successful termination: Heavyδ (M1 , h) = ∅, and the
+displayed probability is exactly pM1 ,h (x).
+    We now bound the abort probability.      If qA,1 = 0, the attacker returns the empty partial oracle.
+Assume qA,1 > 0, and let Nmax = qA,1 /δ 2 . Let L = Dom(TA ). Let N ≤ Nmax be the number of
+                                   
+
+real queries issued by the attacker before it returns or aborts. On abort, N = Nmax ; successful
+termination with N = Nmax is also allowed.
+    To apply Lemma 3.5 with a fixed-length sequence, set z1 = M1 . For each real attacker step i ≤ N ,
+let xi be its query and let zi+1 = H(xi ). For N < i ≤ Nmax , pad with pairwise distinct symbols
+xi = ⊥i ∈/ X and fixed values zi+1 = 0. Work over the enlarged universe X ⊔ {⊥1 , . . . , ⊥Nmax }. The
+points are pairwise distinct because the attacker never repeats a query.
+    Immediately before a real query xi , the history determines the current partial oracle hi−1 . Hence
+
+                             Pr[xi ∈ L | z1 , x1 , . . . , zi ] = pM1 ,hi−1 (xi ) > δ.
+
+Every real attacker query is therefore δ-heavy, while every padding point has conditional membership
+probability zero. The heavy set in Lemma 3.5 has size exactly N , and so
+
+                                                        E[|L|]   qA,1
+                                           E[N ] ≤             ≤      .
+                                                          δ       δ
+By Markov’s inequality,
+                                                                 qA,1
+                                      Pr[N ≥ Nmax ] ≤                 ≤ δ.
+                                                                δNmax
+Since abort implies N = Nmax ,
+
+                            Pr[LearnH
+                                    δ (1 , M1 ) = ⊥] ≤ Pr[N ≥ Nmax ] ≤ δ.
+                                        λ
+
+
+
+
+                                                          16
+5     Reprogramming Attacks
+5.1    The Two-Message attacker
+Definition 5.1 (Eve’s two-stage reprogramming attack). Fix 0 < δ < 1. The attacker Eδ = (Eδ,1 , Eδ,2 )
+is defined as follows.
+    On input the first message m1 , the preprocessing stage runs
+
+                                                       δ (1 , m1 ).
+                                              h ← LearnH   λ
+
+
+If h = ⊥, it outputs ZE = ⊥. Otherwise it prepares
+
+                                               (TA′ , SA
+                                                       ′
+                                                         ) ← ωm1 ,h
+
+and outputs ZE = (m1 , h, TA′ , SA
+                                 ′ ).
+
+    After receiving Bob’s message register Ψ, the postprocessing stage outputs ⊥ if ZE = ⊥. Otherwise
+it defines the fixed reprogrammed oracle H ′ = H[TA′ ], runs
+                                                        ′
+                                          K ∗ ← AH       ′
+                                                 2 (1 , SA , Ψ),
+                                                     λ
+
+
+and outputs K ∗ .
+
+    The preprocessing stage makes at most qA,1 /δ 2 classical queries. Each query to H[TA′ ] can
+                                                               
+
+be implemented using one query to H, a reversible lookup in the known transcript, and a |+⟩⊗ℓ
+ancilla; see the proof of Lemma 5.6. The postprocessing stage therefore makes at most qA,2 quantum
+queries.
+
+Theorem 5.2. Let Π = (A1 , B, A2 ) be a protocol as in Definition 3.6, and let α = αΠ (λ). For
+every 0 < δ < 1, the attacker Eδ of Definition 5.1 satisfies
+                                                                   √
+                                  Π,Eδ (λ) ≥ α − δ − 2(2qB + qA,2 ) δ.
+                              AdvIntKR
+
+It makes at most                                l           m
+                                                 qA,1 /δ 2 + qA,2
+random-oracle queries.
+
+Proof of Theorem 5.2. We proceed via a hybrid argument. Consider the hybrids G0 , G1 , . . . , G5 ,
+where G0 is the honest execution and G5 is Eve’s attack. We say that Gi succeeds when its two
+recorded keys agree and are not ⊥ (an abort counts as failure).
+Hybrid G0 (real execution)
+    1. Sample H0 ← H.
+    2. Run (TA,0 , M1,0 , SA,0 ) ← AH
+                                    1 (1 ).
+                                     0  λ
+
+
+    3. Run (Ψ0 , KB,0 ) ← BH0 (1λ , M1,0 ).
+    4. Run KA,0 ← AH
+                   2 (1 , SA,0 , Ψ0 ).
+                     0 λ
+
+
+Therefore,
+                                          Pr[G0 succeeds] = α.
+
+Hybrid G1
+
+                                                        17
+  1. Sample H1 ← H.
+  2. Run (TA,1 , M1,1 , SA,1 ) ← AH
+                                  1 (1 ).
+                                    1 λ
+
+
+  3. Run h1 ← LearnH
+                   δ (1 , M1,1 ); abort if h1 = ⊥.
+                     1 λ
+
+
+  4. Sample a fresh oracle H
+                           b 1 ← Unif(H(h1 )) and set H
+                                                      e1 = H
+                                                           b 1 [TA,1 ].
+
+  5. Run (Ψ1 , KB,1 ) ← BH (1 , M1,1 ).
+                         e1 λ
+
+  6. Run K1∗ ← AH
+                2 (1 , SA,1 , Ψ1 ).
+                  1 λ
+                    e
+
+
+Lemma 5.3 (G0 to G1 ).
+
+                              |Pr[G0 succeeds] − Pr[G1 succeeds]| ≤ δ.
+
+Proof. We begin by adding an intermediate hybrid G′0 that inserts into G0 an additional call
+h ← LearnHδ (1 , M1,0 ) whose output is otherwise ignored. This computation does not change the
+            0  λ
+
+real execution. By Lemma 4.1, the call aborts with probability at most δ.
+    Condition on the attacker not aborting, and fix values (m1 , τ, h) with positive probability. By
+the deterministic-output property of Learn,
+
+                                      δ (1 , m1 ) = h} = {h ⪯ H}.
+                                {LearnH   λ
+
+
+Because A1 makes only classical oracle queries, once (M1 , TA ) = (m1 , τ ) is fixed, its conditional
+residual state depends only on the recorded query-answer history, not on any value of H outside
+Dom(τ ). Since the original oracle is uniform, conditioning on
+
+                                 M1 = m1 ,      TA = τ,      h⪯H
+
+leaves H uniform over H(h, τ ) and independent of SA . This is the classical-quantum case of the
+conditional-oracle identity used by Katz and Sela [KS24, Lemma 6].
+    In G1 , H
+            b 1 ← Unif(H(h)) is independent of Alice’s conditioned residual state, and Hb 1 [τ ] is
+uniform over H(h, τ ). The conditioned experiments are therefore identical. The only loss comes
+from the abort event, which has probability at most δ.
+
+Hybrid G2
+  1. Sample H2 ← H.
+  2. Run (TA,2 , M1,2 , SA,2 ) ← AH
+                                  1 (1 ).
+                                   2  λ
+
+
+  3. Run h2 ← LearnH
+                   δ (1 , M1,2 ); abort if h2 = ⊥.
+                     2 λ
+
+
+  4. Sample H
+            b 2 ← Unif(H(h2 )).
+
+  5. Prepare (TA,2
+               ′ , S′ ) ← ω
+                    A,2    M1,2 ,h2 and set H2 = H2 [TA,2 ].
+                                            e    b    ′
+
+
+  6. Run (Ψ2 , KB,2 ) ← BH (1 , M1,2 ).
+                         e2 λ
+
+  7. Run K2∗ ← AH
+                2 (1 , SA,2 , Ψ2 ).
+                  2 λ   ′
+                    e
+
+
+Lemma 5.4 (G1 to G2 ).
+                                Pr[G1 succeeds] = Pr[G2 succeeds].
+
+                                                 18
+Proof. Both hybrids abort on the same event. Condition on a reachable nonabort pair (m1 , h).
+By the deterministic-output property, the conditioned state of Alice’s actual view in G1 is exactly
+ωm1 ,h ; G2 simply prepares a new instance of that same classical-quantum state. In both hybrids,
+the fresh oracle Hb i ← Unif(H(h)) is independent of the view, and is then reprogrammed according
+to its transcript. The rest of the experiments is identical and therefore their conditional success
+probabilities agree for every reachable nonabort (m1 , h). Since the two hybrids have the same
+distribution on (M1 , h) and both fail on abort, their success probabilities are equal.
+
+Hybrid G3
+  1. Sample H3 ← H.
+  2. Run (TA,3 , M1,3 , SA,3 ) ← AH
+                                  1 (1 ).
+                                   3  λ
+
+
+  3. Run h3 ← LearnH
+                   δ (1 , M1,3 ); abort if h3 = ⊥.
+                     3 λ
+
+
+  4. Sample H
+            b 3 ← Unif(H(h3 )).
+
+  5. Prepare (TA,3
+               ′ , S′ ) ← ω
+                    A,3    M1,3 ,h3 and set H3 = H3 [TA,3 ].
+                                            e    b    ′
+
+
+  6. Run (Ψ3 , KB,3 ) ← BH (1 , M1,3 ).
+                         b3 λ
+
+  7. Run K3∗ ← AH
+                2 (1 , SA,3 , Ψ3 ).
+                  3 λ   ′
+                   e
+
+
+Lemma 5.5 (G2 to G3 ).
+                                                                     √
+                            |Pr[G2 succeeds] − Pr[G3 succeeds]| ≤ 2qB δ.
+
+Proof. Fix a reachable nonabort pair (m1 , h). We construct a distinguisher Dm1 ,h for the game in
+Lemma 3.4 as follows.
+
+ 1. The distinguisher samples H
+                              b ← Unif(H(h)), sends F0 := H  b to the challenger, and supplies the
+    randomized algorithm Cm1 ,h . On fresh coins, Cm1 ,h samples τ ′ ← µm1 ,h and returns
+
+                                            R := τ ′ |Dom(τ ′ )\Dom(h) .
+
+ 2. The challenger samples the coins of Cm1 ,h , obtains R, sets F1 := F0 [R], samples b ← {0, 1},
+    and gives the distinguisher quantum oracle access to Fb . The distinguisher runs
+
+                                          (Ψ, KB ) ← BFb (1λ , m1 )
+
+    and retains (Ψ, KB ).
+
+ 3. The challenger removes access to Fb and reveals the coins of Cm1 ,h , thereby revealing τ ′ . The
+    distinguisher prepares SA
+                            ′ in the conditional state σ
+                                                         m1 ,τ ′ , runs
+
+                                                     b ′]
+                                                     H[τ
+                                          K ∗ ← A2                 ′
+                                                            (1λ , SA , Ψ),
+
+    and outputs 1 iff K ∗ = KB ̸= ⊥.
+
+
+
+
+                                                     19
+Only Bob’s algorithm receives the challenge oracle, so the distinguisher makes at most qB challenge
+queries.
+   Every transcript in Supp(µm1 ,h ) is consistent with h, so F1 = H[R]
+                                                                     b    = H[τ
+                                                                             b ′ ]. The cases b = 1
+and b = 0 reproduce G2 and G3 , respectively, conditioned on (m1 , h). Moreover, for every x,
+
+                                              0,                                     x ∈ Dom(h),
+                                          (
+                 Pr[x ∈ Dom(R)] ≤
+                                              Prτ ′ ←µm1 ,h [x ∈ Dom(τ ′ )] ≤ δ,     x∈/ Dom(h),
+
+where the
+      √ last inequality is Lemma 4.1. The reprogramming lemma bounds the conditional difference
+by 2qB δ. To remove the conditioning, let π(m1 , h) be the common subprobability mass of nonabort
+executions of the shared prefix that output (M1 , h) = (m1 , h), and write
+
+                  si (m1 , h) := Pr[Gi succeeds | M1,i = m1 , hi = h]       (i ∈ {2, 3}).
+                                                              √
+The preceding argument gives |s2 (m1 , h)−s3 (m1 , h)| ≤ 2qB δ for every (m1 , h) ∈ Supp(π). Because
+success is defined to be false on abort, the two success probabilities are the corresponding π-weighted
+sums. Hence the triangle inequality gives
+
+        |Pr[G2 succeeds] − Pr[G3 succeeds]| ≤                             π(m1 , h) |s2 (m1 , h) − s3 (m1 , h)|
+                                                               X
+
+                                                        (m1 ,h)∈Supp(π)
+                                                          √
+                                                     ≤ 2qB δ,
+
+where    (m1 ,h)∈Supp(π) π(m1 , h) ≤ 1.
+        P
+
+
+Hybrid G4
+   1. Sample H4 ← H.
+   2. Run (TA,4 , M1,4 , SA,4 ) ← AH
+                                   1 (1 ).
+                                    4  λ
+
+
+   3. Run h4 ← LearnH
+                    δ (1 , M1,4 ); abort if h4 = ⊥.
+                      4 λ
+
+
+   4. Sample H
+             b 4 ← Unif(H(h4 )) and set Bob’s oracle H B = H
+                                                      4
+                                                           b 4 [TA,4 ].
+
+   5. Prepare (TA,4
+                ′ , S′ ) ← ω
+                     A,4    M1,4 ,h4 and set H4 = H4 [TA,4 ].
+                                              E    B ′
+
+                              B
+   6. Run (Ψ4 , KB,4 ) ← BH4 (1λ , M1,4 ).
+                    HE
+   7. Run K4∗ ← A2 4 (1λ , SA,4
+                            ′ , Ψ ).
+                                 4
+
+
+Lemma 5.6 (G3 to G4 ).
+                                                                            √
+                         |Pr[G3 succeeds] − Pr[G4 succeeds]| ≤ 2(qB + qA,2 ) δ.
+
+Proof. Fix a reachable nonabort pair (m1 , h). In G4 , the original residual register SA,4 is unused
+and the conditional marginal of TA,4 is µm1 ,h . Thus the conditioned hybrid is unchanged if we
+independently sample
+                     b ← Unif(H(h)),
+                     H                              τ ′′ ← µm1 ,h ,       (TA′ , SA
+                                                                                  ′
+                                                                                    ) ← ωm1 ,h ,
+
+and then run Bob with H[τ
+                        b ′′ ] and Alice’s final algorithm with H[τ
+                                                                b ′′ ][T ′ ]. As usual, the second
+                                                                        A
+reprogramming overwrites the first wherever their domains overlap.
+   We construct a distinguisher Dm1 ,h for the game in Lemma 3.4.
+
+                                                          20
+ 1. The distinguisher prepares (TA′ , SA
+                                       ′ )←ω
+                                              m1 ,h , samples H ← Unif(H(h)), and sends F0 := H to
+                                                                   b                          b
+    the challenger. It also supplies a randomized algorithm Cm1 ,h that samples τ ′′ ← µm1 ,h and
+    returns
+                                          R := τ ′′ |Dom(τ ′′ )\Dom(h) .
+
+ 2. The challenger samples the coins of Cm1 ,h , obtains R, sets F1 := F0 [R], samples b ← {0, 1},
+    and gives the distinguisher quantum oracle access to Fb . The distinguisher runs
+
+                                          (Ψ, KB ) ← BFb (1λ , m1 )
+
+    followed by
+                                                      ′ ]
+                                                  F [TA
+                                         K ∗ ← A2 b                ′
+                                                            (1λ , SA , Ψ),
+    and records the bit d := 1[K ∗ = KB ̸= ⊥].
+
+ 3. The challenger removes access to Fb and reveals the coins of Cm1 ,h , thereby revealing τ ′′ . The
+    distinguisher outputs the recorded bit d.
+
+     Each query to Fb [TA′ ] uses one query to Fb . First compute reversibly whether the query point
+lies in Dom(TA′ ). On that branch, swap the answer register with an ancilla in |+⟩⊗ℓ , apply the XOR
+oracle UFb , and swap back. Because every XOR translation fixes |+⟩⊗ℓ , the challenge oracle has no
+effect on the reprogrammed branch. XOR the known value TA′ (x) into the answer register there and
+uncompute the lookup. This implements UFb [TA′ ] exactly. The total number of challenge queries is
+at most qB + qA,2 .
+     If b = 0, this is G3 . If b = 1, consistency on Dom(h) gives F1 = H[R]
+                                                                          b    = H[τ
+                                                                                  b ′′ ], yielding the
+equivalent form of G4 . By Lemma 4.1, maxx Pr[x ∈ Dom(R)] ≤ δ. The reprogramming lemma gives
+the pointwise bound
+                                                                                                 √
+    |Pr[G3 succeeds | M1 = m1 , h3 = h] − Pr[G4 succeeds | M1 = m1 , h4 = h]| ≤ 2(qB + qA,2 ) δ
+
+for every reachable nonabort pair (m1 , h). Let π(m1 , h) denote the common subprobability mass of
+nonabort executions of the shared prefix that produce that pair, and define
+
+                  si (m1 , h) := Pr[Gi succeeds | M1,i = m1 , hi = h]           (i ∈ {3, 4}).
+
+Because success is defined to be false on abort, the two success probabilities are the corresponding
+π-weighted sums. The triangle inequality yields
+
+       |Pr[G3 succeeds] − Pr[G4 succeeds]| ≤                        π(m1 , h) |s3 (m1 , h) − s4 (m1 , h)|
+                                                       X
+
+                                                (m1 ,h)∈Supp(π)
+                                                             √
+                                              ≤ 2(qB + qA,2 ) δ.
+
+
+
+Hybrid G5
+  1. Sample H5 ← H.
+  2. Run (TA,5 , M1,5 , SA,5 ) ← AH
+                                  1 (1 ).
+                                   5  λ
+
+
+  3. Run h5 ← LearnH
+                   δ (1 , M1,5 ); abort if h5 = ⊥.
+                     5 λ
+
+
+  4. Prepare (TA,5
+               ′ , S′ ) ← ω
+                    A,5    M1,5 ,h5 and set H5 = H5 [TA,5 ].
+                                            e         ′
+
+
+
+                                                  21
+   5. Run (Ψ5 , KB,5 ) ← BH5 (1λ , M1,5 ).
+
+   6. Run K5∗ ← AH
+                 2 (1 , SA,5 , Ψ5 ).
+                   5 λ   ′
+                     e
+
+
+Lemma 5.7 (G4 to G5 ).
+                                      Pr[G4 succeeds] = Pr[G5 succeeds].
+
+Proof. Both hybrids abort on the same event. On success, fix (m1 , τ, h). By the deterministic-output
+property and the conditional-oracle identity of Katz and Sela [KS24, Lemma 6], conditioned on this
+triple the original oracle H5 in G5 is uniform over H(h, τ ) and independent of the unused original
+residual state. In G4 , sampling Hb 4 ← Unif(H(h)) and setting H B = H
+                                                                  4
+                                                                        b 4 [τ ] gives the same uniform
+distribution over H(h, τ ). The independently prepared view ωm1 ,h and every subsequent operation
+are the same. Thus the conditional success probabilities of G4 and G5 are equal for every reachable
+nonabort triple (m1 , τ, h). The two hybrids induce the same distribution π(m1 , τ, h) on these triples.
+Define
+
+           si (m1 , τ, h) := Pr[Gi succeeds | M1,i = m1 , TA,i = τ, hi = h]                  (i ∈ {4, 5}).
+
+Then s4 (m1 , τ, h) = s5 (m1 , τ, h) throughout Supp(π). Both hybrids have success probability zero
+on abort, so the law of total probability gives
+
+ Pr[G4 succeeds] =             π(m1 , τ, h)s4 (m1 , τ, h) =             π(m1 , τ, h)s5 (m1 , τ, h) = Pr[G5 succeeds].
+                         X                                     X
+
+                     m1 ,τ,h                                  m1 ,τ,h
+
+
+
+
+   Hybrid G5 is exactly IntKRΠ,Eδ : the preprocessing stage learns h and prepares the conditioned
+view; Bob runs with the original oracle; Eve intercepts Ψ5 ; and Eve runs Alice’s final algorithm
+with H5 [TA,5
+          ′ ]. Therefore
+
+
+                       Π,Eδ (λ) = Pr[G5 succeeds]
+                    AdvIntKR
+                                                                 √                √
+                                     ≥ Pr[G0 succeeds] − δ − 2qB δ − 2(qB + qA,2 ) δ
+                                                             √
+                                     = α − δ − 2(2qB + qA,2 ) δ.
+
+The query bound follows from Definition 5.1.
+
+Corollary 5.8 (Concrete parameter choice). Let Π satisfy Definition 3.6, let α = αΠ (λ) > 0, and
+define
+                                                               α 2
+                                                                
+                         Q := max{1, 2qB + qA,2 },     δ :=         .
+                                                              8Q
+Then the adversary of Theorem 5.2 succeeds with probability strictly greater than α/2 and makes at
+most                               l                m
+                                    4096 qA,1 Q4 /α4 + qA,2
+random-oracle queries.
+Proof. The reprogramming loss is                    √
+                                                  2Q δ = α/4.
+Since 0 < α ≤ 1 and Q ≥ 1, δ = α2 /(64Q2 ) ≤ α/64. Hence the success lower bound is at least
+
+                                             α − α/64 − α/4 > α/2.
+
+                                                         22
+Moreover,
+                                        qA,1   4096 qA,1 Q4
+                                             =              .
+                                         δ2        α4
+
+
+Corollary 5.9 (Polynomial-query two-message impossibility). Let Π = {Πλ } be a family of protocols
+satisfying Definition 3.6. Suppose that qA,1 , qB , and qA,2 are each bounded by poly(λ), and that
+αΠ (λ) ≥ 1/ poly(λ). Then the family is not interception key-recovery secure against computationally
+unbounded quantum adversaries making at most poly(λ) random-oracle queries. In particular, the
+conclusion applies when the completeness error is negligible.
+
+5.2     The Multi-Round Attack
+We give an attack on a multi-round key agreement protocol with a classical prefix and one final
+possibly quantum message, as defined in Definition 3.9. Recall that in this model, the only property
+the prefix must satisfy is that all communication and all queries to the random oracle are classical;
+the parties’ local computation and residual states may otherwise be quantum. Our attack and
+corresponding analysis extend the techniques from [BMG17] to our setting.
+
+5.2.1    Classical Views of the Prefix
+The main difference between our setting and the purely classical setting in [BMG17] is that we
+allow the parties’ local computation to be quantum. However, as we discuss in this section, we can
+assume without loss of generality that Alice and Bob are executing classical algorithms to generate
+the prefix. In turn, we will be able to apply the techniques from [BMG17] directly.
+    We first explain how to generate classical views of the prefix. Let Π be a protocol as defined in
+Definition 3.9. Recall that while the parties must be query bounded, they may be computationally
+unbounded. We therefore can define an exact classical simulation of the prefix of Π as follows. The
+simulator maintains a classical descirption of the parties’ residual quantum states. Whenever an
+honest party sends a message or queries the oracle during the prefix, the simulator produces a
+sample according to the distribution induced by the party’s current quantum state and updates its
+classical description of the corresponding conditional residual state. Thus the simulation makes the
+same classical oracle queries and produces exactly the same joint state of the public transcript, the
+parties’ query transcripts, and their residual registers as the original prefix.
+    For P ∈ {A, B}, define
+                                         UP := (RP , M, TP )
+as the classical view of party P in this simulation, where RP records all private random choices of
+the simulator, M is the public prefix transcript, and TP is the complete ordered oracle query-answer
+transcript of P . This is equivalent to the notion of a view used by Barak and Mahmoody [BMG17,
+Section 3.1]. We note that the classical description of the residual states is not part of UP .
+    We now explain what is needed to use this simulated classical view in combination with the
+techniques of [BMG17]. The eventual attack will retain the public prefix transcript m and a
+partial oracle h learned during the prefix, and then prepare a fresh Alice prefix view from its
+conditional marginal given (m, h). To justify replacing Alice’s real view by this fresh sample without
+significantly changing Bob’s subsequent behavior, we need the real joint state of the two prefix
+views, conditioned on (m, h), to be close to the product of its marginals. Section 5.2.2 obtains the
+corresponding approximate-product guarantee for the simulated classical views UA and UB from the
+Barak–Mahmoody learner.
+
+
+                                                 23
+    That classical guarantee is not yet sufficient for our application. The final round of the key
+agreement protocol acts on the parties’ residual quantum registers, rather than on the simulator’s
+private randomness, and its algorithms may query the same random oracle H in superposition. We
+must therefore both transfer the approximate-product guarantee from UA , UB to the parties’ actual
+query transcripts and residual quantum states, and preserve the correct correlation of those states
+with H. The local channels defined below perform the first task. The conditional-oracle identity in
+Equation (4) performs the second. In Section 5.2.3, we combine the two facts to replace the real
+conditioned prefix state by independently sampled Alice and Bob views together with a suitably
+sampled and reprogrammed oracle.
+    For every uP in the support of UP , let TP (uP ) denote the query transcript contained in uP , and
+let σP (uP ) be the residual density operator tracked by the simulator after the prefix on that view.
+Define the local channel
+
+                           ΦP (|uP ⟩⟨uP |) := |TP (uP )⟩⟨TP (uP )| ⊗ σP (uP ).
+
+Thus UP is only an auxiliary classical view used to invoke the Barak–Mahmoody result; applying
+ΦP discards the simulator’s private randomness and keeps only the actual query transcript and
+residual quantum state.
+    For a complete public prefix transcript m and a partial oracle h, write
+
+                                     Fm,h := {M = m, h ⪯ H}.
+
+Whenever Pr[Fm,h ] > 0, let νm,h
+                               AB be the diagonal density operator corresponding to the conditional
+
+distribution of (UA , UB ) given Fm,h , and let νm,h
+                                                 A , ν B be its marginals. Define
+                                                      m,h
+
+                                      AB
+                                     ωm,h := (ΦA ⊗ ΦB )(νm,h
+                                                         AB
+                                                             ),
+
+and define ωm,h
+              A , ωB
+                    m,h analogously. Hence ωm,h is a state on TA SA TB SB and contains no simulator
+                                               AB
+
+randomness. We note that, since we condition on M = m, the transcript register is fixed to |m⟩⟨m|M .
+Let Ωm,h be the real conditional state on HTA SA TB SB given Fm,h , where H stores the random oracle.
+Since the simulation is exact, ωm,h
+                                  AB is precisely the T S T S -marginal of Ω
+                                                          A A B B               m,h .
+    Since all oracle queries in the prefix are classical, once M = m, TA = tA , and TB = tB are fixed,
+the residual state of Alice and Bob is the same for every oracle consistent with tA and tB . Therefore,
+since H is initially uniform, whenever the conditioning event has positive probability,
+
+                             Fm,h , TA = tA , TB = tB       ∼ Unif(H(h, tA , tB )) .               (4)
+                                                        
+                       H
+
+Moreover, under this conditioning, the residual state is independent of H.
+
+5.2.2   The Barak–Mahmoody Learner
+In this section, we recall the relevant results from [BMG17], lifted to our setting. The first lemma
+below restates the general result of Barak and Mahmoody for an arbitrary classical protocol.
+In particular, their Theorem 4.3 gives an expected query bound and guarantees approximate
+independence and lightness after each round. We retain only the guarantees after the last protocol
+message, when M is the complete public transcript and h is the learner’s final partial oracle. The
+second lemma then applies this result to the exact classical simulation from Section 5.2.1. It fixes
+the parameters in terms of η, truncates the learner to obtain a worst-case query bound, aborts if
+the truncation threshold is reached or either the independence or lightness guarantee fails, and
+transfers the approximate-independence guarantee to the parties’ residual quantum states. It also
+
+                                                   24
+characterizes the learner’s output by h ⪯ H. Thus the first lemma isolates the result imported from
+Barak and Mahmoody, while the second puts it in the form used for conditioned prefix resampling
+in Section 5.2.3. The Barak–Mahmoody statement uses Items 2, 4, and 5 of their Theorem 4.3 and
+their definition of self-dependency [BMG17, Definition 4.2 and Theorem 4.3, Items 2, 4, and 5].
+Lemma 5.10 (Barak–Mahmoody). Consider a classical two-party random-oracle protocol. Let M
+be its complete public transcript and let
+
+                                UP = (RP , M, TP ),          P ∈ {A, B},
+
+be the parties’ classical views, where TP is the oracle query-answer transcript. Suppose Alice and
+Bob make at most nA and nB oracle queries, respectively, where nA , nB ≥ 1.
+    Let
+                          0 < ε1 ≤ ε2 < 1/10,     0 < α, β < 1,    αβ ≥ ε2 .
+There is a deterministic classical-query algorithm
+
+                                                ε1 ,ε2 (m)
+                                               LH
+
+that takes a complete public transcript m as input and outputs a partial oracle h. For every realized
+pair (m, h), let µAB
+                  m,h be the conditional distribution of (UA , UB ) given
+
+                                     M = m,          ε1 ,ε2 (m) = h,
+                                                    LH
+
+and let µA      B
+         m,h , µm,h be its marginals. Then:
+
+ (i) The expected number of oracle queries made by Lε1 ,ε2 is at most
+                                                  4nA nB
+                                                         .
+                                                    ε1
+
+(ii) Except with probability at most 9α over the realized pair (M, h),
+                                                                 
+                                          M,h , µM,h × µM,h ≤ 9β.
+                                     ∆TV µAB     A      B
+
+
+
+(iii) Except with probability at most 9α over the realized pair (M, h), every x ∈
+                                                                                / Dom(h) satisfies
+                                           ε2                                            ε2
+              Pr[x ∈ Dom(TA ) | M, h] <       + β,           Pr[x ∈ Dom(TB ) | M, h] <      + β.
+                                           nB                                            nA
+
+Proof. We use the deterministic learner from Barak and Mahmoody’s Construction 3.3 with param-
+eter ε1 , together with the stopping modification from their Theorem 4.3. Barak and Mahmoody
+describe this learner as running alongside the protocol. Its oracle queries do not affect the honest
+execution, and Construction 3.3 uses deterministic tie-breaking. Consequently, given the complete
+transcript m, we may replay the learner on the successive prefixes of m and make the same oracle
+queries. This defines the deterministic algorithm LHε1 ,ε2 (m) with the same final partial oracle and
+query complexity.
+    With the stopping modification, the learner is an (ε1 , ε2 )-attacker in the sense of Definition 4.1
+of Barak and Mahmoody. Item 2 of their Theorem 4.3 gives the expected query bound in Item (i).
+Their Definition 4.2 identifies self-dependency with statistical distance from the product of the
+marginals. Evaluating Item 4 of Theorem 4.3 after the final protocol message therefore gives
+Item (ii). Evaluating Item 5 at the same point gives the two lightness bounds in Item (iii) [BMG17,
+Construction 3.3, Definitions 4.1–4.2, and Theorem 4.3, Items 2, 4, and 5].
+
+                                                   25
+Lemma 5.11 (Barak–Mahmoody prefix attacker). Let 0 < η < 1/100, and set
+
+                            q̄A := max{1, qA,pre },          q̄B := max{1, qB,pre },
+
+                                                   4 · 105 q̄A q̄B
+                                                    &                '
+                                         Qlearn :=                 .
+                                                         η3
+
+There is a deterministic algorithm LearnBM,H
+                                         η     with classical oracle access that, on input a complete
+public prefix transcript m, outputs a partial oracle h or aborts. A pair (m, h) is reachable if
+                                  h                                       i
+                                Pr M = m, LearnBM,H
+                                               η    (1λ , m) = h > 0.
+
+It satisfies the following properties.
+
+ (i) It makes at most Qlearn oracle queries and aborts with probability at most η.
+
+(ii) For every reachable pair (m, h),
+                                         1 AB     A      B
+                                           ω   − ωm,h ⊗ ωm,h   ≤ η.
+                                         2 m,h               1
+
+
+(iii) For every reachable pair (m, h) and every x ∈
+                                                  / Dom(h),
+
+                                         Pr[x ∈ Dom(TA ) | Fm,h ] ≤ η.
+
+Moreover, for every reachable pair (m, h) and every oracle H,
+
+                                LearnBM,H
+                                     η    (1λ , m) = h         ⇐⇒        h ⪯ H.
+
+Proof. We apply Lemma 5.10 to the exact classical simulation of the prefix with parameters
+
+                                                                 η2                        η
+                   nA = q̄A ,     nB = q̄B ,       ε1 = ε2 =         ,        α0 = β0 =       .
+                                                                 104                      100
+These parameters satisfy α0 β0 = ε2 . The resulting learner makes at most
+
+                                           4q̄A q̄B   4 · 104 q̄A q̄B
+                                                    =
+                                              ε1           η2
+queries in expectation. We truncate this learner after Qlearn queries and abort if the truncation
+threshold is reached. By Markov’s inequality, this occurs with probability at most η/10.
+   The exceptional events in Items (ii) and (iii) of Lemma 5.10 have total probability at most
+18α0 . Since computation is unbounded in our query model, once the learner terminates we may test
+whether both conditional guarantees hold and abort otherwise, without making any further oracle
+queries. By a union bound, the total abort probability is at most
+                                                   η    28η
+                                          18α0 +      =     < η.
+                                                   10   100
+This proves Item (i).
+    We next establish the claimed characterization of the learner’s output. Fix a reachable nonabort
+pair (m, h). For fixed m, every query and stopping decision of the learner is a deterministic function
+of the partial oracle learned so far. Since some execution produces h, every oracle extending h gives
+
+                                                        26
+the same answers along that execution and therefore produces the same output. Conversely, if the
+learner outputs h, then every pair in h was obtained from an oracle query, and hence h ⪯ H. It
+follows that, for every oracle H,
+
+                              LearnBM,H
+                                   η    (1λ , m) = h       ⇐⇒       h ⪯ H.
+
+Thus, for every reachable nonabort pair (m, h), conditioning on the learner’s output is equivalent to
+conditioning on Fm,h .
+   It remains to transfer the guarantees for the simulated classical views to the actual prefix views.
+By Item (ii) of Lemma 5.10,
+                                                          
+                                ∆TV νm,h
+                                     AB     A
+                                         , νm,h    B
+                                                × νm,h ≤ 9β0 < η.
+
+Applying the local channel ΦA ⊗ ΦB and using trace-distance data processing [Wat18, Chapter 3]
+proves Item (ii). Finally, Item (iii) of Lemma 5.10 gives, for every x ∈
+                                                                       / Dom(h),
+
+                                                       ε2        η2    η
+                       Pr[x ∈ Dom(TA ) | Fm,h ] <          + β0 ≤ 4 +     < η,
+                                                       q̄B       10   100
+
+which proves Item (iii).
+
+5.2.3   Conditioned Prefix Resampling
+The preceding subsection shows that, conditioned on a reachable pair (m, h), the parties’ actual
+prefix views are close to the product state ωm,h
+                                             A ⊗ ω B . This does not by itself justify sampling the
+                                                     m,h
+two views independently in the attack, because that statement does not include the random oracle.
+Bob’s final algorithm and Eve’s simulation of Alice both query the same oracle in superposition, so
+we must also specify how the independently sampled views are coupled to that oracle.
+    The conditional-oracle identity in Equation (4) tells us how to do so. After sampling the
+two marginal views independently, we first sample a base oracle H0 consistent with h and Bob’s
+transcript TB′ , and then reprogram it on Alice’s transcript TA′ . The order is deliberate: the base
+oracle is compatible with Bob’s sampled view, while the final oracle H    e = H0 [T ′ ] contains the
+                                                                                     A
+answers recorded in Alice’s sampled view.
+    The proof compares the real and resampled experiments by applying the same channel to two
+input states. On the real joint view ωm,h
+                                       AB , the channel reconstructs the real conditioned state Ω
+                                                                                                 m,h
+exactly. On the product of the marginals, it produces the resampled state Ωm,h defined below. The
+                                                                            e
+trace-distance bound then essentially follows directly from the approximate-independence guarantee
+of the preceding subsection. In particular, any later joint quantum computation using the oracle
+and the prefix views changes the success probability by at most η when the real conditioned prefix
+is replaced by this resampled one.
+
+Lemma 5.12 (Conditioned prefix resampling). Fix a reachable pair (m, h), and consider the
+following experiment:
+
+ 1. independently prepare
+                                (TA′ , SA
+                                        ′
+                                          ) ← ωm,h
+                                               A
+                                                   ,       (TB′ , SB′ ) ← ωm,h
+                                                                           B
+                                                                               ;
+
+ 2. sample H0 ← Unif(H(h, TB′ )), and define
+                                               e = H0 [T ′ ].
+                                               H        A
+
+
+                                                  27
+Let Ω
+    e                                 ′ ′   ′ ′
+      m,h be the resulting state on HTA SA TB SB , with H holding the sampled function H. Then
+                                                                                       e
+
+                                    1
+                                       Ωm,h − Ω
+                                              e
+                                                m,h   ≤ η.
+                                    2               1
+Proof. We compare the two states by applying the same channel to the real joint prefix view and
+to the product of its marginals. Define a channel Rm,h on TA SA TB SB as follows. On classical
+transcripts tA , tB , it samples
+                                     H0 ← Unif(H(h, tB ))
+and attaches the oracle H0 [tA ], while leaving the four input registers unchanged. Every tB in the
+support of ωm,h
+             B   is consistent with h, so this channel is well defined on both input states considered
+below.
+    We first apply the channel to the real joint prefix view. In this case, tA and tB are mutually
+consistent, and H0 [tA ] is uniform over H(h, tA , tB ). By (4), this is precisely the conditional
+distribution of the real oracle given the two query transcripts. Moreover, the residual state is
+independent of the unobserved oracle values under this conditioning. Therefore,
+                                           Rm,h (ωm,h
+                                                  AB
+                                                      ) = Ωm,h .
+Applying the same channel to the product of the two marginal views gives, by the definition of the
+resampling experiment,
+                                  Rm,h (ωm,h
+                                         A       B
+                                             ⊗ ωm,h )=Ωe
+                                                         m,h .
+Combining these two identities with trace-distance data processing and Lemma 5.11, we obtain
+                      1                     1 AB
+                         Ωm,h − Ω e
+                                    m,h   ≤    ω        A
+                                                    − ωm,h     B
+                                                           ⊗ ωm,h     ≤ η.
+                      2                 1   2 m,h                   1
+
+
+
+
+5.2.4   The Multi-Round attacker
+In this section we conclude the proof by defining the attacker.
+Definition 5.13 (Multi-round reprogramming attack). Fix 0 < η < 1/100. The attacker Eη acts as
+follows. During the classical prefix, Eve runs the online attacker LearnBM,H
+                                                                        η     of Lemma 5.11. If the
+attacker aborts, Eve records an abort flag. Otherwise, after the last classical message Eve has the
+full public transcript m and a partial oracle h. She prepares an independent Alice prefix view
+                           VA′ = (WA′ , SA
+                                         ′
+                                           ) ← ωm,h
+                                                A
+                                                    ,        TA′ := TA (WA′ ).
+After intercepting Bob’s final message register Ψ, Eve outputs ⊥ if the attacker aborted. Otherwise
+she runs
+                                             H[T ′ ]
+                                    K ∗ ← Afin A (1λ , m, SA
+                                                           ′
+                                                             , Ψ)
+and outputs K ∗ .
+Theorem 5.14 (Multi-round quantitative attack). Let Πmr satisfy Definition 3.9, and let α =
+αΠmr (λ). For every 0 < η < 1/100, the attacker of Definition 5.13 satisfies
+                                                                       √
+                          AdvIntKR,mr
+                              Πmr ,Eη (λ) ≥ α − 5η − 2(2qB,q + qA,fin ) η.
+
+It makes at most
+                               4 · 105 max{1, qA,pre } max{1, qB,pre }
+                           &                                         '
+                                                                       + qA,fin
+                                                η3
+random-oracle queries. The first term consists only of classical queries. There is no explicit
+dependence on the number of prefix rounds beyond the two parties’ total prefix-query bounds.
+
+                                                    28
+Proof. We proceed via a hybrid argument. Hybrid J0 is the honest execution. In J1 , . . . , J5 , the
+online attacker runs alongside the real classical prefix and an abort counts as failure. Unless stated
+otherwise, these hybrids induce the same distribution on the public transcript M and the attacker’s
+output h. We say that Ji succeeds when its two recorded keys agree and are not ⊥. Throughout,
+VP = (WP , SP ) denotes the extended classical-quantum prefix view defined above. Changes from
+one hybrid to the next are shown in color.
+Multi-round hybrid J0 (real execution)
+  1. Sample H0 ← H and run the honest classical prefix, obtaining (M (0) , VA,0 , VB,0 ).
+  2. Run (Ψ0 , KB,0 ) ← BqH0 (1λ , M (0) , SB,0 ).
+
+  3. Run KA,0 ← AH
+                 fin (1 , M
+                    0  λ    (0) , S
+                                   A,0 , Ψ0 ).
+
+Thus
+                                           Pr[J0 succeeds] = α.
+
+Multi-round hybrid J1
+  1. Sample H1 ← H, and run the honest classical prefix using H1 while activating LearnBM,H η
+                                                                                              1
+
+
+     after every message. Obtain (M , VA,1 , VB,1 , h1 ), and abort if the attacker aborts.
+                                   (1)
+
+
+  2. Run (Ψ1 , KB,1 ) ← BqH1 (1λ , M (1) , SB,1 ), followed by KA,1 ← AH
+                                                                       fin (1 , M
+                                                                          1  λ    (1) , S
+                                                                                         A,1 , Ψ1 ).
+
+Running the attacker alongside the protocol does not change the honest execution. The only
+difference is that J1 counts a attacker abort as failure. Item (i) of Lemma 5.11 gives
+
+                                |Pr[J0 succeeds] − Pr[J1 succeeds]| ≤ η.                               (5)
+
+Multi-round hybrid J2
+  1. Run the real prefix and attacker as in J1 , retaining (M (2) , h2 ) and discarding the original
+     oracle and prefix views.
+  2. Independently prepare
+                                         ′       ′      ′
+                                        VA,2 = (WA,2 , SA,2 ) ← ωM
+                                                                 A
+                                                                   (2) ,h ,
+                                                                         2
+
+                                          ′       ′      ′
+                                         VB,2 = (WB,2 , SB,2 ) ← ωM
+                                                                  B
+                                                                    (2) ,h .
+                                                                          2
+
+       Set TA,2
+            ′   = TA (WA,2
+                       ′ ) and T ′
+                                B,2 = TB (WB,2 ).
+                                           ′
+
+
+  3. Sample H
+            b 2 ← Unif(H(h2 , T ′ )) and set H
+                               B,2
+                                             e2 = H
+                                                  b 2 [T ′ ].
+                                                        A,2
+
+  4. Run (Ψ2 , KB,2 ) ← BqH (1 , M (2) , SB,2
+                          e2 λ            ′ ).
+
+
+  5. Run K2∗ ← AH
+                fin (1 , M
+                   2  λ    (2) , S ′ , Ψ ).
+                     e
+                                  A,2   2
+
+   Condition on a reachable pair (m, h). By the output characterization in Lemma 5.11, the oracle
+and prefix views in J1 have joint state Ωm,h , while the resampled objects in J2 have state Ω
+                                                                                            e
+                                                                                              m,h .
+Applying Lemma 5.12 and trace-distance data processing through the final algorithms [Wat18,
+Chapter 3] shows that, for every reachable nonabort pair,
+
+            |Pr[J1 succeeds | M = m, h1 = h] − Pr[J2 succeeds | M = m, h2 = h]| ≤ 2η.
+
+
+                                                     29
+Let π(m, h) be the common subprobability mass of nonabort prefix executions in the two hybrids
+that output (M, h) = (m, h). Since success is defined to be false on abort, only these executions
+contribute. Define
+
+                  si (m, h) := Pr[Ji succeeds | M (i) = m, hi = h]            (i ∈ {1, 2}).
+
+The triangle inequality gives
+
+                       |Pr[J1 succeeds] − Pr[J2 succeeds]|
+                                                π(m, h) |s1 (m, h) − s2 (m, h)| ≤ 2η.
+                                     X
+                            ≤
+                                (m,h)∈Supp(π)
+
+In particular,
+                                |Pr[J1 succeeds] − Pr[J2 succeeds]| ≤ 2η.                            (6)
+
+Multi-round hybrid J3
+  1. Run the real prefix and attacker as in J1 , retain (M (3) , h3 ), discard the original oracle and
+     prefix views, and independently prepare
+                   ′       ′      ′                             ′       ′      ′
+                  VA,3 = (WA,3 , SA,3 ) ← ωM
+                                           A
+                                             (3) ,h ,
+                                                   3
+                                                               VB,3 = (WB,3 , SB,3 ) ← ωM
+                                                                                        B
+                                                                                          (3) ,h ,
+                                                                                                3
+
+
+      set TA,3
+           ′   = TA (WA,3
+                      ′ ) and T ′
+                               B,3 = TB (WB,3 ), and sample H3 ← Unif(H(h3 , TB,3 )).
+                                          ′                 b                 ′
+
+
+  2. Set H
+         e3 = H
+              b 3 [T ′ ].
+                    A,3
+
+  3. Run (Ψ3 , KB,3 ) ← BqH (1 , M (3) , SB,3
+                          b3 λ            ′ ).
+
+
+  4. Run K3∗ ← AH
+                fin (1 , M
+                   3  λ    (3) , S ′ , Ψ ).
+                   e
+                                  A,3   3
+
+
+Lemma 5.15 (J2 to J3 ).
+                                                                       √
+                            |Pr[J2 succeeds] − Pr[J3 succeeds]| ≤ 2qB,q η.
+
+Proof. Condition on a reachable pair (m, h) and on a value WB′ = wB′ in the support of the
+classical-history marginal of ωm,h
+                                B . Prepare S ′ in the corresponding conditional state and set
+                                                B
+TB = TB (wB ). For the random reprogramming game of Katz and Sela [KS24, Lemma 3], sample
+  ′         ′
+
+Hb ← Unif(H(h, T ′ )) and set F0 = H.
+                                   b The randomized classical procedure Cm,h samples the history
+                  B
+WA from the classical marginal of ωm,h
+    ′                               A , sets T ′ = T (W ′ ), and returns
+                                              A     A  A
+
+                                         R = TA′ Dom(T ′ )\Dom(h) .
+                                                           A
+
+
+Given challenge access to Fb , run
+
+                                       (Ψ, KB ) ← BqFb (1λ , m, SB′ ).
+
+After challenge access is removed, the coins of Cm,h reveal WA′ . Prepare SA
+                                                                           ′ in the corresponding
+
+conditional state specified by ωm,h , and run
+                                A
+
+
+                                                 b ′]
+                                                 H[T
+                                      K ∗ ← Afin A (1λ , m, SA
+                                                             ′
+                                                               , Ψ).
+
+
+                                                      30
+The distinguisher outputs 1 iff K ∗ = KB ̸= ⊥.
+   Every sampled Alice transcript is consistent with h, so F1 = H[R] b     = H[T
+                                                                               b ′ ]. Thus b = 1
+                                                                                  A
+reproduces J2 and b = 0 reproduces J3 , conditioned on (M, h, WB ) = (m, h, wB ). Only Bob queries
+                                                               ′             ′
+
+the challenge oracle. Moreover, by Lemma 5.11, for every x,
+
+                                              0,                     x ∈ Dom(h),
+                                            (
+                     Pr[x ∈ Dom(R)] ≤
+                                              Pr[x ∈ Dom(TA′ )] ≤ η, x ∈
+                                                                       / Dom(h).
+
+Thus Lemma 3.4 bounds the absolute difference between the two conditional success probabilities by
+     √
+2qB,q η for every (m, h, wB′ ) in the support of the shared conditioning data. If π(m, h, wB′ ) denotes
+the common subprobability mass of that data on nonabort executions of J2 and J3 , define
+
+          si (m, h, wB′ ) := Pr[Ji succeeds | M (i) = m, hi = h, WB,i
+                                                                  ′
+                                                                      = wB′ ]              (i ∈ {2, 3}).
+
+Because success is defined to be false on abort,
+
+             Pr[Ji succeeds] =                         π(m, h, wB′ )si (m, h, wB′ )     (i ∈ {2, 3}).
+                                         X
+                                         ′ )∈Supp(π)
+                                   (m,h,wB
+
+The triangle inequality gives
+
+  |Pr[J2 succeeds] − Pr[J3 succeeds]| ≤                           π(m, h, wB′ ) s2 (m, h, wB′ ) − s3 (m, h, wB′ )
+                                                       X
+                                                   ′ )∈Supp(π)
+                                             (m,h,wB
+                                                 √
+                                          ≤ 2qB,q η.
+
+
+
+Multi-round hybrid J4
+   1. Run the real prefix and attacker as in J1 , retain (M (4) , h4 ), discard the original oracle and
+      prefix views, and independently prepare
+                                                                  ′       ′      ′
+                     E
+                    VA,4 = (WA,4
+                             E      E
+                                 , SA,4 ) ← ωM
+                                             A
+                                               (4) ,h ,
+                                                     4
+                                                                 VB,4 = (WB,4 , SB,4 ) ← ωM
+                                                                                          B
+                                                                                            (4) ,h ,
+                                                                                                  4
+
+
+      set TA,4
+           E = T (W E ) and T ′
+                A  A,4       B,4 = TB (WB,4 ), and sample H4 ← Unif(H(h4 , TB,4 )).
+                                        ′                 b                 ′
+
+
+   2. Independently prepare the Alice view that determines Bob’s oracle,
+                                          B
+                                         VA,4 = (WA,4
+                                                  B      B
+                                                      , SA,4 ) ← ωM
+                                                                  A
+                                                                    (4) ,h ,
+                                                                          4
+
+
+      and set TA,4
+               B = T (W B ). Set
+                    A  A,4
+
+                                      H4B = H
+                                            b 4 [T B ],
+                                                  A,4           H4E = H4B [TA,4
+                                                                            E
+                                                                                ].
+
+
+                              HB
+   3. Run (Ψ4 , KB,4 ) ← Bq 4 (1λ , M (4) , SB,4
+                                             ′ ).
+
+                     HE
+   4. Run K4∗ ← Afin4 (1λ , M (4) , SA,4
+                                     E , Ψ ).
+                                          4
+
+
+Lemma 5.16 (J3 to J4 ).
+                                                                                 √
+                          |Pr[J3 succeeds] − Pr[J4 succeeds]| ≤ 2(qB,q + qA,fin ) η.
+
+                                                         31
+Proof. Condition on a reachable pair (m, h) and on a value WB′ = wB′ in the support of the classical-
+history marginal of ωm,h
+                     B . Prepare S ′ in the corresponding conditional state, and write T ′ = T (w ′ ).
+                                   B                                                    B     B   B
+Independently prepare Eve’s Alice view VAE = (WAE , SA  E ) ← ω A , and set T E = T (W E ). Sample
+                                                               m,h            A    A     A
+Hb ← Unif(H(h, T ′ )), output F0 = H,
+                                   b and let the randomized classical procedure Cm,h independently
+                  B
+sample WAB from the classical marginal of ωm,h
+                                             A , set T B = T (W B ), and return
+                                                      A      A   A
+
+                                        R = TAB Dom(T B )\Dom(h) .
+                                                            A
+
+
+Given challenge access to Fb , run Bob’s final algorithm with Fb and Alice’s final algorithm with
+Fb [TAE ]. A query to Fb [TAE ] is implemented with one query to Fb by reversibly testing membership
+in the known transcript and supplying the recorded answer on member inputs. The total number of
+challenge queries is therefore at most qB,q + qA,fin .
+    After challenge access is removed, the revealed coins of Cm,h determine WAB . The reduction
+can then prepare the corresponding register SA     B . This register is unused in the b = 0 case and
+
+may be discarded; in the b = 1 case it completes the auxiliary classical-quantum view sampled
+in J4 . Every sampled Alice transcript is consistent with h. Therefore, for b = 0 the experiment
+is J3 after discarding that unused view, while for b = 1, F1 = H[T    b B ] and the experiment is J4 .
+                                                                         A
+As in the preceding proof, each point belongs to the reprogramming set with probability at most
+η: points in Dom(h) are excluded, and Item (iii) of Lemma 5.11 applies everywhere else. The
+random reprogramming lemma of Katz and Sela [KS24, Lemma 3] therefore bounds the absolute
+difference between the conditional success probabilities of J3 and J4 , given (M, h, WB′ ) = (m, h, wB′ ),
+                    √
+by 2(qB,q + qA,fin ) η. Let π(m, h, wB′ ) denote the common subprobability of these conditioning data
+in the two hybrids, and define
+
+          si (m, h, wB′ ) := Pr[Ji succeeds | M (i) = m, hi = h, WB,i
+                                                                  ′
+                                                                      = wB′ ]             (i ∈ {3, 4}).
+
+The law of total probability and the triangle inequality yield
+
+       |Pr[J3 succeeds] − Pr[J4 succeeds]| ≤                π(m, h, wB′ ) s3 (m, h, wB′ ) − s4 (m, h, wB′ )
+                                                  X
+                                                     ′
+                                                m,h,wB
+                                                                 √
+                                              ≤ 2(qB,q + qA,fin ) η.
+
+Again, the omitted abort branch has success probability zero in both hybrids.
+
+Multi-round hybrid J5 (the real interception attack)
+   1. Sample H5 ← H, and run the honest classical prefix together with the online attacker. Obtain
+
+                                             (M (5) , h5 , VA,5 , VB,5 ),
+
+      and abort if the attacker aborts.
+   2. Independently prepare Eve’s Alice prefix view
+                                        ′       ′      ′
+                                       VA,5 = (WA,5 , SA,5 ) ← ωM
+                                                                A
+                                                                  (5) ,h ,
+                                                                        5
+
+
+      and set TA,5
+               ′   = TA (WA,5
+                          ′ ).
+
+
+   3. Run (Ψ5 , KB,5 ) ← BqH5 (1λ , M (5) , SB,5 ), and transfer Ψ5 to Eve.
+   4. Run                                          ′
+                                              H5 [TA,5 ]
+                                     K5∗ ← Afin                           ′
+                                                           (1λ , M (5) , SA,5 , Ψ5 ).
+
+                                                     32
+   Fix a reachable pair (m, h). The tuple
+                                                          ′
+                                            H4B , VA,4
+                                                   B            
+                                                       , VB,4
+
+in J4 has exactly the distribution of the conditioned prefix-resampling experiment from Lemma 5.12.
+Eve’s second Alice view VA,4 E is independent in both hybrids. Hence, by Lemma 5.12 and trace-
+
+distance data processing [Wat18, Chapter 3], for every reachable nonabort pair (m, h),
+
+         Pr[J4 succeeds | M (4) = m, h4 = h] − Pr[J5 succeeds | M (5) = m, h5 = h] ≤ 2η.
+
+Let π(m, h) be the common probability that the prefix and attacker in the two hybrids output
+(m, h) without aborting, and define
+
+                  si (m, h) := Pr[Ji succeeds | M (i) = m, hi = h]                (i ∈ {4, 5}).
+
+The abort branch contributes zero, so the law of total probability and the triangle inequality give
+
+           |Pr[J4 succeeds] − Pr[J5 succeeds]| ≤          π(m, h) |s4 (m, h) − s5 (m, h)| ≤ 2η.
+                                                    X
+
+                                                    m,h
+
+Thus
+                             |Pr[J4 succeeds] − Pr[J5 succeeds]| ≤ 2η.                            (7)
+   Hybrid J5 is precisely IntKRmr
+                               Πmr ,Eη . Combining (5), (6), Lemmas 5.15 and 5.16, and (7) gives
+
+                                                                √
+                          AdvIntKR,mr
+                             Πmr ,Eη (λ) ≥ α − η − 2η − 2qB,q η
+                                                              √
+                                           − 2(qB,q + qA,fin ) η − 2η
+                                                                      √
+                                         = α − 5η − 2(2qB,q + qA,fin ) η.
+
+The query bound follows directly from Lemma 5.11 and Definition 5.13.
+
+Corollary 5.17 (Polynomial-query multi-round impossibility). Let Πmr satisfy Definition 3.9, let
+α = αΠmr (λ) > 0, and define
+                                                                                        2
+                                                                                 α
+                                                                           
+                       Qfin := max{1, 2qB,q + qA,fin },             η :=                     .
+                                                                               16Qfin
+
+Then the attacker of Theorem 5.14 succeeds with probability greater than α/2 and makes
+
+                            max{1, qA,pre } max{1, qB,pre }Q6fin
+                                                                                    !
+                          O                                      + qA,fin
+                                            α6
+
+queries. It follows that any family of such protocols with inverse-polynomial valid agreement and
+honest query complexity bounded by poly(λ) is insecure against a computationally unbounded quantum
+attacker making at most poly(λ) oracle queries. The query bound depends on the number of prefix
+rounds only through the total honest prefix-query bounds.
+                                                                                         √
+Proof. The choice of η satisfies η ≤ 1/256 < 1/100, and the reprogramming loss is 2Qfin η = α/8.
+Since Qfin ≥ 1 and 0 < α ≤ 1, 5η ≤ 5α/256. Thus the success lower bound is strictly greater than
+α/2. Substituting 1/η 3 = (16Qfin /α)6 gives the query bound.
+
+
+
+                                                   33
+6      Applications
+In this section, we state the two main applications of our results.
+Definition 6.1 (Fully classical Alice and classical reply). A protocol from Definition 3.6 has fully
+classical Alice and a classical reply if:
+ 1. A1 is a probabilistic classical oracle algorithm and its residual state is classical;
+
+ 2. Bob’s message Ψ is classical; and
+
+ 3. A2 is a probabilistic classical algorithm with classical oracle access.
+Bob may still perform quantum computation and make quantum random-oracle queries.
+Corollary 6.2 (Classical eavesdropping attack). For a protocol with fully classical Alice and a
+classical reply, the attacker in Theorem 5.2 is a computationally unbounded classical attacker with
+classical random-oracle access. Therefore the conclusions of Corollaries 5.8 and 5.9 hold against
+classical eavesdroppers. Because the reply is classical, Eve can copy it and forward it to Alice; the
+attack is therefore passive.
+Proof. Under the stated assumptions, ωm1 ,h is an ordinary classical distribution over Alice’s transcript
+and residual classical state. The attacker is classical, exact conditional sampling is classical, the
+                                                          H[T ′ ]
+reply can be stored classically, and the simulation of A2 A uses only classical oracle queries. No
+quantum operation remains in Eve’s algorithm.
+
+Theorem 6.3 (Attack on QPKE with classical-query key generation). Let Σ satisfy Definition 3.11.
+For every 0 < δ < 1, there is a computationally unbounded quantum IND-CPA attacker Dδ making
+at most                                  l         m
+                                          qGen /δ 2 + qDec
+random-oracle queries and satisfying
+                                                  1                       √
+                          AdvIND-CPA (λ) ≥ αΣ −     − δ − 2(2qEnc + qDec ) δ.
+                             Σ,Dδ
+                                                  2
+In particular, if αΣ (λ) > 0, let
+                                                                               2
+                                                                          αΣ
+                                                                     
+                           QΣ := max{1, 2qEnc + qDec },       δ :=                  .
+                                                                         8QΣ
+Then
+                                                        47     1
+                                     AdvIND-CPA (λ) ≥      αΣ − ,
+                                        Σ,Dδ
+                                                        64     2
+and Dδ makes at most                   l                  m
+                                        4096qGen Q4Σ /αΣ
+                                                       4
+                                                         + qDec
+random-oracle queries. Consequently, a scheme with negligible correctness error and honest query
+complexity bounded by poly(λ) is not query-bounded IND-CPA secure: for every polynomial p, an
+attacker making at most poly(λ) queries achieves advantage at least 1/2 − 1/p(λ) − negl(λ), for every
+message-length function µ bounded above by a polynomial in λ. Encryption, decryption, and the
+ciphertext may all be quantum. For µ(λ) = 1, this conclusion applies in particular to the imperfectly
+correct PKE obtained from two-round OSP by Bartusek and Khurana [BK25, Theorem 7.9], whenever
+the OSP sender’s random-oracle queries are classical.
+
+                                                   34
+Proof. Define a key-agreement protocol ΠΣ from Σ as follows. Alice’s first stage runs
+
+                                             (pk, sk) ← GenH (1λ )
+
+and outputs (TGen , M1 , SA ) = (TGen , pk, sk). On input pk, Bob fixes the two distinct messages
+
+                                       m0 := 0µ(λ) ,        m1 := 0µ(λ)−1 1,
+
+samples b ← {0, 1}, runs C ← EncH (1λ , pk, mb ), sends C, and sets KB = b. Alice’s final stage
+computes mb ← DecH (1λ , sk, C) and outputs
+                                                     
+                                                     0     if m
+                                                               b = m0 ,
+                                                     
+                                                     
+                                           KA :=       1    if m
+                                                               b = m1 ,
+                                                     
+                                                     ⊥     otherwise.
+                                                     
+
+
+For b ∈ {0, 1}, let
+
+                      pb := Pr m
+                               b = mb :
+                                 
+
+                                  H ← Hλ , (pk, sk) ← GenH (1λ ),
+                                  Cb ← EncH (1λ , pk, mb ), m
+                                                            b ← DecH (1λ , sk, Cb ) .
+                                                                                     
+
+
+Therefore
+                                                                     p0 + p1
+               qA,1 = qGen ,         qB = qEnc ,       qA,2 = qDec ,      αΠΣ =
+                                                                             ≥ αΣ ,
+                                                                        2
+where the inequality follows from the definition of the minimum correct-decryption probability in
+Definition 3.11.
+   This is the standard reduction from QPKE to key agreement used in prior QROM impossibility
+work [BEGVV24, LLLL24]. Apply Theorem 5.2 to obtain the intercepting attacker Eδ = (E1 , E2 ).
+The IND-CPA attacker Dδ has its first stage run
+
+                                               ZD ← E1H (1λ , pk)
+
+and returns (ZD , m0 , m1 ). Its second stage, upon receiving the challenge ciphertext register C, runs
+K ∗ ← E2H (1λ , ZD , C) and outputs K ∗ when K ∗ ∈ {0, 1}, or an independent uniform bit otherwise.
+Thus its success probability satisfies
+
+                           Pr[INDΣ,Dδ (1λ ) = 1] ≥ Pr[IntKRΠΣ ,Eδ (1λ ) = 1].
+
+The claimed advantage and query bound follow from Theorem 5.2, since
+                                                                               1
+                               AdvIND-CPA (λ) ≥ Pr[INDΣ,Dδ (1λ ) = 1] −
+                                  Σ,Dδ
+                                                                               2
+                                                                                1
+                                                   ≥ Pr[IntKRΠΣ ,Eδ (1λ ) = 1] − .
+                                                                                2
+   For the stated parameter choice,
+                                            √    αΣ                    αΣ
+                                         2QΣ δ =    ,           δ≤        ,
+                                                  4                    64
+which gives the factor 47/64; the query bound follows by substituting 1/δ 2 = 4096Q4Σ /αΣ     4. A
+
+quantum challenge ciphertext is transferred to the attacker’s second stage, so the reduction does
+not copy it. If Gen and Dec are classical algorithms and the ciphertext is classical, Corollary 6.2
+moreover yields a classical attack.
+
+                                                           35
+References
+[AA14]      Scott Aaronson and Andris Ambainis. The need for structure in quantum speedups.
+            Theory of Computing, 10:133–166, 2014.
+
+[ABKM22]    Gorjan Alagic, Chen Bai, Jonathan Katz, and Christian Majenz. Post-quantum security
+            of the Even–Mansour cipher. In Advances in Cryptology – EUROCRYPT 2022, Part
+            III, volume 13277 of LNCS, pages 458–487. Springer, 2022.
+
+[ACC+ 22]   Per Austrin, Hao Chung, Kai-Min Chung, Shiuan Fu, Yao-Ting Lin, and Mohammad
+            Mahmoody. On the impossibility of key agreements from quantum random oracles.
+            In Advances in Cryptology – CRYPTO 2022, Part II, volume 13508 of LNCS, pages
+            165–194. Springer, 2022.
+
+[BDF+ 11]   Dan Boneh, Özgür Dagdelen, Marc Fischlin, Anja Lehmann, Christian Schaffner, and
+            Mark Zhandry. Random oracles in a quantum world. In Advances in Cryptology –
+            ASIACRYPT 2011, volume 7073 of LNCS, pages 41–69. Springer, 2011.
+
+[BEGVV24] Samuel Bouaziz-Ermann, Alex B. Grilo, Damien Vergnaud, and Quoc-Huy Vu. Towards
+          the impossibility of quantum public key encryption with classical keys from one-way
+          functions. Communications in Cryptology, 1(1), 2024. arXiv:2311.03512.
+
+[BHK+ 19]   Gilles Brassard, Peter Høyer, Kassem Kalach, Marc Kaplan, Sophie Laplante, and
+            Louis Salvail. Key establishment à la merkle in a quantum world. Journal of Cryptology,
+            32(3):601–634, Jul 2019.
+
+[BK25]      James Bartusek and Dakshita Khurana. On the power of oblivious state preparation. In
+            Yael Tauman Kalai and Seny F. Kamara, editors, Advances in Cryptology – CRYPTO
+            2025, pages 575–607, Cham, 2025. Springer Nature Switzerland.
+
+[BMG17]     Boaz Barak and Mohammad Mahmoody-Ghidary. Merkle’s key agreement protocol is
+            optimal: An O(n2 )-query attack on any key exchange from a random oracle. Journal
+            of Cryptology, 30:699–734, 2017. Full version: arXiv:0801.3669.
+
+[BS08]      Gilles Brassard and Louis Salvail. Quantum merkle puzzles. In Proceedings of the 2nd
+            International Conference on Quantum, Nano and Micro Technologies, pages 76–79.
+            IEEE Computer Society, 2008.
+
+[HY18]      Akinori Hosoyamada and Takashi Yamakawa. Finding collisions in a quantum world:
+            Quantum black-box separation of collision-resistance and one-wayness. Cryptology
+            ePrint Archive, Paper 2018/1066, 2018.
+
+[IR89]      Russell Impagliazzo and Steven Rudich. Limits on the provable consequences of one-
+            way permutations. In Proceedings of the 21st Annual ACM Symposium on Theory of
+            Computing, pages 44–61. ACM, 1989.
+
+[KS24]      Jonathan Katz and Ben Sela. A quantum “lifting theorem” for constructions of
+            pseudorandom generators from random oracles. arXiv:2401.14319, 2024.
+
+[LLLL24]    Longcheng Li, Qian Li, Xingjian Li, and Qipeng Liu. How (not) to build quantum
+            PKE in minicrypt. In Advances in Cryptology – CRYPTO 2024, volume 14926 of
+            LNCS, pages 152–183. Springer, 2024.
+
+
+                                               36
+[LLLL25]    Longcheng Li, Qian Li, Xingjian Li, and Qipeng Liu. Toward the impossibility of perfect
+            complete quantum PKE from OWFs. In 16th Innovations in Theoretical Computer
+            Science Conference (ITCS 2025), volume 325 of LIPIcs, pages 71:1–71:16. Schloss
+            Dagstuhl, 2025.
+
+[LLLL26a]   Longcheng Li, Qian Li, Xingjian Li, and Qipeng Liu. Cryptomania v.s. minicrypt in a
+            quantum world, 2026. To appear in Advances in Cryptology – CRYPTO 2026. IACR
+            ePrint 2025/639.
+
+[LLLL26b]   Longcheng Li, Qian Li, Xingjian Li, and Qipeng Liu. Impossibility of perfectly complete
+            many-round key agreement in the QROM. arXiv:2608.03824, 2026.
+
+[Mer78]     Ralph C. Merkle. Secure communications over insecure channels. Communications of
+            the ACM, 21(4):294–299, 1978.
+
+[Wat18]     John Watrous. The Theory of Quantum Information. Cambridge University Press,
+            2018.
+
+
+
+
+                                               37
+

@@ -1,0 +1,2971 @@
+                                               Interacting Lattice Bosons on the Concrete Buchholz Algebra
+                                               All-Temperature Equilibrium States from Functional-Integral Local-Number Bounds
+
+                                                                                      Yoshitsugu Sekine
+                                                                                    4429sekine@gmail.com
+
+                                                                                       August 25, 2026
+arXiv:2608.22362v1 [math-ph] 23 Aug 2026
+
+
+
+
+                                                                                           Abstract
+                                                      Interacting Bose–Hubbard dynamics is formulated on the concrete Buchholz algebra in
+                                                  Fock space. Under repulsive finite-range interactions and a low-activity gap, a discrete func-
+                                                  tional integral gives volume-uniform exponential local-number bounds at all temperatures.
+                                                  These bounds remove the local-moment hypothesis and yield finite-volume approximation
+                                                  and KMS accumulation states in [12].
+                                                  Keywords: Bose–Hubbard model, bosonic Fock space, Buchholz algebra, thermodynamic
+                                                  limit, KMS state, local particle number, Feynman–Kac representation
+
+
+                                           Contents
+                                           1 Introduction                                                                                           1
+
+                                           2 Fock-Space Bose–Hubbard Model                                                                          4
+                                             2.1 Graph, Fock spaces, and local observables . . . . . . . . . . . . . . . . . . . . . .              4
+                                             2.2 Concrete Buchholz algebra . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .            6
+
+                                           3 Existing Dynamics on the Concrete Buchholz Algebra and the Missing Esti-
+                                             mate                                                                                   6
+                                             3.1 Automorphisms on the full Buchholz algebra . . . . . . . . . . . . . . . . . . . . 6
+                                             3.2 The obstruction in the DLL approximation argument . . . . . . . . . . . . . . . . 6
+
+                                           4 Finite-Volume and Infinite-Volume Equilibrium States                                                   6
+                                             4.1 Superstability and finite-volume Gibbs states . . . . . . . . . . . . . . . . . . . .              7
+                                             4.2 Infinite-volume equilibrium problem . . . . . . . . . . . . . . . . . . . . . . . . .              7
+
+                                           5 All-Temperature Particle-Number Bounds at Low Activity                                     8
+                                             5.1 Sub-Markov kernels and the chemical-potential gap . . . . . . . . . . . . . . . . . 8
+                                             5.2 Open paths, loops, and the interacting normalization . . . . . . . . . . . . . . . . 13
+                                             5.3 Factorial and exponential local moments . . . . . . . . . . . . . . . . . . . . . . . 28
+                                             5.4 Dynamics and equilibrium without a local-number hypothesis . . . . . . . . . . . 36
+
+                                           6 Conclusion and Outlook                                                                                40
+
+
+                                           1     Introduction
+                                           The scarcity of physically relevant automorphism groups on the Weyl algebra has long lim-
+                                           ited its use for interacting bosonic systems. The natural automorphisms of the Weyl algebra
+                                           are induced by symplectic transformations and describe quadratic Hamiltonians, whereas even
+
+                                                                                                1
+simple nonquadratic Hamiltonians may fail to preserve the algebra. The resolvent algebra was
+introduced to overcome this restriction and to incorporate resolvents of Hamiltonians and other
+unbounded observables into a representation-independent C ∗ -algebraic framework [9, Sections
+1 and 5]. Its rich ideal structure is not an incidental complication but a source of physical
+information [4]. This structure has been used in general criteria for Bose–Einstein condensation
+and in the analysis of trapped and interacting Bose systems [1, 5, 6, 7, 8]. These applications
+also show why the resolvent algebra must be evaluated through concrete models, of which only
+a limited range has been treated to date. One principal aim of this paper is to extend that
+range to the equilibrium theory of the Bose–Hubbard model.
+    Like the Weyl algebra, the resolvent algebra is defined before a representation is selected.
+This representation independence is essential to its role as an algebra of observables. The
+contrast with a von Neumann algebra makes the point precise. After an automorphism group
+and a ground, equilibrium, or vacuum state have been chosen, the corresponding von Neumann
+algebra is obtained as the weak closure of the C ∗ -algebra in the GNS representation of that
+state. It retains the folium and the thermodynamic sector of the reference state. A nonfactorial
+representation may have a nontrivial center, and its central decomposition records classical
+order parameters or the central-spectrum variables that distinguish sectors. This is the micro–
+macro interpretation of the center in sector theory [14]. In symmetry-breaking situations, the
+center of the mixed representation records the classical distribution of phases, while its factor
+components describe the individual quantum phases. The abstract resolvent algebra does not
+build such a classical component into the kinematics. Its center is trivial, even though its proper
+ideals remain physically informative [9, Theorem 4.10]. The restriction to one reference folium
+is also visible in thermal representations. For example, factorial KMS representations of type
+III at distinct inverse temperatures are disjoint [2, Theorem 5.3.35]. The normal states of a
+von Neumann algebra selected by one state remain in that folium. Such an algebra cannot
+serve as a representation-independent container for all thermodynamic sectors or for unrelated
+dynamics. An abstract C ∗ -algebra is instead intended to retain the kinematics before any such
+choice. Developing as much of the dynamics and equilibrium theory as possible at this abstract
+level is a basic requirement rather than a matter of formal generality.
+    The first operator-algebraic problem for a concrete Hamiltonian is the construction of its
+automorphism group. This is the algebraic counterpart of self-adjointness in the operator for-
+mulation, but it involves two additional obstructions. The first is continuity. Even free bosonic
+dynamics need not be point-norm continuous in the natural C ∗ -norm [9, Section 7.1]. A con-
+tinuous automorphism group may emerge only after a suitable representation has been selected
+and the weak closure has been taken, provided that the dynamics is continuously implementable
+there. Such a passage to a von Neumann algebra resolves continuity within the chosen folium
+but reintroduces the representation dependence that the abstract resolvent algebra was designed
+to avoid.
+    The second obstruction is invariance of the algebra. Free bosonic dynamics acts by auto-
+morphisms of the resolvent algebra, although the action need not be point-norm continuous,
+whereas interacting dynamics can send elements of the gauge-invariant resolvent algebra into a
+larger algebra. An interacting evolution that leaves the resolvent algebra requires a larger ambi-
+ent C ∗ -algebra on which it acts by automorphisms. For continuous Bose systems, particle-sector
+consistency in the Fock representation produces such an extension of the gauge-invariant resol-
+vent algebra and accommodates broad classes of interacting dynamics [5, 3]. The same structure
+supports the analysis of proper condensates, for which infinite particle accumulation is detected
+by particle-number resolvents [6, 7]. The corresponding lattice extension is called the Buchholz
+algebra in [12, Definition 2.2]. Within the Fock representation, it contains the gauge-invariant
+resolvent algebra and is preserved by the Bose–Hubbard dynamics [12, Proposition 3.1]. In this
+sense, the Buchholz algebra is an ambient algebra for the gauge-invariant resolvent algebra.
+The continuous-space construction also contains nonzero invariant subalgebras on which the
+
+
+                                                2
+automorphism group is point-norm continuous, obtained by taking the continuous elements of
+the action [5, Theorem 4.6]. Both the continuity and invariance problems have partial solutions
+once the Fock representation is fixed.
+     The Bose–Hubbard model is a stringent test of this framework because every lattice site
+has an infinite-dimensional local Hilbert space. An interaction-picture cluster expansion gives
+volume-uniform local particle-number estimates for its finite-volume Gibbs states at suﬀiciently
+high temperature and for arbitrary fixed chemical potential [15, Theorem 1]. Combined with
+the Deuchert–Lampart–Lemm automorphism and KMS construction, these estimates yield equi-
+librium states in a high-temperature region without a separate low-activity restriction on the
+chemical potential. The infinite-volume Bose–Hubbard dynamics on the concrete Buchholz al-
+gebra, its finite-volume approximation, and its KMS accumulation states are established in [12,
+Proposition 3.1 and Theorems 4.1 and 5.2]. The finite-volume approximation and equilibrium-
+state conclusions, however, assume uniform polynomial moments of every required order for the
+local particle number. These are the hypotheses in [12, equations (37) and (90)]. This state
+condition is technically severe. It can fail in condensed regimes with divergent local occupa-
+tion, including proper-condensate limits. It also leaves the existence theorem conditional on
+an estimate that is not derived from the Hamiltonian. Superstability and a functional-integral
+representation are proposed as a route to the missing estimate in [12, Remark 5.3].
+     The present paper implements that proposal. For repulsive finite-range density interac-
+tions, we assume that the chemical potential makes the grand-canonical one-particle Hamil-
+tonian bounded below by a strictly positive constant. A discrete functional integral yields a
+volume-uniform exponential bound on the local particle number at every positive inverse tem-
+perature. Theorem 5.25 states the precise result. The exponential estimate is stronger than
+the polynomial condition used in the earlier approximation argument. It permits the occupa-
+tion cutoff to be removed directly and gives the all-temperature finite-volume approximation
+in Theorem 5.32 without imposing a local-number hypothesis on the state. The same argu-
+ment produces weak-∗ accumulation states that are invariant on the gauge-invariant resolvent
+subalgebra and satisfy the KMS boundary relation there for the infinite-volume automorphism
+group, as stated in Corollary 5.33. The high-temperature result and the present theorem cover
+complementary regimes. The high-temperature result allows arbitrary fixed chemical potential
+at suﬀiciently high temperature, whereas the present theorem allows every positive tempera-
+ture under a low-activity gap condition. The gap assumption does not assert the absence of
+Bose–Einstein condensation in the Bose–Hubbard model. It excludes the threshold regime in
+which the chemical potential closes the one-particle gap, and that regime lies outside the present
+theorem.
+     The present construction nevertheless remains tied to the bosonic Fock representation. From
+the viewpoint of algebraic quantum statistical mechanics, the Buchholz algebra should ulti-
+mately be defined without a distinguished reference representation and should serve as an ab-
+stract ambient algebra for the gauge-invariant resolvent algebra. The Bose–Hubbard dynamics
+should then be defined as an automorphism group of this abstract algebra, while the ordinary
+C ∗ -KMS condition should be imposed on an appropriate invariant subalgebra on which the
+action is point-norm continuous. This would preserve the ability of the abstract algebra to
+accommodate distinct folia, temperatures, and phases before a GNS representation is selected.
+     The functional integral used here should also admit an intrinsic formulation at that level.
+The correspondence between stochastically positive KMS systems, periodic stochastic processes,
+and positive semigroups was developed in a formally C ∗ -algebraic setting by Klein–Landau
+[13, Sections 1 and 6–8]. Its reconstruction nevertheless passes through a GNS Hilbert space
+and the associated von Neumann algebra. Standard-form perturbation theory likewise con-
+structs perturbed Liouvilleans and KMS states after a representation has been selected [10].
+For bosonic fields, the Araki–Woods representation can be identified with a Gaussian periodic
+path space, and this equivalence yields interacting dynamics and equilibrium states through
+
+
+                                                3
+functional integration [11, Sections 17.1.5 and 21.4–21.5]. These results are sharp at the von
+Neumann-algebraic level, but a deeper relation between probability, stochastic processes, and
+abstract C ∗ -algebras is needed for the resolvent and Buchholz algebras. Establishing the present
+all-temperature result in the fixed Fock representation is a first step toward that representation-
+independent theory.
+    The paper first fixes the Fock-space Bose–Hubbard model and the concrete Buchholz alge-
+bra. It then isolates the missing local-number input in the existing dynamical and equilibrium
+arguments, constructs the discrete functional integral, proves the exponential bound, and de-
+rives the infinite-volume dynamics and KMS states in the low-activity regime.
+
+
+2     Fock-Space Bose–Hubbard Model
+The concrete model fixes the spatial and particle-number structures before either dynamics or
+states are taken to an infinite-volume limit.
+
+2.1   Graph, Fock spaces, and local observables
+Let Γ be a connected countable graph of uniformly bounded degree. The graph distance is
+denoted by dist (x, y). For a finite X ⋐ Γ and R ≥ 0, the closed graph neighborhood is
+
+                               X[R] = {y ∈ Γ | dist (y, X) ≤ R} .
+
+The interior boundary is
+
+                             ∂X = {x ∈ X | dist (x, Γ \ X) = 1} .
+
+Assume that Γ is d-dimensional with surface parameter σ > 0 in the sense that
+
+                                             |∂ (x[R])|
+                                     sup sup            ≤ σ.
+                                     x∈Γ R≥1   Rd−1
+
+This is Definition 2.1 of [12] and implies the polynomial ball-volume bound
+
+                                   sup |x[R]| ≤ σRd ,    R ≥ 1.                                (1)
+                                   x∈Γ
+
+The phrase polynomial ball-volume growth refers to the estimate (1).
+   For X ⋐ Γ or X = Γ, the one-particle and bosonic Fock spaces are
+                                                   M ⊗n
+                              hX = ℓ2 (X) , FX =       hXs .
+                                                         n∈N
+
+For n ∈ N, the orthogonal projection PX,n onto the n-particle summand is defined by
+                                                        ⊗n
+                                  Ran PX,n = hXs .                                             (2)
+                                 P
+The total number operator is NX = n∈N nPX,n . For m ∈ N, define
+
+                                   X
+                                   m                         [
+                         PX,≤m =         PX,n , DX,fin =         PX,≤m FX .                    (3)
+                                   n=0                     m∈N
+
+Thus DX,fin consists precisely of the vectors having nonzero components in only finitely many
+particle-number summands. For x ∈ X, the creation, annihilation, and local occupation opera-
+tors on DX,fin are a∗x , ax , and Nx = a∗x ax . For x, y ∈ X, their canonical commutation relations
+
+
+                                                 4
+and the resulting local-number commutators on DX,fin are
+                     
+              ax , a∗y = δx,y ,                                                      [ax , ay ] = 0,
+                                                                                     ∗ ∗
+              [a∗x , ay ] = −δx,y ,                                                   ax , ay = 0,
+                                                                                                 (4)
+              Nx , a∗y = a∗x ax , a∗y + a∗x , a∗y ax = δx,y a∗x = δx,y a∗y ,
+             [Nx , ay ] = a∗x [ax , ay ] + [a∗x , ay ] ax = −δx,y ax = −δx,y ay .
+
+For finite X ⋐ Γ, let ΩX be the Fock vacuum. For each multi-index ν = (νx )x∈X ∈ NX , define
+                                              Y (a∗ )νx
+                                    ΨX,ν =        √x ΩX ,
+                                              x∈X
+                                                   νx !
+                                Nx ΨX,ν = νx ΨX,ν ,                      x ∈ X,                        (5)
+                                                            !
+                                                X
+                               NX ΨX,ν =               νx       ΨX,ν .
+                                                x∈X
+
+The creation operators at distinct sites commute, and hence the product does not depend on
+the ordering of X. The vectors ΨX,ν , ν ∈ NX , form the orthonormal occupation-number basis
+of FX .
+    Let hX be the bounded hopping operator on hX with matrix elements
+                                             (
+                                               −1, x ∼ y,
+                                  (hX )x,y =
+                                               0,  x 6∼ y.
+
+Assume that the uniform degree of the graph is strictly positive, and set
+
+                                   0 < Ch = sup |{y ∈ Γ | y ∼ x}| .                                    (6)
+                                               x∈Γ
+
+Then khΛ k ≤ Ch for every finite Λ, and −hΛ − Ch has nonnegative off-diagonal entries and
+nonpositive row sums. Fix U > 0 and r ∈ N1 , and let w : Γ × Γ → R be a bounded symmetric
+function satisfying
+                      w (x, y) ≥ 0, dist (x, y) > r =⇒ w (x, y) = 0.                   (7)
+The density interaction is defined by
+
+                                   v (x, y) = U 1{x} (y) + w (x, y) .
+
+Thus v is pointwise nonnegative, and its interaction range is at most the integer r fixed in (7).
+For finite Λ ⋐ Γ, the number-conserving Hamiltonian and its grand-canonical shift are defined
+on DΛ,fin from (3) by
+                                          X
+                                Hfr,Λ =       (hΛ )x,y a∗x ay ,
+                                               x,y∈Λ
+                                                X
+                                        VΛ =           v (x, y) a∗x a∗y ax ay ,
+                                                                                                       (8)
+                                               x,y∈Λ
+
+                                       HΛ = Hfr,Λ + VΛ ,
+                                    KΛ,µΛ = HΛ − µΛ NΛ .
+The ordered-pair convention in (8) agrees with [12, equation (10)] and introduces no additional
+factor 1/2.
+    The Hamiltonian commutes with NΛ . Its restriction HΛ,n to PΛ,n FΛ is bounded for every
+n ∈ N. For X = Γ, the same formula on the n-particle space defines a bounded operator HΓ,n
+because the hopping has bounded degree and the L interaction is bounded and finite-range. The
+symbol HΓ denotes the self-adjoint direct sum n∈N HΓ,n on FΓ .
+
+                                                        5
+2.2    Concrete Buchholz algebra
+The gauge-invariant resolvent algebra on hX is denoted by R (X)γ . The concrete Buchholz
+algebra of [12, Definition 2.2] is
+
+      BX = {A ∈ B (FX ) | for every n ∈ N there is R ∈ R (X)γ with APX,≤n = RPX,≤n } .
+
+For X = Γ, write B = BΓ . Proposition 2.4 of the cited paper identifies B with the bounded
+inverse limit of its particle-sector coordinate algebras. This characterization explains why the
+algebraic dynamics can exist without a uniform continuity estimate in the particle-number index
+n.
+
+
+3     Existing Dynamics on the Concrete Buchholz Algebra and
+      the Missing Estimate
+The full automorphism group on the concrete Buchholz algebra exists before any state or mo-
+ment condition is selected. The moment condition enters only when this group is approximated
+by spatially finite Hamiltonians and implemented in an infinite-particle representation.
+
+3.1    Automorphisms on the full Buchholz algebra
+For X ⋐ Γ or X = Γ, let αX denote the one-parameter family whose time-t map is defined by
+
+                        αX,t (A) = eitHX Ae−itHX ,   A ∈ BX ,   t ∈ R.
+
+Fact 3.1 (Deuchert–Lampart–Lemm, Proposition 3.1). If v (x, y) tends to 0 as dist (x, y) → ∞,
+then for every finite X ⋐ Γ and for X = Γ, αX is a group of ∗-automorphisms of BX , whose
+time-t member is αX,t for every t ∈ R. No continuity in t is asserted.
+
+   The particle-sector Dyson expansion and the consistency maps of the inverse limit prove
+Fact 3.1; see [12, Proposition 3.1 and equations (21)–(29)]. Example 3.2 of [12] proves that the
+group need not be weakly continuous. The problem addressed here is not existence of αΓ on B
+but approximation of its time-t map αΓ,t by αΛ,t on local gauge-invariant observables.
+
+3.2    The obstruction in the DLL approximation argument
+Theorem 4.1 of [12] derives finite-volume approximation only after assuming a volume-uniform
+local particle-number estimate. Its proof propagates the assumed estimate, uses it to remove
+a local occupation cutoff, and then applies a state-independent finite-range propagation bound
+to the cutoff dynamics. The equilibrium argument in Theorem 5.2 of the same paper inherits
+this dependence.
+    The present proof does not use either conditional theorem. The functional-integral estimate
+proved in this paper controls the cutoff tails directly for the Gibbs family. We then combine
+that control with the finite-range shell expansion and pass the KMS boundary functions to the
+accumulation state.
+
+
+4     Finite-Volume and Infinite-Volume Equilibrium States
+The equilibrium analysis begins with the trace-class Gibbs operator on a finite Fock space and
+passes its KMS boundary relation to a state of the infinite Buchholz algebra.
+
+
+
+
+                                               6
+4.1   Superstability and finite-volume Gibbs states
+Fix β > 0 and a bounded family (µΛ )Λ⋐Γ of chemical potentials. The finite-volume partition
+function and Gibbs state are
+                                 ZΛ,β = TrFΛ [exp (−βKΛ,µΛ )] ,
+                                        TrFΛ [A exp (−βKΛ,µΛ )]                                 (9)
+                               ψΛ (A) =                         .
+                                                  ZΛ,β
+
+Proposition 4.1 (Finite-volume Gibbs existence). For every finite Λ ⋐ Γ and β > 0, the
+operator exp (−βKΛ,µΛ ) is trace class and (9) defines a normal state on B (FΛ ). Its restriction to
+R (Λ)γ satisfies the finite-volume β-KMS boundary relation for the number-conserving dynamics.
+
+
+Proof. Let cU = U +Ch +supΛ⋐Γ |µΛ |, where Ch is the uniform degree bound in (6). Since w ≥ 0
+and the second quantization of hΛ is bounded below by −Ch NΛ , one has the quadratic-form
+bound                                   X             X
+                             KΛ,µΛ ≥ U      Nx2 − cU      Nx
+                                            x∈Λ                x∈Λ
+
+on DΛ,fin defined in (3). For every occupation configuration (νx )x∈Λ ∈ NΛ , the scalar estimate
+is
+                            X            X      U X 2 c2U
+                          U     νx2 − cU   νx ≥        νx −     |Λ| .
+                                                 2          2U
+                            x∈Λ          x∈Λ             x∈Λ
+
+The min–max principle and the occupation-number basis (5) give the trace majorant
+                              2       YX                  
+                               βcU                     βU 2
+                  ZΛ,β ≤ exp       |Λ|        exp −       n < ∞.
+                                2U                      2
+                                               x∈Λ n∈N
+
+The Gibbs density matrix is consequently well-defined. Trace cyclicity for analytic elements
+proves the finite-volume KMS boundary relation. On gauge-invariant observables, adding
+−µΛ NΛ to the generator does not change the real-time action because NΛ commutes with
+those observables.
+
+4.2   Infinite-volume equilibrium problem
+The Fock factorization FΓ ∼
+                          = FΛ ⊗FΛc and the vacuum vector ΩΛc define the state from equation
+(89) of [12] by
+                                    exp (−βKΛ,µΛ )
+                               ρΛ =                ⊗ |ΩΛc ihΩΛc | ,
+                                         ZΛ,β                                           (10)
+                             ψ Λ (A) = TrFΓ [AρΛ ] ,A ∈ B.
+                                                          
+The state space of BΓ is weak-∗ compact, and the net ψ Λ Λ⋐Γ has weak-∗ accumulation points.
+Weak-∗ compactness alone does not pass the KMS boundary condition because the dynamics
+is controlled through unbounded local occupations before the cutoffs are removed.
+    No continuity of αΓ on B is assumed. The equilibrium conclusion to be proved is a state
+ψ on B that is invariant under αΓ on R (Γ)γ and satisfies the corresponding KMS boundary
+relation there. For A, B ∈ R (Γ)γ , this means the existence of a bounded scalar function FA,B
+that is holomorphic on −β < Im z < 0, continuous on the closed strip, and satisfies
+
+                  FA,B (t) = ψ (αΓ,t (A) B) , FA,B (t − iβ) = ψ (BαΓ,t (A)) .                  (11)
+
+Continuity in this statement concerns only the scalar function FA,B and is part of the conclusion.
+It does not assert point-norm, weak, or strong continuity of the automorphism group on B.
+
+                                                  7
+5     All-Temperature Particle-Number Bounds at Low Activity
+The discrete functional integral compares marked open paths with an interacting gas of un-
+marked loops. The argument uses nonnegativity of v and a uniform gap below the one-particle
+band.
+
+5.1   Sub-Markov kernels and the chemical-potential gap
+Let Ch be the uniform degree bound defined by (6). Assume that there is ε > 0 such that
+
+                                          µΛ ≤ −Ch − ε                                      (12)
+
+for every finite Λ ⋐ Γ. The elementary probabilistic definitions are included because the bridge
+measure and its normalization enter the particle-number estimate directly.
+
+Definition 5.1 (Finite state space and sub-Markovian kernels). A finite state space is a finite
+set E whose elements are called states. A matrix kernel R on the finite state space E is
+substochastic when                           X
+                               R (x, y) ≥ 0,   R (x, y) ≤ 1
+                                                   y∈E
+
+for every x, y ∈ E. It is stochastic when every row sum is equal to 1. A stochastic kernel is a
+transition kernel that conserves mass.
+    A family of matrix kernels Pt , t ≥ 0, on E is sub-Markovian when
+
+                                                P0 (x, y) = 1{x} (y) ,
+                               X
+                                     Ps (x, z) Pt (z, y) = Ps+t (x, y) ,
+                               z∈E
+                                                Pt (x, y) ≥ 0,
+                                          X
+                                                Pt (x, y) ≤ 1
+                                          y∈E
+
+for every s, t ≥ 0 and x, y ∈ E.
+
+Definition 5.2 (Cemetery state and absorbing state). Let E be a finite state space in the sense
+of Definition 5.1, and let ∂ ∈
+                             / E. For a substochastic kernel R on E, define a stochastic kernel
+b on E ∪ {∂} by
+R
+                              b (x, y) = R (x, y) ,
+                              R                              x, y ∈ E,
+                                             X
+                              b (x, ∂) = 1 −
+                              R                   R (x, y) ,    x ∈ E,
+                                                 y∈E
+                             b (∂, ∂) = 1,
+                             R
+                             b (∂, y) = 0,
+                             R                   y ∈ E.
+The extra point ∂ is called the cemetery state: the missing row mass of R is the probability
+of a transition from x ∈ E to ∂. The two identities in the last two lines mean that ∂ is an
+                    b after a transition to ∂, the kernel assigns probability 1 to remaining at ∂
+absorbing state for R;
+and probability 0 to returning to E.
+    For a process Z = (Zt )t≥0 with values in E ∪ {∂}, the state ∂ is absorbing when, for every
+sample point and all 0 ≤ s ≤ t,
+                                     Zs = ∂ =⇒ Zt = ∂.
+
+
+
+
+                                                       8
+Definition 5.3 (Discrete-time Markov chain). Let E be a finite state space in the sense of
+Definition 5.1, let R be a stochastic transition kernel on E, and let Pr be a probability measure
+on a measurable space. An E-valued sequence (Yn )n∈N is a discrete-time Markov chain with
+transition kernel R when
+                             Pr (Yn+1 = y|Y0 , . . . , Yn ) = R (Yn , y)
+almost surely for every n ∈ N and y ∈ E. The initial law is specified separately by the
+distribution of Y0 .
+Definition 5.4 (Time-homogeneous Markov process). Let E be a finite state space, let Z =
+(Zt )t≥0 be an E-valued process on a probability space (Σ, F, Pr), and let Pt , t ≥ 0, be stochastic
+kernels on E. For s ≥ 0, let FZ,s be the sigma-algebra generated by Zu , 0 ≤ u ≤ s. The process
+Z is a time-homogeneous Markov process with transition kernels Pt when, for every 0 ≤ s ≤ t
+and y ∈ E,                                      
+                              EPr 1{Zt =y} FZ,s = Pt−s (Zs , y)
+almost surely.
+Definition 5.5 (Poisson process). Let Pr be a probability measure on a measurable space. A
+process Nt , t ≥ 0, is a Poisson process of rate c > 0 when N0 = 0 almost surely, its increments
+over pairwise disjoint time intervals are independent, and
+                                                     (c (t − s))k
+                            Pr (Nt − Ns = k) = e−c(t−s)
+                                                           k!
+for every 0 ≤ s < t and k ∈ N. Its paths are right-continuous, nondecreasing, integer-valued,
+and have jumps of size 1.
+Definition 5.6 (Exponential law). Let Pr be a probability measure on a measurable space. A
+nonnegative random variable T has the exponential law of rate r > 0 when
+                                            Pr (T > t) = e−rt
+for every t ≥ 0.
+Definition 5.7 (Càdlàg path). Let S be a metric space and let I = [0, a] for some a > 0, or
+I = [0, ∞). A path z : I → S is càdlàg when it is right-continuous and has a left limit at every
+positive time in I. A process Z = (Zt )t∈I is càdlàg when the path t 7→ Zt (ω) is càdlàg for every
+sample point ω.
+Definition 5.8 (Process killed at a nonnegative random variable). Let E be a finite state space
+in the sense of Definition 5.1, and let ∂ be an absorbing state in the sense of Definition 5.2. Let
+X = (Xt )t≥0 be a process with values in E ∪ {∂}, and let T be a nonnegative random variable
+on the same probability space. A process ξ = (ξt )t≥0 is called X killed at T , or a killed process,
+when, for every sample point ω and every t ≥ 0,
+                                        (
+                                          Xt (ω) , 0 ≤ t < T (ω) ,
+                               ξt (ω) =
+                                          ∂,       t ≥ T (ω) .
+
+
+Lemma 5.9 (Uniformization of the hopping kernel). For a finite Λ ⋐ Γ, define
+                                            QΛ = −hΛ − Ch .                                    (13)
+The family etQΛ , t ≥ 0, is sub-Markovian. For RΛ = −Ch−1 hΛ , one has
+                                                        X (tCh )n
+                                      tQΛ        −tCh                n
+                                  e         =e                      RΛ .                       (14)
+                                                              n!
+                                                        n∈N
+
+
+
+
+                                                         9
+Proof. The off-diagonal entries of QΛ are nonnegative, and its row sums satisfy
+                          X
+                              (QΛ )x,y = |{y ∈ Λ | y ∼ x}| − Ch ≤ 0.
+                               y∈Λ
+
+The matrix RΛ has nonnegative entries and row sums at most 1. Every power RΛ n has the same
+                             tC R
+two properties. Expanding e h Λ proves (14). The Poisson coeﬀicients in that formula are
+nonnegative and sum to 1. Their convex combination has nonnegative entries and row sums at
+most 1 for every t ≥ 0. The matrix-exponential semigroup law completes the sub-Markovianity
+assertion.
+
+Lemma 5.10 (Probabilistic representation of pΛ,t ). Assume (12), and let Λ ⋐ Γ be finite. Let
+QΛ be the operator defined by (13). Define rΛ and pΛ,t , t ≥ 0, by
+                                       rΛ = − (µΛ + Ch ) ,
+                                                                                                (15)
+                                     pΛ,t = e−t(hΛ −µΛ ) = e−trΛ etQΛ .
+Then, for every x ∈ Λ, there are a probability space (Σx , Fx , Prx ), a nonnegative random variable
+τΛ with exponential law of rate rΛ , and a càdlàg Markov process ξ = (ξt )t≥0 on Λ ∪ {∂} in the
+sense of Definitions 5.7 and 5.4 such that
+                         Prx (ξ0 = x) = 1, Prx (τΛ > t) = e−rΛ t ,        t ≥ 0,
+and ∂ is an absorbing state for ξ in the sense of Definition 5.2. The subscript x in Prx records
+the initial state x. Its transition probabilities satisfy
+                            Prx (ξt = y) = pΛ,t (x, y) ,          x, y ∈ Λ,
+                                                X
+                            Prx (ξt = ∂) = 1 −      pΛ,t (x, y) .                               (16)
+                                                  y∈Λ
+
+For every t ≥ 0, the transition probabilities satisfy the uniform row estimate
+                                     X
+                                         pΛ,t (x, y) ≤ e−tε .                                   (17)
+                                         y∈Λ
+
+
+
+Proof. Let RΛ be the substochastic kernel in Lemma 5.9. Its stochastic extension to Λ ∪ {∂} is
+                                bΛ (x, y) = RΛ (x, y) ,
+                                R                               x, y ∈ Λ,
+                                                X
+                                bΛ (x, ∂) = 1 −
+                                R                   RΛ (x, y) ,    x ∈ Λ,
+                                                 y∈Λ
+                                bΛ (∂, ∂) = 1,
+                                R
+                                bΛ (∂, y) = 0,
+                                R                                    y ∈ Λ.
+
+Thus ∂ is the cemetery state of RΛ and is absorbing for R     bΛ in the sense of Definition 5.2. Let
+   Y
+Prx be the law of the discrete-time Markov chain with transition kernel R        bΛ and initial state
+                  N
+Y0 = x. Let Pr be the law of a Poisson process of rate Ch . On the product space with law
+PrXx = Prx ⊗ Pr , define Xt = YNt . For x, y ∈ Λ, the restriction of every n-step kernel of RΛ
+           Y       N                                                                              b
+to Λ × Λ is RΛ . The assertion holds for n = 0 because both kernels are the identity on Λ. If
+                n
+
+it holds for n, the absorbing-state identity RbΛ (∂, y) = 0 from Definition 5.2 gives the induction
+step                               X
+                     bn+1 (x, y) =
+                     R                 bΛ
+                                       R n        bΛ (z, y) + R
+                                           (x, z) R           bΛn        bΛ (∂, y)
+                                                                  (x, ∂) R
+                       Λ
+                                      z∈Λ
+                         X
+                                n                     n+1
+                     =         RΛ (x, z) RΛ (z, y) = RΛ   (x, y) .
+                         z∈Λ
+
+
+                                                    10
+The Markov property of Y yields
+
+                                                 bΛ
+                                 PrYx (Yn = y) = R n           n
+                                                     (x, y) = RΛ (x, y)
+
+for every n ∈ N and x, y ∈ Λ. The events {Nt = n}, n ∈ N, form a disjoint partition, and the
+product measure makes the entire chain Y independent of the Poisson process N . The law of
+total probability and the Poisson distribution give
+                            X
+            PrXx (Xt = y) =     PrX
+                                  x (Xt = y, Nt = n)
+                               n∈N
+                X                                    X
+            =         PrX
+                        x (Yn = y, Nt = n) =               PrYx (Yn = y) PrN (Nt = n)
+                n∈N                                  n∈N
+                X                     (tCh )n         X (tCh )n
+            =          n
+                      RΛ (x, y) e−tCh         = e−tCh            n
+                                                                RΛ (x, y) = etQΛ (x, y) .
+                                        n!                n!
+                n∈N                                          n∈N
+
+The last equality is the uniformization formula (14).
+             x , F
+                         X
+    Let ΣX         X
+                   x , Prx   denote the probability space carrying X constructed here, and let
+ ΣτΛ , FτΛ , PrrΛ carry a nonnegative random variable τΛ with exponential law of rate rΛ in
+                τΛ
+
+the sense of Definition 5.6. The inequality rΛ ≥ ε > 0 guarantees that this probability law is
+defined. The probability space in the assertion is the product triple
+                                                                              
+                          (Σx , Fx , Prx ) = ΣX
+                                              x × ΣτΛ , Fx ⊗ FτΛ , Prx ⊗ PrrΛ ,
+                                                         X           X     τΛ
+
+
+where X and τΛ are lifted to Σx by the coordinate projections. For ωX ∈ ΣX
+                                                                         x and ωτΛ ∈ ΣτΛ ,
+define ξ = (ξt )t≥0 as X killed at τΛ in the sense of Definition 5.8 by
+                                              (
+                                                  Xt (ωX ) ,    0 ≤ t < τΛ (ωτΛ ) ,
+                           ξt (ωX , ωτΛ ) =                                                 (18)
+                                                  ∂,            t ≥ τΛ (ωτΛ ) .
+
+Because τΛ is a random variable on Σx , it is not a deterministic parameter indexing the process
+ξ. For y ∈ Λ, the endpoint event is
+
+                                  {ξt = y} = {τΛ > t} ∩ {Xt = y} .
+
+The product law makes τΛ independent of the entire process X. The definition of the exponential
+law and the transition identity for X give
+
+          Prx (ξt = y) = Prx (τΛ > t) Prx (Xt = y) = e−rΛ t etQΛ (x, y) = pΛ,t (x, y) .
+
+The sub-Markov row sum and rΛ ≥ ε give the claimed uniform estimate through
+                   X                       X
+                      pΛ,t (x, y) = e−rΛ t   etQΛ (x, y) ≤ e−rΛ t ≤ e−εt .
+                         y∈Λ                         y∈Λ
+
+Subtracting this row sum from 1 gives the cemetery-state formula in (16). The Poisson time
+change preserves the Markov property of the chain Y . For s, t ≥ 0, Definition 5.6 gives
+
+                                                               e−rΛ (s+t)
+                           Prx (τΛ > s + t|τΛ > s) =                      = e−rΛ t .
+                                                                e−rΛ s
+Together with the Markov property of X and the independence of X and τΛ , this identity proves
+that ξ is Markov. The identities RbΛ (∂, ∂) = 1 and (18) show directly that ξs = ∂ implies ξt = ∂
+for every t ≥ s; hence ∂ is absorbing for ξ according to Definition 5.2.
+
+
+                                                        11
+   The continuous-time bridge path space is defined by
+
+  ΩtΛ;x,y = {ω : [0, t] → Λ | ω is càdlàg, has finitely many jumps, ω0 = x and ωt = y} .                                (19)
+
+For ω ∈ ΩtΛ;x,y and 0 ≤ s ≤ t, the notation ωs denotes the value of ω at time s. This path space
+carries the sigma-algebra generated by its coordinate evaluation maps.
+
+Lemma 5.11 (Unnormalized bridge measure). Assume (12), and let Λ ⋐ Γ be finite. Fix
+x, y ∈ Λ and t > 0. Let pΛ,t be defined by (15), and let (Σx , Fx , Prx ) and ξ be the probability
+space and process whose existence is asserted in Lemma 5.10 for the initial state x. Let ΩtΛ;x,y
+be the measurable path space defined by (19). There is a finite positive measure WΛ;x,y    t     on this
+space such that, for every n ∈ N1 , 0 = s0 < s1 < · · · < sn = t, and z0 = x, z1 , . . . , zn−1 , zn = y
+in Λ,
+
+                                                                                   Y
+                                                                                     n−1
+          WΛ;x,y
+           t
+                           ω ∈ ΩtΛ;x,y ωsj = zj , 1 ≤ j ≤ n − 1                  =         pΛ,sj+1 −sj (zj , zj+1 ) .   (20)
+                                                                                     j=0
+
+Its total mass is                                          
+                                             WΛ;x,y
+                                              t
+                                                    ΩtΛ;x,y = pΛ,t (x, y) .                                             (21)
+For s, t > 0, x, y, z ∈ Λ, ω ∈ ΩsΛ;x,z , and η ∈ ΩtΛ;z,y , define their concatenation by
+                                                        (
+                                                            ωu ,      0 ≤ u ≤ s,
+                                          (ω s η)u =
+                                                            ηu−s ,    s < u ≤ s + t.
+                                                                     F          s+t
+For every nonnegative measurable function F on                           x,y∈Λ ΩΛ;x,y , the bridge measures satisfy
+
+       XZ              Z                                                         Z
+                                     F (ω s η) dWΛ;z,y
+                                                  t           s
+                                                        (η) dWΛ;x,z (ω) =                              s+t
+                                                                                               F (ζ) dWΛ;x,y (ζ).       (22)
+       z∈Λ   ΩsΛ;x,z       ΩtΛ;z,y                                                   Ωs+t
+                                                                                      Λ;x,y
+
+
+
+
+Proof. For a measurable set A ⊂ ΩtΛ;x,y , define
+                                                                 n                  o
+                                          WΛ;x,y
+                                           t
+                                                 (A) = Prx            ξ|[0, t] ∈ A         .
+
+This restriction of the path law is a finite positive measure. Fix 0 = s0 < s1 < · · · < sn = t and
+z0 = x, z1 , . . . , zn−1 , zn = y in Λ. For 0 ≤ u ≤ t, let Fξ,u be the sigma-algebra generated by ξv ,
+0 ≤ v ≤ u. Let G0 be the whole sample space on which ξ is defined. For 1 ≤ j ≤ n, define the
+event
+                                                 \j
+                                           Gj =     {ξsℓ = zℓ } .
+                                                        ℓ=1
+
+On Gj−1 , the process satisfies ξsj−1 = zj−1 ∈ Λ. The time-homogeneous Markov property in
+Definition 5.4 and the transition formula (16) identify the conditional probability on this event
+as                           h                 i
+                  1Gj−1 EPrx 1{ξs =zj } Fξ,sj−1 = 1Gj−1 pΛ,sj −sj−1 (zj−1 , zj )
+                                               j
+
+for 1 ≤ j ≤ n. Since Gj−1 ∈ Fξ,sj−1 , the defining property of conditional expectation gives
+                         h                 i           h           h                     ii
+         Prx (Gj ) = EPrx 1Gj−1 1{ξs =zj } = EPrx 1Gj−1 EPrx 1{ξs =zj } Fξ,sj−1
+                                                       
+                                     j                                   j
+
+                   = EPrx 1Gj−1 pΛ,sj −sj−1 (zj−1 , zj ) = pΛ,sj −sj−1 (zj−1 , zj ) Prx (Gj−1 ) .
+
+
+                                                                12
+Since G0 is the whole sample space, Prx (G0 ) = 1. Iterating the recursion from this initial value
+yields
+                             Y
+                             n                            Y
+                                                          n−1
+                 Prx (Gn ) =   pΛ,sj −sj−1 (zj−1 , zj ) =     pΛ,sj+1 −sj (zj , zj+1 ) .
+                                   j=1                               j=0
+
+Because ∂ is absorbing according to Definition 5.2, the identity zn = y ∈ Λ shows that the
+event Gn implies ξs ∈ Λ for every 0 ≤ s ≤ t. Since ξ is càdlàg and takes values in the finite
+state space Λ ∪ {∂}, its paths have finitely many jumps on every bounded time interval. The
+inverse image of the cylinder set in (20) under ξ|[0, t] is Gn up to a Prx -null set. The definition of
+WΛ;x,y
+   t    and the formula for Prx (Gn ) prove (20). Taking no intermediate times in that formula
+gives (21). For an indicator function of a cylinder set, the left-hand side of (22) is evaluated
+by (20); summation over the common value z and the semigroup identity in Definition 5.1 give
+the right-hand side. Finite linear combinations and monotone convergence extend the identity
+to every nonnegative measurable function F .
+
+5.2    Open paths, loops, and the interacting normalization
+The kernels from Lemma 5.10 and the bridge measures from Lemma 5.11 provide the positive
+path-space reference measure for the interaction.
+
+Definition 5.12 (Finite open-path tuple). Let Λ ⋐ Γ be finite, let β > 0, and let m ∈ N. For
+1 ≤ i ≤ m, let qi ∈ N1 and xi , yi ∈ Λ. A finite open-path tuple is a tuple ω = (ω1 , . . . , ωm )
+satisfying
+                                  ωi ∈ ΩqΛ;x
+                                          iβ
+                                             i ,yi
+                                                   , 1 ≤ i ≤ m,
+where the path spaces are defined by (19). For m = 0, the tuple is empty.
+
+Definition 5.13 (Occupation field). For q ∈ N1 , x, y ∈ Λ, and ω ∈ Ωqβ
+                                                                    Λ;x,y , define the occupation
+field of ω by
+                               X
+                               q−1
+                   nω (s, z) =     1{z} (ωs+jβ ) , 0 ≤ s ≤ β, z ∈ Λ.
+                                         j=0
+
+Let ξ = (ξ1 , . . . , ξm ) be a finite open-path tuple in the sense of Definition 5.12, with ξi ∈ ΩqΛ;x
+                                                                                                     iβ
+                                                                                                        i ,yi
+for 1 ≤ i ≤ m. For 0 ≤ s ≤ qi β, the symbol ξi,s denotes the value of the i-th path at time s.
+The occupation field of ξ on [0, β] × Λ is defined by
+
+                             X
+                             m                    X  i −1
+                                                  m qX
+               nξ (s, z) =         nξi (s, z) =             1{z} (ξi,s+jβ ) ,   (s, z) ∈ [0, β] × Λ.    (23)
+                             i=1                  i=1 j=0
+
+For m = 0, both sums in (23) are zero.
+
+    For fixed s ∈ [0, β] and z ∈ Λ, the single-path definition is equivalently
+
+                         nω (s, z) = |{j ∈ N | 0 ≤ j ≤ q − 1, ωs+jβ = z}| .
+
+It counts how many of the q values ωs , ωs+β , . . . , ωs+(q−1)β are equal to z, and hence
+                                               X
+                                                     nω (s, z) = q.
+                                               z∈Λ
+
+For fixed (s, z) ∈ [0, β] × Λ, this definition is the counting identity
+
+                  nξ (s, z) = |{(i, j) | 1 ≤ i ≤ m, 0 ≤ j ≤ qi − 1, ξi,s+jβ = z}| .
+
+
+                                                         13
+It therefore records the total number of path values at the lattice site z for the functional-integral
+time parameter s, and
+                                     X                X
+                                                      m
+                                          nξ (s, z) =    qi .
+                                                 z∈Λ                     i=1
+    The interaction energy determined by Definition 5.13 and (23) is
+                      Z     X                                                    
+            ΦΛ (ξ) =            v (x, y) nξ (s, x) nξ (s, y) − 1{x} (y) nξ (s, x) ds .                  (24)
+                                [0, β] x,y∈Λ
+
+The subtraction in (24) is the normal-ordering term. For finite open-path tuples in the sense
+of Definition 5.12, ω = (ω1 , . . . , ωk ) and ζ = (ζ1 , . . . , ζℓ ), define the interaction energy of their
+concatenated tuple by
+                            ΦΛ (ω, ζ) = ΦΛ (ω1 , . . . , ωk , ζ1 , . . . , ζℓ ) , k, ℓ ∈ N.             (25)
+    Using the bridge path spaces defined in (19), define the loop path space by
+                                              G qβ
+                                     Ωloop
+                                      Λ    =      ΩΛ;x,x .
+                                                              q∈N1
+                                                                                                        (26)
+                                                              x∈Λ
+
+The positive ideal loop measure LΛ on the space in (26) is defined by
+                   Z                       X 1 XZ                 qβ
+                           F (ζ) dLΛ (ζ) =                F (ω) dWΛ;x,x (ω)                             (27)
+                     Ωloop                   q    Ω qβ
+                      Λ                                q∈N1
+                                                    Λ;x,x      x∈Λ
+
+for every nonnegative measurable F . For a finite open-path tuple ω, define
+             X1Z                                       X1Z
+                                           ⊗ℓ
+    ZΛ (ω) =             ℓ e
+                               −ΦΛ (ω,ζ)
+                                         dLΛ (ζ), ZΛ =               e
+                                                                        −ΦΛ (ζ)
+                                                                                dL⊗ℓ
+                                                                                  Λ (ζ).                (28)
+                 ℓ! Ωloop                                  ℓ!    loop ℓ
+               ℓ∈N     Λ                                        ΩΛ             ℓ∈N
+
+Set F = 1 in the loop-measure definition (27). The bridge-mass identity (21), nonnegativity of
+pΛ,qβ , and the row bound (17) give
+                Z                 X 1 X qβ  qβ           X 1X
+                        dLΛ (ζ) =       WΛ;x,x ΩΛ;x,x =              pΛ,qβ (x, x)
+                  Ωloop             q                          q
+                   Λ                      q∈N1   x∈Λ                                 q∈N1   x∈Λ
+                     X 1 XX                                   X 1X
+                ≤                         pΛ,qβ (x, y) ≤                       e−qβε
+                            q                                        q
+                     q∈N1       x∈Λ y∈Λ                       q∈N1       x∈Λ
+                        X e−qβε                               
+                = |Λ|                      = − |Λ| log 1 − e−βε < ∞.
+                                     q
+                        q∈N1
+
+For every q ∈ N1 and x, y ∈ Λ, nonnegativity and (17) give the pointwise estimate
+                                           X
+                            pΛ,qβ (x, y) ≤    pΛ,qβ (x, z) ≤ e−qβε .
+                                                         z∈Λ
+
+Summing this estimate over q and evaluating the resulting geometric series give the open-path
+bound
+          X                  X               X         m     e−βε           1
+              pΛ,qβ (x, y) ≤    e−qβε = e−βε       e−βε    =           = βε       .
+                                                             1 − e−βε     e −1
+             q∈N1                        q∈N1                   m∈N
+
+The loop series in (28) is consequently absolutely convergent and 1 ≤ ZΛ < ∞.
+   For k ∈ N1 and x, y ∈ Λk , the reduced density kernel is
+                                                                           
+                            ρeΛ,k (x; y) = ψΛ a∗y1 · · · a∗yk axk · · · ax1 .                           (29)
+The superstable trace majorant in Proposition 4.1 makes the trace defining (29) finite.
+   The proof of the open-path expansion has nine parts.
+
+                                                               14
+  1. Lemma 5.14 computes the interaction in the occupation-number basis.
+  2. Lemma 5.15 records the positivity and row bound of the finite-slice weights.
+  3. Lemma 5.16 expands the finite-slice trace in particle coordinates.
+  4. Lemma 5.17 inserts the creation–annihilation strings.
+  5. Lemma 5.18 reorganizes the permutation sum by the index sequences generated by re-
+     peated application of a coordinate-index permutation.
+  6. Lemma 5.19 converts the coordinate products into bridge and loop weights.
+  7. Lemma 5.20 supplies uniform bounds, and Lemma 5.21 uses them to take the continuous-
+     time limit.
+  8. Lemma 5.22 identifies the operator and loop partition functions.
+  9. Lemma 5.23 combines these results.
+
+   For a finite Λ ⋐ Γ and ν = (νx )x∈Λ ∈ NΛ , define
+                                   X                               
+                        EΛ (ν) =       v (x, y) νx νy − 1{x} (y) νx .                                   (30)
+                                     x,y∈Λ
+
+Lemma 5.14 (Interaction in the occupation-number basis). Let Λ ⋐ Γ be finite and let ν =
+(νx )x∈Λ ∈ NΛ . The occupation-number vector ΨΛ,ν in (5) satisfies
+                                     VΛ ΨΛ,ν = EΛ (ν) ΨΛ,ν .
+Moreover, EΛ (ν) ≥ 0.
+                                                     √
+Proof. If x 6= y, the operators ax ay contribute νx νy and the operators a∗x a∗y contribute the
+same factor. Hence
+                                 a∗x a∗y ax ay ΨΛ,ν = νx νy ΨΛ,ν .
+                                                       √ √
+If x = y, the two annihilation operators contribute νx νx − 1 and the two creation operators
+contribute the same factor, so
+
+                                (a∗x )2 a2x ΨΛ,ν = νx (νx − 1) ΨΛ,ν .
+These two identities give (30) after summation over the ordered pairs (x, y) ∈ Λ2 . Every
+summand is nonnegative because v is pointwise nonnegative and νx ∈ N.
+
+    To make the limiting step explicit, fix the particle sector N and an integer m ≥ 1, split
+[0, β] into m intervals, and insert the occupation-number basis (5) between the factors in
+                                                                  m
+                                      β                          β
+                    TΛ,m = exp −         Hfr,Λ − µΛ NΛ · exp − VΛ          .               (31)
+                                      m                           m
+The operators Hfr,Λ and VΛ are defined in (8). Define the one-step kernel bm by
+                                                                
+                                                      β
+                               bm (x, y) = exp − (hΛ − µΛ ) (x, y) .                            (32)
+                                                     m
+                                   PN                
+                            (r)                   (r)                       (N )
+For x(r) ∈ ΛN , write νz =                1
+                                      i=1 {z}   x i     . For ϖ ∈ SN , let Ωϖ,m be the set of tuples
+                          m+1               (m)        (0)
+ x(0) , . . . , x(m) in ΛN        satisfying xi = xϖ(i) for every i, and define
+                                                                                 !
+                                         Y
+                                           m−1   Y
+                                                 N                                    β
+                                                                                     e− m E Λ ( ν ) .
+                                                                 (r) (r+1)                       (r)
+              BN,m x(0) , . . . , x(m) =               bm       xi , x i                                (33)
+                                           r=0   i=1
+
+
+                                                  15
+For each time index r, the product of the kernels bm is the one-particle contribution from x(r)
+to x(r+1) , and the exponential is the interaction contribution of the occupation numbers ν (r) .
+                                                                 (N )
+Thus BN,m assigns a number to each tuple x(0) , . . . , x(m) in Ωϖ,m .
+
+Lemma 5.15 (Properties of the finite-slice weights). Assume (12), let Λ ⋐ Γ be finite, and let
+β > 0. For every m ∈ N1 and x ∈ Λ, the kernel in (32) satisfies
+                                                           X                    βε
+                        bm (x, y) ≥ 0, x, y ∈ Λ,                 bm (x, y) ≤ e− m .         (34)
+                                                           y∈Λ
+
+                                            (N )
+For every N ∈ N, ϖ ∈ SN , and x ∈ Ωϖ,m , the weight in (33) satisfies
+
+                                                    YY
+                                                    m−1 N                   
+                                                                   (r) (r+1)
+                              0 ≤ BN,m (x) ≤                  bm x i , x i     .            (35)
+                                                    r=0 i=1
+
+
+
+
+Proof. Definitions (15) and (32) give bm = pΛ,β/m . Nonnegativity of pΛ,t and the row estimate
+                                                                
+(17), evaluated at t = β/m, give (34). Lemma 5.14 gives EΛ ν (r) ≥ 0 for every r. Consequently
+every factor in (33) is nonnegative, and each exponential factor is at most 1. This proves
+(35).
+
+Lemma 5.16 (Finite-slice trace formula). Assume (12), let Λ ⋐ Γ be finite, and let β > 0. For
+every N ∈ N and m ∈ N1 , the Trotter product (31) satisfies
+                                                   1 X           X
+                        TrPΛ,N FΛ [TΛ,m ] =                              BN,m (x) .
+                                                   N!                                       (36)
+                                                      ϖ∈SN x∈Ω(N )
+                                                                   ϖ,m
+
+
+
+
+Proof. Lemma 5.14 gives the diagonal matrix element of the interaction factor, and (32) gives
+the one-particle
+                matrix element of the free factor. Identify PΛ,N FΛ with the symmetric subspace
+of ℓ Λ . For x ∈ ΛN , let δxbe the function on ΛN that equals 1 at x and 0 at every other
+    2   N
+
+tuple. Insertion of the basis δx x ∈ ΛN between consecutive factors of (31) assigns the
+product (33) to each sequence of intermediate coordinates. The bosonic symmetrizer SN on
+ℓ2 ΛN is defined by
+                                         1 X
+                              SN δ x =            δ(xϖ(1) ,...,xϖ(N ) ) .
+                                        N!
+                                                   ϖ∈SN
+                                          (m)       (0)
+Therefore its endpoint condition is xi = xϖ(i) . Summing the intermediate coordinates there-
+fore gives (36). The summands are nonnegative by Lemma 5.15.
+
+   For q ∈ N1 , let Ωq,m                                 qm
+                     Λ;x,y consist of sequences ω = (ωr )r=0 with ω0 = x and ωqm = y, and define
+
+
+       qβ,(m)
+                        Y
+                       qm−1
+    WΛ;x,y ({ω}) =            bm (ωr , ωr+1 ) ,
+                       r=0
+                       X
+                       q−1
+         n(m)
+          ω (r, z) =         1{z} (ωr+jm ) ,      0 ≤ r ≤ m − 1,                            (37)
+                       j=0
+
+                       β X X
+                         m−1                                                 
+           (m)                         (m)       (m)                  (m)
+          ΦΛ (ξ) =           v (x, y) nξ (r, x) nξ (r, y) − 1{x} (y) nξ (r, x) .
+                       m
+                             r=0 x,y∈Λ
+
+
+
+                                                      16
+The discrete loop path space and its ideal loop measure are defined by
+                                            G q,m
+                               Ωloop,m
+                                 Λ      =      ΩΛ;z,z ,
+                                                           q∈N1
+                                                           z∈Λ
+                   X                                        X 1X X                                           (38)
+                                    (m)                                                        qβ,(m)
+                             F (ζ) LΛ ({ζ}) =                                           F (ζ) WΛ;z,z ({ζ})
+                                                                  q
+                 ζ∈Ωloop,m                                 q∈N1       z∈Λ ζ∈Ωq,m
+                                                                             Λ;z,z
+                    Λ
+
+
+for every nonnegative function F on Ωloop,m
+                                        Λ     . For finite tuples ω and ζ whose entries belong
+                                                           (m)
+to the discrete bridge path spaces in (37), the notation ΦΛ (ω, ζ) means that the occupation
+                                                                                     (m)
+numbers of all paths in the concatenated tuple are inserted into the definition of ΦΛ . The
+discrete open-path and loop sums are
+
+                                     X1                  X                (m)           Y
+                                                                                        ℓ
+                                                                      e−ΦΛ
+                       (m)                                                                     (m)
+                     ZΛ      (ω) =                                              (ω,ζ)
+                                                                                              LΛ ({ζj }) ,
+                                           ℓ!             ℓ
+                                     ℓ∈N                                                j=1
+                                                ζ∈ Ωloop,m
+                                                    Λ
+                                                                                                             (39)
+                                     X1                  X              (m)        Y
+                                                                                   ℓ
+                           (m)                                        −ΦΛ (ζ)             (m)
+                          ZΛ =                                        e                  LΛ ({ζj }) .
+                                           ℓ!                   ℓ
+                                     ℓ∈N                                           j=1
+                                                ζ∈       Ωloop,m
+                                                          Λ
+
+
+      (m)
+Let ρeΛ,k denote the reduced kernel obtained from (29) by replacing the Gibbs density matrix
+                                                                                               (m)
+with the normalized m-slice Trotter product and its trace with ZΛ . For M ∈ N, z ∈ ΛM , and
+b ∈ Sk+M , its action on the terminal tuple (y, z) is defined componentwise by
+ϖ
+                          (
+                            yϖ(a)
+                             b    ,   1≤ϖ b (a) ≤ k,
+             b (y, z))a =
+            (ϖ                                                   1 ≤ a ≤ k + M.        (40)
+                            zϖ(a)−k
+                             b      , k+1≤ϖ   b (a) ≤ k + M,
+
+Lemma 5.17 (Creation–annihilation sector formula). Assume (12), let Λ ⋐ Γ be finite, and let
+β > 0. For k, m ∈ N1 and x, y ∈ Λk , the finite-slice reduced kernel is
+                1 X 1 X             X                X                                    
+   (m)
+ ρeΛ,k (x; y) = (m)                                              Bk+M,m u(0) , . . . , u(m) .
+               ZΛ M ∈N M ! z∈ΛM ϖ∈S
+                                 b    k+M u(1) ,...,u(m−1) ∈Λk+M                              (41)
+                                                                 u(0) =(x,z)
+                                                                       b
+                                                                u(m) =ϖ(y,z)
+
+
+
+
+Proof. If N < k, then axk · · · ax1 vanishes on PΛ,N FΛ . Fix N ≥ k and x = (x1 , . . . , xk ), and set
+
+                             κu (x) = |{j ∈ {1, . . . , k} | xj = u}| ,                   u ∈ Λ.
+                                                                        P
+Choose an occupation-number basis vector ΨN = ΨΛ,ν from (5) with u∈Λ νu = N . If νu <
+κu (x) for some u ∈ Λ, the product axk · · · ax1 contains more than νu annihilation operators at
+u. The occupation-number formula (5) gives aνuu +1 ΨN = 0. Annihilation operators at distinct
+                               κ (x)
+sites commute, and the factor auu    therefore gives
+
+                                                axk · · · ax1 ΨN = 0.
+
+It remains to consider the occupation-number basis vectors satisfying
+
+                                           νu ≥ κu (x) ,
+                                                      u ∈ Λ.
+                                                            
+Identify PΛ,N FΛ with the symmetric functions in ℓ2 ΛN . Let ψN be the symmetric coordinate
+                            −k be that of axk · · · ax1 ΨN . For z = (z1 , . . . , zN −k ), the xj are the
+                          x
+function of ΨN , and let ψN
+
+                                                                17
+annihilated coordinates and the zj are the remaining coordinates; the xj need not occur among
+the zj . Definition (5) shows that the two values ψN   x
+                                                         −k (z) and ψN (x1 , . . . , xk , z1 , . . . , zN −k )
+vanish unless
+                                     X
+                                     N −k
+                            κu (x) +      1{u} (zj ) = νu , u ∈ Λ.
+                                             j=1
+
+For every z ∈ ΛN −k , the coordinate representation of the annihilation product is
+                                     s
+                        x                  N!
+                       ψN −k (z) =                ψN (x1 , . . . , xk , z1 , . . . , zN −k ) .
+                                         (N − k)!
+
+The adjoint string a∗y1 · · · a∗yk supplies the same square-root coeﬀicient in the matrix element
+defining (29). Consequently the creation-annihilation strings contribute the factor N !/ (N − k)!.
+Multiplication by the coeﬀicient 1/N ! of the bosonic symmetrizer gives
+                                       1     N!          1
+                                                    =          .
+                                       N ! (N − k)!   (N − k)!
+
+Set M = N − k, and let z = (z1 , . . . , zM ) ∈ ΛM denote the remaining particle coordinates.
+    b ∈ Sk+M , the initial endpoint tuple is (x1 , . . . , xk , z1 , . . . , zM ), while the terminal end-
+For ϖ
+                   b
+point tuple is the ϖ-permutation                                                                b acts on the
+                                       of (y1 , . . . , yk , z1 , . . . , zM ). The permutation ϖ
+coordinate-index set {1, . . . , k + M } and permutes the positions in these tuples. It does not act
+on the lattice Λ. Its terminal action is (40). Insertion of the intermediate coordinates in the
+weight (33) proves (41).
+
+    Separate the coordinate-index set into
+
+                           Dk = {1, . . . , k} , UM = {k + 1, . . . , k + M } .
+
+The set Dk contains the distinguished coordinate indices, and UM contains the remaining co-
+ordinate indices.
+Lemma 5.18 (Marked-index permutation decomposition). Let k ∈ N1 , M ∈ N, and ϖ
+                                                                             b ∈
+Sk+M . For every i ∈ Dk , define
+
+                                     qi = min {q ∈ N1 | ϖ
+                                                        b q (i) ∈ Dk } ,
+                                          b r (i) ,
+                                   ai,r = ϖ              0 ≤ r ≤ qi .
+
+Define the map ϖ : Dk → Dk by
+
+                                           ϖ (i) = ai,qi ,    i ∈ Dk .
+
+The map ϖ is a permutation of Dk , and
+
+                   ai,0 = i, ai,r ∈ UM         (1 ≤ r ≤ qi − 1) , ai,qi = ϖ (i) ∈ Dk .
+
+                                                                                             b to
+The sequence (ai,0 , . . . , ai,qi ) is the marked chain from i to ϖ (i). The restriction of ϖ
+      Sk
+UM \ i=1 {ai,r | 1 ≤ r ≤ qi − 1} is a permutation. There are ℓ ∈ N and points cj,0 ∈ UM \
+Sk
+ i=1 {ai,r | 1 ≤ r ≤ qi − 1}, 1 ≤ j ≤ ℓ, such that the sets
+
+                                Cj = {ϖ
+                                      b r (cj,0 ) | r ∈ N} ,         1 ≤ j ≤ ℓ,
+
+are pairwise disjoint and satisfy
+
+                                     [
+                                     k                                     G
+                                                                           ℓ
+                              UM \         {ai,r | 1 ≤ r ≤ qi − 1} =             Cj .
+                                     i=1                                   j=1
+
+
+                                                         18
+The sets C1 , . . . , Cℓ are called the unmarked cycles. For 1 ≤ j ≤ ℓ and 0 ≤ r ≤ |Cj |, define
+       b r (cj,0 ). These definitions give
+cj,r = ϖ
+                            n                          o
+                              cj,0 , . . . , cj,|Cj |−1 = Cj , cj,|Cj | = cj,0 ,
+                                            b (cj,r ) = cj,r+1 , 0 ≤ r ≤ |Cj | − 1.
+                                            ϖ
+
+The resulting partition of UM and its cardinality are
+                                           !  ℓ      
+                Gk                              G                                  X
+                                                                                   k                  X
+                                                                                                      ℓ
+       UM =         {ai,r | 1 ≤ r ≤ qi − 1} t     Cj  ,                   M=           (qi − 1) +         |Cj | .
+                   i=1                                        j=1                  i=1                j=1
+
+
+                                                                             b in (41), including its coeﬀi-
+For fixed ϖ, q1 , . . . , qk , and C1 , . . . , Cℓ , reindexing the sum over ϖ
+cient 1/M !, produces
+                                                        1 Y 1
+                                                           ℓ
+                                                                   .                                    (42)
+                                                        ℓ!   |Cj |
+                                                         j=1
+
+
+
+
+Proof. For i ∈ Dk , finiteness of {1, . . . , k + M } and bijectivity of ϖ    b give a q ∈ N1 such that
+ϖb q (i) = i. Hence the set defining qi is nonempty. For each a ∈ {1, . . . , k + M }, consider the
+set {ϖ  b r (a) | r ∈ N}. This set either intersects Dk or is contained in UM . The points in its
+intersection with Dk , listed in the order in which positive powers of ϖ         b reach them, divide it
+into the sequences (ai,0 , . . . , ai,qi ). On this list, ϖ sends each point to the next point and sends
+the last point to the first point. Thus ϖ is bijective      S on each intersection and is a permutation
+of Dk . Each set generated by an index in UM \ ki=1 {ai,r | 1 ≤ r ≤ qi − 1} is one of the sets
+Cj . These alternatives prove the partition of UM in the statement. For fixed ϖ, q1 , . . . , qk , and
+C1 , . . . , Cℓ , the M indices in UM can be assigned to the positions ai,r , 1 ≤ r ≤ qi − 1, and cj,r ,
+0 ≤ r ≤ |Cj | − 1, in M ! ways. This factor cancels the coeﬀicient 1/M ! in (41). The marked
+chains have fixed initial indices. The unmarked cycles can be ordered in ℓ! ways, and the j-th
+cycle has |Cj | choices of cj,0 . Removing these repetitions leaves
+
+                                                     1 Y 1
+                                                          ℓ
+                                                              .
+                                                     ℓ! |Cj |
+                                                         j=1
+
+                                                                                                              (m)
+The factor 1/ |Cj | agrees with the length-|Cj | factor in the discrete loop measure LΛ                               defined
+by (38).
+
+Lemma 5.19 (Finite-slice open-path expansion). Assume (12), let Λ ⋐ Γ be finite, and let
+β > 0. For every m ∈ N1 , the finite-slice loop series is the trace normalization:
+                                  (m)
+                                         X
+                                ZΛ =          TrPΛ,N FΛ [TΛ,m ] .                  (43)
+                                                  N ∈N
+
+For every k, m ∈ N1 and x, y ∈ Λk , the finite-slice reduced kernel satisfies
+
+             (m)
+                              X         X             X              (m)
+                                                                    ZΛ     (ω) Y
+                                                                              k
+                                                                                      q β,(m)
+            ρeΛ,k (x; y) =                                                         WΛ;x
+                                                                                     i
+                                                                                        i ,yϖ(i)
+                                                                                                 ({ωi }) .
+                             ϖ∈Sk q1 ,...,qk ∈N1 ωi ∈Ωqi ,m
+                                                                      (m)
+                                                                     ZΛ      i=1
+                                                                                                                         (44)
+                                                      Λ;xi ,yϖ(i)
+                                                     1≤i≤k
+
+
+
+
+                                                          19
+Proof. Lemma 5.17 supplies the sector formula. Apply Lemma 5.18 to each permutation in that
+formula. The reindexed coeﬀicient is (42). For each coordinate index a, the initial and terminal
+sites are             (                            (
+                        x a ,   a ∈  D k ,           yϖ(a)
+                                                      b    ,   ϖb (a) ∈ Dk ,
+                u(0)
+                 a =                        u(m)
+                                             a   =
+                        za−k , a ∈ UM ,              zϖ(a)−k
+                                                      b      , ϖb (a) ∈ UM .
+Concatenating the coordinate sequences along the marked chains and unmarked cycles defines
+
+                                 ωi,rm+s = u(s)
+                                            ai,r ,        0 ≤ r ≤ qi − 1,         0 ≤ s ≤ m,
+                                 ζj,rm+s = u(s)
+                                            cj,r ,        0 ≤ r ≤ |Cj | − 1,          0 ≤ s ≤ m.
+
+The endpoint equalities used to concatenate the coordinate sequences are
+
+                                      u(m)                  (0)
+                                       ai,r = zai,r+1 −k = uai,r+1 ,            0 ≤ r ≤ qi − 2,
+                                      u(m)     (0)
+                                       cj,r = ucj,r+1 ,         0 ≤ r ≤ |Cj | − 2,
+                                 u(m)
+                                  c           = u(0)
+                                                 cj,0 .
+                                     | |
+                                   j, Cj −1
+
+
+The endpoints of the path ωi are
+
+                                               ωi,0 = xi , ωi,qi m = yϖ(i) .
+
+In particular, the i-th marked path has qi blocks of m time slices, while the j-th unmarked path
+is a loop with |Cj | m time slices.
+    The one-step part of Bk+M,m factorizes as
+
+         Y k+M
+         m−1 Y                                      Y
+                                                      k qiY
+                                                          m−1                            ℓ |CjY
+                                                                                         Y    |m−1
+                       bm       u(s)  (s+1)
+                                 a , ua           =                bm (ωi,t , ωi,t+1 )                bm (ζj,t , ζj,t+1 )
+         s=0 a=1                                      i=1 t=0                            j=1    t=0
+
+             Y
+             k
+                    qi β,(m)
+                                              Y
+                                              ℓ
+                                                       |C |β,(m)
+         =         WΛ;x i ,yϖ(i)
+                                 ({ωi })            WΛ;zjc       ,z       ({ζj }) .
+                                                           j,0 −k cj,0 −k
+             i=1                              j=1
+
+ At the s-th Trotter slice, the same partition of the coordinate indices gives the occupation
+identity
+
+                       X
+                       k+M                X   i −1
+                                             k qX                       ℓ |CX
+                                                                        X   j |−1
+
+             νx(s) =            1{x} u(s)
+                                      a    =         1{x} (ω i,rm+s ) +           1{x} (ζj,rm+s )
+                       a=1                            i=1 r=0                         j=1 r=0
+                      (m)         (m)
+                   = nω (s, x) + nζ (s, x) .
+
+Substitution of this identity into the occupation-energy factor of Bk+M,m gives
+
+                                           Y
+                                           m−1
+                                                       β              (m)
+                                                    e− m EΛ (ν ) = e−ΦΛ (ω,ζ) .
+                                                              (s)
+
+
+                                           s=0
+
+Combining the one-step and occupation-energy identities gives the complete factorization
+                                         Y
+                                           k                        Y
+                                                                    ℓ
+                                   (m)                                 |C |β,(m)
+   Bk+M,m u(0) , . . . , u(m) = e−ΦΛ (ω,ζ)
+                                              qi β,(m)
+                                             WΛ;x i ,yϖ(i)
+                                                           ({ω i })   WΛ;zjc −k ,zc                                   ({ζj }) .
+                                                                                                      j,0    j,0 −k
+                                                             i=1                          j=1
+
+For k = 0, the sets generated by repeated application of the coordinate-index permutation are
+precisely the unmarked cycles C1 , . . . , Cℓ . Ordering these sets and choosing one of the |Cj |
+                                           Q
+indices as cj,0 produces the factor ℓ!−1 ℓj=1 |Cj |−1 . This coeﬀicient and the factorization of
+
+                                                                   20
+BM,m convert the sum of the sector traces in (36) into the loop series (39). This proves (43).
+                  Q
+The coeﬀicient ℓ!1 ℓj=1 |C1j | and the path factorization rewrite the sector sum as
+
+                      (m)                1     X             X                X              Y
+                                                                                             k
+                                                                                                          q β,(m)
+                    ρeΛ,k (x; y) =    (m)
+                                                                                                     WΛ;x
+                                                                                                       i
+                                                                                                          i ,yϖ(i)
+                                                                                                                   ({ωi })
+                                     ZΛ ϖ∈Sk q1 ,...,qk ∈N1 ω ∈Ωqi ,m                        i=1
+                                                             i  Λ;x ,y           i    ϖ(i)
+                                                                          1≤i≤k
+
+                                         X1              X                (m)             Y
+                                                                                          ℓ
+                                                                       e−ΦΛ
+                                                                                                     (m)
+                                     ×                                          (ω,ζ)
+                                                                                                    LΛ ({ζj }) .
+                                               ℓ!             ℓ
+                                         ℓ∈N                                              j=1
+                                                    ζ∈ Ωloop,m
+                                                        Λ
+
+                                                                                                    (m)
+The final two sums and the interaction factor are precisely ZΛ (ω) by (39). Substitution of
+this definition proves (44). The derivation identifies the marked endpoint condition ωi,0 = xi
+and ωi,qi m = yϖ(i) . The unmarked cycles remain in the normalized loop factor.
+
+Lemma 5.20 (Finite-slice domination). Under the assumptions of Lemma 5.19, suppose that
+v is pointwise nonnegative. Every tuple ω occurring in (44) satisfies
+                                                      (m)
+                                                    ZΛ       (ω)              (m)
+                                             0≤         (m)
+                                                                    ≤ e−ΦΛ          (ω)
+                                                                                          ≤ 1.                                          (45)
+                                                       ZΛ
+The total loop mass, the finite-slice partition function, and the reduced kernel obey
+                             X                                      
+                                    LΛ ({ζ}) ≤ − |Λ| log 1 − e−βε ,
+                                      (m)
+
+                                   ζ∈Ωloop,m
+                                      Λ
+
+                                                             (m)                1
+                                                         ZΛ        ≤                      |Λ|
+                                                                                                ,                                       (46)
+                                                            (1 − e−βε )
+                                               (m)               k!
+                                         0 ≤ ρeΛ,k (x; y) ≤          k
+                                                                       .
+                                                            (e − 1)
+                                                              βε
+
+
+
+
+Proof. For the concatenated tuple (ω, ζ), the discrete occupation numbers satisfy
+                                      (m)                     (m)                    (m)
+                                     n(ω,ζ) (r, x) = nω (r, x) + nζ                        (r, x) .
+                                                                               (m)
+Substitution into the quadratic and linear terms of ΦΛ                                gives
+  (m)               (m)
+ n(ω,ζ) (r, x) n(ω,ζ) (r, y)
+        (m)           (m)            (m)               (m)                (m)                   (m)                 (m)          (m)
+ = nω (r, x) nω (r, y) + nζ                  (r, x) nζ       (r, y) + nω (r, x) nζ                    (r, y) + nζ         (r, x) nω (r, y) .
+The symmetry and pointwise nonnegativity of v identify the two mixed quadratic terms and
+give
+                       2β X X
+                          m−1
+           (m)                              (m)       (m)
+          IΛ (ω, ζ) =             v (x, y) nω (r, x) nζ (r, y) ≥ 0,
+                       m
+                                         r=0 x,y∈Λ
+                    (m)              (m)               (m)               (m)                         (m)             (m)
+                 ΦΛ (ω, ζ) = ΦΛ (ω) + ΦΛ (ζ) + IΛ                              (ω, ζ) ≥ ΦΛ (ω) + ΦΛ (ζ) .
+For every tuple ξ, the discrete self-energy is nonnegative because
+        X                                                     
+                       (m)        (m)                 (m)
+            v (x, y) nξ (r, x) nξ (r, y) − 1{x} (y) nξ (r, x)
+         x,y∈Λ
+              X                                         X
+                             (m)           (m)                        (m)       (m)
+         =          v (x, x) nξ    (r, x) nξ (r, x) − 1 +   v (x, y) nξ (r, x) nξ (r, y) ≥ 0.
+              x∈Λ                                                        x,y∈Λ
+                                                                          x̸=y
+
+
+                                                                    21
+The discrete loop series in (39) satisfies
+
+                              X1                  X                 (m)            Y
+                                                                                   ℓ
+                                                                e−ΦΛ
+           (m)                                                                            (m)
+         ZΛ        (ω) =                                                  (ω,ζ)
+                                                                                         LΛ ({ζj })
+                                      ℓ!                  ℓ
+                              ℓ∈N                                                  j=1
+                                           ζ∈ Ωloop,m
+                                               Λ
+
+
+                      (m)         X1                  X               (m)         Y
+                                                                                  ℓ
+                                                                                                                         (m)
+         ≤ e−ΦΛ                                                 e−ΦΛ                    LΛ ({ζj }) = e−ΦΛ
+                                                                                         (m)                                          (m)           (m)
+                            (ω)                                             (ζ)                                                (ω)
+                                                                                                                                     ZΛ     ≤ ZΛ .
+                                        ℓ!             ℓ
+                                  ℓ∈N                                             j=1
+                                             ζ∈ Ωloop,m
+                                                 Λ
+
+
+This proves (45).
+   The total mass of the discrete ideal loop measure can be computed from (38). The semigroup
+property and the row estimate (17) give
+
+       X           (m)
+                                           X 1X X                        Y
+                                                                        qm−1                                X 1X
+                  LΛ ({ζ}) =                                                      bm (ζr , ζr+1 ) =                                bqm
+                                                                                                                                    m (z, z)
+                                                  q                                                                  q
+  ζ∈Ωloop,m                             q∈N1          z∈Λ ζ∈Ωq,m
+                                                             Λ;z,z
+                                                                   r=0                                     q∈N1          z∈Λ
+     Λ
+       X 1X                                       X 1 X                                             X e−qβε                                  
+   =                    pΛ,qβ (z, z) ≤                                pΛ,qβ (z, w) ≤ |Λ|                                  = − |Λ| log 1 − e−βε .
+              q                                           q                                                      q
+       q∈N1       z∈Λ                             q∈N1        z,w∈Λ                                 q∈N1
+
+The equality bqm
+              m = pΛ,qβ follows directly from the definitions of bm and pΛ,t . Dropping the
+nonnegative interaction energy and summing the exponential series gives
+                                                                                  ℓ                                                      
+                        (m)
+                                   X1                  X          (m)                                    X             (m)    
+                    ZΛ        ≤                                  LΛ ({ζ}) = exp                                       LΛ ({ζ})
+                                    ℓ!
+                                   ℓ∈N            ζ∈Ωloop,m
+                                                     Λ                                                  ζ∈Ωloop,m
+                                                                                                           Λ
+                                                        −|Λ|
+                      ≤ exp − |Λ| log 1 − e−βωε   = 1 − e−βε       .
+
+    We apply the normalized-loop estimate to the finite-slice reduced kernel. Positivity of the
+bridge weights gives
+
+                         (m)
+                                                    X           X                  X             Y
+                                                                                                 k
+                                                                                                           q β,(m)
+                  0 ≤ ρeΛ,k (x; y) ≤                                                                   WΛ;x
+                                                                                                         i
+                                                                                                            i ,yϖ(i)
+                                                                                                                     ({ωi })
+                                                  ϖ∈Sk q1 ,...,qk ∈N1 ωi ∈Ωqi ,m                 i=1
+                                                                                   Λ;xi ,yϖ(i)
+                                                                                  1≤i≤k
+                                                                                                      
+                        X         Y
+                                  k
+                                      X                  X                                  
+                  =                                                     qi β,(m)
+                                                                        WΛ;x          ({ωi })
+                                                                            i ,yϖ(i)        
+                      ϖ∈Sk i=1             qi ∈N1 ωi ∈Ωqi ,m
+                                                          Λ;xi ,yϖ(i)
+                                                                                                                                             
+                        X Y
+                          k                  X                                         X Y
+                                                                                          k              X                                  
+                  =                                  bqmi m xi , yϖ(i)  =                                     pΛ,qi β xi , yϖ(i) 
+                      ϖ∈Sk i=1             qi ∈N1                                    ϖ∈Sk i=1           qi ∈N1
+                                                                                            k
+                        X Y
+                          k                  X                                X                                  k!
+                  ≤                                  e−qi βε  = k!                e−qβε  =                                 .
+                                                                                                                     k
+                      ϖ∈Sk i=1             qi ∈N1                             q∈N1                         (eβε − 1)
+
+The marked-chain estimate is independent of m, the volume, and the endpoint sites. The
+loop-mass calculation, the exponential-series estimate, and the marked-chain estimate prove
+(46).
+
+   The passage from finite-slice paths to continuous time is isolated in the next lemma.
+
+
+                                                                              22
+Lemma 5.21 (Continuous-time limit). Under the assumptions of Lemma 5.20, the discrete
+loop partition function converges to the loop partition function in (28), and
+
+                (m)
+                            X       X Z                    ZΛ (ω) Y
+                                                                    k
+                                                                          qi β
+          lim ρe (x; y) =                    Qk                       dWΛ;x    i ,yϖ(i)
+                                                                                        (ωi ). (47)
+        m→∞ Λ,k                                  Ω
+                                                   qi β      Z Λ
+                                     ϖ∈Sk q1 ,...,qk ∈N1
+                                              i=1 Λ;x ,y                    i    ϖ(i)           i=1
+
+
+
+Proof. For a path ω ∈ ΩqβΛ;x,y , let its m-skeleton be (ω0 , . . . , ωqm ) with ωr = ωrβ/m . The joint
+distribution of the path values at the times rβ/m, 0 ≤ r ≤ qm, equals the finite-slice measure
+because
+            qβ                                     
+          WΛ;x,y    ω ωrβ/m = ωr , 0 ≤ r ≤ qm
+                 Y
+                qm−1                                     Y
+                                                        qm−1
+                                                                                         qβ,(m)
+            =          pΛ,β/m (ωr , ωr+1 ) =                    bm (ωr , ωr+1 ) = WΛ;x,y ({(ω0 , . . . , ωqm )}) .
+                r=0                                       r=0
+       qβ
+For WΛ;x,y -almost every path, the number of jumps in [0, qβ] is finite. The left Riemann sums
+of the piecewise-constant occupation functions defined in (23) satisfy
+                                                                                 
+                 β X X
+                   m−1
+                                            rβ           rβ                      rβ
+            lim              v (x, y) nξ       , x nξ        , y − 1{x} (y) nξ      ,x
+           m→∞ m                            m             m                      m
+                   r=0 x,y∈Λ
+              Z     X                                                    
+           =            v (x, y) nξ (s, x) nξ (s, y) − 1{x} (y) nξ (s, x) ds = ΦΛ (ξ) .
+                 [0, β] x,y∈Λ
+
+                                                                                                                     (m)
+Fix s ∈ N1 , endpoints xa , ya ∈ Λ, and lengths qa ∈ N1 for 1 ≤ a ≤ s. Since 0 ≤ e−ΦΛ                                      ≤ 1,
+dominated convergence for this fixed path tuple gives
+                                X          (m)      Y
+                                                    s              n       o
+                                        −ΦΛ (ξ(m) )      qa β,(m)
+                      lim              e              WΛ;x   a ,ya
+                                                                      ξ (m)
+                                                                        a
+                          m→∞
+                                     ξa
+                                         (m)
+                                           ∈ΩqΛ;x
+                                               a ,m                        a=1
+                                                  a ,ya
+                                           1≤a≤s                                                                           (48)
+                                Z                                  Y
+                                                                   s
+                           =        Qs                  e−ΦΛ (ξ)           qa β
+                                                                         dWΛ;x a ,ya
+                                                                                     (ξa ).
+                                          qa β
+                                     a=1 ΩΛ;xa ,ya                 a=1
+The discrete sum ranges over skeletons with the prescribed endpoints.
+    The loop-count, loop-length, and marked-length tails are uniform in m. The loop-count tail
+satisfies
+                                                          1                   ℓ
+       X∞       X                 Yℓ               X∞
+           1                (m)
+                          −ΦΛ (ζ)
+                                                             − |Λ| log 1 − e−βε
+                                      (m)                                            L→∞
+0≤                       e           LΛ ({ζj }) ≤                                   −−−−→ 0.
+           ℓ!        ℓ                                 ℓ!
+    ℓ=L+1                                         j=1                       ℓ=L+1
+                ζ∈ Ωloop,m
+                    Λ
+
+The loop-length tail satisfies
+      X∞                                ∞                       ∞
+           1X X              qβ,(m)
+                                        X 1X                    X e−qβε Q→∞
+ 0≤                      WΛ;z,z ({ζ}) =      pΛ,qβ (z, z) ≤ |Λ|         −−−−→ 0.
+           q         q,m                  q                         q
+     q=Q+1      z∈Λ ζ∈ΩΛ;z,z                                q=Q+1         z∈Λ                         q=Q+1
+
+For loop tuples, summing over the position of a loop whose length exceeds Qβ gives
+                          ∞
+                          X                                 X                           Y
+                                                                                        ℓ
+                            1                                                                  (m)
+                                                                                              LΛ ({ζj })
+                                ℓ!                                ℓ
+                          ℓ=1                                                           j=1
+                                                        ζ∈ Ωloop,m
+                                                            Λ
+                                            F               q,m
+                                     ζj ∈       q∈N1 , q>Q ΩΛ;z,z for some 1≤j≤ℓ
+                                                   z∈Λ
+                                                          
+                                 ∞
+                                 X   −qβε            X e−qβε
+                                   e
+                          ≤ |Λ|           exp |Λ|         −Q→∞
+                                                               −−−→ 0.
+                                      q                  q
+                                          q=Q+1                                 q∈N1
+
+
+                                                                    23
+For each marked path, the length tail satisfies
+               ∞
+               X         X                                ∞
+                                                          X                              ∞
+                                                                                         X             Q→∞
+                                                                                                 e−qβε −−−−→ 0.
+                                   qβ,(m)
+         0≤                    WΛ;x,y ({ω}) =                          pΛ,qβ (x, y) ≤
+              q=Q+1 ω∈Ωq,m
+                       Λ;x,y
+                                                      q=Q+1                             q=Q+1
+
+The sum over marked lengths with at least one qi > Q is bounded uniformly in the endpoints
+by
+                                                                       k−1
+ X         X          Y                            ∞
+                                                   X             X
+                      k
+                                          
+                        pΛ,qi β xi , yϖ(i) ≤ k!k      e−qβε      e−qβε 
+                                                                                Q→∞
+                                                                               −−−−→ 0.
+ϖ∈Sk        q1 ,...,qk ∈N1  i=1                                          q=Q+1                q∈N1
+       qi >Q for some 1≤i≤k
+
+The fixed-tuple convergence, the three tail estimates, and the finiteness of Sk permit the limit
+m → ∞ to pass through the loop-count, loop-length, and marked-length sums in (44). Applying
+                                                    (m)
+the same argument with no marked paths gives ZΛ → ZΛ . Applying it with the k marked
+paths gives (47).
+
+Lemma 5.22 (Continuous bosonic cycle decomposition). Assume (12), suppose that v is point-
+wise nonnegative, let Λ ⋐ Γ be finite, and let β > 0. The operator partition function in (9)
+equals the loop partition function:
+                                        ZΛ,β = ZΛ .                                     (49)
+For every k ∈ N1 and x, y ∈ Λk , the reduced kernel satisfies
+                          X     X Z                    ZΛ (ω) Y
+                                                              k
+                                                                  qi β
+           ρeΛ,k (x; y) =               Qk                      dWΛ;x  i ,yϖ(i)
+                                                                                (ωi ).                            (50)
+                                               qi β
+                                          i=1 ΩΛ;x ,y
+                                                         Z Λ
+                             ϖ∈Sk q1 ,...,qk ∈N1                   i   ϖ(i)         i=1
+
+
+
+Proof. Apply the fixed-tuple limit (48) to the finite-slice trace formula (36). The trace majorant
+in Proposition 4.1 permits summation over the particle sectors and gives
+                 X 1 X X Z                                               Y
+                                                                         N
+                                                       −ΦΛ (ω1 ,...,ωN )     β
+        ZΛ,β =                       QN              e                     dWΛ;x i ,xϖ(i)
+                                                                                          (ωi ). (51)
+                     N!                     β
+                                       i=1 ΩΛ;x ,x
+                  N ∈N            N
+                             ϖ∈SN x∈Λ                     i   ϖ(i)                      i=1
+
+Let nq be the number of cycles of length q in ϖ. The cycle lengths exhaust all particle-coordinate
+indices and satisfy                      X
+                                              qnq = N,                                        (52)
+                                                   q∈N1
+
+The number of permutations with these cycle counts is obtained by arranging the N particle-
+coordinate indices in a row. There are N ! arrangements. Each of the nq cycles of length q
+has q cyclic rotations representing the same cycle, and the cycles of the same length have nq !
+orderings. Division by these repetitions gives
+                                                                                       N!
+                   |{ϖ ∈ SN : ϖ has nq cycles of length q}| = Q                           nq
+                                                                                                ,
+                                                                                    q∈N1 q nq !
+                                                     1      N!                     Y 1  1 n q                   (53)
+                                                        Q               =                              .
+                                                     N ! q∈N1 q nq nq !                   nq !    q
+                                                                                   q∈N1
+
+   We calculate how a single cycle becomes one loop. Fix a cycle (i1 i2 · · · iq ) and use the
+convention iq+1 = i1 . For paths ωir ∈ ΩβΛ;xi ,xi , define their concatenated loop ζ ∈ Ωqβ
+                                                                                        Λ;xi1 ,xi1
+                                               r r+1
+by
+                           ζs+(r−1)β = ωir ,s , 0 ≤ s < β, 1 ≤ r ≤ q,
+                                      ζqβ = xi1 .
+
+                                                              24
+Repeated application of the bridge convolution law (22) gives, for every nonnegative function
+F of the concatenated loop,
+
+     X            Z                                   Y
+                                                      q                                     X Z
+                                                              β                                                      qβ
+                      Qq                      F (ζ)         dWΛ;x ir ,xir+1
+                                                                            (ωir ) =                         F (ζ) dWΛ;x i ,xi
+                                                                                                                               (ζ).
+                            β                                                                   qβ                        1   1
+xi1 ,...,xiq ∈Λ        r=1 ΩΛ;x   ir ,xir+1           r=1                               xi1 ∈Λ ΩΛ;xi1 ,xi1
+
+
+The loop occupation at a time s ∈ [0, β] is the sum of the occupations of its constituent paths
+at that time:
+                                             Xq
+                                nζ (s, x) =     1{x} (ωir ,s ) .
+                                                                      r=1
+
+If ζ is the tuple obtained by concatenating every cycle of ϖ, summation of this identity over all
+cycles gives
+                                  X
+                                  N
+                      nζ (s, x) =   1{x} (ωi,s ) , ΦΛ (ζ) = ΦΛ (ω1 , . . . , ωN ) .
+                                                 i=1
+
+    For each q ∈ N1 , define the length-qβ part of the ideal loop measure by
+                     Z                             Z
+                                               1X                   qβ
+                             F (ζ) dLΛ,q (ζ) =              F (ζ) dWΛ;z,z (ζ).
+                        loop
+                       ΩΛ                      q      qβ
+                                                     ΩΛ;z,z            z∈Λ
+                                                       P
+The loop-measure definition (27) gives LΛ =               q∈N1 LΛ,q . For fixed cycle counts satisfying
+(52), the coeﬀicient (53), the bridge convolution law (22), and the energy identity compute the
+corresponding contribution to (51) as
+                         Y 1 Z                                  Y     ⊗n
+                                                        −ΦΛ (ζ)
+                                  Q             n
+                                                      e             dLΛ,qq (ζ q ).
+                             nq !          loop
+                                          ΩΛ
+                                                    q
+                                     q∈N1
+                                    q∈N                     1                        q∈N1
+                                                                                P
+Only finitely many nq are nonzero because their weighted sum is N . Let ℓ = q∈N1 nq . The
+                                          Q
+multinomial expansion of L⊗ℓ
+                           Λ contains ℓ!/   q∈N1 nq ! orderings with these fixed counts. Multi-
+plication by 1/ℓ! gives
+                                 1     ℓ!        Y 1
+                                   Q          =             .
+                                 ℓ! q∈N1 nq !          nq !
+                                                                             q∈N1
+
+Summing over all cycle counts and then over ℓ yields
+                              X1Z
+                       ZΛ,β =             ℓ e
+                                               −ΦΛ (ζ)
+                                                       dL⊗ℓ
+                                                         Λ (ζ) = ZΛ .                                                             (54)
+                                  ℓ! Ωloop
+                                       Λ         ℓ∈N
+
+The quantity ZΛ,β in (54) is the operator trace defined in (9). The quantity ZΛ is the loop
+series defined in (28). Equation (54) proves (49).
+    For the reduced kernel, the k creation-annihilation pairs cut the permutation cycles that
+contain the marked particle-coordinate indices. Fix ϖ ∈ Sk , marked lengths q1 , . . . , qk , and
+unmarked cycle counts (nq )q∈N1 with
+
+                                                                X
+                                                                k            X
+                                                        N=            qi +          qnq .
+                                                                i=1          q∈N1
+
+The factor N !/ (N − k)! selects and orders the k distinguished particle-coordinate indices. After
+the marked endpoints and ϖ are fixed, the remaining N − k particle-coordinate indices fill the
+qi − 1 intermediate positions of the i-th marked chain, 1 ≤ i ≤ k, and the positions in the
+unmarked cycles. There is no cyclic-rotation quotient for a marked chain because its initial
+
+
+                                                                        25
+endpoint is prescribed. The number of arrangements of the remaining particle-coordinate indices
+is
+                                          (N − k)!
+                                        Q       nq
+                                                      .
+                                          q∈N1 q nq !
+
+Multiplication by the selection factor and the bosonic symmetrizer gives
+                           N!      1   (N − k)!       Y 1  1 n q
+                                     Q              =               .
+                        (N − k)! N ! q∈N1 q nq nq !      nq ! q
+                                                                     q∈N1
+
+For fixed marked paths ω = (ω1 , . . . , ωk ), summation over all unmarked cycle counts is
+                        X1Z
+                                         ℓ e
+                                               −ΦΛ (ω,ζ)
+                                                         dL⊗ℓ
+                                                           Λ (ζ) = ZΛ (ω) .
+                            ℓ! Ωloop
+                             ℓ∈N     Λ
+
+
+Substitution of this identity into the marked-chain sum gives
+
+                             X        X           Z
+                                                                          ZΛ (ω) Y
+                                                                                   k
+                                                                                     qi β
+           ρeΛ,k (x; y) =                             Qk                           dWΛ;x  i ,yϖ(i)
+                                                                                                   (ωi ).
+                                                            qi β
+                                                       i=1 ΩΛ;xi ,yϖ(i)
+                                                                           ZΛ
+                            ϖ∈Sk q1 ,...,qk ∈N1                                   i=1
+
+This identity is (50). The loop and marked-chain tail bounds prove absolute convergence of
+every rearrangement in the calculation.
+
+Lemma 5.23 (Open-path and loop expansion). Assume (12), suppose that v is pointwise
+nonnegative, let Λ ⋐ Γ be finite, and let β > 0. For every k ∈ N1 and x, y ∈ Λk , the reduced
+kernel satisfies
+
+                             X        X           Z
+                                                                          ZΛ (ω) Y
+                                                                                   k
+                                                                                     qi β
+           ρeΛ,k (x; y) =                             Qk                           dWΛ;x  i ,yϖ(i)
+                                                                                                   (ωi ).   (55)
+                                                            qi β
+                                                       i=1 ΩΛ;xi ,yϖ(i)
+                                                                           ZΛ
+                            ϖ∈Sk q1 ,...,qk ∈N1                                   i=1
+
+
+
+
+Proof. Lemma 5.16 and Lemma 5.17 provide the coordinate formulas used in the finite-slice
+expansion. Lemma 5.19 gives the exact finite-slice formula. Its trace normalization is (43).
+Lemma 5.20 supplies bounds that are uniform in the slice number. Lemma 5.21 identifies the
+limit of the finite-slice reduced kernels with the right-hand side of (55). The Trotter product
+(31) and the operator KΛ,µΛ in (8) satisfy
+
+                                 lim TΛ,m |PΛ,N FΛ = e−βKΛ,µΛ
+                                m→∞                                           PΛ,N FΛ
+
+in the operator norm for every N ∈ N. The trace majorant in Proposition 4.1 permits the
+particle-sector sum and the limit to be interchanged. The resulting limit is
+                                            (m)
+                                      lim ρe (x; y) = ρeΛ,k (x; y) .
+                                     m→∞ Λ,k
+
+Comparison with (47) proves (55). Lemma 5.22 gives the equality of the operator and loop
+normalizations in (49) and independently verifies the reduced kernel formula in (50).
+
+    Let ψfr,Λ be the Gibbs state at inverse temperature β for the free grand-canonical Hamilto-
+nian Hfr,Λ − µΛ NΛ . It has the same hopping and chemical potential as the interacting Gibbs
+state ψΛ in (9). Let ρefr,Λ,k be its reduced density kernel defined by (29). Equation (24) is
+identically zero when v = 0. Let Zfr,Λ and Zfr,Λ (ω) be the two loop partition functions of this
+free gas, obtained from (28) by setting v = 0. In particular,
+                                                                               
+                          ρefr,Λ,k (x; y) = ψfr,Λ a∗y1 · · · a∗yk axk · · · ax1 .           (56)
+
+                                                            26
+Lemma 5.24 (Repulsive loop domination). Assume (12), suppose that v is pointwise nonneg-
+ative, let Λ ⋐ Γ be finite, and let β > 0. For every finite open-path tuple ω in the sense of
+Definition 5.12, the normalized loop factor satisfies
+
+                                       ZΛ (ω)
+                                              ≤ e−ΦΛ (ω) ≤ 1.                               (57)
+                                        ZΛ
+
+For every k ∈ N1 and x, y ∈ Λk , the interacting reduced density kernel in (29) is bounded by
+the free kernel in (56) with the same hopping and chemical potential:
+
+                                   0 ≤ ρeΛ,k (x; y) ≤ ρefr,Λ,k (x; y) .                     (58)
+
+
+
+Proof. Use the open-path representation in Lemma 5.23. For two finite open-path tuples in the
+sense of Definition 5.12, define their nonnegative cross energy by
+                                   Z      X
+                     IΛ (ω, ζ) = 2            v (x, y) nω (s, x) nζ (s, y) ds .
+                                       [0, β] x,y∈Λ
+
+
+Expanding the concatenated-tuple definition (25) with the occupation-field definition (23) and
+the interaction energy (24) starts from
+
+                             n(ω,ζ) (s, x) = nω (s, x) + nζ (s, x) ,
+                n(ω,ζ) (s, x) n(ω,ζ) (s, y) = nω (s, x) nω (s, y) + nζ (s, x) nζ (s, y)
+                                            + nω (s, x) nζ (s, y) + nζ (s, x) nω (s, y) .
+
+The linear normal-ordering term splits without a mixed contribution. Symmetry of v makes
+the two mixed quadratic terms equal. Integration over s gives
+
+                  ΦΛ (ω, ζ) = ΦΛ (ω) + ΦΛ (ζ) + IΛ (ω, ζ) ≥ ΦΛ (ω) + ΦΛ (ζ) .               (59)
+
+The inequality uses pointwise nonnegativity of v. Insert (59) into the first member of (28). The
+normalized background contribution is bounded by
+
+               ZΛ (ω)               X1Z
+                          −ΦΛ (ω) 1
+                       ≤e                        ℓ e
+                                                      −ΦΛ (ζ)
+                                                              dL⊗ℓ
+                                                                Λ (ζ) = e
+                                                                           −ΦΛ (ω)
+                                                                                   .
+                 ZΛ              ZΛ     ℓ! Ωloop
+                                          ℓ∈N  Λ
+
+
+The final loop series is exactly ZΛ . All bridge measures in (55) are positive. The bound (57)
+gives
+                                X      X Z                   Yk
+                                                                    qi β
+             0 ≤ ρeΛ,k (x; y) ≤                 Q    q β
+                                                                dWΛ;x    i ,yϖ(i)
+                                                                                  (ωi ).
+                                                       k     i
+                                ϖ∈Sk q1 ,...,qk ∈N1    i=1 ΩΛ;xi ,yϖ(i) i=1
+
+
+For this free gas, v = 0 implies
+
+                                                           Zfr,Λ (ω)
+                                Zfr,Λ (ω) = Zfr,Λ ,                  = 1.
+                                                             Zfr,Λ
+
+The right-hand side of the reduced-kernel bound is consequently ρefr,Λ,k (x; y), which proves
+(58).
+
+
+
+
+                                                      27
+5.3   Factorial and exponential local moments
+The free Bose gas in the comparison has one-particle covariance
+                                                      −1
+                               Cfr,Λ = eβ(hΛ −µΛ ) − 1     .
+
+The gap (12) implies hΛ − µΛ ≥ ε and
+                                                              −1
+                                        δx , Cfr,Λ δx ≤ eβε − 1    .
+
+Theorem 5.25 (Exponential replacement of the DLL moment hypothesis). Assume (12) and
+pointwise nonnegativity of v. For every β > 0, k ∈ N, and 0 < a < βε, the finite-volume Gibbs
+states defined by (9) satisfy
+                                                   
+                                        Y
+                                        k−1
+                                                              k!
+                           sup sup ψΛ      (Nx − j) ≤             k
+                                                                      ,                  (60)
+                           Λ⋐Γ x∈Λ      j=0             (e βε −  1)
+
+where the product is 1 for k = 0, and
+                                                       eβε − 1
+                                      sup sup ψΛ eaNx ≤ βε      .                                                  (61)
+                                      Λ⋐Γ x∈Λ          e − ea
+
+
+Proof. For k ∈ N1 , evaluate (58) at x = y = (x, . . . , x). The domination is Lemma 5.24. The
+occupation identity and the free Bose Wick rule are
+                               Y
+                               k−1                                                                  k
+               (a∗x )k akx =         (Nx − j) ,    ψfr,Λ (a∗x )k akx = k!           δx , Cfr,Λ δx          .
+                               j=0
+
+Indeed, fix the basis vector ΨΛ,ν in (5) with νx = n. For n ≥ k, let ν (k) be the multi-index
+obtained by replacing νx with n − k. Repeated annihilation and creation give
+                                       p
+                             akx ΨΛ,ν = n (n − 1) · · · (n − k + 1)ΨΛ,ν (k) ,
+                          (a∗x )k akx ΨΛ,ν = n (n − 1) · · · (n − k + 1) ΨΛ,ν ,
+
+while akx ΨΛ,ν = 0 when n < k. The two diagonal operators consequently agree. The free Bose
+Wick rule sums over all bijections between the k creation and k annihilation entries. Every
+contraction equals δx , Cfr,Λ δx , and the number of bijections is |Sk | = k!. The domination
+and covariance estimates now give
+                                
+                    Y
+                    k−1
+               ψΛ      (Nx − j) = ρeΛ,k ((x, . . . , x) ; (x, . . . , x))
+                    j=0
+                                                                                    k           k!
+              ≤ ρefr,Λ,k ((x, . . . , x) ; (x, . . . , x)) = k!     δx , Cfr,Λ δx        ≤                 k
+                                                                                                               .
+                                                                                             (eβε − 1)
+Taking the two suprema proves (60). The case k = 0 is the normalization of the state.
+   For every n ∈ N, the binomial theorem gives the factorial generating identity
+                                         Xn  
+                                     n         n
+                    e = (1 + e − 1) =
+                     an        a
+                                                  (ea − 1)k
+                                               k
+                                                     k=0
+                                                                                                                   (62)
+                           X
+                           n
+                                 (ea − 1)  k
+                                             n!      X (ea − 1)k Y             k−1
+                       =                           =               (n − j) ,
+                                     k!   (n − k)!         k!
+                           k=0                                k∈N              j=0
+
+
+                                                         28
+where the final infinite sum equals the finite sum because the falling factorial vanishes for k > n.
+Apply (62) to the spectral resolution of Nx . Every summand is positive. Monotone convergence
+and (60) give
+                                                
+                X (ea − 1)k        Y
+                                    k−1              X  ea − 1 k            1         eβε − 1
+  ψΛ e  aNx
+              =               ψΛ       (Nx − j) ≤                    =             =           .
+                                                           eβε − 1        1 − eeβε−1    eβε − ea
+                                                                                a
+                         k!                                                       −1
+                k∈N                j=0                  k∈N
+
+The geometric series converges because a < βε. This proves (61).
+
+   Theorem 5.25 is uniform in the volume and the lattice site. It is an all-temperature statement
+but not an all-density statement. For Γ = Zd and nearest-neighbor hopping, one may take
+Ch = 2d, and the hypothesis is a uniform version of µ < −2d in [12, Remark 5.3].
+
+Definition 5.26 (Exponential spatial weights). Fix b > 0. For x, y ∈ Γ and ∆ ⋐ Γ or ∆ = Γ,
+define                                       X                      X
+             qx (y) = e−b dist(x,y) , Qx,∆ =   qx (y) Ny , Sb = sup   qx (y) .        (63)
+                                                y∈∆                        x∈Γ y∈Γ
+
+
+
+
+   Let P∆,n be the particle-sector projection defined by (2) with X = ∆. The inequalities
+0 < qx (y) ≤ 1 give the sector bound
+
+                                0 ≤ Qx,∆ P∆,n ≤ nP∆,n ,        n ∈ N.                          (64)
+
+Lemma 5.27 (Initial weighted exponential moment). For every b > 0, the constant Sb in (63)
+is finite. Assume (12) and pointwise nonnegativity of v. Fix β > 0 and a ∈ (0, βε), and define
+
+                                                  eβε − 1
+                                         Ma =              .                                   (65)
+                                                  eβε − ea
+
+For every finite Λ ⋐ Γ, ∆ ∈ {Λ, Γ}, and x ∈ Γ, the state ψ Λ defined by (10) satisfies
+                                        a      
+                                            Q
+                                    ψ Λ e Sb x,∆ ≤ Ma .                                        (66)
+
+
+
+Proof. For every x ∈ Γ, decomposition into the sets of points at fixed graph distance from x
+and (1) give
+                 X                     ∞
+                                       X
+                      −b dist(x,y)
+                    e              =1+   e−bn |{y ∈ Γ | dist (x, y) = n}|
+                  y∈Γ                    n=1
+                                         X∞                          ∞
+                                                                     X
+                                 ≤1+           e−bn |x[n]| ≤ 1 + σ         nd e−bn < ∞.
+                                         n=1                         n=1
+
+Taking the supremum over x proves Sb < ∞. The condition 0 < a < βε gives
+                                                   ea − 1
+                                    Ma − 1 =               > 0.
+                                                  eβε − ea
+                                      
+The estimate (61) states that ψ Λ eaNy ≤ Ma for y ∈ Λ. For y ∈ ∆ \ Λ, definition (10) gives
+        
+ψ Λ eaNy = 1 ≤ Ma . Consequently,
+                                           
+                                   ψ Λ eaNy ≤ Ma ,        y ∈ ∆.
+
+
+
+                                                   29
+For n = (ny )y∈∆ ∈ N∆ , define the joint probability mass by
+                                                                                  
+                                                               Y
+                                νΛ,∆ (n) = ψ Λ                      1{ny } (Ny ) .
+                                                               y∈∆
+
+Here 1{ny } (Ny ) is the spectral projection of Ny for the eigenvalue ny . The commutativity of the
+number operatorsP    shows that the product is their joint spectral projection, and normalization
+of the state gives n∈N∆ νΛ,∆ (n) = 1. Since the definition of Sb gives
+                                                         X qx (y)
+                                                   0≤                     ≤ 1,
+                                                                 Sb
+                                                         y∈∆
+                                                        
+generalized Hölder on the probability space N∆ , νΛ,∆ uses the exponents Sb /qx (y), y ∈ ∆. If
+P                                                                          P                −1
+   y∈∆ xq (y) /S b < 1, include the constant function 1 with exponent   1 −      q
+                                                                              y∈∆ x (y) /S b     ;
+if the sum is 1, omit this factor. Thus
+                   a        X          Y        qx (y)
+                       Q
+               ψ Λ e Sb x,∆ =   νΛ,∆ (n)   (eany ) Sb
+                                  n∈N∆                      y∈∆
+                                     1−Py∈∆ qx (y)/Sb                                               qx (y)
+                        X                                             Y        X
+                                                                                                           Sb
+
+                ≤          νΛ,∆ (n)                                                νΛ,∆ (n) e   any 
+
+                     n∈N∆                                            y∈∆       n∈N∆
+                                                          P
+                    Y                   qx (y)                 qx (y)
+                                                              y∈∆ Sb
+                =         ψ Λ eaNy         Sb
+                                                   ≤ Ma                   ≤ Ma .
+                    y∈∆
+
+This proves (66).
+
+Lemma 5.28 (Exponential conjugation by weighted occupation). Let qx and Qx,∆ be defined
+by (63). For ∆ ⋐ Γ or ∆ = Γ, let D∆,fin be defined by (3) with X = ∆. For x ∈ Γ, u, v ∈ ∆,
+and s ∈ R, the following identities hold on D∆,fin :
+
+                                      esQx,∆ a∗u e−sQx,∆ = esqx (u) a∗u ,
+                                                                                                                 (67)
+                                      esQx,∆ av e−sQx,∆ = e−sqx (v) av .
+
+
+
+Proof. The local-number commutators in (4) give
+                                        X
+                        [Qx,∆ , a∗u ] =   qx (y) [Ny , a∗u ] = qx (u) a∗u ,
+                                                   y∈∆
+                                                   X
+                            [Qx,∆ , av ] =               qx (y) [Ny , av ] = −qx (v) av .
+                                                   y∈∆
+
+Choose the pair (A, λ) from the following two possibilities:
+
+                               (A, λ) ∈ {(a∗u , qx (u)) , (av , −qx (v))} .
+
+The two commutator identities give [Qx,∆ , A] = λA. The sector bound (64) shows that Qx,∆
+is bounded on each particle-number summand and preserves D∆,fin . For n ∈ N, the first choice
+of A maps the n-particle summand into the (n + 1)-particle summand. For n ∈ N1 , the second
+choice maps the n-particle summand into the (n − 1)-particle summand, and it vanishes on the
+
+
+                                                               30
+vacuum summand. Thus all operators in the following derivative act on D∆,fin . For Ξ ∈ D∆,fin ,
+the common calculation for both choices of (A, λ) is
+         d  −sλ sQx,∆ −sQx,∆ 
+            e e        Ae       Ξ = e−sλ esQx,∆ (−λA + [Qx,∆ , A]) e−sQx,∆ Ξ = 0.
+        ds
+At s = 0, the vector inside the derivative equals AΞ. Hence the vector is independent of s.
+Multiplication by esλ gives
+                                esQx,∆ Ae−sQx,∆ Ξ = esλ AΞ.
+The two choices of (A, λ) prove (67).
+
+Lemma 5.29 (Weighted hopping commutator). Let Ch be defined by (6), and let qx , Qx,∆ , and
+Sb be defined by (63). Fix a, b > 0, and define
+                                                       !
+                                                a eb − 1
+                            ca,b = Ch e − 1 exp
+                                         b
+                                                            .                          (68)
+                                                  2Sb
+
+For ∆ ⋐ Γ or ∆ = Γ, let D∆,fin be the finite-particle subspace defined by (3) with X = ∆. For
+x ∈ Γ, 0 < θ ≤ a/Sb , and Ξ ∈ D∆,fin , one has
+                        D h              i E         D                E
+                     ±i Ξ, H∆ , eθQx,∆ Ξ ≤ ca,b θ Ξ, Qx,∆ eθQx,∆ Ξ .                     (69)
+
+
+
+Proof. The density interaction commutes with Qx,∆ . Fix u, v ∈ ∆ with u ∼ v. Equation (67)
+and insertion of the identity e−θQx,∆ eθQx,∆ between a∗u and av give the following conjugation
+formula on D∆,fin :
+                                                              
+     eθQx,∆ a∗u av e−θQx,∆ = eθQx,∆ a∗u e−θQx,∆ eθQx,∆ av e−θQx,∆ = eθ(qx (u)−qx (v)) a∗u av . (70)
+
+The triangle inequality for the graph distance gives |dist (x, u) − dist (x, v)| ≤ 1. If dist (x, u) ≥
+dist (x, v), then
+                                                                           
+               |qx (u) − qx (v)| = qx (u) eb(dist(x,u)−dist(x,v)) − 1 ≤ eb − 1 qx (u) .
+
+In this case qx (u) ≤ qx (v). Interchanging u and v in the other case proves
+                                             
+                    |qx (u) − qx (v)| ≤ eb − 1 min {qx (u) , qx (v)} , u ∼ v.                    (71)
+
+Multiplying (70) on the right by eθQx,∆ and subtracting the resulting equality from a∗u av eθQx,∆
+gives                h                i                      
+                       a∗u av , eθQx,∆ = 1 − eθ(qx (u)−qx (v)) a∗u av eθQx,∆ .               (72)
+
+Fix Ξ ∈ D∆,fin and set Φ = exp (θQx,∆ /2) Ξ. The sector bound (64) shows that Qx,∆ preserves
+every particle-number summand and is bounded on each such summand. Hence Φ ∈ D∆,fin , so
+every inner product in the following calculation is defined. For s ∈ R,
+
+                              |1 − es | e−s/2 = 2 |sinh (s/2)| ≤ |s| e|s|/2 .
+
+The definition of Φ gives Ξ = exp (−θQx,∆ /2) Φ. Substitute this equality into (72) and apply
+the scalar inequality with s = θ (qx (u) − qx (v)). This gives
+             D h                i E
+              Ξ, a∗u av , eθQx,∆ Ξ = 1 − eθ(qx (u)−qx (v)) e− 2 (qx (u)−qx (v)) |hΦ, a∗u av Φi|
+                                                              θ
+
+
+
+                θ
+                  |qx (u) − qx (v)| e 2 |qx (u)−qx (v)| (hΦ, Nu Φi + hΦ, Nv Φi) ,
+                                      θ
+            ≤
+                2
+
+                                                     31
+where the last line uses
+
+           2 |hΦ, a∗u av Φi| = 2 |hau Φ, av Φi| ≤ kau Φk2 + kav Φk2 = hΦ, Nu Φi + hΦ, Nv Φi .
+Equation (71) and min {qx (u) , qx (v)} ≤ qx (u) and min {qx (u) , qx (v)} ≤ qx (v) give
+                          |qx (u) − qx (v)| (hΦ, Nu Φi + hΦ, Nv Φi)
+                                    
+                          ≤ eb − 1 min {qx (u) , qx (v)} (hΦ, Nu Φi + hΦ, Nv Φi)
+                                    
+                          ≤ eb − 1 (qx (u) hΦ, Nu Φi + qx (v) hΦ, Nv Φi) .
+
+Equation (71), min {qx (u) , qx (v)} ≤ 1, and 0 < θ ≤ a/Sb also give
+                                                                
+                                                       a eb − 1
+                                 θ |qx (u) − qx (v)| ≤            .
+                                                          Sb
+Summing the hopping terms and applying the uniform degree bound (6) gives
+       D     h           i E         X                           D                E
+         Ξ, i H∆ , eθQx,∆ Ξ ≤ ca,b θ    qx (y) hΦ, Ny Φi = ca,b θ Ξ, Qx,∆ eθQx,∆ Ξ .
+                                                y∈∆
+
+The two choices of sign prove (69).
+
+Lemma 5.30 (Inserted weighted exponential moment). Assume (12) and pointwise nonnega-
+tivity of v. Fix b > 0, β > 0, a ∈ (0, βε), a finite Λ ⋐ Γ, ∆ ∈ {Λ, Γ}, a finite Λ0 ⋐ ∆, and
+x ∈ Γ. Let Ma be defined by (65). For every A ∈ R (Λ0 )γ and 0 < c ≤ a/ (Sb + |Λ0 |), one has
+                                                       
+                    max ψ Λ AecQx,∆ A∗ , ψ Λ A∗ ecQx,∆ A ≤ Ma kAk2 .                      (73)
+
+
+Proof. Gauge invariance gives [A, NΛ0 ] = 0. Write Qx,∆ = Qx,Λ0 + Qx,∆\Λ0 . For 0 < c ≤
+a/(Sb + |Λ0 |), the operator inequalities Qx,Λ0 ≤ NΛ0 and
+
+                                   AecQx,Λ0 A∗ ≤ AecNΛ0 A∗ ≤ kAk2 ecNΛ0
+hold because A commutes with NΛ0 . Since A also commutes with Qx,∆\Λ0 , generalized Hölder
+and (61) can be applied explicitly. The operator bound is
+                                                     
+            ψ Λ AecQx,∆ A∗ = ψ Λ AecQx,Λ0 A∗ ecQx,∆\Λ0
+                                                                       
+                                                  X         X
+                             ≤ kAk2 ψ Λ exp c      Ny + c    qx (y) Ny  .
+                                                           y∈Λ0   y∈∆\Λ0
+
+The sum of the coeﬀicients of the number operators in the last exponential is bounded by
+                                     X
+                         c |Λ0 | + c     qx (y) ≤ c (|Λ0 | + Sb ) ≤ a.
+                                             y∈∆\Λ0
+
+Generalized Hölder for the joint spectral measure of the commuting number operators gives
+                                         
+             X             X                    Y              c/a Y            cqx (y)/a
+ ψ Λ exp c     Ny + c          qx (y) Ny  ≤       ψ Λ eaNy           ψ Λ eaNy
+                      y∈Λ0       y∈∆\Λ0                y∈Λ0                y∈∆\Λ0
+                       P            
+       1
+               c|Λ0 |+c y∈∆\Λ qx (y)
+ ≤ Ma                               ≤ Ma .
+       a                    0
+
+
+
+Combining the operator bound with the generalized Hölder estimate proves the first term in
+(73). Replacing A by A∗ proves the second term.
+
+                                                      32
+Lemma 5.31 (Exponential propagation and cutoff removal). Assume (12), and suppose that
+v is pointwise nonnegative and has finite range. Fix β > 0, a ∈ (0, βε), T > 0, and a finite
+Λ0 ⋐ Γ. For a finite Λ ⋐ Γ, choose ∆ ∈ {Λ, Γ} and a finite ∆0 satisfying Λ0 ⊂ ∆0 ⋐ ∆. For
+λ ≥ 1, define the local particle-number cutoff
+                                            Y
+                                   P∆0 ,λ =    1[0, λ] (Ny ) .
+                                               y∈∆0
+
+For t ∈ R and C ∈ B (F∆ ), define the corresponding cutoff dynamics by
+                          ∆0 ,λ
+                        e∆,t
+                        α       (C) = eitP∆0 ,λ H∆ P∆0 ,λ Ce−itP∆0 ,λ H∆ P∆0 ,λ .
+
+There exist constants aΛ0 ,T > 0 and CΛ0 ,T,a < ∞, independent of Λ, ∆, ∆0 , and λ, for which
+the following two conclusions hold.
+
+  1. The propagated exponential moments satisfy
+                                                                
+                                sup sup ψ Λ α∆,t eaΛ0 ,T Nx          ≤ CΛ0 ,T,a .                 (74)
+                                x∈Γ |t|≤T
+
+
+     For every A ∈ R (Λ0 )γ , the inserted propagated moments satisfy
+                                                                  
+      sup sup max ψ Λ Aα∆,t eaΛ0 ,T Nx A∗ , ψ Λ A∗ α∆,t eaΛ0 ,T Nx A ≤ CΛ0 ,T,a kAk2 .
+       x∈Γ |t|≤T
+                                                                                                  (75)
+
+  2. For every A ∈ R (Λ0 )γ , and every B ∈ B, the two cutoff errors satisfy
+                                                     
+      sup ψ Λ α∆,t (A) − α     ∆0 ,λ
+                             e∆,t    (P∆0 ,λ AP∆0 ,λ ) B ≤ CΛ0 ,T,a |∆0 | λe−aΛ0 ,T λ kAk kBk ,
+       |t|≤T
+                                                                                            (76)
+       sup ψ Λ B α∆,t (A) − α ∆0 ,λ
+                            e∆,t    (P∆0 ,λ AP∆0 ,λ )    ≤ CΛ0 ,T,a |∆0 | λe−aΛ0 ,T λ kAk kBk .
+       |t|≤T
+
+
+
+
+Proof. Fix b > 0 and use the weights in Definition 5.26. Let Ma and ca,b be defined by (65)
+and (68), respectively. The initial estimate is (66). For t ≥ 0, put θ (t) = aSb−1 e−ca,b t . The
+propagated exponential moment is
+                                                           
+                             Gx,∆ (t) = ψ Λ ◦ α∆,t eθ(t)Qx,∆ .
+
+For t ≥ 0, one has 0 < θ (t) ≤ a/Sb and θ′ (t) = −ca,b θ (t). The positive-sign estimate in (69)
+therefore gives the quadratic-form inequality
+                                                  h              i
+                         θ′ (t) Qx,∆ eθ(t)Qx,∆ + i H∆ , eθ(t)Qx,∆ ≤ 0.
+
+Its derivative is consequently nonpositive:
+                                                                h              i
+        G′x,∆ (t) = θ′ (t) ψ Λ ◦ α∆,t Qx,∆ eθ(t)Qx,∆ + ψ Λ ◦ α∆,t i H∆ , eθ(t)Qx,∆ ≤ 0.
+
+Integration from 0 to t gives
+                                              a      
+                                                  Q
+                    Gx,∆ (t) ≤ Gx,∆ (0) = ψ Λ e Sb x,∆ ≤ Ma ,               0 ≤ t ≤ T.
+
+
+
+
+                                                    33
+Replacing H∆ by −H∆ in the commutator estimate gives the same bound for −T ≤ t ≤ 0.
+Define aΛ0 ,T = a (Sb + |Λ0 |)−1 e−ca,b T . The constant ca,b in (68) is positive. For |t| ≤ T , the
+definition of θ gives the coeﬀicient comparison
+                                       a                a
+                        aΛ0 ,T =              e−ca,b T ≤ e−ca,b |t| = θ (|t|) .
+                                   Sb + |Λ0 |           Sb
+
+For x ∈ ∆, the definition of Qx,∆ in (63) and qx (x) = e−b dist(x,x) = 1 give
+                                            X
+                             Qx,∆ = Nx +          qx (y) Ny ≥ Nx .
+                                              y∈∆\{x}
+
+Combining the coeﬀicient and operator comparisons gives
+
+                               aΛ0 ,T Nx ≤ θ (|t|) Nx ≤ θ (|t|) Qx,∆ .
+
+The local number operators commute, so the joint spectral calculus gives
+
+                                        eaΛ0 ,T Nx ≤ eθ(|t|)Qx,∆
+
+                              / ∆, one necessarily has ∆ = Λ and x ∈ Λc . The Hamiltonian
+for x ∈ ∆ and |t| ≤ T . For x ∈
+HΛ acts only on FΛ , whereas Nx acts on FΛc , and Nx ΩΛc = 0. Consequently,
+                                     
+                      αΛ,t eaΛ0 ,T Nx = eaΛ0 ,T Nx , eaΛ0 ,T Nx ΩΛc = ΩΛc .
+
+Using the density matrix in (10) therefore gives
+                                          "          #
+                                           −βKΛ,µΛ
+                                            e
+             ψ Λ αΛ,t eaΛ0 ,T Nx = TrFΛ                ΩΛc , eaΛ0 ,T Nx ΩΛc F c = 1.
+                                              ZΛ,β                           Λ
+
+
+
+The two cases x ∈ ∆ and x ∈
+                          / ∆ prove (74).
+   Define
+                                         a
+                           θΛ0 (t) =            e−ca,b t ,         t ≥ 0.
+                                     Sb + |Λ0 |
+For A ∈ R (Λ0 )γ , Equation (73) gives the two initial bounds at c = θΛ0 (0). Repeating the
+derivative calculation with θΛ0 in place of θ and using both signs in (69) gives, for positive and
+negative times,
+                                                                    
+      sup sup max ψ Λ Aα∆,t eaΛ0 ,T Nx A∗ , ψ Λ A∗ α∆,t eaΛ0 ,T Nx A ≤ Ma kAk2 .
+       x∈Γ |t|≤T
+
+After enlarging CΛ0 ,T,a so that CΛ0 ,T,a ≥ Ma , this proves (75). The spectral inequality
+                                  X                               X
+                    1 − P∆0 ,λ ≤       1(λ, ∞) (Ny ) ≤ e−aΛ0 ,T λ   eaΛ0 ,T Ny
+                                   y∈∆0                              y∈∆0
+
+and (74) give the propagated cutoff tail, for |t| ≤ T ,
+                                           X                    
+     ψ Λ (α∆,t (1 − P∆0 ,λ )) ≤ e−aΛ0 ,T λ   ψ Λ α∆,t eaΛ0 ,T Ny ≤ CΛ0 ,T,a |∆0 | e−aΛ0 ,T λ .
+                                          y∈∆0
+
+Let C = P∆0 ,λ AP∆0 ,λ . The initial cutoff error decomposes as
+
+                         A − C = (1 − P∆0 ,λ ) A + P∆0 ,λ A (1 − P∆0 ,λ ) .
+
+
+
+                                                    34
+Cauchy–Schwarz for the two positive functionals obtained by inserting B on the right or on the
+left gives
+                                                                             aΛ ,T λ
+                         ψ Λ (α∆,t (A − C) B) ≤ CΛ0 ,T,a |∆0 | e−
+                                                                               0
+                                                                                2      kAk kBk ,
+                                                                            aΛ ,T λ
+                                                                                                              (77)
+                                                                           − 02
+                          ψ Λ (Bα∆,t (A − C)) ≤ CΛ0 ,T,a |∆0 | e                       kAk kBk .
+                                                                 ∆0 ,λ
+   Let K∆0 ,λ = P∆0 ,λ H∆ P∆0 ,λ . Differentiation of α∆,t−s ◦ α
+                                                               e∆,s    (C) gives the Duhamel identity
+                                                Z t            h                               i
+                            ∆0 ,λ                                                   ∆0 ,λ
+               α∆,t (C) − α
+                          e∆,t    (C) = i             α∆,t−s        H∆ − K∆0 ,λ , α
+                                                                                  e∆,s    (C)        ds       (78)
+                                                  0
+
+for t ≥ 0, with the orientation of the integral reversed for t < 0. Since C = P∆0 ,λ CP∆0 ,λ ,
+every nonzero term in the commutator contains a factor 1 − P∆0 ,λ next to an oriented hopping
+operator a∗u av with u ∼ v and {u, v} ∩ ∆0 6= ∅. For every finite Z ⋐ ∆, define
+                                            Y
+                                    PZ,λ =     1[0, λ] (Nz ) .
+                                                       z∈Z
+
+For these ordered pairs, the inequalities
+                             p            √                                                           √
+            P{u,v},λ a∗u av ≤ λ (λ + 1) ≤ 2λ,                     P{u},λ a∗u av (Nv + 1)−1/2 ≤            λ
+
+follow directly from (5). Define the spectral projection
+
+                                               Ey,λ = 1(λ, ∞) (Ny ) .                                         (79)
+
+Equation (79) and (74) give, for u ∈ ∆0 and |t − s| ≤ T ,
+
+                 Eu,λ ≤ e−aΛ0 ,T λ eaΛ0 ,T Nu ,        ψ Λ (α∆,t−s (Eu,λ )) ≤ CΛ0 ,T,a e−aΛ0 ,T λ .
+
+Expansion over the ordered pairs u ∼ v with {u, v} ∩ ∆0 6= ∅ produces a factor Eu,λ or Ev,λ at
+an endpoint belonging to ∆0 . Fix u, v ∈ ∆0 with u ∼ v. The occupation-number basis (5) gives
+                                          p           √
+                        ka∗u av P∆0 ,λ k ≤ λ (λ + 1) ≤ 2λ, λ ≥ 1.
+
+For any projection R and bounded operator Z, Cauchy–Schwarz for the state gives
+                                         2
+                             ψ Λ (RZ)        ≤ ψ Λ (R) ψ Λ (Z ∗ Z) ≤ ψ Λ (R) kZk2 .
+
+Apply this inequality with
+                                                                                     
+                      R = α∆,t−s (Eu,λ ) ,        Z = α∆,t−s a∗u av P∆0 ,λ α ∆0 ,λ
+                                                                           e∆,s    (C) B.
+
+                      ∆0 ,λ                                                 √
+Since kCk ≤ kAk and α
+                    e∆,s    (C) = kCk, one has kZk ≤                            2λ kAk kBk. Therefore,
+                                                       √                                1/2
+     ψ Λ α∆,t−s       Eu,λ a∗u av P∆0 ,λ α ∆0 ,λ
+                                         e∆,s    (C)    B ≤ 2λ kAk kBk ψ Λ (α∆,t−s (Eu,λ ))
+     p             aΛ ,T λ
+                                                                                                              (80)
+    ≤ 2CΛ0 ,T,a λe− 2 kAk kBk .
+                     0
+
+
+
+
+Applying Cauchy–Schwarz to the adjoint gives
+                                                       p             aΛ ,T λ
+            ψ Λ Bα∆,t−s Eu,λ a∗u av P∆0 ,λ α              ≤ 2CΛ0 ,T,a λe− 2 kAk kBk .
+                                             ∆0 ,λ                         0
+                                           e∆,s    (C)                                                        (81)
+
+If Cauchy–Schwarz produces either of the two positive functionals containing A or A∗ , use (75)
+with A or A∗ , respectively. At most 2Ch |∆0 | ordered pairs u ∼ v satisfy {u, v} ∩ ∆0 6= ∅ by (6).
+
+                                                             35
+Applying (80) to each commutator term in (78), summing over the ordered pairs, integrating
+in s from 0 to t, and adding the first initial cutoff error in (77) gives
+                                                                            aΛ ,T λ
+                                        (P∆0 ,λ AP∆0 ,λ ) B ≤ CΛ0 ,T,a |∆0 | λe− 2 kAk kBk .
+                                  ∆0 ,λ                                           0
+      sup ψ Λ        α∆,t (A) − α
+                                e∆,t
+      |t|≤T
+
+Applying (81) to each commutator term in (78), summing over the ordered pairs, integrating
+in s from 0 to t, and adding the second initial cutoff error in (77) gives
+                                                                        aΛ ,T λ
+                                                        ≤ CΛ0 ,T,a |∆0 | λe− 2 kAk kBk .
+                             ∆0 ,λ                                            0
+      sup ψ Λ B α∆,t (A) − α
+                           e∆,t    (P∆0 ,λ AP∆0 ,λ )
+      |t|≤T
+
+Replacing aΛ0 ,T /2 by aΛ0 ,T in the notation proves (76).
+
+5.4    Dynamics and equilibrium without a local-number hypothesis
+The model assumptions alone now imply both the finite-volume approximation and the existence
+of an equilibrium state satisfying the KMS boundary relation for αΓ on the concrete Buchholz
+algebra.
+Theorem 5.32 (All-temperature finite-volume approximation). Assume that v is pointwise
+nonnegative and has finite range, and assume (12). For every β > 0, finite Λ0 ⋐ Γ, and T > 0,
+the finite-volume Gibbs family defined by (9) satisfies
+
+                      lim           sup        sup ψ Λ ((αΛ,t (A) − αΓ,t (A)) B) = 0.
+                     Λ↗Γ A∈R(Λ0 )γ , ∥A∥≤1 |t|≤T                                                (82)
+                         B∈R(Λ)γ , ∥B∥≤1
+
+Here αΓ,t is the pre-existing automorphism of Fact 3.1, and the convergence is uniform on
+compact time intervals. No local particle-number estimate is assumed in this statement.
+Proof. Fix a ∈ (0, βε). For m ∈ N1 , put
+                                                              m,λ    ∆m ,λ
+                                                            e∆,t
+                       ∆m = Λ0 [(2m + 1)r], Pm,λ = P∆m ,λ , α      e∆,t
+                                                                  =α       .
+
+Equation (1) gives
+                            X
+                |∆m | ≤            |x[(2m + 1)r]| ≤ σ |Λ0 | ((2m + 1)r)d ≤ σ |Λ0 | (3r)d md .
+                            x∈Λ0
+
+Set
+                                       CΛ0 = max {1, 2Ch } σ |Λ0 | (3r)d .
+Then CΛ0 md bounds both |∆m | and the number of ordered pairs x ∼ y having at least one
+endpoint in ∆m , by (6). Lemma 5.31 is the direct exponential substitute for polynomial-moment
+propagation. Apply its cutoff estimate (76) with ∆0 = ∆m on both ∆ = Λ and ∆ = Γ. Since
+|∆m | ≤ CΛ0 md , each of the two cutoff-removal errors is bounded by
+
+                                          CΛ0 ,T,a md λe−aΛ0 ,T λ kAk kBk .                     (83)
+
+   For ∆ ∈ {Λ, Γ}, equations (75)–(76) in the proof of [12, Lemma 4.10], with X = Λ0 and
+P = Pm,λ , become
+
+                D∆,m,λ = Pm,λ H∆ Pm,λ − Pm,λ H∆\Λ0 [2mr] Pm,λ − Pm,λ HΛ0 [2mr] Pm,λ ,
+                  m,λ                   m,λ
+                e∆,t
+                α     (Pm,λ APm,λ ) − α
+                                      eΛ            (Pm,λ APm,λ )
+                    Z t
+                                         0 [2mr],t                                              (84)
+                               h                                         i
+                          m,λ                 m,λ
+                =i      e∆,t−s
+                        α         D∆,m,λ , α eΛ 0 [2mr],s
+                                                          (P m,λ AP m,λ )    ds .
+                       0
+
+
+                                                         36
+Finite interaction range makes the terms of orders at most m in the iterated form of (84) vanish.
+The estimates and the ordered-time integral used for its order-m + 1 term are
+                                                                    √
+                                               kPm,λ a∗x ay Pm,λ k ≤ 2λ,
+                                                                            |∆m | ≤ CΛ0 md ,
+                      Z
+                                                                                         |t|m+1
+                                                                    ds1 · · · dsm+1 =            .
+                          {(s1 ,...,sm+1 ) | 0≤sm+1 ≤···≤s1 ≤|t|}                       (m + 1)!
+
+Equations (84)–(85) of [12] supply κ > 0 such that the product of the m + 1 transported
+commutator maps in (84) is bounded by (κλ)m+1 . Substitution of these three estimates into its
+order-m + 1 Duhamel integral gives, for |t| ≤ T ,
+               m,λ                   m,λ
+             e∆,t
+             α     (Pm,λ APm,λ ) − α
+                                   eΛ 0 [2mr],t
+                                                (Pm,λ APm,λ )
+              √                Z
+            ≤ 2CΛ0 λmd kAk                                                         (κλ)m+1 ds1 · · · dsm+1
+                                         {(s1 ,...,sm+1 ) | 0≤sm+1 ≤···≤s1 ≤|t|}
+                √                                         m+1                                                 (85)
+                                             m+1 |t|
+            =       2CΛ0 λmd kAk (κλ)
+                                                    (m + 1)!
+                √                       (κλT )  m+1
+            ≤       2CΛ0 λmd kAk                  .
+                                         (m + 1)!
+Taking the supremum over |t| ≤ T in (85) gives
+
+          m,λ                   m,λ
+                                                                            √                   (κλT )m+1
+        e∆,t
+    sup α     (Pm,λ APm,λ ) − α
+                              eΛ 0 [2mr],t
+                                           (Pm,λ APm,λ ) ≤                      2CΛ0 λmd kAk              .   (86)
+    |t|≤T                                                                                        (m + 1)!
+
+The estimate (86) is valid with the outer volume equal to either Λ or Γ. It contains no state-
+dependent term. For all suﬀiciently large m, choose
+                                                           m
+                                                  λ=           ≥ 1.
+                                                         e2 κT
+Substitution into (83) gives
+                                                        CΛ0 ,T,a d+1      a         
+                                                                             Λ0 ,T m
+                      CΛ0 ,T,a md λe−aΛ0 ,T λ =                 m    exp  −            .
+                                                         e2 κT              e2 κT
+Use the lower Stirling bound in the explicit form
+                                         n n
+                                   n! ≥         , n ∈ N1 .
+                                          e
+Apply this inequality with n = m + 1 and substitute the selected value of λ:
+                                      
+                                  m + 1 m+1
+                     (m + 1)! ≥              ,
+                                    e
+                                      m+1               m+1
+                   (κλT )m+1     m/e2               m
+                              =            ≤                    ≤ e−(m+1) .
+                    (m + 1)!     (m + 1)!       e (m + 1)
+Multiplication by the prefactor in (86) yields
+                                                                    √
+                               √              d (κλT )
+                                                         m+1
+                                                                      2CΛ0 d+1 −m
+                                   2CΛ0 λm                     ≤           m e .
+                                                (m + 1)!             e3 κT
+Combining the two computations defines the joint majorant
+                                                      a        
+                                                          Λ ,T m
+                   δm (T ) = CΛ0 ,T,a,β md+1 e−m + exp − 20         .                                         (87)
+                                                          e κT
+
+                                                             37
+Equation (87) implies δm (T ) → 0 as m → ∞. The two cutoff-removal estimates compare the
+uncut Λ and Γ dynamics with their cutoff counterparts, while the shell estimate compares those
+counterparts through Λ0 [2mr]. Writing Am (t) = αΛ0 [2mr],t (A), the resulting two-sided estimate
+is, for ∆ ∈ {Λ, Γ},
+             
+     sup max ψ Λ ((α∆,t (A) − Am (t)) B) , ψ Λ (B (α∆,t (A) − Am (t))) ≤ δm (T ) kAk kBk .
+   |t|≤T
+                                                                                                                 (88)
+For ∆ = Λ and ∆ = Γ, if |t| ≤ T , the two estimates in (88) give
+                         ψ Λ ((αΛ,t (A) − αΓ,t (A)) B)
+                         ≤ ψ Λ ((αΛ,t (A) − Am (t)) B) + ψ Λ ((Am (t) − αΓ,t (A)) B)
+                         ≤ 2δm (T ) kAk kBk .
+The right-hand side tends to zero uniformly for kAk , kBk ≤ 1. Taking the indicated suprema
+and then m → ∞ proves (82).
+
+Corollary 5.33 (All-temperature equilibrium states for αΓ ). Assume that v is pointwise non-
+negative and has finite range, and assume (12). For every β > 0 and every weak-∗γ accumulation
+point ψ of ψ Λ Λ⋐Γ defined in (10), the state ψ is invariant under αΓ on R (Γ) and satisfies
+the β-KMS boundary condition (11). No local particle-number estimate is assumed, and no
+continuity of the automorphism group on B is asserted.
+Proof. Choose a subnet Λj along which ψ Λj → ψ weak-∗. Fix a finite Λ0 ⋐ Γ and A, B ∈
+R (Λ0 )γ , and write Am (t) = αΛ0 [2mr],t (A). The estimate (88) holds for ∆ ∈ {Λj , Γ}, with
+δm (T ) → 0 independently of j. For fixed m and t, the operators (αΓ,t (A) − Am (t)) B and
+B (αΓ,t (A) − Am (t)) belong to B. Weak-∗ convergence passes the estimates with ∆ = Γ to ψ.
+For every j satisfying Λ0 ⊂ Λj , define
+                              1          h −βK                            i
+                                               Λj ,µΛ    izHΛj    −izHΛj
+                 Fj (z) =         TrFΛj e             je       Ae        B , −β ≤ Im z ≤ 0,
+                           ZΛj ,β
+                                                                                           (89)
+                  Fj (t) = ψ Λj αΛj ,t (A) B ,
+                                            
+            Fj (t − iβ) = ψ Λj BαΛj ,t (A) .
+
+The trace argument in [12, Lemma 5.4] proves that Fj is holomorphic for −β < Im z < 0,
+continuous on the closed strip, and bounded by |Fj (z)| ≤ kAk kBk. In the standalone derivative
+calculation of [12, Lemma 5.5], every number factor on the fixed shell is bounded directly by the
+scalar spectral inequality (1 + n)4 ≤ Cc exp (cn) and the exponential propagation (74). More
+explicitly, differentiation on the fixed finite shell gives
+                               dψ Λj (Am (t) B)                              
+                                                  = ψ Λj i HΛ0 [2mr] , Am (t) B ,
+                                      dt
+                               dψ Λj (BAm (t))                               
+                                                  = ψ Λj Bi HΛ0 [2mr] , Am (t) .
+                                      dt
+The commutator expansion on the fixed shell and Cauchy–Schwarz have the form
+                                                                            1/2
+                                                          Y
+     ψ Λ i HΛ [2mr] , Am (t) B ≤ CA,B,m ψ Λ ◦ αΛ [2mr],t 
+           j         0                                         j
+                                                                   (1 + Ny )4  .
+                                                                   0
+                                                                             y∈Λ0 [2mr]
+
+For any c > 0, the scalar bound is obtained from
+                                                                                                         
+                                                Y                                             X
+    Cc = sup (1 + n)4 e−cn < ∞,                         (1 + Ny )4 ≤ Cc|Λ0 [2mr]| exp c                Ny  .
+               n∈N
+                                           y∈Λ0 [2mr]                                      y∈Λ0 [2mr]
+
+
+                                                          38
+Choose c > 0 small enough that generalized Hölder reduces the last exponential to the one-site
+propagated moments in (74). The resulting bound is independent of j. The calculation with B
+on the left is identical. For fixed m and T , we obtain
+                                                                    !
+                                 dψ Λj (Am (t) B)   dψ Λj (BAm (t))
+                 sup       sup                    +                   ≤ CA,B,m,T .
+             Λj ⊃Λ0 [2mr] |t|≤T         dt                 dt
+
+The derivative bound makes the fixed-shell boundary functions equicontinuous. For fixed m,
+weak-∗ convergence gives pointwise convergence at every t. Given η > 0, choose a finite
+η/(3CA,B,m,T )-net of [−T, T ]. Pointwise convergence at the finitely many net points and the
+derivative bound give
+
+                   sup ψ Λj (Am (t) B) − ψ (Am (t) B) ≤ η           (j suﬀiciently large) .
+                  |t|≤T
+
+The same argument applies with B on the left.
+   The upper boundary in (89) has the exact decomposition
+                                                  
+Fj (t) − ψ (αΓ,t (A) B) = Fj (t) − ψ Λj (Am (t) B)
+                                                        
+                         + ψ Λj (Am (t) B) − ψ (Am (t) B) + (ψ (Am (t) B) − ψ (αΓ,t (A) B)) .
+
+The first and third terms are bounded by δm (T ) kAk kBk. The upper boundary satisfies
+
+   sup |Fj (t) − ψ (αΓ,t (A) B)| ≤ sup ψ Λj (Am (t) B) − ψ (Am (t) B) + 2δm (T ) kAk kBk .
+   |t|≤T                                |t|≤T
+                                                                                         (90)
+The lower boundary in (89) and the analogous decomposition with B on the left give the lower-
+boundary estimate. The lower boundary satisfies
+
+ sup |Fj (t − iβ) − ψ (BαΓ,t (A))| ≤ sup ψ Λj (BAm (t)) − ψ (BAm (t)) + 2δm (T ) kAk kBk .
+ |t|≤T                                     |t|≤T
+                                                                                                (91)
+For fixed m, the first terms on the right-hand sides of (90) and (91) tend to zero along the subnet.
+Letting first j tend along the subnet and then m → ∞ proves compact-uniform convergence of
+both boundaries to the two expressions containing αΓ,t . The strip functions satisfy
+
+                                     sup sup |Fj (t − is)| ≤ kAk kBk .
+                                    0≤s≤β t∈R
+
+Montel compactness gives a subsequence converging uniformly on compact subsets of the open
+strip. The compact-uniform boundary limits identify the two boundary values of every such sub-
+sequential limit. If two bounded holomorphic limits had these boundary values, their difference
+would have zero values on both boundaries. The three-lines theorem gives
+                                                         1− s                               s
+                                                             β                                  β
+     (1)    (2)                          (1)    (2)                      (1)    (2)
+    FA,B − FA,B (t − is)    ≤       sup FA,B − FA,B (r)             sup FA,B − FA,B (r − iβ)        = 0.
+                                    r∈R                             r∈R
+
+The limit is unique and defines the bounded strip function FA,B with the boundary values in
+(11).
+   For invariance, set B = 1. Finite-volume invariance and the two shell comparisons give
+
+           |ψ (αΓ,t (A)) − ψ (A)| ≤ |ψ (αΓ,t (A)) − ψ (Am (t))| + ψ (Am (t)) − ψ Λj (Am (t))
+                                                              
+           + ψ Λj Am (t) − αΛj ,t (A) + ψ Λj αΛj ,t (A) − A + ψ Λj (A) − ψ (A) .
+
+                                                    39
+The fourth term is zero. For fixed m, the second and fifth terms tend to zero along the subnet.
+The first and third terms are bounded by δm (T ) kAk. Taking the subnet limit and then m → ∞
+proves invariance on local observables. The local gauge-invariant resolvent algebras are norm
+dense in R (Γ)γ . For local approximating sequences (An )n∈N1 and (Bn )n∈N1 satisfying An → A
+and Bn → B as n → ∞, the automorphisms are isometric and the state has norm one. The
+norm difference is bounded by
+
+           |ψ (αΓ,t (A) B) − ψ (αΓ,t (An ) Bn )| ≤ kA − An k kBk + kAn k kB − Bn k .
+
+The same bound holds on the lower boundary. The uniform strip bound extends invariance and
+(11) to the full gauge-invariant resolvent algebra. This argument does not invoke the conditional
+equilibrium theorem of [12] and does not transfer a particle-number functional to ψ.
+
+
+6   Conclusion and Outlook
+Proposition 3.1 of [12] already supplies the generally discontinuous automorphism group on the
+full concrete Buchholz algebra. The obstruction in Theorem 4.1 and Theorem 5.2 of that paper
+is the uniform local moment condition, not existence of the algebraic automorphism. Theorem
+5.25 replaces that condition by a proved exponential estimate under repulsiveness and the low-
+activity gap. Theorem 5.32 gives the finite-volume dynamical approximation, and Corollary
+5.33 gives invariant states satisfying the KMS boundary relation at every temperature.
+    The discrete functional integral completes the low-activity comparison proposed in [12, Re-
+mark 5.3]. The decisive formula is the interacting cancellation (57). It implies reduced-density
+domination, the factorial estimate (60), and the exponential estimate (61) for every β > 0.
+These bounds remove the local particle-number hypothesis from both conclusions whenever the
+chemical potential satisfies the uniform gap (12).
+    The chemical-potential gap keeps the system on the vacuum side of the one-particle thresh-
+old. The present comparison does not cover higher-density regimes in which condensation or
+superfluid behavior may occur. For general superstable interactions outside this gap, an all-
+temperature local insertion estimate remains open. At high temperature, the volume-uniform
+estimates of [15, Theorem 1] provide a complementary route to uniqueness and boundary-
+independent convergence of the entire Gibbs family. The equilibrium theorem proved here is
+an existence result and does not assert that all volume exhaustions have the same limit.
+    A structural obstruction precedes the equilibrium problem. The free Bose dynamics acts
+by automorphisms of the resolvent algebra, whereas an interacting dynamics generally sends
+elements of the original gauge-invariant resolvent algebra into a larger algebra. The observable-
+algebra extension constructed in [5, 3] contains these evolved observables for a large class of
+pair interactions. In the lattice formulation of [12, Definition 2.2 and Proposition 3.1], this role
+is played by the concrete Buchholz algebra on bosonic Fock space.
+    The resolvent algebra itself has an abstract universal C ∗ -algebraic presentation and admits
+faithful regular representations [9]. The present construction of the Buchholz algebra reintro-
+duces a distinguished Fock representation at the level of the enlarged algebra. This dependence
+is restrictive because a von Neumann algebra obtained as the weak closure of a GNS representa-
+tion retains the folium normal to that representation. Representations associated with different
+temperatures in an infinite system are frequently disjoint, and their normal states cannot then
+be represented simultaneously as normal states of one of the corresponding factors. The pur-
+pose of the present program is to free the Buchholz algebra from the Fock representation as a
+reference representation and to retain, together with the resolvent algebra, as much abstract
+and universal C ∗ -algebraic information as possible.
+    The concrete argument in this paper separates the inputs needed for such an abstraction.
+The dynamics uses the Buchholz sector consistency, the direct cutoff estimate, and finite-range
+shell propagation. The present equilibrium proof realizes its local equilibrium states by the Fock
+
+                                                40
+trace and derives the required local-number estimates from creation-annihilation insertions and
+a positive functional integral. The Fock trace itself need not be retained as an axiom of an
+abstract formulation. Proposition 3.1 of [12], recorded in Fact 3.1, verifies in the concrete model
+that every finite BX is invariant under its local dynamics αX . An abstract formulation may
+require this invariance together with the existence of a β-KMS state for αX on every finite local
+algebra. Impose in addition the standard local-normality requirement of algebraic quantum
+statistical mechanics. Here local normality means that the restriction of a state to every finite
+local algebra extends to a normal state in a regular representation of that finite subsystem. The
+local KMS assumption and local normality should make the choice of the Fock representation
+inessential on each finite local algebra, without building one global Fock representation into the
+abstract algebra. The remaining task is to formulate the positive functional integral and the
+resulting local-number estimates in a form compatible with these locally normal KMS states.
+     Continuous-space bosons form a separate extension problem. Buchholz established stability
+of enlarged gauge-invariant resolvent algebras under continuous pair-potential dynamics and
+developed the corresponding sector structures [5, 3]. Adapting the present strategy requires
+spatial localization estimates that control both particle transport and ultraviolet behavior. The
+canonical-ensemble analysis in [8] provides another test of whether the particle-sector mechanism
+can be separated from one global Fock folium.
+     Perturbation theory is a further direction. Standard-form methods control Liouvilleans and
+equilibrium vectors after a representation has been selected [10]. The positive-temperature
+Euclidean construction in [11, Sections 17.1.5 and 21.4–21.5] identifies the Gaussian periodic
+path-space representation with an Araki–Woods von Neumann algebra and uses this identifica-
+tion to construct perturbed dynamics and KMS states by functional integration. For bosonic
+Gaussian path spaces, it gives a particularly sharp von Neumann-algebraic realization of the ab-
+stract equivalence between stochastically positive KMS systems, periodic Osterwalder–Schrader
+positive processes, and positive semigroup structures established in [13, Sections 1 and 6–8].
+The Klein–Landau construction is formally based on a C ∗ -dynamical system, but its stochastic
+reconstruction passes to the GNS Hilbert space and the associated von Neumann algebra.
+     An intrinsic theory should determine which perturbations preserve the abstract resolvent
+or Buchholz algebra and compare the resulting KMS states with standard-form and Araki–
+Woods perturbations only after a representation has been selected. This requires a deeper
+C ∗ -algebraic theory of probability and stochastic processes in which Euclidean reconstruction
+and functional-integral perturbation do not begin with a fixed Fock or Araki–Woods reference
+representation.
+
+
+References
+ [1] Dorothea Bahns and Detlev Buchholz. Trapped bosons, thermodynamic limit and conden-
+     sation: a study in the framework of resolvent algebras. J. Math. Phys., 62:041903, April
+     2021.
+ [2] O. Bratteli and D. W Robinson. Operator Algebras and Quantum Statistical Mechanics 2:
+     Equilibrium States, Models in Quantum Statistical Mechanics. Texts and Monographs in
+     Physics. Springer, 1997. 2nd edition.
+ [3] D. Buchholz. The resolvent algebra of non-relativistic Bose fields: sectors, morphisms,
+     fields and dynamics. Commun. Math. Phys., 375(2):1159–1199, 2020.
+ [4] Detlev Buchholz. The resolvent algebra: Ideals and dimension. J. Funct. Anal., 266:3286–
+     3302, March 2014.
+ [5] Detlev Buchholz. The Resolvent Algebra of Non-relativistic Bose Fields: Observables,
+     Dynamics and States. Commun. Math. Phys., 362:949–981, May 2018.
+
+                                                41
+ [6] Detlev Buchholz. Proper condensates. J. Math. Phys., 63(1):011903, January 2022.
+
+ [7] Detlev Buchholz. Proper condensates and long range order. J. Math. Phys., 63(8):081905,
+     August 2022.
+
+ [8] Detlev Buchholz. Resolvent algebras and limit states of interacting canonical ensembles,
+     2026. arXiv:2607.10283v1.
+
+ [9] Detlev Buchholz and Hendrik Grundling. The Resolvent Algebra: A New Approach to
+     Canonical Quantum Systems. J. Funct. Anal., 254:2725–2779, June 2008.
+
+[10] J. Dereziński, V. Jakšić, and C.-A. Pillet. Perturbation Theory of W ∗ -Dynamics, Liouvil-
+     leans and KMS-States. Reviews in Mathematical Physics, 15(5):447–489, 7 2003.
+
+[11] Jan Dereziński and Christian Gérard. Mathematics of Quantization and Quantum Fields.
+     Cambridge University Press, 2022.
+
+[12] Andreas Deuchert, Jonas Lampart, and Marius Lemm. Dynamics and Equilibrium States
+     of Infinite Systems of Lattice Bosons, 2025. arXiv:2505.13170.
+
+[13] Abel Klein and Lawrence J. Landau. Stochastic Processes Associated with KMS States.
+     J. Funct. Anal., 42:368–428, 6 1981.
+
+[14] Izumi Ojima. A Unified Scheme for Generalized Sectors Based on Selection Criteria: Order
+     Parameters of Symmetries and of Thermality and Physical Meanings of Adjunctions. Open
+     Systems and Information Dynamics, 10:235–279, September 2003.
+
+[15] Xin-Hai Tong, Tomotaka Kuwahara, and Zongping Gong. Clustering Theorem for Bose-
+     Hubbard class Gibbs states, 2026. arXiv:2411.10759.
+
+
+
+
+                                              42
+

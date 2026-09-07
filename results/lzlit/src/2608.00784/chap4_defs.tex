@@ -1,0 +1,59 @@
+\allowdisplaybreaks      % let long aligned blocks break across pages
+\setlength{\jot}{4pt}    % vertical spacing between aligned lines
+
+\newcommand{\ep}{\epsilon}
+\newcommand{\sig}{\sigma}
+\newcommand{\mpow}[1]{m_p^{#1}}
+\newcommand{\SQ}{\sqrt{\sig^2-1}}
+\newcommand{\CscHalf}{\frac{2^{4\ep-6}\,\pi^{\ep+\frac12}\,\csc(\pi\ep)}{\Gamma(\tfrac12-\ep)}}
+\newcommand{\SecOne}{\frac{2^{4\ep-6}\,\pi^{\ep}\,\sec(\pi\ep)}{\Gamma(1-\ep)}}
+\newcommand{\Xii}{\Xi} % Define \Xii as a placeholder
+\newcommand{\SecTwo}{\frac{4^{2\ep-5}\,\pi^{\ep}\,\sec(\pi\ep)}{\Gamma(2-\ep)}} % when Γ(2-ε) appears
+
+\newcommand{\penguinsymbol}[1]{%
+  \begin{tikzpicture}[x=1ex,y=1ex,scale=#1,baseline=-0.2ex]
+    % body
+    \fill[black]
+      (-0.7,-1.0) .. controls (-0.9,-0.2) and (-0.6,0.9) .. (0,1.1)
+      .. controls (0.6,0.9) and (0.9,-0.2) .. (0.7,-1.0) -- cycle;
+    % belly
+    \fill[white] (0,-0.2) ellipse (0.45 and 0.7);
+    % flippers
+    \fill[black] (-0.9,-0.2) .. controls (-1.4,0.2) and (-1.1,-0.6) .. (-0.7,-0.9) -- cycle;
+    \fill[black] ( 0.9,-0.2) .. controls ( 1.4,0.2) and ( 1.1,-0.6) .. ( 0.7,-0.9) -- cycle;
+    % eyes
+    \fill[white] (-0.18,0.75) circle (0.12);
+    \fill[white] ( 0.18,0.75) circle (0.12);
+    \fill[black] (-0.18,0.75) circle (0.05);
+    \fill[black] ( 0.18,0.75) circle (0.05);
+    % beak & feet (set to black for monochrome)
+    \fill[orange] (0,0.55) -- (-0.12,0.40) -- (0.12,0.40) -- cycle;
+    \fill[orange] (-0.30,-1.05) -- (-0.60,-1.25) -- (-0.10,-1.25) -- cycle;
+    \fill[orange] ( 0.30,-1.05) -- ( 0.60,-1.25) -- ( 0.10,-1.25) -- cycle;
+  \end{tikzpicture}%
+}
+
+\DeclareRobustCommand{\penguin}{%
+  \mathchoice{\penguinsymbol{1.10}}% displaystyle
+             {\penguinsymbol{1.00}}% textstyle
+             {\penguinsymbol{0.80}}% scriptstyle (subscripts)
+             {\penguinsymbol{0.65}}% scriptscriptstyle
+}
+\newcommand{\filledsquare}[1]{\tikz[baseline=-0.5ex]\draw[fill=#1, draw=black] (0,0) rectangle (0.8ex,0.8ex);}
+\newcommand{\halfsquare}[2]{%
+  \tikz[baseline=-0.5ex, x=0.8ex, y=0.8ex]{
+    \path[fill=#1] (0,0) rectangle (0.5,1);
+    \path[fill=#2] (0.5,0) rectangle (1,1);
+    \draw (0,0) rectangle (1,1);
+  }%
+}
+\newcommand{\crossbox}{\fbox{\ding{55}}}
+
+          %bindingoffset=0.52in,
+      %   left=1.4in,
+      %  right=-0.1 in,
+      %   top=1.9in,
+      %    bottom=0.2in,
+          %footskip=.25in]{geometry}
+
+

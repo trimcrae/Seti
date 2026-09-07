@@ -1,0 +1,742 @@
+\usepackage{needspace,multirow,accents,comment,xparse}
+\renewcommand\dot{\accentset{\bullet}}
+\renewcommand\ddot{\accentset{\bullet\bullet}}
+\usepackage{amsmath}
+\def\over{\csname @@over\endcsname} % suppresses amsmath's warning about \over
+
+\usepackage{tikz}
+\usetikzlibrary{shadings}
+
+%==============================================================================
+
+\newcommand{\refwithname}[2]{\hyperref[#2]{#1~\ref*{#2}}}
+\newcommand{\appref}{\refwithname{Appendix}}
+\newcommand{\defref}{\refwithname{Definition}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newcommand{\mynewtheorem}[2]{
+  \newaliascnt{#1}{theorem}
+  \newtheorem{#1}[#1]{#2}
+  \aliascntresetthe{#1}
+  \expandafter\providecommand\csname #1autorefname\endcsname{#2}
+}
+\mynewtheorem{definition}{Definition}
+\mynewtheorem{proposition}{Proposition}
+\mynewtheorem{lemma}{Lemma}
+\mynewtheorem{corollary}{Corollary}
+\mynewtheorem{remark}{Remark}
+\mynewtheorem{claim}{Claim}
+%%==============================================================================
+
+\providecommand{\coloneqq}{\mathrel{\mathop:}\mathrel{\mkern-1.2mu}=}
+\providecommand{\eqqcolon}{=\mathrel{\mkern-1.2mu}\mathrel{\mathop:}}
+\newcommand{\smallbullet}{{\scriptscriptstyle\mspace{.5mu}\bullet\mspace{.5mu}}}
+
+\newcommand{\abs}[2][]{\mathopen{#1\lvert}#2\mathclose{#1\rvert}}
+%=================================================================================
+
+\newcommand{\Hess}{\operatorname{Hess}}
+\newcommand \Riem {{\operatorfont Riem}}
+\newcommand \Ric {{\operatorfont Ric}}
+%
+\newcommand \vol {{\mathbf{vol}}}
+\newcommand \Hstar {H_\star}
+\newcommand \Mstar {M_\star}
+\newcommand \la 	{\langle}
+\newcommand \ra 	{\rangle}
+\newcommand \dbf 	{{\mathbf d}}
+\newcommand \Dcal 	{\mathcal D}
+\newcommand \Gcal 	{\mathcal G}
+\newcommand \Ecalt {\mathcal {\widetilde E}}
+%-----------------------------
+\newcommand \Ebf 	{\mathbf E}
+\newcommand \ebf 	{\mathbf e}
+\newcommand \bei 	{\begin{itemize}}
+\newcommand \eei 	{\end{itemize}}
+\newcommand \del	{\partial}
+
+\newcommand \Ecal 	{\mathcal E}
+\newcommand \Fcal 	{\mathcal F}
+\newcommand \Hcal 	{\mathcal H}
+\newcommand \Lcal 	{\mathcal L}
+\newcommand \Mcal 	{\mathcal M}
+\newcommand \Qcal 	{\mathcal Q}
+\newcommand \RR 	{\mathbb R}
+\newcommand \Sbb 	{\mathbb S}
+%
+\newcommand \eps 	{\epsilon}
+\newcommand \be 	{\begin{equation}\mathopen{}} % avoids an issue with hyperref+amsmath
+\newcommand \ee 	{\end{equation}}
+\newcommand \bel [1]	{\be \label{#1}\mathopen{}} % see above
+%
+\newcommand \lam 	{\lambda}
+\newcommand \gb  	{\overline g}
+%%%===============================================================
+
+\newcommand \sgn 	{\textnormal{sgn}}
+\newcommand \Bcal 	{\mathcal B}
+\newcommand \Ccal {\mathcal C}
+\newcommand \bigO {\mathcal O}
+
+\newcommand \lambdabf {\boldsymbol \lambda}
+\newcommand \sigmabf {\boldsymbol \sigma}
+\newcommand \ubar {\overline u}
+\newcommand \Acal {\mathcal A}
+
+\newcommand \sym {{\textnormal{\textbf{sym}}}}
+\DeclareMathOperator{\im}{im}
+\newcommand \Mbf 	{\mathbf M}
+\newcommand \omegabf {\boldsymbol{\omega}}
+\newcommand \nbf     {\mathbf n}
+\newcommand \rbf     {\mathbf r}
+\newcommand \Jcal   {\mathcal J}
+\newcommand{\Lie}{\mathcal L}
+\newcommand{\tg}{\widetilde g}
+\newcommand \diag {{\bf diag}}
+\newcommand \bse {\begin{subequations}}
+\newcommand \ese {\ifcase\value{equation}\relax\GenericError{}{Subequation (\theequation) is empty}{}{}\or\GenericError{}{Subequation (\theequation) with single equation}{}{}\fi\end{subequations}}
+
+\newcommand \tlambda {\widetilde \lambda}
+\newcommand \tT {\widetilde T}
+\newcommand \tPhi {\widetilde \Phi}
+
+%======================================================================
+\newcommand \Fbb {\mathbb F}
+\newcommand \Ebb {\mathbb E}
+\newcommand \Pbb {\mathbb P}
+\newcommand \Qbb {\mathbb Q}
+\newcommand \Tbb {\mathbb T}
+\newcommand \Jbb {\mathbb J}
+\newcommand \Nbb {\mathbb N}
+\newcommand \Mbb {\mathbb M}
+%==================================================================================
+%
+
+\DeclareMathOperator \Tr {\bf Tr}
+%
+%% Code from https://tex.stackexchange.com/questions/44235/
+%% Code from https://tex.stackexchange.com/a/193126/
+%% Code from mathabx.sty and mathabx.dcl
+\DeclareFontFamily{U}{matha}{\hyphenchar\font45}
+\DeclareFontShape{U}{matha}{m}{n}{ <5> <6> <7> <8> <9> <10> gen * matha <10.95> matha10 <12> <14.4> <17.28> <20.74> <24.88> matha12 }{}
+\DeclareSymbolFont{matha}{U}{matha}{m}{n}
+\DeclareFontSubstitution{U}{matha}{m}{n}
+\DeclareFontFamily{U}{mathx}{\hyphenchar\font45}
+\DeclareFontShape{U}{mathx}{m}{n}{ <5> <6> <7> <8> <9> <10> <10.95> <12> <14.4> <17.28> <20.74> <24.88> mathx10 }{}
+\DeclareSymbolFont{mathx}{U}{mathx}{m}{n}
+\DeclareFontSubstitution{U}{mathx}{m}{n}
+\DeclareMathAccent{\widecheck}{0}{mathx}{"71}
+\DeclareMathAccent{\wideparen}{0}{mathx}{"75}
+
+\DeclareMathDelimiter{\VV}{0}{matha}{"7E}{mathx}{"17} % triple vertical bar |||
+\ExplSyntaxOn
+\NewDocumentCommand\norm{som}{%
+  \IfBooleanTF{#1}{\left\lVert#3\right\rVert}%
+    {\IfValueTF{#2}{\use:c{\cs_to_str:N#2l}\lVert#3\use:c{\cs_to_str:N#2r}\rVert}{\lVert#3\rVert}}}
+\NewDocumentCommand\Norm{som}{%
+  \IfBooleanTF{#1}{\left\VV #3\right\VV}%
+    {\IfValueTF{#2}{\use:c{\cs_to_str:N#2l}\VV #3\use:c{\cs_to_str:N#2r}\VV}{\mathopen{\VV} #3\mathclose{\VV}}}}
+\ExplSyntaxOff
+%========================================================================================
+
+\newcommand \Deltat {\widetilde \Delta}
+\newcommand \volt {\widetilde{\vol}}
+
+%=========================================================================
+\makeatletter
+\providecommand\clap[1]{\hbox to 0pt{\hss#1\hss}}
+\providecommand\mathclap[1]{\mathpalette\mathclap@aux{#1}}
+\newcommand\mathclap@aux[2]{\clap{$#1#2$}}
+\providecommand\mathllap[1]{\mathpalette\mathllap@aux{#1}}
+\newcommand\mathllap@aux[2]{\llap{$#1#2$}}
+\providecommand\mathrlap[1]{\mathpalette\mathrlap@aux{#1}}
+\newcommand\mathrlap@aux[2]{\rlap{$#1#2$}}
+\makeatother
+
+%=========================================
+
+\newcommand \Obig {\mathcal O}
+\usepackage{calligra}
+\DeclareMathAlphabet{\mathcalligra}{T1}{calligra}{m}{n}
+\newsavebox{\calligrabox}
+\newcommand \osmall {\scalebox{1.2}{%
+    \mbox
+      {%
+        \sbox{\calligrabox}{$\mathcalligra{o}$}%
+        \hskip\wd\calligrabox
+        \pdfsave
+        \pdfsetmatrix{1 0 -.7 1}%
+        \llap{\usebox{\calligrabox}}%
+        \pdfrestore
+      }}}
+
+\makeatletter
+\newcommand \lot {{\bf l.o.t.}\@ifnextchar.\@gobble{}} % so that we can write "\lot." without getting a pair of dots
+\makeatother
+
+\newcommand \Vol {\operatorname{\bf Vol}}
+\renewcommand \ker {\operatorname{\bf ker}}
+\renewcommand \dim {\operatorname{dim}}
+\renewcommand \im {\operatorname{\bf im}}
+%
+%=========================================================================
+
+\makeatletter
+\pdfstringdefDisableCommands{%
+  \def\color#1#{\@gobble}%
+}
+\makeatother
+
+%=========================================================================
+
+\newcommand{\0}{\putabove{\scriptscriptstyle 0}}
+\newcommand{\1}{\putabove{\scriptscriptstyle 1}}
+\newcommand{\2}{\putabove{\scriptstyle\varepsilon}}
+\newcommand{\putabove}[2]{%
+  % \ifx\Ric#2\!\fi
+  \ifx\Tr#2\!\fi
+  \mathrlap{\overset{\hbox{\lower1.5pt\hbox{\smash{$#1$}}}}{\phantom{#2}}}#2}
+ %===================================================================================
+% objects related to essentially Euclidean data (e,0)
+
+\newcommand{\eTr}{\putabove{\scriptstyle e}{\Tr}}
+\newcommand{\enabla}{\del}
+\newcommand{\eDelta}{\Delta_e}
+\newcommand{\edG}{d\Gcal_e}
+\newcommand{\edH}{d\Hcal_e}
+\newcommand{\edM}{d\Mcal_e}
+
+%===================================================================================
+% reference metric, second reference metric
+\newcommand{\zg}{\putabove{\scriptscriptstyle 0}g}
+\newcommand{\zh}{\putabove{\scriptscriptstyle 0}h}
+\newcommand{\zvol}{\putabove{\scriptscriptstyle 0}{\dVol}}
+\newcommand{\zR}{\putabove{\scriptscriptstyle 0}R}
+\newcommand{\zRic}{\putabove{\scriptscriptstyle 0}{\Ric}}
+\newcommand{\zTr}{\putabove{\scriptscriptstyle 0}{\Tr}}
+\newcommand{\znabla}{\putabove{\scriptscriptstyle 0}\nabla}
+\newcommand{\zGamma}{\putabove{\scriptscriptstyle 0}\Gamma}
+\newcommand{\zDelta}{\putabove{\scriptscriptstyle 0}\Delta}
+\newcommand{\zdG}{\putabove{\scriptscriptstyle 0}{d\Gcal}}
+\newcommand{\zdH}{\putabove{\scriptscriptstyle 0}{d\Hcal}}
+\newcommand{\zdM}{\putabove{\scriptscriptstyle 0}{d\Mcal}}
+\newcommand{\gdiff}{\gamma} % g-\zg
+\newcommand{\hdiff}{\eta} % h-\zh
+\newcommand{\yg}{\putabove{\scriptscriptstyle 1}g}
+\newcommand{\yh}{\putabove{\scriptscriptstyle 1}h}
+\newcommand{\yR}{\putabove{\scriptscriptstyle 1}R}
+\newcommand{\yRic}{\putabove{\scriptscriptstyle 1}{\Ric}}
+\newcommand{\yTr}{\putabove{\scriptscriptstyle 1}{\Tr}}
+\newcommand{\ynabla}{\putabove{\scriptscriptstyle 1}\nabla}
+\newcommand{\yGamma}{\putabove{\scriptscriptstyle 1}\Gamma}
+\newcommand{\yDelta}{\putabove{\scriptscriptstyle 1}\Delta}
+\newcommand{\ydG}{\putabove{\scriptscriptstyle 1}{d\Gcal}}
+\newcommand{\ydH}{\putabove{\scriptscriptstyle 1}{d\Hcal}}
+\newcommand{\ydM}{\putabove{\scriptscriptstyle 1}{d\Mcal}}
+\newcommand{\ygdiff}{\putabove{\scriptscriptstyle 1}\gdiff} % \yg-\zg
+\newcommand{\yhdiff}{\putabove{\scriptscriptstyle 1}\hdiff} % \yh-\zh
+% \newcommand{\ystar}{\overset{\hbox{\lower1.5pt\hbox{\smash{$\scriptscriptstyle 1$}}}}*}
+% \newcommand{\gstar}{\overset{g}*}
+\newcommand{\pgdiff}{\overset{\hbox{\smash{$\scriptscriptstyle(\mspace{-2mu}1\mspace{-2mu})$}}}\gdiff} % either \gdiff or \ygdiff
+\newcommand{\phdiff}{\overset{\hbox{\smash{$\scriptscriptstyle(\mspace{-2mu}1\mspace{-2mu})$}}}\hdiff} % either \hdiff or \yhdiff
+
+%========================================================================================================
+\newcommand \aweight {\omega} % \rho
+\newcommand \bweight {\eta} % \sigma
+
+\newcommand \pweight {p}
+\newcommand \qweight {q}
+
+\newcommand \Poin {\textnormal{\textbf{P}}}  % Poin}}}
+\newcommand \Korn {\textnormal{\textbf{K}}}       %   {\textnormal{\textbf{Korn}}}
+\newcommand \Hardy {\textnormal{\textbf{H}}}
+\newcommand \Tech {\textnormal{\textbf{R}}}
+
+
+
+\newcommand \Image {\textnormal{\textbf{Im}}}
+\newcommand \ext {\textnormal{\textbf{ext}}}
+\newcommand \reg {\textnormal{\textbf{reg}}}
+\newcommand \Sobo {\textnormal{\textbf{Sobo}}}
+
+\newcommand \dslash {\slashed\del{}}
+\newcommand \Deltaslash {\slashed\Delta{}}
+\newcommand \Hessslash {\mathop{\slashed{\Hess}{}}\nolimits}
+\newcommand \nablaslash {\slashed\nabla{}}
+\newcommand \Aslash {\slashed{\Acal}{}}
+\newcommand \Bslash {\slashed{\Bcal}{}}
+\newcommand \Cslash {\slashed{\Ccal}{}}
+\newcommand \xh {\widehat{x}}
+\newcommand \tAcal {\widetilde{\Acal}}
+
+\newcommand \Jbf {\mathbf{J}}
+\newcommand \htt {\widetilde{h}}
+\newcommand \wtrr {\rbf}
+\newcommand \wtdd {\dbf}
+
+\newcommand \bflambda {{\boldsymbol{\lambda}}}
+
+\newcommand \tCcal {\widetilde {\mathcal C}}
+\newcommand \infiS {\Sigma}
+\newcommand \Oneone {\mathbf{1}}
+\newcommand \barw {\overline{w}}
+\newcommand \barE {\overline{E}}
+\newcommand \mbf {\mathbf{m}}
+
+\newcommand \ft {\widetilde{f}}
+\newcommand \ut {\widetilde{u}}
+\newcommand \vt {\widetilde{v}}
+
+\newcommand \unquad {\hspace{-1em}\ifmmode\mathopen{}\fi}
+
+%===========================================================================
+\newcommand \chichart {\chi_{\textnormal{chart}}}
+\newcommand \eeG {\eps_G}
+\newcommand \eeM {\eps_M}
+
+%===========================================================================
+\newcommand \mt {\widetilde{m}}
+\newcommand \obig {o}
+\newcommand \cbf {\mathbf{c}}
+\newcommand \Eucl {\textnormal{Eucl}}
+%
+\newcommand \ppG {p_G}
+\newcommand \qqG {q_G}
+\newcommand \ppM {p_M}
+\newcommand \qqM {q_M}
+
+\newcommand \astar {a_\star}
+\newcommand \bstar {b_\star}
+\newcommand \pstar {p_\star}
+\newcommand \qstar {q_\star}
+\newcommand \mstar {m^\star}
+\newcommand \Jstar {J^\star}
+\newcommand \LMcal {\mathcal{B}}
+
+\newcommand \black {\color{black}}
+
+% \newcommand \Sphe {S}
+\newcommand \Sphe {\mathbf{S}}
+\newcommand \Sphepasbf {S}
+
+\newcommand \Ball {\mathbf{B}}
+\newcommand \Ballpasbf {B}
+
+\newcommand \vbar {\overline{v}}
+
+\newcommand \Arr {\Acal}
+\newcommand \Brr {\Bcal}
+
+\newcommand \Ars {\slashed \Acal}
+\newcommand \Brs {\slashed \Bcal}
+
+\newcommand \dsperp{\dslash_\perp}
+\newcommand \dspar{\dslash_\parallel}
+\newcommand \nubar{\overline\nu}
+\newcommand \nut{\widetilde\nu}
+\newcommand \mubar{\overline\mu}
+\newcommand \rhot{\widetilde\rho}
+
+\newcommand \unabla{\underline{\nabla}}
+\newcommand \uDelta{\underline{\Delta}}
+
+\newcommand \gslash {\slashed{g}{}}
+\newcommand \Rslash {\slashed{R}{}}
+\newcommand \Zns {Z^{\nablaslash}{}}
+\newcommand \Zrad {Z^{\vartheta}{}}
+
+
+\newcommand \Zpar {Z^{\parallel}}
+\newcommand \Zperp {Z^{\perp}}
+\newcommand \Znewpar {Z^{\parallel}}
+\newcommand \Znewperp {Z^{\perp}}
+
+\newcommand \xislash {\xi^{\slashed\del}{}}
+\newcommand \xirad {\xi^{\vartheta}{}}
+
+
+\newcommand \xipar {\xi^{\parallel}}
+\newcommand \xiperp {\xi^{\perp}}
+
+\newcommand \tmu {\widetilde{\mu}}
+
+\newcommand \tI {\widetilde{I}}
+\newcommand \barzeta {\overline\zeta}
+
+%==================================================
+% OPERATORS
+\newcommand{\ssAAUX}{\slashed{\Acal}}
+\newcommand{\ssA}{\slashed{\ssAAUX}{}}
+\declareslashed{}{/}{.1}{0}{\Acal}
+\declareslashed{}{/}{.3}{0}{\ssAAUX}
+%----------------------------------------------------------
+\newcommand{\ssBAUX}{\slashed{\Bcal}}
+\newcommand{\ssB}{\slashed{\ssBAUX}{}}
+\declareslashed{}{/}{.1}{0}{\Bcal}
+\declareslashed{}{/}{.3}{0}{\ssBAUX}
+%---------------------------------------------------------
+%----------------------------------------------------------
+\newcommand{\ssFAUX}{\slashed{\Fcal}}
+\newcommand{\ssF}{\slashed{\ssFAUX}{}}
+\declareslashed{}{/}{.1}{0}{F}
+\declareslashed{}{/}{.3}{0}{\ssFAUX}
+%---------------------------------------------------------
+% FUNCTIONALS
+%-------------------------------------------------------------------
+\newcommand{\ssrmAAUX}{\slashed{\mathrm{A}}}
+\newcommand{\ssrmA}{\slashed{\ssrmAAUX}{}}
+\declareslashed{}{/}{.1}{0}{\mathrm{A}}
+\declareslashed{}{/}{.3}{0}{\ssrmAAUX}
+%----------------------------------------------------------
+\newcommand{\ssrmBAUX}{\slashed{\mathrm{B}}}
+\newcommand{\ssrmB}{\slashed{\ssrmBAUX}{}}
+\declareslashed{}{/}{.1}{0}{\mathrm{B}}
+\declareslashed{}{/}{.3}{0}{\ssrmBAUX}
+%----------------------------------------------------------
+
+%========================================================
+
+\newcommand \Seed {\textnormal{\textbf{Seed}}}
+\newcommand \Zt {\widetilde{Z}}
+\newcommand \primeP {Q}
+
+\newcommand \vhat {\widehat{v}}
+\newcommand \uhat {\widehat{u}}
+\newcommand \Ehat {\widehat{E}}
+\newcommand \Ebar {\overline{E}}
+
+
+\newcommand \Deltalon {\Delta^{\textnormal{lon}}}
+\newcommand \nablalon {\nabla^{\textnormal{lon}}}
+\newcommand \glon {g^{\textnormal{lon}}}
+\newcommand \tz {\widetilde{z}}
+\newcommand \Fscript {\mathscr{F}}
+
+\newcommand \mbb {\mathbbm{m}}
+\newcommand \notreH {\mathscr{H}}
+\newcommand \CnotreH {C}
+\newcommand \CnotreM {M}
+\newcommand \notreM {\mathscr{M}}
+
+\newcommand\yhat{{\widehat{y}}}
+\newcommand\zhat{{\widehat{z}}}
+\newcommand\lat{\textnormal{lat}}
+\newcommand\lon{\textnormal{lon}}
+\newcommand\Circle{\mathbf{C}}
+
+\newcommand\easyPhi{\Phi^{\textnormal{easy}}}
+\newcommand\easyPsi{\Psi^{\textnormal{easy}}}
+\newcommand\hardPhi{\Phi^{\textnormal{hard}}}
+\newcommand\hardPsi{\Psi^{\textnormal{hard}}}
+\newcommand\draftPsi{\Psi^{\textnormal{draft}}}
+
+\newcommand \ourcone {\mathbf{K}}
+\newcommand \ourconepasbf {K}
+
+\newcommand \cPoin {c_{\textnormal{P}}}
+
+
+
+% Experimental, make := and =: produce the right thing
+\AtBeginDocument{%
+  \mathchardef\ordinarycolon=\mathcode`\:
+  \mathcode`\:="8000
+  \mathchardef\ordinaryequal=\mathcode`\=
+  \mathcode`\=="8000
+}
+\begingroup
+\makeatletter
+\lccode`~=`: \lowercase{\gdef~{\@ifnextchar={\coloneqq\@gobble}%
+    {\begingroup\def~{\ordinarycolon}\colon\endgroup}}}
+\lccode`~=`= \lowercase{\gdef~{\@ifnextchar:{\eqqcolon\@gobble}{\ordinaryequal}}}
+\endgroup
+\renewcommand{\coloneqq}{\mathrel{\mathop\ordinarycolon}\mathrel{\mkern-1.2mu}\ordinaryequal}
+\renewcommand{\eqqcolon}{\ordinaryequal\mathrel{\mkern-1.2mu}\mathrel{\mathop\ordinarycolon}}
+
+\newcommand \coker {\operatorname{\bf coker}}
+
+\newcommand \expoP       {P}
+\newcommand \expoPp {\overline{P}}
+\newcommand \expoPm {\underline{P}}
+
+\newcommand \expoQ       {Q}
+\newcommand \expoQp {\overline{Q}}
+\newcommand \expoQm {\underline{Q}}
+
+\newcommand \expoPsi {S}
+\newcommand \expoy {T}
+
+\renewcommand \Vol {\textnormal{\textbf{V}}}
+\newcommand \dVol {\textnormal{d\textbf{V}}}
+%-------------------------------------------------------------------------------------------------------------------------------------
+
+\newcommand\tPsi{\widetilde{\Psi}}
+\newcommand\Psihat{\widehat{\Psi}}
+\newcommand\xibar{\overline{\xi}}
+\newcommand\ybar{\overline{y}}
+\newcommand\tgamma{\widetilde\gamma}
+\newcommand\talpha   {\alpha^\dag{}}
+
+\newcommand\xoutred[1]{{\red\xout{#1}}}
+
+\newcommand \seedg {g_{\textnormal{\textbf{s}}}}
+\newcommand \seedh {h_{\textnormal{\textbf{s}}}}
+\newcommand \seedmodg {g_{\textnormal{\textbf{s}}}^{\textnormal{\textbf{m}}}}
+\newcommand \seedmodh {h_{\textnormal{\textbf{s}}}^{\textnormal{\textbf{m}}}}
+\newcommand \seedmodgpstarp {g_{\textnormal{\textbf{s}}\,\pstar'}^{\textnormal{\textbf{m}}}}
+\newcommand \seedmodhpstarp {h_{\textnormal{\textbf{s}}\,\pstar'}^{\textnormal{\textbf{m}}}}
+
+\newcommand \modu {\infty}
+
+\newcommand \bfDiv {\textnormal{\textbf{Div}}}
+
+\newcommand \aire {\textbf{Area}}
+% \newcommand \normcoeff {\textnormal{Area}}
+\newcommand \ty {\widetilde{y}}
+\newcommand \normal {\textnormal{\textbf{si}}} % {\textnormal{\textbf{n}}}
+
+\newcommand \globalm {m_\infty}
+\newcommand \nablast {\widetilde{\nablaslash}}
+\newcommand \Deltast {\widetilde{\Deltaslash}}
+
+
+\newcommand \wbar {\overline{w}}
+\newcommand \zbar {\overline{z}}
+\newcommand \wt {\widetilde{w}}
+
+\newcommand \Solu {\textnormal{\textbf{Sol}}}
+
+\newcommand \Ncal {\mathcal{N}}
+\newcommand \Fpar {F^{\parallel}}
+\newcommand \Fperp {F^{\perp}}
+\newcommand \cpar {c^{\parallel}}
+\newcommand \cperp {c^{\perp}}
+\newcommand \Cpar {C^{\parallel}}
+\newcommand \Cperp {C^{\perp}}
+
+\newcommand \Mu {\mathrm{M}}
+\newcommand \Nu {\mathrm{N}}
+\newcommand \Nuh {\widehat{\Nu}}
+\newcommand \Chi {\mathrm{X}}
+\newcommand \Kappa {\mathrm{K}}
+\newcommand \zt {\widetilde{z}}
+
+\newcommand \cutoff {\delta}
+
+\newcommand \Psitot {\Psi^{\textnormal{tot}}}
+\newcommand \Psiold {\Psi^{\textnormal{old}}}
+
+\newcommand \yt {\widetilde{y}}
+\newcommand \Span 	{\mathop{\bf Span}}
+\newcommand \Sym 	{{\bf Sym}}
+
+\newcommand \Scal {\mathcal{S}}
+\newcommand \Ucal {\mathcal{U}}
+
+\newcommand \Psiodd {\Psi_{\textnormal{odd}}}
+\newcommand \Psieven {\Psi_{\textnormal{even}}}
+\newcommand \psiodd {\psi_{\textnormal{odd}}}
+\newcommand \psieven {\psi_{\textnormal{even}}}
+
+\newcommand{\PsiHquabeta}{\Psi^{\notreH}_{\textnormal{qua},\beta}}
+\newcommand{\PsiHbil}{\Psi^{\notreH}_{\textnormal{bil}}}
+\newcommand{\PsiHscabeta}{\Psi^{\notreH}_{\textnormal{sca},\beta}}
+\newcommand{\psiHscabeta}{\psi^{\notreH}_{\textnormal{sca},\beta}}
+\newcommand{\PsiHtenbeta}{\Psi^{\notreH}_{\textnormal{ten},\beta}}
+\newcommand{\psiHtenbeta}{\psi^{\notreH}_{\textnormal{ten},\beta}}
+
+
+\newcommand{\pushbreak}[1]{\nobreak#1\allowbreak}
+
+\newcommand{\xit}{\widetilde{\xi}}
+\newcommand{\Ztperp}{\Zt^\perp}
+\newcommand{\Ztpar}{\Zt^\parallel}
+\newcommand{\Yt}{\widetilde{Y}}
+
+\newcommand \KH {\textnormal{\textbf{KH}}}
+\newcommand \onec {c_{\textnormal{i}}}
+\newcommand \twoc {c_{\textnormal{ii}}}
+\newcommand \oned {d_{\textnormal{i}}}
+\newcommand \twod {d_{\textnormal{ii}}}
+\newcommand \threed {d_{\textnormal{iii}}}
+
+\newcommand \XiXi {\mathord{\rotatebox{90}{$\Xi$}}}
+
+\newcommand \nuh {\widehat{\nu}}
+
+\newcommand \rhopar {\rho^{\parallel}}
+\newcommand \rhoperp {\rho^{\perp}}
+
+\newcommand \tcnp{\widetilde{c}_{n,p}}
+
+\newcommand \cho {\textnormal{cho}}
+
+\newcommand \onegamma {\gamma_n^{(1)}}
+\newcommand \twogamma {\gamma_n^{(2)}}
+\newcommand \threegamma {\gamma_n^{(3)}}
+\newcommand \fourgamma {\gamma_n^{(4)}}
+\newcommand \fivegamma {\gamma_n^{(5)}}
+\newcommand \sixgamma {\gamma_n^{(6)}}
+\newcommand \sevengamma {\gamma_n^{(7)}}
+\newcommand \eightgamma {\gamma_n^{(8)}}
+\newcommand \ninegamma {\gamma_n^{(9)}}
+
+\newcommand \bnotreH {b^\notreH}
+
+\newcommand \fh {\widehat{f}}
+\newcommand \gh {\widehat{g}}
+\newcommand \ghs {\slashed{\gh}}
+\newcommand \nablah {\widehat{\nabla}}
+\newcommand \nablahs {\slashed{\nablah}}
+\newcommand \Deltah {\widehat{\Delta}}
+\newcommand \Deltahs {\slashed{\Deltah}}
+\newcommand \rhoh {\widehat{\rho}}
+\newcommand \Gammah {\widehat{\Gamma}}
+\newcommand \Gammahs {\slashed{\Gammah}}
+\newcommand \delh {\widehat{\del}}
+\newcommand \delhs {\slashed{\delh}}
+
+\newcommand\gxedaux{\slashed{g}}
+\newcommand\gxed{\slashed{\gxedaux}}
+\declareslashed{}{\backslash}{.1}{0}{\gxedaux}
+\newcommand\nablaxedaux{\slashed{\nabla}}
+\newcommand\nablaxed{\slashed{\nablaxedaux}}
+\declareslashed{}{\backslash}{.1}{0}{\nablaxedaux}
+\newcommand\Deltaxedaux{\slashed{\Delta}}
+\newcommand\Deltaxed{\slashed{\Deltaxedaux}}
+\declareslashed{}{\backslash}{.1}{0}{\Deltaxedaux}
+\newcommand\uxedaux{\slashed{u}}
+\newcommand\uxed{\slashed{\uxedaux}}
+\declareslashed{}{\backslash}{.1}{0}{\uxedaux}
+\newcommand\vxedaux{\slashed{v}}
+\newcommand\vxed{\slashed{\vxedaux}}
+\declareslashed{}{\backslash}{.1}{0}{\vxedaux}
+\newcommand\kxedaux{\slashed{k}}
+\newcommand\kxed{\slashed{\kxedaux}}
+\declareslashed{}{\backslash}{.1}{0}{\kxedaux}
+
+\newcommand\varphihat{\widehat{\varphi}}
+
+\newcommand\nuht{\widetilde{\widehat{\nu}}}
+\newcommand\fb{\overline{f}}
+
+\newcommand\xiparrot{\xi^{\parallel\textnormal{rot}}}
+\newcommand\xipartra{\xi^{\parallel\textnormal{trans}}}
+\newcommand\nvec{\mathrm{n}}
+
+\newcommand \undelta {\underline{\delta}}
+\newcommand \deuxdelta {\overline{\delta}}
+
+\newcommand \axi {{\textnormal{\textbf{ax}}}}       %    {\textbf{axi}}
+%\newcommand \verti {\textbf{vert}}
+%\newcommand \hori {\textbf{hori}}
+
+\newcommand \Phistar {\Phi^\star}
+\newcommand \Phipush {\Phi_\star}
+
+\newcommand \projP {P}
+\newcommand \polyP {P}
+\newcommand \projpar {\Pi}
+
+\newcommand \lambdaplane {\lambda_{\textnormal{plane}}}
+\newcommand \Lambdaplane {\Lambda_{\textnormal{plane}}}
+
+\newcommand \CzeroKP{C_{0\Korn\Poin}^\lambda}
+\newcommand \ConeKP{C_{1\Korn\Poin}^\lambda}
+\newcommand \CzeroKPeps{C_{0\Korn\Poin}^{\lambda_\eps}}
+\newcommand \ConeKPeps{C_{1\Korn\Poin}^{\lambda_\eps}}
+\newcommand \ConePeps{C_{1\Poin}^{\lambda_\eps}}
+\newcommand \CtwoPeps{C_{2\Poin}^{\lambda_\eps}}
+\newcommand \CPoin{C_{\Poin}^{\lambda}}
+\newcommand \CPoinTwo{C_{\Poin 2}^{\lambda}}
+\newcommand \alphaKP{\alpha_{\Korn\Poin}^\lambda}
+\newcommand \alphaL{\alpha_{\Lambda}^\lambda}
+
+\newcommand \detbf {\operatorname{\bf det}}
+
+\newcommand \seed {{\textnormal{\textbf{seed}}}}
+\newcommand \lin {{\textnormal{\textbf{lin}}}}
+\newcommand \qua {{\textnormal{\textbf{qua}}}}
+
+\newcommand \PLap {P^{\textnormal{Lap}}}
+\newcommand \PHess {P^{\textnormal{Hess}}}
+
+\newcommand \ang {{\textnormal{\textbf{ang}}}}
+
+\newcommand \Id  I    % {{\textnormal{\textbf{Id}}}}
+
+\newcommand \diam {{\textnormal{\textbf{diam}}}}
+\newcommand \tvarsigma {\widetilde{\varsigma}}
+
+\newcommand\tpsi{\widetilde{\psi}}
+
+\newcommand\mmax{m^{\max}}
+\newcommand\Chu{C_{\textnormal{h}}^u}
+\newcommand\ChE{C_{\textnormal{h}}^E}
+\newcommand\ChNu{C_{\textnormal{h}}^{\Nu}}
+\newcommand\rbar{\overline{r}}
+\newcommand\barg{\overline{g}}
+
+\newcommand\gammash{\gamma_{\textnormal{sh}}}
+\newcommand\cellip{c_{\textnormal{ell}}}
+\newcommand\pmax{p_{\max}}
+\newcommand\pstarsh{\pstar^{\sharp}}
+\newcommand\Jmax{|J|^{\max}}
+\newcommand\Dtot{\Dcal_{\textnormal{tot}}}
+\newcommand\Dsym{\Dcal_{\textnormal{sym}}}
+\newcommand\dtot{d_{\textnormal{tot}}}
+\newcommand\dsym{d_{\textnormal{sym}}}
+\newcommand{\Yperp}{Y^\perp}
+\newcommand{\Ypar}{Y^\parallel}
+\newcommand\Abb{\mathbb A}
+\newcommand\Tdissip{T_{\textnormal{dissip}}}
+\newcommand\Cstar{C_\star}
+\newcommand\xistar{\xi^{\star}}
+\newcommand\xistarpar{\xi^{\star\parallel}}
+\newcommand\xistarperp{\xi^{\star\perp}}
+\newcommand\mseed{m^{\textnormal{\textbf{s}}}}
+\newcommand\Jseed{J^{\textnormal{\textbf{s}}}}
+\newcommand\pushforward{\star}
+\newcommand\pullback{\star}
+\newcommand\mmodu{m^\modu}
+\newcommand\Jmodu{J^\modu}
+\newcommand\umodu{u^\modu}
+\newcommand\Zmodu{Z^\modu}
+\newcommand\gmodu{g^\modu}
+\newcommand\hmodu{h^\modu}
+
+\newcommand\cstun             {\varpi_1}  % {\mathbbm{c}_1}
+\newcommand\cstdeux          {\varpi_2} % {\mathbbm{c}_2}
+\newcommand\csttrois           {\varpi_3} % {\mathbbm{c}_3}
+
+\newcommand{\PsiHquabetaiota}{\Psi^{\notreH}_{\textnormal{qua},\beta\iota}}
+\newcommand{\PsiHbiliota}{\Psi^{\notreH}_{\textnormal{bil},\iota}}
+
+\newcommand \nslash {\slashed n}
+\newcommand \uY {\underline{Y}}
+
+\newcommand\ChZ{C_{\textnormal{h}}^Z}
+\newcommand\Jrm{\mathrm{J}}
+
+\newcommand\Est{\textnormal{\textbf{Est}}}
+
+\newcommand\CPKHzero{C^{g_0,h_0}_{\textnormal{\textbf{PKH}}}}
+\newcommand\unL{\underline{L}}
+\newcommand\unH{\underline{H}}
+ 
+\newcommand \wvect {w}
+\newcommand \supp {\textnormal{\textbf{supp}}\hskip.05cm }
+
+\newcommand{\matV}{V}
+\newcommand{\matG}{G}
+
+\newcommand \matQ {\Theta}
+\newcommand{\zeroXi}{\Sigma}
+\newcommand{\fluc}{\mathrm{fl}}
+
+%================================================================================
+
+
+
+

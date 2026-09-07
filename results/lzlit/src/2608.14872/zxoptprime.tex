@@ -1,0 +1,126 @@
+\section{Another Optimized Ruleset \texorpdfstring{\(\zxoptprime\)}{ZX\_opt'}}
+\label{sec:another-optimized-ruleset}
+
+Now, we introduce a second ruleset adapted from Vilmart~\cite{8785765}, \(\zxoptprime\). We write \(\zxvprime\) for Vilmart's original complete ruleset, so
+\[
+\zxoptprime=\zxvprime\setminus\{(I_r)\}.
+\]
+We use the same generators as in \hyperlink{tab:zx-generators}{Figure~1}, keep the usual interpretation, and use only the connectivity meta-rule of Definition~\ref{def:connectivity-meta-rule}, as before.
+
+\begin{center}
+\begingroup
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.25}
+\resizebox{0.725\textwidth}{!}{%
+\begin{tabular}{|c|}
+\hline
+\strut\\
+\hypertarget{rule:zxoptprime-S}{\sOneTableDiagram}\qquad\quad~\hypertarget{rule:zxoptprime-Ig}{\input{HKS/figures/ruleset1/identities-no-ir.tikz}}\qquad\quad~\hypertarget{rule:zxoptprime-IV}{\vilmartfig{inverse-param}}\\[1.25em]
+\hypertarget{rule:zxoptprime-CP}{\vilmartfig{b1s}}\qquad\qquad\hypertarget{rule:zxoptprime-B}{\vilmartfig{b2s}}\\[1.25em]
+\hypertarget{rule:zxoptprime-H}{\vilmartfig{h2}}\qquad\qquad\hypertarget{rule:zxoptprime-EUprime}{\vilmartfig{Euler-Had}}\\
+\strut\\
+\hline
+\end{tabular}}
+
+\vspace{0.5em}
+
+\begin{minipage}{\textwidth}
+\small
+\textbf{Figure 3.} Set of rules \zxoptprime for the ZX calculus with scalars. The above labels and rewrites are lightly adapted from Vilmart~\cite{8785765}. The right-hand side of (IV) is an empty diagram. (...) denote zero or more wires, while (\rotatebox{45}{\raisebox{-0.4em}{$\cdots$}}) denote one or more wires. In rule (EU'), $\beta_1,\beta_2,\beta_3$ and $\gamma$ can be determined as follows: $x^+:=\frac{\alpha_1+\alpha_2}{2}$, $x^-:=x^+-\alpha_2$, $z := -\sin{x^+}+i\cos{x^-}$ and $z' := \cos{x^+}-i\sin{x^-}$, then $\beta_1 = \arg z + \arg z'$, $\beta_2 = 2\arg\left(i+\left|\frac{z}{z'}\right|\right)$, $\beta_3 = \arg z - \arg z'$, $\gamma = x^+-\arg(z)+\frac{\pi-\beta_2}{2}$ where by convention $\arg(0):=0$ and $z'=0\implies \beta_2=0$.
+\end{minipage}
+\endgroup
+\end{center}
+
+The necessity arguments of Vilmart~\cite{8785765} apply unchanged to \((S)\), \((H)\), and \((CP)\), since the replacement rules \((IV)\) and \((EU')\) involve only nullary and \(1\to1\) structures. Moreover, \((IV)\) is the only rule in \(\zxoptprime\) with an empty side, and \((EU')\) is the only non-linear rule. Thus, \((S)\), \((IV)\), \((H)\), \((EU')\), and \((CP)\) are all necessary. We consider the remaining rules \((B)\) and \((I_g)\) below.
+
+\subsection{\texorpdfstring{\((I_r)\)}{(Ir)} is derivable in \texorpdfstring{\(\zxoptprime\)}{ZXopt'}}
+\label{sec:zxoptprime-ir-rule-derivable}
+
+As with the other ruleset, \((I_r)\) is derivable.
+
+The following derivation of \hyperref[lem:zxoptprime-ir-rule-derivable]{\((I_r)\)} uses only axioms from the \(\mathrm{ZX}_{\mathrm{opt}}'\) rule set, which has some overlap with \(\mathrm{ZX}_{\mathrm{opt}}\), hence we are allowed to use the \hyperref[lem:ir-derivation-L1]{\((H_0)\)} and \hyperref[lem:ir-derivation-L2]{\((HC)\)} lemmas proved in \hyperref[app:ir-rule-derivation]{Appendix A}.
+
+It is worth noting that this derivation for \hyperref[lem:zxoptprime-ir-rule-derivable]{\((I_r)\)} uses a different strategy than the other ruleset, where the primary concern was scalar management.  Here, scalars take a back-seat, since \hyperlink{rule:zxoptprime-IV}{\((IV)\)} is more flexible.  Rather, we focus on deriving the self-inverse property of the Hadamard through some relatively straightforward lemmas regarding cancellation and commutation on \(1 \to 1\) arity structures. In fact, every lemma used in this derivation has \(1 \to 1\) arity except for \hyperref[eq:prime-ir-Fig3Hx]{\((HX)\)}.
+
+\begin{theorem}
+\label{lem:zxoptprime-ir-rule-derivable}
+The \((I_r)\) rule is derivable.
+\begin{equation*}
+\zxoptprime\vdash
+\vcenter{\hbox{\primeirtikzinput{fig3-ir-theorem-statement.tikz}}}
+\end{equation*}
+\end{theorem}
+
+\noindent\textbf{Proof.}
+\begin{center}
+\makebox[\linewidth][c]{\primeirtikzinput{ir-final-proof.tikz}}
+\end{center}
+\tombstone
+
+See \hyperref[app:ir-prime-rule-derivation]{Appendix C} for details.
+
+\subsection{On the Necessity of the Bialgebra \texorpdfstring{\((B)\)}{(B)} rule in \texorpdfstring{\(\zxoptprime\)}{ZXopt'}}
+\label{sec:zxoptprime-necessity-bialgebra-b-rule}
+
+We can simply re-use the exact same counter-model from the \hyperref[sec:necessity-bialgebra-b-rule]{\(\zxopt\) necessity of \((B)\)}. It suffices to show the soundness of the new rules \((IV)\) and \((EU')\), since we know that all the other non-target rules hold, and \((B)\) fails as before.
+
+\begin{theorem}
+\label{lem:zxoptprime-b-rule-necessity}
+The \((B)\) rule is necessary:
+\[
+\zxoptprime\setminus\{(B)\}\nvdash (B).
+\]
+\end{theorem}
+
+\noindent\textbf{Proof.}
+Consider the interpretation \(\sem{-}^{(B)}\) defined in \hyperref[sec:defining-interpretation-functor]{Section~\ref*{sec:defining-interpretation-functor}}. It suffices to show that \((IV)\) and \((EU')\) hold under this interpretation.
+\begin{itemize}
+\item \((IV)\):
+\[
+\sem{\zxfig{IV-LHS-only}}^{(B)}
+=1=
+\sem{\zxfig{empty-diagram}}^{(B)}.
+\]
+On the left-hand side, for any \(\alpha\), the two disconnected scalars evaluate to \(1/(2\sqrt2)\) and \(2\sqrt2\), respectively, giving a product of \(1\).  The right-hand side evaluates trivially to \(1\).
+\item \((EU')\):
+\[
+\sem{\zxfig{EU-prime-LHS-only}}^{(B)} = D_{\alpha_2}H'D_{\alpha_1} = e^{3i\gamma}H'D_{\beta_3}H'D_{\beta_2}H'D_{\beta_1}H' = \sem{\zxfig{EU-prime-RHS-only}}^{(B)}.
+\]
+where \(D_\theta=(Z')^\theta_{1,1}\).  Just like before in the \((EU)\) check, the two scalars on the right-hand side contribute \(e^{3i\gamma}\) in total.  Then, tensoring the corresponding one-qubit Euler identity three times and conjugating by \(O\), which commutes with every \(D_\theta\), we find agreement on the final displayed equality.
+\end{itemize}
+\[
+\therefore\ (B)\text{ is necessary.}
+\qquad\blacksquare
+\]
+
+\subsection{On the Necessity of the Green Identity \texorpdfstring{\((I_g)\)}{(Ig)} rule in \texorpdfstring{\(\zxoptprime\)}{ZXopt'}}
+\label{sec:zxoptprime-necessity-green-identity-ig-rule}
+
+\begin{theorem}
+\label{lem:zxoptprime-ig-rule-necessity}
+The \((I_g)\) rule is necessary:
+\[
+\zxoptprime\setminus\{(I_g)\}\nvdash (I_g).
+\]
+\end{theorem}
+
+\noindent\textbf{Proof.}
+Consider the interpretation \(\sem{-}^{(I_g)}\) defined in \hyperref[sec:necessity-green-identity-ig-rule]{Section~\ref*{sec:necessity-green-identity-ig-rule}}. As before, it suffices to show that \((IV)\) and \((EU')\) hold under this interpretation.
+\begin{itemize}
+\item \((IV)\):
+\[
+\sem{\zxfig{IV-LHS-only}}^{(I_g)}
+=1=
+\sem{\zxfig{empty-diagram}}^{(I_g)}.
+\]
+\item \((EU')\):
+\[
+\sem{\zxfig{EU-prime-LHS-only}}^{(I_g)} = P_{1,1} = \sem{\zxfig{EU-prime-RHS-only}}^{(I_g)}.
+\]
+\end{itemize}
+\[
+\therefore\ (I_g)\text{ is necessary.}
+\]
+\tombstone
+
+So, \(\zxoptprime\) is another complete, minimal ruleset.

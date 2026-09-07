@@ -1,0 +1,1001 @@
+                                                   Non-Kolmogorov-Arnold-Moser Quantum Sensors for Quantum Parameter Estimation
+
+                                             Naga Dileep Varikuti,1, 2, 3, 4, ∗ Sourav Manna,3, 4, ∗ Athreya Shankar,3, 4 Arul Lakshminarayan,3, 4 and Vaibhav Madhok3, 4, †
+                                                                                     1
+                                                                                 Pitaevskii BEC Center, CNR-INO and Dipartimento di Fisica,
+                                                                                Università di Trento, Via Sommarive 14, Trento, I-38123, Italy
+                                                       2
+                                                         INFN-TIFPA, Trento Institute for Fundamental Physics and Applications, Via Sommarive 14, Trento, I-38123, Italy
+                                                                   3
+                                                                     Department of Physics, Indian Institute of Technology Madras, Chennai, India, 600036
+                                                                            4
+                                                                              Center for Quantum Information, Computation and Communication,
+                                                                                Indian Institute of Technology Madras, Chennai, India 600036
+                                                                                                   (Dated: September 4, 2026)
+                                                              Non-KAM (Kolmogorov-Arnold-Moser) systems, when subjected to weak time-dependent perturbations, ex-
+                                                           hibit an abrupt transition to classical chaos through the breakdown of invariant phase-space tori. We showcase
+                                                           the utilization of non-KAM systems in the quantum regime as quantum sensors, leveraging their sensitivity at
+                                                           resonances. Quantum Fisher information (QFI) is a central quantity in quantum parameter estimation theory
+                                                           that measures how much information a quantum state contains about an unknown parameter that is encoded
+arXiv:2609.03092v1 [quant-ph] 2 Sep 2026
+
+
+
+
+                                                           into it. In other words, it quantifies the sensitivity of a quantum state to small changes in that parameter. In
+                                                           this work, through numerical analysis in conjunction with analytical results, we study the performance of the
+                                                           non-KAM systems for quantum sensing applications by computing the QFI. We find that the growth of the QFI
+                                                           is remarkably enhanced when the resonance condition is satisfied. For frequency estimation under Floquet uni-
+                                                           tary encodings, we derive a transport bound: if the mean excitation number grows as ⟨n̂(t)⟩ ∼ tα , the QFI obeys
+                                                           I(t) ≲ t2α+2 . The quantum kicked harmonic oscillator, a paradigmatic non-KAM system, realizes the full hier-
+                                                           archy: localized dynamics (α = 0) yield quadratic growth, delocalized diffusion along stochastic webs (α = 1)
+                                                           yields quartic growth, and translationally invariant resonances (α = 2) saturate the bound with anomalous hexic
+                                                           growth, I(t) ∼ t6 , established analytically at resonance R = 2 and numerically at R = 4. The enhancement
+                                                           stems from resonance-induced translational symmetry rather than exponential instability, identifying non-KAM
+                                                           resonances as a metrological resource distinct from chaos-assisted and criticality-based sensing.
+
+
+                                                                   I.   INTRODUCTION                                 action-angle coordinates, with trajectories confined to invari-
+                                                                                                                     ant n-tori in phase space. When H0 is non-degenerate, KAM
+                                              Quantum sensing is one of the most promising applica-                  theory establishes that a sufficiently weak and generic pertur-
+                                           tions of near-term quantum technologies [1–4]. By harnessing              bation ϵH1 preserves a large set of these invariant tori [20–26].
+                                           quantum effects such as entanglement [5, 6], squeezing [7],               The resulting dynamics, therefore, remain predominantly reg-
+                                           and quantum coherence [8], quantum metrology is well poised               ular despite the perturbation. However, when the conditions
+                                           to probe physical parameters with precision beyond what is                required by KAM theory are violated, the persistence of in-
+                                           achievable with classical approaches. In a typical sensing                variant tori is no longer guaranteed, and even arbitrarily weak
+                                           protocol, an unknown quantity, e.g., a magnetic or electric               perturbations can induce widespread destruction of invariant
+                                           field strength or a frequency, is encoded in the evolution of             tori and the onset of chaos [14–17, 25, 27]. Such behavior is
+                                           a quantum state and subsequently inferred through appropri-               characteristic of non-KAM systems. For time-periodic pertur-
+                                           ate measurements and post-processing [2]. Frequency esti-                 bations, near resonances, where the characteristic frequencies
+                                           mation, in particular, is central to precision measurements in            of the unperturbed and perturbing dynamics become commen-
+                                           platforms like trapped ions, which offer highly controllable              surate, the dynamics display a particularly strong response to
+                                           internal and motional degrees of freedom for quantum sens-                variations in system parameters. In the quantum regime, these
+                                           ing [9–12]. For a parameter to be estimated precisely, it is              non-KAM effects can manifest as sharp changes in eigenvalue
+                                           desirable for the state of the system to exhibit a pronounced             and eigenvector statistics, as well as in the associated operator
+                                           response to small variations in that parameter [13]. This nat-            dynamics [16, 17].
+                                           urally raises the question of whether suitably engineered dy-                Motivated by this striking behavior of non-KAM systems,
+                                           namics can amplify such a response. In the classical regime,              we ask in this work: Can a non-KAM system be harnessed for
+                                           non-Kolmogorov-Arnold-Moser (non-KAM) systems provide                     quantum sensing purposes by exploiting its sensitivity? We
+                                           a natural setting to explore this possibility, owing to their strik-      address this question through rigorous numerical and analyt-
+                                           ing sensitivity to weak perturbations [14–19].                            ical analysis of the quantum Fisher information (QFI) in the
+                                              Non-KAM systems are dynamical systems that fall outside                kicked harmonic oscillator, a prototypical non-KAM system.
+                                           the applicability regime of the Kolmogorov-Arnold-Moser                   The QFI quantifies the distinguishability of quantum states
+                                           (KAM) theorem [20–23]. An n-degree-of-freedom integrable                  corresponding to different values of an unknown parameter
+                                           Hamiltonian system H0 can be described by generalized                     and sets the ultimate precision permitted by quantum mechan-
+                                                                                                                     ics for its estimation [13]. In this work, we study how the QFI
+                                                                                                                     varies with the parameter of interest under resonant and non-
+                                                                                                                     resonant conditions, and whether the enhanced dynamical
+                                           ∗ These authors contributed equally to this work.
+                                                                                                                     response near resonances translates into improved quantum
+                                           † madhok@physics.iitm.ac.in
+                                                                                                                     sensing performance compared to the non-resonant case. Our
+                                                                                                                                        2
+
+findings highlight that dynamical instabilities rooted in clas-    parametrized by ω, the second derivative of any valid distance
+sical non-KAM dynamics can themselves serve as a resource          metric d(Pω , Pω+ϵ ) with respect to ϵ becomes equal to the CFI
+for quantum metrology, complementing conventional quan-            up to a multiplicative factor, i.e.,
+tum resources such as entanglement, squeezing, and quantum
+coherence.                                                                            ∂2ϵ d(Pω , Pω+ϵ )|ϵ→0 ≡ CI(ω),                  (3)
+   This paper is structured as follows. In Sec. II, we provide
+the necessary background for this work. Section II A intro-        where C is a real number and depends on the distance metric
+duces the basics of quantum Fisher information (QFI), while        considered. In other words, the Fisher information quantifies
+Sec. II B introduces the kicked harmonic oscillator (KHO)          the sensitivity of a parametric probability distribution to in-
+model and reviews its basic properties. Section III presents       finitesimal changes in its parameters [34]. Similarly, given
+the main results of this work. In Sec. III A, we examine the be-   |ψω ⟩ = Ûω |ψ⟩, the quantum Fisher information can be identi-
+havior of the Loschmidt echo and its implications for the QFI,     fied with the sensitivity of |ψω ⟩ to tiny variations in the param-
+while Sec. III B examines how the growth of the mean energy        eter ω [13, 28]:
+bounds the growth of the QFI. In Sec. III C, we study the be-
+                                                                                      1 − |⟨ψω+ϵ |ψω ⟩|2
+                                                                                                         !
+havior of the QFI in both resonant and non-resonant regimes.           I(ω) = 4 lim                        = −2∂2ϵ |⟨ψω+ϵ |ψω ⟩|2 ϵ=0 .
+In Sec. IV, we elucidate the role of translation invariance in                   ϵ→0         ϵ2
+the quantum KHO in the growth of the QFI. We then evaluate                                                                             (4)
+the classical Fisher information (CFI) associated with quadra-     In the above equation, the fidelity metric |⟨ψω+ϵ |ψω ⟩|2 is as-
+ture measurements and assess their ability to approach the QFI     sumed to be smooth and differentiable, as is generally the
+in Sec. V. Finally, in Sec. VI, we summarize and discuss our       case. Note that for pure states, the fidelity metric is described
+findings and outline possible directions for future work.          by the Fubini–Study metric, while for mixed states, it is char-
+                                                                   acterized by the Bures metric. The unknown parameter ω may
+                                                                   characterize various properties of the Hamiltonian, including
+                     II.    BACKGROUND                             its characteristic frequency, coupling strengths, and magnetic
+                                                                   or electric field strengths. Note that for pure states, the fidelity
+  Here, we briefly introduce the main quantity of interest, the    metric is given by the Fubini-Study metric, whereas for mixed
+quantum Fisher information, and provide details of the system      states, the Bures metric is used. Beyond its role in quantum
+under study, the kicked harmonic oscillator.                       sensor characterization, the QFI serves as an important tool
+                                                                   for probing multipartite entanglement in many-body quantum
+                                                                   systems [35–38].
+               A.   Quantum Fisher information                        The performance of a quantum sensor can be enhanced by
+                                                                   invoking quantum resources. Let m denote the total available
+   Quantum sensing aims to estimate an unknown parameter ω         sensing resources, quantified, for instance, by the number of
+[28]. A typical sensing protocol consists of three basic stages:   probes. When the probes are employed independently, the
+(i) preparing a probe state |ψω ⟩, (ii) measuring the state in a   Fisher information typically scales linearly with m, I(ω) ∼ m,
+suitable basis, and (iii) extracting an estimate of ω from the     corresponding to the standard quantum limit. However, in-
+measurement outcomes using an appropriate statistical infer-       corporating genuine quantum effects, such as entanglement
+ence procedure. The precision of an unbiased estimator is          during the state preparation in step (i) of the sensing protocol,
+bounded by the Cramér–Rao inequality [29, 30],                    can result in Heisenberg-limited sensing, I(ω) ∼ m2 [5, 6].
+                                                                   The divergent susceptibilities associated with ground states
+                                      1                            near quantum critical transitions have subsequently motivated
+                           ∆2 ω ≥         ,                 (1)    their use as a resource for quantum metrology [39–49]. More
+                                    nI(ω)
+                                                                   recently, quantum chaotic dynamics have also been explored
+where n is the number of experimental repetitions and I(ω)         as a resource for quantum metrology [50, 51]. Motivated by
+denotes the classical Fisher information (CFI). For a mea-         these developments, we consider non-KAM system dynamics
+surement outcome X described by the probability distribution       in the quantum regime as a potential resource for enhancing
+Pω (X), the CFI is defined as                                      quantum sensing applications.
+                            h              i
+                  I(ω) = Eω (∂ω ln Pω (X))2 .            (2)
+                                                                                B.   Model: Kicked harmonic oscillator
+Because the probability distribution depends on the measure-
+ment being performed, the CFI is inherently measurement-
+dependent. Optimizing it over all positive operator-valued           Kicked harmonic oscillator (KHO) is a paradigmatic non-
+measurements (POVMs) yields the quantum Fisher informa-            KAM system that describes the classical motion of charged
+tion (QFI), which sets the ultimate precision allowed by the       particles in a magnetic field with the following Hamilto-
+quantum state [13, 31].                                            nian [52–60]:
+   Geometrically, the CFI corresponds to the unique mono-                                                ∞
+                                                                                                         X
+tone Riemannian metric on a smooth statistical manifold                         H = H0 + K cos(kX)             δ(t − nτ),             (5)
+[32, 33]. This implies that for a probability distribution Pω                                           n=−∞
+                                                                                                                                          3
+
+where H0 denotes the Hamiltonian of a harmonic oscilla-
+tor with the natural frequency ω, and K denotes the kicking
+strength. In this work, we fix the wave vector at k = 1. In
+action-angle coordinates
+                   √        as given
+                                √ by the canonical transfor-
+mation (P, X) = ( 2Jω sin θ, 2J/ω cos θ), the harmonic os-
+cillator remains classically degenerate meaning that H0 = ωJ
+is linear in the action variable J while θ remains a cyclic co-
+ordinate. Therefore, H0 is a non-KAM system [24]. Con-
+sequently, the time-periodic perturbations may lead to reso-
+nances, which typically occur whenever the natural and the
+kicking frequencies commensurate, i.e., ωτ = 2π/R, where
+R ∈ Z+ .
+   Classical dynamics: When the non-KAM system attains a
+resonance, its phase-space structure can change dramatically,
+even if the perturbation is made arbitrarily small. In the KHO
+model, this transition can be seen clearly from the following
+two-dimensional map:
+
+        un+1 = (un + ϵ sin vn ) cos(ωτ) + vn sin(ωτ),               FIG. 1. Classical phase-space trajectories for a fixed initial condi-
+                                                                    tion at four different values of R in the vicinity of R = 4. The initial
+        vn+1 = −(un + ϵ sin vn ) sin(ωτ) + vn cos(ωτ),       (6)
+                                                                    condition is u = 0.0121 and v = u + 3π. The kicking strength is fixed
+                                                                    at K = 0.8 in all panels. Panels (a), (b), and (d) correspond to the
+where u = P/ω, v = X, and ϵ = K/ω. Note that H0 possesses           non-resonant regime, where the trajectory associated with the chosen
+rotational symmetry in phase space, while cos X remains in-         initial condition undergoes only a slight distortion. In contrast, panel
+variant under translations of X by integer multiples of 2π. The     (c) corresponds to the resonant case, R = 4, where the trajectory ex-
+dynamics described by Eq. (6) therefore shows a natural com-        plores an extended region of phase space and forms a thick stochastic
+petition between these two symmetries, which becomes par-           web.
+ticularly evident at the resonant values R ∈ Rc ≡ 1, 2, 3, 4, 6
+[52, 53]. For R = 1 and R = 2, the map can be solved triv-          KHO dynamics [58, 63–68],
+ially. For the remaining resonances, the phase space develops
+stochastic webs whose thickness is exponentially small in ϵ
+                                                                                     n         o   n          o
+                                                                            Û = exp −iK cos X̂ exp −iωτâ† â ,                        (7)
+[53]. These webs originate near the outer boundaries of the
+periodic islands and are formed predominantly by their sep-                                   √
+                                                                    where X̂ = (â + â† )/ 2ω. Throughout this work, we set
+aratrices. Depending on the value of R, the resulting phase-        ℏ = 1. Ion traps and Bose–Einstein condensates have been
+space structure exhibits either square or Kagome-like tessel-       proposed as experimentally accessible platforms for realizing
+lations. Although the KHO is a two-dimensional system, the          the dynamics of the quantum KHO [69–73]. At the resonant
+stochastic webs play a role analogous to Arnold diffusion in        values R ∈ Rc , the translational symmetry of the phase space
+systems with more than two degrees of freedom, allowing             translates into the existence of one or two families of displace-
+phase-space trajectories to undergo unbounded diffusion. In         ment operators that commute with the R-step Floquet opera-
+particular, trajectories initiated near the separatrices can pro-   tor, Û R [59]. This translational invariance has important con-
+gressively spread throughout the stochastic web, leading to         sequences for the Floquet spectrum: the corresponding Flo-
+diffusive growth of the mean energy, ⟨E(t)⟩ ∼ ϵ 2 t, where t        quet states are generally extended across phase space, result-
+denotes the number of time steps.                                   ing in an unbounded growth of the mean energy, ⟨â† â(t)⟩.
+   In contrast, the non-resonant R will comprise all real num-         However, even a small deviation of R from the resonant
+bers except the integers. In this case, for small ϵ, the cir-       values in Rc can break the translational invariance, causing
+cular phase space trajectories of the harmonic oscillator are       the Floquet states to become strongly localized. This local-
+only slightly distorted. Resultantly, the phase space diffu-        ization suppresses the quantum dynamics and is also reflected
+sion is suppressed, leading to stagnated energy growth. Fig-        in the behavior of operator scrambling [16]. Furthermore, in
+ure 1 shows the phase space trajectories of the KHO system          the regime K ≲ π, the quantum KHO can be mapped onto
+for a few randomly chosen initial conditions in the vicinity        an effective tight-binding model, providing an explanation for
+of R = 4. The corresponding separatrix equation is given by         the dynamical localization observed at irrational values of R
+v = ±(u+π)+2lπ, l ∈ Z [53]. The phase space is regular when         [65, 74]. Thus, the quantum KHO exhibits a pronounced sen-
+the system is non-resonant. However, it can be seen from the        sitivity to variations in R near resonance, particularly in the
+figure that the trajectories get increasingly deformed as R ap-     presence of translational invariance.
+proaches 4. Such behavior has applications in the chaotic elec-        Motivated by this sensitivity, we investigate the quantum
+tron transport in semiconductor superlattices [61, 62].             KHO as a platform for quantum sensing. Specifically, we ex-
+   Quantum dynamics: In the quantum regime, the periodicity         plore how its dynamics can be exploited for parameter esti-
+of the perturbation gives rise to a Floquet description of the      mation by using the quantum Fisher information (QFI) as a
+                                                                                                                                                                     4
+
+figure of merit. In the next section, we demonstrate the appli-                                           101
+cability of quantum KHO dynamics to sensing protocols and                                                                                t2
+characterize its performance through the QFI.                                                            10 2
+
+
+
+
+                                                                                  1 | |URt + RURt | |2
+                                                                                                         10 5                                    t 3.1
+                               III.   RESULTS
+                                                                                                         10 8                                   t2
+                                                                                                                                 = 2 , K = 0.1 & R = 2 × 10 3
+   In this work, we are particularly interested in studying the                                          10 11                                R=3
+QFI by taking ω, the natural frequency of a particle trapped                                                                                  R = 3 + Golden ratio
+in a harmonic potential, as the parameter that needs to be esti-                                         10 14                                R = 3.2
+mated. Throughout, the QFI is always defined with respect to                                                                                  R = 5.2
+ω; since we work at fixed τ, we often label the dynamics and                                                     100               101                         102
+display the QFI as a function of the commensurability param-                                                                        t
+eter R = 2π/ωτ for convenience. For this purpose, we employ
+the dynamics of the quantum KHO to imprint ω onto an arbi-                  FIG. 2. Evolution of the Loschmidt echo for the quantum KHO sys-
+trary quantum state, i.e., |ψω (t)⟩ = Ûωt |ψ⟩. Under this setting,         tem near the resonance point. The system is initialized in the vacuum
+the evolution of the QFI follows                                            quantum state |0⟩. R = 3 is the resonance point, and the remaining
+                                                                            three cases correspond to dynamical localization. The dashed style
+                                              †t
+                                                  Ûωt |ψ⟩|2 
+                                                              
+                                 1 − |⟨ψ|Ûω+ϵ                           lines are plotted to demonstrate the time scalings of the LE.
+          I(ω; |ψ⟩, t) = 4 lim 
+                                              ϵ2
+                            ϵ→0
+                                                               
+
+                          = 4∆2|ψ⟩ ĥ(t)
+                                     ω,                               (8)
+                                                                                                                       A.   Loschmidt Echo
+
+         ω = iÛ ω ∂ω Û ω , and ∆ denotes variance with respect
+where ĥ(t)        †t     t       2
+
+to the initial state |ψ⟩. Given |ψω (t)⟩, the operator ĥ(t)
+                                                         ω generates
+                                                                               The quantity appearing in the first equality of Eq. (4),
+                                                                                   †t
+infinitesimal translations in the space of ω. As detailed in                |⟨ψ|Ûω+ϵ Ûωt |ψ⟩|2 , is the Loschmidt echo (LE), a widely used
+Appendix A, for t = 1, the generator takes the following form:              measure for characterizing the sensitivity of quantum dynam-
+                                                                            ics to perturbations. The LE was introduced by Peres to quan-
+                                                 K                          tify the stability of quantum evolution under small changes in
+             ĥ(1) = iÛω† ∂ω Ûω = τn̂ −           Â sin Â,        (9)
+                                                 2ω                         the Hamiltonian or the corresponding time-evolution opera-
+                                                                            tor [75]. It has since been extensively studied across a broad
+where n̂ = â† â denotes
+                      √     the mean energy operator and Â =
+                                                                            range of dynamical regimes, from regular to fully chaotic sys-
+(âe−iωτ + â† eiωτ )/ 2ω. Then, the generator corresponding to
+                                                                            tems [76, 77] and is also relevant for error characterization
+the t-th time step can be written as
+                                                                            in quantum technologies [78]. For continuous-variable sys-
+                        t−1
+                        X                                                   tems in the weak-perturbation regime, the behavior of the
+               ω =
+             ĥ(t)             Ûω† j ĥ(1)  j
+                                        ω Û ω
+                                                                            LE depends strongly on the underlying classical dynamics.
+                         j=0                                                In regular systems, the LE initially exhibits a parabolic de-
+                        t−1                                                cay, 1 − ϵ 2 t2 /ℏ2 , before crossing over to a Gaussian decay at
+                        X                   K                   
+                  =             τn̂( j) −      Â( j) sin Â( j) ,   (10)   longer times. The initial parabolic regime typically persists
+                         j=0
+                                            2ω                              up to times of order O(1/ϵ), over which the Floquet operator
+                                                                            can be approximated by its expansion to second order in the
+where n̂( j) and Â( j) denote the Heisenberg-evolved forms of              perturbation. In contrast, chaotic systems generally exhibit a
+the respective operators under the quantum KHO dynamics                     linear decay at short times, followed by an exponential decay
+for j-time steps. The time evolution of the QFI is then given               at later times. These decay laws have been established for
+by                                                                          infinite-dimensional systems, making them particularly rele-
+                                                                            vant to the quantum KHO, whose Hilbert space is likewise
+                        t−1  
+                        X                   K                   
+                                                                            infinite-dimensional.
+      I (t) = 4 ∆2|ψ⟩        τ â† â ( j) −    Â( j) sin Â( j)    (11)
+                        j=0
+                                             2ω                                The connection between the LE and QFI becomes es-
+                                                                            pecially direct in the limit of an infinitesimal perturbation,
+In this work, we primarily employ the above equation to nu-                 ϵ → 0. This suggests a direct connection between the well-
+merically compute the QFI for the quantum KHO model.                        established behavior of the LE and the growth of the QFI in
+   Note that Eq. (11) suggests a strong connection between the              the regular regime of the KHO. However, it is important to
+QFI and fluctuations in the mean energy, while Eq. (4) indi-                note that the standard LE results assume that the perturbed and
+cates that the QFI is also intimately related to the Loschmidt              unperturbed dynamics belong to the same dynamical regime,
+echo. In the following subsections, we examine these connec-                i.e., that both systems are either regular or chaotic [76]. On
+tions in greater detail. In what follows, we first examine the              the contrary, this assumption does not generally hold in the
+implications of the Loschmidt echo and mean-energy growth                   vicinity of the resonances. In particular, for R ∈ Rc , the KHO
+for the QFI in the quantum KHO model, and then turn to a                    exhibits extended dynamics associated with its translational
+numerical analysis of the QFI.                                              symmetry, whereas an arbitrarily small detuning of R can in-
+                                                                                                                                     5
+
+duce quantum localization [65]. The resonant points therefore         From the following inequality
+represent a distinct regime in which the conventional LE re-
+                                                                                     Z t−1            t−1         Z t
+sults cannot be invoked directly and must be considered sepa-                                α
+                                                                                                      X
+                                                                                                            α
+rately.                                                                                      j dj <         j <         jα d j ,
+                                                                                        0             j=0          0
+   We first perform a brief numerical analysis of the LE for
+the KHO by varying the parameter ω, while fixing τ = 1 and                                                      α    α+1
+                                                                      it can be immediately shown that t−1               , where α ≥ 0
+                                                                                                        P
+K = 0.1. The results are shown in Fig. 2, where we plot                                                    j=0 j ∼ t
+                                                                      as mentioned earlier and t ≥ 2. Therefore, we finally obtain
+           t
+1 − |⟨ψ|Ûω+δω  Ûωt |ψ⟩|2 as a function of the discrete time for
+                                          √                           I(ω; t) ≲ O(t2α+2 ). Also, note that the second term on the
+three different values of ω. For R = 3+ 5, which is irrational,       right-hand side of the inequality in Eq. (14) grows at most
+the system does not exhibit unbounded diffusion [74], and the         as tα+2 . Thus, the maximum growth of the QFI is solely de-
+corresponding classical phase space remains regular. Consis-          termined by the mean energy growth. This behavior is cor-
+tent with the behavior expected for regular systems [76], the         roborated by the results presented in Figs. 4 and 6, which we
+quantity 1−LE shows quadratic growth with time. A similar             discuss in detail in the subsequent sections.
+behavior is observed for R = 3.2 and R = 5.2. In contrast, at            To determine how the mean energy grows in the quantum
+the resonance point R = 3, we observe that 1−LE grows as              KHO, we consider the Heisenberg evolution of the ladder op-
+∼ t3.1 . These results provide an initial indication that the QFI     erators under the quantum KHO dynamics:
+at the resonances can exhibit a substantial enhancement in its
+temporal scaling. As we discuss below, the origin of this en-                                               t−1
+                                                                                                 iKeiωτ X i jωτ
+hancement can be traced to the underlying growth of the mean                    â(t)eiωτt = â + √        e    sin Â( j).        (16)
+energy [79].                                                                                        2ω j=0
+
+                                                                      As time progresses, the number of terms in the expansion of
+                B.     Mean energy growth vs. QFI                     a(t) grows linearly. Moreover, all the accumulated terms with
+                                                                      time are bounded. This indicates that, under KHO dynamics,
+                                                                      the quadrature operators can grow linearly at most, i.e., ⟨X⟩ ∼
+   In atom-optical models, the evolution of the QFI is strongly
+                                                                      t and ⟨P⟩ ∼ t. Using Eq. (16), one could now bound the mean
+correlated with the mean energy growth in the system [6, 48,
+                                                                      energy growth of the quantum KHO in an arbitrary state. The
+79]. If the mean energy growth in those systems scales as
+                                                                      bound for the Fock states can be obtained as
+⟨n̂(t)⟩ ∼ tα , where α ≥ 0, then the maximum attainable scaling
+                                                                                                      √
+of the QFI follows: I(ω; |ψ⟩, t) ∼ t2α+2 . As we shall show in                                          2lKt K 2 t2
+the following, this holds for the quantum KHO model as well.                         ⟨l|n̂(t)|l⟩ ≤ l + √    +       .            (17)
+                                                                                                         ω     2ω
+To see this, we consider the following inequality.
+                          t−1           t−1 q         2           This gives the maximum possible growth of the mean energy
+                         X 
+                               ( j) 
+                                         X            
+                                                    ( j) 
+                                                                      for the recurrence dynamics given in Eq. (16). It is known that
+     I(ω; |ψ⟩, t) = 4∆  ĥω  ≤ 4 
+                      2                      ∆ ĥω  .
+                                                 2             (12)   under the resonance condition, in particular, when the system
+                            j=0                  j=0                  has translation invariance, the mean energy of the quantum
+                                                                      KHO can grow quadratically [59]. Consequently, long-time
+We can further bound the standard deviation of the time
+                                                                      growth of the QFI can display hexic scaling with time at max-
+evolved generator ĥω ( j) as
+                                                                      imum.
+                              s
+                                K2 2 h
+    q           q                                       i
+           ( j)
+      ∆2 ĥω ≤ τ2 ∆2 n̂( j) +      2
+                                     ∆ Â( j) sin Â( j) , (13)                    C.   QFI in the quantum KHO model
+                                4ω
+
+which leads to the following inequality:                                 We first examine the evolution of the QFI for ω = 2π/R
+                   t−1                                  2           with non-integer R that are irrational and rational. As men-
+                  X         K   h                 i             tioned earlier, quantum diffusion is generally suppressed
+      I(t) ≤ 4  τ∆n̂( j) +    ∆ Â( j) sin Â( j)  .   (14)   whenever R is non-integer. Hence, the dynamics are com-
+                 j=0
+                               2ω
+                                                                      pletely regular. From known results of the LE [76, 77], the
+Eq. (14) suggests a connection between the maximum possi-             dynamical behavior of the QFI, in this case, could be inferred
+ble growth of the QFI and the mean energy fluctuations in the         to be quadratic (∼ t2 ∆2 hR ). This is indeed confirmed by our
+system. From the inequality, one can heuristically argue that         numerical results and cross-validated by the LE calculations-
+in an arbitrary quantum state |ψ⟩, if the mean energy grows           see Fig. 2. Moreover, the mean energy, in this case, be-
+as tα , where α ≥ 0, then ∆2 n̂(t) ≲ t2α . Accordingly, the QFI       comes saturated after some time (⟨ψ(t)|â† â|ψ(t)⟩ ∼ ct0 , c is
+will be bounded by a power-law function of t as implied by            a constant) [59]. Hence, the mean energy viewpoint also sup-
+the inequality in Eq. (14):                                           ports the above inference that the QFI growth could be at most
+                                                                      quadratic. The results are shown in Fig. 3(a). The plots show
+                                     t−1
+                                     X                                the QFI growth at two non-resonance points (R = 3 + g.r,
+                       I(ω; t) ≲ [         O( jα )]2 .         (15)   5.2) for two states, namely, the vacuum state |0⟩ and a coher-
+                                     j=0                              ent state |α⟩ with the kicking strength fixed at K = 0.1. At
+                                                                                                                                                              6
+                      (a)                                (b)                                   (a)
+                                                                                                                      104   K = 0.5
+   105                                                                                                                      R=2
+                                                                           1014                                             ω = 0.63662
+                                        107                                                                                 m_num = 2.0
+                                                                                                                      103   m_coh = 1.932
+   103                                                                     1011
+                                        105
+                                                                                                                      102
+                                                                            108
+   101
+
+
+
+
+                                                                                                              ⟨n⟩̂
+                                             3
+                                        10
+                                                                            105                                       101
+
+  10 1
+                                        10   1                              102
+                                                                                                                      100
+
+
+  10 3                                                                     10 1
+                  |    = |0                                                                                                                                   |0⟩
+                                       10 1                                                                          10−1
+                                                                                                                                                              |α⟩
+
+                                                                                  100    101         102    103              100            101       102
+         100          101        102             100   101      102                                                                               t
+
+
+
+
+                                                                          FIG. 4. Time evolution of the QFI under translational invariance.
+FIG. 3. Evolution of the QFI for the vacuum quantum state |0⟩ and a
+                                                                          (a) QFI at the resonance R = 2 for the vacuum state |0⟩ and a co-
+coherent state located in phase space at (x, p) = (−0.5903, −8.1437).
+                                                                          herent state located in phase space at (x, p) = (0.0121 + 3π, 0.0121).
+(a) The QFI is plotted against time at non-resonance points: R = 5.2
+                                                                          Here K = 0.5 and ω = 2/π, with τ = π2 /2 so that ωτ = 2π/R at
+and R = 3+g.r, where g.r stands for the golden ratio. The growth
+                                                                          R = 2. The dashed lines illustrate the respective time scalings of the
+follows the quadratic law for both states. The dashed lines are plotted
+                                                                          QFI of the two states. (b) The corresponding growth of the mean
+to demonstrate the same. (b) The QFI vs time at resonance R = 5.
+                                                                          excitation number ⟨n̂⟩ for the same states, confirming the quadratic
+The same initial states are used as in (a). To ensure delocalization,
+                                                                          energy growth underlying the hexic QFI scaling.
+we take K = 1.5. We obtain quartic scaling for the vacuum state.
+The coherent state displays cubic scaling.
+                                                                          significant enhancements in the growth of QFI. Here we con-
+                                                                          sider R = 1, 2, and 4, where the former two are special cases
+K = 0.1, the system is fully regular. As Fig. 3(a) illustrates, in
+                                                                          amenable to exact analytical treatment. The latter case shall
+this regime, the QFI exhibits quadratic growth with time for
+                                                                          be treated both analytically and numerically.
+both initial states.
+                                                                             The cases where R = 1 and 2 are trivial, for which the
+   We now turn to the resonance points of the quantum KHO.                Heisenberg evolution of the ladder operators admits a simple
+Here, we are mainly interested in resonance points R < Rc ,               form as follows:
+R ∈ Z+ , that are not translationally invariant in phase space.
+For this purpose, we fix R = 5, known to exhibit a quasi-                                                Kt   
+                                                                                  â(t)e2πit/R = â + i √ sin X̂ , where R = 1&2.                           (18)
+crystalline instance in the classical limit. In this case, the sys-                                      2ω
+tem undergoes a localization-to-delocalization transition as K
+is tuned away from zero [64]. As the system becomes delo-                 From this, the evaluation of the mean energy growth is
+calized, the mean energy ⟨ψ(t)|â† â|ψ(t)⟩ grows atmost linearly.        straightforward. For instance, in a Fock state |n⟩, the mean
+Following the analysis of the previous subsection, we find that           energy grows as
+the QFI can grow at most quartically in time, i.e., I(ω) ∼ t4 .
+                                                                                                         K 2 t2
+                                                                                                                                !!
+We verify these predictions numerically for the initial states                                                                2
+                                                                                 ⟨n|(â† â)(t)|n⟩ = n +        1 − e−1/ω Ln0      , (19)
+|0⟩ and |x + ip⟩, where the latter is chosen such that the cor-                                          4ω                   ω
+responding phase-space point (x, p) lies on the stochastic web
+of the classical phase space. The corresponding numerical re-             where Ln0 is an associated Laguerre polynomial. As the mean
+sults are shown in Fig. 3(b). For the vacuum state |0⟩, we                energy growth is quadratic (α = 2), the QFI will grow alge-
+observe the predicted quartic scaling of the QFI with time. In            braically with an exponent ≲ 2α + 2 = 6. Through numerical
+contrast, for the coherent state |x+ip⟩, the QFI exhibits a cubic         results and analytical arguments, we indeed confirm that after
+scaling with time.                                                        a sufficiently long time, the evolution of the QFI converges to
+   In the following, we show that, for R ∈ Rc , the QFI can               the scaling ∼ t6 .
+attain a ∼ t6 scaling. This is enabled by the translational in-              To verify the above inference for the QFI, we consider the
+variance present in these cases, which allows the bound given             generator of translations in ω when R = 2.
+in Eq. (17) to be saturated. Consequently, the QFI can also
+exhibit ∼ t6 scaling. We discuss this in more detail in the                                                           K
+                                                                                                 ĥω = τâ† â −         X̂ sin X̂.                         (20)
+following section.                                                                                                    2ω
+
+                                                                          The time-evolved generator ĥω,t corresponding to Ûωt is given
+                                                                          in Eq. (B5) of Appendix B, wherein the scalar coefficients are
+         IV.   ROLE OF TRANSLATIONAL INVARIANCE                           polynomials in t with degrees ranging from linear to cubic.
+                                                                          This will imply that I|ψ⟩ (ω; t) ∼ O(t6 ). We numerically evalu-
+   The presence of translational invariance implies that Û R             ate the QFI for two different initial states, namely, the vacuum
+commutes with either a one-parameter or two-parameter                     state |0⟩ and a coherent state |α⟩. The results are shown in Fig.
+group of translations [59]. This also leads to extended Flo-              4(a). For the vacuum state, the QFI over a short period ex-
+quet states in the phase space and, consequently, to possi-               hibits the scaling ∼ t5 . This is then followed by a crossover to
+ble unbounded growth of the mean energy. In this case, the                t6 scaling at later times. On the other hand, the QFI of the co-
+mean energy can attain quadratic growth in time, leading to               herent state displays an initial quadratic growth followed by a
+                                                                                                                                                                                             7
+
+                                   (a)                                             (b)                                    (a)                                                 (b)
+        1012               R                                                             t             10 12                                             10 3            ®
+                                                                     K = 0.5                                      K = 1.5                                              j0
+                           1.99
+                                              » t6         1012      ! = 0:63662         200                                                                              ®           » t 1:8
+        1010               1.999                                                                       10 10     ! = 0:63662
+                           2.0
+                                                                                         160
+                                                                                                                   R=4
+                                                                                                                                                                       j®                   » t2
+                                                 » t2                                                                                                    10 2
+
+
+
+
+                                                                                                 I(!; jÃ )
+(ω; |ψ⟩)
+
+
+
+
+            108                                                                                                                       » t 5:7
+
+
+
+
+                                                                                                 ®
+                                                                                         125
+                           2.001                           1011                                         10 8
+
+
+
+
+                                                                                                                                                    ­ ®
+                                                                                                                                                    n^
+                           2.01                                                          100
+            106                                                                          80             10 6                                    ®        10 1                        K = 1.5
+            104                              K = 0.5            10
+                                                                                                                                           j0                                       ! = 0:63662
+                                                           10                                                                                 ®
+                                             ! = 0:63662                                                10 4                               j®                                         R=4
+            102                                                                                                                                          10 0
+                  10   1
+                                   10    2                       1.999             2.0   2.001                 10 1            10 2                             10 1           10 2
+                                   t                                                R                                          t                                               t
+
+   FIG. 5. QFI near the resonance R = 2, for the initial state |0⟩,                              FIG. 6. Time evolution of the QFI at the resonance R = 4. (a) QFI
+   K = 0.5, and ω = 2/π, with τ = π2 /2 so that ωτ = 2π/R at R = 2.                              for the vacuum state |0⟩ and a coherent state located in phase space
+   (a) QFI as a function of time for different values of R near resonance,                       at (x, p) = (−0.5903, −8.1437). Here K = 1.5 and ω = 2/π, with
+   illustrating the persistence of the t6 scaling for small detunings over                       τ = π2 /4 so that ωτ = 2π/R at R = 4. (b) The corresponding growth
+   a finite time interval. (b) QFI (with respect to ω) as a function of R at                     of the mean energy ⟨n̂⟩ for the same states. The dashed lines illustrate
+   different evolution times, showing the progressive sharpening of the                          the respective time scalings of the QFI and mean energy.
+   resonance peak with increasing time.
+
+                                                                                                 frequency, where the goal is to detect small changes from a
+                                                            6
+   sharp transition to the Hexic law t . Although less surprising,                               target value rather than continuously estimate the frequency
+   the Hexic scaling appears to occur at a similar time scale for                                over a broad range.
+   both initial states. Moreover, the hexic growth appears after                                    An experimentally relevant question is whether the en-
+   the time t ∼ O(K −2/3 ) scaling.                                                              hanced QFI scaling observed at the resonant values of R re-
+      Progress towards a concrete metrological task follows from                                 quires exact tuning to an integer value. In practice, such pre-
+   the observation that the resonance condition is controlled by                                 cise tuning may be difficult to achieve, and it is therefore im-
+   the product ωτ. In the present setting, the oscillator frequency                              portant to examine the behavior of the QFI for small detunings
+   ω is the parameter to be estimated, while the kicking period                                  from resonance. Figure 5(a) shows the time dependence of the
+   τ can, in principle, be externally controlled. Thus, the res-                                 QFI for R values in the vicinity of the resonance R = 2. In-
+   onance condition can be approached not only by tuning the                                     terestingly, the resonant scaling is not restricted to the exactly
+   oscillator frequency, but also by adjusting the kicking period.                               tuned point: for values of R sufficiently close to 2, the QFI
+   For an initial estimate ω0 of the unknown frequency, one can                                  initially follows the same scaling as the resonant case. The
+   choose τ ≃ 2π/(Rω0 ),         R ∈ Z+ , thereby bringing the sys-                              agreement persists over an increasingly long time interval as
+   tem close to a resonant point. Since the QFI is strongly en-                                  the detuning |R − 2| is reduced. For larger detunings, the de-
+   hanced in the vicinity of the resonance, this adjustment can                                  parture from the resonant scaling occurs at earlier times, indi-
+   increase the available information about ω and consequently                                   cating that the finite-time dynamics can resolve the deviation
+   improve the precision of a subsequent estimation. This sug-                                   from resonance only after a sufficiently long evolution.
+   gests a natural adaptive sensing protocol: a coarse measure-                                     This finite-time behavior is further illustrated in Fig. 5(b),
+   ment first provides an initial estimate of ω, which is then used                              where the QFI is plotted as a function of R at several evo-
+   to tune τ closer to a resonance, followed by a second sensing                                 lution times. At each time, the QFI exhibits a pronounced
+   stage with enhanced QFI. Repeating this procedure could pro-                                  maximum around the resonant value R = 2, while the peak
+   gressively concentrate the operation of the sensor around the                                 becomes progressively narrower as the evolution time is in-
+   resonant condition.                                                                           creased. Thus, longer evolution allows the dynamics to re-
+      The same mechanism suggests a complementary applica-                                       solve increasingly small deviations from the resonant condi-
+   tion in frequency stabilization and drift detection. Suppose                                  tion. Equivalently, two values of R that are indistinguishable
+   that the kicking period is fixed such that a known operating                                  within the available evolution time can become distinguish-
+   frequency ω0 satisfies ω0 τ = 2π/R. The system then oper-                                     able after sufficiently long evolution because the accumulated
+   ates at a translationally invariant resonance, where the QFI                                  dynamical phase carries information about their small differ-
+   exhibits its strongest temporal enhancement. A small change                                   ence. These results demonstrate that the enhanced resonant
+   ω0 → ω0 + δω moves the system away from the resonant con-                                     scaling is robust against finite detuning over experimentally
+   dition. Because the dynamics are highly sensitive to this de-                                 relevant time scales, while also highlighting the increasing pa-
+   tuning, the resulting change in the quantum state, and conse-                                 rameter resolution afforded by longer interrogation times.
+   quently in the measured Fisher information or an appropriate                                     We now focus on a more intricate case of R = 4. The same
+   observable, can provide a sensitive indicator of a frequency                                  reasoning can be extended to the other cases where R = 3 and
+   drift. In this sense, the resonant KHO can be viewed not only                                 R = 6. As discussed in Ref. [59], the translational symmetries
+   as a sensor for estimating an unknown frequency, but also as a                                of the Floquet dynamics imply that ÛτR possesses either a one-
+   dynamical detector for small deviations from a prescribed op-                                 or a two-parameter translational invariance, depending on the
+   erating frequency. Such a resonance-based scheme could be                                     value of ω. For R = 4, the annihilation operator involves
+   useful for monitoring the stability of an oscillator or trapping                              the sequence of operators sin X̂( j), with j = 0, . . . , t − 1 [see
+                                                                                                                                            8
+
+Eq. (16)]. We therefore seek the simplest condition for ω un-
+der which the relation [sin X̂, Ûτ4 ] = 0 holds. For this purpose,
+the fourth power of the Floquet operator can be rearranged
+into the following form:
+                                                 2
+                Û 4 = e−iK cos(P̂/ω) e−iK cos X̂ .
+                      
+                                                               (21)
+
+Since sin X̂ is a function of X̂, it commutes trivially with
+the factor involving   cos  X̂. Hence, the nontrivial condition
+is that [sin X̂, cos P̂/ω ] = 0. This can be made to satisfy
+by taking the discrete set of frequencies ω = 1/(2kπ), where
+k ∈ Z+ . The resulting symmetry of the Floquet evolution                 FIG. 7. Comparison of the quantum Fisher information (QFI) and
+                                                                         classical Fisher information (CFI) as functions of the quadrature an-
+gives Û †4 sin X̂ Û 4 = sin X̂. More explicitly, for j = 0, 1, 2, 3,
+                                                                         gle ϕ at the resonance R = 4, for an initial coherent state with
+sin X̂( j) = sin X̂(t + j) for t = 4s, where s is a non-negative in-     (x, p) = (π, 0) at discrete time steps t = 5, 10, 15, and 20. We fix
+teger. This is also called the characteristic quantum-resonance          K = 0.1 and ω = 1/(2π), with τ determined by ωτ = 2π/R for
+condition of the system [73]. It then follows that for t = 4s,           R = 4. (a) The thick curves with markers · denote the CFI, while
+Eq. (16) transforms as                                                   the dashed lines denote the QFI. (b) The ratio CFI/QFI as a function
+                                                                         of ϕ for the same time steps. The results show that the CFI remains
+                                    3
+                             iKt X i jπ/2                                of the same order of magnitude as the QFI across the quadrature an-
+             â(t) = â +    √       e    sin X̂( j).            (22)    gles considered, indicating that quadrature measurements can attain
+                            4 2ω j=0                                     a substantial fraction of the QFI.
+As a result, the mean energy operator evolves in the Heisen-
+berg picture as                                                          of the quadrature operator Qϕ . Then the CFI can be computed
+                          iKt  †             K t2 2                  using the following relation:
+      â† â (t) = â† â + √    â B̂ − B̂† â +     B̂† B̂, (23)
+                           4 2ω                   32ω                                           X      1    ∂p(qϕ |ω) 2
+                                                                                                                     !
+                                                                                     IC (Qϕ ) =                         ,        (24)
+where B̂ = 3j=0 ei jπ/2 sin X̂( j). For a generic state |ψ⟩, the
+                P
+                                                                                                q
+                                                                                                   p(qϕ |ω)    ∂ω
+above expression implies that the mean energy grows quadrat-
+ically with discrete time unless ⟨ψ| B̂† B̂|ψ⟩ = 0. Consequently,        where P(qϕ |ω) = ⟨ψω | qϕ |ψω ⟩ = ⟨ψ|Ûω†n qϕ Ûωn |ψ⟩. The
+                                                                                                      Q                  Q
+the QFI can grow with at most ∼ t6 scaling.                              summation is performed over all the eigenstates {|qϕ ⟩} of Qϕ .
+                                                                         Moreover ∂ω p(qϕ |ω) = 2 Im(⟨ψ|Ûω†n qϕ Ûωn hω (n)|ψ⟩), where
+                                                                                                                  Q
+   We confirm this behavior through numerical simulations for
+both the vacuum state and a coherent state. The results are              hω (n) = iÛ †n ∂ω Û n bears the same meaning as before; the gen-
+shown in Fig. 6, where the QFI and mean energy are plotted               erator of translations in parameter space of ω.
+in panels 6(a) and 6(b), respectively. While the mean energy                To assess the performance of quadrature measurements, we
+grows approximately quadratically in time, the QFI exhibits a            compare the CFI with the QFI as a function of the quadra-
+∼ t5.7 scaling, in close agreement with our analytical predic-           ture angle ϕ at the resonance R = 4. For an initial coherent
+tion of t6 scaling. These results demonstrate that translational         state with (x, p) = (π, 0), we evaluate both quantities at sev-
+invariance induced by resonance can substantially enhance the            eral discrete time steps, t = 5, 10, 15, and 20, as shown in
+sensing capability of the system, without requiring conven-              Fig. 7. The CFI exhibits an angle dependence while remain-
+tional quantum resources such as entanglement or squeezing.              ing of the same order of magnitude as the QFI across the range
+This reveals dynamical symmetry as an alternative route to-              of quadrature angles considered. This is further illustrated
+ward enhanced quantum sensing.                                           by the ratio CFI/QFI, which shows that quadrature measure-
+                                                                         ments can attain a substantial fraction of the QFI. Thus, even
+                                                                         though the quadrature measurements do not necessarily real-
+            V.   QUADRATURE MEASUREMENTS                                 ize the optimal measurement, they can capture a significant
+                                                                         portion of the available quantum Fisher information.
+   While the quantum Fisher information sets the maximum
+achievable precision for estimating an unknown parameter in
+the Hamiltonian under an optimal measurement, identifying a                                     VI.   DISCUSSION
+measurement strategy that saturates the quantum Cramér–Rao
+bound is generally challenging. Here, we consider quadra-                  Non-Kolmogorov-Arnold-Moser systems are known to
+ture measurements and examine the classical Fisher informa-              provide a faster route to classical chaos through an abrupt
+tion (CFI) associated with estimating ω, as they are a natural           breaking of the invariance phase space tori. In this work,
+choice in atom-optical settings such as the KHO.
+                                                 √ The quadra-          we have demonstrated that non-KAM systems as promising
+ture operator is given by Qϕ = e−iϕ â† + eiϕ â / 2. By tuning          candidates for the quantum sensing applications by exploiting
+the phase angle ϕ,
+                 Qwe examine how CFI varies at different dis-            their extreme sensitivity near resonance conditions. By ana-
+crete time. Let qϕ be the projector along an eigenstate |qϕ ⟩            lyzing the quantum Fisher information of the kicked harmonic
+                                                                                                                                           9
+
+oscillator under unitary parameter encoding, we showed that             lar resonance-induced enhancements occur in other non-KAM
+the breakdown of the KAM assumptions can lead to a sub-                 systems, where the non-KAM behavior arises not from degen-
+stantial enhancement of parameter sensitivity compared to the           eracies in the unperturbed Hamiltonian, but from the break-
+non-resonant regimes in the parameter space. The observed               down of other KAM assumptions [14, 15]. On the metrolog-
+enhancement originates from the amplified response of the               ical side, extending the analysis to experimentally accessible
+quantum dynamics near resonances, where small perturba-                 measurements beyond quadratures and identifying protocols
+tions induce significant changes in the evolved state.                  that optimally exploit the enhanced QFI would further help
+   The central result of this work is that the temporal growth          understand the sensing potential of these systems. Finally,
+of the QFI is strongly controlled by the dynamical growth of            since QFI is intimately connected to higher-order correlation
+the mean energy. The accumulation of the generator over suc-            functions [80], which can serve as signatures of quantum re-
+cessive kicks provides a natural mechanism for enhancing the            sources such as entanglement and coherence [81, 82], it would
+distinguishability of states corresponding to nearby values of          be interesting to ask whether the quantum resources underly-
+the oscillator frequency. This establishes a direct connection          ing genuine computational advantages can also lead to corre-
+between dynamical energy growth and metrological sensitiv-              sponding metrological advantages.
+ity. In particular, if the mean excitation number grows alge-
+braically as ⟨n̂(t)⟩ ∼ tα , the QFI is bounded by a scaling of the
+form I(t) ≲ t2α+2 . The enhancement of the QFI is therefore not                             ACKNOWLEDGMENTS
+an independent feature of the quantum dynamics, but is inti-
+mately connected to the ability of the system to continuously              NDV thanks Philipp Hauke for insightful discussions on
+accumulate energy under the resonant driving.                           Fisher information and quantum resources and for valuable
+   Three features distinguish non-KAM metrology from its                comments on the manuscript. This work was supported by
+critical and chaotic counterparts. First, the resource is a sym-        the Provincia Autonoma di Trento and Q@TN, the joint lab
+metry: resonance-induced translational invariance yields bal-           between the University of Trento, FBK—Fondazione Bruno
+listic transport and hexic QFI growth, whereas Lyapunov in-             Kessler, INFN—National Institute for Nuclear Physics, and
+stability yields only transient gains [50] and generic delocal-         CNR—National Research Council. We acknowledge fund-
+ization only quartic scaling. Second, the scaling is asymptotic         ing by ANRF file number ANRF/ARGM/2025/002679/TS.
+and algebraic, not cut off at an Ehrenfest time. Third, the pro-        A.S. acknowledges support by the Department of Science
+tocol is passive — a fixed kick sequence — yet attains the gen-         and Technology, Govt. of India through the INSPIRE Fac-
+erator growth that otherwise requires optimal time-dependent            ulty Award (DST/INSPIRE/04/2023/001486), by the Anu-
+control [79]. The KHO has been realized with cold atoms and             sandhan National Research Foundation (ANRF), Govt. of
+proposed for ion traps [69, 72, 73], where ω-estimation at a            India through the Prime Minister’s Early Career Research
+translationally invariant resonance amounts to operating the            Grant (PMECRG) (ANRF/ECRG/2024/001160/PMS), by IIT
+trap at commensurate kick periods.                                      Madras through the New Faculty Initiation Grant (NFIG).
+   An important direction for future work is to investigate             We acknowledge funding support from the National Quan-
+whether the enhanced QFI scaling observed in the KHO per-               tum Mission, an initiative of the Department of Science and
+sists in the presence of realistic experimental imperfections,          Technology, Govt. of India. We also acknowledge the support
+such as decoherence, noise, and fluctuations in the kicking pa-         provided by the Foundation for QC Innovation (FQCI), DST-
+rameters. It would also be interesting to explore whether simi-         NQM T-Hub at IISc Bengaluru, in facilitating this project.
+
+
+
+
+ [1] G. Rosi, F. Sorrentino, L. Cacciapuoti, M. Prevedelli, and G. M.    [8] A. Streltsov, G. Adesso, and M. B. Plenio, Colloquium: Quan-
+     Tino, Precision measurement of the newtonian gravitational              tum coherence as a resource, Rev. Mod. Phys. 89, 041003
+     constant using cold atoms, Nature 510, 518 (2014).                      (2017).
+ [2] C. L. Degen, F. Reinhard, and P. Cappellaro, Quantum sensing,       [9] L. Pezzé and A. Smerzi, Ultrasensitive two-mode interferome-
+     Reviews of modern physics 89, 035002 (2017).                            try with single-mode number squeezing, Phys. Rev. Lett. 110,
+ [3] L. Pezzè, A. Smerzi, M. K. Oberthaler, R. Schmied, and                 163604 (2013).
+     P. Treutlein, Quantum metrology with nonclassical states of        [10] F. Wolf, C. Shi, J. C. Heip, et al., Motional fock states for
+     atomic ensembles, Rev. Mod. Phys. 90, 035005 (2018).                    quantum-enhanced amplitude and phase measurements with
+ [4] D. DeMille, N. R. Hutzler, A. M. Rey, and et al., Quantum sens-         trapped ions, Nature Communications 10, 2929 (2019).
+     ing and metrology for fundamental physics with molecules, Na-      [11] S. C. Burd, H. M. Knaack, R. Srinivas, C. Arenz, A. L. Collopy,
+     ture Physics 20, 741 (2024).                                            L. J. Stephenson, A. C. Wilson, D. J. Wineland, D. Leibfried,
+ [5] V. Giovannetti, S. Lloyd, and L. Maccone, Quantum-enhanced              J. J. Bollinger, D. T. C. Allcock, and D. H. Slichter, Experi-
+     measurements: beating the standard quantum limit, Science               mental speedup of quantum dynamics through squeezing, PRX
+     306, 1330 (2004).                                                       Quantum 5, 020314 (2024).
+ [6] V. Giovannetti, S. Lloyd, and L. Maccone, Quantum metrology,       [12] S. Hawaldar, P. Shahi, A. L. Carter, A. M. Rey, J. J. Bollinger,
+     Physical review letters 96, 010401 (2006).                              and A. Shankar, Bilayer crystals of trapped ions for quantum
+ [7] C. M. Caves, Quantum-mechanical noise in an interferometer,             information processing, Phys. Rev. X 14, 031030 (2024).
+     Phys. Rev. D 23, 1693 (1981).                                      [13] S. L. Braunstein and C. M. Caves, Statistical distance and the
+                                                                                                                                              10
+
+     geometry of quantum states, Physical Review Letters 72, 3439             quantum applications, Quantum 5, 539 (2021).
+     (1994).                                                             [35] P. Hyllus, W. Laskowski, R. Krischek, C. Schwemmer,
+[14] R. Sankaranarayanan, A. Lakshminarayan, and V. Sheorey,                  W. Wieczorek, H. Weinfurter, L. Pezzé, and A. Smerzi, Fisher
+     Chaos in a well: effects of competing length scales, Physics             information and multiparticle entanglement, Phys. Rev. A 85,
+     Letters A 279, 313 (2001).                                               022321 (2012).
+[15] R. Sankaranarayanan, A. Lakshminarayan, and V. B. Sheorey,          [36] G. Tóth, Multipartite entanglement and high-precision metrol-
+     Quantum chaos of a particle in a square well: Competing length           ogy, Phys. Rev. A 85, 022322 (2012).
+     scales and dynamical localization, Phys. Rev. E 64, 046210          [37] H. Strobel, W. Muessel, D. Linnemann, T. Zi-
+     (2001).                                                                  bold, D. B. Hume, L. Pezzè, A. Smerzi, and M. K.
+[16] N. D. Varikuti, A. Sahu, A. Lakshminarayan, and V. Madhok,               Oberthaler, Fisher information and entanglement of
+     Probing dynamical sensitivity of a non-kolmogorov-arnold-                non-gaussian spin states, Science 345, 424 (2014),
+     moser system through out-of-time-order correlators, Phys. Rev.           https://www.science.org/doi/pdf/10.1126/science.1250147.
+     E 109, 014209 (2024).                                               [38] P. Hauke, M. Heyl, L. Tagliacozzo, and P. Zoller, Measur-
+[17] N. D. Varikuti, Instabilities in a non-kam system via infor-             ing multipartite entanglement through dynamic susceptibilities,
+     mation scrambling: A note, arXiv preprint arXiv:2606.12761               Nature Physics 12, 778 (2016).
+     (2026).                                                             [39] P. Zanardi, M. G. Paris, and L. C. Venuti, Quantum criticality
+[18] P. Sreeram, A. Sahu, N. D. Varikuti, B. K. Das, S. Manna, and            as a resource for quantum estimation, Physical Review A 78,
+     V. Madhok, Information acquisition, scrambling, and sensitiv-            042105 (2008).
+     ity to errors in quantum chaos: Pg sreeram et al., Journal of the   [40] C. Invernizzi, M. Korbman, L. C. Venuti, and M. G. Paris, Op-
+     Indian Institute of Science 105, 97 (2025).                              timal quantum estimation in spin systems at criticality, Physical
+[19] N. D. Varikuti, Quantum information scrambling, chaos,                   Review A 78, 042106 (2008).
+     sensitivity, and emergent state designs, arXiv preprint             [41] P. Ivanov and D. Porras, Adiabatic quantum metrology with
+     arXiv:2409.10182 (2024).                                                 strongly correlated quantum optical systems, Physical Review
+[20] V. I. Arnold, Proof of a theorem of an kolmogorov on the in-             A 88, 023803 (2013).
+     variance of quasi-periodic motions under small perturbations        [42] M. Tsang, Quantum transition-edge detectors, Physical Review
+     of the hamiltonian, Collected Works: Representations of Func-            A 88, 021801 (2013).
+     tions, Celestial Mechanics and KAM Theory, 1957–1965 , 267          [43] K. Macieszczak, M. Guţă, I. Lesanovsky, and J. P. Garrahan,
+     (2009).                                                                  Dynamical phase transitions as a resource for quantum en-
+[21] A. N. Kolmogorov, On conservation of conditionally periodic              hanced metrology, Physical Review A 93, 022103 (2016).
+     motions for a small change in hamilton’s function, in Dokl.         [44] M. M. Rams, P. Sierant, O. Dutta, P. Horodecki, and J. Za-
+     Akad. Nauk SSSR, Vol. 98 (1954) pp. 527–530.                             krzewski, At the limits of criticality-based quantum metrology:
+[22] J. Moser, Convergent series expansions for quasi-periodic mo-            Apparent super-heisenberg scaling revisited, Physical Review
+     tions, Mathematische Annalen 169, 136 (1967).                            X 8, 021022 (2018).
+[23] J. Möser, On invariant curves of area-preserving mappings of       [45] I. Frérot and T. Roscilde, Quantum critical metrology, Physical
+     an annulus, Nachr. Akad. Wiss. Göttingen, II , 1 (1962).                review letters 121, 020402 (2018).
+[24] J. Pöschel, A lecture on the classical kam theorem, arXiv          [46] Y. Chu, S. Zhang, B. Yu, and J. Cai, Dynamic framework for
+     preprint arXiv:0908.2234 (2009).                                         criticality-enhanced quantum sensing, Physical Review Letters
+[25] J. A. Segura-Landa, M. Kumari, D. J. Nader, S. Hüsnügil,               126, 010502 (2021).
+     A. SaraerToosi, and S. Lerma-Hernández, Resonant fragility         [47] L. Garbe, M. Bina, A. Keller, M. G. Paris, and S. Felicetti, Criti-
+     and nonresonant robustness of floquet eigenstates in kicked spin         cal quantum metrology with a finite-component quantum phase
+     systems (2026), arXiv:2504.13257 [quant-ph].                             transition, Physical review letters 124, 120504 (2020).
+[26] M. Kumari and S. Ghose, Quantum-classical correspondence in         [48] L. Garbe, O. Abah, S. Felicetti, and R. Puebla, Critical quan-
+     the vicinity of periodic orbits, Phys. Rev. E 97, 052209 (2018).         tum metrology with fully-connected models: from heisenberg
+[27] K. Chinni, M. H. Muñoz Arias, I. H. Deutsch, and P. M. Poggi,           to kibble–zurek scaling, Quantum Science and Technology 7,
+     Trotter errors from dynamical structural instabilities of floquet        035010 (2022).
+     maps in quantum simulation, PRX Quantum 3, 010351 (2022).           [49] K. Gietka, L. Ruks, and T. Busch, Understanding and improv-
+[28] C. W. Helstrom, Quantum detection and estimation theory,                 ing critical metrology. quenching superradiant light-matter sys-
+     Journal of Statistical Physics 1, 231 (1969).                            tems beyond the critical point, Quantum 6, 700 (2022).
+[29] C. R. Rao, Information and the accuracy attainable in the es-       [50] L. J. Fiderer and D. Braun, Quantum metrology with quantum-
+     timation of statistical parameters, in Breakthroughs in Statis-          chaotic sensors, Nature communications 9, 1 (2018).
+     tics: Foundations and Basic Theory, edited by S. Kotz and N. L.     [51] W. Liu, M. Zhuang, B. Zhu, J. Huang, and C. Lee, Quantum
+     Johnson (Springer New York, New York, NY, 1992) pp. 235–                 metrology via chaos in a driven bose-josephson system, Physi-
+     247.                                                                     cal Review A 103, 023309 (2021).
+[30] H. Cramér, Mathematical methods of statistics, Vol. 43 (Prince-    [52] A. Chernikov, R. Sagdeev, D. Usikov, and G. Zaslavsky, Sym-
+     ton university press, 1999).                                             metry and chaos, Computers & Mathematics with Applications
+[31] S. L. Braunstein, C. M. Caves, and G. J. Milburn, Generalized            17, 17 (1989).
+     uncertainty relations: theory, examples, and lorentz invariance,    [53] V. Afanasiev, A. Chernikov, R. Sagdeev, and G. Zaslavsky, The
+     annals of physics 247, 135 (1996).                                       width of the stochastic web and particle diffusion along the web,
+[32] N. N. Chentsov, Statiscal decision rules and optimal inference,          Physics Letters A 144, 229 (1990).
+     Monog 53 (1982).                                                    [54] L. E. Reichl, Transition to Chaos (Springer, 2021).
+[33] E. A. Morozova and N. N. Chentsov, Markov invariant geom-           [55] A. B. Rechester and R. B. White, Calculation of turbulent dif-
+     etry on manifolds of states, Journal of Soviet Mathematics 56,           fusion for the chirikov-taylor model, Phys. Rev. Lett. 44, 1586
+     2648 (1991).                                                             (1980).
+[34] J. J. Meyer, Fisher information in noisy intermediate-scale         [56] Y. H. Ichikawa, T. Kamimura, and T. Hatori, Stochastic diffu-
+                                                                                                                                                  11
+
+     sion in the standard map, Physica D: Nonlinear Phenomena 29,                   79, 4790 (1997).
+     247 (1987).                                                               [70] A. R. R. Carvalho and A. Buchleitner, Web-assisted tunneling
+[57] R. Ishizaki, T. Horita, T. Kobayashi, and H. Mori, Anoma-                      in the kicked harmonic oscillator, Phys. Rev. Lett. 93, 204101
+     lous diffusion due to accelerator modes in the standard map,                   (2004).
+     Progress of Theoretical Physics 85, 1013 (1991).                          [71] S. A. Gardiner, D. Jaksch, R. Dum, J. I. Cirac, and P. Zoller,
+[58] M. V. Daly, Classical and quantum chaos in a non-linearly                      Nonlinear matter wave dynamics with a chaotic potential, Phys.
+     kicked harmonic oscillator, Ph.D. thesis, Dublin City Univer-                  Rev. A 62, 023612 (2000).
+     sity (1994).                                                              [72] G. J. Duffy, A. S. Mellish, K. J. Challis, and A. C. Wilson, Non-
+[59] F. Borgonovi and L. Rebuzzini, Translational invariance in the                 linear atom-optical δ-kicked harmonic oscillator using a bose-
+     kicked harmonic oscillator, Phys. Rev. E 52, 2302 (1995).                      einstein condensate, Phys. Rev. A 70, 041602(R) (2004).
+[60] G. M. Zaslavsky, The physics of chaos in Hamiltonian systems              [73] T. P. Billam and S. A. Gardiner, Quantum resonances in an
+     (world scientific, 2007).                                                      atom-optical δ-kicked harmonic oscillator, Phys. Rev. A 80,
+[61] T. M. Fromhold, A. A. Krokhin, C. R. Tench, S. Bujkiewicz,                     023414 (2009).
+     P. B. Wilkinson, F. W. Sheard, and L. Eaves, Effects of stochas-          [74] M. Frasca, Quantum kicked dynamics and classical diffusion,
+     tic webs on chaotic electron transport in semiconductor super-                 Physics Letters A 231, 344 (1997).
+     lattices, Phys. Rev. Lett. 87, 046803 (2001).                             [75] A. Peres, Stability of quantum motion in chaotic and regular
+[62] T. Fromhold, A. Patane, S. Bujkiewicz, P. Wilkinson,                           systems, Phys. Rev. A 30, 1610 (1984).
+     D. Fowler, D. Sherwood, S. Stapleton, A. Krokhin, L. Eaves,               [76] T. Prosen and M. Znidaric, Stability of quantum motion and cor-
+     M. Henini, et al., Chaotic electron diffusion through stochastic               relation decay, Journal of Physics A: Mathematical and General
+     webs enhances current flow in superlattices, Nature 428, 726                   35, 1455 (2002).
+     (2004).                                                                   [77] A. Goussev, R. A. Jalabert, H. M. Pastawski, and D. A. Wisni-
+[63] G. P. Berman, V. Y. Rubaev, and G. M. Zaslavsky, The problem                   acki, Loschmidt echo, Scholarpedia 7, 11687 (2012), revision
+     of quantum chaos in a kicked harmonic oscillator, Nonlinearity                 #127578.
+     4, 543 (1991).                                                            [78] A. Sahu, N. D. Varikuti, and V. Madhok, Loschmidt echo and
+[64] D. Shepelyansky and C. Sire, Quantum evolution in a dynami-                    scrambling of systematic errors in tomography—a quantum sig-
+     cal quasi-crystal, Europhysics Letters 20, 95 (1992).                          nature of chaos, Chaos: An Interdisciplinary Journal of Nonlin-
+[65] G. Kells, Quantum Chaos in the Delta Kicked Harmonic Os-                       ear Science 36, 033129 (2026).
+     cillator, Ph.D. thesis, National University of Ireland, Maynooth          [79] S. Pang and A. N. Jordan, Optimal adaptive control for quan-
+     (2005).                                                                        tum metrology with time-dependent hamiltonians, Nature com-
+[66] M. Daly and D. Hefernan, Non saturation of energy in a quan-                   munications 8, 1 (2017).
+     tum kicked oscillator, Acta Physica Polonica A 89, 571 (1996).            [80] M. Gärttner, P. Hauke, and A. M. Rey, Relating out-of-time-
+[67] U. M. Engel, On quantum chaos, stochastic webs and local-                      order correlations to entanglement via multiple-quantum coher-
+     ization in a quantum mechanical kick system (Logos-Verlag,                     ences, Phys. Rev. Lett. 120, 040402 (2018).
+     2007).                                                                    [81] N. D. Varikuti and V. Madhok, Out-of-time ordered correlators
+[68] G. A. Kells, J. Twamley, and D. M. Heffernan, Dynamical prop-                  in kicked coupled tops: Information scrambling in mixed phase
+     erties of the delta-kicked harmonic oscillator, Phys. Rev. E 70,               space and the role of conserved quantities, Chaos: An Interdis-
+     015203(R) (2004).                                                              ciplinary Journal of Nonlinear Science 34, 063124 (2024).
+[69] S. A. Gardiner, J. I. Cirac, and P. Zoller, Quantum chaos in an           [82] N. D. Varikuti, S. Bandyopadhyay, and P. Hauke, Deep thermal-
+     ion trap: The delta-kicked harmonic oscillator, Phys. Rev. Lett.               ization and measurements of quantum resources, arXiv preprint
+                                                                                    arXiv:2512.09999 (2025).
+
+
+                                                     Appendix A: Calculating Generator ĥ(t)
+                                                                                         ω
+
+                                 n          o                                                  √
+  The floquet unitary is Û = exp −iK cos X̂ exp {−iωτn̂}, where n̂ = â† a and X̂ = (a + a† )/ 2ω. Let’s say Û = V̂(ω) · F̂(ω),
+so, V̂(ω) = exp{−iK cos X̂} and F(ω) = exp{−iωτn̂}. The generator for t = 1 is, ĥ(1)
+                                                                                  ω = iU ∂ω U.
+                                                                                        †
+
+
+                                                 ∂ω Û = (∂ω V̂) · F̂ + V̂(∂ω · F̂)
+                                                          iK                                                                               (A1)
+                                                       =      X̂ sin X̂ · V̂ · F̂ + V̂ · −iτn̂F̂
+                                                           2ω
+                                              iK                                    
+                               ω = i F̂ V̂           X̂ sin X̂ · V̂ · F̂ + V̂ · −iτn̂F̂
+                                       † †
+                             ĥ(1)
+                                            2ω
+                                         K †              
+                                 = τn̂ −    F̂ X̂ sin X̂ F̂
+                                         2ω
+                                         K †
+                                 = τn̂ −    (F̂ X̂ F̂)(F̂ † sin X̂ F̂)                                                                         (A2)
+                                         2ω
+                                         K e−iωτ â + eiωτ â†           e−iωτ â + eiωτ â†
+                                                                  !                          !
+                                 = τn̂ −             √               sin        √              ;   using F̂ † âF̂ = e−iωτ â
+                                         2ω            2ω                         2ω
+                                         K
+                             ω = τn̂ −
+                         ⇒ ĥ(1)            Â sin Â,
+                                         2ω
+                                                                                                                                               12
+                                   √
+where, Â = (e−iωτ â + eiωτ â† )/ 2ω. The time evolution of the generator is,
+
+
+                                                                  ω = i(Û ) ∂ω (Û ).
+                                                                          t †
+                                                                ĥ(t)              t
+                                                                                                                                            (A3)
+
+Using the product rule for the derivative of the t-step unitary evolution, we have:
+                                                                        t−1
+                                                                        X
+                                                       ∂ω (Û t ) =           Û t−1− j (∂ω Û)Û j .                                       (A4)
+                                                                        j=0
+
+Substituting this into the definition of the generator yields:
+                                                                          t−1
+                                                                          X
+                                                        ω = i(Û )
+                                                                † t
+                                                      ĥ(t)                      Û t−1− j (∂ω Û)Û j
+                                                                           j=0
+                                                                t−1
+                                                                X
+                                                            =         (Û † ) j+1 (i∂ω Û)Û j
+                                                                j=0
+                                                                                                                                            (A5)
+                                                                t−1
+                                                                X                     
+                                                            =         (Û ) iÛ † ∂ω Û Û j
+                                                                          † j
+
+                                                                j=0
+                                                                t−1
+                                                                X
+                                                            =                     ω Û .
+                                                                      (Û † ) j ĥ(1) j
+
+                                                                j=0
+
+
+Using the explicit form of ĥ(ω; 1) derived in Eq. (A2), we can express the generator at time t in terms of Heisenberg-evolved
+operators:
+                                                            t−1
+                                                            X                  K           
+                                                      ω =
+                                                    ĥ(t)       (Û † ) j τn̂ −    Â sin Â Û j
+                                                            j=0
+                                                                                2ω
+                                                                                                                                            (A6)
+                                                          t−1 
+                                                          X              K                   
+                                                        =      τn̂( j) −    Â( j) sin Â( j) ,
+                                                          j=0
+                                                                         2ω
+
+where n̂( j) = (Û † ) j n̂Û j and Â( j) = (Û † ) j ÂÛ j . Because Â is linear in â and â† , its Heisenberg evolution takes the convenient
+form:
+                                                                   e−iωτ â( j) + eiωτ â† ( j)
+                                                        Â( j) =              √                 ,                                           (A7)
+                                                                                2ω
+
+with â( j) = (Û † ) j âÛ j .
+
+
+                                           Appendix B: Time evolution of the QFI for R = 1 & 2
+
+  We obtain an analytical expression for the generator for the two special cases of R, that are R = 1 & R = 2, as they are
+amenable to exact computations. For the other cases of unperturbed frequencies, the QFI is obtained via numerical simulations.
+The local generator for the translations in the parameter space for the time-evolved Floquet operator U t is given by
+                                                                         t−1
+                                                                         X
+                                                            hω (t) =            U † j hω U j ,                                              (B1)
+                                                                          j=0
+
+where hω is the local generator as given in Eq. (A2). We first write down the time evolution of the bosonic ladder operators
+under the dynamics of the kicked harmonic oscillator when the unperturbed frequency takes the values ω = 2π and π, and nπ in
+general for n ∈ Z+ .
+                                                                        Kt   
+                                                      a(t)eiωt = a + i √ sin X̂ .                                                           (B2)
+                                                                        2ω
+                                                                                                                                 13
+
+The time-evolved bosonic ladder operators have linear time dependence for the above-specified frequencies. The result in Eq.
+(B2) is also valid for any frequency that is an integer multiple of π. The linear time dependence implies an unbounded quadratic
+growth of the energy of the kicked harmonic oscillator at resonances. On the contrary, the growth of √the energy operator ⟨a† a⟩
+remains linear if the resonance condition is not fulfilled. This can be traced back to the fact that ⟨a⟩ ∼ t for non-resonant cases.
+We now compute the time evolution of the QFI for the special cases of R = 1 and 2. The generator becomes
+
+                                                     K âe−iωτ + â† eiωτ       âe−iωτ + â† eiωτ
+                                                                          !                        !
+                                    ĥω = τâ â −
+                                               †
+                                                                  √         sin       √
+                                                     2ω             2ω                  2ω
+                                                     K
+                                        = τâ â −
+                                               †
+                                                         X̂ sin X̂,                                                            (B3)
+                                                     2ω
+where we used ωτ = 2π/R. For some j ∈ Z+ ,
+                                               K
+                        ĥω ( j) = τn̂( j) −      X̂( j) sin X̂( j)
+                                              2ω
+                                                                               K 2 j2
+                                     (                                                      )
+                                                 Kj               Kj †                         K
+                                 = τ â â − i √ sin X̂ â + i √ â sin X̂ +
+                                         †                                               2
+                                                                                      sin X̂ −      X̂ sin X̂                  (B4)
+                                                   2ω               2ω          2ω               2ω
+
+The time evolution is given by hR (t) = t−1        †j       j
+                                           P
+                                             j=0 U hR U . The time-evolved generator after t time steps becomes
+                                (
+                                          iKS 1 (t)                     K 2 S 2 (t)       )
+                                                                                                 Kt
+                        ĥω,t = τ tâ â − √
+                                    †
+                                                     sin X̂ â − â sin X̂ +
+                                                                   †                       2
+                                                                                        sin X̂ −    X̂ sin X̂,                 (B5)
+                                             2ω                                2ω                2ω
+
+where
+                                                    t(t − 1)                     t(t − 1)(2t − 1)
+                                        S 1 (t) =              and   S 2 (t) =                    .
+                                                        2                                6
+  From Eq. (B5), the QFI for any arbitrary number state |n⟩ can be straightforwardly obtained.
+                                                                                     
+                                         I(|n⟩; R) = 4 ⟨n|hR (t)2 |n⟩ − ⟨n|hR (t)|n⟩2                                          (B6)
+
+The resulting expression will be a sixth-degree polynomial of t, the total discrete time.
+

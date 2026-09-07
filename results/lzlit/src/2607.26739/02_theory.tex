@@ -1,0 +1,114 @@
+\section{Theoretical framework}\label{sec:nrqft}
+
+We base our calculation of quarkonium and leptonium yields on the NRQCD~\cite{Bodwin:1994jh} and NRQED~\cite{Caswell:1985ui} approaches. 
+We follow a notation similar to that used in refs.~\cite{AH:2024ueu, ColpaniSerri:2025vdz}, based on the covariant projection method to single out each contributing Fock state $n$ \cite{Kuhn:1979bb,Guberina:1980dc,Berger:1980ni,Petrelli:1997ge,Maltoni:1997pt}. Fock states are denoted in spectroscopic notation as $n = {}^{2 S + 1} L_J^{[C]}$, where $S$ is the spin of the pair, $L$ its orbital angular momentum, $J$ the total angular momentum, and $C$ the colour configuration, with $C = 1$ indicating a CS state and $C = 8$ a CO state. While ref.~\cite{ColpaniSerri:2025vdz} implemented bound states $\rm B$ for quarkonia (${\rm B} = {\cal Q}$) and leptonia (${\rm B} = {\cal L}$) resctricted to $L=0$, in this paper we extend the framework to states with $L=1$. This upgrade constitutes the first iteration of the {\madsons} module, enabling fully differential cross-section computations and parton-level event generation within {\mgshort} for tree-level processes involving the production of an arbitrary number of NRQFT bound states. 
+In particular, all phenomenologically relevant states up to order $v^7$ in the NRQCD expansion (see table~\ref{tab:NRQCD_scaling}) can be computed, whereas for leptonia only the LO contribution in $v$ is included.\footnote{As QED states are purely CS, the expansion in $v$ involves relativistic corrections, whose implementation goes beyond the scope of this work.}
+In the remainder of the manuscript, for a bound state $\rm B$ formed by the pair ${\cal C} {\cal C}^\prime$, the notation ${\cal B}[n]$ denotes that the projected state ${\cal C C}^\prime [n]$ has selected the transition channel to $\rm B$, whose probability is encoded in the LDME $\langle {\cal O}_n^{\rm B} \rangle$. 
+
+\begin{table}[t!]
+\centering
+\renewcommand*{\arraystretch}{1.3}
+\begin{tabular}[t]{ccccc}
+\toprule
+\parbox[c]{2cm}{\centering \textbf{power}\\\textbf{counting}}  & \multirow{1}{*}{$\eta_Q,B_c^{\pm}$} & \multirow{1}{*}{$\psi,\Upsilon,B_c^{\ast \pm}$} & \multirow{1}{*}{$h_Q,B_{c1}(L)^{\pm}$} & \multirow{1}{*}{$\chi_{QJ},B_{cJ}^{\ast\pm},B_{c1}(H)^{\pm}$} \\
+\midrule
+$v^3$ & $^1\swave_0^{[1]}$ & $^3\swave_1^{[1]}$ & --- & --- \\
+$v^5$ & --- & --- & $^1\pwave_1^{[1]},{}^1\swave_0^{[8]}$ & $^3\pwave_J^{[1]},{}^3\swave_1^{[8]}$ \\
+$v^7$ & $^1\swave_0^{[8]},{}^3\swave_1^{[8]},{}^1\pwave_1^{[8]}$ & $^1\swave_0^{[8]},{}^3\swave_1^{[8]},{}^3\pwave_J^{[8]}$ & --- & --- \\
+\bottomrule
+\end{tabular}
+\caption{\it\small Hierarchy of Fock-state contributions to different quarkonium states, organised according to the leading powers in the NRQCD velocity scaling~\cite{Bodwin:1994jh}. Note that $J=0,1,2$ for $\chi_{QJ}$ mesons, whereas only $J=0,2$ occur for $B_{cJ}^{\ast \pm}$, in agreement with the PDG notation~\cite{ParticleDataGroup:2024cfk}.\textsuperscript{\ref{fnt:bc_mesons}}}
+\label{tab:NRQCD_scaling}
+\end{table}
+\addtocounter{footnote}{1}\footnotetext{For the \pwavetxt{} CS states of the charmed bottom mesons, we adopt the same naming convention used for the physical mesons, although we refer to the corresponding eigenstates in the Fock basis. Accordingly, the $B_{c1}(L)^\pm$ and $B_{c1}(H)^\pm$ states correspond to pure ${}^1\pwave_1^{[1]}$ and ${}^3\pwave_1^{[1]}$ configurations, respectively, without mixing, unlike the corresponding physical mass eigenstates~\cite{Davies:1996gi,LHCb:2025uce}.
+\label{fnt:bc_mesons}}
+
+
+For completeness, we summarise the key steps in the computation of a generic $2 \to {\rm N}$ cross section. 
+To simplify the discussion, we consider the case in which only the last particle, with index “${\rm N}+2$”, is a bound state of elementary particles ${\cal C}$ and ${\cal C}^\prime$. The derivation can be straightforwardly generalised to an arbitrary number of bound states and to arbitrary positions in the final state.
+We denote by $\d \widetilde \sigma$ the differential cross section at the event-generation level
+\begin{equation}
+    \d \widetilde \sigma_{{\rm N},{\cal B}[n]} \equiv \d\widetilde{\sigma}( {\rm A}_1 + {\rm A}_2 \rightarrow \ident_3 + \dots + \ident_{{\rm N}+1} + {\cal B}[n] + \widetilde{X}_p)\,.
+\label{eq:mg5_xsec_output}
+\end{equation}
+Note that eq.~\eqref{eq:mg5_xsec_output} corresponds to the {\mgshort} output. 
+The tilde notation ($\d \widetilde \sigma$) distinguishes this quantity from the fully hadronic cross section $\d \sigma$, which includes additional (non-)perturbative contributions in the final state, such as soft radiation (showering) and the hadronisation of elementary particles into composite ones.
+For clarity, if the eventual (soft) gluon emission associated with a state $n$ serves only to neutralise colour and match the quantum numbers of ${\cal B}[n]$ to those of ${\rm B}$, then summing eq.~\eqref{eq:mg5_xsec_output} over $n$ yields the cross section for producing ${\rm B}$ at the event-generation level.
+In eq.~\eqref{eq:mg5_xsec_output}, the initial state is defined at the “hadronic” level, with ${\rm A}_i$ denoting a nucleus/ion, a QCD meson or baryon, or an electroweak elementary particle.
+The final state, instead, consists of $\ident_i$, which are elementary particles in the theory, and ${\cal B}[n]$, which is defined above.
+$\widetilde{X}_p$ represents beam remnants and additional parton-level initial-state radiation. 
+The purely partonic counterpart of eq.~\eqref{eq:mg5_xsec_output} is given by
+\begin{equation}
+    \d \hat \sigma_{{\rm N},{{\cal C C}^\prime}[n]} \equiv \d\hat{\sigma}\big( \Ione + \Itwo \rightarrow \ident_3 + \dots + \ident_{{\rm N}+1} + {{\cal C C}^\prime}[n]\big)\,.
+\label{eq:partonic_xsec}
+\end{equation}
+In the initial state, each ${\rm A}_i$ is replaced by its daughter $\ident_i$, which are elementary particles carrying a light-cone fraction $x_i$ of the momentum of their mother particle.
+In the final state, ${\cal B}[n]$ is replaced by the projection of the meson constituent pair onto the state $n$, which has not yet been multiplied by the LDME. The transition from the pure partonic cross section to the event-generation-level cross section is achieved through the relation
+\begin{equation}
+    \d \widetilde \sigma_{{\rm N},{\cal B}[n]} = \sum_{\Ione, \Itwo}\int \d x_1\, \d x_2 f_{\Ione/\mathrm{A}_1}(x_1)\, f_{\Itwo/\mathrm{A}_2}(x_2)\, \d\hat\sigma_{{\rm N},{{\cal CC}^\prime}[n]}\, \langle \mathcal O_{n}^{\rm B} \rangle \,.
+\label{eq:from_part-xsec_to_mg5-xsec}
+\end{equation}
+The sum runs over all partons $\ident_j$ that can be found inside the initial particle ${\rm A}_j$. The partonic cross section is therefore convoluted with the parton distribution functions (PDFs) $f_{\ident_j/\mathrm{A}_j}$ and weighted by the LDME $\langle \mathcal O_{n}^{\rm B}\rangle$.
+The former measures the probability of finding $\ident_j$ inside ${\rm A}_j$, carrying a fraction $x_j$ of the mother momentum. It is understood that $f_{\ident_j/\mathrm{A}_j}(x_j) = \delta(1 - x_j)$ if $\ident_j = {\rm A}_j$ and no additional radiation is present. Eq.~\eqref{eq:partonic_xsec} is related to the squared amplitude of the $2{\to}{\rm N}$ process in which the elementary-particle pair ${\cal C C}^\prime$ is projected onto the state $n$. To show this, we first define the partonic $2{\to}{\rm N}+1$ process describing the open production of ${\cal C}$ and ${\cal C}^\prime$ as
+\begin{equation}
+    r \equiv \Ione (k_1)+\Itwo(k_2) \to \ident_3(k_3) + \dots + \ident_{{\rm N}+2}(k_{{\rm N}+2}) + \ident_{{\rm N}+3}(k_{{\rm N}+3})\,,
+\end{equation}
+where the four-momentum of each particle is given in parentheses, and we identify ${\cal C} = \ident_{{\rm N}+2}$ and ${\cal C}^\prime = \ident_{{\rm N}+3}$. When ${\cal C}$ and ${\cal C}^\prime$ are projected onto the state $n$, the pair is treated as a single particle with momentum $K = k_{{\rm N}+2} + k_{{\rm N}+3}$, and the partonic process becomes
+\begin{equation}
+    \dot r = r^{\ident_{{\rm N}+2} \bigoplus \ident_{{\rm N}+3},\cancel\ident_{{\rm N}+3}}\,.
+\label{eq:mg5_process_definition}
+\end{equation}
+This notation follows that adopted in \mgshort~\cite{Frederix:2009yq}, where the “$\bigoplus$” symbol indicates that two elementary particles are bound together, while the slash marks the corresponding elementary particle as removed from both the phase space and the matrix element. The LO amplitudes associated with the processes $r$ and $\dot r$ are, respectively, ${\cal A}^{({\rm N}+1,0)}(r)$ and ${\mathds A}^{({\rm N},0)}(\dot{r})$. The latter is obtained from the former by applying the colour (${\mathds P}_C$),\footnote{Relevant only for quarkonia. We explicitly retain the colour projector in the following to keep the notation unified, although it is understood to reduce to the identity for leptonia.} spin (${\mathds P}_S$), orbital (${\mathds P}_L$), and total angular-momentum (${\mathds P}_J$) projectors
+\begin{equation}
+    {\mathds A}^{({\rm N},0)}(\dot{r}) = {\cal A}^{({\rm N}+1,0)}_{\left\{[C],S,L,J\right\}}(r) = \sum_{\lambda_J} \left(\sum_{\lambda_L,\lambda_S} {\mathds P}_J \left[ {\mathds P}_L {\mathds P}_S {\mathds P}_{[C]} {\cal A}^{({\rm N}+1,0)}(r)\right]_{q = 0} \right),
+    \label{eq:projected_amplitude}
+\end{equation}
+where $q = |k_{{\rm N}+2} - k_{{\rm N}+3}|/2$ is the relative velocity of the pair, and $\lambda_J$, $\lambda_L$, and $\lambda_S$ are the magnetic quantum number associated with $J$, $L$, and $S$, respectively.
+The explicit forms of the projectors introduced in eq.~\eqref{eq:projected_amplitude} are in order.
+\begin{itemize}
+    \item
+    The colour projector for CS ($C=1$) and CO ($C=8$) states is
+        \begin{equation}
+            {\mathds P}_{[C]} =
+                \begin{cases}
+                    \delta_{c_1 c_2}/\sqrt{N_c} & \quad {\rm for}\ C=1\,, \\
+                    \sqrt{2}\, t_{c_1 c_2}^{c_{12}} & \quad {\rm for}\ C=8\,, \\
+                \end{cases}
+        \label{eq:proj_colour2}
+        \end{equation}
+        where $N_c = 3$ in QCD, $c_1$ and $c_2$ are the colour indices of ${\cal C}$ and ${\cal C}^\prime$, and $t_{ij}^a$ denotes the $\mathrm{SU}(3)$ generators in the fundamental representation.
+    \item
+    The spin projector for spin singlet ($S=0$) and triplet ($S=1$) states is
+        \begin{equation}
+            {\mathds P}_{S} = \dfrac{\bar{v}_{\lambda_{{\cal C}^\prime}}\, \Gamma_S\, u_{\lambda_{{\cal C}}}}{2 \sqrt{2\, m_{{\cal C}} m_{{\cal C}^\prime}}}\,,\quad {\rm where}\ \Gamma_S =
+            \begin{cases}
+                \gamma_5 & \quad {\rm for}\ S=0\,, \\
+                \slashed{\varepsilon}_{\lambda_S}^*(K) & \quad {\rm for}\ S=1\,, \\
+            \end{cases}
+        \label{eq:proj_spin2}
+        \end{equation}
+        the constituent helicities satisfy $\lambda_{{\cal C^{(\prime)}}} = \pm 1/2$, the spin magnetic quantum number takes the values $\lambda_S=0,\pm1$, and $\varepsilon$ is the polarisation vector associated with the outgoing bound state. The quantities $u$ and $v$ denote the spinors of the constituent particle and antiparticle, respectively.
+    \item
+    The orbital angular-momentum projector is
+        \begin{equation}
+            {\mathds P}_{L} = \bigg( \varepsilon_{\lambda_L}^{*\mu}(K) \frac{{\rm d}}{{\rm d}q^\mu}\bigg)^L\,,
+        \label{eq:proj_oam}
+        \end{equation}
+        with $\lambda_L = 0, \pm 1$ for $L=1$. The derivative acts on all terms to its right, including both ${\cal A}^{({\rm N}+1,0)}(r)$ and ${\mathds P}_{S}$, as indicated in eq.~\eqref{eq:projected_amplitude}.
+    \item 
+    The total angular-momentum projector is given by the Clebsch-Gordan coefficients
+        \begin{equation}
+            {\mathds P}_{J} = \langle L, \lambda_L; S, \lambda_S | J, \lambda_J \rangle\,,
+        \label{eq:proj_tam}
+        \end{equation}
+        with $J$ taking values in the range $\vert L-S\vert\le J \le L+S$ in integer steps, and $\lambda_J = \lambda_S + \lambda_L$.\\
+\end{itemize}
+Finally, the explicit LO relation between $\d\hat\sigma_{{\rm N},{\cal C}{\cal C}^\prime[n]}$ and $\mathds{A}^{({\rm N},0)}(\dot{r})$ is 
+\begin{align}
+   \d\hat\sigma_{{\rm N},{\cal C}{\cal C}^\prime[n]} & =
+   \frac{\d {\phi_{\rm N}}(\dot{r})}{{\cal N}(\dot{r})}\!\left(\frac{1}{4k_1\cdot k_2} \frac{1}{\omega(\Ione)\omega(\Itwo)} \right)\! \frac{1}{(2J+1)N_{[C]}} {\frac{1}{2\mu_{\cal B}}}
+   \sum_{\substack{\rm colour\\ \rm spin}} |  {\mathds A}^{({\rm N},0)}(\dot{r})|^2\,,
+\label{eq:partonic_xsec_explicit}
+\end{align}
+where $\mu_{{\cal B}} = (m_{{\cal C}}m_{{\cal C}^\prime})/(m_{{\cal C}}+m_{{\cal C}^\prime})$ is the reduced mass of the ${\cal C C}^\prime$ system. 
+The $\d{\phi_{\rm N}}(\dot r)$ factor denotes the ${\rm N}$-body phase-space measure of the process $\dot r$, while ${\cal N}(\dot{r})$ is the final-state symmetry factor. The quantity $N_{[C]}$ is a colour factor, with $N_{[1]} = 2 N_c$ and ${N_{[8]} = N_c^2-1}$ for quarkonia, and $N_{[1]} = 1$ for leptonia. Moreover, $\omega(\ident_i)$ accounts for the initial-state colour and spin averaging at the $\dot{r}$ level, while $4k_1\cdot k_2 \approx 2\hat s$ corresponds to the flux factor.

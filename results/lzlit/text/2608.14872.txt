@@ -1,0 +1,1719 @@
+                                                             Minimality of the Pure Qubit ZX Calculus
+
+                                                                           Harry K. Stoltz1                 Renaud Vilmart2
+
+                                                                      1 Courant Institute of Mathematical Sciences, New York University
+                                                                    2 Université de Lorraine, CNRS, Inria, LORIA, F 54000 Nancy, France
+
+
+
+
+                                                  The ZX calculus is a graphical language for reasoning about quantum processes. In this paper, we
+arXiv:2608.14872v2 [quant-ph] 24 Aug 2026
+
+
+
+
+                                                  develop a minimal pure-qubit ZX calculus based on the work of Vilmart [13], Backens, Perdrix, and
+                                                  Wang [2], and Stoltz [12]. This resolves a problem that has remained open for nearly a decade, since
+                                                  completeness was first proved. Specifically, we show that (Ir ) is derivable and establish the necessity
+                                                  of (B) and (Ig ), yielding two complete and minimal rulesets.
+
+
+                                            1    Introduction
+                                            Introduced by Bob Coecke and Ross Duncan in 2008 [4, 5], the ZX calculus is a graphical language
+                                            for reasoning about quantum processes. It has found applications in quantum-circuit optimisation and
+                                            extraction, measurement-based quantum computation, and surface-code lattice surgery [6, 7, 3]. The first
+                                            completeness results for the full pure-qubit ZX calculus appeared in 2017 and 2018 [11, 8, 10].
+                                                 In 2019, Vilmart gave two near-optimal axiomatisations, reducing the fifteen displayed equations
+                                            of the previous presentation to complete rulesets with nine and eight named rules, respectively, and
+                                            revealing their fundamental properties [13]. In 2020, Miriam Backens, Simon Perdrix, and Quanlong
+                                            Wang crafted another near-minimal ruleset for the stabilizer ZX calculus [2]. Their presentation consists
+                                            of nine explicit rewrite rules, together with the meta-rule “only connectivity matters,” and was refined
+                                            over a series of papers beginning with their earlier work [1]. Interestingly, both rulesets (stabilizer and
+                                            pure-qubit) remained unresolved at roughly the same points: proving that the bialgebra law is necessary,
+                                            and the status of the red and green compact structures.
+                                                 As for the bialgebra, this is surprising since it is one of the cornerstones of the ZX calculus, since
+                                            it encodes a property known as strong complementarity [5]. As for the red and green compact-structure
+                                            coincidence, it is not obvious whether inclusion of one of them implies the other in the ruleset, but it is
+                                            clear that at least one of them must be necessary.
+                                                 The stabilizer case was finally solved in 2026 [12]. As it turned out, the red and green compact-
+                                            structure rules were both necessary in the stabilizer calculus, by traditional arguments. However, the
+                                            proof of the necessity of the bialgebra law required passing through a relatively nonstandard PROP built
+                                            from modules over a finite ring with nilpotent elements. This construction allowed for all the other
+                                            axioms to hold, but broke the strongly complementary nature of the red and green spiders, hence proving
+                                            that the ruleset posited in [2] was indeed minimal.
+                                                 In this paper, we resolve the analogous problem for the pure-qubit ZX calculus. In this fragment,
+                                            phases are less restricted, and the troublesome (EU) rule allows for a wide family of configurations. It is
+                                            not obvious that certain rules truly can be separated from each other. Indeed, unlike the stabilizer case,
+                                            it is actually possible to derive the red identity rule from the green one! Predictably, the bialgebra law
+                                            is indeed necessary in this ruleset, and the proof relies on an elegant interpretation involving nilpotent
+                                            elements which break the bialgebra interaction while preserving all other rules in the ruleset. This estab-
+                                            lishes the first minimal ruleset for the pure-qubit ZX calculus. Furthermore, we establish the analogous
+
+                                                                                                                            © H.K. Stoltz & R. Vilmart
+                                                                                                                            This work is licensed under the
+                                                                                                                            Creative Commons Attribution License.
+2                                                                    Minimality of the Pure Qubit ZX Calculus
+
+
+results in a second ruleset, which combines the Hadamard decomposition and rotation rules into one, and
+which utilizes a different scalar cleanup rule. These results are the first of their kind for the pure-qubit
+ZX calculus, and resolve a nearly decade-long open problem.
+
+
+2    Background
+In the full pure-qubit ZX calculus, a diagram D with k inputs and l outputs D : k → l is composed of the
+following generators:
+
+             Name                              Diagram                                     Typed Version
+                                                   n
+
+                                                       ...
+          Green Spider                            α                                         α :n→m
+                                                                                           Zn,m
+                                                       ...
+                                                  m
+
+                                                   n
+
+                                                       ...
+           Red Spider                             α                                         α :n→m
+                                                                                           Xn,m
+                                                       ...
+                                                  m
+
+
+           Hadamard                                                                          H :1→1
+
+
+            Identity                                                                        11 : 1 → 1
+
+
+            Braiding                                                                         σ :2→2
+
+
+              Cup                                                                            η :0→2
+
+
+              Cap                                                                            ε :2→0
+
+
+      Unit (empty diagram)                                                                   e:0→0
+
+                             Figure 1. Here α ∈ R, n, m ∈ N, and e is the empty diagram.
+H.K. Stoltz & R. Vilmart                                                                               3
+
+
+   We can compose diagrams in two ways:
+   • Sequentially: If D1 : a → b and D2 : b → c are two diagrams, we can compose D2 ◦ D1 : a → c
+     by placing D1 above D2 . We can think of this new process as performing the process D1 first, and
+     then applying the process D2 next.
+                                                                     ...
+                                                                     D1
+                                                           ◦         ...
+                                                                     D2
+                                                                     ...
+
+   • Spatially: If D1 : a → b and D2 : c → d are two diagrams, we can compose D1 ⊗ D2 : a + c → b + d
+     by placing D1 to the left of D2 . We can think of this new process as performing the processes D1
+     and D2 side-by-side.
+                                                                 ⊗
+
+                                                           ...         ...
+                                                           D1         D2
+                                                           ...         ...
+
+   These operations satisfy the coherence conditions for a strict monoidal category.
+   Importantly, we can define the standard interpretation functor:
+   For any ZX diagram D : n → m, JDK : (C2 )⊗n → (C2 )⊗m is defined inductively in the following way:
+
+                         JD1 ⊗ D2 K = JD1 K ⊗ JD2 K ,            JD2 ◦ D1 K = JD2 K ◦ JD1 K .
+
+                                                                                                  
+                                                               t           |       1   0    0   0
+                         rz    1 0                                                 0    0    1   0
+                            =                                                    =                
+                               0 1                                                 0    1    0   0
+                                                                                     0   0    0   1
+                 t         |                                     t           |
+                                    = |00⟩ + |11⟩                                = ⟨00| + ⟨11|
+
+                     u                        }
+                                   n
+
+                     w                 ...    
+                                               = |0⟩⊗m ⟨0|⊗n + eiα |1⟩⊗m ⟨1|⊗n ,
+                     w                        
+                     w
+                     w             α                                                        α ∈ R.
+                     v                 ...    ~
+                                   m
+
+                  u                          }
+                               n
+
+                  w                ...       
+                                              = |+⟩⊗m ⟨+|⊗n + eiα |−⟩⊗m ⟨−|⊗n ,
+                  w                          
+                  w
+                  w            α                                                             α ∈ R.
+                  v                ...       ~
+                               m
+
+                                                  t |           
+                                                         1 1 1
+                                                        =√
+                                                          2 1 −1
+4                                                                       Minimality of the Pure Qubit ZX Calculus
+
+
+2.1    The Optimized Calculus ZXopt
+
+
+        ···                      ···
+         α         ···                                                                          π
+                                                                                                 4
+                           =                                     =                                    =
+             ···
+                                α+β
+        ···        β      (S)                                   (Ig )                           -π
+                                                                                                 4
+                                                                                                     (E)
+                   ···           ···
+
+
+
+                          =                                        =
+                         (CP)                                     (B)                      α1              β1
+                                                                                           α2      = β2
+                                                                                                 (EU)           π
+                                                                                           α3              β3
+                           π    -π                    ···                ···                                    γ
+                           2     2
+                =                                         α     =           α
+               (HD) π                                          (H)
+                           2                          ···                ···
+
+
+Figure 2. Set of rules ZXopt for the ZX calculus with scalars. The above labels and rewrites are lightly adapted
+from Vilmart [13]. The right-hand side of (E) is an empty diagram. (...) denote zero or more wires, while ( )
+
+
+
+
+                                                                                                                    ·
+                                                                                                                    ··
+denote one or more wires. In rule (EU), β1 , β2 , β3 and γ can be determined as follows: x+ := α1 +α          3   −
+                                                                                                            2 , x :=
+ +                 α2      +           α2     −       ′         α2     +       α2     −
+x − α3 , z := cos 2 cos x + i sin 2 cos x and z := cos 2 sin x − i sin 2 sin x , then β1 = arg z + arg z , β2 = ′
+
+2 arg i + zz′ , β3 = arg z − arg z′ , γ = x+ − arg(z) + α2 −β   where by convention arg(0) := 0 and z′ = 0 =⇒ β2 = 0.
+                                                             2
+                                                           2
+
+     In addition to these collections of rules, we also consider the connectivity meta-rule, defined below.
+In practice, this intuitive notion lets one rearrange a ZX diagram in any way, as long as each component
+retains the original connectivity. Indeed, this is a feature of PROPs (product and permutation categories)
+as well as other “nice” monoidal categories with their associated string diagrams. The interested reader
+is referred to Heunen and Vicary [9].
+Definition 2.1 (Meta-rule: only connectivity matters). Two diagrams represent the same matrix when-
+ever one can be transformed into the other by moving components around without changing their con-
+nections.
+     Note that we are only assuming the above ruleset and the connectivity meta-rule. No color-swapped
+or flipped versions of the rules are assumed a priori.
+     Now that we have all the ingredients, there are some key features one would want to capture in a
+graphical theory ZX (with respect to pure qubit quantum mechanics):
+      • Universality.
+                                                  m   n
+                                        ∀A ∈ C2 ×2 ,          ∃D : n → m,       JDK = A.
+
+      • Soundness.
+                                     ∀D1 , D2 ,       ZXopt ⊢ D1 = D2 =⇒ JD1 K = JD2 K .
+
+      • Completeness.
+                                     ∀D1 , D2 ,       JD1 K = JD2 K =⇒ ZXopt ⊢ D1 = D2 .
+H.K. Stoltz & R. Vilmart                                                                                 5
+
+
+    • Minimality.
+                                         ∀R ∈ ZXopt ,       ZXopt \ {R} ⊬ R.
+    Note that these can be viewed as properties of the interpretation functor. Moreover, universality is
+a feature of the generators, while Soundness, Completeness and Minimality deal intimately with the
+rewrite system.
+    We refer to the ruleset in Figure 2 as ZXopt , and to Vilmart’s original version as ZXV . Thus,
+                                            ZXopt = ZXV \ {(Ir )}.
+Vilmart [13] proved that ZXV satisfies completeness and the necessity of most of the ruleset, with the
+exception of (B), (Ig ), and (Ir ). Notably, this broadly matches the situation of BPW [2], where com-
+pleteness of their ruleset was established for the stabilizer ZX calculus, with the status of the bialgebra
+and (I)-equivalent rules left open. The necessity of these rules was shown in an earlier paper by the
+author [12]. This conceptual symmetry motivates the use of similar techniques in this paper.
+    Now, we collect some important facts and theorems established in Vilmart [13].
+Theorem 2.2 (Vilmart [13]). ZXV is sound and complete for pure qubit quantum mechanics. For any
+two ZX diagrams D1 and D2 ,
+                                   JD1 K = JD2 K     ⇐⇒     ZXV ⊢ D1 = D2 .
+Theorem 2.3 (Vilmart [13]). The rules of ZXV , except possibly (B) and the identity-rule pair, are nec-
+essary:
+                         ∀R ∈ ZXV \ {(B), (Ig ), (Ir )},   ZXV \ {R} ⊬ R.
+Moreover, at least one of the identity rules is necessary:
+                                    ∃R ∈ {(Ig ), (Ir )},    ZXV \ {R} ⊬ R.
+   We show that the (Ir ) rule is derivable from ZXopt , hence our ruleset is complete:
+Theorem 2.4. The (Ir ) rule is derivable:
+
+
+                                                ZXopt ⊢      =
+                                                            (Ir )
+
+
+Proof. See Appendix A for details of this derivation.
+
+        (LIr )               (H)            π         (H)                (D′π )             (IV′ )
+                    π
+         =                    =                        =                  =                   =
+                                                                    π
+
+
+
+
+                                                                                                        ■
+    Before the results of this paper, the remaining unresolved minimality questions were the necessity of
+(B) and the individual status of the two identity rules (Ig ) and (Ir ). We have shown (Ir ) derivable, and
+will further prove the necessity of (B) and (Ig ). Thus,
+Theorem 2.5. ZXopt is a complete and minimal ruleset for the pure-qubit ZX calculus.
+Proof. This follows from the results above and Sections 3 and 4.                                        ■
+   Additionally, we adapt a second ruleset from Vilmart [13], ZX′V , to create a second complete, mini-
+mal ruleset ZX′opt = ZX′V \ {(Ir )}. The proof of this statement is found in Section 5.
+6                                                                      Minimality of the Pure Qubit ZX Calculus
+
+
+3     On the Necessity of the Bialgebra (B) rule
+3.1   Defining the target PROP E
+Let
+                                                 D := C[ε]/(ε 2 )
+and let
+                                                                  3
+                                                      V := D{0,1} .
+We use basis vectors |x⟩ for strings x ∈ {0, 1}3 , with Hamming weight |x|.
+   Now, define a PROP E where we interpret V ⊗0 := D, and
+
+                                        E (n, m) := HomD (V ⊗n ,V ⊗m ).
+
+Sequential composition is given by the usual composition of D-linear maps. Tensor product is given by
+the usual Kronecker tensor product with respect to our basis |x⟩, x ∈ {0, 1}3 .
+    Finally, we take our structural generators to be the usual ones:
+
+                                   I = idV ,           σ (|x⟩ ⊗ |y⟩) = |y⟩ ⊗ |x⟩,
+
+                    η(1) =     ∑ |x⟩ ⊗ |x⟩,              ε(|x⟩ ⊗ |y⟩) = δx,y ,      e = 1 ∈ D.
+                             x∈{0,1}3
+
+For computational ease and clarity of matrix elements, we use the basis vectors
+
+                                               |x⟩,        x ∈ {0, 1}3 ,
+
+ordered lexicographically when writing a matrix.
+   Now, let us define the interpreted Z-spiders, Hadamard, and subsequently X-spiders built from them.
+
+3.2   Defining the Hadamard in E
+By previous work on minimality in the stabilizer fragment, we want H ′ to satisfy:
+
+                                        (H ′ )T = H ′       &    (H ′ )2 = I.                               (1)
+
+In Stoltz [12], this matrix was built using a “nilpotent leak” in the underlying ring, in such a way that
+it retained properties (1), which was enough to satisfy all non-target rules but break the bialgebra. This
+time, we perturb the usual three-fold Hadamard by conjugation.
+                                                   
+                                         1 1 1
+                                   h= √               ,      H0 := h⊗3 .
+                                          2  1   −1
+
+Note that our unperturbed Hadamard H0 is the 8-dimensional Sylvester–Walsh Hadamard matrix.
+    Now, let us define a matrix N, with the goal of skew-rotating the weight-one subspace defined by the
+basis vectors |100⟩, |010⟩, |001⟩. Let N act only on these basis vectors and nowhere else:
+
+                                           N|100⟩ = |010⟩ − |001⟩,
+
+                                           N|010⟩ = |001⟩ − |100⟩,
+H.K. Stoltz & R. Vilmart                                                                                 7
+
+
+                                           N|001⟩ = |100⟩ − |010⟩,
+and
+                                                       N|x⟩ = 0
+for all other x ∈ {0, 1}3 .
+      Then define
+                                                     O := I + εN.
+This should be thought of as preserving all vectors in {0, 1}3 , except adding a small ε-skew rotation from
+N on the basis vectors |100⟩, |010⟩, |001⟩. Then define
+                                                H ′ := O−1 H0 O.
+Note that
+                                                     O−1 = I − εN
+since ε 2 = 0. Hence
+                                         H ′ = H0 + ε(H0 N − NH0 ).
+      Now, since N T = −N, we have
+                                                      OT = O−1 .
+Therefore
+                          (H ′ )T = (O−1 H0 O)T = OT H0T (O−1 )T = O−1 H0 O = H ′ .
+Also,
+                                (H ′ )2 = O−1 H0 OO−1 H0 O = O−1 H02 O = I,
+as desired. Now that we have constructed such a Hadamard, we will see that “only connectivity matters”
+will hold (Lemma 3.1).
+
+3.3     Defining the Green Spiders in E
+Now, let us turn our focus to the interpretation of the Z-spiders.
+    In Stoltz [12], Z-spiders were defined as the usual basis-copying tensor spiders, decorated by phases
+from a tuple t.
+    We want a tuple tx , x ∈ {0, 1}3 , such that spider fusion becomes pointwise multiplication of decora-
+tions
+                                           tx (α)tx (β ) = tx (α + β ).                                (2)
+These can be taken to be characters of the additive phase group (R, +), which settles this property
+precisely.
+    Define
+                                 tx (α) := ei|x|α ,  x ∈ {0, 1}3 .
+This parametrized phase family satisfies (2). Also note that the usual qubit phase gate
+                                                            
+                                                     1 0
+                                           P(α) =
+                                                     0 eiα
+has the property that P(α)⊗3 is diagonal on the basis |x⟩, with diagonal entry ei|x|α .
+Definition. Now, with this motivation, we define the interpreted Z-spider:
+                                     (Z ′ )αn,m :=     ∑ ei|x|α |x⟩⊗m ⟨x|⊗n .
+                                                     x∈{0,1}3
+8                                                                                Minimality of the Pure Qubit ZX Calculus
+
+
+3.4     Defining the Red Spiders in E
+Definition. Finally, we define the interpreted X-spider in the usual way:
+
+                                      (X ′ )αn,m := (H ′ )⊗m ◦ (Z ′ )αn,m ◦ (H ′ )⊗n .
+
+3.5     Defining the Interpretation Functor
+Define the D-linear interpretation
+                                               J−K(B) : V ⊗n −→ V ⊗m
+inductively as follows:
+
+                 JD1 ⊗ D2 K(B) = JD1 K(B) ⊗ JD2 K(B) ,                  JD2 ◦ D1 K(B) = JD2 K(B) ◦ JD1 K(B) .
+                                        u     n       }(B)
+                                             ···
+                                                                = (Z ′ )αn,m : n → m.
+                                        w     α
+                                                      
+                                        v             ~
+                                             ···
+                                              m
+                                               t |(B)
+                                                             = H ′ : 1 → 1.
+
+                                        u             }(B)
+                                           n
+                                        w ···         
+                                                                = (X ′ )αn,m : n → m.
+                                        w α           
+                                        w             
+                                          ···
+                                        v             ~
+                                           m
+      All structural generators are interpreted as the standard versions outlined above.
+Lemma 3.1. J−K(B) satisfies the “only connectivity matters” meta-rule.
+
+Proof. Since our structural generators are standard with respect to the basis {|x⟩ : x ∈ {0, 1}3 }, we have
+the yanking/snake equations:
+
+                     ∀x ∈ {0, 1}3 ,         (ε ⊗ I)(I ⊗ η)(|x⟩) = |x⟩ = (I ⊗ ε)(η ⊗ I)(|x⟩).
+
+The braiding σ is symmetric too.
+   Now, the Hadamard was chosen such that
+
+                                      (H ′ )T = H ′              and          (H ′ )2 = I,
+
+so Hadamards can be bent through the compact structure.
+    As for the green spiders, (Z ′ )αn,m is flexsymmetric: it is invariant under permutation of its input and
+output wires. Also, one can check that
+                                                                T
+                                                   (Z ′ )αn,m        = (Z ′ )αm,n .
+
+Finally, the red spiders inherit these properties by definition.
+   So, any diagram constructed from our generators depends only on their connectivity.                                 ■
+H.K. Stoltz & R. Vilmart                                                                                9
+
+
+3.6     Necessity of the Bialgebra
+Theorem 3.2. The (B) rule is necessary:
+
+                                                ZXopt \ {(B)} ⊬ (B).
+
+Proof. All rules but (B) are sound with respect to the interpretation J−K(B) . See Appendix B for sound-
+ness checks.
+    It is enough to find one basis vector and one coefficient on which the two sides disagree. In the case
+of (B), evaluating both sides on
+                                               |010⟩ ⊗ |010⟩
+and comparing the
+                                                    |000⟩ ⊗ |001⟩
+coefficient gives
+                                            u            }(B)
+                                                                                    √
+                                           w                                      2
+                          (⟨000| ⊗ ⟨001|) · w                  (|010⟩ ⊗ |010⟩) = −    ε,
+                                            v            ~                          4
+
+                                                   u     }(B)
+                                                                              
+                                 (⟨000| ⊗ ⟨001|) · v            (|010⟩ ⊗ |010⟩) = 0.
+                                                   w     
+                                                         ~
+
+
+Clearly these matrices are not the same. Hence, the bialgebra rule (B) is necessary!
+
+                                            Thus, ZXopt \ {(B)} ⊬ (B).
+
+                                                                                                        ■
+
+
+4      On the Necessity of the Green Identity (Ig ) rule
+We will introduce a relational interpretation J−Krel devised by BPW [2], and extend it to a new one,
+J−K(Ig ) to break (Ig ). This technique avoids scalar normalization altogether.
+
+    Given a relation R : A → B, we can assign it a corresponding logical matrix MR , where rows are
+indexed by elements of A, and columns are indexed by elements of B, by convention,
+      • If elements ai ∼ b j , then (MR )i j = 1.
+      • If elements ai ≁ b j , then (MR )i j = 0.
+      Then, for two logical matrices M, N over B, we have two standard ways of composing them:
+      • sequential composition.
+        If M : Br → Bs and N : Bs → Bt , then
+                                                                         _
+                                 N ◦ M : Br → Bt ,       (N ◦ M)a,c :=          (Ma,b ∧ Nb,c )
+                                                                         b∈Bs
+
+                    (where a ∈ Br , c ∈ Bt , and ∨, ∧ denote logical OR and AND, respectively)
+10                                                                        Minimality of the Pure Qubit ZX Calculus
+
+
+     • spatial composition.
+                                ′    ′
+       If M : Br → Bs and N : Br → Bs , then
+                                              ′           ′
+                                M ⊗ N : Br+r → Bs+s ,           (M ⊗ N)(a,c),(b,d) := Ma,b ∧ Nc,d .
+
+                                         (this is the usual Kronecker tensor product)
+
+     Now, for a diagram D : n → m, we define
+
+                                                       JDKrel : Bn → Bm
+
+inductively as follows:
+
+                     JD1 ⊗ D2 Krel = JD1 Krel ⊗ JD2 Krel      JD2 ◦ D1 Krel = JD2 Krel ◦ JD1 Krel .
+                                                                                                
+                                                                               1 0 0 0
+                 r       zrel              r zrel    1 0         r      zrel 0 0 1 0
+                                = 1,              =         ,                =0 1 0 0 .
+                                                                                                 
+                                                     0 1
+                                                                                 0 0 0 1
+                                                                             
+                                                                              1
+                                            rel                q    yrel 0
+                                    J      K = (1 0 0 1),                = 0 .
+                                                                               
+
+                                                                              1
+These are our structural generators.
+
+     Now, we will extend this setup to J−K(Ig ) , our new interpretation.
+
+     First, let us examine the properties we want to preserve and break.
+                    α : n → m and X α : n → m, we write d(n, m) := n+m for the total degree. d(n, m) =
+    Given spiders Zn,m                n,m
+n + m = 2 is a special case, since this matches the arities of the compact structure: (1, 1), (0, 2), (2, 0).
+
+     We want to isolate and separate the case when α = 0 and n + m = 2.
+
+     In this case, we want three things:
+     • For the connectivity meta-rule to hold.
+     • For the (Ir ) rule to hold: zero phase degree 2 red spiders must behave like a wire, cap, and cup.
+     • For the (Ig ) rule to break.
+     Now, whenever n + m = 2, we write the two-point relation:
+
+                                        Cn,m := {(0n , 0m ), (1n , 1m )} ⊆ Bn × Bm .
+
+This gives three cases:                                        rz
+                                                           1 0      rel
+                                                   C1,1 =       =
+                                                           0 1
+                                                  C0,2 = (1 0 0 1) = J    Krel
+H.K. Stoltz & R. Vilmart                                                                                                            11
+
+                                                               
+                                                                1
+                                                              0 q                     yrel
+                                                       C2,0 = 
+                                                              0 =
+                                                                 
+
+                                                                1
+   For arbitrary n, m, we write the one-point relation:
+
+                                                  Pn,m := {(0n , 0m )} ⊆ Bn × Bm .
+
+In the n + m = 2 case, we get:                                     rz
+                                                               1 0      rel
+                                                       P1,1 =       ̸ =     ,
+                                                               0 0
+
+                                                   P0,2 = (1 0 0 0) ̸= J                 Krel ,
+                                                            
+                                                              1
+                                                           0 q                     yrel
+                                                           0 ̸=
+                                                    P2,0 =                                  .
+                                                               
+
+                                                              0
+   For both Cn,m and Pn,m we have:
+                                                   T                      T
+                                                  Pn,m = Pm,n          & Cn,m = Cm,n
+
+so these are good candidates.
+    Hence, for a diagram D : n → m, we will define the interpretation
+
+                                                           JDK(Ig ) : Bn → Bm
+
+inductively:
+
+               JD1 ⊗ D2 K(Ig ) = JD1 K(Ig ) ⊗ JD2 K(Ig ) ,                  JD2 ◦ D1 K(Ig ) = JD2 K(Ig ) ◦ JD1 K(Ig ) .
+               r      z(Ig )       r        zrel            r z(Ig )       r zrel                r      z(Ig )       r   zrel
+                               =                   ,                   =            ,                            =              ,
+                                                                                    y(Ig )               yrel
+                                           K(Ig ) = J        Krel ,
+                                                                           q                       q
+                               J                                                               =                 .
+   We will “break” the green spiders and Hadamard together:
+                                       u      n        }(Ig )
+                                             ···                               t |(Ig )
+                                                                = Pn,m ,                           = P1,1 .
+                                       w      α
+                                                       
+                                       v               ~
+                                             ···
+                                              m
+And modify the red spider with the exception:
+                               u                  }(Ig )
+                                  n
+                               w ···
+                                                             (
+                                                             Cn,m         , α = 0 and n + m = 2,
+                                                           =
+                               w α                
+                               w                  
+                               v
+                                 ···
+                                                  ~           Pn,m         else.
+                                  m
+12                                                                 Minimality of the Pure Qubit ZX Calculus
+
+
+     Note that when we are not in the α = 0 and n + m = 2 case:
+                   u        }(Ig )
+                       n             t | ⊗m u n }(Ig ) t | ⊗n
+                   w ···                  (Ig )        ···         (Ig )
+
+                             =                    ◦v         ~ ◦          .
+                   w α                            w α         
+                   w
+                      ···                               ···
+                   v        ~
+                       m                                 m
+
+
+Lemma 4.1. J−K(Ig ) satisfies the “only connectivity matters” meta-rule.
+Proof. Since our structural generators are standard with respect to the usual ones, the yanking / snake
+equations hold and we have the usual symmetry of the braiding.
+                   T =P            T
+    Now, since Pn,m      m,n and Cn,m = Cm,n , and since both Pn,m and Cn,m are invariant under permutations
+of their inputs / outputs, we get:
+                              u
+                                   n        }(Ig ) T
+                              w · ·
+                                 ·
+                                                      T
+                                                                    q α y(Ig )
+                                                    = Pn,m = Pm,n = Zm,n
+                              v α          ~ 
+                              
+                                 ···
+                                  m
+                                  t | T
+                                      (Ig )                   t |(Ig )
+                                                 T
+                                             = P1,1
+                                                    = P1,1 =
+
+u          }(Ig ) T
+    n
+w · · ·     
+                        (
+                          T
+                                                          (
+w                     Cn,m    , α = 0 and n + m = 2,    Cm,n         , α = 0 and n + m = 2, q α y(Ig )
+w α                =   T
+                                                        =                                     = Xm,n      .
+v
+  ···
+            ~          Pn,m    else                      Pm,n         else
+    m
+
+Therefore, any diagram built from our generators in the relational PROP depends only on their connec-
+tivity.
+                                                                                                   ■
+
+Theorem 4.2. The (Ig ) rule is necessary:
+
+                                             ZXopt \ {(Ig )} ⊬ (Ig )
+
+Proof. All rules but (Ig ) are sound with respect to the interpretation J−K(Ig ) . See Appendix B for details.
+   Now, in the case of (Ig ):
+                                 t |(Ig )                 rz
+                                               1 0      1 0      (Ig )
+                                            =       ̸ =      =
+                                               0 0      0 1
+
+So, (Ig ) is indeed necessary!
+                                                                                                           ■
+H.K. Stoltz & R. Vilmart                                                                                          13
+
+
+5     Another Optimized Ruleset ZX′opt
+Now, we introduce a second ruleset adapted from Vilmart [13], ZX′opt . We write ZX′V for Vilmart’s
+original complete ruleset, so
+                                     ZX′opt = ZX′V \ {(Ir )}.
+We use the same generators as in Figure 1, keep the usual interpretation, and use only the connectivity
+meta-rule of Definition 2.1, as before.
+
+
+                  ···                        ···
+                  α         ···
+                                       =                      =                            =
+                      ···
+
+
+
+                                            α+β
+                  ···       β         (S)                    (Ig )              α        (IV)
+                            ···              ···
+
+                                         =                                     =
+                                        (CP)                                  (B)
+
+                                ···                ···
+                                                                     α1             β1
+                                  α          =     α                        = β2
+                                            (H)                           (EU’)          π
+                                                                     α2             β3
+                                ···                ···                                   γ
+
+
+
+Figure 3. Set of rules ZX′opt for the ZX calculus with scalars. The above labels and rewrites are lightly adapted
+from Vilmart [13]. The right-hand side of (IV) is an empty diagram. (...) denote zero or more wires, while ( )
+
+
+
+
+                                                                                                                 ·
+                                                                                                                ··
+denote one or more wires. In rule (EU’), β1 , β2 , β3 and γ can be determined as follows: x+ := α1 +α   −    +
+                                                                                                    2 , x := x −α2 ,
+                                                                                                       2
+
+z := − sin x + i cos x and z := cos x − i sin x , then β1 = arg z + arg z , β2 = 2 arg i + z′ , β3 = arg z − arg z′ ,
+            +         −      ′        +            −                        ′                  z
+
+γ = x+ − arg(z) + π−β 2                                   ′
+                   2 where by convention arg(0) := 0 and z = 0 =⇒ β2 = 0.
+
+    The necessity arguments of Vilmart [13] apply unchanged to (S), (H), and (CP), since the replace-
+ment rules (IV ) and (EU ′ ) involve only nullary and 1 → 1 structures. Moreover, (IV ) is the only rule in
+ZX′opt with an empty side, and (EU ′ ) is the only non-linear rule. Thus, (S), (IV ), (H), (EU ′ ), and (CP)
+are all necessary. We consider the remaining rules (B) and (Ig ) below.
+
+5.1   (Ir ) is derivable in ZX′opt
+As with the other ruleset, (Ir ) is derivable.
+    The following derivation of (Ir ) uses only axioms from the ZX′opt rule set, which has some overlap
+with ZXopt , hence we are allowed to use the (H0 ) and (HC) lemmas proved in Appendix A.
+    It is worth noting that this derivation for (Ir ) uses a different strategy than the other ruleset, where
+the primary concern was scalar management. Here, scalars take a back-seat, since (IV ) is more flexible.
+Rather, we focus on deriving the self-inverse property of the Hadamard through some relatively straight-
+forward lemmas regarding cancellation and commutation on 1 → 1 arity structures. In fact, every lemma
+used in this derivation has 1 → 1 arity except for (HX).
+14                                                                                   Minimality of the Pure Qubit ZX Calculus
+
+
+Theorem 5.1. The (Ir ) rule is derivable.
+
+
+
+                                                   ZX′opt ⊢           =
+                                                                     (Ir )
+
+
+
+Proof.
+
+
+                                               (HH)          (H0 )               (HH)
+                                                 =            =                    =
+
+
+
+
+                                                                                                                               ■
+      See Appendix C for details.
+
+5.2     On the Necessity of the Bialgebra (B) rule in ZX′opt
+We can simply re-use the exact same counter-model from the ZXopt necessity of (B). It suffices to show
+the soundness of the new rules (IV ) and (EU ′ ), since we know that all the other non-target rules hold,
+and (B) fails as before.
+Theorem 5.2. The (B) rule is necessary:
+
+                                                ZX′opt \ {(B)} ⊬ (B).
+
+Proof. Consider the interpretation J−K(B) defined in Section 3.5. It suffices to show that (IV ) and (EU ′ )
+hold under this interpretation.
+      • (IV ):
+                                               s       {(B)                      r      z(B)
+                                                                   =1=                         .
+                                                   α
+                                                                                           √    √
+        On the left-hand side, for any α, the two disconnected scalars evaluate to 1/(2 2) and 2 2,
+        respectively, giving a product of 1. The right-hand side evaluates trivially to 1.
+      • (EU ′ ):
+                     u       }(B)                                                                      u            }(B)
+                     w α1                                                w β1                                    
+                                           ′           3iγ     ′             ′          ′          ′
+                                    = Dα2 H Dα1 = e H Dβ3 H Dβ2 H Dβ1 H = w β2                                             .
+                     w                                                   w                                       
+                     w                                                                                           
+                     vα ~                                                 v                                     π ~
+                         2                                                                                 β3
+                                                                                                                γ
+
+        where Dθ = (Z ′ )θ1,1 . Just like before in the (EU) check, the two scalars on the right-hand side
+        contribute e3iγ in total. Then, tensoring the corresponding one-qubit Euler identity three times
+        and conjugating by O, which commutes with every Dθ , we find agreement on the final displayed
+        equality.
+                                           ∴ (B) is necessary.                        ■
+H.K. Stoltz & R. Vilmart                                                                                15
+
+
+5.3     On the Necessity of the Green Identity (Ig ) rule in ZX′opt
+Theorem 5.3. The (Ig ) rule is necessary:
+
+                                           ZX′opt \ {(Ig )} ⊬ (Ig ).
+
+Proof. Consider the interpretation J−K(Ig ) defined in Section 4. As before, it suffices to show that (IV )
+and (EU ′ ) hold under this interpretation.
+      • (IV ):
+                                           s            {(Ig )         r    z(Ig )
+                                                                 =1=                 .
+                                               α
+
+      • (EU ′ ):
+                                       u       }(Ig )              u            }(Ig )
+                                       w α1                     w β1         
+                                                        = P1,1 = w β2                    .
+                                       w                        w            
+                                       w                                     
+                                       vα ~                      v          π ~
+                                           2                           β3
+                                                                            γ
+
+                                               ∴ (Ig ) is necessary.
+                                                                                                        ■
+      So, ZX′opt is another complete, minimal ruleset.
+
+
+Acknowledgements
+We thank Miriam Backens for thoughtful discussions about this work, for checking the computations,
+and for providing deeper insights into the problem.
+
+
+References
+ [1] Miriam Backens, Simon Perdrix & Quanlong Wang (2017): A Simplified Stabilizer ZX-calculus. Electronic
+     Proceedings in Theoretical Computer Science 236, pp. 1–20, doi:10.4204/eptcs.236.1. arXiv:1602.04744.
+ [2] Miriam Backens, Simon Perdrix & Quanlong Wang (2020): Towards a Minimal Stabilizer ZX-calculus.
+     Logical Methods in Computer Science 16(4):19, doi:10.23638/lmcs-16(4:19)2020.
+ [3] Niel de Beaudrap & Dominic Horsman (2020): The ZX Calculus Is a Language for Surface Code Lattice
+     Surgery. Quantum 4, p. 218, doi:10.22331/q-2020-01-09-218.
+ [4] Bob Coecke & Ross Duncan (2008): Interacting Quantum Observables. In: Automata, Languages and
+     Programming, Lecture Notes in Computer Science 5126, Springer, pp. 298–310, doi:10.1007/978-3-540-
+     70583-3_25.
+ [5] Bob Coecke & Ross Duncan (2011): Interacting Quantum Observables: Categorical Algebra and Diagram-
+     matics. New Journal of Physics 13(4), p. 043016, doi:10.1088/1367-2630/13/4/043016.
+ [6] Ross Duncan, Aleks Kissinger, Simon Perdrix & John van de Wetering (2020): Graph-Theoretic Simplifica-
+     tion of Quantum Circuits with the ZX-Calculus. Quantum 4, p. 279, doi:10.22331/q-2020-06-04-279.
+ [7] Ross Duncan & Simon Perdrix (2010): Rewriting Measurement-Based Quantum Computations with Gen-
+     eralised Flow. In: Automata, Languages and Programming, Lecture Notes in Computer Science 6199, pp.
+     285–296, doi:10.1007/978-3-642-14162-1_24.
+16                                                               Minimality of the Pure Qubit ZX Calculus
+
+
+ [8] Amar Hadzihasanovic, Kang Feng Ng & Quanlong Wang (2018): Two Complete Axiomatisations of Pure-
+     State Qubit Quantum Computing. In: Proceedings of the 33rd Annual ACM/IEEE Symposium on Logic in
+     Computer Science, pp. 502–511, doi:10.1145/3209108.3209128.
+ [9] Chris Heunen & Jamie Vicary (2019): Categories for Quantum Theory: An Introduction. Oxford University
+     Press, doi:10.1093/oso/9780198739623.001.0001.
+[10] Emmanuel Jeandel, Simon Perdrix & Renaud Vilmart (2018): Diagrammatic Reasoning Beyond Clifford+T
+     Quantum Mechanics. In: Proceedings of the 33rd Annual ACM/IEEE Symposium on Logic in Computer
+     Science, pp. 569–578, doi:10.1145/3209108.3209139.
+[11] Kang Feng Ng & Quanlong Wang (2017): A Universal Completion of the ZX-Calculus. arXiv:1706.09877.
+[12] Harry K. Stoltz (2026): Minimality of the Stabilizer ZX Calculus. arXiv:2606.12383.
+[13] Renaud Vilmart (2019): A Near-Optimal Axiomatisation of ZX-Calculus for Pure Qubit Quantum Mechan-
+     ics. In: 2019 34th Annual ACM/IEEE Symposium on Logic in Computer Science (LICS), pp. 1–10,
+     doi:10.1109/LICS.2019.8785765.
+
+
+A     Derivations for the Red Identity Rule
+Throughout this appendix, we work in
+
+          ZXopt = ZXV \ {(Ir )} = {(S), (Ig ), (E), (CP), (B), (EU), (HD), (H)} + connectivity.
+
+    The following derivation of (Ir ) is highly technical, and most of the difficulty comes from the critical
+tracking of scalars and the scalar cleanup rule in Lemma A.7.
+    We first derive two useful identities from the ruleset:
+Lemma A.1.                                               Lemma A.2.
+
+                          =                     (H0 )                                =                 (HC)
+
+
+                      Proof.                                                   Proof.
+                    (H)       (Ig )                                          (H0 )       (H0 )
+                     =         =                                              =           =
+
+
+                                                   ■                                                      ■
+
+     Now, we derive a rule which lets us remove the red identity along with the two scalar factors shown:
+H.K. Stoltz & R. Vilmart                                                                                                                                           17
+
+
+Lemma A.3.
+                                                                         π
+                                                                                          =                                                                      (LIr )
+
+
+Proof.
+
+
+               (H0 )                         (HC)                                   (Ig )                             (EU)               (Ig )          (H0 )
+         π                 π                                 π                                        π
+                =                             =                                      =                                  =                 =              =
+
+
+
+
+                                                                                                                                                                    ■
+
+   The Hadamard is self-inverse up to a scalar residue:
+Lemma A.4.
+
+                                                                                                                                                                (H−1 )
+                                                                                          π
+                                                                         =
+
+
+
+                                                                             Proof.
+                                                    (LIr )           π
+                                                                                          (H0 )           π
+                                                     =                                     =
+
+
+                                                                                                                                                                    ■
+
+   We derive a scalar-tracked version of red spider fusion:
+Lemma A.5.                                                       ···                                      ···
+                                                                              ···
+                                                      π          α
+                                                                               β
+                                                                                              =           α +β                                                  (LSr )
+                                                                 ···
+                                                                              ···                         ···
+
+                                       ···
+                                                                             Proof.
+                                                                                ···                                      ···
+                                              ···                                             ···                                ···
+                                                             (H−1 )                                           (H0 )
+                             π         α                                            α                                    α
+                                                                 =                                             =
+                                               β                                                  β                                  β
+
+
+
+                                       ···    ···                                   ···       ···                        ···     ···
+                       ···       ···                          ···                                              ···                               ···
+
+             (H)       α
+                                             (S)                                   (H)                                       (H0 )
+              =                               =              α +β                   =                         α +β            =                  α +β
+                                  β
+
+
+
+                       ···       ···                          ···                                              ···                               ···                ■
+ 18                                                                                                             Minimality of the Pure Qubit ZX Calculus
+
+
+    We obtain a useful scalar-tracked form of the familiar Hopf law:
+ Lemma A.6.
+
+                                                                                                 =                                                                                   (HF)
+
+
+ Proof.
+
+                                               (LIr )           π
+                                                                                                (LSr )            π          π
+                                                =                                                 =
+
+
+
+
+                          (Ig )                                                                 (S)
+                                           π             π                                                        π          π
+                           =                                                                     =
+
+
+
+
+                (B)         π        π
+                                                                             (CP)       π            π
+                                                                                                                             (LSr )             π
+                                                                                                                                                           (LIr )
+                 =                                                            =                                                =                            =
+
+
+
+                                                                                                                                                                                       ■
+
+    We now obtain the scalar cleanup rule which lets us remove the following pair of scalar factors:
+ Lemma A.7.
+                                                   =                                               (IV′ )
+
+ Proof.
+                                                                               π                                                         π
+                          (E)                      π            (LSr )                                    − π4
+                                                                                                                      (CP)
+                                                   4
+                           =                                      =                                                    =                                              − π4
+                                                  − π4                         π
+                                                                                                           π
+                                                                                                           4                             π
+                                                                                                                                                                           π
+                                                                                                                                                                           4
+
+
+
+
+            π         π                                                             π       π                                                          π        π
+(LSr )                                                              (LSr )                                                                   (HF)
+  =                                                      − π4         =                                                       − π4            =                                        − π4
+                      π                                                             π       π                                                          π        π
+                                                          π                                                                      π                                                      π
+                                                          4                                                                      4                                                      4
+
+
+
+
+            π
+(LSr )                            (LIr )                                       (S)                                (Ig )                                (LSr )       − π4
+                                                                                                                                                                               (E)
+                                                   π                                        π                                        π
+  =                       − π4     =                                  − π4      =                                  =                            − π4     =           π
+                                                                                                                                                                                =
+            π                                                                                            − π4                                                        4
+                           π                                             π                                                                       π
+                           4                                             4                                                                       4
+                                                                                                          π
+                                                                                                          4
+
+
+
+                                                                                                                                                                                       ■
+
+         Two necessary technical lemmas:
+H.K. Stoltz & R. Vilmart                                                                                                                                                                                                         19
+
+
+Lemma A.8.
+                                                                                                                                                                                                                              (IV′′ )
+                                                                                                                                   π                   π
+                                                                                                             =
+
+
+Proof.
+                                                                                                                                       π                                                        π
+                                                                               π                                                       4                                                        4
+                                                                               4                                    π                                                    π          π
+                              (E)            π       (S)                                        (LIr )                                                     (LSr )
+                                             4
+                               =                      =                                          =                                                           =
+                                         − π4                                                                       π                                                    π          π
+                                                                                   − π4
+                                                                                                                                            − π4                                                        − π4
+
+
+
+                                                            π                                                                                          π
+                                                            4                                                                                          4                                                           π
+                          π              π                                                                          π                  π                                                π           π              4
+         (CP)                                                                                   (B)                                                                    (LSr )
+          =                                                                                      =                                                                       =
+                          π              π                                                                          π                  π                                                            π
+
+                                                                        − π4                                                                                    − π4                                                   − π4
+
+
+
+                                                                                          π
+                                                                                          4
+                              (LIr )             π                  π
+                                                                                                         (S)                   π                   π
+                                                                                                                                                                 π     (E)          π           π
+                                                                                                                                                                 4
+                               =                                                                          =                                                             =
+                                                                                                                                                                − π4
+                                                                                              − π4
+
+
+                                                                                                                                                                                                                                  ■
+
+   The following lemma is a useful identity allowing the red state to delete a green phase gate of −π/2:
+Lemma A.9.
+                                                                                                             − π2       =                                                                                                     (D− )
+
+
+Proof.
+                                                     − π2                                                                                          − π2
+                                  − π2                π             − π2                                                                               π       − π2                                                − π2
+                                                      2                                                                                                2
+          − π2    (H0 )                  (HD)                                      (IV′′ )                                                                             (S)
+                                                                                                         π              π                                                       π           π
+                   =                      =                     π
+                                                                2
+                                                                                     =                                                                     π
+                                                                                                                                                           2
+                                                                                                                                                                        =                                      π
+                                                                                                                                                                                                               2
+
+
+
+
+                                                                    − π2
+                                                                                                                        − π2
+          (Ig )                                                                    (LSr )                                                                      − π2
+                              π              π                                                                                                                         (S)          (H)                 (H0 )
+           =                                                    π
+                                                                                     =
+                                                                                                         π                                 (LIr )
+                                                                2                                                                                                       =            =                   =
+                                                                                                                         π
+                                                                                                                                            =                    π
+                                                                                                                                                                 2
+                                                                                                                         2
+
+
+
+
+                                                                                                                                                                                                                                  ■
+
+   A useful identity is derived:
+20                                                                                                             Minimality of the Pure Qubit ZX Calculus
+
+
+Lemma A.10.
+                                                                              π
+                                                                                     =                                                                        (D′π )
+
+Proof.
+                                       (S)                         (IV′ )                                         (CP)
+                                        =                            =                                             =
+                                 π                                                                                            − π2   − π2
+                                              − π2   − π2                   − π2     − π2
+
+
+
+
+               (S)                      (D− )                                      (S)                              (D− )                   (IV′ )
+                =    − π2                =                                          =               − π2             =                        =
+                                − π2                        − π2
+
+
+                                                                                                                                                                 ■
+
+     We reproduce the derivation of (Ir ) below for readability.
+Theorem A.11. The (Ir ) rule is derivable:
+
+
+                                                                     ZXopt ⊢                 =
+                                                                                            (Ir )
+
+
+Proof.
+
+          (LIr )                        (H)                   π                    (H)                                   (D′π )                      (IV′ )
+                            π
+           =                             =                                          =                                     =                            =
+                                                                                                           π
+
+
+
+
+                                                                                                                                                                 ■
+
+
+B     Necessity of the remaining rules in ZXopt
+Theorem 3.2.
+                                                                   ZXopt \ {(B)} ⊬ (B).
+Proof. We use the interpretation J−K(B) from Section 3. The rule (B) fails, as shown above. It remains
+to check soundness of the other rules.
+     • (Ig )
+                                                            u }(B)
+                                                                                                                 r z(B)
+                                                            v ~                = (Z ′ )01,1 = I =                         .
+
+
+                                                                                   ∴ (Ig ) holds.
+H.K. Stoltz & R. Vilmart                                                                                                                     21
+
+
+   • (E) For x ∈ {0, 1}3 , let
+                                                px = ei|x|π/4 ,              qx = e−i|x|π/4 .
+     Since p and q are constant on the weight-one subspace, we have
+
+                                                        N p = 0,             qT N = 0.
+
+     Therefore Op = p, qT O−1 = qT , and
+                 t        |(B)                                                                           3
+                     π                                                                                                          z(B)
+                      4             T   ′         T                                                  1                        r
+                                                                            e−iπ/4
+                                                                                     
+                                 = q H p = q H0 p =                     1                h                      =1=                      .
+                     -π
+                      4                                                                       eiπ/4
+
+   • (H)
+                      u            }(B)
+                           ···                                                                u · · · }(B)
+                      w            
+                                            = (X ′ )αn,m = (H ′ )⊗m ◦ (Z ′ )αn,m ◦ (H ′ )⊗n = v α ~ .
+                      w     α
+                                                                                             w       
+                      w            
+                      v            ~
+                           ···                                                                                          ···
+     By definition of the X-spiders.
+   • (CP) If we denote u := ∑x∈{0,1}3 |x⟩, then we have that Nu = 0 = N|000⟩, so O fixes both u and
+     |000⟩. Thus,                                                   √
+                                  (X ′ )00,1 = H ′ u = O−1 H0 Ou = 2 2 |000⟩.
+                                                                                                  √
+     Then,
+      √      both the scalar  and two-output     components    on the left therefore evaluate to 2 2 and
+     2 2 |000⟩⊗2 , respectively. On the right-hand side, we evaluate the tensor square of the same
+     red state. So both sides equal 8|000⟩⊗2 .
+                                    t                |(B)
+                                                                                                 r           z(B)
+                                                              = 8|000⟩ ⊗ |000⟩ =                                    .
+
+
+   • (S) Spider fusion holds by construction. The k ≥ 1 internal connecting wires force to the same
+     basis vector |x⟩, and
+                                          ei|x|α ei|x|β = ei|x|(α+β ) .
+     Therefore                                                                                }(B)
+                                               u ···                }(B)      u
+                                                              ···                    ···
+                                               v α                          = v α +β ~
+                                                                              w      
+                                                                                                         .
+                                                        ···
+
+
+
+
+                                                                    ~
+                                                  ···         β
+                                                              ···                    ···
+
+   • (EU) note:
+                                        r     z(B)      1                    r π z(B)           √
+                                                      = √               &      γ
+                                                                                             = 2 2 e3iγ ,
+                                                       2 2
+     so scalars contribute e3iγ .
+     We define dθ and Dθ as shorthand, and recall the definitions of H0 and H ′ :
+
+              dθ := diag(1, eiθ ),             Dθ := (Z ′ )θ1,1 = dθ⊗3 ,                     H0 = h⊗3 ,                 H ′ = O−1 H0 O.
+22                                                                                       Minimality of the Pure Qubit ZX Calculus
+
+
+      Since N only acts within the weight-one subspace, O commutes with every Dθ .
+                                  u        }(B)
+                                      α1
+                                                     = (Z ′ )α1,13 ◦ (X ′ )α1,12 ◦ (Z ′ )α1,11 = Dα3 H ′ Dα2 H ′ Dα1 .
+                                  wα 
+                                  v 2~
+                                      α3
+
+
+                    u             }(B)
+                        β1
+                                           = e3iγ · (X ′ )1,1 ◦ (Z ′ )1,1 ◦ (X ′ )1,1 = e3iγ · H ′ Dβ3 H ′ Dβ2 H ′ Dβ1 H ′ .
+                    wβ                                    3     β     2    β      1 β
+                    v 2      π
+                                  ~
+                        β3
+                             γ
+
+      The corresponding scalar-free qubit Euler identity is
+
+                                                       dα3 hdα2 hdα1 = eiγ hdβ3 hdβ2 hdβ1 h.
+
+      Tensoring this identity three times gives
+
+                                           Dα3 H0 Dα2 H0 Dα1 = e3iγ H0 Dβ3 H0 Dβ2 H0 Dβ1 H0 .
+
+      Conjugating by O gives
+
+                                            Dα3 H ′ Dα2 H ′ Dα1 = e3iγ H ′ Dβ3 H ′ Dβ2 H ′ Dβ1 H ′ ,
+
+      as desired!
+     • (HD) We write as shorthand:
+                                         ⊗3
+                                 Dπ/2 = dπ/2 ,                   t(−π/2) = (1, −i, −i, −1, −i, −1, −1, i)T .
+
+      And compute:
+                                           H ′t(−π/2) = e−3iπ/4 (1, i, i, −1, i, −1, −1, −i)T .
+                         u                 }(B)
+                             π      -π                                                                            t |(B)
+                         w 2         2     
+                                                  = Dπ/2 H ′ diag H ′t(−π/2) H ′ Dπ/2 = H ′ =
+                                                                            
+                                                                                                                           .
+                         w                 
+                         w                 
+                         v π               ~
+                             2
+
+
+                                                                                                                               ■
+
+Theorem 4.2.
+                                                           ZXopt \ {(Ig )} ⊬ (Ig ).
+Proof. We use the interpretation J−K(Ig ) from Section 4. The rule (Ig ) fails, as shown above. It remains
+to check soundness of the other rules.
+    Since all scalars interpret as 1, we suppress them throughout.
+     • (S)
+                                           u ···                 }(Ig )                     u           }(Ig )
+                                                           ···                                   ···
+                                           v α                            = Pn+n′ ,m+m′ = v α + β ~
+                                                                                          w       
+                                                     ···
+
+
+
+
+                                                                 ~
+                                               ···         β
+                                                           ···                                   ···
+H.K. Stoltz & R. Vilmart                                                                                                  23
+
+
+   • (Ir )
+                                                   t |(Ig )              rz
+                                                                     1 0      (Ig )
+                                                                =         =
+                                                                     0 1
+
+   • (E) The two spiders in the left-hand side are both interpreted by one-point relations, so
+                                          t        |(Ig )
+                                               π                                   r     z(Ig )
+                                               4
+                                              -π
+                                                            = P1,0 ◦ P0,1 = 1 =                   .
+                                               4
+
+
+   • (CP)
+                                     t               |(Ig )
+                                                                             (!)
+                                                              = P1,2 ◦ P0,1 = P0,2 = (1 0 0 0)
+
+                                      r            z(Ig )                   (!!)
+                                                            = P0,1 ⊗ P0,1 = P0,2 = (1 0 0 0)
+     where we have used the P-identities:
+
+                                                              Pk,m ◦ Pn,k = Pn,m                                           (!)
+
+                                                      Pn,m ⊗ Pn′ ,m′ = Pn+n′ ,m+m′                                        (!!)
+
+   • (B)
+               u             }(Ig )                                              
+                                                                                  1                        0    0   0
+                                                                                                                     
+                                                                                 0                        0    0   0
+                             ~ = (P2,1 ⊗ P2,1 ) ◦ (1 ⊗ σ ⊗ 1) ◦ (P1,2 ⊗ P1,2 ) = 
+               w                                                                                                    
+               v                                                                 0                        0    0   0
+                                                                                  0                        0    0   0
+                                                                               
+                               u  }(Ig )                          1 0 0 0
+                                                                0 0 0 0
+                               v  ~ = P2,2 ◦ P2,2 = P2,2 =                     
+                                                                0 0 0 0
+                                                                  0 0 0 0
+   • (HD)
+               u            }(Ig )
+                 π     -π                                                                                      t |(Ig )
+               w 2      2   
+                                     = P1,1 ◦ P2,1 ◦ (P1,1 ⊗ P0,1 ) = P1,1 ◦ P2,1 ◦ P1,2 = P1,1 =
+               w            
+               w            
+               v π          ~
+                   2
+
+
+
+   • (H) When n + m = 2 and α = 0, we have:
+         – (n = 0, m = 2)
+                                                         1 0 0 0
+                             P0,2 = (1 0 0 0) = (1 0 0 1) 00 00 00 00 = (P1,1 ⊗ P1,1 ) ◦C0,2 .
+                                                                            0000
+
+         – (n = 1, m = 1)                                            1 0 1 0
+                                      P1,1 =       10       =   10                 = P1,1 ◦C1,1 ◦ P1,1 .
+                                                   00           00     01     00
+24                                                                                         Minimality of the Pure Qubit ZX Calculus
+
+
+          – (n = 2, m = 0)                          1            1 0 0 0  1 
+                                     P2,0 =          0      =       0000               0    = C2,0 ◦ (P1,1 ⊗ P1,1 ).
+                                                     0              0000               0
+                                                     0              0000               1
+
+       Otherwise,
+                 u          }(Ig )
+                     ···                                                                u · · · }(Ig )
+                 w          
+                                        ⊗m            ⊗n
+                                     = P1,1 ◦ Pn,m ◦ P1,1 = Pm,m ◦ Pn,m ◦ Pn,n = Pn,m = v α ~
+                 w    α
+                                                                                       w       
+                 w          
+                 v          ~
+                     ···                                                                                                ···
+
+     • (EU) Since scalars contribute 1, and phases do not matter:
+                                     u         }(Ig )                 u        }(Ig )         u            }(Ig )
+                                         α1                               β1                      β1
+                                                         = P1,1 = v β2 ~                   = v β2                   .
+                                     wα                          w                         w             
+                                     v 2~                                                              π
+                                                                                                           ~
+                                         α3                               β3                      β3
+                                                                                                       γ
+
+
+                                                                                                                                 ■
+
+
+C     Derivations for the Red Identity Rule in ZX′opt
+Throughout this appendix, we work in
+
+                     ZX′opt = {(S), (Ig ), (IV ), (CP), (B), (H), (EU ′ )} + connectivity.
+
+    We have access to the (HC) and (H0 ) lemmas derived in Appendix A, since they rely on shared rules.
+    Now, we first derive two technical lemmas, (HX), which is like a color change rule, and (RT ), which
+sets us up for applications of the copy (CP) rule.
+Lemma C.1.
+                                                                               ···
+                                                            ···
+
+                                                            α        =             α                                          (HX)
+                                                            ···
+                                                                               ···
+Proof.
+                                                            ···
+                                                                           ···                ···
+                                              ···
+
+                                                    (H0 )           (H)                (HC)
+                                              α      =       α       =         α        =         α
+
+
+
+
+                                              ···
+                                                                           ···                ···
+                                                            ···
+                                                                                                                                 ■
+H.K. Stoltz & R. Vilmart                                                               25
+
+
+Lemma C.2.
+
+
+
+
+                                               =                                     (RT )
+
+
+
+Proof.
+
+
+
+         (Ig ), (S)          (CP)              (HX),(HC)              (H0 )
+            =                 =                   =                    =
+
+
+
+
+                      (HC),(HX)         (B)        (S), (Ig )   (H)     (S), (Ig )
+                         =               =            =          =            =
+
+
+
+
+                                                                                        ■
+   We now derive a green phase commutation rule.
+Lemma C.3. When |α| < π,
+
+
+                                         α
+
+                                               =                                     (ZC)
+                                                        α
+26                                                                                              Minimality of the Pure Qubit ZX Calculus
+
+
+Proof.
+
+
+
+
+  α
+                              (EU ′ )                                                                                (EU ′ )
+                                                                                  π
+         (H0 ),(Ig )                       π              (H)          π          2           (H)     π                                  (Ig ), (S)
+            =          α        =         − π4     π
+                                                           =         − π4                      =     − π4     π
+                                                                                                                       =                     =
+                                                   2                                                          2
+                                                                                  π
+                                                   π                              2
+                                                   2                                                          π                  − π2                    α
+                                                                                                              2
+                                                 α + π2
+                                                                                                                                α + π2
+                                                                                α + π2                      α + π2
+
+
+
+
+                                                                                                   ■
+    Here we derive a crucial Clifford+T phase cancellation rule for red spiders. This is conceptually
+close to (Ir ) and will be used in its derivation.
+Lemma C.4.
+
+
+                                                                − π4
+
+                                                                 π
+                                                                            =                                                                           (X±)
+                                                                 4
+
+
+
+
+Proof.
+
+
+                                                                                         − π4                        − π4                        − π4
+                                                   − π4
+
+
+
+                       − π4
+
+  − π4
+
+           (HX)                   (H0 )                          (HC)                               (RT )                      (Ig ), (S)
+            =                      =                              =                                  =                             =
+
+     π
+     4
+
+                        π
+                        4
+
+
+
+                                                    π                                     π                           π
+                                                    4                                                                                             π
+                                                                                          4                           4                           4
+H.K. Stoltz & R. Vilmart                                                                                                  27
+
+
+
+                  − π4                   − π4                        − π4
+                                                                                            − π4
+
+
+                                                                                                                 − π4
+
+
+
+
+        (CP)               (CP)                         (B)                      (B)                (S), (Ig )
+         =                  =                            =                        =                    =
+                                                                                             π
+                                                                                             4
+
+                   π                      π                           π
+                   4                      4                           4
+
+
+                                                                                                                  π
+                                                                                                                  4
+
+
+
+
+                  − π4            − π4
+
+
+
+
+                                                        − π4                − π4
+
+         (RT )           (HC)                   (H0 )              (ZC)      π
+                                                                             4
+                                                                                       (S), (Ig )    (H0 )
+          =               =                      =                  =                     =           =
+
+                                                         π
+                                                         4
+
+
+
+
+                    π              π
+                    4              4
+
+
+
+
+                                                                                                       ■
+    Here we derive the self-inverse property of the Hadamard in our ruleset. Conceptually, this is equiv-
+alent to the (Ir ) rule, as we will soon see.
+Lemma C.5.
+
+
+                                                               =                                                        (HH)
+28                                                                                                                           Minimality of the Pure Qubit ZX Calculus
+
+
+Proof.
+
+                                                                                             π
+                                                                                                                                                                                  − π4
+                                                                                             2                                                − π4
+                                                                 π                                                                                                         π
+                                                                 2
+
+                        (Ig ), (S)
+                                                                                                                                      π        π
+                                                                                                                                                       (X±)                        π
+                                                     (ZC)               (Ig ), (S)         − π2                (EU ′ )                          π
+                                                                                                                                                4        =
+                            =                         =                     =                π
+                                                                                                                 =                                                         π
+                                   π
+                                                                                             2                                        π       − π4                                 π
+                                          2
+                                                                                                                                               π
+                                         − π2                   − π2                                                                                                                π
+                                                                                                                                                                                    4
+                                                                                           − π2                                                 π
+                                                                                                                                                4
+
+
+
+
+                              − π4                                     − π4
+                                                                                                                 − π4                                   − π4
+                    π
+         (H)                   π              (H)                       π            (S)                                  (IV )                                     (S)                  2π            − π4
+                                                            π                                            π
+          =         π
+                                               =                                      =                          2π        =                            2π           =
+                               π                                        π
+                                                            π                                            π                                                                                         π
+                                                                                                                  π                                         π                                      4
+                               π                                        π                                         4                                         4
+                               4                                        4
+
+
+
+
+                                                                                                                                          π
+                                                                                                                                          2                                                   2π
+                                                                                                                                          π
+                                                                                                                                          2
+       (H)               2π              − π4    (Ig )                                            (EU ′ )                                 π
+                                                                                                                                                            (EU ′ )
+                                                                                                                                                                                              −2π
+        =                                         =                                                 =                    π
+                                                                                                                                          2
+                                                                                                                                                              =
+                                                                            2π        − π4                              − π4          2π             − π4                                     2π              − π4
+                                π
+                                4
+
+                                                                                 π                                                            π                                                        π
+                                                                                 4                                                            4                                                        4
+
+
+
+
+               2π                             − π4                                                − π4   (IV )                 − π4       (H)                       − π4   (S), (Ig )     − π4         (X±)
+ (S)                                                 (CP)
+  =                                                   =                2π                                 =                                =                                  =                          =
+                                                                                                                         π                                      π                             π
+                                     π                                                 π                                 4                                      4                             4
+                                     4                                                 4
+
+
+
+
+                                                                                                                                                                                                                     ■
+Theorem C.6. The (Ir ) rule is derivable.
+
+
+
+                                                                                 ZX′opt ⊢                     =
+                                                                                                             (Ir )
+
+
+Proof.
+
+                                                                            (HH)                    (H0 )               (HH)
+                                                                              =                      =                    =
+
+
+
+                                                                                                                                                                                                                     ■
+

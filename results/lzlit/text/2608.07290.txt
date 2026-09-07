@@ -1,0 +1,1508 @@
+                                              Chapter in Advancing Astrophysics with the SKA – II
+
+
+
+
+                                              Testing dark matter models and modified gravity theories
+                                              with spatially resolved H I observations
+arXiv:2608.07290v1 [astro-ph.GA] 7 Aug 2026
+
+
+
+
+                                              Federico Lelli,1 Antonino Marasco,2 Timothy A. Davis,3 Nathan Deg,4
+                                              Jonathan Freundlich,5 Gyula I. G. Jòzsa,6,7 Peter Kamphuis,8 Pavel E. Mancera Piña,9
+                                              Stacy S. McGaugh,10 Amidou Sorgho11 and Kristine Spekkens4
+                                              1 INAF, Osservatorio Astrofisico di Arcetri, Largo Enrico Fermi 5, 50125, Firenze, Italy
+                                              2 INAF, Osservatorio Astronomico di Padova, Vicolo dell’Osservatorio 5, 35122, Padova
+                                              3 Cardiff Hub for Astrophysics Research & Technology, School of Physics & Astronomy, Cardiff University,
+
+                                               Queens Buildings, Cardiff, CF24 3AA, UK
+                                              4 Department of Physics, Engineering Physics, and Astronomy,Queen’s University, Kingston ON K7L 3N6,
+
+                                               Canada
+                                              5 Observatoire Astronomique de Strasbourg, Université de Strasbourg, CNRS UMR 7550, F-67000
+
+                                               Strasbourg, France
+                                              6 Max-Planck-Institut für Radioastronomie, Auf dem Hügel 69, D-53121 Bonn, Germany
+                                              7 Centre for Radio Astronomy Techniques & Technologies (RATT), Department of Physics and Electronics,
+
+                                               Rhodes University, Makhanda, EC, South Africa
+                                              8 Ruhr University Bochum, Faculty of Physics and Astronomy, Astronomical Institute (AIRUB), 44780,
+
+                                               Bochum, Germany
+                                              9 Leiden Observatory, Leiden University, P.O. Box 9513, 2300 RA, Leiden, The Netherlands
+                                              10 Department of Astronomy, Case Western Reserve University, 10900 Euclid Avenue, Cleveland, OH 44106
+                                              11 Instituto Astrofísica Andalucía, Glorieta de la Astronomía s/n, 18008, Granada, Spain
+
+                                              E-mail: federico.lelli@inaf.it, antonino.marasco@inaf.it,
+                                              davist@cardiff.ac.uk, nathan.deg@queensu.ca,
+                                              jonathan.freundlich@astro.unistra.fr, gjozsa@mpifr-bonn.mpg.de,
+                                              peterkamphuisastronomy@gmail.com, pavel@strw.leidenuniv.nl,
+                                              stacy.mcgaugh@case.edu, asorgho@iaa.es, kristine.spekkens@queensu.ca
+
+
+
+
+                                              © The Authors                                                                        https://skao.int/
+Testing dark matter models and modified gravity theories                          F. Lelli et al.
+
+
+   Understanding the nature of dark matter (DM) is one of the most pressing questions
+   of modern physics. The flat rotation curves of galaxies, especially the extended
+   H I rotation curves from radio observations at 21 cm, played a key historical role to
+   establish the DM problem and continue to be a major tool to test different galaxy
+   formation models, particle DM models, and modified gravity theories.
+   The SKA observatory will revolutionize the study of H I rotation curves thanks to
+   its unprecedented angular resolution, sensitivity, and survey speed. In combina-
+   tion with optical and near-infrared ancillary data, H I surveys with SKA-Mid AA4
+   will allow us to (1) obtain H I data at spatial resolutions of 1′′ − 2′′, probing the
+   inner galaxy dynamics with unprecedented details (e.g., the cusp-core problem);
+   (2) move from representative samples of a few hundreds of objects to statistical
+   samples of tens of thousands of objects, allowing us to study the dynamical scal-
+   ing laws of galaxies and their DM properties with unprecedented statistical power
+   across different cosmic environments; (3) move from galaxies at 𝑧 ≃ 0 to galaxies
+   at 𝑧 ≃ 1, probing DM halos at earlier cosmic epochs and exploring the redshift
+   evolution of the dynamical laws across about 8 Gyrs.
+   The massive SKA data, however, will pose important technical challenges for the
+   derivation of H I rotation curves with automated kinematic software. Developing
+   such kinematic software in the SKA era will be crucial to reach major scientific
+   goals, such as discriminating between different solutions to the DM problem.
+
+
+
+
+                                               2
+Testing dark matter models and modified gravity theories                                F. Lelli et al.
+
+
+1   Introduction
+
+The nature of dark matter (DM) is one of the biggest mysteries of the Universe. DM is invoked
+to explain a variety of astrophysical phenomena, such as the internal dynamics of galaxies and
+galaxy systems (groups and clusters), the strength of gravitational lensing, and the power spectrum
+of the cosmic microwave background (CMB; see Sanders, 2010; Bertone and Hooper, 2018, for
+historical perspectives). Nonbaryonic DM is a major ingredient of the Λ Cold Dark Matter (ΛCDM)
+cosmological model and is essential to promote structure formation, starting from the tiny density
+perturbations imprinted on the CMB up to present-day galaxies. DM is generally thought to be
+a new elementary particle that has no electromagnetic interactions, beyond the standard model of
+particle physics. For many years, the leading DM candidates have been weakly interacting massive
+particles (WIMPs), but a plethora of alternative DM models exist, such as self-interacting DM made
+of particles interacting with each other, and fuzzy DM made of ultra-light Axion-like particles (see
+Workman et al., 2022, for a review). Despite four decades of dedicated searches and experiments,
+particle DM has eluded clear detections so far (e.g., Billard et al., 2022). Alternatively, the DM
+effect may indicate the need to revise Einstein’s theory of general relativity and its Newtonian
+limit. In this context, Modified Newtonian Dynamics (MOND, Milgrom, 1983a) and its relativistic
+extensions (Skordis and Złośnik, 2021; Blanchet and Skordis, 2024) appear to be most promising.
+Without a doubt, understanding the nature of DM is one of the major challenges of modern physics.
+The flat rotation curves of disk galaxies played a key historical role in the establishment of the DM
+problem (Bosma, 1978; Rubin et al., 1978). A key complementary role was also played by optical
+and near-infrared (NIR) surface photometry, providing the stellar gravitational contribution to the
+rotation curve (Casertano, 1983). In fact, the proper computation of the baryonic gravitational field
+of a disk-like system showed that H𝛼 rotation curves measured from optical spectroscopy were not
+extended enough to unambiguously probe the DM effect (Kalnajs, 1983; Kent, 1986). The decisive
+evidence came from radio observations of the 21-cm line of atomic hydrogen (H I). The H I disks
+of galaxies are generally twice as extended as their stellar components (e.g., Swaters et al., 2002;
+Lelli et al., 2016b, see Fig. 1), so they are uniquely suited to probe the outermost regions where the
+DM effect is dominant (van Albada et al., 1985; van Albada and Sancisi, 1986; Kent, 1987).
+Over the past 40 years, rotation curves have been derived for hundreds of nearby galaxies (e.g.,
+Begeman, 1987; Persic et al., 1996; Verheijen and Sancisi, 2001; de Blok et al., 2008; Swaters
+et al., 2009). Ideally, one combines H𝛼 and/or CO data at high angular resolutions (∼1′′ −2′′ ) in
+the inner parts with H I data at lower angular resolutions (∼10′′ −30′′ ) in the outer regions (e.g.,
+Bosma, 1978; de Blok and Bosma, 2002; Noordermeer et al., 2005; Lelli et al., 2016b; Shelest and
+Lelli, 2020). In addition, NIR surface photometry provides the best possible tracer of the stellar
+mass distribution (e.g., Verheijen, 2001; McGaugh and Schombert, 2014; Schombert et al., 2019),
+so it can be used in concert with H I and CO surface density maps to construct full mass models,
+separating the gravitational contributions of stars, gas, and DM (see Fig. 2 for an example).
+The Spitzer Photometry and Accurate Rotation Curves (SPARC) database has been a major advance
+in this effort, collecting H I+H𝛼 rotation curves from the literature (see Lelli et al., 2016b, for
+references) and complementing them with NIR surface photometry (Schombert and McGaugh,
+2014). The SPARC sample consists of 175 galaxies at 𝑧 ≃ 0 and has been used to test different
+
+
+                                                  3
+Testing dark matter models and modified gravity theories                                       F. Lelli et al.
+
+
+
+
+Figure 1: Optical images (left panels) and H I maps (right panels) on the same physical scale for four typical
+spirals: NGC 2403 (top left, Fraternali et al., 2002), NGC 6946 (top right, Boomsma et al., 2008), NGC 5055
+(bottom left, Battaglia et al., 2006), and M31 (bottom right, Braun and Thilker, 2004). Considering standard
+observations, the H I disk is generally more extended than the stellar component. Mass models of galaxies
+are usually built using optical and/or NIR images to compute the stellar gravitational contribution, and H I
+maps to compute the gas gravitational contribution (see Fig. 2). Images kindly provided by M. Verheijen.
+
+
+ΛCDM models of galaxy formation (Katz et al., 2017; Li et al., 2020) as well as alternative particle
+DM models, such as self-interacting DM (Ren et al., 2019), fuzzy DM (Bar et al., 2022), and
+superfluid DM (Mistele et al., 2022). The SPARC data have also been used to test modified gravity
+theories, such as MOND (Li et al., 2018), massive gravity (Panpanich and Burikham, 2018), f(𝑅)
+gravity (Naik et al., 2019), conformal gravity (Li and Modesto, 2020), and others. However, the
+SPARC sample is too small and heterogeneous to firmly distinguish between these different theories.
+In addition, it lacks very low-mass galaxies (with baryonic masses smaller than ∼108 M⊙ ), which
+are probed by smaller complementary samples, such as LITTLE-THINGS (Oh et al., 2015; Iorio
+et al., 2017), SHIELD (McNichols et al., 2016), and the compilation of Mancera Piña et al. (2025).
+
+To distinguish among different DM models and/or modified gravity theories, we need much larger
+samples (tens of thousands of galaxies) with both H I and NIR data, probing galaxies in different
+cosmic environments. The first steps in this direction are represented by the WALLABY survey
+with the Australian SKA pathfinder (ASKAP; Westmeier et al., 2022; Deg et al., 2022; Murugeshan
+et al., 2024), the AWES survey with APERTIF (Adams et al., 2022), and the upcoming BIG-
+SPARC database (Haubner et al., 2026). These projects will provide spatially resolved H I data for
+a few thousand galaxies at 𝑧 ≲ 0.05, increasing current samples by about one order of magnitude.
+Another avenue to test different DM models and modified gravity theories is probing the cosmic
+evolution of the baryon-DM connection by measuring H I kinematics at different 𝑧, possibly up
+to 𝑧 ≃ 1. Pioneering H I observations at 𝑧 ≳ 0.05 are provided by the CHILES survey with the
+Very Large Array (VLA; Hess et al., 2019), the DINGO survey with ASKAP (Rhee et al., 2023),
+and the MIGHTEE-HI survey (Jarvis et al., 2025; Vărăşteanu et al., 2025) and LADUMA survey
+
+
+                                                      4
+Testing dark matter models and modified gravity theories                                         F. Lelli et al.
+
+
+
+
+Figure 2: A classic evidence for the DM effect: the observed rotation curve of the spiral galaxy NGC 3521
+differs from that expected from the baryonic distribution. The baryonic contribution (green line; Lelli et al.,
+2016b) is computed solving the Poisson’s equation for the observed distribution of stars (trace by NIR
+photometry) and gas (traced by H I interferometry). The H𝛼 rotation curve (red points; Daigle et al., 2006)
+implies almost no mass discrepancy; the DM effect is evident only at the larger radii probed by the H I rotation
+curve (cyan points; Begeman, 1987). The background image is from the SDSS-DR9 (Ahn et al., 2012).
+
+
+(Kazemi-Moridani et al., 2025) with the SKA-Mid precursor telescope MeerKAT.
+The Square Kilometre Array (SKA) observatory, especially SKA-Mid in South Africa, will revo-
+lutionize the study of H I rotation curves due to its unprecedented angular resolution, sensitivity,
+and survey speed. This chapter describes the main prospects expected from the SKA-Mid Array
+Assembly 4 (AA4). We start with a description of the main open questions in galaxy dynamics,
+namely the origin of the dynamical scaling laws (Sect. 2.1) and the long-standing ΛCDM problems
+on small scales (Sect. 2.2). Next, we discuss the SKA prospects to obtain H I observations at un-
+precedented angular resolutions of ∼1′′ −2′′ (Sect. 3.1), for statistical samples of tens of thousands
+of spatially resolved galaxies (Sect. 3.2), and for galaxies at 𝑧 ≃ 1 that have been inaccessible in H I
+emission so far (Sect. 3.3). Then, we discuss next-generation fitting tools and techniques to model
+the H I kinematics in the SKA era (Sect. 4). We conclude with a brief summary (Sect. 5).
+
+
+2     Open questions
+
+2.1    The baryon-DM coupling and the dynamical laws of galaxies
+A fundamental but somewhat underappreciated piece of evidence in the DM puzzle is that the
+dark mass and the luminous mass of galaxies appear tightly coupled to each other. Empirically,
+the observed dynamics, which is generally dominated by DM, is closely related to the distribution
+
+
+                                                       5
+Testing dark matter models and modified gravity theories                                                                                                                                                F. Lelli et al.
+
+
+a                                 Baryonic Tully-Fisher Relation                   b                              Central Density Relation                  c                         Radial Acceleration Relation
+                        3.0                                                                                                                                                  −7
+                                                                                                          5
+                        2.5                                                                                                                                                  −8
+
+
+
+
+                                                                                       pc−2 ]
+                                                                                                          4
+log(Vflat ) [km s−1 ]
+
+
+
+
+                                                                                                                                                       log(gobs ) [m s−2 ]
+                        2.0                                                                                                                                                  −9
+                                                                                                          3
+
+
+
+
+                                                                                        log(Σdyn,0 ) [M
+                        1.5                                                                                                                                                  −10
+                                                                                                          2
+                                                             Local Galaxies
+                        1.0                                     Milky Way                                                                                                    −11
+                                         HI Galaxy Samples      M31
+                                                                                                          1
+                                            SPARC spirals       M33
+                        0.5                 SPARC dwarfs        LMC                                                                                                          −12
+                                            LITTLE-THINGS       SMC                                                                    SPARC spirals                                                SPARC spirals (1949 points)
+                                            SHIELD I            Leo P
+                                                                                                          0                            SPARC dwarfs                                                 SPARC dwarfs (753 points)
+                        0.0                                                                                                                                                  −13
+                              6   7      8      9       10       11           12                              0   1      2      3      4        5                              −13   −12   −11    −10      −9        −8         −7
+                                        log(Mbar ) [M ]                                                           log(Σbar,0 ) [M   pc−2 ]                                                 log(gbar ) [m s−2 ]
+
+
+
+Figure 3: The dynamical scaling laws of galaxies (adapted from Lelli, 2022). Panel a: The baryonic Tully-
+Fisher relation (BTFR). The dashed line shows the simplest ΛCDM prediction, with slope of 3 and intercept
+set by the cosmological ratio Ωbar /ΩCDM (see, e.g., McGaugh, 2012). The solid line shows a one-parameter
+fit fixing the slope to 4, as predicted by MOND. Panel b: The central density relation (CDR). The dashed
+line corresponds to the 1:1 line. The solid line shows a one-parameter fit using the MOND interpolation
+function. Panel c: The radial acceleration relation (RAR). The dashed line corresponds to the 1:1 line.
+The solid line shows a one-parameter fit using the MOND interpolation function. In the BTFR and CDR,
+each point represents a single galaxy. In the RAR, each point represents a spatially-resolved measurement at
+different radii in 153 different galaxies. In all cases, the observed scatter is comparable to that expected from
+observational uncertainties, leaving little room for intrinsic scatter. H I surveys with SKA-Mid will allow
+studying these dynamical laws with large statistical samples as a function of environment and cosmic time.
+
+
+of baryons (e.g., Swaters et al., 2012). One of the pioneers of H I kinematics in galaxies, Renzo
+Sancisi, summarized the evidence with a concise statement, which is often referred to as Renzo’s
+Rule or Sancisi’s Law: “For any feature in the luminosity profile there is a corresponding feature
+in the rotation curve and vice versa” (Sancisi, 2004). An example of this phenomenon is the
+correspondence in Fig. 2 between the “bump“ at 2 kpc in the observed rotation curve and that
+in the baryonic contribution, pointing to a “maximum disk” scenario in which baryons entirely
+dominate the inner galaxy regions (van Albada and Sancisi, 1986). Another important quote from
+Sancisi (2004) is the following one: “The unavoidable conclusion from the observed correspondence
+between the shapes of the rotation curves and those of the luminosity profiles is that the gravitational
+potential is strongly correlated with the distribution of luminous matter”.
+
+The empirical baryon-DM coupling can be quantified by a set of “dynamical laws” that connect a
+baryonic property (inferred from the observed distribution of stars and gas) and a dynamical one
+(inferred from the shape of the rotation curve), making no assumption about the nature of DM.
+Figure 3 shows three of the main dynamical scaling laws of galaxies (see Lelli, 2022, for details):
+(1) the baryonic Tully-Fisher relation (BTFR) that links the total baryonic mass to the “flat” rotation
+velocity along the outer part of the rotation curve (McGaugh et al., 2000; Verheijen, 2001); (2)
+the central density relation (CDR) that links the central baryonic surface density to the central
+dynamical-mass surface density inferred from the inner rising part of the rotation curve (Lelli et al.,
+2013, 2016c; Swaters et al., 2014); and (3) the radial acceleration relation (RAR) that links the
+baryonic gravitational field measured from the baryonic distribution to the observed centripetal
+acceleration at each radius (McGaugh et al., 2016; Lelli et al., 2017b). These dynamical laws are
+
+
+                                                                                                                         6
+Testing dark matter models and modified gravity theories                                 F. Lelli et al.
+
+
+extremely tight by the usual standards of extragalactic astronomy: the observed scatter around the
+mean relations is consistent with the observational uncertainties, implying that any intrinsic scatter
+must be tiny (e.g., Lelli et al., 2016a, 2019; Li et al., 2018; Ponomareva et al., 2018, 2021; Desmond,
+2023). The properties of these dynamical laws represent one of the major “small-scale challenges”
+for ΛCDM models of galaxy formation (Bullock and Boylan-Kolchin, 2017).
+The dynamical laws of galaxies raised a lively debate in the community because they can be
+interpreted in drastically different ways. In a particle DM scenario (irrespectively of the nature of
+the DM particle), the physical processes driving galaxy evolution inside DM halos must conspire
+to produce these scaling relations at 𝑧 = 0, which would then represent an “attractor solution”
+for baryonic physics (e.g., Di Cintio and Lelli, 2016; Ludlow et al., 2017). In a modified gravity
+scenario, instead, these scaling relations would represent new “Laws of Nature” akin to Kepler’s
+laws for planetary systems. Intriguingly, the existence and properties of these dynamical laws were
+predicted in advance by MOND (Milgrom, 1983b), a paradigm in which the nonrelativistic laws
+of gravity and/or inertia are modified below a characteristic acceleration scale 𝑎 0 (see Famaey and
+McGaugh, 2012; Milgrom, 2014; Banik and Zhao, 2022, for reviews).
+Interestingly, particle DM models and MOND theories make diametrically different predictions
+about how the properties of the dynamical laws (slope, normalization, and scatter) should depend
+on large-scale environment and cosmic time. In general, particle DM models predict that the
+dynamical laws should (1) have measurable intrinsic scatter because they emerge from the chaotic
+process of galaxy formation (Di Cintio and Lelli, 2016; Garaldi et al., 2018; Dutton et al., 2019),
+(2) evolve with cosmic time (Keller and Wadsley, 2017; Pillepich et al., 2019; Mayer et al., 2023),
+and (3) show “positive” residual correlations with large-scale environment (Paranjape and Sheth,
+2022). Here, the term “environment” acquires the specific physical meaning of average gravitational
+acceleration due to the large-scale structure in a given region of the Universe (Desmond et al., 2018).
+In contrast, MOND predicts that the dynamical laws should (1) have zero or tiny intrinsic scatter
+(Milgrom, 1983b, 1994), (2) hold at any cosmic epoch (Hossenfelder and Mistele, 2018), and (3)
+show “negative” residual correlations with the environment (Chae et al., 2020, 2021, 2022). To
+test these predictions, one needs high-quality rotation curves and mass models for statistical galaxy
+samples in different environments and at different redshifts. In Sect. 3, we describe how the synergy
+between H I data from SKA-Mid surveys and optical/NIR images from wide-field photometric
+surveys (e.g., Euclid, Rubin) will provide the necessary data to test these predictions.
+
+2.2   ΛCDM small-scale problems: cusp-core, rotation-curve diversity, and too-big-to-fail
+According to DM-only cosmological simulations, CDM halos are singular (“cuspy”) at their centers
+with volume densities scaling as 𝜌 ∝ 𝑟 −1 (Dubinski and Carlberg, 1991; Warren et al., 1992), and
+can be described by a universal density profile, the NFW profile (Navarro et al., 1996). In contrast,
+the rotation curves of galaxies – especially those of DM-dominated low-mass and low-surface-
+brightness galaxies – often reveal much shallower density profiles or even constant density “cores”
+(see de Blok, 2010, for a review). For a long time, this “cusp-core” discrepancy has been considered
+a major challenge to the standard ΛCDM paradigm (see Bullock and Boylan-Kolchin, 2017, for
+a review). Proposed solutions either advocate for fundamental changes in the physics of the
+dark sector, or focus on the role of baryonic processes during galaxy formation and evolution.
+
+
+                                                  7
+Testing dark matter models and modified gravity theories                                F. Lelli et al.
+
+
+The first type of solutions comprises alternatives to CDM such as warm DM (e.g., Colín et al.
+2000 but see also Macciò et al. 2012), self-interacting DM (e.g., Spergel and Steinhardt, 2000),
+and fuzzy DM (e.g., Goodman, 2000; Hu et al., 2000). The second type of solutions generally
+invokes strong baryonic feedback from supernova explosions and/or active galactic nuclei (AGN) to
+produce massive gas outflows, which lead to non-adiabatic oscillations in the gravitational potential,
+eventually transforming DM cusps into DM cores (e.g., Governato et al., 2010, 2012; Pontzen and
+Governato, 2012; El-Zant et al., 2016; Freundlich et al., 2020).
+
+Some authors consider the cusp-core discrepancy “solved” in the ΛCDM context due to these ad-hoc
+adjustments in the modeling of baryonic physics. However, different hydrodynamical simulations
+disagree on both the intensity of baryonic feedback and its effect on the distribution of DM, with
+some simulations predicting cores in a given mass range, while others not forming cores at all
+(e.g., Bose et al., 2019). A general prediction of feedback-driven core-formation models is that
+the presence of a DM core should correlate with the star formation history of a galaxy (e.g. Muni
+et al., 2025). This prediction could be tested by combining DM density profiles inferred from high-
+resolution H I rotation curves with, e.g., star formation histories inferred from color-magnitude
+diagrams of resolved stellar populations (e.g., McQuinn et al., 2010) and/or multi-wavelength
+integrated photometry (e.g., Schombert et al., 2019). On the other hand, self-interacting DM and
+fuzzy DM appear rather insensitive to baryonic processes (Robles et al., 2017) and predict different
+core-baryon relationships with respect to ΛCDM feedback models (Jiang et al., 2023), so there is
+hope to distinguish between these two proposed solutions to the cusp-core problem.
+
+A related issue in the ΛCDM context is the so-called “rotation-curve diversity” problem (Oman
+et al., 2015; Ghari et al., 2019). At a fixed galaxy mass, observations show a diversity in the inner
+rotation curve shapes − so in the DM density profiles − contrary to ΛCDM expectations if feedback
+processes were the same for galaxies of similar mass. More generally, the observed diversity of
+dwarf galaxies is not reproduced in current ΛCDM simulations, which may again be related to the
+implementation of baryonic feedback and the resulting core-formation process. For example, the
+NIHAO simulations produce both DM cores and a population of “ultra-diffuse” galaxies, but no
+compact dwarfs (Jiang et al., 2019). Importantly, the observed diversity in the inner rotation-curve
+shapes of dwarf galaxies corresponds to a diversity in their inner baryonic surface densities (see
+Lelli et al., 2014a), as quantified by the CDR (Fig.3, middle panel). The true underlying problem,
+therefore, is understanding the origin of the empirical baryon-DM coupling (Sect. 2.1). This issue
+was pointed out by Sancisi (2004) more than 20 years ago: “why, in systems of comparable
+luminosity, are some DM halos cuspy (like the light) and others (also like the light) are not?”.
+
+Another related issue in the ΛCDM context is the “too-big-to-fail” problem, whereby there is a
+mismatch between the predicted and observed number of satellite galaxies that have DM masses
+(measured within the stellar effective radius) above a given threshold. This would lead to the
+paradox of the most massive DM sub-halos not hosting a satellite galaxy and being completely
+dark, unless their DM mass within the stellar effective radius is substantially reduced by baryonic
+effects (e.g., Sales et al., 2022). To some extent, this problem is a combination of the “cusp-core”
+and the “missing satellites” problems, extrapolated to the lowest mass galaxies (Bullock and Boylan-
+Kolchin, 2017). Obtaining H I rotation curves for large samples of gas-rich satellite galaxies may
+
+
+                                                  8
+Testing dark matter models and modified gravity theories                                    F. Lelli et al.
+
+
+clarify this problem and its relation to the “cusp-core” and “rotation-curve diversity” problems.
+
+Finally, we point out that these various problems (“cusp-core”, “rotation curve diversity”, “too-big-
+to-fail”) are specific to ΛCDM and do not apply in a modified gravity context. In general, modified
+gravity theories are required to reproduce the observed rotation curves starting from the observed
+baryonic distribution, so the diversity in the rotation curve shapes (e.g., steeply or slowing rising)
+must naturally correspond to a diversity in the baryonic mass distribution (e.g., cuspy or cored).
+The inner parts of galaxies remain very interesting in a MOND context because it is where the
+predictions of different theories display the largest differences, albeit these are generally limited to a
+small 10−20% effect (e.g., Brada and Milgrom, 1995; Lelli et al., 2017a; Petersen and Lelli, 2020;
+Chae, 2022). Constructing a large sample of galaxies with high-resolution H I data (providing both
+the rotation curve and the gas distribution) and ancillary optical/NIR photometry (providing the
+stellar distribution) is crucial to distinguish between different modified-gravity theories.
+
+
+3     Observational prospects with SKA-Mid
+
+H I surveys with the SKA-Mid AA4 will allow us to address the open questions described in the
+previous section. However, different questions require different survey strategies. For example, to
+study the inner shapes of rotation curves in high detail, we need targeted H I observations of nearby
+galaxies at resolutions of about 1′′ -2′′ and 3 km/s, reaching H I column densities of about 5-10 M⊙
+pc−2 (typical of the innermost galaxy regions). Instead, to investigate the possible dependency of
+the dynamical laws and DM properties on cosmic environment, we need a large statistical sample
+(tens of thousands of galaxies) with “standard” medium-shallow H I data, for example reaching a
+3𝜎 column density of 1 M⊙ pc−2 at resolutions of 5′′ − 10′′ and 5 − 10 km/s. Finally, to investigate
+the possible evolution of the dynamical scaling laws with 𝑧, we need an ultra-deep pencil-beam H I
+survey in a well-studied cosmological field. This section describes these potential H I surveys and
+highlights the importance of SKA-Mid AA4 to achieve the requested resolutions and/or sensitivities.
+
+3.1    Reaching higher spatial resolutions
+For many years, the main limitation of H I rotation curves has been their low angular resolutions of
+15′′ −30′′ from “standard” observations with historical radio interferometers, such as the Westerbork
+Synthesis Radio Telescope (WSRT), the Very Large Array (VLA), and the Australia Telescope
+Compact Array (ATCA). Such angular resolutions are significantly worse than those of 1′′ − 2′′
+available for ancillary optical/NIR images (used to compute the stellar gravitational contribution),
+optical spectroscopy (used to measure H𝛼 rotation curves), and mm/submm interferometry (used to
+measure CO rotation curves). High-resolution H𝛼 and CO kinematic data have been instrumental in
+establishing the presence of DM cores in low-mass galaxies (e.g., de Blok and Bosma, 2002; Simon
+et al., 2003, 2005; Kuzio de Naray et al., 2006) because they allow minimizing beam-smearing
+effects (see Sect. 4.2.1) and detecting potential noncircular motions (see Sect. 4.3.2). However, at
+very low masses (𝑀bar ≲ 108 M⊙ ), H𝛼 and CO observations are not ideal to trace rotation curves
+for several reasons: (1) both H𝛼 and CO emission are “clumpy” in dwarf galaxies, complicating
+the construction of kinematic models (see Sect. 4.3.1); (2) the relatively high velocity dispersions
+of H𝛼 gas (∼15−30 km s−1 , e.g., Barat et al. 2020) require large and uncertain asymmetric-drift
+
+
+                                                    9
+Testing dark matter models and modified gravity theories                                          F. Lelli et al.
+
+
+
+
+Figure 4: H I data at 2′′ resolution from multi-configuration VLA data of the dwarf galaxy I Zw 18 (from
+Lelli et al., 2012). Left Panel: Total intensity H I map, showing clumps and holes that are not visible at
+lower resolutions of 5′′ (see Fig. 2 in Lelli et al. 2012). Contours are at 3 (dashed), 6, 9, 12, 15 × 1021 atoms
+cm−2 . Middle panel: Total intensity H I map superimposed on an H𝛼 image (from Cannon et al., 2004),
+showing that the spatial relation between ionized and atomic gas is complex. Right panel: H I velocity field
+showing evidence for a rotating disk. SKA-Mid AA4 will allow us to obtain H I data with spatial resolutions
+of 1′′ − 2′′ for significant samples of galaxies.
+
+
+corrections to measure the circular velocity tracing the gravitational potential (see Sect. 4.1.2); and
+(3) the low metallicites of dwarf galaxies make the CO emission very hard to detect, even with
+the Atacama Large Millimeter/submillimeter Array (ALMA, e.g., Hunt et al., 2023). Obtaining
+high-resolution H I data is needed to study the inner dynamics of dwarf galaxies in detail.
+
+In this context, a major advance was represented by the THINGS survey (Walter et al., 2008), which
+used the VLA in multiple configurations (B, C, D) to reach angular resolutions of ∼6′′ in 34 nearby
+galaxies. Clearly, high-resolution and high-sensitivity H I observations do not automatically allow
+for the derivation of accurate rotation curves because the H I disk needs to be reasonably regular
+and properly inclined (see Sect. 4 for modeling details). In the case of THINGS, rotation curves
+could be derived for 19 galaxies, after excluding low-inclination disks (de Blok et al., 2008). After
+THINGS, several other H I surveys used the VLA with a similar strategy (e.g., Hunter et al., 2012;
+Ott et al., 2012; Lelli et al., 2014a). To our knowledge, the highest angular resolution ever achieved
+with H I observations to date is 2′′ using VLA observations in A, B, C, D configurations (see Fig. 4,
+Lelli et al., 2012). These types of high-resolution H I observations have been quite successful, but
+they are not very efficient because they require (1) long integration times due to the low sensitivity
+to diffuse H I emission on long baselines, and (2) long observing campaigns spanning several years
+so that the VLA antennas can be moved into different array configurations.
+
+Due to its long baselines, SKA-Mid AA4 will completely change the game because it will allow us
+to routinely obtain H I data at 1′′ − 2′′ resolution. An H I column density of ∼5 M⊙ pc−2 (typical
+of the inner galaxy regions) over 16 km s−1 could be detected with spatial and spectral resolutions
+of ∼1.3′′ and ∼3.1 km s−1 , respectively, with an integration of about 20 hours with SKA-Mid AA4
+Band-2. For example, it would be conceivable to perform a legacy survey of 50 nearby galaxies in
+about 1,000 hours of SKA-Mid to obtain H I data with similar angular resolutions of H𝛼 integral-
+field spectroscopy (e.g., from MaNGA or SAMI), CO interferometry (e.g., from ALMA), and NIR
+
+
+                                                       10
+Testing dark matter models and modified gravity theories                                  F. Lelli et al.
+
+
+imaging (e.g., from Spitzer). This type of high-resolution H I survey would have many scientific
+goals, such as relating the distribution and kinematics of atomic gas with those of molecular and
+ionized gas to understand the star-formation process and the related baryon cycling. In terms of
+the DM problem, there will be two major advances. Firstly, we could measure the properties of
+DM cores (sizes, volume densities) with unprecedented accuracy, even in the smallest H I-bearing
+galaxies, providing major constraints to ΛCDM models of galaxy formation as well as to alternative
+DM models (e.g., warm DM, self-interacting DM, fuzzy DM). Secondly, we could test different
+modified-gravity theories in the inner galaxy regions, where they predict the largest differences
+(e.g., Brada and Milgrom, 1995; Lelli et al., 2017a; Petersen and Lelli, 2020; Chae, 2022).
+
+3.2     Building larger galaxy samples
+A comprehensive understanding of the relationship between cosmic environment and galaxy dy-
+namics (rotation-curve shapes, DM content, and so on) requires large, homogeneous, statistical
+samples of spatially resolved galaxies across a full range of environmental densities, from rich
+clusters, to loose groups, to truly isolated field galaxies. As we mentioned in Sect. 1, existing H I
+samples of spatially resolved galaxies have limited statistics. In addition, they do not capture the
+full environmental diversity necessary to study the possible relations between the DM content of
+galaxies and their location in the large-scale structure of the Universe.
+
+With SKA-Mid AA4, it will be possible to spatially resolve the H I kinematics of large galaxy
+samples in a time-efficient way. To reach this goal, there are two possible survey strategies:
+
+      1. An untargeted medium-shallow H I survey of a large fraction of the sky, similarly to APERTIF
+         (Adams et al., 2022) and WALLABY (Westmeier et al., 2022), but reaching higher angular
+         resolutions (∼5′′ versus ∼ 15′′ − 30′′ ) at similar 3𝜎 column density sensitivities (∼1 M⊙ pc−2
+         over 20 km s−1 ), so that a much larger number of H I disks will be spatially resolved.
+
+      2. A “snapshot” targeted survey of ∼20,000 galaxies with known optical/NIR properties (e.g.,
+         galaxies with Euclid images), so that the integration time can be individually set according
+         to the desired sensitivity and angular resolution to resolve the H I disk. The target sample of
+         20,000 galaxies is about two orders of magnitudes larger than SPARC and about one order of
+         magnitude larger than what we expect from WALLABY, APERTIF, and BIG-SPARC.
+
+Given that SKA-Mid will have standard single-pixel receivers, the field of view (FoV) at 21 cm
+remains rather limited, so it is not immediately obvious which of the two survey strategies is more
+effective, also taking into account commensal science goals.
+
+In the case of an untargeted wide-field medium-shallow H I survey with Band 2 of SKA-Mid AA4,
+we make a rough estimate considering the H I mass function of Jones et al. (2018) and the H I
+mass-size relation of Wang et al. (2016). If we set a 3𝜎 column density sensitivity of 1 M⊙ pc−2 for
+a synthesized beam of 4.3′′ (Briggs’ Robust parameter of 1) and spectral channels of 3.1 km s−1 , we
+expect that we will spatially resolve about 20,000 galaxies by covering 150 square degrees in about
+900 hours of SKA-Mid AA4. Importantly, a spatial resolution of 4.3′′ will allow us to spatially
+resolve galaxies with a H I mass of ∼107 M⊙ within a distance of about 20 Mpc, pushing down in
+terms of the BTFR and other dynamical scaling laws. However, the drawback is that the sample
+
+
+                                                    11
+Testing dark matter models and modified gravity theories                                    F. Lelli et al.
+
+
+will be heavily dominated by giant galaxies with H I masses of a few 1010 M⊙ (near the “knee” of
+the H I mass function), while low-mass galaxies with H I masses below 109 M⊙ will be severely
+under-represented (less than 10% of the full sample). Thus, the dynamical scaling laws will not be
+sampled in a uniform way across their dynamic ranges, limiting our accuracy in determining their
+slope and/or intrinsic scatter as a function of mass, rotation velocity, surface density, and so on.
+
+A pointed H I survey may be more time-expensive than a wide-field H I survey to spatially resolve
+20,000 galaxies. For example, if we consider a mean integration of 15 minutes per galaxy, it
+will take 5000 hours to observe 20,000 galaxies. This time estimate is quite conservative: the
+exact numbers will depend on the exact definition of the galaxy sample and may be substantially
+smaller because a single SKA-Mid pointing may simultaneously probe multiple galaxies in clusters
+and/or groups, maximizing the survey efficiency. A lower survey efficiency, instead, will occur
+when targeting truly isolated galaxies in voids, albeit several background and foreground galaxies
+may be detected and spatially resolved along the line of sight. A pointed H I survey will have the
+main advantage of obtaining − by construction − a galaxy sample that uniformly covers the widest
+possible range in baryonic mass, surface brightness, star-formation rates, environmental properties,
+and so on. In addition, a pointed H I survey may maximize the synergy with other existing multi-
+wavelength data, such as (1) imaging from Euclid, HST, JWST, Spitzer, Rubin, and so on, (2)
+precise distances from Cepheids, the tip of the red giant branch method, supernovae Ia, surface
+brightness fluctuations, and so on, and (3) complementary kinematic data from H𝛼 integral-field
+spectroscopy and/or interferometric CO observations.
+
+Thinking farther ahead in the future, installing phased-array feeds on SKA-Mid antennas (similarly
+to ASKAP and APERTIF) will substantially enlarge the instantaneous FoV of the telescope. In this
+way, wide-field untargetted surveys will be the obvious operational mode to increase the number of
+galaxies with spatially resolved H I kinematics by another 1-2 orders of magnitudes.
+
+3.3   Moving towards higher redshifts
+The intrinsic faintness of the H I emission line, combined with the limited spectral bandpasses
+and radio frequency interference (RFI) in the L-band, have historically limited H I detections of
+individual galaxies to the local universe. This paradigm is beginning to shift with a new generation of
+H I surveys with SKA pathfinders (Hess et al., 2019; Ponomareva et al., 2021; Xi et al., 2024; Jarvis
+et al., 2025), but the existing facilities do not have the requested sensitivity and angular resolution
+to map galaxies beyond 𝑧 ≳ 0.1, enabling detailed kinematic modeling. To our knowledge, the
+current record for the highest 𝑧, well-measured (≳4 independent points) H I rotation curve is held
+by the giant galaxy Malin 1 at 𝑧 ≃ 0.0826 (Pickering et al., 1997; Lelli et al., 2010).
+
+At intermediate redshifts (𝑧 ≃ 0.3 − 1) and cosmic noon (𝑧 ≃ 1 − 3), rotation-curve studies
+currently rely on other kinematic tracers, such as molecular gas using mm/submm interferometric
+observations of CO and [C I] lines (Lelli et al., 2023; Rizzo et al., 2023; Lin et al., 2025), or ionized
+gas using integral-field spectroscopy of the H𝛼, [O II], and [O III] lines (e.g., Di Teodoro et al., 2016,
+2018; Price et al., 2021; Puglisi et al., 2023). Interferometric mm/submm observations with ALMA
+and/or NOEMA are relatively time-costly, so galaxy samples with resolved CO or [C I] kinematics
+remain limited to a few tens of objects. Integral-field observations with the ESO Very Large
+
+
+                                                   12
+Testing dark matter models and modified gravity theories                                         F. Lelli et al.
+
+
+
+
+Figure 5: Comparison between the dynamical properties of SPARC galaxies at 𝑧 ≃ 0 with those of two
+best-studied galaxies at cosmic noon, having top-quality H𝛼 data from VLT/SINFONI and multi-line CO
+data from ALMA (adapted from Lelli et al., 2023). Left panel: The rotation curves of cosmic-noon galaxies
+(red circles and orange stars) are much less extended than those of local galaxies of comparable mass and
+rotation velocity (solid lines color-coded by stellar surface density) due to the lack of H I data. Right panel:
+The location of cosmic-noon galaxies on the radial acceleration relation at 𝑧 ≃ 0 shows that their H𝛼+CO
+rotation curves are probing only the inner, high-acceleration, baryon-dominated regions. To firmly probe the
+DM effect, we need extended H I rotation curves probing the outer, low-acceleration, DM-dominated regions.
+
+
+Telescope (VLT), instead, are more time efficient, so they allowed probing ionized gas kinematics
+in several hundreds of galaxies (e.g., Tiley et al., 2019; Nestor Shachar et al., 2023). In physical
+terms, however, ionized gas has some intrinsic complications: (1) it probes a hotter ISM phase than
+molecular or atomic gas, so the pressure support to the gravitational potential becomes important
+to properly model (see Sect. 4.1.2), and (2) non-circular motions (inflows, outflows) may affect the
+ionized gas kinematics in more complex ways than for the neutral gas (e.g., Lelli et al., 2018). Most
+importantly, both ionized and molecular gas tracers have an intrinsic physical limitation: the ionized
+and molecular gas disks of galaxies generally do not extend beyond their stellar components, so one
+can only trace rotation curves with a limited radial extent (see Fig. 5).
+
+In relatively massive galaxies (𝑀★ > 1010 M⊙ ), the inner high-acceleration regions are generally
+baryon dominated. This fact prevents a firm detection of the DM effect in massive high-𝑧 galaxies
+due to the disk-halo degeneracy: mass models with only baryons and mass models with a DM halo
+can fit the observed rotation curves with similar accuracy, given the significant uncertainties on
+stellar and gas masses (Lelli et al., 2023). The current observational situation at cosmic noon is
+similar to that at 𝑧 ≃ 0 in the 1980’s: one needs extended H I rotation curves to firmly probe the
+DM effect in the outer parts (Kalnajs, 1983; van Albada et al., 1985; Kent, 1986, 1987).
+
+In lower mass galaxies (𝑀★ < 1010 M⊙ ), the inner rotation curves may potentially probe the DM
+effect, similarly to DM-dominated low-mass galaxies at 𝑧 ≃ 0 (see Lelli, 2022, for a review).
+However, molecular lines (CO and [C I]) are hard to detect in such low-mass galaxies, even with
+ALMA. Regarding ionized gas kinematics, the typical spatial resolution of integral-field spectro-
+graphs (0.5 − 1 arcsec) becomes a major limitation in low-mass galaxies, together with the limited
+
+
+                                                      13
+Testing dark matter models and modified gravity theories                                    F. Lelli et al.
+
+
+
+
+Figure 6: Prospects for measuring H I rotation curves at 𝑧 > 0 with SKA-Mid. A mock-observed simulated
+cone of the Universe is shown up to 𝑧 ≃ 1 (adapted from Obreschkow et al., 2009). The dots represent
+simulated galaxies with detectable H I emission. To date, H I rotation curves are limited to galaxies with
+𝐷 ≲ 350 Mpc (𝑧 ≲ 0.08). A pencil-beam survey of about 10,000-hours with Band 1 of SKA-Mid AA4
+could spatially resolve galaxies with H I masses of about 1010 M⊙ out to 𝑧 ≃ 1.
+
+
+spectral resolution of 𝑅 = 𝜆/Δ𝜆 ≃ 3500 − 4000 that corresponds to 𝜎 ≃ 40 km/s for the H𝛼 line at
+𝑧 ≈ 1 (Stott et al., 2016; Wisnioski et al., 2019). All these facts preclude the study of the dynamical
+scaling laws over cosmic time down to low masses, low surface densities, and low accelerations,
+which provide the strongest tests of ΛCDM models and alternative theories (see Sect. 2.1).
+
+SKA-Mid AA4 will revolutionize our view of the H I kinematics in galaxies at 𝑧 > 0.1 thanks to its
+unique combination of angular resolution and sensitivity. To trace reliable H I rotation curves out
+to the DM-dominated regime, a column density sensitivity of ∼ 1 M⊙ /pc2 is required. In addition,
+to constrain the geometric parameters of the H I disk (see Section 4), the disk major axis should
+be sampled with at least 5 resolution elements. If we (1) adopt this combination of sensitivity and
+resolution as a metric for measuring H I rotation curves, (2) assume the local H I mass-size relation
+(e.g., Wang et al., 2016) to predict the size of the H I disk, and (3) account for cosmological redshift
+broadening and dimming (Meyer et al., 2017), we find that a deep SKA-Mid AA4 integration of
+about 10,000 hours is capable of mapping galaxies with 𝑀H I ≃ 1010 M⊙ out to 𝑧 ≃ 1. According to
+H I stacking analyses (Chowdhury et al., 2020, 2022a,b; Bera et al., 2023; Bianchetti et al., 2025),
+the 𝑀★ − 𝑀HI relation evolves with 𝑧, so an H I mass of 1010 M⊙ at 𝑧 ≃ 1 corresponds to galaxies
+with a similar stellar mass. SKA-Mid AA4, therefore, may probe the H I content of galaxies with
+baryonic masses of a few 1010 M⊙ , lower than the present-day mass of the Milky Way. In addition
+to providing extended rotation curves up to 𝑧 ≃ 1, a deep H I survey with SKA-Mid AA4 will also
+allow us to estimate the gravitational contribution of atomic gas, which may dominate over that of
+stars and molecular gas at large radii (Chowdhury et al., 2022b).
+
+Figure 6 illustrates the dramatic leap in our ability to study H I kinematics across more than half of
+the Universe’s lifetime. A deep Band-2 survey with SKA-Mid AA∗ could spatially resolve H I disks
+in the redshift range 0 ≲ 𝑧 ≲ 0.5, considering that the maximum achievable angular resolution
+of ∼3′′ corresponds to ∼20 kpc at 𝑧 ≃ 0.5. A very deep (∼10,000 hours) Band-1 survey with
+SKA-Mid AA4 is needed to spatially resolve massive (𝑀H I ≃ 1010 M⊙ ) disks at 𝑧 ≃ 1, given the
+better angular resolution of ∼1′′ achievable with AA4. However, parts of the redshift range in Fig. 6
+may be severely impacted by RFI, prohibiting the detection of the H I line. For example, the range
+0.1 ≲ 𝑧 ≲ 0.2 is known to be strongly affected by RFI from satellites and ground-based radar (Hess
+et al., 2019). The overall RFI situation needs to be reassessed for the long baselines of SKA-Mid
+
+
+                                                   14
+Testing dark matter models and modified gravity theories                                              F. Lelli et al.
+
+
+
+
+Figure 7: Geometrical parameters of a rotating disk model (adapted from Di Teodoro and Fraternali, 2015).
+A thick disk in the physical coordinate system (𝑥 ′ , 𝑦 ′ , 𝑧 ′ ) is projected into an ellipse in the plane of the sky
+(𝑥, 𝑦). The inclination angle 𝑖 is taken with respect to the line of sight (the 𝑧 axis). The position angle 𝜙
+identifies the position of the major axis on the receding half of the galaxy and it is taken counterclockwise
+from the North direction (along the 𝑦 axis). For a symmetric disk with purely circular orbits, the systemic
+velocity 𝑉sys (the galaxy redshift) corresponds to the projected velocities along the minor axis.
+
+
+AA4. In general, the SKA observatory is the only facility under construction or being planned that
+will enable dynamical studies of H I disks across cosmic time, for the first time.
+
+4     Modeling prospects with next-generation software
+
+4.1    State-of-the-art on kinematic fitting tools
+The H I component of galaxies can be described by a rotating disk with nearly circular orbits. In
+this approximation, the projected line-of-sight velocity 𝑉l.o.s. at a sky position (𝑥, 𝑦) is given by
+
+                                  𝑉l.o.s. (𝑥, 𝑦) = 𝑉sys + 𝑉rot (𝑅) sin(𝑖) cos(𝜃),                                 (1)
+
+where 𝑉sys is the systemic velocity (due to the Hubble expansion and peculiar motions), 𝑉rot is the
+rotational velocity at radius 𝑅 in the disk plane (𝑥 ′ , 𝑦 ′ ), 𝑖 is the inclination angle between the normal
+𝑧 ′ to the disk plane and the line of sight 𝑧, and 𝜃 is the azimuthal angle in the disk plane (see Fig. 7),
+given by the following equation:
+                                           −(𝑥 − 𝑥0 ) sin(𝜙) + (𝑦 − 𝑦 0 ) cos(𝜙)
+                               cos(𝜃) =                                          ,                                (2)
+                                                            𝑅
+
+                                                         15
+Testing dark matter models and modified gravity theories                                     F. Lelli et al.
+
+
+where (𝑥 0 , 𝑦 0 ) are the sky coordinates of the disk center and 𝜙 is the position angle taken in
+the anti-clockwise direction between the North direction and the receding half of the major axis
+of the projected disk. Thus, the rotation curve 𝑉rot (𝑅) can be measured knowing five geometric
+parameters: 𝑉sys , 𝑥0 , 𝑦 0 , 𝜙, and 𝑖. In the following, we describe standard methods to measure 𝑉rot (𝑅)
+from emission-line data: tilted-ring and parametric modeling implemented via two dimensional
+(2D) or three dimensional (3D) approaches. In full 3D approaches, in addition to the parameters in
+Eq. 1 and Eq. 2, it is possible to fit also for the intrinsic gas velocity dispersion 𝜎V (𝑅), the intrinsic
+gas surface density Σ(𝑅), and the disk thickness 𝑧 0 .
+
+4.1.1   Basic techniques: tilted-ring and parametric modeling
+The tilted-ring modeling approach (Rogstad et al., 1974; Begeman, 1989) divides the gas disk into
+a number of rings (usually set by the spatial resolution of the observations). In principle, the
+parameters in Eq. 1 and 2 can be fitted independently in each ring. However, ring-by-ring fits are
+often under-determined and/or degenerate, so the best-fit parameters may unrealistically jump from
+one ring to another. One approach is that, after a first preliminary fit, (𝑥0 , 𝑦 0 ) and 𝑉sys are measured
+as the mean (or median) values across the rings and kept fixed in subsequent iterations. The angles
+𝜙 and 𝑖 can be estimated in the same way unless the gas disk is warped: in such cases, 𝜙(𝑅) and 𝑖(𝑅)
+vary from ring to ring and their radial trend can be appropriately modeled with a smooth function
+to obtain a reliable 𝑉rot (𝑅) without unrealistic jumps. Another approach is to perform a global fit
+to the disk by grouping various parameters (such as 𝑥 0 , 𝑦 0 , and 𝑉sys ) to have a single value across
+all rings. The details of these implementations depend on the specific tilted-ring fitting software.
+The parametric modeling approach uses parametric functions to describe 𝑉rot (𝑅), such as an arctan
+function (Epinat et al., 2010), and fits a global model to the whole disk. In several circumstances,
+parametric modeling can require fewer free parameters to describe 𝑉rot (𝑅) than typical tilted-ring
+models. This eases the use of Markov Chain Monte Carlo (MCMC) algorithms (e.g., Bouché et al.,
+2015; Davis et al., 2017b; Lee et al., 2025) and neural networks (Dawson et al., 2021) in a Bayesian
+framework (see Sect. 4.4.1 and 4.4.2). On the other hand, parametric modeling cannot account for
+disk warps in an automated way because specific functions for the radial variation in 𝜙 and 𝑖 need
+to be defined a-priori. Parametric modeling may also neglect possible real features in the rotation
+curve because a smooth shape is imposed on 𝑉rot (𝑅). While tilted-ring models provide the most
+empirical derivation of the rotation curve itself, some modeling tools allow for hybrid approaches,
+mixing tilted-ring-style approaches for some parameters and parametric functions for others.
+Special types of parametric models are those in which 𝑉rot (𝑅) is described by constraining the
+gravitational potential of different components (stars, gas, and DM halo), so the fitting involves
+physical parameters (such as masses and characteristic radii) together with geometric ones. Ide-
+ally, this approach permits to build dynamically self-consistent models (for instance, by assuming
+hydrostatic equilibrium) because the properties of the gravitational potential and those of the gas
+tracer are constrained at the same time. In addition, this approach bypasses issues in the mass mod-
+eling of rotation curves due to correlations between 𝑉rot (𝑅) measurements (Posti, 2022). The main
+drawback of this approach is its reliance on pre-implemented (cosmologically-motivated) models
+for the DM distribution, which may not capture the observational reality and/or the full complexity
+of galaxy dynamics. In addition, these parametric models have relatively heavy computational
+
+
+                                                    16
+Testing dark matter models and modified gravity theories                                  F. Lelli et al.
+
+
+costs when dynamical self-consistency is requested, and they require refitting the full data (in 2D
+or 3D) several times for testing different DM halos or modified-gravity theory. On the contrary, it
+is computationally fast and conceptually straightforward to fit different DM halos and/or modified
+gravity theories to the empirical 1D rotation curve from a titled-ring model. Although promising,
+H I modeling tools in a dynamically self-consistent framework have not yet been implemented.
+
+4.1.2   From rotation velocity to circular velocity
+When modeling the mass distribution of galaxies, we are interested in the circular velocity of a test
+particle (𝑉c2 = −𝑅 ∇Φ) tracing the total gravitational potential Φ. In general, at a given radius 𝑅,
+an ensemble of particles (stars or gas clouds) rotates with a velocity 𝑉rot that is lower than 𝑉c due to
+the additional outwards acceleration provided by the pressure (𝜌𝜎V2 ) gradient. Contrary to the case
+of stars and/or ionized gas, pressure support is often negligible in the H I disks of spiral galaxies
+because the velocity dispersion is typically between 5 − 15 km s−1 , so effectively 𝑉c ≃ 𝑉rot .
+
+For galaxies in which 𝑉rot /𝜎V ≃ 1 − 4 (e.g., dwarf galaxies), pressure support can be taken into
+account using the so-called asymmetric-drift correction. Assuming that (i) Φ is axisymmetric
+depending only on the cylindrical coordinates (𝑅, 𝑧), and (ii) the velocity dispersion 𝜎V is isotropic
+as expected for collisional gas, the circular velocity is given by (Binney and Tremaine, 1994)
+                                       v
+                                       u                            !
+                                                    𝜕 ln 𝜌 𝜕 ln 𝜎V2
+                                       t
+                                𝑉c =      2 − 𝜎2
+                                        𝑉rot               +          ,                              (3)
+                                               V    𝜕 ln 𝑅   𝜕 ln 𝑅
+
+where 𝜌(𝑅, 𝑧) is the gas volume density, which is not directly observable.
+
+A common approach (Meurer et al., 1996; Lelli et al., 2014b) is to assume that the vertical density
+distribution does not depend on radius, so 𝜕 ln 𝜌/𝜕 ln 𝑅 = 𝜕 ln Σ/𝜕 ln 𝑅, where the gas surface
+density Σ(𝑅) can be traced from emission-line maps. Then, one may either fit the product Σ𝜎V2
+with a smooth functional form (Iorio et al., 2017) or treat Σ(𝑅) and 𝜎V (𝑅) independently. The main
+caveat with this approach is that the thickness of the gas disk is expected to increase with radius from
+theoretical considerations based on vertical hydrostatic equilibrium (Romeo, 1992; Olling, 1995;
+Bacchini et al., 2020), so 𝜕 ln 𝜌/𝜕 ln 𝑅 > 𝜕 ln Σ/𝜕 ln 𝑅 and the correction may be underestimated.
+
+Another approach (Burkert et al., 2010) is to use the Spitzer’s solution for a self-gravitating
+disk in vertical equilibrium (Spitzer, 1942), so 𝜌(𝑅, 𝑧) = 𝜌0 (𝑅) sech2 (𝑧/𝑧 d ) where 𝜌0 (𝑅) =
+𝜋𝐺Σ(𝑅) 2 /2𝜎V (𝑅) is the gas volume density at 𝑧 = 0. The gaseous disks of galaxies, however, are
+not self-gravitating in any realistic case. A self-consistent asymmetric-drift correction should use
+an iterative approach to (i) obtain Φ(𝑅, 𝑧) fitting 𝑉c (𝑅) with a mass model for a given DM halo
+shape, and (ii) measure the variation of the disk thickness with radius by solving the vertical hydro-
+static equation for the given Φ(𝑅, 𝑧) (Bacchini et al., 2020). This approach may be implemented
+in future tools and initial efforts are underway (e.g., Mancera Piña et al., 2025). It may also be
+possible to calibrate the asymmetric-drift correction using numerical simulations, for example to
+obtain prescriptions informed by galaxy morphology (Kretschmer et al., 2021). Parametric models
+built in the dynamically self-consistent framework can potentially account for the flaring of the disk,
+providing direct computation of pressure support via Eq. 3.
+
+
+                                                   17
+Testing dark matter models and modified gravity theories                                     F. Lelli et al.
+
+
+At any rate, the dominant uncertainty in the asymmetric-drift correction is driven by 𝜎V (𝑅), not
+by the vertical density distribution. In fact, one often has to assume that 𝜎V is constant with radius
+because the velocity dispersion profile cannot be accurately measured in the lowest mass galaxies.
+Then, for an exponential gaseous disk with scale length 𝑅d , Eq. 3 simplifies to
+                                             √︃
+                                       𝑉𝑐 = 𝑉rot 2 + 𝜎 2 (𝑅/𝑅 ).                                   (4)
+                                                       V       d
+
+
+Eq. 4 can be used as a rough first-order approximation in poorly resolved galaxies, which are the
+focus of the next section.
+
+4.2     Modeling of poorly resolved disks
+H I surveys with SKA-Mid may provide tens or even hundreds of thousands of galaxies that are
+just barely resolved. Unsurprisingly, preliminary results from the WALLABY survey indicate that
+barely resolved systems will dominate any wide-field H I survey: only ∼10% of the H I detections
+in WALLABY are sufficiently resolved for detailed kinematic modeling (Westmeier et al., 2022;
+Murugeshan et al., 2024). H I modeling in the barely resolved regime demands specific techniques,
+such as the full treatment of beam smearing in 3D (Sec 4.2.1) and algorithms for the automated
+acceptence/rejection of kinematic fits (Sec. 4.2.2). At low spatial resolutions and signal-to-noise
+ratio, measuring the intrinsic gas velocity dispersion is particularly difficult and often impossible;
+uncertainties in 𝜎V (𝑅) do not materially affect the measured rotation curve 𝑉rot (𝑅) (Deg et al.,
+2022), but can have an impact on the circular velocity 𝑉c (𝑅) via the asymmetric-drift correction,
+especially for low-mass galaxies (see Sec. 4.1.2). In addition, in the regime of barely resolved
+galaxies, disk warps and other complexities (see Sect. 4.3) cannot be easily identified, so they are
+generally neglected in the kinematic modeling. This decreases the number of free parameters,
+which is an advantage in modeling large samples of galaxies, but possible systematic effects need
+to be carefully investigated (e.g., Deg et al., 2022; Gasser, 2023).
+
+4.2.1    Beam-smearing effects: 2D and 3D approaches
+Tilted-ring and parametric modeling can be applied either to 2D velocity maps (𝑉l.o.s. at each
+sky position) or directly to the 3D emission-line cubes. The 2D approach is robust for well-
+resolved galaxies with tens or hundreds of resolution elements (Begeman, 1987, 1989), but becomes
+unreliable in less resolved galaxies as is often the case for dwarf galaxies (Swaters et al., 2009). In
+this situation, the derivation of velocity maps is ambiguous due to beam-smearing effects, altering
+the intrinsic shape of the line profiles. Gas emission with intrinsically different 𝑉l.o.s is flux-averaged
+within the resolution element, so the line profiles tend to become broad and non-Gaussian with
+long tails of emission towards the galaxy systemic velocity (e.g., de Blok et al., 2008). In such
+cases, if one estimates 𝑉l.o.s as the moment-one along the profile or as the central velocity of a
+Gaussian fit, the rotational velocity will be underestimated, especially in the central parts (e.g.,
+Swaters et al., 2009; Lelli et al., 2010). Moreover, if one estimates the gas velocity dispersion
+𝜎V as the moment-two along the profile or as the width of a Gaussian fit, the intrinsic velocity
+dispersion will be severely overestimated (Di Teodoro and Fraternali, 2015). For galaxies with
+high inclinations, the minor axis is always poorly resolved due to the disk projection along the line
+of sight. Therefore, similar effects occur when analyzing edge-on galaxies, limiting 2D methods
+
+
+                                                    18
+Testing dark matter models and modified gravity theories                                 F. Lelli et al.
+
+
+to galaxies with inclinations < 75◦ . There is no simple way to fully correct for beam smearing
+using a 2D approach because it depends on the interplay between intrinsic rotation-curve shape, gas
+distribution, disk thickness, and disk inclination (Begeman, 1989).
+The 3D approach builds model cubes using Eq. 1 together with the gas surface density profile, the
+gas vertical structure, and the intrinsic 𝜎V profile (Corbelli and Schneider, 1997; Sicking, 1997).
+The model cubes are then smoothed to the same spectral and spatial resolution of the observations
+(reproducing beam smearing effects) and compared with the observed one until a best-fit is found.
+The 3D approach can then recover the intrinsic 𝑉rot (𝑅) and 𝜎V (𝑅) profiles (Józsa et al., 2007;
+Swaters et al., 2009; Di Teodoro and Fraternali, 2015). Over the past years, several 3D parametric
+fitting tools have been developed, such as KinMS (Davis et al., 2013), GalPak-3D (Bouché et al.,
+2015), DysmalPy (Price et al., 2021; Lee et al., 2025) and Geko (Danhaive and Tacchella, 2025).
+Importantly, 3D parameteric modeling may not always capture the correct beam-smearing effects
+because it imposes a specific rotation-curve shape. For example, an intrinsically flat rotation curve
+leads to more severe beam-smearing effects than an intrinsically solid-body one. A 3D tilted-ring
+modeling is often the best solution, but requires good sensitivity in each ring. Several titled-ring 3D
+fitting tools are now available, such as TiRiFiC (Józsa et al., 2007) and its automated version FAT
+(Kamphuis et al., 2015), 3D Barolo (Di Teodoro and Fraternali, 2015), and a new version of KinMS
+(Davis et al., 2020). These 3D kinematic modeling tools allows for the derivation of rotation curves
+even for poorly resolved galaxies (with only ∼ 3 − 4 independent elements along the major axis),
+which cannot be reliably modeled in 2D. However, even these packages may still be affected by
+beam-smearing, making the innermost rings still somewhat uncertain (see, e.g., Deg et al. 2022).
+In principle, the best way to remove many of the uncertainties discussed above would be to model
+the emission of the kinematic tracer in the 𝑢𝑣-plane, as we discuss in Section 4.4.3.
+
+4.2.2   Automated acceptance/rejection criteria
+A key use of large H I surveys is the comparison with cosmological simulations. These comparisons
+require that the same modeling approach and the same software are applied to both mock and real
+observations. A significant challenge in this context is understanding the “selection function”, that
+is, how to select simulated galaxies that could have been observed and modeled in the same way as
+a given survey. The traditional approach of accepting models based on visual inspection (e.g., Deg
+et al., 2022) introduces an hard-to-quantify effect to the selection function. Moreover, even if this
+effect could be quantified and/or repeated, visual inspection may simply be unfeasible for the large
+galaxy samples expected from SKA-Mid surveys. However, visual inspection by expert users could
+still play an important role in the SKA era; for example, we may train machine-learning algorithms
+using the assessments from visual inspection as a robust training set.
+An automated approach based on a suite of observations and/or test models must be adopted for
+large H I surveys with SKA-Mid. This approach must take into account the limits of modeling
+software in terms of resolution, sensitivity, inclination, and even galaxy mass or rotation velocity.
+In fact, the reliability of kinematic models strongly depends on disk inclination and galaxy mass,
+being progressively worse for low-inclination, low-mass galaxies. For example, Deg et al. (2025)
+demonstrated that, at velocities below ∼50 km s−1 , kinematic models for galaxies resolved by 5
+beams were reliable only for inclinations larger than 40◦ (see also Rhee et al., 2004; Kuzio de Naray
+
+
+                                                  19
+Testing dark matter models and modified gravity theories                                  F. Lelli et al.
+
+
+et al., 2006; Read et al., 2016). A critical assessment in terms of data quality and disk inclination is
+crucial to study the dynamical laws of galaxies (Sect. 2.1) and potential outliers (e.g., Lelli, 2024).
+A major challenge in any automated approach is the presence in the final catalog of “contaminants”:
+rotation curves that do not represent the underlying gravitational potential of the galaxy because of
+technical issues (e.g., the choice of the wrong geometric parameters) and/or intrinsic physical issues
+(e.g., disks out of equilibrium due to interactions, mergers, asymmetries, etc.). These contaminants
+can be found in large catalogs generated by both visual inspection (see, e.g., some of the low-velocity
+WALLABY models of Deg et al. 2022) and automated approaches. Automated accept/reject rules
+can be tuned to increase the number of total rotation curves at the cost of an increased contaminant
+fraction, so one needs to find the best compromise to minimize the contaminant fraction while
+maximizing the total number of acceptable rotation curves. Despite the numerous challenges of
+modeling large numbers of marginally resolved galaxies with low signal-to-noise ratio (SNR), the
+scientific benefits are well worth the effort. They will provide statistically significant samples of
+kinematic models across a wide range of environments and, in the SKA era, a range of redshifts.
+
+4.3     Modeling of highly resolved disks
+SKA-Mid AA4 will allow for H I observations at 1′′ -2′′ resolution (see Sect. 3.1). In nearby galaxies,
+these high spatial resolutions will likely uncover details in the gas distribution and kinematics that
+require more complex modeling approaches than a simple, axisymmetric, rotating disk. These
+complexities may include highly asymmetric gas distributions (clumps, shells, holes, and so on),
+non-circular motions (bar-driven flows, inflows, outflows, and so on), and complex vertical structures
+(extraplanar gas and disk flares). We discuss potential ideas to tackle these challenges.
+
+4.3.1    Asymmetric gas distributions
+Where gas distributions are clumpy and/or strongly asymmetric, traditional approaches (which
+impose axisymmetry) will fail to reproduce the observed gas distribution. The impact of this effect
+on the resulting rotation curve can vary wildly. In systems that are clumpy, but in which the gas
+emission fills much of the radial ring, axisymetric models generally perform well (e.g., Davis,
+2014). However, in extreme cases, the best-fit model may create artificial spikes in the rotation
+curve. Various techniques can be used to avoid such issues, but they all have some drawbacks.
+Three main techniques have been used to deal with clumpy distributions. The simplest one is to
+normalize a-posteriori the flux in a given spatial pixel of the 3D model to match the observed
+intensity (moment-zero) map (Lelli et al., 2012). The main drawback of this method is that
+it does not fully account for beam-smearing effects from the intrinsic variations in the surface
+density distribution within the beam. The second technique mitigates this issue by using the “clean
+components” determined during the imaging of the 𝑢𝑣 data to determine the flux distribution, and
+fitting the kinematics of these components (Smith et al., 2019). The “trusted” flux in the model
+is then reproduced by definition. The third technique adopts a more drastic solution: it allows the
+kinematics and positions of a cloud of point sources to be fitted to the data. While very powerful, this
+technique could have millions of free parameters and is thus extremely computationally expensive.
+In addition, all these methods lose nearly all the constraining power on the disk inclination because
+they are forced to reproduce the observed gas distribution. The best strategy, therefore, is a two-step
+
+
+                                                  20
+Testing dark matter models and modified gravity theories                                   F. Lelli et al.
+
+
+approach: first fitting a model that is axisymmetric in both the gas distribution and kinematics to
+constrain the disk geometry (especially the inclination), then fitting a model that is not axisymmetric
+in the gas distribution to constrain the rotation curve (e.g., Lelli et al., 2012).
+In the future, new machine learning-based techniques, such as diffusion models, may be used to
+determine the gas distribution, although such efforts are in their early stages at the present time.
+Another way to account for clumpy gas distribution may be to do kinematic modeling directly in
+the 𝑢𝑣 plane, modeling all the recoverable scales at the same time, as we discuss in Sect. 4.4.3.
+
+4.3.2   Non-circular motions in the disk plane
+The simplest form of non-circular motion is a radial flow (𝑉rad ) in the disk plane, giving an additional
+term 𝑉rad (𝑅) sin(𝑖) sin(𝜃) in the right part of Eq. 1. More generally, 𝑉rot and 𝑉rad are the first-order
+terms of a harmonic expansion of the line-of-sight velocity (Schoenmakers et al., 1997):
+                                            ∑︁
+                    𝑉l.o.s. (𝑥, 𝑦) = 𝑉sys +    [𝑐 𝑚 (𝑅) cos(𝑚𝜃) + 𝑠 𝑚 (𝑅) sin(𝑚𝜃)] ,                  (5)
+                                         𝑚=1
+
+where the harmonic order 𝑚 = 1 gives 𝑐 1 = 𝑉rot sin(𝑖) and 𝑠1 = 𝑉rad sin(𝑖). A perturbation of
+the gravitational potential of order 𝑚 causes harmonics of order 𝑚 − 1 and 𝑚 + 1 in projection
+(Schoenmakers et al., 1997). For example, bar-like and oval distortions with 𝑚 = 2 give 𝑚 = 1 and
+𝑚 = 3 terms in 𝑉l.o.s (Spekkens and Sellwood, 2007). The harmonic decomposition increases the
+number of free parameters, which are often degenerate, so it can be applied only to high-quality
+observations. This method has been implemented with 2D approaches (Gentile et al., 2005, 2007;
+Trachternach et al., 2008; Marasco et al., 2018), but further progress can be made with a 3D
+approach (Hogarth et al., 2024). In particular, it will be important to investigate strategies to tackle
+the various degeneracies between the free parameters of the harmonic expansion, for example by
+using a Bayesian approach with physically motivated priors, as those discussed in Sect. 4.4.1.
+
+4.3.3   Vertical structure: extraplanar gas and flares
+A non-negligible fraction (≃ 15%) of H I in star-forming galaxies resides in a thick structure that
+surrounds the thin disk, extending typically a few kpc above and below the midplane. The presence
+of “extraplanar” gas clearly emerges in deep H I observations, reaching column densities of 0.1
+M⊙ pc−2 or less (Fraternali et al., 2002; Oosterloo et al., 2007), which will be routinely reached
+by SKA-Mid. The extraplanar H I gas is often characterized by peculiar kinematics, showing a
+slower rotation than the H I in the thin disk and a global inflow motion with typical speeds of a
+few tens km s−1 (e.g., Fraternali et al., 2002; Oosterloo et al., 2007; Marasco et al., 2019). These
+peculiar properties are broadly consistent with a galactic fountain triggered by stellar feedback
+(Fraternali, 2017). To date, the peculiar kinematics of the extraplanar H I gas has been modeled
+in 3D with substantial human intervention, given the increased number of free parameters and
+overall complexity. In the SKA era, we may need to explore automated approaches to account for
+extraplanar H I gas in large galaxy samples. Substantial work needs to be done in this context.
+As discussed in Sect. (4.1.2), H I disks are naturally flared, with a scale-height that is expected
+to reach up to ∼1 kpc in the outskirts (O’Brien et al., 2010; Bacchini et al., 2020; Mancera Piña
+et al., 2022). High-resolution observations should be able to distinguish between extraplanar gas
+
+
+                                                   21
+Testing dark matter models and modified gravity theories                                F. Lelli et al.
+
+
+and flaring of the H I disk because these features occur in distinct regions (inner versus outer disk,
+respectively) and have different kinematics. In fact, extraplanar gas is often visible as residual
+emission after the subtraction of the best-fit kinematic model, including potential disk flaring
+(e.g., Oosterloo et al., 2007). However, in marginally resolved galaxies, the contamination from
+extraplanar gas might be inevitable, leading to a systematic underestimate of 𝑉rot (𝑅). Although there
+is no obvious way to circumvent this issue, tests using mock degraded data of nearby galaxies will
+be valuable to quantify the magnitude of this effect and to elaborate effective correction strategies.
+
+4.4     Next-generation modeling techniques
+4.4.1    Bayesian techniques: improvements and optimization
+Both parametric and non-parametric fitting methods make use of a substantial number of free
+parameters, which are often degenerate. The most important degeneracy is between 𝑉rot and
+inclination, but additional degeneracies arise when one goes beyond a standard, thin, rotating disk
+model, for example by adding non-circular motions (Sect. 4.3.2) and/or extraplanar gas (Sect. 4.3.3).
+Degeneracies can be a concern even for high-resolution data with high SNR, and becomes a very
+severe problem for barely resolved, low-SNR data. Ideally, next-generation modeling tools must be
+able not only to infer a particular galaxy property, but also to determine a realistic observational
+uncertainty. A robust assessment of the uncertainties, including potential covariances, is key to test
+DM models and modified-gravity theories.
+
+In principle, the use of Bayesian inference to fully explore the parameter space should automati-
+cally account for all possible degeneracies, providing realistic uncertainties for all the parameters
+depending on their intrinsic correlation and on the quality of the data themselves. Therefore, it is
+natural to expect that Bayesian techniques will be adopted in the modeling of SKA-Mid H I data
+(but see below for a possible alternative). However, these techniques have two important drawbacks
+that we must overcome before considering them as the “golden standard”.
+
+The first drawback is that, by construction, Bayesian inference is based on the likelihood function,
+which fully shapes the inferred posterior distributions, thus our measurements and associated
+uncertainties. The definition of this function is somewhat arbitrary and complicated by intrinsic
+difference between the model, which is smooth and typically axisymmetric, and the data, which
+show a higher degree of complexity especially at high resolutions, as well as by the presence of
+correlated noise in the datacube (e.g., Davis et al., 2017a).
+
+The second drawback is the high computational cost needed for Bayesian analysis, which generally
+uses Monte Carlo methods and requires building 105 − 106 models to robustly sample the parameter
+space. One way to optimize the existing algorithms is mapping the underlying probability distribu-
+tion function and strategically sample it to improve both efficiency and accuracy. Possible avenues
+to do so include importance sampling, adaptive sampling, variance reduction techniques, optimal
+weighting, and multiphase Monte Carlo. Another, complementary way to optimize the process is
+to resort to GPU-acceleration, both for the creation of individual models and for the exploration of
+the parameter space. Libraries that simplify GPU-accelerated programming are now available in
+several programming languages (e.g., the JAX library in python, Bradbury et al., 2018), and can
+substantially boost the performances. Preliminary tests using KinMS (Davis et al., 2013, 2020)
+
+
+                                                 22
+Testing dark matter models and modified gravity theories                                 F. Lelli et al.
+
+
+indicate a factor ∼ 20 speed-up in the model creation.
+
+4.4.2   Machine learning: artificial and Bayesian neural networks
+An alternative approach to Bayesian fitting is to directly infer the desired quantities (e.g., flat
+rotation velocity, or DM density profile) directly from the 2D or 3D data using machine learning
+techniques, such artificial neural networks (ANN). Neural networks have been shown to be able to
+detect and characterize sources from 2D or 3D H I data, notably as part of the first two SKA data
+challenges (Bonaldi et al., 2021; Hartley et al., 2023; Cornu et al., 2024, 2026). This approach
+would require generating mock data sampling different galaxy and DM parameters to create a
+large and representative training set. Once the ANN is trained, it should in principle provide
+fast predictions and hence be applicable to large datasets. However, the high dimensionality of
+the parameter space may induce degeneracies such that not all information may be recovered. In
+addition, ANNs generally lack explicit uncertainty quantification. By incorporating principles of
+Bayesian inference in a neural network, Bayesian neural networks (BNN) may constitute a promising
+way to device the new generation of dynamical modeling tools. In fact, BNNs provide full posterior
+distributions over the model parameters, offering a way to quantify uncertainty. Furthermore, they
+may provide a more physically-tractable way to emulate current forward-modeling tools. Self-
+supervised, physics-aware, BNNs have been developed to fit gas kinematics in 2D (Dawson et al.,
+2021) and show significant promise when extended to 3D.
+
+It may also be possible to adopt hybrid approaches, such as using an ANN for a fast initial
+parameter estimation, then a more computationally intensive Bayesian method to refine the results
+and quantify uncertainties. Both classical and Bayesian machine learning methods have been
+developed to yield dynamical masses (e.g. Ntampaka et al., 2015; Calderon and Berlind, 2019;
+Villanueva-Domingo et al., 2022; Chu et al., 2024; Hahn et al., 2024), although not specifically
+from H I data so far. Finally, since evaluating a rotation curve or a DM density profile from 2D or
+3D data involves deconvolution steps, attention-based neural networks are likely to be well-suited
+to the task. Indeed, such neural network dynamically weigh the relevance of the different input
+elements, directly correlate all parts of the input, and provide increased interpretability through the
+attention weights. Furthermore, architectures such as transformers enable parallelization and hence
+faster training on modern hardware.
+
+4.4.3   Kinematic modeling in the uv plane
+Interferometric observations consist in a sparse sampling of the Fourier angular space (or uv-
+plane), providing the so-called visibilities. Conversion to the real space (the sky plane) requires
+a manipulation of the visibilities (e.g., gridding, weighting, deconvolution, and cleaning) that is
+not unique, and that inevitably alters the intrinsic properties of the original dataset. The ideal
+approach to circumvent these issues is to model the data directly in the uv-plane. This allows
+using the data in their original space, which provides two main advantages for modeling purposes.
+First, the uncertainties in the visibilities are well defined. Second, convolution with the synthesized
+beam (which is often the computational bottleneck in the model generation) is bypassed: the model
+and the data will probe exactly the same angular scales, by construction. This makes this method
+especially promising when dealing with barely resolved observations.
+
+
+                                                  23
+Testing dark matter models and modified gravity theories                                F. Lelli et al.
+
+
+Several kinematic studies have explored this method (e.g., Dye et al., 2018; Rizzo et al., 2020;
+Powell et al., 2021; Amvrosiadis et al., 2025), but the publicly available modeling packages have yet
+to implement it. Although promising, this method needs to be robustly implemented and carefully
+tested in order to assess its applicability to the unprecedented data volume that SKA-Mid will
+provide. Importantly, while the mathematical approach of a direct modeling of the visibilities is the
+most accurate one, it has two practical drawbacks: (1) the computational costs, and (2) the storage
+capacity costs. Regarding the first drawback, the computational cost can be large because, in a
+typical application, the disk model is first conceived in the real-space and only later transported to
+the 𝑢𝑣 plane with a Fast Fourier Transform (FFT) to be compared with the observed visibilities (e.g.,
+Amvrosiadis et al., 2025). In this case, the original model must be created with sufficient resolution
+to account for the full range of possible scales probed by the data, which might be unpractical.
+This problem has been mitigated by applying a non-uniform FFT (Rizzo et al., 2020; Powell et al.,
+2021). The second drawback is a logistic one: the SKA observatory should store and provide the
+(raw or gridded) visibilities rather than more practical sub-cubes with the individual H I detections.
+An approach that would not require a storage of the visibilities, but only the dirty data cubes and
+the dirty beams, would be to work on the gridded visibilities instead of the measured ones. The fit
+quality would then be calculated in the Fourier domain by comparing a FFT of the dirty cube (done
+once in the complete process) with the FFT of the model multiplied with the gridded sampling
+function, i.e., the FFT of the dirty beam. This method has not been tested yet, but is theoretically
+even less computationally expensive than the 3D fitting method in the image domain, which requires
+two FFTs (back and forth) for the convolution with the clean beam. However, it would require the
+storage of the dirty cube and the dirty beam.
+
+
+5   Conclusions
+
+Understanding the nature of DM is one of the most outstanding challenges of modern physics. A
+prime way to test − and possibly rule out − different DM models and/or modified gravity theories is
+to study the gravitational potential of galaxies using extended H I rotation curves (Sect. 1). During
+the past four decades, the systematic construction of mass models of galaxies revealed a surprising
+coupling between baryons and dynamics (Sect. 2.1), and raised several outstanding problems for the
+ΛCDM cosmological model (Sect. 2.2). Many questions remain unanswered and could be tackled
+with a synergy between the SKA observatory and state-of-the-art optical/NIR facilities.
+
+SKA-Mid AA4 will revolutionize the study of H I rotation curves in several ways because it will
+give us (1) a sharper view of nearby galaxies, probing the H I kinematics at exceptional resolutions
+of 1′′ − 2′′ (Sect. 3.1), (2) a broader view of the nearby Universe, providing statistical samples of
+tens of thousands of galaxies in different cosmic environments (Sect. 3.2), and (3) a deeper view of
+the distant Universe, probing the H I kinematics of galaxies across cosmic time, possibly up to 𝑧 ≃ 1
+for the first time (Sect. 3.3). These observational advances will allow us to test DM models and
+modified gravity theories in new regimes, in which different theories make different predictions.
+
+The unprecedented volume and quality of the SKA data will pose important technical challenges in
+the modeling of the H I kinematics of galaxies. Substantial work has already been done, but many
+technical aspects remain to be investigated in the coming years (Sect. 4).
+
+
+                                                 24
+Testing dark matter models and modified gravity theories                               F. Lelli et al.
+
+
+The extended H I rotation curves of galaxies provided one of the first unambiguous observations of
+the DM effect (see Sanders, 2010; Bertone and Hooper, 2018, for such history). Future H I legacy
+surveys with SKA-Mid may “close the loop”, providing key evidence on what DM is and is not.
+
+
+References
+E. A. K. Adams et al. A&A, 667:A38, Nov. 2022. doi: 10.1051/0004-6361/202244007.
+C. P. Ahn et al. ApJSS, 203(2):21, Dec. 2012. doi: 10.1088/0067-0049/203/2/21.
+A. Amvrosiadis et al. MNRAS, 536(4):3757–3783, Feb. 2025. doi: 10.1093/mnras/stae2760.
+C. Bacchini, F. Fraternali, G. Pezzulli, and A. Marasco. Astron. Astrophys., 644:A125, Dec. 2020.
+   doi: 10.1051/0004-6361/202038962.
+I. Banik and H. Zhao. Symmetry, 14(7):1331, June 2022. doi: 10.3390/sym14071331.
+N. Bar, K. Blum, and C. Sun. Phys. Rev. D, 105(8):083015, Apr. 2022. doi: 10.1103/PhysRevD.
+   105.083015.
+D. Barat et al. Mon. Not. R. Astron. Soc., 498(4):5885–5903, Nov. 2020. doi: 10.1093/Mon.Not.R.
+   Astron.Soc./staa2716.
+G. Battaglia, F. Fraternali, T. Oosterloo, and R. Sancisi. Astron. Astrophys., 447:49–62, Feb. 2006.
+   doi: 10.1051/0004-6361:20053210.
+K. Begeman. HI Rotation Curves of Spiral Galaxies. PhD thesis, University of Groningen, NL,
+   1987.
+K. G. Begeman. Astron. Astrophys., 223:47–60, Oct. 1989.
+A. Bera, N. Kanekar, J. N. Chengalur, and J. S. Bagla. ApJL, 950(2):L18, June 2023. doi:
+   10.3847/2041-8213/acd0b3.
+G. Bertone and D. Hooper. Reviews of Modern Physics, 90(4):045002, Oct. 2018. doi: 10.1103/
+   RevModPhys.90.045002.
+A. Bianchetti et al. ApJ, 982(2):82, Apr. 2025. doi: 10.3847/1538-4357/adb1b8.
+J. Billard et al. Reports on Progress in Physics, 85(5):056201, May 2022. doi: 10.1088/1361-6633/
+   ac5754.
+J. Binney and S. Tremaine. Galactic Dynamics. Princeton University Press, Princeton, USA, first
+   edition, 1994.
+L. Blanchet and C. Skordis. JCAP, 2024(11):040, Nov. 2024. doi: 10.1088/1475-7516/2024/11/040.
+A. Bonaldi et al. MNRAS, 500(3):3821–3837, Jan. 2021. doi: 10.1093/mnras/staa3023.
+R. Boomsma et al. A&A, 490(2):555–570, Nov. 2008. doi: 10.1051/0004-6361:200810120.
+S. Bose et al. MNRAS, 486(4):4790–4804, July 2019. doi: 10.1093/mnras/stz1168.
+A. Bosma. The distribution and kinematics of neutral hydrogen in spiral galaxies of various
+   morphological types. PhD thesis, University of Groningen, 1978.
+N. Bouché et al. Astron. J., 150(3):92, Sept. 2015. doi: 10.1088/0004-6256/150/3/92.
+R. Brada and M. Milgrom. MNRAS, 276(2):453–459, Sept. 1995. doi: 10.1093/mnras/276.2.453.
+J. Bradbury et al. JAX: composable transformations of Python+NumPy programs, 2018. URL
+   http://github.com/google/jax.
+R. Braun and D. A. Thilker. A&A, 417:421–435, Apr. 2004. doi: 10.1051/0004-6361:20034423.
+J. S. Bullock and M. Boylan-Kolchin. Ann. Rev. Astron. Astrophys., 55(1):343–387, Aug. 2017.
+   doi: 10.1146/annurev-astro-091916-055313.
+
+
+                                                25
+Testing dark matter models and modified gravity theories                             F. Lelli et al.
+
+
+A. Burkert et al. Astrophys. J., 725(2):2324–2332, Dec. 2010. doi: 10.1088/0004-637X/725/2/2324.
+V. F. Calderon and A. A. Berlind. MNRAS, 490(2):2367–2379, Dec. 2019. doi: 10.1093/mnras/
+   stz2775.
+J. M. Cannon, N. M. McClure-Griffiths, E. D. Skillman, and S. Côté. Astrophys. J., 607:274–284,
+   May 2004. doi: 10.1086/383408.
+S. Casertano. Mon. Not. R. Astron. Soc., 203:735–747, May 1983.
+K.-H. Chae. ApJ, 941(1):55, Dec. 2022. doi: 10.3847/1538-4357/ac93fc.
+K.-H. Chae et al. Astrophys. J., 904(1):51, Nov. 2020. doi: 10.3847/1538-4357/abbb96.
+K.-H. Chae et al. ApJ, 921(2):104, Nov. 2021. doi: 10.3847/1538-4357/ac1bba.
+K.-H. Chae et al. Phys. Rev. D, 106(10):103025, Nov. 2022. doi: 10.1103/PhysRevD.106.103025.
+A. Chowdhury et al. Nature, 586(7829):369–372, Oct. 2020. doi: 10.1038/s41586-020-2794-7.
+A. Chowdhury, N. Kanekar, and J. N. Chengalur. ApJ, 937(2):103, Oct. 2022a. doi: 10.3847/
+   1538-4357/ac7d52.
+A. Chowdhury, N. Kanekar, and J. N. Chengalur. ApJL, 935(1):L5, Aug. 2022b. doi: 10.3847/
+   2041-8213/ac8150.
+J. Chu et al. MNRAS, 528(4):6354–6369, Mar. 2024. doi: 10.1093/mnras/stae406.
+P. Colín, V. Avila-Reese, and O. Valenzuela. ApJ, 542(2):622–630, Oct. 2000. doi: 10.1086/317057.
+E. Corbelli and S. E. Schneider. Astrophys. J., 479(1):244–257, Apr. 1997. doi: 10.1086/303849.
+D. Cornu et al. A&A, 690:A211, Oct. 2024. doi: 10.1051/0004-6361/202449548.
+D. Cornu et al. A&A, 707:A203, Mar. 2026. doi: 10.1051/0004-6361/202557257.
+O. Daigle et al. MNRAS, 367(2):469–512, Apr. 2006. doi: 10.1111/j.1365-2966.2006.10002.x.
+A. L. Danhaive and S. Tacchella. arXiv e-prints, art. arXiv:2510.07369, Oct. 2025. doi: 10.48550/
+   arXiv.2510.07369.
+T. A. Davis. MNRAS, 443(1):911–918, Sept. 2014. doi: 10.1093/mnras/stu1163.
+T. A. Davis et al. MNRAS, 429(1):534–555, Feb. 2013. doi: 10.1093/mnras/sts353.
+T. A. Davis et al. MNRAS, 468(4):4675–4690, July 2017a. doi: 10.1093/mnras/stw3217.
+T. A. Davis et al. MNRAS, 468(4):4675–4690, July 2017b. doi: 10.1093/mnras/stw3217.
+T. A. Davis, N. Zabel, and J. M. Dawson. KinMS: Three-dimensional kinematic modeling of
+   arbitrary gas distributions. Astrophysics Source Code Library, record ascl:2006.003, June 2020.
+J. M. Dawson, T. A. Davis, E. L. Gomez, and J. Schock. Mon. Not. R. Astron. Soc., 503(1):574–585,
+   May 2021. doi: 10.1093/Mon.Not.R.Astron.Soc./stab427.
+W. J. G. de Blok. Advances in Astronomy, 2010:789293, Jan. 2010. doi: 10.1155/2010/789293.
+W. J. G. de Blok and A. Bosma. A&A, 385:816–846, Apr. 2002. doi: 10.1051/0004-6361:20020080.
+W. J. G. de Blok et al. Astron. J., 136(6):2648–2719, Dec. 2008. doi: 10.1088/0004-6256/136/6/
+   2648.
+N. Deg et al. PASA, 39:e059, Nov. 2022. doi: 10.1017/pasa.2022.43.
+N. Deg et al. ApJ, 994(2):232, Dec. 2025. doi: 10.3847/1538-4357/ae1003.
+H. Desmond. MNRAS, 526(3):3342–3351, Dec. 2023. doi: 10.1093/mnras/stad2762.
+H. Desmond, P. G. Ferreira, G. Lavaux, and J. Jasche. MNRAS, 474(3):3152–3161, Mar. 2018. doi:
+   10.1093/mnras/stx3062.
+A. Di Cintio and F. Lelli. Mon. Not. R. Astron. Soc., 456(1):L127–L131, Feb. 2016. doi: 10.1093/
+   Mon.Not.R.Astron.Soc.l/slv185.
+E. M. Di Teodoro and F. Fraternali. Mon. Not. R. Astron. Soc., 451(3):3021–3033, Aug. 2015. doi:
+
+
+                                               26
+Testing dark matter models and modified gravity theories                             F. Lelli et al.
+
+
+   10.1093/Mon.Not.R.Astron.Soc./stv1213.
+E. M. Di Teodoro, F. Fraternali, and S. H. Miller. A&A, 594:A77, Oct. 2016. doi: 10.1051/
+   0004-6361/201628315.
+E. M. Di Teodoro et al. MNRAS, 476(1):804–813, May 2018. doi: 10.1093/mnras/sty175.
+J. Dubinski and R. G. Carlberg. Astrophys. J., 378:496, Sept. 1991. doi: 10.1086/170451.
+A. A. Dutton, A. V. Macciò, A. Obreja, and T. Buck. MNRAS, 485(2):1886–1899, May 2019. doi:
+   10.1093/mnras/stz531.
+S. Dye et al. MNRAS, 476(4):4383–4394, June 2018. doi: 10.1093/mnras/sty513.
+A. A. El-Zant, J. Freundlich, and F. Combes. MNRAS, 461(2):1745–1759, Sept. 2016. doi:
+   10.1093/mnras/stw1398.
+B. Epinat, P. Amram, C. Balkowski, and M. Marcelin. Mon. Not. R. Astron. Soc., 401(4):2113–2147,
+   Feb. 2010. doi: 10.1111/j.1365-2966.2009.15688.x.
+B. Famaey and S. S. McGaugh. Living Reviews in Relativity, 15:10, Sept. 2012. doi: 10.12942/
+   lrr-2012-10.
+F. Fraternali. In A. Fox and R. Davé, editors, Gas Accretion onto Galaxies, volume 430 of
+   Astrophysics and Space Science Library, page 323, Jan. 2017. doi: 10.1007/978-3-319-52512-9_
+   14.
+F. Fraternali, G. van Moorsel, R. Sancisi, and T. Oosterloo. AJ, 123(6):3124–3140, June 2002. doi:
+   10.1086/340358.
+J. Freundlich et al. MNRAS, 491(3):4523–4542, Jan. 2020. doi: 10.1093/mnras/stz3306.
+E. Garaldi, E. Romano-Díaz, C. Porciani, and M. S. Pawlowski. Phys. Rev. Lett., 120(26):261301,
+   June 2018. doi: 10.1103/PhysRevLett.120.261301.
+A. Gasser. Modelling Rotation Curves in Marginally Resolved Warped Galaxies. Master’s thesis,
+   Royal Military College of Canada, May 2023. URL https://espace.rmc-cmr.ca/jspui/
+   handle/11264/1287?mode=full.
+G. Gentile et al. Astrophys. J., 634(2):L145–L148, Dec. 2005. doi: 10.1086/498939.
+G. Gentile, P. Salucci, U. Klein, and G. L. Granato. Mon. Not. R. Astron. Soc., 375(1):199–212,
+   Feb. 2007. doi: 10.1111/j.1365-2966.2006.11283.x.
+A. Ghari, B. Famaey, C. Laporte, and H. Haghi. A&A, 623:A123, Mar. 2019. doi: 10.1051/
+   0004-6361/201834661.
+J. Goodman. New Astron., 5(2):103–107, Apr. 2000. doi: 10.1016/S1384-1076(00)00015-4.
+F. Governato et al. Nature, 463:203–206, Jan. 2010. doi: 10.1038/nature08640.
+F. Governato et al. Mon. Not. R. Astron. Soc., 422:1231–1240, May 2012. doi: 10.1111/j.1365-2966.
+   2012.20696.x.
+C. Hahn, C. Bottrell, and K.-G. Lee. ApJ, 968(2):90, June 2024. doi: 10.3847/1538-4357/ad4344.
+P. Hartley et al. MNRAS, 523(2):1967–1993, Aug. 2023. doi: 10.1093/mnras/stad1375.
+K. Haubner et al. In D. J. Pisano, K. M. Mogotsi, J. Healy, and S. Blyth, editors, IAU Symposium,
+   volume 20 of IAU Symposium, pages 119–125, July 2026. doi: 10.1017/S1743921324002886.
+K. M. Hess et al. MNRAS, 484(2):2234–2256, Apr. 2019. doi: 10.1093/mnras/sty3421.
+L. M. Hogarth et al. MNRAS, 528(4):6768–6785, Mar. 2024. doi: 10.1093/mnras/stae377.
+S. Hossenfelder and T. Mistele. International Journal of Modern Physics D, 27(14):1847010, Jan.
+   2018. doi: 10.1142/S0218271818470107.
+W. Hu, R. Barkana, and A. Gruzinov. Phys. Rev. Let., 85(6):1158–1161, Aug. 2000. doi: 10.1103/
+
+
+                                               27
+Testing dark matter models and modified gravity theories                              F. Lelli et al.
+
+
+   PhysRevLett.85.1158.
+L. K. Hunt et al. A&A, 675:A64, July 2023. doi: 10.1051/0004-6361/202245805.
+D. A. Hunter et al. Astron. J., 144:134, Nov. 2012. doi: 10.1088/0004-6256/144/5/134.
+G. Iorio et al. Mon. Not. R. Astron. Soc., 466(4):4159–4192, Apr. 2017. doi: 10.1093/Mon.Not.R.
+   Astron.Soc./stw3285.
+M. J. Jarvis et al. MNRAS, Oct. 2025. doi: 10.1093/mnras/staf1702.
+F. Jiang et al. MNRAS, 487(4):5272–5290, Aug. 2019. doi: 10.1093/mnras/stz1499.
+F. Jiang et al. MNRAS, 521(3):4630–4644, May 2023. doi: 10.1093/mnras/stad705.
+M. G. Jones et al. A&A, 609:17, 1 2018. ISSN 14320746. doi: 10.1051/0004-6361/
+   201731448. URL https://ui.adsabs.harvard.edu/abs/2018A%26A...609A..17J/
+   abstracthttp://cdsarc.u-strasbg.fr/viz-bin/qcat?J/A+A/609/A17.
+G. I. G. Józsa, F. Kenn, U. Klein, and T. A. Oosterloo. Astron. Astrophys., 468(2):731–774, June
+   2007. doi: 10.1051/0004-6361:20066164.
+A. Kalnajs. In Internal Kinematics and Dynamics of Galaxies, volume 100 of IAU Symposia, pages
+   87–88, Jan. 1983.
+P. Kamphuis et al. Mon. Not. R. Astron. Soc., 452(3):3139–3158, Sept. 2015. doi: 10.1093/Mon.
+   Not.R.Astron.Soc./stv1480.
+H. Katz et al. Mon. Not. R. Astron. Soc., 466(2):1648–1668, Apr. 2017. doi: 10.1093/Mon.Not.R.
+   Astron.Soc./stw3101.
+A. Kazemi-Moridani et al. ApJ, 981(2):208, Mar. 2025. doi: 10.3847/1538-4357/ad9f3f.
+B. W. Keller and J. W. Wadsley. Astrophys. J., 835(1):L17, Jan. 2017. doi: 10.3847/2041-8213/
+   835/1/L17.
+S. M. Kent. Astron. J., 91:1301–1327, June 1986. doi: 10.1086/114106.
+S. M. Kent. Astron. J., 93:816–832, Apr. 1987. doi: 10.1086/114366.
+M. Kretschmer et al. MNRAS, 503(4):5238–5253, June 2021. doi: 10.1093/mnras/stab833.
+R. Kuzio de Naray, S. S. McGaugh, W. J. G. de Blok, and A. Bosma. ApJSS, 165(2):461–479, Aug.
+   2006. doi: 10.1086/505345.
+L. L. Lee et al. ApJ, 978(1):14, Jan. 2025. doi: 10.3847/1538-4357/ad90b5.
+F. Lelli. Nature Astronomy, 6:35–47, Jan. 2022. doi: 10.1038/s41550-021-01562-2.
+F. Lelli. A&A, 689:L3, Sept. 2024. doi: 10.1051/0004-6361/202451289.
+F. Lelli, F. Fraternali, and R. Sancisi. Astron. Astrophys., 516:A11, June 2010. doi: 10.1051/
+   0004-6361/200913808.
+F. Lelli, M. Verheijen, F. Fraternali, and R. Sancisi. Astron. Astrophys., 537:A72, Jan. 2012. doi:
+   10.1051/0004-6361/201117867.
+F. Lelli, F. Fraternali, and M. Verheijen. Mon. Not. R. Astron. Soc., 433:L30–L34, June 2013. doi:
+   10.1093/Mon.Not.R.Astron.Soc.l/slt053.
+F. Lelli, F. Fraternali, and M. Verheijen. Astron. Astrophys., 563:A27, Mar. 2014a. doi: 10.1051/
+   0004-6361/201322658.
+F. Lelli, M. Verheijen, and F. Fraternali. Astron. Astrophys., 566:A71, June 2014b. doi: 10.1051/
+   0004-6361/201322657.
+F. Lelli, S. S. McGaugh, and J. M. Schombert. Astron. J., 152(6):157, Dec. 2016a. doi: 10.3847/
+   0004-6256/152/6/157.
+F. Lelli, S. S. McGaugh, and J. M. Schombert. Astrophys. J., 816(1):L14, Jan. 2016b. doi:
+
+
+                                                28
+Testing dark matter models and modified gravity theories                           F. Lelli et al.
+
+
+   10.3847/2041-8205/816/1/L14.
+F. Lelli, S. S. McGaugh, J. M. Schombert, and M. S. Pawlowski. Astrophys. J., 827(1):L19, Aug.
+   2016c. doi: 10.3847/2041-8205/827/1/L19.
+F. Lelli, S. S. McGaugh, and J. M. Schombert. MNRAS, 468(1):L68–L71, June 2017a. doi:
+   10.1093/mnrasl/slx031.
+F. Lelli, S. S. McGaugh, J. M. Schombert, and M. S. Pawlowski. Astrophys. J., 836(2):152, Feb.
+   2017b. doi: 10.3847/1538-4357/836/2/152.
+F. Lelli et al. MNRAS, 479(4):5440–5447, Oct. 2018. doi: 10.1093/mnras/sty1795.
+F. Lelli et al. Mon. Not. R. Astron. Soc., 484(3):3267–3278, Apr. 2019. doi: 10.1093/Mon.Not.R.
+   Astron.Soc./stz205.
+F. Lelli et al. A&A, 672:A106, Apr. 2023. doi: 10.1051/0004-6361/202245105.
+P. Li, F. Lelli, S. McGaugh, and J. Schombert. Astron. Astrophys., 615:A3, July 2018. doi:
+   10.1051/0004-6361/201732547.
+P. Li, F. Lelli, S. McGaugh, and J. Schombert. Astrophys. J.S, 247(1):31, Mar. 2020. doi:
+   10.3847/1538-4365/ab700e.
+Q. Li and L. Modesto. Gravitation and Cosmology, 26(2):99–117, Aug. 2020. doi: 10.1134/
+   S0202289320020085.
+L. Lin et al. A&A, 693:A91, Jan. 2025. doi: 10.1051/0004-6361/202450814.
+A. D. Ludlow et al. Phys. Rev. Lett., 118(16):161103, Apr. 2017. doi: 10.1103/PhysRevLett.118.
+   161103.
+A. V. Macciò et al. MNRAS, 424(2):1105–1112, Aug. 2012. doi: 10.1111/j.1365-2966.2012.21284.
+   x.
+P. E. Mancera Piña et al. MNRAS, 514(3):3329–3348, Aug. 2022. doi: 10.1093/mnras/stac1508.
+P. E. Mancera Piña et al. A&A, 699:A311, July 2025. doi: 10.1051/0004-6361/202554381.
+A. Marasco et al. Mon. Not. R. Astron. Soc., 476(2):2168–2176, May 2018. doi: 10.1093/Mon.
+   Not.R.Astron.Soc./sty354.
+A. Marasco et al. Astron. Astrophys., 631:A50, Nov. 2019. doi: 10.1051/0004-6361/201936338.
+A. C. Mayer, A. F. Teklu, K. Dolag, and R.-S. Remus. MNRAS, 518(1):257–269, Jan. 2023. doi:
+   10.1093/mnras/stac3017.
+S. S. McGaugh. Astron. J., 143:40, Feb. 2012. doi: 10.1088/0004-6256/143/2/40.
+S. S. McGaugh and J. M. Schombert. AJ, 148(5):77, Nov. 2014. doi: 10.1088/0004-6256/148/5/77.
+S. S. McGaugh, J. M. Schombert, G. D. Bothun, and W. J. G. de Blok. Astrophys. J., 533:L99–L102,
+   Apr. 2000. doi: 10.1086/312628.
+S. S. McGaugh, F. Lelli, and J. M. Schombert. Phys. Rev. Lett., 117(20):201101, Nov. 2016. doi:
+   10.1103/PhysRevLett.117.201101.
+A. T. McNichols et al. Astrophys. J., 832(1):89, Nov. 2016. doi: 10.3847/0004-637X/832/1/89.
+K. B. W. McQuinn et al. Astrophys. J., 721:297–317, Sept. 2010. doi: 10.1088/0004-637X/721/1/
+   297.
+G. R. Meurer, C. Carignan, S. F. Beaulieu, and K. C. Freeman. Astron. J., 111:1551–+, Apr. 1996.
+   doi: 10.1086/117895.
+M. Meyer et al. PASA, 34:52, Nov. 2017. doi: 10.1017/pasa.2017.31.
+M. Milgrom. Astrophys. J., 270:365–370, July 1983a. doi: 10.1086/161130.
+M. Milgrom. Astrophys. J., 270:371–389, July 1983b. doi: 10.1086/161131.
+
+
+                                               29
+Testing dark matter models and modified gravity theories                           F. Lelli et al.
+
+
+M. Milgrom. Annals of Physics, 229(2):384–415, Feb. 1994. doi: 10.1006/aphy.1994.1012.
+M. Milgrom. Scholarpedia, 9(6):31410, 2014. doi: 10.4249/scholarpedia.31410. revision #196839.
+T. Mistele, S. McGaugh, and S. Hossenfelder. A&A, 664:A40, Aug. 2022. doi: 10.1051/0004-6361/
+   202243216.
+C. Muni et al. MNRAS, 536(1):314–323, Jan. 2025. doi: 10.1093/mnras/stae2748.
+C. Murugeshan et al. PASA, 41:e088, Nov. 2024. doi: 10.1017/pasa.2024.91.
+A. P. Naik et al. MNRAS, 489(1):771–787, Oct. 2019. doi: 10.1093/mnras/stz2131.
+J. F. Navarro, C. S. Frenk, and S. D. M. White. Astrophys. J., 462:563, May 1996. doi: 10.1086/
+   177173.
+A. Nestor Shachar et al. ApJ, 944(1):78, Feb. 2023. doi: 10.3847/1538-4357/aca9cf.
+E. Noordermeer et al. Astron. Astrophys., 442:137–157, Oct. 2005. doi: 10.1051/0004-6361:
+   20053172.
+M. Ntampaka et al. ApJ, 803(2):50, Apr. 2015. doi: 10.1088/0004-637X/803/2/50.
+D. Obreschkow et al. ApJ, 703(2):1890–1903, Oct. 2009. doi: 10.1088/0004-637X/703/2/1890.
+J. C. O’Brien, K. C. Freeman, and P. C. van der Kruit. Astron. Astrophys., 515:A62, June 2010.
+   doi: 10.1051/0004-6361/200912567.
+S.-H. Oh et al. Astron. J., 149(6):180, June 2015. doi: 10.1088/0004-6256/149/6/180.
+R. P. Olling. AJ, 110:591, Aug. 1995. doi: 10.1086/117545.
+K. A. Oman et al. Mon. Not. R. Astron. Soc., 452(4):3650–3665, Oct. 2015. doi: 10.1093/Mon.
+   Not.R.Astron.Soc./stv1504.
+T. Oosterloo, F. Fraternali, and R. Sancisi. AJ, 134(3):1019, Sept. 2007. doi: 10.1086/520332.
+J. Ott et al. Astron. J., 144:123, Oct. 2012. doi: 10.1088/0004-6256/144/4/123.
+S. Panpanich and P. Burikham. Phys. Rev. D, 98(6):064008, Sept. 2018. doi: 10.1103/PhysRevD.
+   98.064008.
+A. Paranjape and R. K. Sheth. MNRAS, 517(1):130–139, Nov. 2022. doi: 10.1093/mnras/stac2689.
+M. Persic, P. Salucci, and F. Stel. MNRAS, 281(1):27–47, July 1996. doi: 10.1093/mnras/278.1.27.
+J. Petersen and F. Lelli. A&A, 636:A56, Apr. 2020. doi: 10.1051/0004-6361/201936964.
+T. E. Pickering, C. D. Impey, J. H. van Gorkom, and G. D. Bothun. AJ, 114:1858, Nov. 1997. doi:
+   10.1086/118611.
+A. Pillepich et al. MNRAS, 490(3):3196–3233, Dec. 2019. doi: 10.1093/mnras/stz2338.
+A. A. Ponomareva et al. MNRAS, 474(4):4366–4384, Mar. 2018. doi: 10.1093/mnras/stx3066.
+A. A. Ponomareva et al. MNRAS, 508(1):1195–1205, Nov. 2021. doi: 10.1093/mnras/stab2654.
+A. Pontzen and F. Governato. MNRAS, 421(4):3464–3471, Apr. 2012. doi: 10.1111/j.1365-2966.
+   2012.20571.x.
+L. Posti. Research Notes of the American Astronomical Society, 6(11):233, Nov. 2022. doi:
+   10.3847/2515-5172/aca0df.
+D. Powell et al. MNRAS, 501(1):515–530, Feb. 2021. doi: 10.1093/mnras/staa2740.
+S. H. Price et al. ApJ, 922(2):143, Dec. 2021. doi: 10.3847/1538-4357/ac22ad.
+A. Puglisi et al. MNRAS, 524(2):2814–2835, Sept. 2023. doi: 10.1093/mnras/stad1966.
+J. I. Read, G. Iorio, O. Agertz, and F. Fraternali. Mon. Not. R. Astron. Soc., 462(4):3628–3645,
+   Nov. 2016. doi: 10.1093/Mon.Not.R.Astron.Soc./stw1876.
+T. Ren, A. Kwa, M. Kaplinghat, and H.-B. Yu. Physical Review X, 9(3):031020, July 2019. doi:
+   10.1103/PhysRevX.9.031020.
+
+
+                                               30
+Testing dark matter models and modified gravity theories                             F. Lelli et al.
+
+
+G. Rhee et al. ApJ, 617(2):1059–1076, Dec. 2004. doi: 10.1086/425565.
+J. Rhee et al. MNRAS, 518(3):4646–4671, Jan. 2023. doi: 10.1093/mnras/stac3065.
+F. Rizzo et al. Nature, 584(7820):201–204, Aug. 2020. doi: 10.1038/s41586-020-2572-6.
+F. Rizzo et al. A&A, 679:A129, Nov. 2023. doi: 10.1051/0004-6361/202346444.
+V. H. Robles et al. MNRAS, 472(3):2945–2954, Dec. 2017. doi: 10.1093/mnras/stx2253.
+D. H. Rogstad, I. A. Lockhart, and M. C. H. Wright. Astrophys. J., 193:309–319, Oct. 1974. doi:
+   10.1086/153164.
+A. B. Romeo. MNRAS, 256(2):307–320, May 1992. doi: 10.1093/mnras/256.2.307.
+V. C. Rubin, W. K. Ford, Jr., and N. Thonnard. Astrophys. J., 225:L107–L111, Nov. 1978. doi:
+   10.1086/182804.
+L. V. Sales, A. Wetzel, and A. Fattahi. Nature Astronomy, 6:897–910, June 2022. doi: 10.1038/
+   s41550-022-01689-w.
+R. Sancisi. In Dark Matter in Galaxies, volume 220 of IAU Symposia, page 233, July 2004.
+R. H. Sanders. The Dark Matter Problem: A Historical Perspective, 2010.
+R. H. M. Schoenmakers, M. Franx, and P. T. de Zeeuw. Mon. Not. R. Astron. Soc., 292(2):349–364,
+   Dec. 1997. doi: 10.1093/Mon.Not.R.Astron.Soc./292.2.349.
+J. Schombert and S. McGaugh. Pub. Astron. Soc. Austr., 31:e036, Sept. 2014. doi: 10.1017/Pub.
+   Astron.Soc.Austr..2014.32.
+J. Schombert, S. McGaugh, and F. Lelli. Mon. Not. R. Astron. Soc., 483(2):1496–1512, Feb. 2019.
+   doi: 10.1093/Mon.Not.R.Astron.Soc./sty3223.
+A. Shelest and F. Lelli. A&A, 641:A31, Sept. 2020. doi: 10.1051/0004-6361/202038184.
+F. J. Sicking. The thickness of the HI gas layer in spiral galaxies. PhD thesis, -, Dec. 1997.
+J. D. Simon, A. D. Bolatto, A. Leroy, and L. Blitz. Astrophys. J., 596(2):957–981, Oct. 2003. doi:
+   10.1086/378200.
+J. D. Simon et al. Astrophys. J., 621(2):757–776, Mar. 2005. doi: 10.1086/427684.
+C. Skordis and T. Złośnik. Phys. Rev. Lett., 127:161302, Oct 2021. doi: 10.1103/PhysRevLett.127.
+   161302.
+M. D. Smith et al. MNRAS, 485(3):4359–4374, May 2019. doi: 10.1093/mnras/stz625.
+K. Spekkens and J. A. Sellwood. Astrophys. J., 664(1):204–214, July 2007. doi: 10.1086/518471.
+D. N. Spergel and P. J. Steinhardt. Phys. Rev. Let., 84(17):3760–3763, Apr. 2000. doi: 10.1103/
+   PhysRevLett.84.3760.
+J. Spitzer, Lyman. Astrophys. J., 95:329, May 1942. doi: 10.1086/144407.
+J. P. Stott et al. MNRAS, 457(2):1888–1904, Apr. 2016. doi: 10.1093/mnras/stw129.
+R. A. Swaters, T. S. van Albada, J. M. van der Hulst, and R. Sancisi. Astron. Astrophys., 390:
+   829–861, Aug. 2002. doi: 10.1051/0004-6361:20011755.
+R. A. Swaters, R. Sancisi, T. S. van Albada, and J. M. van der Hulst. Astron. Astrophys., 493:
+   871–892, Jan. 2009. doi: 10.1051/0004-6361:200810516.
+R. A. Swaters, R. Sancisi, J. M. van der Hulst, and T. S. van Albada. MNRAS, 425(3):2299–2308,
+   Sept. 2012. doi: 10.1111/j.1365-2966.2012.21599.x.
+R. A. Swaters et al. Astrophys. J., 797(2):L28, Dec. 2014. doi: 10.1088/2041-8205/797/2/L28.
+A. L. Tiley et al. MNRAS, 485(1):934–960, May 2019. doi: 10.1093/mnras/stz428.
+C. Trachternach et al. Astron. J., 136(6):2720–2760, Dec. 2008. doi: 10.1088/0004-6256/136/6/
+   2720.
+
+
+                                               31
+Testing dark matter models and modified gravity theories                         F. Lelli et al.
+
+
+T. S. van Albada and R. Sancisi. Royal Society of London Philosophical Transactions Series A,
+   320:447–464, Dec. 1986.
+T. S. van Albada, J. N. Bahcall, K. Begeman, and R. Sancisi. Astrophys. J., 295:305–313, Aug.
+   1985. doi: 10.1086/163375.
+M. A. W. Verheijen. Astrophys. J., 563:694–715, Dec. 2001. doi: 10.1086/323887.
+M. A. W. Verheijen and R. Sancisi. Astron. Astrophys., 370:765–867, May 2001. doi: 10.1051/
+   0004-6361:20010090.
+P. Villanueva-Domingo et al. ApJ, 935(1):30, Aug. 2022. doi: 10.3847/1538-4357/ac7aa3.
+A. A. Vărăşteanu et al. MNRAS, 541(3):2366–2392, Aug. 2025. doi: 10.1093/mnras/staf1079.
+F. Walter et al. Astron. J., 136:2563, Dec. 2008. doi: 10.1088/0004-6256/136/6/2563.
+J. Wang et al. Mon. Not. R. Astron. Soc., 460(2):2143–2151, Aug. 2016. doi: 10.1093/Mon.Not.R.
+   Astron.Soc./stw1099.
+M. S. Warren, P. J. Quinn, J. K. Salmon, and W. H. Zurek. ApJ, 399:405, Nov. 1992. doi:
+   10.1086/171937.
+T. Westmeier et al. PASA, 39:e058, Nov. 2022. doi: 10.1017/pasa.2022.50.
+E. Wisnioski et al. ApJ, 886(2):124, Dec. 2019. doi: 10.3847/1538-4357/ab4db8.
+R. L. Workman et al. Progress of Theoretical and Experimental Physics, 2022(8):083C01, Aug.
+   2022. doi: 10.1093/ptep/ptac097.
+H. Xi et al. ApJL, 966(2):L36, May 2024. doi: 10.3847/2041-8213/ad4357.
+
+
+
+
+                                               32
+

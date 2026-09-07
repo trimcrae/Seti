@@ -1,0 +1,583 @@
+                                             Poled-fibre phase modulator for efficient high-dimensional quantum measurements
+
+                                                  N. Guerrero,1, ∗ N. Villalba,1, ∗ G. H. dos Santos,1, † C. J. Salazar,1 C. Melo,2 F. Castillo,2 J. Cariñe,3
+                                                     G. B. Xavier,4 E. S. Gómez,1, 5 S. P. Walborn,1, 5 J. Pereira,6 G. Saavedra,2 and G. Lima1, 5, ‡
+                                                             1
+                                                             Departamento de Fı́sica, Universidad de Concepción, Concepción, 160-C, Bı́o Bı́o, Chile
+                                                                          2
+                                                                            Department of Electrical Engineering, Universidad de Concepción,
+                                                                                  Edmundo Larenas 219, Concepción 4030000, Chile
+                                                  3
+                                                    Departamento de Ingenierı́a Eléctrica, Universidad Católica de la Santı́sima Concepción, Concepción, Chile
+                                                                4
+                                                                  Institutionen för Systemteknik, Linköpings Universitet, 581 83, Linköping, Sweden
+                                                  5
+                                                    Millennium Institute for Research in Optics, Universidad de Concepción, Concepción, 160-C, Bı́o Bı́o, Chile
+                                                             6
+                                                               Fibre Optics, RISE-Research Institutes of Sweden, Electrum 236, 16440, Kista, Sweden
+                                                                                                (Dated: August 6, 2026)
+                                                            Efficient detection of quantum states underpins advanced device-independent quantum-
+                                                         information protocols that provide the ultimate level of security for tasks including quantum random
+                                                         number generation and quantum key distribution (QKD). High-dimensional encoding is a natural
+                                                         route to boost the performance of such protocols, offering enhanced noise resilience and higher in-
+                                                         formation capacity, yet their practical implementation remains challenging. A key experimental
+                                                         bottleneck in higher dimensions is the typical need of active modulators for basis selection, which
+                                                         incur substantial optical losses and polarization-sensitive operation. Poled optical fiber phase modu-
+                                                         lators (PFPMs) are a fiber-native electro-optic technology that naturally addresses these challenges,
+                                                         combining sub-dB insertion loss, intrinsic polarization independence, and direct compatibility with
+arXiv:2608.04112v1 [quant-ph] 4 Aug 2026
+
+
+
+
+                                                         standard telecommunications fiber. Here we report the first use of a PFPM for active quantum-state
+                                                         measurements in a fully fiber-integrated platform. Basis selection in our receiver for four-dimensional
+                                                         qudits is achieved using a single PFPM, substantially simplifying the receiver architecture. As a
+                                                         benchmark, we perform a four-dimensional QKD session and obtain a finite secret-key rate per
+                                                         pulse that, to the best of our knowledge, surpasses all previously reported QKD demonstrations.
+                                                         Our results establish poled-fiber electro-optic modulation as a broadly applicable platform for high-
+                                                         efficiency detection in fiber-integrated quantum information processing.
+
+
+                                                                 INTRODUCTION                                 inherently introduces several implementation challenges.
+                                                                                                              The most significant is the additional insertion loss as-
+                                              Photonic quantum information has progressed from                sociated with the switching elements, followed by limi-
+                                           proof-of-principle demonstrations of quantum cryptogra-            tations arising from finite switching speeds, modulation
+                                           phy to increasingly complex protocols in communication,            depth, and, finally, the need to manage other photonic
+                                           sensing, and computation [1–3]. Encoding information               degrees of freedom, such as polarisation. For example,
+                                           in photonic states of dimension d > 2, the so-called qu-           commercial fiber-pigtailed LiNbO3 modulators can oper-
+                                           dits, can increase the system information capacity, im-            ate at GHz, but they introduce an extra 3 dB of loss with
+                                           prove tolerance to noise, and provide access to stronger           a strong polarisation dependence [20, 21].
+                                           forms of non-classical correlations [4–13]. In practice,              Previous routes to lower-loss active measurements have
+                                           however, the benefits of high-dimensional encoding are             different trade offs: spatial light modulators and digital
+                                           achieved only when the receiver performs the measure-              micro-mirror devices are flexible but limited to switching
+                                           ment at high fidelity and low loss, like it is the case            rates up to a few kHz [9, 22]; multi-plane light convert-
+                                           with qubit-based communicating systems. Receiver loss              ers are efficient for static measurements but difficult to
+                                           directly suppresses the secret-key rate in quantum key             reconfigure dynamically [23]; piezoelectric fiber stretch-
+                                           distribution (QKD) [14] and opens loopholes in device-             ers have sub-dB insertion loss but switching is limited
+                                           independent (DI) protocols [15–18] (see Fig. 1). Detec-            to tens of kHz [24]; and integrated photonic circuits, al-
+                                           tion efficiencies sufficient high for high-dimensional DI          though recently reaching gigahertz-rate operation, still
+                                           quantum information processing have been achieved for              suffer from relevant fiber-coupling losses [25].
+                                           static, single-outcome measurements [19]. However, a                  Electro-optic modulation in poled silica fiber is a
+                                           wide class of protocols requires active measurement-basis          promising technology that can provide simultaneous low
+                                           selection and multiple-outcome measurements, in which              loss and fast response time, thus solving the efficiency
+                                           a single detection event determines which of the d out-            issue for high-dimensional device-independent applica-
+                                           comes of the selected basis occurred. Active switching             tions. Glass has a low non-linear coefficient for electro-
+                                                                                                              optical modulation, but through thermal or optical pol-
+                                                                                                              ing, a higher effective χ(3) is induced directly in the
+                                                                                                              fiber itself [26, 27]. Poled-fiber devices have been suc-
+                                           ∗ These authors contributed equally to this work                   cessfully operated in classical applications such as fiber-
+                                           † fisica.gu@gmail.com
+                                                                                                              integrated interferometry and switching for over two
+                                           ‡ glima@udec.cl
+                                                                                                              decades [28, 29]. Because the optical mode never leaves
+                                                                                                                         2
+
+
+
+
+Figure 1. Effect of receiver loss in quantum photonic experiments. Top: a conventional receiver based on a commercial,
+fiber-pigtailed LiNbO3 phase modulator (3 dB insertion loss) implements the basis-selection unitary U , pushing the overall
+measurement efficiency below the threshold required for DI quantum information experiments or severe limiting the rate
+attainable in QKD. Bottom: a receiver based on a poled-fiber phase modulator implements the same unitary at sub-dB
+insertion loss, constituting the architecture demonstrated in this work.
+
+
+the fiber, the fiber-to-crystal coupling responsible for
+most of the loss in commercial pigtailed devices is elim-
+inated, and the modulation is furthermore intrinsically
+polarization independent. Nevertheless, the potential
+of this mature and low-loss technology for quantum-
+information tasks has remained largely unexplored.
+
+
+
+   Here we report the first application of a poled op-
+tical fiber phase modulator (PFPM) in a quantum-
+information experiment. The PFPM has a sub-dB inser-
+tion loss of 0.45 dB, intrinsic polarization independence
+[30], and direct compatibility with standard telecommu-         Figure 2. a) Cross-section diagram of the poled-fiber phase
+nications fibre, enabling an efficient fibre-integrated ar-     modulator. Two longitudinal electrodes are inserted in the
+chitecture for the detection of high-dimensional photonic       cladding equidistant from the single-mode core. b) Finished
+                                                                and packaged PFPM.
+states. Specifically, used as the active basis-selection ele-
+ment of a four-dimensional quantum receiver, the PFPM
+allowed the insertion loss of the detection system to be re-
+                                                                                       RESULTS
+duced from 5.76,dB, obtained using LiNbO3 phase mod-
+ulators, to 2.79,dB. The resulting detection efficiency of
+the system then reaches an overall value of ≈ 44%, in-                 PFPM fabrication and characterization
+cluding the detection efficiencies of four superconducting
+nanowire single-photon detectors (SNSPDs). To demon-               A poled-fiber phase modulator is an all-fiber electro-
+strate the potential of this technology for quantum infor-      optic device in which metallic electrodes embedded lon-
+mation processing, we use our new detection scheme for          gitudinally through the cladding of a single-mode op-
+implementing a four-dimensional decoy-state QKD ses-            tical fiber enable voltage-controlled phase modulation
+sion that, up to our knowledge, yields the highest fi-          (Fig. 2(a)). Because the optical mode remains guided
+nite secret-key rate per pulse reported to date for any         in the fiber core, the device can be directly spliced into
+QKD demonstration, at the typical reference channel at-         standard fiber systems, avoiding the free-space-to-fiber or
+tenuation level of 10 dB. The broad relevance of poled-         crystal-to-fiber coupling losses associated with standard
+fiber electro-optic modulation is further illustrated by the    electro-optic modulators [26–28].
+companion submission [29], in which a PFPM serves as               The PFPM was fabricated by drilling two longitudinal
+the active switching element of a quantum packet buffer.        holes in a standard single-mode fiber preform, drawing
+Together, the two results establish poled-fiber electro-        the preform. After cutting the fiber in smaller sections
+optic modulation as a versatile, ultra-low-loss, and ac-        (≈ 3 m), and filling the holes with molten BiSn alloy with
+tive technology for fiber-integrated quantum informa-           pressure, while keeping both ends free of metal. After
+tion, with applications spanning high-dimensional QKD,          solidification, the resulting 1 m-long metallic electrodes
+device-independent protocols, and quantum memories.             were exposed by polishing the fiber from the side and
+                                                                                                                            3
+
+
+
+
+Figure 3. Characterization of the poled-fiber phase modulator. (a), Experimental configuration used for the optical and
+temporal characterization. Spontaneous amplified emission from an EDFA is injected into the fiber system containing the poled-
+fiber modulator. (b), Wavelength-dependent insertion loss obtained from measurements with an optical spectrum analyzer.
+(c), Photodiode waveform measured at the π-phase operating point, including the 10–90% rise-time estimation. BS: Fiber
+beamsplitter; EDFA: Erbium Doped Fiber Amplifier; FG: Function generator; HV-DC: High-voltage direct current power
+supply; HV-PG: High-voltage pulse generator; OSC: Oscilloscope; PC: Manual polarization controller; PD: Photodiode.
+
+
+connected to 20 µm tungsten wires (Fig. 2(b)). Since no          up to 100 kHz drawing a current of 8.5 mA. In principle,
+electrical current can flow between the electrodes, the          however, the same driving electronics can support repe-
+device behaves as a capacitor with a measured capaci-            tition rates up to a few MHz provided that the current
+tance of 61 pF. To overcome the low optical nonlinearity         load remains below the protection threshold.
+of glass, the fibre undergoes a poling step in which 532            The insertion loss in Fig. 3(b) was extracted by sub-
+nm light from a Nd:YAG laser is launched into the core           tracting, in dB, the spectrum measured after the PFPM
+under a simultaneously applied high voltage of ≈ 7 kV.           from a reference spectrum recorded before the device
+This rearranges the internal charge distribution and im-         with the same optical-spectrum-analyzer settings. This
+prints a permanent, long-lived electric field in the glass       gives an average loss of 0.45 dB over 1530–1565 nm, with
+[31].                                                            only weak spectral variation across the telecom C-band.
+   The PFPM was characterized through a wavelength-              The temporal response at the half-wave operating point
+resolved transmission measurement and a temporal char-           [Fig. 3(c)] yields Vπ = 540 V and a 10–90% rise time of
+acterization resorting to a fiber Sagnac interferometer          τr = 46.35 ns.
+(Fig. 3(a)). The optical characterization in Fig. 3(b)
+uses an erbium-doped fiber amplifier (EDFA) as a broad-
+band amplified-spontaneous-emission (ASE) source be-               The PFPM for quantum information processing
+tween 1528 and 1568 nm. The ASE light is split by a
+50/50 fiber coupler into a fiber-based Sagnac loop con-
+taining a polarization controller, a 1 km fiber spool to            To evaluate the performance of the PFPM for quan-
+temporally separate the clockwise and counterclockwise           tum information processing, we integrate it into a four-
+pulses, and the PFPM, and is finally detected on a pho-          dimensional (d = 4) phase-coding HD-QKD system [32],
+todiode. The PFPM is driven by a high-voltage DC                 in which the qudit logical states are encoded in terms
+source (HV-DC) gated by a high-voltage pulse genera-             of the path/core modes available for photon propaga-
+tor (HV-PG), itself triggered by a TTL signal of 400 ns          tion through a four-core multicore fiber (4C-MCF): a sin-
+at 1 kHz from a function generator. The wavelength-              gle photon propagating over path/core k ∈ {0, 1, 2, 3} is
+resolved insertion loss is measured on an optical spec-          identified with the basis state |k⟩. The pulse generation,
+trum analyzer with the Sagnac loop open. The repeti-             decoy-state implementation, synchronization electronics
+tion rate is presently limited by the high-voltage drive         and state-preparation hardware follow the architecture
+electronics rather than by the PFPM itself. Because the          described in Ref. [32]. A schematic overview of the ex-
+PFPM is predominantly capacitive, the current limita-            periment is shown in Fig. 4.
+tion is set by the high-voltage driver and its 50 Ω termi-          At Alice, a weak coherent pulse at 1550 nm is dis-
+nation rather than by dissipation in the fibre device itself.    tributed among four single-mode fibers by a four-core
+The 10 mA current limit of the HV-DC supply therefore            multicore beam splitter (4C-MBS), creating an equal-
+imposes a practical trade-off between TTL gate width             amplitude path superposition. The pulse then enter
+and repetition rate, since wide gate pulses can drive the        the Preparation Stage, where a set of LiNbO3 phase
+electronics into over-current protection. For 40 ns electri-     modulators imprint a phase pattern ϕ      ⃗ A between the
+cal pulses, stable operation was experimentally verified         four paths, producing initial states of the form given by
+                                                                                                                             4
+
+
+
+
+Figure 4. Schematics of the four-dimensional HD-QKD system used. A weak coherent pulse is distributed among four single-
+mode fibers through a four core multicore beam splitter (4C-MBS) [32] and sent to the Preparation Stage, where four LiNbO3
+phase-modulators generate the QKD qudit states. The photons are then multiplexed into a 520 m spool of a 4C multicore fiber,
+which constitutes the transmission channel. At Bob, the photons are routed to the high-efficiency detection system, within
+which a single PFPM (yellow Basis Selection box) realises the active basis switching. Four polarization controllers ensure path
+indistinguishability before a second 4C-MBS performs the high-dimensional projection, with the detection events recorded by
+four SNSPDs.
+
+          E
+ Ψ(ϕ ⃗ A ) = 1 P3 eiϕA   k |k⟩. The complete list of the ini-       The two MUBs realised at Bob have their eingenvec-
+             2    k=0
+tial states used is given in Methods. Note that Alice does       tors defined in terms of equal-amplitude superpositions
+not require low-loss modulators, since insertion loss at         of the four cores states |k⟩. Since our receiver is based
+the transmitter must be further increased to reach the ex-       on a multicore beamsplitter, it can be modelled using
+treme weak coherent states used in quantum information           the Sylvester–Hadamard formalism for any arbitrary di-
+processing. The resulting coherent state is subsequently         mension d [20, 36]. In this case, switching between two
+multiplexed into a 4C-MCF through a single-mode fiber            MUBs typically requires phase patterns acting on multi-
+(SMF) to MCF multiplexer (MUX).                                  ple arms, which motivates a bank of d independent phase
+                                                                 modulators (one per arm) and was the architecture of our
+   Alice and Bob are connected through a 520 m homo-             previous LiNbO3 -based receiver [32]. A structural prop-
+geneous 4C-MCF spool spliced to the transmitter and              erty of the four-dimensional case, however, makes a single
+receiver stations. The spool contributes to ≲ 2.0 dB of          phase modulator sufficient: the two MUB phase patterns
+loss and the relative phase between cores remains essen-         at Bob differ only by a π phase on one arm [11, 20, 32].
+tially constant over the 100 ms probe-lock-guard integra-        The PFPM applies this phase at V = Vπ = 540 V, re-
+tion time window [32]. The total channel attenuation             alising the X projection, while V = 0 realises the Z
+is set to 10 dB through variable attenuators, providing          projection. Thus, the remaining modulators would be
+a common reference point for comparison with recent              redundant for basis switching in QKD. This statement is
+finite-key QKD demonstrations [10, 12, 32–35].                   formally demonstrated in Methods. The key fact that the
+   At Bob’s receiver, a four-dimensional measurement in          PFPM has a sub-dB insertion loss does not compromise
+one of two bases is performed. The demultiplexer (DE-            the quality of the final interference observed, and conse-
+MUX) maps each core into an individual single-mode               quently barely affect the resulting QBER, which would
+fiber arm connected to the Basis Selection Stage. The            be not the case if only one LiNbO3 had been used.
+first arm hosts the active PFPM, while the remaining
+three arms carry only short, length-matched fiber patch
+cords whose static phases are absorbed into Bob’s per-
+block phase calibration. A manual polarization controller                         PFPM-based HD-QKD
+is placed on each of the four arms, following the PFPM
+and the three patch cords, to ensure polarization-mode              Stable interferometric operation of the receiver is en-
+indistinguishability of the four arms. After the basis-          forced by the probe–lock–guard control loop introduced
+selection stage, multi-path interference at a second 4C-         in Ref. [32] and implemented with Alice’s PMs. This re-
+MBS implements a projective measurement in one of the            lax the stress under the PFPM at the receiver, which now
+two QKD bases actively chosen by the PFPM, and each              work for QKD acquisition only when the phase-stability
+of the four output ports is fiber-coupled to a supercon-         metric satisfies QBER < 2.5%. Under this condition
+ducting nanowire single-photon detector (SNSPD) with             the accepted acquisition windows yield mean QBERs of
+system detection efficiency ηd = 85% and dark-count              EµZ = 2.83% and EµX = 4.52%, both well below the
+probability of ≈ 1,3 × 10−5 .                                    18.9% coherent-attack threshold for d = 4 [14]. The
+                                                                                                                                                                                   5
+
+
+                      0.100                                                                                              Table I. Bob insertion-loss budget, by component. The two
+                                 □*
+                                      * x                                                                                contributions that changed between the architectures are the
+                                              □                                                                          active phase modulator (LiNbO3 to PFPM), and the num-
+ Key rate per pulse
+
+
+                      0.010                 ▽* * ◇         x■
+                                                       ▽
+                                                             ○
+                                                            ◇□
+                                                                                                                         ber of required PC stages (eight PCs to four PCs, with the
+                                                             ▽                                                           four LiNbO3 -internal input polarizers also eliminated since
+                      0.001                                          * ◇▽ □          x                                   the PFPM is polarization-independent).
+                                                                              *▽ *
+                                                                                         * ◇
+                                                                                                                           Component               LiNbO3 [32] PFPM (this work)
+                                              X
+                       10-4                                               X
+                                                                                            ▯
+                                                                                                                           Phase modulator          3.22 dB         0.45 dB
+                                                                                                X                          PC stages + conectors    0.30 dB         0.10 dB
+                            -5
+                       10                                                                                                  MCF mux + demux          1.43 dB         1.43 dB
+                                 0            5             10         15         20                25             30      4C-MBS                   0.62 dB         0.62 dB
+                                                                 Attenuation (dB)                                          Splices                  0.19 dB         0.19 dB
+                        Theoretical Key              ○ Santos et al. (2026)          □ Zhang et al. (2025)
+                                                                                                                           Total                    5.76 dB         2.79 dB
+                      ■ This work                    x Li et al. (2023)              ◇ Da Lio et al. (2021)
+                                                     ▽ Islam et al. (2017)           X   Vagniluca et al. (2020)
+
+                                                     * Ogrodnik et al. (2025)        ▯ Zahidy et al. (2024)
+
+                                                                                                                         1.06 × 10−2 bits/pulse, with the main improvement com-
+Figure 5. Finite secret-key fraction (bits per pulse) as a func-                                                         ing from the use of the PFPM.
+tion of channel attenuation, compared with recent leading
+                                                                                                                            As conceptually illustrated by Fig. 1, the PFPM-based
+QKD demonstrations.
+                                                                                                                         receiver addresses the receiver-loss bottleneck of high-
+                                                                                                                         dimensional DI photonic protocols. Doubling the receiver
+                                                                                                                         transmission, as shown by Table I, closes a substantial
+residual asymmetry between the two settings is consis-
+                                                                                                                         fraction of the gap between current HD photonic receivers
+tent with the calibration uncertainty of the PFPM half-
+                                                                                                                         and the efficiency regime required by device-independent
+wave point: a small deviation from the exact π phase
+                                                                                                                         protocols; the impact compounds in multi-photon Bell
+affects only the driven X projection, whereas the Z pro-
+                                                                                                                         tests and multi-party DI protocols. For instance, the 44%
+jection is obtained with the PFPM unbiased.
+                                                                                                                         overall detection efficiency of the present receiver already
+   Using the measured gains and error rates in Z and X
+                                                                                                                         lies above the 43% asymmetric threshold identified for
+basis (see Methods for the acquisition protocol and the
+                                                                                                                         the I3322 Bell inequality when one party has perfect de-
+complete set of recorded parameters), we evaluate the fi-
+                                                                                                                         tection efficiency [37], a regime relevant to atom–photon
+nite secret-key fraction R expected for a four-dimensional
+                                                                                                                         hybrid Bell tests where the matter party is detected with
+decoy-state implementation. At the reference attenua-
+                                                                                                                         near-unit efficiency.
+tion of 10 dB the calculation yields
+                                                                                                                            The residual loss is now dominated by the MCF
+                                 Rfinite (10 dB) = 1.06 × 10−2 bits/pulse.                                         (1)   mux/demux stage (1.43 dB) and the 4C-MBS (0.62 dB),
+                                                                                                                         both fiber-integrated components amenable to further
+   Figure 5 places this result in the context of recent                                                                  loss reduction without sacrificing fiber compatibility or
+leading QKD demonstrations across different encoding                                                                     basis-switching speed. The reduced receiver loss broad-
+platforms. At the common 10 dB reference attenua-                                                                        ens the operating regime accessible to the platform:
+tion, the present rate exceeds all previously reported                                                                   although high-dimensional QKD is at a disadvantage
+QKD experiments, including the best d = 2 implementa-                                                                    in high-loss regimes, where the relative weight of dark
+tions [33, 34]. Up to our knowledge, this is the first time a                                                            counts grows faster with attenuation than in d = 2 imple-
+high-dimensional QKD implementation achieves compet-                                                                     mentations, the present loss budget supports competitive
+itive performance with what has been achieved already                                                                    finite-key rates up to approximately 20 dB of channel at-
+by the top leading bi-dimensional QKD implementations.                                                                   tenuation (≈ 100 km), as projected by the curve in Fig. 5.
+                                                                                                                            Together with the companion paper demonstrating a
+                                                                                                                         fiber-integrated quantum packet buffer [29], the PFPM
+                                                        DISCUSSION                                                       emerges as a versatile electro-optic device for fiber-based
+                                                                                                                         quantum networks, spanning low-loss state preparation,
+   Recently we demonstrated a 4D-QKD protocol over a                                                                     high-fidelity high-efficient quantum measurements, and
+deployed MCF network, where Bob receiver was built                                                                       active routing and buffering. Beyond specific protocols,
+with four LiNbO3 phase modulators instead of a sin-                                                                      low-loss fiber-integrated electro-optic control is directly
+gle PFPM [32]. Comparing that to the present work,                                                                       applicable to measurement-based photonic processing,
+the total receiver insertion loss improved from 5.76 dB                                                                  feed-forward operations and the broader class of fiber-
+to 2.79 dB (Table I), corresponding to an increase of                                                                    integrated quantum receivers and memories. Our ex-
+the receiver overall transmission from 26.5% to 52.6%.                                                                   perimental results position poled-fiber electro-optics as
+The corresponding finite secret-key rate improves by a                                                                   a promising building block for scalable, fiber-integrated
+factor of ∼ 1.7 at 10 dB, going from 6.18 × 10−3 to                                                                      quantum photonic technologies.
+                                                                                                                              6
+
+                        METHODS
+                                                                 Table II. Measured detection and error statistics, and the cor-
+                                                                 responding finite-key bound at 10 dB of channel loss. The de-
+                    Finite-key analysis                          coy intensities and probabilities have been jointly optimized
+                                                                 for the receiver loss of 2.79 dB.
+   We use a prepare-and-measure HD-BB84 protocol with             Parameter                                   Value
+phase coding in d = 4 spatial modes and the standard
+                                                                  Channel loss                                10 dB
+vacuum+weak two-decoy scheme [38, 39].                            Receiver loss (Bob)                        2.79 dB
+   The finite-key analysis follows the vacuum+weak for-           SNSPD efficiency ηd                          85%
+malism of Zhang et al. [40], extended to d dimensions.
+For a sample of N sent pulses and security parameters             N                                         2.75 × 109
+                                                                  Mz                                        5.44 × 107
+ϵsec and ϵcor , the extractable secret-key fraction in d-
+                                                                  Mµz                                       5.21 × 107
+dimensional decoy-state QKD is bounded by
+                                                                  Mνz                                       2.22 × 106
+           1 h 0,L                                                Mµx                                       1.44 × 105
+               Mz log2 d + Mz1,L log2 d − Hd (eU
+                                                         
+    R ≥                                               1)
+           N                                                      Mνx                                       6.49 × 104
+                − Mµz Hd (Eµz ) f (Eµz )                          E µz                                        2.83%
+                                                    i             E µx                                        4.52%
+                − 6 log2 (21/ϵsec ) − log2 (2/ϵcor ) ,     (2)    M0L                                       5.32 × 104
+                                                                  M1L                                       2.66 × 107
+where Mz0,L and Mz1,L are Chernoff lower bounds on the            eU
+                                                                   1                                          6.14%
+vacuum and single-photon detection counts in the Z ba-            f (Eµ )                                      1.05
+sis, estimated from the decoy measurements. The pa-               K (accepted finite-key data set)      2.92 × 107 bits
+rameter eU 1 is the random-sampling upper bound on the            Rfinite                          1.06 × 10−2 bits/pulse
+single-photon error rate. Mµz and Eµz are the mea-
+sured gain and QBER for the signal intensity µ in Z.
+f (Eµz ) is the error-correction inefficiency, and Hd (x) =
+                                                                 basis-selection probability pz = 0.949. The security pa-
+−x log2 [x/(d−1)]−(1−x) log2 (1−x) is the d-ary Shannon
+                                                                 rameters were set to ϵsec = 2.92 × 10−8 , ϵcor = 10−15
+entropy. The explicit Chernoff/Hoeffding constants and
+                                                                 and overall failure probability ϵ = 10−10 . Under these
+the decoy-bound expressions used to evaluate Eq. (2) are
+                                                                 conditions, Eq. (2) yields a finite-key length of K =
+taken from Ref. [32]. Nevertheless, naturally all the ex-
+                                                                 2.92 × 107 bits for the full accepted data set, correspond-
+perimental recorded parameters listed in Table II change
+                                                                 ing to Rfinite (10 dB) = 1.06 × 10−2 bits/pulse. The de-
+between the two implementations.
+                                                                 tection statistics and the final key length are summarized
+                                                                 in Table II.
+Data acquisition and finite-key benchmark at 10 dB
+                                                                            Single-modulator basis projection
+   The gains and QBERs that enter the finite-key bound
+were acquired in a block-wise sequence aligned with the
+                                                                    The eight states prepared by Alice in the protocol are
+probe–lock–guard control loop. Each cycle consists of
+                                                                 listed in Table III. The receiver implements projective
+a 100 ms lock window, during which Alice’s four LiNbO3
+                                                                 measurements by applying a diagonal phase operation
+phase modulators apply the reference pattern that drives
+                                                                 before a fixed four-port Sylvester–Hadamard multiport
+the closed-loop interferometric stabilization [32], and the
+                                                                 that is well-described by a normalized Hadamard trans-
+PFPM is held at the drive voltage corresponding to the
+                                                                 formation [20]:
+basis being characterized (V = 0 for Z, V = Vπ for X ).
+This stabilization procedure is followed by a 100 ms ac-                               
+                                                                                        1 1 1 1
+                                                                                                  
+quisition window during which the PFPM voltage is cho-                               1 1 −1 1 −1
+sen to be V = 0 or V = Vπ , while Alice prepares one of                          H4 = 
+                                                                                     2 1 1 −1 −1
+                                                                                                  
+the QKD states. The resulting gains and QBER for that                                   1 −1 −1 1
+all basis are recorded. Successive Z and X blocks are in-
+terleaved to accumulate the statistics that enter Eq. (2).         In the absence of an additional phase modulation, the
+In this acquisition procedure the PFPM is not required to        analyzer projects onto the Hadamard basis. If a phase
+switch at the optical clock rate, as it applies the voltage      shift is applied before the multiport, the relevant overlap
+after path stabilization has been accomplished. Nonethe-         matrix between the two analyzer bases is
+less, its 46 ns electrical response is compatible with per-
+pulse active basis selection.                                                         U (D) = H4† DH4 ,
+   Over the full session we accumulated N = 2.75 × 109
+sent pulses across the two receiver settings, with op-           where D is the diagonal phase mask. The two bases
+timized decoy intensities (µ, ν) = (0.640, 0.092), send-         are mutually
+                                                                            √ unbiased when every element of U (D) has
+ing probabilities (pµ , pν , p0 ) = (0.744, 0.214, 0.042) and    modulus 1/ 4 = 1/2.
+                                                                                                                               7
+
+                                                                     small amplitude imbalance between the modulated and
+Table III. The eight states prepared by Alice. The four Z
+                                                                     bare paths that contributes a mode-dependent term to
+states differ from their X partners by an extra π phase on
+cores 1, 2 and 3 (equivalently, by an odd-parity element of Z42 ).   the QBER. Consider the Z-basis state prepared by Al-
+Bob’s X -basis projection pattern ϕ  ⃗B                              ice,
+                                      X = {π, 0, 0, 0}, which is
+realized here with a single PFPM, is equivalent up to a global
+                                                                                 |0z ⟩ = 12 |0⟩ + |1⟩ + |2⟩ + |3⟩ ,
+                                                                                                                 
+phase to the symmetric pattern {0, π, π, π} used at Alice for
+the |0x ⟩ state.
+                                                                     and assume arm 0 has power transmission η0 = 10−L/10 ,
+   Basis State                                                ⃗A
+                                                Phase pattern ϕ      where L is the modulator insertion loss in dB, while
+     Z     |0z ⟩ = 12 |0⟩ + |1⟩ + |2⟩ + |3⟩
+                                            
+                                                   {0, 0, 0, 0}      arms 1, 2 and 3 have η1,2,3 ≃ 1. Because the relevant
+           |1z ⟩ = 21 |0⟩ − |1⟩ + |2⟩ − |3⟩
+                                            
+                                                   {0, π, 0, π}
+                                                                     object in the quantum state is the field amplitude rather
+                                                                     than the optical power, the action of the lossy arm on
+           |2z ⟩ = 21 |0⟩ + |1⟩ − |2⟩ − |3⟩
+                                            
+                                                   {0, 0, π, π}
+                                                                     the corresponding ket is multiplication by the amplitude
+           |3z ⟩ = 21 |0⟩ − |1⟩ − |2⟩ + |3⟩
+                                            
+                                                   {0, π, π, 0}                    √
+                                                                     transmission η0 . Up to global phases absorbed into
+     X     |0x ⟩ = 12 |0⟩ − |1⟩ − |2⟩ − |3⟩
+                                            
+                                                   {0, π, π, π}      Bob’s per-block calibration, the state at the input of the
+           |1x ⟩ = 12 |0⟩ + |1⟩ − |2⟩ + |3⟩
+                                            
+                                                   {0, 0, π, 0}
+                                                                     second 4C-MBS, conditional on no loss event, reads
+           |2x ⟩ = 12 |0⟩ − |1⟩ + |2⟩ + |3⟩
+                                            
+                                                   {0, π, 0, 0}                                 1       √               
+           |3x ⟩ = 12 |0⟩ + |1⟩ + |2⟩ − |3⟩
+                                            
+                                                   {0, 0, 0, π}                  |ψMDL ⟩ = √                η0 , 1, 1, 1 ,
+                                                                                               η0 + 3
+
+                                                                     and the squared overlap with the ideal projector gives
+   For the four-dimensional receiver, it is sufficient to ap-        the mode-dependent-loss contribution to the QBER,
+ply a π phase shift to a single path. Choosing, without
+                                                                                                              √
+                                                                                                             2
+loss of generality,                                                                                   η0 + 3
+                                                                               QBERMDL (η0 ) = 1 −              .            (3)
+                                                                                                   4 (η0 + 3)
+                     Dπ = diag(−1, 1, 1, 1),
+                                                                     By symmetry of the Sylvester–Hadamard transformation
+one obtains                                                          under sign flips of the equal-amplitude states, Eq. (3)
+                               1 −1 −1 −1
+                                                                   applies to every ideal MUB state of the protocol when
+                           1 −1 1 −1 −1                            arm 0 is the only lossy arm. Evaluated at the PFPM
+      U (Dπ ) = H4† Dπ H4 =             .                          operating point (L = 0.45 dB, η0 ≃ 0.901), Eq. (3) gives
+                           2 −1 −1 1 −1
+                              −1 −1 −1 1                             QBERMDL ≃ 5 × 10−4 , two orders of magnitude below
+                                                                     the measured baseline interferometric QBER of the re-
+Therefore                                                            ceiver and therefore absorbed into Bob’s per-block phase
+                                                                     calibration together with the static phases of the three
+                            1                                        patch cords.
+         |[U (Dπ )]jk | =        for all j, k ∈ {1, 2, 3, 4}.
+                            2
+This shows that the basis obtained with a single π-phase
+shift is mutually unbiased with respect to the original                            ACKNOWLEDGEMENTS
+Hadamard analyzer basis. Hence, in d = 4, one inde-
+pendently driven phase modulator is sufficient to switch               This research was funded by ANID Anillo Project
+between the two measurement bases used in the protocol.              ATE250003, Fondo Nacional de Desarrollo Cientı́fico y
+  The argument above shows that, in d = 4, a single                  Tecnológico (FONDECYT) Grant No. 1260111, 1240746,
+phase modulator is sufficient to switch between the two              1240843, 1231940, ANID Millennium Science Initiative
+MUBs at the level of the phase pattern. The correspond-              Program ICN17–012, ANID AC3E CIA 250006, and Vin-
+ing hardware, one modulator on arm 0 and bare single-                nova (project no. 2023-01358), the Wallenberg Center for
+mode patches on the remaining three arms, introduces a               Quantum Technologies (WACQT).
+
+
+
+
+ [1] C. H. Bennett and G. Brassard, Quantum cryptography:                 sul Shaari, M. Tomamichel, V. C. Usenko, G. Vallone,
+     Public key distribution and coin tossing, in Proceedings of          P. Villoresi, and P. Wallden, Advances in quantum cryp-
+     the IEEE International Conference on Computers, Sys-                 tography, Advances in Optics and Photonics 12, 1012
+     tems and Signal Processing (Bangalore, India, 1984) pp.              (2020).
+     175–179.                                                         [3] S. Wehner, D. Elkouss, and R. Hanson, Quantum inter-
+ [2] S. Pirandola, U. L. Andersen, L. Banchi, M. Berta,                   net: A vision for the road ahead, Science 362, eaam9288
+     D. Bunandar, R. Colbeck, D. Englund, T. Gehring,                     (2018).
+     C. Lupo, C. Ottaviani, J. L. Pereira, M. Razavi, J. Sham-
+                                                                                                                                   8
+
+ [4] H. Bechmann-Pasquinucci and W. Tittel, Quantum cryp-               High-dimensional detection-loophole-free measurement-
+     tography using larger alphabets, Physical Review A 61,             device-independent quantum random number generator
+     062308 (2000).                                                     (2025), arXiv:2510.06317 [quant-ph].
+ [5] N. J. Cerf, M. Bourennane, A. Karlsson, and N. Gisin,         [19] X.-M. Hu, C. Zhang, B.-H. Liu, Y. Guo, W.-B. Xing, C.-
+     Security of quantum key distribution using d-level sys-            X. Huang, Y.-F. Huang, C.-F. Li, and G.-C. Guo, High-
+     tems, Physical Review Letters 88, 127902 (2002).                   dimensional bell test without detection loophole, Phys.
+ [6] D. Cozzolino, B. Da Lio, D. Bacco, and L. K. Oxenløwe,             Rev. Lett. 129, 060402 (2022).
+     High-dimensional quantum communication: Benefits,             [20] J. Cariñe, G. Cañas, P. Skrzypczyk, I. Šupić, N. Guer-
+     progress, and future challenges, Advanced Quantum                  rero, T. Garcia, L. Pereira, M. A. S. Prosser, G. B.
+     Technologies 2, 1900038 (2019).                                    Xavier, A. Delgado, S. P. Walborn, D. Cavalcanti, and
+ [7] M. Erhard, M. Krenn, and A. Zeilinger, Advances in                 G. Lima, Multi-core fiber integrated multi-port beam
+     high-dimensional quantum entanglement, Nature Re-                  splitters for quantum information processing, Optica 7,
+     views Physics 2, 365 (2020).                                       542 (2020).
+ [8] M. Malik, M. Kues, T. Ikuta, H. Takesue, D. Bajoni,           [21] M. M. Taddei, J. Cariñe, D. Martı́nez, T. Garcı́a,
+     D. J. Moss, R. Morandotti, A. Forbes, S. Walborn,                  N. Guerrero, A. A. Abbott, M. Araújo, C. Branciard,
+     E. Karimi, Y. Ding, S. Paesani, C. Vigliar, B. Brecht,             E. S. Gómez, S. P. Walborn, L. Aolita, and G. Lima,
+     C. Silberhorn, F. Bouchard, M. Karpiński, B. Sussman,             Computational advantage from the quantum superposi-
+     J. M. Lukens, Y. Bromberg, R. Fickler, T. Giordani,                tion of multiple temporal orders of photonic gates, PRX
+     F. Sciarrino, Y. Zheng, J. Wang, M. Huber, A. Tavakoli,            Quantum 2, 010320 (2021).
+     R. Uola, N. Brunner, N. Friis, N. H. Valencia, J. Romero,     [22] S. Etcheverry, G. Cañas, E. S. Gómez, W. A. T.
+     and W. McCutcheon, High-dimensional quantum pho-                   Nogueira, C. Saavedra, G. B. Xavier, and G. Lima, Quan-
+     tonics: Roadmap (2026), arXiv:2604.06528 [quant-ph].               tum key distribution session with 16-dimensional pho-
+ [9] M. Mirhosseini, O. S. Magaña-Loaiza, M. N. O’Sullivan,            tonic states, Scientific Reports 3, 2316 (2013).
+     B. Rodenburg, M. Malik, M. P. J. Lavery, M. J. Pad-           [23] O. Lib, K. Sulimany, M. Araújo, M. Ben-Or, and
+     gett, D. J. Gauthier, and R. W. Boyd, High-dimensional             Y. Bromberg, High-dimensional quantum key distribu-
+     quantum cryptography with twisted light, New Journal               tion using a multi-plane light converter, Optica Quantum
+     of Physics 17, 033033 (2015).                                      3, 182 (2025).
+[10] N. T. Islam, C. C.-W. Lim, C. Cahall, J. Kim, and D. J.       [24] T. Nakamura, T. Nomura, M. Endo, R. He, T. Kashi-
+     Gauthier, Provably secure and high-rate quantum key                wazaki, T. Umeki, J. ichi Yoshikawa, and A. Furusawa,
+     distribution with time-bin qudits, Science Advances 3,             Low-loss polarization control in fiber systems for quan-
+     e1701491 (2017).                                                   tum computation, Opt. Express 31, 19236 (2023).
+[11] G. Cañas, N. Vera, J. Cariñe, P. González, J. Carde-       [25] A. Bernardi, M. Clementi, M. Bacchi, M. R. Bolaños,
+     nas, P. W. R. Connolly, A. Przysiezna, E. S. Gómez,               S. Congia, F. Garrisi, A. Martellosio, M. Passoni, A. Wro-
+     M. Figueroa, G. Vallone, P. Villoresi, T. F. da Silva,             bel, C. Agnesi, G. Vallone, P. Villoresi, F. A. Sabattoli,
+     G. B. Xavier, and G. Lima, High-dimensional decoy-state            M. Galli, and D. Bajoni, Gigahertz-rate thin-film lithium
+     quantum key distribution over multicore telecommunica-             niobate receiver for time-bin quantum communication,
+     tion fibers, Phys. Rev. A 96, 022317 (2017).                       Light: Science & Applications 15, 237 (2026).
+[12] M. Zahidy, D. Ribezzo, C. De Lazzari, I. Vagniluca,           [26] R. A. Myers, N. Mukherjee, and S. R. J. Brueck, Large
+     N. Biagi, R. Müller, T. Occhipinti, L. K. Oxenløwe,               second-order nonlinearity in poled fused silica, Optics
+     M. Galili, T. Hayashi, D. Cassioli, A. Mecozzi, C. An-             Letters 16, 1732 (1991).
+     tonelli, A. Zavatta, and D. Bacco, Practical high-            [27] P. G. Kazansky, P. S. J. Russell, and H. Takebe, Glass
+     dimensional quantum key distribution protocol over de-             fiber poling and applications, Journal of Lightwave Tech-
+     ployed multicore fiber, Nature Communications 15, 1651             nology 15, 1484 (1997).
+     (2024).                                                       [28] M. Fokine, L.-E. Nilsson, Å. Claesson, D. Berlemont,
+[13] G. B. Xavier, J.-Å. Larsson, P. Villoresi, G. Vallone,            L. Kjellberg, L. Krummenacher, and W. Margulis, In-
+     and A. Cabello, Energy-time and time-bin entanglement:             tegrated fiber mach–zehnder interferometer for electro-
+     past, present and future, npj Quantum Information 11,              optic switching, Optics Letters 27, 1643 (2002).
+     129 (2025).                                                   [29] D. Spegel-Lexne, J. Argillander, M. Clason, Å. Claes-
+[14] L. Sheridan and V. Scarani, Security proof for quantum             son, K. H. Tow, J. M. B. Pereira, and G. B. Xavier,
+     key distribution using qudit systems, Physical Review A            An optical-fibre-integrated processing buffer for packet-
+     82, 030301(R) (2010).                                              switched quantum networks (2026), manuscript in prepa-
+[15] A. Acı́n, N. Brunner, N. Gisin, S. Massar, S. Pironio,             ration / companion submission.
+     and V. Scarani, Device-independent security of quantum        [30] O. Tarasenko, N. Myrén, W. Margulis, and I. C. S. Car-
+     cryptography against collective attacks, Physical Review           valho, All-fiber electrooptical polarization control, in Op-
+     Letters 98, 230501 (2007).                                         tical Fiber Communication Conference and Exposition
+[16] T. Vértesi, S. Pironio, and N. Brunner, Closing the detec-        and The National Fiber Optic Engineers Conference (Op-
+     tion loophole in bell experiments using qudits, Physical           tica Publishing Group, 2006) p. OWE3.
+     Review Letters 104, 060401 (2010).                            [31] A. R. Camara, J. M. B. Pereira, O. Tarasenko, W. Mar-
+[17] S. Pironio, A. Acı́n, S. Massar, A. Boyer de la Giroday,           gulis, and I. C. S. Carvalho, Optical creation and erasure
+     D. N. Matsukevich, P. Maunz, S. Olmschenk, D. Hayes,               of the linear electrooptical effect in silica fiber, Opt. Ex-
+     L. Luo, T. A. Manning, and C. Monroe, Random num-                  press 23, 18060 (2015).
+     bers certified by bell’s theorem, Nature 464, 1021 (2010).    [32] G. H. dos Santos, K. Sawada, N. Villalba, C. Jara,
+[18] J. Argillander, D. Spegel-Lexne, M. Clason, P. R.                  N. Guerrero, C. Melo, M. H. Magiotto, D. Martinez,
+     Dieguez, M. Pawlowski, A. Chaturvedi, and G. B. Xavier,            G. B. Xavier, J. Cariñe, G. Saavedra, E. S. Gómez, S. P.
+                                                                                                                         9
+
+     Walborn, and G. Lima, High-dimensional quantum key       [35] B. Da Lio, D. Cozzolino, N. Biagi, Y. Ding, K. Rottwitt,
+     distribution via full core-mode encoding over deployed        A. Zavatta, D. Bacco, and L. K. Oxenløwe, Path-encoded
+     multicore fibers, arXiv:2606.04211 (2026).                    high-dimensional quantum communication over a 2-km
+[33] W. Li, L. Zhang, H. Tan, Y. Lu, S.-K. Liao, J. Huang,         multicore fiber, npj Quantum Information 7, 63 (2021).
+     H. Li, Z. Wang, H.-K. Mao, B. Yan, Q. Li, Y. Liu,        [36] K. J. Horadam, Hadamard Matrices and Their Applica-
+     Q. Zhang, C.-Z. Peng, L. You, F. Xu, and J.-W. Pan,           tions (Princeton University Press, 2007).
+     High-rate quantum key distribution exceeding 110 mb/s,   [37] N. Brunner, N. Gisin, V. Scarani, and C. Simon, Detec-
+     Nature Photonics 17, 416 (2023).                              tion loophole in asymmetric bell experiments, Phys. Rev.
+[34] Y. Zhang, X. Ding, Y. Li, L. Zhang, Y.-P. Guo, G.-Q.          Lett. 98, 220403 (2007).
+     Wang, Z. Ning, M.-C. Xu, R.-Z. Liu, J.-Y. Zhao, G.-      [38] H.-K. Lo, X. Ma, and K. Chen, Decoy state quantum key
+     Y. Zou, H. Wang, Y. Cao, Y.-M. He, C.-Z. Peng, Y.-            distribution, Physical Review Letters 94, 230504 (2005).
+     H. Huo, S.-K. Liao, C.-Y. Lu, F. Xu, and J.-W. Pan,      [39] X. Ma, B. Qi, Y. Zhao, and H.-K. Lo, Practical decoy
+     Experimental Single-Photon Quantum Key Distribution           state for quantum key distribution, Physical Review A
+     Surpassing the Fundamental Weak Coherent-State Rate           72, 012326 (2005).
+     Limit, Physical Review Letters 134, 210801 (2025).       [40] Z. Zhang, Q. Zhao, M. Razavi, and X. Ma, Improved
+                                                                   key-rate bounds for practical decoy-state quantum-key-
+                                                                   distribution systems, Physical Review A 95, 012333
+                                                                   (2017).
+

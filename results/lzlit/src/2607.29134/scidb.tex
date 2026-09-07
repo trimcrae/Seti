@@ -1,0 +1,120 @@
+\section{Tensor-Aware DBMSs}
+\label{app:tensor-aware-dbms}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\linewidth]{images/scidb_on_box_pc.pdf}
+    \caption{Additional DB comparison on 11 small \sys circuits with varying output density. 
+    Top row: runtime; bottom row: peak memory. The plots group circuits by qubit count,
+    output-density bin, and gate count.}
+    \label{fig:addscidbcomp}
+\end{figure*}
+
+Beyond the RDBMS engines used in the main evaluation, tensor-aware DBMSs
+such as TileDB and SciDB are natural candidates for quantum circuit simulation.
+They expose array-oriented storage and execution abstractions that appear well matched
+to tensor contractions. However, using them fairly requires significant effort because \sys currently
+emits SQL workloads whose core operations are joins and aggregations.
+
+% \para{TileDB.}
+TileDB is an array storage engine for dense and sparse multidimensional arrays.\footnote{
+TileDB documentation: \url{https://docs.tiledb.com/main/}. TileDB-Py API:
+\url{https://tiledb-inc-tiledb.readthedocs-hosted.com/projects/tiledb-py/en/stable/python-api.html}.}
+A direct TileDB evaluation would require an array-native implementation of the simulator:
+one would need to choose array schemas, chunk sizes, qubit-index layouts, and contraction
+kernels, rather than executing the same SQL workload used by PostgreSQL, SQLite, and
+DuckDB. The closest SQL-oriented possibility, \texttt{TileDB-MariaDB/MyTile}, is deprecated and supports
+only limited pushdown, which makes it unsuitable as a fair drop-in replacement for our
+join-and-aggregate SQL workload.\footnote{
+TileDB-MariaDB/MyTile documentation:
+\url{https://github.com/TileDB-Inc/TileDB-MariaDB}.}
+We therefore do not include TileDB in the timing comparison. We view a TileDB-native
+implementation as important future work rather than a direct backend substitution.
+
+% \para{SciDB.}
+SciDB is closer to our setting because it provides array operators and a query interface
+for composing them.\footnote{
+SciDB-Py documentation: \url{https://paradigm4.github.io/SciDB-Py/guide.html}.}
+Since \sys emits SQL, we made a preliminary SciDB implementation by translating each tensor
+contraction into SciDB's Array Functional Language (AFL)-style array operations. In principle, an entire circuit could be
+encoded as one nested array expression. In practice, the generated expressions become
+large and fragile for full circuits, so our prototype splits the simulation at tensor
+contraction boundaries and materializes intermediate arrays. This makes the prototype
+robust, but it removes some global optimization opportunities available to RDBMSs when
+they optimize a CTE chain. Thus, please consider the results below as preliminary
+results rather than as results from a fully optimized SciDB implementation.
+
+\medskip
+\para{Experimental setting}
+Figure~\ref{fig:addscidbcomp} reports a comparison on 11 \sys circuits \footnote{\url{https://github.com/InfiniData-Lab/InferQ/blob/main/analysis/sample_csvs/small_sample_scidb.csv}} with
+3--7 qubits and 4--17 gates, spanning sparse, mixed, and dense output-density bins.
+We compare PostgreSQL, DuckDB, SQLite, Umbra, SciDB, and two NumPy baselines:
+\texttt{np-one-shot}, an exact tensor-contraction baseline, and \texttt{np-mps}, an
+MPS-based approximate baseline. 
+% The experiment is CPU-only and was run on a local
+% 32GB-RAM machine; PostgreSQL, SciDB, and Umbra run in Docker containers, while SQLite
+% and DuckDB use Python packages. Since this machine differs from the main experimental
+% platform, this experiment is intended as a qualitative engine discussion rather than a
+% replacement for the main evaluation.
+
+\medskip
+\para{Results}
+We have two main observations from Figure~\ref{fig:addscidbcomp}. First, among DB-backed
+methods, SQLite remains the strongest backend. It beats
+\texttt{np-one-shot} in peak memory for all 11 circuits and in runtime for 4 of the
+11 circuits. PostgreSQL and Umbra remain competitive in memory but are slower than
+SQLite. Second, the direct SciDB prototype has substantial overhead: it is consistently
+slower and uses more memory than the RDBMS backends on these small circuits. The
+\texttt{np-mps} baseline is often fast, but it is approximate, whereas the DB-backed
+methods and \texttt{np-one-shot} are exact strong simulators.
+
+\medskip
+  \vspace{0.2cm}
+\noindent
+\setlength{\fboxsep}{6pt}
+\fcolorbox{black!15}{black!4}{%
+  \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{
+\para{Take-away}
+Tensor-aware DBMSs are promising, but they are not plug-in replacements for the SQL
+workload studied in this paper. To make TileDB or SciDB competitive for quantum circuit
+simulation, future work should co-design the simulator with the array engine, including:
+(i) qubit-index layout and chunking, (ii) sparse-versus-dense array selection,
+(iii) contraction fusion to avoid per-step materialization, and (iv) cost models for
+array-native execution. It is an interesting future direction to explore which types of simulation workloads 
+array DBMSs would be most promising for.
+  }}
+%   for larger workloads
+% where the overhead can be amortized, especially circuits whose states remain sparse or
+% whose tensor contractions have regular chunkable structure. Small circuits and highly
+% irregular contraction sequences are less favorable without such array-native optimization.
+
+
+
+
+
+
+
+
+
+
+% \section{Discussion of additional vector databases (SciDB)}
+% \begin{figure*}
+%     \centering
+%     \includegraphics[width=\linewidth]{images/scdb_trends.pdf}
+%     \caption{Additional DB comparisons for 11 small InferQ circuits with varying sparsity. Plots on the top specify memory and the bottom time usage}
+%     \label{fig:addscidbcomp}
+% \end{figure*}
+
+
+% Apart from SQLite, PostgreSQL and DuckDB, we also discuss the use of vector databases like SciDB,  TileDB and others like UmbraDB.
+
+% InferQ circuits can be converted to SQL for PostgreSQL, DuckDB and SQLite, we add support for UmbraDB and SciDB too. For TileDB, this is is much not convoluted, for running through MariaDB and cloud, hence we omit it from the comparison. For SciDB, we need to adapt our SQL queries to AFL queries. These quantum circuit queries unfortunately are too large for the SciDB single query AFL. Consequently, we need to resort to splitting the query into per tensor contraction AFLs, reducing any join order optimisation benefit that the other DBs offer. Another limitation is that SciDb is also maintained less to the more common PostgreSQL and SQLite engines. 
+
+% We ran a small experiment on 11 small quantum circuits for InferQ on our local laptop machine due to occupancy of the main machine used in other experiments. The specifications are Asus ROG Zephyrus G14 32Gb RAM, AMD Ryzen 9 CPU and Nvidia GeForce RTZ 5070 GPU, which is not used. \rh{Do I need this specification here?}. UmbraDB, SciDB and PostgreSQL were run with docker containers while SQLite and DuckDB have python packages. The experiment serves the purpose to learn more about SciDB for quantum circuits and expand the discussion about database engines. 
+
+
+% Figure \ref{fig:addscidbcomp} displays the performance for time and memory usage to simulate a sample of 11 InferQ circuits for PostgreSQL, DuckDB, SQLite, SciDB and UmbraDB. Out of the 11 circuits, only SQLite is able to beat its numpy tensor contraction counterparts in 4 / 11 cases for runtime and in all 11 /11 cases for memory optimality. Between the RDBMS systems, we see that for these small InferQ quantum circuits SQLite is consistently the best. SciDB is a couple of order fo magnitude worse to other engines, apart from DuckDB which has an even more expensive run for a circuit with 7 qubits. The numpy MPS tensor network (np-mps) performs well, but provides an approximation of the final output unlike the other systems which are exact strong simulators. 
+
+% Despite UmbraDB falling short to PostgreSQL in time, it is slightly better for memory with both these engines remaining competitive against their exact numpy tensor (np-one-shot) simulator. The ranking amongst these systems remain similar across number of qubits, number of gates and the output sparsity of the quantum circuit. 
+
+% This experiment profiles various RDBMS engines, including SciDB. It is outperformed consistently by the other 4 engines on smaller quantum circuits in InferQ. yet, the experiment highlights that RDBMS simulators can be competitive and suggests that SQLite might be one of the best. 

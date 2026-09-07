@@ -1,0 +1,84 @@
+
+% \subsection{Scalability}
+% \label{sec:scalability}
+
+% A key motivation behind InferQ is to enable \emph{scalable} data-driven analysis of quantum circuits and simulation workflows. In this section, we evaluate the scalability of InferQ along two complementary dimensions: (i) the cost of \emph{building} the dataset as the number of circuits grows, and (ii) the implications of this cost structure for downstream analytics and learning tasks.
+
+% \subsection{Cumulative Cost of Dataset Construction}
+
+% Figure~\ref{fig:scalability_runtime} shows the cumulative execution time required to process an increasing number of quantum circuits, plotted on a logarithmic scale. We report the cumulative time for three main stages in the InferQ pipeline: circuit generation, feature extraction, and classical simulation. \emph{Several important observations follow.}
+
+
+
+
+% \paragraph{Simulation dominates end-to-end cost.}
+% Across the entire range of up to 1{,}000 circuits, the cumulative simulation time grows orders of magnitude faster than both circuit generation and feature extraction. While generation and feature extraction remain within seconds even at scale, simulation reaches the order of $10^3$ seconds. This confirms a central assumption underlying InferQ: \emph{simulation is the primary scalability bottleneck}, whereas data handling and feature computation are comparatively cheap.
+
+% \paragraph{Linear growth in cumulative preprocessing costs.}
+% Both circuit generation and feature extraction exhibit smooth, linear growth on the log scale, indicating predictable and well-behaved scaling as more circuits are added. This is particularly important for InferQ, as it suggests that large datasets (tens or hundreds of thousands of circuits) can be constructed incrementally without introducing nonlinear overheads in preprocessing.
+
+% \paragraph{Amortization of expensive simulations.}
+% Although simulation is costly, InferQ amortizes this cost by storing simulation outcomes and derived features in a structured database. Once recorded, these results can be reused indefinitely for downstream tasks such as model training, selector construction, and estimator learning, without repeating the simulation. This shifts the scalability challenge from \emph{repeated simulation} to \emph{one-time data acquisition}, a trade-off that strongly favors data-centric workflows.
+
+% \subsection{Implications for Data-Centric Quantum Workflows}
+
+% The scalability behavior observed in Figure~\ref{fig:scalability_runtime} has several implications for the broader use cases presented in Section~\ref{sec:eva}.
+
+% First, it justifies the feasibility of training machine learning models on large-scale simulation data. As shown in the selector and estimator use cases, once simulation results are materialized in InferQ, training and evaluation of complex models (e.g., XGBoost, random forests) become inexpensive relative to the original simulation effort.
+
+% Second, the clear separation between inexpensive static features and expensive dynamic features motivates hybrid approaches. For example, InferQ enables learning-based estimators that predict dynamic properties (such as entropy or sparsity) from static circuit features, thereby avoiding repeated strong simulation for unseen circuits. In this sense, InferQ transforms scalability limits in classical simulation into a supervised learning problem.
+
+% Finally, the use of an RDBMS backend enables horizontal scalability in future deployments. While the experiments in this work were conducted on a single machine, the relational representation of quantum states, operators, and features allows simulation workloads and analytical queries to be distributed across database engines and hardware resources. This opens a path toward scaling InferQ beyond single-node experimentation.
+
+% \subsection{Summary}
+
+% Overall, the scalability evaluation demonstrates that InferQ cleanly isolates the true computational bottleneck—classical simulation—while keeping data generation, feature extraction, and analytics efficient and predictable. By amortizing simulation costs and enabling reuse through structured storage, InferQ provides a scalable foundation for data-driven optimization and analysis of quantum circuit simulation workflows.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{images/cumulative_execution_time_generation_vs_feature_extraction.pdf}
+    \caption{Cumulative execution time versus number of circuits processed. The figure shows cumulative generation time, and cumulative feature extraction time.}
+    \label{fig:scalability_runtime}
+\end{figure}
+
+% \subsection{Scalability}
+% \label{sec:scalability}
+
+% In Figure~\ref{fig:scalability_runtime}, we report the time changes for generating circuits and extracting features. We observe that generation and feature extraction grow \textbf{linearly} with the increasing number of circuits, even only takes 6.47 seconds to generate 1000 circuits, and extracting features takes 1.9 seconds. 
+% Across up to 1{,}000 circuits, cumulative simulation time grows orders of magnitude faster than
+% generation and feature extraction. 
+% % While generation and feature extraction remain within seconds
+% % at this scale, simulation reaches $\sim 10^3$ seconds. This confirms that classical simulation, not
+% % data handling, is the primary scalability bottleneck.
+
+% \medskip
+% \noindent
+% \setlength{\fboxsep}{6pt}
+% \fcolorbox{black!15}{black!4}{%
+%   \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+% \para{Take-away}
+% \sys is scalable.
+% }}%
+
+\section{Scalability}
+\label{sec:scalability}
+
+Figure~\ref{fig:scalability_runtime} reports how the \sys preprocessing cost grows as we increase the number of generated circuits.
+We observe near-linear scaling for both \emph{circuit generation} and \emph{feature extraction} (static, graph, and SQL features): generating
+1{,}000 circuits takes only 6.47~seconds, and extracting features takes 1.9~seconds.\footnote{We exclude dynamic features here, as extracting them requires running the simulation, while Section~\ref{ssec:uc2} suggests that they can be predicted using static, graph, and SQL features.}
+% In contrast, the cumulative \emph{simulation} time grows orders of magnitude faster than these preprocessing stages.
+This tackles Gap 3 in Section~\ref{ssec:limit}. That is, \sys can scale to large circuit corpora: generation and feature extraction contribute negligible overhead.
+% , while
+% In contrast, simulation remains the dominant cost driver.
+% In practice, the workaround is reusing stored results for downstream analysis and learning).
+
+\medskip
+  \vspace{0.2cm}
+\noindent
+\setlength{\fboxsep}{6pt}
+\fcolorbox{black!15}{black!4}{%
+  \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+\para{Take-away}
+\sys scales well in preprocessing: circuit generation and (static/graph/SQL) feature extraction grow linearly and remain inexpensive. This supports building large circuit datasets for database- and learning-based analyses.
+}}%
+

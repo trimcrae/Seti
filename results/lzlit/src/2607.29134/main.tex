@@ -1,0 +1,398 @@
+%%
+%% This is file `inferq-paper.tex',
+%% generated based on sample-sigconf.tex
+%%
+% \documentclass[acmsmall]{acmart}
+\documentclass[acmsmall]{acmart}
+\usepackage{xurl}
+\usepackage{xspace}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{quantikz2}
+\usetikzlibrary{positioning,arrows.meta,shadows}
+% \usepackage[colorlinks=true]{hyperref}
+\usepackage{enumitem}
+% \usepackage[framemethod=TikZ,
+% innerleftmargin=0.1\baselineskip]{mdframed}
+
+% % \usepackage[bottom]{footmisc}
+
+% \newmdenv[linecolor=gray,backgroundcolor=mygray]{myframe}
+% \definecolor{darkgreen}{rgb}{0.0, 0.2, 0.13}
+
+% \newcommand{\emailo}[1]{\href{mailto:#1}{\textcolor{orange}{#1}}}
+
+
+% \usepackage{silence}
+% \WarningFilter{acmart}{\vspace should only be used}
+
+% \usepackage[hang,flushmargin]{footmisc} 
+% \usetikzlibrary{positioning,arrows.meta}
+% \usepackage{xcolor}
+% \newcommand{\feat}[1]{\path{#1}}
+
+% \usepackage{amsmath,amsfonts}
+
+% \usepackage{algorithmic}
+% \usepackage{textcomp}
+ 
+ \newcommand{\mybox}[1]
+{
+\vspace{1.8mm}
+\noindent \hspace{-1mm} 
+\setlength\fboxsep{1mm}
+\fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{\itshape #1}}
+% \vspace{1mm}
+}
+
+\usepackage{booktabs}
+% \usepackage{hyperref}
+\usepackage{caption}
+\usepackage[justification=centering]{subcaption}
+\usepackage{multirow}
+ \usepackage{amsthm}
+
+ 
+\DeclareUrlCommand\code{\urlstyle{tt}}
+
+\theoremstyle{definition}
+\newtheorem{example}{Example}[section]
+
+ 
+\urlstyle{tt} % make paths look like \texttt
+
+
+\usepackage{outlines}
+% \usepackage{todonotes}
+% \newcommand{\notes}[1]{\textcolor{gray}{#1}}
+
+% \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+%     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\usepackage{siunitx}
+    
+%-----Algorithm related----%
+
+\usepackage[linesnumbered]{algorithm2e}
+% \usepackage[table,dvipsnames]{xcolor}
+
+ \definecolor{mygray}{gray}{0.92}
+ \definecolor{belyellow}{RGB}{181, 156, 86}
+ \definecolor{commentgreen}{rgb}{0.0, 0.5, 0.0}
+\newcommand\mycommfont[1]{\footnotesize\ttfamily\color{commentgreen}{#1}}
+% \newcommand\mycommfont[1]{\footnotesize\ttfamily{#1}}
+\SetCommentSty{mycommfont}
+
+\newcommand{\revision}[1]{\textcolor{black}{#1}}
+
+% \newcommand{\revisionone}[1]{\textcolor{RoyalBlue}{#1}}
+\newcommand{\revisionone}[1]{\textcolor{black}{#1}}
+
+% \newcommand{\revisionthree}[1]{\textcolor{orange}{#1}}
+\newcommand{\revisionthree}[1]{\textcolor{black}{#1}}
+
+% \newcommand{\revisionfour}[1]{\textcolor{BlueGreen}{#1}}
+\newcommand{\revisionfour}[1]{\textcolor{black}{#1}}
+% \newcommand{\revisionfour}[1]{\textcolor{teal}{#1}}
+
+
+% \usepackage[title]{appendix}
+\usepackage[toc,page]{appendix}
+
+% \usepackage{floatrow}
+% Table float box with bottom caption, box width adjusted to content
+% \newfloatcommand{capbtabbox}{table}[][\FBwidth]
+\usepackage{adjustbox}
+\usepackage{blindtext}
+
+% for leftouterjoin
+% \usepackage{amssymb}
+\usepackage{ifsym}
+
+ 
+\usepackage{braket}
+\usepackage{mathtools}
+\newcommand\SmallMatrix[1]{{%
+  \tiny\arraycolsep=0.3\arraycolsep\ensuremath{\begin{pmatrix}#1\end{pmatrix}}}}
+
+% \usepackage{amssymb}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{exmp}{Example}[section]
+
+
+ 
+
+% \newcommand{\rev}[1]{\textcolor{blue}{#1}}
+% \newcommand{\revisionA}[1]{\textcolor{purple}{#1}}
+% \newcommand{\revisionB}[1]{\textcolor{brown}{#1}}
+% \newcommand{\revisionC}[1]{\textcolor{RoyalBlue}{#1}}
+% \newcommand{\revisionM}[1]{\textcolor{DarkOrchid}{#1}}
+% \newmdenv[linecolor=gray,backgroundcolor=mygray]{myframe}
+% \definecolor{darkgreen}{rgb}{0.0, 0.2, 0.13}
+\newcommand{\revisionA}[1]{\textcolor{black}{#1}}
+\newcommand{\revisionB}[1]{\textcolor{black}{#1}}
+\newcommand{\revisionC}[1]{\textcolor{black}{#1}}
+\newcommand{\revisionM}[1]{\textcolor{black}{#1}}
+ 
+
+% \newcommand{\rev}[1]{\textcolor{blue}{#1}}
+% \newcommand{\revisionA}[1]{\textcolor{purple}{#1}}
+% \newcommand{\revisionB}[1]{\textcolor{brown}{#1}}
+% \newcommand{\revisionC}[1]{\textcolor{RoyalBlue}{#1}}
+
+
+
+\newcounter{RihanNOC}
+\stepcounter{RihanNOC}
+\newcommand{\rh}[1]{\textcolor{orange}{\small \bf [Rihan\#\arabic{RihanNOC}\stepcounter{RihanNOC}: #1]}}
+ 
+
+\newcounter{FlorisNOC}
+\stepcounter{FlorisNOC}
+\newcommand{\floris}[1]{\textcolor{belyellow}{\small \bf [Floris\#\arabic{FlorisNOC}\stepcounter{FlorisNOC}: #1]}}
+
+ 
+\newcounter{AaNOC}
+\newcommand{\aad}[1]{%
+    \protect\textcolor{blue}{\small \bf [Aadi\#\arabic{AaNOC}: #1]}%
+    \stepcounter{AaNOC}%
+} 
+
+\newcounter{AdNOC}
+\newcommand{\ad}[1]{%
+    \protect\textcolor{green}{\small \bf [Andrei\#\arabic{AdNOC}: #1]}%
+    \stepcounter{AdNOC}%
+}
+
+\newcommand{\para}[1]{\noindent\textbf{#1.}}
+\newcommand{\parab}[1]{\vspace{1mm}\noindent\textbf{#1}} 
+\renewcommand{\proj}[1]{\ket{#1}\!\bra{#1}}
+
+\newcommand{\sys}{\texttt{InferQ}\xspace}
+
+%% Table composition
+% --- Table ---
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[table,dvipsnames,svgnames]{xcolor}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% --- Chips ---
+ 
+
+% Left-aligned fixed-width column
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% Two X columns with controlled relative widths (candidates a bit narrower than justification)
+\newcolumntype{C}{>{\hsize=0.90\hsize\raggedright\arraybackslash}X}
+\newcolumntype{J}{>{\hsize=1.10\hsize\raggedright\arraybackslash}X}
+
+% Multiline mini-block for the "Prev. family" visual (always top-left aligned)
+\newcommand{\vis}[1]{\begin{tabular}[t]{@{}l@{}}#1\end{tabular}}
+
+% Smaller arrow spacing to help fit in two-column layouts
+\newcommand{\qarrow}{\hspace{0.20em}\(\rightarrow\)\hspace{0.20em}}
+
+% Allow wrapping in candidate lists after commas
+\newcommand{\candsep}{,\allowbreak\ }
+
+% ---- Chip style: white text, no outline, subtle shadow, compact padding ----
+\newcommand{\qfamily}[2]{%
+  \tikz[baseline=(X.base)]\node[
+    draw=none,
+    rounded corners=2.0pt,
+    fill=#2,
+    text=white,
+    inner xsep=2.4pt,
+    inner ysep=1.2pt,
+    font=\scriptsize\sffamily\bfseries,
+    drop shadow={opacity=0.14,shadow xshift=0.35pt,shadow yshift=-0.35pt}
+  ] (X) {#1};%
+}
+
+% ---- Palette (dark fills => readable white text) ----
+\definecolor{qcStart}{HTML}{334155}
+\definecolor{qcEnd}{HTML}{7F1D1D}
+\definecolor{qcStatePrep}{HTML}{1D4ED8}
+\definecolor{qcOracleA}{HTML}{B45309}
+\definecolor{qcHamSim}{HTML}{047857}
+\definecolor{qcModExp}{HTML}{6D28D9}
+\definecolor{qcGrover}{HTML}{BE123C}
+\definecolor{qcQPE}{HTML}{0E7490}
+\definecolor{qcAmpEst}{HTML}{A21CAF}
+\definecolor{qcVar}{HTML}{3F6212}
+\definecolor{qcRandom}{HTML}{475569}
+\definecolor{qcMeasure}{HTML}{111827}
+\definecolor{qcAmpAmpl}{HTML}{C2410C}
+\definecolor{qcQFT}{HTML}{4338CA}
+
+% ---- Named chips ----
+\newcommand{\famSTART}{\qfamily{START}{qcStart}}
+\newcommand{\famEND}{\qfamily{END}{qcEnd}}
+
+\newcommand{\famStatePrep}{\qfamily{StatePrep}{qcStatePrep}}
+\newcommand{\famOracleA}{\qfamily{Oracle/A}{qcOracleA}}
+\newcommand{\famHamSim}{\qfamily{HamSim}{qcHamSim}}
+\newcommand{\famModularExp}{\qfamily{ModularExp}{qcModExp}}
+\newcommand{\famGroverIter}{\qfamily{GroverIter}{qcGrover}}
+\newcommand{\famQPE}{\qfamily{QPE}{qcQPE}}
+\newcommand{\famAmpEst}{\qfamily{AmpEst}{qcAmpEst}}
+\newcommand{\famVariational}{\qfamily{Variational}{qcVar}}
+\newcommand{\famRandom}{\qfamily{Random}{qcRandom}}
+\newcommand{\famMeasure}{\qfamily{Measure}{qcMeasure}}
+ 
+\newcommand{\famAmpAmpl}{\qfamily{AmpAmpl}{qcAmpAmpl}}
+ \newcommand{\famQFT}{\qfamily{QFT}{qcQFT}}
+% \newcommand{\feat}[1]{\texttt{\detokenize{#1}}}
+ 
+% \newcommand{\feat}[1]{%
+%   \begingroup
+%   \catcode`\_=\active
+%   \def_{\_\allowbreak}%
+%   \textnormal{\small\detokenize{#1}}%
+%   \endgroup
+% }
+
+ 
+
+\DeclareUrlCommand{\feat}{\urlstyle{tt}\small}
+% A “problem-dependent subroutine A” chip for the visual mini-diagrams
+\newcommand{\Ablock}{\qfamily{$A$}{qcOracleA}}
+
+
+\sisetup{group-separator = {,}, group-minimum-digits = 4}
+
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+%% Rights management information.
+\setcopyright{cc}
+\setcctype{by-nc-nd}
+\acmJournal{PACMMOD}
+\acmYear{2026} \acmVolume{4} \acmNumber{4 (SIGMOD)} \acmArticle{278}
+\acmMonth{9} \acmDOI{10.1145/3837116}
+
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10002951.10002952</concept_id>
+       <concept_desc>Information systems~Data management systems</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10010405.10010432.10010441</concept_id>
+       <concept_desc>Applied computing~Physics</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+ </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Information systems~Data management systems}
+\ccsdesc[300]{Applied computing~Physics}
+
+ 
+\keywords{Quantum circuit simulation, benchmarking, relational database management systems, SQL workload generation, learned simulator selection}
+
+% \setcopyright{cc}
+% \setcctype{by}
+% \copyrightyear{2026}
+% \acmYear{2026}
+% \acmDOI{10.1145/XXXXXXX}
+
+% %% PACMMOD journal metadata
+% \acmJournal{PACMMOD}
+% \acmVolume{4}
+% \acmNumber{4}
+% \acmArticle{278}
+% \acmMonth{9}
+% \acmPrice{}
+
+% \acmConference
+% \acmBooktitle
+%% The above two must be commented out for the PACM template to work properly.
+
+\begin{document}
+\setlength{\pdfpagewidth}{6.75in}
+\setlength{\pdfpageheight}{10in}
+
+%% Article history dates (required by PACMMOD)
+\received{17 January 2026}
+\received[revised]{19 May 2026}
+\received[accepted]{12 June 2026}
+
+% \title{InferQ - A feature based data model for enabling quantum computation in the NISQ era}
+% \title{InferQ: A Database-Oriented Benchmark for  Quantum Circuits Simulation: [Experiments \& Analysis]}
+\title{InferQ: A Database-Oriented Benchmark for Quantum Circuits Simulation}
+
+\author{Andrei Ilinescu}
+\authornote{Both authors contributed equally to this research.}
+\email{a.ilinescu@student.tudelft.nl}
+\affiliation{%
+  \institution{Delft University of Technology}
+  \city{Delft}
+  \country{The Netherlands}
+}
+
+\author{Aadi Patwardhan}
+\authornotemark[1]
+\email{a.patwardhan@student.tudelft.nl}
+\affiliation{%
+  \institution{Delft University of Technology}
+  \city{Delft}
+  \country{The Netherlands}
+}
+
+\author{Rihan Hai}
+\email{r.hai@tudelft.nl}
+\affiliation{%
+  \institution{Delft University of Technology}
+  \city{Delft}
+  \country{The Netherlands}
+}
+
+
+
+\begin{abstract}
+Recent work suggests that relational database management systems (RDBMSs) can execute quantum circuit simulation by compiling the simulation into SQL workloads (primarily join-and-aggregate tensor contractions). While early results are promising, they largely focus on a narrow set of highly structured circuits and offer limited support for systematic database research, such as query optimization, physical design, and engine-level evaluation across a broad range of circuits.
+We present \sys, a database-oriented benchmark for quantum circuit simulation. \sys generates \emph{general, compositional} circuits by assembling subcircuits from a set of circuit templates, emits each simulation task as an RDBMS-ready SQL workload, and extracts circuit and query features (static, graph, SQL, and dynamic) for workload characterization.
+\sys also releases a large dataset of  202,975 circuits online, with a web-based viewer to support searching, filtering, and downloading circuits and feature records.
+In experiments across RDBMS engines (PostgreSQL, SQLite, DuckDB, and \revisionB{Umbra}) and the widely used Qiskit Aer simulator, we find that  \revisionB{RDBMSs} achieve better peak memory usage than Qiskit Aer on more than \revisionB{50\%} of the circuits generated by \sys.
+Moreover, using \sys features, lightweight machine learning models (linear and tree-based models) can accurately predict when SQL execution is preferable (with accuracy up to 95.6\% for runtime and 97.4\% for memory), enabling data-centric simulator selection and opening the door to principled optimization of SQL-based quantum circuit simulation.
+\end{abstract}
+
+
+
+ 
+
+\maketitle
+\input{introduction}
+\input{Preliminary}
+\input{system}
+\input{tool}
+\input{evaluation}
+
+\input{conclusion}
+\section*{Acknowledgment}
+This publication was supported in part by the Dutch Research Council (VI.Veni.222.439). We thank Tim Littau and Wenbo Sun for programming assistance and sharing code from their prior work, and Arun Pati and Giancarlo Gatti for discussion and feedback on quantum primitive composition.
+ 
+ 
+
+ 
+
+
+
+
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{inferq_ref}
+
+ \input{appendix}
+\end{document}

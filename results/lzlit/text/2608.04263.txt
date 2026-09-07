@@ -1,0 +1,1623 @@
+                                              Poisson-Compiled Quantum Singular Value Transformation for Power-Exponential Dissipation
+
+                                                              Chao Wang,1, ∗ Xi-Ning Zhuang,1, 2 Menghan Dou,1 Zhao-Yun Chen,3, † and Guo-Ping Guo1, 3, 2
+                                                                         1
+                                                                           Origin Quantum Computing Technology (Hefei) Co., Ltd., Hefei, Anhui, 230026, China
+                                                       2
+                                                           Laboratory of Quantum Information, University of Science and Technology of China, Hefei, Anhui, 230026, China
+                                                            3
+                                                              Institute of Artificial Intelligence, Hefei Comprehensive National Science Center, Hefei, Anhui, 230088, China
+                                                                                                            (Dated: August 6, 2026)
+                                                                We study quantum implementations of the contraction exp(−T H α ) for H = H † ⪰ 0 and α > 0. Poisson
+                                                             summation generates an exact target–alias–tail decomposition, whose Fourier samples are compiled classically
+                                                             into one Chebyshev polynomial. The quantum circuit therefore uses a polynomial eigenvalue transformation
+                                                             rather than a frequency linear combination of unitaries. We analyze two access models: block encodings of
+                                                             H/ ∥H∥ and of the shifted signal 2H/ ∥H∥ − I. In ordinary single-sequence quantum singular value transfor-
+                                                             mation (QSVT), parity forces the first model to use an even extension, which is entire only for even positive inte-
+                                                             gers. An exact quadratic lift in the shifted model makes every positive integer entire and changes the fixed-scale
+                                                             approximation error for noninteger powers from order d−α to d−2α relative to that direct even construction. The
+                                                             resulting degree bounds are tight, within the stated access and parity classes, in the separately stated large-scale,
+                                                             fixed-error and fixed-scale, high-precision limits. Preparing a normalized output introduces the input-to-output
+                                                             norm ratio ur through both error allocation and amplitude amplification. Nearest-neighbor Laplacians pro-
+                                                             vide a unit-normalized realization of the shifted signal. For time-independent non-Hermitian dynamics, the
+                                                             Fourier–Weyl representation of the entire surrogate used by optimal linear combination of Hamiltonian simu-
+                                                             lation (LCHS) admits an exact Weyl–Poisson alias identity and remains compatible with sinh–sinh quadrature
+arXiv:2608.04263v1 [quant-ph] 4 Aug 2026
+
+
+
+
+                                                             without a commutativity assumption. This reformulation does not improve the optimal LCHS query order. In
+                                                             amplitude–phase separation (APS), the dissipative semigroup law allows the same polynomial construction to
+                                                             realize a uniformly controlled family of contractions. Square-root access recovers the usual square-root degree,
+                                                             while higher root access gives a conditional beyond-square-root extension.
+
+
+                                                                      I.   INTRODUCTION                                   The same notation is used below when uT is the state after a
+                                                                                                                          more general time-independent dissipative evolution.
+                                              Quantum circuits directly implement unitary dynamics,                          Quantum signal processing (QSP) and quantum singular
+                                           whereas heat flow, higher-order and fractional diffusion, and                  value transformation (QSVT) implement polynomial trans-
+                                           effective non-Hermitian dynamics are generated by contrac-                     formations of block-encoded operators and underlie nearly
+                                           tions [1–4]. The techniques developed for Hamiltonian simu-                    optimal Hamiltonian simulation and linear-system algo-
+                                           lation provide much of the required unitary machinery [5–9],                   rithms [12–17]. A direct Fourier representation of a matrix
+                                           but a dissipative propagator also requires a non-unitary ap-                   function can instead be implemented by a linear combina-
+                                           proximation and probabilistic preparation of the normalized                    tion of unitaries (LCU) [18]. Its sampled frequencies become
+                                           output.                                                                        coherent circuit branches, and the coefficient one-norm en-
+                                              For T > 0, we consider the homogeneous, time-                               ters the success amplitude. In the construction below, Fourier
+                                           independent problem                                                            analysis is used only to generate a polynomial classically; one
+                                                                  α                                                       polynomial-transform circuit implements the resulting trans-
+                                                 uT = e−T H u0 ,              H = H † ⪰ 0,           α > 0.      (1)      formation.
+                                           Two access models are kept separate: a block encoding of                          Related structured constructions use a Gaussian linear com-
+                                           H/ ∥H∥ and a unit-normalized block encoding of 2H/ ∥H∥−                        bination of Hamiltonian simulation (LCHS) or the Kannai
+                                           I. The latter is an additional structural assumption, not a con-               transmutation formula to obtain square-root dissipative depen-
+                                           sequence of a generic block encoding. In a sparse-matrix im-                   dence under factorized or matched access assumptions [19–
+                                           plementation the two oracles can nevertheless share the row-                   21]. Here the question is how the power α and the encoded
+                                           location data; the shifted entries require only a factor-of-two                signal jointly set the polynomial degree, and how the resulting
+                                           rescaling and a diagonal subtraction [10, 11]. The periodic-                   transformation can be used in time-independent non-unitary
+                                           grid Laplacian in Sec. III A also preserves unit normalization.                simulation.
+                                           Neither access model requires a fractional power of H. We                         The mathematical input is theα Poisson α
+                                                                                                                                                                          summation for-
+                                           write the state-preparation overhead as                                        mula [22–24]. Applied to e−T ∥H∥ |x| , it expresses uniform
+                                                                                                                          samples of the inverse Fourier transform as the target plus
+                                                                                   ∥u0 ∥                                  shifted aliases. Kernel symmetry removes the sine terms, and
+                                                                           ur :=         .                       (2)
+                                                                                   ∥uT ∥                                  the Jacobi–Anger expansion converts the remaining cosines
+                                                                                                                          into Chebyshev coefficients. These coefficients are summed
+                                                                                                                          before the circuit is built, so the Poisson sample count belongs
+                                                                                                                          to classical preprocessing. The exact target–alias–tail iden-
+                                           ∗ wangchao2@originqc.com
+                                                                                                                          tity controls coefficient generation; the quantum operation it-
+                                           † chenzhaoyun@iai.ustc.edu.cn
+                                                                                                                          self is standard QSVT and remains subject to polynomial-
+                                                                                                                                   2
+
+approximation lower bounds.                                          on α. Their values may change from line to line. Subscripts
+   Under the standard block encoding of H/ ∥H∥,α theα di-            on asymptotic symbols are omitted. Their hidden constants
+rect even QSVT polynomial approximates e−T ∥H∥ |x| on                may depend on parameters explicitly held fixed in the corre-
+[−1, 1]. It is entire when α is an even positive integer; odd        sponding limit, as stated in the surrounding text. We omit
+integer and noninteger powers retain a singularity at the inte-      additive constant query and sample costs and understand each
+rior point x = 0.α Under the    shifted signal, the scalar target    resource count to be at least one. If the target differs from
+                             α
+becomes e−T ∥H∥ [(1+x)/2] . The exact change of variables            the identity by no more than the requested error, no trans-
+x = 2y 2 − 1 identifies its degree-d approximation with an           formation is required. This convention avoids adding 1+ to
+                                             α   2α
+even degree-2d approximation to e−T ∥H∥ |y| . All positive           every complexity formula. Logarithmic factors are written in
+integers then enter the entire-function regime, while a nonin-       the high-precision convention 1/ϵ ≫ 1, or ur /ϵ ≫ 1 for
+teger endpoint singularity has twice the approximation expo-         state preparation. A logarithm or iterated logarithm appear-
+nent of the corresponding interior singularity. This quadratic       ing in a denominator is understood to be lower-bounded by
+lifting is the source of both the improved physical scale and        one; bounded lower-precision regimes are absorbed into the
+the improved precision dependence proved below.                      implicit constants.
+   A broader Poisson-summation framework for quantum ma-
+trix transformations was introduced previously [25]. Here we
+focus on power-exponential dissipation and pursue a differ-                   A.   Problem formulation and access models
+ent implementation: the contour-based route is removed, the
+coherent frequency LCU is compiled into a polynomial trans-            Let H ̸= 0 be Hermitian and positive semidefinite. We
+formation, and direct and shifted signal access are treated sep-     assume access to a unitary UH whose designated block is ex-
+arately. This leads to the access-dependent approximation            actly, in the standard block-encoding sense [13],
+regimes and end-to-end query bounds established below.
+   The polynomial construction applies directly to heat, bihar-                                                    H
+                                                                                   (⟨0a | ⊗ I)UH (|0a ⟩ ⊗ I) =        .          (3)
+monic, and fractional dissipation. The two non-Hermitian ap-                                                      ∥H∥
+plications use distinct structures. For time-independent non-
+Hermitian simulation, we combine Poisson summation with              The second access model supplies a unitary US whose desig-
+Weyl calculus [26–29], the optimal LCHS kernel [30–32],              nated block is
+and existing sinh–sinh quadrature [33]. The entire scalar sur-                                                         2H
+rogate has a Fourier representation that Weyl calculus lifts to          (⟨0b | ⊗ I)US (|0b ⟩ ⊗ I) = S,        S :=       − I.   (4)
+                                                                                                                      ∥H∥
+the noncommuting Hermitian pair. Strip analyticity and Gaus-
+sian decay of its Fourier kernel control contour displacement        Eq. (4) is a unit-normalized block encoding and is an indepen-
+and alias decay, whereas the exact Poisson identity follows          dent access assumption. A generic block encoding in Eq. (3)
+from the Fourier representation; it is not a substitution rule for   does not automatically give Eq. (4) with unit normalization:
+an ordinary holomorphic functional calculus of L + iG. The           an LCU construction of 2H/ ∥H∥ − I would have coefficient
+resulting alias identity does not alter the optimal LCHS query       one-norm three. This mathematical distinction need not imply
+order or LCU normalization. The sinh–sinh map can reduce             a substantial implementation difference in the sparse-matrix
+a precision-dominated node count, but the uniform count re-          model. If H is s-sparse and its entries and nonzero locations
+tains a linear T βA factor. Amplitude–phase separation (APS)         are computed by the usual sparse-access oracles, the same lo-
+instead exploits the semigroup law for e−tH . Its dissipative        cation oracle and an entry oracle that rescales by two and sub-
+Dyson products divide the total time into nonnegative inter-         tracts the diagonal give S with sparsity at most s + 1 and con-
+vals, so one controlled semigroup family supplies all dissipa-       stant query overhead [10, 13]. Unit normalization must still
+tive factors. For exp[−T (H + iG)], we use half-root access          be verified for the particular sparse encoding. It holds for the
+              1
+to (H/βH ) 2α for fixed positive integer α [34]. A degree-           finite-difference Laplacians in Sec. III A, where each row of
+two QSVT sequence also constructs the associated root-shift          the shifted signal has absolute sum one.
+                                                                        For every α > 0, H α is defined by the spectral calculus;
+                   1
+signal 2(H/βH ) α − I exactly [13]. For APS we give the
+QSVT degree required for one controlled dissipative-family           zero eigenvalues cause no singularity in the target exponential.
+call, the number of such calls made by the interaction-picture       The zero matrix is trivial and will be excluded. Since 0 ⪯
+algorithm, and the primitive half-root query count obtained by       H/ ∥H∥ ⪯ I, the scalar transformations in the two access
+implementing that family with its QSVT circuit. Both non-            models are, respectively,
+Hermitian applications are stated under their additional oracle                               α   α
+assumptions.                                                                  x 7−→ e−T ∥H∥ x ,                0 ≤ x ≤ 1,
+                                                                                      −T ∥H∥α [(1+s)/2]α
+                                                                                                                                 (5)
+                                                                              s 7−→ e                      ,   − 1 ≤ s ≤ 1.
+           II. POISSON-COMPILED QSVT FOR                             If only a block encoding with a known normalization larger
+           POWER-EXPONENTIAL FUNCTIONS                               than ∥H∥ is available, every statement remains valid after re-
+                                                                     placing ∥H∥ by that normalization in both the oracle and the
+  Here and in the appendices, C denotes a positive universal         formulas. In particular, the shifted block is then 2H/βH − I
+constant and Cα , cα denote positive constants depending only        for a known βH ≥ ∥H∥. The present normalization is
+                                                                                                                                                        3
+
+used to αkeep the formulas
+                   α
+                            sharp. The contractionα
+                                                     bounds        The factors 2π in Eqs. (8) and (10) fix the Fourier convention;
+e−T ∥H∥ I ⪯ e−T H ⪯ I imply 1 ≤ ur ≤ eT ∥H∥ for every              using angular frequency changes both the oscillatory phase
+nonzero input. No spectral gap is assumed.                         and the alias spacing.
+  QSVT requires a polynomial with a parity fixed by its              Truncating the sampled kernel at |k| ≤ N and isolating the
+degree. αWeα use an even degree and therefore approximate          n = 0 term yields
+e−T ∥H∥ |x| on [−1, 1]. On the nonnegative spectrum of
+H/ ∥H∥ this is exactly Eq. (5). If a real even polynomial Pd            N
+                                                                        X                                                   α       α
+obeys                                                               h          fα,T (kh)e−2πikhx − e−T ∥H∥ |x|
+                                                                        k=−N
+                                            α   α
+                            Pd (x) − e−T ∥H∥ |x|
+                                                                            X                 α             α         X
+                  max                                ≤ ϵ,    (6)        =          e−T ∥H∥ |x+n/h| − h                          fα,T (kh)e−2πikhx .
+                 x∈[−1,1]
+                                                                            n̸=0                                     |k|>N
+
+then the spectral theorem gives                                                                                                                       (11)
+
+                                            α                      Eq. (11) is the starting point of the error analysis. Its two terms
+                     Pd (H/ ∥H∥) − e−T H           ≤ ϵ.      (7)
+                                                                   are the spectral-aliasing error and the sampled-kernel tail.
+                                                                      Because fα,T is even, the finite sum is real:
+This parity choice is forced in the gap-independent, single-
+sequence QSVT model. An odd QSVT polynomial vanishes                                               N
+at the origin, whereas the target equals one there, and hence
+                                                                                                   X
+                                                                               hfα,T (0) + 2h               fα,T (kh) cos(2πkhx).                     (12)
+cannot achieve error smaller than one uniformly over positive                                      k=1
+semidefinite inputs that may have a zero eigenvalue. Thus ev-
+ery nontrivial ordinary-QSVT approximation used under stan-        The Jacobi–Anger expansion [36]
+dard access is even. Indefinite-parity generalized eigenvalue
+                                                                                                            ∞
+transformations form a different implementation class. The                                                  X
+QSVT completion theorem states that a real polynomial of                 cos(zx) = J0 (z) + 2                     (−1)j J2j (z)T2j (x)                (13)
+parity d mod 2 and modulus at most one on [−1, 1] is imple-                                                 j=1
+
+mentable, up to a constant block normalization, by d uses of
+                                                                   therefore gives the explicit even polynomial
+the signal unitary [13]. A polynomial in the shifted variable
+generally has mixed parity. Generalized Hermitian eigenvalue                                             N
+                                                                                                                                "
+transformation implements it with the same query degree, but
+                                                                                                         X
+                                                                     Pd (x) := hfα,T (0) + 2h                     fα,T (kh) J0 (2πkh)
+its worst-case block normalization can grow as O(log(d + 2))                                             k=1
+[35]. For the query bounds below we instead combine the                                                2
+                                                                                                        d                                         #
+even and odd ordinary-QSVT components with one additional                                         +2
+                                                                                                       X
+                                                                                                             (−1)j J2j (2πkh)T2j (x) , (14)
+ancilla. The fixed factor 1/2 in Eq. (16) keeps both com-                                              j=1
+ponents admissible and gives a degree-independent constant
+normalization. This constant-size parity handling is not a fre-    where d is even. All sums over k are evaluated classically
+quency LCU and does not depend on the number of Poisson            and compiled into one list of QSVT phases. Eq. (14) is not a
+samples.                                                           coherent LCU of the 2N + 1 Fourier modes.
+                                                                      The polynomial in Eq. (14) is the degree-d Chebyshev pro-
+                                                                   jection of Eq. (12). Since the projection norm is O(log(d +
+        B.       Poisson-generated polynomial construction         2)) [37, 38], it is sufficient to make the right-hand side of
+                                                                   Eq. (11) no larger than ϵ/[C log(d + 2)]. The proof in Ap-
+   We use the Fourier-transform convention in [23, 24],            pendix B gives explicit choices of h and N . This projection ar-
+         Z                                Z                        gument aggregates cancellations among all sampled frequen-
+ fb(ξ) =    f (y) e−2πiyξ dy,     f (y) =    fb(ξ) e2πiyξ dξ.      cies and avoids charging the QSVT degree for approximating
+             R                                      R              every cosine separately.
+                                                             (8)
+Only one kernel is needed:                                         Theorem II.1 (Poisson compilation). Let α, T > 0 and 0 <
+                       Z                                           ϵ < 1/4. There are an even integer d, a spacing h, and a
+                                  α   α
+           fα,T (y) :=     e−T ∥H∥ |ξ| e2πiyξ dξ.            (9)   cutoff N such that the polynomial Pd in Eq. (14) satisfies
+                               R
+                                                                                                                        α       α           ϵ
+                                                                                    max       Pd (x) − e−T ∥H∥ |x|                      ≤     .       (15)
+It is real and even. The periodization proof in Appendix A                         x∈[−1,1]                                                 2
+shows that both sides below converge absolutely and locally
+uniformly. Poisson summation with sampling interval h > 0          After computing the coefficients to the accuracy stated in Ap-
+therefore gives the exact identity                                 pendix B, the fixed rescaling
+      X                          X        α       α
+    h      fα,T (kh)e−2πikhx =     e−T ∥H∥ |x+n/h| . (10)                                                Pd (x)
+                                                                                                                                                      (16)
+     k∈Z                             n∈Z                                                               2(1 + ϵ/2)
+                                                                                                                                    4
+
+is QSVT admissible. If B denotes its designated QSVT block,                         C.   Integer and noninteger powers
+then
+                                     α
+                                                                         The inverse Fourier kernel determinesα the  α
+                                                                                                                       classical sam-
+                       2B − e−T H         ≤ ϵ.                 (17)   ple count, while the regularity of e−T ∥H∥ |x| determines the
+                                                                      QSVT degree. These two resources should not be conflated.
+                                                           α             If α is an even positive integer, complex translation of the
+Thus B is a normalization-two block encoding of e−T H with
+                                                                      integral in Eq. (9) gives the steepest-descent bound
+operator error at most ϵ.
+                                                                                                     "                   α #
+                                                                                                                        α−1
+                                                                                          Cα                     |y|
+Proposition II.2 (Quadratic lifting for the shifted signal). Let         |fα,T (y)| ≤ 1          exp −cα        1             . (21)
+P2d be the even Poisson-compiled polynomial for the scalar                             T α ∥H∥                T α ∥H∥
+              α   2α
+target e−T ∥H∥ |y| ; equivalently, apply p Theorem II.1 with          Thus the kernel has a stretched-exponential tail. If instead α
+exponent 2α and replace ∥H∥ there by ∥H∥. Then                        is not an even integer, the nonanalyticity at the origin and the
+                                r         !                           Fourier form of Watson’s lemma give [40]
+                                    1+s                                                     α
+                       P2d                                     (18)                 2T ∥H∥ Γ(α + 1) sin(πα/2)            
+                                                                                                                              −α−1
+                                                                                                                                   
+                                     2                                  fα,T (y) =                                   + o   |y|       .
+                                                                                             (2π |y|)α+1
+                                                                                                                                  (22)
+is a polynomial of degree at most d in s and satisfies                The coefficient in Eq. (22) is nonzero exactly when α is not an
+                            !                                         even integer. Odd integers therefore have the same algebraic
+                                                                      kernel mechanism as fractional powers. For α > 2 the kernel
+                  r
+                      1+s                 α       α       ϵ
+   max      P2d                 − e−T ∥H∥ [(1+s)/2]   ≤     . (19)    need not be nonnegative; this does not obstruct the construc-
+ s∈[−1,1]              2                                  2
+                                                                      tion because its samples are aggregated classically rather than
+                                                                      prepared as LCU amplitudes. Explicit choices of h and N
+After the same boundedness rescaling as in Eq. (16), decom-           are deferred to Appendix A, because they affect only classical
+pose this mixed-parity polynomial into its even and odd parts.        coefficient generation and not the number of oracle calls.
+Coherently selecting the two ordinary-QSVT circuits
+                                                 α
+                                                      gives a            For the shifted signal, Proposition II.2 repeats the same
+constant-normalization block encoding of e−T H using O(d)             analysis with exponent 2α. This exponent is an even inte-
+calls to US and US† .                                                 ger exactly when α is a positive integer. Hence odd integer
+                                                                      powers acquire the same stretched-exponential kernel as even
+                           Pd         2j
+Proof. Write P2d (y) =        j=0 cj y .     The expression in        integer powers. If α is noninteger, the lifted kernel has tail
+                                                                             −2α−1
+                    Pd                     j
+Eq. (18) is exactly j=0 cj [(1 + s)/2] , so the displayed             O(|y|        ), improving the truncation power from α to 2α.
+square root introduces no branch and the result is a polyno-          Theorem II.3 (Polynomial degree in the two access models).
+mial of degree at most d. For this substitution,                      Let 0 < ϵ < 1/4. Under access to UH , if α is an even positive
+                 √                                                    integer, the Poisson-compiled polynomial can be chosen with
+                      2α  2α        α          α
+            e−T ( ∥H∥) |y| = e−T ∥H∥ [(1+s)/2]                 (20)                                      1             !
+                                                                                                α       1 α      1− α1 1
+                                                                                d=O       T ∥H∥ + log        log           .   (23)
+                                                                                                        ϵ              ϵ
+            p
+when y = (1 + s)/2. The uniform error and boundedness
+therefore follow directly from Theorem II.1. Finally, (I +
+S)/2 = H/ ∥H∥, so the spectral theorem gives the asserted             If α is an odd positive integer or is noninteger, the parity-
+operator transformation.                                              compatible construction under UH can be chosen with
+                                                                                                       α1 !
+                                                                                                       T
+                                                                                       d = O ∥H∥               .              (24)
+   The proof, including finite-precision evaluation of the ker-                                         ϵ
+nel samples, is given in Appendix B. The factor 1/2 in
+Eq. (16) is a universal admissibility margin. It only changes         Under access to US , every positive integer α admits degree
+the state-preparation probability by a constant and is unre-                                          1                !
+lated to a Fourier LCU norm. The 2N + 1 kernel values and                                    α       1 2α            1 1
+                                                                                                                 1− 2α
+                                                                          d=O        T ∥H∥ + log             log           .   (25)
+the Bessel sums in Eq. (14) are classical data. They require                                         ϵ                 ϵ
+O(N d) arithmetic operations once the kernel values are avail-
+able. Standard QSP factorization then converts the resulting          If α is noninteger, it is sufficient under US to use
+d + 1 coefficients into a phase sequence [13, 39]. These costs                                                2α1 !
+do not change the number of calls to UH or US , but they are                                       p         T
+                                                                                       d=O            ∥H∥             .          (26)
+part of the classical preprocessing required to instantiate the                                               ϵ
+circuit. For general α, the bounds below specify the number
+                                                                                    α
+and precision of the required one-dimensional kernel evalua-          When T ∥H∥ ≤ ϵ, the identity transformation already has
+tions. They do not assert an optimized bit complexity for a           the required accuracy and the nontrivial terms in these bounds
+particular numerical quadrature implementation.                       may be omitted.
+                                                                                                                                           5
+
+   The single-factor forms in Eqs. (23) and (25) are uniform               If α is an odd positive integer or is noninteger, the correspond-
+upper bounds. Up to constants depending only on α, they are                ing number is
+equivalent to writing the physical-scale contribution and the                                                     1!
+high-precision logarithm as two additive terms. The sharper                                                   T ur α
+joint interpolation is given in Eqs. (B4) and (B5) of Ap-                                     O ur ∥H∥                   .              (29)
+                                         α
+                                                                                                                ϵ
+pendix B. In particular, when T ∥H∥ > 0 is fixed and
+ϵ → 0, the uniform log(1/ϵ) behavior can be sharpened to                   Under access to US , every positive integer α instead uses
+log(1/ϵ)/ log log(1/ϵ). This fixed-scale refinement is the one                                              1              
+used in the precision column of Table I.                                                        α       ur  2α         1 ur
+                                                                                O ur T ∥H∥ + log                 log1− 2α            (30)
+   For α = 1, Eq. (25) becomes                                                                           ϵ                 ϵ
+
+                                                                           calls to US and US† . For noninteger α, a sufficient shifted-
+                       s                              !
+                                        1           1
+           d=O              T ∥H∥ + log         log         .       (27)   oracle query bound is
+                                        ϵ           ϵ
+                                                                                                              1!
+                                                                                                 p        T ur 2α
+                                 p                                                        O ur ∥H∥                   .              (31)
+The bound in Eq. (27) is O( T ∥H∥ log(1/ϵ)) whenever                                                        ϵ
+T ∥H∥ ≥ log(1/ϵ). In this fast-forwarding regime, direct ac-
+cess to 2H/ ∥H∥ − I reproduces the square-root dependence                                                           α
+                                                                              For the integer cases, fixing T ∥H∥ and ur sharpens the
+used by amplitude–phase separation [34, 41, 42]. Outside                   uniform high-precision order implicit in Eqs. (28) and (30)
+this regime, Eq. (27) retains the uniform high-precision cor-              from log(ur /ϵ) to log(ur /ϵ)/ log log(ur /ϵ). The longer in-
+rection; Eq. (B5) is sharper still.                                        terpolation formula is needed only when time, normalization,
+   For even integer α under standard access, the physical-                 and precision vary simultaneously.
+scale part of Eq. (23) is the moderate-precision contribution                 The factor ur has two roles. To obtain normalized-state
+from the stretched-exponential Fourier tail. The uniform high-             error ϵ, Theorem II.3 is invoked with polynomial error of order
+precision part is a simplification of the entire-function contri-          ϵ/ur , and amplitude amplification requires Θ(ur ) uses of that
+bution in Eq. (B4). For non-even α, Eq. (24) is set by the inte-           polynomial. There is no additional Fourier coefficient one-
+rior nonanalyticity. Under shifted access, Eq. (25)
+                                                  p follows by             norm in Eqs. (28) and (29), nor in their shifted counterparts.
+making the replacements α 7→ 2α and ∥H∥ 7→ ∥H∥ before                         The query bounds treat UH or US as an exact oracle. If
+the quadratic lifting. The same replacement in the algebraic               each implemented call differs from the corresponding ideal
+case gives Eq. (26). Thus odd integers move into the entire-               oracle by at most ϵH in operator norm, a telescoping argument
+function regime, whereas noninteger powers remain algebraic                bounds the error of one degree-d polynomial transformation
+but gain a factor of two in the precision exponent. The direct             by dϵH . It is therefore sufficient to synthesize each oracle call
+estimates used here are classical Chebyshev and modulus-of-                and each elementary QSP rotation to error O(ϵ/(ur d)). This
+smoothness bounds [38, 43, 44]. Their converse forms will be               requirement affects gate synthesis, not the number of block-
+used below only in the parameter regimes for which they are                encoding queries.
+uniform.                                                                      The degree estimates also have a direct approximation-
+                                                                           theoretic interpretation. For fixed even integer α, clas-
+                                                                           sical Bernstein theory for entire functions of finite order
+                                                                           explains the two regimes in Eq. (B4). At constant er-
+     D.   End-to-end complexity and approximation limits
+                                                                           ror, an interior Bernstein inequality implies the matching
+                                                                                                     1
+                                                                           lower bound Ω(∥H∥ T α ). At fixed T and H, as ϵ → 0,
+   One application of a degree-d polynomial eigenvalue trans-              finite-order entire-function theory gives the matching order
+formation uses O(d) calls to the corresponding signal ora-                 Θ(log(1/ϵ)/ log log(1/ϵ)) [38, 46, 47]. For α = 2, the full
+cle and its inverse. Applied to the normalized input |u0 ⟩ =               joint time–precision expression agrees with the known opti-
+u0 / ∥u0 ∥, the desired output block in Theorem II.1 has norm              mal degree for Gaussian exponentials [41].
+Θ(1/ur ). Fixed-point amplitude amplification therefore pre-                  If α is not an even integer, the best approximation error for
+pares a state proportional to uT with O(ur d) block-encoding               the even extension implemented in this paper is proportional
+queries, assuming an upper bound on ur [45]. The stated cost               to d−α as d → ∞, with constants depending on α, T , and
+gives constant success probability; standard repetition gives                                              1
+                                                                           H [43, 44, 48]. Hence the ϵ− α exponent in Eq. (24) is optimal
+any prescribed higher success probability.                                 for gap-independent ordinary QSVT with one phase sequence:
+                                                                           an odd sequence already has unit error at the origin. Together
+Theorem II.4 (End-to-end state preparation). Let 0 < ϵ <                   with the uniform constant-error lower bound below, this gives
+1/2, and require Euclidean error at most ϵ in the normalized               the two statements recorded in Table I. We do not claim a
+output state. For an even positive integer α, the number of                matching two-parameter lower bound with constants uniform
+                  †                                                                         α
+calls to UH and UH  is                                                     in both T ∥H∥ and ϵ for every non-even power, or a lower
+                                                                           bound against generalized indefinite-parity constructions.
+                                 ur  α1
+                                                           
+                                               1 ur                           For US , Proposition II.2 identifies degree-d polynomials in
+                 
+                           α
+          O ur       T ∥H∥ + log         log1− α                .   (28)
+                                  ϵ               ϵ                        the shifted variable with even degree-2d polynomials in the
+                                                                                                                                         6
+
+
+TABLE I. Approximation regimes of the Poisson constructions in the two access models. The standard-oracle non-even precision entry is a
+matching upper and lower bound for gap-independent ordinary QSVT with a single phase sequence. It is not a minimax claim for generalized
+indefinite-parity transformations. The physical-scale column is asymptotic as T ∥H∥α → ∞ at fixed error. The precision column keeps
+T ∥H∥α > 0 fixed. Each Θ entry is a one-parameter statement in the indicated limit; the table does not claim that the uniform joint upper
+bounds are minimax for all time–precision scalings.
+
+access                        α                                              fixed-error degree              fixed-scale
+                                                                                                                      precisiondegree
+                                                                                           1
+H/ ∥H∥                        even positive integer                          Θ((T ∥H∥α ) α )                       Θ loglog(1/ϵ)
+                                                                                                                          log(1/ϵ)
+                                                                                           1                                   1
+H/ ∥H∥                        odd positive integer or noninteger             Θ((T ∥H∥α ) α )                            Θ(ϵ
+                                                                                                                              −α
+                                                                                                                                   ) 
+                                                                                          1                               log(1/ϵ)
+2H/ ∥H∥ − I                   positive integer                               Θ((T ∥H∥α ) 2α )                      Θ    log log(1/ϵ)
+                                                                                           1                                    1
+2H/ ∥H∥ − I                   noninteger                                     Θ((T ∥H∥α ) 2α )                           Θ(ϵ  − 2α
+                                                                                                                                   )
+
+
+
+lifted variable. Consequently, integer α yields entire-function          For the heat equation, L discretizes −∆ and α = 1. The
+approximation of order 2α, whereas noninteger α has fixed-            resulting query bounds are displayed below.
+scale error Θ(d−2α ). Markov’s endpoint inequality further                              2        
+gives the matching fixed-error lower bound                                               u βL κT
+                                                                          standard: O r             ,
+                                                                                             ϵ
+                                                                                                                              (34)
+                                α 1
+                        Ω (T ∥H∥ ) 2α .                                                                    ur  12
+                                                                                                                          
+                                                                                                                       1 ur
+                                                                            shifted: O ur βL κT + log              log 2      .
+                                                                                                            ϵ             ϵ
+Thus all entries in Table I are tight in the two separate lim-         Thus direct shifted access changes both the physical depen-
+its stated in its caption. The standard-signal non-even result        dence and the precision dependence of the standard even ex-
+is optimal only for ordinary single-sequence QSVT, and no
+general joint two-parameter minimax claim is made.                          p When βL κT ≥ log(ur /ϵ), the shifted bound is
+                                                                      tension.
+                                                                      O(ur βL κT log(ur /ϵ)). This is the square-root dissipa-
+                                                                      tive dependence used by APS, now obtained directly from
+                                                                      the shifted signal by one constant-normalization polynomial
+                                                                      eigenvalue transformation [34, 41, 42].
+                      III.   APPLICATIONS                                For biharmonic dissipation, ∂t u = −κ(−∆)2 u, one sets
+                                                                      α = 2. This model appears, for example, in linearized
+         A.   Heat, biharmonic, and fractional dissipation            surface-diffusion and thermal grooving problems [56]. The
+                                                                      explicit query bounds are
+  Let L ⪰ 0 be a spatially discretized elliptic operator. The                                             ur  12
+                                                                                                                         
+                                                                                                                      1 ur
+                                                                                               2
+semidiscrete dissipative equation                                         standard: O ur βL      κT + log         log 2      ,
+                                                                                                           ϵ             ϵ
+                                                                                                                               (35)
+                                                                                                          ur  14
+                                                                                                                         
+                       du(t)                                                                                          3 ur
+                                                                                               2
+                             = −κLα u(t)                       (32)         shifted: O ur βL κT + log             log 4      .
+                        dt                                                                                 ϵ             ϵ
+                                                                      The standard formula is the Gaussian regime whose joint
+has solution
+                                                                      time–precision degree is minimax optimal [41]. The shifted
+                                      α
+                                                                      formula is conditional on the stronger signal access and has
+                      u(T ) = e−κT L u(0).                     (33)   the fourth-root scale (κT βL2 41
+                                                                                                   ) . In both integer examples,
+                                                                                  α
+                                                                      fixing κT βL   sharpens the uniform high-precision order to
+Quantum partial differential equation (PDE) algorithms based          log(ur /ϵ)/ log log(ur /ϵ).
+on spectral discretization, finite differences, time marching,           For every noninteger α > 0, fractional diffusion gives
+Dyson series, and Schrödingerization provide complementary                                                   1!
+access models and error accounts [2, 49–55]. Here the spatial                                            κT ur α
+                                                                                 standard: O ur βL                   ,
+discretization is fixed, and the task is the matrix-function step                                          ϵ
+in Eq. (33).                                                                                                                    (36)
+                                                                                                                1!
+   Let βL ≥ ∥L∥ be the known block normalization. We dis-                                          p       κT ur 2α
+                                                                                   shifted: O ur βL                      .
+tinguish access to L/βL from direct unit-normalized access to                                                ϵ
+2L/βL − I. The following costs prepare the normalized state
+proportional to u(T ) with Euclidean error at most ϵ and con-         No oracle for Lα is assumed. The fractional-power exponen-
+stant success probability. The corresponding operator-block           tial is generated by the polynomial applied to the sparse signal
+costs follow by removing the outer factor ur and replacing            itself [3, 4]. In particular, the shifted model attains the opti-
+                                                                                                      1
+every occurrence of ur inside the formulas by one.                    mal fixed-scale exponent ϵ− 2α proved in Appendix D.
+                                                                                                                                 7
+
+  The shifted access assumption is concrete for the usual         The adjoint circuit UA† block encodes A† /βA , and hence
+nearest-neighbor finite-difference Laplacian.  On a D-
+                                                                                        A†                              A†
+                                                                                                                        
+dimensional grid of spacing ∆x, write                                  L      1 A                     G     1     A
+                                                                           =         +        ,          =            −      .
+                                                                      βA      2 βA      βA           βA     2i βA       βA
+                        1                                                                                                    (42)
+                 L=         (2DI − Ann ) ,                (37)
+                      (∆x)2                                       Each expression is a two-term LCU with coefficient one-norm
+where Ann is the nearest-neighbor adjacency matrix. Setting       one. Thus both Hermitian blocks retain the single normal-
+βL = 4D/(∆x)2 gives the exact identity                            ization βA and use only a constant number of calls to UA
+                                                                  and UA† [13, 18, 60]. Contour-integral, Laplace-transform,
+                     2L          Ann                              and eigenvalue-transformation methods provide other block-
+                         2
+                           −I =−     .                    (38)
+                  4D/(∆x)        2D                               encoded routes to non-Hermitian matrix functions [61–67].
+                                                                  The construction below instead preserves the Hamiltonian
+For a periodic grid, 4D/(∆x)2 = ∥L∥ whenever the high-
+                                                                  branches of LCHS.
+est Fourier mode is present, and every row on the right-hand
+                                                                     The Weyl–Poisson construction uses two complementary
+side of Eq. (38) has absolute sum one. For Dirichlet bound-
+                                                                  ingredients. Weyl calculus lifts a scalar Fourier representa-
+aries, the same number is a known upper bound on ∥L∥ and
+                                                                  tion to the noncommuting line of Hamiltonians kL + G [26].
+boundary rows have absolute sum at most one. Because
+                                                                  The scalar surrogate is entire, while its Gaussian-regularized
+the matrix is 2D-sparse and its largest entry has magnitude
+                                                                  Fourier kernel is analytic in a strip; these properties support
+1/(2D), standard sparse-access block encoding has normal-
+                                                                  the contour and alias estimates below. The kernel and query
+ization 2D × 1/(2D) = 1 [10, 11, 13, 57]. The shifted
+                                                                  guarantee come from optimal LCHS [32], while the sinh–sinh
+signal is also the negative transition matrix of the nearest-
+                                                                  map comes from the corresponding LCHS quadrature analysis
+neighbor random walk [58]. Thus its oracle can be prepared
+                                                                  [33]. Poisson summation exposes the continuous LCHS term
+directly without first forming the generally dense fractional
+                                                                  and every discretization alias in one exact operator formula.
+power Lα . For nonperiodic boundaries, the complexity for-
+                                                                  It changes neither the kernel nor the Hamiltonian simulation
+mulas use 4D/(∆x)2 in place of the exact spectral norm, as
+                                                                  used in each branch and therefore does not improve the LCHS
+specified after Eq. (5).
+                                                                  query complexity. For a fixed constant c > 0, set
+    √ fixed ur and ϵ, Eq. (34) has shifted-oracle scale
+   At
+                                                                                          ec−ick
+                                                                                                         2       
+O( κT D/∆x). The √       standard and shifted biharmonic
+                                               √         scales                                            k +1
+                                      2                1                        q(k) =              exp  −          ,
+are, respectively, O(D κT /(∆x) ) and O( D(κT ) /∆x).  4                                π(1 + k 2 )          4γ 2
+For noninteger α, the full grid-dependent terms in Eq. (36) are                        Z
+                      1!               √           1!                      ϕ(x) =      q(k)e−ikx dk.                     (43)
+         Dur κT ur α                        Dur κT ur 2α                                 R
+   O                          ,      O                            The second relation fixes the Fourier-sign convention used in
+        (∆x)2       ϵ                      ∆x      ϵ
+                                                           (39)   the Weyl identity below. The entire function ϕ approximates
+for standard and shifted access. The Holtsmark stable index       e−x for x ≥ 0, but it is not equal to that function. For noncom-
+3/2 [59] corresponds here to α = 3/4; the shifted expression      muting L and G, the Weyl operator introduced below should
+                    √           5         2                       not be identified with the ordinary product ϕ(T L)e−iT G or
+then becomes O(( D/∆x)ur3 (κT /ϵ) 3 ), reproducing the ex-        with a holomorphic substitution in L + iG; it is defined by its
+plicit mesh and success-amplification dependence of the ear-      Fourier integral along kL + G. For 0 < ϵ ≤ 0.9, choose
+lier Poisson-summation construction. Each result additionally                   s
+uses O(ur ) calls to the initial-state oracle.
+                                                                                                 1 
+                                                                              1              1 + 2π
+   These statements concern the semidiscrete propagator. A              γ=        c + log              ,      R = 2cγ 2 ,      (44)
+                                                                              c                 ϵ
+continuum PDE guarantee must additionally allocate error to
+spatial discretization, preparation of u(0), and extraction of    The generalized LCHS theorem then gives
+the desired observable. In particular, mesh refinement gener-                        Z R
+ally increases ∥L∥, so the matrix-function query bound alone            e−T (L+iG) −     q(k)e−iT (kL+G) dk ≤ ϵ.              (45)
+does not constitute an end-to-end exponential speedup for a                              −R
+continuum problem.                                                No commutativity of L and G is required. The kernel also
+                                                                  satisfies
+                                                                            Z                        
+       B.   Time-independent non-Hermitian simulation                                                 1
+                                                                                |q(k)| dk = ec erfc      ≤ ec ,       (46)
+                                                                              R                      2γ
+  Consider the time-independent generator                         Here erfc is the complementary error function, so the contin-
+     A = L + iG,        L = L ⪰ 0,†
+                                           G=G .   †
+                                                          (40)    uous LCU normalization is constant when c is constant.
+                                                                    For real a, the Fourier–Stieltjes Weyl calculus on the line of
+The access model supplies a block encoding of the full gener-     Hamiltonians kL + G reads
+ator,                                                                         −iy
+                                                                                                   Z
+                                                                      W
+                                                                                                      q(k)e−iak e−iT (kL+G) dk.
+                                                                                            
+                                                                   OpT L,T G e ϕ(x + a) :=
+                                  A
+    (⟨0a | ⊗ I)UA (|0a ⟩ ⊗ I) =      ,    βA ≥ ∥A∥ .      (41)                                      R
+                                                                                                                              (47)
+                                  βA
+                                                                                                                                8
+
+Operator-valued Poisson summation now gives, for every h >          the equally explicit compatibility identity
+0,                                                                       X
+                                                                       h     cosh(mh)q(sinh(mh))e−iT (sinh(mh)L+G)
+             X                                                          m∈Z
+         h         q(mh)e−iT (mhL+G)                                       Z
+             m∈Z                                                       =     q(k)e−iT (kL+G) dk
+                         −iy                                               R
+             = OpW
+                                    
+                 T L,T G e     ϕ(x)                                          XZ                                      2πiℓz
+                 X                      
+                                              2πℓ
+                                                                         +      cosh z q(sinh z)e−iT (sinh zL+G) e− h dz.
+                                   −iy
+               +    OpW T L,T G  e     ϕ  x +        .      (48)               ℓ̸=0   R
+                                               h
+                    ℓ̸=0                                                                                                     (51)
+                                                                    The first term on the right is the continuous LCHS inte-
+Eq. (48) is the Weyl–Poisson formula used here. Its first term      gral with the optimal-scaling kernel; the second contains ev-
+is exactly the continuous full-line LCHS integral, and the re-      ery alias created by the transformed lattice. Thus the sinh–
+maining terms are its complete Poisson aliases. The equality        sinh change of variables is compatible with the same Weyl–
+is exact; only the identification of the first term with the tar-   Poisson decomposition. On the real axis, the transformed ker-
+get e−T (L+iG) is approximate because ϕ is an approximation         nel satisfies
+to e−x . The formula retains the noncommuting exponential
+                                                                                                 c− 1
+e−iT (kL+G) . It does not use a product formula or replace L                                                   sinh2 x
+                                                                                                                      
+                                                                                               e 4γ 2
+                                                                         cosh x |q(sinh x)| =           exp −            .   (52)
+and G by commuting variables. Truncating the left side and                                     π cosh x          4γ 2
+isolating the target gives the exact error decomposition
+                                                                    Its tail is double exponential in the transformed cutoff. The
+                                                                    mesh must nevertheless resolve the growth of the complex-
+              N
+              X                                                     time Hamiltonian on the displaced contour. For fixed positive
+         h           q(mh)e−iT (mhL+G) − e−T (L+iG)                 T βA , or as this physical scale grows, Appendix E gives
+             m=−N                                                                                                  
+           n             −iy                   o                                                        1        1
+          = OpW               ϕ(x) − e−T (L+iG)                                  2N + 1 = O T βA log log log
+                                   
+                T L,T G e
+                                                                                                                      ,
+                                                                                                         ϵ        ϵ
+                                           
+                                         2πℓ
+                                                                                                                    
+             X
+                     W         −iy                                                                                 1
+           +      OpT L,T G e ϕ x +                                                     max |sinh(mh)| = O log          .     (53)
+                                          h                                            |m|≤N                       ϵ
+             ℓ̸=0
+                                                                    At fixed positive T βA ,
+                 X
+           −h          q(mh)e−iT (mhL+G) .                  (49)                                        the first bound has
+                    |m|>N
+                                                                    O(log(1/ϵ) log log(1/ϵ)) precision dependence.          As the
+                                                                    supplied physical scale grows, however, the branch count re-
+                                                                    tains a linear T βA factor. Thus the transformation can reduce
+The three terms are respectively the optimal-scaling LCHS           the precision-dominated branch count, but neither the largest
+kernel mismatch, the complete Poisson alias, and the lattice        simulated frequency nor its physical-scale dependence.
+tail. The first term is present because the selected optimal-       Since no specific state-preparation and controlled-selection
+scaling LCHS kernel has ϕ ̸= e−x ; replacing ϕ formally             (PREPARE/SELECT) architecture is fixed here, this node
+would correspond to a different kernel. Adding and subtract-        reduction is not claimed as an end-to-end gate-complexity
+ing the integral over [−R,
+                       R R] bounds its norm by the left-hand        improvement. If a sharper upper bound on ∥L∥ is known
+side of Eq. (45) plus |k|>R |q(k)| dk. The latter is O(ϵ) for       separately, it may replace βA when choosing the quadrature
+the parameters in Eq. (44), so the full-line approximation error    mesh. Eq. (53) is an upper bound for this quadrature rule
+is O(ϵ).                                                            in the stated regime, not a lower bound on every possible
+   For an overall operator error, each displayed tolerance may      quadrature.
+be replaced by a fixed fraction of the desired error. The              In contrast, the discrete LCU coefficient one-norm is uni-
+triangle inequality then combines the kernel, Poisson-alias,        formly independent of βA . For h ≤ 1, the explicit estimate
+and lattice-tail bounds. Such a constant rescaling changes no       is
+asymptotic order below.                                                     N                                           
+                                                                           X                                           1
+   The uniform rule has R = O(log(1/ϵ)) and may take                    h        cosh(mh) |q(sinh(mh))| ≤ ec 1 +           . (54)
+                                                                                                                       π
+h−1 = O(T βA + log(1/ϵ)). It therefore uses                             m=−N
+
+                                                                The right-hand side is also independent of T , ϵ, and N .
+                          1             1                           The coefficient normalization and the number of coherent
+                    O log    T βA + log                     (50)    branches are therefore distinct resources: only the former is
+                          ϵ             ϵ
+                                                                    norm independent.
+                                                                      For every sampled frequency, Eq. (42) gives a block encod-
+nodes [32, 68]. The existing sinh–sinh quadrature can be com-
+                                                                    ing of
+bined with the same kernel [33, 69–72]. We use its unit-scale
+form k = sinh z; inserting a fixed positive scale changes only                               kL + G
+                                                                                                         .                   (55)
+constants in the bounds below. Poisson summation in z gives                                 βA (|k| + 1)
+                                                                                                                                                           9
+
+The largest frequency is R = O(log(1/ϵ)). Hamiltonian sim-                      not change the physical generator H or the target propaga-
+ulation of the controlled branches and the constant LCU nor-                    tor e−T H . The fractional powers are defined by the spectral
+malization therefore give, for fixed positive T βA or growing                   calculus. For α = 1, Eq. (60) is the square-root access of
+physical scale and under the resource convention stated at the                  APS [34]; for a fixed integer α > 1 it is the corresponding
+beginning of Sec. II,                                                           root of order 2α. Such access is not implied by a generic
+                                                                              block encoding of H.
+                        1                                                          APS gives two exact interaction-picture factorizations [34].
+          O T βA log          queries to UA and UA†      (56)
+                        ϵ                                                       Separating the phase first gives
+for operator-norm error at most ϵ [14, 32, 42]. This is the op-
+                                                                                                           " Z                     #
+                                                                                                                          T
+timal LCHS query order expressed through the supplied nor-                          e−T A = e−iT G T exp −                    eisG He−isG ds ,           (62)
+malization βA . Neither the Weyl rewriting nor the sinh–sinh                                                          0
+
+map changes this query order.
+   Preparing the normalized state with Euclidean error at most                  whereas separating the amplitude first gives
+ϵ requires                                                                                               " Z
+                                                                                                                          T
+                                                                                                                                                   #
+                                                                                         −T A       −T H                          sH        −sH
+                                    ur                                             e          =e         T exp −i           e        Ge         ds .   (63)
+                     O ur T βA log                         (57)                                                       0
+                                      ϵ
+                                                                                No commutativity between H and G is used in either equality.
+queries to UA and UA† , together with O(ur ) calls to the initial-              The similarity-transformed generator esH Ge−sH need not be
+state oracle. The corresponding number of branches in each                      Hermitian, so the second factor in Eq. (63) is not generally
+LCHS block is                                                                   unitary.
+                             ur         ur                                      The reusable structure in Eq. (63) is the time-independent
+                O T βA log       log log      .              (58)
+                               ϵ          ϵ                                     contraction semigroup
+At fixed T βA this again reduces to the precision-only log log                                  e−sH e−tH = e−(s+t)H ,                  s, t ≥ 0.        (64)
+compression. The reduction concerns the node-dependent
+PREPARE/SELECT description; it is not, by itself, a query                       After expanding the interaction factor, every dissipative in-
+or gate-complexity speedup. It does not remove the constant                     terval is nonnegative and the intervals in each Dyson prod-
+LCU normalization or improve Eq. (57). The Hermitian re-                        uct sum to T . The algorithm therefore requires one uniformly
+sult of Sec. II remains the case in which the frequency LCU is                  controlled semigroup family, rather than unrelated approxima-
+eliminated entirely.                                                                                                1
+                                                                                tions at each time. Since H = (H 2α )2α , Eq. (60) is the stan-
+                                                                                dard positive signal for an even power 2α, with base normal-
+                                                                                           1
+
+               C.   Amplitude–phase separation                                  ization βH2α . The Poisson-compiled polynomial therefore pro-
+                                                                                vides an ordinary even-QSVT realization of this factor. The
+                                                                                amplitude-driven APS algorithm also queries the controlled
+   Amplitude–phase separation (APS) separates the dissipa-
+                                                                                family
+tive factor from the remaining interaction in non-unitary sim-
+ulation. This viewpoint is also relevant to quantum algorithms                              X
+                                                                                                |m⟩⟨m| ⊗ e−tm H ,      0 ≤ tm ≤ T.         (65)
+for open-system dynamics [73–75]. We consider the time-
+                                                                                                m
+independent generator
+                                                                                This family has a direct Poisson-compiled realization. For
+     A = H + iG,             H = H † ⪰ 0,                     G = G† ,   (59)   each tm , synthesize the corresponding even-QSVT sequence
+                                                                                and choose one common maximum query length. Shorter se-
+Let βH ≥ ∥H∥ and βG ≥ ∥G∥. We assume a block encoding
+                                                                                quences are padded in steps of two. Replacing each phase ro-
+of G/βG and, for a fixed positive integer α, an exact half-root
+                                                                                tation by its multiplexed version, controlled by |m⟩, gives one
+oracle whose designated block is
+                                                                                block-diagonal circuit whose mth block implements e−tm H .
+                                           1
+                                          2α                                   The signal calls are common to all branches; only the phase
+                                    H                                           angles depend on m. Appendix F proves this direct-sum con-
+                                                .                        (60)
+                                    βH                                          struction and its uniform error bound [13]. For a per-call error
+                                                                                δ, the scalar polynomial is computed with smaller error and
+Applying the degree-two QSVT polynomial 2x2 −1 also gives                       rescaled only by 1 + δ/2. Because it is even and bounded by
+the root-shift signal                                                           one, the real-polynomial QSVT theorem implements it with
+                             α1                       1                       normalization one [13]. Each designated block is therefore a
+                        H                       2H α                            normalization-one approximation to e−tm H . The fixed nor-
+                2                   −I =            1       − I,         (61)
+                        βH                      βHα                             malization two used for standalone state preparation in The-
+                                                                                orem II.1 is not repeated inside the APS products. Direct
+with two half-root queries and no approximation error [13].                     root-shift access remains sufficient for the standalone shifted-
+Here α labels the order of the available root access; it does                   oracle results. For repeated APS products, half-root access
+                                                                                                                                       10
+
+avoids the degree-dependent normalization of a mixed-parity              gives the elementary half-root query count in Eq. (68). At
+generalized eigenvalue transformation.                                   fixed T βH , βG T , and ur , the sharper interpolation formula in
+   We use Eq. (65) as the dissipative-family oracle in the APS           Eq. (B5) improves the per-invocation high-precision factor to
+construction [34]. One realization of this family has a max-             log(ur βG T /ϵ)/ log log(ur βG T /ϵ).
+imum QSVT degree, while the truncated Dyson construction                    In a discretized phase-driven APS algorithm, each conju-
+invokes the family and the block encoding of G/βG multiple               gated dissipative step has the form
+times. We give the query count both when the controlled fam-
+                                                                                              isG
+                                                                                                    He−isG
+ily is provided directly and when it is implemented from the                         e−∆t e                  = eisG e−∆tH e−isG ,    (71)
+half-root oracle. In the latter access model, every family invo-
+cation executes the corresponding QSVT sequence. The case                so the same polynomial-transform primitive applies whenever
+G = 0 reduces to the standalone dissipative transformation.              controlled variable-duration calls are available.
+                                                                            At fixed precision, the dissipative term in Eq. (66) scales
+Corollary III.1 (Poisson-compiled amplitude-driven APS).                             1
+
+Let 0 < ϵ < 1/2 and βG T ≥ 1. Under the preceding ac-                    as (T βH ) 2α . The case α = 1 reproduces the square-root
+cess assumptions, one invocation of the controlled family in             APS scaling, whereas every fixed integer α > 1 gives beyond-
+Eq. (65), with the uniform accuracy required by the full APS             square-root dependence on the same physical scale T βH . This
+circuit, can be realized using                                           statement concerns the realization of each controlled dissi-
+                                                                         pative family call; combining it with the family-call count
+                               1                                        gives Eq. (68). Fourier kernels beyond the Gaussian case may
+                                                   !
+                       ur βG T 2α         1 ur βG T
+                                      1− 2α
+    O      T βH + log             log                    (66)            change sign, but this does not obstruct the present construc-
+                           ϵ                   ϵ                         tion: their samples are summed classically into one QSVT
+                                                                         polynomial and are never used as probabilities or coherent
+half-root queries. To prepare a normalized state proportional            LCU coefficients. The conclusion is conditional on the half-
+to e−T (H+iG) u0 with Euclidean error at most ϵ and constant             root access in Eq. (60). The degree-two relation in Eq. (61)
+success probability, amplitude-driven APS uses                           shows how this access also supplies the root-shift signal. This
+                    
+                               log(ur /ϵ)
+                                                                        is consistent with general limitations on fast-forwarding un-
+                 O ur βG T                               (67)            structured linear differential equations [76].
+                             log log(ur /ϵ)
+invocations of the controlled family and the same order of
+calls to the block encoding of G/βG . Consequently, when the                        IV.   DISCUSSION AND CONCLUSION
+controlled family is expanded into its QSVT realization, the
+primitive query counts are                                                  Poisson  summation is used here as a classical compiler for
+                                                                                α
+                                                                         e−T H . Its exact target–alias–tail identity controls the sam-
+                        log(ur /ϵ)                                       pled coefficients, which are combined before one polynomial-
+Qhalf = O ur βG T
+                      log log(ur /ϵ)                                     transform circuit is synthesized. The quantum success ampli-
+                                         1
+                                        2α                          !   tude therefore depends on the input-to-output ratio ur , but not
+                          ur βG T                        1 ur βG T
+                                                     1− 2α               on a Fourier coefficient one-norm.
+             × T βH + log                      log                   ,
+                             ϵ                                ϵ             The encoded signal determines the approximation geome-
+                                                                  (68)   try. The direct even extension under H/ ∥H∥ is entire for even
+            
+                   log(ur /ϵ)
+                                                                        positive integers and has an interior algebraic singularity oth-
+  QG = O ur βG T                           .                      (69)   erwise. Under 2H/ ∥H∥−I, the exact quadratic lift makes ev-
+                 log log(ur /ϵ)
+                                                                         ery positive integer entire and doubles the fixed-scale approxi-
+The algorithm also uses O(ur ) calls to the initial-state oracle.        mation exponent for noninteger powers. The matching bounds
+                                                                         and their scope are summarized in Table I. Standard finite-
+   The factorization and error allocation behind this corol-             difference Laplacians provide a concrete unit-normalized re-
+lary are given in Appendix F. Telescoping controls every                 alization of the shifted oracle.
+controlled-family invocation and the amplitude-amplification                In the time-independent non-Hermitian application, the
+steps. The lower-order iterated logarithms introduced by this            Fourier–Weyl representation of the entire scalar surrogate
+allocation are absorbed into log(ur βG T /ϵ).                            leads to an exact operator-valued Poisson alias identity. The
+   If T βH ≥ log(ur βG T /ϵ), then for α = 1 the per-                    Fourier representation defines the noncommuting operator lift,
+invocation bound in Eq. (66) reduces to                                  while strip analyticity and decay of its kernel control the con-
+                     r                    !                              tour and alias estimates. This construction remains compati-
+                                  ur βG T                                ble with sinh–sinh discretization but changes neither the ker-
+                  O     T βH log             .          (70)
+                                     ϵ                                   nel, the LCU normalization, nor the optimal LCHS query or-
+                                                                         der. The sinh–sinh map can lower the precision-dominated
+This reproduces the square-root dependence of the dissipative            node count, but no end-to-end query or gate-complexity
+family in the amplitude-driven APS framework [34], using                 speedup is claimed. The LCU coefficient one-norm is inde-
+the Poisson-compiled QSVT realization. Eq. (67) is the sep-              pendent of βA , while the uniform branch count retains its T βA
+arate interaction-picture cost. Combining Eqs. (70) and (67)             dependence.
+                                                                                                                                        11
+
+   The APS extension uses a different structure: the semi-              nel evaluation, Poisson sampling, and QSP phase synthesis
+group law in Eq. (64) makes one uniformly controlled fam-               are classical preprocessing costs and are not identified with
+ily of dissipative contractions reusable throughout the Dyson           fault-tolerant gate complexity. The present analysis specifies
+products. Its implementation is based on the half-root access           their sample counts and required numerical precision, but not
+in Eq. (60), whose degree-two QSVT image is the root-shift              an optimized bit complexity for general α. Open approxi-
+signal in Eq. (61). The construction recovers the square-root           mation questions include uniform joint time–precision bounds
+degree when α = 1; combining the per-invocation degree                  for general non-even powers. The non-even lower bound un-
+with the interaction-picture family calls gives the elementary          der standard access is complete for ordinary single-sequence
+half-root query count.                                                  QSVT, but does not extend to generalized indefinite-parity
+   The complexity results count block-encoding queries. Ker-            transformations.
+
+
+
+
+ [1] N. Linden, A. Montanaro, and C. Shao, Quantum vs. classical        [14] D. W. Berry, A. M. Childs, R. Cleve, R. Kothari, and R. D.
+     algorithms for solving the heat equation, Communications in             Somma, Simulating Hamiltonian dynamics with a truncated
+     Mathematical Physics 395, 601 (2022).                                   Taylor series, Phys. Rev. Lett. 114, 090502 (2015).
+ [2] S. Jin, N. Liu, and Y. Yu, Quantum simulation of partial differ-   [15] A. W. Harrow, A. Hassidim, and S. Lloyd, Quantum algorithm
+     ential equations: Applications and detailed analysis, Phys. Rev.        for linear systems of equations, Phys. Rev. Lett. 103, 150502
+     A 108, 032603 (2023).                                                   (2009).
+ [3] R. Metzler and J. Klafter, The random walk’s guide to anoma-       [16] A. M. Childs, R. Kothari, and R. D. Somma, Quantum algo-
+     lous diffusion: a fractional dynamics approach, Physics Reports         rithm for systems of linear equations with exponentially im-
+     339, 1 (2000).                                                          proved dependence on precision, SIAM Journal on Computing
+ [4] A. Lischke, G. Pang, M. Gulian, F. Song, C. Glusa, X. Zheng,            46, 1920 (2017).
+     Z. Mao, W. Cai, M. M. Meerschaert, M. Ainsworth, and G. E.         [17] G. H. Low and Y. Su, Quantum linear system algorithm with
+     Karniadakis, What is the fractional Laplacian? a comparative            optimal queries to initial state preparation, Quantum 10, 2041
+     review with new results, Journal of Computational Physics 404,          (2026).
+     109009 (2020).                                                     [18] A. M. Childs and N. Wiebe, Hamiltonian simulation using lin-
+ [5] S. Lloyd, Universal quantum simulators, Science 273, 1073               ear combinations of unitary operations, Quantum Information
+     (1996).                                                                 and Computation 12, 901 (2012).
+ [6] I. M. Georgescu, S. Ashhab, and F. Nori, Quantum simulation,       [19] Y. Kannai, Off diagonal short time asymptotics for fundamental
+     Rev. Mod. Phys. 86, 153 (2014).                                         solution of diffusion equation, Communications in Partial Dif-
+ [7] A. M. Childs, D. Maslov, Y. Nam, N. J. Ross, and Y. Su, Toward          ferential Equations 2, 781 (1977).
+     the first quantum simulation with quantum speedup, Proceed-        [20] S. Jin, C. Ma, and E. Zuazua, Transmutation based quantum
+     ings of the National Academy of Sciences 115, 9456 (2018).              simulation for non-unitary dynamics (2026), arXiv:2601.03616
+ [8] E. Altman, K. R. Brown, G. Carleo, L. D. Carr, E. Demler,               [quant-ph].
+     C. Chin, B. DeMarco, S. E. Economou, M. A. Eriksson, K.-           [21] T. Kharazi, A. M. Alkadri, K. K. Mandadapu, and K. B. Wha-
+     M. C. Fu, M. Greiner, K. R. Hazzard, R. G. Hulet, A. J. Kollár,        ley, A sublinear-time quantum algorithm for high-dimensional
+     B. L. Lev, M. D. Lukin, R. Ma, X. Mi, S. Misra, C. Monroe,              reaction rates (2026), arXiv:2601.15523 [quant-ph].
+     K. Murch, Z. Nazario, K.-K. Ni, A. C. Potter, P. Roushan,          [22] S. D. Miller and W. Schmid, Summation formulas, from Pois-
+     M. Saffman, M. Schleier-Smith, I. Siddiqi, R. Simmonds,                 son and Voronoi to the present, in Noncommutative Harmonic
+     M. Singh, I. Spielman, K. Temme, D. S. Weiss, J. Vučković,            Analysis: In Honor of Jacques Carmona, edited by P. Delorme
+     V. Vuletić, J. Ye, and M. Zwierlein, Quantum simulators: Ar-           and M. Vergne (Birkhäuser Boston, Boston, MA, 2004) pp.
+     chitectures and opportunities, PRX Quantum 2, 017003 (2021).            419–440.
+ [9] A. J. Daley, I. Bloch, C. Kokail, S. Flannigan, N. Pearson,        [23] E. M. Stein and G. Weiss, Introduction to Fourier Analysis
+     M. Troyer, and P. Zoller, Practical quantum advantage in quan-          on Euclidean Spaces, Princeton Mathematical Series, Vol. 32
+     tum simulation, Nature 607, 667 (2022).                                 (Princeton University Press, Princeton, NJ, 1971).
+[10] D. W. Berry, G. Ahokas, R. Cleve, and B. C. Sanders, Efficient     [24] Y. Katznelson, An introduction to harmonic analysis (Cam-
+     quantum algorithms for simulating sparse Hamiltonians, Com-             bridge University Press, 2004).
+     munications in Mathematical Physics 270, 359 (2007).               [25] C. Wang, X.-N. Zhuang, M. Dou, Z.-Y. Chen, and G.-P. Guo, A
+[11] C. Sünderhauf, E. Campbell, and J. Camps, Block-encoding               unified Poisson summation framework for generalized quantum
+     structured matrices for data input in quantum computing, Quan-          matrix transformations (2026), arXiv:2604.02874 [quant-ph].
+     tum 8, 1226 (2024).                                                [26] H. Ni and L. Ying, Quantum eigenvalue transformation via lin-
+[12] G. H. Low and I. L. Chuang, Optimal Hamiltonian simulation              ear combination of Hamiltonian simulation: A Weyl calculus
+     by quantum signal processing, Phys. Rev. Lett. 118, 010501              approach (2026), arXiv:2606.29848 [quant-ph].
+     (2017).                                                            [27] H. Weyl, The Theory of Groups and Quantum Mechanics
+[13] A. Gilyén, Y. Su, G. H. Low, and N. Wiebe, Quantum singular            (Dover Publications, New York, 1950) reprint of the 1931 En-
+     value transformation and beyond: Exponential improvements               glish translation.
+     for quantum matrix arithmetics, in Proceedings of the 51st An-     [28] R. F. V. Anderson, The Weyl functional calculus, Journal of
+     nual ACM SIGACT Symposium on Theory of Computing, STOC                  Functional Analysis 4, 240 (1969).
+     2019 (Association for Computing Machinery, New York, NY,           [29] B. Jefferies, Spectral Properties of Noncommuting Operators,
+     USA, 2019) pp. 193–204.                                                 Lecture Notes in Mathematics, Vol. 1843 (Springer, Berlin,
+                                                                                                                                           12
+
+     Heidelberg, 2004).                                                       difference methods for linear high dimensional and multiscale
+[30] D. An, J.-P. Liu, and L. Lin, Linear combination of Hamiltonian          partial differential equations, Journal of Computational Physics
+     simulation for nonunitary dynamics with optimal state prepara-           471, 111641 (2022).
+     tion cost, Phys. Rev. Lett. 131, 150603 (2023).                     [51] D. Fang, L. Lin, and Y. Tong, Time-marching based quantum
+[31] D. An, A. M. Childs, and L. Lin, Quantum algorithm for lin-              solvers for time-dependent linear differential equations, Quan-
+     ear nonunitary dynamics with near-optimal dependence on all              tum 7, 955 (2023).
+     parameters, Communications in Mathematical Physics 407, 19          [52] D. W. Berry and P. C. S. Costa, Quantum algorithm for time-
+     (2026).                                                                  dependent differential equations using Dyson series, Quantum
+[32] G. H. Low and R. D. Somma, Optimal quantum simulation of                 8, 1369 (2024).
+     linear non-unitary dynamics (2025), arXiv:2508.19238 [quant-        [53] S. Jin, N. Liu, and Y. Yu, Quantum simulation of partial differ-
+     ph].                                                                     ential equations via Schrödingerization, Phys. Rev. Lett. 133,
+[33] J. Aftab, D. An, and K. Trivisa, Linear combination of                   230602 (2024).
+     Hamiltonian simulation with commutator scaling (2026),              [54] S. Jin, N. Liu, C. Ma, and Y. Yu, On the Schrödingerization
+     arXiv:2606.11475 [quant-ph].                                             method for linear non-unitary dynamics with optimal depen-
+[34] Q. Hu and S. Jin, Quantum simulation of non-unitary dynam-               dence on matrix queries (2025), arXiv:2505.00370 [math.NA].
+     ics via Amplitude–Phase Separation (2026), arXiv:2602.09575         [55] J. Gonzalez-Conde, A. Rodriguez-Rozas, E. Solano, and
+     [quant-ph].                                                              M. Sanz, Efficient Hamiltonian simulation for solving option
+[35] C. Sünderhauf, Generalized quantum singular value transfor-             price dynamics, Physical Review Research 5, 10.1103/phys-
+     mation (2023), arXiv:2312.00723 [quant-ph].                              revresearch.5.043220 (2023).
+[36] DLMF, NIST Digital Library of Mathematical Functions,               [56] W. W. Mullins, Theory of thermal grooving, Journal of Applied
+     https://dlmf.nist.gov/, Release 1.2.7 of 2026-06-15                      Physics 28, 333 (1957).
+     (2026), f. W. J. Olver, A. B. Olde Daalhuis, D. W. Lozier, B. I.    [57] D. Camps and R. Van Beeumen, Fable: Fast approximate quan-
+     Schneider, R. F. Boisvert, C. W. Clark, B. R. Miller, B. V. Saun-        tum circuits for block-encodings, in 2022 IEEE International
+     ders, H. S. Cohl, and M. A. McClain, eds.                                Conference on Quantum Computing and Engineering (QCE)
+[37] J. C. Mason and D. C. Handscomb, Chebyshev Polynomials                   (IEEE, 2022) pp. 104–113.
+     (Chapman and Hall/CRC, Boca Raton, FL, 2003).                       [58] M. Szegedy, Quantum speed-up of Markov chain based algo-
+[38] L. N. Trefethen, Approximation Theory and Approximation                  rithms, in 45th Annual IEEE Symposium on Foundations of
+     Practice, Extended Edition (Society for Industrial and Applied           Computer Science (2004) pp. 32–41.
+     Mathematics, Philadelphia, 2019).                                   [59] V. M. Zolotarev, One-Dimensional Stable Distributions (Amer-
+[39] J. Haah, Product decomposition of periodic functions in quan-            ican Mathematical Society, Providence, RI, 1986).
+     tum signal processing, Quantum 3, 190 (2019).                       [60] D. Dong, Y. Li, and J. Xue, Products between block-encodings
+[40] R. Wong, Asymptotic Approximations of Integrals, Classics in             (2025), arXiv:2509.15779 [quant-ph].
+     Applied Mathematics, Vol. 34 (Society for Industrial and Ap-        [61] S. Takahira, A. Ohashi, T. Sogabe, and T. S. Usuda, Quantum
+     plied Mathematics, Philadelphia, 2001).                                  algorithm for matrix functions by Cauchy’s integral formula,
+[41] A. Aggarwal and J. Alman, Optimal-degree polynomial ap-                  Quantum Information and Computation 20, 14 (2020).
+     proximations for exponentials and Gaussian kernel density           [62] S. Takahira, A. Ohashi, T. Sogabe, and T. S. Usuda, Quantum
+     estimation, in 37th Computational Complexity Conference                  algorithms based on the block-encoding framework for matrix
+     (CCC 2022), Leibniz International Proceedings in Informatics,            functions by contour integrals, Quantum Information and Com-
+     Vol. 234 (Schloss Dagstuhl–Leibniz-Zentrum fuer Informatik,              putation 22, 965 (2022).
+     2022) pp. 22:1–22:23.                                               [63] S. Jiang and D. An, Contour-integral based quantum eigen-
+[42] G. H. Low and I. L. Chuang, Hamiltonian simulation by uni-               value transformation: analysis and applications (2026),
+     form spectral amplification (2017), arXiv:1707.05391 [quant-             arXiv:2601.11959 [quant-ph].
+     ph].                                                                [64] G. H. Low and Y. Su, Quantum eigenvalue processing, in 2024
+[43] R. A. DeVore and G. G. Lorentz, Constructive Approxima-                  IEEE 65th Annual Symposium on Foundations of Computer Sci-
+     tion, Grundlehren der mathematischen Wissenschaften, Vol.                ence (FOCS) (2024) pp. 1051–1062.
+     303 (Springer-Verlag, Berlin, 1993).                                [65] D. An, A. M. Childs, L. Lin, and L. Ying, Laplace trans-
+[44] Z. Ditzian and V. Totik, Moduli of Smoothness, Springer Series           form based quantum eigenvalue transformation via linear com-
+     in Computational Mathematics, Vol. 9 (Springer, New York,                bination of Hamiltonian simulation (2024), arXiv:2411.04010
+     1987).                                                                   [quant-ph].
+[45] T. J. Yoder, G. H. Low, and I. L. Chuang, Fixed-point quantum       [66] H. H. S. Chan, D. M. Ramo, and N. Fitzpatrick, Simulating non-
+     search with an optimal number of queries, Phys. Rev. Lett. 113,          unitary dynamics using quantum signal processing with unitary
+     210501 (2014).                                                           block encoding (2023), arXiv:2303.06161 [quant-ph].
+[46] S. N. Bernstein, Sur l’ordre de la meilleure approximation des      [67] C. Wang, H.-Y. Liu, C. Xue, X.-N. Zhuang, M. Dou, Z.-Y.
+     fonctions continues par des polynomes de degre donne, Mem-               Chen, and G.-P. Guo, Quantum simulation of non-hermitian
+     oires publies par la Classe des Sciences de l’Academie Royale            special functions and dynamics via contour-based matrix de-
+     de Belgique 2, 4, 1 (1912).                                              composition, Quantum Science and Technology 11, 035027
+[47] A. F. Timan, Theory of Approximation of Functions of a Real              (2026).
+     Variable (Pergamon Press, Oxford, 1963).                            [68] L. N. Trefethen and J. A. C. Weideman, The exponentially con-
+[48] S. Bernstein, Sur la meilleure approximation de |x| par des              vergent trapezoidal rule, SIAM Review 56, 385 (2014).
+     polynomes de degrés donnés, Acta Mathematica 37, 1 (1914).        [69] M. Mori, Discovery of the double exponential transformation
+[49] A. M. Childs and J.-P. Liu, Quantum spectral methods for dif-            and its developments, Publications of the Research Institute for
+     ferential equations, Communications in Mathematical Physics              Mathematical Sciences 41, 897 (2005).
+     375, 1427 (2020).                                                   [70] T. Ooura, A double exponential formula for the Fourier trans-
+[50] S. Jin, N. Liu, and Y. Yu, Time complexity analysis of quantum           forms, Publications of the Research Institute for Mathematical
+                                                                         13
+
+     Sciences 41, 971 (2005).
+[71] M. Sugihara, Optimality of the double exponential formula—
+     functional analysis approach, Numerische Mathematik 75, 379
+     (1997).
+[72] T. Okayama, Double-exponential formula for infinite integrals
+     of unilateral rapidly decreasing functions, JSIAM Letters 14, 17
+     (2022).
+[73] H. Weimer, A. Kshetrimayum, and R. Orús, Simulation meth-
+     ods for open quantum many-body systems, Rev. Mod. Phys. 93,
+     015008 (2021).
+[74] H.-Y. Liu, X. Lin, Z.-Y. Chen, C. Xue, T.-P. Sun, Q.-S. Li, X.-N.
+     Zhuang, Y.-J. Wang, Y.-C. Wu, M. Gong, and G.-P. Guo, Simu-
+     lation of open quantum systems on universal quantum comput-
+     ers, Quantum 9, 1765 (2025).
+[75] L. H. Delgado-Granados, T. J. Krogmeier, L. M. Sager-Smith,
+     I. Avdic, Z. Hu, M. Sajjan, M. Abbasi, S. E. Smart, P. Narang,
+     S. Kais, A. W. Schlimgen, K. Head-Marsden, and D. A. Mazz-
+     iotti, Quantum algorithms and applications for open quantum
+     systems, Chemical Reviews 125, 1823 (2025).
+[76] D. An, J.-P. Liu, D. Wang, and Q. Zhao, Quantum differential
+     equation solvers: Limitations and fast-forwarding, Communi-
+     cations in Mathematical Physics 406, 189 (2025).
+                                                                                                                                         14
+
+                                         Appendix A: Fourier-kernel estimates and Poisson truncation
+
+   We first establish the Fourier decay and truncation bounds underlying the Poisson-compiled polynomial. Even powers have
+a stretched-exponential Fourier tail, whereas every non-even power inherits an algebraic tail from the singularity at the origin.
+The same estimates also justify the absolute convergence needed for the exact Poisson identity.
+                                                                                                   α       α
+Lemma A.1 (Poisson residual). For every α, T > 0, the function e−T ∥H∥ |x| and the kernel fα,T are integrable and contin-
+uous. Eqs. (10) and (11) hold for every h > 0; both infinite series in Eq. (10) converge absolutely and uniformly for x in a
+compact interval.
+Proof. Write the right-hand side of Eq. (10) as the periodization of the target with period 1/h. Exponential decay of the target
+makes this periodization continuous, and its defining series converges uniformly on every compact interval. Its kth Fourier
+coefficient on any interval of length 1/h is
+                            1
+                         Z 2h                                                       Z
+                                        −T ∥H∥α |x+n/h|α 2πikhx                                        α       α
+                              X
+                     h              e                     e            dx = h            e−T ∥H∥ |x| e2πikhx dx = hfα,T (kh).
+                            1
+                         − 2h n∈Z                                                   R
+                                                                                                 P
+The interchange of sum and integral follows from absolute convergence. Lemma A.2 implies k |fα,T (kh)| < ∞ for every
+h > 0. Hence the Fourier series with these coefficients converges absolutely and uniformly to the periodization, proving Eq. (10)
+without a distributional limiting argument [24]. Isolating the n = 0 term and the terms |k| ≤ N proves Eq. (11).
+Lemma A.2 (Kernel decay). If α is an even positive integer, there are positive constants cα , Cα such that Eq. (21) holds. If α is
+                                                        1
+not an even integer, Eq. (22) holds and, for |y| ≥ Cα T α ∥H∥,
+                                                                                               α
+                                                                                    T ∥H∥
+                                                             |fα,T (y)| ≤ Cα                 α+1   .                                    (A1)
+                                                                                        |y|
+Proof. Suppose first that α is even. For y > 0, translate the integration variable in Eq. (9) by is, where s > 0. Since the integrand
+is entire and decays on the joining segments,
+                                                           Z
+                                                                            α
+                                      |fα,T (y)| ≤ e−2πys exp[−T ∥H∥ Re(ξ + is)α ] dξ.
+                                                                       R
+
+The elementary polynomial estimate
+                                                                                         α
+                                                         Re(ξ + is)α ≥ cα |ξ| − Cα sα
+follows from homogeneity and Young’s inequality. It shows that the integral is at most
+                                                              Cα                              α
+                                                             1         exp(Cα T ∥H∥ sα ).
+                                                         T   α   ∥H∥
+Choosing
+                                                                                            1
+                                                                                           α−1
+                                                                                  y
+                                                                 s = cα             α
+                                                                               T ∥H∥
+proves Eq. (21); evenness handles y < 0.
+  If α is not even, choose a smooth cutoff equal to one near the origin. On its support,
+                                                 α   α                          α   α                              2α     2α
+                                          e−T ∥H∥ |ξ| = 1 − T ∥H∥ |ξ| + O(T 2 ∥H∥                                       |ξ| ).
+The cutoff constant has a rapidly decreasing Fourier transform. The Fourier transform of the complement is also rapidly de-
+creasing after repeated integration by parts, since it is smooth and all of its derivatives are integrable. The first non-smooth local
+term therefore determines the leading asymptotic. Abel regularization gives
+                                         Z ∞
+                                                                      Γ(α + 1) sin(πα/2)
+                                               ξ α cos(2πyξ) dξ = −
+                                          0                                (2π |y|)α+1
+                                                                                                                                 −α−1
+for y ̸= 0. The localized Fourier version of Watson’s lemma shows that the remainder is o(|y|  ) [40]. This proves Eq. (22).
+                                             1
+Finally, the change of variables ξ 7→ ξ/[T ∥H∥] reduces the kernel to a fixed profile. Its asymptotic is therefore a uniform
+                                             α
+                              1
+upper bound once |y| ≥ Cα T α ∥H∥, which proves Eq. (A1).
+                                                                                                                                         15
+
+  For |x| ≤ 1 and h−1 > 1, the alias term obeys
+                                                                           ∞
+                                              X              α    α        X                  α           α
+                                                    e−T ∥H∥ |x+n/h| ≤ 2          e−T ∥H∥ (n/h−1) .                                      (A2)
+                                             n̸=0                          n=1
+
+For a positive decreasing function, comparison with its integral gives
+                                ∞                                                        Z ∞
+                                X              α         α             α         α                            α α
+                                        e−T ∥H∥ (n/h−1) ≤ e−T ∥H∥ (1/h−1) + h                           e−T ∥H∥ y dy.
+                                n=1                                                           1/h−1
+
+                                    1       −1
+After the substitution y = T − α ∥H∥ z, the last integral is an incomplete gamma tail and is bounded by its first exponential
+times an α-dependent polynomial factor. Absorbing that factor by increasing the logarithm, the alias term and the sampled-kernel
+tail are at most ϵ/[C log(d + 2)] when
+                                                                                     1
+                                                 1               1       Cα log(d + 2) α
+                                                   ≥ 2 + Cα        α log                                                                (A3)
+                                                 h            T ∥H∥            ϵ
+and, for even integer α,
+                                                                                        1− α1
+                                                                  1        Cα log(d + 2)
+                                                 N h ≥ Cα ∥H∥ T   α    log                      .                                       (A4)
+                                                                                 ϵ
+If α is not an even integer, it is sufficient to choose
+                                                                                             α1
+                                                                   T log(d + 2)
+                                                      N h ≥ Cα ∥H∥                                  .                                   (A5)
+                                                                         ϵ
+These parameters are used only to compute the coefficients of Pd classically. Combining Eqs. (A3) and (A4) shows that an even
+power needs
+                                                                                             
+                                               1       1 Cα log(d + 2)          Cα log(d + 2)
+                              N = O ∥H∥ T α log1− α                      + log                                           (A6)
+                                                                ϵ                     ϵ
+kernel samples up to constant factors. This quantity is a classical preprocessing resource and is not the QSVT degree. For a
+non-even power the same multiplication of the radius by h−1 gives
+                                                                1                            α1 !
+                                          T      Cα log(d + 2) α         1     2 Cα log(d + 2)
+                          N = O ∥H∥          log                     +     log                       .                 (A7)
+                                           ϵ            ϵ                ϵ             ϵ
+                                                                                                                      p
+  For shifted access, the classical sample counts follow from the same two formulas after replacing α by 2α and ∥H∥ by ∥H∥.
+Thus Eq. (A6) applies to every integer α, whereas Eq. (A7) applies only to noninteger α after this replacement. These counts
+remain classical coefficient-generation costs and do not multiply the query bounds in Eqs. (25) and (26).
+
+
+                                         Appendix B: Proof of the Poisson-compiled polynomial bounds
+
+   Let the degree-d Chebyshev projection be denoted locally by Sd . Eq. (13) and linearity give Pd = Sd FN,h , where FN,h is the
+finite sum in Eq. (12). The projection is the ordinary Fourier partial-sum operator after x = cos θ; hence its Lebesgue constant
+obeys
+
+                                                     ∥Sd ∥C[−1,1]→C[−1,1] ≤ C log(d + 2)                                                (B1)
+
+[37, 38]. It follows that
+                            α   α                                            α       α                        α   α     α   α
+            Pd − e−T ∥H∥ |x|             ≤ C log(d + 2) FN,h − e−T ∥H∥ |x|                   + Sd e−T ∥H∥ |x| − e−T ∥H∥ |x|         .   (B2)
+                                    ∞                                                    ∞                                      ∞
+
+The parameter choices in Eqs. (A3)–(A5), with Cα enlarged if necessary, make the first term at most ϵ/4. We now bound the
+second term.
+                                                                                                                               16
+                                                        α α
+   Suppose first that α is even. The function e−T ∥H∥ z is entire. A point of the Bernstein ellipse Ees has imaginary part at
+                                                              α                                  α
+most sinh s. For real u, v and even α, − Re(u + iv)α ≤ Cα |v| ; this follows by dividing by |v| and observing that the negative
+part of the resulting polynomial is bounded. For 0 < s ≤ 1 this proves the first estimate below. For s ≥ 1, the elementary bound
+|z| ≤ es proves the second:
+                                                        (
+                                                                          α
+                                          −T ∥H∥α z α     exp(Cα T ∥H∥ sα ), 0 < s ≤ 1,
+                                    max e             ≤                   α                                                 (B3)
+                                   z∈Ees                  exp(Cα T ∥H∥ eαs ), s ≥ 1.
+
+The Bernstein-ellipse coefficient bound therefore makes the degree-d tail no larger than the corresponding line of Eq. (B3)
+multiplied by 4e−ds /(1 − e−s ) [38]. Writing log(1/ϵ) for the required exponential suppression, choose s proportional to
+                  α 1
+[log(1/ϵ)/(T ∥H∥ )] α when this number is at most one. The resulting sufficient degree is
+                                                                         
+                                                              1       1 1
+                                               d = O ∥H∥ T α log1− α        ,
+                                                                        ϵ
+
+including the additional logarithmic factor from (1 − e−s )−1 . When that choice of s exceeds one, take s proportional to
+                           α 1
+log[1 + (log(1/ϵ)/(T ∥H∥ )) α ]. The large-ellipse estimate then gives
+                                                                         
+                                                              log(1/ϵ)            
+                                              d = O
+                                                                          α1   .
+                                                                                   
+                                                                   log(1/ϵ)
+                                                         log 1 + T ∥H∥α
+
+Combining the two regimes gives the sharper joint estimate
+                                                                                           !
+                                                    1            1 1        log(1/ϵ)
+                                                              1− α
+                                    d = O ∥H∥ T     α   log         +                   1 .                                (B4)
+                                                                         
+                                                                  ϵ           
+                                                                                log(1/ϵ) α
+                                                                      log 1 + T ∥H∥α
+
+The denominator is understood under the high-precision convention at the beginning of Sec. II. Bounding it from below by
+                                                               α
+one proves the cleaner uniform form in Eq. (23). At fixed T ∥H∥ it is Θ(log log(1/ϵ)), which gives the stated high-precision
+refinement.                                                      p
+   Applying the same estimate with exponent 2α and normalization ∥H∥, before the quadratic lifting, gives
+                                                                                        !
+                                        p         1        1 1          log(1/ϵ)
+                                                        1−
+                                d=O        ∥H∥T 2α log 2α +                         1 ,                              (B5)
+                                                                    
+                                                             ϵ            
+                                                                            log(1/ϵ) 2α
+                                                                 log 1 + T ∥H∥α
+
+which implies Eq. (25).
+  If α is not even, the Chebyshev coefficients are obtained by writing x = cos θ. The only interior singularity occurs at θ = π/2,
+and
+                                         α      α                      α             α            α
+                                 e−T ∥H∥ |cos θ| = 1 − T ∥H∥ |θ − π/2| + o(|θ − π/2| ).
+
+Localizing this cosine-Fourier integral at π/2 and applying the same Watson-lemma estimate as in Lemma A.2 gives, uniformly
+                            1                                                  α
+for j ≥ Cα max{1, ∥H∥ T α }, the coefficient at index j bounded by Cα T ∥H∥ j −α−1 . The terms of higher order in the local
+exponential form a convergent geometric majorant in this range, while repeated integration by parts controls the complement.
+This is also a standard consequence of the direct theorem for algebraic singularities [40, 43, 44]. Summing the coefficient tail
+gives
+                                                α   α                  α   α                 α
+                                     Sd e−T ∥H∥ |x| − e−T ∥H∥ |x|                  ≤ Cα T ∥H∥ d−α .                          (B6)
+                                                                               ∞
+
+Choosing d as in Eq. (24) completes the approximation estimate.
+   The preceding argument assumes exact kernel samples. It is sufficient to compute each fα,T (kh) to additive error ϵ/[Ch(2N +
+1) log(d + 2)]. Indeed, the resulting finite-sum error is at most h(2N + 1) times the sample error, and Eq. (B1) supplies the
+remaining factor. Rounding the final d + 1 Chebyshev coefficients contributes at most the sum of their absolute rounding errors.
+Both are classical precision requirements and do not alter the block-encoding query count.
+                                                                                                                                17
+
+   Finally, Eq. (15) implies |Pd (x)| ≤ 1 + ϵ/2 on [−1, 1]. The rescaling in Eq. (16) is real, even, and bounded by 1/2.α The
+                                                                                                                           α
+standard QSVT completion theorem therefore produces a valid phase sequence of degree d [13]. Writing g(x) = e−T ∥H∥ |x| ,
+the scalar error satisfies
+                                             Pd (x)          ϵ/2 + (ϵ/2)g(x)
+                                                    − g(x) ≤                 ≤ ϵ.                                             (B7)
+                                            1 + ϵ/2              1 + ϵ/2
+
+The spectral theorem proves Eq. (17). This proves Theorem II.1 and the UH bounds in Theorem II.3. Applying the same
+estimates with exponent 2α and using Proposition II.2 proves the US bounds.
+
+
+                                            Appendix C: End-to-end error propagation
+
+  For nonzero vectors v and w with ∥v − w∥ ≤ ∥w∥ /2, the triangle inequality gives
+
+                                                    v   w    2 ∥v − w∥
+                                                      −    ≤           .                                                      (C1)
+                                                   ∥v∥ ∥w∥      ∥w∥
+
+On the normalized input u0 / ∥u0 ∥, the exact output of the normalization-two block is uT /(2 ∥u0 ∥) and has norm 1/(2ur ). If
+the implemented block produces ueT , Eq. (C1) gives
+
+                                              u
+                                              eT    uT                uT
+                                                  −      ≤ 4ur u
+                                                               eT −         .                                                 (C2)
+                                             ∥e
+                                              uT ∥ ∥uT ∥            2 ∥u0 ∥
+
+Thus block error at most ϵ/(4ur ) is sufficient for normalized-state error ϵ.
+  The probability of observing the designated ancilla outcome is Θ(1/u2r ), provided the block error is at most a fixed fraction of
+1/ur . Fixed-point amplitude amplification uses O(ur ) applications of the polynomial-transform block and its inverse to obtain
+constant success probability [45]. Substituting ϵ/ur for the polynomial accuracy in Eqs. (23) and (24), or in Eqs. (25) and (26),
+proves Eqs. (28) and (29), or Eqs. (30) and (31), respectively.
+
+
+                                            Appendix D: Approximation lower bounds
+
+   We record the scope of the approximation lower bounds in Sec. II D.
+                                                                              α
+   Fix an approximation error smaller than (1 − e−1 )/4 and assume T ∥H∥ is larger than an α-dependent constant. Compare
+                                    1
+the target at x = 0 and at x = 1/[T α ∥H∥]. Both points then lie in [−1/2, 1/2], and the target values differ by 1 − e−1 . Any
+uniformly approximating polynomial is bounded by a universal constant and, by the mean-value theorem, satisfies |P ′ (ξ)| =
+           1
+Ω(∥H∥ T α ) at an intermediate point. Bernstein’s inequality in the interior,
+
+                                                                d
+                                                  |P ′ (ξ)| ≤ p       ∥P ∥∞ ,                                                 (D1)
+                                                               1 − ξ2
+
+therefore gives
+                                                                       1
+                                                        d = Ω(∥H∥ T α ).                                                      (D2)
+                                                        α
+Thus Eq. (D2) is an asymptotic lower bound as T ∥H∥ → ∞. It matches the physical-scale dependence of both Eqs. (23) and
+(24).
+   For even integer α, the target is an entire function of order α. Bernstein’s converse theorem for polynomial approximation
+of entire functions states that, for fixed T and H, the logarithm of the reciprocal best degree-d error is Θ(d log d). Hence d =
+Θ(log(1/ϵ)/ log log(1/ϵ)) [46, 47]. For α = 2, the complete two-parameter transition, including the logarithmic denominator
+in Eq. (B4), follows from a known optimal-degree theorem [41]. For general even powers, the displayed upper bound, the
+constant-error lower bound, and the fixed-T, H high-precision lower bound are the claims used in this paper; no assertion about
+sharp universal constants is required.
+                                                                                                              α    α
+   If α is not even, the even extension used by the direct construction has the nonzero local term −T ∥H∥ |x| . Bernstein’s
+                                            α
+classical theorem for approximation of |x| , together with the direct and converse theorems for algebraic singularities, gives best
+                                                                                                           1
+degree-d error proportional to d−α for this target at fixed T and H [43, 44, 48]. Therefore d = Θ(ϵ− α ) as ϵ → 0 within the
+even-parity class. This class contains every gap-independent transformation made by one ordinary QSVT sequence: the QSVT
+polynomial has definite parity, and the odd case is excluded because its value at zero is zero while the target value is one. This
+                                                                                                                                              18
+
+proves the fixed-scale precision statement in Table I. Generalized eigenvalue transformations of indefinite parity are a different
+constrained-approximation problem and are not included in this converse statement. The uniform upper bound remains Eq. (24).
+  The shifted model has an exact approximation-theoretic reduction. For every degree d,
+                                                      α             α                                                           α   2α
+                    inf    max       Q(s) − e−T ∥H∥ [(1+s)/2]           =            inf            max      P (y) − e−T ∥H∥ |y|         .   (D3)
+                  deg Q≤d s∈[−1,1]                                            deg P ≤2d y∈[−1,1]
+                                                                            P (−y)=P (y)
+
+
+Indeed, Q(s)p7→ Q(2y 2 − 1) maps degree-d polynomials bijectively to even polynomials of degree at most 2d, with inverse
+P (y) 7→ P ( (1 + s)/2). Since the target on the right is even, symmetrizing any approximant shows that the parity restriction
+does not change its best uniform error.
+   If α is a positive integer, the right-hand target in Eq. (D3) is entire. The entire-function converse theorem used above therefore
+gives the fixed-scale order Θ(log(1/ϵ)/ log log(1/ϵ)) for the shifted variable as well. For the physical lower bound, compare the
+shifted target at s = −1 and at
+                                                                                 2
+                                                           s = −1 +          1             .                                                 (D4)
+                                                                         T   α   ∥H∥
+                                                                                                              1
+Their values differ by 1 − e−1 . The mean-value theorem requires a derivative of order T α ∥H∥, while Markov’s inequality gives
+∥Q′ ∥∞ ≤ d2 ∥Q∥∞ . Hence
+                                                                        
+                                                                    α 1
+                                                    d = Ω (T ∥H∥ ) 2α ,                                                   (D5)
+
+matching Eq. (25) at fixed error.
+   If α is noninteger, the exponent 2α is not an even integer. Applying the direct and converse theorem for the algebraic
+               2α
+singularity |y| to the right-hand side of Eq. (D3) gives best error
+
+                                                                    Θ(d−2α ).                                                                (D6)
+                                        1
+Thus the fixed-scale degree is Θ(ϵ− 2α ). The same endpoint argument leading to Eq. (D5) applies at fixed error, so Eq. (26) has
+the optimal physical scale as well [43, 44, 47].
+
+
+                                             Appendix E: Proof of the Weyl–Poisson identity
+
+  We work in finite dimension and set
+                                                                                               Z
+                                     F (k) := q(k)e−iT (kL+G) ,             Fb(ξ) :=               F (k)e−2πikξ dk,                          (E1)
+                                                                                               R
+
+where the Fourier transform is a norm-convergent Bochner integral. For real k, the operator kL + G is Hermitian. Duhamel’s
+formula gives
+                                                              Z 1
+                                    d −iT (kL+G)
+                                       e         = −iT              e−iT (1−s)(kL+G) Le−iT s(kL+G) ds,                                       (E2)
+                                    dk                          0
+
+so its derivative has norm at most T ∥L∥. Repeated Duhamel formulas bound every higher derivative uniformly on the real axis.
+The Gaussian factor in q therefore makes F a matrix-valued Schwartz function. Consequently both lattice sums below converge
+absolutely in operator norm, and the usual Poisson argument applies without a distributional interpretation.
+  For completeness, the ℓth Fourier coefficient of the h-periodization of F is
+                                Z hX                                          Z
+                            1                             − 2πiℓx        1                          2πiℓk          1b
+                                            F (x + mh)e       h     dx =              F (k)e−         h     dk =     F (ℓ/h).                (E3)
+                            h   0                                        h       R                                 h
+                                     m∈Z
+
+The first equality follows by unfolding the periodized integral; the phase is unchanged because ℓm is an integer. Since the
+Fourier series is absolutely convergent, evaluating it at zero and multiplying by h gives
+                                                     X              X
+                                                  h       F (mh) =       Fb(ℓ/h).                                      (E4)
+                                                      m∈Z                    ℓ∈Z
+                                                                                                                                 19
+
+For the Fourier–Stieltjes Weyl calculus restricted to measures on the line (k, 1) [26–29], Eq. (47) shows directly that
+                                                                                  
+                                                         W         −iy         2πℓ
+                                           F (ℓ/h) = OpT L,T G e ϕ x +
+                                           b                                           .                                       (E5)
+                                                                                h
+
+Substitution into Eq. (E4) and separation of the zero mode prove Eq. (48). The zero mode is the continuous LCHS integral.
+Removing the lattice terms |m| > N and subtracting the target proves Eq. (49). At no point is e−iT (kL+G) replaced by a product
+of exponentials, so the proof does not require [L, G] = 0.
+   Absolute convergence establishes the identity. To bound the alias sum quantitatively, one may additionally use strip analyticity.
+Suppose F is analytic for |Im z| < b, tends to zero uniformly on narrower horizontal strips, and its boundary norms are
+integrable. The standard rectangular-contour proof of the trapezoidal rule, valid for Banach-valued analytic functions, gives
+                                                             Z                      Z
+                             X              Z                   ∥F (x + ib)∥ dx + ∥F (x − ib)∥ dx
+                           h     F (mh) −       F (k) dk ≤ R                    2πb
+                                                                                      R
+                                                                                                        .                      (E6)
+                                             R                                e  h − 1
+                             m∈Z
+
+This is the operator form of the exponentially convergent trapezoidal estimate [68].
+   For the kernel in Eq. (43), the Gaussian factor supplies real-axis decay, while the poles at k = ±i leave F analytic in every
+strip |Im k| < b < 1. Since the Hermitian part of −i[(x + iy)L + G] is yL, the logarithmic-norm bound gives
+
+                                                    e−iT [(x+iy)L+G] ≤ eT |y|∥L∥ .                                             (E7)
+
+Taking any fixed b < 1 in Eq. (E6) recovers exponential mesh convergence. The sharper parameter choice established for the
+optimal kernel [32] gives the spacing and uniform node count stated in Eq. (50).
+  The frequency-tail term always satisfies
+
+                                            X                                      X
+                                       h           q(mh)e−iT (mhL+G) ≤ h               |q(mh)| ,                               (E8)
+                                           |m|>N                               |m|>N
+
+because each exponential is unitary. Bounds for the kernel and alias terms depend on the selected LCHS kernel. This is why
+Eq. (49) separates the three contributions rather than replacing them by one scalar quadrature error.
+  It remains to justify the transformed rule. Set
+
+                                           Fsinh (z) := cosh z q(sinh z)e−iT (sinh zL+G) .                                     (E9)
+
+Applying Eq. (E4) to Fsinh gives Eq. (51). Its zero Fourier mode is
+                                           Z                  Z
+                                               Fsinh (x) dx =   q(k)e−iT (kL+G) dk,                                           (E10)
+                                              R                  R
+
+where k = sinh x.
+  More generally, the change of variables k = sinh z writes the ℓth Fourier mode on the right-hand side of Eq. (51) exactly as
+             Z                                                                  Z                             
+                                                   2πiℓz
+                                                                                         −ikx − 2πiℓ
+                cosh z q(sinh z)e−iT (sinh zL+G) e− h dz = OpW    T L,T G  e −iy
+                                                                                   q(k)e     e   h arsinh(k) dk .        (E11)
+                R                                                                      R
+
+Thus the sinh–sinh map preserves both the Weyl lift and the complete Poisson alias decomposition; the case ℓ = 0 reduces to
+Eq. (E10).
+  The transformed kernel has the analytic expression
+
+                                                          ec−ic sinh z       cosh2 z
+                                                                                    
+                                      cosh z q(sinh z) =               exp −           .                             (E12)
+                                                           π cosh z            4γ 2
+
+It is analytic for |Im z| < π/2. Let 0 < b ≤ π/8. Direct calculation gives
+
+                                              |cosh(x ± ib)| ≥ cos b cosh x,
+                                           |Im sinh(x ± ib)| = sin b cosh x,                                                  (E13)
+                                                    2                          2           2
+                                           Re cosh (x ± ib) = cos(2b) cosh x + sin b.
+                                                                                                                                          20
+
+Together with Eq. (E7), these identities imply
+
+                                              ec
+                                                                                                     
+                                                             cos(2b)     2
+                     ∥Fsinh (x ± ib)∥ ≤                exp −         cosh x + (c + T ∥L∥) sin b cosh x .                                (E14)
+                                        π cos b cosh x         4γ 2
+                              2                2       2
+R positive−1a and real v, −ay + vy ≤ −ay /2 + v /(2a). Applying this inequality with y = cosh x, and then using
+For
+ R
+   (cosh x) dx = π, yields the explicit boundary estimate
+
+                                                                ec       2γ (c + T ∥L∥)2 sin2 b
+                                 Z                                       2                     
+                                       ∥Fsinh (x ± ib)∥ dx ≤         exp                          .                                     (E15)
+                                   R                           cos b            cos(2b)
+
+  Since L = (A + A† )/2, the access model gives ∥L∥ ≤ ∥A∥ ≤ βA . Choose
+                                                                     
+                                                       π      1
+                                              b = min    ,              .                                                               (E16)
+                                                       8 2(c + T βA )
+                                                   √                                                   2
+Then (c + T ∥L∥) sin b ≤ 1/2 and cos(2b) ≥ 1/ 2, so each boundary integral in Eq. (E15) is at most ec+γ / cos(π/8). It
+follows directly from Eq. (E6) that mesh error at most ϵ is guaranteed whenever
+                                                             "            2
+                                                                             #
+                                                 2πb                2ec+γ
+                                                     ≥ log 1 +                 .                                (E17)
+                                                  h               ϵ cos(π/8)
+
+Since c is fixed and γ 2 = O(log(1/ϵ)), the physical-scale contribution to the inverse mesh spacing is proportional to T βA . For
+fixed positive T βA , or as this scale grows, the resource convention of Sec. II therefore gives
+                                                                            
+                                                                           1
+                                                       h−1 = O T βA log        .                                           (E18)
+                                                                           ϵ
+
+This is the step at which the block normalization enters the branch count. The displayed simplification is not a joint asymptotic
+formula as T βA → 0; in that limit the additive precision term in Eq. (E17) must be retained.
+   For the lattice tail, Eq. (52) is even and decreasing on the positive real axis. Integral comparison and u = sinh x therefore
+give
+
+                                                                        4ec γ 2           sinh2 (N h)
+                                X                                                                    
+                              h        cosh(mh) |q(sinh(mh))| ≤                    exp −                .                  (E19)
+                                                                     π sinh(N h)              4γ 2
+                              |m|>N
+
+                                                 R ∞ − u22             2
+                                                                                 a2
+                                                                              − 4γ
+Indeed, after the substitution it is enough to usea
+                                                     e  4γ   du ≤  (2γ   /a)e      2
+                                                                                     . Choose
+                                                                
+                                                      arsinh(R)
+                                                N=                 ,      R = 2cγ 2 .                                                   (E20)
+                                                           h
+
+Then Eq. (E19) is O(ϵ) after the constant error allocation described below Eq. (49). Also, R = O(log(1/ϵ)) and arsinh(R) =
+O(log log(1/ϵ)). Taking h ≤ 1 also gives sinh(N h) = O(log(1/ϵ)). Suppressing the additive constant number of nodes
+according to the same resource convention gives
+                                                                               
+                                                                     1        1
+                                            2N + 1 = O T βA log log log           ,                                   (E21)
+                                                                     ϵ        ϵ
+
+which proves Eq. (53), including its βA dependence.
+  It remains to distinguish this node count from the LCU coefficient one-norm. The function cosh x |q(sinh x)| is even and
+decreasing for x ≥ 0 by Eq. (52). Monotone integral comparison therefore gives, for h ≤ 1,
+        N                                                                        Z                                             
+        X                                      X
+                                                                                                                 c          1
+    h          cosh(mh) |q(sinh(mh))| ≤ h            cosh(mh) |q(sinh(mh))| ≤         |q(k)| dk + h |q(0)| ≤ e           1+         .   (E22)
+                                                                                  R                                         π
+        m=−N                                   m∈Z
+
+Here the substitution k = sinh x gives the integral in the second line, Eq. (46) bounds it by ec , and |q(0)| ≤ ec /π. This proves
+Eq. (54). The bound contains neither T nor βA : the normalization is constant even though the number of lattice points is not.
+                                                                                                                                    21
+
+                                        Appendix F: APS factorizations and query complexity
+
+                                               1.   Half-root access and controlled family
+
+  Suppose first that an exact block encoding of
+                                                                               1
+                                                                              2α
+                                                                        H
+                                                               R=                                                                 (F1)
+                                                                        βH
+is available. The Chebyshev polynomial 2x2 − 1 has even parity and modulus at most one on [−1, 1], so a degree-two QSVT
+sequence implements it exactly [13]. Since R is positive semidefinite, its singular-value and eigenvalue transformations coincide,
+and the designated block is
+                                                                     1
+                                                      2           H α
+                                                  2R − I = 2                − I.                                             (F2)
+                                                                  βH
+This proves the relation to the root-shift signal stated in Eq. (61).
+   We next verify that all times required by APS can be placed in one coherent circuit. For every tm ∈ [0, T ], let Pm be a
+                           2α
+polynomial for e−tm βH |x| . Compute the unscaled Poisson polynomial to uniform error δ/4 and round its coefficients so that
+the induced uniform error is at most δ/4. Dividing the result by 1 + δ/2 gives an even polynomial satisfying
+                                                                            1
+                                                                               
+                                   max |Pm (x)| ≤ 1,             Pm (H/βH ) 2α − e−tm H ≤ δ.                           (F3)
+                                  x∈[−1,1]
+
+The second bound is Eq. (B7) with ϵ replaced by δ, but without the additional fixed factor 1/2: before rescaling, the rounded
+polynomial is within δ/2 of the target and has modulus at most 1 + δ/2. Thus the real-polynomial QSVT theorem for fixed
+parity implements Pm as a normalization-one approximate block encoding [13], rather than the fixed normalization-two block
+used in Theorem II.1. Choose a common even query length no smaller than the maximum required at T . Shorter sequences
+may be padded by cancelling pairs of signal queries. A QSVT sequence is an alternating product of the signal unitary and phase
+rotations. At the jth rotation, replace the phase gate by the direct sum of the phase gates for all m, controlled by the time register.
+The signal unitary itself is independent of m. Consequently the full circuit is block diagonal in that register, and its designated
+block obeys
+                                    "            1!              #                      1!
+                    X                         H 2α          −tm H                       H 2α
+                         |m⟩⟨m| ⊗ Pm                    −e             = max Pm                     − e−tm H ≤ δ.                 (F4)
+                     m
+                                              β H                         m            β H
+
+This gives the Poisson-compiled controlled dissipative-family oracle used below. It requires the maximum polynomial degree,
+not the sum of the degrees over the time grid [13]. This is a signal-query statement. The gate cost of the multiplexed phase
+rotations additionally depends on how the time register is accessed and is not included in the block-encoding query count.
+
+
+                                                          2.   Exact factorizations
+
+  Let U (T ) = e−T (H+iG) . Writing U (T ) = e−iT G V (T ) and differentiating gives
+                                          V ′ (T ) = −eiT G He−iT G V (T ),             V (0) = I.                                (F5)
+                                                                                −T H
+The time-ordered solution is Eq. (62). Alternatively, writing U (T ) = e               W (T ) gives
+                                         W ′ (T ) = −i eT H Ge−T H W (T ),              W (0) = I,                                (F6)
+which proves Eq. (63). These identities are exact. Algorithmic use of either one additionally requires the controlled access and
+time-ordering assumptions specified by the APS implementation.
+
+
+                                                     3.   Dissipative Dyson products
+
+   The amplitude-driven factorization can be used without separately implementing the possibly non-Hermitian similarity trans-
+form esH Ge−sH . Iterating Eq. (F6) and multiplying by e−T H from the left gives the exact series
+                             X∞         Z
+               −T (H+iG)
+              e           =      (−i) k
+                                                       e−H(T −sk ) G × e−H(sk −sk−1 ) G · · · Ge−Hs1 ds1 · · · dsk .      (F7)
+                               k=0           0≤s1 ≤···≤sk ≤T
+                                                                                                                                   22
+
+For k = 0 the integrand is e−T H , while for k = 1 the product is e−H(T −s1 ) Ge−Hs1 . Every dissipative duration in a term of
+Eq. (F7) is nonnegative, and the durations sum to T . Since H ⪰ 0, all of these factors are contractions. The norm of the kth
+term is consequently at most
+
+                                                              (βG T )k
+                                                                       .                                                         (F8)
+                                                                k!
+  The APS implementation divides the evolution into O(βG T ) segments and truncates the local Dyson series at
+                                                                     
+                                                         log(ur /ϵ)
+                                                   O                                                                             (F9)
+                                                       log log(ur /ϵ)
+
+terms [34]. Thus the total number of alternating dissipative and G blocks is O(βG T log(ur /ϵ)/ log log(ur /ϵ)). After the ordered
+integrals are discretized, every occurrence of e−H(sj −sj−1 ) is selected from Eq. (65); Eq. (F4) therefore supplies all dissipative
+blocks in the APS circuit with one uniform construction. The Poisson-compiled polynomial thereby provides the controlled
+dissipative-family realization used below.
+
+
+                                                   4.   Error and query allocation
+
+  We now justify Corollary III.1. The APS circuit makes O(βG T log(ur /ϵ)/ log log(ur /ϵ)) controlled dissipative-family calls
+per run. Telescoping over those calls and the subsequent amplitude-amplification steps shows that it is sufficient to choose the
+individual block error as
+                                                                          
+                                                        ϵ   log log(ur /ϵ)
+                                                 Θ                                                                        (F10)
+                                                     ur βG T log(ur /ϵ)
+
+and to allocate the same order of total error to the truncated Dyson construction. Eq. (C1) then controls normalization of the
+approximate output.
+   Every time in Eq. (65) lies in [0, T ]. The uniform degree bounds in Theorem II.3 are monotone when each selected time
+is upper-bounded by T . Thus all controlled branches may be padded to the maximum degree required at T . The multiplexed
+                                                                                                          1
+construction in Eq. (F4) supplies their coherent programmability. To apply Theorem II.3, regard H as (H 2α )2α . The half-root
+                                                                  1                         1
+oracle in Eq. (60) supplies the standard positive signal for H 2α with normalization βH2α . Substituting this normalization, the
+even exponent 2α, and the polynomial tolerance in Eq. (F10) into Eq. (23) gives
+                                                                1                    !
+                                                         ur βG T 2α          1 ur βG T
+                                                                         1− 2α
+                                       O    T βH + log               log                 .                                (F11)
+                                                             ϵ                    ϵ
+
+This is the number of half-root queries executed by one invocation of the controlled dissipative family at the required uniform
+accuracy. It is Eq. (66). For nonnegative a, b and 0 < p ≤ 1, concavity gives (a + b)p ≤ ap + bp ≤ 21−p (a + b)p . Consequently
+Eq. (F11) is, up to a constant depending only on α, the same uniform bound as the physical-scale term plus log(ur βG T /ϵ). If
+                                                                                 1        1
+T βH ≥ log(ur βG T /ϵ), its first factor is bounded by a constant times (T βH ) 2α log1− 2α (ur βG T /ϵ). For α = 1, this is precisely
+the dissipative term in Eq. (70).
+   The extra factor log(ur /ϵ)/ log log(ur /ϵ) inside the reciprocal individual accuracy changes its logarithm only by a lower-
+order iterated-log term, which is absorbed in the displayed order. The number of controlled-family calls per run and the number
+of calls to G/βG have the APS order O(βG T log(ur /ϵ)/ log log(ur /ϵ)) [34]. Fixed-point amplitude amplification multiplies
+both counts by ur [45], which gives Eq. (67) and Eq. (69).
+   If Eq. (65) is supplied directly, Eq. (67) is its query count and Eq. (66) specifies one possible realization. When the family is
+implemented by that QSVT circuit, each invocation executes the half-root sequence. Substituting Eq. (F11) into the family-call
+count of the amplitude-driven APS framework [34] gives Eq. (68). The same procedure uses O(ur ) calls to the initial-state
+oracle. This proves Corollary III.1. The sharper interpolation obtained from Eq. (B4) after replacing the exponent by 2α and the
+                      1
+normalization by βH2α may be substituted in this resource bound; equivalently, it is Eq. (B5). At fixed T βH and βG T it improves
+the per-invocation high-precision behavior to log(ur βG T /ϵ)/ log log(ur βG T /ϵ), as stated after the corollary.
+

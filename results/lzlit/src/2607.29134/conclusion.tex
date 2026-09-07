@@ -1,0 +1,43 @@
+% \section{Limitations and Future Work}
+% InferQ consists of around ~418K entries currently and continues to grow in number of entries. However, not all entries have all metrics calculated. Around ~404K rows have all the graph features computed, while ~201K entries have both the dynamic features. As a consequence, ~191K entries in InferQ have all the features computed. This is due to the failed execution of some circuits with the available hardware for the dynamic features and some circuit graphs not having radius and diameter computed successfully in qubit interaction graph representation. InferQ continues to fill these gaps over time.
+
+% The dataset and the data model is built with extensibility in mind. Hence both can be grown. As future researchers find more relevant metrics and metric classes, InferQ can be extended by adding feature tables and calculating these feature values for new classes across the entries.
+
+% As InferQ considers combination circuits, the circuit entry space is vast. Hence, the standard building blocks from existing benchmarks as well as new quantum algorithms can be added as entries and translated into features by the data model.
+
+% The 3 use cases experimented with can be improved upon, especially using inferQ to enable new paradigms of quantum execution such as RDBMS systems. Efforts similar to Qymera \cite{Littau_2025} could explore the boundaries for RDBMS prototypes using current or new InferQ features.
+
+% Another novel effort is to use modern generative AI such as diffusion models \cite{F_rrutter_2024} to synthesize more efficient circuits or execution plans. These efforts could be combined with the feature engineering of InferQ.
+
+% \section{Conclusion}
+
+% In this work, we present InferQ, a dataset of various combinational quantum circuits and a novel data model defined by structural properties. The suite of static, graph and dynamic metrics allow for exploring enabling classical simulation of quantum computation  through data and learning based methods.
+
+% We validated this data-centric approach across three independent workloads: selecting optimal simulation backends in Qiskit, learning estimators for sparsity and entanglement, and predicting when relational database systems outperform conventional simulators. 
+
+% InferQ is designed to evolve with the quantum ecosystem. New circuit families, new feature classes, and new execution paradigms, such as hybrid backends, or database-driven execution engines, can be integrated by extending the data model and regenerating and extending training data.
+
+% More broadly, this work shows how a structured dataset such as InferQ can serve as a bridge between quantum computing and data-driven machine learning, enabling interdisciplinary methods for understanding and optimizing quantum programs in the NISQ era.
+% \section{Conclusion}
+% Quantum circuit simulation is emerging as a database-relevant workload: when compiled into SQL, simulation becomes a sequence of relational operators whose performance depends on join structure, intermediate cardinalities, and state sparsity.
+% To support systematic research in this space, we introduced \sys, a database-oriented benchmark that (i) generates diverse, compositional quantum circuits under explicit user configurations, (ii) emits RDBMS-ready SQL workloads for simulation, and (iii) extracts static, graph, SQL, and dynamic features to characterize and analyze these workloads.
+% We also provide a large pre-generated dataset and a web UI to make circuits and features easy to browse and reuse.
+
+% Our evaluation shows that across a broad set of general circuits, RDBMS engines can be competitive simulation engines, particularly on peak memory: even without tuning, SQLite yields the lowest peak memory for 34.8\% of 775 circuits.
+% We further show that the choice between SQL execution and conventional simulation is predictable using \sys features: simple models achieve strong routing performance for both runtime and memory, supporting practical, data-driven simulator selection without requiring costly model classes.
+
+% These results position \sys as a foundation for follow-up work in two directions.
+% First, database researchers can use \sys workloads to study query optimization and physical design for SQL-based simulation (e.g., join ordering, predicate/aggregation rewrites, indexing/partitioning, and plan caching) and to quantify improvements on controlled workloads.
+% Second, \sys enables data-centric methods for simulator selection and for estimating expensive circuit properties from cheap features, which can reduce reliance on repeated strong simulation.
+% Looking ahead, we expect \sys to grow by incorporating additional circuit templates, richer SQL/plan-level features, and more engines and execution settings, including distributed deployments and hybrid simulation strategies.
+\section{Conclusion}
+\sys makes SQL-based quantum circuit simulation accessible as a database benchmarking problem: it generates compositional circuits as RDBMS-ready SQL workloads, attaches features that explain relational workload difficulty, and provides both an on-demand toolkit and a large dataset for reproducible analysis. Our evaluation shows that RDBMS engines can be competitive, especially in peak memory across a broad set of general circuits, and that lightweight models trained on \sys features can reliably predict when an RDBMS engine will be preferable. We expect \sys to enable follow-up work in (i) query optimization and physical design for emitted simulation SQL, and (ii) data-centric routing and cost modeling for simulator selection, trained at scale on \sys-generated circuits and features. 
+
+% \medskip
+\revisionB{\para{Outlook} As future work, we plan to further optimize RDBMS-based simulation and develop array-native execution for tensor-aware DBMSs.} 
+\revisionC{\sys can also be extended from circuit generation to end-to-end validation for
+quantum algorithm design, covering correctness checks, iterative test--debug cycles, and
+hardware-aware constraints such as native gate sets and device connectivity.}
+
+% \revisionM{Moreover, to make \sys a useful tool in new quantum algorithm simulation and design, we can expand it from circuit generation to end-to-end algorithm validation by adding problem-specific correctness checks and iterative test--debug cycles. Second, we can incorporate quantum hardware-aware constraints (e.g., native gate sets and device connectivity) so that generated templates can be evaluated under real quantum hardware restrictions.} 
+ 

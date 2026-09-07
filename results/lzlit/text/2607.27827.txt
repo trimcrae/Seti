@@ -1,0 +1,867 @@
+                                               Chapter in Advancing Astrophysics with the SKA – II
+
+
+
+
+                                               Tidal Disruption Events with the SKA
+
+                                               T. An ,1,† A. J. Goodwin ,2 J. C. A. Miller-Jones ,2,† M. Pérez-Torres ,3 L. Rhodes ,4
+                                               X. Shu 5 and the Transient Science Working Group
+                                               1 Shanghai Astronomical Observatory, Chinese Academy of Sciences, 80 Nandan Road, Shanghai 200030,
+
+                                                China
+                                               2 International Centre for Radio Astronomy Research – Curtin University, GPO Box U1987, Perth, WA
+
+                                                6845, Australia
+                                               3 Instituto de Astrofísica de Andalucía, Consejo Superior de Investigaciones Científicas (CSIC), Glorieta de
+
+                                                la Astronomía S/N, 18008 Granada, Spain
+                                               4 Trottier Space Institute, McGill University, Canada
+arXiv:2607.27827v1 [astro-ph.HE] 30 Jul 2026
+
+
+
+
+                                               5 Department of Physics, Anhui Normal University, Wuhu, Anhui, 241002, China
+                                               † Chapter co-ordinator
+
+                                               E-mail: antao@shao.ac.cn, adelle.goodwin@curtin.edu.au,
+                                               james.miller-jones@curtin.edu.au, torres@iaa.csic.es,
+                                               lauren.rhodes@mcgill.ca, xwshu@ahnu.edu.cn
+
+
+                                                  Tidal disruption events (TDEs) and related nuclear transients probe jet launching,
+                                                  disk formation and circularization, particle acceleration, and the circumnuclear
+                                                  medium (CNM). However, the small fraction of events launching relativistic
+                                                  jets, the weak or delayed radio emission of many thermal TDEs, and the black-
+                                                  hole demographics of galactic nuclei remain poorly understood. SKA, with
+                                                  𝜇Jy sensitivity, wide bandwidth, long baselines, rapid response, and commensal
+                                                  surveys1 across 50–350 MHz (SKA–Low) and 0.35–15.4 GHz (SKA–Mid), will
+                                                  transform this field. Its sensitivity, frequency coverage, and very long baseline
+                                                  interferometry (VLBI) capability will extend radio calorimetry from a few well-
+                                                  studied nearby events to volume-limited samples of non-relativistic outflows. The
+                                                  SKA will bring off-axis and mildly relativistic jets into routine reach, trace CNM
+                                                  density profiles through the evolution of the low-frequency synchrotron turnover,
+                                                  and localize faint off-nuclear transients with sub-arcsecond precision. These data
+                                                  will constrain jet incidence, energetics, geometry, and magnetization, map the
+                                                  CNM through shock interactions, test links to changing-look active galactic nuclei
+                                                  (AGN) and high-energy neutrinos, and identify off-nuclear events associated with
+                                                  recoiling supermassive or intermediate-mass black holes. We discuss the benefits
+                                                  of commensal surveys, rapid triggering, and SKA–VLBI, and provide predictions
+                                                  based on the projected performance of AA∗ and AA4. SKA will shift TDE
+                                                  radio studies from detailed case-by-case studies to population-scale inference,
+                                                  advancing studies of jet physics and black-hole demographics.
+
+
+
+                                               © The Authors                                                                        https://skao.int/
+TDEs with the SKA                                                                                       An et al.
+
+
+1    Introduction
+
+A tidal disruption event (TDE) occurs when a star passes within the tidal radius of a massive black
+hole and is torn apart; a fraction of the debris returns to pericenter, circularizes, and is accreted,
+powering luminous emission across the spectrum (Rees, 1988). Multi-wavelength observations
+have revealed two broad classes (Gezari, 2021): (i) thermal TDEs, discovered primarily in the
+optical/UV and soft X-rays, likely dominated by reprocessing and/or disk emission; and (ii) jetted
+TDEs, emitting hard X-rays and 𝛾-rays from a relativistic jet launched along our line of sight,
+with long-lived radio afterglows from external shocks. The field has been punctuated by landmark
+events. Swift J1644+57 established the “jetted TDE” paradigm, appearing as a bright, variable
+X-ray source with a powerful radio afterglow (Bloom et al., 2011; Burrows et al., 2011; Zauderer
+et al., 2011). ASASSN-14li became the template for nearby thermal TDEs with a well-characterized,
+non-relativistic radio outflow (Holoien et al., 2016; Alexander et al., 2016; van Velzen et al., 2016).
+More recently, AT2022cmc was the first on-axis jetted TDE discovered optically, demonstrating the
+feasibility of detecting newly-launched relativistic jets with wide-field optical surveys and following
+their radio evolution from the earliest times (Andreoni et al., 2022; Pasham et al., 2023; Rhodes
+et al., 2023). Together, these events showcase the diverse phenomenology of TDEs in terms of jet
+power, geometry, circumnuclear medium (CNM) interaction, and timescales.
+
+Radio observations probe the kinetic output of TDE outflows and their coupling to the CNM
+(Alexander et al., 2020; van Velzen et al., 2021). Synchrotron spectral energy distributions and
+their time evolution yield shock radii, velocities, magnetic fields, and the energetics of the outflows,
+while late-time light-curve flattening or rebrightening constrains renewed energy injection, or
+density gradients, clumps, or shells in the nuclear environment (Chevalier, 1998; Barniol Duran
+et al., 2013). For Swift J1644+57, the long-lived radio afterglow and achromatic breaks have
+been modeled as a decelerating relativistic jet interacting with the CNM (Zauderer et al., 2011,
+2013; Berger et al., 2012; Metzger et al., 2012); for ASASSN-14li, multi-epoch radio monitoring
+indicates a slower, wide-angle outflow propagating through an 𝑟 −2 -like density profile (Alexander
+et al., 2016; van Velzen et al., 2016). For several optically-selected TDEs, including AT2020vwl
+and AT2018hyz, delayed radio brightening months to years after optical peak suggests evolving
+outflows and/or changes in the accretion state (Goodwin et al., 2025; Cendes et al., 2022).
+
+Despite these advances, major gaps remain. The radio-loud (jetted) fraction appears to be only a
+few percent, but the selection biases are severe (Alexander et al., 2020; van Velzen et al., 2021).
+The fraction of “radio-quiet” (non-jetted) TDEs with weak or delayed radio outflows is poorly con-
+strained (Goodwin et al., 2022; Cendes et al., 2022), and the mapping from SMBH mass/spin and
+stellar parameters to jet production efficiency remains theoretically and observationally unsettled
+(Tchekhovskoy et al., 2014; Blandford and Znajek, 1977). The demographics of low-mass super-
+massive black holes (SMBHs) and intermediate-mass black holes (IMBHs) inferred from TDEs
+    1 Terminology used throughout this chapter is defined:   SKA–Low is the 50–350 MHz aperture-array telescope in
+Western Australia; SKA–Mid is the 0.35–15.4 GHz dish array in South Africa, including MeerKAT; AA4 denotes the
+design-baseline array of 512 SKA–Low stations and 197 SKA–Mid dishes; AA∗ denotes the staged-delivery array of 307
+SKA–Low stations and 144 SKA–Mid dishes. A commensal slow-transient survey is an image-plane transient search
+run on data taken by another primary survey, with revisits on day-to-week timescales.
+
+
+                                                             2
+TDEs with the SKA                                                                           An et al.
+
+
+are still limited by small samples, uncertain selection functions, and incomplete radio follow-up
+(Wevers et al., 2017; Mockler et al., 2019; Lin et al., 2018). Moreover, TDE-like nuclear transients
+(e.g., dramatic changing-look active galactic nucleus (AGN) episodes such as 1ES 1927+654) blur
+the boundary between TDEs and AGN variability, with radio behavior often unconstrained (Trakht-
+enbrot et al., 2019; Ricci et al., 2020). Finally, the tentative association of high-energy neutrinos
+with TDEs (Stein et al., 2021; Reusch et al., 2022), while intriguing, remains disputed (Cendes
+et al., 2021), and coordinated radio campaigns will be required to probe hadronic acceleration sites
+and calorimetry (Mohan et al., 2022).
+
+The SKA will provide the high-fidelity data necessary to resolve these long-standing ambiguities
+in nuclear transient physics. SKA–Mid provides a continuum sensitivity of 1.4–4.6 𝜇Jy in 15 min
+on source across Bands 1 through 5b (Fig. 1), with baselines up to 150 km enabling sub-arcsecond
+imaging from 0.95–15.4 GHz, precisely-measured spectral indices, and high time-resolution vari-
+ability studies. In the same observing time, SKA–Low will provide a sensitivity of 13 𝜇Jy beam−1
+at 50–350 MHz, where late-time, optically thin synchrotron emission from expanding TDE shocks
+may persist for years. Example TDE spectra and nominal improvement on sensitivities of current
+world-class radio instruments at 0.05–15 GHz are shown in Figure 1. The telescopes will support
+transient-friendly modes, multiple subarrays, and voltage-beam output for VLBI. Even in the staged
+AA∗ configuration before 2030, these capabilities will bring faint and delayed radio emission from
+thermal TDEs into reach, tighten constraints on jet geometry (e.g., jet opening angles, Lorentz
+factors) and energetics, trace CNM structure through the evolution of broadband spectra, and build
+radio samples large enough for statistically robust population studies.
+
+The SKA will operate within an ecosystem of time-domain surveys and multi-messenger facilities.
+The Rubin Observatory’s Legacy Survey of Space and Time (LSST) will find large numbers of
+nuclear transients; the Wide Field Survey Telescope (WFST) will help deliver optical classification,
+and the Cerenkov Telescope Array Observatory (CTAO), and the IceCube Neutrino Observatory
+extension (IceCube-Gen2) and the Cubic Kilometre Neutrino Telescope (KM3Net) will provide
+gamma-ray and neutrino triggers, respectively. The SKA’s survey speed, rapid response, and deep
+targeted follow-up, in synergy with SKA–VLBI (Shu et al., 2026), are the missing ingredients
+to decisively map accretion–outflow coupling and black-hole demographics in low-mass galactic
+nuclei.
+
+In the following sections we outline how the SKA, from its staged AA∗ phase to the full AA4
+configuration, will quantify TDE rates and energetics, reconstruct accretion histories of dormant
+SMBHs, and map the physics of their outflows.
+
+
+
+2   Key science questions
+
+The major science questions that SKA will address in the field of TDEs are outlined below, focusing
+on jet production, outflow energetics, CNM structure, and black-hole demographics. Some require
+larger and cleaner samples. Others require access to low radio luminosities, low frequencies, and
+milliarcsecond localization. A combination of these is largely beyond current facilities.
+
+
+                                                 3
+TDEs with the SKA                                                                                   An et al.
+
+
+
+
+                               101     AT2020opy t 50 d
+                                       AT2020opy t 116 d
+                                       AT2020opy t 281 d
+                                       AT2019azh t 183 d
+                                       AT2019azh t 649 d
+                                       AT2019azh t 1974 d
+                                       SKA-mid 3 sensitivity in 15min
+                               100     SKA-low 3 sensitivity in 15min
+                                       VLA 3 sensitivity in 15min
+          Flux density (mJy)
+
+
+
+
+                               10 1
+
+
+
+                               10 2
+
+
+                                      10 2                10 1          100       101
+                                                           Frequency (GHz)
+
+Figure 1: Broadband radio spectra at different times since optical flare of the TDEs AT2019azh (oranges;
+Goodwin et al., 2022; Burn et al., 2025) and AT2020opy (pinks; Goodwin et al., 2023a). The sensitivity of
+the SKA and VLA in various observing bands in a 15 min observation are indicated with horizontal lines,
+and the observing bands of the SKA are highlighted in green (low) and blue (mid). AT2020opy is the furthest
+non-jetted TDE so far observed with broadband radio spectral observations, at a redshift of 𝑧 = 0.15. Due to
+its large distance, the source was only able to be tracked for ≈ 200 d with the VLA. In contrast, AT2019azh
+is a relatively nearby (and bright) non-relativistic TDE at a redshift of 𝑧 = 0.022 in which broadband radio
+monitoring has been possible for > 6 yr. This figure demonstrates how the SKA will not only allow more
+distant (faint) TDEs to be detected and characterised, but also will allow the synchrotron spectral peak to be
+tracked for significantly longer than is currently possible as it evolves to lower frequencies with time.
+
+
+
+2.1   Why do only a few percent of TDEs launch relativistic jets? How are jets connected to
+      the accretion flow?
+
+Only a small fraction of TDEs produce highly relativistic jets visible as luminous, rapidly variable
+X-ray emission and long-lived radio afterglows (e.g., Swift J1644+57, AT2022cmc; Bloom et al.,
+2011; Zauderer et al., 2011; Burrows et al., 2011; Andreoni et al., 2022; Rhodes et al., 2023).
+Candidate drivers include black hole spin (via the Blandford–Znajek process), the accumulation
+of large-scale magnetic flux in magnetically arrested disks (MAD; Tchekhovskoy et al., 2014),
+super-Eddington accretion states (Metzger and Stone, 2016), and stellar orbital geometry (impact
+
+
+                                                                        4
+TDEs with the SKA                                                                             An et al.
+
+
+parameter; Guillochon and Ramirez-Ruiz, 2013). However, the mapping from these ingredients
+to jet launching, Lorentz factor, and opening angle remains unclear. The SKA will address this
+problem by enlarging the radio-selected TDE sample via its high-sensitivity wide-field radio surveys,
+capturing both on-axis jetted events and off-axis afterglows, and by measuring early-time variability
+and spectral evolution to infer Doppler factors and brightness temperatures. AT2022cmc already
+demonstrated that day-scale radio variability implies large Doppler factors (Yao et al., 2024). Broad
+frequency coverage from 50 MHz to 15.4 GHz will break degeneracies between synchrotron self-
+absorption and external free–free absorption, tightening constraints on shock microphysics and
+magnetization.
+
+The few radio-detected on-axis jetted TDEs at 𝑧 ≲ 0.1 had GHz flux densities of several mJy during
+the first weeks, and even off-axis or mildly relativistic jets at 𝑧 ∼ 0.1–0.3 are expected to produce
+∼10–100 𝜇Jy near the synchrotron self-absorption peak, which is detectable with integrations of
+minutes to hours with the SKA telescopes. High-cadence, multi-frequency SKA monitoring with
+a few epochs probing hour-to-day timescales during the first ∼100 d can separate scintillation from
+intrinsic variability and constrain the Doppler (𝛿) and Lorentz (Γ) factors from synchrotron spectral
+modelling. At the population level, combining SKA detection statistics with all-sky optical/X-ray
+TDE counts yields the true jetted fraction via 𝑓j ≈ 𝑁radio /𝑁TDE , where 𝑁radio is the number of
+SKA-detected radio jets (including off-axis detections) and 𝑁TDE is the optical/X-ray TDE yield. In
+the limiting case where only on-axis jets are detected, this reduces to 𝑓j ≈ 𝑁on /(𝑁TDE 𝑓b ), where
+𝑁on is the number of on-axis radio jets detected, and the beaming factor 𝑓b ≃ 1−cos 𝜃 j is determined
+by the jet opening angle 𝜃 j . SKA’s ability to detect off-axis jets reduces sensitivity to assumptions
+about 𝜃 j and thus improves the fidelity of 𝑓j (van Velzen et al., 2021).
+
+A crucial test of the jet–accretion connection will be coordinated SKA+X-ray campaigns searching
+for correlations between radio luminosity and accretion disk properties (Mummery et al., 2025),
+analogous to state transitions in X-ray binaries but scaled to SMBH masses (Merloni et al., 2003;
+Fender et al., 2004). In this framing, late-time radio plateaus or rebrightenings (e.g., AT2020vwl;
+Goodwin et al., 2025) may diagnose accretion-state changes, CNM density shells, or delayed energy
+injection. With sufficient cadence, SKA’s broad frequency coverage will allow these scenarios to be
+distinguished empirically. Finally, SKA–VLBI will constrain sizes, proper motions, and brightness
+temperatures (Shu et al., 2026); for the closest events, milliarcsecond imaging will reveal or limit
+apparent superluminal motion and resolve jet geometry. The one directly resolved TDE jet to date
+was detected in Arp 299B, where Mattila et al. (2018) measured its deceleration and subluminal
+expansion at an average speed of ∼ 0.2𝑐. The only other detection of motion in a TDE is the
+subluminal expansion at ∼ 0.05𝑐 in WTP14adeqka (Golay et al., 2025). Phased SKA baselines will
+substantially improve astrometric accuracy and extend the time baseline over which such events can
+be monitored, enabling more precise measurements of TDE jet motions, and thereby closing the
+loop between jet incidence, beaming, and accretion physics.
+
+A robust measurement of the radio-selected jetted fraction as a function of black-hole mass will
+require ≳ 30 off-axis or mildly relativistic jets followed with a logarithmically-spaced cadence
+through the first ∼ 100 d. That sample would constrain 𝑓j to about 30% in two mass bins. Most
+such events should lie in the 10–100 𝜇Jy range at 𝑧 ∼ 0.1–0.3. Present facilities reach that regime
+
+
+                                                  5
+TDEs with the SKA                                                                                An et al.
+
+
+for only a few selected sources and cannot sustain the cadence needed to separate intrinsic evolution
+from scintillation while securing a nuclear localization.
+
+2.2   How do SMBHs grow?
+
+TDE rates trace how stars are fed into the loss cone of galactic nuclei and therefore inform the
+long-term growth of SMBHs, especially toward the low-mass end and in nuclear star clusters. The
+per-galaxy disruption rate depends on black-hole mass, stellar density profiles, and the efficiency
+of loss-cone refilling, with theory and observations indicating characteristic values of ∼ 10−5 –
+10−4 yr −1 (Magorrian and Tremaine, 1999; Stone and Metzger, 2016; Yao et al., 2024), albeit with
+large, host-dependent dispersion and pronounced enhancements in post-starburst systems (French
+et al., 2020; Law-Smith et al., 2017). Whether these intermittent accretion episodes contribute
+a significant fraction of SMBH mass growth remains debated (Lu and Kumar, 2018; Dai et al.,
+2021), because radiative energetics alone underconstrain the mass actually accreted versus expelled
+in winds or jets.
+
+SKA will address this by delivering radio calorimetry of outflows, thereby quantifying kinetic
+energy budgets for both jets and quasi-spherical winds, uncovering obscured or dust-enshrouded
+TDEs that are faint in optical/UV surveys (Mattila et al., 2018), and providing kinetic-to-radiative
+energy ratios across host types and black-hole masses. Equipartition analyses of broadband radio
+SEDs (Barniol Duran et al., 2013) will yield the energy of the outflow, 𝐸 k , and its size, 𝑅, as a
+function of time for large, uniformly-followed samples. Nearby thermal TDEs (e.g., ASASSN-
+14li) typically exhibit 𝐸 k ∼ 1048 –1049 erg (Alexander et al., 2016; van Velzen et al., 2016), while
+jetted TDEs carry beaming-corrected energies ∼ 1050 –1052 erg (Bloom et al., 2011; Zauderer et al.,
+2011). With SKA sensitivities probing larger volumes, these quantities can be measured for tens
+to hundreds of events, anchoring the kinetic feedback budget and, via comparison to bolometric
+outputs, constraining the fraction of fallback mass that is ultimately accreted (Bonnerot and Lu,
+2020). Moreover, sensitivity at low frequencies and late times closes the energy accounting for
+delayed radio brightenings (e.g., AT2018hyz; Cendes et al. 2022), thus constraining total injected
+energy and coupling to the CNM. By correlating SKA-detected radio TDEs with host morphology
+and star-formation history (van Velzen et al., 2021), we can further test predicted rate enhancements
+in nuclei hosting nuclear star clusters or SMBH binaries (Chen et al., 2011; Stone et al., 2017),
+thereby constraining dynamical feeding channels and their role in SMBH growth over cosmic time.
+
+The key quantity here is the ratio of outflow energy to radiated energy, 𝐸 k /𝐸 rad , as a function of host
+type and black-hole mass. Resolving a dispersion of ≲ 0.3 dex in each major host class (binned by,
+e.g., mass, star formation rate) requires roughly fifty events with well-sampled broadband spectra.
+The constraint is much stronger if the synchrotron peak can still be recovered after it shifts below
+1 GHz at late times, which is feasible only with SKA–Low.
+
+2.3   What is the black-hole mass and spin distribution revealed by TDEs?
+
+TDEs naturally select the low-mass end of the SMBH population, 𝑀• ∼ 105 –107 𝑀⊙ , a regime
+where classical stellar/gas dynamical and reverberation methods to determine the black hole masses
+are challenging (Stone and Metzger, 2016; Wevers et al., 2019). Observables such as luminosity,
+
+
+                                                    6
+TDEs with the SKA                                                                             An et al.
+
+
+color temperature, and rise/decay timescales provide mass estimates (Mockler et al., 2019; Ham-
+merstein et al., 2023; Mummery et al., 2024), while in selected cases quasi-periodic oscillations or
+relativistic precession may offer spin diagnostics (Reis et al., 2012; Pasham et al., 2019, 2024; Zhang
+et al., 2025). Rapidly-spinning, higher-mass SMBHs can disrupt stars outside the event horizon,
+admitting “visible” TDEs above the canonical Hills mass and thereby extending the accessible mass
+range (Kesden, 2012; Leloudas et al., 2016; Gafton and Rosswog, 2019).
+SKA observations will add the kinetic dimension to these demographic inferences: radio detections
+and upper limits, when combined with optical/X-ray data, map radio-loudness and kinetic efficiency
+as functions of 𝑀• and, where available, spin proxies. In this way, SKA samples will populate and
+refine the low-mass tail of SMBH–host scaling relations using TDE-selected nuclei, with emerging
+evidence that TDEs extend the SMBH–bulge relation toward smaller 𝑀• (van Velzen et al., 2021;
+Wevers et al., 2017). With a sufficiently large sample of jetted TDEs, this would also allow us to
+investigate the impact of black hole mass and spin on jet launching.
+SKA-VLBI will allow for localization of off-nuclear TDE candidates to compact star clusters
+providing access to the IMBH regime (𝑀• ∼ 104 –105 𝑀⊙ ). Such localizations are important, as
+demonstrated by AT2024tvd, because even off-nuclear TDEs can harbor SMBHs (Yao et al., 2025).
+In terms of probing the black hole mass function down to the IMBH range, white dwarf (WD)-IMBH
+TDEs offer an excellent avenue of exploration. To date, there are no confirmed WD-IMBH TDEs,
+however the launch of Einstein Probe has given rise to a number of potential events (O’Connor
+et al., 2025; Li et al., 2025). The radio emission associated with IMBHs could span a broad range
+of luminosity-timescale parameter space. However, it may not be possible for IMBHs to produce
+jets in TDEs, if they are formed via hierarchical mergers (Miller and Hamilton, 2002), as their spin
+may not be sufficiently high to launch a jet. SKA follow-up will test for jet or wind signatures, and
+thereby help to constrain IMBH demographics in star clusters and dwarf galaxies (Lin et al., 2018;
+Mezcua, 2017; Liu et al., 2025).
+Although spin measurements from TDEs remain rare and model-dependent, a correlation between
+radio jet power and independent spin indicators (e.g., high-frequency X-ray timing) would test
+spin-powered jet scenarios (Tchekhovskoy et al., 2014; Blandford and Znajek, 1977). SKA’s role
+is to supply robust kinetic power measurements across statistically meaningful samples, enabling
+tests of how SMBH spin couples to magnetic flux and jet efficiency on cosmic scales.
+A useful demographic goal is a uniform census of radio-loudness and kinetic efficiency across 𝑀• =
+105 –107 𝑀⊙ , together with a smaller but clean subset of IMBH candidates. That requires of order one
+hundred radio-detected TDEs across the low-mass SMBH regime and at least ten milliarcsecond-
+localized IMBH candidates. For the bulk SMBH population the gain is completeness. For the
+IMBH channel it is secure source identification, because only SKA–VLBI can exclude SMBHs in
+satellites or disturbed hosts of the AT2024tvd type at the relevant flux densities.
+
+2.4   What is the accretion history of dormant SMBHs?
+As TDE-driven outflows shock the circumnuclear medium (CNM), their radio afterglows encode the
+ambient density profile 𝑛(𝑟) and shock microphysics (𝜖 𝑒 , 𝜖 𝐵 ) through the evolving synchrotron SED
+(e.g., Chevalier, 1998; Metzger and Stone, 2016). Thermal TDEs like ASASSN-14li (Alexander
+
+
+                                                  7
+TDEs with the SKA                                                                              An et al.
+
+
+et al., 2016; van Velzen et al., 2016; Bright et al., 2018) generally indicate non-relativistic outflows
+expanding into approximately 𝑟 −2 density fields, consistent with wind-shaped CNM environments
+(Figure 2). In contrast, late-time flattening or rebrightening in other events such as AT2018hyz,
+AT2018cqh, and AT2019azh (Cendes et al., 2022; Goodwin et al., 2022; Yang et al., 2025) may
+reveal strong inhomogeneities, such as clumps, shells, or stratified media, possibly sculpted by past
+AGN or starburst activity. The broadband sensitivity of the SKA, spanning low to high frequencies,
+will allow simultaneous tracking of the self-absorption turnover (𝜈p , 𝐹p ), yielding the temporal
+evolution of the shock radius 𝑅(𝑡) and magnetic field 𝐵(𝑡) with minimal modeling assumptions
+(e.g. Barniol Duran et al., 2013; Matsumoto et al., 2022).
+Population-level stacking of long-term TDE light curves with SKA will recover characteristic
+𝑛(𝑟) profiles across different host-galaxy types and nuclear histories, testing predictions from
+hydrodynamic simulations of nuclear environments (e.g., Generozov et al., 2017; Mockler et al.,
+2023). SKA–Low observations are especially powerful at late times, when optically thin emission
+persists below ∼350 MHz and the blast wave expands to parsec scales, directly probing the density
+structure of the inner CNM (Figure 2). Current radio telescopes that operate at these low frequencies
+are not sensitive enough to detect the fading radio emission from the majority of TDEs at such
+late times, something only SKA-Low will have the sensitivity to achieve. In addition, high-fidelity
+polarization imaging and rotation-measure (RM) synthesis (Brentjens and de Bruyn, 2005) will
+constrain the magnetized plasma surrounding the shocks, enabling spatially resolved estimates of
+magnetic-field strengths, turbulence, and coherence lengths in galactic nuclei. These measurements
+will connect present-day outflows to the recent accretion and feedback history of otherwise quiescent
+SMBHs, providing key diagnostics of how nuclear activity imprints its environment on sub-parsec
+scales.
+This program depends on following 𝜈p (𝑡) after it moves below 1 GHz, because that evolution
+constrains 𝑛(𝑟) on scales of 0.1–1 pc. About twenty events followed with SKA–Low at four to
+six epochs out to ∼ 1000 d would recover the average density profile beyond the Bondi radius.
+The relevant parameter space is late-time, low-frequency, and sub-mJy, and it remains largely
+unmeasured so far.
+
+2.5   What is the population of recoiling or wandering SMBHs/IMBHs?
+Flares occurring hundreds of parsecs to several kiloparsecs from galactic centers can betray re-
+coiling SMBHs launched by gravitational-wave kicks, SMBHs in merging satellites, or IMBHs
+bound to dense clusters (e.g., Lousto and Zlochower, 2011; Komossa, 2012; Blecha et al., 2016;
+Bellovary et al., 2019; Greene et al., 2021). Recent X-ray and optical discoveries include off-nuclear
+candidates with TDE-like spectra and light curves (e.g., the IMBH TDE candidate in a star clus-
+ter 3XMM J2150–0551), but robust confirmation requires dust-insensitive energetics and precise
+astrometry (Lin et al., 2018). Another interesting class is luminous fast blue optical transients
+(LFBOTs), which are suggested to be powered by TDEs involving IMBHs (Gutiérrez et al., 2024;
+Inkenhaag et al., 2025). The SKA will survey for such off-nuclear transients with accurate positions,
+follow optical/IR candidates to assess synchrotron counterparts. In addition, SKA–VLBI can refine
+localizations to milliarcsecond precision to confirm offsets, characterize host environments, and, in
+exceptional multi-year cases, measure proper motions (Paragi et al., 2015). Even non-detections are
+
+
+                                                   8
+TDEs with the SKA                                                                                    An et al.
+
+
+                                         107         VLBA astrometry at z=0.05
+                                                     VLBA resolution at z=0.05
+                                         106         Current VLA ( a 1GHz)
+                                                     SKA-low ( a 0.05-0.35GHz)
+                                         105         SKA-mid ( a 0.35-15GHz)
+                                                     non-relativistic TDEs
+                                                     relativistic TDEs
+                                         104
+
+
+                            ne (cm 3)
+                                         103
+                                         102
+                                         101
+                                                     R 1
+                                         100
+                                                     R 1.5
+                                        10 1         R 2
+                                        10 2
+                                               104   105       106        107    108
+                                                            Req/Rs
+
+Figure 2: Ambient density 𝑛e versus radius inferred from the synchrotron self-absorption break for known
+TDEs with broadband radio spectra. Current facilities (VLA, ATCA, MeerKAT) reach the SSA break only
+at 𝜈p ≳ 1 GHz, confining equipartition-derived densities to 𝑟 ≲ 1016 cm in all but the brightest relativistic
+events (shaded region). SKA–Low covers 50–350 MHz and reaches ∼13 𝜇Jy beam−1 in a 1 hr integration at
+150 MHz. This allows us to detect thermal TDEs out to 𝐷 𝐿 ≲ 300 Mpc, and extends the region of CNM
+that can be probed by an order of magnitude. Radio data are drawn from Alexander et al. (2016); Eftekhari
+et al. (2018); Mattila et al. (2018); Anderson et al. (2020); Cendes et al. (2021, 2022); Goodwin et al. (2022,
+2023a,b, 2024); Christy et al. (2024); Rhodes et al. (2025).
+
+
+
+
+informative, placing stringent limits on jet/wind energies and hence on the duty cycle and energetics
+of wandering IMBHs and recoiling SMBHs (Alexander et al., 2020). A statistically significant
+SKA-based sample will thus constrain the frequency of displaced massive black holes and their role
+in galaxy assembly.
+
+
+The dominant contaminant in this channel is the orphan GRB afterglow, so classification must rely
+on a purity-controlled combination of observables rather than on any single diagnostic. Candidate
+off-nuclear TDEs should show a statistically significant displacement from the host nucleus, radio
+spectral and temporal evolution slower than that of classical long-GRB afterglows, and similarly
+longer-lasting broadband behaviour consistent with a TDE-driven outflow. Optical and soft-X-
+ray information, such as color evolution, spectral shapes, and light curves, can further suppress
+contamination where available. In this chapter we emphasize the role of SKA in discovery,
+light-curve characterization, and the construction of a clean candidate sample. Milliarcsecond
+confirmation with phased SKA–VLBI will be required only for a small subset of the most compelling
+systems, and is discussed in detail by Shu et al. (2026). Even a modest sample of well-characterized
+off-nuclear candidates would place the first meaningful constraints on the incidence of recoiling
+SMBHs and IMBH-related TDEs.
+
+
+                                                        9
+TDEs with the SKA                                                                           An et al.
+
+
+2.6    What are the properties of TDE outflows?
+Broadband radio spectra and their time evolution constrain shock parameters, with equipartition
+methods yielding characteristic sizes 𝑅 and kinetic energies 𝐸 k , while temporal slopes measure
+expansion and deceleration and thereby separate collimated jets from quasi-spherical winds (e.g.,
+Chevalier, 1998; Barniol Duran et al., 2013). Observations to date indicate a wide dynamic range:
+jetted TDEs with Γ ≫ 1 and 𝐸 k ∼ 1051 –1052 erg (Zauderer et al., 2011; Berger et al., 2012; Mimica
+et al., 2015; Yao et al., 2023; Rhodes et al., 2023); non-jetted outflows with 𝑣 ∼ 0.03–0.3 𝑐 and
+𝐸 k ∼ 1048 –1049 erg (e.g. Alexander et al., 2016; Bright et al., 2018) (Figure 3); and late-time
+rebrightenings that imply refreshed shocks or density structure in the CNM (Cendes et al., 2022;
+Goodwin et al., 2022; Cendes et al., 2024; Goodwin et al., 2025). With dense, multi-band sampling,
+the SKA will track 𝜈p and 𝐹p to infer 𝑅 ∝ 𝑡 𝑚 and 𝐵 ∝ 𝑡 −𝑛 , use closure relations from forward-shock
+theory to test microphysical assumptions (analogous to Gamma Ray Burst afterglows; Sari et al.,
+1998; Granot et al., 2002), as applied to AT2022cmc; (Yao et al., 2024)), and deploy SKA–VLBI
+size and proper-motion constraints to quantify collimation and apparent superluminal motion (Yang
+et al., 2016). Sufficient temporal and frequency sampling will probe different electron energy
+distributions and populations (Rhodes et al., 2025). When signal-to-noise allows, polarization
+provides geometry and field-order diagnostics; low polarizations in non-jetted events would favor
+tangled fields and/or strong depolarization, whereas higher, evolving polarization in jetted events
+at mm–cm bands would support spine–sheath or shock-compressed field configurations. These
+measurements motivate clear, falsifiable expectations: within the first ∼100 days, most radio-bright
+jetted TDEs should show a monotonic decline in 𝜈p with 𝐹p roughly flat or gently decreasing due
+to ongoing energy injection, while non-jetted events should exhibit coupled declines in both; a
+minority (≲ 20%) of thermal TDEs should display late-time (> 300 d) rebrightening indicative
+of CNM structure or refreshed outflows. In all cases, SKA’s cadence and frequency leverage
+will translate spectral–temporal behavior into quantitative energetics, speeds, collimation, and
+composition diagnostics for the outflows.
+
+
+3     Observational strategy and multi-messenger, multi-wavelength synergies
+
+Our observing plan combines wide-field, commensal slow-transient surveys with rapid triggered
+follow-up, targeted late-time campaigns, and SKA–VLBI imaging, while coordinating closely with
+optical, X-ray, and infrared facilities to maximize multi-wavelength return. A practical program
+begins with a Band 2 commensal survey at a 3–7 d cadence. It provides candidate counterparts
+and an initial nuclear localization. Likely events are revisited a few weeks later with targeted
+observations, and a subset of the strongest TDE candidates is then re-observed for ∼ 0.5 hr at about
+3, 10, 30, 100, 300 and 1000 d in Bands 2 and 5, with SKA–Low added once the spectral peak moves
+below 1 GHz. This cadence is sufficient to track the evolving synchrotron turnover and recover the
+physical parameters of the source.
+
+External triggers will come from LSST, ATLAS, Roman, Einstein Probe, XMM-Newton target-of-
+opportunity programs, and any surviving Swift capability. The SKA response should begin within
+24–72 hr. Early multi-band sampling locates the spectral peak close to discovery, while monitoring
+over the next few weeks measures the rise and early decline. Hard-X-ray triggers and unusually red
+
+
+                                                 10
+TDEs with the SKA                                                                                       An et al.
+
+
+
+
+                                                    1051
+
+
+
+
+                             Kinetic Energy (erg)
+                                                    1050
+
+
+                                                    1049
+
+
+                                                    1048                   non relativistic TDEs
+                                                                           relativistic TDEs
+                                                      10 2   10 1    100          101          102
+
+
+Figure 3: Kinetic energy versus Γ𝛽 for seleceted TDEs with broadband radio spectra, inferred from equipar-
+tition analysis. The vertical dashed line separates the relativistic and non-relativistic regimes. Relativistic
+events cluster at 𝐸 k ∼ 1050 –1052 erg; non-relativistic outflows span more than two decades in 𝐸 k for 𝑣 ∼ 0.05–
+0.3𝑐. The present sample is dominated by nearby radio-bright events and leaves the low-energy tail sparsely
+populated. In AA∗ , Band 2 pushes the detectable locus downward by about 1.5 dex in 𝐸 k at 𝑧 = 0.1 and
+expands the accessible volume at fixed radio luminosity by a factor of about 30. Data are from Alexander
+et al. (2016); Eftekhari et al. (2018); Mattila et al. (2018); Anderson et al. (2020); Cendes et al. (2021, 2022);
+Goodwin et al. (2022, 2023a,b, 2024).
+
+
+optical events are characteristic of jetted TDEs, and hence are natural priorities for prompt Band 5
+coverage, where free–free absorption is weaker and newly launched jets are easier to isolate.
+
+The events that constrain energetics and CNM structure most strongly require deeper late-time
+follow-up. We would therefore schedule 1–2 hr observations between 100 and 1000 d for thermal
+TDEs, delayed radio emitters, and candidate off-axis jets. These epochs recover delayed brightening,
+anchor the energy budget, and extend the CNM profile to larger radii.
+
+Bright transients (flux densities ≳ 0.3–0.5 mJy) can be imaged with SKA–VLBI in Band 5a to
+measure sizes and search for proper motion, quantifying collimation and apparent superluminal
+speeds (e.g. AT2019dsg; Mohan et al., 2022). For nearby (distance ≲ 200 Mpc) thermal TDEs that
+peak at 50–200 𝜇Jy, phased SKA sensitivity enables size measurements or stringent limits after a
+few months of expansion. Existing VLBI results for Swift J1644+57 (Yang et al., 2016) provide
+a benchmark, and SKA–VLBI extends these constraints to a broader population with improved
+astrometric precision.
+
+In terms of survey design, Band 2 (0.95–1.7 GHz) offers excellent sensitivity and a wide field
+of view for discovery, while Band 5 (4.6–15.4 GHz) reduces free–free absorption and enables
+early detection of the SSA peak. SKA–Low observations at ∼120–200 MHz will probe late-time,
+optically thin phases when the blast wave has expanded to larger radii. Baselines out to 150 km
+will deliver angular resolutions of roughly 0.3–1.5 arcsec across Bands 2–5, sufficient to separate
+
+
+                                                                    11
+TDEs with the SKA                                                                           An et al.
+
+
+nuclear emission from star-formation and to mitigate confusion; direction-dependent calibration in
+complex fields will preserve image fidelity near bright nuclei. Full-Stokes imaging with per-epoch
+RM synthesis will constrain magnetized CNM, with even upper limits informing depolarization and
+Faraday dispersion. Finally, the SKAO’s use of tied-array beams and non-imaging voltage-buffer
+modes will support VLBI applications, while observatory workflows through the Science Regional
+Centres will ensure timely delivery of calibrated data products for TDE follow-up.
+
+A decisive SKA program for TDEs is intrinsically multi-wavelength and multi-messenger. Optical
+wide-field surveys, ZTF now and LSST through the 2030s, will deliver clean candidate samples
+with rise times, colours, and host information that support source selection. Given the uncertain
+lifetime of Swift, the X-ray program must use a wider set of facilities. Einstein Probe is the
+near-term wide-field trigger facility for soft-X-ray TDEs and has already uncovered candidate WD–
+IMBH events (O’Connor et al., 2025; Li et al., 2025). XMM-Newton remains the best route to
+deeper spectroscopy and timing while it is operational. Once AA4 is mature, NewAthena should
+become the high-throughput partner for joint studies of accretion state and radio calorimetry.
+SVOM provides useful supporting coverage in hard X-rays and the near infrared. Mid-infrared
+facilities from JWST through Roman will isolate dust-obscured or reprocessing-dominated TDEs
+that are optically inconspicuous, and SKA radio follow-up then supplies the dust-insensitive kinetic
+energy term in the energy budget. High-energy triggers add a complementary axis: hard X/ 𝛾-ray
+detections flag candidate jetted events early, and IceCube and KM3Net neutrino alerts motivate
+rapid SKA campaigns testing hadronic acceleration (Murase et al., 2020; Stein et al., 2021; Reusch
+et al., 2022). Milliarcsecond imaging with global VLBI (EVN/VLBA/LBA and African VLBI
+Network; Bempong-Manful et al., 2026) incorporating phased SKA–VLBI supplies size, geometry,
+and astrometry; the transient pipelines already developed for supernovae and related radio transients
+port directly to TDEs.
+
+
+4   Expected outcomes, forecasts, and predictions
+
+In the LSST era the nuclear-transient stream should reach 103 –104 candidates per year within
+𝑧 ≲ 0.5 (Ivezić et al., 2019; van Velzen et al., 2021). Optical and UV filtering should retain a few
+×103 likely TDEs. In AA∗ , Band 2 commensal visits at 3–7 d cadence reach 50–100 𝜇Jy at 5𝜎,
+and stacking ten visits lowers the threshold to 10–30 𝜇Jy, corresponding to 𝐿 𝜈 ≳ 1028 erg s−1 Hz−1
+at 𝐷 𝐿 ≲ 500 Mpc. Week-timescale evolution inconsistent with AGN flicker or scintillation, a
+position consistent with the nucleus to within 0.′′ 3, and a spectrum compatible with synchrotron
+self-absorption should reduce the sample to 150–300 well-identified nuclear radio TDEs per year
+from AA∗ for a radio-loud fraction 𝑓r ∼ 0.1–0.5.
+
+A realistic baseline program would rely on commensal surveys and external facilities for candidate
+discovery. Dedicated SKA time would be reserved for intensive follow up of a small, well-selected
+subset of identified events to constrain jet incidence, CNM structure, and outflow energetics. In
+practice, 30–50 candidates per year could receive a short Band 5 characterization epoch near optical
+peak, and the most informative 8–12 events could then be followed at 3, 10, 30, 100, 300, and 1000 d
+in Bands 2 and 5, with SKA–Low added only for the nearest late-time emitters. Depending on
+source brightness and cadence, such a program would require of order 100–200 hr yr−1 and would
+
+
+                                                 12
+TDEs with the SKA                                                                              An et al.
+
+
+already define the range of jet and outflow properties, test the classification strategy, and anchor the
+first SKA measurements of CNM structure. More ambitious programs aimed at precise binning by
+host class and black-hole mass should be regarded as a later-stage goal, once candidate selection and
+survey yields are better established. SKA’s depth at late times further ensures sensitivity to faint,
+slowly evolving counterparts that optical surveys lose to dust or host contamination (Alexander
+et al., 2020).
+
+Off-axis jets should be several times more common than on-axis jetted TDEs; by pushing to low flux
+densities on week-to-month timescales, SKA will capture their rising afterglows and thereby enable
+robust beaming corrections and true jet fractions (Metzger and Stone, 2016; Mimica et al., 2015;
+Alexander et al., 2020). Late-time rebrightening appears in a non-negligible subset of thermal TDEs
+(e.g., AT2018hyz, AT2020vwl, ASASSN-15oi) (Cendes et al., 2022; Goodwin et al., 2025; Horesh
+et al., 2021), likely reflecting refreshed shocks or CNM structure; a dedicated SKA program should
+detect dozens per year in the LSST epoch, turning such light-curve morphology into environmental
+diagnostics.
+
+From multi-frequency SEDs and their evolution, SKA will measure 𝑅(𝑡), 𝑣 sh (𝑡), 𝐸 k , and 𝑛(𝑟) with
+typical uncertainties of 20–30% per well-sampled event, improving when VLBI sizes are available.
+For nearby thermal TDEs we expect shock velocities 𝑣 sh ∼ 0.05–0.2 𝑐 and 𝐸 k ∼ 1048 –1049 erg,
+while jetted TDEs show beaming-corrected energies ∼ 1050 –1052 erg with Γ of a few to tens, as
+inferred for AT2022cmc (Yao et al., 2024; Rhodes et al., 2023). SKA–VLBI will deliver mas-
+scale astrometry and size constraints to quantify collimation and apparent superluminal motion,
+extending benchmarks set by Swift J1644+57 and related studies (Paragi et al., 2015; Yang et al.,
+2016). Stacked spectra and light curves across host classes will recover average 𝑛(𝑟) profiles
+and their variance, constraining wind-shaped 𝑟 −2 versus isothermal environments and connecting
+present-day shocks to prior nuclear activity (Alexander et al., 2020; Metzger and Stone, 2016).
+Jointly with optical/X-ray mass estimates, SKA radio energetics will extend SMBH–bulge relations
+to 𝑀• ∼ 105 –106 𝑀⊙ , quantify scatter, and test for pseudobulge offsets, while IMBH candidates
+will be assessed for radio outflows; non-detections will bound 𝐸 k and duty cycles (van Velzen et al.,
+2021; Greene et al., 2021).
+
+These programs motivate concrete, testable predictions. First, if spin and magnetic flux dominate
+jet launching, the radio-loud (or jetted) fraction 𝑓j should increase with 𝑀• and with independent
+spin proxies; combining SKA detections (including off-axis) with LSST/eROSITA counts should
+constrain 𝑓j to ±(30–50)% within ∼ 5 years, with trends across mass and host type decisively tested
+(Ivezić et al., 2019; van Velzen et al., 2021). Second, at least ∼ 10% of thermal TDEs should
+exhibit late-time (≳ 300 d) radio brightening with Δ𝐹/𝐹 ≳ 2, indicative of CNM density jumps
+or refreshed shocks; a significantly lower incidence would disfavour such environments (Cendes
+et al., 2022; Goodwin et al., 2022). Third, a non-zero fraction (≳ 1%) of apparently nuclear optical
+TDEs should prove off-nuclear at mas precision with SKA–VLBI, implying recoiling or wandering
+SMBHs and IMBHs; a null result after thousands of events would strongly bound these populations
+(Paragi et al., 2015; Lin et al., 2018). Fourth, polarization should be systematically higher (and more
+variable) in jetted events than in non-jetted outflows, with RM evolution tracing decreasing CNM
+columns; persistently low polarization would imply strong depolarization or tangled fields, as seen
+
+
+                                                  13
+TDEs with the SKA                                                                          An et al.
+
+
+in GRB afterglows (Granot and Königl, 2003). Finally, if the proposed neutrino–TDE association is
+real, neutrino-tagged TDEs should show above-average radio luminosities or unusually hard spectra
+consistent with hadronic acceleration; coordinated SKA campaigns will enable decisive tests (Stein
+et al., 2021; Reusch et al., 2022).
+
+5   Legacy, Impact, and Summary
+
+The SKA will move TDE and nuclear-transient studies from sparse, heterogeneous radio follow-up
+to systematic, well-characterized samples with uniform depth, cadence, and frequency coverage,
+enabling robust population inferences on jet launching, SMBH demographics, and nuclear feedback.
+The combination of survey speed, rapid response and deep targeted follow-up of the SKA, together
+with SKA+VLBI capacity will deliver open, high-value data products, including images, dynamic
+spectra, polarization cubes, and (for VLBI) calibrated visibilities, curated via the SKA Regional
+Centres. These archives will power machine-learning classification of nuclear transients and provide
+a training ground for the next generation of time-domain radio astronomers, while lessons from
+SKA+VLBI pipelines, which are already recognized as broadly applicable to TDEs, FRBs, and
+relativistic mergers, will ensure maximal cross-fertilization across transient classes.
+With its 𝜇Jy sensitivity, broadband frequency coverage, and flexible observing modes, the SKA will
+decisively expand and characterize the radio TDE population, including faint or delayed emitters
+and off-axis jets. Early-time, multi-band radio observations will constrain jet incidence, beaming,
+and energetics, providing rigorous tests of spin/magnetic flux–driven launching scenarios and their
+linkage to accretion-state transitions. By tracking broadband spectral and temporal evolution, the
+SKA will perform CNM tomography, mapping nuclear gas density profiles and magnetization, and
+thereby connect observed outflows to the recent accretion and feedback history of otherwise dormant
+SMBHs. At the same time, TDE-selected SMBH samples, extended by the SKA to lower BH masses
+and to off-nuclear systems, will refine SMBH–host scaling relations and quantify the incidence of
+IMBHs and recoiling or wandering SMBHs. Finally, coordinated multi-messenger programs with
+optical surveys (LSST), X-ray missions (Einstein Probe, SVOM), gamma-ray observatories (CTA),
+and neutrino observatories (IceCube) will test hadronic acceleration scenarios and critically assess
+any neutrino–TDE connection, stressing the SKA’s central role in time-domain, multi-messenger
+astrophysics.
+
+Acknowledgements
+
+MPT acknowledges financial support from the Severo Ochoa grant CEX2021-001131-S and from
+the Spanish grant PID2023-147883NB-C21, funded by MCIU/AEI/ 10.13039/501100011033, as
+well as support through ERDF/EU.
+
+References
+K. D. Alexander et al. ApJL, 819(2):L25, Mar. 2016. doi: 10.3847/2041-8205/819/2/L25.
+K. D. Alexander, S. van Velzen, A. Horesh, and B. A. Zauderer. Space Sci. Rev., 216(5):81, June
+  2020. doi: 10.1007/s11214-020-00702-w.
+
+
+                                                14
+TDEs with the SKA                                                                       An et al.
+
+
+M. M. Anderson et al. ApJ, 903(2):116, Nov. 2020. doi: 10.3847/1538-4357/abb94b.
+I. Andreoni et al. Nature, 612(7940):430–434, Dec. 2022. doi: 10.1038/s41586-022-05465-8.
+R. Barniol Duran, E. Nakar, and T. Piran. ApJ, 772(1):78, July 2013. doi: 10.1088/0004-637X/
+   772/1/78.
+J. M. Bellovary et al. MNRAS, 482(3):2913–2923, Jan. 2019. doi: 10.1093/mnras/sty2842.
+E. Bempong-Manful et al. In Advancing Astrophysics with the SKA – II (AASKAII). 2026. arXiv
+   search: Report number AASKAII/Bempong-Manful01.
+E. Berger et al. ApJ, 748(1):36, Mar. 2012. doi: 10.1088/0004-637X/748/1/36.
+R. D. Blandford and R. L. Znajek. MNRAS, 179:433–456, May 1977. doi: 10.1093/mnras/179.3.
+   433.
+L. Blecha et al. MNRAS, 456(1):961–989, Feb. 2016. doi: 10.1093/mnras/stv2646.
+J. S. Bloom et al. Science, 333(6039):203, July 2011. doi: 10.1126/science.1207150.
+C. Bonnerot and W. Lu. MNRAS, 495(1):1374–1391, June 2020. doi: 10.1093/mnras/staa1246.
+M. A. Brentjens and A. G. de Bruyn. A&A, 441(3):1217–1228, Oct. 2005. doi: 10.1051/0004-6361:
+   20052990.
+J. S. Bright et al. MNRAS, 475(3):4011–4019, Apr. 2018. doi: 10.1093/mnras/sty077.
+M. Burn et al. arXiv e-prints, art. arXiv:2509.17525, Sept. 2025. doi: 10.48550/arXiv.2509.17525.
+D. N. Burrows et al. Nature, 476(7361):421–424, Aug. 2011. doi: 10.1038/nature10374.
+Y. Cendes et al. ApJ, 919(2):127, Oct. 2021. doi: 10.3847/1538-4357/ac110a.
+Y. Cendes et al. ApJ, 938(1):28, Oct. 2022. doi: 10.3847/1538-4357/ac88d0.
+Y. Cendes et al. ApJ, 971(2):185, Aug. 2024. doi: 10.3847/1538-4357/ad5541.
+X. Chen, A. Sesana, P. Madau, and F. K. Liu. ApJ, 729(1):13, Mar. 2011. doi: 10.1088/0004-637X/
+   729/1/13.
+R. A. Chevalier. ApJ, 499(2):810–819, May 1998. doi: 10.1086/305676.
+C. T. Christy et al. arXiv e-prints, art. arXiv:2404.12431, Apr. 2024. doi: 10.48550/arXiv.2404.
+   12431.
+J. L. Dai, G. Lodato, and R. Cheng. Space Sci. Rev., 217(1):12, Feb. 2021. doi: 10.1007/
+   s11214-020-00747-x.
+T. Eftekhari et al. ApJ, 854(2):86, Feb. 2018. doi: 10.3847/1538-4357/aaa8e0.
+R. P. Fender, T. M. Belloni, and E. Gallo. MNRAS, 355(4):1105–1118, Dec. 2004. doi: 10.1111/j.
+   1365-2966.2004.08384.x.
+K. D. French et al. Space Sci. Rev., 216(3):32, Mar. 2020. doi: 10.1007/s11214-020-00657-y.
+E. Gafton and S. Rosswog. MNRAS, 487(4):4790–4808, Aug. 2019. doi: 10.1093/mnras/stz1530.
+A. Generozov et al. MNRAS, 464(2):2481–2498, Jan. 2017. doi: 10.1093/mnras/stw2439.
+S. Gezari. ARA&A, 59:21–58, Sept. 2021. doi: 10.1146/annurev-astro-111720-030029.
+W. W. Golay et al. arXiv e-prints, art. arXiv:2508.16756, Aug. 2025. doi: 10.48550/arXiv.2508.
+   16756.
+A. J. Goodwin et al. MNRAS, 511(4):5328–5345, Apr. 2022. doi: 10.1093/mnras/stac333.
+A. J. Goodwin et al. MNRAS, 522(4):5084–5097, July 2023a. doi: 10.1093/mnras/stad1258.
+A. J. Goodwin et al. MNRAS, 518(1):847–854, Jan. 2023b. doi: 10.1093/mnras/stac312710.48550/
+   arXiv.2208.13967.
+A. J. Goodwin et al. MNRAS, 528(4):7123–7136, Mar. 2024. doi: 10.1093/mnras/stae362.
+A. J. Goodwin et al. ApJ, 981(2):122, Mar. 2025. doi: 10.3847/1538-4357/adb0b1.
+
+
+                                               15
+TDEs with the SKA                                                                        An et al.
+
+
+J. Granot and A. Königl. ApJL, 594(2):L83–L87, Sept. 2003. doi: 10.1086/378733.
+J. Granot, A. Panaitescu, P. Kumar, and S. E. Woosley. ApJL, 570(2):L61–L64, May 2002. doi:
+   10.1086/340991.
+J. E. Greene et al. ApJ, 917(1):17, Aug. 2021. doi: 10.3847/1538-4357/ac0896.
+J. Guillochon and E. Ramirez-Ruiz. ApJ, 767(1):25, Apr. 2013. doi: 10.1088/0004-637X/767/1/25.
+C. P. Gutiérrez et al. ApJ, 977(2):162, Dec. 2024. doi: 10.3847/1538-4357/ad89a5.
+E. Hammerstein et al. ApJ, 942(1):9, Jan. 2023. doi: 10.3847/1538-4357/aca283.
+T. W. S. Holoien et al. MNRAS, 455(3):2918–2935, Jan. 2016. doi: 10.1093/mnras/stv2486.
+A. Horesh, S. B. Cenko, and I. Arcavi. Nature Astronomy, 5:491–497, May 2021. doi: 10.1038/
+   s41550-021-01300-8.
+A. Inkenhaag, A. J. Levan, A. Mummery, and P. G. Jonker. arXiv e-prints, art. arXiv:2510.08505,
+   Oct. 2025. doi: 10.48550/arXiv.2510.08505.
+Ž. Ivezić et al. ApJ, 873(2):111, Mar. 2019. doi: 10.3847/1538-4357/ab042c.
+M. Kesden. Phys. Rev. D, 85(2):024037, Jan. 2012. doi: 10.1103/PhysRevD.85.024037.
+S. Komossa. Advances in Astronomy, 2012:364973, Jan. 2012. doi: 10.1155/2012/364973.
+J. Law-Smith, E. Ramirez-Ruiz, S. L. Ellison, and R. J. Foley. ApJ, 850(1):22, Nov. 2017. doi:
+   10.3847/1538-4357/aa94c7.
+G. Leloudas et al. Nature Astronomy, 1:0002, Dec. 2016. doi: 10.1038/s41550-016-0002.
+D.-Y. Li et al. arXiv e-prints, art. arXiv:2509.25877, Sept. 2025. doi: 10.48550/arXiv.2509.25877.
+D. Lin et al. Nature Astronomy, 2:656–661, June 2018. doi: 10.1038/s41550-018-0493-1.
+Y. Liu et al. arXiv e-prints, art. arXiv:2508.17293, Aug. 2025. doi: 10.48550/arXiv.2508.17293.
+C. O. Lousto and Y. Zlochower. Phys. Rev. Let., 107(23):231102, Dec. 2011. doi: 10.1103/
+   PhysRevLett.107.231102.
+W. Lu and P. Kumar. ApJ, 865(2):128, Oct. 2018. doi: 10.3847/1538-4357/aad54a.
+J. Magorrian and S. Tremaine. MNRAS, 309(2):447–460, Oct. 1999. doi: 10.1046/j.1365-8711.
+   1999.02853.x.
+T. Matsumoto, T. Piran, and J. H. Krolik. MNRAS, 511(4):5085–5092, Apr. 2022. doi: 10.1093/
+   mnras/stac382.
+S. Mattila et al. Science, 361(6401):482–485, Aug. 2018. doi: 10.1126/science.aao4669.
+A. Merloni, S. Heinz, and T. di Matteo. MNRAS, 345(4):1057–1076, Nov. 2003. doi: 10.1046/j.
+   1365-2966.2003.07017.x.
+B. D. Metzger and N. C. Stone. MNRAS, 461(1):948–966, Sept. 2016. doi: 10.1093/mnras/stw1394.
+B. D. Metzger, D. Giannios, and P. Mimica. MNRAS, 420(4):3528–3537, Mar. 2012. doi: 10.1111/
+   j.1365-2966.2011.20273.x.
+M. Mezcua. International Journal of Modern Physics D, 26(11):1730021, Jan. 2017. doi: 10.1142/
+   S021827181730021X.
+M. C. Miller and D. P. Hamilton. ApJ, 576(2):894–898, Sept. 2002. doi: 10.1086/341788.
+P. Mimica, D. Giannios, B. D. Metzger, and M. A. Aloy. MNRAS, 450(3):2824–2841, July 2015.
+   doi: 10.1093/mnras/stv825.
+B. Mockler, J. Guillochon, and E. Ramirez-Ruiz. ApJ, 872(2):151, Feb. 2019. doi: 10.3847/
+   1538-4357/ab010f.
+B. Mockler, D. Melchor, S. Naoz, and E. Ramirez-Ruiz. ApJ, 959(1):18, Dec. 2023. doi: 10.3847/
+   1538-4357/ad0234.
+
+
+                                               16
+TDEs with the SKA                                                                        An et al.
+
+
+P. Mohan et al. ApJ, 927(1):74, Mar. 2022. doi: 10.3847/1538-4357/ac4cb2.
+A. Mummery et al. MNRAS, 527(2):2452–2489, Jan. 2024. doi: 10.1093/mnras/stad3001.
+A. Mummery, E. Nathan, A. Ingram, and M. Gardner. MNRAS, 544(2):2225–2240, Dec. 2025.
+   doi: 10.1093/mnras/staf1565.
+K. Murase et al. ApJ, 902(2):108, Oct. 2020. doi: 10.3847/1538-4357/abb3c0.
+B. O’Connor et al. ApJL, 979(2):L30, Feb. 2025. doi: 10.3847/2041-8213/ada7f5.
+Z. Paragi et al. In Advancing Astrophysics with the Square Kilometre Array (AASKA14), page 143,
+   Apr. 2015. doi: 10.22323/1.215.0143.
+D. R. Pasham et al. Science, 363(6426):531–534, Feb. 2019. doi: 10.1126/science.aar7480.
+D. R. Pasham et al. Nature Astronomy, 7:88–104, Jan. 2023. doi: 10.1038/s41550-022-01820-x.
+D. R. Pasham et al. Nature, 630(8016):325–328, June 2024. doi: 10.1038/s41586-024-07433-w.
+M. J. Rees. Nature, 333(6173):523–528, June 1988. doi: 10.1038/333523a0.
+R. C. Reis et al. Science, 337(6097):949, Aug. 2012. doi: 10.1126/science.1223940.
+S. Reusch et al. Phys. Rev. Let., 128(22):221101, June 2022. doi: 10.1103/PhysRevLett.128.221101.
+L. Rhodes et al. MNRAS, 521(1):389–395, May 2023. doi: 10.1093/mnras/stad344.
+L. Rhodes et al. arXiv e-prints, art. arXiv:2506.13618, June 2025. doi: 10.48550/arXiv.2506.13618.
+C. Ricci et al. ApJL, 898(1):L1, July 2020. doi: 10.3847/2041-8213/ab91a1.
+R. Sari, T. Piran, and R. Narayan. ApJL, 497(1):L17–L20, Apr. 1998. doi: 10.1086/311269.
+X. Shu et al. In Advancing Astrophysics with the SKA – II (AASKAII). 2026. arXiv search: Report
+   number AASKAII/Shu01.
+R. Stein et al. Nature Astronomy, 5:510–518, Feb. 2021. doi: 10.1038/s41550-020-01295-8.
+N. C. Stone and B. D. Metzger. MNRAS, 455(1):859–883, Jan. 2016. doi: 10.1093/mnras/stv2281.
+N. C. Stone, A. H. W. Küpper, and J. P. Ostriker. MNRAS, 467(4):4180–4199, June 2017. doi:
+   10.1093/mnras/stx097.
+A. Tchekhovskoy, B. D. Metzger, D. Giannios, and L. Z. Kelley. MNRAS, 437(3):2744–2760, Jan.
+   2014. doi: 10.1093/mnras/stt2085.
+B. Trakhtenbrot et al. ApJ, 883(1):94, Sept. 2019. doi: 10.3847/1538-4357/ab39e4.
+S. van Velzen et al. Science, 351(6268):62–65, Jan. 2016. doi: 10.1126/science.aad1182.
+S. van Velzen et al. ApJ, 908(1):4, Feb. 2021. doi: 10.3847/1538-4357/abc258.
+T. Wevers et al. MNRAS, 471(2):1694–1708, Oct. 2017. doi: 10.1093/mnras/stx1703.
+T. Wevers et al. MNRAS, 487(3):4136–4152, Aug. 2019. doi: 10.1093/mnras/stz1602.
+J. Yang et al. MNRAS, 462(1):L66–L70, Oct. 2016. doi: 10.1093/mnrasl/slw107.
+L. Yang et al. ApJL, 993(1):L2, Nov. 2025. doi: 10.3847/2041-8213/ae0caa.
+Y. Yao et al. ApJL, 955(1):L6, Sept. 2023. doi: 10.3847/2041-8213/acf216.
+Y. Yao et al. ApJ, 965(1):39, Apr. 2024. doi: 10.3847/1538-4357/ad2b6b.
+Y. Yao et al. ApJL, 985(2):L48, June 2025. doi: 10.3847/2041-8213/add7de.
+B. A. Zauderer et al. Nature, 476(7361):425–428, Aug. 2011. doi: 10.1038/nature10366.
+B. A. Zauderer et al. ApJ, 767(2):152, Apr. 2013. doi: 10.1088/0004-637X/767/2/152.
+W. Zhang et al. Nature Astronomy, 9:702–709, May 2025. doi: 10.1038/s41550-025-02502-0.
+
+
+
+
+                                               17
+

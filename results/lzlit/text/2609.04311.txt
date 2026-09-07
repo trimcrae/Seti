@@ -1,0 +1,779 @@
+                                                 Development of quantum technologies for optical/infrared
+                                                                     interferometry
+                                                                                           John D. Monniera
+                                                  a
+                                                      Department of Astronomy, University of Michigan, Ann Arbor, Michigan 48109, USA
+
+                                                                                             ABSTRACT
+                                              Quantum technologies may revolutionize optical interferometry through new means to distribute and preserve
+arXiv:2609.04311v1 [astro-ph.IM] 3 Sep 2026
+
+
+
+
+                                              electric-field amplitude and phase correlations between widely separated telescopes. After reviewing existing
+                                              techniques, I survey proposed quantum-sensing and quantum-networking applications and highlight recent lab-
+                                              oratory demonstrations of key building blocks. By easing field-transport demands for baselines beyond ∼1 km,
+                                              quantum-enhanced interferometry could enable sub-milliarcsecond imaging and µas-class differential astrometry.
+                                                  That said, “going quantum” is not a magic shortcut to sensitivity because many of the most compelling
+                                              science cases remain photon- and turbulence-limited. I therefore emphasize the practical constraints – loss,
+                                              bandwidth, coherence time, synchronization, and wavelength limits of quantum interfaces – that must also be
+                                              overcome to make these capabilities useful for astronomy, whether deployed on the ground or from space.
+                                              Keywords: quantum interferometry, optical interferometry, quantum networks, quantum memories
+
+                                                                                        1. INTRODUCTION
+                                              The characteristic angular resolution of a two-aperture interferometer operating at wavelength λ with a pro-
+                                              jected baseline B is λ/B. Radio arrays routinely use continental and even Earth-sized baselines because the
+                                              electric field can be amplified, down-converted, digitized, and recorded with tolerable added noise. At optical
+                                              wavelengths, we normally transport the starlight itself to a common beam combiner while controlling delay, po-
+                                              larization, dispersion, and atmospheric phase. Existing optical/infrared arrays now extend to 330 m, providing
+                                              milliarcsecond-scale resolution, and have used this approach to image stellar surfaces, circumstellar environ-
+                                              ments, stars orbiting the Milky Way’s central supermassive black hole, and active galactic nuclei, as well as to
+                                              make precise astrometric measurements.1, 2 Each additional reflection, meter of beam train, and increment of
+                                              delay-line stroke introduces loss or instability or expense, however, and a lost astronomical photon cannot be
+                                              replaced. These constraints become increasingly important for kilometer-scale and longer baselines.
+                                                  Quantum information science suggests another architecture. The astronomical field remains local at each
+                                              telescope while an engineered quantum resource, such as a reference photon, an entangled pair shared between
+                                              stations, or a state held in memory, is distributed or prepared through a network. Measurements made locally at
+                                              the telescopes are then compared through an ordinary classical communications channel. In principle, this can
+                                              recover the first-order coherence measured by a conventional beam combiner without transporting starlight over
+                                              the full baseline. Unlike the unknown astronomical field, the engineered resource can be generated repeatedly,
+                                              its successful preparation can be confirmed (“heralded”), and it can sometimes be stored until needed. Gottes-
+                                              man, Jennewein, and Croke introduced this approach for telescope arrays using quantum repeaters, which are
+                                              intermediate nodes that establish entanglement over a long link by connecting shorter links.3 Later work has
+                                              explored entanglement consumption, time-bin encoding, quantum memories, improved circuits, larger arrays,
+                                              and laboratory tests.4–9 While these parallel approaches may favor different bandwidths, storage times, link
+                                              lengths, and source brightnesses, the ideal lossless direct detection remains the benchmark.
+                                                  This paper follows my 2026 SPIE review talk and is not an encyclopedic survey. I write from the perspective
+                                              of an astronomer and instrument builder. I first discuss photons per mode, then compare classical and quantum-
+                                              assisted measurements. I next review representative protocols and experiments, and close with observatory
+                                              requirements and possible next tests. Complementary recent reviews and roadmaps are provided by Huang et
+                                              al. and Rajagopal et al.10, 11
+                                                 Further author information: J.D.M.: E-mail: monnier@umich.edu
+             2. WHY OPTICAL INTERFEROMETRY IS PHOTON-STARVED
+2.1 Photons per mode, not photons per second
+The most critical quantity for weak-light interferometry is the mean photon occupation per mode, n, not the total
+photon rate. Here a mode means one independently measurable optical-field degree of freedom, with a specified
+spatial pattern, polarization, and temporal or spectral waveform. A bright star can supply many photons per
+second to a telescope, but if those photons are spread over many independent modes, each mode may be nearly
+empty.
+   For one polarization mode of thermal radiation at frequency ν and temperature T ,
+                                                                1
+                                            n(ν, T ) =                     .                                       (1)
+                                                         exp(hν/kB T ) − 1
+
+A single frequency-temporal mode obeys the condition that the product of its bandwidth ∆ν and its coherence
+time τc is of order unity, ∆ν τc ∼ 1. A single spatial mode is diffraction limited, with angular area Ωmode ∼ (λ/D)2
+for a telescope of diameter D. Increasing bandwidth collects more photons by adding independent spectral modes,
+not by making each mode brighter. Exploiting a broad band therefore requires the instrument to process many
+modes in parallel. During an integration τ , the photons are spread over approximately
+
+                                                   M ≃ Npol ∆ν τ                                                   (2)
+
+independent modes, up to order-unity conventions for the temporal coherence interval. Here Npol is the number
+of polarization states included. There is also a spatial-dilution penalty for an unresolved star: it fills only a small
+fraction of the telescope’s diffraction-limited spatial mode. Schematically,
+                                                                                       2
+                                                  Ωsource                            λ
+                                  neff ≃ n min 1,           ,          Ωmode ∼                 .                   (3)
+                                                  Ωmode                              D
+
+This expression includes source spatial dilution but not instrument coupling or downstream losses, which are
+included later in ηq .
+    Table 1 gives examples from the review talk. At 1 µm, the illustrative 10th-magnitude star supplies only
+neff ≃ 7.5 × 10−9 to a diffraction-limited 1-m aperture and 7.5 × 10−7 to a diffraction-limited 10-m aperture.
+Its angular area fills only a small fraction of the telescope’s spatial mode. A larger aperture improves this filling
+factor but cannot increase the surface brightness above the Planck occupation.
+
+Table 1. Illustrative mean photon occupations per thermal mode. The effective values include spatial dilution for the
+stated telescope diameter (assuming diffraction-limited performance) but not a detailed instrument throughput.
+                   Source and wavelength                      n          neff (D=1 m)              neff (D=10 m)
+                                                                  −1                 −1
+                   Sun (6000 K) at 1 µm                  1.0 × 10         1.0 × 10                  1.0 × 10−1
+                   Betelgeuse (3000 K) at 1 µm           8.3 × 10−3       3.1 × 10−4                8.3 × 10−3
+                   10th-mag star (10000 K) at 1 µm       3.1 × 10−1       7.5 × 10−9                7.5 × 10−7
+                   Thermal source (300 K) at 1 cm         2.1 × 102        2.1 × 102                 2.1 × 102
+                   Thermal source (5000 K) at 1 cm        3.5 × 103        3.5 × 103                 3.5 × 103
+
+
+2.2 What the classical architectures measure
+Before considering new quantum approaches, I briefly review three classical architectures for stellar interferom-
+etry: direct detection, Hanbury Brown–Twiss (HBT) intensity interferometry, and heterodyne detection. The
+direct-versus-heterodyne trade has also been examined explicitly for a large, many-baseline astronomy facility in
+the Planet Formation Imager concept.12
+   Direct detection brings the optical fields collected by the telescopes together in a common beam combiner
+before photodetection. Let EA and EB be the complex fields coupled into one matched mode at telescopes A
+and B. Their complex degree of first-order coherence is the visibility VAB :
+                                                            ∗
+                                                          ⟨EA EB ⟩
+                                              VAB = p                        .                                        (4)
+                                                        ⟨|EA |2 ⟩⟨|EB |2 ⟩
+
+The van Cittert–Zernike theorem identifies VAB with a Fourier component of the sky brightness. A conventional
+beam combiner superposes the two optical paths and measures this first-order coherence. With lossless transport
+and ideal detectors, direct detection is broadband and has the best weak-light scaling.
+   Hanbury Brown–Twiss (HBT) intensity interferometry instead detects photons independently at each tele-
+scope and correlates their intensity fluctuations. For thermal light, the normalized zero-delay intensity correlation
+is
+                                                 (2)
+                                                gAB (0) = 1 + |VAB |2 .                                           (5)
+HBT does not require a phase-stable optical link. Its path-length tolerance is set mainly by detector timing
+rather than by optical-phase matching, although coarse delay must still keep the signals within the correlation
+window. Because HBT does not require diffraction-limited single-mode coupling, it can use large, relatively
+inexpensive “light bucket” telescopes and relax adaptive-optics requirements. The price is a weak second-order
+signal when n ≪ 1, measured against many accidental coincidences.13, 14 See Table 2 for the weak-light scaling
+of HBT.
+    In heterodyne detection, each telescope mixes the source with a phase-referenced local oscillator (LO) and
+records the beat signal locally. A major advantage is that the LO can remain coherent over long times, transferring
+the optical phase into a lower-frequency electronic record; the LOs at different stations must themselves remain
+mutually phase referenced. Those electronic records can be copied with little additional noise, then delayed and
+correlated in software. This is especially useful for arrays with many telescopes because the same recorded signal
+can feed many baseline combinations.12 The price is that even an ideal heterodyne receiver has a quantum noise
+floor equivalent to roughly one photon per measured mode. Because optical starlight typically has n̄ ≪ 1 photon
+per mode, this noise overwhelms the signal.
+    Table 2 gives the leading weak-light scalings, omitting order-unity constants and estimator details. Here M
+is the number of incident matched modes used in the comparison, |V | is the source visibility amplitude, and
+ηq is an architecture-specific effective efficiency that includes the relevant throughput and contrast losses. The
+same symbol is used in every row to keep this penalty explicit, but it should not be interpreted as the same
+component-level efficiency for every architecture. For the quantum-assisted case, ηq is the usable distributed-
+resource factor expanded in Eq. 8. Direct detection and entanglement-assisted interferometry therefore have
+square-root throughput dependence, while heterodyne√      and HBT have linear throughput dependence in the weak-
+light limit. Ideal first-order detection scales as n; HBT and heterodyne scale as n when n ≪ 1.
+
+Table 2. Schematic weak-thermal-light sensitivity scalings. These expressions compare idealized architectures and omit
+order-unity factors, backgrounds, detector dark counts, and calibration systematics.
+ Architecture                Representative scaling     Dominant practical trade
+                                         p
+ Direct detection             SNR ∝ |V | ηq M n         Optimal use of weak light, but the astronomical field must
+                                                        reach a common combiner.
+                                             √
+ Heterodyne                    SNR ∝ |V |ηq n M         Local measurement and electronic correlation, but
+                                                        vacuum/local-oscillator noise dominates when n ≪ 1.
+                                              √
+ HBT intensity                SNR ∝ |V |2 ηq n M        Phase-insensitive long-baseline operation, but measures a
+                                                        weak second-order correlation.
+                                           p
+ Entanglement assisted        SNR ∝ |V |    ηq M n      Can recover direct-like scaling only if entanglement, local
+                                                        interactions, and detection are sufficiently efficient.
+
+
+   Figure 1 compares three phase-sensitive architectures that access complex first-order coherence: direct trans-
+port, local-oscillator detection, and quantum-assisted nonlocal detection. HBT is deliberately absent because
+it instead correlates locally measured intensities to obtain the second-order quantity |V |2 . Quantum-assisted
+performance depends on the efficiency, fidelity, and rate of the distributed resource.
+
+
+
+
+Figure 1. Three phase-sensitive architectures and representative weak-source SNR scalings; the source’s µ corresponds to
+n in our scalings. Cropped from Fig. 1a of P.-J. Stas et al., arXiv:2509.09464v2 (2025), under the CC BY 4.0 license; see
+also the published version.9
+
+
+          3. WHAT QUANTUM INTERFEROMETRY CAN AND CANNOT DO
+For a quantum-assisted interferometer to offer advantages of direct-detection methods, it would have to:
+
+1. keep the astronomical photons local to each telescope;
+2. distribute entanglement, reference photons, or stored quantum states through a network designed for that
+   purpose;
+3. open baselines far beyond the kilometer scale without building a kilometer-scale optical delay line; and
+4. retain the first-order-coherence sensitivity that makes direct detection attractive.
+
+Detectors, memories, frequency conversion, stabilized links, and clocks have advanced enough to test several
+required operations together. The main question is now whether a complete system can process enough astro-
+nomical modes at a useful rate.
+   The quantum toolkit does not remove several familiar physical limits. The main guardrails are:
+
+• No free copies and no noiseless amplifier. A quantum memory can store a captured state and return it
+  later, but it cannot make a perfect spare copy. Nor can we noiselessly amplify an arbitrary faint field. If the
+  photon is lost before local capture, quantum processing cannot bring it back.
+• Teleportation is real, but constrained. It can transfer an unknown quantum state, but only by consuming
+  entanglement already shared between the stations and sending the result of a local measurement through
+  a classical channel. Nothing travels faster than light, and causality is not violated. For an astronomical
+  interferometer, this means the entangled resource must be distributed and ready when the signal mode is
+  processed.
+• Which-path information kills the phase. If the measurement reveals which telescope received the photon,
+  the interference is lost. The protocol may herald that a photon arrived, but it must hide which path the photon
+  took (“path erasure”). The same requirement appears in the earlier quantum-assisted telescope-array protocol,
+  and the recent experimental literature calls the corresponding operation “photon mode erasure.”5, 9
+• There is no software delay line after detection. Heterodyne uses a long-coherence LO to transfer the
+  optical phase into an electronic record that can be aligned later in software. Flying-reference protocols such
+  as GJC have no such electronic record: the astronomical and reference photons must overlap when they are
+  combined locally. Memory-assisted protocols can instead retain the relevant phase in a stationary quantum
+  state, but the stellar mode must be coupled into the memory at the correct time and the write, storage, and
+  readout phases must be calibrated. In either case, post-processing cannot restore coherence that was lost
+  before the measurement.
+• The observatory problems remain. Quantum hardware does not remove atmospheric piston, chromatic
+  dispersion, variable coupling, background, or source variability. We still need collecting area, fringe tracking to
+  stabilize atmospheric piston during an exposure, delay tracking to keep the optical paths within the coherence
+  envelope, and calibration.
+
+   I first describe the principal protocols and their theoretical extensions, and then turn to what the laboratory
+experiments actually demonstrated.
+
+                                    4. PROTOCOLS AND THEORY
+4.1 GJC: flying path-entangled reference photons
+The Gottesman–Jennewein–Croke (GJC) protocol is designed to let two telescopes measure the same complex
+visibility as a direct beam combiner without transporting the starlight to a common location. Here, the starlight
+remains at each telescope and interacts with a single distributed reference photon placed in a coherent superposi-
+tion of traveling to telescope A or telescope B. The detector outcomes recorded at the two stations are combined
+through a classical channel. A controllable phase in the reference allows these correlations to recover both the
+visibility amplitude and phase.3
+   In its simplest form, the path-entangled reference photon is
+                                                 1
+                                      |ψref ⟩ = √ |1⟩A |0⟩B + eiδ |0⟩A |1⟩B .
+                                                                           
+                                                                                                                 (6)
+                                                  2
+Here |1⟩A |0⟩B means one reference photon at telescope A and none at telescope B, while |0⟩A |1⟩B means the
+reverse; δ is their tunable relative phase. Each telescope combines its astronomical mode and its local share
+of the reference on a beam splitter. When one photon is detected at each station, the two possibilities cannot
+be distinguished: a stellar photon at A and a reference photon at B, or vice versa. The balance between
+correlated and anticorrelated detector outcomes then measures one phase projection of the visibility, proportional
+to Re(VAB e−iδ ). Varying δ samples different projections.
+    Spontaneous parametric down-conversion (SPDC) is a common laboratory source of correlated photon pairs.
+A pump laser illuminates a nonlinear crystal, where occasionally one pump photon is converted into two lower-
+energy photons. One photon of the pair is detected locally as a herald. That click tells us that its partner was
+probably produced and identifies the time bin to keep. The partner, which is the reference photon used by the
+interferometer, is sent through a beam splitter. It is not directed to one telescope or the other. Instead, the
+beam splitter puts it into a coherent superposition of the two paths, and the two outputs are sent to the two
+telescope stations. This is the path-entangled reference in Eq. 6.
+   Creation of the reference photon is not the only challenge, as the timing requirements for distribution are
+unforgiving. After the reference photon is divided at the beam splitter, the differential propagation time to the
+two stations must track the differential arrival time of the stellar wavefront at the telescopes. The astronomical
+and reference photons must overlap within the same time bin (of order 1 nanosecond) when they are combined
+locally, as well as being matched in spectrum, polarization, and spatial mode. While this is fundamentally the
+same challenge direct-detection interferometrists must solve when bringing starlight together for interference,
+there are some advantages to distributing the reference photon rather than the stellar photon. The reference is
+an engineered resource: its emission time, spectrum, polarization, spatial mode, and phase can be controlled,
+and a future network could use heralding, wavelength conversion, or quantum repeaters to establish it over
+long distances. A lost reference can be replaced for a later trial, whereas starlight lost in a long beam train is
+irretrievable. The astronomical photon also remains in a short local path from the telescope to the detector,
+potentially maintaining high quantum efficiency for this most precious resource. These advantages do not relax
+the final requirement: a successfully delivered reference photon must still be present and mode matched when
+the stellar photon arrives.
+    Note that heterodyne methods avoid this pre-detection optical overlap by using a long-coherence LO to
+preserve the phase in a local electronic record; the flying-reference measurement does not leave such a record.
+There is therefore no possibility of a software delay line after photodetection, as there is for HBT or heterodyne
+methods. We discuss later how a quantum memory could instead provide a physical, programmable delay, but
+the storage interval, readout timing, and phase must still be set and calibrated before the final measurement; the
+memory moves the delay-matching step rather than eliminating it. One hopes the promised quantum network
+can distribute resources with the required timing. Otherwise, the future quantum interferometrist will still need
+to build the correct delay and phase control into a bespoke network, reducing some of the practical advantage
+of the quantum approach.
+    The GJC protocol has two important disadvantages relative to direct detection and the memory-assisted
+Khabiboulline protocol we discuss next. First, in the ideal balanced two-station scheme, the astronomical and
+reference photons arrive at the same station in half of the trials, and these events must be discarded. This halves
+the usable astronomical-photon throughput, contributing an intrinsic factor of 1/2 to the end-to-end efficiency
+ηq before other losses. Second, because stellar-photon arrival times are random, a mode-matched flying reference
+photon must be available in every temporal mode. For 1-ns time bins, this implies a reference-photon rate of
+order 1 GHz per spectral, spatial, and polarization channel. Producing such photons at high efficiency and with
+low multiphoton contamination, distributing them through a quantum network, and maintaining adequate mode
+matching remain challenging. If a stellar photon arrives in a mode without a matching reference photon, that
+event is lost.3
+
+4.2 Khabiboulline: pre-shared Bell pairs and quantum memories
+The Khabiboulline protocol is designed to let two telescopes measure the same complex visibility as a direct beam
+combiner without transporting the starlight or supplying a flying reference photon in every possible time bin. As
+for GJC, the starlight again remains at each telescope. Unlike GJC, each telescope couples its incoming light to
+local quantum memories, while Bell pairs are distributed between the stations in advance. A Bell pair consists of
+one two-state memory element, or qubit, at each station, prepared in a shared quantum state whose measurement
+outcomes remain correlated. Local operations on the memories and Bell pairs preserve the possibility that the
+photon arrived at either telescope (“path erasure” concept), and the results from the two stations are combined
+through a classical channel to recover both the visibility amplitude and phase.4, 5
+    The key practical attraction is that these Bell pairs can be prepared and stored before the unpredictable
+stellar photon arrives. Useful stellar photons in a given measured mode arrive slowly, whereas the network can
+make many heralded attempts to establish Bell pairs between typical photon arrivals. An individual attempt
+need not succeed: Bell-pair generation can be retried, provided the complete entangled resource is ready before
+the next stellar photon arrives and remains coherent until it is used. This retry advantage does not extend to
+the signal: every missed stellar photon is an irrecoverable loss that reduces the accumulated SNR.
+     In more detail, every incoming time bin interacts with a local memory. If a stellar photon is present, its
+optical state and arrival-time address are written into memory. The remaining optical mode is then measured in
+a way that erases which-telescope information, an operation called “photon-mode erasure” in recent experimental
+work. The shared Bell pairs are used in coordinated same-or-different tests, called parity checks, to identify the
+occupied time bin without determining which telescope received the photon. The protocol therefore learns when
+the photon arrived while deliberately leaving where it arrived unresolved, preserving the coherence between
+“photon at telescope A” and “photon at telescope B.” The memories are finally measured using tunable local
+phases, and the joint statistics recover the real and imaginary parts of the visibility. Those local phases must
+still be tied to a stable correlated reference, such as phase-linked control fields; the Bell pairs alone do not supply
+it.4, 9, 15
+     In the ideal protocol, all astronomical-photon events can contribute rather than half being discarded as in
+GJC, and no mode-matched reference photon is required in every possible time bin. Binary encoding keeps the
+prepared resource modest: a block of Mbin possible arrival-time bins requires only ⌈log2 (Mbin + 1)⌉ stored Bell
+pairs rather than one pair per bin. The demanding part shifts to the local light–memory interface, which must
+still process every incoming time bin and capture the stellar state when it appears, as well as to memory coherence
+and low-error quantum gates. Later circuit designs reduced the supporting qubits and quantum gates further.4–6
+Unlike GJC, this protocol does not require an astronomical photon to overlap locally with a flying reference
+photon. It still requires precise timing: the geometric delay and station clocks must be known well enough that
+corresponding stellar temporal modes are assigned to the same memory time bin at the two telescopes, within
+the coherence time and with their relative phase preserved.
+
+4.3 More than two telescopes
+A single baseline is not an imaging array. Two telescopes provide one complex visibility, whereas useful imaging
+normally requires many baselines and robust quantities such as closure phase.16, 17 For three stations,
+
+                                              Φ123 = arg (V12 V23 V31 ) ,                                        (7)
+
+which cancels telescope-based phase errors in an ideal classical array. Extending a quantum-assisted protocol from
+one baseline to an imaging array is not automatic. GJC suggested sharing one reference photon coherently among
+all telescopes so that reference errors could cancel in closure combinations, while Khabiboulline et al. extended
+their memory architecture to N stations using multi-station entanglement.3, 5 These proposals showed how to
+connect more than two telescopes; the explicit construction of a robust quantum closure-phase measurement has
+been addressed only more recently.
+     Multi-telescope quantum interferometry is an especially active topic, with several complementary theoretical
+results appearing in 2026. For conventional imaging, pairwise complex visibilities contain the needed image
+information. The open question is whether measuring each pair separately is quantum-optimal, or whether
+quantum states and joint measurements shared across N > 2 telescopes can extract that information more
+efficiently. An SPIE contribution by Gorshkov et al., Quantum-optimized phase closure for robust imaging, treats
+the closure observable directly.18 Padilla, Sajjad, Saif, and Guha showed how local spatial-mode sorting and
+entanglement-assisted operations could synthesize an arbitrary linear-optical measurement across any number of
+telescopes; their detailed example uses two telescopes, so the larger-array result is a general receiver construction
+rather than a derived closure observable.19 A 2026 preprint by Zhang and collaborators gives a weak-light imaging
+example in which genuinely multi-telescope measurements can outperform independent pairwise receivers for
+some image parameters.20 Together, these works address robust phase closure, general array-receiver design,
+and the possible need for genuinely multi-telescope measurements. The Kwiat group’s conference sequence,
+discussed below, began with a three-arm layout and one-baseline fringe data, then reported visibility-amplitude
+recovery under imposed turbulence and a preliminary zero-closure result for a point source.21–23
+
+                       5. SELECTED EXPERIMENTS AND PROPOSALS
+The previous section described the protocols and theoretical extensions; I now ask what the laboratory ex-
+periments actually measured. The protocol correspondence is important: Brown et al. implemented the GJC
+entangled-reference idea with real optical hardware; Stas et al. demonstrated Khabiboulline-style entanglement-
+assisted nonlocal phase sensing between two quantum-memory nodes, although not its binary time-bin encoding;
+and Wang et al. implemented a memory-assisted Brown/GJC receiver with programmable delay compensation.
+
+5.1 Brown–Smith entangled-reference experiment
+Brown, Smith, and collaborators at the University of Oregon implemented the GJC entangled-reference idea
+with real optical hardware in a tabletop experiment.7 A laser scattered from a rotating diffuser supplied pseudo-
+thermal “starlight,” meaning laboratory light with thermal-like intensity fluctuations, while an SPDC source
+produced the photon pairs. Detection of one photon heralded the event; its partner passed through a beam
+splitter to form the path-entangled reference sent toward the two receiver arms. At each arm, the reference was
+combined with the local pseudo-starlight, and superconducting nanowire single-photon detectors recorded the
+coincidences. Figure 2 shows the apparatus.
+    The experiment used two double-slit configurations of the same pseudo-thermal source as binary-star ana-
+logues. At each baseline setting, it recovered a complex visibility phasor, including amplitude and phase. Because
+the phase reference was not stable between different baseline settings, those phasors could not be combined di-
+rectly into a phase-referenced image. The analysis therefore used |V |2 across baselines and recovered the source-
+intensity autocorrelation. The herald detector was a threshold device: it distinguished a pair-production event
+from an empty time bin, but could not certify that exactly one pair had been produced, so occasional multi-
+pair events could pass the herald (something that could be avoided with a photon-number-resolving detector).
+The apparatus included a heralded-photon source, detectors, and real mode-matching errors, but not separated
+telescopes, atmospheric propagation, or an astronomical source. Spatially filtered sunlight is one possible next
+test.
+
+
+
+
+Figure 2. Laboratory implementation of the entangled-reference receiver of Brown et al.. A rotating diffuser produced
+the weak pseudo-thermal source, while SPDC supplied the heralded path-entangled reference. Cropped from Fig. 2 of M.
+R. Brown et al., “Interferometric Imaging Using Shared Quantum Entanglement,” Phys. Rev. Lett. 131, 210801 (2023),
+doi:10.1103/PhysRevLett.131.210801, under the CC BY 4.0 license; cropping is the only modification.
+
+
+5.2 Event-ready diamond-memory nodes
+Stas et al. demonstrated entanglement-assisted nonlocal optical phase sensing using two separated quantum-
+memory nodes, implementing the central two-station measurement of the Khabiboulline approach rather than
+the GJC flying-reference receiver.9 They first generated and heralded a Bell pair between nuclear-spin memories
+at the two stations. Here “event-ready” means that this shared entangled resource was confirmed before the
+weak signal was measured. A weak phase-encoded optical signal then interacted locally with each diamond
+node. Additional local optical fields erased which-station information, so a detector click did not reveal where
+the signal photon had arrived. The electron spin at each node was measured locally, and the two outcomes were
+compared to flag “signal present somewhere” without revealing which node received the signal. The nuclear-
+spin memories were then measured locally in phase-sensitive bases, and correlations between those outcomes
+recovered the differential phase. Thus the experiment combined remote Bell-pair distribution, local light–memory
+interaction, photon mode erasure, nonlocal photon heralding, and phase-sensitive interferometric readout. It did
+not implement Khabiboulline’s binary encoding of many possible arrival-time bins.
+    Each node used a silicon-vacancy center, an atom-like defect in diamond whose electron spin provided the
+fast interface to light. A nearby nuclear spin provided the longer-lived memory; both spins were manipulated
+with microwave pulses that drove the quantum gates and rotations. The signal-present test accepted only a
+fraction of real photon events, and imperfections in the shared Bell pair also produced false triggers, equivalent
+to reporting a photon when none was present. The input was a phase-scrambled attenuated laser rather than
+starlight.
+    The nodes were about 6 m apart. Stas et al. emulated an effective fiber length L = 1.55 km using 3.1 km
+of spooled fiber across the two entanglement paths. For the complete experiment with the nodes physically
+separated by 6 m, the average accepted-event rate was roughly one event every 80 seconds, over mean input
+levels from 0.25 to 2 photons per pulse. Figure 3 shows the sequence. The experiment combined several operations
+needed for a memory-assisted receiver; rate, false heralds, cryogenic hardware, and bandwidth remain limiting.
+
+
+
+
+Figure 3. Diamond-memory sequence: entangle the two nodes, collect the weak signal without revealing its station, report
+a signal-present event, and read the stored differential phase. Cropped from Fig. 4b of P.-J. Stas et al., arXiv:2509.09464v2
+(2025), under the CC BY 4.0 license; see also the published version.9
+
+
+5.3 Cold-atom memories and long delay compensation
+Wang et al. implemented a memory-assisted Brown/GJC receiver in which cold-atom memories stored and
+later released the shared reference resource; the simulated starlight itself was not stored. They demonstrated
+one programmed readout delay rather than a changing astronomical delay, and they did not implement the
+Khabiboulline binary time-bin protocol. They used two 87 Rb ensemble memories, clouds of atoms in which an
+optical excitation can be held collectively by many atoms, separated by about 2 m.24 To prepare the reference,
+each memory was connected through a 10.1-km deployed-fiber arm to a common remote node. A detector
+click there heralded that one atomic excitation was stored across the two memories without determining which
+memory held it. When released, this excitation became the path-entangled reference photon used in the GJC
+measurement. At each receiver, this reference interfered with one arm of a split laboratory source that mimicked
+thermal starlight. The reported 20-km link is the sum of the two fiber arms, not the separation of the memories
+(Fig. 4).
+   The local write and read times were programmed in advance. The remote herald time tag was used afterward
+to select successful records; the distant click did not trigger memory readout in real time after a round-trip
+message. The final optical measurement was similar to Brown et al.’s implementation of GJC: Wang et al.
+scanned the reference phase and compared coincidence rates from the two receivers to recover the visibility
+amplitude and phase of the simulated source. A 1-km fiber spool and a programmed 5 µs difference between the
+two memory readout times tested one fixed delay, equivalent to 1.5 km of free-space path.
+5.4 Kwiat-group three-telescope tests
+The Kwiat group has explored extending the GJC architec-
+ture to three telescopes in a series of conference reports and
+a poster.21–23 This work considers visibility recovery and
+closure phase in the presence of phase turbulence. The pub-
+lished record is still preliminary, and a full archival experi-
+mental paper has not yet appeared.
+
+5.5 Two-source two-photon astrometry
+Stankus et al. proposed replacing GJC’s engineered reference
+photon with light from a second astronomical source.25 At
+each telescope, diffraction-limited modes from the two source
+directions are mixed locally. Coincidences between the sta-
+tions retain the difference between the two sources’ first-order
+interferometric phases. The measurement is therefore GJC-
+like rather than HBT-like, but it shares one practical advan-
+tage with HBT: no entangled resource or phase-stable optical
+link need be distributed between the stations. The stations
+instead exchange photon-detection records, including arrival
+times and detector channels; their clocks and geometric de-
+lays must still be aligned well enough to identify coincident
+pairs. However, using an astronomical source instead of an Figure 4. Cold-atom memory-assisted interferometer.
+                                                                 Nodes A and B store a shared atomic excitation; a de-
+engineered reference source comes with significant trade-offs.
+                                                                 tector click at remote node C heralds successful prepa-
+One photon from each source must arrive within the same ration. Reprinted with permission from Fig. 1 of B.
+narrow coincidence window, so the useful rate is proportional Wang et al., Phys. Rev. Lett. 136, 240801 (2026).
+to the product of the two small photon occupations. Further, Copyright (2026) by the American Physical Society.
+the second source must not be fully resolved on the long base-
+line, since resolving it reduces the detected fringe contrast.
+In contrast, an engineered GJC reference source can in principle be driven at a high repetition rate, whereas the
+second star supplies photons randomly at a rate that the instrument cannot control. The method also retains
+strict GJC-like local requirements for matching spectrum, polarization, spatial mode, and differential delay;
+eliminating the long inter-station optical link does not eliminate delay control within each telescope. Crawford
+et al. demonstrated the predicted correlation and anticorrelation with two thermal-like laboratory sources, but
+not separated-station or on-sky astrometry.8
+
+5.6 A quantum hard drive
+Bland-Hawthorn, Sellars, and Bartholomew proposed storing the astronomical field in solid crystals doped with
+rare-earth ions, transporting the loaded memories, and reading them together later.26 Such a memory could
+in principle store many independently addressable spatial, spectral, and temporal modes. Rare-earth materials
+have preserved an atomic quantum state for several hours and an optical field for one hour, although hour-scale
+storage and retrieval of single photons has not been demonstrated.27, 28
+    The “quantum hard drive” remains a design study. Its 20-disk example assumes roughly 2×107 independently
+addressable storage cells and up to 2 × 1010 optical modes. Neither that capacity nor coherent transport of a
+loaded memory has been demonstrated. Before they could interfere, corresponding stored modes from the
+two telescopes would still have to be read out with the correct relative timing and optical phase, including
+compensation for the geometric delay. The proposed advantage is to write, transport, and read the field instead
+of building a long delay line.
+    Table 3 summarizes the selected literature and its role in this review. While not comprehensive, these papers
+illustrate the development of the field and the experimental progress toward practical implementations.
+      Table 3. Selected milestones in quantum-enabled optical interferometry; not a comprehensive bibliography.
+ Reference                   Status             Primary contribution
+ Gottesman, Jennewein,       Theory             Introduced a path-entangled reference photon for recovering
+ and Croke (2012)3                              first-order coherence without transporting starlight.
+ Khabiboulline et al.        Theory             Introduced binary time-bin encoding with quantum memories,
+ (2019a,b)4, 5                                  avoiding a flying reference in every bin and reducing entanglement
+                                                use from linear to logarithmic; extended the method to broadband
+                                                and multiple-station operation.
+ Brown et al. (2023)7        Experiment         Implemented the GJC entangled-reference receiver with
+                                                pseudo-thermal light, measured complex visibility at individual
+                                                baselines, and used |V |2 across baselines to reconstruct the intensity
+                                                autocorrelation of a binary-star analogue.
+ Diaz et al.                 Conference         Explored three-telescope extensions of GJC, with emphasis on
+ (2021–2024)21–23            reports /          visibility recovery and closure phase.
+                             poster
+ Bland-Hawthorn et al.       Concept            Proposed a multimode rare-earth “quantum hard drive” for storing,
+ (2021)26                                       transporting, and later reading the astronomical field.
+ Stankus et al. (2022)25     Theory             Used a second star as the reference for GJC-like local interference,
+                                                avoiding distributed entanglement but requiring rare two-source
+                                                coincidences and local mode and delay matching.
+ Stas et al. (2026)9         Experiment         Demonstrated Khabiboulline-style nonlocal phase sensing with
+                                                event-ready entanglement between two memory nodes, including
+                                                mode erasure, nonlocal heralding, and phase readout; no binary
+                                                time-bin encoding.
+ Wang et al. (2026)24        Experiment         Implemented a memory-assisted GJC receiver using cold-atom
+                                                memories and long fiber links, including a fixed programmed readout
+                                                delay.
+ Gorshkov et al. (2026)18    Theory /           Explored quantum-optimized phase closure for robust imaging with
+                             conference         multiple telescopes.
+
+
+                             6. TECHNOLOGICAL REQUIREMENTS
+A realistic sky experiment depends on the product of source coupling, network rate, memory efficiency, gate
+fidelity, readout, detector efficiency, and phase stability, across enough modes to collect useful starlight. For-
+tunately, the enthusiasm for all things quantum is leading to some true breakthroughs in the critical enabling
+technologies (see Table 4).
+
+6.1 Bandwidth and mode count
+Astronomers gain sensitivity by observing over broad bandwidths. Near-infrared interferometers, for example,
+often use the full H band from 1.5 to 1.8 µm, a window of roughly 30 THz. If each memory interface accepts
+1 GHz, covering that band would require about 3 × 104 spectral channels before counting successive temporal
+modes, spatial modes, or polarization states. Each channel would need compatible conversion, timing, phase
+calibration, processing, and detection. Processing many channels in parallel, or multiplexing, will be essential to
+collect enough stellar continuum to take advantage of the long baselines that motivate these methods.
+    Khabiboulline et al. showed that an incoming photon’s arrival time and frequency band can be stored effi-
+ciently in a compact binary code.5 This reduces the required memory and entanglement resources, but it does
+not remove the need to split and interface the light across many spectral channels. The optical hardware still
+scales with bandwidth.
+    Spectral bandwidth is only one part of the mode-count problem. Atmospheric residuals continually move
+starlight among spatial modes, while a single-mode quantum interface rejects everything outside its acceptance
+mode. Polarization must also be preserved or measured. Adaptive optics, photonic lanterns, or replicated spatial
+channels may therefore be needed before the quantum protocol even begins.
+6.2 End-to-end efficiency and fidelity
+To keep the comparison compact, let the effective usable-resource factor be represented schematically as
+
+                                    ηq = ηent ηcouple ηmemory ηgate ηread ηdet Vq2 .                                   (8)
+
+The factors represent entanglement delivery, coupling, storage, gates, readout, and detection, while Vq represents
+phase stability and the quality of the shared quantum state. This is a bookkeeping expression, not a literal loss
+budget. Some imperfections remove events, while others reduce the measured contrast or introduce errors.
+Here fidelity means how closely the delivered quantum state matches the intended state. Six successive 80%
+efficiencies leave only 26% before the visibility penalty. If successful entanglement generation is announced
+before the astronomical mode is processed (“event ready”), failed attempts can be rejected; however, a low
+generation rate reduces the number of usable observing modes. Parallel network channels, error correction, and
+long-lived memories will help, but the end-to-end efficiency must be high enough to make the quantum layer
+worthwhile compared with direct detection.
+
+6.3 Time-dependent delay and atmosphere
+Earth rotation changes the geometric delay continuously, while atmospheric turbulence adds faster path-length
+fluctuations above each telescope. Any architecture must bring the interfering modes into temporal overlap and
+control their relative phase. A quantum link does not remove the need for fringe acquisition, dispersion control,
+or correction of atmospheric piston.
+    One approach is an optical delay: keep the state as a traveling photon and change the physical path it
+follows. This is the familiar solution in direct detection and is also required when flying reference photons or
+two astronomical photons must meet at local beam splitters. Compact optical buffers may replace part of a
+long free-space delay line. A Kwiat-group free-space memory combined three switchable optical loops to provide
+delays up to 12.5 µs, with 5% end-to-end efficiency at the longest delay.29 Guo et al. retrieved about 95% of
+photons after a selectable 0.69-µs delay in a nested multipass cell while preserving polarization entanglement at
+99.6% fidelity.30 These devices demonstrate useful switches, coatings, and photon storage paths, but not the
+continuously variable, phase-referenced delay needed to follow a star.
+    Quantum memories offer a more elegant approach for a quantum network: map the optical state into a
+stationary material excitation, prepare and herald network resources in advance, and release or process the state
+when the required delay is reached. The geometric delay can then be handled partly through programmed
+
+                   Table 4. Functions that a quantum-enabled optical array would have to supply.
+ Technology                         Technology function
+ Superconducting nanowire           Devices that register individual photons with high efficiency, low dark-count rate,
+ single-photon detectors and        and precise timing for correlations and heralding
+ other fast photon counters
+ Quantum memories                   Material systems that preserve a loaded quantum state until it is needed, providing
+                                    a calibrated delay and a stationary resource for later measurements
+ Light–memory interfaces and        Hardware that transfers astronomical optical modes into and out of memory, per-
+ quantum gates                      forms controlled operations on the stored states, preserves their relative phase, and
+                                    works across a wide optical bandwidth
+ Entangled-photon sources and       Sources that generate correlated or entangled pairs, plus intermediate nodes that
+ quantum repeaters                  extend those correlations across lossy links
+ Fiber links and quantum            Links between telescope nodes; frequency conversion changes the photon wave-
+ frequency conversion               length so low-loss telecom transport and memory or science wavelengths can work
+                                    together
+ Optical clocks, frequency combs,   Precise timing and optical-frequency references for synchronizing temporal modes,
+ and stabilized timing              phases, geometric delays, and classical records
+ Photonic integrated circuits       Compact optical chips containing stable beam splitters, phase shifters, filters, and
+                                    coincidence-measurement circuits that can be replicated over many channels
+storage and readout rather than only through meters or kilometers of propagation. Important elements have
+now been demonstrated: Stas et al. used event-ready entanglement between remote memories for nonlocal phase
+sensing, while Wang et al. stored a distributed reference and programmed a fixed 5 µs difference between two
+memory readout times, equivalent to 1.5 km of free-space path.9, 24 Neither experiment continuously tracked
+an astronomical delay. An astronomical implementation would still need efficient broadband loading, many
+independent modes, phase-preserving storage, and readout times that follow the changing delay. Quantum
+memory therefore provides an attractive way to manage delay within a quantum network, even though it moves
+the precision control into the write, storage, and readout system rather than eliminating it.
+
+6.4 Scaling beyond a baseline
+An N -telescope array has N (N − 1)/2 baselines and (N − 1)(N − 2)/2 independent closure phases. Entangling
+telescope pairs, sharing one state among many telescopes, or using a central device that dynamically routes
+entanglement connections (a quantum switch) leads to different routing, clock, scheduling, and calibration re-
+quirements. Array tests must address simultaneous baselines, unequal node losses, and station-dependent phases.
+
+            7. WHERE CAN QUANTUM INTERFEROMETRY ADD VALUE?
+In the astronomical interferometry context, where the light is weak, broadband, and emitted incoherently, directly
+combining the light is, in the ideal lossless case, the most sensitive way to measure its coherence.14 Any practical
+advantage of quantum methods must therefore come from how that measurement is implemented, including its
+loss, cost, and complexity. I would compare each quantum measurement with the best classical alternative using
+the same apertures and incident modes.
+
+
+Improved ground-based direct detection. Low-loss beam transport (free-space or fiber), better coatings,
+adaptive optics, integrated optics combiners, or a different array geometry may save more photons than a quantum
+layer. These approaches preserve the first-order measurement without the network overhead or the problem of
+multiplexing thousands of parallel modes. In terms of sensitivity and imaging, I expect direct detection to remain
+best for ground arrays up to a few km for the foreseeable future.
+
+
+Intensity interferometry and heterodyne detection. Some astronomers are pushing HBT and heterodyne
+techniques to longer baselines, new wavelengths, and more telescopes, ironically driven by technologies developed
+for quantum experiments. For HBT, coupling a high-resolution photonic spectrograph to arrays of single-photon
+avalanche diodes (SPADs) or fast superconducting nanowire detectors enables many narrow spectral channels
+to be correlated in parallel. Photonic spectrographs can also multiplex heterodyne channels, while frequency
+combs provide phase-referenced local oscillators across them. Cherenkov telescope arrays have been studied as
+kilometer-scale HBT interferometers, including the Cherenkov Telescope Array.31 The IC4Stars project aims
+to measure Sirius B with two 8-m-class telescopes separated by about 1 km, using many wavelength channels
+to increase sensitivity. Its recent preprint reports a single-telescope on-sky test with the 1-m Epsilon telescope
+at Calern; the long-baseline measurement remains future work.32 If the goal is to observe very long baselines
+without transporting starlight, these classical methods may be the most practical way to do it in the near future,
+at least for selected bright targets.
+
+
+Space interferometry. Space provides low-loss propagation, long baselines, no atmospheric piston, and lower
+infrared background for a cryogenic interferometer array. The costs are driven by collecting area, formation
+control, pointing, timing, and the intrinsic risk of the mission itself. Reconfiguring the baselines also requires
+propulsion and consumes propellant, potentially limiting both the available array configurations and the mission
+lifetime. Quantum hardware removes none of these constraints, although a hybrid quantum-space array may be
+useful.
+Microarcsecond astronomy. Multi-kilometer optical/infrared baselines reach angular scales unavailable by
+other means, and differential astrometry can be finer than λ/B with stable calibration. Applications could
+include exoplanet systems and compact emission around supermassive black holes. Unfortunately, bright stars
+are also resolved on long baselines, weakening their coherence and usefulness as astrometric references, and
+atmospheric turbulence33 further degrades the fundamental limit unless objects are quite close together on the
+sky. A quantum link does not remove these constraints, although it may allow longer baselines than practical
+direct detection.
+
+
+Measurements beyond astronomical imaging. Bright engineered beacons may provide a more accessible
+near-term application than weak broadband starlight. At 1 µm, a 10-km baseline corresponds to an angular scale
+of about 20 µas. A beacon at a known location could serve as a bright test source for array phasing and baseline
+calibration, with possible applications to metrology or geodesy. New ultra-precise methods could potentially be
+applied to gravitational wave detection or new tests of general relativity.
+
+                                        8. NEXT EXPERIMENTS
+The next leap for quantum interferometry will be to move out of the laboratory and into an observatory dome to
+measure real thermal starlight. A first on-sky visibility measurement would expose the full observatory problem,
+including coupling into the required modes, atmospheric piston, delay tracking, and calibration. Work on longer
+links, higher rates, better memories, multimode operation, and new platforms can proceed in parallel. Some
+specific tests follow:
+
+1. Can we recover a visibility on the sky? Apply an entangled-reference or memory-assisted protocol first
+   to spatially filtered sunlight as a receiver test and then to a bright star. Does the calibrated stellar visibility
+   agree with conventional direct detection?
+2. What are the practical challenges of separate telescope operation? Place nodes at physically sepa-
+   rated telescopes and track geometric delay and piston while preserving nonlocal heralding and path erasure.
+3. Can we use enough modes? Operate many spectral channels simultaneously and report sensitivity per
+   incident astronomical mode, including coupling, conversion, memory, network, gate, and detector losses.
+4. Can three stations recover closure phase? Measure closure phase on a thermal source for simple image
+   reconstruction.
+5. Does a complete quantum experiment win in a science measurement? Choose a narrow case,
+   perhaps stellar-diameter visibility, binary astrometry, or geodesy, and compare observing time and systematic
+   error against HBT, heterodyne, and direct detection using the same apertures. It is conceivable that quantum
+   methods could become competitive with heterodyne or HBT in the near future.
+6. Build the next interferometer to be “quantum-ready.” As astronomers build new direct-detection
+   facilities, the infrastructure should include fiber routes, laboratory and cryogenic space near telescope nodes,
+   access to clocks and frequency combs, calibration paths, and time-tagged photon streams. We lack a clear
+   open platform for quantum physicists to test new ideas, and astronomers lack a clear path to test quantum
+   methods on real starlight. A shared facility would benefit both communities.
+7. Continue brainstorming about new applications. Quantum interferometry represents a fundamentally
+   different way to measure the coherence of light over potentially huge distances. It is too early to tell how it
+   will be used, and the highest-impact applications may not be astronomical. The community should continue
+   to explore new ideas, new quantum resources, and new measurement goals.
+                                                  9. CONCLUSIONS
+After more than a decade of theoretical proposals, quantum-assisted optical interferometry has finally become
+a laboratory reality. Recent experiments have recovered weak-light spatial coherence with entangled references,
+heralded and read out a phase shared between separated memory nodes, and recovered complex visibility with
+a memory-assisted reference prepared over deployed-fiber links, including a test with a fixed differential delay.
+None has yet reported first observations with astronomical light∗ . Bandwidth, event rate, wavelength coverage,
+scaling to more than two telescopes, and delay tracking remain major practical challenges.
+    Ideal direct detection remains the benchmark. Entanglement supplies no source photons, but a quantum
+resource can be regenerated, heralded, stored, or routed. This may extend first-order interferometry beyond the
+practical reach of classical beam transport. Experiments must determine where the efficiency, rate, stability, and
+cost are favorable.
+    The next decade should see a flurry of experiments with real starlight, exposing constraints absent from
+laboratory sources as quantum technologies continue to advance. Baselines beyond 10 km may also motivate
+ideas that previously seemed impractical, including tests with engineered beacons from Earth orbit outward.
+Astronomers and observatories should remain open to hosting well-designed experiments on large telescopes and
+interferometers. This moment recalls the experiments my PhD advisor, Charles Townes, pursued in the 1970s
+and 1980s as advances in lasers and nonlinear optics crossed into astronomy. That history is a useful reminder
+to take new technical opportunities seriously, even before their best applications are obvious.
+
+                                              ACKNOWLEDGMENTS
+The author thanks Michael G. Raymer, Matthew R. Brown, Brian J. Smith, Stephen T. Ridgway, Paul G. Kwiat,
+Pieter Stas, and Emil T. Khabiboulline for helpful discussions and contributions that informed this review.
+J.D.M. acknowledges support from the U.S. National Science Foundation under Award No. 1936321, QII-TAQS:
+Quantum-Enhanced Telescopy (PI: Paul G. Kwiat, University of Illinois Urbana-Champaign; J.D.M. co-PI),
+and Award No. 2326803, QuSeC-TAQS: Distributed Entangled Quantum-Enhanced Interferometric Imaging for
+Telescopy and Metrology (PI: Brian J. Smith, University of Oregon; J.D.M. co-PI).
+    OpenAI’s ChatGPT was used to assist with manuscript organization, language editing, and preparation of
+figure and source inventories. The author reviewed and takes responsibility for the scientific content, interpreta-
+tions, citations, and final text.
+
+                                                     REFERENCES
+ [1] Monnier, J. D., “Optical interferometry in astronomy,” Reports on Progress in Physics 66(5), 789–857 (2003).
+ [2] Eisenhauer, F., Monnier, J. D., and Pfuhl, O., “Advances in optical/infrared interferometry,” Annual Review of
+     Astronomy and Astrophysics 61, 237–285 (2023).
+ [3] Gottesman, D., Jennewein, T., and Croke, S., “Longer-baseline telescopes using quantum repeaters,” Physical Review
+     Letters 109, 070503 (2012).
+ [4] Khabiboulline, E. T., Borregaard, J., De Greve, K., and Lukin, M. D., “Optical interferometry with quantum
+     networks,” Physical Review Letters 123, 070504 (2019).
+ [5] Khabiboulline, E. T., Borregaard, J., De Greve, K., and Lukin, M. D., “Quantum-assisted telescope arrays,” Physical
+     Review A 100, 022316 (2019).
+ [6] Czupryniak, R., Steinmetz, J., Kwiat, P. G., and Jordan, A. N., “Optimal qubit circuits for quantum-enhanced
+     telescopes,” Physical Review A 108(5), 052408 (2023).
+ [7] Brown, M. R., Allgaier, M., Thiel, V., Monnier, J. D., Raymer, M. G., and Smith, B. J., “Interferometric imaging
+     using shared quantum entanglement,” Physical Review Letters 131, 210801 (2023).
+ [8] Crawford, J., Dolzhenko, D., Keach, M., Mueninghoff, A., Abrahao, R. A., Martinez-Rincon, J., Stankus, P., Vintske-
+     vich, S., and Nomerotski, A., “Towards quantum telescopes: demonstration of a two-photon interferometer for
+     precision astrometry,” Optics Express 31(26), 44246–44258 (2023).
+ [9] Stas, P.-J., Wei, Y.-C., Sirotin, M., Huan, Y. Q., Yazlar, U., Abdo Arias, F., Knyazev, E., Baranes, G., Machielse, B.,
+     Grandi, S., Riedel, D., Borregaard, J., Park, H., Lončar, M., Suleymanzade, A., and Lukin, M. D., “Entanglement-
+     assisted non-local optical interferometry in a quantum network,” Nature 651, 326–332 (2026).
+[10] Huang, Z., Titov, O., Schmidt, M. K., Pope, B., Brennen, G. K., Oi, D. K. L., and Kok, P., “Quantum-enabled
+     optical large-baseline interferometry: applications, protocols and feasibility,” Advances in Physics: X 11(1), 2597311
+     (2026).
+   ∗
+       Rumor has it first fringes on the Sun have been obtained as I am writing this. . .
+[11] Rajagopal, J. K., Lau, R. M., Padilla, I., Ridgway, S. T., Cui, C., McClinton, B., Sajjad, A., Corder, S., Rawlings, M.,
+     Rantakyrö, F., Richardson, J. G., Ashok, A., and Guha, S., “Towards quantum-enhanced long-baseline optical/near-
+     ir interferometry,” in [Optical and Infrared Interferometry and Imaging IX ], Proceedings of SPIE 13095, 130951N
+     (2024).
+[12] Ireland, M. J. and Monnier, J. D., “A dispersed heterodyne design for the planet formation imager,” in [Optical and
+     Infrared Interferometry IV ], Proceedings of SPIE 9146, 914612 (2014).
+[13] Hanbury Brown, R. and Twiss, R. Q., “A test of a new type of stellar interferometer on Sirius,” Nature 178,
+     1046–1048 (1956).
+[14] Tsang, M., “Quantum nonlocality in weak-thermal-light interferometry,” Physical Review Letters 107, 270402 (2011).
+[15] Zhang, Y. and Jennewein, T., “Criteria for optimal entanglement-assisted long baseline telescopy,” Physical Review
+     Research 7(4), 043278 (2025).
+[16] Jennison, R. C., “A phase sensitive interferometer technique for the measurement of the Fourier transforms of spatial
+     brightness distributions of small angular extent,” Monthly Notices of the Royal Astronomical Society 118(3), 276–284
+     (1958).
+[17] Monnier, J. D., “Phases in interferometry,” New Astronomy Reviews 51(8–9), 604–616 (2007).
+[18] Gorshkov, A. V., Gottesman, D., Khabiboulline, E. T., Liu, Z., McClinton, B. M., Rajagopal, J. K., and Ridgway,
+     S. T., “Quantum-optimized phase closure for robust imaging,” in [Optical and Infrared Interferometry and Imaging
+     X ], SPIE (2026). Paper 14148-106, presented 7 July 2026.
+[19] Padilla, I., Sajjad, A., Saif, B. N., and Guha, S., “Quantum resolution limit of long-baseline imaging using distributed
+     entanglement,” Physical Review A 113(1), 012608 (2026).
+[20] Zhang, Y., Wang, Y., Wu, W., and Jennewein, T., “Quantum-limited subdiffraction telescopy requires genuine
+     multi-telescope interference.” arXiv:2606.27276 [quant-ph] (2026). Version 2, 6 July 2026.
+[21] Diaz, D., Zhang, Y., Lorenz, V. O., and Kwiat, P. G., “Emulating quantum-enhanced long-baseline interferometric
+     telescopy,” in [Frontiers in Optics + Laser Science 2021 ], FTh6D.7 (2021).
+[22] Diaz, D., Zhang, Y., Lorenz, V. O., and Kwiat, P. G., “Emulating turbulence free quantum-enhanced interferometric
+     telescopy,” in [Quantum 2.0 Conference and Exhibition ], QTu2A.31 (2022).
+[23] Diaz, D., Zhang, Y., Wang, Y., Lorenz, V. O., and Kwiat, P. G., “Tabletop demonstration of quantum-enhanced
+     interferometric telescopy.” Poster presented at the 2024 CHARA Science Meeting, Tucson, Arizona (2024). Unrefereed
+     conference poster.
+[24] Wang, B., Luo, X.-Y., Gao, B.-F., Liu, J.-L., Wang, C.-Y., Yan, Z., Ke, Q.-M., Teng, D., Zheng, M.-Y., Cao,
+     Y., Li, J., Peng, C.-Z., Zhang, Q., Bao, X.-H., and Pan, J.-W., “Memory-assisted nonlocal interferometer toward
+     long-baseline telescopes,” Physical Review Letters 136, 240801 (2026).
+[25] Stankus, P., Nomerotski, A., Slosar, A., and Vintskevich, S., “Two-photon amplitude interferometry for precision
+     astrometry,” The Open Journal of Astrophysics 5 (2022).
+[26] Bland-Hawthorn, J., Sellars, M. J., and Bartholomew, J. G., “Quantum memories and the double-slit experiment:
+     implications for astronomical interferometry,” Journal of the Optical Society of America B 38(7), A86–A98 (2021).
+[27] Zhong, M., Hedges, M. P., Ahlefeldt, R. L., Bartholomew, J. G., Beavan, S. E., Wittig, S. M., Longdell, J. J., and
+     Sellars, M. J., “Optically addressable nuclear spins in a solid with a six-hour coherence time,” Nature 517, 177–180
+     (2015).
+[28] Ma, Y., Ma, Y.-Z., Zhou, Z.-Q., Li, C.-F., and Guo, G.-C., “One-hour coherent optical storage in an atomic frequency
+     comb memory,” Nature Communications 12, 2381 (2021).
+[29] Arnold, N. T., Victora, M., Goggin, M. E., and Kwiat, P. G., “Free-space photonic quantum memory,” in [Quantum
+     Computing, Communication, and Simulation III ], Proceedings of SPIE 12446, 1244606 (2023).
+[30] Guo, Y., Banerji, A., Chin, J. B., Chowdhury, A., and Ling, A., “Highly efficient and broadband optical delay line
+     toward a quantum memory,” APL Photonics 11(2), 026103 (2026).
+[31] Dravins, D., LeBohec, S., Jensen, H., and Nuñez, P. D., “Optical intensity interferometry with the Cherenkov
+     Telescope Array,” Astroparticle Physics 43, 331–347 (2013).
+[32] Izraelevitch-Patitucci, F., Tolilla, S., Ellafi, I., Rivet, J.-P., Hugbart, M., Labeyrie, G., Lai, O., Zmija, A., Guerin,
+     W., and Kaiser, R., “On-sky single-photon time resolution of 35 ps with White Rabbit synchronization: towards the
+     measurement of the size of a white dwarf star.” arXiv:2606.25817 [astro-ph.IM] (2026).
+[33] Shao, M. and Colavita, M. M., “Potential of long-baseline infrared interferometry for narrow-angle astrometry,”
+     Astronomy and Astrophysics 262(1), 353–358 (1992).
+

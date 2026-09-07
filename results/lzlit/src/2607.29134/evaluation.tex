@@ -1,0 +1,225 @@
+% \section{Use Cases}
+
+% \subsection{Data Management Challenges}
+
+% \para{RDBMS as simulation backend}
+
+% \para{Optimal data representation}
+% However, the memory required to store quantum states and operators in the dense vector representation grows exponentially with the number of qubits. As a result, classically simulating quantum circuits using naïve linear algebra techniques does not scale efficiently. \textit{Hence, we can formulate the problem of classically simulating a quantum circuit as follows: given a problem instance (i.e., a circuit of instructions meant for quantum hardware) from the combination circuit problem space, the task is to return the resulting output quantum state, with classical hardware.}  
+
+% The problem of \textit{efficiently simulating quantum computation on classical hardware} has primarily been approached from two perspectives. The first seeks to identify regions of the problem space where simulation is tractable, while the second surveys and evaluates various simulation methods implementing the circuit's execution plan on classical hardware, along with their limitations and opportunities.
+
+% For instance, the work of Mari et al.~(2012) \cite{Mari_2012} extends the Gottesman--Knill theorem and demonstrates that efficient classical simulation is possible under certain constraints on problem instances, such as the presence of positive Wigner functions. Meanwhile, Xu et al.~(2023)    \cite{xu2023herculeantaskclassicalsimulation} explore the applicability of tensor network methods across different regions of the problem space, while Wille et al.~(2022) \cite{Wille_2022} propose and evaluate decision-diagram-based approaches for quantum circuit simulation.
+
+\section{Evaluation}
+\label{sec:eva}
+
+
+%  In this evaluation, we use \sys to quantify and explain when an RDBMS engine is a competitive simulation engine for \emph{general, compositional} quantum circuits.
+% We first compare three RDBMS engines executing \sys-emitted SQL against Qiskit Aer on 775 generated circuits, measuring runtime and peak memory.
+% We then scale to 7{,}877 labeled circuits to train lightweight selectors that predict when SQLite should be chosen, validate the usefulness of our feature design via feature-importance analysis, and demonstrate additional data-centric tasks enabled by \sys (e.g., estimating expensive dynamic properties such as entropy and sparsity from cheap features, and evaluating generation/feature-extraction scalability).
+ 
+In this section, we use \sys to quantify and explain when an RDBMS engine is a competitive simulation engine for \emph{general, compositional} quantum circuits. First, in Section~\ref{ssec:simu} we compare the \sys-emitted SQL workloads on \revisionB{four} RDBMS engines (PostgreSQL, SQLite, DuckDB, \revisionB{and Umbra}) against Qiskit Aer for wall-clock runtime and peak memory. We have also trained lightweight selectors (linear and tree models) that predict when RDBMS should be chosen over Qiskit Aer. We validate the feature design via feature-importance analysis in Section~\ref{ssec:feat_val} and demonstrate additional data-centric tasks enabled by \sys in Section~\ref{ssec:uc2}. 
+% , including estimating expensive dynamic properties (entropy and sparsity) from cheap features. 
+% Finally, we quantify the scalability of circuit generation and feature extraction in Section~\ref{sec:scalability}.
+
+
+\subsection{Experimental Settings}
+
+% \paragraph{Hardware.}
+All experiments were run on a  workstation equipped with an Intel Core
+i9--12900KF (24 threads), 64\,GB RAM, and an NVIDIA RTX~3090 GPU, running
+Ubuntu~20.04.6~LTS with Linux kernel~5.15.0. To ensure a fair comparison between
+different RDBMS engines and other quantum circuit simulators, we disabled GPU and other
+hardware acceleration; all simulations were executed on CPU.
+
+% \paragraph{Software.}
+% Experiments have been executed in Python~3.12 with pinned dependencies managed via
+% \texttt{pyproject.toml}. The main libraries include NumPy~2.2.5, SciPy~1.15.3, and
+% scikit--learn~(\(\ge\)1.8). To compare simulation backends, we used Qiskit~2.0.1 with
+% Qiskit Aer~0.17.0, a widely used simulator in the quantum community. For database-backed
+% simulation, the generated SQL is based on the \texttt{sql-einsum} project\footnote{\url{https://github.com/ti2-group/sql-einsum/tree/main/generate_sql_code}}, extended by the RDBMS simulator\footnote{\url{https://github.com/InfiniData-Lab/Quantum}}
+%  from \cite{hai2025quantum} to support additional RDBMS engines, including PostgreSQL,
+% SQLite, and DuckDB. PostgreSQL was version~12.22 with Ubuntu package
+% \feat{12.22-0ubuntu0.20.04.4} accessed via \feat{psycopg2-binary}~2.9.10, SQLite was
+% version~3.50.4, and DuckDB~1.1.3. 
+% \paragraph{Implementation and systems.}
+We implemented our prototype in Python~3.12, with all dependencies pinned in
+\texttt{pyproject.toml}. Core numerical routines use NumPy~2.2.5, SciPy~1.15.3, and
+scikit--learn~(\(\ge\)1.8). For in-memory quantum-state simulation, we use
+Qiskit~2.0.1 together with Qiskit Aer~0.17.0. For database-backed simulation, we
+generate SQL using the \texttt{sql-einsum} code generator\footnote{\url{https://github.com/ti2-group/sql-einsum/tree/main/generate_sql_code}}
+and build on the RDBMS simulator introduced by \cite{hai2025quantum}. 
+PostgreSQL is version~12.22 
+% (Ubuntu package \feat{12.22-0ubuntu0.20.04.4}) 
+accessed via
+\texttt{psycopg2-binary}~2.9.10. SQLite is version~3.50.4, and DuckDB is version~1.1.3. \revisionB{
+Umbra (\texttt{v0.2-1665-gfeeb4bb5d}) is accessed through its PostgreSQL-compatible (18.1) server interface using
+\code{psycopg2-binary}~2.9.10.}
+\revisionA{For the out-of-core experiments, memory limits are enforced with Docker Engine~($\ge$24.0) using per-container cgroups.}
+% : \texttt{--memory} and \texttt{--memory-swap} are set to the same value, with \texttt{--memory-swappiness=0}. 
+Unless otherwise stated, we report the mean values across
+five repetitions.
+
+ 
+
+ 
+
+% \paragraph{Randomness and repetitions.}
+% All experiments used deterministic pseudo--random seeds. Circuit generation started
+% from seed~0 and was incremented by one for each generated circuit. 
+% Each experiment using
+% the RDBMS simulator was repeated five times. Qiskit-based experiments were executed once
+% due to the cost of strong simulation. 
+
+
+
+
+\input{temp2}
+ 
+
+
+\begin{table}[t]
+\caption{Sparsity and Entropy (Dynamic metrics) estimators performance for Random Forest and Linear Regression models. Reported are coefficient of determination ($R^2$) and root mean squared error (RMSE) comparing predictions to actual values.}
+\label{tab:estimators}
+\begin{tabular}{lcc}
+\toprule
+Model & Sparsity Model & Entropy Model \\
+\midrule
+Random Forest $R^2$ & 0.7737 & 0.8936 \\
+Random Forest RMSE  & 0.1928 & 1.9931 \\
+\midrule
+Linear Regression $R^2$ & 0.3934 & 0.6956 \\
+Linear Regression RMSE  & 0.3156 & 3.3714 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}{\linewidth}
+   \centering
+    \includegraphics[width=0.7\linewidth]{images/estimator-plots.png}
+  \end{minipage}
+  \caption{Predicted vs Actual value for the dynamic feature RF regression estimators for subset (1000 entries) of test set.}
+  \label{fig:estimators}
+  \vspace{0.2cm}
+\end{figure}
+
+% However, a closer look at the distribution of these features in Figure \ref{fig:distribution} renders the valuable insight that sparsity is not uniformly distributed over the problem space, but rather collected in distinct bands.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.75\linewidth]{images/estimator-distributions.png}
+  \caption{Distribution of dynamic features over 202k entries in InferQ with Dynamic features.}
+    \vspace{0.2cm}
+  \label{fig:distribution}
+\end{figure}
+
+\subsection{Use case 2: Predicting Entropies and Sparsity}
+\label{ssec:uc2}
+Dynamic features from Section~\ref{ssec:features} (Shannon entropy, von Neumann entropy, and sparsity) are only available \emph{after} simulation, since they are computed from the output state. This limits their use for larger circuits and motivates a second, data-centric use case: learning inexpensive estimators that predict these dynamic properties from static/graph/SQL features. Besides being useful for database researchers (Use case 1), these metrics are also fundamental to quantum analysis.
+
+
+
+% \begin{figure}[t]
+%   \centering
+%   \begin{minipage}{0.35\linewidth}
+%     \includegraphics[width=\linewidth]{images/predict-sparsity-confusion.png}
+%   \end{minipage}
+%   \hfill
+%     \vspace{0.2cm}
+%   \begin{minipage}{0.35\linewidth}
+%     \includegraphics[width=\linewidth]{images/predict-sparsity-normalized-confusion.png}
+%   \end{minipage}
+%   \caption{Confusion matrix with counts and normalization for random forest classifier for sparsity band prediction.}
+%   \label{fig:confusion}
+% \end{figure}
+\begin{figure}[t]
+  \centering
+  \begin{minipage}{0.37\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]
+      {images/predict-sparsity-confusion.png}
+  \end{minipage}%
+  \hspace{0.02\linewidth}%
+  \begin{minipage}{0.37\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]
+      {images/predict-sparsity-normalized-confusion.png}
+  \end{minipage}
+  \caption{Confusion matrices with counts and normalization for the random forest classifier used for sparsity-band prediction.}
+  \label{fig:confusion}
+\end{figure}
+
+
+
+\vspace{0.2cm}
+\noindent\emph{Q5: Can we estimate complex quantum properties using \sys features?}
+
+\vspace{0.2cm}
+We construct estimators for \feat{sparsity} and
+\feat{shannon_entropy} using \num{202975} circuits for which
+dynamic features are available.\footnote{Estimator training data (Parquet) available at \url{https://github.com/InfiniData-Lab/InferQ/blob/main/analysis/training_data/estimator_training_data.parquet}.}
+We train (i) a Random Forest regressor and
+(ii) a linear regression baseline, % on an 80/20 train--test split, 
+and evaluate
+prediction quality using $R^2$ and RMSE as shown in Table~\ref{tab:estimators}.
+
+
+
+% As Table \ref{tab:estimators} outlines, the random forest regressor performs much better than the linear model for constructing both sparsity and entropy estimators. Visualising the estimator accuracy on a segment of the test set as in Figure \ref{fig:estimators} conveys that the Entropy seems to be modelled well by the data model features chosen for InferQ, but sparsity is not accurate. 
+
+% However, a closer look at the distribution of these features in Figure \ref{fig:distribution} renders the valuable insight that sparsity is uniformly distributed over the problem space, but rather collected in distinct bands.
+
+
+As Table~\ref{tab:estimators} shows, Random Forest substantially outperforms the
+linear model for both targets. Shannon entropy is modeled well by the feature
+set, while sparsity is harder to regress accurately. This is also visible in the
+prediction-versus-actual plots in Figure~\ref{fig:estimators}.
+
+To understand why sparsity is challenging, we inspect its empirical distribution
+(Figure~\ref{fig:distribution}). Sparsity is not smoothly distributed. Instead,
+it concentrates in distinct bands. This suggests treating sparsity as a
+coarse-grained classification problem. Concretely, we bin sparsity into
+$[0.0,0.1),[0.1,0.2),[0.2,0.4),[0.4,0.6),[0.6,1.01]$ and train a Random Forest
+classifier. This yields approximately $77\%$ accuracy, and the normalized confusion matrix
+is concentrated near the diagonal (Figure~\ref{fig:confusion}), indicating that
+\sys features capture sparsity  even when exact regression
+is difficult.
+
+Finally, feature-importance analysis for the sparsity-band classifier highlights
+\texttt{pauli\_gate\_count} as a stronger predictor than \texttt{num\_qubits}.
+This suggests that (in our generated workload) sparsity is driven more by the
+gate mix than by state dimension alone, offering a concrete, data-derived signal
+that can guide both simulator design and feature engineering.
+
+
+
+\medskip
+  \vspace{0.2cm}
+\noindent
+\setlength{\fboxsep}{6pt}
+\fcolorbox{black!15}{black!4}{%
+  \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+\para{Take-away}
+\textbf{(1)} \sys enables learning \emph{cheap estimators} for expensive dynamic properties (e.g., entropy and sparsity) using only features that do not require simulation.
+\emph{This enables follow-up work on fast, simulation-free predictors of state complexity for larger circuits.}\\[2pt]  
+  % \vspace{0.2cm}
+\textbf{(2)} The learned models reveal structure in the data (e.g., sparsity bands) and highlight which circuit characteristics are most predictive.
+\emph{This lays a practical foundation for improving estimators (e.g., hybrid classification/regression) and for connecting circuit structure to quantum-state behavior in a data-centric manner.}
+}}%
+  \vspace{0.2cm}
+
+  
+% \smallskip
+% Besides this use case, we also evaluate using \sys to select the most suitable
+% quantum data representation (i.e., simulation method) in Qiskit Aer. This is a
+% well-studied topic in quantum circuit simulation and is also posed as a data management
+% research question in \cite{hai2025quantum}. Due to space constraints, we report
+% these results in our technical report.
+
+
+
+
+

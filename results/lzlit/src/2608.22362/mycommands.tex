@@ -1,0 +1,1339 @@
+% 分野の略称はarxivに準じる
+% 以前のようなショートカットがほしければyasnippetを使おう
+% 非ソート対象
+\makeatletter
+\providecommand*{\dashv}{\mathrel{\mathpalette\@Dashv\vDash}}
+\newcommand*{\@dashv}[2]{\reflectbox{$\m@th#1#2$}}
+\makeatother
+\newcommand{\coloredtextbf}[1]{\textbf{\textcolor{blue}{#1}}} % 文字の強調
+\newcommand{\pcoloredtextbf}[1]{\textbf{\textcolor{blue}{(#1)}}} % 強調の文字装飾
+%%%%%%%%%%
+% 絶対値 %
+%%%%%%%%%%
+\newcommand{\abscard}[1]{\abs{#1}} % 絶対値記号による濃度の記号
+\newcommand{\absleft}[1]{\left| #1 \right.} % 絶対値の長い式で左だけ絶対値をつけるコマンド
+\newcommand{\absright}[1]{\left. #1 \right|} % 絶対値の長い式で右だけ絶対値をつけるコマンド
+\newcommand{\abssuff}[2]{\abs{#1}_{#2}} % 右下への添字つき絶対値
+\newcommand{\absvol}[1]{\abs{#1}} % 体積
+\newcommand{\abs}[1]{\left| #1 \right|} % 絶対値
+\newcommand{\pabs}[1]{\left|#1\right|_p} % L^p系の絶対値
+%%%%%%%%%%
+% ノルム %
+%%%%%%%%%%
+\NewDocumentCommand{\weaknorm}{O{\dbk} m}{#1{#2}} % 弱(準)ノルム
+\newcommand{\algnorm}{\operatorname{N}} % 分離拡大のノルム, expedition0005848
+\newcommand{\boxnorm}[1]{\norm{#1}_{\txtbox}} % 箱ノルム
+\newcommand{\inftynorm}[1]{\norm{#1}_{\infty}} % infty-ノルム
+\newcommand{\normleft}[1]{\left\Vert #1 \right.} % 左だけあるノルム
+\newcommand{\normright}[1]{\left. #1 \right\Vert} % 左だけあるノルム
+\newcommand{\normsuff}[2]{\norm{#1}_{#2}} % 添字組み込みのノルム
+\newcommand{\norm}[1]{\left\Vert #1 \right\Vert} % ノルム
+\newcommand{\onenorm}[1]{\norm{#1}_1} % 1-ノルム
+\newcommand{\opnorm}[1]{\left\Vert #1 \right\Vert_{\txtoperator}} % 作用素ノルム
+\newcommand{\pnorm}[1]{\left\Vert #1 \right\Vert_p} % pノルム
+\newcommand{\qnorm}[1]{\left\Vert #1 \right\Vert_q} % q-ノルム
+\newcommand{\rnorm}[1]{\left\Vert #1 \right\Vert_r} % r-ノルム
+\newcommand{\seminormlr}[1]{\lrbk{#1}} % lrbkによるセミノルム
+\newcommand{\tnorm}[1]{\left\lvert\hspace{-1 pt}\left\lvert\hspace{-1 pt}\left\lvert {#1}\right\lvert\hspace{-1 pt}\right\lvert\hspace{-1 pt}\right\lvert} % 三本線のノルム
+\newcommand{\twonorm}[1]{\norm{#1}_2}
+%%%%%%%%
+% 内積 %
+%%%%%%%%
+\newcommand{\bkt}[2]{\left\langle #1,\,#2 \right\rangle} % 内積
+\newcommand{\braket}[2]{\left\langle #1 \middle| #2 \right\rangle} % 物理記法でのディラックのブラケット
+\newcommand{\dbkt}[3]{\left\langle #1 \middle| #2 \middle| #3 \right\rangle} % 標準的な物理記法のディラックのブラケット, 3つの引数を取る
+\newcommand{\dualbkt}[2]{\bkt{#1}{#2}_{\txtdual}} % 双対内積
+\newcommand{\rbktvert}[2]{\left( #1 \vert #2 \right)} % 括弧類, 内積の記号の一つ
+\newcommand{\rbkt}[2]{\left( #1,\,#2 \right)} % 内積に利用
+%%%%%%%%
+% 極限 %
+%%%%%%%%
+\newcommand{\Ltwolim}{L^2 \hyphen \lim} % L^2-極限, l.i.m
+\newcommand{\slim}{\mathrm{s} \hyphen \lim} % 強極限
+\newcommand{\uwlim}{\mathrm{uw} \hyphen \lim} % 超弱極限
+\newcommand{\vhlim}{\txtvanhowe \hyphen \lim} % ファン・ホーフェ極限
+\newcommand{\wlim}{\mathrm{w} \hyphen \lim} % 弱極限
+%%%%%%%%
+% 矢印 %
+%%%%%%%%
+\newcommand{\epito}{\twoheadrightarrow} % エピ射・全射用のエイリアス
+\newcommand{\isomto}{\mathrel{\rightarrowtail\kern-1.9ex\twoheadrightarrow}} % 全単射, 同型射, ホモロジー代数・圏論でよく使う
+\newcommand{\monoto}{\rightarrowtail} % モノ射・単射のエイリアス
+\newcommand{\sto}{\xrightarrow{\mathrm{s}}} % 強極限
+\newcommand{\uto}{\xrightarrow{\mathrm{u}}} % (広義)一様収束, expedition0001858
+\newcommand{\uwto}{\xrightarrow{\mathrm{uw}}} % 超弱収束
+\newcommand{\wto}{\xrightarrow{\mathrm{w}}} % 弱極限
+%%%%%%%%%%
+% 括弧類 %
+%%%%%%%%%%
+\newcommand{\basebk}[1]{\left\langle #1 \right\rangle} % 基底用の括弧
+\newcommand{\cbkleft}[1]{\left\{ #1 \right.} % 片側括弧
+\newcommand{\cbkright}[1]{\left. #1 \right\}} % 片側括弧
+\newcommand{\cbk}[1]{\left\{ #1 \right\}} % 中括弧
+\newcommand{\dbk}[1]{\left\langle #1 \right\rangle} % <f>形式の括弧, Dirac bracketの意味でdbk
+\newcommand{\lrbk}[1]{\left \llbracket #1 \right \rrbracket} % 同値類の記号
+\newcommand{\pairbk}[1]{\rbk{#1}} % 適当な対のための括弧
+\newcommand{\rbkleft}[1]{\left( #1 \right.} % 片側括弧
+\newcommand{\rbkright}[1]{\left. #1 \right)} % T片側括弧
+\newcommand{\rbk}[1]{\left( #1 \right)} % 丸括弧, 共通
+\newcommand{\sqbkleft}[1]{\left[ #1 \right.} % sqbkに対する片側括弧
+\newcommand{\sqbkright}[1]{\left. #1 \right]} % sqbkに対する片側括弧
+\newcommand{\sqbk}[1]{\left[ #1 \right]} % いわゆる大括弧
+\newcommand{\sqsqbk}[1]{\sqbk{\sqbk{#1}}} % 大括弧を重ねる
+\newcommand{\vecbk}[1]{\rbk{#1}} % ベクトル用の括弧
+%%%%%%%%%%
+% 関数類 %
+%%%%%%%%%%
+\newcommand{\funcond}[3]{\fun{#1}{#2 \middle| #3}} % 条件つき確率などに利用する関数
+\newcommand{\funpipevert}[4]{\fun{#1}{#2 \middle| #3 \middle\Vert #4}} % 相対レニーエントロピーに利用
+\newcommand{\funrbk}[2]{\fun{\rbk{#1}}{#2}} % 関数の部分に丸括弧を入れてまとめる
+\newcommand{\funvert}[3]{\fun{#1}{#2 \middle\Vert #3}} % カルバック-ライブラ情報量などに利用
+\newcommand{\fun}[2]{#1 \rbk{#2}} % 関数テンプレート
+\newcommand{\invfun}[2]{\fun{\inv{#1}}{#2}} % 逆写像
+\newcommand{\sqfuncond}[3]{\sqfun{#1}{#2 \middle| #3}} % 角括弧を使う条件つき期待値などに利用する関数
+\newcommand{\sqfun}[2]{#1 \sqbk{#2}} % 角括弧を使う関数, 確率論の期待値や完全な熱力学関数に利用
+\newcommand{\sqfunrbk}[2]{\sqfun{\rbk{#1}}{#2}} % 角括弧を使う関数の関数の部分に丸括弧を入れてまとめる
+%%%%%%%%
+% 区間 %
+%%%%%%%%
+\newcommand{\closedinterval}[2]{\sqbk{#1,\,#2}} % 閉区間
+\newcommand{\intint}[1]{\sqbk{#1}} % 整数の区間：\sqbk{n..m} で \setone{n,n+1,\cdots,m} を表す.
+\newcommand{\leftopeninterval}[2]{\left(#1, \, #2 \right]} % 左開区間
+\newcommand{\nonneginterval}{\rightopeninterval{0}{\infty}} % 非負の実数の全体, 区間表記したいときのfldrealnn
+\newcommand{\nonposinterval}{\leftopeninterval{-\infty}{0}} % 非正の実数の全体, 区間表記したいときのfldrealnp
+\newcommand{\openinterval}[2]{\rbk{#1,\,#2}} % 開区間
+\newcommand{\negativeinterval}{\openinterval{-\infty}{0}} % 厳密に負の実数の全体, 区間表記したいときのfldrealneg
+\newcommand{\positiveinterval}{\openinterval{0}{\infty}} % 厳密に正の実数の全体, 区間表記したいときのfldrealplus
+\newcommand{\rightopeninterval}[2]{\left[#1, \, #2 \right)} % 右開区間
+\newcommand{\unitclosedinterval}{\closedinterval{0}{1}} % 単位閉区間
+\newcommand{\unitopeninterval}{\openinterval{0}{1}} % 単位開区間
+%%%%%%%%%%
+% 交換子 %
+%%%%%%%%%%
+\newcommand{\anticommutator}[2]{\cbk{#1,\,#2}} % 反交換子
+\newcommand{\commutator}[2]{\sqbk{#1,\,#2}} % 交換子
+\newcommand{\faweakcomm}[2]{\sqbk{#1,\,#2}_{\txtweak}} % 弱交換子
+\newcommand{\supercommutator}[2]{\sqbk{#1,\,#2}_{\txtsuper}} % 超交換子
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ディラックのブラケット %
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\braEPR}{\bra{\mathrm{EPR}}} % EPRブラベクトル, 量子情報
+\newcommand{\braplus}{\bra{+}} % スピンなどで基底を表すブラ
+\newcommand{\bra}[1]{\left\langle #1 \right|} % ブラベクトル
+\newcommand{\ketEPR}{\ket{\mathrm{EPR}}} % EPR状態
+\newcommand{\ketGHZ}{\ket{\mathrm{GHZ}}} % GHZ状態, expedition0009308
+\newcommand{\ketW}{\ket{\mathrm{W}}} % W状態, expedition0009307
+\newcommand{\ketbraproj}[2]{P_{#2,#1}} % \ketbraが見づらい場合の記法
+\newcommand{\ketbra}[2]{\ket{#1} \!\! \bra{#2}} % \ketと\braをくっつけて一体の作用素のように見せたいとき
+\newcommand{\ketminus}{\ket{-}} % スピンなどで基底を表すケット
+\newcommand{\ketone}{\ket{1}} % 二準位系での基底
+\newcommand{\ketplus}{\ket{+}} % スピンなどで基底を表すブラ
+\newcommand{\ketzero}{\ket{0}} % 二準位系での基底
+\newcommand{\ket}[1]{\left| #1 \right\rangle} % ケットベクトル
+%%%%%%%%%%%%%%%%%%
+% 点列・族の添字 %
+%%%%%%%%%%%%%%%%%%
+\newcommand{\kinone}{k \in \semigrposint} % k in N_1
+\newcommand{\kin}{k \in \monnat} % k in N
+\newcommand{\lil}{\lambda \in \Lambda} % lambda in Lambda
+\newcommand{\mim}{\mu \in M} % mu in M
+\newcommand{\ninone}{n \in \semigrposint} % n in N_1
+\newcommand{\nin}{n \in \monnat} % n in N
+\newcommand{\niz}{n \in \ringratint} % n in Z
+%%%%%%%%%%
+% Wick積 %
+%%%%%%%%%%
+\newcommand{\nna}{\stackrel{\scriptscriptstyle \circ}{\scriptscriptstyle \circ}\!}
+\newcommand{\nne}{\!\stackrel{\scriptscriptstyle \circ}{\scriptscriptstyle \circ}}
+\newcommand{\xxa}{\stackrel{\scriptscriptstyle \times}{\scriptscriptstyle \times}\!}
+\newcommand{\xxe}{\!\stackrel{\scriptscriptstyle \times}{\scriptscriptstyle \times}}
+\newcommand{\bosonwick}[1]{\left. \xxa\! \hspace{0.3pt} #1 \hspace{0.3pt} \!\xxe \right.}
+\newcommand{\gaugedwick}[1]{\left. \nna\! \hspace{0.3pt} #1 \hspace{0.3pt} \!\nne \right.}
+\newcommand{\wick}[1]{\left. :\! \hspace{-0.5pt} #1 \hspace{-0.5pt} \!: \right.} % ウィック積
+%%%%%%%%%%%%%%%%%%
+% 一般・全体利用 %
+%%%%%%%%%%%%%%%%%%
+\DeclareMathOperator*{\argmax}{argmax} % 最大値を取る引数を与える写像
+\DeclareMathOperator*{\essinf}{\mathrm{ess \, inf}} % 本質的下限
+\DeclareMathOperator*{\essran}{\mathrm{ess \, ran}} % 本質的値域
+\DeclareMathOperator*{\esssup}{\mathrm{ess \, sup}} % 本質的上限
+\DeclareMathOperator*{\opexistsone}{\exists!}
+\DeclareMathOperator*{\opexists}{\exists}
+\DeclareMathOperator*{\opforall}{\forall}
+\DeclareMathOperator{\arccosh}{arccosh} % 逆双曲線関数, 共通
+\DeclareMathOperator{\arcsinh}{arcsinh} % 逆双曲線関数, 共通
+\DeclareMathOperator{\arctanh}{arctanh} % 逆双曲線関数, 共通
+\DeclareMathOperator{\bigextprod}{\bigwedge\nolimits} % 外積用の記号
+\DeclareMathOperator{\cn}{cn} % 楕円関数, 共通
+\DeclareMathOperator{\compl}{«} % 関数合成
+\DeclareMathOperator{\compr}{»} % 関数合成
+\DeclareMathOperator{\csch}{csch} % 双曲線関数, 双曲線余割, 共通
+\DeclareMathOperator{\dn}{dn} % 楕円関数
+\DeclareMathOperator{\len}{len} % 長さ, 共通
+\DeclareMathOperator{\logpv}{Log} % 対数関数の主値
+\DeclareMathOperator{\sech}{sech} % 双曲線余割, ハイパボリックセカント
+\DeclareMathOperator{\sgn}{sgn} % 符号, 共通
+\DeclareMathOperator{\sn}{sn} % 楕円積分
+\DeclareMathOperator{\symdiff}{\raisebox{.2ex}{\scalebox{0.8}{$\triangle$}}} % 対称差
+\DeclareMathOperator{\tn}{tn} % 楕円積分
+\NewDocumentCommand{\imunit}{O{\mathsf{i}}}{#1} % 虚数単位, 共通
+\NewDocumentCommand{\placeholder}{O{\bullet}}{#1} % 関手やホモロジーなどでハイフンや点で表す要素
+\NewDocumentCommand{\trace}{O{\operatorname{Tr}}}{#1} % トレース
+\newcommand{\Ad}{\operatorname{Ad}} % 群などの随伴, Adjoint, Ad_U A = U^{\ast} A UまたはAd_g A = gA\inv{g}
+\newcommand{\Coim}{\operatorname{Coim}} % 余像, expedition0009942
+\newcommand{\Coker}{\operatorname{Coker}} % 余核, expedition0009942
+\newcommand{\Cor}{\operatorname{Cor}} % 余制限写像 expedition0008776
+\newcommand{\End}{\operatorname{End}} % 自己準同型写像がなす集合
+\newcommand{\Ext}{\operatorname{Ext}} % Ext群・関手
+\newcommand{\Fix}{\operatorname{Fix}} % 写像の不動点
+\newcommand{\Hom}{\operatorname{Hom}} % 準同型
+\newcommand{\Image}{\operatorname{Im}} % 像の集合
+\newcommand{\Index}{\operatorname{Index}} % 指数定理などの指数を想定
+\newcommand{\Inn}{\operatorname{Inn}} % 内部自己同型群, expedition0009281
+\newcommand{\Inv}{\operatorname{Inv}} % 可逆な写像
+\newcommand{\Ker}{\operatorname{Ker}} % 核の集合
+\newcommand{\Map}{\operatorname{Map}} % 写像
+\newcommand{\Out}{\operatorname{Out}} % 外部自己同型群
+\newcommand{\Ran}{\operatorname{Ran}} % 作用素論での値域を表す記号, 複素数の虚部と区別するため
+\newcommand{\Supp}{\operatorname{Supp}} % 台, 加群の台
+\newcommand{\Tor}{\operatorname{Tor}} % Tor群・関手
+\newcommand{\Tot}{\operatorname{Tot}} % アーベル圏で全複体を与える関手, expedition0008697
+\newcommand{\aaep}{\epsilon} % 代数解析で単位を分解する関数, expedition10579
+\newcommand{\aaepconj}{\cmpconj{\epsilon}} % 代数解析で単位を分解する関数, expedition10579
+\newcommand{\bigmiddleslash}[2]{\left. #1 \middle/ #2 \right.} % 主に商集合\setquotに利用
+\newcommand{\celcius}{\operatorname{\setSymbolUpLeft{\circ}{C}}} % 摂氏温度の記号
+\newcommand{\centimeter}{\operatorname{cm}} % 長さの単位
+\newcommand{\closedran}{\mathop{\overline{\Ran}}} % 閉線型包
+\newcommand{\clossqbk}[1]{\sqbk{#1}} % よく作用素環で閉包を表すために利用する
+\newcommand{\clos}[1]{\overline{#1}} % 外測度など何らかの意味で拡張・閉包のような趣があるものの, 具体的に「---閉包」のような名前がない対象に利用
+\newcommand{\cmpconjrbk}[1]{\overline{\rbk{#1}}} % 複素共役で内部に括弧をつける
+\newcommand{\cmpconj}[1]{\overline{#1}} % 複素共役
+\newcommand{\codim}{\opexists{codim}} % 余次元
+\newcommand{\cod}{\operatorname{cod}} % 終域, codomain
+\newcommand{\cof}{\operatorname{cof}} % 余因子
+\newcommand{\coim}{\operatorname{coim}} % 余像, 小文字は射に対して適用する, expedition0007898
+\newcommand{\coker}{\operatorname{coker}} % 余核, 小文字は射に対して適用する
+\newcommand{\enumcomb}[2]{\setSymbolDownLeft{#2}{\mathrm{C}}_{#1}} % 少なくとも日本ではよく使われる組み合わせの記号
+\newcommand{\enumperm}[2]{\setSymbolDownLeft{#2}{\mathrm{P}}_{#1}} % 順列
+\newcommand{\const}{\operatorname{const}} % 定数
+\newcommand{\dalembertian}{\Box} % ダランベール作用素
+\newcommand{\dddual}[1]{#1^{\ast \ast \ast}} % 三重双対
+\newcommand{\ddual}[1]{#1^{\ast \ast}} % 二重双対
+\newcommand{\diag}{\operatorname{diag}} % 対角
+\newcommand{\diam}{\operatorname{diam}} % 直径, 距離空間・特異単体・単体複体・リーマン幾何など各所で利用
+\newcommand{\diracdelta}{\delta} % ディラックのデルタ関数
+\newcommand{\diracslash}{\not \!} % ディラック方程式などで出てくるガンマ行列との縮約を取るスラッシュ
+\newcommand{\dom}{\operatorname{dom}} % 定義域
+\newcommand{\dualrbk}[1]{\rbk{#1}^{\ast}} % 双対作用素
+\newcommand{\dualsharprbk}[1]{\rbk{#1}^{\#}} % 双対, 特に空間の双対に利用
+\newcommand{\dualsharp}[1]{#1^{\#}} % 双対, 特に空間の双対に利用
+\newcommand{\dual}[1]{#1^{\ast}} % 双対作用素
+\newcommand{\epN}{\ep \hyphen N} % ε-N論法
+\newcommand{\epdelta}{\ep \hyphen \delta} % ε-δ論法
+\newcommand{\ep}{\varepsilon} % エイリアス
+\newcommand{\eqclr}[1]{\lrbk{#1}} % 同値類の記号
+\newcommand{\eqcol}[1]{\overline{#1}} % 同値類の記号
+\newcommand{\eqcsq}[1]{\sqbk{#1}} % 同値類の記号
+\newcommand{\eqdef}{\overset{\mathrm{def}}{=}} % 定義に利用する統合
+\newcommand{\eqisom}{\cong} % 一般的に同型を表す状況に利用
+\newcommand{\eval}{\operatorname{ev}} % 評価写像
+\newcommand{\fml}[2]{\cbk{#1}_{#2}} % 族の基本系
+\newcommand{\highlightcap}[3][yellow]{\tikz[baseline=(x.base)]{\node[rectangle,rounded corners,fill=#1!10](x){#2} node[below of=x, color=#1]{#3};}} % 強調のtikzサンプルで利用
+\newcommand{\highlight}[2][yellow]{\tikz[baseline=(x.base)]{\node[rectangle,rounded corners,fill=#1!10](x){#2};}} % 強調のtikzサンプルで利用
+\newcommand{\hypergeometricfunction}[2]{{\vphantom{F}}_{#1} F_{#2}} % 超幾何関数
+\newcommand{\hyphen}{\hbox{-}} % 記号定義の補助
+\newcommand{\idonebold}{\boldsymbol{1}} % 太字の1で表した恒等写像
+\newcommand{\idone}{1} % 1で表した恒等写像
+\newcommand{\id}{\mathrm{id}} % 恒等写像
+\newcommand{\image}{\operatorname{im}} % 像に関する射
+\newcommand{\inftwo}[2]{\mathop{\inf_{#1}}_{#2}} % 下限
+\newcommand{\inftysmall}[1]{\mathop{d #1}} % 無限小, 超準解析用の無限小は \nainftysmall で分ける
+\newcommand{\invrbk}[1]{\rbk{#1}^{-1}} % 逆写像
+\newcommand{\inv}[1]{#1^{-1}} % 逆像・逆写像, \invもよく使うため独立させる
+\newcommand{\kroneckerdelta}{\delta} % クロネッカーのデルタ
+\newcommand{\laplacian}{\Delta} % ラプラシアン
+\newcommand{\lusharp}[1]{\setSymbolUpLeft{\sharp}{#1}} % TODO expedition0006072 定義箇所で記号の可能性だけ紹介してpostcompかprecompに置き換え
+\newcommand{\maxtwo}[2]{\mathop{\max_{#1}}_{#2}} % 最大値
+\newcommand{\barmean}[1]{\overline{#1}} % 上つきバーによる平均
+\newcommand{\meter}{\operatorname{m}} % メートル
+\newcommand{\napiernum}{\mathsf{e}} % ネイピア数, 自然対数の底, 素電荷など他にもeが出てきて紛らわしい場合に利用
+\newcommand{\net}[2]{\rbk{#1}_{#2}} % ネット
+\newcommand{\od}[2]{\frac{d #1}{d #2}} % 一階の常微分作用素を作用させた関数
+\newcommand{\onehalf}{\frac{1}{2}} % 1/2
+\newcommand{\oneoverfour}{\frac{1}{4}} % 1/4
+\newcommand{\overarc}[1]{\stackrel{\Large\mbox{$\frown$}}{#1}} % 円弧
+\newcommand{\opchern}[1]{\operatorname{ch}} % チャーン指標
+\newcommand{\opexclude}[1]{\widehat{#1}} % その項を除外する作用素
+\newcommand{\ophull}{\operatorname{hull}} % 包
+\newcommand{\opideal}{\operatorname{Ideal}} % イデアル
+\newcommand{\opimag}{\operatorname{Im}} % 複素数の虚部
+\newcommand{\opod}[1]{\frac{d}{d #1}} % 一階の常微分作用素
+\newcommand{\oppd}[1]{\frac{\partial}{\partial #1}} % 偏微分作用素
+\newcommand{\oppv}{\operatorname{pv}} % 主値, principal value
+\newcommand{\opreal}{\operatorname{Re}} % 複素数の実部
+\newcommand{\otherwise}{\mathrm{otherwise}} % 場合分けで「その他」に使う文字列
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}} % 偏導関数
+\newcommand{\pinfty}{p^{\infty}} % p進系の記号
+\newcommand{\predualsharp}[1]{#1_{\#}} % 前双対
+\newcommand{\rel}{\mathbin{\mathrm{rel}}} % ホモトピーでの相対的な持ち上げなどに使うrel, expedition0008480
+\newcommand{\rusharprbk}[1]{\rbk{#1}^{\sharp}} % p系の処理, 置換して削除
+\newcommand{\rusharp}[1]{#1^{\sharp}} % TODO expedition0006072 定義箇所で記号の可能性だけ紹介してpostcompかprecompに置き換え
+\newcommand{\setSymbolDownLeft}[2]{{\vphantom{#2}}_{#1}{#2}} % 左下に添字をつけるvphantomのエイリアス
+\newcommand{\setSymbolUpLeft}[2]{{\vphantom{#2}}^{#1}{#2}} % 左上に添字をつけるvphantomのエイリアス
+\newcommand{\fnsineintegral}[1]{\fun{\mathrm{Si}}{#1}} % 正弦積分の記号 Si(x) の部分
+\newcommand{\intsineintegral}[1]{\int_{0}^{#1} \frac{\sin t}{t} \opdmsr{t}} % 正弦積分の定義の積分
+\newcommand{\supp}{\operatorname{supp}} % 台, 共通
+\newcommand{\vecbf}[1]{\mathbf{#1}} % ベクトル用のコマンド
+\newcommand{\vecarrow}[1]{\overrightarrow{#1}} % 矢印のベクトル
+%%%%%%%%%%%%%%%%%%
+% 以下ソート対象 %
+%%%%%%%%%%%%%%%%%%
+\DeclareMathOperator*{\algbigoplus}{\hat{\bigoplus}} % 代数的直和：フォック空間など解析で閉包と区別するため
+\DeclareMathOperator*{\algbigotimes}{\hat{\bigotimes}} % 代数的テンソル：フォック空間など解析で閉包と区別するため
+\DeclareMathOperator*{\algoplus}{\hat{\oplus}} % 代数的直和：フォック空間など解析で閉包と区別するため
+\DeclareMathOperator*{\algotimes}{\hat{\otimes}} % 代数的テンソル積：フォック空間など解析で閉包と区別するため
+\DeclareMathOperator*{\closedotimes}{\gtclos{\otimes}} % 代数的テンソル積の閉包：作用素環でよく出てくる
+\DeclareMathOperator*{\freeprod}{\ast} % 群の自由積, expedition0007871
+\DeclareMathOperator{\eqalgisom}{\cong} % 代数的な同型
+\DeclareMathOperator{\eqapprox}{\sim} % 近似的に等しい
+\DeclareMathOperator{\eqcatequiv}{\simeq} % 圏同値
+\DeclareMathOperator{\eqcatisom}{\cong} % 圏の同型, expedition0006298
+\DeclareMathOperator{\eqgtisom}{\approx} % 同相
+\DeclareMathOperator{\eqhilbunitaryisom}{\cong} % ヒルベルト空間のユニタリ同値
+\DeclareMathOperator{\eqhomotopic}{\simeq} % 道ホモトピー同値
+\DeclareMathOperator{\eqoaquasiequiv}{\simeq} % $\oacstar$-環の準同値
+\DeclareMathOperator{\eqpathhomotopic}{\dot{\simeq}} % 道ホモトピー同値
+\DeclareMathOperator{\eqprbiddistrib}{\overset{d}{=}} % 確率論での同分布
+\DeclareMathOperator{\eqprbmsrequiv}{\sim} % 確率論での測度の同値：互いに絶対連続
+\DeclareMathOperator{\eqsimelem}{\sim} % 同値な二要素を表す記号
+\DeclareMathOperator{\eqstarisom}{\simeq} % スター同型($\ast$-同型)
+\DeclareMathOperator{\equnitaryequiv}{\simeq} % ユニタリ同値
+\DeclareMathOperator{\lahodgestar}{\star} % ホッジ作用素
+\DeclareMathOperator{\noteqstarisom}{\not\simeq} % スター同型($\ast$-同型)
+\DeclareMathOperator{\Rep}{Rep} % 表現の空間や圏
+\NewDocumentCommand{\agvariety}{O{\mathcal}}{#1} % 代数多様体, 特にイデアルが生成する代数多様体
+\NewDocumentCommand{\cmdrel}{O{\omega}}{#1} % 分散関係
+\NewDocumentCommand{\dfsp}{O{A}}{#1} % 微分形式の空間
+\NewDocumentCommand{\eqcpointed}{O{\eqcsq} m}{#1{#2}_{\ast}} % 基点つき同値類
+\NewDocumentCommand{\fnheaviside}{O{H}}{#1} % ヘビサイド関数
+\NewDocumentCommand{\fthol}{O{\mathcal{O}}}{#1} % 正則関数の空間用
+\NewDocumentCommand{\ftmero}{O{\mathcal{M}}}{#1} % 有理型関数の空間用
+\NewDocumentCommand{\grcentralizer}{O{Z}}{#1} % 中心化群, expedition0005395
+\NewDocumentCommand{\grmetform}{O{2} m m}{\grmet[#1] \! \rbkt{#2}{#3}} % (一般)相対性理論, 計量の二次形式
+\NewDocumentCommand{\grmet}{O{2}}{\setSymbolDownLeft{#1}{g}} % (一般)相対性理論, 計量の文字
+\NewDocumentCommand{\grnormalizer}{O{N}}{#1} % 正規化群, expedition0005395
+\NewDocumentCommand{\gropasym}{O{A}}{#1} % 反対称化作用素, expedition0001365
+\NewDocumentCommand{\gropsym}{O{S}}{#1} % 対称化作用素, expedition0001365
+\NewDocumentCommand{\grpermorderedpair}{O{\mathcal{P}}}{#1} % 偶数個の要素の異なる順序対への分解の全体, expedition0009453
+\NewDocumentCommand{\grsym}{O{\mathfrak{S}} m}{#1_{#2}} % 対称群, expedition0001319
+\NewDocumentCommand{\gtbase}{O{\mathcal}}{#1} % 位相の基底, 開集合の基底, expedition0000259
+\NewDocumentCommand{\gtfilter}{O{\mathcal}}{#1} % フィルター, expedition0000349
+\NewDocumentCommand{\gtfmlclosed}{O{\mathcal}}{#1} % 閉集合系だけではなく, ある集合上の一般の閉集合族を表す, expedition0000227
+\NewDocumentCommand{\gtfmlopen}{O{\mathcal}}{#1} % 「位相」の意味での開集合系だけではなく, ある集合上の一般の開集合族を表す, expedition0000227
+\NewDocumentCommand{\gtopenball}{O{U}}{#1} % 開球
+\NewDocumentCommand{\gtopencover}{O{\mathcal}}{#1} % 開被覆
+\NewDocumentCommand{\gtopennbh}{O{\mathcal}}{#1} % 開近傍系
+\NewDocumentCommand{\gtpreopencover}{O{\mathcal}}{#1} % 内部を取ると開被覆になる集合の族, expedition0009107
+\NewDocumentCommand{\gtsubbase}{O{\mathcal}}{#1} % 位相の準基, expedition0005835
+\NewDocumentCommand{\gtvicinity}{O{\mathcal}}{#1} % 一様構造での近縁
+\NewDocumentCommand{\lasp}{O{\mathcal}}{#1} % 線型空間
+\NewDocumentCommand{\latprightrbk}{O{\top} m}{\rbk{#2}^{#1}} % 転置, expedition0009877
+\NewDocumentCommand{\latpright}{O{\top} m}{#2^{#1}} % 転置, expedition0009877
+\NewDocumentCommand{\latp}{O{t} m}{\setSymbolUpLeft{#1}{#2}} % 転置, expedition0009877
+\NewDocumentCommand{\lpdistribution}{O{\mu} m}{#2_{\ast,#1}} % 分布関数, expedition0010310
+\NewDocumentCommand{\lpmollifier}{O{\rho}}{#1} % フリードリクスの軟化子
+\NewDocumentCommand{\lpofpositive}{O{\chi}}{#1} % 正型関数
+\NewDocumentCommand{\manliederiv}{O{L}}{#1} % リー微分
+\NewDocumentCommand{\mansmoothnbh}{O{\mathcal}}{#1} % 多様体上の滑らかな開近傍の族
+\NewDocumentCommand{\mblfmldsysgenerated}{O{d} m}{\fun{#1}{#2}} % 生成された$d$-系
+\NewDocumentCommand{\mblfmlgenerated}{O{\sigma} m}{\fun{#1}{#2}} % 生成された加法族
+\NewDocumentCommand{\oacorrfn}{O{\Gamma}}{#1} % 汎関数積分表示とも関わる相関関数, expedition0011645
+\NewDocumentCommand{\oagnsvector}{O{\Omega}}{#1} % GNS表現のベクトル状態
+\NewDocumentCommand{\oaideal}{O{\mathcal}}{#1} % 作用素環のイデアル：環や代数のイデアルとは分けておく
+\NewDocumentCommand{\oanumberoperator}{O{A}}{#1} % レゾルベント環での個数作用素
+\NewDocumentCommand{\oaposcone}{O{\mathcal{P}}}{#1} % 冨田-竹崎理論での正錐
+\NewDocumentCommand{\oapressure}{O{P}}{#1} % トレースによる通常の圧力は大文字でP: expedition0009842, トレース状態による修正圧力は小文字でp: expedition0009797
+\NewDocumentCommand{\oarepn}{O{\pi}}{#1} % 作用素環の表現
+\NewDocumentCommand{\oaspnormalstate}{O{N}}{#1} % 作用素環上の正規状態の空間
+\NewDocumentCommand{\oasppurestate}{O{P}}{#1} % 作用素環上の純粋状態の空間
+\NewDocumentCommand{\oaspstate}{O{E}}{#1} % 作用素環の状態がなす空間
+\NewDocumentCommand{\oastatevector}{O{\Omega}}{#1} % GNS表現に付随する状態ベクトル
+\NewDocumentCommand{\oastate}{O{\omega}}{#1} % 作用素環の状態
+\NewDocumentCommand{\opdilation}{O{\delta}}{#1} % スケーリング(伸張)の作用素, expedition0010830
+\NewDocumentCommand{\opdmat}{O{\rho}}{#1} % 密度行列(密度作用素)
+\NewDocumentCommand{\opfockan}{O{a}}{#1} % 場の量子論での消滅作用素
+\NewDocumentCommand{\opfockcran}{O{a}}{#1^{\#}} % 場の量子論での生成・消滅作用素をまとめて表す記法
+\NewDocumentCommand{\opfockcrdagger}{O{a}}{#1^{\dagger}} % 場の量子論での生成作用素のバージョン
+\NewDocumentCommand{\opfockcr}{O{a}}{#1^{\ast}} % 場の量子論での生成作用素
+\NewDocumentCommand{\opfocknumber}{O{N}}{#1} % 個数作用素
+\NewDocumentCommand{\opfocksegalconj}{O{\pi}}{#1} % 場の量子論でのシーガルの場の作用素, expedition0009962
+\NewDocumentCommand{\opfocksegal}{O{\phi}}{#1} % 場の量子論でのシーガルの場の作用素
+\NewDocumentCommand{\opspecmeas}{O{E}}{#1} % スペクトル測度の標準的な記号
+\NewDocumentCommand{\opspec}{O{} m}{\fun{\sigma_{#1}}{#2}} % 作用素のスペクトル, expedition0001551
+\NewDocumentCommand{\optransl}{O{\tau}}{#1} % 平行移動の作用素, expedition0010829
+\NewDocumentCommand{\opvarspec}{O{} m}{\operatorname{spec}_{#1} #2} % 作用素のスペクトル, スピン系の議論など \sigma ではまぎらわしい場合に利用, expedition0001551
+\NewDocumentCommand{\physaction}{O{\mathcal{A}}}{#1} % 物理の作用
+\NewDocumentCommand{\physcharge}{O{e}}{\mathrm{#1}} % 電荷, 素電荷などの物理量を表す. e以外にもqに利用する
+\NewDocumentCommand{\physcplconst}{O{\mathsf{g}}}{#1} % 結合定数, coupling constant
+\NewDocumentCommand{\physelectrostaticcapasity}{O{\mathrm{Cap}}}{#1} % 静電容量, expedition0010917
+\NewDocumentCommand{\physenergy}{O{E}}{#1} % エネルギー
+\NewDocumentCommand{\physgse}{O{E}}{#1_{0}} % 基底エネルギー, ground state energy
+\NewDocumentCommand{\physham}{O{H}}{#1} % ハミルトニアンの雛形, たいていは下つき添字で水素原子, 自由電磁場などを表す
+\NewDocumentCommand{\physlagdensity}{O{\mathcal{L}}}{#1} % ラグランジアン密度の雛形
+\NewDocumentCommand{\physlag}{O{L}}{#1} % ラグランジアンの雛形
+\NewDocumentCommand{\physliouvilean}{O{L}}{#1} % リウビリアンの雛形
+\NewDocumentCommand{\physmass}{O{m}}{#1} % 物質の質量
+\NewDocumentCommand{\prbbrownmv}{O{B}}{#1} % ブラウン運動
+\NewDocumentCommand{\prbcharfun}{O{\chi}}{#1} % 特性関数
+\NewDocumentCommand{\prbdist}{O{\mathcal{P}}}{#1} % 確率分布
+\NewDocumentCommand{\prbgaussianmeasure}{O{\msrcal{N}}}{#1} % ガウス測度
+\NewDocumentCommand{\prbnormaldist}{O{N}}{#1} % 正規分布
+\NewDocumentCommand{\prbpoissonprocess}{O{N}}{#1} % ポアソン過程
+\NewDocumentCommand{\prbprocess}{O{X}}{#1} % 確率過程
+\NewDocumentCommand{\prbqspace}{O{\mathcal{Q}}}{#1} % $Q$-表示の土台の集合を表す
+\NewDocumentCommand{\prbspsample}{O{\Omega}}{#1} % 確率空間に対する標本空間, expedition0010114
+\NewDocumentCommand{\psh}{O{\mathfrak}}{#1} % 前層
+\NewDocumentCommand{\qtquantumchannel}{O{\mathcal{L}}}{#1} % 量子通信路, expedition0005561, expedition0006844
+\NewDocumentCommand{\repn}{O{\pi}}{#1} % 表現
+\NewDocumentCommand{\schattencls}{O{\mathbb{K}}}{#1} % コンパクト作用素またはシャッテンクラス
+\NewDocumentCommand{\setfmlcylinder}{O{\mathcal{C}}}{#1} % 筒集合族, expedition0000313, expedition0004973
+\NewDocumentCommand{\setfml}{O{\mathcal}}{#1} % 集合族
+\NewDocumentCommand{\setindex}{O{\mathcal} m}{#1{#2}} % 添字集合
+\NewDocumentCommand{\setlattice}{O{\Gamma}}{#1} % 格子, expedition0010278
+\NewDocumentCommand{\setspecial}{O{\mathcal} m}{#1{#2}} % 特別な集合を表すための記号, 一点集合・二点集合などを太字で表すといった用途
+\NewDocumentCommand{\shdiffform}{O{\sheaf{A}}}{#1} % 微分形式がなす層
+\NewDocumentCommand{\sheaf}{O{\mathfrak}}{#1} % 層の記号
+\NewDocumentCommand{\smchemicalpotential}{O{\mu}}{#1} % 化学ポテンシャル
+\NewDocumentCommand{\smenergydensity}{O{\varrho}}{#1} % エネルギー密度, expedition0011356
+\NewDocumentCommand{\smfluctuationwithdmat}{O{\beta} m}{\smuncertaintywithdmat[#1]{#2}^2} % 密度行列に付随する正規状態でのゆらぎ, expedition0011059
+\NewDocumentCommand{\sminvtemperature}{O{\beta}}{#1} % 逆温度
+\NewDocumentCommand{\smlocaldensityoperator}{O{\rho}}{#1} % 大正準状態に対する局所密度作用素, expedition0011294
+\NewDocumentCommand{\smmicrocanonicalstate}{O{\beta} m}{\physmean{#2}_{#1}} % 密度行列に付随する正規状態, expedition0011059
+\NewDocumentCommand{\smnumberdensity}{O{\rho}}{#1} % 粒子数密度, expedition0011351
+\NewDocumentCommand{\smooth}{O{\mathcal{E}}}{#1} % 滑らかな関数の空間, 特に微分形式関連でも利用, expedition0010649
+\NewDocumentCommand{\smparticlenumber}{O{N}}{#1} % 平均粒子数, expedition0011351
+\NewDocumentCommand{\smpressure}{O{p}}{#1} % 統計力学での圧力, expedition0011341
+\NewDocumentCommand{\smspecificfreeenergy}{O{\bar{f}}}{#1} % (ヘルムホルツの)比自由エネルギー
+\NewDocumentCommand{\smthermalvac}{O{\beta}}{\Omega_{#1}} % 熱的真空, expedition0011060
+\NewDocumentCommand{\smuncertaintywithdmat}{O{\beta} m}{\rbk{\triangle #2}_{#1}} % 密度行列に付随する正規状態での不確かさ, expedition0011059
+\NewDocumentCommand{\sphilbfrak}{O{\mathfrak}}{#1} % ヒルベルト空間
+\NewDocumentCommand{\sphilb}{O{\mathcal}}{#1} % ヒルベルト空間
+\NewDocumentCommand{\splowerhalf}{O{\mathbb{H}}}{#1_{\txtneg}} % 開下半空間
+\NewDocumentCommand{\spupperhalf}{O{\mathbb{H}}}{#1_{\txtnonneg}} % 開上半空間
+\NewDocumentCommand{\topmetric}{O{d}}{#1} % 位相空間上の距離関数
+\NewDocumentCommand{\vaoutnormal}{O{\widehat}}{#1} % 外向き外法線
+\newcommand{\aaantipodalmap}[1]{#1^{a}} % 対蹠写像, expedition0010618
+\newcommand{\aadmodule}{\mathcal{D}} % D-加群
+\newcommand{\aasingsupp}{\operatorname{sing \, supp}} % 特異台, expedition10583
+\newcommand{\aasingspec}{\operatorname{SS}} % 超局所解析的な特異スペクトル, expedition0010613
+\newcommand{\absconti}{\mathrm{AC}} % 絶対連続な関数がなす空間
+\newcommand{\affext}[1]{\overline{#1}} % アフィン拡大実数・拡大複素数(リーマン球面)に利用
+\newcommand{\aghomcoord}[1]{\sqbk{#1}} % 射影空間の斉次座標
+\newcommand{\agproj}[2]{P_{#1}^{#2}} % 代数幾何での射影空間, P_{#1}^{#2}
+\newcommand{\agtoideal}{\mathcal{I}} % (代数多様体の)部分集合からイデアルへの写像
+\newcommand{\agtovariety}{\mathcal{V}} % イデアルから代数多様体(の部分集合)への写像
+\newcommand{\algad}{\operatorname{ad}} % 環・代数の交換子を生成するad, 群のAdの微分, expedition0004725
+\newcommand{\algdiffop}{\mathfrak{D}} % 微分作用素がなす環, 例 expedition0009836, expedition0007330, expedition0007329
+\newcommand{\algendskew}{\operatorname{Endskew}} % expedition0004007
+\newcommand{\algevenodd}[1]{#1_{\pm}} % (超代数の)偶項・奇項
+\newcommand{\algeven}[1]{#1_{\txteven}} % (超代数の)偶項
+\newcommand{\algideal}[1]{\mathfrak{#1}} % 環または代数のイデアル
+\newcommand{\algodd}[1]{#1_{\txtodd}} % (超代数の)奇項
+\newcommand{\algsetderivative}{\operatorname{Der}} % 代数上の微分作用素がなす集合, expedition0002660
+\newcommand{\catabfingen}{\category{FinGenAb}} % 有限生成な可換群がなす圏
+\newcommand{\catab}{\category{Ab}} % 可換群がなす圏, expedition0006433
+\newcommand{\cataddfuncatoab}{\mathbf{Hom}^{\mathbf{a}}(\category{A}, \category{Ab})} % 小さなアーベル圏$\category{A}$から小さなアーベル群がなす圏$\category{Ab}$への加法関手がなす圏, expedition0007964
+\newcommand{\catban}[1]{\category{Ban}_{#1}} % バナッハ空間がなす圏, expedition0009393
+\newcommand{\catcatlocsmall}{\category{CAT}} % 局所小圏を対象とする圏, expedition0006288, expedition0009286
+\newcommand{\catcatsmall}{\category{Cat}} % 小さな圏を対象とする圏
+\newcommand{\catcluster}{\category{Cluster}} % クラスターとその細分化がなす圏
+\newcommand{\catcomma}[2]{#1 \downarrow #2} % コンマ圏
+\newcommand{\catcpthaus}{\category{CptHaus}} % コンパクトハウスドルフ空間がなす圏
+\newcommand{\catdblcpx}[1]{\fun{\category{C}_2}{#1}} % 二重複体がなす圏
+\newcommand{\catdirgraph}{\category{DirGraph}} % 有向グラフがなす圏
+\newcommand{\category}[1]{\mathop{\mathsf{#1}}} % 圏を生成する
+\newcommand{\cateuclidfinbased}{\cateuclidfin_{\ast}} % 基点つき有限次元ユークリッド空間がなす圏, expedition0009222
+\newcommand{\cateuclidfin}{\category{FinEuclid}} % ユークリッド空間がなす圏
+\newcommand{\catexactseq}[1]{\fun{\mathrm{ES}}{{#1}}} % 完全系列がなす圏
+\newcommand{\catfield}{\category{Field}} % 体がなす圏
+\newcommand{\catfock}{\category{Fock}} % フォック空間がなす圏
+\newcommand{\catfunctor}[2]{#1^{#2}} % 関手圏
+\newcommand{\catgraph}{\category{Graph}} % グラフがなす圏 expedition0009126
+\newcommand{\catgroupoid}{\category{Groupoid}} % 亜群がなす圏
+\newcommand{\catgrpfingen}{\category{FinGenGrp}} % 有限生成な群がなす圏
+\newcommand{\catgrp}{\category{Grp}} % 群がなす圏
+\newcommand{\cathaus}{\category{Haus}} % ハウスドルフ空間がなす圏
+\newcommand{\cathilb}{\category{Hilb}} % ヒルベルト空間がなす圏
+\newcommand{\cathom}[1]{\fun{\category{Hom}}{#1}} % 関手の圏, expedition0009417
+\newcommand{\cathorcomp}{\mathop{\ast}} % 自然変換の水平合成, expedition0009442
+\newcommand{\cathtpybased}{\cathtpy_{\ast}} % 基点を保つホモトピー類がなす圏, expedition0009144
+\newcommand{\cathtpy}{\category{Htpy}} % ホモトピー類がなす圏
+\newcommand{\catintermediatefield}[2]{\catfield_{#1}^{#2}} % 中間体がなす圏, expedition0009367
+\newcommand{\catmanbased}{\catman_{\ast}} % 基点つき多様体の圏
+\newcommand{\catman}{\category{Man}}
+\newcommand{\catmat}[1]{\category{Mat}_{#1}} % 環係数行列がなす圏, expedition0009135
+\newcommand{\catmeasure}{\category{Measure}} % 測度空間がなす圏, expedition0009145
+\newcommand{\catmeas}{\category{Meas}} % 可測空間がなす圏, expedition0009131
+\newcommand{\catmetricfin}{\category{FinMetric}} % 有限な距離空間がなす圏
+\newcommand{\catmodcpx}[1]{#1 \mathchar`- \category{ModChCpx}}
+\newcommand{\catmodel}[1]{\category{Model}_{#1}} % 数理論理学でのモデルがなす圏, expedition0009133
+\newcommand{\catmodfingenleft}[1]{#1 \mathchar`- \catmodfingen} % 有限生成左加群がなす圏
+\newcommand{\catmodfingenright}[1]{\catmodfingen \mathchar`- #1} % 有限生成右加群がなす圏
+\newcommand{\catmodfingen}{\category{FinGenMod}} % 有限生成な加群がなす圏
+\newcommand{\catmodgrleft}[1]{#1 \mathchar`- \catmodgr} % 次数つき加群がなす圏
+\newcommand{\catmodgr}{\category{GrMod}} % 次数つき加群がなす圏
+\newcommand{\catmodlefts}{\catmodleft{S}} % 左$S$-加群がなす圏
+\newcommand{\catmodleft}[1]{#1 \mathchar`- \catmod} % 左加群がなす圏：係数環は別途指定する
+\newcommand{\catmodright}[1]{\catmod \mathchar`- #1} % 右加群がなす圏：係数環は別途指定する
+\newcommand{\catmodtfleft}[1]{#1 \mathchar`- \catmodtf} % 左無捻加群がなす圏
+\newcommand{\catmodtf}{\category{TFMod}} % 無捻加群がなす圏, torsion-freeからTF
+\newcommand{\catmod}{\category{Mod}} % 加群の圏
+\newcommand{\catmonoidcommut}{\category{CMon}} % 可換なモノイドがなす圏
+\newcommand{\catmon}{\category{Mon}} % モノイドの圏
+\newcommand{\catmor}{\category{Mor}} % 射の集まり
+\newcommand{\catobj}[1]{\operatorname{Ob} #1}
+\newcommand{\catopposite}[1]{{#1}^{\txtopposite}} % 反対圏に利用.
+\newcommand{\catopsets}{\category{O}} % 位相空間の開集合全体がなす圏, expedition0008797
+\newcommand{\catorbitforgrp}[1]{\category{O}_{#1}} % 軌道圏, expedition0009364
+\newcommand{\catordfin}{\category{FinOrd}} % 有限順序数がなす圏
+\newcommand{\catpcluster}{\category{PCluster}} % パーシステントクラスター
+\newcommand{\catposet}{\category{Poset}} % 半順序集合がなす圏, expedition0009132
+\newcommand{\catpresheaf}[1]{\category{PSh}} % 前層がなす圏
+\newcommand{\catringcommut}{\category{CRing}} % 可換環の圏
+\newcommand{\catring}{\category{Ring}} % 単位的環がなす圏
+\newcommand{\catrng}{\category{Rng}} % 単位的とは限らない環がなす圏
+\newcommand{\catsetbased}{\catset_{\ast}} % 基点つき集合がなす圏, expedition0009121
+\newcommand{\catsetfinbased}{\catsetfin_{\ast}} % 基点つき有限集合と基点を保つ写像がなす圏
+\newcommand{\catsetfinisom}{\catsetfin_{iso}} % 有限集合と全単射がなす圏
+\newcommand{\catsetfin}{\category{Fin}} % 有限集合と写像がなす圏
+\newcommand{\catsetop}{\catopposite{\category{Set}}} % 集合がなす圏の反対圏
+\newcommand{\catsetpdeffn}{\category{Set}^{\partial}} % 集合と部分関数がなす圏, expedition0009371
+\newcommand{\catset}{\category{Set}} % 集合がなす圏
+\newcommand{\catsheaf}{\category{Sh}} % 層がなす圏
+\newcommand{\catshortexactseq}{\category{SES}} % 短完全系列がなす圏
+\newcommand{\catsimplicial}{\Delta} % 単体圏, 非空の有限順序数と順序写像がなす圏
+\newcommand{\catsingleobj}{\category{B} } % 一対象圏, BGのような形で使う, expedition0009146
+\newcommand{\catskeleton}{\category{sk}} % 圏の骨格, expedition0009428
+\newcommand{\catsliceover}[2]{\bigmiddleslash{#1}{#2}} % $c$上のスライス圏, expedition0009366
+\newcommand{\catsliceunder}[2]{\bigmiddleslash{#1}{#2}} % $c$のもとでのスライス圏, expedition0009365
+\newcommand{\cattopawconnbased}{\cattop_{\ast}^{\txtpathwiseconnected}} % 弧状連結な基点つき位相空間がなす圏, expedition0009427
+\newcommand{\cattopbased}{\cattop_{\ast}} % 基点つき位相空間がなす圏
+\newcommand{\cattopop}{\catopposite{\category{Top}}} % 位相空間がなす圏の反対圏
+\newcommand{\cattop}{\category{Top}} % 位相空間がなす圏
+\newcommand{\cattrgroupoid}[2]{\category{T}_{#1} #2} % 並進亜群, expedition0009430
+\newcommand{\catuniverse}{\mathfrak{U}} % 圏論での宇宙
+\newcommand{\catvect}{\category{Vect}} % 線型空間の圏, expedition0009125, expedition0009418
+\newcommand{\clsordinals}{\operatorname{ON}} % 順序数の全体(クラス)
+\newcommand{\contiseq}{c} % 数列空間用の文字, expedition0010228, expedition0010278
+\newcommand{\conti}{C} % 連続または滑らかな関数の空間
+\newcommand{\dgconnection}{\nabla} % 接続
+\newcommand{\dgcurvatureform}{\Omega} % 接続形式の曲率2-形式, expedition0009944
+\newcommand{\dggrgauge}{\mathcal{G}} % ゲージ群, ゲージ変換群, expedition0003652
+\newcommand{\dgharmform}{\mathbb{H}} % 調和関数または調和形式の空間
+\newcommand{\dgricci}{\operatorname{Ric}} % リッチ曲率, expedition0003770
+\newcommand{\dgriemmetrbk}[3]{\dgriemmet{\rbk{#1}}{#2}{#3}} % リーマン計量
+\newcommand{\dgriemmet}[3]{#1 \! \rbkt{#2}{#3}} % リーマン計量
+\newcommand{\dgspconnection}{\mathcal{A}} % 接続がなす空間, expedition0003652
+\newcommand{\dgvolform}{\mathrm{vol}} % 体積形式. 体積関数\fnvolと区別する
+\newcommand{\distalgsed}{\mathbb{S}} % 十六元数がなす非結合的分配多元体(distributive algebra)
+\newcommand{\divalgoct}{\mathbb{O}} % 八元数全体がなす可除代数(division algebra)または多元体
+\newcommand{\dpopgeneralizedricci}{\mathcal} % 一般化されたワイツェンベックの公式に対するリッチ曲率, expedition0003662
+\newcommand{\dstrapiddec}{\mathcal{S}} % 急減少関数の空間
+\newcommand{\dstschwartz}{\dsttest^{\ast}} % シュワルツ超関数の空間
+\newcommand{\dsttempered}{\dstrapiddec^{\ast}} % 緩増加超関数の空間
+\newcommand{\dsttest}{\mathcal{D}} % シュワルツ超関数に対する試験関数の空間
+\newcommand{\faaadj}[1]{#1^{\ast \ast}} % 共役を二回作用させる
+\newcommand{\faadjrbk}[1]{\rbk{#1}^{\ast}} % 行列・作用素に対する共役・随伴. 線型代数でも内積の必要性からこれに統合. 双対空間にはdualをあてる
+\newcommand{\faadjsharprbk}[1]{\rbk{#1}^{\#}} % 行列・作用素に対する共役・随伴. H^{-s}のような双対とずれるソボレフ空間などに利用する
+\newcommand{\faadjsharp}[1]{#1^{\#}} % 行列・作用素に対する共役・随伴. H^{-s}のような双対とずれるソボレフ空間などに利用する
+\newcommand{\faadjpresharprbk}[1]{\rbk{#1}_{\#}} % 行列・作用素に対する前共役(前双対)
+\newcommand{\faadjpresharp}[1]{#1_{\#}} % 行列・作用素に対する前共役(前双対)
+\newcommand{\faadj}[1]{#1^{\ast}} % 行列・作用素に対する共役・随伴. 線型代数でも内積の必要性からこれに統合. 双対空間にはdualをあてる
+\newcommand{\fabanachlimit}{\mathrm{BL}} % バナッハ極限, expedition0011076
+\newcommand{\faclosedconvexcone}{\mathcal{C}} % 閉凸錐, expedition0010219
+\newcommand{\facomplementarysum}{\operatorname{\dot{+}}} % 相補的な閉部分空間の和, expedition0010174
+\newcommand{\fafitr}[1]{\check{#1}} % フーリエ逆変換
+\newcommand{\fafouriertr}{\mathcal{F}} % フーリエ変換, 逆変換は\invか\faadjで生成
+\newcommand{\faftrrbk}[1]{\widehat{\rbk{#1}}} % フーリエ変換
+\newcommand{\faftr}[1]{\widehat{#1}} % フーリエ変換
+\newcommand{\fafunctional}[1]{\mathcal{#1}} % 汎関数
+\newcommand{\falaplacetr}{\mathcal{L}} % ラプラス変換
+\newcommand{\faperprbk}[1]{\rbk{#1}^{\perp}} % 直交補空間
+\newcommand{\faperp}[1]{#1^{\perp}} % 直交補空間
+\newcommand{\fapolarset}[1]{#1^{o}} % 極集合, expedition0010442
+\newcommand{\fasetantisym}[1]{\mathcal{#1}} % 反対称集合, expedition0001331
+\newcommand{\fastrongod}[2]{\txtstrong \hyphen \od{#1}{#2}} % 強微分, 強常微分
+\newcommand{\fastrongopod}[1]{\txtstrong \hyphen \opod{#1}} % 強微分, 強常微分
+\newcommand{\fastop}[1]{\fun{\beta}{#1}} % 関数解析での強位相の指定, expedition0010403
+\newcommand{\fatop}[1]{\fun{\sigma}{#1}} % 関数解析での弱位相の指定, expedition0010402
+\newcommand{\faunitclosedball}[1]{\rbk{#1}_1} % 閉単位球
+\newcommand{\faweakopod}[1]{\txtweak \hyphen \opod{#1}} % 弱微分, 弱常微分
+\newcommand{\fawstar}[1]{#1_{\mathrm{w}^{\ast}}} % 双対空間に対する汎弱位相
+\newcommand{\fawtop}[1]{#1_{\mathrm{w}}} % 双対空間に対する汎弱位相
+\newcommand{\fldalgclos}[1]{\overline{#1}} % 体の代数閉包
+\newcommand{\fldchar}{\operatorname{char}} % 体の標数
+\newcommand{\fldcmp}{\fld{C}} % 複素数体
+\newcommand{\fldextdeg}[2]{\sqbk{#1 : #2}} % 体の拡大次数, expedition0009274
+\newcommand{\fldfin}[1]{\fld{F}_{#1}} % 有限体
+\newcommand{\fldfrobmap}{\fld{F}} % フロベニウス写像
+\newcommand{\fldgal}[1]{\fun{\operatorname{Gal}}{#1}} % ガロア, Galを冠する関数, expedition0005798
+\newcommand{\fldlaurantseries}[2]{#1 \! \cbk{\cbk{#2}}} % ローラン級数体
+\newcommand{\fldmultiplicativegroup}[1]{#1^{\times}} % 体の乗法群
+\newcommand{\fldratdyadic}{D_{\fldrat}} % 二進有理数, expedition0000391
+\newcommand{\fldratfun}[2]{\fun{#1}{#2}} % 有理関数体, 有理式体
+\newcommand{\fldrat}{\fld{Q}} % 有理数体
+\newcommand{\fldrealneg}{\fld{R}_{<0}} % 厳密に負の実数全体
+\newcommand{\fldrealnn}{\fld{R}_{\geq 0}} % 非負の実数全体
+\newcommand{\fldrealnp}{\fld{R}_{\leq 0}} % 非正の実数全体
+\newcommand{\fldrealplus}{\fld{R}_{>0}} % 厳密に正の実数全体
+\newcommand{\fldreal}{\fld{R}} % 実数体
+\newcommand{\fldtofield}{\mathcal{F}} % ガロア部分群から中間体への写像, expedition0005813
+\newcommand{\fldtogaloisgroup}{\mathcal{G}} % 中間体からガロア部分群への写像, expedition0005813
+\newcommand{\fldtransdeg}{\operatorname{trans-deg}} % 超越次数
+\newcommand{\fld}[1]{\mathbb{#1}} % 実数体・複素数体・四元数体, またはこれらをまとめて表す体用のコマンド
+\newcommand{\fnappell}{\phi} % リーマンの$\zeta$の変形にあたるアッペル関数
+\newcommand{\fnbeta}[1]{\fun{B}{#1}} % 特殊関数のベータ関数
+\newcommand{\fnceil}[1]{\left\lceil #1 \right\rceil} % 天井関数
+\newcommand{\fndef}[1]{\boldsymbol{1}_{#1}} % 定義関数
+\newcommand{\fnerf}[1]{\fun{\operatorname{erf}}{#1}} % 誤差関数
+\newcommand{\fnexp}[1]{\fun{\exp}{#1}} % 指数関数
+\newcommand{\fnfloor}[1]{\lfloor #1 \rfloor} % 床関数
+\newcommand{\fngamma}[1]{\fun{\Gamma}{#1}} % 特殊関数のガンマ関数, expedition0006311
+\newcommand{\fngauss}[1]{\left\lfloor #1 \right\rfloor} % ガウス記号, $x$を超えない最大の整数
+\newcommand{\fnmorphismofcomplex}[1]{\mathrm{#1}} % 複体の射
+\newcommand{\fnrestr}[2]{\left. #1 \right|_{#2}} % 写像の制限
+\newcommand{\fnspbdd}[1]{\fun{B}{#1}} % ある集合上で有界な関数がなす空間
+\newcommand{\fnspconst}[1]{\fun{\operatorname{Const}}{#1}} % 定数関数の空間
+\newcommand{\fntoclose}{i_{\txtclose}} % 閉集合への包含写像
+\newcommand{\fntoopen}{i_{\txtopen}} % 開集合への包含写像
+\newcommand{\fnvalued}[2]{#1_{#2}} % (df)_pのようにある点での値を指定する写像
+\newcommand{\fnvol}[1]{\fun{\operatorname{Vol}}{#1}} %  体積を与える関数. 実際の体積を大文字のVolとし, 体積形式は小文字のvolにする
+\newcommand{\ftcauchyhilberttransform}{\operatorname{\mathbf{CH}}} % コーシー-ヒルベルト変換, expedition0010491, expedition0010511
+\newcommand{\ftcauchyweiltransform}{\operatorname{\mathbf{CW}}} % コーシー-ヴェイユ変換
+\newcommand{\ftcht}[1]{\check{#1}} % 解析汎関数に対するコーシー-ヒルベルト変換の作用, expedition0010483
+\newcommand{\ftdbar}{\overline{\partial}} % 関数論のディーバー作用素
+\newcommand{\ftdirichletsolvableregion}{\operatorname{Reg}} % ディリクレ問題が解けるような領域の全体, expedition000928
+\newcommand{\ftdivisor}{\operatorname{Div}} % 因子, expedition0009889
+\newcommand{\ftdsharp}{\partial^{\#}} % 複素幾何での外微分作用素
+\newcommand{\ftfbt}[1]{\widehat{#1}} % 解析汎関数に対するフーリエ-ボレル変換の作用, expedition0010483
+\newcommand{\ftflt}[1]{\tilde{#1}} % 指数型整関数に対するフーリエ-ラプラス変換の作用, expedition0010545
+\newcommand{\ftfourierboreltransform}{\mathop{\mathbf{FB}}} % フーリエ-ボレル変換, expedition0010483
+\newcommand{\ftfourierlaplacetransform}{\mathop{\mathbf{FL}}} % フーリエ-ラプラス変換
+\newcommand{\ftholconv}[1]{\widehat{#1}} % 正則凸包, expedition0010460
+\newcommand{\ftleraycover}[2]{\mathfrak{#1}} % 関数論でのルレイ被覆, expedition0004155やそのあとの注意
+\newcommand{\ftophull}{\mathop{\mathfrak{h}}} % 包作用素, expedition0004300
+\newcommand{\ftord}{\operatorname{ord}} % 零点または極の位数, expedition0003167
+\newcommand{\ftperronclass}[1]{\mathfrak{P}_{#1}} % ペロン類, expedition0009838
+\newcommand{\ftplurisubharm}{\operatorname{PSH}} % 多重劣調和な関数全体, expedition0004554
+\newcommand{\ftpolydisc}{\mathrm{P} \triangle} % 多重円板
+\newcommand{\ftpolynomialconvex}[1]{\widehat{#1}^{\txtpolynomial}} % 多項式凸包, expedition0010463
+\newcommand{\ftresidue}{\operatorname{Res}} % 関数論の留数
+\newcommand{\ftspentirefunctionofexpfn}{\operatorname{Exp}} % 指数型整関数の空間, expedition0010485
+\newcommand{\ftspecialbd}{\partial_0} % 特殊境界, expedition0005651
+\newcommand{\ftstrongplurisubharm}{\mathrm{SPSH}} % 強多重劣調和な関数全体の集合, expedition0004554
+\newcommand{\ftsubharm}{\mathrm{SH}} % 劣調和関数の空間, expedition0009448
+\newcommand{\grabelize}[1]{#1^{\mathrm{ab}}} % 群のアーベル化, expedition0009330
+\newcommand{\graffine}{\operatorname{Aff}} % アフィン変換, expedition0005496
+\newcommand{\grauto}{\operatorname{Aut}} % 自己同型群, または自己同型写像の全体
+\newcommand{\grcharacter}{\operatorname{Char}} % 指標
+\newcommand{\grdiff}{\operatorname{Diff}} % 微分同相群
+\newcommand{\grdual}[1]{\widehat{#1}} % 双対群
+\newcommand{\greuctr}[2]{\fldreal_{#1}^{#2}} % ユークリッド空間の空間並進群
+\newcommand{\grind}[2]{\sqbk{#1 : #2}} % 群の指数, expedition0005326
+\newcommand{\grisometry}{\operatorname{Isom}} % 等長変換群
+\newcommand{\grmobius}{\mathop{\text{Möb}}} % メビウス変換
+\newcommand{\grord}{\operatorname{ord}} % 群の位数, expedition0005646
+\newcommand{\grprod}[1]{#1^{\txtexcludezero}} % 体の零元を除外した乗法群
+\newcommand{\grprufer}[1]{\setquot{\ringpolynomial{\ringratint}{\frac{1}{#1}}}{\ringratint}} % プリューファーp群
+\newcommand{\grringaug}{\mathrm{d}} % 群環の添加写像, expedition0008765
+\newcommand{\grring}[2]{#1 \! \sqbk{#2}} % 群環
+\newcommand{\grtransposition}[2]{(#1 \, #2)} % 群の互換
+\newcommand{\grtrpos}[2]{(#1 \, #2)} % 互換, expedition0009437
+\newcommand{\gtbd}{\partial} % 位相空間に対する境界作用素
+\newcommand{\gtclosrbk}[1]{\overline{\rbk{#1}}} % 一般位相の閉包
+\newcommand{\gtclos}[1]{\overline{#1}} % 一般位相の閉包
+\newcommand{\gtfmlcompactset}[1]{\mathcal{#1}} % コンパクト集合がなす族, expedition0000329
+\newcommand{\gtfmlcompactconvexset}[1]{\mathcal{#1}} % コンパクト凸集合がなす族, expedition0010532
+\newcommand{\gtint}{\operatorname{Int}} % 一般位相の開核, open kernel
+\newcommand{\gtoneptcpt}[1]{\dot{#1}} % 一点コンパクト化
+\newcommand{\gtopclos}{\operatorname{clos}} % 一般位相の閉包, closure
+\newcommand{\gttopsorgenfreyline}{\mathcal{S}} % ソルゲンフライ直線, expedition0001888
+\newcommand{\habd}{\partial} % ホモロジー代数での境界作用素
+\newcommand{\haboundary}{B} % 境界輪体加群
+\newcommand{\hacechcohomology}{\check{H}} % チェックコホモロジー
+\newcommand{\hachaincomplex}[1]{#1_{\bullet}} % 鎖複体
+\newcommand{\hachain}{C} % 鎖加群
+\newcommand{\hacoboundary}{B} % 余境界輪体
+\newcommand{\hacochain}{C} % 余鎖
+\newcommand{\hacocycle}{Z} % 余輪体
+\newcommand{\hacohomology}{H} % コホモロジー
+\newcommand{\hacwbd}{\underline{\partial}} % CW対に対する鎖加群上の境界作用素, expedition0007497
+\newcommand{\hacycle}{Z} % 輪体加群
+\newcommand{\hahomology}{H} % ホモロジー
+\newcommand{\hainflation}{\operatorname{Inf}} % 膨張写像, inflation map, expedition0009331
+\newcommand{\hareducedhomology}{\tilde{H}} % 被約ホモロジー, expedition0008655
+\newcommand{\harelativechain}{\underline{C}} % 相対鎖加群
+\newcommand{\harelativecohomology}{\underline{H}} % 相対コホモロジー
+\newcommand{\harelativehomology}{\underline{H}} % 相対ホモロジー
+\newcommand{\harelbd}{\overline{\partial}} % ホモロジー代数での相対境界作用素, expedition0007469
+\newcommand{\harestriction}{\operatorname{res}} % 主にホモロジー代数での制限写像, 必要に応じてそれ以外にも転用
+\newcommand{\htpyrevrbk}[1]{\rbk{#1}^{-}} % 道の逆, expedition0003263
+\newcommand{\htpyrev}[1]{#1^{-}} % 道の逆, expedition0003263
+\newcommand{\intdef}[3]{\sqbk{#1}_{#2}^{#3}} % 定積分, definite integral
+\newcommand{\intleb}{\mathrm{L} \int} % ルベーグ積分: リーマン積分と区別したいときに
+\newcommand{\intpv}{\oppv \int} % 主値積分
+\newcommand{\intriem}{\mathrm{R} \int} % リーマン積分, ルベーグ積分と記号をわけたいときに
+\newcommand{\laantilinhodgestar}{\mathop{\bar{\star}}} % 反線型ホッジ作用素, expedition0003676
+\newcommand{\labilinformrank}{\operatorname{rank}} % (有限次元空間上の)双線型形式の階数
+\newcommand{\labilin}{\operatorname{Bilin}} % 双線型写像の集合
+\newcommand{\lacomplexication}[1]{#1_{\fldcmp}} % 複素化
+\newcommand{\laextalg}{\mathcal{A}} % 外積代数
+\newcommand{\laextdiff}[1]{\mathop{d #1}} % 外微分
+\newcommand{\laextprod}{\wedge} % 外積
+\newcommand{\laherm}{\operatorname{Herm}} % エルミート行列の全体
+\newcommand{\lahodgedualind}[1]{#1^{\lahodgestar}} % ホッジ双対指数, expedition0003574
+\newcommand{\lahodgeminkowskistar}{\star_M} % ホッジ-ミンコフスキー作用素
+\newcommand{\lamat}[2]{\rbk{#1}_{#2}} % 行列の成分表示
+\newcommand{\lapartialtp}[2]{#2^{T_{#1}}} % 部分転置, expedition0007073
+\newcommand{\lapfaffian}{\operatorname{Pf}} % パフィアン
+\newcommand{\larank}{\operatorname{rank}} % 線型代数での行列・線型写像の階数
+\newcommand{\lasetbase}[1]{\mathcal{#1}} % 基底をなすベクトルの組 \lasetbase{E} = \basebk{e_i}_{i=1}^{N}
+\newcommand{\latodf}{\operatorname{\flat}} % ベクトル場を微分形式に変換, expedition0003743
+\newcommand{\latovf}{\operatorname{\sharp}} % 音楽同型, 微分形式をベクトル場に送る, expedition0003743, expedition0009967
+\newcommand{\latprbk}[1]{\latp{\rbk{#1}}} % 括弧をつけた上での転置
+\newcommand{\lgconstsymbol}[1]{\mathcal{#1}} % 定数記号, expedition0010147
+\newcommand{\lgfnsymbol}[1]{\mathcal{#1}} % 関数記号, expedition0010147
+\newcommand{\liealgheisenberg}[1]{\mathfrak{H}_{#1}} % ハイゼンベルクリー環
+\newcommand{\liealgrank}{\operatorname{rank}} % (半単純)リー環の階数, expedition0005268
+\newcommand{\liealguppertriangle}[1]{\mathfrak{T}_{#1}} % 上三角リー環
+\newcommand{\liealg}[1]{\mathfrak{#1}} % リー環
+\newcommand{\liegr}[1]{\mathrm{#1}} % リー群
+\newcommand{\lorentz}{L} % ローレンツ空間, expedition0010365
+\newcommand{\losetpredicate}{\mathcal{P}} % 述語記号の全体, expedition0010147
+\newcommand{\lpae}{\mathop{\mathrm{a.e.}}} % ほとんどいたるところ, 「.」を含むためoperatornameが使えない
+\newcommand{\lpas}{\mathop{\txtprobas}} % ほとんど確実に, 「.」を含むためoperatornameが使えない
+\newcommand{\lpconjindex}[1]{#1'} % 共役指数, expedition0010223
+\newcommand{\lpconv}{\ast} % たたみ込み
+\newcommand{\lpfn}{\mathcal{L}} % 同値類を取らない生の関数に対するルベーグ空間
+\newcommand{\lpseq}{\ell} % 数列空間, expedition0000444
+\newcommand{\lpsimple}{\mathrm{SF}} % 単関数の空間
+\newcommand{\lpsymrearr}[1]{#1^{\ast}} % 対称再配分, expedition0003054, expedition0003059
+\newcommand{\lpvanishingatinfty}{D} % Lieb-Loss, 堀内, 無限遠で消滅的な関数, expedition0001998
+\newcommand{\lp}{L} % ルベーグ空間, L_{\txtloc}^p(X), L^p(X)
+\newcommand{\manalgvecfld}{\mathfrak{X}} % ベクトル場がなす代数
+\newcommand{\manatlas}[1]{\mathcal{#1}} % 多様体のアトラス
+\newcommand{\manclifford}{\operatorname{Cl}} % クリフォード関係, クリフォード束: expedition0005779
+\newcommand{\mancospherebdle}{\dual{S}} % 余球面束
+\newcommand{\mancotfunctor}{\dual{T}} % 余接束に関わる関手
+\newcommand{\mancotpqfunctor}[1]{T^{\ast,#1}} % (p,q)テンソル積束に関わる関手
+\newcommand{\mancrosssection}{\Gamma} % ベクトル束の切断
+\newcommand{\mandgspinc}{\operatorname{Spin}^{\mathrm{c}}} % スピン$c$多様体
+\newcommand{\mandgspin}{\operatorname{Spin}} % スピン多様体
+\newcommand{\mandiffideal}{\mathcal{I}} % 微分形式がなす微分イデアル, expedition0007338
+\newcommand{\mandisk}{\mathbb{D}} % 円板または閉球体
+\newcommand{\mandistribution}{\mathcal{D}} % 多様体上の分布, expedition0003991
+\newcommand{\manembedding}{\operatorname{Emb}} % 埋め込み, expedition0009279
+\newcommand{\manfnspmorse}{\operatorname{Morse}} % モース関数の空間, expedition0009964
+\newcommand{\mangrassmann}[3]{\fun{G_{#1,#2}}{#3}} % グラスマン多様体
+\newcommand{\mangrholonomy}{\operatorname{Hol}} % ホロノミー群, expedition0009279
+\newcommand{\mangrpicard}{\operatorname{Pic}} % ピカール群, expedition0004339
+\newcommand{\manhirzebruchlgenus}{\mathcal{L}} % ヒルツェブルフのL種数, expedition0010182
+\newcommand{\manimbedding}{\operatorname{Imb}} % はめ込み, expedition0009279
+\newcommand{\manjacobi}{\operatorname{Jac}} % ヤコビ多様体
+\newcommand{\manmaprank}{\operatorname{rank}} % 多様体上の写像の階数, expedition0002606
+\newcommand{\mannormalfunctor}{\nu} % 法空間・法束に関わる関手
+\newcommand{\manopextalmostcmpstructure}{\operatorname{\mathbf{I}}} % 定義\ref{expedition0003752}(2)の作用素
+\newcommand{\manproj}{\mathbb{P}} % 微分多様体論での射影空間
+\newcommand{\manriemsphere}{\overline{\fldcmp}} % リーマン球面
+\newcommand{\mansetcrit}{\operatorname{Crit}} % 臨界点の集合, expedition0003231, expedition0007521, expedition0009963
+\newcommand{\mansphere}{\mathbb{S}} % 球面
+\newcommand{\manspherebdle}{S} % 球面束
+\newcommand{\manspmoduli}{\mathcal{M}} % モジュライ空間
+\newcommand{\manstiefel}[3]{\fun{V_{#1,#2}}{#3}} % シュティフェル多様体
+\newcommand{\mansubmersion}{\operatorname{Subm}} % 沈め込み, expedition0002644
+\newcommand{\mantanfunctor}{T} % 接束用の関手
+\newcommand{\mantanvec}[2]{\fnvalued{\rbk{\oppd{#1}}}{#2}} % 接ベクトル
+\newcommand{\mantensorbdle}[1]{\mathcal{#1}} % テンソル積束
+\newcommand{\mantoddgenus}{\operatorname{Todd}} % トッド種数, expedition0009957
+\newcommand{\mantorus}{\mathbb{T}} % トーラス
+\newcommand{\mantrivbdle}[1]{\underline{#1}} % 自明束
+\newcommand{\manvecfld}[1]{#1} % ベクトル場
+\newcommand{\manvectbdle}{\operatorname{Vect}} % ベクトル束
+\newcommand{\manyangmills}{\operatorname{YM}} % ヤン-ミルズ, expedition0006094
+\newcommand{\mblclos}[1]{\overline{#1}} % 測度空間の完備化, あえて「閉包」を利用
+\newcommand{\mblfmlbaire}{\mblfml{B}} % ベール集合族, expedition0006109
+\newcommand{\mblfmlborelext}{\overline{\mblfml{B}}} % 拡大実数体上のボレル集合族
+\newcommand{\mblfmlborel}{\mblfml{B}} % ボレル集合族
+\newcommand{\mblfmldsys}{\mblfml{D}} % 可測空間論での$d$-系, Lambda系-とも言う, expedition0000538
+\newcommand{\mblfmlfigure}{\mblfml{F}_0} % 区間塊の全体, expedition0000642
+\newcommand{\mblfmlfinite}[1]{\mblfml{#1}} % 有限加法族
+\newcommand{\mblfmlfrak}[1]{\mathfrak{#1}} % 加法族の mathfrak 表記
+\newcommand{\mblfmlleb}{\mblfml{F}_{\txtleb}} % ルベーグ可測集合の全体
+\newcommand{\mblfmlleftopeninterval}{\mblfml{I}} % ユークリッド空間の左開区間全体がなす集合, expedition0000887
+\newcommand{\mblfmlnull}{\mblfml{N}} % 零集合の全体
+\newcommand{\mblfmlpisys}[1]{\mblfml{#1}} % 可測空間論での$\pi$-系
+\newcommand{\mblfmltail}[1]{\mblfml{#1}} % 末尾加法族, expedition0004740
+\newcommand{\mblfml}[1]{\mathcal{#1}} % 可測集合族に関わる記号の基礎
+\newcommand{\mblfn}{M} % 可測関数
+\newcommand{\mblsplebwiener}{\mblfml{W}} % ルベーグ-ウィーナー空間, expedition0005039
+\newcommand{\modbimod}[3]{\setSymbolDownLeft{#2}{#1}_{#3}} % 両側加群
+\newcommand{\modflatdim}{\operatorname{fd}} % 加群の平坦次元
+\newcommand{\modgldim}{\operatorname{\operatorname{gl \mathchar`- dim}}} % 加群の大域次元
+\newcommand{\modinjdim}{\operatorname{id}} % 加群の単射次元
+\newcommand{\modleft}[2]{\setSymbolDownLeft{#2}{#1}} % 左加群
+\newcommand{\modlgldim}{\operatorname{l \mathchar`- gl \mathchar`- dim}} % 左大域次元
+\newcommand{\modprojdim}{\operatorname{pd}} % 加群の射影次元
+\newcommand{\modrank}{\operatorname{rank}} % 加群の階数
+\newcommand{\modrgldim}{\operatorname{r \mathchar`- gl \mathchar`- dim}} % 加群の右大域次元
+\newcommand{\modright}[2]{#1_{#2}} % 右加群
+\newcommand{\modsocle}{\operatorname{Soc}} % 半単純成分, socle, expedition0008225
+\newcommand{\modwgldim}{\operatorname{w \mathchar`- gl \mathchar`- dim}} % 加群の弱大域次元
+\newcommand{\monfree}{\operatorname{Free}} % 集合から生成する自由モノイド, expedition0009945
+\newcommand{\monnat}{\mathbb{N}} % 0を含めた自然数全体がなすモノイド
+\newcommand{\msrae}[1]{#1 \hyphen \mathrm{a.e.}} % ある測度に対するほとんどいたるところ
+\newcommand{\msras}[1]{#1 \hyphen \txtprobas} % ある測度に対するほとんど確実に
+\newcommand{\msrbb}[1]{\mathbb{#1}} % mathbbで表す測度
+\newcommand{\msrcal}[1]{\mathcal{#1}} % mathcalで表す測度
+\newcommand{\msrcnt}{\mu_{\txtcnt}} % 数え上げ測度
+\newcommand{\msrdirac}{\mu_{\txtdirac}} % ディラックのデルタ測度
+\newcommand{\msrlaw}{\mathrm{Law}} % 法則
+\newcommand{\msrlebwiener}{\mu_0} % ルベーグ-ウィーナー測度
+\newcommand{\msrleb}{\mu_{\txtleb}} % ルベーグ測度
+\newcommand{\msrouter}[1]{#1^{\ast}} % 外測度
+\newcommand{\msrprb}{\mathrm{Pr}} % たまに役立つであろう, 立体のPrで表す確率測度
+\newcommand{\msrpreleb}{m_{\txtleb}} % ユークリッド空間上のルベーグ測度の定義に利用する有限加法的測度
+\newcommand{\msrsf}[1]{\mathsf{#1}} % mathsfで表す測度
+\newcommand{\msrzero}{\mu_0} % 何らかの意味で基準になる測度
+\newcommand{\msr}[1]{#1} % 測度の識別用
+\newcommand{\nafldcmp}{\na{\fldcmp}} % 超準複素数体
+\newcommand{\nafldrat}{\na{\fldrat}} % 超準有理数体
+\newcommand{\nafldreal}{\na{\fldreal}} % 超準実数体
+\newcommand{\nainftysmall}[1]{d #1} % 超準解析での無限小, それ以外の無限小への流用は避ける
+\newcommand{\namonnat}{\na{\monnat}} % 超準自然数がなすモノイド
+\newcommand{\namsrloeb}{\mu_{\mathrm{Loeb}}} % 超準解析でのローブ測度
+\newcommand{\nanonstduniv}{\nauniv(\na{\fldreal})} % 超準宇宙, expedition0009306
+\newcommand{\napreinternaluniv}{\tilde{\nauniv}} % 超準解析での宇宙の一種
+\newcommand{\narank}{\operatorname{rank}} % 超準解析での要素の階数
+\newcommand{\nasplpbase}{\mathfrak{F}} % 定義expedition0009837で定めた商空間
+\newcommand{\nastdop}{\operatorname{st}} % 超準解析の標準化写像, expedition0005133
+\newcommand{\nastdpart}[1]{\setSymbolUpLeft{\circ}{#1}}
+\newcommand{\nastdset}[1]{\setSymbolUpLeft{\txtstandard}{#1}} % expedition0005127, 標準化された集合
+\newcommand{\nastduniv}{\nauniv(\fldreal)} % 超準解析での標準宇宙, expedition0005110
+\newcommand{\nauniv}{\mathcal{U}} % 超準解析での標準宇宙を表す記号
+\newcommand{\na}[1]{\setSymbolUpLeft{\ast}{#1}} % 超準化作用素
+\newcommand{\nfoldvar}[2]{\underline{#1}_{#2}} % #2個の変数をまとめて下線つきで表す
+\newcommand{\oaadjustedentropy}{\hat{S}} % 修正エントロピー expedition0009609, 修正相対エントロピー expedition0009878
+\newcommand{\oaalgentropy}{H} % 代数的エントロピー, expedition0009940
+\newcommand{\oaalgweyl}{\oa{\opfockweyl}} % ワイル代数
+\newcommand{\oaarakiwoodsrepn}{\oarepn^{\txtarakiwoods}} % 荒木-ウッズ表現
+\newcommand{\oaarakiwoodssp}{\spfock_{\txtarakiwoods}} % 荒木-ウッズ空間
+\newcommand{\oaarakiwoodsvac}{\Omega_{\txtarakiwoods}} % 荒木-ウッズ自由場の真空
+\newcommand{\oaarakiwoodsweyl}[1]{W_{#1}} % 荒木-ウッズ表現でのワイル作用素
+\newcommand{\oacalkin}{\operatorname{Cal}} % カルキン環
+\newcommand{\oacar}{\operatorname{CAR}} % CAR環
+\newcommand{\oacenter}{Z} % 作用素環の中心
+\newcommand{\oacntentropy}{h} % CNTエントロピー, expedition0009938
+\newcommand{\oacommutant}[1]{#1^{\prime}} % 作用素環での可換子環
+\newcommand{\oacondexp}{\operatorname{E}} % 作用素環に対する条件つき期待値
+\newcommand{\oacstar}{C^{\ast}} % $C^{\ast}$-環
+\newcommand{\oaderiv}{\delta} % 作用素環上の微分, derivation
+\newcommand{\oadoublecommutant}[1]{#1^{\prime \prime}} % 二重可換子環
+\newcommand{\oaentropy}{S} % 作用素環上のエントロピーで相対エントロピー(定義\ref{expedition0009684})にも流用, オリジナルはフェルミオンの格子模型, expedition0009942
+\newcommand{\oalocgibbsstate}{\phi^{c}} % 局所ギブス状態, expedition0009692
+\newcommand{\oameanadjustedentropy}{\hat{s}} % 平均修正エントロピー expedition0009609
+\newcommand{\oameanenergy}{e} % 平均エネルギー
+\newcommand{\oameanentropy}{s} % 平均エントロピー expedition0009684
+\newcommand{\oanormalizefunctional}[1]{\sqbk{#1}} % 作用素環での汎関数の正規化の記号, どれだけ一般的かは不明
+\newcommand{\oaopdualcone}[1]{\check{#1}} % 双対錐の記号
+\newcommand{\oapredual}[1]{#1_{\ast}} % フォン・ノイマン環の前双対
+\newcommand{\oaresolventalgebra}{\oa{R}} % レゾルベント環
+\newcommand{\oaresolvent}{R} % レゾルベント環の要素としてのレゾルベント
+\newcommand{\oaselfdualcone}{\mathcal{P}} % 標準表現に付随する自己双対錐
+\newcommand{\oasetregularrepn}{\operatorname{Reg}} % 作用素環の正則表現
+\newcommand{\oasetsolforvariationalproblem}[1]{\Lambda_{#1}} % 変分原理の解の集合, expedition0009854
+\newcommand{\oaspec}{\operatorname{Spec}} % 可換な$\oacstar$-環に対するスペクトル
+\newcommand{\oasplocham}{\mathop{\boldsymbol{H}}} % (格子模型での)標準ハミルトニアンがなす実線型空間
+\newcommand{\oaspstdpot}{\mathcal{P}} % (格子模型での)標準ポテンシャルがなす実線型空間, expedition0009673
+\newcommand{\oastaralgebra}{\operatorname{\ast \hyphen \mathrm{alg}}} % 指定した集合が生成する$\ast$-環
+\newcommand{\oatomitamodaut}{\sigma} % 冨田のモジュラー自己同型写像
+\newcommand{\oatomitamodconj}{J} % 冨田のモジュラー共役作用素
+\newcommand{\oatomitamodop}{\Delta} % 冨田のモジュラー作用素
+\newcommand{\oaweyl}{\oa{W}} % 抽象的なワイル環
+\newcommand{\oawstar}{W^{\ast}} % $W^{\ast}$-環
+\newcommand{\oa}[1]{\mathcal{#1}} % 作用素環を表す記号用
+\newcommand{\opabscontipart}[1]{#1_{\txtabsconti}} % 作用素#1の絶対連続部分, expedition0009300
+\newcommand{\opalgebraicmultiplicity}[1]{\fun{m_{\txtalg}}{#1}} % 代数的多重度, expedition0010176
+\newcommand{\opawsegal}{\phi} % 荒木-ウッズ表現でのシーガルの場の作用素
+\newcommand{\opbottomofessspec}[1]{\Sigma_{#1}} % 真性スペクトルの下限
+\newcommand{\opcharnum}[2]{\fun{\mu_{#1}}{#2}} % 作用素論でのn番目の特性数(特性レベル), expedition0009754
+\newcommand{\opclos}[1]{\overline{#1}} % 作用素論での作用素に対する閉包
+\newcommand{\opdifference}[1]{\mathrm{#1}} % 差分作用素, expedition0004874
+\newcommand{\opdifficiencyind}{n} % 対称作用素の不足指数, expedition0009898
+\newcommand{\opdiracind}{\operatorname{ind}} % ディラック作用素の指数, expedition0009280
+\newcommand{\opdmsrfeynman}[1]{\mathop{\mathcal{D} #1}} % 経路積分での形式的な測度
+\newcommand{\opdmsr}[1]{\mathop{d #1}} % 積分で現れる測度用のコマンド, dxのような単純な対象も含む
+\newcommand{\opdpathintegralmsr}[1]{\mathop{\mathcal{D} #1}} % 物理的な経路積分で現れる「測度」
+\newcommand{\opfnresolvent}[1]{\invrbk{#1}} % レゾルベント関数
+\newcommand{\opfockccrrepresentationcran}{\mathrm{CCR} \hyphen \mathrm{CrAn}_{\txtfock}} % 非有界フォック正準交換関係環 expedition0011291
+\newcommand{\opfockschwingerfunctional}{S} % シュウィンガー関数, expedition0009992
+\newcommand{\opfocksegalradiation}{A} % 輻射場に対するシーガルの場の作用素, expedition0010034
+\newcommand{\opfocksndqntdiff}{d \Gamma} % 第一種の第二量子化作用素, 微分版
+\newcommand{\opfocksndqnt}{\Gamma} % 第二種の第二量子化作用素
+\newcommand{\opfockvac}{\Omega} % フォック真空
+\newcommand{\opfockweyl}{W} % フォック空間上のワイル作用素
+\newcommand{\opfockwightmanfunctional}{W} % ワイトマン関数, expedition0009986
+\newcommand{\opformclos}[1]{\overline{#1}} % 準双線型形式の閉包,
+\newcommand{\opformdomain}{\mathop{Q}} % 準双線型形式の定義域, expedition0009907
+\newcommand{\opforminf}[1]{\fun{\mathcal{E}_0}{#1}} % 準双線型形式の下限, expedition0009908
+\newcommand{\opformsum}{\operatorname{\dot{+}}} % 作用素論での形式和
+\newcommand{\opform}[1]{\mathsf{#1}} % 二次形式
+\newcommand{\opfredholmind}{\operatorname{ind}} % フレドホルム指数
+\newcommand{\opgeometricmultiplicity}[1]{\fun{m_{\txtgeom}}{#1}} % 幾何学的多重度, expedition0010176
+\newcommand{\opgroundstateenergy}{E_0} % 基底エネルギー, expedition0001585
+\newcommand{\opprojto}[1]{\sqbk{#1}} % 閉部分空間への射影作用素または閉部分空間それ自身
+\newcommand{\oppr}{\mathrm{pr}} % 射影作用素
+\newcommand{\oprot}{\mathcal} % 回転の作用素・行列で文字種を変えたい場合に利用
+\newcommand{\opsetresolvent}[1]{\fun{\rho}{#1}} % レゾルベント集合
+\newcommand{\opsingularpart}[1]{#1_{\txtsingular}} % 作用素#1の特異部分空間, expedition0009300
+\newcommand{\opspabsconti}[2]{\fun{#1_\txtabsconti}{#2}} % ヒルベルト空間#1での作用素#2の絶対連続部分空間, expedition0009913
+\newcommand{\opspbddlin}[1]{\fun{\mathbb{B}}{#1}} % 有界線型作用素がなす空間
+\newcommand{\opspecfml}[1]{\fml{#1_{\lambda}}{\lambda \in \fldreal}} % スペクトル族
+\newcommand{\opspecint}[1]{\mathcal{E}} % スペクトル積分, expedition0001621
+\newcommand{\opsplin}{\mathbb{L}} % 非有界作用素まで含めた線型作用素がなす空間
+\newcommand{\opsppseudodiffop}{\mathrm{PDO}} % 次数$m$以下の偏微分作用素の空間, expedition0009282
+\newcommand{\opsprollnikpotential}{\mathcal{R}} % ロルニックポテンシャルの全体, expedition0003113
+\newcommand{\opspsingular}[2]{\fun{#1_{\txtsingular}}{#2}} % ヒルベルト空間#1での作用素#2の特異部分空間, expedition0009913
+\newcommand{\opsympform}[2]{\fun{\sigma}{#1, \, #2}} % ボソン$\oacstar$-環に付随するシンプレクティック形式
+\newcommand{\optoop}[1]{\widehat{#1}} % 関数などを作用素に変換する写像
+\newcommand{\opvnentropy}{S} % フォン・ノイマンエントロピー
+\newcommand{\padic}[2]{#1_{#2}} % p進整数, p進数, l進数などを表す
+\newcommand{\physadj}[1]{#1^{\dagger}} % 形式的共役または物理でのエルミート共役
+\newcommand{\physapparatus}[1]{\mathbf{#1}} % 小澤論文でapparatusを表す記号
+\newcommand{\physbfposition}[1]{\mathbf{#1}} % 小澤論文でmathbfで位置を表す記号
+\newcommand{\physbkt}[2]{\left\langle #1 \vert #2 \right\rangle} % 量子力学でよく使われる内積の記法
+\newcommand{\physboltzmannconst}{k_{\txtboltzmann}} % ボルツマン定数, k_B
+\newcommand{\physcmpconj}[1]{{#1}^{\ast}} % 物理記法の複素共役
+\newcommand{\physelecricfield}{E} % 電場
+\newcommand{\physenergyfunc}{\mathcal{E}} % エネルギー汎関数
+\newcommand{\physfermisurface}{\mathcal{F}} % 連結グリーン関数, expedition0009492
+\newcommand{\physfnconnectedgreen}{\mathcal{G}} % 連結グリーン関数, expedition0009492
+\newcommand{\physfngeneratorconnectedgreen}{\mathcal{C}} % 連結グリーン関数の生成子, expedition0009492
+\newcommand{\physionization}{\mathcal{I}} % イオン化, expedition0010208
+\newcommand{\physmagneticflux}{\Phi} % 物理, 磁束
+\newcommand{\physmean}[1]{\dbk{#1}} % 物理, 特に統計力学によく出てくる平均の記号
+\newcommand{\physmfdensity}{B} % 磁束密度, magnetic flux density
+\newcommand{\physoperator}[1]{\hat{#1}} % 物理で演算子につけるハット
+\newcommand{\physoptimeorder}{\operatorname{T}} % 時間順序作用素
+\newcommand{\physplanckconst}{h} % プランク定数
+\newcommand{\physpoissonbkt}[1]{\cbk{#1}} % 物理用のポアソン括弧
+\newcommand{\physprobe}[1]{\mathbf{#1}} % 小澤論文でprobeを表す記号
+\newcommand{\physqinfomatw}{\mathsf{W}} % よい名前がわからない・思いつかないため暫定
+\newcommand{\physscalarpot}{\phi} % スカラーポテンシャル
+\newcommand{\physsysbf}[1]{\mathbf{#1}} % 量子系などの系をmathbfで表したい場合に利用
+\newcommand{\physsyscal}[1]{\mathcal{#1}} % 量子系などの系をmathcalで表したい場合に利用
+\newcommand{\physsysrm}[1]{\mathrm{#1}} % 量子系などの系をmathrmで表したい場合に利用
+\newcommand{\physvecpot}{A} % ベクトルポテンシャル
+\newcommand{\physvec}[1]{\boldsymbol{#1}} % 物理で利用する太字のベクトル
+\newcommand{\postcomp}[1]{{\vphantom{\circ}}_{#1}{\circ}} % 左から合成する, TODO 他と適切に統合, 特にlusharp, rusharp
+\newcommand{\prbabsconti}{\ll} % 測度の絶対連続性
+\newcommand{\prbbinshannonentropy}{h} % 二値シャノンエントロピー, 二値エントロピー, expedition0006915
+\newcommand{\prbcov}{\mathrm{Cov}} % 共分散
+\newcommand{\prbdbkquadvar}[1]{\dbk{#1}} % 山括弧の二次変分
+\newcommand{\prbentropy}{H} % エントロピー
+\newcommand{\prbexp}{\mathbb{E}} % 期待値, 条件つき期待値にも応用
+\newcommand{\prbfmlmartingale}[1]{\mathcal{#1}} % マルチンゲールの族
+\newcommand{\prbfmlprbmeas}[1]{\mathcal{#1}} % 確率測度の族
+\newcommand{\prbgaussiansuperprocesssubsp}{\Gamma} % ガウス超過程に付随する部分空間, expedition0004961
+\newcommand{\prbinvfml}[1]{\mathcal{#1}} % ある可測写像に対する不変加法族, expedition0012042
+\newcommand{\prbkullbackleibler}{D} % カルバック-ライブラ情報量
+\newcommand{\prbmean}[1]{\left\langle #1 \right\rangle} % 平均の別記法
+\newcommand{\prbou}{\xi} % オルンシュタイン-ウーレンベック過程
+\newcommand{\prbsetprbmeas}{\operatorname{Prob}} % 確率測度の空間
+\newcommand{\prbsetregprbmeas}[1]{\fun{\txtprob_{\txtregular}}{#1}} % 正則な確率測度の空間
+\newcommand{\prbshannonentropy}{H} % シャノンエントロピー, expedition0006895
+\newcommand{\prbsingular}{\perp} % 絶対連続性に対する測度の特異性
+\newcommand{\prbsqbkquadvar}[1]{\sqbk{#1}} % 角括弧の二次変分, expedition0010000
+\newcommand{\prbstddev}{\Delta} % 標準偏差, expedition0006478
+\newcommand{\prbvar}{\operatorname{Var}} % 分散, expedition0006478
+\newcommand{\prbweakconvmeasure}{\Rightarrow} % 測度の弱収束, expedition0004769
+\newcommand{\precomp}[1]{\circ_{#1}} % 右から合成する, TODO 他と適切に統合, 特にlusharp, rusharp
+\newcommand{\prodthree}[3]{\mathop{\mathop{\prod_{#1}}_{#2}}_{#3}} % 三条件を持つ積
+\newcommand{\prodtwo}[2]{\mathop{\prod_{#1}}_{#2}} % 二条件を持つ積
+\newcommand{\pshconst}[1]{\setSymbolUpLeft{p}{#1}} % sheaf 定数前層, expedition0008790
+\newcommand{\pshdirectimage}[1]{#1_{p}} % sheaf 前層の順像, expedition0008793
+\newcommand{\pshinverseimage}[1]{#1^{p}} % 前層の逆像, {#1^{p}}ではなく{#1^{\vee}}で表す場合もある
+\newcommand{\pshnatural}[1]{#1^{\natural}} % sheaf 層の議論で現れる
+\newcommand{\pullbackrbk}[1]{\pullback{\rbk{#1}}} % 引き戻し
+\newcommand{\pullback}[1]{#1^{\ast}} % 引き戻し
+\newcommand{\pushoutrbk}[1]{\rbk{#1}_{\ast}} % 押し出し
+\newcommand{\pushout}[1]{#1_{\ast}} % 押し出し, 共通
+\newcommand{\qmebit}{\operatorname{ebit}} % エンタングルメントビット, expedition0009268
+\newcommand{\qmlogneg}[1]{\fun{\mathrm{LogNeg}}{#1}} % 対数ネガティビティ関数
+\newcommand{\qmpaulispin}{\sigma} % パウリ行列
+\newcommand{\qmrenyientropy}{\psi} % 相対レニーエントロピー, expedition0007123
+\newcommand{\qmschmidtnumber}{\operatorname{Sch}} % シュミット数, expedition0009985
+\newcommand{\qmtfadmissble}{\mathcal{C}} % トーマス-フェルミ汎関数の議論で許される関数のクラス, expedition0009357周辺
+\newcommand{\qtdecoder}{\mathcal} % 復号器, expedition0007131
+\newcommand{\qtinstrument}{\mathcal{I}} % 量子測定理論のインストルメント
+\newcommand{\qtobservable}{\mathcal} % 可観測量または自己共役作用素
+\newcommand{\qtpovm}{\mathcal} % POVM, expedition0006582
+\newcommand{\qtrollnik}{\mathcal} % ロルニック, expedition0003113
+\newcommand{\qtsetmeasuredvalue}[1]{\mathcal{#1}} % 測定値の集合, expedition0006499
+\newcommand{\qtspobservable}{\mathcal} % 可観測量または自己共役作用素がなす空間
+\newcommand{\qtstatevec}[1]{#1} % 状態ベクトル, 波動関数
+\newcommand{\qtstate}[1]{#1} % (作用素環上の状態の意味での)状態
+\newcommand{\riemzeta}{\zeta} % リーマンのゼータ, リーマンの$\zeta$
+\newcommand{\ringannideal}{\operatorname{Ann}} % 零化イデアル, expedition0007946
+\newcommand{\ringassociatedprime}{\operatorname{Ass}} % 加群の随伴素イデアル全体 expedition0009267
+\newcommand{\ringconvseries}[2]{\sqfun{#1}{#2}} % 収束ベキ級数環, expedition0004584
+\newcommand{\ringfmlideals}[1]{\mathcal{#1}} % イデアル全体がなす集合
+\newcommand{\ringfmlmaximalideals}[1]{\mathcal{#1}} % 極大イデアル全体がなす集合
+\newcommand{\ringformalpowerseries}[2]{#1 \! \sqbk{\sqbk{#2}}} % 形式的ベキ級数環
+\newcommand{\ringfracfld}{\operatorname{Frac}} % 分数体・剰余体, expedition0008559l
+\newcommand{\ringideal}[1]{\mathsf{#1}} % 環のイデアル, 各イデアルを表す記号でイデアルの全体は \ringfmlideals
+\newcommand{\ringlocalization}[2]{\inv{#1} #2} % 環の局所化, expedition0009953
+\newcommand{\ringmaxspec}{\mathrm{m} \hyphen \mathrm{Spec}} % 極大スペクトル
+\newcommand{\ringnilrad}{\operatorname{nilrad}} % べき零根基, expedition0008345
+\newcommand{\ringopposite}[1]{{#1}^{\txtopposite}} % 反対環に利用.
+\newcommand{\ringpolynomial}[2]{\sqfun{#1}{#2}} % 多項式環
+\newcommand{\ringprim}{\operatorname{Prim}} % 原始イデアル
+\newcommand{\ringrad}{\operatorname{rad}} % 根基, expedition0004618
+\newcommand{\ringratint}{\mathbb{Z}} % 有理整数環
+\newcommand{\ringregelems}[1]{#1^{\circ}} % 環の正則元全体がなす集合,expedition0008368
+\newcommand{\ringspec}{\operatorname{Spec}} % 可換環のスペクトル, expedition0009966
+\newcommand{\semigrposintverone}{\ringratint_{>0}} % 正の整数の全体の表記のバリエーション
+\newcommand{\semigrposint}{\monnat_1} % 正の整数の全体または1以上の自然数全体
+\newcommand{\seqjone}[1]{\seq{#1_{j}}{j \in \semigrposint}}
+\newcommand{\seqj}[1]{\seq{#1_{j}}{j \in \monnat}} %
+\newcommand{\seqkone}[1]{\seq{#1_{k}}{k \in \semigrposint}} % 添字を正の整数の$k$とする点列用のエイリアス
+\newcommand{\seqk}[1]{\seq{#1_{k}}{k \in \monnat}} % 添字を自然数の$k$とする点列用のエイリアス
+\newcommand{\seqna}[1]{\seq{#1_n}{n \in \namonnat}} % 超準自然数に対する点列
+\newcommand{\seqnone}[1]{\seq{#1_n}{\ninone}}
+\newcommand{\seqn}[1]{\seq{#1_{n}}{\nin}} % 添字を自然数の$n$とする点列用のエイリアス
+\newcommand{\seq}[2]{\if\relax\detokenize{#1}\relax \rbk{#1} \else \rbk{#1}_{#2} \fi} % 点列の基本系
+\newcommand{\setcardopsharp}[1]{\operatorname{\#} #1} % ある集合に対して濃度を与える作用素：#版
+\newcommand{\setcardop}[1]{\operatorname{card} #1} % ある集合に対して濃度を与える作用素
+\newcommand{\setcard}[1]{\mathfrak{#1}} % 濃度自体を表す
+\newcommand{\setcenter}[3]{\fun{Z_{#1}^{#2}}{#3}} % 中心, 群・環など様々代数的対象に対して適用する
+\newcommand{\setcmpconj}[1]{#1^{\dagger}} % 集合の複素共役, expedition0010591
+\newcommand{\setcpl}[1]{#1^{c}} % 補集合, complement
+\newcommand{\setcube}{\mathcal{C}} % 超立方体, expedition0009745
+\newcommand{\setdecomp}{\operatorname{Decomp}} % 適当な分解の集合
+\newcommand{\seteven}{\mathrm{Even}} % 偶数全体がなす集合
+\newcommand{\setextremal}{\operatorname{ex}} % 端点の全体
+\newcommand{\setirr}{\mathbb{I}} % 無理数全体がなす集合
+\newcommand{\setisomorphism}[1]{\operatorname{Iso}} % 同型写像の集合
+\newcommand{\setlowerbounds}[1]{#1^{\downarrow}} % 順序数に対する下界の全体
+\newcommand{\setmultiindexpos}[1]{\semigrposint^{#1}} % 正の整数からなる多重指数の空間
+\newcommand{\setmultiindex}[1]{\monnat^{#1}} % 多重指数の空間
+\newcommand{\setnpt}[1]{\lrbk{#1}} % 1~nまでのn点集合, または「i..j」で「整数iからjまでの集合」を表す. 添字集合としての利用を想定
+\newcommand{\setodd}{\mathrm{Odd}} % 奇数全体
+\newcommand{\setone}[1]{\cbk{#1}}
+\newcommand{\setorderedpair}[1]{\dbk{#1}} % 順序対
+\newcommand{\setpartfin}[1]{\fun{\mathrm{P}_{\txtfin}}{#1}} % 集合#1の有限分割全体
+\newcommand{\setperiodiclattice}{\operatorname{Per}} % 周期格子, expedition0009283
+\newcommand{\setpowfin}[1]{\fun{\mathrm{Pow}_{\txtfin}}{#1}} % 集合#1の有限部分集合全体
+\newcommand{\setpow}[1]{\fun{\mathrm{Pow}}{#1}} % 集合#1のベキ集合
+\newcommand{\setprime}{\operatorname{Prime}} % 素数全体がなす集合
+\newcommand{\setprojop}{\operatorname{Proj}} % 射影作用素の集合
+\newcommand{\setquot}[2]{\bigmiddleslash{#1}{#2}} % 商集合
+\newcommand{\set}[2]{\left\{#1 \, \middle| \, #2\right\}}
+\newcommand{\shconti}{\sheaf{\conti}} % 連続関数がなす層
+\newcommand{\shcrosssection}{\Gamma} % 層の切断
+\newcommand{\shdirectimage}[1]{#1_{\ast}} % sheaf 層の順像
+\newcommand{\shdiscontinuoussection}[1]{\sqbk{#1}} % sheaf 不連続切断の層
+\newcommand{\shdstschwartz}{\dual{\shdsttest}} % sheaf シュワルツ超関数がなす層
+\newcommand{\shdsttest}{\sheaf{D}} % sheaf シュワルツの試験関数がなす層
+\newcommand{\shfnhol}{\sheaf{O}} % 正則関数がなす層
+\newcommand{\shfnmero}{\sheaf{M}} % 恒等的に非零の有理型関数がなす層
+\newcommand{\shfnsato}{\sheaf{B}} % 佐藤超関数の層
+\newcommand{\shgerm}[2]{\underline{#1}_{#2}} % sheaf 層の理論での芽
+\newcommand{\shhigherdirectimage}[2]{R^{#1} \shdirectimage{#2}} % 層の高次順像または高次順像関手
+\newcommand{\shhom}{\sheaf{Hom}} % 層の内部ホム関手, expedition0009065
+\newcommand{\shinverseimage}[1]{#1^{\ast}} % sheaf 層の逆像
+\newcommand{\shproperdirectimage}[1]{#1_{!}} % sheaf 層の固有順像
+\newcommand{\shrealanalytic}{\sheaf{A}} % 実解析関数がなす層
+\newcommand{\shsheafify}[1]{#1^{+}} % sheaf 前層の層化, expedition0008808
+\newcommand{\shsingcochain}{\sheaf{S}} % 特異余鎖がなす層
+\newcommand{\shskyscraper}[2]{#1_{#2}} % 摩天楼層
+\newcommand{\shsmooth}{\sheaf{\smooth[E]}} % sheaf 滑らかな関数がなす層, 上つき添字を簡潔にするためC^{\infty}は使わない
+\newcommand{\shstalk}[2]{\underline{#1}_{#2}} % 層での茎
+\newcommand{\shverdierdual}[1]{#1^!} % sheaf ヴェルディエ双対
+\newcommand{\shzeroext}[1]{#1_!} % sheaf 層の零延長, expedition0008825
+\newcommand{\skewfldquatimag}{\mathbb{I}} % 四元数がなす斜体の虚部
+\newcommand{\skewfldquatpureq}{\fldreal \boldsymbol{i} + \fldreal \boldsymbol{j} + \fldreal \boldsymbol{k}} % 四元数の意味での純虚数
+\newcommand{\skewfldquat}{\fld{H}} % 四元数がなす斜体
+\newcommand{\smfreeenergy}{F} % (ヘルムホルツの)自由エネルギー
+\newcommand{\smgrandpartitionfunc}{\Xi} % 大分配関数
+\newcommand{\smmeanmagnetization}{m} % 全磁化の一サイト平均, expedition0011058
+\newcommand{\smmindist}[1]{\fun{\mathfrak{D}}{#1}} % 物質の安定性の議論での距離関数, expedition0006651
+\newcommand{\smpartitionfunc}{Z} % 分配関数
+\newcommand{\smreducertok}[2]{#1^{(#2)}} % $k$粒子系への縮約密度作用素, expedition0010013
+\newcommand{\smspinsum}[1]{\mathring{#1}} % スピン和を取る作用素, expedition0006542
+\newcommand{\smtotalmagnetization}{M} % 全磁化, expedition0011057
+\newcommand{\sobolev}[1]{#1} % ソボレフ空間, WとH両方
+\newcommand{\spaffine}{\mathbb{A}} % アフィン空間
+\newcommand{\spaffspan}{\operatorname{aff}} % アフィン包, expedition0006580
+\newcommand{\spclosedconv}{\mathop{\clos{\spconv}}} % 閉凸包, expedition0002189
+\newcommand{\spclosedlinspan}{\mathop{\clos{\splinspan}}} % 閉線型包
+\newcommand{\spconv}{\operatorname{conv}} % 凸包, 閉凸包は\closedconv, expedition0002189
+\newcommand{\speigv}{\operatorname{Eig}} % 固有値の空間, モース理論, expedition0010235
+\newcommand{\speuclid}{\mathsf{Euc}} % ユークリッド空間
+\newcommand{\speucsub}[1]{\mathbb{#1}} % ユークリッド空間の部分集合・部分空間
+\newcommand{\spfock}{\mathcal{F}} % フォック空間
+\newcommand{\spkleinbottle}[1]{\mathbb{K}^{#1}} % クラインの壷
+\newcommand{\splinspan}{\operatorname{span}} % 線型包
+\newcommand{\spmatsing}{S} % 特異行列(非可逆行列)の全体
+\newcommand{\spmat}[2]{\fun{M_{#1}}{{#2}}} % 全行列環
+\newcommand{\spminkowski}{\mathbb{M}} % ミンコフスキー空間
+\newcommand{\sppt}{\mathrm{pt}} % 一点・一点集合・一点空間
+\newcommand{\stataic}{\mathrm{AIC}} % 赤池情報量基準
+\newcommand{\statpredictivedistribution}[1]{#1^{\ast}} % 予測分布
+\newcommand{\statwaic}{\mathrm{WAIC}} % 統計学, 広く使える情報量規準
+\newcommand{\sumcomb}{\sum_{\mathrm{comb}}} % 組み合わせに関わる和
+\newcommand{\sumfourprimed}[4]{\mathop{\mathop{\mathop{\sumprimed_{#1}}_{#2}}_{#3}}_{#4}} % 和, 共通
+\newcommand{\sumfour}[4]{\mathop{\mathop{\mathop{\sum_{#1}}_{#2}}_{#3}}_{#4}} % 四重和
+\newcommand{\sumprimed}{\mathop{\sideset{}{^{\prime}}\sum}} % 右上にプライム記号をつけた\sum
+\newcommand{\sumthreeprimed}[3]{\mathop{\mathop{\sumprimed_{#1}}_{#2}}_{#3}} % 和, 共通
+\newcommand{\sumthree}[3]{\mathop{\mathop{\sum_{#1}}_{#2}}_{#3}} % 三重和
+\newcommand{\sumtwoprimed}[2]{\mathop{\sumprimed_{#1}}_{#2}} % 和, 共通
+\newcommand{\sumtwo}[2]{\mathop{\sum_{#1}}_{#2}} % 二重和
+\newcommand{\supalg}[2]{\mathbb{#1}_{#2}} % 超代数
+\newcommand{\supthree}[3]{\mathop{\mathop{\sup_{#1}}_{#2}}_{#3}} % 上限
+\newcommand{\suptwo}[2]{\mathop{\sup_{#1}}_{#2}} % 上限
+\newcommand{\tdcompthermenthalpy}[1]{\sqfun{H}{#1}} % 熱力学, エンタルピー
+\newcommand{\tdcompthermentropy}[1]{\sqfun{S}{#1}} % 熱力学, エントロピー
+\newcommand{\tdcompthermgibbs}[1]{\sqfun{G}{#1}} % 熱力学, ギブスの自由エネルギー
+\newcommand{\tdcompthermhelmholtz}[1]{\sqfun{F}{#1}} % 熱力学, ヘルムホルツの自由エネルギー
+\newcommand{\tdcompthermintenergy}[1]{\sqfun{U}{#1}} % 熱力学, 内部エネルギー
+\newcommand{\tdqmax}{Q_{\txtmax}} % 最大吸熱量
+\newcommand{\tdworkadiabatic}{W_{\txttdadiabatic}} % 断熱仕事
+\newcommand{\tdworkcyclic}{W_{\txttdcyclic}} % サイクルがなす仕事
+\newcommand{\tdworkmax}{W_{\txtmax}} % 最大仕事
+\newcommand{\topaffinesimplexbarycenter}[1]{\underline{#1}} % アフィン特異単体の重心, expedition0008931
+\newcommand{\topaffinesingularsimplex}[1]{\sqbk{#1}} % アフィン単体, expedition0009195
+\newcommand{\topbarysubd}{\operatorname{Sd}} % 重心細分, expedition0008943
+\newcommand{\topcarr}{\operatorname{carr}} % 多面体の点に対する台, expedition0009263
+\newcommand{\topcellaffsimp}[1]{\dbk{#1}} % 単体複体の単体をCW複体の単体とみなしたときの記号, expedition0009199
+\newcommand{\topconeop}{\operatorname{\Upsilon}} % 錐作用素, expedition0009100
+\newcommand{\topdist}{\operatorname{dist}} % 距離関数, 他と記号が重複するときに利用
+\newcommand{\topgrdeck}{\operatorname{Deck}} % デッキ変換群, expedition0003436
+\newcommand{\tophomotopygr}[2]{\fun{\pi_{#1}}{#2}} % ホモトピー群
+\newcommand{\toplink}{\operatorname{Lk}} % 絡み数
+\newcommand{\topmesh}{\operatorname{mesh}} % 単体のメッシュ, expedition0009968
+\newcommand{\topopenstar}[2]{\operatorname{St}_{#1} #2} % 開星型集合, expedition0009269
+\newcommand{\toppolyhedron}[1]{\abs{#1}} % 単体複体の多面体
+\newcommand{\topproj}[2]{#1 P^{#2}} % 位相幾何での射影空間, #1 P^{#2}
+\newcommand{\toprmap}{\operatorname{R}} % 重心細分に現れる, expedition0008943
+\newcommand{\topsetdirectedopencover}{\operatorname{ROCover}} % 開被覆の全体, expedition0004832
+\newcommand{\topsetopencoverclass}{\operatorname{\eqc{OCover}}} % 開被覆の全体の同値類, expedition0008899
+\newcommand{\topsetopencover}{\operatorname{OCover}} % 開被覆の全体, expedition0004832
+\newcommand{\topsimplexdelta}[1]{\sqbk{#1}} % 特殊な特異鎖, expedition0008935
+\newcommand{\topsingularchain}{S} % 特異鎖
+\newcommand{\topsingularcochain}{S} % 特異余鎖
+\newcommand{\topsingularconvexchain}{A} % ユークリッド空間上の特異凸鎖, expedition0008932
+\newcommand{\topsingularsimplexset}{T} % 特異単体がなす加群ではなく単に特異単体の全体集合, expedition0008932
+\newcommand{\topsmashproduct}{\wedge} % スマッシュ積, expedition0008842
+\newcommand{\topstandardconvexsimplexset}{B} % ユークリッド空間上の標準凸単体の集合, expedition0008932
+\newcommand{\topstandardsimplex}{\Delta} % 標準単体, expedition0009973
+\newcommand{\topwind}{\operatorname{Wind}} % 平面での巻き付き数
+\newcommand{\txtIII}{\mathrm{III}} % III型因子環などのIII
+\newcommand{\txtII}{\mathrm{II}} % 第二変数などの2(II)
+\newcommand{\txtI}{\mathrm{I}} % I型因子環などのI
+\newcommand{\txtabsconti}{\mathrm{ac}} % 絶対連続
+\newcommand{\txtalg}{\mathrm{alg}} % 代数的
+\newcommand{\txtappoint}{\mathrm{ap}} % 近似点
+\newcommand{\txtarakiwoods}{\mathrm{AW},\mathrm{b}} % 荒木-ウッズ
+\newcommand{\txtarakiwyss}{\mathrm{AW},\mathrm{f}} % 荒木-ヴィス
+\newcommand{\txtasymp}{\mathrm{asymp}} % 漸近
+\newcommand{\txtasym}{\mathrm{as}} % 反対称
+\newcommand{\txtatom}{\mathrm{atom}} % 原子
+\newcommand{\txtaut}{\mathrm{Aut}} % 自己同型群に対する条件を表す
+\newcommand{\txtbasis}{\mathrm{basis}} % 基底, 基底つき有限次元線型空間の圏などに利用
+\newcommand{\txtbc}{\mathrm{BC}} % 境界条件, Boundary Condition
+\newcommand{\txtbdd}{\mathrm{b}} % 有界性を表す
+\newcommand{\txtbec}{\mathrm{BEC}} % BEC, ボース-アインシュタイン凝縮
+\newcommand{\txtbogoliubov}{\mathrm{Bog}} % ボゴリウボフ
+\newcommand{\txtboltzmann}{\mathrm{B}} % ボルツマン
+\newcommand{\txtborel}{\mathrm{b}} % ボレル可測性に関わる対象を指す
+\newcommand{\txtbott}{\mathrm{Bott}} % ボット
+\newcommand{\txtboundedbelow}{\mathrm{bb}} % 下への有界性を表す
+\newcommand{\txtbox}{\mathrm{b}} % 箱位相などの箱
+\newcommand{\txtbrownbridge}{\mathrm{BB}} % ブラウン橋
+\newcommand{\txtbsn}{\mathrm{b}} % ボソンのb
+\newcommand{\txtcameronmartin}{\mathrm{CM}} % キャメロン-マルティン (Cameron-Martin)
+\newcommand{\txtcanonical}{\mathrm{C}} % 統計力学の正準状態などの canonical
+\newcommand{\txtcar}{\mathrm{CAR}} % CAR環, 正準反交換関係の環
+\newcommand{\txtcir}{\mathrm{cir}} % 同心円方向
+\newcommand{\txtclassical}{\mathrm{cl}} % 古典量を表すcl
+\newcommand{\txtclifford}{\mathrm{cl}} % クリフォード
+\newcommand{\txtclose}{\mathrm{c}} % 閉
+\newcommand{\txtcnt}{\mathrm{c}} % カウント, 数え上げ
+\newcommand{\txtconf}{\mathrm{conf}} % 配位, configuration
+\newcommand{\txtconst}{\mathrm{const}} % 定数性を表す添字
+\newcommand{\txtconti}{\mathrm{c}} % 連続性を表す添字
+\newcommand{\txtcoulomb}{\mathrm{C}} % クーロンを表すC
+\newcommand{\txtcpt}{\mathrm{c}} % コンパクト性を表す添字
+\newcommand{\txtcritical}{\mathrm{c}} % 臨界
+\newcommand{\txtcyc}{\mathrm{cyc}} % 巡回
+\newcommand{\txtdel}{\mathrm{del}} % 除外近傍などに利用
+\newcommand{\txtderham}{\mathrm{dR}} % ディラック関係に利用する添字
+\newcommand{\txtdiag}{\mathrm{diag}} % 対角
+\newcommand{\txtdirac}{\mathrm{D}} % ディラック関係に利用する添字
+\newcommand{\txtdiscrete}{\mathrm{d}} % 離散性を表すdiscrete
+\newcommand{\txtdivergent}{\mathrm{div}} % 発散
+\newcommand{\txtdual}{\mathrm{dual}} % 双対
+\newcommand{\txteff}{\mathrm{eff}} % 実効的
+\newcommand{\txtelhole}{\txtel \hyphen \txthole} % 電子-正孔系
+\newcommand{\txtel}{\mathrm{el}} % 電子のel
+\newcommand{\txtemlorentz}{\mathrm{Lorentz}} % ローレンツ変換のローレンツ
+\newcommand{\txtemmag}{\mathrm{mag}} % 電磁気の磁気
+\newcommand{\txtemphoton}{\mathrm{ph}} % 光子
+\newcommand{\txtem}{\mathrm{em}} % 電磁場のem
+\newcommand{\txtentireextension}{\mathrm{ent}} % 整関数拡張を持つ対象, expedition0009682
+\newcommand{\txtergode}{\mathrm{erg}} % エルゴード, エルゴード性
+\newcommand{\txtess}{\mathrm{ess}} % 本質的スペクトルのess
+\newcommand{\txteuclid}{\mathrm{E}} % ユークリッド, ユークリッド化の添字
+\newcommand{\txtevenodd}{\txteven / \txtodd} % 偶奇
+\newcommand{\txteven}{\mathrm{e}} % 偶
+\newcommand{\txtexchange}{\mathrm{ex}} % 交換, 交換相互作用などに利用
+\newcommand{\txtexcludezero}{\times} % 環や体から加法の零元を除く
+\newcommand{\txtexternal}{\mathrm{ext}} % 外部
+\newcommand{\txtfield}{\mathrm{fld}} % 場(field), 場のハミルトニアンなどに利用
+\newcommand{\txtfin}{\mathrm{fin}} % 有限のfin
+\newcommand{\txtflip}{\mathrm{flip}} % フリップ
+\newcommand{\txtfkn}{\mathrm{FKN}} % ファインマン-カッツ-ネルソン, FKN
+\newcommand{\txtfock}{\mathrm{F}} % フォック
+\newcommand{\txtfrechet}{\mathrm{f}} % フレッシェフィルターなどに利用, Fréchet
+\newcommand{\txtfrmn}{\mathrm{f}} % フェルミオンのf
+\newcommand{\txtfr}{\mathrm{fr}} % 自由場などを表すfr
+\newcommand{\txtfull}{\mathrm{full}} % 全空間などのfull：totを利用する場合もある
+\newcommand{\txtgeom}{\mathrm{geom}} % 幾何的
+\newcommand{\txtgrandcanonical}{\mathrm{GC}} % 統計力学の大正準状態など grandcanonical
+\newcommand{\txtgreaterone}{>1} % 1より大きい切断, expedition0010213
+\newcommand{\txtgs}{\mathrm{gs}} % 基底状態
+\newcommand{\txthilbertschmidt}{\mathrm{HS}} % ヒルベルト-シュミット作用素などに利用
+\newcommand{\txthole}{\mathrm{hole}} % 正孔(hole)
+\newcommand{\txtholomorphic}{\mathrm{hol}} % 関数論の正則性
+\newcommand{\txthorizontal}{\mathrm{h}} % 水平成分
+\newcommand{\txthydrogen}{\mathrm{hyd}} % 水素原子のハミルトニアンに利用
+\newcommand{\txtimag}{\mathrm{im}} % 虚
+\newcommand{\txtinflaredred}{\mathrm{IR}} % 赤外
+\newcommand{\txtinfomld}{\mathrm{ML}} % 最尤復号
+\newcommand{\txtinteraction}{\mathrm{I}} % 相互作用
+\newcommand{\txtircapitalized}{\mathrm{IR}} % 赤外または infrared
+\newcommand{\txtirsingular}{\mathrm{irs}} % 赤外特異
+\newcommand{\txtkms}{\mathrm{KMS}} % KMS状態の集合を表す
+\newcommand{\txtleb}{\mathrm{Leb}} % ルベーグ
+\newcommand{\txtleft}{\mathrm{l}} % 左
+\newcommand{\txtleqone}{\leq 1} % 1以下に対する切断, expedition0010213
+\newcommand{\txtlipschitz}{\mathrm{Lip}} % リプシッツ連続などのLip
+\newcommand{\txtloc}{\mathrm{loc}} % 局所
+\newcommand{\txtloop}{\mathrm{loop}} % ループ空間などのループに利用
+\newcommand{\txtlow}{\mathrm{low}} % 低
+\newcommand{\txtmax}{\mathrm{max}} % 最大
+\newcommand{\txtmeanfield}{\mathrm{mf}} % 平均場
+\newcommand{\txtmeromorphic}{\mathrm{mero}} % 関数論の有理型性
+\newcommand{\txtmin}{\mathrm{min}} % 最小
+\newcommand{\txtmix}{\mathrm{mix}} % 混合
+\newcommand{\txtnconv}{\mathrm{nconv}} % non conventional
+\newcommand{\txtneg}{\mathrm{-}} % 負の部分
+\newcommand{\txtnelson}{\mathrm{N}} % ネルソンの頭文字
+\newcommand{\txtnonent}{\mathrm{nonent}} % 非エンタングルメント
+\newcommand{\txtnonneg}{\mathrm{+}} % 正または非負の部分
+\newcommand{\txtnonrel}{\mathrm{NR}} % 非相対論的
+\newcommand{\txtnonzero}{\mathrm{nz}} % 非零, 非零モードを表す
+\newcommand{\txtoaaw}{\mathrm{AW}} % 荒木-ウッズ・荒木-ヴィスの添字
+\newcommand{\txtodd}{\mathrm{o}} % 奇
+\newcommand{\txtopen}{\mathrm{o}} % 開
+\newcommand{\txtoperator}{\mathrm{op}} % 反対環・反対圏
+\newcommand{\txtopposite}{\mathrm{op}} % 反対環・反対圏
+\newcommand{\txtosterwalderschrader}{\mathrm{OS}} % オスターヴァルダー-シュラーダー
+\newcommand{\txtpartial}{\mathrm{p}} % 部分トレースなどの「部分」
+\newcommand{\txtparticle}{\mathrm{p}} % 粒子のp
+\newcommand{\txtparticular}{\mathrm{p}} % 特解(particular solution)のp
+\newcommand{\txtpathwiseconnected}{\mathrm{pc}} % 弧状連結
+\newcommand{\txtpaulifierz}{\mathrm{PF}} % パウリ-フィールツ
+\newcommand{\txtpauli}{\mathrm{Pauli}} % パウリ
+\newcommand{\txtperiodicbdc}{\mathrm{P}} % 周期境界条件
+\newcommand{\txtperiod}{\mathrm{per}} % 周期, 周期境界条件
+\newcommand{\txtphysgrav}{\mathrm{grav}} % 重力
+\newcommand{\txtphysho}{\mathrm{ho}} % 調和振動を表すho
+\newcommand{\txtphysnho}{\mathrm{nho}} % 非調和振動を表すnho
+\newcommand{\txtphysrel}{\mathrm{rel}} % 相対論的
+\newcommand{\txtphysultrarel}{\mathrm{urel}} % 超相対論的
+\newcommand{\txtphys}{\mathrm{phys}} % 物理
+\newcommand{\txtpoint}{\mathrm{pt}} % 点, 一点集合は\sppt
+\newcommand{\txtpoisson}{\mathrm{poisson}} % ポアソン
+\newcommand{\txtpolynomial}{\mathrm{poly}} % 多項式係数の微分作用素環などに利用
+\newcommand{\txtprobas}{\mathrm{a.s.}} % ほとんど確実に
+\newcommand{\txtprobev}{\mathrm{ev}} % eventually(確率論)
+\newcommand{\txtprobio}{\mathrm{io}} % infinitely often(確率論)
+\newcommand{\txtprob}{\mathrm{Prob}} % 確率
+\newcommand{\txtps}{\mathrm{ps}} % piecewise smooth, 区分的に滑らか
+\newcommand{\txtpwsmooth}{\mathrm{ps}} % 区分的に滑らか
+\newcommand{\txtqmepr}{\mathrm{EPR}} % 量子力学でのEPR
+\newcommand{\txtqmev}{\mathop{\mathrm{eV}}} % 電子ボルト
+\newcommand{\txtqmtfd}{\mathrm{TFD}} % トーマスフェルミディラック, Thomas-Fermi-Dirac, expedition0006730
+\newcommand{\txtqmtf}{\mathrm{TF}} % トーマスフェルミ, Thomas-Fermi, expedition0006730
+\newcommand{\txtquadvanhove}{\mathrm{qvH}} % 二次ファン・ホーフェ
+\newcommand{\txtradiation}{\mathrm{rad}} % 輻射
+\newcommand{\txtrad}{\mathrm{rad}} % 動径方向
+\newcommand{\txtreal}{\mathrm{real}} % 実
+\newcommand{\txtregular}{\mathrm{reg}} % 正則な測度などの正則
+\newcommand{\txtrelative}{\mathrm{rel}} % 相対
+\newcommand{\txtrel}{\mathrm{R}} % 相対論的
+\newcommand{\txtreminder}{\mathrm{R}} % 剰余項
+\newcommand{\txtrenormalization}{\mathrm{ren}} % くり込み
+\newcommand{\txtresidual}{\mathrm{r}} % 剰余
+\newcommand{\txtright}{\mathrm{r}} % 右
+\newcommand{\txtsa}{\mathrm{sa}} % 自己共役
+\newcommand{\txtschrodinger}{\mathrm{S}} % シュレディンガー表現などに利用
+\newcommand{\txtsegal}{\mathrm{S}} % シーガルの場の作用素に利用
+\newcommand{\txtselfconsistent}{\mathrm{sc}} % 自己無撞着
+\newcommand{\txtself}{\mathrm{self}} % 自己エネルギーなどの自己(self)
+\newcommand{\txtsingular}{\mathrm{s}} % 特異
+\newcommand{\txtspinboson}{\mathrm{SB}} % スピン-ボソン模型
+\newcommand{\txtspin}{\mathrm{spin}} % スピン
+\newcommand{\txtspph}{\mathrm{ph}} % 相空間
+\newcommand{\txtstable}{\mathrm{s}} % 安定, 安定多様体などに利用
+\newcommand{\txtstandard}{\mathrm{st}} % 超準解析での標準
+\newcommand{\txtstark}{\mathrm{stark}} % シュタルクハミルトニアンに利用
+\newcommand{\txtstateap}{\mathrm{EAP}} % 事後推定値, expected a posterior
+\newcommand{\txtstrongresolvent}{\mathrm{s} \hyphen \text{res}} % 強レゾルベント収束
+\newcommand{\txtstrong}{\mathrm{s}} % 強位相などの強
+\newcommand{\txtsuper}{\mathrm{s}} % 超代数の超
+\newcommand{\txtsym}{\mathrm{s}} % 対称, テンソル積に使う
+\newcommand{\txttdadiabatic}{\mathrm{ad}} % 断熱
+\newcommand{\txttdaq}{\mathrm{aq}} % 断熱準静, adiabatic quasistatic
+\newcommand{\txttda}{\mathrm{a}} % 断熱操作, adiabatic operation
+\newcommand{\txttdcyclic}{\mathrm{cyc}} % サイクルがなす仕事に利用
+\newcommand{\txttdiq}{\mathrm{iq}} % 等温準静, isothermal quasistatic
+\newcommand{\txttdiw}{\mathrm{i}_0} % 広義等温操作, isothermal operation in the wider sense
+\newcommand{\txttdi}{\mathrm{i}} % 等温操作, isothermal operation
+\newcommand{\txttot}{\mathrm{tot}} % 全電荷などの「全」
+\newcommand{\txttruncatedfn}{\mathrm{T}} % 連結相関関数を表す記号
+\newcommand{\txtultraviolet}{\mathrm{UV}} % 紫外
+\newcommand{\txtuninorm}{\mathrm{unif}} % 一様
+\newcommand{\txtunstable}{\mathrm{u}} % 不安定, 不安定多様体などに利用
+\newcommand{\txtvanderwaals}{\mathrm{vdW}} % ファンデルワールス
+\newcommand{\txtvanhowe}{\mathrm{vH}} % ファン・ホーフェ
+\newcommand{\txtvanish}{\mathrm{van}} % 消滅, 原点0で消える関数の関数空間などに利用
+\newcommand{\txtvertical}{\mathrm{v}} % 垂直成分
+\newcommand{\txtweak}{\mathrm{w}} % 弱位相などの弱
+\newcommand{\txtwick}{\mathrm{W}} % Wick積による部分空間, expedition0009962
+\newcommand{\txtwstar}{w^{\ast}} % 汎弱位相用の記号
+\newcommand{\txtzeeman}{\mathrm{zeeman}} % ゼーマンハミルトニアンに利用
+\newcommand{\vadiv}{\operatorname{div}} % ベクトル場の発散, リーマン多様体上の議論にも援用, expedition0007443, expedition0002435
+\newcommand{\vagrad}{\operatorname{grad}} % 勾配作用素
+\newcommand{\vainnprod}{\cdot} % ベクトル解析枠, 高校以来の内積の記号
+\newcommand{\vanishsobolev}{D} % LiebLoss1や物質の安定性に現れるソボレフ空間
+\newcommand{\varot}{\operatorname{rot}} % 回転, expedition0002223
+\newcommand{\vavecprod}{\times} % ベクトル解析枠, 三次元での外積・ベクトル積
+\newcommand{\vecone}{\boldsymbol{1}} % 太文字の1, 恒等写像ではなく適当な意味でのベクトルに対して利用
+\newcommand{\vhlnt}[2]{\fun{\boldsymbol{n}_{#1}^{-}}{#2}} % ファン・ホーフェ極限に現れる, 互いに素なC_aの平行移動でIに完全に含まれる最大個数
+\newcommand{\vhlsets}[2]{\fun{\Gamma_{#1}^{-}}{#2}} % Bratteli-Robinson 2 P287の和集合
+\newcommand{\vhslnt}[2]{\fun{\boldsymbol{n}_{#1}^{\pm}}{#2}} % vhsntとvhlntを両方まとめて書きたい場合に使う
+\newcommand{\vhsnt}[2]{\fun{\boldsymbol{n}_{#1}^{+}}{#2}} % ファン・ホーフェ極限に現れる, C_aの平行移動で領域Iを覆うために必要なC_aの最小個数
+\newcommand{\vhssets}[2]{\fun{\Gamma_{#1}^{+}}{#2}} % Bratteli-Robinson 2 P287の和集合
+\newcommand{\vhsurf}[2]{\fun{\mathrm{surf}_{#1}}{#2}} % 厚さrの表面集合

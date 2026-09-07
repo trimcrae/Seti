@@ -1,0 +1,2084 @@
+                                                   Universal recovery in approximate quantum error correction
+                                                              Dor Elimelech1               Victor V. Albert2               Alexander Barg1,2,3
+
+
+                                                                                                    Abstract
+                                                      Universal recovery—the existence of a single recovery map that corrects an entire family of error
+arXiv:2608.28962v1 [quant-ph] 29 Aug 2026
+
+
+
+
+                                                  channels—is a central feature of quantum error correction (QEC). In exact QEC, linearity guarantees
+                                                  that a code correcting a given error set also corrects every channel whose Kraus operators lie in its linear
+                                                  span, and that a single recovery map suffices for all such channels. Approximate quantum error correction
+                                                  (AQEC), which relaxes perfect recovery to recovery with controlled error, has traditionally lacked this
+                                                  structure. In a recent paper (arXiv:2607.22995), we developed a theory of approximate quantum error
+                                                  correction showing that a restricted form of linearity persists in the approximate setting, yielding uniform
+                                                  AQEC guarantees for the family of channels controlled by a given error set.
+                                                      In this work, we complete the picture by establishing the second half of universal recovery in the
+                                                  approximate setting: a single recovery map can simultaneously correct every channel controlled by a given
+                                                  error set. The error-set theory we proposed quantifies approximate correctability through two parameters:
+                                                  the environment-leakage distance, governing worst-case performance, and the Knill–Laflamme Hellinger
+                                                  distance, governing average-case performance. We show here that both quantities also control universal
+                                                  decoding. We further study the Petz map naturally associated with an error set as an explicit universal
+                                                  recovery, and obtain uniform average- and worst-case guarantees across the entire family of channels.
+
+
+                                            1     Introduction
+                                            Quantum error correction (QEC) protects encoded quantum information against noise by arranging that
+                                            the relevant error operators act reversibly on a code subspace [35, 22]. It is a basic component of fault-
+                                            tolerant quantum computation, quantum communication, and the study of robust quantum phases of matter
+                                            [36, 2, 5, 20, 12]. A central strength of exact QEC is the linear structure provided by the Knill–Laflamme
+                                            conditions [22]: once a code corrects a prescribed error set, it also corrects every channel whose Kraus
+                                            operators lie in its linear span [23]. This gives exact QEC an adversarial error-set formulation, in which one
+                                            can protect uniformly against an entire family of channels by constraining only the type and severity of the
+                                            errors they may introduce, rather than specifying the noise channel itself [16].
+                                                   Approximate quantum error correction relaxes the requirement of perfect recovery and asks instead
+                                            that, after noise and decoding, the recovered state remain close to the original encoded state according
+                                            to a suitable fidelity or distance measure. This relaxation is important both because exact correction is
+                                            typically too rigid for physically relevant noise and because approximate codes can achieve coding regimes
+                                            unavailable to exact QEC, as first demonstrated for amplitude-damping noise and more recently for codes
+                                            approaching the quantum Singleton and Hamming bounds [27, 7, 30]. This has led to a broad theory of
+                                            AQEC, including quantitative conditions for approximate recoverability, coherent-information criteria, and
+                                            near-optimal recovery maps [33, 34, 4, 6, 21]; refined analyses of channel performance and the Petz recovery
+                                            map [31, 32, 44, 28, 19]; explicit constructions and asymptotic existence results [7, 30, 41]; and connections to
+                                            many-body order, circuit complexity, and information masking [43, 42, 29]. Despite this progress, the theory
+                                            has remained overwhelmingly channel-based, reflecting the longstanding view that the linearity underlying
+                                            the adversarial error-set formulation of exact QEC does not extend to the approximate setting [10].
+                                                   This view was recently reexamined in [13], where it was shown that AQEC admits a meaningful
+                                            adversarial error-set formulation under both the worst-case and average-case fidelity criteria. Although the
+                                            full linearity of exact QEC does not survive, a restricted form remains: for a prescribed error set ℰ, one can
+                                                1 Institute for Systems Research, University of Maryland, College Park, MD 20742. 2 Joint Center for Quantum Information
+
+                                            and Computer Science, NIST/University of Maryland, College Park, MD 20742. 3 Department of ECE, University of Maryland,
+                                            College Park, MD 20742. Emails: {dor,vva,abarg}@umd.edu.
+
+
+                                                                                                         1
+obtain uniform AQEC guarantees for a family of channels whose Kraus operators lie in Span(ℰ) and whose
+mixing coefficients satisfy a spectral constraint. These channels, called ℰ-controlled channels, give rise to an
+approximate error-set model in which structural features of exact QEC extend to the approximate setting.
+The two notable features are the relation between correcting erasures and general errors and a corresponding
+notion of approximate distance. The same framework also supports explicit families of codes that correct
+structured error sets uniformly rather than one noise channel at a time.
+      Linearity in exact QEC has a consequence that goes beyond uniform correctability: a single recovery
+map can perfectly correct every channel whose Kraus operators lie in the span of a correctable error set. This
+channel-independent decoding is a basic part of the adversarial error-set formulation, since the recovery map
+depends only on the errors that may occur and not on the particular noise channel. The error-set theory of [13],
+based on the Bény–Oreshkov framework [6] in the worst-case setting and on Petz recovery in the average-case
+setting [4, 44], established uniform AQEC guarantees across all ℰ-controlled channels. These arguments,
+however, provide a suitable recovery map for each controlled channel separately and do not by themselves
+show that one recovery map can be used for the entire family. Whether the uniform protection against
+ℰ-controlled channels also extends to a universal decoding operation is therefore an important remaining
+question for adversarial AQEC. Universal approximate decoders were previously obtained in several structured
+settings [7, 30], providing evidence that such a theory should be possible, but no general results were known
+for the error-set model.
+      The goal of this work is to complete this picture by showing that the error-set AQEC model of [13]
+supports universal adversarial decoding. The AQEC guarantees developed there are controlled by two
+error-set/code parameters: the environment-leakage distance in the worst-case setting and the Knill–Laflamme
+Hellinger distance in the average-case setting. We prove that the corresponding sufficient conditions also
+guarantee the existence of a single recovery map that works uniformly for every ℰ-controlled channel. In
+particular, the asymptotically good AQEC families constructed in [13] admit universal recovery maps. In
+the average-case setting, we prove a stronger statement: for every fixed code and error set, the optimal
+error obtained by allowing the recovery map to depend on the noise channel is attained by a single optimal
+universal recovery map.
+      Establishing the existence of universal recovery maps is only one part of the problem; it is equally
+important to understand how such maps can be constructed in a general error-set setting. A natural candidate
+is the Petz recovery map, also known in QEC as the transpose channel, which has played a central role in
+AQEC [4, 31, 32, 44, 28, 19]. Given a noise channel and a code, the corresponding Petz map is known to
+be near optimal under the average-case criterion [4, 44]. At the same time, the Petz construction is not
+restricted to trace-preserving maps [4, 31, 1], and in the exact setting it may be associated directly with an
+error set rather than with a particular channel. Motivated by these observations, we study the Petz map
+constructed from a given error set ℰ and analyze its performance uniformly over the corresponding controlled
+family. We show that its average-case error is controlled by the Knill–Laflamme Hellinger distance, while its
+worst-case error is controlled by the environment-leakage distance under the stronger notion of ℰ-control.
+
+
+2    Approximate quantum error-correction
+We consider quantum codes, denoted by 𝑄, on a finite dimensional Hilbert space ℋ. For an integer 𝑀 > 0,
+we denote by ℋ𝑀 the 𝑀 dimensional Hilbert space C𝑀 . We denote the set of linear operators and density
+operators on ℋ by 𝐿(ℋ) and 𝐷(ℋ) respectively.⃦We√commonly         measure the closeness of quantum states
+                                                    √     ⃦
+𝜌, 𝜏 ∈ 𝐷(ℋ) by the fidelity defined by ℱ(𝜌, 𝜏 ) := ⃦ 𝜌 𝜏 ⃦1 , where ‖·‖1 is the trace norm (see Definition 8).
+A quantum channel is a is a completely positive and trace preserving map (CPTP) 𝐿(ℋ) → 𝐿(ℋ′ ). Any
+completely positive (CP) map is known to be characterized by a Kraus operator set, {𝐸𝑘 }𝑘∈[𝑆] , where
+[𝑆] = {0, 1, . . . , 𝑆 − 1} and 𝐸𝑖 : ℋ → ℋ′ such that 𝒩 (𝑋) = 𝑘∈[𝑆] 𝐸𝑖 𝑋𝐸𝑖† . If 𝒩 is also trace preserving,
+                                                               ∑︀
+
+we have 𝑘 𝐸𝑘† 𝐸𝑘 = 𝐼. Another equivalent characterization of CP maps is due to Stinespring [38]: a
+         ∑︀
+map is CP if and only if there exist an ancilla space ℋ𝑀 and an operator 𝑈 : ℋ → ℋ𝐻 ′ ⊗ ℋ𝑀 such that
+𝒩 (𝑋) = tr𝑀 (𝑈 𝑋𝑈 † ), where tr𝑀 denotes the partial trace operation on the ancilla space ℋ𝑀 . We elaborate
+more on Stinespring representation on Appendix B. A map ℛ : 𝐿(ℋ′ ) → 𝐿(ℋ) is called a perfect recovery
+map for a channel 𝒩 on the code space, if ℛ ∘ 𝒩 |𝐿(𝑄) = 𝐼𝐿(𝑄) , under an appropriate distance measure
+between quantum channels.
+
+
+                                                       2
+      We focus on two prominent fidelity-based distinguishability measures for quantum channels. The first
+is the worst-case entanglement fidelity, which is used in the Bény–Oreshkov framework [6]. For quantum
+channels 𝒩 , ℳ : 𝐿(ℋ) → 𝐿(ℋ′ ), it is defined as
+                                          (︀                      (︀         )︀        )︀
+                 ℱwc (𝒩 , ℳ) := inf ℱ 𝐼𝐿(ℋ) ⊗ 𝒩 (|𝜓𝜌 ⟩ ⟨𝜓𝜌 |) , 𝐼𝐿(ℋ) ⊗ ℳ (|𝜓𝜌 ⟩ ⟨𝜓𝜌 |) ,
+                                  𝜌∈𝐷(ℋ)
+
+
+where |𝜓𝜌 ⟩ is any purification of 𝜌. Thus, ℱwc measures the performance of the channels uniformly over all
+input states, including their correlations with a reference system.
+       Alongside the worst-case entanglement fidelity, a widely used weaker criterion is the channel (or process)
+fidelity [3, 24, 32, 44], frequently used in the analysis of Petz recovery. Let |Φℋ ⟩ be a maximally entangled
+state on ℋ ⊗ ℋ. The channel fidelity of 𝒩 and ℳ is
+                                     (︀(︀            )︀              (︀        )︀            )︀2
+                  ℱch (𝒩 , ℳ) := ℱ          𝐼𝐿(ℋ) ⊗ 𝒩 (|Φℋ ⟩ ⟨Φℋ |) , 𝐼𝐿(ℋ) ⊗ ℳ (|Φℋ ⟩ ⟨Φℋ |) .
+
+Unlike ℱwc , the channel fidelity evaluates the entanglement fidelity only for the maximally mixed input
+rather than minimizing over all input states. It therefore gives a weaker criterion, although it remains a
+standard and meaningful measure of channel performance. Moreover, the channel fidelity is closely related to
+the Haar-average input-output fidelity [18, Sec. 6.4], and therefore it can be thought of as an average-case
+criterion.
+      For both criteria, proximity of the fidelity to one captures closeness of the corresponding channels. In
+accordance with [6] and [13], we formulate this closeness in terms of the associated Bures distances, for which
+small distance corresponds to high fidelity. The corresponding worst-case Bures distance and channel-fidelity
+Bures distance are defined as
+                                   √︀                                    √︀
+                   𝑑wc (𝒩 , ℳ) := 1 − ℱwc (𝒩 , ℳ), 𝑑ch (𝒩 , ℳ) := 1 − ℱch (𝒩 , ℳ).
+
+      We next give the standard channel-based definition of approximate quantum error correction for a code.
+Definition 1. A quantum code 𝑄 ⊆ ℋ is said to be an 𝜀-wc-AQEC code for a channel 𝒩 : 𝐿(ℋ) → 𝐿(ℋ′ ) if
+there exists a CPTP recovery operation 𝒟 : 𝐿(ℋ′ ) → 𝐿(ℋ) such that
+                                          (︀                 )︀
+                                      𝑑wc 𝒟 ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ≤ 𝜀.                               (1)
+
+The code is said to be an 𝜀-av-AQEC code for 𝒩 if (1) holds for some 𝒟 with 𝑑ch in place of 𝑑wc .
+
+2.1    The error-set model for AQEC
+In [13], the adversarial error-set model of exact QEC was generalized to the approximate setting. Although
+the full linearity property of exact QEC does not extend to AQEC, a restricted form of linearity was shown
+to survive. Namely, given an error set of interest ℰ, one can obtain uniform guarantees on the AQEC
+performance of a code for a family of channels admitting a Kraus representation whose operators lie in
+Span(ℰ) and whose expansion coefficients matrix is a contraction:
+Definition 2 (ℰ-controlled channels and error-set AQEC). Let ℰ = {𝐸𝑘 }𝑘∈[𝑆] be a finite set of operators.
+A quantum
+       ∑︀   channel 𝒩 is said to be ℰ-controlled if it admits a Kraus representation {𝐴𝑚 }𝑚 of the form
+𝐴𝑚 = 𝑘∈[𝑆] 𝑐𝑚,𝑘 𝐸𝑘 , where the coefficient matrix 𝐶 = (𝑐𝑚,𝑘 ) satisfies
+
+                                               ‖𝐶‖∞ = sup ‖𝐶𝑥‖2 ≤ 1.
+                                                        ‖𝑥‖2 =1
+
+
+We denote the set of ℰ-controlled channels by N (ℰ).
+      A quantum code 𝑄 is said to be an 𝜀-(wc/av)-AQEC code for the error set ℰ if it is an 𝜀-(wc/av)-AQEC
+code, in the sense of Definition 1, for every ℰ-controlled channel. We denote the optimal AQEC error for the
+average-case and worst criteria by 𝜀av                 wc                                 av              wc
+                                       opt (ℰ, 𝑄) and 𝜀opt (ℰ, 𝑄) respectively. That is, 𝜀opt (ℰ, 𝑄) and 𝜀opt (ℰ, 𝑄)
+are the infimum values over all 𝜀 > 0 such that such that 𝑄 is 𝜀-av/wc-AQEC for ℰ.
+
+
+
+
+                                                            3
+      The family of ℰ-controlled channels has several useful structural properties. In particular, it is convex,
+and for a linearly independent set ℰ, the property of being ℰ-controlled is independent of the choise of
+the channel’s Kraus representation. The model also admits a broad range of nontrivial examples; see [13,
+Section 3.1.1] for further discussion. The error-set AQEC guarantees established in [13] show that this model
+provides meaningful uniform control over the corresponding family of channels. These guarantees are expressed
+through two error-set/code parameters: the environment-leakage distance, which controls worst-case AQEC
+performance, and the Knill–Laflamme Hellinger distance, which characterizes the average-case performance
+of the Petz recovery map.
+                                                                                𝑆−1
+      We begin with the environment-leakage distance. Let ℰ = {𝐸𝑘 }𝑘=0 be a finite set of operators
+               ′
+𝐸𝑘 : ℋ → ℋ , and let 𝑄 ⊆ ℋ be a code with orthogonal projector 𝑃 . For every 𝑆 × 𝑆 matrix 𝜆, the
+                                                  ℰ
+corresponding Bény–Oreshkov superoperator ℬ𝜆,𝑄        : 𝐿(ℋ) → 𝐿(C𝑆 ) is defined by1
+
+                                         tr (𝐵𝑘,𝑙 𝑋) |𝑘⟩ ⟨𝑙| , 𝐵𝑘,𝑙 = 𝑃 𝐸𝑙† 𝐸𝑘 𝑃 − 𝜆𝑘,𝑙 𝑃.
+                                      ∑︁
+                            ℰ
+                          ℬ𝜆,𝑄 (𝑋) =                                                                         (2)
+                                           𝑘,𝑙
+
+      This superoperator measures the deviation of the complementary map associated with ℰ and 𝑄 from
+the constant map determined by 𝜆.
+Definition 3 (Environment-leakage distance [13, Sec. 3.1]). The environment-leakage distance between an
+error set ℰ and a code 𝑄 is                             ⃦ ℰ ⃦
+                                        𝜁 (ℰ, 𝑄) := inf ⃦ℬ𝜆,𝑄 ⃦ ,
+                                                               ◇
+                                                                                                     (3)
+                                                                𝜆
+where ‖·‖◇ denotes the diamond norm on the space of superoperators, given in Definition 10; see p. 17.
+      Next we introduce the Knill–Laflamme Hellinger distance. Let 𝑄 be a 𝐾-dimensional code with
+orthonormal basis {|𝑐𝑖 ⟩}𝑖∈[𝐾] , and let ℰ = {𝐸𝑘 }𝑘∈[𝑆] . The corresponding QEC matrix 𝐴QEC ∈ 𝐿(C𝐾 ⊗ C𝑆 )
+is given by
+                                        (𝐴QEC )(𝑖,𝑘),(𝑗,𝑙) := ⟨𝑐𝑖 | 𝐸𝑘† 𝐸𝑙 |𝑐𝑗 ⟩ .                     (4)
+The exact Knill–Laflamme conditions hold precisely when this matrix is contained in the Knill–Laflamme
+space
+                            ℋKL := 𝐼𝐾 ⊗ 𝜆 : 𝜆 ∈ 𝐿(C𝑆 ) ⊆ 𝐿(C𝐾 ⊗ C𝑆 ).
+                                    {︀                 }︀
+                                                                                                    (5)
+The relevant approximate version of this condition is obtained by measuring the distance of 𝐴QEC from ℋKL :
+in the Hellinger-distance sense, this proximity characterizes the average-case performance of the Petz recovery
+map and therefore provides an approximate counterpart of the Knill–Laflamme conditions. √       √ For positive
+semidefinite operators 𝐴 and 𝐵, their quantum Hellinger distance is 𝐷H (𝐴, 𝐵) := ‖ 𝐴 − 𝐵‖2 , and the
+distance of 𝐴 ⪰ 0 from the positive cone of the Knill–Laflamme space is
+                                            𝐷H (𝐴, ℋKL ) := min 𝐷H (𝐴, 𝐵) .                                    (6)
+                                                                𝐵∈ℋKL
+                                                                 𝐵⪰0
+
+Definition 4 (Knill–Laflamme Hellinger distance [14, Def. 9]). The Knill–Laflamme Hellinger distance between
+a 𝐾-dimensional code 𝑄 and an error set ℰ is
+                                  1                        1      ⃦√︀             √ ⃦
+                    𝜁H (ℰ, 𝑄) := √ 𝐷H (𝐴QEC , ℋKL ) = √ min ⃦ 𝐴QEC − 𝐼𝐾 ⊗ 𝜆⃦ .                            (7)
+                                                                  ⃦                  ⃦
+                                  𝐾                        𝐾 𝜆⪰0                       2
+
+    As shown in [13, Section 3.2], this quantity is independent of the choice of the matrix representation of
+𝐴QEC and is expressed in closed form as follows:
+                                         √︂                                 ⃦2
+                                            1              1 ⃦     √︀
+                             𝜁H (ℰ, 𝑄) =      tr(𝐴QEC ) − 2 ⃦tr𝐾 ( 𝐴QEC )⃦ .                              (8)
+                                                             ⃦              ⃦
+                                            𝐾             𝐾                  2
+
+Moreover, if ℰ𝒩 is a Kraus set of a channel 𝒩 , then [13, Corollary 10] shows that 𝜁H (ℰ𝒩 , 𝑄) is the average-case
+                                                                                                           √
+Bures distance attained by the Petz recovery map, which is known to be optimal [4] up to a factor of 2. It
+was shown in [13] that 𝜁 and 𝜁H control the optimal AQEC error of a code as stated next.
+Theorem 1 (Sufficient AQEC conditions [13]). Let 𝑄 be a quantum code and let ℰ be an error set. Then
+                                      √︀
+                        𝜀wc
+                         opt (ℰ, 𝑄) ≤   2𝜁(ℰ, 𝑄) and 𝜀avopt (ℰ, 𝑄) ≤ 𝜁H (ℰ, 𝑄).
+  1 This restatement corrects a misprint in [6, Corollary 2].
+
+
+
+
+                                                                4
+3     Universal error-set recovery maps
+In this section, we introduce universal recovery maps for AQEC, define the corresponding optimal decoding
+errors, and prove their existence under both the worst-case and average-case criteria. Recall that the definition
+of error-set AQEC requires that, for every ℰ-controlled channel, there exist a recovery map whose decoding
+error is at most 𝜀. The recovery map may therefore depend on the particular channel. We are interested
+instead in a single recovery map that achieves the same error guarantee uniformly over all ℰ-controlled
+channels.
+Definition 5 (Universal recovery maps and optimal decoding errors). Let 𝑄 ⊆ ℋ be a quantum code, and
+let ℰ be a finite set of error operators from ℋ to ℋ′ . A CPTP recovery operation ℛ : 𝐿(ℋ′ ) → 𝐿(ℋ) is
+called an av-𝜀 universal recovery map, respectively, a wc-𝜀 universal recovery map, for ℰ and 𝑄 if, for every
+ℰ-controlled channel 𝒩 ,                    (︀                 )︀
+                                          𝑑 ℛ ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ≤ 𝜀,                                           (9)
+where 𝑑 = 𝑑ch in the average-case criterion and 𝑑 = 𝑑wc in the worst-case criterion. The optimal average-case
+and worst-case universal decoding error parameters of 𝑄 for ℰ are defined as
+    𝜀*dec (ℰ, 𝑄) := inf {𝜀 > 0 : there exists an *-𝜀 universal recovery map for ℰ and 𝑄} ,     * ∈ {wc, av} .   (10)
+
+3.1     Existence of universal error-set recovery maps
+In what follows, we derive bounds on the optimal decoding error under both the worst-case and average-case
+criteria. We begin with the average-case setting, where we show that relying on a single universal recovery
+map incurs no loss: the optimal average-case decoding error coincides with the optimal average-case AQEC
+error.
+       We will use the following result.
+Theorem (Sion’s minimax theorem [37]). Let 𝑋 and 𝑌 be convex subsets of linear topological spaces such that
+𝑌 is compact, and assume that 𝑓 : 𝑋 × 𝑌 → R is a function such that 𝑓 (·, 𝑦) is continuous and quasi-concave
+on 𝑋 for all 𝑦 and 𝑓 (𝑥, ·) is continuous and quasi-convex on 𝑌 for all 𝑥. Then
+                                       sup min 𝑓 (𝑥, 𝑦) = min sup 𝑓 (𝑥, 𝑦),
+                                       𝑥∈𝑋 𝑦∈𝑌               𝑦∈𝑌 𝑥∈𝑋
+
+where the supremum above is a maximum if 𝑋 is compact as well.
+Theorem 2. Let 𝑄 ⊂ ℋin be a code in a finite-dimensional Hilbert space, and let ℰ = {𝐸𝑖 }𝑖∈[𝑆] be an error
+set with operators 𝐸𝑖 : ℋin → ℋout . Then
+                                             𝜀av            av
+                                              dec (ℰ, 𝑄) = 𝜀opt (ℰ, 𝑄).
+
+In particular, there exists an av-𝜁H (ℰ, 𝑄) universal recovery map ℛ.
+Proof. Let 𝑋 is the set of recovery maps, which is a subset of the linear space of superoperators 𝐿(ℋout ) →
+𝐿(𝑄) equipped with the norm topology (recall that all norm topologies on a finite-dimensional vector space
+are equivalent), let 𝑌 be the set of ℰ-controlled channels, and let 𝑓 be the function defined as
+                    𝑓 (ℛ, 𝒩 ) = ℱch (ℛ ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ) = ⟨Φ𝑄 | (𝐼𝐿(𝑄) ⊗ ℛ ∘ 𝒩 )(𝜑𝑄 ) |Φ𝑄 ⟩ ,
+where |Φ𝑄 ⟩ ∈ 𝑄 ⊗ 𝑄 is the maximally entangled state and 𝜑𝑄 = |Φ𝑄 ⟩ ⟨Φ𝑄 |.
+Lemma 3. The spaces 𝑋 and 𝑌 defined in the proof of Theorem 2 are compact and convex subsets of
+topological vector spaces of superoperators 𝐿(ℋout ) → 𝐿(𝑄) and 𝐿(ℋin ) → 𝐿(ℋout ), respectively, equipped
+with the diamond norm topology.
+      The proof of this lemma is given in Appendix C.2.
+      For any ℛ ∈ 𝑋 and 𝒩 ∈ 𝑌 the functions 𝑓 (ℛ, ·) and 𝑓 (·, 𝒩 ) are affine and therefore continuous and
+both quasi-convex and quasi-concave. Together with 𝑋 and 𝑌 defined above, they satisfy the assumtptions
+of Sion’s minimax theorem, and we therefore have:
+                     max min ℱch (ℛ ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ) = min max ℱch (ℛ ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ).
+                     ℛ∈𝑋 𝒩 ∈𝑌                                𝒩 ∈𝑌 ℛ∈𝑋
+
+
+                                                         5
+Using the above and continuity of the square root function we conclude:
+
+                             𝜀av
+                              dec (ℰ, 𝑄) = inf sup 𝑑ch (ℛ ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ))
+                                          ℛ∈𝑋 𝒩 ∈𝑌
+                                          √︁
+                                         = 1 − max min ℱch (ℛ ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) )
+                                                ℛ∈𝑋 𝒩 ∈𝑌
+                                          √︁
+                                         = 1 − min max ℱch (ℛ ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) )
+                                                   𝒩 ∈𝑌 ℛ∈𝑋
+
+                                          = sup inf 𝑑ch (ℛ ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ))
+                                            𝒩 ∈𝑌 ℛ∈𝑋
+                                          = 𝜀av
+                                             opt (ℰ, 𝑄).
+
+The existence of an Av-𝜁H (ℰ, 𝑄) universal recovery map now follows immediately from Theorem 1.
+     We next turn to the worst-case criterion. Here, we show that the environment-leakage distance controls
+not only the optimal AQEC error, as established in Theorem 1 ß(=[13, Theorem 3]), but also the optimal
+decoding error. Thus, a given error-set condition guarantees the existence of a single recovery map that
+supports 𝜀-AQEC over all ℰ-controlled channels, where 𝜀 depends only on 𝑄 and ℰ.
+Theorem 4. Let 𝑄 ⊂ ℋin be a code in a finite-dimensional Hilbert space and let ℰ = {𝐸𝑖 }𝑖∈[𝑆] be an error
+set with operators 𝐸𝑖 : ℋin → ℋout . Then
+                                                        √︀
+                                          𝜀wc
+                                           dec (ℰ, 𝑄) ≤    𝜁(ℰ, 𝑄).
+
+That is, there exists a universal recovery map ℛℰ such that for any ℰ-controlled channel we have
+                                         (︀                  )︀ √︀
+                                     𝑑wc ℛℰ ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ≤ 𝜁(ℰ, 𝑄)
+
+     This theorem represents an improvement over Theorem 1 by both tightening the upper bound for the
+optimal 𝜀 and showing that it holds under the universal recovery map. The proof is rather technical, so here
+we only sketch the main ideas and present a complete argument in Appendix C.1.
+Proof overview. We generalize the approach of [26] from the channel to the error-set setting. The key tool
+underlying this approach is the Stinespring dilation continuity theorem, which asserts that two CP maps are
+close (under the worst-case criterion) if and only if they admit ∞-norm close Stinespring dilation operators in a
+common ancilla space. We apply this idea in both directions: First we use the closeness of the complementary
+map of the error-set noise superoperator to a constant map to obtain close Stinespring dilations of the
+error-set noise map and a (scaled) identity channel. These dilations give rise to a recovery map ℛ. In the
+other direction, we fix an ℰ-controlled channel 𝒩 , and show that the recovered noisy state ℛ ∘ 𝒩 admits a
+Stinespring dilation which is close to a Stinespring operator of the identity channel. This closeness, by the
+continuity theorem, implies that ℛ ∘ 𝒩 is close to the identity channel as required.
+      With this general theme in mind, let us sketch the main steps of the proof. The definition of 𝜁(ℰ, 𝑄)
+                                                                                                              ℰ
+implies that for a canonical choice of the matrix 𝜆, the corresponding Bény-Oreshkov superoperator ℬ𝜆,𝑄
+            ℰ
+satisfies ‖ℬ𝜆,𝑄 ‖◇ ≤ 2𝜁(ℰ, 𝑄). We consider the error-set noise map on the code space, ℳ𝑄        ℰ , whose Kraus
+representation is {𝐸𝑖 𝑃 }𝑖 . We make two important observations. First,
+                                     ∑︁ (︁                          )︁
+                          ℰ
+                        ℬ𝜆,𝑄  (𝑋) =       tr (𝑃 𝐸𝑙† 𝐸𝑘 𝑃 − 𝜆𝑘,𝑙 𝑃 )𝑋 |𝑘⟩ ⟨𝑙| = ℳ
+                                                                               ̂︁𝑄 − ℳ𝜆 ,
+                                                                                 ℰ
+                                    𝑘,𝑙
+
+
+where ℳ ̂︁𝑄 is the complementary map of ℳ𝑄 with respect to the canonical Stinespring dilation operator 𝒱ℰ
+           ℰ                                   ℰ
+of ℳ𝑄 ℰ  (see Definition 11), and  ℳ  𝜆 is an operator on 𝐿(𝑄) that admits a Kraus dilation operator 𝑉𝜆 . The
+second observation is that the complementary channel of ℳ𝜆 via the Stinespring operator 𝑉𝜆 turns out to be
+a scaled identity channel 𝛼𝜆 𝐼𝐿(𝑄) .
+      The continuity theorem combined with the fact that any two different Stinespring dilation operators
+differ by a partial isometry on the ancilla spaces implies that there exist partial isometries 𝐽ℰ and 𝐽𝜆 such
+that                                                     √︁
+                                                             ̂︁𝑄 − ℳ𝜆 ‖◇ ≤ 2𝜁(ℰ, 𝑄),
+                                                                            √︀
+                         ‖(𝐼 ⊗ 𝐽ℰ )𝑉ℰ − (𝐼 ⊗ 𝐽𝜆 )𝑉𝜆 ‖∞ ≤ ‖ℳ    ℰ                                          (11)
+
+
+                                                           6
+where on the previous line and in the remainder of this discussion, the identity operators in the tensor product
+maps act on the appropriate spaces (which may be different). We omit these spaces from the notation for
+better readability.
+     The bound (11) motivates a recovery map: assume that one wants to (approximately) reverse the
+operation of the error-set noise map ℳ𝑄  ℰ . A natural choice for decoding operation would be:
+
+                    ℛ(𝑋) = trenv 𝑅𝑋𝑅† + (arbitrary completion for TP), 𝑅 = 𝐽𝜆† 𝐽ℰ .
+                                  (︀      )︀
+
+
+To see that, we note that decoded noise channel on the code space ℛ ∘ ℳ𝑄            ℰ turns out to have Kraus
+representation of the form 𝑉dec = (𝐼 ⊗ 𝐽𝜆† 𝐽ℰ )𝑉ℰ (up to the trace preservation term), which satisfies
+                                         ⃦                                  ⃦
+                         ‖𝑉dec − 𝑉𝜆 ‖∞ = ⃦(𝐼 ⊗ 𝐽𝜆† 𝐽ℰ )𝑉ℰ − (𝐼 ⊗ 𝐽𝜆† 𝐽𝜆 )𝑉𝜆 ⃦
+                                         ⃦                                  ⃦
+                                                                             ∞
+                                         ⃦          (︁                          )︁⃦
+                                                  †
+                                       = ⃦(𝐼 ⊗ 𝐽𝜆 ) (𝐼 ⊗ 𝐽ℰ )𝑉ℰ − (𝐼 ⊗ 𝐽𝜆 )𝑉𝜆 ⃦
+                                         ⃦                                        ⃦
+                                                                                   ∞
+                                                                             √︀
+                                       ≤ ‖(𝐼 ⊗ 𝐽ℰ )𝑉ℰ − (𝐼 ⊗ 𝐽𝜆 )𝑉𝜆 ‖∞ ≤ 2𝜁(ℰ, 𝑄),                        (12)
+
+where the last step uses the fact that 𝐽𝜆† is a partial isometry and therefore it is contractive. Since 𝑉𝜆 dilates
+the scaled identity, the continuity theorem implies that the ℛ ∘ ℳ𝑄    ℰ is close to 𝛼𝜆 𝐼𝐿(𝑄) as desired.
+      In the final step, we transition from recovering the error-set noise map (which generally is not a physical
+quantum channel) to recovering an actual ℰ-controlled physical channel 𝒩 given by a coefficient matrix 𝐶
+(see Definition 2). A straightforward calculation shows that 𝒩 admits a Stinespring dilation operator 𝑉𝐶
+related to the 𝑉ℰ by 𝑉𝐶 = (𝐶 ⊗ 𝐼)𝑉ℰ . Accordingly, (up to trace preserving terms) the recovered noise channel
+𝑅 ∘ 𝒩 |𝑄 on the code space has the Stinespring representation
+
+                         𝑉dec,𝐶 = (𝐼 ⊗ 𝑅)𝑉𝐶 = (𝐼 ⊗ 𝑅)(𝐶 ⊗ 𝐼)𝑉ℰ = (𝐶 ⊗ 𝐼)(𝐼 ⊗ 𝑅)𝑉ℰ
+                               = (𝐶 ⊗ 𝑅)𝑉ℰ .
+
+The spectral condition ‖𝐶‖∞ ≤ 1 together with (12) gives that
+                                                ⃦        (︁            )︁⃦
+                       ‖𝑉dec,𝐶 − (𝐶 ⊗ 𝐼)𝑉𝜆 ‖∞ = ⃦(𝐶 ⊗ 𝐼) (𝐼 ⊗ 𝑅)𝑉ℰ − 𝑉𝜆 ⃦
+                                                ⃦                        ⃦
+                                                                    √︀ ∞
+                                              ≤ ‖(𝐼 ⊗ 𝑅)𝑉ℰ − 𝑉𝜆 ‖∞ ≤ 2𝜁(ℰ, 𝑄).
+
+By channel normalization, 𝑉𝜆𝐶 := (𝐶 ⊗ 𝐼)𝑉𝜆 is a Stinespring dilation for the identity channel. Thus, by
+Stinespring continuity theorem we have
+                                                       1                  √︀
+                         𝑑wc (𝑅 ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ) ≤ √ ‖𝑉dec,𝐶 − 𝑉𝜆𝐶 ‖∞ ≤ 𝜁(ℰ, 𝑄).
+                                                        2
+                                                                                                   √
+      Theorem 4 strengthens the sufficient AQEC condition of [13, Theorem 3] by a factor of            2:
+Corollary 5. For an error set ℰ and a quantum code 𝑄 we have:
+                                                     √︀
+                                       𝜀wc
+                                        opt (ℰ, 𝑄) ≤    𝜁 (ℰ, 𝑄).
+
+      Indeed, since every universal recovery map is, in particular, a valid recovery√︀map for each individ-
+ual ℰ-controlled channel, using Theorem 4 we have 𝜀wc                 wc
+                                                        opt (ℰ, 𝑄) ≤ 𝜀dec (ℰ, 𝑄) ≤    𝜁 (ℰ, 𝑄). Hence, the
+environment-leakage distance provides a uniform√worst-case guarantee through a single recovery map, while
+also strengthening the sufficient condition by a 2 factor.
+
+
+4     Error-sets Petz recovery map: a polar approach
+A common approach to AQEC is based on the Petz recovery map, also known in the QEC literature as the
+transpose channel [4, 31, 32, 44, 28, 19]. In the coding setting, the Petz recovery map ℛ𝒩 ,𝑄 is constructed from
+a noise channel 𝒩 and a code 𝑄. It gives an exact recovery operation whenever 𝑄 satisfies the Knill–Laflamme
+
+
+                                                        7
+conditions, and remains near optimal in the√approximate setting. In the Bures-distance normalization used
+here, its decoding error is within a factor of 2 of the optimal error [4, 31]. In [13], the optimal average-case
+AQEC error in the error-set model was bounded by analyzing the Petz recovery map ℛ𝒩 ,𝑄 separately for
+each ℰ-controlled channel 𝒩 . It was shown that the resulting average-case Bures distance is bounded by the
+Knill–Laflamme Hellinger distance 𝜁H (ℰ, 𝑄). This yields a bound on the optimal AQEC error 𝜀av         opt (ℰ, 𝑄),
+but does not directly control the optimal decoding error 𝜀avdec (ℰ, 𝑄), since the recovery  map  ℛ 𝒩 ,𝑄 depends
+on the particular channel 𝒩 . Bounding the decoding error instead requires a single recovery map whose
+performance is controlled simultaneously for all ℰ-controlled channels.
+      In this section, we bridge this gap by replacing the channel-dependent Petz map with a Petz map
+associated directly with the error set ℰ. The Petz construction does not require the underlying CP map to
+be trace preserving, and may be applied without assuming that its Kraus operators satisfy a completeness
+relation [4, 31, 1]. After the standard completion outside the relevant support, it defines a CPTP recovery
+map. We apply this construction to the error-set CP map
+                                                        ∑︁
+                                             ℳℰ (𝑋) :=      𝐸𝑋𝐸 † .                                          (13)
+                                                         𝐸∈ℰ
+
+The goal of this section is to show that the average-case and worst-case performance of the resulting recovery
+map can be controlled uniformly over all ℰ-controlled channels.
+      We first recall the conventional definition of the Petz recovery map adapter to our error-set setting.
+Definition 6 (Error-set Petz recovery map). Let 𝑄 ⊆ ℋin be a 𝐾-dimensional quantum code with orthogonal
+projector 𝑃 , and let ℰ = {𝐸𝑖 }𝑖∈[𝑆] be an error set with operators 𝐸𝑖 : ℋin → ℋout . Consider the CP map
+                                                       1
+ℳℰ (𝑋) defined in (13), let the reference state 𝜎 := 𝐾   𝑃 , and denote Γ = ℳℰ (𝑃 ). The error-set Petz recovery
+map associated with ℳℰ and 𝑄 is
+                                                   (︁                           )︁
+                                                 †           −1/2          −1/2
+                             ℛPetz
+                               ℰ,𝑄 (𝑋) := 𝜎 1/2
+                                                ℳℰ    ℳ ℰ (𝜎)     𝑋ℳ  ℰ (𝜎)        𝜎 1/2 ,
+
+where the inverse is the Moore–Penrose pseudoinverse taken on the support of ℳℰ (𝜎). Equivalently,
+                                                    (︁                )︁
+                                                  †      −1/2    −1/2
+                                  ℛPetz
+                                    ℰ,𝑄 (𝑋) = 𝑃 ℳ ℰ    Γ      𝑋Γ         𝑃.
+
+On the support of Γ, this map admits a Kraus representation of the form
+
+                                             𝑅𝑖 𝑋𝑅𝑖† ,    𝑅𝑖 := 𝑃 𝐸𝑖† Γ−1/2 .
+                                         ∑︁
+                             ℛPetz
+                               ℰ,𝑄 (𝑋) =                                                                     (14)
+                                             𝑖∈[𝑆]
+
+The map is trace preserving on this support, and we can view ℛPetzℰ,𝑄 as a CPTP map on 𝐿(ℋout ) upon
+completion on its orthogonal complement:
+
+                                           𝑅𝑖 𝑋𝑅𝑖† + tr ((𝐼 − 𝑃Γ )𝑋) 𝜌𝑄 ,
+                                        ∑︁
+                                ℛPetz
+                                 ℰ,𝑄 =
+                                           𝑖∈[𝑆]
+
+where 𝑃Γ is the projection on supp(Γ) and 𝜌𝑄 = |𝜓𝑄 ⟩ ⟨𝜓𝑄 | ∈ 𝐿(𝑄) is an arbitrary pure state.
+
+4.1    Polar representation of the Petz map
+We adopt the polar decomposition approach to the Petz map used in [1], where the Petz map is characterized
+as the Choi–Bures projection of an unnormalized reverse map onto the set of quantum channels. We adapt
+this viewpoint to the AQEC setting, taking the case of exact QEC as the source of intuition and motivation
+for the construction. Let 𝑄 ⊆ ℋin be a 𝐾-dimensional code with orthogonal projector 𝑃 , and suppose that
+𝑄 satisfies the Knill–Laflamme conditions for the error set ℰ = {𝐸𝑖 }𝑖∈[𝑆] . Equivalently, its QEC matrix
+𝐴QEC defined in (4) belongs to the Knill–Laflamme space (5) and has the form 𝐴QEC = 𝐼𝐾 ⊗ 𝜆 for some
+positive semidefinite 𝑆 × 𝑆 matrix 𝜆. Consider the error-synthesis operator 𝑆ℰ,𝑄 : 𝑄 ⊗ C𝑆 −→ ℋout given as
+𝑆ℰ,𝑄 (|𝜓⟩ ⊗ |𝑖⟩) := 𝐸𝑖 𝑃 |𝜓⟩, or equivalently
+                                                    ∑︁
+                                             𝑆ℰ,𝑄 =    𝐸𝑖 𝑃 ⊗ ⟨𝑖| .                                   (15)
+                                                     𝑖∈[𝑆]
+
+
+                                                        8
+where we identify 𝑄 with its image in ℋin under the inclusion map 𝑃 . We observe that
+        †
+                         𝑃 𝐸𝑖† 𝐸𝑗 𝑃 ⊗ |𝑖⟩ ⟨𝑗| = 𝐴QEC , and 𝑆ℰ,𝑄 𝑆ℰ,𝑄
+                                                                 †
+                                                                           𝐸𝑖 𝑃 𝐸𝑖† = ℳℰ (𝑃 ) = Γ.
+                    ∑︁                                                 ∑︁
+       𝑆ℰ,𝑄 𝑆ℰ,𝑄 =                                                   =                                    (16)
+                    𝑖,𝑗∈[𝑆]                                                   𝑖∈[𝑆]
+
+                    ∑︀                                                                       †
+Upon writing 𝑃 = 𝑘∈[𝐾] |𝑐𝑘 ⟩ ⟨𝑐𝑘 | for an orthonormal basis {|𝑐𝑘 ⟩}𝑘∈[𝐾] of 𝑄, the operator 𝑆ℰ,𝑄 𝑆ℰ,𝑄 in (16)
+is precisely the operator represented by the QEC matrix 𝐴QEC .
+      Let 𝑆ℰ,𝑄 = 𝑈 𝐺 be the polar decomposition of 𝑆ℰ,𝑄 , where
+                                        √︁
+                                            †
+                                                     √︀               √
+                                   𝐺 := 𝑆ℰ,𝑄  𝑆ℰ,𝑄 = 𝐴QEC = 𝐼𝐾 ⊗ 𝜆.
+
+Writing 𝑃𝜆 for the projection onto supp(𝜆), the projections of the partial isometry 𝑈 are
+
+                                        𝑈 † 𝑈 = 𝐼 𝐾 ⊗ 𝑃𝜆 ,     𝑈 𝑈 † = 𝑃Γ .
+
+Note that for every codeword |𝜓⟩ ∈ 𝑄 and every 𝑖 ∈ [𝑆], we have
+                                               (︁    √ )︁             (︁    √     )︁
+                  𝐸𝑖 |𝜓⟩ = 𝑆ℰ,𝑄 (|𝜓⟩ ⊗ |𝑖⟩) = 𝑈 𝐼𝐾 ⊗ 𝜆 (|𝜓⟩ ⊗ |𝑖⟩) = 𝑈 |𝜓⟩ ⊗ 𝜆 |𝑖⟩
+      √                                                         √
+Since 𝜆 |𝑖⟩ ∈ supp(𝜆), applying 𝑈 † gives 𝑈 † 𝐸𝑖 |𝜓⟩ = |𝜓⟩ ⊗ 𝜆 |𝑖⟩. Thus, 𝑈 † separates the logical state from
+the error label. In particular, for every 𝜌 ∈ 𝐿(𝑄),
+                                               (︁            )︁
+                                            tr𝑆 𝑈 † 𝐸𝑖 𝜌𝐸𝑖† 𝑈 = 𝜆𝑖𝑖 𝜌.
+
+Hence, after normalization, the logical state is recovered perfectly for each individual error. More generally,
+trace preservation guarantees that the corresponding scalar factors sum to one for every channel whose Kraus
+operators lie in Span(ℰ), and the same recovery map therefore exactly recovers every such channel.
+      This motivates the following definition of the polar decoder:
+
+                               ℛpolar
+                                                 (︀ †    )︀
+                                 ℰ,𝑄 (𝑋) := tr𝑆 𝑈 𝑋𝑈 + tr ((𝐼 − 𝑃Γ ) 𝑋) 𝜌𝑄 ,                              (17)
+
+where 𝜌𝑄 ∈ 𝐿(𝑄) is an arbitrary code state. Since 𝑃Γ = 𝑈 𝑈 † is the projection onto the final support of 𝑈 ,
+the second term completes the map to a CPTP map on 𝐿(ℋout ).
+
+Proposition 6. For any code 𝑄 and error set ℰ we have ℛpolar  Petz
+                                                       ℰ,𝑄 = ℛℰ,𝑄 .
+
+Proof. Since the supp(Γ)⊥ -branch of both recovery maps is the same, by the definition of Petz recovery map
+and the polar recovery map, it is sufficient to show that for all 𝑋
+
+                                                      𝑃 𝐸𝑖† Γ−1/2 𝑋Γ−1/2 𝐸𝑖 𝑃.
+                                                  ∑︁
+                                 tr𝑆 𝑈 † 𝑋𝑈 =
+                                    (︀       )︀
+
+                                                   𝑖∈[𝑆]
+
+
+Indeed, by the polar decomposition and (16) we have
+                         (︁         )︁−1/2
+                                †
+                                                               ∑︁
+                      𝑈 = 𝑆ℰ,𝑄 𝑆ℰ,𝑄        𝑆ℰ,𝑄 = Γ−1/2 𝑆ℰ,𝑄 =    Γ−1/2 𝐸𝑖 𝑃 ⊗ ⟨𝑖| .
+                                                                     𝑖∈[𝑆]
+
+The rest follows from a straightforward calculation:
+                           ⎛                                         ⎞
+                              ∑︁ (︁                        )︁
+                                    𝑃 𝐸𝑖† Γ−1/2 𝑋Γ−1/2 𝐸𝑗 𝑃 ⊗ |𝑗⟩ ⟨𝑖|⎠ =    𝑃 𝐸𝑖† Γ−1/2 𝑋Γ−1/2 𝐸𝑖 𝑃.
+           (︀ †    )︀                                                    ∑︁
+       tr𝑆 𝑈 𝑋𝑈 = tr𝑆 ⎝                                                                                   (18)
+                              𝑖,𝑗∈[𝑆]                                         𝑖∈[𝑆]
+
+
+
+
+                                                           9
+      The polar decoder of (17) was introduced in [30] in the restricted setting of Haar random codes, or
+more generally, approximately nondegenerate codes and unitary Hilbert–Schmidt orthogonal errors. In
+particular [30] considered the SVD decomposition of the error synthesis operator 𝑆ℰ,𝑄 = Σ𝐷Θ, where the
+diagonal matrix 𝐷 is close to the identity whenever 𝑆ℰ,𝑄 is an approximate isometry under an approximate
+non-degeneracy assumption. The suggested recovery map was then defined via a Stinespring dilation operator
+𝑈 ′ obtained by rounding the diagonal elements of 𝐷 to 1, 𝑈 ′ = ΣΘ, which gives the partial isometry 𝑈 †
+of the polar decoder. The equivalence of that polar decoder with the Petz recovery map, established in
+Proposition 6 above, was not observed there. This equivalence allows us to combine the general theory of
+Petz recovery with the ideas of [30] to obtain both average-case and worst-case guarantees for general error
+sets, beyond both the channel setting usually considered for the Petz map and the restricted non-degenerate
+Pauli-like setting of [30].
+
+4.2    Error-set performances of Petz recovery
+In this section we use the polar representation of Petz map to provide uniform error-set guarantees on AQEC
+capabilities of the Petz recovery map under both the worst- and average-case criteria.
+
+Average-case analysis
+We begin by analyzing the average-case error-set performances of Petz map. In Theorem 7 we prove the
+average-case error of Petz error-set recovery map is uniformly bounded by the Knill-Laflamme Hellinger
+distance.
+Theorem 7. Let 𝑄 ⊆ ℋin be a 𝐾-dimensional quantum code, and let ℰ = {𝐸𝑖 }𝑖∈[𝑆] be an error set with
+operators 𝐸𝑖 : ℋin → ℋout . Then the error-set Petz recovery map ℛPetz
+                                                                  ℰ,𝑄 of Definition 6 satisfies
+
+
+                                     𝑑ch ℛPetz
+                                        (︀                      )︀
+                                           ℰ,𝑄 ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ≤ 𝜁H (ℰ, 𝑄),
+
+For any ℰ-controlled channel 𝒩 .
+      Before proving Theorem 7, we record a consequence concerning the suboptimality of the error-set Petz   √
+map. For a fixed channel, the channel-adapted Petz recovery map is known to be optimal up to a factor of 2
+[4, 28]. This result does not directly extend to the error-set setting, where a single recovery map constructed
+from ℰ must perform uniformly over all ℰ-controlled channels. By combining Theorem 7 with the necessary
+average-case error-set AQEC conditions of [13], we nevertheless obtain a quantitative bound for Pauli-like
+error sets: when ℰ consists of Hilbert–Schmidt orthogonal unitary errors, the error achieved √︀ by the error-set
+Petz map differs from the optimal universal decoding error by a factor of at most order |ℰ|.
+
+Corollary 8. Let ℰ be an error set composed of Hilbert-Schmidt orthogonal unitary errors and let 𝑄 be a
+quantum code. Then
+                          1
+                      √      𝜁H (ℰ, 𝑄) ≤ 𝜀av             av
+                                          opt (ℰ, 𝑄) = 𝜀dec (ℰ, 𝑄)
+                          2𝑀
+                                       ≤ sup 𝑑ch ℛPetz
+                                                      (︀                       )︀
+                                                          ℰ,𝑄 ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ≤ 𝜁𝐻 (ℰ, 𝑄).
+                                          𝒩 ∈N (ℰ)
+
+                                                  1
+Proof. [13, Proposition 12] gives the inequality √2𝑀 𝜁H (ℰ, 𝑄) ≤ 𝜀av
+                                                                  opt . The equality follows from the equivalence
+of the AQEC decoding error and the optimal error in the average case criterion, proved in Theorem 2, and
+the rightmost inequality follows from Theorem 7
+                                          approach of [44]. Let 𝒩 be an ℰ-controlled channel with Kraus
+Proof of Theorem 7. Our proof follows the ∑︀
+representation {𝐹𝛼 }𝛼∈[𝑅] such that 𝐹𝛼 = 𝑖 𝑐𝛼,𝑖 𝐸𝑖 and ‖𝐶‖∞ ≤ 1. Let 𝐴ℰ ∈ 𝐿(C𝐾 ⊗ C𝑆 ) be the QEC
+operator of the code associated with ℰ. We begin with the simple observation that the trace preservation
+part in Petz map vanishes on the code space.
+
+
+
+
+                                                        10
+Lemma 9. For any channel 𝒩 with Kraus representation {𝐹𝛼 }𝛼 ⊆ Span(ℰ), we have
+                                              ℛPetz
+                                               ℰ,𝑄 ∘ 𝒩 |𝐿(𝑄) = ℛΓ ∘ 𝒩 |𝐿(𝑄) ,
+
+where 𝑅Γ has Kraus representation {𝑅𝑖 }𝑖∈[𝑆] given in (14) is defined as
+
+                                                   𝑅Γ (𝑋) = tr(𝑈 † 𝑋𝑈 ),
+where 𝑈 : 𝑄 → C𝑆 ⊗ ℋout is the partial isometry from the Polar decomposition of the error-synthesis map
+𝑆ℰ,𝜀 .
+Proof. By definition of Petz map, we can write ℛPetz
+                                                ℰ,𝑄 ∘ 𝒩 = ℛΓ | ∘ 𝒩 + ℛΓ⊥ ∘ 𝒩 , where
+
+                              𝑅𝑖 𝑋𝑅𝑖† , 𝑅𝑖 = 𝑃 𝐸𝑖† Γ−1/2 , and ℛΓ⊥ = tr ((𝐼 − 𝑃Γ )𝑋) 𝜌𝑄 .
+                          ∑︁
+               ℛΓ (𝑋) =
+                           𝑖∈[𝑆]
+
+                          †
+By (16) we have Γ = 𝑆ℰ,𝑄 𝑆ℰ,𝑄 and in particular
+                           supp(Γ) = Im (𝒮ℰ,𝑄 ) = Span {𝐸𝑖 |𝜓⟩ : 𝜓 ∈ 𝑄, 𝑖 ∈ [𝑆]} .
+Therefore, for any basis operator |𝜓1 ⟩ ⟨𝜓2 | ∈ 𝐿(𝑄) we have we
+                                                 (︃                             )︃
+                                                           ∑︁
+                                                                              †
+                      ℛΓ⊥ ∘ 𝒩 (|𝜓1 ⟩ ⟨𝜓2 |) = tr (𝐼 − 𝑃Γ )    𝐹𝛼 |𝜓1 ⟩ ⟨𝜓2 | 𝐹𝛼 𝜌𝑄 = 0,
+                                                                         𝛼
+                                                     ∑︀
+where the last equality follows since 𝐹𝛼 |𝜓1 ⟩ =          𝑖 𝑐𝛼,𝑖 𝐸𝑖 |𝜓1 ⟩ ∈ supp (Γ) for all |𝜓1 ⟩ ∈ 𝑄, and 𝐼 − 𝑃Γ projects
+on supp(Γ)⊥ .
+      Lemma 9 implies that that on the code space the noise recovery map satisfies and has Kraus representation
+{𝑅𝑖 𝐹𝛼 }𝑖 where 𝑖 ∈ [𝑆] and 𝛼 ∈ [𝑅]. Using the well-known channel fidelity formula of a channel with respect
+to the identity (see [4, eq. (8)]) we have
+
+                                              )︀ 𝑅−1
+                                                  ∑︁ 𝑆−1
+                                                      ∑︁ ⃒⃒ 1               ⃒2
+                   𝐹ch ℛPetz
+                        (︀                                                  ⃒
+                           ℰ,𝑄 ∘ 𝒩 |    , 𝐼
+                                    𝐿(𝑄) 𝐿(𝑄)   =         ⃒
+                                                          ⃒𝐾  tr (𝑃 𝑅  𝐹  )
+                                                                      𝑖 𝛼 ⃒
+                                                                            ⃒
+                                                  𝛼=0 𝑖=0
+                                                  𝑅−1
+                                                  ∑︁ 𝑆−1
+                                                      ∑︁ ⃒⃒ 1                  ⃒2
+                                                                               ⃒
+                                                =         ⃒ 𝐾 tr (𝑃 𝑅𝑖 𝐹𝛼 𝑃 )⃒
+                                                          ⃒                    ⃒
+                                                  𝛼=0 𝑖=0
+                                                          ⃒                                  ⃒2
+                                                  𝑅−1 ∑︁ ⃒⃒𝑆−1
+                                                  ∑︁ 𝑆−1    ∑︁ 1          (︁              )︁⃒⃒
+                                                                                  †
+                                                =         ⃒        𝑐𝛼,𝑗 tr 𝑃 𝐸𝑖 Γ−1/2 𝐸𝑗 𝑃 ⃒⃒ .            (19)
+                                                          ⃒
+                                                  𝛼=0 𝑖=0 𝑗=0
+                                                          ⃒     𝐾                            ⃒
+
+To proceed with the analysis of (19) we need the following lemma.
+                                 (︁               )︁
+Lemma 10. For all 𝑖, 𝑗 ∈ [𝑆], tr 𝑃 𝐸𝑖† Γ−1/2 𝐸𝑗 𝑃 is exactly the (𝑖, 𝑗)th entry of the QEC matrix tr𝐾
+                                                                                                      (︀√︀     )︀
+                                                                                                           𝐴QEC .
+                                                        ∑︀
+Proof. Indeed, recall that by the polar decomposition, 𝑗∈[𝑆] 𝐸𝑗 𝑃 ⊗ ⟨𝑗| = 𝒮ℰ,𝑄 = 𝑈 𝐺, where
+                            √︁
+                               †
+                                           √︀
+                       𝐺 = 𝑆ℰ,𝑄     𝑆ℰ,𝑄 = 𝐴QEC ,
+                            (︁         )︁−1/2
+                                    †
+                                                                    ∑︁
+                       𝑈 = 𝑆ℰ,𝑄 𝑆ℰ,𝑄          𝑆ℰ,𝑄 = Γ−1/2 𝑆ℰ,𝑄 =        Γ−1/2 𝐸𝑖 𝑃 ⊗ ⟨𝑖| .
+                                                                                 𝑖∈[𝑆]
+
+In particular
+                                                                         𝑃 𝐸𝑖† Γ−1/2 𝐸𝑗 𝑃 ⊗ |𝑖⟩ ⟨𝑗| ,
+                                                                ∑︁
+                                𝐴QEC = 𝐺 = 𝑈 † 𝑆ℰ,𝑄 =
+                           √︀
+                                                                                                                      (20)
+                                                               𝑖,𝑗∈[𝑆]
+
+which implies that                    (︁√︀       )︁      (︁               )︁
+                                                       tr 𝑃 𝐸𝑖† Γ−1/2 𝐸𝑗 𝑃 |𝑖⟩ ⟨𝑗| .
+                                                    ∑︁
+                                tr𝐾          𝐴QEC =
+                                                     𝑖,𝑗∈[𝑆]
+
+
+                                                                11
+                                                                                                               ∑︀
+     We continue with the proof of Theorem 7. Considering the coefficient matrix 𝐶 =                              𝛼,𝑗 𝑐𝛼,𝑗 |𝛼⟩ ⟨𝑗| as
+an operator C𝑆 → C𝑅 we obtain
+                      ⃒                              ⃒2 ⃒
+                                                                       )︁𝑇 )︂ ⃒2
+                      ⃒𝑆−1                                                       ⃒
+                                   (︁             )︁⃒⃒  ⃒(︂   (︁√︀
+                                       † −1/2
+                      ⃒ ∑︁
+                            𝑐𝛼,𝑗 tr 𝑃 𝐸𝑖 Γ    𝐸𝑗 𝑃 ⃒ = ⃒ 𝐶tr𝐾     𝐴QEC           ⃒ .
+                      ⃒                              ⃒  ⃒                        ⃒
+                      ⃒
+                                                                             𝛼,𝑖
+                      ⃒ 𝑗=0                          ⃒  ⃒                        ⃒
+                 √︀
+Denote 𝐴 := tr𝐾 ( 𝐴QEC ). Combining the last equality with (19) we have
+                                             𝑆−1 𝑅−1
+                                          1 ∑︁ ∑︁                    1 ⃦    ⃦2
+           𝐹ch ℛPetz                                 |(𝐶𝐴𝑇 )𝛼,𝑖 |2 = 2 ⃦𝐶𝐴𝑇 ⃦2
+              (︀                    )︀
+                 ℰ,𝑄 ∘ 𝒩 |    , 𝐼
+                          𝐿(𝑄) 𝐿(𝑄)    =   2
+                                         𝐾 𝑖=0 𝛼=0                  𝐾
+                                                1                       1
+                                                  tr 𝐶𝐴𝑇 (𝐴𝑇 )† 𝐶 † = 2 tr 𝐶(𝐴𝑇 )2 𝐶 †
+                                                    (︀              )︀     (︀           )︀
+                                              =                                                                                  (21)
+                                               𝐾2                      𝐾
+                                                1                       1     ¯ 2 𝐶 𝑇 = 1 tr 𝐴2 𝐶¯ † 𝐶¯ .
+                                              = 2 tr (𝐶(𝐴𝑇 )2 𝐶 † )𝑇 = 2 tr 𝐶𝐴
+                                                    (︀              )︀     (︀        )︀       (︀       )︀
+                                                                                                                                 (22)
+                                               𝐾                       𝐾                   𝐾2
+                              √︀
+In (21) we used the fact that 𝐴QEC ⪰ 0 and the partial trace is CP, and in (22) we used the commutativity
+and transpose invariance of the trace.
+      Our goal is to bound the quantity
+                                                              (︂             )︁2      )︂
+                            (︀ Petz                )︀     1        (︁√︀
+                                                                                 ¯ †¯
+                     1 − 𝐹ch ℛℰ,𝑄 ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) = 1 − 2 tr tr𝐾      𝐴QEC 𝐶 𝐶 .                   (23)
+                                                         𝐾
+To that end, consider the QEC matrix of the code 𝑄 with respect to the Kraus set {𝐹𝛼 }𝛼 of the channel 𝒩 ,
+denoted by 𝐴𝒩                                                               𝒩
+             QEC . A straightforward calculation shows that when 𝐴QEC and 𝐴QEC are computed with respect
+to the same basis of 𝑄 (or when considered in operator form) we have the following relation:
+
+                                              𝐴𝒩           ¯            ¯†
+                                               QEC = (𝐼𝐾 ⊗ 𝐶)𝐴QEC (𝐼𝐾 ⊗ 𝐶 ).
+
+On the other hand, since 𝒩 is trace preserving, we have
+                          ⎛                               ⎞
+              (︀ 𝒩 )︀         ∑︁                              ∑︁
+            tr 𝐴QEC = tr ⎝         (𝑃 𝐹𝛼† 𝐹𝛽 𝑃 ) ⊗ |𝛼⟩ ⟨𝛽|⎠ =    tr(𝐹𝛼 𝑃 𝐹𝛼† ) = tr(𝒩 (𝑃 )) = 𝐾.                                 (24)
+                                    𝛼,𝛽∈[𝑅]                                 𝛼∈[𝑅]
+
+Combining the above with (23) and (24) we have:
+                                                                                                 (︂                    )︁2      )︂
+                                            1 (︀           ¯                   ¯ †         1               (︁√︀
+                                                                                                                           ¯ †¯
+     1 − 𝐹ch ℛPetz
+              (︀                      )︀                                           )︀
+                 ℰ,𝑄 ∘ 𝒩 |     , 𝐼
+                          𝐿(𝑄) 𝐿(𝑄)      =     tr  (𝐼𝐾  ⊗  𝐶)𝐴  QEC 𝐾(𝐼   ⊗   𝐶)      −       tr    tr 𝐾         𝐴 QEC     𝐶  𝐶
+                                           𝐾                                              𝐾2
+                                                                                      (︂                             )︂
+                                            1 (︀                               1             (︁             )︁ 2
+                                         = tr 𝐶¯ tr𝐾 (𝐴QEC ) 𝐶¯ † − 2 tr tr𝐾                       𝐴QEC 𝐶¯ † 𝐶¯
+                                                                       )︀                       √︀
+                                                                                                                                   (25)
+                                           𝐾                                 𝐾
+                                              (︂(︂                                            )︁2 )︂         )︂
+                                                   1                    1        (︁√︀
+                                         = tr         tr𝐾 (𝐴QEC ) − 2 tr𝐾              𝐴QEC          𝐶¯ † 𝐶¯ ,                     (26)
+                                                   𝐾                   𝐾
+
+where in (25) we used Lemma 17. Note that 𝐼𝑆 − 𝐶¯ † 𝐶¯ ⪰ 0 by the assumption that ⃦𝐶¯ ⃦∞ = ‖𝐶‖∞ ≤ 1. By
+                                                                                                         ⃦ ⃦
+
+Lemma 18 we also have:                                                         )︁2
+                                      1                    1       (︁√︀
+                                         tr𝐾 (𝐴QEC ) − 2 tr𝐾            𝐴QEC ⪰ 0.
+                                     𝐾                   𝐾
+In particular               (︂(︂
+                                 1                   1       (︁√︀       )︁2 )︂                 )︂
+                         tr        tr𝐾 (𝐴QEC ) − 2 tr𝐾            𝐴QEC                   ¯ †¯
+                                                                               (𝐼𝑆 − 𝐶 𝐶) ≥ 0,                                     (27)
+                                 𝐾                  𝐾
+as the trace of the composition of positive semidefinite operators is always non-negative. Combining (27)
+with (26) and (8) we obtain:
+                                                     (︂(︂                                      )︁2 )︂)︂
+                                                          1                 1       (︁√︀
+                1 − 𝐹ch ℛPetz
+                       (︀                    )︀
+                          ℰ,𝑄 ∘ 𝒩 |    , 𝐼
+                                   𝐿(𝑄) 𝐿(𝑄)    ≤ tr        tr 𝐾 (𝐴 QEC ) −    tr 𝐾      𝐴 QEC
+                                                          𝐾                 𝐾2
+
+                                                                 12
+                                                   1              1 ⃦    (︁√︀    )︁⃦2
+                                                =    tr (𝐴QEC ) − 2 ⃦tr𝐾     𝐴QEC ⃦
+                                                                    ⃦              ⃦
+                                                  𝐾              𝐾                  2
+                                                = 𝜁H (ℰ, 𝑄)2 .
+
+We conclude by taking a square root on both sides of the above expression.
+
+Worst-case analysis
+Our next goal is to analyze the worst-case AQEC of Petz map in the error-set setting. While we do not
+provide AQEC guarantees against all ℰ-controlled channels, we can formulate them for a subset of channels
+isolated by a stronger constraint.
+Definition 7 (Strongly ℰ-controlled channels). Let ℰ = {𝐸𝑖 }𝑖 be an error∑︀set. A channel 𝒩 is called strongly
+ℰ-controlled, if it admits a Kraus representation {𝐹𝛼 }𝛼 such that 𝐹𝛼 = 𝑖 𝑐𝛼,𝑖 𝐸𝑖 and the coefficient matrix
+𝐶 = (𝑐𝛼,𝑖 )𝛼,𝑖 satisfies ‖𝐶‖2 ≤ 1.
+      Many natural error sets give rise to rich families of strongly ℰ-controlled channels, often containing every
+channel whose Kraus operators lie in Span(ℰ). The canonical example is an error set composed of unitary
+Hilbert–Schmidt orthogonal operators, which includes Pauli-type and Majorana errors, among others. For
+such an error set ℰ, every channel admitting a Kraus representation with operators in Span(ℰ) is automatically
+strongly ℰ-controlled, since its coefficient matrix satisfies ‖𝐶‖2 = 1 [30, Proposition 2.3]. In particular, the
+family of 𝑡-limited error channels is strongly controlled by the set of Pauli operators of weight at most 𝑡; see
+[13, Example 1] for further discussion. Similarly to ℰ-controlled channels, the family of strongly ℰ-controlled
+channels is convex. This observation also implies that random erasure and deletion channels are strongly
+controlled by natural choices of error sets; see [13, Sections 2.1.2, 2.1.3].
+Theorem 11. Let 𝑄 ⊆ ℋin be a 𝐾-dimensional quantum code, and let ℰ = {𝐸𝑖 }𝑖∈[𝑆] be an error set with
+operators 𝐸𝑖 : ℋin → ℋout . Then for any strongly ℰ-controlled channel 𝒩 , the error-set Petz recovery map
+ℛPetz
+  ℰ,𝑄 of Definition 6 satisfies
+                                                   ⃦                                 ⃦
+                      (︀ Petz               )︀  1 ⃦ √︀               1 √︀            ⃦
+                  𝑑wc ℛℰ,𝑄 ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ≤ √ ⃦ 𝐴QEC − 𝐼𝐾 ⊗ √
+                                                   ⃦
+                                                                                     ⃦ .
+                                                                          tr𝐾 (𝐴QEC )⃦                 (28)
+                                                 2                   𝐾                 ∞
+
+Proof. We adopt the strategy used in the proof of Theorem 4 to provide worst-case guarantees for the
+proposed recovery map. Given the Petz recovery map and a strongly ℰ-controlled channel by some coefficient
+matrix 𝐶, we find a Stinespring representation of the decoded noisy output ℛPetz  ℰ,𝑄 ∘ 𝒩 |𝐿(𝑄) whose distance
+from some Stinespring dilation operator of the identity is bounded by the r.-h.s. of (28). A similar approach
+was also used in [30]. We then use Stinespring dilation continuity theorem (see Theorem 19) to conclude that
+ℛPetz
+  ℰ,𝑄 ∘ 𝒩 |𝐿(𝑄) is close to the identity with respect to the worst-case Bures distance 𝑑wc .
+                                                                         1
+      Let 𝑃 be the projector on the code space 𝑄 us, and denote 𝜆 = 𝐾      tr𝐾 (𝐴QEC ). Observe that by (16)
+
+                                    1               1 ∑︁
+                               𝜆=     tr𝐾 (𝐴QEC ) =      tr(𝑃 𝐸𝑖† 𝐸𝑗 𝑃 ) |𝑖⟩ ⟨𝑗| .                           (29)
+                                    𝐾               𝐾
+                                                        𝑖,𝑗∈[𝑆]
+
+where (|𝑖⟩)𝑖∈[𝑆] is a basis of C𝑠 . Let 𝒩𝐶 : ℋin → ℋout be a strongly ℰ-controlled channel with Kraus
+operators {𝐹𝛼 }𝛼∈[𝑅] , 𝑅 ∈ N, such that 𝐶 = (𝑐𝛼,𝑖 )𝛼,𝑖 is the linear coefficient matrix defined by the equation
+     ∑︀
+𝐹𝛼 = 𝑖∈𝑆 𝑐𝛼,𝑖 𝐸𝑖 that satisfies ‖𝐶‖2 ≤ 1. By Lemma 9 we can write
+
+                          ℛPetz
+                           ℰ,𝑄 ∘ 𝒩𝐶 |𝐿(𝑄) = ℛΓ ∘ 𝒩𝐶 |𝐿(𝑄) ,       𝑅Γ (𝑋) = tr𝑆 (𝑈 † 𝑋𝑈 ),                    (30)
+
+where 𝑈 : 𝑄 ⊗ ℋ𝑆 → ℋout is the polar partial isometry in the polar decomposition of the error synthesis map
+𝑆ℰ,𝑄 defined in (15), such that               √︁
+                                                 †
+                                                              √︀
+                                   𝑆ℰ,𝑄 = 𝑈 𝑆ℰ,𝑄    𝑆ℰ,𝑄 = 𝑈 𝐴QEC .
+In particular, since 𝑈 : ℋin ⊗ ℋ𝑆 → ℋout is invertible on supp(𝑆ℰ,𝑄 ) = supp(𝐴QEC ), we have
+
+                                            𝑈 † 𝑆ℰ,𝑄 = 𝐴QEC ,
+                                                       √︀
+                                                                                                             (31)
+
+
+                                                       13
+     Consider the noise operation on the code state 𝒩𝐶 |𝐿(𝑄) , which can be formally described as 𝒩𝐶 ∘ 𝒩𝑄 ,
+where 𝒩𝑄 : 𝐿(𝑄) → 𝐿(ℋin ) is simply the inclusion isometry 𝒩𝑄 (𝑋) = 𝑃 𝑋𝑃 . It admits a Kraus representation
+{𝐹𝛼 𝑃 }𝛼∈[𝑅] and has a canonical Stinespring dilation operator 𝑉𝐶 : 𝑄 → ℋout ⊗ ℋ𝑅 of the form
+                                                                                                ⎛                   ⎞
+                       ∑︁                      ∑︁ ∑︁                                    ∑︁          ∑︁
+              𝑉𝐶 =            𝐹𝛼 𝑃 ⊗ |𝛼⟩ =                  𝑐𝛼,𝑖 𝐸𝑖 𝑃 ⊗ |𝛼⟩ =                   ⎝           𝑐𝛼,𝑖 𝐸𝑖 𝑃 ⎠ ⊗ |𝛼⟩ .   (32)
+                      𝛼∈[𝑅]                   𝑖∈[𝑆] 𝛼∈[𝑅]                               𝛼∈[𝑅]       𝑖∈[𝑆]
+
+
+By the definition of 𝒮ℰ,𝑄 in (15), for any |𝜓⟩ we have 𝐸𝑖 𝑃 |𝜓⟩ = 𝑆ℰ,𝑄 (|𝜓⟩ ⊗ |𝑖⟩), so (32) gives rise to
+                       ⎛                           ⎞
+                   ∑︁     ∑︁                                 ∑︁ ∑︁
+        𝑉𝐶 |𝜓⟩ =       ⎝      𝑐𝛼,𝑖 𝑆ℰ,𝑄 (|𝜓⟩ ⊗ |𝑖⟩)⎠ ⊗ |𝛼⟩ =         𝑐𝛼,𝑖 (𝑆ℰ,𝑄 ⊗ 𝐼𝑅 )(|𝜓⟩ ⊗ |𝑖⟩ ⊗ |𝛼⟩)
+                  𝛼∈[𝑅]       𝑖∈[𝑆]                                    𝛼∈[𝑅] 𝑖∈[𝑆]
+                                      (︃                                           )︃
+                                             (︁ ∑︁ ∑︁                         )︁
+                = (𝑆ℰ,𝑄 ⊗ 𝐼𝑅 ) |𝜓⟩ ⊗                         𝑐𝛼,𝑖 |𝑖⟩ ⊗ |𝛼⟩             = (𝑆ℰ,𝑄 ⊗ 𝐼𝑅 ) (|𝜓⟩ ⊗ |vec(𝐶)⟩) ,         (33)
+                                               𝛼∈[𝑅] 𝑖∈[𝑆]
+                   ∑︀
+where, |vec(𝐶)⟩ = 𝛼,𝑖 𝑐𝛼,𝑖 |𝑖⟩ ⊗ |𝛼⟩ ∈ ℋ𝑆 ⊗ ℋ𝑅 is the vectorization of 𝐶. Next, we find a Stinespring dilation
+operator 𝑉dec,𝐶 for the decoded noisy state on the code space ℛPetz
+                                                                ℰ,𝑄 ∘ 𝒩𝐶 |𝐿(𝑄) . Let 𝑉dec,𝐶 : 𝑄 → 𝑄 ⊗ ℋ𝑆 ⊗ ℋ𝑅
+be given as 𝑉dec,C = (𝑈 † ⊗ 𝐼𝑅 )𝑉𝐶 and note that for any 𝑋 ∈ 𝐿(𝑄) we have
+                           (︁             )︁          (︁                            )︁
+                                      †
+                     tr𝑅,𝑆 𝑉dec,𝐶 𝑋𝑉dec,𝐶    = tr𝑅,𝑆 (𝑈 † ⊗ 𝐼𝑅 )(𝑉𝐶 𝑋𝑉𝐶† )(𝑈 ⊗ 𝐼𝑅 )
+                                                   (︁                 )︁
+                                             = tr𝑆 𝑈 † tr𝑅 (𝑉𝐶 𝑋𝑉𝐶† )𝑈 = ℛPetz
+                                                                            ℰ,𝑄 ∘ 𝒩𝐶 (𝑋).
+
+
+where the second equality follows from Lemma 17 and the last equality follows from (30).
+     Our goal is to show now that 𝑉dec,𝐶 is close to some Stinespring dilation of the identity channel on
+𝐿(𝑄). Consider the operator 𝑉𝜆𝐶 : 𝑄 → 𝑄 ⊗ ℋ𝑅 ⊗ ℋ𝑆 given by
+                                                           √
+                              𝑉𝜆𝐶 := 𝐼𝑄 ⊗ |𝜓𝐶 ⟩ , |𝜓𝐶 ⟩ = ( 𝜆 ⊗ 𝐼𝑅 ) |vec(𝐶)⟩ .
+
+We show that 𝑉𝜆𝐶 is indeed a dilation for 𝐼𝐿(𝑄) . Observe that
+
+                                              tr𝑅,𝑆 (𝑉𝜆𝐶 𝑋𝑉𝜆†𝐶 ) = ⟨𝜓𝐶 |𝜓𝐶 ⟩ 𝑋,
+
+so it is sufficient to show that |𝜓𝐶 ⟩ is normalized. This follows from channel normalization and from (29):
+                                                    ∑︁ ∑︁
+         ⟨𝜓𝐶 |𝜓𝐶 ⟩ = ⟨vec(𝐶)| (𝜆 ⊗ 𝐼𝑅 ) |vec(𝐶)⟩ =              𝑐*𝛼,𝑖 𝑐𝛽,𝑗 ⟨𝑖| 𝜆 |𝑗⟩ ⟨𝛼|𝛽⟩
+                                                        𝑖,𝑗∈[𝑆] 𝛼,𝛽∈[𝑅]
+                                                                    ⎛               ⎞
+                                                                                          (︂          )︂
+                                                1  (︁         )︁      1                       (︀ 𝑃 )︀
+                                      𝑐*𝛼,𝑖 𝑐𝛼,𝑗 tr 𝑃 𝐸𝑖† 𝐸𝑗 𝑃 = tr ⎝
+                     ∑︁ ∑︁                                              ∑︁
+                 =                                                         𝐹𝛼 𝑃 𝐹𝛼† ⎠ = tr 𝒩𝐶            = 1.
+                                                𝐾                     𝐾                          𝐾
+                     𝛼∈[𝑅] 𝑖,𝑗∈[𝑆]                                                  𝛼∈[𝑅]
+
+
+      We now bound the ∞-norm distance between 𝑉dec,𝐶 and 𝑉𝜆𝐶 . For any normalized |𝜓⟩ ∈ 𝑄, by (31) and
+(33) we have
+
+              ‖𝑉dec,𝐶 |𝜓⟩ − 𝑉𝜆𝐶 |𝜓⟩‖ = ⃦(𝑈 † ⊗ 𝐼𝑅 )𝑉𝐶 |𝜓⟩ − |𝜓⟩ ⊗ |𝜓𝐶 ⟩⃦
+                                       ⃦                               ⃦
+                                       ⃦(︁                       √         )︁           ⃦
+                                     = ⃦ (𝑈 † 𝒮ℰ,𝑄 ⊗ 𝐼𝑅 ) − 𝐼𝐾 ⊗ 𝜆 ⊗ 𝐼𝑅 (|𝜓⟩ ⊗ |vec(𝐶)⟩)⃦
+                                       ⃦                                                ⃦
+                                       ⃦                        √        ⃦
+                                     ≤ ⃦(𝑈 † 𝒮ℰ,𝑄 ⊗ 𝐼𝑅 ) − 𝐼𝐾 ⊗ 𝜆 ⊗ 𝐼𝑅 ⃦ ‖|𝜓⟩‖ ‖|vec(𝐶)⟩‖
+                                       ⃦                                 ⃦
+                                                                          ∞
+                                       ⃦√︀               √ ⃦
+                                     = ⃦ 𝐴QEC − 𝐼𝐾 ⊗ 𝜆⃦ ‖𝐶‖2
+                                       ⃦                     ⃦
+                                                              ∞
+                                       ⃦√︀               √ ⃦
+                                     ≤ ⃦ 𝐴QEC − 𝐼𝐾 ⊗ 𝜆⃦ ,
+                                       ⃦                     ⃦
+                                                                              ∞
+
+
+
+                                                                 14
+                                                           2 1/2
+                                              ∑︀
+where we used the fact that ‖|vec(𝐶)⟩‖ = (      𝛼,𝑖 |𝑐𝛼,𝑖 | )    = ‖𝐶‖2 . Combining the above with Stinespring
+dilation continuity (Theorem 19) we have
+                                            1                    1 ⃦⃦√︀         √ ⃦
+            𝑑wc ℛPetz
+               (︀                       )︀
+                  ℰ,𝑄 ∘ 𝒩𝐶 |𝐿 (𝑄), 𝐼𝐿(𝑄) ≤ √ ‖𝑉dec,𝐶 − 𝑉𝜆𝐶 ‖∞ ≤ √ ⃦ 𝐴QEC − 𝐼𝐾 ⊗  𝜆⃦ .
+                                                                                  ⃦
+                                             2                    2                ∞
+
+
+
+
+Remark 1. Theorem 11 recovers the guarantees established for the polar decoder in [30]. The 𝛿-approximate
+nondegeneracy condition considered there requires the error-synthesis operator 𝑆ℰ,𝑄 to be a 𝛿-approximate
+isometry, in the sense that each of its singular√︁
+                                                 values differs from 1 by at most 𝛿. Since the singular
+                                                    †           √︀
+values of 𝑆ℰ,𝑄 are precisely the eigenvalues of 𝑆ℰ,𝑄   𝑆ℰ,𝑄 = 𝐴QEC , this assumption is equivalent to
+⃦√︀            ⃦
+⃦ 𝐴QEC − 𝐼𝐾𝑆 ⃦ ≤ 𝛿. Theorem 11 then shows that ℛPetz is an wc-𝛿 universal decoder for all ℰ-controlled
+                ∞                                     ℰ,𝑄
+channels. When ℰ consists of unitary Hilbert–Schmidt orthogonal errors, this family contains every channel
+whose Kraus operators lie in Span(ℰ).
+Proposition 12. Let 𝑄 ⊆ ℋin be a 𝐾-dimensional quantum code, and let ℰ = {𝐸𝑖 }𝑖∈[𝑆] be an error set with
+operators 𝐸𝑖 : ℋin → ℋout . Then
+                           ⃦                              ⃦
+                           ⃦ 𝐴QEC − 𝐼𝐾 ⊗ √1
+                           ⃦√︀              √︀            ⃦   √︀
+                                               tr𝐾 (𝐴QEC )⃦  ≤ 2𝑆𝜁(ℰ, 𝑄).                           (34)
+                           ⃦              𝐾               ⃦
+                                                           ∞
+
+In particular, the error-set Petz recovery map ℛPetz
+                                                ℰ,𝑄 of Definition 6 satisfies
+
+                                                              )︀ √︀
+                                   𝑑wc ℛPetz
+                                      (︀
+                                         ℰ,𝑄 ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ≤    𝑆𝜁(ℰ, 𝑄),                               (35)
+
+for any strongly ℰ-controlled channel 𝒩 .
+
+Proof. Let us denote
+                                   1               ∑︁ 1
+                              𝜆=     tr𝐾 (𝐴QEC ) =      tr(𝑃 𝐸𝑖† 𝐸𝑗 𝑃 ) |𝑖⟩ ⟨𝑗| ,
+                                   𝐾                  𝐾
+                                                    𝑖,𝑗∈[𝑆]
+
+where the last equality follows from (16). We first show that
+                ⃦                                    ⃦    √︃⃦                            ⃦
+                ⃦√︀
+                ⃦ 𝐴QEC − 𝐼𝐾 ⊗ √     1  √︀            ⃦      ⃦              1             ⃦
+                                         tr 𝐾 (𝐴   )
+                                                QEC ⃦
+                                                     ⃦  ≤   ⃦𝐴 QEC − 𝐼 𝐾 ⊗   tr 𝐾 (𝐴QEC ⃦ .
+                                                                                       ) ⃦                  (36)
+                ⃦                   𝐾                 ∞
+                                                            ⃦              𝐾              ∞
+                                                      √
+Indeed, it is well-known that the function 𝑓 (𝑡) = 𝑡 is operator-monotone on [0, ∞) in the sence of Definition 9
+(see [8, Proposition V.1.8]). Thus, (36) follows directly by applying the Hölder type inequality
+                                                                                               √︀ of Lemma 14
+on 𝑓 . To finish the proof, it is sufficient to show that the r.h.s. of (36) is bounded by 2𝑆𝜁(ℰ, 𝑄).
+      To that end, consider the Bény-Oreshkov superoperator corresponding to 𝜆𝑇 :
+
+                                             tr (𝐵𝑖,𝑗 𝑋) |𝑖⟩ ⟨𝑗| , 𝐵𝑖,𝑗 = 𝑃 𝐸𝑗† 𝐸𝑖 𝑃 − 𝜆𝑗,𝑖 𝑃.
+                                         ∑︁
+                         ℬ𝜆ℰ𝑇 ,𝑄 (𝑋) =
+                                       𝑖,𝑗
+
+
+Note that ℬ𝜆ℰ𝑇 ,𝑄 is Hermitian preserving as 𝜆𝑇 is a Hermitian matrix (see (49) for the details). By [13,
+Remark 8], Lemma 15, and the duality principle of Lemma 16 we have
+                          ⃦           ⃦     ⃦       ⃦    ⃦        ⃦
+                          ⃦ ℰ
+                          ⃦(ℬ𝜆𝑇 ,𝑄 )† ⃦  = ⃦ℬ𝜆ℰ𝑇 ,𝑄 ⃦  = ⃦ℬ𝜆ℰ𝑇 ,𝑄 ⃦ ≤ 2𝜁(ℰ, 𝑄),
+                                      ⃦     ⃦       ⃦    ⃦        ⃦
+                                       cb,∞            cb,1           ◇
+
+where (ℬ𝜆ℰ𝑇 ,𝑄 )† : 𝐿(ℋ𝑆 ) → 𝐿(𝑄) is the Hilbert-Schmidt dual operator of ℬ𝜆ℰ𝑇 ,𝑄 . We claim that (ℬ𝜆ℰ𝑇 ,𝑄 )† is
+given as:                                               ∑︁
+                                      (ℬ𝜆ℰ𝑇 ,𝑄 )† (𝑋) =    ⟨𝑖| 𝑋 |𝑗⟩ 𝐵𝑗,𝑖 .
+                                                      𝑖,𝑗∈[𝑆]
+
+
+
+
+                                                      15
+Indeed, for any 𝑌 ∈ 𝐿(𝑄) and 𝑋 ∈ 𝐿(ℋ𝑆 ) we have
+                           ⎛                          ⎞
+   ⟨                ⟩
+                                                                     †
+                            ∑︁                            ∑︁
+    ℬ𝜆ℰ𝑇 ,𝑄 (𝑌 ), 𝑋   = tr ⎝   tr(𝐵𝑖,𝑗 𝑌 )* |𝑗⟩ ⟨𝑖| 𝑋 ⎠ =    tr(𝑌 † 𝐵𝑖,𝑗 ) ⟨𝑖| 𝑋 |𝑗⟩
+                    HS
+                                 𝑖,𝑗                                 𝑖,𝑗
+                               ⎛                      ⎞      ⎛                          ⎞
+                                                                  (︂ ∑︁               )︂  ⟨                   ⟩
+                                              †
+                                ∑︁
+                          = tr ⎝   ⟨𝑖| 𝑋 |𝑗⟩ 𝐵𝑖,𝑗 𝑌 † ⎠ = tr ⎝𝑌 †       ⟨𝑖| 𝑋 |𝑗⟩ 𝐵𝑗,𝑖 ⎠ = 𝑌, (ℬ𝜆ℰ𝑇 ,𝑄 )† (𝑋)           ,
+                                                                                                                   HS
+                                 𝑖,𝑗                                       𝑖,𝑗
+
+                                      †
+where we used ∑︀the equality 𝐵𝑖,𝑗 = 𝐵𝑗,𝑖 which follows since 𝜆 is Hermitian. Consider the matrix 𝑋 ∈ ℋ𝑆 ⊗ ℋ𝑆
+given by 𝑋 = 𝑖,𝑗∈[𝑆] |𝑖⟩ ⟨𝑗| ⊗ |𝑖⟩ ⟨𝑗| where {|𝑖⟩}𝑖 is an orthonormal basis, and note that ‖𝑋‖∞ = 𝑆. By the
+definition of ‖·‖cb,∞ we have
+                                 ⃦(︁               )︁   ⃦        ⃦        ⃦
+                                 ⃦ 𝐼𝑆 ⊗ (ℬ𝜆ℰ𝑇 ,𝑄 )† (𝑋)⃦ ≤ 𝑆 ⃦(ℬ𝜆ℰ𝑇 ,𝑄 )† ⃦    .                         (37)
+                                 ⃦                      ⃦        ⃦        ⃦
+                                                                 ∞                       cb,∞
+
+On the other hand
+                    (︁                   )︁     ∑︁
+                         𝐼𝑆 ⊗ (ℬ𝜆ℰ𝑇 ,𝑄 )† (𝑋) =    |𝑖⟩ ⟨𝑗| ⊗ 𝐵𝑗,𝑖
+                                                  𝑖,𝑗∈[𝑆]
+
+                                                            |𝑖⟩ ⟨𝑗| ⊗ 𝑃 𝐸𝑖† 𝐸𝑗 𝑃 −
+                                                   ∑︁                                 ∑︁
+                                              =                                                |𝑖⟩ ⟨𝑗| ⊗ 𝜆𝑖,𝑗 𝑃,        (38)
+                                                  𝑖,𝑗∈[𝑆]                            𝑖,𝑗∈[𝑆]
+
+where the first equality of (38) follows by (16) and since when restricted to the 𝐾-dimensional codespace
+𝑄, the projector 𝑃 acts as the identity 𝐼𝐾 . Combining (36), (37) and (38) we conclude (34). Finally, (35)
+follows from (34) and Theorem 11.
+
+4.3    Channel performances of Petz recovery
+The performance of the Petz recovery map for a fixed channel is largely understood under the channel-
+fidelity criterion. Its near-optimality and exact optimality properties, as well as explicit expressions for
+its performance in terms of the QEC matrix, have been studied extensively [4, 31, 44, 28, 19]. Existing
+worst-case results are more limited and generally address different criteria or rely on additional structure. In
+[31], near-optimality was established with respect to the minimum pure-state input-output fidelity, rather
+than the worst-case entanglement fidelity. A general worst-case trace-norm guarantee for the Petz map, with
+a code-dimension-dependent loss, was obtained in the subspace and operator-algebra settings in [9]. More
+recently, [15] analyzed the worst-case entanglement fidelity of Petz recovery for covariant codes under flagged
+single-qudit erasure. Their analysis relies on covariance and irreducibility, which imply that the worst-case
+input is the maximally mixed logical state and thereby reduce the problem to a channel-fidelity calculation.
+       Beyond these settings, the literature remains predominantly based on channel fidelity. One reason is
+the tractable Kraus-operator expression for channel fidelity, due to Schumacher [33], which gives a workable
+expression for the channel fidelity. By contrast, worst-case entanglement fidelity requires minimization over
+all logical inputs, including states entangled with a reference system, and its general characterization leads
+to the complementary-channel formalism of Bény and Oreshkov [6]. Building on the polar decomposition
+analysis of Theorem 11, we derive worst-case entanglement-fidelity guarantees for the Petz recovery map for
+general finite-dimensional channels, without covariance assumptions.
+       We now adapt the error-set machinery to the case where the error set ℰ𝒩 = {𝐸𝑖 }𝑖∈[𝑆] is a Kraus set of
+a quantum channel 𝒩 : 𝐿(ℋin ) → 𝐿(ℋout ). The channel 𝒩 is automatically ℰ𝒩 -controlled: using its given
+Kraus representation, the coefficient matrix is 𝐶 = 𝐼𝑆 , and hence ‖𝐶‖∞√= 1. By contrast, this representation
+does not satisfy the strong control condition,{︁since ‖𝐶‖
+                                                        }︁ 2 = ‖𝐼𝑆 ‖2 = 𝑆. To apply Theorem 11, consider
+                                 ′
+                                       √         √                                           ′
+instead the rescaled error set ℰ𝒩 := 𝑆ℰ𝒩 =         𝑆𝐸𝑖          . The channel 𝒩 is strongly ℰ𝒩 -controlled, since
+                                                          𝑖∈[𝑆]
+                                                             (︁√     )︁                                 √
+its Kraus operators admit the representation 𝐸𝑖 = √1𝑆             𝑆𝐸𝑖 , whose coefficient matrix is 𝐼𝑆 / 𝑆 and
+therefore has norm one. A common rescaling of the error operators does not change the corresponding Petz
+                                                                            ′
+recovery map. On the other hand, the QEC matrix associated with ℰ𝒩            is 𝑆𝐴QEC . Applying Theorem 11
+therefore gives the following channel-level bound.
+
+
+                                                                16
+Proposition 13. Let 𝒩 : 𝐿(ℋin ) → 𝐿(ℋout ) be a quantum channel with Kraus set ℰ𝒩 = {𝐸𝑖 }𝑖∈[𝑆] , and let
+𝑄 ⊆ ℋin be a 𝐾-dimensional quantum code. Then
+                                              √︂ ⃦                              ⃦
+                   (︀ Petz                 )︀   𝑆⃦⃦ 𝐴QEC − 𝐼𝐾 ⊗ 1 tr𝐾 (𝐴QEC )⃦ .
+                                                   √︀               √︀          ⃦
+                𝑑wc ℛ𝒩 ,𝑄 ∘ 𝒩 |𝐿(𝑄) , 𝐼𝐿(𝑄) ≤
+                                                2 ⃦              𝐾              ⃦
+                                                                                 ∞
+
+      Indeed, the QEC matrix of the rescaled error set is 𝐴′QEC = 𝑆𝐴QEC , and hence
+                                                     √ ⃦√︀
+            ⃦√︁                                 ⃦        ⃦                                   ⃦
+                              1                 ⃦ = 𝑆 ⃦ 𝐴QEC − 𝐼𝐾 ⊗ √1
+            ⃦                    √︁     (︀ ′ )︀⃦                              √︀             ⃦
+            ⃦ 𝐴′     − 𝐼 𝐾 ⊗ √     tr 𝐾   𝐴                                     tr 𝐾 (𝐴 QEC )⃦ .
+                 QEC                        QEC ⃦
+            ⃦                  𝐾                 ∞
+                                                         ⃦                  𝐾                ⃦
+                                                                                              ∞
+
+The claim now follows from Theorem 11.
+
+Acknowledgments
+D.E. acknowledges support from the Yad Hanadiv Foundation through the Rothschild Fellowship. V.V.A.
+acknowledges NSF grant OMA2120757 (QLCI). The research of A.B. was partially supported by NSF grants
+CIF-2330909 and CIF-2526035.
+
+
+Appendices
+A      Technicalities and auxiliary results
+A.1     States in channels in Hilbert spaces: norms and properties
+Let us shortly present the state and superoperator norms used in this work
+Definition 8 (State norms). Let ℋ, ℋ′ be a finite-dimensional spaces and 𝑝 ∈ [1, ∞]. The 𝑝-norm of an
+operator 𝑋 : ℋ → ℋ′ is defined as
+                                                ⎛          ⎞ 𝑝1
+                                                   ∑︁
+                                       ‖𝑋‖𝑝 = ⎝         𝜆𝑝 ⎠ ,
+                                                      𝜆∈S(𝑋)
+
+where S(𝑋) is the multiset of singular values of 𝑋, and for 𝑝 = ∞ (by taking a limit) ‖𝑋‖∞ is the maximal
+singular value of 𝑋.
+Definition 9. A real valued 𝑓 : [0, ∞) → R is called operator-monotone if for any finite dimensional Hilbert
+space ℋ and for any positive-semidefinite
+                      ∑︀                   operators
+                                             ∑︀       𝐴 and 𝐵 such that 𝐴 ⪰ 𝐵 we have 𝑓 (𝐴) − 𝑓 (𝐵) ≥ 0,
+where 𝑓 acts on 𝑋 = 𝑖 𝜆𝑖 |𝑖⟩ ⟨𝑖| by 𝑓 (𝑋) = 𝑖 𝑓 (𝜆𝑖 ) |𝑖⟩ ⟨𝑖| (and {|𝑖⟩} are orthonormal vectors).
+Lemma 14. [8, Theorem X.1.1] Let ℋ be a finite-dimensional Hilbert space and let 𝐴, 𝐵 ∈ 𝐿(ℋ) be
+positive-semidefinite operators. For any operator-monotone function 𝑓 : R+ → R with 𝑓 (0) = 0:
+
+                                    ‖𝑓 (𝐴) − 𝑓 (𝐵)‖∞ ≤ 𝑓 (‖𝐴 − 𝐵‖∞ ).
+
+Definition 10 (Superoperator norms). Let ℋ, ℋ′ be a finite-dimensional spaces, and 𝒩 : 𝐿(ℋ) → 𝐿(ℋ′ ) be a
+superoperator.
+  1. For 𝑝 ∈ [1, ∞] The 𝑝-completely bounded (cb) norm of 𝒩 is defined to be
+
+                                     ‖𝒩 ‖cb,𝑝 = sup     sup ‖𝒩 ⊗ 𝐼𝑀 (𝑋)‖𝑝 ,
+                                                𝑀 ∈N ‖𝑋‖𝑝 ≤1
+
+
+      where 𝐼𝑀 is the identity on 𝐿(C𝑀 ), and 𝑋 ranges over operators in 𝐿(ℋ ⊗ ℋ𝑀 ).
+  2. The diamond norm of 𝒩 is defined similarly to the ‖·‖cb,1 , with the difference that maximization runs
+     over density operators:
+                                   ‖𝒩 ‖◇ := sup sup ‖𝒩 ⊗ 𝐼𝑀 (𝜌)‖1 .
+                                               𝑀 ∈N 𝜌∈𝐷(ℋ)
+
+
+
+                                                      17
+Lemma 15 (Superoperator norm properties ([39, Theorem 3.51])). If 𝒩 is a Hermitian preserving superop-
+erator 𝐿(ℋ) → 𝐿(ℋ′ ), then ‖𝒩 ‖◇ = ‖𝒩 ‖cb,1 .
+     We shall require the following well-known duality principle of completely bounded norms (see [17,
+Theorem 1]).
+Lemma 16 (Hölder duality lemma). Let ℋ, ℋ′ be a finite-dimensional spaces, and 𝒩 : 𝐿(ℋ) → 𝐿(ℋ′ ) be a
+superoperator. Then
+                                       ‖𝒩 ‖cb,1 = ⃦𝒩 † ⃦cb,∞ ,
+                                                  ⃦ ⃦
+
+where 𝒩 † is the adjoint of 𝒩 with respect to the Hilbert-Schmidt inner product.
+Lemma 17 (Partial traces in composite systems property). Let ℋ = ℋ𝐴 ⊗ ℋ𝐵 ⊗ ℋ𝐶 be a finite-dimensional
+system. Let 𝑌, 𝑊 ∈ 𝐿(ℋ𝐵 ⊗ ℋ𝐶 ) and 𝑋 ∈ 𝐿(ℋ) be linear operators. Then
+
+                          tr𝐵𝐶 (𝑌 ⊗ 𝐼𝐶 )𝑋(𝑊 † ⊗ 𝐼𝐶 ) = tr𝐵 𝑌 tr𝐶 (𝑋)𝑊 † .
+                               (︀                    )︀      (︀        )︀
+
+Proof. The proof follows immediately from the definition of the partial trace: for any 𝑍 ∈ 𝐿(ℋ) we have
+tr𝐵𝐶 (𝑍) = tr𝐵 (tr𝐶 (𝑍)). Thus, it is sufficient to show that
+
+                                 tr𝐶 (𝑌 ⊗ 𝐼𝐶 )𝑋(𝑊 † ⊗ 𝐼𝐶 ) = 𝑌 tr𝐶 (𝑋)𝑊 † .
+                                      (︀                      )︀
+
+Indeed, let {|𝑐𝑖 ⟩}𝑖 be an orthonormal basis for ℋ𝐶 . We have
+                                                             (︂                  )︂
+                    (︀             †
+                                         )︀ ∑︁                            †
+               tr𝐶 (𝑌 ⊗ 𝐼𝐶 )𝑋(𝑊 ⊗ 𝐼𝐶 ) =          𝐼𝐴𝐵 ⊗ ⟨𝑐𝑖 | (𝑌 ⊗ 𝐼𝐶 )𝑋(𝑊 ⊗ 𝐼𝐶 ) 𝐼𝐴𝐵 ⊗ |𝑐𝑖 ⟩
+                                              𝑖
+                                              ∑︁
+                                          =        (𝑌 ⊗ ⟨𝑐𝑖 |)𝑋(𝑊 † ⊗ |𝑐𝑖 ⟩)
+                                              𝑖
+                                                  (︃                              )︃
+                                                    ∑︁
+                                          =𝑌             (𝐼𝐴𝐵 ⊗ ⟨𝑐𝑖 |)𝑋(𝐼𝐴𝐵 ⊗ |𝑐𝑖 ⟩) 𝑊 †
+                                                     𝑖
+                                          = 𝑌 tr𝐶 (𝑋)𝑊 † .
+
+Lemma 18. Let 𝑋 ∈ C𝐾 ⊗ C𝑆 be a positive semidefinite operator. Then
+                                            1 (︁    √ )︁2
+                                tr𝐾 (𝑋) −       tr𝐾 𝑋 ⪰ 0.
+                                           𝐾
+                                                                                   √
+Proof. The proof follows a simple variance-like argument. Let 𝑋 ′ := 𝐾 1
+                                                                         𝐼𝐾 ⊗ tr𝐾 ( 𝑋). Note that 𝑋 ′ ⪰ 0
+                                         √
+hence it is Hermitian, and therefore also 𝑋 − 𝑋 ′ . In particular
+                                 √              √          √
+                                ( 𝑋 − 𝑋 ′ )2 = ( 𝑋 − 𝑋 ′ )( 𝑋 − 𝑋 ′ )† ⪰ 0.
+
+Since the partial trace operation is CPTP, we have
+                                             (︁ √        )︁
+                                         tr𝐾 ( 𝑋 − 𝑋 ′ )2 ⪰ 0.                                       (39)
+
+On the other hand,
+   (︁ √         )︁       (︂
+                              1√             √     1           √   √    1            √
+                                                                                          )︂
+tr𝐾 ( 𝑋 − 𝑋 ′ )2 = tr𝐾 𝑋 −       𝑋(𝐼𝐾 ⊗ 𝑡𝑟𝐾 ( 𝑋)) − (𝐼𝐾 ⊗ tr𝐾 ( 𝑋)) 𝑋 + 2 (𝐼𝐾 ⊗ tr𝐾 ( 𝑋)2
+                              𝐾                    𝐾                   𝐾
+                              1    (︁√ )︁2
+                   = tr𝐾 (𝑋) − tr𝐾    𝑋 ,
+                              𝐾
+where in the last equality we used the equality
+                     (︁√             √     )︁   (︁         √   √ )︁     (︁√ )︁2
+                 tr𝐾     𝑋(𝐼𝐾 ⊗ tr𝐾 ( 𝑋)) = tr𝐾 (𝐼𝐾 ⊗ tr𝐾 ( 𝑋)) 𝑋 = tr𝐾    𝑋 ,
+
+which follows from Lemma 17.
+
+
+                                                         18
+B     Stinespring dilation and the continuity theorem
+Stinespring theorem [38] gives a characterization of completely positive superoperators via an auxilary system
+and dilation map. Let ℋ and ℋ′ be finite-dimensional Hilbert spaces and let 𝒩 : 𝐿(ℋ) → 𝐿(ℋ′ ) be a CP
+map. In the Schrödinger picture, Stinespring theorem implies that 𝒩 is of the form
+
+                                               𝒩 (𝜌) = tr𝑀 (𝑉 𝜌𝑉 † ),                                      (40)
+
+where ℋ𝑀 is a finite-dimensional reference system and 𝑊 : ℋ → ℋ′ × ℋ𝑀 is called a dilation operator,
+which happens to be an isometry when 𝒩 is a quantum channel (namely, it is also trace preserving). In the
+Heisenberg picture, the same Stinespring dilation operator also characterizes the action of the Hilbert-Schmidt
+adjoint of 𝒩 :
+                                           𝒩 † (𝜌) = 𝑉 † (𝜌 ⊗ 𝐼𝑀 )𝑉.                                       (41)
+Let us define Stinespring’s dilations.
+Definition 11 (Stinespring dilation). For a CP map 𝒩 : 𝐿(ℋ) → 𝐿(ℋ′ ), a Stinespring representation is a pair
+(ℋ𝑀 , 𝑉 ) giving rise to (40) and (41). A Stinespring dilation (ℋ𝑀 , 𝑉 ) is called minimal if it satisfies
+
+                            Span {(𝑋 ⊗ 𝐼𝑀 )𝑉𝒩 |𝜓⟩ : |𝜓⟩ ∈ ℋ, 𝑋 ∈ 𝐿(ℋ′ )} = ℋ′ ⊗ ℋ𝑀 , .                     (42)
+
+     For a CP map with Kraus operators ℰ = {𝐸𝑖 }𝑖∈[𝑆] the corresponding canonical Stinespring dilation
+𝑉 : ℋ → ℋ′ ⊗ ℋ𝑆 is given by                 ∑︁
+                                    𝑉 |𝜓⟩ =      𝐸𝑖 |𝜓⟩ ⊗ |𝑖⟩ ,
+                                                     𝑖∈[𝑆]
+
+where {|𝑖⟩}𝑖∈[𝑆] is an orthonormal basis for ℋ𝑆 . We refer to [39, 40] for further information on finite-
+dimensional Stinespring representations.
+      Stinespring dilation continuity theorem for channels [26, Theorem 1] asserts that two quantum channels
+are close if and only if they admit close dilation operators. While the continuity theorem was originally stated
+in the Heisenberg picture, we formulate it in the Schrödinger picture, using the duality lemma (Lemma 16).
+Theorem 19 (Stinespring dilation continuity theorem for channels [26]). Let ℋ and ℋ′ be finite-dimensional
+Hilbert space and 𝒩 , 𝑀 : 𝐿(ℋ) → 𝐿(ℋ′ ) be CPTP maps. Then
+                               2
+               inf ‖𝑉𝒩 − 𝑉ℳ ‖∞ ≤ ‖𝒩 − ℳ‖cb,1 = ⃦𝒩 † − ℳ† ⃦cb,∞ ≤ inf 2 ‖𝑉𝒩 − 𝑉ℳ ‖∞ ,
+                                                  ⃦          ⃦
+             𝑉𝒩 ,𝑉ℳ                                                       𝑉𝒩 ,𝑉ℳ
+
+where the minimization runs over all dilation operators of 𝒩 and ℳ in a joint reference system. More
+generally, it was proved that the minimal distance between Stinespring dilations is in fact the Bures distance:
+                                                     1
+                                      𝑑wc (𝒩 , ℳ) = √    inf ‖𝑉𝒩 − 𝑉ℳ ‖∞ .                                 (43)
+                                                      2 𝑉𝒩 ,𝑉ℳ
+      In [25], the authors extended the continuity theorem from the finite-dimensional channel scenario to
+general CP maps on C* -algebras. If A is a C* -algebra, ℋ is a Hilbert space, and 𝒩 : A → 𝐿(ℋ) is CP
+map, then it admits a Stinespring representation: (𝜋, 𝒦, 𝑉 ) where 𝒦 is a Hilbert space, 𝜋 : A → 𝐿(𝒦) is a
+*
+  -homomorphism and 𝑉 : ℋ → 𝒦 is an operator such that for any 𝑋 ∈ A
+
+                                               𝒩 (𝑋) = 𝑉 † 𝜋(𝑋)𝑉.
+
+Theorem 20 (Stinespring dilation continuity theorem for CP maps). Suppose that A is a C* -algebra, ℋ′ is
+a Hilbert space, and 𝒩 , ℳ : A → 𝐿(ℋ′ ) are CP maps. Then
+                              ‖𝒩 − ℳ‖cb,∞                        √︁
+                      √︁             √︁       ≤ inf ‖𝑉𝒩 − 𝑉ℳ ‖∞ ≤ ‖𝒩 − ℳ‖cb,∞ ,                            (44)
+                                               𝑉𝒩 ,𝑉ℳ
+                           ‖𝒩 ‖cb,∞ + ‖ℳ‖cb,∞
+
+where the minimization runs over all dilations (𝜋, 𝒦, 𝑉ℳ ), (𝜋, 𝒦, 𝑉𝒩 ) of ℳ and ℳ via the same * -homomorphism.
+Furthermore, there exists a Hilbert space 𝒦, a * -homomorphism 𝜋 and dilation operators 𝑉𝒩 ,𝑉ℳ that realize
+the minimization of (44).
+
+
+                                                        19
+      Let us translate the CP map version of Stinespring continuity to our finite-dimensional setting. Let
+ℋ and ℋ′ be finite-dimensional Hilbert spaces and let 𝒩 , ℳ : 𝐿(ℋ) → 𝐿(ℋ′ ) be CP maps. Note that also
+𝒩 † , ℳ† : 𝐿(ℋ′ ) → 𝐿(ℋ) are CP maps (see [39, Proposition 2.18]). Applying Theorem 20 for 𝒩 † and ℳ†
+with A = 𝐿(ℋ′ ), we conclude that there exists a Hilbert space 𝒦, a * -homomorphism 𝜋 : 𝐿(ℋ′ ) → 𝐿(𝒦) and
+dilation operators 𝑉ˆ𝒩 , 𝑉ˆℳ : ℋ → 𝒦 such that
+
+                                𝒩 † (𝑋) = 𝑉ˆ𝒩 𝜋(𝑋)𝑉ˆ𝒩 ,    ℳ† (𝑋) = 𝑉ˆℳ 𝜋(𝑋)𝑉ˆℳ ,
+
+and           ⃦ †        ⃦
+              ⃦𝒩 − ℳ† ⃦                                ⃦          ⃦  √︁
+                        √︁ cb,∞    ≤ inf ‖𝑉𝒩 − 𝑉ℳ ‖∞ = ⃦𝑉ˆ𝒩 − 𝑉ˆℳ ⃦ ≤ ‖𝒩 † − ℳ† ‖cb,∞ .                          (45)
+                                                       ⃦          ⃦
+         √︁
+                                    𝑉𝒩 ,𝑉ℳ                         ∞
+            ‖𝒩 † ‖cb,∞ + ‖ℳ† ‖cb,∞
+
+We recall that any *-homomorphism 𝜋 : 𝐿(ℋ′ ) → 𝐿(𝒦) from a finite-dimensional full operator algebra is
+unitarily equivalent to a *-homomorphism ℐ 𝑀 : 𝐿(ℋ′ ) → 𝐿(ℋ′ ⊗ ℋ𝑀 ), ℋ𝑀 = C𝑀 of the form ℐ 𝑀 (𝑋) =
+𝑋 ⊗ 𝐼𝑀 (see [11, Corollary III.1.2]). That is, there exists a unitary 𝑈 : 𝒦 → ℋ ⊗ ℋ𝑀 such that 𝜋 factors as
+
+                                              𝜋(𝑋) = 𝑈 (𝑋 ⊗ 𝐼𝑀 )𝑈 † .
+
+In particular, without loss of generality, we can restrict ourself to representations of the form (ℐ 𝑀 , ℋ′ ⊗ℋ𝑀 , 𝑉 ).
+      Stinespring representation is clearly not unique. However, it is well known that any two Stinespring
+representations of a CP map (𝜋, 𝒦, 𝑉𝒩 ), and (ˆ       ˆ 𝑉ˆ𝒩 ) are related by a partial isometry (see [25, Eq. (2)]).
+                                                  𝜋 , 𝐾,
+Namely, there exists a partial isometry 𝑊 : 𝒦 → 𝐾      ˆ such that
+
+                              𝑊 𝑉𝒩 = 𝑉ˆ𝒩 ,     𝑊 † 𝑉ˆ𝒩 = 𝑉𝒩 ,            ˆ (𝑋)𝑊 † .
+                                                                𝑊 𝜋(𝑋) = 𝜋                                       (46)
+
+In the finite-dimensional case where (𝜋, 𝒦) = (ℐ 𝑀 , ℋ′ ⊗ ℋ𝑀 ) and (ˆ   ˆ = (ℐ 𝑀^ , ℋ′ ⊗ ℋ ^ ), (46) implies that
+                                                                    𝜋 , 𝒦)                𝑀
+𝑊 is of the form 𝑊 = 𝐼ℋ′ ⊗ 𝐽, where 𝐽 : ℋ𝑀 → ℋ𝑀^ is a partial isometry. Furthermore, if 𝑉𝒩 is minimal in
+the sense of (42), then 𝐽 is an actual isometry. We refer to [26, Section III.B] for a complete derivation of
+the above statement.
+      We now combine combine the above conclusion with (40), (41), (45), (46), and Lemma 16 to obtain the
+following finite-dimensional version of Stinespring continuity theorem for CP maps:
+Lemma 21 (Stinespring dilation continuity for finite-dimensional CP maps). Let ℋ and ℋ′ be finite-
+dimensional Hilbert spaces and 𝒩 , ℳ : 𝐿(ℋ) → 𝐿(ℋ′ ) be CP maps with Stinespring dilation operators
+𝑉𝒩 : ℋ → ℋ′ ⊗ ℋ𝑀𝒩 and 𝑉ℳ : ℋ → ℋ′ ⊗ ℋ𝑀ℳ respectively. Then there exists 𝑀 ∈ N and partial isometries
+𝐽𝒩 : ℋ𝑀𝒩 → ℋ𝑀 , 𝐽ℳ : ℋ𝑀ℳ → ℋ𝑀 such that
+     ‖𝒩 − ℳ‖cb,1                ⃦      ⃦                                      √︁
+                      ≤ inf ⃦𝑉˜𝒩 − 𝑉˜ℳ ⃦ = ‖(𝐼ℋ′ ⊗ 𝐽𝒩 )𝑉𝒩 − (𝐼ℋ′ ⊗ 𝐽ℳ )𝑉ℳ ‖∞ ≤ ‖𝒩 − ℳ‖cb,1 .
+                                ⃦      ⃦
+ √︁          √︁
+   ‖𝒩 ‖cb,1 + ‖ℳ‖cb,1  𝑉˜𝒩 ,𝑉˜ℳ         ∞
+
+
+and
+                                     †                             †
+                             (𝐼ℋ′ ⊗ 𝐽𝒩 𝐽𝒩 )𝑉𝒩 = 𝑉𝒩 ,       (𝐼ℋ′ ⊗ 𝐽ℳ 𝐽ℳ )𝑉ℳ = 𝑉ℳ .
+
+If 𝑉𝒩 (or 𝑉ℳ ) is minimal in the sense of (42), then 𝐽𝒩 (or 𝐽ℳ ) is an isometry.
+
+
+C     Proofs
+C.1     Proof of Theorem 4
+Denote 𝐾 = dim(𝑄), let 𝑃 be the projector on the code 𝑄 and set 𝐾𝑖 := 𝐸𝑖 𝑃 . We begin by translating the
+Bény-Oreshkov type assumption to the Stinespring dilation framework, which is the centerpiece of our proof.
+Step 1: Stinespring dilations from Bény-Oreshkov superoperators. Consider the map ℳ𝑄
+                                                                                    ℰ :
+𝐿(ℋin ) → 𝐿(ℋout ) defined by ℰ:
+                                           𝑆−1
+                                               𝐾𝑖 𝑋𝐾𝑖† .
+                                    𝑄
+                                           ∑︁
+                                  ℳℰ (𝑋) =
+                                                          𝑖=0
+
+
+                                                          20
+Note that ℳ𝑄                                                                       𝑄
+             ℰ is a CP map which in general is not trace preserving. Observe that ℳℰ can also be seen as a
+map 𝐿(𝑄) → 𝐿(ℋout ) when considering the restriction of 𝑃 to 𝑄, which is the inclusion operator 𝑄 → ℋin
+and 𝑃 † : ℋin → 𝑄 remains the usual projection on 𝑄. We note that ℳ𝑄      ℰ has the canonical Stinespring
+representation
+                             (︁       )︁                             𝑆−1                    𝑆−1
+                                    †
+                                                                     ∑︁                     ∑︁
+                 ℳ𝑄
+                  ℰ (𝑋) = tr𝑆 𝑉ℰ 𝑋𝑉ℰ ,                    𝑉ℰ |𝜓⟩ =         𝐾𝑖 |𝜓⟩ ⊗ |𝑖⟩ =          𝐸𝑖 𝑃 |𝜓⟩ ⊗ |𝑖⟩ ,   (47)
+                                                                     𝑖=0                     𝑖=0
+
+where 𝑉ℰ : ℋin → ℋout ⊗ ℋ𝑆 is the canonical dilation operator and {|𝑖⟩}𝑖∈[𝑆] is an orthonormal basis for an
+                                        ̂︁𝑄 : ℋin → ℋ𝑆 be the complementary CP map of ℳ𝑄 defined by
+𝑆-dimensional reference system ℋ𝑆 . Let ℳ ℰ                                                   ℰ
+tracing out the output space:
+                                           (︁       )︁ 𝑆−1
+                                                  †
+                                                           tr(𝐾𝑗† 𝐾𝑖 𝑋) |𝑖⟩ ⟨𝑗| .
+                                 𝑄
+                                                       ∑︁
+                               ℳℰ := trℋout 𝑉ℰ 𝑋𝑉ℰ =
+                               ̂︁
+                                                                      𝑖,𝑗=0
+
+                                       ℰ
+Note that for a fixed 𝑆 × 𝑆 matrix 𝜆, ℬ𝜆,𝑄                               ̂︁𝑄 and the constant map on the
+                                           equals the difference between ℳ ℰ
+code space, which is defined as ℳ𝜆 (𝑋) := tr(𝑋𝑃 )𝜆 and satisfies ℳ𝜆 (𝑋) = tr(𝑋)𝜆 for 𝑋 ∈ 𝐿(𝑄). Indeed
+                               𝑆−1       (︁                      )︁
+                                       tr (𝑃 𝐸𝑗† 𝐸𝑖 𝑃 − 𝜆𝑖,𝑗 𝑃 )𝑋 |𝑖⟩ ⟨𝑗|
+                               ∑︁
+                   ℰ
+                  ℬ𝜆,𝑄 (𝑋) =
+                               𝑖,𝑗=0
+                               𝑆−1                                            𝑆−1
+                                       tr(𝐾𝑗† 𝐾𝑖 𝑋) |𝑖⟩ ⟨𝑗| − tr(𝑃 𝑋)
+                               ∑︁                                             ∑︁
+                           =                                                                         ̂︁𝑄 − ℳ𝜆 ,
+                                                                                      𝜆𝑖,𝑗 |𝑖⟩ ⟨𝑗| = ℳ ℰ
+                               𝑖,𝑗=0                                          𝑖,𝑗=0
+         ⃦     ⃦
+         ⃦ ℰ ⃦
+and thus ⃦ℬ𝜆,𝑄 ⃦ measures the diamond norm distance ‖ℳ   ̂︁𝑄 − ℳ𝜆 ‖◇ . Now let us choose a positive definite
+                                                           ℰ
+                 ◇
+matrix 𝜆, given by
+                                  1               1                1
+                           𝜆𝑖,𝑗 = tr(𝑃 𝐸𝑗† 𝐸𝑖 ) = tr(𝑃 𝐸𝑗† 𝐸𝑖 𝑃 ) = tr(𝐾𝑗† 𝐾𝑖 ).                        (48)
+                                  𝐾               𝐾                𝐾
+            ℰ
+Note that ℬ𝜆,𝑄  is Hermitian preserving because for any Hermitian operator 𝑋,
+                                           𝑆−1       (︁                      )︁*
+                                                   tr (𝑃 𝐸𝑗† 𝐸𝑖 𝑃 − 𝜆𝑖,𝑗 𝑃 )𝑋 |𝑗⟩ ⟨𝑖|
+                                           ∑︁
+                         ℰ
+                        ℬ𝜆,𝑄 (𝑋)† =
+                                           𝑖,𝑗=0
+                                           𝑆−1       (︁                          )︁
+                                                   tr 𝑋 † (𝑃 𝐸𝑖† 𝐸𝑗 𝑃 − 𝜆*𝑖,𝑗 𝑃 ) |𝑗⟩ ⟨𝑖|
+                                           ∑︁
+                                       =
+                                           𝑖,𝑗=0
+                                           𝑆−1       (︁                      )︁
+                                                   tr 𝑋(𝑃 𝐸𝑖† 𝐸𝑗 𝑃 − 𝜆𝑗,𝑖 𝑃 ) |𝑗⟩ ⟨𝑖| = ℬ𝜆,𝑄
+                                           ∑︁
+                                                                                         ℰ
+                                       =                                                     (𝑋).                     (49)
+                                           𝑖,𝑗=0
+
+By [13, Remark 8] and Lemma 15 we have
+                         ⃦         ⃦
+                         ⃦ ̂︁𝑄           ⃦ ℰ ⃦         ⃦ ℰ ⃦
+                         ⃦ℳℰ − ℳ𝜆 ⃦    = ⃦ℬ𝜆,𝑄       = ⃦ℬ𝜆,𝑄 ⃦ ≤ 2𝜁(ℰ, 𝑄).                                            (50)
+                                   ⃦           ⃦
+                                                cb,1
+                                                   cb,1       ◇
+
+where the first equality follows since ‖·‖cb,1 and ‖·‖◇ agree for Hermitian preserving operators (see Lemma 15).
+     Consider the operator 𝑉𝜆 : ℋin → 𝑄 ⊗ ℋ𝑇 ⊗ ℋ𝑇 ′ , where ℋ𝑇 and ℋ𝑇 ′ are two isomorphic copies of the
+space supp(𝜆) ⊆ ℋ𝑆 , defined as
+                                                                     ∑︁ √
+                         𝑉𝜆 |𝜓⟩ = 𝑃 |𝜓⟩ ⊗ |𝜓𝜆 ⟩ , where |𝜓𝜆 ⟩ =            𝑝𝑖 |𝜆𝑖 ⟩ ⊗ |𝜆′𝑖 ⟩ ,             (51)
+                                                                                 𝑖∈[𝑇 ]
+                                                                     ∑︀
+and {|𝜆𝑖 ⟩}𝑖∈[𝑇 ] is an orthonormal basis such that 𝜆 = 𝑖 𝑝𝑖 |𝜆𝑖 ⟩ ⟨𝜆𝑖 | (which exists by the spectral theorem).
+A straightforward calculation shows that 𝑉𝜆 dilates 𝑀𝜆 . That is, for all 𝑋 ∈ 𝐿(ℋin )
+                                                      (︁      )︁
+                                  𝑀𝜆 (𝑋) = trℋin ⊗ℋ𝑇 ′ 𝑉𝜆 𝑋𝑉𝜆† = tr(𝑋𝑃 )𝜆,
+
+
+                                                                 21
+and in particular, if 𝑋 ∈ 𝐿(𝑄)
+                                                    (︁      )︁
+                                   𝑀𝜆 (𝑋) = tr𝑄⊗ℋ𝑇 ′ 𝑉𝜆 𝑋𝑉𝜆† = tr(𝑋)𝜆.
+
+     Using the Stinespring dilations continuity theorem (see Lemma 21, Appendix B) combined with (50),
+we conclude that there exists a finite-dimensional Hilbert space ℋ𝑀 and partial isometries 𝐽ℰ : ℋout → ℋ𝑀
+and 𝐽𝜆 : 𝑄 ⊗ ℋ𝑇 ′ → ℋ𝑀 such that
+                                                         √︂⃦           ⃦
+                                                            ⃦ ̂︁𝑄            √︀
+                  ‖(𝐼ℋ𝑆 ⊗ 𝐽ℰ )𝑉ℰ − (𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 ‖∞ ≤ ⃦ℳ        ℰ − ℳ𝜆 ⃦  ≤ 2𝜁(ℰ, 𝑄)                   (52)
+                                                                       ⃦
+                                                                                 cb,1
+
+and
+
+                               (𝐼ℋ𝑆 ⊗ 𝐽ℰ† 𝐽ℰ )𝑉ℰ = 𝑉ℰ ,        (𝐼ℋ𝑆 ⊗ 𝐽𝜆† 𝐽𝜆 )𝑉𝜆 = 𝑉𝜆 .                      (53)
+
+Further, denote                {︀                                            }︀
+                            𝐴 = (𝑋 ⊗ 𝐼𝑄⊗ℋ𝑇 ′ )𝑉𝜆 |𝜓⟩ : |𝜓⟩ ∈ ℋin , 𝑋 ∈ 𝐿(ℋ𝑇 )
+and note that Span(𝐴) = 𝑄 ⊗ ℋ𝑇 ⊗ ℋ𝑇 ′ . To see this, observe that for all 𝑖 and 𝑗, 𝑋𝑖,𝑗 = |𝜆𝑗 ⟩ ⟨𝜆𝑖 | and all |𝜓⟩,
+                                                      √
+                           (𝑋𝑖,𝑗 ⊗ 𝐼𝑄⊗ℋ𝑇 ′ )𝑉𝜆 |𝜓⟩ = 𝑝𝑖 𝑃 |𝜓⟩ ⊗ |𝜆𝑗 ⟩ ⊗ |𝜆′𝑖 ⟩ .                             (54)
+
+Since 𝑝𝑖 > 0, varying(54) over all |𝜓⟩ ∈ 𝑄 and 𝑖, 𝑗 ∈ [𝑇 ] we obtain a spanning set for 𝑄 ⊗ ℋ𝑇 ⊗ ℋ𝑇 ′ . In
+particular, 𝑉𝜆 is minimal in the sense of Definition 11 and thus, by Lemma 21, 𝐽𝜆 is an isometry.
+      We are now ready to define the universal recovery map.
+Step 2: Defining the recovery map. We now use 𝐽ℰ and 𝐽𝜆 to define the recovery operation ℛ :
+𝐿(ℋout ) → 𝐿(ℋin ). Denote the image of 𝐽𝜆 by ℋ𝐽𝜆 ⊆ 𝑀 and let ℋ𝐽⊥𝜆 be its orthogonal complement. Let
+𝑃𝐽𝜆 and 𝑃𝐽𝜆⊥ be projections on ℋ𝐽𝜆 and ℋ𝐽⊥𝜆 , respectively. Define the operators 𝑅1 , 𝑅2 and 𝑅3 as follows:
+
+                       𝑅1 : ℋout → 𝑄 ⊗ ℋ𝑇 ′ ,                             𝑅1 := 𝐽𝜆† 𝐽ℰ ,
+                       𝑅2 : ℋout → ℋ𝐽𝜆⊥ ,                                 𝑅2 := 𝑃𝐽𝜆⊥ 𝐽ℰ ,
+                       𝑅3 : ℋout → ℋout ,                                 𝑅3 := 𝐼ℋout − 𝐽ℰ† 𝐽ℰ .             (55)
+
+We define the recovery map ℛ : 𝐿(ℋout ) → 𝐿(𝑄) as
+                                   (︁      )︁    (︁     )︁      (︁      )︁
+                       ℛ(𝑋) = tr𝑇 ′ 𝑅1 𝑋𝑅1† + tr 𝑅2 𝑋𝑅2† 𝜌𝑄 + tr 𝑅3 𝑋𝑅3† 𝜌𝑄 ,                                (56)
+
+for some arbitrary fixed pure state 𝜌𝑄 = |𝜓𝑄 ⟩ ⟨𝜓𝑄 | ∈ 𝐷(𝑄). Note that ℛ is clearly a CP map since each of
+the terms on the right in (56) is a composition of a map of the form form 𝑋 → 𝑅𝑋𝑅† and a partial trace,
+which are both CP maps. It remains to check that ℛ is trace preserving:
+                                 (︁    (︁        )︁)︁ (︁ (︁            )︁    (︁       )︁)︁
+                  tr(ℛ(𝑋)) = tr tr𝑇 ′ 𝑅1 𝑋𝑅1† + tr 𝑅2 𝑋𝑅2† + tr 𝑅3 𝑋𝑅3† tr(𝜌𝑄 )
+                                 (︁        )︁     (︁          )︁    (︁        )︁
+                            = tr 𝑅1 𝑋𝑅1† + tr 𝑅2 𝑋𝑅2† + tr 𝑅3 𝑋𝑅3†
+                                 (︁        )︁     (︁          )︁    (︁        )︁
+                            = tr 𝑅1† 𝑅1 𝑋 + tr 𝑅2† 𝑅2 𝑋 + tr 𝑅3† 𝑅3 𝑋
+                                 (︁                                                )︁
+                            = tr (𝐽ℰ† 𝐽𝜆 𝐽𝜆† 𝐽ℰ + 𝐽ℰ† 𝑃𝐽𝜆⊥ 𝐽ℰ + 𝐼ℋout − 𝐽ℰ† 𝐽ℰ )𝑋                     (57)
+                                 (︁                                              )︁
+                            = tr (𝐽ℰ† 𝑃𝐽𝜆 𝐽ℰ + 𝐽ℰ† 𝑃𝐽𝜆⊥ 𝐽ℰ + 𝐼ℋout − 𝐽ℰ† 𝐽ℰ )𝑋                        (58)
+                                 (︁                              )︁
+                            = tr (𝐽ℰ† 𝐽ℰ + 𝐼ℋout − 𝐽ℰ† 𝐽ℰ )𝑋 = tr(𝑋).                                 (59)
+
+In (57) we used the fact that 𝑅3 = 𝐼ℋout − 𝐽ℰ† 𝐽ℰ is a projection operator (on the orthogonal complement
+of the support of 𝐽ℰ ), which implies 𝑅3† 𝑅3 = 𝑅3 . Eq. (57) follows since 𝐽𝜆 is an isometry and therefore
+𝐽𝜆 𝐽𝜆† = 𝑃𝐽𝜆 , and in (59) uses 𝑃𝐽𝜆 + 𝑃𝐽𝜆⊥ = 𝐼𝑀 .
+
+
+                                                          22
+Step 3: Stinespring dilation of the action of an ℰ-controlled channel on the code space. We now
+consider the operation of a ℰ-controlled channel on a code space, and express the its canonical Stinespring
+dilation in terms of 𝑉ℰ . Let 𝒩𝐶 : ℋin → ℋout be an ℰ-controlled channel with Kraus operators {𝐹𝑘 }𝑘∈𝑅 ,
+𝑅 ∈ N such that 𝐶 = (𝑐𝑘,𝑖 )𝑘,𝑖 is the linear coefficient matrix defined by the equation
+                                                       ∑︁
+                                                𝐹𝑘 =      𝑐𝑘,𝑖 𝐸𝑖 .
+                                                         𝑖∈𝑆
+
+We think of 𝐶 as an operator ℋ𝑆 → ℋ𝑅 given by
+                                           ∑︁ ∑︁
+                                     𝐶=          𝑐𝑘,𝑖 |𝑘⟩ ⟨𝑖| ,                                                 (60)
+                                                   𝑘∈[𝑅] 𝑖∈[𝑆]
+
+
+where {|𝑖⟩}𝑖∈[𝑅] and {|𝑘⟩}𝑖∈[𝑆] are orthonormal bases for ℋ𝑅 and ℋ𝑆 respectively. The ℰ-controlled assumption
+implies that 𝐶 can be chosen such that ‖𝐶‖∞ ≤ 1. Consider the operator 𝑉𝐶 : ℋin →: ℋout ⊗ ℋ𝑅 defined as
+𝑉𝐶 = (𝐼ℋout ⊗ 𝐶)𝑉ℰ , where 𝑉ℰ was defined in (47).
+Lemma 22. The operator 𝑉𝐶 is a dilation operator of the channel 𝒩𝐶 on the code space 𝑄 (which is the
+channel 𝒩𝐶 ∘ 𝒩𝑄 , where 𝒩𝑄 : 𝐿(𝑄) → 𝐿(ℋin ) is the inclusion encoding superoperator 𝒩𝑄 (𝑋) = 𝑃 𝑋𝑃 ).
+That is                        (︁      )︁
+                            tr𝑅 𝑉𝐶 𝑋𝑉𝐶† = 𝒩𝐶 ∘ 𝒩𝑄 (𝑋) = 𝒩𝐶 |𝐿(𝑄) (𝑋).                           (61)
+
+Proof. Note that 𝑉𝐶 acts as
+                                                                           (︃𝑆−1                  )︃
+                                                                             ∑︁
+                         𝑉𝐶 |𝜓⟩ = (𝐼ℋout ⊗ 𝐶)𝑉ℰ |𝜓⟩ = 𝐼ℋout ⊗ 𝐶                    𝐾𝑖 |𝜓⟩ ⊗ |𝑖⟩
+                                                                             𝑖=0
+                                     𝑅−1
+                                     ∑︁ 𝑆−1
+                                         ∑︁                          𝑅−1
+                                                                     ∑︁
+                                 =             𝑐𝑘,𝑖 𝐾𝑖 |𝜓⟩ ⊗ |𝑘⟩ =         𝐹𝑘 𝑃 |𝜓⟩ ⊗ |𝑘⟩ .                     (62)
+                                     𝑘=0 𝑖=0                         𝑘=0
+
+The above expression is the canonical Stinespring dilation for 𝒩𝐶 |𝐿(𝑄) = 𝒩𝐶 ∘ 𝒩𝑄 which has the Kraus
+representation {𝐹𝑘 𝑃 }𝑘 (and (61) can be verified by a straightforward calculation).
+
+Step 4: Stinespring dilation of the decoded output for a noisy state. Our next goal is to find a
+Stinespring dilation operator to obtain the decoded output ℛ ∘ 𝒩𝐶 |𝐿(𝑄) form its original representation (56).
+We begin by embedding images of the operators 𝑅1 , 𝑅2 , 𝑅3 , 𝑉𝐶 in a common reference system. Consider the
+space
+                ℋUnif := 𝑄 ⊗ ℋ𝑅 ⊗ ℋ𝑇 ′ ⊗ ℋ𝐽𝜆⊥ ⊗ ℋout ⊗ ℋFlag , ℋFlag = Span {|1⟩ , |2⟩ , |3⟩} ,
+and the environment
+
+                       ℋenv := ℋ𝑅 ⊗ ℋ𝑇 ′ ⊗ ℋ𝐽𝜆⊥ ⊗ ℋout ⊗ ℋFlag ,              ℋUnif = 𝑄 ⊗ ℋenv .                (63)
+
+If ℋ𝐽𝜆⊥ is the zero space we replace it with C. We define the embedding operators as follows:
+
+            𝑈1 : 𝑄 ⊗ ℋ𝑇 ′ ⊗ ℋ𝑅 → ℋUnif ,            𝑈1 = (𝐼𝑄⊗ℋ𝑇 ′ ⊗ℋ𝑅 ) ⊗ |𝜓𝐽 † ⟩ ⊗ |𝜓out ⟩ ⊗ |1⟩
+                                                                                                            ⎫
+                                                                                     ℰ
+                                                                                                            ⎪
+                                                                                                            ⎪
+                                                                                                            ⎬
+            𝑈2 : ℋ𝐽𝜆⊥ ⊗ ℋ𝑅 → ℋUnif ,                𝑈2 = (𝐼ℋ𝐽 ⊥ ⊗ℋ𝑅 ) ⊗ |𝜓𝑄 ⟩ ⊗ |𝜓𝑇 ′ ⟩ ⊗ |𝜓out ⟩ ⊗ |2⟩         (64)
+                                                                 𝜆                                          ⎪
+                                                                                                            ⎪
+            𝑈3 : ℋout ⊗ ℋ𝑅 → ℋUnif ,                𝑈3 = (𝐼ℋout ⊗ℋ𝑅 ) ⊗ |𝜓𝑄 ⟩ ⊗ |𝜓𝐽𝜆⊥ ⟩ ⊗ |𝜓𝑇 ′ ⟩ ⊗ |3⟩ ,
+                                                                                                            ⎭
+
+where |𝜓𝐽𝜆⊥ ⟩, |𝜓𝑇 ′ ⟩ and |𝜓out ⟩ are arbitrary unit vectors in ℋ𝐽𝜆⊥ , ℋ𝑇 ′ and ℋout , respectively, and |𝜓𝑄 ⟩ is
+vector such that |𝜓𝑄 ⟩ ⟨𝜓𝑄 | = 𝜌𝑄 , which is the state from the definition of ℛ (56). Note that 𝑈1 , 𝑈2 and 𝑈3
+are isometries. Consider the operator 𝑉dec,𝐶 : ℋin → ℋUnif defined as
+
+                        𝑉dec,𝐶 := 𝑈1 (𝐼𝑅 ⊗ 𝑅1 )𝑉𝐶 + 𝑈2 (𝐼𝑅 ⊗ 𝑅2 )𝑉𝐶 + 𝑈3 (𝐼𝑅 ⊗ 𝑅3 )𝑉𝐶 .
+
+
+                                                          23
+Lemma 23. The operator 𝑉dec,𝐶 is a Stinespring dilation for ℛ ∘ 𝒩𝐶 |𝐿(𝑄) = ℛ ∘ 𝒩𝐶 ∘ 𝒩𝑄 , where 𝒩𝑄 :
+𝐿(𝑄) → 𝐿(ℋin ) is the inclusion encoding map 𝑋 → 𝑃 𝑋𝑃 . That is, for any 𝑋 ∈ 𝐿(𝑄)
+                                     (︁              )︁
+                                                †
+                                trenv 𝑉dec,𝐶 𝑋𝑉dec,𝐶    = ℛ ∘ 𝒩𝐶 ∘ 𝒩𝑄 (𝑋).
+
+Proof. We begin by observing that 𝑈1 , 𝑈2 and 𝑈3 are supported on orthogonal spaces (since they are associated
+with distinct orthogonal flag states |1⟩, |2⟩, and |3⟩). In particular, when tracing out the environment, cross
+terms vanish and we have:
+                    (︁              )︁                (︁              )︁
+                                †                                †
+                                           ∑︁
+               trenv 𝑉dec,𝐶 𝑋𝑉dec,𝐶    =         trenv 𝑉dec,𝑖 𝑋𝑉dec,𝑖    , 𝑉dec,𝑖 := 𝑈𝑖 (𝐼𝑅 ⊗ 𝑅𝑖 )𝑉𝐶 .     (65)
+                                              𝑖=1,2,3
+
+We proceed by showing that for any 𝑋 we have
+                                             ⎧      (︁      (︁      )︁ )︁
+                         (︁              )︁ ⎨ tr𝑇 ′ 𝑅1 tr𝑅 𝑉𝐶 𝑋𝑉 † 𝑅1†                            𝑖 = 1,
+                                    †                             𝐶
+                    trenv 𝑉dec,𝑖 𝑋𝑉dec,𝑖   =     (︁      (︁      )︁ )︁                                                       (66)
+                                             ⎩ tr 𝑅𝑖 tr𝑅 𝑉𝐶 𝑋𝑉 † 𝑅† 𝜌𝑄                            𝑖 = 2, 3.
+                                                               𝐶      𝑖
+
+
+To this end, let
+
+        ℋenv1 := ℋ𝐽𝜆⊥ ⊗ ℋout ⊗ ℋFlag          ℋenv2 := ℋ𝑇 ′ ⊗ ℋout ⊗ ℋFlag ,                ℋenv3 := ℋ𝐽𝜆⊥ ⊗ ℋ𝑇 ′ ⊗ ℋFlag .
+
+By the definition of 𝑈1 (64)
+           (︁             )︁         (︁                                                                         )︁
+                      †
+     trenv 𝑉dec,1 𝑋𝑉dec,1    = trenv (𝐼𝑅 ⊗ 𝑅1 )𝑉𝐶 𝑋𝑉𝐶† (𝐼𝑅 ⊗ 𝑅1† ) ⊗ |𝜓𝐽 † ⟩ ⟨𝜓𝐽 † | ⊗ |𝜓out ⟩ ⟨𝜓out | ⊗ |1⟩ ⟨1|
+                                                                        ℰ       ℰ
+                                       (︁                          )︁
+                                                      †         †
+                             = trenv1 (𝐼𝑅 ⊗ 𝑅1 )𝑉𝐶 𝑋𝑉𝐶 (𝐼𝑅 ⊗ 𝑅1 ) ,                                                          (67)
+                                    (︁     (︁       )︁ )︁
+                             = tr𝑇 ′ 𝑅1 tr𝑅 𝑉𝐶 𝑋𝑉𝐶† 𝑅1† ,                                                                    (68)
+
+where in (67) we used the fact that the partial trace has the property that, for any operator 𝑋 acting on
+a composite system 𝐴 ⊗ 𝐵 ⊗ 𝐶, we have tr𝐵𝐶 (𝑋) = tr𝐵 (tr𝐶 (𝑋))), and in (68) we used Lemma 17 with
+ℋ𝐴 = 𝑄, ℋ𝐵 = ℋ𝑇 ′ and ℋ𝐶 = ℋ𝑅 . For 𝑖 = 2, using the same augments, we obtain:
+     (︁              )︁         (︁                                                                                        )︁
+                †
+trenv 𝑉dec,2 𝑋𝑉dec,2    = trenv |𝜓𝑄 ⟩ ⟨𝜓𝑄 | ⊗ (𝐼𝑅 ⊗ 𝑅2 )𝑉𝐶 𝑋𝑉𝐶† (𝐼𝑅 ⊗ 𝑅2† ) ⊗ |𝜓𝑇 ′ ⟩ ⟨𝜓𝑇 ′ | ⊗ |𝜓out ⟩ ⟨𝜓out | ⊗ |2⟩ ⟨2|
+                             (︁                            )︁
+                        = tr (𝐼𝑅 ⊗ 𝑅2 )𝑉𝐶 𝑋𝑉𝐶† (𝐼𝑅 ⊗ 𝑅2† ) 𝜌𝑄                                                          (69)
+                             (︁     (︁         )︁ )︁
+                        = tr 𝑅2 tr𝑅 𝑉𝐶 𝑋𝑉𝐶† 𝑅2† ,                                                                      (70)
+
+where (69) uses that 𝜌𝑄 = |𝜓𝑄 ⟩ ⟨𝜓𝑄 | by definition, and (70) uses Lemma 17 again where we identify ℋ𝐴 = C,
+ℋ𝐵 = ℋ𝐽𝜆 and ℋ𝐶 = ℋ𝑅 . The calculation for 𝑖 = 3 follows the same sequence of steps as in the case 𝑖 = 2,
+and we leave the details to the reader.
+     We now conclude the proof by combining (65), (66) with the noisy channel output expression of
+Lemma 22 the definition of the ℛ given in (56):
+              (︁              )︁              (︁              )︁
+                          †                              †
+                                   ∑︁
+         trenv 𝑉dec,𝐶 𝑋𝑉dec,𝐶    =       trenv 𝑉dec,𝑖 𝑋𝑉dec,𝑖
+                                      𝑖=1,2,3
+                                          (︁     (︁      )︁ )︁  ∑︁ (︁      (︁      )︁ )︁
+                                   = tr𝑇 ′ 𝑅1 tr𝑅 𝑉𝐶 𝑋𝑉𝐶† 𝑅1† +   tr 𝑅𝑖 tr𝑅 𝑉𝐶 𝑋𝑉𝐶† 𝑅𝑖† 𝜌𝑄
+                                                                              𝑖=2,3.
+                                             (︁                          )︁                  (︁                   )︁
+                                                  𝑅1 (𝒩𝐶 ∘ 𝒩𝑄 (𝑋)) 𝑅1†                     tr 𝑅𝑖 (𝒩𝐶 ∘ 𝒩𝑄 (𝑋)) 𝑅𝑖† 𝜌𝑄
+                                                                                   ∑︁
+                                   = tr𝑇 ′                                    +
+                                                                                  𝑖=2,3.
+
+                                   = ℛ ∘ 𝒩𝐶 ∘ 𝒩𝑄 (𝑋).
+
+
+
+
+                                                              24
+Step 5: Closeness of the decoded output channel to the identity channel. We now make the final
+step of the proof and√︀show that the worst-case distance between ℛ ∘ 𝒩𝐶 ∘ 𝒩𝑄 and the identity channel
+𝐼𝐿 (𝑄) is bounded by 𝜁(ℰ, 𝑄). To this end, by Eq. (43) and Lemma 23, it is sufficient to find√︀     a dilation
+operator 𝑉𝜆𝐶 : 𝑄 → ℋUnif that dilates identity channel 𝐼𝐿(𝑄) , such that ‖𝑉dec,𝐶 − 𝑉𝜆𝐶 ‖∞ ≤ 2𝜁(ℰ, 𝑄).
+The Stinespring dilation operator of the constant channel 𝑉𝜆 , defined in (51), and the channel coefficient
+operator 𝐶, defined in (60), yield a natural candidate: (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 . Since the image of this map lies in
+𝑄 ⊗ ℋ𝑅 ⊗ ℋ𝑇 ′ , for it to be comparable with 𝑉dec,𝐶 , we have to embed it in the combined space using 𝑈1
+(64). Formally, define
+                                         𝑉𝜆𝐶 := 𝑈1 (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 .
+Lemma 24. The operator 𝑉𝜆𝐶 dilates the identity. That is, for all 𝑋 ∈ 𝐿(𝑄) we have
+                                           (︁         )︁
+                                      trenv 𝑉𝜆𝐶 𝑋𝑉𝜆†𝐶 = 𝑋,
+
+where ℋenv is the environment system defined in (63).
+Proof. Using the same argument as in the proof of Lemma 23 we have
+                        (︁        )︁          (︁                                         )︁
+                   trenv 𝑉𝜆𝐶 𝑋𝑉𝜆†𝐶 = trenv 𝑈1 (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 𝑋𝑉𝜆† (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶 † )𝑈1†
+                                               (︁                                     )︁
+                                     = tr𝑇 ′ 𝑅 (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 𝑋𝑉𝜆† (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶 † ) .                                     (71)
+                                                                 √
+                                                    𝑝𝑖 |𝜆𝑖 ⟩ ⊗ |𝜆′𝑖 ⟩ ∈ ℋ𝑇 ⊗ ℋ𝑇 ′ and therefore,
+                                                   ∑︀
+Recall that 𝑉𝜆 = 𝐼𝑄 ⊗ |𝜓𝜆 ⟩ where |𝜓𝜆 ⟩ =               𝑖∈[𝑇 ]
+                                                   (︀                  )︀
+                            (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 = 𝐼𝑄 ⊗ (𝐼ℋ𝑇 ′ )⊗𝐶 |𝜓𝜆 ⟩ := 𝐼𝑄 ⊗ |𝜓𝜆𝐶 ⟩ ,
+
+where                                              ∑︁ √
+                                    |𝜓𝜆𝐶 ⟩ =                𝑝𝑖 𝐶 |𝜆𝑖 ⟩ ⊗ |𝜆′𝑖 ⟩ ∈ ℋ𝑅 ⊗ ℋ𝑇 ′ .                                (72)
+                                                  𝑖∈[𝑇 ]
+
+Combining this with (71), we have
+                           (︁        )︁
+                      trenv 𝑉𝜆𝐶 𝑋𝑉𝜆†𝐶 = tr𝑇 ′ 𝑅 (𝑋 ⊗ |𝜓𝜆𝐶 ⟩ ⟨𝜓𝜆𝐶 |) = ⟨𝜓𝜆𝐶 |𝜓𝜆𝐶 ⟩ 𝑋.
+
+Thus, to prove the lemma it suffices to show that ⟨𝜓𝜆𝐶 |𝜓𝜆𝐶 ⟩ = 1.
+     Recalling (48) and (51), we have
+                                                              (︁        )︁
+                                                            tr 𝑃ˆ 𝐸𝑗† 𝐸𝑖 |𝑖⟩ ⟨𝑗| ,
+                                   ∑︁                    ∑︁
+                              𝜆=        𝑝𝑖 |𝜆𝑖 ⟩ ⟨𝜆𝑖 | =
+                                        𝑖∈[𝑇 ]                        𝑖,𝑗∈[𝑆]
+
+
+where 𝑃ˆ = 𝐾
+           1
+             𝑃 ∈ 𝐷(𝑄). By (72) we have
+                                ∑︁ √                                       ∑︁
+                  ⟨𝜓𝜆𝐶 |𝜓𝜆𝐶 ⟩ =      𝑝𝑖 𝑝𝑗 ⟨𝜆𝑖 | 𝐶 † 𝐶 |𝜆𝑗 ⟩ ⟨𝜆′𝑖 |𝜆′𝑗 ⟩ =    𝑝𝑖 ⟨𝜆𝑖 | 𝐶 † 𝐶 |𝜆𝑖 ⟩
+                                      𝑖,𝑗∈[𝑇 ]                                                     𝑖∈[𝑇 ]
+                                                                                   (︃                                  )︃
+                                      ∑︁                                                          ∑︁
+                                  =            𝑝𝑖 tr(𝐶 † 𝐶 |𝜆𝑖 ⟩ ⟨𝜆𝑖 |) = tr 𝐶 † 𝐶                       𝑝𝑖 |𝜆𝑖 ⟩ ⟨𝜆𝑖 |
+                                      𝑖∈[𝑇 ]                                                      𝑖∈𝑇
+                                                             ⎛                                                           ⎞
+                                                                     (︂ ∑︁             (︁               )︁          )︂
+                                  = tr(𝐶𝜆𝐶 † ) = tr ⎝𝐶                            tr        𝑃ˆ 𝐸𝑗† 𝐸𝑖        |𝑖⟩ ⟨𝑗| 𝐶 † ⎠
+                                                                        𝑖,𝑗∈[𝑆]
+                                         ⎛                                                            ⎞
+                                                                           (︂ (︁         )︁ )︂
+                                                                 𝑐𝑘,𝑖 𝑐*𝑙,𝑗 tr 𝑃ˆ 𝐸𝑗† 𝐸𝑖
+                                               ∑︁       ∑︁
+                                  = tr ⎝                                                       |𝑘⟩ ⟨𝑙|⎠
+                                           𝑘,𝑙∈[𝑅] 𝑖,𝑗∈[𝑆]
+                                                                     (︂ (︁        )︁ )︂
+                                                                             †
+                                      ∑︁ ∑︁
+                                  =                   𝑐𝑘,𝑖 𝑐*𝑘,𝑗           ˆ
+                                                                       tr 𝑃 𝐸𝑗 𝐸𝑖
+                                      𝑘∈[𝑅] 𝑖,𝑗∈[𝑆]
+
+
+                                                                       25
+                                                             (︂ (︁         )︁ )︂
+                                                   𝑐𝑘,𝑖 𝑐*𝑘,𝑗 tr 𝐸𝑖 𝑃ˆ 𝐸𝑗†
+                                   ∑︁ ∑︁
+                               =
+                                   𝑘∈[𝑅] 𝑖,𝑗∈[𝑆]
+                                              ⎛                                  ⎞
+                                               (︂ ∑︁        )︂ (︂ ∑︁          )︂
+                                                                     𝑐*𝑘,𝑗 𝐸𝑗† ⎠
+                                   ∑︁
+                               =           tr ⎝      𝑐𝑘,𝑖 𝐸𝑖 𝑃ˆ
+                                   𝑘∈[𝑅]           𝑖∈[𝑆]              𝑗∈[𝑆]
+                                     ⎛                     ⎞
+                                                                (︁       )︁
+                                                𝐹𝑘 𝑃ˆ 𝐹𝑘† ⎠ = tr 𝒩𝐶 (𝑃ˆ ) = 1,
+                                           ∑︁
+                               = tr ⎝
+                                        𝑘∈[𝑅]
+
+
+where the last equality follows since tr(𝑃ˆ ) = 1 and 𝒩𝐶 is a quantum channel and therefore is trace preserving.
+
+
+     We now make the final step, and prove closeness of 𝑉dec,𝐶 and 𝑉𝜆𝐶 .
+Lemma 25.
+                           ‖𝑉dec,𝐶 − 𝑉𝜆𝐶 ‖∞ ≤ ‖(𝐼ℋS ⊗ 𝐽ℰ )𝑉ℰ − (𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 ‖∞ .
+where the ‖·‖∞ is with respect the operator norm on the code space 𝑄
+Proof. Throughout this proof we will repeatedly use the following simple fact: For Hilbert spaces ℋ𝐴 , ℋ𝐵 , ℋ𝐶 ℋ𝐷
+and operators 𝑇𝐴→𝐶 : ℋ𝐴 → ℋ𝐶 and 𝑇𝐵→𝐷 : ℋ𝐵 → ℋ𝐷 we have
+
+                       (𝑇𝐵→𝐷 ⊗ 𝐼ℋ𝐶 )(𝐼ℋ𝐵 ⊗ 𝑇𝐴→𝐶 ) = (𝐼ℋ𝐷 ⊗ 𝑇𝐴→𝐶 )(𝑇𝐵→𝐷 ⊗ 𝐼ℋ𝐴 ).
+
+Let |𝜑⟩ ∈ 𝑄 be a code state. We begin by observing that |𝜓⟩ vanishes on the branch 𝑈3 (𝐼ℋ𝑅 ⊗ 𝑅3 )𝑉𝐶 . Indeed:
+
+            (𝐼ℋ𝑅 ⊗ 𝑅3 )𝑉𝐶 |𝜓⟩ = 𝐼ℋ𝑅 ⊗ (𝐼ℋout − 𝐽ℰ† 𝐽ℰ ) (𝐶 ⊗ 𝐼ℋout )𝑉ℰ |𝜓⟩
+                                (︀                     )︀
+
+                              = (𝐶 ⊗ 𝐼ℋout ) 𝐼ℋ𝑆 ⊗ (𝐼ℋout − 𝐽ℰ† 𝐽ℰ ) 𝑉ℰ |𝜓⟩
+                                            (︀                      )︀
+
+                              = (𝐶 ⊗ 𝐼ℋout ) (𝐼ℋ𝑆 ⊗ 𝐼ℋout )𝑉ℰ |𝜓⟩ − (𝐼ℋ𝑆 ⊗ 𝐽ℰ† 𝐽ℰ )𝑉ℰ |𝜓⟩ I𝑖𝑔) = 0,
+                                            (︀
+                                                                                          ¯
+where the last equality follows from the first relation in (53). This derivation implies that
+
+                          𝑉dec,𝐶 |𝜓⟩ = 𝑈1 (𝐼ℋ𝑅 ⊗ 𝑅1 )𝑉𝐶 |𝜓⟩ + 𝑈2 (𝐼ℋ𝑅 ⊗ 𝑅2 )𝑉𝐶 |𝜓⟩ .                       (73)
+
+Let ‖·‖ denote the usual inner product norm on ℋUnif . By (73) we have:
+                       2   ⃦                                                                    ⃦2
+ ‖𝑉dec,𝐶 |𝜓⟩ − 𝑉𝜆𝐶 |𝜓⟩‖ = ⃦𝑈1 (𝐼ℋ𝑅 ⊗ 𝑅1 )𝑉𝐶 |𝜓⟩ + 𝑈2 (𝐼ℋ𝑅 ⊗ 𝑅2 )𝑉𝐶 |𝜓⟩ − 𝑈1 (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 |𝜓⟩⃦
+                           ⃦                                              ⃦2                        2
+                         = ⃦𝑈1 (𝐼ℋ𝑅 ⊗ 𝑅1 )𝑉𝐶 |𝜓⟩ − 𝑈1 (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 |𝜓⟩⃦ + ‖𝑈2 (𝐼ℋ𝑅 ⊗ 𝑅2 )𝑉𝐶 |𝜓⟩‖ (74)
+                           ⃦                                         ⃦2                      2
+                         = ⃦(𝐼ℋ𝑅 ⊗ 𝑅1 )𝑉𝐶 |𝜓⟩ − (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 |𝜓⟩⃦ + ‖(𝐼ℋ𝑅 ⊗ 𝑅2 )𝑉𝐶 |𝜓⟩‖ .         (75)
+
+where (74) follows since the images of 𝑈1 and 𝑈2 are orthogonal (since they include orthogonal flag states)
+and (75) follows since 𝑈1 and 𝑈2 are isometries. The first term on the right in (75) can be written as
+       ⃦                                          ⃦
+       ⃦(𝐼ℋ ⊗ 𝑅1 )𝑉𝐶 |𝜓⟩ − (𝐼ℋ ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 |𝜓⟩⃦
+             𝑅                    𝑇
+             ⃦                                                      ⃦
+          = ⃦(𝐼ℋ𝑅 ⊗ 𝐽𝜆† 𝐽ℰ )(𝐼ℋout ⊗ 𝐶)𝑉ℰ |𝜓⟩ − (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)𝑉𝜆 |𝜓⟩⃦
+             ⃦                                                      ⃦
+             ⃦                                                                             ⃦
+          = ⃦(𝐼ℋ𝑅 ⊗ 𝐽𝜆† )(𝐼ℋ𝑅 ⊗ 𝐽ℰ )(𝐼ℋout ⊗ 𝐶)𝑉ℰ |𝜓⟩ − (𝐼ℋ𝑇 ′ ⊗𝑄 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽𝜆† 𝐽𝜆 )𝑉𝜆 |𝜓⟩⃦           (76)
+             ⃦                                                                             ⃦
+             ⃦                                                                                ⃦
+          = ⃦(𝐼ℋ𝑅 ⊗ 𝐽𝜆† )(𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽ℰ )𝑉ℰ |𝜓⟩ − (𝐼ℋ𝑆 ⊗ 𝐽𝜆† )(𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 |𝜓⟩⃦
+             ⃦                                                                                ⃦
+             ⃦                                                                                     ⃦
+          = ⃦(𝐼ℋ𝑅 ⊗ 𝐽𝜆 𝐽𝜆† )(𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽ℰ )𝑉ℰ |𝜓⟩ − (𝐼ℋ𝑆 ⊗ 𝐽𝜆 𝐽𝜆† )(𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 |𝜓⟩⃦    (77)
+             ⃦                                                                                     ⃦
+             ⃦            (︁                                                           )︁⃦
+          = ⃦(𝐼ℋ𝑅 ⊗ 𝑃𝐽𝜆 ) (𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽ℰ )𝑉ℰ |𝜓⟩ − (𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 |𝜓⟩ ⃦                    (78)
+             ⃦                                                                           ⃦
+
+
+
+
+                                                               26
+where (76) follows from (53), and (77) follows since 𝐽𝜆 is an isometry and therefore, so is 𝐼ℋ𝑅 ⊗ 𝐽𝜆 . Before
+analyzying the second term in (75) we note that
+
+            (𝐼ℋ𝑅 ⊗ 𝑃𝐽𝜆⊥ )(𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 |𝜓⟩ = (𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝑃𝐽𝜆⊥ )(𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 |𝜓⟩
+                                                         = (𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝑃𝐽𝜆⊥ 𝐽𝜆 )𝑉𝜆 |𝜓⟩ = 0,                (79)
+
+where the last equality follows since 𝑃𝐽𝜆⊥ is the projector on the orthogonal complement of the image of 𝐽𝜆 ,
+which implies that 𝑃𝐽𝜆⊥ 𝐽𝜆 = 0. Using (79), we obtain
+                         ⃦                                   ⃦
+ ‖(𝐼ℋ𝑅 ⊗ 𝑅2 )𝑉𝐶 |𝜓⟩‖ = ⃦(𝐼ℋ𝑅 ⊗ 𝑃𝐽𝜆⊥ 𝐽ℰ )(𝐼ℋout ⊗ 𝐶)𝑉ℰ |𝜓⟩⃦
+                         ⃦                                   ⃦
+                         ⃦                                           ⃦
+                       = ⃦(𝐼ℋ𝑅 ⊗ 𝑃𝐽𝜆⊥ )(𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽ℰ )𝑉ℰ |𝜓⟩⃦
+                         ⃦                                           ⃦
+                         ⃦              (︁                                                         )︁⃦
+                       = ⃦(𝐼ℋ𝑅 ⊗ 𝑃𝐽𝜆⊥ ) (𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽ℰ )𝑉ℰ |𝜓⟩ − (𝐼ℋ𝑀 ⊗ 𝐶)(𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 |𝜓⟩ ⃦ . (80)
+                         ⃦                                                                           ⃦
+
+Denote
+                       ˆ := (𝐼ℋ ⊗ 𝐶)(𝐼ℋ ⊗ 𝐽ℰ )𝑉ℰ |𝜓⟩ − (𝐼ℋ ⊗ 𝐶)(𝐼ℋ ⊗ 𝐽𝜆 )𝑉𝜆 |𝜓⟩ ,
+                      |𝜓⟩      𝑀       𝑆                  𝑀       𝑆
+
+                                         ˆ and (𝐼ℋ ⊗ 𝑃𝐽 ) |𝜓⟩
+and note that the vectors (𝐼ℋ𝑅 ⊗ 𝑃𝐽𝜆⊥ ) |𝜓⟩                ˆ are orthogonal as 𝑃 ⊥ and 𝑃𝐽 project on
+                                                   𝑅   𝜆                         𝐽𝜆      𝜆
+complementary orthogonal spaces. Therefore,
+    ⃦                 ⃦2 ⃦                  ⃦2 ⃦                                  ⃦2 ⃦ ⃦2
+    ⃦               ˆ⃦
+    ⃦(𝐼ℋ𝑅 ⊗ 𝑃𝐽𝜆⊥ ) |𝜓⟩⃦ + ⃦(𝐼ℋ𝑅 ⊗ 𝑃𝐽𝜆 ) |𝜓⟩
+                           ⃦               ˆ⃦                   ˆ + (𝐼ℋ ⊗ 𝑃𝐽 ) |𝜓⟩
+                                            ⃦ = ⃦(𝐼ℋ𝑅 ⊗ 𝑃𝐽𝜆⊥ ) |𝜓⟩
+                                                 ⃦                              ˆ⃦    ⃦ ˆ⃦
+                                                                                  ⃦ = ⃦|𝜓⟩⃦ .   (81)
+                                                                       𝑅    𝜆
+
+
+
+Combining (75), (78), (80), and (81), we conclude that
+                                  ⃦ ⃦2 ⃦               (︁                                  )︁⃦2
+                              2   ⃦ ˆ⃦
+       ‖𝑉dec,𝐶 |𝜓⟩ − 𝑉𝜆𝐶 |𝜓⟩‖ = ⃦|𝜓⟩   ⃦ = ⃦(𝐼ℋ𝑀 ⊗ 𝐶) (𝐼ℋ𝑆 ⊗ 𝐽ℰ )𝑉ℰ |𝜓⟩ − (𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 |𝜓⟩ ⃦
+                                            ⃦                                                ⃦
+
+                                                                               2
+                                  ≤ ‖(𝐼ℋ𝑆 ⊗ 𝐽ℰ )𝑉ℰ |𝜓⟩ − (𝐼ℋ𝑆 ⊗ 𝐽𝜆 )𝑉𝜆 |𝜓⟩‖ ,
+
+where the last inequality follows since 𝐼ℋ𝑀 ⊗ 𝐶 is a contraction since ‖𝐶‖∞ ≤ 1. Since this relation holds for
+all |𝜓⟩ ∈ 𝑄, this implies the desired norm inequality.
+
+C.2      Proof of Lemma 3
+We recall that the set of quantum channels between finite-dimensional spaces is convex and compact (see [39,
+Proposition 2.28]), which implies convexity and compactness of 𝑋. The set 𝑌 of ℰ-controlled channels is also
+convex; see [13, Observation 2]. It remains to show that 𝑌 is also compact.
+      Let M(ℰ) be the space of all 𝑅 × 𝑅 matrices 𝐴 ⪰ 0 such that ‖𝐴‖∞ ≤ 1, equipped with the ∞-norm
+topology. First note that M(ℰ) is a compact space: It is bounded (by the constraint ‖𝐴‖∞ ) ≤ 1), and it is
+closed as the intersection of closed sets (the set of positive semidefinite matrices is a closed set, and the set of
+matrices satisfying ‖𝐴‖∞ ≤ 1 is closed by continuity of the norm).
+      Consider the function 𝑔 from M(ℰ) to the set of linear superoperators 𝐿(ℋin ) → 𝐿(ℋout ) defined by
+
+                                                               𝐴𝑖,𝑗 𝐸𝑖 𝑋𝐸𝑗† .
+                                                         ∑︁
+                                         (𝑔(𝐴))(𝑋) =
+                                                       𝑖,𝑗∈[𝑅]
+
+Note that 𝑔 is a linear function, and therefore also it is also continuous (as any linear function between
+finite-dimensional normed spaces is continuous).
+       We claim that 𝑌 is exactly the intersection Im (𝑔) (which is compact, as the image of a compact set
+under a continuous map), with the set of CPTP maps 𝐿(ℋin ) → 𝐿(ℋout ), denoted by CPTP(ℋin , ℋout )
+(which is also compact by [39, Proposition 2.28]). This will imply that 𝑌 is compact as an intersection√of
+compact sets. Indeed, Let 𝐴 ∈ M(ℰ) be a positive matrix with ‖𝐴‖∞ ≤ 1. Consider the matrix 𝐶 = 𝐴.
+Note that 𝑔(𝐴) is the CP map with Kraus representation {𝐹𝛼 }𝛼∈[𝑅] such that
+                                                       ∑︁
+                                                𝐹𝛼 =           𝐶𝑖,𝛼 𝐸𝑖 ,
+                                                       𝑖∈[𝑅]
+
+
+                                                         27
+as we have
+
+                                            𝐸𝑖 𝑋𝐸𝑗† =             𝐸𝑖 𝑋𝐸𝑗†                                   𝐴𝑖,𝑗 𝐸𝑖 𝑋𝐸𝑗† = 𝑔(𝐴)(𝑋)
+  ∑︁            ∑︁       ∑︁                              ∑︁                 ∑︁                     ∑︁
+      𝐹𝛼 𝑋𝐹𝛼† =                         *
+                                  𝐶𝑖,𝛼 𝐶𝑗,𝛼                                         𝐶𝑖,𝛼 𝑐𝛼,𝑗 =
+ 𝛼∈[𝑅]            𝛼∈[𝑅] 𝑖,𝑗∈[𝑅]                         𝑖,𝑗∈[𝑅]             𝛼∈[𝑅]                 𝑖,𝑗∈[𝑅]
+                                                                                                      (82)
+Here, we used the fact that 𝐶 is Hermitian as a square root and therefore 𝑐*𝛼,𝑗 = 𝐶𝑗,𝛼 . We also note that
+         √︀
+‖𝐶‖∞ = ‖𝐴‖∞ ≤ 1. On the other hand assume that 𝒩 is a CP map with Kraus representation {𝐹𝛼 }𝛼∈[𝑆] ,
+for some 𝑆 ∈ N, such that               ∑︁
+                                  𝐹𝛼 =      𝐶𝑖,𝛼 𝐸𝑖 , and ‖𝐶‖∞ ≤ 1.                                   (83)
+                                              𝑖∈[𝑅]
+
+                                                                                                                        2
+We want to show that 𝒩 ∈ Im (𝑔). To that end, take 𝐴 = 𝐶𝐶 † ⪰ 0, we have ‖𝐴‖∞ = ‖𝐶‖∞ ≤ 1 and
+by reversing the calculation of (82) we obtain 𝑔(𝐴) = 𝒩 . We have proved that Im (𝑔) is the set of all
+CP maps 𝐿(ℋin ) → 𝐿(ℋout ) that admits a Kraus representation of the form (83), whose intersection with
+CPTP(ℋin , ℋout ) gives exactly 𝑌 .
+
+
+References
+ [1] A. Afham and M. Tomamichel. Projections with respect to Bures distance and fidelity: Closed-forms and
+     applications. arXiv preprint arXiv:2602.14732, 2026.
+ [2] D. Aharonov and M. Ben-Or. Fault-tolerant quantum computation with constant error rate. SIAM Journal on
+     Computing, 38(4):1207–1282, 2008.
+ [3] K. Audenaert and B. De Moor. Optimizing completely positive maps using semidefinite programming. Physical
+     Review A, 65(3):030302, 2002.
+ [4] H. Barnum and E. Knill. Reversing quantum dynamics with near-optimal quantum and classical fidelity. Journal
+     of Mathematical Physics, 43(5):2097–2106, 2002.
+ [5] C. H. Bennett, D. P. DiVincenzo, J. A. Smolin, and W. K. Wootters. Mixed-state entanglement and quantum
+     error correction. Physical Review A, 54(5):3824, 1996.
+ [6] C. Bény and O. Oreshkov. General conditions for approximate quantum error correctionand near-optimal recovery
+     channels. Physical Review Retters, 104(12):120501, 2010.
+ [7] T. Bergamaschi, L. Golowich, and S. Gunn. Approaching the quantum Singleton bound with approximate error
+     correction. In Proceedings of the 56th Annual ACM Symposium on Theory of Computing, pages 1507–1516, 2024.
+ [8] R. Bhatia. Matrix Analysis. Springer Science & Business Media, 2013.
+ [9] C.-F. Chen, G. Penington, and G. Salton. Entanglement wedge reconstruction using the Petz map. Journal of
+     High Energy Physics, 2020(1):168, 2020.
+[10] C. Crépeau, D. Gottesman, and A. Smith. Approximate quantum error-correcting codes and secret sharing
+     schemes. In Annual International Conference on the Theory and Applications of Cryptographic Techniques, pages
+     285–301. Springer, 2005.
+[11] K. R. Davidson. 𝐶 * -Algebras by Example. American Mathematical Society, Providence, RI, 1996. doi:
+     10.1090/fim/006.
+[12] E. Dennis, A. Kitaev, A. Landahl, and J. Preskill. Topological quantum memory. Journal of Mathematical
+     Physics, 43(9):4452–4505, 2002.
+[13] D. Elimelech, V. V. Albert, and A. Barg. Theory of approximate quantum error correction and the error-set
+     model, 2026.
+[14] D. Elimelech, A. Aydin, and A. Barg. Asymptotically good bosonic Fock state codes: Exact and approximate.
+     arXiv preprint arXiv:2603.15190, 2026.
+[15] M. Elovenkova, H.-Y. Hu, and S. F. Yelin. Covariant approximate quantum codes for protected analog computation.
+     arXiv preprint arXiv:2607.07607, 2026.
+[16] D. Gottesman. An introduction to quantum error correction and fault-tolerant quantum computation. In Quantum
+     information science and its contributions to mathematics, Proceedings of Symposia in Applied Mathematics,
+     volume 68, pages 13–58, 2010.
+
+
+
+                                                              28
+[17] N. Johnston, D. W. Kribs, and V. I. Paulsen. Computing stabilized norms for quantum operations via the theory
+     of completely bounded maps. Quantum Information & Computation, 9(1–2):16–35, 2009. arXiv:0711.3636,
+     doi:10.26421/QIC9.1-2-2.
+[18] S. Khatri and M. M. Wilde. Principles of Quantum Communication Theory: A Modern Approach. arXiv preprint
+     arXiv:2011.04672, 2020. (Book draft).
+[19] S. W. P. Kim. Optimal recovery for quantum error correction. arXiv preprint arXiv:2603.06520, 2026.
+[20] A. Y. Kitaev. Fault-tolerant quantum computation by anyons. Annals of Physics, 303(1):2–30, 2003.
+[21] R. Klesse. Approximate quantum error correction, random codes, and quantum channel capacity. Physical Review
+     A, 75(6):062315, 2007. doi:10.1103/PhysRevA.75.062315.
+[22] E. Knill and R. Laflamme. Theory of quantum error-correcting codes. Physical Review A, 55(2):900, 1997.
+[23] E. Knill, R. Laflamme, and L. Viola. Theory of quantum error correction for general noise. Physical Review
+     Letters, 84(11):2525, 2000.
+[24] R. L. Kosut and D. A. Lidar. Quantum error correction via convex optimization. Quantum Information Processing,
+     8(5):443–459, 2009.
+[25] D. Kretschmann, D. Schlingemann, and R. F. Werner. A continuity theorem for Stinespring’s dilation. Journal
+     of Functional Analysis, 255(8):1889–1904, Oct. 2008. arXiv:0710.2495, doi:10.1016/j.jfa.2008.07.023.
+[26] D. Kretschmann, D. Schlingemann, and R. F. Werner. The information-disturbance tradeoff and the continuity
+     of Stinespring’s representation. IEEE Transactions on Information Theory, 54(4):1708–1717, Apr. 2008. doi:
+     10.1109/TIT.2008.917696.
+[27] D. W. Leung, M. A. Nielsen, I. L. Chuang, and Y. Yamamoto. Approximate quantum error correction can lead
+     to better codes. Physical Review A, 56(4):2567, 1997.
+[28] B. Li, Z. Wang, G. Zheng, Y. Wong, and L. Jiang. Optimality condition for the Petz map. Physical Review
+     Letters, 134(20):200602, 2025.
+[29] X. Li, X. Shu, and H. Zhu. Random approximate quantum information masking. arXiv preprint arXiv:2507.19454,
+     2025.
+[30] F. Ma, X. Tan, and J. Wright. Haar random codes attain the quantum Hamming bound, approximately. arXiv
+     preprint arXiv:2510.07158, 2025.
+[31] H. K. Ng and P. Mandayam. Simple approach to approximate quantum error correction based on the transpose
+     channel. Physical Review A—Atomic, Molecular, and Optical Physics, 81(6):062342, 2010.
+[32] K. Noh, V. V. Albert, and L. Jiang. Quantum capacity bounds of Gaussian thermal loss channels and achievable
+     rates with Gottesman-Kitaev-Preskill codes. IEEE Transactions on Information Theory, 65(4):2563–2582, 2018.
+[33] B. Schumacher. Sending entanglement through noisy quantum channels. Physical Review A, 54(4):2614, 1996.
+[34] B. Schumacher and M. D. Westmoreland. Approximate quantum error correction. Quantum Information
+     Processing, 1(1):5–12, 2002.
+[35] P. W. Shor. Scheme for reducing decoherence in quantum computer memory. Physical Review A, 52(4):R2493,
+     1995.
+[36] P. W. Shor. Fault-tolerant quantum computation. In Proceedings of 37th IEEE Symposium on Foundations of
+     Computer Science, pages 56–65. IEEE, 1996.
+[37] M. Sion. On general minimax theorems. Pacific Journal of Mathematics, 8(1):171–176, 1958. doi:10.2140/pjm.
+     1958.8.171.
+[38] W. F. Stinespring. Positive functions on 𝐶 * -algebras. Proceedings of the American Mathematical Society,
+     6(2):211–216, Apr. 1955. doi:10.1090/S0002-9939-1955-0069403-4.
+[39] J. Watrous. The Theory of Quantum Information. Cambridge University Press, 2018.
+[40] M. M. Wilde. Quantum Information Theory. Cambridge university press, 2017.
+[41] Y. Xu, Y. Wang, C. Vuillot, and V. V. Albert. Letting the tiger out of its cage: bosonic coding without
+     concatenation. Physical Review X, 15(4):041025, 2025.
+[42] J. Yi, R. Liu, and Z. Li. Lovász meets Lieb-Schultz-Mattis: Complexity in approximate quantum error correction.
+     arXiv preprint arXiv:2510.04453, 2025.
+[43] J. Yi, W. Ye, D. Gottesman, and Z.-W. Liu. Complexity and order in approximate quantum error-correcting
+
+
+
+                                                         29
+    codes. Nature Physics, 20(11):1798–1803, 2024.
+[44] G. Zheng, W. He, G. Lee, and L. Jiang. Near-optimal performance of quantum error correction codes. Physical
+     Review Letters, 132(25):250602, 2024.
+
+
+
+
+                                                      30
+

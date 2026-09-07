@@ -1,0 +1,924 @@
+                                                            No-Go Theorems for Quantum Transport Metrics
+                                                                     from Fixed Cost Operators
+                                                                    Minbo Gao∗              Zhengfeng Ji†             Tianshi Yu‡
+
+                                                                                            July 31, 2026
+
+
+
+                                                                                               Abstract
+                                                        Coupling-based quantum optimal transport generalizes classical optimal transport by repre-
+                                                    senting transport plans as bipartite states with prescribed marginals and evaluating their cost
+                                                    as the expectation of a fixed Hermitian operator. Friedland et al. conjectured that the square
+arXiv:2607.28358v1 [quant-ph] 30 Jul 2026
+
+
+
+
+                                                    root of the optimal cost associated with the SWAP projector is a metric in every dimension and
+                                                    that this property persists for nearby quantum cost matrices [FECŻ22]. Miller disproved both
+                                                    conjectures by constructing explicit diagonal qutrit counterexamples [Mil26]. Building on his
+                                                    analysis, we prove a uniform no-go theorem for standard couplings. In every dimension d ≥ 3,
+                                                    no fixed cost operator makes either the optimal cost or its square root a metric, with violations
+                                                    occurring already among commuting states. The obstruction persists under stabilization of the
+                                                    SWAP cost. For channel-induced couplings, global nonnegativity and vanishing self-cost force
+                                                    the cost operator to be zero, precluding point separation when d ≥ 2. Taken together, these no-
+                                                    go results show that fixed-cost coupling formulations do not lead to metrics on the full quantum
+                                                    state space.
+
+
+                                            1       Introduction
+                                            Classical optimal transport asks how to move one probability distribution to another at minimum
+                                            cost. For probability measures µ, ν on a PolishR metric space (X, d) and a measurable cost c :
+                                            X × X → [0, ∞], the MongeR problem minimizes    R c(x, T (x)) dµ(x) over measurable maps T such
+                                            that T# µ = ν, equivalently, h(T (x)) dµ(x) = h(y) dν(y) for every bounded Borel h [Vil09, § 1.1,
+                                            p. 2]. Such a map need not exist: for example, on R, if µ = δ0 and ν = 12 δ−1 + 12 δ1 , then T# µ = δT (0)
+                                            for every map T , so the Monge feasible set is empty [Vil09, § 1.1, p. 2].
+                                                Kantorovich’s 1942 formulation instead optimizes over transport plans, namely probability mea-
+                                            sures on X × X with prescribed marginals [Kan58]:
+
+                                                                   Π(µ, ν) := {π ∈ P(X × X) : π has marginals µ and ν} .                       (1)
+                                                                                                     R
+                                            For a ground cost c, this gives Tc (µ, ν) := inf π∈Π(µ,ν) c dπ. For p ≥ 1, let Pp (X) denote the Borel
+                                            probability measures on X with finite moment of order p. For µ, ν ∈ Pp (X), choosing c(x, y) =
+                                            d(x, y)p yields a distance called Wasserstein distance of order p:
+                                                                                               Z                   1/p
+                                                                                                          p
+                                                                        Wp (µ, ν) :=     inf       d(x, y) dπ(x, y)      .                     (2)
+                                                                                          π∈Π(µ,ν)
+
+                                                ∗
+                                                  Institute of Software, CAS. gaomb@ios.ac.cn or gmb17@tsinghua.org.cn.
+                                                †
+                                                  Tsinghua University. jizhengfeng@tsinghua.edu.cn.
+                                                ‡
+                                                  Institute of Software, CAS. yuts@ios.ac.cn
+
+
+                                                                                                     1
+This is a distance on Pp (X); see [Vil09, pp. 94–95]. Wasserstein geometry has become a standard tool
+in the study of gradient flows and nonlinear PDEs [AGS08], statistics [PZ19], and computational
+optimal transport and data science [PC19].
+    A coupling-based quantum analogue [FECŻ22, CEFŻ23] replaces measures by density operators,
+couplings by bipartite states with prescribed partial traces, and expected costs by expectations of
+fixed operators. For states ρ, σ on a finite-dimensional Hilbert space H, set
+
+                             Γ(ρ, σ) := {ω ⪰ 0 : TrB ω = ρ, TrA ω = σ},                          (3)
+                           TC (ρ, σ) :=    min Tr(Cω),                                           (4)
+                                          ω∈Γ(ρ,σ)
+
+for a fixed Hermitian cost C. We call Γ(ρ, σ) the standard coupling set to distinguish this direct
+fixed-marginal construction from the channel-induced coupling set considered below. Such costs
+have applications in quantum program logic [BGWZ25, BGK+ 26], quantum resource theory [Shi24],
+quantum machine learning
+                    √      [CYL+ 19], and semiclassical and mean-field limits [GMP16]. For C ⪰ 0,
+one may set WC := TC ; the main example is the SWAP cost P− = (1 −F )/2 [FECŻ22]. Although
+the admissible costs are characterized in [CEFŻ23], the SWAP choice already fails the triangle
+inequality for commuting qutrit states, shown recently in [Mil26].
+    This motivates our main question:
+
+      Can any fixed, state-independent linear cost define a metric on all mixed states through
+      the above formulation of optimization over quantum couplings?
+
+    Our answer is negative: for standard couplings, every admissible fixed cost violates the triangle
+inequality for d ≥ 3, already on commuting qutrit states.
+    We also study the channel-induced coupling set
+                           e σ) := {ω ⪰ 0 : TrB ω = ρ⊤ , TrA ω = σ},
+                           Γ(ρ,                                                                  (5)
+
+where the transpose is a Choi-basis convention. For channel-induced couplings, nonnegativity and
+zero self-cost force C = 0, so point separation fails for d ≥ 2.
+    Thus, for d ≥ 3, a quantum Wasserstein distance on all mixed states cannot arise from a direct
+quantum analogue of the classical fixed-cost coupling linear program; finding the right replacement
+remains open.
+
+1.1   Main results
+For a set S, we call a map D : S × S → [0, ∞) a semidistance if it is symmetric and vanishes exactly
+on the diagonal; the triangle inequality is not required.
+   Our first result answers the open question for the standard coupling set.
+
+Theorem 1.1 (Standard-coupling no-go). Let d ≥ 3 and let C = C † act on Cd ⊗ Cd . Suppose
+that TC in (4) is a semidistance on the density operators on Cd . Then there are three mutually
+commuting states ρ, σ, τ such that
+
+                                  TC (ρ, τ ) > TC (ρ, σ) + TC (σ, τ ),                           (6)
+                                 WC (ρ, τ ) > WC (ρ, σ) + WC (σ, τ ).                            (7)
+
+Consequently, no fixed state-independent linear cost makes WC a metric on the full mixed-state
+space when d ≥ 3.
+
+
+                                                     2
+   Theorem 1.1 is uniform over all admissible Hermitian costs: it is not specific to the SWAP
+projector or to a perturbation of it. Moreover, one fixed triple of commuting qutrit states provides
+the obstruction after a basis change depending on C. The commutativity of the marginals does
+not make the optimization classical. Even for diagonal states, an optimal quantum coupling can
+use coherence between |ij⟩ and |ji⟩, and this coherence is precisely what drives the violation. The
+threshold is sharp within this framework: in dimension two, admissibility forces C to be a positive
+multiple of P− , and the corresponding WC is a metric [CEFŻ23].
+   We also consider the stabilization of the SWAP cost introduced by Müller-Hermes [MH22].
+Write T := TP− and
+                                                                      p
+                     Ts (ρ, σ) := inf T (ρ ⊗ γ, σ ⊗ γ),  Ws (ρ, σ) := Ts (ρ, σ),                 (8)
+                                  γ
+
+where the infimum is over finite-dimensional ancillary states. Stabilization gives channel mono-
+tonicity and invariance under tensoring both arguments with a common state [MH22]. It does not,
+however, restore the triangle inequality.
+
+Corollary 1.2 (Stabilized SWAP cost). There are three mutually commuting qutrit states ρ, σ, τ
+for which
+                             Ws (ρ, τ ) > Ws (ρ, σ) + Ws (σ, τ ).
+In particular, the stabilized SWAP semidistance is not a metric.
+
+   For the channel-induced set (5), define
+
+                                      TeC (ρ, σ) :=    min Tr(Cω).                               (9)
+                                                      ω∈Γ(ρ,σ)
+                                                        e
+
+
+Here the obstruction occurs before one reaches the triangle inequality.
+
+Theorem 1.3 (Channel-induced no-go). Let C = C † act on Cd ⊗ Cd . Suppose that TeC (ρ, σ) ≥ 0
+for all states ρ, σ and that TeC (ρ, ρ) = 0 for every state ρ. Then C = 0. Consequently, when d ≥ 2,
+no fixed linear cost over channel-induced couplings can define a semidistance, and hence none can
+define a metric.
+
+    The two theorems identify different failure modes. For the standard coupling set, zero self-cost
+leaves a nontrivial class of admissible operators, but none satisfies the triangle inequality once
+d ≥ 3. For the channel-induced set, zero self-cost is already incompatible with point separation
+once d ≥ 2.
+
+1.2   Technique overview
+The proof of Theorem 1.1 begins with the characterization of admissible costs from [CEFŻ23]. If
+TC is a semidistance, then
+                                C ⪰ 0,     ker C = Sym2 (Cd ).                             (10)
+Thus C vanishes on the symmetric subspace and is positive definite on the antisymmetric subspace.
+After compressing to an arbitrary three-dimensional subspace, we use the fact that every orthonor-
+mal basis of ∧2 C3 is, up to phases, the wedge basis induced by some one-particle basis. Thus the
+restriction of C to the antisymmetric sector can be diagonalized by a common basis change U ⊗ U .
+Up to relabeling, every admissible qutrit cost therefore reduces to
+
+              Ca,b,c = a|1 ∧ 2⟩⟨1 ∧ 2| + b|1 ∧ 3⟩⟨1 ∧ 3| + c|2 ∧ 3⟩⟨2 ∧ 3|,   a, b, c > 0.     (11)
+
+                                                       3
+   For diagonal states, [Mil26, Proposition 1] gives the exact reduction
+                                       1          h √      √           √    √
+            TCa,b,c (diag p, diag q) =     min a ( γ12 − γ21 )2 + b ( γ13 − γ31 )2
+                                       2 γ∈Π(p,q)                                                      (12)
+                                                            √      √     i
+                                                        +c ( γ23 − γ32 )2 .
+The diagonal entries of the quantum transport plan form a classical coupling γ, but positivity allows
+each {|ij⟩, |ji⟩} block to saturate its coherence bound. This produces the square-root interference
+terms in (12). We then exhibit one triple of diagonal qutrit states and evaluate its three pairwise
+costs. After placing the smallest of a, b, c in one fixed antisymmetric direction, the same triple
+strictly satisfies (6) and (7) for every positive choice of the remaining weights. This counterexample
+extends the SWAP-specific obstruction in [Mil26] to the general no-go result of Theorem 1.1.
+    For Corollary 1.2, we show that a common ancillary state does not change the SWAP transport
+cost between commuting states. After simultaneous diagonalization, the cost can be expressed
+through                                             X√
+                                           Φ(π) :=         πij πji
+                                                     i,j
+for a classical coupling π. Coarse-graining a coupling of p ⊗ r and q ⊗ r cannot increase Φ, by
+the Cauchy–Schwarz inequality, while tensoring an optimal coupling of p and q with the diagonal
+ancillary state attains the reverse bound. Hence Ts = T on commuting pairs, and Miller’s qutrit
+violation transfers unchanged to the stabilized setting.
+    The proof of Theorem 1.3 is shorter and uses a different approach. Every bipartite state ω is
+feasible in (5) for
+                                    ρ = (TrB ω)⊤ ,    σ = TrA ω.
+Nonnegativity of all the minima in (9) therefore implies Tr(Cω) ≥ 0 for every bipartite state, and
+hence C ⪰ 0. If ρ = |ψ⟩⟨ψ| is pure, its only channel-induced self-coupling is the pure product state
+on ψ ⊗ ψ. Zero self-cost and positivity force
+                                      C|ψ ⊗ ψ⟩ = 0         for every ψ.
+These vectors span Cd ⊗ Cd , so C = 0. No triangle-inequality argument is needed.
+
+1.3    Discussion
+Scope of the standard-coupling no-go theorem. The dimension threshold d ≥ 3 is sharp. In
+dimension two, admissibility forces the cost to be a positive multiple of P− , and the corresponding
+square-root cost is a metric on the full state space [FECŻ22, CEFŻ23]. The theorem is also
+specific to the full mixed-state space and does not rule out metric behavior
+                                                                          p on restricted families.
+For example, on pure states the SWAP cost reduces to WP− = 2         −1/2  1 − | ⟨ψ|ϕ⟩ |2 , a constant
+multiple of root infidelity and hence a metric [FECŻ22, Proposition 1].
+
+Failure of quantum gluing. Our standard-coupling no-go theorem identifies the triangle in-
+equality as the missing metric axiom, so it is useful to recall why that axiom holds classically.
+Choose nearly optimal couplings π12 ∈ Π(µ1 , µ2 ) and π23 ∈ Π(µ2 , µ3 ). The Gluing Lemma [Vil09,
+p. 23] produces a joint law π123 with these two pairwise marginals, whose (1, 3)-marginal is therefore
+a coupling of µ1 and µ3 . The ground-space triangle inequality, followed by Minkowski’s inequality
+under π123 , then gives Wp (µ1 , µ3 ) ≤ Wp (µ1 , µ2 ) + Wp (µ2 , µ3 ). No analogous principle holds for gen-
+eral quantum couplings: two bipartite states with a common marginal need not admit a common
+tripartite extension. Our theorem shows that the missing gluing lemma is not merely a gap in the
+classical proof; in the fixed-cost, one-shot framework, the triangle inequality itself fails.
+
+                                                     4
+No fixed-cost coupling representation of trace distance. On a finite space with the discrete
+metric, W1 is the total variation distance. Its quantum counterpart is the trace distance dtr (ρ, σ) =
+1
+2 ∥ρ − σ∥1 . Zhou, Yu, Ying, and Ying proved that no Hermitian cost H and bijection f can satisfy
+dtr (ρ, σ) = f (TH (ρ, σ)) for all quantum states [ZYYY22, Theorem 7]. Their theorem excludes
+recovering this particular metric
+                              √     even after a reparametrization of the coupling cost, whereas our
+result excludes metricity of TC for every admissible fixed cost when d ≥ 3.
+
+
+2     Preliminaries
+2.1   Notation and coupling costs
+Let H ∼ = Cd be a finite-dimensional Hilbert space, and let D(H) denote its density operators. We
+fix an orthonormal basis {|1⟩, . . . , |d⟩} whenever a transpose, entrywise conjugate, or Choi operator
+is used. Subscripts on partial traces name the subsystem being traced out. The standard coupling
+set Γ(ρ, σ) and its fixed-cost value TC (ρ, σ) are as in (3) and (4).
+    Let F be the SWAP operator on H ⊗ H, defined by F (x ⊗ y) = y ⊗ x, and write
+
+                                                                                1−F
+                       Hsym := Sym2 (H),        Hasym := ∧2 H,         P− :=          .           (13)
+                                                                                 2
+For |x⟩, |y⟩ ∈ H, write
+                                                |x⟩ ⊗ |y⟩ − |y⟩ ⊗ |x⟩
+                                   |x ∧ y⟩ :=            √            .                           (14)
+                                                           2
+In particular, the vectors |i ∧ j⟩ with i < j form an orthonormal basis of Hasym . Throughout,
+“semidistance” has the convention stated in the introduction: it includes nonnegativity, symmetry,
+and point separation, but not the triangle inequality.
+
+2.2   Channels and Choi-induced couplings
+Following De Palma and Trevisan [DPT21], we regard a quantum channel as the quantum analogue
+of the stochastic map associated with a classical transport plan. For states ρ, σ ∈ D(H), let
+
+           M(ρ, σ) := {E : L(supp ρ) → L(H) : E is a quantum channel and E(ρ) = σ} .              (15)
+
+The restriction of the input space to supp ρ is essential for the correspondence below to be one-to-
+one when ρ is not full rank.
+   To pass from a transport plan to a bipartite state, let
+                                                      d
+                                                      X
+                                             |Ω⟩ :=         |ii⟩
+                                                      i=1
+
+be the unnormalized maximally entangled vector and define the canonical purification
+                                                         √
+                           |Ωρ ⟩ := ( ρ⊤ ⊗ 1)|Ω⟩ = (1 ⊗ ρ)|Ω⟩.
+                                     p
+                                                                                                  (16)
+
+Its two marginals are
+                              TrB |Ωρ ⟩⟨Ωρ | = ρ⊤ ,       TrA |Ωρ ⟩⟨Ωρ | = ρ.
+For E ∈ M(ρ, σ), set                                            
+                                      ωρ,E := (id ⊗E) |Ωρ ⟩⟨Ωρ | .                                (17)
+
+                                                      5
+The two marginals are
+                              TrB ωρ,E = ρ⊤ ,          TrA ωρ,E = E(ρ) = σ.                        (18)
+This explains both the transpose in (5) and the inclusion ωρ,E ∈ Γ(ρ,
+                                                                 e σ).
+
+Proposition 2.1 (Channel–coupling correspondence [DPT21, Proposition 2]). The map E 7→ ωρ,E
+is a bijection from M(ρ, σ) onto Γ(ρ,
+                                 e σ).
+
+   For completeness, a transport plan on supp ρ can always be extended to a channel on all of H.
+For any such extension, let                                
+                                    J(E) := (id ⊗E) |Ω⟩⟨Ω|
+be its ordinary Choi operator, so that TrB J(E) = 1. Equation (17) can then equivalently be
+written as
+                               ωρ,E = ( ρ⊤ ⊗ 1)J(E)( ρ⊤ ⊗ 1),
+                                       p            p
+                                                                                       (19)
+which is independent of the chosen extension. This is why we call Γ(ρ,
+                                                                   e σ) the Choi-induced coupling
+set.
+     De Palma and Trevisan define the transport cost from self-adjoint observables R1 , . . . , RN [DPT21,
+Definition 5 and Eq. (32)]. After swapping the tensor factors to match our convention, set
+                                                                         N
+                                            1 − 1 ⊗ Ri ,
+                                                                         X
+                             Di := Ri⊤ ⊗                         CR :=         Di2 .
+                                                                         i=1
+
+Their cost of a channel-induced coupling ω is then
+                                            N
+                                            X
+                                CR (ω) :=          Tr(Di ωDi ) = Tr(CR ω).
+                                             i=1
+
+Proposition 2.1 therefore identifies optimization over transport channels with
+
+                                  min      CR (ωρ,E ) =     min Tr(CR ω).
+                                E∈M(ρ,σ)                   ω∈Γ(ρ,σ)
+                                                             e
+
+
+We instead allow any Hermitian cost C and use TeC from (9).
+
+
+3     Fixed-cost no-go for standard couplings
+The proof of Theorem 1.1 first reduces an arbitrary cost whose optimal value is a semidistance to
+three positive weights on a qutrit, then solves the resulting optimization for diagonal states.
+
+3.1   Structural reduction of admissible costs
+For simplicity, we use the following definition.
+
+Definition 3.1 (Admissible cost). We call a Hermitian cost C on H ⊗ H admissible if TC is a
+semidistance on D(H).
+
+    In [CEFŻ23], they give a characterization for admissible cost operators, which we recall as
+follows.
+
+
+
+                                                       6
+Theorem 3.1 (Admissible-cost characterization [CEFŻ23, Theorem 6.3]). A Hermitian cost C is
+admissible if and only if
+                                C ⪰ 0,      ker C = Hsym .                              (20)
+
+    In particular, an admissible cost vanishes on the entire symmetric subspace and is positive
+definite on the antisymmetric subspace. This is stronger than requiring zero expectation only on
+pure tensors |ψ⟩ ⊗ |ψ⟩.
+
+Lemma 3.2 (Restriction to a common support). Let ρ and σ be supported on K ⊆ H, and let PK
+be the orthogonal projection onto K. Define the compression of C to K ⊗ K by
+
+                                     CK := (PK ⊗ PK )C(PK ⊗ PK ),
+
+viewed as an operator on K ⊗ K. Then
+
+                                         TC (ρ, σ) = TCK (ρ, σ).
+
+If C is admissible on H, then CK is admissible on K.
+
+Proof. Set QK := 1 − PK and let ω ∈ Γ(ρ, σ). Since ρ is supported on K,
+
+                       Tr (QK ⊗ 1)ω = Tr QK TrB ω = Tr(QK ρ) = 0.
+                                                      
+
+
+Positivity of ω then gives
+
+                             0 = Tr ω 1/2 (QK ⊗ 1)ω 1/2 = (QK ⊗ 1)ω 1/2 2 ,
+                                                                       2
+
+
+and hence (QK ⊗ 1)ω = 0; taking adjoints also gives ω(QK ⊗ 1) = 0. Applying the same argument
+to the second marginal gives the corresponding two identities with 1 ⊗ QK . Therefore
+
+                                      ω = (PK ⊗ PK )ω(PK ⊗ PK ),
+
+so every feasible coupling is supported on K ⊗ K. By cyclicity of the trace,
+
+                                          Tr(Cω) = Tr(CK ω).
+
+Taking the minimum over Γ(ρ, σ) proves the cost identity.
+   If C is admissible, then (20) holds. Since ⟨x, CK x⟩ = ⟨x, Cx⟩ for every x ∈ K ⊗ K, we have
+CK ⪰ 0 and
+                  ker CK = (K ⊗ K) ∩ ker C = (K ⊗ K) ∩ Sym2 (H) = Sym2 (K).
+Theorem 3.1 now implies that CK is admissible on K.
+
+   The three-dimensional antisymmetric representation permits a further normal-form reduction
+that is special to qutrits.
+
+Lemma 3.3 (Qutrit antisymmetric normal form). Let K ∼   = C3 , and let C ⪰ 0 satisfy ker C =
+   2
+Sym (K). There exist a unitary U on K and positive numbers a, b, c such that
+
+               (U ⊗ U )† C(U ⊗ U ) = a|1 ∧ 2⟩⟨1 ∧ 2| + b|1 ∧ 3⟩⟨1 ∧ 3| + c|2 ∧ 3⟩⟨2 ∧ 3|.   (21)
+
+After a permutation of the basis, one may additionally impose b = min{a, b, c}.
+
+
+                                                   7
+Proof. Since C is self-adjoint,
+                                          ran C = (ker C)⊥ = ∧2 K.
+Thus C vanishes on Sym2 (K) and restricts to a positive-definite operator on ∧2 K. The spectral
+theorem therefore provides positive numbers λ1 , λ2 , λ3 and an orthonormal basis |ϕ1 ⟩, |ϕ2 ⟩, |ϕ3 ⟩ of
+∧2 K such that
+                                           X3
+                                       C=       λi |ϕi ⟩⟨ϕi |.
+                                                    i=1
+
+   Define J : K → ∧2 K on the fixed basis by
+
+                        J|1⟩ = |2 ∧ 3⟩,        J|2⟩ = −|1 ∧ 3⟩,              J|3⟩ = |1 ∧ 2⟩,
+
+and extend it conjugate-linearly, meaning that
+
+                                        J(αx + βy) = αJx + βJy.
+
+The vectors |2 ∧ 3⟩, −|1 ∧ 3⟩, and |1 ∧ 2⟩ form an orthonormal basis of ∧2 K. Thus J is bijective
+and antiunitary: for all x, y ∈ K,
+
+                                   ⟨Jx, Jy⟩ = ⟨x, y⟩,             ∥Jx∥ = ∥x∥.
+
+Set |ui ⟩ := J −1 |ϕi ⟩. Since J −1 is also antiunitary, |u1 ⟩, |u2 ⟩, |u3 ⟩ form an orthonormal basis of K.
+Let U be the unitary determined by U |i⟩ = |ui ⟩, and write
+                                                         3
+                                                         X
+                                               |ui ⟩ =         Uri |r⟩.
+                                                         r=1
+
+We now verify explicitly how J intertwines U with its second exterior power. Bilinearity of the
+wedge product gives
+
+                                |u2 ∧ u3 ⟩ = (U22 U33 − U32 U23 )|2 ∧ 3⟩
+                                               + (U12 U33 − U32 U13 )|1 ∧ 3⟩
+                                               + (U12 U23 − U22 U13 )|1 ∧ 2⟩.
+
+In terms of the matrix cofactors, the three coefficients on the right-hand side are, respectively,
+
+                                cof 11 (U ),      − cof 21 (U ),          cof 31 (U ).
+
+The adjugate identity and unitarity of U imply
+
+                               cof r1 (U ) = (det U )(U −1 )1r = (det U )Ur1 .
+
+Consequently,
+                                                                           
+              |u2 ∧ u3 ⟩ = (det U ) U11 |2 ∧ 3⟩ − U21 |1 ∧ 3⟩ + U31 |1 ∧ 2⟩ = (det U )J|u1 ⟩.
+
+The two cyclic analogues are
+
+                       |u3 ∧ u1 ⟩ = (det U )J|u2 ⟩,            |u1 ∧ u2 ⟩ = (det U )J|u3 ⟩.
+
+
+
+                                                          8
+Since J|ui ⟩ = |ϕi ⟩ and |u3 ∧ u1 ⟩ = −|u1 ∧ u3 ⟩, we obtain
+
+      |ϕ1 ⟩ = (det U )−1 |u2 ∧ u3 ⟩,     |ϕ2 ⟩ = −(det U )−1 |u1 ∧ u3 ⟩,         |ϕ3 ⟩ = (det U )−1 |u1 ∧ u2 ⟩.
+
+Because |det U | = 1, the phase factors disappear upon passing to rank-one projectors. Substituting
+into the spectral decomposition of C yields
+
+                 C = λ1 |u2 ∧ u3 ⟩⟨u2 ∧ u3 | + λ2 |u1 ∧ u3 ⟩⟨u1 ∧ u3 | + λ3 |u1 ∧ u2 ⟩⟨u1 ∧ u2 |.
+
+On the other hand, the definition of the wedge product gives
+
+                                         (U ⊗ U )|i ∧ j⟩ = |ui ∧ uj ⟩.
+
+Conjugating the preceding spectral decomposition by U ⊗ U therefore gives
+
+               (U ⊗ U )† C(U ⊗ U ) = λ3 |1 ∧ 2⟩⟨1 ∧ 2| + λ2 |1 ∧ 3⟩⟨1 ∧ 3| + λ1 |2 ∧ 3⟩⟨2 ∧ 3|.
+
+Thus (21) holds with (a, b, c) = (λ3 , λ2 , λ1 ). Finally, a permutation of the one-particle basis induces
+the corresponding permutation of the three unordered pairs {1, 2}, {1, 3}, {2, 3}. We may therefore
+send whichever pair carries the smallest coefficient to {1, 3}, which gives b = min{a, b, c}.
+
+3.2     Exact reduction for diagonal states
+For probability vectors p, q ∈ Rn+ , define their classical coupling polytope by
+                                                                                
+                                                       X              X         
+                   Γcl (p, q) := γ = (γij )ni,j=1 ≥ 0 :     γij = pi ,   γij = qj .                               (22)
+                                                                                
+                                                             j               i
+
+Consider a cost that is diagonal in the antisymmetric basis,
+                                      X
+                             Cc :=         cij |i ∧ j⟩⟨i ∧ j|,           cij ≥ 0.                                 (23)
+                                        1≤i<j≤n
+
+The following is the fixed-cost specialization of Miller’s general diagonal-state formula.
+Lemma 3.4 (Diagonal-state reduction [Mil26, Proposition 1]). For Cc as in (23),
+                                                   1             X     √      √ 2
+                          TCc (diag p, diag q) =       min         cij   γij − γji .                              (24)
+                                                   2 γ∈Γcl (p,q)
+                                                                 i<j
+
+Proof. For an arbitrary quantum coupling ω, define its diagonal-unitary twirl by
+                         Z
+                            (Uθ ⊗ Uθ )ω(Uθ† ⊗ Uθ† ) dµ(θ),
+                                                                    X
+                T (ω) :=                                     Uθ :=     eiθk |k⟩⟨k|.
+                               Tn                                                   k
+
+Here Tn = [0, 2π)n and dµ(θ) = (2π)−n dθ1 · · · dθn is normalized Haar measure; equivalently,
+θ1 , . . . , θn are independent and uniformly distributed on [0, 2π). Since the marginals are diago-
+nal and Cc commutes with Uθ ⊗ Uθ , T (ω) has the same marginals and the same expectation of
+Cc as ω. The averaged state has a scalar block on each |ii⟩ and, for every i < j, a block on
+span{|ij⟩, |ji⟩} of the form                  
+                                       γij zij               √
+                                                 ,   |zij | ≤ γij γji .
+                                       zij γji
+
+                                                        9
+Its diagonal entries form a classical coupling γ ∈ Γcl (p, q). The contribution of the (i, j) block is
+                              cij                      cij √       √ 2
+                                  γij + γji − 2 Re zij ≥       γij − γji .
+                               2                         2
+                                                       √
+Equality is attained in every block by taking zij = γij γji . These blocks, together with the diagonal
+entries γii , form a positive coupling with the required marginals. Minimizing over γ proves (24).
+
+    The variables γij are classical, but the square-root terms in (24) come from coherent off-diagonal
+entries of the quantum coupling. Commuting marginals therefore do not reduce this optimization
+to a classical linear transport problem.
+
+3.3    A uniform weighted qutrit counterexample
+For positive a, b, c, let
+                        Ca,b,c := a|1 ∧ 2⟩⟨1 ∧ 2| + b|1 ∧ 3⟩⟨1 ∧ 3| + c|2 ∧ 3⟩⟨2 ∧ 3|.           (25)
+After relabeling the qutrit basis, assume that
+                                           0 < b ≤ a,       b ≤ c.                               (26)
+Let                                              
+                                            3 1
+                                       p=    , , 0 , ρ = diag p,
+                                            4 4
+                                                 
+                                            1 5 1
+                                       q=    , ,    , σ = diag q,                                (27)
+                                            4 8 8
+                                                 
+                                            1 5 1
+                                       r=    , ,    , τ = diag r.
+                                            8 8 4
+This is the same commuting triple for every choice of the three weights.
+Lemma 3.5. For A ≥ B > 0, the function
+                                                  √          √      2
+                                    gA,B (λ) :=        A−λ−       B−λ
+
+is nondecreasing for 0 ≤ λ < B.
+Proof. Direct differentiation gives
+                                 ′                      A + B − 2λ
+                                gA,B (λ) = −2 + p                       ≥ 0,
+                                                       (A − λ)(B − λ)
+where the last inequality is the arithmetic–geometric mean inequality.
+
+Proposition 3.6 (Uniform weighted qutrit counterexample). Under (26), the three states in (27)
+satisfy
+                                                          √
+                                                    (7 − 2 10)a + b
+                                  TCa,b,c (ρ, σ) =                  ,                     (28)
+                                                            16
+                                                    a + 2b
+                                  TCa,b,c (ρ, τ ) =        ,                              (29)
+                                                      16 √
+                                                    (3 − 2 2)b
+                                  TCa,b,c (σ, τ ) =            .                          (30)
+                                                        16
+                p
+Both TCa,b,c and TCa,b,c strictly violate the triangle inequality on this triple.
+
+                                                       10
+Proof. We apply Lemma 3.4 to each pair.
+The pair (ρ, σ). Every classical coupling of p and q has the form
+                                                  5           1
+                                                                 
+                                             λ    8 −λ+µ 8 −µ
+                              γ(λ, µ) =  14 − λ    λ−µ         µ ,                                (31)
+                                             0        0         0
+
+where                                                                                 
+                                      1                             1
+                                  0≤λ≤ ,             0 ≤ µ ≤ min λ,                        .
+                                      4                             8
+The objective in (24) is
+                                r                   r          !2                             
+                                                                                          
+                         1          5                   1                          1
+                           a           −λ+µ−               −λ        +b               − µ + cµ .
+                         2           8                   4                          8
+
+For fixed λ, the squared difference is nondecreasing in µ, while (c − b)µ ≥ 0 by (26). The minimum
+occurs at µ = 0. Lemma 3.5 then shows that the remaining expression is minimized at λ = 0. An
+optimal coupling is
+                                                 0 58 18
+                                                         
+
+                                         γρσ =  14 0 0  .                                     (32)
+                                                 0 0 0
+Substitution gives (28), since
+                                        r          r !2        √
+                                             5      1     7 − 2 10
+                                               −        =          .
+                                             8      4         8
+
+The pair (ρ, τ ). Every classical coupling of p and r has the form
+                                                   1           1
+                                                                  
+                                              λ    2 −λ+µ 4 −µ
+                               γ(λ, µ) =  18 − λ 18 + λ − µ     µ ,                               (33)
+                                              0        0         0
+
+where
+                                          1                                 1
+                                      0≤λ≤ ,               0≤µ≤               + λ.
+                                          8                                 8
+The objective is                                                                              
+                                 r                   r          !2                        
+                         1          1                   1                          1
+                           a           −λ+µ−               −λ        +b               − µ + cµ .
+                         2           2                   8                          4
+
+The same argument first gives µ = 0 and then λ = 0. Hence
+
+                                              0 12 14
+                                                     
+
+                                      γρτ =  18 81 0                                              (34)
+                                              0 0 0
+
+is optimal, and substitution gives (29).
+The pair (σ, τ ). For γ ∈ Γcl (q, r), set
+                                                     √           √         2
+                                            xij :=       γij −       γji        .
+
+                                                         11
+Since b ≤ a, c,
+                            1                         b
+                              (ax12 + bx13 + cx23 ) ≥ (x12 + x13 + x23 ).                      (35)
+                            2                        2
+To bound the last expression, define the vectors formed from the square roots of the first row and
+the first column of γ:
+                             √     √     √                 √     √     √
+                       u := ( γ11 , γ12 , γ13 ) ,    v := ( γ11 , γ21 , γ31 ) .
+By the definition of xij ,
+                                            ∥u − v∥22 = x12 + x13 .
+Since the row sums of γ are q and its column sums are r,
+                                  3                                    3
+                                  X               1                    X               1
+                        ∥u∥22 =         γ1j = q1 = ,         ∥v∥22 =         γj1 = r1 = .
+                                                  4                                    8
+                                  j=1                                  j=1
+
+The reverse triangle inequality therefore gives
+                                  x12 + x13 = ∥u − v∥22
+                                             ≥ (∥u∥2 − ∥v∥2 )2
+                                                 r     r !2          √
+                                                   1     1       3−2 2
+                                             =       −         =       .
+                                                   4     8         8
+
+Since x23 ≥ 0, (35) now yields
+                                                               √
+                              1                         b(3 − 2 2)
+                                (ax12 + bx13 + cx23 ) ≥            .
+                              2                             16
+This lower bound is attained by
+                                               0 0 41
+                                                       
+
+                                       γστ =  0 58 0  .                                     (36)
+                                               1
+                                               8 0 0
+This proves (30).
+   It remains to verify the two strict violations. From (28)–(30),
+                          TCa,b,c (ρ, τ ) − TCa,b,c (ρ, σ) − TCa,b,c (σ, τ )
+                                               √                 √
+                                             (2 10 − 6)a + (2 2 − 2)b
+                                          =                                  > 0.             (37)
+                                                            16
+For the square roots, the desired inequality is equivalent to
+                      √            √              √         √                   √
+                        a + 2b > κa + b + ( 2 − 1) b,                 κ := 7 − 2 10.          (38)
+Normalize by b > 0, set s = a/b, and define
+                                                √   √
+                                         s + 2 − κs + 1.
+                                          h(s) :=
+              √                           √
+We have h(0) = 2 − 1. Moreover, 0 < κ < 1/ 2 and
+                                                1       κ
+                                     h′ (s) = √     − √       > 0,
+                                             2 s + 2 2 κs + 1
+because
+                             κs + 1 − κ2 (s + 2) = κ(1 − κ)s + 1 − 2κ2 > 0.
+Thus h(s) > h(0) for every s > 0, which is (38).
+
+                                                        12
+Proof of Theorem 1.1. By Theorem 3.1, the cost C satisfies (20). Choose any three-dimensional
+subspace K ⊆ Cd . Lemma 3.2 shows that the compressed cost CK is admissible on K and computes
+all costs between states supported there.
+    Apply Lemma 3.3 to CK . In the resulting basis it has the form Ca,b,c with 0 < b ≤ a, c.
+Embed the three states in (27) into Cd by extending them by zero on K⊥ . They remain mutually
+commuting, and Proposition 3.6 gives (6) and (7).
+
+Remark 3.1 (The qubit exception). When d = 2, the antisymmetric subspace is one-dimensional,
+so Theorem
+      √    3.1 forces every admissible cost to have the form C = λP− with λ > 0. In this case
+WC = λ WP− , and WC is a metric on the Bloch ball [FECŻ22, CEFŻ23]. The dimension threshold
+in Theorem 1.1 is therefore sharp.
+
+
+4    Stabilization does not restore the triangle inequality
+For the SWAP cost, write
+                                                                           p
+                           T (ρ, σ) := TP− (ρ, σ),           W (ρ, σ) :=    T (ρ, σ).
+
+Müller-Hermes introduced the stabilized quantities
+                                                                                p
+                     Ts (ρ, σ) := inf T (ρ ⊗ γ, σ ⊗ γ),          Ws (ρ, σ) :=    Ts (ρ, σ),       (39)
+                                  γ
+
+where the infimum ranges over finite-dimensional ancillary states γ [MH22]. Stabilization improves
+the monotonicity properties of the SWAP cost, but it leaves the commuting obstruction unchanged.
+
+Proposition 4.1 (Stabilization is trivial on commuting pairs). If ρ and σ commute, then for every
+ancillary state γ,
+                                    T (ρ ⊗ γ, σ ⊗ γ) = T (ρ, σ).                             (40)
+Consequently,
+                             Ts (ρ, σ) = T (ρ, σ),           Ws (ρ, σ) = W (ρ, σ).
+
+Proof. The SWAP cost is invariant under applying the same unitary to both marginals. We may
+therefore diagonalize ρ and σ simultaneously and diagonalize γ independently. Write the resulting
+states as diag p, diag q, and diag r.
+    For a classical coupling π, define
+                                               X√
+                                       Φ(π) :=      πij πji .                                (41)
+                                                       i,j
+
+The unweighted case of Lemma 3.4 is equivalent to
+                                                                
+                                               1
+                          T (diag p, diag q) =    1 − max Φ(π) .                                  (42)
+                                               2     π∈Γcl (p,q)
+
+    Let Π be a coupling of p⊗r and q ⊗r, with indices (i, a) and (j, b), and coarse-grain the ancillary
+indices by                                     X
+                                       π ij :=   Π(i,a),(j,b) .
+                                                     a,b
+
+
+
+
+                                                       13
+Then π ∈ Γcl (p, q), and the Cauchy–Schwarz inequality gives
+                                        X q
+                                Φ(Π) =         Π(i,a),(j,b) Π(j,b),(i,a)
+                                               i,j,a,b
+                                               Xp
+                                           ≤     π ij π ji = Φ(π).
+                                                i,j
+
+Conversely, any π ∈ Γcl (p, q) lifts to
+
+                                          Π(i,a),(j,b) := πij ra 1{a=b} ,
+
+which is a coupling of p ⊗ r and q ⊗ r and satisfies Φ(Π) = Φ(π). The maxima in (42) are therefore
+equal before and after tensoring with r, proving (40).
+
+Proof of Corollary 1.2. The three states in (27) commute, so Proposition 4.1 applies. Setting a =
+b = c = 1 in (28)–(30) gives
+                                                        √
+                                                    4 − 10
+                                       Ts (ρ, σ) =         ,
+                                                       8
+                                                     3
+                                       Ts (ρ, τ ) = ,
+                                                    16 √
+                                                    3−2 2
+                                       Ts (σ, τ ) =        .
+                                                       16
+The square-root violation in Proposition 3.6 now proves the claim. This transfers Miller’s SWAP-
+cost counterexample [Mil26] to the stabilized cost.
+
+
+5    Fixed-cost no-go for channel-induced couplings
+The channel-induced formulation fails at an earlier metric axiom. The first step identifies global
+nonnegativity of the optimized cost with positivity of the cost operator.
+
+Proposition 5.1 (Global nonnegativity). The inequality
+
+                                    TeC (ρ, σ) ≥ 0       for all states ρ, σ
+
+holds if and only if C ⪰ 0.
+
+Proof. If C ⪰ 0, every feasible expectation is nonnegative. Conversely, let ω be an arbitrary
+bipartite state and set
+                                 ρ = (TrB ω)⊤ ,   σ = TrA ω.
+Then ω ∈ Γ(ρ,
+          e σ). Global nonnegativity of the minimum implies Tr(Cω) ≥ 0. Since this holds for
+every bipartite state, C ⪰ 0.
+
+    The next linear-algebra fact will turn zero self-cost on pure states into a kernel condition on
+the whole bipartite space. Here |ψ⟩ denotes the entrywise conjugate of |ψ⟩ in the fixed basis as
+introduced in Section 2.
+
+Lemma 5.2 (Spanning by conjugate-diagonal tensors).
+                                
+                          spanC |ψ⟩ ⊗ |ψ⟩ : ψ ∈ H = H ⊗ H.                                    (43)
+
+                                                         14
+Proof. Identify the first factor with the conjugate Hilbert space, and write
+
+                                            Q(z) := |z⟩ ⊗ |z⟩.
+
+For arbitrary x, y ∈ H, conjugation is conjugate-linear, so
+
+                                        |x + ik y⟩ = |x⟩ + (−i)k |y⟩.
+
+Consequently,
+
+                                Q(x + ik y) = |x⟩ ⊗ |x⟩ + ik |x⟩ ⊗ |y⟩
+                                              + (−i)k |y⟩ ⊗ |x⟩ + |y⟩ ⊗ |y⟩.
+
+Using
+                        3
+                        X                    3
+                                             X                      3
+                                                                    X
+                              (−i)k = 0,           (−i)k ik = 4,          (−1)k = 0,
+                        k=0                  k=0                    k=0
+
+we obtain the polarization identity
+                                                     3
+                                                  1X
+                                    |x⟩ ⊗ |y⟩ =     (−i)k Q(x + ik y).                             (44)
+                                                  4
+                                                    k=0
+
+Now let {ei }di=1 be a basis of H. The tensors |ei ⟩ ⊗ |ej ⟩ form a basis of H ⊗ H, and (44) expresses
+each of them as a linear combination of vectors of the form Q(ψ). Hence the latter vectors span
+H ⊗ H.
+
+Proposition 5.3 (Zero self-cost). Suppose C ⪰ 0 and TeC (ρ, ρ) = 0 for every state ρ. Then C = 0.
+
+Proof. Take ρ = |ψ⟩⟨ψ| pure. A bipartite state with a pure marginal is a product with that marginal.
+Hence the only element of Γ(ρ,
+                          e ρ) is
+                                          |ψ ⊗ ψ⟩⟨ψ ⊗ ψ|.
+Zero self-cost gives
+                                           ⟨ψ ⊗ ψ|C|ψ ⊗ ψ⟩ = 0.
+Positivity of C implies C|ψ ⊗ ψ⟩ = 0 for every ψ. These vectors span H ⊗ H by Lemma 5.2, so
+C = 0.
+
+Proof of Theorem 1.3. Proposition 5.1 gives C ⪰ 0. Proposition 5.3 then gives C = 0. For d ≥
+2, the resulting optimized cost vanishes for every pair of states and therefore cannot separate
+points.
+
+Comparison. The two formulations fail for different reasons. In the standard formulation, every
+admissible cost is positive definite on the antisymmetric subspace, yet violates the triangle inequality
+when d ≥ 3. In the channel-induced formulation, global nonnegativity and zero self-cost force C = 0,
+already ruling out point separation when d ≥ 2.
+
+
+
+
+                                                      15
+Acknowledgements
+The authors used Large Language Models as AI-assisted research and writing tools throughout
+the preparation of this manuscript. The tool was used to help brainstorm ideas and explore proof
+strategies. Portions of the manuscript text were redrafted or modified with AI assistance across all
+sections. All final mathematical claims, algorithms, proofs, citations, and wording were reviewed,
+edited, and validated by the authors. The authors assume responsibility for all content of the paper.
+    Minbo Gao would like to thank Li Zhou for helpful discussions. Tianshi Yu would like to
+thank Lihong Zhi for bringing the problem studied in this paper to his attention and for helpful
+discussions.
+
+
+References
+[AGS08]     Luigi Ambrosio, Nicola Gigli, and Giuseppe Savaré. Gradient Flows: In Metric Spaces and
+            in the Space of Probability Measures. Birkhäuser, Basel, 2 edition, 2008. doi:10.1007/
+            978-3-7643-8722-8. 2
+[BGK+ 26] Gilles Barthe, Minbo Gao, Jam Kabeer Ali Khan, Matthijs Muis, Ivan Renison, Keiya Sak-
+          abe, Michael Walter, Yingte Xu, Tianshi Yu, and Li Zhou. Complete Relational Logic
+          for Infinite-Dimensional Quantum Programs with Unbounded Assertions. In Claudia Fag-
+          gian and Joost-Pieter Katoen, editors, 41st Annual Symposium on Logic in Computer Sci-
+          ence (LICS 2026), volume 380 of Leibniz International Proceedings in Informatics (LIPIcs),
+          pages 15:1–15:28, Dagstuhl, Germany, 2026. Schloss Dagstuhl – Leibniz-Zentrum für Informatik.
+          doi:10.4230/LIPIcs.LICS.2026.15. 2
+[BGWZ25] Gilles Barthe, Minbo Gao, Theo Wang, and Li Zhou. Complete Quantum Relational Hoare
+         Logics from Optimal Transport Duality. In 2025 40th Annual ACM/IEEE Symposium on Logic
+         in Computer Science (LICS), pages 884–925, 2025. doi:10.1109/LICS65433.2025.00072. 2
+[CEFŻ23]   Sam Cole, Michal Eckstein, Shmuel Friedland, and Karol Życzkowski. On Quantum Opti-
+            mal Transport. Mathematical Physics, Analysis and Geometry, 26:14, 2023. doi:10.1007/
+            s11040-023-09456-7. 2, 3, 4, 6, 7, 13
+[CYL+ 19] Shouvanik Chakrabarti, Huang Yiming, Tongyang Li, Soheil Feizi, and Xiaodi Wu. Quantum
+          wasserstein generative adversarial networks. In H. Wallach, H. Larochelle, A. Beygelzimer,
+          F. d’Alché Buc, E. Fox, and R. Garnett, editors, Advances in neural information processing
+          systems, volume 32. Curran Associates, Inc., 2019. URL: https://proceedings.neurips.cc/
+          paper_files/paper/2019/file/f35fd567065af297ae65b621e0a21ae9-Paper.pdf. 2
+[DPT21]     Giacomo De Palma and Dario Trevisan. Quantum Optimal Transport with Quantum Channels.
+            Annales Henri Poincaré, 22(10):3199–3234, October 2021. doi:10.1007/s00023-021-01042-3.
+            5, 6
+[FECŻ22]   Shmuel Friedland, Michal Eckstein, Sam Cole, and Karol Życzkowski. Quantum Monge–
+            Kantorovich Problem and Transport Distance between Density Matrices. Physical Review Let-
+            ters, 129:110402, 2022. doi:10.1103/PhysRevLett.129.110402. 1, 2, 4, 13
+[GMP16]     François Golse, Clément Mouhot, and Thierry Paul. On the mean field and classical limits of
+            quantum mechanics. Communications in Mathematical Physics, 343(1):165–205, January 2016.
+            doi:10.1007/s00220-015-2485-7. 2
+[Kan58]     L. Kantorovitch. On the translocation of masses. Management Science, 5(1):1–4, October 1958.
+            doi:10.1287/mnsc.5.1.1. 1
+[MH22]      Alexander Müller-Hermes. On the Monotonicity of a Quantum Optimal Transport Cost, 2022.
+            arXiv:2211.11713. 3, 13
+
+
+
+                                                   16
+[Mil26]   Tomasz Miller. Comment on ’Quantum Monge-Kantorovich Problem and Transport Distance
+          between Density Matrices’, July 2026. arXiv:2607.07764. 1, 2, 4, 9, 14
+[PC19]    Gabriel Peyré and Marco Cuturi. Computational optimal transport: With applications to data
+          science. Foundations and Trends in Machine Learning, 11(5–6):355–607, February 2019. doi:
+          10.1561/2200000073. 2
+[PZ19]    Victor M. Panaretos and Yoav Zemel. Statistical Aspects of Wasserstein Distances. An-
+          nual Review of Statistics and Its Application, 6(1):405–431, March 2019. doi:10.1146/
+          annurev-statistics-030718-104938. 2
+[Shi24]   Xian Shi. Coherence quantifier based on the quantum optimal transport cost. Physical Review
+          A, 109(5):052443, May 2024. doi:10.1103/PhysRevA.109.052443. 2
+[Vil09]   Cédric Villani. Optimal Transport: Old and New. Springer, Berlin, Heidelberg, 2009. doi:
+          10.1007/978-3-540-71050-9. 1, 2, 4
+[ZYYY22] Li Zhou, Nengkun Yu, Shenggang Ying, and Mingsheng Ying. Quantum earth mover’s distance,
+         a no-go quantum Kantorovich–Rubinstein theorem, and quantum marginal problem. Journal of
+         Mathematical Physics, 63(10):102201, October 2022. doi:10.1063/5.0068344. 5
+
+
+
+
+                                                17
+

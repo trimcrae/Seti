@@ -1,0 +1,1641 @@
+                                               Online Shadow Tomography Matching the Classical Bounds
+                                                     Sitan Chen *             Ryan O’Donnell †                 Angelos Pelecanos ‡          John Wright §
+                                                                                                August 10, 2026
+
+
+                                                                                                       Abstract
+                                                   In Online Shadow Tomography, we are given copies of an unknown d-dimensional quantum state ρ, an adversary
+                                               (adaptively) proposes a sequence of bounded observables A(1) , . . . , A(m) , and after each A(t) is given we must
+                                               estimate Tr(A(t) ρ) to within ±ε. This is the direct quantum generalization of the classical problem of Adaptive Data
+                                               Analysis. Prior results for online Shadow Tomography were suboptimal in all three parameters m, d, ε, lagging behind
+                                               the best known and classical rates [BNS+ 21], for which there is some evidence of optimality [NSS+ 18, LT25]. In
+arXiv:2607.29686v2 [quant-ph] 6 Aug 2026
+
+
+
+
+                                               this work, we finally close this gap, giving a pair of algorithms achieving sample complexities of
+                                                                                               √                       √ 
+                                                                                        log(m) log d                          m
+                                                                                    O                          and     O          ,
+                                                                                               ε3                            ε2
+
+                                               matching the classical rates. The bound on the left is the first to achieve o(log2 m)-dependence together with
+                                               poly(log(d)/ε); moreover, it improves all three exponents even in the Offline Shadow Tomography setting. The
+                                               bound on the right is known to be optimal among bounds independent of d, and improves the best prior result by a
+                                               √
+                                                 m log m factor.
+                                                  The key to our proof is a new framework for quantifying post-measurement damage, based on the quantum
+                                               Efron–Stein decomposition.
+
+
+
+
+                                           * SEAS, Harvard University. Email: sitan@seas.harvard.edu.
+                                           † Computer Science Department, Carnegie Mellon University. Email: odonnell@cs.cmu.edu.
+                                           ‡ UC Berkeley. Email: apelecan@berkeley.edu.
+                                           § UC Berkeley. Email: jswright@berkeley.edu.
+
+
+
+
+                                                                                                           1
+Contents
+1   Introduction                                                                                                      3
+    1.1 Related work . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    4
+
+2   Technical overview                                                                                                5
+    2.1 Basic terminology . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   5
+    2.2 Excitation decomposition . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    5
+    2.3 Charging argument . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     6
+    2.4 Controlling energy increase under many observables . . . . . . . . . . . . . . . . . . . . . . . . . .        6
+    2.5 Controlling energy increase under few observables . . . . . . . . . . . . . . . . . . . . . . . . . . .       7
+
+3   Excitation decomposition                                                                                          7
+    3.1 Lifted observables and energy . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     8
+
+4   Logarithmic-in-m rate                                                                                             10
+    4.1 Description of protocol . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   10
+    4.2 Bad outcomes are unlikely . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     12
+    4.3 Per-step damage control: Proof of Corollary 4.6 . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     14
+
+5   Dimension-free rate                                                                                               17
+    5.1 Description of protocol . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   18
+    5.2 Bad outcomes are unlikely . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     18
+    5.3 Per-step damage control: Proof of Lemma 5.3 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       20
+
+A Optimal Threshold Search by information theory methods                                                              24
+
+
+
+
+                                                           2
+1    Introduction
+In this work we revisit the well-studied problem of Shadow Tomography [Aar16, Aar20].
+
+Definition 1.1 (Shadow Tomography). Let ρ be an unknown state on a d-dimensional Hilbert space H. In Online
+Shadow Tomography, we are given n copies of ρ, and subsequently receive a sequence of adaptively chosen observ-
+ables 0 ⪯ A(1) , . . . , A(m) ⪯ 1. After receiving A(t) , we must respond with an answer µ
+                                                                                         b(t) satisfying
+
+                                     µ(t) − µ(t) | ≤ ε ,
+                                    |b                       for      µ(t) ≜ Tr(A(t) ρ)
+
+for some error parameter ε > 0, and the adversary selects the next observable A(t+1) based on the transcript Tt =
+{(A(j) , µ
+         b(j) )}j≤t of the interaction thus far. Offline Shadow Tomography is the special case where the A(t) ’s are all
+fixed ahead of time.
+
+In the special case where ρ and all A(t) ’s are diagonal matrices, this reduces to the classical question of Adaptive Data
+Analysis, for which the best known upper bounds on the sample complexity n scale as the minimum of
+                                                      log(m)√log d √m 
+                                         n = O min                      , 2       ,                                    (1)
+                                                              ε3           ε
+and there is evidence that this is optimal [NSS+ 18, LT25]. In contrast, in the quantum setting, the best known upper
+bounds [BO24, BB24] to hold in all parameter regimes scale as
+                                                        log2 (m) log d m 
+                                               n=O                      , 2 .
+                                                               ε4        ε
+                                                                             √
+In the offline case, recent work [Sin25] improved the latter bound to O( m log(m)/ε2 ).
+    This state of affairs is unsatisfying on several counts. In the online setting, if d is exponentially large in m, then the
+best known rate is the trivial estimator. Even in the offline setting, when the number of observables m is exponentially
+large in the dimension d, the best known rate is sub-optimal in every parameter. In this work, we finally resolve these
+issues, closing a long-standing gap between the classical and quantum rates.
+
+Theorem 1.2. There is a protocol for Online Shadow Tomography of d-dimensional states that, using n copies of the
+unknown state for
+                                  √K log(m + K) 
+                          n=O                              for     K = Θ(log(d)/ε2 ) ,
+                                          ε2
+correctly answers m adaptively chosen observables to error ε with probability at least 9/10.
+
+Theorem 1.3. There is a protocol for Online Shadow Tomography of d-dimensional states that, using n copies of the
+unknown state for
+                                                           √m 
+                                                    n=O          ,
+                                                             ε2
+correctly answers m adaptively chosen observables to error ε with probability at least 9/10. In particular, the sample
+complexity of this protocol is independent of the dimension d.
+
+Elementary casework shows that the minimum of these two rates is equal to the classical rate in Eq. (1) up to constants.
+   We achieve both of these results through a new method for accounting for post-measurement damage through the
+quantum Efron–Stein decomposition [Pic11, PFMO25]. Interestingly, when specialized to the classical setting, this
+appears to give new proofs for the classical rates that do not go through Differential Privacy but instead through Fourier
+analysis of functions over product spaces.
+
+
+
+
+                                                              3
+1.1    Related work
+Adaptive Data Analysis. The classical version of Online Shadow Tomography is the Adaptive Data Analysis prob-
+lem, introduced by Dwork et al. [DFH+ 15]. In this problem, we are given samples from an unknown probability
+distribution p on [d], an adversary adaptively proposes a sequence of random variables (“queries”) a(1) , . . . , a(m) :
+[d] → [0, 1], and after each a(t) is given we must output an estimate of Ep [a] to within ±ε. (For simplicity, we
+fix the allowed failure probability δ of any estimate being inaccurate to 1/3.) Using tools from Differential Privacy,
+                                        3/2     √
+Dwork et al. showed that n = O(loge         (m) log d/ε7/2 ) or n = O(log(m)
+                                                                        e          log(d)/ε4 ) samples suffice, and these
+                                  √
+were improved to just O(log(m) log d/ε ) by Bassily et al. [BNS 21] (see [CLN+ 23] for an improved dependence
+                                             3                        +
+
+on δ). These tools are closely related to the essence of Shadow Tomography: the premise of Differential Privacy is to
+perform data analysis that is as insensitive as possible to individual-level details in the dataset, which can be regarded
+as a classical analogue of the quantum notion of performing “gentle” measurements that do not damage the quantum
+state we are trying to learn about.
+     One can also seek dimension-independent bounds, meaning ones with no dependence on d. In this case, Bassily
+                              √                                    √
+et al. showed that n = O( m log m log(1/ε)/ε
+                                         p
+                                                    2
+                                                      ) or n = O( m log log m log3/2 (1/ε)/ε2 ) suffices, and Dagan–
+Kur [DK22] improved this to n = O( m log(1/ε)/ε2 ) provided ε ≥pexp(−Ω(m)).         e         Interestingly, as a byproduct
+our Theorem 1.3 appears to improve further upon this by removing the log(1/ε) factor, albeit only in the regime of
+constant failure probability.
+     Let us now mention lower bounds (all of which automatically also apply to the harder problem of online Shadow
+Tomography). Trivially, Ω(log(m)/ε2 ) is a lower bound, once d = Ω(log m). For dimension-independent results,
+                              √
+[NSS+ 18] show that n = Ω( m/ε2 ) is a lower bound provided d ≥ exp(O(m)), matching the upper bound, provided
+the algorithm is ε-accurate not only on the underlying distribution, but also on the n empirical samples. In general,
+                                            √
+Lyu–Talwar [LT25] show that Ω(log(m) log d/(ε2 log(1/ε))) is a lower bound (assuming log d ≪ m ≪ 2d and
+                                                                                         √
+ε ≫ 1/d, 1/m); they also give evidence that the known upper bound of O(log(m) log d/ε3 ) is essentially tight by
+                         √
+showing that Ω(log(m) log d/(ε3 log(1/ε))) is a lower bound for algorithms, again, which are ε-accurate not just on
+the distribution but also on the empirical samples.
+
+Shadow Tomography. The offline form of Shadow Tomography was introduced by Aaronson [Aar16] in 2016,
+and the online form first discussed by Aaronson and Rothblum [AR19]. In the online case, upper bounds of n =
+O(m log(m)/ε2 ) and n = O(d2 /ε2 ) are trivial (the last using full tomography [OW16, HHJ+ 17]). Aaronson and
+Rothblum showed that n = O(log2 (m) log2 (d)/ε8 ) suffices. This was later improved by Bădescu–O’Donnell [BO24]
+to n = log2 (m) · O(log(d)/ε4 ). The only known lower bounds for Online Shadow Tomography are the aforemen-
+tioned ones for Adaptive Data Analysis, as well as an Ω(d2 /ε2 ) lower bound that holds when m ≥ exp(O(d2 )) by
+Aaronson [Aar20].
+    In the easier setting of Offline Shadow Tomography, additional results are known. Preceding [BO24], Aaron-
+                                     4
+son [Aar20] showed that n = O(log
+                               e       (m) log(d)/ε4 ) suffices; the bound of Bădescu–O’Donnell was later obtained via
+a different method by Bostanci–Bene Watts [BB24].) In the dimension-independent setting, Sinha [Sin25] gave an effi-
+                                   √
+cient algorithm achieving n = O( m log(m)/ε2 ). Chen–Li–Liu [CLL24] obtained the optimal n = O(log(m)/ε2 ),
+but only under the assumption ε = O(1/d12 ); this assumption was weakened to ε = O(1/d) by Pelecanos–Spilecki–
+Wright [PSW26].
+    Finally, we mention that additional offline Shadow Tomography results are known for special classes of observ-
+ables [HKP20, CGY24, KGKB25, HLHP26] (the last of these is online), for special classes of states [GPS24, CG26].
+Interestingly, even when d = 2N and the observables are specialized to the set of all N -qubit Pauli operators, it was
+not known how to achieve better than quartic dependence in 1/ε, and [CGY24] proved that any such algorithm must
+use highly entangled measurements.
+
+Quantum Efron–Stein decomposition. The key technical tool in our work, the excitation decomposition (see Sec-
+tion 3), was originally introduced by Pickl [Pic11] as a simple method for deriving mean-field limits of quantum
+systems. The method has subsequently been used and extended at length in the quantum mean-field literature, see e.g.,
+[KP10, LNSS15, LnNS15, Pic15].
+    As we discuss in Remark 3.2, this decomposition is formally the dual of the quantum Efron-Stein decomposition
+recently developed by the second author and others [PFMO25] in the context of quantum state certification in non-iid
+
+
+                                                            4
+settings. To the best of our knowledge, even classically, these tools have not been used in the context of Adaptive Data
+Analysis.
+
+
+2     Technical overview
+In this section we provide a high-level description of the core ideas behind Theorems 1.2 and 1.3. For simplicity,
+throughout this overview we will assume that ρ = |ψ⟩⟨ψ| by passing to a purification. This turns out to be without loss
+of generality as our protocol never touches the purification register.
+
+2.1   Basic terminology
+Sub-normalized post-measurement
+                       p              states. Given a positive operator-valued measure (POVM) (My ) implemented
+with Kraus operators ( My ), and given a state σ, the post-measurement state upon observing outcome y is given
+    √     √
+      My σ My                                                                   p       p
+by Tr(My σ) . We often reference the sub-normalized post-measurement state My σ My rather than the post-
+measurement state, as the trace of the former encodes additional information, namely the probability of observing
+that measurement outcome. We can naturally extend this notion to a sequence of measurements: given POVMs
+    (1)          (t)
+(My ), . . . , (My ) with similarly constructed
+                                           q Krausqoperators,             q a sequence of outcomes y1 , . . . , yt ,
+                                                               q if we observe
+                                                 (t)         (1)        (1)         (t)
+then the resulting sub-normalized state is     Myt · · ·   My 1 σ     My1 · · ·   Myt , and its trace is the probability of
+observing y1 , . . . , yt .
+                                                                                                        P
+Quantum events. Given a finite-dimensional Hermitian operator A ∈ C with eigendecomposition A = λ λΠλ ,
+and given some S ⊆ R, we use 1A∈S to denote the projector to the joint span of Πλ for all λ ∈ S. For instance, we
+write 1|A−ν 1|≤ε to denote the projector to the joint span of Πλ for which |λ − ν| ≤ ε.
+
+2.2   Excitation decomposition
+The main difficulty with measuring multiple observables of a quantum state is that quantum measurement is inherently
+destructive. Prior works on Shadow Tomography have developed various ways of gently measuring the state and
+bounding the damage incurred in terms of how much information the measurement reveals. For instance, the gentle
+measurement lemma [Win99, ON02] bounds the trace distance between the original state ρ and the post-measurement
+state under a two-outcome POVM (A, 1 − A) in terms of Tr(Aρ). This bound is pervasive in this literature and in fact
+tight for worst-case observables A.
+    Our key starting point is the observation that the observables for which the gentle measurement lemma is typically
+applied in standard approaches to Shadow Tomography come with additional structure. Indeed, in all state-of-the-art
+works on this problem, the A’s in question are multi-copy observables derived by a common recipe: starting from
+some single-copy observable B, lift it to a multi-copy observable by forming
+                                       n
+                                    1X
+                             B=           Bi      for      Bi ≜ 1⊗(i−1) ⊗ B ⊗ 1⊗(n−i) ,                                 (2)
+                                    n i=1
+
+and define a spectral function A = f (B).
+    In this work, we develop a new framework for reasoning about damage specifically incurred from measuring such
+observables, inspired by a state decomposition originally introduced by Pickl [Pic11] in the context of mean-field
+limits of quantum systems and which is formally dual to the quantum Efron–Stein decomposition recently developed
+by the second author and others [PFMO25]. Specifically, given any pure state |ϕ⟩ on n registers, we can write
+                                                         Y                  Y         
+                                                              (1 − |ψ⟩⟨ψ|)i
+                             X
+                      |ϕ⟩ =      |ϕS ⟩    for    |ϕS ⟩ ≜                          |ψ⟩⟨ψ|i |ϕ⟩ .
+                            S⊆[n]                               i∈S                 i̸∈S
+
+This is an orthogonal decomposition, so that (∥|ϕS ⟩∥22 )S⊆[n] is a distribution over subsets S. Note that when |ϕ⟩ =
+|ψ⟩⊗n , this distribution places all of its mass on S = ∅. Our guiding intuition will be that the more mass this
+distribution places on large subsets, the more damaged |ϕ⟩ is relative to the original state |ψ⟩⊗n .
+
+
+                                                            5
+      More quantitatively, we associate to |ϕ⟩ an energy given by
+                                                                               n
+                                            1
+                                                                                     (1 − |ψ⟩⟨ψ|)i .
+                                                                               X
+                              E[|ϕ⟩⟨ϕ|] =     ⟨ϕ|N|ϕ⟩ ,      for         N≜
+                                            n                                  i=1
+
+In the language of bosonic systems, N is the number operator and E is the mean photon number per register. This can
+also be seen as the quantum generalization of total influence in the analysis of Boolean functions (see Remark 3.2).
+
+2.3     Charging argument
+The energy starts out at 0 for |ϕ⟩ = |ψ⟩⊗n and gives a powerful proxy for tracking damage to the system incurred by
+a sequence of measurements.
+                                                                                                                    (t)
+     In a given round of the learning protocol, we need to estimate Tr(A(t) ρ) for some observable A(t) ; let A denote
+its n-copy lift, defined analogously to Eq. (2). Let τ = |ϕ⟩⟨ϕ| denote the current sub-normalized state of the system on
+n registers, so that Tr(τ ) denotes the probability of the protocol reaching this state. Now suppose τ was “problematic”
+in the sense that it is supported on the quantum event |A(t) − Tr(A(t) ρ)1| > ε. This certainly would not have been
+the case at the beginning of the protocol when |ϕ⟩ = |ψ⟩⊗n , and indicates that the system has incurred some damage
+from the operations performed in previous rounds of the protocol.
+     The key observation is that if this is the case, then the likelihood Tr(τ ) of reaching this particular conditional state
+can be upper bounded by the energy of the system! Specifically, we show (Lemma 3.4) that
+                                                                  1
+                                                     Tr(τ ) ≲        E[τ ] .                                              (3)
+                                                                  ε2
+Intuitively this means that either Tr(τ ) is small in which case it’s unlikely we will reach this problematic state anyways,
+or if it is large, then it must mean that by that point, the system has very high energy. As a result, if we could ensure
+that every operation performed on the system in our protocol does not raise the energy too much in expectation, then
+the probability that the system ends up in such problematic states is low.
+    Thus far, we have not used anything about the structure of the operations being performed on the system over the
+course of the protocol. The measurements used differ markedly between our two results, but the common feature is
+                                                                      (t)
+that they operate over the eigenbasis of the lifted observable A in each round. This lifted structure is essential to
+controlling the energy increase in each round.
+
+2.4     Controlling energy increase under many observables
+In the case of Theorem 1.2, our protocol follows the general online learning template used in prior works on Shadow
+Tomography [Aar20, AR19, BO24, BB24]. We attempt to implement a two-player game between a “student” and
+a “teacher,” where the student iteratively updates an estimate for the unknown state, and the teacher, equipped with
+copies of the unknown state, rejects or accepts the student’s estimate depending on whether it correctly predicts a given
+observable value.
+    The implementation for the student is standard: based on the teacher’s feedback, the student runs standard matrix
+multiplicative weights updates [ACH+ 19]. In our work, we implement the teacher as follows. Instead of directly
+estimating the true value of Tr(A(t) ρ) in a given round, which naively might require a highly destructive measurement,
+the teacher merely tries to determine whether the student’s current estimate is close by performing the following
+measurements. Let ν be the student’s estimate for Tr(A(t) ρ), and consider the two-outcome, n-copy measurement
+(f (A ), 1 − f (A )) where f is the logistic function
+       (t)          (t)
+
+
+                                                                  1
+                                                 f (x) =
+                                                           1 + eλ(ν−cε−x)
+                                                                                        (t)
+for appropriately chosen parameters λ, c. By design, the probability Tr(f (A )ρ) of the first measurement outcome
+is close to 1 (resp. 0) when the student’s estimate is smaller (resp. larger) than the true value of Tr(A(t) ρ) by some
+margin. In particular, if the student’s estimate is inaccurate, the outcome of this measurement is sufficiently biased
+
+
+                                                              6
+that we do not expect the system to be damaged too much. Our core technical step (Corollary 4.6) is to show that in
+expectation over this measurement, if the conditional state of the system is τ , then after the measurement the energy
+increases by at most
+                                                 λ2            (t)
+                                             O 2 · Tr(f (A )τ ) .                                                  (4)
+                                                  n
+                                 (t)
+Observe that the sum of Tr(f (A τ )) over all possible observables A(t) and corresponding conditional states τ over
+the course of the protocol is equal to the expected number of mistakes that the student makes interacting with the
+teacher, which by standard regret minimization guarantees scales with O(log(d)/ε2 ). So for the sum of the expected
+energy increments in Eq. (4) to be bounded by O(ε2 ) so that we may invoke Eq. (3), we need to take
+                                                           p
+                                              λ = O(nε2 / log(d)) .
+
+The argument is concluded upon noting that the conditional states τ encountered in the protocol are never fully “prob-
+lematic” in the above sense of being entirely supported on the subspace given by |A − Tr(A(t) ρ)1| > ε. For
+                                                                                          (t)
+
+such conditional states τ , in addition to the energy term in Eq. (4), there is an extra term that scales with e−Ω(λε)
+(Lemma 4.5) coming from the slope of the logistic function. Summing this over the O(m) total measurements that
+the teacher performs over the course of the full protocol, and by our choice of λ, we conclude that this excess term
+                                                             √
+me−Ω(λε) is sufficiently small provided that n = Ω(log m · log d/ε3 ).
+
+2.5   Controlling energy increase under few observables
+In the case of Theorem 1.3, our protocol is much simpler and involves directly measuring the observables queried
+by the adversary, but corrupted with a small amount of noise. This is similar in spirit to a version of the protocol
+of Sinha [Sin25] in the special case of fixed, non-adaptively chosen observables, which was in turn inspired by the
+Gaussian mechanism from Differential Privacy and Adaptive Data Analysis [DKM+ 06, BNS+ 21]. A small difference
+is that instead of Gaussian noise, we use compactly supported noise to avoid extra log(m) factors. Specifically, we
+consider adding noise drawn from the distribution over [−ω, ω], for width parameter ω = Θ(ε),
+
+                                         ϕ(x) = ω −1/2 cos(πx/2ω) · 1|x|≤ω .
+
+Analogous to before, the core technical step (Lemma 5.3) is to show that in expectation over such a measurement, if
+the conditional state of the system is τ , then after the measurement the energy increases by at most
+                                                           1 
+                                                      O          .
+                                                           n2 ε2
+So after m rounds, the energy increases in expectation to order nm                                                    2
+                                                                  2 ε2 , and by Eq. (3), we need this to be of order ε in
+
+order for the probability of reaching a problematic state to be small. Solving for n, we find that this can be achieved
+             √
+with n = Ω( m/ε2 ) copies.
+
+
+3     Excitation decomposition
+The key tool in our analysis is to quantify post-measurement damage using excitations, inspired by the counting
+method of Pickl [Pic11].
+    Let |ψ⟩ be any purification of the unknown state ρ, let H and R denote the original Hilbert space and the purifica-
+tion registers respectively, and define projectors
+
+                                            P = |ψ⟩⟨ψ| ,         Q=1−P .
+
+Given n copies of ρ, for every subset S ⊆ [n], define
+                                                     Y  Y 
+                                             ΠS ≜      Qi   Pi .
+                                                       i∈S       i̸∈S
+
+
+
+                                                             7
+Any vector |ϕ⟩ ∈ (H ⊗ R)⊗n admits a unique decomposition
+                                          X
+                                    |ϕ⟩ =     |ϕS ⟩ ,    |ϕS ⟩ ≜ ΠS |ϕ⟩ ,
+                                               S⊆[n]
+
+
+in analogy with the classical Efron–Stein decomposition for functions over product spaces. Here, the vectors |ϕS ⟩ are
+orthogonal, and ∥ϕ∥22 = S ∥ϕS ∥22 .
+                         P
+
+    Define the number operator
+                                                         Xn
+                                                   N≜        Qi .
+                                                             i=1
+
+We say that |ϕ⟩ has excitation degree at most k if |ϕS ⟩ = 0 for all |S| > k.
+   We can now define the central quantity that allows us to reason about how much damage a state has incurred from
+measurements.
+
+Definition 3.1 (Energy). The energy of a sub-normalized mixed state τ is defined by
+                                                             1
+                                                  E[τ ] ≜      Tr(Nτ ) .
+                                                             n
+Remark 3.2. There is a dual interpretation of the excitation decomposition in terms of the quantum Efron–Stein
+decomposition developed in [PFMO25]. Given an operator B over H⊗n , one can define operators
+
+                               Ei (B) = Tri (ρi B) ⊗ 1i           and      Di (B) = 1 − Ei
+
+and projectors                                         Y          Y      
+                                              PS ≜           Di           Ei ,
+                                                       i∈S          i∈S
+                                                              P
+and the quantum Efron–Stein decomposition of B is B = S PS B. The connection to the excitation decomposition
+of a state |ϕ⟩ is that if |ϕ⟩ is the sub-normalized conditional state given by applying a sequence of measurements where
+the product of the associated Kraus operators is B, then BS and |ϕS ⟩ are related via
+
+                                              (BS ⊗ 1R )|ψ⟩⊗n = |ϕS ⟩
+
+One can thus think of the excitation decomposition and the Efron–Stein decompositions as Schrödinger / Heisenberg
+                                                                        Pn
+duals of each other. Furthermore, the Efron–Stein degree operator NES = i=1 Di is the dual of the number operator
+in the excitation decomposition, and if B were a classical operator corresponding to a function over [d]n , then the
+corresponding energy E[|ϕ⟩⟨ϕ|] would be the total influence of the function in the sense of classical functions over
+product spaces.
+
+If |ϕ⟩ is normalized, then (∥ΠS ϕ∥22 )S⊆[n] specifies the probability mass function for a random variable S ⊆ [n]; intu-
+itively, if |ϕ⟩ is a post-measurement state, then the more mass is concentrated at smaller subsets S, the less “damaged”
+it is.
+
+3.1   Lifted observables and energy
+Definition 3.3. Given a number of copies n and a single-copy Hermitian observable 0 ⪯ A ⪯ 1, define the lifted
+observable A by
+                                   n
+                               1X
+                          A=         Aj ,     for     Aj ≜ 1⊗(j−1) ⊗ A ⊗ 1⊗(n−j) .
+                               n j=1
+
+For convenience, let X ≜ (A − µ1) ⊗ 1R , and let X = A − µ1. Note that ∥X∥op ≤ 1 and
+
+                                    P XP = ⟨ψ|X|ψ⟩P = (Tr(Aρ) − µ)P = 0 .
+
+
+
+                                                             8
+Because P XP = 0, we can decompose X as
+
+                  X = X+ + X− + X0 ,               X+ ≜ QXP ,            where       X− ≜ P XQ ,   X0 ≜ QXQ.
+           †
+Note that X+  = X− and X0† = X0 . Informally, the left action of X+ corresponds to adding an excitation, that of X−
+corresponds to removing an excitation, and that of X0 corresponds to keeping an excitation.
+
+Lemma 3.4. Let ξ > 0 satisfy nξ 2 ≥ 18. Let τ ∈ (H ⊗ R)⊗n be a sub-normalized mixed state. Consider the quantum
+event |A − Tr(Aρ)1| ≥ ξ, and let B = 1|A−Tr(Aρ)1|≥ξ be the projector onto the corresponding subspace. Then
+
+                                                                9          1
+                                                 Tr(B · τ ) ≤     2
+                                                                    E[τ ] + Tr(τ ).
+                                                                ξ          2
+As a consequence, if τ lies in the subspace corresponding to B, then
+                                                                      18
+                                                        Tr(τ ) ≤         E[τ ] .
+                                                                      ξ2
+Proof. Let B = 1|A−Tr(Aρ)1|≥ξ be the projector to the subspace given by this event. By definition, we have
+
+                                                  1                      1
+                                                      · (A − Tr(Aρ)1)2 = 2 · X .
+                                                                              2
+                                           B⪯       2
+                                                  ξ                     ξ
+Applying Lemma 3.5 below, we have that
+                                                   1         1 9
+                                                       · X ⪯ 2 · (N + 1).
+                                                          2
+                                                   ξ 2      ξ n
+Thus,
+                                      9                   9         9          9        1
+                      Tr(B · τ ) ≤        Tr((N + 1)τ ) = 2 E[τ ] + 2 Tr(τ ) ≤ 2 E[τ ] + Tr(τ ),
+                                     nξ 2                ξ         nξ         ξ         2
+where in the last step we used our assumption that nξ 2 ≥ 18. The last part of the lemma follows from the fact that
+Tr(τ ) = Tr(B · τ ) and from rearranging.
+
+Lemma 3.5. X ⪯ n9 (N + 1).
+                  2
+
+                                                     P
+Proof. Let |u⟩ be a test vector, and write |u⟩ = S |uS ⟩ for its excitation decomposition. Let S ⊆ [n] be a subset
+of size |S| = D, and consider the vector |uS ⟩. Consider the operator Xi in the definition of X. If i ∈             / S, then
+Pi · |uS ⟩ = |uS ⟩, and so Xi · |uS ⟩ = X+ · |uS ⟩. In this case, the action of Xi is to excite the i-th slot of |uS ⟩, making
+Xi · |uS ⟩ have excitation degree at most D + 1. On the other hand, if i ∈ S, then Qi · |uS ⟩ = |uS ⟩, and so we have
+the decomposition Xi · |uS ⟩ = (X− )i · |uS ⟩ + (X0 )i · |uS ⟩ into a vector with excitation degree at most D − 1, and
+one with excitation degree at most D.
+    More precisely, we find that the excitation decomposition of X|u⟩ satisfies, for every T ⊆ [n],
+                           1 X                        1 X                         1 X                   
+             ΠT X|u⟩ =             (X+ )i · |uT \{i} ⟩ +         (X− )i · |uT ∪{i} ⟩ +         (X0 )i · |uT ⟩ .
+                           n                             n                             n
+                               i∈T                           i∈T
+                                                              /                            i∈T
+                             |          {z            }    |          {z            }    |       {z          }
+                                         |AT ⟩                               |BT ⟩                   |CT ⟩
+
+                                     P
+Thus, if we write |A⟩ = (1/n) ·         T |AT ⟩, and similarly for |B⟩ and |C⟩, we have X|u⟩ = |A⟩ + |B⟩ + |C⟩. As a
+result,
+              2
+        ⟨u|X |u⟩ = ∥X|u⟩∥2 = ∥|A⟩ + |B⟩ + |C⟩∥2 ≤ 3 · (∥|A⟩∥2 + ∥|B⟩∥2 + ∥|C⟩∥2 )
+                                                   3 X                X             X        
+                                                = 2·        ∥|AT ⟩∥2 +    ∥|BT ⟩∥2 +  ∥|CT ⟩∥2 ,                          (5)
+                                                  n
+                                                                             T              T                T
+
+
+
+
+                                                                  9
+where in the last step we use the fact that the |AT ⟩’s are orthogonal to each other, as are the |BT ⟩’s and |CT ⟩’s. Let us
+bound these terms separately. First, for a fixed excitation degree D′ , we have
+              X                  X           X                                        X
+                    ∥|AT ⟩∥2 ≤          D′ ·     ∥|uT \{i} ⟩∥2 = D′ (n − D′ + 1) ·            ∥|uS ⟩∥2 ,
+            |T |=D ′                |T |=D ′         i∈T                                                  |S|=D ′ −1
+              X                         X                    X                                                         X
+                       ∥|BT ⟩∥2 ≤              (n − D′ ) ·         ∥|uT ∪{i} ⟩∥2 = (n − D′ )(D′ + 1) ·                          ∥|uS ⟩∥2 ,
+            |T |=D ′                |T |=D ′                 i∈T
+                                                              /                                                    |S|=D ′ +1
+              X                         X            X                                  X
+                                                 ′
+                       ∥|CT ⟩∥ ≤2
+                                               D ·         ∥|uT ⟩∥2 = (D′ )2 ·                    ∥|uT ⟩∥2 .
+            |T |=D ′                |T |=D ′         i∈T                               |T |=D ′
+
+In the first step of all three lines, we have used Cauchy-Schwarz and the fact that X+ , X− , X0 have operator norm at
+most 1. Summing these inequalities, we have
+                          n                                   n
+                                                                                        ∥|uS ⟩∥2 ≤ n · ⟨u|(N + 1)|u⟩,
+                          X         X                         X               X
+                                           ∥|AT ⟩∥2 ≤ n ·             D′
+                         D ′ =1 |T |=D ′                     D ′ =1        |S|=D ′ −1
+                          n−1
+                          X         X                         n−1
+                                                              X                        X
+                                           ∥|BT ⟩∥2 ≤ n ·           (D′ + 1)                      ∥|uS ⟩∥2 ≤ n · ⟨u|N|u⟩,
+                         D ′ =0 |T |=D ′                     D ′ =0               |S|=D ′ +1
+                          n
+                          X         X                         n
+                                                              X             X
+                                           ∥|CT ⟩∥2 ≤ n ·             D′              ∥|uT ⟩∥2 = n · ⟨u|N|u⟩ ,
+                         D ′ =0 |T |=D ′                     D ′ =0        |T |=D ′
+
+and substituting these into Eq. (5) yields the claimed bound.
+
+
+4     Logarithmic-in-m rate
+In this section we prove the upper bound in Theorem 1.2, restated here for convenience:
+Theorem 1.2. There is a protocol for Online Shadow Tomography of d-dimensional states that, using n copies of the
+unknown state for
+                                  √K log(m + K) 
+                          n=O                              for     K = Θ(log(d)/ε2 ) ,
+                                          ε2
+correctly answers m adaptively chosen observables to error ε with probability at least 9/10.
+
+4.1    Description of protocol
+Definition 4.1 (Low and high tests). Given observable 0 ⪯ A ⪯ 1 and threshold θ, we say that
+                                                                                  ε
+                                                  “(A, θ) is low” if Tr(Aρ) ≤ θ − ,
+                                                                                  4
+                                                 “(A, θ) is high” if Tr(Aρ) > θ .
+
+The protocol does not know whether a given (A, θ) is low or high, and this terminology is only used for the analysis.
+Definition 4.2 (Soft binary measurements). For a lifted observable A and threshold θ, define the soft-thresholded
+observable fθ,λ (A), where
+                                                                1
+                                            fθ,λ (x) =                   .
+                                                        1 + eλ(θ−ε/8−x)
+The choice of θ − ε/8 − x ensures that the logistic function is centered halfway between the low and high thresholds
+of θ − ε/4 and θ. We refer to performing the two-outcome measurement corresponding to (fθ,λ (A), 1 − fθ,λ (A)) as
+performing a soft binary measurement corresponding to (A, θ), with the two outcomes referred to as flag and pass
+respectively. More precisely, we implement this measurement using Kraus operators
+                                           q            q              
+                                                fθ,λ (A), 1 − fθ,λ (A) .
+
+
+                                                                           10
+We will analyze the procedure specified in Algorithm 1.
+  Algorithm 1: O NLINE S HADOW T OMOGRAPHY 1
+    Parameters: number of rounds    √    m; target accuracy ε; mistake budget K = Θ(log(d)/ε2 ); logistic sharpness
+                    λ = Θ(εn/ K)
+  1 H ← 0; nmstk ← 0; failed ← FALSE
+  2 for t = 1, 2, . . . , m do
+  3     Receive observable A(t) , chosen by the adversary as a function of the transcript Tt−1 .
+  4     if failed then
+  5          Output µ  b(t) ← 21                                        ▷ algorithm has already failed
+  6     else
+  7          repeat
+  8              ρH ← e−H / Tr(e−H )
+                                      
+  9              ν ← Tr A(t) ρH ; L ← ⊥                         ▷ ⊥: no test has flagged this time
+                                            (t)
+                 ▷ high test on A ; skipped when ν is in the top band (1 − 3ε/4, 1]
+ 10              if ν ≤ 1 − 3ε/4 then                                                        
+ 11                    Perform the soft binary measurement corresponding to A(t) , ν + 3ε/4 .
+ 12                    if it flags then L ← −A(t)
+                ▷ high test on 1 − A(t) ; skipped when ν is in the bottom band
+                   [0, 3ε/4), or when the first test already flagged
+ 13             if L = ⊥ and ν ≥ 3ε/4 then
+                    Perform the soft binary measurement corresponding to 1 − A(t) , 1 − ν + 3ε/4 .
+                                                                                                
+ 14
+ 15                 if it flags then L ← A(t)
+                ▷ if some test has flagged, reweight and count the mistake
+ 16             if L ̸= ⊥ then
+ 17                 H ← H + 8ε L; nmstk ← nmstk + 1
+ 18                 if nmstk = K then failed ← TRUE
+ 19         until L = ⊥ or failed
+ 20         if failed then
+ 21              Output µb(t) ← 1/2                                            ▷ mistake budget exhausted
+ 22         else
+ 23              Output µb(t) ← ν
+
+
+Definition 4.3. We say that round t is bad if at some point therein, the protocol flags for a low test (A, θ) or passes
+for a high test (A, θ). The learner does not know if a given round is bad, and this terminology is only used for the
+analysis.
+
+The following is a consequence of standard regret guarantees for matrix multiplicative weights:
+
+Lemma 4.4. If over the course of m rounds of interaction there is never a bad round, then every estimate the protocol
+                   µ(t) − Tr(A(t) ρ)| < ε.
+outputs satisfies |b
+
+Proof. Fix a round t and a pass through the inner loop, and let ρH and ν = Tr(A(t) ρH ) denote the hypothesis state
+and the value computed at the start of that pass.
+    We first verify that in an iteration of the inner loop in which all tests pass, the output µ  b(t) = ν is accurate. Since
+the round is not bad and all tests passed, no test performed in this pass is high. If the first test was performed, then
+Tr(A(t) ρ) ≤ ν+3ε/4; if it was skipped, then ν > 1−3ε/4 and the same inequality holds trivially since Tr(A(t) ρ) ≤ 1.
+Likewise, if the second test was performed, then Tr(A(t) ρ) ≥ ν − 3ε/4; if it was skipped, then ν < 3ε/4 and the same
+inequality holds trivially since Tr(A(t) ρ) ≥ 0. Hence |b µ(t) − Tr(A(t) ρ)| ≤ 3ε/4 < ε, as desired.
+    Next, suppose instead that in an iteration of the inner loop, some test flags, so that the learner updates H ← H+ 8ε L.
+Since the round is not bad, the flagged test is not low. In the case of either test, the flag identifies a direction along
+
+
+                                                             11
+which the hypothesis is inaccurate by a non-negligible margin:
+
+                                                    Tr(L(ρH − ρ)) > ε/2 .                                           (6)
+
+     Finally, we argue that there cannot be so many flagged steps. The flagged steps constitute a run of matrix mul-
+tiplicative weights: the learner plays the Gibbs states ρH ∝ exp(− 8ε
+                                                                         P
+                                                                            L) against adaptively chosen loss matrices
+L = ±A(t) , which satisfy ∥L∥op ≤ 1. Suppose M flags occur over the course of the interaction, and let ρj and Lj
+denote the hypothesis and the loss matrix at the j-th flag. The standard regret bound for matrix multiplicative weights
+with step size ε/8 (see e.g. [Kal07, Corollary 3]) gives
+                          M                            M
+                          X                         εX                   8 log d   εM   8 log d
+                                Tr(Lj (ρj − ρ)) ≤         |Tr(Lj ρj )| +         ≤    +         ,
+                          j=1
+                                                    8 j=1                   ε       8      ε
+
+whereas Eq. (6) lower bounds the left-hand side by εM/2. Rearranging, M ≲ log(d)/ε2 . So provided the constant in
+K = Θ(log(d)/ε2 ) is large enough, the counter nmstk never reaches K, and each inner loop terminates and outputs an
+accurate estimate.
+
+4.2     Bad outcomes are unlikely
+Consider the binary tree of possible complete internal histories of the protocol, with each node labeled by the sub-
+normalized conditional state at that point in the protocol, and where each leaf node corresponds to either:
+
+      • The first bad outcome that occurs in that branch of the tree, or
+
+      • the final outcome in the protocol, where all outcomes along that branch were non-bad.
+
+Because we clip the protocol after nmstk = K mistakes corresponding to flags, and because in each of the m rounds
+we perform at most two soft binary measurements prior to passing, the depth of the tree is at most 2(m + K).
+   Let D denote the edges of the tree corresponding to the first bad outcome occurring along that path. For each such
+edge e ∈ D, let He ∈ {Fe , 1 − Fe } denote the soft binary measurement operator corresponding to the bad outcome,
+and let σe (resp. τe ) denote
+                          √ the √
+                                sub-normalized post-measurement state right before (resp. after) the bad outcome.
+   By definition, τe = He σe He . We wish to bound
+                                                    X
+                                                         Tr(τe ) ,
+                                                           e∈D
+
+as this corresponds to the probability over the course of the entire protocol that a bad outcome happens.
+    The following bounds the probability of reaching a particular bad leaf in terms of the energy of the corresponding
+sub-normalized conditional state:
+
+Lemma 4.5. Suppose that at some point in the protocol O NLINE S HADOW T OMOGRAPHY 1, the adversary queries
+observable A, and after performing a soft binary measurement with threshold θ, we get a bad outcome corresponding
+to measurement operator H. If τ denotes the sub-normalized state in the tree corresponding to this outcome, and σ
+denotes the one prior to measurement, and if nε2 > 4608, then
+                                                                      4608
+                                         Tr(τ ) ≤ 2e−λε/16 Tr(σ) +         · E[τ ].
+                                                                       ε2
+Proof. Write µ = Tr(Aρ) and recall the notation X = A−µ1. Let us first consider the case when (A, θ) is low, which
+we recall means that µ ≤ θ − ε/4. In this case, the measurement operator is H = fθ,λ (A). Define Π = 1X>ε/16 and
+let Π denote its orthogonal complement. Because H and Π commute,
+
+                      Tr(τ ) = Tr(Hσ) = Tr(HΠσΠ) + Tr(HΠσΠ) = Tr(Πτ Π) + Tr(HΠσΠ).                                  (7)
+
+Over the subspace Π we have
+                                               A ≤ µ + ε/16 ≤ θ − 3ε/16 ,
+
+
+                                                                 12
+where the second step used µ ≤ θ − ε/4 because (A, θ) is low. Recalling the definition of fθ,λ , we have that for any
+x ≤ θ − 3ε/16,
+                                          1                     1                  1         1
+                   fθ,λ (x) =                      ≤                         =            ≤ λε/16 .
+                                   1 + eλ(θ−ε/8−x)   1 + eλ(θ−ε/8−(θ−3ε/16))   1 + eλε/16  e
+We therefore get
+                                                 ΠHΠ = Πfθ,λ (A)Π ⪯ e−λε/16 Π .
+This upper bounds the second term of Eq. (7) by e−λε/16 Tr(σ). As for the first term, set ξ = ε/16, and note that
+nξ 2 = nε2 /162 > 4608/162 = 18. In addition, set B = 1|X|>ε/16 , and note that Π ⪯ B. Then by Lemma 3.4,
+
+                                                           9           1        2304      1
+                         Tr(Πτ Π) ≤ Tr(Bτ ) ≤                   E[τ ] + Tr(τ ) = 2 E[τ ] + Tr(τ ).
+                                                        (ε/16)2        2         ε        2
+Substituting these into Eq. (7) gives us
+                                                                             2304        1
+                                         Tr(τ ) ≤ e−λε/16 Tr(σ) +                 E[τ ] + Tr(τ ),
+                                                                              ε2         2
+and rearranging yields the claimed bound. The case of high (A, θ) follows verbatim.
+
+The following quantifies the amount by which E[τ ] changes in expectation when going from τ to its expected post-
+measurement state.
+Corollary 4.6. Let F = fb,λ (A). Let τ be an arbitrary mixed state, and let
+                                               √ √         √          √
+                                     ΦF (τ ) ≜ F τ F + 1 − F τ 1 − F
+
+denote the expected post-measurement state. Then for 0 < λ ≤ n,
+
+                                                                              2λ2
+                                                  E[ΦF (τ )] − E[τ ] ≤            Tr(F τ ) .
+                                                                              n2
+We defer the proof of this to Section 4.3 and proceed to formally present the argument outlined above.
+Lemma 4.7. The probability over the course of the entire protocol that a bad outcome happens is at most
+
+                                                   9216λ2 K
+                                                            + 4(m + K)e−λε/16 .
+                                                     n2 ε2
+Proof. We first bound the total energy across all leaves of the tree via a telescoping calculation. Telescoping and
+noting that E[τroot ] = 0 for the root of the tree, we have
+                X                  X                           X                          2λ2 X
+                         E[τ ] =        E[τ ] − E[τroot ] =             E[ΦFσ (σ)] − E[σ] ≤ 2    Tr(Fσ σ) ,
+                                    τ
+                                                                                            n
+              leaves τ                                        inner σ                                inner σ
+
+where Fσ denotes the soft binary measurement operator used at the inner node σ (corresponding to the flag outcome),
+                                                                 P
+and where in the last step we used Corollary 4.6. But note that inner τ Tr(Fσ σ) is the expected number of flags over
+the course of the protocol, and this is at most the total number of flags which is K. We conclude that
+                                                  X                X                   2λ2 K
+                                                       E[τe ] ≤              E[τ ] ≤         .
+                                                                                        n2
+                                                 e∈D              leaves τ
+
+The left-hand side can be lower-bounded by Lemma 4.5, and upon rearranging we get
+                                          X                                             9216λ2 K
+                                                (Tr(τe ) − 2e−λε/16 Tr(σe )) ≤                   .
+                                                                                          n2 ε2
+                                          e∈D
+                          P                               P
+The claimed bound on         e∈D Tr(τe ) follows as           σ Tr(σ) ≤ 2(m + K).
+
+
+                                                                      13
+We can now conclude the proof of the main result:
+                                  √                                                                               √
+Proof of Theorem 1.2. If n = Ω( K log(m + K)/ε2 ) with sufficiently large leading constant and λ = Θ(εn/ K)
+with sufficiently small leading constant, the quantity e−λε/16 in Lemma 4.7 is at most c/(m + K) for constant c > 0
+                                                   2
+that can be made arbitrarily small, and the term nλ2 εK2 in Lemma 4.7 can also be upper bounded by an arbitrarily small
+constant, so by Lemma 4.7, the probability over the course of the entire protocol that a bad outcome happens is at most
+an arbitrarily small constant. The proof is complete by Lemma 4.4.
+
+4.3   Per-step damage control: Proof of Corollary 4.6
+We will prove Corollary 4.6 in the Heisenberg picture by controlling the extent to which the number operator N gets
+damaged by the adjoint Φ†F of the expected post-measurement channel for a soft binary measurement. Our goal is to
+show that
+                                                                  2λ2
+                                                Φ†F (N) − N ⪯         F.
+                                                                   n
+To understand this, note that in the Schrödinger picture, this is equivalent to the statement that for any state σ,
+
+                                                                2λ2
+                                           E[ΦF (σ)] ≤ E[σ] +       Tr(F · σ).
+                                                                n2
+Thus, the F measurement can only noticeably increase the energy of the state σ if there is a decent chance that it
+produces outcome F when performed on σ. This can be viewed as an analogue of the standard information/disturbance
+tradeoff in quantum information.
+                          √        √
+    Define the matrix U = 1 − F + i F . This is a unitary, since
+                  √          √   √           √                        √ √              √        √
+        U U † = ( 1 − F + i F )( 1 − F − i F ) = (1 − F ) + F + i F 1 − F − i 1 − F F = 1,
+
+and similarly for U † U . Then for any operator X, the post-measurement channel can be written in terms of U as
+follows:
+                                                    1
+                                         Φ†F (X) = (U † XU + U XU † ) .                                     (8)
+                                                    2
+This is because
+           1 †
+             (U XU + U XU † )
+           2
+           1 √          √           √         √      1 √        √           √         √
+          = ( 1 − F + i F )† · X · ( 1 − F + i F ) + ( 1 − F + i F ) · X · ( 1 − F + i F )†
+           2                                         2
+           1 √          √          √         √      1 √        √           √         √
+          = ( 1 − F − i F) · X · ( 1 − F + i F) + ( 1 − F + i F) · X · ( 1 − F − i F)
+           2                     √        √         2
+           √           √
+          = 1 − F · X · 1 − F + F · X · F = ΦF (X).
+                                                 †
+
+
+Using the fact that for any x ∈ [−1, 1],
+                                 √                √                   √     √         √
+                       ei arcsin( x) = cos(arcsin( x)) + i sin(arcsin( x)) = 1 − x + i x,
+
+the unitary U can also be expressed as U = eiα(A) , for α = arcsin(
+                                                                      p
+                                                                          fλ,θ ).
+
+Lemma 4.8. Suppose there are constants 0 < f− ≤ f+ ≤ 1 for which a Hermitian operator F satisfies
+
+                                                   f− 1 ⪯ F ⪯ f+ 1.
+
+Let U be a unitary commuting with F , and suppose further that (U − 1)† (U − 1) ⪯ aF for some a ≥ 0. Then for any
+Hermitian observable 0 ⪯ X ⪯ 1,
+                                                                      s !
+                                 1 †                                      f+
+                                   (U XU + U XU † ) − X ⪯ a 1 +               F.
+                                 2                                        f−
+
+
+                                                          14
+Proof. For simplicity, we will write
+
+                                   D = U − 1,             G = D† D = DD† = 21 − U − U † .
+
+Note that D + D† = −G, and
+                       1 †                       1           1
+                         (U XU + U XU † ) − X = − (GX + XG) + (D† XD + DXD† ) .
+                       2                         2           2
+We bound the second term using D† XD ⪯ D† D = G ⪯ aF , and DXD† ⪯ DD† = G ⪯ aF . For the first term, we
+use Cauchy–Schwarz:
+                                      p
+                         |⟨v|GX|v⟩| ≤ ⟨v|G|v⟩ · ⟨v|XGX|v⟩
+                                                                  s
+                                       p                            f+
+                                    ≤ a ⟨v|F |v⟩ · ⟨v|XF X|v⟩ ≤ a      · ⟨v|F |v⟩ .
+                                                                    f−
+
+The final inequality follows as XF X ⪯ f+ X 2 ⪯ f+ 1 ⪯ ff−
+                                                         +
+                                                           F.
+
+Lemma 4.9. Let F = f (A) for some non-decreasing, differentiable f : [0, 1] → (0, 1]. Then
+
+                                                  Rf (1 + Rf )L2f
+                                                           p
+                                    †
+                                   ΦF (N) − N ⪯                        ·F ,
+                                                           n
+where
+                                                   α′ (x)                                       f (y)
+                                       Lf = sup p                        Rf =            sup
+                                           x∈[0,1]  f (x)                          x,y∈[0,1]    f (x)
+                                                                                  0≤y−x≤1/n
+               √
+for α = arcsin( f ).
+                            Pn
+Proof. Recall that N =        j=1 Qj . For a fixed mode j, we will prove the bound
+
+
+                                                             Rf (1 + Rf )L2f
+                                                                               p
+                                            Φ†F (Qj ) − Qj ⪯                 ·F .
+                                                                    n2
+This will imply the lemma by linearity. For simplicity, we will show the j = n case, which is without loss of generality.
+To begin, let us suppose that the observable A has eigendecomposition
+                                                               d
+                                                               X
+                                                          A=          ai · |vi ⟩⟨vi |,
+                                                               i=1
+
+so that it has eigenvalues 0 ≤ ai ≤ 1 with corresponding eigenvectors |vi ⟩. Then we can write the lifted observable as
+                                          d       a + · · · + a 
+                                                    i1          in
+                                          X
+                               A=                                  · |vi1 , . . . , vin ⟩⟨vi1 , . . . , vin |
+                                      i ,...,i =1
+                                                        n
+                                      1     n
+
+                                                    d 
+                                          X         X   ai    <n   + a in 
+                                  =                                         · |vi<n , vin ⟩⟨vi<n , vin |,
+                                                                   n
+                                      i<n ∈[d]n−1 in =1
+
+
+where we write i<n = (i1 , . . . , in−1 ), vi<n = (vi1 , . . . , vin−1 ), and ai<n = ai1 + · · · + ain . As a result, A can be
+viewed as a block-diagonal matrix, with blocks specified by strings i<n :
+                                                 d 
+                  X                             X   a    i<n + ain
+                                                                                                 X
+         A=                 |vi<n ⟩⟨vi<n | ⊗                                · |vin ⟩⟨vin | =:                 |vi<n ⟩⟨vi<n | ⊗ Ai<n .
+                                                 in =1
+                                                              n
+              i<n ∈[d]n−1                                                                       i<n ∈[d]n−1
+
+
+
+
+                                                                      15
+As a result, we have that
+                                   X
+                F = f (A) =                    |vi<n ⟩⟨vi<n | ⊗ f (Ai<n ),
+                                i<n ∈[d]n−1
+                                       X                                                 X
+                U = eiα(A) =                     |vi<n ⟩⟨vi<n | ⊗ eiα(Ai<n ) =:                    |vi<n ⟩⟨vi<n | ⊗ Ui<n
+                                 i<n   ∈[d]n−1                                     i<n   ∈[d]n−1
+
+are also block diagonal. In addition, Qn = I ⊗n−1 ⊗ Q is block diagonal by definition. Note that by Equation (8), we
+have
+                      1                                                   1
+           Φ†F (Qj ) = (U Qn U † + U † Qn U ) =           |vi<n ⟩⟨vi<n | ⊗ (Ui<n QUi†<n + Ui†<n QUi<n ).
+                                                   X
+                                                                                                                  (9)
+                      2                               n−1
+                                                                          2
+                                                          i<n ∈[d]
+
+   Fix any block i<n , and consider the matrix within that block, given by
+                                        d                                           d
+                                        X   ai     <n   + a in                     X
+                             Ai<n =                              · |vin ⟩⟨vin | =:      bin · |vin ⟩⟨vin |.
+                                       in =1
+                                                        n                          i =1
+                                                                                    n
+
+
+Let i− and i+ ∈ [d] be such that bi− is the smallest eigenvalue of Ai<n and bi+ is its largest eigenvalue. Since each
+ain is in [0, 1], we must have bi+ − bi− ≤ 1/n. Thus, if we consider the interval I = [bi− , bi+ ], then I contains every
+eigenvalue of Ai<n , and it has width at most |I| ≤ 1/n. Next, define f− = f (bi− ) and f+ = f (bi+ ). Because f
+is a monotonically increasing function, f− and f+ are the smallest and largest eigenvalues of f (Ai<n ), respectively.
+(Indeed, f+ must be the largest value that f attains on the interval I.) Thus, if we set R0 = f+ /f− , then it holds that
+R0 ≤ Rf . Over the interval I, let
+
+                                α1 ≜ sup α(x),               α0 ≜ inf α(y),             ∆ ≜ α1 − α0 .
+                                        x∈I                          y∈I
+
+Note that
+                                        1                1p          α′ (x)    Lf p
+                                ∆≤        · sup α′ (x) ≤    f+ · sup p       ≤      f+ ,                                            (10)
+                                        n x∈I            n       x∈I   f (x)   n
+by the definition of Lf .
+    Consider the unitary Ui′<n ≜ Ui<n · e−iα0 . As multiplying by a phase does not affect conjugation, we can rewrite
+the expression for Φ†F (Qj ) within this block from (9) as
+                            1                               1
+                              (Ui<n QUi†<n + Ui†<n QUi<n ) = (Ui′<n QUi′†<n + Ui′†<n QUi′<n ).
+                            2                               2
+Let us now consider the action of Ui′n within this block. Within this block, on an eigenvector of A with eigenvalue x,
+it acts by applying the eigenvalue ei(α(x)−α0 ) . Thus (Ui′<n − 1)† (Ui′<n − 1) acts on this eigenvector by applying the
+eigenvalue
+
+                                               |ei(α(x)−α0 ) − 1|2 ≤ |α(x) − α0 |2                                   (by |eit − 1| ≤ |t|)
+                                                                      ≤ ∆20
+                                                                        L2f f+
+                                                                      ≤                                                        (by (10))
+                                                                         n2
+                                                                        L2f f+
+                                                                      ≤ 2      · f (x)                             (by definition of f− )
+                                                                        n f−
+                                                                        L2f R0
+                                                                      =        · f (x)                             (by definition of R0 )
+                                                                         n2
+                                                                        L2f Rf
+                                                                      ≤        · f (x).                                    (by R0 ≤ Rf )
+                                                                          n2
+Thus, within this block, we have that
+                                                                                L2f Rf
+                                              (Ui′<n − 1)† (Ui′<n − 1) ⪯               F.
+                                                                                  n2
+
+                                                                     16
+                                                        L2f Rf
+We can thus apply Lemma 4.8 with X = Q and a =            n2 to get
+                                                                           √
+                                                    L2f Rf (1 +                            L2f Rf (1 +
+                                                                                                          p
+               1                                                               R0 )                        Rf )
+                 (Ui<n QUi†<n + Ui†<n QUi<n ) − Q ⪯                                   ·F ⪯                        · F.
+               2                                            n2                                     n2
+As this holds over all blocks, we have that
+
+                                                       L2f Rf (1 +
+                                                                           p
+                                                                                 Rf )
+                                      Φ†F (Qn ) − Qn ⪯           2
+                                                                                        ·F .
+                                                                       n
+This relation holds over all blocks. This therefore holds for all Qj as well, and summing over all n modes Qj yields
+the desired claim.
+
+Proof of Corollary 4.6. Taking f in the above lemmas to be fb,λ (x) = 1/(1 + eλ(b−x) ), we will compute below that
+Lf ≤ λ/2 and Rf ≤ eλ/n . This is the only part of the proof where we use the specific form of f ; elsewhere, we only
+needed that it was nonnegative, nondecreasing, and had range [0, 1].
+                                                                                                  √
+   First, for f (x) = 1/(1 + e−λ(x−b) ), note that f ′ (x) = λf (x)(1 − f (x)), so for α = arcsin( f ),
+
+                                              f ′ (x)        λp
+                                α′ (x) = p                 =   f (x)(1 − f (x))
+                                        2 f (x)(1 − f (x))   2
+
+and thus
+                                               α′ (x)    λp            λ
+                                              p        =    1 − f (x) ≤ .
+                                                f (x))   2             2
+Next, we compute Rf . First, note that
+
+                                                        f ′ (x)
+                                      (log f )′ (x) =           = λ(1 − f (x)) ≤ λ.
+                                                        f (x)
+
+As a result, for all x ≤ y, we can bound
+                                                              Z y                          Z y
+              log(f (y)/f (x)) = log f (y) − log f (x) =            (log f )′ (z) · dz ≤           λ · dz = λ(y − x),
+                                                               x                               x
+
+and so f (y)/f (x) ≤ eλ(y−x) . Thus, over 0 ≤ y − x ≤ 1/n we conclude that Rf ≤ eλ/n . Substituting these into
+Lemma 4.9, we conclude that
+                                                  eλ/n (1 + eλ/2n )λ2 /4
+                                    Φ†F (N) − N ⪯                        ·F .
+                                                            n
+                                                          2
+Because 0 < λ ≤ n by assumption, Φ†F (N) − N ⪯ 2λn F , and the claim follows by taking trace with τ on both sides
+and dividing by n.
+
+
+5    Dimension-free rate
+In this section we prove the upper bound in Theorem 1.3, restated here for convenience:
+
+Theorem 1.3. There is a protocol for Online Shadow Tomography of d-dimensional states that, using n copies of the
+unknown state for
+                                                           √m 
+                                                    n=O          ,
+                                                             ε2
+correctly answers m adaptively chosen observables to error ε with probability at least 9/10. In particular, the sample
+complexity of this protocol is independent of the dimension d.
+
+
+
+
+                                                              17
+5.1     Description of protocol
+Unlike the protocol in Section 4, the protocol here does not use a complicated matrix multiplicative weights outer
+wrapper. Instead, we simply process the adversary’s observables in sequence, and for each A(t) , we consider the
+following soft measurement.
+
+Definition 5.1 (Measurement with compact noise). Given a width parameter ω > 0, define the kernel
+                                            (
+                                             ω −1/2 cos(πx/2ω) if |x| ≤ ω
+                                   ϕω (x) ≜
+                                             0                    otherwise
+
+and let MAω denote the positive operator-valued measure with density
+
+                                               dMAω (y) ≜ ϕω (y 1 − A)2 dy
+
+                                ω
+and associated Kraus operators KA (y) ≜ ϕω (y 1 − A). We will ultimately take
+
+                                                          ω = ε/4 .
+
+Given a pure state |ϕ⟩, measuring with MAω results in the convolution of ϕω with the distribution given by measuring
+                                                                        ω
+in the eigenbasis of A. The sub-normalized post-measurement state is KA   |ϕ⟩.
+
+     Note that this is a valid POVM because for any eigenvector |v⟩ of A with eigenvalue x, we have
+     Z              Z                 Z x+ω                             Z 1
+  ⟨v|   dMAω (y) |v⟩ = ϕω (y − x)2 dy =       ω −1 cos(π(y − x)/2ω)2 dy =     cos(πu/2)2 du = 1, (11)
+                              y                     x−ω                                  −1
+
+where we have used the substitution u = (y − x)/ω.
+The pseudocode for the protocol is given in Algorithm 2.
+ Algorithm 2: O NLINE S HADOW T OMOGRAPHY 2
+   Parameters: target accuracy ε; number of rounds m.
+ 1 for t = 1, 2, . . . , m do
+ 2     ω ← ε/4.
+ 3     Receive observable A(t) , chosen by the adversary as a function of the transcript Tt−1 .
+ 4     Apply the measurement M ω(t) to the current n-copy register, obtaining outcome y.
+                                     A
+ 5              b(t) ← y
+         Output µ
+
+Our notion of badness is as follows:
+
+Definition 5.2. We say that a round t is bad if the corresponding measurement with compact noise returns an estimate
+of Tr(A(t) ρ) which is not within ε of the true answer. The learner does not know if a given round is bad, and this
+terminology is only used for the analysis.
+
+5.2     Bad outcomes are unlikely
+We use a similar charging argument as in the previous section. Consider the tree of possible complete internal histories
+of the protocol, with each node labeled by the sub-normalized conditional state at that point in the protocol. Note that
+every internal node of this tree now has a continuum of children, rather than just two. Each leaf node plays the same
+role as before, either
+
+      • The first bad outcome that occurs in that branch of the tree, or
+
+      • the final outcome in the protocol, where all outcomes along that branch were non-bad,
+
+
+
+
+                                                             18
+except that our notion of bad is different from Section 4. Additionally, the depth of this tree is at most m by design.
+    Let D denote the continuum of edges of the tree corresponding to the first bad outcome occurring along that path.
+For each such edge e ∈ D, let Fe denote the measurement operator with compact noise corresponding to the bad
+outcome, and let σe (resp. τe ) denote the sub-normalized post-measurement state right before (resp. after) the bad
+outcome.
+    As before, we wish to bound the sum over all edges e ∈ D of Tr(τe ), as this is the probability over the course of the
+entire protocol that a bad outcome happens. However, because the children of each node in the tree are a continuum
+indexed by R, we have to be careful about the notion of summation. We write this as
+                                                     Z
+                                                         Tr(τe ) de ,
+                                                       D
+
+where de denotes the sum over transcript lengths ℓ of the Lebesgue measure over length-ℓ transcripts, which are
+naturally indexed by Rℓ , restricted to transcripts ending with edge e. We will use similar shorthand later when referring
+to integration over other sets of nodes in the tree.
+    We implement the same charging argument as before. The key technical lemma is the following analogue of
+Corollary 4.6:
+Lemma 5.3. Given y ∈ R, let Fy ≜ ϕω (y 1 − A). Let σ be an arbitrary mixed state, and let
+                                                    Z
+                                            Φ(σ) ≜ Fy σFy dy
+
+denote the expected post-measurement state. Then
+                                                                  π2
+                                           E[Φ(σ)] − E[σ] ≤             Tr(σ) .
+                                                                2n2 ω 2
+We defer the proof of this to Section 5.3 and proceed to formally present the argument outlined above. In analogy with
+Lemma 4.5, we need the following simple consequence of the formalism from Section 3 which bounds the probability
+of reaching a particular bad leaf in terms of the energy of the corresponding sub-normalized conditional state.
+Lemma 5.4. Suppose that at some point in the protocol O NLINE S HADOW T OMOGRAPHY 2, the adversary queries
+observable A, and after performing the measurement with compact noise MAω with ω = ε/4 we obtain outcome y for
+which |y − Tr(Aρ)| > ε. If τ denotes the sub-normalized state in the tree right after this measurement outcome, and
+if nε2 > 32, then
+                                                          32
+                                                 Tr(τ ) ≤ 2 E[τ ] .
+                                                          ε
+Proof. Because the outcome y is inaccurate, τ is supported on the quantum event
+
+                                   |A − Tr(Aρ)1| ≥ |y − Tr(Aρ)| − ε/4 > 3ε/4 .
+
+and is thus preserved under the projector 1|x−Tr(Aρ)|≥3ε/4 . So the claim follows by Lemma 3.4.
+
+Proof of Theorem 1.3. As in the proof of Lemma 4.7, we pass to an integral over all leaves of the tree. Telescoping
+and noting again that E[τroot ] = 0 for the root of the tree, we have
+                                                                                      π2
+          Z            Z                          Z                                      Z
+            E[τ ] dτ = E[τ ] dτ − E[τroot ] =                (E[Φσ (σ)] − E[σ]) dσ ≤ 2 2          Tr(σ) dσ ,
+                                                    interior                        2n ω interior
+where the Φσ (σ) denotes the post-measurement state after performing the POVM MAω on interior node σ. Note that
+because the tree is of depth m and the integral of Tr(σ) over sub-normalized conditional states at any particular layer
+is at most 1, we conclude by our choice of ω = ε/4 that
+                                                                         8π 2 m
+                                          Z               Z
+                                              E[τe ] de ≤ E[τ ] dτ ≤ 2 2 ,
+                                           D                             n ε
+                                              ε2
+                                                 R
+                          R side is at least 32 D Tr(τ
+By Lemma 5.4, the left-hand
+                                                         m
+                                                          e ) de. Rearranging, we conclude that the probability that there
+is any bad outcome, i.e., D Tr(τe ) de, is at most O( n2 ε4 ), from which the theorem follows.
+
+
+                                                           19
+5.3    Per-step damage control: Proof of Lemma 5.3
+We first introduce some useful notation and facts about the Fourier transform of the compact noise kernel ϕω . In
+particular, we use ϕbω for the unitary Fourier transform of ϕω
+                                                          Z
+                                                       1
+                                           ϕω (t) = √
+                                           b                 e−itz · ϕω (z) dz.
+                                                       2π
+
+
+Claim 5.5. Let ϕω be the kernel from Definition 5.1 and qω (t) = |ϕbω (t)|2 . Then
+
+                                                                               π2
+                                    Z                    Z
+                                      qω (t) dt = 1,         t2 qω (t) dt =        .
+                                                                              4ω 2
+Proof. Plancherel along with Eq. (11) implies that
+                   Z             Z                 Z         Z ω
+                                           2           2
+                     qω (t) dt = |ϕω (t)| dt = |ϕω (t)| dt =
+                                    c                            ω −1 cos(πt/2ω)2 dt = 1
+                                                                                 −ω
+
+Moreover,
+                                         Z                    Z
+                                             t2 qω (t) dt =       t2 |ϕ
+                                                                      cω (t)|2 dt
+                                                              Z
+                                                          =             cω (t)|2 dt
+                                                                  |it · ϕ
+                                                              Z
+                                                          =        c′ (t)|2 dt = ∥ϕ′ ∥2 .
+                                                                  |ϕ ω             ω 2
+
+
+The second equality follows because differentiation becomes multiplication by it under the Fourier transform. The
+derivative of ϕω is now
+                                                    π
+                                     ϕ′ω (x) = − 3/2 sin(πx/2ω) · 1|x|<ω .
+                                                  2ω
+Then                                Z ω                          Z 1
+                         ′ 2     π2                   2       π2               2        π2
+                       ∥ϕω ∥2 =           sin(πx/2ω)    dx =         sin(πu/2)   du =       ,
+                                4ω 3 −ω                      4ω 2 −1                   4ω 2
+where we have used the substitution u = x/ω.
+
+Proof of Lemma 5.3. We will prove the statement in the Heisenberg picture by showing that
+
+                                                                        π2
+                                                  Φ† (N) − N ⪯               · 1.
+                                                                       2nω 2
+This implies the desired inequality by
+
+                               1                          1                          π2
+            E[Φ(σ)] − E[σ] =      Tr(N · Φ(σ)) − Tr(N · σ) = · Tr((Φ† (N) − N) · σ) ≤ 2 2 Tr(σ).
+                               n                            n                        2n ω
+
+We show in Claim 5.6 that for Ut = eitA , the adjoint of the channel that maps to the post-measurement state can be
+written as                                   Z
+                                                        1
+                                 Φ (X) = qω (t) · Ut† XUt + Ut XUt† dt.
+                                  †
+                                                                               
+                                                        2
+               Pn
+Recall that N = j=1 Qj . By linearity, it suffices to bound Φ† (Qj ) for a single mode j. It holds that
+                                                 n
+                                                Y                Yn         
+             Ut† Qj Ut = e−itA · Qj · eitA =            e−itAj /n Qj   eitAj /n = e−itAj /n · Qj · eitAj /n .
+                                                  j=1                      j=1
+
+
+
+
+                                                                  20
+Applying Lemma 4.8 with F as the identity implies that a unitary U satisfies
+                                            1 †
+                                              U XU + U XU † − X ⪯ 2a1,
+                                                           
+                                            2
+whenever (U − 1)† (U − 1) ⪯ a1. In our case, since the spectrum of Aj lies in [0, 1] and using |eix − 1| ≤ |x|, it
+holds that
+                                                                             t2
+                          (eitAj /n − 1)† (eitAj /n − 1) = |eitAj /n − 1|2 ⪯ 2 · 1,
+                                                                            n
+which means
+          1 †                          1                                                    2t2
+            Ut Qj Ut + Ut Qj Ut† − Qj = e−itAj /n Qj eitAj /n + eitAj /n Qj e−itAj /n − Qj ⪯ 2 · 1.
+                                                                                    
+                                                                                                             (12)
+          2                            2                                                    n
+We now write using Equation (12) and Claim 5.5
+                                         Z                                       
+                          †                           1 †                    †
+                        Φ (Qj ) − Qj = qω (t) ·          U Qj Ut + Ut Qj Ut − Qj dt
+                                                      2 t
+                                         2 Z                         π2
+                                      ⪯        t 2
+                                                   q ω (t) dt  · 1 =         · 1.
+                                           n2                        2n2 ω 2
+The desired result follows by linearity:
+                                            n
+                                                                                   π2           π2
+                                                                                           1         · 1.
+                                            X
+                             Φ† (N) − N =          Φ† (Qj ) − Qj ⪯ n ·
+                                                                
+                                                                                         ·   =
+                                            j=1
+                                                                                 2n2 ω 2       2nω 2
+
+   We prove the final ingredient from the proof below.
+
+Claim 5.6. Given y ∈ R and PSD observable A, let Fy = ϕω (y 1 − A) and Ut = eitA . Then
+                            Z               Z
+                                                      1
+                               Fy XFy dy = qω (t) · Ut† XUt + Ut XUt† dt.
+                                                                           
+                             y                        2
+                                                               P
+Proof. We write the spectral decomposition of A =                 λ λ · Πλ . Then
+
+
+                                      Fy = ϕω (y 1 − A) =
+                                                                      X
+                                                                             ϕω (y − λ) · Πλ .
+                                                                         λ
+
+Substituting
+                        Z                   Z      X                          X
+                                                                                              
+                             Fy XFy dy =                    ϕω (y − λ) · Πλ X   ϕω (y − µ) · Πµ dy
+                         y                   y      λ                               µ
+                                            XZ                                       
+                                       =                    ϕω (y − λ) · ϕω (y − µ) dy · Πλ XΠµ
+                                            λ,µ         y
+                                            XZ                                     
+                                       =                    |ϕbω (t)|2 · eit(λ−µ) dt · Πλ XΠµ
+                                            λ,µ         t
+                                            Z          X           X           
+                                       =         qω (t)   eitλ · Πλ X   e−itµ · Πµ dt
+                                             t                λ                     µ
+                                            Z
+                                       =         qω (t) · Ut XUt† dt.
+                                             t
+
+The third inequality follows by defining fλ (y) = ϕω (y − λ) and observing that
+                                                                −itλ c
+                                                     fc
+                                                      λ (t) = e     · ϕω (t).
+
+
+                                                                    21
+Since ϕω is a real function we use Plancherel to deduce
+                            Z                              Z
+                               ϕω (y − λ) · ϕω (y − µ) dy = fλ (y) · fµ (y) dy
+                             y                              y
+                                                           Z
+                                                          = fcλ (t) · fµ (t) dt
+                                                                      c
+                                                            t
+                                                           Z
+                                                          = eit(λ−µ) · ϕ  cω (t) · ϕ
+                                                                                   cω (t) dt
+                                                            t
+                                                           Z
+                                                          = eit(λ−µ) · |ϕ  cω (t)|2 dt.
+                                                                t
+
+Finally, since qω is an even function, we can average over t and −t to get
+                                               Z
+                                                        1
+                                    Φ† (X) = qω (t) · Ut† XUt + Ut XUt† dt.
+                                                                           
+                                                        2
+
+Acknowledgments
+The authors are grateful to the numerous individuals with whom they have shared inspiring discussions about Shadow
+Tomography, including Costin Bădescu, Ainesh Bakshi, John Bostanci, Weiyuan Gong, Jerry Li, Allen Liu, Jack
+Spilecki, Ewin Tang, Qi Ye, and Zhihan Zhang.
+
+Statement on AI use. The main ideas underlying this work, including the central proof strategies, were generated by
+ChatGPT 5.6-Sol Pro. The human authors carefully studied, refined, and verified these ideas, and substantially rewrote
+and reorganized their presentation, adding the motivation and exposition necessary to communicate the arguments
+clearly. The final paper reflects the authors’ own understanding of the results, and the authors take full responsibility
+for every claim, proof, and citation contained in it.
+
+
+References
+[Aar16]      Scott Aaronson. The complexity of quantum states and transformations: From quantum money to black
+             holes. arXiv preprint arXiv:1607.05256, 2016.
+[Aar20]      Scott Aaronson. Shadow tomography of quantum states. SIAM Journal on Computing, 49(5):STOC18–
+             368–STOC18–394, 2020.
+[ACH+ 19] Scott Aaronson, Xinyi Chen, Elad Hazan, Satyen Kale, and Ashwin Nayak. Online learning of quantum
+          states. Journal of Statistical Mechanics: Theory and Experiment, 2019(12):124019, 2019.
+[AR19]       Scott Aaronson and Guy Rothblum. Gentle measurement of quantum states and differential privacy.
+             In Proceedings of the 51st Annual ACM SIGACT Symposium on Theory of Computing, pages 322–333.
+             Association for Computing Machinery, 2019.
+[BB24]       Adam Bene Watts and John Bostanci. Quantum event learning and gentle random measurements. In
+             15th Innovations in Theoretical Computer Science Conference (ITCS 2024), volume 287 of Leibniz In-
+             ternational Proceedings in Informatics, pages 97:1–97:22. Schloss Dagstuhl—Leibniz-Zentrum für In-
+             formatik, 2024.
+[BHOS15] Fernando Brandão, Aram Harrow, Jonathan Oppenheim, and Sergii Strelchuk. Quantum conditional mu-
+         tual information, reconstructed states, and state redistribution. Physical Review Letters, 115(5):050501,
+         2015.
+[BNS+ 21] Raef Bassily, Kobbi Nissim, Adam Smith, Thomas Steinke, Uri Stemmer, and Jonathan Ullman. Algorith-
+          mic stability for adaptive data analysis. SIAM Journal on Computing, 50(3):STOC16–377–STOC16–405,
+          2021.
+
+
+                                                           22
+[BO24]      Costin Bădescu and Ryan O’Donnell. Improved quantum data analysis. TheoretiCS, 3(7):1–34, 2024.
+
+[CG26]      Chi-Fang Chen and András Gilyén. Efficient shadow tomography of thermal states. arXiv preprint
+            arXiv:2603.16845, 2026.
+
+[CGY24]     Sitan Chen, Weiyuan Gong, and Qi Ye. Optimal tradeoffs for estimating Pauli observables. In Proceed-
+            ings of the 65th Annual IEEE Symposium on Foundations of Computer Science, pages 1086–1105. IEEE,
+            2024.
+
+[CLL24]     Sitan Chen, Jerry Li, and Allen Liu.      Optimal high-precision shadow estimation.       arXiv preprint
+            arXiv:2407.13874, 2024.
+
+[CLN+ 23] Edith Cohen, Xin Lyu, Jelani Nelson, Tamás Sarlós, and Uri Stemmer. Generalized private selection
+          and testing with high confidence. In 14th Innovations in Theoretical Computer Science Conference
+          (ITCS 2023), volume 251 of Leibniz International Proceedings in Informatics, pages 39:1–39:23. Schloss
+          Dagstuhl—Leibniz-Zentrum für Informatik, 2023.
+
+[DFH+ 15] Cynthia Dwork, Vitaly Feldman, Moritz Hardt, Toniann Pitassi, Omer Reingold, and Aaron Roth. Pre-
+          serving statistical validity in adaptive data analysis. In Proceedings of the 47th Annual ACM Symposium
+          on Theory of Computing, pages 117–126. Association for Computing Machinery, 2015.
+
+[DK22]      Yuval Dagan and Gil Kur. A bounded-noise mechanism for differential privacy. In Proceedings of the
+            35th Conference on Learning Theory, volume 178 of Proceedings of Machine Learning Research, pages
+            625–661. PMLR, 2022.
+
+[DKM+ 06] Cynthia Dwork, Krishnaram Kenthapadi, Frank McSherry, Ilya Mironov, and Moni Naor. Our data,
+          ourselves: Privacy via distributed noise generation. In Advances in Cryptology—EUROCRYPT 2006,
+          volume 4004 of Lecture Notes in Computer Science, pages 486–503. Springer, 2006.
+
+[FR15]      Omar Fawzi and Renato Renner. Quantum conditional mutual information and approximate Markov
+            chains. Communications in Mathematical Physics, 340(2):575–611, 2015.
+
+[GMS19]     Aurélien Garivier, Pierre Ménard, and Gilles Stoltz. Explore first, exploit next: The true shape of regret
+            in bandit problems. Mathematics of Operations Research, 44(2):377–399, 2019.
+
+[GPS24]     Daniel Grier, Hakop Pashayan, and Luke Schaeffer. Sample-optimal classical shadows for pure states.
+            Quantum, 8:1373, 2024.
+
+[HHJ+ 17]   Jeongwan Haah, Aram Harrow, Zhengfeng Ji, Xiaodi Wu, and Nengkun Yu. Sample-optimal tomography
+            of quantum states. IEEE Transactions on Information Theory, 63(9):5628–5641, 2017.
+
+[HKMK23] Hassan Hafez-Kolahi, Behrad Moniri, and Shohreh Kasaei. Information-theoretic analysis of minimax
+         excess risk. IEEE Transactions on Information Theory, 69(7):4659–4674, 2023.
+
+[HKP20]     Hsin-Yuan Huang, Richard Kueng, and John Preskill. Predicting many properties of a quantum system
+            from very few measurements. Nature Physics, 16(10):1050–1057, 2020.
+
+[HLHP26] Jerry Huang, Laura Lewis, Hsin-Yuan Huang, and John Preskill. Predicting adaptively chosen observ-
+         ables in quantum systems. PRX Quantum, 7(1):010347, 2026.
+
+[Kal07]     Satyen Kale. Efficient algorithms using the multiplicative weights update method. PhD thesis, Princeton
+            University, 2007.
+
+[KGKB25] Robbie King, David Gosset, Robin Kothari, and Ryan Babbush. Triply efficient shadow tomography.
+         PRX Quantum, 6(1):010336, 2025.
+
+[KP10]      Antti Knowles and Peter Pickl. Mean-field dynamics: singular potentials and rate of convergence. Com-
+            munications in Mathematical Physics, 298(1):101–138, 2010.
+
+
+                                                         23
+[LnNS15]    Mathieu Lewin, Phan Th nh Nam, and Benjamin Schlein. Fluctuations around hartree states in the mean-
+            field regime. American Journal of Mathematics, 137(6):1613–1650, 2015.
+
+[LNSS15]    Mathieu Lewin, Phan Thành Nam, Sylvia Serfaty, and Jan Philip Solovej. Bogoliubov spectrum of
+            interacting bose gases. Communications on Pure and Applied Mathematics, 68(3):413–471, 2015.
+
+[LT25]      Xin Lyu and Kunal Talwar. Fingerprinting codes meet geometry: Improved lower bounds for private
+            query release and adaptive data analysis. In Proceedings of the 57th Annual ACM Symposium on Theory
+            of Computing, pages 2374–2385. Association for Computing Machinery, 2025.
+
+[NSS+ 18] Kobbi Nissim, Adam Smith, Thomas Steinke, Uri Stemmer, and Jonathan Ullman. The limits of post-
+          selection generalization. In Advances in Neural Information Processing Systems 31, pages 6402–6411.
+          Curran Associates, 2018.
+
+[ON02]      Tomohiro Ogawa and Hiroshi Nagaoka. A new proof of the channel coding theorem via hypothesis
+            testing in quantum information theory. In Proceedings of the 2002 IEEE International Symposium on
+            Information Theory, page 73. IEEE, 2002.
+
+[OW16]      Ryan O’Donnell and John Wright. Efficient quantum tomography. In Proceedings of the 48th Annual
+            ACM Symposium on Theory of Computing, pages 899–912. Association for Computing Machinery, 2016.
+
+[PFMO25] Giacomo De Palma, Marco Fanizza, Connor Mowry, and Ryan O’Donnell. Non-iid hypothesis testing:
+         From classical to quantum. arXiv preprint arXiv:2510.06147, 2025.
+
+[Pic11]     Peter Pickl. A simple derivation of mean-field limits for quantum systems. Letters in Mathematical
+            Physics, 97(2):151–164, 2011.
+
+[Pic15]     Peter Pickl. Derivation of the time dependent gross–pitaevskii equation with external fields. Reviews in
+            Mathematical Physics, 27(01):1550003, 2015.
+
+[PSW26]     Angelos Pelecanos, Jack Spilecki, and John Wright. The debiased Keyl’s algorithm: A new unbiased
+            estimator for full state tomography. In Proceedings of the 58th Annual ACM Symposium on Theory of
+            Computing, pages 1266–1277. Association for Computing Machinery, 2026.
+
+[RR16]      Daniel Russo and Benjamin Van Roy. An information-theoretic analysis of Thompson sampling. Journal
+            of Machine Learning Research, 17(68):1–30, 2016.
+
+[Sin25]     Pulkit Sinha. Dimension-independent and computationally efficient shadow tomography. In Proceed-
+            ings of the 57th Annual ACM Symposium on Theory of Computing, pages 1242–1253. Association for
+            Computing Machinery, 2025.
+
+[Sio58]     Maurice Sion. On general minimax theorems. Pacific Journal of Mathematics, 8(1):171–176, 1958.
+
+[Win99]     Andreas Winter. Coding theorem and strong converse for quantum channels. IEEE Transactions on
+            Information Theory, 45(7):2481–2485, 1999.
+
+[XR22]      Aolin Xu and Maxim Raginsky. Minimum excess risk in Bayesian learning. IEEE Transactions on
+            Information Theory, 68(12):7935–7955, 2022.
+
+
+A    Optimal Threshold Search by information theory methods
+In this appendix we show possibly the shortest route to obtaining log(m) · poly(log d, 1/ε) dependence in Offline
+Shadow Tomography. The method is information-theoretical, and (seemingly) unrelated to the methods used in the
+rest of this paper.
+    We consider the following quantum statistical decision theory problem. It is an “argmax” version of Shadow
+Tomography, more or less equivalent to the “Threshold Search” problem from [BO24]:
+
+
+                                                        24
+Definition A.1. The (worst-case) Best Observable Selection problem is as follows. Given are (classical descriptions
+of) observables 0 ⪯ A1 , . . . , Am ⪯ 1 on Cd , as well as n copies of an unknown mixed state ρ ∈ Cd×d . The task is to
+measure the copies and output j ∈ [m] with small regret,
+
+                                                      rρ (j) = µ∗ − µj ,
+
+where µi := Tr(ρAi ) and µ∗ := maxi {µi }.
+
+We prove:
+                                                                                                   q
+                                                                                                       ln m
+Theorem A.2. There is a Best Observable Selection algorithm with expected regret at most                2n . Thus the expected
+regret is at most ε provided n ≥ ln2εm
+                                     2 .
+
+
+We may view the observables A1 , . . . , Am as defining a two-player game between an Adversary and a Learner. Si-
+multaneously, the Adversary chooses a state ρ (possibly at random), and the Learner chooses a decision rule POVM
+M = (M1 , . . . , Mm ) on (Cd )⊗n . The “payoff” is the expected regret Ej∼M (ρ⊗n ) [r(j)]. By standard minimax the-
+ory for bilinear games on convex compact sets [Sio58], the game has an optimal value that is equally achieved when
+the Adversary must play first (with a randomized strategy) and when the Learner must play first. The Learner-first
+version corresponds to the Best Observale Selection scenario; thus for Theorem A.2 we may equivalently study the
+Adversary-first scenario. This Adversary-first scenario is a Bayesian one, where ρ is drawn from a prior distribution
+D, known to the Learner. Thus to prove Theorem A.2, it is necessary and sufficient to prove the following:
+
+Theorem A.3. Consider a Bayesian version of Best Observable Selection, with input including a known distribution
+D on states. Then there is a POVM M (depending only on D and A1 , . . . Am ) satisfying
+                                                             q
+                                             E     [rρ (j)] ≤ ln2nm .
+                                                   ρ∼D
+                                                 j∼M (ρ⊗n )
+
+
+Proof. Given ρ ∼ D, let j ∗ = j ∗ (ρ) denote the index (unknown to the Learner) achieving µ∗ = maxj {Tr(ρAj )}.
+For the sake of analysis, consider the classical-quantum state |j ∗ ⟩⟨j ∗ | ⊗ ρ⊗n , where we call the first (classical) register
+J and the remaining registers B1 , . . . , Bn . We then introduce the averaged state
+
+                                               ΩJB1 ···Bn = E[|j ∗ ⟩⟨j ∗ | ⊗ ρ⊗n ].
+                                                              ρ
+
+    We will consider Learner POVMs that happen to depend on only the first T copies of ρ, for 0 ≤ T < n. With such
+learners in mind, we could define the (conditional mutual) information that seeing copy T + 1 would reveal about j ∗ :
+
+                                             η(T ) := I(J : BT +1 | B1 · · · BT )Ω .
+
+By the chain rule,
+                         n−1
+                         X
+                                η(T ) = I(J : B1 · · · Bn )Ω = H(J)Ω − H(J | B1 · · · Bn )Ω ≤ ln m,
+                         T =0
+
+where the last step used that J is classical and supported on [m]. Thus there is some particular t with η(t) ≤ lnnm ; this
+will be the good number of copies for the Learner to use.
+    By the Fawzi–Renner Theorem [FR15], there exists a channel R : B1 · · · Bt → JB1 · · · Bt that, when applied to
+ΩB1 ···Bt+1 (without touching register Bt+1 ), yields a state Ω
+                                                              e JB ···B satisfying
+                                                                  1    t+1
+
+
+
+                                       Dmeas                                      ln m
+                                        KL (ΩJB1 ···Bt+1 ∥ ΩJB1 ···Bt+1 ) ≤ η(t) ≤ n .
+                                                           e                                                               (13)
+
+(Here we actually use the sharpened form of the theorem with measured relative entropy, rather than −2 ln F, due to
+Brandão et al. [BHOS15].) The Learner will apply this channel to its first t copies of ρ; for analysis purposes, we can
+think of the Bt+1 register as coming along as a “holdout” used to analyze regret. Then, the learner will measure the
+register J, obtaining and outputting e
+                                     j.
+
+
+                                                                  25
+    Now for analysis purposes, consider the process of measuring J to obtain some j ∈ [m], then measuring Bt+1
+with effect Aj to obtain some a ∈ {0, 1}. On one hand, the “reward” µej obtained by the Learner is E[e
+                                                                                                     a], for (ej, a
+                                                                                                                  e)
+                                                                                                             ∗
+obtained from the measurement process applied to ΩJB ···B . On the other hand, the best reward µ∗ is E[a ], for
+                                                  e
+                                                          1        t+1
+
+(j ∗ , a∗ ) obtained from the measurement process applied to ΩJB1 ···Bt+1 . Equation (13) precisely gives us the classical
+KL bound dKL ((j ∗ , a∗ ) ∥ (e   e )) ≤ lnnm . Thus
+                              j, a
+                                                                         q                     q
+                             j)] = E[a∗ ] − E[e
+                       E[rρ (e                a] ≤ dTV (a∗ , a
+                                                             e) ≤            1       ∗
+                                                                             2 dKL (a ∥ a) ≤
+                                                                                        e          ln m
+                                                                                                    2n ,
+
+where we used Pinsker’s inequality and data processing.
+                                                                   e log4 d ) copies.
+Corollary A.4. Shadow Tomography can be accomplished with log(m) · O( ε
+
+Proof. Applying Markov to the previous result immediately solves the “3/4 vs. 1/4” version of Threshold Search
+from [BO24, Section 4.1] with O(log m) copies. Then, Shadow Tomography with log(m) · O(   e log4 d ) copies follows
+                                                                                             ε
+by combination with online quantum state learning [ACH+ 19], exactly as in [Aar20, BO24].
+
+Corollary   A.5. When µ∗ ≥ 1 − δ, there is a Best Observable Selection algorithm with expected regret at most
+q
+  2 ln m
+         √
+     n     δ + 2 lnn m .
+
+Proof. We repeat the earlier proof to get to dKL (a∗ ∥ a
+                                                       e ) ≤ lnnm , where a∗ and a
+                                                                                 e are Bernoulli. Then E[a∗ ] = µ∗ ≥
+                                                                                           q       √
+1 − δ and a version of Pinsker (e.g. [GMS19, Lemma 6]) indeed implies E[e   a] ≥ E[a∗ ] − ( 2 lnn m δ + 2 lnn m ).
+
+Our proof of Theorem (A.2) can be viewed as a kind of quantization of the Thompson-sampling result of Russo–Van
+Roy [RR16], which in turn uses the information theory methods of Xu–Raginsky [XR22] and the minimax idea of
+Hafez-Kolahi et al. [HKMK23].
+
+
+
+
+                                                              26
+

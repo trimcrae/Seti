@@ -1,0 +1,135 @@
+\section{Introduction}
+
+
+In the current noisy intermediate-scale quantum (NISQ) era, most quantum applications are developed and validated through classical simulation. Quantum programs are typically expressed in the circuit model as a sequence of gates, and the common practice is to execute the circuit on a simulator before running it on quantum hardware. 
+Simulators produce the circuit’s (predicted) output, e.g., measurement outcomes or their probabilities. 
+Efficient circuit simulation, therefore, remains a cornerstone for near-term quantum algorithm development. 
+\revisionB{For database researchers, this raises a data management question: can circuit simulation be expressed as a relational workload whose execution can benefit from database management systems (DBMS) memory management, query optimization, and out-of-core processing? 
+ }
+
+\smallskip
+\para{Data management challenge}
+    Recent work \cite{einsteinSQL2023, hai2025quantum} argues that relational databases can serve as a competitive simulation \emph{engine} by compiling circuit simulation into relational workloads. A particularly promising result is that DuckDB can scale to \emph{millions of qubits} for sparse circuits. Concretely, under a 2GB memory limit, DuckDB simulates up to $4{,}000{,}862$ qubits for GHZ-state preparation and up to $53{,}017$ qubits for W-state preparation \cite{techreport}, which are two standard state-preparation routines that initialize many qubits into widely used multi-qubit entangled states.  
+% These numbers suggest that an RDBMS can be a promising simulation engine for large-scale quantum hardware, algorithms, and applications. 
+% when the underlying \floris{where do tensors suddenly come from??} tensors remain sparse. 
+These results raise an obvious question for the database community: \emph{when does ``an RDBMS as a simulator'' actually work?}
+% , and when does it break down?}
+
+ 
+
+
+
+
+The same study makes clear this scalability is highly workload-dependent: for a dense circuit such as Quantum Fourier Transform (QFT), the maximum supported qubit count is only $14$ under the same setting \cite{techreport}. Moreover, the largest improvements in those experiments arise from circuits with a specific structure. For instance, GHZ is a stabilizer circuit, which uses only Clifford gates (Hadamard, CNOT, Phase), and is known to be simulated efficiently on classical computers via the Gottesman–Knill theorem \cite{Aaronson_2004}. Moreover, a key systems gap is revealed in \cite{einsteinSQL2023, hai2025quantum}: existing approaches have not fully exploited RDBMS capabilities to handle simulation workloads through mechanisms such as query optimization, indexing, and materialization, emphasizing that closing this gap is important for an end-to-end database-driven simulation pipeline.
+Altogether, these results motivate a database-centric benchmark: to move beyond isolated case studies, the community needs a systematic way to generate \emph{diverse} simulation workloads and study how SQL representations behave under query optimization and execution. \revisionB{Such a benchmark enables database researchers to study query planning, materialization, indexing, spill behavior, and backend engine selection for quantum circuit simulation.}
+That is, these results point to a benchmark gap. 
+ % To move beyond isolated case studies, we need a database-centric benchmark that can generate diverse simulation workloads and help map out the boundary: which circuit families yield relational workloads that an RDBMS optimizes well, which ones defeat it, and why. 
+
+\medskip
+%\para{Why this is different from existing tensor workloads in RDBMS}
+\para{Why this differs from existing tensor workloads in RDBMSs}
+ When a quantum circuit is compiled into SQL, the underlying computation \emph{can} be expressed as tensor algebra:
+applying gates corresponds to multiplying and contracting tensors (e.g., updating a state vector by small operators). 
+%
+% \floris{You from now on in an RDMBS, right? Because other approaches may not use tensors... make this explicity in text?}
+At a computational level, circuit simulation in RDBMS  is a tensor workload: vector-matrix multiplication, matrix-matrix multiplication, and tensor contractions. One of the most frequent operations is matrix multiplication. Using SQL, matrix multiplication can be implemented as a join-and-aggregate operation: represent the matrices in long form as $A(i,k,a_{ik})$ and $B(k,j,b_{kj})$, compute $W=AB$ by joining rows of $A$ and $B$ on the shared inner index $k$, multiplying matching values, and summing over $k$:
+\[
+w_{ij}=\sum_k a_{ik}b_{kj},
+\]
+which corresponds to:
+\begin{quote}\small
+\texttt{SELECT A.i, B.j, SUM(A.val * B.val) AS w\_ij\\
+FROM A JOIN B ON A.k = B.k\\
+GROUP BY A.i, B.j;}
+\end{quote}
+This style of expressing tensor computation in SQL has been studied in the database community \cite{Khamis2020, boehm2023optimizing, Makrynioti2019survey, zhou2020database, 10107490}, including recent work on efficient Einstein summation in SQL \cite{einsteinSQL2023} and relational abstractions for tensor and linear-algebra workloads in ML \cite{chen2017towards, wang2020spores, luo2021automatic, yuan2021tensor, sun2026transql}. 
+
+However, the simulation workload induced by quantum circuits differs from mainstream ML workloads in several fundamental ways. In transformer models, the core computation is dominated by dense linear algebra over matrices with dimensions in the thousands (e.g., attention uses dense $QK^\top$ and $QV$ products) \cite{vaswani2017attention}. In contrast, a quantum circuit acts on a state vector of dimension $2^{N}$: for qubit count $N=50$, the state has $2^{50}\approx 1.13\times 10^{15}$ amplitudes, which already requires about $16$~PB just to store a dense complex state vector. 
+At the same time, each instruction applies only a tiny operator (typically $2\times 2$ or $4\times 4$ matrices), but it must be
+applied across this exponentially large index space. 
+% Meanwhile, the gate operators applied per instruction are small (typically size $2\times 2$ or $4\times 4$ matrices), 
+The   structure of a quantum circuit determines a 
+% long, dependency-constrained 
+sequence of tensor contractions whose intermediate sparsity and entanglement can change abruptly across the gate sequence. 
+
+% As a result, optimizing SQL for quantum simulation is not a direct reuse of existing in-database ML optimization techniques: the bottlenecks, intermediate result behavior, and the role of structure (sparsity, interaction graphs, and composition patterns) can be qualitatively different. A benchmark that exposes these properties is a prerequisite for principled optimizer and execution-engine research in this space.
+% \floris{I would spell out challenges a bit more? What you have is already good too...
+This mismatch creates database-specific difficulties:
+(i) intermediate results may be \emph{enormous} unless the representation stays sparse or factored;
+(ii) whether sparsity survives depends on the \emph{gate sequence}, and entangling operations can rapidly densify the state and
+cause abrupt blow-ups;
+and (iii) the computation is a long, dependency-constrained sequence of small updates rather than a few large tensor computations,
+so ``optimize one big join'' is not the right mental model. Consequently, optimizing SQL for quantum circuit simulation is not a
+direct reuse of existing in-database tensor/ML techniques: the bottlenecks, cardinality growth, and the importance of
+circuit structure (sparsity patterns, interaction graphs, composition rules) are qualitatively different.
+A benchmark that systematically varies these properties is therefore essential for a principled optimizer and execution-engine
+research in this space.
+% }
+
+\medskip
+\para{Gaps of existing benchmarks}
+Existing quantum benchmarks such as SupermarQ \cite{tomesh2022supermarqscalablequantumbenchmark}, MQT Bench \cite{Quetschlich_2023}, and QASM Bench \cite{li2022qasmbenchlowlevelqasmbenchmark} provide valuable circuit suites for the quantum community, but they do not directly target database execution.
+% : they generate circuits as OpenQASM\footnote{\url{https://openqasm.com/}} and
+% Qiskit QPY\footnote{\url{https://quantum.cloud.ibm.com/docs/en/api/qiskit/qpy}}  rather than as SQL workloads, and they are not designed to study query optimization, physical design, or execution behavior of RDBMS engines on simulation workloads.
+In particular, they generate circuits as quantum-circuit descriptions (e.g., QASM/Qiskit circuits) meant to be run by quantum toolchains, not as relational workloads. As a result, they are not designed to evaluate how an RDBMS behaves as a simulation engine, e.g., the impact of query optimization, physical design (indexes/partitioning), and execution strategies on circuit-simulation workloads. 
+
+\begin{figure}[t]
+  \centering
+  %\includegraphics[width=\columnwidth]{images/rdbms_qiskit_7705_aer_vs_sqlite_wins_pretty.pdf}
+   \includegraphics[width=0.53\columnwidth]{images/rdbms_qiskit_7705_aer_vs_sqlite_wins_new.png}
+  \caption{\revisionB{Across \num{7705} circuits, share of cases where RDBMSs (executing the emitted SQL workload)
+  or Qiskit Aer %(best of its built-in simulation methods) 
+  achieves the lowest runtime and the lowest
+  peak memory. Detailed experimental settings are in Section~\ref{sec:eva}.}}
+  \label{fig:aer-vs-sqlite-wins}
+   % \vspace{-0.4cm}
+\end{figure}
+
+\medskip
+
+\para{Our approach}
+We present \sys, a database-oriented benchmark for quantum circuit simulation.
+Given a small user configuration (Table~\ref{tab:base_params}), \sys generates
+\emph{compositional} circuits by assembling subcircuits from a set of quantum templates. Each circuit is accompanied by an
+\emph{RDBMS-ready SQL workload} that expresses the simulation task as relational
+operators. \revisionB{This makes simulation directly accessible to database research: each circuit becomes both a quantum artifact and a relational workload whose query shape, intermediate behavior, and backend performance can be analyzed.} Moreover, to support data-centric analysis, \sys also 
+extracts four groups of features: \emph{static} and \emph{graph} features from the circuit
+structure, \emph{SQL} features from the emitted query workload, and \emph{dynamic}
+features from the simulation.
+\revisionC{
+Our experimental results further clarify why exposing simulation as database workloads is useful. 
+Running the generated SQL inside DBMSs makes simulation subject to database execution and optimization choices, enabling better memory management, runtime improvements for certain circuits, and out-of-core execution for large circuits under memory limits. 
+Thus, RDBMS-based simulation enables systematic optimization of quantum circuit simulation through DBMS memory management, spill-aware execution, and backend selection.
+}
+
+
+\para{Contributions}
+We make the following contributions:
+\begin{itemize}[leftmargin=*]
+    \item 
+    % \textbf{\sys benchmark and artifacts.} 
+    We propose \sys, a benchmark %generator and dataset
+    that produces quantum circuit simulation workloads in \emph{relational form} (SQL),
+    enabling direct evaluation inside RDBMS engines.
+
+    \item 
+    % \textbf{Compositional circuit generation.} 
+    We design a template-based generator
+    that \emph{scales} circuit size while preserving realistic structure via compositional circuit generation (Section~\ref{sec:benchmark}). 
+    % conditional,history-dependent template assembly.
+
+     \item %\textbf{Circuit and SQL feature model.} 
+    From the generated circuits, we extract \emph{static, graph, SQL,} and \emph{dynamic} features per circuit, enabling
+    systematic workload characterization and correlation with DB performance 
+    (Section~\ref{ssec:features}).
+
+  
+    
+    \item Using \sys workloads, we quantify when SQL-driven simulation is competitive with Qiskit Aer, \revisionB{including memory-efficient and out-of-core cases.}
+    % For example, as shown in Figure~\ref{fig:aer-vs-sqlite-wins}, even without database-specific tuning, SQLite attains the lowest peak
+    % memory on \textbf{34.8\%} of circuits in our RDBMS-vs.-Aer comparison (270/775), and
+    \sys features enable accurate, lightweight machine learning based selectors for deciding when to use an
+    RDBMS engine (Section~\ref{sec:eva}).
+\end{itemize}
+
+

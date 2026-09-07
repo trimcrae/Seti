@@ -1,0 +1,4006 @@
+\documentclass[a4paper,11pt]{article}
+
+% ------------------------------------------------------------------
+% JHEP layout.  Keep jheppub.sty and JHEP.bst in this directory.
+% ------------------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage{jheppub}
+\preprint{ICTS-USTC/PCFT-26-58}
+
+% ------------------------------------------------------------------
+% Additional packages used in the manuscript.
+% jheppub already loads amsmath, amssymb, graphicx, natbib and hyperref.
+% ------------------------------------------------------------------
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{microtype}
+\usepackage{enumitem}
+
+%\usepackage{showlabels}
+
+\allowdisplaybreaks[2]
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+\setlist[enumerate]{leftmargin=8mm,itemsep=2pt,topsep=3pt}
+
+% Cross references remain label based, so numbering stays consistent when
+% material is inserted, deleted or rearranged.  Following standard JHEP usage,
+% equations are cited with \eqref{...}, giving only the parenthesized number.
+% ------------------------------------------------------------------
+% Frequently used notation.
+% ------------------------------------------------------------------
+\newcommand{\appref}[1]{appendix~\ref{#1}}
+\newcommand{\secref}[1]{section~\ref{#1}}
+\newcommand{\figref}[1]{figure~\ref{#1}}
+\newcommand{\tabref}[1]{table~\ref{#1}}
+\newcommand{\e}{\mathrm e}
+\newcommand{\dd}{\mathrm d}
+\newcommand{\Li}{\operatorname{Li}}
+\newcommand{\arcosh}{\operatorname{arcosh}}
+\newcommand{\Order}{\mathcal O}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,decorations.pathmorphing}
+% ------------------------------------------------------------------
+% Front matter.  These fields are deliberately collected here so that
+% they can be edited without touching the body of the manuscript.
+% ------------------------------------------------------------------
+\title{The large $N$  vector model  with angular velocity}
+\author[a]{Justin R. David}
+\author[b,c]{, Srijan Kumar}
+\affiliation[a]{\vspace{.1cm} Centre for High Energy Physics,  Indian Institute of Science,
+	C. V. Raman Avenue, Bangalore 560012, India. \vspace{.1cm} }
+\affiliation[b]{ Interdisciplinary Center for Theoretical Study, University of Science and Technology of China, Hefei,
+	Anhui 230026, China.\vspace{.1cm} }
+\affiliation[c]{Peng Huanwu Center for Fundamental Theory, Hefei, Anhui 230026, China.}
+
+
+\emailAdd{justin@iisc.ac.in}
+\emailAdd{srijankumar@ustc.edu.cn}
+
+
+% \author[a,b]{Srijan Kumar}
+
+% \affiliation[a]{Centre for High Energy Physics, Indian Institute of Science, C. V. Raman Avenue, Bangalore 560012, India}
+% \affiliation[b]{International Centre for Theoretical Sciences (ICTS-TIFR), Tata Institute of Fundamental Research, Shivakote, Hesaraghatta, Bengaluru 560089, India}
+
+% \emailAdd{srijankumar@iisc.ac.in}
+
+\abstract{We study the free energy of the critical $O(N)$ vector model at large $N$  on
+	$S^{1}\times S^{2}$ with an angular velocity $\hat\mu$ without the singlet constraint. The
+	leading high-temperature behaviour is determined analytically both as an expansion about $\hat\mu r=0$ and $\hat\mu^{2}r^{2}=1$
+	where $r$ is the radius of the sphere.
+	We supplement the analytic results with a numerical analysis that agrees with both the analytical expansions in their respective
+	regimes and smoothly interpolates between them. The leading
+	high-temperature contribution to the free energy develops a pole
+	at $\hat\mu^{2}r^{2}=1$, in agreement with expectations from the thermal effective
+	field theory. Its residue coincides with that of the massless  free theory. 
+	Sub-leading terms, however, exhibit non-analytic dependence on the angular
+	velocity and distinguish the critical fixed-point result from the
+	free theory answer.
+	The residue at the pole can also be obtained  by placing the $O(N)$ model 
+	on the pp-wave geometry. We show that the residue agrees  with that obtained from  the direct computation.}
+
+
+
+\begin{document}
+	\maketitle
+	
+	
+	\section{Introduction}
+	\label{sec:introduction}
+	
+	
+	The
+	study of  conformal field theories at finite temperature is important in many phenomenological contexts both in high energy physics and condensed matter physics.  From the theoretical point of view a  reason for their importance  is because  the physics of 
+	conformal field theories at finite temperature  at strong coupling can be related to black hole physics 
+	by  the AdS/CFT correspondence.
+	However,   non-zero temperature breaks  some of the symmetries  of the conformal group 
+	making it less constrained as compared to its zero temperature counter part making its study more involved. 
+	In spite of this there has been a  lot of progress  in using symmetries of the conformal group to constrain 
+	and determine observables  in thermal CFT's \cite{Iliesiu:2018fao,Gobeil:2018fzy,Iliesiu:2018zlz,Petkou:2018ynm,David:2023uya,Marchetto:2023fcw,Karydas:2023ufs,Petkou:2026upo,Diatlyk:2023msc,Benedetti:2023pbt,David:2024naf,Kumar:2025txh,Marchetto:2023xap,Barrat:2025wbi,Barrat:2025nvu,Niarchos:2026vow}.
+	Here the large $N$ vector models played an instrumental role providing a testing ground for verifying the methods 
+	developed in the thermal bootstrap program.    With the  motivation of
+	understanding CFT's at finite temperature,  new results in  this model have been found.  These involve  evaluation
+	of partition functions as well as one point functions of vector models on 
+	curved geometries \cite{David:2024pir,David:2025tqn,Mauro:2026zus,Parmentier:2026aqh}. Vector models provide non-trivial examples to benchmark the general CFT results in curved geometries at finite temperature \cite{Buric:2024kxo,Buric:2025uqt,Ammon:2025cdz}. 
+	\\
+	
+	%	
+	%	In various physical contexts, the presence of additional structures may lead to non-trivial modifications to such theories. One such additional structure is the angular momentum, which we are going to study in this work in a specific model
+	The thermodynamics of rotating black holes in $AdS$ provides the motivation to study conformal field theories 
+	in the presence of angular potential. 
+	Early works led to constraining the partition functions of conformal field theories with finite angular velocities 
+	using a thermal effective action \cite{Bhattacharyya:2007vs,Banerjee:2012iz,Jensen:2012jh,Shaghoulian:2015lcn}. 
+	%	 The presence of angular potential lead to a non-trivial deformation to the thermal partition function, and opens up new interesting avenue for study. Such a set up is particularly interesting in the study of the spinning AdS black holes \cite{Bhattacharyya:2007vs,Banerjee:2012iz,Shaghoulian:2015lcn}. 
+	In this paper we will restrict our attention to the critical $O(N)$ model at large $N$  on $S^1\times S^2$ without the singlet constraint.
+	To present our results let us first define the 
+	thermal partition function of  a system 
+	on the geometry of $S^1\times S^2$ with an angular potential $\hat\mu$ along $z$-axis which is  given by
+	\begin{equation}
+		Z_{}(\beta,\hat\mu)
+		=\operatorname{Tr}\!\left[\e^{-\beta(H-\hat\mu L_z)}\right],
+		%=\operatorname{Tr}\Big[e^{-\beta(\tau+(1-\hat\mu) L_z)}\Big]
+	\end{equation}
+	$H$ is the Hamiltonian of the system and $L_z$ is the angular momentum along $z$-axis with an angular velocity $\hat \mu$, and 
+	$\beta $ stands for the inverse temperature. 
+	
+	Recently, there has been a renewed effort at characterising  the behaviour of conformal field theories at finite temperature and 
+	angular velocity  \cite{Shaghoulian:2016gol,Benjamin:2023qsc,Allameh:2024qqp,Anand:2025mfh}.
+	These papers, in particular the work of  \cite{Anand:2025mfh} have led to the conjecture 
+	that  thermal free energies of all conformal field theories develop a pole at  $\hat \mu^2r^2=1$, where $r$ is the radius of the sphere. 
+	For conformal field theories   in $d=2$ space-time dimensions, the existence of this pole can be shown using modular invariance \cite{Shaghoulian:2015lcn,Benjamin:2023qsc,Anand:2025mfh}.  The residue at the pole has been shown to be proportional to the central charge of the theory. 
+	For conformal field theories on $S^1\times S^{d-1}$ with $d\geq 3$  
+	the existence of the pole  has been argued from thermal effective field theory \cite{Anand:2025mfh}  and is viewed
+	as a generalization to the Cardy formula in higher dimension 
+	\footnote{Earlier work on effective  field theory  techniques applied in supersymmetric theories  also predicted the existence of the 
+		pole \cite{DiPietro:2014bca,Cassani:2021fyv}.}.
+	The  residue 
+	at this  pole depends on the theory under consideration. 
+	In \cite{Komargodski:2026ain}, it was argued that this residue can be extracted from evaluating  the partition function of the 
+	conformal field theory on the pp-wave geometry.  In  \cite{Lee:2026azy}  the existence of the pole was shown to hold in a class 
+	non-relativistic conformal theories.   Free energies of 
+	conformal higher derivative and higher spin fields also show poles as the angular velocity approaches unity  \cite{Mukherjee:2026dfu}. 
+	
+	In this work we will provide further evidence for the conjecture that partition functions of conformal field theories develop
+	poles as the angular velocity approaches unity, in units of the radius of the sphere. 
+	We evaluate the partition function of the large $N$ critical $O(N)$ model at large $N$ at arbitrary $\hat \mu r$  in $d =3$ and
+	show that 
+	as $\hat\mu^2 r^2  \rightarrow 1$, the free energy develops a pole. 
+	This theory is  in the non-singlet sector and is a  non-trivial interacting thermal  conformal field theory. 
+	
+	
+	%Recent developments demonstrate that the thermal free energy of conformal field theories admits a pole at $\hat \mu^2r^2=1$ for $d\ge 3$. For $d=2$ this pole structure can be shown by a direct application of the Modular invariance of the partition function. The residue at the pole is completely determined by the central charge, up to simple numerical factors. In contrast for $d\ge 3$ the residue involves theory dependence. The existance of the pole still stands to be universal in CFTs as has been argued in \cite{Anand:2025mfh}, using an effective field theory description \cite{Bhattacharyya:2007vs,Banerjee:2012iz,Jensen:2012jh,Benjamin:2023qsc,Allameh:2024qqp,Shaghoulian:2016gol} at high temperature, often viewed as a generalization to the Cardy formula in higher dimension.
+	% One can note that the limit $\hat \mu r\to1$ reads out the large angular momentum contribution in the partition function. Study of the CFTs on the plane wave geometry \cite{Gibbons:1975jb} captures the residue at this pole of the free energy following the prescription given in \cite{Komargodski:2026ain}. Similar pole structure is argued to hold in non-relativistic CFTs as well \cite{Lee:2026azy}. The existence of such a pole has been confirmed in free scalar, free fermionic CFTs  and holographic examples, and also for conformal higher derivative and higher spin free fields \cite{Mukherjee:2026dfu}. 
+	%  In our current work we will provide a test for this proposal for the critical $O(N)$ model at large $N$ as a non-trivial interacting CFT example. 
+	%\\
+	
+	\subsubsection*{Summary of the results}
+	
+	We summarise the  main observations of this paper  of the $O(N)$ model in presence of the angular potential in $(2+1)\, d$.  
+	The model admits two fixed points one is the  free fixed point in the UV and the other  is a  strong coupling  fixed point in the IR.
+	At the  free fixed point the high temperature contribution to the free energy is known to have the following form \footnote{Throughout the paper we factor out the $N$ that occurs as a pre-factor in the free energy. }
+	\begin{equation}
+		\frac{\beta^2}{r^2}\log Z_{\rm free}^{(0)}(\hat{\mu} r)
+		=\frac{2\zeta(3)}{1-\hat \mu^2r^2}.
+		\label{eq:free-leading-pole-intro}
+	\end{equation}
+	The superscript ``(0)'' denotes the leading high temperature contribution. Thus the leading high temperature behaviour of the free energy is given by the pole at $\hat\mu^2 r^2=1$.  Let us write this free energy as an expansion about $\hat{\mu} r=0$, we obtain
+	\begin{align} \label{expfreeir}
+	\frac{\beta^2}{r^2}	\log Z^{(0)}_{\rm free}(\hat\mu r)={2\zeta(3)}\Big(1+\hat\mu^2r^2+\hat{\mu}^4r^4+O\big((\hat\mu r)^6\big) \Big). 
+	\end{align}
+	The non-trivial  IR fixed  point is characterised by a  thermal mass which arises due to the uniform saddle point of the auxiliary field in the Hubbard-Stratanovich transform of the quartic action at  the strict large $N$ limit.
+	The thermal mass   $\tilde m(\hat\mu r)$,  which satisfies  the gap equation at small $\hat \mu r$  takes the following form
+	\begin{align}
+		&\frac{\tilde m(\hat\mu r)\beta}{2\log\rho_{\rm g}}
+		=1+\frac{\hat\mu^2r^2}{3}
+		+\frac{45+2\sqrt5\log\rho_{\rm g}}{225}\hat\mu^4r^4
+		%	\nonumber
+		%	+\frac{2025+186\sqrt5\log\rho_{\rm g}-40\log^2\rho_{\rm g}}{14175}
+		%	(1-x^2)^3
+		%	\nonumber\\
+		+O\big((\hat\mu r)^6 \big)
+		\label{eq:mass-x1-series-intro},\quad {\rm with }\ \rho_{\rm g}\equiv(1+\sqrt5)/2,  \nonumber \\ 
+		& \qquad\qquad \qquad {\rm with} \qquad  \hat \mu r \ll1, 
+	\end{align}
+%	where  $x^2 = 1- \hat \mu^2 r^2$. 
+	The free energy as  an expansion  in small $\hat \mu r  $  is given by 
+	\begin{align}
+		&\frac{\beta^2}{r^2}\log Z_{\rm saddle}^{(0)}(\hat\mu r)
+		=\frac85\zeta(3)+\frac85\zeta(3)\hat\mu^2 r^2
+		+\Big(\frac85\zeta(3)
+		+\frac{4\sqrt5\log^3\rho_{\rm g}}{45}\Big)\hat\mu^4r^4
+		%	&\qquad\qquad+\Big(\frac85\zeta(3)
+		%	+\frac{4\log^3\rho_{\rm g}(127\sqrt5-8\log\rho_{\rm g})}{2835}\Big)
+		%	(1-x^2)^3
+		%	\nonumber\\
+		%	&+\left[\frac85\zeta(3)
+		%	+\frac{4\log^3\rho_{\rm g}}{70875}
+		%	\left(\sqrt5(4590+22\log^2\rho_{\rm g})
+		%	-435\log\rho_{\rm g}\right)\right]
+		%	(1-x^2)^4
+		+O((\hat\mu r)^6).
+		\label{eq:F-x1-final-intro}
+	\end{align}
+	Observe the difference in the expansion of the free energy 
+	at the IR fixed point vs the UV fixed point from (\ref{expfreeir}) and (\ref{eq:F-x1-final-intro}). 
+	
+	
+	Let us now present the results for the 
+	the  thermal mass $\tilde m(\hat\mu r)$  of the $O(N)$ model at large $N$ which satisfies the gap equation at $\hat \mu^2 r^2=1$. 
+	The expansion   takes the following form
+	\begin{align}\label{mb mbx-intro}
+		\tilde m(\hat \mu r)\beta\sim{}&\log^2\!\frac1{\sqrt{1-\hat\mu^2r^2}} . 
+	\end{align}
+	The nature of this expansion is non-analytic including the higher order terms which are presented in (\ref{eq:mass-corrected}). 
+	This  solution for thermal mass, leads to the following expansion for the free energy about $\hat \mu^2 r^2 =1$.
+	\begin{align} \label{intro-exp-irpartition}
+		\frac{\beta^2}{r^2}\log Z_{\rm saddle}^{(0)}(\hat \mu r)
+		\sim{}&\frac{2\zeta(3)}{1-\hat\mu^2r^2}
+		-\frac16\log^6\!\frac1{\sqrt{1-\hat\mu^2r^2}}. 
+	\end{align}
+	% We evaluate the free energy of the model in presence of the angular potential at the limits $\hat \mu\to 0$ as well as $\hat \mu^2r^2=1$. 
+	The leading behavior at $\hat \mu^2r^2=1$ is given by a simple pole,   the residue at the pole coincides with the free theory answer \eqref{eq:free-leading-pole-intro}. The existence of the pole  confirms the expectation from thermal effective field theory,  the expansion 
+	away from $\hat \mu^2r^2=1$ is non-analytic and there are sub-leading logarithmic divergent terms. 
+	The  ratio of the free energy at the non-trivial fixed point to that at the free fixed point in  these two limits are given by 
+	\begin{align}
+		\lim_{\hat\mu r\to0} \frac{\log Z^{(0)}_{\rm saddle}}{\log Z^{(0)}_{\rm free}}=\frac{4}{5},\qquad {\rm and }\qquad  	\lim_{\hat\mu^2 r^2\to1} \frac{\log Z^{(0)}_{\rm saddle}}{\log Z^{(0)}_{\rm free}}=1.
+	\end{align}
+	\begin{figure}[tbp]
+		\centering
+		\includegraphics[width=0.88\textwidth]{interacting_free_ratio_clean.pdf}
+		\caption{Ratio of the leading high-temperature free energy \eqref{eq:F-fixed} of the
+			critical large-$N$ theory evaluated at the value of the thermal mass satisfying \eqref{eq:gap-fixed}, to that of the
+			free-theory \eqref{eq:free-leading-pole}, shown with a logarithmic
+			horizontal axis.  The curve is evaluated numerically, with $x^2=1-\hat\mu^2r^2$. It approaches unity as $x\to0$ and equals $4/5$ at $x=1$; the dashed and
+			dotted horizontal lines marks these two limiting values.}
+		\label{fig:interacting-free-ratio}
+	\end{figure}
+	In   figure \ref{fig:interacting-free-ratio},   this  ratio is obtained numerically  for  all values of $\hat \mu^2  r^2 $  between $0$ and unity. 
+	We see that there is a 
+	smooth interpolation  between these two limits of angular velocities.
+	% More precisely we can get the behavior of the $\tilde m\beta $ that solves the relation \eqref{sim gap}, at the leading order in small $x$
+	%
+	%
+	% Similarly one can also estimate the leading behavior of the integral involved in the free  energy  \eqref{eq:physical-functional}, followed by substitution of the thermal mass as given in \eqref{mb mbx}, to obtain the leading small $x$ behavior of the free energy as  
+	
+	As we mentioned earlier, in \cite{Komargodski:2026ain} it was argued 
+	that the residue of the pole when $\hat \mu^2 r^2  \rightarrow 1$ can be obtained by
+	considering the conformal field theory in the pp-wave geometry. 
+	We consider the  $O(N)$ model  at large $N$ in the pp-wave geometry and show that the only   critical point it admits is 
+	when the theory is free. Therefore the residue of the pole must coincide with that of the free theory. 
+	This provides a consistency check of our results in  (\ref{eq:free-leading-pole-intro}) and (\ref{intro-exp-irpartition})
+	from which we see residues  of the pole  of the free theory coincides 
+	with that of the critical $O(N)$ model.  
+	
+	
+	The rest of the paper is organized as follows. In \secref{sec:free} we review the free scalar with the angular potential. Section \ref{sec:interacting} has the calculations for free energy in the $O(N)$ model at large $N$, both at $\hat \mu r=0$ as well as at $\hat \mu^2r^2=1$. Section \ref{sec:plane-wave} has the calculation of the free energy on the plane wave geometry. Section \ref{sec:conclusions} has our discussions. Appendix \ref{app:free-highT} computes the high temperature asymptotics of the free theory pole contribution. Appendix \ref{app:bessel-poisson} computes the small $\tilde m\beta x$ expansion of the gap equation. Finally in the appendix \ref{app:thermal-mass-orders} we evaluate the thermal mass as an expansion about $\hat \mu^2r^2=1$ till a few higher orders.
+
+
+
+
+
+\section{Free theory}
+\label{sec:free}
+
+We begin with a single real conformal scalar field on
+$S^1_\beta\times S^2_r$. 
+The action involving a free  scalar field coupled with the curvature of the background reads as follows
+% In three dimensions, conformal coupling fixes the
+%curvature term in the Euclidean action, which on the present background is
+\begin{equation}
+ S_{\rm free}[\phi]
+ =\frac12\int_0^\beta\dd\tau\int_{S^2}\dd^2x\,\sqrt g\,
+ \left[
+ (\partial_\tau\phi)^2+g^{ab}\nabla_a\phi\nabla_b\phi
+ +\frac{\mathcal R}{8}\phi^2
+ \right],
+ \qquad \mathcal R=\frac{2}{r^2}.
+ \label{eq:free-action}
+\end{equation}
+Rotation is introduced by coupling the thermal ensemble to the
+angular momentum $L_z$, taken along the $z$-axis for convenience.  For an imaginary angular velocity $\hat\mu=i\mu$,\footnote{We adopted the convention of imaginary angular chemical potential following the convention of imaginary $U(1)$ chemical 
+	potential in the Euclidean theory. However all expressions in $\mu$  can be converted to  the real chemical potential 
+	by the simple replacement of $\mu = - i \hat \mu$. } the
+corresponding grand-canonical partition function is
+\begin{equation}
+ Z_{\rm free}(\beta,\mu)
+ =\operatorname{Tr}\!\left[\e^{-\beta(H-i\mu L_z)}\right].
+ \label{eq:free-trace}
+\end{equation}
+To make the effect of this angular potential on the Euclidean action
+explicit, we first write the trace in canonical form.  Rotational invariance
+implies $[H,L_z]=0$, while $L_z=-i\partial_\varphi$ on one-particle
+wavefunctions and
+$L_z=\int_{S^2}\dd^2x\,\sqrt g\,\pi\,\partial_\varphi\phi$ in canonical
+variables.  The trace \eqref{eq:free-trace} therefore admits the exact
+Euclidean path integral representation
+\begin{align}
+ Z_{\rm free}(\beta,\mu)
+ &={}\int\mathcal D\phi\,\mathcal D\pi\,
+ \nonumber\\[-1mm]
+ &\quad\times
+ \exp\Big[-\int\dd^3x\,\sqrt g
+ \Big(
+ \frac12\pi^2
+ -i\pi\bigl(\partial_\tau+\mu\partial_\varphi\bigr)\phi
+ +\frac12 g^{ab}\nabla_a\phi\nabla_b\phi
+ +\frac{\mathcal R}{16}\phi^2
+ \Big)\Big],\nonumber\\
+&\qquad\qquad {\rm with} \qquad\phi(\tau+\beta)=\phi(\tau).
+ \label{eq:free-phase-space}
+\end{align}
+The periodic boundary condition displayed in
+\eqref{eq:free-phase-space} implements the bosonic thermal trace.  Completing
+the square in $\pi$ in \eqref{eq:free-phase-space} and performing its Gaussian
+integral converts the angular coupling into a shift of the derivative along
+the thermal circle.
+The resulting configuration-space action is
+\begin{equation}
+\begin{aligned}
+ S_{\rm free}[\phi;\mu]
+ & =\frac12\int_0^\beta\dd\tau\int_{S^2}\dd^2x\,\sqrt g\,
+ \left[
+ g^{\mu\nu}(D_\mu\phi)(D_\nu\phi)
+ +\frac{\mathcal R}{8}\phi^2
+ \right],
+ \\
+ D_\mu
+ & \equiv\nabla_\mu+i\mu\,\delta_{\mu\tau}L_z,
+ \qquad L_z=-i\partial_\varphi .
+ \label{eq:free-mu-action}
+\end{aligned}
+\end{equation}
+Equation \eqref{eq:free-mu-action} gives
+$D_\tau=\partial_\tau+\mu\partial_\varphi$, whereas the spatial
+derivatives remain $D_a=\nabla_a$.  The angular potential can therefore be
+viewed as a constant background connection supported only along
+$S^1_\beta$.
+% Thus the angular potential is implemented directly as a flat connection along the thermal circle.  Reversing the sign convention for $L_z$ is equivalent to $\mu\to-\mu$ and does not affect the final result, which is even in $\mu$.
+The quadratic operator in \eqref{eq:free-mu-action} is diagonal in Fourier
+modes along $S^1_\beta$ and spherical harmonics on $S^2_r$.  Thus we express the field as the following mode expansion
+\begin{equation}
+ \phi(\tau,\theta,\varphi)
+ =\sum_{n\in\mathbb Z}\sum_{l=0}^{\infty}\sum_{m=-l}^{l}
+ \phi_{nlm}\,\e^{i\omega_n\tau}Y_{lm}(\theta,\varphi),
+ \qquad
+ \omega_n=\frac{2\pi n}{\beta},
+ \qquad
+ L_zY_{lm}=mY_{lm}.
+ \label{eq:free-mode-expansion}
+\end{equation}
+The angular potential shifts
+the Matsubara frequency to $\omega_n+\mu m$.  Moreover, the eigenvalue
+$l(l+1)/r^2$ of the scalar
+Laplacian combines with the curvature coupling to give
+$(l+\tfrac12)^2/r^2$.  Substitution of
+\eqref{eq:free-mode-expansion} into \eqref{eq:free-mu-action}, followed by the
+Gaussian integral over the mode coefficients, leads to the following expression
+\begin{equation}
+ \log Z_{\rm free}
+ =-\frac12\sum_{n\in\mathbb Z}\sum_{l=0}^{\infty}\sum_{m=-l}^{l}
+ \log\!\left[
+ \left(\omega_n+\mu m\right)^2
+ +\frac{\left(l+\tfrac12\right)^2}{r^2}
+ \right].
+ \label{eq:free-determinant}
+\end{equation}
+The  Matsubara sum in \eqref{eq:free-determinant} can now be
+evaluated using the standard formula for the regulated sum found in 
+\cite{Klebanov:2011uf}.  It recasts the free energy as a sum of a zero-point
+contribution and a thermal logarithm, as shown below
+%The two
+%thermal logarithms produced for a fixed magnetic quantum number are combined
+%using the symmetry of the spectrum under $m\mapsto-m$, giving
+% The Matsubara sum over $n$ is performed only at this final stage.  The standard bosonic identity gives
+% \begin{align}
+%  -\frac12\sum_{n\in\mathbb Z}
+%  \log\!\left[
+%  \left(\omega_n+\mu m\right)^2
+%  +\frac{\left(l+\tfrac12\right)^2}{r^2}
+%  \right]
+%  ={}&-\frac{\beta}{2r}\left(l+\frac12\right)
+%  \nonumber\\
+%  &-\frac12\log\!\left(
+%  1-\e^{-\frac{\beta}{r}(l+\frac12)+i\beta\mu m}
+%  \right)
+%  \nonumber\\
+%  &-\frac12\log\!\left(
+%  1-\e^{-\frac{\beta}{r}(l+\frac12)-i\beta\mu m}
+%  \right),
+%  \label{eq:free-matsubara-sum}
+% \end{align}
+% where an additive constant independent of $(l+\tfrac12)/r$ and $\mu$ has been omitted.  Since the spectrum is invariant under $m\to-m$, this reduces to
+\begin{equation}
+ \log Z_{\rm free}
+ =-\frac{\beta}{2r}\sum_{l=0}^{\infty}\frac{(2l+1)^2}{2}
+ -\sum_{l=0}^{\infty}\sum_{m=-l}^{l}
+ \log\!\left(
+ 1-\e^{-\frac{\beta}{r}(l+\frac12)+i\beta\mu m}
+ \right).
+ \label{eq:free-after-matsubara}
+\end{equation}
+The first term in \eqref{eq:free-after-matsubara} is the vacuum contribution.
+For the conformal spectrum on $S^2$, its zeta-regularized value vanishes
+because the sum over odd squares is proportional to $\zeta(-2)=0$
+\begin{equation}
+ -\frac{\beta}{2r}\sum_{l=0}^{\infty}\frac{(2l+1)^2}{2}
+ =0.
+ \label{eq:free-vacuum-zero}
+\end{equation}
+Thus the first term from the equation  \eqref{eq:free-after-matsubara} vanishes and only the 2nd term survives.
+  We now expand the summand in the second term as a small $x$ expansion of the $\log (1-x)$ and the finite sum over $m$ is performed as a geometric sum.
+\begin{align}
+ \log Z_{\rm free}
+ &=\sum_{n=1}^{\infty}\frac1n
+ \sum_{l=0}^{\infty}\e^{-n\beta(l+\frac12)/r}
+ \sum_{m=-l}^{l}\e^{in\beta\mu m}
+ \nonumber,\\
+ &=\sum_{n=1}^{\infty}\frac1n
+ \sum_{l=0}^{\infty}\e^{-n\beta(l+\frac12)/r}
+ \frac{\sin[(l+\frac12)n\beta\mu]}{\sin(n\beta\mu/2)}.
+ \label{eq:free-angular-sum}
+\end{align}
+The remaining sum over the angular momentum $l$ in
+\eqref{eq:free-angular-sum} is again a geometric sum.  Its evaluation leads to the
+following compact exact form.  
+\begin{equation}
+ \log Z_{\rm free}
+ =\sum_{n=1}^{\infty}
+ \frac{\cosh\!\left(\frac{n\beta}{2r}\right)}
+ {n\left[\cosh\!\left(\frac{n\beta}{r}\right)-\cos(n\beta\mu)\right]}.
+ \label{eq:free-exact-real}
+\end{equation}
+%For real $\mu$, the source $i\mu$ in \eqref{eq:free-trace} is an imaginary
+%angular velocity, and \eqref{eq:free-exact-real} is manifestly real.  Real rotation is reached by continuing $\mu$ to imaginary values,
+%and the endpoint $\Omega^2r^2=1$ is equivalent to $\mu^2r^2=-1$.  Since the
+%answer is even in $\mu$, the sign is immaterial. 
+ Now we use the following definition
+%$\mu r=i\sqrt{1-x^2}$ and parameterize the continuation by
+\begin{equation}
+ x^2\equiv 1+\mu^2r^2,
+ \qquad
+ 0<x<1.
+ \label{eq:free-x-def}
+\end{equation}
+Under the parametrization \eqref{eq:free-x-def}, the endpoint
+$\mu^2r^2=-1$ corresponds to $x\to0$.  At fixed $\beta/r$, the 
+summand in \eqref{eq:free-exact-real} admits a double pole at $x=0$, as demonstrated in the following expansion
+%After this pole is extracted, the coefficients of the endpoint expansion
+%decay exponentially with the series index $n$, which permits termwise
+%summation.  Expanding the denominator in \eqref{eq:free-exact-real} through
+%order $x^4$ gives the first finite correction:
+\begin{equation}
+ \log Z_{\rm free}
+ =\frac{1}{x^2}\sum_{n=1}^{\infty}
+ \frac{r}{\beta n^2\sinh\frac{\beta n}{2r}}
+ \left\{
+  1
+  +\frac{x^2}4\left[
+   \frac{\beta n}{r}\coth\!\left(\frac{\beta n}{r}\right)-1
+  \right] +O(x^4)
+ \right\}
+.
+ \label{eq:free-small-x-full}
+\end{equation}
+The $n$-sums in the above equation are convergent, but do not admit known closed form expression. The sum in the first term gives  the residue at the pole at $x^2=0$ and it reorganizes itself as a small $\beta/r$ expansion as given below
+%The second term in braces is the correction of order $x^0$.  Its sum is
+%absolutely convergent for every fixed positive $\beta/r$.
+%The series multiplying $x^{-2}$ in \eqref{eq:free-small-x-full} is well
+%defined for every positive $\beta/r$ and admits the exact dilogarithm representation derived in
+%\appref{app:free-highT}.  Having first isolated the endpoint pole at fixed
+%$\beta/r$, we next take the high-temperature limit $\beta/r\to0^+$.  The
+%coefficient of the pole then has the asymptotic expansion
+\begin{align}
+ \log Z_{\rm free}
+ \sim\frac{1}{x^2}\Bigg[{}&\frac{2r^2}{\beta^2}\zeta(3)
+ +\frac{1}{12}\log\!\left(\frac{\beta}{r}\right)
+ +\zeta'(-1)+\frac{\log2-1}{12}
+ \nonumber\\
+ &-\frac{7}{34560}\frac{\beta^2}{r^2}
+ -\frac{31}{58060800}\frac{\beta^4}{r^4}
+ -\frac{127}{19508428800}\frac{\beta^6}{r^6}
+ +\cdots\Bigg]
+ +O(x^0).
+ \label{eq:free-summed-highT-few}
+\end{align}
+Note the asymptotic nature of the above expansion and its  derivation from \eqref{eq:free-small-x-full} is shown in \appref{app:free-highT}.
+%Here $\sim$ refers only to the high-temperature asymptotics of the pole
+%coefficient.  
+%The $\Order(x^0)$ term in \eqref{eq:free-summed-highT-few}
+%contains the finite correction displayed explicitly in
+%\eqref{eq:free-small-x-full}, whose high-temperature expansion is not needed
+%here.  The Mellin-transform derivation and the coefficient at arbitrary
+%order are collected in \appref{app:free-highT}.
+%For comparison with the interacting theory, extract from
+Now keeping only the leading contribution at the high temperature in the residue of the pole at $x^2=0$, we have
+\begin{equation}
+ \log Z_{\rm free}^{(0)}
+ =\frac{2r^2}{\beta^2}\frac{\zeta(3)}{x^2}.
+ \label{eq:free-leading-pole}
+\end{equation}
+The superscript $(0)$ used in the above equation denotes the leading contribution at small $\beta/r $. This is the exact leading contribution at high temperature to the free energy in presence of angular potential characterized by $x$, which can be verified by expanding \eqref{eq:free-exact-real} directly at small $\beta/r$.
+% The interacting calculation will
+%reproduce this residue once the physical normalization of the thermal
+%determinant is restored; see \eqref{eq:physical-functional}.
+
+\section{Critical $O(N)$ model}
+\label{sec:interacting}
+\sectionmark{Critical O(N) model and large-N saddle}
+
+We now consider the interacting $O(N)$ vector model on
+$S^1_\beta\times S^2_r$, without imposing a singlet constraint.  The field
+content consists of $N$ real scalars $\phi_i$, with $i=1,\ldots,N$,
+transforming in the vector representation of $O(N)$; interacting via a quartic coupling term whose coupling strength is denoted by $\lambda$.
+\begin{equation}
+ S[\phi]
+ =\int_0^\beta\dd\tau\int_{S^2}\dd^2x\,\sqrt g\,
+ \left[
+ \frac12\nabla_\mu\phi_i\nabla^\mu\phi_i
+ +\frac{\mathcal R}{16}\phi_i\phi_i
+ +\frac{\lambda}{2N}(\phi_i\phi_i)^2
+ \right],
+ \qquad \mathcal R=\frac{2}{r^2}.
+ \label{eq:ON-action}
+\end{equation}
+The model undergoes simplifications at a large $N$ limit and  admits a nontrivial fixed point at
+$\lambda\to\infty$, while $\lambda=0$ corresponds to the free CFT described
+in \secref{sec:free}.
+%The non-trivial fixed point can be theoretically 
+%attained by linearizing the quartic potential in the action by Hubbard-Stratonovich trick
+The angular potential $i\mu$ couples to the generator $L_z$ of rotations about the
+polar axis.  The thermal partition function is
+\begin{equation}
+ Z(\beta,\mu)
+ =\operatorname{Tr}\!\left[
+ \exp\!\left\{-\beta\bigl(H-i\mu L_z\bigr)\right\}
+ \right].
+ \label{eq:ON-trace}
+\end{equation}
+Since the Hamiltonian defined by \eqref{eq:ON-action} is rotationally
+invariant, $[H,L_z]=0$. Now this partition function can be evaluated as the following path integral as was done in the  \secref{sec:free}.
+%A similar treatment as was done in \secref{sec:free}, 
+%Applying the canonical derivation of
+%\secref{sec:free} to the trace \eqref{eq:ON-trace}, 
+%and denoting by $\pi_i$
+%the momentum conjugate to $\phi_i$, gives
+%\begin{align}
+% Z(\beta,\mu)
+% ={}&\int\mathcal D\phi\,\mathcal D\pi\,
+% \exp\Bigg\{-\int_0^\beta\dd\tau\int_{S^2}\dd^2x\,\sqrt g\,
+% \Bigg[
+% \frac12\pi_i\pi_i
+% -i\pi_i\bigl(\partial_\tau+\mu\partial_\varphi\bigr)\phi_i
+% \nonumber\\[-1mm]
+% &\hspace{31mm}
+% +\frac12g^{ab}\nabla_a\phi_i\nabla_b\phi_i
+% +\frac{\mathcal R}{16}\phi_i\phi_i
+% +\frac{\lambda}{2N}(\phi_i\phi_i)^2
+% \Bigg]\Bigg\}.
+% \label{eq:ON-phase-space}
+%\end{align}
+%With .  Performing the
+%Gaussian momentum integral in \eqref{eq:ON-phase-space} gives
+\begin{equation}
+ Z(\beta,\mu)
+ =\int\mathcal D\phi\,\exp\!\left[-S[\phi;\mu]\right],
+ \label{eq:ON-path-integral}\qquad {\rm with } \ \ \phi(\tau+\beta)=\phi(\tau).
+\end{equation}
+The action appearing in \eqref{eq:ON-path-integral} is
+\begin{equation}
+ \begin{aligned}
+ S[\phi;\mu]
+ &=\int_0^\beta\dd\tau\int_{S^2}\dd^2x\,\sqrt g\,
+ \left[
+ \frac12g^{\mu\nu}(D_\mu\phi_i)(D_\nu\phi_i)
+ +\frac{\mathcal R}{16}\phi_i\phi_i
+ +\frac{\lambda}{2N}(\phi_i\phi_i)^2
+ \right],
+ \\
+ D_\mu&=\nabla_\mu+i\mu\,\delta_{\mu\tau}L_z,
+ \qquad L_z=-i\partial_\varphi .
+ \end{aligned}
+ \label{eq:ON-mu-action}
+\end{equation}
+%Equation \eqref{eq:ON-mu-action} gives
+%$D_\tau=\partial_\tau+\mu\partial_\varphi$, while the derivatives along
+%$S^2$ are unchanged.  
+%The quartic interaction depends only on the local
+%$O(N)$ and rotation-invariant combination $\phi_i\phi_i$; consequently, the
+%angular coupling does not modify its Hubbard--Stratonovich linearization.
+\\
+
+Now we apply the Hubbard-Stratanovich trick to recast the quartic interaction in \eqref{eq:ON-action} into a form which is quadratic in $\phi$ by introducing an auxiliary field $\zeta$ in the following manner.
+%\begin{align}
+% &\exp\!\left[-\frac{\lambda}{2N}
+% \int\dd^3x\,\sqrt g\,(\phi_i\phi_i)^2\right]
+% \nonumber\\
+% &\qquad=\int\mathcal D\zeta\,
+% \exp\!\left[-\int\dd^3x\,\sqrt g\,
+% \left(
+% \frac{N}{8\lambda}\zeta^2
+% -\frac{i}{2}\zeta\,\phi_i\phi_i
+% \right)\right],
+% \label{eq:HS-identity}
+%\end{align}
+%where the field-independent normalization of the auxiliary-field measure has
+%been set to unity.  Substituting \eqref{eq:HS-identity} into
+%\eqref{eq:ON-path-integral} gives
+\begin{align}
+ Z(\beta,\mu)
+ ={}&\int\mathcal D\zeta\,\mathcal D\phi\,
+ \exp\Bigl\{-\frac12\int_0^\beta\dd\tau
+ \int_{S^2}\dd^2x\,\sqrt g\,\Bigl[
+ g^{\mu\nu}(D_\mu\phi_i)(D_\nu\phi_i)
+ \nonumber\\
+ &\hspace{35mm}
+ +\Big(\frac{\mathcal R}{8}-i\zeta\Big)\phi_i\phi_i
+ +\frac{N}{4\lambda}\zeta^2
+ \Bigr]\Bigr\}.
+ \label{eq:HS-path-integral}
+\end{align}
+% Because the transformation is pointwise and contains no derivatives, it is
+% unaffected by the angular potential. 
+Note that we do not keep track of the field-independent normalization arising due to the Gaussian path integral in the auxiliary field, as it is not important for the leading large $N$ calculations.
+We decompose the auxiliary field into its zero mode and its nonzero-mode
+part,
+\begin{align}
+    \zeta=\zeta_0+\tilde \zeta.
+    \label{eq:zeta-mode-decomposition}
+\end{align}
+A key simplification follows from the fact that only the zero mode
+$\zeta_0$ contributes at the leading order in the large-$N$ limit, whereas the
+nonzero modes $\tilde \zeta$ enter only at subleading orders.  Thus, at the leading order in the large-$N$ expansion, the path integral over the auxiliary field in the partition function reduces to an ordinary integral over its zero mode $\zeta_0$, as we demonstrate below.
+\begin{align}
+	Z(\beta,\mu)
+	={}&\int d\zeta_0\,\mathcal D\phi\,
+	\exp\Bigl\{-\frac12\int_0^\beta\dd\tau
+	\int_{S^2}\dd^2x\,\sqrt g\,\Bigl[
+	g^{\mu\nu}(D_\mu\phi_i)(D_\nu\phi_i)
+	\nonumber\\
+	&\hspace{35mm}
+	+\Big(\frac{\mathcal R}{8}-i\zeta_0\Big)\phi_i\phi_i
+	+\frac{N}{4\lambda}\zeta_0^2
+	\Bigr]\Bigr\}.
+	\label{eq:zero-mode-path-integral}
+\end{align}
+%The decomposition \eqref{eq:zeta-mode-decomposition} is essential for the
+%large-$N$ expansion.  The effective action of $\zeta$ carries an overall
+%factor of $N$, so its leading contribution is obtained by evaluating it at
+%the homogeneous, rotationally invariant saddle.  At this saddle
+%$\tilde\zeta=0$, and hence only the zero mode $\zeta_0$ contributes to the
+%leading, order-$N$ result for $\log Z$.  The nonzero modes describe
+%fluctuations about the saddle; their functional integral begins at order
+%$N^0$ in $\log Z$, or equivalently at order $1/N$ after normalization per
+%scalar component.  They therefore do not contribute in the strict
+%large-$N$ limit considered here.  The functional integral in
+%\eqref{eq:HS-path-integral} consequently reduces, at leading order, to a
+%saddle-point evaluation of $\zeta_0$, which determines the scalar mass
+%through the gap equation.  We parameterize this zero mode as
+%  At leading order the
+% relevant saddle is homogeneous and rotationally invariant.  We parameterize a
+% homogeneous auxiliary-field configuration and its stationary value by
+Now the path integral over $N$ scalar fields $\phi_i$ can be performed exactly as path integrals of free massive scalars with $-i\zeta_0$ identified as the  scalar mass squared.
+Performing the Gaussian integral over the $N$ scalar fields in
+\eqref{eq:zero-mode-path-integral} leaves a single ordinary integral over
+the  zero mode of the auxiliary field as the following
+\begin{equation}
+ Z(\beta,\mu)
+ =\int\dd\zeta_0\,
+ \exp\!\left\{N\left[
+  \log Z(\zeta_0;\beta,\mu)
+  -\frac{\beta\pi r^2}{2\lambda}\zeta_0^2
+ \right]\right\}.
+ \label{eq:zero-mode-integral}
+\end{equation}
+Here $ Z(\zeta_0;\beta,\mu)$ denotes the partition function  of a single 
+scalar of mass $-i\zeta_0$. We use the following notation for this mass, called the thermal mass
+\begin{equation}
+ \zeta_{0}=i\tilde m^2,
+ \label{eq:thermal-mass-definition}
+\end{equation}
+We evaluate the integral in \eqref{eq:zero-mode-integral} by using the method of steepest
+descent, therefore gives the following expression, with $\tilde m$ understood
+to take its value at the saddle point,
+\begin{equation}
+ \frac1N\log Z(\beta,\mu)
+ =\log Z(\tilde m;\beta,\mu)
+ +\frac{\beta\pi r^2}{2\lambda}\tilde m^4
+ .
+ \label{eq:ON-leading-effective-action}
+\end{equation}
+Where the following saddle point condition determines the thermal mass $\tilde m$ in the following manner
+\begin{equation}
+ \frac{\partial}{\partial \tilde m}
+ \left[
+ \log Z(\tilde m;\beta,\mu)
+ +\frac{\beta\pi r^2}{2\lambda}\tilde m^4
+ \right]
+ =0.
+ \label{eq:ON-finite-lambda-saddle}
+\end{equation}
+At the critical point, $\lambda\to\infty$,
+\eqref{eq:ON-finite-lambda-saddle} reduces to
+\begin{equation}
+ \frac{\partial}{\partial \tilde m}\log Z(\tilde m;\beta,\mu)
+ =0.
+ \label{eq:critical-saddle-general}
+\end{equation}
+%For a positive saddle-point solution, \eqref{eq:critical-saddle-general} is
+%equivalently $\partial_{\tilde m}\log Z(\tilde m;\beta,\mu)=0$.
+
+Using \eqref{eq:thermal-mass-definition} in \eqref{eq:HS-path-integral}, the
+one-component quadratic action at fixed homogeneous mass is
+\begin{equation}
+ S_{\tilde m}[\phi]
+ =\frac12\int_0^\beta\dd\tau\int_{S^2}\dd^2x\,\sqrt g\,
+ \left[
+ g^{\mu\nu}(D_\mu\phi)(D_\nu\phi)
+ +\left(\frac{\mathcal R}{8}+\tilde m^2\right)\phi^2
+ \right].
+ \label{eq:massive-action}
+\end{equation}
+%Expanding the quadratic action \eqref{eq:massive-action} in periodic
+%Matsubara modes and spherical harmonics gives
+The single scalar partition function used in \eqref{eq:zero-mode-integral}, can be written as the following sum in Matsubara modes as well as angular modes.
+\begin{equation}
+ \log Z(\tilde m;\beta,\mu)
+ =-\frac12\sum_{n\in\mathbb Z}\sum_{l=0}^{\infty}\sum_{m=-l}^{l}
+ \log\!\left[
+ \left(\frac{2\pi n}{\beta}+\mu m\right)^2
+ +\frac{(l+\tfrac12)^2}{r^2}+\tilde m^2
+ \right].
+ \label{eq:interacting-determinant}
+\end{equation}
+% Here $m$ under $\sum_{m=-l}^{l}$ is the magnetic quantum number, whereas
+% $\tilde m$ is the homogeneous mass parameter entering the curvature-shifted
+% combination $\mathcal R/8+\tilde m^2$.
+Applying the same regularized Matsubara identity as in \secref{sec:free} to
+\eqref{eq:interacting-determinant} yields
+% \begin{align}
+%  &-\frac12\sum_{n\in\mathbb Z}
+%  \log\!\left[
+%  \left(\frac{2\pi n}{\beta}+\mu m\right)^2
+%  +\frac{(l+\tfrac12)^2}{r^2}+\tilde m^2
+%  \right]
+%  \nonumber\\
+%  &\quad=-\frac12\log\!\left[
+%  2\cosh\!\left(
+%  \beta\sqrt{\frac{(l+\tfrac12)^2}{r^2}+\tilde m^2}
+%  \right)-2\cos(\beta\mu m)
+%  \right]
+%  \nonumber\\
+%  &\quad=-\frac{\beta}{2}
+%  \sqrt{\frac{(l+\tfrac12)^2}{r^2}+\tilde m^2}
+%  -\frac12\log\!\left(
+%  1-\e^{-\beta\sqrt{(l+\tfrac12)^2/r^2+\tilde m^2}+i\beta\mu m}
+%  \right)
+%  \nonumber\\
+%  &\qquad\phantom{=}
+%  -\frac12\log\!\left(
+%  1-\e^{-\beta\sqrt{(l+\tfrac12)^2/r^2+\tilde m^2}-i\beta\mu m}
+%  \right).
+%  \label{eq:single-mode-matsubara-sum}
+% \end{align}
+% The magnetic spectrum is symmetric under $m\mapsto-m$.  After summing over
+% $-l\leq m\leq l$, the two thermal logarithms therefore contribute equally,
+% and the determinant becomes
+\begin{align}
+ \log Z(\tilde m;\beta,\mu)
+ =-\frac{\beta}{2}
+ \sum_{l=0}^{\infty}\sum_{m=-l}^{l}
+ \sqrt{\frac{(l+\frac12)^2}{r^2}+\tilde m^2}
+-\sum_{l=0}^{\infty}\sum_{m=-l}^{l}
+ \log\!\Big(
+ 1-\e^{-\beta\sqrt{\frac{(l+\frac12)^2}{r^2}+\tilde m^2}+i\beta\mu m}
+ \Big).
+ \label{eq:interacting-after-matsubara}
+\end{align}
+Rewriting \eqref{eq:interacting-after-matsubara}, we separate the vacuum and
+thermal contributions according to
+\begin{align}
+ \log Z(\tilde m;\beta,\mu)
+ ={}&-\frac12\log Z_1(\tilde m)
+ +\frac12\log Z_2(\tilde m;\beta,\mu),
+ \label{eq:interacting-split}
+\end{align}
+where
+\begin{align}
+ \log Z_1(\tilde m)
+ &=\beta\sum_{l=0}^{\infty}\sum_{m=-l}^{l}
+ \sqrt{\frac{(l+\tfrac12)^2}{r^2}+\tilde m^2},
+\nonumber\\
+{\rm and}\quad \log Z_2(\tilde m;\beta,\mu)
+ &=2\sum_{l=0}^{\infty}\sum_{m=-l}^{l}
+ \sum_{n=1}^{\infty}\frac1n\,
+ \e^{-n\beta\sqrt{(l+\tfrac12)^2/r^2+\tilde m^2}+i\mu mn\beta}.
+ \label{eq:Z2-def}
+\end{align}
+These sums do not admit compact closed form expressions but we provide the computation of the these two terms given  in the above equation as high temperature expansions in the next subsection. 
+%The expression in \eqref{eq:Z2-def} is real without an explicit real-part
+%projection, because for every fixed $l$ and $n$,
+%$\sum_{m=-l}^{l}\e^{i\mu mn\beta}
+%=1+2\sum_{m=1}^{l}\cos(\mu mn\beta)$.  The overall factor of two remains
+%required by the normalization in \eqref{eq:interacting-split}.  This
+%symmetric form also supplies the analytic continuation in $\mu$ directly,
+%whereas an explicit real-part operation would not be holomorphic.
+%At the critical saddle, \eqref{eq:ON-leading-effective-action} reduces to
+%\begin{equation}
+% \frac1N\log Z(\beta,\mu)
+% =\log Z(\tilde m;\beta,\mu),
+% \label{eq:ON-per-component-normalization}
+%\end{equation}
+%where $\tilde m$ denotes the positive solution of the saddle-point equation
+%\eqref{eq:critical-saddle-general}.
+
+\subsection{High temperature set-up}
+\label{subsec:high-temperature-expansion}
+Let us  first consider the term $\log Z_1(\tilde{m}) $ from \eqref{eq:Z2-def} which does not have an explicit dependence on $\mu$. This term admits  the following  systematic expansion at small
+$\beta/r$, as was computed in  \cite{David:2024pir}.
+\begin{align}
+ &\log Z_1
+ =\sum_{p=0}^{\infty}\log Z_1^{(p)},
+ \nonumber\\
+{\rm where}\qquad &\log Z_1^{(p)}
+ \equiv
+ \frac{(-1)^p(4p-2)}{4\pi(2p)!}\,
+ B_{2p}(\tilde m\beta)^{3-2p}
+ \left(\frac{\beta}{r}\right)^{2p-2}
+ \Gamma\!\left(p-\frac32\right)
+ \Gamma\!\left(p+\frac12\right).
+ \label{eq:Z1-highT}
+\end{align}
+In \eqref{eq:Z1-highT}, $B_{2p}$ denotes the Bernoulli number and
+$\log Z_1^{(p)}$ is of order $(\beta/r)^{2p-2}$. In all the further discussions we will only focus on the leading term from the above expansion in small $\beta/r$, thus we write the leading term explicitly
+\begin{equation}
+ \log Z_1^{(0)}
+ =-\frac{2r^2}{3\beta^2}(\tilde m\beta)^3,
+ \qquad {\rm thus,}\qquad
+ -\frac12\log Z_1^{(0)}
+ =\frac{r^2}{3\beta^2}(\tilde m\beta)^3.
+ \label{eq:Z1-p0}
+\end{equation}
+\\
+
+Now we will compute the term $\log Z_2(\tilde{m},\beta,\mu)$ from \eqref{eq:Z2-def} as a systematic series expansion in small $\beta/r$, following a similar method used in \cite{David:2024pir}. First we re-express this term as an integral representation as given below,
+%The thermal contribution \eqref{eq:Z2-def} is treated by introducing a
+%Schwinger parameter and a Fourier representation for the square-root
+%dependence.  The magnetic
+%sum is real, while the imaginary part of the Fourier integrand is odd in
+%$u$ and vanishes on the symmetric integration range.  Applying these
+%representations to \eqref{eq:Z2-def} gives
+\begin{align}
+ \log Z_2
+ ={}&\frac{1}{2\pi}
+ \sum_{l=0}^{\infty}\sum_{n=1}^{\infty}\frac{1}{n^2}
+ \int_0^{\infty}\frac{\dd\tau}{\tau^2}
+ \exp\!\left[-\tau n^2(\tilde m\beta)^2-\frac{1}{4\tau}\right]
+ \nonumber\\
+ &\times\int_{-\infty}^{\infty}\dd u\,
+ \exp\!\left[-\frac{u^2}{4\tau n^2}
+ -i\left(l+\frac12\right)\frac{\beta u}{r}\right]
+ \sum_{m=-l}^{l}\e^{i\mu mn\beta}.
+ \label{eq:Z2-schwinger}
+\end{align}
+Note the above integral representation linearizes the $l$ dependence in the exponential,  thus we can proceed to perform the sum over $m$ and $l$.
+The sum over $m$ is straightforwardly carried out as a finite geometric sum, as follows
+\begin{equation}
+ \sum_{m=-l}^{l}\e^{i\mu mn\beta}
+ =\cos(\beta l\mu n)
+ +\cot\!\left(\frac{\beta\mu n}{2}\right)
+ \sin(\beta l\mu n).
+ \label{eq:interacting-msum}
+\end{equation}
+Now taking only the $l$-dependent part from \eqref{eq:Z2-schwinger} into account  and substituting \eqref{eq:interacting-msum} in it, we carry out the $l$-sum  as a sum of infinite geometric series in the following, leading to an exact compact expression
+%
+%Substituting \eqref{eq:interacting-msum} into
+%\eqref{eq:Z2-schwinger}, performing the remaining geometric sum over $l$,
+%and then expanding at fixed $u$, $n$ and $\mu r$ gives
+\begin{align}
+ \sum_{l=0}^{\infty}
+ \e^{-i\beta(l+\frac12)u/r}
+ \sum_{m=-l}^{l} e^{i\mu mn\beta}& =
+ \sum_{l=0}^{\infty}
+ \e^{-i\beta(l+\frac12)u/r}
+ \left[
+ \cos(\beta l\mu n)
+ +\cot\!\left(\frac{\beta\mu n}{2}\right)
+ \sin(\beta l\mu n)
+ \right]\nonumber,\\
+ &=
+ \frac{2\cos(\beta u/2r)}
+ {(\e^{i\beta u/r}-\e^{i\beta\mu n})
+  (1-\e^{-i\beta(\mu nr+u)/r})}\nonumber,\\
+  &
+ =
+ \frac{2r^2}{\beta^2(\mu^2n^2r^2-u^2)}
+ +\frac1{12}\left(
+ \frac{u^2}{\mu^2n^2r^2-u^2}+2
+ \right)
+%  \nonumber\\
+%  &\qquad\qquad\qquad\qquad\qquad\qquad\qquad
+%  +\frac{\beta^2
+%  (24\mu^4n^4r^4+4\mu^2n^2r^2u^2-21u^4)}
+%  {2880r^2(\mu^2n^2r^2-u^2)}
+ +O\!\left((\beta/r)^4\right).
+ \label{eq:Sn-highT}
+\end{align}
+At the last line of the above equation we have expanded the exact answer of this sum obtained in the 2nd line as a series expansion in small $\beta/r$.
+Now we combine \eqref{eq:Sn-highT} with the equation \eqref{eq:Z2-schwinger} after performing the integral in $\tau$ in terms of modified Bessel functions of 2nd kind, leading to the following expression
+\begin{align}
+ \log Z_2
+ ={}&\frac1{2\pi}\sum_{n=1}^{\infty}
+ \int_{-\infty}^{\infty}\dd u\,
+ \frac{4\tilde m\beta\,
+ K_1\!\left(\tilde m\beta\sqrt{n^2+u^2}\right)}
+ {\sqrt{n^2+u^2}}
+ \nonumber\\
+ &\times\Bigg[
+ \frac{2r^2}{\beta^2(\mu^2n^2r^2-u^2)}
+ +\frac1{12}\left(
+ \frac{u^2}{\mu^2n^2r^2-u^2}+2
+ \right)
+ +O\!\left((\beta/r)^2\right)
+ \Bigg].
+ \label{eq:Z2-highT}
+\end{align}
+This provides a formal series expansion of $\log Z_2(\tilde m, \beta,\mu)$ in small $\beta/r$. 
+From the above series expansion let us only focus on the leading high temperature contribution, as written below with the use of the definition $x^2=1+\mu^2r^2 $
+%\begin{equation}
+% \log Z_2^{(0)}
+% \equiv
+% \frac{8\tilde m r^2}{\pi\beta}
+% \sum_{n=1}^{\infty}\int_0^{\infty}\dd u\,
+% \frac{K_1\!\left(\tilde m\beta\sqrt{n^2+u^2}\right)}
+% {\sqrt{n^2+u^2}\,(\mu^2n^2r^2-u^2)}.
+% \label{eq:Z2-p0-before-x}
+%\end{equation}
+%We recall the definition used in \eqref{eq:free-x-def} as given below
+%\begin{equation}
+% x^2-1\equiv\mu^2r^2,
+% \qquad 0<x<1,
+% \label{eq:x-def}
+%\end{equation}
+%  Substituting \eqref{eq:x-def} into
+%\eqref{eq:Z2-p0-before-x} gives
+%\begin{equation}
+% \log Z_2^{(0)}
+% =\frac{8\tilde m r^2}{\pi\beta}
+% \sum_{n=1}^{\infty}\int_0^{\infty}\dd u\,
+% \frac{K_1\!\left(\tilde m\beta\sqrt{n^2+u^2}\right)}
+% {\sqrt{n^2+u^2}\,[(x^2-1)n^2-u^2]}.
+% \label{eq:Z2-p0}
+%\end{equation}
+%Equations \eqref{eq:Z1-p0} and \eqref{eq:Z2-p0} give the complete
+%contribution at order $(\beta/r)^{-2}$, with the dependence on $x$ and
+%$\tilde m\beta$ kept exact.  We now reduce the thermal term to a form suitable for
+%the saddle-point analysis.  Since the integrand in \eqref{eq:Z2-p0} is even
+%in $u$, it may be written as
+\begin{equation}
+ \log Z_{2}^{(0)}
+ =\frac{8\tilde m r^2}{\beta}\sum_{n=1}^{\infty}
+ \int_{-\infty}^{\infty}\frac{\dd u}{2\pi}
+ \frac{K_1\!\left(\tilde m\beta\sqrt{n^2+u^2}\right)}
+ {\sqrt{n^2+u^2}\,[(x^2-1)n^2-u^2]}.
+ \label{eq:Z2-full-line}
+\end{equation}
+Note that  the integration contour in the above equation is defined slightly above the real line in the complex $u$-plane to avoid the poles of the integrand on the real line at $u^2=n^2(x^2-1)$.
+The integrand admits a branch cut along $u\in (in,\infty)$ on the imaginary $u$-axis in the upper half plane, accompanied by a pole coincident on the branch point at $u=in$\footnote{The contribution due to the pole located at an endpoint of a branch cut discontinuity is fixed by the fact that the expression has to reproduce the free theory answer correctly when $\tilde m\to 0$, as there is no universal prescription given to handle such a pole.}. Thus the integral along the contour slightly above the real axis can be evaluated by correctly accounting for the branch cut and the pole contribution on the imaginary $u$ axis as shown in the \figref{fig1}.
+Performing this manipulation we obtain the expression below with the use of the definition $q=\sqrt{y^2-n^2}$.
+\begin{figure}[h]
+	\centering
+	\begin{tikzpicture}[>=Stealth]
+		
+		% Axes
+		\draw[->] (-5,0) -- (5,0) node[right] {$\operatorname{Re}u$};
+		\draw[->] (0,-0.5) -- (0,5) node[above] {$\operatorname{Im}u$};
+		
+		% Real-axis poles
+		\fill (-2.7,0) circle (2pt);
+		\fill ( 2.7,0) circle (2pt);
+		
+		\node[below] at (-2.7,0) {$-n\sqrt{x^2-1}$};
+		\node[below] at ( 2.7,0) {$n\sqrt{x^2-1}$};
+		
+		% Branch cut: red zigzag
+		\draw[red, very thick, decorate,
+		decoration={zigzag, amplitude=1.5pt, segment length=5pt}]
+		(0,1.8) -- (0,4.5);
+		
+		% Prominent pole at branch-cut endpoint
+		\filldraw[black, draw=white, line width=0.6pt] (0,1.8) circle (3.2pt);
+		\node[left] at (0,1.8) {$in$};
+		
+		% Original contour slightly above real axis
+		\draw[thick,->] (-4.5,0.3) -- (4.5,0.3);
+		\node[above right] at (3.6,0.3) {$\mathcal{C}$};
+		
+		% Contour around branch cut
+		\draw[thick,->] (-0.22,4.4) -- (-0.22,2.1);
+		\draw[thick] (-0.22,2.1)
+		arc[start angle=180,end angle=360,radius=0.22];
+		\draw[thick,->] (0.22,2.1) -- (0.22,4.4);
+		
+		\node[right] at (0.35,3.2) {$\gamma$};
+		
+	\end{tikzpicture}
+	
+	\caption{The contribution of the original contour $\cal C$ is equal to that of the contour $\gamma$ wrapping the branch cut, except the pole contribution at one end of the  branch cut at $u=in$.}
+		\label{fig1}
+\end{figure}
+
+	
+
+
+%The contour prescription for \eqref{eq:Z2-full-line} is inherited from real
+%angular velocity and runs
+%infinitesimally above the real-axis singularities.  Upon continuation to
+%$\mu r=i\sqrt{1-x^2}$ according to \eqref{eq:x-def}, and rotation to the
+%imaginary axis, the pole crossed by
+%the contour gives the mass-independent endpoint term, whereas the
+%discontinuity across the square-root branch cut contains the full dependence
+%on $\tilde m\beta$.  Writing the cut variable as $q=\sqrt{y^2-n^2}$, one obtains
+\begin{equation}
+ \log Z_2^{(0)}
+ =\frac{4r^2}{\beta^2x^2}\zeta(3)
+ -\frac{4\tilde m r^2}{\beta}\sum_{n=1}^{\infty}\int_0^{\infty}\dd q\,
+ \frac{J_1(\tilde m\beta q)}{(q^2+n^2x^2)\sqrt{q^2+n^2}}.
+ \label{eq:contour-rotated}
+\end{equation}
+
+
+The first term in the above equation is independent of $\tilde m$, it comes as the contribution from the pole and the 2nd term arises due to the branch cut discontinuity.
+As an internal consistency check, one can notice that at $\tilde m\to0$ only the first term from the above equation survives and the complete $\log Z_1$ contribution from \eqref{eq:Z1-highT} vanishes as well, therefore when combined with \eqref{eq:interacting-split} correctly reproduces the free theory result \eqref{eq:free-leading-pole}.\\
+
+% No additional normalization is introduced in passing from
+% \eqref{eq:Z2-full-line} to \eqref{eq:contour-rotated}.
+
+% To reduce the branch-cut contribution, introduce
+% \begin{equation*}
+%  a\equiv\tilde m\beta,
+%  \qquad
+%  z_v^2\equiv 1-v+vx^2.
+% \end{equation*}
+% We apply the Feynman-parameter identity\footnote{For $A,B>0$,
+% $\displaystyle
+%  \frac{1}{A\sqrt B}
+%  =\frac12\int_0^1\frac{\dd v}{\sqrt{1-v}}
+%  \frac{1}{[vA+(1-v)B]^{3/2}}.$}
+% with the choices
+% \begin{equation*}
+%  A=q^2+n^2x^2,
+%  \qquad
+%  B=q^2+n^2.
+% \end{equation*}
+% The combined denominator is
+% \begin{equation*}
+%  vA+(1-v)B
+%  =q^2+n^2(1-v+vx^2)
+%  =q^2+n^2z_v^2.
+% \end{equation*}
+% Consequently, the mass-dependent term in \eqref{eq:contour-rotated} can be
+% written in the form
+Now, the second term in \eqref{eq:contour-rotated} can be rewritten using a
+Feynman parametrization\footnote{We have used the integral formula,
+$\displaystyle
+ \frac{1}{A\sqrt B}
+ =\frac12\int_0^1\frac{\dd v}{\sqrt{1-v}}
+ \frac{1}{[vA+(1-v)B]^{3/2}}$ for $A,B>0$, to rewrite the denominator of the integrand in the first line of \eqref{eq:branch-feynman-parametrized}. } which will allow us to carry out the sum over $n$ as given below 
+\begin{align}
+ \log Z_{2,{\rm mass}}^{(0)}
+ &\equiv-\frac{4\tilde m r^2}{\beta}
+ \sum_{n=1}^{\infty}\int_0^{\infty}\dd q\,
+ \frac{J_1(\tilde m\beta q)}{(q^2+n^2x^2)\sqrt{q^2+n^2}}
+ \nonumber,\\
+ &=-\frac{2\tilde m r^2}{\beta}
+ \sum_{n=1}^{\infty}\int_0^1\frac{\dd v}{\sqrt{1-v}}
+ \int_0^\infty\dd q\,
+ \frac{J_1(\tilde m\beta q)}
+ {[q^2+n^2(1-v+vx^2)]^{3/2}}.
+ \label{eq:branch-feynman-parametrized}
+\end{align}
+Now one can perform the integral over $q$ in the above expression using the standard integral formula of the Bessel function as given below
+\begin{equation}
+ \int_0^\infty\dd q\,
+ \frac{J_1(\tilde m\beta q)}
+ {[q^2+n^2(1-v+vx^2)]^{3/2}}
+ =\frac{
+  1-\bigl[1+n\tilde m\beta\sqrt{1-v+vx^2}\bigr]
+  \e^{-n\tilde m\beta\sqrt{1-v+vx^2}}
+ }{\tilde m\beta\,n^3(1-v+vx^2)^{3/2}}.
+ \label{eq:J1-integral}
+\end{equation}
+\\
+
+Substituting \eqref{eq:J1-integral} in
+\eqref{eq:branch-feynman-parametrized}, we perform the sum over $n$ in terms of Polylogarithm functions,
+and using the change of variable $z=\sqrt{1-v+vx^2}$, we have
+%%
+%%the factor
+%%$1/(\tilde m\beta)$ cancels the explicit $\tilde m$ and gives
+%\begin{align}
+% \log Z_{2,{\rm mass}}^{(0)}
+% &=-\frac{2r^2}{\beta^2}\int_0^1
+% \frac{\dd v}{\sqrt{1-v}\,(1-v+vx^2)^{3/2}}
+% \sum_{n=1}^{\infty}\frac{1}{n^3}
+% \Bigl\{1-
+% \bigl[1+n\tilde m\beta\sqrt{1-v+vx^2}\bigr]
+% \nonumber\\[-1mm]
+% &\hspace{59mm}\times
+% \exp\!\bigl[-n\tilde m\beta\sqrt{1-v+vx^2}\bigr]\Bigr\}.
+% \label{eq:after-bessel-integral}
+%\end{align}
+%The three contributions in braces in \eqref{eq:after-bessel-integral}
+%produce $\zeta(3)$, $-\Li_3(\e^{-w})$, and
+%$-w\Li_2(\e^{-w})$, respectively, with
+%$w=\tilde m\beta\sqrt{1-v+vx^2}$.  We therefore introduce
+%\begin{equation}
+% \Phi(w)\equiv
+% \zeta(3)-\Li_3(e^{-w})-w\Li_2(e^{-w}),
+% \qquad
+% \Phi'(w)=-w\log(1-e^{-w}).
+% \label{eq:Phi-def}
+%\end{equation}
+%The change of variable $z=\sqrt{1-v+vx^2}$ maps the parameter interval to
+%$x\leq z\leq1$.  Applying it to \eqref{eq:after-bessel-integral} and restoring
+%the pole term already obtained in \eqref{eq:contour-rotated}, the complete
+%leading thermal determinant becomes
+\begin{align}
+ &\log Z_2^{(0)}(\tilde m\beta,x)
+ =\frac{4r^2}{\beta^2}\left[
+ \frac{\zeta(3)}{x^2}
+ -\frac{1}{\sqrt{1-x^2}}
+ \int_x^1\dd z\,
+ \frac{\Phi(\tilde m\beta z)}{z^2\sqrt{z^2-x^2}}
+ \right],\nonumber\\
+ \label{eq:Z2-reduced}
+& {\rm with} \qquad \Phi(w)\equiv
+ \zeta(3)-\Li_3(e^{-w})-w\Li_2(e^{-w}).
+\end{align}
+Now combining \eqref{eq:Z2-reduced}, \eqref{eq:Z1-p0} and \eqref{eq:interacting-split} we obtain the leading high temperature contribution to the free energy per scalar component given as follows
+%In \eqref{eq:Z2-reduced}, the first term is the mass-independent residue of
+%the pole crossed during the contour rotation, whereas the integral is the
+%branch-cut contribution and contains the complete dependence on the
+%homogeneous mass.
+%
+%According to \eqref{eq:interacting-split}, the physical determinant contains
+%$-\frac12\log Z_1^{(0)}+\frac12\log Z_2^{(0)}$.  The first term gives the
+%cubic mass contribution in \eqref{eq:Z1-p0}, while one half of
+%\eqref{eq:Z2-reduced} supplies the pole and branch-cut terms.  Hence the
+%leading high-temperature partition function per scalar component is
+\begin{equation}
+ \frac{\beta^2}{r^2}\log Z^{(0)}(\tilde m\beta,x)
+ =\frac{(\tilde m\beta)^3}{3}+\frac{2\zeta(3)}{x^2}
+ -\frac{2}{\sqrt{1-x^2}}
+ \int_x^1\dd z\,
+ \frac{\Phi(\tilde m\beta z)}{z^2\sqrt{z^2-x^2}}.
+ \label{eq:physical-functional}
+\end{equation}
+%At this stage, $\tilde m$ is an off-shell homogeneous mass.  Its positive
+%stationary value is determined by \eqref{eq:critical-saddle-general} and
+%defines the thermal mass.  Substituting this value into
+%\eqref{eq:physical-functional} gives the partition function.  The
+%endpoint pole has coefficient
+%$2\zeta(3)/x^2$, in agreement with the free-theory result
+%\eqref{eq:free-leading-pole}.
+Thus we have reduced the leading high temperature contribution to the free energy  into a form which no longer involves any infinite sum, only an integral remains to be performed. This integral is convergent and can be computed numerically, however we could not find any analytic closed form expression. We will see that 
+this representation proves particularly useful,  as it allows us to obtain systematic series expansions of $\log Z^{(0)}(\tilde m \beta,x)$ both around $x=0$ and $x^2=1$. Before proceeding to computations of such expansions, we will evaluate the gap equation by differentiating the leading high temperature expression for the free energy obtained here with respect to $\tilde m$.
+\subsection{Gap equation at high temperature}
+\label{sec:gap}
+
+%Throughout this subsection $\beta>0$, $r>0$, $\tilde m>0$, and $0<x<1$.  
+Differentiating the mass-dependent terms in \eqref{eq:physical-functional} and setting it to zero gives the saddle point condition as was given in \eqref{eq:critical-saddle-general}
+\begin{equation}
+ \frac{\partial}{\partial(\tilde m\beta)}\left(\frac{\beta^2}{r^2}\log Z^{(0)}\right)
+ =\tilde m\beta\left[
+ \tilde m\beta+\frac{2}{\sqrt{1-x^2}}
+ \int_x^1\dd z\,
+ \frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}
+ \right].
+ \label{eq:dF-dmass}
+\end{equation}
+%Setting \eqref{eq:dF-dmass} to zero and selecting the positive saddle gives
+%\begin{equation}
+% 0=\tilde m\beta+\frac{2}{\sqrt{1-x^2}}
+% \int_x^1\dd z\,
+% \frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}.
+% \label{eq:gap-z}
+%\end{equation}
+For compactness, we define the integral appearing  in \eqref{eq:dF-dmass} to be $I(x,\tilde m \beta )$, as given below
+\begin{equation}
+ I(x,\tilde m\beta)=\int_x^1\dd z\,
+ \frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}.
+ \label{eq:I-finite}
+\end{equation}
+Substituting the definition \eqref{eq:I-finite} into \eqref{eq:dF-dmass}, the non-trivial 
+gap equation becomes
+\begin{equation}
+ \tilde m\beta=-\frac{2}{\sqrt{1-x^2}}I(x,\tilde m\beta).
+ \label{eq:gap-I}
+\end{equation}
+This equation gives the non-trivial gap equation for the thermal mass in presence of the angular potential, parametrized by $x$, at the leading order in high temperature. This gap equation can be solved numerically as shown in  \figref{fig:thermal-mass-notebook}. In the remainder of this section we will solve the gap equation near $x^2=1$ as well as $x=0$ as systematic order by order expansions, thereby evaluating the series expansions for free energies at these limits.
+
+\subsection{Small $\mu$ expansion}
+\label{subsec:small-mu}
+In this subsection we expand the gap equation \eqref{eq:gap-I} about
+$x^2=1$, which corresponds to $\mu=0$ by the definition
+$x^2=1+\mu^2r^2$, and determine the thermal mass order by order in
+$1-x^2$.  We use the substitution
+$z=\sqrt{x^2+(1-x^2)t^2}$ in \eqref{eq:gap-I} so that the integration range becomes independent of $x$
+and  all dependences on $x$ are absorbed in the integrand.  The gap equation then
+takes the form
+\begin{align}
+\tilde m\beta+2\int_0^1\dd t\,
+ \frac{\log \bigl(1-\e^{-\tilde m\beta
+ \sqrt{x^2+(1-x^2)t^2}}\bigr)}
+ {\sqrt{x^2+(1-x^2)t^2}}=0.
+ \label{eq:gap-fixed}
+\end{align}
+Applying the same change of variable to the free energy
+\eqref{eq:physical-functional} gives
+\begin{align}
+ \frac{\beta^2}{r^2}\log Z^{(0)}(\tilde m\beta,x)
+ ={}&\frac{\left(\tilde m\beta\right)^3}{3}+\frac{2\zeta(3)}{x^2}
+ -2\int_0^1\dd t\,
+ \frac{\Phi\big(\tilde m\beta\sqrt{x^2+(1-x^2)t^2}\big)}
+ {[x^2+(1-x^2)t^2]^{3/2}}.
+ \label{eq:F-fixed}
+\end{align}
+Now we expand the integrand in the 2nd terms of the gap equation \eqref{eq:gap-fixed} around $x^2=1$ and that can be written as the following general expression
+%
+%Both \eqref{eq:gap-fixed} and \eqref{eq:F-fixed} are regular for
+%$0<x\leq1$.  Since
+%$x^2+(1-x^2)t^2=1-(1-x^2)(1-t^2)$, their integrands have ordinary Taylor
+%expansions in $1-x^2$ at fixed $t$.  For the gap-equation integrand, this
+%expansion can be displayed explicitly as
+\begin{align}
+ \frac{\log\bigl(1-\e^{-\tilde m\beta
+ \sqrt{x^2+(1-x^2)t^2}}\bigr)}
+ {\sqrt{x^2+(1-x^2)t^2}}
+% &=\sum_{n=0}^{\infty}
+% \frac{[(1-x^2)(1-t^2)]^n}{n!}
+% \left.\frac{\dd^n}{\dd y^n}
+% \left[
+% \frac{\log\!\left(1-\e^{-\tilde m\beta\sqrt{1-y}}\right)}
+% {\sqrt{1-y}}
+% \right]\right|_{y=0}
+% \nonumber\\
+ =-\sum_{n=0}^{\infty}
+ \frac{[(1-x^2)(1-t^2)]^n}{n!}
+ \sum_{j=0}^{n}
+ \frac{(2n-j)!(\tilde m\beta)^j}{2^{2n-j}(n-j)!j!}
+ \Li_{1-j}(\e^{-\tilde m\beta}).
+ \label{eq:gap-kernel-derivatives}
+\end{align}
+Now we substitute \eqref{eq:gap-kernel-derivatives} into \eqref{eq:gap-fixed}, and carry out the integral over $t$ straightforwardly to obtain the following gap equation expanded in systematic series expansion about $x^2=1$.
+%The dependence on $t$ is now entirely contained in $(1-t^2)^n$, and
+%$\int_0^1\dd t\,(1-t^2)^n=4^n(n!)^2/(2n+1)!$.  Substituting
+%\eqref{eq:gap-kernel-derivatives} into \eqref{eq:gap-fixed} and integrating
+%term by term gives
+\begin{align}
+% 0={}&\tilde m\beta
+% -2\sum_{n=0}^{\infty}
+% \frac{(1-x^2)^n}{n!}\frac{4^n(n!)^2}{(2n+1)!}
+% \sum_{j=0}^{n}
+% \frac{(2n-j)!}{2^{2n-j}(n-j)!j!}
+% (\tilde m\beta)^j\Li_{1-j}(\e^{-\tilde m\beta})
+% \nonumber\\
+\tilde m\beta
+ -2\sum_{n=0}^{\infty}
+ \frac{n!(1-x^2)^n}{(2n+1)!}
+ \sum_{j=0}^{n}
+ \frac{2^j(2n-j)!}{(n-j)!j!}
+ (\tilde m\beta)^j\Li_{1-j}(\e^{-\tilde m\beta})=0.
+ \label{eq:gap-x1-all-orders}
+\end{align}
+Note that the leading order gap equation correctly reproduces the gap equation in absence of the angular potential well known in the literature \cite{Sachdev:1993pr,Chubukov:1993aau}
+\begin{align}
+ &\tilde m_0\beta+2\log(1-\e^{-\tilde m_0\beta})=0,
+ \nonumber\\
+&{\rm thus}\qquad \tilde m_0\beta
+ =2\log\!\Big(\frac{1+\sqrt5}{2}\Big).
+% \simeq0.962424.
+ \label{eq:m0-value}
+\end{align}
+For compactness, we denote the golden ratio by
+$\rho_{\rm g}\equiv(1+\sqrt5)/2$.  Now solving the gap equation
+\eqref{eq:gap-x1-all-orders} iteratively in powers of $1-x^2$ gives the
+following thermal-mass expansion:
+%\eqref{eq:gap-x1-all-orders} and matching equal powers gives
+\begin{align}
+ \frac{\tilde m(x)\beta}{2\log\rho_{\rm g}}
+ =&1+\frac{1-x^2}{3}
+ +\frac{45+2\sqrt5\log\rho_{\rm g}}{225}(1-x^2)^2
+ \nonumber\\
+ &+\frac{2025+186\sqrt5\log\rho_{\rm g}-40\log^2\rho_{\rm g}}{14175}
+ (1-x^2)^3
+ \nonumber\\
+ &\hspace{-1 cm}+\frac{118125-5560\log^2\rho_{\rm g}
+ +\sqrt5\log\rho_{\rm g}(16020+378\log^2\rho_{\rm g})}{1063125}
+(1-x^2)^4
+ +O((1-x^2)^5).
+ \label{eq:mass-x1-series}
+\end{align}
+The agreement of the above solution with the numerical solution of \eqref{eq:gap-fixed} near $x^2=1$ is shown in figure \ref{fig:thermal-mass-notebook}.
+Similarly we expand the expression for the free energy given in \eqref{eq:F-fixed} as a systematic expansion around  $x^2=1$, then we substitute the expression for the thermal mass \eqref{eq:mass-x1-series} in it. This leads to the following expansion for the free energy at $x^2=1$.
+%
+% There
+%is a useful simplification when the functional is evaluated on shell.
+%Equation \eqref{eq:dF-dmass} shows that its derivative
+%with respect to $\tilde m\beta$ is $\tilde m\beta$ times the complete
+%left-hand side of \eqref{eq:gap-z}, equivalently \eqref{eq:gap-fixed}, and
+%hence vanishes on the solution represented by \eqref{eq:mass-x1-series}.
+%It follows that the coefficient of $(1-x^2)^n$ in the on-shell
+%functional does not depend on the new mass correction at the same order;
+%only the lower-order mass expansion is required.
+%
+%Substituting \eqref{eq:D-dilog-result} and \eqref{eq:D-trilog-result} into
+%\eqref{eq:Phi-def}, as detailed in \appref{app:golden}, gives the first
+%relation in \eqref{eq:Phi-m0}.  Combining that relation with
+%\eqref{eq:m0-value} in \eqref{eq:F-fixed} gives the second relation, namely
+%the on-shell value at $x=1$:
+%\begin{equation}
+% \Phi(\tilde m_0\beta)=\frac15\zeta(3)+\frac16\left(\tilde m_0\beta\right)^3,
+% \qquad
+% \frac{\beta^2}{r^2}\log Z^{(0)}(\tilde m_0\beta,1)=\frac85\zeta(3).
+% \label{eq:Phi-m0}
+%\end{equation}
+%Substituting \eqref{eq:mass-x1-series} into \eqref{eq:F-fixed}, using
+%\eqref{eq:m0-value} and \eqref{eq:Phi-m0}, gives the on-shell result through
+%fourth order.  The explicit pole term is expanded about $x^2=1$ as
+%\begin{equation*}
+% \frac{8\zeta(3)}{5x^2}
+% =\frac{8\zeta(3)}5\left[1+(1-x^2)+(1-x^2)^2
+% +(1-x^2)^3+(1-x^2)^4\right]
+% +\Order((1-x^2)^5).
+%\end{equation*}
+%Combining these contributions gives the complete Taylor expansion
+\begin{align}
+ &\frac{\beta^2}{r^2}\log Z_{\rm saddle}^{(0)}(x)
+ =\frac85\zeta(3)+\frac85\zeta(3)(1-x^2)
++\Big(\frac85\zeta(3)
+ +\frac{4\sqrt5\log^3\rho_{\rm g}}{45}\Big)(1-x^2)^2
+ \nonumber\\
+ &\qquad\qquad+\Big(\frac85\zeta(3)
+ +\frac{4\log^3\rho_{\rm g}(127\sqrt5-8\log\rho_{\rm g})}{2835}\Big)
+ (1-x^2)^3
+ \nonumber\\
+ &+\left[\frac85\zeta(3)
+ +\frac{4\log^3\rho_{\rm g}}{70875}
+ \left(\sqrt5(4590+22\log^2\rho_{\rm g})
+ -435\log\rho_{\rm g}\right)\right]
+ (1-x^2)^4
+ +O((1-x^2)^5).
+ \label{eq:F-x1-final}
+\end{align}
+The leading term reproduces the free energy at the non-trivial fixed point in absence of the angular potential at high temperature.  The first correction term arising due to the angular potential has also been computed in  \cite{Mauro:2026zus}. We have tested this expansion\footnote{
+	The expansions for both the thermal mass and the free energy are also found numerically till $O((1-x^2)^{12})$, available in the ancillary file \texttt{x1\_series.txt} with the arXiv version of this paper.} by evaluating the free energy  with the use of the numerical solution of the gap equation \eqref{eq:gap-I} in \figref{fig:logZ-notebook}, demonstrating the agreement between them in the region near $x^2=1$
+.
+\subsection{Expansion at $\mu^2r^2=-1$}
+\subsubsection{Gap equation and its solution}
+We now solve the gap equation near $\mu^2r^2=-1$, equivalently $x\to0$ using the definition used earlier $x^2=1+\mu^2r^2$.
+Before proceeding to the detailed analysis, we first examine the gap equation \eqref{eq:gap-I} qualitatively to identify the plausible asymptotic behavior of the thermal mass as a consistent solution of the 
+%
+%Before proceeding to the detailed investigation let us first examine the gap equation \eqref{eq:gap-I} and find the qualitative picture of the the plausible domain for  thermal mass
+ the gap equation at $x\to 0$.
+
+We recall the definition of the integral $I(x,\tilde m\beta)$ from \eqref{eq:I-finite} involved in the gap equation \eqref{eq:gap-I}
+\begin{align}\label{I integral}
+ I(x,\tilde m\beta)=\int_x^1\dd z\,
+ \frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}.
+\end{align}
+The above  integral admits logarithmic divergence as $x\to 0$ which arises from the expansion of the numerator of the integrand in small $z$ whose leading behavior is noted below
+\begin{equation}
+	\log(1-\e^{-\tilde m\beta z})
+	=\log(\tilde m\beta z)+O(\tilde m \beta z).
+	\label{eq:bernoulli-expansion1}
+\end{equation}
+This leads to a double logarithmic growth of $I(x,\tilde m\beta)$ at $x\to0$, as demonstrated below
+%
+%The logarithmic singularity of the integrand in \eqref{eq:I-finite} when
+%$\tilde m\beta z\to0$ rules out a bounded thermal mass: as $x\to0$, the right-hand side of
+%\eqref{eq:gap-I} would become unbounded while its left-hand side remained
+%finite.  Thus $\tilde m\beta$ must grow.  If $\tilde m\beta x$ remained
+%bounded away from zero, however, the integral would approach a finite
+%function of this combination, and would become exponentially small if
+%$\tilde m\beta x$ also grew.  Neither behavior can balance the growing left-hand side of
+%\eqref{eq:gap-I}; hence $\tilde m\beta x$ must approach zero.  In this
+%endpoint regime,
+%$\log(1-\e^{-\tilde m\beta z})=\log(\tilde m\beta z)
+%+\Order(\tilde m\beta z)$ near the lower endpoint, and the leading
+%logarithmic behavior is
+\begin{equation}
+ I(x,\tilde m\beta)\sim
+ -\frac12\log^2\!\frac1x.
+\end{equation}
+Now incorporating this leading behavior of $I(x,\tilde m\beta )$ in the gap equation \eqref{eq:gap-I}, one obtains the following relation
+\begin{align}\label{sim gap}
+	\tilde m\beta\sim
+	\log^2\!\frac1x.
+\end{align}
+%This  can be rewritten as follows
+%\begin{align}
+%	x\sim \frac{2e^{-\sqrt{\tilde m \beta}}}{\tilde m \beta} \qquad {\rm thus}\qquad \tilde m \beta x\sim 2e^{-\sqrt{\tilde m \beta }}
+%\end{align}
+%For the consistency of the first relation $\tilde m\beta$ has to grow as $x\to 0$. And the second relation reveals the fact that the combination $\tilde m \beta x$ remains small. 
+Hence the qualitative regime of behavior  where such relation holds is given by 
+%The second relation is the leading balance in \eqref{eq:gap-I}.  It gives
+%$\tilde m\beta=\Order(\log^2(1/x))$ and therefore
+%$\tilde m\beta x=\Order(x\log^2(1/x))\to0$, confirming the endpoint behavior.
+%The consistent scaling is thus
+\begin{equation}
+ \tilde m\beta\longrightarrow\infty,
+ \qquad
+ \tilde m\beta x\longrightarrow0\qquad{\rm as }\qquad x\longrightarrow 0.
+ \label{eq:double-scaling}
+\end{equation}
+More precisely we can get the behavior of the $\tilde m\beta $ that solves the relation \eqref{sim gap}, at the leading order in small $x$
+\begin{align}\label{mb mbx}
+\tilde m\beta\sim{}&\log^2\!\frac1x \qquad {\rm and } \qquad\tilde m \beta x\sim x \log^2\!\frac1x .
+\end{align}
+Similarly one can also estimate the leading behavior of the integral involved in the free energy  \eqref{eq:physical-functional}, followed by substitution of the thermal mass as given in \eqref{mb mbx}, to obtain the leading small $x$ behavior of the free energy as  
+\begin{align}
+	 \frac{\beta^2}{r^2}\log Z_{\rm saddle}^{(0)}(x)
+	\sim{}&\frac{2\zeta(3)}{x^2}
+	-\frac16\log^6\!\frac1x .
+\end{align}
+Here we note that logarithmic behavior arises due to the leading solution for the thermal mass, while first term is the pole contribution identical to that present in the free theory.
+\\
+
+In principle one should be able to understand the perturbative structure for the gap equation by 
+substituting the higher-order expansion \eqref{eq:bernoulli-expansion1} into \eqref{I integral}, followed by term-by-term integration. However, organizing the resulting terms systematically in a manner consistent with the leading behavior \eqref{sim gap} becomes cumbersome.
+%A substitution of the expansion \eqref{eq:bernoulli-expansion1} with  higher order terms into \eqref{I integral} and term by term integration  may not directly provide a simple understanding of the systematic perturbative structure of the gap equation consistent with the leading behavior \eqref{sim gap}. 
+But the qualitative behavior \eqref{eq:double-scaling} leads to the following statement. A perturbative expansion of the gap equation in small $\tilde m \beta x$, can prove the consistency of  this leading solution and allows computations of systematic corrections. In the remainder of this section we will demonstrate that  such a perturbative expansion for the gap equation indeed exists, following a more careful treatment.
+\\
+
+Now to obtain the complete systematic expansion of the gap equation, we use a different approach from what was used in estimating  the leading qualitative behavior above. First we rewrite the integral $I(x,\tilde m\beta)$ from \eqref{eq:I-finite} in the following manner
+%The consistency of the scaling in \eqref{eq:double-scaling} will be verified
+%by the leading solution \eqref{eq:mass-leading-W} below.
+%The two conditions in \eqref{eq:double-scaling} serve distinct purposes.
+%The vanishing combination $\tilde m\beta x$ controls the thermal argument at
+%the lower endpoint of \eqref{eq:I-finite}, while the divergence of
+%$\tilde m\beta$ suppresses the contribution from the upper endpoint $z=1$.
+%To separate these effects while retaining the integration variable of
+%\eqref{eq:I-finite}, introduce
+%
+%And this is related to the original integral by the following exact relation
+%The notation $I_\infty(\tilde m\beta x)$ records that the integral depends
+%on $x$ and $\tilde m\beta$ only through their product; its lower integration
+%endpoint remains $z=x$.
+%Comparing \eqref{eq:I-finite} with \eqref{eq:I-infty} and subtracting the
+%added interval $[1,\infty)$ gives the exact relation
+\begin{equation}
+	I(x,\tilde m\beta)=I_\infty(\tilde m\beta x)
+	-\int_1^\infty\dd z\,
+	\frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}.
+	\label{eq:I-tail-exact}
+\end{equation}
+where
+\begin{equation}
+	I_\infty(\tilde m\beta x)=\int_x^\infty\dd z\,
+	\frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}.
+	\label{eq:I-infty}
+\end{equation}
+The second term in \eqref{eq:I-tail-exact} is positive and exponetially suprressed at large $\tilde m \beta$. We  denote this term by
+$I_{\rm tail}$.  Its large-$\tilde m\beta$ behavior follows directly by
+using the exponential expansion of
+$\log(1-\e^{-\tilde m\beta z})$ and expanding  $\sqrt{z^2-x^2}$ in the denominator about $z=1$, and finally integrating term by term. This gives
+%  For each term, the smooth factor
+%$(z^2-x^2)^{-1/2}$ is expanded about the lower endpoint $z=1$, and repeated
+%integration by parts gives the corresponding inverse-power expansion.  The
+%leading exponential supplies the terms proportional to
+%$\e^{-\tilde m\beta}$, whereas the remaining terms begin at order
+%$\e^{-2\tilde m\beta}$.  The first three endpoint coefficients therefore
+%give, uniformly for $x$ in any compact subset of $[0,1)$,
+\begin{align}
+	I_{\rm tail}(x,\tilde m\beta)
+	={}&\frac{\e^{-\tilde m\beta}}{\tilde m\beta}
+	\Bigg[
+	\frac1{\sqrt{1-x^2}}
+	-\frac1{\tilde m\beta(1-x^2)^{3/2}}
+	+\frac{2+x^2}{(\tilde m\beta)^2(1-x^2)^{5/2}}
+	+O\!\left((\tilde m\beta)^{-3}\right)
+	\Bigg]\nonumber\\
+	&\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad +O\!\left(\frac{\e^{-2\tilde m\beta}}{\tilde m\beta}\right).
+	\label{eq:I-tail-asymptotic}
+\end{align}
+%The overall factor $\e^{-\tilde m\beta}$ in
+%\eqref{eq:I-tail-asymptotic}, together with the
+%$\e^{-2\tilde m\beta}$ remainder, makes the exponential decay manifest.  In
+%the double-scaling regime \eqref{eq:double-scaling}, $x\to0$ and the factor in
+%square brackets tends to unity.
+Thus  combining \eqref{eq:I-tail-exact} with
+\eqref{eq:I-tail-asymptotic} gives
+\begin{equation}
+	I(x,\tilde m\beta)=I_\infty(\tilde m\beta x)
+	+O\!\left(\frac{\e^{-\tilde m\beta}}{\tilde m\beta}\right).
+	\label{eq:I-tail-estimate}
+\end{equation}
+%This appendix gives an alternative derivation of the endpoint expansion
+%\eqref{eq:I-all-orders} without dividing the integration range into lower
+%and upper parts.  For convenience, we begin by reproducing the
+%infinite-range integral \eqref{eq:I-infty} in the form used below,
+%\begin{equation}
+%	I_\infty(\tilde m\beta x)
+%	=\int_x^\infty\dd z\,
+%	\frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}.
+%	\label{eq:BP-definitions}
+%\end{equation}
+%We can expand the numerator in the integrand using 
+%$-\log(1-\e^{-u})=\sum_{n=1}^\infty\e^{-nu}/n$, keeping all order contributions and integrate over $z$ for each terms in this series separately to obtain
+%%The substitution $z=x\cosh t$ gives
+%%$\dd z/\sqrt{z^2-x^2}=\dd t$ and removes the square-root kernel.  We then
+%%use the convergent expansion
+%%$-\log(1-\e^{-u})=\sum_{n=1}^\infty\e^{-nu}/n$.  Since every term is
+%%non-negative for $u>0$, Tonelli's theorem permits the sum and integral to
+%%be interchanged.  The remaining integral is the representation
+%%$K_0(s)=\int_0^\infty\dd t\,\e^{-s\cosh t}$, namely the $\nu=0$ case of
+%%\cite[Eq.~(10.32.8)]{NIST:DLMF}.  Hence
+%\begin{align}
+%	-I_\infty(\tilde m\beta x)
+%	% ={}&-\int_0^\infty\dd t\,
+%	% \log\!\left(1-\e^{-\tilde m\beta x\cosh t}\right)
+%	% \nonumber\\
+%	% ={}&\sum_{n=1}^\infty\frac1n
+%	% \int_0^\infty\dd t\,
+%	% \e^{-n\tilde m\beta x\cosh t}
+%	% \nonumber\\
+%	={}&\sum_{n=1}^\infty
+%	\frac{K_0(n\tilde m\beta x)}{n}.
+%	\label{eq:BP-bessel-sum}
+%\end{align}
+%
+%
+%
+%This appendix gives an alternative derivation of the endpoint expansion
+%\eqref{eq:I-all-orders} without separating the integration range into lower
+%and upper parts. We begin with
+%\begin{equation}
+%	I_\infty(\tilde m\beta x)
+%	=
+%	\int_x^\infty \dd z\,
+%	\frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}.
+%	\label{eq:BP-definitions}
+%\end{equation}
+%Using
+%\[
+%-\log(1-\e^{-u})
+%=
+%\sum_{n=1}^{\infty}\frac{\e^{-nu}}{n},
+%\qquad u>0,
+%\]
+%and $z=x\cosh t$, one obtains
+Now we perform the integral over $z$ in $I_\infty$ defined in \eqref{eq:I-infty} by expanding the logarithm in the numerator of the integrand in small $e^{-\tilde m \beta z}$. This results into a series involving modified Bessel functions of 2nd kind, as shown below 
+\begin{align}
+	-I_\infty(\tilde m\beta x)
+	&=\sum_{n=1}^{\infty} \frac{1}{n} \int_x^\infty \frac{e^{-n\tilde m  \beta z}}{\sqrt{z^2-x^2}} dz
+%	&=
+%	\sum_{n=1}^{\infty}\frac1n
+%	\int_0^\infty \dd t\,
+%	\e^{-n\tilde m\beta x\cosh t}
+	\nonumber,\\
+	&=
+	\sum_{n=1}^{\infty}
+	\frac{K_0(n\tilde m\beta x)}{n}.
+	\label{eq:BP-bessel-sum}
+\end{align}
+The next task is to obtain an expansion for $I_\infty$ consistent with the leading behavior qualitatively  discussed before.
+We avoid direct small $\tilde m \beta x$ expansion of  Bessel functions in the above expression as summing over $n$ is not straightforward after that. But the above sum of the Bessel functions can be reorganized as the following expansion with the use of the Poisson resummation guided by a set of algebraic manipulations shown in \appref{app:bessel-poisson}.
+%
+%
+%A termwise small-$\tilde m\beta x$ expansion of the individual Bessel
+%functions in \eqref{eq:BP-bessel-sum} is not uniform, because terms with
+%$n\sim(\tilde m\beta x)^{-1}$ also contribute.  The differential reduction,
+%Poisson resummation, and coefficient algebra are therefore carried out
+%before the small-$\tilde m\beta x$ expansion.  The complete derivation is
+%given in \appref{app:bessel-poisson}; its result may be stated directly as
+\begin{align}
+	-I_\infty(\tilde m\beta x)=&
+% \sum_{n=1}^{\infty}\frac{K_0(n\tilde m\beta x)}{n}
+% =-I_\infty(\tilde m\beta x)
+ \frac12\log^2\!\frac2{\tilde m\beta x}+C_0
+-\sum_{k=1}^{\infty}(\tilde m\beta x)^{2k}
+ \Big[
+ \frac{B_{2k}}{2k\,4^k(k!)^2}
+ \log\!\frac2{\tilde m\beta x}+C_{2k}
+ \Big],
+% \nonumber\\[-1mm]
+% &\hspace{42mm}0<\tilde m\beta x<1.
+\nonumber\\
+{\rm where}\qquad &C_0
+ =\frac{\pi^2}{24}-\gamma_1-\frac{\gamma_E^2}{2}, \label{eq:I-all-orders}
+\\ {\rm and} \qquad
+& C_{2k}
+ =\frac{B_{2k}}{2k\,4^k(k!)^2}
+ \left[
+ \log(2\pi)+H_k-H_{2k-1}
+ -\frac{\zeta'(2k)}{\zeta(2k)}
+ \right] \qquad {\rm for }\qquad k\ge1.
+ \nonumber
+\end{align}
+Here $H_n=\sum_{j=1}^n j^{-1}$, with $H_0=0$ and $\gamma_E$ and $\gamma_1$ are the standard Stieltjes-constants.\footnote{The Stieltjes constants are defined by
+	$
+	\zeta(s)=\frac1{s-1}
+	+\sum_{n=0}^{\infty}\frac{(-1)^n\gamma_n}{n!}(s-1)^n
+	$, with $\gamma_E=\gamma_0.$}
+%Restoring the original finite upper limit changes
+%\eqref{eq:I-all-orders} only by the exponentially small correction in
+%\eqref{eq:I-tail-estimate}.
+\\
+
+Finally, substituting \eqref{eq:I-all-orders} into \eqref{eq:gap-I} and using
+\eqref{eq:I-tail-estimate} gives
+\begin{align}
+ \tilde m\beta={}&\frac1{\sqrt{1-x^2}}
+ \Bigg[
+ \log^2\!\frac2{\tilde m\beta x}+2C_0
+  -2\sum_{k=1}^{\infty}(\tilde m\beta x)^{2k}
+ \left(
+ \frac{B_{2k}}{2k\,4^k(k!)^2}\log\!\frac2{\tilde m\beta x}+C_{2k}
+ \right)
+ \Bigg]
+ \nonumber\\
+ &\qquad\qquad\qquad\qquad+O\!\left(
+ \frac{\e^{-\tilde m\beta}}
+ {\tilde m\beta\sqrt{1-x^2}}\right).
+ \label{eq:gap-expanded}
+\end{align}
+Thus we have obtained a systematic series expansion of the gap equation \eqref{eq:gap-I} in small $\tilde m \beta x$ consistent with the leading asymptotics provided in \eqref{eq:double-scaling} and \eqref{mb mbx}. Now we can solve the leading order gap equation as shown below
+\begin{equation}
+ \tilde m\beta=\log^2\!\frac{2}{\tilde m\beta x}.
+ \label{eq:mass-leading-W}
+\end{equation}
+This leading order gap equation admits a solution in terms of Productlog function as the following
+\begin{align}\label{Prodlog}
+	\tilde m\beta=4W_0^2\!\left(\frac1{\sqrt{2x}}\right)\sim  \log^2\!\frac1x ,
+\end{align}
+where $W_0(x)$ denotes the Productlog function of $x$. This leading solution in terms of the Productlog function agrees with the numerical solution of the gap equation \eqref{eq:gap-I} near $x=0$ as demonstrated in the figure \ref{fig:thermal-mass-notebook}. 
+The thermal mass is evaluated till a few higher orders by solving the gap equation \eqref{eq:gap-expanded} systematically order by order in \appref{app:thermal-mass-orders}, leading  to the following   answer
+%
+%Equation
+%\eqref{eq:mass-leading-W} shows that $\tilde m\beta$ grows as $\log^2(1/x)$
+%while $\tilde m\beta x$ vanishes as $x\log^2(1/x)$.  Using this scaling in
+%the sum in \eqref{eq:gap-expanded}, one finds that, for fixed $k\geq1$, its
+%logarithmic and nonlogarithmic terms are respectively of orders
+%$x^{2k}\log^{4k+1}(1/x)$ and $x^{2k}\log^{4k}(1/x)$.  Thus the first
+%power-dependent term is of order
+%$x^2\log^5(1/x)$; the expansion of the prefactor
+%$(1-x^2)^{-1/2}$ in \eqref{eq:gap-expanded} begins at order
+%$x^2\log^2(1/x)$, and the finite-upper-limit correction in
+%\eqref{eq:I-tail-estimate} remains exponentially small.  The order-by-order
+%solution through $x^4$, obtained by retaining the $k=1$ and $k=2$ summands
+%in \eqref{eq:gap-expanded}, is derived in
+%\appref{app:thermal-mass-orders}.  At the accuracy displayed below, its
+%$x^2$ and $x^4$ sectors lie within the final power-suppressed remainder, so
+%only the $x^0$ equation \eqref{eq:app-mass-leading-sector} is required.  Its
+%expansion for $x\to0^+$ gives
+\begin{align}
+ \tilde m\beta={}&\log^2\!\frac1x
+ -4\log\!\frac1x\,\log\log\!\frac1x
+ +2\log2\,\log\!\frac1x
+ +4\log^2\log\!\frac1x
+ \nonumber\\
+ &+(8-4\log2)\log\log\!\frac1x
+ +\log^22-4\log2+2C_0
+ \nonumber\\
+ &+O\!\left(
+ \frac{\log^2\log(1/x)}{\log(1/x)}\right)
+ +O\!\left(x^2\log^5\!\frac1x\right).
+ \label{eq:mass-corrected}
+\end{align}
+%The term $2C_0$ in \eqref{eq:mass-corrected} is required at the displayed
+%order.  For numerical purposes, it is useful to retain this constant without
+%re-expanding the logarithm.  Retaining the $x^0$ terms in
+%\eqref{eq:gap-expanded}, including $2C_0$, gives the corresponding improved
+%equation
+%\begin{equation}
+% \tilde m\beta=\left[\log\!\frac{2}{\tilde m\beta x}\right]^2+2C_0.
+% \label{eq:mass-C0-implicit}
+%\end{equation}
+Such a solution has
+$\tilde m\beta\to\infty$ and $\tilde m\beta x\to0$, thereby verifying
+\eqref{eq:double-scaling}. Note that $C_0$ is provided in \eqref{eq:I-all-orders}.
+
+\begin{figure}[tbp]
+ \centering
+ \includegraphics[width=0.88\textwidth]{thermal_mass_full_region_higher_orders.pdf}
+ \caption{Dimensionless thermal mass $\tilde m\beta$ on
+ $10^{-3}\leq x\leq1$.  The blue points are the  numerical solutions
+ of \eqref{eq:gap-fixed}; the red curve is the leading small-$x$ solution
+ \eqref{Prodlog} given by the Productlog function, and the green curve is the expansion
+ \eqref{eq:mass-x1-series} about $x=1$, continued through order
+ $(1-x^2)^{12}$ available in the ancillary file with the arXiv version of this paper. }
+ \label{fig:thermal-mass-notebook}
+\end{figure}
+
+\subsubsection{$\log Z$ as a small-$x$ expansion}
+\label{sec:logZ}
+In this subsection we will evaluate the free energy \eqref{eq:physical-functional} at the value of the thermal mass \eqref{eq:mass-corrected} satisfying the gap equation \eqref{eq:gap-expanded}. First we will expand the the free energy as a  series expansion  in small $\tilde m \beta x$,  consistent with the qualitative behavior presented in \eqref{eq:double-scaling}. More precisely we have to obtain such a series expansion for the integral in the last term of \eqref{eq:physical-functional}. Thus let us consider only this term as follows
+%
+%We now use the endpoint expansion \eqref{eq:I-all-orders} to determine the
+%partition function.  It is useful first to keep $\tilde m\beta$ off shell and
+%express the mass-dependent branch-cut contribution in terms of the integral
+%$I$ defined in \eqref{eq:I-finite} and appearing in the gap equation
+%\eqref{eq:gap-I}.  According to \eqref{eq:interacting-split}, one half of the
+%integral term in \eqref{eq:Z2-reduced} contributes to the physical
+%determinant.  Writing this contribution on the fixed interval
+%$x\leq z\leq1$ gives
+%\begin{equation}
+% \frac12\log Z_{2,{\rm mass}}^{(0)}
+% =-\frac{2r^2\left(\tilde m\beta\right)^2}{\beta^2\sqrt{1-x^2}}
+% \int_x^1\dd z\,
+% \frac{\tilde m\beta\,\Phi(\tilde m\beta z)}
+% {(\tilde m\beta z)^2
+%  \sqrt{(\tilde m\beta z)^2-(\tilde m\beta x)^2}}.
+% \label{eq:Zth-geometric}
+%\end{equation}
+%All integrations in \eqref{eq:Zth-geometric} are now over the fixed interval
+%$x\leq z\leq1$.  Cancelling the explicit powers of $\tilde m\beta$ gives
+\begin{equation}
+ \frac12\log Z_{2,{\rm mass}}^{(0)}
+ =-\frac{2r^2}{\beta^2\sqrt{1-x^2}}
+ \int_x^1\dd z\,
+ \frac{\Phi(\tilde m\beta z)}{z^2\sqrt{z^2-x^2}}.
+ \label{eq:Zth-z}
+\end{equation}
+Now the above integral is related to the integral $I(x,\tilde m\beta)$  in the following manner
+%In \eqref{eq:Zth-z}, the mass dependence occurs only through
+%$\Phi(\tilde m\beta z)$.  Differentiating \eqref{eq:Zth-z} at fixed $x$, using
+%\eqref{eq:Phi-def}, and identifying $I$ through \eqref{eq:I-finite} gives
+%%\begin{equation}
+%% \frac{\partial}{\partial(\tilde m\beta)}
+%% \left(\frac12\log Z_{2,{\rm mass}}^{(0)}\right)
+%% =\frac{2r^2\tilde m\beta}{\beta^2\sqrt{1-x^2}}I(x,\tilde m\beta).
+%% \label{eq:dZth-dmass}
+%%\end{equation}
+%By \eqref{eq:Phi-def}, $\Phi(0)=0$, so \eqref{eq:Zth-z} vanishes at
+%$\tilde m\beta=0$.  Although $I(x,\lambda)$ is singular as $\lambda\to0$,
+%the product $\lambda I(x,\lambda)$ is integrable.  Integrating
+%\eqref{eq:dZth-dmass} from zero to $\tilde m\beta$ therefore fixes the
+%integration constant and yields
+\begin{equation}
+ \frac12\log Z_{2,{\rm mass}}^{(0)}
+ =\frac{2r^2}{\beta^2\sqrt{1-x^2}}
+ \int_0^{\tilde m\beta}\lambda I(x,\lambda)\,\dd\lambda.
+ \label{eq:Zth-lambda}
+\end{equation}
+This follows from the fact that the integral $I(x,\tilde m \beta)$ was originated from the differentiation of the term \eqref{eq:Zth-z} in the free energy \eqref{eq:physical-functional}, as was shown in \eqref{eq:dF-dmass}, up to an overall factor of $\tilde m$, apart from other $\tilde m$-independent factors.\\
+
+Now using \eqref{eq:I-tail-exact} in the above equation we have 
+\begin{align}
+	\frac{1}{2}\log Z_{2,{\rm mass}}^{(0)}=\frac{2r^2}{\beta^2\sqrt{1-x^2}}
+	\int_0^{\tilde m\beta}\lambda \Big[I_\infty(x\lambda)-\int_1^\infty\dd z\,
+	\frac{\log(1-\e^{-\lambda z})}{\sqrt{z^2-x^2}}\Big]\,\dd\lambda.
+	\label{eq:Zth-lambda1}
+\end{align}
+The 2nd term from the above expression is evaluated as follows
+\begin{align}\label{2nd term}
+&	-\frac{2r^2}{\beta^2\sqrt{1-x^2}}
+	\int_0^{\tilde m\beta}d\lambda\,\lambda \int_1^\infty\dd z\,
+	\frac{\log(1-\e^{-\lambda z})}{\sqrt{z^2-x^2}}\nonumber\\
+	&=\frac{2r^2}{\beta^2\sqrt{1-x^2}}
+	\int_1^\infty\dd z\,
+	\frac{\zeta (3)-\tilde m\beta z \text{Li}_2\left(e^{-\tilde m\beta z}\right)-\text{Li}_3\left(e^{-\tilde m\beta z}\right)}{z^2 \sqrt{z^2-x^2}}\nonumber,\\
+	&=\frac{2r^2 \zeta (3)}{\beta^2\sqrt{1-x^2} (1+\sqrt{1-x^2})}+O(e^{-\tilde{m}\beta}).
+\end{align}
+One can easily realize that the contribution due to the Polylogarithm functions in the numerator of the integrand in the 2nd line of the above equation, are exponentially suppressed at large $\tilde m\beta$, following a similar treatment as was used in \eqref{eq:I-tail-asymptotic}.
+%
+%
+%It remains to evaluate the integral in \eqref{eq:Zth-lambda}.  We insert the exact
+%decomposition \eqref{eq:I-tail-exact}.  In the infinite-range part, the
+%substitution $v=\lambda x$ isolates the small endpoint
+%$\tilde m\beta x$.  In the tail, set $u=\lambda z$.  The decay in
+%\eqref{eq:I-tail-asymptotic} allows the upper
+%limit of the $\lambda$ integral to be extended to infinity with an
+%exponentially small error.  Absolute convergence permits the order of
+%integration to be reversed, giving the triangular domain
+%$0\leq\lambda\leq u$ and reducing the calculation to
+%\begin{equation}
+% \int_0^u\frac{\lambda\,\dd\lambda}{\sqrt{u^2-\lambda^2x^2}}
+% =\frac{u}{1+\sqrt{1-x^2}},
+% \qquad
+% \int_0^\infty u\log(1-\e^{-u})\,\dd u=-\zeta(3).
+% \label{eq:tail-identities}
+%\end{equation}
+%The first identity in \eqref{eq:tail-identities} evaluates the inner integral
+%over this triangular domain, while the second gives the remaining thermal
+%moment.  Using both identities in the decomposition
+%\eqref{eq:I-tail-exact}, one obtains in the double-scaling regime
+%\eqref{eq:double-scaling}
+%\begin{equation}
+% \int_0^{\tilde m\beta}\lambda I(x,\lambda)\,\dd\lambda
+% =\frac1{x^2}\int_0^{\tilde m\beta x}vI_\infty(v)\,\dd v
+% +\frac{\zeta(3)}{1+\sqrt{1-x^2}}
+% +O(\tilde m\beta\e^{-\tilde m\beta}).
+% \label{eq:lambda-I-result}
+%\end{equation}
+%The remainder in \eqref{eq:lambda-I-result} is uniform for $x$ bounded away
+%from one.
+%Since $0<\tilde m\beta x<1$, the first term in
+%\eqref{eq:lambda-I-result} is determined by the endpoint expansion
+%\eqref{eq:I-all-orders}.  Its lower boundary contributes nothing because
+%$v^2\log^p v\to0$ for the powers $p$ that occur here.  Term-by-term
+%integration therefore gives
+\\
+
+The integral in the first term in \eqref{eq:Zth-lambda1} is computed by straightforward term by term integration of the expansion for $I_{\infty}$ given in \eqref{eq:I-all-orders}
+\begin{align}
+\int_0^{\tilde m\beta }\lambda I_\infty(x,\lambda)\,\dd \lambda
+ ={}&-\frac{\left(\tilde m\beta\right)^2}{4}
+ \left[\log^2\!\frac2{\tilde m\beta x}+\log\!\frac2{\tilde m\beta x}+\frac12\right]
+ -\frac{C_0\left(\tilde m\beta\right)^2}{2}
+ \nonumber\\
+ &+\left(\tilde m\beta\right)^2\sum_{k=1}^{\infty}\frac{(\tilde m\beta x)^{2k}}{2k+2}
+ \left[
+ \frac{B_{2k}}{2k\,4^k(k!)^2}
+ \left(\log\!\frac2{\tilde m\beta x}+\frac1{2k+2}\right)+C_{2k}
+ \right].
+ \label{eq:int-I-result}
+\end{align}
+Combining \eqref{eq:Zth-lambda1}, \eqref{2nd term} and \eqref{eq:int-I-result}, 
+we have the following series expansion at $x=0$
+we obtain the free energy at the non-trivial fixed point at the high temperature as a systematic series expansion at $x=0$ 
+%and then
+%restoring the normalization in \eqref{eq:Zth-lambda}, gives the complete
+%off-shell small-$x$ expansion of the mass-dependent thermal contribution:
+\begin{align}
+ &\frac{\beta^2}{2r^2}\log Z_{2,{\rm mass}}^{(0)}
+ =\frac{2\zeta(3)}{\sqrt{1-x^2}[1+\sqrt{1-x^2}]}
+-\frac{\left(\tilde m\beta\right)^2}{2\sqrt{1-x^2}}
+ \left[\log^2\!\frac2{\tilde m\beta x}+\log\!\frac2{\tilde m\beta x}+\frac12+2C_0\right]
+ \nonumber\\
+ &+\frac{2\left(\tilde m\beta\right)^2}{\sqrt{1-x^2}}
+ \sum_{k=1}^{\infty}\frac{(\tilde m\beta x)^{2k}}{2k+2}
+ \Bigg[
+ \frac{B_{2k}}{2k\,4^k(k!)^2}
+ \log\!\frac2{\tilde m\beta x}
+ +\frac{B_{2k}}{2k\,4^k(k!)^2(2k+2)}
+ +C_{2k}
+ \Bigg]
+ +O(\tilde m\beta\e^{-\tilde m\beta}).
+ \label{eq:Zth-offshell}
+\end{align}
+%The power series in \eqref{eq:Zth-offshell} is controlled by
+%$\tilde m\beta x$, while the last term records the exponentially small
+%finite-range correction.  As a consistency check, differentiating
+%\eqref{eq:Zth-offshell} reproduces \eqref{eq:dZth-dmass} with $I$ replaced by $I_\infty$;
+%restoring the tail in \eqref{eq:I-tail-exact} recovers the exact relation.
+Now using \eqref{eq:Zth-offshell} in the \eqref{eq:physical-functional} and finally substituting the series expansion for the thermal mass \eqref{eq:mass-corrected} in it, we find the free energy to be 
+%We now evaluate the result at the thermal saddle.  Adding the cubic vacuum
+%and mass-independent endpoint terms in \eqref{eq:physical-functional} to
+%\eqref{eq:Zth-offshell} gives
+%\begin{equation}
+% \frac{\beta^2}{r^2}\log Z^{(0)}(\tilde m\beta,x)
+% =\frac{\left(\tilde m\beta\right)^3}{3}+\frac{2\zeta(3)}{x^2}
+% +\frac{\beta^2}{2r^2}\log Z_{2,{\rm mass}}^{(0)}.
+% \label{eq:F-from-Zth}
+%\end{equation}
+%Using \eqref{eq:gap-expanded} in \eqref{eq:F-from-Zth} to eliminate the
+%double logarithm gives
+%\begin{align}
+% \frac{\beta^2}{r^2}\log Z_{\rm saddle}^{(0)}(x)
+% ={}&\frac{2\zeta(3)}{x^2}+\zeta(3)
+% -\frac{\left(\tilde m\beta\right)^3}{6}
+% -\frac{\left(\tilde m\beta\right)^2}{2}\left(\log\!\frac2{\tilde m\beta x}+\frac12\right)
+% \nonumber\\
+% &+\Order\!\left(x^2\left(\tilde m\beta\right)^4\log\!\frac2{\tilde m\beta x}\right)
+% +\Order(\tilde m\beta\e^{-\tilde m\beta}),
+% \label{eq:F-onshell-mass}
+%\end{align}
+%where $\tilde m\beta$ solves \eqref{eq:gap-expanded}.  Substituting
+%\eqref{eq:mass-corrected} into \eqref{eq:F-onshell-mass} gives
+\begin{align}
+ \frac{\beta^2}{r^2}\log Z_{\rm saddle}^{(0)}(x)
+ =\frac{2\zeta(3)}{x^2}
+ -\frac16\log^6\!\frac1x
+ +\left(2\log\log\!\frac1x-\log2-\frac12\right)
+ \log^5\!\frac1x
+ \nonumber\\
+ +\Big[
+ -10\log^2\log\!\frac1x
+ +(10\log2+1)\log\log\!\frac1x
+-\frac52\log^22-\frac12\log2-\frac14-C_0
+ \Big]\log^4\!\frac1x
+ \nonumber\\
+ +O\!\left(\log^3\!\frac1x\,\log^3\log\!\frac1x\right).
+% +\zeta(3)+O\!\left(x^2\log^9\!\frac1x\right).
+ \label{eq:F-small-x}
+\end{align}
+We demonstrate that a good agreement with the free energy \eqref{eq:physical-functional} evaluated at the numerical solution of the gap equation \eqref{eq:gap-I} is observed just by considering the leading correction to in the above expansion in the figure
+\ref{fig:logZ-notebook}.
+%The contribution $-C_0\log^4(1/x)$ in \eqref{eq:F-small-x} is therefore a
+%genuine subleading effect and is absent when \eqref{eq:gap-expanded} is
+%truncated to its leading double-logarithmic term.
+
+\begin{figure}[tbp]
+ \centering
+ \includegraphics[width=0.88\textwidth]{logZ_full_region_O12.pdf}
+ \caption{The leading high-temperature partition function
+ $\beta^2\log Z_{}^{(0)}/r^2$ on $10^{-3}\leq x\leq1$, displayed
+ on a logarithmic vertical scale.  The blue points are obtained by numerically solving
+ \eqref{eq:gap-fixed} and thereby evaluating \eqref{eq:F-fixed}; the red curve is
+ the leading terms of the small-$x$ expansion \eqref{eq:F-small-x},
+ $2\zeta(3)/x^2-\frac16\log^6(1/x)$, and the green curve is the expansion
+ \eqref{eq:F-x1-final} about $x=1$, continued through order
+ $(1-x^2)^{12}$, as given in the ancillary file with the arXiv version of this paper.}
+ \label{fig:logZ-notebook}
+\end{figure}
+
+
+
+% Numerical checks are retained in the source but excluded from the manuscript.
+%\iffalse
+%\section{Numerical comparison across \texorpdfstring{$0<x\leq1$}{0<x<=1}}
+%\label{sec:numerics}
+%
+%The numerical analysis is based on the regular equations \eqref{eq:gap-fixed}
+%and \eqref{eq:F-fixed}, with $\beta=r=1$.  For each value of $x$, the positive
+%root of \eqref{eq:gap-fixed} is bracketed and determined to the stated
+%precision before the reduced functional \eqref{eq:F-fixed} is evaluated.  The
+%comparison is designed to test both endpoint expansions and their domains of
+%validity.
+%
+%\subsection{Thermal mass}
+%
+%For each $x$, the positive numerical root of \eqref{eq:gap-fixed} is found by
+%bracketing and bisection.  It is compared with the leading solution
+%\eqref{eq:mass-leading-W} and with the implicit $C_0$-improved equation
+%\eqref{eq:mass-C0-implicit}.  In each case the plotted quantity is the
+%approximation minus the numerical root, divided by the numerical root.
+%\begin{figure}[p]
+% \centering
+% \includegraphics[width=0.78\textwidth]{figures/mass_error.png}
+% \caption{Relative errors of the leading approximation
+% \eqref{eq:mass-leading-W} and the $C_0$-improved approximation
+% \eqref{eq:mass-C0-implicit}.  The reference values are obtained from the
+% numerical solution of \eqref{eq:gap-fixed}.}
+% \label{fig:mass-error}
+%\end{figure}
+%
+%\begin{figure}[t]
+% \centering
+% \includegraphics[width=0.86\textwidth]{figures/thermal_mass_full_region_order12.png}
+% \caption{Dimensionless thermal mass $\tilde m\beta$ across the interval.  The
+% points are numerical solutions of \eqref{eq:gap-fixed}; the orange curve is
+% the leading small-$x$ solution \eqref{eq:mass-leading-W}, and the red curve is
+% the expansion \eqref{eq:mass-x1-series} about $x=1$, continued through order
+% $(1-x^2)^{12}$.  The vertical range is restricted in order to resolve the
+% crossover region.}
+% \label{fig:thermal-mass-full-region}
+%\end{figure}
+%
+%\subsection{On-shell partition function}
+%
+%Substituting the numerical root of \eqref{eq:gap-fixed}, denoted by
+%$\left(\tilde m\beta\right)_{\rm num}(x)$, into \eqref{eq:F-fixed} gives
+%\begin{align}
+% \frac{\beta^2}{r^2}\log Z_{\rm num}^{(0)}(x)
+% ={}&\frac{\left(\tilde m\beta\right)_{\rm num}(x)^3}{3}+\frac{2\zeta(3)}{x^2}
+% \nonumber\\
+% &-2\int_0^1\dd t\,
+% \frac{\Phi\!\left(\left(\tilde m\beta\right)_{\rm num}(x)\sqrt{x^2+(1-x^2)t^2}\right)}
+% {[x^2+(1-x^2)t^2]^{3/2}}.
+% \label{eq:F-num}
+%\end{align}
+%Because the explicit term $2\zeta(3)/x^2$ in \eqref{eq:F-num} dominates the
+%full answer, the comparison subtracts this pole first.  The remaining
+%difference directly tests the relative normalization of the vacuum and
+%mass-dependent thermal terms.
+%\begin{figure}[p]
+% \centering
+% \includegraphics[width=0.78\textwidth]{figures/logz_error.png}
+% \caption{Absolute relative error of the pole-subtracted on-shell partition function.  The numerical result is evaluated from \eqref{eq:F-num}, while the analytic approximation is obtained from \eqref{eq:F-onshell-mass}.}
+% \label{fig:logz-error}
+%\end{figure}
+%
+%For a global comparison across the whole interval $0<x\le 1$, it is also
+%useful to plot the numerical result \eqref{eq:F-num} together with the small-$x$
+%series \eqref{eq:F-small-x} and the independent Taylor series
+%\eqref{eq:F-x1-final} about $x=1$.  Since \eqref{eq:F-small-x} diverges at
+%$x=0$ like $2\zeta(3)/x^2$, the plot starts at a small positive value of $x$.
+%\begin{figure}[p]
+% \centering
+% \includegraphics[width=0.82\textwidth]{figures/logZ_full_region_higher_orders.png}
+% \caption{Full-region comparison of $\beta^2\log Z^{(0)}/r^2$ on
+% $10^{-3}\le x\le1$.  The blue points are the numerical on-shell values from
+% \eqref{eq:gap-fixed} and \eqref{eq:F-num}, the orange curve is the leading
+% small-$x$ expansion \eqref{eq:F-small-x}, and the remaining curves continue
+% the Taylor expansion \eqref{eq:F-x1-final} through orders $(1-x^2)^4$,
+% $(1-x^2)^8$, and $(1-x^2)^{12}$.  Increasing the order extends the useful
+% $x\to1$ approximation progressively toward smaller $x$.  The point $x=0$ is
+% omitted because of the pole in \eqref{eq:F-small-x}.}
+% \label{fig:logz-full-region}
+%\end{figure}
+%
+%
+%\subsection{Convergence of the expansion about \texorpdfstring{$x=1$}{x=1}}
+%
+%For each $x$, the numerical mass from \eqref{eq:gap-fixed} is substituted into \eqref{eq:F-fixed}.  The table lists the Taylor approximation minus the numerical result, divided by the numerical result, for truncations after fourth, eighth, and twelfth order.
+%
+%\begin{table}[ht]
+%\centering
+%\small
+%\setlength{\tabcolsep}{7pt}
+%\begin{tabular}{@{}rrrrr@{}}
+%\toprule
+%$x$ & $\left(\tilde m\beta\right)_{\rm num}$ & through $(1-x^2)^4$ & through $(1-x^2)^8$ & through $(1-x^2)^{12}$\\
+%\midrule
+%0.950 & 0.9957711434 & $-9.18\times10^{-6}$ & $-8.50\times10^{-10}$ & $-7.83\times10^{-14}$\\
+%0.900 & 1.0318788413 & $-2.58\times10^{-4}$ & $-3.45\times10^{-7}$ & $-4.56\times10^{-10}$\\
+%0.800 & 1.1140201398 & $-6.31\times10^{-3}$ & $-1.08\times10^{-4}$ & $-1.85\times10^{-6}$\\
+%0.700 & 1.2131104056 & $-3.60\times10^{-2}$ & $-2.49\times10^{-3}$ & $-1.71\times10^{-4}$\\
+%0.600 & 1.3357371285 & $-1.12\times10^{-1}$ & $-1.91\times10^{-2}$ & $-3.25\times10^{-3}$\\
+%0.500 & 1.4927593409 & $-2.46\times10^{-1}$ & $-7.94\times10^{-2}$ & $-2.54\times10^{-2}$\\
+%\bottomrule
+%\end{tabular}
+%\caption{Relative differences between the fourth-, eighth-, and twelfth-order
+%continuations of \eqref{eq:F-x1-final} and the numerical result
+%\eqref{eq:F-num}.  The improvement is geometric near $x=1$ and remains
+%substantial well into the interior of the interval.}
+%\label{tab:x1-errors}
+%\end{table}
+%
+%\begin{figure}[htbp]
+% \centering
+% \includegraphics[width=0.78\textwidth]{figures/x1_convergence_higher_orders.png}
+% \caption{The numerical on-shell partition function \eqref{eq:F-num} compared
+% with the fourth-, eighth-, and twelfth-order continuations of the $x\to1$
+% Taylor series \eqref{eq:F-x1-final}.}
+% \label{fig:x1-convergence}
+%\end{figure}
+%
+%\fi
+%\clearpage
+\section{$O(N)$ model on the pp-wave geometry}
+\label{sec:plane-wave}
+
+Recently in \cite{Komargodski:2026ain}, it was argued that the residue of the pole at  large angular velocity limit 
+for conformal field theories can be obtained by studying the theory in the plane wave geometry. 
+let $x^2 = 1- \hat \mu^2 r^2 $, 
+then the  partition function in the $x\rightarrow 0 $ limit  is then given by  \footnote{We have related the 
+	$\epsilon $ in equation (3.12)  of \cite{Komargodski:2026ain} to $x$ used in this paper. The relation is given by $x^2 = 2\epsilon$.  }
+\begin{eqnarray}
+	\log Z( \beta , x) = \frac{4\pi   }{x^2}  \log Z_{pp} \Big( \frac{\beta}{r}  \Big) ,
+\end{eqnarray}
+$Z_{pp} \big( \frac{\beta}{r} \big)$ is the partition function  on the conformal field theory on the pp wave. 
+In this section, we would like to study the critical  $O(N)$ model at large $N$ in the pp wave geometry. 
+This will enable us to obtain its partition function  $Z_{pp} \big( \frac{\beta}{r} \big) $ and allow us to 
+check the consistency of the result obtained  from solving the gap equation  on $S^1\times S^2$ 
+for all values of the angular velocity 
+in section. 
+To study the $O(N)$ model on the pp wave background 
+we follow the same procedure as was done on $S^1\times S^2$ in the section \ref{sec:interacting}. 
+We  evaluate the partition function of the massive scalar  on the pp wave background and look for the 
+saddle point by minimising the partition function with respect to mass to obtain the gap equation. 
+
+We begin by  re-deriving  the plane wave metric to keep track  of the factors involving the radius of the sphere. 
+Following the 
+analysis in  \cite{Komargodski:2026ain}, 
+we begin with the metric
+\begin{eqnarray}
+	ds^2 = - dt^2 + r^2 ( d\theta^2 + \sin^2 \theta d\phi^2) .
+\end{eqnarray}
+We then define 
+\begin{eqnarray}
+	\phi =\varphi + \frac{(1-\epsilon)}{r}t.
+\end{eqnarray}
+With this the angular velocity $r\dot\phi $ is close to the speed of light as $\epsilon\to0$. 
+Substituting in the metric, we obtain 
+\begin{eqnarray}
+	ds^2 = - dt^2 + r^2 d\theta^2 + r^2 \sin^2 \theta 
+	\Big( d\varphi +  \frac{(1-\epsilon)}{r}dt \Big)^2 .
+\end{eqnarray}
+Now we scale the coordinates as follows
+\begin{eqnarray}
+	\varphi = \epsilon \,x , \qquad \theta = \frac{\pi}{2} + \sqrt{2\epsilon}\, y . 
+\end{eqnarray}
+Substituting this  in the metric and taking $\epsilon\rightarrow 0$, the leading terms in the metric organise as 
+\begin{eqnarray}
+	ds^2 = 2 \epsilon \Big( -( 1+ y^2 ) dt^2 + r^2 dy^2 + r dx dt\Big) .
+\end{eqnarray}
+Note, all dimensions are consistent. $y, \epsilon, x $ are dimensionless.
+After a Weyl rescaling we obtain the metric of the form 
+\begin{eqnarray} \label{ppwave}
+	ds^2 = \Big( -( 1+ y^2 ) dt^2 + r^2 dy^2 + r dx dt\Big) .
+\end{eqnarray}
+
+The next step  is to evalute the partition function of a massive scalar on the geometry in (\ref{ppwave}). 
+The Ricci curvature of the geometry is zero and therefore the action  of  massive scalar in this background 
+is given by 
+\begin{eqnarray}
+	S_{\hat m } (\phi)  =\frac{1}{2} \int dt dx dy \sqrt{g} 
+	\left[ g^{\mu\nu} \partial_\mu \phi \partial_\nu \phi + \hat m^2  \phi^2 \right].
+\end{eqnarray}
+Here $\hat m$ is the thermal mass arising from the zero mode of the auxiliary field in the Hubbard Stratanovich transformation of the action of the $O(N)$  model at large $N$ in the pp-wave geometry.
+To evaluate the partition function on this background we first analytically continue to Euclidean time 
+$t\rightarrow -i \tau$  with $\tau \sim \tau + \beta$ 
+and solve for the eigen spectrum of the Laplacian which is given by 
+\begin{eqnarray} \label{eigen1}
+	\Big( \frac{ 4 i }{r} \partial_\tau \partial_x  + \frac{4}{r^2} ( 1+ y^2)\partial_x^2 +  \frac{1}{r^2} \partial_y^2  - \hat m ^2 
+	\Big)\phi = \frac\lambda{r^2} \phi.
+\end{eqnarray}
+Here $\lambda$ is the eigen value, which we need to write in terms of  quantum numbers,  more suitable to evaluate 
+the partition function. 
+Since the pp-wave background is invariant under translations in  $x$ we can expand the massive scalar as 
+\begin{eqnarray}
+	\phi( \tau, x, y) = \sum_{n =-\infty}^\infty
+	\int_{0}^\infty \frac{d k}{2\pi } e^{i k x } e^{\frac{2\pi i n \tau }{\beta} }  \phi ( n, k , y )  + cc .
+\end{eqnarray}
+Here we have also decomposed the scalar in its Matsubara modes and considered $k>0 $ for the modes to be well 
+behaved as in \cite{Gibbons:1975jb,Komargodski:2026ain}. 
+Substituting this expansion in (\ref{eigen1}) we obtain  the following eigen value equation for $\lambda$, we obtain 
+\begin{eqnarray}
+	(  - 4i  k \frac{2\pi n }{ r \beta}  - 4 ( 1+ y^2 ) \frac{ k^2}{r^2}     +  \frac{1}{r^2} \partial_y^2  - \hat m^2   ) \phi(n, k  , y) = \frac{ \lambda}{r^2}  \phi( n, k,  y) .
+\end{eqnarray}
+Note that $\phi^*(n, k , y)$ also obeys the same equation. 
+The $y$ dependence of the  Laplacian is that of the quantum mechanical harmonic oscillator, its eigen spectrum is given by 
+\begin{equation}
+	\frac{1}{r^2} \Big( - \partial_y^2 + 4  k^2 y^2 \Big) \psi_l(y) =  \Big( l + \frac{1}{2} \Big) \frac{4k }{r^2}  \psi_l(y), 
+	\qquad l = 0, 1, 2, \cdots .
+\end{equation}
+Here $\psi_l(y)$ are the eigen functions of the harmonic oscillator. 
+Therefore, we can write  $\phi(n, k , y) =\sum_{l =0}^\infty  \phi( n, k , l ) \psi_l(y)$  and we obtain the eigen spectrum of the
+Laplacian on the plane wave to be given by 
+\begin{eqnarray}
+	\lambda &=& -\left( \frac{ 8\pi n i  r k }{  \beta}  +  4k^2  + \hat m^2 r^2  + 4k \big(l + \frac{1}{2} \big) \right) , 
+	\\ \nonumber
+	&& n \in \mathbb{Z},  \quad  l = 0, 1, 2, 3, \cdots , \quad  k \geq 0 .
+\end{eqnarray}
+We can now write the partition function of a massive scalar on the pp wave background as 
+\begin{eqnarray}
+	\log Z_{pp} =-  \sum_{l = 0}^\infty \sum_{n = -\infty}^\infty   \int_0^\infty \frac{dk}{2\pi} 
+	\log\left[  4k  ( l + \frac{1}{2} )  + 4  k^2  +\hat m^2 r^2 + \frac{i 8\pi nr k }{\beta} \right].
+\end{eqnarray}
+Here we have also included the contribution from the complex conjugate  modes $\phi^*(n, k, l)$, this removes the  overall factor of 
+$\frac{1}{2}$ in the partition function. 
+
+To proceed with the analysis of the partition function, we first   scale out the factor of $4 k$ from the logarithm
+using the zeta function regularization. 
+We obtain 
+\begin{eqnarray}
+	\log Z_{pp} =- \sum_{l = 0}^\infty \sum_{n = -\infty}^\infty   \int_0^\infty \frac{dk}{2\pi} 
+	\log\left({( l + \frac{1}{2} )} + k  +  \frac{\hat m^2r^2 }{4k}   +  i \frac{2\pi nr }{\beta}  \right) .
+\end{eqnarray}
+Now we organize the sum over Matsubara frequencies as, using $\mathbf{m}=\hat m/2$
+\begin{eqnarray}\label{z0+z3}
+	\log Z_{pp}  &=&- \frac{1}{2}\sum_{l = 0}^\infty \sum_{n = -\infty}^\infty   \int_0^\infty \frac{dk}{2\pi} 
+	\log\left(  \Big[ {( l + \frac{1}{2} )}  + k  +  \frac{ \mathbf{m}^2r^2 }{k} \Big]^2    +  \Big[ \frac{2\pi nr }{\beta} \Big]^2   \right)  .
+\end{eqnarray}
+The sum over the Matsubara frequencies  can be done using the formula  in \cite{Klebanov:2011uf}  which results in 
+% The  Matsubara sum on the first line becomes
+% Here we can open up the sinh and perform the $k$ integration and the $l$ sum  in the exponential terms. 
+\begin{align}\label{z1+z2}
+	\log Z_{pp} &=-\frac12\sum_{l=0}^\infty \int_0^\infty \frac{dk}{\pi} \log \Big[2\sinh \Big\{\frac{\beta}{2r}\big(l+\frac{1}{2}+k+\frac{\mathbf m^2r^2}{k}\big)\Big\}\Big]\nonumber,\\
+	&=-\frac12\sum_{l=0}^{\infty} \int_0^\infty \frac{dk}{\pi} \frac{\beta}{2r}\Big(l+\frac{1}{2}+k+\frac{\mathbf m^2r^2}{k}\Big)-\frac12\sum_{l=0}^{\infty} \int_0^\infty \frac{dk}{\pi}\log\Big[1-e^{-\frac{\beta}{r}(l+\frac{1}{2}+k+\frac{\mathbf m^2r^2}{k})}\Big]\nonumber,\\
+	&\equiv- \frac12
+	(\log Z_1+\log Z_2).
+\end{align}
+
+
+\subsubsection*{Evaluation of $\log Z_1$}
+
+The first term in the above expression, denoted by $\log Z_1$, diverges and  therefore needs to be regulated. 
+We regulate it by writing the sum over $l$ as a $\zeta$ function by introducing 
+\begin{align}
+	\log Z_1 (\alpha) &=\frac{\beta}{r} \sum_{l=0}^\infty \int_0^\infty\frac{dk}{2\pi}\Bigg[\frac{1}{\Gamma (-\alpha )}    \int_0^{\infty } t^{-\alpha -1} e^{-t \left(l+\frac{1}{2}+k+\frac{\mathbf m^2r^2}{k}\right)} \, dt\Bigg]_{\alpha=1}
+	&\equiv \log Z_1(\alpha)|_{\alpha=1}.
+\end{align}
+The  $k$-integral and the sum over $l$ can be done and we obtain 
+\begin{align}
+	\log Z_1(\alpha)=\frac{\beta \mathbf m }{2 \pi  \Gamma (-\alpha )}\int_0^\infty dt\, t^{-\alpha -1} \text{csch}\left(\frac{t}{2}\right) K_1(2\mathbf m r t).
+\end{align}
+Using the following expansion for $1/\sinh(t/2)$
+\begin{align}
+	\frac{1}{\sinh(t/2)}=   \sum _{n=0}^{\infty } \frac{\left(2^{2-2 n} \left(1-2^{2 n-1}\right) B_{2 n}\right) }{(2 n)!}t^{2 n-1}.
+\end{align}
+One gets,
+\begin{align}\label{Z1}
+	\log Z_1(\alpha)&=\frac{\mathbf m\beta }{2\pi\Gamma (-\alpha )}  
+	\sum _{n=0}^{\infty } \frac{\left(2^{2-2 n} \left(1-2^{2 n-1}\right) B_{2 n}\right) }{(2 n)!}
+	\int_{0}^\infty t^{2n-\alpha -2}  K_1(2\mathbf m r t) dt.
+	%\\
+	%	&=\frac{m\beta }{2\pi\Gamma(-\alpha)}  
+	%	\sum _{n=0}^{\infty } \frac{\left(2^{2-2 n} \left(1-2^{2 n-1}\right) B_{2 n}\right) }{(2 n)! L^{2n-1}} \times \frac{1}{4} \Gamma \Big(n-\frac{\alpha }{2}-1\Big) \Gamma \Big(n-\frac{\alpha }{2}\Big) (m r)^{\alpha -2 n+1}
+\end{align}
+We expand the Bessel  function at large argument  as given below \footnote{We could also perform the integration over $t$ directly, which 
+	 leads to the same conclusion.}
+\begin{align}
+	K_1(2\mathbf mrt)=\sum_{k=0}^\infty \frac{(-1)^{k+1} 2^{-2 k-1} \Gamma \left(k-\frac{1}{2}\right) \Gamma \left(k+\frac{3}{2}\right) e^{-2 \mathbf mr t} }{\sqrt{\pi } k! (\mathbf m r t)^{k+\frac{1}{2}}}.
+\end{align}
+We substitute this expansion  in equation \eqref{Z1} to obtain
+\begin{align}
+	\log Z_1(\alpha)
+	=	\sum_{n,k=0}^{\infty}
+	\frac{\beta\mathbf m  (-1)^k  \left(4^n-2\right) B_{2 n} \Gamma \left(k-\frac{1}{2}\right) \Gamma \left(k+\frac{3}{2}\right)  \Gamma \left(2 n-k-\alpha -\frac{3}{2}\right) (\mathbf m r)^{\alpha -2 n+1}}{2^{4n+k-\alpha-\frac{1}{2}}\pi ^{3/2} k! (2 n)! \Gamma (-\alpha )}.
+\end{align}
+%\begin{align}
+%	\log Z_1(\alpha)=\sum_{n,k=0}^\infty\frac{(-1)^k (2^{2n-1}-1)\beta\,m^{\alpha+1}(Lm)^{1-2n}B_{2n}
+	%		\Gamma\!\left(k-\frac12\right)\Gamma\!\left(k+\frac32\right)
+	%		\Gamma\!\left(2n-k-\alpha-\frac32\right)}
+%	{2^{k+4n-\alpha-\frac32}\pi^{3/2}k!(2n)!\Gamma(-\alpha)}
+%\end{align}
+It is now easy to see that the above expression admits an expansion around $\alpha =1$, which does not have a pole. 
+Expanding around  $\alpha=1$ and summing over $k$ from $0$ to $\infty$ we obtain
+\begin{eqnarray}
+	\lim_{\alpha\to 1}\log Z_1(\alpha)&=& (\alpha -1) \sum_{n=0}^{\infty}
+	\frac{\sqrt{\pi }  \beta  \mathbf m^3 \left(4^n-2\right) r^2 B_{2 n} \, _2\tilde{F}_1\left(\frac{3}{2},4-2 n;\frac{7}{2}-2 n;-1\right) \sec (2 \pi  n)}{2^{4n-3}(\mathbf mr)^{2n}\Gamma (2 n+1)}, \nonumber \\ \nonumber
+	& =&    (\alpha -1) \sum_{n=0}^{\infty}
+	\frac{\sqrt{\pi }  \beta  \mathbf m^3 \left(4^n-2\right) r^2 B_{2 n} \;  _2{F}_1\left(\frac{3}{2},4-2 n;\frac{7}{2}-2 n;-1\right) }{2^{4n-3}(\mathbf mr)^{2n} ( 2n !) \Gamma\big( \frac{7}{2} - n \big) } \nonumber\\&&\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad+ O( (\alpha -1)^2). 
+\end{eqnarray}
+%\begin{align}
+%	\lim_{\alpha\to 1}\log Z_1(\alpha)=(\alpha -1)\sum_{n=0}^\infty \frac{\sqrt{\pi }  \beta  L m^3  \left(4^n-2\right) B_{2 n} \, _2\tilde{F}_1\left(\frac{3}{2},4-2 n;\frac{7}{2}-2 n;-1\right) \sec (2 \pi  n) }{2^{4n-3}\Gamma (2 n+1)(Lm)^{2n}}\nonumber\\
+%	+O((\alpha-1)^2)
+%\end{align}
+Therefore the regulated sum results in 
+\begin{align}\label{z1 zero}
+	\log Z_1=0.
+\end{align}
+
+\subsubsection*{Evaluation of $\log Z_2$}
+
+We now evaluate the term $\log Z_2$ defined in
+\eqref{z1+z2}.  For $\beta, l , \mathbf{ m}  r>0$, the expansion of the logarithm is
+absolutely convergent, so the $l$-sum and the $k$-integral may be performed
+term by term.  One obtains
+\begin{equation}
+	\log Z_2=-\sum_{l=0}^\infty\int_0^\infty\frac{\dd k}{\pi}
+	\sum_{n=1}^\infty\frac1n
+	\e^{-\frac{n\beta} r[l+\frac12+k+\frac{\mathbf m^2r^2}k]}.
+	\label{eq:plane-wave-Z2-series}
+\end{equation}
+In \eqref{eq:plane-wave-Z2-series}, the $l$-sum gives
+$[2\sinh(n\beta/2 r)]^{-1}$, while the $k$-integral gives the Bessel function. 
+We obtain
+\begin{align}\label{eq:plane-wave-Z2-summed}
+	\log Z_2=-\frac{\mathbf m r }{\pi  }
+	\sum_{n=1}^\infty
+	\frac{	K_1(2 \mathbf m n \beta )}{ n\sinh\frac{\beta  n}{2 r}}.
+\end{align}
+%\begin{equation}
+%	\log Z_2=-\frac{m}{2\pi}\sum_{n=1}^\infty
+%	\frac{K_1(4n\beta m)}{n\sinh(n\beta/L)}.
+%	\label{eq:plane-wave-Z2-summed}
+%\end{equation}
+%For $m=0$, equation \eqref{eq:plane-wave-Z2-summed} is understood by
+%continuity, using $\mathbf mK_1(2n\beta \mathbf m)\to1/(2n\beta)$.
+Combining \eqref{z1 zero} and
+\eqref{eq:plane-wave-Z2-summed} 
+according to the decompositions \eqref{z0+z3} and \eqref{z1+z2} gives
+\begin{equation}
+	\log Z(\mathbf m;\beta, r)_{pp}
+	=
+	\frac{\mathbf m r }{2\pi  }
+	\sum_{n=1}^\infty
+	\frac{	K_1(2 \mathbf m n \beta )}{ n\sinh\frac{\beta  n}{2 r}}.
+	\label{eq:plane-wave-logZ-final}
+\end{equation}
+As a check of this result,  observe that 
+\begin{eqnarray}
+	\lim_{ \mathbf m \rightarrow 0}  \log Z(\mathbf m;\beta, r)_{pp} = \frac{r}{4\pi \beta}\sum_{n=1}^\infty \frac{1}{n^2 \sinh\frac{\beta  n}{2 r}}.
+\end{eqnarray}
+Multiplying this with the volume of the pp wave $\frac{2\pi }{\epsilon}$ as in \cite{Komargodski:2026ain}, the partition function precisely agrees with 
+equation (4.9) of \cite{Komargodski:2026ain}, as well as with the result of our independent calculation shown in the leading term of \eqref{eq:free-small-x-full}, with the identification $x^2=2\epsilon$.
+
+
+We are now ready to find the fixed point of the large $N$,  $O(N)$ model  on the pp wave. 
+The saddle point is given by  minimizing the partition function 
+with respect to $\mathbf m$.  
+From 
+\eqref{eq:plane-wave-logZ-final} we obtain the gap equation
+\begin{equation}
+	\frac{\partial\log Z_{pp} }{\partial \mathbf m}
+	=-\mathbf m\beta    r\sum_{n=1}^\infty\frac{  K_0(2 \mathbf m n \beta ) }{\pi \sinh\frac{\beta n}{2r}}=0.
+	\label{eq:plane-wave-gap}
+\end{equation}
+The only real and non-negative solution  for $\mathbf m$ satisfying the above equation for $\beta, r >0$ is 
+$\mathbf m=0$.  
+This implies that the free energy of the large $N$ critical  $O(N)$ model  on $S^1\times S^2$ 
+at $x\rightarrow 0$  or $\mu^2 r^2 + 1\rightarrow 0$
+coincides with that of the massless theory. 
+This provides a consistency check of the explicit  and detailed calculation of the behaviour   of the $\frac{r^2}{\beta^2}$  in the section \ref{sec:interacting}. 
+
+Our calculation of the partition function of the large $N$ critical model on the pp-wave  geometry also predicts  that 
+as $x$ is dialled to zero, all sub-leading coefficients  in the $\frac{\beta}{r}$ expansion  of the partition function of the critical 
+$O(N)$ model at large $N$ also develop poles at $x=0$ and their residue coincides with that of the massless theory. 
+It will be interesting to verify this prediction by similar calculations as done for the $r^2/\beta^2$ coefficient in this paper.
+
+
+\section{Discussions}
+\label{sec:conclusions}
+In this work we have examined the free energy of the large $N$ critical vector model of scalars with angular potential in $(2+1)\, d$. We have computed the leading high temperature contribution to free energy as systematic  expansions at  vanishing angular potential $\hat\mu r=0$ and as well as at the limit $\hat\mu^2 r^2 =1$. We also have shown that the answers at these two different limits interpolate via a smooth curve obtained numerically in the range $\hat\mu r\in (0,1)$.
+The free energy at $\hat\mu r=0$ reproduces the known result in absence of the angular potential \cite{Sachdev:1993pr}. 
+On the other hand it exhibits a simple pole at $\hat\mu^2r^2=1$ as its  leading contribution, thus verifying the predictions from the thermal effective field theory \cite{Anand:2025mfh}. 
+The pole contribution at  the non-trivial fixed point coincides with that of the free theory, while the sub-leading terms in the series about $\hat\mu^2r^2=1$ are non-analytic, distinguishing it from the free theory result.  This non-analytic behaviour originates from the non-analyticity of the thermal mass satisfying the gap equation as a series expansion about $\hat\mu^2r^2=1$.  
+%Existing studies in the thermal effective field theories do not accommodate such non-analytic terms. 
+It would be interesting to study how to incorporate such terms within thermal effective field theory.  
+Such logarithmic terms were also present for the free massive theory
+in \cite{Anand:2025mfh}.
+Our results can provide an explicit example to test such a generalization of  the thermal effective field theory.
+
+
+We also have applied the proposal of \cite{Komargodski:2026ain} to read out the residue at the pole at $\hat\mu^2r^2=1$
+by studying the $O(N)$ model  on a pp-wave geometry.  The result for the residue agrees with our 
+direct computation. It would be interesting to investigate if the feature observed in this paper, that 
+the residue of the poles of the   $O(N)$ model   at large $N$ and 
+at the non-trivial fixed point coincides with its free fixed point   is a general feature in the large $N$ vector models. 
+The methods developed in this paper for evaluating partition functions  at angular 
+chemical potential  and solving the gap equations can be generalised for other vector models. 
+
+
+In this paper we  have focused on the leading high temperature behaviour of the free energy in presence of the angular potential as a direct computation. It would be interesting to observe similar poles in the sub-leading orders  
+in the free energy as a systematic high temperature expansion as developed for the case without angular velocity in 
+\cite{David:2024pir}.  Our analysis of the $O(N)$ model in the pp-wave geometry  predicts that these poles must coincide with that 
+of  free theory. 
+The generalization of the analysis   for the squashed sphere \cite{Parmentier:2026aqh} is an  interesting direction for further investigation. 
+In this paper  we have dealt with the large $N$, critical $O(N)$ model without singlet constraint. The model with the singlet constraint is of particular interest as it undergoes Gross-Witten-Wadia transition \cite{Shenker:2011zf}. 
+It would be interesting to  study the behaviour of this  phase transition in presence of the angular potential.
+
+Finally it would be interesting to develop the methods of thermal bootstrap to obtain the behaviour of one point functions of  primaries 
+of conformal field theories in general and the $O(N)$ model in particular  at finite angular potential. 
+
+
+
+
+
+
+
+
+
+
+
+\section*{Acknowledgments}
+The use of Feynman parametrization in \eqref{eq:branch-feynman-parametrized} was suggested by ChatGPT and proved to be instrumental in the further analysis.
+%ChatGPT and Codex also provided useful assistance with parts of the analysis, intermediate algebraic manipulations and consistency checks.
+ ChatGPT and Codex were also used to assist with the subsequent algebraic manipulations in Section \ref{sec:interacting}, parts of consistency checks, numerical analysis and  manuscript organization. 
+ All such steps were carried out under human supervision and were independently verified at every stage, either by  using \textit{Mathematica} or independent calculations.
+ 
+JRD is partially supported by ANRF, India: grant no. ANRF/ARGM/2025/00054/TS. SK is supported by the National Natural Science Foundation of China (NSFC) under Grants No. 12247103.
+
+
+
+\appendix
+
+
+
+\section{High-temperature expansion  of the free-theory pole}
+\label{app:free-highT}
+In this appendix we reorganize the residue at the pole at $x=0$ for the free energy in free theory given in \eqref{eq:free-small-x-full} as a small $\beta/r$ expansion to obtain the result \eqref{eq:free-summed-highT-few}.
+Let us consider the coefficient of the $x^{-2}$ pole in \eqref{eq:free-small-x-full} as given below
+\begin{equation}
+	C_{\rm free}\!\left(\frac{\beta}{r}\right)
+	\equiv
+	\lim_{x\to0}x^2\log Z_{\rm free}
+	=
+	\frac{r}{\beta}
+	\sum_{n=1}^{\infty}
+	\frac{1}{n^2\sinh\!\left(n\beta/2r\right)}.
+	\label{eq:app-free-def}
+\end{equation}
+Now using the following geometric series 
+\begin{equation}
+	\frac{1}{\sinh\!\left(n\beta/2r\right)}
+	=
+	2\sum_{j=0}^{\infty}
+	\e^{-(j+\frac12)n\beta/r},
+\end{equation}
+together with the Mellin representation
+\begin{equation}
+	\e^{-t}
+	=
+	\frac{1}{2\pi i}
+	\int_{c-i\infty}^{c+i\infty}\dd s\,
+	\Gamma(s)t^{-s},
+	\qquad c>0,
+\end{equation}
+the sums over $n$ and $j$ can be performed with the use of the standard formulae
+\begin{equation}
+	\sum_{n=1}^{\infty}\frac{1}{n^{s+2}}
+	=
+	\zeta(s+2),
+	\qquad
+	\sum_{j=0}^{\infty}
+	\frac{1}{(j+\frac12)^s}
+	=
+	(2^s-1)\zeta(s),
+\end{equation}
+one obtains
+\begin{equation}
+	C_{\rm free}\!\left(\frac{\beta}{r}\right)
+	=
+	\frac{1}{2\pi i}
+	\int_{c-i\infty}^{c+i\infty}\dd s\,
+	2(2^s-1)\Gamma(s)\zeta(s)\zeta(s+2)
+	\left(\frac{\beta}{r}\right)^{-s-1},
+	\qquad c>1.
+	\label{eq:app-free-MB}
+\end{equation}
+
+The high-temperature expansion follows by shifting the contour in
+\eqref{eq:app-free-MB} to the left.  The pole at $s=1$ gives the leading
+term $2\zeta(3)(r/\beta)^2$, while the double pole at $s=-1$ produces
+the logarithmic and constant contributions.  The remaining poles at
+$s=-2k-1$, $k\geq1$, give
+\begin{equation}
+	c_k
+	=
+	\frac{
+		2\bigl(1-2^{-2k-1}\bigr)
+		\zeta(-2k-1)\zeta(1-2k)}
+	{(2k+1)!}.
+	\label{eq:app-free-ck}
+\end{equation}
+Therefore
+\begin{align}
+	C_{\rm free}\!\left(\frac{\beta}{r}\right)
+	\sim{}&
+	2\zeta(3)\frac{r^2}{\beta^2}
+	+\frac{1}{12}\log\!\frac{\beta}{r}
+	+\zeta'(-1)
+	+\frac{\log2-1}{12}
+	\sum_{k=1}^{\infty}
+	c_k\left(\frac{\beta}{r}\right)^{2k}.
+	\label{eq:app-free-all-orders}
+\end{align}
+Finally, the functional equation of the Riemann zeta function yields
+\begin{equation}
+	c_k
+	\sim
+	-\frac{8(2k-1)!}{(2\pi)^{4k+2}},
+	\qquad k\to\infty.
+	\label{eq:app-free-large-order}
+\end{equation}
+The factorial growth of the coefficients shows that
+\eqref{eq:app-free-all-orders} is an asymptotic expansion in
+$\beta/r$ with zero radius of convergence.
+Thus the calculation above reproduces the high-temperature
+pole expansion stated in the equation
+\eqref{eq:free-summed-highT-few}.
+%\section{The logarithmic coefficients}
+%\label{app:endpoint}
+%
+%This appendix derives the endpoint identities used in the gap-equation
+%analysis of subsection~\ref{sec:gap}.  The calculation establishes both the
+%double logarithm in \eqref{eq:I-all-orders} and the universal logarithmic
+%coefficient displayed in \eqref{eq:I-low-expansion}.
+%Let us recall the expression from \eqref{eq:I-split} here.
+%%\begin{align}
+%% I_{\rm low}(x,\tilde m\beta)
+%% &\equiv\int_x^{1/(\tilde m\beta)}\dd z\,
+%% \frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}},
+%% \nonumber\\
+%% I_{\rm high}(x,\tilde m\beta)
+%% &\equiv\int_{1/(\tilde m\beta)}^\infty\dd z\,
+%% \frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}},
+%% \nonumber\\
+%% I_\infty(\tilde m\beta x)
+%% &=I_{\rm low}(x,\tilde m\beta)+I_{\rm high}(x,\tilde m\beta).
+%% \label{eq:I-split-appen}
+%% \label{eq:I-split}
+%%\end{align}
+%%On this interval the numerator has the convergent expansion
+%%\begin{equation}
+%% \log(1-\e^{-\tilde m\beta z})
+%% =\log(\tilde m\beta z)-\frac{\tilde m\beta z}{2}
+%% +\sum_{k=1}^{\infty}\frac{B_{2k}}{2k(2k)!}
+%% (\tilde m\beta z)^{2k}.
+%% \label{eq:bernoulli-expansion-appen}
+%% \label{eq:bernoulli-expansion}
+%%\end{equation}
+%The $\log(\tilde m\beta z)$ term produces the double logarithm in
+%\eqref{eq:I-low-expansion}, whereas the endpoint part of each
+%$(\tilde m\beta z)^{2k}$ moment produces a single logarithm multiplied by
+%$(\tilde m\beta x)^{2k}$.  The linear term is analytic in
+%$(\tilde m\beta x)^2$ and evaluates directly to
+%\begin{equation}
+% -\frac{\tilde m\beta}{2}
+% \int_x^{1/(\tilde m\beta)}\dd z\,
+% \frac{z}{\sqrt{z^2-x^2}}
+% =-\frac12\sqrt{1-(\tilde m\beta x)^2}.
+% \label{eq:minus-linear-half}
+%\end{equation}
+%
+%The logarithmic moment can be evaluated exactly and then expanded at small
+%$\tilde m\beta x$:
+%% The logarithmic endpoint moment entering \eqref{eq:I-low-expansion} is:
+%\begin{align}
+% &\int_x^{1/(\tilde m\beta)}\dd z\,
+% \frac{\log(\tilde m\beta z)}{\sqrt{z^2-x^2}}
+% \nonumber\\[-1mm]
+% &\quad=-\frac12\log^2\!\frac2{\tilde m\beta x}+\frac{\pi^2}{24}
+% +\frac12\log^2\!\left(
+% \frac{1+\sqrt{1-(\tilde m\beta x)^2}}{2}\right)
+%+\frac12\Li_2\!\left(
+% -\frac{1-\sqrt{1-(\tilde m\beta x)^2}}
+% {1+\sqrt{1-(\tilde m\beta x)^2}}\right),
+% \nonumber\\
+% &=-\frac12\log^2\!\frac2{\tilde m\beta x}+\frac{\pi^2}{24}
+% -\sum_{j=1}^{\infty}\frac1{4^{j+1}j^2}\binom{2j}{j}
+% (\tilde m\beta x)^{2j}.
+% \label{eq:A-log-exact}
+%\end{align}
+%% Expanding \eqref{eq:A-log-exact} at small $\tilde m\beta x$ gives
+%% \begin{equation}
+%%  \int_x^{1/(\tilde m\beta)}\dd z\,
+%%  \frac{\log(\tilde m\beta z)}{\sqrt{z^2-x^2}}
+%%  =-\frac12\log^2\!\frac2{\tilde m\beta x}+\frac{\pi^2}{24}
+%%  -\sum_{j=1}^{\infty}\frac1{4^{j+1}j^2}\binom{2j}{j}
+%%  (\tilde m\beta x)^{2j}.
+%%  \label{eq:A-log-series}
+%% \end{equation}
+%For $k\ge1$, define the remaining moments by
+%\begin{equation}
+% J_k(x,\tilde m\beta)
+% =\int_x^{1/(\tilde m\beta)}\dd z\,
+% \frac{(\tilde m\beta z)^{2k}}{\sqrt{z^2-x^2}}.
+% \label{eq:Jk-def}
+%\end{equation}
+%Integrating \eqref{eq:Jk-def} by parts, using
+%$z\,\dd z/\sqrt{z^2-x^2}=\dd\sqrt{z^2-x^2}$, gives
+%\begin{equation}
+% J_k(x,\tilde m\beta)
+% =\frac{\sqrt{1-(\tilde m\beta x)^2}}{2k}
+% +\frac{2k-1}{2k}(\tilde m\beta x)^2
+% J_{k-1}(x,\tilde m\beta),
+% \qquad
+% J_0(x,\tilde m\beta)=\arcosh\!\frac1{\tilde m\beta x}.
+% \label{eq:Jk-recursion}
+%\end{equation}
+%Iterating \eqref{eq:Jk-recursion} yields
+%\begin{align}
+% J_k(x,\tilde m\beta)
+% ={}&\sqrt{1-(\tilde m\beta x)^2}
+% \sum_{j=0}^{k-1}
+% \frac{(2k)![(k-j-1)!]^2}{4^{j+1}(k!)^2(2k-2j-1)!}\,
+% (\tilde m\beta x)^{2j}
+% \nonumber\\
+% &+\frac1{4^k}\binom{2k}{k}(\tilde m\beta x)^{2k}
+% \arcosh\!\frac1{\tilde m\beta x}.
+% \label{eq:Jk-exact}
+%\end{align}
+%The only logarithmic term in \eqref{eq:Jk-exact} is therefore
+%\begin{equation}
+% J_k^{(\log)}(x,\tilde m\beta)
+% =\frac1{4^k}\binom{2k}{k}(\tilde m\beta x)^{2k}
+% \arcosh\!\frac1{\tilde m\beta x}.
+% \label{eq:Jk-log}
+%\end{equation}
+%For $\tilde m\beta x\to0^+$,
+%$\arcosh[1/(\tilde m\beta x)]
+%=\log[2/(\tilde m\beta x)]+\Order((\tilde m\beta x)^2)$.  Multiplying
+%\eqref{eq:Jk-log} by the Bernoulli coefficient of
+%$(\tilde m\beta z)^{2k}$ in
+%\eqref{eq:bernoulli-expansion-appen}, and using
+%$\binom{2k}{k}/(2k)!=1/(k!)^2$, gives
+%\begin{align}
+% \frac{B_{2k}}{2k(2k)!}J_k^{(\log)}(x,\tilde m\beta)
+% &=\frac{B_{2k}}{2k\,4^k(k!)^2}\,
+% (\tilde m\beta x)^{2k}\log\!\frac2{\tilde m\beta x}
+% +\Order((\tilde m\beta x)^{2k+2}),
+% \qquad k\geq1.
+% \label{eq:Jk-Bernoulli-log}
+%\end{align}
+%Thus the coefficient of
+%$(\tilde m\beta x)^{2k}\log[2/(\tilde m\beta x)]$ is explicitly
+%$B_{2k}/[2k\,4^k(k!)^2]$, precisely as in
+%\eqref{eq:I-low-expansion}.
+%Collecting the logarithmic and regular contributions gives the lower-range
+%expansion
+%\begin{align}
+% I_{\rm low}(x,\tilde m\beta)
+% ={}&-\frac12\log^2\!\frac2{\tilde m\beta x}-C_0^{\rm low}
+% \nonumber\\
+% &+\sum_{k=1}^{\infty}(\tilde m\beta x)^{2k}
+% \left[
+% \frac{B_{2k}}{2k\,4^k(k!)^2}\log\!\frac2{\tilde m\beta x}
+% +C_{2k}^{\rm low}
+% \right].
+% \label{eq:I-low-expansion}
+%\end{align}
+%
+%\section{Evaluation of \texorpdfstring{$C_0$}{C0}}
+%\label{app:C0}
+%
+%For $0<\tilde m\beta x<1$, the lower-range integral in
+%\eqref{eq:I-split} is
+%\begin{equation}
+% I_{\rm low}(x,\tilde m\beta)
+% \equiv\int_x^{1/(\tilde m\beta)}\dd z\,
+% \frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}.
+% \label{eq:B-C0-low-def}
+%\end{equation}
+%
+%We first derive the constant in \eqref{eq:C0-low} from the lower-range
+%integral \eqref{eq:B-C0-low-def}.  Separate its numerator as
+%$\log(1-\e^{-\tilde m\beta z})=\log(\tilde m\beta z)
+%+\log[(1-\e^{-\tilde m\beta z})/(\tilde m\beta z)]$.
+%The second term behaves as
+%$-\tilde m\beta z/2+(\tilde m\beta z)^2/24
+%+\Order((\tilde m\beta z)^4)$ near $z=0$ and is regular after division by
+%$z$.
+%Using the exact logarithmic moment \eqref{eq:A-log-exact} for the first term
+%and taking $\tilde m\beta x\to0^+$ in the regular term gives
+%\begin{equation}
+% I_{\rm low}(x,\tilde m\beta)
+% =-\frac12\log^2\!\frac2{\tilde m\beta x}+\frac{\pi^2}{24}
+% +\int_0^{1/(\tilde m\beta)}\frac{\dd z}{z}\,
+% \log\!\left(\frac{1-\e^{-\tilde m\beta z}}
+% {\tilde m\beta z}\right)
+% +\Order\!\left((\tilde m\beta x)^2
+% \log\frac2{\tilde m\beta x}\right).
+% \label{eq:B-C0-low-constant}
+%\end{equation}
+%The quadratic term in the numerator produces the first omitted logarithm,
+%with the order displayed in \eqref{eq:B-C0-low-constant}.
+%Comparing \eqref{eq:B-C0-low-constant} with
+%\eqref{eq:I-low-expansion} gives precisely \eqref{eq:C0-low}, including its
+%overall sign.
+%
+%The upper-range integral defined in \eqref{eq:I-split} is
+%\begin{equation}
+% I_{\rm high}(x,\tilde m\beta)
+% \equiv\int_{1/(\tilde m\beta)}^\infty\dd z\,
+% \frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}}.
+% \label{eq:B-C0-high-def}
+%\end{equation}
+%For this integral, the kernel has the uniform expansion
+%$1/\sqrt{z^2-x^2}=1/z+\Order(x^2/z^3)$ for
+%$z\geq1/(\tilde m\beta)$.  Since
+%$\log(1-\e^{-\tilde m\beta z})$ decays exponentially, it follows that
+%\begin{equation}
+% I_{\rm high}(x,\tilde m\beta)
+% =\int_{1/(\tilde m\beta)}^\infty\frac{\dd z}{z}\,
+% \log(1-\e^{-\tilde m\beta z})
+% +\Order((\tilde m\beta x)^2)
+% =-C_0^{\rm high}+\Order((\tilde m\beta x)^2),
+% \label{eq:B-C0-high-limit}
+%\end{equation}
+%in agreement with \eqref{eq:I-high-expansion} and \eqref{eq:C0-high}.
+%Adding the lower and upper constants according to
+%\eqref{eq:C-range-sum} gives
+%\begin{equation}
+% C_0
+% =-\frac{\pi^2}{24}
+% -\int_0^{1/(\tilde m\beta)}\frac{\dd z}{z}\,
+% \log\!\left(\frac{1-\e^{-\tilde m\beta z}}
+% {\tilde m\beta z}\right)
+% -\int_{1/(\tilde m\beta)}^\infty\frac{\dd z}{z}\,
+% \log(1-\e^{-\tilde m\beta z}).
+% \label{eq:B-C0-convergent}
+%\end{equation}
+%This representation is absolutely convergent: its lower-range integrand is
+%finite at $z=0$, while its upper-range integrand is
+%$\Order(\e^{-\tilde m\beta z}/z)$.  Introducing the same lower cutoff in
+%the two terms of
+%\eqref{eq:B-C0-convergent} gives
+%\begin{equation}
+% C_0=-\frac{\pi^2}{24}
+% +\lim_{\epsilon\to0^+}\left[
+% -\int_\epsilon^\infty\frac{\dd z}{z}\,
+% \log(1-\e^{-\tilde m\beta z})
+% -\frac12\log^2(\tilde m\beta\epsilon)\right].
+% \label{eq:B-C0-cutoff}
+%\end{equation}
+%The integral and the logarithm in the square brackets must be kept together
+%when the cutoff is removed.
+%
+%The remaining finite part can be evaluated with the integral representation
+%of the digamma function
+%\cite[Eq.~(5.9.13)]{NIST:DLMF}.
+%For a positive integer, it gives
+%\begin{equation}
+% \psi(n)-\log n
+% =\int_0^\infty\dd z\,\e^{-n\tilde m\beta z}
+% \left(\frac1z-\frac{\tilde m\beta}
+% {1-\e^{-\tilde m\beta z}}\right).
+% \label{eq:B-digamma}
+%\end{equation}
+%Moreover,
+%$\psi(n)-\log n=-1/(2n)+\Order(n^{-2})$ by
+%\cite[Eq.~(5.11.2)]{NIST:DLMF},
+%so the series obtained after division by $n$ is absolutely convergent.
+%Dividing \eqref{eq:B-digamma} by $n$, summing, and using
+%$\sum_{n\geq1}\e^{-n\tilde m\beta z}/n
+%=-\log(1-\e^{-\tilde m\beta z})$ from
+%\cite[Eq.~(4.6.1)]{NIST:DLMF} gives
+%\begin{equation}
+% \sum_{n=1}^{\infty}\frac{\psi(n)-\log n}{n}
+% =\lim_{\epsilon\to0^+}\int_\epsilon^\infty\dd z\,
+% \left[-\frac{\log(1-\e^{-\tilde m\beta z})}{z}
+% +\frac{\tilde m\beta\log(1-\e^{-\tilde m\beta z})}
+% {1-\e^{-\tilde m\beta z}}\right].
+% \label{eq:B-digamma-series-integral}
+%\end{equation}
+%The second integral on the right-hand side can be evaluated directly:
+%\begin{align}
+% \tilde m\beta\int_\epsilon^\infty\dd z\,
+% \frac{\log(1-\e^{-\tilde m\beta z})}
+% {1-\e^{-\tilde m\beta z}}
+% &=\tilde m\beta\int_\epsilon^\infty\dd z\,
+% \log(1-\e^{-\tilde m\beta z})
+% -\frac12\log^2(1-\e^{-\tilde m\beta\epsilon})
+% \nonumber\\
+% &=-\frac{\pi^2}{6}
+% -\frac12\log^2(\tilde m\beta\epsilon)+o(1).
+% \label{eq:B-thermal-cutoff}
+%\end{align}
+%In the last line we used
+%$\tilde m\beta\int_0^\infty\dd z\,
+%\log(1-\e^{-\tilde m\beta z})=-\zeta(2)=-\pi^2/6$, with
+%$\zeta(2)=\pi^2/6$ given in
+%\cite[Eq.~(25.6.1)]{NIST:DLMF}.
+%Substituting \eqref{eq:B-thermal-cutoff} into
+%\eqref{eq:B-digamma-series-integral} and comparing the result with
+%\eqref{eq:B-C0-cutoff} gives
+%\begin{equation}
+% C_0=\frac{\pi^2}{8}
+% +\sum_{n=1}^{\infty}\frac{\psi(n)-\log n}{n}.
+% \label{eq:B-C0-sum}
+%\end{equation}
+%
+%It remains to evaluate this convergent series.  The integer value
+%$\psi(n)=H_{n-1}-\gamma_E$ is
+%\cite[Eq.~(5.4.14)]{NIST:DLMF}.
+%Writing
+%$H_M=\sum_{j=1}^M1/j$ and
+%$H_M^{(2)}=\sum_{j=1}^M1/j^2$, the finite identity
+%$\sum_{n=1}^M H_{n-1}/n
+%=\sum_{1\leq j<n\leq M}1/(jn)
+%=\frac12[H_M^2-H_M^{(2)}]$ gives
+%\begin{equation}
+% \sum_{n=1}^{M}\frac{\psi(n)-\log n}{n}
+% =\frac12\left[H_M^2-H_M^{(2)}\right]
+% -\gamma_E H_M-\sum_{n=1}^{M}\frac{\log n}{n}.
+% \label{eq:B-partial-sum}
+%\end{equation}
+%Only the leading large-$M$ forms are needed:
+%\begin{equation}
+% \begin{aligned}
+% H_M&=\log M+\gamma_E+o(1),
+% &H_M^{(2)}&=\frac{\pi^2}{6}+o(1),\\
+% \sum_{n=1}^{M}\frac{\log n}{n}
+% &=\frac12\log^2M+\gamma_1+o(1).
+% \end{aligned}
+% \label{eq:B-large-M-limits}
+%\end{equation}
+%The first two limits follow from
+%\cite[Eqs.~(2.10.7)--(2.10.8)]{NIST:DLMF},
+%together with $\zeta(2)=\pi^2/6$.  The sign convention for $\gamma_1$ and
+%its limiting definition are
+%\cite[Eqs.~(25.2.4)--(25.2.5)]{NIST:DLMF}.
+%
+%Substituting \eqref{eq:B-large-M-limits} into \eqref{eq:B-partial-sum},
+%all powers of $\log M$ cancel, and the limit is
+%\begin{equation}
+% \sum_{n=1}^{\infty}\frac{\psi(n)-\log n}{n}
+% =-\frac{\pi^2}{12}-\frac{\gamma_E^2}{2}-\gamma_1.
+% \label{eq:B-infinite-sum}
+%\end{equation}
+%Substitution into \eqref{eq:B-C0-sum} finally gives
+%\begin{equation}
+% C_0=\frac{\pi^2}{24}-\gamma_1-\frac{\gamma_E^2}{2}.
+% \label{eq:B-C0-final}
+%\end{equation}
+%Equation~\eqref{eq:B-C0-final} is the result quoted in
+%\eqref{eq:C0-final}.
+%
+%\section{Evaluation of the coefficients \texorpdfstring{$C_{2k}$}{C2k}}
+%\label{app:C2k}
+%
+%This appendix derives the closed form \eqref{eq:C2k-final} for every integer
+%$k\geq1$.  The coefficient $C_{2k}$ is the sum of the lower- and upper-range
+%contributions defined in
+%\eqref{eq:C-range-sum}.  Although these two contributions depend separately
+%on the point $z=1/(\tilde m\beta)$ at which the integral was split, that
+%dependence must cancel in their sum.  We recall that
+%$H_n=\sum_{q=1}^n q^{-1}$ denotes the $n$th harmonic number.
+%
+%\subsection{Lower and upper integration ranges}
+%
+%On the lower interval $x\leq z\leq1/(\tilde m\beta)$, the expansion
+%\eqref{eq:bernoulli-expansion} reads
+%\begin{equation}
+% \log(1-\e^{-\tilde m\beta z})
+% =\log(\tilde m\beta z)-\frac{\tilde m\beta z}{2}
+% +\sum_{j=1}^{\infty}\frac{B_{2j}}{2j(2j)!}
+% (\tilde m\beta z)^{2j}.
+% \label{eq:C-Bernoulli}
+%\end{equation}
+%Substituting \eqref{eq:C-Bernoulli} into the lower-range integral and using
+%the moments \eqref{eq:A-log-exact} and \eqref{eq:Jk-exact} determines the
+%coefficient of each power $(\tilde m\beta x)^{2k}$.  After multiplying by
+%$4^k/\binom{2k}{k}$, the four terms below have a direct origin: the first
+%comes from the regular part of the $\log(\tilde m\beta z)$ moment, the
+%second from the linear term $-\tilde m\beta z/2$, the third from the
+%nonlogarithmic part of the resonant
+%Bernoulli moment with $j=k$, and the remaining sum collects all moments with
+%$j\ne k$.  Thus
+%\begin{align}
+% \frac{4^k}{\binom{2k}{k}}\,C_{2k}^{\rm low}
+% ={}&-\frac1{4k^2}+\frac1{2(2k-1)}
+% +\frac{B_{2k}}{2k(2k)!}(H_k-H_{2k})
+% \nonumber\\
+% &+\sum_{\substack{j=1\\j\ne k}}^{\infty}
+% \frac{B_{2j}}{4j(2j)!(j-k)}.
+% \label{eq:C-lower-result}
+%\end{align}
+%Equation~\eqref{eq:C-lower-result} is the lower-range coefficient defined in
+%\eqref{eq:C2k-low}.  The term with $j=k$ is absent from the final sum because
+%its logarithmic part has already been isolated explicitly in
+%\eqref{eq:I-low-expansion}.
+%
+%On the upper interval $z\geq1/(\tilde m\beta)$, one has
+%$x/z\leq\tilde m\beta x$.  Hence, uniformly for
+%$0\leq\tilde m\beta x\leq q_0<1$, the kernel admits the expansion
+%\begin{equation}
+% \frac1{\sqrt{z^2-x^2}}
+% =\sum_{j=0}^{\infty}\frac1{4^j}\binom{2j}{j}
+% \frac{x^{2j}}{z^{2j+1}}.
+% \label{eq:C-kernel-expansion}
+%\end{equation}
+%The series \eqref{eq:C-kernel-expansion} can be integrated term by term
+%because $\log(1-\e^{-\tilde m\beta z})$ decays exponentially.  Rewriting
+%the $j=k$ contribution as
+%$x^{2k}=(\tilde m\beta x)^{2k}/(\tilde m\beta)^{2k}$ gives the upper-range
+%coefficient
+%\begin{equation}
+% C_{2k}^{\rm high}
+% =\frac1{4^k(\tilde m\beta)^{2k}}\binom{2k}{k}
+% \int_{1/(\tilde m\beta)}^\infty\dd z\,
+% \frac{\log(1-\e^{-\tilde m\beta z})}{z^{2k+1}}.
+% \label{eq:C-upper-result}
+%\end{equation}
+%This is precisely the coefficient $C_{2k}^{\rm high}$ in
+%\eqref{eq:C2k-high}.  Adding \eqref{eq:C-lower-result} and
+%\eqref{eq:C-upper-result} according to \eqref{eq:C-range-sum} gives
+%\begin{align}
+% \frac{4^kC_{2k}}{\binom{2k}{k}}
+% ={}&-\frac1{4k^2}+\frac1{2(2k-1)}
+% +\frac{B_{2k}}{2k(2k)!}(H_k-H_{2k})
+% \nonumber\\
+% &+\sum_{\substack{j=1\\j\ne k}}^{\infty}
+% \frac{B_{2j}}{4j(2j)!(j-k)}
+% +\frac1{(\tilde m\beta)^{2k}}
+% \int_{1/(\tilde m\beta)}^\infty\dd z\,
+% \frac{\log(1-\e^{-\tilde m\beta z})}{z^{2k+1}}.
+% \label{eq:C-combined-before-modes}
+%\end{align}
+%The infinite Bernoulli sum and the upper-range integral in
+%\eqref{eq:C-combined-before-modes} are separately convergent.  Nevertheless,
+%they are the lower- and upper-range parts of the same contribution.  Writing
+%them in a common mode representation pairs the lower- and upper-range pieces
+%of each mode and makes the cancellation of the matching-point terms manifest.
+%
+%\subsection{Mode-by-mode cancellation}
+%
+%To evaluate the last two terms of \eqref{eq:C-combined-before-modes}, use
+%$2\sinh(\tilde m\beta z/2)=\tilde m\beta z
+%\prod_{n\geq1}[1+(\tilde m\beta z)^2/(2\pi n)^2]$ together with
+%$1-\e^{-\tilde m\beta z}=2\e^{-\tilde m\beta z/2}
+%\sinh(\tilde m\beta z/2)$.  Taking the logarithm separates the two
+%elementary endpoint terms from the sum over positive modes:
+%\begin{equation}
+% \log(1-\e^{-\tilde m\beta z})
+% =\log(\tilde m\beta z)-\frac{\tilde m\beta z}{2}
+% +\sum_{n=1}^{\infty}\log\!\left(
+% 1+\frac{(\tilde m\beta z)^2}{(2\pi n)^2}\right).
+% \label{eq:C-Weierstrass}
+%\end{equation}
+%For $|\tilde m\beta z|<2\pi$, each mode in \eqref{eq:C-Weierstrass} may be
+%expanded in powers of $(\tilde m\beta z)^2$.  Summing its coefficient over
+%$n$ produces $\zeta(2j)$, and comparison with the Bernoulli expansion
+%\eqref{eq:C-Bernoulli} gives
+%\begin{equation}
+% \frac{B_{2j}}{2j(2j)!}
+% =\frac{(-1)^{j+1}}{j(2\pi)^{2j}}\zeta(2j).
+% \label{eq:C-bj-modes}
+%\end{equation}
+%Equation~\eqref{eq:C-bj-modes} places the Bernoulli series from the lower
+%interval and the logarithm in the upper integral in the same mode basis.
+%The index $j=k$ remains excluded from the nonresonant sum because its
+%logarithmic contribution was already separated in \eqref{eq:I-low-expansion}.
+%The Taylor expansion of a fixed mode is used only on the lower interval; it
+%is not uniform on the unbounded upper interval, where the logarithm must be
+%kept exact.
+%Before combining the nontrivial modes, consider the elementary terms
+%$\log(\tilde m\beta z)-\tilde m\beta z/2$ in
+%\eqref{eq:C-Weierstrass}.  Their upper-range integral is
+%\begin{equation}
+% \frac1{(\tilde m\beta)^{2k}}
+% \int_{1/(\tilde m\beta)}^\infty\dd z\,
+% \frac{\log(\tilde m\beta z)-\tilde m\beta z/2}{z^{2k+1}}
+% =\frac1{4k^2}-\frac1{2(2k-1)},
+% \label{eq:C-elementary-upper}
+%\end{equation}
+%which cancels exactly the first two terms of
+%\eqref{eq:C-combined-before-modes}.  It remains to combine the nonresonant
+%lower-range coefficients with the upper-range logarithm at each fixed mode
+%number $n$.  Decomposing $1/[j(j-k)]$ into simple fractions reduces the
+%lower-range sum to geometric and logarithmic series.  One integration by
+%parts reduces the upper-range integral to a boundary logarithm and a rational
+%integral; polynomial division of the latter produces the same lower inverse
+%powers with opposite signs.  The surviving terms are
+%\begin{align}
+% &\sum_{\substack{j=1\\j\ne k}}^{\infty}
+% \frac{(-1)^{j+1}}{2j(j-k)(2\pi n)^{2j}}
+% +\frac1{(\tilde m\beta)^{2k}}
+% \int_{1/(\tilde m\beta)}^\infty\dd z\,
+% \frac{\log[1+(\tilde m\beta z)^2/(2\pi n)^2]}{z^{2k+1}}
+% \nonumber\\
+% &\qquad=
+% \frac{(-1)^{k+1}}{k(2\pi n)^{2k}}\log(2\pi n)
+% +\frac{(-1)^{k+1}}{2k^2(2\pi n)^{2k}}.
+% \label{eq:C-one-mode}
+%\end{align}
+%Equation~\eqref{eq:C-one-mode} makes the fixed-mode cancellation explicit:
+%all lower powers of $(2\pi n)^{-2}$, the boundary terms at
+%$z=1/(\tilde m\beta)$, and all
+%occurrences of $\log[1+(2\pi n)^{-2}]$ have disappeared.  Its right-hand
+%side is $\Order(n^{-2k}\log n)$, so the remaining sum over $n$ is absolutely
+%convergent for every $k\geq1$.
+%
+%To sum these terms over $n$, differentiate the Dirichlet series
+%$\zeta(s)=\sum_{n\geq1}n^{-s}$.  At $s=2k$ this gives
+%\begin{equation}
+% \sum_{n=1}^{\infty}\frac{\log n}{n^{2k}}=-\zeta'(2k),
+% \label{eq:C-zeta-prime}
+%\end{equation}
+%Writing $\log(2\pi n)=\log(2\pi)+\log n$, using
+%$\sum_{n\geq1}n^{-2k}=\zeta(2k)$, and applying
+%\eqref{eq:C-zeta-prime} to \eqref{eq:C-one-mode} yields
+%\begin{align}
+% &\sum_{n=1}^{\infty}\Bigg\{
+% \sum_{\substack{j=1\\j\ne k}}^{\infty}
+% \frac{(-1)^{j+1}}{2j(j-k)(2\pi n)^{2j}}
+% +\frac1{(\tilde m\beta)^{2k}}
+% \int_{1/(\tilde m\beta)}^\infty\dd z\,
+% \frac{\log[1+(\tilde m\beta z)^2/(2\pi n)^2]}{z^{2k+1}}
+% \Bigg\}
+% \nonumber\\
+% &\quad=\frac{(-1)^{k+1}\zeta(2k)}{k(2\pi)^{2k}}
+% \left[
+% \log(2\pi)-\frac{\zeta'(2k)}{\zeta(2k)}+\frac1{2k}
+% \right].
+% \label{eq:C-mode-sum}
+%\end{align}
+%It remains to combine \eqref{eq:C-mode-sum} with the harmonic-number term
+%in \eqref{eq:C-combined-before-modes}.  The $1/(2k)$ term in
+%\eqref{eq:C-mode-sum} is absorbed by writing
+%$H_{2k}=H_{2k-1}+1/(2k)$.  Finally, \eqref{eq:C-bj-modes} at $j=k$ identifies
+%the common factor involving $\zeta(2k)$ as
+%$B_{2k}/[2k(2k)!]$, while
+%$\binom{2k}{k}/(2k)!=1/(k!)^2$.  This gives
+%\begin{equation}
+% C_{2k}
+% =\frac{B_{2k}}{2k\,4^k(k!)^2}
+% \left[
+% \log(2\pi)+H_k-H_{2k-1}
+% -\frac{\zeta'(2k)}{\zeta(2k)}
+% \right].
+% \label{eq:C-before-final}
+%\end{equation}
+%Thus the dependence on the split at $z=1/(\tilde m\beta)$ has cancelled,
+%and
+%\eqref{eq:C-before-final} is precisely the coefficient quoted in
+%\eqref{eq:C2k-final}.
+
+%\section{Polylogarithms at the golden-ratio saddle}
+%\label{app:golden}
+%
+%This appendix derives the polylogarithm values required at the golden-ratio
+%saddle in \eqref{eq:Phi-m0}.  Set
+%\begin{equation}
+% z=\e^{-\tilde m_0\beta/2}=\frac{\sqrt5-1}{2}.
+% \label{eq:D-golden-def}
+%\end{equation}
+%Equations \eqref{eq:D-golden-def} and \eqref{eq:m0-value} give $z^2=1-z$ and
+%$\e^{-\tilde m_0\beta}=z^2$.  The reflection, duplication, and Landen
+%identities become
+%\begin{align}
+% \Li_2(z^2)+\Li_2(z)
+% &=\frac{\pi^2}{6}-2\log^2z,
+% \label{eq:D-dilog-reflection}\\
+% \Li_2(z)+\Li_2(-z)
+% &=\frac12\Li_2(z^2),
+% \label{eq:D-dilog-duplication}\\
+% \Li_2(z^2)+\Li_2(-z)
+% &=-\frac12\log^2z.
+% \label{eq:D-dilog-landen}
+%\end{align}
+%Solving \eqref{eq:D-dilog-reflection}--\eqref{eq:D-dilog-landen} gives
+%\begin{equation}
+% \Li_2(\e^{-\tilde m_0\beta})
+% =\frac{\pi^2}{15}-\frac{\left(\tilde m_0\beta\right)^2}{4}.
+% \label{eq:D-dilog-result}
+%\end{equation}
+%
+%For the trilogarithm, use
+%\begin{align}
+% \Li_3(w)+\Li_3(1-w)+\Li_3\!\left(-\frac{w}{1-w}\right)
+% ={}&\zeta(3)+\frac{\pi^2}{6}\log(1-w)
+% \nonumber\\
+% &-\frac12\log w\,\log^2(1-w)
+% +\frac16\log^3(1-w).
+% \label{eq:D-trilog-relation}
+%\end{align}
+%Setting $w=z^2$ in \eqref{eq:D-trilog-relation} and using
+%\eqref{eq:D-golden-def} and \eqref{eq:m0-value} gives $1-w=z$ and
+%$-w/(1-w)=-z$.  The duplication identity is
+%\begin{equation}
+% \Li_3(z)+\Li_3(-z)=\frac14\Li_3(z^2).
+% \label{eq:D-trilog-duplication}
+%\end{equation}
+%Combining \eqref{eq:D-trilog-relation} and
+%\eqref{eq:D-trilog-duplication} under these substitutions yields
+%\begin{equation}
+% \Li_3(\e^{-\tilde m_0\beta})
+% =\frac45\zeta(3)-\frac{\pi^2\tilde m_0\beta}{15}+\frac{\left(\tilde m_0\beta\right)^3}{12}.
+% \label{eq:D-trilog-result}
+%\end{equation}
+%Substituting \eqref{eq:D-dilog-result} and \eqref{eq:D-trilog-result} into
+%\eqref{eq:Phi-def} gives \eqref{eq:Phi-m0}.
+
+\section{Small $\tilde m \beta x$ expansion of the gap equation}
+\label{app:bessel-poisson}
+
+%This appendix derives the expansion quoted in \eqref{eq:I-all-orders}
+%without splitting the integration range into lower and upper parts.  We
+%start from
+%\begin{equation}
+%	I_\infty(\tilde m\beta x)
+%	=\int_x^\infty\dd z\,
+%	\frac{\log(1-\e^{-\tilde m\beta z})}{\sqrt{z^2-x^2}},
+%	\qquad 0<\tilde m\beta x<1.
+%	\label{eq:BP-definitions}
+%\end{equation}
+%With $z=x\cosh t$ and
+%$-\log(1-\e^{-u})=\sum_{n\geq1}\e^{-nu}/n$, Tonelli's theorem allows
+%termwise integration, and the $\nu=0$ case of
+%\cite[Eq.~(10.32.9)]{NIST:DLMF} gives
+In this appendix we show the derivation of the equation \eqref{eq:I-all-orders} from \eqref{eq:BP-bessel-sum}.
+We had the equation \eqref{eq:BP-bessel-sum} as
+\begin{equation}
+	-I_\infty(\tilde m\beta x)
+%	=\sum_{n=1}^\infty\frac1n
+%	\int_0^\infty\dd t\,\e^{-n\tilde m\beta x\cosh t}
+	=\sum_{n=1}^\infty\frac{K_0(n\tilde m\beta x)}{n}.
+	\label{eq:BP-bessel-sum-appen}
+\end{equation}
+First we apply the following derivative operation to the above equation, this will allow us to rearrange the resulting series with the use of Poisson resummation, 
+%A termwise small-$\tilde m\beta x$ expansion of the last series is not
+%uniform, because modes $n\sim(\tilde m\beta x)^{-1}$ also contribute.
+%Moreover, the direct even interpolation
+%$K_0(\tilde m\beta x|y|)/|y|\sim-\log|y|/|y|$ is not integrable at the
+%origin.  We therefore apply two logarithmic derivatives before Poisson
+%resummation.  By the modified Bessel equation
+%\cite[Eq.~(10.25.1)]{NIST:DLMF},
+%\begin{equation}
+%	\left[(\tilde m\beta x)\frac{\partial}{\partial(\tilde m\beta x)}\right]^2
+%	\frac{K_0(n\tilde m\beta x)}{n}
+%	=n(\tilde m\beta x)^2K_0(n\tilde m\beta x),
+%\end{equation}
+%so that
+\begin{equation}
+	\left[(\tilde m\beta x)\frac{\partial}{\partial(\tilde m\beta x)}\right]^2
+	[-I_\infty(\tilde m\beta x)]
+	=(\tilde m\beta x)^2\sum_{n=1}^\infty nK_0(n\tilde m\beta x).
+	\label{eq:BP-differential-reduction}
+\end{equation}
+and at the very end we can recover the reorganized series expansion for  $  -I_\infty (\tilde m \beta x)$ by integrating it appropriately.\\
+
+Noting the fact that the summand in \eqref{eq:BP-bessel-sum-appen} is even in $n$, we can apply the 
+the Poisson summation formula, as given below 
+\begin{equation}
+	\sum_{n=-\infty}^{\infty}f(n)
+	=
+	\sum_{p=-\infty}^{\infty}\widehat f(2\pi p),
+	\label{eq:BP-Poisson-general}
+	\qquad {\rm with}\qquad \widehat f(b)=\int_{-\infty}^{\infty}\dd y\,\e^{-iby}f(y),
+\end{equation}
+to obtain the following equality
+\begin{align}
+	2\sum_{n=1}^{\infty}nK_0(n\tilde m\beta x)
+	={}&
+	\frac{2}{(\tilde m\beta x)^2}
+	+
+	4\sum_{p=1}^{\infty}
+	\Bigg[
+	\frac{1}{(\tilde m\beta x)^2+(2\pi p)^2}
+	-
+	\frac{2\pi p\,
+		\operatorname{arcsinh}[2\pi p/(\tilde m\beta x)]}
+	{[(\tilde m\beta x)^2+(2\pi p)^2]^{3/2}}
+	\Bigg].
+	\label{eq:BP-Poisson-sum}
+\end{align}
+Now we will expand the summand in small $\tilde m \beta x$. We need to combine the following expansions to do so
+\begin{align}
+&	\operatorname{arcsinh}\!\frac{2\pi p}{\tilde m\beta x}
+	={\log\!\frac{4\pi p}{\tilde m\beta x}}
+	+\sum_{j=1}^\infty
+	\frac{(-1)^{j+1}}{2j\,4^j}\binom{2j}{j}
+	\left(\frac{\tilde m\beta x}{2\pi p}\right)^{2j},
+	\nonumber\\
+&	\left[1+\left(\frac{\tilde m\beta x}{2\pi p}\right)^2\right]^{-1}
+	=\sum_{j=0}^\infty(-1)^j
+	\left(\frac{\tilde m\beta x}{2\pi p}\right)^{2j},
+	\nonumber\\
+&	\left[1+\left(\frac{\tilde m\beta x}{2\pi p}\right)^2\right]^{-3/2}
+	=\sum_{j=0}^\infty
+	\frac{(-1)^j(2j+1)!}{4^j(j!)^2}
+	\left(\frac{\tilde m\beta x}{2\pi p}\right)^{2j}.
+	\label{eq:BP-denom32-expansion}
+\end{align}
+The summand in
+\eqref{eq:BP-Poisson-sum} can be expressed as the following series with use of the above expansion formulae, followed by a reorganization of the summation indices
+\begin{align}
+	&\frac{1}{(\tilde m\beta x)^2+(2\pi p)^2}
+	-\frac{2\pi p\,
+		\operatorname{arsinh}[2\pi p/(\tilde m\beta x)]}
+	{[(\tilde m\beta x)^2+(2\pi p)^2]^{3/2}}
+	\nonumber\\
+	&\quad=
+	\frac{1}{(2\pi p)^2}
+	\left[
+	1-\log\!\frac{4\pi p}{\tilde m\beta x}
+	\right]
+	+
+	\frac{1}{(2\pi p)^2}
+	\sum_{m=1}^{\infty}
+	\Bigg[
+	(-1)^m
+	-\frac{(-1)^m(2m+1)!}{4^m(m!)^2}
+	\log\!\frac{4\pi p}{\tilde m\beta x}
+	\nonumber\\
+	&\hspace{40mm}
+	-\sum_{j=1}^{m}
+	\frac{1}{2j\,4^j}
+	\binom{2j}{j}
+	\frac{(-1)^{m+1}(2m-2j+1)!}
+	{4^{m-j}[(m-j)!]^2}
+	\Bigg]
+	\left(
+	\frac{\tilde m\beta x}{2\pi p}
+	\right)^{2m}.
+	\label{eq:BP-Cauchy-coefficient}
+\end{align}
+%For each $m\geq1$, the quantity in square brackets in
+%\eqref{eq:BP-Cauchy-coefficient} is the coefficient of
+%$(\tilde m\beta x/2\pi p)^{2m}$.  Using
+%\[
+%(-1)^{j+1}(-1)^{m-j}=(-1)^{m+1},
+%\]
+%the finite Cauchy sum has the same overall sign $(-1)^m$ as the first
+%term.  Hence this coefficient can be written as
+%\begin{align}
+%	(-1)^m\Bigg[
+%	&1+
+%	\sum_{j=1}^{m}
+%	\frac{1}{2j\,4^j}
+%	\binom{2j}{j}
+%	\frac{(2m-2j+1)!}
+%	{4^{m-j}[(m-j)!]^2}
+%	\nonumber\\
+%	&\qquad
+%	-\frac{(2m+1)!}{4^m(m!)^2}
+%	\log\!\frac{4\pi p}{\tilde m\beta x}
+%	\Bigg].
+%	\label{eq:BP-m-coefficient-rearranged}
+%\end{align}
+%The logarithmic term already contains the common factorial coefficient
+%$(2m+1)!/[4^m(m!)^2]$.  We therefore normalize the remaining
+%nonlogarithmic part by the same factor and define
+%\begin{equation}
+%	R_m\equiv
+%	\frac{4^m(m!)^2}{(2m+1)!}
+%	\left[
+%	1+
+%	\sum_{j=1}^{m}
+%	\frac{1}{2j\,4^j}
+%	\binom{2j}{j}
+%	\frac{(2m-2j+1)!}
+%	{4^{m-j}[(m-j)!]^2}
+%	\right].
+%	\label{eq:BP-Rm-def}
+%\end{equation}
+%With this definition, the complete coefficient
+%\eqref{eq:BP-m-coefficient-rearranged} takes the compact form
+%\begin{equation}
+%	(-1)^m
+%	\frac{(2m+1)!}{4^m(m!)^2}
+%	\left[
+%	R_m-\log\!\frac{4\pi p}{\tilde m\beta x}
+%	\right].
+%	\label{eq:BP-m-coefficient-Rm}
+%\end{equation}
+%\begin{align}
+%	&(-1)^m
+%	-\frac{(-1)^m(2m+1)!}{4^m(m!)^2}
+%	\log\!\frac{4\pi p}{\tilde m\beta x}
+%	\nonumber\\
+%	&\qquad-
+%	\sum_{j=1}^{m}
+%	\frac{(-1)^{j+1}}{2j\,4^j}\binom{2j}{j}
+%	\frac{(-1)^{m-j}(2m-2j+1)!}
+%	{4^{m-j}[(m-j)!]^2}.
+%	\label{eq:BP-Cauchy-coefficient}
+%\end{align}
+%The finite convolution reduces to harmonic numbers.  The signs satisfy
+%\[
+%(-1)^{j+1}(-1)^{m-j}=(-1)^{m+1}.
+%\]
+For $m\geq1$, the coefficient of
+$(\tilde m\beta x/2\pi p)^{2m}$ in
+\eqref{eq:BP-Cauchy-coefficient} is therefore
+\begin{align}
+	\operatorname{Coeff}_{m}
+	={}&
+	(-1)^m
+	\Bigg[
+	1+
+	\sum_{j=1}^{m}
+	\frac{1}{2j\,4^j}
+	\binom{2j}{j}
+	\frac{(2m-2j+1)!}
+	{4^{m-j}[(m-j)!]^2}
+	-\frac{(2m+1)!}{4^m(m!)^2}
+	\log\!\frac{4\pi p}{\tilde m\beta x}
+	\Bigg].
+	\label{eq:BP-m-coefficient-rearranged}
+\end{align}
+The logarithmic contribution already carries the factorial factor
+$(2m+1)!/[4^m(m!)^2]$.  We therefore normalize the remaining
+nonlogarithmic part by the same factor, and call it
+\begin{equation}
+	R_m
+	\equiv
+	\frac{4^m(m!)^2}{(2m+1)!}
+	\left[
+	1+
+	\sum_{j=1}^{m}
+	\frac{1}{2j\,4^j}
+	\binom{2j}{j}
+	\frac{(2m-2j+1)!}
+	{4^{m-j}[(m-j)!]^2}
+	\right].
+	\label{eq:BP-Rm-def}
+\end{equation}
+Equation \eqref{eq:BP-m-coefficient-rearranged} then becomes
+\begin{equation}
+	\operatorname{Coeff}_{m}
+	=
+	(-1)^m
+	\frac{(2m+1)!}{4^m(m!)^2}
+	\left[
+	R_m-\log\!\frac{4\pi p}{\tilde m\beta x}
+	\right].
+	\label{eq:BP-m-coefficient-Rm}
+\end{equation}
+A direct subtraction of consecutive coefficients gives
+\begin{align}
+	R_m-R_{m-1}
+	=
+	\frac{1}{2m(2m+1)}
++
+	\frac{m!(m-1)!}{2(2m+1)!}
+	\left[
+	\sum_{j=1}^{m-1}
+	\binom{2j}{j}
+	\binom{2m-2j}{m-j}
+	-4^m
+	\right].
+	\label{eq:BP-Rm-difference}
+\end{align}
+Now we have the following identity
+\begin{equation}
+	\sum_{j=0}^{m}
+	\binom{2j}{j}
+	\binom{2m-2j}{m-j}
+	=
+	4^m,
+	\label{eq:BP-Vandermonde}
+\end{equation}
+and therefore
+\begin{equation}
+	\sum_{j=1}^{m-1}
+	\binom{2j}{j}
+	\binom{2m-2j}{m-j}
+	=
+	4^m-2\binom{2m}{m}.
+	\label{eq:BP-Vandermonde-reduced}
+\end{equation}
+Substitution into \eqref{eq:BP-Rm-difference} gives
+\begin{equation}
+	R_m-R_{m-1}
+	=
+	-\frac{1}{2m(2m+1)},
+	\qquad
+	R_0=1.
+	\label{eq:BP-Rm-recurrence}
+\end{equation}
+Hence
+\begin{equation}
+	R_m
+	=
+	1-\sum_{q=1}^{m}\frac{1}{2q(2q+1)}
+	=
+	H_{2m+1}-H_m,
+	\qquad
+	H_n\equiv\sum_{q=1}^{n}\frac1q .
+	\label{eq:BP-harmonic-reduction}
+\end{equation}
+The coefficient \eqref{eq:BP-m-coefficient-Rm} therefore reduces to
+\begin{equation}
+	\operatorname{Coeff}_{m}
+	=
+	-\frac{(-1)^m(2m+1)!}{4^m(m!)^2}
+	\left[
+	\log\!\frac{4\pi p}{\tilde m\beta x}
+	+H_m-H_{2m+1}
+	\right],
+	\qquad m\geq1.
+	\label{eq:BP-m-coefficient-final}
+\end{equation}
+Substituting this result into \eqref{eq:BP-Cauchy-coefficient} gives
+\begin{align}
+	&\frac{1}{(\tilde m\beta x)^2+(2\pi p)^2}
+	-\frac{2\pi p\,
+		\operatorname{arsinh}[2\pi p/(\tilde m\beta x)]}
+	{[(\tilde m\beta x)^2+(2\pi p)^2]^{3/2}}
+=
+	\frac{1-\log[4\pi p/(\tilde m\beta x)]}{(2\pi p)^2}
+	\nonumber\\
+	&\qquad\qquad
+	-\frac{1}{(2\pi p)^2}
+	\sum_{m=1}^{\infty}
+	\frac{(-1)^m(2m+1)!}{4^m(m!)^2}
+	\left[
+	\log\!\frac{4\pi p}{\tilde m\beta x}
+	+H_m-H_{2m+1}
+	\right]
+	\left(
+	\frac{\tilde m\beta x}{2\pi p}
+	\right)^{2m}.
+	\label{eq:BP-summand-m}
+\end{align}
+The $p$-sum in \eqref{eq:BP-Poisson-sum} can now be performed directly.  Using
+\begin{align}
+&	\sum_{p=1}^{\infty}
+	\frac{
+		\log[4\pi p/(\tilde m\beta x)]
+		+H_{k-1}-H_{2k-1}}
+	{(2\pi p)^{2k}}\nonumber\\
+&\qquad\qquad	=
+	\frac{(-1)^{k+1}B_{2k}}{2(2k)!}
+	\left[
+	\log\!\frac{2}{\tilde m\beta x}
+	+\log(2\pi)
+	+H_{k-1}-H_{2k-1}
+	-\frac{\zeta'(2k)}{\zeta(2k)}
+	\right],
+	\label{eq:BP-p-sum}
+\end{align}
+where
+\begin{equation}
+	\sum_{p=1}^{\infty}\frac{1}{(2\pi p)^{2k}}
+	=
+	\frac{(-1)^{k+1}B_{2k}}{2(2k)!},
+	\qquad
+	\sum_{p=1}^{\infty}\frac{\log p}{p^{2k}}
+	=
+	-\zeta'(2k),
+	\qquad k\geq1,
+\end{equation}
+Thus the Poisson-resummed series becomes
+\begin{align}
+	&\left[
+	(\tilde m\beta x)
+	\frac{\partial}{\partial(\tilde m\beta x)}
+	\right]^2
+	[-I_\infty(\tilde m\beta x)]
+	\nonumber\\
+	&\quad=
+	1-\sum_{k=1}^{\infty}
+	\frac{2kB_{2k}(\tilde m\beta x)^{2k}}
+	{4^k(k!)^2}
+	\left[
+	\log\!\frac{2}{\tilde m\beta x}
+	+\log(2\pi)
+	+H_{k-1}-H_{2k-1}
+	-\frac{\zeta'(2k)}{\zeta(2k)}
+	\right].
+	\label{eq:BP-differential-series}
+\end{align}
+It remains to integrate the above expression appropriately to recover $-I_\infty(\tilde m \beta x)$. We directly integrate the above expression which give rise to two constants of integration to be determined, the result of the integration is given below
+%\begin{equation}
+%	(\tilde m\beta x)
+%	\frac{\partial}{\partial(\tilde m\beta x)}
+%	=
+%	\frac{\partial}{\partial\log(\tilde m\beta x)},
+%\end{equation}
+%the required integrations follow from
+%\begin{equation}
+%	\left[
+%	(\tilde m\beta x)
+%	\frac{\partial}{\partial(\tilde m\beta x)}
+%	\right]^2
+%	\frac12\log^2\!\frac{2}{\tilde m\beta x}
+%	=
+%	1,
+%\end{equation}
+%and
+%\begin{align}
+%	&\left[
+%	(\tilde m\beta x)
+%	\frac{\partial}{\partial(\tilde m\beta x)}
+%	\right]^2
+%	\left\{
+%	(\tilde m\beta x)^{2k}
+%	\left[
+%	\log\!\frac{2}{\tilde m\beta x}
+%	+c+\frac1k
+%	\right]
+%	\right\}
+%	\nonumber\\
+%	&\qquad=
+%	4k^2(\tilde m\beta x)^{2k}
+%	\left[
+%	\log\!\frac{2}{\tilde m\beta x}+c
+%	\right].
+%	\label{eq:BP-integration-identity}
+%\end{align}
+%and give
+\begin{align}
+	-I_\infty(\tilde m\beta x)
+	={}&
+	\frac12\log^2\!\frac{2}{\tilde m\beta x}
+	+C_1+C_2\log\!\frac{2}{\tilde m\beta x}
+	\nonumber\\
+	&-
+	\sum_{k=1}^{\infty}
+	\frac{B_{2k}(\tilde m\beta x)^{2k}}
+	{2k\,4^k(k!)^2}
+	\left[
+	\log\!\frac{2}{\tilde m\beta x}
+	+\log(2\pi)
+	+H_k-H_{2k-1}
+	-\frac{\zeta'(2k)}{\zeta(2k)}
+	\right].
+	\label{eq:BP-before-constants}
+\end{align}
+$C_1, C_2$ are the constants of integration to be determined. Here we have used that fact that
+\begin{equation}
+	H_{k-1}+\frac1k=H_k,
+\end{equation}
+In the remainder of this appendix we will fix these integration constant $C_1$ and $C_2$ by analyzing the original form of the integral $I_{\infty}(\tilde{m}\beta x)$. Let us consider the original expression for the integral $I_{\infty}(\tilde m \beta x)$ from \eqref{eq:I-finite}, with a change in the integration variable $u=\tilde{m}\beta z$ 
+%To fix the two homogeneous terms, we return to the original
+%undifferentiated integral,
+\begin{equation}
+	-I_\infty(\tilde m\beta x)
+	=
+	-\int_{\tilde m\beta x}^{\infty}\dd u\,
+	\frac{\log(1-\e^{-u})}
+	{\sqrt{u^2-(\tilde m\beta x)^2}}.
+	\label{eq:BP-original-integral}
+\end{equation}
+We split the integration range at $u=1$ and isolate the singular part
+of the numerator on $0<u<1$ by the exact identity
+\begin{equation}
+	\log(1-\e^{-u})
+	=
+	\log u
+	+
+	\log\!\left(\frac{1-\e^{-u}}{u}\right).
+	\label{eq:BP-log-split}
+\end{equation}
+This gives
+\begin{align}
+	-I_\infty(\tilde m\beta x)
+	={}&
+	-\int_{\tilde m\beta x}^{1}\dd u\,
+	\frac{\log u}{\sqrt{u^2-(\tilde m\beta x)^2}}
+	-
+	\int_{\tilde m\beta x}^{1}\dd u\,
+	\frac{\log[(1-\e^{-u})/u]}
+	{\sqrt{u^2-(\tilde m\beta x)^2}}
+	\nonumber\\
+	&\qquad\qquad\qquad\qquad-
+	\int_{1}^{\infty}\dd u\,
+	\frac{\log(1-\e^{-u})}
+	{\sqrt{u^2-(\tilde m\beta x)^2}}.
+	\label{eq:BP-C0-split}
+\end{align}
+The first term contains the complete logarithmic singularity, while
+the rest of the terms are regular at $\tilde m \beta x=0$ and contributes $O(1)$ constants as  leading contributions. One can compute the integral in the first term exactly, thereby take the limit $\tilde m \beta x\to0  $ to the resulting expression as shown below
+%\begin{equation}
+%	\log\!\left(\frac{1-\e^{-u}}{u}\right)
+%	=
+%	-\frac{u}{2}
+%	+\Order(u^2).
+%\end{equation}
+%Therefore
+\begin{align}
+&	-\int_{\tilde m\beta x}^{1}\dd u\,
+	\frac{\log u}{\sqrt{u^2-(\tilde m\beta x)^2}}\nonumber
+\\&	=
+	\frac12\log^2\!\frac{2}{m\beta x}
+	-\frac14
+	\log^2\!\left(
+	\frac{1+\sqrt{1-m^2\beta^2x^2}}{2}
+	\right)
+	+\frac12\Li_2\!\left(
+	\frac{1-\sqrt{1-m^2\beta^2x^2}}{2}
+	\right)
+	-\frac{\pi^2}{24},\nonumber\\
+	&=\frac{1}{2}\log^2(\frac2{\tilde{m}\beta x})-\frac{\pi^2}{24}+O((\tilde m\beta x)^2)
+	\label{eq:BP-log-singular}
+\end{align}
+%\begin{align}
+%	&\frac{1}{24}
+%	\Bigg[
+%	12\,\Li_2\!\left(
+%	\frac{1-\sqrt{1-m^2\beta^2x^2}}{2}
+%	\right)
+%	-6\log\!\left(
+%	\frac{1+\sqrt{1-m^2\beta^2x^2}}{4}
+%	\right)
+%	\log\!\left(
+%	1+\sqrt{1-m^2\beta^2x^2}
+%	\right)
+%	\nonumber\\
+%	&\hspace{25mm}
+%	-12\log\!\frac{4}{m\beta x}\log(m\beta x)
+%	-\pi^2+6\log^2 2
+%	\Bigg]
+%	\nonumber\\
+%	&\qquad=
+%	\frac12\log^2\!\frac{2}{m\beta x}
+%	-\frac14
+%	\log^2\!\left(
+%	\frac{1+\sqrt{1-m^2\beta^2x^2}}{2}
+%	\right)
+%	+\frac12\Li_2\!\left(
+%	\frac{1-\sqrt{1-m^2\beta^2x^2}}{2}
+%	\right)
+%	-\frac{\pi^2}{24}.
+%\end{align}
+%there exists a constant $C>0$ such that
+%\begin{align}
+%	\left|
+%	\int_{\tilde m\beta x}^{1}\dd u\,
+%	\frac{\log[(1-\e^{-u})/u]}
+%	{\sqrt{u^2-(\tilde m\beta x)^2}}
+%	\right|
+%	&\leq
+%	C\int_{\tilde m\beta x}^{1}\dd u\,
+%	\frac{u}{\sqrt{u^2-(\tilde m\beta x)^2}}
+%	\nonumber\\
+%	&=
+%	C\sqrt{1-(\tilde m\beta x)^2}
+%	=
+%	\Order(1).
+%	\label{eq:BP-regular-bound}
+%\end{align}
+%For the integral over $u\geq1$, the exponential decay of
+%$\log(1-\e^{-u})$ gives, for sufficiently small $\tilde m\beta x$,
+%\begin{align}
+%	\left|
+%	\int_{1}^{\infty}\dd u\,
+%	\frac{\log(1-\e^{-u})}
+%	{\sqrt{u^2-(\tilde m\beta x)^2}}
+%	\right|
+%	&\leq
+%	C\int_{1}^{\infty}\dd u\,\frac{\e^{-u}}{u}
+%	=
+%	\Order(1).
+%	\label{eq:BP-tail-bound}
+%\end{align}
+%Hence both terms remain finite and may be evaluated directly at
+%$\tilde m\beta x=0$, yielding
+%\begin{equation}
+%	-I_\infty(\tilde m\beta x)
+%	=
+%	\frac12\log^2\!\frac{2}{\tilde m\beta x}
+%	+C_0+o(1),
+%	\qquad
+%	\tilde m\beta x\to0^+,
+%\end{equation}
+%with
+%\begin{equation}
+%	C_0
+%	=
+%	-\frac{\pi^2}{24}
+%	-\int_0^1\dd u\,
+%	\frac{\log[(1-\e^{-u})/u]}{u}
+%	-\int_1^\infty\dd u\,
+%	\frac{\log(1-\e^{-u})}{u}.
+%\end{equation}
+Now using this and the fact that the 2nd and the last term from \eqref{eq:BP-C0-split} remains finite at $\tilde m\beta x\to0$ limit, we evaluate non-vanishing contribution of $-I_\infty(\tilde{m}\beta x)$ at $\tilde m\beta x\to0$, as the following
+\begin{equation}
+\lim_{\tilde m \beta x\to 0}[	-I_\infty(\tilde m\beta x)]
+	=
+	\frac12\log^2\!\frac{2}{\tilde m\beta x}
+	+C_0,
+	\label{eq:BP-small-argument-limit}
+\end{equation}
+Here we have suppressed all the terms those tends to zero at this limit, with $C_0$ being the $O(1)$ constant term, obtained by combining the constant from \eqref{eq:BP-log-singular} and the $\tilde m \beta x\to 0$ limit of the integrals in the 2nd and the last term in \eqref{eq:BP-C0-split}, as given below
+ \begin{equation}
+	C_0
+	=
+	-\frac{\pi^2}{24}
+	-\int_0^1\dd u\,
+	\frac{\log[(1-\e^{-u})/u]}{u}
+	-\int_1^\infty\dd u\,
+	\frac{\log(1-\e^{-u})}{u}.
+	\label{eq:BP-C0}
+\end{equation}
+%This arises from the combined effect of \eqref{eq:BP-log-singular}
+%Comparison with the twice-integrated form
+%\begin{equation}
+%	-I_\infty(\tilde m\beta x)
+%	=
+%	\frac12\log^2\!\frac{2}{\tilde m\beta x}
+%	+C_1
+%	+C_2\log\!\frac{2}{\tilde m\beta x}
+%	+o(1)
+%\end{equation}
+The integrals in the above equation are convergent and will be evaluated later. Thus, comparing the equation \eqref{eq:BP-before-constants} and \eqref{eq:BP-small-argument-limit}, we identify the constants $C_1$ and $C_2$ as the following
+\begin{equation}
+	C_1=C_0,
+	\qquad
+	C_2=0.
+\end{equation}
+The constant $C_0$ in \eqref{eq:BP-C0} can be evaluated as a compact analytic answer following the steps shown below. Let us use the following standard integration result
+\begin{equation}
+%	\mathcal{F}(s)
+%	\equiv
+	\int_0^\infty \dd u\,u^{s-1}\log(1-\e^{-u})
+	=
+	-\Gamma(s)\zeta(1+s),
+	\qquad {\rm Re}\ s>0.
+\end{equation}
+Now since we have
+\begin{equation}
+	\int_0^1\dd u\,u^{s-1}\log u
+	=
+	-\frac{1}{s^2},
+\end{equation}
+the convergent combination appearing in $C_0$ can be obtained as
+\begin{align}
+	&\int_0^1\dd u\,
+	\frac{\log[(1-\e^{-u})/u]}{u}
+	+
+	\int_1^\infty\dd u\,
+	\frac{\log(1-\e^{-u})}{u}
+=
+	\lim_{s\to0}
+	\left[
+	-\Gamma(s)\zeta(1+s)+\frac{1}{s^2}
+	\right].
+	\label{eq:C0-reg-combination}
+\end{align}
+Using the known expansions for Gamma and Zeta function as given below
+\begin{equation}
+	\Gamma(s)
+	=
+	\frac1s-\gamma_{\mathrm E}
+	+\left(
+	\frac{\gamma_{\mathrm E}^2}{2}
+	+\frac{\pi^2}{12}
+	\right)s+O(s^2),
+	\qquad
+	\zeta(1+s)
+	=
+	\frac1s+\gamma_{\mathrm E}
+	-\gamma_1 s+O(s^2),
+\end{equation}
+with $\gamma_{\mathrm E}$ is the Euler--Mascheroni constant, and
+$\gamma_1$ is the first Stieltjes constant.
+It then follows that
+\begin{equation}\label{GammaZeta}
+	-\Gamma(s)\zeta(1+s)
+	=
+	-\frac1{s^2}
+	+\gamma_1
+	+\frac{\gamma_{\mathrm E}^2}{2}
+	-\frac{\pi^2}{12}
+	+O(s).
+\end{equation}
+Therefore combining \eqref{GammaZeta} and \eqref{eq:C0-reg-combination} we have
+\begin{equation}
+	\int_0^1\dd u\,
+	\frac{\log[(1-\e^{-u})/u]}{u}
+	+
+	\int_1^\infty\dd u\,
+	\frac{\log(1-\e^{-u})}{u}
+	=
+	\gamma_1+\frac{\gamma_{\mathrm E}^2}{2}
+	-\frac{\pi^2}{12},
+\end{equation}
+Hence substituting this in \eqref{eq:BP-C0} we obtain
+\begin{equation}
+	C_0
+	=
+	\frac{\pi^2}{24}
+	-\frac{\gamma_{\mathrm E}^2}{2}
+	-\gamma_1.
+	\label{eq:BP-C0-closed}
+\end{equation}
+\section{Small {$x$} expansion of the thermal mass}
+\label{app:thermal-mass-orders}
+
+In this appendix, we solve the gap equation \eqref{eq:gap-expanded} as a small $x$ expansion with higher order terms
+till the order of $x^4$.  For compactness we use the following notations
+\begin{equation}
+	M\equiv\tilde m(x)\beta,
+	\qquad
+	\Lambda\equiv\log\!\frac1x ,
+	\label{eq:app-mass-definitions}
+\end{equation}
+In the following discussions it is understood that $M$ is a function of $x$ and $\beta$ and will not be displayed explicitly in order to streamline the presentation.. Now we have, as $x\to0$,
+\begin{equation}
+	M\sim\Lambda^2,
+	\qquad
+	Mx\sim x\Lambda^2\longrightarrow0.
+\end{equation}
+%Because $Mx\to0$, the gap equation may be expanded in explicit powers
+%of $x^2$, with the coefficient of each power retaining its dependence
+%on the large logarithm $\Lambda$.  Inserting $k=1$ and $k=2$ into the
+%general coefficient $C_{2k}$ in \eqref{eq:I-all-orders} yields
+%\begin{equation}
+%	C_2=\frac1{48}
+%	\left[
+%	\log(2\pi)-\frac{\zeta'(2)}{\zeta(2)}
+%	\right],
+%	\qquad
+%	C_4=-\frac1{7680}
+%	\left[
+%	\log(2\pi)-\frac13-\frac{\zeta'(4)}{\zeta(4)}
+%	\right].
+%	\label{eq:app-mass-C2-C4}
+%\end{equation}
+With the use of  definitions in \eqref{eq:app-mass-definitions}, we can write down the gap equation \eqref{eq:gap-expanded}
+ truncating
+ after the $k=2$ term gives
+\begin{align}
+	M={}&\frac1{\sqrt{1-x^2}}
+	\Bigg[
+	\log^2\!\frac{2}{Mx}+2C_0
+	-2(Mx)^2
+	\left[
+	\frac1{48}\log\!\frac{2}{Mx}+C_2
+	\right]
+	\nonumber\\
+	&\hspace{2mm}
+	-2(Mx)^4
+	\left[
+	-\frac1{7680}\log\!\frac{2}{Mx}+C_4
+	\right]
+	+O\!\left(
+	(Mx)^6\log\!\frac{2}{Mx}
+	\right)
+	\Bigg]
++O\!\left(
+	\frac{\e^{-M}}{M\sqrt{1-x^2}}
+	\right).
+	\label{eq:app-mass-gap-k2}
+\end{align}
+%We have used 
+The logarithmic part of the $k$-th term scales as
+$x^{2k}\Lambda^{4k+1}$; hence the first omitted algebraic sector is
+$O(x^6\Lambda^{13})$.  We therefore can use the following ansatz for $M$ to solve the gap equation given in the above equation
+\begin{equation}
+	M
+	=
+	M_{\rm L}(x)
+	+x^2A_2(x)
+	+x^4A_4(x)
+	+O\!\left(x^6\Lambda^{13}\right).
+	\label{eq:app-mass-sector-ansatz}
+\end{equation}
+Here $M_{\rm L}(x)$ collects the terms with no explicit positive power
+of $x$.  The coefficient functions $A_2(x)$ and $A_4(x)$ retain the
+logarithmic dependence associated with the $x^2$ and $x^4$ sectors and
+are therefore not constant Taylor coefficients.  We also define
+\begin{equation}
+	\ell(x)\equiv
+	\log\!\frac{2}{M_{\rm L}(x)x}.
+\end{equation}
+The ansatz \eqref{eq:app-mass-sector-ansatz} gives the following
+expansion of the mass-dependent logarithm and the geometric prefactor is also expanded at small $x$ in the following
+\begin{align}
+	\log\!\frac{2}{Mx}
+	={}&
+	\ell
+	-x^2\frac{A_2}{M_{\rm L}}
+	+x^4
+	\left(
+	\frac{A_2^2}{2M_{\rm L}^2}
+	-\frac{A_4}{M_{\rm L}}
+	\right)
+	+O(x^6\Lambda^{11}),
+	\nonumber\\
+	\frac1{\sqrt{1-x^2}}
+	={}&
+	1+\frac{x^2}{2}
+	+\frac{3x^4}{8}
+	+O(x^6),
+	\label{eq:app-mass-expansions}
+\end{align}
+Here and throughout the subsequent discussion, the $x$-dependence of $M_{\rm L}$, $A_2$, $A_4$, and $\ell$ is left implicit for notational simplicity.
+Substitution of \eqref{eq:app-mass-sector-ansatz} and
+\eqref{eq:app-mass-expansions} into \eqref{eq:app-mass-gap-k2}, followed
+by matching explicit powers of $x$, gives
+\begin{align}
+	M_{\rm L}+x^2A_2+x^4A_4
+	={}&\ell^2+2C_0
+	+x^2\Bigg[
+	\frac12\left(\ell^2+2C_0\right)
+	-\frac{2\ell A_2}{M_{\rm L}}
+	-M_{\rm L}^2\left(\frac{\ell}{24}+2C_2\right)
+	\Bigg]
+	\nonumber\\
+	&+x^4\Bigg[
+	\frac38\left(\ell^2+2C_0\right)
+	-\frac{\ell A_2}{M_{\rm L}}
+	-\frac{M_{\rm L}^2}{2}
+	\left(\frac{\ell}{24}+2C_2\right)
+	\nonumber\\
+	&\hspace{17mm}
+	+\frac{1+\ell}{M_{\rm L}^2}A_2^2
+	-\frac{2\ell A_4}{M_{\rm L}}
+	+M_{\rm L}A_2
+	\left(\frac1{24}-\frac{\ell}{12}-4C_2\right)
+	\nonumber\\
+	&\hspace{17mm}
+	+M_{\rm L}^4
+	\left(\frac{\ell}{3840}-2C_4\right)
+	\Bigg]
+	+O\!\left(x^6\Lambda^{13}\right)
+	+O\!\left(\frac{\e^{-M_{\rm L}}}{M_{\rm L}}\right).
+	\label{eq:app-mass-gap-collected}
+\end{align}
+The final remainder in \eqref{eq:app-mass-gap-collected} is
+exponentially smaller than every algebraic sector and does not affect
+the order-by-order matching.\\
+At order $x^0$, \eqref{eq:app-mass-gap-collected} reduces to
+\begin{equation}
+	M_{\rm L}
+	=
+	\ell^2+2C_0,
+	\qquad
+	\ell
+	=
+	\log\!\frac{2}{M_{\rm L}x}.
+	\label{eq:app-mass-leading-sector}
+\end{equation}
+Ignoring the $C_0$ contribution in
+\eqref{eq:app-mass-leading-sector} isolates the ProductLog
+approximation, as given below
+\begin{equation*}
+	M_{\rm prodlog}(x)
+=	
+	4W_0^2\!\left(\frac1{\sqrt{2x}}\right),
+\end{equation*}
+which is the solution quoted in \eqref{Prodlog} of the main text.
+Retaining $C_0$ in \eqref{eq:app-mass-leading-sector} defines the
+improved leading sector $M_{\rm L}$ before any power-suppressed
+corrections are included.  Its physical large-$M_{\rm L}$ branch has
+the asymptotic behavior
+\begin{equation}
+	M_{\rm L}
+	=
+	\Lambda^2
+	\left[
+	1+O\!\left(
+	\frac{\log\Lambda}{\Lambda}
+	\right)
+	\right],
+	\qquad
+	\ell
+	=
+	\Lambda
+	\left[
+	1+O\!\left(
+	\frac{\log\Lambda}{\Lambda}
+	\right)
+	\right].
+	\label{eq:app-mass-leading-orders}
+\end{equation}
+
+At order $x^2$, the expansion of the leading logarithm, the geometric
+prefactor, and the direct $k=1$ term, all of these contribute.  Solving the
+resulting equation for $A_2$ gives
+\begin{equation}
+	A_2(x)
+	=
+	\frac{\displaystyle
+		\frac{M_{\rm L}}2
+		-M_{\rm L}^2
+		\left(
+		\frac{\ell}{24}+2C_2
+		\right)}
+	{\displaystyle
+		1+\frac{2\ell}{M_{\rm L}}}.
+	\label{eq:app-mass-A2-exact}
+\end{equation}
+Together with \eqref{eq:app-mass-leading-orders}, this gives
+\begin{equation}
+	A_2(x)
+	=
+	-\frac{\Lambda^5}{24}
+	\left[
+	1+O\!\left(
+	\frac{\log\Lambda}{\Lambda}
+	\right)
+	\right].
+	\label{eq:app-mass-A2}
+\end{equation}
+Therefore, the first power-suppressed correction behaves as
+$x^2A_2(x)\sim-x^2\Lambda^5/24$.
+
+At order $x^4$, including all contributions and using the order-$x^2$
+equation to simplify their sum gives
+\begin{align}
+	A_4(x)
+	={}&
+	\frac{1}{\displaystyle
+		1+\frac{2\ell}{M_{\rm L}}}
+	\Bigg\{
+	\frac{1+\ell}{M_{\rm L}^2}A_2^2
+	+\left[
+	\frac12
+	+M_{\rm L}
+	\left(
+	\frac1{24}
+	-\frac{\ell}{12}
+	-4C_2
+	\right)
+	\right]A_2
+	\nonumber\\
+	&\hspace{28mm}
+	+\frac{M_{\rm L}}8
+	+M_{\rm L}^4
+	\left(
+	\frac{\ell}{3840}
+	-2C_4
+	\right)
+	\Bigg\}.
+	\label{eq:app-mass-A4-exact}
+\end{align}
+Similarly using \eqref{eq:app-mass-leading-orders} and
+\eqref{eq:app-mass-A2} in \eqref{eq:app-mass-A4-exact} shows that
+$A_4=O(\Lambda^9)$.  It follows that the $x^4$ sector is smaller than
+the $x^2$ sector by a factor of order $x^2\Lambda^4$, which vanishes as
+$x\to0$.\\
+%
+%More generally, for fixed $p,q,N>0$,
+%\begin{equation}
+%	x^{2p}\Lambda^q=o(\Lambda^{-N}),
+%	\qquad x\to0^+,
+%\end{equation}
+
+Now every term carrying a positive power of $x$ lies beyond all fixed
+orders in the inverse-logarithmic expansion of $M_{\rm L}(x)$.  For
+this reason, the implicit form \eqref{eq:app-mass-leading-sector} is
+preferable when evaluating the power-suppressed sectors.
+
+Together, \eqref{eq:app-mass-leading-sector},
+\eqref{eq:app-mass-A2-exact}, and \eqref{eq:app-mass-A4-exact}
+determine the expansion \eqref{eq:app-mass-sector-ansatz}. Iterating
+the leading-sector equation gives the following explicit expression
+for $M_{\rm L}$, whose terms through order $\Lambda^0$ reproduce
+\eqref{eq:mass-corrected} in the main text,
+\begin{align}
+	M_{\rm L}
+	={}&
+	\Lambda^2
+	-2\Lambda\log\!\frac{\Lambda^2}{2}
+	+\log^2\!\frac{\Lambda^2}{2}
+	+4\log\!\frac{\Lambda^2}{2}
+	+2C_0
+	-
+	\frac{
+		2\log^2\!\frac{\Lambda^2}{2}
+		+8\log\!\frac{\Lambda^2}{2}
+		+4C_0
+	}{\Lambda}
+	+O\Big(
+	\frac{\log^3\Lambda}{\Lambda^2}
+	\Big).
+	\label{eq:app-mass-ML-explicit}
+\end{align}
+%Equation \eqref{eq:app-mass-ML-explicit} reproduces
+%\eqref{eq:mass-corrected} through order $\Lambda^0$.  
+%Its
+%$C_0$-independent part is the inverse-logarithmic expansion of the
+%ProductLog approximation $M_{\rm PL}$, while the $C_0$ terms correct
+%the leading sector.  The $x^2$ and $x^4$ corrections are given by
+%\eqref{eq:app-mass-A2-exact} and \eqref{eq:app-mass-A4-exact},
+%respectively.
+
+
+\bibliographystyle{JHEP}
+\bibliography{references}
+
+\end{document}

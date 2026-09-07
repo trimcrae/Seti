@@ -1,0 +1,1086 @@
+% \input{temp}
+
+\section{\sys Benchmark}
+\label{sec:benchmark}
+
+
+
+
+\sys has two components. First, it generates quantum circuits via templates. Second, it extracts a structured set of circuit features. This section presents the \sys benchmark pipeline (Figure~\ref{fig:sec41_running_example}).
+% We group Features into
+% \emph{static} and \emph{graph} Features, which are computed directly from the circuit
+% description, and \emph{dynamic} Features, which require strong simulation.
+We describe the features in Section~\ref{ssec:features}.
+
+
+\input{images/pipeline}
+% \medskip
+% \para{Design goal}
+% Database benchmarks such as TPC-H\footnote{\url{https://www.tpc.org/tpch/}}, TPC-DS\footnote{\url{https://www.tpc.org/tpcds/}}, and the Join Order Benchmark (JOB) \cite{leis2015good} generate query workloads by instantiating a fixed set of \emph{query templates}.
+% % A relational query is then expressed in a query language such as SQL (or relational algebra, Datalog), which serves as the specification interface between a benchmark and a DBMS.
+% Similarly, \sys generates a circuit workload from a fixed set of \emph{circuit templates}.
+% Each circuit template generates a \emph{subcircuit}, and an output circuit is the \emph{ordered} composition of the generated subcircuits.
+
+\medskip
+\para{Design goal} \revisionC{
+Quantum algorithms are typically built by composing reusable algorithmic blocks, often called \emph{primitives}. Examples include state preparation, Hamiltonian simulation, quantum Fourier transform (QFT), quantum phase estimation (QPE), amplitude amplification and estimation, and variational layers~\cite{abrams1999quantum, brassard2002quantum, farhi2014quantum, gilyen2019quantum, martyn2021grand}. For example, the Harrow--Hassidim--Lloyd (HHL) algorithm~\cite{harrow2009quantum} can be viewed, at a high level, as a composition of Hamiltonian simulation, QPE, and amplitude amplification. More broadly, many modern quantum algorithms are developed by composing primitive transformations in structured ways~\cite{gilyen2019quantum, martyn2021grand}. Thus, a simulation benchmark should not be limited to a fixed set of textbook circuits, but should support diverse and extensible workloads that can cover recent and future quantum algorithms.}
+
+Database benchmarks such as TPC-H\footnote{\url{https://www.tpc.org/tpch/}}, TPC-DS\footnote{\url{https://www.tpc.org/tpcds/}}, and the Join Order Benchmark (JOB)~\cite{leis2015good} \revisionC{use parameterized templates to obtain controlled scale, coverage, and reproducibility. 
+Inspired by this design, \sys generates circuits from a library of templates representing quantum primitives (Table~\ref{tbl:comb}) and composes them using feasibility constraints and history-dependent transition rules. In \sys, randomness is used to vary parameters, scale, and primitive combinations, while preserving meaningful composition patterns. Compared with existing quantum benchmarks centered on a fixed set of textbook circuits~\cite{tomesh2022supermarqscalablequantumbenchmark, Quetschlich_2023,li2022qasmbenchlowlevelqasmbenchmark}, \sys is more general and extensible: new primitives and transition rules can be added as quantum algorithms and simulation workloads evolve. This gives \sys broad benchmark coverage while preserving the structure needed to study realistic quantum circuit simulation workloads.}
+
+ 
+\input{tables/Table_composition}
+ 
+
+\subsection{Overview} 
+\sys targets the compositional structure found in existing quantum circuits, where a
+single circuit is assembled from multiple building blocks (Table~\ref{tbl:comb}).\revisionB{\footnote{Templates are compositional rather than disjoint: high-level primitives may include lower-level steps, but exposing common operations as reusable blocks supports flexible benchmarking. We use \textsc{Start}/\textsc{End} and keep \textsc{Measure} explicit, so every generated sequence has the uniform form \(\textsc{Start}\!\rightarrow\!\text{actual circuit templates}\!\rightarrow\!\textsc{Measure}\!\rightarrow\!\textsc{End}\).}}
+% \footnote{we should clarify an implementation detail here.}
+This differs from template-only benchmarks that generate isolated, standalone circuits.
+  \sys selects an ordered
+sequence of \emph{circuit templates} and instantiates each template into a \emph{subcircuit}.
+The resulting subcircuits are then composed into one benchmark circuit.
+
+Concretely, \sys generates one circuit instance as follows:
+\begin{enumerate}
+    \item \textbf{Select templates.} 
+    % Then it 
+    \sys sequentially samples a template sequence using the
+    history-dependent distribution.
+     \item \textbf{Sample parameters.}   \sys  samples user-configured  local parameters
+    (e.g., qubit count and depth).
+    \item \textbf{Generate  subcircuits.} For each selected template, \sys samples template
+    parameters and generates the corresponding subcircuit.
+    \item \textbf{Output circuit.} The circuit generation process stops when a stopping rule triggers, after which \sys composes
+    all subcircuits into a single circuit.
+    % \item \textbf{Extract features.} Features are extracted from the circuit, from its metadata, graph and sql representation, and dynamically via processing simulation output. 
+\end{enumerate}
+
+This design produces circuits that satisfy user constraints while supporting diverse
+compositions and realistic template transitions.
+% \floris{As we discussed, it is not clear at all from the steps above why global constraints are satisfied. It seems that you implicitly assume that the set of templates $F$ and allowed parameters is rich enough to fill in any remainig budget after sequentially filling it up... That is, when you have consumed say a number of qubits and depth, you assume that there is a template that can be used to fill up remaining qubits and depth? You could assume that or simply relax and use some ``padding'', that use identity gate or something to fill up gaps.}
+
+\subsection{Select Templates}
+% \subsection{Conditional composition}
+\label{sssec:seq_select}
+\revisionA{InferQ builds a circuit incrementally: at each step, it chooses one circuit template and later instantiates it as a subcircuit. The purpose of template selection is to keep this sequence valid while still producing diverse, realistic benchmark workloads.}
+In \sys, we maintain a set of circuit templates \(F\).
+Table~\ref{tbl:comb} lists representative templates, such as \famStatePrep; the full
+template set is documented online.\footnote{\url{https://github.com/InfiniData-Lab/InferQ/blob/main/README.md}}
+Given a selected template \(f\in F\), \sys instantiates a \emph{subcircuit} by sampling
+concrete, circuit-specific parameter values. For example, from the  \famStatePrep $\ $ template we can
+generate a GHZ state preparation subcircuit with 10 qubits.
+
+\medskip
+\para{Addressing Gap 2}
+Database benchmarks typically instantiate each query template independently, yielding
+a workload that is a set (or multiset) of queries without sequential dependencies among
+template choices. In contrast, as discussed in Gap~2, the circuits targeted by \sys are
+\emph{ordered} compositions of subcircuits, and the choice of the next subcircuit is often
+constrained by (and semantically coupled to) the current one. 
+%----------------------------
+% To capture such dependencies,
+% we model template selection as a discrete-time Markov process.
+%----------------------------
+\revisionA{InferQ therefore samples templates sequentially: the already-chosen template affects which templates are allowed next and how probabilities over possible choices are updated.}
+
+\medskip
+\para{Design element 1: Explicit synergy rules}
+\sys provides a set of user-configurable \emph{synergy rules} that encode statistical
+dependencies between templates and bias generation toward semantically coherent pipelines. For example,
+\texttt{StatePrep}\(\rightarrow\)\texttt{HamSim}\(\rightarrow\)\texttt{QPE}, 
+\texttt{ModularExp}\(\rightarrow\)\texttt{QPE}, and \texttt{A}\(\rightarrow\)\texttt{GroverIter}\(\rightarrow\)\texttt{AmpEst} (Table~\ref{tbl:comb}).
+Intuitively, these rules specify how earlier template choices should increase or decrease
+the probability of selecting specific templates later, making the sampling distribution
+explicitly history-dependent.
+
+% To explain our approach for \emph{conditional composition}, we first introduce the following   definitions and notation.
+
+
+\medskip
+\para{Definitions}
+Let \(\mathcal S\) denote the space of subcircuits, and let \(T\) be the number of
+templates (equivalently, subcircuits) generated for one circuit instance. Let \(B\) denote the
+\emph{context space}, i.e., the current circuit generation status (e.g., remaining allowed templates, and  synergy rules
+in Table~\ref{tbl:comb}). 
+A \emph{circuit template} \(f\in F\) is a parameterized generator
+\begin{equation}
+\label{eq:f-definition}
+f:\Theta_f \times B \to \mathcal S.
+\end{equation}
+Let \(\mathsf{feas}(b,f)\in\{0,1\}\) be a hard feasibility predicate
+for choosing template \(f\in F\) under context \(b\in B\). 
+
+\sys generates an ordered template sequence \(f_1,f_2,\dots,f_T\). At step \(t\), after
+selecting \(f_t\) and sampling parameters \(\theta_t\in\Theta_{f_t}\), \sys instantiates the
+corresponding subcircuit as
+\begin{equation}
+s_t = f_t(\theta_t, b_{t-1}),
+\end{equation}
+where \(b_{t-1}\in B\) is the current context given historical $t-1$ steps.
+
+At each step \(t\in\{1,\ldots,T\}\), \sys maintains a categorical distribution \(p_t\) over the
+template set \(F\). We write \(p_t(f)\) for the probability   assigned to template \(f\in F\), so
+\begin{equation}
+\sum_{f\in F} p_t(f)=1.
+\end{equation}
+% Equivalently, for \(F=\{f_1,\ldots,f_N\}\), we can view this distribution as a probability vector
+% \(\mathbf{p}^{(t)}=(p_t(f_1),\ldots,p_t(f_N))\in[0,1]^N\).
+A larger value of \(p_t(f)\) means that template \(f\) is more likely to be selected at step \(t\).
+
+
+% At each step \(t\in\{1,\dots,T\}\), \sys maintains a probability vector
+% \(p_{t}(f) f\in F, where \(\sum_{p_{t}(f) f}=1\) and
+% \(p_{t}(f) \) is the probability of selecting template \(f\). Larger \(p_{t}(f)}\) means that
+% \(f_j\) is more likely to be selected at step \(t\).
+
+\medskip
+\para{Design element 2: Conditional composition as a Markov transition model}
+At step \(t\), \sys samples the next template from a categorical distribution over \(F\).
+Given the current context \(b_{t-1}\), it proceeds in two steps:
+
+\smallskip
+\noindent\textbf{(1) Sample a template.}
+First apply feasibility masking and renormalize:
+\begin{equation}
+\label{eq:feasibility-mask}
+\bar p_t(f)
+=
+\frac{p_t(f)\,\mathsf{feas}(b_{t-1},f)}
+{\sum_{g\in F} p_t(g)\,\mathsf{feas}(b_{t-1},g)},
+\qquad f\in F,
+\end{equation}
+then sample \(f_t\sim \bar p_t\).
+\revisionA{Next, InferQ samples local parameters for \(f_t\), instantiates the corresponding subcircuit, appends it to the current circuit prefix, and updates the generation context.}
+% Next sample \(\theta_t\in\Theta_{f_t}\), instantiate \(s_t=f_t(\theta_t,b_{t-1})\),
+% append \(s_t\), and update the context:
+% \begin{equation}
+% b_t=\mathsf{Upd}(b_{t-1},f_t,\theta_t,s_t).
+% \end{equation}
+
+\smallskip
+\noindent\textbf{(2) Reweight to obtain the next distribution.}
+Let \(\mathcal R\) be the set of synergy rules, where each rule is a triple \((T,U,\beta)\) with
+\(T\subseteq F\) (trigger), \(U\subseteq F\) (target), and \(\beta>0\).
+After selecting \(f_t\), define the reweighted (unnormalized) probabilities
+\begin{equation}
+\label{eq:synergy-reweight}
+\widehat p_{t+1}(f)
+=
+\bar p_t(f)\cdot
+\prod_{(T,U,\beta)\in\mathcal R:\; f_t\in T,\; f\in U}\beta,
+\qquad f\in F,
+\end{equation}
+and then apply feasibility under the updated context \(b_t\) and renormalize:
+\begin{equation}
+\label{eq:next-template-dist}
+p_{t+1}(f)
+=
+\frac{\widehat p_{t+1}(f)\,\mathsf{feas}(b_t,f)}
+{\sum_{g\in F}\widehat p_{t+1}(g)\,\mathsf{feas}(b_t,g)},
+\qquad f\in F.
+\end{equation}
+%--------------------
+% This mechanism induces a sequence-dependent distribution while preserving diversity
+% through stochastic sampling, enabling semantically coherent compositions of subcircuits. 
+%--------------------
+\revisionA{Equations~\ref{eq:feasibility-mask}--\ref{eq:next-template-dist}
+keep the generation process simple: feasibility masking removes disallowed templates that do not fit the current circuit, while synergy rules encourage quantum subcircuits (primitives) that commonly appear together. This lets InferQ generate circuits that follow quantum algorithm design principles without enumerating every full circuit by hand.}
+\revisionC{
+Allowed and disallowed compositions are captured by feasibility masking: a disallowed successor template receives probability zero in the current generation context and therefore cannot be sampled. 
+The synergy rules are soft preferences over feasible successor circuit templates, guiding the generator toward meaningful algorithmic patterns, such as HamSim$\rightarrow$QPE, without hard-coding a fixed enumeration of complete circuits. 
+This separation is important because quantum algorithms, quantum hardware, and their simulation needs are evolving rapidly. 
+The current design keeps \sys configurable as new quantum primitives and workloads emerge.
+}
+
+
+
+\begin{example}[Single-step reweighting under a synergy rule]
+\label{ex:pro_update}
+\small
+Assume the previously selected template is \texttt{StatePrep}. By Table~1,
+the feasible successors are \(\{\texttt{HamSim},\texttt{ModularExp},\texttt{GroverIter},\texttt{Variational}\}\),
+with a uniform distribution \(p_t(\cdot)=\tfrac{1}{4}\).
+Let \(\mathcal{R}\) include \((T,U,\beta)=(\{\texttt{StatePrep}\},\\  \{\texttt{HamSim}\},2)\).
+Then
+\[
+\begin{aligned}
+\widehat p_{t+1}(\texttt{HamSim})&=\tfrac{1}{2}, &
+\widehat p_{t+1}(\texttt{ModularExp})&=\tfrac{1}{4},\\
+\widehat p_{t+1}(\texttt{GroverIter})&=\tfrac{1}{4}, &
+\widehat p_{t+1}(\texttt{Variational})&=\tfrac{1}{4},
+\end{aligned}
+\]
+and after normalization,
+\[
+\begin{aligned}
+ p_{t+1}(\texttt{HamSim})&=\tfrac{2}{5}, &
+ p_{t+1}(\texttt{ModularExp})&=\tfrac{1}{5},\\
+p_{t+1}(\texttt{GroverIter})&=\tfrac{1}{5}, &
+ p_{t+1}(\texttt{Variational})&=\tfrac{1}{5},
+\end{aligned}
+\]
+\end{example}
+
+
+\begin{figure*}[t]
+\centering
+
+% Custom styles used by the nodes below
+\tikzset{
+  stagebox/.style={
+    draw,
+    rounded corners,
+    thick,
+    align=left,
+    inner xsep=3.2pt,
+    inner ysep=3.2pt,
+    text width=30mm,
+    minimum height=16mm
+  },
+  metricbox/.style={
+    draw,
+    rounded corners,
+    thick,
+    align=center,
+    inner xsep=4pt,
+    inner ysep=3pt,
+    minimum width=16mm,
+    minimum height=7mm
+  },
+  flowarrow/.style={
+    ->,
+    thick,
+    dashed
+  },
+  outarrow/.style={
+    ->,
+    thick
+  }
+}
+
+\begin{tikzpicture}[
+  font=\footnotesize,
+  >=Latex,
+  node distance=6mm and 3.5mm
+]
+
+% ---- Stages (left to right) ----
+
+
+\node[stagebox, fill=blue!10, draw=blue!55] (sel) {%
+  \textbf{1) Select templates}\\[-1pt]
+  \scriptsize
+  history-dependent draw\\
+  START $\rightarrow$ QFT\\
+  (synergy boosts QPE)\\
+  QFT $\rightarrow$ QPE
+};
+
+\node[stagebox, fill=gray!10, draw=gray!55, right=of sel] (cfg) {%
+  \textbf{2) Sample parameters}\\[-1pt]
+  \scriptsize
+  given seed $=0$,\\
+  $n_q=7$, depth $=80$\\
+  eval $k=4$, reps $r=1$
+};
+
+\node[stagebox, fill=purple!10, draw=purple!55, right=of cfg] (inst) {%
+  \textbf{3) Generate subcircuit}\\[-1pt]
+  \scriptsize
+  bind local params\\
+  QFT: swaps=off\\
+  QPE: $m=4$, swaps=off\\
+  sample $\phi=1.998$
+};
+
+\node[stagebox, fill=orange!12, draw=orange!60, right=of inst] (merge) {%
+  \textbf{4) Output circuit}\\[-1pt]
+  \scriptsize
+  merge subcircuits\\
+  $C=S_1 \circ S_2$\\
+  store provenance:\\
+  (templates, params)
+};
+
+% \node[stagebox, fill=green!10, draw=green!55, right=of merge] (feat) {%
+%   \textbf{5) Extract features}\\[-1pt]
+%   \scriptsize
+%   from the same $C$:\\
+%   static, graph, \& sql (cheap)\\
+%   dynamic (via simulation)
+% };
+
+% ---- Workflow arrows (dashed) ----
+\draw[flowarrow] (sel) -- (cfg);
+\draw[flowarrow] (cfg) -- (inst);
+\draw[flowarrow] (inst) -- (merge);
+% \draw[flowarrow] (merge) -- (feat);
+
+% % ---- Metric outputs (anchored to the RIGHT edge under step 5 to prevent overflow) ----
+% \path (feat.south east) coordinate (featSE);
+
+% \node[metricbox, fill=red!12,  draw=red!45,
+%       below=6mm of featSE, anchor=north east] (dyn) {Dynamic};
+      
+% \node[metricbox, fill=pink!12, draw=pink!45,
+%       left=3mm of dyn] (sql) {SQL};
+      
+% \node[metricbox, fill=teal!12, draw=teal!45,
+%       left=3mm of sql] (graph) {Graph};
+
+% \node[metricbox, fill=green!12, draw=green!45,
+%       left=3mm of graph] (static) {Static};
+
+
+% % ---- Arrows to metric boxes ----
+% \draw[outarrow] (feat.south) -- (static.north);
+% \draw[outarrow] (feat.south) -- (graph.north);
+% \draw[outarrow] (feat.south) -- (sql.north);
+% \draw[outarrow] (feat.south) -- (dyn.north);
+
+\end{tikzpicture}
+\caption{\sys benchmark's quantum circuit generation pipeline, and  
+running example in Section~\ref{sec:worked_example_qft_qpe}.
+% for Sec.~4.1: InferQ samples a small instance configuration, selects a short template sequence using a history-dependent distribution (synergy), instantiates templates by binding local parameters, outputs the composed circuit plus provenance, and extracts static/graph/dynamic metrics.
+}
+\label{fig:sec41_running_example}
+\end{figure*}
+
+\subsection{Sample Parameters}
+
+Circuit generation is constrained by the global parameters in
+Table~\ref{tab:base_params}, which are configured by users.
+% except seed on the last row. 
+\sys requires users to provide ranges for key parameters, such as qubit count,
+% (\texttt{min\_qubits}, \texttt{max\_qubits}) and 
+depth, 
+% (\texttt{min\_depth}, \texttt{max\_depth}),
+repetitions count for repeatable subroutines, and number of qubits used during evaluation. A concrete value is drawn uniformly at random
+from each range. If a user prefers a fixed value, they set the range endpoints equal
+(e.g., \texttt{min\_qubits}=\texttt{max\_qubits}=10). This range-based interface provides more flexibility for users to construct workloads. \revisionA{For database evaluation over the generated simulation workload, these ranges play the role of scale factors: they control the size and shape of the generated SQL workloads.}
+
+\subsection{Generate Subcircuits }
+\label{sssec:subc}
+Each selected circuit template \(f\) is instantiated by sampling parameters from its
+parameter domain \(\Theta_f\). In \sys, we write one sampled
+parameter tuple as
+\begin{equation}
+\theta = (n_q, d, k, r, \xi) \in \Theta_f,
+\end{equation}
+where \(n_q\) is the qubit count, \(d\) is the depth  allocated to this subcircuit,
+\(k\) is the evaluation-qubit count, \(r\) is the repetition count for repeatable template
+sections, and \(\xi\) is a tuple of template-specific configuration variables.
+\revisionA{Moreover, \(n_q\) and \(d\) control the circuit size, while \(k\) and \(r\) control the evaluation and repetition settings. That is, these parameters determine the generated circuit structure and, therefore, the number and shape of relational operators in the generated SQL workload.}
+
+ 
+
+
+The domain \(\Theta_f\) is derived from the  parameters  in Table~\ref{tab:base_params}. For example, the per-subcircuit depth \(d\) is sampled uniformly from the defined range between  min\_depth and max\_depth. 
+\revisionA{Quantum-specific choices about \(\xi\) can be found in Appendix~K of our technical report \cite{inferqtech}.}
+% \ref{sssec:circuittemplate}
+% Each selected circuit template \(f\) is instantiated by sampling parameters from its
+% parameter domain \(\Theta_f\). In \sys, we write one sampled
+% parameter tuple as
+% \begin{equation}
+% \theta = (n_q, d, k, r, \xi) \in \Theta_f,
+% \end{equation}
+% where \(n_q\) is the qubit count, \(d\) is the depth  allocated to this subcircuit,
+% \(k\) is the evaluation-qubit, \(r\) is the repetition count for repeatable template
+% sections, and \(\xi\) is a tuple of template-specific configuration variables.
+
+% The domain \(\Theta_f\) is derived from the  hyper-parameters  in Table~\ref{tab:base_params}. For example, the per-subcircuit depth \(d\) is sampled uniformly from the defined range between  min\_depth and max\_depth.
+
+% The template-specific
+% configuration variables \(\xi\) captures local design choices supported by \(f\).
+% Typical examples include whether \texttt{QFT} includes final swaps, the choice of feature map
+% and ansatz in variational templates, the number of layers in QAOA-style templates, or the
+% number of steps and coin operators in quantum-walk templates.
+
+
+
+% \paragraph{Structural vs. numerical parameters.}
+% In \sys, template instantiation is staged. \sys first fixes the \emph{structure} of the subcircuit
+% (e.g., qubit assignment, gate topology, repetition pattern, and depth contribution) from
+% \((n_q,d,k,r,\xi)\). If the template contains parametrized gates,  \sys then samples the
+% \emph{numerical} values (e.g., rotation angles) from template-specific distributions. This
+% separation lets \sys explore structural diversity independently from numerical variability.
+ 
+
+
+
+
+% \begin{table}[t]
+% \centering
+% \caption{Parameters.}
+%   % \vspace{-0.4cm}
+% \label{tab:base_params}
+% \resizebox{\columnwidth}{!}{%
+% \begin{tabular}{llp{7.5cm}}
+% \hline
+% \textbf{Parameter} & \textbf{Type} & \textbf{Description} \\
+% \hline
+% \texttt{min\_qubits} & int & Minimum number of qubits per generated circuit. \\
+
+% \texttt{max\_qubits} & int & Maximum number of qubits per generated circuit. \\
+
+% \texttt{min\_depth} & int & Minimum target depth of a generated quantum circuit. \\
+
+% \texttt{max\_depth} & int & Maximum target depth of a generated quantum circuit. \\
+
+% \texttt{min\_reps} & int & Minimum number of repetitions for repeatable subroutines (e.g., Grover iterations or variational layers). \\
+
+% \texttt{max\_reps} & int & Maximum number of repetitions for repeatable subroutines. \\
+
+% \texttt{min\_eval\_qubits} & int & Minimum number of qubits used during evaluation. \\
+
+% \texttt{max\_eval\_qubits} & int & Maximum number of qubits used during evaluation. \\
+
+% \texttt{measure} & bool & Whether measurements are appended to the circuit. \\
+
+% \texttt{seed} & int & Global random seed to ensure full reproducibility of circuit generation. \\
+
+% \hline
+% \end{tabular}%
+% }
+%   % \vspace{-0.4cm}
+% \end{table}
+\begin{table}[t]
+  \caption{Parameters.}
+  \label{tab:base_params}
+  \centering
+
+  {\small
+  \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{1.0}
+
+  \begin{tabularx}{\linewidth}{@{}l l Y@{}}
+    \toprule
+    \textbf{Parameter} & \textbf{Type} & \textbf{Description} \\
+    \midrule
+    \texttt{min\_qubits}
+      & int
+      & Minimum number of qubits per generated circuit \\
+
+    \texttt{max\_qubits}
+      & int
+      & Maximum number of qubits per generated circuit \\
+
+    \texttt{min\_depth}
+      & int
+      & Minimum target depth of a generated quantum circuit \\
+
+    \texttt{max\_depth}
+      & int
+      & Maximum target depth of a generated quantum circuit \\
+
+    \texttt{min\_reps}
+      & int
+      & Minimum number of repetitions for repeatable subroutines
+        (e.g., Grover iterations or variational layers) \\
+
+    \texttt{max\_reps}
+      & int
+      & Maximum number of repetitions for repeatable subroutines \\
+
+    \texttt{min\_eval\_qubits}
+      & int
+      & Minimum number of qubits used during evaluation \\
+
+    \texttt{max\_eval\_qubits}
+      & int
+      & Maximum number of qubits used during evaluation \\
+
+    \texttt{measure}
+      & bool
+      & Whether measurements are appended to the circuit \\
+
+    \texttt{seed}
+      & int
+      & Global random seed to ensure full reproducibility of
+        circuit generation \\
+    \bottomrule
+  \end{tabularx}
+  }
+\end{table}
+
+
+
+ 
+
+\subsection{Output Circuit}
+% \subsection{Terminate and Merge Circuit}
+\label{sssec:merge}
+Generation stops when a maximum number of templates is reached or when a probabilistic stopping condition triggers.
+This prevents excessively long circuits while keeping circuit length variable across instances. 
+After termination, the instantiated subcircuits \(S_1,\ldots,S_T\) are composed in order to
+produce the final benchmark circuit:
+\begin{equation}
+C = S_1 \circ S_2 \circ \cdots \circ S_T.
+\end{equation}
+Alongside \(C\), \sys outputs a provenance record that stores the template sequence
+\((f_1,\ldots,f_T)\), sampled parameters (including repetitions and \(\xi\)), and global
+resource statistics (e.g., depth and gate counts). This record makes our generated circuit instances
+easy to inspect, query, and reproduce. \revisionA{This provenance is useful for database benchmarking because the same randomized workload can be replayed and compared across engines.}
+
+\medskip
+\para{SQL query generation} Once a circuit is generated, we construct an equivalent SQL query using the implementation in \cite{hai2025quantum}. We extended their package by making it a dependency to InferQ. The package uses the einstein summation (einsum) representation of a quantum circuit with tensor algebra. It then converts tensor contractions into relational  joins as proposed by Blacher et al. \cite{einsteinSQL2023}. 
+
+\medskip
+\para{Reproducibility guarantee} To make sure 
+all sampling in \sys is deterministic, we use seeded pseudo-random number generators\footnote{See
+\url{https://docs.python.org/3/library/random\#random.seed} and
+\url{https://numpy.org/doc/2.2/reference/random/generated/numpy.random.seed.html}.} and maintain a global random seed as part of the parameters in Table~\ref{tab:base_params}. Consequently, with the seed and the generated template
+sequence, both the subcircuit structure and the numerical gate parameters are 
+reproducible across runs.
+
+\input{example}
+
+
+% --- In the paper ---
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  >=Latex,
+  node distance=8mm and 8mm,
+  main/.style={
+    draw,
+    rounded corners,
+    very thick,
+    align=center,
+    inner sep=5pt,
+    minimum width=24mm,
+    minimum height=9mm
+  },
+  outputbox/.style={
+    draw,
+    rounded corners,
+    thick,
+    align=center,
+    inner sep=4pt,
+    minimum width=18mm,
+    minimum height=7mm
+  },
+  arrow/.style={->, thick}
+]
+
+% Main chain
+\node[
+  main,
+  fill=blue!10,
+  draw=blue!50
+] (gen) {Circuit Generation\\(\revisionB{Section 3})};
+
+\node[
+  main,
+  fill=purple!10,
+  draw=purple!50,
+  right=of gen
+] (feat) {Feature\\Extraction};
+
+\node[
+  main,
+  fill=orange!12,
+  draw=orange!55,
+  right=of feat
+] (sim) {Simulation};
+
+% Bottom row
+\node[
+  outputbox,
+  fill=teal!12,
+  draw=teal!45,
+  below=of feat,
+  xshift=-10mm
+] (graph) {Graph};
+
+\node[
+  outputbox,
+  fill=green!12,
+  draw=green!45,
+  left=3mm of graph
+] (stat) {Static};
+
+\node[
+  outputbox,
+  fill=pink!12,
+  draw=pink!45,
+  right=3mm of graph
+] (sql) {SQL};
+
+\node[
+  outputbox,
+  fill=red!12,
+  draw=red!45
+] (dyn) at (sql -| sim) {Dynamic};
+
+% Arrows
+\draw[arrow] (gen.east) -- (feat.west);
+\draw[arrow] (feat.east) -- (sim.west);
+
+\draw[arrow] (feat.south) -- (stat.north);
+\draw[arrow] (feat.south) -- (graph.north);
+\draw[arrow] (feat.south) -- (sql.north);
+\draw[arrow] (sim.south) -- (dyn.north);
+
+\end{tikzpicture}
+
+\caption{\sys feature extraction workflow. Static, graph-based, and
+SQL-derived features are extracted prior to simulation, whereas dynamic
+features can only be obtained after the simulation completes.}
+\label{fig:feat_overview}
+\end{figure}
+
+\section{Circuit Feature Extraction}
+\label{ssec:features}
+
+When we push quantum circuit simulation into an RDBMS, it induces a sequence of
+relational operators (e.g., joins and aggregations implementing tensor
+contractions) over large intermediate relations. In this setting, performance
+depends on cardinality growth, join selectivity, skew, and the size of
+intermediate states. However, such properties are not explicit in the quantum 
+circuit representation. 
+%
+To make systematic progress on query optimization,
+physical design (e.g., indexing/partitioning), and \emph{routing} (deciding when
+an RDBMS backend is beneficial), we need a set of circuit features that
+indicate what the induced relational query workload looks like. Ideally, a
+feature vector that approximates workload characteristics \emph{before}
+executing the full simulation.
+Therefore, we include a feature extraction component in \sys and aim to cover
+different sources of cost, including problem size (number of qubits, circuit
+depth), interaction structure,  state evolution, and the generated SQL queries. 
+As shown in Figure~\ref{fig:feat_overview}, \sys models each circuit with four types
+of features: \emph{static}, \emph{graph}, \emph{dynamic}, and \emph{SQL} features, as listed in Table~\ref{tbl:static}--\ref{tbl:dyn}, respectively. Such a
+separation makes \sys \textbf{extensible}: new features can be added easily.  
+
+% Static
+% features summarize circuit scale and gate composition and are cheap to compute,
+% enabling fast workload characterization and coarse-grained planning of the
+% generated circuits as SQL queries. Graph features summarize the qubit
+% interaction structure induced by multi-qubit gates, which is useful for
+% analyzing the join structure induced by the SQL representation.  SQL features are related to the query representation of the quantum circuit. Dynamic
+% features capture properties of the evolving quantum state (e.g., sparsity and
+% entanglement), which are relevant to intermediate relation sizes in sparse or
+% factorized representations. Dynamic features are expensive to compute but
+% important for anticipating whether an RDBMS backend is effective without
+% running the full simulation (i.e., executing the SQL queries), as we will show
+% in Section~\ref{ssec:feat_val}. 
+Notably, as shown in Figure~\ref{fig:feat_overview},
+feature extraction is an optional post-processing step: \sys can generate circuits
+without extracting features, and computes them only when needed for analysis. 
+
+% \sys encompasses four classes of features in its data model: \emph{static},
+% \emph{graph}, and \emph{dynamic} features. These feature classes are designed
+% to capture complementary aspects of quantum circuits, ranging from trivially
+% extractable metadata to structural interaction patterns and
+% quantum-information--theoretic properties. Static features encode basic circuit
+% characteristics and metadata that are inexpensive to compute and useful for
+% heuristic-driven execution planning. Graph features capture the structural
+% interactions induced by circuit instructions through qubit connectivity.
+% Finally, dynamic features capture properties of the quantum state itself and
+% require partial or full simulation.
+
+% \begin{figure*}[t]
+%   \centering
+%   \includegraphics[width=\linewidth]{images/finalinferQschema.pdf}
+%   \caption{Schema for storing extracted circuit features. 
+%   % \sys circuit data model schema. Each circuit is stored with a unique
+%   % hash (primary key) and associated feature classes. \sys entries are centered
+%   % around circuits in the \texttt{InferQ\_Circuits} table, which reference
+%   % static, graph, SQL and dynamic features, as well as storage metadata in Azure DB. 
+%   }
+%   \label{fig:schema}
+% \end{figure*}
+
+ 
+
+\subsection{Static Features}
+Static features describe basic properties of a quantum circuit. These features
+are crucial for constructing heuristics for efficient classical simulation.
+For example, dense state-vector representations are only feasible for circuits
+with small width and a small number of qubits, as memory requirements grow
+exponentially with these parameters. For an RDBMS-backed simulator, gate counts
+and depth largely determine the number and types of relational operators
+generated.
+
+\begin{table}[t]
+  \caption{Notation used in circuit feature extraction.}
+    % \vspace{-0.2cm}
+  \label{tab:notation}
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.05}
+  \begin{tabularx}{0.88\columnwidth}{@{}l>{\footnotesize}X@{}}
+    \toprule
+    \textbf{Notation} & \textbf{Description} \\
+    \midrule
+    $C$ & Quantum circuit (ordered list of gate instructions). \\
+    $G$ & Number of circuit instructions (gate count). \\
+    $N$ & Number of qubits in the circuit. \\
+    $W$ & Circuit width (maximum simultaneously active qubits). \\
+    $G_I=(V,E)$ & Qubit interaction graph induced by multi-qubit gates. \\
+    $V$ & Vertex set of $G_I$ (qubits; $|V|=N$). \\
+    $E$ & Edge set of $G_I$ (qubit interactions; $|E|$ is the edge count). \\
+    $2^N$ & State-space dimension (length of a full statevector). \\
+    $\mathbf{p}=(p_1,\ldots,p_{2^N})$ & Probability vector derived from the saved statevector. \\
+    $H(\mathbf{p})$ & Shannon entropy of $\mathbf{p}$ (superposition). \\
+    $\rho(\mathbf{p})$ & Sparsity / support density: fraction of entries above threshold (superposition). \\
+    $S_{\mathrm{vN}}^{(k)}$ & von Neumann entropy across qubit line $k$ (entanglement). \\
+    % $\varepsilon$ & Small constant for numerical stability in entropy computation. \\
+    $\tau$ & Threshold for treating near-zero entries as zero in sparsity computation. \\
+    $\mathbb{I}(\cdot)$ & Indicator function ($1$ if condition holds, else $0$). \\
+    % \bottomrule
+    % \midrule
+    $N_{\mathrm{AST}}$ & Total number of nodes in the SQL abstract syntax tree (AST). \\
+    $S$ & Number of \texttt{SELECT} statements in the query. \\
+    $P$ & Number of predicates appearing in \texttt{WHERE} clauses. \\
+    $J$ & Number of distinct relations participating in join conditions. \\
+    \bottomrule
+  \end{tabularx}
+    \vspace{-0.4cm}
+\end{table}
+
+
+
+As shown in Table~\ref{tbl:static}, static features can be computed efficiently.
+We treat a circuit as an ordered list of instructions, where each instruction
+applies a gate to one or more qubits. This view allows us to analyze the
+complexity of computing static features. Let $G$ be the number of gates
+(instructions), $N$ the number of qubits, and $W$ the circuit width (maximum
+simultaneously active qubits). We assume $W \le N$ and typically $G \gg N$. We
+summarize the notation in Table~\ref{tab:notation}. All static features in
+Table~\ref{tbl:static} are computable in at most linear time in $G$ with modest
+memory overhead, making them inexpensive yet informative metadata for the \sys
+benchmark.
+
+% \begin{table}[t]
+% \centering
+% \caption{Time and space complexities for static features.}
+% \label{tbl:static}
+% \resizebox{\columnwidth}{!}{%
+% \begin{tabular}{lccc}
+% \hline
+% \textbf{Feature} & \textbf{Time} & \textbf{Space} & \textbf{Description} \\
+% \hline
+% num\_qubits & $O(1)$ & $O(1)$ & Total number of qubits \\
+% width & $O(G)$ & $O(W)$ & Maximum simultaneous active qubits \\
+% depth & $O(G)$ & $O(W)$ & Longest dependency chain \\
+% circuit\_size & $O(1)$ & $O(1)$ & Total gate count \\
+% pauli\_gate\_count & $O(G)$ & $O(1)$ & Number of Pauli gates (X, Y, Z) \\
+% two\_qubit\_gate\_count & $O(G)$ & $O(1)$ & Number of two-qubit gates \\
+% two\_qubit\_gate\_percentage & $O(G)$ & $O(1)$ & Ratio of two-qubit gates \\
+% locality\_ratio & $O(G)$ & $O(1)$ & Local vs.\ non-local gate ratio \\
+% idling\_score & $O(G)$ & $O(W)$ & Idle qubit utilization \\
+% density\_score & $O(G)$ & $O(G)$ & Gate density feature \cite{bandic2024profilingquantumcircuitsefficient} \\
+% gate\_counts & $O(G)$ & $O(G)$ & Per-gate-type histogram \\
+% \hline
+% \end{tabular}%
+% }
+% \end{table}
+\begin{table}[t]
+\centering
+\caption{Time and space complexities for static features.}
+\label{tbl:static}
+
+{\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tabularx}{0.8\columnwidth}{@{}lccY@{}}
+\hline
+\textbf{Feature} & \textbf{Time} & \textbf{Space} & \textbf{Description} \\
+\hline
+num\_qubits & $O(1)$ & $O(1)$ & Total number of qubits \\
+width & $O(G)$ & $O(W)$ & Maximum simultaneous active qubits \\
+depth & $O(G)$ & $O(W)$ & Longest dependency chain \\
+circuit\_size & $O(1)$ & $O(1)$ & Total gate count \\
+pauli\_gate\_count & $O(G)$ & $O(1)$ & Number of Pauli gates (X, Y, Z) \\
+two\_qubit\_gate\_count & $O(G)$ & $O(1)$ & Number of two-qubit gates \\
+two\_qubit\_gate\_percentage & $O(G)$ & $O(1)$ & Ratio of two-qubit gates \\
+locality\_ratio & $O(G)$ & $O(1)$ & Local vs.\ non-local gate ratio \\
+idling\_score & $O(G)$ & $O(W)$ & Idle qubit utilization \\
+density\_score & $O(G)$ & $O(G)$ & Gate density feature \cite{bandic2024profilingquantumcircuitsefficient} \\
+gate\_counts & $O(G)$ & $O(G)$ & Per-gate-type histogram \\
+\hline
+\end{tabularx}
+}
+\end{table}
+
+\subsection{Graph Features}
+\label{ssec:graphf}
+Graph features are computed from the \emph{qubit interaction graph}, where
+vertices are qubits and edges represent interactions induced by multi-qubit
+gates. This abstraction enables the computation of classical graph properties,
+similar to existing works on quantum circuit compilation \cite{Bandic_2023,bandic2024profilingquantumcircuitsefficient}
+and graph-based circuit characterization \cite{Hernndez2015ClassificationOG}.
+
+Graph features make circuit structure directly accessible to database analysis:
+they indicate what the join structure and intermediate-result growth may look
+like in relational tensor computation. Intuitively, circuits whose interaction
+graphs are highly connected (e.g., with diameter-reducing shortcuts, high node
+degree, and strong centralization) tend to induce more global correlations and
+fewer separable subproblems, which often translates into harder contractions and
+less opportunity for decomposition.
+% \begin{table}[t]
+% \centering
+% \caption{Time and space complexities for graph features.}
+% \label{tbl:graph}
+% \resizebox{\columnwidth}{!}{%
+% \begin{tabular}{lccc}
+% \hline
+% \textbf{Feature} & \textbf{Time} & \textbf{Space} & \textbf{Description} \\
+% \hline
+% edge\_count & $O(1)$ & $O(1)$ & Number of interaction edges \\
+% max\_degree & $O(N)$ & $O(1)$ & Maximum node degree \\
+% min\_cut & $O(NE)$ & $O(V+E)$ & Minimum cut \\
+% diameter & $O(N^3)$ & $O(N^2)$ & Graph diameter \\
+% radius & $O(N^3)$ & $O(N^2)$ & Minimum eccentricity \\
+% average\_degree & $O(N)$ & $O(1)$ & Mean node degree \\
+% average\_clustering\_coefficient & $O(N^3)$ & $O(1)$ & Local clustering tendency \\
+% average\_shortest\_path\_length & $O(N^3)$ & $O(N^2)$ & Mean shortest path length \\
+% central\_point\_of\_dominance & $O(NE)$ & $O(N)$ & Graph centralization measure \\
+% std\_dev\_adjacency\_matrix & $O(N^2)$ & $O(1)$ & Adjacency matrix variance \\
+% \hline
+% \end{tabular}%
+% }
+% \end{table}
+\begin{table}[t]
+\centering
+\caption{Time and space complexities for graph features.}
+\label{tbl:graph}
+{\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tabularx}{\columnwidth}{@{}lccY@{}}
+\hline
+\textbf{Feature} & \textbf{Time} & \textbf{Space} & \textbf{Description} \\
+\hline
+edge\_count & $O(1)$ & $O(1)$ & Number of interaction edges \\
+max\_degree & $O(N)$ & $O(1)$ & Maximum node degree \\
+min\_cut & $O(NE)$ & $O(V+E)$ & Minimum cut \\
+diameter & $O(N^3)$ & $O(N^2)$ & Graph diameter \\
+radius & $O(N^3)$ & $O(N^2)$ & Minimum eccentricity \\
+average\_degree & $O(N)$ & $O(1)$ & Mean node degree \\
+average\_clustering\_coefficient & $O(N^3)$ & $O(1)$ & Local clustering tendency \\
+average\_shortest\_path\_length & $O(N^3)$ & $O(N^2)$ & Mean shortest path length \\
+central\_point\_of\_dominance & $O(NE)$ & $O(N)$ & Graph centralization measure \\
+std\_dev\_adjacency\_matrix & $O(N^2)$ & $O(1)$ & Adjacency matrix variance \\
+\hline
+\end{tabularx}
+}
+\end{table}
+As summarized in Table~\ref{tbl:graph}, graph features can be computed in
+polynomial time and space with respect to qubit count $N$, with worst-case
+complexity bounded by $O(N^3)$. Let $E$ be the number of edges in the
+interaction graph. Under a gate set dominated by one- and two-qubit gates, each
+gate introduces at most one interaction edge; hence $E=O(G)$, with worst-case
+space $O(N^2)$ for a weighted, undirected interaction graph. Building an
+adjacency-list representation takes $O(N+E)$ time and space. While some
+features require $O(N^3)$ time in the worst case, they remain practical for the
+qubit ranges where graph characterization is useful, and can be computed
+offline.
+
+\subsection{SQL Features}
+\label{ssec:sql}
+SQL features are extracted from the generated SQL queries, which are relevant to the performance of RDBMS engines for quantum circuit simulation. 
+% We decide to evaluate InferQ potential to enable this RDBMS approach that views quantum circuits as SQL queries. By constructing features for this new representation, namely SQL features we can analyse patterns within simulation data. Like the graph Features were for the interaction graph representation, these SQL Features serve as numeric features for the SQL query representation of a quantum circuit. Moreover, as these queries will run on the RDBMS system, it stands to reason that these Features shall be the most important features to consider RDBMS simulators.   
+% \noindent\textbf{Complexity Parameters.} \rh{Can we remove this paragraph and put in the Table \ref{tab:notation}}
+% Let $N$ denote the total number of nodes in the SQL abstract syntax tree (AST), $S$ the number of \texttt{SELECT} statements, $P$ the number of predicates appearing in \texttt{WHERE} clauses, and $J$ the number of distinct relations participating in join conditions. All reported complexities exclude SQL parsing time and assume the AST is already constructed. Feature extraction primarily involves linear AST traversals, with higher-order costs arising only from pairwise relation combinations during join edge construction.
+ Table \ref{tab:sql_complexity}  summarizes the complexities to calculate these features from the circuit SQL query representation. To calculate the various joins and other clauses, we view the query tree as an abstract syntax tree (AST) and then do a traversal. Getting to this SQL representation of a quantum circuit is not expensive. Using existing methods \cite{Littau_2025, hai2025quantum}, we can generate these queries by translating the quantum circuit into Einstein summation (einsum) notation representing the tensor contraction sequence.
+% with complexity equal the number of tensors / relations : which is equivalent to $O(G)$ circuit instructions from Table \ref{tab:notation} . Consequently, these can be extracted with similar complexity with that of the graph Features as the AST nodes is bounded by G too. 
+% \begin{table}[t]
+% \centering
+% \caption{Time and space complexities for extracting SQL features (excluding parsing).}
+% \label{tab:sql_complexity}
+% \resizebox{\columnwidth}{!}{%
+% \begin{tabular}{lccc}
+% \hline
+% \textbf{Feature} & \textbf{Time} & \textbf{Space} & \textbf{Description} \\
+% \hline
+% num\_and\_clauses 
+% & $O(N)$ 
+% & $O(1)$ 
+% & Counts logical AND operators during AST traversal \\
+
+% num\_joins 
+% & $O(S \cdot P + J^2)$ 
+% & $O(J^2)$ 
+% & Counts explicit and implicit joins and stores join edges \\
+
+% num\_select\_columns 
+% & $O(N)$ 
+% & $O(1)$ 
+% & Counts column expressions in SELECT clauses \\
+
+% num\_agg\_funcs 
+% & $O(N)$ 
+% & $O(1)$ 
+% & Counts aggregate functions (e.g., COUNT, SUM, AVG) \\
+
+% num\_where\_clauses 
+% & $O(N)$ 
+% & $O(1)$ 
+% & Counts WHERE clause nodes in the AST \\
+
+% num\_eq\_predicates 
+% & $O(N)$ 
+% & $O(1)$ 
+% & Counts equality predicates used in filters and joins \\
+
+% \hline
+% \end{tabular}%
+% }
+% \end{table}
+
+\begin{table}[t]
+\centering
+\caption{Time and space complexities for extracting SQL features (excluding parsing).}
+\label{tab:sql_complexity}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccc}
+\hline
+\textbf{Feature} & \textbf{Time} & \textbf{Space} & \textbf{Description} \\
+\hline
+num\_and\_clauses 
+& $O(N_\text{AST})$ 
+& $O(1)$ 
+& Counts logical AND operators during AST traversal \\
+
+num\_joins 
+& $O(S \cdot P + J^2)$ 
+& $O(J^2)$ 
+& Counts explicit and implicit joins and stores join edges \\
+
+num\_select\_columns 
+& $O(N_\text{AST})$ 
+& $O(1)$ 
+& Counts column expressions in SELECT clauses \\
+
+num\_agg\_funcs 
+& $O(N_\text{AST})$ 
+& $O(1)$ 
+& Counts aggregate functions (e.g., COUNT, SUM, AVG) \\
+
+num\_where\_clauses 
+& $O(N_\text{AST})$ 
+& $O(1)$ 
+& Counts WHERE clause nodes in the AST \\
+
+num\_eq\_predicates 
+& $O(N_\text{AST})$ 
+& $O(1)$ 
+& Counts equality predicates used in filters and joins \\
+
+\hline
+\end{tabular}%
+}
+\end{table}
+
+
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\linewidth]{images/inferQsql.png}
+%     \caption{InferQ Schema extension with SQL features table per circuit in core InferQ\_Circuits table.}
+%     \label{fig:sqlschemaextension}
+% \end{figure}
+
+
+
+
+\subsection{Dynamic Features}
+As shown in Table~\ref{tbl:dyn}, dynamic features depend on the circuit's
+\emph{output state} and cannot be derived from circuit structure alone. They
+are crucial for database-backed simulation because relational approaches
+typically rely on \emph{sparse} or \emph{factorized} state representations: if
+the state remains sparse, relational operators can operate over small relations
+and avoid exponential blow-up; if entanglement grows quickly, intermediate
+results densify and the advantage diminishes.  We therefore extract three dynamic
+features that capture these effects: (i) Shannon entropy, (ii) von Neumann entropy, and (iii) a sparsity (non-zero support) measure of the
+saved statevector.
+
+% \begin{table}[t]
+% \caption{Time and space complexities for dynamic features.}
+% \label{tbl:dyn}
+% \centering
+% \resizebox{\columnwidth}{!}{%
+% \begin{tabular}{lccc}
+% \hline
+% \textbf{Feature} & \textbf{Time} & \textbf{Space} & \textbf{Description} \\
+% \hline
+% Shannon\_entropy& $O(2^N)$ & $O(2^N)$ & Shannon Entropy of stored statevector\\
+% von\_neumann\_entropy& $O(N \cdot 2^N)$& $O(N \cdot 2^N)$&Von Neumann Entropy of stored statevector\\
+% sparsity & $O(2^N)$ & $O(2^N)$ & Sparsity of stored statevector \\
+% \hline
+% \end{tabular}%
+% }
+% \end{table}
+\begin{table}[t]
+\caption{Time and space complexities for dynamic features.}
+\label{tbl:dyn}
+\centering
+
+{\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tabularx}{\columnwidth}{@{}lccY@{}}
+\hline
+\textbf{Feature} & \textbf{Time} & \textbf{Space} & \textbf{Description} \\
+\hline
+Shannon\_entropy& $O(2^N)$ & $O(2^N)$ & Shannon Entropy of stored statevector\\
+von\_neumann\_entropy& $O(N \cdot 2^N)$& $O(N \cdot 2^N)$&Von Neumann Entropy of stored statevector\\
+sparsity & $O(2^N)$ & $O(2^N)$ & Sparsity of stored statevector \\
+\hline
+\end{tabularx}
+}
+\end{table}
+
+Using the vector representation for the quantum state defined in
+Section~\ref{sec:pre}, we define sparsity and entropies as follows:
+% \begin{equation}
+% \begin{aligned}
+% H(\mathbf{p}) &= - \sum_{i=1}^{2^{N}} \left( p_i + \varepsilon \right)\log_2\left( p_i + \varepsilon \right), \\
+% S(\mathbf{p}) &= \frac{1}{2^{N}} \sum_{i=1}^{2^{N}} \mathbb{I}\left(p_i > \tau\right).
+% \end{aligned}
+% \end{equation}
+% \paragraph{Entropy, sparsity, and entanglement.}
+% Let $\mathbf{p} = (p_1,\dots,p_{2^N})$ denote the probability distribution obtained from an $N$-qubit statevector in the computational basis. We compute the Shannon entropy, analogous to its use in classical and quantum information
+% \begin{equation}
+% H(\mathbf{p}) = - \sum_{i=1}^{2^N} (p_i + \varepsilon)\log_2(p_i + \varepsilon), 
+% \end{equation}
+% where $\varepsilon>0$ is a small constant added for numerical stability to avoid evaluating $\log_2(0)$ when $p_i=0$.
+
+Let $\mathbf{p} = (p_1,\dots,p_{2^N})$ denote the probability distribution obtained from an $N$-qubit statevector in the computational basis. We compute the Shannon entropy, analogous to its use in classical and quantum information, as
+\begin{equation}
+H(\mathbf{p}) = - \sum_{i=1}^{2^N} p_i \log_2 p_i.
+\end{equation}
+% where terms with $p_i=0$ are defined as zero, following the convention
+% $0\log_2 0 = 0$.
+
+To quantify entanglement, we compute the von Neumann entropy across a partition defined by a cut along a qubit line $k$,
+\begin{equation}
+S_{\mathrm{vN}}^{(k)} = -\mathrm{Tr}\!\left(\rho_{A_k}\log_2\rho_{A_k}\right),
+\qquad
+\rho_{A_k} = \mathrm{Tr}_{B_k}(\rho),
+\end{equation}
+where the bipartition corresponds to separating qubit line $k$ from the remaining qubit lines. We define the sparsity
+\begin{equation}
+\rho(\mathbf{p}) = \frac{1}{2^N} \sum_{i=1}^{2^N} \mathbb{I}(p_i > \tau),
+\end{equation}
+which we use synonymously with the support density, i.e., the fraction of basis states carrying non-negligible probability mass. 
+
+Here, the Shannon entropy $H(\mathbf{p})$ and sparsity $\rho(\mathbf{p})$ characterize the degree of superposition in the computational basis, with higher values indicating broader support over basis states, while the von Neumann entropy $S_{\mathrm{vN}}^{(k)}$ measures quantum entanglement across each qubit line. We store the von Neumann entropy per qubit line to capture individual entanglement, rather than treating the full state as a combined vector, which being a pure state, has total entanglement entropy as zero. Characterizing both superposition and entanglement is essential for understanding the mechanisms underlying quantum advantage.
+
+All dynamic features are expensive to compute and require exponential time and memory in $N$ for exact computation due to the full pass over the length-$2^{N}$ vector. In particular, computing the von Neumann entropy across each of the $N$ qubit lines incurs an additional factor of $N$ on top of the full vector pass against the rest of the system, resulting in $O(N \cdot 2^N)$ time and memory. This motivates an additional use case for InferQ in Section~\ref{ssec:uc2}: enabling accurate dynamic-feature estimators without requiring full simulation of the circuit. 
+% Moreover, given the high complexity of the state representation, it is important to explore other representations, such as SQL and tensor networks, to potentially reduce this cost. In Sec.~\ref{} we present experimental results for these two additional use cases.
+
+In addition, we highlight InferQ’s extensibility in supporting the addition of new features, which facilitates a wide range of use cases and experimental analyses.
+
+
+% \subsection{Quantum Circuits as SQL Queries}
+
+
+
+

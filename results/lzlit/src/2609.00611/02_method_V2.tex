@@ -1,0 +1,29 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{Panda V2 encoder}
+\label{sec:encoder}
+
+Each detector image is represented as a sparse set of voxelized 3D points with associated sensor measurements, such as deposited charge or arrival time. Panda V2 uses the same four-stage point-native encoder, based on Point Transformer V3~\citep{wu2024pointtransformerv3simpler} and LitePT~\citep{litept} for all three modalities. Following \cite{litept}, sparse 3D convolutions~\citep{choy20194dspatiotemporalconvnetsminkowski} are used at high spatial resolution and local self-attention~\citep{vaswani2017attention} at coarser scales. The network first processes the native voxelization, pools by a factor of two, switches from convolution to attention at the same resolution, then pools by a further factor of four before a final attention stage. Multi-scale features are upsampled and concatenated to produce a contextual feature for each input point.
+
+\subsection{Observable prototype self-distillation}
+\label{sec:pretraining}
+
+\begin{figure}[t!]
+    \centering
+    \includegraphics[width=1\linewidth]{figs/reconstruction_results.jpg}
+    \caption{The Panda V2 backbone is adapted to detector-specific reconstruction tasks using only 1,000 labeled events and compared with published baselines. 
+(a) PILArNet-M particle clustering and semantic segmentation. Panda V1 curves correspond to its strongest published frozen backbone configuration for each task~\citep{panda}.
+(b) For TPCpp-10M, the same adaptation strategy is evaluated on track clustering, particle identification, and noise tagging.
+(c) On SK-like water Cherenkov data, lightweight probes reconstruct single-particle vertex ($e^-$), direction ($e^-/\mu^-$), and momentum ($e^-/\mu^-$) (bottom row), while Panda Detector performs multi-ring reconstruction (top row, 1-3+ ring recall is shown); APFit and fiTQun results on official SK data~\citep{sk} are shown for context, and arrows signify the direction of better performance for each metric.
+}
+
+    \label{fig:reconstruction}
+\end{figure}
+
+We pre-train Panda V2 with the self-distillation objective of Panda~\citep{panda}: an EMA teacher and student encode independently augmented views of the same image, and the student predicts the teacher's assignments over learned prototypes. Following DOS~\citep{dos}, masked measurements are removed rather than explicitly represented and only observable locations are distilled. Apart from dataset-dependent quantities tied to input scale, the architecture and training recipe are shared.
+
+\subsection{Parameter-efficient reconstruction}
+\label{sec:reconstruction}
+
+Downstream reconstruction uses lightweight task-specific heads, with the pre-trained backbone either frozen or adapted using LoRA~\citep{lora}. For LArTPC and sPHENIX, semantic labels are predicted with a linear classifier and LoRA, while particle clustering uses a lightweight two-stage GNN with LoRA. For single-ring water Cherenkov events, particle identity and energy are predicted from the mean frozen event representation, while position and direction are obtained from a coordinate--feature cross-correlation followed by a linear projection. For multi-ring water Cherenkov reconstruction we use Panda Detector, the DETR-style set-prediction module introduced in Panda~\citep{panda}. Additional architecture and training details are given in the appendix.

@@ -1,0 +1,2495 @@
+                                          Prepared for submission to JHEP
+
+
+
+
+                                          Towers of Operators in CFTs and Convexity Bounds
+                                          at Large Charge
+
+
+
+                                          Fedor K. Popov1 and Adar Sharon2
+                                          1
+                                              Simons Center for Geometry and Physics, Stony Brook University, Stony Brook, NY
+arXiv:2607.28726v1 [hep-th] 30 Jul 2026
+
+
+
+
+                                          2
+                                              Mani L. Bhaumik Institute for Theoretical Physics, Department of Physics and Astronomy, Uni-
+                                              versity of California, Los Angeles, CA 90095, USA
+
+                                              E-mail: fpopov@scgp.stonybrook.edu, asharon@physics.ucla.edu
+
+                                          Abstract: In [1], it was shown that for 3d CFTs with a moduli space along which a U (1)
+                                          symmetry is spontaneously broken, the minimum scaling dimension at large charge Q scales
+                                          as ∆min (Q) = α1 Q + α0 + O(1/Q). Motivated by the holographic swampland program, we
+                                          study possible bounds on the coefficients αi . For α0 , the weak gravity conjecture motivates
+                                          the CFT charge convexity conjecture, which requires the bound α0 ≤ 0. Using the moduli
+                                          space EFT we prove this bound for the projected ∆min (Q), obtained by fixing a single
+                                          charge Q and minimizing the dimension while allowing all other charges to vary. This
+                                          provides a WGC-motivated bound that is explicitly provable using CFT methods. On
+                                          the other hand, we show that α1 admits no universal bound apart from the trivial bound
+                                          α1 ≥ 0. We also compute α1 and α0 in several new 3d N = 1 theories via the ϵ-expansion
+                                          and large-N methods.
+Contents
+
+1 Introduction                                          2
+
+2 Computations in double-scaling limits                  5
+  2.1 Review of double-scaling limits at large charge    6
+  2.2 SO(N ) × SO(N ) model                              8
+  2.3 SO(3) model                                       12
+  2.4 SQED                                              14
+  2.5 SU (2) SQCD                                       16
+
+3 Bounds on α0                                          21
+  3.1 Setup                                             21
+  3.2 Proof of the convexity bound when M ≥ 0           25
+  3.3 Proof of projected convexity                      27
+  3.4 Fixed-charge-ray convexity                        28
+
+4 Bounds on α1                                          32
+
+A Locally symmetric target spaces and commutativity     37
+
+B Equal-scaling regime of the SO(N ) × SO(N ) model     39
+
+
+
+
+                                        –1–
+1   Introduction
+
+The study of Conformal Field Theories (CFTs) ultimately leads to the study of the allowed
+spectrum of local operators. One of the central problems in CFTs is to constrain this spec-
+trum using conformal symmetry, locality and unitarity. An especially interesting case is
+when a subclass of operators arranges itself into a “tower”. For example, crossing symme-
+try implies the existence of double-twist towers whose dimensions become asymptotically
+additive [2–4], while infinite towers of conserved higher-spin currents force the theory to
+be free, or close to free, in a precise sense [5, 6]. In holographic CFTs, towers of single-
+trace operators are the boundary imprint of bulk particle spectra, including Kaluza–Klein
+modes and string excitations. Thus the structure of large-charge towers gives a CFT way
+of probing when an extra geometric direction, or a higher-dimensional bulk description,
+is emerging. Towers also play a central role in the swampland program. The distance
+conjecture predicts an infinite tower of light states at infinite-distance limits in quantum
+gravity [7, 8] (see [9] for a review), and in holographic settings this can be translated into
+statements about towers of CFT operators [10–12]. Thus, in several different contexts,
+the existence and properties of towers of operators provide sharp information about the
+structure of the underlying theory.
+     The best-known linear towers of non-spinning operators arise in supersymmetric CFTs
+with four supercharges. In these theories, moduli spaces are associated with towers of chiral
+operators. If Φ is a chiral operator of R-charge r parameterizing the moduli space, then
+Φn is also chiral and has dimension
+                                               d−1
+                                      ∆Φn =        rn.                                   (1.1)
+                                                2
+However, linear towers are not restricted to this highly supersymmetric setting, and they
+also arise in theories with less supersymmetry. Recently, [1] studied general CFTs with
+moduli spaces along which a continuous global symmetry is spontaneously broken. The
+main result is that if Q is the charge under a broken U (1), then
+
+                                   ∆min (Q) = α1 Q + · · · ,                             (1.2)
+
+where the ellipsis denotes terms which are subleading at large Q. Here and below, ∆min (Q)
+denotes the lowest scaling dimension in the charge-Q sector. In cases where the relevant
+symmetry is an R-symmetry, this result reduces to (1.1).
+     We thus find that moduli spaces with less than four supercharges obey the linear
+relation (1.1) only asymptotically at large Q. The form of the corrections can also be fixed.
+Using large-charge methods [13] applied to the moduli-space EFT [1, 14, 15], one finds that
+in 3d, which will be our main focus, the expansion takes the form
+
+                              ∆min (Q) = α1 Q + α0 + O(1/Q),                             (1.3)
+
+while in 4d the same moduli-space EFT analysis gives
+
+                           ∆min (Q) = α1 Q + α0 log Q + O(Q0 ).                          (1.4)
+
+
+
+
+                                            –2–
+The main examples in this paper are 3d N = 1 theories, which can have moduli spaces
+despite having only two supercharges, as explained e.g. in [16]. In terms of the EFT analysis
+we will be using, α1 is a classical contribution while α0 comes from the one-loop correction.
+These are the two main observables we will be studying in this paper.
+    There are two related reasons to study these coefficients. The first is simply that
+there are very few examples in which they can be computed in theories with less than four
+supercharges. In the first part of this paper we compute α1 , α0 in several new examples
+using large N or small ϵ expansions. Some of these computations are the first direct
+computations of the subleading coefficient in 3d, rather than computations obtained by
+continuing from the ϵ-expansion. The examples include large-Nf computations in 3d N = 1
+SQED, SU (2) SQCD, and Wess-Zumino models. The details of these computations are
+reviewed in section 2.
+    The second motivation comes from the holographic swampland program, and more
+specifically from convexity conjectures for charged operators. The idea is to translate
+expectations from the swampland program into constraints on CFT data by using the
+AdS/CFT correspondence. Motivated by the weak gravity conjecture (WGC) [17], Aharony
+and Palti [18] introduced the CFT convexity conjecture (CCC), which requires ∆min (Q)
+to be superadditive,
+                           ∆min (Q1 + Q2 ) ≥ ∆min (Q1 ) + ∆min (Q2 ),                   (1.5)
+for charges which are multiples of some order-one unit charge q0 . This conjecture has been
+tested and refined in several examples and generalizations [19–21]. A large-charge EFT
+discussion of convexity was given in [22], while [23] found that bottom-up EFT consistency
+alone is not enough to prove it. Ultimately it was found that this strong version of the
+conjecture is not correct in general [24].
+     Nevertheless, one can ask for a weaker version of the same statement, where the order-
+one charge assumption on q0 is dropped and the inequality is required only at parametrically
+large charge. All known large-charge phases are manifestly consistent with convexity,1 the
+only exception being the asymptotically linear behavior of (1.3) for a 3d N = 1 theory
+with a moduli space. In this case the asymptotic version of (1.5) (known as the asymptotic
+CCC) requires2
+                            Asymptotic CCC bound:          α0 ≤ 0.                     (1.6)
+This is an example of an explicit CFT constraint motivated by holographic swampland,
+and one can now attempt to prove or disprove it using CFT tools.
+    In this paper we prove a version of the bound (1.6). In the case of a single U (1)
+symmetry our version is equivalent to the desired bound (1.6), with a subtlety arising only
+when considering symmetry groups with several Cartans. For a set of Cartans {Qa }N     a=1 ,
+   1
+      It is certainly possible that there are undiscovered large-charge phases with an exotic asymptotic be-
+havior of ∆min , for which convexity would have to be studied separately.
+    2
+      We emphasize that the bound is a necessary but not sufficient condition for the asymptotic CCC, since
+if α0 = 0 then the next subleading term in the large-Q expansion (1.3) determines convexity. The only
+known cases with α0 = 0 have an exactly linear tower (so that all other subleading corrections also vanish
+and convexity is obeyed), but it is certainly possible that other cases exist.
+
+
+
+
+                                                   –3–
+let ∆min (Qa ) denote the lowest dimension at fixed charge vector Qa . The stronger fixed-
+charge-ray convexity statement is that, for every fixed ray in charge space, ∆min (Qa ) is
+asymptotically convex. Although all known CFT examples (including the ones discussed
+in this paper) are consistent with this statement, we were not able to prove it using large-
+charge methods. In fact, we will find a 3d N = 1 EFT counterexample to this statement
+(which does not correspond to any known complete CFT). Thus we find that large-charge
+methods are insufficient to prove this statement in full generality without some additional
+input from the full UV CFT, in agreement with [23].
+     Instead, we focus on a slightly weaker statement, which involves a projection to a single
+Cartan. Given a set of Cartan generators T a and some specific linear combination of them
+
+                                          Tn = na T a ,                                  (1.7)
+
+define
+                                    (n)
+                                ∆min (Q) = min ∆min (Qa ).                               (1.8)
+                                             n·Q=Q
+
+Thus only the charge under Tn is held fixed, while the charges under all orthogonal Cartans
+are minimized over. In particular, the state which minimizes (1.8) may carry nonzero
+charges under the Cartans orthogonal to Tn .
+    Our main general result is a proof of the projected convexity bound. In 3d,
+                              (n)          (n)       (n)
+                            ∆min (Q) = α1 Q + α0 + O(1/Q),                               (1.9)
+
+and we show that the full one-loop coefficient obeys
+                                             (n)
+                                           α0      ≤0                                  (1.10)
+
+for any choice of Cartan generator Tn . If the inequality is strict, this implies asymptotic
+                                               (n)
+superadditivity of the projected tower. If α0 = 0, the sign of the next term in the large-
+charge expansion must be examined. This provides a concrete example of a CFT bound
+motivated by the holographic swampland program that can be derived directly using CFT
+                                                                     (n)
+tools. We will focus on showing that the scalar contribution to α0 is non-positive, since
+the fermion and gauge field contributions are always non-positive using an argument from
+[1].
+     As discussed above, this result is weaker than fixed-charge-ray convexity. The projected
+observable allows the theory to choose the most favorable charge vector with fixed n · Q,
+while the fixed-charge-ray problem prescribes the full charge direction in advance. In
+some simple classes of EFTs, including very low-dimensional moduli spaces and maximally
+symmetric sigma-model targets, one can still prove the fixed-charge-ray sign bound by
+additional arguments. We discuss these cases in section 3.4.
+     This projected statement is also the natural version to compare with the WGC when
+there is more than one Cartan. For several U (1)’s, the relevant flat-space statement is not
+a separate one-dimensional WGC along every fixed charge ray, but rather the convex-hull
+WGC [25]: for every direction in the dual charge space, the spectrum must contain states
+whose charge-to-mass vectors have sufficiently large projection in that direction. In the
+
+
+
+
+                                             –4–
+black-hole discharge argument, convex combinations of such vectors are then interpreted
+as multi-particle final states. Our projected observable is analogous to the first, lower-
+envelope part of this statement: it fixes a direction Tn and lets the theory choose the
+lightest tower among all states with fixed n · Q.
+     Let us also mention the coefficient α1 . In a simple holographic picture, the linear
+tower resembles a Kaluza–Klein tower, with the charge interpreted as momentum along
+an internal circle. This suggests asking whether α1 is bounded by some analogue of the
+absence of parametric scale separation.3 Here “absence of scale separation” refers to the
+swampland expectation that controlled AdS quantum gravity vacua with compact extra
+dimensions cannot have a parametrically large hierarchy between the AdS scale and the
+lightest Kaluza–Klein scale: mKK LAdS should remain order one. In this sense, the relevant
+swampland conjectures forbid parametrically scale-separated AdS compactifications [26–
+28]; see [29] for a recent review. Scale-separated AdS flux vacua have a long history,
+starting with constructions such as DGKT and related type-IIA orientifold models [30, 31],
+while further discussions of scale separation in type-II AdS flux vacua and holography
+include [32–37]. We will argue that there is no such universal bound on α1 itself: simple
+operations on CFTs can make it parametrically large or small. A more natural normalized
+quantity, involving current and stress-tensor two-point function coefficients, may still be
+worth considering, but we will not find a universal bound on α1 alone.
+     The rest of the paper is organized as follows. In section 2 we compute α1 , α0 in
+several double-scaling limits, including large-Nf and ϵ-expansion examples. In section 3
+we consider α0 . We review the quadratic fluctuation problem of [1], prove the projected
+convexity bound for the one-charge observable, and explain why the argument does not
+extend to arbitrary fixed charge rays. We then give the EFT counterexample to fixed-
+charge-ray convexity. In section 4 we discuss possible bounds on α1 , and explain why α1
+itself is not expected to obey a universal bound.
+
+2       Computations in double-scaling limits
+
+In this section we compute the large-charge coefficients α1 and α0 in several controlled
+double-scaling limits of 3d N = 1 theories. We use large-charge methods applied to the
+moduli space EFT: by the state-operator correspondence, we work on the cylinder, expand
+around the homogeneous large-charge saddle, and compute its energy. Throughout this
+paper we set the cylinder radius to one. The leading coefficient α1 comes from the classical
+saddle energy, while α0 comes from the one-loop Casimir energy of fluctuations. The
+examples include large-Nf limits and ϵ-expansions. Our superspace conventions follow
+[38], while the moduli-space EFT and large-charge normalization follow [1]. The argument
+for the protection of certain moduli spaces of 3d N = 1 theories from being lifted by
+quantum corrections by time-reversal symmetries is discussed in [16].
+    3
+        We thank Irene Valenzuela for this observation.
+
+
+
+
+                                                     –5–
+2.1     Review of double-scaling limits at large charge
+We now review the double-scaling limits used to compute observables in the large charge
+expansion. Our review will be very brief, and for more details we refer the reader to the
+original papers cited below.
+
+2.1.1    ϵ-expansion
+In perturbative examples, the large-charge limit is organized by a double-scaling limit [39–
+41] (we will also need to include fermions, see [42]). The reason is that the classical fixed-
+charge saddle depends on the charge Q and the coupling g only through the combination
+
+                                              x ≡ g 2 Q.                                  (2.1)
+
+One therefore takes
+                          Q ≫ 1,          g ≪ 1,       x = g 2 Q is fixed.                (2.2)
+In this regime the lowest operator dimension admits an expansion of the form
+                               1
+             ∆min (Q, g) =        ∆−1 (x) + ∆0 (x) + g 2 ∆1 (x) + · · · ,    x = g 2 Q.   (2.3)
+                               g2
+The leading term is obtained by solving the classical fixed-charge equations, while ∆0 (x)
+is the one-loop correction from the quadratic fluctuations around the helical saddle on
+R × S d−1 .
+     Thus the computation naturally splits into a classical and a quantum piece. First one
+finds the homogeneous fixed-charge saddle of the classical action at generic coupling and
+evaluates the cylinder energy on that saddle. This gives
+                                                     1
+                                      ∆cl (Q, g) =      ∆−1 (x).                          (2.4)
+                                                     g2
+One then expands the fields around the helical background,
+
+                                            ϕ = ϕ∗ + δϕ                                   (2.5)
+
+and computes the Gaussian determinant of quadratic fluctuations. This gives the first
+quantum correction,
+                              ∆1−loop (Q, g) = ∆0 (x).                         (2.6)
+so that, at fixed x = g 2 Q,
+
+                      ∆min (Q, g) = ∆cl (Q, g) + ∆1−loop (Q, g) + O(1/Q).                 (2.7)
+
+This is the only general input from the perturbative large-charge formalism that we will
+need later on.
+    Let us mention one subtlety in applying this logic to 3d N = 1 theories. Since minimal
+supersymmetry in 4d has four real supercharges, it is not clear how to write a theory in 4−ϵ
+dimensions which interpolates between a 4d theory and a 3d theory with 2 supercharges.
+For Wess-Zumino models, this difficulty can be bypassed by embedding the model in a
+
+
+
+
+                                                 –6–
+non-supersymmetric Yukawa theory and analytically continuing the number of fermionic
+degrees of freedom to the value corresponding to a single 3d Majorana fermion [43, 44]. It
+is less clear whether an analogous continuation works for the gauge theories discussed in
+this paper, and so we will not use it there; see [45] for a study of this question in 3d N = 1
+SQED.
+
+2.1.2   Large N
+There is a second useful regime in which the microscopic theory is strongly coupled but
+admits a controlled large-N description. The prototype is the large-N treatment of the
+O(N ) model at fixed charge [46, 47] (see also the review [48]). The calculations below
+follow the same logic, adapted to theories with moduli spaces.
+     The starting point is the canonical partition function at fixed charge. For a single U (1)
+charge one projects the grand-canonical partition function onto charge Q by introducing a
+chemical potential θ conjugate to the charge:
+                           Z 2π                  Z 2π
+                                dθ −iθQ                dθ −iθQ
+                 ZQ (β) =          e    Z(iθ) =           e     Tr e−βH+iθQ̂ .            (2.8)
+                            0   2π                 0  2π
+For several commuting Cartans one similarly introduces chemical potentials θa conjugate
+to charges Qa ,
+                             Z 2π Y
+                                    dθa −i Pa θa Qa          P
+                Z{Qa } (β) =            e           Tr e−βH+i a θa Q̂a .           (2.9)
+                              0   a
+                                    2π
+
+At low temperature we expect
+
+                           Z{Qa } (β) ≈ e−β∆min (Qa )     (β → ∞),                      (2.10)
+
+so the saddle-point evaluation of (2.9) directly computes the lowest operator dimension.
+     In a path-integral description, the θa may be viewed as constant background gauge
+fields along the Euclidean time circle, so they enter through the covariant derivative
+
+                                      D0 = ∂0 + iθa T a                                 (2.11)
+
+on fields charged under the Cartan generators T a . One then rewrites the interacting theory
+using standard Hubbard-Stratonovich fields, integrates out the N matter fields, and obtains
+an effective action for a small number of collective fields. Schematically, at leading order
+in N we find                         Z    Z
+                         Z{Qa } (β) = dθa DσDϕ0 e−N Seff [θa ,σ,ϕ0 ] .                 (2.12)
+
+Here ϕ0 denotes possible condensates while σ stands for the Hubbard-Stratonovich fields.
+The whole point of the large-N method is that the coefficient of the effective action is of
+order N , so it can be evaluated by a saddle
+                                           P
+                                              point approximation. The large charge enters
+at the same time through the factor e   −i  a θa Qa in the fixed-charge projection. Thus, in
+
+the regime relevant for this paper, 1 ≪ N ≪ Qa , both the collective-field effective action
+and the fixed-charge projection are sharply peaked, and the dominant contribution comes
+from a homogeneous helical saddle.
+
+
+
+
+                                             –7–
+     The saddle-point equations are obtained by varying the action with respect to the
+collective fields and the chemical potentials,
+                          ∂Seff              δSeff            ∂Seff
+                                = 0,               = 0,             = 0.              (2.13)
+                          ∂θa                 δσ              ∂ϕ0
+
+The corresponding grand-canonical free energy is F (θa ) ≡ −β −1 log Z(iθa ), and the saddle-
+point condition for the chemical potentials becomes
+                                          ∂F
+                                                 = Qa .                               (2.14)
+                                         ∂(iθa )
+
+The lowest operator dimension is then obtained from the Legendre transform
+                                       "                   #
+                                                   X
+                      ∆min (Qa ) = lim F (θa ) − i   θa Qa      .                     (2.15)
+                                       β→∞
+                                                          a         saddle
+
+This also makes clear how the classical and quantum pieces arise. First one finds the homo-
+geneous saddle and evaluates the effective action on it; this gives the leading contribution,
+which in the examples below determines α1 . One then expands the collective fields around
+that saddle,
+                            σ = σ∗ + δσ,       ϕ0 = ϕ0,∗ + δϕ0                         (2.16)
+and computes the Gaussian determinant. This gives the first quantum correction, which
+in our case contributes to α0 .
+
+2.2     SO(N ) × SO(N ) model
+We now study a 3d N = 1 theory with real superfields A, Xi , Yi , with i = 1, . . . , N , and
+superpotential
+                                         g
+                                   W = A Xi2 − Yi2 .
+                                                      
+                                                                                       (2.17)
+                                         2
+The model has continuous global symmetry SO(N ) × SO(N ). It also has a discrete sym-
+metry Xi ↔ Yi , which protects the moduli space branch where ⟨|Xi |2 ⟩ = ⟨|Yi |2 ⟩, and a
+second discrete symmetry A → −A, which protects the moduli space branch with ⟨A⟩ ̸= 0.
+We will focus on the former, where a continuous symmetry is broken. For N = 2 this
+model reduces to the 5-field example of [1].
+     In this section we compute the large-charge spectrum of this model in two controlled
+limits: the ϵ-expansion near 4d, and the large-N limit in the regime Qx,y ≫ N ≫ 1. In
+appendix B we generalize the large-N analysis to the complementary equal-scaling regime
+Qx,y = λx,y N , in which the charges grow linearly with N .
+
+2.2.1    ϵ-expansion
+We apply the general double-scaling discussion to the model (2.17). We will focus on
+turning on a single Cartan of each SO(N ) symmetry, so we choose two components of Xi
+and combine them into a complex field x, and similarly choose two components of Yi and
+combine them into a complex field y. It turns out that in this case the answer follows almost
+
+
+
+
+                                               –8–
+immediately from the result for N = 2 computed in [1]. Indeed, writing the remaining real
+fields as XI , YI , with I = 1, . . . , N − 2, the superpotential becomes
+                                        g
+                                          A |x|2 − |y|2 + XI2 − YI2 .
+                                                                   
+                              W =                                                        (2.18)
+                                        2
+The charged sector then has a U (1)x ×U (1)y symmetry rotating x and y. For generic Qx , Qy ,
+only the (A, x, y) sector participates in the charged saddle,
+                                                      q       and so the result reduces to
+that of the N = 2 case. In the large-charge regime g∗2         Q2x + Q2y ≫ 1, we find
+
+                                   √
+                                                            q
+                                           ϵ    ϵ          2
+                ∆cl (Qx , Qy ) =       2 1− +         + O(ϵ )  Q2x + Q2y .               (2.19)
+                                           2 4(N + 4)
+
+From this result one can read off α1 in any direction in charge space.
+   To find α0 , it is convenient to restrict to the diagonal charge assignment
+
+                                            Qx = Qy ≡ Q.                                 (2.20)
+
+To obtain the next correction, we expand around this saddle and compute the Casimir
+energy of the quadratic fluctuations. The key point is that the nontrivial interacting sector
+is again only the (A, x, y) sector, exactly as in the N = 2 5-field model computed in [1].
+The additional XI , YI fields are free on this background, so at this order they only affect the
+answer through the fixed-point value of the coupling. It follows that the one-loop corrected
+dimension takes the form
+                            g2
+                                                          
+                                        4          1
+                                                      + O(g ) log g 2 Q + O(g 0 Q0 ). (2.21)
+                                                           2
+                                                                         
+    ∆min (Q) = d − 2 +         2
+                                 + O(g ) Q −
+                           64π                     32
+
+The one-loop beta function can be computed explicitly and is
+
+                                                gϵ g 3 (N + 4)
+                                       βg = −     +            ,                         (2.22)
+                                                2       64π 2
+Therefore the fixed point is at
+                                                    32π 2
+                                            g∗2 =         ϵ.                             (2.23)
+                                                    N +4
+Substituting g = g∗ gives
+                                                 
+                                 1                2       1
+     ∆min (Q, Q) = 2 +                 − 1 ϵ + O(ϵ ) Q −    log(ϵQ) + O(Q0 ).            (2.24)
+                              2(N + 4)                   32
+
+And so for the diagonal charge assignment Qx = Qy ,
+                                      
+                              1                                         1
+               α1 = 2 +             − 1 ϵ + O(ϵ2 ),            α0 = −      + O(ϵ).       (2.25)
+                          2(N + 4)                                      32
+
+
+
+
+                                                 –9–
+2.2.2      Large N
+We now analyze the same model directly in the large-N expansion in 3d. The logic is
+parallel to the general discussion above: we first determine the homogeneous fixed-charge
+saddle and then evaluate the one-loop determinants around it. Expanding the superfields
+as
+                                                          1
+                                      A(x, θ) = a + θ̄η + θ̄θF,
+                                                          2
+                                                            1
+                                  Xi (x, θ) = Xi + θ̄ ψXi + θ̄θFXi                           (2.26)
+                                                            2
+and similarly for Yi , we find the component action
+              1          1
+        S = (∂µ Xi )2 + (∂µ Yi )2 + iψXi γ µ ∂µ ψXi + iψYi γ µ ∂µ ψYi + FX2 i + FY2i +
+              2          2
+   +2a(Xi Fi − Yi Fi ) − a(ψ̄iX ψiX − ψ̄iY ψiY ) + F (Xi2 − Yi2 ) − 2η̄(Xi ψiX − Yi ψiY ).
+            X       Y
+                                                                                             (2.27)
+
+Here F already plays the role of the Hubbard-Stratonovich field, so no additional auxiliary
+field is needed. This implies that at the IR fixed point ∆F = 2, and supersymmetry then
+fixes ∆A = 1.
+     To construct the large-N effective action we allow homogeneous expectation values
+for the charged combinations X ≡ X1 + iX2 and Y ≡ Y1 + iY2 . We work on R × S 2 ,
+so the scalars acquire the usual conformal mass term 41 (Xi2 + Yi2 ).4 Introducing chemical
+potentials θx , θy for the two Cartans with charges Qx , Qy , we obtain
+                                                                           
+                    N                    2   1     N                     2  1
+            Seff =     tr log −∆ + F − a +       +   tr log −∆ − F − a +        −
+                    2                        4     2                        4
+                          −N tr log [iγ µ ∂µ + a] − N tr log [iγ µ ∂µ − a] +
+                                                                            
+                                              2    1    2               2    1
+                  +iθx Qx + iθy Qy + F + θx +          X + −F + θy +             Y 2+
+                                                   4                         4
+                                    +2a(XFx − Y Fy ) + Fx2 + Fy2 .                           (2.28)
+
+Here ∆ is the Laplacian on R × S 2 . In the regime Qx,y ≫ N ≫ 1, the classical charged
+condensates contribute at order Q while the Tr log terms contribute at order N , so the
+determinants do not modify the leading saddle-point equations, though they do contribute
+to the first subleading correction. At leading order we therefore find the saddle-point
+equations
+                           
+                           
+                                     2aX + 2Fx          = 0,
+                           
+                                     −2aY + 2Fy          = 0,
+                           
+                           
+                           
+                           
+                                        2 + 1 X + 2aF
+                                             
+                           
+                           
+                              2  F + θ x    4        x = 0,
+                                          2   1
+                              2 −F + θy + 4 Y − 2aFy = 0,                         (2.29)
+                           
+                           
+                           
+                           
+                                    XFx − Y Fy          = 0,
+                           
+                           
+                                          2
+                                        X −Y     2       = 0,
+                           
+                           iQ + 2θ X 2 = iQ + 2θ Y 2 = 0
+                           
+                                x     x            y y
+
+  4
+      Since ∆A = 1, no conformal mass term is added for a.
+
+
+
+
+                                                 – 10 –
+From the first two and the fifth equations we immediately find Fx = Fy = a = 0, while the
+sixth equation gives Y = X. The remaining saddle-point equations reduce to
+                            
+                                    2 F + θx2 + 14 X = 0,
+                                                  
+                            
+                            
+                                   2 −F + θy2 + 14 X = 0,
+                                                   
+                                                                                   (2.30)
+                                          2               2
+                            
+                             iQx + 2θx X = iQy + 2θy X = 0
+whose solution is
+                                               iQx,y
+                                   θx,y = − q              ,
+                                             2(Q2x + Q2y )
+                                     q                        Q2x − Q2y
+                        X2 = Y 2 =    Q2x + Q2y ,      F =                 .             (2.31)
+                                                             4(Q2x + Q2y )
+Evaluating the classical action on this saddle gives the leading contribution
+                                                 s
+                                                   Q2x + Q2y
+                               ∆min (Qx , Qy ) =             .                           (2.32)
+                                                       2
+    We now turn to the subleading contribution. This comes from evaluating the Tr log
+terms on the leading saddle. It is useful to define the regulated determinant
+                                                                                   
+                                 X               s       2             2
+           1                   1           l+ 1            1               1     x
+   ξ(x) ≡ tr log −∆ + x +          =                     l+      +x− l+          − .
+           T                   4                 2          2               2     2
+                                        l
+                                                                                         (2.33)
+We have regulated the determinant by subtracting the first two terms in the large-ℓ expan-
+sion,
+                          p               x                          1
+                         r r2 + x = r2 + + O(r−2 ),          r =ℓ+ .                      (2.34)
+                                           2                         2
+Equivalently, this is dimensional regularization with local power divergences removed. With
+this convention a conformally coupled real scalar on R × S 2 has vanishing Casimir energy,
+ξ(0) = 0. We plot ξ(x) for the relevant range − 14 ≤ x ≤ 14 in figure 1.
+     The final result is
+                     s                                 !                      !
+                       Q2x + Q2y   N       Q2x − Q2y      N       Q2y − Q2x
+   ∆min (Qx , Qy ) =             + ξ                     + ξ                    + · · · . (2.35)
+                           2        2    4(Q2x + Q2y )     2    4(Q2x + Q2y )
+
+There are additional corrections of order N 0 Q0 which we have not computed, as well as
+subleading orders in 1/Q. We have thus found that the leading linear term in Q (which
+determines α1 ) is                     s
+                                            Q2x + Q2y
+                                                      ,                                  (2.36)
+                                                2
+while the order-N Q0 correction is
+                                                  !                          !
+                          N        Q2x − Q2y           N      Q2y − Q2x
+                      α0 = ξ                          + ξ                        .       (2.37)
+                          2       4(Q2x + Q2y )        2     4(Q2x + Q2y )
+It is clear from figure 1 that α0 is always non-positive.
+
+
+
+
+                                            – 11 –
+                                 0
+
+                              -0.02
+
+
+
+                              -0.06
+
+
+
+
+                       ξ(x)
+                              -0.10
+
+
+
+                              -0.14
+                                  -1/4        -1/8            0       1/8         1/4
+                                                              x
+
+Figure 1: ξ(x) for − 14 ≤ x ≤ 14 . The function vanishes at x = 0 and is negative everywhere
+else.
+
+
+2.3   SO(3) model
+We now consider a 3d N = 1 Wess-Zumino model with three real superfields xi , yi , zi ,
+i = 1, 2, 3, and superpotential
+                                W = g ϵijk xi yj zk .                        (2.38)
+We will work in the ϵ-expansion in d = 4 − ϵ dimensions. First, a direct computation shows
+that the theory has beta function
+                                               ϵ    g3
+                                         βg = − g + 2 + O(g 5 ),                        (2.39)
+                                               2   8π
+and so a fixed point exists in the ϵ-expansion.
+    The model has an SO(3) global symmetry. The F-term equations are
+
+                                         x ∧ y = y ∧ z = z ∧ x = 0,                     (2.40)
+
+so on the classical moduli space the three vectors are parallel, and the discrete symmetries
+x → −x, y → −y and z → −z protect this moduli space from being lifted by quantum
+corrections. We may therefore write
+
+                       xi = r s 1 ni ,               yi = r s2 ni ,   zi = r s3 ni ,    (2.41)
+
+where ni ni = 1 and sa sa = 1. The moduli space is locally
+
+                                           M ≃ R+ × Sn2 × Ss2 .                         (2.42)
+
+   We fix a charge Q under the Cartan of the SO(3) symmetry. We can choose the
+homogeneous fixed-charge saddle to rotate along a great circle of Sn2 , while s is constant:
+
+                      r = v,             n(t) = (cos µt, sin µt, 0),         s = s0 .   (2.43)
+
+On the unit-radius cylinder the conformal mass is md = d−2
+                                                        2 , and the equation of motion
+for r fixes µ = md . The charge-fixing condition is
+
+                                               Q = Ωd−1 v 2 µ.                          (2.44)
+
+
+
+
+                                                        – 12 –
+Evaluating the classical energy on the saddle gives
+                                                            d−2
+                                      ∆cl (Q) = µQ =            Q,                     (2.45)
+                                                             2
+so that α1 is just the free result:
+                                                d−2
+                                           α1 =     .                                   (2.46)
+                                                 2
+    We now discuss the one-loop correction. The charged sector (r, Sn2 ) is precisely the
+CP 1 ≃ S 2 sigma-model sector with the normalization c = 1 in the notation of [1]. There-
+fore its fluctuation determinant is the same as the CP 1 determinant computed there.
+Equivalently, this sector is just the free conformal scalar sector written in polar variables,
+and its regulated Casimir energy vanishes:
+                                             (r,n)
+                                           ∆1−loop = 0.                                (2.47)
+
+    The remaining factor Ss2 gives two neutral angular moduli. Expanding around a point
+on Ss2 ,                                   q
+                                  s = (η1 , η2 ,     1 − η12 − η22 ),                  (2.48)
+the quadratic action is
+                                                 2
+                                               2 X
+                                           v
+                                      L(2)
+                                       s =               ∂µ η a ∂ µ η a .              (2.49)
+                                             2
+                                                   a=1
+Thus the two ηa have the same dispersion relation as the neutral spectator modulus in the
+five-field model of [1],                p
+                                ωs (ℓ) = ℓ(ℓ + d − 2).                             (2.50)
+We may therefore import the corresponding Casimir result directly. In d = 4 − ϵ, one such
+real spectator mode contributes
+                                          1
+                                       − log(ϵQ)                                       (2.51)
+                                          32
+to ∆min (Q). Since the SO(3) model has two such modes, while the (r, Sn2 ) sector contributes
+zero, we obtain
+                                             1
+                           ∆1−loop (Q) = − log(ϵQ) + O(Q0 ).                           (2.52)
+                                            16
+The fermions do not modify this logarithmic term: after diagonalizing the fermion mass
+matrix in the rotating frame, their contribution reduces to the shifted fermion towers
+analyzed in [1], whose regulated logarithmic contribution vanishes.
+     Combining the classical and one-loop pieces gives
+                                       ϵ      1
+                       ∆min (Q) = 1 −       Q−     log(ϵQ) + O(Q0 ).                   (2.53)
+                                        2      16
+Thus, in the notation of (1.4), this example has
+                                          ϵ                            1
+                                  α1 = 1 − ,               α0 = −                      (2.54)
+                                          2                            16
+at this order in ϵ.
+
+
+
+
+                                               – 13 –
+2.4     SQED
+Next we discuss 3d N = 1 SQED at large Nf . Suppressing the gauge kinetic term, the
+Lagrangian contains
+                                  i
+               |Dϕi |2 + iψ̄i
+                             D       λ − iψ̄i λϕi + iλ̄ψi ϕ̄i ,
+                             ψi + λ̄
+                                     D                             i = 1, . . . , Nf .   (2.55)
+                                  2
+Since we are working on R × S 2 , we must also include the conformal mass term
+
+                                    m2 |ϕi |2 ,   m2 = 1/4 .                             (2.56)
+
+The theory has a global SU (Nf ) symmetry. Its moduli space is obtained by giving arbitrary
+expectation values to ϕi , modulo the overall U (1) gauge symmetry. Thus the moduli-space
+EFT consists of a dilaton, parametrizing the radial direction, coupled to a nonlinear sigma
+model with target space CPNf −1 . This moduli space is preserved to all orders by the
+time-reversal symmetry ϕi → −ϕi [16].
+    To project onto fixed charges under the Cartan of SU (Nf ) we introduce chemical
+                                                                P
+potentials θi , together with a Lagrange multiplier λ imposing    θi = 0. This amounts to
+                                                                     i
+adding                                                 X
+                                      −iθi Qi + iλ         θi .                          (2.57)
+                                                       i
+
+At the order in Nf relevant for our discussion we may ignore the gaugino and gauge-field
+fluctuations. To obtain the large-Nf effective action on R × S 2 , we keep the homogeneous
+charged scalar condensates ϕi , the constant gauge-field mode A0 , and the chemical po-
+tentials θi , and integrate out the nonzero modes of the matter multiplets. The resulting
+effective action is
+               Seff Xh                                    i     X
+                          (A0 + θi )2 + m2 |ϕi |2 − iθi Qi + iλ
+                                          
+                   =                                                θi
+                T
+                      i                                          i
+                        X                             X                              (2.58)
+                                      2
+                                        − ∇2 + m2 −                 0,i ] + O(Nf0 ),
+                                 
+                     +     Tr log −D0,i                     Tr log[i
+                                                                    D
+                       i                                      i
+
+where
+                                    D0,i = ∂0 + i(A0 + θi ).                             (2.59)
+In the regime Qi ≫ Nf ≫ 1 the Tr log terms do not modify the leading saddle-point
+equations, so at leading order we may extremize only the classical part of Seff . This gives
+                             
+                                  (A0 + θi )2 + m2 ϕi
+                                                        
+                             
+                                                          = 0,
+                             2(A + θ )|ϕ |2 − iQ + iλ = 0,
+                             
+                                  0
+                                   P i i                 i
+                                                         2                            (2.60)
+                             
+                                    i (A0 +  θ i )|ϕ i |  = 0,
+                                        P
+                                            i θi           = 0.
+                             
+
+Summing the second equation over i and using the third one gives
+                                              1 X
+                                        λ=        Qi .                                   (2.61)
+                                              Nf
+                                                   i
+
+
+
+
+                                              – 14 –
+For generic charges all ϕi are nonzero, since otherwise the second equation would impose
+a nongeneric relation among the Qi . The first equation then implies
+
+                                 A0 + θi = isi m,               si ∈ {±1}.           (2.62)
+           P
+Imposing    i θi = 0 fixes
+                                                     im X
+                                        A0 =              si .                       (2.63)
+                                                     Nf
+                                                            i
+
+The second equation then determines
+                                                       
+                                                1  X
+                                 si = sgn Qi −      Qj  .                          (2.64)
+                                                Nf
+                                                                    j
+
+Substituting back into the classical action gives
+                                                                       
+                             X                X                 1  X
+                   ∆ = −i         θi Qi = m           sgn Qi −      Qj  Qi .       (2.65)
+                                                                Nf
+                             i                   i                       j
+
+It is convenient to define the shifted charges
+                                                       1 X
+                                     Q̃i = Qi −            Qj .                      (2.66)
+                                                       Nf
+                                                                j
+
+Then the leading contribution becomes
+                                                     1X
+                                         ∆=             |Q̃i |,                      (2.67)
+                                                     2
+                                                        i
+
+which is just the free-theory result.
+     We now turn to the subleading Nf Q0 correction. This is obtained by evaluating the
+Tr log terms on the leading saddle. On the cylinder the constant background values of
+A0 and θi can be absorbed into the time dependence of the charged fields, so the bosonic
+                                                                                  2     2
+                                                                     P                    
+determinant reduces to the free conformally coupled scalar result      i Tr log −∂ + m
+while the fermionic determinant reduces to the free fermion result. Their Casimir-energy
+contribution therefore vanishes. We thus find
+                                    1X
+                        ∆min (Q) =     |Q̃i | + O(Nf0 Q0 ) + O(1/Q).                (2.68)
+                                    2
+                                         i
+
+In particular, we find that α0 vanishes at leading order in 1/Nf . The result is consistent
+with the EFT computation in [1]; taking Nf → ∞ in [1] and using the fact that the Wilson
+coefficient c there approaches the free value 1/4 as Nf → ∞, we find that the result indeed
+reduces to the Casimir energy of a scalar with only the conformal coupling on R × S 2 ,
+which vanishes.
+
+
+
+
+                                                 – 15 –
+2.5     SU (2) SQCD
+We now consider the Higgs branch of 3d N = 1 SU (2) SQCD with Nf complex fundamental
+multiplets, following [16]. Since the SU (2) fundamental is pseudoreal, the scalar quarks
+can be combined into an Nf -component quaternionic vector,
+
+                                          q ∈ HNf .                                   (2.69)
+
+The gauge group is SU (2)gauge ≃ Sp(1), acting by left quaternionic multiplication, and the
+flavor symmetry is enhanced from the generic U (Nf ) to Sp(Nf ). On the moduli space, the
+classical quotient is therefore
+
+                        Mreg = HNf \ {0} /Sp(1) = R+ × HP Nf −1 .
+                                         
+                                                                                     (2.70)
+
+Thus the low-energy theory consists of the dilaton together with a NLSM with target space
+                                               Sp(Nf )
+                             HP Nf −1 =                      .                        (2.71)
+                                          Sp(Nf − 1) × Sp(1)
+
+     For a general SU (Nc ) gauge group the structure of the Higgs branch can be more
+involved - for higher Nc there are separate meson and baryon branches, and the NLSM
+contains moduli which are not all Goldstone bosons, making an equally explicit analysis
+less immediate. In addition, for Nf < Nc the moduli space can be lifted nonperturbatively.
+We will thus focus on the Nc = 2 case, where the moduli space has this particularly simple
+quotient description.
+
+2.5.1    Two-derivative EFT and α1
+The bosonic two-derivative EFT for the moduli space is
+                      1       1        c
+                LEFT = (∂Φ)2 − m2d Φ2 + Φ2 gAB (x)∂µ xA ∂ µ xB + · · · ,              (2.72)
+                      2       2        2
+where Φ is the dilaton, xA ∈ HP Nf −1 and gAB is the quotient metric on HP Nf −1 . c > 0 is
+a Wilson coefficient whose exact value we do not know, but we will be able to compute it
+at large Nf later on. In 3d on the unit cylinder R × S 2 , md = 1/2. All computations will
+be performed using dimensional regularization, which allows us to preserve the symmetries
+of the theory at the quantum level.
+     We choose a charge assignment with a single nonzero Cartan charge Q for a U (1) ⊂
+Sp(Nf ). Let k A (x) be the Killing vector on HP Nf −1 generated by this U (1). For the
+rank-one charge assignment considered here, the orbit lies inside a totally geodesic
+
+                                     HP 1 ⊂ HP Nf −1 .                                (2.73)
+
+With the quotient metric inherited from S 4Nf −1 → HP Nf −1 , this HP 1 is a round four-
+sphere of radius a = 21 . The fixed-charge saddle sits at a point where |k|2 = gAB k A k B is
+maximal, and for this U (1) action
+
+                                       2         1
+                                      kmax = a2 = .                                   (2.74)
+                                                 4
+
+
+
+                                           – 16 –
+    Writing the helical saddle as
+
+                                     Φ = v,         ẋA = µk A (x0 ),                        (2.75)
+
+the dilaton equation of motion gives
+                                                                      1
+                                m2d = cµ2 kmax
+                                           2
+                                               ,       ⇒           µ= √ .                    (2.76)
+                                                                       c
+The classical fixed-charge energy is therefore
+                                                       Q
+                                        ∆cl (Q) = µQ = √ ,                                   (2.77)
+                                                        c
+so that
+                                                   1
+                                              α1 = √ .                                       (2.78)
+                                                    c
+2.5.2     Scalar Casimir contribution
+We now compute the scalar contribution to α0 from the quadratic fluctuations around this
+saddle. Let
+                           λℓ = ℓ(ℓ + 1),    ℓ = 0, 1, 2, . . . ,                 (2.79)
+be the scalar spherical-harmonic eigenvalues on S 2 . We expand the fields as
+
+                    Φ = v + δΦ,         xA = xA         A
+                                              s (t) + δx ,              ẋA     A
+                                                                          s = µk (xs ),      (2.80)
+
+and decompose the target-space fluctuation into the component tangent to the helical orbit
+and the components orthogonal to it,
+                                                          k A (xs )
+          δxA = δx∥ k̂ A (xs ) + δxA
+                                   ⊥,      k̂ A (xs ) =             ,     kA (xs )δxA
+                                                                                    ⊥ = 0.   (2.81)
+                                                           kmax
+First consider the two fluctuations consisting of the radial mode δΦ and the angular fluc-
+tuation tangent to the helical orbit δx∥ . Their two frequencies are
+
+                                    ωℓ,− = ℓ,         ωℓ,+ = ℓ + 1.                          (2.82)
+
+The ℓ = 0 mode in the lower branch is the collective coordinate associated with the broken
+U (1). The regulated zero-point energy of this block is
+                           ∞                                     ∞
+                        1X                          1X
+                          (2ℓ + 1) (ωℓ,+ + ωℓ,− ) =    (2ℓ + 1)2 = 0                         (2.83)
+                        2                           2
+                          ℓ=0                                   ℓ=0
+
+in dimensional regularization. We therefore only need the remaining fluctuations orthogo-
+nal to the helical orbit δx⊥ .
+     Inside the selected HP 1 , there are three real transverse modes, which are
+                                            r
+                                                   1
+                                     ωℓ,0 = λℓ + ,                                  (2.84)
+                                                   c
+                                            r
+                                                   1     1
+                                    ωℓ,± = λℓ + ± √ .                               (2.85)
+                                                   c      c
+
+
+
+
+                                                   – 17 –
+so the entire HP 1 block contributes
+                                                            r
+                                                          1
+                               ωℓ,0 + ωℓ,+ + ωℓ,− = 3 λℓ + .                        (2.86)
+                                                          c
+The remaining 4(Nf − 2) real modes are normal to the selected HP 1 . They organize into
+2(Nf − 2) pairs                                r
+                                  ⊥      ⊥             1
+                                ωℓ,+ + ωℓ,− = 2 λℓ + .                              (2.87)
+                                                      4c
+     To express the answer in the notation already used above, recall the regulated scalar
+determinant function ξ defined in (2.33). With this convention, ξ(y) is the Casimir sum
+                           p
+for a scalar with frequency λℓ + y + 1/4. Since
+
+                                                1 2
+                                                 
+                                                           1
+                            ℓ(ℓ + 1) + x = ℓ +      +x− ,                           (2.88)
+                                                2          4
+a real relativistic scalar with frequency
+                                                p
+                                        ωℓ =     λℓ + x                             (2.89)
+
+contributes
+                         ∞                                  
+                       1X          p                       1
+                           (2ℓ + 1) ℓ(ℓ + 1) + x     =ξ x−     .                    (2.90)
+                       2                         reg       4
+                         ℓ=0
+
+Therefore the scalar contribution to the order-Q0 term is
+                                                              
+                       scalar        1 1                   1   1
+                      α0      = 3ξ    −    + 4(Nf − 2)ξ      −     .                (2.91)
+                                     c 4                   4c 4
+The first term comes from the HP 1 ≃ S 4 sector, and the second from the normal modes.
+Thus the scalar contribution is non-positive for c > 0:
+
+                                            α0scalar ≤ 0.                           (2.92)
+
+2.5.3   Fermion Casimir contribution
+We now include the fermions in the two-derivative moduli-space EFT. In a 3d N = 1 sigma
+model, their two-derivative action is fixed by the same metric that appears in the bosonic
+EFT. In the present case the target-space metric is
+
+                   ds2M = dΦ2 + cΦ2 gAB (x)dxA dxB ,            xA ∈ HP Nf −1 .     (2.93)
+
+In an orthonormal frame on the target space, the quadratic fermion action around a bosonic
+background takes the form
+                         (2)    i                              
+                       Lferm = χ̄Iˆγ µ ∇µ δIˆJˆ + ∂µ Y K ωK,IˆJˆ χJˆ.               (2.94)
+                                2
+Here Y I = (Φ, xA ), hatted indices denote tangent-space indices on M, and ωK,IˆJˆ is the
+target-space spin connection. On the homogeneous saddle,
+                                                                   1
+                          Φ = v,       ẋA = µk A (x0 ),        µ= √ ,              (2.95)
+                                                                    c
+
+
+
+
+                                              – 18 –
+the pullback of the target-space spin connection is a constant antisymmetric matrix,
+
+                                   ΩIˆJˆ = µk A ωA,IˆJˆ Y =(v,x0 ) .                  (2.96)
+
+We can diagonalize this antisymmetric matrix into 2 × 2 blocks. Each block can be put
+into the form                                    !
+                                            0 −1
+                                  ΩIˆJˆ = ν                                     (2.97)
+                                            1 0
+for some ν ≥ 0. ν is the induced fermion chemical potential for that two-Majorana block.
+Thus each nonzero 2 × 2 block of Ω gives a pair of Majorana fermions with frequencies
+shifted by ±ν.
+     The tangent space decomposes as
+                                                        4(N −2)
+                         T M = RΦ ⊕ R∥ ⊕ R3HP 1 ,⊥ ⊕ R⊥ f .
+                                         
+                                                                                  (2.98)
+
+The first factor consists of the radial fermion and the fermion tangent to the helical orbit.
+Since
+                                √            √    1 1      1
+                                  c µ kmax = c · √ · = ,                              (2.99)
+                                                    c 2    2
+this pair gives one two-Majorana block with
+                                                 1
+                                               ν= .                                  (2.100)
+                                                 2
+This is below the first spinor level on S 2 , and therefore this block does not contribute to
+the Casimir energy.
+    Inside the selected HP 1 ≃ S 4 , the three transverse fermions split into one unshifted
+Majorana fermion and one shifted two-Majorana block. The corresponding chemical po-
+tentials are
+                                              ν=0                                     (2.101)
+for the unshifted fermion, and
+                                                1
+                                              ν=√                                    (2.102)
+                                                  c
+for the shifted pair. The 4(Nf − 2) real fermions normal to the selected HP 1 organize into
+2(Nf − 2) shifted two-Majorana blocks, each with
+                                                1
+                                             ν= √ .                                  (2.103)
+                                               2 c
+    For a two-Majorana block with chemical potential ν, the spinor frequencies on the unit
+S 2 are
+                              ωn,± = n ± ν,            n = 1, 2, . . . ,             (2.104)
+with degeneracy 2n. In dimensional regularization the contribution of such a fermion block
+vanishes unless the lower branch crosses zero. Thus there is no contribution for ν ≤ 1. For
+ν > 1, the negative-energy levels with n < ν are filled, giving a Fermi sphere contribution
+                             ∞
+                             X
+                 F(ν) = −2         n(ν − n)+ ,        (ν − n)+ ≡ max(ν − n, 0),      (2.105)
+                             n=1
+
+
+
+
+                                               – 19 –
+which is manifestly non-positive. Equivalently, if K = ⌊ν⌋, then
+                      K
+                      X                                    K(K + 1)(2K + 1)
+          F(ν) = −2         n(ν − n) = −νK(K + 1) +                         .        (2.106)
+                                                                  3
+                      n=1
+
+At integer ν, the top level has zero energy, so this expression gives the same Casimir
+contribution. In particular,
+
+                                  F(ν) = 0        for      ν ≤ 1,                    (2.107)
+
+and
+                                           F(ν) ≤ 0.                                 (2.108)
+Combining the blocks, the fermion contribution to the order-Q0 term is
+                                                             
+                     ferm               1                    1
+                   α0 (c, Nf ) = F √        + 2(Nf − 2)F     √ .                     (2.109)
+                                         c                  2 c
+
+The radial/tangent block with ν = 1/2 and the unshifted Majorana fermion with ν = 0 do
+not contribute. The total scalar-plus-fermion contribution is therefore
+
+                         α0 (c, Nf ) = α0scalar (c, Nf ) + α0ferm (c, Nf ).          (2.110)
+
+Using the scalar result above, this gives
+                                                                 
+                    1 1                   1   1      1               1
+ α0 (c, Nf ) = 3ξ    −     +4(Nf −2)ξ       −     +F √ +2(Nf −2)F    √ . (2.111)
+                    c 4                   4c 4        c             2 c
+
+Since F(ν) ≤ 0, the fermion contribution is always non-positive. It vanishes whenever the
+induced chemical potentials remain below the first spinor level on S 2 . Equivalently, the
+fermion contribution vanishes for c ≥ 1; for 41 ≤ c < 1 only the shifted two-Majorana block
+inside the selected HP 1 contributes, while for c < 14 both this block and the 2(Nf − 2)
+normal shifted two-Majorana blocks contribute.
+
+2.5.4   Large Nf prediction
+At leading order in large Nf , the two-derivative metric on the Higgs branch is the classical
+quotient metric inherited from the canonical kinetic terms of the quarks. Equivalently,
+writing the quaternionic scalar as a radial mode times a point in HP Nf −1 , the flat kinetic
+term descends to dΦ2 + Φ2 ds2 Nf −1 . In the normalization of (2.72), this gives
+                               HP
+
+                                       c = 1 + O(1/Nf ).                             (2.112)
+
+At this leading large-Nf value,
+                                             α1 = 1.                                 (2.113)
+The normal modes have x = 1/4, so their scalar Casimir contribution is
+
+                                             ξ(0) = 0.                               (2.114)
+
+
+
+
+                                              – 20 –
+The remaining HP 1 block gives
+                                                 
+                                                 3
+                                α0scalar = 3ξ       ≃ −0.556.                        (2.115)
+                                                 4
+The fermion contribution vanishes at this order. Indeed, at c = 1 the fermionic chemical
+potentials are
+                                                    1
+                                    ν = 1,     ν= ,                                (2.116)
+                                                    2
+for the shifted HP 1 block and the normal shifted blocks, respectively. Since the fermion
+contribution is controlled by F(ν), which vanishes for ν ≤ 1, we find
+                                                           
+                         ferm                              1
+                        α0 (1, Nf ) = F(1) + 2(Nf − 2)F        = 0.                (2.117)
+                                                           2
+The ν = 1 block has zero modes at the first spinor level, but these do not shift the ground-
+state energy. Thus the leading large-Nf EFT prediction for the one-Cartan tower is
+                                                
+                                                3
+                           ∆min (Q) = Q + 3ξ         + O(1/Q).                        (2.118)
+                                                4
+
+3     Bounds on α0
+
+3.1    Setup
+As discussed in the introduction, the large-charge expansion for a 3d theory with a single
+U (1) symmetry broken on the moduli space is
+
+                             ∆min (Q) = α1 Q + α0 + O(1/Q).                             (3.1)
+
+The asymptotic CCC then requires the large-charge convexity bound
+
+                                           α0 ≤ 0.                                      (3.2)
+
+When the global symmetry has several Cartans, however, there are two distinct questions.
+The first is the fixed-charge-vector problem, where one studies
+
+                                          ∆min (Qa )                                    (3.3)
+
+at a fixed charge vector Qa . Fixed-charge-ray convexity would mean applying (3.2) to every
+fixed direction in charge space. The second question is the projected one-charge problem.
+For a set of Cartans T a choose a single linear combination
+
+                                         Tn = na T a                                    (3.4)
+
+and define
+                                 (n)
+                                ∆min (Q) = min ∆min (Qa ).                              (3.5)
+                                                n·Q=Q
+
+Here only the charge under U (1)n is held fixed; all orthogonal Cartan charges are minimized
+over.
+
+
+
+
+                                            – 21 –
+     The point of this section is that the moduli-space EFT proves the convexity bound
+                                                                (n)
+for the second type. For the saddle computing ∆min (Q), the fermion and gauge-boson
+contributions are non-positive by the argument from [1], and we prove that the scalar
+                   (n)                                                                         (n)
+contribution to α0 is non-positive as well. Thus the projected observable obeys α0 ≤
+0. When this inequality is strict, the projected tower is asymptotically convex; if it is
+saturated, the next term in the large-charge expansion controls convexity. Equivalently,
+for each chosen linear combination Tn , the projected minimization selects at least one
+charge-space direction on the lower envelope which satisfies the leading convexity bound.
+This is weaker than proving convexity along every ray in the charge lattice. In fact, we
+will give a two-derivative N = 1 supersymmetric EFT counterexample to the stronger
+fixed-charge-ray statement. This is not a UV-complete CFT counterexample, but it shows
+that the stronger claim cannot be derived from the moduli-space EFT alone.
+     We first recall the part of the moduli-space EFT calculation that we will need. The
+general setup follows appendix A of [1], but we spell out the result in detail. The low-energy
+theory contains the dilaton Φ, Goldstone coordinates π a for the broken Cartan generators,
+and additional massless moduli ϕA . Denote the full dimension of the moduli space by n.
+The two-derivative EFT takes the form
+                              "
+                           √    Φ2
+                    Z
+           SEFT = dd x g            ∂µ π a ∂ µ π b G
+                                                   b ab (ϕ) + Φ2 ∂µ π a ∂ µ ϕB G
+                                                                               b aB (ϕ)+
+                                 2
+                                                                                            #   (3.6)
+                       Φ2                               Gb ΦΦ (ϕ)
+                          ∂µ ϕA ∂ µ ϕB G                            −Φ∂ 2 Φ − m2d Φ2 + · · · ,
+                                                                                      
+                    +                  b AB (ϕ) +
+                       2                                    2
+
+where md = (d − 2)/2 on a unit-radius cylinder. The general homogeneous helical saddle
+around which we expand is
+
+                              Φ = v,       π a = µa t,       ϕA = ϕ̄A ,                        (3.7)
+
+We assume, as usual in this large-charge EFT analysis, that the transverse moduli are
+constant on the saddle. The dilaton equation fixes the norm of the angular velocity relative
+to the conformal mass,
+                                µa µb G
+                                      b ab (ϕ̄) = m2 G
+                                                   d ΦΦ (ϕ̄),
+                                                     b                                 (3.8)
+while the ϕA equations impose
+                                                        
+                         ∂ A µa µb G
+                                   b ab (ϕ) − m2 G
+                                               d
+                                                 b ΦΦ (ϕ) = 0.                                 (3.9)
+                                                                 ϕ̄
+
+The charge densities conjugate to the Cartan angles are, at leading order,
+
+                                        ρa = v 2 G
+                                                 b ab (ϕ̄)µb .                                (3.10)
+
+Depending on which charges are held fixed, the equations (3.8)–(3.10) are used either to
+determine the angular velocity vector µa , or to determine the charge vector selected by a
+chosen angular velocity.
+
+
+
+
+                                               – 22 –
+    To compute the Casimir energy, we expand (3.6) to quadratic order in fluctuations
+around the saddle (3.7). Specifically we write
+
+                  Φ = v + δΦ,       π a = µa t + δπ a ,    ϕA = ϕ̄A + δϕA ,           (3.11)
+
+and decompose the Cartan fluctuations into the component along the helical direction and
+the components orthogonal to it,
+
+                         δπ a = µa δπ0 + δπ⊥
+                                           a
+                                             ,        Gab µa δπ⊥
+                                                               b
+                                                                 = 0,                 (3.12)
+
+where Gab = G
+            b ab (ϕ̄). Then we find the quadratic Lagrangian
+               1
+       Lfluct = GΦΦ (∂δΦ)2 + m2d (∂δπ0 )2 + 4m2d δ π̇0 δΦ
+                                                         
+               2
+                 1                                           1 2 µ A
+               + Gab ∂ µ δπ⊥a
+                              ∂µ δπ⊥b
+                                      + GaB ∂µ δπ⊥a µ
+                                                    ∂ δϕB + KAB   ∂ δϕ ∂µ δϕB         (3.13)
+                 2                                           2
+                                                      1 2
+                            b
+               + µa Gab,A δπ⊥ δ ϕ̇A + dAB δ ϕ̇A δϕB − MAB   δϕA δϕB .
+                                                      2
+Bars indicate evaluation at ϕA = ϕ̄A . Here K, M, d are matrices whose specific form is
+discussed in [1] and we will not need.
+    The quadratic fluctuation problem splits into two sectors. The first is the universal
+charged sector (the first row of (3.13)), which includes the radial fluctuation δΦ and the
+Goldstone fluctuation δπ0 along the helical direction. This sector is the same as the fixed-
+charge fluctuation problem of a free complex scalar and does not contribute to the Casimir
+energy. The second sector (the last two rows of (3.13)) contains the remaining n − 2 real
+scalar modes: the Cartan phases orthogonal to the helical direction, denoted δπ⊥ a , and the
+
+transverse moduli δϕA . This non-universal sector is the one which controls the sign of α0 .
+    From now on we focus on the non-universal sector. Let us rewrite the bottom two rows
+describing this sector in a simpler matrix form. Let x denote the n − 2-vector containing
+both the orthogonal Cartan fluctuations and the transverse moduli,
+                                                 !
+                                              π⊥
+                                        x=         .                                  (3.14)
+                                               ϕ
+
+For a scalar spherical harmonic with eigenvalue λℓ = ℓ(ℓ + 1) on the unit S 2 , the non-
+universal Lagrangian is
+                              1 T                   1
+                                ẋ K ẋ + ẋ T A x − x T λℓ K + M x.
+                                                                 
+                       Lℓ =                                                           (3.15)
+                              2                     2
+Here K T = K and M T = M are symmetric, and AT = −A is antisymmetric. The matrix
+M has support only on the non-Cartan moduli,
+                                             !
+                                       0 0
+                                 M=            .                          (3.16)
+                                       0 MAB
+
+Since K is positive definite, we can make a constant linear change of variables x = U X
+with
+                                      U T KU = 1.                                 (3.17)
+
+
+
+
+                                            – 23 –
+Choosing U block upper triangular preserves the block form of the matrices above, and
+preserves their (anti)symmetry. In canonical variables the Lagrangian becomes (renaming
+the rotated matrices A, M back to A, M for simplicity)
+                               1 T                1
+                                 Ẋ Ẋ + Ẋ T AX − X T λℓ 1 + M X.
+                                                               
+                        Lℓ =                                                            (3.18)
+                               2                  2
+   We can now discuss computing the Casimir energy for this two-derivative EFT. The
+normal-mode frequencies are obtained from
+                                                    
+                         det (−ω 2 + λℓ )1 − 2iωA + M = 0.                    (3.19)
+
+The physical frequencies ωℓ,i for i = 1, . . . , n − 2 are the positive normal-mode frequencies
+of the quadratic Hamiltonian. The scalar contribution to α0 is then the Casimir energy for
+this Hamiltonian:
+                                             ∞        n−2
+                                         1X X
+                     α0scalar = ECas =     nℓ ωℓ,i              nℓ = 2ℓ + 1.            (3.20)
+                                         2
+                                          ℓ=0         i=1
+
+We interpret this equation as being regularized in dimensional regularization.
+    In general, we do not have closed-form expressions for the frequencies ωℓ,i . An excep-
+tion is when A and M commute:
+                                       [A, M ] = 0,                                  (3.21)
+in which case one can diagonalize them simultaneously into elementary blocks. There are
+1 × 1 blocks with
+                                  A = 0,     M = m2 ,                            (3.22)
+which gives a relativistic dispersion relation with mass squared m2 ,
+                                             p
+                                       ωℓ = λℓ + m2 ,                                   (3.23)
+
+and 2 × 2 blocks with                         !
+                                      0 −ν
+                                A=                ,     M = m 2 12 ,                    (3.24)
+                                      ν 0
+which give                               p
+                                ωℓ,± =       λℓ + m2 + ν 2 ± ν .                        (3.25)
+
+For m2 ≥ 0, the absolute values do not fold and the two branches together contribute as
+two relativistic dispersion relations:
+                                              p
+                               ωℓ,+ + ωℓ,− = 2 λℓ + m2 + ν 2 .                   (3.26)
+
+Thus each such block reduces to ordinary relativistic scalar sums with
+                                                                     p non-negative mass
+squared. In the notation of (2.33), each relativistic mode ωℓ = λℓ + m2 contributes
+ξ(m2 − 41 ) to the Casimir energy. Since ξ(m2 − 14 ) is non-positive for m2 ≥ 0, each such
+relativistic scalar contribution is non-positive. However generically the modes are non-
+relativistic and so the proof of non-positivity is more involved.
+
+
+
+
+                                              – 24 –
+3.2   Proof of the convexity bound when M ≥ 0
+In this section we assume that the mass matrix M in (3.18) is positive semidefinite M ≥ 0.
+We show that under this assumption, the scalar contribution to α0 is non-positive,
+
+                                     α0scalar = ECas ≤ 0,                              (3.27)
+
+    The proof follows directly from the quadratic Hamiltonian corresponding to the La-
+grangian (3.18). The canonical momentum is
+
+                                          P = Ẋ + AX,                                 (3.28)
+
+so the Hamiltonian for angular momentum ℓ is
+                        1                    1
+                    Hℓ = (P − AX)T (P − AX) + X T (λℓ 1 + M ) X.                       (3.29)
+                        2                    2
+Hamilton’s equations imply
+
+                               Ẍ + 2AẊ + (λℓ 1 + M ) X = 0,                          (3.30)
+
+which is equivalent to the determinant condition (3.19). The ground-state energy at fixed
+ℓ is
+                                          1X
+                                     Eℓ =       ωℓ,i .                             (3.31)
+                                          2
+                                                  i
+    We now show that if M is positive semidefinite M ≥ 0, then the Casimir energy is
+non-positive. Introduce the reference Hamiltonian
+                                      1       1
+                Hℓ,ref = Hℓ + P T AX = P T P + X T λℓ 1 + M − A2 X.
+                                                                
+                                                                                       (3.32)
+                                      2       2
+Since −A2 = AT A ≥ 0, the matrix λℓ 1 + M − A2 is positive semidefinite. Hence the
+reference ground-state energy is
+                                          1 p
+                               Eℓ,ref =     tr λℓ 1 + M − A2 .                         (3.33)
+                                          2
+Equivalently, after diagonalizing M − A2 , the reference frequencies are
+                                            p
+                                      ref
+                                    ωℓ,i  = λℓ + κ i ,                                 (3.34)
+
+where κi ≥ 0 are the eigenvalues of M − A2 .
+     By the variational principle, the true ground-state energy is no larger than the expec-
+tation value in any normalized trial state. We denote by |0⟩ the ground state of Hℓ and
+use the ground state |0ref ⟩ of Hℓ,ref as the trial state. The two Hamiltonians differ only by
+the mixed term:
+                                     Hℓ = Hℓ,ref − P T AX.                              (3.35)
+The reference ground state is a centered real Gaussian. In this state
+                                                          i
+                                  ⟨0ref |Pi Xj |0ref ⟩ = − δij ,                       (3.36)
+                                                          2
+
+
+
+                                             – 25 –
+and therefore
+                                                    i
+                            ⟨0ref |P T AX|0ref ⟩ = − tr A = 0,                              (3.37)
+                                                    2
+because A is antisymmetric. Thus the variational principle tells us that
+
+            Eℓ = ⟨0|Hℓ |0⟩ ≤ ⟨0ref |Hℓ |0ref ⟩ = ⟨0ref |Hℓ,ref − P T AX|0ref ⟩ = Eℓ,ref .   (3.38)
+
+Here we used the fact that M is positive semidefinite, since using the variational principle
+requires that Hℓ is bounded from below.
+    Using (3.31) and (3.33), the inequality Eℓ ≤ Eℓ,ref gives us
+                                 X          Xp
+                                     ωℓ,i ≤      λℓ + κi .                            (3.39)
+                                      i                   i
+
+This inequality is the main point behind the proof of the convexity bound α0 ≤ 0. The
+scalar contribution to α0 is the regulated Casimir energy
+                                              1X
+                                     ECas =      (2ℓ + 1)ωℓ,i .                             (3.40)
+                                              2
+                                                     ℓ,i
+
+We would like to compare this to the regulated Casimir energy of the reference Hamiltonian
+
+                                 ref       1X        p
+                                ECas =       (2ℓ + 1) λℓ + κi .                             (3.41)
+                                           2
+                                              ℓ,i
+
+Both expressions should be understood as being regularized in dimensional regularization.
+Since the reference Hamiltonian has relativistic dispersion relations as in (3.23) with posi-
+tive κi , the discussion around (3.23) tells us that
+                                               ref
+                                              ECas ≤ 0.                                     (3.42)
+
+Then if we could use the pointwise inequality (3.39) directly in the sum, this would imme-
+                       ref ≤ 0. However, since both expressions require regularization, we
+diately prove ECas ≤ ECas
+must be more careful. Instead it can be easily checked that the term-by-term difference
+between the sums is finite:
+                                                             !
+                            1X            X
+                                                ref
+                                                      X
+                      D≡        (2ℓ + 1)       ωℓ,i −    ωℓ,i < ∞,                    (3.43)
+                            2
+                                 ℓ                    i       i
+
+and then we can use the pointwise inequality (3.39) to show that D ≥ 0. Since D is finite
+we can write for the regulated sums
+                                           ref
+                                          ECas − ECas = D.                                  (3.44)
+
+Therefore
+                                         ref        ref
+                                 ECas = ECas − D ≤ ECas ≤ 0.                                (3.45)
+This proves that M ≥ 0 is sufficient for the scalar contribution to α0 to be non-positive.
+Together with the argument that the fermions and gauge bosons also have non-positive con-
+tributions [1], this proves that α0 ≤ 0 whenever the scalar matrix M is positive semidefinite.
+
+
+
+
+                                                    – 26 –
+3.3   Proof of projected convexity
+                                                                                   (n)
+We now show that for the saddle which computes the projected observable ∆min (Q) in
+(3.5), we must have M ≥ 0. Then the results of the previous subsection complete the proof
+               (n)
+of the bound α0 ≤ 0.
+     Choose a single Cartan generator Tn = na T a and fix only the charge Q under this
+generator. For the projected saddle, the angular velocity is along the chosen generator,
+
+                                          µa = µna .                                     (3.46)
+
+This does not mean that the charge vector itself is parallel to na . At the saddle value ϕ̄,
+the charge vector follows from (3.10) and the constraint n · ρ = Q:
+
+                                               b ab (ϕ̄)nb
+                                               G
+                                    ρa = Q                   .                           (3.47)
+                                              nc G
+                                                 b cd (ϕ̄)nd
+
+Thus the state which minimizes the projected observable may carry orthogonal Cartan
+charges. These charges are nevertheless still of order Q; for any Cartan direction f a ,
+                                             "                   #1/2
+                                              f aG
+                                                 b ab (ϕ̄)f b
+                              |f a ρa | ≤ |Q|                           .                (3.48)
+                                              nc G
+                                                 b cd (ϕ̄)nd
+
+Allowing the orthogonal charges to vary therefore does not take us outside the large-charge
+regime.
+     We now prove the key positivity statement. The zero-mode part (ℓ = 0) of the Hamil-
+tonian (3.29) is
+                                  1                          1
+                     H0 (X, P ) = (P − AX)T (P − AX) + X T M X.                       (3.49)
+                                  2                          2
+The important point is the meaning of the canonical momentum P . The fields π⊥ are
+the Goldstone bosons corresponding to Cartans of the broken symmetry group orthogonal
+to Tn , so their canonical momenta (which are components of P ) are precisely the corre-
+sponding charge fluctuations. Since the projected observable fixes only the charge under
+Tn (which sits in the “universal sector” we have stripped out), these orthogonal charge
+                                                                            (n)
+fluctuations are not held fixed. Therefore, if the saddle really computes ∆min (Q), it must
+be a local minimum of the unreduced Hamiltonian (3.49) with respect to all small X, P
+fluctuations. Suppose that M had a negative direction. Then for some vector v,
+
+                                          v T M v < 0.                                   (3.50)
+
+Because the orthogonal charges are not fixed, the fluctuation
+
+                                   X = ϵv,         P = AX                                (3.51)
+
+is an allowed nearby configuration at the same fixed Qn . Along this fluctuation
+                                            1
+                              H0 (ϵv, Aϵv) = ϵ2 v T M v < 0.                             (3.52)
+                                            2
+
+
+
+
+                                             – 27 –
+This is a nearby configuration in the same projected fixed-charge problem with lower energy.
+                                                                                (n)
+Hence the original saddle could not have been the ground-state saddle for ∆min (Q). We
+conclude that every projected one-charge ground-state saddle obeys
+
+                                               M ≥ 0.                                 (3.53)
+
+      Combining (3.53) with the variational theorem of the previous subsection proves that
+                                        (n)
+the scalar one-loop contribution to ∆min (Q) is non-positive, proving the convexity bound
+  (n)
+α0 ≤ 0.
+      It is useful to translate (3.53) back into the EFT data, since then α0 ≤ 0 gives an
+explicit bound on the coefficients of the EFT. Before bringing the kinetic matrix to the
+identity, the non-Goldstone block of the potential in (3.15) is MAB , and the sign condition
+M ≥ 0 is equivalent to
+                                          MAB ≥ 0.                                    (3.54)
+For the projected saddle (3.46), define the fixed-angular-velocity inertia
+
+                                               µ 2 na nb G
+                                                         b ab (ϕ)
+                                  In (ϕ) =                        .                   (3.55)
+                                                 m2 G
+                                                   d
+                                                      b ΦΦ (ϕ)
+
+The saddle equations (3.8) and (3.9) imply
+
+                                In (ϕ̄) = 1,        ∂A In (ϕ̄) = 0.                   (3.56)
+
+Indeed, the first equation is the dilaton equation, while the second is the ϕA equation at
+fixed angular velocity. At the saddle, the expression
+
+                       b ΦΦ (ϕ) − µ2 na nb G
+                   m2d G                   b ab (ϕ) = m2 G
+                                                       d ΦΦ (ϕ) (1 − In (ϕ))
+                                                         b                            (3.57)
+
+vanishes together with its first derivative. Hence the non-Goldstone mass matrix can be
+written as
+                                         1
+                              MAB = − m2d GΦΦ ∂A ∂B In (ϕ̄).                      (3.58)
+                                         2
+Thus the result MAB ≥ 0 can be translated explicitly into a condition on the EFT coeffi-
+cients.
+
+3.4   Fixed-charge-ray convexity
+We now discuss convexity for ∆min where we fix the full charge vector. After explaining why
+M is not necessarily positive-semidefinite on the corresponding saddle, we discuss specific
+cases in which it is still possible to prove fixed-charge-ray convexity. We then describe a
+consistent EFT (which does not correspond to any CFT that we are aware of) which does
+not obey fixed-charge-ray convexity. As a result this statement, if true, cannot be proven
+using large-charge EFT methods alone.
+
+
+
+
+                                               – 28 –
+3.4.1   Why the proof fails for fixed charge vectors
+The argument in section 3.3 does not prove fixed-charge-ray convexity. In the fully fixed
+charge-vector problem, the orthogonal Cartan charges are held fixed. As a result, we now
+cannot vary all the momenta P , since some of them will correspond to conserved charges
+which we are now holding fixed. We therefore cannot use the fluctuation (3.51) to argue
+for an instability, since this fluctuation may change the value of the charge vector. Instead
+the best we can do is set P = 0 and demand stability there, which requires
+
+                                       M − A2 ≥ 0.                                    (3.59)
+
+This condition is weaker than the condition M ≥ 0, which is the one required to prove the
+convexity bound.
+
+3.4.2   Cases where the convexity bound can still be proven
+There are still special situations where M ≥ 0 can be proven for a fixed charge vector
+by other means. First, as already discussed in [1], if the theory effectively has only one
+Cartan participating in the large-charge saddle, then there are no orthogonal Cartan charge
+fluctuations, and effectively A = 0 so that the weaker condition (3.59) becomes M ≥ 0.
+Charge conjugation or another discrete symmetry can also forbid the mixing term π̇ T Aϕ,
+in which case A = 0 again.
+     Another useful class of models where M ≥ 0 for the fixed charge vector case are theories
+with low-dimensional moduli spaces. Specifically, moduli spaces of dimension n ≤ 3 must
+have A = 0, since A is an antisymmetric matrix acting on n − 2 degrees of freedom. As a
+result we find that M ≥ 0 for these low-dimensional moduli spaces.
+     Another useful class consists of dilaton plus NLSM EFTs where the sigma-model target
+is locally symmetric,
+                                        ∇E RA BCD = 0.                                 (3.60)
+In appendix A we show that for this class the matrices A and M defined in (3.18) com-
+mute. As discussed around (3.21), the result is that the spectrum includes only relativistic
+dispersion relations (up to shifts of ±ν for some ν which cancel in pairs when we sum
+over the frequencies). This almost proves that the Casimir energy is non-positive, except
+that we first must prove that the mass matrix M only has positive eigenvalues, i.e. that
+M ≥ 0. This must be checked explicitly for specific examples, and indeed for the relevant
+                                                                Sp(Nf )
+cases in this paper (the CPn model in section 2.4 and the Sp(Nf −1)×Sp(1)  target space in
+section 2.5) we indeed find M ≥ 0. For compact maximally symmetric targets this sign can
+be checked universally, and one finds M ≥ 0 in general, so the fixed-charge-ray convexity
+bound follows in this subclass.
+
+3.4.3   A two-derivative EFT counterexample
+We now give a simple EFT example showing why fixed-charge-ray convexity cannot be
+derived from the two-derivative moduli-space EFT alone. Consider the 3d EFT
+                     1       1    c                                  1
+                  L = (∂Φ)2 − Φ2 + Φ2 hij (x) ∂µ φi ∂ µ φj ,       c= ,               (3.61)
+                     2       8    2                                  4
+
+
+
+                                           – 29 –
+with target coordinates
+                                           φi = (θ1 , θ2 , x)                                (3.62)
+and compact target metric
+                                                                                1
+      ds2h = dx2 + 1 + f (x)2 dθ12 + 4f (x)dθ1 dθ2 + dθ22 ,
+                             
+                                                                      f (x) =     sin(2x).   (3.63)
+                                                                                2
+The torus block is
+                                             !
+                                1 + f 2 2f                                   1
+                      hab =                      ,       det hab = 1 − 3f 2 ≥ ,              (3.64)
+                                  2f     1                                   4
+
+so the metric is everywhere positive.
+    There are two charges corresponding to translations in θ1 , θ2 . First fix the full charge
+vector
+                                      ρa = (ρ, 0).                                       (3.65)
+The homogeneous fixed-charge energy is
+                                 |ρ| p 11     |ρ|   1
+                        HQ (x) = √    h (x) = √ p            .                               (3.66)
+                                2 c          2 c 1 − 3f (x)2
+
+Therefore x = 0 is a global minimum in this fully fixed charge-vector sector. The corre-
+sponding helical saddle is
+
+                          Φ = v,         θ1 = t,          θ2 = 0,    x = 0.                  (3.67)
+
+It obeys the dilaton equation because
+                                                       1
+                                               c θ̇12 = ,                                    (3.68)
+                                                       4
+and the x-equation because
+
+                              ∂x h11 θ̇12 = 2f f ′ θ̇12 = 0     at x = 0.                    (3.69)
+
+   Expanding the non-universal sector (θ2 , x) around the saddle gives, after canonical
+normalization,                      !                    !
+                               0 −1                 0 0
+                        A=            ,      M=            .                     (3.70)
+                               1 0                  0 −1
+Thus the weaker condition M − A2 ≥ 0 is met, but we have M ̸≥ 0.
+   The normal-mode frequencies obey
+                                    √
+                     2     2λℓ + 3 ± 16λℓ + 9
+                    ωℓ,± =                    ,     λℓ = ℓ(ℓ + 1).                           (3.71)
+                                    2
+The lower branch is non-negative for all ℓ, with a zero only at ℓ = 0. The regulated scalar
+Casimir energy in dimensional regularization is
+                       ∞                               
+               scalar
+                       X
+                                                   2   1                  1
+             ECas =        rℓ (ωℓ,+ + ωℓ,− ) − 2rℓ +        ,     rℓ = ℓ + .         (3.72)
+                                                       4                  2
+                          ℓ=0
+
+
+
+
+                                                     – 30 –
+Numerically, we find
+                                    scalar
+                                   ECas    ≃ 0.02868 > 0.                              (3.73)
+     To make the example a counterexample to the convexity bound in a 3d N = 1 moduli-
+space EFT, we must also include the contribution from the fermions. In an orthonormal
+frame on the full target-space cone, let Y I = (Φ, θ1 , θ2 , x). Hatted indices label tangent-
+frame directions, χIˆ are the Majorana fermions paired with the bosonic moduli, γ µ are the
+cylinder gamma matrices, ∇µ is the spacetime spinor covariant derivative, and ωK,IˆJˆ is the
+target-space spin connection. The quadratic fermion action around a bosonic background
+is
+                            (2)  i                              
+                          Lf = χ̄Iˆγ µ ∇µ δIˆJˆ + ∂µ Y K ωK,IˆJˆ χJˆ.                   (3.74)
+                                2
+On the saddle, the only nonzero background derivative is θ̇1 = 1. At x = 0, the metric h
+is locally the identity in the coordinates (θ1 , θ2 , x), while
+
+                              h12 = 2f (x),        ∂x h12 x=0 = 2.                     (3.75)
+
+Thus the base spin connection has
+                                         ω̄θ1 ,θ̂2 x̂ = 1                              (3.76)
+at the saddle. The cone factor gives the additional universal component
+                                                   √
+                                       ωθ1 ,Φ̂θ̂1 = c.                                 (3.77)
+
+The pulled-back target spin connection therefore splits the four Majorana fermions into
+two blocks:
+                                     √       1
+                            ΩΦ̂θ̂1 = c θ̇1 = ,      Ωθ̂2 x̂ = θ̇1 = 1.                  (3.78)
+                                             2
+The first block is the universal radial/longitudinal pair, and the second is the non-universal
+pair associated with (θ2 , x).
+     For a two-Majorana block with dimensionless chemical potential ν, the spinor frequen-
+cies on S 2 are
+                                 ωn,± = n ± ν     n = 1, 2, . . . ,                     (3.79)
+with degeneracy 2n. In dimensional regularization the contribution is
+                                               ∞
+                                               X
+                                 Ef (ν) = −2         n(ν − n)+ .                       (3.80)
+                                               n=1
+
+Here the two blocks have
+                                            1
+                                   νuniv = ,       ν⊥ = 1.                       (3.81)
+                                            2
+Therefore neither block has a negative-energy filled level. The ν⊥ = 1 block has a zero
+mode at the first spinor level, but it does not shift the Casimir energy. Thus
+                                          ferm
+                                         ECas  = 0,                                    (3.82)
+
+and the total one-loop contribution remains
+                            total    scalar    ferm
+                           ECas   = ECas    + ECas  ≃ 0.02868 > 0.                     (3.83)
+
+
+
+
+                                              – 31 –
+This example is thus an EFT counterexample to the statement that every fixed ray in
+charge space has non-positive α0 .
+    Let us finally compare this with the projected observable. If we fix only the θ1 charge,
+then at fixed x the minimizing charge vector is given by (3.47) with na = (1, 0):
+
+                                                   h21      2f
+                            ρ1 = Q,       ρ2 = Q       =Q        .                    (3.84)
+                                                   h11    1 + f2
+
+The projected fixed-Q1 energy is proportional to (h11 )−1/2 , so it is minimized by maximiz-
+ing h11 = 1 + f 2 . Since |f | ≤ 1/2, the projected saddle lies at f = ±1/2, not at f = 0. At
+this projected saddle,
+                                                     4
+                                       Q2 = ρ2 = ± Q1 ,                                (3.85)
+                                                     5
+and we find                                                    !
+                                                          0 0
+                                Aproj = 0,     Mproj =           .                     (3.86)
+                                                          0 45
+Thus Mproj ≥ 0, as expected from the argument above for the projected saddle.
+
+4   Bounds on α1
+
+We now turn to the leading coefficient α1 , which measures the slope of the tower. An
+immediate trivial bound following from the standard unitarity bound is
+
+                                            α1 ≥ 0.                                     (4.1)
+
+The question is whether there is any stronger universal bound.
+    The main motivation for such a bound comes from holography and scale separation.
+In a simple bulk picture, a linear tower of charged operators can arise from Kaluza–Klein
+momentum on an internal circle. If the bulk contains an AdSd × SR      1 region, with AdS
+
+radius L, then a KK mode with integer momentum n has
+
+                                                        n2
+                                        m2n = m20 +        .                            (4.2)
+                                                        R2
+At large |n|, the dual operator dimension behaves as
+
+                                                         L
+                                   ∆(n) ∼ Lmn ∼            |n|,                         (4.3)
+                                                         R
+so in this cartoon one would identify
+                                                  L
+                                           α1 ∼     .                                   (4.4)
+                                                  R
+A theory with parametrically small internal radius would therefore have a parametrically
+large value of α1 . Conversely, an absence of parametric scale separation might suggest that
+α1 should remain order one.
+
+
+
+
+                                            – 32 –
+     This interpretation is most natural when the charge is associated with a geometric
+isometry whose normalization is fixed, for example a Cartan of a simple non-Abelian sym-
+metry. In the examples of section 2, the corresponding slopes are indeed order one, and
+we will not find any obstruction to this expectation in such cases. The difficulties arise for
+Abelian symmetries. For a standalone U (1), the large-charge slope is very sensitive to the
+charge lattice, to finite quotients, and to the choice of a linear combination of several U (1)
+factors. These are perfectly ordinary CFT operations, but they obscure any direct relation
+between the raw coefficient α1 and a geometric radius. In a semiclassical holographic the-
+ory, a bulk observer would also keep track of the full charge lattice, the current two-point
+matrix, and multi-particle states. Thus the arguments below should not be interpreted as
+producing genuine bulk scale separation in a large-N theory. Rather, they show that α1
+by itself is not the right CFT observable for diagnosing such scale separation.
+     Let us see how this happens. Before asking whether α1 is bounded, one must specify
+how the charge is normalized. Throughout this discussion we use the natural CFT nor-
+malization: the charge Q is normalized so that the smallest nonzero charge carried by a
+local operator is one. With this convention,
+
+                                    ∆min (Q) = α1 Q + · · ·                               (4.5)
+
+defines the coefficient α1 . There are now simple operations on a CFT which can change
+α1 by an arbitrarily large or arbitrarily small factor:
+
+   • First, α1 has no universal upper bound. Suppose a CFT has a U (1) global symmetry
+     and a large-charge tower as in (4.5). Now gauge a finite subgroup
+
+                                            ZN ⊂ U (1).                                   (4.6)
+
+      This gives a new fully consistent CFT. The continuous global symmetry of the new
+      theory is U (1)/ZN , and local operators whose original charge was not divisible by N
+      are projected out. Therefore the surviving large-charge tower is obtained from the
+      original one by setting
+                                          Qold = N Qnew ,                              (4.7)
+      where Qnew is again normalized so that the smallest surviving charge is one. Thus
+
+                                 ∆new
+                                  min (Qnew ) = α1 N Qnew + · · · ,                       (4.8)
+
+      and so
+                                           α1new = N α1 .                                 (4.9)
+      Since N can be chosen arbitrarily large, there is no universal upper bound on α1
+      itself.
+
+   • There is also no universal lower bound. This time the simplest mechanism is to
+     choose an unusual primitive direction in a multi-U (1) charge lattice. Suppose the
+
+
+
+
+                                            – 33 –
+        theory has two commuting charges Qx , Qy , and that the leading large-charge answer
+        in this plane is
+                                               1 q 2
+                             ∆min (Qx , Qy ) = √     Qx + Q2y + · · · .               (4.10)
+                                                2
+        This is precisely the leading behavior found in the large-N SO(N ) × SO(N ) example
+        of section 2.2. Now choose a primitive U (1) generator
+
+                                     Q = aQx + bQy ,            gcd(a, b) = 1.            (4.11)
+
+        The condition gcd(a, b) = 1 means that the charge Q is already normalized so that
+        the charge lattice contains states of charge one.
+        If we only fix this single charge Q, the lightest state at large Q is obtained by mini-
+        mizing (4.10) over Qx , Qy subject to
+
+                                                 aQx + bQy = Q.                           (4.12)
+
+        Treating the charges as continuous is sufficient at leading order in large Q, since
+        lattice effects only change the answer by O(Q0 ). The minimum is obtained for a
+        charge vector parallel to (a, b),
+
+                                                         Q
+                                     (Qx , Qy ) =             (a, b) + O(Q0 ),            (4.13)
+                                                      a2 + b2
+        and therefore
+                                     (a,b)      1   Q
+                                    ∆min (Q) = √ √         + O(Q0 ).                      (4.14)
+                                                 2 a2 + b2
+        Thus
+                                              (a,b)        1
+                                            α1        =p            .                     (4.15)
+                                                        2(a2 + b2 )
+        By taking a2 + b2 large, this coefficient can be made arbitrarily small.
+        This example illustrates part of the problem with interpreting α1 as a measure of
+        scale separation. The small slope is not telling us that an internal circle has become
+        large. It is telling us that the chosen U (1) is a long primitive vector in a higher-rank
+        charge lattice, so that states carrying large charge under this U (1) can be built from
+        comparatively modest charges under the original Cartans.5
+
+     The conclusion is that α1 by itself is not a universal CFT observable with a meaningful
+upper or lower bound. It depends too strongly on discrete choices in the charge lattice and
+on which U (1) direction one decides to study.
+     One can instead attempt to study α1 with a different normalization of the charge. It
+is tempting to suggest the following alternative. Let
+
+                                                               Iµν (x)
+                                      ⟨Jµ (x)Jν (0)⟩ = CJ              ,                  (4.16)
+                                                               x2d−2
+  5
+      We thank Miguel Montero for discussions on this point.
+
+
+
+
+                                                    – 34 –
+and
+                                                   Iµν,ρσ (x)
+                                   ⟨Tµν (x)Tρσ (0)⟩ = CT      ,                     (4.17)
+                                                      x2d
+where Jµ is the current for the U (1) whose charge is being fixed, and Tµν is the energy-
+momentum tensor. Here Iµν and Iµν,ρσ are tensor structures fixed by symmetries whose
+specific form we will not need. Naively, CT is a measure of the number of degrees of
+freedom in the system, while CJ is a measure of the number of charged degrees of freedom.
+A natural combination is then6                r
+                                                CJ
+                                      α
+                                      b1 = α1       .                               (4.18)
+                                                CT
+     This normalized slope fixes the two simplest problems discussed above. Specifically,
+                                                                                   √
+gauging a finite subgroup ZN ⊂ U (1) leads to CJ → CJ /N 2 , and the combination α1 CJ
+is unchanged. Similarly, if we choose a primitive direction
+
+                                             Q = aQx + bQy ,                                          (4.19)
+
+then the current is
+                                             J = aJx + bJy .                           (4.20)
+                                                                                    √
+In an orthogonal current basis, CJ grows like a2 + b2 , compensating the factor 1/ a2 + b2
+in (4.10).
+     We can still make α̂1 arbitrarily small, simply by finding examples with many un-
+charged degrees of freedom, so that CT ≫ CJ . However, it seems much more difficult to
+find examples where α̂1 is arbitrarily large, and indeed we do not yet have such an example.
+So it is possible that the correct upper bound is on α̂1 .
+     The downside of working with α̂1 is that this same normalization also removes the
+naive relation to scale-separation. For a KK photon on an internal circle of radius R, the
+discussion above gave
+                                                 L
+                                           α1 ∼ .                                      (4.21)
+                                                 R
+On the other hand, dimensional reduction of the Einstein term gives
+
+                                                CJ  R2
+                                                   ∼ 2,                                               (4.22)
+                                                CT  L
+
+because the KK gauge kinetic term carries the extra factor of R2 . Hence
+                                        r
+                                           CJ
+                                α
+                                b1 = α1        ∼ O(1).                                                (4.23)
+                                           CT
+Thus αb1 is better behaved as a CFT normalization, but it is not a direct measure of the
+hierarchy L/R.
+    We therefore do not find a universal swampland-type bound either on α1 itself or on the
+normalized slope αb1 . The raw coefficient α1 is the quantity which most directly resembles
+   6
+    Using CJ alone would remove the charge-normalization issues discussed above, but it would make α̂1
+arbitrarily small (of order 1/N ) for any large-N theory, making it an uninteresting observable in holographic
+theories.
+
+
+
+
+                                                   – 35 –
+a KK slope, but it is too sensitive to the choice of charge lattice and to projections of
+higher-rank symmetries. The normalized coefficient is better behaved as a CFT quantity,
+but no longer directly measures the scale-separation parameter. A sharper holographic
+diagnostic would presumably need to keep track of the full current two-point matrix, the
+full charge lattice, and, in large-N theories, multi-particle states. We leave this possibility
+for future work.
+
+Acknowledgments
+
+The authors would like to thank I. Valenzuela for many useful discussions and for the ob-
+servation which sparked this project. We would also like to thank G. Cuomo, S. Hellerman
+and M. Watanabe for useful discussions, and J. Kulp and M. Montero for useful discus-
+sions and comments on a draft. A.S. is supported by the Mani L. Bhaumik Institute for
+Theoretical Physics.
+
+
+
+
+                                            – 36 –
+A     Locally symmetric target spaces and commutativity
+
+In this appendix we prove that for a dilaton coupled to a NLSM, a locally symmetric target
+implies [A, M ] = 0 using the notation of (3.18). However it is not enough to prove M ≥ 0.
+Our dilaton-coupled-to-NLSM EFT is explicitly given by
+
+            1             1        c                                                     (d − 2)2
+      L=      ∂µ Φ ∂ µ Φ − m2d Φ2 + Φ2 GAB (φ) ∂µ φA ∂ µ φB ,                    m2d =            .      (A.1)
+            2             2        2                                                        4
+We expand around a homogeneous helical saddle
+
+                              Φ = v,        ∂i φA = 0,           φ̇A = µ k A (φ0 ),                      (A.2)
+
+where k A is a Killing vector of the target-space metric GAB . The equations of motion
+imply
+                             k B ∇B k A = 0,    m2d = c µ2 k 2 .                 (A.3)
+Thus the orbit generated by k A is a geodesic. Let η A be the covariant target-space fluctu-
+ation and decompose it into a longitudinal mode and transverse modes,
+
+                                                                kA
+                           η A = η∥ k̂ A + η⊥
+                                            A
+                                              ,        k̂ A =       ,          A
+                                                                           kA η⊥ = 0.                    (A.4)
+                                                                |k|
+The dilaton mixes only with the longitudinal mode η∥ , giving the universal sector discussed
+in section 3.1. The non-universal contribution to the Casimir energy comes entirely from
+                             A . After expanding them in spherical harmonics on S d−1 , the
+the transverse fluctuations η⊥
+quadratic Lagrangian for each angular momentum ℓ takes the form
+                                       1 T                 1
+                                         q̇ q̇ + q̇ T A q − q T λℓ 1 + M q,
+                                                                        
+                              Lℓ :=                                                                      (A.5)
+                                       2                   2
+with q the vector of transverse modes. In the present case the matrices entering this
+quadratic problem are
+
+    AA B = µ ∇ B k A ⊥ ,        M A B = B A B + (A2 )A B ,              B A B = µ2 RA CBD k C k D ⊥ .    (A.6)
+
+     If the target space is locally symmetric,
+
+                                             ∇E RA BCD = 0.                                              (A.7)
+
+Using also the geodesic condition k B ∇B k A = 0, we find
+
+                             k E ∇E B A B = µ2 k E ∇E RA CBD k C k D = 0.
+                                                                    
+                                                                                                         (A.8)
+
+Since k A is Killing, its flow preserves the curvature tensor and therefore also preserves B:
+
+                                                  Lk B A B = 0.                                          (A.9)
+
+Using the Lie derivative of a (1, 1) tensor,
+
+                     (Lk B)A B = k E ∇E B A B − B E B ∇E k A + B A E ∇B k E ,                           (A.10)
+
+
+
+
+                                                     – 37 –
+and AA B = µ ∇B k A , we conclude that
+
+                                         [A, B] = 0.                                (A.11)
+
+Since M = B + A2 , this immediately implies
+
+                                         [A, M ] = 0.                               (A.12)
+
+    As discussed around (3.21), the commutativity statement is not yet enough to prove
+convexity: we still need the sign condition M ≥ 0. We can prove this extra condition
+under the stronger assumption that the target space is maximally symmetric. Locally,
+such a target is a round sphere, which we embed as
+
+                                         X I X I = L2 .                             (A.13)
+
+The Killing vector which generates the helical motion can then be written as a linear
+rotation,
+                            k I = ΩI J X J ,   ΩT = −Ω.                       (A.14)
+It is useful to define
+                                S = −Ω2 ,       |k|2 = X T SX.                      (A.15)
+The fixed-charge ground state chooses the point X0 on the sphere where |k|2 is largest.
+Therefore X0 is an eigenvector of S with the largest eigenvalue,
+
+                                                   |k|2X=X0
+                         SX0 = s∗ X0 ,      s∗ =            = λmax (S).             (A.16)
+                                                       L2
+Now take any small fluctuation Y tangent to the sphere at X0 , so Y · X0 = 0. Since s∗ is
+the largest eigenvalue of S, we have
+
+                                     Y T SY ≤ s∗ Y T Y.                             (A.17)
+
+For the maximally symmetric target, the quadratic form defined by the matrix M is
+
+                             Y T M Y = µ2 s∗ Y T Y − Y T SY ,
+                                                           
+                                                                                    (A.18)
+
+up to the positive normalization factor removed when bringing the kinetic term to canonical
+form. The inequality above therefore implies
+
+                                         Y T MY ≥ 0                                 (A.19)
+
+for every tangent fluctuation Y . Thus M ≥ 0, so the missing sign condition holds for
+compact maximally symmetric targets.
+
+
+
+
+                                            – 38 –
+B   Equal-scaling regime of the SO(N ) × SO(N ) model
+
+In Section 2.2 we analyzed the large-N effective action (2.28) of the SO(N )×SO(N ) model
+in the regime Qx,y ≫ N ≫ 1, where the classical condensate terms dominate over the Tr log
+determinants. There the determinants did not back-react on the leading saddle (2.31), and
+they contributed only the subleading one-loop term in (2.35). In this appendix we treat
+the complementary, “equal-scaling” regime in which the charges grow linearly with N ,
+
+                           Qx,y = λx,y N,       N → ∞,        λx,y fixed,               (B.1)
+
+where we have introduced the fixed charge ratios λx,y ≡ Qx,y /N . In the regime (B.1) the
+condensate and determinant contributions are both of order N and must be treated on an
+equal footing.
+    We start from the large-N effective action (2.28), repeated here for convenience,
+
+         N                             N
+            Tr log −∆ + F − a2 + 14 +          Tr log −∆ − F − a2 + 41
+                                                                     
+Seff =
+          2                                 2
+         − N Tr log [iγ µ ∂µ + a] − N Tr log [iγ µ ∂µ − a]
+         + iθx Qx + iθy Qy + F + θx2 + 14 X 2 + −F + θy2 + 41 Y 2 + 2a(XFx − Y Fy ) + Fx2 + Fy2 ,
+                                                              
+
+                                                                                      (B.2)
+
+We now impose the scaling (B.1) and rescale the condensates as
+                                  √                √
+                            X = N X̄,         Y = N Ȳ ,                                (B.3)
+
+holding F, a, θx , θy , Fx , Fy = O(1). With (B.3) the last line of (B.2) is subleading after
+dividing by N , since
+
+                    2a(XFx − Y Fy )                      Fx2 + Fy2
+                                    = O(N −1/2 ),                  = O(N −1 ).          (B.4)
+                         N                                   N
+Using Qx,y = λx,y N , the leading action per unit N is therefore
+
+               Seff  1                            1
+                    = Tr log −∆ + F − a2 + 14 + Tr log −∆ − F − a2 + 14
+                                                                                
+               N     2                                2
+                     − Tr log [iγ ∂µ + a] − Tr log [iγ µ ∂µ − a]
+                                 µ
+
+                     + iθx λx + iθy λy + F + θx2 + 41 X̄ 2 + −F + θy2 + 41 Ȳ 2 .
+                                                                         
+                                                                                        (B.5)
+
+    Varying (B.5) with respect to X̄ and Ȳ gives the mass conditions
+
+                                       F + θx2 + 41 X̄ = 0,
+                                                   
+                                                                                        (B.6)
+                                      −F + θy2 + 14 Ȳ = 0,
+                                                   
+                                                                                        (B.7)
+
+while varying with respect to θx and θy gives the charge conditions
+
+                                       iλx + 2θx X̄ 2 = 0,                              (B.8)
+                                        iλy + 2θy Ȳ 2 = 0.                             (B.9)
+
+
+
+
+                                             – 39 –
+These are the per-N analogues of the fixed-charge conditions in (2.31). For λx,y ̸= 0, equa-
+tions (B.8)–(B.9) force X̄, Ȳ ̸= 0, so the brackets in (B.6)–(B.7) must vanish identically,
+
+                           F + θx2 + 14 = 0,       −F + θy2 + 14 = 0.                     (B.10)
+
+The saddle thus lies on the imaginary-θ contour, as in section 2.2. For λx,y > 0 the branch
+compatible with (B.8)–(B.9) is
+                                           q
+                                     iθx = F + 41 ,                                  (B.11)
+                                           q
+                                     iθy = 14 − F ,                                  (B.12)
+
+which requires − 14 ≤ F ≤ 14 . Substituting (B.11)–(B.12) back into (B.8)–(B.9) fixes the
+condensates,
+                                                λx
+                                       X̄ 2 = q       ,                                   (B.13)
+                                             2 F + 41
+                                                λy
+                                       Ȳ 2 = q       .                                   (B.14)
+                                             2 14 − F
+
+Finally, the variation of (B.5) with respect to a is proportional to a from the bosonic
+determinants, while the two fermionic determinant variations cancel at a = 0. Hence,
+exactly as below (2.31), the a = 0 branch is stationary, and we set a = 0 from now on.
+     At a = 0 the bosonic determinants in (B.5) are expressed through the function ξ
+defined in (2.33), ξ(x) ≡ T1 Tr log[−∆ + x + 14 ]. Their combined contribution to Seff /N is
+                         ∞                                                        
+ 1                 1X               q       2        q        2
+                              l + 12     l + 12 + F +       l + 21 − F − 2 l + 12 , (B.15)
+                                                                                 
+    ξ(F ) + ξ(−F ) =
+ 2                     2
+                          l=0
+
+where the explicit sum follows from (2.33) (the linear-in-F counterterms cancel between
+ξ(F ) and ξ(−F )). The fermionic determinants are independent of F and contribute only
+an additive constant, which we drop. On the saddle (B.10) the mass q
+                                                                   terms in (B.5) vanish,
+and the charge terms reduce, using (B.11)–(B.12), to iθx λx = λx           F + 41 and iθy λy =
+  q
+λy 14 − F . The action per N on this branch is therefore
+
+                 Seff     1
+                                              q          q
+                         = ξ(F ) + ξ(−F ) + λx F + 4 + λy 14 − F .
+                                                   1
+                                         
+                                                                                          (B.16)
+                 N branch 2
+The physical dimension is ∆min /N = Seff /N |branch evaluated at the saddle value F∗ de-
+termined below. Note that the determinant piece 12 [ξ(F ) + ξ(−F )] is precisely the per-N
+version of the one-loop term N2 ξ(·) + N2 ξ(·) of (2.35); the difference is that here F is fixed
+by the back-reacted saddle rather than by the leading classical value in (2.31).
+     Varying (B.5) with respect to F before substituting X̄, Ȳ gives 12 [ξ ′ (F ) − ξ ′ (−F )] +
+X̄ 2 − Ȳ 2 = 0. Using (B.13)–(B.14) and the derivative of (2.33),
+                                                                
+                                        ∞            1
+                                       X         l +           1
+                             ξ ′ (x) =     q        2
+                                                            − ,                           (B.17)
+                                                    1
+                                                       2      2
+                                       l=0 2    l+ 2 +x
+
+
+
+
+                                               – 40 –
+the stationarity condition becomes the single equation that determines F∗ ,
+                                                     
+          ∞
+      1 X                   1                 1        + q λx              λy
+             l + 12  q
+                   
+  0=                                −q                              − q           . (B.18)
+      4                     1
+                               2             1
+                                                 2
+                                                          2   F + 1
+                                                                       2    1
+                                                                              − F
+         l=0             l+ 2 +F          l+ 2 −F                 4         4
+
+For λx = λy the right-hand side of (B.18) is manifestly antisymmetric under F → −F , so
+F∗ = 0 on the diagonal.
+      Equation (B.18) is solved numerically by bisection, with the sums in (B.15) and (B.18)
+truncated at lmax = 4000 and F discretized on a grid of 4001 points in [− 14 , 14 ]. The (λx , λy )
+plane is sampled on a 41 × 41 grid with λx,y ∈ [0, 2]. Figures 2a and 2b show, respectively,
+the stationary value of the shifted action (B.16) and the corresponding F∗ as functions of
+(λx , λy ).
+
+      2                                                    2           2
+                                                                                                            0.2
+     1.5                                                   1.5        1.5
+                                     Seff /N |branch
+λy
+
+
+
+
+      1                                                    1
+
+
+
+
+                                                                                                   F∗
+                                                                 λy
+
+
+                                                                       1                                    0
+
+     0.5                                                   0.5        0.5
+
+                                                                                                            −0.2
+      0                                                    0           0
+           0   0.5     1       1.5                     2                    0   0.5   1      1.5        2
+                       λx                                                             λx
+
+  (a) Stationary shifted action Seff /N |branch .                (b) Saddle value F∗ . The diagonal λx = λy gives
+                                                                 F∗ = 0, consistent with (B.18).
+
+Figure 2: Heat maps over the (λx , λy ) plane: (a) the stationary shifted action Seff /N |branch
+of (B.16), and (b) the corresponding saddle value F∗ .
+
+
+
+References
+
+ [1] G. Cuomo, L. Rastelli and A. Sharon, Moduli spaces in CFT: large charge operators, JHEP
+     09 (2024) 185 [2406.19441].
+ [2] Z. Komargodski and A. Zhiboedov, Convexity and Liberation at Large Spin, JHEP 11 (2013)
+     140 [1212.4103].
+ [3] A.L. Fitzpatrick, J. Kaplan, D. Poland and D. Simmons-Duffin, The Analytic Bootstrap and
+     AdS Superhorizon Locality, JHEP 12 (2013) 004 [1212.3616].
+ [4] S. Caron-Huot, Analyticity in Spin in Conformal Theories, JHEP 09 (2017) 078
+     [1703.00278].
+ [5] J. Maldacena and A. Zhiboedov, Constraining Conformal Field Theories with A Higher Spin
+     Symmetry, J. Phys. A 46 (2013) 214011 [1112.1016].
+ [6] J. Maldacena and A. Zhiboedov, Constraining conformal field theories with a slightly broken
+     higher spin symmetry, Class. Quant. Grav. 30 (2013) 104003 [1204.3882].
+
+
+
+
+                                                            – 41 –
+ [7] C. Vafa, The String landscape and the swampland, hep-th/0509212.
+ [8] H. Ooguri and C. Vafa, On the Geometry of the String Landscape and the Swampland, Nucl.
+     Phys. B 766 (2007) 21 [hep-th/0605264].
+ [9] E. Palti, The Swampland: Introduction and Review, Fortsch. Phys. 67 (2019) 1900037
+     [1903.06239].
+[10] E. Perlmutter, L. Rastelli, C. Vafa and I. Valenzuela, A CFT Distance Conjecture, JHEP 10
+     (2021) 070 [2011.10040].
+[11] F. Baume and J. Calderón-Infante, On higher-spin points and infinite distances in conformal
+     manifolds, JHEP 12 (2023) 163 [2305.05693].
+[12] F. Baume and J. Calderón Infante, Tackling the SDC in AdS with CFTs, JHEP 08 (2021)
+     057 [2011.03583].
+[13] S. Hellerman, D. Orlando, S. Reffert and M. Watanabe, On the CFT Operator Spectrum at
+     Large Global Charge, JHEP 12 (2015) 071 [1505.01537].
+[14] S. Hellerman, S. Maeda and M. Watanabe, Operator Dimensions from Moduli, JHEP 10
+     (2017) 089 [1706.05743].
+[15] S. Hellerman and S. Maeda, On the Large R-charge Expansion in N = 2 Superconformal
+     Field Theories, JHEP 12 (2017) 135 [1710.07336].
+[16] D. Gaiotto, Z. Komargodski and J. Wu, Curious Aspects of Three-Dimensional N = 1
+     SCFTs, JHEP 08 (2018) 004 [1804.02018].
+[17] N. Arkani-Hamed, L. Motl, A. Nicolis and C. Vafa, The String landscape, black holes and
+     gravity as the weakest force, JHEP 06 (2007) 060 [hep-th/0601001].
+[18] O. Aharony and E. Palti, On Convexity of Charged Operators in CFTs and the Weak
+     Gravity Conjecture, Phys. Rev. D 104 (2021) 126005 [2108.04594].
+[19] O. Antipin, J. Bersini, N.A. Dondi, F. Sannino and Z.-W. Wang, More on the Weak Gravity
+     Conjecture via Convexity of Charged Operators, 2109.04946.
+[20] O. Aharony and Y.-N. Breitstein, Tests of the Charge Convexity Conjecture in
+     Caswell-Banks-Zaks Theory, 2305.08947.
+[21] E. Palti and A. Sharon, Convexity of Charged Operators with Multiple Abelian Symmetries,
+     2206.06703.
+[22] D. Orlando and E. Palti, Goldstone Bosons and Convexity, 2303.02178.
+[23] T.D. Cohen, K. Fadakar, D. Gomes, A. Monin and R. Rattazzi, Superadditivity at Large
+     Charge, 2503.16603.
+[24] A. Sharon and M. Watanabe, A counterexample to the CFT convexity conjecture, JHEP 05
+     (2023) 202 [2301.08262].
+[25] C. Cheung and G.N. Remmen, Naturalness and the Weak Gravity Conjecture, Phys. Rev.
+     Lett. 113 (2014) 051601 [1402.2287].
+[26] F.F. Gautason, M. Schillo, T. Van Riet and M. Williams, Remarks on scale separation in
+     flux vacua, JHEP 03 (2016) 061 [1512.00457].
+[27] D. Lüst, E. Palti and C. Vafa, AdS and the Swampland, Phys. Lett. B 797 (2019) 134867
+     [1906.05225].
+
+
+
+
+                                             – 42 –
+[28] N. Cribiori and G. Dall’Agata, Weak gravity versus scale separation, JHEP 06 (2022) 006
+     [2203.05559].
+[29] T. Coudarchet, Hiding the extra dimensions: A review on scale separation in string theory,
+     Physics Reports 1064 (2024) 1.
+[30] O. DeWolfe, A. Giryavets, S. Kachru and W. Taylor, Type IIA Moduli Stabilization, JHEP
+     07 (2005) 066 [hep-th/0505160].
+[31] P.G. Camara, A. Font and L.E. Ibanez, Fluxes, moduli fixing and MSSM-like vacua in a
+     simple IIA orientifold, JHEP 09 (2005) 013 [hep-th/0506066].
+[32] A. Font, A. Herráez and L.E. Ibáñez, On scale separation in type II AdS flux vacua, JHEP
+     03 (2020) 013 [1912.03317].
+[33] J. Polchinski and E. Silverstein, Dual Purpose Landscaping Tools: Small Extra Dimensions
+     in AdS/CFT, 0908.0756.
+[34] S. de Alwis, R.K. Gupta, F. Quevedo and R. Valandro, On KKLT/CFT and LVS/CFT
+     Dualities, JHEP 07 (2015) 036 [1412.6999].
+[35] J.P. Conlon and F. Quevedo, Putting the Boot into the Swampland, JHEP 03 (2019) 005
+     [1811.06276].
+[36] J.P. Conlon and F. Revello, Moduli Stabilisation and the Holographic Swampland, LHEP
+     2020 (2020) 171 [2006.01021].
+[37] T.C. Collins, D. Jafferis, C. Vafa, K. Xu and S.-T. Yau, On Upper Bounds in Dimension
+     Gaps of CFT’s, 2201.03660.
+[38] J. Gates, S. James, M.T. Grisaru, M. Rocek and W. Siegel, Superspace, or One Thousand
+     and One Lessons in Supersymmetry, Benjamin/Cummings, Reading, MA (1983),
+     [hep-th/0108200].
+[39] G. Arias-Tamargo, D. Rodriguez-Gomez and J.G. Russo, The large charge limit of scalar
+     field theories and the Wilson-Fisher fixed point at ϵ = 0, JHEP 10 (2019) 201 [1908.11347].
+[40] G. Badel, G. Cuomo, A. Monin and R. Rattazzi, The Epsilon Expansion Meets Semiclassics,
+     JHEP 11 (2019) 110 [1909.01269].
+[41] M. Watanabe, Accessing Large Global Charge via the ϵ-Expansion, JHEP 04 (2021) 264
+     [1909.01337].
+[42] A. Sharon and M. Watanabe, Transition of Large R-Charge Operators on a Conformal
+     Manifold, JHEP 01 (2021) 068 [2008.01106].
+[43] L. Fei, S. Giombi, I.R. Klebanov and G. Tarnopolsky, Yukawa CFTs and Emergent
+     Supersymmetry, PTEP 2016 (2016) 12C105 [1607.05316].
+[44] S. Thomas, Emergent Supersymmetry, .
+[45] Y.-N. Breitstein and A. Sharon, Hunting 3d N = 1 SQED in the ϵ-expansion, JHEP 10
+     (2024) 197 [2407.07148].
+[46] L. Alvarez-Gaume, D. Orlando and S. Reffert, Large charge at large N, JHEP 12 (2019) 142
+     [1909.02571].
+[47] S. Giombi and J. Hyman, On the Large Charge Sector in the Critical O(N ) Model at Large
+     N , JHEP 09 (2021) 184 [2011.11622].
+
+
+
+
+                                             – 43 –
+[48] L.A. Gaumé, D. Orlando and S. Reffert, Selected topics in the large quantum number
+     expansion, Phys. Rept. 933 (2021) 1 [2008.03308].
+
+
+
+
+                                            – 44 –
+

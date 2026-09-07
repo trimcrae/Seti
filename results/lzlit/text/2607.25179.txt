@@ -1,0 +1,1518 @@
+                                            Co-transmission of classical data and continuous-variable entanglement over a single
+                                                                              quantum channel
+                                                                                  Nicholas Zaunders1, ∗ and Timothy C. Ralph1
+                                                     1
+                                                         School of Mathematics and Physics, University of Queensland, St Lucia, Queensland 4072, Australia.
+                                                             Displacement-based simultaneous quantum-classical communications (SQCC) protocols, as orig-
+                                                          inally proposed, are generally incompatible with the majority of useful quantum communication
+                                                          schemes, such as entanglement distribution or repeater-based quantum key distribution: direct
+                                                          measurement of the classical signal also measures and destroys the quantum state, leaving point-to-
+                                                          point Gaussian quantum key distribution as the only quantum communication scheme amenable to
+                                                          integration with SQCC. In this work, we apply the classically-modulated quantum communication
+                                                          protocol proposed by Zaunders and Ralph [1] to circumvent this issue and demonstrate the distri-
+                                                          bution of continuous-variable Gaussian entanglement simultaneously with classical information. We
+                                                          characterise the quality of the distributed entangled state and outline how the scheme is suitable for
+                                                          use in repeater-based networks. Lastly, we compute the secret key generation rate of the Gaussian
+                                                          CMQC scheme in the point-to-point case and compare it to the equivalent point-to-point SQCC
+                                                          protocol.
+
+
+                                                              I.   INTRODUCTION                                larger Hilbert space allows classical information to be
+                                                                                                               encoded simultaneously in a practical way. In the case
+arXiv:2607.25179v2 [quant-ph] 3 Aug 2026
+
+
+
+
+                                              The cornerstone of modern quantum technology is the              of Gaussian-modulated coherent-state quantum key dis-
+                                           generation and harnessing of entanglement, a uniquely               tribution (QKD), the encoding is performed by modulat-
+                                           non-classical property of multipartite quantum states               ing the displacement of the quantum state in the phase
+                                           which acts as a kind of resource for performing useful              space [24, 25] and was termed simultaneous quantum-
+                                           functions in quantum information processing [2]. En-                classical communication (SQCC); an experimental im-
+                                           tanglement shared between two or more physically dis-               plementation of the SQCC-QKD protocol was shown in
+                                           tant locations, in particular, can be exploited to achieve          [26]. Later works [27] presented a formalised version of
+                                           outcomes which would ordinarily be entirely inaccessi-              the SQCC scheme and demonstrated composable secu-
+                                           ble to purely-classical communication protocols, includ-            rity under general attacks.
+                                           ing quantum key distribution [3–7], quantum teleporta-
+                                           tion [8–10], clock synchronisation and navigation [11–                 A primary limitation of the existing SQCC scheme is
+                                           14], distributed quantum computing [15] and quantum                 that it is strictly limited to key distribution protocols,
+                                           sensing [16–19]. For this reason a chief aim of quan-               since it is assumed that decoupling of the quantum and
+                                           tum research is the development of entanglement distri-             classical data streams is performed in postprocessing, i.e.
+                                           bution schemes, which reliably and efficiently generate             after measurement of the hybrid quantum-classical state
+                                           physically-separated entangled quantum modes via the                has taken place. In this work, we circumvent this issue by
+                                           transmission of entangled states.                                   utilising the classically-modulated quantum communica-
+                                              One approach to entanglement distribution is to                  tion (CMQC) protocol proposed by the current authors
+                                           use continuous-variable (CV) optical entangled states.              [1] to analyse the specific case of the simultaneous distri-
+                                           Continuous-variable states utilise an infinite-dimensional          bution of classical information and continuous-variable
+                                           Hilbert space, where it is most sensible to characterise            entanglement under practical requirements for classical
+                                           measurement outcomes in terms of their distribution in              performance. Such a scheme has an immediate advan-
+                                           a continuous phase space composed of the quadratures of             tage over either ordinary entanglement distribution or
+                                           the electromagnetic field [20, 21], as opposed to discrete-         optical-frequency classical communication, when viewed
+                                           variable states, which exist in a finite Hilbert space. An          from the perspective of future quantum-integrated net-
+                                           advantage of continuous-variable resource states is that            works; by integrating the classical and quantum informa-
+                                           continuous-variable states can be generated reliably, sta-          tion into a single hybrid quantum-classical signal, exist-
+                                           bly and deterministically and do not require heralding or           ing classical communication networks can be retrofitted
+                                           specialised laboratory equipment to prepare or measure              to distribute entanglement synchronously without any
+                                           [22]. These properties make continuous-variable quan-               major loss in quality. Combined with high-lifetime opti-
+                                           tum information protocols attractive for practical deploy-          cal quantum memories [28–30],the Gaussian CMQC pro-
+                                           ment in future quantum networks [23].                               tocol could for example allow for any node within a clas-
+                                              Another advantage of continuous-variable protocols is            sical network to passively generate and store high-quality
+                                           that the additional degrees of freedom inherent to the              entanglement with every other node in the network while
+                                                                                                               maintaining classical communications uptime and with-
+                                                                                                               out requiring substantial increases in computational or
+                                                                                                               hardware cost. Alternatively, the CMQC scheme could
+                                           ∗ n.zaunders@uq.edu.au
+                                                                                                               be used to integrate classical communications natively to
+                                                                                                                           2
+
+quantum protocols which require distributed sources of        of this displacement, which has the effect of translating
+entanglement as well as LOCCs to operate (for example         the mean of the outgoing mode in the phase space, is
+when entanglement swapping between nodes), allowing           drawn from some suitable coherent-state classical proto-
+the protocol to be executed compactly over a single fibre     col with alphabet {d˜1 , . . . , d˜n } such that each displace-
+line or free-space channel.                                   ment is uniquely associated with a classical symbol and
+   This paper is structured as follows. In Section II, we     corresponding binary sequence.
+describe the hybrid scheme introduced in [1], starting           Transmission. Alice then transmits her displaced
+from the required entangled resources and moving onto         mode containing both the entanglement and classical
+the classical modulation and transmission. We then de-        modulation to Bob via a lossy bosonic channel E charac-
+scribe the teleportation stage which decouples the classi-    terised by a transmissivity η. We also model a thermal-
+cal and quantum datastream, and outline how Bob recon-        noise input to the channel of mean photon number
+structs each classical symbol via his teleportation mea-      n = ηε/2(1 − η), such that the equivalent excess-noise
+surements. Lastly, we describe the feedforward opera-         contribution to the signal in shot-noise units (SNU) is ε.
+tions required for Bob to return the joint output state to       Demodulation. In order to extract the classical sig-
+an appropriate two-mode-squeezed entangled state. Sec-        nal, Bob must determine some way of measuring the dis-
+tion III explicitly analyses an implementation of the pro-    placement of the mode received from Alice, since this
+tocol assuming a quadrature phase-shift-keyed classical       will allow him to calculate some estimator of Alice’s ini-
+modulation and a Gaussian thermal-noise lossy channel;        tial displacement from which he can infer Alice’s intended
+we define the classical encoding in terms of a discrete       classical symbol. In previous proposals [25, 27] dealing
+alphabet and signal strength and convert to a phase-          with classical modulation in CV-QKD, this is easily per-
+space modulation of the distributed entangled signal. We      formed via a direct measurement of the quadratures via
+characterise the state after transmission. We then per-       either homodyne or heterodyne detection, with the mea-
+form the teleportation step and associated measurement,       surement outcome containing both the classical informa-
+describe how Bob interprets his measurement results to        tion as well as the correlated quantum values needed to
+reconstruct Alice’s classical datastream, and explicitly      distil a secret key. However, it is clear that direct mea-
+compute the bit-error rate of the classical signal as a       surement is not suitable when we require the protocol
+function of initial entanglement, classical signal strength   to distribute entanglement, since any measurement by
+and channel characteristics. We then characterise the         Bob on the received mode would collapse the state. Bob
+feedforward operations performed by Bob to reproduce a        therefore needs some way to demodulate the classical and
+two-mode squeezed vacuum state after teleportation and        quantum signal without destroying the quantum state via
+explicitly compute the output state obtained by Alice         measurement.
+and Bob at the end of the protocol for a full classical al-      To extract the signal without directly measuring
+phabet, which includes non-Gaussian effects arising from      it, Bob utilises his entangled state ρ̂B to perform a
+classical bit errors. We quantify the output state in terms   continuous-variable teleportation [31] on the received
+of its Gaussian components. In Section IV, we provide         mode. He does this by mixing one mode of his two-
+a lower bound on the quantum performance of the pro-          mode squeezed state with the incoming mode on a bal-
+tocol in terms of the entanglement of the output state.       anced beamsplitter and measuring the output modes of
+We provide an analysis in terms of the reverse coherent       the beamsplitter via homodyne detection on q̂ and p̂ re-
+information, entanglement of formation, and asymptotic        spectively. Crucially, his measurement values are also
+secret-key rate as a function of channel loss for realistic   an estimator of the classical signal, with the homodyne
+conditions in the regime of ideal (unphysical) teleporta-     measurement on q̂ (p̂) measuring the displacement of the
+tion as well as more realistic implementations. Section V     signal arising from the classical scheme in the q̂ (p̂) di-
+then concludes with a summarisation of our findings and       rection. In this way Bob can simultaneously measure
+a discussion of some future applications of the protocol      and estimate Alice’s classical signal while preserving the
+to quantum networking.                                        transmitted entanglement by teleporting the correlations
+                                                              onto his auxiliary entangled state via a measurement-
+                                                              dependent displacement unitary (Fig. 1.b).
+          II.   PROTOCOL DESCRIPTION                             Reconstruction of the quantum state. The fact
+                                                              that the measurement outcomes predict Alice’s classical
+   Based off the protocol proposed in [1], the structure      displacement also allows Bob to additionally remove the
+and operating procedure of the Gaussian protocol is as        classical displacement that is teleported onto his outgo-
+follows (Fig. 1.a).                                           ing mode (alongside the quantum correlations) by per-
+   State preparation and classical modulation. To             forming the inverse displacement operation, in order to
+begin, Alice (Bob) generates a two-mode squeezed vac-         return the mode to zero-mean. Unlike the displacement
+uum state ρ̂A (ρ̂B ) of squeezing rA (rB ). To encode the     arising from the teleportation, however, the removal of
+classical information, Alice performs a phase-space dis-      the classical displacement is probabilistic: there is a non-
+placement operation on the outgoing mode of her state         zero probability eS that Bob predicts the wrong classical
+by an amount dk ∈ R2 [24, 25, 27]. The size and direction     symbol based on his measurements, which are necessarily
+                                                                                                                                3
+
+imperfect. In this case, Bob would perform the wrong in-              Each symbol then corresponds to a displacement opera-
+verse displacement. The net result of such mistakes is to             tion in the phase space D̂(dk ), for vector displacement
+introduce a non-Gaussian noise source into his outgoing
+                                                                                                             T
+quantum mode.                                                                                dk = (dx , dy )                  (5)
+
+                                                                      where dx = Re[d˜k ], dy = Im[d˜k ].
+                                                                         We consider initially the case where Alice only sends
+                                                                      the symbol 00, i.e. she displaces the outgoing mode AS
+                       III.   ANALYSIS                                of her state by the fixed amount D̂(d1 ). The covariance
+                                                                      of her state remains unchanged, while the mean vector
+                                                                      now becomes
+   We now proceed to analyse the protocol, with the aim
+of characterising the joint entangled state ρ̂out
+                                              AB shared by                              µdAA
+                                                                                           1
+                                                                                             S
+                                                                                               −→ (0, 0, dx , dy )T .         (6)
+Alice and Bob after transmission, teleportation and cor-              Next, Alice’s displaced mode AS is transmitted to Bob
+rection. For convenience, we consider first a simplified              through the lossy channel E; we model this as a beam-
+case where Alice sends a classical symbol with a fixed                splitter of transmittance η and thermal-noise contribu-
+arbitrary displacement, since this allows us to show most             tion ε. The effect of the channel is to transform Alice’s
+key results without a major loss of generality. We then               displaced entangled state, which we label ρ̂dAA1
+                                                                                                                         , into a
+conclude the analysis by extending our results to the full                                                             S
+                                                                      mixed Gaussian two-mode squeezed state characterised
+protocol, where Alice’s classical symbol is chosen ran-               by
+domly from a predetermined classical alphabet. A full
+derivation is presented in Appendix A.                                                              √      √
+                                                                                     µdAA
+                                                                                        1
+                                                                                          S
+                                                                                            = (0, 0, ηdx , ηdy )T             (7)
+                                                                                                             
+                                                                                       d1        a00 I c00 σZ
+                                                                                     VAA    =                                 (8)
+                                                                                          S     c00 σZ b00 I
+
+                                                                      where
+        A.    State preparation and transmission
+                                                                                     a00 = cosh 2rA                           (9)
+   We begin by assuming Alice and Bob’s entangled re-                                b00 = η(cosh 2rA + ε − 1) + 1           (10)
+                                                                                           √
+sources are two-mode squeezed vacuum states of squeez-                               c00 = η sinh 2rA .                      (11)
+ing rA and rB respectively. These states are both Gaus-
+sian, and so are uniquely characterised by their mean vec-            After transmission, the joint state ρ̂dAA
+                                                                                                              1
+                                                                                                                S BS B
+                                                                                                                        shared by
+tors and covariance matrices in terms of the field quadra-            Alice and Bob is the four-mode Gaussian state with mean
+ture operators:                                                       and covariance matrix
+                                                                                              √     √
+                                                                            µAAS BS B = (0, 0, ηdx , ηdy , 0, 0, 0, 0)T       (12)
+        µA = µB = (0, 0, 0, 0)T                                 (1)                        d1
+                                                                            VAAS BS B = VAA S
+                                                                                                ⊕ VBS B .                    (13)
+                       cosh 2rA I sinh 2rA σZ
+           VAAS =                                               (2)
+                      sinh 2rA σZ cosh 2rA I
+                                                                         B.    Teleportation and classical data estimation
+                                             
+                       cosh 2rB I sinh 2rB σZ
+           V BS B =                             .               (3)
+                      sinh 2rB σZ cosh 2rB I
+                                                                         In order to extract the classical data stream from
+                                                                      the combined classical-quantum signal, Bob performs
+Alice and Bob retain the mode A and B respectively; the               a continuous-variable teleportation of Alice’s mode AS
+outgoing modes AS and BS are used for the transmis-                   onto his retained mode B by first mixing the sent mode
+sion and teleportation stages. To encode each classical               with his entangled state and measuring the output via a
+message, Alice displaces her outgoing mode AS accord-                 dual homodyne detection [31]. This allows him to pre-
+ing to a QPSK protocol, where her four possible classical             serve the entangled state while also allowing him to esti-
+symbols {d˜1 , d˜2 , d˜3 , d˜4 } associated with the classical bit-   mate the classical signal via his measurement outcomes.
+strings {00, 01, 11, 10} respectively are defined by                     The first step, mixing between the signal mode AS and
+                                                                      Bob’s auxiliary entangled mode BS , is done on a balanced
+                                                                      beamsplitter, producing the four-mode entangled Gaus-
+                           i(2k − 1)π
+                                       
+         d˜k = d exp                        , k = 1, 2, 3, 4.   (4)   sian state (ρ̂dAA
+                                                                                      1
+                                                                                        S BS B
+                                                                                               )′ with mean vector and covariance
+                                4                                     matrix
+                                                                                                                                    4
+
+
+ a.                                                                                   b.
+
+
+
+
+FIG. 1. (a) Schematic of the Gaussian CMQC protocol. The flow of quantum and classical information is represented by black
+and blue dashed lines respectively. Bob and Alice each prepare a two-mode entangled state ρ̂A,B . Alice encodes her classical
+information by displacing the outgoing mode of her state by D̂(d), depending on the symbol d˜ she draws from the classical
+alphabet d˜1 , . . . , d˜n , and transmits the mode to Bob over the lossy channel E characterised by transmissivity η and thermal
+noise ε. Upon reception, Bob teleports the incoming mode onto his outgoing mode by mixing Alice’s signal with one arm of
+his entangled state on a balanced beamsplitter and performing a dual homodyne measurement, the measurement outcomes
+q̂As , p̂As −→ x = (x0 , y0 )T of which are used to perform the teleportation unitary D̂(gx x) on the teleported mode B (b). The
+outcome x is also used to generate an estimate ⟨α⟩ of Alice’s sent classical symbol; Bob performs the displacement D̂(−gα ⟨α⟩)
+on his mode to probabilistically return the state to zero-mean. The net output of the protocol is a non-Gaussian zero-mean
+ensemble two-mode entangled state ρ̂out      AB . The√ choice of electronic gain gx when enacting the teleportation Âtele affects the
+properties of the teleporter: we assume gx = − 2 tanh rB such that in the limit of many exchanged states the teleporter map
+ρ̂ −→ Âtele ρ̂Â†tele is equivalent to the pure-loss channel ρ̂ −→ Λ[τ ](ρ̂), where τ = tanh2 rB .
+
+
+
+
+                              µdAA
+                                 1
+                                   S BS B
+                                          ′
+                                            ≡ (0, 0, αx , αy , αx , αy , 0, 0)T                                                  (14)
+                                                               c√00                c√00
+                                                  a00 I             σ                   σ            0
+                                                                                                          
+                                                                  2 Z                 2 Z
+                                               c√00 σZ b00 +cosh 2rB I b00 −cosh 2rB I − sinh√2rB σZ 
+                                d1        ′                       2                   2
+                              VAAS BS B =  c√002                                                    2
+                                                                                                                                 (15)
+                                                                                                          
+                                               2 σZ b00 −cosh        2rB     b00 +cosh 2rB    sinh
+                                                                                                  √2rB σZ 
+                                                                                                           
+                                                                  2       I           2      I      2
+                                                    0     − sinh√2r2
+                                                                     B
+                                                                        σZ sinh√2r   2
+                                                                                        B
+                                                                                          σZ    cosh 2rB I
+
+
+
+where for ease we have defined                                         measurement outcome x is a random variable with bi-
+                    √      √                                           variate Gaussian distribution P d1 (x0 , y0 ) centred on α1 ,
+              α1 = ηd1 / 2 ≡ (αx , αy ).                     (16)      then with high probability the sign of the outcomes x0 , y0
+Bob then performs a dual homodyne measurement on                       predict the sign of the received classical displacement and
+the two output modes of the beamsplitter, measuring                    consequently Alice’s sent symbol: if x0 ≥ 0, then it is
+the q̂ quadrature of the mode BS and obtaining the mea-                most likely that αx ≥ 0 and so the first bit of the symbol
+surement result x0 , and measuring the p̂ quadrature of                is 0; if y0 ≥ 0, then it is most likely that αy ≥ 0 and
+the mode AS and obtaining the measurement result y0                    so the second bit of the symbol is 0, and so on. Equiv-
+respectively. This is equivalent to projection onto the                alently, obtaining x0 ≥ 0, y0 ≥ 0 simultaneously implies
+quadrature eigenstates corresponding to the correct mea-               the classical symbol d˜1 or 00, etc.
+surement outcomes, which has projector                                    The bit-error rate for bits encoded in this fashion is
+                                                                       by definition equal to the probability that Bob obtains
+ Π̂ ≡ I ⊗ |p̂ = y0 ⟩ ⟨p̂ = y0 |AS ⊗ |q̂ = x0 ⟩ ⟨q̂ = x0 |BS ⊗ I.       a measurement result predicting a binary 1, i.e. x < 0,
+                                                             (17)      when the sent classical symbol encodes binary 0, i.e. for
+                                                                       αx ≥ 0, or vice versa:
+The probability P d1 (x0 , y0 ) of obtaining a specific mea-
+surement result x = (x0 , y0 )T is given by the norm of                            eC = P (x0 < 0, y0 | αx ≥ 0)                  (19)
+the state post-measurement, conditional on obtaining the                                Z Z ∞
+measurement x:                                                                        ≡        dx0 dy0 P d1 (x0 , y0 )           (20)
+                               √             √                                              0
+                              ( 2x0 −αx )2 +( 2y0 −αy )2
+                                                        
+                     exp − 12
+                                                                                                                      
+                   1               b    +cosh(2r   )
+                                                                                        1       1          αx
+ P d1 (x0 , y0 ) =
+                                     00          B
+                                                           . (18)                     = erfc √ √                         .       (21)
+                   π          b00 + cosh(2rB )                                          2         2 b00 + cosh 2rB
+
+The simplest way for Bob to reconstruct the classical                  It is not difficult to see that by the symmetry of P d1 and
+signal from his measurements is to note that, since the                the classical encoding the error rate for bits encoded on
+                                                                                                                               5
+
+the p̂ quadrature is also eC , and in general the bit-error     non-Gaussian. However, the degree of non-Gaussianity
+rate for either quadrature for any symbol is eC . It thus       generally vanishes at least exponentially fast with the
+follows that the bit-error rate of the whole protocol is eC .   classical signal strength d. The output state is therefore
+                                                                well approximated by the equivalent Gaussian state with
+                                                                identical mean and covariance matrix.
+         C.   Reconstructing the entangled state                   In the simplified case where Alice sends only the single
+                                                                classical symbol d˜1 , the mean vector and covariance ma-
+   Lastly, Bob applies the correct feed-forward operations      trix of the ensemble state (i.e. in the limit of many shots,
+on the output mode of his teleportation, based on his           where each moment is averaged over the distribution of
+measurement results, to obtain a zero-mean two-mode             the measurement results x0 , y0 ) is given by
+squeezed Gaussian state.                                                         √           √        T
+   To propagate the state, Bob performs the unitary dis-           µdAB
+                                                                      1
+                                                                        = 0, 0, 2 τ αx eC , 2 τ αy eC                        (26)
+placement D̂(gx x) on his mode.  √ By choosing the gain
+                                                                         
+                                                                                 a0 I          c0 [1 − δ] σZ 
+                                                                                                                
+parameter gx such that gx = − 2 tanh rB the teleporter               d1
+                                                                                           
+                                                                   VAB  =                                  2   .           (27)
+is converted into an effective pure-loss channel [6] with                  c0 [1 − δ] σZ b0 + ∆ − µdB1         I
+transmissivity τ = tanh2 rB ; in the ensemble limit (i.e. in
+the limit of many shots, where each moment is averaged          We define
+over the distribution of the measurement results x0 , y0 )                           r
+the mean of the state approaches                                                      2 −ω2 /2
+                                                                                δ=     ωe                                    (28)
+                               √                                                     π
+                     µdB1 −→ τ α1 .                    (22)
+                                                                               ∆ = 2(1 − b00 )τ δ + 2α2 τ eC                 (29)
+Removing the remaining classical displacement is less
+                                                                where ω is the signal-to-noise ratio of the Gaussian clas-
+straightforward. Unlike the measurement outcomes x,
+                                                                sical signal,
+Bob can only estimate the classical displacement prob-
+abilistically and so cannot directly return the state to                                  1       α2
+zero-mean. Instead, Bob performs an approximate dis-                               ω2 =                                      (30)
+                                                                                          2 b00 + cosh 2rB
+placement operation D̂(−gα ⟨α⟩) such that
+                                                               such that
+                    
+                     D̂(−gα α1 ) x0 ≥ 0, y0 ≥ 0                                                     
+                    
+                    D̂(−g α ) x ≥ 0, y < 0                                              1        ω
+     D̂(−gα ⟨α⟩) =
+                           α 2     0         0
+                                                    (23)                            eC = erfc √         .              (31)
+                                                                                         2          2
+                    
+                     D̂(−g  α
+                           α 3  ) x0 <  0, y 0 ≥0
+                                                                                          √
+                    
+                      D̂(−gα α4 ) x0 < 0, y0 < 0
+                    
+                                                                Recall that αx = αy = α/ 2 for the symbol d˜1 . The vari-
+         √       √            √                                 ances a0 , b0 and c0 encode the variances of the quantum
+for αk = ηdk / 2 and gα = τ . The net effect of these           state in the case of no classical signal, i.e. the protocol
+two operations is thus to enact the mean transformation         where Alice and Bob perform only a partial CV telepor-
+                                                               tation with feed-forward on Bob’s mode:
+          
+           (0, 0)T                x0 ≥ 0, y0 ≥ 0
+          (0, −2g α )T
+          
+                                   x0 ≥ 0, y0 < 0
+                     α y                                                             a0 = a00                                (32)
+   µdB1 →                 T
+                                                   (24)
+          
+           (−2g    α
+                  α x , 0)         x 0 < 0, y0 ≥ 0                                   b0 = τ b00 + (1 − τ )                   (33)
+          
+          
+            (−2gα αx , −2gα αy )T x0 < 0, y0 < 0.                                            √
+                                                                                     c0 = − τ c00 .                          (34)
+As the strength d of the classical modulation increases,        Extending to the full protocol, where Alice has essentially
+the frequency of classical errors decreases and so the ap-      an equal chance of sending either of the four classical
+proximate transform D̂(−gα ⟨α⟩) rapidly approaches the          symbols, is straightforward. In this case, Alice’s input
+correct displacement operation D̂(−gα α1 ), such that           state is not the single-symbol state ρ̂dAA
+                                                                                                         1
+                                                                                                           S
+                                                                                                             but rather a
+                                                                balanced stochastic mix of each single-symbol state:
+                     µdB1 −→ (0, 0)T .                  (25)
+                                                                                   ρ̂dAA
+                                                                                       1
+                                                                                           + ρ̂dAA
+                                                                                                 2
+                                                                                                     + ρ̂dAA
+                                                                                                           3
+                                                                                                               + ρ̂dAA
+                                                                                                                     4
+
+                                                                         ρ̂AAS =         S         S         S         S
+                                                                                                                         .   (35)
+                                                                                                     4
+    D.    Covariance matrix of the ensemble joint
+                   entangled state                              By the overall linearity of the protocol it follows that the
+                                                                output state is therefore also given by the equivalent mix
+  Since the bit-error rate of the protocol only achieves        of single-symbol output states:
+eC = 0 in the limit of an infinitely strong classical sig-
+nal, the output state ρ̂dAB
+                          1
+                            of the protocol (after measure-                          ρ̂dAB
+                                                                                         1
+                                                                                           + ρ̂dAB
+                                                                                                 2
+                                                                                                   + ρ̂dAB
+                                                                                                         3
+                                                                                                           + ρ̂dAB
+                                                                                                                 4
+
+                                                                            ρ̂out
+                                                                              AB =                                 .         (36)
+ment and re-displacement) for a single shot is necessarily                                         4
+                                                                                                                             6
+
+The general output state is also well approximated by a             variable context quantifies the minimum amount of en-
+Gaussian for the same reasons as the single-symbol out-             tanglement required to prepare ρ̂out
+                                                                                                      AB from vacuum [38–
+put state. Determining the covariance matrix and mean               40]; and thirdly the asymptotic secret-key rate [41, 42]
+vector of the general output state is also straightforward,
+since we can exploit the linearity of expectation values;                              K∞ = βIAB − χEB                    (44)
+given the symmetry of the classical protocol we find
+                                                                    which is a measure of the number of secret-key bits dis-
+          µout
+                            T                                       tillable by Alice and Bob from the state ρ̂out
+                                                                                                                AB in the limit
+           AB = (0, 0, 0, 0)                                 (37)
+                                                                  of many states being exchanged.
+           out              a0 I     c0 [1 − δ] σZ                     For each measure R, EF , K∞ , an exact analytical value
+          VAB  =                                         .   (38)
+                       c0 [1 − δ] σZ [b0 + ∆] I                     for the full arbitrary non-Gaussian state ρ̂out
+                                                                                                                AB is generally
+                                                                    not known. However, extremality properties of Gaus-
+The two relevant limits [1] are the limit of high teleporter        sian states [38] allow us to derive a sufficiently tight
+squeezing rB ≫ 0 and high classical signal α ≫ 0. In the            lower bound on R, EF , K∞ by computing the value for
+limit of large classical signal, it is straightforward to see       the equivalent Gaussian state ρ̂GAB defined by the mean
+that δ, ∆ −→ 0, and so                                              vector and covariance matrix VAB  out
+                                                                                                          , µout
+                                                                                                             AB . We present
+                            
+                               a0 I c0 σZ
+                                                                   these calculations in Appendix B. Each bound is then op-
+                  VAB −→                                 (39)       timised over Alice and Bob’s two-mode squeezing param-
+                              c0 σZ b0 I
+                                                                    eters rA,B in both an impractical unconstrained regime,
+i.e. perfect classical communication allows the two par-            where it is assumed that Alice and Bob can generate
+ties to recover a state equivalent to Alice’s initial entan-        states of essentially unbounded squeezing, and a con-
+gled state passed through the channel E and a pure-loss             strained regime, where both parties are limited to a maxi-
+channel of transmissivity τ . In the limit of high squeez-          mum squeezing of 10 dB in order to capture a more realis-
+ing rB −→ ∞ and fixed classical signal, however, we find            tic implementation of the protocol subject to limitations
+eC −→ 0.5 and                                                       in state preparation [43].
+                                                                       Additionally, we employ the approach outlined in refs.
+                             δ −→ 0                          (40)   [25] and [27], where we condition the performance of
+                                      2                             the protocol on a fixed classical quality-of-service met-
+                             ∆ −→ α                          (41)
+                                                                    ric. Specifically, we fix
+as well as b0 , c0 −→ b00 , c00 . Unlimited squeezing there-                         √ √
+                                                                                   2 2 b00 + cosh 2rB erfc−1 (2eC )
+fore allows Alice and Bob to ignore the effect of the                         d=                 √                         (45)
+teleporter at the cost of vanishing classical communica-                                           η
+tion (due to the reduced signal-to-noise of Bob’s mea-
+                                                                    such that the error rate of the classical data is always at
+surements), the errors of which propagate an effective
+                                                                    most eC . This more accurately reflects the usage of the
+thermal-noise contribution α2 onto the quantum signal.
+                                                                    protocol in actual deployment, where the classical aspect
+   Finally, in the limit of both high classical signal and
+                                                                    of the communications must obey strict requirements on
+high squeezing, we obtain
+                                                                    reliability and performance, and where the energy cost
+                            
+                               a00 I c00 σZ
+                                                                   associated with increasing the signal strength d is not a
+                  VAB −→                                (42)        chief concern.
+                              c00 σZ b00 I
+                                                                       Figures 2.a and 2.b show results for the reverse co-
+i.e. they obtain an ensemble state exactly equivalent to            herent information R and entanglement of formation EF
+if Alice had directly transmitted the entangled state ρ̂A           respectively in the case of no classical signal (d = 0,
+over the communication channel E.                                   where the protocol reduces to forward-communication-
+                                                                    assisted asymmetric entanglement swapping), eC = 10−9
+                                                                    and eC = 10−6 . In the unconstrained regime for the
+                       IV.    RESULTS                               protocol with no classical signal, the RCI approaches the
+                                                                    repeaterless (PLOB) bound of − log2 (1 − η) [44], which
+   We now proceed to characterise the protocol in terms             constitutes an ultimate upper bound on the entangle-
+of the entanglement of the non-Gaussian output state                ment distribution capacity of the protocol, since in the
+ρ̂out                                                               limit of unbounded squeezing the teleportation channel
+  AB .  We present results for three useful measures
+of mixed-state entanglement in continuous-variable sys-             approaches identity. In the constrained regime the proto-
+tems: firstly, the reverse coherent information [32]                col achieves similar performance (i.e. scaling as O[η]) in
+                                                                    the limit of high loss, showing that Bob does not need to
+                   R = S(ρ̂out       out
+                           A ) − S(ρ̂AB )                    (43)   employ massive amounts of squeezing to achieve equiva-
+                                                                    lent quantum performance.
+which provides a lower bound on the distillable entan-                 The RCI for the protocol with a non-zero classical sig-
+glement of the output state [33–35]; secondly, the entan-           nal then demonstrates the decohering effect of the clas-
+glement of formation EF [36, 37], which in a continuous-            sical bit errors on the quantum signal, with the protocol
+                                                                                                                                                                       7
+
+Reverse coherent information R                  No classical signal (unconstr.)                                                  Direct entanglement distribution
+                            100                                                                                  100
+
+
+
+
+                                                                                       Entanglement of formation EF
+                                                        eC = 10-9 (unconstr.)                                                         No classical signal (constr.)
+                                                        eC = 10-6 (unconstr.)                                                                 eC = 10-9 (constr.)
+                                                  No classical signal (constr.)                                                               eC = 10-6 (constr.)
+                                                           eC = 10-9 (constr.)
+                       10-2                                eC = 10-6 (constr.)                               10-2
+
+
+                       10-4                                                                                  10-4
+
+
+                       10-6                                                                                  10-6
+
+                                      a.                                                                                   b.
+                       10-8                                                                                  10-8
+                                  0        10   20      30     40           50    60                                   0        20         40              60         80
+                                                     Loss (dB)                                                                          Loss (dB)
+
+FIG. 2. Lower bounds on the (a) reverse coherent information and (b) entanglement of formation of the generated state
+ρ̂out
+  AB generated by the protocol as a function of channel loss η. The excess noise on the channel is ε = 0.025. The reverse
+coherent information R is optimised over the squeezing of Alice and Bob’s respective two-mode states rA , rB at each point
+assuming unconstrained optimisation (rA,B ∈ [0, ∞), solid lines) and constrained optimisation (rA,B ∈ [0, 1.151], dashed lines)
+representing a maximum squeezing of 10 dB. The entanglement of formation EF is optimised only for the constrained case,
+since the entanglement needed to prepare a state of unconstrained squeezing is trivially infinite [39]. Data is presented in both
+cases for a protocol with no classical signal (i.e. ordinary teleportation), eC = 10−9 and eC = 10−6 .
+
+
+only delivering distillable entanglement below ∼ 55 dB                                   constrained case is a smaller magnitude of entanglement
+of loss for a classical signal with eC = 10−9 , and below                                for lower bit-error rates.
+∼ 27 dB of loss for a classical signal with eC = 10−6 .                                     Lastly, we present the asymptotic secret key generation
+The sensitivity of the Gaussian CMQC protocol to clas-                                   rate results in Figure 4 for unconstrained and constrained
+sical errors, in comparison to SQCC-QKD protocols [27]                                   optimisation, again for no classical signal, eC = 10−9 ,
+which are more or less robust to weak classical modula-                                  and eC = 10−6 . The rate K∞ follows the same trends
+tion, arises from the term 2α2 τ eC in ∆, which has has the                              as in the distillable entanglement, and exhibits the same
+equivalent effective excess-noise contribution 2d2 eC : even                             characteristic sensitivity to classical noise. Importantly,
+for fixed bit-error rates, as loss increases the classical am-                           Fig. 4 also distinguishes between the entanglement-based
+plitude d required to maintain the signal increases expo-                                protocol and the SQCC scheme presented in [27], which
+nentially and so ∆ grows with loss. The protocol fails to                                uses classical modulation of coherent states and postpro-
+deliver distillable entanglement when ∆ becomes larger                                   cessed direct measurement to generate secret-key bits at
+than the maximally tolerable excess noise (MTEN).                                        the same time as exchanging classical information. Com-
+   Figure 3 characterises the protocol in terms of chan-                                 pared to the QKD-specific SQCC scheme, the entan-
+nel excess noise as a function of the classical quality-of-                              glement scheme is significantly more sensitive to errors
+service for a fixed channel loss of η = 30 dB. We calcu-                                 in the classical signal: the upper bound on key gener-
+late the maximum tolerable excess noise εMTEN in terms                                   ation, which is given by the optimised secret-key rate
+of the RCI for both the unconstrained and constrained                                    of the channel in the case of no classical signal, is sat-
+regimes. In the unconstrained regime (Fig. 3.a), the sen-                                urated by the optimised SQCC-QKD protocol at bit-
+sitivity to classical noise is highlighted more clearly, with                            error rates of only eC = 10−6 . In contrast, the Gaussian
+the classical signal requiring a bit-error rate of at most                               CMQC scheme is less robust, requiring error rates of up
+eC ∼ 5×10−7 to be able to distil entanglement. However,                                  to eC ≤ 10−14 to saturate the upper bound. The reason
+the transition between the distillable and non-distillable                               for this is that the re-displacement process in SQCC-
+regime is sharp, which shows there is very little coupling                               QKD is done virtually on measurement outcomes, and
+between channel noise and classical noise. In the distill-                               so is not constrained to be a physically valid operation,
+able regime, the maximum allowable noise stays mostly                                    unlike the re-displacement D̂(−gα ⟨α⟩). The virtual re-
+constant at ε ∼ 10−1 , which indicates the protocol is                                   displacement therefore has the effect of reducing the ef-
+fairly robust over noisy channels.                                                       fective noise on Bob’s mode, something which is not pos-
+   We also see again that the difference between the un-                                 sible with physical operations, and so after normalisation
+constrained and constrained (Fig. 3.a, b respectively)                                   does not have an effective SNR-dependent noise contri-
+protocols is small, with the constrained protocol exhibit-                               bution. This allows the SQCC-QKD protocol to be much
+ing the same εMTEN as a function of eC as in the un-                                     more resilient to classical errors compared to the physical
+constrained case. The only disadvantage incurred in the                                  CMQC protocol.
+                                                                                                                                                                      8
+
+          100                                              1.5                                     100                                              1.5
+                 a.                                                                                       b.
+
+
+
+
+                                                                 RCI (10-3 bits/pulse)
+
+
+
+
+                                                                                                                                                          RCI (10-3 bits/pulse)
+          10-1                                             1                                       10-1                                             1
+ε (SNU)
+
+
+
+
+                                                                                         ε (SNU)
+          10-2                                             0.5                                     10-2                                             0.5
+
+
+
+
+          10-3 -10                                         0                                       10-3 -10                                         0
+            10         10-9      10-8       10-7    10-6                                             10         10-9      10-8       10-7    10-6
+                      Classical bit-error rate eC                                                              Classical bit-error rate eC
+
+FIG. 3. RCI R as a function of channel noise ε and classical bit-error rate eC , in the case of unconstrained (a) and constrained
+(b) optimisation for η = 30 dB channel loss. The boundary of the shaded area represents the maximum channel noise εMTEN
+at which the protocol can distil entanglement.
+
+
+  However, it is worth noting that the approach to QKD                                   the output state in terms of the reverse coherent informa-
+used here is pessimistic, since it implicitly assumes Eve                                tion, entanglement of formation and asymptotic secret-
+has knowledge of the measurement result x, i.e. that                                     key generation rate; we compare the performance of the
+the teleportation step is untrusted. It is also interest-                                protocol to the point-to-point SQCC CV-QKD scheme
+ing to note that the Gaussian CMQC protocol, which                                       developed by Qi et al. [24, 27], which it is virtually equiv-
+can be represented in terms of some physical (albeit non-                                alent to. We show that the entanglement distribution
+Gaussian) effective channel [1], offers an alternative proof                             protocol, while sensitive to classical measurement errors,
+of the security of CV-QKD and simultaneous classical                                     is nonetheless robust against loss and channel noise, and
+communication when used in this way. In ref. [27],                                       retains this robustness even in the case of implementation
+the non-physicality of the re-displacement operations re-                                under realistic conditions (i.e. imperfect teleportation).
+quired the use of some cumbersome security arguments to                                     The application of the Gaussian CMQC scheme to
+lower-bound the information of an attacker on the quan-                                  quantum networking is obvious. The most immediately
+tum key data. The key rate of the CMQC protocol, while                                   apparent use case of the protocol is the augmentation
+not as tight, requires fewer assumptions to guarantee se-                                of existing or future optical-frequency classical commu-
+curity and likely could be improved further by relaxing                                  nications networks, where a network of many classically-
+requirements on what aspects of the teleportation are as-                                communicating nodes now promotes each outgoing clas-
+sumed to be controlled by Eve.                                                           sical signal to a hybrid quantum-classical signal via the
+                                                                                         Gaussian CMQC protocol. Each node retains the ability
+                                                                                         to send and receive classical information without requir-
+                          V.   DISCUSSION                                                ing any changes to the encoding, decoding or synchro-
+                                                                                         nisation of each coherent signal, only requiring the ad-
+   Here we have discussed how the CMQC protocol of                                       dition of an entanglement source (for transmission) and
+ref. [1] can be implemented to efficiently distribute                                    teleportation apparatus (for receiving). Combined with
+both classical information and continuous-variable Gaus-                                 an appropriate distillation protocol [45–47] and quantum
+sian entanglement on the same pulse and optical mode.                                    memories, this would allow each node in the system to
+The protocol leverages a CV teleportation of the hybrid                                  build up a reservoir of entangled pairs with every other
+quantum-classical signal to both measure the classical                                   networked node, in the background, while maintaining
+data and preserve the quantum correlations, and addi-                                    uptime on each classical link. Each node can then lever-
+tionally uses the measurement outcomes of the telepor-                                   age this stored entanglement to perform whatever task
+tation to approximate a pure Gaussian entangled state                                    is required, e.g. entanglement swapping between distant
+via a local unitary operation. We provide an exact an-                                   nodes, key distribution, distributed quantum computing,
+alytic description of the entangled state shared by Alice                                etc., and can perform the additional classical commu-
+and Bob after performing the protocol over a lossy, noisy                                nications needed for each task seamlessly via the same
+Gaussian channel and quantify the bit-error rate of the                                  channel.
+classical signal. Lastly, we assess the efficacy of the entan-                              It would also be straightforward to extend the Gaus-
+glement distribution by computing the entanglement of                                    sian CMQC protocol to either a two-way or repeater-
+                                                                                                                                      9
+
+                                            Optimised CV-QKD              outputs some non-pure zero-mean CV entangled state, it
+                     100                  eC = 10-9 (unconstr.)           is possible to extend the Gaussian CMQC scheme to a
+                                          eC = 10-6 (unconstr.)           repeater-like configuration by purifying the state through
+                                     No classical signal (constr.)
+                     10-2
+Secret key rate K∞
+
+
+                                             eC = 10-9 (constr.)          noiseless linear amplification [48, 49], which would have
+                                             eC = 10-6 (constr.)          the effect of increasing the effective squeezing of the joint
+                     10-4                      SQCC, eC = 10-6            entangled state. The classical signal, which is measured
+                                                                          independently, can also be error-corrected and the outgo-
+                     10-6                                                 ing mode then re-displaced with the appropriate classical
+                                                                          symbol. In this way, the hybrid quantum-classical signal
+                                                                          could be propagated indefinitely in one direction, subject
+                     10-8                                                 only to limitations arising from the probabilistic nature
+                                                                          of quantum amplifiers. Alternatively, the scheme could
+              10-10                                                       be symmetrised to output a hybrid signal to two nodes si-
+                                                                          multaneously, allowing individual CMQC ‘units’ to form
+                            0   20        40              60         80   part of a combined quantum-classical repeater protocol
+                                       Loss (dB)                          of the kind described by Dias et al. [50], though this may
+                                                                          also be subject to issues of synchronisation (see e.g. [51])
+  FIG. 4. Secret-key rate K∞ as a function of channel loss                of both the classical and quantum signal.
+  for the same parameters as in Fig. 2. The key rate of the                  Lastly, the teleportation protocol [31] used in this pa-
+  protocol with no classical signal and unconstrained optimi-             per is the simplest possible CV teleportation scheme, and
+  sation is equivalent to the optimised key rate for ordinary             is intended primarily as a proof-of-concept. Other pro-
+  Gaussian coherent-state CV-QKD performed over E, which                  posals for high-fidelity CV teleportation exist, e.g. [52],
+  upper-bounds the performance of the protocol. For compari-
+                                                                          and it would be valuable to determine whether imple-
+  son, we include a plot of the keyrate attained by the improved
+  SQCC-QKD protocol described in [27], which nearly saturates             menting these more sophisticated teleportation schemes
+  the bound despite the relatively poor (eC = 10−6 ) classical            within the overall Gaussian CMQC protocol may lead to
+  signal.                                                                 improved outcomes either in classical quality-of-service
+                                                                          or in terms of the generated entangled state.
+
+  like scheme. In the case of a two-way scheme, indi-
+  vidual signals could be exchanged in both the forward                                  ACKNOWLEDGMENTS
+  and backward direction between Alice and Bob, allow-
+  ing for parties to engage in two-way classical commu-                      We acknowledge productive discussions with Josephine
+  nication while simultaneously generating entanglement.                  Dias and Nibedita Swain. The Australian Government
+  This would have the advantage of also allowing Alice and                supported this research through the Australian Research
+  Bob to mutually perform feedback operations on their                    Council’s Linkage Projects funding scheme (Project No.
+  retained entangled mode, which allows them to (in prin-                 LP200100601) and the Centre of Excellence for Quantum
+  ciple) achieve a pure state under appropriate conditions                Computation and Communication Technology (Project
+  [31], as well as letting them implement higher-rate dis-                No. CE170100012). The views expressed herein are those
+  tillation protocols which require two-way or backwards                  of the authors and are not necessarily those of the Aus-
+  classical communication. Similarly, because the protocol                tralian Government or the Australian Research Council.
+
+
+
+
+      [1] N. Zaunders and T. C. Ralph, Generalised simultaneous                Physical Review A 61, 010303 (1999).
+          transmission of arbitrary quantum states and classical           [7] F. Grosshans, G. Van Assche, J. Wenger, R. Brouri,
+          information (2026), arXiv:2606.03181 [quant-ph].                     N. J. Cerf, and P. Grangier, Quantum key distribution
+      [2] M. A. Nielsen and I. L. Chuang, Quantum computation                  using gaussian-modulated coherent states, Nature 421,
+          and quantum information, 10th ed. (Cambridge Univer-                 238 (2003).
+          sity Press, Cambridge ; New York, 2010).                         [8] C. H. Bennett, G. Brassard, C. Crépeau, R. Jozsa,
+      [3] C. H. Bennett and G. Brassard, Quantum cryptogra-                    A. Peres, and W. K. Wootters, Teleporting an unknown
+          phy: Public key distribution and coin tossing, Theoreti-             quantum state via dual classical and Einstein-Podolsky-
+          cal Computer Science 560, 7 (2014).                                  Rosen channels, Physical Review Letters 70, 1895 (1993).
+      [4] A. K. Ekert, Quantum cryptography based on Bell’s the-           [9] C. H. Bennett, G. Brassard, S. Popescu, B. Schu-
+          orem, Physical Review Letters 67, 661 (1991).                        macher, J. A. Smolin, and W. K. Wootters, Purification
+      [5] N. Gisin, G. Ribordy, W. Tittel, and H. Zbinden, Quan-               of Noisy Entanglement and Faithful Teleportation via
+          tum cryptography, Reviews of Modern Physics 74, 145                  Noisy Channels, Physical Review Letters 76, 722 (1996).
+          (2002).                                                         [10] S. L. Braunstein, C. A. Fuchs, and H. J. Kimble, Criteria
+      [6] T. C. Ralph, Continuous variable quantum cryptography,               for continuous-variable quantum teleportation, Journal
+                                                                                                                                 10
+
+     of Modern Optics 47, 267 (2000).                                    distribution between two absorptive quantum memories,
+[11] R. Jozsa, D. S. Abrams, J. P. Dowling, and C. P.                    Nature 594, 41 (2021).
+     Williams, Quantum Clock Synchronization Based on               [30] A. Ortu, A. Holzäpfel, J. Etesse, and M. Afzelius, Storage
+     Shared Prior Entanglement, Physical Review Letters 85,              of photonic time-bin qubits for up to 20 ms in a rare-earth
+     2010 (2000).                                                        doped crystal, npj Quantum Information 8, 29 (2022).
+[12] U. Yurtsever and J. P. Dowling, Lorentz-invariant look at      [31] S. L. Braunstein and P. Van Loock, Quantum infor-
+     quantum clock-synchronization protocols based on dis-               mation with continuous variables, Reviews of Modern
+     tributed entanglement, Physical Review A 65, 052317                 Physics 77, 513 (2005).
+     (2002).                                                        [32] R. Garcı́a-Patrón, S. Pirandola, S. Lloyd, and J. H.
+[13] P. Kómár, E. M. Kessler, M. Bishof, L. Jiang, A. S.               Shapiro, Reverse Coherent Information, Physical Review
+     Sørensen, J. Ye, and M. D. Lukin, A quantum network                 Letters 102, 210501 (2009).
+     of clocks, Nature Physics 10, 582 (2014).                      [33] C. Weedbrook, S. Pirandola, R. Garcı́a-Patrón, N. J.
+[14] E. O. Ilo-Okeke, L. Tessler, J. P. Dowling, and T. Byrnes,          Cerf, T. C. Ralph, J. H. Shapiro, and S. Lloyd, Gaus-
+     Remote quantum clock synchronization without synchro-               sian quantum information, Reviews of Modern Physics
+     nized clocks, npj Quantum Information 4, 40 (2018).                 84, 621 (2012).
+[15] J. I. Cirac, A. K. Ekert, S. F. Huelga, and C. Mac-            [34] M. S. Winnel, N. Hosseinidehaj, and T. C. Ralph, Gener-
+     chiavello, Distributed quantum computation over noisy               alized quantum scissors for noiseless linear amplification,
+     channels, Physical Review A 59, 4249 (1999).                        Physical Review A 102, 063715 (2020).
+[16] D. Gottesman, T. Jennewein, and S. Croke, Longer-              [35] S. Pirandola, U. L. Andersen, L. Banchi, M. Berta,
+     Baseline Telescopes Using Quantum Repeaters, Physical               D. Bunandar, R. Colbeck, D. Englund, T. Gehring,
+     Review Letters 109, 070503 (2012).                                  C. Lupo, C. Ottaviani, J. L. Pereira, M. Razavi, J. Sham-
+[17] C. Degen, F. Reinhard, and P. Cappellaro, Quantum                   sul Shaari, M. Tomamichel, V. C. Usenko, G. Vallone,
+     sensing, Reviews of Modern Physics 89, 035002 (2017).               P. Villoresi, and P. Wallden, Advances in quantum cryp-
+[18] Q. Zhuang, Z. Zhang, and J. H. Shapiro, Distributed                 tography, Advances in Optics and Photonics 12, 1012
+     quantum sensing using continuous-variable multipartite              (2020).
+     entanglement, Physical Review A 97, 032329 (2018).             [36] C. H. Bennett, D. P. DiVincenzo, J. A. Smolin, and W. K.
+[19] Y. Xia, Q. Zhuang, W. Clark, and Z. Zhang,                          Wootters, Mixed-state entanglement and quantum error
+     Repeater-enhanced distributed quantum sensing based                 correction, Physical Review A 54, 3824 (1996).
+     on continuous-variable multipartite entanglement, Phys-        [37] M. M. Wolf, G. Giedke, O. Krüger, R. F. Werner, and
+     ical Review A 99, 012328 (2019).                                    J. I. Cirac, Gaussian entanglement of formation, Physical
+[20] D. F. Walls and G. J. Milburn, Quantum optics, 2nd ed.              Review A 69, 052320 (2004).
+     (Springer, Berlin, 2008).                                      [38] M. M. Wolf, G. Giedke, and J. I. Cirac, Extremality of
+[21] C. Gerry and P. Knight, Introductory Quantum Optics,                Gaussian Quantum States, Physical Review Letters 96,
+     1st ed. (Cambridge University Press, 2004).                         080502 (2006).
+[22] H. Bachor and T. C. Ralph, A Guide to Experiments in           [39] S. Tserkis and T. C. Ralph, Quantifying entanglement in
+     Quantum Optics, 1st ed. (Wiley, 2019).                              two-mode Gaussian states, Physical Review A 96, 062338
+[23] V. C. Usenko, A. Acı́n, R. Alléaume, U. L. Ander-                  (2017).
+     sen, E. Diamanti, T. Gehring, A. A. E. Hajomer,                [40] S. Tserkis, S. Onoe, and T. C. Ralph, Quantifying en-
+     F. Kanitschar, C. Pacher, S. Pirandola, and V. Pruneri,             tanglement of formation for two-mode Gaussian states:
+     Continuous-variable quantum communication (2025),                   Analytical expressions for upper and lower bounds and
+     version Number: 1.                                                  numerical estimation of its exact value, Physical Review
+[24] B. Qi, Simultaneous classical communication and quan-               A 99, 052337 (2019).
+     tum key distribution using continuous variables, Physical      [41] I. Devetak and A. Winter, Distillation of secret key and
+     Review A 94, 042340 (2016).                                         entanglement from quantum states, Proceedings of the
+[25] B. Qi and C. C. W. Lim, Noise Analysis of Simultane-                Royal Society A: Mathematical, Physical and Engineer-
+     ous Quantum Key Distribution and Classical Communi-                 ing Sciences 461, 207 (2005).
+     cation Scheme Using a True Local Oscillator, Physical          [42] F. Laudenbach, C. Pacher, C. F. Fung, A. Poppe,
+     Review Applied 9, 054008 (2018).                                    M. Peev, B. Schrenk, M. Hentschel, P. Walther, and
+[26] R. Kumar, A. Wonfor, R. Penty, T. Spiller, and I. White,            H. Hübel, Continuous-Variable Quantum Key Distribu-
+     Experimental demonstration of single-shot quantum and               tion with Gaussian Modulation—The Theory of Practi-
+     classical signal transmission on single wavelength optical          cal Implementations, Advanced Quantum Technologies
+     pulse, Scientific Reports 9, 11190 (2019).                          1, 1800011 (2018).
+[27] N. Zaunders, Z. Wang, R. Malaney, R. Aguinaldo, and            [43] H. Vahlbruch, M. Mehmet, K. Danzmann, and R. Schn-
+     T. C. Ralph, Enhanced simultaneous quantum-classical                abel, Detection of 15 dB Squeezed States of Light and
+     communications under composable security, Physical Re-              their Application for the Absolute Calibration of Pho-
+     view A 112, 042608 (2025).                                          toelectric Quantum Efficiency, Physical Review Letters
+[28] C. Nguyen, D. Sukachev, M. Bhaskar, B. Machielse,                   117, 110801 (2016).
+     D. Levonian, E. Knall, P. Stroganov, R. Riedinger,             [44] S. Pirandola, R. Laurenza, C. Ottaviani, and L. Banchi,
+     H. Park, M. Lončar, and M. Lukin, Quantum Net-                     Fundamental limits of repeaterless quantum communica-
+     work Nodes Based on Diamond Qubits with an Efficient                tions, Nature Communications 8, 15043 (2017).
+     Nanophotonic Interface, Physical Review Letters 123,           [45] J. J. Guanzon, M. S. Winnel, A. P. Lund, and T. C.
+     183602 (2019).                                                      Ralph, Ideal Quantum Teleamplification up to a Selected
+[29] X. Liu, J. Hu, Z.-F. Li, X. Li, P.-Y. Li, P.-J. Liang, Z.-Q.        Energy Cutoff Using Linear Optics, Physical Review Let-
+     Zhou, C.-F. Li, and G.-C. Guo, Heralded entanglement                ters 128, 160501 (2022).
+                                                                                                                                 11
+
+[46] J. Dias, M. S. Winnel, N. Hosseinidehaj, and T. C. Ralph,           Special Topics 203, 3 (2012), arXiv:1111.0786 [quant-ph].
+     Quantum repeater for continuous-variable entanglement          [55] T. L. Curtright, D. Fairlie, and C. Zachos, A concise trea-
+     distribution, Physical Review A 102, 052425 (2020).                 tise on quantum mechanics in phase space (World Scien-
+[47] K. Azuma, S. E. Economou, D. Elkouss, P. Hilaire,                   tific, Singapore Hackensack London, 2014).
+     L. Jiang, H.-K. Lo, and I. Tzitrin, Quantum repeaters:         [56] T. C. Ralph, P. K. Lam, and R. E. S. Polkinghorne, Char-
+     From quantum networks to the quantum internet, Re-                  acterizing teleportation in optics, Journal of Optics B:
+     views of Modern Physics 95, 045006 (2023).                          Quantum and Semiclassical Optics 1, 483 (1999).
+[48] T. C. Ralph and A. P. Lund, Nondeterministic Noiseless         [57] It may seem unreasonable to claim that Bob does not
+     Linear Amplification of Quantum Systems, in AIP Con-                have a backwards communications channel, as we do in
+     ference Proceedings (AIP, Calgary (Canada), 2009) pp.               the body of the paper, and then quantify the distillable
+     155–160.                                                            entanglement explicitly in terms of a reverse-assisted ca-
+[49] G. Y. Xiang, T. C. Ralph, A. P. Lund, N. Walk, and G. J.            pacity. We are obliged to ignore this apparent contradic-
+     Pryde, Heralded noiseless linear amplification and distil-          tion for practical reasons, since the forward capacity is
+     lation of entanglement, Nature Photonics 4, 316 (2010).             trivially known and not especially illustrative. However,
+[50] J. Dias, M. S. Winnel, W. J. Munro, T. C. Ralph, and                practical implementations of the protocol would likely
+     K. Nemoto, Distributing entanglement in first-generation            have two-way communication accessible in some form or
+     discrete- and continuous-variable quantum repeaters,                another and so evaluating the RCI is not unreasonable.
+     Physical Review A 106, 052604 (2022).                          [58] I. Devetak and P. W. Shor, The Capacity of a Quantum
+[51] P. P. Rohde, Z. Huang, Y. Ouyang, H.-L. Huang, Z.-                  Channel for Simultaneous Transmission of Classical and
+     E. Su, S. Devitt, R. Ramakrishnan, A. Mantri, S.-H.                 Quantum Information, Communications in Mathemati-
+     Tan, N. Liu, S. Harrison, C. Radhakrishnan, G. K. Bren-             cal Physics 256, 287 (2005).
+     nen, B. Q. Baragiola, J. P. Dowling, T. Byrnes, and            [59] C. Weedbrook, A. M. Lance, W. P. Bowen, T. Symul,
+     W. J. Munro, The Quantum Internet (Technical Version)               T. C. Ralph, and P. K. Lam, Quantum Cryptography
+     (2025), arXiv:2501.12107 [quant-ph].                                Without Switching, Physical Review Letters 93, 170504
+[52] U. L. Andersen and T. C. Ralph, High-Fidelity Telepor-              (2004).
+     tation of Continuous-Variable Quantum States Using De-         [60] M. Navascués, F. Grosshans, and A. Acı́n, Optimal-
+     localized Single Photons, Physical Review Letters 111,              ity of Gaussian Attacks in Continuous-Variable Quan-
+     050504 (2013).                                                      tum Cryptography, Physical Review Letters 97, 190502
+[53] J. Eisert, S. Scheel, and M. B. Plenio, Distilling Gaussian         (2006).
+     States with Gaussian Operations is Impossible, Physical        [61] R. Garcı́a-Patrón and N. J. Cerf, Unconditional Opti-
+     Review Letters 89, 137903 (2002).                                   mality of Gaussian Attacks against Continuous-Variable
+[54] S. Olivares, Quantum optics in the phase space - A tuto-            Quantum Key Distribution, Physical Review Letters 97,
+     rial on Gaussian states, The European Physical Journal              190503 (2006).
+
+
+
+
+                                     Appendix A: Characterising the entangled state
+
+   In this section we will derive the mean vector and covariance matrix of the ensemble state ρ̂out
+                                                                                                AB in full. We begin
+with Alice and Bob each generating a two-mode squeezed vacuum state of squeezing rA and rB respectively; Alice
+and Bob label each mode of their state as a retained mode (A, B) and a sent mode (AS , BS ) such that each state
+ρ̂AAS and ρ̂BS B is fully characterised by the mean and covariance matrix
+                                             µAAS = (0, 0, 0, 0)T                                                             (A1)
+                                                                             
+                                                       cosh 2rA I sinh 2rA σZ
+                                             VAAS =                                                                           (A2)
+                                                      sinh 2rA σZ cosh 2rA I
+                                             µBS B = (0, 0, 0, 0)T                                                            (A3)
+                                                                               
+                                                         cosh 2rB I sinh 2rB σZ
+                                             V BS B =                             .                                           (A4)
+                                                        sinh 2rB σZ cosh 2rB I
+We consider first the simplified case where Alice modulates her signal by some fixed and arbitrary displacement, which
+we label d = (dx , dy ), and then specify our results to the case where the displacement is randomly chosen from some
+classical alphabet.
+   The next three steps in the protocol are the classical modulation of Alice’s outgoing mode AS , transmission of AS
+across a lossy and noisy channel E, and mixing of the two modes AS and BS on a balanced beamsplitter prior to
+teleportation. The first operation is Alice’s displacement of her outgoing mode AS such that
+                                                    µdAAS −→ (0, 0, dx , dy )T .                                              (A5)
+The next operation is transmission of the mode AS via the channel E. This is modelled as a beamsplitter of transmis-
+sivity η corresponding to the loss of the channel, with the other input port of the beamsplitter accepting a thermal
+                                                                                                                           12
+
+state of mean photon number parameter n = ηε/2(1 − η); this enacts the map
+                                                 √                                     
+                     d         cosh(2rA )I          η sinh(2rA )σZ           a00 I c00 σZ
+                   VAAS → √                                              ≡                  .                           (A6)
+                              η sinh(2rA )σZ [η(cosh 2rA + ε − 1) + 1] I    c00 σZ b00 I
+
+At this stage the joint state ρ̂dAAS BS B is a separable Gaussian state, and so has trivial mean and covariance:
+                                                               √        √
+                                         µdAAS BS B = (0, 0,       ηdx , ηdy , 0, 0, 0, 0)T                             (A7)
+                                           d            d
+                                          VAA S BS B
+                                                     = VAA S
+                                                             ⊕ VBS B .                                                  (A8)
+
+After transmission to Bob, the two ‘sent’ modes AS and BS are entangled. This is done on a balanced beamsplitter,
+with appropriate symplectic representation
+
+                                                      I 0      0   0
+                                                                    
+                                                        1      1
+                                                    0 √ I − √ I 0
+                                           SAS BS =     2       2                                          (A9)
+                                                    0 √1 I √1 I 0
+                                                                     
+                                                                     2      2
+                                                              0     0      0     I
+
+such that the joint output state (ρ̂dAAS BS B )′ is a four-mode mixed entangled Gaussian state with mean and covariance
+
+                           (µdAAS BS B )′ = SAS BS · µAAS BS B                                                         (A10)
+                                                   √         √
+                                                     ηdx        ηdy
+                                          = (0, 0, √ , √ , 0, 0, 0, 0)                                                 (A11)
+                                                       2         2
+                                          ≡ (0, 0, αx , αy , 0, 0, 0, 0)                                               (A12)
+                             d
+                           (VAA S BS B
+                                       )′ = SAS BS · VAAS BS B · SA  T
+                                                                       S BS
+                                                                                                                       (A13)
+                                                aI        √c σZ             √c σZ             0
+                                                                                                     
+                                                            2                 2
+                                             √c σZ b+cosh 2rB I b−cosh 2rB I           − sinh√2r B
+                                                                                                     σZ 
+                                             2              2                 2               2
+                                          =  √c                                                        .             (A14)
+                                                                                                        
+                                             2 σZ b−cosh    2
+                                                               2rB
+                                                                   I     b+cosh 2rB
+                                                                               2    I    sinh
+                                                                                            √ 2r
+                                                                                              2
+                                                                                                 B
+                                                                                                    σ Z 
+                                                        sinh 2rB         sinh 2rB
+                                                 0    −    √
+                                                             2
+                                                                  σZ        √
+                                                                              2
+                                                                                  σZ     cosh 2rB I
+
+In order to perform the teleportation, Bob first performs a dual homodyne measurement on the entangled modes AS ,
+BS , measuring the q̂ quadrature on the mode BS and the p̂ quadrature on the mode AS . Homodyne measurement of a
+field quadrature is defined as equivalent to projection onto the quadrature eigenstate [53]; the measurement therefore
+has the equivalent projector
+
+                               Π̂ = I ⊗ |p̂ = y0 ⟩As ⟨p̂ = y0 |As ⊗ |q̂ = x0 ⟩Bs ⟨q̂ = x0 |Bs ⊗ I,                     (A15)
+
+where the single-mode projectors |p̂ = y0 ⟩As ⟨p̂ = y0 |As , |q̂ = x0 ⟩Bs ⟨q̂ = x0 |Bs represent projection onto the p̂ eigen-
+state of the mode AS with measurement result y0 and projection onto the q̂ eigenstate of the mode BS with mea-
+surement result x0 respectively. The probability of obtaining a specific measurement result x = (x0 , y0 )T for each
+quadrature is given by the norm of the state post-measurement,
+                                                              h                 i
+                                           P (x0 , y0 ) = Tr (ρ̂dAAS BS B )′ Π̂ ,                                       (A16)
+
+and the two-mode entangled output state ρ̂AB is conditioned on obtaining the specific outcome x0 , y0 ; that is,
+                                                           h                      i
+                                                                 d          ′
+                                     d           TrA  B
+                                                       S S
+                                                             (ρ̂ AAS BS B )    Π̂
+                                     ρ̂AB x0 ,y0 =      h                     i .                                (A17)
+                                                            d
+                                                      Tr (ρ̂AAS BS B )′ Π̂
+
+  To do this, we switch to a Wigner function formalism and follow the example of continuous-variable teleportation
+outlined in [31]. The Wigner function of the Gaussian state (ρ̂dAAS BS B )′ is given by [33]
+
+                                     exp − 12 (q − µdAAS BS B )T · (VAA
+                                                                     d
+                                                                               )−1 · (q − µdAAS BS B )
+                                                                                                     
+                       d                                                S BS B
+                     WAAS BS B (q) =                           q                                            (A18)
+                                                                        d
+                                                                                  
+                                                       (2π)N det VAA       S BS B
+                                                                                                                     13
+
+for the real-valued phase-space position vector q = (qA , pA , qAS , . . . )T , q ∈ R8 , corresponding to the 4 pairs of
+quadrature operators q̂ = (q̂A , p̂A , q̂AS , . . . ) for the state of N = 4 modes. Quantum measurements in the Wigner
+formalism are given by the weighted integral of the state function with the Wigner function of the measurement
+operator over
+             thequadratures corresponding to the measured modes [54]; thus, the (unnormalised) Wigner function
+of the state ρ̂dAB x ,y is given explicitly by
+                    0 0
+
+                                                                                       δ(qBS − x0 ) δ(pAS − y0 )
+                                                Z
+      d 
+      WAB x ,y (qA , pA , qB , pB ) = (4π)2 dqAS dpAS dqBS dpBS WAAS BS B (x)                                    , (A19)
+             0 0                                                                           4π           4π
+where we use the known result that the Wigner function of a position or momentum eigenstate of the quadrature x̂,
+for a specific measurement result X, is a delta function in the phase-space variable x located at X [55]. The norm of
+the state is given by the integral of the Wigner function over all modes
+                                                  Z
+                                    P (x0 , y0 ) = d4 q WAB
+                                                         d 
+                                                               x ,y
+                                                                    (qA , pA , qB , pB ).                       (A20)
+                                                                    0   0
+
+
+Evaluating the above explicitly, we find
+                                                                √         2
+                                                                             √         2
+                                                                                         
+                                                              1 ( 2x0 −αx ) + 2y0 −αy )
+                                                    1 exp   − 2       b+cosh(2rB )
+                                   P (x0 , y0 ) =                                            .                    (A21)
+                                                    π           b + cosh(2rB )
+It is instructive now to consider the state represented by the function [WAB ]x0 ,y0 , which we recall specifically cor-
+responds to the single two-mode entangled state shared by Alice and Bob assuming an initial classical displacement
+d = (dx , dy )T and conditioned on receiving the homodyne measurement results x0 and y0 . It is known that CV tele-
+portation introduces fluctuations on the displacement of the teleported modes, proportional to the outcomes obtained
+during measurement and varying shot-by-shot [31, 53]. We can calculate these fluctuations directly by looking at the
+mean of the state [WAB ]x0 ,y0 , which we calculate via the statistical moments of the Wigner function according to [54]
+                                                           Z
+                                               Tr[q̂i ρ̂] = dN q qi Wρ̂ (q).                                      (A22)
+
+We determine that
+                          √               √                    √                     √           !T
+        d             c( 2x0 − αx ) −c( 2y0 − αy ) sinh 2rB ( 2x0 − αx ) sinh 2rB ( 2y0 − αy )
+        µAB x ,y =                    ,               ,                   ,                         .             (A23)
+               0   0    b + cosh(2rB ) b + cosh(2rB )    b + cosh(2rB )        b + cosh(2rB )
+To propagate the sent mode AS onto the remaining EPR mode B, Bob applies the displacement
+                                                          D̂B (−gx x)                                              (A24)
+                                                                         √
+The gain factor gx can be freely chosen by Bob; we assume gx = − 2 tanh rB x such that the teleporter becomes an
+effective pure-loss channel in the ensemble limit [56], with transmissivity τ = tanh2 rB .
+   Removing the displacement arising from the classical modulation is more involved. Since Bob does not have direct
+access to the actual classical modulation αx,y , he can only estimate the correct displacement based off his measurement
+results x0 , y0 , which from P (x0 , y0 ) he knows are Gaussian random variables centred around the classical modulation
+values. We therefore use the threshold discrimination algorithm described in [27] to define an estimate ⟨α⟩ of the true
+classical displacement based off the measurement results x0 , y0 :
+                                                    
+                                                    
+                                                     (αx , αy )    x0 ≥ 0, y0 ≥ 0
+                                                    
+                                                    (α , −α )
+                                                        x       y   x0 ≥ 0, y0 < 0
+                                              ⟨α⟩ =                                                                (A25)
+                                                    
+                                                     (−α  x , αy ) x0 < 0, y0 ≥ 0
+                                                    
+                                                      (−αx , −αy ) x0 < 0, y0 < 0.
+                                                    
+
+That is, if Bob measures x0 , y0 ≥ 0, he correctly assumes Alice has sent the symbol d = (dx , dy )T ; if he measures
+x0 ≥ 0, y0 < 0, he erroneously assumes Alice has sent the symbol d = (dx , −dy )T , etc. Based on this, the displacement
+operation Bob performs to return the signal to zero-mean changes dependent on his measurements. We define this
+conditional displacement as
+                                              
+                                               D −gα (αx , αy )T ,
+                                                                 
+                                             
+                                                                       x0 ≥ 0, y0 ≥ 0
+                                             D −g (α , −α )T  ,
+                                                 
+                                                                        x0 ≥ 0, y0 < 0
+                                                      α   x    y
+                               D̂(−gα ⟨α⟩) =                                                                       (A26)
+                                               D −gα (−αx , αy )T ,
+                                                                  
+                                             
+                                                                       x0 < 0, y0 ≥ 0
+                                               D −gα (−αx , −αy )T , x0 < 0, y0 < 0
+                                             
+                                                                   
+                                                                                                                       14
+                   √
+where we set gα = τ η to account for the attenuation of the signal from both the channel E and the effective teleporter
+attenuation τ . After both displacements, the mean of the output state becomes
+
+
+                                              
+                                                             +     + T
+                                              (µqA , µpA , µqB , µpB )
+                                                                              x0 ≥ 0, y0 ≥ 0
+                                                                   −
+                                               (µqA , µpA , µqB , µpB )T
+                                                             +
+                                              
+                                d                                           x0 ≥ 0, y0 ≥ 0
+                                µAB x0 ,y0 −→                                                 .                    (A27)
+                                              (µqA , µpA , µ−
+                                              
+                                                                   + T
+                                                             qB , µpB )        x0 ≥ 0, y0 ≥ 0
+                                               (µqA , µpA , µqB , µ−
+                                                             −         T
+                                              
+                                                                   pB )        x0 ≥ 0, y0 ≥ 0
+                                              
+
+
+
+            √                    √
+             2x0 −αx )         c( 2y −α )
+for µqA = c(                        0   y
+          b+cosh(2rB ) , µpA = b+cosh(2rB ) and
+
+
+
+
+                                                  √
+                                       (1 − b)(   2x0 − αx ) tanh rB
+                                 µ+
+                                  qB =                                                                             (A28)
+                                              b + cosh(2rB )
+                                                √
+                                  +    (1 − b)(   2y0 − αy ) tanh rB
+                                 µpB =                                                                             (A29)
+                                              b + cosh(2rB )
+                                        √
+                                       [ 2(1 − b)x0 − (1 + b + 2 cosh 2rB )αx ] tanh rB
+                                 µ−
+                                  qB =                                                                             (A30)
+                                                         b + cosh 2rB
+                                        √
+                                       [ 2(1 − b)y0 − (1 + b + 2 cosh 2rB )αy ] tanh rB
+                                 µ−
+                                  pB =                                                                             (A31)
+                                                         b + cosh 2rB
+
+
+
+More succinctly, after applying D̂(−gα ⟨α⟩) the non-Gaussian Wigner function of the total output state becomes a
+probabilistic mix of [WAB ]x0 ,y0 , each of which is a Gaussian state represented by the same covariance matrix but
+                                                                                    h       i
+                                                                                       d,±±
+different displacements µ±± = (µqA , µpA , µ±qB , µ± T
+                                                   pB ) . Labelling these states as  W AB     :
+                                                                                                  x0 ,y0
+
+
+
+
+                                               h        i
+                                                    d,++
+                                                  W
+                                                AB
+                                                                           x0 ≥ 0, y0 ≥ 0
+                                               
+                                               h        ix0 ,y0
+                                                    d,+−
+                                               
+                                                  W                         x0 ≥ 0, y0 < 0
+                                               
+                                               
+                                                    AB
+                                    d        
+                                    WAB x ,y −→ h d,−+ ix0 ,y0                                                     (A32)
+                                         0 0     W                         x0 < 0, y0 ≥ 0
+                                               h AB ix0 ,y0
+                                               
+                                               
+                                               
+                                                W d,−−
+                                               
+                                               
+                                                             AB             x0 < 0, y0 < 0.
+                                                                   x0 ,y0
+
+
+
+
+We can now proceed to calculate mean and covariance of the output state after Bob has performed
+                                                                                             d both postprocessing
+operations. Importantly, we must calculate the ensemble mean and covariance, since the state WAB     x0 ,y0
+                                                                                                            is necessarily
+dependent on the measurement outcomes, which vary shot-by-shot. To do this, we can exploit         the   fact  that each
+                                                                                             d
+                                                                                               
+shot of the protocol is an independent and identically distributed state represented by WAB     x0 ,y0
+                                                                                                        and   distributed
+according to P (x0 , y0 ); the ensemble state is thus the continuous mixture
+
+
+                                                  Z
+                                        d
+                                                                           d 
+                                       WAB =          dx0 dy0 P (x0 , y0 ) WAB x0 ,y0
+                                                                                      .                            (A33)
+                                                                                                                                                      15
+
+The moments of the state are now given by Eq. (A22). For example:
+
+ µdAB, q̂A = Tr q̂A ρ̂dAB
+                         
+                                                                                                                                                   (A34)
+             ZZ
+                 d2 x d4 q P (x0 , y0 ) WAB
+                                        d 
+           =                                         q
+                                              x0 ,y0 A
+                                                                                                                                                   (A35)
+             Z ∞Z ∞         Z                 h          i                        Z ∞Z 0             Z                    h      i
+                                                    d,++                                                                    d,+−
+           =            d2 x d4 q P (x0 , y0 ) WAB                         qA +               d2 x       d4 q P (x0 , y0 ) WAB                qA
+               0     0                                        x0 ,y0              0     −∞                                           x0 ,y0
+               Z 0 Z ∞          Z                  h         i              Z 0         Z 0 Z                  h        i
+                                                        d,−+                                                       d,−−
+           +             d2 x    d4 q P (x0 , y0 ) WAB                qA +            d2 x d4 q P (x0 , y0 ) WAB                 qA                (A36)
+              −∞ 0                                             x0 ,y0         −∞ −∞                                       x0 ,y0
+             Z ∞Z ∞                      " √                  # Z Z                             " √              #
+                                                                        ∞   0
+                          2                c( 2x0 − αx )                        2                 c( 2x0 − αx )
+           =            d x P (x0 , y0 )                        +              d x P (x0 , y0 )
+              0    0                        b + cosh 2rB              0    −∞                      b + cosh 2rB
+             Z 0 Z ∞                      " √                  # Z                               " √              #
+                                                                        0    0
+                                           c( 2x0 − αx )                                           c( 2x0 − αx )
+                                                                          Z
+                           2                                                     2
+           +             d x P (x0 , y0 )                        +              d x P (x0 , y0 )                                                   (A37)
+              −∞ 0                          b + cosh 2rB               −∞ −∞                        b + cosh 2rB
+                                    " √                 #
+                                     c( 2x0 − αx )
+             ZZ
+           =      d2 x P (x0 , y0 )                        =0                                                                                      (A38)
+                                      b + cosh 2rB
+ µdAB, q̂B = Tr q̂B ρ̂dAB
+                         
+                                                                                                                                                   (A39)
+             ZZ
+                  d2 x d4 q P (x0 , y0 ) WAB
+                                         d 
+           =                                             q
+                                                  x0 ,y0 B
+                                                                                                                                                   (A40)
+             Z ∞Z ∞          Z                    h          i             Z ∞Z 0          Z                  h        i
+                          2       4                     d,++                                                      d,+−
+           =            d x d q P (x0 , y0 ) WAB                      qB +           d x d4 q P (x0 , y0 ) WAB
+                                                                                      2
+                                                                                                                                qB
+               0     0                                        x0 ,y0               0    −∞                                           x0 ,y0
+               Z 0 Z ∞          Z                 h           i                   Z 0 Z 0            Z                     h      i
+                                                       d,−+                                                                  d,−−
+           +             d2 x       d4 q P (x0 , y0 ) WAB                  qB +               d2 x        d4 q P (x0 , y0 ) WAB                qB (A41)
+                −∞ 0                                              x0 ,y0           −∞    −∞                                           x0 ,y0
+               Z ∞Z ∞                                 Z ∞Z 0
+                         d2 x P (x0 , y0 ) µ+                       d2 x P (x0 , y0 ) µ+
+                                                                                       
+           =                                qB +                                       qB
+               0     0                                0     −∞
+               Z 0 Z ∞                                Z 0 Z 0
+                         d2 x P (x0 , y0 ) µ−                        d2 x P (x0 , y0 ) µ−
+                                                                                        
+           +                                qB +                                        qB                                                         (A42)
+               −∞    0                                 −∞     −∞
+           = − 2αx tanh rB eC .                                                                                                                    (A43)
+
+The remaining moments follow in the same way. Lastly, we extend to the case where Alice sends not just a single
+arbitrary displacement, but instead randomly selects a displacement from the classical alphabet described in the main
+work. For each shot, the sent state thus becomes a stochastic four-way mix of the state describing each possible
+symbol:
+
+                                                          ρ̂dAA
+                                                              1
+                                                                  + ρ̂dAA
+                                                                        2
+                                                                            + ρ̂dAA
+                                                                                  3
+                                                                                      + ρ̂dAA
+                                                                                            4
+
+                                              ρ̂AAS −→          S         S         S         S
+                                                                                                .                                                  (A44)
+                                                                            4
+
+Because the protocol is composed of entirely linear operations and measurements, the only effect is to transform the
+output state into a balanced mix of the four single-symbol states such that
+                    h d ,++ i            h
+                                            d2 ,++
+                                                   i         h
+                                                               d3 ,++
+                                                                      i         h
+                                                                                  d4 ,++
+                                                                                         i
+                       WAB
+                          1
+                                         + WAB              + WAB              + WAB                                      x0 ≥ 0, y0 ≥ 0
+                                 x0 ,y0             x0 ,y0              x0 ,y0             x0 ,y0
+                    
+                    
+                    
+                    
+                    
+                    h d ,+− i            h        i         h        i         h        i
+                                            d2 ,+−             d3 ,+−             d4 ,+−
+                     W 1                + WAB              + WAB              + WAB                                      x0 ≥ 0, y0 < 0
+                    
+                    
+    out         1  AB          x0 ,y0             x0 ,y0             x0 ,y0             x0 ,y0
+    WAB x0 ,y0 −→                                                                                                                                  (A45)
+                  4
+                      h         i         h        i         h        i         h        i
+                         d1 ,−+             d2 ,−+             d3 ,−+             d4 ,−+
+                    
+                       WAB              + WAB              + WAB              + WAB                                      x0 < 0, y0 ≥ 0
+                                  x0 ,y0             x0 ,y0             x0 ,y0             x0 ,y0
+                    
+                    
+                    
+                    
+                     h         i         h        i         h        i         h        i
+                     W d1 ,−−              d2 ,−−             d3 ,−−             d4 ,−−
+                    
+                                         + WAB              + WAB              + WAB                                      x0 < 0, y0 < 0.
+                    
+                         AB
+                                         x0 ,y0               x0 ,y0                     x0 ,y0                  x0 ,y0
+
+
+Calculation of the moments also proceeds straightforwardly in the many-symbol case, since expectation values are
+                                                                                                                          16
+
+also linear. Thus
+
+                                   µdAB,
+                                       1         d2         d3         d4
+                                          q̂B + µAB, q̂B + µAB, q̂B + µAB, q̂B
+        µout                  out
+                      
+         AB, q̂A = Tr   q̂ ρ̂
+                          A AB     =                                                                                   (A46)
+                                                         4
+                                   =0                                                                                  (A47)
+                                    µdAB,
+                                       1         d2         d3         d4
+                                          q̂B + µAB, q̂B + µAB, q̂B + µAB, q̂B
+        µout                out
+                               
+         AB, q̂B = Tr q̂A ρ̂AB =                                                                                       (A48)
+                                                         4
+                                 1
+                                =  [−2αx tanh rB eC − 2αx tanh rB eC + 2αx tanh rB eC + 2αx tanh rB eC ]               (A49)
+                                 4
+                                =0                                                                                     (A50)
+
+and similarly for the remaining moments of the state. Thus, the covariance matrix of the ensemble state ρ̂out
+                                                                                                          AB for the
+protocol with full classical communication is
+
+                                                    µout
+                                                     AB = (0, 0, 0, 0)
+                                                                      T
+                                                                                                                       (A51)
+                                                           ′
+                                                             a I c ′ σZ
+                                                                        
+                                                     out
+                                                    VAB  = ′                                                           (A52)
+                                                            c σZ b′ I
+
+for
+
+      a′ = a                                                                                                           (A53)
+                                                                          α2
+                                                                 − 41 b+cosh                           
+                                                      αe                     2rB
+                                                                                             α
+      b′ = b tanh2 rB + sech2 rB + 2(1 − b) tanh2 rB √ √             + α2 erfc          √                   tanh2 rB   (A54)
+                                                      π b + cosh 2rB                   2 b + cosh 2rB
+                                                
+                                          α2
+                                 − 14 b+cosh
+                              αe             2rB
+      c′ = −c tanh rB 1 − √ √                   .                                                                    (A55)
+                              π b + cosh 2rB
+
+
+                                         Appendix B: Estimating entanglement
+
+                                           1.     Reverse coherent information
+
+   The reverse coherent information (RCI) is defined in the following way [32]. Suppose the Gaussian CMQC protocol
+is represented by the quantum channel
+
+                                                        Λ : ρ̂in → ρ̂out
+                                                                     AB .                                               (B1)
+
+The maximum amount of entanglement distillable from the state ρ̂out     AB in e-bits is by construction identical to the
+entanglement distribution capacity of Λ, since we assume that the input state ρin is independent and identically
+distributed (recalling that each input state is a superposition of the four individual single-symbol states). Calculating
+the entanglement distribution capacity under arbitrary two-way communication E↔ is not technically feasible; a lower
+bound is the entanglement distribution capacity assisted by a simplified reverse communication E◁ [57], which is itself
+lower-bounded by the so-called reverse coherent information capacity
+
+                                                ER (Λ) ≡ max S(ρ̂out       out
+                                                                 A ) − S(ρ̂AB )                                         (B2)
+                                                          ρ̂in
+
+
+for ρ̂out        out                                                        out
+      A = TrB [ρ̂AB ]. The reverse coherent information Rout of the state ρ̂AB for a fixed input, given by
+
+                                                  Rout = S(ρ̂out       out
+                                                             A ) − S(ρ̂AB )                                             (B3)
+
+therefore bounds the distillable entanglement [33–35]. Lastly, by Gaussian extremality the quantity Rout is lower-
+bounded by the RCI of the zero-mean Gaussian state ρ̂G                                     out
+                                                      AB defined by the covariance matrix VAB , and so we calculate
+a lower bound R on the distillable entanglement as
+
+                                                Rout ≥ R ≡ S(ρ̂G         G
+                                                               A ) − S(ρ̂AB ).                                          (B4)
+                                                                                                                     17
+
+The quantities S(ρ̂G        G
+                   A ), S(ρ̂AB ) are calculated from the symplectic eigenvalues νi of the respective covariance matrices
+describing each state or substate [33]:
+
+                                                                 +         −
+                                                   S(ρ̂G
+                                                       AB ) = g(νAB ) + g(νAB ),                                   (B5)
+                                                    S(ρ̂G
+                                                        A ) = g(νA ),                                              (B6)
+
+where
+                                                       s               
+                                                        1
+                                                              q
+                                               ±                2     2
+                                              νAB =       D1 ± D1 − 4D2 ,                                          (B7)
+                                                        2
+                                               D1 = a2 + b2 − 2c2 ,                                                (B8)
+                                                              2
+                                               D2 = ab − c                                                         (B9)
+
+and νA = a. Here g is the usual function [33]
+
+                                                                         x−1            x−1
+                                                                                           
+                                         x+1                 x+1
+                                  g(x) ≡     log2                      −     log2                 .               (B10)
+                                          2                   2           2              2
+
+
+
+                                              2.    Entanglement of formation
+
+
+  The entanglement of formation EF describes the minimum amount of entanglement on average, in e-bits, required to
+produce an arbitrary entangled state [36]. It has an equivalent definition in the context of continuous-variable states
+as the ‘minimum amount of two-mode squeezing required to prepare an (arbitrary) entangled state’ [39]. Estimating
+EF for a given state is a hard problem requiring optimisation over a convex roof [40], and for the majority of cases
+no analytic solution exists. For the state ρ̂out
+                                             AB the best approximation is again the lower bound provided by Gaussian
+extremality [38], we therefore calculate the quantity EF such that
+
+                                                   EF ≡ EF (ρ̂G            out
+                                                              AB ) ≤ EF (ρ̂AB ).                                  (B11)
+
+We define EF (ρ̂G                                                                                    out
+                AB ) as the entanglement of formation for the Gaussian state with covariance matrix VAB and compute
+it using the numerical approach outlined by Tserkis, Onoe and Ralph [40] for an arbitrary two-mode Gaussian state;
+letting
+
+                                                             a 0 c1 0
+                                                                     
+                                                      out   0 a 0 c2 
+                                                     VAB  ≡                                                      (B12)
+                                                            c1 0 b 0 
+                                                             0 c2 0 b
+
+EF is given by
+
+                        EF =       inf        H{k(r)} = cosh2 log2 (cosh2 k) − sinh2 log2 (sinh2 k)               (B13)
+                               r− ≤ r ≤ r +
+
+
+where
+
+                                            1
+                                              cosh−1 e2r1 χ cosh2 r + e2r2 χ sinh2 r
+                                                                                     
+                                    k(r) =                                                                        (B14)
+                                            2
+                                            s
+                                              e−2r1 + e−2r2 tanh2 r
+                                         χ=                                                                       (B15)
+                                                e2r1 + e2r2 tanh2 r
+                                                                                                                    18
+
+with
+                                        s
+                                            (a − b)ξ+ − 2θ sinh 2r − (a + b)ξ− cosh 2r
+                              r1 = ln                            p                                               (B16)
+                                                    ω − σ + 1 + γ(ζ1 + ζ2 )
+                                        s
+                                            (a − b)ξ+ + 2θ sinh 2r + (a + b)ξ− cosh 2r
+                              r2 = ln                            p                                               (B17)
+                                                    ω + σ − 1 + γ(ζ1 + ζ2 )
+                              ξ± = ab − c21 ± 1                                                                  (B18)
+                               θ = abc2 − c21 c2 + c1                                                            (B19)
+                               ω = (a − b) [(a + b) cosh 2r + (c2 − c1 ) sinh 2r]                                (B20)
+                                   1 2 2
+                                       a (b − 1) − ab(c21 + c22 ) − b2 + (c1 c2 − 1)2
+                                                                                       
+                               γ=                                                                                (B21)
+                                   2
+                              ζ1 = a2 (2b2 − 1) − 2ab(c21 + c22 − 1) − b2 + 2c21 c22 + 2                         (B22)
+                              ζ2 = 2(a + b)(c1 − c2 ) sinh 4r − (a + b)2 − 4c1 c2 cosh 4r
+                                                                                    
+                                                                                                                 (B23)
+                                        out
+                               σ = det VAB  .                                                                    (B24)
+The bounds r± are given by [39]
+                                                           s        p
+                                                     1         κ±    κ2 − λ+ λ−
+                                                 r± = ln                                                         (B25)
+                                                     2                λ−
+for
+                                κ = 2(σ + 1) − (a − b)2                                                          (B26)
+                                     2       2
+                              λ± = a + b − 2c1 c2 + 2 [(ab − c1 c2 ) ± (c1 − c2 )(a + b)] .                      (B27)
+
+
+                                             3.   Secret-key rate calculations
+
+  In general, the asymptotic secret-key generation rate K for a quantum key distribution scheme using reverse rec-
+onciliation is given by the Devetak-Winter bound [42, 58]
+                                                     K = βIAB − χEB                                              (B28)
+for β = 0.95 the asymptotic error reconciliation efficiency, IAB the classical mutual information, and χEB the Holevo
+information between Bob and an attacker Eve. Again, calculating IAB or χEB analytically for ρ̂out   AB is a non-trivial
+task. We first exploit extremality [38] to produce a lower bound on the mutual information. Writing
+                                                                    
+                                                    out      aI cσZ
+                                                 VAB ≡                                                          (B29)
+                                                            cσZ bI
+
+and assuming Alice and Bob use a no-switching (heterodyne) [59] measurement scheme, then
+                                                                             !
+                                                                    a + 1
+                                IAB (ρ̂out           G
+                                       AB ) ≥ IAB (ρ̂AB ) = log2          c2
+                                                                               .                                 (B30)
+                                                                 a + 1 − b+1
+
+Similarly, the optimality of Gaussian attacks [60, 61] also upper-bounds the Holevo information by the equivalent
+Gaussian amount. Assuming that Eve holds a purification ρ̂ABE of the Gaussian state ρ̂G
+                                                                                      AB , then
+
+                                    χBE (ρ̂out           G
+                                           AB ) ≤ χBE (ρ̂AB ) ≡ χBE (ρ̂ABE )                                     (B31)
+                                                              = S(ρ̂E ) − S(ρ̂E|B )                              (B32)
+                                                                    = S(ρ̂G          G
+                                                                          AB ) − S(ρ̂A|B )                       (B33)
+where
+                                                                              c2
+                                                                                  
+                                         S(ρ̂G
+                                             A|B ) = g(νA|B ) = g         a−           .                         (B34)
+                                                                             b+1
+                                                                             19
+
+Thus we compute a lower bound K∞ on the asymptotic keyrate
+
+                                    K ≥ K∞ = βIAB (ρ̂G             G
+                                                     AB ) − χEB (ρ̂AB ).   (B35)
+

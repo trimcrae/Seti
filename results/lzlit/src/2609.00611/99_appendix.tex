@@ -1,0 +1,577 @@
+\appendix
+
+\section{Related Work}
+\label{app:related_work}
+
+\subsection{Reconstruction in high energy and nuclear physics experiments}
+
+Experiments in high energy and nuclear physics infer the properties of particles and their interactions through scientific instruments that record how matter propagates through, or deposits energy within, a detector medium. Reconstruction solves the resulting inverse problem: it maps low-level measurements---such as ionization deposits, photodetector hits, or calorimeter signals---to a set of physical observables, including particle identities, positions, directions, energies, and momenta.
+
+Machine-learning approaches to this problem operate at two substantially different levels of abstraction. Much work in particle colliders begins from already reconstructed particle candidates or jets, after experiment-specific tracking and calorimetry algorithms have compressed the raw sensor response into a comparatively small set of high-level objects. Sensor-level methods instead operate directly on detector measurements and must learn both the local semantics of individual hits and the global grouping required to assemble them into particles. Existing sensor-level reconstruction systems are therefore closely tied to their instruments. Pandora and WireCell combine detector-specific pattern-recognition algorithms for LArTPC reconstruction~\citep{Acciarri2018,Abratenko_2022}, while SPINE replaces this hand-engineered chain with a cascade of supervised neural networks for semantic segmentation, clustering, and particle assembly~\citep{drielsma2021scalableendtoenddeeplearningbaseddata}. Our work concerns the latter, sensor-level setting, but seeks a reusable framework that can support these reconstruction stages across multiple detector technologies.
+
+\subsection{Foundation models in high energy and nuclear physics}
+
+Most early foundation-model efforts in particle physics operate on reconstructed collider objects. Masked Particle Modeling masks jet constituents and predicts discretized particle tokens~\citep{golling2024maskedparticlemodelingsets,leigh2024tokenizationneededmaskedparticle}; re-simulation-based SSL constructs positive views from alternative simulations of the same underlying event~\citep{r3sl,rieck2025selfsupervisedlearningstrategiesjet}; and RINO enforces invariances motivated by the renormalization-group structure of jets~\citep{hao2025rinorenormalizationgroupinvariance}. In parallel, large-scale supervised multi-task training has produced broadly reusable jet representations across classification, regression, and generation tasks~\citep{Mikuni_2025,bhimji2025omnilearnedfoundationmodelframework, krzmanc2026cross}. These works demonstrate that pre-training can reduce downstream supervision and support transfer across tasks, but assume that detector measurements have already been reconstructed into particle-level inputs.
+
+A growing body of work instead learns directly from sensor-level detector data. PoLAr-MAE introduced masked point modeling for sparse LArTPC trajectories~\citep{polarmae}; contrastive learning has been studied for robust representations of neutrino-detector data~\citep{wilkinson2025contrastivelearningrobustrepresentations}; PolarBERT applies self-supervised pre-training to IceCube events~\citep{polarbert}; and recent work on heterogeneous collider neutrino detectors combines masked reconstruction with relational voxel-level objectives across multiple detector subsystems~\citep{alonsomonsalve2026foundationstylemodelsenergyfrontierheterogeneous}. FM4NPP scales autoregressive pre-training on sPHENIX-like TPC data and demonstrates strong frozen-backbone adaptation across tracking and segmentation tasks~\citep{park2025fm4npp}, while Panda uses prototype self-distillation to learn reusable point-level representations of LArTPC events~\citep{panda}.
+
+These methods establish the promise of sensor-level foundation models, but their architectures or objectives generally remain coupled to a particular sensing modality. PoLAr-MAE uses a trajectory-oriented volumetric tokenization and energy-infilling objective; the heterogeneous-detector framework uses module-aware fusion and simulation-derived relational targets; and FM4NPP transforms spacepoints into collider coordinates, serializes them according to outward particle propagation and detector layering, and predicts spatial neighbors constrained to lie at larger radius. Such priors are well-motivated within their respective instruments, but do not directly provide an off-the-shelf pre-training strategy for other detectors. Instead, Panda V2 holds the point-native architecture and self-distillation objective fixed across LArTPC, collider TPC, and water Cherenkov data. The method assumes only three-dimensional coordinates and optional per-measurement sensor features; detector-dependent choices are restricted to quantities such as spatial discretization, masking scale, and normal feature-level transforms (e.g. log-scaling energy).
+
+\subsection{Self-supervised learning for 3D point clouds}
+
+Our method also builds on the broader literature in self-supervised point-cloud representation learning. Contrastive approaches such as PointContrast align corresponding geometry across transformed views~\citep{xie2020pointcontrastunsupervisedpretraining3d}, while Masked Scene Contrast combines contrastive and reconstructive objectives at scene scale~\citep{maskedscenecontrast}. Masked modeling methods instead remove local regions and predict geometric tokens, coordinates, or latent features; representative examples include Point-BERT~\citep{yu2022pointbertpretraining3dpoint}, Point-MAE~\citep{pang2022maskedautoencoderspointcloud}, Point-M2AE~\citep{zhang2022pointm2aemultiscalemaskedautoencoders}, and Masked Scene Modeling~\citep{hermosilla2025maskedscenemodeling}. Point2Vec replaces direct geometric reconstruction with latent prediction~\citep{zeid2023point2vecselfsupervisedrepresentationlearning}.
+
+Prototype self-distillation provides a complementary route to point-level semantics. Sonata adapts image-based self-distillation to large 3D scenes and emphasizes representations that remain useful under frozen or lightly adapted evaluation~\citep{wu2025sonataselfsupervisedlearningreliable}. DOS further restricts self-distillation to observable points and introduces soft prototype targets, avoiding explicit representations of masked locations~\citep{dos}; Panda V2 adopts the observable-point principle while retaining the prototype-assignment objective of Panda. Recent work has broadened the scope of 3D pre-training through joint 2D--3D learning in Concerto~\citep{concerto}, multi-domain point-cloud training in Utonia~\citep{zhang2026utonia}, and latent prediction of unobserved LiDAR structure in GhostPoint~\citep{abdelsamad2026ghostpoint}.
+
+Particle detector point clouds differ from conventional indoor scenes, autonomous-driving LiDAR, and object scans: they are generated by stochastic particle interactions, are often globally sparse but locally structured, and encode physical quantities at every active measurement. We study whether the same self-distillation principle can nevertheless operate across several such sensing processes, and evaluate the resulting representations not only through standard semantic probes, but through particle reconstruction and detector-specific physical quantities.
+
+\section{Dataset definitions}
+
+\subsection{LArTPC: PILArNet-M}
+
+ PILArNet-M is an openly released dataset of 1,199,200 simulated, fully labeled LArTPC events, comprising both multi-particle “particle-bomb” configurations
+  and single-particle samples. Primary particles are generated with the model-independent MultiPartVertex and MultiPartRain generators (MPV/MPR), then
+  propagated through liquid argon using Geant4~\citep{geant4} within the LArG4\footnote{\url{https://github.com/LArSoft/larg4}} simulation framework. The resulting sparse point clouds include deposited energy and
+  labels for semantic class, particle identity, particle instance, interaction membership, momentum, and vertex.
+  
+  Each event occupies a ($768^3$)-voxel representation of a $(2.3,\mathrm{m})^3$ detector volume, corresponding to a 3 mm voxel pitch. The dataset is divided
+  into 1,082,400 training, 66,800 validation, and 50,000 test events, and is publicly distributed in HDF5 format. Further details on its construction,
+  preprocessing, and label definitions are provided in \cite{polarmae} and the PILArNet-M dataset release\footnote{ \url{https://huggingface.co/datasets/DeepLearnPhysics/PILArNet-M}}.
+
+
+\subsection{Water Cherenkov: WAND}
+
+% Explain  WAND:
+
+% Full WCh detector sim with:
+% (GENIE +) Geant4 + LUCiD
+% LUCiD includes relevant scattering, absorption, etc. all wavelength dependent where applicable PMT sensor response (TTS, QE, AoI acceptance, etc.)
+% SuperK-like geometry: (~11k PMTs, 16.9m cylinder)
+% Single particle (mu, e, pi+, pi0) as well as multi-ring and GENIE nue/numu
+% Isotropic particle guns, uniform 1-2000 MeV
+% For this work, ~120k total events, ~10k from each config. 
+
+
+% Then write out each individual config and the number of events in each config
+
+% Closed source.
+
+% Train/val/test split
+
+
+  WAND (\textbf{W}ater-cherenkov \textbf{A}nnotated \textbf{N}eutrino \textbf{D}ataset) is a dataset of fully simulated water Cherenkov detector events. In this revision of the dataset, events are simulated in a Super-Kamiokande-like cylindrical geometry
+  with a radius of approximately \(16.9\,\mathrm{m}\), a half-height of \(18.1\,\mathrm{m}\), and approximately \(11{,}000\) photomultiplier tubes (PMTs)~\citep{fukuda2003superkamiokande}.
+  Primary particles are produced using an isotropic particle gun with kinetic energies sampled uniformly between \(1\) and \(2000\,\mathrm{MeV}\). For
+  atmospheric-neutrino configurations, the primary interaction is generated with {GENIE}~\citep{genie}. Particles are subsequently propagated through a full
+  {Geant4}~\cite{geant4} detector simulation, while LUCiD~\citep{lucid} models optical transport and detector response. This includes wavelength-dependent scattering and absorption, together with PMT effects such as quantum efficiency, PMT transit-time spread, and angle-of-incidence-dependent acceptance.
+
+  WAND contains single particle samples of electrons, muons, charged pions, and neutral pions, as well as fixed multi-particle, multi-ring, and pile-up
+  configurations containing both particle-gun and \textsc{GENIE}~\citep{genie} \(\nu_e\) and \(\nu_\mu\) interactions. For this work, we retain the 13 configurations summarized in Table~\ref{tab:wand-configurations}. After reserving \(1{,}000\) events from every configuration for evaluation and limiting each configuration to at most \(10{,}000\) training events, the resulting training pool contains \(119{,}917\) events.
+
+  \begin{table*}[t]
+      \centering
+      \caption{
+          WAND configurations used in this work. ``Train'' denotes the number of
+          events remaining after the per-configuration holdout and training cap.
+          Each configuration contributes \(1{,}000\) additional held-out events.
+      }
+      \label{tab:wand-configurations}
+      \small
+      \begin{tabular}{@{}llrr@{}}
+          \toprule
+          Configuration & Generated event content & Train & Holdout \\
+          \midrule
+          \texttt{config\_000001}
+              & Single-particle gun: \(\mu^-\)
+              & \(9{,}416\) & \(1{,}000\) \\
+          \texttt{config\_000002}
+              & Single-particle gun: \(\pi^+\)
+              & \(9{,}150\) & \(1{,}000\) \\
+          \texttt{config\_000003}
+              & Single-particle gun: \(e^-\)
+              & \(10{,}000\) & \(1{,}000\) \\
+          \texttt{config\_000005}
+              & Single-particle gun: \(\pi^0\)
+              & \(9{,}188\) & \(1{,}000\) \\
+          \texttt{config\_000007}
+              & Multi-particle gun: \(\mu^-+\pi^+\)
+              & \(9{,}143\) & \(1{,}000\) \\
+          \texttt{config\_000008}
+              & Multi-particle gun: \(e^-+\pi^+\)
+              & \(9{,}304\) & \(1{,}000\) \\
+          \texttt{config\_000009}
+              & Multi-particle gun: \(e^-+\pi^0\)
+              & \(9{,}176\) & \(1{,}000\) \\
+          \texttt{config\_000010}
+              & Multi-particle gun: \(\mu^-+\pi^++\pi^0\)
+              & \(8{,}828\) & \(1{,}000\) \\
+          \texttt{config\_000011}
+              & Multi-particle gun: \(\mu^-+\pi^++\pi^-\)
+              & \(9{,}108\) & \(1{,}000\) \\
+          \texttt{config\_000012}
+              & Multi-particle gun: \(e^-+\pi^++\pi^0\)
+              & \(9{,}152\) & \(1{,}000\) \\
+          \texttt{config\_000015}
+              & Pile-up: \((\mu^-+\pi^+)\) gun \(+\)
+                \textsc{GENIE} \(\nu_\mu\)
+              & \(9{,}164\) & \(1{,}000\) \\
+          \texttt{config\_000016}
+              & Pile-up: \(2\times(\mu^-+\pi^+)\) particle-gun interactions
+              & \(9{,}248\) & \(1{,}000\) \\
+          \texttt{config\_000017}
+              & Pile-up: \textsc{GENIE} \(\nu_\mu+\nu_e\) interactions
+              & \(9{,}040\) & \(1{,}000\) \\
+          \midrule
+          {Total}
+              & & \({119{,}917}\) & \({13{,}000}\) \\
+          \bottomrule
+      \end{tabular}
+  \end{table*}
+
+\subsection{Collider TPC: TPCpp-10M}
+
+  TPCpp-10M is an open dataset of simulated proton--proton collisions in the sPHENIX Time Projection Chamber (TPC) at Relativistic Heavy Ion Collider (RHIC) \citep{tpcpp10m}. Minimum-
+  bias \(p+p\) collisions at \(\sqrt{s}=200\,\mathrm{GeV}\) are simulated. The generated
+  particles are propagated through the sPHENIX~\citep{klest2022compacttpc} detector geometry using {Geant4}~\citep{geant4}, including the measured \(1.4\,\mathrm{T}\) solenoidal
+  magnetic field. The simulation accounts for energy loss, multiple scattering, secondary-particle production, and particle decays.
+
+  A detector response chain simulates and digitizes TPC ionization signals, including channel-dependent gain and noise, signal shaping, and zero
+  suppression. The resulting signals are reconstructed into three-dimensional TPC spacepoints. The open release provides \(10\) million unlabeled events for
+  foundation-model pretraining and a labeled training set of \(70{,}000\) events for track finding, particle identification, and noise tagging. An
+  additional \(13{,}000\) validation events and \(7{,}000\) test events are provided, giving \(90{,}000\) labeled events in total. We refer readers to the
+  TPCpp-10M publication for a detailed description of the detector, simulation, preprocessing, data representation, and downstream labels.
+
+  \begin{table}[h!]
+      \centering
+      \caption{TPCpp-10M dataset partitions.}
+      \label{tab:tpcpp-splits}
+      \small
+      \begin{tabular}{@{}lrl@{}}
+          \toprule
+          Partition & Events & Available labels \\
+          \midrule
+          Unlabeled pretraining & \(10{,}000{,}000\) & None \\
+          Labeled training      & \(70{,}000\)       & Track, PID, noise \\
+          Validation            & \(13{,}000\)       & Track, PID, noise \\
+          Test                  & \(7{,}000\)        & Track, PID, noise \\
+          \midrule
+          Total labeled         & \({90{,}000}\) & \\
+          \bottomrule
+      \end{tabular}
+  \end{table}
+  
+\section{Pre-training setup}
+
+\subsection{Backbone}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{figs/arch.jpg}
+    \caption{\textbf{Reconstruction setup.} The Panda V2 backbone architecture takes in 3D point clouds as input and produces a single feature for each point by concatenating features from each stage of the encoder. These features are used as input to a clustering module, which is then trained to perform image reconstruction. Note that a separate backbone and clustering module is trained for each type of detector data; we did not train a single backbone or module to deal with all three data modalities.}
+    \label{fig:arch}
+\end{figure}
+
+The Panda V2 encoder follows the LitePT~\citep{litept} architecture, which is an recent upgrade to the Point Transformer V3 encoder~\citep{wu2024pointtransformerv3simpler}; in it, sparse convolution blocks are removes from later layers, while attention is removed from earlier layers, with similar performance despite the large reduction in parameter size. It also introduces 3D rotary positional embeddings~\citep{su2023roformerenhancedtransformerrotary} (PointRoPE) as an enhancement to the attention mechanism. We use this same architecture, with the largest change being the removal of non-residual pre-layer normalization that LitePT introduced in attention-only blocks.
+Our architecture has 4 total stages, the first two being CNN-only and the second two being attention only. For the attention blocks, we use a patch size of 1024 to perform local serialized attention. This is in contrast to the Panda V1 encoder, which had five stages, sparse CNN and attention blocks in each stack, and a patch size of 256. The voxel resolution at each of the four stages are (1, 2, 2, 8); we find the necessity to spend a considerable amount of compute at both fine resolutions (in the first three blocks) and at coarse resolutions (in the last block). The channel dimensions for each stage are (54, 108, 432, 576). A coarse schematic of the backbone is found on the left side of Fig.~\ref{fig:arch}.
+
+\subsection{Training setup}
+
+The pre-training setup across each detector modality is held fixed with the exception of grid size (what constitutes a voxel for use by the sparse CNN), the mask size (used to create masked views of an image), and feature transforms (e.g., scaling coordinates to [-1,1]$^3$). We choose a mask size of 40 voxels for LArTPC data, 12.5 voxels for water Cherenkov data, and 13.3 voxels for sPHENIX data.
+
+All encoders are pre-trained over 10M image presentations; as such, the number of epochs varies between each detector (10 epochs for PILArNet-M, 2 epochs for TPCpp-10M, and 100 for WAND).
+
+We plan to open source the full configurations and training code in a forthcoming extended update to this manuscript.
+
+\section{Fine-tuning setup}
+
+\subsection{Equivariant probe}
+\label{sec:eqn_probe}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{figs/rotation_cosine_ridgelines_z.pdf}
+    \caption{\textbf{Does the self-distillation objective enforce rotationally invariant features?} We find that after pre-training representations from backbone encoders across detection mechanism weakly exhibit rotation invariance, holding the entire cosine similarity distribution across the same points $\geq0.98$ most of time through a rotation through the X-axis.}
+    \label{fig:invariant_feats}
+\end{figure}
+
+
+Consider the problem of predicting a particle's vertex or direction from frozen backbone features that are approximately invariant under global rotations and translations, a scenario we find ourselves in (illustrated in Fig.~\ref{fig:invariant_feats}) after pre-training with the self-distillation objective in the main text. A linear probe applied to the mean of per-point features corresponding to the particle has no equivariant mechanism: its output is unchanged when the event is transformed, whereas a physical direction should transform as $d\mapsto Rd$ and a vertex as $p\mapsto Rp+t$. We therefore need a probe that combines the approximately invariant scalar features with the spatial coordinates at which they occur. For an event containing features $z_i\in\mathbb{R}^D$ at positions $x_i\in\mathbb{R}^3$, we define
+\begin{equation}
+    h^{(0)}=\frac{1}{N}\sum_{i=1}^N z_i,
+    \qquad
+    \bar{x}=\frac{1}{N}\sum_{i=1}^N x_i,
+\end{equation}
+and their centered coordinate--feature moment
+\begin{equation}
+    H^{(1)}
+    =
+    \frac{1}{N}\sum_{i=1}^N
+    (x_i-\bar{x})(z_i-h^{(0)})^\top
+    \in\mathbb{R}^{3\times D}.
+\end{equation}
+
+Each column of $H^{(1)}$ is a three-dimensional vector describing how one backbone feature channel varies spatially across the event. To predict a physical vector quantity, such as the particle direction, these $D$ vector-valued channels must be combined into a single three-dimensional vector. We therefore learn a set of scalar weights $a\in\mathbb{R}^D$ over the feature channels, giving the linear readout
+\begin{equation}
+    H^{(1)}a
+    =
+    \frac{1}{N}\sum_{i=1}^N
+    (x_i-\bar{x})\,a^\top(z_i-h^{(0)})
+    \in\mathbb{R}^3.
+\end{equation}
+The scalar $a^\top(z_i-h^{(0)})$ measures the activation of one learned combination of backbone features at point $i$. The resulting weighted sum is its first spatial moment, or learned dipole, and points toward the region in which that feature combination is most strongly activated. We learn a separate weight vector $a$ for each vector-valued prediction task.
+
+Treating the backbone features as approximately rotation-invariant scalar channels, a rigid transformation $x_i\mapsto Rx_i+t$ gives
+\begin{equation}
+    h^{(0)}\mapsto h^{(0)},
+    \qquad
+    H^{(1)}\mapsto RH^{(1)}.
+\end{equation}
+Consequently, multiplying $H^{(1)}$ by any learned feature-space vector produces a three-dimensional output that rotates with the event.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{figs/sk_h0_h1_readout_comparison.pdf}
+    \caption{Comparison training a linear probe to predict particle position and direction from single ring electron $(e^-)$ or muon $(\mu^-)$ water Cherenkov images using either mean event features from the frozen backbone $h^{(0)}$ or the equivariant coordinate--feature moment $H^{(1)}$. 68$^{th}$ percentile position and angular resolution are given; lower is better.}
+    \label{fig:readout}
+\end{figure}
+
+In Fig.~\ref{fig:readout}, we evaluate this property on single electron and single muon water Cherenkov events by jointly probing the interaction vertex $p$ and initial particle direction $d$. As a scalar-feature baseline, two linear heads predict the vertex displacement $\Delta p=p-\bar{x}$ and an unnormalized direction vector from the mean event feature,
+
+\begin{equation}
+    \widehat{\Delta p}_{\mathrm{mean}}
+    =
+    W_p h^{(0)}+b_p,
+    \qquad
+    \widetilde{d}_{\mathrm{mean}}
+    =
+    W_d h^{(0)}+b_d.
+\end{equation}
+The equivariant probe instead learns only two task vectors,
+$a_{\mathrm{pos}},a_{\mathrm{dir}}\in\mathbb{R}^D$, and predicts
+\begin{equation}
+    \hat{p}
+    =
+    \bar{x}+H^{(1)}a_{\mathrm{pos}},
+    \qquad
+    \hat{d}
+    =
+    \frac{H^{(1)}a_{\mathrm{dir}}}
+         {\lVert H^{(1)}a_{\mathrm{dir}}\rVert}.
+\end{equation}
+
+From the figure, one finds that they can determine vector-like quantities from weakly invariant features by exploiting the structure of the invariant features in 3D space.
+
+\subsection{Semantic segmentation} For the semantic segmentation task, We train a single linear classifier on top of frozen backbone outputs; LoRA is applied to each attention block in the backbone.
+
+\subsection{Clustering.}
+
+\paragraph{Two-stage GNN.} 
+
+Our clustering head uses a two-stage coarse-to-fine procedure. First, a local binary edge classifier predicts whether neighboring occupied voxels belong to the same particle; connected components of the thresholded edge predictions define prefragments. Second, a lightweight GNN operates on the resulting prefragment graph, using rotation-invariant node and edge features constructed from coordinate--feature cross-correlation matrices, to merge prefragments into complete particle instances and classify them.
+
+The centered moment $H_f^{(1)}$ describes how the learned scalar feature channels vary spatially within prefragment $f$. We project its $D$ channels to eight learned vector summaries,
+\begin{equation}
+    V_f = H_f^{(1)}A \in \mathbb{R}^{3\times 8},
+    \qquad
+    A \in \mathbb{R}^{D\times 8}.
+\end{equation}
+Each column of $V_f$ is the first spatial moment, or learned dipole, of one linear combination of the backbone features. This projection provides a compact description of the fragment's internal geometry while avoiding comparisons over all $D$ feature channels.
+
+Treating the backbone features as approximately rotation-invariant scalar channels, as encouraged by our self-distillation objective, $V_f$ transforms equivariantly under a global rotation: $V_f\mapsto RV_f$. Directly flattening $V_f$ would therefore expose orientation-dependent vector components to a scalar GNN. We instead represent these vectors through dot products, which are invariant as $(RV_f)^\top(RV_g)=V_f^\top V_g$. The node representation is
+\begin{equation}
+    u_f =
+    \left[
+        \phi\!\left(h_f^{(0)}\right),
+        \operatorname{vec}\!\left(\frac{1}{3}V_f^\top V_f\right)
+    \right]
+    \in \mathbb{R}^{128},
+\end{equation}
+where $\phi$ is a LayerNorm--linear--GELU block mapping the mean fragment feature to 64 dimensions. The remaining 64 entries encode the magnitudes and pairwise alignments of the eight moment vectors.
+
+We construct a complete directed graph over the prefragments. For an edge $f\rightarrow g$, we define
+\begin{equation}
+    d_{fg}=\bar{x}_g-\bar{x}_f,
+    \qquad
+    \hat{d}_{fg}=\frac{d_{fg}}{\lVert d_{fg}\rVert},
+\end{equation}
+and form the 81-dimensional edge representation
+\begin{equation}
+    e_{fg} =
+    \left[
+        \lVert d_{fg}\rVert,\,
+        V_f^\top\hat{d}_{fg},\,
+        V_g^\top\hat{d}_{fg},\,
+        \operatorname{vec}\!\left(\frac{1}{3}V_f^\top V_g\right)
+    \right].
+\end{equation}
+The first term gives the separation between the two centroids of each fragment; the next two measure how each fragment’s moment vectors align with the line connecting the fragments; and the final terms contain all pairwise alignments between their moment vectors. All are invariant under a common translation or rotation, while retaining the relative directional information needed to identify spatially consistent particle trajectories. 
+
+We process the graph using two message-passing layers of width 128, following the graph-processing and grouping procedure used by SPINE’s Graph Particle Aggregator (GrapPA) network~\cite{domine2020scalable, drielsma2021clustering}. A final classifier predicts whether each fragment pair belongs to different particles or the same particle, and we average the logits for $f\rightarrow g$ and $g\rightarrow f$ to enforce symmetry. During training, each prefragment is assigned the majority truth-particle label of its voxels, and the GrapPA edge loss is averaged across classes within each event and then across events before being added to the local fragmenter loss. At inference, we apply SPINE’s score-based grouping rule described in \cite{drielsma2021clustering} and map the resulting fragment groups back to the original voxels.
+
+\paragraph{Panda Detector.} We utilize the Panda Detector module as defined in the Panda paper~\citep{panda}; to make the network amenable to perform ring counting, i.e. clustering while allowing overlap between clusters, we simply do not perform NMS on outputs, instead supervising strong suppression of low quality masks with mask supervision across both predicted particles and predicted non-objects. To regress per-particle properties like vertex, direction, and momentum, we simply add several new MLP heads in addition to the particle identification head that predicts each quantity separately based using individual decoded queries.
+
+Fig.~\ref{fig:arch} provides an simple illustration of these reconstruction setups. In all configurations, we train for 20M presentations of labeled images, taking the model with the highest metric on held out validation data.
+
+\section{Detailed comparisons}
+
+\subsection{LArTPC}
+
+We compare the data efficiency of the Panda V2 backbone to the baselines reported in the original Panda paper~\cite{panda} in Tables \ref{tab:lar_semseg} (for semantic segmentation) and \ref{tab:lar_instance} (for clustering, i.e. instance segmentation). We note that the closest basis of comparison to the semantic segmentation fine-tuning setup is Panda V1 (dec.), which utilized a 16M UNet-like decoder with the frozen pre-trained backbone; we call our Panda V2 fine-tuning setup ``Panda V2 (dec.)", though it is a materially less expressive decoding setup: just LoRA on the attention blocks on the backbone and a single two-layer MLP projecting backbone outputs to individual classes. Similarly, for the instance segmentation setup, we compare Panda V1 fine-tuned with Panda Detector and a frozen backbone to Panda V2 trained with LoRA+GNN. We point out that Panda V2, when trained on 1K events (0.1\% of the total data) does as well as Panda V1 when trained on 1M labeled events. 
+
+We provide several clustering examples, both successful and poor, in Fig.~\ref{fig:lar_instance}.
+
+\begin{table*}[t]
+\hspace{-5mm}
+    \begin{minipage}{0.5\linewidth}
+    \centering
+        \captionof{table}{\textbf{LArTPC semantic segmentation performance.} Here Panda V2 (dec.) corresponds to parameter-efficient fine-tuning using an MLP head applied to backbone outputs+LoRA, while Panda V1 (dec.) corresponds to using Panda Detector~\citep{panda}. PT$_\text{100\%}$+FT$_{K\%}$ corresponds to pretraining on the full 1M dataset and fine-tuning on $K\%$.}
+        \tablestyle{3.5pt}{1.0}
+        \input{tables/table_lartpc_semseg}
+        \vspace{-1mm}
+        \label{tab:lar_semseg}
+        \vspace{1mm}
+\end{minipage}
+\hspace{1mm}
+\begin{minipage}{0.55\linewidth}
+    \centering
+\captionof{table}{\textbf{LArTPC clustering performance.} We compare Panda V1 with decoder-only fine-tuning (i.e., a frozen backbone) with the Panda Detector to Panda V2 with LoRA+GNN. 100\% corresponds to 1M labeled events used for fine-tuning.}
+    \tablestyle{0.7pt}{1.0}
+    \input{tables/table_lartpc_instance}
+    \vspace{-1mm}
+    \label{tab:lar_instance}
+    \vspace{1mm}
+    \end{minipage}
+\end{table*}
+
+\begin{figure*}[p]
+  \centering
+  \begin{minipage}{1\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figs/lar/fig00_input_truth_pred.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/lar/fig01_input_truth_pred.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/lar/fig13_input_truth_pred.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/lar/fig14_input_truth_pred.jpg}\par\vspace{0.4em}
+    \makebox[\linewidth][c]{%
+      \parbox[t]{0.333\linewidth}{\centering{Input}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Truth}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Prediction}}%
+    }
+  \end{minipage}
+  \caption{\textbf{LArTPC particle clustering.} Results for two random images and two poorly-reconstructed images. We provide the ARI score for the predicted clusters in the top right corner.}
+  \label{fig:lar_instance}
+\end{figure*}
+
+
+
+\subsection{sPHENIX}
+
+We compare to the baselines reported in FM4NPP~\citep{park2025fm4npp} in Table.~\ref{tab:fm4npp} on clustering, PID semantic segmentation, and noise separation semantic segmentation. Note that Panda V2 backbone is nearly a quarter of the size of the previous state-of-the-art network (53M params vs 188M) while still performing as well and in some cases outperforming and using 70$\times$ less labeled data.
+
+We provide several clustering examples, both successful and poor, in Fig.~\ref{fig:sph_instance}.
+
+\begin{table}[t]
+    \centering
+    \vspace{-3mm}
+        \captionof{table}{\textbf{Collider TPC clustering and semantic segmentation performance.} We fine-tune Panda V2 on 1,000 labeled images and compare to methods that were fine-tuned on 70,000 images. We take clustering (i.e., tracking) efficiency and purity numbers from \cite{park2025fm4npp} and convert them into an $F_1$ score by taking their harmonic mean for balanced comparison; we similarly do the same for semantic segmentation metrics. The Param. column refers to the number of trainable parameters, while the Img. column corresponds to the number of images used to adapt the backbone to the downstream task.}\hspace{-10pt}
+    \resizebox{\linewidth}{!}{
+        \tablestyle{1.0pt}{1}
+        \hspace{0mm}
+        \input{tables/table_sphenix}
+        }
+        \vspace{-1mm}
+        % \hspace{10mm}
+        \label{tab:fm4npp}
+        \vspace{-3mm}
+\end{table}
+
+\begin{figure*}[p]
+  \centering
+  \begin{minipage}{1\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figs/sph/fig00_input_truth_pred.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/sph/fig02_input_truth_pred.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/sph/fig03_input_truth_pred.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/sph/fig12_input_truth_pred.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/sph/fig14_input_truth_pred.jpg}\par\vspace{0.15em}
+    \makebox[\linewidth][c]{%
+      \parbox[t]{0.333\linewidth}{\centering{Input}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Truth}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Prediction}}%
+    }
+  \end{minipage}
+  \caption{\textbf{sPHENIX particle clustering.} Results for three random images and two poorly-reconstructed images. We provide the ARI score for the predicted clusters in the top right corner.}
+  \label{fig:sph_instance}
+\end{figure*}
+
+
+\subsection{Super-Kamiokande}
+
+We provide full comparison of Panda V2 performing reconstruction in a water Cherenkov detector in Table \ref{tab:super-k-performance}, and reconstruction examples in Fig.~\ref{fig:wch_instance}. We note that there is quite a bit of way to go when it comes to performing as well as the full official reconstruction results from the Super-Kamiokande collaboration; that being said, the results do show that this method is promising for use in a water Cherenkov detector.
+
+
+\begin{figure*}[p]
+  \centering
+  \begin{minipage}{1\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figs/wc/config_000005__index-03893__config_000005-wc_hits_0239.h5_evt148.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/wc/config_000010__index-07575__config_000010-wc_hits_0315.h5_evt144.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/wc/config_000011__index-08331__config_000011-wc_hits_0150.h5_evt201.jpg}\par\vspace{0.15em}
+    \makebox[\linewidth][c]{%
+      \parbox[t]{0.333\linewidth}{\centering{Input}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Truth}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Prediction}}%
+    }
+  \end{minipage}
+  \caption{\textbf{Water Cherenkov multi-ring reconstruction examples.} We provide results for three random images. We unroll the 3D cylinder to better visualize the predictions, however we note that the inputs to the backbone and reconstruction module are three-dimensional. We match particles whose rings overlap by $\geq$0.5 IoU and color them the same to help with visualization. Note that Panda Detector also predicts momentum, which can be found in the legends.}
+  \label{fig:wch_instance}
+\end{figure*}
+
+
+\begin{table*}[t]
+\centering
+\caption{\textbf{Performance on Super-K reconstruction tasks.} We compare Panda V2 fine-tuned with a Panda Dector decoder to perform ring counting, and with a linear readout on mean-aggregated or equivariant moment features + LoRA for single-ring reconstruction on electrons and muons. We compare to numbers described in \cite{sk}.}
+\label{tab:super-k-performance}
+\begingroup
+\small
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.12}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lccc@{\hspace{0.5\tabcolsep}}c@{\hspace{0.5\tabcolsep}}ccc@{\hspace{0.5\tabcolsep}}c@{\hspace{0.5\tabcolsep}}cc@{}}
+\toprule
+ & \multicolumn{3}{c}{Ring counting} &  & \multicolumn{3}{c}{Single-ring electron} &  & \multicolumn{2}{c}{Single-ring muon} \\
+\cmidrule(lr){2-4} \cmidrule(lr){6-8} \cmidrule(lr){10-11}
+Method & 1R recall\,$\uparrow$ & 2R recall\,$\uparrow$ & $\geq$3R recall\,$\uparrow$ &  & Vertex (cm)\,$\downarrow$ & Direction ($^\circ$)\,$\downarrow$ & Momentum (\%)\,$\downarrow$ &  & Direction ($^\circ$)\,$\downarrow$ & Momentum (\%)\,$\downarrow$ \\
+\midrule
+\multicolumn{11}{l}{\textit{Published reconstruction}} \\
+\priorwork APFit & \cellcolor[HTML]{D6D6FF}$\mathbf{0.9590}$ & \cellcolor[HTML]{E3E3FF}$0.5280$ & \cellcolor[HTML]{F4F4FF}$0.4680$ &  & \cellcolor[HTML]{E3E3FF}$24.86$ & \cellcolor[HTML]{E3E3FF}$1.68$ & \cellcolor[HTML]{E3E3FF}$3.56$ &  & \cellcolor[HTML]{E3E3FF}$1.28$ & \cellcolor[HTML]{E3E3FF}$2.60$ \\
+\priorwork fiTQun & \cellcolor[HTML]{E3E3FF}$0.9500$ & \cellcolor[HTML]{D6D6FF}$\mathbf{0.6670}$ & \cellcolor[HTML]{E3E3FF}$0.6750$ &  & \cellcolor[HTML]{D6D6FF}$\mathbf{20.64}$ & \cellcolor[HTML]{D6D6FF}$\mathbf{1.48}$ & \cellcolor[HTML]{D6D6FF}$\mathbf{2.90}$ &  & \cellcolor[HTML]{D6D6FF}$\mathbf{1.00}$ & \cellcolor[HTML]{D6D6FF}$\mathbf{2.26}$ \\
+\midrule
+\multicolumn{11}{l}{\textit{Self-supervised}} \\
+\thiswork Panda V2 & \cellcolor[HTML]{F4F4FF}$0.8036$ & \cellcolor[HTML]{F4F4FF}$0.4435$ & \cellcolor[HTML]{D6D6FF}$\mathbf{0.9669}$ &  & \cellcolor[HTML]{F4F4FF}$98.69$ & \cellcolor[HTML]{F4F4FF}$5.75$ & \cellcolor[HTML]{F4F4FF}$4.80$ &  & \cellcolor[HTML]{F4F4FF}$5.88$ & \cellcolor[HTML]{F4F4FF}$4.82$ \\
+\bottomrule
+\multicolumn{11}{r}{\footnotesize \hspace{2\tabcolsep}\thiswork{}This work} \\
+\end{tabular}%
+}
+\endgroup
+\end{table*}
+
+
+
+\section{Interpretability probes}
+
+  We investigate whether the frozen representations linearly encode physically meaningful quantities using two lightweight ridge-regression probes. The
+  pretrained encoder remains completely frozen, and only a single affine direction,
+  \begin{equation}
+      \hat{y} = \mathbf{w}^{\mathsf T}\mathbf{z} + b,
+  \end{equation}
+  is fitted for each target. Truth information is used only to construct the targets and associate points with particles and is never provided to the
+  encoder. Consequently, successful prediction indicates that the corresponding quantity is already organized along a linear direction in the learned
+  representation.
+
+\subsection{Particle progression}
+\label{sec:time}
+
+  The particle progression probe tests whether the representation contains an ``arrow of time'' along individual particle trajectories. Points are first
+  grouped into particles using their truth particle-instance assignments. For primary particles, the beginning of the trajectory is identified using the
+  truth interaction vertex. For secondary particles, the starting point is approximated by their attachment point to another particle from the same
+  interaction. The remaining points are then ordered by their progression away from this starting point. For track-like particles, this ordering is based on
+  geodesic distance through a nearest-neighbor graph, allowing the ordering to follow curved trajectories rather than a straight spatial axis.
+
+  For a particle containing \(N_p\) points, each point \(i\) is assigned an ordered rank \(r_i\in\{0,\ldots,N_p-1\}\). Its normalized progression target is
+  \begin{equation}
+      \tau_i = 2\frac{r_i}{N_p-1}-1.
+  \end{equation}
+  The first point therefore has \(\tau=-1\), the final point has \(\tau=+1\), and intermediate points are distributed between these endpoints according to their
+  relative ordering. Thus, \(\tau\) represents normalized particle progression rather than physical time or propagation distance and can be compared across
+  particles of different lengths and sampling densities. The probe is trained at the point level, with each particle assigned equal total weight so that
+  long, densely sampled particles do not dominate the fit. Performance is quantified using the within-particle Spearman rank correlation.
+
+  \subsection{Transverse Momentum}
+  \label{sec:pt}
+
+  The transverse-momentum probe tests whether the frozen collider representation encodes track curvature. Truth associations are used to group TPC
+  spacepoints belonging to the same charged-particle track. In the approximately uniform \(1.4\,\mathrm{T}\) solenoidal magnetic field of sPHENIX, the
+  transverse projection of a charged-particle trajectory is approximately circular. As ground truth $p_T$ information is unavailable in the TPCpp-10M dataset, a robust circle fit to the \((x,y)\) coordinates gives the curvature
+  radius \(R\), from which the transverse momentum is estimated as
+  \begin{equation}
+      p_T\,[\mathrm{GeV}/c]
+      = 0.3\,|q|\,B\,[\mathrm{T}]\,R\,[\mathrm{m}]
+      \simeq 0.0042\,R\,[\mathrm{cm}],
+  \end{equation}
+  where the final expression uses \(B=1.4\,\mathrm{T}\) and \(|q|=1\). 
+
+  The frozen point features are averaged over each associated track (using true cluster information) to form a single particle representation,
+  \begin{equation}
+      \overline{\mathbf{z}}_p
+      = \frac{1}{N_p}\sum_{i\in p}\mathbf{z}_i.
+  \end{equation}
+  A linear ridge probe is then fitted to \(\log p_T\),
+  \begin{equation}
+      \widehat{\log p_T}
+      = \mathbf{w}_{p_T}^{\mathsf T}\overline{\mathbf{z}}_p+b_{p_T},
+      \qquad
+      \hat{p}_T=\exp\!\left(\widehat{\log p_T}\right).
+  \end{equation}
+  Only well-reconstructed track-like particles are retained: tracks must contain at least 12 spacepoints, span at least \(10\,\mathrm{cm}\) in transverse
+  arc length. Performance is reported using the Spearman correlation between predicted
+  and fitted \(p_T\).
+
+  
+\subsection{Additional arrow of time examples}
+
+We provide more examples of ``arrow of time" prediction using the learned task vector from Fig.~\ref{fig:interp}a in Fig.~\ref{fig:arrow-of-time-four-events}.
+
+\begin{figure*}[p]
+  \centering
+  \begin{minipage}{0.82\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figs/arrow/event_03414__energy_pred_T_particle_event_truth_T_xy.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/arrow/event_04091__energy_pred_T_particle_event_truth_T_xy.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/arrow/event_04737__energy_pred_T_particle_event_truth_T_xy.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/arrow/event_04897__energy_pred_T_particle_event_truth_T_xy.jpg}\par\vspace{0.4em}
+    \makebox[\linewidth][c]{%
+      \parbox[t]{0.333\linewidth}{\centering{Input}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Truth}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Prediction}}%
+    }
+  \end{minipage}
+  \caption{Arrow-of-time examples for four held-out events. Each row shows the
+    input deposited energy, the true $\tau$ (as defined in \S\ref{sec:time}, and the predicted $\tau$ from left to right.}
+  \label{fig:arrow-of-time-four-events}
+\end{figure*}
+
+
+\subsection{Additional $p_T$ examples}
+
+We provide more examples of $p_T$ prediction using the learned task vector from Fig.~\ref{fig:interp}b in Fig.~\ref{fig:sphenix-linear-spectrometer-four-events}.
+
+
+
+\begin{figure*}[p]
+  \centering
+  \begin{minipage}{0.82\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figs/pt/event_0008__xy.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/pt/event_0026__xy.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/pt/event_0039__xy.jpg}\par\vspace{0.15em}
+    \includegraphics[width=\linewidth]{figs/pt/event_0053__xy.jpg}\par\vspace{0.4em}
+    \makebox[\linewidth][c]{%
+      \parbox[t]{0.333\linewidth}{\centering{Input}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Truth}}%
+      \hfill
+      \parbox[t]{0.333\linewidth}{\centering{Prediction}}%
+    }
+  \end{minipage}
+  \caption{sPHENIX linear spectrometer probing examples for four held-out events. Each
+    row shows the input, truth, and prediction of the $p_T$ proxy (defined in \S\ref{sec:pt} from left to right.}
+  \label{fig:sphenix-linear-spectrometer-four-events}
+\end{figure*}

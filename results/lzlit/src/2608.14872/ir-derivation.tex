@@ -1,0 +1,248 @@
+\section{Derivations for the Red Identity Rule}
+\label{app:ir-rule-derivation}
+
+Throughout this appendix, we work in
+\[
+\zxopt=\zxv\setminus\{(I_r)\}
+=\{(S),(I_g),(E),(CP),(B),(EU),(HD),(H)\}
++\text{ connectivity}.
+\]
+
+The following derivation of \((I_r)\) is highly technical, and most of the difficulty comes from the critical tracking of scalars and the scalar cleanup rule in \hyperref[eq:ir-derivation-L7]{Lemma~\ref*{lem:ir-derivation-L7}}.
+
+We first derive two useful identities from the ruleset:
+
+\newcommand{\irshortstatement}[3]{%
+\begin{equation*}
+\vcenter{\hbox{\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/#1}}}
+\tag{\ensuremath{#3}}
+\label{eq:ir-derivation-#2}
+\end{equation*}%
+}
+\newcommand{\irshortrow}[1]{%
+\leavevmode\par
+\nopagebreak[4]
+\begin{center}
+\makebox[\linewidth][c]{#1}%
+\end{center}
+}
+\newcommand{\irshortjoin}{\hspace{1em}}
+\newcommand{\scalarpairnodes}[3]{%
+\begin{scope}[shift={(#2,#3)}]
+	\node [style=X dot] (#1-chi-x) at (-0.6,0.35) {};
+	\node [style=Z dot] (#1-chi-z) at (-0.6,-0.35) {};
+	\node [style=X phase dot] (#1-omega-x) at (0.6,0.45) {$\pi$};
+	\node [style=Z dot] (#1-omega-z) at (0.6,-0.45) {};
+\end{scope}%
+}
+\newcommand{\scalarpairedges}[1]{%
+\draw (#1-chi-x) to (#1-chi-z);
+\draw [bend left=45] (#1-chi-x) to (#1-chi-z);
+\draw [bend right=45] (#1-chi-x) to (#1-chi-z);
+\draw (#1-omega-x) to (#1-omega-z);
+}
+
+\Needspace{0.30\textheight}
+\noindent
+\begin{minipage}[t]{0.48\linewidth}
+\vspace{0pt}
+\begin{lemma}
+\label{lem:ir-derivation-L1}
+\irshortstatement{ir-l01-statement.tikz}{L1}{\mathrm{H}_0}
+\end{lemma}
+\begin{irproof}
+\widehkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-l01-proof.tikz}
+\vspace{-2.6\baselineskip}
+\end{irproof}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+\vspace{0pt}
+\begin{lemma}
+\label{lem:ir-derivation-L2}
+\irshortstatement{ir-l02-statement.tikz}{L2}{\mathrm{HC}}
+\end{lemma}
+\begin{irproof}
+\widehkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-l02-proof.tikz}
+\end{irproof}
+\end{minipage}
+
+\vspace{\baselineskip}
+
+Now, we derive a rule which lets us remove the red identity along with the two scalar factors shown:
+
+\Needspace{0.35\textheight}
+\begin{lemma}
+\label{lem:ir-derivation-L3}
+\irshortstatement{ir-atomic-l03-statement.tikz}{L3}{\mathrm{LI}_r}
+\end{lemma}
+\begin{irproof}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-atomic-l03-proof-a.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-atomic-l03-proof-b.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-atomic-l03-proof-b2.tikz}%
+}
+\end{irproof}
+
+The Hadamard is self-inverse up to a scalar residue:
+
+\Needspace{0.25\textheight}
+\begin{lemma}
+\label{lem:ir-derivation-L4}
+\irshortstatement{ir-atomic-l04-statement.tikz}{L4}{\mathrm{H}^{-1}}
+\end{lemma}
+\begin{irproof}
+\widehkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-atomic-l04-proof.tikz}
+\end{irproof}
+
+We derive a scalar-tracked version of red spider fusion:
+
+\Needspace{0.35\textheight}
+\begin{lemma}
+\label{lem:ir-derivation-L5}
+\irshortstatement{ir-atomic-l07-statement.tikz}{L5}{\mathrm{LS}_r}
+\end{lemma}
+\begin{irproof}
+\widehkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-atomic-l07-proof-a.tikz}
+\vspace{-0.75\baselineskip}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-atomic-l07-proof-a2.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-atomic-l07-proof-b.tikz}%
+}
+\vspace{-1.5\baselineskip}
+\end{irproof}
+
+\Needspace{0.45\textheight}
+We obtain a useful scalar-tracked form of the familiar Hopf law:
+
+\begin{lemma}
+\label{lem:ir-derivation-L6}
+\irshortstatement{ir-renaud-l06-statement.tikz}{L6}{\mathrm{HF}}
+\end{lemma}
+\begin{irproof}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l06-proof-1.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l06-proof-2.tikz}%
+}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l06-proof-3.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l06-proof-a2.tikz}%
+}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l06-proof-a3.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l06-proof-6.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l06-proof-7.tikz}%
+}
+\end{irproof}
+
+We now obtain the scalar cleanup rule which lets us remove the following pair of scalar factors:
+
+\Needspace{0.45\textheight}
+\begin{lemma}
+\label{lem:ir-derivation-L7}
+\irshortstatement{ir-atomic-l14-statement.tikz}{L7}{\mathrm{IV}'}
+\end{lemma}
+\begin{irproof}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-1.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-3.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-4.tikz}%
+}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-5.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-6.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-6a.tikz}%
+}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-7.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-7a.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-8.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l07-proof-9.tikz}%
+}
+\end{irproof}
+
+Two necessary technical lemmas:
+
+\Needspace{0.45\textheight}
+\begin{lemma}
+\label{lem:ir-derivation-L8}
+\irshortstatement{ir-renaud-l08-statement.tikz}{L8}{\mathrm{IV}''}
+\end{lemma}
+\begin{irproof}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-1.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-2.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-3.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-4.tikz}%
+}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-5.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-6.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-7.tikz}%
+}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-7a.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-8a.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l08-proof-9.tikz}%
+}
+\end{irproof}
+
+\Needspace{0.40\textheight}
+The following lemma is a useful identity allowing the red state to delete a green phase gate of \(-\pi/2\):
+
+\begin{lemma}
+\label{lem:ir-derivation-L9}
+\irshortstatement{ir-renaud-l09-statement.tikz}{L9}{\mathrm{D}_{-}}
+\end{lemma}
+\begin{irproof}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l09-proof-a.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l09-proof-b.tikz}%
+}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l09-proof-b2.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l09-proof-b3.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l09-proof-b4.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l09-proof-c.tikz}%
+}
+\end{irproof}
+
+A useful identity is derived:
+
+\Needspace{0.35\textheight}
+\begin{lemma}
+\label{lem:ir-derivation-L10}
+\irshortstatement{ir-renaud-l10-statement.tikz}{L10}{\mathrm{D}'_{\pi}}
+\end{lemma}
+\begin{irproof}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l10-proof-a.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l10-proof-b.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l10-proof-c.tikz}%
+}
+\irshortrow{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l10-proof-d.tikz}\irshortjoin
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-l10-proof-e.tikz}%
+}
+\end{irproof}
+
+\Needspace{0.32\textheight}
+We reproduce the derivation of \((I_r)\) below for readability.
+
+\begin{theorem}
+The \((I_r)\) rule is derivable:
+\begin{equation*}
+\zxopt\vdash
+\vcenter{\hbox{\hkstikzitinput{HKS/figures/ir-derivation/ir-atomic-ir-statement.tikz}}}
+\end{equation*}
+\end{theorem}
+
+\begin{irproof}
+\leavevmode\par
+\begin{center}
+\makebox[\linewidth][c]{%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-ir-proof-a.tikz}\hspace{1em}%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-ir-proof-b.tikz}\hspace{1em}%
+	\hkstikzitinput{HKS/figures/ir-derivation/renaud-short/ir-renaud-ir-proof-c.tikz}%
+}
+\end{center}
+\end{irproof}

@@ -1,0 +1,192 @@
+\tikzstyle{env}=[copoint,regular polygon rotate=0,minimum width=0.2cm, fill=black]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\tikzstyle{hadamard edge}=[-,color=blue,dashed,dash pattern=on 2pt off 0.7pt]
+\tikzstyle{black edge}=[-,color=black,dashed,dash pattern=on 2pt off 0.7pt]
+
+
+\tikzstyle{every picture}=[baseline=-0.25em]
+\tikzstyle{dotpic}=[scale=0.5]
+\tikzstyle{diredges}=[every to/.style={diredge}]
+\tikzstyle{dot graph}=[shorten <=-0.1mm,shorten >=-0.1mm,scale=0.6]
+\tikzstyle{plot point}=[circle,fill=black,minimum width=2mm,inner sep=0]
+
+% create a white box of the given tikz size
+\newcommand{\phantombox}[1]{\tikz[baseline=(current bounding box).east]{\path [use as bounding box] (0,0) rectangle #1;}}
+\tikzstyle{braceedge}=[decorate,decoration={brace,amplitude=2mm,raise=-1mm}]
+\tikzstyle{small braceedge}=[decorate,decoration={brace,amplitude=1mm,raise=-1mm}]
+\tikzstyle{left hook arrow}=[left hook-latex]
+\tikzstyle{right hook arrow}=[right hook-latex]
+
+\newcommand{\measurement}{\tikz[scale=0.6]{ \draw [use as bounding box,draw=none] (0,-0.1) rectangle (1,0.7); \draw [fill=white] (1,0) arc (0:180:5mm); \draw (0,0) -- (1,0) (0.5,0) -- +(60:7mm);}}
+
+% ================
+% = GHZ/W STYLES =
+% ================
+
+\tikzstyle{black dot}=[inner sep=0.7mm,minimum width=0pt,minimum height=0pt,fill=black,draw=black,shape=circle]
+
+\tikzstyle{dot}=[black dot]
+\tikzstyle{smalldot}=[inner sep=0.4mm,minimum width=0pt,minimum height=0pt,fill=black,draw=black,shape=circle]%
+\tikzstyle{white dot}=[dot,fill=white]
+\tikzstyle{antipode}=[white dot,inner sep=0.3mm,font=\footnotesize]
+\tikzstyle{smallwhitedot}=[smalldot,fill=white]%
+\tikzstyle{alt white dot}=[white dot,label={[xshift=3.07mm,yshift=-0.05mm,font=\footnotesize]left:$*$}]
+\tikzstyle{gray dot}=[dot,fill=gray!40!white]
+\tikzstyle{smallgraydot}=[smalldot,fill=gray!40!white]%
+\tikzstyle{box vertex}=[draw=black,rectangle]
+\tikzstyle{small box}=[box vertex,fill=white]%
+\tikzstyle{whitebg}=[fill=white,inner sep=2pt]
+\tikzstyle{graph state vertex}=[sg vertex,fill=black]
+
+\tikzstyle{wide copoint}=[fill=white,draw=black,shape=isosceles triangle,shape border rotate=90,isosceles triangle stretches=true,inner sep=1pt,minimum width=1.5cm,minimum height=5mm]
+\tikzstyle{wide point}=[fill=white,draw=black,shape=isosceles triangle,shape border rotate=-90,isosceles triangle stretches=true,inner sep=1pt,minimum width=1.5cm,minimum height=4mm]
+\tikzstyle{very wide copoint}=[fill=white,draw=black,shape=isosceles triangle,shape border rotate=-90,isosceles triangle stretches=true,inner sep=1pt,minimum width=2.5cm,minimum height=4mm]
+\tikzstyle{very wide empty copoint}=[draw=black,shape=isosceles triangle,shape border rotate=-90,isosceles triangle stretches=true,inner sep=1pt,minimum width=2.5cm,minimum height=4mm]
+\tikzstyle{symm}=[ultra thick,shorten <=-1mm,shorten >=-1mm]
+
+% ====================================
+% = GENERAL MONOIDAL CATEGORY STYLES =
+% ====================================
+
+\tikzstyle{square box}=[rectangle,fill=white,draw=black,minimum height=5mm,minimum width=5mm,font=\small]
+\tikzstyle{square gray box}=[rectangle,fill=gray!30,draw=black,minimum height=6mm,minimum width=6mm]
+\tikzstyle{wide medium box}=[shape=rectangle,text height=1.5ex,text depth=0.25ex,yshift=0.5mm,fill=white,draw=black,minimum height=10mm,yshift=-0.5mm,minimum width=7.5mm,font={\small}]
+\tikzstyle{pointer edge}=[->,very thick,gray]
+\tikzstyle{copoint}=[regular polygon,regular polygon sides=3,draw=black,scale=0.75,inner sep=-0.5pt,minimum width=7mm,fill=white]
+\tikzstyle{point}=[regular polygon,regular polygon sides=3,draw=black,scale=0.75,inner sep=-0.5pt,minimum width=7mm,fill=white,regular polygon rotate=180]
+\tikzstyle{gray point}=[point,fill=gray!40!white]
+\tikzstyle{gray copoint}=[copoint,fill=gray!40!white]
+
+\newcommand{\edgearrow}{{\arrow[black]{>}}}
+\newcommand{\edgetick}{{\arrow[black,scale=0.7,very thick]{|}}}
+% \pgfkeys{/tikz/.cd, markat/.store in=\markat, markwith/.store
+% in=\markwithsym}
+
+% \tikzstyle{diredge}=[postaction=decorate,decoration={markings, mark=at position 0.55 with \edgearrow}]
+% \tikzstyle{medium diredge}=[postaction=decorate,decoration={markings, mark=at position 0.75 with \edgearrow}]
+
+
+\tikzstyle{diredge}=[->]
+\tikzstyle{rdiredge}=[<-]
+\tikzstyle{medium diredge}=[->]
+
+
+
+\tikzstyle{short diredge}=[->]
+\tikzstyle{halfedge}=[-)]
+\tikzstyle{other halfedge}=[(-]
+\tikzstyle{freeedge}=[(-)]
+\tikzstyle{white edge}=[line width=5pt,white]
+\tikzstyle{tick}=[postaction=decorate,decoration={markings, mark=at position 0.5 with \edgetick}]
+\tikzstyle{small map edge}=[|-latex, gray!60!blue, shorten <=0.9mm, shorten >=0.5mm]
+\tikzstyle{thick dashed edge}=[very thick,dashed,gray!40]
+\tikzstyle{map edge}=[|-latex,very thick, gray!40, shorten <=1mm, shorten >=0.5mm]
+\tikzstyle{tickedge}=[postaction=decorate,
+  decoration={markings, mark=at position 0.5 with \edgetick}]
+% \tikzstyle{dirtickedge}=[postaction=decorate,
+%   decoration={markings, mark=at position 0.3 with \edgearrow},
+%   decoration={markings, mark=at position 0.5 with \edgetick},
+%   decoration={markings, mark=at position 0.8 with \edgearrow}]
+\tikzstyle{dirtickedge}=[postaction=decorate,
+  decoration={markings, mark=at position 0.5 with \edgetick},
+  decoration={markings, mark=at position 0.85 with \edgearrow}]
+\tikzstyle{dirdoubletickedge}=[postaction=decorate,
+  decoration={markings, mark=at position 0.4 with \edgetick},
+  decoration={markings, mark=at position 0.6 with \edgetick},
+  decoration={markings, mark=at position 0.85 with \edgearrow}]
+
+% PARALLELAGRAM BOXES:
+\makeatletter
+\newcommand{\boxshape}[3]{%
+\pgfdeclareshape{#1}{
+\inheritsavedanchors[from=rectangle] % this is nearly a rectangle
+\inheritanchorborder[from=rectangle]
+\inheritanchor[from=rectangle]{center}
+\inheritanchor[from=rectangle]{north}
+\inheritanchor[from=rectangle]{south}
+\inheritanchor[from=rectangle]{west}
+\inheritanchor[from=rectangle]{east}
+% ... and possibly more
+\backgroundpath{% this is new
+% store lower right in xa/ya and upper right in xb/yb
+\southwest \pgf@xa=\pgf@x \pgf@ya=\pgf@y
+\northeast \pgf@xb=\pgf@x \pgf@yb=\pgf@y
+
+\@tempdima=#2
+\@tempdimb=#3
+
+\pgfpathmoveto{\pgfpoint{\pgf@xa - 5pt + \@tempdima}{\pgf@ya}}
+\pgfpathlineto{\pgfpoint{\pgf@xa - 5pt - \@tempdima}{\pgf@yb}}
+\pgfpathlineto{\pgfpoint{\pgf@xb + 5pt + \@tempdimb}{\pgf@yb}}
+\pgfpathlineto{\pgfpoint{\pgf@xb + 5pt - \@tempdimb}{\pgf@ya}}
+\pgfpathlineto{\pgfpoint{\pgf@xa - 5pt + \@tempdima}{\pgf@ya}}
+\pgfpathclose
+}
+}}
+
+
+\boxshape{NEbox}{0pt}{8pt}
+\boxshape{SEbox}{0pt}{-8pt}
+\boxshape{NWbox}{8pt}{0pt}
+\boxshape{SWbox}{-8pt}{0pt}
+\makeatother
+
+\tikzstyle{map}=[draw,shape=NEbox,inner sep=7pt]
+\tikzstyle{mapdag}=[draw,shape=SEbox,inner sep=7pt]
+\tikzstyle{maptrans}=[draw,shape=SWbox,inner sep=7pt]
+\tikzstyle{mapconj}=[draw,shape=NWbox,inner sep=7pt]
+
+
+
+% PROBABILITY DISTRIBUTION
+\tikzstyle{probs}=[shape=semicircle,fill=gray!40!white,draw=black,shape border rotate=180,minimum width=1.2cm]
+
+% ========================
+% = COMMUTATIVE DIAGRAMS =
+% ========================
+
+\tikzstyle{arrs}=[-latex,font=\small,auto]
+\tikzstyle{arrow plain}=[arrs]
+\tikzstyle{arrow dashed}=[dashed,arrs]
+\tikzstyle{arrow bold}=[very thick,arrs]
+\tikzstyle{arrow hide}=[draw=white!0,-]
+\tikzstyle{arrow reverse}=[latex-]
+\tikzstyle{cdnode}=[]
+
+% =================================
+% = Qutrit trichromatic calculus =
+% =================================
+
+\tikzstyle{gn}=[dot,fill=lime!50,minimum width=0.2cm,inner sep=0.5pt,font=\footnotesize]
+\tikzstyle{rn}=[dot,fill=red!50,inner sep=0.5pt,minimum width=0.2cm,font=\footnotesize]
+\tikzstyle{bn}=[dot,fill=blue,minimum width=0.3cm]
+
+\tikzstyle{rc}=[dot,thick,fill=white,draw = red,minimum width=0.2cm,inner sep=0.5pt,font=\footnotesize]
+\tikzstyle{gc}=[dot,thick,fill=white,draw= lime,inner sep=0.5pt,minimum width=0.2cm,font=\footnotesize]
+\tikzstyle{bc}=[dot,thick,fill=white,draw= blue,minimum width=0.3cm]
+
+\tikzstyle{label}=[circle,fill=white,minimum width=0.3cm]
+
+%\tikzstyle{H box}=[rectangle,draw=black,xscale=1,yscale=1,font=\small,inner sep=0.75pt]
+\tikzstyle{H box}=[rectangle,fill=yellow,draw=black,xscale=1,yscale=1,font=\small,inner sep=0.75pt,minimum width=0.15cm,minimum height=0.15cm]
+
+\tikzstyle{clocklabel}=[dot,fill=yellow,draw=black,font=\tiny,inner sep=0.75pt]
+
+
+\tikzstyle{rsn}=[circle split,draw,fill=red,font=\tiny,inner sep=0.75pt]
+\tikzstyle{gsn}=[circle split,draw,fill=lime,font=\tiny,inner sep=0.75pt]
+\tikzstyle{bsn}=[circle split,draw,fill=blue,font=\tiny,inner sep=0.75pt]
+
+\tikzstyle{rsc}=[circle split,thick,draw= red,draw,fill=white,font=\tiny,inner sep=0.75pt]
+\tikzstyle{gsc}=[circle split,thick,draw= lime,draw,fill=white,font=\tiny,inner sep=0.75pt]
+\tikzstyle{bsc}=[circle split,thick,draw= blue,draw,fill=white,font=\tiny,inner sep=0.75pt]
+
+% ========
+% = MISC =
+% ========
+
+\tikzstyle{cnot}=[fill=white,shape=circle,inner sep=-1.4pt]
+% \tikzstyle{tick}=[sloped,rotate=90,font=\small\bf,xshift=0.07mm]
+\tikzstyle{wire label}=[font=\tiny, auto]
+

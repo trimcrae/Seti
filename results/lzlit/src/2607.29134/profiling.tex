@@ -1,0 +1,175 @@
+% \section{Deep Profiling of SQLite and Qiskit Aer}
+% \label{sec:deep-profile-sqlite-aer}
+
+% % The aggregate evaluation shows that SQLite can be competitive with Qiskit Aer, especially for peak memory, but the aggregate win rates do not explain where this advantage comes from. We have generated and simulated 106 circuits, and profiled the SQLite and Qiskit Aer\footnote{These 106 circuits are sampled from the \num{7705} circuits used in the Sec. 6.}. The goal is to identify the mechanism behind the crossover: when SQLite is faster, whether this is due to sparse relational representation and low overhead; and when Aer is faster, whether SQLite is dominated by SQL execution-plan cost.
+
+% To understand why SQLite uses less peak memory than
+% Qiskit Aer on many circuits, we have generated and simulated 106 circuits, and profiled the SQLite and Qiskit Aer\footnote{These 106 circuits are sampled from the \num{7705} circuits used in the Sec. 6.}.
+% % This analysis separates SQLite's memory advantage from possible simulator memory
+% % overheads and identifies when SQLite's cost is dominated by SQL execution.
+
+% For SQLite, each circuit is compiled into a tensor-contraction program represented as a chain of Common Table Expressions (CTEs). Each contraction step is implemented as a join followed by an aggregation. We record the number of total and contraction CTEs, estimated intermediate-relation sizes, result cardinalities, SQLite execution-plan operators, temporary B-tree usage, automatic-index usage, page-cache overflow counters, peak resident set size (RSS), and wall-clock runtime. For Qiskit Aer, we compare against the fastest successful Aer method for the same circuit, rather than fixing a single simulator representation across all circuits.
+
+% The profiling results in Table~\ref{tab:sqlite-aer-profile} help us understand \emph{when} each engine wins. Across 106 circuits, SQLite is faster in 19 cases, while Qiskit Aer is faster in 87 cases. SQLite wins when the relational workload remains small: the median SQLite-winning circuit has 37 total CTEs, 32 contraction CTEs, a largest intermediate relation of 256\,B, and only 16 final result rows. In these cases, SQLite runs in a median of 0.85\,ms, compared with 2.01\,ms for the fastest successful Aer method. By contrast, when Aer wins, the median workload is larger: 55 total CTEs, 49 contraction CTEs, a largest intermediate relation of 1.0\,KB, and 128 final result rows. In these cases, SQLite takes a median of 1.67\,ms, while Aer takes 0.92\,ms.
+
+% \begin{table}[t]
+% \centering
+% \small
+% \caption{Median properties of completed SQLite--Aer profiling runs, grouped by the faster runtime backend. CTE sizes are estimated from intermediate-relation cardinalities and row widths.}
+% \label{tab:sqlite-aer-profile}
+% \begin{tabular}{lrr}
+% \toprule
+%  & SQLite faster & Aer faster \\
+% \midrule
+% Number of cases & 19 & 87 \\
+% Total CTEs & 37 & 55 \\
+% Contraction CTEs & 32 & 49 \\
+% Total estimated CTE size & 3.0\,KB & 8.6\,KB \\
+% Largest intermediate CTE & 256\,B & 1.0\,KB \\
+% Final result rows & 16 & 128 \\
+% SQLite runtime & 0.85\,ms & 1.67\,ms \\
+% Fastest Aer runtime & 2.01\,ms & 0.92\,ms \\
+% \bottomrule
+% \end{tabular}
+% \end{table}
+
+% This result shows that SQLite's advantage is not determined by qubit count alone. Some SQLite-winning circuits have more qubits than Aer-winning circuits, but their relational intermediates remain small. The decisive factor is the size and structure of the induced SQL workload. When the tensor-contraction sequence preserves sparsity, SQLite only materializes a small number of non-zero amplitudes, and the join-and-aggregate pipeline can finish before Aer method setup and simulation overhead dominate. For such circuits, the sparse SQL representation is a good representation of the quantum state in the circuits.
+
+% The same representation becomes unfavorable once the contraction pipeline grows. Longer CTE chains introduce repeated joins, aggregations, and materialization points. SQLite query plans repeatedly use temporary B-trees for grouping and automatic indexes for joins. These are standard relational execution mechanisms, but in a long contraction sequence their cumulative cost dominates the arithmetic. Thus, when Aer wins, it is not because SQLite fails to represent the computation; rather, the relational execution machinery becomes the bottleneck.
+
+% % The timeout cases follow the same pattern. They occur in the high-cost SQL regime, with larger join-and-aggregation structure: the median timeout case has 15 qubits, 99 \texttt{GROUP BY} clauses, and 128 join/equality predicates. These cases indicate that the hard boundary for SQLite is not simply state-vector dimension, but the interaction between output density, intermediate cardinality, CTE-chain length, and the physical operators selected by SQLite. Dense or highly connected circuits can rapidly turn the SQL representation into a long sequence of expensive relational operators.
+
+% The memory measurement results are different from the runtime results. Among 106 circuits, SQLite uses less peak RSS than the best Aer memory configuration in 105 out of 106 cases. Median peak RSS is 167\,MB for SQLite and 171\,MB for Aer. This difference is small in absolute terms for these circuits, but it is consistent: SQLite benefits from storing sparse relational intermediates rather than allocating the simulator representation chosen by Aer. At the same time, this memory advantage does not automatically translate into runtime advantage, because SQLite still pays the cost of repeated SQL planning and execution operators.
+% %
+% The SQLite profiling results are similar. The page-cache overflow counter is zero in all completed runs, and we do not observe an external-sort. Therefore, the slowdown is not explained by SQLite spilling large page-cache contents to disk. Instead, it might be because the repeated use of temporary B-trees and automatic indexes inside the query plan. 
+% % In this setting, temporary B-trees should be interpreted primarily as relational execution structures used for grouping and ordering, not as evidence of out-of-core execution. 
+% The dominant cost is the repeated construction and consumption of these structures across the CTE chain.
+
+% Different from RDBMSs, Aer's performance depends strongly on which simulator method is valid and efficient for the circuit. In the profiling runs, the fastest successful Aer method varies across circuits: \texttt{unitary} is fastest in 47 cases, \texttt{automatic} in 40 cases, \texttt{extended\_stabilizer} in 12 cases, and \texttt{statevector} in 7 cases. This confirms that a single fixed Aer method is not a stable baseline for heterogeneous circuits. Some circuits admit efficient specialized simulation, while others require a more general representation. For peak memory, the best Aer configuration is almost always \texttt{statevector}, which is the lowest-RSS Aer method in 105 completed cases.
+
+% Overall, the profiling study explains the SQLite--Aer crossover. SQLite wins when three conditions hold simultaneously: the circuit state remains sparse, the intermediate relations stay small, and the CTE chain is short enough that SQL execution overhead is negligible. Aer wins once the contraction sequence becomes long enough for repeated joins, aggregations, temporary B-trees, and automatic indexes to dominate. The comparison is therefore governed by both data representation and execution strategy: SQLite provides a compact sparse representation for some circuits, while Aer benefits from specialized simulator methods that avoid the overhead of executing a long relational contraction pipeline.
+
+\section{Profiling of SQLite and Qiskit Aer}
+\label{sec:deep-profile-sqlite-aer}
+
+To understand why SQLite uses less peak memory than Qiskit Aer on many circuits,
+we profile both systems on 162 generated circuits.\footnote{We have sampled these 162 circuits
+  from the large \num{7705} circuits used in Section~6. This profiling comparison is separate from the all-backend tuned
+winner count reported in Figure~7 and Appendix~G.}
+
+For SQLite, each circuit is compiled into a tensor-contraction program represented
+as a chain of Common Table Expressions (CTEs). Each contraction step is implemented
+as a join followed by an aggregation. We record the number of total and contraction
+CTEs, estimated intermediate-relation sizes, result cardinalities, SQLite
+execution-plan operators, temporary B-tree usage, automatic-index usage,
+page-cache overflow counters, peak resident set size (RSS), and wall-clock
+runtime. For Qiskit Aer, we compare against the fastest   Aer method for
+runtime, rather than fixing a single simulator representation across all circuits.
+For memory, we compare against the lowest-RSS   Aer configuration for
+the same circuit.
+
+The profiling results\footnote{\url{https://github.com/InfiniData-Lab/InferQ/blob/main/analysis/memory_profiling/sqlite_vs_qiskit_summary.csv}} in Table~\ref{tab:sqlite-aer-profile} characterize when
+each system is faster. Across 162 circuits, SQLite is faster in 46 cases, while
+Qiskit Aer is faster in 116 cases. SQLite is faster when the relational workload
+remains small: the median SQLite-winning circuit has 26.5 total CTEs, 22
+contraction CTEs, the largest intermediate relation of 256\,B, and 16 final result
+rows. In these cases, SQLite runs in a median of 2.03\,ms, compared with
+2.82\,ms for the fastest   Aer method. In contrast, when Aer is faster,
+the median workload is larger: 55 total CTEs, 49 contraction CTEs, a largest
+intermediate relation of 1.0\,KB, and 128 final result rows. In these cases,
+SQLite takes a median of 6.63\,ms, while Aer takes 3.09\,ms.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Median properties of completed SQLite--Aer profiling runs, grouped by
+the backend with lower runtime. CTE sizes are estimated from intermediate-relation
+cardinalities and row widths.}
+\label{tab:sqlite-aer-profile}
+\begin{tabular}{lrr}
+\toprule
+ & SQLite faster & Aer faster \\
+\midrule
+Number of cases & 46 & 116 \\
+Total CTEs & 26.5 & 55 \\
+Contraction CTEs & 22 & 49 \\
+Total estimated CTE size & 2.9\,KB & 10.5\,KB \\
+Largest intermediate CTE & 256\,B & 1.0\,KB \\
+Final result rows & 16 & 128 \\
+SQLite runtime & 2.03\,ms & 6.63\,ms \\
+Fastest Aer runtime & 2.82\,ms & 3.09\,ms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These results show that SQLite's advantage is not determined by qubit count
+alone. Some SQLite-winning circuits have more qubits than Aer-winning circuits,
+but their relational intermediates remain small. The decisive factor is the size
+and structure of the induced SQL workload. When the tensor-contraction sequence
+preserves sparsity, SQLite materializes only a small number of nonzero amplitudes,
+and the join-and-aggregate pipeline can complete before Aer's method setup and
+simulation overheads dominate. For such circuits, the sparse SQL representation
+provides a compact representation of the circuit state.
+
+The same representation becomes less favorable once the contraction pipeline
+grows. Longer CTE chains introduce repeated joins, aggregations, and intermediate
+execution structures. SQLite query plans use temporary B-trees for grouping in
+all completed runs and automatic indexes for joins in 154 out of 162 runs. These
+are standard relational execution mechanisms, but in a long contraction sequence
+their cumulative cost can dominate the arithmetic. Thus, when Aer is faster, it
+is not because SQLite fails to represent the computation; rather, the relational
+execution machinery becomes the bottleneck.
+
+The memory measurements follow a different pattern from the runtime measurements.
+Among the 162 circuits, SQLite uses less peak RSS than the lowest-RSS  
+Aer method in 139 cases. Median peak RSS is 203\,MB for SQLite and 206\,MB for
+Aer. This difference is small in absolute terms for these circuits, but it is
+consistent with SQLite benefiting from storing sparse relational intermediates
+rather than allocating the simulator representation used by Aer. At the same
+time, this memory advantage does not automatically translate into a runtime
+advantage, because SQLite still pays the cost of repeated SQL execution.
+
+The SQLite-specific profiling counters support this interpretation. The
+page-cache overflow counter is zero in all completed runs, and we do not observe
+external-sort behavior. Thus, the slowdown is not explained by observed
+out-of-core execution in these runs. Instead, the dominant cost is the repeated
+construction and consumption of temporary B-trees and automatic indexes across
+the CTE chain.
+
+Unlike the RDBMS backends, Aer's performance depends strongly on which simulator
+method is applicable and efficient for each circuit. In the profiling runs, the
+fastest  Aer method varies across circuits: \texttt{unitary} is fastest
+in 46 cases, \texttt{automatic} in 42 cases, \feat{statevector} in 37 cases,
+\feat{extended\_stabilizer} in 26 cases, \feat{matrix\_product\_state} in
+5 cases, \feat{density\_matrix} in 4 cases, and \feat{stabilizer} in 2
+cases. This indicates that a single fixed Aer method is not a stable baseline for
+heterogeneous circuits. Some circuits admit efficient specialized simulation,
+while others require a more general representation. For peak memory, the
+lowest-RSS Aer configuration is usually \feat{statevector} or
+\feat{density\_matrix}:  \feat{statevector} has the lowest RSS in 88 cases,
+\feat{density\_matrix} in 49 cases, \feat{automatic} in 14 cases,
+\feat{matrix\_product\_state} in 9 cases, and \feat{unitary} in 2 cases.
+
+We do not enable Aer cache blocking in this comparison. Our Aer baseline uses the
+standard CPU simulator methods, whereas Aer's cache-blocking options (e.g.,
+\texttt{blocking\_enable} and \texttt{blocking\_qubits}) are documented for
+distributed GPU and/or multi-node simulation~\cite{QiskitAerMultiGPU}. They
+partition the state into chunks to reduce data exchange across distributed memory
+spaces, rather than providing a disk-backed CPU cache comparable to an RDBMS
+buffer manager. Enabling these options would therefore change the simulator
+configuration instead of providing a fair comparison to SQLite's
+relational execution.  
+
+\medskip
+  \vspace{0.2cm}
+\noindent
+\setlength{\fboxsep}{6pt}
+\fcolorbox{black!15}{black!4}{%
+  \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{
+\noindent\textbf{Takeaway.}
+The relative performance of SQLite and Qiskit Aer is governed by both
+representation and execution strategy. SQLite is memory-efficient when sparsity
+keeps intermediate relations small, but Aer is faster once repeated joins,
+aggregations, temporary B-trees, and automatic indexes make SQL execution
+overhead dominate the contraction pipeline.
+}}

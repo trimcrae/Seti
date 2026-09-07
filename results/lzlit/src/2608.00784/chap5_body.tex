@@ -1,0 +1,1553 @@
+
+\section{Introduction}
+The analysis presented in this chapter is based on Ref.~\cite{Bhattacharyya:2025sky}.
+%{``Scattering amplitudes: the most perfect microscopic structures in the universe''- L.J. Dixon}\cite{Dixon:2011xs}.\\\\
+In conventional quantum field theory, scattering amplitudes are typically computed by considering the external states as momentum eigenstates, ensuring momentum conservation at each interaction vertex. However, an alternative exists, namely the conformal primary basis. In this basis, the external states are labeled by their conformal dimensions and their positions on the celestial two-sphere, parametrized by complex coordinates \( z, \bar{z} \). For massless external states, the conformal primary basis is obtained via a Mellin transformation over the energy variable \( \omega \). Scattering amplitudes expressed in this basis are referred to as \textit{celestial amplitudes}, owing to their kinematic structure and interpretation as correlation functions on the celestial sphere \cite{Pasterski:2016qvg}.\par
+A comprehensive understanding of celestial conformal field theory (CCFT) necessitates knowledge of its full operator spectrum. In standard two-dimensional CFTs, the conformal block decomposition~\cite{Osborn:2012vt,Poland:2018epd} serves as a fundamental tool for probing the spectrum. Analogously, the block decomposition of celestial correlators and OPE has been extensively explored in~\cite{Lam:2017ofc, Nandan:2019jas, Law:2020xcf, Fan:2021isc,Fan:2022vbz,Fan:2022kpp,Atanasov:2021cje,De:2022gjn,Garcia-Sepulveda:2022lga, Banerjee:2023jne}. However, unlike standard CFTs, the computation of the block expansion in CCFT differs significantly due to the kinematic constraints imposed by four-dimensional scattering amplitudes, which result in a delta function \(\delta(|z - \bar{z}|)\) in cross-ratio space. This constraint enforces the cross-ratio \(z\) to be real-valued.
+To overcome this limitation, one can perform a shadow transformation~\cite{FERRARA1972281,Ferrara:1972kab,Simmons-Duffin:2012juh} on one of the external operators, which relaxes the kinematic constraints and restores complex \(z\) dependence in the celestial correlator~\cite{Fan:2021isc}. This procedure enables the application of standard 2D CFT techniques to analyze the conformal block decomposition, particularly in extracting operator product expansion (OPE) coefficients.
+To extract the OPE data for the shadow-transformed amplitude in quadratic EFT, we employ the OPE inversion formula~\cite{Caron-Huot:2017vep,Simmons-Duffin:2017nub,Mazac:2018qmi}. The Euclidean inversion formula, applicable to CCFT, is relatively straightforward compared to the Lorentzian version, which relies on computing the double discontinuity across branch cuts of hypergeometric functions in the complexified cross-ratio space where \(z\) and \(\bar{z}\) are independent variables.
+The key idea is to identify OPE coefficients as residues of poles in the analytically continued partial wave expansion coefficients. %where the exchanged conformal dimensions are extended from discrete to continuous representations. 
+This analytic continuation enables the extraction of OPE data in terms of integrals over partial waves, offering a powerful method for decoding the celestial operator spectrum.
+
+\par 
+In spite of these promising ideas and newer developments in CCFT in recent years, Celestial holography has some drawbacks that need to be addressed. Most of the examples of celestial amplitude presented in the literature, especially for the UV incomplete theories, give non-analytic (or purely divergent) results \cite{Arkani-Hamed:2020gyp}, which is because the Mellin transformation of flat space amplitude (at some order of perturbation) integrates over full energy scale (IR to UV) of the external asymptotic states. For example, in Einstein's GR, the Celestial amplitude is purely divergent at any order of perturbation. This issue is, to some extent, resolved in the context of string theory \cite{Stieberger:2018edy, Chang:2021wvv, Donnay:2023kvm} because of the UV softness of the theory. However, in the context of QFT, there are several approaches to handle the problem: the first one is to treat the celestial amplitude as a distribution \cite{Pasterski:2017ylz}. Secondly, by regularizing it using the background field method \cite{Fan:2022vbz,Casali:2022fro, Fan:2022kpp, deGioia:2022fcn, Banerjee:2023rni, Ball:2023ukj, Crawley:2023brz}. Thirdly, by introducing a modified Mellin transformation \cite{Banerjee:2019prz}. More recently, another approach has been proposed in \cite{Adamo:2024mqn} based on the eikonal exponentiation of scattering amplitude (in the context of celestial amplitude see \cite{deGioia:2022fcn}) in both flat and curved space \cite{Adamo:2021rfq}. In the eikonal limit (small angle, high energies), the perturbative series of the scattering amplitude can be exponentiated \cite{Amati:1987uf,Kabat:1992tb} and the full scattering matrix can be written in terms of the Born amplitude dressed by a phase. It has also been shown that because of the oscillating nature of the eikonal amplitudes, they are meromorphic in conformal dimensions with an infinite number of poles in the negative real axis. This provides an example of meromorphic and non-perturbative gravitational celestial amplitude. From the point of view of UV completeness, we expect improved analytic behaviour of celestial amplitude in higher derivative EFTs of gravity, which is one of the main themes of the paper. As previously noted, celestial amplitudes in general relativity (GR) exhibit non-analytic---more precisely, \textit{distributional}--- behaviour. In this work, we aim to explore whether this singular structure persists in higher-derivative EFTs, specifically within the context of \textit{quadratic gravity}. Our investigation centres around the following key questions:
+
+\begin{itemize}
+    \item Does the celestial amplitude in quadratic gravity remain distributional, or does it exhibit improved analytic properties?
+    \item Is the introduction of \textit{eikonal resummation} necessary in such theories to achieve better analytic behaviour in the celestial amplitude?
+    \item Can we get some analytic control to extract the OPE data (including spinning exchanges) from the celestial correlator corresponding to the Born amplitude.
+    \item Furthermore, is it possible to extract OPE data from the \textit{non-perturbative (in couplings of the theory) eikonal amplitude}?
+\end{itemize}
+Through these questions, we aim to understand the interplay between analytic structure, resummation techniques, and CFT data for the celestial amplitudes of massless scalar in higher-derivative theories.
+\par
+This chapter is organised as follows. In Section~\eqref{ch5:sec3}, we briefly review the key theme of the paper, i.e. eikonal amplitude in the celestial sphere, discuss the boost eigenstate and its connection to the Mellin transform, and then generalise the amplitude analysis to quadratic EFT. In this section, we also describe analyticity and dispersion relation(s) relevant to our context, generalising from pure GR scenario. The nature of the $\gamma$-poles in the celestial amplitude for quadratic EFT is discussed. Further in Section~\eqref{ch5:sec4}, we discuss Celestial \textit{Operator Product Expansion (OPE)} and show the detailed computation of the conformal block decomposition in Celestial conformal field theory (CCFT). To compute the Euclidean OPE coefficients, we used the \textit{OPE-inversion formula} pioneered by Caron-Huot. In Section~\eqref{ch5:sec5}, we calculate the carrollian amplitude from the celestial counterpart and calculate the corrections we obtain from the non-vanishing quadratic EFT coefficients. We also demonstrate how the IR pole in carrollian amplitude shifts its value from that of GR. In Appendix~\ref {ch5:app:A}, we show the derivation and the simplification of the Mellin integration we encountered in terms of the \textit{simplex variables}.
+%\section{Celestial amplitude: a lightening review}\label{sec2}
+%\begin{figure}[b!]
+ %   \centering
+% \includegraphics[width=0.65\linewidth]{QUADRATIC.png}
+%    \caption{Figure describing the celestial description of conformal correlator (right) for $n\to m$ scattering amplitude in asymptotically flat space (left). }
+  %  \label{fig1}
+%\end{figure}
+
+%Traditionally, the external states of scattering amplitudes are parametrized by the energy eigenvalues. Alternatively, the conformal primary basis is a particularly interesting alternative, which renders the resulting scattering amplitude in a form that transforms it into a conformal correlator on the celestial sphere schematically shown in Fig.~\eqref{fig1}. As such, scattering amplitudes expressed in the conformal primary basis are usually referred to as celestial amplitudes. For the massless field scattering, external states in the four-momentum basis can be parametrized in terms of frequency $\omega$ and a point on celestial sphere $(z,\bar z)$ as  the external momenta can be parametrized as \cite{Arkani-Hamed:2020gyp,Pasterski:2016qvg},
+%\begin{align}
+ %   p^i_\mu=\frac{\omega}{\sqrt{2}}\left(1+|z_i|^2,z_i+\bar z_i,-i(z_i-\bar z_i),1-|z_i|^2\right)\,.\label{2.1e}
+%\end{align}
+%In celestial conformal field theory (CCFT), the massless four-momenta can be written as \eqref{2.1e}. In $(-+++)$ convention $z$ is the cross-ratio and $\bar z$ is its complex conjugate
+%\begin{align}
+%z=\frac{z_{12}z_{34}}{z_{13}z_{24}},\,\,\,\,\,\,\bar z=\frac{\bar z_{12}\bar z_{34}}{\bar z_{13}\bar z_{24}}.      
+%\end{align}
+
+
+
+%\noindent
+%In CCFT, $\mathcal{O}_{\Delta,m=0}$ is a conformal primary with conformal dimension $h_i=\frac{\Delta_i+J_i}{2},\,\bar{h}_i=\frac{\Delta_i-J_i}{2},\text{with}\,\Delta_i=1+i\lambda_i,\,\lambda_i\in \mathbb{R}$. The 4d scattering channels are given as,
+%\begin{align}
+ %   \begin{split}
+  %     & a)\quad 12\Longleftrightarrow 34,\,\,\,\,  \,(z>1)\,,\\&
+  %     b)\quad 13\Longleftrightarrow 24 ,\,\,\,\,   \,(0<z<1)\,,\\&
+  %     c)\quad 14\Longleftrightarrow 23,\,\,\,\,  \,(z<0)\,.\\&
+ %   \end{split}
+%\end{align}
+%\begin{figure}[htb!]
+  %  \centering \includegraphics[width=0.40\linewidth]{CIRCLE.png}
+  %  \caption{Figure depicting the regime of validity for Mellin transformed amplitude(s) in different kinematical regime.}
+  %  \label{fig:3}
+%\end{figure}
+
+%Now, in these three kinematic regimes, the corresponding celestial amplitude, which is a Mellin transform of flat space scattering amplitude, transforms like a $n$-point correlator (for our case, we took the primaries to be scalars) of a two-dimensional conformal field theory and is given by,
+%\begin{align}
+  %  \mathcal{A}_n(z_i,\bar z_i):=\Bigg\langle\prod_{i=1}^n\mathcal{O}_{\Delta_i}(z_i,\bar z_i)\Bigg\rangle=\rmint_0^\infty\,\prod_{i=1}^n d\omega_i\,\omega_i^{\Delta_i-1}\mathbb{M}_{n}(p_1,\cdots,p_n)\,\delta^{(4)}\Bigg(\sum_{i=1}^n\epsilon_i\omega_iq_i\Bigg).
+%\end{align}
+%In this paper, we will focus on the 4-point scalar amplitude, which is given by (using the SL($2,\mathbb{C}$) invariance),
+%\begin{align}
+  %  \begin{split}
+%\mathcal{A}_{\Delta_i,J_i}(z_i,\bar z_i)=\frac{\left(\frac{z_{14}}{z_{13}}\right)^{h_3-h_4}\left(\frac{z_{24}}{z_{14}}\right)^{h_1-h_2}\left(\frac{\bar z_{14}}{\bar z_{13}}\right)^{\bar h_3-\bar h_4}\left(\frac{\bar z_{24}}{\bar z_{14}}\right)^{\bar h_1-\bar h_2}}{z_{12}^{h_1+h_2}z_{34}^{h_3+h_4}\bar z_{12}^{\bar h_1+\bar h_2}\bar z_{34}^{\bar h_3+\bar h_4}}\,\mathcal{G}_{\Delta_i,J_i}(z_i,\bar z_i),
+  %  \end{split}
+%\end{align}
+%where the left and right moving conformal dimensions are,
+%\begin{align}
+ %   h_i+\bar h_i=\Delta_i,\,\,\hspace{0.8cm}h_i-\bar h_i=J_i.
+%\end{align}
+%Using the SL($2,\mathbb{C}$) invariance we can fix the coordinates $z_i$ to,
+%\begin{align}
+        %z_1=0,\,\,z_2=z,\,\,z_3=1,\,\,z_4=\infty.
+%\end{align}
+%Now the momentum conservation further reduces the amplitude to be\footnote{The momentum conserving delta function can also be written in terms of the simplex variables \cite{Pasterski:2017ylz} (we describe it in detail in Appendix~\ref{appA}) $\sigma_i=v^{-1}\omega_i  \,\text{with}\,\, \sum_{i=1}^n\sigma_i=1
+%$,
+%\begin{align}
+  %  \prod_{i=1}^n\rmint_0^\infty %d\omega_i\, \omega_i^{i\lambda_i}[\cdots]=\rmint_0^\infty dv \,v^{-1+\sum i\lambda_i}\prod_{i=1}^n\rmint_0^1\,d\sigma_i \sigma_i^{i\lambda_i}\delta{\Bigg(\sum_i\sigma_i-1\Bigg)}[\cdots]\,.\label{2.8r}
+%\end{align} 
+%For a detailed derivation of the $\sigma$  integral and delta function simplification, we refer the reader to look at Appendix~\eqref{appA}.},
+%\begin{align}
+  %  \begin{split}
+   %     \mathcal{G}_{\Delta_i,J_i}(z_i,\bar z_i)=(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}\delta(iz-i\bar z)\mathcal{A}(\mathbf \Delta,J_i,z)
+  %  \end{split}
+%\end{align}
+%where $\mathbf{\Delta}=\sum_i \Delta_i$ and the delta function ensures the planarity of the celestial amplitude. In the celestial sphere, we have different kinematic channels depending on the values of $\epsilon_i$.
+
+%\textcolor{black}{The theory dependent dynamics of the scattering amplitude is encoded }in $\mathbfcal{A}(\gamma,z)$, given by,
+%\begin{align}
+   % \begin{split}
+     %   \mathbfcal{A}(\gamma,z)\to  \mathbfcal{A}^{ij\to kl}(\gamma,z)=B^{ij\to kl}(z)\rmint_0^\infty d\omega\,\omega^{\gamma-1}\,\mathbb{M}(s=\Phi(z)\omega^2,t=-\phi(z)\omega^2)\,,\label{2.6m}
+   % \end{split}
+%\end{align}
+%\textcolor{black}{where $\gamma$ is related to $\mathbf{\Delta}$ as, $\gamma=\sum_{i=1}^4(\Delta_i-1)=\mathbf{\Delta}-4$.} Also, the functions $\Phi(z)$ and $\phi(z)$ are given in Table~\eqref{tab:kinematics} for different kinematic regimes.
+%\noindent
+%Now, we proceed to the central theme of the paper. We investigate the eikonal limit of the celestial amplitude for quadratic EFT.
+%\begin{table}
+%\begin{center}
+% \begin{tabular}{|c|c|c|c|} 
+%  \hline
+%Kinematics & $\mathbf{12\leftrightarrow 34}$ & $\mathbf{13\leftrightarrow 24}$ & $\mathbf{14\leftrightarrow 23}$  \\
+%\hline
+%\multirow{2}{*}{physical region} & $z\ge 1$ & $1\ge z\ge 0$ & $0\ge z$ 
+%\\
+%& $s\ge0\ge u,t$ & $u\ge0\ge s,t$ & $t\ge0\ge s,u$
+%\\
+%\hline
+%$(s,u,t)$ & $(\omega^2,-{1\over z}\omega^2,-{(z-1)\over z}\omega^2)$ & $(-z\omega^2,\omega^2,-(1-z)\omega^2)$ & $(-{(-z)\over 1-z}\omega^2,-{1\over 1-z}\omega^2,\omega^2)$  
+%\\
+% \hline
+%\end{tabular}
+%\end{center}
+%\caption{The physical regions, C.O.M energy $\omega$ and Mandelstam variables in the three different kinematic regimes.}
+%\label{tab:kinematics}
+%\end{table}
+\section{ Celestial eikonal amplitude for quadratic gravity}\label{ch5:sec3}
+\textcolor{black}{We consider scattering amplitudes with external massless scalars, with the exchange particle being a graviton which has one massive mode due to non-vanshing coupling constants of quadratic EFT.} The main ingredient for computing the celestial eikonal amplitude is the Born amplitude in quadratic gravity. The gravity theory we are going to consider is the following,
+\begin{align}
+    \begin{split}
+        S_{g}=\rmint d^4 x \sqrt{-g}\left(\kappa \,\mathcal{R}+\alpha \mathcal{R}_{\mu\nu}\mathcal{R}^{\mu\nu}-\frac{1}{3}(\alpha+\beta)\mathcal{R}^2\right)
+    \end{split}\label{3.1i}
+\end{align}
+where, $\kappa\sim m_p^2\sim \frac{1}{G}$ and $\alpha,
+\beta$ are dimensionless Wilson coefficients (or coupling constants of the theory) of the EFT. At the tree level, we have the following Feynman diagram(s) as depicted in Fig~\eqref{ch5:fig3}.
+To compute the diagram, we need to know the graviton propagator, which is given by \cite{Hamber:2009zz},
+\begin{align}
+    \begin{split}\label{3.2h}
+      \kappa  \langle h_{\mu\nu}(q)\,h_{\eta\delta}(-q)\rangle=2 \mathcal{P}^{(2)}_{\mu\nu;\eta\delta}\left(\frac{1}{q^2}-\frac{1}{q^2+\frac{\kappa}{\alpha}}\right)+\mathcal{P}^{(0)}_{\mu\nu;\eta\delta}\left(-\frac{1}{q^2}+\frac{1}{q^2+\frac{\kappa}{2\beta}}\right)
+    \end{split}
+\end{align}
+where the projectors are defined as,
+\begin{align}
+    & \mathcal{P}^{(0)}_{\mu\nu;\eta\delta}=-\frac{1}{3q^2}\left(q_\mu q_{\nu}\eta_{\eta\delta}+q_{\eta}q_{\delta}\eta_{\mu\nu}\right)+\frac{1}{3}\eta_{\mu\nu}\eta_{\eta\delta}+\frac{1}{3q^4}q_{\mu}q_{\nu}q_{\eta}q_{\delta}
+\end{align}
+
+and
+\begin{align}
+\begin{split}
+    & \mathcal{P}^{(2)}_{\mu\nu;\eta\delta}=\frac{1}{3q^2}\left(q_\mu q_{\nu}\eta_{\eta\delta}+q_{\eta}q_{\delta}\eta_{\mu\nu}\right)-\frac{1}{2 q^2}\Bigg(q_{\mu}q_{\eta}\eta_{\nu\delta}+q_{\mu}q_{\delta}\eta_{\nu\eta}+q_{\nu}q_{\eta}\eta_{\mu\delta}+q_{\nu}q_{\delta}\eta_{\mu\eta}\Bigg)\\&\hspace{0.8cm}+\frac{2}{3q^4}\Bigg(q_\mu q_\nu q_\eta q_\delta\Bigg)+\frac{1}{2}\Bigg(\eta_{\mu\eta}\eta_{\nu\delta}+\eta_{\mu\delta}\eta_{\nu\eta}\Bigg)-\frac{1}{3}\eta_{\mu\nu}\eta_{\eta\delta}\,.
+    \end{split}
+\end{align}
+\noindent
+\begin{figure}[t!]
+\centering
+\scalebox{0.18}{\includegraphics{diagram_FEYN.png}}
+\caption{Figure describing the $s,t,u$-channel diagram respectively, relevant for our computation }\label{ch5:fig3}
+\end{figure}
+\textcolor{black}{Before proceeding to the main discussion, we begin by outlining several foundational aspects of quadratic effective field theories (EFTs) of gravity. It is well understood that quantum corrections to Einstein gravity generically induce higher-derivative terms, including those quadratic in the curvature, such as \( R^2 \). This naturally motivates the study of such terms at the level of the microscopic (bare) action, providing a framework amenable to consistent perturbative renormalization. The inclusion of curvature-squared contributions in classical gravity was first proposed in \cite{weyl}, and their role in rendering gravity power-counting renormalizable was subsequently demonstrated in \cite{1962JMP.....3..608U}, with full renormalizability to all orders in perturbation theory established in \cite{PhysRevD.16.953}. }\par
+\textcolor{black}{
+Despite these notable achievements, higher-derivative gravitational theories are often regarded as problematic due to issues related to unitarity. This concern becomes manifest at the level of the tree-level propagator \eqref{3.2h}, where the ultraviolet behavior improves from a \( 1/q^2 \) to a \( 1/q^4 \) fall-off, yet this improvement introduces a massive spin-2 ghost with mass \( m = \sqrt{\kappa/\alpha} \), signaling a breakdown of perturbative unitarity. More specifically, while it is possible to quantize the theory such that all excitations have positive-definite energy, this necessitates the inclusion of negative-norm (ghost) states in the Hilbert space. As shown in \cite{PhysRev.79.145}, such states inevitably violate unitarity and cannot be consistently projected out without sacrificing the unitarity of the \( S \)-matrix. Therefore, despite the theory’s favorable UV behavior, its physical consistency remains fuzzy in the absence of a \textit{precise} resolution to the unitarity problem (see also the Appendix of \cite{PhysRevD.16.953} for a detailed discussion).}\par
+\textcolor{black}{
+However, as emphasized in \cite{FRADKIN1982469}, unitarity is fundamentally a dynamical property, and cannot be definitively assessed within the confines of a purely perturbative treatment or at the level of the tree-level propagator alone. A comprehensive analysis requires accounting for loop corrections and potentially non-perturbative effects at fixed energy. As we will demonstrate in the following sections, the eikonal scattering amplitude constructed within a bottom-up approach—non-perturbative in the coupling—is manifestly unitary by construction.
+ } \par
+ \textcolor{black}{
+Nevertheless, more recent analyses~\cite{Abe:2017abx,Abe:2018rwb,Abe:2020ikj,Abe:2022spe} have shown that Einstein gravity, when treated as a quantum theory, violates tree-level unitarity in the high-energy limit, failing to satisfy the unitarity bound \( |\mathbb{A}(s,t)| < C \), where \( C \) is a finite constant. In particular, in the Regge limit, the amplitude in general relativity exhibits unbounded growth, scaling as \( |\mathbb{A}(s,t)|_{\textrm{GR}} \sim {O}(s^1) \to \infty \). In contrast, the same studies demonstrate that scalar matter scattering mediated by graviton exchange in quadratic gravity satisfies unitarity bound at high energies, despite the presence of negative-norm (ghost) states. This result is in accord with the expectations of the Llewellyn Smith conjecture~\cite{LLEWELLYNSMITH1973233}, which heuristically suggests that renormalizable quantum field theories should also exhibit unitary behavior.}\par
+\textcolor{black}{In addition, our subsequent computations of the tree-level scattering amplitude in quadratic gravity yields the following structure:
+\begin{align}
+\mathbb{A}(s,t) \sim \frac{s^2}{t} + O(s^0) , 
+\end{align}
+where the leading term arises from the Einstein-Hilbert (GR) sector, while the subleading constant contribution originates from the quadratic curvature corrections in the effective action. When the theory is treated as an effective field theory, the eikonal limit \( t/s \to 0 \) remains well-defined by taking the momentum transfer \( t \) to be sufficiently small and keeping the center-of-mass energy \( s \) bounded by the EFT cutoff \( \Lambda \). Moreover, it is straightforward to observe that the quadratic curvature contributions exhibit improved high-energy behavior compared to the GR term. Consequently, there is no apparent violation of the unitarity bound---at least within the regime where the theory is interpreted as a low-energy effective description of some UV-complete quantum gravity theory.}
+
+
+\textcolor{black}{
+Under this interpretation, Einstein gravity treated as an effective field theory (EFT) remains consistent with unitarity, as the amplitude stays within unitarity bound. Importantly, the constant contribution from the higher-derivative terms does not introduce any violation of the unitarity bound; that is, one finds
+\begin{equation}
+|\mathbb{A}(s,t)| \leq f(\Lambda) + {O}(s^0),
+\end{equation}
+for some finite function \( f(\Lambda) \).}
+\textcolor{black}{
+In summary, when quadratic gravity (or Einstein gravity) is treated as a low-energy EFT, unitarity of the scattering amplitude is not much problematic (rather, in another context, i.e, in the S-matrix bootstrap program, the goal is to put a bound on the EFT coupling, assuming the existence of a high-energy UV completion which is causal and unitary). This contrasts with the situation where one attempts to promote the theory to a full UV-complete quantum field theory, where issues such as ghost modes and associated violations of unitarity may become significant.} 
+
+\textcolor{black}{Keeping these takeaways in mind, we now set up the scattering process for our case. Specifically, we consider the gravitationally mediated scattering of massless scalar matter fields. The dynamics of the scalar field are governed by the following matter action:
+\begin{align}
+    S_{m} = \rmint d^4x\, \sqrt{-g} \left( -\frac{1}{2} g^{\mu\nu} \nabla_{\mu} \phi \nabla_{\nu} \phi \right),
+\end{align}
+where \(\phi\) denotes a massless scalar field minimally coupled to gravity and bulk gravitational action is defined in \eqref{3.1i}\,.
+}
+Now, to compute the amplitude in terms of the Mandelstam variables $s,t,u$ we use the constraint $s+t+u=0$ for external massless on-shell states. Then the amplitude $\mathbb{M}(s,t)$ can be cast as the sum of three distinct channels $(s,t,u)$\footnote{The Mandelstam variables are given by,
+\begin{align}
+s:=-(p_1+p_2)^2,\,\,\,\,\,\, t:=-(p_1-p_3)^2,\,\,\,\,\,\,\,\,\,\,\,u:=-(p_1-p_4)^2\,.
+\end{align}
+}, after which we take the \textit{eikonal limit, $\frac{t}{s}\rightarrow 0$}, to extract the dominant contribution.
+It is noteworthy that, similar to GR without higher curvature corrections, the dominant eikonal contribution comes from the $t$ channel. The key difference is the contribution from $s$ and $u$ channels, which cancel each other in GR but not if we have higher curvature terms. We can promptly write down the  contributions to the amplitude from the three channels as,
+\begin{align}
+\mathbb{M}_{\text{Born}}^{\textrm{EFT}}(s,t)=\mathbb{A}_s(s,t)+\mathbb{A}_t(s,t)+\mathbb{A}_u(s,t)\nonumber
+\end{align}
+where
+\begin{align}
+\begin{split}
+    &\mathbb{A}_s(s,t) =\frac{2}{24} \left(s^2+6 s t+6 t^2\right) \left(\frac{1}{-s}-\frac{1}{\frac{\kappa}{\alpha }-s}\right)-\frac{1}{48} s^2 \left(\frac{1}{-s}-\frac{1}{\frac{\kappa}{2 \beta }-s}\right)\,,\\&
+\mathbb{A}_t(s,t)=\frac{2}{24} \left(6 s^2+6 s t+t^2\right) \left(\frac{1}{-t}-\frac{1}{\frac{\kappa}{\alpha }-t}\right)-\frac{1}{48} t^2 \left(\frac{1}{-t}-\frac{1}{\frac{\kappa}{2 \beta }-t}\right)\,,\\&
+\mathbb{A}_u(s,t) =\frac{2}{24} \left(s^2-4 s t+t^2\right) \left(-\frac{1}{\frac{\kappa}{\alpha }+(s+t)}-\frac{1}{-s-t}\right)-\frac{1}{48} (s+t)^2 \left(-\frac{1}{\frac{\kappa}{2 \beta }+(s+t)}-\frac{1}{-s-t}\right)\,.
+\end{split}
+\end{align}
+
+
+After adding all of them, in the eikonal limit \footnote{ \textcolor{black}{We use the notation \(\mathbb{M}^{\textrm{EFT}}_{\textrm{Born}}\) to denote the Born amplitude in the eikonal limit, as this approximation is employed throughout the manuscript in place of the full Born amplitude. Subsequently, we take the Mellin transformation of the eikonal limit of the Born amplitude to find the celestial amplitude.}}
+,  
+
+\begin{align}
+\mathbb{M}_{\text{Born}}^{\textrm{EFT}}(s,t)\to-\frac{1}{48} s \left(\frac{ (3 \kappa+\alpha  s-8 \beta  s)}{(\kappa-\alpha  s) (\kappa-2 \beta  s)}-\frac{4 }{\kappa+\alpha  s}+\frac{1}{\kappa+2 \beta  s}+\frac{24 \,(-s) }{-t \kappa }\right)\,.\label{3.9p}
+\end{align}
+In the limit $\alpha\rightarrow 0,\beta\rightarrow 0\,,$ it gives back the Einstein-GR result, $\mathbb{M}^{\textrm{GR}}\rightarrow \frac{s^2}{-2t}$. For non-zero values of $\alpha$ and $\beta $, we get the tree-level amplitude of the quadratic EFT. This can be written in the following way,
+\begin{align}
+    \begin{split}
+        \mathbb{M}_{\text{Born}}^{\textrm{EFT}} (s=\omega^2,t=-\textcolor{black}{\frac{z-1}{z} }\omega^2)=-\frac{1}{48} \omega ^2 \Bigg(  \frac{3 \kappa+\alpha\omega^2-8 \beta  \omega^2}{(\kappa-\alpha  \omega^2) (\kappa-2 \beta  \omega^2)}-\frac{4 }{\kappa+\alpha  \omega^2}+\frac{1}{\kappa+2 \beta  \omega^2}-\textcolor{black}{\frac{24 \,z}{(z-1)\kappa}}\Bigg)\,.\label{3.8p}
+    \end{split}
+\end{align}
+The variable $z$ should be chosen according to the relevant kinematic region, namely the $12\to 34$, $13\to 24$, and $14\to 23$ channels. \textcolor{black}{One should note that even though we get a non-zero finite piece due to the presence of non vanishing $\alpha,\beta$, in the $s$ and $u$-channel, the $t-$channel contribution in the eikonal limit remains the same as of GR}.  \par
+%Now using \eqref{2.6m}, $\mathbfcal{A}(\gamma,z)$ is given by,
+
+%\begin{align}
+%\begin{split}
+ %   \mathbfcal{A}_{Born}(\gamma,z)&=\rmint_{0}^\infty d\omega \,\omega^{\gamma-1}\, \frac{1}{48} \omega ^2 \Bigg(\kappa  \left(-\frac{4}{\kappa -\alpha  \omega ^2}+\frac{4}{\alpha  \omega ^2+\kappa }-\frac{1}{2 \beta  \omega ^2+\kappa }+\frac{1}{\kappa -2 \beta  \omega ^2}\right)-\textcolor{black}{\frac{24 \,z}{z-1}}\Bigg)\,,\\&=\frac{i \pi  4^{2-3 \gamma }  }{3 \left(-1+e^{2 i \pi  \gamma }\right)}\Bigg(\kappa ^{2 \gamma -1} \left(\beta ^{1-2 \gamma }-2^{2 \gamma +1} \alpha ^{1-2 \gamma }\right)\Bigg)-\underbrace{\frac{2^{3-\gamma}\, \pi\,  z \delta (i (\gamma +2))}{z-1}}_{\text{Einstein gravity}}\,.\label{3.11b}   
+   % \end{split}
+%\end{align}
+%The integral has a finite piece, which vanishes in the GR limit. We now investigate what happens to the celestial amplitude in the \textcolor{red}{Eikonal limit for the finite curvature corrections with the phase, as discussed in \cite{Adamo:2024mqn} [CITE before]}. 
+%\begin{figure}
+   % \centering
+  % \scalebox{1.61}{\includegraphics[width=0.5\linewidth]{DIAGRAM.png}}
+   % \caption{A few one and two loop diagrams with ladder box and crossed boxes in the classical (eikonal) limit.}
+  %  \label{fig:DIAGRAM}
+%\end{figure}
+%\par
+%\noindent
+
+As discussed previously there are three distinct kinematic regions: $\mathbf{12 \to 34}$, $\mathbf{13 \to 24}$, and $\mathbf{14 \to 23}\,.$ These regions differ significantly from one another and are each valid only within specific ranges of the cross-ratios. To go from one kinematical region to another, one typically employs a systematic procedure of analytic continuation.
+Now, the celestial amplitude (for external scalar operators) in three different kinematical regions is given by,
+\begin{align}
+\begin{split}\label{3.10e}
+&{\mathbfcal{A}}^{12\to 34}(\mathbf \Delta,z)=2^{3-\gamma}z^2\rmint_0^\infty d\omega\,\omega^{\gamma-1}\,\mathbb{M}_{\textrm{Born}}^{\textrm{EFT}}\left(s=\omega^2,t=-\frac{z-1}{z}\omega^2\right),\,\,\,\,\,(z>1)\\ &\hspace{2.3 cm}
+   =\frac{i \pi  2^{-\frac{3 \gamma }{2}-2} z^2 \left(\alpha ^{\frac{\gamma }{2}+1}-2^{\frac{\gamma }{2}+3} \beta ^{\frac{\gamma }{2}+1}\right) \left(\frac{\alpha  \beta }{\kappa }\right)^{-\frac{\gamma }{2}-1}}{3 \left(-1+e^{\frac{i \pi  \gamma }{2}}\right) \kappa }+\underbrace{\frac{2^{3-\gamma}\, \pi\,  z^3 \delta (i (\gamma +2))}{(z-1)\kappa}}_{\text{Einstein gravity}}\,,\\ &
+\hspace{2.3 cm}=\delta_1(\alpha,\beta|\gamma)z^2+\delta_2(\gamma)\frac{z^3}{(z-1)\kappa}\,,\\ &
+{\mathbfcal{A}}^{13\to 24}(\mathbf \Delta,z)=2^{3-\gamma}z^{2+\frac{\gamma}{2}}\rmint_0^\infty d\omega\,\omega^{\gamma-1}\,\mathbb{M}_{\textrm{Born}}^{\textrm{EFT}}\left(s=-z\omega^2,t=-(1-z)\omega^2\right),\,\,\,\,\,(0<z<1)\\ & \hspace{2.3 cm}\to {\mathbfcal{A}}^{12\to 34}(\mathbf \Delta,z)\,,
+   \\ &
+{\mathbfcal{A}}^{14\to 23}(\mathbf \Delta,z)=2^{3-\gamma}(-z)^{2+\frac{\gamma}{2}}(1-z)^{-\frac{\gamma}{2}}\rmint_0^\infty d\omega\,\omega^{\gamma-1}\,\mathbb{M}_{\textrm{Born}}^{\textrm{EFT}}\left(s=\frac{z}{1-z}\omega^2,t=\omega^2\right),\,\,\,\,\,(z<0)
+   \\ & \hspace{2.3 cm}\to{\mathbfcal{A}}^{12\to 34}(\mathbf \Delta,z)\,\,,
+   \end{split}
+   \end{align}
+where,
+\textcolor{black}{
+\begin{align}
+    \begin{split}
+        &\delta_1(\alpha,\beta|\gamma)=\pi \,e^{-\frac{i\pi\gamma}{4}}\frac{  2^{-\frac{3 \gamma }{2}-2} z^2 \kappa^{\gamma/2} \left(\beta ^{-\frac{\gamma }{2}-1}-2^{\frac{\gamma }{2}+3} \alpha ^{-\frac{\gamma }{2}-1}\right) }{6  \sin\left(\frac{\pi \gamma}{4}\right) }, \,\delta_2(\gamma)={2^{3-\gamma}\pi \delta(i(\gamma+2))\,.}
+    \end{split}
+\end{align}}
+\noindent
+Collecting the result of the integrals, we can write the full amplitude in the conformal basis as, 
+
+\begin{align}\begin{split}
+\centering\label{4.18m}
+  \mathcal{A}_4(z,\bar z)\sim\,&  (z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}|z|^{-\Delta_1-\Delta_2}\frac{\delta(|z-\bar z|)}{|z_{13}|^2|z_{24}|^2}\mathbfcal{A}^{ij\to kl}(\mathbf{\Delta},J_i,z)\,.
+ \end{split} 
+\end{align}
+
+We find that the Mellin-transformed Born amplitude has a better analytic structure than GR, which is purely divergent (or purely distributional), which answers the first question we rise in the introduction. Moreover, we find that the part coming from the quadratic correction in the amplitude is analytic in the whole complex $\gamma$-plane except $\gamma=n,$ where $n\in \mathbb{Z}$. In contrast, for GR the celestial amplitude in the eikonal limit is non-analytic, which replicates the fact that quadratic EFT modifies the analytic behaviour in the whole energy plane, and correspondingly, the amplitude becomes analytic in the $\gamma$ plane with the location of isolated singularities \footnote{ A general proof in \cite{Arkani-Hamed:2020gyp} shows that for QFT's with better UV behaviour(s) leads to analytic amplitudes (rather than purely divergent distributional nature) with poles in the right-half (left-half) complex $\gamma$-plane which we call `UV poles' (IR poles). }.
+Next, we proceed to discuss the eikonal amplitude in GR and then generalize it for quadratic EFT.
+
+
+
+\noindent
+\subsection{Eikonal amplitude in GR} 
+
+\textcolor{black}{The eikonal approximation provides an effective framework for analyzing high-energy scattering processes in the regime where momentum transfer is small compared to the centre-of-mass energy. In gravity, this leads to an eikonal amplitude dominated by ladder-type graviton exchanges, capturing the resummation of leading contributions at each order in perturbation theory \cite{Amati:1987uf,Kabat:1992tb}. Remarkably, the eikonal amplitude encodes both ultraviolet (UV) and infrared (IR) aspects of the theory. The eikonal regime thus serves as a stage for exploring how quantum gravity reconciles high-energy scattering with universal IR behaviour governed by asymptotic symmetries.
+}\par
+
+Before going into the eikonal phase calculations of quadratic higher curvature gravity, we briefly describe the computation in the context of GR. The eikonal expression for the amplitude is given by summing the eikonal phase. We take bottom-up approach to compute the eikonal amplitude. In bottom-up approach we define the eikonal phase as \cite{Kabat:1992tb,PhysRev.186.1656, DiVecchia:2023frv},
+\begin{align}
+    \chi=\frac{2\pi G}{E\,p}\rmint \frac{d^{D-2}\boldsymbol{q}_{\perp}}{(2\pi)^{D-2}}  e^{i \boldsymbol{q}_{\perp}\cdot \boldsymbol{x}}\,\mathbb{M}^{\textrm{EFT}}_{\textrm{Born}}(s,\textcolor{black}{t=- \boldsymbol{q}_{\perp}^2})\,.
+\end{align}
+Consequently the eikonal amplitude is given by,
+\begin{align}
+    \begin{split}
+    \mathbfcal{M}_{\textrm{eik}}(s,t)=8E\,p\rmint d^{D-2}\boldsymbol{x}_{\perp} e^{-i\boldsymbol{q}_{\perp}\cdot \boldsymbol{x}_{\perp} }(e^{i\chi}-1)\,.
+    \end{split}
+\end{align}
+\noindent
+%The eikonal amplitude can be casted as \footnote{$\Delta(x)$ is related to the propagator as,
+%$\frac{-1}{k^2-i\epsilon}=\rmint d^4x\,e^{-i k\cdot x}\Delta(x)\,.$} \cite{Kabat:1992tb},
+%\begin{align}
+%    i\mathcal{M}=-N \,G\,\frac{s^2}{2}\rmint d^4x\, e^{-i(p_1-p_3)\cdot x}\Delta(x)\,\frac{e^{i\chi }-1 }{\chi}\label{3.12m}
+%\end{align}
+%where \footnote{N is a suitable normalization.} $\chi$ is given by the following expression,
+%\begin{align}
+%\chi=\frac{2\pi G\frac{s^2}{2}}{Ep}\rmint\frac{ d^2k_{\perp}}{(2\pi)^2}e^{i{\bf k_\perp }\cdot {\bf x_\perp}}\frac{1}{k_{\perp}^2+\mu^2-i\epsilon}
+%\end{align}
+%and $\Delta(x)$ is the position space propagator. The expresion is written in the C.O.M frame, where $p_1^{\mu}=(E,0,0,p)$ and $p_2^{\mu}=(E,0,0,-p)$, $\mu$ is the graviton mass which acts as the infrared regulator alongwith \footnote{Here $m$ is the mass of the scalars apperaing in the external leg, which one can also choose to be vanishing. }$$\frac{s^2}{2}=\frac{1}{2}(s-2m^2)^2-2m^4.$$ 
+%Now the integral over $k_{\perp}$ can be done, yielding 
+%\begin{align}
+%\chi_{GR}= \frac{G \frac{s^2}{2}}{E p}K_0(\mu x_{\perp})
+%\approx -\frac{G\frac{s^2}{2}}{E p}\log(\mu x_{\perp})
+%\end{align}
+%\noindent
+%for $\mu x_{\perp}<<1$.
+%\textcolor{black}{Now, the momentum transfer is in the transverse direction dominantly. This follows from the on-shell relations,}
+%\begin{align}q^2+2q\cdot p_3=0=q^2-2q\cdot p_1\end{align}. Therefore the integral over two coordinates can be performed as \cite{Kabat:1992tb},
+%\begin{align}
+  %  \rmint dt dz \Delta(x)=-\frac{Ep}{2\pi G\frac{s^2}{2}} \chi_{GR}
+%\end{align}
+%Hence, \begin{align}
+  %  i\mathcal{M}=8 E p\rmint d^2x_{\perp}e^{-iq_\perp\cdot x_{\perp}}(e^{i\chi_{GR}}-1).
+%\end{align}
+%Now the integral over $x_{\perp}$ can be carried out which leads to\footnote{Neglecting the divergent piece.
+In GR the eikonal amplitude is given by \cite{Amati:1987uf, Kabat:1992tb},
+\begin{align}
+\begin{split}
+    i\mathbfcal{M}^{\textrm{GR}}_{\textrm{eik}}&=\frac{8\pi E p}{\mu^2} \frac{\Gamma\left(1-\frac{i G\frac{s^2}{2}}{2Ep}\right)}{\Gamma\left(\frac{i G\frac{s^2}{2}}{2Ep}\right)}\Bigg(\frac{4\mu^2}{q_{\perp}^2}\Bigg)^{1-\frac{i G\frac{s^2}{2}}{2Ep}}
+    =-\underbrace{\frac{16 i \pi  G s^2}{2t}}_{\text{Born Amplitude}}\times\underbrace{\frac{\Gamma\left(-\frac{i G{s^2}}{4Ep}\right)}{\Gamma\left(\frac{i G\frac{s^2}{2}}{2Ep}\right)}\Bigg(\frac{4\mu^2}{q_{\perp}^2}\Bigg)^{-\frac{i G{s^2}}{4Ep}}}_{\text{Phase}}\,.
+    \end{split}
+\end{align}
+This is an important feature that the eikonal (leading) amplitude in GR to all order of $G$ is the product of the born amplitude and a phase factor. 
+%\textcolor{red}{We will comment later how this phase is universal even in quadratic EFT(s). Though the phase factor remains same as of GR, the Born amplitude and hence the eikonal amplitude changes for quadratic EFT. }
+\subsection{Eikonal amplitude in quadratic gravity}
+Now for quadratic EFT of gravity, as the propagator changes, the expression of eikonal phase $\chi$ also changes. \textcolor{black}{ A natural question that arises in the context of high-energy gravitational scattering is whether eikonal exponentiation remains valid in higher-derivative theories such as quadratic gravity. The answer, we argue, is affirmative in the eikonal regime, and we provide the reasoning below. The validity of eikonal exponentiation in quadratic gravity can be addressed by considering the structure of gravitational scattering amplitudes in the high-energy, small-angle (eikonal) regime. In this limit, the dominant contributions arise from the exchange of soft, long-wavelength gravitons. Crucially, this infrared (IR) behavior is governed by the long-distance propagation of the gravitational field, which remains dictated by the Einstein-Hilbert term—even in the presence of higher-curvature corrections such as \( R^2 \), \( R_{\mu\nu}^2 \), or \( R^3 \). These UV modifications primarily affect the short-distance (non-eikonal) part of the interaction and do not interfere with the leading IR dynamics responsible for exponentiation.
+Within the effective field theory framework, and under the assumption that the higher-derivative couplings (e.g., \( \alpha, \beta \)) are large compared to the inverse energy scale of interest (which is $m_p$), the eikonal exponentiation is expected to persist. This expectation is supported by the IR universality of the gravitational interaction, and it follows the logic that the eikonal resummation is dominated by ladder diagrams with soft graviton exchanges.
+We acknowledge, however, that a full demonstration of exponentiation in quadratic gravity would require explicit computation of loop-level diagrams, particularly the sum of multi-graviton ladder diagrams.  We intend to explore this in future work. This was first shown for Einstein gravity in the seminal work of 't Hooft \cite{tHooft:1987vrq} and then by others (see, e.g., \cite{Kabat:1992tb}). Apart from gravitational field theories, for QFTs involving \textit{massive} (relevant for our case) meson exchange the ladder structure can been nicely be identified and the S-matrix exponentiates \cite{PhysRev.186.1656}. There, the resummation of eikonal ladder diagrams leads to the well-known exponential form of the amplitude:
+\begin{align}
+&\mathcal{A}_{\text{eik}}(s, q_\perp) \sim 2s \rmint d^2b\, e^{iq_\perp \cdot b} \left( e^{i\chi(s,b)} - 1 \right),
+\end{align}
+where \( \chi(s, b) \) is the eikonal phase and is given by,
+\begin{align}
+ &   \chi(s,b)\sim \rmint d^D q\, \delta(2 p_1\cdot b) \delta(2 p_2\cdot b)\,\mathbfcal{A}_{\textrm{tree}}(s,-q^2), \,\textrm{with},\,q^\mu=p_1^\mu-{p_1^\mu}', b^\mu\textrm{ is the impact parameter.}
+\end{align}
+A recent review \cite{DiVecchia:2023frv} discussed that this structure holds not only in General Relativity but also in UV-complete frameworks such as string theory. Given this, it is natural to expect that intermediate theories like quadratic gravity—lying between Einstein gravity and UV completions—should also admit eikonal exponentiation, at least in the IR regime. We refer specifically to Section 3.1.5 of \cite{DiVecchia:2023frv}, which supports this viewpoint.
+While a dedicated study of loop-level exponentiation in quadratic gravity is indeed warranted, we believe the arguments above (as well as supported by our bottom-up computation presented in the manuscript) justify the assumption of exponentiation within the eikonal limit of the effective theory.
+}The eikonal phase for our case can be written in the following way,
+
+\begin{align}
+\begin{split}
+\hspace{0cm}\chi_{\textrm{EFT}}&=\frac{2\pi G}{Ep}\rmint\frac{ d^2k_{\perp}}{(2\pi)^2}e^{i{\bf k_\perp }\cdot {\bf x_\perp}}\Bigg[\widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)+\frac{s^2}{k_\perp^2+\mu^2-i\epsilon}\Bigg]\,,\\&
+    =\underbrace{\frac{2\pi G\,\widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)}{Ep}\rmint\frac{ d^2k_{\perp}}{(2\pi)^2}e^{i{\bf k_\perp }\cdot {\bf x_\perp}}}_{\text{Contact term contribution in quadratic EFT}}+\,\frac{2\pi G s^2}{Ep}\rmint\frac{ d^2k_{\perp}}{(2\pi)^2}e^{i{\bf k_\perp }\cdot {\bf x_\perp}}\frac{1}{k_\perp^2+\mu^2-i\epsilon}\,,\\&
+    =\frac{2\pi G\, \widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)}{E p}\,\delta^{(2)}(\boldsymbol{x}_\perp)-\frac{G s^2}{2 Ep}\log(\mu \boldsymbol{x}_{\perp})\,.\label{3.19p}
+      \end{split}
+\end{align}
+
+\begin{tcolorbox}[thesisstatementbox, title=A digression on the functions of Dirac-$\delta$ function (measure)]
+\restorethesisbodyformat
+We now slightly deviate from our original discussion to briefly outline how one can meaningfully define functions of the \(\delta\)-function. As is well known, the \(\delta\)-function is a tempered distribution rather than a continuous probability distribution, as it has support only at a single point. Consequently, functions of such distributions are generally ill-defined. Nevertheless, as discussed in \cite{maroun2013generalized}, it is possible---albeit with care---to give meaningful interpretations to functions of the \(\delta\)-function (especially the exponential map). We will briefly review this proposition, which, despite its subtleties, also provides a physically reasonable framework for our purposes. \par
+
+The first approach proceeds as follows: one attempts to construct a resolvent-like function of the \(\delta\)-distribution to bypass difficulties associated with the exponential map. Consider the following object, interpreted as a distribution: $\frac{1}{1+\delta(x)}$.
+
+\textbf{Proposition \cite{maroun2013generalized,johnson2000feynman}.} \textit{As a distribution,}
+\begin{align}
+    \frac{1}{1+\delta(x)} := \mathbb{I},
+\end{align}
+\textit{where \(\mathbb{I}\) denotes the Lebesgue measure. i.e, for each \(\varphi(x) \in C^{\infty}_c(\mathbb{R})\), one has}
+\begin{align}
+    \left\langle \frac{1}{1+\delta(x)}, \varphi(x) \right\rangle := \rmint_{\mathbb{R}} \varphi(x).
+\end{align}
+
+While instructive, this proposition is of limited use in physical applications: it simply recovers the Lebesgue measure and entirely washes out the singular behaviour of the \(\delta\)-distribution. To address this, one must proceed more carefully. A more refined approach involves invoking the spectral theorem and exploiting the idempotence property of the \(\delta\)-function when treated as a characteristic set function \cite{maroun2013generalized}.
+
+\textbf{Definition (Analytic Linearization) \cite{maroun2013generalized}.} 
+\textit{Let \(f(\delta_a)\) be a function of the Dirac measure with singular support at \(x = a\). Its analytic realization is given by the formal series expansion}
+\begin{align}
+    f(\delta_a) \rightsquigarrow \mathbb{I} + \sum_{n=1}^\infty \frac{f^{(n)}(a)}{n!}\, \delta_a.\label{3.18j}
+\end{align}
+
+This construction provides an analytic framework for defining functions of distributions. Importantly, it does not strictly contradict the earlier proposition. To see this, consider:
+\begin{align}
+    \frac{1}{1+\delta_0} \rightsquigarrow \mathbb{I} - \delta_0 (1-1+1-1+\cdots) \overset{\text{reg}}{=} \mathbb{I} - \frac{1}{2}\delta_0,
+    \label{3.23n}
+\end{align}
+where the alternating sum \(1-1+1-1+\cdots\)—which, according to Riemann’s reordering theorem, can be rearranged to converge to any real value—can be uniquely regularized via Dirichlet Eta summation yielding: $1-1+1-1+\cdots\overset{\text{reg}}{=}\eta(0)=1/2$. Thus, analytic linearization complements (or refines) the earlier proposition by preserving both the regular (Lebesgue) component and the singular structure encoded in Dirac-\(\delta\), offering a physically meaningful extension well-suited to our purpose(s).
+\end{tcolorbox}
+\restorethesisbodyformat
+%\newpage
+Now get back to our original discussion: the eikonal amplitude is given by,
+\vspace{-0.3 cm}
+\begin{align}
+    \begin{split}
+        \mathbfcal{M}_{\textrm{eik}}&
+        % =8Ep\rmint d^2 \boldsymbol{x}_{\perp}\,e^{-i \boldsymbol{q}\cdot \boldsymbol{x}_{\perp}}\left(e^{i\chi_{\textrm{EFT}}}-1\right)\,,\\ &
+        =8Ep\rmint d^2 \boldsymbol{x}_{\perp}\,e^{-i \boldsymbol{q}\cdot \boldsymbol{x}_{\perp}}\left[\exp\left(-\frac{iGs^2}{2Ep}\log(\mu \boldsymbol{x}_{\perp})\right)\exp\left(\frac{2\pi i G\,\widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)}{Ep}\delta^{(2)}(\boldsymbol{x}_{\perp})\right)-1\right]\,,    \label{3.19k}
+        \end{split}
+\end{align}
+where, we have \begin {align}\widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)=-\frac{1}{48} s \left(\frac{(3 \kappa+\alpha  s-8 \beta  s)}{(\kappa-\alpha  s) (\kappa-2 \beta  s)}-\frac{4}{\kappa+\alpha  s}+\frac{1}{\kappa+2 \beta s}\right)\,.\,
+    \label{3.18p}\end{align}
+As seen from \eqref{3.19k}, the eikonal amplitude involves an integral over \( e^{\delta(x)} \). Are they really bad or can we get some physically meaningful result out of it? Although functions of distributions are formally ill-defined, with careful treatment, \( e^{\delta(x)} \) can be given a physically intuitive meaning.
+We use the `Analytic Linearization' \eqref{3.18j} to address this question. Now using this concept, we can rewrite \eqref{3.19k} as \footnote{\textcolor{black}{We use the following analytic linearization of exponential map to compute the celestial eikonal amplitude: $  e^{\delta_0}\rightsquigarrow\mathbb{I} + \sum_{n=1}^\infty \frac{f^{(n)}(\delta_0=0)}{n!}\, \delta_0=\mathbb{I}+(e-1)\delta_0.$}},
+\begin{align}
+    \begin{split}
+        \mathbfcal{M}_{\textrm{eik}}= 8Ep\rmint d^2 \boldsymbol{x}_{\perp}\,e^{-i \boldsymbol{q}\cdot \boldsymbol{x}_{\perp}}\left[(\mu\,|{x}_{\perp}|)^{\frac{-i G s^2}{2Ep}}\left\{1+\left(e-1\right){\frac{2\pi i G \widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)}{Ep}}\delta^{(2)}(\boldsymbol{x}_{\perp})\right\}-1\right]\,.\label{3.20k}
+    \end{split}
+\end{align}
+We make use of the \textit{Lebesgue measure and Schwartz bracket} \cite{Borji:2024pvg} to extract the sensible piece.
+\noindent
+Furthermore, to evaluate the integral of \eqref{3.23j} onwards we use the distributional nature of dirac delta function in terms of sharply picked gaussian distribution. Dividing the integral \eqref{3.20k} into two parts we get,
+\begin{align}
+    \begin{split}
+         \mathbfcal{M}^{\textrm{total}}_{\textrm{eik}} & = 8Ep\rmint d^2 \boldsymbol{x}_{\perp}\,e^{-i \boldsymbol{q}\cdot \boldsymbol{x}_{\perp}}\exp\left(-\frac{iGs^2}{2Ep}\log(\mu \boldsymbol{x}_{\perp})\right)\\ & +8Ep \rmint d^2 \boldsymbol{x}_{\perp}\,e^{-i \boldsymbol{q}\cdot \boldsymbol{x}_{\perp}}\left(e-1\right){\frac{2\pi i G \widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)}{Ep}}\exp\left(-\frac{iGs^2}{2Ep}\log(\mu |{x}_{\perp}|)\right)\delta^{(2)}(\boldsymbol{x}_{\perp})\,,\\ &
+         :=\mathbfcal{M}^{\textrm{GR}}_{\textrm{eik}}+\mathbfcal{M}^{\textrm{EFT}}_{\textrm{eik}}
+         \label{3.23j}
+    \end{split}
+\end{align}
+where $\mathbfcal{M}^{\textrm{GR}}_{\textrm{eik}}$ and $\mathbfcal{M}^{\textrm{EFT}}_{\textrm{eik}}$ denote the GR part and the EFT correction respectively.
+\textcolor{black}{In \eqref{3.23j}}, the delta function simply evaluates \( f(\boldsymbol{x}_{\perp}) \) at \( \boldsymbol{x}_{\perp} = 0 \), multiplying it by a constant, and has no effect at finite \( \boldsymbol{x}_{\perp} \). However, in the Regge limit, the dominant contribution to the amplitude arises from large transverse separations, \( \boldsymbol{x}_{\perp} \). Since the delta-function term is sharply localized at \( \boldsymbol{x}_{\perp} = 0 \), it contributes only a constant to the eikonal amplitude. To obtain a physically meaningful result, we must smear the delta function around \( \boldsymbol{x}_{\perp} = 0 \), as the logarithmic part of the amplitude is valid only in the regime of large \( \boldsymbol{x}_{\perp} \).
+
+\begin{align}
+    \begin{split}
+\mathbfcal{M}_{\textrm{eik}}^{\textrm{EFT}}&= {{16\pi i G\, \widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)}} \left(e-1\right)\,\lim_{\varepsilon\to 0}\rmint  d^2 \boldsymbol{x}_{\perp}\,e^{-i \boldsymbol{q}\cdot \boldsymbol{x}_{\perp}}(\mu\,\boldsymbol{x}_{\perp})^{\frac{-i G s^2}{2Ep}}\delta_{\varepsilon}^{(2)}(\boldsymbol{x}_{\perp})\,,\\ &
+        \rightarrow{16\pi i G\, \widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)} \left(e-1\right)\lim_{\varepsilon\to 0}\rmint dx_{\perp}d\theta\,x_{\perp} e^{-i q  x_{\perp}\cos{\theta}}\,(\mu\,{x}_{\perp})^{\frac{-i G s^2}{2Ep}}\frac{1}{x_{\perp}}\delta(\theta)\delta_{\varepsilon}(x_{\perp})\,,\\ &
+       =8Ep \left(e^{\frac{2\pi i G \widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)}{Ep}}-1\right)\lim_{\varepsilon\to 0}\frac{1}{\sqrt{\pi}\varepsilon}\rmint dx_{\perp} e^{-i q\,x_{\perp}} (\mu\,{x}_{\perp})^{-2iGs} e^{-x^2/\varepsilon^2}\\ &
+        =4Ep \left(e^{\frac{2\pi i G \widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)}{Ep}}-1\right)\lim_{\varepsilon\to 0}\frac{1}{\sqrt{\pi}} \Gamma \left(\frac{1}{2}-i G s\right) (\mu  \epsilon )^{-2 i G s}\\ &
+      =\frac{16\pi i G\, \widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s)} {\sqrt{\pi}}(e-1)\Gamma\left(\frac{1}{2}-i G s \right)\left(\frac{1}{\mu\varepsilon}\right)^{2iGs}\,.
+    \end{split}
+\end{align}
+ {From the above equation, it is quite evident that after considering the distributional aspect of the contact delta function, we are able to modify the phase dressing in quadratic EFT along with an IR regulator $\mu_{IR}=\mu\epsilon$.}
+%\textit{\,Quadratic EFT vs pure gravity:}
+%\textcolor{black}{In quadratic EFT of gravity, the part of the eikonal amplitude coming from the higher curvature corrections, is well behaved in UV limit (i.e in the $s,t$ plane) compared to it's GR counterpart. The presence of the massive mode in quadratic EFT modifies the infrared behaviour.}
+Now we proceed to show the analyticity properties, i.e. how the UV (or IR) behaviour of the eikonal amplitude has modified in the presence of the quadratic EFT corrections.
+\begin{tcolorbox}[thesisresultbox, title=Eikonal amplitude: GR vs EFT correction]
+\restorethesisbodyformat
+\begin{align}
+    \begin{split}
+&\mathbfcal{M}_{\textrm{eik}}^{\textrm{GR}}\sim -\underbrace{\frac{16  \pi  G \xi (s)}{t}}_{\text{Born Amplitude}}\times\underbrace{\frac{\Gamma\left(-iGs\right)}{\Gamma\left(iGs\right)}\Bigg(\frac{4\mu^2}{-t}\Bigg)^{-iGs}}_{\text{Phase}}\,\,\,\,\,\,\\ 
+&
+\hspace{0.8cm}\oplus
+\\&
+\mathbfcal{M}_{\textrm{eik}}^{\textrm{EFT}}\sim\underbrace{\widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(s|\alpha,\beta)}_{\textrm{Born amplitude}}\times \underbrace{\frac{16\pi  G(e-1)\, } {\sqrt{\pi}}\frac{\Gamma(-2iGs)}{\Gamma(-iGs)}\left(\frac{2}{\mu\varepsilon}\right)^{2iGs}}_{\textrm{phase}}\,.\label{3.27y}
+    \end{split}
+\end{align}
+As demonstrated in ~\eqref{3.27y}, EFT correction to the eikonal amplitude retains the same structural form as in GR. In particular, the eikonal amplitude continues to be expressed as the product of the Born amplitude and a phase factor. The principal distinction lies in the fact that, unlike in GR, the EFT-corrected eikonal amplitude is independent of the Mandelstam variable `\( t \)', thereby eliminating the associated `\( z \)'-dependence in the celestial eikonal amplitude which will be discussed in the next section.
+
+\end{tcolorbox}
+\restorethesisbodyformat
+\subsection{Analyticity and dispersion relation for celestial eikonal amplitude}
+In this section, we explain the  UV behaviour of the eikonal amplitude due to the presence of the higher curvature terms. We also inspect the IR behaviour for the quadratic EFT celestial amplitude. Below, we focus only on the contribution coming from the EFT (curvature squared) part. \textcolor{black}{Although the celestial Born amplitude arising from EFT corrections is meromorphic (as shown in \eqref{3.10e})—rendering the construction of an eikonal amplitude technically unnecessary—employing eikonal exponentiation nonetheless offers a practical framework for capturing non-perturbative (in coupling) structures in the celestial amplitude, thereby addressing the second question posed in the introduction. However, the eikonal amplitude encodes the full non-perturbative scattering amplitude within the given eikonal regime.  }
+
+
+\noindent
+{\textit{\textbf{\,{UV behaviour}}}}:
+Thus, the $2\rightarrow2$ scattering amplitude of massless scalars as external states can be casted with the contribution of phase in the eikonal limit as follows \footnote{In the argument of $\Gamma$ function, we neglect terms like $G\alpha\sim \ell_p^2<<1$.}, 
+\begin{align}
+    \begin{split}\label{3.32a}
+    \mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z)&=\frac{16\pi i G \,}{\sqrt{\pi}}(e-1)2^{3-\gamma}z^2\rmint_0^\infty d\omega \,\omega^{\gamma-1}\,{\Gamma\left(\frac{1}{2}-iG \omega^2\right)}\Bigg(\frac{1}{\mu \varepsilon}\Bigg)^{2iG\omega^2}\widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(\omega^2)+\textrm{GR part}\,.
+    \end{split}
+\end{align}
+%At large $\omega$ limit the integral takes the form,
+%\begin{align}
+   % \begin{split}
+%\mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z)&\xrightarrow[]{\omega\to \infty} 2^{4-\gamma}z^2 \rmint_0^\infty d\omega\,\omega^{\gamma+1}\,\left(\frac{e}{\mu^2\varepsilon^2}\right)^{iG\omega^2}(-iG\omega^2)^{-iG\omega^2},
+  %  \end{split}
+%\end{align}
+%where,   
+In large $\omega$ limit, the integral reduces to,
+\begin{align}
+\begin{split}\label{3.27k}
+\mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z)&= \frac{i\pi  G g(\alpha,\beta)}{\sqrt{\pi}}(e-1)\,2^{7-\gamma}z^2\rmint_0^\infty d\omega \,\omega^{\gamma-1}\,{\Gamma\left(\frac{1}{2}-iG \omega^2\right)}\Bigg(\frac{1}{\mu \varepsilon}\Bigg)^{2iG\omega^2}+\textrm{GR part}\,,\\ &
+        =i\pi G g(\alpha,\beta)(e-1)2^{8-\gamma}z^2 \rmint_{0}^{\infty} d\omega\,\omega^{\gamma-1}\left(\frac{2}{\mu\varepsilon}\right)^{2iG\omega^2}\frac{\Gamma\left(-2iG\omega^2\right)}{\Gamma(-iG\omega^2)}+\cdots\,\,,
+    \end{split}
+\end{align}where $  g(\alpha,\beta)=\frac{8\beta-\alpha}{2\alpha\beta}+\frac{4}{\alpha}-\frac{1}{2\beta}.$ In obtaining the second line, we used the duplication formula,
+$\frac{\Gamma(a)\Gamma(a+\frac{1}{2})}{\Gamma(2a)}= \frac{\sqrt{\pi}}{2^{2a-1}}.$ Now we have,
+\begin{align}
+\begin{split}
+\mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z) &
+%= i\pi G 2^{7-\gamma}z^2 g(\alpha,\beta)\rmint_0^\infty d\omega\, \omega^{\gamma - 1} \left( \frac{2}{\mu \varepsilon} \right)^{2iG\omega^2} \frac{\Gamma(-2iG\omega^2)}{\Gamma(-iG\omega^2)} \,,\\
+= i\pi G g(\alpha,\beta)(e-1)2^{7-\gamma}z^2 \rmint_0^\infty dx\, x^{\frac{\gamma - 2}{2}} \left( \frac{2}{\mu \varepsilon} \right)^{2iGx} \frac{\Gamma(-2iGx)}{\Gamma(-iGx)}\,,
+%\\
+%&\sim2^{4-\gamma}z^2 g(\alpha,\beta) \frac{1}{2} \rmint_0^\infty dx\, x^{\frac{\gamma - 2}{2}} e^{iGx} \cdot 2^{-2iGx + 1/2} (-iGx)^{-i G x}\left( \frac{2}{\mu \varepsilon} \right)^{2iGx} ,\\
+\\ &\xrightarrow[]{x\to \infty} i\pi G g(\alpha,\beta)(e-1)2^{7-\gamma}z^2\sqrt{2} \rmint_0^\infty dx\, x^{\frac{\gamma - 2}{2}} \left( \frac{e}{\mu^2 \varepsilon^2} \right)^{iGx}  (-i Gx)^{-iGx}\,.
+\end{split}
+\end{align}
+The integral\footnote{We found a mismatch between signs of $a$ and $b$ in the expression $e^{ax}x^{ibx}$ in \cite{Adamo:2024mqn} where it seems to be of opposite sign according to the asymptotic behaviour of the ratio of gamma functions.} can be done by analytically continuing it in the fourth quadrant of the complex plane.
+\begin{align}
+    \begin{split}
+    \mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z)=i\pi G g(\alpha,\beta)(e-1)2^{\frac{15}{2}-\gamma}z^2  \left(-\frac{i}{G}\right)^{\gamma/2-1}\rmint_0^\infty d\zeta\,\zeta^{\frac{\gamma}{2}-1}\left(\frac{e}{\mu^2\varepsilon^2}\right)^{\zeta}\,(-\zeta)^{-\zeta}\,.\label{3.35b1}
+    \end{split}
+\end{align}
+The integral in \eqref{3.35b1} is analytic for carefully chosen IR cut-off, more precisely the integral is meromorphic in the complex $\gamma$ plane. For large $\gamma$, the integral in \eqref{3.35b1} can be done using the saddle point approximation\footnote{\textcolor{black}{Though it is tough to compare the convergence rate of the integral to that of its GR counterpart, as it is done under the saddle-point approximation, we have checked both integrals numerically and found that the UV behaviour of the part coming from the quadratic gravity is comparatively better. }}
+\begin{align}
+    \begin{split}
+         \mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z)\xrightarrow[]{\gamma\gg1}i\pi G g(\alpha,\beta)(e-1)2^{\frac{15}{2}-\gamma}z^2  \left(-\frac{i}{G}\right)^{\gamma/2}e^{f(\zeta_{*})}\sqrt{\frac{\pi\zeta_{*}^2}{2\zeta_{*}+\gamma}}
+    \end{split}
+\end{align}
+where, $\zeta_{*}=\frac{\gamma }{2 {W}\left(-\frac{1}{2} e \gamma  \mu ^2 \epsilon ^2\right)}$ and $f(\zeta)=\frac{1}{2} \gamma  \log (\zeta )-\zeta  \log (-\zeta )-\zeta  \log \left(\mu ^2 \epsilon ^2\right)+1$, with ${W}$ being the {Lambert}-${W} $ function.
+
+\textcolor{black}{
+\textbf{A sidebar:} A quick question that may arise is how one can justify expanding the integrand in Eq.~\eqref{3.32a} in the large-\(\omega\) limit, given that the integration is performed over the entire range \((0, \infty)\).
+ The explanation goes as follows: The expansion of the integrand in the large-\(\omega\) limit is employed to extract the ultraviolet (UV) behavior of the corresponding celestial amplitude. Strictly speaking, the appropriate procedure is to first expand the integrand in the large-\(\omega\) regime, perform the indefinite integral, and then analyze the \(\omega \to \infty\) behavior of the result.
+}
+
+\textcolor{black}{
+Nonetheless, guided by intuition from the saddle point approximation, one expects that in the presence of a large parameter, the dominant contribution to the integral originates near the peak of the integrand, where it is sharply localized. Although the integration domain extends over the full range \((0, \infty)\), the leading contribution arises from the large-\(\omega\) region, which justifies the use of this approximation in capturing the UV behavior. This is why we did not evaluate the integral in Eq.~(3.32) explicitly; instead, we applied a saddle point analysis by choosing the parameter \(\gamma\) to be large, leading to a dominant contribution near the saddle point \(\zeta_*\).}
+
+\textcolor{black}{
+For a more rigorous justification, one could invoke the ``strategy of regions'' a well-established technique widely used in the computation of multi-loop Feynman integrals~\cite{Beneke:1997zp}. This method systematically \textit{expands the integrand} in distinct regions characterized by separated scales, allowing for controlled approximations. In our context, this methodology has been applied heuristically, in line with earlier treatments in ~\cite{Adamo:2024mqn}. }
+
+{\textit{\textbf{\,{IR behaviour}}}}: 
+Now, to investigate the analytic property of the eikonal amplitude in IR limit, we first consider a general integral of the form,
+\begin{align}
+    \begin{split}
+        \mathcal{I}(a):=\rmint_0^\infty dx\, x^{a-1}\,\phi(x)\, c^{\ell x},\,\quad \textrm{Re}(\ell)=0 \,,
+    \end{split}
+\end{align}
+ where $a\in \mathbb{C}$ and c is a constant. Now $\phi(x)$ is analytic around $x=0$. Also, it doesn't affect the convergence at infinity. Now, to examine the IR behaviour, 
+%in $x$ 
+we expand $c^{\ell x}$ and $\phi$ in Taylor series around $x=0$ and see what happens to the integral \footnote{Here, $L>0$ but a small number.}. The integral becomes, 
+\begin{align}
+    \begin{split}
+\mathcal{I}_L(a)&=\sum_{m,n=0}^\infty\phi_m\frac{\ell^n \log(c)^n}{n!}\rmint_0^L dx \,x^{a+m+n-1}\,,\\&
+=\sum_{m,n=0}^\infty\phi_m\frac{\ell^n \log(c)^n}{n!}\frac{L^{a+m+n}}{(a+m+n)}
+\,\sim\sum_{m,n=0}^\infty\frac{\ell^n \log(c)^n\phi_m}{n!(a+n+m)}L^{a+m+n}+\text{regular terms}\,.
+    \end{split}
+\end{align}
+%Now, all the pole structure is reflected from $\mathcal{I}_L(a)$ where $L>0$. 
+The integral has poles and admits the following expansion (with $k=m+n$) ,
+\begin{align}
+\begin{split}
+   \mathcal{I}_k(a)\sim\frac{\ell^k \log(c)^kL^{a+k}{\phi_0}}{k!(a+k)}+\frac{\ell^{k-1} \log(c)^{k-1}L^{a+k}{\phi_1}}{(k-1)!(a+k)}+\cdots\text{regular}.\label{3.34p}
+\end{split}
+\end{align}
+
+\noindent 
+Now, in the actual eikonal amplitude given in \eqref{3.27k}, has Gamma functions which can be expanded in a Taylor series (near $\omega=0$) as follows,
+\begin{align}
+ \begin{split}
+\log{\Gamma\left(\frac{1}{2}-iG\omega\right)}=\gamma_E\left(\frac{1}{2}+i G\omega\right)+\sum_{p\geq 2}\frac{\zeta(p)}{p}\left(\frac{1}{2}+iG\omega\right)^{p}
+ \end{split}   \end{align}
+where $\zeta(p)$ is the Riemann zeta function and $\gamma_E$ is the Euler's constant.
+Therefore, the eikonal amplitude for our case can be written as,
+ \begin{align}
+     \begin{split}
+  \mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z)\sim C_E\rmint_0^\infty d\omega'\omega'^{\gamma/2-1}e^{i b \omega'}\exp\Bigg[\sum_{p\geq 2}\frac{\zeta(p)}{p}\left(\frac{1}{2}+iG\omega'\right)^{p}\Bigg]\,{\widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(\omega',z)},
+     \end{split}
+ \end{align}
+where \begin{align}
+    b=G\left[\log\Bigg(\frac{ 4}{\mu^2 \epsilon^2}\Bigg)+\gamma_E\right],\,\,\, C_E=e^{\gamma_E /2}\,.
+\end{align}
+ Now by comparing term by term with  \eqref{3.34p}, we can readily identify,
+
+\begin{align}\begin{split}
+\label{3.36m}
+ &\phi_0=0,\,\,\,\,\,\,\,\phi_1=\frac{1}{12} \sqrt{\pi } G^2 \omega  (\beta -2 \alpha )\,\\&\phi_2=\frac{1}{12} i \sqrt{\pi } G^3 (\gamma_E +\log (4)) (2 \alpha -\beta )\,,\\&\phi_3=\frac{1}{48} \sqrt{\pi } G^4 \left(-8 \alpha ^3+(\gamma_E +\log (4))^2 (4 \alpha -2 \beta )+2 \pi ^2 \alpha +16 \beta^3-\pi ^2 \beta \right)\,,\\&
+ \phi_4=\frac{1}{144} i \sqrt{\pi } G^5 \left(24 \psi ^{(0)}\left(\frac{1}{2}\right) \left(\alpha ^3-2 \beta ^3\right)-\left(3 \pi ^2 \psi ^{(0)}\left(\frac{1}{2}\right)+2 \left(\psi ^{(0)}\left(\frac{1}{2}\right)^3+\psi ^{(2)}\left(\frac{1}{2}\right)\right)\right) (2 \alpha -\beta )\right)\,,\\&\,\, \vdots
+ \end{split} 
+\end{align}
+\noindent
+where $\psi^{(0)}(x)$ is the digamma function and $\psi^{(2)}(x)$ is the second-order derivative of the digamma function.
+Clubbing together all the pieces we get,
+\begin{align}
+    \begin{split}
+\mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z)\sim\Bigg(\frac{L^{\frac{\gamma}{2}+n+1}\left(2i G \log(\frac{2}{\mu\epsilon})\right)^n\,\phi_1}{n!(\frac{\gamma}{2}+n+1)}+\cdots+\text{regular contribution}\Bigg)\,.
+    \end{split} \label{eqnnn}
+\end{align}
+
+%\noindent
+It is evident that, in the IR limit, the leading singularity coming from the EFT contribution differs from that of pure GR. As evident from \eqref{eqnnn}, the location of the leading pole is at $\gamma=-2(n+1)$, and it is now a simple pole, unlike GR, where we get contributions from higher order poles. The introduction of higher curvature terms changes the infrared behaviour by changing only the subleading pole (i.e, simple pole) structure. Now, we proceed to discuss the dispersion relation for the quadratic EFT.
+%\subsection{\textcolor{red}{Large $\gamma$ limit}}
+%In this subsection we inspect the large $\gamma$ behaviour of the eikonal amplitude. In the $\gamma\rightarrow \infty $ limit, the integral \eqref{3.27k} becomes,
+%\begin{align}
+%\begin{split}
+ %  & \lim_{\gamma\rightarrow \infty}\rmint_0^\infty d\omega\, \exp\Bigg[\frac{1}{2} \gamma  \log (\omega )+i C \omega -i G \omega  \log (\omega )+\\&\hspace{0.8cm}\log \frac{1}{48}\left(\frac{4}{\alpha  \omega +\kappa }-\frac{4}{\kappa -\alpha  \omega }+\frac{1}{\kappa -2 \beta  \omega }-\frac{1}{2 \beta  \omega +\kappa }\right)\Bigg]
+%\end{split}  
+%\end{align}
+%where,
+%$ C =2-\log\Big(\frac{4\mu^2(z-1)}{z}\Big)  \,.$
+%The saddle point in the large $\gamma$  limit for the integral is given below,
+%\begin{align}
+%    \omega_{\star}=\frac{-i \gamma }{2 G \,\mathbfcal{W}\left[-\frac{i \gamma  e^{-\frac{C}{G}+\frac{1}{6} i G z (2 \alpha -\beta )+1}}{2 G}\right]}
+%\end{align}
+%where $\mathbfcal{W}(x)$ is the {\bf Lambert-$\mathbfcal{W}$} function \footnote{It has the following asymptiotics as $x\to\infty$,
+%\begin{align}
+%    \mathbfcal{W}(x)\approx\log (x)-\log(\log(x))+\mathcal{O}(1)\,.
+%\end{align}}. 
+%It exactly matches with the GR result obtained in \cite{Adamo:2024mqn} if we take $\alpha,\beta\rightarrow 0$. %Hence, the required second order derivative at the saddle point can be written as,
+%\begin{align}
+%\begin{split}
+ %   &\frac{d^2 L(\omega)}{d\omega^2}\Bigg|_{\omega=\omega_{\star},z'=\frac{(z-1)\kappa}{z}}=\frac{\alpha  \beta  z'^2}{9 G^2 \kappa ^4}+\frac{2 G^2 }{{\gamma }}\log \left(-\frac{i \gamma  e^{-\frac{C}{G}+\frac{1}{6} i G z' (2 \alpha -\beta )+1}}{2 G}\right) \\&\hspace{0.8cm}\times\left[1+\log \left(-\frac{i \gamma  e^{-\frac{C}{G}+\frac{1}{6} i G z' (2 \alpha -\beta )+1}}{2 G}\right)\right]
+%    \end{split}
+%\end{align}
+%In the above equation, 
+%\begin{align}
+%\begin{split}
+ %    L(\omega):=&\frac{1}{2} \gamma  \log (\omega )+i C \omega -i G \omega  \log (\omega )\\&\hspace{2 cm}+\log \left[\frac{1}{48} \left(  \left(\frac{4}{\alpha  \omega +\kappa }-\frac{4}{\kappa -\alpha  \omega }+\frac{1}{\kappa -2 \beta  \omega }-\frac{1}{2 \beta  \omega +\kappa }\right)-\frac{24z}{(z-1)\kappa}\right)\right].
+%\end{split}
+%\end{align}
+%Therefore, the eikonal amplitude becomes,
+%\begin{align}
+  %  \mathbfcal{A}_{eik}(\gamma,z)\sim \sqrt{\frac{2\pi}{|L''(\omega_{\star})|}}\,e^{L(\omega_{\star})} \label{eq1}
+%\end{align}
+%where, 
+%\begin{align}
+%\begin{split}
+% L(\omega)=&\frac{1}{2} \gamma  \log (\omega )+i C \omega -i G \omega  \log (\omega )\\&+\log \left[\frac{1}{48} \left(  \left(\frac{4}{\alpha  \omega +\kappa }-\frac{4}{\kappa -\alpha  \omega }+\frac{1}{\kappa -2 \beta  \omega }-\frac{1}{2 \beta  \omega +\kappa }\right)-\frac{24z}{(z-1)\kappa}\right)\right]
+%\end{split}
+%\end{align}
+%and prime indicates derivative with respect to $\omega\,.$ Also we have, 
+%\begin{align}
+%\begin{split}
+%\frac{d^2 L(\omega)}{d\omega^2}\Bigg|_{\omega=\omega_{\star},z'=\frac{(z-1)\kappa}{z}}=\frac{\alpha  \beta  z'^2}{9 G^2 \kappa ^4}+\frac{2 G^2 }{{\gamma }}\log \left(-\frac{i \gamma  e^{-\frac{C}{G}+\frac{1}{6} i G z' (2 \alpha -\beta )+1}}{2 G}\right) \times\left[1+\log \left(-\frac{i \gamma  e^{-\frac{C}{G}+\frac{1}{6} i G z' (2 \alpha -\beta )+1}}{2 G}\right)\right]\,. \label{eq2}
+%\end{split}
+%\end{align}
+
+%Using \eqref{eq1} and \eqref{eq2}, we get the following in the large $\gamma$ limit,
+%\begin{align}
+ %   |\mathcal{A}_{eik}(\gamma,z)|^2\sim \frac{1}{G^\gamma}\Bigg(\frac{\gamma}{\log(\gamma)}\Bigg)^{\gamma}e^{-\gamma}\,.
+%\end{align}
+%\textcolor{red}{This behaviour is softer than the black hole dominant contribution (in large $\gamma$)\cite{Arkani-Hamed:2020gyp} which can be written as ,
+%\begin{align}
+ %   |\mathcal{A}_{BH}(\gamma,z)|^2\sim \frac{1}{G^\gamma}\gamma^\gamma e^{-\gamma}>>|\mathcal{A}_{eik}(\gamma,z)|^2
+%\end{align}
+%This has connection to \textit{Cerulus-Martin bound}. AB: Independent of higher curvature correction. \cite{Cerulus:1964cjb} in this context\footnote{ See also for \cite{Haring:2022cyf} gravitational Regge bounds.}}. 
+%\\\\
+%\noindent
+%The following subsection is devoted to the discussion of the dispersion relation, and we point out the differences that arise due to the presence of the quadratic correction. 
+%As the dispersion relation(s) are usually contour dependent we demonstrate it for closing the contour in the lower-half of the complex $\omega$-plane with $+i\varepsilon$- prescription.
+
+\noindent
+\subsection{Dispersion Relations}
+Although, like GR \cite{Adamo:2024mqn} we are unable to compute the integral in eikonal amplitude explicitly, we still find out the dispersion relation. The dispersion relation can be figured out from the analytic continuation of the integral \eqref{3.27k} in the full complex plane. To do so, we define the eikonal amplitude with an appropriate  $i\varepsilon$-prescription\footnote{A natural question arises regarding the choice of the \(-i\varepsilon\)-prescription. This choice is essential to impose the correct limiting conditions to recover the results for GR. In contrast, adopting a \(+i\varepsilon\) prescription causes the integration contour to encircle certain unphysical poles whose residues become divergent in the limit \(\alpha, \beta \to 0\). To ensure consistency and recover GR result in the limit  \(\alpha, \beta \to 0\), it is therefore necessary to employ the \(-i\varepsilon\) prescription.
+},
+\begin{align}
+    \begin{split}
+\mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z)=\frac{16\pi i G \,}{\sqrt{\pi}}(e-1)2^{3-\gamma}z^2\rmint_{0-i\varepsilon}^{\infty-i\varepsilon} d\omega \,\omega^{\gamma-1}\Gamma\left(\frac{1}{2}-iG\omega^2\right)\Bigg(\frac{1}{\mu \epsilon}\Bigg)^{2iG\omega^2}\,\widetilde{\mathbb{M}}_{\textrm{Born}}^{\textrm{EFT}}(\omega)\,. \label{3.26uu}
+    \end{split}
+    \end{align}
+    where, $\widetilde{\mathbb{M}}_{\textrm{Born}}^{\textrm{EFT}} $ is defined in \eqref{3.18p}. 
+   
+\begin{figure}[htb!]
+    \centering
+\includegraphics[width=0.40\linewidth]{CONT.png}
+    \caption{Figure depicting the chosen contour for dispersion relation in the complex-$\omega$ plane. The cross signs depict the location of the poles.}
+    \label{fig:o}
+\end{figure}
+
+The integral can also be written after a change of variable change in the following way,
+\begin{align}
+    \begin{split}
+\sim z^2\rmint_{0+i\varepsilon}^{ \infty+i\varepsilon} d\omega'\,\omega'^{\gamma/2}\Gamma\left(\frac{1}{2}-iG\omega'\right)\Bigg(\frac{1}{\mu \epsilon}\Bigg)^{2iG\omega'}\frac{\widetilde{\mathbb{M}}_{\textrm{Born}}^{\textrm{EFT}}(\omega')}{\omega'}\,.
+    \end{split}
+\end{align}
+This has poles at,
+\begin{align}
+    G\omega'=e^{-i\pi/2}\left(n+\frac{1}{2}\right),\,\,\, \mbox{and}\,\, \omega'=\frac{\kappa }{\alpha},-\frac{\kappa }{\alpha},\frac{\kappa }{2\beta},-\frac{\kappa }{2\beta}\,,\,\,\,\,\, n \in \mathbb{Z}_{\geq0}\,.
+\end{align}
+\noindent
+Note that we also have extra poles at $\omega'$ entirely due to the higher curvature contributions. We also have a branch cut, which is running from $0\rightarrow i\infty$. However, as we have poles on positive and negative real axis, we need to change the argument about the branch cut. The integral in $\omega'$  can now be analytically continued to the complex plane, and we use a contour in the clockwise orientation in the complex plane as depicted in Fig.~\ref {fig:o}. The integral can now be written as a sum of four separate pieces as,
+\begin{equation}
+\begin{split}
+    I_{C} 
+    &\sim z^2\oint_C d\omega\,\omega^{\gamma/2}\Gamma\left(\frac{1}{2}-iG\omega\right)\Bigg(\frac{1}{\mu \epsilon}\Bigg)^{2iG\omega}\frac{\widetilde{\mathbb{M}}_{\textrm{Born}}^{\textrm{EFT}}(\omega)}{\omega}\,,\\
+    &= I_1+I_2 +I_{\epsilon}+I_R 
+\end{split}
+\end{equation}
+
+\noindent
+where the decomposition of the contour $\Gamma=\Gamma_1\cup \Gamma_R\cup \Gamma_2\cup \Gamma_\epsilon$ corresponds to each of the four integrals in the second line, with $\Gamma_R$ the semi-circle part of the contour of radius $R$ and $\Gamma_\epsilon$ the smaller semi-circle part of radius $\epsilon$ as shown in Fig.~\eqref{fig:o}. It can be shown that in the limits where $\epsilon\to0$ and $R\to\infty$, the contributions from $\Gamma_\epsilon$ and $\Gamma_R$ vanishes. Therefore, we have,
+\begin{align}
+    &I_1+I_2=2\pi i \sum_{n\geq1} \textbf{Res}\Bigg[z^2\,\omega^{\gamma/2}\Gamma\left(\frac{1}{2}-iG\omega\right)\Bigg(\frac{1}{\mu \epsilon}\Bigg)^{2iG\omega}\frac{\widetilde{\mathbb{M}}_{\textrm{Born}}^{\textrm{EFT}}(\omega)}{\omega}\Bigg]\,\nonumber\\&\hspace{0.8cm}\text{at} \,\,\omega=G^{-1}e^{-i\pi/2}(n+1/2)
+    %\left\{\frac{\kappa }{\alpha},-\frac{\kappa }{\alpha},\frac{\kappa }{2\beta},-\frac{\kappa }{2\beta}\right\}
+\end{align}
+where the integrals ($I_1,\,I_2$) are given by,
+\begin{align}
+      I_1=-\mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma,z),\,\,\,\,\,\,\,\,\,\,\,
+      I_2=e^{-i\pi \gamma/2}\,\overline{\mathbfcal{A}^{\textrm{EFT}}_{eik}}(\bar\gamma,-z) \,.
+\end{align}
+$\overline{\mathbfcal{A}^{\textrm{EFT}}_{eik}}(\bar \gamma) $ denotes the complex conjugate of the eikonal amplitude $\mathbfcal{A}^{\textrm{EFT}}_{eik}(\gamma)$ . Therefore we can write the following \textit{dispersion relation} including the GR contribution as,
+
+\begin{align}
+\begin{split}\label{3.53e}
+ \hspace{0cm}-&(\mathbfcal{A}_{eik}^{\textrm{GR}}(\gamma,z)+\mathbfcal{A}_{eik}^{\textrm{EFT}}(\gamma,z))+e^{-i\pi \gamma/2}(\overline{\mathbfcal{A}_{eik}^{\textrm{GR}}}\left(\bar \gamma,-z\right)+\overline{\mathbfcal{A}_{eik}^{\textrm{EFT}}}(\bar\gamma,-z)) \\&=z^2\sum_{n\geq 1}\frac{(-1)^n \frac{16\pi i G \,}{\sqrt{\pi}}(e-1)2^{3-\gamma} 2^{-4} \left(-\frac{i \left(n+\frac{1}{2}\right)}{G}\right)^{\gamma /2}}{3 n! (\alpha -2 i  +2 \alpha  n) (\alpha +2 i  +2 \alpha  n) (\beta -i +2 \beta  n) (\beta +i  +2 \beta  n)}\\ &\hspace{2 cm}\times\Big[(2 n+1) \mu _{\text{IR}}^{-2 n-1} \left(4  (\beta -2 \alpha )+\alpha  \beta  (2 n+1)^2 (\alpha -8 \beta )\right)\Big]\\&
+\hspace{0.8cm}-\frac{\pi z^3 2^{3-\gamma}}{z-1}\sum_{k\geq 1}\frac{i^k}{k!(k-1)!}\left(-\frac{i k}{G}\right)^{\gamma/2}\Bigg(\frac{k(z-1)}{4zG\mu^2}\Bigg)^k\,.
+ \end{split} 
+\end{align}
+The sum in \eqref{3.53e} does not admit a closed-form expression and is therefore left as a formal sum.
+%\footnote{The sum is indeed convergent which can be shown using the ratio test: 
+%$$\lim_{n\to \infty}\left|\frac{\sigma_{n+1}}{\sigma_{n}}\right|\sim\lim_{n\to \infty} \left|\frac{i e (\gamma -3)}{8 G \mu ^2 n^2 z}+\frac{i e}{4 G \mu ^2 n z}+\mathcal{O}\left(\frac{1}{n^3}\right)\right|\to 0\,,$$ where $\sigma_n$ is the \textit{nth} term of the sum.}
+where, $\mu_{IR}=\mu\epsilon$ is a dimensionless IR regulator. As a consistency check, one can verify that setting $\alpha=\beta=0$ recovers the result corresponding to GR \cite{Adamo:2024mqn}. \textcolor{black}{
+Up to this point, we have investigated the analyticity and pole structure of the celestial amplitude, highlighting the modifications due to the incorporation of higher curvature terms. In the following section, we focus on the properties of the conformal four-point function that follows from it.}
+\par
+\textcolor{black}{
+Subsequently, we compute the shadow transform of the celestial four-point correlator of primary operators arising from the quadratic effective field theory (EFT). We then carry out the conformal block decomposition and determine the associated operator product expansion (OPE) coefficients. } %\textcolor{red}{While it is more instructive to consider the correlator associated with the phase-dressed eikonal amplitude, obtaining a closed-form analytic expression for its conformal block expansion proves to be highly challenging due to the complicacy introduced by gamma functions in the eikonal phase. Moreover, the tree-level Born amplitude obtained from the quadratic EFT—excluding the phase dressing—exhibits improved analytic behaviour compared to that of pure GR. Consequently, the subsequent analysis is carried out without phase dressing, with the aim of enabling analytic and closed-form computations of the partial wave coefficients and, subsequently, the OPE coefficients.
+%AB: Need to modify or remove?}
+\section{Shadowed correlator and operator product expansion (OPE)}\label{ch5:sec4}
+As introduced in \cite{Pasterski:2016qvg, Strominger:2017zoo} and briefly discussed in the introduction, there is significant progress in understanding the 2D holographic description of 4D scattering amplitude in flat space. Specifically, the action of Lorentz group $SL(2,\mathbb{C})$ on the kinematic data can be rescasted as the Mobius transformation on the celestial sphere and the scattering amplitudes (denoted as $\mathcal{A}_{n}(z_i,\bar z_i)$), defined on the boost eigenstate, can be re-interpreted as correlation function in a 2D CFT.\par
+%\textbf{\textit{What the section is all about?}}\\
+In light of this, in this section, our aim is to explore the structure of the celestial conformal field theory (CCFT) associated with the quadratic effective field theory (EFT) amplitude (in the eikonal limit) in flat space. A crucial step in this direction is to determine the full operator spectrum of the conformal theory on the celestial sphere. This, in turn, requires knowledge of the OPE coefficients in various channels. Primarily, we focus on the shadowed amplitude. We first employ the Burchnall-Chaundy (BC) expansion to extract the OPE coefficients by comparing it with the conformal block expansion of Dolan and Osborn \cite{Dolan:2003hv}. However, we find that the BC expansion appears insufficient to capture the complete spectrum of the theory. To go beyond this limitation, we subsequently incorporate the effects of spinning exchanges (which completes the spectrum) in the OPE coefficients using the Euclidean OPE inversion formula \cite{Caron-Huot:2017vep, Simmons-Duffin:2017nub, Mazac:2018qmi, Mukhametzhanov:2018zja} and consequently comment on the subtlety associated with the inversion.
+
+%To compute the \textit{Celestial operator product expansion}(OPE)\cite{Hollands:2023txn,Dolan:2003hv} for quadratic EFT, the information of higher curvature lies in graviton propagator in the tree level amplitude. To setup the stage for discussing regarding the OPE calculation we have to invoke the notion of \textit{Conformal primary wavefunctions}(CPW)\cite{Pasterski:2016qvg}. In this basis, we rewrite the scattering amplitude and show the difference with pure Einstein gravity.
+%To keep the discussion self-contained we review the aspect of CPW's.\footnote{
+%\textbullet \,\textbf{Hyperbolic Slicing}: \textit{Hyperbolic or Milne slicing} is quite important because, every massive particle is coming from past timelike infinity ($i^{-}$) and asymptots at large t ($t\to \infty$) to $i^{+}$ i.e the future timelike infinity. Then how should one distinguish between two different massive particle? The way to do this is using hyperbolic slicing by introducing the coordinates,
+%\begin{align}
+   % \begin{split}
+     %   &t^2-r^2=\tau^2,\,\,\,\,\,
+     %   \rho \tau =r
+    %\end{split}
+%\end{align}
+%In these coordinates, the AFM (asymptotically flat metric), $ds^2=-dt^2+dr^2+r^2d\Omega^2$ is given by 
+
+
+%\begin{align}
+  %  ds^2=-d\tau^2+\tau^2(\frac{d\rho^2}{1+\rho^2}+2\rho^2\gamma_{z\bar z}dzd\bar z)=-d\tau^2+\tau^2 ds^2_{\mathbb{H}_3}.
+%\end{align}
+%Now the trajectory of any massive  particle with constant momentum $\vec{p}$ and fixed energy E, can be parametrized as,
+%\begin{align}
+ %   r=\vec{r}_0+\frac{t}{E}\vec{p}
+%\end{align}
+%Hence at large t,
+%\begin{align}
+  %  \rho=|\vec{p}|/m,\,\,\,\,\, \frac{\vec{r}}{r}=\frac{\vec{p}}{p}
+%\end{align}
+%So, the particle reaches a fixed $(\rho,z,\bar{z})$ coordinate, which is a fixed point on the celestial sphere with hyperbolic slicings.} Next we procced to discuss about the conformal primary wavefunctions.
+
+
+%\noindent
+%\textbf{Conformal Primary Wavefunctions:}
+%These are primary with respect to the Lorentz group SL(2,$\mathbb{C}$). It satisfies to basic properties as \cite{Pasterski:2016qvg},
+
+%\noindent
+%\textbullet \,\,It  is the solution of massive Klein-Gordon equation:
+%\begin{align}
+ %   \Bigg(\frac{\partial}{\partial X^{\nu}}\frac{\partial}{\partial X_{\nu}}-m^2\Bigg)\phi_{\Delta,m}(X^\mu,w,\bar{w})=0
+%\end{align}
+%\noindent
+%\textbullet \,\,It  transforms as a conformal quasi-primary under an SL(2,$\mathbb{C}$) Lorentz transform:
+%\begin{align}
+%\phi_{\Delta,m}\Bigg(\Lambda^\mu_\nu X^\nu;\frac{aw+b}{cw+d},\frac{\bar{a}\bar w+\bar b}{\bar c \bar w+\bar d},\Bigg)=|cw+d|^{2\Delta}\phi_{\Delta,m}(X^\mu,w,\bar{w})
+%\end{align}
+%Where $a,b,c,d\in \mathbb{C}$ and $\Lambda_\mu^\nu$ is the SL(2,$\mathbb{C}$) group element alongwith $ad-bc=1$.
+
+%\noindent
+%Now, we proceed to compute the four-point correlator of conformal primary wavefunctions with a shadow primary insertion. We consider the external legs to be massless. Hence our conformal primary wavefunctions become $\phi_{\Delta,m=0}$. Below we highlight a few important notions of this wavefunction before diving into the actual computation.
+
+%\noindent
+%\textbf{Integral representation:} Conformal primary wavefunctions can be obtained by making the Fourier transform of the propagator running from  bulk to boundary in hyperbolic space $H_3$. The metric can be casted as \cite{Raclariu:2021zjz},
+%\begin{align}
+  %  ds^2_{H^3}=\frac{dy^2+dzd\bar z}{y^2}
+%\end{align}
+%Here $y=0$ is the boundary and y coordinate is bounded between $0<y<\infty$. The $SL(2,\mathbb{C})$ isometry acts in the metric as,
+
+%\begin{align}
+%\begin{split}
+ %   &z\to z'=\frac{(az+b)(c\bar z+\bar d)+a\bar c y^2}{|cz+d|^2+|c|^2y^2},\,\,\,\,\,\,
+  %  \bar z\to \bar z'=\frac{(\bar a\bar z+\bar b)(c\ z+ d)+\bar a c y^2}{|cz+d|^2+|c|^2y^2}\\& \hspace{0.8cm} y\to y'=\frac{y}{|cz+d|^2+|c|^2y^2}
+  %  \end{split}
+%\end{align}
+%With $ a,b,c,d\in \mathbb{C}$ and $ad-bc=1$. The hyperbolic space can be embedded in $\mathbb{R}^{1,3}$ in either hyperboloid for ($\bar p>0$ or $\bar p<0 $),
+%\begin{align}
+ %-(\hat p^0)^2+(\hat p^1)^2-(\hat p^2)^2-(\hat p^3)^2=-1 .  
+%\end{align}
+%\noindent
+%The embedding map $\hat{p}^\mu$ for the upper hyperboloid for an outgoing massive particle becomes,
+%\begin{align}
+  %  \hat{p}^\mu=\Bigg(\frac{1+y^2+|z|^2}{2y},\frac{\text{Re}(z)}{y},\frac{\text{Im}(z)}{y},\frac{1-y^2-|z|^2}{2y}\Bigg)
+%\end{align}
+
+%\noindent
+%Now the bulk to boundary propagator \footnote{Under the SL(2,C) transformation,
+%\begin{align}
+%    w\rightarrow \frac{aw+b}{cw+d},\,\,\,\,\,\, \bar{w}\rightarrow \frac{\bar a\bar{w}+\bar b}{\bar c\bar w+\bar d}
+%\end{align}
+%$G_{\Delta}$ transforms as,
+%\begin{align}
+   % G_{\Delta}(y',z',\bar z',w'\bar w')=|cw+d|^{2\Delta}G_{\Delta}(y,z,\bar{z},w,\bar w)
+%\end{align}} $G_{\Delta}(y,z,\bar z,w,\bar w)$ is given by,
+
+
+%\begin{align}
+%    G_{\Delta}(y,z,\bar z,w,\bar w)=\Bigg(\frac{y}{y^2+|z-w|^2}\Bigg)^\Delta
+%\end{align}
+
+ % \noindent
+%Now, having the ingredients in hand the Conformal primary wavefunction can be written as,
+%\begin{align}
+    %\phi_{\Delta,m}^{\pm}=\rmint_0^\infty \frac{dy}{y^3}\rmint dz d\bar z \,G_{\Delta}(y,z,\bar z,w,\bar{w})\exp[\pm im \hat{p}^\mu X_{\mu}]
+%\end{align}
+%Where, the plus (minus) sign is for outgoing (incoming) particle.
+
+%\noindent
+%From the conformal primary wavefunction solution for massive case (Bessel function), one can obtain the masssless solution and can be written as (for $Re(\Delta)>1$),   
+%\begin{align}
+ %   \phi^{\pm}_{\Delta,m=0}=\frac{1}{(-X^{\mu}q_{\mu}\mp i\epsilon)^{\Delta}}.
+%\end{align}
+%We will use massless states as conformal primary wavefunctions for our case, as we are interested in the scattering amplitude for massless spin-2 exchange in quadratic EFT with massless external legs for different channels. In the next section, we explore the conformal partial wave expansion and find the OPE coefficient which eventually encodes the information about the spectrum of the theory.\\
+%The conformal field theory OPE data has been extracted via conformal block expansion \cite{Caron-Huot:2017vep,Dolan:2003hv} of the shadowed amplitude in the first place. Next as it seems not to encode any information of spin($J$), we attempt to capture the effects of exchange spin in the OPE coefficients using the euclidean inversion formula \cite{Caron-Huot:2017vep,Mazac:2018qmi,Mukhametzhanov:2018zja}. The next part of our paper is devoted to those two towers of operator product expansion coefficients and conformal block decomposition.
+%\textit{ Conformal block expansion uses the crossing symmetry of the four-point function to fix it and further computes the OPE data. Hence it is very crucial to consider. Here, for the calculated four-point CCFT correlator we attempt to focus and compute the OPE data and comment on its difference and subtleties involved in quadratic EFT rather than Einstein gravity.}
+\noindent
+%Therefore after performing the $\sigma$ integral, (done in Appendix~\eqref{appA}) similarly the remaining $v$ integral becomes,
+%\begin{align}
+%\begin{split}
+ %  &\rmint_0^\infty dv \,v^{4-1+\sum i\lambda_i}\,\Bigg[ \frac{1}{48} v^2 \left(\frac{k \left(3 k-v^2 (\alpha -8 \beta )\right)}{\left(k+\alpha  v^2\right) \left(k+2 \beta  v^2\right)}-\frac{4 k}{k-\alpha  v^2}+\frac{k}{k-2 \beta  v^2}-\frac{24z}{z-1}\right)\Bigg]\\&
+  % =\mathbfcal{A}^{12\to 34}(\mathbf{\Delta},\ell_i,z)
+ %  \end{split}
+%\end{align}
+\par
+%We now focus on calculating the shadowed four point correlators of CCFT
+%\cite{Simmons-Duffin:2012juh,Fan:2023lky}.
+%Now to access the complex cross-ratio we do perform a \textit{shadow transform} on one of the conformal primary.
+The \textit{shadow} of a conformal primary with conformal dimension $h,\bar h$ (and scaling dimension $\Delta=h+\bar h$) can be written as \cite{Simmons-Duffin:2012juh,Fan:2023lky},
+\begin{align}
+\widetilde{\mathcal{O}}_{\tilde\Delta}(z,\bar z):=\widetilde{{\mathcal{O}}_{\Delta}(y,\overline{y})}=\mathscr{K}_{h,\bar h}\rmint d^2y (z-y)^{2h-2}(\bar z-\bar y)^{2\bar h-2}\mathcal{O}_{\Delta}(y,\bar y),
+\end{align}
+where the constant is given  by,
+\begin{align}
+    \mathscr{K}_{h,\bar h}=\frac{(-1)^{2(h-\bar h)}\Gamma(2-2h)}{\pi\Gamma(2\bar h -1)}.
+\end{align}
+The shadow operator is a primary with conformal dimensions $\{1-h,1-\bar h\}$ which corresponds to a scaling dimension $\tilde \Delta=2-\Delta $.
+\subsection{Shadowed amplitude corresponding to eikonal amplitude }
+The 4-point eikonal amplitude is given by,
+\begin{align}
+    \begin{split}
+        \mathcal{M}_{\textrm{eik}}
+    \end{split}(z_i,\bar z_i)=\lim_{z_4\to \infty}\frac{1}{|z|^{\Delta_1+\Delta_2}|z_4|^{2\Delta_4}}(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}\delta(iz-i\bar z) \mathbfcal{M}_{\textrm{eik}}(\mathbf \Delta,z)\,.
+\end{align}
+The normalized amplitude is given by,
+\begin{align}
+\widehat{\mathcal{M}}_{\textrm{eik}}=\lim_{z_4,\bar z_4\to \infty}z_4^{\Delta_4} \bar z_4^{\Delta_4} \mathcal{A}_{\textrm{eik}}(z_i,\bar z_i)\,.
+\end{align}
+Therefore the shadowed amplitude is given by,
+\begin{align}
+    \begin{split} \widetilde{\mathcal{M}}_{\textrm{eik}}^{\textrm{EFT}}(w,\bar w)=&\mathscr{K}_{h_2,\bar h_2}\lim_{z_4\to \infty}|z_4|^{2\Delta_4}\rmint \frac{d^2 z}{(z-w)^{\Delta_2}(\bar z-\bar w)^{2-\Delta_2}}\frac{1}{|z|^{\Delta_1+\Delta_2}}(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}\delta(iz-i\bar z) \\ &
+   \times i\pi G \widetilde{\mathbb{M}}^{\textrm{EFT}}_{\textrm{Born}}(e-1)2^{8-\gamma}z^2 \rmint_{0}^{\infty} d\omega\,\omega^{\gamma-1}\left(\frac{2}{\mu\varepsilon}\right)^{2iG\omega^2}\frac{\Gamma\left(-2iG\omega^2\right)}{\Gamma(-iG\omega^2)}.\label{4.6j}
+    \end{split}
+\end{align}
+Here $\widetilde{M}_{\textrm{Born}}^{\textrm{EFT}}(\omega)$ is defined in \eqref{3.18p}. It contains only the terms arising due the presence of the curvature squared terms. Note that in equation \eqref{4.6j}, the $\omega$-integral is independent of the cross-ratio $z$. This allows us to perform the integrals over $z$ and $\bar z$ explicitly, resulting in a function that depends only on $w$, $\bar w$, and the remaining integral over $\omega$. Consequently, the overall structure of the shadow amplitude (coming from the curvature squared terms) remains unchanged if we replace the full non-perturbative (in coupling) eikonal amplitude with just the Born amplitude. Hence, from the following section onward, we focus on the Born amplitude to study the conformal correlator and its operator product expansion.\par
+
+Before we concluding we note that,  for the GR part, the computation of the shadow amplitude is not so straightforward. The eikonal shadow amplitude for GR has the following form:
+\begin{align}
+    \begin{split}
+        \widetilde{\mathcal{M}}_{\textrm{eik}}^{\textrm{GR}}(w,\bar w)=&\mathscr{K}_{h_2,\bar h_2}\lim_{z_4\to \infty}|z_4|^{2\Delta_4}\rmint \frac{d^2 z}{(z-w)^{\Delta_2}(\bar z-\bar w)^{2-\Delta_2}}\frac{1}{|z|^{\Delta_1+\Delta_2}}(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}\delta(iz-i\bar z)\\ &
+        \times\left(\frac{G z}{1-z}\right)\rmint_{0}^{\infty} d\omega\,\omega^{\gamma+1}\left(\frac{4 z\mu^2}{\omega^2 (z-1)}\right)^{-iG\omega^2}\frac{\Gamma\left(-iG\omega^2\right)}{\Gamma(iG\omega^2)}\,.\label{4.6l}
+    \end{split}
+\end{align}
+As can be seen easily from \eqref{4.6l}, the integral over \( z \) and \( \bar{z} \) can be performed explicitly, leaving us with an integral over \( \omega \). However, this remaining integral cannot be evaluated analytically, making it difficult to obtain the shadowed amplitude non-perturbatively in \( G \) for GR. Our primary objective is to extract the OPE coefficient analytically from the conformal block expansion, which requires a closed-form expression (at least in $w,\,\bar w$) for the amplitude. Fortunately, the contribution due to the  EFT correction in the Born amplitude possesses a well-behaved analytic structure, allowing us to bypass the need for eikonal resummation in both qualitative and quantitative analyses. Therefore, in the following subsections, we will consider only the Born amplitude when computing the OPE coefficients.
+
+\subsection{Shadowed amplitude corresponding to celestial Born amplitude}
+ We start by reminding that  the 4-point amplitude is given by,
+\begin{align}
+    \begin{split}
+        \mathcal{A}_{4}(z_i,\bar z_i)=\lim_{z_4\to \infty}\frac{1}{|z|^{\Delta_1+\Delta_2}|z_4|^{2\Delta_4}}(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}\delta(iz-i\bar z) \mathcal{A}(\mathbf \Delta,z)\,.
+    \end{split}
+\end{align}
+Consequently, one can define the normalized 4-point amplitude as,
+\begin{align}
+    \begin{split}
+         \widehat{\mathcal{A}_{4}}(z_i,\bar z_i)=\lim_{z_4,\bar z_4\to \infty}z_4^{\Delta_4} \bar z_4^{\Delta_4} \mathcal{A}_{4}(z_i,\bar z_i)\,.
+    \end{split}
+\end{align}
+Our goal is to compute the celestial amplitude of the shadowed correlator, find the conformal block expansion and correspondingly calculate the partial wave coefficients using \textit{Euclidean OPE inversion formula}.
+ Now, we want to compute the following correlator,
+\begin{align}
+    \begin{split}
+    \widetilde{\mathcal{A}_{4}}(w,\bar w)&:=\lim_{z_4\to \infty}|z_4|^{2\Delta_4}\Big\langle\mathcal{O}_{\Delta_1}(0,0)\widetilde{\mathcal{O}}_{2-\Delta_2}(w,\bar w)\mathcal{O}_{\Delta_3}(1,1)\mathcal{O}_{\Delta_4}(z_4,\bar z_4)\Big\rangle\,,\\ &
+          =\mathscr{K}_{h_2,\bar h_2}\lim_{z_4\to \infty}|z_4|^{2\Delta_4}\rmint \frac{d^2 z}{(z-w)^{\Delta_2}(\bar z-\bar w)^{2-\Delta_2}}\Big\langle\mathcal{O}_{\Delta_1}(0,0){\mathcal{O}_{\Delta_2}}(z,\bar z)\mathcal{O}_{\Delta_3}(1,1)\mathcal{O}_{\Delta_4}(\bar z_4,\bar z_4)\Big\rangle\,.
+    \end{split}
+\end{align}
+We can define three celestial amplitudes in the respective kinematic regions by choosing the corresponding integration range of the cross-ratio $z$.
+\begin{align}
+    \begin{split}\label{4.28i}
+ \mathscr{K}_{h_2,\bar h_2}^{-1}\widetilde{\mathcal{A}_{4}}(w,\bar w)&=\rmint \frac{dz}{(z-w)^{2-\Delta_2}(z-\bar w)^{2-\Delta_2}} \frac{(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}}{|z|^{\Delta_1+\Delta_2}} \mathbfcal{A}(\mathbf{\Delta},z)\,.\end{split}\end{align}
+\noindent
+The integrals can be expressed in terms of \textit{Appell hypergeometric} functions and the amplitude for the different kinematic channels take the following form:\footnote{ 
+\begin{align}
+\mathbf{F}_1(a,b_1,b_2,c,x,y)=\sum_{m,n=0}^\infty \frac{(a)_{m+n}(b_1)_m(b_2)_n}{(c)_{m+n}m!n!}x^m y^n \,\,\,\,,\max(|x|,|y|)<1,\nonumber
+\end{align}
+\noindent
+where $(a)_k$ is the Pochhammer symbol is given by,
+$
+    (a)_k:=\frac{\Gamma(a+k)}{\Gamma(a)}\,.$
+Also the integral representation of the same function is given by,
+\begin{align}
+  \mathbf{F}_1(a,b_1,b_2,c,x,y)=\frac{1}{B(a,c-a)}\rmint_0^1 dm \frac{m^{a-1}(1-m)^{c-a-1}  }{(1-mx)^{b_1}(1-my)^{b_2}}
+,\,\,\mathscr{R}(c)>0 \mbox{ and } \mathscr{R}(c-a)>0\nonumber
+\end{align}
+with,
+$B(a,b):=\frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}\,, B(a,b)=\rmint_0^1 dx \,x^{a-1}(1-x)^{b-1} $
+is the usual Euler Beta function. Given these, we now proceed to compute the shadowed four-point correlator in three different kinematic regimes.}
+
+\hspace{0cm}{\,\,{\textbf{\textit{12$\to$34 kinematics:}}}}
+
+By defining $\textcolor{black}{w=\frac{z_{12'}z_{34}}{z_{13}z_{2'4}}}$ we can cast the integral in \eqref{4.28i} for the $12\to 34$ kinematics in the following way \footnote{For four general points $z_1,z_2',z_3,z_4 $. $z_2'$ is the location of the insertion of the shadow primary.},
+\begin{align}
+    \begin{split}
+    \mathscr{K}_{h_2,\bar h_2}^{-1}\widetilde{\mathcal{A}_{4}}^{12\to 34}(w,\bar w)&=\rmint_{1}^{\infty}\frac{dz}{(z-w)^{2-\Delta_2}(z-\bar w)^{2-\Delta_2}}\frac{(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}}{|z|^{\Delta_1+\Delta_2}}\mathcal{A}^{12\to 34}(\mathbf{\Delta},z)\,,\\ & =\rmint_{1}^{\infty}\frac{dz}{(z-w)^{2-\Delta_2}(z-\bar w)^{2-\Delta_2}}\frac{(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}}{|z|^{\Delta_1+\Delta_2}}\textstyle{\left(\delta_{1}(\alpha,\beta|\gamma)z^2+\delta_2(\gamma)\frac{z^3}{z-1}\right)}\,, \\ & =\delta_1(\alpha,\beta|\gamma)B\left(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4)\right)\\ &\hspace{0.5 cm}\times F_{1}\left(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),2-\Delta_2,2-\Delta_2,2+\Delta_1-\Delta_2,w,\bar w\right)\\&\hspace{0.8cm}+(\textrm{contribution from GR})\,.
+    \end{split}
+\end{align}
+\textcolor{black}{
+The contribution from GR can be straightforwardly computed as,
+\begingroup\tiny
+\begin{align}
+    \begin{split}
+        (\textrm{contribution from GR})&=\delta_2(\gamma)\rmint_{1}^{\infty}\frac{dz}{(z-w)^{2-\Delta_2}(z-\bar w)^{2-\Delta_2}}\frac{(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}-1}}{|z|^{\Delta_1+\Delta_2-3}}\,, \\ &
+        \xrightarrow[]{z \to 1/z} \delta_2(\gamma)\rmint_0^1 \frac{dz}{(1-z\,w)^{2-\Delta_2}(1-z\,\bar{w})^{2-\Delta_2}} (1-z)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}-1}z^{\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4\right)}\,,\\ &
+        =\delta_2(\gamma)\,B\left(\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4+2\right),\frac{1}{2} \left(\Delta _1-\Delta _2-\Delta _3+\Delta _4\right)\right)\\&
+        \hspace{0.6 cm}\times\textrm{F}_1\left(\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4+2\right),2-\Delta_2,2-\Delta_2,\Delta _1-\Delta _2+1,w,\bar w\right)\,.
+    \end{split}
+\end{align}
+\endgroup
+In the later computations we will not explicitly show the contributions from GR as our primary goal to examine the contribution coming from the quadratic corrections.}
+Hence, finally the 4-point correlator for the single shadowed operator(s) in the $\mathfrak{s}$-channel can be written as,
+\begin{align}
+    \begin{split}
+      \lim_{z_4\to \infty}  |z_4|^{2\Delta_4}\Big\langle\mathcal{O}_{\Delta_1}(0,0)\widetilde{\mathcal{O}_{\Delta_2}}(w,\bar w)\mathcal{O}_{\Delta_3}(1,1)\mathcal{O}_{\Delta_4}(z_4,\bar z_4)\Big\rangle=\frac{1}{|w|^{2+\Delta_1-\Delta_2}}\mathcal{G}^{\mathfrak{s}}
+      (w,\bar w)\,.
+    \end{split}
+\end{align}
+Therefore we can identify the conformal block corresponding to quadratic EFT to be,
+\begin{align}
+    \begin{split} \label{s-channel}
+    &\mathcal{G}^{12\to34}
+      (w,\bar w)=\delta_1(\alpha,\beta|\gamma)|w|^{2+\Delta_1-\Delta_2}B\left(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4)\right)\\ &\times F_{1}\left(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),2-\Delta_2,2-\Delta_2,2+\Delta_1-\Delta_2,w,\bar w\right)+(\textrm{contribution from GR})\,.
+    \end{split}
+\end{align}
+{\,\,{\textbf{\textit{13$\to$24 kinematics:}}}}
+
+The $\mathfrak{t}$-channel contribution to the four-point function in quadratic EFT is given by \footnote{From now on we omit writing the GR contribution for each case. One should assume that they are always there inherently. The pure GR contributions impose constraints on the external conformal dimensions which is not there for quadratic gravity.},
+\begin{align}
+    \begin{split}
+    \mathcal{G}^{13\to 24}(w,\bar w)&=\rmint_{0}^{1}\frac{dz}{(z-w)^{2-\Delta_2}(z-\bar w)^{2-\Delta_2}}\frac{(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}}{|z|^{\Delta_1+\Delta_2}}\mathcal{A}^{13\to 24}(\mathbf{\Delta},z))\\&
+ =\delta_1(\alpha,\beta|\gamma) \textcolor{black}{(w\bar w)^{2-
+       \Delta_2}B(-\Delta _1-\Delta _2+3,\frac{1}{2} \left(\Delta _1-\Delta _2-\Delta _3+\Delta _4+2\right)})\\&
+         \times \mathbf{F}
+         _1(3-\Delta_1-\Delta_2,2-\Delta_2,2-\Delta_2,\frac{1}{2} \left(-\Delta _1-3 \Delta _2-\Delta _3+\Delta _4+8\right),\frac{1}{w},\frac{1}{\bar w})\,.
+    \end{split}
+\end{align}
+\noindent
+%Using the expansion\footnote {  The block decomposition can be factorized into the product of two \textit{Gauss-hypergeometric functions}. We use the \textit{Burchnall-Chaundy expansion} of the Appell hypergeometric function to write the integral as a product of two Gauss hypergeometric functions,
+%	\begin{align}
+	%	\label{eq:F1exp}
+	%	\mathbfcal{F}_1\left(a , b_1, b_2 , c  , x, y\right) =\sum_{n=0}^\infty & {\frac{(a)_n(b_1)_n(b_2)_n(c-a)_n}  {n!(c+n-1)_n (c)_{2n}}}\,x^n y^n\times {}_{2}\mathbfcal{F}_1\left({a+n,b_1+n\atop c+2n};x\right) {}_{2}\mathbfcal{F}_1\left({a+n,b_2+n\atop c+2n};y\right)\ .
+	%\end{align}}of the {Appell} function, the integral $\mathcal{G}^s$ can be written in the form of conformal block decomposition as,
+	%\begin{align}
+%\begin{split}
+		%\label{5.33u}
+	%	&\mathcal{G}^s(w,\bar w)= B\left(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4)\right) \\&\sum_{n=0}^\infty {(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4))_n(2-\Delta_2)_n(2-\Delta_2)_n(\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4))_n \over n!(1+n-\Delta_2+\Delta_1 )_n (2+\Delta_1-\Delta_2 )_{2n}}\\
+	%	& \hspace{0cm}\times w^{n}\,  {}_{2}{F}_1\left({\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4)+n,2-\Delta_2+n \atop \Delta_1-\Delta_2+2+2n};w\right)
+		%\bar{w}^{n}\,  {}_{2}{F}_1\left({\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4)+n,2-\Delta_2+n \atop \Delta_1-\Delta_2+2+2n};\bar w\right)
+       % \end{split}
+	%\end{align}     
+%\noindent
+%Now the general form of conformal block decomposition of  $\mathcal{G}^s$ is given by the following sum, 
+	%\begin{align}
+		%\mathcal{G}
+       % _{34}^{21}(w,\bar{w}) = \sum_{h,\bar{h}} C_{34}^{21}(h,\bar{h}) \mathbfcal{P}_{34}^{21}[h, \bar{h}] (w,\bar{w}),  
+	%\end{align}
+	%where $C_{34}^{21}(h, \bar{h})$ are constants. Each conformal block of a primary field with conformal dimension $(h,\bar h)$ respectively can be casted as \cite{Osborn:2012vt}, 
+	%\begin{align}
+		%\mathbfcal{P}_{34}^{21}[h, \bar{h}]=\bar{w}^{\bar{h}}{ }_2 F_1\left(\begin{array}{c}
+		%	\bar{h}-\bar{h}_{12}, \bar{h}+\bar{h}_{34} \\
+		%	2 \bar{h}
+		%\end{array}; \bar{w}\right) w^{h}{ }_2 F_1\left(\begin{array}{c}
+	%%	\end{array}; w\right)  
+	%\end{align}
+	%where $h_{ij}=h_i-h_j$. Here to use this definition of $\mathbfcal{P}_{34}^{21}[h, \bar{h}]$,  we need to replace $(h_2, \bar{h}_2)$ by the conformal dimension $(h'_2,\bar{h}'_2)$ of the shadowed operator $\tilde{\mathcal{O}}_{\tilde{\Delta}_{2}}(z_2', \bar{z}_2') $ 
+	%\begin{align}
+		%h_{12}=  \frac{i\lambda_1}{2}-\frac{i\lambda_2}{2},\quad
+		%h'_{34}:= h'_3-h_4=-\frac{i\lambda_3}{2}-\frac{i\lambda_4}{2}, \quad h'_3+h_4=1-\frac{i\lambda_3}{2}+\frac{i\lambda_4}{2},
+	%\end{align}
+	%where the antiholomorphic are defined in the similar fashion.
+%Hence, it is possible for our case to extract out the OPE coefficients from the \textit{Burchnall-Chaundy} expansion and it leads to the following OPE coefficient,\footnote{ The square of the OPE coefficients are related to the residue of partial wave coefficients $c(\Delta',J)$. One can deduce the relation as,
+%\begin{align}  f_{\phi\phi\mathcal{O}_k}^2=-\textbf{Res} [c(\Delta',J)]\Bigg|_{\Delta'=\Delta_k}
+%\end{align}
+%}
+{{\,\,{\textbf{\textit{14$\to$23 kinematics:}}}}}
+
+Similarly for the $14\to 23$ kinematics ($\mathfrak{u}$-channel), four-point function has the following form,
+\begin{align}
+    \begin{split}
+         \mathcal{G}^{14\to 23}(w,\bar w)&=\rmint_{-\infty}^{0}\frac{dz}{(z-w)^{2-\Delta_2}(z-\bar w)^{2-\Delta_2}}\frac{(z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}}{|z|^{\Delta_1+\Delta_2}}\mathcal{A}^{14\to 23}(\mathbf{\Delta},z)\,.
+    \end{split}
+\end{align}
+Now changing the integral variable as $z\to \frac{\omega}{\omega-1}$, we are left with the following result,
+\begin{align}
+    \begin{split}
+         \mathcal{G}^{14\to 23}(w,\bar w)&=\delta_1(\alpha,\beta|\gamma)(w\bar w)^{\Delta_2-2}B(-\Delta _1-\Delta _2+3,\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4+2\right))\\&  \times \mathbf{F}_1(3-\Delta_1-\Delta_2,2-\Delta_2,2-\Delta_2,\frac{1}{2}(8+\Delta_1-\Delta_2+\Delta_3-\Delta_4),\frac{w-1}{w},\frac{\bar w-1}{\bar w})\,.
+    \end{split}
+\end{align}
+%Therefore, the other kinematic  four-point function, $\mathcal{G}^{4,1}_{3,2}(w,\bar w)\Big|_u$, can be re-written compactly in the $u$-channel as,
+Finally, using the identity of $\mathbf{F}_1$, we can write it in the following way, 
+\begin{align}
+\begin{split}
+   &\mathcal{G}^{14\to 23}(w,\bar w) =\delta_1(\alpha,\beta|\gamma)B(-\Delta _1-\Delta _2+3,\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4+2\right))\\&\times\mathbf{F}_1(\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4+2\right),2-\Delta_2,2-\Delta_2,\frac{1}{2}(8-\Delta_1-3\Delta_2+\Delta_3-\Delta_4),1-w,1-\bar w)\,.
+    \end{split}
+\end{align}
+Finally, adding the results from the three kinematic regimes mentioned above, we obtain the following expression,
+
+\begin{align}
+    \begin{split}
+    \label{4.16o}
+       & \textcolor{black}{\mathcal{G}^{12\to 34}(w,\bar w)+\mathcal{G}^{13\to 24}(w,\bar w)+\mathcal{G}^{14\to 23}(w,\bar w)}\\ &
+=\delta_1(\alpha,\beta|\gamma)\Bigg[B\Bigg(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4)\Bigg)\\&\times \mathbf{F}_{1}\left(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),2-\Delta_2,2-\Delta_2,2+\Delta_1-\Delta_2,w,\bar w\right)\\&+(w\bar w)^{2-
+       \Delta_2}B(-\Delta _1-\Delta _2+3,\frac{1}{2} \left(\Delta _1-\Delta _2-\Delta _3+\Delta _4+2\right))\\&
+         \hspace{2 cm}\times \mathbf{F}
+         _1(3-\Delta_1-\Delta_2,2-\Delta_2,2-\Delta_2,\frac{1}{2} \left(-\Delta _1-3 \Delta _2-\Delta _3+\Delta _4+8\right),\frac{1}{w},\frac{1}{\bar w})\\&+B(-\Delta _1-\Delta _2+3,\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4+2\right))\\&\hspace{0.2cm}\times\mathbf{F}_1(\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4+2\right),2-\Delta_2,2-\Delta_2,\frac{1}{2}(8-\Delta_1-3\Delta_2+\Delta_3-\Delta_4),1-w,1-\bar w)\Bigg]\,.
+    \end{split}
+\end{align}
+
+\noindent
+Now our goal is to find the OPE coefficients using the inversion formula derived in \cite{Caron-Huot:2017vep}. For the inversion we need the argument of the blocks to be $w, \bar w$ and here we immediately identify the problem with our four-point function where we have different arguments. Hence, to resolve the problem we need the analytic continuation of the \textbf{Appell function}.
+
+
+\noindent
+\textbf{Analytic continuation:}
+\noindent
+Here, we describe the analytic continuation of our conformal block that we found in \eqref{4.16o}. In $\mathfrak{t}$ and $\mathfrak{u}$-channel, we use analytic continuation as well as check the properties under the monodromy projection. Some portions of the analytically continued block does not contribute due to their incorrect behaviour under \textit{monodromy projection} \cite{Simmons-Duffin:2012juh} and we discard them. For $\mathfrak{t}$  channel we get, 
+\hfsetfillcolor{gray!8}
+\hfsetbordercolor{black}
+\begin{align}
+\begin{split}
+\label{4.40o}
+    \\& \mathbf{F}_1(\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4+2\right),2-\Delta_2,2-\Delta_2,\frac{1}{2}(8-\Delta_1-3\Delta_2+\Delta_3-\Delta_4),1-w,1-\bar w)\to \\&
+   \frac{\Gamma \left(\Delta _1+\Delta _2-2\right) \Gamma \left(\frac{1}{2} \left(\Delta _1-\Delta _2-\Delta _3+\Delta _4+2\right)\right)}{\Gamma \left(\Delta _1-\Delta _2+2\right) \Gamma \left(\frac{1}{2} \left(\Delta _1+3 \Delta _2-\Delta _3+\Delta _4-6\right)\right)}\\&\hspace{0.8cm} \times\mathbf{F}_1(\frac{1}{2} \left(\Delta _1-\Delta _2+\Delta _3-\Delta _4+2\right),2-\Delta_2,2-\Delta_2,2-\Delta_2+\Delta_1,w,\bar w)+\cdots
+ \end{split} 
+\end{align}
+In \eqref{4.40o}, the ellipsis denotes the terms obtained after analytic continuation but do not exhibit correct behaviour under monodromy projection.
+%Therefore the four point function takes the form,
+%\begin{align}
+ %   \begin{split}
+  %  \mathcal{G}^{2,1}_{3,4}(w,\bar w)=\mathcal{N}^{2,1}_{3,4}\,\mathbfcal{F}_1(3 - \Delta_1 - \Delta_3,2-\Delta_3,2-\Delta_3,2-\Delta_3+\Delta_4,w,\bar w)+\cdots
+   % \end{split}
+%\end{align}
+The analytic continuation for the $\mathfrak{u}$-channel kinematics can be done similarly.
+Now we proceed to compute the OPE coefficients eventually in the $\texttt{s}$-channel kinematics. This choice is generic due to choosing external primary conformal dimension(s) to be equal. Otherwise, one should calculate the OPE coefficients for different channels separately, in euclidean setup. \textcolor{black}{ Though in euclidean scenario there is no sense of time, and therefore operator ordering does not matter. }
+
+\subsection{Conformal block expansion and partial wave coefficients}
+For $12\to 34$ kinematics, the four point function of the conformal primaries (with one shadowed operator) can be expanded in $\texttt{s}$-channel OPE in the following way \cite{Dolan:2003hv,Caron-Huot:2017vep},
+\begin{align}
+    \mathcal{G}^{12\to 34}(w,\bar w)=\sum_{J,\Delta}f_{12\mathbfcal{O}}f_{34\mathbfcal{O}}G_{J,\Delta}(w,\bar w),\label{4.29}
+\end{align}
+where, $J,\Delta$ are the spin and conformal dimension of the exchanging primary operator $(\mathbfcal{O})$. \textcolor{black}{$f_{ijk}$ are the  OPE coefficients} and $G_{J,\Delta}(z,\bar z)$ is defined as,
+\begin{align}
+    G_{J,\Delta}=\frac{k_{\Delta-J}(w)k_{\Delta+J}(\bar w)+k_{\Delta+J}(w)k_{\Delta-J}(\bar w)}{1+\delta_{J,0}}, \textrm{\,\,with }\,\,k_{\beta}(w)=w^{\beta/2}\,{}_{2}\mathbf{F}_1\left(\beta/2+a,\beta/2+b,\beta,w\right)
+\end{align}
+where the constants $a,b$ are identified as $a=\frac{1}{2}(2-\Delta_2-\Delta_1),b=\frac{1}{2}(\Delta_3-\Delta_4)$.
+Therefore the block should take the form \cite{Osborn:2012vt,Caron-Huot:2017vep},
+\begin{align}    \begin{split}\mathcal{G}^{12\to 34}(w,\bar w)=&\delta_1(\alpha,\beta|\gamma)B\left(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4)\right)\\&\sum_{J,\Delta}f_{12\mathbfcal{O}}f_{34\mathbfcal{O}}\left[w^{\frac{\Delta-J}{2}}\bar w^{\frac{\Delta+J}{2}}\right]\times{_2}F_1\left(\genfrac{}{}{0pt}{}{\frac{1}{2}(\Delta-J+2-\Delta_2-\Delta_1),\frac{1}{2}(\Delta-J+\Delta_3-\Delta_4)}{\Delta-J};w\right)\\&\hspace{1.5 cm} \times {_2}F_1\left(\genfrac{}{}{0pt}{}{\frac{1}{2}(\Delta+J+2-\Delta_2-\Delta_1),\frac{1}{2}(\Delta+J+\Delta_3-\Delta_4)}{\Delta+J};\bar w\right)+(J\to -J)\,.\label{4.36k}
+  \end{split}
+\end{align}
+Next, our goal is to compute the OPE coefficients using two different approaches: Burchnall-Chaundy expansion and OPE inversion formula. (Un-)fortunately the first one is only applicable for the four point functions involving the Appell functions.
+
+%\newpage
+\noindent
+\textbf{Burchnall-Chaundy expansion:}
+
+
+ We use the Burchnall-Chaundy expansion\footnote {The \textit{Burchnall-Chaundy expansion} of the Appell hypergeometric function enables one to write it in terms of a product of two Gauss hypergeometric functions in the following way,
+	\begin{align}
+		\label{eq:F1exp}
+		\mathbf{F}_1\left(a , b_1, b_2 , c  , x, y\right) =\sum_{n=0}^\infty & {\frac{(a)_n(b_1)_n(b_2)_n(c-a)_n}  {n!(c+n-1)_n (c)_{2n}}}\,x^n y^n\times {}_{2}\mathbf{F}_1\left(\genfrac{}{}{0pt}{}{a+n,b_1+n}{c+2n};x\right) {}_{2}\mathbf{F}_1\left(\genfrac{}{}{0pt}{}{a+n,b_2+n}{c+2n};y\right)\,.
+	\end{align}} \cite{Burchnall1940EXPANSIONSOA} (see \cite{Fan:2023lky} for more details) of the {Appell} function in \eqref{s-channel} to get the following,
+	\begin{align}
+\begin{split}
+		\label{5.33u}
+		&\mathcal{G}^{12\to 34}(w,\bar w)=\delta_1(\alpha,\beta|\gamma) B\left(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4)\right) \\&\hspace{0cm} \times w^{\frac{2+\Delta_1-\Delta_2}{2}}\bar w^{\frac{2+\Delta_1-\Delta_2}{2}}\sum_{n=0}^\infty\frac{(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4))_n(2-\Delta_2)_n(2-\Delta_2)_n(\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4))_n}{n!(1+n-\Delta_2+\Delta_1 )_n (2+\Delta_1-\Delta_2 )_{2n}}\\
+		&\times w^{n}\bar{w}^{n}\,  {}_{2}{F}_1\left(\genfrac{}{}{0pt}{}{\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4)+n,2-\Delta_2+n}{\Delta_1-\Delta_2+2+2n};w\right)\\&
+		\hspace{5
+        cm}\times{}_{2}{F}_1\left(\genfrac{}{}{0pt}{}{\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4)+n,2-\Delta_2+n}{\Delta_1-\Delta_2+2+2n};\bar w\right).
+        \end{split}
+	\end{align}     
+Now comparing \eqref{4.36k} with \eqref{5.33u} we get,
+\begin{align}
+   \Delta\pm 
+ J=2+2n+\Delta_1-\Delta_2\,.
+\end{align}
+This is only possible when $J=0$ and immediately implies that the exchange operators have to be scalars.
+\textcolor{black}{Therefore the $\textrm{OPE}_{12\mathcal{O}}\otimes \textrm{OPE}_{34\mathcal{O}}$ coefficient (for $J=0$) is given by},
+\begin{align}
+    \begin{split}
+&f_{12\mathbfcal{O}}f_{34\mathbfcal{O}}\sim \delta_1(\alpha,\beta|\gamma) \,B\Big(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4)\Big) \\ &\hspace{0 cm}\times\frac{(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4))_n(2-\Delta_2)_n(2-\Delta_2)_n(\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4))_n}{  n!(1+n-\Delta_2+\Delta_1 )_n (2+\Delta_1-\Delta_2 )_{2n}},\,\,\,\\&\hspace{0.8cm}\textrm{with,\,\,}2n=\Delta-2-\Delta_1+\Delta_2.
+    \end{split}
+\end{align}
+For simplicity we set the conformal dimensions of  the external primaries to be same $\Delta_{\mathcal{O}}$. Therefore the OPE coefficient reduces to (for non-spinning exchange),
+
+\begin{tcolorbox}[thesisresultbox, title=OPE coefficient for EFT correction (scalar exchange)]
+\restorethesisbodyformat
+\begin{align}
+    \begin{split}
+    \label{4.46o}
+f^2_{\mathcal{O}\mathcal{O}\mathbfcal{O}}=& \delta_1\Big(\alpha,\beta\Big|\textcolor{black}{\gamma\to4(\Delta_{\mathcal{O}}-1)}\Big) B\left(\Delta_{\mathcal{O}},\Delta_{\mathcal{O}}\right)\times\frac{\Gamma \left(\frac{\Delta }{2}\right)^4 \Gamma \left(2 \Delta _\mathcal{O}\right) \Gamma \left(\frac{\Delta }{2}+\Delta _\mathcal{O}-1\right)}{\Gamma (\Delta -1) \Gamma (\Delta ) \Gamma \left(\frac{\Delta }{2}-\Delta _\mathcal{O}+1\right) \Gamma \left(\Delta _\mathcal{O}\right){}^4}\,.
+    \end{split}
+\end{align}
+\end{tcolorbox}
+\restorethesisbodyformat
+
+\vspace{0.5 cm}
+\noindent
+This naturally leads us to the question: what happens if we consider the exchange of spinning primaries, i.e., operators with non-zero spin ($J \ne 0$)?\footnote{It is not entirely clear to us why the Burchnall-Chaundy expansion of the four-point function fails to capture the complete spectrum of the theory.} To address this question, we make use of Caron-Huot's \textit{OPE inversion formula} \cite{Caron-Huot:2017vep}, which applies for  operators with finite, non-zero spin subject to the appropriate unitarity bounds. \textit{If one can demonstrate that the four-point function admits a consistent inversion yielding non-vanishing OPE coefficients for spinning operators, this would imply that the spectrum necessarily includes spinning exchanges. Thus, the problem reduces to examining whether such a consistent inversion is possible. We show that, in this case, the OPE inversion can indeed be performed consistently. Furthermore, we conduct a comparative study of the results obtained for $J=0$ using both approaches. }
+\par
+\subsection*{OPE Inversion:}
+To start with, one needs the following integral representation. The discreteness in $\Delta$ should be converted into an integral form, sometimes known as partial-wave expansion \cite{Dolan:2003hv,Costa:2012cb} and takes the following form \cite{Caron-Huot:2017vep},
+\begin{align}
+\mathcal{G}^{12\to 34}(w,\bar w)=\mathbf{1}_{12}\mathbf{1}_{34}+\sum_{J=0}^\infty\rmint_{d/2-i\infty}^{d/2+i\infty}\frac{d\Delta}{2\pi i} \,\,c(J,\Delta)F_{J,\Delta}(w,\bar w)\label{5.35}
+\end{align}
+where, $c(J,\Delta)$ is the partial-wave coefficient and $F_{J,\Delta}$ is given by,
+\begin{align}F_{J,\Delta}(w,\bar w)=\frac{1}{2}\Bigg(\textcolor{black}{G_{J,\Delta}(w,\bar w)}\hspace{0.2cm}+\underbrace{\textcolor{black}{\frac{K_{J,d-\Delta}}{K_{J,\Delta}}G_{J,d-\Delta}(w,\bar w)}}_{\text{Shadow contribution}}\Bigg)\end{align}
+where the constants can be casted as,
+\begin{align}
+   & K_{J,\Delta}=\frac{\Gamma(\Delta-1)}{\Gamma(\Delta-d/2)}\kappa_{J+\Delta},\,\,\,\,\,\,\,\,\,\,\,\,\,\,\kappa_{\beta}=\frac{\Gamma(\beta/2-a)\Gamma(\beta/2+a)\Gamma(\beta/2-b)\Gamma(\beta/2+b)}{2\pi^2\Gamma(\beta-1)\Gamma(\beta)}\,,\\& \hspace{0.3cm}a=\frac{1}{2}(2-\Delta_2-\Delta_1)\,,\quad \quad\quad\quad
+b=\frac{1}{2}(\Delta_3-\Delta_4)\nonumber
+\end{align}
+and $w,\bar w$ are the cross-ratio(s). $\Delta_i, \text{ for } \, i=1,\cdots,4$ are conformal dimension of primaries\footnote{Note that for our case we have three primaries and one shadowed primary.}. Under the assumption that  harmonic functions $F(J,\Delta)$ are orthogonal to each other, and Euclidean OPE data(s) can be obtained by inverting \eqref{5.35} in the following way \cite{Caron-Huot:2017vep} ,
+\begin{align}
+    c_{\texttt{s}}(J,\Delta)=N(J,\Delta)\rmint_{-\infty}^{\infty} d^2w\,\mu(w,\bar w)\,F_{J,\Delta}(w,\bar w)\,\mathcal{G}^{12\to 34}(w,\bar w)\label{4.46p}
+\end{align}
+%\noindent
+%In analogy with the \textit{Froissart-Gribov} formula one derives the Lorentzian OPE inversion and express the coefficients $c(J,\Delta)$ in terms of the Lorentzian OPE data. For s-channel ($12\to 34$) scattering we have the following conformal block expansion of the amplitude,
+%\begin{align}
+  %  \begin{split}
+       %\mathbfcal{G}^{21}_{34}(w,\bar w):=\,\mathbfcal{F}_1\left(3-\Delta_1-\Delta_3,2-\Delta_3,2-\Delta_3,2-\Delta_3+\Delta_4,w,\bar w\right)
+  %  \end{split}
+%\end{align}
+%One can proceed to compute the double-Discontinuity (\textbf {dDisc}) of this function as follows,
+
+%\begin{align}
+%\textbf{dDisc}[\mathcal{G}^{21}_{34}(w,\bar w)]=2\sin^2(2\pi \Delta_3)\,\mathcal{G}^{21}_{34}\,(w,\bar w)
+%\end{align}
+%Now, using the \textit{Lorentzian OPE inversion formula} \cite{Caron-Huot:2017vep} we can write ,
+%\begin{align}
+    %c_L^t(J,\Delta)=%\frac{\kappa_{\Delta}}{4}\rmint_0^1 dw\,d \bar w\,\mu(w,\bar w)\,G_{\Delta+1-d, J+d-1}(w,\bar w)\,\textbf{dDisc}[\mathcal{G}^{21}_{34}(w,\bar w)],
+%\end{align}
+where,
+\begin{align}
+    \begin{split}
+  &      \mu(w,\bar w)=\left|\frac{w-\bar w}{w\bar w}\right| ^{d-2}\frac{(1-w)^{a+b}(1-\bar w)^{a+b}}{(w\bar w)^2},\,\textrm{with}\,\,a=\frac{2-\Delta_2-\Delta_1}{2},\,b=\frac{\Delta_3-\Delta_4}{2},\\ &
+  G_{J,\Delta}=\frac{k_{\Delta-J}(w)k_{\Delta+J}(\bar w)+k_{\Delta+J}(w)k_{\Delta-J}(\bar w)}{1+\delta_{J,0}}, \textrm{\,\,with }\,\,k_{\beta}(w)=w^{\beta/2}\,{}_{2}\mathbf{F}_1\left(\beta/2+a,\beta/2+b,\beta,w\right)\,.\label{4.47y}
+    \end{split}
+\end{align}
+Now, we can decompose the integral \eqref{4.46p} into three different channels, and as we are interested in the OPE limit, we make the following variable change $$w=\frac{4\rho_w}{(1+\rho_w)^2},\quad {\bar w}=\frac{4\rho_{\bar w}}{(1+\rho_{\bar w})^2}\,\quad |\rho_w|<1 $$ and focus on the $(0,1)$ region as we are interested in the $\texttt{s}$-channel OPE. According to the chosen notion of cross ratio, the $\texttt{s}$-channel OPE in Euclidean case dominates in this specific regime. So finally we get\footnote{We have used the relation $k_{\beta}(w,\bar w)\Bigg|_{a=0,b=0}=(4\rho)^{\beta/2}\,_2F_1(\frac{1}{2},\frac{\beta}{2},\frac{\beta+1}{2},\rho^2)\,.$},
+\begin{align}
+    \begin{split}
+       c_{\texttt{s}}(J,\Delta)&=N(J,\Delta)\rmint_{0}^1\rmint_{0}^1 d\rho_w d\rho_{\bar w}\,\,\mu (\rho_w,\rho_{\bar w})F_{J,\Delta}(\rho_w,\rho_{\bar w}){\mathcal{G}}^{\mathfrak{s}}(\rho_w,\rho_{\bar w})\\&
+       = \delta_1(\alpha,\beta|\gamma)N(J,\Delta)\rmint_{|\rho_w|\ll 1} d^2\rho_w \,\mu(\rho_w,\rho_{\bar w })\,\Bigg(\left(\frac{4\rho_w}{(1+\rho_w)^2}\right)^{\frac{\Delta-J}{2}}\left(\frac{4\rho_{\bar w }}{(1+\rho_{\bar w })^2}\right)^{\frac{\Delta+J}{2}}+\rho_w\leftrightarrow\rho_{\bar w}\Bigg)\\&\hspace{0.8cm}\times \mathbf{F}_{1}\left(\Delta_{\mathcal{O}},\Delta_{\mathcal{O}},2\Delta_{\mathcal{O}},\frac{4\rho_w}{(1+\rho_w)^2},\frac{4\rho_{\bar{w}}}{(1+\rho_{\bar{w}})^2}\right)\,,\\& 
+        \approx \delta_1(\alpha,\beta|\gamma)\,N(J,\Delta)\textstyle{\rmint_{0}^1\rmint_{0}^1 \frac{d\rho_w d\rho_{\bar w}}{{16 \,\rho_w^2 \,\text{$\rho_{\bar w }$}^2}}{\Bigg(\rho_w ^{\frac{\Delta-J}{2}} \text{$\rho_{\bar w }$}^{\frac{\Delta+J}{2}}+\rho_w ^{\frac{\Delta-J}{2}} \text{$\rho_{\bar w }$}^{\frac{\Delta+J}{2}} \Bigg)\left(\frac{(\text{$\rho_{\bar w} $}+1)^2}{(\text{$\rho_{\bar w }$}-1)^2}\right)^{\Delta_{\mathcal{O}} } \left(1-\rho_w ^2\right) \left(1-\text{$\rho_{\bar w }$}^2\right)}},
+        \\& =\delta_1(\alpha,\beta|\gamma) \frac{e^{-2\pi i\Delta_{\mathcal{O}}}N(J,\Delta)}{8 (\Delta +J-2)}\Gamma (1-2 \Delta_{\mathcal{O}} ) \Bigg[\Gamma \left(\frac{1}{2} (-J+\Delta -2)\right)\, \\&
+ \hspace{0.8cm}\times_2\tilde{F}_1\left(\frac{1}{2} (-J+\Delta -2),-2 \Delta_{\mathcal{O}} ;\frac{1}{2} (-J+\Delta -4 \Delta_{\mathcal{O}} );-1\right)+J\leftrightarrow -J\Bigg],\\& \hspace{0.8cm} \textrm{with},\, \mathscr{R}[\Delta-J]>2, \textrm{and},\,\mathscr{R}[\Delta+J]>2\,.\label{4.55u}
+    \end{split}
+\end{align}
+In evaluating \eqref{4.55u}, the integral convergence condition of  shadow part of the conformal block violets unitarity bound, hence can be dropped. In simplifying the integral at the Euclidean OPE limit (\textcolor{black}{$\rho_w,\rho_{\bar w}\ll1$}), we have approximated the hypergeometric function to be 1. Similarly we have approximated the whole $\text{Appell}\,\,\mathbf{F}_1$ function as \footnote{ The normalization factor $N(J,\Delta)$ in general dimension is given by,
+\begin{align}
+   N (J,\Delta)=\frac{4^\Delta \,
+   \Gamma(J+\frac{d-2}{2})\Gamma(J+\frac{d}{2})K_{J,\Delta}}{ 2\pi\,\Gamma(J+1)\Gamma(J+d-2)K_{J,d-\Delta}}B\left(\frac{1}{2}(2+\Delta_1-\Delta_2+\Delta_3-\Delta_4),\frac{1}{2}(2+\Delta_1-\Delta_2-\Delta_3+\Delta_4)\right)\,.\nonumber
+\end{align}},
+
+\begin{align} \label{approx1}
+\mathbf{F}_{1}\left(\Delta_{\mathcal{O}},\Delta_{\mathcal{O}},\Delta_{\mathcal{O}},2\Delta_{\mathcal{O}},\frac{4\rho_w}{(1+\rho_w)^2},\frac{4\rho_{\bar{w}}}{(1+\rho_{\bar{w}})^2}\right)\approx \Bigg(\frac{\rho_{\bar w}+1}{\rho_{\bar w}-1}\Bigg)^{2\Delta_{\mathcal{O}}}\,.
+\end{align}
+
+
+
+
+\par 
+Now, one can extract the OPE coefficient from the partial-wave coefficient using the following observation that $c(J,\Delta)$ has poles at the real $\Delta$ axis at the location of the physical operators and consequently by computing the residues \cite{Liu:2020tpf,Caron-Huot:2017vep},
+\begin{align}
+    \begin{split}
+        c(J,\Delta')\sim -\sum_{\Delta}\frac{f^2_{\mathcal{O}\mathcal{O}\mathbfcal{O}_{\Delta}}}{\Delta'-\Delta}\,.
+    \end{split}
+\end{align}
+\noindent
+In the complex \(\Delta'\)-plane, the integrand has several poles originating from various \(\Gamma\)-functions and potentially from the hypergeometric function as well. By analyzing \eqref{4.55u}, it becomes evident that, to ensure proper convergence of the integral, the contour must be closed on the right side of the \(\Delta'\)-plane i.e. $\textrm{Re}(\Delta')>1$. If we consider the shadow contribution of the block, the contour must be closed on the left. However, due to shadow symmetry, the OPE coefficients remain unchanged, as discussed in \cite{Caron-Huot:2017vep}. Accordingly, we evaluate the residues at the poles that lie in the right half of the complex \(\Delta'\)-plane. We now turn to the function of interest \eqref{4.55u}:
+\begin{align}
+    \begin{split}
+      c_{\texttt{s}}(J,\Delta)=&\delta_1(\alpha,\beta|\gamma) B\left(\Delta_{\mathcal{O}},\Delta_{\mathcal{O}}\right)\Gamma(1-2\Delta_{\mathcal{O}})\\&\times\frac{\Gamma^4 \left(\frac{\Delta'+J}{2}\right)\Gamma(2-\Delta'+J-1)\Gamma(2-\Delta'+J)}{2\pi(\Delta'+J-2)\Gamma(\Delta'+J-1)\Gamma(\Delta'+J)\Gamma^4\left(\frac{2-\Delta'+J}{2}\right)}\\
+&\times \Bigg[\Gamma\left(\frac{1}{2}(\Delta'-J-2)\right){_2}\tilde{F}_1\left(\frac{1}{2} (-J+\Delta' -2),-2 \Delta_{\mathcal{O}} ;\frac{1}{2} (-J+\Delta' -4 \Delta_{\mathcal{O}} );-1\right)+J\leftrightarrow-J \Bigg]\,.\label{4.36l}
+    \end{split}
+\end{align}
+We analyze the singularities of \(c_{\mathfrak{s}}(J,\Delta)\) piece by piece. The function has three types of simple poles for \(\mathrm{Re}(\Delta') > 1\) \footnote{One can verify that \({_2}\tilde{F}_1\) does not introduce any poles for \(\mathrm{Re}\,\Delta' > 1\) by observing that, for \(\Delta_{\mathcal{O}} = 1\), it behaves as,
+${_2}\tilde{F}_1 \sim -\frac{2 (-\Delta + J + 2)}{\Gamma \left( \frac{1}{2} (-J + \Delta - 2) \right)}$,
+which is manifestly analytic in this region. Upon analytically continuing \(\Delta_{\mathcal{O}}\) into the entire complex plane while keeping its real part fixed, no additional pole structure is expected to emerge.
+}:
+\begin{itemize}
+    \item  An infinite tower of simple poles at \(\Delta' = n+J+1\),
+\item Another infinite tower of simple poles at \(\Delta' =n+J+2\),
+\item There is a single simple pole at \(\Delta' = 2 - J\). However, based on the convergence condition of the integral in \eqref{4.55u}, this pole lies outside the region of convergence and can therefore be excluded from the residue analysis.
+\end{itemize}
+%\newpage
+The corresponding residues are:\\
+\textbullet $\,\,$ at $\Delta' = n+J+2:$
+\begingroup\tiny
+\begin{align}
+&\mathop{\mathbf{Res}}_{\Delta' = n+J+2}c_{\texttt{s}}(J,\Delta')
+=\frac{e^{-2 i \pi  \Delta_{\mathcal{O}}}\delta_1(\alpha,\beta|\gamma) B\left(\Delta_{\mathcal{O}},\Delta_{\mathcal{O}}\right)\Gamma (1-2 \Delta_{\mathcal{O}}) 2^{2 J+2 n} \Gamma \left(J+\frac{n}{2}+1\right)^4}{ n^3 (2 J+n)^3 \Gamma \left(-\frac{n}{2}\right)^4 \Gamma (n) \Gamma (n+2) \Gamma (2 J+n) \Gamma (2 J+n+2) \Gamma \left(\frac{n}{2}-2 \Delta_{\mathcal{O}}+1\right) \Gamma \left(J+\frac{n}{2}-2 \Delta_{\mathcal{O}}+1\right)}\notag\\
+&\quad
+ \times\Bigg[-2 n (2 J+n) \Gamma \left(J+\frac{n}{2}+1\right) \Gamma \left(\frac{n}{2}-2 \Delta_{\mathcal{O}}+1\right) \frac{ab}{c^2}{_2}\Theta_1^{(1)} \left( 
+\begin{array}{c} 
+1, 1 : c, a + 1; b + 1 \\
+c + 1 : 2; c + 1 
+\end{array} 
+; -1, -1 \right)\notag\\
+&\quad +2 n (2 J+n) \Bigg(-\Gamma \left(\frac{n}{2}+1\right) \left(\frac{ab}{c^2}{_2}\Theta_1^{(1)} \left( 
+\begin{array}{c} 
+1, 1 : c, a + 1; b + 1 \\
+c + 1 : 2; c + 1 
+\end{array} 
+; -1, -1 \right)-\frac{a}{c}\Theta_1^{(1)} \left( 
+\begin{array}{c} 
+1, 1 : a, a + 1; b + 1 \\
+a + 1 : 2; c + 1 
+\end{array} 
+; -1, -1 \right)\right)\notag\\
+&\quad \times\Gamma \left(J+\frac{n}{2}-2 \Delta_{\mathcal{O}}+1\right)-\frac{a}{c}\,\Gamma \left(J+\frac{n}{2}+1\right) \Gamma \left(\frac{n}{2}+2 \Delta_{\mathcal{O}}+1\right) \Theta_1^{(1)} \left( 
+\begin{array}{c} 
+1, 1 : a, a + 1; b + 1 \\
+a + 1 : 2; c + 1 
+\end{array} 
+; -1, -1 \right)\Bigg)\notag\\
+&\quad+n \Big(2 \Gamma \left(J+\frac{n}{2}+1\right) \Gamma \left(\frac{n}{2}-2 \Delta_{\mathcal{O}}+1\right) \, _2F_1\left(J+\frac{n}{2},-2 \Delta_{\mathcal{O}};J+\frac{n}{2}-2 \Delta_{\mathcal{O}}+1;-1\right)\notag\\
+&\qquad \times\left((2 J+n) \left(H_{J+\frac{n}{2}-2 \Delta_{\mathcal{O}}}-5 H_{J+\frac{n}{2}-1}+4 H_{2 J+n}-4 H_{-\frac{n}{2}-1}+4 H_n-4 \log (2)\right)+\frac{4 J-2}{n+1}-\frac{2}{2 J+n+1}-4\right)\notag\\
+&\qquad +n \Gamma \left(\frac{n}{2}\right) \, _2F_1\left(\frac{n}{2},-2 \Delta_{\mathcal{O}};\frac{1}{2} (n-4 \Delta_{\mathcal{O}}+2);-1\right) \Gamma \left(J+\frac{n}{2}-2 \Delta_{\mathcal{O}}+1\right)\notag\\
+&\qquad \times\Big(-(2 J+n) \left(4 H_{J+\frac{n}{2}-1}-4 H_{2 J+n}-H_{\frac{n}{2}-2 \Delta_{\mathcal{O}}}+4 H_{-\frac{n}{2}-1}-4 H_n+\psi ^{(0)}\left(\frac{n}{2}\right)+\gamma_E \right)+\frac{4 J-2}{n+1}-\frac{2}{2 J+n+1}\notag\\
+&\qquad\qquad -4 \log (2) (2 J+n)-2\Big)\Big)+4 (2 J+n) \Gamma \left(J+\frac{n}{2}+1\right) \Gamma \left(\frac{n}{2}-2 \Delta_{\mathcal{O}}+1\right) \, _2F_1\left(J+\frac{n}{2},-2 \Delta_{\mathcal{O}};J+\frac{n}{2}-2 \Delta_{\mathcal{O}}+1;-1\right)\Bigg]\label{4.62i}
+\end{align}
+\endgroup
+\textbullet $\,\,$ at $\Delta' = n+J+1:$
+\begingroup\small
+\begin{align}
+&\mathop{\mathbf{Res}}_{\Delta' = n+J+1}c_{\texttt{s}}(J,\Delta')
+=\delta_1(\alpha,\beta|\gamma) B\left(\Delta_{\mathcal{O}},\Delta_{\mathcal{O}}\right)\notag\\
+&\quad\times\frac{1}{(n-1) n! (2 J+n-1) \Gamma \left(\frac{1-n}{2}\right)^4 \Gamma (2 J+n) \Gamma (2 J+n+1)}\notag\\
+&\quad\times \Big[e^{-2 i \pi  \Delta_{\mathcal{O}}} (-1)^n \Gamma (1-2 \Delta_{\mathcal{O}}) 4^{J+n} \Gamma (1-n) \Gamma \left(J+\frac{n}{2}+\frac{1}{2}\right)^4 \Big(\Gamma \left(J+\frac{n}{2}+\frac{1}{2}\right)\notag\\
+&\qquad\times\, _2\tilde{F}_1\left(\frac{1}{2} (2 J+n-1),-2 \Delta_{\mathcal{O}};\frac{1}{2} (2 J+n-4 \Delta_{\mathcal{O}}+1);-1\right)+\Gamma \left(\frac{n+1}{2}\right) \, _2\tilde{F}_1\left(\frac{n-1}{2},-2 \Delta_{\mathcal{O}};\frac{1}{2} (n-4 \Delta_{\mathcal{O}}+1);-1\right)\Big)\Big]\notag\\
+&\quad \,.\label{4.63e1}
+\end{align}
+\endgroup
+Here,  \(H_n = \rmint_{0}^1 dx\,\frac{1 - x^n}{1 - x}\) denotes the harmonic number, and \(\psi^{(0)}\) is the digamma function, which is the logarithmic derivative of the gamma function. Moreover, we write the  derivatives of the hypergeometric functions (appeared in the calculation) can be casted in terms of \textit{Kampé de Fériet-like functions} \cite{Ancarani:2009zz}\footnote{Specifically, $
+   {_2}\Theta_1^{(1)} \left( 
+\begin{matrix}
+a_1, a_2 \; : \; b_1, b_2; b_3 \\
+c_1 \; : \; d_1; d_2
+\end{matrix}
+; x_1, x_2 \right)
+= 
+\sum_{m_1=0}^{\infty} \sum_{m_2=0}^{\infty} 
+\frac{
+(a_1)_{m_1} (a_2)_{m_2} (b_1)_{m_1} (b_2)_{m_1 + m_2} (b_3)_{m_1 + m_2}
+}{
+(c_1)_{m_1} (d_1)_{m_1 + m_2} (d_2)_{m_1 + m_2}
+}
+\frac{x_1^{m_1} x_2^{m_2}}{m_1! m_2!}\,.\nonumber
+$}.
+\begin{align}
+    \begin{split}    
+ &{_2} F_1^{(1,0,0,0)}(a,b,c,-1)=-\frac{a}{c}\Theta_1^{(1)} \left( 
+\begin{array}{c} 
+1, 1 : a, a + 1; b + 1 \\
+a + 1 : 2; c + 1 
+\end{array} 
+; -1, -1 \right), \\&   \nonumber 
+\end{split} \\[0.5em]
+\begin{split}
+   &  {_2} F_1^{(0,0,1,0)}(a,b,c,-1)=\frac{ab}{c^2}{_2}\Theta_1^{(1)} \left( 
+\begin{array}{c} 
+1, 1 : c, a + 1; b + 1 \\
+c + 1 : 2; c + 1 
+\end{array} 
+; -1, -1 \right), \\& \hspace{2 cm}\textrm{with}\,\,a=\frac{n}{2}, \,b=-2\Delta_{\mathcal{O}},\,\textcolor{black}{c=\frac{n}{2}-2\Delta_{\mathcal{O}}+1}\,. \label{4.63e}
+\end{split}
+\end{align}
+Collecting all the results from \eqref{4.62i} and \eqref{4.63e1} we find the OPE coefficient to be,
+
+\begin{tcolorbox}[thesisresultbox, title=OPE coefficient for EFT correction (general exchange)]
+\restorethesisbodyformat
+\begin{align*}
+&f^2_{\Delta_\mathcal{O}\Delta_\mathcal{O}\Delta} 
+=-\mathop{\mathbf{Res}}_{\Delta' = n+J+2}c_{\texttt{s}}(J,\Delta')\Big|_{n=\Delta-J-2}-\mathop{\mathbf{Res}}_{\Delta' = n+J+1}c_{\texttt{s}}(J,\Delta')\Big|_{n=\Delta-J-1}.\label{4.39}
+\end{align*}
+\end{tcolorbox}
+\restorethesisbodyformat
+\vspace{0.5cm}
+%\hfsetfillcolor{gray!8}
+%\hfsetbordercolor{black}
+%\begin{align}
+%\begin{split}
+%\label{4.51k}
+%\tikzmarkin[disable rounded corners=true]{pldpi11}(3.5
+%,-0.8)(-0.4,0.9)
+ %    & c^{\texttt{t}}(J,\Delta)=\frac{1}{2}\mathcal{N}^{2,1}_{3,4}N(J,\Delta)\rmint_{0}^1dw\,d\bar w \frac{(1-w)^{a+b}(1-\bar w)^{a+b}}{(w\bar w)^2}\left(G_{J,\Delta}(w,\bar w)+\frac{K_{J,2-\Delta}}{K_{J,\Delta}}G_{J,2-\Delta}(w,\bar w)\right)\\ &\hspace{0.8cm}\times\mathbfcal{F}_1(3 - \Delta_1 - \Delta_3,1-i\lambda_3,1-i\lambda_3,2-\Delta_3+\Delta_4,w,\bar w)\\ &
+    %    =\frac{1}{2}\mathcal{N}^{2,1}_{3,4}N(J,\Delta)\sum_{n,r}\frac{\Gamma (a+b+1)^2\Gamma(n-1)\Gamma{(r-1)}\left(2-\Delta _3\right)_r \left(-\Delta _1-\Delta _3+3\right)_r \left(a+\frac{J+\Delta }{2}\right)_n \left(b+\frac{J+\Delta }{2}\right)_n}{n! r! \left(-\Delta _3+\Delta _4+2\right)_r \Gamma (a+b+n) \Gamma (a+b+r) (J+\Delta )_n}\\ & \times \, _3F_2\left(n-1,2-\Delta _3,-\Delta _1-\Delta _3+r+3;a+b+n,-\Delta _3+\Delta _4+r+2;1\right)\\ &
+     %   \times \, \, _3F_2\left(r-1,a+\frac{\Delta }{2}-\frac{J}{2},b+\frac{\Delta }{2}-\frac{J}{2};a+b+r,\Delta -J;1\right)+\textrm{shadow contribution}
+  %\tikzmarkend{pldpi11}
+ %\end{split} 
+%\end{align}
+
+%\subsection*{{\underline{\texttt{u}-channel Partial Wave Coefficient (PWC):}}}
+%Similarly, the $\texttt{u}-$channel partial wave coefficient is given by,
+
+
+%\hfsetfillcolor{gray!8}
+%\hfsetbordercolor{black}
+%\begin{align}
+%\begin{split}
+%\label{4.50p}
+%\tikzmarkin[disable rounded corners=true]{pldpi2}(0.1
+%,-0.9)(-0.3,0.6)
+ %    c^{\texttt{u}}(J,\Delta)&=\mathbfcal{C}^{2,1}_{3,4}(J,\Delta,\Delta_i)\sum_{n,r}\frac{1}{n! r! \left(\Delta _1-\Delta _3+2\right)_r (J+\Delta )_n \Gamma \left(-b+n+\frac{\Delta }{2}-\frac{J}{2}\right) \Gamma \left(-b+r+\frac{\Delta }{2}-\frac{J}{2}\right)}\\ &\hspace{0cm}\times \Gamma (1-b)^2 \left(2 \Delta _1-1\right)_r \left(2-\Delta _3\right)_r \Gamma \left(-\frac{J}{2}+n+\frac{\Delta }{2}-1\right) \Gamma \left(-\frac{J}{2}+r+\frac{\Delta }{2}-1\right) \left(\frac{1}{2} (-2 a+J+\Delta )\right)_n\\ &\hspace{0cm}\times\left(\frac{1}{2} (2 a+J+\Delta )\right)_n \, _3F_2\left(-a+\frac{\Delta }{2}-\frac{J}{2},a+\frac{\Delta }{2}-\frac{J}{2},-\frac{J}{2}+r+\frac{\Delta }{2}-1;-b+r+\frac{\Delta }{2}-\frac{J}{2},\Delta -J;1\right) \,\\ &\hspace{0cm}\times \, _3F_2\left(\frac{\Delta }{2}-\frac{J}{2}+n-1,2 \Delta _1+r-1,2-\Delta _3;-b+\frac{\Delta }{2}-\frac{J}{2}+n,\Delta _1-\Delta _3+r+2;1\right)+\textrm{shadow contribution}
+ % \tikzmarkend{pldpi2}
+ %\end{split} 
+%\end{align}
+
+
+%\begin{figure}
+ % \hspace{0.4 cm}\scalebox{0.85}{\includegraphics[width=0.45\linewidth]{SUMMAND.png}}\hspace{0cm}
+%\includegraphics[width=0.58\linewidth]{SUMMAND2.png}
+%    \caption{For different values of $n$ and $r$ variable in the sum of $u$-channel, Partial wave coefficient (PWC) has been ploted in 3D using \textbf{{Mathematica}}. For large value of $n$ and $r$ i.e $n=15,r=15$ (Left) and $n=25,r=25$ (Right) the valley depicts the convergence of the later entries of the sum. We considered $\Delta_1=\Delta_2=1, \,\Delta_3=\Delta_4+2i \lambda=\Delta_\phi:=1+i\,\lambda (=2) (\text{say})$. Alongwith, we considered spin $J=2$. }
+ %   \label{fig:5}
+%\end{figure}
+
+
+%\noindent
+%The detailed computation is given in Appendix~\eqref{appA}.
+
+
+%\vspace{-0.30 cm}
+%\subsection*{{\underline{\texttt{s}-channel Partial Wave Coefficient (PWC):}}}
+%After doing the integrals in \eqref{B.7o} and $m,s$ sum, we are left with,
+
+
+%\hfsetfillcolor{gray!8}
+%\hfsetbordercolor{black}
+%\begin{align}
+%\begin{split}
+%\label{4.55p}
+%\tikzmarkin[disable rounded corners=true]{pldpi1}(0.3
+%,-0.9)(-0.4,0.6)
+  %   & c^{\texttt{s}}(J,\Delta)=\textstyle{{\mathbfcal{C}^s}(J,\Delta,\Delta_i)\sum_{n,r}\frac{\pi  i^{-2 \Delta } \csc (\pi  (a-b)) \Gamma (a+b+1)^2 \Gamma (\Delta -J) \Gamma (J+\Delta ) \left(2-\Delta _3\right)_r \left(-\Delta _3-\Delta _4+3\right)_r \Gamma \left(r+\Delta _1-\Delta _3+2\right)\Gamma\left(r+\Delta _1-\Delta _3+2\right)}{n! r! \left(\Delta _1-\Delta _3+2\right)_r \Gamma \left(a+\frac{\Delta -J}{2}\right) \Gamma \left(a+\frac{J+\Delta }{2}\right) \Gamma \left(b+\frac{\Delta -J}{2}\right) \Gamma \left(b+\frac{J+\Delta }{2}\right)}}\\ &
+ %\textstyle{
+ %   \times\Bigg( \frac{e^{i \pi  a}\Gamma (-a+r+1) \Gamma \left(b+\frac{\Delta }{2}-\frac{J}{2}\right) \, _3\tilde{F}_2\left(-a+r+1,b+\frac{J}{2}-\frac{\Delta }{2}+1,b+\frac{\Delta }{2}-\frac{J}{2};-a+b+1,b+r+2;1\right)}{\Gamma \left(\frac{1}{2} (-2 b-J+\Delta )\right)}}\\&\hspace{0.8cm}-\textstyle{\frac{e^{i \pi  b} \Gamma (-b+r+1) \Gamma \left(a+\frac{\Delta }{2}-\frac{J}{2}\right) \, _3\tilde{F}_2\left(-b+r+1,a+\frac{J}{2}-\frac{\Delta }{2}+1,a+\frac{\Delta }{2}-\frac{J}{2};a-b+1,a+r+2;1\right)}{\Gamma \left(\frac{1}{2} (-2 a-J+\Delta )\right)}\Bigg)}\\ &
+   % \times \textstyle{\Bigg(\frac{(-1)^a \Gamma (-a+n+1) \Gamma (a-b-n) \Gamma \left(b+\frac{J}{2}+n+\frac{\Delta }{2}\right) \, _3\tilde{F}_2\left(-a+n+1,2-\Delta _3,r-\Delta _3-\Delta _4+3;b+n+2,r+\Delta _1-\Delta _3+2;1\right)}{\Gamma \left(\frac{1}{2} (-2 b+J-2 n+\Delta )\right)}}\\ &\textstyle{+\frac{(-1)^b \Gamma (-b+n+1) \Gamma (-a+b-n) \Gamma \left(a+\frac{J}{2}+n+\frac{\Delta }{2}\right) \, _3\tilde{F}_2\left(-b+n+1,2-\Delta _3,r-\Delta _3-\Delta _4+3;a+n+2,r+\Delta _1-\Delta _3+2;1\right)}{\Gamma \left(\frac{1}{2} (-2 a+J-2 n+\Delta )\right)}\Bigg)}+\textrm{shadow contribution}
+  %\tikzmarkend{pldpi1}
+ %\end{split} 
+%\end{align}
+
+
+%Using the linear transformation properties of Appell and Hypergeometric function, we have the integral,
+
+%\begin{align}
+ %   \begin{split}
+  %      c^{\mathfrak{u}}(J,\Delta)=\rmint_{0}^1 dw\,d\bar w&\,w^{\frac{\Delta-J}{2}}\bar w^{\frac{\Delta+J}{2}}(1-w)^{\frac{\Delta-J}{2}}(1-\bar w)^{\frac{\Delta+J}{2}}{}_{2}\mathbfcal{F}_1\left(\frac{\Delta-J}{2}+a,\frac{\Delta-J}{2}-b,\Delta-J,w\right)\\ &
+%\times{}_{2}\mathbfcal{F}_1\left(\frac{\Delta+J}{2}+a,\frac{\Delta+J}{2}-b,\Delta+J,\bar w\right)\mathbfcal{F}_1\left(\right)
+%    \end{split}
+%\end{align}
+%We can write the OPE coefficients as far as Euclidean signature is concerned as follows,
+%\begin{align}
+   % \begin{split}
+     %   c_E^t(J,\Delta)\sim \kappa_{\beta}\rmint_0^1 \frac{d w}{w^2}(1- w)^{a+b}\left(\rmint_{0}^1 d\bar w \frac{(1-\bar w)^{a+b}}{\bar w^2} F_{J,\Delta}(w,\bar w)\mathcal{G}_{34}^{21}(w,\bar w)\right)
+ %   \end{split}
+%\end{align}
+
+
+%Now, $\mathcal{G}_{34}^{21}(w,\bar w)$ behaves in the following way in the OPE limit, 
+
+%\begin{align}
+ %   \mathcal{G}_{34}^{21}(w,\bar w)\xrightarrow[\bar w\to \bar w]{ w\to0}{}_2\mathbfcal{F}_{1}(3-\Delta_1-\Delta_3,2-\Delta_3,2-\Delta_3+\Delta_4,\bar w)
+%\end{align}
+
+%Therefore, the integral inside parentheses becomes,
+
+
+%\begin{align}
+%\begin{split} 
+ %   &\rmint_{w}^1 d\bar w \frac{(1-\bar w)^{a+b}}{\bar w^2} k_{\beta}(\bar w)\textbf{ dDisc}[\mathcal{G}_{34}^{21}(w,\bar w)]
+   % \\&=\frac{\pi  \csc \left(\pi  \left(-\Delta _1-\Delta _3-\Delta _4+3\right)\right) \Gamma \left(-\Delta _3+\Delta _4+2\right) }{\Gamma \left(2-\Delta _3\right) \Gamma \left(-\Delta _1-\Delta _3+3\right) \Gamma \left(\Delta _1+\Delta _3+\Delta _4-2\right)}\\&\hspace{6, cm}\times\rmint_w^1 (1-{\bar w})^{\Delta _1+\Delta _3+\Delta _4-3} \frac{(1-\bar w)^{a+b}}{\bar w^2} k_{\beta}(\bar w)
+   % \end{split}
+%\end{align}
+%\noindent
+\textbf{\textit{A comparison of OPE computed from BC expansion and OPE inversion formula}:}
+\begin{figure} [htb!]
+    \centering
+\includegraphics[width=0.60\linewidth]{BC_EXP.png}
+    \caption{Plot depicting the matching for extraction of OPE coefficient using BC expansion (\textbf{red}) and OPE inversion for spin-0 (\textbf{blue}). We have set the conformal dimension for the external primaries to be: $\Delta_{\mathcal{O}}=1+i$.}
+    \label{fig5f}
+\end{figure}
+Now we present a comparative analysis of the s-channel OPE, which offers valuable insights into the interactions among conformal primary operators on the celestial sphere. In  Fig.~\eqref{fig5f}, we present a comparative study of extracting the OPE coefficients (taking the external conformal dimension to be $\Delta_{\mathcal{O}}=1+i$) from the two approaches: Burchnall-Chaundy (BC) expansion and OPE inversion.
+While the OPE coefficients derived via the BC expansion show agreement with those obtained through the OPE inversion formula for $J = 0$ and in the vicinity of: $\textrm{Im}(\Delta_{\mathcal{O}}) \gtrsim 1$, discrepancies begin to emerge at higher values of $\textrm{Im}(\Delta_{\mathcal{O}})$, leaving no major structural differences. These deviations can be attributed to the limit $\rho_w \ll 1$, which approximates the Appell and hypergeometric functions encoding the $\Delta_{\mathcal{O}}$ dependence as shown in \eqref{approx1}. Due to the technical complexity of performing an exact OPE inversion without such approximations, we currently work within a simplified framework. However, it is anticipated that a more complete evaluation of the OPE inversion, incorporating the full integration domain, may yield results that are more consistent with those from the BC expansion. The exact evaluation of OPE coefficients using the inversion formula requires a separate study, which we leave for further investigation.
+
+
+
+
+This calculation demonstrates a way for extracting OPE data from the four-point function within a suitable approximation scheme. Therefore, the answer to the third question raised in the introduction is also affirmative. Once analytic control over the OPE data is established for the Born amplitude, we immediately gain control over the full non-perturbative eikonal celestial amplitude, at least for the EFT correction part, since the $\omega$-integral in \eqref{4.6j} is independent of the cross-ratio $z$. Consequently, the same analysis performed for the Born amplitude case can be applied, with the $\omega$-integral treated as a formal object. However, for the GR part in \eqref{4.6l}, the functional dependence of the shadow amplitude on $z$ is highly sensitive to the $\omega$-integral, for which no closed-form solution is available. As a result, we lose entirely the analytic control over the OPE data for the GR part of the eikonal shadow correlator.
+
+\section{Connection to Carrollian amplitude}
+\label{ch5:sec5}
+A significant bridge between celestial and Carrollian frameworks is established through the so-called $\mathcal{B}$-transform \cite{Donnay:2022aba,Donnay:2022wvx}. This transformation maps celestial amplitudes defined via Mellin transforms of scattering amplitudes in momentum space into Carrollian amplitudes, which are naturally formulated in a spacetime with Carrollian symmetry arising in the ultra-relativistic limit. The $\mathcal{B}$-transform acts as a change of basis, translating between representations adapted to conformal structures at null infinity and those suited to Carrollian dynamics. Notably, the transformation preserves the essential symmetry content of the theory, shedding light on the interplay between conformal covariance on the celestial sphere and Carrollian symmetries on null hypersurfaces \cite{Donnay:2022aba,Bagchi:2022emh,Donnay:2022wvx}. Now we can compute the unmodified Carrollian amplitude from the celestial amplitude as,
+\begin{align}
+\begin{split}
+   \mathbfcal{C}(u_i,z_i,\bar z_i)&\sim\rmint_0^\infty \prod_id\omega_i e^{-i\sum\epsilon_j\omega_j u_j}\mathbb{M}_{\textrm{eik}}(\omega_i,z_i)\,,\\&
+    \sim\prod_{i=1}^4 \rmint_0^1 d\sigma_i \delta{\Bigg(\sum_i\sigma_i-1\Bigg)}[\cdots]\rmint_0^\infty dv \,\textcolor{black}{v^{-1}}e^{-iv^{-1}(\sigma_1u_1+\sigma_2u_2-\sigma_3u_3-\sigma_4u_4)}\mathbb{M}_{eik}(v,z)\,,\\&
+    \sim \prod_{i=1}^4 \rmint_0^1 d\sigma_i \delta{\Bigg(\sum_i\sigma_i-1\Bigg)}[\cdots]\Bigg(\rmint_0^\infty dv \,\textcolor{black}{v^{-1}}e^{-iv^{-1}(\sigma_1u_1+\sigma_2u_2-\sigma_3u_3-\sigma_4u_4)}\\&\times\Bigg[ \frac{1}{48\kappa} v^2 \left(\frac{\kappa \left(3 \kappa-v^2 (-\alpha +8 \beta )\right)}{\left(\kappa-\alpha  v^2\right) \left(\kappa-2 \beta  v^2\right)}-\frac{4 \kappa}{\kappa+\alpha  v^2}+\frac{\kappa}{\kappa+2 \beta  v^2}-\frac{24 z}{(z-1)}\right)\Bigg]\Bigg)\,.
+       \end{split}
+\end{align}
+\textcolor{black}{In obtaining the second line from the first one we used the simplex-variable decomposition of the Mellin measure discussed in Appendix~\ref{ch5:app:A}.} Now, changing the variable $v^{-1}=p$ and $(\sigma_1u_1+\sigma_2u_2-\sigma_3u_3-\sigma_4u_4)=h$, we can write the integrand in the parenthesis as,
+\begin{align}
+\begin{split}&\label{5.2w}
+    \tilde{\mathbfcal{C}}(\sigma_i,z_i,\bar z_i)=\textcolor{black}{\frac{h^8z}{{22579200 \sqrt{2 \pi }\,\kappa (z-1)}} \left(-761+280 \Bigg(-\frac{1}{2} (i \pi ) \text{ sign}(h)+\log (h)+\gamma_E \right)\Bigg)}\\&\hspace{1 cm}-(-\beta+2\alpha)\textcolor{black}{\frac{h^{10}}{{109734912000 \sqrt{2 \pi } \,\,\kappa^2 }} \Bigg(-7381+2520 \left(-\frac{1}{2} (i \pi ) \text{ sign}(h)+\log (h)+\gamma_E\right)\Bigg)}
+    \end{split}
+\end{align}
+where $\gamma_E$ is the Euler's constant. The first and second terms in \eqref{5.2w} come from the GR and the first-order correction to GR in quadratic EFT, respectively.  Now, performing the $\sigma$ integral, one can easily find out the Carrollian amplitude corresponding to the celestial amplitude as,
+\begin{align}
+   \mathbfcal{C}(u_i,z_i,\bar z_i)\sim \prod_{i=1}^4 \rmint_0^1\,d\sigma_i \delta(\sigma_i  - \sigma_{*i})\,\tilde{\mathbfcal{C}}(\sigma_i,z_i,\bar z_i)\,,
+\end{align}
+where the localization point $\sigma_{i\star}$ can be found in \eqref{5.17u}. \par
+One important point to note here is that the Carrollian amplitude has an IR pole in GR, which now shifts due to the non-zero value of $\alpha,\beta$. However, we have found this result by linearizing in $\alpha,\beta$. The IR-pole behaviour is given by,
+\begin{align}
+  \lim_{\delta\to 0^{+}} \frac{1}{\delta} \frac{h^8(z-1) \left(h^2\frac{ (z-1)}{z} (-\beta +2 \alpha )+540 \kappa\right)}{43545600 \sqrt{2 \pi }   \kappa z}.
+\end{align}
+Here, the infrared pole is important for boost invariance \cite{Donnay:2022wvx}.
+\section{Conclusion and Discussion}\label{ch5:sec7}
+Motivated by the case study of celestial eikonal amplitudes and their improved analytic behaviour, we have generalized the study of it for Einstein gravity to quadratic EFT. Below, we list the main findings of our paper,
+\begin{enumerate}
+\item Motivated by the analysis of \cite{Adamo:2024mqn}, we construct the celestial eikonal amplitude for the quadratic EFT of gravity, despite the fact that the Born amplitude in this case is meromorphic, unlike in GR. We find that the corrections to the eikonal phase arising from the EFT are short-ranged, involving \(\delta\)-function contributions. Nevertheless, by adopting a suitable prescription for handling functions of the \(\delta\)-function, we demonstrate that it is possible to extract physically meaningful results even in the presence of such contact interactions. We find that like GR the eikonal amplitude is multiplication of two parts: Born amplitude and a phase.
+\item Furthermore, we analyze the analytic structure of the eikonal amplitude by examining its behavior in both the ultraviolet (UV) and infrared (IR) regimes. In the UV limit, we find that the amplitude exhibits no structural differences compared to GR. However, upon numerical checking we find the EFT correction part converges faster than the GR part. But in the IR regime, the leading singularity is identified as a simple pole, in contrast to GR, where the leading singularity corresponds to an \(n\)-th order pole. Thus, the infrared behavior appears to improve upon the inclusion of EFT corrections. Although we are unable to compute the \(\omega\) integral exactly, we derive the corresponding dispersion relation. This dispersion relation is modified due to the presence of non-vanishing coupling constants \((\alpha, \beta)\). Contributions from poles on the real axis are absent, as they are excluded by the choice of integration contour, which is essential to ensure that the limit \((\alpha, \beta) \to 0\) correctly.
+
+\item  We also compute the celestial operator product expansion (OPE) from a four-point function involving three primary operators and one shadow operator, by expressing the correlator in the basis of \textit{conformal primary wavefunctions}. Upon evaluating the shadowed four-point function, we obtain an Appell function, which we then decompose into a sum of products of hypergeometric functions using the Burchnall-Chaundy expansion. In this process, we identify the celestial conformal blocks and express them in terms of hypergeometric functions. Remarkably, the underlying symmetries fix the conformal dimensions of the exchanged operators in a manner consistent with the Osborn block expansion, allowing the remaining factors to be identified as OPE coefficients.
+While such coefficients can alternatively be extracted from the collinear limit of scattering amplitudes, yielding only the leading OPE behaviour; our computation proceeds without invoking this limit. Surprisingly, OPE coefficient obtained using Burchnall-Chaundy 
+ does not involve contribution from the spinning exchange. To get the contribution from spin,  we employ the (Euclidean) OPE inversion formula to extract the full set of OPE coefficients. Furthermore, we provide a comparison of OPE coefficients extracted from the two ways mentioned above.
+\end{enumerate}
+\noindent
+Now, we end this section by discussing some possible future outlooks. The first objective is to compute the OPE inversion exactly, without resorting to approximations, for both the GR component and the EFT-corrected component. This task presents a significant challenge, particularly for the GR contribution, as it requires the exact computation of the eikonal amplitude. While the EFT corrections generally allow for a more straightforward  (as the kinematic part factors out form the eikonal amplitude) inversion, the GR component remains nontrivial due to the inherent complexity of exact eikonal amplitude calculations in this context. Moreover, due to the infrared triangle between soft theorems, ward identities, and memory effects, as proposed by Strominger et al. \cite{Strominger:2017zoo,Pate:2017fgt}, it is an open arena for investigating ward identities in quadratic EFT. One can try to find the memory effects in this setup. One can also attempt to compute soft theorems and central charges in this case. \textcolor{black}{In effective field theories (EFTs), gravitons typically possess at least one massive mode. Consequently, when attempting to construct the stress-energy tensor within the celestial framework, one must invoke the shadow transform of the massless graviton mode. However, the presence of residual massive  degrees of freedom complicates this process, rendering the stress tensor's construction nontrivial and subtle}. Last but not the least, One can also consider light transforms in celestial CFT for the quadratic gravity and focus on marginal operator construction \cite{Banerjee:2022hgc,Narayanan:2024qgb,Banerjee:2024hvb}.
+
+%\newpage
+\appendix
+\section{Few definitions and conventions}\label{ch5:app:A}
+\textbullet \,\,Hypergeometric ${}_2\mathbf{F}_1$ satisfies the following identities,
+
+\begin{align}
+\begin{split}
+   &{}_2\mathbf{F}_1\left(\genfrac{}{}{0pt}{}{a,b}{c};x\right) =(1-x)^{c-a-b} {}_2\mathbf{F}_1\left(\genfrac{}{}{0pt}{}{c-a,c-b}{c};x\right)\,,\\&
+    {}_2\mathbf{F}_1\left(\genfrac{}{}{0pt}{}{a,b}{c-1};x\right) =\sum_{m=0}^\infty \frac{(a)_m (b)_m}{(c-1)_{2m}}x^m {}_2\mathbf{F}_1\left(\genfrac{}{}{0pt}{}{a+m,b+m}{c+2m};x\right)\,.
+\end{split}
+\end{align}
+
+
+\noindent
+\textbullet \,The Appell hypergeometric function $\mathbf{F}_1$ has the  analytic continuation as follows,
+	\begin{align}
+		\label{eq:F1toOne}
+		\begin{aligned}
+			& \mathbf{F}_1\left(a, b_1, b_2, c, x, y\right)=\frac{\Gamma(c) \Gamma\left(c-a-b_1-b_2\right)}{\Gamma(c-a) \Gamma\left(c-b_1-b_2\right)}\mathbf{F}_1\left(a, b_1, b_2, 1+a+b_1+b_2-c, 1-x, 1-y\right) \\
+			& \quad+\frac{\Gamma(c) \Gamma\left(a+b_2-c\right)}{\Gamma(a) \Gamma\left(b_2\right)}(1-x)^{-b_1}(1-y)^{c-a-b_2} \mathbf{F}_1\left(c-a, b_1, c-b_1-b_2, c-a-b_2+1, \frac{1-y}{1-x}, 1-y\right) \\
+			& \quad+\frac{\Gamma(c) \Gamma\left(c-a-b_2\right) \Gamma\left(a+b_1+b_2-c\right)}{\Gamma(a) \Gamma\left(b_1\right) \Gamma(c-a)}(1-x)^{c-a-b_1-b_2} \\
+			& \quad \times G_2\left(c-b_1-b_2, b_2, a+b_1+b_2-c, c-a-b_2, x-1, \frac{1-y}{x-1}\right),
+		\end{aligned}
+	\end{align}
+	and 
+	\begin{align}
+		\label{eq:F1toInf}
+		\begin{aligned}
+			& \mathbf{F}_1\left(a, b_1, b_2, c, x, y\right)=\frac{\Gamma(c) \Gamma\left(a-b_1-b_2\right)}{\Gamma(a) \Gamma\left(c-b_1-b_2\right)}(-x)^{-b_1}(-y)^{-b_2} \mathbf{F}_1\left(1+b_1+b_2-c, b_1, b_2, 1+b_1+b_2-a, \frac{1}{x}, \frac{1}{y}\right)\\
+			& \quad+ \frac{\Gamma(c) \Gamma\left(b_2-a\right)}{\Gamma\left(b_2\right) \Gamma(c-a)}(-y)^{-a} \mathbf{F}_1\left(a, b_1, 1+a-c, 1+a-b_2, \frac{x}{y}, \frac{1}{y}\right) \\
+			& \quad+\frac{\Gamma(c) \Gamma\left(a-b_2\right) \Gamma\left(b_1+b_2-a\right)}{\Gamma(a) \Gamma\left(b_1\right) \Gamma(c-a)}(-x)^{b_2-a}(-y)^{-b_2} G_2\left(1+a-c, b_2, b_1+b_2-a, a-b_2,-\frac{1}{x}, -\frac{x}{y}\right).
+		\end{aligned}
+	\end{align}
+
+
+\vspace{-0.3 cm}
+
+
+
+%\noindent    
+%\textbullet\,    The $\mathscr{U}$-function is given by the following expression,
+%\begin{align}\begin{split}
+ %  &\mathscr{U}(\alpha,\beta,z,\kappa)=\frac{ 1}{192 \pi } \Bigg[\frac{1}{\alpha^2}\Bigg(2^{3-\frac{2 i  }{\alpha }} e^{-\frac{\pi   }{\alpha }} \left(e^{\frac{2 \pi   }{\alpha }}-1\right) \left(\frac{\alpha  \mu ^2 z}{\kappa  (z-1)}\right)^{-\frac{i  }{\alpha }} (\left(\frac{\kappa }{\alpha }\right)^{\gamma /2} \Gamma \left(-\frac{i  }{\alpha }\right)^2+\\&\left(-\frac{\kappa }{\alpha }\right)^{\gamma /2} 2^{\frac{4 i  }{\alpha }} \Gamma \left(\frac{i  }{\alpha }\right)^2 \left(-\frac{\alpha ^2 \mu ^4}{\kappa ^2 (\frac{z-1}{z})^2}\right)^{\frac{i  }{\alpha }})\Bigg)
+  %  -\frac{1}{\beta^2}\Bigg(e^{-\frac{\pi   }{2 \beta }} \left(e^{\frac{\pi   }{\beta }}-1\right) 2^{-\frac{\beta  (\gamma +2)+3 i  }{2 \beta }} \left(\frac{\beta z \mu ^2}{\kappa  (z-1)}\right)^{-\frac{i  }{2 \beta }} \\&\left(\left(\frac{\kappa }{\beta }\right)^{\gamma /2} \Gamma \left(-\frac{i  }{2 \beta }\right)^2+\left(-\frac{\kappa }{\beta }\right)^{\gamma /2} 2^{\frac{3 i  }{\beta }} \Gamma \left(\frac{i  }{2 \beta }\right)^2 \left(-\frac{\beta ^2 z^2\mu ^4}{\kappa ^2 (z-1)^2}\right)^{\frac{i  }{2 \beta }}\right)\Bigg)\Bigg]
+%\end{split}
+%\end{align}
+%\begin{align}
+   % \begin{split}
+   %       &c^{\texttt{u}}(J,\Delta)=\frac{1}{2}\mathcal{N}^{2,1}_{3,4}N(J,\Delta)\rmint_{-\infty}^0dw\,d\bar w \,\frac{(1-w)^{a+b}(1-\bar w)^{a+b}}{(w\bar w)^2}\left(G_{J,\Delta}(w,\bar w)+\frac{K_{J,2-\Delta}}{K_{J,\Delta}}G_{J,2-\Delta}(w,\bar w)\right)\\ &\times\mathbfcal{F}_1(3 - \Delta_1 - \Delta_3,1-i\lambda_3,1-i\lambda_3,2-\Delta_3+\Delta_4,w,\bar w)\\ &
+   %     \xrightarrow[]{\Delta_i=\Delta_{\phi},\forall i}  \frac{1}{2}\mathcal{N}^{2,1}_{3,4}N(J,\Delta)\rmint_{0}^1 dw\,d\bar w\,\frac{1}{(w\bar w)^2(1-w)^{a+b}(1-\bar w)^{a+b}}\left(G_{J,\Delta}\left(\frac{w}{w-1},\frac{\bar w}{\bar w-1}\right)+\textrm{shadow}\right)\\ &
+   %  \times \mathbfcal{F}_1\left(3-\Delta_1-\Delta_3,2-\Delta_{3},2-\Delta_{3},2-\Delta_3+\Delta_4 ,\frac{w}{w-1},\frac{\bar w}{\bar w-1}\right)\\ &
+   %   =\frac{1}{2}\mathcal{N}^{2,1}_{3,4}N(J,\Delta)\frac{\Gamma(3-\Delta_3-\Delta_4)\Gamma^2(\Delta_1+\Delta_3-2)\Gamma(3-\Delta_3-\Delta_1)}{\Gamma^2(2+\Delta_1-\Delta_3)\Gamma(-1+\Delta_3-\Delta_4)\Gamma(-1-\Delta_1+\Delta_3)}\\ &\times\rmint_{0}^1 dw\,d\bar w \frac{\left(\frac{w}{w-1}\right)^{\frac{\Delta-J}{2}} \left(\frac{\bar w}{\bar w-1}\right)^{\frac{\Delta+J}{2}}}{(w\bar w^2)(1-w)^{a+b}(1-\bar w)^{a+b}}{}_2 \mathbfcal{F}_1\left(\frac{\Delta-J}{2}+a,\frac{\Delta-J}{2}+b,\Delta-J,\frac{w}{w-1}\right)\\ &{}_2 \mathbfcal{F}_1\left(\frac{\Delta+J}{2}+a,\frac{\Delta+J}{2}+b,\Delta+J,\frac{\bar w}{\bar w-1
+%}\right)\mathbfcal{F}_1\left(2\Delta_1-1,2-\Delta_3,2-\Delta_3,2+\Delta_1-\Delta_3,w,\bar w\right)\\ &
+%=\frac{1}{2}\mathcal{N}^{2,1}_{3,4}N(J,\Delta)\frac{\Gamma(3-\Delta_3-\Delta_4)\Gamma^2(\Delta_1+\Delta_3-2)\Gamma(3-\Delta_3-\Delta_1)}{\Gamma^2(2+\Delta_1-\Delta_3)\Gamma(-1+\Delta_3-\Delta_4)\Gamma(-1-\Delta_1+\Delta_3)}\\ &\times\rmint_{0}^1 dw\,d\bar w \frac{w^{\frac{\Delta-J}{2}-2}\bar w^{\frac{\Delta+J}{2}-2}}{(1-w)^b(1-\bar w)^b}{}_2 \mathbfcal{F}_1\left(\frac{1}{2}(2a-J+\Delta),\frac{1}{2}(-2a-J+\Delta),\Delta-J,w\right)\\ &{}_2 \mathbfcal{F}_1\left(\frac{1}{2}(2a+J+\Delta),\frac{1}{2}(-2a+J+\Delta),\Delta+J,\bar w\right)\mathbfcal{F}_1\left(2\Delta_1-1,2-\Delta_3,2-\Delta_3,2+\Delta_1-\Delta_3,w,\bar w\right)+\cdots\\ & 
+%=\mathbfcal{C}^{2,1}_{3,4}(J,\Delta,\Delta_i)\sum_{m,n,r,s=0}^{\infty}\frac{\left(\frac{1}{2}(2a-J+\Delta)\right)_{m}\left(\frac{1}{2}(-2a-J+\Delta)\right)_{m}\left(\frac{1}{2}(2a+J+\Delta)\right)_{n}\left(\frac{1}{2}(-2a+J+\Delta)\right)_{n}}{(\Delta-J)_{m}(\Delta+J)_{n}m!n!}\\ &
+%\times\frac{(2\Delta_1-1)_{r+s}(2-\Delta_3)_{r}(2-\Delta_3)_s}{(2+\Delta_1-\Delta_3)_s r! s!}\rmint_0^1 dw d \bar w \frac{w^{\frac{\Delta-J}{2}-2+m+r}\bar w^{\frac{\Delta+J}{2}-2+n+s}}{(1-w)^b(1-\bar w)^b}\\ &
+%=\mathbfcal{C}^{2,1}_{3,4}(J,\Delta,\Delta_i)\sum_{m,n,r,s=0}^{\infty}\frac{\left(\frac{1}{2}(2a-J+\Delta)\right)_{m}\left(\frac{1}{2}(-2a-J+\Delta)\right)_{m}\left(\frac{1}{2}(2a+J+\Delta)\right)_{n}\left(\frac{1}{2}(-2a+J+\Delta)\right)_{n}}{(\Delta-J)_{m}(\Delta+J)_{n}m!n!}\\ &
+%\times\frac{(2\Delta_1-1)_{r+s}(2-\Delta_3)_{r}(2-\Delta_3)_s}{(2+\Delta_1-\Delta_3)_{r+s} r! s!}\frac{\Gamma (1-b)^2 \Gamma \left(-\frac{J}{2}+m+r+\frac{\Delta }{2}-1\right) \Gamma \left(-\frac{J}{2}+n+s+\frac{\Delta }{2}-1\right)}{\Gamma \left(-b+m+r+\frac{\Delta }{2}-\frac{J}{2}\right) \Gamma \left(-b+n+s+\frac{\Delta }{2}-\frac{J}{2}\right)}\\ & 
+%=\mathbfcal{C}^{2,1}_{3,4}(J,\Delta,\Delta_i)\sum_{n,r}\frac{1}{n! r! \left(\Delta _1-\Delta _3+2\right)_r (J+\Delta )_n \Gamma \left(-b+n+\frac{\Delta }{2}-\frac{J}{2}\right) \Gamma \left(-b+r+\frac{\Delta }{2}-\frac{J}{2}\right)}\\ &\Gamma (1-b)^2 \left(2 \Delta _1-1\right)_r \left(2-\Delta _3\right)_r \Gamma \left(-\frac{J}{2}+n+\frac{\Delta }{2}-1\right) \Gamma \left(-\frac{J}{2}+r+\frac{\Delta }{2}-1\right) \left(\frac{1}{2} (-2 a+J+\Delta )\right)_n\\ &\left(\frac{1}{2} (2 a+J+\Delta )\right)_n \, _3F_2\left(-a+\frac{\Delta }{2}-\frac{J}{2},a+\frac{\Delta }{2}-\frac{J}{2},-\frac{J}{2}+r+\frac{\Delta }{2}-1;-b+r+\frac{\Delta }{2}-\frac{J}{2},\Delta -J;1\right) \,\\ &\, _3F_2\left(\frac{\Delta }{2}-\frac{J}{2}+n-1,2 \Delta _1+r-1,2-\Delta _3;-b+\frac{\Delta }{2}-\frac{J}{2}+n,\Delta _1-\Delta _3+r+2;1\right)
+ %   \end{split}
+%\end{align}
+%Now, we will go on to the computation of the PWC for the s-channel\footnote{We use the following identity,
+
+%\begin{align}
+ %   \begin{split}
+  %      \hspace{0cm}{}_2\mathbfcal{F}_1\left(a_1,a_2,a_3,\frac{1}{z}\right)\to \pi  \csc \left(\pi  \left(a_1-a_2\right)\right) \Gamma \left(a_3\right) \left(\frac{\left(-\frac{1}{z}\right)^{-a_2} \, _2\widetilde{\mathbfcal{F}}_1\left(a_2,a_2-a_3+1;-a_1+a_2+1;z\right)}{\Gamma \left(a_1\right) \Gamma \left(a_3-a_2\right)}-\frac{\left(-\frac{1}{z}\right)^{-a_1} \, _2\widetilde{\mathbfcal{F}}_1\left(a_1,a_1-a_3+1;a_1-a_2+1;z\right)}{\Gamma \left(a_2\right) \Gamma \left(a_3-a_1\right)}\right),
+   % \end{split}
+%\end{align}
+%where, ${}_2\widetilde{\mathbfcal{F}}_1$ is the regularized Hypergeometric ${}_2\mathbfcal{F}_1$.
+%}
+%\begin{align}
+  %  \begin{split}\label{B.7o}
+   %    & c^{\texttt{s}}(J,\Delta) = \frac{1}{2}\mathcal{N}^{2,1}_{3,4}N(J,\Delta)\rmint_{1}^\infty dw\,d\bar w \,\frac{(1-w)^{a+b}(1-\bar w)^{a+b}}{(w\bar w)^2}\left(G_{J,\Delta}(w,\bar w)+\frac{K_{J,2-\Delta}}{K_{J,\Delta}}G_{J,2-\Delta}(w,\bar w)\right)\\ &\hspace{ 0 cm}\times\mathbfcal{F}_1(3 - \Delta_1 - \Delta_3,2-\Delta_3,2-\Delta_3,2-\Delta_3+\Delta_4,w,\bar w)\\ &
+    %    =\frac{1}{2}\mathcal{N}^{2,1}_{3,4}N(J,\Delta)\rmint_0^1 dw\,d\bar w \frac{(1-w)^{a+b}(1-\bar w)^{a+b}}{(w\bar w)^{a+b}}w^{\frac{J-\Delta}{2}}\bar w^{\frac{-J-\Delta}{2}} {}_2 F_1\left(\frac{\Delta-J}{2}+a,\frac{\Delta-J}{2}+b,\Delta-J,\frac{1}{w}\right)\\ &{}_2 F_1\left(\frac{\Delta+J}{2}+a,\frac{\Delta +J}{2}+b,\Delta+J,\frac{1}{\bar w}\right) \,\mathbfcal{F}_1(3 - \Delta_1 - \Delta_3,1-i\lambda_3,1-i\lambda_3,2-\Delta_3+\Delta_4,\frac{1}{w},\frac{1}{\bar w})\\ & 
+    %    =\frac{1}{2}\mathcal{N}^{2,1}_{3,4}N(J,\Delta)\frac{\Gamma \left(\Delta _1+\Delta _3-2\right) \Gamma \left(\Delta _1+\Delta _4-1\right)}{\Gamma \left(\Delta _1-\Delta _3+2\right) \Gamma \left(\Delta _3-\Delta _4-1\right)}\sum_{m,n,r,s=0}^{\infty}\rmint_0^1 dw\,d\bar w \frac{(1-w)^{a+b}(1-\bar w)^{a+b}}{(w\bar w)^{a+b}}w^{\frac{J-\Delta}{2}}\bar w^{\frac{-J-\Delta}{2}}\\ &
+       % \hspace{0cm}\times \frac{w^m}{m!} \Gamma (\Delta -J) \left(-\frac{1}{w}\right)^{\frac{J-\Delta }{2}} \left(\frac{\left(-\frac{1}{w}\right)^{-a} \Gamma (-a+b-m) \left(a+\frac{\Delta -J}{2}\right)_m}{\Gamma \left(b+\frac{\Delta -J}{2}\right) \Gamma \left(\frac{1}{2} (-2 a-J-2 m+\Delta )\right)}+\frac{\left(-\frac{1}{w}\right)^{-b} \Gamma (a-b-m) \left(b+\frac{\Delta -J}{2}\right)_m}{\Gamma \left(a+\frac{\Delta -J}{2}\right) \Gamma \left(\frac{1}{2} (-2 b-J-2 m+\Delta )\right)}\right)\\ &\hspace{0cm}
+     %  \times \frac{\bar w^n}{n!} \Gamma (J+\Delta ) \left(-\frac{1}{\bar w}\right)^{\frac{1}{2} (-\Delta -J)} \left(\frac{\left(-\frac{1}{\bar w}\right)^{-a} \Gamma (-a+b-n) \left(a+\frac{J+\Delta }{2}\right)_n}{\Gamma \left(b+\frac{J+\Delta }{2}\right) \Gamma \left(\frac{1}{2} (-2 a+J-2 n+\Delta )\right)}+\frac{\left(-\frac{1}{\bar w}\right)^{-b} \Gamma (a-b-n) \left(b+\frac{J+\Delta }{2}\right)_n}{\Gamma \left(a+\frac{J+\Delta }{2}\right) \Gamma \left(\frac{1}{2} (-2 b+J-2 n+\Delta )\right)}\right)\\ &
+     % \times \frac{(-\Delta _3-\Delta _4+3)_{r+s}(2-\Delta_3)_r (2-\Delta_3)_s}{(\Delta _1-\Delta _3+2)_{r+s}r! s!}w^{r}\bar w^{s}
+    %\end{split}
+%\end{align}
+\noindent
+\textbullet \textbf{\, Evaluating the delta function:}
+\noindent
+The momentum conserving delta functions are always of much importance here because they put strong constraints on the celestial correlators. 
+For non-vanishing values of $\alpha$ and $\beta $ we get the tree amplitude as,
+
+\begin{align}
+\mathbb{M}_4^{\textrm{tree}}(s,t)\to\frac{1}{48} s \left(\frac{ (3 \kappa-\alpha  s+8 \beta  s)}{(\kappa+\alpha  s) (\kappa+2 \beta  s)}-\frac{4 }{\kappa-\alpha  s}+\frac{1}{\kappa-2 \beta  s}+\frac{24 \,s }{t \kappa}\right)+\mathcal{O}\left(\frac{t}{s}\right)+\cdots
+\end{align}
+
+\noindent
+The momentum conserving delta function can also be written in terms of the simplex variables \cite{Pasterski:2017ylz} as $\sigma_i=v^{-1}\omega_i  \,\text{with}\,\, \sum_{i=1}^n\sigma_i=1
+$,
+\begin{align}
+  \prod_{i=1}^n\rmint_0^\infty d\omega_i\, \omega_i^{i\lambda_i}[\cdots]=\rmint_0^\infty dv \,v^{\sum i\lambda_i-1}\prod_{i=1}^n\rmint_0^1\,d\sigma_i \sigma_i^{i\lambda_i}\delta^{(4)}\left(\sum_{i=1}^4\epsilon_i\sigma_iq_i\right)\,\delta\left(\sum_{i=1}^4\sigma_{i}-1\right)[\cdots]\,.
+\end{align}
+We can cast the delta function as \cite{Pasterski:2017ylz},
+\begin{align}
+\begin{split}\label{5.17u}
+&\delta^{(4)}\left(\sum_{i=1}^4\epsilon_i\sigma_iq_i\right)\,\delta\left(\sum_{i=1}^4\sigma_{i}-1\right)
+= \frac{1}{4}\delta(|z_{12}z_{34}\bar z_{13}\bar z_{24}-z_{13}z_{24}\bar z_{12}\bar z_{34}|)
+\\
+&\times\delta\left(\sigma_1+
+\frac{\epsilon_1\epsilon_4}{ \mathcal{D}_4 }
+	\frac{z_{24}\bar z_{34}}{z_{12}\bar z_{13}}\right)
+\delta\left(\sigma_2-
+\frac{\epsilon_2\epsilon_4}{ \mathcal{D}_4}
+	\frac{z_{34}\bar z_{14}}{z_{23}\bar z_{12}}
+\right)\delta\left(\sigma_3+\frac{\epsilon_3\epsilon_4}{ \mathcal{D}_4}
+	\frac{z_{24}\bar z_{14}}{z_{23}\bar z_{13}}\right)
+	\delta\left(\sigma_4-\frac{1}{\mathcal{D}_4}\right)\,, \\
+&\equiv \frac{1}{4}\delta(|z_{12}z_{34}\bar z_{13}\bar z_{24}-z_{13}z_{24}\bar z_{12}\bar z_{34}|)
+\prod_{i=1}^4 \delta\left(\sigma_i  - \sigma_{\star i}\right)
+\end{split}
+\end{align}
+where the denominator $\mathcal{D}_4$ is defined as,
+\begin{align}
+\mathcal{D}_4 = \left( 1-{\epsilon_1\epsilon_4}\right)
+	\frac{z_{24} \bar z_{34}}{z_{12}\bar z_{13}}
++\left( {\epsilon_2\epsilon_4}-1\right)
+	\frac{z_{34} \bar z_{14}}{z_{23} \bar z_{12}}
++\left(1-{\epsilon_3\epsilon_4}\right)
+	\frac{z_{24}\bar z_{14}}{z_{23}\bar z_{13}} \,.
+\end{align}
+In the above equation, $\sigma_{\star i}$ are the supports of the $\sigma$ integral, using localized Dirac delta functions. 
+\noindent
+On the support of the delta functions, the Mandelstam variables simplify to $s=v^2, t=-zv^2.$ This parametrization is valid for massless particles as external legs.
+Hence the $\sigma_i$ integral becomes,
+\begin{align}
+\begin{split}
+    &\rmint_0^1\,d\sigma_i \sigma_i^{i\lambda_i}\delta{\Bigg(\sum_i\sigma_i-1\Bigg)}\delta^{(4)}(\sum_{i=1}^4\epsilon_i\sigma_iq_i)\,,\\&
+    =\frac{1}{4}\delta(|z_{12}z_{34}\bar z_{13}\bar z_{24}-z_{13}z_{24}\bar z_{12}\bar z_{34}|)
+\prod_{i=1}^4 \rmint_0^1\,d\sigma_i \sigma_i^{i\lambda_i}\delta\Bigg(\sigma_i  - \sigma_{*i}\Bigg)\,,\\&
+\sim (z-1)^{\frac{\Delta_1-\Delta_2-\Delta_3+\Delta_4}{2}}|z|^{-\Delta_1-\Delta_2}\frac{\delta(|z-\bar z|)}{|z_{13}|^2|z_{24}|^2}\prod_{i=1}^4\underbrace{\mathbf{1}_{[0,1]}(\sigma_{*i})}_{\textrm{indicator function}}\,,
+\end{split}
+\end{align}
+where, the indicator function ensures all the $\sigma_{i*}$ are between 0 to 1.
+
+\begin{equation}    \mathbf{1}_{[0,1]}(\sigma_{*i})=\left\{ 
+  \begin{array}{ c l }
+    1 & \quad \textrm{if } \sigma_{*i} \in[0,1] \\
+    0                 & \quad \textrm{otherwise}.
+  \end{array}\right.\end{equation}

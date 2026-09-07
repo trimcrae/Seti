@@ -1,0 +1,2237 @@
+                                             BCFW recursion for light-like Wilson loop correlators
+arXiv:2608.19418v1 [hep-th] 19 Aug 2026
+
+
+
+
+                                                                 J.M. Drummond1 , M. Rochford2 , R. Wright3
+
+
+                                          School of Physics and Astronomy, University of Southampton, Southampton, SO17 1BJ, UK
+
+
+
+
+                                                                                       Abstract
+
+                                               We apply the idea of holomorphic linking [1] to correlators of multiple light-like loop operators
+                                          in N = 4 super Yang-Mills theory. This allows us to extend the BCFW recursion relations for
+                                          planar scattering amplitude integrands or single Wilson loops in the planar theory to correlators
+                                          of multiple loop operators. We discover a novel term which feeds the recursion for single loops
+                                          into the relation for multiple loop operators. We illustrate the recursion relations with several
+                                          examples and highlight its applicability in combination with the Q̄-equation for multiple loop
+                                          operators. Finally, we again employ holomorphic linking to derive a recursion relation for colour-
+                                          exact Wilson loop correlators.
+
+
+
+
+                                            1
+                                              J.M.Drummond@soton.ac.uk
+                                            2
+                                              M.J.Rochford@soton.ac.uk
+                                            3
+                                              Rowan.Wright@soton.ac.uk
+Contents
+
+1 Introduction                                                                                      3
+
+
+2 Twistor formulation of N = 4 SYM and loop operators                                               4
+
+
+3 Holomorphic linking and recursion relations                                                       8
+
+
+4 Recursion for tree-level correlators of multiple loop operators                                  15
+
+   4.1   Tree-level recursion in Q̄-equation . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+
+
+5 Recursion for loop-level integrands                                                              18
+
+   5.1   Forward limit term . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+
+
+6 Consistency checks at tree-level                                                                 25
+
+   6.1   MHV . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+
+   6.2   NMHV . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+
+   6.3   Discussion of the ‘intersecting’ term . . . . . . . . . . . . . . . . . . . . . . . . . . 27
+
+   6.4   N2 MHV in the SU(N ) theory . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+
+         6.4.1   n1 = 3 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 30
+
+         6.4.2   General n1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 32
+
+   6.5   Higher MHV degree checks at tree-level . . . . . . . . . . . . . . . . . . . . . . . . 33
+
+
+7 Consistency checks at one and two loops                                                          34
+
+
+                                                  1
+  7.1   MHV one-loop . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 34
+
+        7.1.1   SU(N ) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 34
+
+        7.1.2   U(N ) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 34
+
+  7.2   Two-loop and other one-loop checks . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+
+
+8 Recursion beyond the large N limit                                                               35
+
+  8.1   Example: N2 MHV hexagon . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 36
+
+
+9 Conclusions                                                                                      38
+
+
+
+
+                                                 2
+1         Introduction
+
+Recursion relations for scattering amplitudes have been a powerful tool in the study of pertur-
+bative quantum field theory. The well-known BCFW relations [2, 3] permit massless on-shell
+tree-level amplitudes to be recursively computed starting from three-point amplitudes (defined
+for complex momenta). The idea of [3] is that the tree-level on-shell amplitudes can be treated
+as a rational function of their momenta (or more precisely the spinor-helicity variables associated
+to the momenta). The amplitude can then be deformed to become a meromorphic function of
+an additional auxiliary complex parameter. The poles of the deformed amplitude are related to
+factorisation channels of the original amplitude and thus their residues are related to on-shell
+amplitudes with lower multiplicity. Assuming appropriate analytic behaviour of the deformed
+amplitude, the original undeformed amplitude can then be reconstructed as a sum over the
+residues.
+
+     These relations have been exploited and generalised for many applications. Of particular
+relevance here is the fact that they can be cast in a manifestly supersymmetric form for super-
+symmetric gauge theories [4, 5], In particular, for N = 4 super Yang-Mills theory, they involve
+a single superamplitude for each multiplicity [6], as the on-shell multiplet is CPT self-conjugate.
+The supersymmetric BCFW recursion relation can then be generalised to loop integrands for
+N = 4 super Yang-Mills theory in the planar limit [7]. In this sense, it provides access to all-loop
+information about the theory.
+
+     Since (super) amplitudes are dual to light-like (super) Wilson loops in the planar limit of
+the N = 4 theory [8, 9, 10, 11, 12, 13], it should be possible to understand the BCFW recursion
+relations, both at tree-level and for the loop integrand, from the Wilson loop side of the duality.
+Indeed, it was shown in [1] that this is possible. At tree level, the approach relies on making
+use of a twistorial formulation which describes the self-dual N = 4 theory as a holomorphic
+Chern-Simons theory in twistor space [14]1 . The Wilson loop operator is formulated in a manner
+directly analogous to its spacetime version as the trace of the holonomy of the gauge field around
+a loop consisting of a sequence of intersecting (holomorphic) lines. The supersymmetric tree-
+level BCFW recursion relations then beautifully arise via the Makeenko-Migdal loop equations
+[16] applied to these holomorphic Chern-Simons Wilson loops. The singular configurations,
+corresponding to factorisation channels in the amplitude formulation of the recursion relation,
+correspond to self-intersecting Wilson loop configurations in this new formulation. Since these
+Wilson loops are formulated in holomorphic Chern-Simons theory and the variations of the loops
+are holomorphic, these configurations are related to ‘holomorphic linking’.
+
+    As also described in [1], the Wilson loop formulation of the recursion relation can be extended
+to capture the all-loop integrand. The holomorphic Chern-Simons formulation of the self-dual
+    1
+        The relation of Chern-Simons actions to self-dual (super) Yang-Mills theory has a long history, see e.g. [15].
+
+
+                                                            3
+sector can be completed to the full N = 4 theory by adding a tower of non-local interactions of
+‘log-det’ form [17]. When included in the analysis of the loop equations, these interactions then
+generate the dependence on the loop variables in the integrand.
+
+     Here we will show that the recursion relations obtained from loop equations and holomorphic
+linking can be generalised to correlators of multiple super Wilson loop operators. Such correlators
+have recently been analysed in [18, 19, 20], where a number of results have been obtained making
+use of the twistorial formulation of the N = 4 theory and the supersymmetric loop operators.
+Our analysis will follow closely that of [1], although we will have to pay close attention to the
+large N expansion as we will be interested in the connected parts of correlators of multiple loop
+operators, which are suppressed at large N with respect to the disconnected contributions.
+
+     The recursion relations we obtain for tree-level correlators will contain a novel type of term
+which feeds the results of single loop operators into those for multiple loops. In this sense, we
+obtain a recursion which directly extends that for a single Wilson loop in holomorphic Chern-
+Simons theory. We also generalise to the full N = 4 theory by including the non-local ‘log-det’
+interactions to obtain results for loop integrands. It is then possible to go beyond the planar limit
+and obtain a relation satisfied by colour exact multiple Wilson loop correlators. This relation
+expresses correlators in terms of a sum over correlators with either a lower number of cusps on
+the loops or correlators of a lower Grassmann degree, which thus allows for recursive computation
+of colour-exact Wilson loops.
+
+     The recursion relation we obtain has some direct applications beyond obtaining explicit
+expressions for Wilson loop correlators. In particular, it can be used to justify a general analysis
+of the Q̄-equation obeyed by correlators of multiple loop operators described in [18, 19] which is
+a generalisation of the Q̄-equation for Wilson loops presented in [21, 22].
+
+
+
+2     Twistor formulation of N = 4 SYM and loop operators
+
+Recall that, perturbatively, N = 4 Super-Yang Mills theory may be formulated in supertwistor
+space CP3|4 [17]. We use the notation Z = (Z|χ) to denote a supertwistor with bosonic twistors
+                                                                 ′
+(Z A ) = (Z 1 , Z 2 , Z 3 , Z 4 ) and Grassmann counterparts (χA ) = (χ1 , χ2 , χ3 , χ4 ). Note that we have
+the projective invariance Z ∼        = uZ = (uZ|uχ) for u ∈ C∗ .
+
+    Firstly, we introduce a (0, 1)-form gauge connection A(Z) whose various components are
+
+
+
+
+                                                     4
+given explicitly by the expansion
+                                ′               1 A′ B ′
+     A(Z, χ) = a(Z, Z) + χA γ̃A′ (Z, Z) +          χ χ ϕA′ B ′ (Z, Z)                                 (2.1)
+                                                2!
+                            1                 ′  ′   ′  ′          1               ′  ′  ′  ′
+                           + ϵA′ B ′ C ′ D′ χA χB χC γ D (Z, Z) + ϵA′ B ′ C ′ D′ χA χB χC χD g(Z, Z).
+                            3!                                     4!
+Here {a, γ̃, ϕ, γ, g} are all (0, 1)-forms with degrees of homogeneity {0, −1, −2, −3, −4} respec-
+tively under the u rescaling described above. Note that A is holomorphic in χ both in the sense
+that A is independent of χ̄ and that ∂χ̄ ⌟A = 0 (i.e. there are no dχ̄ contributions).
+
+    The N = 4 theory is described using the twistor action
+
+                                         S[A] = S1 [A] + S2 [A] ,                                    (2.2)
+
+where the self-dual theory is described by a holomorphic Chern-Simons action,
+                                  Z            1
+                                       3|4                 1          
+                      S1 [A] = β1 D Z ∧ tr A ∧ ∂A + A ∧ A ∧ A                                        (2.3)
+                                                 2         3
+and the measure is defined by
+                           1                              1                  ′   ′   ′   ′
+                D3|4 Z =      ϵABCD Z A dZ B ∧ dZ C ∧ dZ D ϵA′ B ′ C ′ D′ dχA dχB dχC dχD .          (2.4)
+                           4!                             4!
+The expansion around the self-dual theory is given by a non-local interaction term where the
+interactions are confined to lines X in supertwistor space,
+                                          Z
+                               S2 [A] = β2 d4|8 X log det ∂ + A X .
+                                                               
+                                                                                       (2.5)
+
+In order to faithfully produce the spacetime N = 4 action, β1 and β2 must obey the relation
+(here strictly speaking there is a sign ambiguity depending on whether we are matching to the
+spacetime action in Lorentzian or Euclidean signature)
+
+                                            β2 = −4π 2 β12 gYM
+                                                            2
+                                                                                                     (2.6)
+
+Note that this means that there is a rescaling freedom in matching to the action, essentially
+equivalent to rescaling the fermions. We will later make the choice
+
+                                               iCF                 4g 2 CF2
+                                      β1 = −        ,       β2 =            ,                        (2.7)
+                                               4π 3                 π2N
+           g2
+with g 2 = 16π
+            YM
+               2 . This scaling is chosen to ensure a perfect match (including numerical prefactors)
+
+between planar Wilson loop expectation values computed in the twistor formalism and planar
+scattering amplitudes, and also to ensure the colour-exact expectation value of a Wilson loop
+
+                                                        5
+obeys the Q̄-equation as discussed in [19]. In the analysis which follows, we will leave β1 and β2
+symbolic.
+
+    We can define a line X by picking two specified points ZA and ZB in supertwistor space
+and considering the set of points sA ZA + sB ZB . We can regard X = (ZA , ZB ) as the image of a
+holomorphic embedding ZX of Σ = CP1 into CP3|4 ,
+
+                                         ZX : Σ → CP3|4 ,
+                                         ZX : s 7→ sZA + ZB ,                                        (2.8)
+
+where we have chosen to parametrise CP1 with homogeneous coordinates (sA , sB ) = (s, 1) and
+specified the map so that s = 0 corresponds to ZB and s = ∞ corresponds to ZA .
+
+   By (∂¯ + A)X in (2.5) we mean the pullback to Σ of (∂¯ + A) under the holomorphic map ZX .
+We may rewrite (2.5) using
+                                                                        ∞
+                                                                        X 1                    r
+                 log det(∂¯ + A) = tr log(∂¯ + A) = tr log ∂¯ −                    tr −∂¯−1 AX       (2.9)
+                                                                         r=1
+                                                                               r
+
+and keep only terms with at least two instances of the connection A in order to saturate the
+Grassmann integration, which yields
+                                            Z               ∞
+                                                            X 1                r
+                             S2 [A] = −β2        4|8
+                                                d X                 tr −∂¯−1 AX .                   (2.10)
+                                                            r=2
+                                                                r
+
+Here ∂¯−1 means any representative integral operator ∂¯s−1
+                                                         0
+                                                            acting on (0, 1)-forms on Σ as
+                                            Z
+                               ¯ −1
+                              (∂s0 ω)(s) =    Gs0 (s, s′ ) ∧ ω(s′ ) .                               (2.11)
+                                                    Σ
+
+The (1, 0)-form Green’s function Gs0 (s, s) is defined by
+
+                                                     1     (s − s0 )ds′
+                                 Gs0 (s, s′ ) = −                                                   (2.12)
+                                                    2πi (s − s′ )(s′ − s0 )
+
+and is the solution to
+                         ¯ s (s, s′ ) = iδ(s − s′ )ds̄ ∧ ds′ = iδ̄(s − s′ ) ∧ ds′ ,
+                         ∂G                                                                         (2.13)
+                            0
+
+
+obeying Gs0 (s0 , s′ ) = 0. Note that the delta function is normalised so that
+                             Z                     Z
+                                ds ∧ ds̄ δ(s − t) = ds ∧ δ̄(s − t) = −i .                           (2.14)
+
+
+
+                                                        6
+    The terms in (2.10) are then explicitly given using
+                             Z
+               ¯−1     r
+          tr(−∂ AX ) = tr         Gs0 (sr , s1 ) ∧ AX (s1 ) ∧ . . . ∧ Gs0 (sr−1 , sr ) ∧ AX (sr ) ,
+                               Σr
+                            1 r Z ds ∧ A (s ) ∧ . . . ∧ ds ∧ A (s )
+                                                1     X 1                   r       X r
+                         =         tr                                                                 (2.15)
+                             2πi        Σ r        (sr −  s 1 ) . . . (sr−1 − s r )
+
+and we note that all dependence on s0 indeed cancels.
+
+    To define a loop operator associated to a curve C we first need to define a parallel transport
+operator corresponding to a given line. Given a line X, and a (0, 1)-form Chern-Simons connection
+A, we can find a frame H(X, s), smoothly varying on Σ, such that
+
+                                           H −1 (∂¯ + A)X H = ∂¯ .                                    (2.16)
+
+The frame obeys the differential equation
+
+                                              (∂¯ + A)X H = 0 .                                       (2.17)
+
+The frame H(X, s) is unique up to multiplication by a gauge transformation g(X) (independent
+of s),
+                                 H(X, s, s̄) → H(X, s)g(X) .                           (2.18)
+With some choice of frame H(X, s), we define the parallel transport operator
+
+                                       UX (s, s′ ) ≡ H(X, s)H(X, s′ )−1                               (2.19)
+
+which then obeys the differential equation
+
+                                           (∂¯ + A)X UX (s, s′ ) = 0                                  (2.20)
+
+with the boundary condition that UX (s′ , s′ ) = 1 . The parallel transport operator also obeys the
+concatenation property
+                               UX (s, s′ )UX (s′ , s′′ ) = UX (s, s′′ ) .                     (2.21)
+We may formally expand UX (s, s′ ) in terms of the integral operator ∂¯−1 ′ described in (2.11),
+                                                                                 s
+
+               ∞
+               X              l
+        ′
+UX (s, s ) =         −∂¯s−1
+                         ′ AX    (s)                                                                  (2.22)
+               l=0
+                     Z                          Z                         Z
+            =1−    Gs′ (s, s1 ) ∧ AX (s1 ) + Gs′ (s, s1 ) ∧ AX (s1 ) Gs′ (s1 , s2 ) ∧ AX (s2 ) + . . .
+                     Σ                        Σ                       Σ
+                s − s′       ds1 ∧ AX (s1 )     s − s′     ds1 ∧ AX (s1 )     ds2 ∧ AX (s2 )
+                       Z                               Z                  Z
+            =1+                             ′
+                                              +                                                  + ... .
+                 2πi       (s − s1 )(s1 − s ) (2πi)  2       (s − s1 )      (s1 − s2 )(s2 − s′ )
+
+
+
+                                                       7
+Finally, note that given two distinct points Z and Z ′ in CP3|4 we note that the line X containing
+them both is uniquely defined and we write
+
+                             UZ,Z ′ ≡ U ZX (s), ZX (s′ ) = UX (s, s′ ).
+                                                        
+                                                                                            (2.23)
+
+
+     To define the supertwistor version of piecewise light-like loop operators L(C) we introduce
+a sequence of supertwistors Zi ∈ CP3|4 , for i = 1, . . . , n, and the corresponding sequence of
+intersecting lines Xi = (Zi−1 , Zi ). Each line is the image of an embedding ZXi of Σi = CP1 into
+CP3|4 as described above,
+
+                                            ZXi : s 7→ sZi−1 + Zi .                                  (2.24)
+
+In principle, and as described in [1], the formalism can be applied to more general curves Σi , but
+here we only consider the case where they are given by copies of CP1 .
+
+     We may then define the holonomy around the full curve C by picking a base point on one
+of the components (Z = sZ1 + Zn on the line X1 for example) and writing
+
+    HolZ [C] = UX1 (s, ∞)UXn (0, ∞) . . . UX2 (0, ∞)UX1 (0, s) = UZ,Zn UZn ,Zn−1 . . . UZ2 ,Z1 UZ1 ,Z (2.25)
+
+The trace of the holonomy in some representation R is then gauge-invariant and independent of
+the choice of Z. Finally, the Wilson loop operator is then defined via
+                                1                       1                                  
+                     L(C) =            trR HolZ [C] =     tr UZ1 ,Zn UZn ,Zn−1 . . . UZ2 ,Z1 ,       (2.26)
+                              trR 11                    N
+where we have specified R to be the fundamental representation for G = SU(N ) or G = U(N ).
+
+      For perturbative calculations, we make use of (2.22) to write,
+
+                            ds1 ∧ AXi (s1 )            ds1 ∧ AXi (s1 )   ds2 ∧ AXi (s2 )
+                          Z                          Z                 Z
+                       1                        1
+      UZi ,Zi−1 = 1 −                       −      2
+                                                                                         + ... .
+                      2πi         s1          (2πi)          s1            (s1 − s2 )
+
+
+
+3      Holomorphic linking and recursion relations
+
+We now review the approach of [1] to derive the all-loop BCFW recursion of [7] from the Wilson
+loop side of the duality. We begin with a family of curves as described in the previous section.
+While one can consider a very general family with multiple parameters, we will focus on a family
+of curves with a single complex parameter t here. An important feature is that the dependence
+of the Zi on t should be holomorphic.
+
+                                                        8
+     Since we now have a family of curves, the component lines Xi generically become dependent
+on t. We will denote the shifted line by Xi,t . As t varies any such line Xt will sweep out a ruled
+surface Σ̃ of complex dimension two, parametrised by t and s, the coordinate for the line Σ,
+                                               f : Σ̃ → CP3|4
+                                               f : (t, s) 7→ ZXt (s) .                                         (3.1)
+
+
+     The equation (2.20) for the frame on the line Xt at fixed t is
+                                            (∂¯ + A)Xt UXt (s, s′ ) = 0 .                                      (3.2)
+We can now consider a variation with respect to t̄. Writing δ̄ = dt̄ ∂t̄ we have
+                            δ̄ UXt (s1 , s)(∂¯ + AXt )UXt (s, s0 ) = 0 .
+                                                                 
+                                                                                                               (3.3)
+
+We regard the LHS as a (0, 2)-form living on Σ̃. It follows that, after integrating over s against
+Gs0 (s1 , s) we obtain
+   Z                 n                                                                          o
+                                                                      ¯
+       Gs0 (s1 , s) ∧ UXt (s1 , s)(δ̄AXt )UXt (s, s0 ) − UXt (s1 , s)(∂ + AXt ) ∧ δ̄UXt (s, s0 ) = 0 . (3.4)
+     Σ
+
+The second term may be rewritten using
+                                                            ¯ Xt (s1 , s)
+                                          UXt (s1 , s)AXt = ∂U                                                 (3.5)
+and integration by parts to obtain
+      Z                                                    Z                   n                           o
+         Gs0 (s1 , s) ∧ UXt (s1 , s)(δ̄AXt )UXt (s, s0 ) =    Gs0 (s1 , s) ∧ ∂¯ UXt (s1 , s) δ̄UXt (s, s0 )
+       Σ                                                   ZΣ                  n                           o
+                                                         =    ¯
+                                                              ∂Gs0 (s1 , s) ∧ UXt (s1 , s) δ̄UXt (s, s0 )
+                                                               Σ
+                                                          = δ̄UXt (s1 , s0 ) .                                 (3.6)
+Here, the final relation holds due to
+           ¯ s (s1 , s) = −ids ∧ ds̄ δ(s − s1 ) − δ(s − s0 ) = d2 s δ(s − s1 ) − δ(s − s0 ) .
+                                                                                          
+           ∂G 0                                                                                                (3.7)
+
+
+     Now, the δ̄-operator acting on the pullback of the connection is given by
+                                              Ā
+                                               ∂ Z̄ ∂ Z̄ B̄                ∂ 2 Z̄ Ā
+                                                                                        
+                      δ̄AXt (s) = dt̄ ∧ ds̄                  ∂ A +                   A
+                                                 ∂ t̄ ∂s̄ Ā B̄            ∂ t̄∂s̄ Ā
+                                = δ̄ Z̄ Ā ∧ ∂¯Z̄ B̄ ∂Ā AB̄ + δ̄ ∂¯Z̄ Ā AĀ
+                                = δ̄ Z̄ Ā ∧ ∂¯Z̄ B̄ ∂Ā AB̄ − ∂¯ δ̄ Z̄ Ā AĀ ] − δ̄ Z̄ Ā ∂A
+                                                                                            ¯ Ā
+                                                                   
+
+                                = δ̄ Z̄ Ā ∧ ∂¯Z̄ B̄ ∂Ā AB̄ − ∂B̄ AĀ − ∂¯ δ̄ Z̄ Ā AĀ .
+                                                                                           
+                                                                                                               (3.8)
+
+                                                          9
+The first line in (3.8) above is included to make clear that all terms on the RHS are pulled back
+to Σ under ZXt so that Z and thus its bosonic component Z depend holomorphically on both
+s, the parameter of the line and t, the parameter of the deformation (and hence Z̄ depends on
+both anti-holomorphically). Using this relation, equation (3.6) becomes
+                              Z
+                                 Gs0 (s1 , s) ∧ UXt (s1 , s)δ̄ Z̄ Ā ∧ ∂¯Z̄ B̄ ∂Ā AB̄ − ∂B̄ AĀ UXt (s, s0 )
+                                                                                               
+           δ̄UXt (s1 , s0 ) =
+                              ZΣ
+                            − ∂G ¯ s (s1 , s)UXt (s1 , s)(δ̄ Z̄ Ā AĀ )UXt (s, s0 )
+                                     0
+                              ZΣ
+                            + Gs0 (s1 , s)∂U ¯ Xt (s1 , s)(δ̄ Z̄ Ā AĀ )UXt (s, s0 )
+                              ZΣ
+                            − Gs0 (s1 , s)UXt (s1 , s)(δ̄ Z̄ Ā AĀ )∂U¯ Xt (s, s0 )                          (3.9)
+                               Σ
+
+and hence we find
+
+  DUXt (s1 , s0 ) ≡ δ̄UXt (s1 , s0 ) + δ̄ Z̄ Ā (s1 )AĀ Z(s1 ) UXt (s1 , s0 ) − UXt (s1 , s0 )δ̄ Z̄ Ā (s0 )AĀ Z(s0 )
+                                                                                                                      
+                    Z
+                  =    Gs0 (s1 , s) ∧ UXt (s1 , s)δ̄ Z̄ Ā ∧ ∂¯Z̄ B̄ FĀB̄ UXt (s, s0 ) ,                          (3.10)
+                       Σ
+
+where
+                                   FĀB̄ = ∂Ā AB̄ − ∂B̄ AĀ + AĀ AB̄ − AB̄ AĀ                                 (3.11)
+are the components of the (0, 2)-form curvature,
+
+                                        ¯ + A ∧ A = 1 dZ̄ Ā ∧ dZ̄ B̄ FĀB̄ .
+                                    F = ∂A                                                                       (3.12)
+                                                    2
+Note that δ̄ Z̄ Ā ∧ ∂¯Z̄ B̄ FĀB̄ (Z) is the pullback of the curvature F to Σ̃,
+
+                            δ̄ Z̄ Ā ∧ ∂¯Z̄ B̄ FĀB̄ (Z) = f ∗ F(Z) ,     Z ≡ ZXi,t (s) .                        (3.13)
+
+
+    Finally, for the full curve Ct , made of many components Xi,t , each of which may now vary
+with the parameter t, we have
+                                       1 X                                   
+                           δ̄L(Ct ) =       tr (DUXi,t )UXi−1,t . . . UXi+1,t
+                                       N i
+                                                Z
+                                       1 1 X      ds
+                                                        ∧ f ∗ tr F(Z)HolZ [Ct ] ,
+                                                                               
+                                     =                                                                           (3.14)
+                                       N 2πi i Σi s
+
+where Z is shorthand for ZXi,t (s), i.e. the supertwistor corresponding to the image of s on the
+line Xi,t . Note also that
+                                                     1 ds
+                                        G∞ (0, s) =       .                               (3.15)
+                                                    2πi s
+                                                           10
+    We may write the expectation value of a loop operator on a curve C as a path integral
+                                         Z
+                               ⟨L(C)⟩ = DA e−S1 [A] L(C) .                             (3.16)
+
+The δ̄ variation for our family of curves is therefore
+                                   Z               X Z ds
+                            1 1            −S1 [A]
+                                                            ∧ f ∗ tr F(Z)HolZ [Ct ] .
+                                                                                  
+               δ̄⟨L(Ct )⟩ =          DA e                                                     (3.17)
+                            N 2πi                  i   Σi s
+
+Recall that if we vary the Chern-Simons action with respect to the gauge connection we find
+                                          Z
+                              δS1 [A] = β1 D3|4 Z ∧ tr(F ∧ δA) .                         (3.18)
+
+Let us introduce a variational derivative δ/δA such that
+                       δ i             k         α i k  3|4
+                                        ′
+                                   A(Z ) = δj δl − δj δl δ̄ (Z, Z ′ ) .
+                                                 k i
+                                                                                              (3.19)
+                        δA(Z) j            l          N
+
+Here α = 0 for a U(N ) gauge group while α = 1 for SU(N ). The object δ̄ 3|4 (Z, Z ′ ) is a
+                                                        3|4      3|4
+distribution-valued (0, 3)-form on the product CPZ × CPZ ′ which obeys
+                            Z
+                                 D3|4 Z ′ ∧ δ̄ 3|4 (Z, Z ′ ) ∧ ω(Z ′ ) = ω(Z)        (3.20)
+                               3|4
+                             CPZ ′
+
+
+for any (0, p)-form ω. Explicitly, we can write δ̄ 3|4 (Z, Z ′ ) as
+                      Z                                 Z
+          ′       1     du 4|4           ′       1        du ^ ¯       1    Y   ′     ′
+   3|4
+ δ̄ (Z, Z ) =       4
+                           ∧ δ̄  (Z −uZ    ) =       4
+                                                                   ∂ A   ′A
+                                                                             (χA −uχ′A ) . (3.21)
+                (2π)    u                      (2π)        u A Z − uZ A′
+
+
+    From (3.18) we can then write the curvature F as the variation of the Chern-Simons action
+with respect to A,
+                                  Z
+                   δ
+                       S1 [A] = β1 D3|4 Z ′ ∧ F(Z ′ ) ∧ δ̄ 3|4 (Z, Z ′ ) = β1 F(Z) .   (3.22)
+                 δA(Z)
+and hence
+                                     Z        XZ                                        
+                           1                         ds    ∗      δ    −S1 [A]
+        δ̄⟨L(Ct )⟩ = −                   DA             ∧ f tr        e        HolZ [Ct ] .   (3.23)
+                       β1 N (2πi)             i   Σi s          δA(Z)
+
+As in [16, 1] we formally manipulate the path integral, using integration by parts to bring the
+variation to act on the holonomy,
+                                    Z             X Z ds                          
+                             1            −S1 [A]            ∗       δ
+            δ̄⟨L(Ct )⟩ =              DA e                ∧ f tr         HolZ [Ct ] .    (3.24)
+                         β1 N (2πi)               i  Σi
+                                                        s          δA(Z)
+
+                                                    11
+To compute the action of the variational derivative on the holonomy, we may follow a similar
+argument as in eq. (3.3) and below. We consider a pair of lines Xt , Xt′ , each embedded in
+its own copy of CP3|4 . As t varies, the two lines sweep out a three-dimensional surface inside
+CP3|4 × CP3|4 , parametrised by t, s, s′ . We define a map g as follows
+
+                                g : (t, s, s′ ) 7→ ZXt (s), ZXt′ (s′ ) .
+                                                                      
+                                                                                         (3.25)
+
+Now we have (writing Z ≡ ZXt (s) and Z ′ ≡ ZXt′ (s′ ))
+                             δ i h            ′  ¯         ′
+                                                                     ′
+                                                                             ik
+                                     UXt (s1 , s ) ∂ + AXt (Z ) UXt (s , s0 ) = 0 ,
+                                       ′                 ′        ′                                   (3.26)
+                            δA(Z) j                                           l
+
+
+where we should regard the LHS as a (0, 3)-form on the three-dimensional space obtained by
+taking the direct product Σ × Σ′ (i.e. the direct product of two lines) and varying t.
+
+    Now, integrating over s′ against Gs0 (s1 , s′ ) we have
+               Z                                  δ i
+                             ′               ′ k
+                  Gs0 (s1 , s ) ∧ UXt (s1 , s )m
+                                    ′                        A(Z ′ )m        ′      n
+                                                                    n UXt′ (s , s0 )l
+                                                   δA(Z) j
+               ZΣ
+                                                            m  δ i
+             + Gs0 (s1 , s′ ) ∧ UXt′ (s1 , s′ )km ∂¯ + AXt′ n               UXt′ (s′ , s0 )nl = 0 .   (3.27)
+                Σ                                               δA(Z)     j
+
+
+Applying (3.19) to the first term and (3.5) and integration by parts to the second, we obtain
+            δ i
+                  UX (s1 , s0 )kl =
+          δA(Z) j
+           Z
+                      ′      ∗ 3|4   ′
+                                       n
+                                                  ′ k      ′      i  α i              k
+                                                                                        o
+         − Gs0 (s1 , s ) ∧ g δ̄ (Z, Z ) UX (s1 , s )j UX (s , s0 )l − δj UX (s1 , s0 )l .             (3.28)
+            Σ                                                        N
+We can now compute the action of the variational derivative on the holonomy with the base
+point Z taken on component i as follows,
+                          
+              δ                      δ m                                          n
+       tr         HolZ [C] =                  UXi (s, ∞)UXi−1 . . . UXi+1 UXi (0, s) m
+           δA(Z)                 δA(Z) n
+             δ m                                                l
+                         UXi (s, ∞)nl UXi−1 . . . UXi+1 UXi (0, s) m
+                                      
+          =
+               δA(Z) n
+            X                              n  δ m             r                           k
+          +      UXi (s, ∞)UXi−1 . . . UXj+1 r                UXj k UXj−1 . . . UXi+1 UXi (0, s) m
+            j̸=i
+                                                  δA(Z) n
+                                        n  δ  m
+                                                        UXi (0, s)rm .
+            
+          + UXi (s, ∞)UXi−1 . . . UXi+1 r                                                          (3.29)
+                                            δA(Z) n
+
+
+
+
+                                                       12
+Making use of (3.28) we find (writing UXl,t = UXl )
+                    
+       δ
+tr         HolZ [Ct ] =                                                                            (3.30)
+    δA(Z)
+   Z
+               ′     ∗ 3|4          ′
+                                      n
+                                                  ′ n    ′      m     α    m
+                                                                             o                             l
+−      G∞ (s, s ) ∧ g δ̄ (Z, Z ) UXi (s, s )n UXi (s , ∞)l − UXi (s, ∞)l        UXi−1 . . . UXi+1 UXi (0, s) m
+    Σi                                                               N
+   XZ                                                                   n
+          G∞ (0, s′ ) ∧ g ∗ δ̄ 3|4 (Z, Z ′ ) UXi (s, ∞)UXi−1 . . . UXj+1 r
+                                            
+−
+   j̸=i   Σj
+             n
+                       ′ r      ′   m    α m              r
+                                                            o                          k
+          × UXj (0, s )n UXj (s , ∞)k − δn UXj (0, ∞)k UXj−1 . . . UXi+1 UXi (0, s) m
+  Z                                      N
+              ′     ∗ 3|4     ′
+                                                           n n       ′ r       ′    m    α        r
+                                                                                                      o
+−     Gs (0, s ) ∧ g δ̄ (Z, Z ) UXi (s, ∞)UXi−1 . . . UXi+1 r UXi (0, s )n UXi (s , s)m − UXi (0, s)n ,
+   Σi                                                                                     N
+
+or, more compactly,
+                    
+       δ
+tr         HolZ [Ct ] =                                                                                   (3.31)
+     δA(Z)
+     n Z
+   X        ds′       ∗ 3|4       ′
+                                      n                                                α                  o
+−                ∧  g  δ̄   (Z, Z   )  tr UX  UX    . . . UX   tr UX  . . . UX    UX  ] −   tr UXn . . . UX 1    .
+    j=1 Σj
+           2πis′                            i   i−1         j       j         i+1   i
+                                                                                          N
+
+Note that the first and last term of (3.30) combine to give the term j = i in the sum.
+
+     We therefore obtain for the variation of the expectation value of the loop operator,
+
+                    N    XZ          ds ds′      ∗ 3|4       ′
+                                                                h
+                                                                      ′      ′′      α           i
+ δ̄⟨L(Ct )⟩ = −                        ∧    ∧  g  δ̄   (Z, Z   ) ⟨L(C t )L(C t  )⟩ −    ⟨L(C t )⟩  . (3.32)
+                β1 (2πi)2 i,j Σi ×Σj s   s′                                          N2
+
+Here, the factor of δ̄ 3|4 (Z, Z ′ ) ensures that Z on the line Xi and Z ′ on the line Xj actually
+coincide. Then the loop Ct′ begins and ends at the intersection point, passing through the lines
+Xi−1 , . . . Xj+1 while the loop Ct′′ begins and ends at the same intersection point and passes
+through the lines Xj−1 , . . . , Xi+1 .
+
+     Taking the large N limit of (3.32) we identify β1 → − iC    F
+                                                               4π 3
+                                                                    and one obtains
+                                XZ         ds ds′
+               δ̄⟨L(Ct )⟩ = 2πi              ∧ ′ ∧ g ∗ δ̄ 3|4 (Z, Z ′ )⟨L(Ct′ )⟩⟨L(Ct′′ )⟩ .              (3.33)
+                                i,j Σi ×Σj s   s
+
+
+    To obtain the explicit form of the BCFW recursion relation from (3.33) we choose an explicit
+deformation of the form
+                                     Zn → Ẑn = Zn + tZn−1 .                             (3.34)
+
+                                                       13
+In this case the only line for which the pullback f ∗ F of the Chern-Simons curvature is non-
+vanishing is X1,t . Therefore, the only term in the sum in (3.17) is i = 1. The map ZX1,t is given
+explicitly by
+                                 ZX1,t (s) = sZ1 + Zn + tZn−1 ≡ Z .                         (3.35)
+Then we integrate both sides of (3.33) as follows,
+                                dt ds ds′ du
+     Z                        Z
+        dt
+           ∧ δ̄⟨L(Ct )⟩ = 2πi      ∧    ∧ ′ ∧       ∧ δ̄ 4|4 (Z − uZ ′ )⟨L(Ct′ )⟩⟨L(Ct′′ )⟩ ,                               (3.36)
+         t                      t     s     s     u
+where the delta function is given explicitly by
+                       δ̄ 4|4 (Z − uZ ′ ) = δ̄ 4|4 sZ1 + Zn + tZn−1 − u(s′ Zj + Zj−1 ) .
+                                                                                      
+                                                                                                                            (3.37)
+The LHS of (3.36) is
+                              Z
+                                   dt                                           
+                                      ∧ δ̄⟨L(Ct )⟩ = 2πi ⟨L(Ct=0 )⟩ − ⟨L(Ct=∞ )⟩                                            (3.38)
+                                    t
+while the RHS is                    X
+                                                                    ′          ′′
+                              2πi        [n, n − 1, 1, j, j − 1]⟨L(Ct=tj
+                                                                         )⟩⟨L(Ct=t j
+                                                                                     )⟩ .                                   (3.39)
+                                     j
+
+We conclude
+                                               X
+ ⟨L[1, . . . , n]⟩ = ⟨L[1, . . . , n − 1]⟩ +        [n − 1, n, 1, j − 1, j]⟨L[1, . . . , j − 1, Ij ]⟩⟨L[Ij , j, . . . , n̂j ]⟩ .
+                                                j
+                                                                                                                            (3.40)
+Here, the supertwistors Ẑn (j) and ZI (j) are given by
+                                  Ẑn = Zn−1 ⟨n 1 j − 1 j⟩ − Zn ⟨n − 1 1 j − 1 j⟩ ,
+                                  ZI = Zj−1 ⟨j n − 1 n 1⟩ − Zj ⟨j − 1 n − 1 n 1⟩ .                                          (3.41)
+More generally, if we return to (3.32) and we do not take the large N limit, we obtain (again
+identifying β1 → − iCF
+                   4π 3
+                        )
+    ⟨L[1, . . . , n]⟩ = ⟨L[1, . . . , n − 1]⟩
+       X                               h                                                α                     i
+     +      [n − 1, n, 1, j − 1, j] ⟨L[1, . . . , j − 1, Ij ]L[Ij , j, . . . , n̂j ]⟩ − 2 ⟨L[1, . . . , n̂j ]⟩ .            (3.42)
+        j
+                                                                                       N
+
+Writing the correlator of two Wilson loops as the sum of disconnected and connected parts,
+⟨L1 L2 ⟩ = ⟨L1 ⟩⟨L2 ⟩ + ⟨L1 L2 ⟩c , gives us the relation
+    ⟨L[1, . . . , n]⟩ = ⟨L[1, . . . , n − 1]⟩                                                                               (3.43)
+                           X                           h
+                         +      [n − 1, n, 1, j − 1, j] ⟨L[1, . . . , j − 1, Ij ]⟩⟨L[Ij , j, . . . , n̂j ]⟩
+                              j
+                                                                                                     α                      i
+                                            + ⟨L[1, . . . , j − 1, Ij ]L[Ij , j, . . . , n̂j ]⟩c −      ⟨L[1, . . . , n̂j ]⟩  .
+                                                                                                     N2
+
+                                                              14
+     In contrast to the equation (3.40), the full relation obtained without taking the large N
+limit is not closed. It requires knowledge about the connected part of the correlator of two
+light-like Wilson loops, albeit in a special kinematic limit, where the two loops share a common
+‘intersection’ twistor Ij .
+
+     However, as will now argue, a similar recursion relation can be obtained for such objects
+following very similar logic to that presented above.
+
+
+
+4       Recursion for tree-level correlators of multiple loop op-
+        erators
+
+Let us consider the correlator of two loop operators L(C) and L(C̃). We will denote the twistors
+describing the two contours as Z1 , . . . , Zn1 and Z̃1 , . . . , Z̃n2 . Considering the variation of the
+correlator of the two loop operators in some one-parameter deformation, we find in complete
+analogy to (3.17),
+                                 Z
+                           1 1
+      δ̄⟨L(Ct )L(C̃t )⟩ =          DA e−S1 [A] ×                                                         (4.1)
+                           N 2πi
+        hX Z ds                                      X Z ds̃                                          i
+                         ∗
+                                                                     ∧ f ∗ L(Ct ) tr F(Z̃)HolZ̃ [C̃t ] .
+                                                                                  
+                     ∧ f tr F(Z)HolZ [Ct ] L(C̃t ) +
+          i    Σi s                                   i      Σ̃i s̃
+
+We may employ the same logic as in the case of a single loop operator to write the insertion of
+the curvature as the variational derivative on the action and then integrate by parts inside the
+path integral. We obtain (writing ZXi,t (s) ≡ Z)
+                                    Z
+                             1
+    δ̄⟨L(Ct )L(C̃t )⟩ =               DA e−S1 [A] ×
+                         β1 N (2πi)
+     X Z ds             h                                                        i
+                     ∗         δ            i            h             δ
+                ∧ f tr            HolZ [Ct ] L(C̃t ) + tr HolZ [Ct ]       L(C̃t ) + (C ↔ C̃) . (4.2)
+       i  Σi
+              s            δA(Z)                                     δA(Z)
+
+
+      This results in (writing ZXi,t (s) ≡ Z, ZXj,t (s′ ) ≡ Z ′ and ZX̃j,t (s̃) ≡ Z̃)
+
+δ̄⟨L(Ct )L(C̃t )⟩ =
+        N     X Z ds ds′                          h                                        α                     i
+                                  ∗ 3|4        ′           ′       ′′
+ −                      ∧    ∧  g  δ̄    (Z, Z   )  ⟨L(C   t )L(C  t  )L(  C̃ t )⟩   −        ⟨L(C t )L( C̃ t )⟩
+    β1 (2πi)2 i,j     s   s′                                                              N2
+          1       X Z ds ds̃                         h                                          α                                        i
+                                      ∗ 3|4
+ −                        ∧     ∧   g  δ̄   (Z,  Z̃)   ⟨tr(Hol  Z [C   t ]Hol  Z̃ [ C̃ t ])⟩ −    ⟨tr Hol  Z  [C  t ] tr Hol Z̃ [ C̃ t ]⟩
+    β1 (2πi)2 N 2 i,j   s    s̃                                                                N
++ (C ↔ C̃) .                                                                                                                    (4.3)
+
+                                                                  15
+    Now the LHS can be decomposed into disconnected and connected contributions (marked
+with a ‘c’ superscript),
+             δ̄⟨L(Ct )L(C̃t )⟩ = δ̄⟨L(Ct )⟩⟨L(C̃t )⟩ + ⟨L(Ct )⟩δ̄⟨L(C̃t )⟩ + δ̄⟨L(Ct )L(C̃t )⟩c .                (4.4)
+Likewise, the various terms on the RHS may be decomposed as
+        ⟨L(Ct′ )L(Ct′′ )L(C̃t )⟩ = ⟨L(Ct′ )⟩⟨L(Ct′′ )⟩⟨L(C̃t )⟩ + ⟨L(Ct′ )L(Ct′′ )⟩c ⟨L(C̃t )⟩
+                                   +⟨L(Ct′ )⟩⟨L(Ct′′ )L(C̃t )⟩c + ⟨L(Ct′′ )⟩⟨L(Ct′ )L(C̃t )⟩c
+                                   +⟨L(Ct′ )L(Ct′′ )L(C̃t )⟩c                                                    (4.5)
+                ⟨L(Ct )L(C̃t )⟩ = ⟨L(Ct )⟩⟨L(C̃t )⟩ + ⟨L(Ct )L(C̃t )⟩c                             (4.6)
+ α
+   ⟨tr HolZ [Ct ] tr HolZ̃ [C̃t ]⟩ = αN ⟨L(Ct )L(C̃t )⟩ = αN ⟨L(Ct )⟩⟨L(C̃t )⟩ + ⟨L(Ct )L(C̃t )⟩c (4.7)
+                                                                                                 
+ N
+We may then make use of (3.32) for the first two terms in (4.4) and we find various terms from
+the RHS are cancelled. We are left with
+  δ̄⟨L(Ct )L(C̃t )⟩c =
+          N     X Z ds ds′                         h
+   −          2
+                          ∧ ′ ∧ g δ̄ (Z, Z ) ⟨L(Ct′ )⟩⟨L(Ct′′ )L(C̃t )⟩c + ⟨L(Ct′′ )⟩⟨L(Ct′ )L(C̃t )⟩c
+                                  ∗ 3|4          ′
+      β1 (2πi) i,j      s   s
+                                                                            α                 i
+                                             + ⟨L(Ct′ )L(Ct′′ )L(C̃t )⟩c − 2 ⟨L(Ct )L(C̃t )⟩c
+                                                                           N
+            1       X Z ds ds̃                       h
+   −                        ∧    ∧ g ∗ δ̄ 3|4 (Z, Z̃) ⟨tr(HolZ [Ct ]HolZ̃ [C̃t ])⟩
+      β1 (2πi)2 N 2 i,j   s   s̃
+                                                                                       i
+                                             − αN ⟨L(Ct )⟩⟨L(C̃t )⟩ + ⟨L(Ct )L(C̃t )⟩c
+   + (C ↔ C̃) .                                                                                                  (4.8)
+
+
+    Now we may again take the large N limit (i.e. keep leading terms for large N on both sides)
+and we find
+     δ̄⟨L(Ct )L(C̃t )⟩c =
+           X Z ds ds′                             h                                                          i
+      − iπ              ∧ ′ ∧ g ∗ δ̄ 3|4 (Z, Z ′ ) ⟨L(Ct′ )⟩⟨L(Ct′′ )L(C̃t )⟩c + ⟨L(Ct′′ )⟩⟨L(Ct′ )L(C̃t )⟩c
+            i,j
+                    s      s
+                Z
+         iπ X ds ds̃               ∗ 3|4
+                                                  h                                                     i
+      − 3                ∧      ∧ g δ̄ (Z, Z̃) ⟨tr(HolZ [Ct ]HolZ̃ [C̃t ])⟩ − αN ⟨L(Ct )⟩⟨L(C̃t )⟩
+         N i,j        s      s̃
+      + (C ↔ C̃) .                                                                                               (4.9)
+
+
+    Finally, we specify the same shift as in (3.34) with only the twistor Zn1 on the first loop
+being dependent on t. Following similar logic as before, we find the only terms in the resulting
+
+                                                        16
+recursion relation for the connected part of the leading large N correlator of two lightlike loop
+operators are, identifying β1 → − iCF
+                                  4π 3
+                                       ,
+
+⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c = ⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]⟩c                                        (4.10)
+   X                                   
+ +      [n − 1, n, 1, j − 1, j] ⟨L[1, . . . , j − 1, Ij ]⟩⟨L[Ij , j, . . . , n̂1 ]L[1̃, . . . , ñ2 ]⟩c
+                                                                                                              
+                                                                                                          c
+                           + ⟨L[Ij , j, . . . , n̂1 ]⟩⟨L[1, . . . , j − 1, Ij ]L[1̃, . . . , ñ2 ]⟩
+   1 X                                                                                                                           
+ + 2   [n − 1, n, 1, ȷ̃ − 1, ȷ̃] ⟨L[1, . . . , n̂1 , Iȷ̃ , ȷ̃, . . . , ȷ̃ − 1, Iȷ̃ ]⟩ − α⟨L[1, . . . , n̂1 ]⟩⟨L[1̃, . . . , ñ2 ]⟩ .
+  N
+
+     Let us comment on the nature of the terms on the RHS of (4.10). The first term is just
+the connected correlator of two loop operators with one twistor removed. The second and third
+terms are analogous to the RHS of the recursion relation (3.40) and arise from locations where the
+deformed loop self-intersects. The fourth term is a new type of contribution which arises when
+the deformed loop intersects the other loop, while the fifth term accompanies the fourth in the
+case of SU(N ) gauge group. In contrast to the large N recursion (3.40) for a single Wilson loop,
+the recursion relation (4.10) explicitly distinguishes between the gauge groups U(N ) (α = 0) and
+SU(N ) (α = 1).
+
+
+
+4.1      Tree-level recursion in Q̄-equation
+
+The relations derived above and in section 3 prove to be very useful in performing the integration
+on the RHS of the Q̄-equation for planar Wilson loop correlators and the colour exact Wilson
+loop [19]. The Q̄-equation is a non-perturbative equation for Wilson loops [21],
+                                        Z
+                  A′ (k)   1                          ′  (k+1)     (k) (1,0)
+                Q̄A Rn = Γcusp Resϵ=0 [d2|3 Zn+1 ]A  A [Rn+1 − Rn Rn+1 ] + cyc,             (4.11)
+                           4
+           (k)
+where Rn is the conformally invariant, finite piece of the Wilson loop and
+                 Zn+1 = Zn − ϵZn−1 + Cϵτ Z1 + C ′ ϵ2 Z2 ,                                                                   (4.12)
+                        Z τ =∞                                  Z    Z ∞
+                                 2|3    A′                                             ′
+                 Resϵ=0        [d Zn+1 ]A = C(n − 1 n 1)A Resϵ=0 ϵdϵ     dτ [d3 χn+1 ]A .                                   (4.13)
+                           τ =0                                                              0
+
+Upon perturbative expansion, the equation relates loop-level Wilson loops to Wilson loops of a
+lower loop order and this has allowed for the calculation of two-loop and three-loop amplitudes
+[23, 24]. In [18], the Q̄-equation was extended to an arbitrary number of Wilson loops,
+                                m Z
+  A′ (k)         1             X                     ′ 
+                                     [d2|3 Znr +1 ]A     (k+1)                (k)         (1,0)
+                                                                                                              
+Q̄A Rn1 ,...,nm = Γcusp Resϵ=0                     A Rn1 ,...,nr+1 ,...,nm + Rn1 ,...,nm Rn1 ,...,nr+1 ,...,nm +cycr ,
+                 4             r=1
+                                                                                                                (4.14)
+
+                                                                17
+and (4.13) was verified to hold for colour-exact Wilson loops at O(g 2 ). This verification for
+multiple Wilson loops and the colour-exact Wilson loop was carried out by making use of (3.42)
+and (4.10), respectively. By using the BCFW shift
+                                                   Znr → Znr + tZnr −1                                                    (4.15)
+on the correlators which appear in the equations above, the only non-zero terms are those for
+which the χnr +1 integration is isolated to the R invariant factors which appear in the BCFW
+expression (this generates the ϵ poles) and the correlator parts go smoothly in the ϵ → 0 limit.
+For the colour exact Wilson loop R1−loop
+                                     n    , the RHS of the Q̄-equation is thus given by
+        ′
+    Q̄A  1−loop
+      A Rn
+             n−2
+       2CF X           ⟨n 1 i − 1 i⟩                     ⟨n − 1 n 1 i⟩ 
+    =            log                       Q̄ log                        ⟨L[n, 1, . . . , i − 1, I¯i ]L[I¯i , i, . . . , n]⟩tree
+         N i=3       ⟨n − 1 n i − 1 i⟩               ⟨n − 1 n 1 i − 1⟩
+           α                                                           1                         
+       − 2 ⟨L[n, 1, . . . , i − 1, I¯i , i, . . . , n, I¯i ]⟩tree + 1 − 2 ⟨L[1, . . . , n]⟩tree + cyc,                      (4.16)
+          N                                                            N
+where the correlators on the RHS are taken to be the conformally invariant finite pieces, I¯i ≡
+(i − 1 i) ∩ (n − 1 n 1) and the Wilson loops on each side of the equation include all Grassmann
+sectors. Full details on the integration in the Q̄ equation are included in section 6.2 and appendix
+B of [19].
+
+
+
+5      Recursion for loop-level integrands
+
+We recall that to complete the self-dual theory to the full maximally supersymmetric Yang-Mills
+theory, we should add to the Chern-Simons action the non-local interactions given by
+                        Z                                 Z        ∞
+                                                                  X   1
+                            4|8                               4|8
+                                                                        tr(−∂¯X
+                                                                              −1
+                                                                                 A)r .
+                                               
+             S2 [A] = β2 d X log det ∂ + A X = −β2 d X                                    (5.1)
+                                                                  r=2
+                                                                      r
+Therefore when we perform the path integral in the full N = 4 theory we obtain an additional
+term when writing the insertion of the curvature as the variation of the action,
+                                                             
+                                         1 δS[A]      δS2 [A]
+                               F(Z) =               −           .                      (5.2)
+                                        β1 δA(Z) δA(Z)
+
+      Making a variation of S2 with respect to the connection, we find
+                                    ∞ 
+                                                     ds1 ∧ AX (s1 ) ∧ . . . ∧ dsr ∧ δAX (sr )
+                         Z                       Z
+                             4|8
+                                   X     1 r
+           δS2 [A] = −β2 d X                  tr
+                                        2πi       Σr       (sr − s1 ) . . . (sr−1 − sr )
+                       Z         Z r=2
+                   = β2 d4|8 X      tr JA ∧ δA                                                                             (5.3)
+                                            Σ
+
+
+                                                               18
+where
+                                                ds1 ∧ AX (s1 ) ∧ . . . ∧ dsr−1 ∧ AX (sr−1 )
+                       X  1 r          Z
+             JA = −                 ds                                                           .        (5.4)
+                       r=2
+                             2πi         Σr−1 (s − s1 )(s1 − s2 ) . . . (sr−2 − sr−1 )(sr−1 − s)
+
+
+
+    As described in [1], based on general arguments of [25], the variation of the log-det term is
+given by                                           Z
+                              δ log det(∂¯ + A)X =   tr(JA ∧ δA),                           (5.5)
+                                                            Σ
+with
+                                                      ′              ′
+                                                                           
+                                   JA (s) = lim
+                                             ′
+                                                GA (s   , s) − G 0 (s  , s)
+                                             s →s
+
+
+where GA is the Green’s function for the operator (∂¯ + A)X and G0 (s′ , s) is the Green’s function
+for the ∂¯ operator given in (2.12). Since the two operators are related by the holomorphic frame
+H(X, s) via
+                                 H −1 (X, s)(∂¯ + A)X H(X, s) = ∂¯X ,                         (5.6)
+the Green’s function GA is given by
+
+                                GA (s′ , s) = H(X, s′ )G0 (s′ , s)H −1 (X, s)                             (5.7)
+
+as an integral operator. We therefore find
+
+                                   ds ′                        ds ∂UX (s′ , s)
+                     JA (s) = −        H (X, s)H −1 (X, s) = −                       .                    (5.8)
+                                   2πi                         2πi  ∂s′        s′ =s
+
+Equivalently, we may write
+
+                                  UX (s′ , s) − UX (s, s)                         ds′
+                                                                         I
+                        ds                                      ds
+             JA (s) = −     lim             ′
+                                                          = −                            UX (s′ , s) .    (5.9)
+                        2πi s′ →s          s −s               (2πi)2           (s′ − s)2
+
+From (2.22) we find explicitly
+                                                                                           
+                         ds1 ∧ AX (s1 )            ds1 ∧ AX (s1 )     ds2 ∧ AX (s2 )
+                     Z                           Z                Z
+             ds 1                           1
+  JA (s) = −                             +                                             + ... ,
+             2πi 2πi    (s − s1 )(s1 − s) (2πi)2     (s − s1 )      (s1 − s2 )(s2 − s)
+
+matching the result in (5.4) above. Note that a simple argument shows that tr(JA ) = 0 in the
+SU(N ) case.
+
+    As explained in [1], it is helpful to express the variation using
+
+                                                    ds ∧ ds′ ∧ ds′′
+                                     Z
+                                 1
+                    JA = −                                                   UX (s′ , s)                 (5.10)
+                               (2πi)3 S 1 ×S 1 (s − s′ )(s′ − s′′ )(s′′ − s)
+
+
+                                                      19
+where the integration over s′′ is taken around the pole at s′′ = s′ . This representation is useful
+as we may think of the line X as the image of Σ = CP1 under the embedding ZX such that ZA
+and ZB are the images of s′′ and s′ respectively, i.e. we write
+                                       s − s′         s − s′′
+                                     ZX (s) =   Z A +          ZB .                                         (5.11)
+                                       s′′ − s′       s′ − s′′
+The integrations force both ZA and ZB to coincide with Z on the line X.
+
+     We may then express JA as
+                                                                         ds′ ∧ ds′′
+                                          Z
+                                  1
+                           JA =                        Gs′′ (s′ , s) ∧     ′    ′′
+                                                                                     UX (s′ , s) .          (5.12)
+                                (2πi)2      S 1 ×S 1                     (s − s )  2
+
+
+The integrations over s′ and s′′ are the integrations over the locations of ZA and ZB over the
+(fixed) line X. They combine with integration over the line X as
+                          ds′ ∧ ds′′              ⟨AdA⟩ ∧ ⟨BdB⟩
+               d4|8 X ∧     ′    ′′ 2
+                                      = −d4|8 X ∧          2
+                                                                = −D3|4 ZA ∧ D3|4 ZB .                      (5.13)
+                          (s − s )                    ⟨AB⟩
+
+
+     Returning to (3.23) and working now with the full action of the N = 4 theory, we have
+                          Z     X Z dsi                                                                      
+                    1                               ∗       δ    −S[A]              δS2 [A]             −S[A]
+δ̄⟨L(Ct )⟩ = −              DA                 ∧ f tr           e      HolZ [Ct ] +         HolZ [Ct ]e
+               β1 N (2πi)        i   Σ i
+                                         s i              δA(Z)                     δA(Z)
+                        Z            X Z dsi                                                        
+                  1            −S[A]                      ∗     δ                  δS2 [A]
+           =               DA e                       ∧ f tr        HolZ [Ct ] −           HolZ [Ct ] .
+             β1 N (2πi)               i    Σ i
+                                                s i           δA(Z)                δA(Z)
+                                                                                                            (5.14)
+The first term above is as analysed previously while the second term is the new contribution. It
+can be expressed as
+                         Z       XZ
+                  β2                                              dsi
+                            4|8
+                                            g̃ ∗ δ̄ 3|4 (Z, Ẑ) ∧
+                                                                                          
+            −              d X                                        ∧ tr JA (s)HolZ [Ct ] . (5.15)
+              β1 N (2πi)          i   Σi ×Σ
+                                                                  si
+
+Here g̃ is the map from Σ̃i × Σ to CP3|4 × CP3|4 given by
+                                g̃ : (t, si , s) 7→ (ZXi,t (si ), ZX (s)) ≡ (Z, Ẑ) .                       (5.16)
+
+The presence of δ̄ 3|4 (Z, Ẑ) forces Z on the line Xi,t and Ẑ on the integration line X to coincide.
+
+     Using the form of JA given above, we find that (5.15) can be expressed as
+                                 ds′ ∧ ds′′
+                    Z
+            β2          4|8
+      −               d     X ∧                 ×                                                             (5.17)
+        β1 N (2πi)3              (s′ − s′′ )2
+                                  Z
+                              X                                 dsi
+                                          g̃ ∗ δ̄ 3|4 (Z, Ẑ) ∧     ∧ Gs′′ (s′ , s) tr UX (s′ , s)HolZ [Ct ] .
+                                                                                                           
+                               i    Σi ×Σ
+                                                                 si
+
+
+                                                             20
+      Since the delta function and the contour integration forces Z = Ẑ = ZB , the trace in the
+first term in (5.17) can then be replaced with a new loop operator
+                                                                          
+                    tr UZi−1 ,Zi−2 . . . UZi+1 ,Zi UZi ,ZB UZB ,Ẑ UẐ,Zi−1 = N L(C̃t ∪ X) . (5.18)
+
+
+     Let us now specify the same shift (3.34) as before. Once again, the only contributing term
+in the sum over i is the term where i = 1. We then integrate against dt/t as before and find the
+new contribution
+                          ds′ ∧ ds′′                 ds(s′ − s′′ )
+              Z                       Z
+    N β2          4|8                   dt dsi                          du
+            4
+                d     X ∧   ′    ′′ 2
+                                           ∧    ∧   ′              ′′
+                                                                      ∧    ∧ δ̄ 4|4 (Z − uẐ)⟨L(C̃t ∪ X)⟩ .
+ β1 N (2πi)               (s − s )       t   si   (s − s)(s − s )       u
+                                                                                                     (5.19)
+
+Here we have explicitly
+                                                       s − s′      s − s′′    
+               4|4                   4|4
+              δ̄ (Z − uẐ) = δ̄  si Z1 + Zn + tZn−1 − u ′′      ZA + ′       ZB                                      (5.20)
+                                                        s − s′      s − s′′
+
+We may bring this to a canonical form with a few simple steps. First we rescale u by (s′′ − s′ )
+to clear the denominators in the final two terms in the argument of the δ̄ 4|4 . We then define
+s̃ = s − s′ . This yields an integral of the form
+
+       dt dsi ds̃ s′ − s′′
+    Z
+                                       du 4|4                                           ′     ′′
+                                                                                                      
+  −       ∧      ∧                   ∧   δ̄   s i Z 1 + Z n + tZ n−1 − us̃ZA + u(s̃ + s   − s    )Z B   . (5.21)
+        t     si    s̃ s̃ + s′ − s′′   u
+
+We then further rescale, defining š = us̃ and then ǔ = u(s′ − s′′ ), giving
+             Z
+                dt dsi dš           dǔ 4|4                                        
+           −       ∧      ∧     ∧         δ̄ si Z1 + Zn + tZn−1 − šZA + (š + ǔ)ZB .                               (5.22)
+                 t    si     š   š + ǔ
+Finally defining û = ǔ + š yields the canonical form which we recognise as the R-invariant,
+      Z
+         dt dsi dš dû 4|4                                         
+   −        ∧      ∧     ∧      δ̄ si Z1 + Zn + tZn−1 − šZA + ûZB = −[n, n − 1, 1, A, B]
+         t     si    š      û
+                                                                      = [n − 1, n, 1, A, B]  (5.23)
+
+Putting everything together, we obtain the following recursion relation
+
+       ⟨L[1, . . . , n]⟩ = ⟨L[1, . . . , n − 1]⟩
+          X                               h                                                α                     i
+        +      [n − 1, n, 1, j − 1, j] ⟨L[1, . . . , j − 1, Ij ]L[Ij , j, . . . , n̂j ]⟩ − 2 ⟨L[1, . . . , n̂j ]⟩
+           j
+                                                                                          N
+                        Z
+              β2
+        −             5
+                          D3|4 ZA ∧ D3|4 ZB [n − 1, n, 1, A, B]⟨L[1, . . . , n − 1, n̂AB , Ẑ, B]⟩ .                 (5.24)
+          β1 (2πi)
+
+
+                                                            21
+Taking the large N limit yields
+                                                X
+  ⟨L[1, . . . , n]⟩ = ⟨L[1, . . . , n − 1]⟩ +       [n − 1, n, 1, j − 1, j]⟨L[1, . . . , j − 1, Ij ]⟩⟨L[Ij , j, . . . , n̂j ]⟩
+                                                j
+
+               g2 1
+                             Z
+              + 2                D3|4 ZA ∧ D3|4 ZB [n − 1, n, 1, A, B]⟨L[1, . . . , n − 1, n̂AB , Ẑ, B]⟩ . (5.25)
+               π (2πi)2
+                1
+Note that the (2πi)2 factor can be thought of as part of the residual GL(2) integral which is to be
+
+performed on the last line, which will be cancelled when computing that integral using residues.
+As discussed in [1], this matches the BCFW recursion for the loop integrand obtained in [7].
+
+      Now, let us repeat the analysis in the case of the correlator of two Wilson loops. We return
+to eq. (4.2) but now find an additional term on the RHS,
+                                  Z
+                             1
+   δ̄⟨L(Ct )L(C̃t )⟩ =              DA e−S1 [A] ×
+                        β N (2πi)
+    X Z dsi             1h                                                                            i
+                     ∗         δ               δS2 [A]           i            h             δ
+                ∧ f tr            HolZ [Ct ] −         HolZ [Ct ] L(C̃t ) + tr HolZ [Ct ]       L(C̃t )
+      i  Σi si              δA(Z)              δA(Z)                                      δA(Z)
+   + (C ↔ C̃) .                                                                                                         (5.26)
+
+The new contribution can be expressed as
+               Z      XZ
+        β2                                             dsi
+                  4|8
+                                 g̃ ∗ δ̄ 3|4 (Z, Ẑ) ∧
+                                                                               
+  −              d X                                       ∧ tr JA (s)HolZ [Ct ] L(C̃t )                   + (C ↔ C̃) .
+    β1 N (2πi)         i   Σi ×Σ
+                                                       si
+                                                                                                                        (5.27)
+
+As before, we can decompose all contributions into disconnected and connected parts. This
+results in an equation for the connected part of the correlator,
+
+   δ̄⟨L(Ct )L(C̃t )⟩c =
+           N     X Z ds ds′                                 h
+                                         ∗ 3|4           ′
+    −                        ∧      ∧  g  δ̄      (Z,  Z   )  ⟨L(Ct′ )⟩⟨L(Ct′′ )L(C̃t )⟩c + ⟨L(Ct′′ )⟩⟨L(Ct′ )L(C̃t )⟩c
+       β1 (2πi)2 i,j       s    s′
+                                                                                       α                  i
+                                                      + ⟨L(Ct′ )L(Ct′′ )L(C̃t )⟩c − 2 ⟨L(Ct )L(C̃t )⟩c
+                                                                                      N
+             1       X Z ds ds̃                                h
+    −                           ∧      ∧ g ∗ δ̄ 3|4 (Z, Z̃) ⟨tr(HolZ [Ct ]HolZ̃ [C̃t ])⟩
+       β1 N 2 (2πi)2 i,j     s      s̃
+                                                                                                     c
+                                                                                                       i
+                                                      − αN ⟨L(Ct )⟩⟨L(C̃t )⟩ + ⟨L(Ct )L(C̃t )⟩
+                   Z             Z
+           β2                X                                   dsi                                    c
+                      d4|8 X             g̃ ∗ δ̄ 3|4 (Z, Ẑ) ∧
+                                                                                            
+    −                                                                 ∧ tr JA (s)HolZ [Ct ] L(C̃t )
+       β1 N (2πi)             i    Σi ×Σ
+                                                                 si
+   + (C ↔ C̃) .                                                                                                         (5.28)
+
+                                                             22
+In the large N limit the following terms survive
+
+   δ̄⟨L(Ct )L(C̃t )⟩c =
+           N     X Z ds ds′                                  h                                                                        i
+                                         ∗ 3|4           ′            ′         ′′             c          ′′          ′             c
+    −                        ∧      ∧  g  δ̄      (Z,  Z   )  ⟨L(C    t )⟩⟨L(C  t  )L(C̃  t )⟩    +  ⟨L(C t  )⟩⟨L(C   t )L( C̃ t )⟩
+       β1 (2πi)2 i,j       s    s′
+             1       X Z ds ds̃                                h                                                                     i
+                                              ∗ 3|4
+    −                           ∧      ∧   g    δ̄    (Z,  Z̃)   ⟨tr(Hol   Z [C t ]Hol Z̃ [ C̃ t ])⟩ − αN     ⟨L(C t )⟩⟨L(   C̃  t )⟩
+       β1 N 2 (2πi)2 i,j     s      s̃
+                   Z         XZ
+           β2                                                     dsi                                           c
+                       4|8
+                                         g̃ ∗ δ̄ 3|4 (Z, Ẑ) ∧
+                                                                                                     
+    −                 d X                                                ∧ tr JA (s)HolZ [Ct ] L(C̃t )
+       β1 N (2πi)             i    Σi ×Σ
+                                                                   si
+   + (C ↔ C̃) .                                                                                                                      (5.29)
+
+Taking the same shift as before and then performing the integration against dt/t and using the
+large N limits for β1 and β2 yields the following recursion relation for the connected correlator
+in the large N limit,
+
+⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c = ⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]⟩c
+     X                                   
+  +         [n − 1, n, 1, j − 1, j] ⟨L[1, . . . , j − 1, Ij ]⟩⟨L[Ij , j, . . . , n̂1 ]L[1̃, . . . , ñ2 ]⟩c
+                                                                                                                  
+                                        + ⟨L[Ij , j, . . . , n̂1 ]⟩⟨L[1, . . . , j − 1, Ij ]L[1̃, . . . , ñ2 ]⟩c
+        1 X                                                                                                                                 
+  + 2             [n − 1, n, 1, ȷ̃ − 1, ȷ̃] ⟨L[1, . . . , n̂1 , Iȷ̃ , ȷ̃, . . . , ȷ̃ − 1, Iȷ̃ ]⟩ − α⟨L[1, . . . , n̂1 ]⟩⟨L[1̃, . . . , ñ2 ]⟩
+      N
+      g2 1
+                     Z
+  + 2                    D3|4 ZA ∧ D3|4 ZB [n − 1, n, 1, A, B]⟨L[1, . . . , n − 1, n̂AB , Ẑ, B]L[1̃, . . . , ñ2 ]⟩c .
+      π (2πi)2
+                                                                                                                                      (5.30)
+
+
+     The integrand P
+                   of an l-loop Wilson loop correlator is given by a correlator with Lagrangian
+insertions L(Xi ) = ∞     1   ¯−1 r
+                      r=2 r (−∂Xi A) ,
+
+                                                      l
+                                                    Z ^
+                                    l−loop     1
+          ⟨L(C1 ) . . . L(Cn )⟩              =               d4|8 Xi ⟨L(C1 ) . . . L(Cn )L(X1 ) . . . L(Xl )⟩CS ,                    (5.31)
+                                               l!      i=1
+
+where the correlator on the RHS is computed in holomorphic Chern-Simons theory (i.e. without
+S2 [A]). To shorten notation, we label L(Xi ) by Li .
+
+      As it is written, (5.30) depends on loop-integrated correlators. Using (5.31), we can express
+
+
+
+
+                                                                     23
+it in terms of loop integrands,
+
+⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]L1 . . . Ll ⟩c = ⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]L1 . . . Ll ⟩c
+     X                                    
+  +         [n − 1, n, 1, j − 1, j] ⟨L[1, . . . , j − 1, Ij ]LpL ⟩⟨L[Ij , j, . . . , n̂1 ]L[1̃, . . . , ñ2 ]LpR ⟩c
+       j,p
+                                                                                                                         
+                           + ⟨L[Ij , j, . . . , n̂1 ]LpL ⟩⟨L[1, . . . , j − 1, Ij ]L[1̃, . . . , ñ2 ]LpR ⟩c
+     1 X                          
+   + 2   [n − 1, n, 1, ȷ̃ − 1, ȷ̃] ⟨L[1, . . . , n̂1 , Iȷ̃ , ȷ̃, . . . , ȷ̃ − 1, Iȷ̃ ]L1 . . . Ll ⟩                                 (5.32)
+    N ȷ̃
+                              X                                                            
+                          −α        ⟨L[1, . . . , n̂1 ]LpL ⟩⟨L[1̃, . . . , ñ2 ]LpL ⟩
+                                            p
+                l Z
+         1      X                                                                                                              Y
+   +                             [n − 1, n, 1, A′l0 , Bl′0 ]⟨L[1, . . . , n − 1, n̂Al0 Bl0 , Ẑ, Bl′0 ]L[1̃, . . . , ñ2 ]               Li ⟩c .
+       (2πi)2 l =1     GL(2)l0
+                 0                                                                                                           i∈L\{l0 }
+                                                                                                                                    (5.33)
+We have suppressed the “CS” label on each
+                                     Q correlator. WeQ sum over the partitions p of {L1 , . . . , Ll }
+into two sets, pL and pR , with LpL = i∈pL Li , LpR = i∈pR Li . Note that the sum is symmet-
+ric under permutations of the Langrangian insertions. As an explicit example, for l = 2, the
+partitions are
+
+               {{{L1 , L2 }, {}} , {{L1 }, {L2 }} , {{L2 }, {L1 }} , {{}, {L1 , L2 }}} .                                            (5.34)
+
+The GL(2) integration, GL(2) ≡ ⟨g1 dg⟨g1 1⟩∧⟨g 2 dg2 ⟩
+                       R         R
+                                           g2 ⟩2
+                                                       , is as described below.
+
+
+
+5.1      Forward limit term
+
+Here, we outline how to compute the last term of (5.30), known as the forward limit term. We
+use (5.13) to rewrite the integral in terms of λA and λB ,
+                      ⟨AdA⟩ ∧ ⟨BdB⟩
+          Z
+     1        4|8
+        2
+            d     X ∧          2
+                                       [n − 1, n, 1, A, B]⟨L[1, . . . , n − 1, n̂AB , Ẑ, B]L[1̃, . . . , ñ2 ]⟩c .
+  (2πi)                   ⟨AB⟩
+                                                                                                             (5.35)
+                      g      2
+where we omit the 4π    2 factor. The λA and λB integration sends ZA , ZB → Ẑ. We can change
+
+variables to express the integration in terms of a GL(2) transformation of the points {ZA , ZB }
+along the line X = (AB),
+                    ⟨g1 dg1 ⟩ ∧ ⟨g2 dg2 ⟩
+        Z
+    1
+      2
+           d4|8 X ∧               2
+                                          [n − 1, n, 1, A′ , B ′ ]⟨L[1, . . . , n − 1, n̂AB , Ẑ, B ′ ]L[1̃, . . . , ñ2 ]⟩c .
+ (2πi)                    ⟨g1 g2 ⟩
+                                                                                                                      (5.36)
+
+                                                                   24
+where g = (g1 |g2 ), g1 = (g11 g12 )T , g2 = (g21 g22 )T , A′ = g11 A + g12 B, B ′ = g21 A + g22 B. The
+integrand has simple poles in gij variables and we take the integration contour to go around the
+poles in gij , for which ⟨n1 − 1 n1 1 A′ ⟩, ⟨n1 − 1 n1 1 B ′ ⟩ → 0. This corresponds to sending both A′
+and B ′ to to the point Ẑ = (AB)∩(n1 −1 n1 1). Let g11         0        0
+                                                                    and g21  be the values of g11 and g21 which
+                       ′                            ′
+solve ⟨n1 − 1 n1 1 A ⟩ = 0 and ⟨n1 − 1 n1 1 B ⟩ = 0, respectively. Expanding the GL(2) measure
+and taking the residue with respect to the poles in g11 and g21 leaves us with the standard loop
+integration and fermionic integration.
+         Z
+    1
+             D3|4 ZA ∧ D3|4 ZB [n − 1, n, 1, A, B]⟨L[1, . . . , n − 1, n̂AB , Ẑ, B]L[1̃, . . . , ñ2 ]⟩c
+  (2πi)2
+       Z                           
+            4|8                             0           0     g12 g22
+  =− d X                 lim        (g21 − g21 )(g11 − g11 )
+                         0 ,g →g 0
+                  g21 →g21   11 11                           ⟨g1 g2 ⟩2
+                                                                                                              
+                                                 ′    ′                                ′                     c
+                               × [n − 1, n, 1, A , B ]⟨L[1, . . . , n − 1, n̂AB , Ẑ, B ]L[1̃, . . . , ñ2 ]⟩     (5.37)
+
+The residue for the g11 pole is taken first, then g21 . Dependence on g12 and g22 drops out upon
+taking the residue.
+
+     By using tree-level BCFW on the forward limit integrand in the single Wilson loop BCFW
+expression at O(g 2 ), the GL(2) integral can be performed explicitly [26], giving a sum over terms
+with a Kermit piece and a product of two tree-level Wilson loops. Similarly, at higher loops, a
+sequence of BCFW expansions can be performed for the forward limit integrand and the GL(2)
+integration can be computed explicitly giving a sum over terms with a “bridge factor” and a
+product of two Wilson loops of a lower loop order [27]. We expect a similar procedure to allow
+for the computation of the GL(2) integral in the forward limit term for Wilson loop correlators
+of any loop order.
+
+
+
+6      Consistency checks at tree-level
+
+Let us first consider the tree-level recursion relation (4.10) or equivalently (5.30) with g set to zero.
+Here we first present some simple analytic checks at low MHV degree and then comment on the
+more extensive numerical checks which we have performed. Since the leading order contribution
+to the connected part of the correlation function of two Wilson loops always comes with a colour
+factor of N12 in the large N limit, here we omit these N12 factors.
+
+
+
+
+                                                          25
+6.1     MHV
+
+In the MHV case, the connected part of the correlator is equal to zero. To see that the recursion
+(4.10) predicts this, note that since all of the terms on the right-hand side except for the first
+already come dressed with R-invariants (of Grassmann degree 4), only the first term contributes,
+and so we see that
+             ⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c,tree,MHV = ⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]⟩c,tree,MHV     (6.1)
+Note that in this case there is no distinction between U(N ) and SU(N ) since the α-dependent
+term in the recursion is already at too high an MHV degree to contribute. Iterating, we see
+                   ⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c,tree,MHV = ⟨L[1, 2]L[1̃, . . . , ñ2 ]⟩c,tree,MHV            (6.2)
+which vanishes since the first loop operator has degenerated to a backtracking Wilson loop. Thus,
+the recursion relation correctly predicts a vanishing contribution at MHV.
+
+
+
+6.2     NMHV
+
+Let us next consider the case of the NMHV contribution, for which we know from twistor Wilson
+loop diagrams that in the U(N ) theory,
+                                                                      X
+                  ⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c,tree,NMHV
+                                                        U(N )       =   [∗, i − 1, i, ȷ̃ − 1, ȷ̃] (6.3)
+                                                                            i,ȷ̃
+
+where in the sum, i runs over the cusps of the first loop and ȷ̃ runs over the cusps of the second
+loop. In the SU(N ) theory, the answer is simply zero.
+
+     In the SU(N ) theory, the MHV contribution to a single Wilson loop is 1, while for a correlator
+of two Wilson loops the contribution is zero. Since all terms multiplying R-invariants in (4.10)
+must enter at MHV in order to contribute at NMHV for the overall answer, in the SU(N ) theory
+the recursion reads
+           ⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c,tree,NMHV
+                                                 SU(N )      = ⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]⟩c,tree,NMHV
+                                                                                                        SU(N )      ;   (6.4)
+note that the term in the final line of (4.10) has vanished since for SU(N ) we have a factor of
+1 − α = 0 multiplying the R-invariant. Iterating, this correctly predicts a vanishing contribution
+at NMHV by the same logic as we used in the case of the MHV contribution.
+
+      In U(N ), the final term in the recursion survives and we instead find
+           ⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c,tree,NMHV
+                                                 U(N )       =⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]⟩c,tree,NMHV
+                                                                                                       U(N )
+                                                                 X
+                                                               +      [n1 − 1, n1 , 1, ȷ̃ − 1, ȷ̃]                      (6.5)
+                                                                    ȷ̃
+
+
+
+                                                              26
+where again we have used that any object multiplying an R-invariant must enter at MHV in
+order to give an NMHV contribution overall. By using (6.3) and identifying the reference twistor
+with Z1 , the right-hand side reads
+                       1 −1 X
+                      nX    ñ2                                   X
+                                   [1, i − 1, i, ȷ̃ − 1, ȷ̃] +     [n1 − 1, n1 , 1, ȷ̃ − 1, ȷ̃].        (6.6)
+                       i=1 ȷ̃=1̃                                    ȷ̃
+
+
+The second term is precisely the i = n1 contribution to the first sum and so, combining, we have
+                                           n1 X
+                                           X  ñ2
+                                                  [1, i − 1, i, ȷ̃ − 1, ȷ̃]                             (6.7)
+                                            i=1 ȷ̃=1̃
+
+
+which is the correct formula.
+
+
+
+6.3     Discussion of the ‘intersecting’ term
+
+The N2 MHV contribution is the first time that the various Wilson loop correlators which feature
+in the recursion (other than the first, boundary term) actually enter non-trivially beyond their
+MHV expressions. Let us briefly comment on the novel term
+
+                        [n − 1, n, 1, ȷ̃ − 1, ȷ̃]⟨L[1, . . . , n̂1 , Iȷ̃ , ȷ̃, . . . , ȷ̃ − 1, Iȷ̃ ]⟩   (6.8)
+
+which is really a Wilson loop in a self-intersecting configuration: the arguments first run around
+the first Wilson loop to the intersection point Iȷ̃ , then around the edges of the second Wilson
+loop and back to Iȷ̃ . A Wilson loop in such a self-intersecting limit transpires to be divergent,
+but the presence of the R-invariant [n − 1, n, 1, ȷ̃ − 1, ȷ̃] eliminates the divergences for Grassmann
+reasons and protects the well-definedness of this term in the recursion relation.
+
+      As a concrete example, let us consider the intersecting Wilson loop
+
+                                           ⟨L[1, 2, 3, b
+                                                       41 , I1̃ , 2̃, 3̃, 4̃, I1̃ ]⟩                    (6.9)
+
+and for simplicity specialise to the NMHV contribution to this object (which in turn contributes
+to the connected part of the correlator of two Wilson loops at N2 MHV). If we simply take the
+twistor-diagrammatic formula          X
+                                        [∗, i − 1, i, j − 1, j]                           (6.10)
+                                              i<j
+
+and substitute in naively for the twistors in our intersecting Wilson loop, two issues arise:
+
+
+
+                                                             27
+1. Due to the repetition of the twistor I1̃ in the loop, we will have R-invariants with a repeated
+   twistor, e.g. [∗, I1̃ , 1̃, 4̃, I1̃ ]. Such terms are ill-defined since the antisymmetry of R-invariants
+   dictates that they vanish while they clearly also have a zero factor in their denominator.
+   These terms can be addressed in a simple way: if we first perturb the second instance of
+   the twistor Iȷ̃ , i.e. instead consider Wilson loop
+
+                                                          41 , I1̃ , 2̃, 3̃, 4̃, I1̃′ ]⟩
+                                              ⟨L[1, 2, 3, b                                                        (6.11)
+
+   with
+                                                     ZI1̃′ = ZI1̃ + ϵZr                                            (6.12)
+   and then take the limit ϵ → 0 in a way which respects Q-supersymmetry (i.e. which treats
+   the Z and χ variables in the same way), by power-counting these terms are ϵ-suppressed
+   and so are identified with zero in the limit.
+
+2. The specific geometry of the Wilson loop in this configuration - namely, the fact that 4, I1̃
+   and 1 are collinear, as are 1̃, I1̃ and 4̃ - gives rise to other terms which are divergent even
+   though they don’t feature repeated twistors. Namely, we have for this case
+
+        A = [∗, 1, 2, 4̃1 , I1̃ ], B = [∗, I1̃ , 3, 4̂1 ], C = [∗, I1̃ , 1̃, 3̃, 4̃], D = [∗, 4̃, I1̃ , 1̃, 2̃].   (6.13)
+
+   For instance, A features the denominator factor
+
+                                   ⟨∗ 1 4̃1 I1̃ ⟩ = ⟨∗ 1 (34) ∩ (4̃1̃1) (4̃1̃) ∩ (341)⟩                            (6.14)
+
+   which vanishes on support of Plücker relations. If one regulates these diagrams in the same
+   way as the previous case, by replacing ZI1̃ with
+
+                                                      ZI1̃′ = ZI1̃ + ϵZr                                           (6.15)
+
+   and then taking the ϵ → 0 limit supersymmetrically, A and B are ϵ-suppressed and so
+   vanish in the limit, while C and D in fact diverge.
+   However, the Grassmann structure of C and D degenerates in the ϵ → 0 limit and as such
+   becomes a linear combination of χ3 , χ4 , χ1 , χ4̃ and χ1̃ . Note that these are precisely the
+   arguments of the R-invariant [3, 4, 1, 4̃, 1̃] which accompany the R-invariant in the recursion.
+   As such, those terms which survive in the limit and naively diverge as ϵ → 0 are actually
+   eliminated for Grassmann reasons. The limit-taking prescription thus allows us to obtain
+   a perfectly well-defined object, provided that we multiply by the R-invariant before taking
+   the limit.
+   Note that this is exactly the same phenomenon as was already present in the ’forward limit’
+   term in the all-loop recursion relation for a single Wilson loop presented in [7].
+
+
+
+
+                                                            28
+    As such, the self-intersecting term should really be understood in the following way: we
+consider
+                       [n − 1, n, 1, ȷ̃ − 1, ȷ̃]⟨L[1, . . . , n̂1 , Iȷ̃′ , ȷ̃, . . . , ȷ̃ − 1, Iȷ̃′′ ]⟩ (6.16)
+where
+                                       ZIȷ̃′ = ZIȷ̃ + ϵZr ,        ZIȷ̃′′ = ZIȷ̃ + ηZs                                (6.17)
+for arbitrary super-twistors Zr and Zs , and then take the limit ϵ → 0 followed by η → 0
+(or equivalently η → 0 followed by ϵ → 0). Any apparent divergences come with vanishing
+Grassmann factors and so may be discarded, and we are left with a finite, well-defined object.
+Note that although we have considered the NMHV contribution for the purposes of a simple
+example, this prescription continues to work at higher MHV degree.
+
+     Operationally, if working with twistor Wilson loop diagrams, it is sufficient to first generate
+an ordinary Wilson loop with the appropriate number of edges, then plug in the values of the
+various twistors (including e.g. the repetition of Iȷ̃ ), before discarding any diagrams which are
+naively divergent. Doing this will give an ill-defined answer in general (for instance, it is easy
+to check that the answer isn’t even independent of the reference supertwistor Z∗ ), since we are
+discarding terms which really diverge in the appropriate limit, but upon multiplying by the
+accompanying R-invariant we obtain the correct, reference twistor independent contribution.
+
+
+
+6.4      N2 MHV in the SU(N ) theory
+
+Specialising to the SU(N ) theory, let us now turn to the N2 MHV contribution to the connected
+part of the correlator of two Wilson loops. As has already been noted, this object remarkably
+factorises into a perfect square:
+                                                     2 MHV   1                                                    2
+      ⟨L[1, . . . , n1 ]L[1̃, . . . , ñ1 ]⟩c,tree,N
+                                            SU(N )         =    ⟨L[1, . . . , n 1 ]L[ 1̃, . . . , ñ ]⟩c,tree,NMHV
+                                                                                                    2 U(N )           . (6.18)
+                                                             2
+
+
+     However, it is not at all manifest from the BCFW representation that the answer factorises
+in this way, and we comment that it requires a surprisingly involved and tedious calculation to
+see this. Here we present an analytic proof of the equivalence of the two expressions.
+
+
+
+
+                                                              29
+6.4.1     n1 = 3
+
+
+Let us begin with the simple case of n1 = 3 with generic n2 . In this case (4.10) reads (here all
+terms are at tree-level and computed in the SU(N ) theory)
+                                                    2
+         ⟨L(1, 2, 3)L[1̃, . . . , ñ2 ]⟩c,N MHV
+               X                                                                                                 
+            =      [1, 2, 3, ȷ̃ − 1, ȷ̃] ⟨L[1, 2, 3̂, Iȷ̃ , ȷ̃, . . . , ȷ̃ − 1, Iȷ̃ ]⟩NMHV − ⟨L[1̃, . . . , ñ2 ]⟩                         (6.19)
+                     ȷ̃
+
+
+where we recall that
+
+          Zb3 = Z2 ⟨3 1 ȷ̃ − 1ȷ̃⟩ − Z3 ⟨2 1 ȷ̃ − 1ȷ̃⟩,                        ZIȷ̃ = Zȷ̃−1 ⟨ȷ̃ 1 2 3⟩ − Zȷ̃ ⟨ȷ̃ − 1 1 2 3⟩.                (6.20)
+
+
+    Choosing Z∗ = Z2 , and recalling that in our prescription any R-invariants with a repeated
+twistor are identified with zero, the expression in the brackets on the right-hand side reads (here
+we use the twistor Wilson loop diagram expansion for the objects on the right)
+                   ȷ̃−1                                     ȷ̃−1                                    ȷ̃−2
+                   X                                        X                                       X
+                             [2, 3̂, Iȷ̃ , k̃ − 1, k̃] +             [2, Iȷ̃ , ȷ̃, k̃ − 1, k̃] +             [2, k̃ − 1, k̃, ȷ̃ − 1, ȷ̃]
+                  k̃=ȷ̃+1                                  k̃=ȷ̃+2                                 k̃=ȷ̃+1
+                           ȷ̃−1                                  ȷ̃−2
+                           X                                     X
+                  +                 [2, k̃ − 1, k̃, Iȷ̃ , 1] −          [2, ȷ̃ − 1, ȷ̃, k̃ − 1, k̃]                                        (6.21)
+                          k̃=ȷ̃+1                                ȷ̃+2
+
+
+after some
+       P cancellation.     To simplify the analysis, we can use the invariance of the object under
+  A         A ∂
+QA′ =     Zi ∂χA′ , to set up to four χ variables to zero. Let us choose to set χ1 = χ2 = χ3 = 0,
+               i
+from which it follows that we also have χ3̂ = 0. Simplifying the R-invariant factor in the front
+of the right-hand side, we have after some calculation that
+
+                                                                               δ̄ 0|4 (χIȷ̃ )
+                   [1, 2, 3, ȷ̃ − 1, ȷ̃] =                                                                                                 (6.22)
+                                                   ⟨1 2 3ȷ̃ − 1⟩⟨2 3 ȷ̃ − 1 ȷ̃⟩⟨3 ȷ̃ − 1 ȷ̃ 1⟩⟨ȷ̃ − 1 ȷ̃ 1 2⟩⟨ȷ̃ 1 2 3⟩
+
+
+    Simplifying the other R-invariants on the support of the δ̄ 0|4 (χIȷ̃ ) which by the above is
+multiplying them all (and recalling that we have set χ1 , χ2 , χ3 to zero), it follows from some
+simple algebra that
+
+        [2, 3̂, Iȷ̃ , k̃ − 1, k̃]
+                                    ⟨1 2 ȷ̃ − 1 ȷ̃⟩⟨ȷ̃ − 1 ȷ̃ 2 3⟩δ̄ 0|4 χk̃−1 ⟨k̃ 1 2 3⟩ − χk̃ ⟨k̃ − 1 1 2 3⟩
+                                                                                                              
+         =−                                                                                                                            ,   (6.23)
+                ⟨k̃ − 1 k̃ 2 3⟩⟨k̃ 1 2 3⟩⟨k̃ − 1 1 2 3⟩⟨123[ȷ̃ − 1⟩⟨ȷ̃] 1 k̃ − 1 k̃⟩⟨1 2 3[ȷ̃ − 1⟩⟨ȷ̃] k̃ − 1 k̃ 2⟩
+
+
+
+                                                                              30
+          [2, Iȷ̃ , ȷ̃, k̃ − 1, k̃]
+                                   ⟨ȷ̃ 1 2 3⟩δ̄ 0|4 χȷ̃−1 ⟨ȷ̃ k̃ − 1 k̃ 2⟩ − (ȷ̃ − 1 ↔ ȷ̃) + (ȷ̃ ↔ k̃)
+                                                                                                         
+           =                                                                                                                ,       (6.24)
+                ⟨2 ȷ̃ − 1 ȷ̃ k̃ − 1⟩⟨ȷ̃ − 1 ȷ̃ k̃ − 1 k̃⟩⟨ȷ̃ k̃ − 1 k̃ 2⟩⟨k̃ − 1 k̃ 2[ȷ̃ − 1⟩⟨ȷ̃] 1 2 3⟩⟨k̃ 2 ȷ̃ − 1 ȷ̃⟩
+
+
+
+      [2, k̃ − 1, k̃, ȷ̃, Iȷ̃ ]
+                                  ⟨ȷ̃ − 1 1 2 3⟩δ̄ 0|4 χȷ̃−1 ⟨ȷ̃ k̃ − 1 k̃ 2⟩ − (ȷ̃ − 1 ↔ ȷ̃) + (ȷ̃ ↔ k̃)
+                                                                                                             
+       =−                                                                                                                       ,   (6.25)
+              ⟨2 k̃ − 1 k̃ ȷ̃ − 1⟩⟨k̃ − 1 k̃ ȷ̃ − 1 ȷ̃⟩⟨k̃ ȷ̃ − 1 ȷ̃ 2⟩⟨ȷ̃ − 1 ȷ̃ 2 k̃ − 1⟩⟨1 2 3 [ȷ̃ − 1⟩⟨ȷ̃] 2 k̃ − 1 k̃⟩
+
+
+
+       [2, k̃ − 1, k̃, Iȷ̃ , 1]
+                                ⟨1 2 ȷ̃ − 1 ȷ̃⟩2 δ̄ 0|4 χk̃−1 ⟨k̃ 1 2 3⟩ − χk̃ ⟨k̃ − 1 1 2 3⟩
+                                                                                             
+        =                                                                                                           ,               (6.26)
+          ⟨2 k̃ − 1 k̃ 1 [ȷ̃ − 1⟩⟨ȷ̃] 1 2 3⟩⟨k̃ − 1 k̃ 1 [j −˜ 1⟩⟨ȷ̃] 1 2 3⟩⟨k̃ 1 2 3⟩⟨k̃ − 1 1 2 3⟩⟨1 2 k̃ − 1 k̃⟩
+
+
+      and finally
+
+
+
+                    [2, ȷ̃ − 1, ȷ̃, k̃ − 1, k̃]
+                                            δ̄ 0|4 χȷ̃−1 ⟨ȷ̃ k̃ − 1 k̃ 2⟩ − (ȷ̃ − 1 ↔ ȷ̃) + (ȷ̃ ↔ k̃)
+                                                                                                     
+                     =−                                                                                                     .       (6.27)
+                            ⟨2 ȷ̃ − 1 ȷ̃ k̃ − 1⟩⟨ȷ̃ − 1 ȷ̃ k̃ − 1 k̃⟩⟨ȷ̃ k̃ − 1 k̃ 2⟩⟨k̃ − 1 k̃ 2 ȷ̃ − 1⟩⟨k̃ 2 ȷ̃ − 1 ȷ̃⟩
+
+
+      Note in particular that the Grassmann structure has collapsed into just two terms,
+                           G1 = δ̄ 0|4 χȷ̃−1 ⟨ȷ̃ k̃ − 1 k̃ 2⟩ − (ȷ̃ − 1 ↔ ȷ̃) + (ȷ̃ ↔ k̃)
+                                                                                          
+                                                                                                                                    (6.28)
+and
+                                             G2 = δ̄ 0|4 χk̃−1 ⟨k̃ 1 2 3⟩ − χk̃ ⟨k̃ − 1 1 2 3⟩
+                                                                                              
+                                                                                                                                    (6.29)
+
+
+      Performing the summation in (6.21), and noting that all of the sums may be taken to run from
+ȷ̃ + 2 to ȷ̃ − 2 at no cost since
+                χȷ̃−1 ⟨ȷ̃ k̃ − 1 k̃ 2⟩ − χȷ̃ ⟨ȷ̃ − 1 k̃ − 1 k̃ 2⟩ + χk̃−1 ⟨k̃ ȷ̃ − 1 ȷ̃ 2⟩ − χk̃ ⟨k̃ − 1 ȷ̃ − 1 ȷ̃ 2⟩ = 0           (6.30)
+
+for k̃ = j + 1 or k̃ = j − 1, we find that the coefficient of G1 vanishes while the coefficient of G2 reduces
+to
+                                     ⟨1 2 ȷ̃ − 1 ȷ̃⟩                                      ⟨ȷ̃ − 1 ȷ̃ 2 3⟩   ⟨ȷ̃ − 1 ȷ̃ 1 2⟩ 
+                                                                                        × −                +
+ ⟨k̃ 1 2 3⟩⟨k̃ − 1 1 2 3⟩⟨1 2 3 [ȷ̃ − 1⟩⟨ȷ̃] 1 k̃ − 1 k̃⟩⟨1 2 3[ȷ̃ − 1⟩⟨j] 2 k̃ − 1 k̃⟩     ⟨k̃ − 1 k̃ 2 3⟩ ⟨k̃ − 1 k̃ 1 2⟩
+                                                                                                                        (6.31)
+
+                                                                     31
+Recalling that we have set χ1 = χ2 = χ3 = 0, G2 is precisely the numerator of [1, 2, 3, k̃ − 1, k̃], while
+its coefficient simplifies to 12 times the denominator of that R-invariant. Thus, the overall expression
+reduces to
+                                              1
+                                                [1, 2, 3, k̃ − 1, k̃]                               (6.32)
+                                              2
+
+    Finally, restoring the R-invariant prefactor and the sum over ȷ̃, we are left with
+                                1X                          X
+                                      [1, 2, 3, ȷ̃ − 1, ȷ̃]  [1, 2, 3, k̃ − 1, k̃]                                                                 (6.33)
+                                2
+                                                    ȷ̃                            k̸̃=ȷ̃
+
+                                                                 1 X                      2
+                                                           =         [1, 2, 3, ȷ̃ − 1, ȷ̃]                                                         (6.34)
+                                                                 2
+                                                                         ȷ̃
+
+where we have used that R-invariants are nilpotent in the final line. This exactly matches 21 the square
+of the NMHV tree contribution to the correlator of a triangle with an n-gon in the U(N ) theory.
+
+
+
+6.4.2       General n1
+
+
+Let us now extend the analysis to general n1 ; the recursion relation states that
+                                                           2                                                             2
+                 ⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c,N MHV = ⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]⟩c,N MHV
+                              X                                
+                          +        [1, n1 − 1, n1 , ȷ̃ − 1, ȷ̃] ⟨L[1, . . . , n1 − 1, n̂1,j , Iȷ̃ , ȷ̃, . . . , ȷ̃ − 1, Iȷ̃ ]⟩NMHV
+                                 ȷ̃
+                                                                                      
+                                 −⟨L[1, . . . , n̂1 ]⟩NMHV − ⟨L[1̃, . . . , n̂2 ]⟩NMHV .                                                           (6.35)
+
+
+    Again expanding all of the objects on the right-hand side diagrammatically, we obtain after some
+cancellation of terms that (here we set Z∗ = Zn1 −1 which also eliminates some terms)
+
+        ⟨L[1, . . . , n1 − 1, n̂1,j , Iȷ̃ , ȷ̃, . . . , ȷ̃ − 1, Iȷ̃ ]⟩NMHV − ⟨L[1, . . . , n̂1 ]⟩NMHV − ⟨L[1̃, . . . , n̂2 ]⟩NMHV
+             1 −2
+            nX                                            1 −2
+                                                         nX                                       1 −2 X
+                                                                                                 nX    ȷ̃−1
+        =         [n1 − 1, i − 1, i, n̂1 , Iȷ̃ ] +              [n1 − 1, i − 1, i, Iȷ̃ , ȷ̃] +                    [n1 − 1, i − 1, i, ˜l − 1, ˜l]
+            i=2                                          i=2                                     i=2 l̃=ȷ̃+1
+
+                 1 −2
+                nX                                                1 −2
+                                                                 nX                                        1 −2
+                                                                                                          nX
+            +           [n1 − 1, i − 1, i, ȷ̃ − 1, Iȷ̃ ] +                [n1 − 1, i − 1, i, Iȷ̃ , 1] −           [n1 − 1, i − 1, i, n̂1 , 1]
+                i=2                                                i=2                                      i=2
+                ȷ̃−1
+                X                                               ȷ̃−1
+                                                                X                                        ȷ̃−2
+                                                                                                         X
+            +           [n1 − 1, n̂1 , Iȷ̃ , ˜l − 1, ˜l] +           [n1 − 1, Iȷ̃ , ȷ̃, ˜l − 1, ˜l] +         [n1 − 1, ˜l − 1, ˜l, ȷ̃ − 1, Iȷ̃ ]
+                l̃=ȷ̃+1                                        l̃=ȷ̃+1                                  l̃=ȷ̃+1
+                 ȷ̃−1
+                 X                                           ȷ̃−1
+                                                             X
+            +           [n1 − 1, ˜l − 1, ˜l, Iȷ̃ , 1] −             [n1 − 1, ȷ̃ − 1, ȷ̃, ˜l − 1, ˜l].                                              (6.36)
+                l̃=ȷ̃+1                                    l̃=ȷ̃+2
+
+
+
+                                                                               32
+      After multiplying by [1, n1 − 1, n1 , ȷ̃ − 1, ȷ̃] and summing over ȷ̃, the final five terms here collapse to
+                                        1 X                                 2
+                                                 [1, n1 − 1, n1 , ȷ̃ − 1, ȷ̃]                               (6.37)
+                                        2
+                                                             ȷ̃
+
+via the same calculation as was presented in the n1 = 3 case. In order to supply all of the additional
+diagrams which arise for the case of n1 versus n1 − 1, we additionally need
+                                   X                                        1 −2 X
+                                                                           nX
+                                         [1, n1 − 1, n1 , ȷ̃ − 1, ȷ̃]                   [n1 − 1, i − 1, i, ˜l − 1, ˜l]                           (6.38)
+                                    ȷ̃                                      i=2    l̃
+and so completing the proof amounts to establishing that
+          1 −2
+         nX                                           1 −2
+                                                     nX                                           1 −2 X
+                                                                                                 nX    ȷ̃−1
+                [n1 − 1, i − 1, i, n̂1 , Iȷ̃ ] +            [n1 − 1, i − 1, i, Iȷ̃ , ȷ̃] +                      [n1 − 1, i − 1, i, ˜l − 1, ˜l]
+          i=2                                         i=2                                        i=2 l̃=ȷ̃+1
+
+              1 −2
+             nX                                               1 −2
+                                                             nX                                          1 −2
+                                                                                                        nX
+         +           [n1 − 1, i − 1, i, ȷ̃ − 1, Iȷ̃ ] +                 [n1 − 1, i − 1, i, Iȷ̃ , 1] −         [n1 − 1, i − 1, i, n̂1 , 1]
+              i=2                                                 i=2                                   i=2
+             nX1 −2 X
+
+         =                  [n1 − 1, i − 1, i, ˜l − 1, ˜l]                                                                                       (6.39)
+               i=2     l̃
+
+
+     The third term on the left-hand side is almost exactly equal to the right-hand side, except for the
+fact that it omits the ˜l = ȷ̃ term. We are therefore done provided that
+        1 −2
+       nX
+              [n1 − 1, i − 1, i, n̂1 , Iȷ̃ ] + [n1 − 1, i − 1, i, Iȷ̃ , ȷ̃] − [n1 − 1, i − 1, i, ȷ̃ − 1, ȷ̃]
+         i=2
+                                                                                                              
+                + [n1 − 1, i − 1, i, ȷ̃ − 1, Iȷ̃ ] + [n1 − 1, i − 1, i, Iȷ̃ , 1] − [n1 − 1, i − 1, i, n̂1 , 1] = 0                               (6.40)
+A simple calculation confirms that, for each i, the first three and final three terms each sum to zero
+individually, and thus we have established the required result.
+
+     We comment that this was a surprisingly involved check, although it is worth remembering that
+even the twistor diagrammatic calculation provides an expression for the N2 MHV tree correlator in
+terms of shifted twistors, and even in that case it is only after the use of R-invariant identities that the
+perfect square form arises.
+
+
+
+6.5      Higher MHV degree checks at tree-level
+
+In addition to the analytic checks presented here, we have verified this relation numerically at NMHV,
+N2 MHV and N3 MHV for all correlators of two Wilson loops up to octagon-octagon, and also at N4 MHV
+for n-gon-square correlators up to n = 8, for both U(N ) and SU(N ). To do this, we computed the left-
+hand side and right-hand side of the recursion using twistor Wilson loop diagrams and plugged in
+random numerics on a variety of chi monomials to verify a match.
+
+                                                                              33
+7       Consistency checks at one and two loops
+
+7.1      MHV one-loop
+
+7.1.1      SU(N )
+
+
+In the SU(N ) theory, the MHV contribution at O(g 2 ) to the correlator of two Wilson loops vanishes,
+since all of the possible twistor Wilson loop diagrams come with a vanishing colour factor. This clearly
+matches the prediction from (5.30) since only the final term has the potential to enter at this MHV degree
+and it vanishes on account of the fact that the tree-level connected correlator would contribute at NMHV
+(note that the fermionic integration removes eight Grassmann degrees) which is a zero contribution in
+the SU(N ) theory. Thus, only the boundary term survives and see by iterating that every correlator is
+equal to the vanishing backtracking loop with n1 = 2.
+
+
+
+7.1.2      U(N )
+
+
+In the U(N ) theory, it was shown in [18] that at O(g2 ), the contribution to the correlator of two Wilson
+loops is given by                                X
+                                                     Kiȷ̃                                            (7.1)
+                                                              i,j̄
+
+for ‘Kermit diagrams’ Kij defined by
+
+                      d4 xAB                    (⟨∗ i − 1 i [A⟩⟨B] j − 1 j ∗⟩)2
+                  Z
+        Kij = −                                                                                    .                         (7.2)
+                        π 2 ⟨A B i − 1 i⟩⟨A B j − 1 j⟩⟨A B i − 1 ∗⟩⟨A B i ∗⟩⟨A B j − 1 ∗⟩⟨A B j ∗⟩
+
+For concreteness, let us choose to set the arbitrary reference twistor as Z∗ = Z1 for which the sum
+reduces to
+                                             Xn1 Xñ2
+                                                      Kiȷ̃                                     (7.3)
+                                                           i=3 ȷ̃=1̃
+
+
+
+      On the other hand, at this loop order and MHV degree the recursion (5.30) reads
+                                    2                                                      2
+⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c,O(g ),MHV = ⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]⟩c,O(g ),MHV
+      g2 1
+                     Z
+   + 2                    D3|4 ZA ∧ D3|4 ZB [n1 − 1, n1 , 1, A, B]⟨L[1, . . . , n1 − 1, n̂AB , Ẑ, B]L[1̃, . . . , ñ2 ]⟩c,tree,NMHV .
+      π (2πi)2
+                                                                                                                                (7.4)
+
+Note that the fermionic integration on the second line reduces the power of the Grassmann variables from
+eight to zero as required at this MHV degree. Expanding the tree-level correlator diagrammatically with
+
+                                                                 34
+the choice Z∗ = Z1 and keeping only those terms which survive the fermionic integration, the recursion
+(5.30) reads
+                                                   2                                                        2
+             ⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c,O(g ),MHV = ⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]⟩c,O(g ),MHV
+                   g2
+                         Z
+                + 2 D3|4 ZA ∧ D3|4 ZB [n − 1, n, 1, A, B][1, Ẑ, B, ȷ̃ − 1, ȷ̃].                                        (7.5)
+                   π
+It was shown in [7] that the product of two R-invariants becomes precisely Kn1 ȷ̃ (with the choice
+Z∗ = Z1 ), which strictly speaking requires absorbing the π12 into the integration measure, so that the
+BCFW expression becomes
+                                                   2                                                        2
+             ⟨L[1, . . . , n1 ]L[1̃, . . . , ñ2 ]⟩c,O(g ),MHV = ⟨L[1, . . . , n1 − 1]L[1̃, . . . , ñ2 ]⟩c,O(g ),MHV
+                        X
+                + g2         Kn1 ȷ̃                                                                                     (7.6)
+                        ȷ̃
+
+In the case n1 = 3 this clearly matches the diagrammatic expansion (since Pthe boundary term on the
+RHS degenerates to a backtracking loop), and it is similarly clear that g 2 ȷ̃ Kn1 ȷ̃ provides precisely
+those extra diagrams which arise when increasing n1 − 1 → n1 . The BCFW representation thus matches
+the diagrammatic representation for all n1 .
+
+
+
+7.2     Two-loop and other one-loop checks
+
+We have verified the loop-level relation numerically at N MHV for all O(g 2 ) correlators of two Wilson
+loops up to octagon-octagon and at N2 MHV for n-gon-square up to n = 6 for U(N ) and SU(N ). We
+also checked the relation for MHV and NMHV correlators at O(g 4 ) up to the case of a pentagon-square
+correlator. As in the case of our tree-level checks, these were performed by using the diagrammatic
+expansion for the correlators appearing on both sides of the equation and evaluating each side of the
+recursion on various chi monomials for random numerics.
+
+
+
+
+8     Recursion beyond the large N limit
+
+As noted below (3.43), the expression for the colour-exact Wilson loop obtained from holomorphic
+linking is not of a closed form, as a 2 Wilson loop correlator appears and the equation cannot be
+used recursively. This is a general property of the expressions obtained for colour-exact correlators of
+any number of Wilson loops; an r Wilson loop correlator depends on an r + 1 Wilson loop correlator.
+However, such correlators are of a lower MHV degree, so by using the general holomorphic linking
+expression for a correlator of r Wilson loops, we can generate correlators for any number of Wilson
+loops (including the simplest case of a single Wilson loop) recursively.
+
+    The derivation for the recursion relation for the colour-exact correlator of r Wilson loops,
+⟨L(C1 ) . . . L(Cr )⟩, follows in an analogous way to the single and two Wilson loop calculations in sections
+
+                                                               35
+3 and 4. Taking the lines of each Wilson loop to depend on a parameter t, the variation of the correlator
+is given by,
+
+δ̄⟨L(C1 ) . . . L(Cr )⟩ =
+                 r XZ
+        N       X               ds ds′      ∗ 3|4         ′
+                                                              h
+                                                                      ′      ′′ Q                    α                         i
+ −                                ∧    ∧  g  δ̄     (Z, Z   )  ⟨L(C   u )L(C u )  w∈R\{u}  L(Cw )⟩ −    ⟨L(C 1 ) . . . L(C r )⟩
+    β1 (2πi)2                   s   s′                                                               N2
+                u=1 iu ,ju
+          1         X X Z ds ds̃                                h
+                                                ∗ 3|4                                       Q
+ −            2   2
+                                    ∧     ∧   g  δ̄   (Z,   Z̃)   ⟨tr(HolZ [Cu ]HolZ̃ [Cv ]) w∈R\{u,v} L(Cw )⟩
+    β1 (2πi) N                    s    s̃
+                    u̸=v iu ,jv
+                                                                      α                           Q                      i
+                                                                  − ⟨tr HolZ [Cu ] tr HolZ̃ [Cv ] w∈R\{u,v} L(Cw )⟩
+                                                                     N
+                                                                                                                         (8.1)
+
+where R = {1, . . . , r} are the labels of the r Wilson loops, iu labels the cusp i of the u-th Wilson
+loop, iu ∈ {1u , . . . , nu } with nu the number of cusps on L(Cu ), Z ≡ ZXiu ,t (s), Z ′ ≡ ZXju ,t (s′ ) and
+Z̃ ≡ ZXjv ,t (s̃). Taking only the line (Zn1 Z11 ) to be t-dependent and applying the same shift as in (3.34),
+we obtain the recursion relation for colour-exact correlators of Wilson loops (which also facilitates the
+evaluation of a single Wilson loop),
+                                             Q
+⟨L(C1 ) . . . L(Cr )⟩ = ⟨L[1, . . . , n1 − 1] w∈R\{1} L(Cw )⟩)                                           (8.2)
+       1 n −2
+   N X
++           [n1 − 1, n1 , 11 , j1 − 1, j1 ]
+  2CF
+      j1 =3
+                                                                Q                    α                         
+     × ⟨L[11 , . . . , j1 − 1, Ij1 ]L[Ij1 , j1 , . . . , n̂1,j1 ] w∈R\{1} L(Cw )⟩ − 2 ⟨L(C1 ) . . . L(Cr )⟩
+                                                                                     N
+                       nv
+   N 1       X       X
++                           [n1 − 1, n1 , 11 , jv − 1, jv ]
+  2CF N 2
+          v∈R\{1} jv =1v
+                                                               Q                                             Q               
+     × ⟨L[11 , . . . , n̂1,jv , Ijv , jv , . . . , jv − 1, Ijv ] w∈R\{1,v} L(Cw )⟩ − α⟨L[11 , . . . , n̂1,jv ] w∈R\{1} L(Cw )⟩
+
+where
+
+          Ẑn1 ,jv ≡ (n1 − 1 n1 ) ∩ (11 jv − 1 jv ) = Zn1 −1 ⟨n1 11 jv − 1 jv ⟩ − Zn1 ⟨n1 − 1 11 jv − 1 jv ⟩
+          ZIjv ≡ (jv − 1 jv ) ∩ (n1 − 1 n1 11 ) = Zjv −1 ⟨jv n1 − 1 n1 11 ⟩ − Zjv ⟨jv − 1 n1 − 1 n1 11 ⟩                 (8.3)
+
+The r = 1 case is given explicitly in (3.42).
+
+
+
+8.1      Example: N2 MHV hexagon
+
+As an instructive example of how this recursion works, we can compute the colour-exact tree-level
+contribution to the hexagon ⟨L[1, . . . , 6]⟩ at N2 MHV for U(N ) from the recursion relation. Using (8.2),
+
+
+
+
+                                                              36
+we have
+
+                   ⟨L[1, . . . , 6]⟩(0,2) =⟨L[1, . . . , 5]⟩(0,2)
+                                               N
+                                            +        ([5, 6, 1, 2, 3]⟨L[1, 2, I3 ]L[I3 , 3, 4, 5, 6̂3 ]⟩(0,1)
+                                              2CF
+                                                          + [5, 6, 1, 3, 4]⟨L[1, 2, 3, I4 ]L[I4 , 4, 5, 6̂4 ]⟩(0,1) )                        (8.4)
+
+where ⟨L(C1 ) . . . L(Cr )⟩(l,k) refers to the O(g 2l ) Nk MHV correlator, Ij = (j − 1 j) ∩ (1 5 6) and 6̂j =
+(5 6) ∩ (1 j − 1 j). ⟨L[1, . . . , 5]⟩(0,2) = 0 and using (8.2) again for the first correlator, we get
+                                                                                               1              X
+     ⟨L[1, 2, I3 ]L[I3 , 3, 4, 5, 6̂3 ]⟩(0,1) = ⟨L[1, 2]L[I3 , 3, 4, 5, 6̂3 ]⟩(0,1) +                                [2, I3 , 1, j − 1, j]
+                                                                                             2N CF
+                                                                                                          j∈{4,5,6̂3 }
+                                                                                      1          X
+                                               = ⟨L[I3 , 3, 4, 5, 6̂3 ]⟩(0,1) +                            [2, I3 , 1, j − 1, j]
+                                                                                    2N CF
+                                                                                              j∈{5,6̂3 }
+                                                  N                           1              X
+                                               =     [5, 6̂3 , I3 , 3, 4] +                             [2, I3 , 1, j − 1, j]                (8.5)
+                                                 2CF                        2N CF
+                                                                                           j∈{5,6̂3 }
+
+where (8.2) was used again in the last line. We use recursion to compute the second correlator in (8.4),
+                                                                                                  1
+          ⟨L[1, 2, 3, 4]L[I4 , 4, 5, 6̂4 ]⟩(0,1) = ⟨L[1, 2, 3]L[I4 , 4, 5, 6̂4 ]⟩(0,1) +              [3, I4 , 1, 5, 6̂4 ]
+                                                                                               2N CF
+                                                        1           X                                    1
+                                                  =                             [2, 3, 1, j − 1, j] +          [3, I4 , 1, 5, 6̂4 ]
+                                                      2N CF                                           2N CF
+                                                               j∈{I4 ,4,5,6̂4 }
+
+                                                                                                                                             (8.6)
+
+Plugging these two expressions into (8.4), we have
+
+                                        N2                                         1         X
+            ⟨L[1, . . . , 6]⟩(0,2) =     2   [5, 6, 1, 2, 3]([5, 6̂3 , I3 , 3, 4] + 2                   [2, I3 , 1, j − 1, j])
+                                       4CF                                         N
+                                                                                           j∈{5,6̂3 }
+                                               1                                                X                                   
+                                           +      [5, 6, 1, 3, 4]([3, I4 , 1, 5, 6̂4 ] +                     [2, 3, 1, j − 1, j])            (8.7)
+                                               N2
+                                                                                           j∈{I4 ,4,5,6̂4 }
+
+Checking this expression on different chi monomials on random numerics, we find a match with the
+diagrammatic calculation. By making use of (8.2) for r = 1 and r = 2, we were able to find the colour
+exact expression for N2 MHV hexagon at tree-level for U(N ). As we are at maximal MHV degree, the
+colour exact hexagon can only differ from the planar expression by a bosonic factor, which depends in
+a simple way on conformally invariant cross ratios. By probing the expression on different numerics, we
+find that they are related by,
+                                                                    
+                                     (0,2)       1
+                   ⟨L[1, . . . , 6]⟩       = 1 + 2 (u1 + u2 + u3 − 1) ⟨L[1, . . . , 6]⟩(0,2),p ,  (8.8)
+                                                N
+where
+                                                x213 x246           x215 x224              x226 x235
+                                        u1 =                 u2 =                   u3 =             .                                       (8.9)
+                                                x236 x241           x214 x225              x225 x236
+
+                                                                    37
+and p means the planar part.
+
+     We can compute general colour-exact Wilson loop correlators in a completely analogous way by
+implementing the recursion relation on a computer. Note that since every correlator which features in the
+BCFW recursion relation is either of one point lower (the first, boundary term) or enters at a lower MHV
+degree due to the R-invariant pre-multiplying the other terms, the recursion will always terminate. Note
+also that the same colour-exact recursion can be performed for loop integrands. Although the ‘forward
+limit’ term in this case will feature a Wilson loop correlator at MHV degree one higher than the target
+expression (due to the fermionic integration to be performed on this term), the loop level correlator
+which enters is at one loop order lower and so we can subsequently construct that object recursively
+until the procedure terminates in the same way.
+
+
+
+
+9     Conclusions
+
+We have demonstrated that holomorphic linking gives rise to a BCFW-like recursion relation for the cor-
+relators of multiple light-like Wilson loop operators, which generalises the BCFW relation familiar from
+the study of a single Wilson loop’s expectation value (or, equivalently, the dual scattering amplitude).
+We have verified these recursion relations in a number of cases, both analytically and numerically, and
+have demonstrated that they allow colour-exact Wilson loop correlators to be computed recursively.
+
+     It would be interesting to further study the practical usefulness of these recursion relations for
+computation. We already made use of them in [19] to simplify the verification of the Q̄-equation
+and in particular to simplify the action of the ‘collinear integral’ on tree-level Wilson loop correlators.
+Although the MHV/twistor Wilson loop diagram rules are in practice very simple to implement, at high
+multiplicity and/or MHV degree the number of diagrams grows very rapidly and the BCFW recursions
+which we have presented here should allow for the generation of more compact expressions, albeit
+featuring e.g. more complicated dependence on the kinematics per term. It would be interesting to
+study the precise growth rate in the number of terms in either representation, and to experiment with
+e.g. applying the recursion all the way down versus, say, stopping at the simplified cases which factorise
+(which are N2 MHV tree, NMHV one-loop, and MHV two-loops, in the SU(N ) theory). Relatedly, it
+would be instructive and useful to automate these recursion relations in a computer algebra system.
+
+     One pressing line of enquiry is whether the recursion relations which we have presented here hint
+at a description of Wilson loop correlators in terms of positive geometries (or some generalisation
+thereof). Since the ordinary BCFW recursion relations provide a triangulation of the amplituhedron,
+a natural question is whether these BCFW-like relations can play a similar role for a generalisation of
+the amplituhedron to the case of multiple loop operators. It would also be interesting to investigate
+whether the BCFW representation for Wilson loop correlators admit any notion of cluster compatibility
+for the poles common to each term, as is the case for a single Wilson loop [28]. We defer exploration of
+these points to further work.
+
+
+
+                                                    38
+     We also find it interesting to note that the recursion relations we present here make very explicit the
+connection between a colour-exact correlator of r-Wilson loops, and correlators of r + 1-Wilson loops (at
+lower MHV degree). For instance, a colour-exact single Wilson loop’s expectation value is related to the
+correlator of two Wilson loops at MHV degree one lower, which we can further decompose into higher
+but simpler correlators using the recursion relations presented here. This suggests a deep connection
+between the non-planar corrections to a single Wilson loop’s expectation value, and the correlation
+functions of multiple Wilson loops. It would be interesting to explore whether, as a consequence, the
+familiar formulae for the planar one-loop leading singularities of a single Wilson loop’s expectation
+value admit non-planar generalisations, for instance in terms of correlators, rather than products, of
+loop operators at tree level. It may be possible to address this question by adapting the arguments
+presented in [20], and we hope to return to this point in future work.
+
+
+
+
+Acknowledgements
+
+All authors are supported by the STFC consolidated grant ST/X000583/1.
+
+
+
+
+                                                    39
+References
+[1] M. Bullimore and D. Skinner, “Holomorphic Linking, Loop Equations and Scattering Amplitudes
+   in Twistor Space,” [arXiv:1101.1329 [hep-th]].
+
+[2] R. Britto, F. Cachazo and B. Feng, “New recursion relations for tree amplitudes of gluons,” Nucl.
+   Phys. B 715 (2005), 499-522 [arXiv:hep-th/0412308 [hep-th]].
+
+[3] R. Britto, F. Cachazo, B. Feng and E. Witten, “Direct proof of tree-level recursion relation in
+   Yang-Mills theory,” Phys. Rev. Lett. 94 (2005), 181602 [arXiv:hep-th/0501052 [hep-th]].
+
+[4] A. Brandhuber, P. Heslop and G. Travaglini, “A Note on dual superconformal symmetry of the N=4
+   super Yang-Mills S-matrix,” Phys. Rev. D 78 (2008), 125005 [arXiv:0807.4097 [hep-th]].
+
+[5] N. Arkani-Hamed, F. Cachazo and J. Kaplan, “What is the Simplest Quantum Field Theory?,”
+   JHEP 09 (2010), 016 [arXiv:0808.1446 [hep-th]].
+
+[6] V. P. Nair, “A Current Algebra for Some Gauge Theory Amplitudes,” Phys. Lett. B 214 (1988),
+   215-218.
+
+[7] N. Arkani-Hamed, J. L. Bourjaily, F. Cachazo, S. Caron-Huot and J. Trnka, “The All-Loop Integrand
+   For Scattering Amplitudes in Planar N=4 SYM,” JHEP 01 (2011), 041 [arXiv:1008.2958 [hep-th]].
+
+[8] L. F. Alday and J. M. Maldacena, “Gluon scattering amplitudes at strong coupling,” JHEP 06
+   (2007), 064 [arXiv:0705.0303 [hep-th]].
+
+[9] J. M. Drummond, G. P. Korchemsky and E. Sokatchev, “Conformal properties of four-gluon planar
+   amplitudes and Wilson loops,” Nucl. Phys. B 795 (2008), 385-408 [arXiv:0707.0243 [hep-th]].
+
+[10] A. Brandhuber, P. Heslop and G. Travaglini, “MHV amplitudes in N=4 super Yang-Mills and
+   Wilson loops,” Nucl. Phys. B 794 (2008), 231-243 [arXiv:0707.1153 [hep-th]].
+
+[11] Z. Bern, L. J. Dixon, D. A. Kosower, R. Roiban, M. Spradlin, C. Vergu and A. Volovich, “The
+   Two-Loop Six-Gluon MHV Amplitude in Maximally Supersymmetric Yang-Mills Theory,” Phys. Rev.
+   D 78 (2008), 045007 [arXiv:0803.1465 [hep-th]].
+
+[12] J. M. Drummond, J. Henn, G. P. Korchemsky and E. Sokatchev, “Hexagon Wilson loop = six-gluon
+   MHV amplitude,” Nucl. Phys. B 815 (2009), 142-173 [arXiv:0803.1466 [hep-th]].
+
+[13] L. J. Mason and D. Skinner, “The Complete Planar S-matrix of N=4 SYM as a Wilson Loop in
+   Twistor Space,” JHEP 12 (2010), 018 [arXiv:1009.2225 [hep-th]].
+
+[14] E. Witten, “Perturbative gauge theory as a string theory in twistor space,” Commun. Math. Phys.
+   252 (2004), 189-258 [arXiv:hep-th/0312171 [hep-th]].
+
+[15] E. Sokatchev, “An Action for N=4 supersymmetric selfdual Yang-Mills theory,” Phys. Rev. D 53
+   (1996), 2062-2070 [arXiv:hep-th/9509099 [hep-th]].
+
+[16] Y. M. Makeenko and A. A. Migdal, “Exact Equation for the Loop Average in Multicolor QCD,”
+   Phys. Lett. B 88 (1979), 135 [erratum: Phys. Lett. B 89 (1980), 437]
+
+                                                 40
+[17] R. Boels, L. J. Mason and D. Skinner, “Supersymmetric Gauge Theories in Twistor Space,” JHEP
+   02 (2007), 014 [arXiv:hep-th/0604040 [hep-th]].
+
+[18] J. Drummond, Ö. Gürdoğan, M. Rochford and R. Wright, “Light-like Wilson loop correlators,”
+   [arXiv:2512.12655 [hep-th]].
+
+[19] J. Drummond, M. Rochford and R. Wright, “Light-like Wilson loops correlators and the Q̄-
+   equation,” [arXiv:2601.23210 [hep-th]].
+
+[20] J. Drummond, M. Rochford and R. Wright, “Leading singularities of Wilson loop correlators from
+   twistor Wilson loop diagrams,” [arXiv:2602.18423 [hep-th]].
+
+[21] S. Caron-Huot and S. He, “Jumpstarting the All-Loop S-Matrix of Planar N=4 Super Yang-Mills,”
+   JHEP 07 (2012), 174 [arXiv:1112.1060 [hep-th]].
+
+[22] M. Bullimore and D. Skinner, “Descent Equations for Superamplitudes,” [arXiv:1112.1056 [hep-th]].
+
+[23] S. He, Z. Li and C. Zhang, “The symbol and alphabet of two-loop NMHV amplitudes from Q̄
+   equations,” JHEP 03 (2021), 278 [arXiv:2009.11471 [hep-th]].
+
+[24] Z. Li and C. Zhang, “The three-loop MHV octagon from Q equations,” JHEP 12 (2021), 113
+   [arXiv:2110.00350 [hep-th]].
+
+[25] D. Quillen, “Determinants of Cauchy-Riemann Operators over Riemann Surfaces,” Func. Anal.
+   Appl. 19 (1985) 37–41.
+
+[26] J. L. Bourjaily, S. Caron-Huot and J. Trnka, “Dual-Conformal Regularization of Infrared Loop
+   Divergences and the Chiral Box Expansion,” JHEP 01 (2015), 001 [arXiv:1303.4734 [hep-th]].
+
+[27] J. L. Bourjaily and S. Caron-Huot, “Loop amplitude integrands from unitarity cuts,” Phys. Rev.
+   D 108 (2023) no.2, 025008 [arXiv:2305.01673 [hep-th]].
+
+[28] J. Drummond, J. Foster and Ö. Gürdoğan, “Cluster adjacency beyond MHV,” JHEP 03 (2019),
+   086 [arXiv:1810.08149 [hep-th]].
+
+
+
+
+                                                 41
+

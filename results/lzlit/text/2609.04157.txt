@@ -1,0 +1,486 @@
+                                                                                    Spurious quantum correlations
+
+                                                                   Shashaank Khanna,1, 2, ∗ Matthew F. Pusey,1, † and Roger Colbeck3, ‡
+                                                        1
+                                                         Department of Mathematics, University of York, Heslington, York, YO10 5DD, United Kingdom
+                                                                          2
+                                                                            Aix-Marseille University, CNRS, LIS, Marseille, France
+                                                      3
+                                                        Department of Mathematics, King’s College London, Strand, London, WC2R 2LS, United Kingdom
+                                                                                         (Dated: 3rd September 2026)
+                                                           In his seminal paper, Bell [Physics Physique Fizika 1, 195 (1964)] considers the correlations that
+                                                        result from space-like separated measurements on a pair of entangled particles. He uses relativity
+                                                        theory to motivate the Bell causal structure, then shows the existence of quantum correlations that
+                                                        cannot be explained classically within this causal structure. Classical explanations of such quantum
+                                                        correlations are possible in alternative causal structures, for instance, those that allow superluminal
+                                                        causal influences, but, as shown in [New Journal of Physics 17 033002 (2015)], all such alternative
+                                                        explanations require fine tuning (causation without correlation). Here we discuss the existence of
+                                                        spurious quantum correlations — correlations that look quantum in one causal structure, but have a
+                                                        natural classical explanation in another. More precisely, there are causal structures that admit non-
+                                                        classical quantum correlations, but for which the same correlations have a classical explanation in
+arXiv:2609.04157v1 [quant-ph] 3 Sep 2026
+
+
+
+
+                                                        another causal structure without fine tuning. The realisation in the other causal structure can also be
+                                                        achieved without breaking any natural constraints on the causal structure that follow from relativity
+                                                        theory. However, similarly to non-classical quantum correlations in the Bell causal structure, we
+                                                        find other causal structures with non-classical quantum correlations that do not have a classical
+                                                        causal explanation in any alternative causal structure without fine tuning.
+
+
+                                                              INTRODUCTION                                   can be generated with that causal structure do not have
+                                                                                                             a conditional independence that is present in the observa-
+                                                                                                             tions. This additional elimination corresponds to seeking
+                                              Bell’s theorem [1, 2] establishes the existence of quan-       causal structures for which the observed correlations are
+                                           tum correlations that cannot be explained by any local            faithful (not fine tuned).
+                                           classical theory. To do so he considered a particular                The IC* algorithm [4] provides a way to go from a dis-
+                                           causal structure, and showed that measurements on a               tribution (or its conditional independences) to a set of
+                                           pair of entangled particles generate correlations violat-         possible faithful classical causal structures with the ad-
+                                           ing a bound that holds whenever the shared particles              ditional restriction that any latent common causes in the
+                                           are classical. Later, Wood and Spekkens [3] considered            causal structure are pairwise (have at most two children).
+                                           whether other causal structures could realise these quan-         The justification for this restriction is the result that for a
+                                           tum correlations classically, and showed that doing so            given set of observed conditional independences, if there
+                                           requires fine tuning, i.e., the presence of causation with-       exists a causal structure that generates them faithfully,
+                                           out correlation (see later for a precise definition). Such        then there also exists a causal structure with pairwise
+                                           realisations would hence be somewhat conspiratorial, for          common causes that generates them faithfully [5]. This
+                                           instance, they might have superluminal causation while            restriction does not cause problems for most of our re-
+                                           the observed correlations are no-signalling.                      sults, but we need to go beyond it when discussing cor-
+                                              Taking a step back, we consider the task of finding pos-       relations that are not spurious. IC* also restricts latent
+                                           sible causal explanations of a given phenomenon. More             variables to be parentless. This is because in a classi-
+                                           precisely, we consider a setup involving several variables        cal causal structure, for any latent variable that is not
+                                           and trying to infer the underlying causal relations. By           parentless, if a new causal structure is formed by remov-
+                                           performing repeated trials, and assuming an i.i.d. struc-         ing the edges from its parents and adding a directed edge
+                                           ture, we can get a close approximation of the distribu-           from each of its parents to each of its children, any distri-
+                                           tion of the variables. For the purposes of the present            bution realisable classically in the original causal struc-
+                                           paper, we consider the case in which we know the dis-             ture is classically realisable in the latter. Since our uses
+                                           tribution exactly. A first feature we might look for is           of IC* are to find classical causal structures, this second
+                                           the set of conditional independences in the distribution,         restriction will not cause issues in this work.
+                                           i.e., whether there are variables or sets of variables X,            If only one causal structure results, then one should try
+                                           Y , Z such that P (X|Y Z) = P (X|Z). Causal structures            to recreate the correlations within that structure, and if
+                                           often directly imply sets of conditional independences,           that is possible, this would appear to be an acceptable
+                                           so any causal structure that implies a conditional inde-          causal structure for the observed correlations1 . In gen-
+                                           pendence not seen in the observed distribution can be
+                                           eliminated. Furthermore, it is common to also eliminate
+                                                                                                              1 If not, then one is forced to reconsider the assumptions that go
+                                           causal structures in which almost all correlations that
+                                                                                                                                             2
+
+eral, there are several causal structures that can recreate                 A          B            D                                   D
+the conditional independences without fine tuning. In
+some cases, additional principles may be used to discard
+some of these. For instance, if each observed variable can                        C           E                           Λ         E
+be assigned a spacetime location, some causal structures
+may be rejected because they would have causation out-
+                                                                                        F                                     F
+side the future lightcone, in violation of relativity theory.
+E.g., if B is observed outside the future lightcone of A,
+                                                                                       (a)                                    (b)
+then it is reasonable to reject causal structures in which
+A is a cause of B.2
+   As Bell’s theorem shows, the sets of correlations that              FIG. 1. (a) The causal structures H1 (without red arrow) and
+                                                                       G1 (with red arrow). (b) The instrumental causal structure
+can be produced by a causal structure also depend on the
+                                                                       which is used in the proof of our results.
+theory. In this work we are interested in causal struc-
+tures in which there are non-classical quantum correla-
+tions, but for which the same correlations can be ex-                     Directed edges in a causal structure indicate (the pos-
+plained classically in another causal structure. The al-               sibility of) direct causal influences. The observed nodes
+ternative classical explanation should not be fine tuned,              represent observable things and hence have an associated
+and it should also not be possible to eliminate it using               random variable3 , while latent nodes are unobserved and
+the relativistic principle mentioned above. We refer to                the way they are modelled depends on the underlying
+correlations with these properties as spurious quantum                 theory (in this work we are mainly concerned with clas-
+correlations because at first sight they appear quantum,               sical and quantum theory). Figure 1(a) shows the main
+but this may be because the wrong causal structure is be-              causal structure we consider in this paper.
+ing considered. From the result of Wood and Spekkens [3]                  Let H be a causal structure with nodes X1 , . . . , Xn of
+mentioned earlier, there are no spurious quantum corre-                which Xm+1 , . . . , Xn are latent and let Xi↓ denote the
+lations in the causal structure Bell considered.                       parents of Xi in H (i.e., the nodes that have a directed
+   To find spurious causal structures, we investigated the             edge to Xi in H). In classical theory, every latent node
+causal structures from [6] that support non-classical cor-             has an associated random variable, and a distribution
+relations. We use the IC* algorithm to try to identify                 P (X1 . . . Xm ) over the observed variables is said to be
+other causal structures that imply the same observed con-              classically compatible with H if there exists a distribution
+ditional independences. We find that for some causal                   Q(X1 . . . Xn ) over all the nodes such that
+structures, including our primary example H1 in Fig-                                                X
+ure 1, or H2 and H3 in Figure 2, all non-classical (quan-                      P (x1 . . . xm ) =         Q(x1 . . . xn ), and  (1)
+tum) correlations they can produce are spurious. How-                                               xm+1 ...xn
+ever, there are other causal structures, like in Figure 3,                                          n
+                                                                                                          Q(xi |x↓i ) .
+                                                                                                    Y
+with non-classical (quantum) correlations, for which no                         Q(x1 . . . xn ) =                                           (2)
+other causal structure faithfully allows the same condi-                                            i=1
+tional independences. Thus no non-classical (quantum)
+                                                                       This condition implies that any variable is condition-
+correlations in such causal structures are spurious.
+                                                                       ally independent of its non-descendants given its par-
+                                                                       ents (Theorem 1.2.7 in [4]), which is known as the causal
+CLASSICAL AND QUANTUM CORRELATIONS                                     Markov condition.
+     WITHIN A CAUSAL STRUCTURE                                            For example, P (CDEF ) is classically compatible with
+                                                                       the causal structure H1 in Figure 1(a) if there exists a
+  We first give a few definitions to help set up our anal-             joint distribution Q(ABCDEF ) such that
+ysis.                                                                                  X
+                                                                         P (cdef ) =         Q(abcdef ) and
+Definition 1 (Causal Structure). A causal structure is                                  ab
+a directed acyclic graph (DAG) over a set of latent (de-
+                                                                        Q(abcdef ) = Q(a)Q(b)Q(d)Q(c|ab)Q(e|bd)Q(f |ace) .
+noted here within a circle) and observed (denoted here
+                                                                                                                         (3)
+within a triangle) nodes.
+                                                                         In quantum theory, each of the latent nodes is associ-
+                                                                       ated with a quantum state instead of a random variable.
+  into IC*, e.g., it may be a sign that the correlations are fine
+  tuned.
+2 There is a bit of subtlety here in that we would need to be able
+
+  to assign spacetime points or regions in which variables are first   3 We use upper case to denote random variables and lower case to
+
+  generated; in some cases this may not be easy to justify.              denote specific instances of those variables.
+                                                                                                                           3
+
+In this work we only consider causal structures in which         is said to be I-compatible with H if P obeys all the con-
+every latent node is parentless. Given a causal structure        ditional independences that follow from the d-separation
+H, the set of quantum mechanically compatible distri-            relations on the observed nodes, i.e., if X ⊥⊥ Y |Z for all
+butions is defined as follows. Consider a latent node X          sets of observed nodes X, Y , Z for which X⊥Y |Z. We
+with children X ↑ . For each element Y of X ↑ associate          denote by IH the set of all such probability distributions.
+                      Y
+a Hilbert space HX       , and then associate a joint quan-      The set of distributions classically compatible with H is
+tum   state on  the  tensor   product of these Hilbert spaces,   denoted as CH , meanwhile the set of quantum mechani-
+            Y
+N
+   Y ∈X ↑ H X , with   X.    For  each observed node Y with      cally compatible correlations is QH . From [6], we know
+latent parents Y L and N      observed parents Y O , associate   that CH ⊆ QH ⊆ IH . If CH ⊂ IH , then H is said to
+                                         Y
+a POVM that acts on            Qi ∈Y L HQi , where the POVM      support non-classical correlations. Further, if CH ⊂ QH ,
+can depend on the values of the variables Y O . The joint        then H supports non-classical quantum correlations.
+distribution is formed by applying the POVMs to the                 We now define what it means for correlations to be
+quantum state. If Y L is empty, taking the empty tensor          spurious. To do so, we formally introduce fine tuning
+product to be C, since a POVM on C is just a proba-              and the set of non-classical non-fine tuned correlations
+bility distribution, an observed node with no latent par-        in a causal structure.
+ents is assigned a probability distribution (conditioned         Definition 4 (Fine tuning). Consider a causal structure
+on the values of any observed parents), recovering the           H and a distribution P over the observed nodes of H
+classical case. Correlations obtained in such a way are          that is I-compatible with H. If there exist disjoint sets
+called quantum mechanically compatible with the causal           of observed nodes X, Y and Z for which P (X|Y Z) =
+structure.                                                       P (X|Z) but where the d-separation X⊥Y |Z does not
+   For example, a distribution P (CDEF ) is quantum              hold in H, then P is said to be fine tuned (with respect
+mechanically compatible with H1 if there exist Hilbert           to H). Otherwise P is said to be faithful (with respect
+           F      C       C     E
+spaces HA    , HA   , HB    , HB  , density operators ρA on      to H).
+  F       C                  C      E
+HA ⊗ HA and ρB on HB ⊗ HB             , and POVMs {Kde }e on
+HB (for each d), {Mc,e }f on HA (for each c, e) and {N c }c
+  E                     f           F                            Definition 5. Let H be a causal structure. A distribu-
+on HA C
+        ⊗ HB  C
+                such that                                        tion P over the observed variables of H is non-classical
+                                                                 and non-fine tuned (NCNFT) in H if
+                   f
+  P (cdef ) = tr((Mc,e ⊗ N c ⊗ Kde )(ρA ⊗ ρB ))P (d).     (4)       • P is I-compatible with H;
+   Given a causal structure, certain conditional indepen-           • P is not classically compatible with H; and
+dences that hold for all (classically or quantum mechan-
+ically) compatible distributions can be directly read off           • P is not fine tuned with respect to H.
+its associated DAG using the concept of d-separation.            Definition 6 (Spurious correlations). Let H be a causal
+Definition 2 (Blocked paths). Consider a causal struc-           structure and P be NCNFT in H. P is spurious with re-
+ture with X, Y and Z disjoint sets of nodes. A path from         spect to H if there exists a causal structure G such that
+X to Y is blocked by Z if it contains either A → W → B           P is classically compatible with G and not fine tuned
+with W ∈ Z, A ← W → B with W ∈ Z or A → W ← B                    with respect to G. If, in addition, P is quantum mechan-
+such that neither W nor any descendant of W belongs to           ically compatible with H, then P is a spurious quantum
+Z.                                                               correlation with respect to H.
+                                                                   Definition 6 is useful in cases where we do not have
+Definition 3 (d-separation). Consider a causal structure
+                                                                 any information about the spacetime locations at which
+with disjoint sets of nodes, X, Y and Z. X and Y are
+                                                                 particular variables are realised. If such information is
+d-separated by Z, denoted X⊥Y |Z if either there is no
+                                                                 available, it is useful to use the upgraded definition given
+path between any node in X and any node in Y , or if
+                                                                 below. To introduce this, we use ≺H to denote the partial
+every path from a node in X to a node in Y is blocked
+                                                                 order of the causal structure H, i.e., for two nodes X and
+by Z.
+                                                                 Y in H, the relation X ≺H Y (“X is before Y in H”)
+  In [7, 8] it was shown that if X⊥Y |Z in a causal struc-       means that there is a directed path from X to Y in H.
+ture H, then any distribution P that is classically com-         We also use X ⊀⊁H Y (“X and Y are not ordered in
+patible with H satisfies P (X|Y Z) = P (X|Z), which we           H”) to mean that there is no directed path from X to Y
+denote as X ⊥⊥ Y |Z. This was extended to quantum                or from Y to X in H.
+causal structures in [6]. However, the converse does not
+                                                                 Definition 7. Let H be a causal structure. A spacetime
+hold and cases where it does not are said to be fine tuned
+                                                                 order for H is a partial order ≺st on the observed nodes
+(see Definition 4).
+                                                                 of H that respects the partial order of H in the sense
+  It is further useful to consider distributions that are po-
+                                                                 that for every pair of observed nodes X and Y in H,
+tentially beyond the quantum set. Given a causal struc-
+ture H, a distribution P over the observed nodes of H                             X ≺H Y =⇒ X ≺st Y.
+                                                                                                                          4
+
+  Note that a spacetime order for H need not be identical      the following theorem, which is (part of) Theorem 26
+to the partial order of H; we can have X ⊀⊁H Y but             of [6] (Theorem 26 in [6] has an additional transforma-
+X ≺st Y for instance.                                          tion that we do not need here).
+
+Definition 8 (Spurious correlations with a spacetime or-       Theorem 2. Consider a causal structure G and let G′
+der). Let H be a causal structure and let ≺st be a space-      be a second causal structure obtained by performing one
+time order for H. A distribution P over the observed           of the following transformations on G: 1) Removing an
+variables of H is said to be spurious with respect to H        edge, 2) Removing an isolated latent node, or 3) Adding
+with spacetime order ≺st if P satisfies all the conditions     an edge from a node X to node Y the parents of X are a
+of Definition 6 but with the additional requirement on G       subset of the parents of Y , and the parents of X contain
+that ≺st is a spacetime order for G.                           at least one latent node. Then CG′ ⊆ CG .
+
+Definition 9 (Spurious correlations respecting the             Lemma 1 (CG1 = IG1 ). A distribution is I-compatible
+causal partial order). Let H be a causal structure. A          with G1 if and only if it is classically compatible with G1 .
+distribution P over the observed variables of H is said
+to be spurious and respect the causal partial order of H       Proof. We apply Theorem 2 several times with the fol-
+if P satisfies all the conditions of Definition 6 with the     lowing sequence: remove the edges A → F and A → C,
+additional requirement on G that ≺G is identical to ≺H .       remove the isolated latent node A, add the edge C → E,
+                                                               remove the edges B → C and B → E, remove the iso-
+   Definition 9 has the advantage that it does not need        lated latent node B. Call the resulting causal struc-
+an additional spacetime order to be defined. However,          ture G′1 . Theorem 2 implies that CG′1 ⊆ CG1 . However,
+it is a stronger requirement than Definition 8, and may        since G′1 has no latent nodes, it follows from [6] that
+not be relevant in all cases. Its significance is that if P    CG′1 = IG′1 . Further, since the d-separation relations be-
+is spurious and respects the causal partial order of H,        tween observed nodes are the same in both G1 and G′1 , we
+then, for any spacetime order ≺st for H, P is spurious         have IG′1 = IG1 . Thus IG1 ⊆ CG1 , but since CG1 ⊆ IG1
+with respect to H with spacetime order ≺st . This means        the claim follows.
+that, subject to natural relativistic constraints, for all     Theorem 3. All NCNFT correlations in H1 are spuri-
+possible locations of the variables in spacetime there is      ous respecting the causal partial order of H1 .
+an alternative classical causal structure that gives rise to
+P.                                                             Proof. Consider the causal structure G1 in Figure 1(a)
+   For all the instances discussed in this paper we prove      for which ≺G1 is identical to ≺H1 . From Lemma 1 we
+spuriousness respecting the causal partial order.              have CG1 = IG1 . The only conditional independence on
+                                                               the observed nodes that follows from the d-separation re-
+                                                               lations is C ⊥⊥D, so IH1 = IG1 . Therefore, by Theorem 1
+                        RESULTS                                all NCNFT correlations in H1 are spurious respecting the
+                                                               causal partial order of H1 .
+  Our main aim is to establish the existence of quantum
+                                                                  Given Theorem 3 it remains to find quantum NCNFT
+correlations that are spurious in H1 . We do so by showing
+                                                               correlations in H1 . We proceed to construct a concrete
+that all quantum correlations in H1 are classical in G1 .
+                                                               example. The idea behind our construction is that if
+  We start by giving a condition that can identify spuri-
+                                                               entanglement is shared by A and B, and a Bell basis
+ous correlations.
+                                                               measurement performed to produce C then the situa-
+Theorem 1. Let H and G be causal structures with the           tion is analogous to having Λ share entanglement in the
+same set of observed nodes with ≺G identical to ≺H , and       instrumental causal structure (Figure 1(b)), where the
+satisfying IH = IG , CH ⊂ IH , CG = IG . Then every            resulting entangled state depends on C. We then ex-
+distribution that is NCNFT in H is spurious and respects       ploit a known non-classical quantum correlation in the
+the causal partial order of H.                                 instrumental causal structure from [9, 10] to obtain the
+                                                               violation.
+Proof. From the conditions in the statement, CG = IH ,            The next lemma gives the concrete reduction from H1
+from which it follows that any distribution that is I-         to the instrumental causal structure. The general idea
+compatible with H is classically compatible with G. Fur-       behind this has been called the marginalization piggy-
+ther, since IG = IH , if the distribution is not fine tuned    back in [11].
+with respect to H it is also not fine tuned with respect
+to G.                                                          Lemma 2. Let P (CDEF ) be classically compatible with
+                                                               H1 (cf. Figure 1(a)). Then P (DEF ) is classically com-
+   The next step is to establish that G1 has no non-           patible with the instrumental causal structure (cf. Fig-
+classical correlations (i.e., CG1 = IG1 ). To do so we use     ure 1(b)).
+                                                                                                                                              5
+
+Proof. From (3), if P is classically compatible with H1                 The distribution over C is P (C = 0) = P (C = 3) =
+                                                                        1
+then                                                                    4 (1 + cos(2α) cos(2β)) and P (C = 1) = P (C = 2) =
+                                                                        1
+                                                                        4 (1 − cos(2α) cos(2β)).
+            X
+ P (def ) =   Q(a) Q(b) Q(d) Q(c|ab) Q(e|bd) Q(f |ace).
+             abc
+                                                                           We proceed to compute the value of the left-hand-side
+                                                                        of (5). In the case C = 0, we have
+Define a new random variable Λ with Q(λ = (a, b, c)) =
+Q(a)Q(b)Q(c|ab). Noting that Q(e|bd) = Q(e|abcd) and                                                        X
+                                                                                                                          e
+                                                                          P (E = F |D = 0, C = 0) =                  tr((M0,e ⊗ K0e )χ0 )
+Q(f |ace) = Q(f |abce), we have                                                                                 e
+                   X
+        P (def ) =    Q(λ)Q(d)Q(e|λd)Q(f |λe),                                   1
+                                                                                   2 + sin(2ζ0 + π4 + 2ϕ) + sin(2ζ0 + π4 − 2ϕ)
+                                                                                                                               
+                                                                               =
+                       λ                                                         4
+which is the condition required for P to be classical in                         1
+                                                                                   1 + cos(2ϕ) sin(2ζ0 + π4 )
+                                                                                                             
+                                                                               =                                              (10)
+the instrumental causal structure.                                               2
+
+   We will use the following result, originally proven                  Similarly,
+in [12].                                                                                                   X
+                                                                                                                         0
+                                                                          P (F = 0|D = 1, C = 0) =                  tr((M0,e ⊗ K1e )χ0 )
+Lemma 3. Let P (DEF ) be classically compatible with                                                        e
+the instrumental causal structure, where the random vari-
+                                                                              = cos2 (ϕ + π8 ) cos2 (ζ0 ) + cos2 (ϕ − π8 ) sin2 (ζ0 )       (11)
+ables take values d ∈ {0, 1, 2}, e ∈ {0, 1} and f ∈ {0, 1}.
+Then                                                                    and
+P (E=F |D=0) + P (F =0|D=1) + P (E=0, F =1|D=2) ≤ 2.
+                                                                                                             1
+                                               (5)                      P (E = 0, F = 1|D = 2, C = 0) = tr((M0,0 ⊗ K20 )χ0 )
+                                                                                                                                           2
+                                                                        = cos(ζ0 ) sin(ϕ + π8 ) sin( π8 ) + sin(ζ0 ) cos(ϕ + π8 ) cos( π8 )
+   To construct our quantum distribution we use the no-                                                                              (12)
+tation |θ⟩ = cos(θ)|0⟩ + sin(θ)|1⟩, |ψx ⟩ = cos(x)|00⟩ +
+sin(x)|11⟩,                                                             Define the sum of the right-hand-sides of (10), (11)
+   |m0 ⟩ = √12 |00⟩ + |11⟩ , |m1 ⟩ = √12 |01⟩ + |10⟩ ,
+                                                                      and (12) to be I(ζ0 , ϕ). By construction, in the case
+                                                                        C = 3 we also get I(ζ0 , ϕ), while for C = 1 and C = 2
+   |m2 ⟩ = √12 |01⟩ − |10⟩ , |m3 ⟩ = √12 |00⟩ − |11⟩ .
+                                                   
+                                                                        we get I(ζ1 , ϕ) (for each c, the Pauli operators in the
+                                                                                         f
+In the notation introduced before (4), take the Hilbert                 definition of Mc,e cancel those in χc ).
+spaces HA  F    C
+             , HA , HBC    E
+                        , HB  to be two dimensional, and                  Note that
+the observed variables to take values c ∈ {0, 1, 2, 3}, d ∈                              1       √            √          
+{0, 1, 2}, e ∈ {0, 1} and f ∈ {0, 1}. Then take                              I(ζ0 , 0) =    11 + 2 2 + (1 + 2 2) sin(2ζ0 ) ,
+                                                                                         8
+ρA = |ψα ⟩⟨ψα |, ρB = |ψβ ⟩⟨ψβ |                                  (6)   which is greater
+                   c                                                                     √ than the√ classical bound of 2 for
+P (d) = 1/3, N = |mc ⟩⟨mc |                                       (7)   sin(2ζ0 ) > (5−2   2)/(1+2   2) ≈ 0.567, with a maximum
+                                                                                       √
+Kde = |ϵd + e π2 ⟩⟨ϵd + e π2 | with (ϵ0 , ϵ1 , ϵ2 ) =   π        5π     value of (3 + 2)/2 ≈ 2.207 at ζ0 = π/4. However, we
+                                                                    
+                                                        4 , 0,   8
+                                                                  (8)   cannot take ϕ = 0 because then P (F |CD) = P (F |D),
+                                        π       π   π                   which would correspond to a fine tuning. We hence
+ f
+Mc,e = σc |θef ⟩⟨θef |σc†   with   θef = + ϕ + e + f .                  choose ϕ to be small but non-zero to avoid this. Similarly,
+                                       8            4        2
+                                                                  (9)   taking α = π/4 or β = π/4 (which would correspond to
+                                                                        the measurement generating C doing perfect teleporta-
+Here {σc }3c=1 are the Pauli operators and σ0 = 11, and
+                                                                        tion) leads to fine tuning (C ⊥⊥ E), so we choose values
+the form of some of the states and measurements takes
+                                                                        close to these instead.
+inspiration from the result of [9, 10].
+                                                                           Concretely, for α = 7π/32, β = 6π/32, and ϕ = π/32
+Lemma 4. The distribution P (CDEF ) generated by the                    we find the left-hand-side of (5) evaluates to
+quantum strategy from (6)–(9) is NCNFT in H1 .
+                                          F
+Proof. Let χc be the density operator on HA    E
+                                            ⊗ HB con-                         P (C ∈{0, 3})I(ζ0 , ϕ) + P (C ∈ {1, 2})I(ζ1 , ϕ)
+ditioned on C = c. We have                                                       1        √            π
+                                                                              =     43 + 3 2 − 4 sin( 16  ) + 8 sin( π8 ) + 4 sin 3π
+                                                                                                                                  16 )
+                                                                                 32
+      χ0 = |ψζ0 ⟩⟨ψζ0 |                                                                                                      
+                                                                                             π
+      χ1 = (σ1 ⊗ 11)|ψζ1 ⟩⟨ψζ1 |(σ1 ⊗ 11)                                           + 8 cos( 16 ) + 2 cos( π8 ) + 8 cos( 3π
+                                                                                                                         16 )
+
+      χ2 = (σ2 ⊗ 11)|ψζ1 ⟩⟨ψζ1 |(σ2 ⊗ 11)                                  ≈ 2.128
+      χ3 = (σ3 ⊗ 11)|ψζ0 ⟩⟨ψζ0 |(σ3 ⊗ 11), where
+                                                                        Thus, by Lemma 3, P (DEF ) is not classically compati-
+ tan(ζ0 ) = tan(α) tan(β) and tan(ζ1 ) = cot(α) tan(β).                 ble with the instrumental scenario, and so, by Lemma 2,
+                                                                                                                       6
+
+
+ A           B             D         A            B         D
+                                                                nodes (without fine tuning), and then to use IC* to rule
+                                                                out alternative causal structures with at most bipartite
+                                                                common causes.
+         C         E                         C          E
+                                                                Proof. For H4 the d-separation relations involving only
+                                                                observed nodes are {A⊥D, E⊥F |A}. Any common cause
+             F                                    F             of three (or more) observed nodes will be a common cause
+                                                                for either A and D or E and F . However, since A⊥D and
+                                                                E⊥F |A, this will lead to fine tuning. Thus, faithful cor-
+             (a)                                  (b)           relations that are I-compatible with H4 can have at most
+                                                                bi-partite common causes. For correlations with A ⊥⊥ D
+FIG. 2. (a) The causal structures H2 (without red arrow) and    and E ⊥⊥ F |A (and no other conditional independences),
+G2 (with red arrow). (b) The causal structures H3 (without      the IC* algorithm returns a set of causal structures all
+red arrows) and G3 (with red arrows).
+                                                                of which are reducible to H4 using the techniques of [6].
+                                                                Thus, NCNFT correlations in H4 cannot be spurious.
+                                         A              B          For the bi-locality causal structure, the d-separation
+     B       A         C                                        relations involving only observed nodes are generated by
+                                 E               C          F   {E⊥CDF H, F ⊥CDEG, C⊥EGF H, CF H⊥EG, G⊥H}
+                                                                (via the semi-graphoid axioms [13]). From these d-
+ F           D             E
+                                                                separations it follows that a common cause of {E, C},
+                                 G               D          H   {E, F }, {C, F }, {E, D}, {E, H}, {C, G}, {C, H}, {F, G}
+                                                                or {F, D} will require fine tuning. This leaves the
+                                                                only possible common cause of more than 2 observed
+             (a)                                 (b)            variables as a common cause of {G, D, H}. However,
+                                                                with such a common cause fine tuning would be needed
+FIG. 3. Causal structures (a) H4 and (b) Bi-locality in which   to satisfy G ⊥⊥ H. Hence only bi-partite common
+all NCNFT correlations are not spurious.                        causes can avoid fine tuning. For correlations with the
+                                                                conditional independences implied by the d-separation
+                                                                relations above, the IC* algorithm returns a set of causal
+P (CDEF ) is not classically compatible with H1 . An ex-
+                                                                structures all of which are reducible to the bi-locality
+haustive check of all conditional independence relations
+                                                                structure using the techniques of [6].
+involving subsets of C, D, E and F confirms that C ⊥⊥ D
+                                                                   Hence, for both the causal structures in Figure 3, since
+is the only one satisfied by P (CDEF ). Thus, P (CDEF )
+                                                                there do not exist any other alternate causal structures
+is NCNFT in H1 .
+                                                                that exhibit the same corresponding conditional indepen-
+   Using similar reasoning, we find spurious non-classical      dences, we have that all NCNFT correlations in them are
+(quantum) correlations respecting the causal partial or-        not spurious.
+der in the causal structures H2 and H3 in Figures 2(a)
+and 2(b). The corresponding classically compatible
+explanations are provided by G2 and G3 respectively                                 CONCLUSION
+(shown in the same figures). This can be proven using
+Theorem 1 (we omit the proof as it follows the same line           We have given several examples of causal structures
+as the case of H1 , previously discussed). The triangle and     that have spurious quantum correlations, and several oth-
+the instrumental causal structures also exhibit spurious        ers that do not. In the spurious cases, a conclusion that
+quantum correlations respecting the causal partial order,       quantum correlations are present could be due to us-
+since any non-classical quantum correlations in them is         ing the wrong causal structure, with a classical expla-
+classically compatible with the causal structure where all      nation being possible in another. The quantum nature
+the observed variables share a single common cause.             of such correlations would hence not be inferrable by
+   We also find that for some other causal structures           causal inference alone but would require additional anal-
+(shown in Figure 3) there are NCNFT correlations that           ysis. Furthermore, the alternative classical explanation
+are not spurious.                                               would remain compatible with relativity theory based on
+                                                                the spacetime locations where the variables are gener-
+Theorem 4. Let H be one of the causal structures in
+                                                                ated, so compatibility with relativity can also not help
+Figure 3 and P be NCNFT in H. P is not spurious.
+                                                                eliminate the classical alternative.
+   The idea behind the proof is to argue that common               In the cases without spurious correlations, we get a
+causes of three or more observed variables are incompat-        more direct reason to believe in the quantum nature
+ible with the d-separation relations between the observed       of particular observed correlations: these correlations
+                                                                                                                              7
+
+do not have a (non fine tuned) classical explanation in           [6] J. Henson, R. Lal,         and M. F. Pusey, “Theory-
+any other causal structure. These non-spurious correla-               independent limits on correlations from generalized
+tions are hence natural candidates for use in information-            Bayesian networks,” New J. Phys. 16, 113043 (2014).
+processing tasks, analogously to the use of non-classical         [7] D. Geiger, Towards the Formalization of Informational
+                                                                      Dependencies, Tech. Rep. 880053 (UCLA Computer Sci-
+correlations for device-independent cryptographic tasks               ence, 1987).
+such as quantum key distribution or randomness expan-             [8] T. Verma and J. Pearl, “Causal networks: Semantics and
+sion in Bell causal structures (see, e.g., [14] for a review).        expressiveness,” in Proceedings of the 4th Workshop on
+                                                                      Uncertainty in Artificial Intelligence (1988) pp. 352–359.
+                                                                  [9] R. Chaves, G. Carvacho, I. Agresti, V. Di Giulio,
+                   Acknowledgements                                   L. Aolita, S. Giacomini, and F. Sciarrino, “Quantum
+                                                                      violation of an instrumental test,” Nature Physics 14,
+                                                                      291–296 (2018).
+  We thank Robert Spekkens and Elie Wolfe for useful
+                                                                 [10] T. Van Himbeeck, J. B. Brask, S. Pironio, R. Ra-
+conversations.                                                        manathan, A. B. Sainz, and E. Wolfe, “Quantum vi-
+                                                                      olations in the instrumental scenario and their relations
+                                                                      to the Bell scenario,” Quantum 3, 186 (2019).
+                                                                 [11] M. Maciel Ansanelli, Bidirectional insights between clas-
+                                                                      sical and quantum causal inference, Ph.D. thesis, Univer-
+  ∗
+     shashaank.khanna@lis-lab.fr                                      sity of Waterloo (2026).
+  †
+     matthew.pusey@york.ac.uk                                    [12] B. Bonet, “Instrumentality tests revisited,” in Proc. 17th
+   ‡
+     roger.colbeck@kcl.ac.uk                                          Conf. on Uncertainty in Artificial Intelligence, edited by
+ [1] J. S. Bell, “On the Einstein-Podolsky-Rosen paradox,”            J. Breese and D. Koller (Morgan Kaufmann, Seattle, WA,
+     Physics 1, 195–200 (1964).                                       2001) pp. 48–55.
+ [2] J. S. Bell, “La nouvelle cuisine,” in Speakable and Un-     [13] J. Pearl and A. Paz, “Graphoids: Graph-based logic for
+     speakable in quantum mechanics (Cambridge University             reasoning about relevance relations or when would x tell
+     Press, 2004) pp. 232–248.                                        you more about y if you already know z?” in Probabilistic
+ [3] C. J. Wood and R. W. Spekkens, “The lesson of causal             and Causal Inference: The Works of Judea Pearl (2022)
+     discovery algorithms for quantum correlations: Causal            pp. 189–200.
+     explanations of Bell-inequality violations require fine-    [14] S. Pirandola, U. L. Andersen, L. Banchi, M. Berta,
+     tuning,” New J. Phys. 17, 033002 (2015).                         D. Bunandar, R. Colbeck, D. Englund, T. Gehring,
+ [4] J. Pearl, Causality, 2nd ed. (Cambridge University Press,        C. Lupo, C. Ottaviani, et al., “Advances in quantum
+     2009).                                                           cryptography,” Advances in Optics and Photonics 12,
+ [5] T. Verma, “Graphical aspects of causal models,” Techni-          1012 (2020).
+     cal Report R-191, UCLA (1993).
+

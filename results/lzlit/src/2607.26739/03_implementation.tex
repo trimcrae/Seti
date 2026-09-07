@@ -1,0 +1,393 @@
+\section{Implementation}
+\label{sec:implementation}
+
+\subsection[{The {\tt sm\_onia} {\ufo} model}]{The {\ttfamily{\fontseries{b}\selectfont sm\_onia}} {\ufo} model}
+
+\begin{lstlisting}[caption={\it\small Definitions of the $\chi_{c2}$ meson Fock state $^3\pwave_2^{[1]}$ in {\tt boundstates.py} of the updated \ufo\ model {\tt sm\_onia}.},captionpos=b,language=Python,label={lst:boundstates.py},float=tp,floatplacement=tbp]
+# chi meson
+chic2_13p21 = Boundstate(
+    pdg_code = 445,
+    name = 'chic2(1|3P21)',
+    particles = ['c','c~'],
+    mass = 3.56,
+    principal = 1,
+    spin = 3,
+    orbital = 1,
+    J = 2,
+    color = 1,
+    charge = 0,
+    ldme = 0.5371,
+    texname = 'chic213P21'
+)
+\end{lstlisting}
+
+Alongside this article, an updated version of the Universal Feynman Output (\ufo)~\cite{Degrande:2011ua,Darme:2023jdn} model \texttt{sm\_onia} is provided. 
+The model is part of the \mgshort\ suit and is automatically downloaded if it is not already present in the local installation when the command
+\prompt{import~model~sm\_onia}\noindent
+is called.
+The elementary particle content of this model, together with all associated default parameter values, is identical to that of the {\tt sm} \ufo\ model, which is loaded automatically when \mgshort\ is launched. Consequently, by default, \texttt{sm\_onia} features zero lepton masses and adopts a four-flavour scheme ($4$FS) with a massless charm quark. To generate charmonia, charmed bottom mesons, and leptonia, additional model restrictions are needed. Specifically, 
+\prompt{import~model~sm\_onia-c\_mass}\noindent
+sets a non-zero mass for the charm quark, while
+\prompt{import~model~sm\_onia-lepton\_masses}\noindent
+is used for leptons. The default masses are reported in table~\ref{tab:sm_input} of appendix~\ref{app:setup}.
+
+In \texttt{sm\_onia}, the Fock states associated with a quarkonium or leptonium state are defined in the \texttt{Boundstate} class and provided in the dedicated file \texttt{boundstates.py}. An example of an implemented Fock-state configuration for $\chi_{c2}$ is given in listing~\ref{lst:boundstates.py}.
+In this way, the generation of processes involving bound states follows the same logic as for ordinary elementary particles, namely by specifying either the Fock-state \texttt{pdg\_code} or its \texttt{name}. In both cases, we adopt the same convention as that used in ref.~\cite{ColpaniSerri:2025vdz}.
+The Fock-state PDG numbering scheme follows the convention established in \pythia{\tt 8}~\cite{Bierlich:2022pfr} and is consistent with the PDG MC guidelines~\cite{ParticleDataGroup:2024cfk} (cf.\@ section~$45$ therein). 
+The only additional feature introduced here concerns the updated number $n_s$ used for CO states, which identifies their spin and orbital quantum numbers: \texttt{0} for $^3\swave_1^{[8]}$, \texttt{1} for $^1\swave_0^{[8]}$, \texttt{2} for $^3\pwave_J^{[8]}$, \texttt{3} for $^3\pwave_0^{[8]}$, \texttt{4} for $^3\pwave_1^{[8]}$, \texttt{5} for $^3\pwave_2^{[8]}$, and \texttt{6} for $^1\pwave_1^{[8]}$.
+If a particle is specified by its {\tt name} without selecting a particular Fock state, the complete collection of states up to order $v^7$ is included automatically. Furthermore, for Fock states with $L=1$ and $S=1$, we allow users to collectively denote ${}^{3}\pwave_J^{[8]}$ contribution using the notation \texttt{name(N|3PJ8)}, where \texttt{N} is the energy level of the particle (the principal number number for leptonia and the radial quantum number for quarkonia). For example, \texttt{jpsi(1|3PJ8) = jpsi(1|3P08) jpsi(1|3P18) jpsi(1|3P28)} for the $J/\psi$.
+In the {\tt sm\_onia} model, the same symbol is used for {\swave}- and {\pwavetxt} leptonia; e.g., all {\pwavetxt} positronia adopt the symbol {\tt PS} rather than {\tt he}, {\tt chie0}, {\tt chie1}, and {\tt chie2}.  
+Different states are then uniquely distinguished by their quantum-number content, which must always be specified when generating leptonia. Moreover, we point out that, for \pwavetxt\ leptonia, a different convention for the principal number $N$ is adopted, since the lowest-energy state corresponds to $N=2$ rather than $N=1$, in the case of quarkonia. More details on the different conventions will be provided in the dedicated discussion of section~\ref{sec:leptionium}.
+The list of bound-state names implemented in the local \mgshort\ installation can be displayed in the command-line interface using the command
+\prompt{display~boundstates}\noindent
+after loading the \ufo\ model.
+
+
+\begin{lstlisting}[caption={\it\small Example of the {\tt onia\_card.dat} in case of the production of the $^3\pwave_2^{[1]}$ $\chi_{c2}$ state.},captionpos=b,language=Python,label={lst:onia_card.dat},float=tp,floatplacement=tbp]
+#*********************************************************************
+# Long distance matrix elements (LDME)                               *
+#*********************************************************************
+Block ldme
+   445  0.5371  # LDME for chic2(1|3P21)
+   
+#*********************************************************************
+# Mass                                                               *
+#*********************************************************************
+Block onium_mass
+   445  3.56    # mass for chic2(1|3P21)
+\end{lstlisting}
+
+Compared with the first version of the model introduced in ref.~\cite{ColpaniSerri:2025vdz}, we have added two properties to the \texttt{Boundstate} class: \texttt{mass} and \texttt{ldme}.
+Their corresponding default values are reported in tables~\ref{tab:onia_masses},~\ref{tab:ldme_charmonia},~\ref{tab:ldme_bottomonia}, and~\ref{tab:ldme_Bc} of appendix~\ref{app:setup}.
+When a process involving at least one Fock state is generated and the {\tt output} command has been executed, each LDME and mass parameter is copied to the \texttt{onia\_card.dat} file, as shown in the example in listing~\ref{lst:onia_card.dat}. The user can modify each parameter to the desired value at runtime following the same procedures used for accessing the {\tt run\_card.dat} and {\tt param\_card.dat}. Explicitly, the commands for setting the LDME and mass parameters are
+\prompt{set~onia\_card~ldme~<pdg\_code>~<value>}\noindent
+and
+\prompt{set~onia\_card~onium\_mass~<pdg\_code>~<value>}\noindent
+respectively.
+
+
+\subsection{Automatic differentiation with dual numbers}
+
+{\pwavetxt} states, in contrast to {\swavetxt} states, are characterised by a vanishing wavefunction at the origin. Hence, their production is controlled by the first derivative of the wavefunction at the origin. In momentum space, the same derivative is encoded in the projector introduced in eq.~\eqref{eq:proj_oam}.
+Consequently, the implementation of \pwavetxt{} states in \mgshort{} requires the automated evaluation of derivatives within the amplitude-generation framework.
+To this end, we employ dual numbers ${\cal D}$~\cite{Clifford:1871aaa}, which provide an exact and numerically stable solution. These properties are essential in view of a future extension of \madsons\ to NLO accuracy, where the local cancellation between IR-singular real-emission contributions and their corresponding FKS subtraction terms demands high numerical precision. 
+This solution is also scalable and can be generalised to higher derivative orders with minimal intervention, allowing for possible future extensions of the package to incorporate states with $L>1$, such as ${\rm D}$-waves, or to provide a systematic treatment of relativistic corrections in the matrix element.
+Beyond our specific application, automatic differentiation based on dual numbers has previously been used in a variety of contexts, including machine learning~\cite{Baydin:2015tfa},\footnote{While the dual numbers used here correspond to a dedicated forward-mode automatic differentiation implementation, existing machine-learning-based approaches in the \mgshort{} ecosystem, such as {\tt MadJax}~\cite{Heinrich:2022xfa} and {\tt MadNIS}~\cite{Heimel:2022wyj,Heimel:2023ngj}, rely on reverse-mode automatic differentiation for backpropagation, as provided by frameworks such as {\tt JAX}~\cite{jax2018github} and {\tt PyTorch}~\cite{NEURIPS2019_9015pytorch}.} the computer algebra system {\tt Symbolica}~\cite{Symbolica}, and high-energy physics within the Local Unitarity formalism~\cite{Capatti:2020xjc,Capatti:2022tit} for a constructive, integrand-level realisation of the Kinoshita-Lee-Nauenberg (KLN) theorem~\cite{Kinoshita:1962ur,Lee:1964is}.
+We finally emphasise that the techniques used to support {\pwavetxt} quarkonia in \madonia\ and \helaconia\ differ significantly from the dual-number strategy employed in {\tt MadSONS}. Indeed, \madonia, which supports only single-quarkonium production, relies on numerical differentiation, whereas \helaconia\ introduces dedicated {\pwavetxt} currents into the recursion relations. Although the latter approach is exact and numerically stable, its scalability remains limited. For completeness, we briefly describe the rationale behind our implementation of dual numbers in \mgshort{} in this section.
+
+The dual number representation of a complex-valued variable $x(q)$ is defined as
+\begin{equation}
+    {\cal D}(x) = x + \epsilon\, \frac{\d x}{\d q}\,,
+\end{equation}
+which consists of a primal component and a dual (or tangent) component. The latter is proportional to the nilpotent quantity $\epsilon$, which satisfies $\epsilon^2 = 0$ while $\epsilon \neq 0$. For our purposes, we employ the multivariate generalisation
+\begin{align}
+    {\cal D}_n(x) = \sum_{k=0}^n \frac{1}{k!} \left( \sum_{j=1}^n \epsilon_j \frac{\d}{\d q_j} \right)^{\!k} x\,,
+\label{eq:mulvar_dual_numb}
+\end{align}
+in which $n$ directions in the $q_k$ parameter space are considered, each associated with a distinct nilpotent element $\epsilon_j$, satisfying $\epsilon_j^2 = 0$ and ${\epsilon_i\, \epsilon_j \neq 0}$ for $i \neq j$.
+For practical implementations, the primal and dual components of eq.~\eqref{eq:mulvar_dual_numb} can be represented by the array
+\begin{align}
+    {\cal D}_n^{\scriptscriptstyle{\rm arr}}(x) & = \bigg({\cal D}_{n,0}^{\scriptscriptstyle{\rm arr}}(x),{\cal D}_{n,1}^{\scriptscriptstyle{\rm arr}}(x),{\cal D}_{n,2}^{\scriptscriptstyle{\rm arr}}(x),\ldots,{\cal D}_{n,2^{n}-1}^{\scriptscriptstyle{\rm arr}}(x)\bigg) \nonumber\\
+    & = \bigg(
+        x,\,
+        \frac{\d x}{\d q_1},\,
+        \frac{\d x}{\d q_2},\,
+        \frac{\d^2 x}{\d q_1\d q_2},\,
+        \frac{\d x}{\d q_3},\,
+        \frac{\d^2 x}{\d q_1\d q_3},\,
+        \frac{\d^2 x}{\d q_2\d q_3}, \frac{\d^3 x}{\d q_1\d q_2\d q_3},
+        \dots,
+        \frac{\d^n x}{\d q_1\dots\d q_n}
+    \bigg)\,.
+\label{eq:dual_array}
+\end{align}
+The derivative component associated with the $i^{\mathrm{th}}$ entry, with $i\in\left\{0,1,\ldots,2^{n}-1\right\}$, is determined by the binary decomposition
+\begin{equation}
+    i = \sum_{k=0}^{n-1} 2^k b_{i,k}\, , 
+    \qquad  
+    b_{i,k}\in\{0,1\}\, ,
+\label{eq:binary_decomposition}
+\end{equation}
+such that
+\begin{equation}
+    {\cal D}_{n,i}(x)  = \prod_{k=1}^{n}\left({\epsilon_k^{b_{i,k-1}}} \right){\cal D}_{n,i}^{\scriptscriptstyle{\rm arr}}(x)= \prod_{k=1}^{n} \left(\epsilon_k \frac{\d}{\d q_k} \right)^{b_{i,k-1}} x\, .
+\label{eq:dual_component}
+\end{equation}
+Here, each bit $b_{i,k-1}$ specifies whether the derivative with respect to $q_{k}$ is present in the corresponding mixed derivative.
+The full multivariate dual representation is then obtained by summing over all components,
+\begin{equation}
+    {\cal D}_n(x) = \sum_{i=0}^{2^n-1} {\cal D}_{n,i}(x)\, .
+\end{equation}
+
+One advantage of dual numbers is the automatic propagation of derivatives through the chain rule using operator overloading. For elementary operations such as addition and multiplication, the propagation follows directly from the nilpotency of the dual unit:
+\begin{align}
+    {\cal D}(x + y) & = x + y + \epsilon \left( \frac{\d x}{\d q} + \frac{\d y}{\d q} \right)={\cal D}(x)+{\cal D}(y)\, , \\
+    {\cal D}(x{\cdot}y) & = x{\cdot}y + \epsilon \left( \frac{\d x}{\d q}{\cdot}y + x{\cdot}\frac{\d y}{\d q} \right)={\cal D}(x)\cdot{\cal D}(y)\,,
+\end{align}
+where the $\epsilon^2$ term vanishes due to the nilpotency condition. For non-linear functions, the corresponding derivatives must be implemented explicitly. For a generic function $f(x)$,\footnote{We leave the generalisation of the formula for a multivariable function $f(\vec{x})$ to the reader.} the chain rule gives 
+\begin{equation}
+    {\cal D}\big( f(x) \big) = f(x) + \epsilon\,  \frac{\d f(x)}{\d q} = f(x) + \epsilon\, \left( \frac{\partial f(x)}{\partial x}\right)\frac{\d x}{\d q}\,.
+\label{eq:dual_chain_rule}
+\end{equation}
+Hence, once the analytic form of the derivative of $f(x)$ is implemented, the derivative propagation proceeds automatically.
+Examples of eq.~\eqref{eq:dual_chain_rule} for a general power law, the logarithm, and the cosine are given below:
+\begin{align}
+    {\cal D}(x^p) & = x^p + \epsilon \left( p\, x^{p-1}\frac{\d x}{\d q} \right) && \Rightarrow && \frac{\partial f(x)}{\partial x} = p\, x^{p-1}\,, \nonumber\\
+    {\cal D}(\log{(x)}) & = \log{(x)} + \epsilon \left( \frac{1}{x}\,\frac{\d x}{\d q} \right) && \Rightarrow && \frac{\partial f(x)}{\partial x} = \frac{1}{x}\,, \nonumber\\
+    {\cal D}(\cos{(x)}) & = \cos{(x)} + \epsilon \left( -\sin(x)\,\frac{\d x}{\d q} \right) && \Rightarrow && \frac{\partial f(x)}{\partial x} =  -\sin{(x)}\,.\nonumber
+\end{align}
+The multivariate extension of the dual-number representation in eq.~\eqref{eq:dual_chain_rule} is given by
+\begin{align}
+    {\cal D}_n\big(f(x)\big) = \sum_{k=0}^n \frac{1}{k!} \left( \sum_{j=1}^n \epsilon_j \frac{\d}{\d q_j} \right)^{\!k} f(x) \,,
+\label{eq:mulvar_dual_chain}
+\end{align}
+which can be represented in array form as
+\begin{align}
+    {\cal D}_n^{\rm arr}\big(f(x)\big) & = 
+    \bigg(
+        f(x),\,
+        \frac{\d x}{\d q_1}\,\frac{\partial f(x)}{\partial x},\,
+        \frac{\d x}{\d q_2}\,\frac{\partial f(x)}{\partial x},\,\nonumber\\ & \phantom{=\bigg(}\quad
+        \frac{\d^2 x}{\d q_1\d q_2}\,\frac{\partial f(x)}{\partial x} + \frac{\d x}{\d q_1}\,\frac{\d x}{\d q_2}\,\frac{\partial^2 f(x)}{\partial x^2},
+        \frac{\d x}{\d q_3}\,\frac{\partial f(x)}{\partial x},
+        \dots
+    \bigg),
+\label{eq:dual_chain_array}
+\end{align}
+in analogy with eqs.~\eqref{eq:mulvar_dual_numb} and~\eqref{eq:dual_array}. Here, the array entries represent derivatives of the composite function $f(x(q))$, obtained through repeated application of the multivariate chain rule. Despite these similarities, the binary decomposition alone is not sufficient to directly determine the $i^{\mathrm{th}}$ contribution $\mathcal{D}_{n,i}(f(x))$ of eq.~\eqref{eq:mulvar_dual_chain}. Instead, these contributions can be systematically organised through partitions of the binary-support set associated with a given array index $i$.
+Using the binary decomposition introduced in eq.~\eqref{eq:binary_decomposition}, we define the binary-support set
+\begin{equation}
+    B_i = \left\{2^k \,\middle|\, k \in {\mathbb N}_0\,,\, b_{i,k}=1 \right\}.
+\end{equation}
+The set of all non-empty subsets of $B_i$ is denoted by
+\begin{equation}
+    P^\ast\!(B_i) = \left\{ g \,\middle|\, g \subseteq B_i\,, g \neq \varnothing \right\},
+\end{equation}
+while the corresponding partition set is then defined as
+\begin{equation}
+    P(B_i) = \left\{ \{g_\alpha\} \,\middle|\, g_\alpha \in P^\ast\!(B_i)\,, \bigcup g_\alpha = B_i\,, \forall\,g_\alpha\neq g_\beta \in P^\ast\!(B_i): g_\alpha\cap g_\beta=\varnothing \right\}.
+\end{equation}
+For each partition, we further define the partition-sum map
+\begin{equation}
+    S(P) = \left\{ \left\{ \sum_{\beta\in g}\beta ~\bigg\vert~ g\in p
+    \right\}~\Bigg\vert~ p\in P\right\}.
+\end{equation}
+In other words, for each partition $p\in P$, the map $S$ assigns the set of sums of the elements in each block $g\in p$.
+As examples, we explicitly show the derivation of the partition-sum map for the numbers $6$ and $7$, whose binary decompositions are $b_6 = 110$ and $b_7 = 111$, respectively.
+For the former, we have
+$$B_6 = \{2,4\} \Rightarrow P(B_6) = \{\{\{2,4\}\},\ \{\{2\},\{4\}\}\} \Rightarrow S(P(B_6)) = \{\{6\},\ \{2,4\}\}\,,$$
+while for the latter, we have instead
+\begin{align*}
+    B_7 = \{1,2,4\} 
+    & \Rightarrow P(B_7) =\{\{\{1,2,4\}\},\ \{\{1\},\{2,4\}\},\ \{\{2\},\{1,4\}\},\\
+    & \phantom{\Rightarrow P(B_7) =\{\ } \{\{4\},\{1,2\}\},\ \{\{1\},\{2\},\{4\}\}\} \\ 
+    & \Rightarrow S(P(B_7)) = \{\{7\},\ \{1,6\},\ \{2,5\},\ \{4,3\},\ \{1,2,4\}\}\,.
+\end{align*}
+Using these definitions, the $i^{\mathrm{th}}$ component of eq.~\eqref{eq:mulvar_dual_chain} can be written as
+\begin{equation}
+    {\cal D}_{n,i}\big( f(x)\big) = \sum_{s\in S(P(B_i))} \left\{ \left[   
+    \left(\frac{\partial}{\partial x}\right)^{|s|}f(x)\right] \left[\prod_{k \in s}  \left( \prod_{j=1}^{n} \left( \epsilon_j \frac{\d}{\d q_{j}}\right)^{\!b_{k,j-1}} x \right) \right] \right\},
+\label{eq:dual_chain_component}
+\end{equation}
+where $|s|$ denotes the number of elements in the set $s$. The full multivariate dual representation is then obtained by summing over all components,
+\begin{equation}
+     {\cal D}_{n}\big( f(x)\big) = \sum_{i=0}^{2^n-1} {\cal D}_{n,i}\big( f(x)\big)\, .
+\end{equation}
+
+For the implementation of the projector in eq.~\eqref{eq:proj_oam} at tree level, only the elementary operations ($+$, $-$, $\times$, $\div$) and general power functions with arbitrary exponents are required. Dual numbers and their overloaded operations are implemented in \mgshort{} as an independent {\tt Fortran} module contained in the file {\tt dual\_variables.f}.
+Whenever at least one \pwavetxt{} state is detected during the process-generation stage, \mgshort{} automatically activates the {\tt dual\_mode}. In eq.~\eqref{eq:mulvar_dual_numb}, the parameter $n$ then corresponds to the number of independent dual directions, which in this application is equal to the number of \pwavetxt{} states in the process. Each variable $q_k$ is promoted to a four-vector $q_k^\mu$, associated with the relative momentum of the ${\cal C}_k{\cal C}_k^\prime$ pair forming the $k^{\mathrm{th}}$ \pwavetxt{} state. The derivative propagation is performed component-wise in Lorentz space, while the same dual variable $\epsilon_k$ is shared among all Lorentz components. Within the {\tt MATRIX} routines of the generated {\tt matrix.f} files, the {\tt DUAL} type is introduced wherever required, and the code automatically performs the sums over the orbital- and spin-angular-momentum projections $\lambda_{L}$ and $\lambda_{S}$.
+The derivative propagation originates from the initialisation of the partonic momenta. For a process involving $n$ \pwavetxt{} states, the momenta associated with the constituents of the $k^{\mathrm{th}}$ \pwavetxt{} state are initialised as
+\begin{equation}
+\begin{aligned}
+    {\cal D}_{n,0}(k_{{\cal C}_k}^\mu) & = \frac{m_{{\cal C}_k}}{m_{{\cal C}_k}+m_{{\cal C}^\prime_k}} K_k^\mu\,,
+    \qquad
+    {\cal D}_{n,2^{k-1}}(k_{{\cal C}_k}^\mu) = +\epsilon_{k}\varepsilon_{\lambda_{L_k}}^{*\mu}\!(K_k)\,,
+    \\
+    {\cal D}_{n,0}(k_{{\cal C}_k^\prime}^\mu) & = \frac{m_{{\cal C}^\prime_k}}{m_{{\cal C}_k}+m_{{\cal C}^\prime_k}}K_k^\mu\,,
+    \qquad 
+    {\cal D}_{n,2^{k-1}}(k_{{\cal C}_k^\prime}^\mu) = -\epsilon_{k}\varepsilon_{\lambda_{L_k}}^{*\mu}\!(K_k)\,,
+\end{aligned}
+\label{eq:dual_mom_init}
+\end{equation}
+while all remaining dual components vanish. This construction directly reproduces the projector definition in eq.~\eqref{eq:proj_oam}.
+
+
+\subsection{Momentum reshuffling for improved mass treatment}\label{sec:resh}
+
+In conventional perturbative NRQFT calculations, the mass of a bound state $\mathcal{B}$ is approximated by the sum of the masses of its constituents $\mathcal{C}$ and $\mathcal{C}^\prime$, $M_{\mathcal{B}}=m_{\mathcal{C}}+m_{\mathcal{C}^\prime}$. However, this approximation can differ significantly from the physical bound-state mass and thereby introduce a systematic uncertainty into theoretical predictions. The effect is particularly pronounced in kinematic threshold regions and in processes involving multiple bound states with identical constituents but different physical masses, such as the associated production of $J/\psi + \psi(2\swave)$ discussed in section~\ref{sec:quarkonium}, where the conventional treatment assigns the same constituent-mass approximation to both states.
+This approximation originates from the requirement that the matrix element in eq.~\eqref{eq:projected_amplitude} must be evaluated with on-shell constituent particles. Nevertheless, a more realistic treatment of the physical bound-state masses is expected to improve the description of observables sensitive to kinematic thresholds and phase-space boundaries. To this end, \mgshort\ allows the user to specify physical bound-state masses through the \texttt{onia\_card.dat} input file, as described previously, cf.\@ listing~\ref{lst:onia_card.dat}. The phase-space integration is then performed using these physical masses, ensuring that each bound state contributes with its measured mass to the available phase-space volume. Meanwhile, through the momentum-reshuffling procedure described in this section, the constituent masses entering the matrix-element level remain fixed to their associated parameter values.
+ 
+We consider a generic $2\to {\rm N}$ process
+\begin{equation}
+    \dot{r} \equiv \Ione (k_1)+\Itwo(k_2) \to \ident_3(k_3) + \dots + \ident_{{\rm N}+2}(k_{{\rm N}+2})\,.
+\end{equation}
+The phase-space generator samples ``physical'' momenta $k_i$ satisfying the on-shell conditions $k_i^2=m_i^2$, where $m_i$ denotes the physical mass of the particle $\ident_i$. Since the matrix element must be evaluated at the constituent level, bound-state external particles must instead satisfy the on-shell conditions corresponding to the sum of their constituent masses. We therefore introduce a set of ``reshuffled'' momenta $\overline{k}_i$, satisfying $\overline{k}_i^2=\overline{m}_i^2$, where $\overline{m}_i=m_i$ for elementary particles, while $\overline{m}_i=m_{{\cal C}_i}+m_{{\cal C}^\prime_i}$ for a bound state composed of the constituents ${\cal C}_i$ and ${\cal C}_i^\prime$. Since $m_i \simeq \overline{m}_i$ and the amplitude $\mathds{A}^{({\rm N},0)}(\dot r)$ depends only weakly on small variations in the external momenta, we approximate
+\begin{equation}
+    \mathds{A}^{({\rm N},0)}(\dot{r}) \approx \mathds{A}^{({\rm N},0)}\left(\Ione (\overline{k}_1)+\Itwo(\overline{k}_2) \to \ident_3(\overline{k}_3) + \dots + \ident_{{\rm N}+2}(\overline{k}_{{\rm N}+2})\right)\,.
+\label{eq:resh_matrix_element_approx}
+\end{equation}
+Whenever this approximation holds, the phase space can be generated using the exact masses $m_i$, while the matrix element is evaluated using the on-shell condition of the elementary particles. 
+This translates to an approximated inclusion of higher-order relativistic corrections in the cross section, due to the improved mass treatment in the phase-space measure.
+
+The mapping $\{{k_i}\}\rightarrow\{{\overline{k}_i}\}$ is not unique. We therefore introduce different momentum-reshuffling prescriptions based on either initial-state or final-state recoil schemes.
+These constructions follow the same general philosophy as those employed in \mgshort\ for resonance-aware event generation~\cite{Artoisenet:2012st,Frixione:2019fxg}, suitably adapted to non-relativistic bound-state production. Table~\ref{tab:momreshuff} summarises the available momentum-reshuffling options implemented in \mgshort{} and the corresponding values of the \texttt{mom\_resh\_type} parameter to activate them introduced with this update.
+
+To describe the algorithms, it is convenient to distinguish between the momenta of elementary particles and those of bound states. We therefore define
+\begin{align}
+    &\{p_{i^\prime}\} = \{k_i\, \vert\, \ident_i\in \mathfrak{E}\}\,,\quad \{q_{j^\prime}\} = \{k_j\, \vert\, \ident_j\in\mathfrak{B}\}\,,\\
+    &\{\overline{p}_{i^\prime}\} = \{\overline{k}_i\, \vert\, \ident_i\in\mathfrak{E}\}\,,\quad \{\overline{q}_{j^\prime}\} = \{\overline{k}_j\, \vert\, \ident_j\in\mathfrak{B}\}\,,
+\end{align}
+where $\mathfrak{E}$ ($\mathfrak{B}$) corresponds to the collection of elementary particles (bound states) in the theory, while $i^\prime$ and $j^\prime$ denote relabellings of the indices $i$ and $j$, running from $1$ to ${\rm N}_e$ (${\rm N}_e\geq 2$) for elementary particles and from $1$ to ${\rm N}_b$ (${\rm N}_b\geq 1$) for bound states, respectively.
+The relabelling preserves the original relative ordering within each subset, thereby ensuring a unique inverse mapping.
+The separation between momenta $p$ and $q$ ensures that all the momenta $k_i$ for which $\overline{m}_i \neq m_i$ belong to the second subset. By construction, if all constituent masses are chosen such that $\overline{m}_i = m_i$ for all $i$, then $\overline{k}_i = k_i$ for all $i$ (and consequently also for all $q_i$).
+The reshuffled momenta are required to preserve overall four-momentum conservation, from which we obtain
+\begin{align}
+    &k_1+k_2 = \sum_{i=3}^{{\rm N}+2} k_i = \sum_{i^\prime=3}^{{\rm N}_e} p_{i^\prime} + \sum_{j^\prime=1}^{{\rm N}_b} q_{j^\prime}=p_1+p_2\,,\\
+    &\overline{k}_1+\overline{k}_2 = \sum_{i=3}^{{\rm N}+2} \overline{k}_i = \sum_{i^\prime=3}^{{\rm N}_e} \overline{p}_{i^\prime} + \sum_{j^\prime=1}^{{\rm N}_b} \overline{q}_{j^\prime}=\overline{p}_1+\overline{p}_2\,. 
+    \label{eq:mom_tilde}
+\end{align}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[t]
+    \centering
+    \begin{tabular}{|c|l|}
+    \hline
+        {\tt mom\_resh\_type} & momentum-reshuffling option \\
+        \hline
+        0 & initial-state reshuffling \\
+        1 & final-state reshuffling with smooth $\varphi$ [cf. eq.~\eqref{eq:varphiformomreshtype1}] \\
+        2 & final-state reshuffling with step-function $\varphi$ [cf. eq.~\eqref{eq:varphiformomreshtype2}] \\\hline
+    \end{tabular}
+    \caption{\label{tab:momreshuff}\it\small Possible values of the {\tt mom\_resh\_type} 
+parameter and the corresponding momentum-reshuffling options.}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\paragraph{Initial-state momentum reshuffling:}
+Working in the hadronic centre-of-mass (c.m.) frame, the physical initial-state momenta of the elementary particles $\Ione$ and $\Itwo$ can be parametrised as
+\begin{equation}
+    p_1 = x_1\dfrac{\sqrt{s}}{2}(1,0,0,1)^\mathrm{T},\quad p_2 = x_2\dfrac{\sqrt{s}}{2}(1,0,0,-1)^\mathrm{T},
+\end{equation}
+where $\sqrt{s}$ denotes the hadronic collision energy. The corresponding reshuffled momenta are given by
+\begin{equation}
+    \overline{p}_1 = \overline{x}_1\dfrac{\sqrt{s}}{2}(1,0,0,1)^\mathrm{T},\quad \overline{p}_2 = \overline{x}_2\dfrac{\sqrt{s}}{2}(1,0,0,-1)^\mathrm{T}.
+\end{equation}
+In the initial-state reshuffling procedure, only the initial-state momenta $p_1$, $p_2$, and the bound-state momenta $q_{j^\prime}$ are modified, while all other final-state momenta remain unchanged,
+\begin{equation}
+    \overline{p}_{i^\prime} = p_{i^\prime}\,\ \ \forall\ \ i^\prime \ge 3\,.
+\end{equation}
+The bound-state momenta are adjusted to satisfy the corresponding on-shell conditions while keeping their spatial components fixed,
+\begin{equation}
+    \overline{q}_{j^\prime}^{0} = \sqrt{\overline{m}_{j^\prime}^2+\vert \bm{q}_{j^\prime} \vert^2}\,,\quad \overline{\bm{q}}_{j^\prime}^{\phantom{0}} = \bm{q}_{j^\prime}^{\phantom{0}}\,.
+\end{equation}
+Using eq.~\eqref{eq:mom_tilde}, we then obtain
+\begin{align}
+    \overline{x}_1 & = \dfrac{1}{\sqrt{s}}\left(\sum_{i^\prime=3}^{{\rm N}_e}p_{i^\prime}^0+\sum_{j^\prime=1}^{{\rm N}_b}q_{j^\prime}^0\right)+\dfrac{x_1-x_2}{2}\,,\\
+    \overline{x}_2 & = \dfrac{1}{\sqrt{s}}\left(\sum_{i^\prime=3}^{{\rm N}_e}p_{i^\prime}^0+\sum_{j^\prime=1}^{{\rm N}_b}q_{j^\prime}^0\right)-\dfrac{x_1-x_2}{2}\,.
+\end{align}
+This momentum reshuffling option is activated by setting \texttt{mom\_resh\_type=0} in the input file \texttt{run\_card.dat}.
+
+\paragraph{Final-state momentum reshuffling:}
+The final-state reshuffling is based on a recoil scheme in which the desired on-shell conditions are enforced primarily through modifications of the final-state momenta, while the initial-state kinematics are modified only through the corresponding change of the partonic c.m.\@ energy when required by kinematic threshold constraints. The construction is performed in the c.m.\@ frame of the $\Ione$-$\Itwo$ system with physical momenta. If the events are generated in the hadronic frame, as is the case in \mgshort, the reshuffling is performed by first boosting the momenta into this frame, applying the reshuffling procedure, and finally boosting the reshuffled momenta back to the hadronic frame. The initial-state momenta are given by
+\begin{align}
+    p_1 & = \dfrac{\sqrt{\hat s}}{2}(1,0,0,1)^\mathrm{T}\,,\quad p_2 = \dfrac{\sqrt{\hat s}}{2}(1,0,0,-1)^\mathrm{T}\,,\\
+    \overline{p}_1 & = \dfrac{\sqrt{\hat{\overline{s}}}}{2}(1,0,0,1)^\mathrm{T}\,,\quad \overline{p}_2 = \dfrac{\sqrt{\hat{\overline{s}}}}{2}(1,0,0,-1)^\mathrm{T},
+\end{align}
+where $\sqrt{\hat s}$ ($\sqrt{\hat{\overline{s}}}$) denotes the partonic c.m.\@ energy before (after) reshuffling. The total momentum of the non-bound-state recoil system is defined as
+\begin{equation}
+    P_X = \sum_{i^\prime=3}^{{\rm N}_e} p_{i^\prime}\,,\quad \overline{P}_X = \sum_{i^\prime=3}^{{\rm N}_e} \overline{p}_{i^\prime}\,,
+\end{equation}
+before and after reshuffling, respectively. Its invariant mass is preserved under the reshuffling,
+\begin{equation}
+    P_X^2=\overline{P}_X^2\equiv M_\mathrm{rec}^2\,.
+\end{equation}
+To construct the reshuffled bound-state kinematics, we introduce the intermediate systems
+\begin{align}
+    &Q_{j^\prime} = \sum_{k=j^\prime}^{{\rm N}_b} q_k\,,\quad M_{j^\prime} = \sqrt{Q_{j^\prime}^2}\,,\label{eq:invM}\\
+    &\overline{Q}_{j^\prime} = \sum_{k=j^\prime}^{{\rm N}_b} \overline{q}_{k}\,,\quad \overline{M}_{j^\prime} = \sqrt{\overline{Q}_{j^\prime}^2}\,.\label{eq:invOverlineM}
+\end{align}
+The reshuffled invariant masses are determined recursively, starting from $j^\prime={\rm N}_b$ and decreasing the index successively according to
+\begin{equation}
+    \overline{M}_{j^\prime} = \varphi(M_{j^\prime},m_{j^\prime},M_{j^\prime+1},\overline{m}_{j^\prime},\overline{M}_{j^\prime+1})\,,\quad 1\leq j^\prime<{\rm N}_b\,,
+\end{equation}
+with the boundary conditions
+\begin{equation}
+    M_{{\rm N}_b} = m_{{\rm N}_b}\,,\quad \overline{M}_{{\rm N}_b} = \overline{m}_{{\rm N}_b}\,.
+\end{equation}
+The function $\varphi(m,m_1,m_2,\overline{m}_1,\overline{m}_2)$, defined for $m\geq m_1+m_2$, ensures that the generated invariant mass satisfies the condition
+\begin{equation}
+\varphi(m,m_1,m_2,\overline{m}_1,\overline{m}_2)
+\geq
+\overline{m}_1+\overline{m}_2\,.
+\end{equation}
+Its explicit form is not unique. In the default setup (\texttt{mom\_resh\_type=1}), we employ the smooth choice
+\begin{align}
+    & \varphi(m,m_1,m_2,\overline{m}_1,\overline{m}_2)
+    \nonumber\\
+    & \quad =\dfrac{1}{2}\left[ m+\overline{m}_1+\overline{m}_2+\sqrt{\left(m-\overline{m}_1-\overline{m}_2\right)^2+\dfrac{\left(m_1+m_2-\overline{m}_1-\overline{m}_2\right)^2}{\tilde{n}}} \right]
+\label{eq:varphiformomreshtype1}
+\end{align}
+with $\tilde{n}=100$. Alternatively, a step-function prescription is available (\texttt{mom\_resh\_type=2}),
+\begin{equation}
+    \varphi(m,m_1,m_2,\overline{m}_1,\overline{m}_2) = 
+    \begin{cases}
+        \hfill m\,,& \text{if}\ m\ge \overline{m}_1+\overline{m}_2\,, \\
+        \dfrac{\overline{m}_1+\overline{m}_2}{m_1+m_2}m\,,& \text{otherwise}\,.
+    \end{cases}
+\label{eq:varphiformomreshtype2}
+\end{equation}
+Once $\overline{M}_{j^\prime}$ is known for all $j^\prime=1,\dots,{\rm N}_b$, the reshuffled partonic invariant mass is fixed by
+\begin{equation}
+    \sqrt{\hat{\overline{s}}} = \varphi(\sqrt{\hat{s}},M_{1},M_\mathrm{rec},\overline{M}_{1},M_\mathrm{rec})\,.
+\label{eq:overlineshat1}
+\end{equation}
+The recoil system momentum is then reconstructed as
+\begin{align}
+    &\overline{P}_X^0 = \varepsilon\!\left(\sqrt{\hat{\overline{s}}},M_\mathrm{rec},\overline{M}_{1}\right)\,,\\
+    &\overline{\bm P}_X = \sqrt{\left(\overline{P}_X^0\right)^2-M_{\mathrm{rec}}^2}\frac{\bm{P}_X}{\vert \bm{P}_X \vert}=\pi\!\left(\sqrt{\hat{\overline{s}}},\overline{M}_{1},M_\mathrm{rec}\right)\frac{\bm{P}_X}{\vert \bm{P}_X \vert}\,,
+\end{align}
+where the auxiliary functions are defined as
+\begin{align}
+    \varepsilon(m,m_1,m_2) & = \sqrt{m_1^2 + \pi^2(m,m_1,m_2)}\,,\\
+    \pi(m,m_1,m_2) & = \dfrac{m}{2}\lambda(m,m_1,m_2)\,,
+\end{align}
+with the dimensionless K\"all\'en factor
+\begin{equation}
+    \lambda(m,m_1,m_2) = \sqrt{1-\dfrac{(m_1+m_2)^2}{m^2}}\sqrt{1-\dfrac{(m_1 - m_2)^2}{m^2}}\,.
+\end{equation}
+The reshuffled recoil momenta are obtained through a double boost,
+\begin{equation}
+    \overline{p}_{i^\prime} = \mathds{B}_\mathrm{R}^{-1}(\overline{P}_X)\,\mathds{B}_\mathrm{R}(P_X)\,p_{i^\prime}\,,\quad \ \forall\ \ i^\prime\ge3\,,
+\end{equation}
+where the boost operator $\mathds{B}_\mathrm{R}(k)$ maps a four-vector $k$ into its rest frame,
+\begin{equation}
+    \mathds{B}_\mathrm{R}(k)\,k = (\sqrt{k^2},0,0,0)^\mathrm{T},
+\end{equation}
+and $\mathds{B}^{-1}_\mathrm{R}(k)$ denotes the corresponding inverse boost. Starting from the total reshuffled bound-state system momentum,
+\begin{align}
+    & \overline{Q}_{1}^0 = \varepsilon\!\left(\sqrt{\hat{\overline{s}}}, \overline{M}_{1}, M_\mathrm{rec}\right),
+\label{eq:overlineQ101}\\
+    & \overline{\bm Q}_{1} = \sqrt{\left( \overline{Q}_{1}^0 \right)^2 - \overline{M}_1^2} \frac{{\bm Q}_1}{\vert {\bm Q}_1\vert} = \pi\!\left(\sqrt{\hat{\overline{s}}}, \overline{M}_1, M_{\mathrm{rec}}\right) \frac{{\bm Q}_1}{\vert {\bm Q}_1\vert} = -\overline{\bm P}_X \, ,
+\label{eq:overlineQ1vec1}
+\end{align}
+the individual bound-state momenta are constructed recursively according to
+\begin{align}
+    & \overline{q}_{j^\prime} = \mathds{B}_\mathrm{R}^{-1}(\overline{Q}_{j^\prime})\left(\varepsilon(\overline{M}_{j^\prime},\overline{m}_{j^\prime},\overline{M}_{j^\prime+1}),\pi(\overline{M}_{j^\prime},\overline{m}_{j^\prime},\overline{M}_{j^\prime+1})\,{\bm e}_{j^\prime}\right)^\mathrm{T},\\
+    & \overline{Q}_{j^\prime+1} = \mathds{B}_\mathrm{R}^{-1}(\overline{Q}_{j^\prime})\left(\varepsilon(\overline{M}_{j^\prime},\overline{M}_{j^\prime+1},\overline{m}_{j^\prime}),-\pi(\overline{M}_{j^\prime},\overline{m}_{j^\prime},\overline{M}_{j^\prime+1})\,{\bm e}_{j^\prime}\right)^\mathrm{T}\,.
+\end{align}
+The direction unit vector ${\bm e}_{j^\prime}$ is determined from the original bound-state kinematics through
+\begin{equation}
+    \mathds{B}_\mathrm{R}(Q_{j^\prime})\,q_{j^\prime} = \left(\varepsilon(M_{j^\prime},m_{j^\prime},M_{j^\prime+1}),\pi(M_{j^\prime},m_{j^\prime},M_{j^\prime+1})\,{\bm e}_{j^\prime}\right)^\mathrm{T}.
+\end{equation}
+This procedure is iterated until $j^\prime=\mathrm{N}_b-1$. Finally, we assign $\overline{q}_{\mathrm{N}_b}=\overline{Q}_{\mathrm{N}_b}$. In the special case of $\mathrm{N}_e=2$, corresponding to the absence of final-state elementary particles to absorb recoil, eq.~\eqref{eq:overlineshat1} simplifies to
+\begin{equation}
+    \sqrt{\hat{\overline{s}}} = \overline{M}_1\,,
+\label{eq:overlineshat2}
+\end{equation}
+while eqs.~\eqref{eq:overlineQ101} and \eqref{eq:overlineQ1vec1} reduce to
+\begin{align}
+    &\overline{Q}_{1}^0 = \overline{M}_{1}\,,\label{eq:overlineQ102}\\
+    &\overline{\bm Q}_{1} ={\bm 0}\,.\label{eq:overlineQ1vec2}
+\end{align}
+
+A possible advantage of the final-state momentum-reshuffling options over the initial-state momentum-reshuffling procedure is that the invariant masses of final-state subsystems are preserved to the largest possible extent. This can be particularly relevant when final-state configurations contain sharply peaked resonant structures and the matrix elements exhibit a strong dependence on the corresponding invariant masses.

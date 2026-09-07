@@ -1,0 +1,44 @@
+% Fig 6: Random Feature surrogate. Green = quantum Fourier coefficients |c_w|
+% over the full spectrum Omega (orange); red = surrogate trained on the
+% truncated sub-spectrum Omega_RF. Palette matches Fig5 (coefC/freqC).
+% Drawn at natural size (no resizebox) so all text matches the body font.
+\begingroup
+% Palette from Fig 8 (green/orange); red kept as surrogate accent (no red in Fig 8)
+\definecolor{coefC}{RGB}{0,115,60}
+\definecolor{freqC}{RGB}{179,117,36}
+\definecolor{rfC}{RGB}{205,60,60}
+\definecolor{barGreen}{RGB}{136,225,175}
+\definecolor{barRed}{RGB}{205,60,60}
+\begin{tikzpicture}[x=1cm,y=1cm]
+% bars: full spectrum (green), surrogate sub-spectrum overlaid (red, first 5)
+\foreach \i/\h in {1/2.75, 2/2.25, 3/1.95, 4/1.45, 5/1.05, 6/0.55, 7/0.33, 8/0.22, 9/0.15, 10/0.11}{
+  \fill[barGreen, rounded corners=1pt] ({0.15+(\i-1)*0.55},0)
+    rectangle ({0.15+(\i-1)*0.55+0.36},\h);
+}
+\foreach \i/\h in {1/2.75, 2/2.25, 3/1.95, 4/1.45, 5/1.05}{
+  \fill[barRed, rounded corners=1pt] ({0.15+(\i-1)*0.55+0.20},0)
+    rectangle ({0.15+(\i-1)*0.55+0.38},\h);
+}
+% axes
+\draw[line width=1.1pt, -{Stealth[length=2.8mm]}] (0,0) -- (0,3.5);
+\draw[line width=1.1pt, -{Stealth[length=2.8mm]}] (0,0) -- (7.0,0);
+\node[text=coefC, anchor=south west] at (-0.05,3.55) {$|c_\omega|$};
+\node[anchor=south] at (6.75,0.18) {$\omega$};
+% formulas
+\node at (3.6,3.1)
+  {$f_Q(x,\Theta) \,=\, \displaystyle\sum_{\textcolor{freqC}{\omega}\in\textcolor{freqC}{\Omega}}
+   \textcolor{coefC}{c_{\omega}}\, e^{i\textcolor{freqC}{\omega}x}$};
+\node at (4.8,1.8)
+  {$f_{RF}(x,\beta) \,=\, \displaystyle\sum_{\textcolor{rfC}{\omega}\in\textcolor{rfC}{\Omega_{RF}}}
+   \textcolor{rfC}{\beta_{\omega}}\, e^{i\textcolor{rfC}{\omega} x}$};
+\draw[line width=1.1pt, rfC, -{Stealth[length=2.2mm]}]
+  (2.0,2.6) to[bend right=40] (2.8,1.9);
+% spectrum extents below the axis
+\draw[line width=1.1pt, freqC, {Stealth[length=2.2mm]}-{Stealth[length=2.2mm]}]
+  (0.05,-0.32) -- (5.55,-0.32);
+\node[text=freqC] at (4.0,-0.72) {$\Omega$};
+\draw[line width=1.1pt, rfC, {Stealth[length=2.2mm]}-{Stealth[length=2.2mm]}]
+  (0.05,-0.88) -- (2.75,-0.88);
+\node[text=rfC] at (1.4,-1.28) {$\Omega_{RF}$};
+\end{tikzpicture}%
+\endgroup

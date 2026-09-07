@@ -1,0 +1,658 @@
+% We evaluate dense QFT circuits from 3 to 26 qubits under split SQL execution on PostgreSQL, DuckDB, and SQLite, using memory limits of 4, 8, and 16~GB. We have chosen QFT as it is intentionally challenging: it quickly produces dense intermediate states and therefore allows us to inspect whether an RDBMS can complete the simulation by spilling intermediate results to disk. All configurations complete except one: DuckDB at the largest circuit (26 qubits) under the smallest 4~GB memory limit terminates with an out-of-memory (OOM) error after 51 gates. 
+
+ 
+
+% \medskip
+% \noindent\textbf{OOC parameters.}
+% For this OOC sweep, we generate one QFT circuit for each qubit count from 3 to 26, selecting the densest QFT variant that fits the IQS index budget of 603 and disabling final QFT swaps. We run only split SQL execution on PostgreSQL, DuckDB, and SQLite, sweeping Docker memory caps of 16, 8, and 4~GB. Each engine-cap-circuit tuple is executed with one warm-up run followed by five timed runs, and the runtime tables report the median of the five timed runs.
+
+% All containers use a one-CPU quota, swap is disabled by setting Docker
+% \texttt{--memory-swap} equal to the memory cap, and host page cache is not
+% explicitly dropped between runs. DuckDB uses one thread and sets
+% \texttt{memory\_limit} to the limit minus a 1024~MB headroom pad (3072, 7168,
+% and 15360~MB for the 4, 8, and 16~GB caps, respectively). SQLite uses a
+% 64~MB cache budget for both main and temporary schemas. PostgreSQL uses the
+% tuned PostgreSQL~12.22 container, with the server container capped at the
+% experiment memory limit and \texttt{temp\_file\_limit} set to 64~GB. Spill is
+% measured as \texttt{postgres\_explain\_temp\_written} for PostgreSQL and as
+% \texttt{proc\_io\_write\_bytes} for DuckDB and SQLite.
+% For runtime, we report the median runtime of five repeated runs.
+
+% To get the spill results, for PostgreSQL we use \texttt{postgres\_explain\_temp\_written}, and \texttt{proc\_io\_write\_bytes} for DuckDB and SQLite.
+% \section{Results on Out-of-Core Evaluation}
+% % \section{Memory-limit sensitivity for QFT at 26 qubits}
+% \label{app:qft-cap-sensitivity}
+
+% We summarize the memory-limit sensitivity of split-query execution for dense QFT circuits from 3 to 26 qubits on PostgreSQL, DuckDB, and SQLite, \rh{here add which container you used} using one container CPU and memory caps of 4, 8, and 16~GB. Each configuration is run once as a warmup and five times for measurement; we report medians over the five timed runs. The dataset contains 1{,}291 rows, compared with an expected full-success grid of 1{,}296; 1{,}290 rows complete successfully and one is terminated by an OOM kill. The only failure is DuckDB at 26 qubits under the 4~GB cap. In that row, the recorded gate count is truncated at 51, indicating that execution stopped before the full circuit completed. \rh{add ``refer to Table.11-13'' at the right place.}
+
+% \para{Postgres.}
+% Postgres exhibits a consistently heavy-spill regime across all three caps. As qubit count increases from 23 to 26, spill grows monotonically from 2.32~GB to 23.49~GB, and this progression is effectively unchanged across the 4, 8, and 16~GB settings. Runtime improves at higher caps for the largest instances, but the engine continues to rely on substantial externalization even at 16~GB. For dense QFT contractions, Postgres therefore behaves as a stable out-of-core engine rather than transitioning into a light-spill regime.
+
+% \para{DuckDB.}
+% DuckDB shows the sharpest change between heavy- and light-spill behavior. Up to 24 qubits, spill remains negligible across all caps. At 25 qubits, the 4~GB setting jumps to 7.68~GB of spill while the 8~GB and 16~GB settings remain near zero. At 26 qubits, the 4~GB run fails, the 8~GB run completes with heavy spill (9.69~GB), and the 16~GB run completes with near-zero spill. Thus, as qubit count grows, DuckDB moves from a light-spill regime into a threshold region where successful execution depends strongly on the available memory cap.
+
+% \para{SQLite.}
+% SQLite shows a gradual but persistent spill pattern. From 23 to 26 qubits, spill rises steadily from about 0.51~GB to about 6.1~GB across all three caps, while runtime also increases monotonically. Unlike DuckDB, SQLite does not exhibit a sharp transition between low- and high-spill behavior; instead, it scales through the dense QFT workload by relying on moderate out-of-core execution throughout. This makes SQLite slower than Postgres at the largest sizes, but more robust than DuckDB at 4~GB.
+
+% \para{Results and relevance to \sys.}
+% Taken together, these results show that dense QFT contractions expose three distinct engine-level spill profiles: stable heavy spill for Postgres, threshold-sensitive spill for DuckDB, and gradual moderate spill for SQLite. The qubit-by-qubit evolution in Tables~\ref{tab:qft-26q-runtime-evolution} and~\ref{tab:qft-26q-spill-evolution} makes these differences explicit. More broadly, this experiment illustrates a central contribution of \sys: it enables systematic study of out-of-core execution by exposing workload- and engine-dependent spill behavior alongside runtime and circuit features.
+
+% \begin{table}[t]
+%   \centering
+%   \caption{26-qubit QFT results under split execution for three memory caps. Runtimes are medians over five timed runs after one warmup. Spill is measured by \texttt{postgres\_explain\_temp\_written} for Postgres and by \texttt{proc\_io\_write\_bytes} as a spill proxy for DuckDB and SQLite. DuckDB at 4~GB is OOM-killed before finishing the full circuit; the recorded \texttt{num\_gates}=51 is therefore truncated and is not a completed runtime observation.}
+%   \label{tab:qft-26q-cap-summary}
+%   \footnotesize
+%   \begin{tabularx}{\columnwidth}{@{}lXXX@{}}
+%     \toprule
+%     \textbf{Cap} & \textbf{Postgres} & \textbf{DuckDB} & \textbf{SQLite} \\
+%     \midrule
+%     4~GB & success; 223.5~s; 23.49~GB spill & OOM kill; truncated at 51 gates & success; 423.2~s; 6.14~GB spill \\
+%     8~GB & success; 214.5~s; 23.49~GB spill & success; 199.9~s; 9.69~GB spill & success; 392.3~s; 5.91~GB spill \\
+%     16~GB & success; 154.6~s; 23.49~GB spill & success; 189.5~s; $\sim$0~GB spill & success; 405.5~s; 6.07~GB spill \\
+%     \bottomrule
+%   \end{tabularx}
+% \end{table}
+
+% \begin{table}[t]
+%   \centering
+%   \caption{Runtime evolution (seconds) for the high-qubit QFT region under split execution. Each entry is the median over five timed runs.}
+%   \label{tab:qft-26q-runtime-evolution}
+%   \footnotesize
+%   \setlength{\tabcolsep}{4pt}
+%   \begin{tabularx}{\columnwidth}{@{}llXXXX@{}}
+%     \toprule
+%     \textbf{Engine} & \textbf{Cap} & \textbf{23q} & \textbf{24q} & \textbf{25q} & \textbf{26q} \\
+%     \midrule
+%     Postgres & 4~GB  & 21.9 & 46.5 & 101.6 & 223.5 \\
+%     Postgres & 8~GB  & 17.8 & 46.6 & 74.8  & 214.5 \\
+%     Postgres & 16~GB & 22.2 & 46.5 & 74.8  & 154.6 \\
+%     DuckDB   & 4~GB  & 21.2 & 45.1 & 104.5 & --    \\
+%     DuckDB   & 8~GB  & 21.2 & 43.7 & 91.4  & 199.9 \\
+%     DuckDB   & 16~GB & 21.5 & 43.5 & 91.7  & 189.5 \\
+%     SQLite   & 4~GB  & 43.3 & 92.8 & 188.9 & 423.2 \\
+%     SQLite   & 8~GB  & 46.3 & 96.0 & 180.1 & 392.3 \\
+%     SQLite   & 16~GB & 42.1 & 92.5 & 186.8 & 405.5 \\
+%     \bottomrule
+%   \end{tabularx}
+% \end{table}
+
+% \begin{table}[t]
+%   \centering
+%   \caption{Spill evolution (GB) for the high-qubit QFT region under split execution. Postgres uses \texttt{postgres\_explain\_temp\_written}; DuckDB and SQLite use \texttt{proc\_io\_write\_bytes} as a spill proxy.}
+%   \label{tab:qft-26q-spill-evolution}
+%   \footnotesize
+%   \setlength{\tabcolsep}{4pt}
+%   \begin{tabularx}{\columnwidth}{@{}llXXXX@{}}
+%     \toprule
+%     \textbf{Engine} & \textbf{Cap} & \textbf{23q} & \textbf{24q} & \textbf{25q} & \textbf{26q} \\
+%     \midrule
+%     Postgres & 4~GB  & 2.32 & 4.64 & 9.82 & 23.49 \\
+%     Postgres & 8~GB  & 2.32 & 4.64 & 9.82 & 23.49 \\
+%     Postgres & 16~GB & 2.32 & 4.64 & 9.82 & 23.49 \\
+%     DuckDB   & 4~GB  & 0.00 & 0.00 & 7.68 & --    \\
+%     DuckDB   & 8~GB  & 0.00 & 0.00 & 0.00 & 9.69  \\
+%     DuckDB   & 16~GB & 0.00 & 0.00 & 0.00 & 0.00  \\
+%     SQLite   & 4~GB  & 0.51 & 1.22 & 2.71 & 6.14  \\
+%     SQLite   & 8~GB  & 0.51 & 1.24 & 2.62 & 5.91  \\
+%     SQLite   & 16~GB & 0.51 & 1.22 & 2.63 & 6.07  \\
+%     \bottomrule
+%   \end{tabularx}
+% \end{table}
+
+% \begin{figure}[t]
+%   \centering
+%   \IfFileExists{images/qft_26q_caps_runtime_spill.pdf}{%
+%     \includegraphics[width=\columnwidth]{images/qft_26q_caps_runtime_spill.pdf}%
+%   }{%
+%     \includegraphics[width=\columnwidth]{images/qft_26q_caps_runtime_spill.png}%
+%   }
+%   \caption{Memory-limit sensitivity of dense QFT contractions at 26 qubits under split execution. Bars are grouped by engine and colored by memory limit (4, 8, and 16~GB). The left panel reports median runtime over five timed runs after one warmup, and the right panel reports spill volume. The disk marker above each successful bar summarizes normalized spill volume relative to the largest successful spill observation in this experiment. For Postgres, spill is measured by \texttt{postgres\_explain\_temp\_written}; for DuckDB and SQLite, spill is approximated by \texttt{proc\_io\_write\_bytes}. DuckDB at 4~GB is OOM-killed before completing the circuit and records a truncated gate count (\texttt{num\_gates}=51); it is therefore shown as a failure marker rather than a completed bar.}
+%   \label{fig:qft-26q-cap-sensitivity}
+% \end{figure}
+
+
+
+% \medskip
+% \para{Runtime performance}
+% Table~\ref{tab:qft-26q-runtime-evolution} reports the runtime of SQL queries
+% generated from larger, high-qubit-count circuits across RDBMSs and memory limits,
+% where spilling may occur under memory limit. PostgreSQL and DuckDB have
+% comparable runtimes up to 24 qubits. At 25 and 26 qubits, memory pressure becomes
+% dominant: PostgreSQL benefits from a larger memory limit, whereas DuckDB exhibits
+% a sharp transition from successful execution to out-of-memory failure at 26 qubits
+% under the 4~GB limit. SQLite is consistently slower, but its runtime increases
+% smoothly and it completes under all memory limits.
+
+% \begin{table}[t]
+%   \centering
+%   \caption{Runtime evolution in seconds. A dash indicates the OOM configuration.}
+%   \label{tab:qft-26q-runtime-evolution}
+%   \footnotesize
+%   \setlength{\tabcolsep}{4pt}
+%   \begin{tabular}{@{}llccc@{}}
+%     \toprule
+%     \textbf{Engine} & \textbf{Qubits} & \textbf{4~GB} & \textbf{8~GB} & \textbf{16~GB} \\
+%     \midrule
+%     \multirow{4}{*}{PostgreSQL}
+%       & 23 & 21.9  & 17.8  & 22.2  \\
+%       & 24 & 46.5  & 46.6  & 46.5  \\
+%       & 25 & 101.6 & 74.8  & 74.8  \\
+%       & 26 & 223.5 & 214.5 & 154.6 \\
+%     \midrule
+%     \multirow{4}{*}{DuckDB}
+%       & 23 & 21.2  & 21.2  & 21.5  \\
+%       & 24 & 45.1  & 43.7  & 43.5  \\
+%       & 25 & 104.5 & 91.4  & 91.7  \\
+%       & 26 & --    & 199.9 & 189.5 \\
+%     \midrule
+%     \multirow{4}{*}{SQLite}
+%       & 23 & 43.3  & 46.3  & 42.1  \\
+%       & 24 & 92.8  & 96.0  & 92.5  \\
+%       & 25 & 188.9 & 180.1 & 186.8 \\
+%       & 26 & 423.2 & 392.3 & 405.5 \\
+%     \bottomrule
+%   \end{tabular}
+% \end{table}
+
+% \medskip
+% \para{Spill performance}
+% Table~\ref{tab:qft-26q-spill-evolution} reports spill volume.
+% % \footnote{We measure PostgreSQL spill as the temporary blocks written reported by
+% % \texttt{EXPLAIN (ANALYZE, BUFFERS)}, denoted
+% % \texttt{postgres\_explain\_temp\_written}; for DuckDB and SQLite, we approximate
+% % spill using the per-query delta of Linux
+% % \texttt{/proc/\textless pid\textgreater/io}'s \texttt{write\_bytes}, denoted
+% % \texttt{proc\_io\_write\_bytes}. See
+% % \url{https://www.postgresql.org/docs/current/sql-explain.html} and
+% % \url{https://docs.kernel.org/filesystems/proc.html#proc-pid-io-display-the-io-accounting-fields}.}
+% PostgreSQL spill grows
+% monotonically with qubit count and is essentially unchanged across memory limits,
+% suggesting a stable heavy-spill execution mode. DuckDB shows a different behavior:
+% it has almost no spill until a threshold is crossed, after which execution either spills
+% heavily or fails. SQLite spills gradually as qubit count increases and remains stable
+% across memory limits. These differences are precisely the kind of engine-specific
+% behavior that \sys makes visible for out-of-core quantum simulation workloads.
+
+% \medskip
+% Moreover, now we focus on the largest QFT circuit (26 qubits), PostgreSQL completes all three memory limits, but remains spill-heavy: it writes 23.49~GB of temporary data even at 16~GB. DuckDB is highly memory-threshold sensitive: it fails at 4~GB, completes at 8~GB with 9.69~GB of spill, and completes at 16~GB with near-zero spill. SQLite completes all three memory limits with moderate spill, but has the highest runtime at 26 qubits. Thus, the engines expose three distinct out-of-core
+% profiles: robust heavy spilling (PostgreSQL), threshold-sensitive spilling (DuckDB),
+% and robust moderate spilling (SQLite). These differences suggest that for future work on further improving
+% RDBMS-backed simulation for large quantum circuits, we can investigate
+% engine-specific
+% query tuning, physical design, and spill-aware execution strategies.
+
+% Through these results, we observe that for large circuits that exceed memory, RDBMS engines can
+% still complete simulation through out-of-core execution. This
+% highlights a distinct advantage of database-backed simulation and
+% enables follow-up work on spill-aware SQL plans and memory-
+% sensitive query optimization.
+
+% \begin{table}[t]
+%   \centering
+%   \caption{Spill evolution in GB. A dash indicates the OOM.}
+%   \label{tab:qft-26q-spill-evolution}
+%   \footnotesize
+%   \setlength{\tabcolsep}{4pt}
+%   \begin{tabular}{@{}llccc@{}}
+%     \toprule
+%     \textbf{Engine} & \textbf{Qubits} & \textbf{4~GB} & \textbf{8~GB} & \textbf{16~GB} \\
+%     \midrule
+%     \multirow{4}{*}{PostgreSQL}
+%       & 23 & 2.32  & 2.32  & 2.32  \\
+%       & 24 & 4.64  & 4.64  & 4.64  \\
+%       & 25 & 9.82  & 9.82  & 9.82  \\
+%       & 26 & 23.49 & 23.49 & 23.49 \\
+%     \midrule
+%     \multirow{4}{*}{DuckDB}
+%       & 23 & 0.00 & 0.00 & 0.00 \\
+%       & 24 & 0.00 & 0.00 & 0.00 \\
+%       & 25 & 7.68 & 0.00 & 0.00 \\
+%       & 26 & --   & 9.69 & 0.00 \\
+%     \midrule
+%     \multirow{4}{*}{SQLite}
+%       & 23 & 0.51 & 0.51 & 0.51 \\
+%       & 24 & 1.22 & 1.24 & 1.22 \\
+%       & 25 & 2.71 & 2.62 & 2.63 \\
+%       & 26 & 6.14 & 5.91 & 6.07 \\
+%     \bottomrule
+%   \end{tabular}
+% \end{table}
+
+ 
+
+
+% \section{Out-of-Core Evaluation}
+% \label{app:qft-cap-sensitivity}
+
+% In this section, we explore \emph{out-of-core}
+% execution for DBMS-backed SQL simulation, and try to answer the following research questions: 
+% Q3: Can RDBMS-based simulation complete workloads that no
+% longer fit in memory?
+
+
+
+
+% We have  generate a set of large circuits, one circuit for each qubit count from one to 45. 
+% simulated  in Section~\ref{app:ooc-expander}. With the memory limit, Qiskit Aer cannot finish the simulation. In contract, RDBMSs spill to secondary storage to complete execution under memory limit, demonstrating a clear case \emph{when} it is benifitial to use RDBMS as a simulation backend. 
+
+% Through this experiment, we observed that the effective
+%  simulation
+% of  RDBMS is becuase they exploit the sparsity of the input circuits. Therefore, we designed a second experiment in Sec.~\ref{app:ooc-inferq-sparsity}, in which we vary the sparisty of the generated circuits via \sys, and observe  sparsity, intermediate resutls, and spill behavior.
+ 
+
+
+% \subsection{Large Circuits Simulation}
+% \label{app:ooc-expander}
+% \begin{figure}[t]
+%     \centering
+%     \includegraphics[width=1.0\linewidth]{images/expanderfig3_spill_vs_cte.pdf}
+%     % all gb results stores in allgb_ prefix image, no explanation so omitted. 
+%     \caption{Out-of-core behavior (Median Spill for 5 trials of query run) on 40--45 qubit Expander circuits under 16~GB caps. Filled points (tot : total) denote total intermediate relation size across the CTE chain; open points (lrg : largest) denote the maximum single-step intermediate size.}
+%     \label{fig:expander_ooc}
+% \end{figure}
+
+% \para{Experiment setup.}
+% we generate a set of circuits with the same structure and sparsity but varying number of qubits $N$, each circuit for each qubit count from one to 45. This set of circuits are relatively sparse. 
+% we generate a set of circuits with the same structure and sparsity but varying number of qubits $N$, each circuit for each qubit count from one to 45. This set of circuits are relatively sparse. 
+% This set of sparse circuits are presentative  in practice: stabilizer, amplitude amplification, and and sparse Hamiltonians and sparse linear systems.
+% Moreover,
+% even when the final state is dense, intermediate tensors and relations during contraction
+% can be much smaller than $2^N$.  
+% %
+% We simulate a set of circuits with the same structure but varying number of qubits $N$. The bigger value $N$ is, the larger circuit is and running the SQL query for simulating this circuit would require more memory.  Quantum-specific details about these circuits are provided in Section~\ref{app:expander-details}. 
+% %
+% We run PostgreSQL, DuckDB, and SQLite under  
+% memory caps of 16~GB and record (i) median spill volume over 5 runs per circuit query and (ii) the maximum and total
+% intermediate relation sizes across the CTE chain during SQL execution. 
+% The detailed configuration for each database engine for the out-of-core experiments is in Section~\ref{app:spill-instrumentation}.
+
+
+% \para{Results.} Under 16~GB limit, Qikit Aer failed to complete the simulation from circuits with 30 qubits. In contrast, all RDBMS have finished all simulations.
+% Figure~\ref{fig:expander_ooc} summarizes spill behavior and intermediate sizes for the
+% 40--45 qubit circuits. 
+
+% First, why did Qikit Aer fail? Recall in Sec. 1 and 2.1 we have explained that for $N$-qubit state it leads to $2^n$ complex amplitudes. If we store each of these complex numbers in double
+% precision, even if we ignore overhead, 
+% this is $16 \cdot 2^N$ bytes, which reaches roughly 16~GB at
+% $n{=}30$ and grows exponentially thereafter. 
+% This is how Qiskit Aer an exact simulation, known as the \texttt{statevector} method. 
+% So, for this set of circuits with 40 to 45 qubits,  where a Qiskit Aer
+% would require approximately 16--512~TB. 
+% % requires storing $2^n$ complex amplitudes.
+% This is why in this experiments Qikit Aer fail. 
+% % That is, 
+% % It  cannot execute circuits once $2^n$ exceeds available RAM.
+% In contrast, RDBMSs stores amplitudes as tuples and can exploit the sparsity: if only a small subset of basis states have non-zero amplitudes,
+% the representation size scales with the number of non-zero amplitudes rather than grows exponentially with qubit count ($2^N$).
+
+
+% Now we anlyze Figure~\ref{fig:expander_ooc}. Across engines, intermediate relation sizes remain in the megabyte (MB) range, consistent with the RDBMSs'  sparsty support of the state representation.\footnote{We also observe that different spilling behvoirs among engines.  DuckDB
+% consistently spills the least, while SQLite and PostgreSQL are comparable on several
+% circuits. This is most likely because the different inner mechnism of these engines. However, we should also mention that for PostgreSQL we cancompute exact temporary spill as this is directly supported. From the public availble documentation, DuckDB and SQLite do not provide such support so we can only  use a conservative operating system level proxy for them. We have added all details about this in Section~\ref{app:spill-instrumentation}.}
+% We see that Spill volume is often orders of magnitude larger than the final and intermediate
+% relation sizes. This might be becuase additional overhead required by join and aggregate operators
+% (e.g., hash tables, sorting or grouping state, and temporary structures) and repeated
+% materialization of intermediates. 
+% Now let's look at the Spearman correlation values of  maximum single-step intermediate size (denoted as $r(lrg)$) and  total intermediate relation
+% size across the CTE chain (denoted as $r(tot)$) in Figure~\ref{fig:expander_ooc}. 
+% Spill correlates more strongly
+% with the total intermediate size across all CTEs than with the single largest CTE
+% (Spearman correlation higher for total-CTE than max-CTE in all settings). This indicates that for simulation over this set of sparse circuits, spilling volume is more correlated with all CTEs than with the single largest CTE. For future work, it might worth investating more sophsicated optimiazation, e.g., materialize and cache CTEs that are repeatedly used. 
+% % Varying the memory limitcauses only modest changes in intermediate relation
+% % sizes, indicating that the DBMS execution primarily benefits from sparse  
+% % representation, while out-of-core externalization absorbs operator workspace peaks.
+
+
+% \para{Takeaways.}
+% This experiment demonstrates when DBMS-based simulation is uniquely useful for quantum circuit simulation:
+% exact simulation for large-$N$ circuits that exceed the in-memory Qiskit Aer engine's capbility (dense
+% statevector representation), by combining sparse tuple-level representation with out-of-core
+% execution. At the same time, spill volume is correlated with relational operators and intermediate
+% relation growth, which motivates query optimizations (join ordering, operator choice,
+% and materialization control) to reduce externalization overhead.
+\section{Out-of-Core Evaluation}
+\label{app:qft-cap-sensitivity}
+
+In this section, we study \emph{out-of-core} execution for DBMS-backed SQL simulation and
+address the following question:
+
+\smallskip
+\noindent\textbf{Q3:} Can an RDBMS backend complete simulation queries once the workload no
+longer fits in main memory?
+
+\smallskip
+To answer Q3, we conduct two experiments. First, in
+Section~\ref{app:ooc-expander}, we generate a family of large circuits with an increasing number of qubits up to 45. Under a fixed memory limit, Qiskit Aer cannot complete the simulation, whereas RDBMS engines can spill
+temporary data to secondary storage and complete execution, demonstrating a clear case
+\emph{when} an RDBMS backend is beneficial. Second, in
+Section~\ref{app:ooc-inferq-sparsity}, we use \sys to generate circuits with controlled
+variation in sparsity and study how sparsity, intermediate results, and spill behavior
+interact.
+
+\subsection{Large Circuits Simulation}
+\label{app:ooc-expander}
+
+
+
+\para{Experiment setup}
+We generate a family of circuits with a fixed structure and similar sparsity, while
+increasing the qubit count $N$ (one circuit for each $N$ from 1 to 45). These circuits
+are designed so that the simulation state can be represented compactly as a relation of
+non-zero entries. These circuits are representative in practice and are a common scenario for structured and sparse quantum circuit simulation workloads (e.g., stabilizer, amplitude amplification, and sparse linear systems). 
+Quantum-specific construction details are provided in Section~\ref{app:expander-details}.
+
+We execute the generated SQL queries on PostgreSQL, DuckDB, and SQLite under a 16~GB memory cap. In SQL-based simulation, the tensor-contraction sequence is written as a chain of Common Table Expressions (CTEs), each encoding one contraction step (join + aggregate). 
+For each query, we record (i) median spill volume over five runs and (ii) the
+maximum and total intermediate relation sizes across the CTE chain. The engine-specific
+spill configuration is described in
+Section~\ref{app:spill-instrumentation}.
+
+
+\para{Results}
+Under the 16~GB limit, Qiskit Aer fails to complete exact simulation starting at 30 qubits.
+This is expected. Recall in Sec. 1 and 2.1 we have explained that 
+an $N$-qubit state requires $2^N$
+complex entries. If we store each complex entry in double precision, this is approximately $16 \cdot 2^N$ bytes,
+which reaches roughly 16~GB at $N{=}30$ (ignoring runtime overhead) and grows
+exponentially thereafter. For the 40--45 qubit circuits evaluated here, Qiskit would require approximately 16--512~TB (this is known as
+statevector in Qiskit for exact simulation). 
+
+In contrast, all three RDBMS engines
+complete all runs because they store the state as tuples and can exploit sparsity: storage
+scales with the number of non-zero entries rather than with $2^N$.
+
+
+
+Figure~\ref{fig:expander_ooc} summarizes out-of-core behavior for the 40--45 qubit circuit simulation under the 16~GB limit.
+Across engines, intermediate relation sizes remain in the megabyte range, consistent with RDBMSs' support for storing sparse tensors.\footnote{We observe different spill behavior across DBMS
+engines. DuckDB spills the least in this experiment, while SQLite and PostgreSQL are
+comparable on several circuits. Note that PostgreSQL exposes query-level temporary I/O
+counters, so we can compute spill volume exactly. DuckDB and SQLite do not expose a
+stable, query-level temp-bytes-written counter in the same way, so we use a conservative
+operating-system level proxy for them. Details are provided in
+Section~\ref{app:spill-instrumentation}.}
+At the same time, total spill volume is often orders of magnitude larger than the sizes of the
+intermediate relations. This is likely due to the overhead during joins and
+group-bys (e.g., hash tables, sorting or grouping state, and temporary structures), as
+well as repeated materialization of intermediates along the CTE chain.
+
+
+
+
+We further inspect the Spearman correlation values between spill volume and the maximum
+single-step intermediate size ($r(\texttt{lrg})$) and the total intermediate size across
+all CTEs ($r(\texttt{tot})$). In all three engines, $r(\texttt{tot}) > r(\texttt{lrg})$,
+indicating that spill is more strongly associated with cumulative intermediate volume than
+with the peak single-step intermediate. This suggests that optimization opportunities
+include reducing repeated intermediate materialization and improving reuse, for example by
+caching selected intermediates when they are used multiple times.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1.0\linewidth]{images/expanderfig3_spill_vs_cte.pdf}
+    \caption{Spill volume of RDBMS engines (PostgreSQL, DuckDB, SQLite). Filled points (\texttt{tot}) denote total intermediate relation size across the CTE chain; open points (\texttt{lrg}) denote the maximum single-step intermediate size.}
+    \label{fig:expander_ooc}
+\end{figure}
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1.0\linewidth]{images/fig4a_walltime_vs_qubits.pdf}
+    \caption{Runtime of RDBMS engines (PostgreSQL, DuckDB, SQLite).}
+    \label{fig:expander_walltime_qubits}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=1.0\linewidth]{images/fig4b_walltime_vs_spill.pdf}
+    \caption{Runtime versus spill volume for RDBMS engines (PostgreSQL, DuckDB, SQLite).}
+    \label{fig:expander_walltime_spill}
+\end{figure}
+
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.55\linewidth]{images/fig2_spill_vs_qubits.pdf}
+    \caption{Spill volume with varying numbers of qubits (log scale).}
+    \label{fig:dbspillqubits_repeat}
+\end{figure*}
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.6\linewidth]{images/fig7_cte_vs_density.pdf}
+    \caption{Maximum and total intermediate CTE sizes against output state sparsity (log scale).}
+    \label{fig:dbspillctesparse_repeat}
+\end{figure*}
+
+Figure~\ref{fig:expander_walltime_qubits} reports query runtime. 
+Runtime increases rapidly with the number of qubits for all engines. PostgreSQL is consistently the fastest in this experiment, DuckDB is second,
+and SQLite is the slowest. Figure~\ref{fig:expander_walltime_spill} shows runtime and
+spill volume are related, indicating that externalization overhead is a major
+reason for end-to-end query time once operator workspaces spill to disk.
+
+\medskip
+  % \vspace{0.2cm}
+\noindent
+\setlength{\fboxsep}{6pt}
+\fcolorbox{black!15}{black!4}{%
+  \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{
+\para{Takeaways}
+This experiment demonstrates \emph{when} DBMS-backed simulation is particularly useful:
+it enables exact simulation for large circuits that exceed the in-memory limits of
+Qiskit Aer by combining a sparse tuple-level representation with out-of-core
+execution. At the same time, spill volume and runtime are closely tied to relational
+operator workspace and intermediate relation growth, which motivates RDBMS
+optimization opportunities such as join ordering, operator selection, and materialization
+control to reduce externalization overhead.
+}}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/fig8_walltime_vs_spill.pdf}
+     \vspace{-0.3cm}
+    \caption{Execution time versus spill volume for sampled InferQ circuits (log-log).}
+    \label{fig:dbwalltimespill_repeat}
+    \vspace{-0.4cm}
+\end{figure*}
+\subsection{Experiment on Varying Sparsity}
+\label{app:ooc-inferq-sparsity}
+
+\begin{table*}[!ht]
+  \centering
+  \caption{Ablation study for \emph{time-optimal method} prediction
+    (80\% - 20\% train-test split).
+    \textbf{Bold}: best overall result (XGB, full feature set);
+    \underline{underline}: second best (RF, full feature set).
+    Acc: accuracy; F1: macro F1-score.}
+  \label{tab:ablation_time}
+  \scriptsize
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.05}
+  \begin{tabular}{l cc cc cc cc cc}
+    \toprule
+    & \multicolumn{2}{c}{\textbf{LR}}
+    & \multicolumn{2}{c}{\textbf{SVM}}
+    & \multicolumn{2}{c}{\textbf{DT}}
+    & \multicolumn{2}{c}{\textbf{RF}}
+    & \multicolumn{2}{c}{\textbf{XGB}} \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+    \cmidrule(lr){8-9}\cmidrule(lr){10-11}
+    \textbf{Feature Set}
+      & Acc & F1
+      & Acc & F1
+      & Acc & F1
+      & Acc & F1
+      & Acc & F1 \\
+    \midrule
+    SQL
+      & 0.79 & 0.54
+      & 0.80 & 0.57
+      & 0.91 & 0.70
+      & 0.93 & 0.75
+      & 0.92 & 0.75 \\
+    Static
+      & 0.80 & 0.55
+      & 0.80 & 0.55
+      & 0.90 & 0.68
+      & 0.92 & 0.72
+      & 0.92 & 0.74 \\
+    Static + Graph
+      & 0.84 & 0.60
+      & 0.81 & 0.56
+      & 0.90 & 0.66
+      & 0.92 & 0.73
+      & 0.92 & 0.74 \\
+    Static + SQL
+      & 0.86 & 0.64
+      & 0.86 & 0.65
+      & 0.93 & 0.76
+      & 0.94 & 0.78
+      & 0.94 & 0.80 \\
+    Static + Dynamic
+      & 0.86 & 0.66
+      & 0.86 & 0.65
+      & 0.92 & 0.73
+      & 0.94 & 0.77
+      & 0.94 & 0.79 \\
+    Static + Graph + SQL
+      & 0.87 & 0.67
+      & 0.84 & 0.62
+      & 0.92 & 0.74
+      & 0.94 & 0.78
+      & 0.93 & 0.78 \\
+    Static + Graph + SQL + Dyn.
+      & 0.89 & 0.70
+      & 0.88 & 0.69
+      & 0.94 & 0.80
+      & \underline{0.95} & \underline{0.83}
+      & \textbf{0.95} & \textbf{0.84} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+The previous experiment indicates that sparse representations can make DBMS-backed
+simulation more useful under a memory limit.   
+We therefore conduct a second experiment on
+InferQ-generated workloads to study how spill volume, intermediate CTE sizes, and query
+runtime relate to the sparsity of a circuit.
+This is possible because InferQ can generate circuits
+with controlled variation in sparsity.
+
+We first explain the sparsity of the final output state of a circuit simulation.
+For an $n$-qubit circuit, the output is a length-$2^n$ amplitude vector
+$\mathbf{p}$. We define \emph{output density} as the fraction of non-zero entries in the vector $\mathbf{p}$ against the vector size $|\mathbf{p}|$:
+\[
+\mathrm{density}(\mathbf{p}) \;=\; \frac{\left|\{\, i \mid p_i \neq 0 \,\}\right|}{|\mathbf{p}|}.
+\]
+A smaller density indicates fewer non-zero tuples in the DBMS representation, while a
+density close to 1 indicates a near-dense output.
+
+\medskip
+\para{Experiment setup}
+We construct a sample of 17 InferQ circuits\footnote{\url{https://github.com/InfiniData-Lab/InferQ/blob/main/analysis/sample_csvs/final_sparse_sample.csv}}
+spanning three density bands: Sparse $[0,0.33)$, Medium $[0.33,0.67)$, and Dense
+$[0.67,1.0]$. The circuits span a number of qubits from 20 to 23. 
+We execute the
+SQL simulation on PostgreSQL, DuckDB, and SQLite under a 16~GB memory cap. For each run,
+we record spill volume, wall-clock runtime, and the maximum and total intermediate CTE
+sizes observed over the CTE chain.
+
+\medskip
+\para{Results}
+Figure~\ref{fig:dbspillqubits_repeat} plots spill volume against the number of qubits. Across
+all engines, circuits in the Sparse band tend to incur the least spill, and PostgreSQL
+often shows negligible spill for the sparsest cases. This matches the intuition that a
+sparse output can be represented as a smaller relation, reducing memory pressure and
+temporary-workspace needs.
+
+From Figure~\ref{fig:dbspillqubits_repeat}, we observe that output density alone does not determine spill volume. For PostgreSQL and SQLite, several
+Medium-density circuits spill more than some Dense circuits at similar qubit counts. This indicates that spill is strongly influenced by
+\emph{intermediate} results produced during query execution, which depend on plan choices
+such as join ordering and materialization behavior, rather than being determined solely
+by the final output density.
+
+
+
+
+Figure~\ref{fig:dbspillctesparse_repeat} reports the maximum and total intermediate CTE sizes as
+a function of output density. The correlations are consistently
+positive across engines, and the maximum-intermediate correlation is slightly stronger
+than the total-intermediate correlation. At the same time, intermediate sizes vary across
+DBMS engines for the same circuit, which is expected because optimizers may choose
+different join orders and physical operators, leading to different intermediate growth.
+
+Finally, Figure~\ref{fig:dbwalltimespill_repeat} shows runtime versus spill volume. PostgreSQL and
+SQLite show a very strong positive association between execution time and spill (rank
+correlations shown in the figure), and DuckDB exhibits a weaker but
+still positive association. This result indicates that externalization cost is a dominant
+reason for end-to-end runtime once operators spill to disk. 
+
+\medskip
+  \vspace{0.2cm}
+\noindent
+\setlength{\fboxsep}{6pt}
+\fcolorbox{black!15}{black!4}{%
+  \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{
+\para{Takeaways}
+It shows that DBMS out-of-core behavior is governed primarily by
+intermediate relation growth and operator workspace, which depend on workload structure
+and DBMS plan choices, rather than only on the density of the final output. It motivates
+optimizing SQL-based simulation using standard DBMS techniques such as improving join
+ordering, controlling materialization, and reducing intermediate blow-up. It also
+suggests that spill-aware cost models are useful for predicting when a DBMS   will
+benefit from out-of-core execution and when externalization overhead will dominate in future work.
+}}
+
+
+% \subsection{Experiment on Varying Sparsity Circuits}
+% \label{app:ooc-inferq-sparsity}
+
+% % \para{Why this experiment.}
+% The previous
+% Experiment help us relaize sparisty matters for RDBMS's out-of-core perofrmance.  We next conduct a second experiment, in which we have circuits with varying sparisty, more specificlly, how spill volume and intermediate CTE sizes
+% relate to output-state sparsity. This is possible because InferQ can generate circuits
+% with controlled variation in sparsity.
+
+% \para{Experiment setup}
+% We construct a sample of 17 InferQ circuits \footnote{\url{https://anonymous.4open.science/r/InferQ-ADEF/analysis/sample_csvs/final_sparse_sample.csv}} spanning three output-sparsity bands. Sparsity
+% is defined as the fraction of non-zero amplitudes in the statevector $\mathbf{p}$:
+% \[
+% \mathrm{sparsity}(\mathbf{p}) \;=\; \frac{\left|\{\, i \mid p_i \neq 0 \,\}\right|}{|\mathbf{p}|}.
+% \]
+% We use three bands: Sparse $[0,0.33)$, Medium $[0.33,0.67)$, and Dense $[0.67,1.0]$. The
+% circuits span \texttt{num\_qubit} from 20 to 23. While this range is within the
+% capabilities of in-memory statevector simulators, it is sufficient to observe meaningful
+% differences in spill and intermediate sizes across DBMS engines. We execute the SQL
+% simulation on PostgreSQL, DuckDB, and SQLite under a 16~GB memory limitand record spill
+% volume as well as the maximum and total intermediate CTE sizes during query execution.
+
+
+% \para{Results.}
+% Figure~\ref{fig:dbspillqubits_repeat} shows the results.  
+% % DuckDB spills the least at these qubit counts,
+% % while PostgreSQL and SQLite spill one to two orders of magnitude more than DuckDB in several cases.
+% % This is consistent with the larger-qubit QFT study, where DuckDB begins to spill more
+% % heavily beyond 25 qubits (Table~\ref{tab:qft-26q-spill-evolution}). 
+% Across all engines,
+% for circuits in the Sparse band, all engines tend to have the lowest spill, with PostgreSQL showing minimal and often
+% negligible spill on the most sparse circuits.
+
+% We can see that the sparsity of the final output state alone does not determine spill volume. For PostgreSQL and SQLite, several
+% Medium-sparsity circuits spill more than some Dense circuits at similar qubit counts
+% (Figure~\ref{fig:dbspillqubits_repeat}), which indicates that spill is influenced by intermediate
+% states and the resulting intermediate relations produced by the execution plan, not only
+% by the sparsity of the final output state.
+
+% Figure~\ref{fig:dbspillctesparse_repeat} reports maximum and total intermediate CTE sizes versus
+% output sparsity. Both metrics vary substantially across circuits, and in many cases the
+% Medium band produces intermediate CTE sizes comparable to or larger than the Dense band.
+% Since each DBMS may choose different join orders and execution strategies, intermediate
+% CTE sizes also differ across engines for the same circuit. Overall, sparsity is
+% monotonically correlated with intermediate CTE sizes (Spearman coefficient above 0.7),
+% with the correlation slightly stronger for maximum CTE size than for total CTE size.
+
+% \medskip
+% \para{Takeaways.}
+% This experiment help us understand better the relationship between RDBMSs' out-of-core performance, and intermediate
+% relation growth during contraction, which depends on both circuit structure and DBMS plan
+% choices (e.g., join ordering and materialization behavior), rather than only the sparsity
+% of the final state. It motivates future work on reducing intermediate blow-up through
+% better contraction ordering and plan selection. It might also be possible to try out circuit-level transformations
+% that compress intermediate states to better leverage DBMS backends.

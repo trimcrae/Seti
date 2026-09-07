@@ -1,0 +1,189 @@
+\section{GALA Code Construction}\label{sec:construction}
+Let's consider another generalization of the block circulant codes where the non-commutativity is instead supplied by a small non-abelian finite group.
+
+
+\subsection{Monomial Direct Product Codes}\label{ssec:mono-gala}
+\begin{definition}[Direct Product GALA Code]\label{def:dpg-code}
+Given parameters $L, J\leq \tfrac L2, k, m\in\mathbb Z_+$ and an active set $\Gamma$ as in Definition~\ref{def:kasai}, the Direct Product GALA (DPG) codes $\mathrm{GALA}_{L,J}(H_k\times C_m)$ are the family of two-block CSS codes on $n = Lkm$ qubits lifted over the group algebra $\mathbb F_2[H_k\times C_m]$, where $H_k$ is a non-abelian permutation group on $[k]$ and $C_m$ is an abelian permutation group on $[m]$. A DPG code is specified by choosing the generators (also called lifts) $\mathcal{F},\mathcal{G}\subset H_k\times C_m$:
+\begin{align*}
+    \mathcal{F} &= \{(F_i, f_{i})\}_{i\in[\frac L2]},\\
+    \mathcal{G} &= \{(G_i, {g}_i)\}_{i\in[\frac L2]},
+\end{align*}
+with $F_i, G_i\in H_k$ and $f_i,g_i\in C_m$, such that
+\begin{equation}\label{eq:dpg-active}
+    [F_i, G_j] = 0\iff (i,j)\in \Gamma .
+\end{equation}
+By Lemma~\ref{lemma:dpk-commutivity}, $[(F_i,f_i),(G_j,g_j)] = 0\iff [F_i,G_j] = 0$, so \eqref{eq:dpg-active} is exactly the commutativity pattern of Definition~\ref{def:kasai} for the lifted generators: the entire orthogonality pattern is decided inside $H_k$, and the abelian entries $f_i,g_i$ are unconstrained by it. The stabilizers $ H_X, {H}_Z$ are given by the first $J$ block rows of the parent matrices $\hat H_X = [F|G]$ and $\hat H_Z = [G^T|F^T]$, where
+\begin{align*}
+    F &= \sum_{i\in [\frac{L}{2}]} z_i\otimes F_i\otimes f_i ,\\
+    G &= \sum_{i\in [\frac{L}{2}]} z_i\otimes G_i\otimes g_i,
+\end{align*}
+so that $F,G\in \mathbb F_2[\mathbb Z_{\frac L2}\times H_k\times C_m]$, with $z_i\in\mathbb Z_{\frac L2}$ as in Definition~\ref{def:kasai}.
+\end{definition}
+
+Notice that when using a small group $H_k$ as the non-abelian part (say $S_3$), it is computationally simple to enumerate all tuples $F_i, G_i\in H_k$ satisfying a given active orthogonality constraint \eqref{eq:dpg-active}, and the enumeration is independent of $m$. Two remarks make this enumeration a finite classification rather than a search. First, only the tops enter \eqref{eq:dpg-active}. Second, the classification need only be carried out up to the symmetries of the construction, of which the following reflection is the one we use.
+
+Let us give an explicit example. Suppose $L = 12$, $J = 3$, pick the active set $\Gamma = \left([\frac L2]\times [\frac L2]\right) \setminus \{(0,3), (1,2)\}$ of Definition~\ref{def:kasai}, and let $H_k = S_3$. We can write down this group and its multiplication table as follows:
+
+$$
+\renewcommand{\arraystretch}{1.3}
+\begin{array}{c|cccccc}
+\cdot      & e        & \sigma_0 & \sigma_1 & \tau_0   & \tau_1   & \tau_2   \\ \hline
+e          & e        & \sigma_0 & \sigma_1 & \tau_0   & \tau_1   & \tau_2   \\
+\sigma_0   & \sigma_0 & \sigma_1 & e        & \tau_2   & \tau_0   & \tau_1   \\
+\sigma_1   & \sigma_1 & e        & \sigma_0 & \tau_1   & \tau_2   & \tau_0   \\
+\tau_0     & \tau_0   & \tau_1   & \tau_2   & e        & \sigma_0 & \sigma_1 \\
+\tau_1     & \tau_1   & \tau_2   & \tau_0   & \sigma_1 & e        & \sigma_0 \\
+\tau_2     & \tau_2   & \tau_0   & \tau_1   & \sigma_0 & \sigma_1 & e        \\
+\end{array},
+\qquad
+\begin{array}{c|c}
+\text{element} & \text{cycle} \\ \hline
+e        & \mathrm{id}   \\
+\sigma_0 & (0\,1\,2)     \\
+\sigma_1 & (0\,2\,1)     \\
+\tau_0   & (1\,2)        \\
+\tau_1   & (0\,2)        \\
+\tau_2   & (0\,1)        \\
+\end{array}.
+$$
+Commutativity can be checked by a table look-up, and the possible tops are then completely determined.
+
+\begin{lemma}[$S_3$ ansatzes at $L=12$, $J=3$]\label{lemma:s3-ansatz}
+Let $L=12$, $J=3$, $\Gamma = \left([\frac L2]\times [\frac L2]\right)\setminus\{(0,3),(1,2)\}$ and $H_k = S_3$. Then the tuples $(\mathcal F^H,\mathcal G^H)$ satisfying \eqref{eq:dpg-active} are exactly
+\begin{align}
+    \mathcal{F}^H &= \{\sigma_j,\ \tau_i,\ e,\ e,\ e,\ e\},
+        & \mathcal{G}^H &= \{e,\ e,\ \sigma_k,\ \tau_i,\ e,\ e\};\label{eq:ansatz-a}\\
+    \mathcal{F}^H &= \{\tau_i,\ \sigma_j,\ e,\ e,\ e,\ e\},
+        & \mathcal{G}^H &= \{e,\ e,\ \tau_i,\ \sigma_k,\ e,\ e\};\label{eq:ansatz-b}\\
+    \mathcal{F}^H &= \{\tau_i,\ \tau_j,\ e,\ e,\ e,\ e\},
+        & \mathcal{G}^H &= \{e,\ e,\ \tau_i,\ \tau_j,\ e,\ e\}, \quad i\neq j,\label{eq:ansatz-c}
+\end{align}
+\end{lemma}
+
+\begin{proof}
+It is easy to check exhaustively.
+\end{proof}
+
+To get a valid code we then choose the bottom entries $f,g\in C_m$ greedily to optimize girth and distance, which by Lemma~\ref{lemma:dpk-commutivity} costs nothing in orthogonality. The $[[1152,580,\leq12]]$ code of \cite{zhao2026ultrahighratequantumerrorcorrection} is an instance of this example with $k = 3$, $H_3 = S_3$ and $C_m = \mathbb Z_{32}$, so that $n = Lkm = 12\cdot3\cdot32 = 1152$. 
+
+
+Before proving this connection, and the connections to the other Kasai codes, let us record the more general version of the GALA codes:
+\begin{definition}[Semidirect Product GALA Code]\label{def:spg-code}
+Given parameters $L, J \leq \tfrac{L}{2}, k, m \in \mathbb{Z}_+$ and an active set $\Gamma$ as in Definition~\ref{def:kasai}, the Semi-direct Product GALA (SPG) codes are the family of two-block CSS codes on $n = Lkm$ qubits lifted over the group algebra $\mathbb F_2[H_k\ltimes C^k_m]$, where $H_k$ is a non-abelian permutation group on $[k]$, $C_m$ is an abelian permutation group on $[m]$, and $H_k\ltimes C_m^k$ is the semi-direct product of Definition~\ref{def:semidirect-product}. An SPG code is specified by choosing the generators $\mathcal{F},\mathcal{G}\subset H_k\ltimes C^k_m$:
+\begin{align*}
+    \mathcal{F} &=  \{(F_i;\textbf{f}_i )\}_{i\in[\frac L2]},\\
+    \mathcal{G} &= \{(G_i; \textbf{g}_i)\}_{i\in[\frac L2]},
+\end{align*}
+such that $[(F_i;\textbf{f}_i),(G_j;\textbf{g}_j)] = 0\iff (i,j)\in\Gamma$, which by Lemma~\ref{lemma:spk-commutivity} is the commutativity condition~\eqref{eq:spk-commutivity} on the pair $(F_i;\textbf f_i), (G_j;\textbf g_j)$. The stabilizers $ H_X, {H}_Z$ are given by the first $J$ block rows of the parent matrices $\hat H_X = [F|G]$ and $\hat H_Z = [G^T|F^T]$, where
+\begin{align*}
+    F &= \sum_{i\in [\frac{L}{2}]} z_i\otimes M_\ltimes(F_{i}, \textbf{f}_{i}) ,\\
+    G &= \sum_{i\in [\frac{L}{2}]} z_i\otimes M_\ltimes(G_{i},\textbf{g}_{i}).
+\end{align*}
+\end{definition}
+
+The commutativity condition~\eqref{eq:spk-commutivity} is harder to work with than \eqref{eq:dpg-active}, since the bottoms no longer drop out; but Lemma~\ref{lemma:spk-commutivity} still supplies simplifying sufficient conditions, which serve as good heuristics for computing ansatzes and simplify the proofs below. The most useful of these is to make the bottoms constant on a subset of the lifts:
+
+\begin{definition}[Restricted SPG Code]\label{def:SPG-restricted}
+A restricted semidirect Product GALA code $\mathrm {GALA}_{L,J}(H_k\ltimes_\mathcal{R} C_m)$ on $\mathcal{R}\subseteq [L]$ is an SPG code with  $\textbf{f}_i = \textbf{1}\otimes f_i$, $f_i\in C_m$ for all $i\in \mathcal{R}$ and $\textbf{g}_j = \textbf{1}\otimes g_j$, $g_j\in C_m$  for all  $j + \frac L2\in \mathcal{R}$.
+\end{definition}
+
+If we restrict an SPG code on the maximal $\mathcal{R} = [L]$, all its matrix elements simplify to $M_\ltimes(h, \textbf{1}\otimes c) = M_\times(h\otimes c)$; that is, the DPG codes are exactly the SPG codes with maximal restriction. The size of the restriction corresponds exactly to the number of abelian column generators in \cite{zhao2026ultrahighratequantumerrorcorrection}, and it is what controls the cost of the movement schedule in Section~\ref{sec:hardware}.
+
+\subsection{Permutation Equivalence of Kasai}\label{ssec:kasai-perm-eq}
+We can now show that GALA codes contain Kasai codes as special cases, once AOD compatibility is required of the latter. We say two codes $\mathcal{P}, \mathcal{Q}$ with check matrices $H_P, H_Q$ are permutation equivalent, or $\mathcal{P}\sim_\pi \mathcal{Q}$, when $\pi_r\cdot H_P\cdot \pi_c = H_Q$ for some permutation matrices $\pi_r, \pi_c$. For quantum codes this condition must hold for both $H_X$ and $H_Z$ with the same $\pi_c$. It guarantees that the two codes have the same logical space up to a relabeling of the qubits, and in particular the same $n,k,d$ and girth.
+
+\begin{proposition}[Kasai codes with a reference APM are GALA codes]\label{prop:kasai-containment}
+Let $\mathcal{K}=\mathrm K_{L,J}(\mathcal F,\mathcal G)$ be a Kasai code on $[P]$ with generators $\mathcal{F},\mathcal{G}\subset\mathbb A_P$ and active set $\Gamma$ as in Definition~\ref{def:kasai}.
+\begin{enumerate}
+    \item \emph{(Semi-direct.)} Suppose the centralizer $\mathcal A = Z_{\mathbb A_P}(\mathcal F\cup\mathcal G)$ contains an element $A$ acting \emph{freely} on $[P]$ such that $A^s$ has no fixed point for $0<s<\ord{A}$, and put $m = \ord A$. Then $k = P/m$ is an integer and $\mathcal K\sim_\pi\mathcal Q$ for some $\mathcal Q\in\mathrm{GALA}_{L,J}(H_k\ltimes\mathbb Z_m)$ with the same $L,J,\Gamma$, where $\mathbb Z_m = \rs{A}$ acts regularly inside each orbit of $A$ and $H_k\leq S_k$ is the group induced by $\mathcal F\cup\mathcal G$ on the set of $k$ orbits.
+    \item \emph{(Direct.)} Suppose instead $P = km$ with $\gcd(k,m) = 1$, and that the reductions modulo $m$ of the generators pairwise commute in $\mathbb A_m$. Then $\mathcal K\sim_\pi\mathcal Q$ for some $\mathcal Q\in\mathrm{GALA}_{L,J}(H_k\times C_m)$ with the same $L,J,\Gamma$, where $H_k\leq\mathbb A_k$ and $C_m\leq\mathbb A_m$ are generated by the reductions of $\mathcal F\cup\mathcal G$ modulo $k$ and modulo $m$ respectively.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+The first case follow from Lemma 1 of~\cite{zhao2026ultrahighratequantumerrorcorrection}, which we will restate in our language. Let us fix orbit representatives $\gamma = \gamma_0,\dots,\gamma_{k-1}$ and relabel $[P]$ by
+\[
+    \pi : [k]\times[m]\to[P],\qquad (a,s)\mapsto A^s\gamma_a ,
+\]
+which is bijective since $A$ act freely on $P$. Let $M\in Z_{\mathbb A_P}(A)$. Then $M\gamma_a = A^{s_a}\gamma_{h(a)}$ for some $h(a)\in[k]$ and $s_a\in\mathbb Z_m$, and $MA^s = A^sM$ gives
+\[
+    M(A^s\gamma_a) = A^sM\gamma_a = A^{s+s_a}\gamma_{h(a)};
+\]
+that is, $M$ maps each orbit of $A$ onto an orbit of $A$ and acts inside it as a uniform shift, which is exactly the wreath product structure where each orbit correspond to a shift on $[m]\cong \gamma$ and the inter-orbit shifts correspond to a permutation on $[k]$. The second case follows from CRT.
+
+\end{proof}
+
+
+Indeed, we can verify numerically that the $[[1152,580]]$ code is permutation equivelent to $\mathrm{GALA}_{12,3}(S_3\times \mathbb Z_{32}) $, and the $[[2304,1156]]$ codes are permutation equivalent to $\mathrm{GALA}_{12,3}(S_3\times\mathbb Z_2\times  \mathbb Z_{32})$.
+
+As we show in Section~\ref{sec:bounds}, the monomial DPG construction that covers the co-designed Kasai codes~\cite{zhao2026ultrahighratequantumerrorcorrection} faces fundamental limits on the achievable parameters: reaching $d\geq L$ at small $n$, and reaching higher $d$ at all, requires further generalizations. We give these generalizations here and discuss how they overcome the barriers in Section~\ref{sec:bounds}.
+
+\subsection{Polynomial and Loose-Active Orthogonality Generalizations}\label{ssec:generalized-gala}
+
+Both constructions so far lift each proto-matrix entry to a single group element. Upgrading some lifts to a \emph{sum} of group elements --- that is, taking the lift in the group ring $\mathbb F_2[H_k\star C_m]$ rather than in the group $H_k\star C_m$ --- enlarges the search space at fixed $L$, and in particular by-passes the distance bound~\eqref{eq:j<=2} of Proposition~\ref{prop:distance-bound}, so that $L = 8$, $J = 2$ codes become available. Once the lifts are sums, a second relaxation follows for free: the term-wise condition $[F_{i,i'},G_{j,j'}] = 0$ for $(i,j)\in\Gamma$ is stronger than active orthogonality requires, since by~\eqref{eq:psi-r} what must vanish is the aggregate $\Psi_r$, and the individual commutators of a polynomial lift can cancel against each other. This gives the final generalization of loose-active orthogonality.
+
+
+\begin{definition}[Polynomial GALA Code]\label{def:pg-code}
+Given parameters $L, J \leq \tfrac{L}{2}, k, m \in \mathbb{Z}_+$ and an active set $\Gamma$ as in Definition~\ref{def:kasai}, let $G = H_k\star C_m$ be either the direct product $H_k\times C_m$ of Definition~\ref{def:direct-product} or the semi-direct product $H_k\ltimes C^k_m$ of Definition~\ref{def:semidirect-product}, with $H_k$ a non-abelian permutation group on $[k]$ and $C_m$ an abelian permutation group on $[m]$. The Polynomial GALA codes $\mathrm{GALA}_{L,J}(\mathbb F_2[G])$ are the family of two-block CSS codes on $n = Lkm$ qubits in which each lift entry is an element of the \emph{group ring} $\mathbb F_2[G]$, i.e.\ a sum of group elements rather than a single one. A polynomial GALA code is specified by choosing generators $\mathcal F,\mathcal G\subset\mathbb F_2[G]$,
+\begin{align*}
+    \mathcal{F} &= \left\{\sum_{i'\in I^{\mathcal F}_i}(F_{i,i'}; \textbf{f}_{i,i'})\right\}_{i\in[\frac L2]},\\
+    \mathcal{G} &= \left\{\sum_{j'\in I^{\mathcal G}_j}(G_{j,j'}; \textbf{g}_{j,j'})\right\}_{j\in[\frac L2]},
+\end{align*}
+over finite index sets $I^{\mathcal F}_i, I^{\mathcal G}_j$, such that every pair of monomials $(F_{i,i'};\textbf f_{i,i'})$, $(G_{j,j'};\textbf g_{j,j'})$ with $(i,j)\in\Gamma$ commutes --- by Lemma~\ref{lemma:dpk-commutivity} in the direct-product case and by condition~\eqref{eq:spk-commutivity} of Lemma~\ref{lemma:spk-commutivity} in the semi-direct case --- while some pair with $(i,j)\notin\Gamma$ does not. The stabilizers $ H_X, {H}_Z$ are given by the first $J$ block rows of the parent matrices $\hat H_X = [F|G]$ and $\hat H_Z = [G^T|F^T]$, where
+\begin{align*}
+    F &= \sum_{i\in [\frac{L}{2}]} z_i\otimes \sum_{i'\in I^{\mathcal F}_i}M_\ltimes(F_{i,i'}, \textbf{f}_{i,i'}) ,\\
+    G &= \sum_{i\in [\frac{L}{2}]} z_i\otimes \sum_{i'\in I^{\mathcal G}_i}M_\ltimes(G_{i,i'},\textbf{g}_{i,i'}),
+\end{align*}
+reading $M_\ltimes(h,\textbf 1\otimes c) = h\otimes c$ in the direct-product case, so that $F,G\in\mathbb F_2[\mathbb Z_{\frac L2}\times G]$. The monomial codes of Definitions~\ref{def:dpg-code} and~\ref{def:spg-code} are the case $|I^{\mathcal F}_i| = |I^{\mathcal G}_j| = 1$ for all $i,j$.
+\end{definition}
+
+\begin{definition}[Polynomial GALA Code with Loose-Active Orthogonality]\label{def:loose-orthogonality}
+A polynomial GALA code with loose-active orthogonality is a code built as in Definition~\ref{def:pg-code} in which the term-wise commutation requirement on $\Gamma$ is replaced by the weaker aggregate requirement
+\begin{equation}\label{eq:loose-active}
+    \Psi_r = 0\quad\text{for every } r\in\{j-i\ :\ i,j\in[J]\},\qquad \Psi_{r'}\neq 0\ \text{ for some } r'\in[\tfrac L2],
+\end{equation}
+with $\Psi_r$ as in~\eqref{eq:psi-r}. Grouping the terms of $\Psi_r$ under the involution $u\mapsto r-u$, \eqref{eq:loose-active} is implied by the paired conditions
+\[
+    [\mathcal F_u,\mathcal G_{r-u}] + [\mathcal F_{r-u},\mathcal G_u] = 0\quad\text{for } u\in[\tfrac L2],
+    \qquad\text{and}\qquad
+    [\mathcal F_u,\mathcal G_u] = 0 \quad\text{whenever } 2u\equiv_{\frac L2} r,
+\]
+imposed for each active offset $r$, which may hold even when no individual commutator vanishes.
+\end{definition}
+
+
+\subsection{Codes with ZX-dualities}\label{ssec:zxdual}
+Finally, we can impose even more symmetry during the code search, so as to improve parallelization and the availability of logical operations. The relevant symmetry here is a ZX-duality in the sense of Definition~\ref{def:zx-duality}, and for a two-block code it is available whenever the two lists of lifts are related pointwise by a re-indexing of the blocks.
+
+\begin{proposition}[ZX-Dual GALA Codes]\label{def:dual-gala}
+Let $\mathcal{Q}\in \mathrm{GALA}_{L,J}(H_k\star C_m)$ with $4\mid L$, and let $R = \{r_0,r_1, r_2, r_3 \}$ denote the following involutions on $[\frac{L}{2}]$:
+\begin{equation}\label{eq:zx-sector-maps}
+    r_0 = e:\; i\mapsto i,\qquad r_1:\; i\mapsto i + \tfrac L4,\qquad r_2:\; i\mapsto -i,\qquad r_3=r_1r_2:\; i\mapsto \tfrac L4 - i ,
+\end{equation}
+If the generators of $\mathcal Q$ satisfy
+\begin{equation}\label{eq:zx-generator-condition}
+    F_iG_{r(i)} = t \quad \forall i\in [\tfrac L2]
+\end{equation}
+for some {sector involution} $r\in R$, we say $\mathcal Q$ is ZX-dual. The ZX-duality is given by $\tau = \iota_r\otimes t$, where
+\begin{equation}\label{eq:zx-iota}
+\iota_{r_0} = r_3, \iota_{r_1} = r_2, \iota_{r_2} = r_0, \iota_{r_3} = r_1.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+The first two are \emph{translations} of $\mathbb{Z}_\frac L2$ and the last two are \emph{reflections}. It is easy to see that when $r =r_2$, $F_i = G_{-i}^T\cdot t$, and $H_X\cdot e\otimes t = H_Z$ exactly. It remains three cases. For $r = r_0$, $\iota = r_1r_2$. We can see this by tracing the matrix elements:
+\begin{align*}
+(H_X)_{i,j} 
+&\xrightarrow{r_2} (H_X)_{i,-j}\\
+&\xrightarrow{r_1} (H_X)_{i, -j+\frac L4} \\
+&= F_{i-(-j+\frac L4)} \\
+&=G^T_{i-(-j+\frac L4)}\cdot t \\
+&=G^T_{j-(\frac L4-i)}\cdot t =(H_Z)_{\frac L4-i,j}. 
+\end{align*}
+The derivation for other cases are similar.
+\end{proof}
+
+
+
+A natural question one might ask is whether this restriction leads to girth or distance failures. It does, for the reflection sector involutions, and we return to it in Section~\ref{ssec:zx-bounds}.

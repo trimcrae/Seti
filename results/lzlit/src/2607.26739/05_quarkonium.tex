@@ -1,0 +1,426 @@
+\section{Quarkonium production}\label{sec:quarkonium}
+
+In this section, we present the cross sections for selected processes, demonstrating the broad applicability of our code. Both $pp$ and $e^+ e^-$ colliders are considered. We use a c.m.\@ energy of $\sqrt{s} = 13\,{\rm TeV}$ for the former, while $\sqrt{s} = 10.58\,{\rm GeV}$ is adopted for the latter, corresponding to the asymmetric-energy configuration of $B$ factories such as SuperKEKB and Belle II ($E_{e^-} = 7\,{\rm GeV}$ and $E_{e^+}=4\,{\rm GeV}$). For each process, we provide the total (fiducial) cross section obtained with different setups. 
+The first employs our default inputs (see appendix~\ref{app:setup}) and serves as the baseline.
+The remaining setups are obtained by varying quark masses and LDME values. 
+The non-default inputs are chosen to reproduce the physical masses of one of the produced quarkonia $\cal Q$, $m_{Q} + m_{\bar{Q}'} = M_{\cal Q}$, where $Q$ and $\bar{Q}'$ are charm or bottom (anti)quarks.
+Each LDME is rescaled by the mass-dependent factors {$\left({m_c}/{1.55\,{\rm GeV}}\right)^n$} or {$\left({m_b}/{4.7\,{\rm GeV}}\right)^n$}, where $m_c$ and $m_b$ denote the charm and bottom masses used in the setup, and $n=3$ ($n=5$) for {\swavetxt}s ({\pwavetxt}s).
+Note that this rescaling method is not the only viable choice for estimating the parametric dependence of the LDME, and for certain processes it may prove overly simplistic. For instance, a valid alternative, albeit more complex to implement, especially for the broad study presented here, would be to refit and evaluate all LDMEs directly at the quark mass used in the modified setup.
+For each setup, we present both initial- and final-state reshuffled cross sections (the latter obtained with the option \texttt{mom\_resh\_type=1}) and compare them with the non-reshuffling scenario, in which the CS and CO quarkonium masses are set to the sums of their constituent-quark masses.
+To quantify the impact of the mass treatment, we consider two quantities. The first, denoted by $\Delta\sigma^{\rm resh}$, measures the deviation of the averaged reshuffled cross sections from the non-reshuffled case,
+\begin{equation}
+    \Delta\sigma^{\rm resh} = \left\vert 1 - \frac{\sigma^{\rm FS\ resh.} + \sigma^{\rm IS\ resh.}}{2\,\sigma^{\rm no\ resh.}} \right\vert,
+\end{equation}
+capturing overall impact of using physical bound-state masses in the phase space generation. The second, denoted by $\Delta \sigma^{\rm algo}$, is the relative difference between the two reshuffling algorithms,
+\begin{equation}\label{eq:unc_resh}
+    \Delta\sigma^{\rm algo} = \left\vert \frac{\sigma^{\rm FS\ resh.} - \sigma^{\rm IS\ resh.}}{\sigma^{\rm FS\ resh.} + \sigma^{\rm IS\ resh.}} \right\vert,
+\end{equation}
+quantifying the uncertainty associated with the reshuffling procedure.
+In phenomenological applications, neither algorithm is expected to be superior to the other. We therefore recommend performing computations with both prescriptions and using their difference as an estimate of the associated uncertainty. In this sense, eq.~\eqref{eq:unc_resh} provides an estimate of an additional theoretical uncertainty that should be included in phenomenological studies, as it is not negligible in general. For the LO predictions considered in this work, this uncertainty is expected to be subdominant compared to the scale variations for processes exhibiting a non-trivial scale dependence.
+
+The inclusion of physical masses allows one to estimate the importance of missing relativistic corrections. Our implementation relies on the assumption that a phase-space treatment alone is sufficient to capture the effect of including physical masses, while the matrix element can still be evaluated at its original level of accuracy, as discussed in eq.~\eqref{eq:resh_matrix_element_approx}.
+However, this assumption might not hold in general, as the neglected corrections to the matrix element could be larger than anticipated and might partially compensate for those already incorporated in the phase space. In such cases, the reshuffling procedure does not necessarily improve the parametric quark-mass dependence of the cross-section prediction and may even increase the associated uncertainty.
+The size of the missing contributions to total cross sections can be estimated by comparing the $\Delta\sigma^{\rm resh}$ deviation with the expected scaling of ${\cal O} \left( \sum_{\cal Q}\Delta M_{\cal Q}/ M_{\cal Q}\right)$, where $\Delta M_{\cal Q} = \vert M_{\cal Q} - (m_Q + m_{\bar{Q}'}) \vert$.
+
+The modular architecture of \mgshort\ records each partonic and Fock-state contribution individually in the {\tt HTML} output, such that the cross section associated with each Fock state combination can always be retrieved after process generation.
+Moreover, an LHE file is saved at the end of the event-generation pipeline, enabling the decomposition of differential distributions into their individual contributions. This functionality will be demonstrated in the next sections.
+
+Before moving to the description of some exemplary cross sections, we stress that these results are intended solely as a showcase of our code rather than as phenomenology studies.
+In this sense, comparisons of the presented numbers with experimental data, where available, should be performed with care, as our numerical results do not include contributions beyond LO in QCD, do not account for possible feed-down effects, nor include possible double-parton-scattering (DPS) contributions~\cite{Kom:2011bd,Lansberg:2014swa,Lansberg:2015lva,Shao:2016wor,Lansberg:2016rcx,Lansberg:2016muq,Borschensky:2016nkv,Lansberg:2017chq,Shao:2019qob,Shao:2020kgj,Prokhorov:2020owf}. In addition, some processes may exhibit a strong dependence
+on the chosen values of the CO LDMEs. The only exception is the discussion of $J/\psi\, + \psi(2\swave)$ in section \ref{sec:jpsipsi2sresult}, which is studied in greater depth to illustrate the full potential of our tool for phenomenological applications. In particular, although we restrict ourselves to single-parton-scattering (SPS) contributions, we consider not only direct \swave- and {\pwavetxt} contributions, but also $J/\psi$ feed-down contributions from $\psi(2\swave)$ and $\chi_{cJ}$ states. However, we refrain from presenting complete phenomenological studies of the other processes considered in this section, as this goes beyond the scope of this work.
+
+\subsection{Single-quarkonium production in proton-proton collisions}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[t!]
+\centering
+\renewcommand*{\arraystretch}{1.4}
+\textbf{$\boldsymbol{pp}$ collision: associated jet production}
+\begin{tabular}[t]{lcccc}
+\toprule
+\multirow{2}{*}{\textbf{final state}}  & \multirow{2}{*}{$\left(\dfrac{m_c}{\rm GeV}, \dfrac{m_b}{\rm GeV}\right)$}& \multicolumn{3}{c}{$\boldsymbol{\sigma}~[\textbf{nb}]$} \\
+& & \textbf{no resh.} & \textbf{FS resh.} & \textbf{IS resh.} \\
+\midrule
+\multirow{2}{*}{$\psi(2\swave) + j + X$} 
+& $(1.55,4.7)$  & $137.7(2)$ & ${137.7(2)}$ & ${137.8(2)}$ \\ 
+& $(1.845,4.7)$ & $138.5(2)$ & $142.1(2)$ & $1(2)$ \\ 
+\hdashline
+\multirow{2}{*}{$ \eta_c + j + X$} 
+& $(1.55,4.7)$ & $828.6(13)$ & $847.3(12)$ & $847.2(12)$ \\ 
+& $(1.49,4.7)$ & $809.4(12)$ & $820.6(12)$ & $820.1(12)$ \\ 
+\hdashline
+\multirow{2}{*}{$ \Upsilon + j + X$} 
+& $(1.55,4.7)$ & $44.42(6)$ & $45.18(11)$ & $45.21(11)$ \\ 
+& $(1.55,4.73)$ & $44.29(7)$ & $45.36(11)$ & $45.39(11)$ \\
+\hdashline
+\multirow{2}{*}{$\eta_b(2\swave) + j + X$} 
+& $(1.55,4.7)$ & $168.4(3)$ & $164.8(2)$ & $165.8(2)$ \\
+& $(1.55,5)$ & $171.6(2)$ & $171.8(3)$ & $171.8(3)$ \\
+\hdashline
+\multirow{2}{*}{$\chi_{c0} + j + X$} 
+& $(1.55,4.7)$ & $86.03(14)$ & $87.19(15)$ & $87.22(15)$ \\  
+& $(1.705,4.7)$ & $86.75(14)$ & $88.43(15)$ & $88.41(14)$ \\  
+\hdashline
+\multirow{2}{*}{$\chi_{c1} + j + X$} 
+& $(1.55,4.7)$ & $283.4(5)$ & $285.2(4)$ & $285.3(5)$ \\ 
+& $(1.755,4.7)$ & $291.0(5)$ & $294.5(5)$ & $294.5(5)$ \\ 
+\hdashline
+\multirow{2}{*}{$\chi_{c2} + j + X$} 
+& $(1.55,4.7)$ & $382.6(7)$ & $387.3(6)$ & $386.3(6)$ \\ 
+& $(1.78,4.7)$ & $377.0(7)$ & $384.9(6)$ & $384.8(6)$ \\ 
+\hdashline
+\multirow{2}{*}{$h_b + j + X$}
+& $(1.55,4.7)$ & $3.680(6)$ & $3.624(5)$ & $3.651(5)$ \\ 
+& $(1.55,4.95)$ & $3.941(6)$ & $3.930(6)$ & $3.938(6)$ \\ 
+\bottomrule
+\end{tabular}
+\caption{\it\small
+Total fiducial cross sections for associated inclusive quarkonium-jet production in $p p$ collisions at ${\sqrt{s} = 13\,{\rm GeV}}$. Kinematic cuts on the jet transverse momentum (${k_{Tj} > 10\,{\rm GeV}}$) and rapidity (${|\eta_j|< 5}$) are applied to remove the IR-sensitive regions. The no-reshuffling scenarios are obtained by fixing all quarkonium masses to the sum of the constituent-quark masses (given in column $2$). The first row for each final state corresponds to our default setup. For the other setups, the LDMEs are rescaled by a mass-dependent factor (see text). The MC uncertainties are given in parentheses.}
+\label{tab:sigma_pp2Qj}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[t!]
+\centering
+\renewcommand*{\arraystretch}{1.4}
+\textbf{$\boldsymbol{pp}$ collision: associated open heavy-quark production}
+\begin{tabular}[t]{lcccc}
+\toprule
+\multirow{2}{*}{\textbf{final state}}  & \multirow{2}{*}{$\left(\dfrac{m_c}{\rm GeV}, \dfrac{m_b}{\rm GeV}\right)$}& \multicolumn{3}{c}{$\boldsymbol{\sigma}~[\textbf{nb}]$} \\
+& & \textbf{no resh.} & \textbf{FS resh.} & \textbf{IS resh.} \\
+\midrule
+$ \psi(2\swave) + c \bar{c} + X$ 
+& $(1.55,4.7)$ & {$410.6(7)$} & {$313.1(7)$} & {$342.9(9)$} \\ \hdashline
+\multirow{2}{*}{$\eta_b(2\swave) + c \bar{c} + X$} 
+& $(1.55,4.7)$ & {$37.06(6)$} & {$35.50(6)$} & {$34.78(6)$} \\
+& $(1.55,5)$ & {$33.26(6)$} & {$33.24(6)$} & {$33.23(6)$} \\
+\hdashline
+$ B_c^+ + b \bar{c} + X$ 
+& $(1.55,4.7)$ & {$15.404(15)$} & {$15.194(14)$} & {$15.272(14)$} \\ 
+\hdashline
+$ B_{c1}(L)^+ + b \bar{c} + X$ 
+& $(1.55,4.7)$ & {$3.348(3)$} & {$2.867(3)$} & {$2.988(3)$} \\ 
+\bottomrule
+\end{tabular}
+\caption{\it\small  Same as table~\ref{tab:sigma_pp2Qj}, but for the total cross sections of quarkonium production in association with an open heavy-quark pair. For quark masses different from the default values, the LDMEs are rescaled by a mass-dependent factor (see text).}
+\label{tab:sigma_pp2Qccx}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[t!]
+\centering
+\renewcommand*{\arraystretch}{1.4}
+\textbf{$\boldsymbol{pp}$ collision: associated electroweak-boson production}
+\begin{tabular}[t]{lcccc}
+\toprule
+\multirow{2}{*}{\textbf{final state}}  & \multirow{2}{*}{$\left(\dfrac{m_c}{\rm GeV}, \dfrac{m_b}{\rm GeV}\right)$} & \multicolumn{3}{c}{$\boldsymbol{\sigma}~[\textbf{fb}]$} \\
+& & \textbf{no resh.} & \textbf{FS resh.} & \textbf{IS resh.} \\
+\midrule
+\multirow{2}{*}{$ \psi(2\swave) + Z + X$} 
+& $(1.55,4.7)$ & {$537.9(6)$} & {$493.8(5)$} & {$515.3(6)$} \\ 
+& $(1.845,4.7)$ & {$509.7(5)$} & {$500.8(5)$} & {$505.1(5)$} \\ 
+\hdashline
+\multirow{2}{*}{$ \chi_{b0} + \gamma + X$} 
+& $(1.55,4.7)$ & $742(1)$ & $633.4(9)$ & $662.2(9)$ \\ 
+& $(1.55,4.93)$ & {$726.8(9)$} & {$693(1)$} & {$702(1)$} \\ 
+\hdashline
+\multirow{2}{*}{$\psi(2\swave) + W^+ + X$} 
+& $(1.55,4.7)$  & $704.7(7)$ & $649.0(6) $ & $675.2(6)$ \\
+& $(1.845,4.7)$ & {$618.6(6)$} & {$606.0(6)$} & {$611.5(6)$} \\ 
+\bottomrule
+\end{tabular}
+\caption{\it\small Same as table~\ref{tab:sigma_pp2Qj}, but for the total (fiducial) cross sections of quarkonium production associated with electroweak bosons. Kinematic cuts are applied only for quarkonium production associated with photons: ${k_{T\gamma} > 5~{\rm GeV}}$ and ${|\eta_\gamma|< 5}$. For quark masses different from the default values, the LDMEs are rescaled by a mass-dependent factor (see text).}
+\label{tab:sigma_pp2Qew}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+As a first set of examples, we consider single-quarkonium production in proton-proton collisions at ${\sqrt{s} = 13\,{\rm TeV}}$, in association with a jet (table~\ref{tab:sigma_pp2Qj}), open heavy quarks (table~\ref{tab:sigma_pp2Qccx}), and electroweak gauge bosons (table~\ref{tab:sigma_pp2Qew}).
+All numerical results include both CS and CO contributions up to order $v^7$ in the NRQCD velocity expansion (see table~\ref{tab:NRQCD_scaling}), and are evaluated at LO in $\alpha_s$.
+For instance, the syntax to generate $p p \to h_{b} + j + X$ is:
+\prompt{\tt import model sm\_onia}
+\vskip -0.25truecm
+\prompt{\tt generate p p > hb j; output; launch}
+
+\noindent
+For processes such as the example above, where no charm quark or charmonium is explicitly present in the final state, we adopt the fixed-flavour-number scheme with $n_f = 4$ light quark flavours. Otherwise, the {\tt c\_mass} restriction is applied, and $n_f = 3$ is used.
+To avoid the soft and collinear divergences encountered in associated production with jets and photons, we impose kinematic cuts on the transverse momentum and rapidity of the massless final-state particles. For jets, we require that $k_{Tj} > 10\,{\rm GeV}$ and $|\eta_j| < 5$, while for photons we impose $k_{T\gamma} > 5\,{\rm GeV}$ and $|\eta_\gamma| < 5$.
+All remaining processes discussed in this section are IR safe, and no cuts are applied.
+
+The cross sections in table~\ref{tab:sigma_pp2Qj}, all evaluated in the same fiducial region, span the range $1$--$100\,{\rm nb}$ across the different quarkonia considered. Similar magnitudes are observed in table~\ref{tab:sigma_pp2Qccx} for associated open-heavy-quark production. This results from an accidental compensation among different effects, including the suppression from the additional power of $\alpha_s$, the presence of new types of diagrams, and the enhancement due to integration over a wider phase space.
+As expected, the cross sections for associated weak-boson production, shown in table~\ref{tab:sigma_pp2Qew}, are significantly smaller, reflecting both the weaker electroweak coupling and the presence of heavier final-state particles.
+
+Most of the processes included in table~\ref{tab:sigma_pp2Qj} exhibit similar features.
+Momentum reshuffling induces deviations 
+$\Delta \sigma^{\rm resh}$ at or below the percent level for all setups, with $\psi(2\swave) + j$ at $m_c = 1.55\,{\rm GeV}$ being the process least affected by momentum reshuffling. This is somewhat counter-intuitive, given that the alternative setup (for which $m_c = M_{\psi(2\swave)}/2$) does exhibit a shift in the fiducial cross section when momenta are reshuffled to accommodate the CO state masses. Moreover, the final-state reshuffling causes the cross section to shift in the opposite direction to that discussed in section~\ref{sec:momreshufftest}.
+These illustrate that the impact of fiducial cuts on the cross section is generally difficult to anticipate. 
+Overall, the uncertainties $\Delta\sigma^{\rm algo}$ associated with the treatment of the quarkonium masses are negligible. We attribute this mainly to the stringent cuts employed, which exclude the threshold regions and thereby reduce the impact of the reshuffling procedure, spoiling the expected ${\cal O}(\Delta M_{\cal Q}/M_{\cal Q})$ scaling.
+However, since these behaviours may change significantly when different cuts are applied, we recommend using multiple reshuffling algorithms to reliably assess such uncertainties.
+
+In table~\ref{tab:sigma_pp2Qccx}, momentum reshuffling affects the cross sections in different ways.
+For $B_c^+ + b\bar{c}$, the mass-treatment deviation $\Delta \sigma^{\rm resh}$ remains at the percent level. For $\eta_b + c\bar{c}$, the deviation increases for the default setup, reaching $\Delta \sigma^{\rm resh}\sim5\%$, while the alternative setup yields cross sections that are compatible within MC uncertainties, independently of the reshuffling procedure employed.
+The effect becomes more pronounced for $B_{c1}(L)^+ + b \bar{c}$ and $\psi(2\swave) + c \bar{c}$, with $\Delta \sigma^{\rm resh}$ reaching ${\sim}13\%$ for the former and ${\sim}20\%$ for the latter.
+In addition, initial- and final-state reshuffling algorithms are found to differ at the percent level or below, with the largest deviation observed for $\psi(2\swave) + c \bar{c}$ ($\Delta\sigma^{\rm algo}\sim4\%$).
+Based on the limited number of processes investigated here, the presence of two open heavy quarks appears to favour a reduction of the total production yield when physical masses are used.
+Note that, in the case of associated open-quark production, the quark masses entering the open fermion line(s) should not differ significantly from their typical pole-mass values. Therefore, alternative setups that modify the mass parameters of the open quarks are discarded.
+
+Moving to table~\ref{tab:sigma_pp2Qew}, all three processes considered exhibit sensitivity to both the heavy-quark and quarkonium masses. Among them, $\chi_{b0}+\gamma$ with the default setup shows the largest deviation associated with the mass treatment, with $\Delta \sigma^{\rm resh} \sim 13\%$, while the other two processes exhibit $\Delta \sigma^{\rm resh} \sim 6\%$.
+The uncertainty associated with the reshuffling algorithm is instead $\Delta\sigma^{\rm algo} \sim 2\%$ for all processes. For the alternative setups, both $\Delta \sigma^{\rm resh}$ and $\Delta\sigma^{\rm algo}$ relative deviations decrease, as the heavier CO states become the only source of reshuffling uncertainty.
+However, this does not imply that the alternative setups are necessarily preferable or that they are free from uncertainties. 
+Moreover, we observe that, for $\chi_{b0} + \gamma$, changing the bottom-quark mass affects the reshuffled cross sections more than the non-reshuffled one. 
+This is in contrast to our naive expectation that the momentum reshuffling prescription should reduce the sensitivity of the cross section to variations of the constituent-quark masses.  
+As $\Delta \sigma^{\rm resh}$ is of the same order as the expected scaling $\Delta M_{\chi_{c2}}/M_{\chi_{c2}} \sim 5\%$, we infer that the neglected corrections are not excessively large in this case, and that the increased sensitivity to the constituent-quark mass is primarily driven by the naive LDME rescaling.
+
+Before concluding the discussion of single-quarkonium hadroproduction, we elaborate further on $\chi_{b0}+\gamma$. Although both CS and CO $\chi_{b0}$ LDMEs have the same $v^2$ order (cf.\@ table~\ref{tab:NRQCD_scaling}), the former is forbidden at LO by charge-conjugation conservation. The \mgshort\ output confirms this, as the cross section is solely determined by the $\chi_{b0}[^3 \swave_1^{[8]}]$ state. 
+
+Overall, the first examples reported in tables~\ref{tab:sigma_pp2Qj}, \ref{tab:sigma_pp2Qccx}, and \ref{tab:sigma_pp2Qew} illustrate different scenarios when a coherent mass treatment is employed. For the total cross sections, $\Delta \sigma^{\rm resh}$ follows the expected scaling of ${\cal O} \left( \Delta M_{\cal Q}/ M_{\cal Q}\right)$.
+Once a fiducial region is imposed, however, this expectation no longer holds. Applying cuts that remove part of the threshold region should generally reduce the impact of reshuffling, but the size of this reduction remains difficult to anticipate, as it depends strongly on several factors, including the size of the accessible phase-space region and the specific structure of the matrix elements involved. 
+In addition, our examples demonstrate that \madsons\ is capable of providing reliable cross sections that account for both \swave- and \pwavetxt\ contributions.
+
+
+\subsection{Double-quarkonium production in proton-proton collisions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[t!]
+\centering
+\renewcommand*{\arraystretch}{1.4}
+\textbf{$\boldsymbol{pp}$ collision: double-quarkonium production}
+\begin{tabular}[t]{lcccc}
+\toprule
+\multirow{2}{*}{\textbf{final state}}  & \multirow{2}{*}{$\left(\dfrac{m_c}{\rm GeV}, \dfrac{m_b}{\rm GeV}\right)$} & \multicolumn{3}{c}{$\boldsymbol{\sigma}~[\textbf{nb}]$} \\
+& & \textbf{no resh.} & \textbf{FS resh.} & \textbf{IS resh.} \\
+\midrule
+$\psi(2\swave) + \psi(2\swave) + X$ & $(1.55,4.7)$ & $4.994(4)$ & $2.1123(8)$ & $2.9854(12)$ \\ \hdashline
+$J/\psi + \psi(2\swave) + X$ & $(1.55,4.7)$ & $18.81(2)$ & $12.569(4)$ & $14.806(5)$ \\ \hdashline
+$J/\psi + \eta_c + X$ & $(1.55,4.7)$ & $38.39(4)$ & $38.27(4)$ & $38.00(4)$ \\ \hdashline
+$J/\psi + \Upsilon + X$ & $(1.55,4.7)$ & $0.15988(18)$ & $0.15475(18)$ & $0.15254(17)$ \\ \hdashline
+$J/\psi + \eta_b + X$ & $(1.55,4.7)$ & $1.1832(5)$ & $1.173(4)$ & $1.1625(5)$ \\ \hdashline
+$\Upsilon + \Upsilon + X$ & $(1.55,4.7)$ & $0.04703(3)$ & $0.04469(3)$ & $0.04559(3)$ \\
+\bottomrule
+\end{tabular}
+\caption{\it\small Total cross sections for double-charmonium and double-bottomonium production in $p p$ collisions at $\sqrt{s} = 13\,{\rm TeV}$.}
+\label{tab:sigma_pp2QQ}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The second set of examples concerns double-quarkonium production in proton-proton collisions at ${\sqrt{s}=13\,{\rm TeV}}$.
+We consider the total cross sections for double-charmonium, double-bottomonium, and mixed charmonium-bottomonium production solely adopting the default setup. All these processes are IR finite for both CS and CO channels at LO, and no additional cuts are therefore applied.
+They are generated in {\mgshort} following the same syntax as for single-quarkonium production. The numerical results are reported in table~\ref{tab:sigma_pp2QQ}. All CS and CO contributions up to order $v^7$ (see table~\ref{tab:NRQCD_scaling}) are included, without feed-down and DPS contributions.
+
+The impact of reshuffling varies noticeably with the quarkonium states considered. For $J/\psi + \eta_c$, $J/\psi + \Upsilon$, and $\Upsilon + \Upsilon$, applying a momentum reshuffling procedure modifies the cross section at the percent level. In contrast, double-$\psi(2\swave)$ and $J/\psi + \psi(2\swave)$ production undergo a more significant reduction, with $\Delta\sigma^{\rm resh}\sim49\%$ and $\Delta\sigma^{\rm resh}\sim27\%$, respectively. For the same processes, large values of $\Delta\sigma^{\rm algo}$ are also observed, namely $\sim17\%$ for double-$\psi(2\swave)$ and $\sim8\%$ for $J/\psi + \psi(2\swave)$. The high sensitivity of these channels to the mass treatment has important phenomenological consequences for the description of the LHCb measurement of $J/\psi + \psi(2\swave)$~\cite{LHCb:2023wsl}.
+Previous SPS predictions tended to fully cover the measured data, creating mild tension with interpretations involving sizeable DPS contributions. The reduction of both direct $J/\psi + \psi(2\swave)$ production and feed-down contributions from double-$\psi(2\swave)$ production is therefore important for improving our understanding of this process. 
+
+An instructive comparison can be made between the analogous processes of double-$\psi(2\swave)$ and double-$\Upsilon$ production. For the non-reshuffled cross sections, we find 
+$$\dfrac{\sigma\!\left(\psi(2\swave)+\psi(2\swave)\right)}{{\sigma\!\left(\Upsilon+\Upsilon\right)}} \sim 100\,,$$ which can be attributed to the different virtuality scales of the propagators, controlled by the charm-quark mass in one case and the bottom-quark mass in the other, as well as to the different LDMEs involved.
+Moreover, the mass treatment generates corrections of different magnitudes for the two processes, with $\Delta\sigma^{\rm resh}$ decreasing by roughly a factor $10$ from double-$\psi(2\swave)$ to double-$\Upsilon$ production. This behaviour is consistent with the expected scaling of the reshuffling correction, namely $2\Delta M_{\psi(2\swave)}/M_{\psi(2\swave)} \sim 32\%$ for double-$\psi(2\swave)$ and $2\Delta M_{\Upsilon}/M_{\Upsilon}\sim 1\%$ for double-$\Upsilon$ production.
+The remaining processes listed in table~\ref{tab:sigma_pp2QQ} follow the same pattern. For example, the expected scaling for $J/\psi + \psi(2\swave)$ is $\Delta M_{\psi(2\swave)}/M_{\psi(2\swave)} \sim 16\%$, in good agreement with the trend observed in the table.
+
+To qualitatively understand the cross sections of other similar processes, we first observe that the $\mathcal{O}(\alpha_s^4)$ cross section of $J/\psi+\eta_b$ is almost an order of magnitude larger than that of $J/\psi+\Upsilon$ at the same order. Both processes are dominated by mixed CS-CO channels~\cite{Shao:2016wor}. However, the dominant contribution, $J/\psi[^3P_J^{[8]}]+\eta_b[^1S_0^{[1]}]$, in $J/\psi+\eta_b$ production (see table~\ref{tab:sigma_pp2JpsiEtab}) is further enhanced by $t$-channel gluon diagrams, similar to that shown in figure~1(e) of ref.~\cite{Shao:2016wor}. Such diagrams can only occur in CO-CO channels for $J/\psi+\Upsilon$ production.
+
+Similar to the $J/\psi+J/\psi$ case, the total cross section of $J/\psi+\psi(2\swave)$ SPS production is dominated by the CS-CS channel due to the relative sizes of the LDMEs. However, owing to charge-conjugation conservation, the CS-CS contribution vanishes for $J/\psi+\eta_c$ at $\mathcal{O}(\alpha_s^4)$, making the LO contribution of this channel at $\mathcal{O}(\alpha_s^5)$ one order of magnitude smaller than the corresponding CS-CS contribution in $J/\psi+\psi(2\swave)$ production~\cite{Lansberg:2013qka}. This led to the expectation that the SPS contribution in $J/\psi+\eta_c$ hadroproduction is suppressed compared with the DPS contribution, making this process an ideal probe of the DPS mechanism. However, as shown by the results reported in table~\ref{tab:sigma_pp2QQ}, the total cross section of $J/\psi+\eta_c$ is even a factor of two larger than that of $J/\psi+\psi(2\swave)$. The dominant contributions in the former arise from the CS-CO channels $J/\psi[^3P_J^{[8]}]+\eta_c[^1S_0^{[1]}]$, analogous to the previously discussed $J/\psi+\eta_b$ case. These channels are enhanced by $t$-channel gluon diagrams, although they are suppressed by the smaller CO LDMEs. These diagrams lead to relatively flat di-quarkonium rapidity-gap $\Delta y$ distributions. Similar behaviour is also observed in the di-$J/\psi$ case, but only for CO-CO channels~\cite{Lansberg:2019fgm}. However, the double CO LDME suppression in the di-$J/\psi$ case makes this enhancement effect much less pronounced than in the $J/\psi+\eta_c$ case. Therefore, although sensitive to the CO LDMEs of $J/\psi$, the SPS contribution in $J/\psi+\eta_c$ hadroproduction remains sizeable, contrary to what has been assumed in the literature.
+Note that, to observe this enhancement experimentally, large $\Delta y$ and low transverse momenta must be included, as the effect becomes negligible for $\Delta y \to 0$, where the expected LDME scaling becomes valid again.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[t!]
+\centering
+\renewcommand*{\arraystretch}{1.4}
+\begin{tabular}[t]{lc||lc}
+\toprule \multicolumn{4}{c}{\textbf{process: $\boldsymbol{p p \to J/\psi + \eta_b + X}$}}\\
+\toprule
+{\textbf{channel}} 
+ & {$\boldsymbol{\sigma~[\textbf{pb}]}$} & {\textbf{channel}} 
+ & {$\boldsymbol{\sigma~[\textbf{pb}]}$} \\ 
+ \midrule
+$J/\psi\big[{}^3{\swave}_1^{[1]}\big] + \eta_b\big[{}^1{\swave}_0^{[1]}\big]$ & {$0$} & $J/\psi\big[{}^3{\swave}_1^{[8]}\big] + \eta_b\big[{}^1{\swave}_0^{[1]}\big]$ & $203.73(9)$\\ \hdashline
+$J/\psi\big[{}^3{\swave}_1^{[1]}\big] + \eta_b\big[{}^1{\swave}_0^{[8]}\big]$ & {$0$} & $J/\psi\big[{}^3{\swave}_1^{[8]}\big] + \eta_b\big[{}^1{\swave}_0^{[8]}\big]$ & $1.04(4)$ \\ \hdashline
+$J/\psi\big[{}^3{\swave}_1^{[1]}\big] + \eta_b\big[{}^3{\swave}_1^{[8]}\big]$ & $0.5137(9)$
+& $J/\psi\big[{}^3{\swave}_1^{[8]}\big] + \eta_b\big[{}^3{\swave}_1^{[8]}\big]$ & $1.34(2)$ \\ \hdashline
+$J/\psi\big[{}^3{\swave}_1^{[1]}\big] + \eta_b\big[{}^1{\pwave}_1^{[8]}\big]$ & {$0$} & $J/\psi\big[{}^3{\swave}_1^{[8]}\big] + \eta_b\big[{}^1{\pwave}_1^{[8]}\big]$ & $6.44(9)$ \\ \hdashline
+$J/\psi\big[{}^1{\swave}_0^{[8]}\big] + \eta_b\big[{}^1{\swave}_0^{[1]}\big]$ & $161.21(6)$ & $J/\psi\big[{}^3{\pwave}_J^{[8]}\big] + \eta_b\big[{}^1{\swave}_0^{[1]}\big]$ & $762(4)$ \\ \hdashline
+$J/\psi\big[{}^1{\swave}_0^{[8]}\big] + \eta_b\big[{}^1{\swave}_0^{[8]}\big]$ & $0.81(4)$ & $J/\psi\big[{}^3{\pwave}_J^{[8]}\big] + \eta_b\big[{}^1{\swave}_0^{[8]}\big]$ & $4.1(3)$ \\ \hdashline
+$J/\psi\big[{}^1{\swave}_0^{[8]}\big] + \eta_b\big[{}^3{\swave}_1^{[8]}\big]$ & $0.405(12)$ & $J/\psi\big[{}^3{\pwave}_J^{[8]}\big] + \eta_b\big[{}^3{\swave}_1^{[8]}\big]$ & $1.63(5)$ \\ \hdashline
+$J/\psi\big[{}^1{\swave}_0^{[8]}\big] + \eta_b\big[{}^1{\pwave}_1^{[8]}\big]$ & $5.16(12)$ & $J/\psi\big[{}^3{\pwave}_J^{[8]}\big] + \eta_b\big[{}^1{\pwave}_1^{[8]}\big]$ & $25.29(9)$ \\ 
+\bottomrule
+\end{tabular}
+\caption{\it\small Fock-state decomposition of the total cross section for associated $J/\psi+\eta_b$ production in $pp$ collisions at $\sqrt{s} = 13\,{\rm TeV}$.
+Results are obtained using the final-state reshuffling algorithm.}
+\label{tab:sigma_pp2JpsiEtab}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+While we present a more detailed investigation of $J/\psi+\psi(2\swave)$ production in section~\ref{sec:jpsipsi2sresult}, we now further consider $pp \to J/\psi + \eta_b$ to highlight another feature of the \mgshort\ architecture: each  Fock-state contribution is stored independently, enabling a detailed decomposition of the process. 
+The total cross section of this process is $\sigma_{J/\psi\textrm{--}\eta_b} = 1173(4)^{+258\%}_{-74.5\%}\,{\rm pb}$, while the breakdown into Fock-state combinations is given in table~\ref{tab:sigma_pp2JpsiEtab}.\footnote{Values of order $10^{-27}$ or smaller in the {\tt HTML} output are interpreted as numerical zeros, consistently with the symmetry arguments discussed in the text. Accordingly, they are reported as zero in the table.} 
+As expected, the double-CS channel vanishes at LO due to charge-conjugation symmetry and colour conservation, but becomes non-zero at $\mathcal{O}(\alpha_s^5)$ through the emission of an additional gluon~\cite{Lansberg:2013qka}. The dominant contributions at $\mathcal{O}(\alpha_s^4)$ therefore arise from the mixed-colour channels. 
+Among them, most CS $J/\psi$ channels also vanish, and the only non-zero contribution is about one order of magnitude smaller than the CS $\eta_b$ channels. This can again be traced back to charge-conjugation symmetry: three gluons must couple to the $c \bar{c}$ line to satisfy this symmetry, which at LO is only possible when the $\eta_b$ is in a $^3 \swave_1^{[8]}$ configuration. However, as mentioned before, this channel involves propagators with larger virtualities than the other CS-CO mixed channels, resulting in a suppression of $m_b^4/m_c^4 \sim 85$. 
+Interestingly, while the same argument does not apply to the double-$^3 \swave_1^{[8]}$ channel, for which charge parity is not a good quantum number, this contribution is still suppressed by the additional CO LDME. Since the two suppression mechanisms are of comparable size, the two channels, $J/\psi[^3\swave_1^{[1]}]+\eta_b[^3\swave_1^{[8]}]$ and $J/\psi[^3\swave_1^{[8]}]+\eta_b[^3\swave_1^{[8]}]$, are found to have similar magnitudes.
+Finally, we observe that the largest contribution to the cross section comes from $J/\psi[^3\pwave_J^{[8]}]+\eta_b[^1\swave_0^{[1]}]$.
+Although this channel is, in principle, a potential probe of CO $\psi(N\swave)$ LDMEs, the $\eta_b$ meson is challenging to detect, and no experimental measurement has yet demonstrated the feasibility of such a study.
+
+
+\subsection{Charmonium production in electron-positron collisions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[t!]
+\centering
+\renewcommand*{\arraystretch}{1.4}
+\textbf{$\boldsymbol{e^+e^-}$ collision: inclusive and exclusive charmonium production}
+\begin{tabular}[t]{lcccc}
+\toprule
+\multirow{2}{*}{\textbf{final state}}  & \multirow{2}{*}{$\left(\dfrac{m_c}{\rm GeV}, \dfrac{m_b}{\rm GeV}\right)$}& \multicolumn{3}{c}{$\boldsymbol{\sigma}~[\textbf{fb}]$} \\
+& & \textbf{no resh.} & \textbf{FS resh.} & \textbf{IS resh.} \\
+\midrule
+\multirow{3}{*}{$\psi(2\swave) + g + X$} 
+& $(1.55,4.7)$ & $202.82 (3)$ & $189.10(3)$ & $211.78(3)$ \\ 
+& $(1.845,4.7)$ & {$299.20(4)$} & {$293.58(4)$} & {$303.21(4)$} \\  
+& $(1.945,4.7)$ & $338.490(4)$ & $338.490(4)$ & $338.490(4)$ \\ 
+\hdashline
+\multirow{1}{*}{$\psi(2\swave)\big[{}^3\swave_1^{[1]}\big] + gg$} 
+& $(1.55,4.7)$ & $127.27(11)$ & $90.86(8)$ & $116.25(10)$ \\ 
+{\qquad\qquad\quad$+\ X$}
+& $(1.845,4.7)$ & {$130.12(11)$} & $130.12(11)$ & $130.12(11)$ \\ 
+\hdashline
+\multirow{1}{*}{$\psi(2\swave) + c \bar{c} + X$}
+& $(1.55,4.7)$ & $63.08 (4)$ & $46.27 (3)$ & $50.54 (3)$ \\ 
+\hdashline
+\multirow{1}{*}{$h_c + c \bar{c} + X$} 
+& $(1.55,4.7)$ & $7.924(6)$ & $6.551(5)$ & $6.599(5)$ \\ 
+\hdashline
+\multirow{2}{*}{$J/\psi + \chi_{c0}$} 
+& $(1.55,4.7)$ & $4.6551(4)$ & $4.4892(3)$ & $4.9535(4)$ \\ 
+& $(1.705,4.7)$ & $7.2112(7)$ & $7.4915(7)$ & $6.8110(7)$ \\ 
+\hdashline
+\multirow{2}{*}{$J/\psi + \chi_{c1}$} 
+& $(1.55,4.7)$ & $0.76830(9)$ & $0.73091(8)$ & $0.81499(9)$ \\ 
+& $(1.755,4.7)$ & $1.16544(16)$ & $1.22910(17)$ & $1.11965(16)$ \\ 
+\hdashline
+\multirow{2}{*}{$J/\psi + \chi_{c2}$} 
+& $(1.55,4.7)$ & $1.04835(4)$ & $0.99371(3)$ & $1.09331(4)$ \\ 
+& $(1.78,4.7)$ & $1.43786(7)$ & $1.52470(8)$ & $1.41769(7)$ \\ 
+\hdashline
+\multirow{3}{*}{$\chi_{c0} + \chi_{c2}$}
+& $(1.55,4.7)$ & $1.3914(3)\cdot10^{-5}$ & $1.2619(2)\cdot10^{-5}$ & $1.2242(2)\cdot10^{-5}$ \\ 
+& $(1.705,4.7)$ & $1.7487(3)\cdot10^{-5}$ & $1.7131(3)\cdot10^{-5}$ & $1.6918(3)\cdot10^{-5}$ \\ 
+& $(1.78,4.7)$ & $1.8697(3)\cdot10^{-5}$ & $1.9098(4)\cdot10^{-5}$ & $1.9407(4)\cdot10^{-5}$ \\  
+\hdashline
+\multirow{3}{*}{$\chi_{c1} + h_{c}$}
+& $(1.55,4.7)$ & $0.63456(7)$ & $0.57200(8)$ & $0.69509(7)$ \\ 
+& $(1.755,4.7)$ & $0.88768(9)$ & $0.88523(9)$ & $0.88871(9)$ \\ 
+& $(1.765,4.7)$ & $0.89843(9)$ & $0.9009(1)$ & $0.89745(9)$ \\ 
+\bottomrule
+\end{tabular}
+\caption{\it\small Same as table~\ref{tab:sigma_pp2Qj}, but for charmonium production in $e^+ e^-$ collisions at $\sqrt{s} = 10.58\,{\rm GeV}$, with $E_{e^-} = 7\,{\rm GeV}$ and $E_{e^+} = 4\,{\rm GeV}$. No kinematic cuts are applied. For quark masses different from the default values, the LDMEs are rescaled by a mass-dependent factor (see text).}
+\label{tab:sigma_e+e-}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The last class of processes we consider are inclusive and exclusive charmonium production processes in $e^+ e^-$ collisions at $\sqrt{s} = 10.58\,{\rm GeV}$. All processes are IR finite at LO, and no kinematic cuts are applied. The \mgshort\ results are reported in table~\ref{tab:sigma_e+e-}.
+
+For some of the processes presented here, rescaling the quark mass parameter can lead to substantially larger cross sections than those obtained in the default setup.
+In addition, unlike the hadronic collisions discussed previously, initial- and final-state reshuffling affect some of the cross sections in opposite directions.
+Taken together, these effects lead to the relatively larger deviations observed in the table when different mass parameters and reshuffling procedures are employed.
+To understand this behaviour, it is again useful to compare the observed variation with the expected mass scaling, $\sum_{\cal Q}\Delta M_{\cal Q}/M_{\cal Q}$.
+The $\Delta \sigma^{\rm resh}$ associated with the $2\to3$ production processes $\psi(2\swave) + c\bar{c}$ and $h_c + c\bar{c}$ satisfy the expected scaling.
+The same conclusion holds for the CS contribution to inclusive $\psi(2\swave)$ production, $\psi(2\swave) + gg$, for which we find $\Delta \sigma^{\rm resh} \approx 19\%$, while $\Delta M_{\psi(2\swave)}/M_{\psi(2\swave)} \approx 16\%$. Hence, in this case, we consider the cross section obtained within the reshuffling procedure to provide a more realistic estimate than that obtained from the charm-mass rescaling proposed here.
+By contrast, $\Delta \sigma^{\rm resh}\approx1\%$ for the CO channel, $\psi(2\swave) + g$, does not reproduce the expected scaling, $\Delta M_{\psi(2\swave)}^{[8]}/M_{\psi(2\swave)}^{[8]} \approx 18\%$. In this case, adopting a heavier charm-mass value appears to be the more reliable approach. 
+For the exclusive double-quarkonia processes, the situation is more nuanced, even among processes that might appear similar a priori.
+We observe that for $J/\psi + \chi_{cJ}$ and $\chi_{c1} + h_c$, where initial- and final-state reshuffling shift the cross section in opposite directions, we find $\Delta \sigma^{\rm resh} < \sum_{\cal Q}\Delta M_{\cal Q}/M_{\cal Q}$ across the different charm masses considered. This suggests that, for these processes, our approximation does not capture the dominant physical mass effects and that the contribution from relativistic corrections is underestimated. In these cases, rescaling the quark-mass parameter again appears to provide a more realistic result. By contrast, for $\chi_{c0} + \chi_{c2}$, we find that $\Delta \sigma^{\rm resh}$ and the charm-mass variations are of comparable size, both being consistent with the expected scaling. However, the two methods modify the cross section in opposite directions, leading to a less clear-cut situation.
+
+A few comments on notable physical features of our results are in order.
+All exclusive double-charmonium processes have cross sections of ${\cal O}(1\,{\rm fb})$, except for $\chi_{c0} + \chi_{c2}$, whose cross section is significantly smaller. At $\mathcal{O}(\alpha_s^2\alpha^2)$, these processes are produced via $s$-channel diagrams mediated by a photon or a $Z$ boson. For $\chi_{c0} + \chi_{c2}$ production, single-photon exchange violates charge-conjugation symmetry, and the process therefore proceeds only via a highly off-shell $Z$ boson, resulting in a much smaller cross section. However, the $\mathcal{O}(\alpha^4)$ contribution to $\chi_{c0} + \chi_{c2}$ production via two virtual $s$-channel photons is non-zero, and exceeds the cross section presented at $\mathcal{O}(\alpha_s^2\alpha^2)$ reported in table~\ref{tab:sigma_e+e-} by roughly one order of magnitude. 
+The other exclusive processes discussed in table~\ref{tab:sigma_e+e-} exhibit a distinct hierarchy. The most instructive example is $J/\psi + \chi_{c1}$, whose cross section is significantly smaller than that of the $J/\psi + \chi_{c0}$ processes and comparable in magnitude to $h_c + \chi_{c1}$, although the $h_c$ LDME is much smaller than that of $J/\psi$. The associated production of $J/\psi + \chi_{c1}$ is subjected to helicity and parity suppressions~\cite{Dong:2011fb}. 
+Each helicity configuration exhibits an asymptotic behaviour governed by a power of ${m_c^2}/{s}$, as dictated by the helicity selection rule~\cite{Brodsky:1981kj}.
+By contrast, the double-\pwavetxt\ exclusive process $h_c + \chi_{c1}$ is not affected by these suppressions. At the energy considered here, the smaller $h_c$ LDME in the $h_c+\chi_{c1}$ process and the suppressions in the $J/\psi+\chi_{c1}$ are of comparable size, yielding similar cross sections.
+These provide two new examples of the point highlighted in ref.~\cite{ColpaniSerri:2025vdz}: the impact of subleading contributions is often difficult to predict using simple counting arguments based solely on the hierarchy of couplings and velocity-scaling rules.
+
+Another interesting process is inclusive $\psi(2\swave) + g$ production, which at $\mathcal{O}(\alpha_s\alpha^2)$ is entirely dominated by CO contributions, making it a benchmark channel for CO LDME extraction, similarly to inclusive $J/\psi$~\cite{Braaten:1995ez,Zhang:2009ym}. 
+Although this channel is LO in the perturbative expansion in $\alpha_s$, as in the $J/\psi$ case, a significant contribution to inclusive $\psi(2\swave)$ production at $B$-factory energies arises from the CS channel $e^+e^-\to\gamma^*\to \psi(2\swave)+gg+X$, whose leading contribution is at $\mathcal{O}(\alpha_s^2\alpha^2)$, as shown in table \ref{tab:sigma_e+e-}. The suppression by one additional power of $\alpha_s$ is partially compensated by the larger CS LDME.  
+We also note that the hierarchy observed in table~\ref{tab:sigma_e+e-}, namely $\sigma(e^+e^-\to \psi(2\swave)+g+X) > \sigma(e^+e^-\to \psi(2\swave)\big[{}^3\swave_1^{[1]}\big]+gg+X)$, may change when different sets of CO LDMEs are used. In addition, the impact of the aforementioned relativistic corrections~\cite{He:2009uf,Jia:2009np,Li:2026zsu,Jiang:2026ieb}, QCD radiative corrections~\cite{Zhang:2009ym,Ma:2008gq,Gong:2009kp}, and initial-state photon radiation~\cite{Shao:2014rwa,Gong:2019rpd}, which are not (fully) included here, should not be underestimated.
+
+Investigating this class of processes at $e^+ e^-$ colliders shows a different behaviour of momentum reshuffling compared to the hadronic case discussed previously. In particular, the majority of the processes considered here exhibit $\Delta \sigma^{\rm resh} < \Delta \sigma^{\rm algo}$, while for the exclusive double-charmonium processes this effect is compounded by the two reshuffling procedures shifting the cross section in opposite directions. We again emphasise that such behaviour is not easily predictable, as it depends on the interplay of multiple factors. As a result, it may differ significantly even between processes that, a priori, one might expect to behave similarly, such as $\chi_{c0} + \chi_{c2}$ and $\chi_{c1} + h_c$.
+The variety of situation presented here further highlight that a proper estimate of mass-treatment uncertainties requires a systematic comparison of multiple reshuffling algorithms for multiple constituent-mass choices, rather than reliance on a single prescription.
+
+
+
+\subsection[\texorpdfstring{$J/\psi + \psi(2\swave)$}{J/psi + psi(2S)} hadroproduction: a case study]{\boldmath $J/\psi + \psi(2\swave)$ hadroproduction: a case study}\label{sec:jpsipsi2sresult}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[htb!]
+  \centering    
+  \begin{subfigure}[t]{0.49\textwidth}
+      \input{figures/mQQ.pgf}
+      %\includegraphics{figures/mQQ.pdf}
+      \caption{}
+      \label{subfig:mqq}
+  \end{subfigure}\\
+  \begin{subfigure}[t]{0.49\textwidth}
+      \input{figures/rapQQ.pgf}
+      %\includegraphics{figures/rapQQ.pdf}
+      \caption{}
+      \label{subfig:yqq}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+      \input{figures/rap_diff.pgf}
+      %\includegraphics{figures/rap_diff.pdf}
+      \caption{}
+      \label{subfig:Dy}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+      \input{figures/ptQQ.pgf}
+      %\includegraphics{figures/ptQQ.pdf}
+      \caption{}
+      \label{subfig:ptqq}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+      \input{figures/ang_diff.pgf}
+      %\includegraphics{figures/ang_diff.pdf}
+      \caption{}
+      \label{subfig:Dphi}
+  \end{subfigure}
+  \caption{\it Differential cross sections for $J/\psi + \psi(2\swave)$ production at the LHC as functions of (a) the pair invariant mass, (b) the pair rapidity, (c) the absolute rapidity difference, (d) the pair transverse momentum, and (e) the azimuthal angle difference. Fiducial cuts are indicated in the figures. Theoretical predictions are obtained by combining {\tt \mgshort} with {\tt \pythia8}. The LHCb data are taken from ref.~\cite{LHCb:2023wsl}.\vspace*{-0.2\baselineskip}
+  }
+\label{fig:xsec-jpsi-psi2S}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+As our last example, we present a realistic phenomenological application of our framework to the associated production of $J/\psi+\psi(2\swave)$ at the LHC.
+This process has been measured by the LHCb collaboration~\cite{LHCb:2023wsl} at $\sqrt{s}=13$ TeV. The motivation for studying this process is multifaceted. It provides an ideal probe of quarkonium production mechanisms~\cite{Qiao:2002rh,Qiao:2009kg,Lansberg:2013qka,Sun:2014gca,Baranov:2015cle,Lansberg:2015lva,He:2019qqr,Lansberg:2019fgm,Lansberg:2020rft,Sun:2023exa,He:2024ugx,He:2025kkw}, DPS~\cite{Kom:2011bd,Lansberg:2014swa,Borschensky:2016nkv,Prokhorov:2020owf}, fully charmed tetraquark states~\cite{ATLAS:2023bft,CMS:2025vnq}, and transverse-momentum-dependent gluon distributions in protons~\cite{Lansberg:2017dzg,Scarpa:2019fol}. We consider only the SPS contribution at $\mathcal{O}(\alpha_s^4)$, including all CS and CO Fock states up to order $v^7$ (see table \ref{tab:NRQCD_scaling}) and the relevant feed-down contributions. 
+Our theory-data comparison is shown in figure~\ref{fig:xsec-jpsi-psi2S}. The bands represent the $7$-point uncertainty obtained from independent variations of the factorisation and renormalisation scales by factors of two, while the statistical MC uncertainties are shown as error bars. 
+Following the experimental analysis, we require each quarkonium to satisfy $p_{T{\cal Q}} < 14\,{\rm GeV}$ and $2.5 < y_{\cal Q} < 5$. In addition, we employ our default setup (see appendix~\ref{app:setup}) to generate the parton-level events.
+
+This process provides an ideal benchmark to demonstrate the capabilities of \madsons. 
+First, the mass difference between the two produced quarkonia, the $J/\psi$ and $\psi(2\swave)$, is $590~{\rm MeV}$, hence a sensitivity to the mass treatment is expected. More specifically, as we take $m_c = 1.55~{\rm GeV}$, the order of the deviation of the direct channel is ${\Delta M_{\psi(2\swave)}/M_{\psi(2\swave)} \sim 16\%}$; similarly for the feed-down contribution from $\psi(2\swave) + \psi(2\swave)$ we have $2 \Delta M_{\psi(2\swave)}/M_{\psi(2\swave)} \sim 32\%$, while $\Delta M_{\psi(2\swave)}/M_{\psi(2\swave)} + \Delta M_{\chi_{cJ}}/M_{\chi_{cJ}} \sim 25\textrm{--}28\%$ for $\chi_{cJ} + \psi(2\swave)$, depending on $J=0,1,2$.
+For all these channels, momentum reshuffling is thus required for a consistent treatment.
+We consider initial- and final-state reshuffling separately to explicitly illustrate the differences between the two algorithms. Although not performed in this work, the two results can be combined in a further step into a single band that includes the additional theoretical uncertainty associated with the choice of momentum reshuffling algorithm.
+Moreover, {\pwavetxt} contributions in both direct and feed-down channels are not negligible.
+While the process is dominated by the CS-CS channel, it also receives contributions from CO states, including single and double {\pwavetxt} channels which collectively account for $\sim17\%$ of the total fiducial cross section, and $J/\psi$ feed-down from $\psi(2\swave)$ and $\chi_{cJ}$ states, which contribute roughly $25\%$ of the total fiducial cross section. 
+
+To account for quarkonium decays, we interface the {\mgshort} LO events with the parton-shower, hadronisation, and decay modules of \pythia~{\tt v8.315}~\cite{Bierlich:2022pfr}. We enable multi-parton interactions, intrinsic-$k_T$ smearing, and initial- and final-state radiation. The $J/\psi$ is kept stable, while all other quarkonia are allowed to decay. After the full event generation with \pythia{\tt 8}, double-$J/\psi$ events are removed from both direct and feed-down channels by requiring exactly one $J/\psi$ in the final state. The resulting prediction is then reweighted by the branching ratio ${\rm Br}\big(\psi(2\swave)\to {\rm non-}J/\psi\big)\approx 46\%$ to match the unfolded experimental cross section.
+
+The measurement reports a fiducial cross section of
+\begin{equation}
+\sigma^{\rm LHCb}_{J/\psi+\psi(2\swave)} = 4.5\pm{0.7}({\rm stat.})\pm{0.3} ({\rm syst.})\,{\rm nb}\,,
+\end{equation}
+which should be compared with our theoretical predictions,
+\begin{align}
+    \sigma^{\rm IS~resh.}_{J/\psi+\psi(2\swave)} & = 2.23^{+192\%}_{-89\%}\,{\rm nb}\,,\\ 
+    \sigma^{\rm FS~resh.}_{J/\psi+\psi(2\swave)} & = 1.83^{+191\%}_{-90\%}\,{\rm nb}\,,
+\end{align}
+corresponding to initial- and final-state reshuffling, respectively. The quoted theoretical uncertainties are estimated using the standard $7$-point scale variation prescription. The difference between the two central values corresponds to $\Delta \sigma^{\rm algo} \approx 10\%$. Although both central values lie below the measured cross section, the large scale uncertainties affecting our LO prediction render them compatible with the data.
+The comparison between our theoretical predictions and the experimental data for five different distributions is shown in figure~\ref{fig:xsec-jpsi-psi2S}. 
+Overall, we find satisfactory agreement, with the predictions being either comparable to or below the data. 
+Although leading-logarithmic QCD radiation is included through the parton shower, it should be noted that our study does not include full NLO QCD corrections, complete relativistic corrections, or DPS contributions.
+Their inclusion could compensate for the mismatch with the data observed in some bins, leading to an increase of the integrated cross section as well. We further comment on this possibility in the discussion of each distribution below.
+
+We first consider figure~\ref{subfig:mqq}, which shows the differential cross section as a function of the quarkonium-pair invariant mass $M_{\cal QQ}$. For $M_{\cal QQ} \lesssim 10\,{\rm GeV}$, where SPS is expected to dominate, both reshuffling algorithms provide predictions in satisfactory agreement with the data.
+Nonetheless, the large scale uncertainties prevent us from reaching firmer conclusions. A priori, including higher-order terms in the $\alpha_s$ expansion should reduce these uncertainties, provided that the perturbative expansion remains stable.\footnote{Possible remedies for perturbative instabilities in quarkonium processes are discussed in refs.~\cite{Shao:2018adj,Maxia:2026fbz}.}
+For $M_{\cal QQ} > 10\,{\rm GeV}$, the DPS contribution is expected to become ever more relevant, as its cross section should decrease more slowly with $M_{\cal QQ}$ than that of SPS. Consistently, our predictions tend to undershoot the data in this region. Hence, compared with the predictions presented in ref.~\cite{LHCb:2023wsl}, our result improves the description by leaving more room for DPS. The reduction of the cross section is primarily driven by momentum reshuffling, as also shown in table~\ref{tab:sigma_pp2QQ}.
+Moreover, the sizeable $\Delta \sigma^{\rm algo}$ correction mentioned above  is reflected in the distribution of figure~\ref{subfig:mqq}. This effect is driven by the first bins, which contribute most to the cross section and whose central values differ significantly depending on the algorithm employed. By contrast, the separation observed in the last two bins is largely due to the increased statistical MC uncertainty at large $M_{\cal QQ}$ and should not be interpreted as a genuine deviation between the two algorithms.
+
+Figures~\ref{subfig:yqq} and~\ref{subfig:Dy} show the cross-section dependence on the rapidity of the quarkonium pair and the absolute difference between the quarkonium rapidities, respectively. As before, our theoretical predictions improve upon those shown in ref.~\cite{LHCb:2023wsl}, since they maintain good agreement with the data while leaving room for DPS contributions. For instance, figure~\ref{subfig:Dy} presents features analogous to those observed in figure~\ref{subfig:mqq}, where the SPS prediction falls faster than the measurement. This behaviour is expected from studies of $J/\psi$-pair production~\cite{Kom:2011bd,Lansberg:2014swa}, as the large $\Delta y$ region is where DPS, which produces a broader spectrum, becomes dominant. Again, while the discrepancy between the two reshuffling procedures in the first bin represents a genuine difference, the separation observed in the last bins can be traced back to the increased statistical MC uncertainty.
+
+Figures~\ref{subfig:ptqq} and~\ref{subfig:Dphi} show the distributions in the transverse plane. It is important to note that, at LO, these distributions for $p_{T\mathcal{QQ}}>0$ and $\Delta \phi<\pi$ are entirely determined by the perturbative parton-shower and non-perturbative intrinsic-$k_T$ smearing models implemented in \pythia{\tt 8}, and are consequently sensitive to their modelling choices. For this reason, together with the large scale uncertainties affecting the transverse-momentum spectrum of the quarkonium pair, we find the description of the $p_{T{\cal QQ}}$ distribution satisfactory. Similar conclusions apply to the azimuthal angle difference, where we note that the last bin is particularly sensitive to the $k_T$-smearing procedure. A similar sensitivity of the azimuthal difference to $k_T$ effects in double-$J/\psi$ production has already been pointed out in the literature~\cite{Kom:2011bd}.
+
+Overall, figure~\ref{fig:xsec-jpsi-psi2S} illustrates the  capabilities of \madsons. The inclusion of \pwavetxt\ states in the framework enables the systematic treatment of all phenomenologically relevant CO channels and feed-down contributions.
+Moreover, the improved mass treatment reduces the overall $J/\psi + \psi(2\swave)$ cross section, leading to an improved description of the experimental data compared with previous predictions.

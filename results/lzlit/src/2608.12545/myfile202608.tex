@@ -1,0 +1,276 @@
+%% ****** Start of file apstemplate.tex ****** %
+%%
+%%
+%%   This file is part of the APS files in the REVTeX 4.2 distribution.
+%%   Version 4.2a of REVTeX, January, 2015
+%%
+%%
+%%   Copyright (c) 2015 The American Physical Society.
+%%
+%%   See the REVTeX 4 README file for restrictions and more information.
+%%
+%
+% This is a template for producing manuscripts for use with REVTEX 4.2
+% Copy this file to another name and then work on that file.
+% That way, you always have this original template file to use.
+%
+% Group addresses by affiliation; use superscriptaddress for long
+% author lists, or if there are many overlapping affiliations.
+% For Phys. Rev. appearance, change preprint to twocolumn.
+% Choose pra, prb, prc, prd, pre, prl, prstab, prstper, or rmp for journal
+%  Add 'draft' option to mark overfull boxes with black boxes
+%  Add 'showkeys' option to make keywords appear
+%\documentclass[aps,prl,preprint,groupedaddress]{revtex4-2}
+%\documentclass[aps,prl,preprint,superscriptaddress]{revtex4-2}
+%\documentclass[aps,prl,reprint,groupedaddress]{revtex4-2}
+\documentclass[%
+ reprint,
+%superscriptaddress,
+%groupedaddress,
+%unsortedaddress,
+%runinaddress,
+%frontmatterverbose, 
+%preprint,
+%preprintnumbers,
+%nofootinbib,
+%nobibnotes,
+%bibnotes,
+ amsmath,amssymb,
+ aps,
+%pra,
+%prb,
+%rmp,
+%prstab,
+%prstper,
+%floatfix,
+]{revtex4-2}
+% You should use BibTeX and apsrev.bst for references
+% Choosing a journal automatically selects the correct APS
+% BibTeX style file (bst file), so only uncomment the line
+% below if necessary.
+%\bibliographystyle{apsrev4-2}
+
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+
+\begin{document}
+
+% Use the \preprint command to place your local institutional report number 
+% on the title page in preprint mode.
+% Multiple \preprint commands are allowed.
+%\preprint{}
+
+\title{Ising-machine-like Driving Condition Restrictions in SSBM and Additional Pseudo-annealing\\- Driving Method for SSBM that Achieves Best Cut Value Search -} %Title of paper
+
+% repeat the \author .. \affiliation  etc. as needed
+% \email, \thanks, \homepage, \altaffiliation all apply to the current author.
+% Explanatory text should go in the []'s, 
+% actual e-mail address or url should go in the {}'s for \email and \homepage.
+% Please use the appropriate macro for the type of information
+
+% \affiliation command applies to all authors since the last \affiliation command. 
+% The \affiliation command should follow the other information.
+
+\author{Toshiya Sato}
+%\email[]{Your e-mail address}
+%\homepage[]{Your web page}
+%\thanks{}
+%\altaffiliation{}
+\affiliation{NTT Device Technology Laboratories, NTT, Inc., Atsugi, Kanagawa 243-0198, Japan}
+
+% Collaboration name, if desired (requires use of superscriptaddress option in \documentclass). 
+% \noaffiliation is required (may also be used with the \author command).
+%\collaboration{}
+%\noaffiliation
+
+\date{\today}
+
+\begin{abstract}
+In our previous paper, we described the proposal and validation of a new physical implementation-type simulator (spontaneous symmetry breaking machine (SSBM)) for a combinatorial optimization problem that utilizes a phenomenon dual to the model in which a pseudo-spin many-body system is created by spontaneous symmetry breaking.
+Furthermore, we performed numerical simulations with different initial fluctuations on a large-scale benchmark problem $(K_{2000})$ and reported that we identified a condition under which pseudo-spin patterns gradually converge during the solution search process to ultimately form a single pattern and that the cut value of this converged solution reached 99.7\% of the known best.
+In this paper, we discuss the conditions under which the SSBM can exhibit behavior analogous to that of a continuous-variable-type Ising machine, and report that by adding an effect similar to physical annealing to these conditions, the SSBM can be made to search for the best known cuts in $K_{2000}$.
+\end{abstract}
+
+\pacs{}% insert suggested PACS numbers in braces on next line
+
+\maketitle %\maketitle must follow title, authors, abstract and \pacs
+
+% Body of paper goes here. Use proper sectioning commands. 
+% References should be done using the \cite, \ref, and \label commands
+\section{Introduction}
+
+The realization of a high-performance solver for combinatorial optimization problems has become an extremely important challenge to address real-world issues — such as drug discovery, logistics, and portfolio management — that require selecting the most suitable option possible from countless alternatives.
+Following the proposal and realization of an Ising machine (IM) that physically implements quantum annealing, known as D-Wave \cite{Johnson}, an extended IM capable of handling fully connected problems was realized using a physically implemented IM based on a ring-type pulsed laser oscillator system (coherent IM (CIM)) \cite{Yamamoto}.
+Furthermore, driven by remarkable advances in digital processing technologies — such as GPUs and FPGAs, which offer significant advantages for parallel processing — noteworthy results are now being reported even in the category of algorithmic solvers, where speedup through parallel processing plays a crucial role.
+Examples include simulated bifurcation machine (SBM)\cite{Goto} and simulated CIM, where physical models are described in the form of differential equations, and digital annealers \cite{Aramon}, momentum annealing \cite{Okuyama}, and STATICA \cite{KYamamoto}, which aim to address both fully connected problems and acceleration through parallel processing.
+Among these, CIM, SBM, and simulated CIM — which do not belong to the annealer category — share similarities with the Hopfield-Tank model\cite{HopfieldT} in that they are continuous variable (where variables corresponding to spins take analog values) and continuous-time models; at the same time, they share the following two similarities not found in the Hopfield-Tank model: (1) These methods map spins to continuous variables and employ a process in which a single stable equilibrium point is guided to one of two final stable equilibrium points via a pitchfork bifurcation. Furthermore, (2) to suppress the unintended effects of the Ising interaction term arising from the introduction of continuous variables, the steady-state approximation or the adiabatic theorem is assumed, and the bifurcation process proceeds sufficiently slowly\cite{Yamamoto, Goto}.
+Consequently, except at the initial stage, state transitions during the search for solutions occur while maintaining a state in which most of the continuous variables corresponding to the spins follow the stable equilibrium point where the values gradually increase (only a few continuous variables rapidly switch spin states).
+On the other hand, we proposed a new type of solver for combinatorial optimization problems called SSBM, based on the physical implementation of spontaneous symmetry breaking phenomena, and demonstrated its effectiveness \cite{Toshiy01,Toshiy02} (see also Section S1 and Figure S1 in the supplementary materials).
+In this paper, we describe our attempt to adjust the solution search conditions in SSBM so that they produce effects similar to the steady-state approximation and the adiabatic theorem used in CIM and SBM, and we report that we have successfully found the best solution \cite{GOTO-02} for the currently known $K_{2000}$ \cite{Yamamoto-2}.
+
+\section{SSBM as a Fully Dissipative Connection System}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.48\textwidth]{Figure01.png} 
+  \caption{Set-up of nest-type dissipative system using polarized optical coherent clock pulses and $1\times2$MZM as \it partial inflow gate \rm of the FDCS.}
+  \label{fig:01}
+\end{figure}
+
+SSBM is a solver for combinatorial optimization problems that utilizes the SSB phenomenon; it is a system composed of a number of basic elements equal to the number of elements $N$ in the combinatorial optimization problem. Each basic element is a dissipative system, not a Hamiltonian system (Fig. 1). In this system, an electrical pulse derived from a preceding incoming optical clock pulse drives the input gate to control the inflow rate (transmittance) of the subsequent optical clock pulse while simultaneously flowing out of the system completely. Furthermore, under conditions where the pulse width of the optical clock pulse, the pulse width of the modulation pulse driving the input gate, and the repetition period of the optical clock pulse satisfy $\sigma_{\mbox{\rm \scriptsize pw}} \ll \tau_{\mbox{\rm \scriptsize pw}} \ll \Delta t$, the basic element system exhibits robust causality (i.e., dissipative causality), as expressed by the following iteration equation, when a Mach–Zehnder interferometer-type intensity modulator (MZM) with a sufficiently wide response bandwidth is used as the input gate:
+
+\begin{eqnarray}
+\phi_{i+m} 
+& = &
+\sin^{2}(\frac{\gamma}{2} \, \phi_{i}  +  \theta_{B} ) 
+\end{eqnarray}
+
+Here, $\gamma$, $\phi_{i+m}$, and $\theta_{B}$ represent the modulation efficiency, the transmittance at port $ {\bf A}$, and the static phase condition of the MZM, respectively. Furthermore, the multiple dissipative systems that constitute the basic elements of the SSBM can be realized not only through parallelization but also through time-division multiplexing. In such cases, the boundary, which is typically defined as a spatial domain, is instead defined as a spatiotemporal domain\cite{Toshiy01}(see Figs. 1(a) and (b)). Here, we further narrow the conditions and focus on the case where $\gamma \!=\! \pi$ and $\theta_{B} \!=\! 0$. Under these conditions, the system is governed by a pseudo-potential featuring a single unstable fixed point ($\phi = 1/2$), an axis of symmetry passing through this unstable fixed point, and two additional attractors ($\phi = 0$ and $\phi = 1$); however, at the moment the input of the optical clock pulse begins, a state fixed at the attractor $\phi = 0$ (a state with broken symmetry) emerges. This state is a stable fixed point where there is no inflow of clock pulses from the boundary of interest into the interior of the system, and it conceals an important characteristic that is often overlooked, as will be discussed later (hereafter, this state will be referred to as the hidden state (HS)). The symmetry that has already been broken in the HS is restored by transitioning the state of the system to an unstable fixed point while maintaining the aforementioned bistable pseudo-potential (see Section S1 in the supplementary materials). In the time-division multiplexing example, this is achieved by inputting, through an external input port added between the input gate and the MZM, by inputting optical pulses with an intensity adjusted to half that of the optical clock pulse and the same number $(N)$ as the basic elements, with their timing appropriately adjusted. The restored symmetry is immediately and spontaneously broken, triggering a phenomenon (SSB phenomenon) in which the system transitions to one of the two stable fixed points by dynamics-derived attraction (DDA). Furthermore, using a delayed optical interferometer, we introduce the relationship described by Eqs. (2) through (7) — namely, the pseudo-spin interaction (pSI) — among the basic elements.
+
+\begin{widetext}
+\begin{eqnarray}% equation no. 02 ~ 7
+\phi_{i+m}
+& = &  {\cal C}( \,\frac{\pi}{2}, \,\phi_{i},  \,{\cal Q}_{i} \,)\nonumber\\
+& = &
+\left\{\sin^{2}(\frac{\pi}{2} \,|\sqrt{\phi_{i}} -  {\cal Q}_{i} |^{2} ) +  \overline{ \sin^{2}(\frac{\pi}{2} \,|\sqrt{\overline{\phi_{i}}} -  {\overline{\cal Q}_{i} } |^{2} )} \right\}/ \,2  \\
+{\cal Q}_{i}
+& = &  
+{\cal Q}_{i}^{\rm FM} + {\cal Q}_{i}^{\rm AFM} \\
+{\cal Q}_{i}^{\rm FM}
+& = &  
+- \sum^{i \ne k} {\cal J}_{i:k}^{\rm FM}( \sqrt{\phi_{i}}  -  \sqrt{\phi_{i+k}})  \\
+{\cal Q}_{i}^{\rm AFM}
+& = &  
+- \sum^{i \ne k} {\cal J}_{i:k}^{\rm AFM}( \sqrt{\phi_{i}}  -  \sqrt{\overline{\phi_{i+k}}})
+\end{eqnarray}
+\begin{eqnarray}
+ {\cal J}_{i:k}^{\rm FM} = \left\{ \begin{array}{ll}
+  {\cal J}_{i:k} (>0) & \mbox{if} \mbox{\footnotesize \rm \,\,\,\,\,\,\,\,\,ferromagnetic\,}\\
+                                 0 & \mbox{if}\,\,\, \mbox{\footnotesize \rm  anti-ferromagnetic\,} \end{array} \right. \\
+ {\cal J}_{i:k}^{\rm AFM} = \left\{ \begin{array}{ll}  0 & \mbox{if}\,\,\, \mbox{\footnotesize \rm  \,\,\,\,\,\,\,\,\,ferromagnetic\,} \\
+                                  {\cal J}_{i:k} (>0) & \mbox{if} \,\,\,   \mbox{\footnotesize \rm  anti-ferromagnetic\,}  \end{array} \right. 
+\end{eqnarray}
+\end{widetext}
+
+$\overline{\phi}$ is the complement of $\phi$ and can be implemented using the complementary output of the MZM. The reason for averaging using the conjugate term is to counteract the tendency of pseudo-spins to accumulate in the zero state due to ferromagnetic interactions, thereby improving performance\cite{Toshiy02}. Although this increases the complexity of the system, it maintains the feasibility of the physical implementation itself. Furthermore, to address situations where SSB cannot be completed due to competition between the pSI effect (the sum of pSI acting on individual elements) and DDA — a specific example being cases like $K_{2000}$ where the number of elements is large and pSI is fully coupled — we introduce a modified scheme following the equations below to enhance the effectiveness of DDA \cite{Toshiy02}.
+
+\begin{widetext}
+\begin{eqnarray}% equation no. 09 ~ 10
+\phi_{i+m}
+& = &
+{\cal N}(\,n, \,\pi, \, {\cal C}( \,\frac{\pi}{2}, \,\phi_{i},  \,{\cal Q}_{i} \,))\\
+{\cal N}(n, \pi, P_{in} )
+& := &
+\underbrace{
+\sin^{2}(\frac{\pi}{2}\,\sin^{2}(... \frac{\pi}{2}\,\sin^{2}(}_{n:\rm{{ number\, of\, nesting}}}\frac{\pi}{2}\,P_{in} )...))
+\end{eqnarray}
+\end{widetext}
+
+The pSI introduced here differs distinctly in nature from the Ising interactions in that it can produce effects consistent with the interpretation of the exchange interaction energy across the entire range of values of the continuous variable $\phi$. Due to the characteristics of this pseudo-spin interaction, a convergence effect of the solutions that does not appear in continuous-variable IM manifests, and cases where a single good solution can be obtained by narrowing down the conditions have also been confirmed\cite{Toshiy02}.
+
+
+
+\section{Restrictive Driving Conditions in SSBM and Additional Pseudo-Annealing Effects}
+
+Although it was confirmed that SSBM exhibits the unique behavior of converging to a single good solution when applied to $K_{2000}$, the problem remained that it could not find the best solution known at this time. To find a way to solve this problem, we focus on the following two differences from the improved SBM (heated ballistic SBM(HbSBM))\cite{GOTO-02}, which has been reported to be able to find the best cut. Point 1: In continuous-variable IMs, including HbSBM, operations are performed in accordance with the concept of quasi-static operations (operations under constraints that maintain a state approximating the steady state). The purpose of this is to avoid the issues that arise from directly applying the Ising interaction, inherited from the Ising model, to a system where spins are assigned to continuous variables (see Section S2 in the supplementary materials). Point 2: This is an improvement adopted in HbSBM to enable best-cut search. Starting from applying the Nosé–Hoover method (which assumes application under equilibrium conditions) to bSBM, it extends the method beyond its original scope. The key point here was to introduce an effect that effectively acts as noise in the SBM — a model that is free of noise (fluctuations) — and to realize a behavior in which this effect “diminishes” over time (in other words, to adopt a method that provides support through a form of pseudo-annealing). Although it is not possible to apply the same technique to SSBM, which is based on discrete dynamics, it is feasible to introduce pseudo-annealing based on the essence of that method.
+Therefore, we performed numerical simulations of the SSBM under new driving conditions that took into account the two points mentioned above.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.48\textwidth]{Figure02.png}
+ \caption{Behavior of SSBM under a restriction condition following the continuous-variable-type Ising machines (simulation results for the $K_{2000}$ problem). (a) Step evolutions of continuous-variables $\phi_{i}$ (pseudo-spins) (20 samples, 9699 steps), (b) Histogram of pseudo-spin values (20 samples, total=193,980 counts), (c) Histogram of cut values explored in 1,000 simulations.}
+ \end{figure}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.48\textwidth]{Figure03.png}
+ \caption{Behavior of SSBM in the case where a pseudo-annealing effect is added under the restricted conditions (simulation results for the $K_{2000}$ problem). (a) Step evolutions of pseudo-spins (20 samples, 9699 steps), (b) Histogram of pseudo-spin values (20 samples, total=193,980 counts), (c) Scheduling of additional noise levels for pseudo-annealing.}
+ \end{figure}
+
+Figure 2 shows the results when only the restriction related to the first point mentioned above was imposed (fixing the nesting number to 12); it confirms that the pseudo-spins are strongly confined to the vicinity of the up- or down states as intended (see Figs. 2(a), (b)), and that the cut values obtained using different initial noise exhibit a statistical distribution similar to that of a continuous-variable IM (see Figs. 2(c)). This statistical distribution is presumed to result from the fact that, under conditions where DDA dominates, the flexibility of pseudo-spin changes decreases, thereby preventing a smooth transition towards other stabilization streams and hindering the convergence of pseudo-spin patterns, and causing the stabilization streams in solution-search trials starting from different initial values to become individually isolated\cite{Toshiy02}.
+
+Regarding the second point, we conducted our analysis using a different method from HbSBM. This was mainly due to the following two obstacles: (1) While the Nosé–Hoover method examined in HbSBM is a technique for differential dynamical systems, SSBM is a discrete dynamical system, so this method cannot be applied directly. (2) Since HbSBM ultimately required venturing into regions beyond the assumptions underlying the application of the Nosé–Hoover method, it was essential to introduce a method that went beyond the simple application of this method. Therefore, we conducted a study to verify the effectiveness of a method that simply incorporates the essence of the improvement method through pseudo-annealing that introduces intensity-scheduled noise, inspired by the behavior of instantaneous temperature in HbSBM\cite{GOTO-02}. Figure 3 shows the results of applying pseudo-annealing with $n$ fixed at $12$. It can be confirmed that the pseudo-spins are strongly confined to the vicinity of the up and down states, while transitions between up and down occur with a frequency corresponding to the intensity of the applied noise (Figures 3(a) and (b)). The specific scheduling of the noise intensity applied here is shown in Figure 3(c); the range of noise intensity was adjusted so that it fell between a sufficiently large value where the effect of pSI can be neglected and a value small enough to be negligible compared to the effect of pSI. The distribution of cut values obtained from 1,000 trials (Fig. 3(d)) shows a shift toward larger cut values compared to the case without pseudo-annealing (Fig. 2(c)). This can be understood as follows: while the entropic effect comes into play when random transitions caused by noise occur during the pseudo-annealing operation, the stabilizing effect of pSI — which had been inhibited by the constraining effect of Point-1 — is temporarily released. Consequently, these effects compete with each other, resulting in the stabilization effect being more effectively elicited as the noise intensity decreases sufficiently through the scheduling process. Furthermore, in addition to the fact that this distribution shape is similar to that of dSBM, HdSBM, and HbSBM, for which the best cut has been reported to be obtained \cite{GOTO-02}, it was also confirmed that the best cut can be obtained. This similarity suggests that the two points mentioned above, which were the focus of this study, act as dominant conditions in search behavior. Furthermore, while the peak position of the cut value distribution obtained from the Gaussian fitting (33,244) was quite close to the position of the cut value for the converged solution in the previous report (33,249) \cite{Toshiy02}, a difference was also confirmed: in the trial where the cut value reached 33,249 (trial 35/1000), 25 distinct pseudo-spin patterns were explored. This discrepancy can be understood as resulting from differences in how the entropic effect manifested, depending on whether the stabilizing effect of pSI was driven by random transitions or by smooth transitions that leveraged the characteristics of the pseudo-spin interactions.
+
+\section{Conclusion}
+
+This paper reports on a study (numerical simulation) in which constraints that induce behavior analogous to that of a continuous-variable IM were imposed on the SSBM, and a pseudo-annealing effect was further introduced. We demonstrated that, under these conditions, while the convergence effect of pseudo-spin patterns observed in previous reports is lost, the system becomes capable of searching for the best cut. It is important to note that while it is possible to adjust the driving conditions of the SSBM to resemble those of a continuous-variable IM, it is difficult to elicit behavior similar to that of the SSBM from a continuous-variable IM; this can be attributed to the difference between the Ising interaction and the pseudo-spin interaction introduced in the SSBM. In SSBM, the pseudo-spin interaction makes it possible to utilize the flexibility of pattern transitions inherent in the continuous-variable nature of the system and to elicit entropic effects not derived from noise, thereby enabling the convergence of pseudo-spin patterns. On the other hand, in cases involving pseudo-annealing operations, entropic effects originating from noise play a significant role, resulting in a statistical distribution of the obtained cut values. Quantitative discussions regarding solution-search characteristics that take these different entropic effects into account remain a topic for future research.
+
+\section*{Acknowledgments}
+The authors thank T. Hashimoto and H. Takenouchi for their support.
+
+
+\begin{thebibliography}{12}
+\bibliographystyle{IEEEtran}
+
+\bibitem{Nishimori}
+T. Kadowaki and H. Nishimori, "Quantum annealing in the transverse Ising model," Phys. Rev. E \bf58\rm, 5355 (1998).
+\bibitem{Johnson}
+M. W. Johnson, P. Bunyk, F. Maibaum, E. Tolkacheva, A. J. Berkley, E. M. Chapple, R. Harris, J. Johansson, T. Lanting, I. Perminov, E. Ladizinsky, T. Oh, and G. Rose, "A scalable control system for a superconducting adiabatic quantum optimization system," Supercond. Sci. Technol. 23, 065004 (2010).
+\bibitem{Yamamoto}
+Z. Wang, A. Marandi, K. Wen, R. L. Byer, and Y. Yamamoto, "Coherent Ising machine based on degenerate optical parametric oscillators," Phys. Rev. A \bf88\rm, 063853 (2013).
+\bibitem{Goto}
+H. Goto, "Bifurcation-based adiabatic quantum computation with a nonlinear oscillator network," Sci. Rep. \bf6\rm, 21686 (2016).
+\bibitem{Aramon}
+M. Aramon, G. Rosenberg, E. Valiante, T. Miyazawa, H. Tamura, and H. G. Katzgraber, "Physics-Inspired Optimization for Quadratic Unconstrained Problems Using a Digital Annealer," Front. Phys. \bf7\rm, 48 (2019).
+\bibitem{Okuyama}
+T. Okuyama, T. Ohira, and T. Washio, "Anomalous diffusion in a system of particles with a range of interaction," Phys. Rev. E \bf100\rm, 012111 (2019).
+\bibitem{KYamamoto}
+K. Yamamoto, et al., "STATICA: A 512-spin 0.25-$\mu$m-weight annealing processor with an all-spin-updates-at-once architecture for combinatorial optimization with complete spin–spin interactions," IEEE J. Solid-State Circuits \bf56\rm(1), 165–178 (2021).
+\bibitem{HopfieldT}					
+J. J. Hopfield and D. W. Tank, “Computing with neural circuits: A model,” Science \bf233\rm, 625 (1986).
+\bibitem{Toshiy01}
+T. Sato, "A spontaneous symmetry breaking machine — a theory and an application for a novel type of spontaneous symmetry breaking in a unique dissipative system," arXiv:2507.11044 (2025).
+\bibitem{Toshiy02}
+T. Sato and T. Goh, "A proof-of-principle experiment on the spontaneous symmetry breaking machine and numerical estimation of its performance on the $K_{2000}$ benchmark problem," arXiv:2512.17922 (2025).
+\bibitem{GOTO-02}
+T. Kanao, H. Goto, "Simulated bifurcation assisted by thermal fluctuation," Commun. Phys. 5, 153 (2022).
+\bibitem{Yamamoto-2}
+T. Inagaki, Y. Haribara, K. Igarashi, T. Sonobe, S. Tamate, T. Honjo, A. Marandi, P. L. McMahon, T. Umeki, K. Enbutsu, O. Tadanaga, H. Takenouchi, K. Aihara, K. Kawarabayashi, K. Inoue, S. Utsunomiya, and H. Takesue, "A coherent Ising machine for 2000-node optimization problems," Science \bf354\rm, 603–606 (2016).
+\end{thebibliography}
+
+
+
+%\subsection{}
+%\subsubsection{}
+
+% If in two-column mode, this environment will change to single-column format so that long equations can be displayed. 
+% Use only when necessary.
+%\begin{widetext}
+%$$\mbox{put long equation here}$$
+%\end{widetext}
+
+% Figures should be put into the text as floats. 
+% Use the graphics or graphicx packages (distributed with LaTeX2e).
+% See the LaTeX Graphics Companion by Michel Goosens, Sebastian Rahtz, and Frank Mittelbach for examples. 
+%
+% Here is an example of the general form of a figure:
+% Fill in the caption in the braces of the \caption{} command. 
+% Put the label that you will use with \ref{} command in the braces of the \label{} command.
+%
+% \begin{figure}
+% \includegraphics{}%
+% \caption{\label{}}%
+% \end{figure}
+
+% Tables may be be put in the text as floats.
+% Here is an example of the general form of a table:
+% Fill in the caption in the braces of the \caption{} command. Put the label
+% that you will use with \ref{} command in the braces of the \label{} command.
+% Insert the column specifiers (l, r, c, d, etc.) in the empty braces of the
+% \begin{tabular}{} command.
+%
+% \begin{table}
+% \caption{\label{} }
+% \begin{tabular}{}
+% \end{tabular}
+% \end{table}
+
+% If you have acknowledgments, this puts in the proper section head.
+%\begin{acknowledgments}
+% Put your acknowledgments here.
+%\end{acknowledgments}
+
+% Create the reference section using BibTeX:
+\bibliography{your-bib-file}
+
+\end{document}

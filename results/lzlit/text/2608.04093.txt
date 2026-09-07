@@ -1,0 +1,683 @@
+                                                     An optical-fibre-integrated buffer for packet-switched quantum networks
+
+                                                              Daniel Spegel-Lexne,1, ∗ Joakim Argillander,1 Martin Clason,1 Åsa Claesson,2
+                                                           Kenny Hey Tow,3 Gustavo Lima,4, 5 João M. B. Pereira,3 and Guilherme B. Xavier1, †
+                                                                 1
+                                                                   Institutionen för Systemteknik, Linköpings Universitet, 581 83, Linköping, Sweden
+                                                             2
+                                                              Fibrelab, RISE-Research Institutes of Sweden, Fibrevägen 2-6, 82450, Hudiksvall, Sweden
+                                                              3
+                                                                Fibre Optics, RISE-Research Institutes of Sweden, Electrum 236, 16440, Kista, Sweden
+                                                                    4
+                                                                      Departamento de Fı́sica, Universidad de Concepción, 160-C Concepción, Chile
+                                                        5
+                                                          Millennium Institute for Research in Optics, Universidad de Concepción, 160-C Concepción, Chile
+                                                                                                 (Dated: August 6, 2026)
+                                                            Packet-switched quantum networks require buffers that can delay qubit payloads while routing
+                                                         information is read out in real time. Previous approaches have not provided this functionality in
+                                                         a fully fibre-integrated architecture compatible with telecom infrastructure. Here we demonstrate
+                                                         an optical-fibre-integrated buffer, based on a recirculating loop and a fibre storage line, in which
+                                                         the storage time of a polarisation-encoded qubit payload is determined by readout of an attached
+                                                         packet header. The key component behind this achievement is an ultra-low-loss poled fibre phase
+                                                         modulator, which provides fast, polarisation-insensitive switching directly in fibre and allows header
+                                                         and payload to be processed within the buffer. We demonstrate storage and retrieval of polarisation-
+                                                         encoded qubit payloads for storage times up to 47 µs, with an average quantum bit error rate of
+                                                         1.8% together with stable operation over several hours. These results establish a practical fibre-based
+                                                         architecture for packet-level quantum network buffering that can easily integrate into the current
+arXiv:2608.04093v1 [quant-ph] 4 Aug 2026
+
+
+
+
+                                                         telecommunication infrastructure opening up new paths for deployment of the quantum internet.
+
+
+                                                                 INTRODUCTION                                 nowadays offering excellent performance in terms of stor-
+                                                                                                              age lifetime or efficiency, have the general disadvantage of
+                                              Realizing large-scale quantum networks, often framed            being relatively complex and not directly spectrally com-
+                                           as a “quantum internet”, would enable functionalities              patible with optical-fibre telecom infrastructure, as well
+                                           that are fundamentally out of reach for classical com-             as requiring cryogenic cooling and bulk optical elements
+                                           munication networks, including device-independent se-              making them challenging to integrate into real-world net-
+                                           curity and distributed quantum computing [1, 2]. Es-               work nodes [20, 21].
+                                           sentially, in all architectures, photons in the telecom               Another approach to try to bridge the gap towards
+                                           band are the natural carriers of quantum information               more practical quantum memories is based on the use of
+                                           across metropolitan and intercity links owing to the low-          an optical loop (working as the quantum memory), com-
+                                           loss properties of commercial optical fibres in the 1550           bined with an optical switch for storage/retrieval [22].
+                                           nm spectral region [3, 4]. Quantum key distribution                This approach has been highly successful with many rel-
+                                           (QKD) is a well-established quantum communication ap-              evant applications being demonstrated [23–32]. All these
+                                           plication, having had many demonstrations ranging from             previous approaches relied on bulk optical elements, mak-
+                                           foundational experiments to modern, ultra-long-distance            ing it difficult to integrate with fibre-optical components,
+                                           and side-channel attack secure versions [5–8], as well as          thus greatly limiting their use for quantum communica-
+                                           field demonstrations now spanning terrestrial fibre net-           tion and networking applications. Recently, efforts on
+                                           works and free-space and satellite links [9–12]. As these          fibre-based recirculating memories for quantum applica-
+                                           systems evolve from point-to-point demonstrations to               tions have included a fibre loop with an electro-optical
+                                           multi-user networks, they increasingly require network-            switch with storage periods of several µs [33]. Other
+                                           layer primitives, such as packet buffering, without de-            very recent approaches managed to have very much faster
+                                           grading the fragile quantum states [2, 13].                        storage periods but with the recirculating loop itself im-
+                                              Recently, significant effort has been dedicated to de-          plemented in free-space [34–36]. Furthermore, none of
+                                           veloping a framework for packet-switched quantum net-              these previous experiments have demonstrated higher-
+                                           works as a natural extension from classical packet-                level functions like processing a packet with a payload
+                                           switched communication extensively used over the Inter-            containing quantum states. Therefore, an efficient, fully
+                                           net [14–16]. Within a network node, quantum memo-                  fibre integrated approach with fast temporal responses
+                                           ries [17–19] are needed to act as buffers allowing time            capable of packet handling is still missing.
+                                           for header processing belonging to each quantum packet.               Here we cover this gap by demonstrating an optical-
+                                           Typical quantum memory implementations, although                   fibre-integrated processing buffer for packet-switched
+                                                                                                              quantum networks, based on a Sagnac-loop switch [37]
+                                                                                                              and a fibre storage line controlled by an ultra-low-loss
+                                                                                                              poled-fibre phase modulator [38–42]. This key device ex-
+                                           ∗ daniel.spegel-lexne@liu.se
+                                                                                                              hibits much lower losses compared with commercial fibre-
+                                           † guilherme.b.xavier@liu.se
+                                                                                                              optical lithium niobate (LiNbO3 ) modulators, as well as
+                                                                                                                           2
+
+exhibiting polarisation independence, a key property for      overlap in time in the outgoing channel, and the receiver
+handling polarisation-encoded quantum states. We suc-         will be unable to distinguish between them. Buffers are
+cessfully demonstrate storage, and subsequent retrieval       then used before the switch to delay the packets appro-
+of a polarisation qubit payload across the fibre buffer,      priately, such that they can all enter the same channel to
+as well as active readout of a header while the payload       M1 without overlapping in time.
+remains stored. Our results demonstrate a practical and
+fully telecom compatible fibre architecture for processing
+buffers for the quantum internet. Parallel to this work in
+a companion submission [43], a completely distinct ap-
+plication of poled fiber modulators for quantum informa-
+tion was demonstrated, through the construction of an
+                                                                a)                Header       Payload           b)
+ultra-high efficiency active receiver for high-dimensional                       (Classic) (Single Photons)
+photonic quantum states in a quantum key distribution
+
+
+
+
+                                                                     Intensity
+demonstration. Together we demonstrate the first uses
+of poled fibre phase modulators for quantum informa-                                       Time
+tion processing applications, whose unique characteris-         c)
+tics, namely, ultra-low-loss, fast response times, polar-                                                     Switch
+isation state insensitivity and direct fibre compatibility
+may open the path forward for highly demanding quan-                                        BN1
+tum communication applications.
+
+
+                       RESULTS                                                              BN2
+
+
+             Quantum network buffering
+
+                                                                                            BN3
+  The quantum internet requires switching and real-time
+processing of packets of quantum states at the network
+nodes [14–16], in a similar fashion to the standard in-
+ternet. A typical packet structure consists of a payload
+containing a number of quantum states and a classical
+header, which holds classical information needed for real-
+time processing of the packet at each network node (Fig.
+1a). We encode the header and payload at the same                                            BN
+wavelength, with our implementation being able to split
+the header from the payload within the buffer, owing to
+the high-speed response of the poled phase modulator.
+  A typical quantum networking scenario occurs in a star
+network, where multiple users are connected to a central      Figure 1. Quantum network packet switching. a) Packet
+node, responsible for processing and rerouting the pack-      structure consisting of a header containing classical informa-
+ets (Fig. 1b). As an example, N simultaneous users wish       tion and a payload consisting of quantum states. b) A star
+to distribute quantum states to M other users, all con-       network configuration, with multiple users connected through
+nected through the central processing node, with a multi-     a central switching node. c) N users are connected to M users
+port switch that can connect any input to any output          in a star configuration, where the central node has buffering
+(Fig. 1c). At the end of each quantum channel between         and switching functionality. Packets can be sent from any of
+the N transmitting users and the central node, packet         the N to the M users at will. As an example, if packets from
+                                                              users N1 , N2 and N3 , which are all addressed to the same end
+buffers are deployed to appropriately delay the packets
+                                                              user (M1 ), arrive simultaneously at the central node, then the
+before they are processed by the switch. The quantum          packets will collide in the outgoing communication channel to
+states are sequentially prepared within a payload by each     M1 . Buffering is therefore needed to time-multiplex the pack-
+user and a header containing destination information (i.e.    ets to avoid collisions in the outgoing link. The central node
+an address) is added to each payload. The header will         also needs to process the header, which contains source and
+be processed at the central node, to determine how to         destination information for instance. With this information,
+configure the switch for the correct routing operation.       the delay amount in the buffer is decided by the node. Our
+The node further checks whether the continuing commu-         implementation allows both header processing and buffering
+nication channels to each of the M destination users is       functionality for a packet.
+available. If packets with the same final destination (i.e.
+M1 ) arrive at the node with a time difference ∆τ < τp ,
+where τp is the time duration of the packet, then they will
+                                                                                                                          3
+
+         Poled optical fibre phase modulator                     laser, while simultaneously applying a high-voltage of ≈ 5
+                                                                 kV, allowing electric charges to redistribute and leaving
+   Previous active loop recirculating memories often rely        a long-lived recorded electric field in the glass after the
+on bulk electro-optical modulators for storage/retrieval         poling field is removed [44]. After poling, the needed
+control, which limits integration capabilities within opti-      voltage to apply a π phase shift decreases from approx-
+cal fibre communication systems. Commercial fibre pig-           imately (Vπ ≈ 5 kV) for 950 V to our device (Fig. 2b),
+tailed electro-optical modulators have typically high in-        and in terms of time response, we obtain a rise and fall
+sertion losses (∼ 50%) that greatly hamper their use             time of 22.4 and 26.4 ns respectively (Fig. 2c). Since
+for multi-pass quantum photonics applications or mea-            the phase modulator is essentially just an optical fibre,
+surements that have a high minimum threshold detec-              the losses are very low and mainly limited by the fibre
+tion efficiency. Therefore we resort to optical fibre poling     connectors, which we measure to be 0.4 dB.
+technology to construct an in-fibre low-loss phase mod-
+ulator for the recirculating loop memory. The poled fi-
+bre phase modulator used here was fabricated from a                        Fibre-optical active loop memory
+specially designed single-mode silica fibre containing two
+longitudinal holes running parallel to the core. These              A recirculating quantum memory typically consists of
+holes were drilled at the preform stage before fibre draw-       a resonating circuit, with an active device needed to in-
+ing and subsequently filled with bismuth electrodes in a         ject the photonic quantum states onto the circuit, and
+pressure chamber, producing the cross-section shown in           then retrieve it after some chosen time [22]. We em-
+Fig. 2a [41].                                                    ploy a combination of a fibre-optical Sagnac interferom-
+                                                                 eter with a fibre delay line and a mirror to complete the
+  a) Poled Fiber Phase Modulator                                 resonator circuit. The Sagnac interferometer acts as an
+                                                                 optical switch, determining whether the states are stored
+                                                                 or retrieved. Such interferometers are very fast optical
+                                                                 switches with several applications in quantum informa-
+                                                                 tion [45–49]. Our experimental setup is depicted in Fig.
+                                                                 3.
+                                                                    A source of weak coherent states, comprising of a con-
+                                                                 tinuous wave semiconductor laser diode at 1546.9 nm in
+                                                                 tandem with an LiNbO3 intensity modulator, produces
+                                                                 a payload of 16 sequential pulses, with a period of 20
+  b)                           c)                                ns and a width of 10 ns at a repetition frequency of 975
+                                                                 Hz. A high voltage DC source feeds a high-voltage switch
+                                                                 (Berkeley Nucleonics) capable of delivering up to 1 kV of
+                                                                 pulse amplitude. As the modulator acts as a capacitor,
+                                                                 it has very high impedance. Thus a 50 Ω high-voltage
+                                                                 power resistor is connected in parallel to the modulator.
+                                                                 This limits the repetition rate / pulse width product as
+                                                                 the drawn current is limited by the DC source. The po-
+Figure 2. Poled fibre modulator. a) The cross-section of the     larisation states of the pulses are set with a linear po-
+poled fibre phase modulator is shown, imaged using a Vytran      lariser followed by a half-wave plate (HWP). The pulses
+glass processor. b) Interference curves at the two outputs       are then attenuated to the single photon level, (average
+of a fibre-optical Sagnac interferometer driven by the poled     0.1 photons per pulse), approximately 1.6 photons per
+fibre phase modulator. The outputs are measured with the         payload.
+two single-photon detectors. The interferometer is the same
+one employed in our experiment, please see in the next sec-
+                                                                    The payload is then delivered to the fibre-optical
+tion for details. The error bars represent the standard devi-    Sagnac interferometer, which consists of a circulator, a
+ation assuming a Poissonian photon number distribution. c)       50 : 50 fibre coupler, a 1 km spooled fibre delay, the
+Time domain response from a driving pulse applied to the         poled-fibre phase modulator and a manual polarisation
+poled modulator within the Sagnac interferometer. In this        controller to maximise the interference of the superpos-
+measurement, the classical optical output is measured with a     ing co- and counter-propagating paths back on the fibre
+p-i-n photo-receiver. The rise and fall times are measured to    coupler. In one of the Sagnac outputs, the storage line
+be 22.4 ns and 26.4 ns respectively.                             is connected, consisting of a 100 m delay fibre, a manual
+                                                                 polarisation controller and a fibre Bragg grating (FBG)
+   The application of an electric field between the elec-        acting as a mirror. The lengths of the fibre spools were
+trodes causes a phase shift to be applied to the propa-          chosen for convenience, and different lengths can be used
+gating light due to the Kerr effect. Due to the low op-          depending on the desired payload length and overall stor-
+tical non-linearity of glass, the optical fibre is first poled   age time per cycle.
+by coupling to its core 532 nm light from a Nd:YAG                  The other output, going back through the circulator,
+                                                                                                                             4
+
+
+
+
+Figure 3. All-fibre quantum packet buffer implementation. We prepare weak coherent polarisation encoded qubits in the state
+preparation stage. A fibre coupler is employed at the output of this stage, and connected to a superconducting nanowire
+single-photon detector (SNSPD) for photon number calibration purposes. Then an optical circulator leads to the routing stage
+consisting of a Sagnac interferometer with the poled fibre phase modulator used to control whether a relative ϕ = 0 or ϕ = π
+phase shift is applied onto the packets, thus causing it to be routed to the storage line or to exit the loop back through the
+circulator. A fibre delay is employed in the Sagnac loop to ensure the phase shift is applied to the entire packet in only one
+of the counter-propagating directions. The storage line consists of a 100 m fibre delay, a manual polarisation controller and a
+mirror composed of a fibre Bragg grating. The measurement stage consists of a manual polarisation controller and a polarising
+beam splitter, whose two outputs are connected to two other SNSPDs. Att: Optical attenuator; Circ: Optical circulator;
+FBG: Fibre Bragg grating; HWP: Half-wave plate; IM: Intensity modulator; PC: Manual polarisation controller; PFPM: Poled
+fibre phase modulator; Pol: Linear polariser; VOPC: Voltage operated polarisation controller; PBS: Polarising beam splitter;
+SNSPD: Superconducting nanowire single-photon detector.
+
+
+is then connected to a manual polarisation controller            port, if ϕ = 0 the photon reflects back to the storage
+and a fibre polarisation beamsplitter (PBS) to perform           line and it becomes effectively trapped in a resonating
+a projective measurement on the retrieved polarisation           circuit. Once a relative phase ϕ = π is applied, then
+qubits. Finally, the two outputs from the PBS are con-           the single-photon exits to the circulator and is retrieved
+nected to two superconducting nanowire single-photon             from the memory. It then propagates to the measurement
+detectors (SNSPDs), within the same cryostat of the cal-         operation by the PBS before arriving at either detector
+ibration detector. They have a nominal system detection          D1 or D2 .
+efficiency > 90% and less than 30 dark counts per second
+for each detector. A time tagger (IdQuantique ID1000)
+is used to process the detection events.
+   The Sagnac interferometer acts as a tunable optical              The poled fibre phase modulator is driven by a high-
+switch, routing the photon between the two outputs de-           voltage driver consisting of a DC power supply and a fast
+pending on the setting ϕ of the poled fibre phase modu-          high-voltage switch. It generates two consecutive pulses
+lator. The relation between the applied phase difference         separated in time, each 330 ns wide with 950 V ampli-
+and the probability of detecting a photon at the two out-        tude, corresponding to a π phase shift (inset Fig. 2). The
+puts D1and D2 ofthe                                           first pulse causes the qubit packet to be stored while the
+                       interferometer is proportional to        second retrieves it. By adjusting the delay between the
+cos2 ϕ2 and sin2 ϕ2 [45]. If no relative phase is ap-
+                                                                 two consecutive driving pulses, the photon payload can
+plied (ϕ = 0) the photon will exit through the same path         be stored and retrieved for a different number of cycles in
+it entered. If the phase is set to ϕ = π the photon will         the buffer. The period between each cycle where readout
+exit through the other output and thus, in our setup, en-        is possible is about ≈ 6µs for the particular lengths of
+ter the storage line. The photon is reflected back by the        optical fibre in the Sagnac loop and storage line in our
+FBG and reenters the Sagnac loop.                                experiment. Note that the minimum storage time is one
+   Since now the photon is entering from the opposing            cycle.
+                                                                                                                                  5
+
+                  Experimental results
+                                                                               1200    Cycle 1                Exponential Fit
+                                                                                                              LiNbO3 modulator
+   We initially demonstrate the retrieval of a payload over                    1000                           Exponential Fit
+different storage cycles, as determined by the delay be-                                                      Average Counts
+tween the high-voltage driving pulses. The payload con-                         800
+
+
+
+
+                                                               Counts/(1min)
+sisting of the train of 16 weak coherent states is sent to
+the input of the Sagnac loop, with the measurement data                         600                      10            Cycle 10
+                                                                                                          0
+acquired by accumulating the detection events with the
+                                                                                400                 25
+time tagger with each cycle delay measured with a 30                                                               5
+sec integration time, and all the curves are superposed                                              0             0
+                                                                                200
+and plotted in Fig. 4. The PBS before the detectors was
+removed for this initial measurement. The manual po-                              0
+larisation controllers are needed to compensate residual
+polarisation transformations for each storage cycle, and                              5 10 15 20 25 30 35 40 45 50 55 60
+ensure optimal interferometric visibility at the Sagnac                                             Time [ s]
+interferometer.
+   We clearly see the expected exponential decay in the
+                                                               Figure 4. Buffer efficiency. A payload of 16 weak coherent
+detection probability between storage cycles, where the        states (WCSs) is stored in the buffer, and subsequently re-
+losses come from the fibre spools (0.3 dB), poled phase        trieved. We employ 0.1 photons per state on average (1.6
+modulator (0.4 dB), fibre coupler (0.5 dB), FBG (0.1           photons per payload) on the input of the buffer, to demon-
+dB), and additional losses from connectors and splices         strate storage for typical weak coherent state amplitudes in
+(1.2 dB), amounting to an efficiency of ≈ 56% per cycle.       practical applications. The different curves corresponding up
+There is also an additional loss of approximately 1 dB for     to ten storage cycles are obtained individually for each delay
+each pass through the circulator, but this only happens        of the retrieval high voltage pulse, and acquired with a time
+once independently of the number of storage cycles. We         tagger. They are then all plotted superposed on the figure.
+can still observe detection events following retrieval after   The green data points represent the average detected single-
+10 storage cycles, which corresponds to approximately 60       photon counts for all the 16 WCSs for that particular storage
+                                                               loop, and the green curve is an exponential decay fit. We also
+µs. The first storage peak in the graph corresponds to no
+                                                               show for reference in the red curve, the expected performance
+high-voltage driving pulse to the modulator (ϕ = 0), and       if a commercial LiNbO3 phase modulator is used instead of
+is used as a reference. We also plot in Fig. 4 the expected    the poled fibre modulator. The insets zoom in on the last
+performance if a commercial LiNbO3 phase modulator             three storage cycles showing the individual detected counts
+would be used instead (typical 3 dB loss).                     for each WCS.
+   We then experimentally demonstrate the storage and
+retrieval of polarisation-encoded weak coherent states.
+The PBS at the measurement stage is reinstalled, and we        ND|i⟩ and ND|i⟩⊥ correspond to the number of detections
+employ the half-wave plate θ in the beginning of the setup     on the matching and on the orthogonal detector respec-
+to generate the superposition |ψinput ⟩ = cos(2θ)|H⟩ +         tively, for the |i⟩ input state. The quantum bit error rate
+sin(2θ)|V ⟩, where |H⟩ and |V ⟩ represent the horizontal       (QBER) is then written as QBER = 1 − P|i⟩ , and we cal-
+and vertical polarisation states respectively. We then         culated it from the detection probabilities in Fig. 5b for
+sweep θ and thus, for each input state, the counts at the      the different storage times respectively as 1.06 ± 0.04%,
+PBS outputs are recorded over 30 s, for 5 different storage    1.11 ± 0.08%, 1.46 ± 0.13%, 2.74 ± 0.39%, 2.29 ± 0.55%
+cycles, the last one corresponding to 47 µs. This exper-       respectively.
+iment was done for the two mutually unbiased polari-              We next evaluate the long-term stability of the buffer
+sation measurement bases used in QKD BB84-protocols            by continuously monitoring the QBER for a fixed input
+[5], Z and X, which are changed using the manual po-           state, (|H⟩). The measurement sequence starts at the
+larisation controller before the PBS. The corresponding        first storage cycle, then proceeds to cycles n=3 and n=6,
+polarisation curves for the nth storage cycle are presented    before returning to n=1. For this stability measurement,
+in figure 5a.                                                  the mean input photon number is increased to 1.0, since
+   In Fig. 5b, we show the probabilities to detect each        the focus is on temporal stability. The main source of in-
+of the four BB84 transmitted states by setting the input       stability is the residual time-dependent birefringence of
+polarisation state angle to θH,V = {0, 45} and θD,A =          the optical fibre, which slowly changes the polarisation
+{22.5, 67.5}, where the subscripts D√and A correspond          state reaching the measurement PBS. For each storage
+to the superposition
+          √            states |D⟩ = 1/ 2(|H⟩ + |V ⟩) and       cycle, data is acquired for 30 s. At the start of each mea-
+|A⟩ = 1/ 2(|H⟩ − |V ⟩). We then record the counts over         surement round, the computer connected to the time tag-
+the two measurement bases Z and X, corresponding to            ger calculates the current detection probability (P|H⟩ ).
+the projections onto the |H⟩; |V ⟩ and |D⟩; |A⟩ states re-     If P|H⟩ < 95%, corresponding to a QBER above 5%, the
+spectively. The probability of detection for the |i⟩ state     measurement is paused and an automatic recalibration
+is calculated as P|i⟩ = ND|i⟩ /(ND|i⟩ + ND|i⟩⊥ ), where        routine is initiated. This recalibration is performed us-
+                                                                                                                                                                         6
+
+                a)       n=1                      n=3                         n=4                                  n=6                       n=8
+               1.0                      1.0                      1.0                          1.0                                                          Legend
+                                                                                                                                  1.0
+Norm. Counts
+
+                                                                                                                                                            D1 Z-Basis
+               0.5                      0.5                      0.5                          0.5                                 0.5                       D2 Z-Basis
+                                                                                                                                                            D1 X-Basis
+                                                                                                                                                            D2 X-Basis
+               0.0                      0.0                      0.0                          0.0                                 0.0
+                     0    /4       /2         0    /4       /2         0       /4      /2                  0        /4       /2         0     /4      /2
+                b)                                                         HWP setting
+               |H                       |H                       |H                           |H                                  |H                        1.0
+Preparation
+
+
+
+
+               |V                       |V                       |V                           |V                                  |V
+                                                                                                                                                            0.5
+               |D                       |D                       |D                           |D                                  |D
+               |A                       |A                       |A                           |A                                  |A
+                                                                                                                                                            0.0
+                     |H |V |D |A              |H |V |D |A              |H |V |D |A                         |H |V |D |A                  |H |V |D |A
+                                                                         Projection
+
+  Figure 5. Quantum information storage. a) Normalised single-photon detection following the projective polarisation measure-
+  ment in the measurement stage for different storage times, up to a maximum n = 8 corresponding to 47 µs. It is carried out as
+  a function of the input half-wave plate angle (θ) in the superposition |ψinput ⟩ = cos(2θ)|H⟩ + sin(2θ)|V ⟩. For each storage cycle
+  we project the state |ψinput ⟩ over the two mutually unbiased bases used in BB84 QKD, the computational (Z) and the logical
+  (X) bases. The integration time for each data point is 30 secs. Error bars come from the assumption that each detection event
+  is governed by Poissonian statistics. b) We show the corresponding detection probabilities for each storage cycle number, by
+  preparing each of the four prepared BB84 states and projecting onto each of the same four states, simulating a QKD protocol
+  for different storage times, with an average QBER of 1.85 ± 0.13% over all cycles.
+
+
+  ing an all-fibre voltage-operated polarisation controller                                            5
+  (VOPC) with 0.2 dB insertion loss, which realigns the                                                                                                           Loop 1
+  polarisation state of the retrieved weak coherent states                                                                                                        Loop 3
+  with the PBS before data acquisition resumes. The pro-                                               4                                                          Loop 6
+  cedure typically takes a few minutes, depending on the
+  initial polarisation condition. The longest storage case is                                          3
+                                                                                            QBER [%]
+
+
+
+
+  the most sensitive to residual birefringence, as expected,
+  because of the longer fibre propagation distance. Such
+  automatic polarisation stabilisation is routinely used in                                            2
+  fibre-based experiments and commercial QKD systems.
+  The results, shown in Fig. 6, demonstrate stable long-
+                                                                                                       1
+  term operation over more than 12 hours.
+     Finally, to demonstrate the full functionality of the
+  buffer, we show processing of a header determining how                                               0
+  long the payload should be stored, emulating the scenario
+                                                                                                               0         2         4          6      8     10       12
+                                                                                                                                            Time [h]
+  in Fig. 1. The header is added as three extra pulses to the
+  beginning of the 16 weak coherent state payload, allowing
+  the encoding of up to eight different addresses, assuming                                 Figure 6. Long-term stability of the buffer. QBER for detect-
+  direct digital amplitude modulation. The central node                                     ing the state |H⟩ on basis Z as a function of time for different
+  then decides on the delay to be applied for each packet,                                  storage cycles. Error bars come from the assumption that
+  depending on the destination address. In our proof-of-                                    each detection event is governed by Poissonian statistics.
+  principle implementation, we map each header value to a
+  different delay in terms of the storage cycle number. The
+  header has a much higher average photon number com-                                       generator producing the desired driving pulses to the am-
+  pared to the payload, ensuring the header is successfully                                 plitude modulator at the output of the laser.
+  read out by the SNSPDs. Note that in an intermediate                                         The possibility of performing real-time packet process-
+  node in a network, simpler gated-mode avalanche diode-                                    ing requires fast response times given the cumulative de-
+  based single-photon detectors could be used to read out                                   coherence or loss probability as a function of storage time
+  the header, or even high-sensitivity photo-receivers if the                               in a quantum memory. The poled fibre phase modulator
+  header intensity is tuned to be sufficiently high. The full                               also satisfies this strict requirement, allowing us to split
+  packet structure is created from an arbitrary waveform                                    the header from the payload without any need for addi-
+                                                                                                                        7
+
+tional time separation between the header and payload.         of-principle platform can be further improved in terms
+The results are shown in Fig. 7, where we see the time-        of losses, by approximately 1.1 dB per pass through the
+of-arrival events acquired from the time-tagger for each       replacement of four FC/PC connectors inside the Sagnac
+number of different storage cycles with the corresponding      loop with fibre splices (1.0 dB), and a fibre coupler with
+header already split. We show a copy of the full packet        lower excess losses (0.1 dB), thus improving the overall
+before reaching the buffer (red shaded region), using a 10     transmissivity per storage cycle to 72%. This value can
+: 90 splitter (not shown for simplicity) and the SNSPD.        be slightly different depending on the fibre delay values,
+The header is then split off from the payload (blue shaded     which will be determined by the desired packet length.
+region), which stays in the loop and proceeds for another         Since the buffer is designed to process entire packets,
+round. The header information containing the 3-bit bi-         much denser payloads and headers are possible by using
+nary word corresponding to the desired delay sets the de-      much narrower and closely packed pulse widths, without
+lay of the applied retrieval pulse. The different retrieval    degrading the performance of the storage. For instance,
+times for each payload are shown in the green area.            recent results have shown the use of 45 ps wide pulses
+   Figure 8 places our buffer in the broader landscape         with 400 ps separation [55]. The repetition rate of the
+of room-temperature quantum matter memories [50–54]            buffer can be greatly improved by employing DC sources
+and photonic recirculating loop platforms. We compare          with higher current limits or a pulse generator capable
+the effective qubit yield, which we define as Y = η N ,        of directly driving high-impedance capacitive loads [56].
+where N is the number of stored qubits and η the storage       Furthermore, our companion submission [43] has demon-
+efficiency per loop (or equivalently the total efficiency in   strated repetition rates of 100 kHz, using a poled fibre
+the case of matter memories [50–54]). It quantifies the ex-    modulator with smaller Vπ and shorter pulse widths,
+pected number of qubits recovered per storage event. In        thus confirming the potential of the device for practical
+our case, through the storage and retrieval of a 16-qubit      quantum information processing tasks.
+packet at ∼ 56% per-cycle efficiency, our buffer reaches          The results obtained are also the first to use poled
+Y ≈ 9 qubit yield, overcoming the best previous result         fibre electro-optical modulation technology for applica-
+by nearly an order of magnitude.                               tions in quantum information processing. The fast speed,
+                                                               low insertion loss and direct optical fibre compatibility
+                                                               make it very attractive for demanding applications such
+                     DISCUSSION                                as device-independent quantum communication imple-
+                                                               mentations, where low losses and high speeds for appli-
+                                                               cation of different measurement settings are crucial [57].
+   As point-to-point quantum communication protocols
+                                                               Furthermore, the polarisation independence of the device
+get more sophisticated the focus begins to shift to net-
+                                                               opens further possibilities, such as, in higher-dimensional
+working applications. In spite of significant proof-of-
+                                                               hybrid entanglement processing where polarisation is one
+principle experiments over the years to implement dif-
+                                                               of the degrees-of-freedom [58].
+ferent networking protocols and primitives, a quantum
+buffering device capable of real-time packet processing
+is still missing. Furthermore, for such a buffer to be of                    ACKNOWLEDGEMENTS
+more practical value, it should be easy to integrate with
+current telecom networking hardware.
+   Here we are able to demonstrate such a buffer. Our            We acknowledge helpful discussions with Alvaro
+approach was done at the critical telecom spectral win-        Alarcón, Walter Margulis, Sebastian Etcheverry, Gus-
+dow, allowing full compatibility with current systems.         tavo do Amaral and Guilherme Temporão. We ac-
+We implement a loop memory based configuration us-             knowledge financing from Vinnova (project no. 2023-
+ing a Sagnac interferometer which controls the storage of      01358), the Wallenberg Center for Quantum Technolo-
+the quantum states in a storage line comprised of a fibre      gies (WACQT) and the project “DIGITAL-2022-QCI-02-
+delay and a fibre Bragg grating, operating as a mirror.        DEPLOY-NATIONAL” (Project number: 101113375 -
+A major differentiator of our implementation compared          NQCIS National Quantum Communication in Sweden)
+with previous demonstrations is the use of a poled fi-         funded by the European Union together with Vinnova
+bre phase modulator, allowing our platform to be fully         and the Wallenberg Centre for Quantum Technology
+fibre-based with fast response times, critical for packet-     (WACQT).
+processed quantum networks. Additionally, compared to
+typical commercial fibre pigtailed modulators, our device
+offers much lower insertion loss as well as low polarisa-
+tion dependence, properties which have prevented previ-
+ous experiments from reaching the stringent performance
+requirements for a practical quantum internet.
+   These first results are very promising as they do not
+require cryogenic systems, or complex and sensitive in-
+terfaces between free-space and fibre-optics. Our proof-
+                                                                                                                                   8
+
+
+
+
+                                                                  n=2
+                 60000
+                                                                      Input package        Header Readout        Payload Readout
+                 40000
+
+                 20000                           500
+                                                   0
+                     0
+                         0   5            10           15           20                25        30          35            40
+                                                                 Time [ s]
+                                                                  n=3
+                 60000
+                                                                      Input package        Header Readout        Payload Readout
+                 40000
+
+                 20000                           500
+                                                   0
+Counts/(4mins)
+
+
+
+
+                     0
+                         0   5            10           15           20                25        30          35            40
+                                                                 Time [ s]
+                                                                  n=4
+                 60000
+                                                                      Input package        Header Readout        Payload Readout
+                 40000
+
+                 20000                                          500
+                                                                  0
+                     0
+                         0   5            10           15           20                25        30          35            40
+                                                                 Time [ s]
+                                                                  n=6
+                 60000
+                                                                      Input package        Header Readout        Payload Readout
+                 40000
+
+                 20000                                                                           500
+                                                                                                   0
+                     0
+                         0   5            10           15           20                25        30          35            40
+                                                                 Time [ s]
+
+Figure 7. Quantum packet processing. The packet consists of a header containing three strong pulses, and the payload consists
+of 16 weak coherent states. The panels from top to bottom correspond to storage cycles of n = {2, 3, 4, 6} respectively. On the
+left the red shaded waveform shows a copy of the packet before entering to the memory. The insets zoom in on the full packet
+before processing (red region), then the header after being split off from the payload (blue region) and the payload after being
+appropriately delayed (green region). Please see the text for further details. The different encoding values for the header can
+be seen based on on/off encoding for each respective delay for the payload on the insets.
+                                                                                   9
+
+
+                               Loop memory                            This work
+              101              Matter memory
+                               This Work
+Qubit yield
+
+
+
+
+              100                         [22] [36] [24] [32][31]
+                                                    [34] [35]               [33]
+
+                                            [51]               [50]
+                        [53]
+                                 [52]
+                      [54]
+              10 1
+
+                     10 3        10 2     10 1      100       101            102
+                                 Maximum reported storage time [ s]
+
+Figure 8. Effective qubit yield of room-temperature quantum
+memories and photonic buffers. For each platform we plot the
+effective qubit yield Y = ηN , which represents the expected
+number of qubits retrieved per storage event vs. the maxi-
+mum reported storage time. Loop memories consist of active
+recirculating memories while matter memories are included
+as a comparison, since they allow continuous on-demand re-
+trieval. For the loop memories, we compare the different ef-
+ficiencies per loop pass, while for matter memories we report
+the total efficiency. The efficiencies per cycle for references
+[31–33] were not explicitly given and were thus inferred from
+the experimental data provided.
+                                                                                                                                  10
+
+
+
+
+ [1] H. J. Kimble, The quantum internet, Nature 453, 1023            [17] A. I. Lvovsky, B. C. Sanders, and W. Tittel, Optical
+     (2008).                                                              quantum memory, Nature Photonics 3, 706 (2009).
+ [2] S. Wehner, D. Elkouss, and R. Hanson, Quantum inter-            [18] K. Heshami, D. G. England, P. C. Humphreys, P. J.
+     net: A vision for the road ahead, Science 362, eaam9288              Bustard, V. M. Acosta, J. Nunn, and B. J. Sussman,
+     (2018).                                                              Quantum memories: emerging applications and recent
+ [3] N. Gisin and R. Thew, Quantum communication, Nature                  advances, Journal of Modern Optics 63, 2005 (2016).
+     Photonics 1, 165 (2007).                                        [19] F. Bussières, N. Sangouard, M. Afzelius, H. de Riedmat-
+ [4] S. Pirandola, U. L. Andersen, L. Banchi, M. Berta,                   ten, C. Simon, and W. Tittel, Prospective applications
+     D. Bunandar, R. Colbeck, D. Englund, T. Gehring,                     of optical quantum memories, Journal of Modern Optics
+     C. Lupo, C. Ottaviani, J. L. Pereira, et al., Advances               60, 1519 (2013).
+     in quantum cryptography, Advances in Optics and Pho-            [20] A. Ortu, A. Holzäpfel, J. Etesse, and M. Afzelius, Storage
+     tonics 12, 1012 (2020).                                              of photonic time-bin qubits for up to 20 ms in a rare-earth
+ [5] C. H. Bennett and G. Brassard, Quantum cryptography:                 doped crystal, npj Quantum Information 8, 29 (2022).
+     Public key distribution and coin tossing, in Proceedings of     [21] S. Duranti, S. Wengerowsky, L. Feldmann, A. Seri,
+     the IEEE International Conference on Computers, Sys-                 B. Casabone, and H. de Riedmatten, Efficient cavity-
+     tems and Signal Processing (Bangalore, India, 1984) pp.              assisted storage of photonic qubits in a solid-state quan-
+     175–179.                                                             tum memory, Optics Express 32, 26884 (2024).
+ [6] A. K. Ekert, Quantum cryptography based on bell’s the-          [22] T. B. Pittman and J. D. Franson, Cyclical quantum mem-
+     orem, Physical Review Letters 67, 661 (1991).                        ory for photonic qubits, Phys. Rev. A 66, 062302 (2002).
+ [7] H.-K. Lo, M. Curty, and B. Qi, Measurement-device-              [23] K. Makino, Y. Hashimoto, J. ichi Yoshikawa, H. Ohdan,
+     independent quantum key distribution, Physical Review                T. Toyama, P. van Loock, and A. Furusawa, Synchro-
+     Letters 108, 130503 (2012).                                          nization of optical photons for quantum information pro-
+ [8] M. Lucamarini, Z. L. Yuan, J. F. Dynes, and A. J.                    cessing, Science Advances 2, e1501772 (2016).
+     Shields, Overcoming the rate–distance limit of quantum          [24] F. Kaneda, F. Xu, J. Chapman, and P. G. Kwiat,
+     key distribution without quantum repeaters, Nature 557,              Quantum-memory-assisted multi-photon generation for
+     400 (2018).                                                          efficient quantum information processing, Optica 4, 1034
+ [9] S.-K. Liao, W.-Q. Cai, W.-Y. Liu, L. Zhang, Y. Li, J.-G.             (2017).
+     Ren, J. Yin, Q. Shen, Y. Cao, Z.-P. Li, et al., Satellite-to-   [25] F. Kaneda and P. G. Kwiat, High-efficiency single-photon
+     ground quantum key distribution, Nature 549, 43 (2017).              generation via large-scale active time multiplexing, Sci-
+[10] J. Yin, Y. Cao, Y.-H. Li, S.-K. Liao, L. Zhang, J.-G. Ren,           ence Advances 5, eaaw8586 (2019).
+     W.-Q. Cai, W.-Y. Liu, B. Li, H. Dai, et al., Satellite-         [26] E. Meyer-Scott, N. Prasannan, I. Dhand, C. Eigner,
+     based entanglement distribution over 1200 kilometers,                V. Quiring, S. Barkhofen, B. Brecht, M. B. Plenio, and
+     Science 356, 1140 (2017).                                            C. Silberhorn, Scalable generation of multiphoton en-
+[11] L. Zhou, J. Lin, C. Ge, Y. Fan, Z. Yuan, H. Dong,                    tangled states by active feed-forward and multiplexing,
+     Y. Liu, D. Ma, J.-P. Chen, C. Jiang, X.-B. Wang, L.-X.               Phys. Rev. Lett. 129, 150501 (2022).
+     You, Q. Zhang, and J.-W. Pan, Independent Optical Fre-          [27] Z. Hou, J.-F. Tang, C.-J. Huang, Y.-F. Huang, G.-Y.
+     quency Combs Powered 546 km Field Test of Twin-Field                 Xiang, C.-F. Li, and G.-C. Guo, Entangled-state time
+     Quantum Key Distribution, Physical Review Applied 22,                multiplexing for multiphoton entanglement generation,
+     064057 (2024).                                                       Phys. Rev. Appl. 19, L011002 (2023).
+[12] M. Pittaluga, Y. S. Lo, A. Brzosko, R. I. Woodward,             [28] L. T. Weinbrenner, N. Prasannan, K. Hansenne,
+     D. Scalcon, M. S. Winnel, T. Roger, J. F. Dynes,                     S. Denker, J. Sperling, B. Brecht, C. Silberhorn, and
+     K. A. Owen, S. Juárez, P. Rydlichowski, D. Vicinanza,               O. Gühne, Certifying the topology of quantum networks:
+     G. Roberts, and A. J. Shields, Long-distance coherent                Theory and experiment, Phys. Rev. Lett. 132, 240802
+     quantum communications in deployed telecom networks,                 (2024).
+     Nature 640, 911 (2025).                                         [29] F. Hanamura, K. Takase, K. Hirota, R. Nehra, F. Lang,
+[13] M. Pompili, C. Delle Donne, I. te Raa, B. van der Vecht,             S. Miki, H. Terai, M. Yabuno, T. Kashiwazaki, A. In-
+     M. Skrzypczyk, G. Ferreira, L. de Kluijver, A. J. Stolk,             oue, T. Umeki, W. Asavanant, M. Endo, J.-i. Yoshikawa,
+     S. L. N. Hermans, P. Pawelczak, W. Kozlowski, R. Han-                and A. Furusawa, Scalable optical quantum state synthe-
+     son, and S. Wehner, Experimental demonstration of en-                sizer with dual-mode resonator memory, PRX Quantum
+     tanglement delivery using a quantum network stack, npj               6, 040336 (2025).
+     Quantum Information 8, 121 (2022).                              [30] X.-L. Pang, C.-N. Zhang, J.-P. Dou, H. Li, T.-H. Yang,
+[14] S. DiAdamo, B. Qi, G. Miller, R. Kompella, and A. Sha-               and X.-M. Jin, Entangling motional atoms and an optical
+     bani, Packet switching in quantum networks: A path to                loop at ambient condition, npj Quantum Information 9,
+     the quantum internet, Phys. Rev. Res. 4, 043064 (2022).              62 (2023).
+[15] R. Mandil, S. DiAdamo, B. Qi, and A. Shabani, Quan-             [31] K. A. G. Bonsma-Fisher, C. Hnatovsky, D. Grobnic,
+     tum key distribution in a packet-switched network, npj               S. J. Mihailov, P. J. Bustard, D. G. England, and B. J.
+     Quantum Information 9, 85 (2023).                                    Sussman, Fiber-integrated quantum memory for telecom
+[16] S. J. Ben Yoo, S. K. Singh, M. B. On, G. Gül, G. S. Kan-            light, Phys. Rev. A 108, 012606 (2023).
+     ter, R. Proietti, and P. Kumar, Quantum wrapper net-            [32] K. A. G. Bonsma-Fisher, R. Tannous, D. Poitras, C. Hna-
+     working, IEEE Communications Magazine 62, 76 (2024).                 tovsky, S. J. Mihailov, P. J. Bustard, D. G. England, and
+                                                                          B. J. Sussman, Storage of telecom wavelength heralded
+                                                                                                                                  11
+
+     single photons in a fiber cavity quantum memory, Optica              Science Advances 10, eadr2007 (2024).
+     Quantum 2, 41 (2024).                                           [47] C. Raj, T. Prasad, A. Chaturvedi, L. Pollyceno,
+[33] K. Fook Lee, G. Gül, Z. Jim, and P. Kumar, Fiber                    D. Spegel-Lexne, S. Gómez, J. Argillander, A. Alarcón,
+     loop quantum buffer for photonic qubits, New Journal                 G. B. Xavier, M. Pawlowski, and P. R. Dieguez, Certi-
+     of Physics 26, 083011 (2024).                                        fying semi-device-independent security via wave-particle
+[34] C. J. Evans, C. M. Nunn, S. W. L. Cheng, J. D. Franson,              duality experiments, npj Quantum Information 12, 7
+     and T. B. Pittman, Experimental storage of photonic po-              (2025).
+     larization entanglement in a broadband loop-based quan-         [48] J. Argillander, D. Spegel-Lexne, M. Clason, P. R.
+     tum memory, Phys. Rev. A 108, L050601 (2023).                        Dieguez, M. Pawlowski, A. Chaturvedi, and G. B. Xavier,
+[35] S. Cheng, C. Evans, and T. Pittman, Fiber-coupled                    High-dimensional detection-loophole-free measurement-
+     broadband quantum memory for polarization-encoded                    device-independent quantum random number generator
+     photonic qubits, npj Quantum Information 11, 163                     (2025), arXiv:2510.06317 [quant-ph].
+     (2025).                                                         [49] K. Vijayadharan, M. R. Bolaños, M. Avesani, G. Val-
+[36] M.-S. Sun, C.-H. Zhang, Y.-Z. Luo, S. Wang, Y. Liu,                  lone, P. Villoresi, and C. Agnesi, A sagnac-based arbi-
+     J. Li, and Q. Wang, On-demand storing time-bin qubit                 trary time-bin state encoder for quantum communication
+     states with optical quantum memory, Applied Physics                  applications, EPJ Quantum Technology 12, 129 (2025).
+     Letters 126, 104001 (2025).                                     [50] K. F. Reim, P. Michelberger, K. C. Lee, J. Nunn, N. K.
+[37] A. Alarcón, P. González, J. Cariñe, G. Lima, and G. B.            Langford, and I. A. Walmsley, Single-photon-level quan-
+     Xavier, Polarization-independent single-photon switch                tum memory at room temperature, Phys. Rev. Lett. 107,
+     based on a fiber-optical sagnac interferometer for quan-             053603 (2011).
+     tum communication networks, Optics Express 28, 33731            [51] R. Finkelstein, E. Poem, O. Michel, O. Lahad, and
+     (2020).                                                              O. Firstenberg, Fast, noise-free memory for photon syn-
+[38] R. A. Myers, N. Mukherjee, and S. R. J. Brueck, Large                chronization at room temperature, Science Advances 4,
+     second-order nonlinearity in poled fused silica, Optics              eaap8598 (2018).
+     Letters 16, 1732 (1991).                                        [52] K. T. Kaczmarek, P. M. Ledingham, B. Brecht, S. E.
+[39] P. G. Kazansky, P. S. J. Russell, and H. Takebe, Glass               Thomas, G. S. Thekkadath, O. Lazo-Arjona, J. H. D.
+     fiber poling and applications, Journal of Lightwave Tech-            Munns, E. Poem, A. Feizpour, D. J. Saunders, J. Nunn,
+     nology 15, 1484 (1997).                                              and I. A. Walmsley, High-speed noise-free optical quan-
+[40] T. Fujiwara, D. Wong, Y. Zhao, S. Fleming, S. Poole, and             tum memory, Phys. Rev. A 97, 042316 (2018).
+     M. Sceats, Electro-optic modulation in germanosilicate          [53] S. E. Thomas, S. Sagona-Stophel, Z. Schofield,
+     fibre with uv-excited poling, Electronics Letters 31, 573            I. A. Walmsley, and P. M. Ledingham, Single-photon-
+     (1995).                                                              compatible telecommunications-band quantum memory
+[41] M. Fokine, L. E. Nilsson, Å. Claesson, D. Berlemont,                in a hot atomic gas, Phys. Rev. Appl. 19, L031005 (2023).
+     L. Kjellberg, L. Krummenacher, and W. Margulis, In-             [54] S. E. Thomas, L. Wagner, R. Joos, R. Sittig, C. Nawrath,
+     tegrated fiber mach–zehnder interferometer for electro-              P. Burdekin, I. M. de Buy Wenniger, M. J. Rasiah,
+     optic switching, Optics Letters 27, 1643 (2002).                     T. Huber-Loyola, S. Sagona-Stophel, S. Höfling, M. Jet-
+[42] D. Spegel-Lexne, J. M. B. Pereira, A. Alarcón,                      ter, P. Michler, I. A. Walmsley, S. L. Portalupi, and P. M.
+     J. Argillander, M. Clason, Å. Claesson, K. H. Tow,                  Ledingham, Deterministic storage and retrieval of tele-
+     W. Margulis, and G. B. Xavier, Storage buffer of po-                 com light from a quantum dot single-photon source in-
+     larization quantum states based on a poled-fiber phase               terfaced with an atomic quantum memory, Science Ad-
+     modulator, in CLEO 2025 (Optica Publishing Group,                    vances 10, eadi7346 (2024).
+     2025) p. FF115 4.                                               [55] F. Grünenfelder, A. Boaron, G. V. Resta, M. Perrenoud,
+[43] N. Guerrero, N. Villalva, G. H. dos Santos, C. J. Salazar,           D. Rusca, C. Barreiro, R. Houlmann, R. Sax, L. Stasi,
+     C. Melo, F. Castillo, J. Cariñe, G. B. Xavier, E. S.                S. El-Khoury, E. Hänggi, N. Bosshard, F. Bussières, and
+     Gómez, S. P. Walborn, J. Pereira, G. Saavedra, and                  H. Zbinden, Fast single-photon detectors and real-time
+     G. Lima, Poled-fibre phase modulator for efficient high-             key distillation enable high secret-key-rate quantum key
+     dimensional quantum measurements, Submitted com-                     distribution systems, Nature Photonics 17, 422 (2023).
+     panion manuscript (2026).                                       [56] Y. Xu, W. Chen, H. Liang, Y.-H. Li, F.-T. Liang,
+[44] A. R. Camara, J. M. B. Pereira, O. Tarasenko, W. Mar-                Q. Shen, S.-K. Liao, and C.-Z. Peng, Megahertz high
+     gulis, and I. C. S. Carvalho, Optical creation and erasure           voltage pulse generator suitable for capacitive load, AIP
+     of the linear electrooptical effect in silica fiber, Opt. Ex-        Advances 7, 115210 (2017).
+     press 23, 18060 (2015).                                         [57] G. B. Xavier, J.-Å. Larsson, P. Villoresi, G. Vallone,
+[45] A. Alarcón, J. Argillander, D. Spegel-Lexne, and G. B.              and A. Cabello, Energy-time and time-bin entanglement:
+     Xavier, Dynamic generation of photonic spatial quantum               past, present and future, npj Quantum Information 11,
+     states with an all-fiber platform, Opt. Express 31, 10673            129 (2025).
+     (2023).                                                         [58] Z.-Q. Zhong, X.-H. Zhan, J.-L. Chen, S. Wang, Z.-Q.
+[46] D. Spegel-Lexne,         S. Gómez,         J. Argillander,          Yin, J.-Q. Geng, D.-Y. He, W. Chen, G.-C. Guo, and
+     M. Pawlowski, P. R. Dieguez, A. Alarcón, and G. B.                  Z.-F. Han, Hyperentanglement quantum communication
+     Xavier, Experimental demonstration of the equivalence                over a 50 km noisy fiber channel, Optica 11, 1056 (2024).
+     of entropic uncertainty with wave-particle duality,
+

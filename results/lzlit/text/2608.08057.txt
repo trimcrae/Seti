@@ -1,0 +1,2826 @@
+                                                        NON-SEMISIMPLE OPEN-CLOSED 3D TFT
+
+                                                                    INGO RUNKEL AND YILONG WANG
+
+
+                                              Abstract. Given a spherical ﬁnite tensor category C, not necessarily semisimple,
+                                              and a two-sided modiﬁed trace on its projective ideal, we deﬁne an open-closed three-
+                                              dimensional topological ﬁeld theory with values in vector spaces.
+                                                 The bordism category has as morphisms three-dimensional bordisms with corners,
+                                              whose boundary is partitioned into the gluing boundary, parametrised by source and
+                                              target surface, and the unparametrised free boundary. The free boundary is equipped
+                                              with an embedded C-coloured graph satisfying an admissibility condition.
+arXiv:2608.08057v1 [math.QA] 8 Aug 2026
+
+
+
+
+                                                 Our construction starts from a new three-manifold invariant based on the multi-han-
+                                              dlebody invariant of [CGPT18] and the chromatic maps of [CGPV23]. The open-closed
+                                              topological ﬁeld theory is then obtained via the universal construction.
+
+
+
+
+                                                                                  Contents
+                                          1. Introduction                                                                               2
+                                          2. Algebraic input                                                                            4
+                                          2.1. Spherical ﬁnite tensor categories                                                        4
+                                          2.2. The central monad                                                                        6
+                                          2.3. Chromatic maps                                                                           8
+                                          3. The handlebody invariant                                                                  11
+                                          3.1. Admissible skein modules                                                                11
+                                          3.2. Handlebody invariants                                                                   13
+                                          3.3. Skein modules and handlebody invariants for bichrome graphs                             15
+                                          4. Three-manifold invariant                                                                  19
+                                          4.1. Piecewise linear cell decompositions of manifolds                                       19
+                                          4.2. Bulk-admissible graphs and the invariant τ                                              21
+                                          4.3. Comparison to the closed 3-manifold invariant in [CGPT18]                               26
+                                          4.4. Proof of Theorem 4.8                                                                    28
+                                          4.5. The cutting move                                                                        34
+                                          5. Open-closed TFT via the universal construction                                            38
+                                          5.1. Bulk-admissible bordisms                                                                38
+                                          5.2. Universal construction                                                                  40
+                                          5.3. Proof of Proposition 5.8                                                                44
+                                          References                                                                                   50
+2                            INGO RUNKEL AND YILONG WANG
+
+                                    1. Introduction
+   State-sum constructions of three-dimensional topological ﬁeld theories (TFTs) were
+ﬁrst given by Turaev-Viro [TV92] and Barrett-Westbury [BW94]. State sums are natu-
+rally understood in terms of open-closed TFTs which assign vector spaces to 2-manifolds
+with boundary and linear maps to bordisms with corners, see for example the alterfold
+theory [LMW+ 23a, LMW+ 23b, LMW+ 24a], as well as [SS25]. The constructions men-
+tioned so far all require semisimple algebraic input.
+   Recently, there has been a vast development in the construction of TFTs based on
+non-semisimple algebraic inputs, with the ﬁrst major step forward being the invari-
+ants in [CGP12] and the corresponding TFT in [BCGP14]. Further examples of non-
+semisimple 3d TFTs include the one constructed from modular tensor categories based
+on the surgery presentation of 3-manifolds [DGG+ 19], as well as the one deﬁned in
+[CGPV23] from chromatic categories (generalization of spherical fusion categories) via
+admissible skein modules and the generators-and-relations presentation of bordism cat-
+egories in [Juh14].
+
+   In this paper, we construct a non-semisimple open-closed TFT, whose algebraic input
+is a triple (C, t, π1 ) where C is a spherical ﬁnite tensor category, t is a non-zero modiﬁed
+trace on ProjC and π1 : P1 → 1 is a surjection which just serves as normalisation. Our
+construction crucially uses chromatic maps and their properties from [CGPV23], as well
+as the corresponding invariant F of admissible bichrome graphs in multi-handlebodies
+deﬁned in [CGPT18]. The basic idea is as follows: We ﬁrst extend the multi-handlebody
+invariant F to an invariant τC of general 3-manifolds with boundary, together with a C-
+coloured bulk-admissible graph embedded in the boundary. Bulk-admissibility means
+that each connected component of the 3-manifold has a projectively labelled edge some-
+where in its boundary (Deﬁnition 4.4). In particular, a connected 3-manifold is not
+allowed to have empty boundary. We then use the universal construction [BHMV95] to
+deﬁne a TFT.
+   We brieﬂy outline the deﬁnition of the invariant τC (M, Γ), where M is a 3-manifold
+with boundary and Γ is a bulk-admissible C-graph in ∂M . We choose a PLCW decom-
+position of M and push Γ to the boundary of a tubular neighbourhood of the 1-skeleton,
+resulting in a multi-handlebody H with an admissible C-graph on its boundary. Next,
+we construct a graph using the 2- and 3-cells (Deﬁnition 4.1), and choose a spanning
+tree of the graph. Then, we add red loops to H to record how 2-cells are attached to
+the 1-skeleton of M , where we only add red loops for 2-cells that do not correspond to
+the edges in the spanning tree. In this way, H is decorated with an admissible bichrome
+(red and blue) graph Γ′ on its boundary surface, and we deﬁne τC (M, Γ) to be the
+multi-handlebody invariant F(H, Γ′ ).
+   The ﬁrst main result of this paper is that τC (M, Γ) does not depend on the choices of
+the PLCW decomposition, the spanning tree, and how Γ is pushed to the boundary of
+the handlebody H. Namely, we have
+
+
+Theorem 1.1 (Theorem 4.8). τC (M, Γ) is well-deﬁned and only depends on the diﬀeo-
+morphism class of (M, Γ).
+                          NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                3
+
+   The key novelty of our construction is the use of spanning trees when adding red loops.
+Based on existing state-sum constructions of 3-manifold invariants and TFTs, it might be
+tempting to add red loops for every 2-cell: Indeed, in the semisimple case, this is typical
+(see for example [LMW+ 23a] and [SS25]); and in the non-semisimple case, this is closely
+related what the authors of [CGPT18] did to deﬁne an invariant of closed 3-manifolds.
+However, in the presence of boundaries, such a construction would often create red
+loops bounding disks after handle-slides/sliding moves, and such red loops evaluate to
+zero in many non-semisimple cases (Remark 2.7), but also in some semisimple examples
+(Remark 2.8). In our construction we avoid such obviously unwanted zeros by using
+spanning trees, resulting in not only fewer red loops, but also less room for the red loops
+to slide (cf. the proof of Lemma 4.13).
+   One can deﬁne an invariant of closed connected 3-manifolds M by evaluating τC on
+M minus a 3-ball with a suitable admissible graph I on the boundary S2 (see Section 4.3
+for details). In Proposition 4.11 we show that τC (M \ B3 , I) agrees with the invariant
+KC (M ) of closed connected 3-manifolds in [CGPT18].
+  After deﬁning the invariant τC , we use the universal construction to construct a non-
+compact open-closed TFT on the bordism category of surfaces whose boundaries contain
+C-marked points (called ∂-marked surfaces), and 3-dimensional bordisms between them:
+
+Theorem 1.2 (Theorem 5.10). Via the universal construction, the invariant τC extends
+to an open-closed topological ﬁeld theory V : Bordnc
+                                                  oc (C) → Vectk .
+
+  The key to the proof of Theorem 5.10 is Proposition 5.8, which says that the state
+space of any ∂-marked surface (Σ, L) is spanned by what we call “collar elements”. Such
+an element has underlying 3-manifold Σ = Σ × [0, 1] viewed as a bordism from ∅ to
+(Σ, L). Using collar elements, we show that there exists a surjection
+                             E(Σ, L) : Sadm (Σ, L) → V(Σ, L)
+from the admissible skein module of (Σ, L) to the corresponding state space of V (Propo-
+sition 5.9). In particular, V(Σ, L) is ﬁnite-dimensional. In addition to the ﬁnite-
+dimensionality of the state spaces, Proposition 5.8 also helps us to establish monoidality
+of V.
+   Both the TFT V in this paper and the TFT S of admissible skein modules in [CGPV23]
+depend heavily on the properties of the multi-handlebody invariant F, and the source
+bordism category of S can be identiﬁed with the full subcategory of Bordnc oc (C) consisting
+of closed surfaces with no marked points. However, the two TFTs are deﬁned by diﬀerent
+methods: V is deﬁned via the universal construction, while S is deﬁned by Juhász’s
+presentation of bordism categories [Juh14]. We expect that V agrees with S for closed
+surfaces and admissible bordisms with empty free boundary (Remark 5.12).
+   When the input category C is semisimple, we argue in Remark 4.12 that τC generalises
+the Turaev-Viro invariant by comparing both of these invariants with the alterfold in-
+variant ZC in [LMW+ 23a]. Namely, τC is a non-zero scalar multiple of ZC and, since both
+the open-closed TFT V and the alterfold TFT are built from the universal construction,
+the state space of any 2-alterfold under the alterfold TFT is isomorphic to the state
+space of its B-coloured region (which is a ∂-marked surface) under V, see Remark 5.13.
+4                            INGO RUNKEL AND YILONG WANG
+
+  Finally, it would be interesting to explore the relation between the TFT V in this
+paper and the TFT constructed in [DGG+ 19]. We expect that for any spherical ﬁnite
+tensor category C, our TFT V coincide with the TFT in [DGG+ 19] associated to the
+Drinfeld center Z(C) of C. This is inspired by the general “RT=TV” philosophy in the
+semisimple case [TV17, LMW+ 23b], which is supported in particular by the alterfold
+theory. We plan to return to this question in the future.
+
+   The paper is organised as follows. In Section 2, we review the deﬁnition and basic
+properties of the algebraic data that is used to deﬁne the 3-manifold invariant τC and
+the topological V. In Section 3, we review admissible skein modules and the handlebody
+invariant F. In Section 4, we give the deﬁnition of the invariant τC and prove its topo-
+logical invariance. Finally, in Section 5, we apply the universal construction to construct
+V, and verify that it is indeed a topological ﬁeld theory.
+
+Acknowledgements. We would like to thank Francesco Costantino, Azat Gainutdi-
+nov and Shuang Ming for fruitful discussions. I.R. thanks BIMSA for hospitality during
+a visit in September 2024 where this project was started. Y.W. thanks University of
+Hamburg for hospitality during his visit in February 2026. I.R. acknowledges support
+by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under
+Germany’s Excellence Strategy - EXC 2121 “Quantum Universe” - 390833306 and the
+Collaborative Research Center - SFB 1624 “Higher structures, moduli spaces and inte-
+grability” - 506632645. Y.W. is supported by NSFC No. 12301045 and No. 12571041.
+
+
+Conventions. Throughout this paper, k will denote an algebraically closed ﬁeld of
+arbitrary characteristic, and C is a spherical ﬁnite tensor category over k. Here, “spher-
+ical” means that C is unimodular and pivotal and admits a two-sided modiﬁed trace on
+its projective ideal.
+
+
+                                  2. Algebraic input
+   In this section we describe the algebraic data we ﬁx to deﬁne the three-manifold
+invariants and topological ﬁeld theory in the later sections, and we collect the algebraic
+properties we will need.
+
+2.1. Spherical ﬁnite tensor categories. As stated in the conventions, C is a spherical
+ﬁnite tensor category over k. For ﬁnite tensor categories we follow the conventions in
+[EGNO15], see Deﬁnitions 1.8.6 and 4.1.1, as well as Section 6 there. In particular C, is
+rigid and has a simple tensor unit. We will take C to be strictly monoidal for notational
+simplicity.
+   A tensor category is spherical if it is pivotal, unimodular, and admits a two-sided
+modiﬁed trace on its projective ideal. Let us recall these notions in turn.
+   That C is pivotal means that there is a natural monoidal isomorphism δ : Id → (−)∗∗ ,
+and we hence do not need to distinguish between left and right duals. For the various
+evaluation and coevaluation maps we employ the standard string diagram expressions,
+                                NON-SEMISIMPLE OPEN-CLOSED 3D TFT                         5
+
+read from bottom to top,
+                                                             X     X∗
+                                   ∗
+         evX =                  :X ⊗X →1           coevX =              : 1 → X ⊗ X∗
+                 X   ∗
+                            X
+(2.1)
+                                                             X∗    X
+         ef
+          vX =                  : X ⊗ X∗ → 1       coev
+                                                    gX =                : 1 → X∗ ⊗ X
+                 X         X∗
+   We will denote by ProjC the full subcategory of projective objects in C. These form
+a tensor ideal in C. Namely, tensor products of a projective object with any object are
+again projective, and direct sums and summands of projective objects are projective. If
+P is projective, then so is P ∗ [EGNO15, Prop. 6.1.3], or, equivalently, every projective
+object in C is also injective.
+   Every object X ∈ C has a unique projective cover PX . The projective cover P1 of the
+tensor unit 1 will be particularly important. The Hom-space C(P1 , 1) is one-dimensional
+by construction. That C is unimodular means that also C(1, P1 ) is non-zero, and hence
+necessarily one-dimensional. Equivalently, C is unimodular iﬀ P1 ∼   = P1∗ . We will ﬁx
+non-zero morphisms
+
+(2.2)                        π1 : P1 → 1        and     ι1 : 1 → P1 .
+
+These are unique up to scalars. The following conditions are equivalent:
+  • C is semisimple,
+  • 1 is projective (then X = X ⊗ 1 is projective for all X ∈ C),
+  • π1 ◦ ι1 6= 0 (up to a rescaling, π1 ◦ ι1 = id1 and so 1 is a direct summand of P1 ,
+    hence projective).
+  A (left, right, or two-sided) modiﬁed trace t on ProjC is a family of linear maps
+
+(2.3)                        (tP )P ∈ProjC   where tP : End(P ) → k ,
+
+such that the tP are cyclic and satisfy partial trace conditions which depend on whether
+t is left, right, or two-sided, see [GKP10] and [GPV11, Sec. 2.2] for details. A useful
+way to think of a two-sided modiﬁed trace is as a linear form on the admissible skein
+module of the 2-sphere [CGPV23], see Proposition 3.6 below. The following theorem is
+instrumental [GKP18, Cor. 5.6].
+
+Theorem 2.1. A pivotal unimodular ﬁnite tensor category D admits a non-zero right
+modiﬁed trace t on ProjD . The right modiﬁed trace t is unique up to an overall scalar
+and induces a non-degenerate pairing for each X ∈ D, P ∈ ProjD ,
+
+                         D(X, P ) × D(P, X) → k ,     (f, g) 7→ tP (f ◦ g) .
+
+   A pivotal unimodular ﬁnite tensor category is called spherical if the unique-up-to-
+scalar right modiﬁed trace is two-sided. By [SS21, Thm. 1.3], this is equivalent to the
+deﬁnition of sphericality in [DSPS13, Def. 3.5.2]. If C is semisimple, it agrees with the
+earlier notion of sphericality in [BW93], namely that that left and right categorical trace
+coincide.
+6                            INGO RUNKEL AND YILONG WANG
+
+  To summarise, the algebraic input for the construction of manifold invariants and the
+topological ﬁeld theory below is a triple
+(2.4)                                          (C, t, π1 ) ,
+where
+    • C is a spherical ﬁnite tensor category,
+    • t a non-zero two-sided modiﬁed trace on ProjC , and
+    • π1 : P1 → 1 is a surjection.
+This determines the embedding ι1 : 1 → P1 via the non-degeneracy of the modiﬁed
+trace through the normalisation condition
+(2.5)                                     tP1 (ι1 ◦ π1 ) = 1 .
+Below we will only deal with two-sided modiﬁed traces and so from now on, by “modiﬁed
+trace” we will always mean “two-sided modiﬁed trace”.
+2.2. The central monad. The construction of chromatic maps below relies on the
+central monad Z : C → C [BV12]. For each X ∈ C, Z(X) is deﬁned to be the coend
+                                               Z V ∈C
+(2.6)                            Z(X) =                 V∗⊗X ⊗V ,
+
+with dinatural maps ιX,V : V ∗ ⊗ X ⊗ V → Z(X). By construction of the functor Z, ιX,V
+is natural in X. In fact, Z is even a quasi-triangular Hopf monad, and the name “central
+monad” derives from the fact that the category of Z-modules is braided-equivalent to
+the Drinfeld centre of C [BV12, DS07].
+Remark 2.2. The Drinfeld centre Z(D) of a pivotal ﬁnite tensor category D has a ribbon
+structure if and only if D is spherical, see [Shi17, Thm. 5.11] and [MW24, Cor. 2.13]. By
+[ENO04, Prop. 4.4] and [Shi16b, Thm. 1.1], the braiding on Z(D) is non-degenerate, and
+so in our setting Z(C) is a modular tensor category, that is, a non-degenerately braided
+ﬁnite ribbon tensor category.
+  One way to construct Z(X) is as a cokernel in C [KL01, Prop. 5.1.7] (as C is rigid, the
+tensor product functor is biexact):
+Proposition 2.3. Let G be a projective generator of C and let {fi }i=1,...,n be a basis of
+End(G). The following sequence is exact,
+             n                   L
+             M                       fi∗ ⊗id−id⊗fi                    ιX,G
+                   G ⊗ X ⊗ G −−−i−−−−−−−−→ G∗ ⊗ X ⊗ G −−−→ Z(X) → 0 .
+                    ∗
+
+             i=1
+   In the above expression it is understood that fi∗ ⊗ idX⊗G − idG∗ ⊗X ⊗ fi starts in the
+i’th copy of G∗ ⊗ X ⊗ G of the direct sum.
+   As in [CGPV23, Sec. 4.5], we deﬁne
+                                           V       Z(X)
+                         V   Z(X)
+
+
+(2.7)           ∂X,V =               :=            ιX,V        : X ⊗ V → V ⊗ Z(X) .
+
+                         X   V
+                                                  X       V
+                            NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                      7
+
+The maps ∂X,V are natural in both X and V . The universal property of Z(X) now takes
+the following form: For each natural transformation ξ : X ⊗ (−) → (−) ⊗ Y there is a
+unique ξ̃ : Z(X) → Y such that for all V ,
+                                     V        Y            V       Y
+
+
+                                                                   ξ˜
+(2.8)                                    ξX,V         =
+                                                                   Z(X)
+
+
+                                     X        V            X       V
+
+   The Hopf monad Z admits a unique-up-to-scalar integral and cointegral [Shi19, Thm.
+4.8 and Cor. 4.10]1
+(2.9)            Λ : Z(1) → 1 ,       λ : 1 → Z(1) ,               such that Λ ◦ λ = 1 .
+That the tensor unit appears above rather than a more general invertible object is due
+to the assumption that C is unimodular.
+   The integral Λ is determined by the choice of modiﬁed trace t on C as follows. For P
+projective let {αi } ⊂ C(P, 1) be a basis, and let {αi } ⊂ C(1, P ) be its dual basis in the
+sense that tP (αi ◦ αj ) = δi,j . Deﬁne
+                                                      P
+
+
+                                                X     αi
+(2.10)                             ΛtP =                   :P →P .
+                                                  i   αi
+
+
+                                                      P
+
+The morphism ΛtP is independent of the choice of basis {αi } and hence uniquely deter-
+mined by t. The dual basis relation also implies that
+(2.11)                              tP (ΛtP ) = dim C(P, 1) .
+We have [CGPV23, Lem. 4.1 & 4.3]:
+
+Lemma 2.4. There is a unique natural endomorphism Λt• of the identity functor such
+that for each P ∈ ProjC , ΛtP is as above.
+
+  By (2.8) with X = Y = 1, this implies the existence of a unique Λ : Z(1) → 1 such
+that
+                                          X                X
+
+                                                               Λ
+
+(2.12)                                    ΛtX         =        Z(1) ,
+
+
+
+                                          X                X
+
+which is indeed an integral for Z [CGPV23, Lem. 4.8].
+  1 That reference uses Hopf comonads, see [BGR20, Sec. 2.5 & Prop. 2.10] for the translation to Hopf
+monads.
+8                           INGO RUNKEL AND YILONG WANG
+
+Remark 2.5. The integral Λ gives us another way to characterise semisimplicity of C
+[Shi15a, Prop. 5.6].1 Namely, let u := ι1,1 : 1 → Z(1) be the unit of the monad Z. Then
+
+                            C semisimple                 ⇔          Λ ◦ u 6= 0 .
+
+Thanks to the explicit expression (2.10), we can give a simpler argument as compared
+to [Shi15a]. The direction ‘⇒’ follows form explicit computation, which we omit. For
+‘⇐’ ﬁrst note that by (2.12), Λ ◦ u 6= 0 is equivalent to Λt1 = α id1 for some α 6= 0.
+On the other hand, from (2.5) and (2.10) we see that ΛtP1 = ι1 ◦ π1 . For the surjection
+π1 : P1 → 1, naturality of Λt• (Lemma 2.4) gives
+
+(2.13)               α−1 π1 = Λt1 ◦ π1 = π1 ◦ ΛtP1 = π1 ◦ ι1 ◦ π1 .
+
+Thus we must have π1 ◦ ι1 6= 0, which is one of the equivalent characterisations of
+semisimplicity of C.
+
+2.3. Chromatic maps. A chromatic map (based on a projective P for a projective
+generator G) is a map cP,G : P ⊗ G → P ⊗ G such that for all X ∈ C,
+                            P                       X                  P       X
+
+                                     G
+(2.14)                          cP,G           ΛtG∗ ⊗X          =                  ,
+                                     G
+
+                            P                       X                  P       X
+
+see [CGPV23, Sec. 1.8]. Importantly, chromatic maps always exist, and we will quickly
+review their construction in [CGPV23] as we will need it later. Using that duals of
+projective covers are again projective covers, one checks that G∗ is also a projective
+generator, and from Proposition 2.3 we see that ι1,G∗ is surjective. Hence there exists a
+(typically non-unique) map dP : P → P ⊗ G ⊗ G∗ such that
+
+                                                                                            P
+                                                           ∃dP
+(2.15)                                                                                       idP ⊗λ   .
+              P ⊗ G ⊗ G∗ id ⊗δ ⊗id                 P ⊗ G∗∗ ⊗ G∗            idP ⊗ι1,G∗
+                                                                                         P ⊗ Z(1)
+                             P        G       G∗
+
+
+Deﬁne
+                                d ⊗id                                     idP ⊗G ⊗evG          
+(2.16)                      P
+             cP,G := P ⊗ G −−   G
+                             −−−→ P ⊗ G ⊗ G∗ ⊗ G −−−−−−−→ P ⊗ G
+
+Expressing dP in terms of cP,G and combining with (2.7), the deﬁning condition (2.15)
+for dP is equivalent to
+                                 P                  Z(1)              P    Z(1)
+
+                                          G
+                                                            =
+(2.17)                               cP,G                                  λ
+                                         G
+
+                                 P
+                                NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                                           9
+
+So far we know that there exists a cP,G which satisﬁes (2.17). Next we sketch the
+argument why cP,G is a chromatic map, i.e. why (2.17) implies (2.14). Writing L and R
+for the left and right hand side of (2.14), we have
+                                                           P                 X                 P          X
+                     P               X
+                                                                                 Λ                            Λ
+                           G                 Λ                                    Z(1)                         Z(1)
+                                                                                 m1                           m1
+                                             Z(1)
+               (1)                                   (2)                         Z 2 (1) (3)       Z(1)       Z 2 (1) (4)
+(2.18)      L=           cP,G                        =                Z(1)               =                            =R
+                                     G ⊗X
+                                     ∗
+                                                                 G                                   λ
+                           G                                   cP,G
+                                                                 G
+                     P               X
+                                                           P                 X                 P          X
+
+In step (1), the horizontal bars just mean that we combine the parallel strands labelled
+G∗ and X into a single strand labelled G∗ ⊗ X. Formally, it stands for a coupon labelled
+idG∗ ⊗X . We then substitute the deﬁnition of Λ in (2.12). In step (2) we use the deﬁnition
+of the product mX : Z(Z(X)) → Z(X) of the monad X, which we did not review, and
+for which we refer to [BV06] and [CGPV23, Sec. 4.5]. Step (3) is (2.17), and step (4)
+follows from the deﬁning property of a cointegral (see again the previous two references)
+and from the normalisation Λ ◦ λ = 1.
+   We denote the aﬃne linear space of solutions to (2.17) by
+                                 
+(2.19)                   CP,G = cP,G ∈ End(P ⊗ G) cP,G solves (2.17) ,
+and refer to CP,G as the chromatic space (based on the projective P for the projective
+generator G). We summarise the discussion so far by the following theorem [CGPV23,
+Thm. 4.2]:
+
+Theorem 2.6. For each P ∈ ProjC and projective generator G, the chromatic space
+CP,G is non-empty, and each cP,G ∈ CP,G is a chromatic map.
+
+Remark 2.7. Write Z0 : Z(1) → 1 for the counit of the Hopf monad Z, characterised
+by idX = (idX ⊗ Z0 ) ◦ ∂1,X . Composing (2.17) with idP ⊗ Z0 , we get
+                                         P
+
+                                                 G
+(2.20)                                       cP,G                 = (Z0 ◦ λ) idP .
+                                                 G
+
+                                         P
+This particular morphism will be relevant when evaluating a red loop bounding a disc,
+as we will explain later in Remark 3.13. Note that Z0 ◦ λ is precisely opposite to the
+combination used in Remark 2.5 to detect semisimplicity. We are not aware of a proof
+that, for characteristic zero, Z0 ◦λ 6= 0 iﬀ Λ◦u 6= 0 (for ﬁnite characteristic this is false in
+general), but it seems analogous to the Larsen-Radford theorem relating semisimplicity
+and cosemisimplicity for Hopf algebras, see [Shi19, Sec. 4.7] for a related discussion.
+10                             INGO RUNKEL AND YILONG WANG
+
+However, there are two special cases where we can already conclude that Z0 ◦ λ 6= 0 is
+equivalent to semisimplicity:
+     (1) If C is in addition ribbon and modular, then Z = L ⊗ (−) for L = Z(1) the
+         canonical coend of C. As C is ribbon, L is a braided Hopf algebra, and as C
+         is modular, L is self-dual. Indeed, by one of the equivalent characterisations
+         of modularity, there is a non-degenerate Hopf pairing for L, which exchanges
+         integrals and cointegrals (see [Lyu95], [KL01, Def. 5.2.7, Prop. 4.2.14] and [Shi16b,
+         Thm. 1.1]).
+     (2) If C = Rep(H) for H a ﬁnite-dimensional unimodular and unibalanced Hopf
+         algebra such that dim(H) 6= 0 in k, see [CGPV23, Ex. 1.5].
+Much of the complication in the construction of the three-manifold invariants below is
+due to the fact that we allow for the case Z0 ◦ λ = 0.
+
+Remark 2.8. Let us consider the case that C is a spherical fusion category. Then
+C = ProjC and for the modiﬁed trace t we take the categorical trace tr. The projective
+cover of 1 is P1 = 1 and we choose π1 = id1 , which implies ι1 = id1 .
+   The central Hopf monad is described for example in [TV17, Ch. 9.4]. Z acts on objects
+            L
+as Z(X) = U ∈Irr(C) U ∗ ⊗ X ⊗ U . We have
+                                                     X
+                u = e1 : 1 → Z(1) , Z0 =                       evU : Z(1) → 1 ,
+                                                   U ∈Irr(C)
+(2.21)                                              X
+                Λ = p1 : Z(1) → 1 , λ =                             g U : 1 → Z(1) ,
+                                                           dim(U ) coev
+                                               U ∈Irr(C)
+
+where dim(U ) is the categorical dimension of U , and e1 : 1 = 1∗ ⊗ 1 ֒→ Z(1) and
+p1 : Z(1) ։ 1∗ ⊗ 1 = 1 are the embedding and projection of the direct summand
+1∗ ⊗ 1 ⊂ Z(1). Note that with this normalisation indeed Λ ◦ λ = 1 as required in (2.9).
+We further have
+
+(2.22)                         Λ◦u=1 ,             Z0 ◦ λ = Dim(C) ,
+                    P
+where Dim(C) = U ∈Irr(C) dim(U )2 is the global dimension of C. In particular, Λ ◦ u 6= 0
+in accordance with Remark 2.5. We also have the evident conclusion
+
+(2.23)                       Z0 ◦ λ = 0      ⇔        Dim(C) = 0 in k .
+
+This provides an example that Z0 ◦ λ = 0 can happen in semisimple categories over
+ﬁelds in ﬁnite characteristic. (In characteristic zero one necessarily has Dim(C) 6= 0,
+see [EGNO15, Thm. 7.21.12].) If C = Rep(H) is the category of representations of a
+semisimple spherical Hopf algebra, then Dim(C) = dimk (H), and so Z0 ◦ λ = 0 iﬀ
+dimk (H) = 0 in k, cf. [CGPV23, Ex. 1.5].
+                                                                           L
+   To obtain the chromatic maps, as projective generator of C we take G := U ∈Irr(C) U .
+For any object P ∈ C, the chromatic map is then given by
+                                         M
+(2.24)                        cP,G =               dim(U ) · idP ⊗ idU ,
+                                       U ∈Irr(C)
+
+see [CGPV23, Ex. 1.4]. Indeed, it is not hard to check that cP,G solves (2.17).
+                             NON-SEMISIMPLE OPEN-CLOSED 3D TFT                               11
+
+                               3. The handlebody invariant
+3.1. Admissible skein modules. In this section, we recall the deﬁnition of admissi-
+ble skein modules, introduced in [CGPV23], and in [RW] under the name non-unital
+skein modules. For a general discussion of admissible skein modules, see also [RST24].
+Roughly speaking, the skein module of a surface is the vector space freely spanned by
+C-coloured graphs modulo relations induced by C which hold inside embedded disks.
+If we require each graph to have at least one projectively coloured edge, we speak of
+admissible graphs and admissible skein modules.
+  Let us go through the deﬁnition in more detail. We ﬁrst need the notion of a ∂-marked
+surface.
+Deﬁnition 3.1. A ∂-marked surface (Σ, L) (over C) is a compact2 oriented surface Σ
+with boundary ∂Σ (possibly empty), and a ﬁnite set L of marked points. A marked
+point is a triple (p, ν, X) where p ∈ ∂Σ, ν ∈ {±}, and X ∈ C. The points p in L are
+required to be mutually distinct, i.e., the map L → ∂Σ is injective.
+   Let (Σ, L) be a ∂-marked surface over C. A blue graph (over C), or a (blue) C-graph,
+in (Σ, L), is a union of a ﬁnite collection of oriented arcs (embedded [0, 1]), circles
+(embedded S1 ) and vertices (embedded points). We refer to the arcs and circles as edges
+of the blue graph. The vertices, circles and the interior of the arcs (images of (0, 1))
+are mutually disjoint, and are contained in the interior of Σ. The endpoints of the arcs
+either lie on vertices of Γ or on marked points on ∂Σ. In the latter case, the arc meets
+∂Σ transversally. Each arc and each circle is labelled by an object of C. The endpoints
+of the arcs meeting a vertex v are cyclically ordered by the orientation of Σ, and are
+partitioned into two consecutive sets of ingoing and outgoing endpoints, both equipped
+with a total order compatible with the cyclic order. The vertex is labelled by a morphism
+in C, compatible with the in– and outgoing endpoints of edges, their orientation, and
+their labels. It will be convenient to represent the vertices as coupons, as in the usual
+string diagram notation:
+               X        W              X         W
+
+
+                f                          f         f ∈ C(U ∗ ⊗ U ⊗ V, X ⊗ W ∗ )
+(3.1)
+
+
+                    U                      U
+                        V                        V
+Each marked point (p, ν, X) on ∂Σ is met by precisely one endpoint of one arc. This
+arc is labelled by X, and if ν = −, the arc points away from ∂Σ (i.e., the endpoint 0 of
+[0, 1] is mapped to the marked point p), and if ν = + the arc points towards ∂Σ.
+Deﬁnition 3.2. A blue graph Γ on a ∂-marked surface (Σ, L) is called admissible if
+each connected component of Σ contains at least one edge of Γ labelled by an object in
+ProjC .
+  2One can allow non-compact surfaces with a ﬁnite number of connected components, see [RST24],
+but we restrict ourselves to the compact case.
+12                             INGO RUNKEL AND YILONG WANG
+
+  Next we turn to skein relations. Let us write S̃(Σ, L) for the k-linear span of all blue
+graphs on Σ, and S̃adm (Σ, L) for the span of all admissible blue graphs.
+  Let K ⊂ Σ be an embedded square [0, 1]×[0, 1] in the interior of Σ. We call [0, 1]×{0}
+and [0, 1] × {1} the in– and outgoing base of K, respectively. Let Γ be a blue graph
+which intersects the boundary of K transversally and only at its bases. By evaluating
+the resulting graph in K as a string diagram in C, we obtain a morphism
+(3.2)                                           F (Γ ∩ K)
+in C from the tensor product of objects labelling the edges intersecting the ingoing base
+to that for the outgoing base. For example
+
+
+              X         W
+                                outgoing base
+
+
+
+
+                    f                                                                         ∗
+(3.3)                            K                               ^
+                                                F (Γ ∩ K) = f ◦ (coev U ⊗ idV ∗ ) : V → X ⊗ W
+
+
+                   U
+                                ingoing base
+                        V
+
+
+
+This is well-deﬁned because C is assumed to be pivotal, see e.g., [TV17, Ch. 2] for more
+on the diagrammatic calculus for pivotal monoidal categories.
+                                       P
+  A skein relation for K is an element ni=1 ai Γi ∈ S̃(Σ, L) such that
+     (1) Γi only intersects the boundary of K transversely and only at the bases of K;
+     (2) the blue graphs agree outside of K: Γi ∩ (Σ \ K) = Γj ∩ (Σ \ K) for i, j = 1, ..., n;
+         P
+     (3) ni=1 ai F (Γi ∩ K) = 0 as a morphism in C.
+A skein relation for K is called admissible, if one (hence every) Γi is admissible and
+the connected component of Σ containing K has a ProjC -coloured edge not completely
+contained in K. Equivalently, Γi is admissible in Σ \ K.
+   Let N (Σ, L) ⊂ S̃(Σ, L) be the span of all skein relations for K as we vary over all
+choices of K. Analogously Nadm (Σ, L) ⊂ S̃adm (Σ, L) is the span of all admissible skein
+relations.
+Deﬁnition 3.3. Let (Σ, L) be a ∂-marked surface. The admissible skein module (over
+C) for (Σ, L) is the quotient space
+                            Sadm (Σ, L) = S̃adm (Σ, L)/Nadm (Σ, L) .
+We write [Γ] ∈ Sadm (Σ, L) for the class of a blue graph Γ.
+  Admissible skein modules can be generalised to other subcategories than ProjC [CGP23,
+RST24], but we will not need that here. It follows from [RST24, Prop. 5.6] (see also
+[CGP23, Thm. 2.3] for the case L = ∅) that:
+Proposition 3.4. The skein module Sadm (Σ, L) is ﬁnite dimensional over k for all
+∂-marked surfaces (Σ, L).
+                         NON-SEMISIMPLE OPEN-CLOSED 3D TFT                              13
+
+Remark 3.5. Of course one can also deﬁne skein modules without the admissibility
+condition in the same way as S(Σ, L) = S̃(Σ, L)/N (Σ, L). If C is semisimple, S(Σ, L) =
+Sadm (Σ, L). For non-semisimple C, the S(Σ, L) are less well behaved than Sadm (Σ, L).
+For example, for Σ an annulus, S(Σ, ∅) can be inﬁnite dimensional [RST24, Rem. 5.10],
+while Sadm (Σ, L) is always ﬁnite-dimensional, as we saw in the previous proposition.
+  Admissible skein modules on the 2-sphere are dual to (two-sided) modiﬁed traces.
+Namely, for P ∈ ProjC and f : P → P , let Λf be the blue graph in S2 formed of a single
+vertex v labelled f and a single edge from v to v labelled P . We have (see [CGPV23,
+Thm. 2.4], and [RST24, Prop. 5.5] for a proof based on excision):
+Proposition 3.6. Let ψ ∈ Sadm (S2 , ∅)∗ . For P ∈ ProjC write ψP : EndC (P ) → k for
+the map f 7→ ψ([Λf ]). Then (ψP )P ∈ProjC is a two-sided modiﬁed trace on ProjC and all
+such traces are of this form.
+   Conversely, a linear form on Sadm (S2 , ∅) can be obtained from a modiﬁed trace t as
+follows. Let Γ be an admissible blue graph on S2 . Pick a point p on an edge e labelled by
+a projective object P . Pick a small enough open disc D around p, so that it intersects e
+in a single arc. The complement of D is topologically a square K, whose in- and outgoing
+base are intersected once by the edge e, so that F (Γ ∩ K) is a morphism P → P , which
+we can then evaluate with tP . It is proved in [GPV11, Thm. 5] that this is a well-deﬁned
+isotopy invariant for admissible blue graphs on S2 , and in [CGPV23, Thm. 2.4] that it
+respects admissible skein relations. Altogether, we get a linear form
+(3.4)             F′ : Sadm (S2 , ∅) → k , Γ 7→ F′ (Γ) := tP (F (Γ ∩ K)) .
+From here on, F′ will be the linear form corresponding to the choice of modiﬁed trace t
+we made in Section 2.1.
+Lemma 3.7. Suppose C is non-semisimple. If [Γ] ∈ Sadm (S2 , ∅) is the union of two
+disjoint graphs Γ = Γ1 ⊔ Γ2 such that each of Γ1,2 contains a projectively coloured edge,
+then F′ ([Γ]) = 0.
+Proof. As Γ1 contains a projectively coloured edge, we can apply a skein relation to a
+square K which entirely contains Γ2 . Since Γ2 contains a projectively labelled edge, the
+evaluation F (Γ2 ) : 1 → 1 then can be written as a composition 1 → P1 → 1, which is
+always zero for non-semisimple C.                                                      
+3.2. Handlebody invariants. The invariant F′ from (3.4) can be extended to higher
+genus surfaces by identifying the surface with the boundary of a handlebody. To char-
+acterise the extension, we ﬁrst need to recall the cutting move from [CGPT18].
+   By a multi-handlebody H we mean a ﬁnite disjoint union of 3-dimensional handle-
+bodies. Let Γ be an admissible blue graph on ∂H, that is, Γ ∈ S̃adm (∂H), where we
+abbreviate S̃adm (Σ) = S̃adm (Σ, ∅) as ∂H is closed and so there are no marked boundary
+points.
+   Let D ⊂ H be an oriented properly embedded disk whose boundary ∂D ⊂ ∂H
+does not meet the vertices of Γ and intersects the strands of Γ transversely in a non-
+empty set containing at least one ProjC -coloured strand. We call D a cutting disc in H.
+Denote by cutD (H) the multi-handlebody obtained by cutting H along D. Cut along
+14                              INGO RUNKEL AND YILONG WANG
+
+
+
+
+                                                                αi
+
+                                            Cutting   P
+                            D
+                                                       i
+
+                                                                αi
+
+
+
+
+                      Figure 1. The cutting move along the disk D.
+
+
+
+∂D the edges of Γ which intersect ∂D, say, labelled by X1 , ..., Xn . Then, attach the cut
+points to two new coupons in ∂cutD (H), one on each side of the cut. By assumption,
+P := X1 ⊗ · · · ⊗ Xn ∈ ProjC , which means we can colour the pair of coupons joining the
+two sets of the cut points by a dual basis pair as in the deﬁnition of ΛtP in (2.10), see
+Figure 1. In this way, we obtain an admissible graph
+
+(3.5)                            cutD (Γ) ∈ S̃adm (∂cutD (H)) .
+
+  The next theorem is shown in [CGP23, Thm. 4.1 & 4.3] and is the key ingredient on
+which the construction of the open-closed TFT below will be based.
+
+Theorem 3.8. Let (C, t, π1 ) be as in (2.4). There is a unique collection of maps
+
+(3.6)                        F := {F(H, −) : Sadm (∂H) → k} ,
+
+where H ranges over multi-handlebodies such that
+     (1) the values of F(H, [Γ]) only depend on the orientation preserving diﬀeomorphism
+         classes of elements (H, [Γ]);
+     (2) F(D3 , −) = F′ from (3.4) as linear maps Sadm (S2 , ∅) → k;
+     (3) F is multiplicative with respect to disjoint unions;
+     (4) F is invariant under the cutting move, that is, for Γ ∈ S̃adm (∂H) and D a cutting
+         disc, we have
+
+                            F(H, [Γ]) = F(cutD (H), [cutD (Γ)]) .
+
+Example 3.9. Let C be non-semisimple, and let P ∈ ProjC . Let H be a solid torus and
+let Γc and Γn be P -coloured circles embedded in ∂H such that Γc is contractible in H
+and Γn is not:
+
+
+
+(3.7)                                                                P
+                             P     Γc
+                                                           Γn
+                            NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                   15
+
+Then
+
+                                                                        P
+                                                  X
+(3.8)     F(H, Γc ) = F(H,       P
+                                             )=        F(D3 ,                     P     )=0
+                                                   j
+                                                                                  βj
+                                                                        βj
+
+
+
+where the second step is the cutting move, and the third step is Lemma 3.7. On the
+other hand,
+
+                                                                                   P
+
+                                                       X
+              F(H, Γn ) = F(H,                 P )=            F(D3 ,                       )
+(3.9)                                                      i
+                                                                                       αi
+                                                                             αi
+
+
+
+           = t(ΛtP ) = dimk C(P, 1)
+where the last equality is (2.11).
+
+3.3. Skein modules and handlebody invariants for bichrome graphs. A bichrome
+graph in a closed surface Σ is the disjoint union of a blue graph in Σ (the “blue part”)
+and ﬁnitely many pairwise disjoint unoriented embedded curves in Σ (the “red part”).
+
+Deﬁnition 3.10. A bichrome graph Γ on a closed surface Σ is admissible if its blue
+part is admissible (each connected component of Σ contains an edge of the blue graph
+                                             bi (Σ) for the linear span of admissible
+labelled by an object in ProjC ). We write S̃adm
+bichrome graphs on Σ.
+                                               bi (Σ) → S
+  Next we deﬁne a surjective linear map RB : S̃adm        adm (Σ) (“red-to-blue map”).
+Recall the deﬁnition of the chromatic space CP,G in (2.19). A red-blue modiﬁcation of
+an admissible bichrome graph is a modiﬁcation in an annular neighbourhood of a red
+curve ω of the following form
+                        P                              P
+
+                                                               G
+
+(3.10)
+                                                          cP,G
+
+
+                                     ω
+
+
+where P ∈ ProjC , G is a projective generator, and cP,G ∈ CP,G . Here P can stand for a
+tensor product of several edge labels if the path connecting ω to the projectively labelled
+edge crosses other blue edges. In more detail, a red-blue modiﬁcation depends on the
+following choices: 1) a point p on a red curve ω and a point q on a blue edge labelled by
+a projective object P ; 2) an embedded path γ : [0, 1] → Σ with γ(0) = p and γ(1) = q
+used to isotope the P -labelled edge (and the other edges it crosses) close to p ∈ ω (γ is
+allowed to cross blue edges but not red curves); 3) a choice of projective generator G and
+16                            INGO RUNKEL AND YILONG WANG
+
+a choice of chromatic map cG,Q ∈ CG,Q , where Q = X1 ⊗ · · · ⊗ Xn ⊗ P with X1 , . . . , Xn
+labels of other blue strands crossed by γ.
+   We can use red-blue modiﬁcations to iteratively convert a bichrome graph Γ into a
+purely blue graph as follows: Deﬁne the depth of a red curve ω ⊂ Γ as the minimal
+number of red curves a path from a point on ω to a point on a projectively labelled
+blue edge of Γ needs to cross. Then apply red-blue modiﬁcations to all depth-0 red
+curves and repeat the process. We denote the resulting admissible blue graph by Γrb .
+Of course, Γrb depends on many arbitrary choices, but it is shown in [CGPV23, Lem. 2.6]
+and [CGHP26, Prop. 5.16] that its image [Γrb ] ∈ Sadm (Σ) does not:
+
+Lemma 3.11. [Γrb ] ∈ Sadm (Σ) only depends on Γ and not on the order and choices
+made in the red-blue modiﬁcations during the above iterative procedure.
+
+     Using this lemma, we can deﬁne
+                                bi
+(3.11)                   RB : S̃adm (Σ) → Sadm (Σ) ,     Γ 7→ [Γrb ] .
+
+Since admissible bichrome graphs without red part are allowed, the map RB is evidently
+                          bi (Σ) to be the quotient
+surjective, and we deﬁne Sadm
+                               bi           bi
+(3.12)                        Sadm (Σ) := S̃adm (Σ)/ ker(RB) .
+
+By abuse of notation, we also denote the resulting isomorphism by RB:
+                                     bi         ∼
+(3.13)                         RB : Sadm (Σ) −−→ Sadm (Σ) .
+
+In particular, we can now extend the invariant F in (3.6) to admissible bichrome graphs:
+                                                    RB             F(H,−)
+(3.14)           Fbi := {Fbi (H, −) : Sadm
+                                       bi
+                                           (∂H) −−→ Sadm (∂H) −−−−→ k }
+
+where H ranges over multi-handlebodies. Accordingly, Fbi inherits properties from F as
+listed in Theorem 3.8. We state these as a corollary:
+
+Corollary 3.12.
+                   bi (∂H) has no red components, then F bi (H, [Γ]) = F(H, [Γ]).
+     (1) If [Γ] ∈ Sadm
+     (2) The values of Fbi only depends on the orientation preserving diﬀeomorphism
+         classes of elements (H, [Γ]).
+     (3) Fbi is multiplicative with respect to disjoint unions.
+     (4) Let (H, Γ) be a handlebody with admissible bichrome graph Γ and D ⊂ H a cutting
+         disc which does not meet the red graph, then
+
+                          Fbi (H, [Γ]) = Fbi (cutD (H), [cutD (Γ)]) .
+
+Proof. (1) follows as RB is the identity on blue graphs. (2) and (3) are clear, and for (4)
+note that one can apply the red-blue transformation in such a way that the graph is not
+changed in a neighbourhood of ∂D, and such that Γrb and (cutD (Γ))rb agree outside a
+neighbourhood of ∂D.                                                                     
+
+Remark 3.13. By construction, the replacement (3.10) is an equality after applying
+Fbi (H, −). Consider a bichrome graph Γ ∪ ω, where the red loop ω bounds a disc in ∂H
+                         NON-SEMISIMPLE OPEN-CLOSED 3D TFT                            17
+
+which does not intersect the bichrome graph Γ. We can then use the admissible skein
+relation obtained from (2.20) to get the equality
+(3.15)                   Fbi (H, [Γ ∪ ω]) = Z0 ◦ λ · Fbi (H, [Γ]) .
+Thus if Z0 ◦ λ = 0, red loops bounding an otherwise empty disc lead to Fbi (H, −) being
+zero.
+                                  bi (Σ) is that a projective blue strand can slide over
+  The key relation that holds in Sadm
+a nearby red curve:
+Lemma 3.14 ([CGPV23, Lem. 2.8]). Let Γ1 and Γ2 be two admissible bichrome graphs
+on a closed surface Σ which agree outside a neighbourhood of a red curve ω and in the
+neighbourhood look like
+                              P                         P
+
+
+
+(3.16)                 Γ1 =                  ,   Γ2 =
+
+                                                                 ω
+                                         ω
+
+                           bi (Σ) we have [Γ ] = [Γ ].
+where P ∈ ProjC . Then in Sadm              1      2
+
+  There are two useful corollaries of this lemma. The ﬁrst one is that also a non-
+projective edge can slide over a red curve:
+Corollary 3.15. Suppose Σ \ ω is connected. Then the statement of Lemma 3.14 also
+holds if we replace P by an arbitrary object X ∈ C.
+Proof. As Σ \ ω is connected, we can ﬁnd a path γ which connects ω to a P -labelled
+edge, with P projective, and which passes through the X-labelled edge before crossing
+any other edges. If the path crosses more edges before reaching P (possibly including
+the original edge X), we replace P by the corresponding tensor product. We can drag
+the P -labelled edge close to the X-labelled edge along γ. Then the following equalities
+          bi (Σ):
+hold in Sadm
+                                  P X                           P X
+            P X
+
+
+
+(3.17)                        =                             =
+
+                                             ω                        ω
+                          ω
+
+
+
+In the ﬁrst step we apply Lemma 3.14 to the projective object X ⊗ P , and in the second
+step we apply the same lemma in the opposite direction to the projective object P
+only.                                                                                 
+18                             INGO RUNKEL AND YILONG WANG
+
+   The second corollary is that we can also slide a red curve over another red curve under
+suitable connectedness assumptions.
+
+Corollary 3.16. Let Γ1 and Γ2 be two admissible bichrome graphs on a closed surface
+Σ which agree outside a neighbourhood of a red curve ω and in the neighbourhood look
+like:
+
+
+
+
+(3.18)                 Γ1 =                  ,       Γ2 =
+                                                                     ω
+                                         ω
+                              ω′                            ω′
+
+                                     bi (Σ) we have [Γ ] = [Γ ].
+Suppose Σ \ ω is connected. Then in Sadm              1      2
+
+Proof. As Σ \ ω is connected, we may pick a representative of [Γ1 ] where enough red
+curves have been changed into blue curves so that ω and ω ′ have depth 0. Again by
+connectedness of Σ \ ω, we can then isotope a projectively labelled edge (or possibly a
+tensor product of several edge labels, including a projective one) either close to the left
+side of ω ′ or to the right side. We give the computation for the blue curve approaching
+from the left, the other computation is similar:
+                                                       P G                   P
+
+             P                     P G
+
+
+
+(3.19)                       = cP,G                  = cP,G              =
+
+                         ω                       ω               ω                    ω
+                 ω′
+                                                                                 ω′
+
+The ﬁrst and third equality are both given by the red-blue modiﬁcation, and the second
+equality is Lemma 3.14.                                                              
+
+Deﬁnition 3.17. The change of bichrome graphs in Corollaries 3.15 and 3.16 is called
+a sliding move along a red curve.
+
+  Let (H, Γ) and (H ′ , Γ′ ) be multi-handlebodies with admissible bichrome graphs on
+the boundary. Following [CGPT18, Sec. 5], we say that (H, Γ) is obtained from (H ′ , Γ′ )
+by a red capping move along a red loop ω ⊂ Γ′ and write (H, Γ) = capω (H ′ , Γ′ ) if
+     • there is a properly embedded disk D ⊂ H ′ such that ∂D ⊂ ∂H ′ intersects ω at one
+       point;
+     • H is obtained from H ′ by attaching a 2-handle along ω; and
+     • Γ = Γ′ \ ω.
+                                 NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                      19
+
+In the converse direction we say that (H ′ , Γ′ ) is obtained from (H, Γ) by a red digging
+move:
+                                                           red capping
+                                 ω
+                             P                                            P
+(3.20)   (H ′ , Γ′ ) :                                                                       : (H, Γ)
+                                  X                                               X
+                                                           red digging
+
+The next lemma shows that Fbi is invariant under red digging/capping moves. This is
+shown in [CGPT18, Lem. 5.7] in the case that every edge of the blue graph is coloured
+in ProjC . The same proof works for admissible bichrome graphs, and we review it below
+for the reader’s convenience.
+
+Lemma 3.18. If (H, Γ) is obtained from (H ′ , Γ′ ) by a red capping move, then we have
+Fbi (H, [Γ]) = Fbi (H ′ , [Γ′ ]).
+
+Proof. Let D ⊂ H ′ be a disc as in the conditions on the red capping move above. We
+may assume that a projectively labelled edge (or a tensor product involving one such
+edge) is near ω. We get the following identities, for P ∈ ProjC and X ∈ C, which hold
+after applying Fbi ,
+
+                                                                                                    X
+
+                         ω                                G                       P      G     αi
+             P                           (1)    P                        (2) X        cP,G
+                                         =          cP,G                 =
+                                                                              i          G
+                         X                                X                                    αi
+                                                                                                    X
+(3.21)
+
+                                           X
+                 P           G
+          (3)                                       (4)       P
+          =              cP,G         ΛtG∗ ⊗X       =
+                                           X                         X
+
+
+Step (1) is the red-blue modiﬁcation, step (2) is invariance under the cutting move
+(Corollary 3.12), step (3) is just the deﬁnition of ΛtG∗ ⊗X from (2.10), and step (4) is
+(2.14). Note that step (3) and (4) are admissible skein relations as there is still the
+P -labelled edge in the complement of the disc where we apply identities of morphisms
+in C.                                                                                 
+
+                                     4. Three-manifold invariant
+4.1. Piecewise linear cell decompositions of manifolds. In this section, we recall
+the notion of PLCW decompositions of manifolds following [Kir10]. From now on, all
+maps are assumed to be piecewise linear, and for a subset A inside a manifold M , we
+write N(A) for a small neighbourhood of A in M .
+   A generalised n-cell A(n) is the image of a map χ : Dn → RN such that χ(Int(Dn )) ∩
+χ(∂Dn ) = ∅ and χ is injective on Int(Dn ). In this case, we call χ a characteristic map
+for A(n) , and denote Int(A(n) ) := χ(Int(Dn )), ∂A(n) := χ(∂Dn ). A generalised cell
+20                              INGO RUNKEL AND YILONG WANG
+
+complex is a ﬁnite collection K of generalised cells such that for distinct A and B in K,
+Int(A) ∩ Int(B) = ∅, and for any cell A ⊂ K, ∂A is a union of cells. The support |K|
+                                               S
+of K is the union of all its cells, i.e., |K| = A∈K A. A regular cellular map f : L → K
+between two generalised cell complexes is a map f : |L| → |K| such that for every cell
+A = χ(Dn ) ∈ L, there exists a cell A′ ∈ K such that A′ = f (A) and f ◦ χ : Dn → A′
+is a characteristic map for A′ . The dimension and n-skeleton K (n) of a generalised cell
+complex are deﬁned in the usual way.
+   A PLCW complex is a generalised cell complex K such that dim(K) = 0, or dim(K) =
+n > 0 and the following conditions hold:
+     • K (n−1) is a PLCW complex;
+     • For any n-cell A ∈ K, A = χ(Dn ), there is a PLCW complex L such that |L| ∼
+                                                                                 = ∂Dn ,
+       and the restriction χ|∂Dn : L → K (n−1) is a regular cellular map.
+   A PLCW decomposition of a compact manifold M is a PLCW complex δ such that M
+is homeomorphic to |δ|. If dim(M ) = n, then for 0 ≤ i ≤ n we denote the set of i-cells
+                                                                              (i)
+by δi (M ), or simply by δi . To indicate the relation with M , we denote by Mδ = |δi |
+                                                                 (0)            (n)
+the i-skeleton of M with respect to δ, and we write δ = (Mδ ⊂ · · · ⊂ Mδ = M ) when
+δ is a PLCW decomposition of M .
+   Diﬀerent PLCW decompositions of a compact manifold are related by a sequence of
+moves called elementary subdivisions introduced in [Kir10, Sec. 7]. Here we brieﬂy recall
+relevant concepts for later use.
+   Let n ≥ 1 and let R0 ⊂ Rn be the hyperplane determined by xn = 0, which divides Rn
+into two subspaces R+ (resp. R− ) satisfying xn ≥ 0 (resp. xn ≤ 0). Let K be a PLCW
+complex and A(n) = χ(Dn ) an n-cell. By deﬁnition, there is a PLCW decomposition L of
+∂Dn such that χ|∂Dn : L → K (n−1) is a regular cellular map. If the image of the equator
+∂Dn ∩ R0 in L is a union of cells of L, then we can obtain a PLCW complex K ′ from
+K by replacing A(n) by the collection of the cells A+ = χ(Dn ∩ R+ ), A− = χ(Dn ∩ R− )
+and A0 = χ(Dn ∩ R0 ). In this case, we say that K ′ is obtained from K by an elementary
+subdivision of the cell A(n) . In summary, under suitable conditions, an elementary
+subdivision of A(n) divides A(n) into two n-cells that are separated by an (n − 1)-cell.
+   According to [Kir10, Thm. 8], if δ and δ′ are PLCW decompositions of the same com-
+pact manifold M , then they are related by a ﬁnite sequences of elementary subdivisions
+and their inverses. We will need this fact to show that our invariant τ in Section 4 is
+well-deﬁned.
+Deﬁnition 4.1. Let M be a connected 3-manifold with boundary ∂M , and δ a PLCW
+decomposition of M . The (2,3)-graph of M associated to δ, denoted by Gδ (M ), is the
+graph constructed as follows:
+     • The set of vertices of Gδ (M ), denoted by Gδ (M )0 , consists of a distinguished vertex
+       v0 , together with one vertex for each 3-cell of M . In other words, we have Gδ (M )0 =
+       {v0 } ⊔ δ3 , and in particular, |Gδ (M )0 | = |δ3 | + 1.
+     • For each 2-cell W (2) between two 3-cells X (3) and Y (3) , i.e., W (2) ⊂ X (3) ∩ Y (3) ,
+       we add an edge connecting X (3) and Y (3) . For each 2-cell W (2) between ∂M and a
+       3-cell X (3) , i.e., W (2) ⊂ X (3) ∩ ∂M , we add an edge connecting v0 and X (3) .
+Remark 4.2. The following observations follow immediately from the deﬁnition.
+                            NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                     21
+
+  (1) Since M is assumed to be connected, Gδ (M ) is a connected graph.
+  (2) The distinguished vertex v0 can be thought of as corresponding to the boundary
+      ∂M of M .
+  (3) The part Gδ (M ) \ {v0 } of the graph Gδ (M ) with half-edges around v0 can be
+                                          (1)
+      embedded in M . Moreover, N(Mδ ), the neighbourhood of the 1-skeleton of M ,
+      is nothing but (the closure of) the complement of Gδ (M ) \ {v0 } in M .
+  (4) By construction, we have a bijection between the set δ2 of 2-cell of M and the set
+      of the edges of Gδ (M ). In the following, we will identify these two sets.
+  We now consider substructures of a connected graph which will be used later. A
+spanning tree of a connected graph G is a connected subgraph T of G which contains all
+the vertices of G and has no cycles. Consequently, removing any edge from T results in
+a disconnected graph.
+Remark 4.3. By abuse of notation, we will denote the set of edges of a graph G also
+by G. We will need the following properties of spanning trees of a graph G.
+  (1) Suppose G has n vertices and let S ⊂ G be a subgraph with the same set of
+      vertices. Then S is a spanning tree of G if and only if S is connected and has
+      exactly n − 1 edges, see e.g. [W01, Thm. 2.1.4].
+  (2) Let T ⊂ G be a spanning tree and let f be an edge not in T. Then there is a
+      unique cycle C formed by f and edges from T. Removing any edge e 6= f from C
+      results again in a spanning tree (T \ {e}) ∪ {f }. Let us write this as T(e               f ).
+                        ′                                                      ′
+  (3) Let T and T be two diﬀerent spanning trees and let f in T \ T. Then there is
+      an edge e in T \ T′ such that T(e             f ) is again a spanning tree, see e.g. [W01,
+      Prop. 2.1.7] or [G23, Ex. 5.8]. Note that T(e            f ) has one edge more in common
+                  ′
+      with T than T had.
+         To ﬁnd e as above, consider the cycle C formed by f and edges of T. As T′ has
+      no cycles, there must be at least one edge e of C not contained in T′ . Apply part
+      1 to the pair e and f .
+  (4) The tree graph T (G) has as vertices spanning trees T ⊂ G and has an edge between
+      T and T′ if and only if T′ = T(e           f ) for some e, f in the notation of part 1. By
+      part 2, T (G) is connected, cf. [G23, Ex. 5.9].
+  (5) Let T0 (G) be the subgraph with the same vertices, but with fewer edges. Namely,
+      T and T′ are adjacent in T0 (G) if and only if T′ = T(e              f ) for some e, f which
+      have a common vertex v in G. Then T0 (G) is still connected.
+         To see this, note that by part 3 it is enough to show that T and T(e                      f)
+      are connected in T0 (G) for an arbitrary choice of e in T and f not in T. By
+      part 1 there is a unique cycle C containing f and edges of T. This cycle must
+      contain e. Let f = h0 , h1 , . . . , hn = e be consecutive edges on C. By construction,
+      h1 , . . . , hn are in T while h0 is not. Let Ti+1 = Ti (hi+1        hi ) with T0 = T. Then
+      T1 = T0 (h1          h0 ) = T(h1    f ) and T2 = T1 (h2       h1 ) = T(h2     f ), etc., giving
+      Ti = T(hi           f ). By construction, Ti and Ti+1 are adjacent in T0 (G), and so
+      T0 = T and Tn = T(e            f ) are connected in T0 (G).
+4.2. Bulk-admissible graphs and the invariant τ . In this section we ﬁx a triple
+(C, t, π1 ) as in (2.4). One can compare the following deﬁnition with [RST24, Def. 2].
+22                                INGO RUNKEL AND YILONG WANG
+
+Deﬁnition 4.4. A bulk-admissible graph over C (or bulk-admissible C-graph) in a com-
+pact oriented 3-manifold M with boundary is a blue graph Γ ⊂ ∂M over C with no free
+ends such that for each connected component J of M , at least one connected component
+of ∂J contains a strand of Γ coloured with an object in ProjC .
+
+Deﬁnition 4.5. Let M be a 3-manifold with boundary Σ := ∂M , and Γ a bulk-
+admissible C-graph in M . A generic PLCW decomposition of (M, Γ) is a PLCW de-
+                    (0)    (1)    (2)   (3)
+composition δ = (Mδ ⊂ Mδ ⊂ Mδ ⊂ Mδ = M ) of M , that satisﬁes the following
+conditions:
+                                                       (0)       (1)     (2)
+     • δ restricts to a PLCW decomposition (Σδ ⊂ Σδ ⊂ Σδ ) of Σ;
+     • Γ ∩ δ0 (Σ) = ∅;
+     • Γ intersects δ1 (Σ) only on the edges of Γ and these intersections are transversal.
+
+   Let M be a connected 3-manifold and Γ a bulk-admissible graph on ∂M . Choose the
+following data:
+     • δ, a generic PLCW decomposition of (M, Γ),
+     • T, a spanning tree of Gδ (M ), and
+     • Q := {q ∈ Int(W (2) ) | W (2) ⊂ ∂M }, a set of points in the interior of the 2-cells in
+       ∂M (one point for each boundary 2-cell) that avoids Γ, i.e., q ∈ / Γ for all q ∈ Q.
+Under the identiﬁcation of the set of 2-cells of M and that of the edges in Gδ (M ), we
+write δ2 \ T for the subset of 2-cells that do not correspond to edges in T.
+             (1)                                      (1)
+  Let N(Mδ ) be a tubular neighbourhood of Mδ (the 1-skeleton of M ). For each
+                (2)                                                                             (2)
+q ∈ Q, let Wq be the 2-cell containing q, and let Uq be a small disk around q in Wq
+                                                        (2)
+that is disjoint from Γ. For all q ∈ Q, enlarge Uq in Wq and push Γ to align along the
+∂Uq ’s in this enlarging process, so that Γ, as well as all of the ∂Uq ’s, are contained in
+      (1)
+N(Mδ ):
+
+
+
+
+(4.1)                                  q                                  q
+
+
+
+
+For every 2-cell W (2) ∈ δ2 , we deﬁne its belt corresponding to Q, denoted by bltQ (W (2) ),
+as follows:
+                                
+                                ∂U                          if W (2) ⊂ ∂M and W (2) ∩ Q = q;
+                                    q
+(4.2)        bltQ (W (2) ) :=
+                                W (2) ∩ ∂(N(M (1) ))        if Int(W (2) ) ⊂ Int(M ).
+                                              δ
+
+Here, the ∂Uq on the right hand side is understood as the boundary of the enlarged
+neighbourhood of q.
+  For each 2-cell W (2) ∈ δ2 \ T, add a red loop along bltQ (W (2) ). Pushing Γ to the
+             (1)
+surface ∂N(Mδ ), and taking its union with the red belt loops (which are already on
+                                                 (1)
+the surface), we obtain a handlebody N(Mδ ) with an admissible bichrome graph ΓQ (T)
+                          NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                             23
+
+on its boundary:
+
+
+
+(4.3)
+
+
+
+  Using the above notations, we give the following deﬁnition.
+
+Deﬁnition 4.6. Let M be a connected compact oriented 3-manifold and Γ a bulk-
+admissible C-graph on ∂M . For a choice of δ, T and Q as in the above discussions, we
+deﬁne the associated handlebody bichrome graph of (M, Γ) to be
+                                                            (1)
+(4.4)                     Hδ (M, Γ, Q, T) := (N(Mδ ), ΓQ (T)) .
+
+   We can now deﬁne an invariant of bulk-admissible C-graphs in arbitrary compact
+oriented 3-manifolds.
+
+Deﬁnition 4.7. Let (C, t, π1 ) be as in (2.4), M a compact oriented 3-manifold with a
+                                                        F
+bulk-admissible C-graph Γ in ∂M . Assume that (M, Γ) = m  i=1 (Mi , Γi ) is the decompo-
+sition of (M, Γ) into connected components. We deﬁne
+                               m
+                               G                                 m
+                                                                 Y
+          τC (M, Γ) := Fbi (       Hδi (Mi , Γi , Qi , Ti )) =         Fbi (Hδi (Mi , Γi , Qi , Ti ))
+                            i=1                                  i=1
+
+where for each 1 ≤ i ≤ m, δi is a generic PLCW decomposition of (Mi , Γi ), Ti is a
+spanning tree of Gδi (Mi ), and Qi is a set of interior points in 2-cells on ∂M that avoids
+Γi .
+
+Theorem 4.8. Let (C, t, π1 ) be as in (2.4), M a compact oriented 3-manifold with a
+bulk-admissible C-graph Γ in ∂M . Then the invariant τC (M, Γ) in Deﬁnition 4.7 does
+not depend on the choice of δi , Ti and Qi . Moreover, τC (M, Γ) depends only on the
+orientation preserving diﬀeomorphism class of (M, Γ).
+
+  The proof of the theorem will be carried out in the next subsection. Before that, let
+us comment on how τC can be seen as an extension of the handlebody invariant F.
+  Recall the notion of admissible skein modules from Deﬁnition 3.3. For a ∂-marked
+surface (Σ, L) we deﬁne the 1-admissible skein module
+(4.5)                                        S1-adm (Σ, L)
+in the same way as Sadm (Σ, L), except that we only require the graphs in S1-adm (Σ, L)
+to have a projective edge in at least one connected component of Σ, rather than in all
+of them. Similarly, 1-admissible skein relations are relations for discs such that there is
+a projective edge in the complement somewhere on Σ, not necessarily in the component
+the disc is placed in. Of course, if Σ is connected, S1-adm (Σ, L) = Sadm (Σ, L).
+   One diﬀerence between Sadm (Σ, L) and S1-adm (Σ, L) is that for Sadm (Σ, L), taking the
+disjoint union of graphs gives an isomorphism (see e.g. [RST24, Lem. 2.9])
+(4.6)              Sadm (Σ, L) ⊗ Sadm (Σ′ , L′ ) → Sadm (Σ ⊔ Σ′ , L ⊔ L′ ) ,
+24                           INGO RUNKEL AND YILONG WANG
+
+while for S1-adm (Σ, L) it does not. Indeed, just take two copies of S2 . Then S1-adm (S2 , ∅)
+is 1-dimensional with basis given by the graph Γ with one edge labelled P1 and mor-
+phisms π1 and ι1 on the vertices. However, the disjoint union [Γ ⊔ Γ] is zero in
+S1-adm (S2 ⊔ S2 , ∅).
+   The reason to introduce S1-adm is that it describes the skein-invariance of τC for
+connected manifolds:
+
+Proposition 4.9. Let M be a connected 3-manifold. Then τC gives a well-deﬁned linear
+map
+                              τC (M, −) : S1-adm (∂M, ∅) → k .
+
+Proof. Let Γ be a 1-admissible graph on ∂M . Since M is connected this implies (and
+is in fact equivalent to) Γ being bulk-admissible. We need to show that the assignment
+Γ 7→ τC (M, Γ) factors through S1-adm (∂M, ∅), i.e., that it respects skein relations. Let
+K ⊂ ∂M be an embedded disk as in (3.3). Pick a PLCW decomposition δ′ of ∂M such
+that K is a neighbourhood of a vertex of δ′ which does not contain a full 1-cell or 2-cell
+of δ′ . Then extend δ′ to a PLCW-decomposition of M (cf. Proposition 5.14 below).
+Pick the set of points Q such that it avoids K. Pick an arbitrary spanning tree T and
+let Hδ (M, Γ, Q, T) be the associated handlebody bichrome graph. By Theorem 3.8, the
+assignment
+                              τC (M, Γ) = Fbi (Hδ (M, Γ, Q, T))
+is independent of these choices. By construction, Hδ (M, Γ, Q, T) inherits the embedding
+                                                                        (1)
+of K and satisﬁes K ∩ Γ = K ∩ ΓQ (T). As the boundary of N(Mδ ) is connected,
+the 1-admissible skein relation in S1-adm (∂M, ∅) becomes an admissible skein relation in
+  bi (∂N(M (1) ), ∅) which holds by construction of F bi .
+Sadm                                                                                   
+            δ
+
+  The next proposition shows that τC extends the handlebody invariant F in Theo-
+rem 3.8 in the sense that for handlebodies H, both deﬁne the same linear form
+
+(4.7)                    τC (H, −) = F(H, −) : Sadm (∂H, ∅) → k .
+
+Proposition 4.10. Let H be a handlebody. Then for any admissible C-graph Γ in H,
+we have τC (H, Γ) = F(H, [Γ]).
+
+Proof. Assume H is of genus g. Consider the PLCW decomposition δ of (H, Γ) in
+Figure 2. Perturb Γ so that the above PLCW decomposition is generic. It is easy to see
+that the (2,3)-graph Gδ (H, Γ) of (H, Γ) with respect to δ is of the following form:
+                                                    ∂
+
+                                           (2)
+                                       B1
+
+                               (3)                        (3)
+                              A1                        A2       (3)    (2)
+(4.8)                                        (2)
+                                           W1,−
+                                                                Ag     B0
+                                                         ···
+                                     (2)
+                                   W1,+
+
+
+                                                    (3)
+                                                   A0
+                                  NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                             25
+
+
+               a)
+
+
+
+
+ b)                        (3)
+                                                            c)
+         (2)              Aj
+        Bj
+                           (1)
+                          Yj,+
+
+                (2)
+               Wj,+                Wj,−
+                                         (2)                                           (3)
+        (1)
+      Xj,+                  (1)                 (1)
+                                               Xj,−                                   A0
+                          Yj,−
+                                                                                                         (2)
+                    (1)            (1)                                                                  B0
+                Zj−1              Zj
+
+
+         Figure 2. a) PLCW decomposition of a genus-g handlebody represented
+         as g handles attached to a 3-ball. The black lines represent the 1-cells,
+         and the gray lines are only used to indicate the shape of the handlebody.
+                                                                               (1)
+         b) For j = 1, ..., g, the j-th handle has two 0-cells, four 1-cells Xj,± ,
+              (1)                    (2)               (2)                      (3)
+         Yj,± , three 2-cells Wj,± and Bj                    and one 3-cell Aj . All the handles are
+                                                                           (1)
+         attached to a ball, which has additional 1-cells Zj connecting the 0-cells
+         of nearby handles.
+                                            (2)                (3)
+         c) The ball itself has one 2-cell B0 and one 3-cell A0 .
+
+
+Moreover, one immediately sees that a spanning tree T of Gδ (H, Γ) can be taken to
+                      (2)
+contain only edges Bj for j = 0, 1, ..., g. As an illustration, in (4.8), the black edges
+are edges in T, and the red edges correspond to 2-cells whose belts are to be decorated
+                     (1)
+by red loops in N(Hδ ) (see (4.9)).
+                                                                          (2)                           (1)
+  Choose interior points Q of the boundary 2-cells Bj                           arbitrarily, then N(Hδ ) is of
+the following form:
+
+
+
+(4.9)
+
+
+
+                                                                                                               (2)
+where the red loops are added to the handles corresponding to the boundary of Wj,± ,
+which are not in the spanning tree T by construction. In other words, we have
+                                                                                           g
+                                                                                           [
+                                                      (1)                       (1)
+                      Hδ (H, Γ, Q, T) = (N(Hδ ), ΓQ (T)) = (N(Hδ ), Γ ∪                        γj,± )
+                                                                                        j=1
+26                                INGO RUNKEL AND YILONG WANG
+
+                                                      (2)
+where γj,± stands for the red loops along blt(Wj,± ). Note also that the holes which are
+                                                                                         (2)
+not decorated by red loops are in one-to-one correspondence with the 2-cells Bj                 for
+j = 1, ..., g. By applying the capping move (3.20), we have
+                           cap{γj,± |1≤j≤g} (Hδ (H, Γ, Q, T)) ∼
+                                                              = (H, Γ)
+which implies that
+     τC (H, Γ) = Fbi (Hδ (H, Γ, Q, T)) = Fbi (cap{γj,± |1≤j≤g} (Hδ (H, Γ, Q, T))) = F(H, Γ) ,
+where the second equality is invariance of Fbi under the capping move (Lemma 3.18),
+and the third equality is the observation that after the capping move no red curves
+remain, and so Fbi is just F (Corollary 3.12 (1)).                               
+
+4.3. Comparison to the closed 3-manifold invariant in [CGPT18]. The invariant
+τC can be used to deﬁne an invariant of closed 3-manifolds in the following way: Let
+M be a closed connected oriented 3-manifold, and let B ⊂ M be an embedded 3-ball.
+Consider the C-graph I formed of a single edge labelled P1 and two vertices labelled ι1
+and π1 respectively. Embed I in ∂(M \ B). Then
+(4.10)                               IC (M ) := τC (M \ B, I)
+is an invariant of closed connected 3-manifolds. For example, if M = S3 then M \B = D3 ,
+the closed 3-disc, and we ﬁnd
+                            (1)           (2)          (3)               (4)
+(4.11)               IC (S3 ) = τC (D3 , I) = F(D3 , I) = tP1 (ι1 ◦ π1 ) = 1 .
+Step 1 is the deﬁnition of IC , step 2 uses that D3 is a handlebody and so by Proposi-
+tion 4.10, τC agrees with F. Step 3 uses the relation between F and the modiﬁed trace
+in Theorem 3.8 (2), and ﬁnally step 4 is the normalisation condition (2.5).
+   In [CGPT18, Thm. 2.4], the authors deﬁne an invariant KC (M ) of closed connected
+3-manifolds M using Heegaard splittings. Namely, let M = Hα ∪Σ Hβ , where Hα and
+Hβ are handlebodies and Σ is their common boundary. Let β1 , . . . , βg be a reducing set
+of bounding circles for Hβ (each βi bounds an embedded disc in Hβ , one per handle, see
+[CGPT18] for details). Build an admissible bichrome graph Γβ on Σ = ∂Hα by declaring
+the βi to be red loops and adding the graph I from above anywhere away from the red
+loops. Then KC (M ) = Fbi (Hα , Γβ ). We claim that this agrees with the invariant from
+the previous paragraph:
+Proposition 4.11. For every closed connected 3-manifold M , we have KC (M ) = IC (M ).
+Proof. Start by picking a PLCW-decomposition δ of M and consider its (2,3)-graph
+Gδ (M ). Its genus is g = |δ2 |−|δ3 |+1, and this is also the genus of the two complementary
+                                (1)
+handlebodies Hα = N(Mδ ) and Hβ the closure of the complement M \ Hα . In the
+construction of KC (M ) we add g red curves to Hα , one per handle of Hβ . Let us see
+how that comes out of the the spanning tree construction. Gδ (M ) has |δ3 | vertices and
+|δ2 | edges. By Remark 4.3 (1), every spanning tree T of Gδ (M ) has |δ3 | − 1 edges. This
+would correspond to |Gδ (M )| − |T| = |δ2 | − |δ3 | + 1 = g edges, as required. Indeed, pick
+a basis C1 , . . . , Cg of the cycles in Gδ (M ), and construct a spanning tree T by omitting
+one edge per cycle. Then, conversely, in the construction of τC we would add one red
+                              NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                                     27
+
+loop per omitted edge, which precisely gives the red loops on Hα in the construction of
+KC (M ).
+   Of course, M has empty boundary, so this is not yet the construction of τC . Instead
+we should take a PLCW decomposition of M \ B with graph I on the boundary. We
+modify the PLCW-decomposition δ by arbitrarily picking a 2-cell A(2) and a 1-cell L(1)
+in the boundary of A(2) . We may assume that A(2) sits on the boundary of two distinct
+         (3)
+3-cells D1,2 . Modify δ to δ′ as follows:
+                                                         (2)
+                                         (3)
+                                        D+              C+
+
+
+                                                                                              (1)
+                                                                                             L+
+                                                                             (1)
+                                                                            X2
+(4.12)                                  A   (2)
+
+                                                                                                          (1)
+                                                          (1)                                            L−
+                                                        X1
+
+                                                          (2)
+                                                  (3)   C−
+                                               D−
+
+
+                                                                (1)
+Here we have split the 1-cell L(1) into L± by adding a new vertex, added two 1-cells
+  (1)             (2)
+X1,2 and 2-cells C± , as well as one 0-cell (in addition to the vertex on L(1) ). Note that
+                        (2)                       (2)
+the region between C+ and C− is empty as this is where we have removed the 3-ball
+B. The (2,3)-graph changes locally as follows:
+                                  (3)                                                                         (3)
+                              D+                                                                         D+
+                                                                                        (2)
+                                                                                       C+
+
+                                  A(2)                                v0
+(4.13)
+                                                                                       (2)
+                                                                                   C−
+                           (3)                                                                            (3)
+                          D−                                                                         D−
+
+                              δ                                                                     δ′
+                                                                                        (1)
+For the new spanning tree T′ we add one edge, say X1 , to T. Then locally, near the
+neighbourhood of L(1) , Hα changes as follows
+
+
+
+
+(4.14)
+                                                                       π1
+
+                                                                            P1
+
+
+                                                                             ι1
+
+
+
+
+                                         Hα                                       H′
+
+
+Outside of the displayed region, Hα and H ′ agree. Executing a red capping move
+(Lemma 3.18), we obtain Hα with graph Γ.                                     
+28                           INGO RUNKEL AND YILONG WANG
+
+Remark 4.12. Consider the case that C is in addition semisimple with non-zero global
+dimension, and recall from Remark 2.8 the chromatic map cP,G . Applying the red-
+to-blue map to a red loop is equivalent to replace the red loop by G with a coupon
+P
+   U ∈Irr(C) dim(U )idU inserted on it. Note that since 1 is projective and has non-zero
+dimension, every C-graph (including the empty graph) on the boundary of a 3-manifold
+is automatically bulk-admissible, because we can add contractible loops coloured by 1
+wherever needed.
+   By discussions in [LMW+ 23a, Sec. 3.2] and [CGPT18, Sec. 2], for any graph Γ on a
+multi-handlebody H, the invariant F(H, Γ) is a non-zero scalar multiple of the alterfold
+invariant ZC (H ⊂ S3 , ∂H, Γ). Here, H is embedded in S3 as the B-coloured region, and
+its complement is the A-coloured region. Consequently, by Proposition 4.10, the alterfold
+invariant ZC (H ⊂ S3 , ∂H, Γ) is a scalar multiple of τC (H, Γ). Moreover, all the invariants
+above generalise the Turaev-Viro invariant in the following sense: Let M be a closed
+3-manifold, then by [CGPT18, Thm. 2.7] and [LMW+ 23a, Prop. 3.14] and Proposition
+4.11, we have TVC (M ) = ZC (MB , ∅, ∅) = KC (M )/Dim(C) = IC (M )/Dim(C), where MB
+is the B-coloured alterfold M (with empty A-coloured region).
+   More generally, consider a 3-manifold M with a C-graph Γ on its boundary. Construct
+a 3-alterfold as follows: for each connected component Ji of ∂M , let Hi be a handlebody
+                                                   S
+of the same genus as Ji , and deﬁne M ′ = M ∪ i Hi . Let M be the B-coloured region
+and the Hi ’s are the A-coloured region, we get an alterfold M ′ with a C-graph Γ on its
+separating surface. Then ZC (M ′ , ∂M, Γ) is a scalar multiple of τC (M, Γ). We mention
+the following key ingredients in the veriﬁcation of this statement, leaving the details to
+the interested reader: (1) the red capping move of F corresponds to alterfold Move 1,
+and the cutting move corresponds to alterfold Move 2; (2) the diﬀerence in the scalar
+multiple of the two invariants is caused by the use of spanning trees, see Remark 4.3 (1).
+
+4.4. Proof of Theorem 4.8. Throughout this subsection, let (C, t, π1 ) be as in (2.4),
+and let (M, Γ) be a connected compact oriented 3-manifold with a bulk-admissible C-
+graph Γ on the boundary ∂M . We prove Theorem 4.8 by showing the independence
+of τC of the choices of the spanning trees, the interior points of boundary 2-cells and
+the PLCW decompositions. We will continue using the conventions in the previous
+subsection.
+   We will use sliding moves (Deﬁnition 3.17) repeatedly in the arguments below, and we
+have to make sure that the condition in Corollaries 3.15 and 3.16 is satisﬁed, namely that
+the complement of the red loop across which we are sliding a blue or red strand is con-
+nected. We note here once that this is indeed the case for all red loops on Hδ (M, Γ, Q, T):
+                                                                        (1)
+the complement of each individual attaching belt of a 2-cell in N(Mδ ) is connected.
+
+Lemma 4.13. Let T and T′ be two spanning trees of Gδ (M ), then Hδ (M, Γ, Q, T′ ) can
+be obtained from Hδ (M, Γ, Q, T) by sliding moves among the red loops on the boundary
+                   (1)
+surface Σ := ∂N(Mδ ).
+
+Proof. By construction, the only diﬀerence between Hδ (M, Γ, Q, T) and Hδ (M, Γ, Q, T′ )
+is that the red loops in Γ(T) and Γ(T′ ) are at diﬀerent positions on the boundary surface
+Σ, which correspond to the diﬀerent subsets of 2-cells δ2 \ T and δ2 \ T′ respectively.
+                         NON-SEMISIMPLE OPEN-CLOSED 3D TFT                              29
+
+   By Remark 4.3 (5), we only have to consider the case when T and T′ are diﬀerent in
+2 edges {e} = T \ T′ and {e′ } = T′ \ T that share a common vertex v ∈ e ∩ e′ . Let Le
+and Le′ denote belts of the 2-cells corresponding to e and e′ respectively.
+   In this case, the only diﬀerence between Hδ (M, Γ, Q, T) and Hδ (M, Γ, Q, T′ ) is that
+in Hδ (M, Γ, Q, T), Le′ is decorated by a red loop (as e′ ∈ δ2 \ T), but Le is not. In
+Hδ (M, Γ, Q, T′ ), we have the opposite: Le is decorated by a red loop, but Le′ is not.
+Hence, in order to show that Hδ (M, Γ, Q, T′ ) can be obtained from Hδ (M, Γ, Q, T) by
+sliding moves, we only have to show that Le′ can slide along the other red loops of
+Hδ (M, Γ, Q, T) on Σ to result in Le .
+   The following observation enables us to further simplify the question: Sliding a strand
+of an admissible bichrome graph in a surface over a red loop is eﬀectively the same as
+isotoping the strand over one side of the boundary of the 2-handle attached to the surface
+along the red loop. Let A be the 3-manifold with boundary obtained as follows: Attach
+a 2-handle to Hδ (M, Γ, Q, T) along each of its red loops except for the red loop at Le′ ,
+see below:
+
+
+(4.15)                                        
+
+
+  Then to ﬁnish the proof of the lemma, it suﬃces to show that Le′ can be isotoped to
+Le in A. In view of Remark 4.2, A is obtained from (the closure of) the complement of
+T \ {v0 } in M by removing the 2-handle attached along Le′ .
+  Let f (v, v0 ) be the edge at v that is contained in the unique path in T connecting v
+and v0 (if v = v0 , we set f (v, v0 ) to be empty). We have the following two cases:
+Case 1. f (v, v0 ) = e. In this case, denote the connected component of T\{e} containing
+v by B, then B as a subtree of T is not connected to v0 , and the boundary the tubular
+neighbourhood of B in A (see Remark 4.2) is homeomorphic to an annulus S1 × [0, 1] in
+A having Le and Le′ as its two boundary circles. Hence, Le′ can be isotoped to Le in A.
+
+
+                                 N(B)
+
+
+                                                   e′
+(4.16)                                        v
+                                          e
+
+
+
+
+                                  v0
+
+Case 2. f (v, v0 ) 6= e. Let E(v, T) be the set of edges of T that has v as a vertex. By
+construction, e, e′ and possibly some other edges in T form a cycle C in Gδ (M ), and
+the connected component B of T \ (E(v, T) \ {e}) containing v has C \ {e′ } as a subtree.
+By assumption, B is not connected to v0 , and by the same argument as above, the
+30                             INGO RUNKEL AND YILONG WANG
+
+boundary of the tubular neighbourhood of B in A is isomorphic to an annulus S1 × [0, 1]
+in A having Le and Le′ as its two boundary circles.
+
+                                                         N(B)
+
+
+
+
+(4.17)                                              e        e′
+                                                             v
+
+
+
+
+                                                                   v0
+Hence, Le′ can be isotoped to Le in A, and this completes the proof.                        
+
+  Now ﬁx δ and T. Let Q and Q′ be two sets of interior points in 2-cells in ∂M that
+avoid Γ, then Hδ (M, Γ, Q, T) and Hδ (M, Γ, Q′ , T) have the same underlying handlebody
+     (1)
+N(Mδ ). By construction, since Hδ (M, Γ, Q, T) and Hδ (M, Γ, Q′ , T) are associated to
+the spanning tree T of Gδ (M ), so the bichrome graphs ΓQ (T) and ΓQ′ (T) are identical
+                                                                                (1)
+except for the blue part on the boundary of the solid torus N(∂W (2) ) in N(Mδ ). In
+particular, they have identical red parts.
+
+Lemma 4.14. The bichrome graphs ΓQ (T) and ΓQ′ (T) are related by a sequence of
+                                              (1)
+sliding moves along the red loops on Σ := ∂N(Mδ ).
+
+Proof. It suﬃces to prove the statement for the case when Q and Q′ are only diﬀerent
+in the choice of one point in one 2-cell. More precisely, in this situation, Q \ Q′ = {q}
+and Q′ \ Q = {q ′ } for two points q and q ′ contained in the interior of a boundary 2-cell
+W (2) ⊂ ∂M . Let e be the edge of Gδ (M ) corresponding to W (2) , then e connects to v0 .
+   Now we have the following 2 cases.
+Case 1. e ∈/ T. In this case, there is a red loop C along the belt of W (2) corresponding
+to Q (resp. Q′ ) in ΓQ (T) (resp. ΓQ′ (T)). By Corollaries 3.15 and 3.16, ΓQ (T) can be
+slided to ΓQ′ (T) along the red loop C:
+                       enlarge neighborhood             enlarge neighborhood
+                                of q                              of q ′
+
+
+
+                                                        q′                             q′
+                 q                            q
+
+                                                                                 (1)
+                              (1)                                          In N(Mδ )
+                       In N(Mδ )
+(4.18)
+
+                                                  sliding
+                           NON-SEMISIMPLE OPEN-CLOSED 3D TFT                             31
+
+Case 2. e ∈ T. By the property of spanning trees, T \ {e} is disconnected (see above
+Remark 4.3). Consider the connected component of T\{e} that does not contain v0 , and
+take the union of this connected component with the half-edge of e to which it connects.
+Denote the result by B.
+   For each red loop of ΓQ (T) (or ΓQ′ (T), recall that they have the same red parts),
+                            (1)
+attach a 2-handle to N(Mδ ), and denote the resulting 3-manifold by A. Then the
+boundary of the complement of B in M is homeomorphic to a disk D2 in A whose
+boundary circle is the longitude of the solid torus N(∂W (2) ).
+
+
+                                     N(B)
+
+
+(4.19)
+                                                     v
+                                                 e
+
+
+                                        v0
+
+   It is then easy to see that the blue part of ΓQ (T) that is contained in the boundary
+of N(∂W (2) ) can be isotoped in A through the complement of B to the corresponding
+blue part of ΓQ′ (T). This is illustrated as follows:
+
+
+
+
+(4.20)
+
+                           q′                        q′                  q′
+                   q                         q                    q
+
+
+  As is noted in the proof of Lemma 4.13, this implies that ΓQ (T) and ΓQ′ (T) are related
+by a sequence of sliding moves along the red loops, and this completes the proof.        
+
+Corollary 4.15. The value Fbi (Hδ (M, Γ, Q, T)) does not depend on the choice of the
+spanning tree T of Gδ (M ) and the set of interior points Q of 2-cells.           
+
+Lemma 4.16. Let δ and δ′ be two generic PLCW decompositions of (M, Γ). Then for
+any choice of spanning trees of Gδ (M ) (resp. Gδ′ (M )) and any choice of interior points
+Q (resp. Q′ ) of boundary 2-cells of δ (resp. δ′ ), we have
+
+(4.21)                 Fbi (Hδ (M, Γ, Q, T)) = Fbi (Hδ′ (M, Γ, Q′ , T′ )) .
+
+Proof. According to [Kir10, Thm. 8], δ and δ′ are related by a ﬁnite sequences of ele-
+mentary subdivisions and their inverses. Therefore, it suﬃces to prove (4.21) when δ′ is
+obtained from δ by an elementary subdivision of an n-cell in δ for n = 1, 2, 3. Our proof
+of the lemma is hence divided into 3 cases, where in each one of them, we will make
+some assumptions on T, T′ , Q and Q′ . Thanks to Corollary 4.15, such assumptions can
+be made without loss of generality, and for simplicity, we will not refer to Corollary 4.15
+every time we use it.
+32                              INGO RUNKEL AND YILONG WANG
+
+Case 1. When n = 1, δ′ is obtained from δ by adding a 0-cell to a 1-cell A(1) . In this case,
+δ and δ′ have identical sets of 2-cells and 3-cells, and in particular, Gδ (M ) = Gδ′ (M ).
+Hence, we can assume that T = T′ and Q = Q′ . Moreover, it is easy to see that the
+                                         (1)
+subdivision of A(1) only changes N(Mδ ) by fattening the 1-handle corresponding to
+A(1) , and change the local shape of Γ on it accordingly:
+
+
+
+                            Fatten        Elem.             Fatten
+(4.22)
+                                          Subdiv.
+
+
+
+
+Therefore, Hδ (M, Γ, Q, T) is diﬀeomorphic to Hδ′ (M, Γ, Q′ , T′ ), which implies that (4.21)
+holds.
+Case 2. When n = 2, δ′ is obtained from δ by adding a 1-cell W (1) inside a 2-cell A(2)
+                                       (0)    (0)
+such that W (1) connects two 0-cells V1 and V2 in ∂A(2) , and W (1) separates A(2) into
+             (2)      (2)
+two 2-cells A1 and A2 . A local picture is given as follows:
+                                    (0)                              (0)
+                                V1                                 V1
+
+
+
+                                                             (2)            (2)
+                                             Elem.      A1                 A2
+(4.23)                          A   (2)
+                                            Subdiv.
+                                                                     W (1)
+
+
+                                    (0)                              (0)
+                                V2                                 V2
+
+   Now we compare the graph Gδ (M ) with Gδ′ (M ). Let e be the edge in Gδ (M ) cor-
+responding to A(2) , and let v, v ′ be the endpoints of e. We allow v and v ′ to be equal
+when e is a loop. Then by construction, Gδ′ (M ) can be obtained from Gδ (M ) by adding
+an edge e′ that connects v and v ′ :
+                                    v′                                                 v′
+
+                        e                                               e
+(4.24)            v                                          v                    e′
+
+
+                      Gδ (M )                                      Gδ′ (M )
+                                                      (2)                                   (2)
+We take e ∈ Gδ′ (M ) to corresponds to the 2-cell A1 in δ′ , and e′ to A2 .
+   By Corollary 4.15, the choice of spanning tree T′ for Gδ′ (M ) does not aﬀect the value
+of Fbi . Since e and e′ form a loop in Gδ′ (M ), we can assume that T′ does not contain e′ .
+In addition, as Gδ (M ) and Gδ′ (M ) have the same set of vertices and are only diﬀerent
+in the edge e′ , it is easy to see that T′ is also a spanning tree of Gδ (M ). So we can
+assume that T = T′ .
+   Again by Corollary 4.15, the choice of interior points Q′ in boundary 2-cells of δ2′ does
+not aﬀect the value of Fbi . Since the only diﬀerence between the 2-cells of δ and those
+                  (2)       (2)
+of δ′ are A(2) , A1 and A2 , we can pick the same interior points for all the boundary
+                          NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                33
+
+                                  (2)   (2)
+2-cells in δ2 \ {A(2) } = δ2′ \ {A1 , A2 }. In addition, since A(2) is homeomorphic to
+  (2)           (2)                                        (2)
+A1 ∪ W (1) ∪ A2 , we can pick an interior point x1 ∈ A1 , and assume that it is also the
+                                                       (2)
+interior point we choose for A(2) , where we view A1 as a subset of A(2) . This implies
+the only diﬀerence in the choice of interior points of 2-cells in δ and δ′ lies in the choice
+                               (2)
+of the interior point x2 in A2 , i.e., Q′ = Q ∪ {x2 }.
+   By the above discussions, we can see that there is a red loop γ in Hδ′ (M, Γ, Q′ , T′ )
+               (2)
+parallel to ∂A2 :
+
+
+
+
+(4.25)                                        (2)
+                                         A2
+
+
+
+                                    γ
+
+
+
+                                                                          (1)
+Thus, Hδ (M, Γ, Q, T) can be obtained from Hδ′ (M, Γ, Q′ , T′ ) = (N(Mδ′ ), ΓQ′ (T′ )) by a
+red capping move along γ. In other words, we have
+
+
+                        Hδ (M, Γ, Q, T) = capγ (Hδ′ (M, Γ, Q′ , T′ )) ,
+
+
+which implies that (4.21) holds in this case due to Lemma 3.18.
+  Note that even if W (1) ∩ Γ 6= ∅ (then A(2) is necessarily contained in ∂M ), the above
+                                                                                  (1)
+argument is still valid, because in the tubular neighbourhood of W (1) in N(Mδ′ ), we
+can pull all other parts of the graph away from γ so we can still perform the red capping
+move.
+
+Case 3. When n = 3, δ′ is obtained from δ by adding a 2-cell W (2) inside a 3-cell A(3)
+such that the equator ∂W (2) is a union of 1-cells in ∂A(3) , and W (2) separates A(3) into
+                 (3)       (3)
+two 2-cells A1 and A2 . In particular, δ and δ′ have the same 1-skeleton, so we have
+              (1)          (1)
+N := N(Mδ ) = N(Mδ′ ). Moreover, δ2 = δ2′ \ {W (2) }.
+    Next, we compare ΓQ (T) with ΓQ′ (T′ ). By construction, Γ (after being pushed to ∂N)
+is a subgraph of ΓQ (T) and ΓQ′ (T′ ). Moreover, since δ2 = δ2′ \ {W (2) }, and Int(W (2) ) ⊂
+Int(M ), the set of 2-cells in ∂M in δ and δ′ are the same, so by Corollary 4.15, we
+can assume without loss of generality that Q = Q′ . Consequently, the images of Γ as
+subgraphs of ΓQ (T) and ΓQ′ (T′ ) respectively are identical.
+    Then we investigate the red loops in ΓQ (T) and ΓQ′ (T′ ) that are added to ∂N accord-
+ing to the choice of T (resp. T′ ). Let v1 be the vertex in Gδ (M ) corresponding to A(3) ,
+                                                          (3)        (3)
+v1′ (resp. v2′ ) the vertex in Gδ′ (M ) corresponding to A1 (resp. A2 ), and e′ the edge in
+Gδ′ (M ) corresponding to W (2) . By construction, Gδ′ (M ) can be obtained from Gδ (M )
+34                           INGO RUNKEL AND YILONG WANG
+
+by splitting the vertex v1 into two distinct vertices v1′ and v2′ connected by one edge e′ :
+
+
+
+                              A(3)                                  W (2)
+
+                                                              (3)           (3)
+                                                             A2           A1
+
+
+
+
+(4.26)
+
+
+                                                                    v1′
+                                                         W (2)
+                                      v
+                                                             v2′
+
+
+
+
+                                                       (3)          (3)
+                           v ↔ A(3)             v1′ ↔ A1 , v2′ ↔ A2
+
+
+In other words, Gδ′ (M ) has one vertex and one more edge than Gδ (M ), and shrinking
+Gδ′ (M ) along e′ (so that v1′ and v2′ becomes a single vertex) will produce Gδ (M ).
+   Since v1′ 6= v2′ , there must be a spanning tree T′ of Gδ′ (M ) containing e′ : Start with
+any spanning tree of Gδ′ (M ), if it does not contain e′ , then we can carry out an edge
+exchange as in Remark 4.3 (2) to obtain a new spanning tree that does contain e′ . By
+shrinking T′ along e′ , we get a spanning tree T of Gδ (M ). Indeed, shrinking along e′
+removes one vertex and one edge, and so the condition in Remark 4.3 (1) is still satisﬁed.
+Thus, there is a 1-to-1 correspondence between the set of edges in Gδ (M ) \ T and those
+in Gδ′ (M ) \ T′ . These sets of edges in turn correspond to the same subset of 2-cells in
+δ2 = δ2′ \ {W (2) }, to whose boundary we add red loops to obtain ΓQ (T) and ΓQ′ (T′ ).
+   Combining the above discussions, we conclude that ΓQ (T) and ΓQ′ (T′ ) have the same
+Γ component and the same red loops corresponding to 2-cells, i.e., ΓQ (T) = ΓQ′ (T′ ).
+Therefore, we have
+                               (1)                    (1)
+     Hδ (M, Γ, Q, T)) = (N(Mδ ), ΓQ (T)) = (N(Mδ ), ΓQ′ (T′ )) = Hδ′ (M, Γ, Q′ , T′ ) ,
+
+which immediately implies (4.21). This completes the proof.                                
+
+Proof of Theorem 4.8. The statement follows directly from Lemma 4.16 and Corollary
+3.12.                                                                           
+
+4.5. The cutting move. The cutting move of bulk-admissible C-graphs in general 3-
+manifolds is deﬁned in the same way as that of bichrome graphs in multi-handlebodies in
+Section 3.2. More precisely, consider (M, Γ) and let D ⊂ M be a cutting disc, that is, an
+oriented properly embedded disk whose boundary ∂D ⊂ ∂M does not meet the coupons
+of Γ and intersects the strands of Γ transversely in a non-empty set which contains at
+least one strand coloured by an object in ProjC . Denote by cutD (M ) the 3-manifold
+obtained by cutting M along D and denote by cutD (Γ) the bichrome graph in cutD (M )
+obtained by joining the cut points of Γ to two new coupons in ∂cutD (M ), and colour
+                         NON-SEMISIMPLE OPEN-CLOSED 3D TFT                              35
+
+the pair of coupons by the dual basis (2.10). Locally, we have
+
+
+
+                                                                                  αi
+
+                                                     Cutting              P
+(4.27)                    D
+                                                                              i
+
+                                                                                  αi
+
+
+
+
+   In this case, we say that (cutD (M ), cutD (Γ)) is obtained from (M, Γ) via the cutting
+move (along D). Note that by construction, if Γ is bulk-admissible in M , then cutD (Γ)
+is bulk-admissible in cutD (M ).
+
+Proposition 4.17. Let M be a compact oriented 3-manifold and Γ a bulk-admissible
+C-graph Γ in M . For any cutting disk D of (M, Γ), we have
+
+                           τC (M, Γ) = τC (cutD (M ), cutD (Γ)) .
+
+Proof. Without loss of generality, assume that M is connected. By Theorem 4.8, we can
+choose a generic PLCW decomposition δ of (M, Γ) such that a tubular neighbourhood
+of D consists of the following cells:
+
+
+                                                                        (2)
+                                          L+
+                                               (1)
+                                                       A+
+                                                           (3)        W+
+
+(4.28)                                                                C (1)
+                                                                        (2)
+                                               (1)                    W−
+                                          L−             (3)
+                                                       A−
+
+
+
+
+Here, D is a 2-cell that is bounded by one 1-cell C (1) and one 0-cell; the cylinder above
+                                                         (2)       (2)
+and below ∂D are parts of two 2-cells denoted by W+ and W− respectively, whose
+                                  (1)
+boundaries also contain 1-cells L± above and below the 0-cell on ∂D. Finally, there is
+            (3)                                                                   (3)
+one 3-cell A+ above D, and one below D, denoted by A− .
+  Locally, the (2,3)-graph Gδ (M ) is of the following form near D:
+
+
+                                        (3)
+                                   A+                 W+
+                                                        (2)
+
+
+                                                                 v0
+(4.29)                                    D
+                                                         (2)
+                                         (3)          W−
+                                    A−
+
+
+
+
+                                                                 (2)              (2)
+Since the edges of Gδ corresponding to D, W+ and W− form a cycle, there exists a
+spanning tree T of Gδ such that D ∈     / T (see Remark 4.3 (2)). After picking a set Q
+of interior points in 2-cells contained in ∂M , we obtain the handlebody Hδ (M, Γ, Q, T)
+36                           INGO RUNKEL AND YILONG WANG
+
+with bichrome diagrams on its boundary, and by deﬁnition,
+                             τC (M, Γ) = Fbi (Hδ (M, Γ, Q, T)) .
+Locally, the part of the handlebody Hδ (M, Γ, Q, T) corresponding to the cells near D is
+illustrated by the left hand side of (4.30)
+
+
+                              K                                                  K
+
+
+(4.30)
+                                                   γ
+
+
+
+
+                              Hδ (M, Γ, Q, T)                                        (H, Φ)
+
+where the genus is created by the 1-cell bounding D and the red loop is present in
+Hδ (M, Γ, Q, T) because D ∈  / T. Note that on the left hand side of (4.30), the vertical
+tube is part of the thickened 1-skeleton, and let K be a horizontal section of this tube. We
+will later use the disc K to perform cutting moves on multi-handlebodies with bichrome
+graphs.
+   Let (H, Φ) := capγ (Hδ (M, Γ, Q, T)) be the handlebody with bichrome graph that is
+obtained from Hδ (M, Γ, Q, T) by applying the red capping move along the red loop γ
+(see (3.20)). In particular, Φ = Γ \ {γ}, and by Lemma 3.18, we have
+                      τC (M, Γ) = Fbi (Hδ (M, Γ, Q, T)) = Fbi (H, Φ) .
+  Now consider (cutD (M ), cutD (Γ)). We may assume that cutD (M ) admits the generic
+PLCW decomposition illustrated as follows:
+
+                                                                      (3)
+                                                                     A+
+
+                                                                             (2)
+                                                       (1)                  W+
+                                                     L+              αi
+
+                                       X                                     (1)
+                                                                            C+
+(4.31)
+                                         i                                   (1)
+                                                                            C−
+
+                                                       (1)     (3)           (2)
+                                                     L−      A−             W−
+                                                                     αi
+
+
+
+where on each side of the cut, we have a disk consisting of a 2-cell bounded by one 1-cell
+and one 0-cell, and other cells of cutD (M ) are identical to those of M . We denote the
+resulting PLCW decomposition of (cutD (M ), cutD (Γ)) by δ′ .
+   If cutD (M ) is connected, then near the cut, the (2,3)-graph Gδ′ (cutD (M )) takes the
+form
+
+                                          (3)
+                                        A+                W+
+                                                             (2)
+
+                                                D+
+                                                                      v0
+(4.32)
+                                                D−
+                                                              (2)
+                                             (3)             W−
+                                         A−
+                             NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                      37
+
+                                                                                 (2)          (2)
+As before, since the edges corresponding to D+ (resp. D− ) and W+ (resp. W− ) form
+a cycle, we can see that there exists a spanning tree T′ of Gδ′ (cutD (M )) that does not
+contain the edges corresponding to D+ and D− .
+   If cutD (M ) is separated into 2 connected components M+ and M− , then δ′ restricts
+to PLCW decompositions on each of them. Let Gδ′ (M+ ) be the (2,3)-graph of M+
+associated to δ′ (or more precisely, the restriction of δ′ to M+ ), similarly let Gδ′ (M− )
+be the (2,3)-graph of M− . Then near the cut Gδ′ (M+ ) and Gδ′ (M− ) are of the form
+
+                                            (3)
+                                           A+            W+
+                                                            (2)
+
+
+                                                   D+
+                                                               v0,+
+(4.33)                                                         v0,−
+                                                   D−
+                                                              (2)
+                                             (3)          W−
+                                           A−
+
+
+
+
+where v0,+ and v0,− are the corresponding distinguished vertices. The same argument
+as in the above implies that there exist spanning trees T′+ and T′− of Gδ′ (M+ ) and
+Gδ′ (M− ), respectively, such that T′+ does not contain D+ and T′− does not contain D− .
+In this case, denote cutD (Γ)+ := cutD (Γ) ∩ M+ and cutD (Γ)− := cutD (Γ) ∩ M− so that
+(cutD (M ), cutD (Γ)) = (M+ , cutD (M )+ ) ⊔ (M− , cutD (M )− ).
+   Pick arbitrarily a set Q′ of interior points of boundary 2-cells of cutD (M ). If cutD (M )
+is connected, denote
+                          (H ′ , Φ′ ) := Hδ′ (cutD (M ), cutD (Γ), Q′ , T′ ) ,
+while for cutD (M ) not connected set
+         (H ′ , Φ′ ) := Hδ′ (M+ , cutD (Γ)+ , Q′+ , T′+ ) ⊔ Hδ′ (M− , cutD (Γ)− , Q′− , T′− ) ,
+where Q′+ = Q′ ∩ M+ and Q′− = Q′ ∩ M− . Then by deﬁnition, in both cases, we have
+(4.34)                       τC (cutD (M ), cutD (Γ)) = Fbi (H ′ , Φ′ ) .
+  By the above discussions, the local picture of (H ′ , Φ′ ) near the cut, regardless of the
+connectedness of cutD (M ), is of the form
+
+
+
+                                                    αi
+
+
+                                                                      γ+
+                                     X
+(4.35)
+                                       i
+
+                                                                      γ−
+                                                    αi
+
+
+
+
+                                                        (H ′ , Φ′ )
+38                              INGO RUNKEL AND YILONG WANG
+
+where the red loops γ+ and γ− , corresponding to D+ and D− respectively, are present
+in (H ′ , Φ′ ) because of our choice of spanning trees. Note also that outside of the neigh-
+bourhood of the cut depicted in (4.35), (H ′ , Φ′ ) is identical to (H, Φ) (see (4.30)).
+   Applying the red capping move along γ+ and γ− to (H ′ , Φ′ ), we obtain a new multi-
+handlebody (H ′′ , Φ′′ ) with bichrome graphs on it, i.e.,
+(4.36)                            (H ′′ , Φ′′ ) = capγ+ ,γ− (H ′ , Φ′ ) .
+The local conﬁguration of (H ′′ , Φ′′ ) near the cut is illustrated below:
+
+
+
+                                              X         αi
+
+(4.37)
+                                               i
+                                                        αi
+
+
+
+
+By construction, outside of the neighbourhood of the cut depicted in (4.37), (H ′′ , Φ′′ ) is
+identical to (H ′ , Φ′ ) and (H, Φ). Moreover, by comparing (4.37) and (4.30), we can see
+that
+(4.38)                          (H ′′ , Φ′′ ) = (cutK (H), cutK (Φ)) .
+Therefore, we have
+(4.39)     τC (M, Γ) = Fbi (H, Φ) = Fbi (H ′′ , Φ′′ ) = Fbi (H ′ , Φ′ ) = τC (cutD (M ), cutD (Γ))
+where the second equality follows from (4.38) and Corollary 3.12, and the third equality
+follows from (4.36) and Lemma 3.18.                                                   
+
+                5. Open-closed TFT via the universal construction
+5.1. Bulk-admissible bordisms. Before deﬁning the relevant bordism categories, we
+brieﬂy set up the notations and recall some basic concepts on bordisms. For the rest
+of the paper, we assume that all manifolds are compact and oriented, and that for all
+n ∈ N, any embedding of an (n − 1)-manifold into an n-manifold is equipped with a
+collar, which we usually suppress for simplicity.
+
+Deﬁnition 5.1. Suppose Σ, Σ′ are compact oriented surface with boundaries O = ∂Σ
+and O ′ = ∂Σ′ . A bordism from Σ to Σ′ is a compact oriented 3-manifold M with corners.
+The boundary ∂M is equipped with a decomposition into two parts, the free boundary
+∂ frM and the gluing boundary ∂ glM such that
+     • ∂M = ∂ frM ∪ ∂ glM , and
+     • ∂ glM ∩ ∂ frM is precisely the set of corner points of M .
+Furthermore, M is equipped with an orientation preserving diﬀeomorphism −Σ ⊔ Σ′ →
+∂ glM (the gluing boundary parametrisation) such that O⊔O ′ is mapped onto ∂ glM ∩∂ frM .
+We call Σ and Σ′ the source and target of M , and we write M : Σ → Σ′ .
+
+  Note that the above decomposition of ∂M endows M with the structure of a 3-
+dimensional h2i-manifold (see for example [LP05, HR24]).
+                          NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                 39
+
+   Let (C, t, π1 ) be as in (2.4), and let (Σ, L) and (Σ′ , L′ ) be ∂-marked surfaces (Deﬁni-
+tion 3.1) over C. An orientation-preserving diﬀeomorphism from (Σ, L) to (Σ′ , L′ ) is an
+orientation-preserving diﬀeomorphism f : Σ → Σ′ such that f (∂Σ) = ∂Σ′ , f (L) = L′ ,
+and for any marked point x ∈ L, its label equals to the label of f (x) ∈ L′ . In the
+following, all diﬀeomorphisms are assumed to be orientation-preserving, and by abuse
+of notation, we write f : (Σ, L) → (Σ′ , L′ ).
+
+Deﬁnition 5.2. Let (C, t, π1 ) be as in (2.4), and let (Σ, L), (Σ′ , L′ ) be ∂-marked surfaces
+over C.
+  (1) A bordism of ∂-marked surfaces from (Σ, L) to (Σ′ , L′ ) is a pair (M, Γ), where
+      M : Σ → Σ′ is a bordism of compact oriented surfaces, and Γ is a C-graph in the
+      ∂-marked surface (∂ frM , −L ⊔ L′ ). We write (M, Γ) : (Σ, L) → (Σ′ , L′ ) and call
+      (Σ, L) and (Σ′ , L′ ) the source and target of (M, Γ) respectively.
+  (2) A bordism (M, Γ) : (Σ, L) → (Σ′ , L′ ) of ∂-marked surfaces is called bulk-admissible
+      if it satisﬁes the following condition: For each connected component J of M that
+      is disjoint from the input surface Σ, there is at least one blue edge of Γ that is
+      contained in ∂J and is labelled by an object in ProjC . In this case, we will also
+      call Γ a bulk-admissible C-graph in the bordism (M, Γ).
+
+Remark 5.3. The bulk-admissibility condition in Deﬁnition 5.2 can be viewed as a
+generalization of that in Deﬁnition 4.4. Let (M, Γ) : ∅ → ∅ be a bordism from the
+empty set to itself. Such a bordism is also called a closed bordism. In particular, we
+have ∂ glM = ∅, ∂ frM = ∂M , and Γ ⊂ ∂M is a graph with no free ends. In this case,
+(M, Γ) is a bulk-admissible bordism in the sense of Deﬁnition 5.2 if and only if Γ is a
+bulk-admissible C-graph in M in the sense of Deﬁnition 4.4.
+  Note also that if we glue two bulk-admissible bordisms of ∂-marked surfaces along
+their common gluing boundaries, then the resulting bordism is again bulk-admissible.
+
+   Let (M, Γ) and (M ′ , Γ′ ) : (Σ, L) → (Σ′ , L′ ) be two bulk-admissible bordisms of ∂-
+marked surfaces. An orientation preserving diﬀeomorphism ϕ : M → M ′ is called an
+isomorphism from (M, Γ) to (M ′ , Γ′ ) if ϕ preserves the embeddings of −Σ ∪ Σ′ into M
+and M ′ respectively, and ϕ(Γ) = Γ′ . We call the isomorphism class of (M, Γ) : (Σ, L) →
+(Σ′ , L′ ) the bordism class of (M, Γ), and we denote it by [M, Γ] : (Σ, L) → (Σ′ , L′ ) or
+simply [M, Γ].
+   Note that ∂-marked surfaces, with bulk-admissible bordism classes between them as
+morphisms, form a category: It is routine to show that the composition of bordism classes
+by gluing representatives of bordism classes along their common gluing boundaries is
+well-deﬁned and associative. The identity morphism of (Σ, L) is simply (Σ × [0, 1], L ×
+[0, 1]), where the lines L × [0, 1] are coloured in blue and labelled by the same object as
+their corresponding end points. Moreover, this category is symmetric monoidal under
+disjoint union.
+
+Deﬁnition 5.4. Let (C, t, π1 ) be as in (2.4). The category of 3-dimensional non-compact
+open-closed bordisms over C, denoted by Bordnc  oc (C), is the symmetric monoidal category
+whose objects are ∂-marked surfaces over C, and whose morphisms are bulk-admissible
+bordism classes between ∂-marked surfaces over C. A symmetric monoidal functor from
+40                              INGO RUNKEL AND YILONG WANG
+
+Bordncoc (C) to a symmetric monoidal category is called a non-compact open-closed topo-
+logical ﬁeld theory.
+Example 5.5. Let (Σ, L) and (Σ′ , L′ ) be ∂-marked surfaces over C, and f : (Σ, L) →
+(Σ′ , L′ ) be an orientation-preserving diﬀeomorphism. We deﬁne the mapping cylinder of
+f to be the bordism M(f ) := (Mf , L × [0, 1]), where Mf = (Σ, L)⊔ ((Σ′ , L′ )× [0, 1])/(x ∼
+(f (x), 0)) is the cylinder over Σ′ glued with Σ along f , which is viewed as a bordism from
+Σ to Σ′ . More speciﬁcally, the boundary identiﬁcations of Mf are (f, 0) : Σ → Σ′ × {0}
+and (idΣ′ , 1) : Σ′ → Σ′ × {1}. By deﬁnition, M(f ) is bulk-admissible, and it is easy to
+check that the bordism class of M(f ) only depends on the mapping class of f . In other
+words, [f ] = [f ′ ] ∈ Mod(Σ, L) implies [M(f )] = [M(f ′ )] ∈ End(Σ, L) in Bordnc oc (C), and
+we have a well-deﬁned assignment Mod(Σ, L) → End(Σ, L), [f ] 7→ [M(f )].
+5.2. Universal construction. Let (C, t, π1 ) be as in (2.4). In view of Remark 5.3,
+the invariant τC is a multiplicative invariant of bulk-admissible closed bordism classes of
+∂-marked surfaces. We will show that it can be extended to a topological ﬁeld theory
+V : Bordnc oc (C) → Vectk via the universal construction (see [BHMV95] and e.g. [GP,
+Ch. 7.7]).
+   For any (Σ, L) ∈ Bordnc oc (C), consider the following vector spaces with basis given by
+                      nc
+Hom-spaces in Bordoc (C),
+                        e
+                        V(Σ, L) := spank {[M, Γ] ∈ Hom(∅, (Σ, L))} ,
+(5.1)
+                       Ve ′ (Σ, L) := spank {[M ′ , Γ′ ] ∈ Hom((Σ, L), ∅)} .
+Then τC extends by linearity to a natural pairing between Ve ′ (Σ, L) and V(Σ,
+                                                                          e    L):
+(5.2)   h·, ·i : Ve ′ (Σ, L) × V(Σ,
+                               e    L) → k ,   h[M ′ , Γ′ ], [M, Γ]i := τC (M ′ ∪(Σ,L) M, Γ′ ∪ Γ) .
+When there is more than one ∂-marked surface involved, we write h·, ·i(Σ,L) to be more
+precise. Deﬁne
+(5.3)                                       e
+                                 V(Σ, L) := V(Σ, L)/rad(h·, ·i) ,
+                         e
+where rad(h·, ·i) = {w ∈ V(Σ, L) | hv, wi = 0 ∀v ∈ Ve ′ (Σ, L)} is the right radical of the
+pairing h·, ·i.
+  For any bordism class [M, Γ] : (Σ, L) → (Σ′ , L′ ), the associativity of the gluing of
+bordisms implies that the linearization of the assignment
+                 Hom(∅, (Σ, L)) → Hom(∅, (Σ′ , L′ )) ,
+(5.4)
+                           [N, Φ] 7→ [M, Γ] ◦ [N, Φ] = [(M ∪(Σ,L) N, Γ ∪ Φ)]
+induces a well-deﬁned linear map V[M, Γ] : V(Σ, L) → V(Σ′ , L′ ). For simplicity, we will
+use [M, Γ] : ∅ → (Σ, L) to denote both a bordism class in V(Σ,e    L) and its image in
+V(Σ, L).
+  As usual in the universal construction, at this point we already have a functor from
+bordisms to (possibly inﬁnite dimensional) vector spaces,
+(5.5)                              V : Bordnc
+                                           oc (C) → Vectk ,
+
+which takes an object (Σ, L) to V(Σ, L) as in (5.3), and which acts on bordisms as (5.4).
+The more involved part is to show monoidality. The ﬁrst step is a lax monoidal structure
+                            NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                                   41
+
+which we deﬁne next. The main step will be showing that this is actually a monoidal
+structure.
+  Let (Σ1 , L1 ), (Σ2 , L2 ) be two ∂-marked surfaces. Deﬁne the linear map
+                          e 1 , L1 ) ⊗k V(Σ
+                     Ψ̃ : V(Σ           e 2 , L2 ) → V(Σ1 ⊔ Σ2 , L1 ⊔ L2 )
+(5.6)
+                                                v1 ⊗ v2 7→ [v1 ⊔ v2 ]
+induced by taking disjoint unions. While Ψ̃ is not injective, it turns out to become
+injective once we descend to the quotient also in the domain vector space. The proof
+is standard for universal constructions (see e.g. [GP, Sec. 7.7]), and we write it out for
+convenience of the reader.
+Lemma 5.6. Ψ̃ descends to a well-deﬁned injective linear map
+(5.7)                Ψ : V(Σ1 , L1 ) ⊗k V(Σ2 , L2 ) → V(Σ1 ⊔ Σ2 , L1 ⊔ L2 ) .
+Proof. For simplicity, we denote S1 := (Σ1 , L1 ), S2 := (Σ2 , L2 ), and S1⊔2 := (Σ1 ⊔
+Σ2 , L1 ⊔ L2 ). For the radicals we write accordingly Rx = rad(h·, ·iSx ) for x ∈ {1, 2, 1 ⊔ 2}.
+  As a ﬁrst step, we express the tensor product of quotients as a quotient of the tensor
+product,
+                                                                                                    
+                              e 1 ) ⊗k V(S
+           V(S1 ) ⊗k V(S2 ) = V(S              e 1 ) ⊗k R2 + R1 ⊗k V(S
+                                       e 2 ) / V(S                 e 2) .
+
+To check well-deﬁnedness, we show that Ψ̃ vanishes on the two summands of the quotient.
+              e 1 ) and w ∈ R2 . Then for any u ∈ V
+Let thus v ∈ V(S                                    e ′ (S1⊔2 ),
+
+    hu, Ψ̃(v ⊗k w)iS1⊔2 = hu, v ⊔ wiS1⊔2 = τC (u ∪S1⊔2 (v ⊔ w)) = τC ((u ∪S1 v) ∪S2 w)
+                          = h(u ∪S1 v), wiS2 = 0 ,
+where the last step uses that w ∈ R2 . Hence Ψ̃(v ⊗k w) ∈ R1⊔2 and so is zero in V(S1⊔2 ).
+The calculation that Ψ̃(v ⊗k w) = 0 for v ∈ R1 and w ∈ V(Se 2 ) is analogous. Hence Ψ is
+well-deﬁned.
+                                               P            e 1 ) ⊗ V(Se 2 ) be such that
+  Next we show that Ψ is injective. Let h = i vi ⊗k wi ∈ V(S         k
+h∈   e                      e
+  / V(S1 ) ⊗k R2 + R1 ⊗k V(S2 ), i.e., [h] is non-zero in V(S1 ) ⊗k V(S2 ). We will show
+that Ψ̃(h) ∈
+           / R1⊔2 , which implies that Ψ is injective. By assumption on h, there must
+         e x ), x = 1, 2, such that
+be ux ∈ V(S
+                                      X
+                                          hu1 , vi iS1 hu2 , wi iS2 6= 0 .
+                                      i
+But then also
+                                  X                                   X
+        hu1 ⊔ u2 , Ψ̃(h)iS1⊔2 =       hu1 ⊔ u2 , vi ⊔ wi iS1⊔2 =             hu1 , vi iS1 hu2 , wi iS2 6= 0 ,
+                                  i                                    i
+
+and so Ψ̃(h) ∈
+             / R1⊔2 .                                                                                           
+   For monoidality of V, it remains to show surjectivity of Ψ in (5.7). To do so, we
+investigate a special family of elements of V(Σ, L) called collar elements.
+Deﬁnition 5.7. Let (Σ, L) be a ∂-marked surface. A collar element of V(Σ, L) is a
+ﬁnite linear combination of elements of the form [Σ, Γ] such that Σ ∼
+                                                                    = Σ × [0, 1] and Γ
+is an admissible C-graph. Here, we view Σ as a bordism from ∅ to (Σ, L) with gluing
+42                            INGO RUNKEL AND YILONG WANG
+
+boundary ∂ glΣ = Σ × {1} and free boundary ∂ frΣ = (Σ × {0}) ∪ ((∂Σ) × [0, 1]) ∼
+                                                                               = Σ, and
+we smoothen the corner at ∂Σ × {0}. The admissible C-graph Γ is contained in the free
+boundary ∂ frΣ and ends in L.
+Proposition 5.8. For any ∂-marked surface (Σ, L), V(Σ, L) is spanned by collar ele-
+ments.
+     The proof of Proposition 5.8 will be given in Section 5.3.
+   Let (Σ, L) be a ∂-marked surface and [Σ, Γ] a collar element of V(Σ, L). Recall from
+Section 3.1 that S̃adm (Σ, L) stands for the k-linear span of all admissible blue graphs,
+and so by deﬁnition, Γ ∈ S̃adm (Σ, L). Moreover, any admissible C-graph Γ in (Σ, L)
+gives rise to a collar element [Σ, Γ] ∈ V(Σ, L) by identifying the free boundary of Σ with
+Σ and embedding Γ in it. By Proposition 5.8, we have a surjective linear map
+(5.8)                         Ẽ(Σ, L) : S̃adm (Σ, L) → V(Σ, L) .
+When (Σ, L) is clear from the context, we will also write Ẽ for Ẽ(Σ, L).
+   Recall from Deﬁnition 3.3 that the admissible skein module Sadm (Σ, L) of (Σ, L) is
+the quotient of S̃adm (Σ, L) by the subspace Nadm (Σ, L) spanned by admissible skein
+relations.
+Proposition 5.9. Let (C, t, π1 ) be as in (2.4), and let (Σ, L) be a ∂-marked surface.
+Then Ẽ(Σ, L) factors through a surjective map E(Σ, L) : Sadm (Σ, L) → V(Σ, L). In
+particular, V(Σ, L) is ﬁnite-dimensional.
+Proof. The map Ẽ(Σ, L) is already surjective. For well-deﬁnedness of E(Σ, L), we need
+to show that Nadm (Σ, L) ⊂ ker(Ẽ(Σ, L)). Let thus v ∈ Nadm (Σ, L) be an admissible
+                               P
+skein relation and write v = i ci Γi as a sum of graphs on (Σ, L). Then for all u ∈
+Ve ′ (Σ, L) we have                       X
+                       hu, Ẽ(Σ, L)(v)i =   τC (u ∪Σ (Σ, Γi )) = 0
+                                             i
+as τC respects skein relations by Proposition 4.9 (an admissible skein relation is in par-
+ticular 1-admissible). Hence Ẽ(Σ, L)(u) is in the radical of the pairing and therefore
+zero in V(Σ, L).
+   Finally, in light of Proposition 3.4, existence of the surjective map E(Σ, L) immedi-
+ately implies that V(Σ, L) is ﬁnite-dimensional.                                        
+     We can now state the main result of this paper:
+Theorem 5.10. Let (C, t, π1 ) be as in (2.4). The assignments (Σ, L) 7→ V(Σ, L) and
+[M, Γ] 7→ V[M, Γ] of objects and morphisms of Bordncoc (C) to ﬁnite-dimensional vector
+spaces and linear maps deﬁnes an open-closed topological ﬁeld theory, i.e., a symmetric
+monoidal functor V : Bordncoc (C) → Vectk .
+
+Proof. We already noted functoriality of V in (5.5). That V takes values in ﬁnite-
+dimensional vector spaces was shown in Proposition 5.9.
+   In Lemma 5.6 we saw that the candidate monoidal structure map Ψ is injective. Next
+we show that it is surjective. By deﬁnition, the collar elements in V(Σ ⊔ Σ, L ⊔ L′ ) are
+of the form (Σ ⊔ Σ′ , Γ ⊔ Γ′ ) where Σ ∼
+                                       = Σ × [0, 1] (resp. Σ′ ∼
+                                                              = Σ′ × [0, 1]), and Γ (resp.
+                          NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                43
+
+Γ′ ) is a C-coloured graph contained in the ∂ frΣ (resp. ∂ frΣ′ ) ending in L (resp. L′ ). In
+other words, all of the collar elements in V(Σ ⊔ Σ′ , L ⊔ L′ ) are contained in the image of
+Ψ. Therefore, by Proposition 5.8, Ψ is surjective.
+    Finally, the fact that Ψ endows the functor V with a symmetric monoidal structure
+follows directly from deﬁnition, and we are done.                                          
+
+   Proposition 5.9 gives a concrete description of the state space of the open-closed
+TFT V via skeins, while in general in the universal construction it is not clear how to
+parametrise states concretely as one needs to use all bordisms.
+   Note that for TFTs starting from the full bordism category, the values of the TFT
+functor are automatically ﬁnite dimensional vector spaces, as the source bordism cat-
+egory is rigid. However, the non-compact bordism category Bordnc     oc (C) is not rigid,
+and so the fact that V is a symmetric monoidal functor does not a priori imply that
+V(Σ, L) is ﬁnite-dimensional. We get ﬁnite-dimensionality from that of skein modules
+via Proposition 5.9.
+
+Example 5.11. As a simple example, consider the solid torus H as a bordism ∅ → ∅
+with embedded blue graph Γn on its boundary given a circle labelled by a projective
+object P as in (3.9). There, we also computed the invariant to be
+
+(5.9)             V(H, Γn ) = τC (H, Γn ) = F(H, [Γn ]) = dimk C(P, 1) ,
+
+where in the second step we used Proposition 4.10. In this case, the disc D with a
+P -marked point on the boundary is actually a rigid object in Bordncoc (C), and so the
+invariant above can be computed as a trace of the the identity morphism,
+
+(5.10)                          V(H, Γn ) = dimk V(D, P )
+
+By Proposition 5.9 we have a surjective map E(D, P ) : Sadm (D, P ) → V(D, P ), and we
+also have a surjective map
+
+
+
+(5.11)               C(P, 1) → Sadm (D, P ) ,    f 7→         f
+
+                                                                  P
+
+
+
+
+Comparing dimensions, we see that all these surjective maps are isomorphisms,
+
+(5.12)                      C(P, 1) ∼
+                                    = Sadm (D, P ) ∼
+                                                   = V(D, P ) .
+
+This gives at least one concrete example of a state space of the TFT V, and also illustrates
+that the theory is non-trivial.
+
+Remark 5.12. In [CGPV23] a non-compact TFT S is deﬁned on objects and bordisms
+without free boundary, i.e., on closed bordisms. To a closed surface Σ, it assigns the
+admissible skein module, S(Σ) = Sadm (Σ, ∅). The value on bordisms is obtained via
+the presentation in [Juh14]. Given a closed connected 3-manifold M , consider M \ B3
+44                            INGO RUNKEL AND YILONG WANG
+
+as a bordism S2 → ∅. It is shown in [CGPV23, Thm. 3.5] that S is related to KC (cf.
+Section 4.3) as
+
+(5.13)             S(M \ B3 ) = KC (M ) F′ : S(S2 ) = Sadm (S2 , ∅) → k ,
+
+where F′ was deﬁned in (3.4). The same relation holds for V,
+
+(5.14)            V(M \ B3 ) = KC (M ) F′ : V(S2 , ∅) ∼
+                                                      = Sadm (S2 , ∅) → k .
+Indeed, by Proposition 5.9 we have a surjection E(S2 , ∅) : Sadm (S2 , ∅) → V(S2 , ∅). But
+Sadm (S2 , ∅) is one-dimensional with basis the class of the graph I described in Section 4.3,
+and the surjection is not zero (compose with D3 : S2 → ∅), hence an isomorphism. Acting
+with V(M \ B3 ) on the collar element for S2 with graph I produces the invariant IC (M )
+from (4.10), which we saw to be equal to KC (M ) in Proposition 4.11.
+   More generally, we expect that our TFT V deﬁned in Theorem 5.10 agrees with S on
+closed surfaces and bordisms. We have not been able to prove this, so this is based on
+the observation above as well as the surjection S(Σ) → V(Σ, ∅) for closed surfaces from
+Proposition 5.9 (which accordingly we expect to be an isomorphism).
+
+Remark 5.13. As is noted in Remark 4.12, when C is semisimple, the alterfold invariant
+ZC is a scalar multiple of τC . Since both the alterfold TFT [LMW+ 23b] and the TFT
+V in this paper are constructed via the universal construction, and a non-zero constant
+scalar multiple does not change the radical of the pairing associated to the corresponding
+invariants, the two open-closed TFTs have isomorphic state spaces and are proportional
+to each other on bordisms. More precisely, consider an arbitrary C-decorated 2-alterfold
+(F, γ, L), with F a closed surface, γ a multi-curve on F separating it into alternatively
+A-B-coloured regions, and L are C-labelled points on γ. Then the state space V(F, γ, L)
+in the alterfold TFT is isomorphic to V(Σ, L) where Σ is the B-coloured subsurface of
+F with boundary ∂Σ = γ. We skip the details.
+
+5.3. Proof of Proposition 5.8. Recall that every triangulation is also a PLCW de-
+composition, and in fact, by [Kir10, Thm. 6.3], every PLCW complex has a subdivision
+which is a triangulation. We will need:
+
+Proposition 5.14 ([Arm67, Cor. 1]). Any triangulation of the boundary of a compact
+PL-manifold can be extended to a triangulation of the whole manifold.
+
+     We immediately have:
+
+Corollary 5.15. Let Σ, Σ′ be compact oriented surfaces with boundary (possibly empty),
+and let M : Σ → Σ′ be a bordism. Then any triangulation δ of ∂ glM = −Σ ∪ Σ′ can be
+extended to a triangulation of M .
+
+Proof. Let O := ∂ frM ∩∂ glM , then O = ∂(∂ frM ), and δ restricts to a triangulation δ|O of
+O. So by Proposition 5.14, δ|O extends to a triangulation ϕ on ∂ frM . Moreover, δ ∪O ϕ
+is a triangulation of ∂M = ∂ frM ∪ ∂ glM . Finally, applying Proposition 5.14 again, we
+obtain a triangulation of M extending δ.                                                  
+
+     Now we are ready to give the proof of Proposition 5.8.
+                           NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                     45
+
+Proof of Proposition 5.8. It suﬃces to show that for any [M, Γ] ∈ Hom(∅, (Σ, L)), there
+                         e
+is a collar element u ∈ V(Σ, L) such that [M, Γ] − u ∈ rad(h·, ·i). By Lemma 5.6, we may
+assume that M is connected (while Σ is not necessarily connected).
+   To construct the collar element u, we ﬁrst set up some notations. By the existence of
+collars, Σ ∼= Σ × [0, 1] embeds in M , so that Σ0 := Σ × {0} is attached to M \ Σ. The
+gluing boundary ∂ glM of M is Σ1 := Σ × {1} ⊂ Σ ⊂ M , and to emphasise this, we write
+(N, Φ) ∪(Σ1 ,L) (M, Γ) when we glue (M, Γ) to another bordism (N, Φ).
+   Let δM be a triangulation of M which restricts to triangulations of Σ, Σ0 and Σ1 ,
+which are denoted by δΣ , δΣ0 and δΣ1 respectively. Deﬁne
+                                                               (1) 
+                                 M1 := Σ ∪ N (M \ Σ)δ                  ,
+i.e., M1 is the union of Σ with the tubular neighbourhood of the 1-skeleton of M \ Σ.
+Let QM be a set of interior points of 2-cells in (∂M ) \ Σ1 = Int(∂ frM ).
+   Let G′ (M ) be the graph obtained from GδM (M ) by deleting all of its edges corre-
+sponding to the 2-cells in δM which are contained in Σ1 , i.e.,
+(5.15)                          G′ (M ) := GδM (M ) \ (δΣ1 )2 ,
+where (δΣ1 )2 stands for the set of 2-cells in δΣ1 . Fix a choice of a spanning tree T′ (M )
+of G′ (M ). Similar to what we did in Deﬁnition 4.6, deform Γ according to the interior
+points QM chosen above, so that Γ is contained in ∂M1 . Then we add red loops along
+the belts of 2-cells in δM \ δΣ which correspond to edges in G′ (M ) \ T′ (M ). Denote the
+resulting bichrome graph in M1 by Γ1 (recall from Remark 4.3 that we denote the set
+of edges of T′ (M ) also by T′ (M )):
+                            [
+(5.16)      Γ1 = Γ ∪                    γblt(W (2) ) ,   with S(M \ Σ) = (δM \Σ )2 \ T′ (M ) ,
+                       W (2) ∈S(M \Σ)
+
+where γblt(W (2) ) is the red loop along the belt of the 2-cell W (2) with respect to QM
+(suppressed for simplicity), see (4.2).
+   Applying the red-to-blue map RB to all the red loops in Γ1 , we obtain a bulk-
+admissible graph RB(Γ1 ) in M1 . Let D(M1 \ Σ) be the collection of meridian disks
+of all the 1-handles (thickened 1-cells) in M1 \ Σ. By connectedness, we can isotope
+RB(Γ1 ) so that the boundaries of the disks in D(M1 \ Σ) have non-empty intersection
+with edges in RB(Γ1 ) that are coloured by projective objects. Applying the cutting move
+(4.27) to (M1 , RB(Γ1 )) along each of the disks in D(M1 \ Σ), we will obtain the disjoint
+union of Σ with ﬁnitely many 3-balls D3 , each containing admissible graphs in them.
+Evaluating the 3-balls with the admissible graphs by F, we obtain a linear combination
+of admissible graphs in Σ, which by deﬁnition is a collar element. Denote it by u, then
+with an abuse of notation, we write
+                                u = cutD(M1 \Σ) (M1 , RB(Γ1 )) .
+
+   We show that u is the desired collar element by showing that for any [N, Φ] ∈ Ve ′ (Σ, L),
+τC ((N, Φ) ∪(Σ1 ,L) (M, Γ)) is equal to τC ((N, Φ) ∪(Σ1 ,L) u). Note that by construction and
+Proposition 4.17, we have
+(5.17)             τC ((N, Φ) ∪(Σ1 ,L) u) = τC (N ∪Σ1 M1 , Φ ∪L RB(Γ1 )) ,
+46                                       INGO RUNKEL AND YILONG WANG
+
+so it remains to show that τC (N ∪Σ1 M, Φ ∪L Γ) is equal to τC (N ∪Σ1 M1 , Φ ∪L RB(Γ1 )).
+   Start with the triangulation δM that we picked to construct u, and note that δM
+restricts to a triangulation δΣ1 . Then by Corollary 5.15, we can extend δΣ1 to a trian-
+gulation δN on N . Let
+                                                      δ̃ := δN ∪δΣ1 δM
+be the triangulation on N ∪Σ M that restricts to δM on M and δN on N .
+                                                                (1)
+  The closure of the 1-skeleton of M \ Σ, denoted by cl(M \ Σ)δ , is the union of
+           (1)
+(M \ Σ)δ with all the 0-cells in Σ0 that are boundaries of 1-cells in M \ Σ. It is a
+1-dimensional PLCW complex. By the connectedness of M , we can iteratively contract
+1-cells in M \ Σ which have one boundary 0-cell in Σ0 and the other one in M \ Σ until
+                            (1)
+all the 0-cells of cl(M \ Σ)δ are contained in Σ0 . For example:
+
+
+
+(5.18)
+                                                                           
+                       Σ0                                                                   Σ0
+
+
+
+In this way, we obtain a new 1-dimensional PLCW complex Y such that the set of 0-cells
+Y0 ⊂ (δΣ0 )0 . Moreover, we have
+                                                                 (1)
+                                  Σ ∪ N((M \ Σ)δ ) = M1 ∼
+                                                        = Σ ∪ N(Y ) .
+
+In other words, M1 is homeomorphic to the 3-manifold obtained from attaching 1-handles
+to Σ0 ⊂ Σ.
+   We can now choose a PLCW decomposition ϕ of M1 as follows: For Σ, we still choose
+δΣ . For any 1-handle in N(Y (1) ) attached to Σ along a 1-cell X (1) , we pick a PLCW
+decomposition of it according to whether X (1) has one or two boundary 0-cells, which
+is described as follows.
+                                                                 (0)      (0)
+   Firstly, suppose X (1) has two 0-cells, which are denoted by Z+ and Z− respectively.
+                   (2)                                 (0)                                       (1)               (0)
+Pick a 2-cell V+ in Σ containing Z+ , add a 1-cell loop X+ around Z+ , we obtain a
+                 (2)                          (1)                     (2)                              (2)
+new 2-cell W+ bounded by X+ inside V+ , and the rest of V+ is again a 2-cell, which,
+                                                                            (2)                              (0)
+by an abuse of notation, is still denoted by V+ . Do the same for Z− . Attach another
+                            (1)    (1)
+2-cell W (2) along X+ , X− and X (1) , and ﬁnally add a 3-cell A(3) that is bounded by
+     (2)   (2)
+W+ , W− and W (2) , we obtain a PLCW decomposition of the 1-handle attached to Σ.
+The above construction is depicted by:
+
+                                                             A(3)            W (2)
+
+
+                                                             X (1)
+
+(5.19)                             (2)
+                                          W+
+                                                (2)    (0)           (0)     (2)
+                                                                            W−          (2)
+                                  V+                  Z+         Z−                    V−         (1)        (2)
+                                                                                                 X± := ∂W±
+                            Σ0
+                                          (3)                                    (3)
+                                         B+                                  B−
+                          NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                                                       47
+
+           (2)                                                                     (3)
+Suppose V± are boundary 2-cells of 3-cells B± in δΣ respectively, then attaching the
+1-handle with the above PLCW decomposition to Σ results in adding the following local
+graph to GδΣ (Σ), where the orange edges are the 2-cells in ϕ but not in δΣ :
+                                                                      v0
+
+
+
+
+                                               (2)          W (2)                                 (2)
+                                              V+                                              V−
+(5.20)                                                                     A(3)
+
+
+                                                               (2)                 (2)
+                                                          W+                 W−
+                                                   (3)                                        (3)
+                                              B+                                           B−
+
+If X (1) has only one 0-cell Z (0) , we choose a two-cell V (2) in Σ containing Z (0) and add
+two 1-cell loops around Z (0) , then the rest of the construction is similar to the above:
+
+
+                                                          A(3)
+                                                                                         W (2)
+
+                                                          X (1)
+
+(5.21)                                                                                                   (1)         (2)
+                                                (2)                        (2)                          X± := ∂W±
+                                  V (2)       W+                     W−
+                                                               (0)
+                                                           Z
+
+                          Σ0
+
+                                      B (3)
+
+
+
+In this case, attaching the 1-handle with the above PLCW decomposition results in
+adding the following local graph to GδΣ (Σ):
+                                                                                  v0
+
+
+
+
+                                                                                    W (2)
+
+(5.22)                                        V (2)                                    A(3)
+
+                                                                     (2)                         (2)
+                                                                W+                         W−
+
+
+
+                                                                                 B (3)
+                                                                                                                            (1)
+By the above construction, it is easy to see that the 1-skeleton (M1 )ϕ of M1 can be
+                                    (1)      (2)      (1)
+obtained by attaching two 1-cells X± (= ∂W± ) to Mδ for each 1-cell X (1) in Y , i.e.,
+we have
+                                                         (1)                [                      (1)         (1)
+(5.23)                    (M1 )(1) ∼                            ∪                         (X+ ∪ X− )
+                               ϕ = Mδ
+                                                                      X (1) ∈Y
+
+and the set of 2-cells in M1 is given by
+                               [                                                                                             
+                                                                                           (2)                        (2)
+(5.24)       ϕ2 = (δΣ )2 ∪                W (2) (X (1) ) ∪ W+ (X (1) ) ∪ W− (X (1) ) .
+                             X (1) ∈Y
+
+  Let G′ (M1 ) be the graph (with half-edges) obtained from deleting the half-edges in
+Gϕ (M1 ) corresponding to the 2-cells in Σ1 from the boundary vertex side. Deﬁne G′ (Σ)
+48                             INGO RUNKEL AND YILONG WANG
+
+and G′ (N ) similarly (with respect to δΣ and δN ). Then by the discussions above, we
+have G′ (M1 ) ⊃ G′ (Σ) ⊂ G′ (M ) (see (5.15)), depicted as follows:
+
+            Σ1                                                        Σ1
+
+
+                              v ∈ (δΣ )3                                                 v ∈ (δΣ )3
+
+
+
+
+                      v0          G′(M1)                                          v0           G′ (Σ)
+(5.25)
+                                                                Σ1
+
+
+                                                                                              v ∈ (δΣ )3
+
+                                                                                                      Σ0
+
+
+
+
+                                                                                       Gδ (M ) \ Gδ (Σ)
+                                                            G′ (M )         v0
+
+
+Here, the gray boxes labelled by v ∈ (δΣ )3 represent the part of the graphs whose vertices
+are contained in (δΣ )3 , i.e., those correspond to 3-cells in Σ.
+  Since ϕ and δN are identical on Σ × {1}, by gluing them together along Σ1 , we obtain
+a PLCW decomposition
+                                             ϕ̃ := ϕ ∪δΣ1 δN
+
+of N ∪Σ1 M1 that restricts to ϕ on M1 and δN on N . The corresponding (2,3)-graph
+Gϕ̃ (N ∪Σ1 M1 ) can be obtained from connecting G′ (M1 ) and G′ (N ) along the half-edges
+corresponding to 2-cells in Σ1 and at the boundary vertex, and Gδ (N ∪Σ M ) can be
+obtained similarly. This is illustrated below:
+
+                 Σ1                                            Σ1
+
+
+                                       v ∈ (δΣ )3                                              v ∈ (δΣ )3
+           N                                            N
+
+                                                                                                        Σ0
+(5.26)
+
+
+                                  v0                                                     Gδ (M ) \ Gδ (Σ)
+                                                                                 v0
+
+                      G′(M1) ∪Σ1,v0 G′(N )                             G′(M ) ∪Σ1,v0 G′(N )
+                              NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                          49
+
+   Recall that to deﬁne the bichrome graph Γ1 in (5.16), we chose a spanning tree
+T′ (M ) of G′ (M ) (ignoring half-edges). Let T′ (Σ) := T′ (M ) ∩ G′ (Σ), then by the above
+construction, in particular, by (5.24), the subgraph
+                                                        [
+(5.27)                         T′ (M1 ) := T′ (Σ) ∪              W (2) (X (1) )
+                                                      X (1) ∈Y
+
+of G′ (M1 ) is a spanning tree of G′ (M1 ). Indeed, the set of vertices that are not in T′ (Σ) is
+in one-to-one correspondence with 1-cells in Y (the 3-cells of the tubular neighbourhood
+                                 S
+of these 1-cells), and by adding X (1) ∈Y W (2) (X (1) ) to T′ (Σ), we cover all the vertices in
+G′ (M1 ). Then, by Remark 4.3 (1), T′ (M1 ) is a tree. The edges that are added to T′ (Σ)
+are coloured in red on the left hand side of (5.25).
+   By deﬁnition, GδN (N ) is of the following form:
+
+                                                   Σ1
+
+
+(5.28)                                       N                   v0
+
+
+
+
+Pick a spanning tree T(N ) of GδN (N ), then
+                                 T(N ∪Σ1 M ) := T(N ) ∪∂ T′ (M )
+is a spanning tree of Gδ̃ (N ∪Σ1 M ), where we identify edges in GδN (N ) associated to
+2-cells in Σ1 with the corresponding edges in Gδ̃ (N ∪Σ1 M ). Indeed, the right hand side
+of the above equation contains all the vertices in Gδ̃ (M ∪Σ1 N ), and by computing the
+Euler characteristic, it is easy to see that T(M ∪Σ1 N ) is a tree. Similarly, deﬁne
+                                T(N ∪Σ1 M1 ) := T(N ) ∪∂ T′ (M1 ) .
+Recall from (5.16) that we denote S(M \Σ) = (δM \Σ )2 \T′ (M ). Similarly deﬁne S(Σ) :=
+(δΣ )2 \ T′ (Σ) and S(N ) := δN (N )2 \ T(N ), we have
+               S(N ∪Σ1 M ) := δ̃2 \ T(M ∪Σ1 N ) = S(Σ) ∪ S(M \ Σ) ∪ S(N ) .
+Pick a set of interior points of 2-cells in ∂ frN , then QN ∪ QM is a set of interior points
+of ∂ fr(N ∪Σ1 M ), with which we can deform the graph Φ ∪L Γ to the boundary of
+               (1)
+N((N ∪Σ1 M ) ), and we have
+                δ̃
+               τC (N ∪Σ1 M, Φ ∪L Γ)
+                                                                     [                      
+                                       (1)
+               = Fbi N((N ∪Σ1 M )δ̃ ) , (Φ ∪L Γ) ∪                                γblt(W (2) ) .
+                                                             W (2) ∈S(N ∪Σ1 M )
+
+                                                                                                   (2)
+On the other hand, (5.27) says that the edges corresponding to the 2-cells W± (X (1) )
+for X (1) ∈ Y are not included in T′ (M1 ). So by (5.24), we have
+                     S(N ∪Σ1 M1 ) := ϕ̃2 \ T(N ∪Σ1 M1 ) = S(Σ) ∪ S(N ) ∪ S ′ ,
+               S            (2)  (1) ), W (2) (X (1) )}.
+where S ′ :=     X (1) ∈Y {W+ (X         −
+50                                        INGO RUNKEL AND YILONG WANG
+
+   Pick a set of interior points QM1 of 2-cells in ∂ frM 1 , then deform Φ∪L RB(Γ1 ) according
+                                                              (1)
+to QM1 ∪ QN so that it is contained in N((N ∪Σ1 M1 )ϕ̃ ). Then we have
+     τC (N ∪Σ1 M1 , Φ ∪L RB(Γ1 ))
+                                                                [                           
+                                   (1)
+      = Fbi N((N ∪Σ1 M1 )ϕ̃ ), (Φ ∪L Γ1 ) ∪                                   γblt
+                                                                                     W (2)
+                                                       W (2) ∈S(N ∪Σ1 M1 )
+                                                            [                                       [                       
+                                   (1)
+      = Fbi N((N ∪Σ1 M1 )ϕ̃ ), (Φ ∪L Γ) ∪                                  γblt(W (2) ) ∪                     γblt(W (2) )
+                                                      W (2) ∈S(N ∪Σ1 M )                         W (2) ∈S ′
+
+By (5.23),
+                                    (1)                    (1)       [                (1)                (1)
+                 N((N ∪Σ1 M1 )ϕ̃ ) = N(N ∪Σ1 M )δ̃ ∪                          (N(X+ ) ∪ N(X− ))
+                                                                   X (1) ∈Y
+       S
+and        W (2) ∈S ′ γblt(W (2) ) are exactly the red loops           along the longitudes of the tubes
+S                     (1)          (1)
+    X (1) ∈Y (N(X+ ) ∪ N(X− )). Hence, we have
+                                                            [                                      [                        
+                                   (1)
+     capS ′ N((N ∪Σ1 M1 )ϕ̃ ), (Φ ∪L Γ) ∪                                  γblt(W (2) ) ∪                     γblt(W (2) )
+                                                     W (2) ∈S(N ∪Σ1 M )                          W (2) ∈S ′
+                                                        [                            
+                             (1)
+      = N((N ∪Σ1 M )δ̃ ), (Φ ∪L Γ) ∪                                   γblt(W (2) )
+                                                  W (2) ∈S(N ∪Σ1 M )
+
+where capS ′ stands for capping all the red loops γblt(W (2) ) for W (2) ∈ S ′ . Finally, by
+Lemma 3.18, we have
+                  τC (N ∪Σ1 M1 , Φ ∪L RB(Γ1 ))
+                                                                             [                               
+                                               (1)
+                   = Fbi N((N ∪Σ1 M )              ), (Φ ∪L Γ) ∪                             γblt(W (2) )
+                                               δ̃
+                                                                   W (2) ∈S(N ∪Σ1 M )
+
+                   = τC (N ∪Σ1 M, Φ ∪L Γ) ,
+and we are done.                                                                                                                 
+
+                                                  References
+[Arm67]           M. A. Armstrong, Extending triangulations, Proc. Amer. Math. Soc. 18 (1967) 701–704.
+[BW93]            J. W. Barrett, B. W. Westbury, Spherical categories, Adv. Math. 143 (1999) 357–375,
+                  arXiv:hep-th/9310164 [hep-th].
+[BW94]            J. W. Barrett, B. W. Westbury, The equality of 3-manifold invariants, Math. Proc. Cam-
+                  bridge Philos. Soc. 118 (1995) 503–510, arXiv:hep-th/9406019 [hep-th].
+[BGR20]           J. Berger, A. M. Gainutdinov, I. Runkel, Monadic cointegrals and applications to quasi-
+                  Hopf algebras, J. Pure Appl. Algebra 225 (2021), 106678, arXiv:2003.13307 [math.QA].
+[BCGP14]          C. Blanchet, F. Costantino, N. Geer, B. Patureau-Mirand, Non-semisimple TQFTs, Reide-
+                  meister torsion and Kashaev’s invariants, Adv. Math. 301 (2016), 1–78, arXiv:1404.7289
+                  [math.GT].
+[BHMV95]          C. Blanchet, N. Habegger, G. Masbaum, P. Vogel, Topological quantum ﬁeld theories
+                  derived from the Kauﬀman bracket, Topology 34 (1995), no. 4, 883–927.
+[BV06]            A. Bruguières, A. Virelizier, Hopf monads, arXiv:math/0604180 [math.QA].
+[BV12]            A. Bruguières, A. Virelizier, Quantum double of Hopf monads and categorical centers,
+                  Trans. Amer. Math. Soc. 364 (2012) 1225–1279, arXiv:0812.2443 [math.QA].
+[CGHP26]          F. Costantino, N. Geer, B. Haïoun, B. Patureau-Mirand, Graded spherical skein 2+1-G-
+                  HQFT and modiﬁed Turaev-Viro invariants, arXiv:2601.02617 [math.GT].
+                             NON-SEMISIMPLE OPEN-CLOSED 3D TFT                                     51
+
+[CGP12]    F. Costantino, N. Geer, B. Patureau-Mirand, Quantum invariants of 3-manifolds via link
+           surgery presentations and non-semi-simple categories, J. Topol. 7 (2014), no. 4, 1005–1053,
+           arXiv:1202.3553 [math.GT].
+[CGP23]    F. Costantino, N. Geer, B. Patureau-Mirand, Admissible skein modules, arXiv:2302.04493
+           [math.GT].
+[CGPT18]   F. Costantino, N. Geer, B. Patureau-Mirand, V. Turaev, Kuperberg and Turaev-Viro
+           invariants in unimodular categories, Paciﬁc J. Math. 306 (2020), no. 2, 421–450,
+           arXiv:1809.07991 [math.QA].
+[CGPV23]   F. Costantino, N. Geer, B. Patureau-Mirand, A. Virelizier, Noncompact (2+1)-TQFTs
+           from non-semisimple spherical categories, arXiv:2302.04509 [math.GT].
+[DS07]     B. Day, R. Street, Centres of monoidal categories of functors, in Categories in algebra,
+           geometry and mathematical physics, Contemp. Math. 431, Amer. Math. Soc., Providence,
+           RI, 2007, 187–202.
+[DGG+ 19]  M. De Renzi, A. M. Gainutdinov, N. Geer, B. Patureau-Mirand, I. Runkel, 3-Dimensional
+           TQFTs from non-semisimple modular categories, Sel. Math. New Ser. 28 (2022) 42,
+           arXiv:1912.02063 [math.GT].
+[DSPS13]   C. L. Douglas, C. Schommer-Pries, N. Snyder, Dualizable tensor categories,
+           arXiv:1312.7188 [math.QA].
+[EGNO15]   P. Etingof, S. Gelaki, D. Nikshych, V. Ostrik, Tensor categories, Mathematical Surveys
+           and Monographs 205, Amer. Math. Soc., Providence, RI, 2015.
+[ENO04]    P. Etingof, D. Nikshych, V. Ostrik, An analogue of Radford’s S 4 formula for ﬁnite tensor
+           categories, arXiv:math/0404504 [math.QA].
+[G23]      D. Grinberg, An introduction to graph theory, arXiv:2308.04512 [math.HO].
+[GKP10]    N. Geer, J. Kujawa, B. Patureau-Mirand, Generalized trace and modiﬁed dimension func-
+           tions on ribbon categories, arXiv:1001.0985 [math.RT].
+[GKP18]    N. Geer, J. Kujawa, B. Patureau-Mirand, M-traces in (non-unimodular) pivotal categories,
+           Algebr. Represent. Theory 25 (2022), no. 3, 759–776. arXiv:1809.00499 [math.RT].
+[GP]       N. Geer, B. Patureau-Mirand, Quantum topology via modiﬁed traces: From semisimple
+           to non-semisimple, to appear.
+[GPV11]    N. Geer, B. Patureau-Mirand, A. Virelizier, Traces on ideals in pivotal categories, Quan-
+           tum Topol. 4 (2013), no. 1, 91–124, arXiv:1103.1660 [math.QA].
+[HR24]     A. Hofer, I. Runkel, Modular functors from non-semisimple 3d TFTs, arXiv:2405.18038
+           [math.QA].
+[Juh14]    A. Juhász, Deﬁning and classifying TQFTs via surgery, Quantum Topol. 9 (2018), no. 2,
+           229–321, arXiv:1408.0668 [math.GT].
+[KL01]     T. Kerler, V. V. Lyubashenko, Non-semisimple topological quantum ﬁeld theories for
+           3-manifolds with corners, Lecture Notes in Mathematics 1765, Springer-Verlag, Berlin,
+           2001.
+[Kir10]    A. Kirillov, Jr., On piecewise linear cell decompositions, Algebr. Geom. Topol. 12 (2012),
+           no. 1, 95–108, arXiv:1009.4227 [math.GT].
+[LP05]     A. D. Lauda, H. Pfeiﬀer, Open-closed strings: two-dimensional extended TQFTs and
+           Frobenius algebras, Topology Appl. 155 (2008), no. 7, 623–666, arXiv:math/0510664
+           [math.QA].
+[LMW+ 23a] Z. Liu, S. Ming, Y. Wang, J. Wu, 3-alterfolds and quantum invariants, arXiv:2307.12284
+           [math.GT].
+[LMW+ 23b] Z. Liu, S. Ming, Y. Wang, J. Wu, Alterfold topological quantum ﬁeld theory, SCIENCE
+           CHINA Mathematics (2026), arXiv:2312.06477 [math-ph].
+[LMW+ 24a] Z. Liu, S. Ming, Y. Wang, J. Wu, Alterfold Theory and Topological Modular Invariance,
+           Comm. Math. Phys. 407 (2026), no. 5, Paper No. 102. arXiv:2412.12702 [math.QA].
+[Lyu95]    V. Lyubashenko, Modular transformations for tensor categories, J. Pure Appl. Algebra
+           98 (1995), no. 3, 279–327.
+52                           INGO RUNKEL AND YILONG WANG
+
+[MW24]     L. Müller, L. Woike, The distinguished invertible object as ribbon dualizing object in the
+           Drinfeld center, arXiv:2401.02792 [math.QA].
+[RST24]    I. Runkel, C. Schweigert, Y. H. Tham, Excision for spaces of admissible skeins,
+           arXiv:2407.09302 [math.QA].
+[RW]       D. Reutter, K. Walker, From non-unital skein theory to modiﬁed traces and non-semisimple
+           topological ﬁeld theories, talk by D. Reutter at “Lecture and seminar series on modiﬁed
+           traces in algebra and topology”, Hausdorﬀ Research Institute for Mathematics, Bonn,
+           Dec. 2020, and Going from n + ǫ to n + 1 in non-semisimple oriented TQFTs, talk by
+           K. Walker at the UQSL seminar, Feb. 2022.
+[SS21]     T. Shibata, K. Shimizu, Modiﬁed traces and the Nakayama functor, Algebr. Represent.
+           Theory 26 (2023), no. 2, 513–551, arXiv:2109.10044 [math.QA].
+[Shi15a]   K. Shimizu, The monoidal center and the character algebra, J. Pure Appl. Algebra 221
+           (2017), no. 9, 2338–2371, arXiv:1504.01178 [math.QA].
+[Shi16b]   K. Shimizu, Non-degeneracy conditions for braided ﬁnite tensor categories, Adv. Math.
+           355 (2019), 106778, arXiv:1602.06534 [math.QA].
+[Shi17]    K. Shimizu, Ribbon structures of the Drinfeld center of a ﬁnite tensor category, Kodai
+           Math. J. 46 (2023), no. 1, 75–114, arXiv:1707.09691 [math.QA].
+[Shi19]    K. Shimizu, Integrals for ﬁnite tensor categories, Algebr. Represent. Theory 22 (2019),
+           no. 2, 459–493, arXiv:1702.02425 [math.CT].
+[SS25]     M.-N. Steﬀen, C. Schweigert, A boundary characterization of Turaev-Viro TQFTs,
+           arXiv:2508.13759 [math.QA].
+[TV17]     V. Turaev, A. Virelizier, Monoidal Categories and Topological Field Theory, Progress in
+           Mathematics 322, Birkhäuser, Cham, 2017.
+[TV92]     V. G. Turaev, O. Ya. Viro, State sum invariants of 3-manifolds and quantum 6j-symbols,
+           Topology 31 (1992), no. 4, 865–902.
+[W01]      D. B. West, Introduction to Graph Theory, Prentice Hall, 2001.
+
+  Ingo Runkel, Fachbereich Mathematik, Universität Hamburg, Bundesstraße 55, 20146
+Hamburg, Germany
+  Email address: ingo.runkel@uni-hamburg.de
+
+  Yilong Wang, Beijing Institute of Mathematical Sciences and Applications (BIMSA),
+Beijing, China
+  Email address: wyl@bimsa.cn
+

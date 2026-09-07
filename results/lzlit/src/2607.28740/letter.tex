@@ -1,0 +1,405 @@
+\documentclass[aps,prl,twocolumn,floatfix,nofootinbib]{revtex4-2}
+
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx} 
+\usepackage{mathtools}
+\usepackage{physics}
+\usepackage{bbold} %for the indicator function \mathbb{1} in the SM
+\usepackage[colorlinks = true, allcolors = purple]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, shapes.geometric, calc}
+
+\definecolor{topo}{HTML}{1B6E6B}
+\definecolor{topobar}{HTML}{9DD8C9}
+\definecolor{triv}{HTML}{B45626}
+\definecolor{trivbar}{HTML}{F4C2A6}
+\definecolor{cor}{HTML}{4A3F9E}
+\definecolor{ccgray}{HTML}{888888}
+\definecolor{crit}{HTML}{000000}
+\definecolor{avcol}{HTML}{A03C2C}
+\definecolor{bpcol}{HTML}{2F5586}
+\definecolor{xlcol}{HTML}{2F5586}
+\definecolor{zlcol}{HTML}{A03C2C}
+
+
+
+% \usepackage{enumitem}
+
+
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+\newtheorem{defn}{Definition}
+
+
+% Nandu's definitions
+\newcommand{\term}[1]{\left( #1 \right)}
+% \newcommand{\abs}[1]{\left| #1 \right|}
+\renewcommand{\comm}[1]{\left[ #1 \right]}
+\newcommand{\curly}[1]{\left\{ #1 \right\}}
+\newcommand{\expect}[1]{\left\langle #1 \right\rangle}
+\renewcommand{\d}{\partial}
+\newcommand{\half}{\frac{1}{2}}
+
+
+\newcommand{\rcite}[1]{Ref. \cite{#1}}
+\newcommand{\eqnref}[1]{Eq.~(\ref{#1})}
+\newcommand{\figref}[1]{Fig.~\ref{#1}}
+\newcommand{\sfigref}[2]{Fig.~\hyperref[#1]{\ref{#1}#2}}
+\newcommand{\tabref}[1]{Table~\ref{#1}}
+\newcommand{\secref}[1]{Sec.~\ref{#1}}
+\newcommand{\appref}[1]{Supplemental Material~\ref{#1}}
+\newcommand{\appreffix}[1]{Supplemental Material~{#1}}
+
+
+\usepackage{xcolor}
+\definecolor{mydarkred}{RGB}{100,0,0}
+\definecolor{mydarkblue}{RGB}{0,0,100}
+\definecolor{mydarkgreen}{RGB}{30,120,30}
+\newcommand{\ttd}[1]{{\color{mydarkred}{\bf #1}}}
+\newcommand{\response}[1]{{\color{mydarkblue}{Response: #1}}}
+\newcommand{\NM}[1]{{\color{mydarkgreen}{[NM: #1]}}}
+\newcommand{\JA}[1]{{\color{red}{(JA): #1}}}
+\newcommand{\zw}[1]{{\color{blue} #1}}
+
+
+% Short forms that might need changing later
+\DeclareMathOperator{\dist}{dist}
+\DeclareMathOperator{\diam}{diam}
+\DeclareMathOperator{\artanh}{artanh}
+\DeclareMathOperator{\supp}{supp}
+
+%-------------------- convenient macros --------------------
+
+\newcommand{\teta}{\tilde{eta}}
+\newcommand{\CC}{\mathcal{C}}
+\newcommand{\LL}{\mathcal{L}}
+\newcommand{\RR}{\mathcal{R}}
+\newcommand{\sset}[1]{(#1)}
+\newcommand{\mset}[1]{[#1]}
+\newcommand{\TC}{\text{TC}}
+\newcommand{\cL}{\mathcal{L}}
+\newcommand{\Cclus}{C_{\mathrm{clus}}}
+\newcommand{\muclus}{\mu_\mathrm{clus}}
+
+
+
+
+\newcommand{\Caltech}{Department of Physics and Institute for Quantum Information and Matter, California Institute of Technology, Pasadena, CA 91125, USA}
+\begin{document}
+\title{Gapped Parent Hamiltonians for the Strongly Deformed Toric Code}
+\author{Nandagopal Manoj}\email{nmanoj@caltech.edu}
+\author{Zack Weinstein}
+\author{Jason Alicea}
+\affiliation{\Caltech}
+\date{\today}
+
+\begin{abstract}
+Local non-unitary deformations of topologically ordered wavefunctions can drive transitions into peculiar states that challenge modern perspectives on gapped quantum matter.
+The strongly deformed toric code offers a curious case, hosting $m$ anyon condensation alongside perimeter-law scaling of Wilson loops charged under an exact 1-form symmetry---properties that typically do not coexist in gapped ground states. Nevertheless, we rigorously construct local gapped parent Hamiltonians for these strongly deformed toric code states. The Hamiltonians we construct are not strictly finite-range, but contain sums of Wilson loop operators whose coefficients decay exponentially in their diameter. If one adopts standard locality bounds used to define gapped phases---which allow for such exponentially decaying terms---our construction shows that these states realize a trivial gapped phase. Within this locality class, we demonstrate that perimeter-law scaling of Wilson loops does not imply a spontaneously broken 1-form symmetry, and from a dual perspective, that long-range ferromagnetic order and perimeter-law disorder parameter correlations can coexist in a 2D gapped ground state. We evade a recent no-go theorem [Sahay et al., arXiv:2503.01977] by relaxing its assumptions in a manner that we quantify as benign in the thermodynamic limit. More broadly, our results highlight that stronger notions of locality are necessary for prohibiting these counterintuitive properties within a gapped phase.
+\end{abstract}
+
+
+
+\maketitle
+
+Ground states of local gapped Hamiltonians have been rigorously proven to exhibit exponentially decaying correlations~\cite{HastingsKoma2006,hastings_locality_2010}. The nature of the converse relationship---the sufficient conditions for a quantum state to be the gapped ground state of a local Hamiltonian---remains a fundamental open problem outside of one spatial dimension. In one dimension, the identification of matrix product states as the relevant `corner of Hilbert space' enables an analytical classification of gapped phases~\cite{Haldane1983a,Haldane1983b,Chen_Gu_Wen_2010,Chen_Gu_Wen_2011,SchuchGarciaCirac2011} and underlies powerful variational techniques for their numerical study \cite{white_density_1992,ostlund_thermodynamic_1995,vidal_efficient_2003,verstaete_matrix_2006,cirac_matrix_2021}. Attaining an analogous understanding in two (and higher) dimensions potentially paves the way for similar applications.  
+
+
+Deformed toric code states [see Eq.~\eqref{eqn:defnofdefTC}] provide an interesting edge case that subtly challenges modern methods of classifying phases. These states arise from deforming toric code ground states by a non-unitary operator that creates $m$-anyon pairs, driving a quantum phase transition out of the topological phase beyond a critical deformation strength \cite{CastelnovoChamon2007DefToricCode}. In the resulting strongly deformed phase, a peculiar combination of properties emerges: (i) condensed $m$ anyons; (ii) an exact `electric' 1-form symmetry; and (iii) \emph{perimeter-law} scaling of Wilson loops \cite{HuxfordNguyenKim2023}. The final property is especially puzzling, given the first two: such a perimeter law is typically interpreted as a signature of deconfined $e$ anyons and a spontaneously broken 1-form symmetry~\cite{Gaiotto2015, McGreevyGLP2023}, both of which appear incompatible with a conventional $m$-condensed gapped phase~\cite{Burnell_anyon_2018}. Based on this observation, Ref.~\onlinecite{Sahay2025FunkyIsing} proved a rigorous no-go theorem showing---subject to several technical assumptions---that the strongly deformed toric code states are \emph{intrinsically gapless}; that is, they do not admit a local gapped parent Hamiltonian with a finite ground-state degeneracy.
+
+
+\begin{figure}
+\centering
+\includegraphics[width = \columnwidth]{fig-parentham_overview.pdf}
+\caption{(a) Properties of the deformed toric code state $\ket{\psi(\beta)}$.
+For $\beta$ beyond a critical deformation strength $\beta_c$, $m$ anyons condense and destroy the topological order, yet Wilson loops continue to exhibit perimeter-law scaling. The vertical axis on the phase diagram sketches the spectral gap of two parent Hamiltonians for $\ket{\psi(\beta)}$: the Castelnovo-Chamon Hamiltonian $H_{\rm CC}$ [Eq.~\eqref{eq:HCC}] and our parent Hamiltonian $H(\beta)$ [Eq.~\eqref{eqn:Hbeta}], proved to be gapped and
+non-degenerate for sufficiently large $\beta$.
+%
+(b) Toric-code stabilizers $A_v$ and $B_p$, the associated $1$-form symmetry
+$Z_{\tilde{\mathcal{L}}}$, and Wilson loop operator $X_{\mathcal{L}}$.}
+\label{fig:overview}
+\end{figure}
+
+\begin{table}[t]
+\caption{Corollaries of the parent Hamiltonian construction. Gapped ground state is in reference to an exponential-in-diameter-local Hamiltonian [cf. Eq.~(\ref{eq:locality_bound})].}
+\label{tab:corollaries}
+\begin{ruledtabular}
+\begin{tabular}
+{p{0.95\columnwidth}}
+
+
+\hangindent=1.2em
+\hangafter=1
+1.\ Perimeter-law Wilson loops in a gapped ground state do not imply $1$-form SSB. \\
+
+\hangindent=1.2em
+\hangafter=1
+2.\ Long-range order parameter correlations and perimeter-law disorder correlations can coexist in a 2D gapped ground state. \\
+
+\hangindent=1.2em
+\hangafter=1
+3.\ Toric code under strong Pauli-$Z$ decoherence is separable as a convex sum of trivial gapped ground states.   \\
+
+\hangindent=1.2em
+\hangafter=1
+4.\ 2D classical Ising ferromagnet at low temperature is dual to a $\mathbb{Z}_2$ gauge theory with exponentially decaying interactions at high temperature. \\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+
+In this Letter, we explicitly construct local parent Hamiltonians for which the strongly deformed toric code states are the unique gapped ground states. We circumvent the no-go theorem of Ref.~\onlinecite{Sahay2025FunkyIsing} by relaxing its assumptions in a physically motivated way---such that the violations to these assumptions vanish exponentially quickly in the thermodynamic limit. {Our parent Hamiltonians naturally incorporate the perimeter law by containing sums of Wilson loop operators with coefficients decaying exponentially in their support; although the resulting Hamiltonians are not strictly finite-range, they nevertheless satisfy standard locality bounds commonly used to define and analyze gapped phases of matter~\cite{HastingsKoma2006,hastings_locality_2010}.} More broadly, we demonstrate that within the standard definition of locality, perimeter-law decay of Wilson loops is compatible with a trivial symmetric phase and is therefore not a reliable probe of 1-form spontaneous symmetry breaking (SSB). Our construction yields a number of nontrivial corollaries, highlighted in Table \ref{tab:corollaries}.
+
+
+{\bf \emph{Deformed toric code.}}~Consider an $L_x \times L_y$ square lattice with periodic boundary conditions, where each edge $e$ hosts a qubit equipped with Pauli operators $X_e,Z_e$. The code space of the toric code is the simultaneous +1 eigenspace of the vertex stabilizers $A_v = \prod_{e \ni v} Z_e$ and the plaquette stabilizers $B_p = \prod_{e \in p} X_e$ [see Fig.~\ref{fig:overview}(b)]. In other words, it is the four-dimensional ground-state subspace of the Hamiltonian \cite{kitaev_fault-tolerant_2003}
+\begin{equation} \label{eqn:H0TC}
+    H_{\TC} = \sum_v(1-A_v) +\sum_p(1- B_p).
+\end{equation}
+We will initially focus on the logical `++' toric code state $\ket{\TC} = \sum_{\mathcal{L}} X_{\mathcal{L}} \ket{0}$, where $X_{\mathcal{L}} = \prod_{e \in \mathcal{L}} X_e$ is a product over a collection of (possibly disconnected or non-contractible) closed loops $\mathcal{L}$ in the direct lattice, and $\ket{0}$ is the simultaneous +1 eigenstate of each $Z_e$. This state satisfies $X_{\mathcal{L}} \ket{\TC} =  \ket{\TC}$ for any loop $\mathcal{L}$, and is therefore the +1 eigenstate of the two logical-$X$ operators.
+
+
+Given $\ket{\TC}$, the (unnormalized) deformed toric code state is defined by \cite{CastelnovoChamon2007DefToricCode}
+\begin{align} \label{eqn:defnofdefTC}
+    \ket{\psi(\beta)} &=  e^{\frac{\beta}{2}\sum_e Z_e}\ket{\TC} \propto 
+    \sum_{\cL} e^{-\beta \abs{\cL}} X_{\cL}\ket{0}
+\end{align}
+with $\abs{\cL}$ the number of edges in $\cL$. This state is symmetric under the 1-form symmetry $Z_{\tilde{\mathcal{L}}}$ [Fig.~\ref{fig:overview}(b)] for any \emph{contractible} loop $\tilde{\mathcal{L}}$ in the dual lattice, and thus differs slightly from the deformed state considered in Ref.~\onlinecite{Sahay2025FunkyIsing}; we address the latter as well in later sections. 
+
+The norm of $\ket{\psi(\beta)}$, 
+\begin{align} \label{eqn:partition_function}
+    \braket{\psi(\beta)}{\psi(\beta)} \propto \sum_{\cL} e^{-2 \beta \abs{\cL}},
+\end{align}
+is proportional to the partition function of the two-dimensional (2D) classical Ising model, where each $\mathcal{L}$ represents a configuration of magnetic domain walls~\cite{fn1}. This connection suggests that $\ket{\psi(\beta)}$ exhibits a phase transition in the 2D classical Ising$^\star$ universality class at a critical deformation strength $\beta_c = \frac{1}{2}\ln(1 + \sqrt{2}) \approx 0.441$. 
+Within the strongly deformed phase $\beta > \beta_c$, $\ket{\psi(\beta)}$ exhibits long-range order in the string operator $Z_{\tilde P} =\prod_{e \in {\tilde P}} Z_e$ that creates $m$ anyons at the endpoints of the dual-lattice path ${\tilde P}$,
+indicating that $m$ anyons are condensed~\cite{Burnell_anyon_2018}. The resulting state is topologically trivial, as indicated by a vanishing topological entanglement entropy~\cite{CastelnovoChamon2007DefToricCode, LevinWen2006, KitaevPreskill2006}. 
+
+In typical Hamiltonian deformations of $H_{\TC}$ that condense the $m$ anyons while preserving the exact 1-form symmetry \cite{Wegner_duality_1971,KogutRMP1979}, the resulting ground states exhibit area-law scaling of Wilson loop expectation values: $\expval{X_{\mathcal{L}}} \sim e^{-\alpha \text{Area}(\mathcal{L})}$, for a large contractible loop $\mathcal{L}$. In contrast, Ref.~\onlinecite{HuxfordNguyenKim2023} emphasized that $\ket{\psi(\beta)}$ exhibits perimeter-law scaling $\expval{X_{\mathcal{L}}} \sim e^{-\mu \abs{\mathcal{L}}}$ for any finite $\beta$, even within the strongly deformed phase. These authors interpreted the perimeter-law scaling of Wilson loops in the $\beta > \beta_c$ phase as indicative of spontaneous 1-form symmetry-breaking \emph{without} topological order, in apparent violation of the generalized Landau paradigm~\cite{McGreevyGLP2023}. Subsequently, Ref.~\onlinecite{Sahay2025FunkyIsing} suggested that the combination of exact 1-form symmetry under $Z_{\tilde{\mathcal{L}}}$, long-range order in $\expval{Z_{\tilde P}}$, and perimeter-law scaling in $\expval{X_{\mathcal{L}}}$ cannot arise in the ground state of a gapped Hamiltonian with a finite degeneracy. Here we will offer an alternative perspective on the state $\ket{\psi(\beta)}$ by constructing, at large deformation strengths $\beta$, an exact local parent Hamiltonian for which $\ket{\psi(\beta)}$ is the unique gapped ground state.
+
+
+
+{\bf \emph{Parent Hamiltonian constructions.}}~Equation~\eqref{eqn:defnofdefTC} reveals two complementary perspectives on $\ket{\psi(\beta)}$. At small $\beta$, where the topological order persists, $\ket{\psi(\beta)}$ is most naturally viewed as a deformation of the $H_{\rm TC}$ ground state $\ket{\rm{TC}}$.  Conversely, large $\beta$ massacres the topological order and exponentially suppresses large loops in the representation on the right side of Eq.~\eqref{eqn:defnofdefTC}.  There it is more natural to view $\ket{\psi(\beta)}$ as a deformation of the trivial product state $\ket{0}$, which is the unique zero-energy ground state of
+\begin{equation}\label{eqn:H0}
+  H_0 = \sum_e (1-Z_e).
+\end{equation}
+We will show that these two viewpoints lead to distinct parent Hamiltonians---adiabatically connected to $H_{\TC}$ and $H_0$, respectively---that are local and gapped in their `natural' regimes.  
+
+Let us start with the former viewpoint and define manifestly
+Hermitian, positive-semidefinite operators $Q_p$ by the following deformation of the $B_p$ projectors in Eq.~\eqref{eqn:H0TC}:
+\begin{equation}
+    \begin{split}
+        Q_p &= e^{-\frac{\beta}{2} \sum_{e \in p} Z_e} (1 - B_p) e^{- \frac{\beta}{2} \sum_{e \in p} Z_e} \\
+            &= e^{-\beta \sum_{e \in p} Z_e} - B_p.
+    \end{split}
+\end{equation}
+Notice that the exponentials in the first line contain only pieces of the non-unitary deformation $e^{ \frac{\beta}{2} \sum_e Z_e}$ from Eq.~\eqref{eqn:defnofdefTC} that do not commute with a particular $B_p$. All of the operators $(1-A_v)$ and $Q_p$ clearly annihilate $\ket{\psi(\beta)}$, which accordingly admits the finite-range, frustration-free parent Hamiltonian
+\begin{equation}
+    H_{\rm CC}(\beta) = \sum_v(1-A_v) + \sum_p Q_p
+    \label{eq:HCC}
+\end{equation}
+for any $\beta$. One can readily show that $H_{\text{CC}}(\beta)$ is an exact parent Hamiltonian for any toric code ground state deformed by $e^{\frac{\beta}{2}\sum_e Z_e}$.  
+Equation~\eqref{eq:HCC} is precisely the Castelnovo-Chamon Hamiltonian \cite{CastelnovoChamon2007DefToricCode} and is indeed gapped for $\beta<\beta_c$ but, interestingly, gapless for $\beta > \beta_c$~\cite{Sahay2025FunkyIsing}.
+
+Next we apply similar logic at large $\beta$, where $\ket{\psi(\beta)}$ appears `close' to $\ket{0}$. First note that the operator 
+\begin{equation}\label{eq:Vdef1}
+\mathcal{Z} = \sum_{\cL} e^{-\beta \abs{\cL}} X_{\cL} \propto \sum_{\qty{s_v = \pm 1}} e^{ K \sum_{\expval*{v v'}} X_{vv'} s_v s_{v'}  }
+\end{equation}
+acting on $\ket{0}$ in Eq.~\eqref{eqn:defnofdefTC} is positive-definite for all $\beta > 0$. This observation follows from the right side of Eq.~\eqref{eq:Vdef1}, which identifies $\mathcal{Z}$ with the partition function of a bond-disordered Ising model at inverse temperature $K = \artanh(e^{-\beta}) >0$.  There, $s_v$'s represent auxiliary classical spins on the vertices $v$ of the lattice, and the Pauli operators $X_{v v'} \equiv X_e$ on the links $e$ connecting vertices $v,v'$ encode signs of the Ising couplings. Positive-definiteness of $\mathcal{Z}$ guarantees that the operator
+\begin{equation}
+    W = \log \mathcal{Z} \equiv \sum_{\cL} J_{\cL} X_{\cL}
+    \label{eq:Vdef}
+\end{equation}
+is well-defined and Hermitian. Furthermore, $W$ commutes with each vertex stabilizer $A_v$ and hence can be expanded as a sum over loop operators $X_{\mathcal{L}}$ with real-valued coefficients $J_{\mathcal{L}}$, as shown above.
+
+At this point we have expressed $\ket{\psi(\beta)}$ as the trivial state $\ket{0}$ deformed by a non-unitary operator $\mathcal{Z} = e^{W}$, where $W$ is a sum of commuting operators---paralleling the middle representation in Eq.~\eqref{eqn:defnofdefTC}.  Defining operators $W_e = \sum_{\mathcal{L} \ni e} J_{\mathcal{L}} X_{\mathcal{L}}$ that contain only the components of $W$ that anticommute with $Z_e$, we analogously obtain our alternate
+frustration-free parent Hamiltonian for $\ket{\psi(\beta)}$,
+\begin{equation} \label{eqn:Hbeta}
+    \begin{split}
+        H(\beta) &= \sum_e e^{-W_e}\left(1 - Z_e\right)e^{-W_e} \\
+        &= \sum_e \qty( e^{- 2W_e} - Z_e ).
+    \end{split}
+\end{equation}
+Indeed, similar to the Castelnovo-Chamon Hamiltonian~(\ref{eq:HCC}), $H(\beta)$ sums Hermitian, positive-semidefinite terms that individually annihilate $\ket{\psi(\beta)}$.
+
+
+Contrary to the Castelnovo-Chamon Hamiltonian, locality of $H(\beta)$ is not manifest but can be argued heuristically at large $\beta$ as follows.  In the extreme limit $\beta \to \infty$, each $J_{\mathcal{L}}$ for non-empty loop configurations $\mathcal{L}$ vanishes, and $H(\beta \to \infty)$ reduces to the trivial local parent Hamiltonian \eqref{eqn:H0}. More generally, each $J_{\mathcal{L}}$ decays asymptotically in $\abs{\mathcal{L}}$ as $e^{-\beta \abs{\mathcal{L}}}$, exponentially suppressing large loop contributions to $W_e$. Furthermore, as we carefully explain below, the logarithm in Eq.~\eqref{eq:Vdef} ensures that potentially problematic nonlocal loop configurations consisting of far-separated disconnected loops are effectively absent in $W$.
+%
+This observation---which one can readily verify to low orders by Taylor expanding the logarithm---closely relates to the linked-cluster theorem from diagrammatic perturbation theory \cite{zinn-justin_quantum_2021}, and crucially ensures extensivity of the ``free energy'' $W$ for the disordered Ising model $\mathcal{Z}$ \cite{kardarStatisticalPhysicsFields2007}. Consequently, it is natural to expect that each operator $e^{-2W_e}$ is locally supported near the edge $e$, and can be organized as a sum of terms that decay exponentially in their diameter about $e$ in the large-$\beta$ regime. 
+
+{\bf \emph{Proving locality and spectral gap.}}~We now outline a rigorous proof that, for sufficiently large $\beta$, our parent Hamiltonian $H(\beta)$ is local in the sense of Refs.~\onlinecite{HastingsKoma2006,hastings_locality_2010, Sahay2025FunkyIsing} and consequently exhibits a finite spectral gap. Technical details are deferred to the Supplemental Material~\cite{SOM}. Our approach uses the Mayer cluster expansion~\cite{Friedli_Velenik_2017} to explicitly write Eq.~\eqref{eq:Vdef} as a sum of exponentially localized terms, bolstering the intuition developed above. Locality of $H(\beta)$ arises directly from properties of the cluster expansion, and the spectral gap at large $\beta$ then follows from the gap stability results of Refs.~\onlinecite{BravyiHastingsMichalakis2010,BravyiHastings2011}.
+
+
+
+To this end, we interpret $\mathcal{Z}$ in Eq.~(\ref{eq:Vdef1}) as the (operator-valued) partition function for a hard-core \emph{polymer model}. Each loop configuration $\mathcal{L}$ is first decomposed into a collection of connected loops $\gamma$ (`polymers'), each carrying the operator-valued weight $w(\gamma) = e^{-\beta \abs{\gamma}} X_{\gamma}$. Each pair of polymers $\gamma, \gamma'$ is then assigned a hard-core interaction $\delta(\gamma, \gamma') = 0$ if they intersect and $1$ otherwise. With this notation, Eq.~\eqref{eq:Vdef1} can be rewritten as
+\begin{equation}
+    \mathcal{Z} = \sum_{\Gamma' \subseteq \Gamma } \left[\prod_{\gamma \in \Gamma'} w(\gamma) \right] \left[\prod_{\curly{\gamma, \gamma'} \subseteq \Gamma'}  \delta(\gamma, \gamma')\right] ,
+    \label{eqn:polymer_model}
+\end{equation}
+where $\Gamma$ denotes the set of all possible polymers $\gamma$, and $\Gamma'$ sums over all subsets of $\Gamma$. The hard-core interactions ensure that the contributing subsets $\Gamma'$ are in one-to-one correspondence with the loop configurations $\mathcal{L}$ in Eq.~\eqref{eq:Vdef1}.
+
+
+The Mayer cluster expansion expresses the `polymer free energy' $W$ as a sum over \emph{connected clusters} $\mathcal{C}$, each defined as a (possibly repeating) finite sequence of polymers $\term{\gamma_{1}, \gamma_{2}, \ldots, \gamma_{n}}$ whose union is connected~\cite{Friedli_Velenik_2017}.  
+Eq.~\eqref{eq:Vdef} accordingly admits the more constrained form
+\begin{equation}
+    W = {\sum_{\mathcal{C}} f(\mathcal{C}) X_{\mathcal{C}}} ,
+    \label{eq:V_Mayer}
+\end{equation}
+where $X_{\mathcal{C} = (\gamma_1,\dots,\gamma_n)} \equiv  X_{\gamma_1}X_{\gamma_2} \dots X_{\gamma_n}$, and the coefficients $f(\mathcal{C})$ are defined precisely in the End Matter.  We can then identify $W_e  = \sum_{\mathcal{C} \in \mathcal{S}_e} f(\CC) X_{\CC}$, where $\mathcal{S}_e \equiv \curly{\CC: \text{support}(X_{\CC}) \ni e}$ defines the set of connected clusters for which $X_\mathcal{C}$ anticommutes with $Z_e$. Our parent Hamiltonian then admits the useful representation $H(\beta) = H_0 + V(\beta)$, where
+\begin{equation}
+    V(\beta) = \sum_e \term{\exp\comm{-2\sum_{\mathcal{C} \in \mathcal{S}_e} f(\CC) X_{\CC}}-1}.
+    \label{eq:HbetafC}
+\end{equation}
+
+
+In the Supplemental Material \cite{SOM}, we derive several properties of the coefficients $f(\mathcal{C})$ relevant for the locality of $H(\beta)$. We first show that the coefficients decay exponentially with the size of the constituent polymers defining $\mathcal{C}$---i.e., $\abs{f(\mathcal{C})} \lesssim \prod_{\gamma \in \mathcal{C}} e^{-\beta \abs{\gamma}}$. This fact alone does not suffice for locality, since each $W_e$ sums over combinatorially many connected clusters. To prove that $H(\beta)$ is bounded and local, we further derive the crucial inequality (see also Ref. \onlinecite{FernandezProcacci2007} for a tighter bound)
+\begin{equation} \label{eqn:fCbound}
+    \sum_{\mathcal{C} \in \mathcal{S}_e} \abs{f(\CC)} \leq \mathrm{const} \times e^{-4\beta}
+\end{equation}
+which involves the sum of \emph{all} $f(\mathcal{C})$'s contributing to a given $W_e$, and holds for $\beta > \beta^* = 2 + \log 3$.  These bounds are proved using graph-theoretic techniques that are standard to the cluster expansion~\cite{Friedli_Velenik_2017,Penrose1967,KoteckyPreiss1986}; the nontrivial step involves bounding the $\sim n!$ growth in the number of ways the same set of $n$ polymers can form a cluster. 
+Equation~\eqref{eqn:fCbound}, together with the exponential decay of $f(\CC)$ in cluster size, ensures that  $H(\beta)$ is a sum of exponentially localized operators for sufficiently large $\beta$, in harmony with the intuition developed earlier.
+
+Finally, since $H(\beta)$ in Eq.~\eqref{eqn:Hbeta} is obtained from a local perturbation $V(\beta)$ to the trivial gapped Hamiltonian $H_{0}$ in Eq.~\eqref{eqn:H0}, we can leverage the results of Bravyi et al.~\cite{BravyiHastingsMichalakis2010,BravyiHastings2011} to prove that $H(\beta)$ is also gapped for sufficiently large $\beta$. Explicitly, we first decompose $V(\beta) = \sum_{r \geq 1} \sum_{A \in S(r)} V_{r,A}$ into a sum of local terms, where $S(r)$ is the set of all $r \times r$ squares $A$ on the lattice, and $V_{r,A}$ exhibits trivial support outside of $A$. Next, we prove in the Supplemental Material~\cite{SOM} that the operator norm $\norm{V_{r,A}}$ of each local term can be (conservatively) upper-bounded as
+\begin{equation}
+\label{eq:VrA}
+\norm{V_{r,A}} \leq J(\beta) e^{-r}, \quad J(\beta) = e^{-4 \beta} \times (4.11 \times 10^5) ,
+\end{equation}
+which shows that $\norm{V_{r,A}}$ decays (at least) exponentially in the diameter of $A$. With this precise definition of a local perturbation $V(\beta)$, Ref.~\onlinecite{BravyiHastingsMichalakis2010} proved that the gap $\Delta(\beta)$ of $H(\beta)$ is lower-bounded as $\Delta(\beta) \geq [1 - c_{1} J(\beta)] \Delta_{0}$ up to corrections that vanish super-polynomially in system size~\cite{fn2}, where $c_{1}$ is a constant and $\Delta_{0} = 2$ is the gap of $H_{0}$. Since $J(\beta)$ decays exponentially with $\beta$, we have shown that for sufficiently large $\beta$, our local parent Hamiltonian $H(\beta)$ admits the unique ground state $\ket{\psi(\beta)}$ with a finite spectral gap $\Delta(\beta)$~\cite{fn3}. 
+
+
+
+\textbf{\textit{Consistency with the no-go theorem.}}~Let us describe the relationship between our construction and the rigorous no-go theorem from Ref.~\onlinecite{Sahay2025FunkyIsing}. Thus far we have focused on the deformed logical `++' state---Eq.~\eqref{eqn:defnofdefTC}---which we now denote more explicitly by $\ket{\psi_{++}(\beta)}$. Our parent Hamiltonian $H(\beta)$ for this state does not violate the no-go theorem, since $\ket{\psi_{++}(\beta)}$ does not satisfy all of its assumptions: namely, the theorem requires an exact 1-form symmetry $Z_{\tilde{\mathcal{L}}}$ about both contractible \emph{and} non-contractible loops $\tilde{\mathcal{L}}$ in the dual lattice. To meet these assumptions, we should instead consider the logical `00' state $\ket{\psi_{00}(\beta)} \propto \sum_{\mathcal{L}}' e^{-\beta \abs{\mathcal{L}}} X_{\mathcal{L}} \ket{0}$, where the prime indicates that the sum is performed over only contractible loops $\mathcal{L}$. 
+
+Since non-contractible loops in $\ket{\psi_{++}(\beta)}$ are exponentially suppressed in the linear system size $L \equiv \min(L_{x}, L_{y})$ throughout the strongly deformed phase $\beta > \beta_{c}$, the (normalized) fidelity between $\ket{\psi_{00}(\beta)}$ and $\ket{\psi_{++}(\beta)}$ is lower-bounded by $1 - e^{-\mathcal{O}(L)}$ at large $\beta$. Consequently, these two states are indistinguishable from each other in the thermodynamic limit; in particular, $H(\beta)$ is an excellent \emph{approximate} parent Hamiltonian for $\ket{\psi_{00}(\beta)}$, with a variational energy $e^{-\mathcal{O}(L)}$. Since phases of matter are strictly well-defined in the thermodynamic limit $L \to \infty$, we should regard $\ket{\psi_{00}(\beta)}$ as belonging to the same phase of matter as $\ket{\psi_{++}(\beta)}$, namely, a trivial gapped phase. This observation is again consistent with the results of Ref.~\onlinecite{Sahay2025FunkyIsing}, which focuses on the existence of \emph{exact} parent Hamiltonians. 
+
+
+Nevertheless, by employing identical cluster expansion techniques as in the previous section, we can indeed construct an exact 1-form symmetric parent Hamiltonian $H^{(00)}(\beta)$ for which $\ket{\psi_{00}(\beta)}$ is the unique gapped ground state \cite{SOM}. This Hamiltonian differs from Eq.~\eqref{eq:HbetafC} by terms of total spectral norm $e^{-\mathcal{O}(L)}$ in the large-$\beta$ regime, and satisfies a locality criterion analogous to Eq.~\eqref{eq:VrA} for any \emph{fixed} aspect ratio $a_{xy} \equiv L_{x} / L_{y}$. Once more, this result is consistent with the no-go theorem, which forbids the existence of a parent Hamiltonian obeying an \emph{aspect-ratio-independent} locality bound. Specifically, Ref.~\onlinecite{Sahay2025FunkyIsing} begins from the standard definition of local Hamiltonians $H = \sum_{\mathcal{R} \subseteq \Lambda} h_{\mathcal{R}}$ with exponentially decaying tails \cite{HastingsKoma2006,hastings_locality_2010}, which are required to satisfy the bound \cite{fn4}
+\begin{equation}
+    \label{eq:locality_bound}
+    \sup_{i \in \Lambda} \sum_{\mathcal{R} \ni i} \norm{h_{\mathcal{R}}} \abs{\mathcal{R}} e^{\mu \diam (\mathcal{R})} \leq s
+\end{equation}
+for finite constants $\mu, s$, but additionally demands that $\mu, s$ can be chosen independently of the aspect ratio $a_{xy}$. On the other hand, our Hamiltonian $H^{(00)}(\beta)$ contains terms which create \emph{pairs} of far-separated non-contractible closed loops. Although the total norm of such terms is exponentially suppressed in $L$, the aspect ratio can always be chosen sufficiently small that Eq.~\eqref{eq:locality_bound} is violated for any constants $\mu, s$ fixed in advance. Our parent Hamiltonian construction therefore demonstrates that the aspect-ratio-independent locality criterion is not just a technical assumption, but physically necessary for proving enforced gaplessness of $\ket{\psi_{00}(\beta)}$.
+
+
+\textbf{\textit{Discussion.}}~
+We have demonstrated that the strongly deformed toric code state $\ket{\psi(\beta)}$ admits a local and gapped parent Hamiltonian $H(\beta)$ with $\ket{\psi(\beta)}$ as the unique ground state. Since $H(\beta)$ is connected to the trivial Hamiltonian $H_0$ by a gap-preserving deformation, this result demonstrates that $\ket{\psi(\beta)}$ lies within the trivial phase for sufficiently large $\beta$. 
+Although our cluster expansion techniques only prove that $H(\beta)$ is local and gapped at large $\beta$, it is natural to conjecture that the entire $\beta > \beta_c$ regime realizes a trivial phase with a corresponding gapped parent Hamiltonian.
+
+An immediate corollary of our result is that, within the space of Hamiltonians exhibiting exponentially decaying interactions [see Eq.~\eqref{eq:locality_bound}], perimeter-law decay of Wilson loops is not a reliable diagnostic of 1-form SSB. In the presence of an exact 1-form symmetry, it is commonly argued \cite{Gaiotto2015,McGreevyGLP2023} that a perimeter-law Wilson loop can be ``locally dressed'' into an additional topological operator that braids nontrivially with the 1-form symmetry, resulting in topological order and ground-state degeneracy on the torus. Our construction demonstrates that this intuition fails in the deformed toric code states. A natural question is whether there might be more robust diagnostics of 1-form SSB at the level of individual states, i.e., without reference to a particular parent Hamiltonian. 
+% }
+
+The techniques developed in this work also shed light on the mixed-state separability of the strongly \emph{decohered} toric code. Previously, Refs.~\onlinecite{ChenGrover_separability_2024,WangSongMengGrover_analog_2025} demonstrated that the toric code under strong Pauli-$Z$ decoherence can be expressed as an incoherent mixture of topologically trivial pure states with condensed $m$ anyons. These states are structurally similar to the deformed toric code states, and given the results of Ref.~\onlinecite{Sahay2025FunkyIsing}, one might wonder whether they are intrinsically gapless. As described in the End Matter, and elaborated in the Supplemental Material \cite{SOM}, one can construct exact gapped parent Hamiltonians for these states at large decoherence strengths by an identical procedure as for the deformed toric code. This result completes the argument of Refs.~\onlinecite{ChenGrover_separability_2024,WangSongMengGrover_analog_2025} into a rigorous proof that the strongly $Z$-decohered toric code is separable, i.e., can be written as a convex sum of short-range entangled pure states.
+
+
+{From a dual perspective, our result also demonstrates that gapped Ising-symmetric wavefunctions can simultaneously exhibit long-range ferromagnetic correlations and perimeter-law disorder parameter correlations. Conventionally, when a gapped Hamiltonian exhibits a spontaneously broken global (0-form) Ising symmetry, its symmetric ground state exhibits long-range order parameter correlations and \emph{area-law} disorder parameter correlations. Indeed, a no-go theorem~\cite{Levin_constraints_2020} rules out the coexistence of long-range order parameter and long-range disorder parameter correlations in 1D, and a recent result~\cite{McDonough_Zhang_lieb-robinson_2025} demonstrates that \emph{exponential-in-volume} local perturbations to the 2D ferromagnetic Ising fixed point result in area-law disorder parameters. In contrast, the strongly deformed toric code state $\ket{\psi_{00}(\beta)}$ is dual to a ferromagnetic ground state $\ket{\varphi(\beta)}$ with perimeter-law disorder parameters, and our gapped parent Hamiltonian $H^{(00)}(\beta)$ is correspondingly dual to a gapped Ising-symmetric parent Hamiltonian $H_{\text{dual}}(\beta)$ for $\ket{\varphi(\beta)}$; see the End Matter for details. Interestingly, although $H_{\text{dual}}(\beta)$ satisfies the exponential-in-diameter locality bound of Eq.~\eqref{eq:locality_bound}, it \emph{fails} to satisfy the more stringent exponential-in-volume locality criterion. We expect that with a restriction to exponential-in-volume local Hamiltonians, long-range order parameters and area-law disorder parameters cannot coexist in a gapped ground state.}
+
+{Our results highlight that the specific notion of locality imposed on the space of allowed Hamiltonians is a subtle but physically consequential choice in the classification of gapped quantum phases. It is particularly interesting to consider whether a more restrictive notion of locality can resurrect the correspondence between perimeter-law Wilson loops, 1-form SSB, and topological order. Crucially, the exponential-in-volume locality criterion previously discussed is insufficient for this purpose: in the Supplemental Material~\cite{SOM}, we show that our parent Hamiltonians $H(\beta)$ and $H^{(00)}(\beta)$ satisfy even these locality bounds. Inspired by the dual Ising parent Hamiltonian, perhaps the physically correct notion of locality in 1-form symmetric systems requires the suppression of Wilson loop operators $X_{\mathcal{L}}$ not by the volume $\abs{\mathcal{L}}$ of their support, but by the area of the region they bound. Alternatively, it may be preferable to focus on Hamiltonian-agnostic criteria for gapped phases, such as the (approximate) entanglement bootstrap axioms~\cite{Shi_fusion_2020,Shi_Kim_2021,Kim_Lin_Ranard_Shi_2024}. Given that the deformed toric code states satisfy these axioms as well~\cite{SOM}, it is interesting to ask whether there might exist a stronger Hamiltonian-agnostic definition of a gapped state which restores the intrinsic gaplessness of these funky states.}
+
+
+\textit{Note added:} During the completion of this work, we became aware of a forthcoming work by Sahay, Zhang, von Keyserlingk, and Verresen that overlaps in part with the mixed state results of this work. Where our results overlap they agree.
+
+\textbf{\textit{Acknowledgements.}}~
+We thank Rahul Sahay for inspiring discussions and introducing us to this problem. We also thank Tarun Grover, Ethan Lake, Anton Kapustin, John McGreevy, Spyridon Michalakis, Olexei Motrunich, Zohar Nussinov, Daniel Ranard, Ruben Verresen, Curt von Keyserlingk, and Carolyn Zhang for helpful discussions and comments. This work was primarily supported by the U.S. Department of Energy, Office of Science, National Quantum Information Science Research Centers, Quantum Science Center. We also acknowledge funding provided by the Institute for Quantum Information and Matter, an NSF Physics Frontiers Center (NSF Grant PHY-2317110).
+
+
+\makeatletter
+\let\old@addcontentsline\addcontentsline
+\renewcommand{\addcontentsline}[3]{}
+\makeatother
+
+\bibliography{biblio}
+\addcontentsline{toc}{section}{}
+
+\clearpage
+\newpage
+\onecolumngrid
+\section{End Matter}
+\twocolumngrid
+
+\textbf{\textit{Exact expression for the parent Hamiltonian.}}~We now provide exact expressions for the coefficients $f(\mathcal{C})$ appearing in Eq.~\eqref{eq:HbetafC}, thereby fully specifying the parent Hamiltonian $H(\beta)$ for the strongly deformed toric code $\ket{\psi(\beta)} = e^{W} \ket{0}$ at large $\beta$.  In our derivation we wrote 
+\begin{equation}
+     W = \log \mathcal{Z} = \sum_\mathcal{C} f(\mathcal{C})X_\mathcal{C} ,
+     \label{eq:W_EM}
+\end{equation} 
+where $\mathcal{Z}$ is the polymer-model partition function in Eq.~\eqref{eqn:polymer_model}. The weights and hard-core interaction parameters in $\mathcal{Z}$ respectively read
+\begin{equation}
+    w(\gamma) = e^{-\beta \abs{\gamma}} X_\gamma, \,\,\, \delta(\gamma, \gamma') = \begin{cases}
+        0 & \gamma, \gamma'\text{ intersect} \\
+        1 & \text{otherwise}
+    \end{cases},
+\end{equation}
+where $X_{\gamma} = \prod_{e \in \gamma} X_e$, and two polymers $\gamma, \gamma'$ intersect if there exists edges $e \in \gamma$ and $e' \in \gamma'$ such that $e, e'$ share a vertex on the square lattice.  (For example, this convention counts a `figure 8' as a single polymer, rather than two intersecting polymers.) 
+
+The Mayer cluster expansion~\cite{Friedli_Velenik_2017} rewrites the polymer free energy $W$ as a sum over connected clusters $\mathcal{C}$, allowing us to extract $f(\mathcal{C})$ through the right side of Eq.~\eqref{eq:W_EM}. Specifically,
+%
+the cluster expansion provides the decomposition
+\begin{equation}
+    \log \mathcal{Z} = \sum_{n = 1}^\infty \sum_{\gamma_1, \dots, \gamma_n \in \Gamma} \varphi(\gamma_1, \dots,\gamma_n) \prod_{i = 1}^n w(\gamma_i).
+    \label{eq:MayerExplicit}
+\end{equation}
+Here $\Gamma$ denotes the set of all possible polymers $\gamma$, while $\varphi$ are \emph{Ursell functions}, defined as $\varphi(\gamma) = 1$ and 
+\begin{equation}
+    \varphi(\gamma_1,  \dots, \gamma_n) = \frac{1}{n!} \sum_{G \in \mathcal{G}_n^c} \prod_{(i,j) \in {E(G)}} \comm{\delta(\gamma_i,\gamma_j) - 1}
+\end{equation}
+for $n>1$. The sum is performed over all \emph{connected} graphs $G$ on $n$ vertices $\{1, \ldots , n \}$, with $\mathcal{G}^c_n$ the set of all such connected graphs, and $E(G)$ the edge set of $G$. Note that if the polymers $\gamma_1, \dots, \gamma_n$ have any mutually non-intersecting bipartition, then for any connected graph $G \in \mathcal{G}^c_n$, there will always be an edge $(i,j) \in E(G)$ such that $\delta(\gamma_i,\gamma_j) - 1 = 0$, ensuring that $\varphi(\gamma_1, \dots, \gamma_n) = 0$. Therefore, we can restrict the sum over polymers in Eq.~\eqref{eq:MayerExplicit} to \emph{connected} sets of polymers---i.e., connected clusters---that we compactly label by $\mathcal{C} = (\gamma_1,\ldots,\gamma_n)$, where $n$ can range from $1$ to $\infty$.
+We can then write
+\begin{equation}
+    \log \mathcal{Z} = \sum_{\CC} \varphi(\CC) \prod_{i = 1}^{\text{length}(\CC)} w(\gamma_i),
+\end{equation}
+and read off, with the aid of Eq.~\eqref{eq:W_EM}, the coefficients
+\begin{equation}
+\label{eq:fc_endmatter}
+  f(\CC) = \varphi(\CC) \prod_{i = 1}^{\text{length}(\CC)} e^{-\beta\abs{\gamma_i}}
+\end{equation}
+that define our parent Hamiltonian $H(\beta)$ [see Eq.~\eqref{eq:HbetafC}].
+
+
+
+
+\textbf{\textit{Dual Ising Wavefunction.}}~From a dual description, our construction demonstrates that long-range ferromagnetic order and perimeter-law disorder parameter correlations can coexist in a gapped ground state. Explicitly, the no-go state $\ket{\psi_{00}(\beta)}$ is related by Wegner duality to the Ising wavefunction
+\begin{equation}
+    \ket{\varphi(\beta)} = \exp \qty{ \frac{\beta}{2} \sum_{\expval{pq}} Z_{p} Z_{q} } \ket{+} ,
+\end{equation}
+where $Z_{p}, X_{p}$ are a new set of Pauli operators defined on the dual lattice (i.e., at the centers of plaquettes $p,q$ of the original lattice), and $\ket{+}$ is the simultaneous $+1$ eigenstate of each $X_{p}$. This state is symmetric under the $\mathbb{Z}_{2}$ symmetry $\prod_{p} X_{p}$, and exhibits long-range ferromagnetic correlations $\expval{Z_{p} Z_{p'}} \sim \mathcal{O}(1)$ for $\beta > \beta_{c}$; i.e., the $\mathbb{Z}_{2}$ symmetry is spontaneously broken at large $\beta$. 
+
+{Conventional quantum ferromagnets, such as the 2D transverse-field Ising model, exhibit \emph{area-law} scaling of the disorder parameter, $\expval*{\prod_{p \in \mathcal{R}} X_p} \sim e^{-\alpha \abs{\mathcal{R}}}$ for a large 2D region $\mathcal{R}$. This scaling is especially natural from a ``mean-field'' perspective, where the ferromagnetic ground state is approximated as a symmetry-broken product state. In contrast,} $\ket{\varphi(\beta)}$ exhibits \emph{perimeter-law} correlations of the disorder parameter, $\expval*{\prod_{p \in \mathcal{R}} X_{p}} \sim e^{-\mu \abs{\partial \mathcal{R}}}$. Indeed, the latter operators are directly related to the Wilson loops $X_{\mathcal{L}}$ of the deformed toric code via Wegner duality~\cite{Wegner_duality_1971}. 
+
+In 1D gapped ground states, a rigorous theorem \cite{Levin_constraints_2020} forbids the coexistence of long-range order parameter correlations and perimeter-law (i.e., long-ranged) disorder parameter correlations, and a natural question is whether a similar result can hold in two dimensions. Our parent Hamiltonian $H^{(00)}(\beta)$ for $\ket{\psi_{00}(\beta)}$ is dual to a $\mathbb{Z}_{2}$-symmetric gapped parent Hamiltonian $H_{\text{dual}}(\beta)$ with an exact two-fold degeneracy at large $\beta$. This Hamiltonian demonstrates via counterexample that a result analogous to Ref.~\onlinecite{Levin_constraints_2020} cannot hold in 2D under the standard definition of local Hamiltonians, which allows for interactions decaying exponentially in their \emph{diameter} [see Eq.~\eqref{eq:locality_bound}]. 
+
+Recently, Ref.~\onlinecite{McDonough_Zhang_lieb-robinson_2025} proved that weak $\mathbb{Z}_{2}$-symmetric perturbations of the 2D ferromagnetic fixed point yield ferromagnetic ground states exhibiting area-law disorder parameters, $\expval*{\prod_{p \in \mathcal{R}} X_{p}} \sim e^{-\alpha \abs{\mathcal{R}}}$, so long as these perturbations exhibit interactions which decay exponentially with their \emph{volume}. This result is consistent with our parent Hamiltonian $H_{\text{dual}}(\beta)$, which violates this exponential-in-volume locality constraint. Indeed, $H_{\text{dual}}(\beta)$ contains interaction terms of the form $\prod_{p \in \mathcal{R}} X_{p}$ which are only suppressed in their \emph{perimeter} $\abs{\partial \mathcal{R}}$, rather than their volume $\abs{\mathcal{R}}$. It is natural to conjecture that long-range ferromagnetic order and perimeter-law disorder parameters cannot coexist in 2D gapped ground states of exponential-in-volume local Hamiltonians.
+
+
+\textbf{\textit{The Strongly Decohered Toric Code is Separable.}}~Let $\rho_{p} = [\prod_{e} \mathcal{E}_{e}]( \dyad{\TC} )$ be the mixed state obtained by applying a phase-flip channel $\mathcal{E}_{e}(\rho) = (1 - p) \rho + p Z_{e} \rho Z_{e}$ of strength $p$ to each qubit of a toric code state $\ket{\TC}$. Such a mixed state is well-known to undergo a mixed-state \emph{decodability} phase transition \cite{dennis_topological_2002,fan_diagnostics_2024} at a critical threshold $p_{c} \approx 0.109$, such that the initial state $\ket{\TC}$ can no longer be reliably recovered from $\rho_{p}$ for $p > p_{c}$. Reference~\onlinecite{ChenGrover_separability_2024} argued that this transition coincides with a \emph{separability} phase transition, whereupon $\rho_{p}$ can be expressed as a convex sum of short-range entangled states for $p > p_{c}$. Specifically, letting the initial state $\ket{\TC}$ be the `++' logical state, Ref.~\onlinecite{ChenGrover_separability_2024} demonstrated that $\rho_{p}$ admits a decomposition into a mixture of the states
+\begin{equation}
+    \ket{\psi_{\mathcal{L}}(K)} = X_{\mathcal{L}} \sum_{\qty{x_{e} = \pm 1}} \sqrt{ \mathcal{Z}^{\text{Ising}}_{K}(\qty{x_{e}}) } \ket{\qty{x_{e}}}_x ,
+\end{equation}
+where $K = - \frac{1}{2} \log[p / (1-p)]$, $\ket{\qty{x_{e}}}_{x}$ are the Pauli-$X$ basis states, and $\mathcal{Z}^{\text{Ising}}_{K}(\qty{x_{e}}) = \sum_{\qty{s_{v}}} e^{K \sum_{\expval{v v'}} x_{v v'} s_{v} s_{v'}}$ is the partition function of a bond-disordered Ising model with disorder realization $\qty{x_{e}}$. 
+
+Similar to the deformed toric code state~\eqref{eqn:defnofdefTC}, the states $\ket{\psi_{\mathcal{L}}(K)}$ are 1-form symmetric under contractible loop operators $Z_{\tilde{\mathcal{L}}}$, exhibit condensed $m$ anyons for $p > p_{c}$, but maintain perimeter-law Wilson loops for all $p < \frac{1}{2}$. Therefore, although each $\ket{\psi_{\mathcal{L}}(K)}$ is topologically trivial for $p > p_{c}$, the results of Ref.~\onlinecite{Sahay2025FunkyIsing} call into question whether these states are indeed short-range entangled. Using identical cluster expansion techniques to those described in the main text, we answer this question in the affirmative for sufficiently large $p< \frac{1}{2}$~\cite{SOM}.
+
+Explicitly, recalling the expression for the operator $\mathcal{Z}$ in the right-hand side of Eq.~\eqref{eq:Vdef1}, we see that $\ket{\psi_{\mathcal{L}}(K)}$ can be rewritten as
+\begin{equation}
+    \ket{\psi_{\mathcal{L}}(K)} \propto X_{\mathcal{L}} \sqrt{\mathcal{Z}} \ket{0} = X_{\mathcal{L}} e^{W / 2} \ket{0} ,
+\end{equation}
+where we have used the simple identity $\mathcal{Z} \ket{\qty{x_{e}}}_{x} = \mathcal{Z}^{\text{Ising}}_{K}(\qty{x_{e}}) \ket{\qty{x_{e}}}_{x}$ [see Eq.~\eqref{eq:Vdef1}]. Using an identical approach as for the deformed toric code state $\ket{\psi(\beta)}$, one can construct a local parent Hamiltonian $H_{\mathcal{L}}(K)$ for which $\ket{\psi_{\mathcal{L}}(K)}$ is the unique gapped ground state at sufficiently large $p$. Applying the results of Ref.~\cite{Yin_Lucas_low-density_2025,DeRoeck_Khemani_low-density_2025}, $\ket{\psi_{\mathcal{L}}(K)}$ can be prepared via finite-time unitary evolution with a local generator, and is therefore short-range entangled.
+
+In the Supplemental Material \cite{SOM}, we note that there is a minor subtlety when the `++' initial state is replaced by a general toric code state $\ket{\TC}$. For certain choices of $\ket{\TC}$, the pure-state decomposition of $\rho_{p}$ is not completely trivial: instead, it contains an exponentially small (in trace norm) sector of gapless states. Such mixed states $\rho_p$ are therefore \emph{approximately} separable at large $p$; in particular, they are indistinguishable from a corresponding separable state in the thermodynamic limit.
+
+\textbf{\textit{Classical High-Low Temperature Duality.}}~Our rewriting of the deformed toric code state $\ket{\psi(\beta)} = e^{W} \ket{0}$ as a deformation of the trivial paramagnet leads to a novel high/low temperature duality between the 2D classical Ising model and a 2D gauge theory with exponentially decaying interactions. This duality is valid at large $\beta$, where the Ising model lies in a ferromagnetic phase and the dual gauge theory lies within a confined phase.
+
+Recall first from Eq.~\eqref{eqn:partition_function} that the norm of $\ket{\psi(\beta)}$ can be expressed as the partition function of a 2D Ising model, where the loop configurations $\mathcal{L}$ are understood as magnetic domain walls. On the other hand, by Eq.~\eqref{eq:V_Mayer}, the same norm can be written as
+\begin{equation}
+    \bra{\psi(\beta)} \ket{\psi(\beta)} = \bra{0} e^{2W} \ket{0} = \bra{0} e^{2 \sum_{\mathcal{C}} f(\mathcal{C}) X_{\mathcal{C}}} \ket{0} .
+\end{equation}
+By expanding $\ket{0} \propto \sum_{\qty{x_{e}}} \ket{\qty{x_{e}}}_x$ in the Pauli-$X$ basis, we find that the 2D Ising partition function is proportional to the following dual partition function with Ising spins $x_{e} = \pm 1$ on the edges of the square lattice:
+\begin{equation}
+    \bra{\psi(\beta)} \ket{\psi(\beta)} \propto \sum_{\qty{x_{e} = \pm 1}} e^{2 \sum_{\mathcal{C}} f(\mathcal{C}) x_{\mathcal{C}}}, \quad x_{\mathcal{C}} = \prod_{\gamma \in \mathcal{C}} \prod_{e \in \gamma} x_{e} .
+\end{equation}
+This classical partition function is invariant under the local $\mathbb{Z}_{2}$ symmetry transformation $x_{v v'} \mapsto s_{v} x_{v v'} s_{v'}$, where we've written $x_{v v'} \equiv x_{e}$ for $e = \expval{v v'}$, and $\qty{s_{v} = \pm 1}$. Consequently, the above partition function describes a pure $\mathbb{Z}_{2}$ gauge theory.  It is unclear whether this dual model can be extended to (or past) the critical point, since the cluster expansion generally fails to converge at sufficiently small $\beta$.
+
+\makeatletter
+\let\addcontentsline\old@addcontentsline
+\makeatother
+\include{SM.tex}
+
+\end{document}

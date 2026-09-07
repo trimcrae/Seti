@@ -1,0 +1,397 @@
+
+\clearpage
+% \appendix
+ 
+\begin{appendices}
+
+% \begin{table*}[t]
+% \centering
+% \small
+% \caption{Appendix roadmap.}
+% \label{tab:appendix-roadmap}
+% \begin{tabular}{p{0.13\linewidth} p{0.78\linewidth}}
+% \toprule
+% Appendix & What it covers \\
+% \midrule
+% A & Out-of-core evaluation: large circuits, spill, and sparsity effects. \\
+% B--C & Routing ablations and training/inference overhead. \\
+% D & Tensor-aware DBMS discussion and preliminary SciDB results. \\
+% E & Support for SupermarQ, MQT Bench, and QASM Bench. \\
+% F & SQLite vs. Qiskit Aer profiling for memory and runtime. \\
+% G--H & DBMS tuning, indexing, partitioning, and CTE materialization. \\
+% I & Reproducibility details for circuits, spill metrics, and tuning. \\
+% J--K & Generated-circuit characterization and subcircuit-generation details. \\
+% L & Extra SQL-only feature results and preprocessing scalability. \\
+% M--N & Implementation details, Qiskit Aer selector, and feature schema. \\
+% \bottomrule
+% \end{tabular}
+% \end{table*}
+\appendix
+
+\noindent Table~\ref{tab:appendix-roadmap} provides a compact roadmap of the appendix material.
+
+\begin{table}[H]
+\centering
+\caption{Appendix roadmap.}
+\label{tab:appendix-roadmap}
+\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\columnwidth}{@{}p{0.17\columnwidth}X@{}}
+\toprule
+Appendix & Main content \\
+\midrule
+A & Out-of-core evaluation and spill behavior. \\
+B--C & Routing ablations and training/inference overhead. \\
+D--E & Tensor-aware DBMS discussion and support for external benchmark suites. \\
+F--H & SQLite--Aer profiling, DBMS-specific tuning, and physical-design discussion. \\
+I--K & Reproducibility details, generated-workload characterization, and subcircuit generation. \\
+L--O & SQL-only results, preprocessing scalability, implementation details, Qiskit Aer selector, and feature schema. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+ 
+ 
+\input{chapters/outofcore}
+\input{chapters/Ablation}
+\input{chapters/scidb}
+\input{chapters/benchmark-suites}
+
+ 
+\section{Subcircuit generation}
+\label{sssec:circuittemplate}
+In Section~\ref{sec:benchmark} we mentioned how to generate a subcircuit. Here, we provide more details.
+% In Section~\ref{sec:benchmark} we mentioned that for each template $f$, we have parameter domain $\Theta_f$. Here we explain the below parameters that included in $\Theta_f$. From $\Theta_f$, \sys decides the value of the paramer through sampling. For instance, suppose a user sets \texttt{min\_depth}=5 and \texttt{max\_depth}=10.
+% These bounds apply to each generated \emph{subcircuit} independently.
+% When a template $f$ is selected, \sys forms the domain of its depth parameter $d$
+% by intersecting the template’s intrinsic depth range with $[5,10]$.
+% \sys then samples a value $d$ from this per-subcircuit domain and instantiates
+% a subcircuit of exactly that depth.
+% The total depth of the final circuit is the sum of the depths of all instantiated
+% subcircuits.
+
+% \[
+% (n_q, d, k, r, \xi),
+% \]
+% where:
+% \begin{itemize}
+%     \item $n_q$ is the number of qubits;
+%     \item $d$ is a target depth;
+%     \item $k$ is the number of qubits used for evaluation tasks;
+%     \item $r$ is a repetition count for repeatable subroutines inside a generator;
+%     \item $\xi$ denotes a collection of \emph{template-specific configuration
+%           variables}.
+% \end{itemize}
+
+% The variable $\xi$ captures auxiliary design choices that are local to a given
+% circuit generator and are not shared across the global benchmark configuration.
+% These include discrete architectural options, boolean feature flags, local layer
+% counts, and generator-specific control parameters. All such variables are
+% sampled by family-specific parameter generators and are constrained only by the
+% global hyperparameters and the current circuit context.
+% %
+% Typical examples of variables contained in $\xi$ include whether a Quantum
+% Fourier Transform includes final qubit-reversal swaps, the choice of feature map
+% and ansatz type in variational circuits, the number of layers in QAOA-like
+% subroutines, or the number of steps and coin operators in quantum walk circuits.
+
+% Once a template is selected, a structural circuit template is first instantiated using the current instance configuration and the generator’s internal settings. This defines the qubit layout, gate topology, repetition structure, and depth contribution of the subcircuit. If the generator includes parametric gates, numerical gate values are then sampled from generator-specific distributions. This staged construction separates architectural variability from numerical variability, allowing \sys to explore both circuit structure and parameter space in a controlled and independent manner.
+
+
+
+
+Each selected circuit template \(f\) is instantiated by sampling parameters from its
+parameter domain \(\Theta_f\). In \sys, we write one sampled
+parameter tuple as
+\begin{equation}
+\theta = (n_q, d, k, r, \xi) \in \Theta_f,
+\end{equation}
+where \(n_q\) is the qubit count, \(d\) is the depth  allocated to this subcircuit,
+\(k\) is the evaluation-qubit, \(r\) is the repetition count for repeatable template
+sections, and \(\xi\) is a tuple of template-specific configuration variables.
+
+The domain \(\Theta_f\) is derived from the  parameters  in Table~\ref{tab:base_params}. For example, the per-subcircuit depth \(d\) is sampled uniformly from the defined range between  min\_depth and max\_depth.
+
+The template-specific
+configuration variables \(\xi\) captures local design choices supported by \(f\).
+Typical examples include whether \texttt{QFT} includes final swaps, the choice of feature map
+and ansatz in variational templates, the number of layers in QAOA-style templates, or the
+number of steps and coin operators in quantum-walk templates.
+
+
+
+\paragraph{Structural vs. numerical parameters.}
+In \sys, template instantiation is staged. \sys first fixes the \emph{structure} of the subcircuit
+(e.g., qubit assignment, gate topology, repetition pattern, and depth contribution) from
+\((n_q,d,k,r,\xi)\). If the template contains parametrized gates,  \sys then samples the
+\emph{numerical} values (e.g., rotation angles) from template-specific distributions. This
+separation lets \sys explore structural diversity independently from numerical variability.
+
+
+
+% \section{Attempt}
+% Let $\mathcal S$ denote the space of subcircuits, and let $F$ be a finite set of circuit templates (Table~\ref{tab:base_params}).
+% Let $B$ denote the \emph{context space}, i.e., the set of generation states maintained by \sys
+% (e.g., remaining qubit/depth budgets, allocated registers, and composition constraints; Table~\ref{tbl:comb}).
+% A \emph{circuit template} $f\in F$ is a parameterized generator
+% \[
+% f:\Theta_f \times B \to \mathcal S.
+% \]
+% At step $t$, after selecting a template $f_t$ and parameters $\theta_t\in\Theta_{f_t}$, \sys instantiates the corresponding
+% subcircuit as
+% \[
+% S_t = f_t(\theta_t, b_{t-1}),
+% \]
+% where $b_{t-1}\in B$ is the current context.
+
+% A circuit instance is an ordered composition of subcircuits:
+% \[
+% C \;=\; S_1 \circ S_2 \circ \cdots \circ S_T,
+% \]
+% where $T$ is determined by a stopping rule and/or budget exhaustion.
+
+% \sys generates a template sequence $f_1,\dots,f_T$ incrementally.
+% At step $t$, it samples the next template from a context-dependent categorical distribution on $F$:
+% \[
+% p^{(t)}(f)
+% =
+% \frac{\pi(f)\, w_t(f)\, \mathsf{feas}(b_{t-1}, f)}
+% {\sum_{g\in F}\pi(g)\, w_t(g)\, \mathsf{feas}(b_{t-1}, g)},
+% \qquad f\in F,
+% \]
+% where $\pi$ is a base distribution over templates,
+% $w_t$ is a synergy weight (defined below),
+% and $\mathsf{feas}(b,f)\in\{0,1\}$ is a hard feasibility predicate given context $b$
+% (budgets and structural constraints).
+
+% After sampling $f_t\sim p^{(t)}$, \sys samples $\theta_t\in\Theta_{f_t}$, instantiates
+% $S_t=f_t(\theta_t,b_{t-1})$, appends $S_t$ to the circuit, and updates the context:
+% \[
+% b_t = \mathsf{Upd}(b_{t-1}, f_t, \theta_t, S_t).
+% \]
+% Here $\mathsf{Upd}$ deterministically updates remaining budgets (e.g., decreases remaining depth),
+% tracks allocated registers, and records any state needed by later feasibility checks.
+
+% To bias generation toward semantically coherent compositions (Table~\ref{tbl:comb}),
+% \sys uses a set $\mathcal R$ of synergy rules.
+% A rule is a triple $(T,U,\beta)$ with trigger set $T\subseteq F$,
+% target set $U\subseteq F$, and multiplicative factor $\beta>0$.
+% After selecting $f_t$, we update the synergy weights for the next step by
+% \[
+% w_{t+1}(f)
+% =
+% \prod_{(T,U,\beta)\in\mathcal R:\; f_t\in T,\; f\in U}\beta,
+% \qquad f\in F,
+% \]
+% and then sample $f_{t+1}$ using $p^{(t+1)}$, i.e., after renormalizing over feasible templates.
+% This keeps the process stochastic (diverse circuits) while increasing the probability of coherent transitions.
+
+% The induced stochastic process on $(b_t,f_t)$ is first-order Markov: $(b_{t+1},f_{t+1})$ depends on the past only through $(b_t,f_t)$.
+
+
+% \section{Non-Interleaved}
+% At step $t$, \sys maintains a categorical distribution $p_t$ over templates.
+% Given the current context $b_{t-1}$, it proceeds in two steps:
+
+% \smallskip
+% \noindent\textbf{(1) Sample a template.}
+% First apply feasibility masking and renormalize:
+% \[
+% \bar p_t(f)
+% =
+% \frac{p_t(f)\,\mathsf{feas}(b_{t-1},f)}
+% {\sum_{g\in F} p_t(g)\,\mathsf{feas}(b_{t-1},g)},
+% \qquad f\in F,
+% \]
+% then sample $f_t\sim \bar p_t$.
+% Next sample $\theta_t\in\Theta_{f_t}$, instantiate $S_t=f_t(\theta_t,b_{t-1})$,
+% append $S_t$, and update the context:
+% \[
+% b_t=\mathsf{Upd}(b_{t-1},f_t,\theta_t,S_t).
+% \]
+
+% \smallskip
+% \noindent\textbf{(2) Reweight to obtain the next distribution.}
+% Let $\mathcal R$ be the set of synergy rules, where each rule is a triple $(T,U,\beta)$ with
+% $T\subseteq F$ (trigger), $U\subseteq F$ (target), and $\beta>0$.
+% After selecting $f_t$, define the reweighted (unnormalized) probabilities
+% \[
+% \widehat p_{t+1}(f)
+% =
+% \bar p_t(f)\cdot
+% \prod_{(T,U,\beta)\in\mathcal R:\; f_t\in T,\; f\in U}\beta,
+% \qquad f\in F,
+% \]
+% and then apply feasibility under the updated context $b_t$ and renormalize:
+% \[
+% p_{t+1}(f)
+% =
+% \frac{\widehat p_{t+1}(f)}
+% {\sum_{g\in F}\widehat p_{t+1}(g)},
+% \qquad f\in F.
+% \]
+
+\input{chapters/feature}
+\input{scalability}
+
+\section{Implementation}
+\label{sec:imp}
+% Tools and API}
+
+InferQ is supported by two complementary tools:
+(1) a \textit{generation and feature-extraction framework} used to construct the dataset, and
+(2) a \textit{web-based dataset browser} for interactive exploration and retrieval.
+
+\subsection{InferQ Generation and Feature Extraction Framework}
+
+The parameters in Table~\ref{tab:base_params} are stored in Python dataclass. 
+
+The InferQ framework implements the circuit generation and metric extraction pipeline described in Section~3. It produces combinational quantum circuits and computes their static, graph, SQL, and dynamic features in a reproducible and structured manner.
+
+Each generated circuit is assigned a \emph{content-based hash} that uniquely identifies its structure and parameters. This hash serves as the primary key across the dataset and links the circuit to all extracted feature records.
+
+For every circuit, InferQ stores:
+\begin{itemize}
+    \item the quantum circuit in a portable serialization format compatible with Qiskit, and
+    \item a feature record in JSON format containing all static, graph, and dynamic metrics.
+\end{itemize}
+
+Feature extraction is modular and category-based. Static features are derived directly from the circuit representation, graph features are computed from the qubit interaction graph, and dynamic features are obtained from full-state simulation. This separation allows InferQ to be extended with new feature families without recomputing or modifying existing entries.
+
+\subsection{InferQ Web Dataset Viewer}
+
+InferQ is accompanied by a web-based dataset browser inspired by MQTBench\cite{Quetschlich_2023} that enables interactive inspection, filtering, and download of circuits and their features.
+
+The interface presents the dataset as a table where each row corresponds to a circuit identified by its hash. Columns are grouped into the four InferQ feature categories: \textit{static}, \textit{graph}, \textit{SQL}, and \textit{dynamic}.
+
+Users can enable or hide individual feature columns or entire feature groups, apply range-based filters on any visible numeric feature, and explore circuits based on structural, topological, or physical properties.
+
+Each circuit entry includes download links for both the quantum circuit file and its corresponding feature JSON record, allowing users to retrieve exactly the data selected through the interface and use it directly in simulators, learning pipelines, or benchmarking workflows.
+
+
+
+\para{Reproducibility and Code} 
+InferQ is fully reproducible: given the same code revision, dependency lockfile, and random seed, the framework deterministically regenerates identical circuit structures, parameters, and extracted features. Each circuit is assigned a content-based hash that uniquely identifies its structure and serves as the primary key linking the circuit artifact to all feature records.
+
+\paragraph{Code and environment.}
+InferQ is released as open-source software with separate modules for circuit generation, feature extraction, and dataset management. The repository includes a locked Python environment via \texttt{uv.lock} and a declared interpreter version. For exact reproduction, users should report the git commit hash, Python version, and lockfile version.
+
+\paragraph{Cloud-agnostic storage.}
+Circuit binaries and feature files are stored in a cloud object store. While Azure Blob Storage is used in the reference deployment, all storage operations are routed through a backend-agnostic interface, allowing any S3-compatible or local filesystem to be used. Each circuit is stored in its own directory
+\texttt{Circuits/\{circuit\_hash\}}, containing a serialized \texttt{.qpy} circuit file and a \texttt{.json} metadata file that records generator history and extracted features.
+
+
+\paragraph{Deterministic circuit generation.}
+Circuit construction follows an incremental process in which subcircuits (“generators”) are sampled and appended until a stochastic stopping condition is met. All randomness is controlled by a single global seed, which governs instance-level parameters (e.g., qubit count and depth), generator selection, generator-internal choices, and gate parameters.
+
+\paragraph{Synergy-based generator sampling.}
+Generator selection is history-dependent rather than i.i.d. After each generator is chosen, the categorical distribution over the remaining generators is reweighted using predefined \emph{synergies} between generator families. These synergies favor complementary compositions (e.g., state preparation followed by algorithmic cores and optional variational layers), discourage long runs of the same family, and enforce feasibility constraints such as depth and qubit limits. The updated distribution is then renormalized before sampling the next generator. Because these updates are deterministic functions of the previous generator sequence and the global seed, the entire generator sequence is exactly reproducible.
+
+\paragraph{Feature reproducibility.}
+For each circuit, InferQ extracts static, graph-based, and dynamic (simulation-based) features. Feature extractors are modular and deterministic given the same simulator backend, numeric precision, and hardware configuration. For fair comparison, users should report simulator version and floating-point settings when dynamic features are used.
+
+
+\subsection{Qiskit Aer Data Representation Selector}
+\label{ssec:selector_RESULTS}
+Most quantum applications will be run using a simulator framework like IBM Qiskit \cite{IBMQiskit} with Qiskit Aer\cite{QiskitAerDocs} as a simulation backend. Qiskit Aer offers various simulation backends corresponding to different quantum data representations. Each performs better or worse in terms of time and memory depending on the circuit to be simulated. This leads to the research question: \textit{what is the optimal Qiskit Aer data representation for classical simulation?} 
+
+InferQ can be used to train a selector for the Qiskit data representations for optimal simulation. In our experiment we trained various ML models  to select the best representation within the classes of ["statevector", "density\_matrix", "extended\_stabilizer", "matrix\_product\_state"] provided by Qiskit Aer. We recorded the execution time for 93{,}567 entries in InferQ on our machine from Section~\ref{sec:impl}.\footnote{Qiskit Selector training data (Parquet) available at \url{https://github.com/InfiniData-Lab/InferQ/blob/main/analysis/training_data/selector_training_data.parquet}} For this experiment, we used the framework from Qymera \cite{Littau_2025}.\footnote{We thank the authors for sharing their code and helping us set up the experiments.}
+ 
+
+By defining the best representation to be the one taking lowest execution time, we could train various multiclass classifier models to select the best method. 
+
+Training models of complexities and  evaluating them on a test set of size 20\% outperformed Qiskit Aer's own ``automatic'' data representation selector by a margin of up to 28\%.
+
+The accuracy in table  \ref{tab:selectoraccuracy} is the percentage of cases in the test set that the predicted best method matched the actual best method. Upon inspection of the features, it became clear why Naive Bayes performs weakly. There is multimodality within feature distributions rather than Gaussian structures.  In addition, the classes are highly imbalanced, as shown in Figure \ref{fig:selectortestset}.
+
+\begin{table}[tb]
+\centering
+\begin{minipage}{\columnwidth}
+
+\caption{Test-set accuracy of InferQ-trained selectors compared with Qiskit Aer's built-in ``automatic'' method selector.}
+\label{tab:selectoraccuracy}
+
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{cccccccc}
+\toprule
+ & Qiskit ``Automatic'' & \multicolumn{6}{c}{Trained on InferQ} \\
+Metric & Accuracy & \textbf{XGBoost} & Random Forest & Decision Tree & KNN & Logistic Regression & Naive Bayes \\
+\midrule
+Accuracy & 36\% & \textbf{64\%} & 64\% & 63\% & 61\% & 61\% & 55\% \\
+\bottomrule
+\end{tabular}
+}
+
+\vspace{0.6em}
+
+\centering
+\includegraphics[width=0.7\linewidth]{images/selector-distribution.png}
+\captionof{figure}{Bar chart displaying the imbalance between the classes being the best simulation method for minimum execution time.}
+\label{fig:selectortestset}
+
+\end{minipage}
+\end{table}
+
+\begin{figure*}[tbh]
+  \centering
+  \includegraphics[width=\linewidth]{images/finalinferQschema.pdf}
+  \caption{Schema for storing extracted circuit features. 
+  \sys circuit data model schema. Each circuit is stored with a unique
+  hash (primary key) and associated feature classes. \sys entries are centered
+  around circuits in the \texttt{InferQ\_Circuits} table, which reference
+  static, graph, SQL and dynamic features, as well as storage metadata in Azure DB. 
+      }
+  \label{fig:schema}
+\end{figure*}
+
+Despite the K-Nearest Neighbour (KNN)'s relatively high accuracy, it is clear from 
+Figure \ref{fig:selectorconfusion} 
+that it is unable to predict the smaller classes well, as 42\% of the ``density\_matrix'' and 34\% ``extended\_stabilizer'' methods are being classified as ``matrix\_product\_state''. The Decision Tree is much better overall for all the classes, except it is overcompensating for the minority classes and hence has low accuracy for the dominant ``matrix\_product\_state''. Logistic regression has lowest accuracy so we are left with tree models and linear SVM.
+
+\begin{figure*}[tb]
+    \centering
+    \includegraphics[width=\linewidth]{images/selector-confusion_1.png}
+    \caption{Confusion matrices, normalised over the true classes, for each model's performance on the test set.
+    SV = \texttt{statevector}, DM = \texttt{density\_matrix}, MPS = \texttt{matrix\_product\_state}, ES = \texttt{extended\_stabilizer}.
+    Panels are ordered by decreasing accuracy and share a common colour scale.}
+    \label{fig:selectorconfusion}
+\end{figure*}
+
+In order to break this tie, we can look at the distribution in which the simulation methods come 2nd, 3rd and 4th place. From Table \ref{tab:method_ranks} it becomes clear that ``matrix\_product\_state'', ``density\_matrix'' and "statevector" dominate in 2nd position too. Hence, we can choose XGBoost which performs the best for these 3 dominant classes as can be seen from confusion plots of Figure 33. Although the accuracy of XGBoost is 64.4\%, it still outperforms Qiskit Aer's own "automatic" method which is only able to select correctly in 35.9\% of the cases. Even simpler models like logistic regression and linear SVMs are able to leverage InferQ features to perform relatively well against the current Qiskit Aer "automatic" selector. 
+
+\begin{table}[h]
+\caption{Number of entries where each simulation method is ranked 1st, 2nd, 3rd, and 4th by the XGBoost-based selector, ordered by predicted execution time.}
+\label{tab:method_ranks}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{4}{c}{Rank Position} \\
+\cmidrule(lr){2-5}
+Method & 1 & 2 & 3 & 4 \\
+\midrule
+\texttt{statevector}            & 30802 & 34743 & 25131 & 2891 \\
+\texttt{density\_matrix}        & 17704 & 20340 & 7625  & 948  \\
+\texttt{matrix\_product\_state} & 42288 & 35959 & 14537 & 783  \\
+\texttt{extended\_stabilizer}   & 2773  & 2525  & 46274 & 41995 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+
+We thus show that InferQ can be used to optimize Qiskit Aer Workloads by building a selector, demonstrating that a complex model like XGBoost surpasses its simpler competitors in predictions amongst the highly imbalanced classes of representations. By outperforming Qiskit Aer's own "automatic" selector with all models experimented with, it validates our data-centric approach to this problem.
+
+Moreover, the experiment  showcases that data management techniques can be used to make classical simulation of quantum computation more efficient without incorporating the domain specific techniques of quantum science. It also completes a pipeline to solve the mutli-class problem of which classical simulation method is optimal given a circuit incorporating the novel approach of RDBMS.
+
+\section{InferQ Feature Schema}
+\label{sec:inferqschemafull}
+Figure~\ref{fig:schema} illustrates the schema of how \sys stores the extracted circuit features. 
+
+
+
+
+
+
+
+\end{appendices}

@@ -1,0 +1,740 @@
+                                                    AlphaClifford: Efficient Clifford Synthesis and
+                                                         Transpilation with Model-based RL
+                                                        Daniele Lizzio Bosco                              Jacopo Cossio                     Carla Piazza               Giuseppe Serra
+                                                        University of Udine                            University of Udine               University of Udine         University of Udine
+                                                           Udine, Italy                                    Udine, Italy                      Udine, Italy               Udine, Italy
+                                                University of Naples “Federico II”                 cossio.jacopo@spes.uniud.it          carla.piazza@uniud.it      giuseppe.serra@uniud.it
+                                                           Naples, Italy
+                                                 lizziobosco.daniele@spes.uniud.it
+arXiv:2608.18946v2 [quant-ph] 22 Aug 2026
+
+
+
+
+                                               Abstract—Clifford circuits play a foundational role in quantum                  coherence time improvements [6], [7]—the execution of quan-
+                                            computing, particularly due to their importance in quantum                         tum algorithms remains fundamentally constrained by circuit
+                                            error correction and fault-tolerant logical synthesis. While these                 depth and the total number of physical gates. To mitigate
+                                            circuits can be efficiently simulated and represented as symplectic
+                                            matrices, standard synthesis methods—such as the Aaronson-                         these hardware limitations, quantum circuit optimization plays
+                                            Gottesman algorithm—often yield sub-optimal circuits with ex-                      a critical role. As equivalent unitary transformations can be
+                                            cessively high gate counts. In this work, we introduce AlphaClif-                  realized by different sequences of quantum gates, the objective
+                                            ford, a model-based Reinforcement Learning framework powered                       of quantum circuit synthesis [8]–[12] is to find a sequence
+                                            by Monte Carlo Tree Search, designed to efficiently synthesize                     of gates that implements a target circuit (or its mathematical
+                                            Clifford circuits from the fundamental gate set composed of H,
+                                            S, and CNOT. By modeling the state space through the algebraic                     representation) while minimizing a specific cost metric, such
+                                            properties of the symplectic group, AlphaClifford effectively                      as overall circuit depth or the number of two-qubit entangling
+                                            explores this combinatorial space to minimize overall circuit cost.                gates.
+                                            For unconstrained Clifford optimization, our approach achieves                        A closely related challenge is quantum circuit transpilation
+                                            a consistent reduction in both total and two-qubit (CNOT) gate                     [13], [14], which involves mapping a logical circuit onto
+                                            counts compared to state-of-the-art synthesis heuristics, despite
+                                            operating with a strictly less expressive gate set. Furthermore,                   a specific physical architecture. This requires decomposing
+                                            we demonstrate the broad applicability of our framework on two                     the target circuit into a native gate set and respecting strict
+                                            additional tasks: hardware-constrained Clifford transpilation,                     hardware constraints, such as the limited connectivity map of
+                                            where we outperform existing RL-based compilers, and as a post-                    the physical qubits [15].
+                                            synthesis optimization component within a full Clifford+T logical                     The problems of quantum circuit synthesis and transpilation
+                                            synthesis pipeline. Our results underscore that model-based RL
+                                            is highly effective at addressing the combinatorial complexities                   have been extensively explored in the literature, utilizing a
+                                            of quantum compilation, offering a scalable pathway to mitigate                    wide array of heuristic, algebraic, and search-based techniques
+                                            hardware constraints in both near-term and future fault-tolerant                   [9], [16]–[18]. Recently, Reinforcement Learning (RL) has
+                                            quantum devices.                                                                   emerged as a highly effective paradigm for tackling these
+                                               Index Terms—Reinforcement Learning, Clifford Circuits,                          computationally hard optimization problems [19]–[28]. By
+                                            Quantum Synthesis, Quantum Optimization, Circuit Compilation
+                                                                                                                               learning complex patterns rather than relying on heuristic
+                                                                                                                               rules, RL-based approaches have demonstrated the ability to
+                                                                       I. I NTRODUCTION                                        discover novel, non-intuitive gate sequences that rule-based
+                                               The field of quantum computing is rapidly approaching the                       compilers might otherwise miss.
+                                            era of “quantum utility” [1], marking a pivotal transition where                      In this work, we propose a RL-based technique to address
+                                            quantum devices cease to be experimental research instruments                      both the synthesis and transpilation tasks specifically for the
+                                            and begin to execute practical, large-scale applications. These                    set of Clifford circuits. Generated strictly by the Hadamard
+                                            applications are expected to span both scientific domains, such                    (H), Phase (S), and Controlled-NOT (CNOT) gates, Clifford
+                                            as Quantum Chemistry [2] and High Energy Physics [3], and                          circuits are one of the most studied gate sets, and play a central
+                                            industrial use cases, including discrete optimization [4] and                      role in the logical synthesis pipeline, particularly within the
+                                            finance [5].                                                                       context of Clifford+T decomposition [21].
+                                               Despite significant recent advancements in quantum hard-                           A key advantage of Clifford gates is that they admit an
+                                            ware capabilities—most notably in error rate reduction and                         efficient classical representation via symplectic matrices [29].
+                                                                                                                               We exploit this compact representation to develop a RL
+                                               © 2026 IEEE. Personal use of this material is permitted. Permission from        framework designed to learn highly efficient syntheses and
+                                            IEEE must be obtained for all other uses, in any current or future media,          transpilation strategies for Clifford circuits.
+                                            including reprinting/republishing this material for advertising or promotional
+                                            purposes, creating new collective works, for resale or redistribution to servers      Inspired by recent successes on similar tasks from Al-
+                                            or lists, or reuse of any copyrighted component of this work in other works.       phaTensor [19] and AlphaCNOT [27], our method formulates
+ a) Training                                       b) Inference                                         c) Applications
+                                                                                                          Clifford Optimization
+
+                                                             Ctar
+                   Symplectic
+                   Generation                                                                                    Ctar                                                   Csyn
+                                                     Target Clifford               Symplectic Matrix
+                                                                                                            Target Clifford                                       Optimized Circuit
+
+                                                                                    H(1), H(2), S(3),     Clifford Transpilation
+                                                                                    CNOT(1,2), S(3),
+                                                                                    H(1), CNOT(2,3)
+
+                                                    X Flip          Z Flip
+                                                                                   Output Sequence               Ctar           +                                       C .
+    Initial Node
+                                                                                                           Target Clifford        Connectivity Map            Hardware-Compliant
+                                                                             X       H            H
+                                H(2), CNOT(3,2),                                                        Logical Synthesis
+                                S(1), S(2), H(1)                                     H                                                                    T                      T
+                                Output Sequence
+                                                                             Z       S     S                 U                    U                   T                      T
+                                                    Pauli Adjustment                                                                                          T                   T
+   Target Node     State Tree                                                    Final Circuit          Initial Circuit       Precompiled           Clifford+T          Optimization
+
+
+
+Fig. 1: a) We train our model to reproduce a target symplectic matrix. Each symplectic matrix is modelled as the node of a
+tree, where nodes are connected if the corresponding matrices can be reached with an operation from H, S, and CNOT. We
+train a MCTS-based model as a pair of value network (for nodes, e.g. lighter blue corresponds to a higher value) and policy
+network (for edges, e.g. wider arrows corresponds to higher probabilities). b) Given a target Clifford circuit Ctar , we utilize
+our model to synthesize a circuit C with the same symplectic matrix, i.e. P · C ≡ Ctar for a suitable Pauli P . We then compute
+the P from initial circuit, and we apply the corresponding gates to the obtained circuit. c) AlphaClifford can be applied to
+a variety of tasks, including general Clifford circuits optimization, Clifford transpilation to ensure compatibility with a given
+hardware connectivity map, and as a component in a pipeline for logical synthesis, from a general initial circuit, to the final
+approximated version in Clifford+T.
+
+
+the circuit compilation problem as a tree-based search over                                 II. S YMPLECTIC R EPRESENTATION OF C LIFFORD
+the space of symplectic matrices, with the aim of finding the                                                  C IRCUITS
+shortest path from an initial matrix to the identity, allowing for
+a compact reconstruction of the corresponding Clifford circuit                    A. Stabilizer Formalism and Tableau Representation
+from the set gate {H, S, CNOT}.
+                                                                                     The n-qubit Pauli group Pn consists of all n-fold tensor
+                                                                                  products of the Pauli matrices {I, X, Y, Z} together with the
+  To demonstrate the broad applicability of our proposed                          multiplicative phase factors {±1, ±i}. The Clifford group Cn
+method, we evaluate it on three different tasks: unconstrained                    is defined as the normalizer of the Pauli group within the
+Clifford optimization, Clifford transpilation to a target hard-                   unitary group U (2n ). Specifically, for any Clifford operator
+ware connectivity map, and as a refinement step in a full                         C ∈ Cn and any Pauli operator P ∈ Pn , the conjugation
+logical synthesis pipeline.                                                       CP C † yields another operator in Pn . The group Cn is finitely
+                                                                                  generated by the Hadamard (H), Phase (S), and Controlled-
+                                                                                  NOT (CNOT) gates.
+   We show that our model achieves comparable or higher
+                                                                                     By the Gottesman-Knill theorem [30], Clifford circuits can
+performance with respect to a variety of different techniques,
+                                                                                  be efficiently simulated on classical hardware. The standard
+including up to 56% total gate reduction compared to the
+                                                                                  data structure for this is the tableau representation introduced
+Aaronson-Gottesman algorithm [29] for the general Clifford
+                                                                                  by Aaronson and Gottesman [29]. The state of an n-qubit
+optimization task, and up to 20% compared to the RL-based
+                                                                                  Clifford circuit is completely characterized by tracing the evo-
+Clifford transpiler from [26] on the task of transpilation. Our
+                                                                                  lution of n destabilizer generators and n stabilizer generators.
+results suggest that AlphaClifford can be applied efficiently in
+                                                                                  In this formalism, the circuit is represented as a 2n × (2n + 1)
+different settings.
+                                                                                  binary matrix T over the Galois field F2 :
+                                                                                                                                           
+   The paper is organized as follows. In Section II we provide a                                            T =           X      Z      r       ,                                     (1)
+brief introduction to the symplectic representation of Clifford
+circuits. In Section III we discuss related works. In Section                     where X and Z are 2n × n Boolean matrices denoting the
+IV we present our method. Experimental design and results                         presence of X and Z Pauli operators, respectively. The 2n-
+are discussed in Section V. Finally, in Section VI we provide                     dimensional column vector r contains Boolean phase bits
+some final considerations and suggest possible directions for                     indicating whether the overall sign of each respective generator
+further works.                                                                    is +1 (ri = 0) or −1 (ri = 1).
+   As a simple example, consider a single-qubit system. The        P can be computed efficiently in O(n2 ) time. Therefore,
+initial tableau corresponding to the identity circuit is           mapping the RL state space to Sp(2n, F2 ) rather than the full
+                                                                 Clifford group Cn reduces the search space by a factor of 22n ,
+                             1 0 0
+                      TI =                ,                        simplifying the learning process.
+                             0 1 0
+where the first row represents the destabilizer generator X and                         III. R ELATED W ORK
+the second row represents the stabilizer generator Z.                 The problem of quantum circuit synthesis and compilation
+   Applying a Hadamard gate H exchanges X and Z, resulting         is extremely important for mitigating hardware limitations of
+in the tableau                                                     current devices, and the literature addressing this challenge is
+                                                                   extensive [31].
+                                       
+                              0 1 0
+                     TH =                  .                          Within the context of Clifford circuits, the historical baseline
+                              1 0 0
+                                                                   is the well-known Aaronson-Gottesman algorithm [29], which
+This illustrates how Clifford operations act linearly on the       demonstrated that this class of circuits can be efficiently
+(X , Z) components of the tableau by transforming Pauli            simulated and synthesized in polynomial time with gates from
+generators. If we further apply an X gate, the Pauli structure     {H, S, CNOT}.
+remains unchanged, but the phase of the Z generator is flipped:       However, standard approaches usually generate sub-optimal
+                                       
+                              0 1 0                                circuits with respect to the number of gates. To address this,
+                    TXH =                 .
+                              1 0 1                                various advanced heuristic methods have been proposed.
+                                                                      For instance, the approaches described in [32] (such as
+Thus, while the matrices X and Z encode the Pauli action
+                                                                   A*, greedy algorithms, and Volanto [33]) leverage a richer
+of the circuit, the vector r captures the accumulated phase
+                                                                   generating set to reduce the gate count in the circuit. Another
+information.
+                                                                   approach is the one proposed in [34], where Clifford-specific
+B. Symplectic Matrix Representation                                template matching is combined with symbolic peephole opti-
+   While the phase vector r is required to track the exact         mization, obtaining relevant reductions in CNOT count.
+quantum state (including Pauli phases), the fundamental entan-        It is also worth noting that the literature offers solutions
+gling structure and basis transformations induced by a Clifford    for the optimal and exact syntheses of Clifford circuits [35],
+circuit are entirely captured by the 2n × 2n binary matrix         [36]. However, finding the absolute minimum sequence of
+M = [X Z].                                                         gates generally requires exponential time, drastically limiting
+   To preserve the commutation relations of the Pauli group,       the scalability of these methods to a very small number of
+the matrix M must satisfy the symplectic condition over F2 :       qubits and rendering them unsuitable for practical, large-scale
+                                                                   applications.
+                  M ΩM T = Ω       (mod 2),                  (2)      Recently, many Reinforcement Learning (RL) based so-
+where Ω is the 2n × 2n block matrix defined as:                    lutions have been proposed to address tasks related to cir-
+                                                                 cuit synthesis, optimization, and compilation, including state
+                            0 In                                   preparation [24], quantum architecture search [37], and “pre-
+                     Ω=             ,                        (3)
+                           In 0                                    compilation” in logical synthesis pipelines in Q-P RE S YN [38].
+and In is the n × n identity matrix. Consequently, M is an            The synthesis of Clifford circuits is particularly well-suited
+element of the symplectic group Sp(2n, F2 ).                       for RL applications: the algebraic properties of these circuits
+   Crucially, there exists a surjective group homomorphism         provide a compact and highly efficient state representation,
+ϕ : Cn → Sp(2n, F2 ) that maps a Clifford unitary to its corre-    usually as a matrix of polynomial size. Initially, many works
+sponding symplectic matrix. The kernel of this homomorphism        were based on model-free algorithms, such as Proximal Policy
+is precisely the Pauli group Pn (ignoring global phases).          Optimization [39] (PPO), which learn directly by interacting
+                                                                   with the environment without building an internal model of
+C. Implications for Circuit Synthesis                              the dynamics.
+   In our context of synthesizing Clifford circuits, the homo-        Notable among these is the recent work [26], which lever-
+morphism ϕ provides a powerful mathematical abstraction.           ages RL for the routing and synthesis of Clifford circuits,
+If an RL agent restricts its objective to finding a sequence       yielding transpilers capable of significantly outperforming
+of {H, S, CNOT} gates that yields a symplectic matrix Msyn         traditional heuristics like SABRE [40]. Another impactful
+matching a target symplectic matrix Mtarget , the synthesized      model-free application is provided in [22] in the context
+circuit Csyn and the target circuit Ctarget are guaranteed to      of quantum circuit discovery for fault-tolerant logical state
+belong to the same coset of the Pauli group. Mathematically,       preparation, where RL was used to discover entirely new
+this establishes an equivalence up to a Pauli layer:               protocols that surpass the efficiency of manually designed
+                                                                   circuits. Additionally, in [25] the authors propose a PPO-based
+                      Ctarget ≡ P · Csyn ,                   (4)
+                                                                   approach to optimize CNOT count in linear reversible circuits.
+where P ∈ Pn . By tracking the evolution of the phase vector       Concurrent work [28] also addresses Clifford circuit synthesis
+r alongside the synthesis process, the residual Pauli correction   using model-free RL. Their approach formulates synthesis as
+the reduction of a symplectic tableau to the identity using               two nodes are connected if the corresponding matrices
+PPO, and introduces a permutation-equivariant, size-agnostic              can be reached through a Clifford gate operation.
+neural architecture that generalizes across different numbers of        • Second, we train a model to learn the structure of this
+qubits, allowing to learn a scalable policy for unconstrained             space by predicting sequences of gate operations that
+Clifford synthesis.                                                       transform the initial symplectic matrix into the target one.
+   Despite the significant successes of model-free methods,               The training procedure, structured after the Monte Carlo
+recent developments demonstrate that when the mathematical                Tree Search pattern [41], is detailed in Section IV-C.
+structure of the problem allows it, model-based algorithms,             • Third, once trained, the model is used to synthesize
+usually based on Monte Carlo Tree Search [41] (MCTS), offer               Clifford circuits (Fig. 1b) by generating a new sequence
+vastly superior capabilities for exploring complex combinato-             of gates from a target circuit. The generated sequence of
+rial spaces.                                                              Clifford gates will have the same symplectic matrix as
+   In this regard, AlphaTensor-Quantum [19] paved the way                 the one associated to the target circuit.
+by demonstrating how the CNOT+T component of a circuit
+can be optimized using search techniques originally designed          A. Modeling the problem of symplectic matrices
+for board games [42]. Similarly, AlphaCNOT [27] provided                 The search space of our problem, represented by the set
+a model to address the problems of CNOT optimization                  of symplectic matrices, is explored through a tree-based ap-
+in both unconstrained and constrained (i.e., depending on a           proach. For a given problem dimension n (corresponding to the
+connectivity map) settings.                                           number of qubits), given a target Clifford circuit C represented
+   Finally, another relevant contribution is QuSynth [43], in         by its symplectic matrix MC ∈ Sp(2n, F2 ), and possibly a
+which the task of stabilizer state preparation is reformulated by     connectivity map M, our aim is to determine a sequence of
+using graph-state representations, and addressed by combining         Clifford gates equivalent to C.
+RL with MCTS for structured look-ahead.                                  To this end, we construct a search tree as follows:
+   Our work, AlphaClifford, builds on these developments by              • The root node represents the identity matrix I2n , corre-
+bringing the strengths of search-informed reinforcement learn-              sponding to the empty circuit;
+ing to the synthesis of general Clifford circuits. In particular,        • Each node N is labeled by a symplectic matrix M
+we draw inspiration from the AlphaTensor and AlphaCNOT                      and has one child for each admissible Clifford operation
+frameworks, adapting their core ideas to exploit the algebraic              g ∈ {Hi , Si , CNOTij : i, j ∈ {1, . . . , n}} (subject to
+structure of Clifford operations and further advance the state              M). The child node is labeled by the matrix obtained
+of the art in this domain.                                                  by applying g to M , i.e., by the product of M with the
+                                                                            matrix corresponding to g;
+                     IV. A LPHAC LIFFORD                                 • The terminal nodes (i.e., the leaves) are labeled by the
+
+   A popular class of Reinforcement Learning (RL) approaches                target symplectic matrix MC .
+is classified as model-free, i.e., they learn directly from              In the unconstrained setting, each node has Θ(n2 ) children
+interactions with the environment and do not leverage an              due to the possible CNOT operations between pairs of qubits,
+explicit model of its dynamics. Model-free approaches, such as        along with single-qubit gates. In the case of limited connectiv-
+Proximal Policy Optimization [39] (PPO), rely on sequences of         ity constraints, only a subset of 2-qubit operations is allowed.
+state–action–reward transitions to iteratively update the policy      B. Inverting the representation: from the target to the identity
+via gradient-based optimization.
+   Conversely, model-based RL algorithms construct a rep-                Training an RL agent with the forward representation de-
+resentation of the environment to simulate future outcomes            scribed in Section IV-A would require providing, at each
+[44]. Within complex combinatorial spaces, such as the set of         step k, both the current symplectic matrix Mk (encoding the
+symplectic matrices, their capacity for structured and efficient      partial circuit g1 , . . . , gk ) and the fixed target matrix MC .
+exploration enables them to obtain improved performance over          This increases the input dimensionality and, moreover, the
+both classical heuristics and model-free algorithms.                  target matrix contributes little information during an episode,
+                                                                      as it remains constant. To avoid this, we adopt an inverted
+   Following the latter principle, and inspired by recent ap-
+                                                                      formulation that embeds the target directly into the state
+plications such as AlphaTensor [19] and AlphaCNOT [27],
+                                                                      representation.
+we propose AlphaClifford, a novel model-based approach
+                                                                         At step k, the observation is defined as
+for exploring the combinatorial space of symplectic matrices
+associated with Clifford circuits.                                                               MC Mk−1 ,
+   Our method, illustrated in Fig. 1, is organized into the
+following steps:                                                      where Mk−1 is the inverse of the current symplectic matrix over
+                                                                      F2 , corresponding to the inverse circuit. Under this represen-
+  •   First, we model the space of symplectic matrices as
+                                                                      tation, synthesizing the target Clifford circuit is equivalent to
+      a search tree (Fig. 1a), where each node represents a
+                                                                      reaching the identity:
+      specific symplectic matrix and directed edges correspond
+      to the application of Clifford gates. In this representation,                          MC MC−1 = I2n .
+ a) Selection                     b) Expansion                      c) Simulation                                 d) Backpropagation
+
+                    H(1)
+
+
+             S(2)
+
+
+
+            H(2)
+
+
+     CNOT(1,2)
+
+
+
+                                        H(3)
+
+
+
+                                                                             H(2), CNOT(3,2), S(1), . . ., H(1)
+
+                                                                                Reward Computation
+
+
+
+Fig. 2: Overview of the Monte Carlo Tree Search (MCTS) phases for Clifford circuit synthesis. The search space is explored
+by iteratively executing four distinct stages: (a) Selection: The tree is traversed from the root (representing the target symplectic
+matrix C) to a leaf node. Actions, corresponding to Clifford gates H, S, and CNOT, are chosen by balancing exploration and
+exploitation using the UCT formula. (b) Expansion: When reaching a leaf node, the tree is expanded by the addition of one
+or more child nodes, each representing the state resulting from a possible Clifford operation. (c) Simulation: A rollout is
+performed from the newly expanded node based on the policy network. A sequence of gates is sampled until a terminal state
+is reached, at which point the evaluation of the value network is computed based on the proximity to the identity matrix. (d)
+Backpropagation: The reward obtained during simulation is propagated upward to the root, updating the value estimates and
+visit counts for all nodes along the selected path to refine future selection steps.
+
+
+Hence, each episode begins in the state MC , and the agent’s             where Q(s, a) is the estimated value of taking action a
+task is to reach the identity matrix. This turns the problem into        in state s, N (s) is the visit count of node s, N (s, a) is
+a goal-reaching task with a fixed terminal state and allows us           the number of times action a has been selected from s,
+to provide a single observation matrix to the model, rather              and c is an exploration constant. This criterion balances
+than a pair (Mk , MC ).                                                  exploration of less-visited actions and exploitation of
+   When a gate gt is applied in the forward construction of the          high-value ones;
+circuit, the corresponding update in the inverted representation      2) Expansion: When a non-terminal node with unexplored
+must use the adjoint action. Since                                       actions is reached, the tree is expanded by applying a
+                                                                         new admissible Clifford operation, thus generating a new
+     Mt = Mgt Mt−1           =⇒        Mt−1 = Mt−1
+                                               −1
+                                                   Mg † ,
+                                                         t               child node. A node is terminal if it corresponds to the
+the state transition in the inverted formulation becomes                 identity matrix or if other stopping criteria are met (e.g.,
+                                               
+              MC Mt−1 −1
+                           −→ MC Mt−1    −1
+                                            Mg † .                       maximum depth). In the presence of connectivity con-
+                                               t                         straints, only allowed CNOT operations are considered;
+Thus, although the agent selects forward Clifford operations,         3) Simulation: From the expanded node, a rollout is
+the evolution of the internal representation proceeds by right-          performed by sampling a sequence of Clifford gates
+multiplication with the corresponding symplectic matrices,               according to the policy network until a terminal node
+consistently reflecting the reversed dynamics.                           is reached. The resulting trajectory is then processed by
+C. Monte Carlo Tree Search Framework                                     the value function to estimate the quality of the new
+                                                                         node;
+   We adopt a Monte Carlo Tree Search [41] (MCTS) strategy
+                                                                      4) Backpropagation: The outcome of the simulation is
+to efficiently explore the space of symplectic matrices asso-
+                                                                         propagated back along the selected path, updating visit
+ciated with Clifford circuits (see Fig. 2). The procedure is
+                                                                         counts and value estimates for each node involved in the
+structured into four main phases:
+                                                                         traversal.
+   1) Selection: Starting from the root node corresponding to
+       the target symplectic matrix MC , the tree is traversed      D. Training Details
+       by iteratively selecting actions (i.e., Clifford gates in
+       {H, S, CNOT}) according to a tree policy. In particular,        The training consists of constructing a different random
+       we adopt the Upper Confidence Bound for Trees (UCT)          target matrix for each episode, and asking the model to “reach”
+       criterion [44], which selects the action a maximizing        the identity matrix starting from the inverse of the target with
+                                         s                          the fewest amount of moves. Each “move”, corresponding
+                                            log N (s)               to a step in the environment, represents the application of
+                  UCT(a) = Q(s, a) + c                ,      (5)
+                                             N (s, a)               a feasible gate to the current circuit. Feasible gates are H,
+S, and CNOTs, possibly with constraints based on topology               1) Optimization: A direct application of our framework
+connectivity. An episode finishes after reaching the identity,       is Clifford circuit optimization. Given a target Clifford cir-
+or when the agent perform nmax moves without reaching the            cuit, the objective is to find an equivalent representation
+identity.                                                            that minimizes the total number of two-qubit gates. More
+   We adopt a naive reward function √     to guide the learning      broadly, the model can be tailored during training to minimize
+process. At each step a penalty of −1/ n is applied to limit         alternative target metrics, such as overall circuit depth. Beyond
+long sequences and a terminal reward of +n is assigned when          full-circuit synthesis, AlphaClifford can also be employed as
+reaching the identity matrix. This “non-informed” strategy is        a peephole optimizer [46] for Clifford circuits involving a
+fundamental in our approach: without relying on problem-             larger number of qubits. Starting, for example, from a circuit
+specific heuristics, the model itself naturally learns to find       synthesized using the Aaronson–Gottesman algorithm, one can
+shorter decompositions. In particular, the training objective        extract contiguous subcircuits whose support contains at most
+implicitly minimizes the total number of applied gates, which        n qubits, resynthesize each block using the corresponding
+also implies a reduction of CNOTs. Note that different rewards       n-qubit AlphaClifford model, and replace the original block
+could be used to minimize different target functions: for            whenever the selected cost is reduced. By iteratively applying
+example, we can select a higher penalty to reduce the CNOT           this procedure, models trained on relatively small problem
+count.                                                               sizes can be used to optimize substantially larger circuits,
+   We employ a linear curriculum learning strategy [45] based        although the resulting improvements are local and do not
+on the (expected) difficulty of the instances. In practice, we       imply global optimality.
+generate each target symplectic matrix by selecting random              2) Transpilation: We further evaluate our approach on
+k Clifford gates, where k is parameter we can tune during            the task of quantum circuit transpilation. Given n qubits
+training.                                                            and a hardware connectivity map—represented as a graph
+   More in detail, we divide our training in tranches. Starting      where nodes correspond to physical qubits and edges denote
+from k = 1, we train our model on a tranche of difficulty k.         allowable direct interactions—the goal of transpilation is to
+At the end of the tranche, we increase k if the model reached a      transform a logical circuit into an equivalent physical circuit
+solving rate of at least 95%, i.e., the model is able to correctly   that strictly adheres to these connectivity constraints. This
+reproduce most matrices. We stop the training after the max          is usually achieved by mapping logical qubits to physical
+difficulty of kmax = 4n2 is reached.                                 qubits and inserting additional gates (e.g., SWAP routing) to
+                                                                     ensure all two-qubit operations occur between adjacent nodes.
+E. Inference                                                         Addressing this task is critical for near-term quantum exe-
+                                                                     cution, as many hardware platforms (such as superconducting
+   Once the model has been trained to synthesize symplectic
+                                                                     architectures [47]) only permit multi-qubit operations between
+matrices of size 2n × 2n, optionally subject to hardware
+                                                                     physically coupled qubits.
+connectivity constraints, it can be deployed for inference.
+                                                                        Similar to circuit optimization, the objective is to find a valid
+Specifically, given a target Clifford circuit Ctar characterized
+                                                                     transpilation that minimizes a specific cost function, typically
+by a symplectic matrix Mtar , our model generates a sequence
+                                                                     the two-qubit gate count or the overall circuit depth. Further-
+of gates forming a synthetic circuit Csyn that yields the iden-
+                                                                     more, for realistic hardware deployments, the cost function
+tical symplectic matrix. Consequently, Mtar = Msyn , which
+                                                                     can be expanded to incorporate device-specific characteristics,
+establishes that the target and synthetic circuits are equivalent
+                                                                     such as penalizing the use of qubits or couplers with high error
+up to a Pauli operator (i.e., Ctar ≡ P Csyn for a pauli P ).
+                                                                     rates. To accomplish this within our framework, the model’s
+   The complete inference procedure for a given target circuit       action space during training is constrained to the specific
+proceeds as follows: (i) efficiently compute its target sym-         connectivity map of the target hardware connectivity map.
+plectic matrix Mtar ; (ii) query the trained model to synthesize        3) Optimizing Logical Synthesis Pipeline: A crucial task in
+a gate sequence corresponding to this matrix; (iii) efficiently      fault-tolerant quantum computing is logical synthesis, which
+compute the phase discrepancy—namely, the signs of the               involves approximating a target unitary using a discrete, uni-
+stabilizers and destabilizers—between the target and synthetic       versal gate set such as Clifford+T [8]. Unlike pure Clifford
+circuits; and (iv) apply the appropriate X and Z gates to            synthesis, optimal exact synthesis over universal gate sets is
+correct the phase, yielding a fully equivalent circuit. A visual     a notoriously difficult problem, with worst-case computational
+overview of this pipeline is provided in Fig. 1b.                    complexity scaling exponentially with respect to the number of
+                                                                     qubits [48], [49]. To address this limitation, compilers typically
+F. Applications
+                                                                     employ a “peephole” synthesis strategy, decomposing the
+  We identify three primary applications where our model can         target circuit into much smaller, tractable sub-blocks (typically
+be efficiently deployed: Clifford optimization (Fig. 1c, top),       acting on two or three qubits) [34].
+Clifford transpilation (Fig. 1c, middle), and as a subroutine           A standard logical synthesis pipeline generally operates in
+within a standard logical synthesis pipeline (Fig. 1c, bottom).      successive stages. First, a pre-processing step can applied
+These settings are described below and are experimentally            to the logical circuit. This may involve decomposing large
+demonstrated in Sections V-A, V-B, and V-C, respectively.            multi-qubit gates into smaller two- or three-qubit instances
+(e.g., via recursive Cartan decomposition [50], [51]) or per-         As comparison, we consider first the well-known Aaronson-
+forming structural pre-synthesis edits to make the circuit          Gottesman algorithm [29], as implemented in qiskit [52]),
+more amenable to compilation [38]. Next, a local synthesis          and then three different heuristic models (A∗ , greedy, and
+algorithm compiles each of these individual sub-blocks into a       Volanto [33]), as provided in [32]. These three methods
+Clifford+T representation.                                          provide a decomposition in a block of SWAP gates, followed
+   Our framework can be integrated into the final stage of this     by a block of one and two qubit transvection gates [53]. Given
+pipeline as a post-synthesis optimizer. Once the full circuit       a n-qubit Pauli operator P , the corresponding transvection can
+has been compiled into Clifford+T, we can extract the largest       be defined as
+contiguous blocks of purely Clifford gates. Our model can                                         
+                                                                                                    iπ
+                                                                                                                
+then be applied directly to these extracted Clifford sub-circuits                    TP := exp         (In − P ) .              (6)
+                                                                                                     4
+to find equivalent representations that minimize the total gate
+count, effectively compressing the circuit without altering the        Note that by allowing a richer gate set provides an unfair
+expensive T-gate layout.                                            comparison versus our approach that is constrained to the
+   While our experimental evaluation in Section V-C demon-          less expressive set {H, S, CNOT}. Nevertheless, we include
+strates this capability on the relatively small Clifford blocks     this evaluation, where the SWAP layer is first decomposed
+generated by standard peephole synthesis, our approach can          in three CNOTs. For completeness, we also consider the
+be applied more in general in any kind of compilation task          CNOT count obtained by the same three methods when the
+involving large blocks of consecutive Clifford gates.               obtained circuits are decomposed in {H, S, CNOT} by the
+                                                                    default transpiler provided by qiskit. Finally, we report the
+                V. E XPERIMENTAL R ESULTS                           same metrics obtained by the qiskit greedy method, and by
+                                                                    the well-known stim software for stabilizer simulation [54].
+   In the following, we describe the experimental evaluations
+and the obtained results for the tasks of Clifford Optimiza-
+tion (Section V-A), Clifford Transpilation (Section V-B), and                                               Problem Size (n)
+optimization in the logical synthesis pipeline (Section V-C).         Approach                  3       4         5        6       7
+   Both policy and value networks share the same architecture,
+                                                                                                 Total Gates
+i.e., a 12-layer fully connected network with 256 hidden units
+per layer. We structured the net using 4 residual blocks with         Aaronson-Gottesman       19.99   25.89    38.05    51.37   65.61
+                                                                      Qiskit greedy            13.57   23.03    34.75    47.77   62.18
+skip connections every three layers. We trained a different           Stim                     21.27   36.28    54.70    72.82   96.39
+model for each number of qubits n, and for each selected              A* (with transv.)        12.97   19.56    26.54    35.04   43.15
+connectivity map for the transpilation task. The training was         Greedy (with transv.)    13.03   19.40    27.42    36.08   45.61
+executed in tranches of different complexity (computed as the         Volanto (with transv.)   12.95   19.93    28.65    38.12   48.14
+number of generating gates) as described in Section IV-D, and         A* (H, S, CNOT)          19.49   33.47    49.90    68.33    89.47
+increasing once the solving threshold of 95% is achieved for          Greedy (H, S, CNOT)      19.17   33.21    51.44    72.16    98.29
+                                                                      Volanto (H, S, CNOT)     20.26   37.30    59.25    87.19   117.57
+the tranche, up to a complexity of 4n2 .
+                                                                      AlphaClifford            8.85    13.90    20.66    29.56   40.05
+                                                                      AlphaClifford10          8.78    13.39    19.49    27.11   36.75
+A. Clifford Optimization
+                                                                                               2-Qubit Gates
+   As a first task, we evaluate the ability of our model to
+                                                                      Aaronson-Gottesman       3.65    10.41    16.17    22.43   28.59
+efficiently synthesize sufficiently complex Clifford circuits.        Qiskit greedy            4.35     8.01    13.01    18.79   24.95
+This problem can be reformulated as a Clifford optimization           Stim                     7.29    13.20    20.32    29.49   40.35
+task: we start from a random Clifford circuit generated by            A* (with transv.)        6.34    10.63    15.72    21.39   27.32
+qiskit [52], and we synthesize an equivalent circuit with             Greedy (with transv.)    6.28    10.60    16.55    22.71   29.86
+                                                                      Volanto (with transv.)   6.38    11.16    17.36    24.38   32.62
+gates from {H, S, CNOT}.
+   For n qubits with n ∈ {3, 4, 5, 6, 7}, we evaluate our model       A* (H, S, CNOT)          8.84    15.38    23.10    31.89   41.59
+                                                                      Greedy (H, S, CNOT)      8.78    15.39    24.39    34.19   46.28
+on 100 Clifford circuits involving up to 4n2 gates. These             Volanto (H, S, CNOT)     9.19    17.04    27.37    39.85   54.23
+experiments evaluate full synthesis, in which the complete            AlphaClifford            4.25    7.50     11.85    17.47   25.53
+target circuit is provided to a single model. Note that, as           AlphaClifford10          4.06    6.96     10.98    15.82   23.06
+discussed in Section IV-F, the same models can be applied as
+local peephole optimizers to blocks of larger Clifford circuits.    TABLE I: Average number of total and 2-Qubit gates for
+   To evaluate our approach, we consider both the average total     different optimization methods over varying problem sizes.
+number of gates, and the number of two-qubit gates (in our          Best results for each n are highlighted in bold.
+case, CNOTs) required to synthesize a circuit. We evaluate our
+model both one shot, and after 10 repetitions, i.e. we sample          We observe that our model achieves the lowest amount of
+our model 10 times, and select the circuit with lowest amount       total gates, and two qubit gates, in most cases. Note that all
+of gates. We denote the latter as AlphaClifford10 . Our results     methods were able to synthesize correctly each instance, with
+are reported in Table I.                                            the exception of Greedy method that was not able to synthesize
+a few instances of larger dimensions (in this case, the average                  • Starting from the representation of the initial circuit, we
+reported in Table I is considered only on the solved instances).                   decompose each 2 qubit gates in a block of CNOTs and
+   We stress that the advantage compared to the methods in                         single qubit gates with the KAK decomposition [50];
+[32] is obtained with a less expressive gate. We expect our                      • Then, we decompose each single qubit unitary in up to
+method to obtain even better performance when allowing more                        three Rz (θ) rotations (with additional X and H gates).
+expressive gate sets.                                                              Each rotation is then decomposed in {H, S, T } with the
+                                                                                   GRIDSYNTH algorithm [56] with a tolerance of ε = 0.01;
+B. Transpilation
+                                                                                 • Finally, we search for blocks of adjacent Clifford circuits.
+   To evaluate our model, for each number of qubits and                            For each block of at least 2 qubits, we use AlphaClifford
+connectivity map, we generate a random Clifford circuit                            to synthesize an optimized version.
+without connectivity constraints. We then use a model trained
+                                                                                  In addition, we evaluate the same pipeline with the use of
+on the specific connectivity map to generate an equivalent
+                                                                               Q-P RE S YN [38] to optimize the number of T gates with a
+circuit by using the gate set {H, S, CNOT}, where a CNOT
+                                                                               sequence of 2 qubit merges. In particular, we apply a greedy
+can be selected only between pairs of qubits allowed by the
+                                                                               optimizer to evaluate the largest sequence of gates that can
+connectivity map.
+                                                                               be merged together, with the aim of reducing the number
+   Following the procedure in [26], we select 6 connectivity
+                                                                               of resulting T gates after applying the KAK decomposition
+maps from 3 to 6 qubits (see Fig. 3 for additional information).
+                                                                               followed by GRIDSYNTH.
+As before, we provide total gate count, and CNOT count. As
+                                                                                  In Table III we present the Clifford gate reduction, with the
+a comparison, we evaluate the RL-based Clifford transpiler by
+                                                                               default qiskit transpiler as a comparison. Note that in this
+qiskit, available at [55]. Both methods are sampled once
+                                                                               specific setting, due to the particular structure of the Clifford
+and 10 times, to take into account the stochasticity or RL-
+                                                                               circuits (that are already optimal in the number of CNOT
+based approaches. Results are provided in Table II. We observe
+                                                                               gates), the algorithms Aaronson-Gottesman and the ones from
+that in general, our model provides consistently a lower total
+                                                                               [32] did not obtain any reduction in total number of gates.
+gate counts than the other approach. However, it also obtains
+                                                                               Finally, note that the considered pipeline applied to random
+a slightly higher number of CNOTs, suggesting that a reward
+                                                                               circuits leads to mostly 2 and 3 qubit Clifford blocks, therefore
+function tailored on the number of two-qubit gates instead of
+                                                                               allowing for a small reduction of gates. We expect different
+total gates could be beneficial in this specific setting.
+                                                                               choices of logical synthesis algorithms and different circuit
+                                                                               families to provide higher reductions.
+ 2                                           0   0
+                                                         1                                           VI. C ONCLUSION
+                                     1
+         1                                                     2
+                                                                                  In this work, we introduced AlphaClifford, a novel model-
+                             2
+                                                                       3       based reinforcement learning framework designed to address
+                   0   3                                                   4   the complex combinatorial challenges of Clifford circuit syn-
+                                                                               thesis and transpilation. By formulating the compilation pro-
+       (a) 3L                (b) 4L                          (c) 5L            cess as a Monte Carlo Tree Search over the algebraic space
+                                                                               of symplectic matrices, AlphaClifford consistently discovers
+ 2                 3                     4       5                             highly optimized gate sequences.
+                                                                                  Our experimental evaluations demonstrate that AlphaClif-
+         1                           3           4
+                                                                               ford achieves superior or comparable results to state-of-the-
+                                                     1             2       3   art methods across a variety of settings. For unconstrained
+                                 1                                             optimization, it successfully minimizes both total and two-
+                       2                                                       qubit gate counts compared to standard heuristics, even when
+         0                                   0       0
+                                                                               restricted to a less expressive gate set. Furthermore, we showed
+       (d) 4T                (e) 5T                          (f) 6T            its adaptability to hardware-constrained transpilation and its
+Fig. 3: Hardware connectivity maps utilized for benchmarking:                  practical utility as a post-synthesis optimizer within a logical
+Line graphs (a-c) and T-shape graphs (d-f). Vertices represent                 synthesis pipeline. Notably, these results were obtained using
+physical qubits and edges represent available coupling map                     a single base architecture and a naive reward function, under-
+connections.                                                                   scoring the generality and robustness of our technique.
+                                                                                  Ultimately, these results highlight the potential of model-
+                                                                               based RL to transcend the limitations of traditional heuristic-
+C. Full Logical synthesis pipeline                                             driven compilers, advancing the trajectory established by
+   Finally, we evaluate our proposed method as a component of                  frameworks like AlphaTensor [19] and AlphaCNOT [27].
+a logical synthesis pipeline. To do so, we first generate 10 ran-              As quantum hardware continues to scale toward the era of
+dom circuits for each number of qubits n ∈ {5, 10, 15, 20, 25}.                quantum utility, computationally intelligent approaches like
+Following the approach in [38], we consider the pipeline:                      AlphaClifford will be critical for bridging the gap between
+                                                  L Maps                                                                     T Maps
+                                 3L                    4L                       5L                       4T                      5T                   6T
+     Approach            Tot.     CNOT         Tot.     CNOT            Tot.      CNOT            Tot.    CNOT           Tot.       CNOT      Tot.     CNOT
+     RL-Qiskit1         14.52         4.91     26.80        10.51      36.95         16.78     26.38          9.60       33.63        15.15   50.85        24.41
+     RL-Qiskit10        12.19         4.60     22.90         9.54      33.31         16.08     21.58          8.43       30.92        14.29   46.11        22.74
+     AlphaClifford1      9.83         5.15     17.49        10.66      29.07         18.45     16.16          9.51       26.27        16.82   42.35        27.49
+     AlphaClifford10     9.81         4.99     17.08        10.08      27.58         17.31     15.76          8.96       25.04        15.56   38.84        25.10
+
+TABLE II: Performance of RL-Qiskit [55] and AlphaClifford for the transpilation task. Results report average total (Tot.) and
+CNOT gate counts for L and T connectivity maps. Best values for metric are reported in bold.
+
+                                         Initial Compiled                      Qiskit Transpile                  AlphaClifford
+                            n     Clifford (k)    T-count (k)             Clifford (k)       %red             Clifford (k)      %red
+                                                                Without Pre-compilation
+                            5           1.24            0.76                    1.23          0.36                1.21           2.44
+                            10          5.17            3.14                    5.16          0.13                5.05           2.39
+                            15         10.27            6.23                   10.26          0.09               10.01           2.53
+                            20         20.26           12.28                   20.24          0.14               19.76           2.50
+                            25         29.59           17.92                   29.55          0.14               28.88           2.43
+                                                                    With Pre-compilation
+                            5           1.09            0.66                    1.08          0.35                1.06           2.75
+                            10          4.90            2.97                    4.90          0.17                4.78           2.46
+                            15          9.98            6.06                    9.97          0.15                9.72           2.57
+                            20         19.77           11.98                   19.75          0.12               19.28           2.50
+                            25         29.18           17.66                   29.12          0.20               28.45           2.49
+
+TABLE III: Clifford synthesis performance: comparison of Clifford gate counts (in thousands) and reduction percentages
+relative to the original synthesized circuit. Results are grouped by whether pre-synthesis [38] was applied.
+
+
+high-level logical algorithms and the strict physical constraints                                                    R EFERENCES
+of near-term and future fault-tolerant quantum devices.
+                                                                                     [1] Y. Kim, A. Eddins, S. Anand, K. X. Wei, E. Van Den Berg, S. Rosenblatt,
+   We highlight several promising directions for future work.                            H. Nayfeh, Y. Wu, M. Zaletel, K. Temme, and A. Kandala, “Evidence
+First, extending the action space to include more expres-                                for the utility of quantum computing before fault tolerance,” Nature, vol.
+                                                                                         618, no. 7965, pp. 500–505, Jun. 2023.
+sive operations, such as transvections, could further enhance
+                                                                                     [2] Y. Alexeev, V. S. Batista, N. Bauman, L. Bertels, D. Claudino, R. Dutta,
+compilation efficiency. Second, while our generalized reward                             L. Gagliardi, S. Godwin, N. Govind, M. Head-Gordon, M. R. Hermes,
+function successfully minimized total gate counts, designing                             K. Kowalski, A. Li, C. Liu, J. Liu, P. Liu, J. M. Garcı́a-Lastra, D. Mejia-
+tailored reward structures—such as heavily penalizing two-                               Rodriguez, K. Mueller, M. Otten, B. Peng, M. Raugas, M. Reiher,
+                                                                                         P. Rigor, W. J. Shaw, M. van Schilfgaarde, T. Vegge, Y. Zhang,
+qubit gates to improve specific transpilation connectivity maps                          M. Zheng, and L. Zhu, “A perspective on quantum computing appli-
+or incorporating error-aware routing—could yield even better                             cations in quantum chemistry using 25–100 logical qubits,” J. Chem.
+hardware-specific solutions. Finally, a further direction is to                          Theory Comput., vol. 21, no. 22, pp. 11 335–11 357, 2025.
+                                                                                     [3] A. Di Meglio, K. Jansen, I. Tavernelli, C. Alexandrou, S. Arunachalam,
+investigate systematic block-selection and iterative peephole                            C. W. Bauer, K. Borras, S. Carrazza, A. Crippa, V. Croft, R. de Putter,
+strategies for applying the models developed here to large-                              A. Delgado, V. Dunjko, D. J. Egger, E. Fernández-Combarro, E. Fuchs,
+scale Clifford circuits.                                                                 L. Funcke, D. González-Cuadra, M. Grossi, J. C. Halimeh, Z. Holmes,
+                                                                                         S. Kühn, D. Lacroix, R. Lewis, D. Lucchesi, M. L. Martinez, F. Meloni,
+                                                                                         A. Mezzacapo, S. Montangero, L. Nagano, V. R. Pascuzzi, V. Rade-
+                                                                                         scu, E. R. Ortega, A. Roggero, J. Schuhmacher, J. Seixas, P. Silvi,
+                VII. ACKNOWLEDGEMENTS                                                    P. Spentzouris, F. Tacchino, K. Temme, K. Terashi, J. Tura, C. Tüysüz,
+                                                                                         S. Vallecorsa, U.-J. Wiese, S. Yoo, and J. Zhang, “Quantum computing
+   DLB thanks Gianluca Macrı̀ for his support in preparing                               for high-energy physics: State of the art and challenges,” PRX Quantum,
+the figures and diagrams of this work. JC is supported by                                vol. 5, p. 037001, Aug 2024.
+                                                                                     [4] A. Bochkarev, R. Heese, S. Jäger, P. Schiewe, and A. Schöbel, “Quantum
+FSE/FVG PhD Grant on “Computer Science and Artificial                                    computing for discrete optimization: A highlight of three technologies,”
+Intelligence” (CUP G23C25000620008).                                                     Eur. J. Oper. Res., vol. 329, no. 3, pp. 747–766, 2026.
+   This work has been partially supported by INdAM-GNCS                              [5] D. Herman, C. Googin, X. Liu, Y. Sun, A. Galda, I. Safro, M. Pistoia,
+                                                                                         and Y. Alexeev, “Quantum computing for finance,” Nat. Rev. Phys.,
+project Algebra lineare quantistica, state preparation e com-                            vol. 5, no. 8, pp. 450–465, Jul. 2023.
+pilazione di circuiti quantistici (CUP E53C25002010001) and                          [6] Google Quantum AI, R. Acharya, I. Aleiner, R. Allen, T. I. Andersen,
+by the regional project QUASAR-FVG Calcolo e simulazione                                 M. Ansmann, F. Arute, K. Arya, A. Asfaw, J. Atalaya, R. Babbush,
+                                                                                         D. Bacon, J. C. Bardin, J. Basso, A. Bengtsson, S. Boixo, G. Bortoli,
+quantistica: sviluppo, applicazioni e ricerca in Friuli Venezia                          A. Bourassa, J. Bovaird, L. Brill, M. Broughton, B. B. Buckley, D. A.
+Giulia (CUP G23C25001510002).                                                            Buell, T. Burger, B. Burkett, N. Bushnell, Y. Chen, Z. Chen, B. Chiaro,
+     J. Cogan, R. Collins, P. Conner, W. Courtney, A. L. Crook, B. Curtin,              optimization with AlphaTensor,” Nature Machine Intelligence, vol. 7, p.
+     D. M. Debroy, A. Del Toro Barba, S. Demura, A. Dunsworth, D. Eppens,               374–385, 2025.
+     C. Erickson, L. Faoro, E. Farhi, R. Fatemi, L. Flores Burgos, E. Forati,      [20] Z. T. Wang, Q. Chen, Y. Du, Z. H. Yang, X. Cai, K. Huang, J. Zhang,
+     A. G. Fowler, B. Foxen, W. Giang, C. Gidney, D. Gilboa, M. Giustina,               K. Xu, J. Du, Y. Li, Y. Jiao, X. Wu, W. Liu, X. Lu, H. Xu, Y. Jin,
+     A. Grajales Dau, J. A. Gross, S. Habegger, M. C. Hamilton, M. P. Har-              R. Wang, H. Yu, and S. P. Zhao, “Quantum compiling with reinforcement
+     rigan, S. D. Harrington, O. Higgott, J. Hilton, M. Hoffmann, S. Hong,              learning on a superconducting processor,” 2024.
+     T. Huang, A. Huff, W. J. Huggins, L. B. Ioffe, S. V. Isakov, J. Iveland,      [21] D. Kremer, A. Javadi-Abhari, and P. Mukhopadhyay, “Optimizing the
+     E. Jeffrey, Z. Jiang, C. Jones, P. Juhas, D. Kafri, K. Kechedzhi, J. Kelly,        non-clifford-count in unitary synthesis using reinforcement learning,”
+     T. Khattar, M. Khezri, M. Kieferová, S. Kim, A. Kitaev, P. V. Klimov,             2025.
+     A. R. Klots, A. N. Korotkov, F. Kostritsa, J. M. Kreikebaum, D. Land-         [22] R. Zen, J. Olle, L. Colmenarez, M. Puviani, M. Müller, and F. Marquardt,
+     huis, P. Laptev, K.-M. Lau, L. Laws, J. Lee, K. Lee, B. J. Lester, A. Lill,        “Quantum circuit discovery for fault-tolerant logical state preparation
+     W. Liu, A. Locharla, E. Lucero, F. D. Malone, J. Marshall, O. Martin,              with reinforcement learning,” Phys. Rev. X, vol. 15, p. 041012, Oct 2025.
+     J. R. McClean, T. McCourt, M. McEwen, A. Megrant, B. Meurer Costa,            [23] K. Nakaji, J. Wurtz, H. Huang, L. M. Calderón, K. Panicker, E. Kyoseva,
+     X. Mi, K. C. Miao, M. Mohseni, S. Montazeri, A. Morvan, E. Mount,                  and A. Aspuru-Guzik, “Quantum circuits as a game: A reinforcement
+     W. Mruczkiewicz, O. Naaman, M. Neeley, C. Neill, A. Nersisyan,                     learning agent for quantum compilation and its application to reconfig-
+     H. Neven, M. Newman, J. H. Ng, A. Nguyen, M. Nguyen, M. Y. Niu,                    urable neutral atom arrays,” Jun. 2025.
+     T. E. O’Brien, A. Opremcak, J. Platt, A. Petukhov, R. Potter, L. P.           [24] A. Kundu, “Improving thermal state preparation of sachdev–ye–kitaev
+     Pryadko, C. Quintana, P. Roushan, N. C. Rubin, N. Saei, D. Sank,                   model with reinforcement learning on quantum hardware,” Machine
+     K. Sankaragomathi, K. J. Satzinger, H. F. Schurkus, C. Schuster, M. J.             Learning: Science and Technology, vol. 6, no. 2, p. 025066, jun 2025.
+     Shearn, A. Shorter, V. Shvarts, J. Skruzny, V. Smelyanskiy, W. C. Smith,      [25] R. Romanello, D. Lizzio Bosco, J. Cossio, D. Sutulovic, G. Serra, C. Pi-
+     G. Sterling, D. Strain, M. Szalay, A. Torres, G. Vidal, B. Villalonga,             azza, and P. Burelli, “Cnot minimal circuit synthesis: A reinforcement
+     C. Vollgraff Heidweiller, T. White, C. Xing, Z. J. Yao, P. Yeh, J. Yoo,            learning approach,” in 2025 IEEE International Conference on Quantum
+     G. Young, A. Zalcman, Y. Zhang, and N. Zhu, “Suppressing quantum                   Artificial Intelligence (QAI), 2025.
+     errors by scaling a surface code logical qubit,” Nature, vol. 614, no.        [26] D. Kremer, V. Villar, H. Paik, I. Duran, I. Faro, and J. Cruz-Benito,
+     7949, pp. 676–681, Feb. 2023.                                                      “Practical and efficient quantum circuit synthesis and transpiling with
+ [7] A. P. M. Place, L. V. H. Rodgers, P. Mundada, B. M. Smitham,                       Reinforcement Learning,” May 2024.
+     M. Fitzpatrick, Z. Leng, A. Premkumar, J. Bryon, A. Vrajitoarea,              [27] J. Cossio, D. Lizzio Bosco, R. Romanello, G. Serra, and C. Piazza,
+     S. Sussman, G. Cheng, T. Madhavan, H. K. Babla, X. H. Le, Y. Gang,                 “Alphacnot: Learning cnot minimization with model-based planning,”
+     B. Jäck, A. Gyenis, N. Yao, R. J. Cava, N. P. De Leon, and A. A.                  Apr. 2026.
+     Houck, “New material platform for superconducting transmon qubits
+                                                                                   [28] R. Yeung, A. Kissinger, and R. Cornish, “Equivariant reinforcement
+     with coherence times exceeding 0.3 milliseconds,” Nat. Comm., vol. 12,
+                                                                                        learning for clifford quantum circuit synthesis,” 2026. [Online].
+     no. 1, p. 1779, Mar. 2021.
+                                                                                        Available: https://arxiv.org/abs/2605.10910
+ [8] A. Y. Kitaev, “Quantum computations: algorithms and error correction,”
+                                                                                   [29] S. Aaronson and D. Gottesman, “Improved simulation of stabilizer
+     Russ. Math. Surveys, vol. 52, no. 6, pp. 1191–1249, Dec. 1997.
+                                                                                        circuits,” Phys. Rev. A, vol. 70, p. 052328, Nov 2004.
+ [9] M. Amy, D. Maslov, M. Mosca, and M. Roetteler, “A Meet-in-the-
+                                                                                   [30] D. Gottesman, “Stabilizer codes and quantum error correction,” May
+     Middle Algorithm for Fast Synthesis of Depth-Optimal Quantum Cir-
+                                                                                        1997.
+     cuits,” IEEE Trans. Comput.-Aided Des. Integr. Circuits Syst., vol. 32,
+     no. 6, pp. 818–830, Jun. 2013.                                                [31] G. Yan, W. Wu, Y. Chen, K. Pan, X. Lu, Z. Zhou, Y. Wang, R. Wang,
+                                                                                        and J. Yan, “Quantum circuit synthesis and compilation optimization:
+[10] V. Kliuchnikov, D. Maslov, and M. Mosca, “Fast and efficient exact
+                                                                                        Overview and prospects,” Jun. 2024.
+     synthesis of single-qubit unitaries generated by Clifford and T gates,”
+     Quantum Inf. Comput., vol. 13, no. 7&8, pp. 607–630, May 2013.                [32] M. Webster, S. Koutsioumpas, and D. E. Browne, “Heuristic and optimal
+[11] M. G. Davis, E. Smith, A. Tudor, K. Sen, I. Siddiqi, and C. Iancu,                 synthesis of cnot and clifford circuits,” Mar. 2025.
+     “Towards Optimal Topology Aware Quantum Circuit Synthesis,” in 2020           [33] K. Volanto, “Minimizing the number of two-qubit gates in clifford
+     IEEE International Conference on Quantum Computing and Engineer-                   circuits,” Master’s thesis, Aalto University, Mar. 2023.
+     ing (QCE). Denver, CO, USA: IEEE, Oct. 2020, pp. 223–234.                     [34] S. Bravyi, R. Shaydulin, S. Hu, and D. Maslov, “Clifford Circuit
+[12] Z.-H. He, X.-N. Zhang, and X. Chen, “Unitary Diagonalization of                    Optimization with Templates and Symbolic Pauli Gates,” Quantum,
+     the Generalized Complementary Covariance Quaternion Matrices with                  vol. 5, p. 580, Nov. 2021.
+     Application in Signal Processing,” Mathematics, vol. 11, no. 23, p. 4840,     [35] S. Bravyi, J. A. Latone, and D. Maslov, “6-qubit optimal Clifford
+     Dec. 2023.                                                                         circuits,” npj Quantum Information, vol. 8, no. 1, p. 79, Jul. 2022.
+[13] F. Chong, D. Franklin, and M. Martonosi, “Programming languages and           [36] I. Shaik and J. van de Pol, “Cnot-optimal clifford synthesis as sat,” Apr.
+     compiler design for realistic quantum hardware,” Nature, vol. 549, pp.             2025.
+     180–187, Sep. 2017.                                                           [37] A. Kundu and S. Mangini, “TensorRL-QAS: Reinforcement learning
+[14] C. Zhu, X. Wu, Z. Yang, J. Wang, A. Wu, S. Zheng, and X. Wang,                     with tensor networks for improved quantum architecture search,” Sep.
+     “Quantum Compiler Design for Qubit Mapping and Routing: A Cross-                   2025.
+     Architectural Survey of Superconducting, Trapped-Ion, and Neutral             [38] D. Lizzio Bosco, L. Cincio, G. Serra, and M. Cerezo, “Quantum circuit
+     Atom Systems,” May 2025.                                                           pre-synthesis: Learning local edits to reduce t-count,” Jan. 2026.
+[15] J. Preskill, “Quantum Computing in the NISQ era and beyond,” Quan-            [39] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov,
+     tum, vol. 2, p. 79, 2018.                                                          “Proximal policy optimization algorithms,” Jul. 2017.
+[16] A. Zulehner, A. Paler, and R. Wille, “An Efficient Methodology for            [40] H. Zou, M. Treinish, K. Hartman, A. Ivrii, and J. Lishman,
+     Mapping Quantum Circuits to the IBM QX Architectures,” IEEE Trans-                 “LightSABRE: A Lightweight and Enhanced SABRE Algorithm,” Sep.
+     actions on Computer-Aided Design of Integrated Circuits and Systems,               2024.
+     vol. 38, no. 7, pp. 1226–1236, Jul. 2019.                                     [41] R. Coulom, “Efficient selectivity and backup operators in monte-carlo
+[17] G. Li, Y. Ding, and Y. Xie, “Tackling the Qubit Mapping Problem                    tree search,” in in Computers and Games, 5th Int. Conf., Turin, Italy,
+     for NISQ-Era Quantum Devices,” in Proceedings of the Twenty-Fourth                 May 2006, revised papers, 2007.
+     International Conference on Architectural Support for Programming             [42] V. Mnih, K. Kavukcuoglu, D. Silver, A. A. Rusu, J. Veness, M. G.
+     Languages and Operating Systems. Providence RI USA: ACM, Apr.                      Bellemare, A. Graves, M. Riedmiller, A. K. Fidjeland, G. Ostrovski
+     2019, pp. 1001–1014.                                                               et al., “Human-level control through deep reinforcement learning,”
+[18] A. A. Khan, A. Ahmad, M. Waseem, P. Liang, M. Fahmideh, T. Mikko-                  Nature, vol. 518, no. 7540, pp. 529–533, 2015.
+     nen, and P. Abrahamsson, “Software architecture for quantum computing         [43] M. Doherty, M. Puviani, J. Brewer, G. Matos, D. Amaro, B. Criger, and
+     systems — a systematic review,” Journal of Systems and Software, vol.              D. T. Stephen, “Fast stabilizer state preparation via AI-optimized graph
+     201, p. 111682, 2023.                                                              decimation,” Mar. 2026.
+[19] F. J. R. Ruiz, T. Laakkonen, J. Bausch, M. Balog, M. Barekatain,              [44] L. Kocsis and C. Szepesvári, “Bandit based monte-carlo planning,” in
+     F. J. H. Heras, A. Novikov, N. Fitzpatrick, B. Romera-Paredes, J. van de           Machine Learning: ECML 2006, 17th European Conference on Machine
+     Wetering, A. Fawzi, K. Meichanetzidis, and P. Kohli, “Quantum circuit              Learning, 2006.
+[45] Y. Bengio, J. Louradour, R. Collobert, and J. Weston, “Curriculum
+     learning,” in Proc. 26th Int. Conf. Mach. Learn. (ICML), Jun. 2009.
+[46] A. K. Prasad, V. V. Shende, I. L. Markov, J. P. Hayes, and K. N. Patel,
+     “Data structures and algorithms for simplifying reversible circuits,” J.
+     Emerg. Technol. Comput. Syst., vol. 2, no. 4, p. 277–293, Oct. 2006.
+     [Online]. Available: https://doi.org/10.1145/1216396.1216399
+[47] P. Krantz, M. Kjaergaard, F. Yan, T. P. Orlando, S. Gustavsson, and
+     W. D. Oliver, “A quantum engineer’s guide to superconducting qubits,”
+     Appl. Phys. Reviews, vol. 6, no. 2, p. 021318, Jun. 2019.
+[48] C. M. Dawson and M. A. Nielsen, “The solovay-kitaev algorithm,”
+     Quantum Info. Comput., vol. 6, no. 1, pp. 81–95, Jan. 2006.
+[49] M. A. Nielsen and I. L. Chuang, Quantum Computation and Quantum
+     Information. Cambridge: Cambridge University Press, 2000.
+[50] E. Cartan, “Sur une classe remarquable d’espaces de Riemann,” Bull.
+     Soc. Math. Fr., vol. 2, pp. 214–264, 1926.
+[51] D. Wierichs, M. West, R. T. Forestano, M. Cerezo, and N. Killoran,
+     “Recursive Cartan decompositions for unitary synthesis,” Jun. 2025.
+[52] A. Javadi-Abhari, M. Treinish, K. Krsulich, C. J. Wood, J. Lishman,
+     J. Gacon, S. Martiel, P. D. Nation, L. S. Bishop, A. W. Cross, B. R.
+     Johnson, and J. M. Gambetta, “Quantum computing with Qiskit,” Jun.
+     2024.
+[53] R. Koenig and J. A. Smolin, “How to efficiently select an arbitrary
+     clifford group element,” J. Math. Physics, vol. 55, no. 12, p. 122202,
+     Dec. 2014.
+[54] C. Gidney, “Stim: a fast stabilizer circuit simulator,” Quantum, vol. 5,
+     p. 497, Jul. 2021. [Online]. Available: https://doi.org/10.22331/q-2021-
+     07-06-497
+[55] Qiskit, “Ai-transpiler cliffords,” 2024, hugging Face model repository.
+     Accessed: Apr. 21, 2026.
+[56] N. J. Ross and P. Selinger, “Optimal ancilla-free clifford+t approxi-
+     mation of z-rotations.” Quantum Inf. Comput., vol. 16, no. 11-12, pp.
+     901–953, 2016.
+

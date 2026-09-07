@@ -1,0 +1,713 @@
+%
+\documentclass[final,notitlepage,12pt,reqno]{amsart}
+
+%\usepackage{arydshln}
+\usepackage[table]{xcolor}
+\usepackage{etoolbox,mathtools}
+\makeatletter
+\patchcmd{\@makefnmark}{\fontsize}{\check@mathfonts\fontsize}{}{}
+\makeatother
+
+\makeatletter
+
+\DeclareFontFamily{U}{mathx}{}
+\DeclareFontShape{U}{mathx}{m}{n}{<-> mathx10}{}
+\DeclareSymbolFont{mathx}{U}{mathx}{m}{n}
+\DeclareMathAccent{\widecheck}{0}{mathx}{"71}
+
+\def\smallunderbrace#1{\mathop{\vtop{\m@th\ialign{##\crcr
+   $\hfil\displaystyle{#1}\hfil$\crcr
+   \noalign{\kern3\p@\nointerlineskip}%
+   \tiny\upbracefill\crcr\noalign{\kern3\p@}}}}\limits}
+\makeatother
+
+\newcommand{\bmmax}{0}
+\newcommand{\hmmax}{0}
+\UseRawInputEncoding
+\usepackage{graphicx,extarrows}
+\usepackage{calc}
+\usepackage{url}
+\newlength{\depthofsumsign}
+\setlength{\depthofsumsign}{\depthof{$\sum$}}
+\newlength{\totalheightofsumsign}
+\newlength{\heightanddepthofargument}
+
+\newcommand{\nsum}[1][1.0]{% only for \displaystyle
+   \mathop{%
+        \raisebox
+            {-#1\depthofsumsign+1\depthofsumsign}
+            {\scalebox
+                {#1}
+                {$\displaystyle\sum$}%
+            }
+    }
+}
+
+
+
+\makeatletter
+\let\I\@undefined
+\makeatother
+
+\setlength{\emergencystretch}{0em}
+
+\usepackage{geometry}
+\geometry{body={17.5cm,24.5cm}}
+
+
+\usepackage{indentfirst}
+\usepackage[normalem]{ulem}
+\usepackage{float}
+\usepackage{amsthm}
+
+\usepackage{enumitem}[2011/09/28]
+\setenumerate{align=left, leftmargin=0pt,labelsep=.5em, labelindent=0\parindent,listparindent=\parindent,itemindent=*}
+%\setitemize{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
+\usepackage{array}
+%\usepackage{empheq}
+%\usepackage{natbib}
+%\setlength{\bibsep}{0.0pt}
+\usepackage[all]{xy}
+
+
+\usepackage{exscale,relsize}
+\usepackage{multirow}
+
+
+\usepackage{caption}[2012/02/19]
+
+\usepackage{longtable,lscape}
+
+%\captionsetup[figure]{font=small}
+\captionsetup[table]{font=small}
+\setlength{\LTcapwidth}{\textwidth}
+\usepackage{colonequals}
+
+\usepackage{amssymb,bm,amsmath}
+\usepackage{amsfonts}
+
+\usepackage[OT2,T1,T2A]{fontenc}
+\usepackage[utf8x]{inputenc}
+\usepackage[french,german,russian,english]{babel}
+\usepackage{appendix}
+\newcommand{\textcyr}[1]{
+{\fontencoding{OT2}\fontfamily{wncyr}\selectfont
+\hyphenchar\font=-1\relax#1}}
+
+
+\DeclareMathOperator{\sech}{sech}
+\DeclareMathOperator{\Span}{span}
+\DeclareMathOperator{\dist}{dist}
+\DeclareMathOperator{\ind}{ind}
+\DeclareMathOperator{\lcm}{lcm}
+\DeclareMathOperator*{\fib}{fib}
+
+\DeclareMathOperator*{\vfib}{\widetilde{fib}}
+\DeclareMathOperator{\Lyn}{Lyn}
+\DeclareMathOperator{\Au}{Au}
+\DeclareMathOperator{\Ag}{Ag}
+\DeclareMathOperator{\disc}{disc}
+\DeclareMathOperator{\Shf}{\text{\cyrins{\textsf{Ш}}}}
+\DeclareMathOperator{\shf}{\text{\cyrins{\textsf{ш}}}}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\ELi}{ELi}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\Cl}{Cl}
+\DeclareMathOperator{\Ls}{Ls}
+\DeclareMathOperator{\ran}{ran}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\Gal}{Gal}
+\DeclareMathOperator{\End}{End}
+\DeclareMathOperator*{\res}{res}
+\DeclareMathOperator{\Li}{Li}
+\DeclareMathOperator{\sn}{sn}
+\DeclareMathOperator{\cn}{cn}
+\DeclareMathOperator{\dn}{dn}
+\DeclareMathOperator{\am}{am}
+\DeclareMathOperator{\tn}{tn}
+\DeclareMathOperator{\JZ}{Z}
+\DeclareMathOperator{\Int}{Int}
+\DeclareMathOperator{\arccot}{arccot}
+\DeclareMathOperator{\D}{d}
+\DeclareMathOperator{\I}{Im}
+\DeclareMathOperator{\R}{Re}
+\DeclareMathOperator*{\Reg}{Reg}
+
+\def\RotSymbol#1#2#3{\rotatebox[origin=c]{#1}{$#2#3$}}
+\def\rotcirclearrowleft{\mathpalette{\RotSymbol{-14}}\circlearrowleft}
+\def\rotcurvearrowleft{\mathpalette{\RotSymbol{-100}}\curvearrowleft}
+\def\turncurvearrowleft{\mathpalette{\RotSymbol{-180}}\curvearrowleft}
+
+\def\Xint#1{\mathchoice {\XXint\displaystyle\textstyle{#1}}%
+{\XXint\textstyle\scriptstyle{#1}}%
+{\XXint\scriptstyle\scriptscriptstyle{#1}}%
+{\XXint\scriptscriptstyle\scriptscriptstyle{#1}}%
+\!\int}\def\XXint#1#2#3{{\setbox0=\hbox{$#1{#2#3}{\int}$}       \vcenter{\hbox{$#2#3$}}\kern-.5\wd0}}
+
+
+\def\dashint{\Xint-}
+\def\ddashint{\Xint=}
+\def\clockint{\Xint\circlearrowright}
+\def\counterint{\Xint\rotcirclearrowleft}
+\def\pd{\text{\textit\pounds}}
+
+
+%\bibpunct{[}{]}{,}{n}{}{;}
+
+\def\qed{\hfill$ \blacksquare$}
+\def\eor{\hfill$ \square$}
+
+
+\def\acknowledgement{\par\addvspace{17pt}\small\rmfamily
+\trivlist
+\item[\hskip\labelsep
+{\it{Acknowledgements}.}]}
+\def\endacknowledgement{\endtrivlist\addvspace{6pt}}
+
+\newcolumntype{L}{>{$}l<{$}}
+\newcolumntype{C}{>{$}c<{$}}
+\newcolumntype{R}{>{$}r<{$}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{conjecture}[theorem]{Conjecture}
+
+\newenvironment{remark}[1][Remark]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+%\theoremstyle{remark}
+%\newtheorem{notation}[theorem]{Notation}
+%\newtheorem{remark}{Remark}[theorem]
+
+
+
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand*\thetable{\arabic{table}}
+\numberwithin{equation}{section}
+
+\setcounter{tocdepth}{4}
+
+
+\usepackage{Baskervaldx}
+\usepackage[baskervaldx]{newtxmath}
+\usepackage[cal=cm,scr=rsfs,frak=euler]{mathalfa}
+
+%\usepackage{baskervald}
+%\usepackage[baskervillef]{newtxmath}
+
+\usepackage[scr=rsfs]{mathalfa}
+\DeclareMathAlphabet{\mathsf}{OT1}{\sfdefault}{m}{n}
+\SetMathAlphabet{\mathsf}{bold}{OT1}{\sfdefault}{m}{n}
+\DeclareSymbolFontAlphabet{\mathbb}{AMSb}
+\DeclareRobustCommand{\cyrins}[1]{%
+  \begingroup\fontfamily{erewhon-TLF}%
+  \foreignlanguage{russian}{#1}%
+  \endgroup
+}
+
+\usepackage{color}
+
+\usepackage{eurosym}
+
+\begin{document}
+
+\pagenumbering{roman}
+\selectlanguage{english}
+%+Title
+\title{Galois descents of certain multiple polylogarithms}\dedicatory{Dedicated to 19260817, a prime number}\author{Yajun Zhou}
+\address{Program in Applied and Computational Mathematics (PACM), Princeton University, Princeton, NJ 08544} \email{yajunz@math.princeton.edu}\curraddr{\textrm{} \textsc{Academy of Advanced Interdisciplinary Studies (AAIS), Peking University, Beijing 100871, P. R. China}}\email{yajun.zhou.1982@pku.edu.cn}
+
+\date{\today}\thanks{\textit{Keywords}: Galois descents, multiple polylogarithms, cyclotomic multiple zeta values\\\indent\textit{MSC 2020}: 11M06, 11M32\\\indent * This work was supported in part  by the Applied Mathematics Program within the Department of Energy
+(DOE) Office of Advanced Scientific Computing Research (ASCR) as part of the Collaboratory on
+Mathematics for Mesoscopic Modeling of Materials (CM4).}
+
+
+%+Abstract
+
+\begin{abstract}We prove some conjectures of K. C. Au concerning the  descents of cyclotomic levels in certain sums over multiple polylogarithms. Via answers to a question of Au in some particular cases, we also confirm Broadhurst's conjecture on honorary multiple zeta values at even weights. \end{abstract}
+%-Abstract
+
+\maketitle
+%+Contents
+\pagenumbering{arabic}
+
+\section{Introduction\label{sec:intro}}
+Multiple polylogarithms (MPLs)  are defined by (analytic continuations of) \begin{align}
+\Li_{a_1,\dots,a_n}(z_1,\dots,z_n)\colonequals {\sum\limits_{\ell_{1}>\dots>\ell_{n}>0}\prod\limits_{j=1}^n\frac{\smash[t]{z_{j}^{\ell_{j}}}}{\ell_j^{a_j}}}.\label{eq:Mpl_defn}
+\end{align} Here, the right-hand side of \eqref{eq:Mpl_defn}  converges absolutely  for  $ a_1,\dots,a_n\in\mathbb Z_{>0}, \prod_{j=1}^m|z_j|<1,m\in\mathbb Z\cap[1,n]$. The series in question also converges (though not necessarily in the mode of absolute convergence) when  $ (a_1,z_1)\neq(1,1)$ and $ |z_1|=\dots=|z_n|=1$. A convergent MPL $ \Li_{a_1,\dots,a_n}(z_1,\dots,z_n)$ is said to have weight $ a_1+\dots+a_n$ and depth $n$.
+
+Using convergent MPLs, one may introduce the $ \mathbb Q$-vector space spanned by cyclotomic multiple zeta values (CMZVs) of weight $ w\in\mathbb Z_{>0}$ and level $N\in\mathbb Z_{>0}$:\begin{align}
+ \mathfrak Z_{w}(N)\colonequals\Span_{\mathbb Q}\left\{\Li_{a_1,\dots,a_n}(z_1,\dots,z_n)\colonequals \smash[b]{\sum\limits_{\ell_{1}>\dots>\ell_{n}>0}\prod\limits_{j=1}^n\frac{\smash[t]{z_{j}^{\ell_{j}}}}{\ell_j^{a_j}}}\middle|\begin{smallmatrix}a_1,\dots,a_n\in\mathbb Z_{>0}\\z_{1}^{N}=\dots=z_n^N=1\\\sum _{j=1}^{n}a_{j}=w\\(a_1,z_1)\neq(1,1)\end{smallmatrix} \right\}.\label{eq:Zk(N)}
+\end{align}Conventionally, one sets $ \mathfrak Z_{0}(N) \colonequals \mathbb Q$. CMZVs of levels 1 and 2 are known as multiple zeta values (MZVs) and alternating multiple zeta values (AMZVs), respectively. Customarily, (A)MZVs are  denoted by \begin{align}
+\zeta_{A_{1},\dots,A_n}\equiv\Li_{|A_1|,\dots,|A_n|}\bigg(\frac{A_1}{|A_1|},\dots,\frac{A_n}{|A_n|}\bigg)\in \mathfrak Z_{w}(2),
+\end{align}where $ A_1,\dots,A_n\in\mathbb Z\smallsetminus\{0\}$ and $ A_1\neq1$. With symbolic computations involving provable algebraic relations\footnote{In particular, Au's software \cite{Au2022a} gives automated reductions  in $ \mathfrak Z_{w}(N)$ for $ w\in\{1,2,3,4,5,6\}$, $N=4$ and  $ w\in\{1,2,3,4,5\}$, $ N=6$.} among CMZVs of mod\-er\-ate-sized weights \cite{Au2022a}, Kam Cheong Au discovered some remarkable patterns concerning \begin{align}\Li_{a_1,\dots,a_n}(z,\mathbf 1_{n-1})
+\equiv\Li_{a_1,\dots,a_n}(z,\underset{n-1}{\underbrace{1,\dots,1}})\colonequals \sum_{\ell_{1}>\dots>\ell_{n}>0}\frac{z^{\ell_{1}}}{\prod_{j=1}^n\ell_j^{a_j}}\quad(\text{where } |z|\leq1)
+\end{align}and \begin{align}
+g_{w,n}(z)\colonequals {}&(-1)^n\sum_{\substack{a_1,\dots,a_n\in\mathbb Z_{>0}\\a_1+\dots+a_n=w}} \Li_{a_1,\dots,a_n}(z,\mathbf 1_{n-1}),\label{eq:g_w,n}
+\end{align}
+as recapitulated in the conjecture below.
+
+\begin{conjecture}[K. C. Au {\cite[Conjecture 1.5]{Au2022a}}]\label{conj:Au1.5}\begin{enumerate}[leftmargin=*,  label=\emph{(\alph*)},ref=(\alph*),
+widest=d, align=left] \item
+For each fixed pair of weight $w\in\mathbb Z_{>0}$ and depth $ n\in\mathbb Z\cap[1,w]$, one has  {\allowdisplaybreaks
+\begin{align}
+\R g_{w,n}\bigg( \frac{1+i}{2} \bigg)\in{}&\mathfrak Z_w(2),\label{eq:Au1.5a1}\\\R g_{w,n}( i )\in{}&\mathfrak Z_w(2),\label{eq:Au1.5a2}
+\end{align}
+}where each individual summand is in $ \mathfrak Z_w(4)$.\footnote{In an unlabeled formula right above  \cite[Conjecture 1.5]{Au2022a}, Au stated a borderline case of \eqref{eq:Au1.5a1}, where $n=1$.}
+\item Set $ \varrho\colonequals  e^{\pi i/3}$. For each fixed pair of weight $w\in\mathbb Z_{>0}$ and depth $ n\in\mathbb Z\cap[1,w]$, one has \begin{align}
+\R g_{w,n}(\varrho)\in{}&\mathfrak Z_w(1),\label{eq:Au1.5b}
+\end{align}where each individual summand is in $ \mathfrak Z_w(6)$.\footnote{\label{fn:desc3}According to either \cite[Example 3.9]{Au2022a} or \cite[Proposition 3.3]{SunZhou2026MCV}, there is a sharper result $ \mu_{a_1,\dots, a_n}\in\mathfrak Z_{a_1+\dots+a_n}(3)$.  Also note that one may verify \eqref{eq:Au1.5b} for $ w\in\mathbb Z\cap[1,8]$ and $ n\in\mathbb Z\cap[1,w]$, using the algorithms given in \cite[\S\S3.1--3.2]{SunZhou2026MCV}. }
+ \end{enumerate}
+\end{conjecture}
+
+Au referred to these  relations as ``Galois descent for multiple polylogarithms---a subtle and
+largely unexplored phenomenon''.
+ Here, 
+ {the   wording  ``largely unexplored'' was particularly  judicious. Galois descents of CMZVs did not belong to an uncharted territory before Au's work~\cite{Au2022a}: Broadhurst's numerical experiments in 2014 suggested the presence of honorary multiple zeta values  (or just ``hononary MZVs'' for short) at even weights  \cite[Conjecture 5]{Broadhurst2014MDV}\begin{align}
+\R \Li_{w-1,1}(\varrho,1)\in\mathfrak Z_w(1),\quad \text{for }w\in 2\mathbb Z_{>0},\label{eq:BroadhurstConj5}
+\end{align} while  Xu's empirical discovery  \cite[Conjecture 7.2]{Xu2019nonlinEuler}  \begin{align}\begin{split}&\zeta_{-2m,2}+2m\zeta_{-2m-1,1}\equiv\Li_{2m,2}(-1,1)+2m\Li_{2m+1,1}(-1,1)\\\in{}& \mathfrak Z_{2m+2}(1)\cap\Span_{\mathbb Q}\{\zeta_{a,2m+2-a}\equiv\Li_{a,2m+2-a}(1,1)|a\in\mathbb Z\cap[1,2m+1]\}\label{eq:XuConj}
+\end{split}\end{align}  in 2019 has been  proved very recently by Zheng--Yang  \cite{ZhengYang2025}  (in part) and by Charlton  \cite{Charlton2026} (in full). Moreover, by working with the categories of mixed Tate motives, Glanois \cite{Glanois2016} established criteria for Galois descents in motivic versions for CMZVs of levels $N\in\{ 2,3,4,6,8\}$, which paved the way for the proofs of Zheng--Yang~\cite{ZhengYang2025} and  Charlton~\cite{Charlton2026}.}
+
+In this note, we not only answer Au's questions \eqref{eq:Au1.5a1}--\eqref{eq:Au1.5b} in the positive, but also confirm Broadhurst's \eqref{eq:BroadhurstConj5}.
+
+We open with a brief  overview of our  toolkit in  \S\ref{sec:MPL_GPL}, before establishing ``depth-blind'' versions of \eqref{eq:Au1.5a1} and \eqref{eq:Au1.5b}, which replace their left-hand sides by (alternating) sums over $ n\in\mathbb Z\cap[1,w]$.  In \S\ref{sec:desc3}, we prove the full versions of  both \eqref{eq:Au1.5b} and \eqref{eq:BroadhurstConj5},  upon a conversion of $ g_{w,n}(z)$ from its defining multi-index summation [see \eqref{eq:g_w,n}] to an integral representation.
+Afterwards, these techniques are extended to the complete verifications of \eqref{eq:Au1.5a1}  and \eqref{eq:Au1.5a2} in \S\ref{sec:desc4}, along with another conjecture of Au \cite[Conjecture 1.6]{Au2022a}. \section{ Depth-blind Galois descents of multiple polylogarithms \label{sec:MPL_GPL}}
+\subsection{Generalized polylogarithms and their properties\label{subsec:GPLprop}}
+The generalized polylogarithms (GPLs) are   defined through the recursion \cite[(2.1)]{Frellesvig2016} \begin{align}\notag\\[-12pt]
+G(\alpha_{1},\dots,\alpha_n;z)\colonequals{\displaystyle\int_0^z\frac{G(\alpha_2,\dots,\alpha_n;x)\D x}{x-\alpha_1}},\quad\text{for }\displaystyle\smash[t]{\sum_{k=1}^n|}\alpha_k|\neq0\label{eq:GPL_rec}
+\end{align}and the initial condition \cite[(2.2)]{Frellesvig2016}\begin{align}
+{ G(\boldsymbol0_{n};z)\equiv G(\underset{n }{\underbrace{0,\dots,0 }};z)}\colonequals{\dfrac{\log^nz}{n!}},\quad G(-\!\!-;z)\colonequals1.\label{eq:GPL0}
+\end{align}To better appreciate the combinatorial structure of MPLs, we convert them to GPLs  (see \cite[(2.5)]{Frellesvig2016} or \cite[(1.3)]{Panzer2015}): \begin{align}
+\begin{split}\Li_{a_1,\dots,a_n}(z_1,\dots,z_n)={}&(-1)^{n}G\left(\smash[b]{\underset{a_1-1 }{\underbrace{0,\dots,0 }}},\frac{1}{z_{1}},\smash[b]{\underset{a_2-1 }{\underbrace{0,\dots,0 }}},\frac{1}{z_{1}z_2},\dots,\smash[b]{\underset{a_n-1 }{\underbrace{0,\dots,0 }}},\frac{1}{\prod_{j=1}^nz_j};1\right)\\[-5pt]\\\equiv{}&(-1)^nG\left(  \boldsymbol0_{a_{1}-1},\frac{1}{z_{1}},\boldsymbol0_{a_{2}-1},\frac{1}{z_{1}z_2},\dots,\boldsymbol0_{a_{n}-1},\frac{1}{\prod_{j=1}^nz_j};1\right).
+\end{split}\label{eq:MPLtoGPL}
+\end{align}Note that when  $ \alpha_n\neq0$, the GPL recursion \eqref{eq:GPL_rec} effectively defines $G(\alpha_{1},\dots,\alpha_n;z)$ as a function of the homogeneous coordinates $ [\alpha_{1}:\cdots:\alpha_n:z]$, namely  \cite[(2.3)]{Frellesvig2016}
+\begin{align}
+G(\alpha_{1},\dots,\alpha_n;z)=G(\sigma\alpha_{1},\dots,\sigma\alpha_n;\sigma z)\label{eq:GPLscaling}
+\end{align}for $\sigma\neq0 $.
+In particular, we have\begin{align}
+\begin{split}\begin{split}\Li_{a_1,\dots,a_n}(z,\mathbf 1_{n-1})={}&(-1)^{n}G({\underset{a_1-1 }{\underbrace{0,\dots,0 }}},1,{\underset{a_2-1 }{\underbrace{0,\dots,0 }}},1,\dots,\smash[b]{\underset{a_n-1 }{\underbrace{0,\dots,0 }}},1;z)\\\equiv{}&(-1)^{n}G(\boldsymbol0_{a_1-1},1,\boldsymbol0_{a_2-1},1,\dots,\boldsymbol0_{a_n-1},1;z),
+\end{split}\label{eq:LtoGPL}
+\end{split}
+\end{align}according to the MPL-GPL conversion \eqref{eq:MPLtoGPL}  and the scaling property \eqref{eq:GPLscaling}.
+
+ The products of GPLs satisfy \cite[(2.4)]{Frellesvig2016} \begin{align}\label{eq:GPL_shuffle}G(\alpha_{1},\dots,\alpha_{j};z)G(\beta_{1},\dots,\beta_{k};z)=\sum_{\bm\gamma\in\bm \alpha\Shf\bm \beta }G(\gamma_{1},\dots,\gamma_{j+k}; z)\end{align}where the set $ \bm \alpha\Shf\bm \beta$ runs over all the shuffles of the vector components in  $ \bm \alpha$ and $\bm \beta$   that maintain the internal orders  within both vectors. 
+
+\subsection{Equations of motion for  ``depth-blind'' Galois descents\label{subsec:depth-blind}}
+In view of \eqref{eq:LtoGPL}, we can rewrite \eqref{eq:g_w,n} as\begin{align}
+g_{w,n}(z)\colonequals {}&\sum_{\substack{\alpha_1,\dots,\alpha_{w-1}\in\{0,1\}\\\alpha_1+\dots+\alpha_{w-1}+1=n}}G(\alpha_1,\dots,\alpha_{w-1},1;z) .\tag{\ref{eq:g_w,n}$'$}
+\end{align}
+Now, we settle ``depth-blind'' versions of \eqref{eq:Au1.5a1} and \eqref{eq:Au1.5b}
+for all the positive weights, as described in the two propositions below.\begin{proposition}
+
+\label{prop:G_avg_desc}Define\begin{align}
+\mathsf G_w(z)\colonequals {}&\sum_{n=1}^w g_{w,n}(z)
+\end{align}for all $ w\in\mathbb Z_{>0}$. We have \begin{align}
+\mathsf G_w(z)+\mathsf G_w(1-z)\in\Span_\mathbb Q\left\{ Z_\ell [\log z+\log(1-z)]^{w-\ell}\middle|\begin{smallmatrix}\ell,w-\ell\in\mathbb Z_{\geq0}\\Z_\ell\in\mathfrak Z_\ell(1)\end{smallmatrix}\right\}.\label{eq:Gw_refl}
+\end{align}In particular, this implies that \begin{align}
+\R \mathsf G_w\bigg(\frac{1+i}{2}\bigg)\in{}&\mathfrak Z_w(2),\\\R \mathsf G_{w}(\varrho)\in{}&\mathfrak Z_w(1).
+\end{align}
+\end{proposition}
+\begin{proof}Thanks to the GPL recursion \eqref{eq:GPL_rec}, we obtain an equation of motion\footnote{Since empty sums are zero, we   have $ g_{w,n}(z)=0$ for $ n\notin\mathbb Z\cap[1,w]$. }\begin{align}
+\frac{\partial g_{w,n}(z)}{\partial z}=\frac{ g_{w-1,n}(z)}{z}+\frac{g_{w-1,n-1}(z)}{z-1}.\label{eq:gwn_evolv}
+\end{align}Summing over all the depths $ n\in\mathbb Z\cap[1,w]$, we get \begin{align}
+\frac{\partial\mathsf G_w(z)}{\partial z}={}&\left( \frac{1}{z} +\frac{1}{z-1}\right)\mathsf G_{w-1}(z).
+\end{align}Trading $z$ for $1-z$, one has\begin{align}
+\frac{\partial\mathsf G_w(1-z)}{\partial z}={}&\left( \frac{1}{z} +\frac{1}{z-1}\right)\mathsf G_{w-1}(1-z).
+\end{align}To deduce \eqref{eq:Gw_refl} from the recursion \begin{align}
+\frac{\partial[\mathsf G_w(z)+\mathsf G_w(1-z)]}{\partial z}={}&\left( \frac{1}{z} +\frac{1}{z-1}\right)[\mathsf G_{w-1}(z)+G_{w-1}(1-z)]
+\end{align}with initial condition\begin{align}
+\mathsf G_1(z)+\mathsf G_1(1-z)=\log z+\log(1-z),
+\end{align}one only needs to check the regularized limits \cite[\S2.3]{Panzer2015}\begin{align}
+\Reg_{z\to0}[\mathsf G_w(z)+\mathsf G_w(1-z)]=\Reg_{z\to0}\mathsf G_w(1-z)\in \mathfrak Z_w(1),\label{eq:RegG(1-z)}
+\end{align}which is a routine exercise.
+[By working a little harder, one can actually represent $ \Reg_{z\to0}\mathsf G_w(1-z)$ as a polynomial (in rational coefficients) of $ \pi^2$ and all the odd zeta values $ \zeta_{2n+1}\equiv\Li_{2n+1}(1),n\in\mathbb Z_{>0}$. See  \S\ref{subsec:shf_gwn} for details.]
+
+The rest  follow from the observations that $ \log\frac{1+i}{2}+\log\frac{1-i}{2}=\Li_1(-1)\in\mathfrak Z_1(2)$ and $ \log \varrho +\log(1-\varrho)=0$, as well as the GPL shuffles in \eqref{eq:GPL_shuffle}.\end{proof}\begin{proposition}\label{prop:G_alt_avg_desc}Define\begin{align}
+\widetilde{\mathsf G}_w(z)\colonequals {}&\sum_{n=1}^w (-1)^{n}g_{w,n}(z)
+\end{align}for all $ w\in\mathbb Z_{>0}$. For $ |z|\le1$ and $ z\neq1$, we have
+\begin{align}
+\widetilde{\mathsf G}_w(z)= g_{w,1}\bigg(\frac{z}{z-1}\bigg)\equiv-\Li_w\bigg(\frac{z}{z-1}\bigg),
+\label{eq:gw1Landen}\end{align}which entails \begin{align}
+\R \widetilde{\mathsf G}_1\bigg(\frac{1+i}{2}\bigg)=\frac{\log2}{2}\in\mathfrak Z_1(2),\quad \R \widetilde {\mathsf G}_1(\varrho)=0\in\mathfrak Z_1(1)=\{0\}
+\end{align}and\begin{align}
+\R \widetilde{\mathsf G}_w\bigg(\frac{1+i}{2}\bigg)\in \mathbb Q\zeta _{w}\subseteq\mathfrak Z_w(1),\\\R \widetilde{\mathsf G}_w(\varrho)\in \mathbb Q\zeta _{w}\subseteq\mathfrak Z_w(1),
+\end{align}for all $ w\in\mathbb Z_{>1}$.
+\end{proposition}\begin{proof}The function\begin{align}
+\widetilde{\mathsf \Delta}_w(z)\colonequals\widetilde{\mathsf G}_w(z)-g_{w,1}\bigg(\frac{z}{z-1}\bigg) \end{align}is governed by the recursion [cf.\ \eqref{eq:gwn_evolv}] \begin{align}
+\frac{\partial \widetilde{\mathsf \Delta}_w(z)}{\partial z}=\left( \frac{1}{z} -\frac{1}{z-1}\right)\widetilde{\mathsf \Delta}_{w-1}(z)
+\end{align}and the boundary condition $ \widetilde{\mathsf\Delta}_w(0)=0$ for all  $ w\in\mathbb Z_{>1}$. In other words, one has\begin{align}
+\widetilde{\mathsf \Delta}_w(z)=\int_{0}^z\left( \frac{1}{x} -\frac{1}{x-1}\right)\widetilde{\mathsf \Delta}_{w-1}(x)\D x
+\end{align} for all  $ w\in\mathbb Z_{>1}$. Direct computation reveals that  $ \widetilde{\mathsf\Delta}_1(z)=0$, so we must have  $ \widetilde{\mathsf \Delta}_w(z)=0$ for all $ z\in\mathbb C$ and   $ w\in\mathbb Z_{>1}$.
+
+To wrap up this proposition, simply note that  \begin{align}
+\R\Li_w(-i)={}&\frac{1-2^{w-1}}{2^{2w-1}}\zeta _{w}\intertext{and}\R\Li_w(\varrho)={}&\left( 1-\frac{1}{2^{w-1}} \right)\left( 1-\frac{1}{3^{w-1}} \right)\frac{\zeta _{w}}{2}
+\end{align}hold for all $ w\in\mathbb Z_{>1}$.
+\end{proof}
+
+\section{ Galois descents from hexagon vertices\label{sec:desc3}}
+\subsection{Shuffle structure of Au's sums\label{subsec:shf_gwn}}The  ``depth-blind'' appetizers in \S\ref{subsec:depth-blind} primarily drew on the GPL recursion  \eqref{eq:GPL_rec},  without making heavy use of the GPL shuffles in  \eqref{eq:GPL_shuffle}.  In this subsection, we will produce identities of a different flavor, to investigate the ``in-depth'' structure of Au's sum rules.
+
+We start from an application of the  GPL shuffles in  \eqref{eq:GPL_shuffle}:\begin{align}
+G(1;z)G(\boldsymbol0_{w-1},1;z)=G(\boldsymbol0_{w-1},1,1;z)+g_{w,2}(z),\label{eq:gw2_prod}
+\end{align}  or in terms of word shuffles,\begin{align}
+1\shf \boldsymbol0_{w-1}1= \boldsymbol0_{w-1}11+\sum_{\substack{\alpha_1,\dots,\alpha_{w-1}\in\{0,1\}\\\alpha_1+\dots+\alpha_{w-1}+1=2}}\alpha_1\cdots\alpha_{w-1}1.
+\tag{\ref{eq:gw2_prod}$'$}\label{eq:gw2_prod'}\end{align}   In the next lemma, we will generalize \eqref{eq:gw2_prod} and \eqref{eq:gw2_prod'} to all the available weights and depths. \begin{lemma}
+For $ w\in\mathbb Z_{>0}$ and $ n\in\mathbb Z\cap[1,w]$, we have \begin{align}
+g_{w,n}(z)=\sum_{m=1}^n(-1)^{m-1}G(\boldsymbol1_{n-m};z)G(\boldsymbol0_{w-n},\boldsymbol1_{m};z),\label{eq:gwn_prod_expn}
+\end{align}with the understanding that $G(\boldsymbol0_{0},\boldsymbol1_{m};z)=G(\boldsymbol1_{m};z)$ and $ G(\boldsymbol1_{0};z)=1$. \end{lemma}\begin{proof}For $ n=1$,  the proposed formula follows from the definition of $ g_{w,1}(z)$.  For $n=w$, we have \begin{align}
+g_{w,w}(z)=G(\boldsymbol1_{w};z)=\frac{\log^w(1-z)}{w!}
+\end{align}by  iterative invocations of either the GPL recursion  \eqref{eq:GPL_rec} or the GPL shuffles   \eqref{eq:GPL_shuffle} for $ 1\shf\textbf{1}_n=(n+1)\boldsymbol1_{n+1}$, whereas the right-hand side of \eqref{eq:gwn_prod_expn} becomes \begin{align}
+\sum_{m=1}^w(-1)^{m-1}G(\boldsymbol1_{ w-m};z)G(\boldsymbol1_{m};z)=\sum_{m=1}^w(-1)^{m-1}\frac{\log^w(1-z)}{(w-m)!m!}=\frac{\log^w(1-z)}{w!},
+\end{align}according to the binomial theorem.
+
+ In the light of \begin{align}
+\frac{\partial G(\boldsymbol1_{n-m};z)}{\partial z}={}&\begin{cases}0 & \text{if }n-m=0, \\
+\frac{ G(\boldsymbol1_{n-m-1};z)}{z-1} & \text{if }n-m>0, \\
+\end{cases}\intertext{and}\frac{\partial G(\boldsymbol0_{w-n},\boldsymbol1_{m};z)}{\partial z}={}&\begin{cases}\frac{G(\boldsymbol1_{m-1};z)}{z-1} & \text{if }w-n=0, \\
+\frac{ G(\boldsymbol0_{w-n-1},\boldsymbol1_{m};z)}{z} & \text{if }w-n>0, \\
+\end{cases}
+\end{align}we see that\begin{align}
+\delta_{w,n}(z)\colonequals g_{w,n}(z)-\sum_{m=1}^n(-1)^{m-1}G(\boldsymbol1_{n-m};z)G(\boldsymbol0_{w-n},\boldsymbol1_{m};z)
+\end{align}evolves in the same fashion as $  g_{w,n}(z)$:\begin{align}
+\frac{\partial \delta_{w,n}(z)}{\partial z}=\frac{ \delta_{w-1,n}(z)}{z}+\frac{\delta_{w-1,n-1}(z)}{z-1},\quad\text{where }w\in\mathbb Z_{>0},n\in\mathbb Z\cap[1,w],
+\end{align}so long as one adopts the convention that $ \delta_{w-1,w}(z)=0$. Since $ \delta_{w,n}(0)=0$, we may evaluate\begin{align}
+ \delta_{w,n}(z)=\int_{0}^z\left[ \frac{ \delta_{w-1,n}(x)}{x}+\frac{\delta_{w-1,n-1}(x)}{x-1} \right]\D x\label{eq:delta_int_evolv}
+\end{align} iteratively,  as follows:\begin{itemize}
+\item
+Using $ \delta_{2,1}(x)=\delta_{2,2}(x)=0$ proved in the last paragraph, deduce $ \delta_{3,2}(z)=0$.\item Fixing the depth $n=2$, prove $ \delta_{w,2}(z)=0$  by induction on the weight  $w$, through repeated invocations of \eqref{eq:delta_int_evolv}. [Here, one does not need to know the shuffle identity \eqref{eq:gw2_prod} beforehand.]\item Using $ \delta_{3,3}(x)=0$ proved in the last paragraph, deduce $ \delta_{4,3}(z)=0$, and then promote to all the weights $ w>4$ while fixing the depth  $n=3$.\item Proceed as above, advancing the depth $n$ by one step at a time, before validating $ \delta_{w,n}(z)=0$ for all $ w\geq n$.
+\end{itemize} This completes the proof of  \eqref{eq:gwn_prod_expn}.
+\end{proof}\begin{remark}In terms of word shuffles, the last lemma converts a multi-index summation over certain binary words  into a single sum over $ m\in\mathbb Z\cap[1,n]$:\begin{align}
+\sum_{\substack{\alpha_1,\dots,\alpha_{w-1}\in\{0,1\}\\\alpha_1+\dots+\alpha_{w-1}+1=n}}\alpha_1\cdots\alpha_{w-1}1= \sum_{m=1}^n(-1)^{m-1}\boldsymbol1_{n-m}\shf\boldsymbol0_{w-n}\boldsymbol1_{m},\tag{\ref{eq:gwn_prod_expn}$'$}\label{eq:gwn_prod_expn'}
+\end{align}so long as  the empty words $ \boldsymbol0_0$ and $ \boldsymbol1_0$  are suitably interpreted.
+\eor\end{remark}\begin{remark}During the proof of Proposition \ref{prop:G_avg_desc}, we encountered a quantity\begin{align}
+\Reg_{z\to0}\mathsf G_w(1-z)=\Reg_{z\to0} \sum _{n=1}^wg_{w,n}(1-z),
+\end{align} where the operation    ``$ \Reg_{z\to0}$'' was meant to suppress all the positive integer powers of $ \log z$. With \eqref{eq:gwn_prod_expn'}, we have\begin{align}
+\begin{split}\Reg_{z\to0} g_{w,n}(1-z)={}&\Reg_{z\to0}\sum_{m=1}^n(-1)^{m-1}G(\boldsymbol1_{n-m};1-z)G(\boldsymbol0_{w-n},\boldsymbol1_{m};1-z)\\={}&(-1)^{n-1}G(\boldsymbol0_{w-n},\boldsymbol1_{n};1)
+\end{split}
+\end{align}for $ n\in\mathbb Z\cap[1,w-1]$ and $ \Reg_{z\to0}g_{w,w}(1-z)=\frac{1}{w!}\Reg_{z\to0}\log^w z=0$, so \begin{align}
+\begin{split}\Reg_{z\to0}\mathsf G_w(1-z)={}&\sum_{n=1}^{w-1}(-1)^{n-1}G( \boldsymbol0_{w-n},\boldsymbol1_{n};1)=-\sum_{n=1}^{w-1}\Li_{w-n+1,\boldsymbol1_{n-1}}(\boldsymbol1_{n})\\\underset{\text{\cite[(5)]{BorweinStraub2015Snp}}}{\xlongequal{\text{\cite[(1.3)]{Koelbig1986}}}}{}&-\sum_{n=1}^{w-1}\frac{(-1)^{w-1}}{(w-n-1)!n!}\int_0^1\frac{\log^{w-n-1}t\log^{n}(1-t)\D t}{t}\\={}&\frac{(-1)^w}{(w-1)!}\int_0^1\frac{[\log t+\log(1-t)]^{w-1}-\log^{w-1}t}{t}\D t\\\in{}&\mathfrak Z_{w}(1)\cap\mathbb Q[\pi^2,\zeta_{3},\zeta_{5},\dots]
+\end{split}\label{eq:RegGw(1-z)}
+\end{align} gives a quantitative refinement of the statement in \eqref{eq:RegG(1-z)}, where  the ``$ \in$'' step follows from a standard argument \cite[\S9.1]{Koelbig1986}.
+\eor\end{remark}
+
+To facilitate further discussions, we rewrite the shuffle identities \eqref{eq:gwn_prod_expn} and \eqref{eq:gwn_prod_expn'}
+with the  integral representations of Nielsen polylogarithms, as studied by K\"olbig \cite[(1.3)]{Koelbig1986} and Borwein--Straub \cite[(5)]{BorweinStraub2015Snp}. \begin{proposition}
+For $ |z|\leq1$, $ z\neq1$, $ w\in\mathbb Z_{>0}$ and $ n\in\mathbb Z\cap[1,w-1]$, we have\begin{align}
+g_{w,n}(z)=\frac{(-1)^w}{(w-n-1)!n!}\int_0^1 \frac{[\log^{}(1-zt)-\log(1-z)]^{n}-[-\log(1-z)]^n}{t}\log^{w-n-1}t\D t.\label{eq:gwn_int}
+\end{align} \end{proposition}\begin{proof}We compute \begin{align}
+\begin{split}g_{w,n}(z)={}&-\sum_{m=1}^n\frac{\log^{n-m}(1-z)}{(n-m)!}\Li_{w-n+1,\boldsymbol1_{m-1}}(z,\boldsymbol1_{m-1})\\\underset{\text{\cite[(5)]{BorweinStraub2015Snp}}}{\xlongequal{\text{\cite[(1.3)]{Koelbig1986}}}}{}&\frac{1}{(w-n-1)!}\sum_{m=1}^n\frac{(-1)^{w-n+m}\log^{n-m}(1-z)}{(n-m)!m!}\int_0^1\frac{\log^{w-n-1}t\log^{m}(1-zt)\D t}{t}.
+\end{split}
+\end{align}  The binomial theorem then leads us to  \eqref{eq:gwn_int}.
+\end{proof}
+\begin{remark}The integral representations for Nielsen polylogarithms do not work when $n=w$. Fortunately,  direct computations reveal these exceptional cases as simply $ g_{w,w}(z)=\frac{\log^w(1-z)}{w!}$ for all $ w\in\mathbb Z_{>0}$.
+\eor\end{remark}
+
+Consider the hypergeometric  series\begin{align}
+_2F_1\left( \left.\begin{array}{@{}c@{}}
+a,b \\
+c \\
+\end{array}\right|z \right)=1+\sum_{k=1}^\infty\frac{(a)_k(b)_k}{(c)_k}\frac{z^k}{k!},\quad|z|\leq 1,z\neq1, \label{eq:2F1_defn}
+\end{align}
+where $ (A)_{k}=\prod_{m=0}^{k-1}(A+m)$ is the rising factorial. In the next proposition, we turn the right-hand side of    \eqref{eq:gwn_int} into partial derivatives of  $ _2F_1$   series with respect to their  hypergeometric parameters.\begin{proposition}
+For $ |z|\leq1$, $ \left\vert \frac{z}{z-1} \right\vert\leq1$, $ z\neq1$, and $ m+1,n\in\mathbb Z_{>0}$, we have\begin{subequations}\begin{align}
+g_{m+n,n}(z)={}&\frac1{m!n!}\left.\!\frac{\partial^{m+n}}{\partial u^{m}\partial v^n}\left[ (1-z)^{v}{_2}F_1\left(\begin{array}{@{}c@{}}
+-u,v \\
+1-u \\
+\end{array}\middle| z\right) -1\right]\right|_{u=v=0}\label{eq:gwn_dd_2F1}\\={}&\frac1{m!n!}\left.\!\frac{\partial^{m+n}}{\partial u^{m}\partial v^n}\left[ {_2}F_1\left(\begin{array}{@{}c@{}}
+1,v \\
+1-u \\
+\end{array}\middle| \frac{z}{z-1}\right) -1\right]\right|_{u=v=0}.\label{eq:gwn_dd_2F1Pfaff}
+\end{align}\end{subequations}\end{proposition}\begin{proof}With Euler's integral representation for the hypergeometric series  $ _2F_1$ \cite[Theorem 2.2.1]{AAR}, we have\begin{align}
+\begin{split}\sum _{m=0}^\infty \sum _{n=1}^\infty g_{m+n,n}(z)u^mv^n={}&\sum _{n=1}^\infty \frac{\log^n(1-z)}{n!}v^n+u\int_0^1 \frac{(1-z)^{v}-\left(\frac{1-z}{1-zt}\right)^v}{t^{u+1}}\D t\\={}&[(1-z)^{v}-1]+(1-z)^{v}\left[{_2}F_1\left(\begin{array}{@{}c@{}}
+-u,v \\
+1-u \\
+\end{array}\middle| z\right) -1 \right]\\={}&(1-z)^{v}{_2}F_1\left(\begin{array}{@{}c@{}}
+-u,v \\
+1-u \\
+\end{array}\middle| z\right)-1
+\end{split}
+\end{align}for sufficiently small $|u| $ and $|v|$, so  \eqref{eq:gwn_dd_2F1} follows immediately.
+
+Pfaff's transformation \cite[(2.2.6)]{AAR}  brings us\begin{align}
+{_2}F_1\left(\begin{array}{@{}c@{}}
+v,-u \\
+1-u \\
+\end{array}\middle| z\right)=(1-z)^{-v}{_2}F_1\left(\begin{array}{@{}c@{}}
+v,1 \\
+1-u \\
+\end{array}\middle| \frac{z}{z-1}\right),
+\end{align} which explains \eqref{eq:gwn_dd_2F1Pfaff}.
+\end{proof}
+
+
+ 
+\subsection{Au's Galois descents from ``level 6'' to level 1\label{subsec:desc3}}
+Now we embark on the proof of  Au's  sum rule in \eqref{eq:Au1.5b}.\footnote{As indicated in Footnote \ref{fn:desc3}, for each given weight $ w$ and level $n$, this sum rule represents a Galois descent from  $ \mathfrak Z_w(3)$ [in the guise of $ \mathfrak Z_w(6)$, hence the presence of quotation marks in the title of this subsection] to   $ \mathfrak Z_w(1)$. }  Towards this end, we unpack\begin{align}\R
+g_{m+n,n}(\varrho)=\left.\!\frac1{m!n!}\R\frac{\partial^{m+n}}{\partial u^{m}\partial v^n}\left[ {_2}F_1\left(\begin{array}{@{}c@{}}
+1,v \\
+1-u \\
+\end{array}\middle| \frac{1}{\varrho}\right) -1\right]\right|_{u=v=0}
+\end{align}into Euler's integral representation \cite[Theorem 2.2.1]{AAR}
+as follows:\begin{align}
+\begin{split}\R
+g_{m+n,n}(\varrho)={}&\frac1{m!n!}\left.\!\R\frac{\partial^{m+n}}{\partial u^{m}\partial v^n}\left[ \frac{\Gamma (1-u) }{\Gamma (v) \Gamma (1-u-v)} \int_0^1 \frac{t^{v-1} (1-t)^{-u-v}}{1-\frac{t }{\varrho}} \D t-1\right]\right|_{u=v=0}\\={}&\frac1{m!n!}\left.\!\R\frac{\partial^{m+n}}{\partial u^{m}\partial v^n}\left[ \frac{1 }{\mathrm B(1-u-v,v)} \int_0^1 \frac{t^{v-1} (1-t)^{-u-v}}{1-\frac{t }{\varrho}} \D t-1\right]\right|_{u=v=0},
+\end{split}
+\end{align}where $ \mathrm B(\cdot,\cdot)$ 
+and $ \Gamma(\cdot)$ are Euler's beta and gamma functions. Now that\begin{align}
+\left.\!\frac{\partial^{m+n}}{\partial u^{m}\partial v^n}\left[ \frac{1 }{\mathrm B(1-u-v,v)} -v\right]\right|_{u=v=0}\in \mathfrak Z_{m+n-1}(1)
+\end{align}is expressible through the Riemann zeta values $ \zeta_{w}\equiv\Li_w(1)$ for $ w\in\mathbb Z_{>1}$ (cf.\ \cite[(2.17)]{Xu2017}), it will suffice to show that \begin{align}
+\left.\!\R\frac{\partial^{m+n}}{\partial u^{m}\partial v^n}\int_0^1 \frac{t^{v-1} (1-t)^{-u-v}}{1-\frac{t }{\varrho}} \D t\right|_{u=v=0}
+\end{align}are representable through MZVs for $ m,n\in\mathbb Z_{>0}$. Furthermore, since\begin{align}
+\R\frac{1}{\left(1-\frac{t }{\varrho} \right)t}=\frac{1}{t}-\frac{1}{2}\left( \frac{1}{t-\varrho} +\frac{1}{t-\frac{1}{\varrho}}\right),
+\end{align}and\begin{align}
+\int_0^1\frac{\log^{a} t \log^{b}(1-t)}{t}\D t\in\mathfrak Z_{a+b+1}(1) 
+\end{align}is a consequence of GPL recursion \eqref{eq:GPL_rec}  and GPL shuffles \eqref{eq:GPL_shuffle} for all $a,b\in\mathbb Z_{>0}$, we may focus on the rational function\begin{align}
+\frac{1}{t-\varrho} +\frac{1}{t-\frac{1}{\varrho}}=\frac{2t-1}{1-t(1-t)}
+\end{align}whose poles are two vertices of a hexagon inscribed in the unit circle.\begin{theorem}\label{thm:1.5b}
+We have \begin{align}
+\int_0^1\left( \frac{1}{t-\varrho} +\frac{1}{t-\frac{1}{\varrho}} \right)\log^{a} t \log^{b}(1-t)\D t\in\mathfrak Z_{a+b+1}(1)\label{eq:desc3int}
+\end{align}for all $a,b\in\mathbb Z_{>0}$. As a result, Au's relation $\R g_{w,n}(\varrho)\in\mathfrak Z_w(1)$ holds for all $ w\in\mathbb Z_{>0}$ and $ n\in\mathbb Z\cap[1,w]$.\end{theorem}
+\begin{proof}We only need to work out \begin{align}
+   \mathscr I_{a,b}\colonequals\int_0^1\left( \frac{1}{t-\varrho} +\frac{1}{t-\frac{1}{\varrho}} \right)\log^{a} \frac{t}{1-t} \log^{b}(t(1-t))\D t\in\mathfrak Z_{a+b+1}(1)\tag{\ref{eq:desc3int}$'$}\label{eq:desc3int'} 
+\end{align}for $ a,b\in\mathbb Z_{\geq0}$. In view of the relation\begin{align}
+\left( \frac{1}{t-\varrho} +\frac{1}{t-\frac{1}{\varrho}} \right)\log^{b}(t(1-t))=b!\frac{2t-1}{1-t(1-t)}G(\boldsymbol0_{b};t(1-t))=b!\frac{\partial}{\partial t}G(1,\boldsymbol0_{b};t(1-t)),
+\end{align} we may integrate by parts, and deduce the following series representation for $ \mathscr I_{a,b}$:\begin{align}
+\begin{split}\mathscr I_{a,b}={}&-b!a\int_{0}^1\frac{G(1,\boldsymbol0_{b};t(1-t))}{t(1-t)}\log^{a-1} \frac{t}{1-t}\D t\\\xlongequal{\text{\cite[\S2.2]{SunZhou2026MCV}}}{}& a\int_{0}^1\sum_{k=1}^\infty\left.\!\frac{\partial^{b}}{\partial x^{b}}\frac{[t(1-t)]^{x-1}}{x}\right|_{x=k}\log^{a-1} \frac{t}{1-t}\D t\\={}& a\sum_{n=1}^\infty\int_{0}^1\left.\!\frac{\partial^{a+b-1}}{\partial \varepsilon^{a-1}\partial x^{b}}\frac{t^{x+\varepsilon}(1-t)^{x-\varepsilon}}{x}\right|_{x=n,\varepsilon=0}\frac{\D t}{t(1-t)}\\={}& a\sum_{n=1}^{\infty}\left.\!\frac{\partial^{a+b-1}}{\partial \varepsilon^{a-1}\partial x^{b}}\frac{\Gamma (x-\varepsilon) \Gamma (x+\varepsilon )}{x \Gamma (2 x)}\right|_{x=n,\varepsilon=0}.
+\end{split}
+\end{align} It is worth noting that when $a$ is even, all the summands vanish identically, and one has $ \mathscr I_{a,b}=0$. This is also anticipated from  the integrand of \eqref{eq:desc3int'}, which is an odd function of $2t-1$ if $a $ is even. 
+
+In the rest of this proof, we  will focus on the series representation of  $ \mathscr I_{a,b}$ for odd  $a$, and show that it belongs to $ \mathfrak Z_{a+b+1}(1)$, using Wilf--Zeilberger (WZ) pairs \cite{WZ1990}. Thanks to Hou--Sun  (cf.\ \cite[Theorem 1.3]{HouSun2026}), we may pick a WZ pair\footnote{Here, we write $ x!\equiv\Gamma(x+1)$ for $ x>-1$. The WZ pairs listed here are just  $ \varepsilon$-shifted versions of \cite[Theorem 1.3]{HouSun2026}. }\begin{align}
+\mathscr F_{\varepsilon}(n,k)\colonequals{}&\frac{2 \left(n-\frac{\varepsilon }{2}\right)! \left(k+n+\frac{\varepsilon }{2}\right)!}{3 (2 k+2 n+\varepsilon+2) (k+2 n+1)!} ,\\\mathscr G_\varepsilon(n,k)\colonequals{}& \frac{\frac{\left(n-\frac{\varepsilon }{2}+1\right)^2}{k+2 n+2}+k+n+\frac{\varepsilon }{2}+1}{n-\frac{\varepsilon }{2}+1}\mathscr F_{\varepsilon}(n,k),
+\end{align}satisfying\begin{align}
+\mathscr F_{\varepsilon}(n+1,k)-\mathscr F_{\varepsilon}(n,k)=\mathscr G_\varepsilon(n,k+1)-\mathscr G_\varepsilon(n,k)
+\end{align}and \begin{align}
+\sum_{n=0}^\infty\left.\!\frac{\partial^{a+b-1}\mathscr G_\varepsilon(x,0)}{\partial \varepsilon^{a-1}\partial x^{b}}\right|_{x=n}=\sum_{k=0}^\infty\left.\!\frac{\partial^{a+b-1}\mathscr F_\varepsilon(x,k)}{\partial \varepsilon^{a-1}\partial x^{b}}\right|_{x=0}.
+\end{align}This effectively turns $ \mathscr I_{a,b}$ into a member in the $ \mathbb Q$-vector space\begin{align}
+\Span_{\mathbb Q}\left\{ Z_m\sum_{k=0}^\infty\frac{1}{(k+1)^{1+s}}\prod_{j=1}^M\mathsf H_{k}^{(r_j)}\middle|\begin{smallmatrix}m+1,s,r_j\in\mathbb Z_{>0}\\Z_m\in\mathfrak Z_m(1)\\m+s+\sum_{j=1}^m r_j=a+b\\\end{smallmatrix} \right\}\subseteq\mathfrak Z_{a+b+1}(1),
+\end{align}where $ \mathsf H_{k}^{(r)}\colonequals \sum_{0<n<k}\frac{1}{n^r}$ denotes the $ k$-th harmonic number of order $r$ and the ``$ \subseteq$'' step follows from \cite[Theorem 3.1(a)]{Zhou2022mkMpl}.\end{proof}
+\subsection{Application to Broadhurst's conjecture}Now we verify Broadhurst's conjecture on honorary MZVs at even weights \cite[Conjecture 5]{Broadhurst2014MDV}.\begin{corollary}
+For all  $w\in\mathbb Z_{>1}$, we have \begin{align}
+\frac{\pi\I\Li_{w-1}(\varrho)}{3}+\R\Li_{w,1}(\varrho)\in\mathfrak Z_{w}(1).\label{eq:gw2}
+\end{align}In particular, when $w$ is even, we recover  Broadhurst's relation \eqref{eq:BroadhurstConj5}.\end{corollary}\begin{proof}According to   \eqref{eq:gwn_prod_expn}, the left-hand side of  \eqref{eq:gw2} is equal to $ -\R g_{w,2}(\varrho)$, which is representable as a $ \mathbb Q$-linear combination of   MZVs at weight $w\in\mathbb Z_{>1}$.
+
+For $ s>0$, we may express \begin{align}
+\I \Li_s(\varrho)=\left( 1+\frac{1}{2^{s-1}} \right)\frac{\sqrt{3}L(\chi_{-3},s)}{2}
+\end{align} through a special Dirichlet $L$-function\begin{align}
+L(\chi_{-3},s)\colonequals \sum_{n=0}^\infty\left[\frac{1}{(3n+1)^s}-\frac{1}{(3n+2)^s}\right].
+\end{align}If $ w$ is an even  positive  integer, then  $ L(\chi_{-3},w-1)$ is a rational multiple of $\sqrt{3}\pi^{w-1}$, which simplifies   \eqref{eq:gw2} to   $\R\Li_{w,1}(\varrho)\in\mathfrak Z_{w}(1)$.
+\end{proof}
+\begin{remark}At this point, one may regard Au's  \eqref{eq:Au1.5b}  as an extension of Broadhurst's depth-2 relation \eqref{eq:BroadhurstConj5} to arbitrary depths. In the meantime, we note that  Xu's relation \eqref{eq:XuConj} does not    directly transcribe the generic behavior of  $ g_{w,n}(-1)$:  there are  weights $w$ and depths $n\geq1$,  such that Au's sums $ g_{w,n}(-1)$ do not degenerate to MZVs. Symbolic computations of $\R g_{w,n}(e^{2\pi i/N})$ and $\I g_{w,n}(e^{2\pi i/N})$ at small weights (with the aid of Au's \texttt{MultipleZetaValues} package \cite{Au2022a}) also suggest the absence of Galois descents when  $N\in\{3,5,7,8,9,10,12\}$.
+\eor\end{remark}
+
+
+\section{Galois descents from square vertices\label{sec:desc4}}
+
+
+\subsection{Multiple polylogarithms at $\frac{1+i}2$}Similar to our experience in \S\ref{subsec:desc3},  the identity\begin{align}
+\begin{split}\R
+g_{m+n,n}\bigg(\frac{1+i}2\bigg)={}&\left.\!\frac1{m!n!}\R\frac{\partial^{m+n}}{\partial u^{m}\partial v^n}\left[ {_2}F_1\left(\begin{array}{@{}c@{}}
+1,v \\
+1-u \\
+\end{array}\middle| \frac{1}{i}\right) -1\right]\right|_{u=v=0}\\={}&\frac1{m!n!}\left.\!\R\frac{\partial^{m+n}}{\partial u^{m}\partial v^n}\left[ \frac{1 }{\mathrm B(1-u-v,v)} \int_0^1 \frac{t^{v-1} (1-t)^{-u-v}}{1+it} \D t-1\right]\right|_{u=v=0}
+\end{split}
+\end{align}reduces our task to the examination of\begin{align}
+\R\frac{1}{(1+it)t}-\frac{1}{t}=-\frac{t}{1+t^2},
+\end{align} a rational function whose poles are two vertices of a square inscribed in the unit circle.
+
+
+\begin{theorem}We have \begin{align}
+\int_0^1\frac{t}{1+t^{2}}\log^a t \log^{b+1}(1-t)\D t\in\mathfrak Z_{a+b+2}(2)\label{eq:desc4int}
+\end{align}for all $a,b\in\mathbb Z_{\geq0}$.  As a result, Au's relation $\R g_{w,n}\big(\frac{1+i}2\big)\in\mathfrak Z_w(2)$ holds for all $ w\in\mathbb Z_{>0}$ and $ n\in\mathbb Z\cap[1,w]$.
+\end{theorem}\begin{proof}We note that Au proposed a generalization of  \eqref{eq:desc4int}  for all $ a,b,c\in\mathbb Z_{\geq0}$ \cite[Conjecture 1.6]{Au2022a}:\begin{align}
+ \int_0^1\frac{t}{1+t^{2}}\log^a t \log^{b}(1-t)\log^{c}(1+t)\D t\in\mathfrak Z_{a+b+c+1}(2),\label{eq:AuConj1.6}
+\end{align}whereupon na\"ive applications of  GPL recursion \eqref{eq:GPL_rec}  and GPL shuffles \eqref{eq:GPL_shuffle} would produce summands that are in $\mathfrak Z_{a+b+c+1}(4)$. We will  prove this general conjecture of Au, by targeting its equivalent form \begin{align}\begin{split}\mathscr J_{a,b,c}\colonequals{}&\int_{0}^{1}\frac{t}{1+t^{2}}\left(\log t+\log\frac{1-t}{1+t}\right)^{a}\left(\log t-\log\frac{1-t}{1+t}\right)^{b}\log^{c}\frac{1-t^2}{t}\D t\in\mathfrak Z_{a+b+c+1}(2)
+\end{split}\tag{\ref{eq:AuConj1.6}$'$}\label{eq:AuConj1.6'}
+\end{align} for all $ a,b,c\in\mathbb Z_{\geq0}$.  
+
+Without loss of generality, we momentarily assume that $ b+c$ is even and $c>0$. For any   integrable function $ f(t)$ on the open unit interval, we have \begin{align}
+\int_0^1\frac{t}{1+t^{2}}\left[f(t)+f\bigg(\frac{1-t}{1+t}\bigg) \right]\D t=\int_{0}^1\frac{f(t)\D t}{1+t}\label{eq:f_01_automorph}
+\end{align}by direct variable substitution. In particular, we have\begin{align}
+\begin{split}&\int_{0}^{1}\frac{t}{1+t^{2}}\left(\log t+\log\frac{1-t}{1+t}\right)^{a}\left(\log t-\log\frac{1-t}{1+t}\right)^{b}\\{}&\times\left[\log^{c}\frac{1-t^2}{t}+\left( \log\frac{1-t^2}{t} -2\log2\right)^{c}\right]\D t\\={}&\int_{0}^1\frac{1}{1+t}\left(\log t+\log\frac{1-t}{1+t}\right)^{a}\left(\log t-\log\frac{1-t}{1+t}\right)^{b}\log^{c}\frac{1-t^2}{t}\D t,\label{eq:Jabc_desc_prep}
+\end{split}
+\end{align}where\begin{align}
+\frac{1-\left(\frac{1-t}{1+t}\right)^2}{\frac{1-t}{1+t}}=\frac{4t}{1-t^2}
+\end{align} and   $ \log2=-\Li_1(-1)\in\mathfrak Z_{1}(2)$.
+ Applying GPL recursion \eqref{eq:GPL_rec} and GPL shuffles \eqref{eq:GPL_shuffle}  to the right-hand side of \eqref{eq:Jabc_desc_prep},  we see that it belongs to $ \mathfrak Z_{a+b+c+1}(2)$. Put differently, we have\begin{align}
+\mathscr J_{a,b,c}\in \mathfrak Z_{a+b+c+1}(2)+\Span_{\mathbb Q}\left\{(\log2)^m\mathscr J_{a,b',c'}\middle|\begin{smallmatrix}m,b',c'\in\mathbb Z_{\geq0}\\c'< c\\ m+b'+c'=b+c\end{smallmatrix}\right\}\label{eq:Jabc_c_rec}
+\end{align} under the working hypothesis that  $ b+c$ is even and $c>0$. Under the same  assumption, we also have the following variation on \eqref{eq:Jabc_desc_prep}:\begin{align}
+\begin{split}&\int_{0}^{1}\frac{t}{1+t^{2}}\left(\log t+\log\frac{1-t}{1+t}\right)^{a}\left(\log t-\log\frac{1-t}{1+t}\right)^{b}\\{}&\times\frac{\log (1+t)\log^{c}\frac{1-t^2}{t}-\log \frac{1+t}{2}\left( \log\frac{1-t^2}{t} -2\log2\right)^{c}}{\log2}\D t\\={}&\int_{0}^1\frac{1}{1+t}\left(\log t+\log\frac{1-t}{1+t}\right)^{a}\left(\log t-\log\frac{1-t}{1+t}\right)^{b}\frac{\log (1+t)\log^{c}\frac{1-t^2}{t}}{\log2}\D t,\label{eq:Jabc_desc_prep1}
+\end{split}
+\end{align}where elementary algebra reveals that \begin{align}1+\frac{1-t}{1+t}={}&\frac{2}{1+t},\\
+\log (1+t)={}&\log\frac{1-t^2}{t} -\left(\log t-\log\frac{1-t}{1+t}\right),
+\end{align} and\begin{align}
+\begin{split}&\frac{\log (1+t)\log^{c}\frac{1-t^2}{t}-\log \frac{1+t}{2}\left( \log\frac{1-t^2}{t} -2\log2\right)^{c}}{\log^{2}2}-(2c+1)\frac{\log^{c}\frac{1-t^2}{t}+\left( \log\frac{1-t^2}{t} -2\log2\right)^{c}}{2\log2}\\&{}-\frac{c}{\log2}\left( \log t-\log\frac{1-t}{1+t} \right)\left[ \log^{c-1}\frac{1-t^2}{t}+\left( \log\frac{1-t^2}{t} -2\log2\right)^{c-1} \right]\\\in{}&\mathbb Z\left[ \log2,\log\frac{1-t^2}{t},\log t-\log\frac{1-t}{1+t}\right].
+\end{split}
+\end{align}Here,  the left-hand side of the last equation goes like \begin{align}
+c\log^{c-1}\frac{1-t^2}{t}+O\left( \log^{\max\{0,c-2\}}\frac{1-t^2}{t}\right).
+\end{align}
+Rewriting the right-hand side of \eqref{eq:f_01_automorph} as\begin{align}\frac12
+\int_{0}^1\frac{1}{1+t}\left[f(t)+f\bigg(\frac{1-t}{1+t}\bigg) \right]\D t,
+\end{align}
+we have effectively shown that \eqref{eq:Jabc_c_rec} remains valid when $c$ is traded for $c-1$. In other words,  \eqref{eq:Jabc_c_rec} holds true without any constraint on the parity of    $ b+c$. This means that we may build \eqref{eq:AuConj1.6'} inductively on the situations where $c=0$.
+
+Now we turn our attention to the claim that $ \mathscr J_{a,b,0}\in\mathfrak Z_{a+b+1}(2)$, or equivalently\begin{align}
+\mathscr K_{a,b}\colonequals{}&\int_{0}^{1}\frac{t}{1+t^{2}}\log ^{a}t\log^{b}\frac{1-t}{1+t}\D t\in\mathfrak Z_{a+b+1}(2).\label{eq:Kab_defn}
+\end{align}
+The corresponding borderline cases are easy: we have \begin{align}
+\mathscr K_{a,0}=\int_{0}^{1}\frac{t}{1+t^{2}}\log ^{a}t\D t\xlongequal{u=t^2}\frac{1}{2^{a+1}}\int_0^1\frac{\log ^{a}u\D u}{1+u}\in\mathfrak Z_{a+1}(2)
+\end{align}and \begin{align}
+\mathscr K_{0,b}=\int_{0}^{1}\frac{t}{1+t^{2}}\log^{b}\frac{1-t}{1+t}\D t\xlongequal{\text{\eqref{eq:f_01_automorph}}}\int_{0}^1\frac{\log ^{b}t\D t}{1+t}-\mathscr K_{b,0}\in\mathfrak Z_{b+1}(2).
+\end{align}One also has the following reciprocity law: \begin{align}
+\mathscr K_{a,b}+\mathscr K_{b,a}\xlongequal{\text{\eqref{eq:f_01_automorph}}}\int_{0}^1\frac{1}{1+t}\left[\log ^{a}t\log^{b}\frac{1-t}{1+t}+\log ^{b}t\log^{a}\frac{1-t}{1+t}\right]\D t\in\mathfrak Z_{a+b+1}(2).\label{eq:Krecip}
+\end{align}As before, we will reduce $ \mathscr K_{a,b}$ to AMZVs and $ \mathbb Q$-linear combinations of $ Z_m\mathscr K_{a',b'}$ where $ Z_m\in\mathfrak Z_m(2)$  and $ m=a+b-a'-b'>0$. We need to distinguish several scenarios, according to the parities of $a$ and $b$, in the next   paragraph.
+
+We evaluate an absolutely convergent integral\begin{align}
+\frac{1}{(2\pi i)^{2}}\int_{i0^+-\infty}^{i0^++\infty}\frac{z}{1+z^{2}}\log ^{a+1}z\log^{b+1}\frac{z-1}{z+1}\D z
+\end{align}in two ways. First, closing the contour upwards, and picking up the residue at $z=i$, we find \begin{align}
+\frac{1}{4\pi i}\left( \frac{\pi i}{2} \right)^{a+b+2}.
+\end{align}Second, applying a transformation $ z=1/t$ to $ \R z>1$, we get
+\begin{align}
+\begin{split}&\frac{1}{(2\pi i)^{2}}\int_{i0^+}^{i0^++\infty}\frac{z}{1+z^{2}}\log ^{a+1}z\log^{b+1}\frac{z-1}{z+1}\D z\\={}&\frac{1}{(2\pi i)^{2}}\int_{0}^{1}\frac{t}{1+t^{2}}\log ^{a+1}t\left[ \left(\log\frac{1-t}{1+t}+\pi i\right)^{b+1}+(-1)^{a}\log^{b+1}\frac{1-t}{1+t} \right]\D t\\{}&-\frac{(-1)^{a}}{(2\pi i)^{2}}\int_{0}^{1}\frac{1}{t}\log ^{a+1}t\log^{b+1}\frac{1-t}{1+t}\D t;\end{split}
+\intertext{similarly, one has}
+\begin{split}&\frac{1}{(2\pi i)^{2}}\int_{i0^+-\infty}^{i0^+}\frac{z}{1+z^{2}}\log ^{a+1}z\log^{b+1}\frac{z-1}{z+1}\D z\\={}&-\frac{(-1)^{a}}{(2\pi i)^{2}}\int_{0}^{1}\frac{t}{1+t^{2}}(\log t-\pi i)^{a+1}\left(-\log\frac{1-t}{1+t}\right)^{b+1}\D t\\{}&-\frac{1}{(2\pi i)^{2}}\int_{0}^{1}\frac{t}{1+t^{2}}(\log t+\pi i)^{a+1} \left(-\log\frac{1-t}{1+t}+\pi i\right)^{b+1}\D t\\{}&+\frac{(-1)^{a}}{(2\pi i)^{2}}\int_{0}^{1}\frac{1}{t}(\log t-\pi i)^{a+1}\left(-\log\frac{1-t}{1+t}\right)^{b+1}\D t.
+\end{split}
+\end{align}Reading off the real parts of the last two displayed equations, we arrive at \begin{align}
+\begin{split}&\frac{[(-1)^a+1] [(-1)^b+1]}{\pi^{2}}\int_{0}^{1}\frac{ A^{a+1} B^{b+1}t\D t}{1+t^{2}}+(-1)^b (a+1)  (b+1) \int_0^1\frac{ A^{a} B^{b}t\D t}{1+t^{2}}\\&{}-\int_0^1\frac{[(-1)^a+1] (-1)^b a (a+1) B^2+ [(-1)^b+1]b (b+1)A^{2}}{2}\frac{ A^{a-1} B^{b-1}t\D t}{1+t^{2}}\\&{}-\frac{(-1)^{a}}{\pi ^{2}}\R\int_{0}^{1}\frac{A^{a+1} B^{b+1}-(A-\pi i)^{a+1}(-B)^{b+1}}{t}\D t
+\\\in{}&\mathfrak Z_{a+b+1}(2)+\Span_{\mathbb Q}\left\{\pi^{2\ell}\mathscr K_{a',b'}\middle|\begin{smallmatrix}\ell\in\mathbb Z_{>0},a'\in\mathbb Z\cap[0,a],b'\in\mathbb Z\cap[0,b]\\2\ell+a'+b'=a+b\end{smallmatrix}\right\},
+\end{split}
+\end{align}where \begin{align}
+A\colonequals\log t,\quad B\colonequals\log\frac{1-t}{1+t} .
+\end{align}In particular, this implies \begin{align}
+\mathscr K_{a,b}\in \mathfrak Z_{a+b+1}(2)+\Span_{\mathbb Q}\left\{\pi^{2\ell}\mathscr K_{a',b'}\middle|\begin{smallmatrix}\ell\in\mathbb Z_{>0},a'\in\mathbb Z\cap[0,a],b'\in\mathbb Z\cap[0,b]\\2\ell+a'+b'=a+b\end{smallmatrix}\right\}\label{eq:a1b1prep}
+\end{align} when both  $ a$ and  $b$ are odd, as well as \begin{align}
+(b+1)\mathscr K_{a,b}-a\mathscr K_{a-1,b+1}\in \mathfrak Z_{a+b+1}(2)+\Span_{\mathbb Q}\left\{\pi^{2\ell}\mathscr K_{a',b'}\middle|\begin{smallmatrix}\ell\in\mathbb Z_{>0},a'\in\mathbb Z\cap[0,a],b'\in\mathbb Z\cap[0,b]\\2\ell+a'+b'=a+b\end{smallmatrix}\right\}\label{eq:a0b1prep}
+\end{align}when $a$ is even and $b$ is odd. In view of \eqref{eq:Krecip}, the last displayed equation is unscathed when its left-hand side is replaced by  $ a\mathscr K_{b+1,a-1}-(b+1)\mathscr K_{b,a}$. This effectively extends  \eqref{eq:a0b1prep} to all the cases where $ a+b$ is odd. Moreover, when  $ a+b$ is odd,  \eqref{eq:Krecip} specializes to \begin{align}
+\mathscr K_{(a+b+1)/2,(a+b-1)/2}+\mathscr K_{(a+b-1)/2,(a+b+1)/2}\in\mathfrak Z_{a+b+1}(2).
+\end{align}    As we combine this linearly with   \eqref{eq:a0b1prep}, we see that  \eqref{eq:a1b1prep}  is true when $ \mathscr K_{a,b}$ on its left-hand side becomes either   $ \mathscr K_{(a+b+1)/2,(a+b-1)/2}$ or $ \mathscr K_{(a+b-1)/2,(a+b+1)/2}$. After repeated invocations of  \eqref{eq:a0b1prep}, one realizes that   \eqref{eq:a1b1prep}  holds whenever the non-negative integers $ a$ and $b$ add up to an odd number.  It remains to treat the cases where both  $ a$ and  $b$ are  even. For  a fixed even number $S$ and integers $ n\in\mathbb Z\cap[0,S/2]$, consider the following analogs of  \eqref{eq:Krecip}:\begin{align}
+\begin{split}&\int_{0}^1\frac{t}{1+t^{2}}\log ^{n}t\log^{n}\frac{1-t}{1+t}\left[\left(\log t+\log\frac{1-t}{1+t}\right)^{S-2n}+(-1)^{n}\left(\log t-\log\frac{1-t}{1+t}\right)^{S-2n}\right]\D t\\={}&\frac{1}{2}\int_{0}^1\frac{1}{1+t}\log ^{n}t\log^{n}\frac{1-t}{1+t}\left[\left(\log t+\log\frac{1-t}{1+t}\right)^{S-2n}+(-1)^{n}\left(\log t-\log\frac{1-t}{1+t}\right)^{S-2n}\right]\D t\\\in{}&\mathfrak Z_{S+1}(2),
+\end{split}\label{eq:recip'}
+\end{align} where the integrands are rational functions of $t$ times  bivariate polynomials in even powers of $\log t$ and $\log\frac{1-t}{1+t}$. When  $ S/2$ is odd, the case  $ n=S/2$ produces a trivial identity $ 0\in\mathfrak Z_{S+1}(2)$. Otherwise, one obtains linearly independent\footnote{As a quick access to the linear independence of the bivariate polynomials in question, one may map $ \log t$ to $ e^{i\phi}$ and $ \log\frac{1-t}{1+t}$ to $ e^{-i\phi}$. } integrands from \eqref{eq:recip'}, which cover   $ \mathscr K_{a,b}\in \mathfrak Z_{a+b+1}(2)$ for all the pairs of even non-negative   $ a$ and  $b$   summing to  a preset value $S$.\footnote{Replacing $ (-1)^n$ by $ (-1)^{n+1}$ in \eqref{eq:recip'}, one may also strengthen    \eqref{eq:a1b1prep} into    $ \mathscr K_{a,b}\in \mathfrak Z_{a+b+1}(2)$, when $a$ and $b$ are both odd.}
+                  
+Thus far, we have completed an inductive proof of \eqref{eq:Kab_defn} for all $ a,b\in\mathbb Z_{\geq0}$, which in turn, settles both   \eqref{eq:desc4int} and  \eqref{eq:AuConj1.6}. \end{proof}\subsection{Landen-type transformation}
+A generalization of the Landen-type transformation formula \eqref{eq:gw1Landen} will bring us a verification of Au's \eqref{eq:Au1.5a2}.\begin{theorem}For $ w\in\mathbb Z_{>0}$ and $ n\in\mathbb Z\cap[1,w]$, we have
+\begin{align}
+g_{w,n}\bigg(\frac z{z-1}\bigg)={}&\sum_{j=n}^w(-1)^j\binom{j-1}{n-1}g_{w,j}(z).\label{eq:gwn_Landen}
+\end{align} As a result, Au's relation $\R g_{w,n}(i)\in\mathfrak Z_w(2)$ holds for all $ w\in\mathbb Z_{>0}$ and $ n\in\mathbb Z\cap[1,w]$.
+\end{theorem}\begin{proof}One may construct an equation of motion  for the left-hand side of \eqref{eq:gwn_Landen}, by applying a  variable transformation to  \eqref{eq:gwn_evolv}, before realizing that the right-hand side of \eqref{eq:gwn_Landen} evolves in the same way, with identical initial and boundary conditions.    
+
+ Specializing  \eqref{eq:gwn_Landen} to $ z=\frac{1+i}{2}$, we get\begin{align}
+\R g_{w,n}(i)=\R g_{w,n}(-i)=\sum_{j=1}^w(-1)^j\binom{j-1}{n-1}\R g_{w,j}\bigg(\frac{1+i}2\bigg),
+\end{align}thereby concluding our proof. 
+\end{proof}
+
+\begin{thebibliography}{10}
+
+\bibitem{AAR}
+G.~E. Andrews, R.~Askey, and R.~Roy.
+\newblock {\em Special Functions}, volume~71 of {\em Encyclopedia of
+  Mathematics and Its Applications}.
+\newblock Cambridge University Press, Cambridge, UK, 1999.
+
+\bibitem{Au2022a}
+K.~C. Au.
+\newblock Iterated integrals and multiple polylogarithm at algebraic arguments.
+\newblock \url{arXiv:2201.01676v3} [math.NT] (software available at
+  \url{https://www.researchgate.net/publication/357601353_Mathematica_package_MultipleZetaValues}),
+  2026.
+
+\bibitem{BorweinStraub2015Snp}
+J.~M. Borwein and A.~Straub.
+\newblock Relations for {N}ielsen polylogarithms.
+\newblock {\em J. Approx. Theory}, 193:74--88, 2015.
+
+\bibitem{Broadhurst2014MDV}
+D.~Broadhurst.
+\newblock Multiple {D}eligne values: a data mine with empirically tamed
+  denominators.
+\newblock \url{arXiv:1409.7204} [hep-th], 2014.
+
+\bibitem{Charlton2026}
+S.~Charlton.
+\newblock On a proof of {X}u's conjecture and depths of {G}alois descents.
+\newblock {\em Rev. R. Acad. Cienc. Exactas F\'is. Nat. Ser. A Mat. RACSAM},
+  120(2):Paper No. 34, 6 pages, 2026.
+
+\bibitem{Frellesvig2016}
+H.~Frellesvig, D.~Tommasini, and C.~Wever.
+\newblock On the reduction of generalized polylogarithms to $\mathrm{Li}_ n$
+  and $\mathrm{Li}_{2, 2}$ and on the evaluation thereof.
+\newblock {\em J. High Energy Phys.}, 2016(3):189, 2016.
+\newblock \url{arXiv:1601.02649v3} [hep-ph].
+
+\bibitem{Glanois2016}
+C.~Glanois.
+\newblock Motivic unipotent fundamental groupoid of
+  {$\mathbb{G}_m\smallsetminus\mu_N$} for {$N=2,3,4,6,8$} and {G}alois
+  descents.
+\newblock {\em J. Number Theory}, 160:334--384, 2016.
+
+\bibitem{HouSun2026}
+Q.-H. Hou and Z.-W. Sun.
+\newblock Evaluations of some series via the WZ method.
+\newblock \url{arXiv:2604.15172v1} [math.CO], 2026.
+
+\bibitem{Koelbig1986}
+K.~S. K{\"o}lbig.
+\newblock Nielsen's generalized polylogarithms.
+\newblock {\em SIAM J. Math. Anal.}, 17:1232--1258, 1986.
+
+\bibitem{Panzer2015}
+E.~Panzer.
+\newblock Algorithms for the symbolic integration of hyperlogarithms with
+  applications to {F}eynman integrals.
+\newblock {\em Comput. Phys. Commun.}, 188:148--166, 2015.
+\newblock (software available at
+  \url{https://bitbucket.org/PanzerErik/hyperint/wiki/Home}).
+
+\bibitem{SunZhou2026MCV}
+Z.-W. Sun and Y.~Zhou.
+\newblock Multiple {C}lausen values and deformed {A}p\'ery-like series.
+\newblock \url{arXiv:2607.14646v2} [math.NT], 2026.
+
+\bibitem{WZ1990}
+H.~S. Wilf and D.~Zeilberger.
+\newblock Rational functions certify combinatorial identities.
+\newblock {\em J. Amer. Math. Soc.}, 3(1):147--158, 1990.
+
+\bibitem{Xu2017}
+C.~Xu.
+\newblock Multiple zeta values and {E}uler sums.
+\newblock {\em J.\ Number Theory}, 177:443--478, 2017.
+
+\bibitem{Xu2019nonlinEuler}
+C.~Xu.
+\newblock Evaluations of nonlinear {E}uler sums of weight ten.
+\newblock {\em Appl. Math. Comput.}, 346:594--611, 2019.
+
+\bibitem{ZhengYang2025}
+W.~Zheng and Y.~Yang.
+\newblock Proof of {X}u conjecture on alternating double zeta values.
+\newblock {\em Rev. R. Acad. Cienc. Exactas F\'is. Nat. Ser. A Mat. RACSAM},
+  119(4):Paper No. 91, 5 pages, 2025.
+\newblock (Correction: \textit{ibid.} 119(4):Paper No. 113, 2 pages, 2025).
+
+\bibitem{Zhou2022mkMpl}
+Y.~Zhou.
+\newblock Hyper-{M}ahler measures via {G}oncharov--{D}eligne cyclotomy.
+\newblock In H.~S. Cohl, R.~S. Costas-Santos, and R.~S. Maier, editors, {\em
+  Classical hypergeometric functions and generalizations}, volume 818 of {\em
+  Contemp. Math.}, pages 239--288. Amer. Math. Soc., Providence, RI, 2025.
+\newblock \url{arXiv:2210.17243v4} [math.NT].
+
+\end{thebibliography}
+
+
+\end{document}

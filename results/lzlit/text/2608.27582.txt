@@ -1,0 +1,506 @@
+                                              Network steering with arbitrarily low detection efficiency of any entangled measurement
+
+                                                                                                    Shubhayan Sarkar∗
+                                                                           Institute of Informatics, Faculty of Mathematics, Physics and Informatics,
+                                                                                University of Gdansk, Wita Stwosza 57, 80-308 Gdansk, Poland
+
+                                                            Quantum nonlocality and its asymmetric counterpart, quantum steering, are among the most in-
+                                                         triguing manifestations of quantum mechanics. From a theoretical perspective, they are not only
+                                                         of fundamental significance but also hold promise for a wide range of applications. However, the
+                                                         stringent technological requirements for their experimental observation in a loophole-free way have
+                                                         largely restricted their realization to foundational demonstrations. A major challenge in these setups
+                                                         is the limited detection efficiency of current detectors as to observe nonlocality or steering in the stan-
+                                                         dard scenarios, one requires detectors above a certain critical efficiency which can only be achieved
+                                                         with superconducting detectors. Considering the simplest quantum network, we demonstrate here
+                                                         that quantum steering between two parties, can be demonstrated for any non-zero detection effi-
+arXiv:2608.27582v1 [quant-ph] 27 Aug 2026
+
+
+
+
+                                                         ciency, if the sources in the network generate states above a critical visibility well-within the current
+                                                         practical limits. This form of quantum steering in networks, is termed swap-steering. Moreover, when
+                                                         the sources are perfect, swap-steering can be observed using any entangled measurement on the un-
+                                                         trusted side, even with arbitrarily low detection efficiency. Consequently, two major loopholes, the
+                                                         detection-loophole as well as free-will loophole can be closed easily in quantum steering experiments,
+                                                         when implemented using networks.
+
+
+                                               Introduction— Quantum nonlocality [1, 2] stands as                 loopholes pose significant experimental challenges for
+                                            one of the most paradigm-shifting concepts to have                    demonstrating nonlocality (or steering), as closing them
+                                            emerged in modern physics that has not just reshaped                  requires stringent technological requirements, making
+                                            our foundational understanding of the physical world                  loophole-free implementations extremely demanding in
+                                            but also has led to several useful applications such as               practice. Consequently, exploring scenarios that enable
+                                            device-independent (DI) quantum information proto-                    the observation of nonlocality or steering while impos-
+                                            cols, including DI cryptography [3, 4]. While the the-                ing less stringent technological requirements and offer-
+                                            oretical side of nonlocality along with the applications              ing greater resilience to noise is an important direction
+                                            have been extensively explored, observing them in a                   for further research.
+                                            loophole-free way still requires state-of-art quantum in-                Quantum networks with multiple sources provide a
+                                            frastructure such as superconducting detectors, genuine               novel perspective on this problem. Here, we delve into
+                                            random number generators along with sources that gen-                 a recently introduced notion of network steering [13],
+                                            erate expected states with high visibility [5–11]. As                 called swap-steering [14], where two parties can observe
+                                            a matter of fact, beyond the simplest scenarios, quan-                quantum steering, one of them being trusted, with sin-
+                                            tum nonlocality or quantum steering (assymetric form                  gle fixed measurements, thus readily closing the free-
+                                            of quantum nonlocality) [12] has not yet been demon-                  will loophole. We find that allowing for tomograph-
+                                            strated in a loophole-free way. This limits the applica-              ically complete measurements on the trusted side al-
+                                            bility and explorability of quantum nonlocality from a                lows the observation of quantum steering in this net-
+                                            practical perspective.                                                work with arbitrary low detection efficiency of mea-
+                                               There are three major loopholes in any nonlocality                 surements on the untrusted side, if the sources generate
+                                            (or steering) experiments [4]. First, locality-loophole,              states above a certain critical visibility. We then show
+                                            which states that the measurements on both subsystems                 that if the sources are perfect, then by using any entan-
+                                            should be fast enough such that no signal can reach from              gled measurement on the untrusted side with arbitrary
+                                            one to other. This loophole can be closed by large spa-               low detection efficiency one can observe swap-steering.
+                                            tial distance and fast electronics well-within the current            Considering parameters from current practical experi-
+                                            practical reach. Second, the detection-loophole, which                ments, we finally conclude that, quantum steering in
+                                            states that below a certain critical efficiency of the de-            networks can be demonstrated using room-temperature
+                                            tectors, there exist local models to explain the observed             detectors in a loophole-free way that does not even re-
+                                            correlations. To close this loophole, one requires super-             quire genuine random number generators.
+                                            conducting detectors with high efficiency. Third, the
+                                                                                                                     For our purpose, we first adapt the idea of process to-
+                                            free-will loophole, where measurement settings on both
+                                                                                                                  mography [15–20] to witness entanglement of any mea-
+                                            subsystems need to chosen independent each other,
+                                                                                                                  surement. Then, using the corresponding witness, we
+                                            while having the capability of switching them at will
+                                                                                                                  construct the swap-steering witnesses, allowing us to
+                                            during the course of the experiment. The latter two
+                                                                                                                  observe steering in quantum networks among two par-
+                                                                                                                  ties, using any entangled measurement. Consequently,
+                                                                                                                  we provide a one-sided DI witness of entanglement of
+                                            ∗ shubhayan.sarkar@ug.edu.pl
+                                                                                                                  any measurement. Finally, considering realistic detec-
+                                                                                                                                       2
+
+tors and sources, we find the critical visibility beyond
+which swap-steering can be demonstrated using any en-
+tangled measurement.
+   Quantum measurement tomography— We begin by de-
+scribing the tomography of quantum measurements.
+Consider a quantum measurement { Mi } where Mi de-
+notes the measurement elements such that they are pos-
+itive semi-definite and ∑i Mi = 1. For projective mea-
+surements, an additional condition is Mi M j = Mi δij .
+Considering a set of informationally complete density
+matrices ρ j that are known (trusted), one can reconstruct
+the measurement by evaluating the probabilities, also                FIG. 1. Witnessing entanglement in measurements. To de-
+referred to as correlations, pij = Tr( Mi ρ j ). Here one ad-        tect entanglement in the measurement acting on N subsys-
+                                                                     tems, one needs to consider N independent trusted sources
+ditionally assumes the dimension of the Hilbert space
+                                                                     that generate local states and send them to the untrusted mea-
+on which the measurements act. A broader class of to-                surement. From the obtained statistics, one can infer whether
+mography is known as process tomography where one                    the measurement has entanglement or not.
+considers tomography of quantum channels and has to
+trust the input states along with measurements [15–20].
+   At most times, it will not be required to reconstruct
+the complete measurement but only to confirm some                       We do not delve into the details of further con-
+relevant properties about it. Here we are interested in              struction of the witnesses of entanglement in mea-
+the entanglement in composite quantum measurements                   surements as it follows directly from constructing wit-
+and thus classify them into two classes:                             nesses of entangled states which has been extensively
+                                                                     studied [21, 22]. We focus here on the experimen-
+Definition 1 (Separable measurements). Consider the
+                                                                     tal implementation of these witnesses. As an exam-
+measurement Mi such that all the measurement elements
+                                                ′ ⊗ . . . ∀i, then   ple, let us consider the Bell-basis measurement (BM)
+{ Mi } are separable, that is, Mi ∝ ∑ j σi,j ⊗ σi,j
+                                                                     {|ϕ+ ⟩⟨ϕ+ |, |ϕ− ⟩⟨ϕ− |, |ψ+ ⟩⟨ψ+ |, |ψ− ⟩⟨ψ− |} where
+{ Mi } is a separable measurement.
+                                                                              1                                 1
+  Using the above definition, we define entangled mea-                |ϕ± ⟩ = √ (|00⟩ ± |11⟩) ,       |ψ± ⟩ = √ (|01⟩ ± |10⟩) .
+surements.                                                                     2                                 2
+                                                                                                                              (2)
+Definition 2 (Entangled measurements). Consider the                  Now, to detect entanglement in Bell-basis measurement,
+measurement { Ei } such that at least one of the measurement         a possible witness W BM is given by W BM = 1/21 −
+elements Ei is not separable, then { Ei } is an entangled mea-       |ϕ+ ⟩⟨ϕ+ |. A way to implement this witness is to pre-
+surement.                                                            pare the state |ϕ+ ⟩ and act it on the measurement and
+                                                                     if one satisfies the criterion (1), then the measurement is
+  Let us now construct witnesses that can detect
+                                                                     confirmed to be entangled. However, entangled states
+whether a given composite measurement is separable or
+                                                                     is a costly resource and preparing particular entangled
+entangled.
+                                                                     states is even more difficult. Thus, it is beneficial to ex-
+  Witnesses— It is well-known that due to Hahn-Banach
+                                                                     press this witness in terms of local states which is much
+theorem, for every entangled state ρe there exists an en-
+                                                                     simpler to generate [see Fig. 1].
+tanglement witness Wρe such that Tr(Wρe ρe ) < 0 and
+                                                                        Any witness W can be decomposed into the form
+Tr(Wρe σ ) ≥ 0 where σ represents any separable state.
+Similarly, we can find a general result to witness entan-                          W = ∑ cij... | ai ⟩⟨ ai | ⊗ |b j ⟩⟨b j | ⊗ . . .   (3)
+glement in quantum measurements that straightaway                                          ij...
+follows from the Hahn-Banach theorem.
+                                                                     where | ai ⟩⟨ ai |, |b j ⟩⟨b j |, . . . are positive semi-definite for
+Fact 1. For any entangled measurement { Ei } def. 2, there
+                                                                     any i, j, . . .. Normalising and absorbing the factors into
+exists an entanglement witness W such that
+                                                                     cij... , we can safely conclude that they are valid den-
+          min Tr(W Ei ) < 0,      min Tr(W Mi ) ≥ 0           (1)    sity matrices. However, this might not be optimal in
+            i                       i                                the sense that one might be required to measure a large
+for every separable measurement { Mi }.                              number of correlations to conclude that the measure-
+                                                                     ment is entangled. For instance, the witness W BM de-
+Proof. Consider that the element Ek of { Ei } is entan-              composes as
+gled. Considering the witness W Ek , we have that                                                                                        
+Tr(W Ek Ek ) < 0 and Tr(W Ek σ ) ≥ 0 for every separa-                           1             2
+                                                                                                                    ′
+ble state σ. As witnesses exist for every entangled state,           W BM =           1 − ∑ ∑ (−1) j+ j |µi,j ⟩⟨µi,j | ⊗ |µi,j′ ⟩⟨µi,j′ |
+                                                                                 4           i =0 j,j′ =0,1
+thus every entangled measurement can be witnessed us-
+ing the construction (1).                                                                                                             (4)
+                                                                                                                                                                         3
+                                  √
+where |µ0,j ⟩ = | j⟩, |µ1,j ⟩ = 1/ 2(|0⟩ + (−1) j |1⟩), and
+            √
+|µ2,j ⟩ = 1/ 2(|0⟩ + i(−1) j |1⟩). Thus, at least 12 corre-
+lations must be considered to evaluate whether the BM
+is entangled.
+   As it turns out, the number of correlations to observe
+in the particular case of BM can be significantly reduced.
+Consider the following witness
+
+               3
+       W ′ BM = 1 − ∑ |µi,j ⟩⟨µi,j | ⊗ |µi,j ⟩⟨µi,j |.                    (5)
+               2   i,j=0,1
+
+It is simple to check that Tr(W ′ BM σ ) ≥ 0 for any sepa-
+rable state σ and Tr(W ′ BM |ϕ+ ⟩⟨ϕ+ |) = −1/2. Moreover
+one has to measure only 4 correlations now. We do not                           FIG. 2. Swap-steering scenario. Alice and Bob are spatially
+prove here that the witness W ′ BM is optimal. However,                         separated and each of them receives N subsystems from the
+based on our extensive search this seems to be the case.                        untrusted sources. On the received subsystem Bob performs a
+Thus, we conjecture that the above witness W ′ BM is an                         single measurement while Alice being trusted performs a to-
+optimal witness of the BM. Similarly, one can find differ-                      mography on her subsystem. From the experiment, they ob-
+ent optimal witnesses tailored to specific quantum mea-                         tain the correlations { p( a, b|i1 . . . i N )}.
+surements that can be implemented using local quan-
+tum states.
+   One-sided device-independent witness— Let us now pro-
+                                                                                where Ma| x denote the measurement elements of Al-
+ceed towards relaxing the trust in the input states to
+show that a given measurement is entangled. For this                            ice corresponding to input x. It is important to re-
+purpose, we utilise the recently contrived swap-steering                        call that Alice and Bob can not communicate with each
+scenario, which is the minimal scenario to detect any                           other during the experiment. If the correlations ⃗p admit
+form of network nonlocality without inputs [14]. The                            a separable outcome-independent hidden state (SOHS)
+swap-steering scenario consists of two parties namely,                          model [14, 23], then p( a, b|i1 . . . i N ) is given by
+Alice and Bob in two different labs. Both of them re-
+                                                                                ∑ pk ∑
+                                                                                                           (k)                (k)                                 (k)
+ceive subsystems from N classically correlated sources                                                 p(λ1 , . . . , λ N )Tr[ Ma|i1 ...i N ρ (k) ⊗ . . . ρλ ]
+                                                                                                                                                  λ1               N
+                                   NN      (k)                                   k       λ1 ,...,λ N
+S j that prepare the states           j=1 ρ A j Bj for j  = 1, . . . , N                                                                    (k)          (k)
+                                                                                                                                    p ( b | λ1 , . . . , λ N ).         (7)
+and mix them with a probability pk . Here A j , Bj de-
+note the N different subsystems of Alice and Bob re-                            Unlike the standard network considerations, here the
+spectively. Bob performs a single measurement { Eb } on                         sources are not assumed to be independent but can be
+the received subsystems where b denotes his outcomes                            classically correlated [see [14]].
+such that Eb acts on N Cd . Alice is trusted in this con-
+                            N
+                                                                                   Consider now that the sources generate the classically
+text, meaning the measurements she performs on her                              correlated state given by ∑k pk iN=1 ρ A B and Bob’s
+                                                                                                                                       N          (k)
+subsystems are well-defined and known. Here, we con-                                                                    i i
+
+sider the measurements of the trusted party is Ai1 ...i N =                     measurement { Mb } is separable and given by Mb =
+                                                                                                ( j)
+{τi1 ⊗ . . . τi N , 1 − τi1 ⊗ . . . τi N } where τi j ∈ Cd are projec-          ∑ j iN=1 σi,b such that b = 0, . . . , n − 1. We show in
+                                                                                     N
+
+                                                                                Appendix A that for every such quantum realisation,
+tors such that {τi j } span the Hilbert spaces Cd and thus
+                                                                                one can construct an SOHS model of the form (7) that
+are tomographically complete. Consequently, we have                             reproduces the same statistics deterministically. Conse-
+that i j = {1, . . . , d2 } for j = 1, . . . , N. As we trust one               quently, every separable measurement generates corre-
+of the sides in the experiment, in general such scenarios                       lations in the swap-steering network [Fig. 2] that can be
+are referred to as one-sided device-independent (1SDI)                          explained via an SOHS model.
+(see Fig. 2).                                                                      Consider now an entangled measurement { Eb }
+   Alice and Bob repeat the experiment enough times                             whose entanglement witness is given by W{ Eb } such
+to obtain the correlations ⃗p = { p( a, b|i1 . . . i N )} where                 that it satisfies the criterion (1). The operator W{ Eb }
+p( a, b|i1 . . . i N ) denotes the probability of obtaining out-                can be expressed using the tomographically com-
+come a, b with Alice and Bob respectively given Alice’s                         plete set of operators stated above as W{ Eb } =
+input i1 . . . i N . These probabilities can be computed in                           2
+quantum theory as                                                               − ∑id1 ,...i N =1 β i1 ,...i N τi1 ⊗ . . . τi N . Utilising this entangle-
+                                      "                             #           ment witness, let us now propose the following swap-
+                                                           N                    steering inequalities
+  p( a, b|i1 . . . i N ) = ∑ pk Tr ( Ma|i1 ...i N ⊗ Eb )
+                                                           O (k)
+                                                                  ρA B
+                                                                                           S{Eb } = max ∑ β i1 ,...i N p(0, b|i1 . . . i N )
+                                                                    i i
+                          k                                i =1                                                                                                         (8)
+                                                                          (6)                               b    i1 ,...i N
+                                                                                                                                        4
+
+where p(0, b|i1 . . . i N ) is the probability of obtaining out-            us also consider realistic sources such that the expected
+come 0 by trusted Alice given the input i1 . . . i N and out-               state is generated with a visibility v, that is, the state can
+                                                                            be expressed as ρ A B = v|ϕd+ ⟩⟨ϕd+ | + (1 − v)1/d2 for any
+come b by Bob. Let us now find its SOHS bound.                                                  (i )
+                                                                                               i i
+Fact 2. Consider the swap-steering scenario in Fig. 2 and the               i.
+functional S{ Eb } (8). The maximal value attainable of S{ Eb }                Now, we consider again the functional S{ Eb } (8). Us-
+using an SOHS model is β SOHS = 0.                                                       (i )
+                                                                            ing states ρ A B , we obtain as Eq. (9) that for any η ∈
+                                                                                             i i
+   The proof of the above fact is in the Appendix B. Let                    [0, 1], S{Eb } is
+us now consider that all the sources produce the maxi-
+                                                                                   Tr(ηEb )  N                                     
+mally entangled state of dimension d, that is, |ψ Ai ,Bi ⟩ =
+              √                                                               max       N
+                                                                                              v Tr(W{ Eb } (1 − Eb )) − Tr(W{ Eb } ) .
+|ϕd+ ⟩ = 1/ d(∑i |ii ⟩) with Bob performing the mea-                            b     d
+                                                                                                                                    (10)
+surement { Eb }. Let us say that Bob obtains the out-                       If the visibility v = 1, then for any entangled mea-
+come b. Due to entanglement swapping, the post-                             surement { Eb }, S{ Eb } > 0 for any η ∈ (0, 1]. Con-
+measurement state at Alice is Eb with a probability                         sequently, when the sources are perfect, swap-steering
+Tr( Eb )/d N and thus one is left with the expression                       can be detected using any entangled measurement with
+                                                                            arbitrarily low detection efficiency. In the case of stan-
+                   Tr( Eb )
+                     dN i ∑
+  S{Eb } = max                    β i1 ,...i N Tr(τi1 ⊗ . . . τi N Eb )     dard quantum steering, the critical detection efficiency
+               b            ,...i                                           increases with the visibility of the state, that is, if the
+                             1    N
+
+                   Tr( Eb )                                                 source produces states with lower visibility, more effi-
+          = max             Tr(−W Eb ) > 0.                           (9)   cient detectors are required to witness quantum steer-
+               b     dN
+                                                                            ing [31, 33]. Unlike this, we observe that for swap-
+Consequently, we can conclude that every entangled                          steering, for any non-zero detection, one can always ob-
+measurement generates swap-steerable correlations and                       serve swap-steering when the visibility of each source is
+thus entanglement in any quantum measurement can be                         above a certain critical visibility vc given by
+witnessed in a 1SDI way. For simplicity, we considered                                                             !1/N
+that the dimension of the local subsystems on which                                                 Tr(W{ Eb } )
+                                                                                         vc =                           .           (11)
+{ Eb } acts is the same. However, all the above argu-                                            Tr(W (1 − Eb ))
+ments can straightaway be generalised to the case when
+they are different by considering that the source gener-                       For a realisable entanglement swapping experiment
+ates the maximally entangled state of the corresponding                     [34, 35], where Ẽ0 = |ψ−⟩⟨ψ − |, with the sources gener-
+dimension of the local subsystem and Alice performs to-                     ating the state v|ψ− ⟩⟨ψ− | + (1 − v)1/4, and the entan-
+mography on it.                                                             glement witness W Ẽ0 = 1/2 − |ψ−⟩⟨ψ − |, we obtain
+   Realistic scenarios— Detector inefficiency is one of the                 the the critical visibility to be vc = (2/3)1/2 ≈ 0.81,
+principal obstacles to the experimental certification of                    thus well within the current experimental limit. Con-
+quantum nonlocality. If the overall efficiency falls be-                    sequently, with realisable practical sources, one can ob-
+low a critical threshold, the observed statistics can of-                   serve quantum steering for any non-zero detection effi-
+ten be explained by local hidden-variable models, giv-                      ciency in a loophole-free way.
+ing rise to the well-known detection loophole [24, 25].                        Discussions— In this work, we found that similar to
+Consequently, standard Bell and steering tests typically                    detecting entangled quantum states, entanglement in
+require high detection efficiencies to certify nonclas-                     any quantum measurement can also be detected with-
+sical correlations [26–28]. This challenge is particu-                      out trusting them. In particular, we proposed an entan-
+larly relevant for device-independent and semi-device-                      glement witness of the Bell-basis measurement that only
+independent quantum information protocols, whose se-                        requires to produce {|0⟩⟨0|, |1⟩⟨1|, |+⟩⟨+|, |−⟩⟨−|} which
+curity fundamentally relies on loophole-free demonstra-                     is simple to implement. For instance, in a polarisation-
+tions of nonlocality [29, 30]. Developing methods that                      based setup, one has to simply rotate the polarisation of
+remain robust against arbitrarily large losses is therefore                 a single state |0⟩ to prepare all the other states. We then
+of both foundational and practical importance.                              extended this idea to witness entanglement in quantum
+   Let us suppose now that the detectors can only de-                       measurements in a 1SDI way. For this purpose, we
+tect all subsystems together with a probability η. We                       utilised the swap-steering scenario which is the mini-
+then define an additional outcome ∅ that takes into ac-                     mal scenario to witness any form of network nonlocality
+count all the non-simultaneous-detection events. Con-                       without inputs.
+sequently, the measurement of Bob in the noisy scenario                        The usual approach to reducing the detection effi-
+                 noisy              noisy
+is given by { Eb       , E∅ } with Eb     = ηEb which fur-                  ciency in standard nonlocality or steering tests is either
+ther allows us to conclude that E∅ = (1 − η )1 [4]. No-                     using more number of measurements per site [31, 33,
+tice that as Alice is trusted, she can do post-processing                   36], non-maximally entangled state [26] or full statis-
+on her end, that is, she can faithfully ignore the non-                     tics [32]. To obtain arbitrarily low critical detection ef-
+simultaneous-detection events [31, 32]. Moreover, let                       ficiency, one requires infinite number of measurements
+                                                                                                                                     5
+
+per site, thus, genuine infinite randomness is required             entangled, which is then detected by Alice.
+to witness them in a loophole-free way, which is im-                   Several interesting problems follow-up from this
+possible. Moreover, in all these approaches, as the vis-            work. The first one concerns finding optimal witnesses
+ibility of the states decreases, the critical detection effi-       for several other entangled measurements. A challeng-
+ciency increases. Counterintuitively, we observed here              ing problem in this direction will be to witness more
+that for arbitrary non-zero detection efficiency of any             structures in the quantum measurement. For instance, is
+single entangled measurement, one can observe swap-                 it possible to detect that every measurement element is
+steering in the quantum network if the sources generate             entangled or not. The most interesting follow-up prob-
+states beyond a certain critical visibility. A simple way           lem will be to demonstrate the above results experimen-
+to understand this is to observe that the notion of steer-          tally and utilise the scenario for a cryptographic proto-
+ing in networks is that the quantum state at the trusted            col.
+side gets updated or steered from a separable to an en-
+tangled state, due to the measurement of Bob. Now, if                                    Acknowledgements
+Bob’s measurement possess any finite amount of entan-
+glement, along with the sources generating the maxi-                We thank Emanuele Polino for fruitful discussions. We
+mally entangled state, the entanglement-swapping en-                acknowledge the National Science Centre, Poland, grant
+sures that the reduced state on the trusted side becomes            Opus 25, UMO-2023/49/B/ST2/02468.
+
+
+
+
+ [1] J. S. Bell, On the einstein podolsky rosen paradox, Physics    [10] L. K. Shalm, E. Meyer-Scott, B. G. Christensen, P. Bier-
+     Physique Fizika 1, 195 (1964).                                      horst, M. A. Wayne, M. J. Stevens, T. Gerrits, S. Glancy,
+ [2] J. S. Bell, On the problem of hidden variables in quantum           D. R. Hamel, M. S. Allman, K. J. Coakley, S. D. Dyer,
+     mechanics, Rev. Mod. Phys. 38, 447 (1966).                          C. Hodge, A. E. Lita, V. B. Verma, C. Lambrocco, E. Tor-
+ [3] A. Acín, N. Brunner, N. Gisin, S. Massar, S. Pironio,               torici, A. L. Migdall, Y. Zhang, D. R. Kumor, W. H. Farr,
+     and V. Scarani, Device-independent security of quantum              F. Marsili, M. D. Shaw, J. A. Stern, C. Abellán, W. Amaya,
+     cryptography against collective attacks, Phys. Rev. Lett.           V. Pruneri, M. W. Mitchell, T. Jennewein, P. G. Kwiat, J. C.
+     98, 230501 (2007).                                                  Bienfang, R. P. Mirin, E. Knill, and S. W. Nam, Strong
+ [4] N. Brunner, D. Cavalcanti, S. Pironio, V. Scarani, and              loophole-free test of local realism, Physical Review Let-
+     S. Wehner, Bell nonlocality, Rev. Mod. Phys. 86, 419 (2014).        ters 115, 250402 (2015).
+ [5] B. Wittmann, S. Ramelow, F. Steinlechner, N. K. Langford,      [11] W. Rosenfeld, D. Burchardt, R. Garthoff, K. Redeker,
+     N. Brunner, H. M. Wiseman, R. Ursin, and A. Zeilinger,              N. Ortegel, M. Rau, and H. Weinfurter, Event-ready bell
+     Loophole-free einstein-podolsky-rosen experiment via                test using entangled atoms simultaneously closing detec-
+     quantum steering, New Journal of Physics 14, 053030                 tion and locality loopholes, Physical Review Letters 119,
+     (2012).                                                             010402 (2017).
+ [6] A. J. Bennet, D. A. Evans, D. J. Saunders, C. Branciard,       [12] H. M. Wiseman, S. J. Jones, and A. C. Doherty, Steering,
+     E. G. Cavalcanti, H. M. Wiseman, and G. J. Pryde, Ar-               entanglement, nonlocality, and the einstein-podolsky-
+     bitrarily loss-tolerant einstein-podolsky-rosen steering al-        rosen paradox, Phys. Rev. Lett. 98, 140402 (2007).
+     lowing a demonstration over 1 km of optical fiber with no      [13] B. D. M. Jones, I. Šupić, R. Uola, N. Brunner, and
+     detection loophole, Physical Review X 2, 031003 (2012).             P. Skrzypczyk, Network quantum steering, Phys. Rev.
+ [7] B. G. Christensen, K. T. McCusker, J. B. Altepeter,                 Lett. 127, 170405 (2021).
+     B. Calkins, T. Gerrits, A. E. Lita, A. Miller, L. K. Shalm,    [14] S. Sarkar, Network quantum steering enables random-
+     Y. Zhang, S. W. Nam, N. Brunner, C. C. W. Lim, N. Gisin,            ness certification without seed randomness, Quantum 8,
+     and P. G. Kwiat, Detection-loophole-free test of quan-              1419 (2024).
+     tum nonlocality, and applications, Physical Review Let-        [15] H. B. Coldenstrodt-Ronge, J. S. Lundeen, K. L. Pregnell,
+     ters 111, 130406 (2013).                                            A. Feito, B. J. Smith, W. Mauerer, C. Silberhorn, J. Eis-
+ [8] B. Hensen, H. Bernien, A. E. Dréau, A. Reiserer, N. Kalb,           ert, M. B. Plenio, and I. A. Walmsley, A proposed testbed
+     M. S. Blok, J. Ruitenberg, R. F. L. Vermeulen, R. N.                for detector tomography, Journal of Modern Optics 56,
+     Schouten, C. Abellán, W. Amaya, V. Pruneri, M. W.                   432–441 (2009).
+     Mitchell, M. Markham, D. J. Twitchen, D. Elkouss,              [16] J. S. Lundeen, A. Feito, H. Coldenstrodt-Ronge, K. L.
+     S. Wehner, T. H. Taminiau, and R. Hanson, Loophole-free             Pregnell, C. Silberhorn, T. C. Ralph, J. Eisert, M. B. Plenio,
+     bell inequality violation using electron spins separated by         and I. A. Walmsley, Tomography of quantum detectors,
+     1.3 kilometres, Nature 526, 682 (2015).                             Nature Physics 5, 27–30 (2008).
+ [9] M. Giustina, M. A. M. Versteegh, S. Wengerowsky,               [17] A. Feito, J. S. Lundeen, H. Coldenstrodt-Ronge, J. Eisert,
+     J. Handsteiner, A. Hochrainer, K. Phelan, F. Steinlechner,          M. B. Plenio, and I. A. Walmsley, Measuring measure-
+     J. Kofler, J.-Á. Larsson, C. Abellán, W. Amaya, V. Pruneri,         ment: theory and practice, New Journal of Physics 11,
+     M. W. Mitchell, J. Beyer, T. Gerrits, A. E. Lita, L. K.             093038 (2009).
+     Shalm, S. W. Nam, T. Scheidl, R. Ursin, B. Wittmann, and       [18] A. Luis and L. L. Sánchez-Soto, Complete characteriza-
+     A. Zeilinger, Significant-loophole-free test of bell’s theo-        tion of arbitrary quantum measurement processes, Phys.
+     rem with entangled photons, Physical Review Letters 115,            Rev. Lett. 83, 3573 (1999).
+     250401 (2015).                                                 [19] L. Pereira, J. García-Ripoll, and T. Ramos, Complete phys-
+                                                                                                                                                   6
+
+     ical characterization of quantum nondemolition mea-                                    to secure quantum key distribution, Phys. Rev. Lett. 97,
+     surements via tomography, Physical Review Letters 129,                                 120405 (2006).
+     10.1103/physrevlett.129.010402 (2022).                                            [30] N. Brunner, D. Cavalcanti, S. Pironio, V. Scarani, and
+[20] L. Pereira, J. J. García-Ripoll, and T. Ramos, Paral-                                  S. Wehner, Bell nonlocality, Rev. Mod. Phys. 86, 419 (2014).
+     lel tomography of quantum non-demolition measure-                                 [31] V. Srivastav, N. H. Valencia, W. McCutcheon, S. Leedum-
+     ments in multi-qubit devices, npj Quantum Information                                  rongwatthanakun, S. Designolle, R. Uola, N. Brunner, and
+     9, 10.1038/s41534-023-00688-7 (2023).                                                  M. Malik, Quick quantum steering: Overcoming loss and
+[21] R. Horodecki, P. Horodecki, M. Horodecki, and                                          noise with qudits, Physical Review X 12, 10.1103/phys-
+     K. Horodecki, Quantum entanglement, Rev. Mod.                                          revx.12.041023 (2022).
+     Phys. 81, 865 (2009).                                                             [32] M. Masini and S. Sarkar, One-sided di-qkd secure against
+[22] O. Gühne and G. Tóth, Entanglement detection, Physics                                  coherent attacks over long distances, New Journal of
+     Reports 474, 1–75 (2009).                                                              Physics 28, 064503 (2026).
+[23] S. Sarkar, Witnessing network steerability of every bi-                           [33] G. Vallone, Einstein-podolsky-rosen steering: Closing
+     partite entangled state without inputs, Phys. Rev. A 113,                              the detection loophole with non-maximally-entangled
+     032212 (2026).                                                                         states and arbitrary low efficiency, Physical Review A 87,
+[24] P. M. Pearle, Hidden-variable example based upon data                                  10.1103/physreva.87.020101 (2013).
+     rejection, Phys. Rev. D 2, 1418 (1970).                                           [34] J.-W. Pan, D. Bouwmeester, H. Weinfurter, and
+[25] A. Garg and N. D. Mermin, Detector inefficiencies in                                   A. Zeilinger, Experimental entanglement swapping:
+     the einstein-podolsky-rosen experiment, Phys. Rev. D 35,                               Entangling photons that never interacted, Phys. Rev. Lett.
+     3831 (1987).                                                                           80, 3891 (1998).
+[26] P. H. Eberhard, Background level and counter efficiencies                         [35] G. Minati, G. Rodari, E. Polino, F. Andreoli, D. Poderini,
+     required for a loophole-free einstein-podolsky-rosen ex-                               R. Chaves, G. Carvacho, and F. Sciarrino, Random-
+     periment, Phys. Rev. A 47, R747(R) (1993).                                             ness certification in a quantum network with inde-
+[27] C. Branciard, Detection-loophole-free test of quantum                                  pendent sources, Science Advances 12, eaea8571 (2026),
+     steering, Phys. Rev. A 83, 032123 (2011).                                              https://www.science.org/doi/pdf/10.1126/sciadv.aea8571.
+[28] A. J. e. a. Bennet, Arbitrarily loss-tolerant einstein-                           [36] N. Miklin, A. Chaturvedi, M. Bourennane, M. Pawłowski,
+     podolsky-rosen steering allowing a demonstration over 1                                and A. Cabello, Exponentially decreasing critical detec-
+     km of optical fiber with no detection loophole, Phys. Rev.                             tion efficiency for any bell inequality, Physical Review
+     X 2, 031003 (2012).                                                                    Letters 129, 10.1103/physrevlett.129.230403 (2022).
+[29] A. Acín, N. Gisin, and L. Masanes, From bell’s theorem
+
+
+
+                                                                             APPENDIX
+
+
+                                                                        A.    SOHS models
+
+
+  Consider the scenario depicted in Fig. 2 of the manuscript that such that the sources generate the classically
+                                      NN    (k)                                                      NN     ( j)
+correlated state given by ∑k pk       i =1 ρ Ai Bi and Bob’s measurement is { Mb } where Mb = ∑ j     i =1 σi,b such that b =
+0, . . . , n − 1. The assemblage, or collection of post-measured states, Ξ = {ξ b } is given by ξ b = ∑k,j pk TrB ( iN=1 1 Ai ⊗
+                                                                                                                   N
+
+ ( j) (k)
+σi,b ρ A B ).
+           i i
+  Let us now construct an SOHS model that reproduces the same assemblage as Ξ. The intuition behind the follow-
+ing construction is that all the sources Si deterministically send the outcome b to Bob and send the corresponding
+local states to Alice to reproduce the assemblage Ξ. For this purpose, we consider that λi = (bi , ji ) where bi , ji are
+non-negative integers such that bi = 0, . . . , n − 1. The corresponding correlations p( a, b) under the SOHS model is
+given as
+                                                                                                                                !
+                                                                                                              N
+                                 ∑ pk              ∑
+                                                                      (k)        (k)                            O
+                                                             p       λ1 . . . , λ N        Tr    Ma|i1 ...i N          ρ̃ (k)
+                                                                                                                        λi
+                                  k          (k)
+                                            λ1 ,...,λ N
+                                                       (k)                                                      i =1
+                                                                                                                  
+                                                                                                  (k)          (k)
+                                                                                           p b | λ1 , . . . , λ N                               (12)
+
+                                      (k)              (k)
+The probability distribution p(λ1 , . . . , λ N ) for all k is given by
+                                                                         (
+                                           (k)          (k)                  pb,j,k    λ1 = . . . = λ N = (b, j)
+                                      p ( λ1 , . . . , λ N ) =                                                                                  (13)
+                                                                             0         otherwise
+                                                                                                                                                    7
+                                                                                                                
+                      i =1 1 Ai ⊗ σi,b ρ Ai Bi ) along with p
+                     NN            ( j) (k)                                             (k)                (k)
+where pb,j,k = Tr(                                                              b | λ1 , . . . , λ N                 given as
+                                                                                    (
+                                         
+                                                  (k)          (k)
+                                                                                       1     λ1 = (b, j)                ∀ j, k
+                                     p       b | λ1 , . . . , λ N           =                                                     .               (14)
+                                                                                        0     otherwise
+
+The corresponding local states sent by the source Si to Alice is ρ̃ (k) = TrB (1 Ai ⊗ σi,b ρ A B )/pb,j,k .
+                                                                                                                                      ( j) (k)
+                                                                                                      λi                                    i i
+
+
+
+
+                                                    B.    Upper-bound for SOHS models
+
+Fact 2. Consider the swap-steering scenario in Fig. 2 of the manuscript and the functional S{ Eb } given by
+
+                                              S{Eb } = max ∑ β i1 ,...i N p(0, b|i1 . . . i N )                                                   (15)
+                                                              b        i1 ,...i N
+
+The maximal value attainable of S{ Eb } using an SOHS model is β SOHS = 0.
+
+Proof. Let us recall that for correlations admitting a SOHS model, we have that
+
+                                    p(0, b|i1 . . . i N ) = ∑ pk                            ∑
+                                                                                                             (k)             (k)
+                                                                                                      p ( λ1 ) . . . p ( λ N )
+                                                                       k             (k)
+                                                                                    λ1 ,...,λ N
+                                                                                                (k)
+
+                                                                                                                 (k)         (k)
+                                               Tr[ M0|i1 ...i N ρ (k) ⊗ . . . ρ (k) ] p(b|λ1 , . . . , λ N )                                      (16)
+                                                                    λ1                        λN
+
+for all b. As S{ Eb } is linear over the probabilities p(0, b|i1 . . . i N ) we can straightforwardly optimise over models with
+pk′ = 1 for some k = k′ . Consequently, we have from (15) that
+
+                                   S{Eb } = max
+                                                    b
+                                                            ∑              p(λ1 ) . . . p(λ N Γ(ρλ1 ⊗ . . . ρλ N ))
+                                                         λ1 ,...,λ N
+                                                                                                       p ( b | λ1 , . . . , λ N )                 (17)
+
+where
+
+                                 Γ ( ρ λ1 ⊗ ρ λ n ) =        ∑ βi1 ,...iN p(0|i1 . . . i N , ρλ1 ⊗ . . . ρλN ).                                   (18)
+                                                          i1 ,...i N
+
+Expanding the above formula (18), by recalling Alice’s measurements Ai1 ...i N , we obtain
+
+                               Γ ( ρ λ1 ⊗ . . . ρ λ N ) =           ∑ βi1 ,...iN Tr(τi1 ⊗ . . . τiN ρλ1 ⊗ . . . ρλN )
+                                                                  i1 ,...i N
+                                                          = −Tr(W ρλ1 ⊗ . . . ρλ N ) ≤ 0.                                                         (19)
+
+Thus, we have from (17) that for correlations admitting a SOHS model
+
+                                                                           S{Eb } ≤ 0.                                                            (20)
+
+This concludes the proof.
+

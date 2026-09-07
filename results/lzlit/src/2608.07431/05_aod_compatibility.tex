@@ -1,0 +1,66 @@
+\section{Physical Implementations on RNAA}\label{sec:hardware}
+In this section, we make a case for GALA codes in comparison to the original construction using APMs. Firstly, similar to APMs, product-groups also allow us to design active orthogonality, and with more simplicity afforded by compressing commutativity conditions to a small $H_k$ factor. Secondly, similar to the reference APM approach taken in the followup co-design work, GALA also restrict the search space to AOD compatible ones, and more controllably so: while the reference APMs with desirable orbit structures is neither prescriptive nor does it always ensure all transitions are rigid global cyclic shifts, such properties for GALA codes (especially DPG and SPG-restricted codes) follows directly from the abelian group $C_m$, with group elements that translate directly to movement schedules. 
+
+
+\subsection{Hardware Compatibility by Construction}\label{ssec:matching-hardware}
+
+ We ground our claims that all GALA codes make efficient use of crossed-AODs by constructing an atom layout and move sequence for their syndrome extraction circuit, building off of atom layouts for previous codes \cite{zhao2026ultrahighratequantumerrorcorrection}. In GALA codes, the order of qubits as specified in the check matrices maps directly to the locations of neutral atoms in a 2D layout in the quantum computer and block permutations correspond directly to row and column permutations within those blocks of atoms. We obtain an overall fast elapsed time for syndrome extraction because these required permutations correspond to ``easy'' atom moves.
+
+To understand what an ``easy'' atom move is on neutral atom quantum computers we need to understand AODs. An Acousto-optic deflector is a dynamically controllable diffraction grating that allows us to copy one laser beam into multiple beams with arbitrarily-controllable positions along a line. By combining two AOD devices at 90 degrees, one oriented to the x-axis and to the y-axis, we obtain a crossed-AOD which copies a laser beam to a set of x-coordinates and then copies each of those to a set of y-coordinates, producing a grid of dynamically movable beams with the restriction that they stay in an irregular grid \textit{and} those grid sites cannot cross during moves. Each beam is a trap which can pick up and move atoms to arbitrary locations in a 2D grid. Because we cannot collide atoms during moves, when we do cyclic permutations we must either move in two sequential steps or use two sets of crossed-AOD devices to avoid conflicts. We use either two or four crossed-AODs for our estimates here.
+
+We now describe the layout in 2D of the data and ancilla atoms during each step of syndrome extraction. We refer to \textit{blocks} of $P$ data or ancilla atoms as groups of atoms that we arrange, move, and permute as a group. For a GALA code with parameters $L$ and $J$, where $L$ is typically 8 or 12 and $J\ge L/2$, there are $L$ blocks of data qubits, $J$ blocks of X ancilla and $J$ blocks of Z ancilla. We use a 2D arrangement of sites identical to \cite{zhao2026ultrahighratequantumerrorcorrection} with placement of $L+J$ pairs of blocks vertically but we do some moves more optimally. 
+
+A key choice when laying out is how to split $P$ into rows and columns. For example, if the GALA code uses group $S2\times S3\times S14$ with $P=2*3*14=84$, multiple layouts are valid but will have slightly different distances needed to move atoms which impacts the total time.  We have the following:
+
+\begin{proposition}[Regular Movements]\label{prop:regular-moves}
+    Let $\mathcal Q\in \mathrm{GALA}_{L,J, \star}(H_k\ltimes_{\mathcal{R}} C_m)$ be a restricted semi-direct product GALA code, and suppose $C_p\times C_q = C_m$. There is a natural layout where the data qubits are arranged in a $kp\times Lq$ array and the check qubits are arranged in a $kp\times Jq$ arrays such that syndrome extraction is implementable over $L$ rounds of independent row swaps $\sigma_r$ and column swaps $\sigma_c$ on the check qubits. In particular, if $i\in \mathcal{R}$, $F_i = (h_i, c_i\otimes c'_i)\in H_k\times C_p\times C_q$ ($\mathcal{R} = [L]$ for DPK constructions), the shifts are given by 
+
+    \begin{align*}
+        \sigma_{r,i} &= h_{i}h_{i-1}^T\otimes c_ic_{i-1}^T,\\
+        \sigma_{c,i} &= I_J\otimes  c'_i{c_{i-1}'}^T.
+    \end{align*}
+
+
+    
+    which can be efficiently implemented using AOD compatible moves. Otherwise, for $i\neq \mathcal{R}$, $F_i = (h_i; c_{i0}\otimes c'_{i0}, ..., c_{ik}\otimes c'_{ik})\in H_k\star(C_p\times C_q)$, the moves are
+    \begin{align*}
+        \sigma_{r,i} &= h_{i}h_{i-1}^T\otimes I_p \cdot c_{i0} c_{i-1,0}^T\oplus ...\oplus c_{ik} c_{i-1,k}^T,\\
+        \sigma_{c,i} &= c'_{i0} {c'_{i-1,0}}^T\oplus ...\oplus c'_{ik} {c'_{i-1,k}}^T.\\
+    \end{align*}
+    \end{proposition}
+    Proof follows from the CRT. Note picking $H_k\star C_m = S_3\times \mathbb Z_{32}$ and $S_3\times \mathbb Z_2\times \mathbb Z_{32} $ recovers the optimal moves for the $P=96$ and $P=192$ codes from \cite{zhao2026ultrahighratequantumerrorcorrection}.
+
+In this factorization, any non-commuting factor $H_k$ becomes (part of) the row permutation to reduce the chance for conflicting AOD moves. All factorizations of the groups into row and column groups are valid so for $[[672,336,12]]$ we choose 2 rows and 42 columns and for $[[132,30,12]]$ we choose 1 row and 11 columns per block.
+
+The purpose of atom permutations is to rearrange the qubits so that we can apply a layer of parallel CZ gates between all paired atoms. $F_i$ and $G_i$ specify how to arrange the ancilla relative to the data atoms therefore $F_j F^{-1}_i$, $G_j F^{-1}_i$, $G_j G^{-1}_i$, and $F_j G^{-1}_i$ specify the changes to the previous permutation to obtain the permutation for the next CZ layer. A key insight that improves our move parallelism is the observation that the Z check matrix contains the inverse block permutations of the X check matrix so to do a permutation for the next X check and the next Z check in parallel we permute the ancilla needed for the non-inverse permutation but permute \textit{half of the data} the same amount and by permuting the data instead of the ancilla, we obtain the inverse \textit{relative permutation} between the Z ancilla and the data.
+
+With this arrangement, we choose the permutation sequence that minimizes move time (sequence $F_0$, $F_3$, $F_4$, $F_5$, $F_2$, $F_1$, $G_1$, $G_4$, $G_2$, $G_5$, $G_3$, $G_0$ for $[[132,30,12]]$ and sequence $F_0$, $F_2$, $F_{3a}$, $F_{3b}$, $F_{1a}$, $F_{1b}$, $G_{1b}$, $G_{1a}$, $G_{3b}$, $G_{3a}$, $G_{2}$, $G_{0}$ for $[[672,336,12]]$). A design feature of GALA codes is the sum of multiple permutation matrices in some blocks of the check matrix. This enables high rate at smaller code block size and also reduces the number of times we have to rearrange the blocks of atoms. The a and b subscripts refer to the two summed permutations in the check matrix for $[[672,336,12]]$. From the positions determined by this sequence of permutations, assuming a distance between atom pairs of 12um, vertical and horizontal, and assuming movement acceleration of $5500 m/s^2$ \cite{zhou2025resource} we estimate the total time for syndrome extraction. $[[672,336,12]]$ takes 8.868ms with two crossed-AODs or 6.755ms parallelizing block and column permutations with four crossed-AODs. $[[132,30,12]]$ takes 5.257ms with two crossed-AODs or 3.100ms by parallelizing block and column permutations with four crossed-AODs.
+
+%SE durations for [[672, 336, 12]]:
+%Two crossed-AODs: 8.868ms
+%Four crossed-AODs: 6.755ms
+%
+%SE durations for n132
+%Two crossed-AODs: 5.257ms
+%Four crossed-AODs: 3.100ms
+
+
+\begin{table*}
+\centering
+\begin{tabular}{lllllll}
+\toprule
+Desideratum &  Quasi-Cyclic \cite{Hagiwara_2007}&Kasai \cite{kasai2026breakingorthogonalitybarrierquantum}
+& QuEra
+\cite{zhao2026ultrahighratequantumerrorcorrection} & Okada-Kasai \cite{okada2026pairpartitionconstructionscpmbasedquantum}&SPG~(Sec.~\ref{sec:construction})&DPG~(Sec.~\ref{sec:construction})\\\midrule
+Rate& \color{purple}$?$&\color{teal} $\geq 50\%$& \color{teal}$\geq 50\%$&\color{teal}$\geq 50\%$& \color{teal}$\geq 50\%$&\color{teal}$\geq 50\%$\\
+Length& \color{teal} $10^2 - 10^3$& \color{purple} $\geq 5\times 10^3$& \color{olive} $10^3-5\times 10^3$& \color{teal} $10^2 - 10^3$& \color{teal} $10^2 - 10^3$&\color{teal} $10^2 - 10^3$\\
+Girth $\geq 6$&  {\color{teal}Yes} &{\color{teal}Yes} & {\color{teal}Yes} &{\color{teal}Yes} & {\color{teal}Yes} &{\color{teal}Yes} \\
+AOD Compatibility&  {\color{teal}Parallel Cyclic}&\color{purple}?& \color{teal}Parallel Cyclic &\color{olive}Serial Cyclic& \color{olive}Serial Cyclic&{\color{teal}Parallel Cyclic}\\
+Low-weight Basis&  \color{purple}?&\color{purple}?& \color{purple}?&\color{purple}?& {\color{teal}Yes} &{\color{teal} Yes}\\
+ Automorphisms& \color{olive} Cyclic Shift & \color{purple}?&\color{purple}?& \color{olive}Cyclic Shift& \multicolumn{2}{c}{\color{teal} Customizable Shifts; Clifford if ZX-dual}\\
+\bottomrule
+\end{tabular}
+\caption{Summary of desiderata of related constructions.}
+\label{tab:comparison}
+\end{table*}
+

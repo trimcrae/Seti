@@ -1,0 +1,1278 @@
+                                                                                                                                                           UMD-PP-026-06
+
+                                                                Exponential-in-Nc2 cost reduction of product-formula-based
+                                                                   quantum simulations of quantum chromodynamics
+                                                                                                  1, 2, 3, ∗                            4, †
+                                                                              Zohreh Davoudi                   and Jesse R. Stryker
+                                                                      1
+                                                                        Maryland Center for Fundamental Physics and Department of Physics,
+                                                                                University of Maryland, College Park, MD 20742, USA
+                                                                           2
+                                                                             Joint Center for Quantum Information and Computer Science,
+                                                                             NIST/University of Maryland, College Park, Maryland 20742
+                                                                                 3
+                                                                                   The NSF Institute for Robust Quantum Simulation,
+                                                                             University of Maryland, College Park, Maryland 20742, USA
+                                                                4
+                                                                  Physics Division, Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA
+                                                                                               (Dated: August 24, 2026)
+                                                            Quantum algorithms for simulating quantum chromodynamics (QCD) have matured steadily since
+                                                         the pioneering work of Byrnes and Yamamoto [PRA 73, 022328 (2006)]. The most popular strate-
+arXiv:2608.21258v1 [hep-lat] 21 Aug 2026
+
+
+
+
+                                                         gies for Hamiltonian simulation involve product-formula decompositions. However, the application
+                                                         of product-formula methods to SU(Nc ) lattice gauge theories by Byrnes and Yamamoto leads to
+                                                                  2
+                                                         O(Λ8(Nc −1) ) gate complexity per Trotter step, where Λ is the bosonic cutoff in the electric (i.e.,
+                                                         irreducible-representation) basis. A seminal work by Kan and Nam [arXiv:2107.12769
+                                                                                                                                               (2021)] sig-
+                                                         nificantly improves over such an undesirable cost and reports an O Λpolylog(Λ) scaling, yet it still
+                                                         calls for an unrealistically large number of quantum gates. Here, we illuminate one of the reasons
+                                                                                                                                2
+                                                         behind this high cost estimate and show that a factor of size O(24(Nc −1) ) can be removed from
+                                                         the per-Trotter-step cost estimate by Kan and Nam. We specifically show that, by using methods
+                                                         developed in our past works [PRD 112, 014508 (2025); Quantum 7, 1213 (2023)], exponentiated-
+                                                         Hamiltonian decomposition—a necessary step in the application of product-formula algorithms—
+                                                         can be performed far more efficiently than previously thought. Our method reduces the T-gate
+                                                         cost estimate of QCD simulations using a second-order product formula by a factor of nearly 1014 ,
+                                                         independent of simulation parameters and sizes. Focusing on simulations in the electric basis, we
+                                                         further contrast our results with other methods: the local-multiplet basis approach of Ciavarella,
+                                                         Klco, and Savage [PRD 103, 094501 (2021)] and the near-optimal algorithm of Rhodes, Kreshchuk,
+                                                         and Pathak [PRX Quantum 5, 040347 (2024)]. This work highlights the importance of continued
+                                                         algorithmic improvement to bringing the quantum-simulation cost of QCD within reach of realistic
+                                                         quantum computers.
+
+
+                                                                   CONTENTS                                      VI. Conclusions                                         15
+
+                                            I. Introduction                                              1           Acknowledgments                                     16
+
+                                                                                                                     References                                          16
+                                           II. U(1) lattice gauge theory                                 3
+                                               A. Hopping terms                                          4
+                                               B. Plaquette terms                                        5                         I.   INTRODUCTION
+
+                                           III. SU(2) lattice gauge theory                               6
+                                                                                                                    The field of quantum computation is fast evolving,
+                                                A. Hopping terms                                         8
+                                                                                                                 and simulation of quantum many-body dynamics remains
+                                                B. Plaquette terms                                       8       one of the key applications of quantum computers [1–
+                                                                                                                 3]. Quantum field theories, in particular, have long been
+                                           IV. SU(3) lattice gauge theory                               9        identified as a target application. Quantum chromody-
+                                               A. Hopping terms                                        10        namics is especially relevant for many phenomenologi-
+                                               B. Plaquette terms                                      11        cal predictions rooted in the Standard Model of particle
+                                                                                                                 physics [4, 5]; if successful, quantum computers will allow
+                                           V. Other algorithms                                         12        ab initio simulations of real-time dynamics and far-from-
+                                              A. Simulation with near-optimal algorithms               12        equilibrium conditions in collider scattering events, the
+                                              B. Simulation in the local-multiplet basis with                    early universe, and matter in extreme environments [6–
+                                                 classically precomputed rotations                     14        14]. Essential to this program is the ability to simulate
+                                                                                                                 time evolution of QCD in Minkowski (as opposed to Eu-
+                                                                                                                 clidean) spacetime.
+                                                                                                                    The most popular algorithms for simulating
+                                           ∗ davoudi@umd.edu
+                                                                                                                 Schrödinger-picture time evolution on a universal
+                                           † jstryker@lbl.gov
+                                                                                                                 quantum computer are based on product formulas
+                                                                                                                           2
+                                          PΓ
+(PFs) [15]. Consider a Hamiltonian H = γ=1 Hγ with              only nonzero cγ are included in the sum. Here, we use
+noncommuting Hγ . In quantum simulation, circuits               Pauli operator to refer to an arbitrary tensor product of
+for exactly implementing the time-evolution operator            the single-qubit Pauli operators
+e−iT H (with T ∈ R) are generally not available, so one
+must resort to an approximation method. PFs refer to              X = |0⟩⟨1| + |1⟩⟨0| , Z = |0⟩⟨0| − |1⟩⟨1| , Y = iXZ, (3)
+approximating e−iT H by a sequence of subevolutions of
+                                                                and 1 = |0⟩⟨0| + |1⟩⟨1|. Unitary evolution for an Hγ that
+the form e−itHγ (with |t| < |T |). One must then develop
+                                                                is a Pauli operator can be readily decomposed into ele-
+circuits for the e−itHγ subevolutions. A commonly used
+                                                                mentary gates [20]; however, for a Hamiltonian involving
+PF is the second-order Trotter-Suzuki expansion [16, 17],
+                                                                η qubits, there may be as many as 4η Pauli operators
+                
+                   Γ                1
+                                                 s             required for the decomposition.
+                  Y         t
+                                   Y        t                      Pauli decomposition is the underlying method in a pio-
+   V2 (T ; s) =        e−i 2 Hγ        e−i 2 Hζ  , (1)
+                                                                neering paper by Byrnes and Yamamoto [21] on quantum
+                γ=1,2,...       ζ=Γ,Γ−1,...
+                                                                computing LGTs. They first write the Hamiltonian of a
+                                                                Yang-Mills LGT in terms of various number and ladder
+where s := Tt ∈ Z+ . This form approximates the ex-
+                                                                operators that are defined in the (discrete) irreducible-
+act evolution with a spectral-norm error that is bounded
+                                                                representation—or irrep, also referred to as electric—
+as [18]
+                                                                basis with truncation Λ. If the local irrep quantum num-
+                                        α2 T 3                  bers are encoded into qubits using a unary map, as pro-
+                V2 (T ; s) − e−iT H ≤          .         (2)    posed in Ref. [21], then the corresponding Pauli decompo-
+                                         s2
+                                                                sition is simple but the qubit-register size is unnecessarily
+Here, the commutator-error bound α2 is a function of the        large. Using a binary map, the local irrep quantum num-
+spectral norm of the second-order nested commutators of         bers can be encoded exponentially more efficiently, but
+the Hamiltonian terms.                                          the Pauli decomposition is more involved. The number
+   PF algorithms take advantage of the locality that is         of Pauli terms in any case will be unrealistically large,
+                                                                                                  2
+usually present in physical theories, including in quan-        and at worse scales as O(Λ8(Nc −1) ) for SU(Nc ) theories,
+tum field theories. Moreover, the PF algorithms do not          which is inefficient. Furthermore, the Pauli terms often
+intrinsically require ancillary qubits. Such features are       do not commute, which causes significant commutator er-
+especially appealing in noisy intermediate-scale quantum        ror and drives up the number of Trotter steps, s, required
+(NISQ) devices, but remain relevant for the fault-tolerant      to guarantee a fixed, low error [per Eq. (2)].
+era of quantum computing too.                                      To remedy this situation, a seminal paper by Kan and
+   In this paper, we consider the application of PF algo-       Nam [22] adopts an earlier technique of Shaw et al. [23]
+rithms to simulating real-time dynamics of gauge theories       to avoid a naive Pauli decomposition of the Hamiltonian
+(including QCD) in the Kogut-Susskind [19] lattice for-         terms, achieving a gate complexity that scales with Λ as
+mulation. Any PF algorithm of a quantum many-body               O Λ polylog(Λ) . The key idea from Ref. [23] is the arti-
+Hamiltonian starts with a Trotterization prescription—a         ficial splitting of a bosonic ladder operator into two terms
+choice by which the collection of Hamiltonian summands          that we name as even and odd. Kan and Nam apply the
+Hγ are identified. This splitting is informed by whether        even-odd splitting from Ref. [23] to all ladder operators
+or not e−itHγ can be efficiently decomposed into a uni-         in the LGT Hamiltonian, multiplying them all out to ob-
+versal set of single- and two-qubit gates. If such a de-        tain the summands for Trotterization. This method for
+composition is not known, further splitting of terms may        splitting the Hamiltonian leads to subevolutions on dif-
+be required to obtain a set of Hγ whose exponentiated           ferent subspaces that can be circuitized in closed form. In
+forms can be implemented efficiently. This process often        the U(1) theory in (1+1)D, the even-odd splitting leads
+increases both the number of subevolutions to be imple-         to only a doubling of the interaction terms of the Hamil-
+mented and the (bound on the) Trotter error. In partic-         tonian, i.e., the fermion hopping terms. But when the
+ular, each individual subevolution in non-Abelian gauge         method is carried over from U(1) to SU(2) to SU(3), and
+theories may itself incur a high cost. It is therefore desir-   from (1+1)D to (2+1)D to (3+1)D, the abundance of
+able to minimize the number of subevolutions, or equiva-        ladder operators that all undergo splitting leads to an ap-
+lently Γ. Since lattice gauge theory (LGT) Hamiltonians         parent need for ∼ 1015 subevolutions per magnetic (pla-
+are usually sums over local operators acting on a site, a       quette) term in the Hamiltonian [22]. A Trotter decom-
+link, or a plaquette, which are translationally invariant,      position of this sort is still considered “efficient”, from
+we generally focus on one of such local operators at a          the point of view of computational complexity classes,
+time and use Γ to refer to the subevolutions associated         because the large but fixed number of local subevolutions
+with that particular operator.                                  is independent of tunable simulation parameters (such as
+   The most straightforward, but often inefficient, ap-         volume or time). The staggering multiplicative cost that
+proach to Trotterized time evolution is Pauli decompo-          comes with ∼ 1015 subevolutions, however, presents a
+sition. Pauli decomposition entails determining the ex-         roadblock to implementations on near-term and poten-
+pression
+       P of a Hamiltonian in the basis of Pauli operators:      tially also far-term hardware, rendering the decomposi-
+H = γ cγ Hγ , where each Hγ is a Pauli operator and             tion of Ref. [22] inefficient in the colloquial sense of the
+                                                                                                                         3
+
+word.                                                          of the Kogut-Susskind SU(Nc ) LGTs in the irrep ba-
+   We have found in Refs. [24, 25] a different strategy        sis: the post-Trotter, near-optimal algorithm of Rhodes,
+to subdivide operators in the Hamiltonian. The strate-         Kreshchuk, and Pathak [26], and the local-multiplet ba-
+gies in Ref. [22] and Refs. [24, 25] can all be under-         sis approach of Ciavarella, Klco, and Savage [27]. We
+stood as finding   splittings for local Hamiltonian opera-     further motivate a full end-to-end algorithmic analysis
+                                                               within different frameworks and algorithms presented to
+             P
+tors, H → γ Hγ , wherein each Hγ is block-diagonalized
+into blocks no larger than 2 × 2. Summands of that             date [28–38].
+form are sought because if Hγ only generates rotations            This paper is organized as follows. In Secs. II, III,
+in two-dimensional subspaces, analytically diagonalizing       and IV, we explain how our strategy is applied to the
+it is potentially tractable. However, one summand Hγ           U(1), SU(2), and SU(3) LGTs, respectively, in any num-
+could generate rotations in precisely one two-dimensional      ber of dimensions. Here, only the fermion-gauge inter-
+subspace, or in many disjoint two-dimensional subspaces        action (hopping) and magnetic (plaquette) Hamiltonians
+simultaneously. If one can find diagonalizable Hγ that         are of importance given their off-diagonal nature in the
+generate rotations in many two-dimensional subspaces si-       irrep basis. Table I compiles a summary of the number
+multaneously, then fewer overall summands are needed.          of subevolutions to be implemented within our approach
+   References [24, 25] are rooted in the observation that      compared with Ref. [22]. The overall cost saving for QCD
+if Hγ involves a definite tensor product of ladder op-         simulations using a second-order PF is further provided.
+erators, then an even-odd splitting of just one ladder-        Section V includes a discussion of other leading algorith-
+operator factor should                                         mic approaches to the problem of quantum simulating
+                        P suffice to yield new summands
+Hγ,γ ′ (with Hγ =         γ ′ Hγ,γ ) that generate rotations
+                                    ′                          QCD dynamics. In Sec. VI, we present our conclusions
+in two-dimensional subspaces and whose diagonaliza-            and offer an outlook.
+tions are tractable. Reference [24] proposes a partial-
+diagonalization procedure based on systematically apply-
+ing unitary transformations—which can be geometrically
+interpreted as shearing—until the transformed version of             II.   U(1) LATTICE GAUGE THEORY
+Hγ , say H̃γ , involves exactly one ladder-operator factor.
+One then does a single even-odd splitting on the residual         It is instructive to first explain how our method im-
+                              (e)     (o)
+ladder operator, H̃γ → H̃γ + H̃γ , and separately diago-       proves the PF-based algorithm cost for more elementary
+           (e)       (o)
+nalizes H̃γ and H̃γ for circuitization. Reference [25] in-     lattice gauge theories, before generalizing to QCD. Con-
+stead introduces at the start an even-odd splitting to any     sider the U(1) LGT coupled to staggered fermions in
+                                                  (e)    (o)   d + 1 dimensions. An individual U(1) gauge link is char-
+one of the bosonic ladder operators: Hγ → Hγ + Hγ .
+With the help of an ancilla qubit, one applies certain         acterized by one quantum number and has an on-link
+unitary transformations—based on singular value decom-         Hilbert space spanned by states of the form |ϵ⟩, where
+positions (SVDs)—that have the effect of diagonalizing         each electric-field value ϵ ∈ Z corresponds to a distinct
+          (e)      (o)                                         irrep of U(1). This basis, i.e., the irrep basis, is to be
+either Hγ or Hγ for circuitization. Later on, we dis-
+                                                               contrasted with its conjugate group-element basis |θ⟩,
+cuss the Hamiltonian splitting assuming the SVD-based
+                                                               wherein states are parametrized by a continuous coor-
+procedure [25], although one should be equally able to
+                                                               dinate θ on the U(1) manifold.
+apply the shearing procedure [24]. We also provide a
+graph-theoretic interpretation to lend some intuition for         In the irrep basis, the link operator is defined by
+our splitting scheme.
+   As will be shown in the paper, the strategy based on a                           U |ϵ⟩ = |ϵ − 1⟩ ,                  (4)
+single even-odd splitting reduces the number of subevo-
+lutions to be implemented per Trotter step in the SU(Nc )
+                                                                                    P
+                                                               or equivalently U = ϵ |ϵ − 1⟩⟨ϵ|. Thus, U is formally an
+                                  2
+LGT by a factor of O(24(Nc −1) ) compared to Ref. [22].        infinite-dimensional shift matrix; it can be thought of as a
+For QCD, the reduction is a factor of ∼ 109 in the number      matrix with ones on the superdiagonal and zeroes every-
+of subevolutions per Trotter step, and a factor of nearly      where else. In practice, one often truncates the Hilbert
+1014 in the total simulation cost estimate of a second-        space to some maximum value of the electric-field mag-
+order PF implementation. The reduction holds regard-           nitude: |ϵ| ≤ Λ, rendering U finite-dimensional.
+less of the cutoff value, system size, or other parameter         To Trotterize terms in the Hamiltonian involving link
+values.                                                        operators, we turn to the even-odd splitting procedure
+   Our work demonstrates that continuous algorithmic           as it was done in Ref. [25]. This algorithm is motivated
+improvements are vital to realistic resource estimation        by the fact that the link operator is a sparse matrix that
+of gauge-theory simulations toward the fault-tolerant          has only superdiagonal elements, hence one can easily
+era of quantum computing, and they may decide fea-             identify unitary matrices V and W such that V † U W is
+sibility of QCD simulations. To put our work in the            properly diagonal. We supplement our explanation with
+broader context, we also contrast our algorithm with two       a graph-theoretic interpretation, following a description
+other leading algorithms for simulating time dynamics          presented in Ref. [24] for the U(1) case.
+                                                                                                                                        4
+
+                            Hamiltonian term    Ref. [22] (quoted)        Ref. [22] (tightened) This work
+                            U(1) hopping                         2                            2         1
+                            U(1) plaquette                      16                           16         2
+                            SU(2) hopping                       64                           64         8
+                            SU(2) plaquette              1,048,576                      524,288       256
+                            SU(3) hopping                   13,872                        9,248        75
+                            SU(3) plaquette 1,470,021,852,266,496         290,374,686,867,456 1,062,882
+
+TABLE I. The count of summands, Γ, in the product-formula decomposition of different operators in the Kogut-Susskind
+Hamiltonian, obtained using the two splitting methods. The irrep basis is assumed, and the chosen operators are those that
+are off-diagonal in this basis. The second column states the precise upper bound reported in Ref. [22], while the third column
+reflects a careful recounting of strictly necessary summands within the same splitting algorithm. The final column is the number
+of summands obtained by the proposed splitting method in this work.
+
+
+                     A.    Hopping terms                               of A allows for a diagonalization of |0⟩⟨1|x A plus its
+                                                                       Hermitian conjugate, as shown in Ref. [25]. To proceed,
+  To demonstrate the algorithm that implements each                    one finds an SVD of A , i.e., choices of unitary V and
+exponentiated Hamiltonian term in a Trotter step, we be-               W such that A = V SW † , with S being a diagonal and
+gin with the hopping terms—also known as the fermion–                  positive semi-definite square matrix. A solution is simple
+gauge-boson interaction—in the U(1) LGT. Each hop-                     to obtain:
+ping term takes the form
+                                                                                               V = Xy λ−
+                                                                                                       p ,                            (7)
+                   Hhop = ψx† Up ψy + H.c.,                     (5)                            W = 1y 1p ,                            (8)
+                                                                                               S = |0⟩⟨0|y Dp .                       (9)
+up to a constant multiplicative factor. Here, ψ † and
+ψ are the single-component, staggered-fermion creation
+                                                                       Here, λ±
+                                                                                      P                          P
+and annihilation operators, respectively, x and y are                           p =     ϵ |ϵ⟩⟨ϵ ∓ 1|p and Dp :=     ϵ |ϵ⟩⟨ϵ|p . With
+any two nearest-neighbor sites on a Cartesian lattice,                 p truncated to a finite number of η qubits, one should
+and p denotes the link connecting them. We often use                   “wrap” the λ±  p shift operators by defining |ϵmax + 1⟩ :=
+the site or link labels to also refer to the registers of              |ϵmin ⟩ and |ϵmin − 1⟩ := |ϵmax ⟩, ensuring the unitarity of
+qubits associated with their respective degrees of free-               λ±p .
+                                                                             2
+
+dom. Thus, x and y are each one-qubit registers, while                    With the above SVD, the next step is to introduce the
+p is an η := ⌈log2 (2Λ + 1)⌉ qubit register. Applying a                unitary
+Jordan-Wigner transformation, the hopping term can be
+                                                                                    U = Hx |0⟩⟨0|x V † + |1⟩⟨1|x W † ,
+                                                                                                                      
+written in terms of qubit operators acting on the x and                                                                         (10)
+y registers. For the simplified case of a (1+1)D lattice,                                         √
+one has                                                                where Hx = (Xx + Zx )/ 2 denotes the single-qubit
+                                                                       Hadamard gate for site x. It it is straightforward to verify
+               Hhop = |0⟩⟨1|x |1⟩⟨0|y Up + H.c.                 (6)    that the Hamiltonian in Eq. (6) has the diagonalization
+
+In higher dimensions, the Jordan-Wigner transforma-                                          U Hhop U † = Zx S .                     (11)
+tion can leave behind additional Pauli-Z operator-factors
+on the hopping terms (so-called Pauli-Z strings); these                On a quantum computer, the U operation involves con-
+Pauli-Z strings are already diagonal in the computational              trolled operations, basic addition primitives, and Pauli
+basis, and as such their presence or absence does not                  gates. Details about these known operations can be
+make any difference in the splitting algorithm that fol-               found in, e.g., Ref. [25]. Overall, the circuit for im-
+lows. The goal is to implement e−itHhop using known                    plementing e−itHhop = U † e−itZx |0⟩⟨0|y Dp U can be imple-
+circuit elements.                                                      mented efficiently, i.e., with a number of gates that scales
+   First, we define A := |1⟩⟨0|y Up and note that A 2 = 0.             as a low-degree polynomial in η. Incidentally, the de-
+Second, we observe that A is accompanied in Hhop by the                composition for the U(1) hopping term presented in this
+operator-factor |0⟩⟨1|x .1 The squaring-to-zero property               example is exact and does not require any splitting to be
+
+
+
+1 From the point of view of the algorithm, the structural similarity   2 The “wrapping” of λ± operators at the lower and upper cutoffs
+                                                                                            p
+  of |0⟩⟨1|x to the factor |1⟩⟨0|y in A is merely a coincidence. The     potentially allows for an unphysical mixing between |ϵmax ⟩ and
+  key property of A is simply A 2 = 0. Later examples will have          |ϵmin ⟩; to prevent this mixing, one can modify the definition of
+  different choices of A that square to zero by other means.             Dp [24].
+                                                                                                                                                 5
+
+implemented. Our count of Γ = 1 is reported in the last         if the state of the p link is in the nullspace of A (e) , and
+column of Table I.                                              to |1⟩anc otherwise. A valid choice for P (e) is
+   In contrast, the algorithm of Ref. [23] (adopted by
+Ref. [22]) splits a single link operator into a sum of two                              P (e) = Xanc Ep + Op .                             (16)
+operators on p: one that is nonzero when applied to even-
+numbered basis states and one that is nonzero when ap-          The effect of P (e) is
+plied to odd-numbered basis states. Concretely,                               (e)
+                                                                   P (e) (Hplaq ⊗ |0⟩⟨0|anc )P (e) †
+                     Up = Up Ep + Up Op ,               (12)
+                                                                                      = (Up Ep )Uq Us† Ut† |0⟩⟨1|anc + H.c.,               (17)
+              P                   P
+where Ep = k |2k⟩⟨2k|p , Op = k |2k + 1⟩⟨2k + 1|p , and
+                                                                which yields a form similar to Eq. (6) and is suitable for
+Ep + Op = 1. With this splitting, ψx† Up Ep ψy + H.c. and       the application of the SVD algorithm. We choose the
+ψx† Up Op ψy +H.c. can each be diagonalized following a pro-    decomposition A (e) = V (e) S (e) W (e) † with
+cedure similar to what is presented above. This split—
+which turns out to be unnecessary for diagonalizing the                                   V (e) = λ−  −
+                                                                                                   p λq 1s 1t ,                            (18)
+U(1) hopping term, as shown above—leads to twice the
+number of simulatable terms and introduces a new source                                   W (e) = 1p 1q λ−  −
+                                                                                                         s λt ,                            (19)
+of Trotter error. While the cost increase is insignificant in                                 (e)
+                                                                                          S         = Ep 1q 1s 1t ,                        (20)
+this example, dramatic cost amplification can arise from
+such unnecessary splittings in the more complex cases,          With the SVD specified, it is straightforward to confirm
+                                                                      (e)
+as will become clear shortly.                                   that Hplaq can be diagonalized via
+
+                                                                                 (e)
+                                                                                Hplaq = U (e) † Zanc S (e) U (e) ,
+                                                                                                          
+                                                                                                                                           (21)
+                  B.    Plaquette terms
+                                                                with the diagonalizing transformation
+   Next, we demonstrate how our algorithm works for the
+                                                                   U (e) = Hanc |0⟩⟨0|anc V (e) † + |1⟩⟨1|anc W (e) † P (e) .
+                                                                                                                     
+plaquette Hamiltonian in the U(1) case. Consider the
+single-plaquette Hamiltonian                                                                                              (22)
+
+                Hplaq = Up Uq Us† Ut† + H.c.             (13)                                                 (o)
+                                                                A similar procedure brings Hplaq to a diagonal form.
+                                                                                                                                         (e/o)
+(up to a constant multiplicative factor), where p, q, s,        Once again, all elements of the algorithm for e−itHplaq =
+                                                                                     (e/o)
+and t label four independent but structurally identical         U (e/o) † e−itZanc S       U (e/o) can be efficiently imple-
+gauge links. Due to the absence of fermionic creation           mented using known quantum circuitry [25].
+and annihilation operators, which previously provided us           The essential difference between our method compared
+with a nilpotent operator, the plaquette operator does          with that used in Ref. [22] is that the latter entails split-
+not square to zero and is not a candidate for the A oper-       ting each and every link operator in the plaquette term
+ator. To proceed, we split one of the link operators into       and implementing each resulting term individually us-
+a sum of two operators according to Eq. (12). With this         ing known quantum circuits, whereas our method calls
+splitting, the plaquette Hamiltonian can be written as          for splitting only a single link operator and implement-
+                                                                ing each resulting term individually. In other words, the
+                            (e)      (o)
+                Hplaq = Hplaq + Hplaq ,                  (14)   method of Ref. [22] involves 24 = 16 subevolutions per
+                                                                U(1)-plaquette operator, while ours calls for only two.
+with                                                            Moreover, the excessive splitting as in Ref. [22] increases
+                                                                the number of noncommuting terms and hence the Trot-
+  Hplaq = A (e) + H.c., A (e) := (Up Ep )Uq Us† Ut† ,
+       (e)
+                                                        (15a)   ter error.
+  Hplaq = A (o) + H.c., A (o) := (Up Op )Uq Us† Ut† .
+       (o)                                                         The above discussion can be illuminated by a graph-
+                                                        (15b)
+                                                                theoretic interpretation of the splitting of Hplaq . First,
+                  (e)                                           one can associate basis states |ϵp , ϵq , ϵs , ϵt ⟩ of a plaquette
+   Focusing on Hplaq , one first notes that (A (e) )2 = 0,
+                                                                with points (ϵp , ϵq , ϵs , ϵt ) on a 4D grid. Second, one can
+making it a candidate for the SVD algorithm of Ref. [25].
+                                                                connect two points (ϵp , ϵq , ϵs , ϵt ) and (ϵ′p , ϵ′q , ϵ′s , ϵ′t ) by an
+One way to diagonalize A (e) plus its Hermitian conjugate
+                                                                edge if the corresponding states are mixed by the action
+using an SVD is to enlarge the Hilbert space with one
+                                                                of Hplaq , i.e.,
+ancillary qubit, which is prepared in the computational-
+zero state, |0⟩anc [25]. Here the ancilla ensures that a                     ⟨ϵ′p , ϵ′q , ϵ′s , ϵ′t | Hplaq |ϵp , ϵq , ϵs , ϵt ⟩ ̸= 0.     (23)
+reversible unitary operation on A (e) , whose net effect on
+the main qubits is an SVD of A (e) , can be straightfor-        Figure 1 defines a system for plotting the points of a 4D
+wardly found, as shown below. Explicitly, one first de-         grid, which enables visualizing these mixings by Hplaq .
+fines a unitary operator P which projects |0⟩anc to |0⟩anc      Two “outer” coordinates are used to specify (ϵp , ϵq ), while
+                                                                                                                               6
+
+                                                                      two-color scheme, it should be possible to separate Hplaq
+                                                                      into two “sub-Hamiltonians” that can each be separately
+                                                                                                               (e)         (o)
+                                                                      diagonalized. This is exactly what Hplaq and Hplaq in
+                                                                      Eq. (14) correspond to, so they may be identified with
+                                                                      the two colors of Fig. 2(a). In contrast, Fig. 2(b) depicts
+                                                                      a coloring of the same graph using 16 colors, which is a
+                                                                      valid but excessive coloring. Each color can be mapped
+                                                                      to one of the 24 subevolutions that result from splitting
+                                                                      each of the four quantum numbers, as called for by the
+                                                                      method of Ref. [22].
+                                                                         To connect back to the U(1) hopping term, recall that
+                                                                      this term could be diagonalized without any splitting.
+                                                                      The reason is, the analogous graph—a 3D graph in the
+                                                                      coordinates of the fermion occupation numbers at sites x
+                                                                      and y and the electric-field value on the link connect-
+                                                                      ing them—can be colored with a single color, as dis-
+                                                                      cussed/depicted in Ref. [24].
+                                                                         Table I includes our count of Γ = 2 for Hplaq . While
+                                                                      the factor of eight reduction using our method compared
+                                                                      to Ref. [22] may seem modest, as it will become clear
+                                                                      shortly, the redundant coloring, i.e., splitting, leads to
+                                                                      an exponentially large number of subevolutions in Nc2
+FIG. 1. A schematic representation of the nonzero electric-           for SU(Nc ) LGTs.
+basis matrix elements of the U(1) plaquette Hamiltonian,
+Hplaq = Up Uq Us† Ut† + H.c., based on a 4D grid. Each point
+represents a basis state with quantum numbers (ϵp , ϵq , ϵs , ϵt ).
+ϵp and ϵq (ϵs and ϵt ) are the coordinates along the coarse outer          III.   SU(2) LATTICE GAUGE THEORY
+(fine inner) axes. Each edge represents a mixing between two
+states by Hplaq , which generates moves of ±(1, 1, −1, −1) in
+                                                                         Thanks to the algorithm reviewed in the previous sec-
+the grid. In this example, a truncation ϵi ∈ {0, ±1} is in
+effect, hence three blocks of points along the outer axes and         tion for splitting Hamiltonians and diagonalizing the
+three points within each block along the inner axes.                  summands—which is a precursor to implementing any
+                                                                      single subevolution within the PF decomposition of the
+                                                                      Hamiltonian dynamics—the main concern becomes the
+two “inner” coordinates are used to specify (ϵs , ϵt ). The           number of proposed subevolutions entailed by the split-
+points in Fig. 1 then represent the states of the plaquette           ting. These summands exhibit a block-diagonal struc-
+if each link’s electric field is truncated to three values,           ture, and can therefore be fully diagonalized individually.
+e.g., ϵi ∈ {0, ±1}. The edges representing nonzero Hplaq              Importantly, once these terms are identified, an SVD-
+matrix elements connect points that are related by moves              based procedure similar to that presented for the U(1)
+of ±(1, 1, −1, −1) in the space of electric quantum num-              case can be used to diagonalize them using basic quan-
+bers.                                                                 tum circuitry. The key differences that arise for SU(Nc )
+   Within Fig. 1, one can observe chains that connect                 are: i) The non-Abelian link operator is a ladder opera-
+two states or three states; for higher cutoffs there are              tor on multiple quantum numbers simultaneously. ii) The
+even longer chains of connected states. To simulate Hplaq             nonvanishing matrix elements of the non-Abelian link op-
+directly, one would have to simultaneously diagonalize                erator are nontrivial functions—rather than all equaling
+subspaces of all different dimensionalities up to the limit           one, as was the case in Eq. (4) for the U(1) link—and
+set by the cutoff. Splitting the Hamiltonian into multi-              most of them are irrational, hence they demand more
+ple distinct terms can have the effect of breaking up the             costly circuits to encode and evaluate. These properties
+chains such that any individual subevolution under those              are discussed and addressed in detail in Refs. [22, 25]. In
+terms only calls for rotating two-dimensional subspaces—              the following sections, we only focus on the summand-
+rotations that can be analytically diagonalized in closed             counting aspect of the algorithms.
+form.                                                                    We begin the discussion of non-Abelian LGTs with
+   In graph-theoretic terms, the edges of the graph asso-             the SU(2) gauge group and consider coupling the gauge
+ciated with Hplaq can be colored with two colors. Figure              bosons to staggered fermions in the group’s fundamental
+2(a) depicts such a coloring when each ϵi is truncated                representation. An individual link is characterized by
+to four possible values. One sees that, within the graph              Nc2 − 1 = 3 quantum numbers. The on-link Hilbert space
+of any individual color, each point is connected to no                is spanned by basis states of the form
+more than one other point, corresponding to rotations
+of at most two-dimensional subspaces. Because of the                                         |j, mL , mR ⟩ ,                (24)
+                                                                                                                                       7
+
+
+
+
+FIG. 2. Colorings of a graph representing the truncated U(1) plaquette Hamiltonian, Hplaq . In this example, each ϵi is truncated
+to four possible values to keep the drawing simple. The interpretation of the coordinates and edges is the same as in Fig. 1.
+                                                                                              (e)       (o)
+(a) A coloring of the graph using two colors, corresponding to the two subevolutions by Hplaq and Hplaq . (b) A coloring of
+                  4
+the graph using 2 = 16 colors, corresponding to the 16 subevolutions called for by the method of Ref. [22]. In both (a) and
+(b), when restricting to any one color, there are no chains connecting more than two points, making it possible to analytically
+diagonalize each subevolution corresponding to each different color.
+
+
+where                                                                     with the coefficients Cα,β defined as
+
+                        j ∈ {0, 21 , 1, · · · },                  (25)
+                                                                          Cα,β (j, mL , mR ; j ′ ) :=
+                           i
+                        m ∈ {−j, −j + 1, · · · j},                (26)    q
+                                                                            2j+1      ′   L         1      L    ′   R     1          R
+                                                                            2j ′ +1 ⟨j , m + α| 2 , α; j, m ⟩ ⟨j , m + β| 2 , β; j, m ⟩ .
+with i ∈ {L, R}. Above, j labels an irrep of SU(2), and                                                                              (28)
+the azimuthal quantum numbers mL and mR are associ-
+ated with rotations to the link-operator matrix from the                  The exact form of coefficients Cα,β is irrelevant to the
+left or right side. The above basis is the irrep or electric              Hamiltonian-splitting procedure; the key information
+basis; it is to be contrasted with its conjugate group-                   is which states appear in the right-hand side and the
+element basis |θ1 , θ2 , θ3 ⟩ wherein states are parametrized             changes in quantum numbers. The formulas for the Cα,β
+by coordinates in the SU(2) manifold (e.g., Euler angles                  coefficients do, however, meaningfully impact the indi-
+of a rigid body).                                                         vidual cost of implementing any one subevolution.
+   In the fundamental (two-dimensional) representation,
+the link operator is a 2 × 2 matrix of operators Uα,β                        According to Eq. (27), applying Uα,β changes mL and
+                                                                            R
+for α ∈ {− 12 , 21 } and β ∈ {− 12 , 12 }. The link-operator              m by certain definite amounts—set by α and β—while
+matrix serves as a set of coordinate operators for the                    j can be incremented or decremented by 12 ; i.e., there are
+three-dimensional manifold of SU(2), and is conjugate to                  terms for both j ′ possibilities. To express these changes
+momentum-like operators that are the electric fields. The                 in the quantum numbers, it is convenient to define the
+main property we are concerned with is the action of the                  following elementary ladder operators [21]:
+link operator when expressed in the irrep basis:
+                                                                                     J ± |j, mL , mR ⟩ = j ± 21 , mL , mR ,         (29)
+                  L    R
+ Uα,β |j, m , m ⟩ =                                                                  MαL |j, mL , mR ⟩ = |j, mL + α, mR ⟩           (30)
+    j+ 21
+    X                                                                                MβR |j, mL , mR ⟩ = |j, mL , mR + β⟩.          (31)
+                 Cα,β (j, mL , mR ; j ′ ) |j ′ , mL + α, mR + β⟩ , (27)
+ j ′ =|j− 21 |
+                                                                          In terms of the above operators, the link operator’s com-
+                                                                                                                               8
+
+ponents can be written as                                       U(1) case, but they can be still implemented with elemen-
+                                                                tary circuit operations [25]. The diagonal operators after
+                                       − L
+    Uα,β = MαL MβR J + cL    R                R
+                                                    
+                        1,α c1,β N1 + J c2,α c2,β N2            SVD are more costly to implement compared with the
+              (+)    (−)                                        U(1) case due to the presence of nontrivial functions of
+          := Uα,β + Uα,β ,                               (32)                                     L/R
+                                                                number operators, i.e., Nk and ck in Eq. (32); nonethe-
+                 L/R                                            less, the overall implementation cost remains polynomial
+where Nk and ck,α with k ∈ {1, 2} are shorthand for             in qubit number [22, 25].
+various known diagonal operators, whose form can be                To summarize, our algorithm calls for the implementa-
+inferred from Eq. (28) but their expressions will not           tion of eight subevolutions per single-link hopping Hamil-
+be needed in the proceeding discussions. The form in            tonian, which is to be compared with the 64 subevolu-
+Eq. (32) makes it clear that each distinct term in the link     tions called for by the algorithm of Ref. [22]. The extra
+operator involves three ladder operators—one for each of        factor of eight arises from the unnecessary even-odd split-
+the link’s quantum numbers.                                     ting of each of the three ladder operators J ± , MαL and
+   Recall that the gauge-matter interaction energy (hop-        MβR in Eq. (32). In the graph-theoretic representation,
+ping terms) and the magnetic energy (plaquette terms)           our algorithm amounts to using eight colors for the graph
+are constructed from the link operators. These off-             of edges connecting states in a seven-dimensional graph3
+diagonal operators, with generally irrational coefficients,     (four dimensions for the two fermionic occupation num-
+are harder to simulate when compared with the electric          bers at two adjacent sites and three dimensions for the
+energy, which is diagonal in the irrep basis and has ma-        quantum numbers of the gauge link) while the algorithm
+trix elements that are quadratic forms. We next explain         of Ref. [22] corresponds to 64 colors.
+how to split the SU(2) hopping and plaquette terms into
+diagonalizable summands.
+                                                                                   B.    Plaquette terms
+
+                  A.    Hopping terms
+                                                                  A single plaquette’s Hamiltonian has the form:
+
+  The hopping Hamiltonian of a single link, analogous
+                                                                                      X
+                                                                           Hplaq = 2      Uα,β Uβ,γ Uγ,δ Uδ,α ,             (34)
+to Eq. (5), is                                                                          α,β,γ,δ
+                       X
+              Hhop =         ψα† Uα,β ψβ′ + H.c.,        (33)   (up to a constant multiplicative factor) where we have
+                       α,β                                      omitted the link labels and used the self-adjoint property
+                                                                of SU(2) traces to omit writing “+H.c.”. The task now
+where, for brevity, we have omitted the link index p and        is to identify summands to which one can apply the SVD
+the site index x, and have denoted the operator at site y       algorithm. One should expect a relatively large number
+with a prime symbol. For a fixed choice of α and β, one         of summands by considering the graph-coloring interpre-
+might observe that that (ψα† Uα,β ψβ′ )2 = 0 and thus be        tation: for a given basis state of the four links, Hplaq can
+inclined to choose that quantity as the A operator. We          connect it to many different possible other basis states
+do not proceed this way immediately because the SVD             because of all the different choices for {α, β, γ, δ} as well
+              (+)    (−)
+for Uα,β = Uα,β +Uα,β is nontrivial. This is related to the     as possibilities for the transitions j → j ± 1/2 on all four
+fact that, in the graph-theoretic interpretation, the edges     links. Thus, a very large number of graph edges can con-
+describing states connected by ψα† Uα,β ψβ′ + H.c. would        nect to any one point in the plaquette’s 12-dimensional
+require at least two colors—a consequence of the multiple       grid of quantum numbers (with three coordinates associ-
+possibilities for j → j ± 1/2 induced by Uα,β . However,        ated with each of the four links). To find the simulatable
+                              (σ)                               terms, we draw inspiration from the earlier examples by
+the graph of edges for ψα† Uα,β ψβ′ + H.c. for either choice
+of σ ∈ {+, −} can be colored with one color since either        distilling the Hamiltonian down to summands that in-
+operator induces definite changes on all relevant quantum       duce definite changes in all relevant quantum numbers.
+                                                       (σ)      The counting of the terms proceeds as follows:
+numbers. It is also true that each choice of ψα† Uα,β ψβ′
+squares to zero, resembles the ladder-operator content of          ⋄ There are 24 choices from the four indices
+the U(1) hopping term, and has an easily solvable SVD.               {α, β, γ, δ} that can each take two values, and there
+Thus, the counting of simulatable terms goes as follows:             are 24 possibilities for the combinations of four
+there are two choices for α, two choices for β, and two              U (±) .
+choices for σ, for a total count of 23 = 8 summands. The
+count of eight is included in Table I.
+   To diagonalize each of the distinct Hermitian opera-
+          (±)
+tors ψα† Uα,β ψβ′ + H.c., one proceeds according to the al-     3 We do not illustrate the graph of edges for the SU(2) hopping
+
+gorithms outlined for the U(1) case. The SVD matrices             term or any later operators due to the high dimensionalities of
+and transformations will be different compared to the             the spaces in which they live.
+                                                                                                                                                    9
+
+    ⋄ The self-adjoint property of the SU(2) trace is ex-                             IV.    SU(3) LATTICE GAUGE THEORY
+      hibited by the observation that
+                                                                                 Next, we consider the SU(3) LGT in the Kogut-
+                       (σ )    (σ )   (σ )   (σ )
+                     Uα,β1 Uβ,γ2 Uγ,δ3 Uδ,α4                                   Susskind formulation with staggered fermions, whose
+                                                                               continuum limit recovers QCD. For the SU(3) group,
+      (with σi ∈ {+, −}) induces the same change in                            there are Nc2 − 1 = 8 degrees of freedom per link. The
+      quantum numbers as                                                       on-link Hilbert space is spanned by irrep-basis states of
+                                                                               the form
+                (−σ1 )  (−σ2 )  (−σ3 ) (−σ4 ) †
+               U−α,−β  U−β,−γ  U−γ,−δ U−δ,−α .                                   |ω, λL , λR ⟩ := |(p, q), (T L , TzL , Y L ), (T R , TzR , Y R )⟩ ,
+                                                                                                                                                  (35)
+      In         other            words,     the       choice
+                                                                               where
+      (−α, −β, −γ, −δ, −σ1 , −σ2 , −σ3 , −σ4 )      is    al-
+      ready accounted for by the choice of                                          p, q ∈ {0, 1, 2, · · · , Λ} ,                               (36)
+      (α, β, γ, δ, σ1 , σ2 , σ3 , σ4 ) and Hermitian conju-                                                         
+      gation; a double counting arises if the choices are                             i        1             1
+                                                                                    T ∈ 0, , 1, · · · , (p + q) ,                               (37)
+      counted independently. Consequently, a factor of 21                                      2             2
+      is needed to compensate for the overcounting. This
+                                                                                                                              
+                                                                                              p+q p+q 1                    p+q
+      gives a total of 24 × 24 × 12 = 27 distinct rotational                        Tzi ∈ −           ,−          + ,··· ,       ,              (38)
+                                                                                                 2            2    2        2
+      directions in the space of quantum numbers.                                                                                 
+                                                                                              q + 2p q + 2p 1               p + 2q
+                                                                                    Yi ∈ −               ,−        + ,··· ,          ,          (39)
+                                                                                                  3             3     3        3
+    ⋄ Finally, in our method, within any single simulat-
+      able term, it is necessary to split at least one of                      with i ∈ {L, R}. Here, ω := (p, q) labels an irrep of
+      the ladder-operator factors into odd and even parts                      SU(3) by two nonnegative integers and is analogous to
+      that each square to zero. This gives an additional                       the total angular momentum j for SU(2). The other
+      factor of 2, for a final count of 28 = 256 subevolu-                     quantum numbers are analogous to the azimuthal quan-
+      tions, as given in Table I.                                              tum numbers mL and mR in SU(2); they are labels
+                                                                               for the SU(2)×U(1) subgroup: each side i ∈ {L, R} of
+   The counting outlined above is a notable improvement                        the link holds a total isospin T i , third component of
+over that in Ref. [22] which amounts to 1,048,576 simu-                        isospin Tzi , and a U(1) hypercharge Y i .4 This basis is
+latable terms for a single plaquette Hamiltonian. Half of                      to be contrasted with a conjugate, group-element basis
+this count arises from double counting of the Hermitian-                       parametrized by eight coordinates (i.e., generalized Euler
+conjugate operators. The remaining count arises from                           angles) on the SU(3) manifold.
+splitting to even and odd parts all the three ladder opera-                       In the fundamental representation, the link operator is
+                       (±)
+tors in each distinct Uα,β ; there are four such links in each                 a 3 × 3 matrix of operators Uν,ξ for ν, ξ ∈ {1, 2, 3}. U
+plaquette term, and there are 27 total plaquette terms as                      transforms in the fundamental (p, q) = (1, 0) = 3 irrep.
+noted above. These amount to (23 )4 × 27 = 524, 288                            Unlike SU(2), the matrix U † is not unitarily equivalent to
+terms to be diagonalized. Once again, such excessive                           U , transforming instead in the antifundamental (0, 1) =
+splitting is unnecessary, and results in an increased call to                  3∗ irrep. We are mainly concerned with the action of the
+diagonalization and diagonal-operator implementations,                         link operator in the irrep basis:
+as well as increased Trotter error.
+
+
+
+                                                     XXX                                        ′    ′          ′     ′
+                              Uν,ξ |ω, λL , λR ⟩ =                   Cν,ξ (ω, λL , λR ; ω ′ , λL , λR ) |ω ′ , λL , λR ⟩ ,                      (40)
+                                                     ω ′ λL ′ λR ′
+
+
+
+
+4 The quantum numbers T , T , and Y       are sometimes called “mag-
+                           z
+  netic” quantum numbers for historical reasons. However, the
+  irrep basis is an electric eigenbasis and the magnetic energy is
+  strictly off-diagonal in this basis. For this reason, we will always           numbers, reserving “magnetic” for quantities directly associated
+  refer to T , Tz , and Y as the isospin and hypercharge quantum                 with plaquette operators or their eigenbasis.
+                                                                                                                                          10
+
+with coefficients Cν,ξ given by                                                                 A.    Hopping terms
+                                                  s
+                                                      dim(ω)                    The form of a single-link hopping Hamiltonian is
+                                  L′     R′
+   Cν,ξ (ω, λL , λR ; ω ′ , λ , λ ) =                           ×            ψν† Uν,ξ ψξ′ + H.c. In analogy to SU(2), any given element
+                                                      dim(ω ′ )
+                                                                             Uν,ξ can be separated into terms that induce definite
+                      ′                               ′
+              ⟨ω ′ , λL |ω, λL ; 3, ν⟩ ⟨ω ′ , λR |ω, λR ; 3, ξ⟩ .     (41)   changes on the (p, q) quantum numbers, of which there
+                                                                             are three possibilities, as is evident from Eq. (47). The
+The indices ν ∈ {1, 2, 3} and ξ ∈ {1, 2, 3} are short-                       number of transitions Uν,ξ can induce on the isospin and
+hand for the collections of, respectively, (tL , tL        L                 hypercharge quantum numbers explicitly depends on the
+                                                      z , y ) and
+  R R R
+(t , tz , y ) quantum numbers associated with the com-                       values of ν and ξ. Specifically, the number of possible
+ponents of U ; labels                                                       transitions depends on whether ν or ξ is less than or
+                          ‘1’, ‘2’, and    ‘3’, correspond to
+  1 1 1
+   ,   ,    , 1
+                 , − 1 1
+                      ,   , and (0, 0, − 2                                   equal to three:
+  2 2 3       2      2 3                 3 , respectively. The
+sum over ω ′ := (p′ , q ′ ) takes values in the set {(p +                       ⋄ The simplest case is ν = ξ = 3, where U3,3 only in-
+                                                               ′
+1, q), (p − 1, q + 1), (p, q − 1)}, while the sums over λi =                      duces definite transitions on the Y i quantum num-
+   i′    i′   i′                                                                  bers in addition to the (p, q) quantum numbers.
+(T , Tz , Y ) take the values ( T ± t , Tz + tz , Y + y i ).
+                                       i     i    i   i    i
+                                                    ′
+dim(ω) = 12 (p+1)(q+1)(p+q+2) and ⟨ω ′ , λL |ω, λL ; 3, ν⟩                        Therefore, one has to simulate three terms, cor-
+               ′                                                                  responding to the three possible changes in (p, q)
+and ⟨ω ′ , λR |ω, λR ; 3, ξ⟩ are the SU(3) Clebsch-Gordan                         only.
+coefficients. To implement U † , one can take advantage
+of the identities that relate U † to the U operator in the                      ⋄ When exactly one of ν or ξ is less than three, two
+antifundamental representation 3∗ [21, 32, 39].                                   possibilities for changing a T i quantum number
+   To express distinct changes in the quantum numbers,                            arise (either raising or lowering it). This leads to
+one can define elementary ladder operators, analogous to                          2 × 3 = 6 transitions to simulate for this particular
+the SU(2) case in Eqs. (29)-(31):                                                 choice of Uν,ξ . The total number of elements Uν,ξ
+                                                                                  that fall into this category is four (U1,3 , U2,3 , U3,1 ,
+    P ± |p⟩ = |p ± 1⟩ ,                  Q± |q⟩ = |q ± 1⟩ ,           (42)        and U3,2 ), so in total, 6 × 4 = 24 terms are to be
+                                                                                  counted towards Γ.
+        i±     i          i                 ±
+    T        |T ⟩ = |T ± 12 ⟩ ,          Tzi |Tzi ⟩ = |Tzi ± 12 ⟩ ,   (43)
+                                                                                ⋄ When ν < 3 and ξ < 3, both T L and T R change,
+        i±     i          i
+    Y        |Y ⟩ = |Y        ± 13 ⟩ ,                                (44)        each with two possibilities. These two choices come
+                                                                                  with 22 = 4 possibilities, while the possible choices
+along with the composite ladder operators [21]                                    of changes in (p, q) are three as always. This leads
+                                                                                  to 4 × 3 = 12 transitions to simulate for this partic-
+                                                                                  ular choice of Uν,ξ . The total number of elements
+            + +
+            Tzi Y i , ν = 1
+           
+                                                                                  Uν,ξ that fall into this category is four (U1,1 , U1,2 ,
+     Mν = Tzi − Y i + , ν = 2
+        i
+                                                                      (45)        U2,1 , and U2,2 ), so in total 12 × 4 = 48 should be
+            (Y i − )2 , ν = 3
+           
+                                                                                  counted towards Γ.
+            (
+                 + i(a)      − i(b)
+      i       T i Dω,ν + T i Dω,ν , ν ∈ {1, 2}                                  ⋄ As with the U(1) and SU(2) hopping terms, the
+     Cω,ν =                                                           (46)
+                i
+              Dων  ,                ν=3                                           presence of fermionic operators means no even-odd
+                                                                                  splitting of a bosonic ladder operator needs to be
+                   i                     i(a/b)                                   introduced. The final count is the sum of the previ-
+for i ∈ {L, R}. Dω,ν   and Dω,ν are diagonal operators                            ous steps (i.e., 3 + 24 + 48), and amounts to a total
+in the irrep basis. The particular values of the diag-                            of Γ = 75 simulatable terms.
+onal elements are not relevant to the following discus-
+sion; they correspond to SU(3) Clebsch-Gordan coeffi-                           In contrast, Ref. [22] reports a count of 13,872 as an
+cients [22] that are, as was noted, costly to evaluate. In                   upper bound on the number of simulatable terms. This
+terms of the above operators, the link operator’s compo-                     upper bound comes from splitting to even and odd parts
+nents can be written as                                                      up to four, six, and eight ladder operators in each of the 3,
+                                                                             24, and 48 terms counted above, respectively. This gives
+                                                                             24 × 3 + 26 × 24 + 28 × 48 = 13, 872 total terms. Nonethe-
+   Uν,ξ = MνL MξR P + C1Lν C1Rξ N1 + P − Q+ C2Lν C2Rξ N2 +
+                 
+                                                                             less, some terms are comprised of a product of fewer than
+                   Q− C3Lν C3Rξ N3 .
+                                   
+                                                         (47)                four, six, or eight ladder operators. For example, consider
+                                                                             the hopping term involving U3,3 . According to the right-
+Nk for k ∈ {1, 2, 3} constitute yet another set of known                     hand side of Eq. (47), U3,3 is a sum of three terms, where
+diagonal operators in the irrep basis, whose forms do not                    the second term does have four ladder-operator factors
+matter in the proceeding discussions. The number and                         but the first and third terms only have three.5 When
+structure of transitions U † induces is analogous to U , so
+we refer to only the U form in all subsequent transition
+                                                                             5 The square of a ladder operator is counted as one ladder oper-
+countings.
+                                                                                                                                      11
+
+the exact number of ladder operators in each product is                ⋄ As with the SU(2) plaquette, there is an additional
+counted for each term, the total number of simulatable                   factor of two needed for the splitting of a single
+term via the splitting procedure of Ref. [22] is tightened               bosonic ladder operator per term, giving a final
+to 9,248. This count is still much higher than the im-                   count of Γ = 1, 062, 882.
+proved count of this work, Γ = 75.
+                                                                      In contrast,        Ref. [22] reports the count
+                                                                   1, 470, 021, 852, 266, 496 as an upper bound on the
+                   B.   Plaquette terms                            number of simulatable terms. This count arises from
+                                                                   splitting to even and odd parts up to eight, six, and
+  A single-plaquette Hamiltonian in the SU(3) LGT has              four ladder operators in each of the three classes of link
+the form                                                           operators. In effect, one can replace the matrix S above
+                                                                   with
+                                †    †
+             Hplaq = Uα,β Uβ,γ Uγ,δ Uδ,α + H.c.            (48)                                               
+                                                                                        12 × 28 12 × 28 6 × 26
+As with the link operator in the hopping term, one needs
+                                                                               S ′ :=  12 × 28 12 × 28 6 × 26  .       (50)
+                                                                                                              
+to account for the number of terms within any given ele-
+ment Uν,ξ that induce distinct changes of quantum num-                                   6 × 26 6 × 26 3 × 24
+bers, and this number depends on whether the indices                                                           ′   ′   ′  ′
+are less than or equal to three. The counting of distinct          The total number of terms is then Sαβ         Sβγ Sγδ Sδα  =
+terms contributing to Eq. (48) goes as follows:                    1, 470, 021, 852, 266, 496. Since not all terms in each class
+                                                                   have a maximum number of eight, six, or four terms,
+   ⋄ The simplest term in the expanded trace is the                this count can be slightly improved, yielding a tightened
+     one where all indices are equal to three, i.e.,               count of 290, 374, 686, 867, 456. This number is still sig-
+     U3,3 U3,3 U3,3 U3,3 . Recall that U3,3 for any given          nificantly larger than our improved count reported above,
+     link changes the link’s Y i quantum numbers by a              that is Γ=1,062,882. This cost reduction can be ex-
+     definite amount, while there are three possibilities          pressed in terms of the number of colors, Nc : our strategy
+     for how the (p, q) quantum numbers may change.                reduces the number of subevolutions to be implemented
+     Hence, the total number of distinct changes that                                                        2
+                                                                   per Trotter step by a factor of O(24(Nc −1) ) compared to
+     U3,3 U3,3 U3,3 U3,3 can induce on the four-link pla-          Ref. [22]. This rough scaling can be understood by re-
+     quette is 34 = 81.                                            calling that Ref. [22] assumes a worst-case scenario where
+   ⋄ A maximally complicated term in the expanded                  each term in a given Uν,ξ involves ladder operators for all
+     trace is one where all of the indices are less than           Nc2 − 1 quantum numbers on its link, hence one would
+     three, e.g., U1,1 U1,1 U1,1 U1,1 . For any given U1,1 ,       have a splitting for each of 4×(Nc2 −1) quantum numbers
+     there are not only three possible changes in (p, q),          around the plaquette; by contrast, our algorithm splits
+     but also two possible changes in each of T L and              a term involving any number of ladder-operator factors
+     T R . The total number of choices for the given link          into just two simulatable terms.
+     is then 3 × 2 × 2 = 12. The distinct choices for                 We conclude this section by translating the above im-
+     all four links will be 124 = 20, 736. There are 24            provement in the number of simulatable terms into a re-
+     combinations of (α, β, γ, δ) that follow the counting         duction of the simulation cost of QCD within a (second-
+     of U1,1 U1,1 U1,1 U1,1 , amounting to 20, 736 × 24 =          order) PF algorithm. First, one notes that the total
+     331, 776 terms.                                               time-evolution gate cost is the cost of a single Trotter
+                                                                   step times the number of Trotter steps, s, see Eq. (1).
+   ⋄ The above examples inspire a derivation of the full           The cost of a single Trotter step is dominated by the
+     count, including those given above, as follows: Col-          cost of plaquette operators: As already observed, the
+     lect the term multiplicities of the expanded Uν,ξ             number of simulatable terms is much larger for the pla-
+     into a matrix of their own:                                   quette Hamiltonian than for the hopping Hamiltonian
+                                                                 in the irrep basis. Moreover, the plaquette Hamiltonian
+                          12 12 6                                  has a large norm toward the continuum limit, i.e., as
+                  S :=  12 12 6  .                 (49)
+                                  
+                                                                   the gauge-matter coupling decreases.6 One plaquette op-
+                          6 6 3                                    erator involves Γ subroutines (oracle calls), where Γ is
+                                                                   the number of simulatable terms. With either method
+      When the trace in Eq. (48) is expanded out, the              (Ref. [22] or ours), a single subroutine involves similar
+      total number of distinct combinations of changes             arithmetic operations and can be carried out to simi-
+      in quantum numbers will be Sα,β Sβ,γ Sγ,δ Sδ,α =             lar precision, such that the costs of these subroutines
+      531, 441.
+
+
+  ator since it can be implemented as an incrementer of a single   6 We suppressed the constant factors in Hamiltonian terms in this
+
+  quantum number by two units.                                       papers, but they can be restored by consulting Refs. [21, 22].
+                                                                                                                             12
+
+are similar [O(1) different], regardless of which subevolu-         ported here, one can begin to compare their costs relative
+tion is being considered and which decomposition strat-             to the methods discussed in this paper.
+egy has been chosen. The number of Trotter steps, on
+                                 1/2
+the other hand, scales with α2 according to Eq. (2),
+with α2 being the norm of a function of the second-                     A.   Simulation with near-optimal algorithms
+order nested commutators of the Hamiltonian terms. As
+argued in Ref. [22], the scaling of α2 can be bounded                  The approach of this work results in nearly 14 orders of
+by O(Γ), so that s scales as Γ1/2 .7 Putting all these              magnitude reduction in the simulation cost of the QCD
+together gives an overall scaling of Γ × Γ1/2 = Γ3/2                Hamiltonian within the Kogut and Susskind formulation
+for the second-order PF simulation cost. Thus, for the              compared with Ref. [22]. However, the number of subevo-
+SU(3) plaquette, with our Γ being smaller by a factor               lutions to be simulated in each Trotter step, Γ, remains
+of R := 1, 470, 021, 852, 266, 496/1, 062, 882 ≈ 1.38 × 109         large. The number of terms is dominated by the magnetic
+relative to Ref. [22], the gate cost falls by a factor of           interactions in the electric-field basis, yielding Γ ∼ 106
+                                                                    with the decomposition of this work. Recall that the total
+              R3/2 = (1.38 × 109 )3/2 ≈ 1013.7 .            (51)    cost goes as Γ3/2 using a second-order PF, contributing a
+                                                                    factor of ∼ 109 to the T-gate complexity. This cost moti-
+                                                                    vates considering approaches that bypass the need for de-
+              V.    OTHER ALGORITHMS
+                                                                    composition of the exponentiated Hamiltonian. One such
+                                                                    approach is based on near-optimal simulation algorithms
+   There are other approaches to simulating QCD. In or-             rooted in block encodings of the Hamiltonian. In fact,
+der to enable an apples-to-apples comparison of the as-             Rhodes, Kreshchuk, and Pathak present [26] a resource
+sociated cost, an end-to-end analysis of the algorithms in          analysis of the simulation cost of QCD within the Kogut-
+the same setting has to be performed and the precision              Susskind framework, which reports a ∼ 1023 − 1027 -fold
+targets have to be comparable.                                      improvement in the T-gate cost compared to the PF ap-
+   Besides the complete analysis by Kan and Nam using               proach of Ref. [22] (for a range of system sizes and pa-
+PFs, another error-bounded analysis was presented by                rameters toward continuum and infinite-volume limits).
+Rhodes, Kreshchuk, and Pathak [26] using near-optimal,              Therefore, the result of this work, while an improvement
+post-Trotter time-evolution algorithms, which we outline            in the cost of PF-based simulations, remains at least
+in this section. This approach achieves an exponentially            nine orders of magnitude higher than that reported by
+improved scaling in Nc2 compared to the PF algorithm                Ref. [26]. In the following, we briefly describe the build-
+by Kan and Nam [22].                                                ing blocks of the algorithm of Ref. [26] and attempt to
+   We also discuss in this section the approach of                  track the sources of such a large cost reduction.
+Ciavarella, Klco, and Savage [27], which was later re-                 Consider a d-dimensional lattice with the total number
+fined in Ref. [32]. While lacking the full error-bounded            of sites N d . The goal is to simulate a geometrically-local
+simulation-cost analysis, this approach relies on eliminat-         LGT Hamiltonian H for time T with error ϵ, starting
+ing gauge redundancy in the electric (irrep) basis using            from a state with bounded local quantum numbers at any
+physical constraints. A question that arises is whether             gauge link. For SU(3), the initial-state bound is such that
+such an approach asymptotically performs better than                p, q ≤ Λ0 at all links. The algorithm of Ref. [26] uses the
+the algorithms based on redundant encodings, such as                Haah, Hastings, Kothari, and Low (HHKL) method [50],
+that presented in this work and in Refs. [22, 26]—a ques-           which decomposes the full time-evolution operator into
+tion we partly address in this section.                             time evolution of local blocks B. Simulation of each block
+   Finally, we note that our comparative study in this              only requires evolution for time t = O(1). The simulation
+section is limited to quantum simulation of QCD in the              of the system then requires O(T ) such time segments and
+truncated electric basis. Over the past decade, progress is         O(N d ) such blocks.
+reported using other approaches as well, such as large-Nc              To simulate each block and each segment, Ref. [26]
+approximations [34, 40, 41], maximally gauged-fixed for-            then uses a qubitization algorithm [51]. Qubitization—
+mulations [35, 42], orbifolds [33, 43, 44], group-element           an algorithm that is based on block encoding of the
+representations [28, 29, 45] and discrete subgroups [31,            Hamiltonian and functions of it—has a time complexity
+46, 47], q-deformed and similar representations [36–38],            proportional to the norm of the Hamiltonian. Since the
+and simulations in the Coulomb gauge [48, 49]. Once                 electric-field term in the Kogut-Susskind Hamiltonian is
+a full simulation-cost analysis is achieved for these ap-           unbounded (or realistically bounded with a large cutoff),
+proaches using the system setting and parameters re-                it is advantageous to simulate physics in the interaction
+                                                                    picture with respect to the electric-field term [52, 53].
+                                                                       Specifically,       |ψ(t)⟩          =    e−itH |ψ(0)⟩  =
+                                                                                 −i t dt′ HI (t′ )
+                                                                                   R
+                                                                      −itHE
+7 In Ref. [25], the upper bound used for α             3
+                                       2 was set at O(Γ ) instead
+                                                                    e       T [e                   ] |ψ(0)⟩I , where HI (t)   =
+  of O(Γ). Nonetheless, the argument of Ref. [22] may apply to      e−itHE (Hhop + HM + Hplaq )eitHE . Here, T denotes the
+  the upper bounding there as well to reduce the simulation cost    time-ordering operator, and HE , Hhop , HM , and Hplaq
+  of the SU(2) LGT.                                                 are the electric, hopping, mass, and plaquette Hamiltoni-
+                                                                                                                          13
+
+ans, respectively. The dynamics of the electric-field term       ments are, however, in order. First, the Nc2 -dependent
+      B
+e−itHE within each block of the HHKL algorithm can be            link-update contribution to OF is larger than the Nc4
+fast forwarded, as it is diagonal in the electric-field basis.   color-selection contribution for SU(3); moreover, the gen-
+The time-dependent Hamiltonian HI (t) can be simulated           eral Nc dependence of the fixed-color-link-update and
+using a truncated Dyson-series approach [54, 55]. The            amplitude-evaluation circuits has not been established.
+total asymptotic gate cost of these steps, as shown in           Second, a sparse-access block encoding generally carries
+Ref. [26], turns out to be O N d T polylog(N d T Λ0 ϵ−1 ) .
+                                                            
+                                                                 a normalization that depends on the matrix sparsity [56].
+This is to be compared with the second-order PF algo-            Consequently, the multiplicative sparsity of the non-
+rithm asymptotic cost, which for the SU(3) LGT        goes     Abelian plaquette operator may enter the block-encoding
+as O N 3d/2 T 3/2 Λϵ−1/2 polylog N 3d/2 T 3/2 Λϵ−3/2 [22].       normalization—and hence the number of queries to the
+   A key question is whether the algorithm of Ref. [26]          block encoding—even though it does not appear explic-
+harbors a large prefactor associated with the number of          itly in the gate costs quoted for OF and OH .
+simulatable blocks. This question is ultimately related
+to the scaling of the algorithm as a function of Nc . To
+address this question, one first notes that Ref. [26] em-          This difference in Nc scaling is significant compared
+                                                                                                                       2
+ploys a sparse-access oracle as a precursor to qubitiza-         to the result of Ref. [22], which has at least a 24(Nc −1)
+tion. The oracle first finds and enumerates the nonzero          scaling. Our term-count prefactor, which removes this
+states achieved by the action of the Hamiltonian terms           exponential factor from the cost of Ref. [22], is still a
+(via a subroutine called OF ); it then evaluates the asso-       factor of 103 higher compared to Ref. [26]. Moreover,
+ciated amplitudes which depend on the Clebsch-Gordan             the full second-order Trotterization cost is proportional
+coefficients (via a subroutine called OH ).                      to Γ3/2 , which brings the cost difference associated with
+   For the costly plaquette operator, the subroutine OF          the number of terms between our algorithm and that in
+consists of two successive components. First, a unary-           Ref. [26] to a factor of 106 .
+iteration circuit selects a plaquette and one of the Nc4
+possible color contractions arising from the trace. The
+registers encoding the four color indices are then used as          One may wonder what additional factors contribute
+controls for a second circuit that encodes the action of         to the remaining cost difference (i.e., an extra factor of
+the corresponding color-resolved plaquette (correspond-          around 103 − 107 for various parameter sets considered
+ing to the 4-tuple of color indices) on the gauge-field          in Ref. [26]). The exponential improvement in ϵ−1 is
+registers. Since the selection circuit and the plaquette-        not significant except for ultra-precise simulations. Simi-
+encoding circuit are applied sequentially within a single        larly, the optimal time scaling [O(T ) vs. O(T 3/2 ) for the
+call to OF , their gate costs are added together (rather         second-order PF] is only important for long simulations.
+than multiplied). The plaquette encoding itself factorizes       The use of the HHKL algorithm brings down the cost of
+into four link updates, each of which depends only on the        naive qubitization from O(V 2 ) to O(V polylog(V )), which
+pair of color indices associated with that link. The con-        is asymptotically more optimal than the second-order PF
+trolled implementation of each link-operator factor must,        volume scaling O(V 3/2 ). However, achieving the HHKL
+therefore, be defined for each of the Nc2 possible input         scaling requires the size of the HHKL blocks to be mach
+pairs of color indices. For a fixed component (ν, ξ) of a        smaller than the lattice volume [50], which is yet to be
+given link, the action of Uν,ξ produces up to 12 nonzero         confirmed for SU(Nc ) LGTs. Other differences include
+candidate states for SU(3), whose construction requires          the use of a local encoding of the fermions in Ref. [26]
+a total of 88 controlled signed-incrementer/decrementer          compared with the nonlocal encoding of Ref. [22], and
+operations. The combined cost of implementing all                the HHKL approach for simulating time dynamics in
+four link-operator factors is, therefore, proportional to        Ref. [26]. Both of these features can be applied to the ap-
+4Nc2 × C(Nc ) where C(Nc ) is an Nc -dependent function          proach of Ref. [22] (and hence of this work) to potentially
+[88 for SU(3)]. The subroutine OH , on the other hand,           improve the cost.
+evaluates the amplitudes, with a cost that at most is
+proportional to 4 × 12, with the same origin for each fac-
+tor as above (with no additional Nc2 factor because the            It is likely that the Trotter-error bounds can be im-
+color pair is supplied as control/input information to the       proved, e.g., by obtaining more realistic but hard to com-
+amplitude-evaluation circuit OH ).                               pute empirical estimates of the errors (using approaches
+   The block-encoding cost is determined by two calls            such as randomized compiling [57, 58]) or by applying
+each to OF and OH , together with controlled rotations.          constraints imposed by the initial states [59–66], includ-
+This block encoding is then queried by the qubitiza-             ing states’ available quantum resources [67, 68]. Such
+tion algorithm in the interaction picture, with a number         improvements may further reduce the cost difference be-
+of queries that scale with the norm of the interaction-          tween PF-based and block-encoding-based algorithms of
+picture Hamiltonian and the simulation time. This yields         QCD in the electric-field basis. More research is needed
+the claimed Nc4 scaling from the Nc4 possible color con-         to scrutinize both types of algorithms to fully understand
+tractions of the plaquette operator in OF . Two com-             the origin of cost difference between the two methods.
+                                                                                                                              14
+
+  B.    Simulation in the local-multiplet basis with                from the action of the link operators are obtained, one
+          classically precomputed rotations                         has to take inner products of this state with the set of
+                                                                    gauge-invariant states. This process yields a Hamiltonian
+In this work, as well as in Refs. [22, 26], the Kogut-              matrix that is indexed by the gauge-invariant quantum
+Susskind SU(Nc ) LGT in the irrep basis is encoded by               numbers: irreps (p, q) for the links as well as the sites’
+allocating to each of the Nc2 −1 bosonic quantum numbers            multiplicity indices.
+a qubit register of size η (where η ∝ log(Λ) for the bi-               The plaquette operators’ action, in principle, does not
+nary encoding). Nonetheless, the gauge-invariant Hilbert            depend on the states of the external links, as it is entirely
+is much smaller than the full Hilbert space, suggesting             determined by the actions on individual links comprising
+that a smaller set of quantum numbers may be at play.               the plaquette, see Eq. (40). The irrep quantum num-
+   This guidance, and the analogy to an earlier SU(2)               bers of the four on-plaquette links are in general consis-
+analysis [69], led Ciavarella, Klco, and Savage in Ref. [27]        tent with a variety of different irrep configurations of the
+to rely on classical pre-processing to explicitly construct         external links. Nonetheless, when a plaquette operator
+the gauge-invariant states at vertices of the lattice and           is applied to a gauge-invariant state, the changes in ir-
+to identify all the physical transitions among them. The            reps along the four on-plaquette links are accompanied
+subevolutions associated with these transitions are subse-          by changes that affect the Clebsch-Gordan coefficients, as
+quently encoded in a quantum circuit. A gauge-invariant             needed to maintain gauge singlets at each corner of the
+state is formed by summing over states with any pos-                plaquette. These Clebsch-Gordan coefficients, that are
+sible gauge-field quantum numbers, weighted by SU(3)                functions of the external fluxes meeting at the corners,
+Clebsch-Gordan coefficients to ensure that the irreps               therefore, create a dependence on the external fluxes.
+overall add up to a gauge singlet. Since the Gauss’s law            This has led to the notion of (externally) controlled pla-
+operators at a vertex all commute with the quadratic and            quette operators, i.e., operators that update the fluxes of
+cubic Casimirs of any attached link, one may characterize           on-plaquette links with amplitudes that are determined
+a gauge-singlet state with the irreps (p, q) of the involved        by the states of externally attached links. A given update
+links. Not all assignments of (p, q) to the links are consis-       to the fluxes of on-plaquette links is in general compat-
+tent with the formation of a gauge singlet; the physical            ible with many different possible configurations of the
+states are those that have the allowed (p, q) combinations.         external links, leading to a number of transition ampli-
+   The evaluation of SU(3) Clebsch-Gordan coefficients is           tudes that increases for higher cutoffs. In other words, by
+an old problem that is more complicated than its SU(2)              eliminating all quantum numbers but (p, q) (and possi-
+counterpart. The reason is, when two irreps of SU(2), i.e.,         ble multiplicity indices), the plaquette operator’s action
+angular momenta j1 and j2 , are added together, a total             becomes less local.
+angular momentum j3 can be formed in a unique way.                     In the context of quantum simulation, the above
+In an SU(2) LGT, this means that gauge-singlet config-              repackaging of plaquette operators has been implemented
+urations of trivalent vertices may be completely charac-            in a Trotterized time-evolution scheme. In this scheme,
+terized by the angular momenta (or Casimir quantum                  a plaquette operator is simulated by a PF decomposition
+numbers) of the attached links. In the representation               of its own, involving individual subevolutions for each
+theory of SU(3), on the other hand, the tensor product              and every independent matrix element of the plaquette
+(p1 , q1 ) ⊗ (p2 , q2 ) may contain multiple copies of an irrep     operator. These subevolutions are Givens rotations on
+(p3 , q3 ).8 This means that (p, q) labels are insufficient to      the plaquette’s links that are logically controlled by the
+completely characterize all states, and additional multi-           irreps of the external links. The logical controls are non-
+plicity indices9 are needed at the vertices to account for          trivial quantum gates. Thus, a key cost metric for simu-
+all gauge-invariant states.                                         lation in this scheme is the number of nonzero amplitudes
+   Once the states have been constructed, one must eval-            contained by a plaquette operator, which determines the
+uate the Hamiltonian matrix elements. The most com-                 number of PF subevolutions.
+plex matrix elements correspond to a single plaquette                  To understand the scaling of the number of nonzero
+operator. The cost of applying the plaquette operator               matrix elements, let us first ignore the Gauss’s law con-
+on any given basis state is not expected to scale dramat-           straints as well as the multiplicity indices. First, the
+ically with increasing the irrep quantum numbers (p, q)             number of possible states of the plaquette, as character-
+because the link operators can only change the irreps in a          ized by the (p, q) pairs on the four links, goes as Λ8 . The
+few ways, as discussed in Sec. IV. Once the state resulting         number of possible states one basis state can transition
+                                                                    to from another does not depend on Λ because of the
+                                                                    limited transitions possible, as mentioned above, render-
+                                                                    ing the Λ8 × Λ8 transition matrix to be sparse. Thus, the
+8 The most commonly cited example is the tensor product of two
+                                                                    number of nonzero entries would scale with the number
+  octets, which can combine to form a third octet in two distinct
+  ways (referred to as “symmetric” and “antisymmetric”). In gen-
+                                                                    of columns only.
+  eral, there is no agreed-upon way to handle this new degree of       Now there is an additional complication, which is that
+  freedom.                                                          the matrix elements actually depend on the (p, q) pairs
+9 Denoted by Γ in Refs. [27, 32].
+                                                                    of external links as well, as mentioned earlier. Hence,
+                                                                                                                                            15
+
+ 2D          Λ2        Λ2          3D          Λ2                  Λ2
+                                                                                                   
+                                                                                   O Λ polylog(Λ) scaling of our algorithm and the algo-
+                                                                                   rithm of Refs. [22, 26]. It appears that the cost saving
+                                                    Λ2        Λ2
+                                                                                   in the number of qubits [from O(8η) down to at least
+Λ2                           Λ2   Λ2                                          Λ2   O(2η)] is overshadowed by a significant growth in the
+                  Λ2                                     Λ2
+                                        Λ Λ2
+                                         2                               Λ2        circuit complexity. Moreover, the classical pre-processing
+        Λ2              Λ2                                          Λ2
+                                                    Λ2        Λ2                   that sets up the quantum circuits can be expensive for
+Λ2                           Λ2   Λ2                                          Λ2   large cutoff values required toward the continuum limit.
+                  Λ2                                     Λ2
+                                                                                      Further refinement of the algorithm of Ref. [27] is pos-
+                                        Λ2                               Λ2        sible. For example, Balaji et al. [32] offer a range of
+             Λ2        Λ2                      Λ2                  Λ2              optimizations in implementing each plaquette transition
+      (Λ2)4 × (Λ2)8 = Λ24               (Λ2)4 × (Λ2)16 = Λ40                       operator, adopting strategies such as pruning, gray order-
+                                                                                   ing, and fusions. Their algorithm, nonetheless, still scales
+FIG. 3.     The estimated scaling of the number of nonzero                         with the number of physical transitions of the plaquette,
+matrix elements of the plaquette operator, for square (left)                       which is unaltered by such improvements. The fusion
+and cubic (right) lattices, when working in the local-multiplet                    strategy, which combines appropriate entangling opera-
+basis [70]. Orange links on the plaquette contribute Λ8 scaling                    tions into a smaller set, can reduce the number of gates,
+from the number of (p, q) configurations the four links can be                     but all physical transitions still need to be pre-processed
+in. Green links are external to the plaquette but contribute
+                                                                                   and encoded in a circuit before further optimizations are
+additional powers of Λ due to the functional dependence of the
+matrix elements on the (p, q) configurations of these external                     sought. Moreover, the gate reductions appear to not be
+links.                                                                             asymptotically large, leaving the large scaling with the
+                                                                                   cutoff as a bottleneck of the algorithm in the far term.
+
+there must be a distinct matrix for each and every pos-
+sible external configuration of gauge-invariant quantum                                            VI.    CONCLUSIONS
+numbers. The scaling of the number of these “external-
+control sectors” is (Λ(Nc −1)(v−2) )4 for plaquettes with                          In this work, we demonstrate a substantial reduction
+vertices with valency v. In other words, the full plaquette                        in the gate count of Trotterized time evolution under
+acting on the local-multiplet basis is a block-diagonal ma-                        the quantum-chromodynamics Hamiltonian within the
+trix involving (Λ(Nc −1)(v−2) )4 independent blocks, each                          Kogut-Susskind lattice formulation in the truncated elec-
+with at most Λ8 nonzero matrix elements (for a square                              tric basis. The reduction is achieved by an application of
+or cubic lattice).                                                                 the singular-value decomposition algorithm of Ref. [25],
+   Finally, one should consider whether or not the Gauss’s                         which yields a term decomposition with a number of
+law constraints or multiplicity indices change the scaling                         terms that is exponentially smaller in Nc2 ; for U(1),
+argument. Gauss’s laws constraints must have the ef-                               SU(2), and SU(3) gauge theories, the number of costly
+fect of reduce the absolute number of nonzero transition-                          magnetic-term subevolutions are reduced by factors of 8,
+matrix entries, but multiplicity indices would have the                            4.096 × 103 , and 1.383052730 × 109 , respectively, when
+effect of increasing them. Apparently, as argued in                                compared with the previous state-of-the-art [22]. Using
+Ref. [70], the scaling behavior empirically appears to                             a second-order product formula, these term reductions
+still approximately follow the polynomial scaling outlined                         translate to nearly 20-fold, 105 -fold, and 1014 -fold re-
+above, so that the above counting is still a good proxy                            ductions, respectively, in the simulations’ T-gate counts.
+for the scaling. Putting the above observations all to-                            The gate-count reductions hold regardless of simulation
+gether, in the ideal case of trivalent vertices, the scaling                       parameters such as system size, simulation time, and
+of the plaquette is Λ8 ; unfortunately, however, one can-                          electric-field truncation cutoff.
+not tile 2D or 3D space using exclusively trivalent vertices                          Moreover, our work provides a comparison of sim-
+without introducing plaquettes that have more than four                            ulation strategies, full cost, and asymptotic cost scal-
+links. For the standard case of a square (cubic) lattice,                          ing between this work and two other leading results us-
+in which all vertices are v = 4 (v = 6), the scaling is Λ24                        ing Kogut-Susskind lattice Hamiltonian in the truncated
+(Λ40 ). This scaling argument is summarized in Fig. 3.                             electric basis. First, the near-optimal, post-Trotter ap-
+   To achieve a full quantum-simulation cost, one needs to                         proach of Ref. [26] yields a factor of 103 reduction in
+take a step further and evaluate the Trotter error associ-                         the number of terms and a factor of 106 in the over-
+ated with the splitting of the plaquette operator to many                          all associated cost compared with our work, regardless
+separate Givens rotations. While operations belonging                              of simulation parameters, along with additional reduc-
+to the different external-control sectors commute, those                           tions associated with optimal scaling in time and inverse
+within each sector may not commute. This source of er-                             error, and likely due to the use of a local evolution struc-
+ror has not yet been accounted for, hindering a full cost                          ture and fermion-to-qubit encoding. Second, the local-
+comparison with the results considered in this work. A                             multiplet-basis approach of Ref. [27] results in a com-
+key difference, nonetheless, is the large polynomial scal-                         pact encoding of the local degrees of freedom in terms
+ing of the algorithm with Λ compared with the modest                               of the Casimir quantum numbers, but it also introduces
+                                                                                                                   16
+
+controlled-plaquette building blocks that leads to an al-         The reason is that rigorous algorithmic analysis are
+gorithmic complexity that scales as Λ24 for 2D square             possible for various time-evolution algorithms (al-
+and Λ40 for 3D cubic lattices. This is to be contrasted           though they may be loosely bounded, like the Trot-
+with algorithms of Refs. [22, 25],and of this work, which        ter approaches). Preparation of nontrivial states
+scale at most as O Λ polylog(Λ) .                                 in QCD is an important task and would require
+   The result of this work demonstrates that improving            more dedicated resource studies within different ap-
+the cost of quantum simulating QCD is a continuous ef-            proaches. On the same footing, the observable esti-
+fort; as new understanding in formulations, algorithms,           mation and measurements are subject to errors that
+and cost analysis emerge, the QCD algorithmic cost can            need to be accounted for in an end-to-end analysis
+be re-analyzed with new tools, and significant improve-           of the QCD simulation cost.
+ments are possible. The initial high cost estimates and
+unfavorable asymptotic scalings should not discourage          The above discussions make it clear that quantum-
+the progress. One should also bear in mind that present-     algorithm developments for gauge theories in general,
+day QCD computations using classical computing re-           and for QCD in particular, remain a frontier research
+sources are themselves resource-intensive, requiring frac-   problem and a complete picture of required quantum re-
+tions of exascale supercomputers per year per calculation,   sources will likely emerge in the coming years.
+which amounts to ∼ 1025 floating-point operations. It is
+conceivable that precision QCD simulations would de-
+mand the use of quantum supercomputers in the future.        Note: Close to the submission of this manuscript, a
+   On the path to further improvement in QCD quantum-        manuscript by Draper was released [81], in which the
+resource analysis, one must account for a number of issues   near-optimal algorithm of Ref. [26] is combined with the
+and the correlated interplay among them:                     precomputed local-multiplet-basis approach of Ref. [27],
+                                                             upon various improvements in both methods. Future
+   ⋄ Boson-truncation errors in the electric basis within    work can compare this algorithm’s performance with
+     the Kogut-Susskind theory are often controlled          those presented here.
+     by exponentially suppressed bounds of Tong et
+     al. [53] and subsequent improvements [71]; nonethe-
+     less, these bounds become polynomial in the cut-                      ACKNOWLEDGMENTS
+     off in the continuum limit [53]. Truncation er-
+     rors in other formulations and representations need
+                                                             We acknowledge early contributions by Alexander
+     to be rigorously bounded or empirically estimated.
+                                                             Shaw, and fruitful discussions with Anthony Ciavarella,
+     Progress along these lines continues [72, 73].
+                                                             Christopher Kane, Natalie Klco, Michael Kreshchuk, and
+   ⋄ The continuum limit of lattice gauge theories, via a    Mason Rhodes. Z.D. was supported by the U.S. De-
+     simultaneous extrapolation to the zero lattice spac-    partment of Energy (DOE), Office of Science, Office of
+     ing and infinite truncation cutoff is important and     Nuclear Physics (award no. DE-SC0026067); the DOE,
+     needs to be done in parallel to time-digitization or    Office of Science, Office of Advanced Scientific Comput-
+     other time-evolution schemes to balance the sys-        ing Research (ASCR), program in Accelerated Research
+     tematics and avoid unnecessarily large resource es-     in Quantum Computing, Fundamental Algorithmic Re-
+     timates. Such analysis in the context of PF and         search toward Quantum Utility (FARQu); the U.S. Na-
+     post-Trotter algorithms for lattice gauge theories      tional Science Foundation’s Quantum Leap Challenge In-
+     are studied in recent years [74–78], but need to        stitute (award no. OMA-2120757); and Maryland Cen-
+     be applied systematically to other formulations and     ter for Fundamental Physics, Department of Physics,
+     representations.                                        and College of Computer, Mathematical, and Natural
+                                                             Sciences at the University of Maryland. Z.D. is fur-
+   ⋄ Finite-volume and finite-time-extent systematics        ther grateful to Ignacio Cirac and the Max Planck In-
+     will also be important to be accounted for in           stitute for Quantum Optics (MPQ), Garching, Germany,
+     simulation-cost analysis; progress in quantify-         for their hospitality during the completion of this work.
+     ing such infrared effects has been reported in          The visit to MPQ was made possible by a Humboldt Re-
+     recent years for Minkowski-time quantum-field-          search Fellowship by the Alexander von Humboldt Foun-
+     theory simulations [79, 80].                            dation. J.R.S. was supported by the U.S. DOE, Office
+                                                             of Science (award no. DE-AC02-05CH11231), partially
+   ⋄ Last but not least, the analysis of this work and       through the Quantum-Information-Science-Enabled Dis-
+     other works reported here often considers solely        covery (QuantISED) program for High Energy Physics
+     the time-evolution task in a quantum computer.          (KA2401032).
+
+
+
+
+ [1] Richard P. Feynman, “Simulating physics with comput-     [2] I. M. Georgescu, S. Ashhab, and Franco Nori, “Quan-
+     ers,” Int. J. Theor. Phys. 21, 467–488 (1982).               tum Simulation,” Rev. Mod. Phys. 86, 153 (2014),
+                                                                                                                          17
+
+     arXiv:1308.6253 [quant-ph].                                    A 73, 022328 (2006), arXiv:quant-ph/0510027.
+ [3] Andrew J. Daley, Immanuel Bloch, Christian Kokail,        [22] Angus Kan and Yunseong Nam, “Lattice Quantum Chro-
+     Stuart Flannigan, Natalie Pearson, Matthias Troyer, and        modynamics and Electrodynamics on a Universal Quan-
+     Peter Zoller, “Practical quantum advantage in quantum          tum Computer,” (2021), arXiv:2107.12769 [quant-ph].
+     simulation,” Nature 607, 667–676 (2022).                  [23] Alexander F. Shaw, Pavel Lougovski, Jesse R. Stryker,
+ [4] Franz Gross et al., “50 Years of Quantum Chromodynam-          and Nathan Wiebe, “Quantum Algorithms for Simu-
+     ics,” Eur. Phys. J. C 83, 1125 (2023), arXiv:2212.11107        lating the Lattice Schwinger Model,” Quantum 4, 306
+     [hep-ph].                                                      (2020), arXiv:2002.11146 [quant-ph].
+ [5] P. Achenbach et al., “The present and future of QCD,”     [24] Jesse R. Stryker, “Shearing approach to gauge-invariant
+     Nucl. Phys. A 1047, 122874 (2024), arXiv:2303.02579            Trotterization,” Phys. Rev. D 112, 014508 (2025),
+     [hep-ph].                                                      arXiv:2105.11548 [hep-lat].
+ [6] Natalie Klco, Alessandro Roggero, and Martin J. Sav-      [25] Zohreh Davoudi, Alexander F. Shaw, and Jesse R.
+     age, “Standard model physics and the digital quantum           Stryker, “General quantum algorithms for Hamilto-
+     revolution: thoughts about the interface,” Rept. Prog.         nian simulation with applications to a non-Abelian
+     Phys. 85, 064301 (2022), arXiv:2107.04769 [quant-ph].          lattice gauge theory,” Quantum 7, 1213 (2023),
+ [7] Christian W. Bauer, Zohreh Davoudi, et al., “Quantum           arXiv:2212.14030 [hep-lat].
+     Simulation for High-Energy Physics,” PRX Quantum 4,       [26] Mason L. Rhodes, Michael Kreshchuk,           and Shiv-
+     027001 (2023), arXiv:2204.03381 [quant-ph].                    esh Pathak, “Exponential Improvements in the Sim-
+ [8] Alberto Di Meglio et al., “Quantum Computing for High-         ulation of Lattice Gauge Theories Using Near-
+     Energy Physics: State of the Art and Challenges,” PRX          Optimal Techniques,” PRX Quantum 5, 040347 (2024),
+     Quantum 5, 037001 (2024), arXiv:2307.03236 [quant-ph].         arXiv:2405.10416 [quant-ph].
+ [9] Christian W. Bauer, Zohreh Davoudi, Natalie Klco, and     [27] Anthony Ciavarella, Natalie Klco, and Martin J. Savage,
+     Martin J. Savage, “Quantum simulation of fundamen-             “Trailhead for quantum simulation of SU(3) Yang-Mills
+     tal particles and forces,” Nature Rev. Phys. 5, 420–432        lattice gauge theory in the local multiplet basis,” Phys.
+     (2023), arXiv:2404.06298 [hep-ph].                             Rev. D 103, 094501 (2021), arXiv:2101.10227 [quant-ph].
+[10] Douglas Beck et al., “Quantum Information Science and     [28] Henry Lamm, Scott Lawrence, and Yukari Yamauchi,
+     Technology for Nuclear Physics. Input into U.S. Long-          “General Methods for Digital Quantum Simulation of
+     Range Planning, 2023,” (2023) arXiv:2303.00113 [nucl-          Gauge Theories,” Phys. Rev. D 100, 034518 (2019),
+     ex].                                                           arXiv:1903.08807 [hep-lat].
+[11] Lena Funcke, Tobias Hartung, Karl Jansen, and Ste-        [29] Jan F. Haase, Luca Dellantonio, Alessio Celi, Danny
+     fan Kühn, “Review on Quantum Computing for Lat-               Paulson, Angus Kan, Karl Jansen, and Christine A.
+     tice Field Theory,” PoS LATTICE2022, 228 (2023),               Muschik, “A resource efficient approach for quantum
+     arXiv:2302.00467 [hep-lat].                                    and classical simulations of gauge theories in parti-
+[12] Jad C. Halimeh, Niklas Mueller, Johannes Knolle, Zlatko        cle physics,” Quantum 5, 393 (2021), arXiv:2006.14160
+     Papić, and Zohreh Davoudi, “Quantum simulation of             [quant-ph].
+     out-of-equilibrium dynamics in gauge theories,” (2025),   [30] Edison M. Murairi, Michael J. Cervia, Hersh Kumar,
+     arXiv:2509.03586 [quant-ph].                                   Paulo F. Bedaque, and Andrei Alexandru, “How many
+[13] Zohreh Davoudi, “TASI/CERN/KITP Lecture Notes on               quantum gates do gauge theories require?” Phys. Rev. D
+     ”Toward Quantum Computing Gauge Theories of Na-                106, 094504 (2022), arXiv:2208.11789 [hep-lat].
+     ture”,” (2025), arXiv:2507.15840 [hep-lat].               [31] Henry Lamm, Ying-Ying Li, Jing Shu, Yi-Lin Wang,
+[14] Zohreh Davoudi, “Quantum Simulation of Gauge The-              and Bin Xu, “Block encodings of discrete subgroups on a
+     ories for Particle and Nuclear Physics,” in 42th In-           quantum computer,” Phys. Rev. D 110, 054505 (2024),
+     ternational Symposium on Lattice Field Theory (2026)           arXiv:2405.12890 [hep-lat].
+     arXiv:2605.20417 [hep-lat].                               [32] Praveen Balaji, Cianán Conefrey-Shinozaki, Patrick
+[15] Seth Lloyd, “Universal Quantum Simulators,” Science            Draper, Jason K. Elhaderi, Drishti Gupta, Luis Hi-
+     273, 1073 (1996).                                              dalgo, Andrew Lytle, and Enrico Rinaldi, “Quantum
+[16] H. F. Trotter, “On the product of semi-groups of opera-        circuits for SU(3) lattice gauge theory,” Phys. Rev. D
+     tors,” Proc. Am. Math. Soc. 10, 545–551 (1959).                112, 054511 (2025), arXiv:2503.08866 [hep-lat].
+[17] M. Suzuki, “Generalized Trotter’s Formula and System-     [33] Jad C. Halimeh, Masanori Hanada, and Shunji Mat-
+     atic Approximants of Exponential Operators and Inner           suura, “Universal framework with exponential speedup
+     Derivations with Applications to Many Body Problems,”          for the quantum simulation of quantum field theories in-
+     Commun. Math. Phys. 51, 183–190 (1976).                        cluding QCD,” (2025), arXiv:2506.18966 [quant-ph].
+[18] Andrew M. Childs, Yuan Su, Minh C. Tran, Nathan           [34] Anthony N. Ciavarella and Christian W. Bauer, “Quan-
+     Wiebe, and Shuchen Zhu, “Theory of Trotter Error with          tum Simulation of SU(3) Lattice Yang-Mills Theory at
+     Commutator Scaling,” Phys. Rev. X 11, 011020 (2021),           Leading Order in Large-Nc Expansion,” Phys. Rev. Lett.
+     arXiv:1912.08854 [quant-ph].                                   133, 111901 (2024), arXiv:2402.10265 [hep-ph].
+[19] John B. Kogut and Leonard Susskind, “Hamiltonian For-     [35] Henry Froland, Dorota M. Grabowska, and Zhiyao
+     mulation of Wilson’s Lattice Gauge Theories,” Phys.            Li, “Simulating Fully Gauge-Fixed SU(2) Hamiltonian
+     Rev. D 11, 395–408 (1975).                                     Dynamics on Digital Quantum Computers,” (2025),
+[20] Michael A. Nielsen and Isaac L. Chuang, Quantum Com-           arXiv:2512.22782 [quant-ph].
+     putation and Quantum Information (Cambridge Univer-       [36] Torsten V. Zache, Daniel González-Cuadra, and Pe-
+     sity Press, 2012).                                             ter Zoller, “Quantum and Classical Spin-Network Algo-
+[21] Tim Byrnes and Yoshihisa Yamamoto, “Simulating lat-            rithms for q-Deformed Kogut-Susskind Gauge Theories,”
+     tice gauge theories on a quantum computer,” Phys. Rev.         Phys. Rev. Lett. 131, 171902 (2023), arXiv:2304.02527
+                                                                                                                           18
+
+     [quant-ph].                                                 [53] Yu Tong, Victor V. Albert, Jarrod R. McClean, John
+[37] Mason L. Rhodes, Shivesh Pathak, and Riley W. Chien,             Preskill, and Yuan Su, “Provably accurate simulation
+     “Quantum simulation of lattice gauge theories coupled            of gauge theories and bosonic systems,” Quantum 6, 816
+     to fermionic matter via anyonic regularization,” (2026),         (2022), arXiv:2110.06942 [quant-ph].
+     arXiv:2603.15820 [quant-ph].                                [54] Dominic W. Berry, Andrew M. Childs, Richard Cleve,
+[38] Zoë Webb-Mack and Natalie Klco, “Deforming the Trail:           Robin Kothari, and Rolando D. Somma, “Simulating
+     Baseline Quantum Circuitry for SU(2)k Lattice Gauge              Hamiltonian Dynamics with a Truncated Taylor Series,”
+     Theory,” (2026), arXiv:2605.15076 [quant-ph].                    Phys. Rev. Lett. 114, 090502 (2015), arXiv:1412.4687
+[39] J. J. de Swart, “The Octet model and its Clebsch-Gordan          [quant-ph].
+     coefficients,” Rev. Mod. Phys. 35, 916–939 (1963), [Er-     [55] Guang Hao Low and Nathan Wiebe, “Hamilto-
+     ratum: Rev.Mod.Phys. 37, 326–326 (1965)].                        nian Simulation in the Interaction Picture,” (2018),
+[40] Anthony N. Ciavarella, Ivan M. Burbano, and Chris-               arXiv:1805.00675 [quant-ph].
+     tian W. Bauer, “Efficient truncations of SU(Nc) lattice     [56] András Gilyén, Yuan Su, Guang Hao Low, and Nathan
+     gauge theory for quantum simulation,” Phys. Rev. D               Wiebe, “Quantum singular value transformation and be-
+     112, 054514 (2025), arXiv:2503.11888 [hep-lat].                  yond: exponential improvements for quantum matrix
+[41] Neel S. Modi, Anthony N. Ciavarella, Jad C. Hal-                 arithmetics,” in Proceedings of the 51st annual ACM
+     imeh, and Christian W. Bauer, “Large Nc Truncations              SIGACT symposium on theory of computing (2019) pp.
+     for SU(Nc) Lattice Yang-Mills Theory with Fermions,”             193–204.
+     (2026), arXiv:2602.02344 [hep-lat].                         [57] Andrew M. Childs, Aaron Ostrander, and Yuan Su,
+[42] Dorota M. Grabowska, Christopher F. Kane, and Chris-             “Faster quantum simulation by randomization,” Quan-
+     tian W. Bauer, “Fully gauge-fixed SU(2) Hamiltonian for          tum 3, 182 (2019), arXiv:1805.08385 [quant-ph].
+     quantum simulations,” Phys. Rev. D 111, 114516 (2025),      [58] Earl Campbell, “Random Compiler for Fast Hamilto-
+     arXiv:2409.10610 [quant-ph].                                     nian Simulation,” Phys. Rev. Lett. 123, 070503 (2019),
+[43] Georg Bergner, Masanori Hanada, Enrico Rinaldi, and              arXiv:1811.08017 [quant-ph].
+     Andreas Schafer, “Toward QCD on quantum com-                [59] Markus Heyl, Philipp Hauke,          and Peter Zoller,
+     puter: orbifold lattice approach,” JHEP 05, 234 (2024),          “Quantum localization bounds Trotter errors in digi-
+     arXiv:2401.12045 [hep-th].                                       tal quantum simulation,” Sci. Adv. 5, aau8342 (2019),
+[44] Jad C. Halimeh, Masanori Hanada, Shunji Matsuura,                arXiv:1806.11123 [quant-ph].
+     Franco Nori, Enrico Rinaldi, and Andreas Schäfer,          [60] Burak Şahinoğlu and Rolando D. Somma, “Hamiltonian
+     “A universal framework for the quantum simulation                simulation in the low-energy subspace,” npj Quantum
+     of Yang–Mills theory,” Commun. Phys. 9, 67 (2026),               Inf. 7, 119 (2021), arXiv:2006.02660 [quant-ph].
+     arXiv:2411.13161 [quant-ph].                                [61] Changhao Yi and Elizabeth Crosson, “Spectral analysis
+[45] Christian W. Bauer and Dorota M. Grabowska, “Efficient           of product formulas for quantum simulation,” npj Quan-
+     representation for simulating U(1) gauge theories on dig-        tum Inf. 8, 37 (2022), arXiv:2102.12655 [quant-ph].
+     ital quantum computers at all values of the coupling,”      [62] Weiyuan Gong, Shuo Zhou, and Tongyang Li, “Com-
+     Phys. Rev. D 107, L031503 (2023), arXiv:2111.08015               plexity of Digital Quantum Simulation in the Low-
+     [hep-ph].                                                        Energy Subspace: Applications and a Lower Bound,”
+[46] Erik J. Gustafson, Henry Lamm, Felicity Lovelace, and            Quantum 8, 1409 (2024), arXiv:2312.08867 [quant-ph].
+     Damian Musk, “Primitive quantum gates for an SU(2)          [63] Daniel Burgarth, Paolo Facchi, Alexander Hahn, Mattias
+     discrete subgroup: Binary tetrahedral,” Phys. Rev. D             Johnsson, and Kazuya Yuasa, “Strong error bounds for
+     106, 114501 (2022), arXiv:2208.12309 [quant-ph].                 Trotter and strang-splittings and their implications for
+[47] Sebastian Osorio Perez, Edison M. Murairi, Erik J.               quantum chemistry,” Phys. Rev. Res. 6, 043155 (2024),
+     Gustafson, and Henry Lamm, “Primitive Quantum                    arXiv:2312.08044 [quant-ph].
+     Gates for an SU (3) Discrete Subgroup: Σ(72 × 3),”          [64] Yuan Su, Hsin-Yuan Huang, and Earl T. Campbell,
+     (2025), arXiv:2511.17437 [hep-lat].                              “Nearly tight Trotterization of interacting electrons,”
+[48] Tianyin Li, “Quantum simulations of quantum electro-             Quantum 5, 495 (2021), arXiv:2012.09194 [quant-ph].
+     dynamics in Coulomb gauge,” Phys. Rev. D 112, 054512        [65] James D. Watson, Jacob Bringewatt, Alexander F. Shaw,
+     (2025), arXiv:2406.01204 [hep-lat].                              Andrew M. Childs, Alexey V. Gorshkov, and Zohreh
+[49] Xiaojun Yao, “Quantum simulation of QED in                       Davoudi, “Quantum Algorithms for Simulating Nuclear
+     Coulomb gauge,” Phys. Rev. D 113, 034510 (2026),                 Effective Field Theories,” (2023), arXiv:2312.05344
+     arXiv:2507.01089 [quant-ph].                                     [quant-ph].
+[50] Jeongwan Haah, Matthew B. Hastings, Robin Kothari,          [66] Kaoru Mizuta and Tomotaka Kuwahara, “Trotterization
+     and Guang Hao Low, “Quantum Algorithm for Sim-                   is Substantially Efficient for Low-Energy States,” Phys.
+     ulating Real Time Evolution of Lattice Hamiltoni-                Rev. Lett. 135, 130602 (2025), arXiv:2504.20746 [quant-
+     ans,” SIAM J. Comput. 52, FOCS18–250–FOCS18–284                  ph].
+     (2023), arXiv:1801.03922 [quant-ph].                        [67] Qi Zhao, You Zhou, and Andrew M. Childs, “Entangle-
+[51] Guang Hao Low and Isaac L. Chuang, “Hamiltonian                  ment accelerates quantum simulation,” Nature Phys. 21,
+     Simulation by Qubitization,” Quantum 3, 163 (2019),              1338–1345 (2025), arXiv:2406.02379 [quant-ph].
+     arXiv:1610.06546 [quant-ph].                                [68] Xiangran Zhang, Jue Xu, Qi Zhao, and You Zhou, “Tam-
+[52] Abhishek Rajput, Alessandro Roggero, and Nathan                  ing Trotter Errors with Quantum Resources,” Phys. Rev.
+     Wiebe, “Hybridized Methods for Quantum Simulation                Lett. 137, 070202 (2026), arXiv:2604.13486 [quant-ph].
+     in the Interaction Picture,” Quantum 6, 780 (2022),         [69] Natalie Klco, Jesse R. Stryker, and Martin J. Savage,
+     arXiv:2109.03308 [quant-ph].                                     “SU(2) non-Abelian gauge field theory in one dimen-
+                                                                      sion on digital quantum computers,” Phys. Rev. D 101,
+                                                                                                                            19
+
+     074512 (2020), arXiv:1908.06935 [quant-ph].                       namical simulations of Hamiltonian lattice gauge theo-
+[70] Anthony Ciavarella, Natalie Klco, and Martin J. Savage,           ries,” (2025), arXiv:2506.16559 [hep-lat].
+     “Some Conceptual Aspects of Operator Design for Quan-        [76] Marcela Carena, Henry Lamm, Ying-Ying Li, and Wan-
+     tum Simulations of Non-Abelian Lattice Gauge Theo-                qiang Liu, “Improved Hamiltonians for Quantum Simu-
+     ries,” (2022) arXiv:2203.11988 [quant-ph].                        lations of Gauge Theories,” Phys. Rev. Lett. 129, 051601
+[71] Bo Peng, Yuan Su, Daniel Claudino, Karol Kowal-                   (2022), arXiv:2203.02823 [hep-lat].
+     ski, Guang Hao Low, and Martin Roetteler, “Quan-             [77] Anthony N. Ciavarella, “Quantum simulation of lattice
+     tum simulation of boson-related Hamiltonians: tech-               QCD with improved Hamiltonians,” Phys. Rev. D 108,
+     niques, effective Hamiltonian construction, and error             094513 (2023), arXiv:2307.05593 [hep-lat].
+     analysis,” Quantum Sci. Technol. 10, 023002 (2025),          [78] Marc Illa, Martin J. Savage, and Xiaojun Yao, “Dy-
+     arXiv:2307.06580 [quant-ph].                                      namical Local Tadpole-Improvement in Quantum Sim-
+[72] Jinghong Yang, Christopher F. Kane,            and Shab-          ulations of Gauge Theories,” (2025), arXiv:2504.21575
+     nam Jabeen, “Tightening energy-based boson truncation             [quant-ph].
+     bound using Monte Carlo-assisted methods,” (2026),           [79] Raúl A. Briceño, Juan V. Guerrero, Maxwell T. Hansen,
+     arXiv:2604.24896 [hep-lat].                                       and Alexandru M. Sturzu, “Role of boundary conditions
+[73] Anthony N. Ciavarella, Siddharth Hariprakash, Jad C.              in quantum computations of scattering observables,”
+     Halimeh, and Christian W. Bauer, “Truncation uncer-               Phys. Rev. D 103, 014506 (2021), arXiv:2007.01155 [hep-
+     tainties for accurate quantum simulations of lattice gauge        lat].
+     theories,” (2025), arXiv:2508.00061 [quant-ph].              [80] Ivan M. Burbano, Marco A. Carrillo, Rana Urek, An-
+[74] Marcela Carena, Henry Lamm, Ying-Ying Li, and                     thony N. Ciavarella, and Raúl A. Briceño, “Real-time
+     Wanqiang Liu, “Lattice renormalization of quantum                 estimators for scattering observables: A full account of
+     simulations,” Phys. Rev. D 104, 094519 (2021),                    finite-volume errors for quantum simulation,” Phys. Rev.
+     arXiv:2107.01166 [hep-lat].                                       D 113, L071502 (2026), arXiv:2506.06511 [hep-lat].
+[75] Christopher F. Kane, Siddharth Hariprakash, and Chris-       [81] Patrick Draper, “Block Encoding Non-Abelian Lattice
+     tian W. Bauer, “Obtaining continuum physics from dy-              Gauge Theory,” (2026), arXiv:2608.17115 [quant-ph].
+

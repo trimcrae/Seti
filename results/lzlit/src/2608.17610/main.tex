@@ -1,0 +1,2992 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{authblk}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{aliascnt}
+\usepackage{array,booktabs,multirow,tabularx}
+\newcounter{algorithm}
+\newcommand{\SetKwInput}[2]{}
+\newcommand{\SetKwComment}[3]{}
+\newcommand{\SetKw}[2]{}
+\newcommand{\KwInput}[1]{\noindent\textbf{Input: }#1\par}
+\newcommand{\KwOutput}[1]{\noindent\textbf{Output: }#1\par}
+\newcommand{\tcp}[1]{}
+\newcommand{\Return}{\textbf{return} }
+\newcommand{\While}[2]{%
+  \noindent\textbf{while }#1\textbf{ do}\par
+  \begingroup\leftskip=1.5em #2\par\endgroup
+  \noindent\textbf{end while}\par}
+\newcommand{\If}[2]{%
+  \noindent\textbf{if }#1\textbf{ then }#2\par}
+\newenvironment{algorithm}[1][]{%
+  \par\medskip\noindent\begin{minipage}{\linewidth}\small
+  \hrule\smallskip
+  \renewcommand{\caption}[1]{%
+    \refstepcounter{algorithm}%
+    \noindent\textbf{Algorithm~\thealgorithm: ##1}\par\smallskip}
+  \renewcommand{\;}{\par}%
+}{%
+  \smallskip\hrule\end{minipage}\par\medskip}
+\usepackage{hyperref}
+\usepackage[capitalize,nameinlink]{cleveref}
+\crefname{algorithm}{algorithm}{algorithms}
+\Crefname{algorithm}{Algorithm}{Algorithms}
+
+\allowdisplaybreaks
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=green!40!black,
+  urlcolor=blue!55!black
+}
+
+\newtheorem{theorem}{Theorem}[section]
+\newaliascnt{lemma}{theorem}
+\newtheorem{lemma}[lemma]{Lemma}
+\aliascntresetthe{lemma}
+\newaliascnt{corollary}{theorem}
+\newtheorem{corollary}[corollary]{Corollary}
+\aliascntresetthe{corollary}
+\newaliascnt{proposition}{theorem}
+\newtheorem{proposition}[proposition]{Proposition}
+\aliascntresetthe{proposition}
+\newaliascnt{definition}{theorem}
+\newtheorem{definition}[definition]{Definition}
+\aliascntresetthe{definition}
+\newaliascnt{remark}{theorem}
+\newtheorem{remark}[remark]{Remark}
+\aliascntresetthe{remark}
+\newaliascnt{fact}{theorem}
+\newtheorem{fact}[fact]{Fact}
+\aliascntresetthe{fact}
+
+\newcommand{\bits}{\{0,1\}}
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cB}{\mathcal{B}}
+\newcommand{\cD}{\mathcal{D}}
+\newcommand{\cE}{\mathcal{E}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\cK}{\mathcal{K}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cR}{\mathcal{R}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cU}{\mathcal{U}}
+\newcommand{\cX}{\mathcal{X}}
+\newcommand{\cY}{\mathcal{Y}}
+\newcommand{\Dom}{\operatorname{Dom}}
+\newcommand{\Unif}{\operatorname{Unif}}
+\newcommand{\poly}{\operatorname{poly}}
+\newcommand{\negl}{\operatorname{negl}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\Supp}{\operatorname{Supp}}
+\newcommand{\Real}{\mathsf{Real}}
+\newcommand{\Learn}{\mathsf{Learn}}
+\newcommand{\Heavy}{\mathsf{Heavy}}
+\newcommand{\View}{\mathsf{View}}
+\newcommand{\IntKR}{\mathsf{IntKR}}
+\newcommand{\Adv}{\mathsf{Adv}}
+\newcommand{\Gen}{\mathsf{Gen}}
+\newcommand{\Enc}{\mathsf{Enc}}
+\newcommand{\Dec}{\mathsf{Dec}}
+\newcommand{\IND}{\mathsf{IND}}
+\newcommand{\pk}{\mathsf{pk}}
+\newcommand{\sk}{\mathsf{sk}}
+\newcommand{\ct}{\mathsf{ct}}
+\newcommand{\ket}[1]{\lvert #1\rangle}
+\newcommand{\bra}[1]{\langle #1\rvert}
+\newcommand{\proj}[1]{\ket{#1}\!\bra{#1}}
+\newcommand{\given}{\,\middle|\,}
+\newcommand{\ceil}[1]{\left\lceil #1\right\rceil}
+\newcommand{\changed}[1]{\textcolor{purple!75!black}{#1}}
+\newcommand{\mrchanged}[1]{\changed{#1}}
+
+\newenvironment{hybrid}[1]{%
+  \par\medskip
+  \noindent\textbf{#1}
+  \begin{enumerate}[leftmargin=2.5em,label=\arabic*.,itemsep=0.25em,topsep=0.35em]
+}{%
+  \end{enumerate}
+  \medskip
+}
+
+\SetKwInput{KwInput}{Input}
+\SetKwInput{KwOutput}{Output}
+\SetKwComment{tcp}{\(\triangleright\) }{}
+\SetKw{Return}{return}
+
+\title{Towards the Impossibility of Imperfectly Complete Key Agreement in the QROM}
+\renewcommand{\Authfont}{\normalsize}
+\renewcommand{\Affilfont}{\small}
+\renewcommand{\Authands}{, }
+\setlength{\affilsep}{0.45em}
+\author[1]{Fuyuki Kitagawa\thanks{\texttt{fuyuki.kitagawa@ntt.com}}}
+\author[1]{Ryo Nishimaki\thanks{\texttt{ryo.nishimaki@ntt.com}}}
+\author[2]{Ági Villányi\thanks{\texttt{agivilla@mit.edu}}}
+\author[1]{Takashi Yamakawa\thanks{\texttt{takashi.yamakawa@ntt.com}}}
+\affil[1]{NTT, Tokyo, Japan}
+\affil[2]{Massachusetts Institute of Technology, Cambridge, MA, USA}
+\date{}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We make progress towards the impossibility of imperfectly complete
+quantum-computation, classical-communication (QCCC) key agreement by
+constructing the first
+unconditional attacks on quantum key agreement in the following restricted settings. 
+
+In the two-message setting, we assume that Alice makes only classical queries to the oracle in the first round and that her message to Bob is classical, but otherwise both parties may perform arbitrary quantum computation, make quantum queries, and send a quantum state in the second round. Our attack and analysis are based on the heavy-query learning techniques from Austrin et al. (CRYPTO 2022) and the reprogramming techniques of Katz and Sela (arXiv 2401.14319). 
+
+In the round-independent setting, we show that the attack of Barak and Mahmoody (CRYPTO 2009; J. Cryptology 2017) can be extended to multiple rounds when Alice and Bob share classical communication and make only classical queries in all but the final round. In both settings, the attacker is computationally unbounded and makes \(\poly(\lambda)\) queries to recover the key whenever each
+honest query bound is at most \(\poly(\lambda)\) and the valid agreement probability is
+inverse-polynomial. As a consequence, we rule out imperfectly correct quantum
+public-key encryption for classical messages whose length is bounded by a
+polynomial in \(\lambda\)
+in the QROM when key generation has classical oracle access, even if
+encryption, decryption, and the ciphertext are quantum. In particular, the
+one-bit case applies to the imperfectly correct PKE obtained from two-round
+OSP by Bartusek and Khurana (CRYPTO 2025) whenever the classical
+OSP sender makes only classical random-oracle queries. 
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}
+
+Merkle studied key agreement as a way for two parties with no shared secret
+to communicate securely over an insecure channel.  His puzzle protocol allows
+the two parties to establish a key while requiring a passive eavesdropper to
+make quadratically more queries to a random oracle~\cite{Merkle78}. Subsequent work showed
+that, for classical protocols, this quadratic gap is optimal under both
+perfect and imperfect completeness.  Impagliazzo and Rudich ruled out a
+super-polynomial gap~\cite{ImpagliazzoRudich89}, and Barak and Mahmoody proved
+a tight quadratic upper bound, including when the honest parties need not
+agree with certainty~\cite{BarakMahmoodyFull}.
+
+It is natural to ask whether these results can be extended to the quantum setting, in which parties are allowed to make queries to the oracle in superposition. This is known as the quantum random-oracle model (QROM)~\cite{BonehEtAl11} and quantum variants of Merkle's approach,
+and key agreement in the QROM more broadly, have been studied in
+several works~\cite{BrassardSalvail08,BrassardEtAl19}. The model we consider in this work was introduced by Austrin
+et al.~\cite{AustrinEtAl22} as
+quantum-computation, classical-communication (QCCC). In a QCCC
+protocol, the parties may perform arbitrary quantum computation, retain
+quantum states, and query the random oracle in superposition, but every
+message they exchange is classical.
+
+In 2018, Hosoyamada and Yamakawa asked whether QCCC key agreement in the
+QROM can achieve a super-polynomial gap between
+the query complexities of the honest parties and the
+eavesdropper~\cite[Section~6]{HosoyamadaYamakawa18}. Assuming perfect completeness, Austrin et al. gave an unconditional quadratic-query classical attack when one party
+is classical~\cite{AustrinEtAl22}. For general QCCC protocols, their Polynomial Compatibility
+Conjecture yields a classical attack whose query complexity is polynomial in
+the honest parties' query bounds; unconditionally, they obtained an attack using exponentially many queries. 
+
+Li, Li, Li, and Liu subsequently obtained unconditional attacks in a sequence
+of increasingly general, perfectly complete settings. They first treated
+QPKE with classical-query key generation, while also proving a separate
+imperfect-correctness result for oracle-free decryption~\cite{LiEtAl24}.
+They then allowed logarithmically many quantum key-generation queries
+unconditionally and formulated a conjecture for the general
+case~\cite{LiEtAl25}. Their later work removed both restrictions for
+perfectly complete QPKE with classical keys and either classical or quantum
+ciphertexts~\cite{LiEtAl26PKE}. Most recently, they gave an unconditional,
+round-independent attack on every perfectly complete QCCC key-agreement
+protocol. The honest parties may query the oracle in superposition in every
+round, while the eavesdropper makes only classical
+queries~\cite{LiEtAl26ManyRound}.
+
+What remains open is imperfectly complete QCCC key agreement when the honest
+parties may make arbitrary quantum queries. Even a classical-query attack in
+this setting would face a serious obstacle identified by Austrin et al. Their
+Simulation Conjecture asserts, informally, that a classical algorithm whose
+query complexity is polynomial in the oracle's input length can approximate
+the acceptance probability of any quantum algorithm with the same type of
+query bound, on most random oracles. It follows from
+the Aaronson-Ambainis conjecture on influential variables of bounded
+low-degree polynomials~\cite{AaronsonAmbainis14}. Austrin et al. showed that,
+if the Simulation Conjecture is false, then there exists an imperfectly complete QCCC protocol secure against
+every classical eavesdropper whose query complexity is polynomial in the
+security parameter. A fully general classical
+attack would therefore require substantial progress on this simulation
+problem. The barrier leaves room, however, for quantum-query attacks and for
+attacks that restrict the honest parties' quantum queries. We pursue both
+possibilities in this work.
+
+Before this work, no unconditional impossibility result was known for
+imperfectly correct QCCC key agreement in the QROM with unrestricted quantum
+oracle access, even for two-message protocols.  The two-message setting also
+captures quantum public-key encryption (QPKE) through a standard
+key-agreement protocol: Alice sends her public key, Bob responds with an
+encryption of a uniformly random bit, and Alice recovers the shared bit by
+decrypting. If the ciphertext is quantum, then the second message in this protocol is
+quantum as well.  Bouaziz-Ermann et al. extended the conjectural approach to
+this more general setting~\cite{BouazizEtAl24}.  Our two-message result gives
+an unconditional attack when Alice's first-stage oracle queries and first
+message are classical, and therefore addresses an open case not covered by
+the perfectly complete impossibility results.
+
+\subsection{Our Results}
+
+We prove unconditional attacks that do not assume perfect completeness, where the attacker is a query-bounded, computationally unbounded party. 
+
+For a key-agreement protocol \(\Pi\), let
+\[
+  \alpha_\Pi(\lambda)
+  :=
+  \Pr[K_{\cA}=K_{\cB}\neq\bot]
+\]
+denote its valid agreement probability. Our bounds are meaningful whenever
+\(\alpha_\Pi\) is nonnegligible.  Thus they apply in a substantially broader
+regime than negligible completeness error: the honest parties need only agree
+on a valid key with inverse-polynomial probability, rather than with
+probability \(1-\negl(\lambda)\). 
+
+We begin with two-message protocols. Before sending the first message, Alice
+queries the oracle only classically, although her remaining computation and
+retained state may be quantum. Bob may return a quantum message, and both Bob
+and Alice's final algorithm may query the oracle in superposition. Let
+\(q_{\cA,1}\), \(q_{\cB}\), and \(q_{\cA,2}\) bound the number of queries
+in Alice's first stage, Bob's stage, and Alice's final stage, respectively.
+
+\begin{theorem}[Two-message attack, informal]
+\label{thm:informal-two-message}
+Let \(\Pi\) be a protocol of the form above with valid agreement probability
+\(\alpha>0\).  There is a computationally unbounded quantum attacker that
+recovers Bob's key with probability greater than \(\alpha/2\) using
+\[
+  O\!\left(
+    \frac{
+      q_{\cA,1}\max\{1,2q_{\cB}+q_{\cA,2}\}^{4}}
+      {\alpha^{4}}
+    +q_{\cA,2}
+  \right)
+\]
+random-oracle queries.  Its queries before Bob's response are classical;
+its queries after intercepting the response may be quantum.
+\end{theorem}
+
+Consequently, no family of such protocols with honest query bounds at most
+\(\poly(\lambda)\) and inverse-polynomial valid agreement is secure against
+computationally unbounded attackers making \(\poly(\lambda)\) queries. If Alice is
+entirely classical and Bob's response is classical, the attack is a passive
+classical eavesdropping attack.
+
+In the multi-round setting, we allow for a classical-communication prefix of arbitrary length. The parties may
+run quantum algorithms and store quantum states, but all oracle queries made before the final round must be classical. Bob next sends one possibly quantum message, and
+Alice performs her final computation. These last two stages may query the
+oracle in superposition. Let
+\(q_{\cA,\mathsf{pre}}\) and \(q_{\cB,\mathsf{pre}}\) bound the parties'
+total prefix queries, and let \(q_{\cB,\mathsf q}\) and
+\(q_{\cA,\mathsf{fin}}\) bound their final-stage queries.
+
+\begin{theorem}[Multi-round attack, informal]
+\label{thm:informal-multi-round}
+Let \(\Pi^{\mathsf{mr}}\) be a protocol of the form above with valid
+agreement probability \(\alpha>0\).  There is a computationally unbounded
+online quantum attacker that recovers Bob's key with probability greater
+than \(\alpha/2\) using
+\[
+  O\!\left(
+    \frac{
+      \max\{1,q_{\cA,\mathsf{pre}}\}
+      \max\{1,q_{\cB,\mathsf{pre}}\}
+      \max\{1,2q_{\cB,\mathsf q}+q_{\cA,\mathsf{fin}}\}^{6}}
+      {\alpha^{6}}
+    +q_{\cA,\mathsf{fin}}
+  \right)
+\]
+random-oracle queries.  Its queries during the classical prefix are
+classical, and the bound has no additional dependence on the number of
+prefix rounds.
+\end{theorem}
+
+As an application, we consider quantum public-key encryption for classical
+messages whose length is bounded by a polynomial in \(\lambda\). The public
+and secret keys are classical, and key generation has classical oracle
+access. Encryption, decryption, and the ciphertext itself may be quantum.
+
+\begin{theorem}[QPKE attack, informal]
+\label{thm:informal-qpke}
+No QPKE scheme for classical messages whose length is bounded by a polynomial
+in \(\lambda\), with
+classical-query key generation, negligible correctness error, and honest
+query bounds at most \(\poly(\lambda)\), is query-bounded IND-CPA secure. In
+fact, for every polynomial \(p\), there is a computationally unbounded quantum
+attacker making \(\poly(\lambda)\) queries whose IND-CPA advantage is at least
+\[
+  \frac12-\frac{1}{p(\lambda)}-\negl(\lambda).
+\]
+\end{theorem}
+
+\begin{table}[t]
+  \centering
+  \small
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabularx}{\textwidth}{@{}l*{3}{>{\centering\arraybackslash}p{1.45cm}}>{\centering\arraybackslash}p{1.75cm}>{\raggedright\arraybackslash}X@{}}
+    \toprule
+    \multicolumn{1}{c}{\multirow{2}{*}{\textit{Result}}}
+      & \multicolumn{3}{c}{\textit{Oracle access}}
+      & \multicolumn{1}{c}{\multirow{2}{*}{\textit{Correctness}}}
+      & \multicolumn{1}{c}{\multirow{2}{*}{\textit{Status}}} \\
+    \cmidrule(lr){2-4}
+      & \(\Gen\) & \(\Enc\) & \(\Dec\) & & \\
+    \midrule
+    \cite{AustrinEtAl22}
+      & Q & Q & Q & perfect & Conjectural \\
+    \cite{BouazizEtAl24}
+      & Q & Q & -- & perfect & Conjectural \\
+    \cite{LiEtAl24}
+      & C & Q & Q & perfect & Unconditional \\
+    \cite{LiEtAl24}
+      & C & Q & -- & imperfect & Unconditional \\
+    \cite{LiEtAl25}
+      & Q (log.) & Q & Q & perfect
+      & Unconditional for \(O(\log\lambda)\) \(\Gen\) queries; conjectural
+        otherwise \\
+    \cite{LiEtAl26PKE}
+      & Q & Q & Q & perfect & Unconditional \\
+    This work
+      & C & Q & Q & imperfect & Unconditional \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Comparison of QPKE impossibility results in the QROM.  Here C and
+  Q denote classical and quantum random-oracle access, respectively, and
+  -- denotes oracle-free decryption.  The two rows for
+  \cite{LiEtAl24} separate its perfect-correctness result from its
+  imperfect-correctness result, which requires oracle-free decryption.}
+  \label{tab:qpke-comparison}
+\end{table}
+
+Moreover, the multi-round theorem gives an interactive key-generation variant of QPKE.  Namely, suppose that ordinary key generation is
+replaced by an arbitrary classical-communication setup phase between the
+decrypting and encrypting parties.  The parties may perform quantum local
+computation and retain quantum states, but both make only classical
+random-oracle queries during this phase.  Viewing the setup as the classical
+prefix and the challenge ciphertext as Bob's final message, the multi-round
+attack applies without any dependence on the number of setup rounds. The reduction fixes two distinct messages and turns the scheme into key
+agreement in the natural way. Alice generates and sends the public key; Bob
+encrypts one of the two messages and takes its index as his key; Alice
+decrypts and recovers the index. Recovering Bob's key is therefore equivalent
+to guessing which message was encrypted.
+
+Finally, we obtain the following corollary.
+
+\begin{corollary}[Two-round OSP consequence, informal]
+The PKE obtained from a negligibly incorrect two-round OSP protocol by the
+transformation of Bartusek and Khurana is not query-bounded IND-CPA secure in
+the QROM, provided that the classical OSP sender makes only classical
+random-oracle queries and the honest query bounds are polynomial.
+\end{corollary}
+
+\subsection{Discussion}
+
+We note that our key-agreement model and security notion are different from prior work.
+In classical random-oracle key agreement, a passive eavesdropper can copy the
+public transcript and is commonly required to be unable to recover an honest
+party's key~\cite{BarakMahmoodyFull}. Here Bob's final message may be quantum
+and therefore cannot in general be copied. Moreover, unlike the Classical
+Communication One Quantum Message (CC1QM) security notion of Bouaziz-Ermann
+et al.~\cite[Definition~3.1]{BouazizEtAl24}, our success condition asks only
+that the attacker recover Bob's key. It does not require the attacker to
+provide Alice with a replacement state that makes her output the same
+non-abort key. Thus our attack objective is weaker, while security against
+our interception key-recovery experiment is correspondingly stronger: every
+successful CC1QM attack yields a successful interception key-recovery attack,
+but the converse need not hold. This does not by itself break the full CC1QM
+condition for a quantum final message. It is nevertheless sufficient for our
+QPKE application, because the IND-CPA challenge ciphertext is transferred to
+the attacker and need not be returned to Alice.
+
+Moreover, our result crucially relies on the fact that the early oracle queries are
+classical. Once the complete classical query-answer transcript is fixed, the
+party's residual state depends only on that transcript, while all unqueried
+oracle values remain uniform. This makes it possible to resample a conditioned
+view and then apply random reprogramming. With quantum queries, a party
+may instead be entangled with many oracle values in superposition,
+and there is no classical transcript that both determines the
+residual state and leaves the remaining oracle values independent and
+uniform. Measuring the query register generally changes the execution, while
+keeping it coherent does not yield the classically sampled
+reprogramming set needed by \Cref{lem:reprogramming}. Extending our result to
+quantum queries in the prefix would therefore require novel techniques for handling quantum oracle interactions, and we leave this as future work.
+
+
+\subsection{Acknowledgements}
+
+This research was conducted while AV was a summer intern at NTT Social Informatics Laboratories
+in Tokyo. AV is very grateful to NTT and the organizers of the internship for the opportunity and their generous hospitality. 
+
+We acknowledge the use of AI in the production of this paper.  The proof ideas for the two-round setting were human-generated, while GPT-5.6 Sol Extra-Hard Thinking assisted in formalizing. When attempting to generalize to the multi-round setting, GPT-5.6 Sol Extra-Hard Thinking formalized an attack by extending Barak-Mahmoody. The authors take full responsibility for the correctness of this work.
+
+\subsection{Related Work}
+
+\paragraph{Oblivious state preparation.}
+Bartusek and Khurana introduced oblivious state preparation (OSP). They showed
+that two-round OSP implies one-bit CPA-secure PKE with classical key
+generation, decryption, keys, and ciphertexts, but quantum
+encryption~\cite[Theorem~7.9]{BartusekKhurana24}. They also reduced OSP to
+perfectly complete key agreement, thereby ruling out perfectly correct OSP
+in the QROM~\cite[Corollary~7.7]{BartusekKhurana24}. In their relativizing
+OSP-to-PKE transformation, the classical OSP sender becomes the key
+generator. Our theorem therefore attacks the resulting PKE even when its
+correctness error is negligible rather than zero, provided that the sender
+queries the random oracle classically.
+
+\paragraph{Quantum public-key encryption.}
+Under the Polynomial Compatibility Conjecture, Bouaziz-Ermann et al. handled
+protocols with a final quantum message. Their result assumes perfect
+completeness and no oracle queries by Alice after she receives that message,
+so its QPKE application requires oracle-free
+decryption~\cite{BouazizEtAl24}. Our two-message theorem instead permits
+imperfect completeness and quantum oracle queries in Alice's final
+computation, at the cost of requiring classical queries in her first stage.
+
+Li et al. proved a complementary sequence of QPKE impossibility results.
+Their first paper unconditionally rules out perfectly complete QPKE with
+classical keys and ciphertexts when key generation has classical oracle
+access. It separately rules out imperfectly correct, classical-key QPKE with
+possibly quantum ciphertexts in any oracle model, provided that decryption is
+oracle-free~\cite{LiEtAl24}. Their next paper allows logarithmically many
+quantum key-generation queries unconditionally and gives a conjectural
+result beyond that range~\cite{LiEtAl25}. Their 2026 result removes both the
+conjecture and the key-generation restriction for perfectly complete QPKE
+with classical keys and either classical or quantum
+ciphertexts~\cite{LiEtAl26PKE}. Our result keeps the classical-query
+restriction on key generation, but allows imperfect correctness and
+unrestricted quantum oracle queries by encryption and decryption.
+
+\paragraph{Many-round key agreement.}
+In a recent preprint, Li et al. give an unconditional attack against
+perfectly complete, arbitrary-round QCCC key agreement with unrestricted
+quantum oracle queries~\cite{LiEtAl26ManyRound}. All communication in their
+model is classical, and their eavesdropper makes only classical queries. Our
+multi-round theorem makes a different tradeoff: it tolerates imperfect
+completeness and a final quantum message, but it requires classical oracle
+access during the prefix and uses a quantum attacker after the prefix.
+
+\subsection{Organization}
+
+\Cref{sec:technical-overview} explains the two attacks and the QPKE
+application.  \Cref{sec:preliminaries} defines the query model, partial
+oracles, and the key-agreement and QPKE security notions, and recalls the
+external lemmas used in the proofs.  \Cref{sec:resampling} constructs the
+heavy-query learner for the two-message setting and defines Alice's
+conditioned first-round view.  \Cref{sec:main-attack} proves the two-round and multi-round theorems.  Finally, \Cref{sec:corollaries} derives the classical-eavesdropping,
+QPKE, and OSP consequences.
+
+\section{Technical Overview}\label{sec:technical-overview}
+
+\subsection{The Two-Message Attack and QPKE Application}
+
+We consider two-round key agreement in the QROM with the following syntax. Both Alice and Bob are quantum algorithms but Alice may make only classical queries to the oracle and her message to Bob must be classical. Alice first makes at most $q_{\cA, 1}$ queries to the random oracle $H$ to obtain query, answer pairs $T_\cA$, and sends her message $m_1$ to Bob, retaining a residual state $S_\cA$. Bob then makes his queries to $H$, outputs a key $K_B$ and then sends his possibly quantum message $\psi$ to Alice, who then outputs a key $K_A$. 
+
+Eve proceeds as follows. After receiving Alice's first message \(m_1\), Eve looks for an input that is
+likely to occur in the transcript of Alice's first round, conditioned on
+\(m_1\) and all oracle answers Eve has learned so far. Whenever this
+conditional probability exceeds \(\delta\), Eve queries the input and adds
+the answer to a partial oracle \(h\), where $h$ is defined such that it agrees with $H$ on all points in its domain, which we denote by $\Dom(h)$. We stop the procedure after
+\(\ceil{q_{\cA,1}/\delta^2}\) queries; the probability of reaching this
+cutoff is at most \(\delta\). If this learning phase is successful, then every point outside \(\Dom(h)\) 
+appears in a fresh conditioned Alice transcript with probability at most
+\(\delta\). 
+
+Although Alice's queries in the first round are classical, she may retain a quantum
+state. However, once Alice's message and full query transcript
+are fixed, her residual state depends only on those classical random variables, while
+all unqueried oracle values remain uniform. Conditioned on \((m_1,h)\), Eve
+can therefore prepare a distribution over Alice's views, which we denote by $\omega_{m_1, h}$, and use it to sample a new view
+\[
+  (T'_{\cA},S'_{\cA})\leftarrow\omega_{m_1,h}.
+\] 
+Eve then intercepts Bob's response \(\Psi\) and runs Alice's final algorithm
+on \(S'_{\cA}\) and \(\Psi\), using a \emph{reprogrammed oracle}
+\(H[T'_{\cA}]\), which is defined to agree with $T'_\cA$ on all points inside of $\Dom(T'_{\cA})$, and with $H$ everywhere else. 
+
+The analysis of the two-message attack combines two ingredients. The
+first ingredient is the heavy-query bound of Austrin et
+al.~\cite[Lemma~3.4]{AustrinEtAl22}, in the form recalled by Katz and
+Sela~\cite[Lemma~4]{KatzSela24}, which lets Eve learn the heavy inputs
+before we invoke reprogramming. The second is the random
+reprogramming lemma in the form stated by Katz and
+Sela~\cite[Lemma~3]{KatzSela24}. The lemma bounds the effect
+of reprogramming an oracle on a random set: if each point belongs to that set
+with probability at most \(\delta\), then the acceptance probability of a
+\(q\)-query quantum algorithm changes by at most \(2q\sqrt\delta\). 
+
+The QPKE application uses the standard reduction from QPKE to key
+agreement used in prior QROM impossibility work
+\cite{BouazizEtAl24,LiEtAl24}. Alice generates
+\((\pk,\sk)\) and sends \(\pk\). Fix two distinct messages \(m_0,m_1\).
+Bob chooses a uniform bit \(b\), encrypts \(m_b\), and takes \(b\) as his
+key; Alice decrypts and maps \(m_0,m_1\) back to their indices. The resulting
+agreement probability is at least the scheme's minimum correct-decryption
+probability. In the IND-CPA game, Eve preprocesses \(\pk\), treats the
+challenge ciphertext as Bob's response, and uses its recovered key as the
+guess for \(b\). Interception success \(p\) therefore yields IND-CPA
+advantage at least \(p-1/2\). Because the ciphertext is transferred rather
+than copied, encryption, decryption, and the ciphertext may all be quantum.
+Only key generation needs classical oracle access.
+
+\subsection{The Multi-Round Attack}
+
+For the multi-round result, we treat the entire classical-query prefix as an
+auxiliary classical protocol.  The parties' local computations and residual
+states may be quantum, but their messages and oracle queries during the
+prefix are classical.  Since we do not impose a computational bound, an
+exact simulator can sample these classical actions from their induced
+distributions and record the corresponding conditional residual states.  We
+can therefore apply the Barak--Mahmoody learner to the simulated classical
+views and then map its guarantees back to the parties' actual query
+transcripts and residual quantum states~\cite{BarakMahmoodyFull}.
+
+Conditioned on the public transcript \(m\) and the partial oracle \(h\)
+learned by Eve, the parties' prefix views are close to the product of their
+marginals, and no input outside \(\Dom(h)\) is likely to appear in Alice's
+prefix query transcript.  This product guarantee does not yet include the
+random oracle used in the final round.  Since every prefix query is
+classical, after the two query transcripts are fixed, the unqueried oracle
+values remain uniform and the residual states have no further dependence on
+them.  We use this fact to sample independent prefix views together with a
+consistent oracle and show that the resulting state is close to the real
+conditioned state.  These steps are given in
+\Cref{sec:classical-prefix-views,sec:bm-learner,sec:conditioned-prefix-resampling}.
+
+Eve can then sample a fresh Alice prefix view, intercept Bob's final message,
+and run Alice's final computation from the sampled residual state.  Since
+the learner's query bound depends only on the total numbers of prefix
+queries made by Alice and Bob, the attack has no additional dependence on
+the number of prefix rounds.
+
+
+\section{Preliminaries}\label{sec:preliminaries}
+
+Let \(\lambda\in\mathbb{N}\) be the security parameter, and let
+\(n,\ell:\mathbb{N}\to\mathbb{N}_{>0}\) be functions bounded above by a
+polynomial in \(\lambda\). Define
+\[
+  \cX_\lambda=\bits^{n(\lambda)},
+  \qquad
+  \cY_\lambda=\bits^{\ell(\lambda)},
+  \qquad
+  \cH_\lambda=\{H:\cX_\lambda\to\cY_\lambda\}.
+\]
+For any finite set \(\cR\), we write \(r\leftarrow\cR\) for a uniformly
+random element of \(\cR\).  In particular,
+\(H\leftarrow\cH_\lambda\) denotes a uniformly random function.  When
+\(\lambda\) is clear, we omit the subscript.  When representing the
+sampled oracle by a classical register, \(\mathsf H\) has orthonormal basis
+\(\{\ket{H}_{\mathsf H}:H\in\cH\}\). For a probability mass function or subprobability mass function \(\pi\), we
+write
+\[
+  \Supp(\pi):=\{z:\pi(z)>0\}
+\]
+for its support.
+
+\subsection{Random Oracles and Query Algorithms}
+
+\begin{definition}[Oracle quantum algorithms]\label{def:oracle-algorithms}
+A quantum oracle algorithm
+\(\mathcal Q=\{\mathcal Q_\lambda\}_{\lambda\in\mathbb N}\) is a family
+of quantum circuits. We write \(I\) for its input register, \(X\) for its
+\(n(\lambda)\)-qubit query register, \(Y\) for its
+\(\ell(\lambda)\)-qubit response register, and \(Z\) for all remaining work
+registers. The circuit family depends only on $\lambda$. For
+\(H\in\cH_\lambda\), a query applies the unitary
+\[
+  U_H\ket{x}_X\ket{y}_Y\ket{z}_Z
+  =
+  \ket{x}_X\ket{y\oplus H(x)}_Y\ket{z}_Z.
+\]
+The algorithm alternates oracle-independent operations with applications of
+\(U_H\). For fixed \(\lambda\), let \(q(\mathcal Q_\lambda)\) denote its
+worst-case number of oracle queries; we sometimes abbreviate this to
+\(q(\mathcal Q)\). 
+
+An algorithm has \emph{classical oracle access} if each query is made on a
+classical input \(x\), the answer \(H(x)\) is returned classically, and the
+ordered list of query-answer pairs can be recorded without changing the
+execution. The rest of the computation and the residual state may be
+quantum.
+\end{definition}
+
+We use the standard classical-quantum representation of a state that is
+classical on one register. If \(C\)
+is a classical register with finite alphabet \(\mathcal C\) and \(S\) is a
+quantum register, then
+\[
+  \rho_{CS}
+  =
+  \sum_{c\in\mathcal C}
+  p(c)\proj{c}_C\otimes\sigma_{S\mid c},
+\]
+where \(p\) is a probability distribution and, whenever \(p(c)>0\),
+\(\sigma_{S\mid c}\) is the normalized state of \(S\) obtained by measuring
+\(C\) in the computational basis and observing \(c\). Explicitly, writing
+\(P_c=\proj{c}_C\),
+\[
+  p(c)=\Tr\!\left[(P_c\otimes I_S)\rho_{CS}\right]
+\]
+and, for \(p(c)>0\),
+\[
+  \sigma_{S\mid c}
+  =
+  \frac{
+    \Tr_C\!\left[(P_c\otimes I_S)\rho_{CS}(P_c\otimes I_S)\right]
+  }{p(c)}.
+\]
+
+\subsection{Partial Oracles and Reprogramming}
+
+\begin{definition}[Partial oracle]
+For any $\lambda \in \mathbb{N}$, fix $\cX = \cX_\lambda, \cY = \cY_\lambda,$ and $\cH = \cH_\lambda$.  A partial oracle is a function
+\(h:\Dom(h)\to\cY\), where
+\(\Dom(h)\subseteq\cX\). We denote the \emph{size} of $h$ by \(|h|=|\Dom(h)|\). We write
+\(h\preceq H\) when a full oracle \(H\in\cH\) extends \(h\), meaning that
+\(H(x)=h(x)\) for every \(x\in\Dom(h)\).  Define
+\[
+  \cH(h)=\{H\in\cH:h\preceq H\}.
+\]
+Two partial oracles \(h\) and \(\tau\) are \emph{consistent} if they agree on the
+intersection of their domains.  For consistent \(h\) and \(\tau\), define
+\[
+  \cH(h,\tau)
+  =
+  \{H\in\cH:h\preceq H,\ \tau\preceq H\}.
+\]
+The notation \(H\leftarrow\Unif(\cH(h))\), and similarly
+\(H\leftarrow\Unif(\cH(h,\tau))\), means that \(H\) is sampled uniformly
+from the indicated set.
+\end{definition}
+
+An ordered transcript
+\(\tau=((x_1,y_1),\ldots,(x_t,y_t))\) is \emph{consistent} when
+\(x_i=x_j\) implies \(y_i=y_j\).  A consistent transcript defines the
+partial oracle \(\tau(x_i)=y_i\).  Repeated queries may be retained in the
+ordered list, while \(\Dom(\tau)\) denotes the set of distinct queried
+points.  We write \(|\tau|=t\) for the length of the ordered list, including
+repetitions.
+
+\begin{definition}[Reprogrammed oracle]
+For an oracle \(H\) and a consistent transcript \(\tau\) (equivalently, a
+partial oracle), define
+\[
+  H[\tau](x)
+  =
+  \begin{cases}
+    \tau(x),&x\in\Dom(\tau),\\
+    H(x),&x\notin\Dom(\tau).
+  \end{cases}
+\]
+For another internally consistent transcript \(\tau'\), which need not be
+consistent with \(\tau\), successive reprogramming is
+defined so that the second transcript overwrites the first on their common
+domain:
+\[
+  H[\tau][\tau'](x)
+  =
+  \begin{cases}
+    \tau'(x),&x\in\Dom(\tau'),\\
+    \tau(x),&x\in\Dom(\tau)\setminus\Dom(\tau'),\\
+    H(x),&x\notin\Dom(\tau)\cup\Dom(\tau').
+  \end{cases}
+\]
+\end{definition}
+
+
+\subsection{External Lemmas}
+
+Below we recall the two prior results used in our reprogramming attack.
+
+The first is the random reprogramming
+lemma in the form used by Katz and Sela~\cite[Lemma~3]{KatzSela24}, itself a
+restatement of a result by Alagic et al.~\cite[Lemma~3]{AlagicEtAl22}.
+
+\begin{lemma}[Random reprogramming lemma]\label{lem:reprogramming}
+Let \(\cD\) be a distinguisher in the following game.
+\begin{enumerate}[leftmargin=2em]
+  \item \(\cD\) outputs a full function
+  \(F_0:\cX\to\cY\) and a possibly inefficient randomized classical
+  algorithm \(C\) whose output is a
+  partial function \(R\).  Let
+  \[
+    \varepsilon
+    =
+    \max_{x\in\cX}
+    \Pr_{R\leftarrow C}[x\in\Dom(R)].
+  \]
+  \item The challenger samples \(R\leftarrow C\), sets
+  \(F_1=F_0[R]\), chooses \(b\leftarrow\bits\), and gives \(\cD\) quantum
+  oracle access to \(F_b\).
+  \item The oracle access is removed.  The challenger reveals the random
+  coins used by \(C\), and \(\cD\) outputs a bit.
+\end{enumerate}
+If \(\cD\) makes at most \(q\) challenge-oracle queries, then
+\[
+  \left|
+    \Pr[\cD\text{ outputs }1\mid b=1]
+    -
+    \Pr[\cD\text{ outputs }1\mid b=0]
+  \right|
+  \le 2q\sqrt\varepsilon.
+\]
+\end{lemma}
+
+The restriction that \(C\) is classical is deliberate.  Its only role is to
+sample the classical partial function \(R\), and the game later reveals the
+random coins used for that sample.  In our applications, \(C\) samples a
+classical query transcript, while \(\cD\) separately prepares any residual
+quantum state conditioned on the revealed transcript.  Thus \(C\) never
+simulates Alice's quantum state.  Allowing \(C\) itself to retain quantum
+state would also require a different game interface, since revealing
+classical random coins would no longer specify its complete internal state.
+
+The second is the following heavy-query counting lemma of Austrin et
+al.~\cite[Lemma~3.4]{AustrinEtAl22}, in the form recalled by Katz and
+Sela~\cite[Lemma~4]{KatzSela24}.
+
+\begin{lemma}[Heavy-query bound]\label{lem:heavy-bound}
+Let \(L,z_1,x_1,\ldots,z_q,x_q\) be correlated random variables, where
+\(L\) ranges over subsets of a universe \(\cU\), each \(x_i\in\cU\), and
+the \(x_i\)'s are pairwise distinct.  Conditioned on a history
+\(z_1,x_1,\ldots,z_i\), call \(x_i\) \(\delta\)-heavy if
+\[
+  \Pr[x_i\in L\mid z_1,x_1,\ldots,z_i]\ge\delta.
+\]
+Let \(S\) be the set of \(\delta\)-heavy points among the \(x_i\)'s.  Then
+\[
+  \mathbb{E}[|S|]\le\frac{\mathbb{E}[|L|]}{\delta}.
+\]
+\end{lemma}
+
+\subsection{Public Key Cryptography with Quantum Parties}\label{sec:model}
+
+We now define the protocols used throughout
+the paper. We note that the two-message model in \Cref{def:protocol} is close to the CC1QM
+model of Bouaziz-Ermann et al.~\cite{BouazizEtAl24}, with one additional
+restriction: before sending her first message, Alice has only classical
+oracle access.
+
+\subsubsection{Two-Message Key Agreement}
+
+
+\begin{definition}[Two-message key agreement with a classical first message]
+\label{def:protocol}
+A two-message key-agreement protocol with a classical first message and a
+possibly quantum response is a tuple of oracle quantum algorithms \(\Pi=(\cA_1,\cB,\cA_2)\) with the
+following syntax relative to \(\cH_\lambda\). 
+\begin{itemize}[leftmargin=2em]
+  \item \(\cA_1^H(1^\lambda)\) has classical oracle access and outputs
+  \((T_{\cA},M_1,S_{\cA})\).  Here \(M_1\) is a classical first message,
+  \(S_{\cA}\) is Alice's residual register, and \(T_{\cA}\) is the complete
+  ordered classical query-answer transcript of \(\cA_1\).
+  \item \(\cB^H(1^\lambda,M_1)\) has quantum oracle access and outputs a
+  possibly quantum message register \(\Psi\) and a classical key
+  \(K_{\cB}\in\cK_\lambda\cup\{\bot\}\).
+  \item \(\cA_2^H(1^\lambda,S_{\cA},\Psi)\) has quantum oracle access and
+  outputs a classical key \(K_{\cA}\in\cK_\lambda\cup\{\bot\}\).
+\end{itemize}
+Other than access to the common random oracle, Alice and Bob initially share
+no state or correlated randomness.  We assume worst-case bounds
+\[
+  |T_{\cA}|\le q_{\cA,1},
+  \qquad
+  q(\cB)\le q_{\cB},
+  \qquad
+  q(\cA_2)\le q_{\cA,2}.
+\] 
+The protocol is the following experiment, denoted by \(\Real_\Pi(1^\lambda)\):
+\begin{enumerate}[leftmargin=2em]
+  \item Sample \(H\leftarrow\cH_\lambda\).
+  \item Run
+  \((T_{\cA},M_1,S_{\cA})\leftarrow\cA_1^H(1^\lambda)\), and send the
+  classical message \(M_1\) to Bob.
+  \item Run
+  \((\Psi,K_{\cB})\leftarrow\cB^H(1^\lambda,M_1)\), and send the
+  message register \(\Psi\) to Alice.
+  \item Run
+  \(K_{\cA}\leftarrow\cA_2^H(1^\lambda,S_{\cA},\Psi)\).
+\end{enumerate}
+The valid agreement probability is
+\[
+  \alpha_\Pi(\lambda)
+  :=
+  \Pr_{\Real_\Pi(1^\lambda)}
+  [K_{\cA}=K_{\cB}\neq\bot].
+\]
+We use the following notions of completeness and security for such a protocol:
+
+\begin{enumerate}[leftmargin=2em,label=\textup{(\roman*)}]
+  \item \textbf{Completeness.}  The protocol has completeness error
+  \(\epsilon_c(\lambda)\) if
+  \[
+    \alpha_\Pi(\lambda)\ge 1-\epsilon_c(\lambda).
+  \]
+  We say the protocol is \emph{correct} if \(\epsilon_c\) is negligible.
+  \item \textbf{Security.}  The protocol is interception key-recovery secure,
+  as defined in \Cref{def:intkr}, if, for every polynomially query-bounded attacker
+  \(\cE\),
+  \begin{equation}
+    \Adv^{\IntKR}_{\Pi,\cE}(\lambda) \leq \negl(\lambda).
+  \end{equation}
+
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Intercepting attacker]
+An \emph{intercepting-attacker} is a pair
+\(\cE=(\cE_{1},\cE_{2})\). Its first stage receives
+Alice's classical message, may query the oracle before Bob generates his
+response, and outputs a possibly quantum state \(Z_{\cE}\). Its second stage
+receives \(Z_{\cE}\) together with Bob's message register and outputs a guess for the
+classical key.
+\end{definition}
+
+\begin{definition}[Interception key-recovery experiment]\label{def:intkr}
+Let \(\cE=(\cE_{1},\cE_{2})\) be any polynomially
+query-bounded intercepting-attacker: its computation may be
+unbounded, but its two stages together make at most \(\poly(\lambda)\)
+random-oracle queries.  The experiment
+\(\IntKR_{\Pi,\cE}(1^\lambda)\) is:
+\begin{enumerate}[leftmargin=2em]
+  \item Sample \(H\leftarrow\cH_\lambda\).
+  \item Run
+  \((T_{\cA},M_1,S_{\cA})\leftarrow\cA_1^H(1^\lambda)\) and reveal
+  \(M_1\) to \(\cE_{1}\).
+  \item Run
+  \(Z_{\cE}\leftarrow\cE_{1}^H(1^\lambda,M_1)\).
+  \item Run
+  \((\Psi,K_{\cB})\leftarrow\cB^H(1^\lambda,M_1)\) and transfer
+  \(\Psi\) to \(\cE_{2}\).
+  \item Run
+  \(K^*\leftarrow\cE_{2}^H(1^\lambda,Z_{\cE},\Psi)\).
+  The experiment outputs \(1\) iff \(K^*=K_{\cB}\neq\bot\).
+\end{enumerate}
+Define
+\[
+  \Adv^{\IntKR}_{\Pi,\cE}(\lambda)
+  :=
+  \Pr[\IntKR_{\Pi,\cE}(1^\lambda)=1].
+\]
+\end{definition}
+
+\subsubsection{Multi-Round Key Agreement with a Classical-Query Prefix}
+
+We also consider protocols with an arbitrary classical-communication prefix.
+During the prefix, both parties query the oracle only
+classically, although their other computations and residual states may be
+quantum. In the final round, Bob sends a possibly quantum message, after
+which Alice performs her final computation. This communication pattern is similar to
+the CC1QM pattern of Bouaziz-Ermann et
+al.~\cite[Definition~11]{BouazizEtAl24}, except that we additionally require classical
+oracle access during the prefix.
+
+\begin{definition}[Multi-round key agreement with a classical-query prefix]\label{def:multi-protocol}
+
+A key-agreement protocol with a classical prefix and one final possibly
+quantum message is a tuple of oracle quantum algorithms
+\[
+  \Pi^{\mathsf{mr}}
+  =
+  \bigl((\cA_i)_{i=1}^{r},(\cB_i)_{i=1}^{r-1},
+    \cB_{\mathsf q},\cA_{\mathsf{fin}}\bigr).
+\]
+Here \(r\ge1\) is the number of messages that Alice sends during the
+classical prefix. To simplify the indexing, we assume that Alice sends both
+the first and last prefix messages.
+The honest experiment, denoted
+\(\Real_{\Pi^{\mathsf{mr}}}(1^\lambda)\), is:
+\begin{enumerate}[leftmargin=2em]
+  \item Sample \(H\leftarrow\cH_\lambda\). Alice and Bob begin in an
+  oracle-independent product state
+  \(\rho_{\cA,0}\otimes\rho_{\cB,0}\).
+  \item For \(i=1,\ldots,r\), Alice runs \(\cA_i\) on her current residual
+  register and the public transcript so far, makes only classical oracle
+  queries, sends a classical message \(M_{2i-1}\), and retains her new
+  residual register. If \(i<r\), Bob proceeds analogously: he runs
+  \(\cB_i\), makes only classical oracle queries, sends a classical message
+  \(M_{2i}\), and retains his new residual register.
+  \item Let
+  \[
+    M=(M_1,\ldots,M_{2r-1})
+  \]
+  be the complete classical prefix transcript. Let \(T_{\cA}\) and
+  \(T_{\cB}\) be the complete ordered query-answer transcripts accumulated by
+  Alice and Bob during the prefix, and let \(S_{\cA}\) and \(S_{\cB}\) be
+  their residual quantum registers at its end.
+  \item Bob runs
+  \[
+    (\Psi,K_{\cB})
+    \leftarrow
+    \cB_{\mathsf q}^{H}
+    (1^\lambda,M,S_{\cB}),
+  \]
+  where \(\Psi\) is a possibly quantum message register and
+  \(K_{\cB}\in\cK_\lambda\cup\{\bot\}\) is classical.
+  \item After receiving \(\Psi\), Alice runs
+  \[
+    K_{\cA}
+    \leftarrow
+    \cA_{\mathsf{fin}}^{H}
+    (1^\lambda,M,S_{\cA},\Psi).
+  \]
+  Here \(K_{\cA}\in\cK_\lambda\cup\{\bot\}\) is classical.
+\end{enumerate}
+Write
+\[
+  q_{\cA,\mathsf{pre}}
+  :=\max |T_{\cA}|,
+  \qquad
+  q_{\cB,\mathsf{pre}}
+  :=\max |T_{\cB}|,
+\]
+and let \(q_{\cB,\mathsf q}\) and
+\(q_{\cA,\mathsf{fin}}\) bound the quantum-oracle queries made by
+\(\cB_{\mathsf q}\) and \(\cA_{\mathsf{fin}}\), respectively. The valid
+agreement probability is
+\[
+  \alpha_{\Pi^{\mathsf{mr}}}(\lambda)
+  :=
+  \Pr_{\Real_{\Pi^{\mathsf{mr}}}(1^\lambda)}
+  [K_{\cA}=K_{\cB}\neq\bot].
+\]
+We use the following notions of completeness and security for such a protocol:
+\begin{enumerate}[leftmargin=2em,label=\textup{(\roman*)}]
+  \item \textbf{Completeness.}  The protocol has completeness error
+  \(\epsilon_c(\lambda)\) if
+  \[
+    \alpha_{\Pi^{\mathsf{mr}}}(\lambda)
+    \ge 1-\epsilon_c(\lambda).
+  \]
+  We say the protocol is \emph{correct} if \(\epsilon_c\) is negligible.
+  \item \textbf{Security.}  The protocol is online interception key-recovery
+  secure, as defined in \Cref{def:multi-intkr}, if, for every
+  computationally unbounded attacker \(\cE\) making at most \(\poly(\lambda)\)
+  random-oracle queries, restricted to classical queries during the prefix
+  but allowed quantum queries after receiving \(\Psi\),
+  \begin{equation}
+    \Adv^{\IntKR,\mathsf{mr}}_{\Pi^{\mathsf{mr}},\cE}(\lambda)
+    \leq \negl(\lambda).
+  \end{equation}
+\end{enumerate}
+\end{definition}
+
+\begin{definition}[Online interception experiment]
+\label{def:multi-intkr}
+The experiment
+\(\IntKR^{\mathsf{mr}}_{\Pi^{\mathsf{mr}},\cE}(1^\lambda)\) proceeds as
+follows.
+\begin{enumerate}[leftmargin=2em]
+  \item Sample \(H\leftarrow\cH_\lambda\) and initialize the parties and Eve.
+  \item Run the honest classical prefix. After each public message, activate
+  Eve on the transcript so far and its retained state; during these
+  activations Eve may make classical oracle queries and update its state.
+  \item Run \(\cB_{\mathsf q}^H\) on Bob's residual register. Transfer its
+  message register \(\Psi\) to Eve and retain Bob's key \(K_{\cB}\).
+  \item Eve may make quantum oracle queries and outputs a classical key guess
+  \(K^*\). The experiment outputs \(1\) iff
+  \(K^*=K_{\cB}\neq\bot\).
+\end{enumerate}
+Define
+\[
+  \Adv^{\IntKR,\mathsf{mr}}_{\Pi^{\mathsf{mr}},\cE}(\lambda)
+  :=
+  \Pr[\IntKR^{\mathsf{mr}}_{\Pi^{\mathsf{mr}},\cE}(1^\lambda)=1].
+\]
+\end{definition}
+
+\subsubsection{Quantum Public-Key Encryption}
+
+We consider classical public and secret keys, classical messages whose
+length is bounded by a polynomial in \(\lambda\), and possibly quantum encryption,
+decryption, and ciphertexts. We allow imperfect
+correctness but require \(\Gen\) to query the random oracle only classically.
+Our security experiment is the corresponding query-bounded IND-CPA
+experiment: the attacker may perform unbounded computation but is charged
+for its oracle queries. When \(\Gen\), \(\Dec\), and the ciphertext are
+classical but \(\Enc\) may be quantum, the \(\mu(\lambda)=1\) case
+is exactly the PKE syntax used by Bartusek and
+Khurana~\cite[Definition~7.8]{BartusekKhurana24}.
+
+\begin{definition}[QPKE with classical-query key generation]
+\label{def:qpke}
+Let \(\mu:\mathbb{N}\to\mathbb{N}\) be any polynomial-time computable
+function satisfying \(1\le\mu(\lambda)\le p(\lambda)\) for some polynomial
+\(p\), and let
+\(\cM_\lambda=\bits^{\mu(\lambda)}\). A quantum public-key encryption scheme
+\(\Sigma=(\Gen,\Enc,\Dec)\) for the message spaces
+\(\{\cM_\lambda\}_{\lambda\in\mathbb N}\), in the QROM with oracle family
+\(\cH_\lambda\), has the following syntax.
+\begin{itemize}[leftmargin=2em]
+  \item \((\pk,\sk)\leftarrow\Gen^H(1^\lambda)\) outputs a classical
+  public key and secret key.  The algorithm has classical random-oracle
+  access, and its complete ordered query-answer transcript can be recorded as
+  \(T_{\Gen}\).
+  \item \(C\leftarrow\Enc^H(1^\lambda,\pk,m)\), for
+  \(m\in\cM_\lambda\), uses quantum random-oracle access and outputs a
+  possibly quantum ciphertext register \(C\).
+  \item \(\widehat m\leftarrow\Dec^H(1^\lambda,\sk,C)\) uses quantum
+  random-oracle access and outputs
+  \(\widehat m\in\cM_\lambda\cup\{\bot\}\).
+\end{itemize}
+Write \(q_{\Gen}\), \(q_{\Enc}\), and \(q_{\Dec}\) for the respective
+worst-case query bounds. Define the minimum correct-decryption probability
+\begin{align*}
+  \alpha_\Sigma(\lambda)
+  :=\min_{m\in\cM_\lambda}
+  \Pr\bigl[&\Dec^H(1^\lambda,\sk,C)=m:\ \\
+    &H\leftarrow\cH_\lambda,\
+    (\pk,\sk)\leftarrow\Gen^H(1^\lambda),\
+    C\leftarrow\Enc^H(1^\lambda,\pk,m)\bigr].
+\end{align*}
+The scheme has correctness error \(\epsilon_c(\lambda)\) if
+\(\alpha_\Sigma(\lambda)\ge1-\epsilon_c(\lambda)\).
+\end{definition}
+
+\begin{definition}[Query-bounded IND-CPA security]\label{def:qpke-ind}
+For a two-stage attacker \(\cD=(\cD_0,\cD_1)\), the experiment
+\(\IND_{\Sigma,\cD}(1^\lambda)\) is:
+\begin{enumerate}[leftmargin=2em]
+  \item Sample \(H\leftarrow\cH_\lambda\) and
+  \((\pk,\sk)\leftarrow\Gen^H(1^\lambda)\).
+  \item Run
+  \((Z_{\cD},m_0,m_1)\leftarrow\cD_0^H(1^\lambda,\pk)\), where
+  \(Z_{\cD}\) is a possibly quantum state and
+  \(m_0,m_1\in\cM_\lambda\).
+  \item Sample \(b\leftarrow\bits\), run
+  \(C\leftarrow\Enc^H(1^\lambda,\pk,m_b)\), and transfer \(C\) to
+  \(\cD_1\).
+  \item Run \(b'\leftarrow\cD_1^H(1^\lambda,Z_{\cD},C)\).  The experiment
+  outputs \(1\) iff \(b'=b\).
+\end{enumerate}
+Define
+\[
+  \Adv^{\IND\text{-}\mathrm{CPA}}_{\Sigma,\cD}(\lambda)
+  :=
+  \left|\Pr[\IND_{\Sigma,\cD}(1^\lambda)=1]-\frac12\right|.
+\]
+The scheme is query-bounded IND-CPA secure if this advantage is negligible
+for every computationally unbounded attacker making at most
+\(\poly(\lambda)\) random-oracle queries. This differs from standard
+computational IND-CPA only in the attacker's resource bound. Because
+encryption is public, the experiment does not need a separate encryption
+oracle.
+\end{definition}
+
+\section{Conditional Resampling and Heavy-Query Learning}\label{sec:resampling}
+
+\subsection{The Heavy-Query Attacker}
+
+The following procedure is the \textsc{findTranscript} heavy-query attacker
+of Katz and Sela~\cite[Section~3 and Lemma~5]{KatzSela24} adapted to our setting. Its cutoff analysis is precisely
+their application of the heavy-query counting bound of Austrin et
+al.~\cite{AustrinEtAl22}.
+
+Throughout this subsection, probabilities are taken over
+\[
+  H\leftarrow\cH,
+  \qquad
+  (T_{\cA},M_1,S_{\cA})\leftarrow\cA_1^H(1^\lambda).
+\]
+For a first-message value \(m_1\) and a partial oracle \(h\), let
+\[
+  \mathsf E_{m_1,h}:=\{M_1=m_1,\ h\preceq H\}.
+\]
+Whenever \(\Pr[\mathsf E_{m_1,h}]>0\), define
+\begin{equation}\label{eq:p-heavy}
+  p_{m_1,h}(x)
+  :=
+  \Pr[x\in\Dom(T_{\cA})\mid\mathsf E_{m_1,h}].
+\end{equation}
+Define
+\[
+  \Heavy_\delta(m_1,h)
+  :=
+  \{x\in\cX\setminus\Dom(h):p_{m_1,h}(x)>\delta\}.
+\]
+Fix a total order \(\prec\) on \(\cX\).
+
+\begin{algorithm}[H]
+\caption{\(\Learn_\delta^H(1^\lambda,m_1)\)}
+\label{alg:learn}
+\KwInput{Security parameter \(1^\lambda\), first message \(m_1\), oracle
+access to \(H\), threshold \(\delta\), and bound \(q_{\cA,1}\).}
+\KwOutput{A partial oracle \(h\) or \(\bot\).}
+\(N_{\max}\gets\ceil{q_{\cA,1}/\delta^2}\); \(h\gets\emptyset\)\;
+\While{\(\Heavy_\delta(m_1,h)\neq\emptyset\)}{
+  \If{\(|\Dom(h)|\ge N_{\max}\)}{\Return \(\bot\)\;}
+  Let \(x\) be the \(\prec\)-least point in \(\Heavy_\delta(m_1,h)\)\;
+  Query \(H(x)\) and set \(h\gets h\cup\{x\mapsto H(x)\}\)\;
+}
+\Return \(h\)\;
+\end{algorithm}
+
+A pair \((m_1,h)\) is \emph{reachable} if
+\[
+  \Pr[M_1=m_1,\ \Learn_\delta^H(1^\lambda,m_1)=h]>0.
+\]
+
+As in the Katz-Sela attacker, fixing the order \(\prec\) makes every next
+query a deterministic function of \((m_1,h)\). Hence, for every reachable
+pair \((m_1,h)\) and every oracle \(H\),
+\[
+  \Learn_\delta^H(1^\lambda,m_1)=h
+  \quad\Longleftrightarrow\quad
+  h\preceq H.
+\]
+We refer to this equivalence as the \emph{deterministic-output property} of
+\(\Learn\).
+
+\subsection{The Conditioned View of the First Round}
+
+For every reachable pair \((m_1,h)\), let \(\omega_{m_1,h}\)
+denote the conditional state of Alice's view after the first round
+\((T_{\cA},S_{\cA})\) given \(\mathsf E_{m_1,h}\).  Write
+\[
+  \mu_{m_1,h}(\tau)
+  =
+  \Pr[T_{\cA}=\tau\mid\mathsf E_{m_1,h}]
+\]
+for its transcript marginal.  Explicitly,
+for every \(\tau\) with \(\mu_{m_1,h}(\tau)>0\), let
+\(\sigma_{m_1,\tau}\) be the corresponding conditional state of
+\(S_{\cA}\) given \((M_1,T_{\cA})=(m_1,\tau)\). Then
+\[
+  \omega_{m_1,h}
+  =
+  \sum_{\substack{\tau:\\
+        \mu_{m_1,h}(\tau)>0}}
+  \mu_{m_1,h}(\tau)
+  \proj{\tau}_{T_{\cA}}\otimes\sigma_{m_1,\tau}.
+\]
+The notation
+\((T'_{\cA},S'_{\cA})\leftarrow\omega_{m_1,h}\) means that we prepare a new
+instance of this state: sample \(\tau\leftarrow\mu_{m_1,h}\), place \(\tau\)
+in \(T'_{\cA}\), and prepare \(S'_{\cA}\) in the state
+\(\sigma_{m_1,\tau}\). By the deterministic-output property, the events
+\(\mathsf E_{m_1,h}\) and
+\(\{M_1=m_1,\Learn_\delta^H(1^\lambda,m_1)=h\}\) coincide for every
+reachable pair.
+
+\begin{lemma}[Katz-Sela heavy-query attacker]\label{lem:learn-success}
+For every \(0<\delta<1\), with probability at least \(1-\delta\) over the
+real execution of the first round, \(\Learn_\delta^H(1^\lambda,M_1)\) outputs a
+partial oracle \(h\neq\bot\).  On every nonabort execution,
+\[
+  |\Dom(h)|\le\ceil{q_{\cA,1}/\delta^2}
+\]
+and, for every \(x\notin\Dom(h)\),
+\[
+  \Pr_{(T'_{\cA},S'_{\cA})\leftarrow\omega_{M_1,h}}
+  [x\in\Dom(T'_{\cA})]
+  \le\delta.
+\]
+\end{lemma}
+
+\begin{proof}
+The argument is a restatement, in our notation, of the proof of Katz and
+Sela~\cite[Lemma~5]{KatzSela24}; we include it explicitly for completeness.
+The residual register \(S_{\cA}\) plays no role in the counting argument and
+is simply prepared together with its sampled transcript.
+
+The second claim is immediate upon successful termination:
+\(\Heavy_\delta(M_1,h)=\emptyset\), and the displayed probability is exactly
+\(p_{M_1,h}(x)\).
+
+We now bound the abort probability. If \(q_{\cA,1}=0\), the attacker
+returns the empty partial oracle. Assume \(q_{\cA,1}>0\), and let
+\(N_{\max}=\ceil{q_{\cA,1}/\delta^2}\). Let
+\(L=\Dom(T_{\cA})\). Let \(N\le N_{\max}\) be the number of real queries
+issued by the attacker before it returns or aborts. On abort,
+\(N=N_{\max}\); successful termination with \(N=N_{\max}\) is also allowed.
+
+To apply \Cref{lem:heavy-bound} with a fixed-length sequence, set
+\(z_1=M_1\). For each real attacker step \(i\le N\), let \(x_i\) be its
+query and let \(z_{i+1}=H(x_i)\). For \(N<i\le N_{\max}\), pad with pairwise
+distinct symbols \(x_i=\bot_i\notin\cX\) and fixed values
+\(z_{i+1}=0\). Work over the enlarged universe
+\(\cX\sqcup\{\bot_1,\ldots,\bot_{N_{\max}}\}\). The points are pairwise
+distinct because the attacker never repeats a query.
+
+Immediately before a real query \(x_i\), the history determines the current
+partial oracle \(h_{i-1}\). Hence
+\[
+  \Pr[x_i\in L\mid z_1,x_1,\ldots,z_i]
+  =p_{M_1,h_{i-1}}(x_i)>\delta.
+\]
+Every real attacker query is therefore \(\delta\)-heavy, while every padding
+point has conditional membership probability zero. The heavy set in
+\Cref{lem:heavy-bound} has size exactly \(N\), and so
+\[
+  \mathbb{E}[N]
+  \le
+  \frac{\mathbb{E}[|L|]}{\delta}
+  \le
+  \frac{q_{\cA,1}}{\delta}.
+\]
+By Markov's inequality,
+\[
+  \Pr[N\ge N_{\max}]
+  \le
+  \frac{q_{\cA,1}}{\delta N_{\max}}
+  \le\delta.
+\]
+Since abort implies \(N=N_{\max}\),
+\[
+  \Pr[\Learn_\delta^H(1^\lambda,M_1)=\bot]
+  \le \Pr[N\ge N_{\max}]
+  \le \delta.
+\]
+\end{proof}
+
+\section{Reprogramming Attacks}\label{sec:main-attack}
+
+\subsection{The Two-Message attacker}
+
+\begin{definition}[Eve's two-stage reprogramming attack]\label{def:eve}
+Fix \(0<\delta<1\).  The attacker
+\(\cE_\delta=(\cE_{\delta,1},
+\cE_{\delta,2})\) is defined as follows.
+
+On input the first message \(m_1\), the preprocessing stage runs
+\[
+  h\leftarrow\Learn_\delta^H(1^\lambda,m_1).
+\]
+If \(h=\bot\), it outputs \(Z_{\cE}=\bot\).  Otherwise it prepares
+\[
+  (T'_{\cA},S'_{\cA})\leftarrow\omega_{m_1,h}
+\]
+and outputs \(Z_{\cE}=(m_1,h,T'_{\cA},S'_{\cA})\).
+
+After receiving Bob's message register \(\Psi\), the postprocessing stage
+outputs \(\bot\) if \(Z_{\cE}=\bot\).  Otherwise it defines the fixed
+reprogrammed oracle \(H'=H[T'_{\cA}]\), runs
+\[
+  K^*\leftarrow
+  \cA_2^{H'}(1^\lambda,S'_{\cA},\Psi),
+\]
+and outputs \(K^*\).
+\end{definition}
+
+The preprocessing stage makes at most
+\(\ceil{q_{\cA,1}/\delta^2}\) classical queries. Each query to
+\(H[T'_{\cA}]\) can be implemented using one query to \(H\), a reversible
+lookup in the known transcript, and a \(\ket{+}^{\otimes\ell}\) ancilla; see
+the proof of \Cref{lem:g3-g4}. The postprocessing stage therefore makes at
+most \(q_{\cA,2}\) quantum queries.
+
+\begin{theorem}\label{thm:main}
+Let \(\Pi=(\cA_1,\cB,\cA_2)\) be a protocol as in
+\Cref{def:protocol}, and let
+\(\alpha=\alpha_\Pi(\lambda)\).  For every \(0<\delta<1\), the attacker
+\(\cE_\delta\) of \Cref{def:eve} satisfies
+\[
+  \Adv^{\IntKR}_{\Pi,\cE_\delta}(\lambda)
+  \ge
+  \alpha
+  -\delta
+  -2(2q_{\cB}+q_{\cA,2})\sqrt\delta.
+\]
+It makes at most
+\[
+  \ceil{q_{\cA,1}/\delta^2}+q_{\cA,2}
+\]
+random-oracle queries.
+\end{theorem}
+
+\begin{proof}[Proof of \Cref{thm:main}]
+We proceed via a hybrid argument. Consider the hybrids \(G_0,G_1,\ldots,G_5\), where $G_0$ is the honest
+execution and $G_5$ is Eve's attack. We say that \(G_i\) \emph{succeeds} when
+its two recorded keys agree and are not \(\bot\) (an abort counts as failure).
+
+\begin{hybrid}{Hybrid \(G_0\) (real execution)}
+  \item Sample \(H_0\leftarrow\cH\).
+  \item Run
+  \((T_{\cA,0},M_{1,0},S_{\cA,0})
+  \leftarrow\cA_1^{H_0}(1^\lambda)\).
+  \item Run
+  \((\Psi_0,K_{\cB,0})
+  \leftarrow\cB^{H_0}(1^\lambda,M_{1,0})\).
+  \item Run
+  \(K_{\cA,0}
+  \leftarrow\cA_2^{H_0}(1^\lambda,S_{\cA,0},\Psi_0)\).
+\end{hybrid}
+Therefore,
+\[
+  \Pr[G_0\text{ succeeds}]=\alpha.
+\]
+
+\begin{hybrid}{Hybrid \(G_1\)}
+  \item Sample \(H_1\leftarrow\cH\).
+  \item Run
+  \((T_{\cA,1},M_{1,1},S_{\cA,1})
+  \leftarrow\cA_1^{H_1}(1^\lambda)\).
+  \item \changed{Run
+  \(h_1\leftarrow\Learn_\delta^{H_1}(1^\lambda,M_{1,1})\); abort if
+  \(h_1=\bot\).}
+  \item \changed{Sample a fresh oracle
+  \(\widehat H_1\leftarrow\Unif(\cH(h_1))\) and set
+  \(\widetilde H_1=\widehat H_1[T_{\cA,1}]\).}
+  \item Run
+  \((\Psi_1,K_{\cB,1})
+  \leftarrow\cB^{\changed{\widetilde H_1}}(1^\lambda,M_{1,1})\).
+  \item Run
+  \(K^*_1
+  \leftarrow\cA_2^{\changed{\widetilde H_1}}
+  (1^\lambda,S_{\cA,1},\Psi_1)\). 
+\end{hybrid}
+
+\begin{lemma}[\(G_0\) to \(G_1\)]\label{lem:g0-g1}
+\[
+  \left|
+  \Pr[G_0\text{ succeeds}]
+  -
+  \Pr[G_1\text{ succeeds}]
+  \right|
+  \le\delta.
+\]
+\end{lemma}
+
+\begin{proof}
+We begin by adding an intermediate hybrid \(G'_0\) that inserts into \(G_0\) an additional call
+\(h\leftarrow\Learn_\delta^{H_0}(1^\lambda,M_{1,0})\) whose output is otherwise
+ignored. This computation does
+not change the real execution. By
+\Cref{lem:learn-success}, the call aborts with probability at most
+\(\delta\).
+
+Condition on the attacker not aborting, and fix values
+\((m_1,\tau,h)\) with positive probability. By the deterministic-output
+property of \(\Learn\),
+\[
+  \{\Learn_\delta^H(1^\lambda,m_1)=h\}
+  =
+  \{h\preceq H\}.
+\]
+Because \(\cA_1\) makes only classical oracle queries, once
+\((M_1,T_{\cA})=(m_1,\tau)\) is fixed, its conditional residual state
+depends only on the recorded query-answer history, not on any value of
+\(H\) outside \(\Dom(\tau)\). Since the original oracle is uniform,
+conditioning on
+\[
+  M_1=m_1,\qquad T_{\cA}=\tau,\qquad h\preceq H
+\]
+leaves \(H\) uniform over \(\cH(h,\tau)\) and independent of
+\(S_{\cA}\). This is the classical-quantum case of the
+conditional-oracle identity used by Katz and
+Sela~\cite[Lemma~6]{KatzSela24}.
+
+In \(G_1\),
+\(\widehat H_1\leftarrow\Unif(\cH(h))\) is independent of Alice's conditioned
+residual state, and \(\widehat H_1[\tau]\) is uniform over \(\cH(h,\tau)\). The
+conditioned experiments are therefore identical. The only loss comes from
+the abort event, which has probability at most \(\delta\).
+\end{proof}
+
+\begin{hybrid}{Hybrid \(G_2\)}
+  \item Sample \(H_2\leftarrow\cH\).
+  \item Run
+  \((T_{\cA,2},M_{1,2},S_{\cA,2})
+  \leftarrow\cA_1^{H_2}(1^\lambda)\).
+  \item Run
+  \(h_2\leftarrow\Learn_\delta^{H_2}(1^\lambda,M_{1,2})\); abort if
+  \(h_2=\bot\).
+  \item Sample \(\widehat H_2\leftarrow\Unif(\cH(h_2))\).
+  \item \changed{Prepare
+  \((T'_{\cA,2},S'_{\cA,2})\leftarrow\omega_{M_{1,2},h_2}\) and set
+  \(\widetilde H_2=\widehat H_2[T'_{\cA,2}]\).}
+  \item Run
+  \((\Psi_2,K_{\cB,2})
+  \leftarrow\cB^{\widetilde H_2}(1^\lambda,M_{1,2})\).
+  \item Run
+  \(K^*_2
+  \leftarrow\cA_2^{\widetilde H_2}
+  (1^\lambda,S'_{\cA,2},\Psi_2)\).
+\end{hybrid}
+
+\begin{lemma}[\(G_1\) to \(G_2\)]\label{lem:g1-g2}
+\[
+  \Pr[G_1\text{ succeeds}]
+  =
+  \Pr[G_2\text{ succeeds}].
+\]
+\end{lemma}
+
+\begin{proof}
+Both hybrids abort on the same event. Condition on a reachable
+nonabort pair \((m_1,h)\). By the deterministic-output property, the
+conditioned state of Alice's actual view in \(G_1\) is exactly
+\(\omega_{m_1,h}\); \(G_2\) simply prepares a new instance of that same
+classical-quantum state. In both hybrids, the fresh oracle
+\(\widehat H_i\leftarrow\Unif(\cH(h))\) is independent of the view, and is then
+reprogrammed according to its transcript. The rest of the experiments is
+identical and therefore their conditional success probabilities agree for every
+reachable nonabort \((m_1,h)\). Since the two hybrids have the same
+distribution on \((M_1,h)\) and both fail on abort, their success probabilities
+are equal.
+\end{proof}
+
+\begin{hybrid}{Hybrid \(G_3\)}
+  \item Sample \(H_3\leftarrow\cH\).
+  \item Run
+  \((T_{\cA,3},M_{1,3},S_{\cA,3})
+  \leftarrow\cA_1^{H_3}(1^\lambda)\).
+  \item Run
+  \(h_3\leftarrow\Learn_\delta^{H_3}(1^\lambda,M_{1,3})\); abort if
+  \(h_3=\bot\).
+  \item Sample \(\widehat H_3\leftarrow\Unif(\cH(h_3))\).
+  \item Prepare
+  \((T'_{\cA,3},S'_{\cA,3})\leftarrow\omega_{M_{1,3},h_3}\) and set
+  \(\widetilde H_3=\widehat H_3[T'_{\cA,3}]\).
+  \item \changed{Run
+  \((\Psi_3,K_{\cB,3})
+  \leftarrow\cB^{\widehat H_3}(1^\lambda,M_{1,3})\).}
+  \item Run
+  \(K^*_3
+  \leftarrow\cA_2^{\widetilde H_3}
+  (1^\lambda,S'_{\cA,3},\Psi_3)\).
+\end{hybrid}
+
+\begin{lemma}[\(G_2\) to \(G_3\)]\label{lem:g2-g3}
+\[
+  \left|
+  \Pr[G_2\text{ succeeds}]
+  -
+  \Pr[G_3\text{ succeeds}]
+  \right|
+  \le 2q_{\cB}\sqrt\delta.
+\]
+\end{lemma}
+
+\begin{proof}
+Fix a reachable nonabort pair \((m_1,h)\). We construct a distinguisher
+\(\cD_{m_1,h}\) for the game in \Cref{lem:reprogramming} as follows.
+\begin{enumerate}[leftmargin=2em]
+  \item The distinguisher samples
+  \(\widehat H\leftarrow\Unif(\cH(h))\), sends
+  \(F_0:=\widehat H\) to the challenger, and supplies the randomized
+  algorithm \(C_{m_1,h}\). On fresh coins, \(C_{m_1,h}\) samples
+  \(\tau'\leftarrow\mu_{m_1,h}\) and returns
+  \[
+    R:=\tau'|_{\Dom(\tau')\setminus\Dom(h)}.
+  \]
+  \item The challenger samples the coins of \(C_{m_1,h}\), obtains \(R\),
+  sets \(F_1:=F_0[R]\), samples \(b\leftarrow\bits\), and gives the
+  distinguisher quantum oracle access to \(F_b\). The distinguisher runs
+  \[
+    (\Psi,K_{\cB})
+    \leftarrow\cB^{F_b}(1^\lambda,m_1)
+  \]
+  and retains \((\Psi,K_{\cB})\).
+  \item The challenger removes access to \(F_b\) and reveals the coins of
+  \(C_{m_1,h}\), thereby revealing \(\tau'\). The distinguisher prepares
+  \(S'_{\cA}\) in the conditional state \(\sigma_{m_1,\tau'}\), runs
+  \[
+    K^*\leftarrow
+    \cA_2^{\widehat H[\tau']}
+    (1^\lambda,S'_{\cA},\Psi),
+  \]
+  and outputs \(1\) iff \(K^*=K_{\cB}\neq\bot\).
+\end{enumerate}
+Only Bob's algorithm receives the challenge oracle, so the distinguisher
+makes at most \(q_{\cB}\) challenge queries.
+
+Every transcript in \(\Supp(\mu_{m_1,h})\) is consistent with \(h\),
+so \(F_1=\widehat H[R]=\widehat H[\tau']\). The cases \(b=1\) and \(b=0\)
+reproduce \(G_2\) and \(G_3\), respectively, conditioned on \((m_1,h)\).
+Moreover, for every \(x\),
+\[
+  \Pr[x\in\Dom(R)]
+  \le
+  \begin{cases}
+    0,&x\in\Dom(h),\\
+    \Pr_{\tau'\leftarrow\mu_{m_1,h}}
+      [x\in\Dom(\tau')]\le\delta,&x\notin\Dom(h),
+  \end{cases}
+\]
+where the last inequality is \Cref{lem:learn-success}. The reprogramming
+lemma bounds the conditional difference by \(2q_{\cB}\sqrt\delta\).
+To remove the conditioning, let \(\pi(m_1,h)\) be the common subprobability
+mass of nonabort executions of the shared prefix that output
+\((M_1,h)=(m_1,h)\), and write
+\[
+  s_i(m_1,h)
+  :=
+  \Pr[G_i\text{ succeeds}\mid M_{1,i}=m_1,\ h_i=h]
+  \qquad (i\in\{2,3\}).
+\]
+The preceding argument gives
+\(\lvert s_2(m_1,h)-s_3(m_1,h)\rvert
+\le 2q_{\cB}\sqrt\delta\) for every \((m_1,h)\in\Supp(\pi)\).
+Because success is defined to be false on abort, the two success
+probabilities are the corresponding \(\pi\)-weighted sums. Hence the triangle
+inequality gives
+\[
+  \begin{aligned}
+  \left|\Pr[G_2\text{ succeeds}]-\Pr[G_3\text{ succeeds}]\right|
+  &\le
+  \sum_{(m_1,h)\in\Supp(\pi)}\pi(m_1,h)
+    \left|s_2(m_1,h)-s_3(m_1,h)\right|\\
+  &\le 2q_{\cB}\sqrt\delta,
+  \end{aligned}
+\]
+where \(\sum_{(m_1,h)\in\Supp(\pi)}\pi(m_1,h)\le1\).
+\end{proof}
+
+\begin{hybrid}{Hybrid \(G_4\)}
+  \item Sample \(H_4\leftarrow\cH\).
+  \item Run
+  \((T_{\cA,4},M_{1,4},S_{\cA,4})
+  \leftarrow\cA_1^{H_4}(1^\lambda)\).
+  \item Run
+  \(h_4\leftarrow\Learn_\delta^{H_4}(1^\lambda,M_{1,4})\); abort if
+  \(h_4=\bot\).
+  \item \changed{Sample
+  \(\widehat H_4\leftarrow\Unif(\cH(h_4))\) and set Bob's oracle
+  \(H^{\mathsf B}_4=\widehat H_4[T_{\cA,4}]\).}
+  \item Prepare
+  \((T'_{\cA,4},S'_{\cA,4})\leftarrow\omega_{M_{1,4},h_4}\) and set
+  \(H^{\mathsf E}_4=H^{\mathsf B}_4[T'_{\cA,4}]\).
+  \item Run
+  \((\Psi_4,K_{\cB,4})
+  \leftarrow\cB^{H^{\mathsf B}_4}(1^\lambda,M_{1,4})\).
+  \item Run
+  \(K^*_4
+  \leftarrow\cA_2^{H^{\mathsf E}_4}
+  (1^\lambda,S'_{\cA,4},\Psi_4)\).
+\end{hybrid}
+
+\begin{lemma}[\(G_3\) to \(G_4\)]\label{lem:g3-g4}
+\[
+  \left|
+  \Pr[G_3\text{ succeeds}]
+  -
+  \Pr[G_4\text{ succeeds}]
+  \right|
+  \le 2(q_{\cB}+q_{\cA,2})\sqrt\delta.
+\]
+\end{lemma}
+
+\begin{proof}
+Fix a reachable nonabort pair \((m_1,h)\). In \(G_4\), the original
+residual register \(S_{\cA,4}\) is unused and the conditional marginal of
+\(T_{\cA,4}\) is \(\mu_{m_1,h}\). Thus the conditioned hybrid is unchanged
+if we independently sample
+\[
+  \widehat H\leftarrow\Unif(\cH(h)),
+  \qquad
+  \tau''\leftarrow\mu_{m_1,h},
+  \qquad
+  (T'_{\cA},S'_{\cA})\leftarrow\omega_{m_1,h},
+\]
+and then run Bob with \(\widehat H[\tau'']\) and Alice's final algorithm with
+\(\widehat H[\tau''][T'_{\cA}]\). As usual, the second reprogramming
+overwrites the first wherever their domains overlap.
+
+We construct a distinguisher \(\cD_{m_1,h}\) for the game in
+\Cref{lem:reprogramming}.
+\begin{enumerate}[leftmargin=2em]
+  \item The distinguisher prepares
+  \((T'_{\cA},S'_{\cA})\leftarrow\omega_{m_1,h}\), samples
+  \(\widehat H\leftarrow\Unif(\cH(h))\), and sends
+  \(F_0:=\widehat H\) to the challenger. It also supplies a randomized
+  algorithm \(C_{m_1,h}\) that samples
+  \(\tau''\leftarrow\mu_{m_1,h}\) and returns
+  \[
+    R:=\tau''|_{\Dom(\tau'')\setminus\Dom(h)}.
+  \]
+  \item The challenger samples the coins of \(C_{m_1,h}\), obtains \(R\),
+  sets \(F_1:=F_0[R]\), samples \(b\leftarrow\bits\), and gives the
+  distinguisher quantum oracle access to \(F_b\). The distinguisher runs
+  \[
+    (\Psi,K_{\cB})\leftarrow\cB^{F_b}(1^\lambda,m_1)
+  \]
+  followed by
+  \[
+    K^*\leftarrow
+    \cA_2^{F_b[T'_{\cA}]}
+    (1^\lambda,S'_{\cA},\Psi),
+  \]
+  and records the bit \(d:=\mathbf 1[K^*=K_{\cB}\neq\bot]\).
+  \item The challenger removes access to \(F_b\) and reveals the coins of
+  \(C_{m_1,h}\), thereby revealing \(\tau''\). The distinguisher outputs
+  the recorded bit \(d\).
+\end{enumerate}
+
+Each query to \(F_b[T'_{\cA}]\) uses one query to \(F_b\). First compute
+reversibly whether the query point lies in \(\Dom(T'_{\cA})\). On that
+branch, swap the answer register with an ancilla in
+\(\ket{+}^{\otimes\ell}\), apply the XOR oracle \(U_{F_b}\), and swap back.
+Because every XOR translation fixes \(\ket{+}^{\otimes\ell}\), the challenge
+oracle has no effect on the reprogrammed branch.  XOR the known value
+\(T'_{\cA}(x)\) into the answer register there and uncompute the lookup.  This
+implements \(U_{F_b[T'_{\cA}]}\) exactly. The total number of challenge queries
+is at most \(q_{\cB}+q_{\cA,2}\).
+
+If \(b=0\), this is \(G_3\). If \(b=1\), consistency on
+\(\Dom(h)\) gives \(F_1=\widehat H[R]=\widehat H[\tau'']\), yielding the
+equivalent form of \(G_4\). By \Cref{lem:learn-success},
+\(\max_x\Pr[x\in\Dom(R)]\le\delta\). The reprogramming lemma gives the
+pointwise bound
+\[
+  \left|
+    \Pr[G_3\text{ succeeds}\mid M_1=m_1,\ h_3=h]
+    -
+    \Pr[G_4\text{ succeeds}\mid M_1=m_1,\ h_4=h]
+  \right|
+  \le 2(q_{\cB}+q_{\cA,2})\sqrt\delta
+\]
+for every reachable nonabort pair \((m_1,h)\). Let \(\pi(m_1,h)\) denote the
+common subprobability mass of nonabort executions of the shared prefix that
+produce that pair, and define
+\[
+  s_i(m_1,h)
+  :=
+  \Pr[G_i\text{ succeeds}\mid M_{1,i}=m_1,\ h_i=h]
+  \qquad (i\in\{3,4\}).
+\]
+Because success is defined to be false on abort, the two success
+probabilities are the corresponding \(\pi\)-weighted sums. The triangle
+inequality yields
+\[
+  \begin{aligned}
+  \left|\Pr[G_3\text{ succeeds}]-\Pr[G_4\text{ succeeds}]\right|
+  &\le
+  \sum_{(m_1,h)\in\Supp(\pi)}\pi(m_1,h)
+    \left|s_3(m_1,h)-s_4(m_1,h)\right|\\
+  &\le 2(q_{\cB}+q_{\cA,2})\sqrt\delta.
+  \end{aligned}
+\]
+\end{proof}
+
+\begin{hybrid}{Hybrid \(G_5\)}
+  \item Sample \(H_5\leftarrow\cH\).
+  \item Run
+  \((T_{\cA,5},M_{1,5},S_{\cA,5})
+  \leftarrow\cA_1^{H_5}(1^\lambda)\).
+  \item Run
+  \(h_5\leftarrow\Learn_\delta^{H_5}(1^\lambda,M_{1,5})\); abort if
+  \(h_5=\bot\).
+  \item Prepare
+  \((T'_{\cA,5},S'_{\cA,5})\leftarrow\omega_{M_{1,5},h_5}\) and set
+  \(\widetilde H_5=H_5[T'_{\cA,5}]\).
+  \item Run
+  \((\Psi_5,K_{\cB,5})
+  \leftarrow\cB^{H_5}(1^\lambda,M_{1,5})\).
+  \item Run
+  \(K^*_5
+  \leftarrow\cA_2^{\widetilde H_5}
+  (1^\lambda,S'_{\cA,5},\Psi_5)\).
+\end{hybrid}
+
+\begin{lemma}[\(G_4\) to \(G_5\)]\label{lem:g4-g5}
+\[
+  \Pr[G_4\text{ succeeds}]
+  =
+  \Pr[G_5\text{ succeeds}].
+\]
+\end{lemma}
+
+\begin{proof}
+Both hybrids abort on the same event. On success, fix
+\((m_1,\tau,h)\). By the deterministic-output property and the
+conditional-oracle identity of Katz and Sela~\cite[Lemma~6]{KatzSela24},
+conditioned on this triple the
+original oracle \(H_5\) in \(G_5\) is uniform over \(\cH(h,\tau)\) and
+independent of the unused original residual state. In \(G_4\), sampling
+\(\widehat H_4\leftarrow\Unif(\cH(h))\) and setting
+\(H^{\mathsf B}_4=\widehat H_4[\tau]\) gives the
+same uniform distribution over \(\cH(h,\tau)\). The independently prepared
+view \(\omega_{m_1,h}\) and every subsequent operation are the same.
+Thus the conditional success probabilities of \(G_4\) and \(G_5\) are equal
+for every reachable nonabort triple \((m_1,\tau,h)\). The two hybrids induce
+the same distribution \(\pi(m_1,\tau,h)\) on these triples. Define
+\[
+  s_i(m_1,\tau,h)
+  :=
+  \Pr[G_i\text{ succeeds}\mid
+    M_{1,i}=m_1,\ T_{\cA,i}=\tau,\ h_i=h]
+  \qquad (i\in\{4,5\}).
+\]
+Then \(s_4(m_1,\tau,h)=s_5(m_1,\tau,h)\) throughout \(\Supp(\pi)\).
+Both hybrids have success probability zero on abort, so the law of total
+probability gives
+\[
+  \Pr[G_4\text{ succeeds}]
+  =
+  \sum_{m_1,\tau,h}\pi(m_1,\tau,h)
+    s_4(m_1,\tau,h)
+  =
+  \sum_{m_1,\tau,h}\pi(m_1,\tau,h)
+    s_5(m_1,\tau,h)
+  =
+  \Pr[G_5\text{ succeeds}].
+\]
+\end{proof}
+
+Hybrid \(G_5\) is exactly \(\IntKR_{\Pi,\cE_\delta}\): the preprocessing
+stage learns \(h\) and prepares the conditioned view; Bob runs with the
+original oracle; Eve intercepts \(\Psi_5\); and Eve runs Alice's final
+algorithm with \(H_5[T'_{\cA,5}]\).  Therefore
+\begin{align*}
+  \Adv^{\IntKR}_{\Pi,\cE_\delta}(\lambda)
+  &=
+  \Pr[G_5\text{ succeeds}]\\
+  &\ge
+  \Pr[G_0\text{ succeeds}]
+  -\delta
+  -2q_{\cB}\sqrt\delta
+  -2(q_{\cB}+q_{\cA,2})\sqrt\delta\\
+  &=
+  \alpha-\delta-2(2q_{\cB}+q_{\cA,2})\sqrt\delta.
+\end{align*}
+The query bound follows from \Cref{def:eve}.
+\end{proof}
+
+\begin{corollary}[Concrete parameter choice]\label{cor:parameters}
+Let \(\Pi\) satisfy \Cref{def:protocol}, let
+\(\alpha=\alpha_\Pi(\lambda)>0\), and define
+\[
+  Q:=\max\{1,2q_{\cB}+q_{\cA,2}\},
+  \qquad
+  \delta:=\left(\frac{\alpha}{8Q}\right)^2.
+\]
+Then the adversary of \Cref{thm:main} succeeds with probability strictly
+greater than \(\alpha/2\) and makes at most
+\[
+  \ceil{4096\,q_{\cA,1}Q^4/\alpha^4}+q_{\cA,2}
+\]
+random-oracle queries.
+\end{corollary}
+
+\begin{proof}
+The reprogramming loss is
+\[
+  2Q\sqrt\delta=\alpha/4.
+\]
+Since \(0<\alpha\le1\) and \(Q\ge1\),
+\(\delta=\alpha^2/(64Q^2)\le\alpha/64\).  Hence the success lower bound is
+at least
+\[
+  \alpha-\alpha/64-\alpha/4>\alpha/2.
+\]
+Moreover,
+\[
+  \frac{q_{\cA,1}}{\delta^2}
+  =
+  \frac{4096\,q_{\cA,1}Q^4}{\alpha^4}.
+\]
+\end{proof}
+
+\begin{corollary}[Polynomial-query two-message impossibility]\label{cor:quantum-impossibility}
+Let \(\Pi=\{\Pi_\lambda\}\) be a family of protocols satisfying
+\Cref{def:protocol}. Suppose that \(q_{\cA,1}\), \(q_{\cB}\), and
+\(q_{\cA,2}\) are each bounded by \(\poly(\lambda)\), and that
+\(\alpha_\Pi(\lambda)\ge1/\poly(\lambda)\). Then the family is not
+interception key-recovery secure against computationally unbounded quantum
+adversaries making at most \(\poly(\lambda)\) random-oracle queries. In
+particular, the conclusion applies when the completeness error is negligible.
+\end{corollary}
+
+\subsection{The Multi-Round Attack}
+\label{sec:multi-round}
+
+We give an attack on a multi-round key agreement protocol with a classical prefix and one final possibly quantum message, as defined in 
+\Cref{def:multi-protocol}. Recall that in this model, the only property the prefix must satisfy is that all communication and all queries to the random oracle are classical;
+the parties' local computation and residual states may otherwise be
+quantum.  Our attack and corresponding analysis extend the techniques from \cite{BarakMahmoodyFull} to our setting.
+
+\subsubsection{Classical Views of the Prefix}
+\label{sec:classical-prefix-views}
+
+The main difference between our setting and the purely classical setting in \cite{BarakMahmoodyFull} is that we allow the parties' local computation to be quantum. However, as we discuss in this section, we can assume without loss of generality that Alice and Bob are executing classical algorithms to generate the prefix. In turn, we will be able to apply the techniques from \cite{BarakMahmoodyFull} directly. 
+
+We first explain how to generate classical views of the prefix. Let $\Pi$ be a protocol as defined in Definition~\ref{def:multi-protocol}. Recall that while the parties must be query bounded, they may be computationally unbounded. We therefore can define an exact classical
+simulation of the prefix of $\Pi$ as follows. The simulator maintains a classical descirption of the parties' residual quantum states. Whenever an honest party sends a
+message or queries the oracle during the prefix, the simulator produces a sample according to the distribution induced by the party's current
+quantum state and updates its classical description of the corresponding
+conditional residual state. Thus the simulation makes the same classical
+oracle queries and produces exactly the same joint state of the public
+transcript, the parties' query transcripts, and their residual registers as
+the original prefix.
+
+For $P\in\{\cA,\cB\}$, define
+\[
+  U_P := (R_P,M,T_P)
+\]
+as the classical view of party $P$ in this simulation, where $R_P$ records all
+private random choices of the simulator, $M$ is the public prefix transcript,
+and $T_P$ is the complete ordered oracle query-answer transcript of $P$.
+This is equivalent to the notion of a view used by Barak and
+Mahmoody~\cite[Section~3.1]{BarakMahmoodyFull}.  We note that the classical description of the residual states is not part of $U_P$.
+
+We now explain what is needed to use this simulated classical view in combination with the techniques of \cite{BarakMahmoodyFull}. The eventual attack will retain the public prefix transcript $m$ and a
+partial oracle $h$ learned during the prefix, and then prepare a fresh Alice
+prefix view from its conditional marginal given $(m,h)$.  To justify replacing
+Alice's real view by this fresh sample without significantly changing Bob's
+subsequent behavior, we need the real joint state of the two prefix views,
+conditioned on $(m,h)$, to be close to the product of its marginals.
+\Cref{sec:bm-learner} obtains the corresponding approximate-product
+guarantee for the simulated classical views $U_{\cA}$ and $U_{\cB}$ from
+the Barak--Mahmoody learner.
+
+That classical guarantee is not yet sufficient for our application.  The
+final round of the key agreement protocol acts on the parties' residual quantum registers, rather than on the
+simulator's private randomness, and its algorithms may query the same random
+oracle $H$ in superposition.  We must therefore both transfer the
+approximate-product guarantee from $U_{\cA},U_{\cB}$ to the parties' actual
+query transcripts and residual quantum states, and preserve the correct
+correlation of those states with $H$.  The local channels defined below
+perform the first task.  The conditional-oracle identity in
+\Cref{eq:prefix-conditional-oracle-main} performs the second.  In
+\Cref{sec:conditioned-prefix-resampling}, we combine the two facts to replace
+the real conditioned prefix state by independently sampled Alice and Bob
+views together with a suitably sampled and reprogrammed oracle.
+
+For every $u_P$ in the support of $U_P$, let $T_P(u_P)$ denote the query
+transcript contained in $u_P$, and let $\sigma_P(u_P)$ be the residual density
+operator tracked by the simulator after the prefix on that view.  Define the
+local channel
+\[
+  \Phi_P(\proj{u_P})
+  :=
+  \proj{T_P(u_P)}\otimes\sigma_P(u_P).
+\]
+Thus $U_P$ is only an auxiliary classical view used to invoke the
+Barak--Mahmoody result; applying $\Phi_P$ discards the simulator's private
+randomness and keeps only the actual query transcript and residual quantum
+state.
+
+For a complete public prefix transcript $m$ and a partial oracle $h$, write
+\[
+  \mathsf F_{m,h}:=\{M=m,\ h\preceq H\}.
+\]
+Whenever $\Pr[\mathsf F_{m,h}]>0$, let $\nu^{AB}_{m,h}$ be the diagonal density
+operator corresponding to the conditional distribution of
+$(U_{\cA},U_{\cB})$ given $\mathsf F_{m,h}$, and let
+$\nu^A_{m,h},\nu^B_{m,h}$ be its marginals.  Define
+\[
+  \omega^{AB}_{m,h}
+  :=
+  (\Phi_{\cA}\otimes\Phi_{\cB})(\nu^{AB}_{m,h}),
+\]
+and define $\omega^A_{m,h},\omega^B_{m,h}$ analogously.  Hence
+$\omega^{AB}_{m,h}$ is a state on
+$T_{\cA}S_{\cA}T_{\cB}S_{\cB}$ and contains no simulator randomness.
+We note that, since we condition on $M=m$, the transcript register is fixed to
+$\proj{m}_M$.  Let
+$\Omega_{m,h}$ be the real
+conditional state on
+$\mathsf H T_{\cA}S_{\cA}T_{\cB}S_{\cB}$ given $\mathsf F_{m,h}$, where
+$\mathsf H$ stores the random oracle.  Since the simulation is exact,
+$\omega^{AB}_{m,h}$ is precisely the
+$T_{\cA}S_{\cA}T_{\cB}S_{\cB}$-marginal of $\Omega_{m,h}$.
+
+Since all oracle queries in the prefix are classical, once
+$M=m$, $T_{\cA}=t_{\cA}$, and $T_{\cB}=t_{\cB}$ are fixed, the
+residual state of Alice and Bob is the same for every oracle consistent
+with $t_{\cA}$ and $t_{\cB}$.  Therefore, since $H$ is initially
+uniform, whenever the conditioning event has positive probability,
+\begin{equation}
+  H\ \big|\
+  \bigl(
+    \mathsf F_{m,h},
+    T_{\cA}=t_{\cA},
+    T_{\cB}=t_{\cB}
+  \bigr)
+  \ \sim\
+  \Unif\!\left(
+    \cH(h,t_{\cA},t_{\cB})
+  \right).
+  \label{eq:prefix-conditional-oracle-main}
+\end{equation}
+Moreover, under this conditioning, the residual state is independent
+of $H$.
+
+\subsubsection{The Barak--Mahmoody Learner}
+\label{sec:bm-learner}
+
+In this section, we recall the relevant results from \cite{BarakMahmoodyFull}, lifted to our setting.  The first lemma below restates the
+general result of Barak and Mahmoody for an arbitrary classical protocol.  In
+particular, their Theorem~4.3 gives an expected query bound and guarantees
+approximate independence and lightness after each round.  We retain only the
+guarantees after the last protocol message, when \(M\) is the complete public
+transcript and \(h\) is the learner's final partial oracle.  The second lemma
+then applies this result to the exact classical simulation from
+\Cref{sec:classical-prefix-views}.  It fixes the parameters in terms of
+\(\eta\), truncates the learner to obtain a worst-case query bound, aborts
+if the truncation threshold is reached or either the independence or
+lightness guarantee fails, and transfers the
+approximate-independence guarantee to the parties' residual quantum states.
+It also characterizes the learner's output by \(h\preceq H\).  Thus the first
+lemma isolates the result imported from Barak and Mahmoody, while the second
+puts it in the form used for conditioned prefix resampling in
+\Cref{sec:conditioned-prefix-resampling}.  The Barak--Mahmoody statement uses
+Items~2, 4, and~5 of their Theorem~4.3 and their definition of
+self-dependency~\cite[Definition~4.2 and Theorem~4.3,
+Items~2, 4, and~5]{BarakMahmoodyFull}.
+
+\begin{lemma}[Barak--Mahmoody]
+\label{lem:bm-final-transcript}
+Consider a classical two-party random-oracle protocol.  Let $M$ be its complete
+public transcript and let
+\[
+  U_P=(R_P,M,T_P),\qquad P\in\{\cA,\cB\},
+\]
+be the parties' classical views, where $T_P$ is the oracle query-answer
+transcript.  Suppose Alice and Bob make at most $n_A$ and $n_B$ oracle
+queries, respectively, where $n_A,n_B\ge1$.
+
+Let
+\[
+  0<\varepsilon_1\le\varepsilon_2<1/10,
+  \qquad
+  0<\alpha,\beta<1,
+  \qquad
+  \alpha\beta\ge\varepsilon_2.
+\]
+There is a deterministic classical-query algorithm
+\[
+  \mathsf L^H_{\varepsilon_1,\varepsilon_2}(m)
+\]
+that takes a complete public transcript $m$ as input and outputs a partial
+oracle $h$.  For every realized pair $(m,h)$, let $\mu^{AB}_{m,h}$ be the
+conditional distribution of $(U_{\cA},U_{\cB})$ given
+\[
+  M=m,
+  \qquad
+  \mathsf L^H_{\varepsilon_1,\varepsilon_2}(m)=h,
+\]
+and let $\mu^A_{m,h},\mu^B_{m,h}$ be its marginals.  Then:
+\begin{enumerate}[leftmargin=2em,label=\textup{(\roman*)}]
+  \item The expected number of oracle queries made by
+  $\mathsf L_{\varepsilon_1,\varepsilon_2}$ is at most
+  \[
+    \frac{4n_A n_B}{\varepsilon_1}.
+  \]
+
+  \item Except with probability at most $9\alpha$ over the realized pair
+  $(M,h)$,
+  \[
+    \Delta_{\mathrm{TV}}\!\left(
+      \mu^{AB}_{M,h},
+      \mu^A_{M,h}\times\mu^B_{M,h}
+    \right)
+    \le 9\beta.
+  \]
+
+  \item Except with probability at most $9\alpha$ over the realized pair
+  $(M,h)$, every $x\notin\Dom(h)$ satisfies
+  \[
+    \Pr[x\in\Dom(T_{\cA})\mid M,h]
+      < \frac{\varepsilon_2}{n_B}+\beta,
+    \qquad
+    \Pr[x\in\Dom(T_{\cB})\mid M,h]
+      < \frac{\varepsilon_2}{n_A}+\beta.
+  \]
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+We use the deterministic learner from Barak and Mahmoody's
+Construction~3.3 with parameter $\varepsilon_1$, together with the stopping
+modification from their Theorem~4.3.  Barak and Mahmoody describe this learner
+as running alongside the protocol.  Its oracle queries do not affect the
+honest execution, and Construction~3.3 uses deterministic tie-breaking.
+Consequently, given the complete transcript $m$, we may replay the learner on
+the successive prefixes of $m$ and make the same oracle queries.  This defines
+the deterministic algorithm $\mathsf L^H_{\varepsilon_1,\varepsilon_2}(m)$
+with the same final partial oracle and query complexity.
+
+With the stopping modification, the learner is an
+$(\varepsilon_1,\varepsilon_2)$-attacker in the sense of Definition~4.1 of
+Barak and Mahmoody.  Item~2 of their Theorem~4.3 gives the expected query
+bound in Item~\textup{(i)}.  Their Definition~4.2 identifies self-dependency
+with statistical distance from the product of the marginals.  Evaluating
+Item~4 of Theorem~4.3 after the final protocol message therefore gives
+Item~\textup{(ii)}.  Evaluating Item~5 at the same point gives the two
+lightness bounds in Item~\textup{(iii)}
+\cite[Construction~3.3, Definitions~4.1--4.2, and Theorem~4.3,
+Items~2, 4, and~5]{BarakMahmoodyFull}.
+\end{proof}
+
+\begin{lemma}[Barak--Mahmoody prefix attacker]
+\label{lem:multi-independence-attacker}
+Let $0<\eta<1/100$, and set
+\[
+  \bar q_{\cA}:=\max\{1,q_{\cA,\mathsf{pre}}\},
+  \qquad
+  \bar q_{\cB}:=\max\{1,q_{\cB,\mathsf{pre}}\},
+\]
+\[
+  Q_{\mathsf{learn}}
+  :=
+  \left\lceil
+    \frac{4\cdot 10^5\,\bar q_{\cA}\bar q_{\cB}}{\eta^3}
+  \right\rceil.
+\]
+There is a deterministic algorithm
+$\Learn^{\mathsf{BM},H}_\eta$ with classical oracle access that, on input a
+complete public prefix transcript $m$, outputs a partial oracle $h$ or aborts.
+A pair $(m,h)$ is \emph{reachable} if
+\[
+  \Pr\!\left[
+    M=m,\
+    \Learn^{\mathsf{BM},H}_\eta(1^\lambda,m)=h
+  \right]>0.
+\]
+It satisfies the following properties.
+\begin{enumerate}[leftmargin=2em,label=\textup{(\roman*)}]
+  \item It makes at most $Q_{\mathsf{learn}}$ oracle queries and aborts with
+  probability at most $\eta$.
+
+  \item For every reachable pair $(m,h)$,
+  \[
+    \frac12
+    \left\|
+      \omega^{AB}_{m,h}
+      -
+      \omega^A_{m,h}\otimes\omega^B_{m,h}
+    \right\|_1
+    \le\eta.
+  \]
+
+  \item For every reachable pair $(m,h)$ and every $x\notin\Dom(h)$,
+  \[
+    \Pr[x\in\Dom(T_{\cA})\mid\mathsf F_{m,h}]
+    \le\eta.
+  \]
+\end{enumerate}
+Moreover, for every reachable pair $(m,h)$ and every oracle $H$,
+\[
+  \Learn^{\mathsf{BM},H}_\eta(1^\lambda,m)=h
+  \quad\Longleftrightarrow\quad
+  h\preceq H.
+\]
+\end{lemma}
+
+\begin{proof}
+We apply \Cref{lem:bm-final-transcript} to the exact classical simulation of
+the prefix with parameters
+\[
+  n_A=\bar q_{\cA},
+  \qquad
+  n_B=\bar q_{\cB},
+  \qquad
+  \varepsilon_1=\varepsilon_2=\frac{\eta^2}{10^4},
+  \qquad
+  \alpha_0=\beta_0=\frac{\eta}{100}.
+\]
+These parameters satisfy $\alpha_0\beta_0=\varepsilon_2$.  The resulting
+learner makes at most
+\[
+  \frac{4\bar q_{\cA}\bar q_{\cB}}{\varepsilon_1}
+  =
+  \frac{4\cdot10^4\bar q_{\cA}\bar q_{\cB}}{\eta^2}
+\]
+queries in expectation.  We truncate this learner after
+$Q_{\mathsf{learn}}$ queries and abort if the truncation threshold is
+reached.  By Markov's inequality, this occurs with probability at most
+$\eta/10$.
+
+The exceptional events in Items~\textup{(ii)} and~\textup{(iii)} of
+\Cref{lem:bm-final-transcript} have total probability at most
+$18\alpha_0$.  Since computation is unbounded in our query model, once the
+learner terminates we may test whether both conditional guarantees hold and
+abort otherwise, without making any further oracle queries.  By a union
+bound, the total abort probability is at most
+\[
+  18\alpha_0+\frac{\eta}{10}
+  =\frac{28\eta}{100}<\eta.
+\]
+This proves Item~\textup{(i)}.
+
+We next establish the claimed characterization of the learner's output.  Fix
+a reachable nonabort pair $(m,h)$.  For fixed $m$, every query and stopping
+decision of the learner is a deterministic function of the partial oracle
+learned so far.  Since some execution produces $h$, every oracle extending
+$h$ gives the same answers along that execution and therefore produces the
+same output.  Conversely, if the learner outputs $h$, then every pair in $h$
+was obtained from an oracle query, and hence $h\preceq H$.  It follows that,
+for every oracle $H$,
+\[
+  \Learn^{\mathsf{BM},H}_\eta(1^\lambda,m)=h
+  \quad\Longleftrightarrow\quad
+  h\preceq H.
+\]
+Thus, for every reachable nonabort pair $(m,h)$, conditioning on the learner's
+output is equivalent to conditioning on $\mathsf F_{m,h}$.
+
+It remains to transfer the guarantees for the simulated classical views to
+the actual prefix views.  By Item~\textup{(ii)} of
+\Cref{lem:bm-final-transcript},
+\[
+  \Delta_{\mathrm{TV}}\!\left(
+    \nu^{AB}_{m,h},
+    \nu^A_{m,h}\times\nu^B_{m,h}
+  \right)
+  \le 9\beta_0<\eta.
+\]
+Applying the local channel $\Phi_{\cA}\otimes\Phi_{\cB}$ and using
+trace-distance data processing~\cite[Chapter~3]{Watrous18} proves
+Item~\textup{(ii)}.  Finally, Item~\textup{(iii)} of
+\Cref{lem:bm-final-transcript} gives, for every $x\notin\Dom(h)$,
+\[
+  \Pr[x\in\Dom(T_{\cA})\mid\mathsf F_{m,h}]
+  <
+  \frac{\varepsilon_2}{\bar q_{\cB}}+\beta_0
+  \le
+  \frac{\eta^2}{10^4}+\frac{\eta}{100}
+  <\eta,
+\]
+which proves Item~\textup{(iii)}.
+\end{proof}
+
+\subsubsection{Conditioned Prefix Resampling}
+\label{sec:conditioned-prefix-resampling}
+
+The preceding subsection shows that, conditioned on a reachable pair
+\((m,h)\), the parties' actual prefix views are close to the product state
+\(\omega^A_{m,h}\otimes\omega^B_{m,h}\).  This does not by itself justify
+sampling the two views independently in the attack, because that statement
+does not include the random oracle.  Bob's final algorithm and Eve's
+simulation of Alice both query the same oracle in superposition, so we must
+also specify how the independently sampled views are coupled to that oracle.
+
+The conditional-oracle identity in
+\Cref{eq:prefix-conditional-oracle-main} tells us how to do so.  After
+sampling the two marginal views independently, we first sample a base oracle
+\(H_0\) consistent with \(h\) and Bob's transcript \(T'_{\cB}\), and then
+reprogram it on Alice's transcript \(T'_{\cA}\).  The order is deliberate:
+the base oracle is compatible with Bob's sampled view, while the final
+oracle \(\widetilde H=H_0[T'_{\cA}]\) contains the answers recorded in
+Alice's sampled view. 
+
+The proof compares the real and resampled experiments by applying the same
+channel to two input states.  On the real joint view
+\(\omega^{AB}_{m,h}\), the channel reconstructs the real conditioned state
+\(\Omega_{m,h}\) exactly.  On the product of the marginals, it produces the
+resampled state \(\widetilde\Omega_{m,h}\) defined below.  The trace-distance
+bound then essentially follows directly from the
+approximate-independence guarantee of the preceding subsection.  In
+particular, any later joint quantum computation using the oracle and the
+prefix views changes the success probability by at most \(\eta\) when the
+real conditioned prefix is replaced by this resampled one.
+
+\begin{lemma}[Conditioned prefix resampling]
+\label{lem:prefix-resampling}
+Fix a reachable pair $(m,h)$, and consider the following experiment:
+\begin{enumerate}[leftmargin=2em]
+  \item independently prepare
+  \[
+    (T'_{\cA},S'_{\cA})\leftarrow\omega^A_{m,h},
+    \qquad
+    (T'_{\cB},S'_{\cB})\leftarrow\omega^B_{m,h};
+  \]
+  \item sample $H_0\leftarrow\Unif(\cH(h,T'_{\cB}))$, and define
+  \[
+    \widetilde H=H_0[T'_{\cA}].
+  \]
+\end{enumerate}
+Let $\widetilde\Omega_{m,h}$ be the resulting state on
+$\mathsf H T'_{\cA}S'_{\cA}T'_{\cB}S'_{\cB}$, with $\mathsf H$ holding the
+sampled function $\widetilde H$.  Then
+\[
+  \frac12
+  \left\|
+    \Omega_{m,h}
+    -
+    \widetilde\Omega_{m,h}
+  \right\|_1
+  \le \eta.
+\]
+\end{lemma}
+
+\begin{proof}
+We compare the two states by applying the same channel to the real joint
+prefix view and to the product of its marginals.  Define a channel
+$\mathcal R_{m,h}$ on $T_{\cA}S_{\cA}T_{\cB}S_{\cB}$ as follows.  On
+classical transcripts $t_{\cA},t_{\cB}$, it samples
+\[
+  H_0\leftarrow\Unif(\cH(h,t_{\cB}))
+\]
+and attaches the oracle $H_0[t_{\cA}]$, while leaving the four input
+registers unchanged.  Every $t_{\cB}$ in the support of
+$\omega^B_{m,h}$ is consistent with $h$, so this channel is well defined on
+both input states considered below.
+
+We first apply the channel to the real joint prefix view.  In this case,
+$t_{\cA}$ and $t_{\cB}$ are mutually consistent, and
+$H_0[t_{\cA}]$ is uniform over $\cH(h,t_{\cA},t_{\cB})$.  By
+\eqref{eq:prefix-conditional-oracle-main}, this is precisely the conditional
+distribution of the real oracle given the two query transcripts.  Moreover,
+the residual state is independent of the unobserved oracle values under this
+conditioning.  Therefore,
+\[
+  \mathcal R_{m,h}(\omega^{AB}_{m,h})=\Omega_{m,h}.
+\]
+Applying the same channel to the product of the two marginal views gives,
+by the definition of the resampling experiment,
+\[
+  \mathcal R_{m,h}
+  (\omega^A_{m,h}\otimes\omega^B_{m,h})
+  =\widetilde\Omega_{m,h}.
+\]
+Combining these two identities with trace-distance data processing and
+\Cref{lem:multi-independence-attacker}, we obtain
+\[
+  \frac12\left\|
+    \Omega_{m,h}-\widetilde\Omega_{m,h}
+  \right\|_1
+  \le
+  \frac12\left\|
+    \omega^{AB}_{m,h}
+    -\omega^A_{m,h}\otimes\omega^B_{m,h}
+  \right\|_1
+  \le\eta.
+\]
+\end{proof}
+
+\subsubsection{The Multi-Round attacker}
+
+In this section we conclude the proof by defining the attacker.
+
+\begin{definition}[Multi-round reprogramming attack]
+\label{def:multi-eve}
+Fix \(0<\eta<1/100\). The attacker \(\cE_\eta\) acts as follows. During the
+classical prefix, Eve runs the online
+attacker \(\Learn^{\mathsf{BM},H}_\eta\) of
+\Cref{lem:multi-independence-attacker}. If the attacker aborts, Eve records an
+abort flag. Otherwise, after the last classical message Eve has the full
+public transcript \(m\) and a partial oracle \(h\). She prepares an
+independent Alice prefix view
+\[
+  V'_{\cA}=(W'_{\cA},S'_{\cA})
+  \leftarrow\omega^A_{m,h},
+  \qquad
+  T'_{\cA}:=T_{\cA}(W'_{\cA}).
+\]
+After intercepting Bob's final message register \(\Psi\), Eve outputs
+\(\bot\) if the attacker aborted. Otherwise she runs
+\[
+  K^*
+  \leftarrow
+  \cA_{\mathsf{fin}}^{H[T'_{\cA}]}
+  (1^\lambda,m,S'_{\cA},\Psi)
+\]
+and outputs \(K^*\).
+\end{definition}
+
+\begin{theorem}[Multi-round quantitative attack]
+\label{thm:multi-main}
+Let \(\Pi^{\mathsf{mr}}\) satisfy
+\Cref{def:multi-protocol}, and let
+\(\alpha=\alpha_{\Pi^{\mathsf{mr}}}(\lambda)\).  For every
+\(0<\eta<1/100\), the attacker of \Cref{def:multi-eve} satisfies
+\[
+  \Adv^{\IntKR,\mathsf{mr}}_{
+    \Pi^{\mathsf{mr}},\cE_\eta}(\lambda)
+  \ge
+  \alpha
+  -5\eta
+  -2(2q_{\cB,\mathsf q}+q_{\cA,\mathsf{fin}})\sqrt\eta.
+\]
+It makes at most
+\[
+  \left\lceil
+    \frac{4\cdot 10^5\,
+      \max\{1,q_{\cA,\mathsf{pre}}\}
+      \max\{1,q_{\cB,\mathsf{pre}}\}}
+      {\eta^3}
+  \right\rceil
+  +q_{\cA,\mathsf{fin}}
+\]
+random-oracle queries.  The first term consists only of classical queries.
+There is no explicit dependence on the number of prefix rounds beyond the
+two parties' total prefix-query bounds.
+\end{theorem}
+
+\begin{proof}
+We proceed via a hybrid argument. Hybrid \(J_0\) is the honest execution. In \(J_1,\ldots,J_5\), the online
+attacker runs alongside the real classical prefix and an abort counts as
+failure. Unless stated otherwise, these hybrids induce the same distribution
+on the public transcript \(M\) and the attacker's output \(h\). We say that
+\(J_i\) succeeds when its two recorded keys agree and are not \(\bot\).
+Throughout, \(V_P=(W_P,S_P)\) denotes the extended classical-quantum
+prefix view defined above. Changes from one hybrid to the next are shown in
+\mrchanged{color}.
+
+\begin{hybrid}{Multi-round hybrid \(J_0\) (real execution)}
+  \item Sample \(H_0\leftarrow\cH\) and run the honest classical prefix,
+  obtaining
+  \((M^{(0)},V_{\cA,0},V_{\cB,0})\).
+  \item Run
+  \((\Psi_0,K_{\cB,0})\leftarrow
+    \cB_{\mathsf q}^{H_0}(1^\lambda,M^{(0)},S_{\cB,0})\).
+  \item Run
+  \(K_{\cA,0}\leftarrow
+    \cA_{\mathsf{fin}}^{H_0}
+    (1^\lambda,M^{(0)},S_{\cA,0},\Psi_0)\).
+\end{hybrid}
+Thus
+\nopagebreak[4]
+\[
+  \Pr[J_0\text{ succeeds}]=\alpha.
+\]
+
+\begin{hybrid}{Multi-round hybrid \(J_1\)}
+  \item \mrchanged{Sample \(H_1\leftarrow\cH\), and run the honest
+  classical prefix using \(H_1\) while activating
+  \(\Learn^{\mathsf{BM},H_1}_\eta\) after every message.  Obtain
+  \((M^{(1)},V_{\cA,1},V_{\cB,1},h_1)\), and abort if the attacker aborts.}
+  \item Run
+  \((\Psi_1,K_{\cB,1})\leftarrow
+    \cB_{\mathsf q}^{H_1}(1^\lambda,M^{(1)},S_{\cB,1})\), followed by
+  \(K_{\cA,1}\leftarrow
+    \cA_{\mathsf{fin}}^{H_1}
+    (1^\lambda,M^{(1)},S_{\cA,1},\Psi_1)\).
+\end{hybrid}
+Running the attacker alongside the protocol does not change the honest
+execution. The only difference is that \(J_1\) counts a attacker abort as
+failure. Item~(i) of
+\Cref{lem:multi-independence-attacker} gives
+\begin{equation}
+\label{eq:multi-j0-j1}
+  \left|
+    \Pr[J_0\text{ succeeds}]-\Pr[J_1\text{ succeeds}]
+  \right|
+  \le\eta.
+\end{equation}
+
+\begin{hybrid}{Multi-round hybrid \(J_2\)}
+  \item Run the real prefix and attacker as in \(J_1\), retaining
+  \((M^{(2)},h_2)\) and discarding the original oracle and prefix views.
+  \item \mrchanged{Independently prepare
+  \[
+    V'_{\cA,2}=(W'_{\cA,2},S'_{\cA,2})
+      \leftarrow\omega^A_{M^{(2)},h_2},
+  \]
+  \[
+    V'_{\cB,2}=(W'_{\cB,2},S'_{\cB,2})
+      \leftarrow\omega^B_{M^{(2)},h_2}.
+  \]
+  Set \(T'_{\cA,2}=T_{\cA}(W'_{\cA,2})\) and
+  \(T'_{\cB,2}=T_{\cB}(W'_{\cB,2})\).}
+  \item \mrchanged{Sample
+  \(\widehat H_2\leftarrow\Unif(\cH(h_2,T'_{\cB,2}))\) and set
+  \(\widetilde H_2=\widehat H_2[T'_{\cA,2}]\).}
+  \item Run
+  \((\Psi_2,K_{\cB,2})\leftarrow
+    \cB_{\mathsf q}^{\widetilde H_2}
+    (1^\lambda,M^{(2)},S'_{\cB,2})\).
+  \item Run
+  \(K^*_2\leftarrow
+    \cA_{\mathsf{fin}}^{\widetilde H_2}
+    (1^\lambda,M^{(2)},S'_{\cA,2},\Psi_2)\).
+\end{hybrid}
+
+Condition on a reachable pair \((m,h)\). By the output characterization in
+\Cref{lem:multi-independence-attacker}, the oracle and prefix views in \(J_1\)
+have joint state \(\Omega_{m,h}\), while the resampled objects in \(J_2\)
+have state \(\widetilde\Omega_{m,h}\). Applying
+\Cref{lem:prefix-resampling} and trace-distance data processing through the
+final algorithms~\cite[Chapter~3]{Watrous18} shows that, for every reachable
+nonabort pair,
+\[
+  \left|
+    \Pr[J_1\text{ succeeds}\mid M=m,\ h_1=h]
+    -
+    \Pr[J_2\text{ succeeds}\mid M=m,\ h_2=h]
+  \right|
+  \le 2\eta.
+\]
+Let \(\pi(m,h)\) be the common subprobability mass of nonabort prefix
+executions in the two hybrids that output \((M,h)=(m,h)\). Since success is
+defined to be false on abort, only these executions contribute. Define
+\[
+  s_i(m,h)
+  :=
+  \Pr[J_i\text{ succeeds}\mid M^{(i)}=m,\ h_i=h]
+  \qquad (i\in\{1,2\}).
+\]
+The triangle inequality gives
+\[
+  \begin{aligned}
+  &\left|
+    \Pr[J_1\text{ succeeds}]-\Pr[J_2\text{ succeeds}]
+  \right|\\
+  &\qquad\le
+  \sum_{(m,h)\in\Supp(\pi)}\pi(m,h)
+  \left|s_1(m,h)-s_2(m,h)\right|
+  \le 2\eta.
+  \end{aligned}
+\]
+In particular,
+\begin{equation}
+\label{eq:multi-j1-j2}
+  \left|
+    \Pr[J_1\text{ succeeds}]-\Pr[J_2\text{ succeeds}]
+  \right|
+  \le2\eta.
+\end{equation}
+
+\begin{hybrid}{Multi-round hybrid \(J_3\)}
+  \item Run the real prefix and attacker as in \(J_1\), retain
+  \((M^{(3)},h_3)\), discard the original oracle and prefix views, and
+  independently prepare
+  \[
+    V'_{\cA,3}=(W'_{\cA,3},S'_{\cA,3})
+      \leftarrow\omega^A_{M^{(3)},h_3},
+    \qquad
+    V'_{\cB,3}=(W'_{\cB,3},S'_{\cB,3})
+      \leftarrow\omega^B_{M^{(3)},h_3},
+  \]
+  set \(T'_{\cA,3}=T_{\cA}(W'_{\cA,3})\) and
+  \(T'_{\cB,3}=T_{\cB}(W'_{\cB,3})\), and sample
+  \(\widehat H_3\leftarrow\Unif(\cH(h_3,T'_{\cB,3}))\).
+  \item Set \(\widetilde H_3=\widehat H_3[T'_{\cA,3}]\).
+  \item \mrchanged{Run
+  \((\Psi_3,K_{\cB,3})\leftarrow
+    \cB_{\mathsf q}^{\widehat H_3}
+    (1^\lambda,M^{(3)},S'_{\cB,3})\).}
+  \item Run
+  \(K^*_3\leftarrow
+    \cA_{\mathsf{fin}}^{\widetilde H_3}
+    (1^\lambda,M^{(3)},S'_{\cA,3},\Psi_3)\).
+\end{hybrid}
+
+\begin{lemma}[\(J_2\) to \(J_3\)]
+\label{lem:multi-j2-j3}
+\[
+  \left|
+    \Pr[J_2\text{ succeeds}]-\Pr[J_3\text{ succeeds}]
+  \right|
+  \le2q_{\cB,\mathsf q}\sqrt\eta.
+\]
+\end{lemma}
+
+\begin{proof}
+Condition on a reachable pair \((m,h)\) and on a value
+\(W'_{\cB}=w'_{\cB}\) in the support of the classical-history marginal of
+\(\omega^B_{m,h}\). Prepare \(S'_{\cB}\) in the corresponding conditional
+state and set \(T'_{\cB}=T_{\cB}(w'_{\cB})\).
+For the random reprogramming game of Katz and Sela
+\cite[Lemma~3]{KatzSela24}, sample
+\(\widehat H\leftarrow\Unif(\cH(h,T'_{\cB}))\) and set
+\(F_0=\widehat H\). The randomized classical procedure \(C_{m,h}\) samples
+the history \(W'_{\cA}\) from the classical marginal of
+\(\omega^A_{m,h}\), sets \(T'_{\cA}=T_{\cA}(W'_{\cA})\), and returns
+\[
+  R
+  =
+  T'_{\cA}
+  \big|_{\Dom(T'_{\cA})\setminus\Dom(h)}.
+\]
+Given challenge access to \(F_b\), run
+\[
+  (\Psi,K_{\cB})
+  \leftarrow
+  \cB_{\mathsf q}^{F_b}(1^\lambda,m,S'_{\cB}).
+\]
+After challenge access is removed, the coins of \(C_{m,h}\) reveal
+\(W'_{\cA}\). Prepare \(S'_{\cA}\) in the corresponding conditional
+state specified by \(\omega^A_{m,h}\), and run
+\[
+  K^*
+  \leftarrow
+  \cA_{\mathsf{fin}}^{\widehat H[T'_{\cA}]}
+  (1^\lambda,m,S'_{\cA},\Psi).
+\]
+The distinguisher outputs \(1\) iff \(K^*=K_{\cB}\neq\bot\).
+
+Every sampled Alice transcript is consistent with \(h\), so
+\(F_1=\widehat H[R]=\widehat H[T'_{\cA}]\). Thus \(b=1\) reproduces \(J_2\)
+and \(b=0\) reproduces \(J_3\), conditioned on
+\((M,h,W'_{\cB})=(m,h,w'_{\cB})\). Only Bob queries the challenge oracle.
+Moreover, by
+\Cref{lem:multi-independence-attacker}, for every \(x\),
+\[
+  \Pr[x\in\Dom(R)]
+  \le
+  \begin{cases}
+    0,&x\in\Dom(h),\\
+    \Pr[x\in\Dom(T'_{\cA})]\le\eta,&x\notin\Dom(h).
+  \end{cases}
+\]
+Thus \Cref{lem:reprogramming} bounds the absolute difference between the two
+conditional success probabilities by \(2q_{\cB,\mathsf q}\sqrt\eta\) for
+every \((m,h,w'_{\cB})\) in the support of the shared conditioning data. If
+\(\pi(m,h,w'_{\cB})\) denotes the common subprobability mass of that data on
+nonabort executions of \(J_2\) and \(J_3\), define
+\[
+  s_i(m,h,w'_{\cB})
+  :=
+  \Pr[J_i\text{ succeeds}\mid
+    M^{(i)}=m,\ h_i=h,\ W'_{\cB,i}=w'_{\cB}]
+  \qquad (i\in\{2,3\}).
+\]
+Because success is defined to be false on abort,
+\[
+  \Pr[J_i\text{ succeeds}]
+  =
+  \sum_{(m,h,w'_{\cB})\in\Supp(\pi)}
+    \pi(m,h,w'_{\cB})s_i(m,h,w'_{\cB})
+  \qquad (i\in\{2,3\}).
+\]
+The triangle inequality gives
+\[
+  \begin{aligned}
+  \left|\Pr[J_2\text{ succeeds}]-\Pr[J_3\text{ succeeds}]\right|
+  &\le
+  \sum_{(m,h,w'_{\cB})\in\Supp(\pi)}\pi(m,h,w'_{\cB})
+  \left|s_2(m,h,w'_{\cB})-s_3(m,h,w'_{\cB})\right|\\
+  &\le 2q_{\cB,\mathsf q}\sqrt\eta.
+  \end{aligned}
+\]
+\end{proof}
+
+\begin{hybrid}{Multi-round hybrid \(J_4\)}
+  \item Run the real prefix and attacker as in \(J_1\), retain
+  \((M^{(4)},h_4)\), discard the original oracle and prefix views, and
+  independently prepare
+  \[
+    V^{\mathsf E}_{\cA,4}
+      =(W^{\mathsf E}_{\cA,4},S^{\mathsf E}_{\cA,4})
+      \leftarrow\omega^A_{M^{(4)},h_4},
+    \qquad
+    V'_{\cB,4}=(W'_{\cB,4},S'_{\cB,4})
+      \leftarrow\omega^B_{M^{(4)},h_4},
+  \]
+  set \(T^{\mathsf E}_{\cA,4}=T_{\cA}(W^{\mathsf E}_{\cA,4})\) and
+  \(T'_{\cB,4}=T_{\cB}(W'_{\cB,4})\), and sample
+  \(\widehat H_4\leftarrow\Unif(\cH(h_4,T'_{\cB,4}))\).
+  \item \mrchanged{Independently prepare the Alice view that determines
+  Bob's oracle,
+  \[
+    V^{\mathsf B}_{\cA,4}
+    =
+    (W^{\mathsf B}_{\cA,4},S^{\mathsf B}_{\cA,4})
+    \leftarrow\omega^A_{M^{(4)},h_4},
+  \]
+  and set
+  \(T^{\mathsf B}_{\cA,4}=T_{\cA}(W^{\mathsf B}_{\cA,4})\).
+  Set
+  \[
+    H^{\mathsf B}_4=\widehat H_4[T^{\mathsf B}_{\cA,4}],
+    \qquad
+    H^{\mathsf E}_4=H^{\mathsf B}_4[T^{\mathsf E}_{\cA,4}].
+  \]}
+  \item Run
+  \((\Psi_4,K_{\cB,4})\leftarrow
+    \cB_{\mathsf q}^{H^{\mathsf B}_4}
+    (1^\lambda,M^{(4)},S'_{\cB,4})\).
+  \item Run
+  \(K^*_4\leftarrow
+    \cA_{\mathsf{fin}}^{H^{\mathsf E}_4}
+    (1^\lambda,M^{(4)},S^{\mathsf E}_{\cA,4},\Psi_4)\).
+\end{hybrid}
+
+\begin{lemma}[\(J_3\) to \(J_4\)]
+\label{lem:multi-j3-j4}
+\[
+  \left|
+    \Pr[J_3\text{ succeeds}]-\Pr[J_4\text{ succeeds}]
+  \right|
+  \le
+  2(q_{\cB,\mathsf q}+q_{\cA,\mathsf{fin}})\sqrt\eta.
+\]
+\end{lemma}
+
+\begin{proof}
+Condition on a reachable pair \((m,h)\) and on a value
+\(W'_{\cB}=w'_{\cB}\) in the support of the classical-history marginal of
+\(\omega^B_{m,h}\). Prepare \(S'_{\cB}\) in the corresponding conditional
+state, and write \(T'_{\cB}=T_{\cB}(w'_{\cB})\). Independently prepare Eve's Alice view
+\(V^{\mathsf E}_{\cA}=(W^{\mathsf E}_{\cA},S^{\mathsf E}_{\cA})
+\leftarrow\omega^A_{m,h}\), and set
+\(T^{\mathsf E}_{\cA}=T_{\cA}(W^{\mathsf E}_{\cA})\).  Sample
+\(\widehat H\leftarrow\Unif(\cH(h,T'_{\cB}))\), output
+\(F_0=\widehat H\), and let the randomized classical procedure
+\(C_{m,h}\) independently sample \(W^{\mathsf B}_{\cA}\) from the classical
+marginal of \(\omega^A_{m,h}\), set
+\(T^{\mathsf B}_{\cA}=T_{\cA}(W^{\mathsf B}_{\cA})\), and return
+\[
+  R
+  =
+  T^{\mathsf B}_{\cA}
+  \big|_{\Dom(T^{\mathsf B}_{\cA})\setminus\Dom(h)}.
+\]
+Given challenge access to \(F_b\), run Bob's final algorithm with \(F_b\)
+and Alice's final algorithm with \(F_b[T^{\mathsf E}_{\cA}]\).  A query to
+\(F_b[T^{\mathsf E}_{\cA}]\) is implemented with one query to \(F_b\) by
+reversibly testing membership in the known transcript and supplying the
+recorded answer on member inputs. The total number of challenge queries is
+therefore at most
+\(q_{\cB,\mathsf q}+q_{\cA,\mathsf{fin}}\).
+
+After challenge access is removed, the revealed coins of \(C_{m,h}\)
+determine \(W^{\mathsf B}_{\cA}\). The reduction can then prepare the
+corresponding register \(S^{\mathsf B}_{\cA}\). This register is unused in
+the \(b=0\) case and may be discarded; in the \(b=1\) case it completes the
+auxiliary classical-quantum view sampled in \(J_4\). Every sampled Alice
+transcript is consistent with \(h\). Therefore, for \(b=0\) the experiment
+is \(J_3\) after discarding that unused view, while for \(b=1\),
+\(F_1=\widehat H[T^{\mathsf B}_{\cA}]\) and the experiment is \(J_4\).
+As in the preceding proof, each point belongs to the reprogramming set with
+probability at most \(\eta\): points in \(\Dom(h)\) are excluded, and
+Item~(iii) of \Cref{lem:multi-independence-attacker} applies everywhere else.
+The random reprogramming lemma of Katz and Sela
+\cite[Lemma~3]{KatzSela24} therefore bounds the absolute difference
+between the conditional success probabilities of \(J_3\) and \(J_4\), given
+\((M,h,W'_{\cB})=(m,h,w'_{\cB})\), by
+\(2(q_{\cB,\mathsf q}+q_{\cA,\mathsf{fin}})\sqrt\eta\). Let
+\(\pi(m,h,w'_{\cB})\) denote the common subprobability of these conditioning
+data in the two hybrids, and define
+\[
+  s_i(m,h,w'_{\cB})
+  :=
+  \Pr[J_i\text{ succeeds}\mid
+    M^{(i)}=m,\ h_i=h,\ W'_{\cB,i}=w'_{\cB}]
+  \qquad (i\in\{3,4\}).
+\]
+The law of total probability and the triangle inequality yield
+\[
+  \begin{aligned}
+  \left|\Pr[J_3\text{ succeeds}]-\Pr[J_4\text{ succeeds}]\right|
+  &\le
+  \sum_{m,h,w'_{\cB}}\pi(m,h,w'_{\cB})
+  \left|s_3(m,h,w'_{\cB})-s_4(m,h,w'_{\cB})\right|\\
+  &\le
+  2(q_{\cB,\mathsf q}+q_{\cA,\mathsf{fin}})\sqrt\eta.
+  \end{aligned}
+\]
+Again, the omitted abort branch has success probability zero in both
+hybrids.
+\end{proof}
+
+\begin{hybrid}{Multi-round hybrid \(J_5\) (the real interception attack)}
+  \item \mrchanged{Sample \(H_5\leftarrow\cH\), and run the honest classical prefix
+  together with the online attacker.  Obtain
+  \[
+    (M^{(5)},h_5,V_{\cA,5},V_{\cB,5}),
+  \]
+  and abort if the attacker aborts.}
+  \item Independently prepare Eve's Alice prefix view
+  \[
+    V'_{\cA,5}
+    =(W'_{\cA,5},S'_{\cA,5})
+    \leftarrow\omega^A_{M^{(5)},h_5},
+  \]
+  and set \(T'_{\cA,5}=T_{\cA}(W'_{\cA,5})\).
+  \item \mrchanged{Run
+  \((\Psi_5,K_{\cB,5})\leftarrow
+    \cB_{\mathsf q}^{H_5}
+    (1^\lambda,M^{(5)},S_{\cB,5})\),
+  and transfer \(\Psi_5\) to Eve.}
+  \item Run
+  \[
+    K^*_5
+    \leftarrow
+    \cA_{\mathsf{fin}}^{H_5[T'_{\cA,5}]}
+    (1^\lambda,M^{(5)},S'_{\cA,5},\Psi_5).
+  \]
+\end{hybrid}
+
+Fix a reachable pair \((m,h)\). The tuple
+\[
+  \bigl(
+    H^{\mathsf B}_4,
+    V^{\mathsf B}_{\cA,4},
+    V'_{\cB,4}
+  \bigr)
+\]
+in \(J_4\) has exactly the distribution of the conditioned prefix-resampling
+experiment from \Cref{lem:prefix-resampling}. Eve's second Alice view
+\(V^{\mathsf E}_{\cA,4}\) is independent in both hybrids. Hence, by
+\Cref{lem:prefix-resampling} and trace-distance data processing
+\cite[Chapter~3]{Watrous18}, for every reachable nonabort pair \((m,h)\),
+\[
+  \left|
+    \Pr[J_4\text{ succeeds}\mid M^{(4)}=m,\ h_4=h]
+    -
+    \Pr[J_5\text{ succeeds}\mid M^{(5)}=m,\ h_5=h]
+  \right|
+  \le 2\eta.
+\]
+Let \(\pi(m,h)\) be the common probability that the prefix and attacker in
+the two hybrids output \((m,h)\) without aborting, and define
+\[
+  s_i(m,h)
+  :=
+  \Pr[J_i\text{ succeeds}\mid M^{(i)}=m,\ h_i=h]
+  \qquad (i\in\{4,5\}).
+\]
+The abort branch contributes zero, so the law of total probability and the
+triangle inequality give
+\[
+  \left|
+    \Pr[J_4\text{ succeeds}]-\Pr[J_5\text{ succeeds}]
+  \right|
+  \le
+  \sum_{m,h}\pi(m,h)\left|s_4(m,h)-s_5(m,h)\right|
+  \le 2\eta.
+\]
+Thus
+\begin{equation}
+\label{eq:multi-j4-j5}
+  \left|
+    \Pr[J_4\text{ succeeds}]-\Pr[J_5\text{ succeeds}]
+  \right|
+  \le2\eta.
+\end{equation}
+
+Hybrid \(J_5\) is precisely
+\(\IntKR^{\mathsf{mr}}_{\Pi^{\mathsf{mr}},\cE_\eta}\). Combining
+\eqref{eq:multi-j0-j1}, \eqref{eq:multi-j1-j2},
+\Cref{lem:multi-j2-j3,lem:multi-j3-j4}, and
+\eqref{eq:multi-j4-j5} gives
+\begin{align*}
+  \Adv^{\IntKR,\mathsf{mr}}_{
+    \Pi^{\mathsf{mr}},\cE_\eta}(\lambda)
+  &\ge
+  \alpha
+  -\eta-2\eta
+  -2q_{\cB,\mathsf q}\sqrt\eta
+  \\
+  &\quad
+  -2(q_{\cB,\mathsf q}+q_{\cA,\mathsf{fin}})\sqrt\eta
+  -2\eta
+  \\
+  &=
+  \alpha
+  -5\eta
+  -2(2q_{\cB,\mathsf q}+q_{\cA,\mathsf{fin}})\sqrt\eta.
+\end{align*}
+The query bound follows directly from
+\Cref{lem:multi-independence-attacker,def:multi-eve}.
+\end{proof}
+
+\begin{corollary}[Polynomial-query multi-round impossibility]
+\label{cor:multi-impossibility}
+Let \(\Pi^{\mathsf{mr}}\) satisfy \Cref{def:multi-protocol}, let
+\(\alpha=\alpha_{\Pi^{\mathsf{mr}}}(\lambda)>0\), and define
+\[
+  Q_{\mathsf{fin}}
+  :=
+  \max\{1,2q_{\cB,\mathsf q}+q_{\cA,\mathsf{fin}}\},
+  \qquad
+  \eta
+  :=
+  \left(\frac{\alpha}{16Q_{\mathsf{fin}}}\right)^2.
+\]
+Then the attacker of \Cref{thm:multi-main} succeeds with probability greater
+than \(\alpha/2\) and makes
+\[
+  O\!\left(
+    \frac{
+      \max\{1,q_{\cA,\mathsf{pre}}\}
+      \max\{1,q_{\cB,\mathsf{pre}}\}
+      Q_{\mathsf{fin}}^6}
+      {\alpha^6}
+    +q_{\cA,\mathsf{fin}}
+  \right)
+\]
+queries. It follows that any family of such protocols with
+inverse-polynomial valid agreement and honest query complexity bounded by
+\(\poly(\lambda)\) is insecure against a computationally unbounded quantum
+attacker making at most \(\poly(\lambda)\) oracle queries.
+The query bound depends on the number of prefix rounds only through the total
+honest prefix-query bounds.
+\end{corollary}
+
+\begin{proof}
+The choice of \(\eta\) satisfies \(\eta\le1/256<1/100\), and the
+reprogramming loss is
+\(2Q_{\mathsf{fin}}\sqrt\eta=\alpha/8\).  Since
+\(Q_{\mathsf{fin}}\ge1\) and \(0<\alpha\le1\),
+\(5\eta\le5\alpha/256\).  Thus the success lower bound is strictly greater
+than \(\alpha/2\).  Substituting
+\(1/\eta^3=(16Q_{\mathsf{fin}}/\alpha)^6\) gives the query bound.
+\end{proof}
+
+\section{Applications}\label{sec:corollaries}
+
+In this section, we state the two main applications of our results.
+
+
+\begin{definition}[Fully classical Alice and classical reply]
+A protocol from \Cref{def:protocol} has fully classical Alice and a classical
+reply if:
+\begin{enumerate}[leftmargin=2em]
+  \item \(\cA_1\) is a probabilistic classical oracle algorithm and its
+  residual state is classical;
+  \item Bob's message \(\Psi\) is classical; and
+  \item \(\cA_2\) is a probabilistic classical algorithm with classical
+  oracle access.
+\end{enumerate}
+Bob may still perform quantum computation and make quantum random-oracle
+queries.
+\end{definition}
+
+\begin{corollary}[Classical eavesdropping attack]\label{cor:classical}
+For a protocol with fully classical Alice and a classical reply, the
+attacker in \Cref{thm:main} is a computationally unbounded classical
+attacker with classical random-oracle access.  Therefore the conclusions of
+\Cref{cor:parameters,cor:quantum-impossibility} hold against classical
+eavesdroppers. Because the reply is classical, Eve can copy it and forward
+it to Alice; the attack is therefore passive.
+\end{corollary}
+
+\begin{proof}
+Under the stated assumptions, \(\omega_{m_1,h}\) is an ordinary classical
+distribution over Alice's transcript and residual classical state.  The
+attacker is classical, exact conditional sampling is classical, the reply can
+be stored classically, and the simulation of \(\cA_2^{H[T'_{\cA}]}\) uses
+only classical oracle queries.  No quantum operation remains in Eve's
+algorithm.
+\end{proof}
+
+\begin{theorem}[Attack on QPKE with classical-query key generation]
+\label{thm:qpke}
+Let \(\Sigma\) satisfy \Cref{def:qpke}.  For every \(0<\delta<1\), there is
+a computationally unbounded quantum IND-CPA attacker \(\cD_\delta\) making
+at most
+\[
+  \ceil{q_{\Gen}/\delta^2}+q_{\Dec}
+\]
+random-oracle queries and satisfying
+\[
+  \Adv^{\IND\text{-}\mathrm{CPA}}_{\Sigma,\cD_\delta}(\lambda)
+  \ge
+  \alpha_\Sigma-\frac12-\delta
+  -2(2q_{\Enc}+q_{\Dec})\sqrt\delta.
+\]
+In particular, if \(\alpha_\Sigma(\lambda)>0\), let
+\[
+  Q_\Sigma:=\max\{1,2q_{\Enc}+q_{\Dec}\},
+  \qquad
+  \delta:=\left(\frac{\alpha_\Sigma}{8Q_\Sigma}\right)^2.
+\]
+Then
+\[
+  \Adv^{\IND\text{-}\mathrm{CPA}}_{\Sigma,\cD_\delta}(\lambda)
+  \ge \frac{47}{64}\alpha_\Sigma-\frac12,
+\]
+and \(\cD_\delta\) makes at most
+\[
+  \ceil{4096q_{\Gen}Q_\Sigma^4/\alpha_\Sigma^4}+q_{\Dec}
+\]
+random-oracle queries. Consequently, a scheme with negligible correctness
+error and honest query complexity bounded by \(\poly(\lambda)\) is not
+query-bounded IND-CPA secure: for every polynomial \(p\), an attacker making
+at most \(\poly(\lambda)\) queries achieves advantage at least
+\(1/2-1/p(\lambda)-\negl(\lambda)\), for every message-length function \(\mu\)
+bounded above by a polynomial in \(\lambda\).
+Encryption,
+decryption, and the ciphertext may all be quantum. For
+\(\mu(\lambda)=1\), this conclusion applies in particular to the
+imperfectly correct PKE obtained from two-round OSP by Bartusek and
+Khurana~\cite[Theorem~7.9]{BartusekKhurana24}, whenever the OSP sender's
+random-oracle queries are classical.
+\end{theorem}
+
+\begin{proof}
+Define a key-agreement protocol \(\Pi_\Sigma\) from \(\Sigma\) as follows.
+Alice's first stage runs
+\[
+  (\pk,\sk)\leftarrow\Gen^H(1^\lambda)
+\]
+and outputs \((T_{\Gen},M_1,S_{\cA})=(T_{\Gen},\pk,\sk)\).  On input
+\(\pk\), Bob fixes the two distinct messages
+\[
+  m_0:=0^{\mu(\lambda)},
+  \qquad
+  m_1:=0^{\mu(\lambda)-1}1,
+\]
+samples \(b\leftarrow\bits\), runs
+\(C\leftarrow\Enc^H(1^\lambda,\pk,m_b)\), sends \(C\), and sets
+\(K_{\cB}=b\). Alice's final stage computes
+\(\widehat m\leftarrow\Dec^H(1^\lambda,\sk,C)\) and outputs
+\[
+  K_{\cA}:=
+  \begin{cases}
+    0 & \text{if }\widehat m=m_0,\\
+    1 & \text{if }\widehat m=m_1,\\
+    \bot & \text{otherwise.}
+  \end{cases}
+\]
+For \(b\in\bits\), let
+\begin{align*}
+  p_b:=\Pr\bigl[&\widehat m=m_b:\ \\
+    &H\leftarrow\cH_\lambda,\
+    (\pk,\sk)\leftarrow\Gen^H(1^\lambda),\\
+    &C_b\leftarrow\Enc^H(1^\lambda,\pk,m_b),\
+    \widehat m\leftarrow\Dec^H(1^\lambda,\sk,C_b)\bigr].
+\end{align*}
+Therefore
+\[
+  q_{\cA,1}=q_{\Gen},\qquad
+  q_{\cB}=q_{\Enc},\qquad
+  q_{\cA,2}=q_{\Dec},
+  \qquad
+  \alpha_{\Pi_\Sigma}=\frac{p_0+p_1}{2}\ge\alpha_\Sigma,
+\]
+where the inequality follows from the definition of the minimum
+correct-decryption probability in \Cref{def:qpke}.
+
+This is the standard reduction from QPKE to key agreement used in prior
+QROM impossibility work~\cite{BouazizEtAl24,LiEtAl24}. Apply
+\Cref{thm:main} to obtain the
+intercepting attacker
+\(\cE_\delta=(\cE_{1},\cE_{2})\).  The IND-CPA
+attacker \(\cD_\delta\) has its first stage run
+\[
+  Z_{\cD}\leftarrow\cE_{1}^H(1^\lambda,\pk)
+\]
+and returns \((Z_{\cD},m_0,m_1)\). Its second stage, upon
+receiving the challenge ciphertext register \(C\), runs
+\(K^*\leftarrow\cE_{2}^H(1^\lambda,Z_{\cD},C)\) and outputs \(K^*\)
+when \(K^*\in\bits\), or an independent uniform bit otherwise.  Thus its
+success probability satisfies
+\[
+  \Pr[\IND_{\Sigma,\cD_\delta}(1^\lambda)=1]
+  \ge
+  \Pr[\IntKR_{\Pi_\Sigma,\cE_\delta}(1^\lambda)=1].
+\]
+The claimed advantage and query bound follow from \Cref{thm:main}, since
+\begin{align*}
+  \Adv^{\IND\text{-}\mathrm{CPA}}_{\Sigma,\cD_\delta}(\lambda)
+  &\ge
+  \Pr[\IND_{\Sigma,\cD_\delta}(1^\lambda)=1]-\frac12\\
+  &\ge
+  \Pr[\IntKR_{\Pi_\Sigma,\cE_\delta}(1^\lambda)=1]-\frac12.
+\end{align*}
+
+For the stated parameter choice,
+\[
+  2Q_\Sigma\sqrt\delta=\frac{\alpha_\Sigma}{4},
+  \qquad
+  \delta\le\frac{\alpha_\Sigma}{64},
+\]
+which gives the factor \(47/64\); the query bound follows by substituting
+\(1/\delta^2=4096Q_\Sigma^4/\alpha_\Sigma^4\).  A quantum challenge
+ciphertext is transferred to the attacker's second stage, so the reduction
+does not copy it.  If \(\Gen\) and \(\Dec\) are classical algorithms and the
+ciphertext is classical, \Cref{cor:classical} moreover yields a classical
+attack.
+\end{proof}
+
+\bibliographystyle{alpha}
+\bibliography{quantum}
+
+
+\end{document}

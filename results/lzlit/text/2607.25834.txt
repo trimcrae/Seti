@@ -1,0 +1,631 @@
+                                                Lowering the implementation barrier of neutral-atom quantum computing with
+                                                                             agentic workflows
+                                                       Constantin Dalyac        ,1 Alexandre Dauphin      ,1 Loı̈c Henriet       ,1 and Christophe Jurczak        2
+                                                                         1
+                                                                             PASQAL SAS, 24 rue Emile Baudot, 91120 Palaiseau, France
+                                                                                 2
+                                                                                   Quantonation Ventures, Dallas, TX 75206, USA
+                                                                                               (Dated: July 28, 2026)
+                                                           Quantum computers are moving from research laboratories to industrial machines accessible via
+                                                        the cloud and integrated into high-performance computing facilities. However, translating theoret-
+                                                        ical quantum protocols into hardware experiments remains a major bottleneck, requiring expertise
+                                                        across protocol design, compilation, simulation, and cloud execution. Here, we introduce an agentic
+                                                        workflow that automates this pipeline on neutral-atom quantum processors (here two Pasqal QPUs
+                                                        available on the cloud) while keeping the researcher in the loop for critical validation. In three case
+                                                        studies from many-body physics and optimization, the agent went from published paper or patent
+                                                        to a QPU campaign run overnight. In particular, human intervention was crucial to ensure scientific
+                                                        validity: the agent selected an inadequate observable in one experiment and constructed a plausible
+                                                        but incorrect hardware diagnosis in another, with both failures detected only through domain-expert
+                                                        review. Finally, we use a second agent to classify a corpus of 633 Rydberg-array arXiv papers and
+                                                        show that nearly half are implementable on present-day QPUs while identifying specific hardware
+                                                        upgrades needed for the rest. Together, these results demonstrate that agentic workflows provide a
+                                                        practical bridge between theoretical ideas and physical hardware, opening quantum experimentation
+arXiv:2607.25834v1 [quant-ph] 28 Jul 2026
+
+
+
+
+                                                        to a much broader scientific community.
+
+
+                                                            I.   INTRODUCTION                                   This barrier is, at its core, a coordination problem
+                                                                                                             across specialized domains, precisely the kind of prob-
+                                               Validating a quantum-computing application ulti-              lem that recent agents powered by large language mod-
+                                            mately means confronting a theoretical proposal with             els (LLM) have begun to address. Agentic systems can
+                                            physical hardware. For much of the field’s history, the          orchestrate heterogeneous software tools, scientific work-
+                                            binding constraint on that step was hardware availabil-          flows, and laboratory infrastructure [6–8], carrying a task
+                                            ity: quantum processors were scarce, laboratory-bound            across interfaces that have traditionally required sepa-
+                                            systems accessible mainly to the groups that built them.         rate human specialists. Rather than replacing scientific
+                                            Today, however, quantum processing units (QPUs) are              judgment, such systems offer a way to fold expertise dis-
+                                            increasingly stable, remotely accessible resources embed-        tributed across technical layers into a single operational
+                                            ded in cloud and high-performance-computing ecosys-              workflow.
+                                            tems.     Neutral-atom platforms are a representative               Building on this observation, our contributions are
+                                            case: arrays of individually controlled atoms interact-          threefold. First, we introduce an agentic workflow that
+                                            ing through Rydberg states realize programmable many-            carries a quantum-computing task all the way from a
+                                            body Hamiltonians [1], and scale naturally into the 100–         prompt to hardware execution. The workflow is tailored
+                                            1000-qubit range with flexible geometries and both ana-          for Pasqal’s QPUs, and executes specifically on FC1 and
+                                            log and digital modes of operation [2, 3]. This ver-             SA1, which are located respectively in Canada and in
+                                            satility supports applications spanning quantum simu-            Saudi Arabia. Second, we validate the framework across
+                                            lation, graph machine learning and combinatorial opti-           three increasingly difficult applications: two many-body
+                                            mization [4, 5].                                                 quantum simulations and a graph-coloring algorithm. Fi-
+                                               Accessible hardware, however, does not imply easy ex-         nally, we apply a separate, lighter agentic workflow to the
+                                            perimentation. Between a published protocol and a QPU            literature itself: it screens arXiv for Rydberg-array the-
+                                            lies a long chain of research and engineering tasks: ex-         ory papers compatible with the platform, using back-of-
+                                            tracting the procedure from the literature, translating it       the-envelope rather than detailed calculations. Of the
+                                            into device-level controls, validating it in a simulation,       526 papers classified, roughly half are viable starting
+                                            navigating cloud-execution infrastructure, and interpret-        points for experimentation on present-day hardware. For
+                                            ing noisy data. Each step is individually well under-            the remaining papers, the workflow identifies the hard-
+                                            stood and the ensemble is well supported by a software           ware specifications that would need to be reached, pro-
+                                            stack, but the full chain demands fluency across quan-           viding direct feedback for the design of future hardware.
+                                            tum physics, software engineering, numerical simulation,
+                                            cloud computing, and hardware characterization. The
+                                            resulting implementation barrier often exceeds the effort                      II.     AGENTIC WORKFLOW
+                                            of formulating the original scientific idea, leaving many
+                                            physically viable proposals unexplored despite suitable            We start by describing known agentic workflows that
+                                            hardware being available.                                        have been developed for scientific research, before pre-
+                                                                                                                              2
+
+
+                     Human guidance                                           Protocol extraction & adaptation
+                  • Defines objectives
+                  • Reviews protocol
+                  • Interprets results
+
+               Is protocol X feasible on a
+               Pasqal QPU ?
+                                                                              Qubit register         Pulse
+
+
+                                                           refinement
+
+
+
+                             Scientific analysis                               Validation & hardware execution
+
+                                                                                     Noiseless emulator
+
+
+                                                                                   Noise-aware emulator
+
+
+                                                                                       Pasqal QPU run
+
+
+
+FIG. 1. AI-assisted workflow for translating quantum protocols into hardware experiments. A researcher defines
+the scientific objective and interacts with the AI workflow through natural-language instructions. The AI extracts or generates
+an experimental protocol, including the neutral-atom register and pulse sequence, from a scientific publication, patent, or user
+request. The pulse sequence is determined by the qubit register, the time evolution of the Rabi frequency Ω (rad.µs−1 ) and
+the detuning δ (rad.µs−1 ). Before execution on quantum hardware, the protocol is validated using noiseless and noise-aware
+emulation to identify implementation issues and support iterative refinement. Once validated, the experiment is executed on a
+cloud-accessible neutral-atom quantum processor. The resulting measurement data are automatically processed into scientific
+observables, which the researcher interprets to assess the outcome and, when necessary, refine the protocol for subsequent
+iterations. The workflow keeps the researcher in the decision loop while automating the engineering tasks required to bridge
+the gap between a scientific idea and a hardware experiment.
+
+
+senting our specific workflow for this study, presented at        controllers handle real-time qubit feedback [15] and error-
+a high-level in Fig. 1.                                           correction stabilisation [16], and LLM-based program
+                                                                  synthesis (Agent-Q [17], with retrieval [18] or simula-
+                                                                  tor feedback [19]) generates circuits from specifications.
+                     A.    Prior work                             Multi-agent architectures have similarly been applied to
+                                                                  translate natural-language requirements into traceable
+   LLM agents are now used to run increasingly au-                quantum-application workflows [20]. Most closely, Shi-
+tonomous scientific workflows, in which they coordi-              raishi et al. [21] expose QPU and HPC execution to an
+nate tools, execute multi-step procedures, and interface          agent through a Model Context Protocol server. These
+with external computational or experimental infrastruc-           approaches lower the expertise to operate hardware but
+ture [9].                                                         assume a well-defined target. AI-Mandel [22] goes one
+   Coscientist [6], ChemCrow [7], and the AI Scientist [8]        step further and lets the agent choose its own research
+established the feasibility of agentic automation: the first      question in quantum optics, using a domain-specific de-
+two translate natural-language objectives into executable         sign tool to turn each idea into an implementable exper-
+chemistry experiments through tool-augmented reason-              iment.
+ing, while the AI Scientist automates machine-learning               As agentic workflows become autonomous, they also
+from a hypothesis to a manuscript. Role-specialised               raise questions about the evolving role of the human sci-
+multi-agent systems (AtomAgents [10], ProtAgents [11])            entist. Consequently, many recent frameworks emphasize
+outperform monolithic ones on design tasks, and self-             the importance of maintaining meaningful human over-
+driving laboratories [12] run modular instruments in              sight throughout the research process [23, 24]. System-
+closed loops (e.g. ChemOS 2.0 [13], with multi-agent              atic evaluations have shown that LLMs can generate per-
+benchmarks [14]).                                                 suasive yet fundamentally incorrect analyses due to hal-
+   Within quantum technologies, reinforcement-learning            lucinations and flawed reasoning [25, 26]. Recent bench-
+                                                                                                                          3
+
+marks on open physics problems further demonstrate              timization application derived from a patent, specifically
+that even advanced autonomous agents struggle with              a graph-coloring algorithm (Example C).
+the tacit domain knowledge, contextual judgment, and               Before turning to the examples, we briefly recall the
+physical intuition required for scientific discovery [27].      control knobs these experiments are expressed in. A
+We observe similar limitations in this study, particularly      neutral-atom QPU realizes an Ising-like Hamiltonian
+during result interpretation, and discuss these challenges      whose terms map onto three handles: the qubit register,
+throughout the case studies presented in this work.             i.e. the positions of the atoms, which fix the pairwise in-
+                                                                                  6
+                                                                teractions C6 /rij  through the chosen geometry; the Rabi
+                                                                frequency Ω(t), which coherently couples the ground and
+       B.    Description of our agentic workflow                Rydberg states and sets the transverse field; and the de-
+                                                                tuning δ(t) of the driving laser from resonance, which
+   Our framework builds on Pasqal’s existing software           acts as a longitudinal field controlling the Rydberg pop-
+stack: Pulser [28], an open-source Python library for           ulation. A protocol is thus a register plus time profiles
+designing pulse sequences on neutral-atom QPUs and                Ω(t), δ(t) , typically applied globally to all atoms. Each
+their emulators; the matrix-product-state emulator emu-         handle comes with limits: a maximum number of atoms
+mps [29]; and the Pasqal Cloud SDK [30, 31], which pro-         and a minimum interatomic spacing for the register, caps
+vides programmatic access to the QPUs, their calibration        on Ω and on the reachable detuning range, finite ramp
+data, and noise models.                                         rates, and a maximum sequence duration. These bounds
+   On top of this stack, the workflow is implemented as a       are device-specific and evolve with hardware upgrades.
+collection of skills, each responsible for one stage such as:
+translating a scientific source into a specification, compil-
+ing that specification into a pulse sequence, validating it      A.     Reproduction of a literature hardware result
+in emulation, executing it on hardware, or analyzing the
+returned data (Fig. 1). The individual skills are detailed                           1.   Context and task
+in Appendix A. We here use Anthropic’s Claude Code
+with the models Opus 4.8 and Fable 5.                              Our objective is to reproduce known results that have
+   The skills operate on a single structured arti-              already been run on hardware. We select a landmark
+fact, a machine-readable experimental specification             paper by Keesling et al. [32] from 2019 where the authors
+experiment_spec.json capturing the physical parame-             study the Kibble-Zurek mechanism when driving a 1D
+ters, observables, and constraints of the experiment. This      array of atoms through a quantum phase transition from
+specification is the primary interface between researcher       the paramagnetic to several ordered states, namely Z2 , Z3
+and agent: it can be inspected, modified or approved            and Z4 . From a domain expert point of view, we know
+before anything is executed. By construction, any modi-         that the quantum phase transition to Z2 is realizable but
+fication propagates to all downstream stages.                   not the higher order ones.
+   Importantly, no protocol reaches the QPU without                We intentionally prompt the agent towards the Z3
+passing through emulation. A candidate sequence is first        phase to judge if the workflow can recognize hardware-
+simulated noiselessly to establish a reference prediction,      imposed limitations. We use the following prompt:
+then re-simulated with device-specific noise parameters
+retrieved from the cloud SDK. Comparing the two indi-                   Reproduce the Z3 density-wave results from
+cates whether the target observable is expected to survive            Keesling et al. on FC1. Read the paper,
+realistic hardware conditions and helps the researcher in             identify the protocol for the Z3 phase,
+deciding to submit.                                                   adapt it to FC1 constraints, and run the
+   Finally, the skills can be composed into iterative re-             pipeline through EMU validation. If the
+finement loops that follow the researcher–AI dialogue:                EMU verdict is GO, propose a QPU submission
+validation or hardware results may motivate changes to                plan. If any aspect of the paper’s protocol
+the register geometry, pulse schedule, or target observ-              cannot be faithfully reproduced on FC1,
+able, upon which the agent regenerates the sequence and               document the deviation and justify whether
+                                                                      it preserves the essential physics.
+re-runs the relevant stages.
+
+
+            III.   END-TO-END EXAMPLES                                          2.    Workflow and dialogue
+
+   We present three examples of increasing complexity.            The agent extracts the protocol directly from the pa-
+First, we reproduce a well-known quantum simulation             per: a 51-atom 1D chain, the blockade ratio Rb /a defin-
+result expected to be achievable on FC1 and SA1 (Ex-            ing the ordered lobe (Rb /a ≈ 2.16–2.43 for Z3 , with Rb
+ample A). Next, we examine a theoretical proposal to            the blockade radius and a the atomic spacing), and the
+assess whether the predicted phase of matter can be re-         pulse schedule together with the sweep rates tabulated
+alized on FC1 (Example B). Finally, we address an op-
+                                                                                                                         4
+
+for each interaction range. It then fetches FC1’s live de-          Prompted to make better use of the field of view, we
+vice specification through the cloud SDK and combines            suggest replacing the open chain with a ring register to
+the two to reach the following verdict:                          add atoms and remove edge effects. The agent then
+                                                                 sizes a 56-atom ring at the spacing floor and reruns the
+  (i) The Z3 phase is not native: reaching the tar-              pipeline. We furthermore note that the second Pasqal
+      geted regime at the spacing floor forces Ω/2π down         QPU SA1 offers a larger field of view. The agent sizes a
+      to 0.087 MHz, stretching the dynamical timescale           96-atom ring for it.
+      so that neither one Rabi period nor the nearest-              In Fig. 2, we show that the reconstructed correlator
+      neighbour interaction time fit inside the sequence         from the 2019 apparatus and from both 2026 devices co-
+      cap. By the same scaling argument, the still-higher        incide to within statistical error at all 20 lattice sites
+      Z4 phase places it further out of reach.                   probed, with fitted correlation lengths of ξ = 3.9 (pa-
+                                                                 per), 4.2 (FC1) and 4.2 (SA1) sites.
+ (ii) The Z2 phase on the contrary is native: at the 5 µm
+      spacing floor and full Ω, Rb /a = 1.28 falls well
+      inside the ordering lobe, and the paper’s slowest                                 3.   Comments
+      schedule fits the 6 µs FC1 specification.
+
+   These observations fit very well with our intuition, con-        This first example already demonstrates excellent
+firming that the agent identifies correctly the hardware         agentic capability. In addition to independently con-
+constraints.                                                     structing the noiseless-vs-ideal comparison, it also re-
+   Redirected to the Z2 phase, the agent uses the                covered from infrastructure failures (a paused QPU, er-
+noise_emulate skill and obtains 80 % noise retention             rors in jobs) without derailing the broader campaign.
+with the saturated order parameter, reaching 71 % of its         Agents have the healthy habit of consistently adding
+ideal value. The order parameter is the density-density          checkpoints, error logs and try/except errors that help
+correlator introduced in the original work [32]                  recover from failures. Most noticeably, the pipeline was
+                                                                 extremely fast: in less than an hour and three researcher
+                  1 X                                          prompts the agentic workflow had QPU jobs up and run-
+         G(r) =        ⟨ni ni+r ⟩ − ⟨ni ⟩⟨ni+r ⟩ .        (1)    ning.
+                  Nr i
+                                                                    That said, the higher-level scientific moves that im-
+                                                                 proved the outcome, such as switching to a ring regis-
+                                                                 ter or extending the study to a second QPU originated
+                                                                 from the researcher. Note that every such piece of in-
+                                                                 put is retained by the agentic workflow, so that future
+                                                                 experiments start from an accumulated body of domain
+                                                                 know-how rather than repeating the same reasoning from
+                                                                 scratch. Once directed, the agent executed each multi-
+                                                                 hour, multi-device campaign autonomously.
+
+
+                                                                  B.   Preparation of frustrated quantum magnetic
+                                                                            phases on a triangular lattice
+
+                                                                   We now turn to a harder use-case for which a theory
+                                                                 paper exists but no QPU implementation is proposed.
+
+
+                                                                                   1.    Context and task
+
+FIG. 2. Density-density correlator G(r) in the saturated            Guo et al. [33] explore the quantum magnetic phases of
+Z2 -ordered phase as a function of the distance r in num-        a frustrated triangular Rydberg-atom array. Using quan-
+ber of sites. Open black circles: values taken from Fig. 1d      tum Monte Carlo, the authors map out a phase diagram
+of Keesling et al. [32] (51-atom chain, fitted ξ = 3.9 sites).   containing three ordered lobes as a function of the re-
+Half-filled markers: this work, on a 56-atom ring on Pasqal
+                                                                 duced detuning δ/Ω: a 1/3-filling plateau, a 1/2-filling
+QPU FC1 (orange, 2000 shots, ξ = 4.2) and a 96-atom ring
+on Pasqal QPU SA1 (green, 1000 shots, ξ = 4.2). The grey
+                                                                 “order-by-disorder” phase known to be experimentally
+line is a guide to the eye. All three datasets show that the     fragile, and a 2/3-filling plateau.
+saturated ordered-phase correlator is a robust observable, re-      We give the agent a deliberately open-ended system
+produced by our agentic workflow on two Pasqal QPUs, 7           prompt. This tests whether it can autonomously isolate
+years after the landmark experiment.                             the relevant physical variables and map out an experi-
+                                                                 mental realisation:
+                                                                                                                                 5
+
+
+      Read Guo et al. paper (link provided).
+    For each distinct phase of matter described
+    in the paper, assess whether it can
+    realistically be prepared and observed on
+    Pasqal QPU FC1 using our pipeline. Produce
+    a verdict table (feasible / marginal /
+    infeasible) with your reasoning. For every
+    phase you judge feasible or marginal, output
+    a complete experiment_spec.json ready for
+    spec-to-sequence.
+
+  From an expert perspective, preparing a frustrated
+ground state on hardware requires several trade-offs:
+choosing commensurate system sizes, designing an adi-
+abatic annealing trajectory, and tracking a combination
+of observables sufficient to certify the phase unambigu-
+ously. Our goal is to assess how effectively the agent
+navigates these nuances.
+                                                                 FIG. 3. Normalised order parameter |m| versus δ/Ω on the
+                                                                 bulk sublattice. Open black circles: QMC in the thermody-
+                2.   Workflow and dialogue                       namic limit (Guo et al. [33]). Filled circles: QPU Pasqal FC1
+                                                                 at N = 49 (blue) and N = 100 (orange), on rhombic L × L
+                                                                 triangular registers
+                                                                               √      with L ≡ 1 mod 3, so the open boundary
+   Invoking the paper-to-spec skill, the agent correctly         pins a single 3 sublattice. Shaded band: MPS emulation
+parsed the paper’s core results, identifying the 1/3 and         of the N = 49 register including the calibrated FC1 noise
+2/3 plateaus alongside the delicate 1/2-filling order-by-        model (±2σ over 40 quantum-jump trajectories). All data
+disorder phase. Its verdict table again demonstrated a           share a = 5.3 µm (Rb /a = 1.21), Ω/2π = 2 MHz, and a 4 µs
+firm grasp of the hardware constraints. The decisive lim-        linear detuning ramp from δi = −4 MHz, with 300 shots per
+itation is FC1’s maximum detuning, |δ|/2π ≤ 10 MHz:              point.
+since each lobe is specified by a fixed reduced detun-
+ing δ/Ω, reaching a deeper lobe forces a proportionally
+smaller Rabi frequency, and hence a longer adiabatic             small registers. Guided by the researcher on both points,
+ramp measured against a fixed coherence time. Work-              it identified the staggered magnetisation
+ing from the tunable knobs the agent reasoned that                             N                                       
+                                                                        3 X                                 2π 2π
+  (i) the 1/3-filling phase (δc1 /Ω = 1.22) is feasible, since      m =       nj eiQ·rj ,        Q =           , √          ,   (2)
+                                                                        N j=1                               3a     3a
+      its lobe is reached at the full Ω/2π = 2 MHz;
+ (ii) the 1/2-filling phase (δ/Ω ≃ 9.5) is only marginally       where nj ∈ {0, 1} is the Rydberg occupation of atom j
+      feasible, as it requires halving the Rabi frequency        and the prefactor normalises perfect 1/3 order to |m| = 1.
+      to Ω/2π ≃ 1 MHz, which lengthens the ramp and              Because the phase is three-fold degenerate, the sublattice
+      risks non-adiabatic transitions out of the ground          selected varies from shot to shot and ⟨m⟩ averages to
+      state;                                                     zero, hence the importance of selecting the shot-resolved
+                                                                 magnitude ⟨|m|⟩. We then directed the agent to design a
+(iii) the 2/3-filling phase (δc2 /Ω = 17.8) is infeasible, as    scaling study for commensurate rhombic registers (L × L
+      it would demand Ω/2π ≲ 0.6 MHz, a ramp far too             with L ≡ 1 mod 3), yielding valid sizes N = 49 (L = 7)
+      slow compared with the atomic coherence time.              and N = 100 (L = 10). The resulting QPU data (Fig. 3)
+                                                                 clearly display the 1/3 plateau. A deficit of roughly half
+   We instructed the agent to generate and test Pulser           the QMC amplitude arises from finite-size rounding, di-
+sequences preparing the viable phases. Left to its own           abatic ramp excitations, and hardware noise. The emu-
+devices, the agent exhibited a form of cognitive narrow-         lated noise faithfully envelopes the QPU datapoints.
+ing: of the four observables detailed in the original paper
+it retained only the structure factor and the mean mag-
+netisation. While the structure factor is an appropriate                                3.   Comments
+two-body diagnostic, the mean magnetisation is not the
+one-body order parameter of the paper, and cannot dis-             The agent demonstrated a significant ability to ex-
+tinguish the particular pattern from any other state at          tract, translate, and execute a hardware experiment di-
+the same density. The agent also overlooked the finite-          rectly from a theory paper, eliminating tedious boiler-
+size scaling arguments that are central to interpreting          plate script generation and hardware parameter mapping
+                                                                 to sharply reduce the time-to-QPU.
+                                                                                                                      6
+
+   However, we observed a key failure mode: the agent
+consistently optimized for the nearest tractable sub-task        Rydberg IS primitive, handle the multi-round
+at the expense of the core physics, selecting the observ-        orchestration on present hardware, and
+able that was easiest to compute rather than the one             benchmark the estimated chromatic number
+                                                                 against a classical baseline on random
+that genuinely certifies the phase. Crucially, because the
+                                                                 unit-disk graphs. Document any hardware
+pipeline ran smoothly and generated plausible-looking            constraint that forces a deviation from the
+data, only domain expertise could identify that the wrong        patent’s idealized procedure.
+physical quantity was being measured. Consequently,
+while Example A required just 3 human messages, this
+example required 43 exchanges to reach a physically accu-
+rate implementation. This highlights that agentic work-                      2.   Workflow and dialogue
+flows must be evaluated not merely on execution success,
+but on physical accuracy.                                       On present hardware, physical atom expulsion is re-
+   Finally, these experiments clarify current QPU bound-     placed by a classical measurement-feedback loop: the
+aries. The 1/2- and 2/3-filling lobes are restricted here    agent compiles the full N -atom layout once into a
+solely by the maximum detuning |δ|max , and could be un-     MappableRegister batch and submits each round as
+locked either by expanding the detuning range or rescal-     a separate job within that open batch, activating only
+ing the blockade ratio to shift the lobes to smaller δ/Ω,    the subset of trap sites corresponding to the current
+a regime already accessed on academic setups [34].           subgraph. This eliminates re-queuing latency between
+                                                             rounds while holding a single QPU queue slot. To cope
+                                                             with finite shot counts, the agent runs a beam search
+  C.    Patent implementation: graph coloring via            (width w=3, ns =200 shots per round per branch), main-
+            iterative Rydberg IS peeling
+                                                             taining three candidate colorings in parallel and retaining
+                                                             the best final result. A classical repair step corrects any
+   We now move to our last example, taken from combi-        blockade-imperfect shots that violate the IS constraint.
+natorial optimization. The source here is distinctive: not      The multi-round orchestration rests on Pulser [28]
+a journal paper but a Pasqal patent. This tests whether      for pulse-level compilation and the Pasqal Cloud
+the same workflow mines patents as readily as the pub-       SDK for batch lifecycle management.            The use of
+lished literature, a second and largely untapped corpus      MappableRegister and open-batch primitives was not
+of hardware-ready protocols. The patent specifies the al-    specified a priori; the agent designed and refined
+gorithm but not its realization on present hardware, so      this pipeline through iterative back-and-forth with the
+the agent must bridge from a protocol description to a       user, consulting the SDK and hardware documen-
+working multi-round pipeline.                                tation to identify constraints that do not surface
+                                                             programmatically—notably, the minimum trap-site fill-
+                                                             ing fraction the cloud API enforces when the active sub-
+                  1.   Context and task                      graph shrinks in late rounds, which would otherwise
+                                                             cause job rejections.
+   Graph coloring (assigning colors to the vertices of          We benchmark on random unit-disk graphs with N ∈
+G = (V, E) such that adjacent vertices receive differ-       {15, 20, 30, 40, 50, 60, 70, 80} atoms, 75 instances in to-
+ent colors) is equivalent to a sequence of independent-      tal. The classical chromatic number χ (DSATUR) is 4–5
+set (IS) problems: peel one IS per round until all ver-      throughout, confirming that χ stays bounded as N grows
+tices are covered, with the round count upper-bounding       from 15 to 80 for these sparse graphs. At N =20 the
+the chromatic number χ(G). A project-and-expel algo-         QPU achieves the exact chromatic number on all 10 in-
+rithm maps this decomposition onto the native Rydberg        stances (mean gap ⟨χ̂ − χ⟩=0.00); the gap grows to at
+IS primitive [35, 36]: starting from all N atoms in |0⟩, a   most 1.44 ± 0.50 at N =80, and never exceeds 2 across
+resonant global pulse drives the current sub-register into   all 75 instances (overall mean 0.84). Figure 4 shows the
+a superposition of independent sets; one measurement         scaling.
+shot collapses onto a valid IS; those atoms are assigned a
+color and retired; the residual subgraph defines the next
+round.                                                                             3.   Comments
+
+      Read the attached Pasqal patent describing                This example extends the workflow beyond a single-
+    the project-and-expel algorithm for                      shot protocol to a multi-round, state-dependent pipeline:
+    estimating the chromatic number of a                     the agent compiles the register once, routes χ̂ sequen-
+    graph on a Rydberg array. Implement it                   tial jobs within one open batch, manages beam-search
+    on Pasqal QPU FC1: map the iterative                     branches across rounds, and aggregates the final coloring,
+    IS-peeling decomposition onto the native
+                                                             an orchestration pattern that would require substantial
+                                                             bespoke engineering outside an agentic scaffold. It also
+                                                                                                                       7
+
+
+
+
+FIG. 4. Example C, QPU beam-search graph coloring on FC1 (unit-disk graphs at density 0.35, blockade radius Rb =10 µm;
+beam-width w=3, ns =200 shots/round, 75 instances). (a) QPU estimate χ̂ and classical optimum χ (DSATUR) vs. N ; lines
+show mean ±σ, dots show per-instance values. (b) Coloring gap χ̂−χ per instance (coloured by gap value) and mean ±σ; the
+gap is zero at N =20 and never exceeds 2. (c) Fraction of seeds at each gap value per N .
+
+
+demonstrates that the corpus an agent can draw on is          were classified according to the hardware capabilities re-
+not limited to published papers: a patent, read directly,     quired to implement their proposed protocols. Table I
+served as a complete and actionable protocol source.          summarizes the resulting distribution.
+   As in the previous example, though, the agent re-             Among the classified papers, 258 (49.0%) were found
+quired direction from the researcher and occasionally         to be compatible with publicly available Pasqal QPUs.
+went astray. Confronted with an unexpectedly high rate        Of these, 225 describe sufficiently complete experimental
+of constraint-violating shots, the agent confidently at-      protocols that can be translated directly into executable
+tributed it to physics, diagnosing substantial Rydberg-       implementations, while the remaining 33 require mod-
+blockade leakage on the QPU. The true cause was a             est adaptation, such as specifying an observable, pulse
+mismatch between the ordering of the atomic coordi-           schedule, or parameter range. The remaining 268 papers
+nates and the ordering of the measured bitstrings, which      require hardware capabilities that are not yet publicly
+scrambled the vertex labels and made valid independent        available, most commonly XY-type interactions (141 pa-
+sets appear to violate the adjacency constraints. The         pers) or local addressing (87 papers).
+pathology lay in the workflow, neither the hardware nor          The 258 implementable papers represent viable start-
+the physics, and only expert scrutiny of the raw shot-        ing points for experimentation on present-day hardware.
+to-graph mapping surfaced the labelling bug behind the        In practice, obtaining a meaningful experimental signal
+agent’s plausible but incorrect physical story.               still requires adapting each protocol to the characteris-
+                                                              tics of the device and selecting observables that remain
+                                                              robust in the presence of hardware noise. The agent sub-
+    IV.    CORPUS-SCALE ANALYSIS OF THE                       stantially reduces this engineering effort while scientific
+          RYDBERG-ARRAY LITERATURE                            judgment remains essential when designing the experi-
+                                                              ment and interpreting its outcome.
+   The examples in the previous section demonstrate the          Beyond estimating the current experimental reach of
+workflow on individual protocols. The same agentic ap-        neutral-atom platforms, the classification also provides a
+proach can also be applied at corpus scale: a second agen-    quantitative view of future hardware priorities. The vast
+tic workflow surveys the Rydberg-array theory literature      majority of currently inaccessible protocols require either
+and performs a rapid feasibility assessment based on the      XY interactions or local addressing, which together ac-
+physical resources required by each proposal. The com-        count for approximately 85% of the non-implementable
+plete corpus-construction procedure, search queries, fil-     papers. The same analysis therefore serves two com-
+tering pipeline, and classification workflow are described    plementary purposes: it estimates how much of today’s
+in Appendix B.                                                Rydberg-array literature can already be brought to hard-
+   The search identified 633 Rydberg-array theory papers.     ware using an agentic workflow, and it identifies the hard-
+Of these, 107 could not be reliably classified because the    ware capabilities that would unlock the largest fraction
+corresponding PDF was unreadable or insufficiently de-        of the remaining scientific literature.
+tailed for automated analysis. The remaining 526 papers
+                                                                                                                           8
+
+                                                                largest fraction of the literature, providing a demand-
+TABLE I. Classification of the 526 Rydberg-array theory pa-
+                                                                driven perspective for future hardware development.
+pers the agent could read and classify (out of 633 on-topic;
+107 unclassified). The top two rows (258 papers, 49.0 %) are       A central observation emerging from our study is that
+implementable on a present-day neutral-atom QPU; the re-        the operational bottleneck has shifted. The agent proves
+maining rows group the rest by which rule they fail.            highly effective at coordinating software tools, navigat-
+                                                                ing device interfaces and generating experiments on the
+ Class                                         Papers    %
+                                                                QPU. Its limitations appear rather in the selection of
+ Implementable today                              225 42.8      physically meaningful observables, recognizing subtle sci-
+ Implementable with modest adaptation              33 6.3       entific assumptions, and deciding whether an experimen-
+ Needs different atomic encoding (XY)             141 26.8      tal signal genuinely supports a physical claim. If any-
+ Needs local addressing                            87 16.5      thing, the researcher’s role becomes more decisive than
+ Too big (N > 100)                                 17 3.2       ever—hypothesis formulation, critical evaluation, and
+ Needs measurements during the pulse                9 1.7       scientific interpretation of the data remain irreducibly
+ Needs basis rotations beyond on/off readout        5 1.0       human—now that the surrounding engineering no longer
+ Genuinely under-specified                          9 1.7       competes for their attention. The same tooling works in
+ Total                                            526 100       the theorist’s favour upstream as well: by pairing noise-
+                                                                less predictions with noise-aware emulation, it gives a
+                                                                rapid, quantitative read on which observables are likely
+                                                                to rise above the hardware noise, concentrating effort on
+         V.    SUMMARY AND OUTLOOK
+                                                                the signals a QPU can actually resolve.
+                                                                   Looking forward, we believe this work also paves the
+   While quantum hardware has become increasingly ac-           way for scientific reproducibility. Reproducing a pub-
+cessible through cloud platforms and high-performance           lished quantum experiment often requires reconstruct-
+computing infrastructures, translating a scientific idea        ing a large amount of implicit engineering knowledge
+into a hardware experiment remains a substantial under-         that is only partially captured in the manuscript itself.
+taking. In this work, we introduced an agentic framework        By translating scientific protocols into structured, ex-
+designed to bridge this gap, structured as a collection of      ecutable specifications, agentic workflows offer a scal-
+modular AI-agent skills. By operating on a common ex-           able framework to preserve this engineering layer along-
+perimental specification and state representation, these        side the publication. As hardware and software plat-
+skills can be iteratively orchestrated by the researcher        forms evolve, these specifications can be re-instantiated,
+into refinement loops that regenerate sequences, run sim-       adapted to new devices, and revalidated with minimal
+ulations, or adjust parameters to accelerate the time to        manual effort. In this sense, publications can evolve from
+run a real experiment on a Pasqal QPU.                          static descriptions of experiments into executable scien-
+   Beyond these individual demonstrations, our corpus-          tific artifacts that can be systematically revisited, veri-
+scale analysis provides a broader perspective: approxi-         fied, and extended over time.
+mately half of the analyzed theory papers describe pro-            Ultimately, we expect that the most transformative
+tocols that are compatible with Pasqal QPUs and could           quantum applications will emerge when quantum hard-
+immediately be explored experimentally using our work-          ware becomes accessible not only to the teams that build
+flow. Concurrently, the analysis of the remaining papers        it, but also to a broader scientific community capable of
+quantifies exactly which hardware capabilities—notably          bringing new questions, unique datasets, and fresh per-
+XY interactions and local addressing—would unlock the           spectives to the field [37].
+
+
+
+
+ [1] A. Browaeys and T. Lahaye, Nature Physics 16, 132               177 (2024).
+     (2020).                                                     [6] D. A. Boiko, R. MacKnight, B. Kline, and G. Gomes,
+ [2] L. Henriet, L. Beguin, A. Signoles, T. Lahaye,                  Nature 624, 570 (2023).
+     A. Browaeys, G.-O. Reymond, and C. Jurczak, Quantum         [7] A. M. Bran, S. Cox, O. Schilter, C. Baldassari, A. D.
+     4, 327 (2020).                                                  White, and P. Schwaller, Nature Machine Intelligence 6,
+ [3] A. J. Menssen, M. Gullans, T. Manovitz, J. M. Tay-              525 (2024).
+     lor, J. Cong, J. Sinclair, Z. Aqua, D. J. Blumen-           [8] C. Lu, C. Lu, R. T. Lange, J. Foerster, J. Clune, and
+     thal, J. Ataides, J. Borregaard, et al., arXiv preprint         D. Ha, arXiv preprint (2024), arXiv:2408.06292 [cs.AI].
+     arXiv:2607.21554 (2026).                                    [9] T. Zheng et al., arXiv preprint (2025), arXiv:2505.13259
+ [4] S. Ebadi, A. Keesling, M. Cain, T. T. Wang, H. Levine,          [cs.AI].
+     D. Bluvstein, G. Semeghini, A. Omran, J.-G. Liu,           [10] A. Ghafarollahi and M. J. Buehler, Proceedings of the
+     R. Samajdar, et al., Science 376, 1209 (2022).                  National Academy of Sciences 122, e2414074122 (2025).
+ [5] C. Dalyac, L. Leclerc, L. Vignoli, M. Djellabi, W. d. S.   [11] A. Ghafarollahi and M. J. Buehler, Digital Discovery 3,
+     Coelho, B. Ximenez, A. Dareau, D. Dreon, V. E. Elfving,         1389 (2024).
+     A. Signoles, et al., The European Physical Journal A 60,   [12] G. Tom et al., Chemical Reviews 124, 9633 (2024).
+                                                                                                                                   9
+
+[13] M. Sim et al., Matter 7, 2959 (2024).                          [36] C. Vercellino, G. Vitali, P. Viviani, E. Giusto, A. Scionti,
+[14] I. Mandal et al., Nature Communications 16, 9104                    A. Scarabosio, O. Terzo, and B. Montrucchio, in 2023
+     (2025).                                                             IEEE International Conference on Quantum Comput-
+[15] K. Reuer et al., Nature Communications 14, 7138 (2023).             ing and Engineering (QCE), Vol. 2 (2023) pp. 141–147,
+[16] V. Sivak et al., arXiv preprint (2025), arXiv:2511.08493            arXiv:2605.03524.
+     [quant-ph].                                                    [37] C. Jurczak, QOuLiPo: What a quantum computer sees
+[17] L. Jern et al., in IEEE International Conference on                 when it reads a book (2026), arXiv:2605.14188 [cs.CL].
+     Quantum Computing and Engineering (QCE) (2025).
+[18] H. Asif et al., arXiv preprint (2025), arXiv:2503.02497
+     [quant-ph].
+[19] T. Mikuriya et al., arXiv preprint                   (2025),                   ACKNOWLEDGMENTS
+     arXiv:2510.26101 [cs.CL].
+[20] M. Tao, Y. Li, T. Yue, M. Zhang, and A. Arrieta Marcos,
+     arXiv preprint (2026), arXiv:2607.00939 [cs.SE].                  The hardware results reported here were obtained on
+[21] M. Shiraishi et al., in International Conference on            the Pasqal QPUs FC1 and SA1 through standard Pasqal
+     Quantum Communications, Networking, and Computing              Cloud accounts available to external users. FC1 is lo-
+     (QCNC) (2026).                                                 cated in Sherbrooke, in the DistriQ quantum-innovation
+[22] S. Arlt, X. Gu, and M. Krenn, Towards autonomous               zone (Québec, Canada); SA1 is located in the Kingdom
+     quantum physics research using LLM agents with access          of Saudi Arabia. The AI coding agent used throughout
+     to intelligent tools (2025), arXiv:2511.11752 [cs.AI].         this work is Anthropic’s Claude Fable 5 and Opus 4.8.
+[23] S. Kumar, S. Datta, V. Singh, D. Datta, S. K. Singh, and
+     R. Sharma, IEEE Access 12, 75735 (2024).
+[24] X. Tang, Q. Jin, K. Zhu, T. Yuan, Y. Zhang, W. Zhou,
+                                                                          Appendix A: Agentic workflow description
+     M. Qu, Y. Zhao, J. Tang, Z. Zhang, A. Cohan, Z. Lu, and
+     M. Gerstein, Nature Communications 16, 8317 (2025).
+[25] L. Messeri and M. J. Crockett, Nature 627, 49 (2024).             The framework exposes six modular skills, which share
+[26] J. Huang, X. Chen, S. Mishra, H. S. Zheng, A. W. Yu,           a common per-experiment state and exchange informa-
+     X. Song, and D. Zhou, in International Conference on           tion through structured artifacts.
+     Learning Representations (ICLR) (2024).
+[27] M. Malinowski, Can AI answer open questions in                     • paper_to_spec translates a scientific objective
+     physics?, https://m-malinowski.github.io/2026/06/                    into a structured experimental specification. The
+     05/ai-open-physics-problems.html (2026), accessed:                   input may be a research publication, patent,
+     June 11, 2026.                                                       technical report, or a high-level user description.
+[28] H. Silvério, S. Grijalva, C. Dalyac, L. Leclerc, P. J. Kar-
+                                                                          The resulting experiment_spec.json captures
+     alekas, N. Shammah, M. Beji, L.-P. Henry, and L. Hen-
+     riet, Quantum 6, 629 (2022).
+                                                                          the relevant physical parameters, observables, and
+[29] K. Bidzhiev, S. Grava, P. le Henaff, M. Mendizabal                   experimental constraints.
+     Pico, E. Merhej, and A. Quelle, arXiv preprint (2025),
+     arXiv:2510.09813 [quant-ph].
+[30] Pasqal, pasqal-cloud:        Python SDKs to interact
+                                                                        • spec_to_sequence converts the specification into
+     with Pasqal Cloud Services, https://github.com/                      an executable Pulser implementation. In addition
+     pasqal-io/pasqal-cloud (2026), accessed: 2026-06-10.                 to generating the pulse sequence itself, the skill
+[31] A. Wennersteen, K. Bidzhiev, M. D’Arcangelo,                         exposes a standard build_sequence interface that
+     M. Moreau, A. Quelle, A. Dauphin, and M. Beji,                       is reused by the simulation, validation, calibration,
+     in Quantum Engineering Sciences and Technologies for                 and hardware-execution stages, so that modifica-
+     Industry and Services (QUEST-IS 2025), Communica-                    tions to the specification propagate consistently
+     tions in Computer and Information Science, Vol. 2744,                downstream.
+     edited by F. Barbaresco and F. Gerin (Springer, Cham,
+     2026) pp. 117–125.
+[32] A. Keesling, A. Omran, H. Levine, H. Bernien, H. Pich-             • validate_emu evaluates a candidate protocol with
+     ler, S. Choi, R. Samajdar, S. Schwartz, P. Silvi,                    emu-mps. A typical validation pairs a noiseless sim-
+     S. Sachdev, P. Zoller, M. Endres, M. Greiner, V. Vuletić,           ulation, which provides the reference prediction,
+     and M. D. Lukin, Nature 568, 207 (2019).
+                                                                          with a noise-aware simulation that incorporates
+[33] S. Guo et al., Order-by-disorder and emergent Kosterlitz–
+     Thouless phase in a triangular Rydberg array (2023),
+                                                                          device-specific noise parameters obtained through
+     arXiv:2302.08963 [cond-mat.quant-gas].                               the Pasqal Cloud SDK and generates a statistical
+[34] P. Scholl, M. Schuler, H. J. Williams, A. A. Eberharter,             envelope from multiple quantum-jump trajectories.
+     D. Barredo, K.-N. Schymik, V. Lienhard, L.-P. Henry,                 This skill is aimed in particular at Pulser-literate
+     T. C. Lang, T. Lahaye, A. M. Läuchli, and A. Browaeys,              users who may not be aware of the more delicate
+     Nature 595, 233 (2021).                                              subtleties of quantum hardware.
+[35] L.-P. Henry and L. Henriet, A method for estimating the
+     chromatic number of a graph, PCT Patent Application
+     No. PCT/EP2024/081690 (2024), assignee: PASQAL;                    • noise_emulate performs a high-fidelity noisy
+     priority EP 23306936.8, filed 8 November 2024.                       emulation of a candidate sequence on local GPU
+                                                                                                                         10
+
+     resources, complementing the faster cloud-based         nant dipole–dipole exchange, dual-species architectures,
+     screening of validate_emu.       The sequence is        and microwave-dressed couplings); (iv) absence of mid-
+     simulated with matrix-product-state trajectories:       circuit measurement; and (v) computational-basis bit-
+     a single noiseless reference run plus an ensem-         string readout without basis rotations for tomography.
+     ble of forty noisy trajectories, whose statistics          Papers satisfying all five criteria are marked as imple-
+     define a quantile envelope for each observable.         mentable. Otherwise, the first violated rule determines
+     The underlying noise model is fetched live from
+                                                             TABLE II. Verbatim arXiv search_query strings used in
+     the device through the Pasqal Cloud SDK at              the corpus scan (executed 2026-05-23) and corresponding hit
+     execution time, so that the emulation reflects          counts per query. All queries target the abstract field via the
+     the current operating point of the hardware             abs: prefix. The aggregate count includes overlaps across
+     rather than static datasheet values. Finally, the       queries; deduplication yields 1,108 unique papers.
+     envelope is widened by a calibration-offset band
+                                                             Label                   search_query                         Hits
+     that propagates residual uncertainty in the Rabi
+     frequency and detuning calibration, producing the       rydberg_array_dyn   abs:"rydberg atom array" AND   106
+     acceptance region against which measured QPU                                (abs:dynamics OR abs:quench
+     data are later evaluated by harvest_and_analyze.                            OR abs:sweep)
+                                                             rydberg_scars       abs:"rydberg" AND (abs:scar    100
+                                                                                 OR abs:"many-body scar" OR
+   • qpu_submit manages execution on quantum                                     abs:"Z2 state" OR abs:"Z3
+     hardware. Before submission, it can run a short                             state")
+                                                             rydberg_mis_opt     abs:"rydberg" AND               49
+     calibration procedure to characterize the cur-
+                                                                                 (abs:"maximum independent
+     rent operating point of the device; the resulting                           set" OR abs:"MIS" OR
+     calibration values are propagated to both the                               abs:"combinatorial
+     experimental parameters and the corresponding                               optimization")
+     noise models. The calibrated experiment is then         rydberg_floquet     abs:"rydberg" AND               91
+     submitted through the Pasqal Cloud SDK.                                     (abs:"Floquet" OR
+                                                                                 abs:"periodic driv")
+                                                             rydberg_phase_trans abs:"rydberg atom array"        68
+   • harvest_and_analyze retrieves completed exper-                              AND (abs:"phase transition"
+     imental data and produces higher-level scientific                           OR abs:"ordered phase" OR
+     observables. Raw bitstrings are processed using                             abs:"adiabatic")
+     device-reported corrections and compared against        rydberg_2d_lattices abs:"rydberg" AND              115
+     both the noiseless prediction and the noise-aware                           (abs:kagome OR
+     simulation envelope, giving a direct assessment                             abs:triangular OR
+                                                                                 abs:"square lattice")
+     of the agreement between theory, hardware-aware
+                                                             pulser_pasqal_sp    abs:"Pulser" OR abs:"Pasqal" 1,188
+     simulation, and measurement.                                                OR abs:"FRESNEL"
+                                                             rydberg_xy_dipolar abs:"rydberg" AND (abs:"XY      204
+                                                                                 model" OR abs:"dipolar" OR
+      Appendix B: Details of the search query                                    abs:"resonant dipole" OR
+                                                                                 abs:"flip-flop")
+   We issued nine topical queries against the arXiv ab-      rydberg_topology    abs:"rydberg atom array"        45
+stract index, retrieving 1,966 raw hits, which dedu-                             AND (abs:topological
+plicated to 1,108 unique papers. A subsequent filter-                            OR abs:"spin liquid" OR
+                                                                                 abs:"gauge theory")
+ing stage removed off-topic matches (e.g. Fresnel op-
+tics, Pulser signal-processing literature, and Rydberg       Sum (with overlap)                                          1,966
+vapour-cell sensor work), resulting in a final corpus of     Unique                                                      1,108
+633 Rydberg-array theory papers.
+   Each paper was then processed by an automated agent
+that parses the full text PDF and assigns a protocol class   a hardware feature label indicating the missing capabil-
+using a five-rule decision tree:                             ity (see Table I). For each classification, the agent stores
+   (i) system size N ≤ 100; (ii) global drive only (i.e.     rule-level justification with citations to the relevant sec-
+no site-selective driving or local detuning); (iii) Ising    tion or figure in the paper, enabling auditability without
+or blockade interactions (excluding XY models, reso-         requiring full manual review.
+

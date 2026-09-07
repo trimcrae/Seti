@@ -1,0 +1,653 @@
+                                              Residue construction of quantized Coulomb
+                                                               branches
+                                                                         Daniil Klyuev
+                                                                         August 4, 2026
+arXiv:2608.01379v1 [math.RT] 2 Aug 2026
+
+
+
+
+                                                                             Abstract
+                                                   We describe the image of a quantized BFN Coulomb branch 𝒜ℏ=1   𝐺,𝑁
+                                               under localization (abelianization) map for any 𝐺, 𝑁 . In most cases,
+                                               such as quiver gauge theories without loops, this description works for
+                                               any flavors, sometimes we need to take generic or formal flavor param-
+                                               eters. The answer is given by a roots and residue condition similar
+                                               to Ginzburg—Kapranov—Vasserot construction of DAHA [GKV]. As a
+                                               corollary, for any quantized conical Coulomb branch (and zero or small
+                                               flavors) we provide a mathematical construction of the sphere trace in-
+                                               troduced by Gaiotto and Okazaki [GO].
+
+
+                                          1    Introduction
+                                          Let 𝐺 be a reductive group and 𝑁 its representation. Braverman, Finkelberg
+                                          and Nakajima gave a mathematical definition of Coulomb branch ℳ𝐺,𝑁 =
+                                          Spec 𝒜ℏ=0
+                                                  𝐺,𝑁 in [BFN]. The algebra 𝒜𝐺,𝑁 is defined as 𝐺(𝑂)-equivariant Borel-
+                                                                               ℏ=0
+
+                                          Moore homology of an infinite-dimensional scheme. Adding equivariance
+                                          with respect to the loop torus C× ℏ we get an algebra 𝒜𝐺,𝑁 that is a deforma-
+                                          tion of 𝒜𝐺,𝑁 over C[ℏ]. Below we will set ℏ = 1.
+                                                    ℏ=0
+
+                                              In the case of quiver gauge theories for quivers without loops quantized
+                                          Coulomb branches are isomorphic to a quotient of a shifted Yangian [BFKKNWW,
+                                          KTWWY] (hence they are called truncated shifted Yangians.) The main tool
+                                          in the proof of this description is localization map (𝑖* )−1 : 𝒜𝐺,𝑁 ˓→ 𝒜𝑇,𝑁,𝑙𝑜𝑐
+                                          described in Remark 5.23 of [BFN]. Here "𝑙𝑜𝑐" means that we consider Ore
+                                          localization at 𝛼 + 𝑘 ∈ C[t] for roots 𝛼 of 𝐺 and integers 𝑘.
+
+                                                                                 1
+    We can further embed 𝒜𝑇,𝑁,𝑙𝑜𝑐 into 𝒜𝑇,0,𝑙𝑜𝑐 = ⊕𝜆∈𝑌 C[t]𝑙𝑜𝑐 𝑟𝜆 . Here 𝑌 is
+the cocharacter lattice of 𝑇 . In this paper we describe the image of 𝒜𝐺,𝑁 in
+𝒜𝑇,0,𝑙𝑜𝑐 for any pair (𝐺, 𝑁 ) obtaining a roots and residues description similar
+to Ginzburg—Kapranov—Vasserot residue construction of DAHA [GKV].
+    An answer for a very close object in the case of 𝐺 = SL(2) and 𝑁 = 0 was
+given in [KV]. Schrader and Shapiro proved the residue description for pure
+𝐾-theoretic GL𝑛 Coulomb branch, see Lemma 6.14 in [SS]. Crisan obtained
+roots and residue description of Iwahori Coulomb branches in [Cri].
+    Let 𝒜𝐺,𝑁 be quantized Coulomb branch with generic or formal flavor
+parameters.
+Remark 1.1. This is a technical condition, the only thing we actually need
+is that there are no cancellations in (1.1). This is true for any flavors if no
+weight of 𝑁 is proportional to a root of 𝐺 and this is true for zero flavors
+unless 2𝜉𝑖 is a root for some weight 𝜉𝑖 of 𝑁 .
+   Our main result is the following:
+Theorem
+∑︀          (Theorem 3.1). Let 𝑆 be a subset of 𝑊 -invariant elements 𝑎 =
+   𝑎𝜆 𝑟𝜆 of 𝒜𝑇,0,𝑙𝑜𝑐 that satisfy the following condition:
+  1. Each 𝑎𝜆 is divisible by
+                     ∏︀𝑛 ∏︀−𝜉𝑖 (𝜆)−1
+                       𝑖=1   𝑗=0     (𝜉𝑖 + 𝑏𝑖 + (𝜉𝑖 (𝜆) + 𝑗 + 12 ))
+                               ∏︀     ∏︀                                      (1.1)
+                                  𝛼>0    |𝑘|<𝑁 (𝛼 − 𝑘)
+
+     for some 𝑁 > 0. In particular, 𝑎𝜆 has at most simple poles at 𝛼 − 𝑘,
+     where 𝛼 is a positive root of 𝐺 and 𝑘 is an integer.
+     Denote the residue at this divisor by Res𝛼,𝑘 (𝑎𝜆 ) ∈ C[𝛼⊥ ].
+
+  2. The residues satisfy the condition Res𝛼,𝑘 (𝑎𝜆 ) + Res𝛼,𝑘 (𝑎𝑠𝛼 (𝜆)+𝑘𝛼ˇ ) = 0.
+   Then the image of 𝒜𝐺,𝑁 in 𝒜𝑇,0,𝑙𝑜𝑐 is 𝑆.
+    One could use the residue construction to better understand twisted
+and positive traces on quantized Coulomb branches, see introduction to [K]
+or [KV] for a discussion of twisted and positive traces. The SL(2) residue
+construction was a crucial ingredient in the second part of [KV]. The only
+thing we discuss here is the following corollary of the residue construction.
+    Suppose that 𝐺, 𝑁 define a conical Coulomb branch (the theory is good or
+ugly in physics terminology. We discuss these terms in Section 4.) We provide
+
+                                         2
+a mathematical proof that the special sphere partition function introduced
+by Gaiotto and Okazaki (see Section 2.6 and formula (2.9) in [GO]) can be
+extended to the sphere trace map Tsph : 𝒜𝐺,𝑁 → C. We also show that Tsph
+indeed satisfies the twisted trace condition:
+Theorem. (Theorem 4.3) Suppose ℳ𝐺,𝑁 is conical and |Re 𝑏𝑖 | < 12 for 𝑖 =
+1, . . . , 𝑛. Then there exists a 𝑔parity -twisted trace 𝑇sph : 𝒜𝐺,𝑁 → C such that
+for 𝑅(𝑥) ∈ 𝐻𝐺* (𝑝𝑡) ⊂ 𝒜𝐺,𝑁 we have
+                                         ∫︁
+                           𝑇 (𝑅(𝑥)) =        𝑅(𝑥)𝑤0 (𝑥)𝑑𝑥,
+                                            tR
+
+where
+                                                           2
+                                       ∏︀
+                                            𝛼>0 sinh(𝜋𝛼)
+                        𝑤0 (𝑥) = ∏︀𝑛                           .
+                                    𝑗=1 cosh(𝜋(𝜉𝑗 − i𝑏𝑗 ))
+
+Remark 1.2. The residue construction, the sphere trace and the proof in the
+article work with minimal changes for 𝐾-theoretic Coulomb branches. There
+is no conicity condition in that case.
+    The results can also be modified to work for algebras defined in appendix
+to [NW]. In particular, it works for quiver Coulomb branches with sym-
+metrizers in the case when the definition in the main part of [NW] gives the
+algebra isomorphic to the algebra defined in appendix (which is true in all
+finite types, see Theorem C.7 in [NW].)
+    The residue construction is modified as follows. The roots of gˆ𝑘 should
+live in t*𝑘 [[𝑧 𝑘 ]]. So we allow at most simple poles at 𝛼 − 𝑘𝑙 for 𝛼 a root of g𝑘
+and integer 𝑙. The Euler classes appearing in the numerator of (1.1) should
+                                       𝑘
+come from quotients of ⊕N𝑘 [[𝑧 𝑘 ]]𝑧 2 .
+   In order to compute the sphere trace when 𝑏𝑖 = 0 we should take
+                             ∏︀𝑑 ∏︀                  𝜋𝛼 2
+                                 𝑘=1     𝛼∈Δ𝑘,+ sinh( 𝑘 )
+                    𝑤0 (𝑥) = ∏︀𝑑 ∏︀dim N             𝜋𝜉
+                                                           .
+                                 𝑘=1     𝑗=1
+                                             𝑘
+                                               cosh( 𝑘𝑘𝑗 )
+
+Acknowledgments
+I am grateful to Gus Schrader for suggesting the statement of Proposition 2.1,
+other useful discussions and for the lecture course on 𝐾-theoretic Coulomb
+branches in Spring quarter of 2025 at Northwestern University. I am grateful
+to Vasily Krylov and to Dragos Crisan for comments on the previous versions
+of the paper.
+
+                                             3
+2      Description of pure Coulomb branch
+Using homological version of Lemma A.2 we have an inclusion
+
+                           𝒜𝐺,0 → 𝒜𝑇,0,𝑙𝑜𝑐 ∩ End(C[t]𝑊 ).
+
+The action of 𝒜𝑇,0 on C[t] is given by homological version of Proposition A.1.
+Namely, the element 𝑟𝜆 ∈ 𝒜𝑇,0 sends 𝑃 (t) ∈ C[t] to 𝑃 (t + 𝜆). Let us describe
+𝒜𝑇,0,𝑙𝑜𝑐 ∩ End(C[t]𝑊 ) explicitly.
+                                                                    ∑︀
+Proposition 2.1. Let 𝑆 be a subset of 𝑊 -invariant elements 𝑎 = 𝑎𝜆 𝑟𝜆 of
+𝒜𝑇,0,𝑙𝑜𝑐 that satisfy the following conditions:
+
+    1. Each 𝑎𝜆 has at most simple poles at 𝛼 − 𝑘, where 𝛼 is a root of 𝐺 and 𝑘
+       is an integer. Denote the residue at this divisor by Res𝛼,𝑘 (𝑎𝜆 ) ∈ C[𝛼⊥ ].
+
+    2. The corresponding residues satisfy the condition
+
+                           Res𝛼,𝑘 (𝑎𝜆 ) + Res𝛼,𝑘 (𝑎𝑠𝛼 (𝜆)+𝑘𝛼ˇ ) = 0.
+
+Then 𝑆 coincides with the subalgebra of 𝒜𝑇,0,𝑙𝑜𝑐 that preserves C[t]𝑊 .
+
+Proof. First, we check that 𝑆 indeed sends each 𝑊 -invariant polynomial to
+a polynomial. Let 𝑎 be an element
+                             ∑︀     of 𝑆 and 𝑃 be an invariant polynomial.
+We have to check that 𝑎𝑃 =      𝑎𝜆 𝑃 (t + 𝜆) is regular. Since each 𝑎𝜆 has at
+most simple poles at 𝛼 − 𝑘, we have to check that this sum has no pole at
+𝛼 − 𝑘. We have
+
+                           𝑃 (t + 𝜆)|𝛼(t)=𝑘 = (𝑠𝛼 𝑃 )(t + 𝜆)|𝛼(t)=𝑘 =         (2.1)
+                𝑃 (𝑠𝛼 t + 𝑠𝛼 𝜆)|𝛼(t)=𝑘 = 𝑃 (t − 𝑘 𝛼
+                                                  ˇ + 𝑠𝛼 (𝜆))|𝛼(t)=𝑘 =        (2.2)
+                                                  𝑟𝑠𝛼 (𝜆)−𝑘𝛼ˇ (𝑃 )|𝛼(t)=𝑘 .   (2.3)
+
+Hence in the computation of the pole we get the term 𝑎𝜆 + 𝑎𝑠𝛼 (𝜆)−𝑘𝛼ˇ , it is
+regular.                                               ∑︀
+    Now we argue in the opposite direction. Let 𝑎 =        𝑎𝜆 𝑟𝜆 ∈ 𝒜𝑎𝑏,𝑙𝑜𝑐 be an
+element that preserves the space of 𝑊 -invariant polynomials. By construc-
+tion, the denominator of each 𝑎𝜆 is a product of linear factors of the form
+𝛼 − 𝑘. We have to prove that there are no poles of order at least two and
+that no expression of the form 𝑎𝜆 + 𝑎𝑠𝛼 (𝜆)−𝑘𝛼ˇ has a pole at 𝛼 − 𝑘.
+
+
+                                            4
+     Suppose that at least one of these conditions is not satisfied for 𝑎𝜆0 and
+𝛼 − 𝑘. Let 𝜆1 = 𝑠𝛼 (𝜆0 ) − 𝑘 𝛼 ˇ . Let Supp(𝑎) = {𝜆 | 𝑎𝜆 ̸= 0} ∪ {𝜆1 }.
+     For any natural numbers 𝑁, 𝑀 , distinct points t1 , t2 , . . . , t𝑀 and polyno-
+mials 𝑄1 , . . . , 𝑄𝑀 there exists a polynomial 𝑃 such that 𝑃 − 𝑄𝑖 belongs to
+𝑁 -th power of the ideal corresponding to t𝑖 .
+     Let t be a point satisfying 𝛼(t) = 𝑘. Let 𝑆 be any set of representatives for
+𝑊/⟨𝑠𝛼 ⟩ in 𝑊 . For Zariski generic t the points 𝑤(t + 𝜆), 𝑤 ∈ 𝑆, 𝜆 ∈ Supp(𝑎),
+are distinct and the only elements in 𝑊 (t + 𝜆0 ) of the form t + 𝜆 with
+𝜆 ∈ Supp(𝑎) are t+𝜆0 and t+𝜆1 . We also require 𝛽(t+𝜆0 )+𝑙, 𝛽(t+𝜆1 )+𝑙 ̸= 0
+for all possible linear factors 𝛽+𝑙 with 𝛽 ̸= ±𝛼 appearing in the denominators
+of 𝑎𝜆 , the set of t satisfying all three conditions is still Zariski generic.
+     We choose 𝑁 equal to the largest possible degree of a denominator for all
+nonzero 𝑎𝜆 . We take 𝑀 equal to the number of distinct points of the form
+𝑤(t + 𝜆), 𝑤 ∈ 𝑊 , 𝜆 ∈ Supp(𝑎). Suppose that t + 𝜆0 = t1 . We set 𝑄𝑖 = 0 for
+𝑖 > 1.                 ∑︀
+     It follows that      𝑤𝑃 is a 𝑊 -invariant polynomial equal to 1 on 𝑊 t1
+and equal to 0 on other points of the form 𝑤(t + 𝜆), up to 𝑁 -th order. In
+particular, for 𝜆 ∈ Supp(𝑎), the value 𝑃 (t + 𝜆) zero up to 𝑁 -th order unless
+𝜆 = 𝜆0 or 𝜆 = 𝜆1 .
+     We have (𝑟𝜆 𝑃 )(t1 ) = 𝑃 (t1 + 𝜆). With our choice of 𝑁 , the functions
+(𝑎𝜆 𝑟𝜆 𝑃 ) are regular at t = t1 for 𝜆 ̸= 𝜆0 , 𝜆1 . For 𝜆0 and 𝜆1 we write
+𝑎𝜆𝑖 = (𝛼 − 𝑘)−𝐿𝑖 𝑏𝑖 with 𝐿𝑖 > 0 and 𝑏𝑖 regular at t1 . The singular part
+of (𝑎𝑃 ) at t1 can be computed as (𝛼 − 𝑘)−𝐿0 𝑏0 𝑄0 + (𝛼 − 𝑘)−𝐿1 𝑏1 𝑄0 (𝑠𝛼 t + 𝑘 𝛼ˇ ).
+It should be zero for all polynomials 𝑄0 . Taking 𝑄0 = 1 gives 𝐿0 = 𝐿1 ,
+𝑏0 (t1 ) + 𝑏1 (t1 ) = 0. Suppose that 𝐿0 > 1. Take 𝑄0 = 𝛼 − 𝑘. We get
+𝑄0 (𝑠𝛼 t + 𝑘 𝛼ˇ ) = 𝑘 − 𝛼, so that
+
+    (𝛼 − 𝑘)−𝐿0 𝑏0 𝑄0 + (𝛼 − 𝑘)−𝐿1 𝑏1 𝑄0 (𝑠𝛼 t + 𝑘 𝛼
+                                                  ˇ ) = (𝛼 − 𝑘)1−𝐿0 (𝑏0 − 𝑏1 ).
+
+This expression is not regular at t1 .
+   We get that 𝐿0 = 𝐿1 = 1 and 𝑏0 (t1 ) + 𝑏1 (t1 ) = 0. Since the space of all
+possible t1 is Zariski dense in 𝛼⊥ , we have
+
+                   Res𝛼,𝑘 𝑎𝜆0 + Res 𝛼𝑘 𝑎𝜆1 = (𝑏0 + 𝑏1 )|𝛼⊥ = 0.
+
+
+
+Proposition 2.2. The image of 𝒜 in 𝒜𝑇,0,𝑙𝑜𝑐 is 𝑆.
+
+
+                                         5
+Proof. The Coulomb branch algebra 𝒜 has a filtration by coweights.
+                                                                 ∑︀          The
+algebra 𝑆 also has a filtration by coweights: an element 𝑎 =        𝑎𝜆 𝑟𝜆 belongs
+to 𝑆≤𝜇 if Supp(𝑎) is contained in the set of weights of representation of highest
+weight 𝜇. By construction, the inclusion 𝒜 ⊂ 𝑆 respects the filtration.
+                                                     𝐺(𝑂)
+    The graded piece (gr 𝒜)𝜆 is isomorphic to 𝐻𝐵𝑀 (Gr𝜆 ) = C[t]𝑊𝜆 . Take
+                              𝑊𝜆
+∑︀ lift 𝑎 ∈ 𝒜≤𝜆 of 1 ∈ C[t] . Consider the image of 𝑎 in 𝒜𝑇,0,𝑙𝑜𝑐 , write 𝑎 =
+any
+   𝑎𝜇 𝑟𝜇 . Then 𝑎𝜆 does not depend on the choice of 𝑎 and can be computed
+using pullback with respect to inclusion 𝑡𝜆 ˓→ Gr𝜆 of a smooth point. The
+                            1
+result will be 𝑎𝜆 = ∏︀ ∏︀𝛼(𝜆)−1
+                       𝛼   𝑗=0   (𝛼−𝑗)
+    Take any 𝑏 ∈ 𝑆≤𝜆 . Suppose that 𝑏𝜆 has a pole at 𝛼 − 𝑘. Then 𝑏𝑠𝛼 (𝜆)+𝑘𝛼ˇ is
+nonzero. Hence 𝑠𝛼 (𝜆) + 𝑘 𝛼   ˇ is a weight of the representation 𝑉𝜆 of Langlands
+             ˇ
+dual group 𝐺. Applying 𝑠𝛼 we get 𝜆 − 𝑘 𝛼        ˇ . The weights of 𝑉𝜆 of the form
+𝜆 − 𝑙𝛼ˇ are 𝜆, 𝜆 − 𝛼, · · · , 𝑠𝛼 (𝜆) = 𝜆 − 𝛼(𝜆)ˇ 𝛼. It follows that 0 ≤ 𝑘 ≤ 𝛼(𝜆).
+Also, when 𝑠𝛼 (𝜆) + 𝑘 𝛼 ˇ = 𝜆, the corresponding residue equals to zero, hence
+0 ≤ 𝑘 < 𝛼(𝜆). We deduce that 𝑏𝜆 is divisible by 𝑎𝜆 . Since both 𝑎, 𝑏 are
+𝑊 -invariant, the ratio 𝑎𝑏𝜆𝜆 is a 𝑊𝜆 -invariant polynomial. It follows that gr 𝒜
+surjects onto gr 𝑆. Therefore the image of 𝒜 is the whole 𝑆, as claimed.
+
+
+3     General case
+We turn to an arbitrary Coulomb branch of cotangent type. Let 𝑁 be a rep-
+resentation of 𝐺. We decompose 𝑁 as a sum of irreducible 𝐺-representations
+and then further decompose each of them as a sum of weight spaces of 𝑇 .
+Denote the 𝑇 -weights of 𝑁 by 𝜉1 , . . . , 𝜉𝑛 . Choose a flavor for each irreducible
+summand of 𝑁 and define 𝑏𝑖 to be the flavor corresponding to the represen-
+tations containing C𝜉𝑖 . We require that 𝑏𝑖 are variables or generic numbers.
+    Consider the following commutative diagram:
+                                         𝜄𝑇
+                                 ℛ𝑇,𝑁         𝒯𝑇,𝑁
+                                     𝑖           𝑖0
+                                          𝜄
+                                 ℛ𝐺,𝑁         𝒯𝐺,𝑁
+
+Here 𝒯𝐺,𝑁 is the infinite-dimensional vector bundle over Gr𝐺 constructed
+in [BFN] and 𝜄 is the inclusion ℛ𝐺,𝑁 ⊂ ℛ𝑇,𝑁 . The map 𝑖0 lifts the inclusion
+Gr𝑇 ⊂ Gr𝐺 . This diagram gives rise to the following diagram of algebras,
+where all maps are injective
+
+                                         6
+                                            𝜄𝑇 *,𝑙𝑜𝑐
+                                𝒜𝑇,𝑁,𝑙𝑜𝑐               𝒜𝑇,0,𝑙𝑜𝑐
+                                    𝑖−1
+                                     *                 𝑖−1
+                                                        0*
+                                                                                         (3.1)
+                                              𝜄*
+                                    𝒜𝐺,𝑁                𝒜𝐺,0
+                                                                    ∑︀
+    Let 𝑆 be a subset of 𝑊 -invariant elements 𝑎 =                       𝑎𝜆 𝑟𝜆 of 𝒜𝑇,0,𝑙𝑜𝑐 that
+satisfy the following condition:
+  1. Each 𝑎𝜆 is divisible by
+                     ∏︀𝑛 ∏︀−𝜉𝑖 (𝜆)−1
+                       𝑖=1   𝑗=0     (𝜉𝑖 + 𝑏𝑖 + (𝜉𝑖 (𝜆) + 𝑗 + 21 ))
+                               ∏︀     ∏︀                                                 (3.2)
+                                  𝛼>0    |𝑘|<𝑁 (𝛼 − 𝑘)
+
+     for some 𝑁 > 0. In particular, 𝑎𝜆 has at most simple poles at 𝛼 − 𝑘,
+     where 𝛼 is a positive root of 𝐺 and 𝑘 is an integer.
+     Denote the residue at this divisor by Res𝛼,𝑘 (𝑎𝜆 ) ∈ C[𝛼⊥ ].
+
+  2. The residues satisfy the condition Res𝛼,𝑘 (𝑎𝜆 ) + Res𝛼,𝑘 (𝑎𝑠𝛼 (𝜆)+𝑘𝛼ˇ ) = 0.
+Theorem 3.1. The image of 𝒜𝐺,𝑁 in 𝒜𝑇,0,𝑙𝑜𝑐 is 𝑆.
+Proof. Since 𝑏𝑖 generic or variables there are no cancellations between the
+numerator and the denominator in (3.2).
+    Using (3.1) we get that the image of 𝒜𝐺,𝑁 lies in the intersection of
+the images of 𝒜𝐺,0 and 𝒜𝑇,𝑁,𝑙𝑜𝑐 in 𝒜𝑇,0,𝑙𝑜𝑐 . The map 𝜄𝑇 * is computed    ∑︀ in𝜆
+formula (4.10) in [BFN], and the image of 𝜄𝑇 * consists of elements          𝑎𝜆 𝑟
+                              ∏︀𝑛 ∏︀−𝜉𝑖 (𝜆)−1                           1
+such that 𝑎𝜆 is divisible by 𝑖=1 𝑗=0          (𝜉𝑖 + 𝑏𝑖 + (𝜉𝑖 (𝜆) + 𝑗 + 2 )). The
+statement about simple poles and the condition on the residues follows from
+the Proposition 2.2. Hence 𝒜𝐺,𝑁 lands inside 𝑆.
+    It remains to show that the image of 𝒜𝐺,𝑁 is the whole 𝑆. Similarly to the
+above, we can compute the leading term of the localization of a lift 𝑎 ∈ 𝒜≤𝜆
+of 1 ∈ C[t]𝑊𝜆 ∼= 𝒜≤𝜆 /𝒜<𝜆 . The result is ∏︀ ∏︀𝛼(𝜆)𝑟𝜆
+                                                           ∈ 𝒜𝑇,𝑁,𝑙𝑜𝑐 . Then we
+                                                         𝛼   𝑗=0 (𝛼−𝑗)
+apply 𝜎𝑇* . The formula (4.10) in [BFN] says that
+                               𝑛 −𝜉∏︁
+                              ∏︁   𝑖 (𝜆)−1
+
+                𝜎𝑇* (𝑟𝜆 ) =               (𝜉𝑖 + 𝑏𝑖 + (𝜉𝑖 (𝜆) + 𝑗 + 21 )).
+                              𝑖=1     𝑗=0
+
+It follows that 𝒜𝐺,𝑁 surjects onto 𝑆.
+
+                                              7
+4     Sphere trace
+Let 𝒜 be a noncommutative algebra over C and 𝑔 be an automorphism of
+𝒜. A linear map 𝑇 : 𝒜 → C is called 𝑔-twisted trace if 𝑇 (𝑎𝑏) = 𝑇 (𝑏𝑔(𝑎)) for
+all 𝑎, 𝑏 ∈ 𝒜. Homological Coulomb branches are Z/2-graded by the parity of
+homology group and below we take 𝑔 = 𝑔parity , the parity automorphism of
+𝒜𝐺,𝑁 .
+    We assume that the Coulomb branch ℳ𝐺,𝑁 is conical. This means that
+𝒜ℏ=0
+  𝐺,𝑁 is a positively graded algebra. For analytic reasons, we will take 𝑏𝑖
+satisfying |Re 𝑏𝑖 | < 12 .
+
+Definition 4.1. Suppose that 𝒜𝐺,𝑁 satisfies the conclusion of Theorem 3.1.
+We define a linear map Tsph : 𝒜 → C by
+                                  ∫︁
+                       Tsph (𝑎) =    𝑎0 (i𝑥)𝑤0 (𝑥)𝑑𝑥,
+                                         tR
+
+where
+                                                            2
+                                        ∏︀
+                                             𝛼>0 sinh(𝜋𝛼)
+                         𝑤0 (𝑥) = ∏︀𝑛
+                                      𝑗=1 cosh(𝜋(𝜉𝑗 − i𝑏𝑗 ))
+
+Proposition 4.2. The map 𝑇sph is well-defined and one can extend the def-
+inition of 𝑇sph to any flavors 𝑏1 , . . . , 𝑏𝑛 satisfying |𝑏𝑗 | < 12 for all 𝑗. Then the
+map 𝑇sph is a 𝑔parity -twisted trace.
+
+Proof. We start with the case when 𝑏𝑗 are generic numbers satisfying the
+condition above.
+    We∑︀will  use the alternative    definition of being conical: for all 𝛽 ∈ tR we
+         𝑛                ∑︀
+have 𝑖=1 |𝜉𝑖 (𝛽)| > 2 𝛼>0 |𝛼(𝛽)|. The equivalence between this definition
+and the standard one is proved in Lemma 2.6 of [GHRWZ].
+    We show that 𝑤0 (𝑥) exponentially decays at infinity. Let 𝑡𝑥 ∈ tR be
+a point with
+           ∑︀
+                |𝑥| = 1 and 𝑡 > 0. Then the numerator of              𝑤 is equiva-
+                                                                   ∑︀𝑛 0
+lent to 𝑒𝑡 𝛼>0 |𝜋𝛼(𝑥)| and the denominator is equivalent to 𝑒𝑡 𝑖=1 |𝜉𝑖 (𝑥)| , hence
+                             −𝑡𝑠
+𝑤0 (𝑥) is equivalent
+∑︀               ∑︀𝑛 to 𝑒 , where 𝑠 is a positive number. Moreover, since
+   𝛼>0 |𝛼(𝑥)| −    𝑖=1 |𝜉𝑖 (𝑥)| is a continuous function, we have 𝑠 > 𝑠0 > 0 for
+some 𝑠0 that does not depend on 𝑥. We see that 𝑤0 (𝑥) exponentially decays
+at infinity.
+    The only possible poles of 𝑎𝜆 have form 𝛼 − 𝑘 for a positive root 𝛼 and
+an integer 𝑘. It follows from Theorem 3.1 that 𝑎0 does not have a pole at
+
+
+                                              8
+𝛼. Hence 𝑎0 is regular on the locus 𝛼(𝑥) ∈ iR. Combining this and the
+exponential decay of 𝑤0 we get that Tsph (𝑎) is well-defined.
+   Another corollary of Theorem 3.1 is that the poles of 𝑎𝜆 are simple. Then
+the trace condition Tsph (𝑎𝑏) = Tsph (𝑏𝑔(𝑎)) can be checked for each term
+∫︁                                                  ∫︁
+           𝜆                                2𝜋i𝜁(𝜆)            𝜆
+   𝑃𝜆 (i𝑥+i )𝑎𝜆 (i𝑥)𝑏−𝜆 (i𝑥+i𝜆)𝑤0 (𝑥)𝑑𝑥 = 𝑒            𝑃𝜆 (i𝑥−i )𝑎𝜆 (i𝑥−i𝜆)𝑏−𝜆 (i𝑥)𝑤0 (𝑥)𝑑𝑥
+           2                                                   2
+similarly to Proposition 2.6 in [K]. Here 𝑃𝜆 (𝑥 + 𝜆2 ) = 𝑟𝜆 𝑟−𝜆 comes from the
+multiplication in the abelian Coulomb branch. The poles of 𝑎𝜆 and 𝑏𝜆 are
+canceled by the∑︀zeroes of 𝑤0 (𝑥). The equation 𝑤0 (𝑥 + i𝜆) = 𝑒2𝜋i𝜁(𝜆) 𝑤0 (𝑥)
+holds for 𝜁 = 21 𝑛𝑖=1 𝜉𝑖 because cosh(𝑥 + 𝜋i) = − cosh(𝑥).
+      It remains to show the statement of the proposition without genericity
+assumption. Let 𝑆 ′ be the subset of 𝒜𝑇,0,𝑙𝑜𝑐 consisting of elements                   𝑎𝜆 𝑟 𝜆
+                                                                                    ∑︀
+such that each 𝑎𝜆 satisfies the divisibility condition above (this means 𝑎 ∈
+𝒜𝑇,𝑁,𝑙𝑜𝑐 ⊂ 𝒜𝑇,0,𝑙𝑜𝑐 ) and has simple poles; without residue condition. The
+set 𝑆 ′ can be defined in the case when the flavors 𝑏1 , . . . , 𝑏𝑛 are independent
+variables.
+      Since different 𝑎𝜆 can be chosen independently, we can write a spanning
+set 𝑣𝑖,𝜆 = 𝑓𝑖,𝜆 𝑟𝜆 of 𝑆 ′ over C[𝑏1 , . . . , 𝑏𝑛 ]. Then 𝑓𝑖,0 (i𝑥)𝑤0 (𝑥) is a function in
+𝑏1 , . . . , 𝑏𝑛 holomorphic on the set |Re 𝑏𝑗 | < 12 , 𝑗 = 1, . . . , 𝑛. It follows that
+                                 ∫︁
+                                     𝑓𝑖,0 (i𝑥)𝑤0 (𝑥)𝑑𝑥.
+                                    tR
+
+is also holomorphic on the set |Re 𝑏𝑗 | < 12 , 𝑗 = 1, . . . , 𝑛. This allows us
+to define 𝑇sph (𝑣𝑖,0 ) as a holomorphic function in variables 𝑏1 , . . . , 𝑏𝑛 on the
+set |Re 𝑏𝑗 | < 21 , 𝑗 = 1, . . . , 𝑛. We claim that 𝑇sph can be extended            to the
+whole 𝑆 ′ by linearity. Indeed,∑︀if we have any linear dependence
+                                                                          ∑︀
+                                                                              𝑆𝑖 𝑣𝑖,0 = 0,
+𝑆𝑖 ∈ C[𝑏1 , . . . , 𝑏𝑛 ], then 𝑇sph ( 𝑆𝑖 𝑣𝑖,0 ) vanishes for generic |Re 𝑏𝑗 | < 12 , hence
+is identically zero.
+     It follows from BFN construction that 𝒜𝐺,𝑁 is free over C[𝑏1 , . . .∑︀   , 𝑏𝑛 ]. Take
+                                                      ′
+any basis {𝑢𝑗 } of 𝒜𝐺,𝑁 . Since 𝒜𝐺,𝑁 = 𝑆 ⊂ 𝑆 , we can write 𝑢𝑗 = 𝑅𝑖,𝑗,𝜆 𝑣𝑖,𝜆
+and define 𝑇 (𝑢𝑗 ) as a holomorphic function on the set |Re 𝑏𝑘 | < 21 , 𝑘 =
+1, . . . , 𝑛.
+     It remains to check that 𝑇 (𝑣𝑖,𝜆 𝑣𝑗,−𝜆 ) = 𝑇 (𝑣𝑗,−𝜆 𝑔parity (𝑣𝑖,𝜆 )). We checked
+this in the case when 𝑏𝑘 are generic. Since both sides are holomorphic on the
+set |Re 𝑏𝑘 | < 21 , 𝑘 = 1, . . . , 𝑛, this equality works in general.
+    Restricting to cohomology of a point we get the following theorem:
+
+                                             9
+Theorem 4.3. Suppose ℳ𝐺,𝑁 is conical and |Re 𝑏𝑖 | < 21 for 𝑖 = 1, . . . , 𝑛.
+Then there exists a 𝑔parity -twisted trace 𝑇sph : 𝒜𝐺,𝑁 → C such that for 𝑅(𝑥) ∈
+𝐻𝐺* (𝑝𝑡) ⊂ 𝒜𝐺,𝑁 we have
+                                       ∫︁
+                          𝑇 (𝑅(𝑥)) =       𝑅(𝑥)𝑤0 (𝑥)𝑑𝑥,
+                                                  tR
+
+where
+                                                                 2
+                                             ∏︀
+                                                  𝛼>0 sinh(𝜋𝛼)
+                             𝑤0 (𝑥) = ∏︀𝑛                             .
+                                           𝑗=1 cosh(𝜋(𝜉𝑗 − i𝑏𝑗 ))
+
+Proof. It is enough to add the basis of 𝐻𝐺* (𝑝𝑡) to the set 𝑣𝑖,0 in the proof of
+Proposition 4.2.
+Remark 4.4. Let us show that in the abelian case the sphere trace can be
+analytically continued. Let 𝐺 = 𝑇 = (C× )𝑑 be a torus. Suppose that
+𝜉1 , . . . , 𝜉𝑑 are linearly independent. Then we can assume that 𝑏1 = · · · =
+𝑏𝑑 = 0. We have
+                       ∫︁
+                                   𝑅(i𝑥)𝑑𝑥
+         𝑇 (𝑅(𝑥)) =         ∏︀𝑛                      = (𝑅(𝜕𝑦 )ℱ𝑥 𝑤0 (𝑥))|𝑦1 =···=𝑦𝑑 =0 .
+                         tR   𝑖=1 cosh(𝜋(𝜉𝑖 − i𝑏𝑖 ))
+
+Here ℱ𝑥 means that the Fourier transform is applied only in 𝑥 varibles and
+𝑦1 , . . . , 𝑦𝑑 are the variables after the Fourier transform. So we need to under-
+stand the behavior of ℱ𝑥 𝑤0 (𝑥) with respect to 𝑏𝑑+1 , . . . , 𝑏𝑛 .
+       Consider the full Fourier transform ℱ𝑤0 (𝑥, 𝑏𝑑+1 , . . . , 𝑏𝑛 ). Now 𝜉1 − i𝑏1 =
+                                                   𝑛                  −1
+  1 , . . . , 𝜉𝑛 −i𝑏𝑛 form a linear basis of C . Since cosh (𝜋𝑧) is self-dual, ℱ𝑤0 =
+𝜉∏︀
+     cosh(𝜋𝜁𝑖 ) (both statements up to a constant), where 𝜁𝑖 is a basis dual to
+ 𝜉𝑖 − i𝑏𝑖 . This basis can be computed as follows. Let 𝜉1* , . . . , 𝜉𝑑* ∈ t be the
+ basis dual to 𝜉1∑︀      , . . . , 𝜉𝑑 and the same for 𝑏*𝑑+1 , . . . , 𝑏*𝑛 . Then 𝜁𝑖 = i𝑏*𝑖 if 𝑖 > 𝑑
+                  *
+ and 𝜁𝑖 = 𝜉𝑖 − i 𝑗>𝑑 𝑏*𝑗 𝜉𝑖* (𝜉𝑗 ) if 𝑖 ≤ 𝑑.
+       This means that for some positive integer 𝑁 the function ℱ𝑤0 in the
+                 𝑏*              *
+ variables 𝑑+1     𝑁
+                     , . . . , 𝑏𝑁𝑛 defines a trace on some abelian Coulomb branch. In
+the case when 𝜉1 , . . . , 𝜉𝑛 form a basis of weight lattice we can take 𝑁 = 1
+and get a sphere trace on a dual Coulomb branch. (A similar result should
+hold in the case when 𝜉1 , . . . , 𝜉𝑛 span weight lattice.) In particular, we can
+apply Theorem 3.2 in [K] to ℱ𝑥 𝑤0 = ℱ𝑏* ℱ𝑤0 |𝑏↦→−𝑏 to get that ℱ𝑥 𝑤0 depends
+meromorphically on 𝑏𝑑+1 , . . . , 𝑏𝑛 .
+
+
+
+                                                  10
+A      Action on the cohomology of a point
+This construction is introduced on pages 36-37 of [LW], here we provide more
+details and show compatibility with the localization.
+   Consider the diagram
+                                         𝑝2
+                        ∙/𝐺(𝑂)                 𝐺(𝑂)∖𝐺(𝐾)/𝐺(𝑂),
+                                         𝑝1
+
+where 𝑝1 collapses 𝐺(𝐾)/𝐺(𝑂) and 𝑝2 collapses 𝐺(𝑂)∖𝐺(𝐾).
+   We define the action of 𝐾-theoretic quantized pure Coulomb branch al-
+gebra
+                                ×
+                     𝒜𝑞𝐺,0 = 𝐾 C𝑞 (𝐺(𝑂)∖𝐺(𝐾)/𝐺(𝑂))
+       ×
+on 𝐾 C𝑞 (∙/𝐺(𝑂)) by
+                                   𝒢.ℱ = 𝑝1,* (𝒢 ⊗ 𝑝*2 ℱ).
+                                                              ×
+We note that this action is compatible with the 𝐾 C𝑞 (∙/𝐺(𝑂))-module struc-
+ture on 𝒜𝐺,0 given by ℱ.𝒢 = 𝒢 ⊗ 𝑝*1 ℱ by projection formula.
+                                                                  ×
+   Let us check that this indeed gives the action of 𝒜𝐺,0 on 𝐾 C𝑞 ×𝐺 (𝑝𝑡).
+Consider the diagram
+
+                                   𝐺(𝑂)∖𝐺(𝐾) ×𝐺(𝑂) 𝐺(𝐾)/𝐺(𝑂)
+                                                                         𝜋1
+                                                        𝜋3
+                                   𝜋2
+
+ 𝐺(𝑂)∖𝐺(𝐾)/𝐺(𝑂)                               𝐺(𝑂)∖𝐺(𝐾)/𝐺(𝑂)                   𝐺(𝑂)∖𝐺(𝐾)/𝐺(𝑂)
+             𝑝1                     𝑝2                                    𝑝2             𝑝2
+                              𝑝1                                    𝑝1
+        ∙/𝐺(𝑂)                                       ∙/𝐺(𝑂)                         ∙/𝐺(𝑂)
+
+Then we get
+
+
+    ℋ.(𝒢.ℱ) = 𝑝1* (ℋ ⊗ 𝑝*2 𝑝1* (𝒢 ⊗ 𝑝*2 ℱ)) = 𝑝1* (ℋ ⊗ 𝜋2* 𝜋1* (𝒢 ⊗ 𝑝*2 ℱ)) =
+           𝑝1* 𝜋2* (𝜋2* ℋ ⊗ 𝜋1* 𝒢 ⊗ 𝜋1* 𝑝*2 ℱ) = 𝑝1* 𝜋3* (𝜋2* ℋ ⊗ 𝜋1* 𝒢 ⊗ 𝜋3* 𝑝*2 ℱ) =
+            𝑝1* (𝜋3* (𝜋2* ℋ ⊗ 𝜋1* 𝒢) ⊗ 𝑝*2 ℱ) = 𝑝1* (ℋ * 𝒢 ⊗ 𝑝*2 ℱ) = (ℋ * 𝒢).ℱ
+
+    Let us compute the action of 𝒜𝑇,0 explicitly.
+Proposition A.1. Consider the 𝐾-theory class 𝑟𝜆 of the scyscraper sheaf of
+𝑧 𝜆 . Then 𝑟𝜆 .𝑅(𝑧) = 𝑅(𝑞 𝜆 𝑧).
+
+                                                11
+Proof. I have learned a similar proof on Gus Schrader’s lectures on 𝐾-theoretic
+Coulomb branches.
+                                                                       ×
+    Take 𝑅(𝑧) = [C𝜉 ], where 𝜉 is a character of 𝑇 . Thinking of 𝐾 C𝑞 (𝑇 (𝑂)∖𝑇 (𝐾)/𝑇 (𝑂))
+as 𝑇 (𝑂) ⋊ C×                                                       *
+              𝑞 -equivariant sheaves on 𝑇 (𝐾)/𝑇 (𝑂), we have 𝑝2 (ℱ) ⊗ 𝒢 is the
+                                   𝜆
+representation C𝜉 at the point 𝑧 .
+    Pulling further back to 𝑇 (𝐾) we get the structure sheaf of 𝑇 (𝑂) × 𝑇 (𝑂)-
+invariant subset 𝑧 𝜆 𝑇 (𝑂) with the natural equivariant structure twisted by C𝜉 ,
+a representation of left 𝑇 (𝑂). This sheaf (before twist) corresponds to the
+module 𝑀 ∼   = C[𝑇 (𝑂)] with the natural left and right 𝑇 (𝑂)-module structure.
+The dependence on 𝜆 is in the action of the loop rotation group: 𝑠 ∈ C×        𝑞 acts
+                                   𝑗
+on the function 𝑡𝑖,𝑗 (meaning 𝑡𝑖 𝑧 goes to one, all other go to zero, hence 𝑡𝑖,0
+is invertible) by 𝑠𝜆𝑖 +𝑗 .
+    Now we want the left 𝑇 (𝑂) action to become the natural∏︀one with no
+twist. We choose another generator of 𝑀 , namely 𝑚0 =                   𝑡−𝜉 𝑖
+                                                                         𝑖,0 . Then
+(notational issues may remain)
+                           (︀         ∏︁ −𝜉        )︀ ∏︁ 𝜉𝑖
+      𝑎(𝑧)𝑓 (𝑏(𝑧))𝑚0 = 𝑓 (𝑎(𝑧)𝑏(𝑧))      𝑎𝑖,0 𝑖 𝑚0      𝑎𝑖,0 = 𝑓 (𝑎(𝑧)𝑏(𝑧))𝑚0 ,
+
+the standard action of 𝑎(𝑧) ∈ 𝑇 (𝑂) on 𝑓 ∈ C[𝑇 (𝑂)].
+    This changes the loop rotation action by 𝑞 𝜉(𝜆) . The action of right 𝑇 (𝑂)
+is now twisted by C𝜉 . Hence after taking quotient by the left 𝑇 (𝑂) we get
+a scyscraper sheaf on 𝑧 𝜆 twisted by C𝜉 . Its pushforward is C𝜉 . Considering
+the loop rotation, we get (notation again)
+
+                                𝑟𝜆 .𝑠𝜉 = 𝑞 𝜉(𝜆) 𝑠𝜉 ,
+
+as claimed.
+    Since 𝑟𝜆 form a basis of 𝒜𝑇,0 we get an injective homomorphism from 𝒜𝑇,0
+to End(C[t]). It remains to show that the localization map is compatible with
+the action on the 𝐾-theory of a point. Let 𝑖 : Gr𝑇 → Gr𝐺 be the inclusion
+of affine Grassmannians.
+
+Lemma A.2. Consider the map (𝑖* ) : 𝒜𝑊                                 𝑊
+                                        𝑇,0 → 𝒜𝐺,0 . Then for any 𝑎 ∈ 𝒜𝑇,0
+and any 𝑚 ∈ 𝐾 𝐺 (𝑝𝑡) ⊂ 𝐾 𝑇 (𝑝𝑡) we have 𝑎𝑚 = (𝑖* 𝑎)𝑚.
+
+
+
+
+                                        12
+Proof. Consider the diagram
+
+                                                        𝑝𝑇
+                                                         2
+              𝑇 (𝑂)∖∙         𝑇 (𝑂)∖𝑇 (𝐾)/𝑇 (𝑂)               ∙/𝑇 (𝑂)
+                         𝑝𝑇
+                          1
+                  𝑞                       𝑖
+                                                        𝑝𝐺
+                                                         2
+              𝐺(𝑂)∖∙          𝐺(𝑂)∖𝐺(𝐾)/𝑇 (𝑂)                 ∙/𝑇 (𝑂)
+                         𝑝𝐺
+                          1
+                                          𝜋                       𝑞
+                                                        𝑝2
+              𝐺(𝑂)∖∙     𝑝1   𝐺(𝑂)∖𝐺(𝐾)/𝐺(𝑂)                  ∙/𝐺(𝑂)
+
+Note that 𝑞 * gives precisely the inclusion 𝐾 𝐺 (𝑝𝑡) ⊂ 𝐾 𝑇 (𝑝𝑡).
+   First, we check that 𝑖* is compatible with the action on ℱ ∈ 𝐾 𝐺(𝑂) (𝑝𝑡),
+namely
+                     𝑝𝑇2* (𝑝𝑇1 * 𝑞 * ℱ ⊗ 𝒢) = 𝑝𝐺    𝐺*
+                                               2* (𝑝1 ℱ ⊗ 𝑖* 𝒢).
+
+First, we have 𝑝𝑇2 = 𝑝𝐺
+                      2 𝑖, so it is enough to check
+
+                        𝑖* (𝑝𝑇1 * 𝑞 * ℱ ⊗ 𝒢) = 𝑝𝐺*
+                                                1 ℱ ⊗ 𝑖* 𝒢.
+
+Then the top left corner commutes, hence
+
+                               𝑝𝑇1 * 𝑞 * ℱ = 𝑖* 𝑝𝐺*
+                                                 1 ℱ.
+
+The claim now follows from the projection formula.
+   Now we check that 𝜋 * is compatible with the action on ℱ ∈ 𝐾 𝐺(𝑂) (𝑝𝑡),
+namely
+                                *       *     *
+                   𝑝𝐺    𝐺*
+                    2* (𝑝1 ℱ ⊗ 𝜋 𝒢) = 𝑞 𝑝2* (𝑝1 ℱ ⊗ 𝒢).
+
+We have 𝑝𝐺
+         1 = 𝑝1 𝜋, hence
+                                        * *
+                                𝑝𝐺*
+                                 1 ℱ = 𝜋 𝑝1 ℱ,
+
+and
+                                 *     * *
+                         𝑝𝐺*
+                          1 ℱ ⊗ 𝜋 𝒢 = 𝜋 (𝑝1 ℱ ⊗ 𝒢).
+
+It remains to use the equation 𝑝2* 𝜋 * = 𝑞 * 𝑝2* . This equation means that
+leaving only 𝑇 (𝑂) part of 𝐺(𝑂)-equivariant structure and then doing push-
+forward is the same as doing pushforward and then leaving only 𝑇 (𝑂) part
+of 𝐺(𝑂)-equivariant structure.
+    The lemma follows.
+
+
+
+                                        13
+References
+[BFN] A. Braverman, M. Finkelberg, H. Nakajima. Towards a mathematical
+   definition of Coulomb branches of 3-dimensional 𝒩 = 4 gauge theories,
+   II. Adv. Theor. Math. Phys. 22 (2018), no. 5, 1071–1147
+
+[BFKKNWW] A. Braverman, M. Finkelberg and H. Nakajima, Coulomb
+   branches of 3𝑑 𝒩 = 4 quiver gauge theories and slices in the affine Grass-
+   mannian, Adv. Theor. Math. Phys. 23, 75-166 (2019). The only reference
+   in my paper is to the appendix by Alexander Braverman, Michael Finkel-
+   berg, Joel Kamnitzer, Ryosuke Kodera, Hiraku Nakajima, Ben Webster,
+   and Alex Weekes
+
+[Cri] D. Crisan, Convolution algebras associated to representations,
+   arXiv:2606.19783 [math.RT]
+
+[GHRWZ] D. Gaiotto, J. Hilburn, J. Redondo-Yuste, B. Webster, Z. Zhou,
+   Twisted traces on abelian quantum Higgs and Coulomb branches, Com-
+   mun. Math. Phys. 406 (2025) 9, 202
+
+[GKV] V. Ginzburg, M. Kapranov, and E. Vasserot. “Residue construction
+   of Hecke algebras”. In: Adv. Math. 128.1 (1997), pp. 1–19.
+
+[GO] D. Gaiotto and T. Okazaki, Sphere correlation functions and Verma
+   modules, JHEP 02, 133 (2020)
+
+[KTWWY] J. Kamnitzer,P. Tingley,B. Webster,A. Weekes and O. Yacobi,
+   On category 𝒪 for affine Grassmannian slices and categorified tensor
+   products. Proc. London Math. Soc., 119 (2019): 1179-1233.
+
+[K] D. Klyuev, Positive traces on quantized abelian Coulomb branches,
+   arXiv:2510.25021 [math.RT]
+
+[KV] D. Klyuev, J. Vulakh, Positive traces on certain SL(2) Coulomb
+   branches, arXiv:2507.19447 [hep-th]
+
+[LW] E. LePage, B. Webster, Rational Cherednik algebras of 𝐺(ℓ, 𝑝, 𝑛) from
+   the Coulomb perspective. Advances in Mathematics. 433. (2023)
+
+[NW] H. Nakajima and A. Weekes, Coulomb branches of quiver gauge theo-
+  ries with symmetrizers, J. Eur. Math. Soc. 25, no.1, 203-230 (2021)
+
+                                     14
+[SS] G. Schrader, A. Shapiro, The algebraic modular functor conjecture in
+   type 𝐴𝑛 quantum Teichmüller theory, arXiv:2509.03820 [math.QA]
+
+
+
+
+                                   15
+

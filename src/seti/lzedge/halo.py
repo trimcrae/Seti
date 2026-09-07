@@ -174,6 +174,103 @@ def _numeric_lab_speed_distribution(density, v_lab: np.ndarray, v_grid: np.ndarr
 
 
 @dataclass
+class Isotropic:
+    """Isotropic component with an arbitrary radial profile ``profile(|v|)`` (Galactic frame).
+
+    ``profile`` need not be normalised; the density is profile/N with N the
+    3-D integral up to ``v_esc`` (None: the profile must vanish by itself).
+    Used for the *shape* of the high-velocity tail — the sharp cut, the soft
+    (King-like) cut, and the Gaia-style power-law tail (v_esc - v)^k — which
+    is the physics an event at the kinematic edge is sensitive to.
+    """
+    profile: object
+    v_esc: float | None
+    fraction: float = 1.0
+    name: str = "isotropic"
+    v_grid_max: float = 1500.0
+    _norm: float | None = field(default=None, repr=False)
+
+    def _radial(self, speed: np.ndarray) -> np.ndarray:
+        s = np.asarray(speed, dtype=float)
+        f = np.asarray(self.profile(s), dtype=float)
+        if self.v_esc is not None:
+            f = np.where(s < self.v_esc, f, 0.0)
+        return np.clip(f, 0.0, None)
+
+    @property
+    def norm(self) -> float:
+        if self._norm is None:
+            vmax = self.v_esc if self.v_esc is not None else self.v_grid_max
+            grid = np.linspace(0.0, vmax, 4001)
+            self._norm = float(trapz(4.0 * math.pi * grid ** 2 * self._radial(grid), grid))
+        return self._norm
+
+    def density(self, v_xyz: np.ndarray) -> np.ndarray:
+        speed = np.sqrt(np.sum(np.asarray(v_xyz, dtype=float) ** 2, axis=-1))
+        return self._radial(speed) / self.norm
+
+    def lab_speed_distribution(self, v_lab: np.ndarray, v_grid: np.ndarray, n_mu: int = 96) -> np.ndarray:
+        """v² ∫dΩ f(|v n̂ + v_lab|): phi is trivial; the cap in cos(theta) is integrated exactly."""
+        v = np.asarray(v_grid, dtype=float)
+        vl = float(np.linalg.norm(v_lab))
+        out = np.zeros_like(v)
+        pos = v > 0
+        vv = v[pos]
+        if vl < 1e-9:
+            out[pos] = 4.0 * math.pi * vv ** 2 * self._radial(vv) / self.norm
+            return out
+        if self.v_esc is None:
+            mu_c = np.ones_like(vv)
+        else:
+            mu_c = np.clip((self.v_esc ** 2 - vv ** 2 - vl ** 2) / (2.0 * vv * vl), -1.0, 1.0)
+        x_gl, w_gl = np.polynomial.legendre.leggauss(n_mu)
+        half = 0.5 * (mu_c + 1.0)
+        mu = half[:, None] * x_gl[None, :] + (half[:, None] - 1.0)
+        w = half[:, None] * w_gl[None, :]
+        speed = np.sqrt(vv[:, None] ** 2 + vl ** 2 + 2.0 * vv[:, None] * vl * mu)
+        ang = 2.0 * math.pi * np.sum(w * self._radial(speed), axis=1)
+        ang = np.where(half > 0.0, ang, 0.0)
+        out[pos] = vv ** 2 * ang / self.norm
+        return out
+
+
+def profile_sharp_maxwellian(v0: float):
+    return lambda v: np.exp(-np.asarray(v, float) ** 2 / v0 ** 2)
+
+
+def profile_soft_maxwellian(v0: float, v_esc: float):
+    """exp(-v²/v0²) - exp(-v_esc²/v0²): continuous at the escape speed (King-like)."""
+    c = math.exp(-(v_esc / v0) ** 2)
+    return lambda v: np.exp(-np.asarray(v, float) ** 2 / v0 ** 2) - c
+
+
+def profile_power_tail(v0: float, v_esc: float, k: float, v_join: float):
+    """Maxwellian below v_join, then A (v_esc - v)^k joined continuously (Deason+2019 tail)."""
+    fj = math.exp(-(v_join / v0) ** 2)
+    a = fj / max(v_esc - v_join, 1e-9) ** k
+
+    def f(v):
+        v = np.asarray(v, float)
+        tail = a * np.clip(v_esc - v, 0.0, None) ** k
+        return np.where(v < v_join, np.exp(-v ** 2 / v0 ** 2), tail)
+    return f
+
+
+def shm_tail(v0: float = 238.0, v_esc: float = 544.0, tail: str = "sharp", k: float = 2.0,
+             v_join: float | None = None, name: str | None = None) -> Halo:
+    """A one-component isotropic halo with a chosen high-velocity-tail shape."""
+    if tail == "sharp":
+        prof = profile_sharp_maxwellian(v0)
+    elif tail == "soft":
+        prof = profile_soft_maxwellian(v0, v_esc)
+    elif tail == "power":
+        prof = profile_power_tail(v0, v_esc, k, v_join if v_join is not None else 0.8 * v_esc)
+    else:
+        raise ValueError(tail)
+    return Halo([Isotropic(profile=prof, v_esc=v_esc, name=tail)], name=name or f"SHM-{tail}")
+
+
+@dataclass
 class Halo:
     """A mixture of components; fractions are density fractions and should sum to 1."""
     components: list

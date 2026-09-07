@@ -24,7 +24,7 @@ import numpy as np  # noqa: E402
 
 from . import kinematics as K  # noqa: E402
 from .earth import v_lab_kms, year_grid  # noqa: E402
-from .halo import shm, shm_plus_plus, shm_tail  # noqa: E402
+from .halo import lmc_tail, shm, shm_plus_plus, shm_tail  # noqa: E402
 from .rate import Efficiency  # noqa: E402
 from .timing import EventModel  # noqa: E402
 
@@ -40,6 +40,7 @@ def fig_tails(cfg: dict, out: pathlib.Path, deltas=(300.0, 350.0, 380.0), m_chi:
         ("SHM++ (Sausage), v_esc 528", shm_plus_plus(), 233.0),
         ("SHM sharp, v_esc 500", shm(238.0, 500.0), 238.0),
         ("SHM sharp, v_esc 580", shm(238.0, 580.0), 238.0),
+        ("SHM + LMC 0.26 % (2609.04175)", lmc_tail(shm(238.0, 544.0), 570.0, 100.0, 0.0026, cut_kms=200.0), 238.0),
     ]
     for label, halo, v0 in variants:
         vl = v_lab_kms(t_obs, v0)
@@ -51,7 +52,7 @@ def fig_tails(cfg: dict, out: pathlib.Path, deltas=(300.0, 350.0, 380.0), m_chi:
         ax.text(vm + 3, 2e-3, f"δ={d:.0f} keV", rotation=90, va="bottom", fontsize=8)
     ax.set_yscale("log")
     ax.set_ylim(1e-8, 1e-2)
-    ax.set_xlim(300, 900)
+    ax.set_xlim(300, 1000)
     ax.set_xlabel("lab-frame speed v [km/s] on " + t_obs)
     ax.set_ylabel("f_lab(v) [s/km]")
     ax.set_title(f"the high-speed tail on the event date; v_min(248 keV) for m_χ = {m_chi:.0f} GeV")
@@ -180,10 +181,72 @@ def fig_vesc_posterior(out: pathlib.Path, m_chi: float = 1000.0) -> pathlib.Path
     return p
 
 
+def fig_evidence(out: pathlib.Path) -> pathlib.Path | None:
+    f = out / "posterior_summary.json"
+    g = out / "vesc_marginal.json"
+    if not f.exists():
+        return None
+    s = json.loads(f.read_text())
+    names, vals = [], []
+    for name, v in s["per_halo"].items():
+        if v.get("evidence_rel_best") is not None:
+            names.append(name)
+            vals.append(v["evidence_rel_best"])
+    if g.exists():
+        sv = json.loads(g.read_text())
+        for name, res in sv["measurements"].items():
+            vp = res["per_mass"].get("_vesc_posterior") or {}
+            if vp.get("evidence_rel_best") is not None:
+                names.append("v_esc: " + name)
+                vals.append(vp["evidence_rel_best"])
+    if not names:
+        return None
+    fig, ax = plt.subplots(figsize=(7.6, 0.45 * len(names) + 1.6))
+    y = np.arange(len(names))
+    ax.barh(y, vals, color=["C0" if not n.startswith("v_esc") else "C1" for n in names])
+    ax.set_yticks(y)
+    ax.set_yticklabels(names, fontsize=8)
+    ax.set_xscale("log")
+    ax.set_xlabel("evidence relative to the best model in its group (energy x date x sideband, σ marginalised)")
+    ax.invert_yaxis()
+    fig.tight_layout()
+    p = out / "evidence.png"
+    fig.savefig(p, dpi=150)
+    plt.close(fig)
+    return p
+
+
+def fig_vesc_inverse(out: pathlib.Path) -> pathlib.Path | None:
+    g = out / "vesc_marginal.json"
+    if not g.exists():
+        return None
+    sv = json.loads(g.read_text())
+    inv = sv.get("inverse")
+    if not inv:
+        return None
+    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    ax.plot(inv["vesc_grid"], inv["likelihood_norm"], "k-", lw=2, label="the event's likelihood of v_esc (flat prior)")
+    for name, res in sv["measurements"].items():
+        vp = res["per_mass"].get("_vesc_posterior") or {}
+        if vp.get("posterior"):
+            x = [a for a, _ in vp["posterior"]]
+            yv = [b for _, b in vp["posterior"]]
+            ax.plot(x, yv, lw=1.2, label=f"posterior with {name}")
+    ax.set_xlabel("local escape speed v_esc [km/s]")
+    ax.set_ylabel("normalised likelihood / posterior")
+    ax.set_title(f"the escape speed from the event ({sv['tail']['tail']} tail; m_χ, δ, σ marginalised)")
+    ax.legend(fontsize=7)
+    fig.tight_layout()
+    p = out / "vesc_inverse.png"
+    fig.savefig(p, dpi=150)
+    plt.close(fig)
+    return p
+
+
 def make_all(cfg: dict, out: pathlib.Path) -> list[pathlib.Path]:
     out.mkdir(parents=True, exist_ok=True)
     made = [fig_tails(cfg, out), fig_modulation(cfg, out), fig_calendar(cfg, out)]
-    for extra in (fig_scan_map(out), fig_vesc_posterior(out)):
+    for extra in (fig_scan_map(out), fig_vesc_posterior(out), fig_evidence(out), fig_vesc_inverse(out)):
         if extra is not None:
             made.append(extra)
     return made

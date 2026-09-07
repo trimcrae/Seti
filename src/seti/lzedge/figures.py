@@ -128,8 +128,8 @@ def fig_calendar(cfg: dict, out: pathlib.Path, m_chi: float = 1000.0) -> pathlib
     return p
 
 
-def fig_scan_map(out: pathlib.Path, m_chi: float = 1000.0) -> pathlib.Path | None:
-    f = out / "scan.json"
+def fig_scan_map(results: pathlib.Path, out: pathlib.Path, m_chi: float = 1000.0) -> pathlib.Path | None:
+    f = results / "scan.json"
     if not f.exists():
         return None
     rows = [r for r in json.loads(f.read_text()) if r["m_chi_gev"] == m_chi]
@@ -156,8 +156,8 @@ def fig_scan_map(out: pathlib.Path, m_chi: float = 1000.0) -> pathlib.Path | Non
     return p
 
 
-def fig_vesc_posterior(out: pathlib.Path, m_chi: float = 1000.0) -> pathlib.Path | None:
-    f = out / "vesc_marginal.json"
+def fig_vesc_posterior(results: pathlib.Path, out: pathlib.Path, m_chi: float = 1000.0) -> pathlib.Path | None:
+    f = results / "vesc_marginal.json"
     if not f.exists():
         return None
     s = json.loads(f.read_text())
@@ -181,9 +181,9 @@ def fig_vesc_posterior(out: pathlib.Path, m_chi: float = 1000.0) -> pathlib.Path
     return p
 
 
-def fig_evidence(out: pathlib.Path) -> pathlib.Path | None:
-    f = out / "posterior_summary.json"
-    g = out / "vesc_marginal.json"
+def fig_evidence(results: pathlib.Path, out: pathlib.Path) -> pathlib.Path | None:
+    f = results / "posterior_summary.json"
+    g = results / "vesc_marginal.json"
     if not f.exists():
         return None
     s = json.loads(f.read_text())
@@ -216,8 +216,8 @@ def fig_evidence(out: pathlib.Path) -> pathlib.Path | None:
     return p
 
 
-def fig_vesc_inverse(out: pathlib.Path) -> pathlib.Path | None:
-    g = out / "vesc_marginal.json"
+def fig_vesc_inverse(results: pathlib.Path, out: pathlib.Path) -> pathlib.Path | None:
+    g = results / "vesc_marginal.json"
     if not g.exists():
         return None
     sv = json.loads(g.read_text())
@@ -243,10 +243,12 @@ def fig_vesc_inverse(out: pathlib.Path) -> pathlib.Path | None:
     return p
 
 
-def make_all(cfg: dict, out: pathlib.Path) -> list[pathlib.Path]:
+def make_all(cfg: dict, results: pathlib.Path, out: pathlib.Path | None = None) -> list[pathlib.Path]:
+    out = out or (results / "figures")
     out.mkdir(parents=True, exist_ok=True)
     made = [fig_tails(cfg, out), fig_modulation(cfg, out), fig_calendar(cfg, out)]
-    for extra in (fig_scan_map(out), fig_vesc_posterior(out), fig_evidence(out), fig_vesc_inverse(out)):
+    for extra in (fig_scan_map(results, out), fig_vesc_posterior(results, out),
+                  fig_evidence(results, out), fig_vesc_inverse(results, out)):
         if extra is not None:
             made.append(extra)
     return made

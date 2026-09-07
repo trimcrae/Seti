@@ -16,6 +16,7 @@ import datetime as dt
 import json
 import math
 import pathlib
+import re
 import time
 
 import numpy as np
@@ -443,6 +444,138 @@ def stage_vesc_marginal(cfg: dict, out: pathlib.Path) -> dict:
     return summary
 
 
+def stage_sensitivity(cfg: dict, out: pathlib.Path) -> dict:
+    """How much the date factor depends on the unknown live-time mask, and a
+    cross-check of the sideband count against arXiv:2609.04175 (N_SB = 4.9 per
+    window event at delta = 377 keV, SHM 544, Helm, sideband ~350-590 keV)."""
+    ev, run, win, sc = cfg["event"], cfg["run"], cfg["window"], cfg["scan"]
+    t_obs = ev["date"]
+    eff = Efficiency.from_table(win["efficiency"])
+    spec = cfg["halo_models"]["shm_lz"]
+    halo = build_halo("shm_lz", spec)
+    masks = {
+        "uniform_27mar2023_1apr2024": LiveTime.uniform(run["start"], run["end"], run["live_days"]),
+        "late_start_1jun2023": LiveTime.uniform("2023-06-01", run["end"], run["live_days"]),
+        "early_end_31dec2023": LiveTime.uniform(run["start"], "2023-12-31", run["live_days"]),
+        "summer_half_duty": LiveTime.from_rows([(run["start"], "2023-05-15", 1.0), ("2023-05-15", "2023-08-15", 0.5),
+                                               ("2023-08-15", run["end"], 1.0)]),
+        "winter_half_duty": LiveTime.from_rows([(run["start"], "2023-10-15", 1.0), ("2023-10-15", "2024-02-15", 0.5),
+                                               ("2024-02-15", run["end"], 1.0)]),
+        "calibration_weeks_removed": LiveTime.from_rows([(run["start"], "2023-06-05", 1.0), ("2023-06-05", "2023-06-12", 0.0),
+                                                        ("2023-06-12", run["end"], 1.0)]),
+    }
+    rows = []
+    for m in (1000.0,):
+        for delta in (300.0, 340.0, 360.0, 370.0, 377.0, 380.0):
+            model = EventModel(halo, m, delta, eff, v0_kms=spec["v0"])
+            entry = {"m_chi_gev": m, "delta_keV": delta}
+            for name, live in masks.items():
+                tb = timing_bayes_factor(model, live, t_obs, sc.get("livetime_step_days", 6.0))
+                entry[f"timing_{name}"] = tb["bayes_factor_timing"]
+            live0 = masks["uniform_27mar2023_1apr2024"]
+            r_win = timing_bayes_factor(model, live0, t_obs, sc.get("livetime_step_days", 6.0))["mean_rate_livetime"]
+            for lo, hi, tag in ((350.0, 590.0, "04175_350_590"), (350.0, 600.0, "ours_350_600"), (350.0, 680.0, "dent_350_680")):
+                sb = sideband_expectation(model, live0, lo, hi, 0.96, sc.get("livetime_step_days", 6.0))
+                entry[f"sideband_per_event_{tag}"] = sb / r_win if r_win > 0 else None
+            rows.append(entry)
+    summary = {"rows": rows, "reference_04175": {"delta1_keV": 377, "N_SB_helm": 4.9, "N_SB_vietze": 3.7,
+                                                  "sideband_keV": [350, 590]}}
+    (out / "sensitivity.json").write_text(json.dumps(summary, indent=1))
+    return summary
+
+
+def stage_predictions(cfg: dict, out: pathlib.Path) -> dict:
+    """What each halo model's posterior maximum implies for the next events: the
+    season above a tenth of the annual peak, the 5-95 % recoil-energy range on the
+    peak date, expected counts in LZ's projected 1000 live days and in the
+    sideband, and the seasonal factor of LZ's first run (WS2022, Dec 2021-May 2022,
+    same S1c range in its EFT search)."""
+    from .crossexp import HighEnergySearch, expected_counts
+    from .earth import year_grid
+    from .rate import smeared_spectrum
+    ev, run, win, sc = cfg["event"], cfg["run"], cfg["window"], cfg["scan"]
+    t_obs = ev["date"]
+    eff = Efficiency.from_table(win["efficiency"])
+    live = LiveTime.uniform(run["start"], run["end"], run["live_days"])
+    sbc = cfg.get("sideband", {})
+    ps = out / "posterior_summary.json"
+    if not ps.exists():
+        return {"error": "run the posterior stage first"}
+    s = json.loads(ps.read_text())
+    preds = {}
+    for name, v in s["per_halo"].items():
+        spec = cfg["halo_models"][name]
+        halo = build_halo(name, spec)
+        bm = v["by_mass"].get("1000") or v["best"]
+        m = 1000.0 if v["by_mass"].get("1000") else float(v["best"]["m_chi_gev"])
+        delta = float(bm["best_delta_keV"] if "best_delta_keV" in bm else bm["delta_keV"])
+        model = EventModel(halo, m, delta, eff, v0_kms=spec["v0"], rho_gev_cm3=spec.get("rho", 0.3))
+        tb = timing_bayes_factor(model, live, t_obs, sc.get("livetime_step_days", 6.0))
+        mu1 = tb["mean_rate_livetime"] * run["exposure_tonne_year"]
+        sig1 = 1e-45 / mu1 if mu1 > 0 else None
+        # season above a tenth of the peak
+        year = int(t_obs[:4])
+        dates = year_grid(year, 73)
+        rc = model.rate_curve(dates)
+        on = rc >= 0.1 * rc.max() if rc.max() > 0 else np.zeros_like(rc, dtype=bool)
+        idx = np.where(on)[0]
+        season = (dates[int(idx[0])].date().isoformat(), dates[int(idx[-1])].date().isoformat()) if idx.size else None
+        # recoil-energy range on the peak date (5-95 % of the observed-energy spectrum)
+        t_peak = dates[int(np.argmax(rc))]
+        E = np.arange(5.0, 400.0, 1.0)
+        def sig_fn(x, _s=float(ev["sigma_stat_keV"]), _e=float(ev["energy_keV"])):
+            return K.resolution_sigma_keV(x, _s, _e)
+
+        wide = Efficiency.from_table([[5.4, 0.5], [14.0, 0.96], [400.0, 0.96]])
+        dens = smeared_spectrum(E, model.eta_at(t_peak), m, delta, wide, sig_fn, 1e-45, spec.get("rho", 0.3))
+        if dens.sum() > 0:
+            cdf = np.cumsum(dens) / dens.sum()
+            e_range = (float(np.interp(0.05, cdf, E)), float(np.interp(0.95, cdf, E)))
+        else:
+            e_range = None
+        # LZ 1000 live days (4.71 t): expected window and sideband counts at sigma_1
+        expo_1000 = 4.71 * 1000.0 / 365.25
+        sb_rate = sideband_expectation(model, live, sbc["E_lo_keV"], sbc["E_hi_keV"], sbc.get("plateau_efficiency", 0.96),
+                                       sc.get("livetime_step_days", 6.0)) if mu1 > 0 else 0.0
+        n_1000 = expo_1000 / run["exposure_tonne_year"]          # window events, normalised to one in WS2024
+        n_sb_1000 = n_1000 * (sb_rate / tb["mean_rate_livetime"]) if tb["mean_rate_livetime"] > 0 else None
+        # WS2022: 60 live days x 5.5 t, 23 Dec 2021 - 12 May 2022, same S1c range in the EFT search
+        ws2022 = HighEnergySearch("LZ WS2022 extended-window (EFT) search", 5.4, 290.0, 5.5 * 60.0 / 365.25,
+                                  "2021-12-23", "2022-05-12", 1.0, eff_table=win["efficiency"],
+                                  source="60 live days x 5.5 t (arXiv:2207.03764); dates from the WS2022 paper; S1c 3-600 phd as in arXiv:2312.02030")
+        rho_spec = spec.get("rho", 0.3)
+
+        def factory(e, _h=halo, _m=m, _d=delta, _v0=spec["v0"], _rho=rho_spec):
+            return EventModel(_h, _m, _d, e, v0_kms=_v0, rho_gev_cm3=_rho)
+
+        cx = expected_counts(factory, sig1 or 1e-45, [ws2022], step_days=sc.get("livetime_step_days", 6.0))[0]
+        preds[name] = {"m_chi_gev": m, "delta_keV": delta, "sigma_n_cm2": sig1,
+                       "season_above_tenth_of_peak": season, "peak_date": t_peak.date().isoformat(),
+                       "energy_range_5_95_keV_on_peak_date": e_range,
+                       "expected_window_events_1000_live_days": n_1000,
+                       "expected_sideband_events_1000_live_days": n_sb_1000,
+                       "ws2022_expected_events": cx["expected_seasonal"],
+                       "ws2022_seasonal_factor": cx["seasonal_factor"],
+                       "ws2022_per_unit_exposure_relative_to_ws2024": (cx["expected_seasonal"] / ws2022.exposure_tonne_year) / (1.0 / run["exposure_tonne_year"])}
+    (out / "predictions.json").write_text(json.dumps(preds, indent=1))
+    return preds
+
+
+_MACRO_KEYS = {
+    "shm_lz": "ShmLz", "shm_pp": "ShmPp", "shm_vesc_low": "ShmVescLow", "shm_vesc_high": "ShmVescHigh",
+    "shm_lmc_026": "ShmLmcLow", "shm_lmc_060": "ShmLmcHigh",
+    "deason2019_gaia_dr2": "Deason", "koppelman_helmi2021": "Koppelman", "necib_lin2022_dr2": "Necib",
+    "roche2024_gaia_dr3": "Roche", "monari2018_gaia_dr2": "Monari", "rave2007_lz_assumed": "Rave",
+}
+
+
+def _macro_key(name: str) -> str:
+    """TeX macro names are letters only: map config keys to a letters-only tag."""
+    if name in _MACRO_KEYS:
+        return _MACRO_KEYS[name]
+    return "".join(w.capitalize() for w in re.sub(r"[0-9]+", "", name).split("_") if w)
+
+
 def stage_numbers(cfg: dict, out: pathlib.Path, paper_dir: pathlib.Path | None = None) -> dict:
     """Write paper/lzedge/numbers.tex from the committed results (missing stages -> TODO macros)."""
     ev, run = cfg["event"], cfg["run"]
@@ -468,14 +601,48 @@ def stage_numbers(cfg: dict, out: pathlib.Path, paper_dir: pathlib.Path | None =
         macros["BestDelta"] = f"{best['delta_keV']:.0f}"
         macros["BestHalo"] = best["halo"].replace("_", r"\_")
         macros["BestSideband"] = f"{best['sideband_per_window_event']:.2f}"
+        pj = out / "posterior.json"
+        if pj.exists():
+            rows_all = json.loads(pj.read_text())
+            lz_rows = [x for x in rows_all if x["halo"] == "shm_lz" and x["m_chi_gev"] == 1000]
+            if lz_rows:
+                b_lz = max(lz_rows, key=lambda x: x["marginal"])
+                macros["TimingShmLzBest"] = f"{b_lz['timing']:.1f}"
+                macros["SidebandShmLzBest"] = f"{b_lz['sideband_per_window_event']:.2f}"
+                macros["SigmaShmLzBest"] = f"{b_lz['sigma_n_for_one_event_cm2']:.1e}"
         for name, v in s["per_halo"].items():
-            key = "".join(w.capitalize() for w in name.split("_"))
+            key = _macro_key(name)
             if v.get("evidence_rel_best") is not None:
                 macros[f"Evid{key}"] = f"{v['evidence_rel_best']:.2g}"
             bm = v["by_mass"].get("1000")
             if bm:
                 macros[f"DeltaBest{key}"] = f"{bm['best_delta_keV']:.0f}"
                 macros[f"DeltaOne{key}"] = f"{bm['delta_1sigma_keV'][0]:.0f}--{bm['delta_1sigma_keV'][1]:.0f}"
+    pp = out / "predictions.json"
+    if pp.exists():
+        pr = json.loads(pp.read_text())
+        for name, v in pr.items():
+            key = _macro_key(name)
+            if v.get("season_above_tenth_of_peak"):
+                a_, b_ = v["season_above_tenth_of_peak"]
+                macros[f"SeasonStart{key}"] = a_
+                macros[f"SeasonEnd{key}"] = b_
+            if v.get("energy_range_5_95_keV_on_peak_date"):
+                macros[f"ERange{key}"] = f"{v['energy_range_5_95_keV_on_peak_date'][0]:.0f}--{v['energy_range_5_95_keV_on_peak_date'][1]:.0f}"
+            macros[f"NThousand{key}"] = f"{v['expected_window_events_1000_live_days']:.1f}"
+            if v.get("expected_sideband_events_1000_live_days") is not None:
+                macros[f"NSbThousand{key}"] = f"{v['expected_sideband_events_1000_live_days']:.1f}"
+            if v.get("ws2022_per_unit_exposure_relative_to_ws2024") is not None:
+                macros[f"WsTwentyTwoRel{key}"] = f"{v['ws2022_per_unit_exposure_relative_to_ws2024']:.2f}"
+    ss = out / "sensitivity.json"
+    if ss.exists():
+        srows = json.loads(ss.read_text())["rows"]
+        row = next((x for x in srows if x["delta_keV"] == 370.0), srows[-1])
+        vals = [v for k, v in row.items() if k.startswith("timing_")]
+        macros["TimingMaskMin"] = f"{min(vals):.1f}"
+        macros["TimingMaskMax"] = f"{max(vals):.1f}"
+        macros["SidebandAtEdge"] = f"{row.get('sideband_per_event_04175_350_590', float('nan')):.1f}" if row["delta_keV"] == 377.0 else \
+            f"{next(x for x in srows if x['delta_keV'] == 377.0)['sideband_per_event_04175_350_590']:.1f}"
     vs = out / "vesc_marginal.json"
     if vs.exists():
         sv = json.loads(vs.read_text())
@@ -485,11 +652,13 @@ def stage_numbers(cfg: dict, out: pathlib.Path, paper_dir: pathlib.Path | None =
             macros["VescSixtyEight"] = f"{inv['flat_prior_68_kms'][0]:.0f}--{inv['flat_prior_68_kms'][1]:.0f}"
             macros["VescNinetyFiveLower"] = f"{inv['flat_prior_95_lower_kms']:.0f}"
         for name, res in sv["measurements"].items():
-            key = "".join(w.capitalize() for w in name.split("_"))
+            key = _macro_key(name)
             pm = res["per_mass"].get("1000")
             if pm:
                 macros[f"DeltaMed{key}"] = f"{pm['delta_median_keV']:.0f}"
+                macros[f"DeltaMode{key}"] = f"{pm['best_delta_keV']:.0f}"
                 macros[f"DeltaSixtyEight{key}"] = f"{pm['delta_68_keV'][0]:.0f}--{pm['delta_68_keV'][1]:.0f}"
+                macros[f"DeltaNinetyFiveUpper{key}"] = f"{pm['delta_95_keV'][1]:.0f}"
             vp = res["per_mass"].get("_vesc_posterior") or {}
             if vp.get("evidence_rel_best") is not None:
                 macros[f"EvidVesc{key}"] = f"{vp['evidence_rel_best']:.2g}"
@@ -505,7 +674,8 @@ def stage_numbers(cfg: dict, out: pathlib.Path, paper_dir: pathlib.Path | None =
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="lzedge")
     ap.add_argument("--stage", default="all",
-                    choices=["kinematics", "scan", "tails", "posterior", "vesc", "numbers", "figures", "all"])
+                    choices=["kinematics", "scan", "tails", "posterior", "vesc", "sensitivity", "predictions",
+                             "numbers", "figures", "all"])
     ap.add_argument("--config", default=None)
     ap.add_argument("--out", default="results/lzedge")
     ap.add_argument("--halos", default=None, help="comma-separated subset of halo_models")
@@ -528,9 +698,15 @@ def main(argv: list[str] | None = None) -> int:
     if a.stage in ("vesc", "all"):
         s = stage_vesc_marginal(cfg, out)
         print(f"vesc: {len(s['measurements'])} measurements in {s['elapsed_s']}s")
+    if a.stage in ("sensitivity", "all"):
+        s = stage_sensitivity(cfg, out)
+        print("sensitivity:", json.dumps(s["rows"][-2], indent=None))
+    if a.stage in ("predictions", "all"):
+        s = stage_predictions(cfg, out)
+        print("predictions:", json.dumps(s.get("shm_lz", s), indent=None)[:400])
     if a.stage in ("figures", "all"):
         from .figures import make_all
-        made = make_all(cfg, out / "figures")
+        made = make_all(cfg, out, out / "figures")
         print("figures:", ", ".join(p.name for p in made))
     if a.stage in ("numbers", "all"):
         m = stage_numbers(cfg, out)

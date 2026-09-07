@@ -22,7 +22,7 @@ import yaml
 
 from . import kinematics as K
 from .earth import extremal_dates, galactic_lb_deg, v_lab_kms, v_lab_speed_kms
-from .halo import shm, shm_plus_plus
+from .halo import shm, shm_plus_plus, shm_tail
 from .rate import Efficiency
 from .timing import EventModel, LiveTime, modulation_summary, timing_bayes_factor
 
@@ -137,9 +137,59 @@ def stage_scan(cfg: dict, out: pathlib.Path, halos_only: list[str] | None = None
     return summary
 
 
+def stage_tails(cfg: dict, out: pathlib.Path) -> dict:
+    """Tail shape x v_esc x v0 at the event: the astrophysics of the edge, model by model."""
+    ev, run, win, sc = cfg["event"], cfg["run"], cfg["window"], cfg["scan"]
+    E_obs, t_obs = float(ev["energy_keV"]), ev["date"]
+    eff = Efficiency.from_table(win["efficiency"])
+    live = LiveTime.uniform(run["start"], run["end"], run["live_days"])
+    sig_ref = float(ev["sigma_stat_keV"])
+
+    def sigma_fn(E):
+        return K.resolution_sigma_keV(E, sig_ref, E_obs)
+
+    tails = cfg.get("tails", {})
+    shapes = tails.get("shapes", [{"tail": "sharp"}, {"tail": "soft"}, {"tail": "power", "k": 1.0},
+                                  {"tail": "power", "k": 2.5}])
+    vescs = tails.get("v_esc", [500.0, 528.0, 544.0, 580.0])
+    v0s = tails.get("v0", [220.0, 238.0, 250.0])
+    masses = tails.get("m_chi_gev", [200.0, 1000.0, 10000.0])
+    d = tails.get("delta_keV", {"min": 0.0, "max": 480.0, "step": 20.0})
+    deltas = np.arange(d["min"], d["max"] + 0.5 * d["step"], d["step"])
+    rows = []
+    t0 = time.time()
+    for shape in shapes:
+        for vesc in vescs:
+            for v0 in v0s:
+                halo = shm_tail(v0=v0, v_esc=vesc, tail=shape["tail"], k=shape.get("k", 2.0))
+                label = f"{shape['tail']}" + (f"_k{shape['k']}" if shape["tail"] == "power" else "")
+                for m in masses:
+                    for delta in deltas:
+                        model = EventModel(halo, float(m), float(delta), eff, v0_kms=v0)
+                        tb = timing_bayes_factor(model, live, t_obs, sc.get("livetime_step_days", 3.0))
+                        ms = modulation_summary(model, int(t_obs[:4]), sc.get("year_samples", 73))
+                        r_obs = tb["rate_at_event"]
+                        pE = float(model.observed_energy_density(E_obs, t_obs, sigma_fn)[0]) / r_obs if r_obs > 0 else 0.0
+                        rows.append({"tail": label, "v_esc": vesc, "v0": v0, "m_chi_gev": m, "delta_keV": float(delta),
+                                     "rate_at_event_per_ty": r_obs, "mean_rate_livetime_per_ty": tb["mean_rate_livetime"],
+                                     "bayes_factor_timing": tb["bayes_factor_timing"],
+                                     "energy_density_at_event_per_keV": pE,
+                                     "peak_date": ms["peak_date"], "fractional_modulation": ms["fractional_modulation"],
+                                     "fraction_of_year_on": ms["fraction_of_year_on"]})
+                print(f"  tails {label} vesc={vesc} v0={v0}: {len(rows)} rows, {time.time() - t0:.0f}s")
+                (out / "tails.json").write_text(json.dumps(rows, indent=1))
+    with (out / "tails.csv").open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
+    summary = {"n_rows": len(rows), "elapsed_s": round(time.time() - t0, 1)}
+    (out / "tails_summary.json").write_text(json.dumps(summary, indent=2))
+    return summary
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="lzedge")
-    ap.add_argument("--stage", default="all", choices=["kinematics", "scan", "all"])
+    ap.add_argument("--stage", default="all", choices=["kinematics", "scan", "tails", "all"])
     ap.add_argument("--config", default=None)
     ap.add_argument("--out", default="results/lzedge")
     ap.add_argument("--halos", default=None, help="comma-separated subset of halo_models")
@@ -153,6 +203,9 @@ def main(argv: list[str] | None = None) -> int:
     if a.stage in ("scan", "all"):
         s = stage_scan(cfg, out, a.halos.split(",") if a.halos else None)
         print(f"scan: {s['n_rows']} rows in {s['elapsed_s']}s")
+    if a.stage in ("tails", "all"):
+        s = stage_tails(cfg, out)
+        print(f"tails: {s['n_rows']} rows in {s['elapsed_s']}s")
     return 0
 
 

@@ -1,0 +1,1170 @@
+\documentclass[%
+  aps,
+  prl,
+  reprint,
+  superscriptaddress,
+  amsmath,
+  amssymb,
+  longbibliography
+]{revtex4-2}
+
+\usepackage{graphicx}% Include figure files
+\usepackage{bm}% bold math
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage[
+  colorlinks=true,
+  citecolor=blue!55!black,
+  linkcolor=blue!55!black,
+  urlcolor=blue!55!black
+]{hyperref}
+\hypersetup{hidelinks}
+%\usepackage{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+
+%\usepackage[showframe,%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+%%margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+%]{geometry}
+
+\begin{document}
+
+% \preprint{APS/123-QED}
+
+\title{\textbf {TeV Higgsino Dark Matter from LZ Nuclear Recoil to Fermi-LAT Gamma Rays} 
+}% 
+
+\author{Lei Wu}
+\email{leiwu@njnu.edu.cn}
+\affiliation{Department of Physics and Institute of Theoretical Physics, Nanjing Normal University, Nanjing, 210023, China}
+%\affiliation{Nanjing Key Laboratory of Particle Physics and Astrophysics, Nanjing, 210023, China}
+
+
+\author{Yang Zhang}
+\email{zhangyang2025@htu.edu.cn}
+\affiliation{Center for Theoretical Physics, Henan Normal University, Xinxiang 453007, China}
+
+
+\author{Bin Zhu}
+\email{zhubin@mail.nankai.edu.cn}
+\affiliation{School of Physics, Yantai University, Yantai 264005, China}
+
+
+\date{\today}% It is always \today, today,
+             %  but any date may be explicitly specified
+
+\begin{abstract}
+The Higgsino dark matter of the minimal supersymmetric standard model is one of the most minimal and canonical WIMP candidates. We demonstrate that this classic candidate can account for both the high-energy nuclear-recoil excess reported by the LZ experiment and the mild preference in the 14 years of Fermi–LAT Galactic-center data, with the relic abundance fixing the Higgsino dark matter mass near 1.1 TeV and the recoil spectrum selecting a mass splitting of a few hundred keV. Together with the 10-year IceCube solar-neutrino constraint, the Higgsino interpretation further pins down a viable region of parameter space. It predicts a Galactic-center gamma-ray line and endpoint signal near the present H.E.S.S. sensitivity and within CTAO's projected reach, making this classic candidate testable in the near future.
+\end{abstract}
+
+\maketitle
+
+
+{\it Introduction.} The existence of dark matter (DM) is firmly established by gravitational evidence spanning galactic rotation curves, cluster lensing, the cosmic microwave background, and the growth of large-scale structure \cite{Bertone:2004pz}.  Its identity, however, remains one of the central open questions of particle physics and cosmology.  Weakly interacting massive particles (WIMPs) are among the most studied candidates, since masses and interactions at the weak scale, from a few tens of GeV to several TeV, reproduce the observed relic abundance and provide concrete targets for direct, indirect, and collider searches \cite{Jungman:1995df}. Recently, a single high-energy nuclear recoil in LUX-ZEPLIN (LZ) and a gamma-ray excess toward the Galactic Center in Fermi-LAT data may point to the upper end of this mass range.
+
+
+The LZ candidate lies in the $200$--$300$~keV recoil-energy window and has a local significance of about $3.4\sigma$ and a global significance of $2.6\sigma$~\cite{LZ:2026HighEnergy}. This event is kinematically compatible with TeV-scale DM, though standard elastic scenarios are excluded by null results.
+Meanwhile, the Fermi-LAT excess is a broad spectral component at multi-GeV energies, reported in 14 years of data with a significance of about $2\sigma$ \cite{Dessert:2022evk}. Its morphology follows a steeply rising, approximately squared Navarro--Frenk--White profile, and its spectrum is broader and harder than the diffuse emission that accounts for the rest of the Galactic plane, so that an interpretation in terms of unresolved astrophysical sources becomes increasingly strained at the highest energies.  A TeV-scale WIMP annihilating into gauge bosons, and Higgs pair produces just such a component, since gauge-boson fragmentation yields a continuum peaking near $E_\gamma\sim m_\chi/50\simeq 20$~GeV and spanning about a decade in energy, matching both the position and the width of the excess. Both observations, despite their modest significance, are thus compatible with a common origin in a TeV-scale WIMP.
+
+We propose that higgsino dark matter accounts for both observations. In the pure-doublet limit, the observed thermal relic abundance fixes its mass near 1 TeV \cite{Arkani-Hamed:2006wnf,Jungman:1995df}, the very scale the two observations favor. It can inelastically scatter off xenon nuclei, reproducing the LZ recoil, and annihilate into $W^+W^-$ and $ZZ$, enhanced by the Sommerfeld effect at halo velocities \cite{Hisano:2004ds,Hisano:2006nn}, generating the continuum underlying the Fermi-LAT preference. Such a TeV Higgsino DM also produces a neutrino signal through its capture in the Sun, subsequent thermalization, and annihilation. The residual elastic scattering that governs this thermalization receives both a tree-level Higgs-exchange contribution and an electroweak-loop contribution that survives in the pure-Higgsino limit. Their coherent interference can suppress the elastic rate, providing a possible mechanism to delay thermalization and weaken the IceCube signal. In this region, the higgsino DM annihilation also yields the line-like ($\gamma\gamma$, $\gamma Z$) and the continuum gamma-ray fluxes within the projected sensitivity of the Cherenkov Telescope Array (CTA) \cite{Rodd:2024qsi}, making the scenario decisively testable.
+
+%Astrophysical and cosmological observations have established the existence of nonbaryonic dark matter, which dominates the matter content of the Universe~\cite{Bertone:2004pz,Planck:2018vyg}. Its particle nature, however, remains unknown. Among the proposed candidates, weakly interacting massive particles (WIMPs) have been extensively searched for through nuclear recoils in underground detectors~\cite{LZ:2024zvo,XENON:2025vwd,PandaX:2024qfu}. Recently, the LZ Collaboration reported a high-energy nuclear-recoil excess in an analysis based on \(2.84~\mathrm{tonne\,yr}\) of exposure and extending to \(270~\mathrm{keV}\), with the modeled background expected to contribute well below one event in this region~\cite{LZ:2026HighEnergy}. Such high recoil energies can naturally arise from inelastic dark matter scattering, in which the incoming state transitions to a slightly heavier state~\cite{Tucker-Smith:2001myb,Bramante:2016rdh}.
+
+%A nearly pure Higgsino in the minimal supersymmetric standard model (MSSM) provides a simple and predictive realization of this mechanism. Requiring it to account for the observed dark matter relic abundance through thermal freeze-out fixes its mass near \(1.1~\mathrm{TeV}\), since its annihilation and coannihilation rates are determined mainly by electroweak gauge interactions~\cite{Jungman:1995df,Cirelli:2005uq,Nagata:2014wma}. In the nearly pure limit, the two neutral Higgsino-like states form a pseudo-Dirac pair with an unsuppressed off-diagonal \(Z\) coupling~\cite{Nagata:2014wma}. A small mass splitting then allows the lighter state to scatter into the heavier state through \(Z\)-boson exchange, producing a characteristic signal at high recoil energies~\cite{Nagata:2014wma,Bramante:2016rdh}. We therefore investigate whether the LZ excess can be explained by thermal Higgsino dark matter.
+
+
+%An analysis of fourteen years of Fermi--LAT data also found a halo-dependent preference for a TeV Higgsino continuum spectrum~\cite{Dessert:2022evk}. This interpretation can be tested independently with solar neutrinos and Galactic-center gamma rays. In the Sun, gravitational acceleration allows Higgsinos to scatter inelastically on heavy nuclei even when terrestrial scattering probes only the high-velocity tail of the dark matter distribution. After capture, further scattering determines whether the Higgsinos thermalize in the solar core, where annihilation into \(W^+W^-\) and \(ZZ\) produces high-energy neutrinos~\cite{Catena:2018vzc}. The ten-year IceCube solar-neutrino data therefore provide a stringent test of the parameter region favored by the LZ recoil spectrum~\cite{IceCube:2025fcu}. Higgsino annihilation in the Galactic halo also produces gamma-ray lines and endpoint photons~\cite{Beneke:2019gtg}, which can be tested with H.E.S.S.~and CTAO~\cite{CTAO:2024wvb}.
+
+
+%In this Letter, we identify the MSSM parameter region in which inelastic scattering of a thermal Higgsino can account for the LZ excess while satisfying the relic-density requirement and remaining compatible with the Fermi--LAT data.  Using the ten-year IceCube solar-neutrino likelihood and a loop-complete calculation of the elastic Higgsino--nucleon amplitude, we find that most of this region is excluded, leaving only a narrow blind spot generated by destructive tree--loop interference. The surviving region predicts a Galactic-center gamma-ray line and endpoint signal close to the present H.E.S.S.~sensitivity and within the projected reach of CTAO for a cuspy halo profile.
+
+
+{\it Higgsino DM for LZ and Fermi-Lat excesses.} In the MSSM, we consider a Higgsino dark matter that saturates the relic density. The small mass splitting between the two nearly degenerate Higgsino states enables the inelastic transition $\widetilde{\chi}_1^0 A \to \widetilde{\chi}_2^0 A$, which can produce a sizable nuclear recoil signal via the unsuppressed off-diagonal $Z$ coupling~\cite{Bramante:2016rdh}. In the heavy gaugino limit, the leading contribution of the mass splitting is given by
+\begin{equation}
+\delta_m \simeq
+m_Z^2
+\left|
+s_W^2
+\frac{M_1+\mu\sin 2\beta}{M_1^2-\mu^2}
++
+c_W^2
+\frac{M_2+\mu\sin 2\beta}{M_2^2-\mu^2}
+\right|,
+\label{eq:higgsino_splitting}
+\end{equation}
+where $\mu$ mainly determines the Higgsino mass and
+thermal annihilation rate, while \(M_1\), \(M_2\), and
+\(\tan\beta\) control the neutral splitting and residual elastic
+interaction. A splitting of a few hundred keV can be realized in
+two limiting ways. At finite gaugino masses, opposite-sign bino
+and wino contributions can cancel, approximately along
+\(M_1\simeq-\tan^2\theta_W M_2\). Alternatively, both
+contributions can become small through common gaugino decoupling,
+which for the splitting of interest requires gaugino masses of
+order \(10^4~\mathrm{TeV}\). The complete parameter map and the corresponding limiting
+relations are given in the Supplemental Material
+
+%Thus, \(\lvert\mu\rvert\) mainly determines the common Higgsino mass and the thermal annihilation rate, while \(M_1\), \(M_2\), and \(\tan\beta\) determine the neutral splitting~\cite{Nagata:2014wma, Martin:2024ytt}. The sign of \(\mu\) and the value of \(\tan\beta\) shift the detailed position of the solution in the \((M_1,M_2)\) plane.
+%In the lower-gaugino-mass region, the bino and wino contributions in Eq.~\eqref{eq:higgsino_splitting} have opposite signs and nearly cancel. To leading order in \(\lvert\mu/M_{1,2}\rvert\), the cancellation condition is
+%\begin{equation}
+%M_1M_2<0,
+%\qquad
+%M_1\simeq-\tan^2\theta_W\,M_2
+%\simeq-0.30\,M_2.
+%\label{eq:gaugino_cancellation}
+%\end{equation}
+%The small departure from this relation and loop corrections determine the remaining mass splitting of a few hundred keV.
+
+%A second realization is obtained in the common-decoupling region, where the bino and wino contributions have the same sign and both gauginos are ultraheavy. Neglecting terms suppressed by \(\lvert\mu/M_{1,2}\rvert\), the splitting satisfies
+%\begin{equation}
+%\frac{s_W^2}{\lvert M_1\rvert}
+%+
+%\frac{c_W^2}{\lvert M_2\rvert}
+%\simeq
+%\frac{\delta_m}{m_Z^2}.
+%\label{eq:gaugino_decoupling}
+%\end{equation}
+%For 
+%\(\delta_m\simeq0.3~\mathrm{MeV}\),
+%this requires approximately \(\lvert M_1\rvert \gtrsim 5\times10^3~\mathrm{TeV} \) or \(\lvert M_2\rvert \gtrsim 1.5 \times10^4~\mathrm{TeV} \).
+%he same gaugino parameters also determine the residual elastic Higgsino--nucleon amplitude, which will be important for the solar-neutrino test.
+
+For inelastic scattering on a nucleus \(A\), the minimum incident speed required to produce a recoil energy \(E_R\) is
+\begin{equation}
+v_{\min}(E_R)
+=
+\frac{m_AE_R/\mu_{\chi A}+\delta_m}
+{\sqrt{2m_AE_R}},
+\label{eq:vmin_inelastic}
+\end{equation}
+where \(\mu_{\chi A}\) is the dark-matter--nucleus reduced mass. A positive mass splitting raises the kinematic threshold and shifts the recoil spectrum toward high energies. For a thermal Higgsino near \(1.1~\mathrm{TeV}\), xenon recoils in the
+\(\mathcal{O}(100)~\mathrm{keV}\)
+range probe neutralino mass splittings of several hundred keV. The corresponding event rate is controlled by the high-velocity tail of the Galactic dark matter distribution~\cite{Tucker-Smith:2001myb,Bramante:2016rdh}. A quantitative determination of the preferred mass splitting therefore requires a consistent treatment of the Galactic density, the local phase-space distribution, the nuclear response, and the detector likelihood, which we present in the next section.
+
+
+
+To analyze the high-energy xenon recoil and Galactic-center gamma-ray data within a common astrophysical framework, we adopt a fixed Einasto--Eddington Galactic benchmark. The dark matter density follows an Einasto profile with $\alpha=0.17$, $r_s=20~\mathrm{kpc}$,
+${R_0=8.5~\mathrm{kpc}}$, ${\rho_\chi(R_0)=0.40~\mathrm{GeV\,cm^{-3}}}$~\cite{HESS:2026ila}.
+The same density profile is used to normalize the Fermi--LAT signal and the line and endpoint signals considered below. After introducing a smooth outer taper and a spherical baryonic potential, we obtain the local dark matter velocity distribution through isotropic Eddington inversion~\cite{Lacroix:2018qqh}. The construction gives
+\(v_{\rm esc}(R_0)=544~\mathrm{km\,s^{-1}}\)
+and a maximum laboratory-frame speed
+\(v_{\rm max}=v_{\rm esc}+v_E=798~\mathrm{km\,s^{-1}}\),
+where \(v_E=254~\mathrm{km\,s^{-1}}\) is the annual-average Earth speed. This prescription keeps the Galactic density and local phase-space distribution internally consistent.
+% It is used as a fixed benchmark rather than as a fit to Milky-Way dynamical data, and no halo parameters are profiled in the baseline analysis.
+
+The public fourteen-year Fermi--LAT likelihood was released for an NFW density profile and is provided separately in nine angular annuli~\cite{Dessert:2022evk}. We translate it to the common Einasto profile by rescaling the signal normalization within each annulus before summing the likelihoods,
+\begin{equation}
+\ln \mathcal{L}^{\rm Ein}_F
+\left(m_\chi,\langle\sigma v\rangle\right)
+=
+\sum_{i=1}^{9}
+\ln \mathcal{L}^{\rm pub}_{F,i}
+\left(
+m_\chi,
+\langle\sigma v\rangle
+\frac{J_i^{\rm Ein}}{J_i^{\rm NFW}}
+\right).
+\label{eq:fermi_einasto_reweight}
+\end{equation}
+This procedure preserves the annulus-dependent information in the public likelihood and avoids applying a single overall rescaling after the annuli have been combined. For LZ, the inelastic recoil spectrum is evaluated with the local Eddington velocity distribution and folded with the high-energy nuclear-recoil response and detector likelihood. All direct- and indirect-detection rates are calculated under the full-density assumption.
+
+\begin{table}[tbp]
+\caption{\textbf{Likelihood definitions and numerical inputs.} }
+\label{tab:likelihood-contract}
+\footnotesize
+\begin{ruledtabular}
+\begin{tabular}{@{}p{0.14\columnwidth}p{0.40\columnwidth}p{0.34\columnwidth}@{}}
+{\raggedright Term\par} &
+{\raggedright Definition\par} &
+{\raggedright Numerical input\par}\\
+\hline
+{\raggedright Relic\par} &
+{\raggedright $\displaystyle
+\chi_\Omega^2=\left(\frac{\Omega_\chi h^2-\Omega_0}{\sigma_\Omega}\right)^2$
+\par} &
+{\raggedright $\Omega_0=0.120$;
+$\sigma_\Omega=0.01206$\par}\\[1.0ex]
+
+{\raggedright LZ\par} &
+{\raggedright $\displaystyle q_{\rm LZ}=-2\ln
+\frac{{\cal L}_{\rm LZ}(m_\chi,\delta_m)}{{\cal L}_{\rm LZ,max}}$\par} &
+{\raggedright $E_{\rm obs}=248\,\mathrm{keV}$;
+$\sigma_E=32.53\,\mathrm{keV}$;
+$\bar\mu_b=0.0106$;
+$\sigma_b=0.0008$;
+profile $\mu_b\geq0$\par}\\[1.0ex]
+
+{\raggedright Fermi\par} &
+{\raggedright $\displaystyle q_F=2\ln
+\frac{{\cal L}^{\rm Ein}_F(m_\chi,\langle\sigma v\rangle_H)}
+{{\cal L}^{\rm Ein}_F(m_\chi,0)}$\par} &
+{\raggedright Non-Gaussian; the full released nine-annulus likelihood cube is
+used.\par}\\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+
+
+We rank the parameter space using
+\begin{equation}
+S_{\rm joint}(m_\chi,\delta_m)
+=
+\chi_\Omega^2(m_\chi)
++
+q_{\rm LZ}(m_\chi,\delta_m)
+-
+q_F(m_\chi),
+\label{eq:joint_score}
+\end{equation}
+where the definitions and numerical inputs of the three components are summarized in Table~\ref{tab:likelihood-contract}. Only differences relative to the evaluated minimum are used, thus the displayed $\Delta{\cal S}_{\rm joint}$ levels are relative-likelihood guides rather than coverage-calibrated confidence regions.
+
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig1_lz_fermi_likelihood.pdf}
+\caption{
+Common-halo relic-density, Fermi--LAT, and LZ likelihoods.
+The blue and orange curves show the corresponding \(\Delta S=2.30\) guides for the relic-density plus Fermi--LAT contribution and the LZ likelihood, respectively.
+The violet shading shows the joint likelihood, with the star marking the best-fit point.
+}
+\label{fig:joint_likelihood}
+\end{figure}
+
+
+
+Figure~\ref{fig:joint_likelihood} shows the separate contributions and their overlap. The relic-density requirement provides the dominant constraint on the Higgsino mass, while the LZ recoil likelihood selects the correlated region in the \((m_\chi,\delta_m)\) plane. The Fermi--LAT contribution varies only weakly over the relic-selected mass range and therefore has little impact on the location or width of the preferred region.
+
+The joint score in the {fiducial Einasto--Eddington benchmark} reaches its minimum at
+${m_\chi=1.091~\mathrm{TeV}}$, and ${\delta_m=324~\mathrm{keV}}$. At this point, the LZ recast predicts \({N_s=0.7238}\) accepted signal events and lies only
+\({2\Delta\mathrm{NLL}_{\rm LZ}=0.0522}\)
+above the minimum of the LZ-only profile. Thus the joint minimum is also close to the region independently preferred by the high-energy recoil data. The preferred value of \(\delta_m\) is determined by the recoil spectrum, while the correlation between \(m_\chi\) and \(\delta_m\) follows from the inelastic minimum-speed condition. Around \(m_\chi\simeq1.09~\mathrm{TeV}\), the LZ recast selects approximately ${318~\mathrm{keV}\lesssim\delta_m\lesssim334~\mathrm{keV}}$
+within the displayed \(\Delta S=2.30\) guide.
+
+At the same point, the fixed thermal Higgsino template gives
+\({q_F=2.110}\), corresponding to a modest improvement of the Fermi--LAT likelihood relative to the no-signal hypothesis. The Fermi--LAT term therefore provides a mild compatibility contribution rather than an appreciable additional constraint on the preferred \((m_\chi,\delta_m)\) region. Since the LZ signal probes velocities close to the kinematic endpoint, the precise position and width of the preferred splitting remain conditional on the adopted Einasto--Eddington phase-space closure and detector response.
+
+{\it Constraints and Prospects.}  
+
+
+The parameter region selected by the joint LZ and Fermi--LAT analysis must also satisfy complementary constraints from solar-neutrino searches. The IceCube signal is governed by three successive processes, namely capture in the Sun, thermalization of the captured population, and annihilation in the solar core. Throughout the LZ-preferred splitting interval, capture is kinematically open and unsuppressed, since the gravitational acceleration of the solar potential keeps the endothermic inelastic up-scattering on heavy nuclei accessible and the nearly unsuppressed off-diagonal \(Z\) interaction binds the incident higgsino dark matter~\cite{Nussinov:2009ft,Catena:2018vzc}. The signal is therefore set by the subsequent thermalization.
+
+After a few inelastic scatterings, further up-scattering becomes kinematically inaccessible, leaving the captured higgsino dark matter on extended nonthermal orbits~\cite{Blennow:2018xwu}. It migrates toward the solar core only through residual elastic scattering, a process that need not complete within the age of the Sun. This elastic rate controls post-capture cooling rather than the initial inelastic capture, and it depends on the same gaugino--higgsino mixing parameters that generate the neutral-state splitting. In the dominant spin-independent channel, finite gaugino mixing induces Higgs exchange at tree level, whereas electroweak loops remain nonzero in the pure-higgsino limit~\cite{Hisano:2004pv,Chen:2019gtm}. After matching onto the same low-energy nucleon operators, the two contributions must be combined coherently, with $\sigma_N^{\mathrm{SI}}=(4\mu_{\chi N}^2/\pi)\,\left|\mathcal{A}_{N,\mathrm{tree}}^{\mathrm{SI}}+\mathcal{A}_{N,\mathrm{EW}}^{\mathrm{SI,loop}}\right|^2$. Because the tree amplitude inherits the signs of the gaugino--higgsino mixing parameters, it can oppose the electroweak-loop amplitude, and a strong suppression requires $\mathrm{Re}\!\left(\mathcal{A}_{N,\mathrm{tree}}^{\mathrm{SI}}\,\mathcal{A}_{N,\mathrm{EW}}^{\mathrm{SI,loop*}}\right)<0$ together with comparable magnitudes of the two amplitudes~\cite{Han:2018gej,Bisal:2023fgb}. The separate tree-level and pure-higgsino loop estimates in the Supplemental Material show that the magnitude condition can be realized on part of the displayed gaugino surface, establishing the parametric possibility of destructive interference, but locating the resulting cancellation band and its IceCube boundary requires a point-by-point, loop-complete signed-amplitude calculation. Where the two amplitudes carry opposite signs, the interference is destructive and suppresses the elastic cross section, slowing thermalization, and the resulting delay reduces the annihilation rate and the neutrino flux, keeping the interpretation consistent with the IceCube bound. 
+
+H.E.S.S. reports no significant line
+excess~\cite{HESS:2026ila}.  
+We normalize the complete Higgsino $\gamma+X$ spectrum by
+$\mu_\gamma$, with $\mu_\gamma=1$ denoting the canonical full-density thermal
+prediction.  
+We obtain the black and orange curves by
+normalizing its observed Einasto line limits to the canonical NLO Higgsino line prediction quoted in the same analysis.  For the two Einasto normalizations shown, these line-only overlays remain above $\mu_\gamma=1$ across the joint-fit mass interval. The mass interval selected by the joint analysis predicts a complementary line-like Galactic-center signal from present-day Higgsino annihilation. A TeV Higgsino produces $\gamma\gamma$ and $\gamma Z$ lines accompanied by a sizeable endpoint contribution~\cite{Beneke:2019gtg,Urban:2021cdu,Beneke:2022eci}. Figure~\ref{fig:hess-ctao} compares this target with present H.E.S.S. limits and the projected CTAO reach.  
+
+
+
+
+
+
+
+
+To determine how the physical endpoint spectrum modifies the CTAO reach, we
+evaluate the complete photon-number-weighted $\gamma+X$ spectrum with
+\textsc{DM$\gamma$Spec}, including the NLO electroweak Sommerfeld correction
+and the resummed line, endpoint, and continuum
+contributions~\cite{Beneke:2019gtg,Urban:2021cdu,Beneke:2022eci}.  For spatial
+ring $p$ and reconstructed-energy bin $k$, the expected count template for
+$\mu_\gamma=1$ is
+\begin{equation}
+ s_{pk}^{H}
+ =
+ \frac{J_p T_p}{8\pi m_\chi^2}
+ \int \mathrm{d}E_t\,
+ A_{\rm eff}(E_t,p)\,
+ D_{pk}(E_t)\,
+ \frac{\mathrm{d}\langle\sigma v\rangle_\gamma}
+      {\mathrm{d}E_t},
+ \label{eq:ctao_signal}
+\end{equation}
+where $J_p$ is the annihilation $J$ factor, $A_{\rm eff}$ is the effective
+area, $D_{pk}$ is the probability for a photon of true energy $E_t$ to be
+reconstructed in bin $k$, and $T_p$ is the exposure of ring $p$.  We fold the
+templates through the public Prod5 South effective area and energy
+dispersion~\cite{cherenkov_telescope_array_observatory_2021_5499840}.  We use
+the four $0.5^\circ$ Galactic-center rings, the published $3\times3$ pointing
+pattern, and $500$ h total exposure of the CTAO line-search
+forecast~\cite{CTAO:2024wvb}.
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=\columnwidth]{fig2_hess_ctao_line_endpoint.pdf}
+\caption{
+Sensitivity of Galactic-center gamma-ray searches to thermal Higgsino dark matter.
+The vertical axis is the Higgsino-template normalization \(\mu_\gamma\), with \(\mu_\gamma=1\) denoting the thermal prediction.
+The black and orange curves show the published H.E.S.S.~observed line limits, and the blue curve shows the CTAO Omega sensitivity estimated from the response-matched Higgsino \(\gamma+X\) spectrum.
+}
+\label{fig:hess-ctao}
+\end{figure}
+
+
+The public CTAO products do not include the complete Galactic-center
+background count cube or the exact nuisance implementation.  Our local
+background-only Asimov likelihood is therefore used only to determine the
+relative response to the physical Higgsino spectrum and to a monochromatic
+line~\cite{Cowan:2010js}:
+\begin{equation}
+ \begin{aligned}
+ {\cal L}_{\rm loc}(\mu_\gamma,\boldsymbol{\theta})
+ &=
+ \prod_{p,k}
+ {\rm Pois}\!\left[
+ n_{pk}\,\middle|\,
+ \mu_\gamma s_{pk}^{H}
+ + b_{pk}(\beta_p,\gamma_p,\boldsymbol{\eta}_p)
+ \right]
+ \\
+ &\quad\times \pi(\boldsymbol{\eta}_p),
+ \qquad n_{pk}=b_{pk}.
+ \end{aligned}
+ \label{eq:ctao_local_likelihood}
+\end{equation}
+In each spatial ring, we profile the local background normalization $\beta_p$,
+the spectral slope $\gamma_p$, and the correlated response nuisance parameters
+$\boldsymbol{\eta}_p$.  We apply the same procedure to the full Higgsino
+$\gamma+X$ template and to a monochromatic $\gamma\gamma$ template, determining
+their local one-sided 95\% limits from $q=2.71$.  At each mass, we use the
+local likelihood only to determine the relative line-to-Higgsino response and
+anchor its absolute normalization to the released CTAO pure-line profile
+likelihood~\cite{CTAO:2024wvb,bringmann_2024_11422081}.  The resulting curve is therefore a
+response-matched projection rather than an official CTAO likelihood.
+
+The released response and line-search profile describe the Alpha
+configuration, for which the matched projection remains above the thermal
+target.  The illustrative Omega-scale projection shown in blue in
+Fig.~\ref{fig:hess-ctao} applies the approximate factor-of-two gain quoted by
+CTAO for the full-scope Omega configuration~\cite{CTAO:2024wvb}.
+Subject to the $500$-h exposure, the full-density assumption, this
+configuration mapping, and the fiducial cuspy Einasto halo, CTAO would
+therefore probe the joint-fit thermal-Higgsino target.
+
+{\it Conclusions.} We have shown that the inelastic higgsino dark matter, the most canonical WIMP candidate, offers a single coherent interpretation of the LZ high-energy recoil excess and the Fermi-LAT preference for a TeV-scale continuum. Freeze-out fixes its mass near 1.1 TeV, while the recoil spectrum selects a mass splitting of a few hundred keV. Such a scenario also predicts a neutrino signal, from capture in the Sun and annihilation in the core, and we find that destructive interference between the tree-level and electroweak-loop elastic scattering suppresses this flux, keeping the interpretation consistent with the ten-year IceCube constraint. The surviving region predicts a Galactic-center gamma-ray line and an endpoint signal near the present H.E.S.S. sensitivity and within CTAO's projected reach, placing the minimal WIMP picture under decisive, near-term scrutiny.\\~\\
+
+{\it Acknowledgements} We would greatly thank Yongheng Xu for discussion. L.W. is supported by the National Natural Science Foundation of China (NNSFC) under grant No. 12335005 and No.~12275134.
+
+\bibliography{apssamp}% Produces the bibliography via BibTeX.
+
+% ============================================================================
+% Supplemental Material (merged from supplement.tex; text/content preserved)
+% ============================================================================
+\clearpage
+\onecolumngrid
+\hypersetup{
+  colorlinks=true,
+  citecolor=blue!55!black,
+  linkcolor=blue!55!black,
+  urlcolor=blue!55!black
+}
+
+% Reproduce the standalone Supplemental Material front matter without
+% invoking a second REVTeX \maketitle (which is single-use in reprint mode).
+\begin{center}
+{\large\bfseries Supplemental Material:\\
+TeV Higgsino Dark Matter from LZ Nuclear Recoil to
+Fermi--LAT Gamma Rays\par}
+\vspace{1.3em}
+Lei Wu$^{1}$, Yang Zhang$^{2}$, and Bin Zhu$^{3}$\\[0.35em]
+{\itshape
+$^{1}$Department of Physics and Institute of Theoretical Physics,\\
+Nanjing Normal University, Nanjing 210023, China\\
+$^{2}$Center for Theoretical Physics, Henan Normal University, Xinxiang 453007, China\\
+$^{3}$School of Physics, Yantai University, Yantai 264005, China\par}
+\end{center}
+\vspace{1.5em}
+
+\renewcommand{\theequation}{S.\arabic{equation}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thetable}{S\arabic{table}}
+\setcounter{equation}{0}
+\setcounter{figure}{0}
+\setcounter{table}{0}
+\renewcommand{\theHequation}{supp.\arabic{equation}}
+\renewcommand{\theHfigure}{supp.\arabic{figure}}
+\renewcommand{\theHtable}{supp.\arabic{table}}
+
+
+
+
+
+This Supplemental Material details the computational framework used to interpret the LZ high-energy nuclear-recoil excess as inelastic Higgsino dark matter. It begins with the MSSM realization of the inelastic Higgsino and the origin of the sub-MeV mass splitting. We then describe the {fiducial Einasto–Eddington dark-matter halo model}, the xenon recoil rate, and the energy-only likelihood proxy adopted for LZ. We next give the annulus-by-annulus reconstruction of the Fermi--LAT likelihood and discuss the elastic-scattering amplitudes relevant for post-capture thermalization in the Sun. Finally, we describe the H.E.S.S.~line comparison and the response-matched CTAO line-plus-endpoint projection.
+
+
+\section{ Higgsino Dark Matter in the MSSM}
+\label{sec:mssm-realization}
+
+%\subsection{Higgsino spectrum and the neutral-state splitting}
+
+The sub-MeV neutral-state splitting required by the high-energy xenon
+recoil can be realized within the ordinary MSSM neutralino sector.  We take
+all electroweakino parameters to be real and work in the gauge-eigenstate
+basis
+\(\psi^0=(-i\widetilde B,-i\widetilde W^3,
+\widetilde H_d^0,\widetilde H_u^0)\).  The neutralino mass term is specified
+by
+\begin{equation}
+ {\cal M}_N=
+ \begin{pmatrix}
+ M_1 & 0 & -m_Zs_Wc_\beta & m_Zs_Ws_\beta \\
+ 0 & M_2 & m_Zc_Wc_\beta & -m_Zc_Ws_\beta \\
+ -m_Zs_Wc_\beta & m_Zc_Wc_\beta & 0 & -\mu \\
+ m_Zs_Ws_\beta & -m_Zc_Ws_\beta & -\mu & 0
+ \end{pmatrix},
+ \label{eq:neutralino-matrix-supp}
+\end{equation}
+where \(s_W=\sin\theta_W\), \(c_W=\cos\theta_W\),
+\(s_\beta=\sin\beta\), and \(c_\beta=\cos\beta\).  With
+\(\widetilde\chi_i^0=N_{ij}\psi_j^0\), we use the positive-mass Takagi
+convention
+\begin{equation}
+ N^*{\cal M}_NN^\dagger
+ ={\rm diag}\!\left(
+ m_{\widetilde\chi_1^0},m_{\widetilde\chi_2^0},
+ m_{\widetilde\chi_3^0},m_{\widetilde\chi_4^0}\right),
+ \qquad m_{\widetilde\chi_i^0}>0 ,
+ \label{eq:neutralino-diagonalization-supp}
+\end{equation}
+with the states ordered by increasing physical mass.  Only relative signs
+among \(M_1\), \(M_2\), and \(\mu\) are physical; the signed parameters used
+below can be translated to the conventional \(M_2>0\) basis by field
+rephasings.  All masses and mixing magnitudes displayed in this section are
+obtained by direct diagonalization of Eq.~\eqref{eq:neutralino-matrix-supp}
+at tree level.
+
+In the region of interest, the two lightest eigenstates form an almost pure
+pseudo-Dirac Higgsino pair.  We characterize the lightest state and its
+neutral-current couplings by
+\begin{equation}
+ f_H=|N_{13}|^2+|N_{14}|^2,\qquad
+ D_{ij}=N_{i3}N_{j3}^*-N_{i4}N_{j4}^* .
+ \label{eq:higgsino-fraction-z-coupling-supp}
+\end{equation}
+Our normalization of the neutralino--\(Z\) interaction is
+\begin{equation}
+ {\cal L}_Z=
+ \frac{g}{4c_W}Z_\mu\,
+ \overline{\widetilde\chi_i^0}\gamma^\mu
+ \left[-D_{ij}P_L+D_{ij}^*P_R\right]
+ \widetilde\chi_j^0 .
+ \label{eq:z-neutralino-vertex-supp}
+\end{equation}
+The pure-Higgsino limit gives \(f_H\to1\),
+\(D_{11}=|N_{13}|^2-|N_{14}|^2\to0\), and
+\(|D_{12}|\to1\).  The diagonal axial neutral current is therefore
+suppressed, whereas the off-diagonal transition
+\(\widetilde\chi_1^0 A\to\widetilde\chi_2^0 A\) retains its weak
+interaction strength.  This is the pseudo-Dirac limit of the MSSM Higgsino
+sector rather than an additional dark-sector interaction.
+%\cite{Nagata:2014wma,Tucker-Smith:2001myb,Bramante:2016rdh}.
+
+The small neutral splitting is controlled by the sum of the bino and wino
+mixing contributions.  Defining
+\begin{equation}
+ \begin{split}
+ \delta_m^{\rm tree}
+ &\equiv
+ m_{\widetilde\chi_2^0}^{\rm tree}
+ -m_{\widetilde\chi_1^0}^{\rm tree}
+ \simeq m_Z^2|C_B+C_W|,\\
+ C_B&=s_W^2
+ \frac{M_1+\mu\sin2\beta}{M_1^2-\mu^2},\qquad
+ C_W=c_W^2
+ \frac{M_2+\mu\sin2\beta}{M_2^2-\mu^2},
+ \end{split}
+ \label{eq:higgsino-splitting-components-supp}
+\end{equation}
+makes the two limiting mechanisms explicit.
+%\cite{Nagata:2014wma,Martin:2024ytt}.  
+Equation
+\eqref{eq:higgsino-splitting-components-supp} is the leading
+electroweak-mixing expansion away from a gaugino--Higgsino crossing, for
+which
+\begin{equation}
+ |M_i^2-\mu^2|\gg
+ m_Z\max\!\left(|M_i|,|\mu|\right),\qquad i=1,2 .
+ \label{eq:heavy-gaugino-validity-supp}
+\end{equation}
+At finite gaugino masses, \(C_B\) and \(C_W\) may have opposite signs and
+cancel.  When the two contributions have the same sign, a sub-MeV splitting
+instead requires both gauginos to decouple.  In the deeper
+\(|M_{1,2}|\gg|\mu|\) limit, the two behaviors reduce to
+\begin{equation}
+ M_1\simeq-\tan^2\theta_W\,M_2
+ \quad\text{(cancellation)},\qquad
+ \frac{s_W^2}{|M_1|}+\frac{c_W^2}{|M_2|}
+ \simeq\frac{\delta_m^{\rm tree}}{m_Z^2}
+ \quad\text{(common-sign decoupling)} .
+ \label{eq:gaugino-limits-supp}
+\end{equation}
+For a splitting of a few \(10^2\,{\rm keV}\), the latter relation places
+the characteristic gaugino scale at \(10^4\,{\rm TeV}\).  The analytic
+relations organize the solution space; they are not used in place of the
+exact diagonalization.
+
+%\subsection{Cancellation--decoupling topology}
+
+At fixed \(\delta_m^{\rm tree}\), the cancellation and decoupling regimes
+belong to one continuous curve in the leading-order coefficient space.
+With
+\begin{equation}
+ C_\delta=\frac{\delta_m^{\rm tree}}{m_Z^2}>0,\qquad
+ s={\rm sgn}(C_B+C_W),\qquad
+ \kappa=\frac{C_B}{C_B+C_W},
+ \label{eq:kappa-definition-supp}
+\end{equation}
+the two contributions can be written as
+\begin{equation}
+ C_B=\kappa sC_\delta,\qquad
+ C_W=(1-\kappa)sC_\delta .
+ \label{eq:kappa-parameterization-supp}
+\end{equation}
+For \(\kappa<0\), the bino contribution is opposite in sign to the total
+and is cancelled in part by the wino contribution.  For
+\(0<\kappa<1\), the two contributions have the same sign and the
+sub-MeV splitting selects the double-decoupling region.  For
+\(\kappa>1\), the wino contribution is opposite in sign to the total.
+Along the tracked heavy-gaugino solutions, \(\kappa\to0\) and
+\(\kappa\to1\) approach the bino- and wino-decoupling limits,
+respectively.  Algebraically, however, these endpoints only require
+\(C_B=0\) or \(C_W=0\); the coefficient may also vanish through its
+numerator outside the heavy-gaugino regime.
+
+\begin{figure}[th]
+ \centering
+ \includegraphics[width=0.6\textwidth]
+ {figS1_gaugino_compact_coordinate.pdf}
+ \caption{\textbf{Tree-level gaugino topology of the small-splitting
+ Higgsino.}  The exact-diagonalization roots are shown in the conventional
+ \((|M_2|,|M_1|)\) plane and colored by the compact coordinate
+ \(Z_\kappa\) of Eq.~\eqref{eq:compact-kappa-supp}, denoted by \(Z\) on
+ the color bar. }
+ \label{fig:gaugino-topology-supp}
+\end{figure}
+
+
+The decoupling endpoints are mapped to infinity in the conventional
+\((|M_2|,|M_1|)\) plane.  We therefore use the compact coordinate
+\begin{equation}
+ Z_\kappa=\frac{\kappa}{1+|\kappa|}\in(-1,1),
+ \label{eq:compact-kappa-supp}
+\end{equation}
+denoted by \(Z\) on the color bar of Fig.~\ref{fig:gaugino-topology-supp}.
+The three coefficient sectors correspond to \(Z_\kappa<0\),
+\(0<Z_\kappa<1/2\), and \(1/2<Z_\kappa<1\), respectively.
+The parameter map in Fig.~\ref{fig:gaugino-topology-supp}
+illustrates how this analytically continuous coefficient-space curve
+projects into the apparent cancellation and decoupling branches of the
+gaugino-mass plane.  
+
+
+\section{Dark matter halo model}
+\label{sec:lz-reconstruction-supp}
+
+%\subsection{Common Einasto--Eddington phase-space closure}\label{subsec:halo-closure-supp}
+
+The same fixed Galactic model determines both the density entering the
+Galactic-center photon signal and the local speed distribution entering the
+xenon recoil rate.  We adopt an Einasto profile normalized at the Solar
+position and close it smoothly at large radius,
+\begin{equation}
+ \rho_\chi(r)=\rho_\odot
+ \exp\!\left[-\frac{2}{\alpha}
+ \left\{\left(\frac{r}{r_s}\right)^\alpha-
+ \left(\frac{R_0}{r_s}\right)^\alpha\right\}\right]T(r),
+ \label{eq:einasto-profile-supp}
+\end{equation}
+where
+\begin{equation}
+ T(r)=
+ \begin{cases}
+  1, & r\leq r_t,\\[2pt]
+  \exp\!\left[-(r-r_t)^2/r_d^2\right], & r>r_t .
+ \end{cases}
+ \label{eq:halo-taper-supp}
+\end{equation}
+The inner-halo parameters are
+\(\alpha=0.17\), \(r_s=20~{\rm kpc}\),
+\({R_0=8.5~{\rm kpc}}\), and
+\({\rho_\odot=0.40~{\rm GeV\,cm^{-3}}}\).  We take
+\(r_t=30~{\rm kpc}\), while the taper scale \(r_d\) is fixed by the
+condition \(v_{\rm esc}(R_0)=544~{\rm km\,s^{-1}}\).  Solving this condition
+with Eq.~\eqref{eq:baryonic-potential-supp} gives
+\({r_d\simeq35.434~{\rm kpc}}\).  This construction
+leaves the inner density used for the photon \(J\) factors unchanged while
+rendering the total mass and relative potential finite.
+
+The spherical baryonic contribution to the potential is represented by a
+Plummer disc and a Hernquist bulge,
+\begin{equation}
+ \Phi_b(r)=-\frac{GM_d}{\sqrt{r^2+a_d^2}}
+            -\frac{GM_b}{r+a_b},
+ \quad
+ \begin{matrix}
+ M_d=6.8\times10^{10}M_\odot,& a_d=3.0~{\rm kpc},\\
+ M_b=5.0\times10^9M_\odot,& a_b=0.5~{\rm kpc}.
+ \end{matrix}
+ \label{eq:baryonic-potential-supp}
+\end{equation}
+With \(\Phi=\Phi_\chi+\Phi_b\), we define
+\(\Psi(r)=\Phi(\infty)-\Phi(r)\) and
+\({\cal E}=\Psi-v^2/2\).  The isotropic distribution function then follows
+from Eddington inversion %\cite{Lacroix:2018qqh},
+\begin{equation}
+ f({\cal E})=\frac{1}{\sqrt{8}\,\pi^2}
+ \left[
+ \int_0^{\cal E}\frac{\mathrm{d}\Psi}
+ {\sqrt{{\cal E}-\Psi}}\frac{\mathrm{d}^2\rho_\chi}{\mathrm{d}\Psi^2}
+ +\frac{1}{\sqrt{\cal E}}
+ \left(\frac{\mathrm{d}\rho_\chi}{\mathrm{d}\Psi}\right)_{\Psi=0}
+ \right].
+ \label{eq:eddington-inversion-supp}
+\end{equation}
+The boundary term vanishes for the tapered profile.  At \(R_0\), the
+Galactic-frame distribution is normalized as
+\(f_{\rm gal}(\bm v)=f[\Psi(R_0)-v^2/2]/\rho_\odot\), and the laboratory
+distribution in a fixed effective annual-average-speed approximation and the
+mean inverse speed are
+\begin{equation}
+ f_{\rm lab}(\bm v)=f_{\rm gal}(\bm v+\bm v_E),\qquad
+ \eta(v_{\min})=\int_{|\bm v|>v_{\min}}
+ \frac{f_{\rm lab}(\bm v)}{|\bm v|}\,\mathrm{d}^3v .
+ \label{eq:mean-inverse-speed-supp}
+\end{equation}
+We use \(v_E=254~{\rm km\,s^{-1}}\), so that the laboratory-frame endpoint
+is \(v_{\max}=v_{\rm esc}+v_E=798~{\rm km\,s^{-1}}\).  This fixed boost is
+not a live-time average.  A physical numerical solution is required to obey
+\(f({\cal E})\geq0\) throughout the bound domain and is normalized to unity
+before \(\eta\) is tabulated; a negative branch would invalidate the closure
+rather than be clipped.  The outer taper, spherical baryonic
+potential, velocity isotropy, and annual-average boost are fixed closure
+assumptions rather than a fit to Milky-Way dynamical data; none of the halo
+quantities is profiled in the baseline likelihood.
+
+\section{Xenon recoil rate and detector response}
+\label{subsec:xenon-rate-supp}
+
+The endothermic threshold places the observed high-energy recoil close to
+the laboratory speed endpoint.  Hereafter
+\(\delta_m=m_{\widetilde\chi_2^0}-m_{\widetilde\chi_1^0}>0\) denotes the
+physical splitting entering the scattering kinematics.  For isotope \(A\),
+\begin{equation}
+ v_{\min}^A(E_R)=
+ \frac{m_AE_R/\mu_{1A}+\delta_m}{\sqrt{2m_AE_R}},
+ \qquad
+ \delta_m\leq\delta_{\max}^A\equiv
+ \frac{1}{2}\mu_{1A}v_{\max}^2,
+ \label{eq:vmin-supp}
+\end{equation}
+where
+\(\mu_{1A}=m_{\widetilde\chi_1^0}m_A/
+(m_{\widetilde\chi_1^0}+m_A)\).  At the Letter's reference point,
+\({(m_{\widetilde\chi_1^0},\delta_m)=(1.091~{\rm TeV},324~{\rm keV})}\),
+using the central reconstructed value as the kinematic diagnostic
+\(E_R\simeq E_{\rm obs}=248~{\rm keV}\) requires
+\({v_{\min}=719\text{--}749~{\rm km\,s^{-1}}}\) across the naturally occurring
+xenon isotopes; for \(^{131}{\rm Xe}\),
+\({v_{\min}=731~{\rm km\,s^{-1}}}\) and
+\(\delta_{\max}^{131}=389~{\rm keV}\).  The LZ interpretation therefore
+probes the extreme high-speed tail rather than the bulk of the local
+distribution %\cite{Tucker-Smith:2001myb,Bramante:2016rdh}.
+
+For the real MSSM parameters and positive-mass Takagi convention defined
+above, \(D_{12}\) is purely imaginary in the
+pseudo-Dirac limit.  The leading transition current is consequently
+vectorlike, with strength
+\(|{\rm Im}\,D_{12}|=|D_{12}|\).  Integrating out the \(Z\) boson gives the
+zero-momentum reference cross section
+\begin{equation}
+ \sigma_A^0=
+ \frac{G_F^2\mu_{1A}^2}{8\pi}
+ \left(Q_W^A\right)^2|D_{12}|^2,
+ \qquad
+ Q_W^A=(A-Z_A)-(1-4s_W^2)Z_A .
+ \label{eq:xenon-transition-cross-section-supp}
+\end{equation}
+Writing \(\xi_A\) for the isotope mass fraction, the recoil rate per unit
+detector mass is
+\begin{equation}
+ \frac{\mathrm{d}R}{\mathrm{d}E_R}=
+ \frac{\rho_\odot}{m_{\widetilde\chi_1^0}}
+ \sum_A\xi_A\frac{\sigma_A^0}{2\mu_{1A}^2}
+ F_{W,A}^2(E_R)\,
+ \eta\!\left[v_{\min}^A(E_R)\right],
+ \qquad F_{W,A}^2(0)=1 .
+ \label{eq:xenon-recoil-rate-supp}
+\end{equation}
+Natural-xenon number abundances \(a_A\) are converted according to
+\(\xi_A=a_Am_A/\sum_Ba_Bm_B\).  The central calculation uses the
+weak-charge-contracted one-body response
+\(F_{W,A}^2(q)=W_{M,A}(q)/W_{M,A}(0)\), evaluated with
+\textsc{WimPyDD}~\cite{Jeong:2021bpl},
+for
+\(A=128,129,130,131,132,134,136\).  For \(^{124}{\rm Xe}\) and
+\(^{126}{\rm Xe}\), for which the same tabulation is unavailable, we use a
+Helm form factor; together these isotopes account for only \(0.184\%\) of the
+natural-xenon number abundance.  Because the weak charge has already been
+factored into \(\sigma_A^0\), the normalized response in
+Eq.~\eqref{eq:xenon-recoil-rate-supp} does not introduce a second factor of
+\(Q_W^A\).  A corrected-Helm treatment of all isotopes is retained only as a
+nuclear-response diagnostic and is not combined with the \(W_M\)
+calculation as a second likelihood~\cite{Helm:1956zz,Lewin:1995rx}.
+
+The baseline uses the full-density pure-Higgsino limit,
+\(\rho_{\widetilde\chi_1^0}=\rho_\odot\) and \(|D_{12}|=1\).  Departures of
+the exact MSSM coupling from unity can be inserted through
+Eq.~\eqref{eq:xenon-transition-cross-section-supp}, but they are not profiled
+in the two-dimensional \((m_{\widetilde\chi_1^0},\delta_m)\) surface.
+
+The reconstruction uses only the quantities reported for the high-energy
+candidate, supplemented by the explicit one-dimensional conventions in
+Table~\ref{tab:halo-lz-inputs-supp}.  In particular, the
+\(50\)--\(300~{\rm keV}\) interval is the normalization window of this
+recast, not a claim about the complete LZ analysis region.
+
+\begin{table}[b]
+ \caption{\textbf{Fixed halo and LZ reconstruction inputs.}  Entries marked
+ ``reported'' are taken from the official LZ extended nuclear-recoil analysis
+ \cite{LZ:2026HighEnergy}; the remaining entries define the conditional
+ astrophysical or one-dimensional reconstruction model used here.}
+ \label{tab:halo-lz-inputs-supp}
+ \footnotesize
+ \begin{ruledtabular}
+ \begin{tabular}{@{}p{0.20\textwidth}p{0.28\textwidth}p{0.43\textwidth}@{}}
+ Quantity & Value & Role or status\\
+ \hline
+ Einasto profile &
+ \(\alpha=0.17\), \(r_s=20~{\rm kpc}\) &
+ Fixed inner-halo shape\\
+ Local normalization &
+ \({R_0=8.5~{\rm kpc}}\),
+ \({\rho_\odot=0.40~{\rm GeV\,cm^{-3}}}\) &
+ Common normalization for local recoils and photon \(J\) factors\\
+Speed inputs &
+ \(v_{\rm esc}=544\), \(v_E=254\),\par
+ \(v_{\max}=798~{\rm km\,s^{-1}}\) &
+ Fixed Eddington endpoint and effective mean-speed boost\\
+ Exposure &
+ \(2.84~{\rm tonne\,yr}\) &
+ Reported; signal normalization\\
+ Candidate &
+ Event of interest, science sample, no veto tag &
+ Reported; the only event in the energy-only likelihood\\
+ Reconstructed energy &
+ \(248\pm23_{\rm stat}\pm23_{\rm sys}~{\rm keV}\) &
+ Reported; the proxy uses \(E_{\rm obs}=248~{\rm keV}\) and
+ \(\sigma_E=32.53~{\rm keV}\)\\
+ Conditional energy window &
+ \(50<E/{\rm keV}<300\) &
+ Recast convention used to normalize \(f_s\) and \(f_b\)\\
+ Final-ROI efficiency &
+ Digitized curve; \(50\%\) at \(5.4\) and \(269.9~{\rm keV}\),
+ with a mean of \(96\%\) over \(14\)--\(250~{\rm keV}\) &
+ Treated as the inclusion probability for the adopted observation space\\
+Local background &
+ \(0.0106\pm0.0008\) events\par for
+ \(500<S1_c/{\rm phd}<600\) &
+ Reported local anchor promoted to the effective \(\mu_b\) of the event-local
+ proxy; not the total background of the complete LZ analysis\\
+ \end{tabular}
+ \end{ruledtabular}
+\end{table}
+
+\clearpage
+
+Let \(r(E_R)=\mathrm{d}R/\mathrm{d}E_R\) and let
+\(\epsilon_{\rm ROI}(E_R)\) denote the digitized probability for a recoil to
+enter the adopted final-ROI observation space.  The expected accepted signal
+yield is
+\begin{equation}
+ \mu_s={\cal E}_{\rm LZ}\int\mathrm{d}E_R\,
+ \epsilon_{\rm ROI}(E_R)r(E_R),
+ \qquad {\cal E}_{\rm LZ}=2.84~{\rm tonne\,yr}.
+ \label{eq:lz-signal-count-supp}
+\end{equation}
+To keep the count and energy density in the same observation space, we
+{globally normalize the Gaussian-folded spectrum over the adopted
+reconstructed-energy window},
+\begin{equation}
+ f_s(E)=
+ \frac{\displaystyle
+ \int\mathrm{d}E_R\,\epsilon_{\rm ROI}(E_R)r(E_R)
+ G(E-E_R;\sigma_E)}
+ {\displaystyle
+ \int_{E_-}^{E_+}\mathrm{d}E'\!
+ \int\mathrm{d}E_R\,\epsilon_{\rm ROI}(E_R)r(E_R)
+ G(E'-E_R;\sigma_E)},
+ \qquad (E_-,E_+)=(50,300)~{\rm keV}.
+ \label{eq:lz-signal-pdf-supp}
+\end{equation}
+For the energy-only proxy, the two reported energy uncertainties are combined
+in quadrature, giving \(\sigma_E=32.53~{\rm keV}\).
+{The denominator globally normalizes the folded spectrum over the adopted
+reconstructed-energy window.
+
+\subsection{Energy-only likelihood proxy}
+\label{subsec:lz-likelihood-supp}
+
+The official LZ analysis employs a simultaneous unbinned extended profile
+likelihood in the two-dimensional \(\{S1_c,\log_{10}S2_c\}\) space for the
+science, prompt-veto, and delayed-veto samples.  Since the corresponding
+event-level likelihood and background probability-density functions are not
+publicly available, we construct a one-dimensional energy-only proxy.  The
+published background expectation for the candidate's local high-\(S1_c\)
+interval is promoted to an effective background normalization in this proxy.
+This modeling convention defines the LZ score used in the Letter; it is not
+an estimate of the total background in \(50\)--\(300~{\rm keV}\).  Separating
+the proxy likelihood from its background constraint avoids counting the same
+prior twice:
+\begin{equation}
+ \begin{split}
+ {\cal L}_{\rm proxy}(\mu_s,\mu_b)
+ &=e^{-(\mu_s+\mu_b)}
+ \left[\mu_sf_s(E_{\rm obs})+\mu_bf_b(E_{\rm obs})\right],\\
+ \pi_b(\mu_b)
+ &=\exp\!\left[-\frac{1}{2}
+ \left(\frac{\mu_b-0.0106}{0.0008}\right)^2\right],\\
+ f_b(E)&=\frac{1}{E_+-E_-}=\frac{1}{250~{\rm keV}} .
+ \end{split}
+ \label{eq:lz-likelihood-supp}
+\end{equation}
+For each \((m_{\widetilde\chi_1^0},\delta_m)\), the profiled proxy and
+relative score are
+\begin{equation}
+ \begin{split}
+ {\cal L}_{\rm LZ}^{\rm prof}
+ (m_{\widetilde\chi_1^0},\delta_m)
+ &=\max_{\mu_b\geq0}
+ \left[{\cal L}_{\rm proxy}(\mu_s,\mu_b)\pi_b(\mu_b)\right],\\
+ q_{\rm LZ}&=-2\ln
+ \frac{{\cal L}_{\rm LZ}^{\rm prof}}
+ {{\cal L}_{\rm LZ,max}^{\rm prof}} .
+ \end{split}
+ \label{eq:lz-test-statistic-supp}
+\end{equation}
+Here \({\cal L}_{\rm LZ,max}^{\rm prof}\) is the maximum over the evaluated
+\((m_{\widetilde\chi_1^0},\delta_m)\) domain after profiling \(\mu_b\).
+At the joint reference point quoted in the Letter,
+\({(m_{\widetilde\chi_1^0},\delta_m)=(1.091~{\rm TeV},324~{\rm keV})}\),
+the adopted surface gives \({\mu_s=N_s=0.7238}\) and
+\({q_{\rm LZ}=0.0522}\).  These are respectively an expected accepted signal
+yield and a relative score displacement; neither is an
+event-assignment probability or a discovery significance.
+
+For comparison, the official LZ scan reports local significances of
+\(3.0\sigma\) and \(3.3\sigma\) for the Higgsino-like \(O_1^s\) interaction
+at \(m_\chi=1~{\rm TeV}\) and \(\delta=300\) and \(350~{\rm keV}\),
+respectively~\cite{LZ:2026HighEnergy}.  These two points bracket, but do not
+directly evaluate, our reference splitting.  Moreover, the official scan
+adopts the standard halo model, whereas our calculation uses the
+Einasto--Eddington phase-space distribution.  We therefore quote these
+significances only for comparison and do not identify them with the value of
+our energy-only proxy statistic.
+
+The dominant model dependence follows directly from the kinematics.  Since
+the required speeds lie within roughly \(75~{\rm km\,s^{-1}}\) of the fixed
+endpoint, changes to the high-speed tail can shift the selected splitting.
+Likewise, the \(W_M\)--Helm comparison tests the nuclear diffraction pattern
+near \(q\simeq250~{\rm MeV}\), rather than supplying an independent data
+set.  We therefore quote the baseline result only under the fixed
+Einasto--Eddington closure and the central \(W_M\) response.  The construction
+is a report-informed, event-local energy score: it neither reproduces the
+official LZ multidimensional likelihood and nuisance covariance nor defines a
+halo-marginalized interval.
+
+
+\section{Fermi--LAT likelihood reconstruction}
+\label{sec:fermi-likelihood-supp}
+
+The Galactic-center continuum test uses the public fourteen-year
+Fermi--LAT likelihood released for a Higgsino signal and an NFW density
+profile~\cite{Dessert:2022evk}.  The release provides separate likelihoods
+for nine angular annuli.  To keep the photon signal consistent with the
+Einasto profile used for the local phase-space construction, we rescale the
+signal normalization inside each annular likelihood before the annuli are
+combined.  Defining
+\begin{equation}
+ J_i^X=\int_{\Delta\Omega_i}\!\mathrm{d}\Omega
+ \int_{\rm l.o.s.}\!\mathrm{d}s\,\rho_X^2[r(s,\Omega)],
+ \qquad X\in\{\mathrm{Ein},\mathrm{NFW}\},
+ \label{eq:fermi-jfactor-supp}
+\end{equation}
+the reweighted likelihood is
+\begin{equation}
+ \ln {\cal L}^{\rm Ein}_F(m_\chi,\langle\sigma v\rangle)
+ =\sum_{i=1}^{9}\ln {\cal L}^{\rm pub}_{F,i}\!\left(
+ m_\chi,
+ \langle\sigma v\rangle\frac{J_i^{\rm Ein}}{J_i^{\rm NFW}}
+ \right).
+ \label{eq:fermi-annulus-reweight-supp}
+\end{equation}
+The ratios are evaluated with the fixed Einasto benchmark of
+Eq.~\eqref{eq:einasto-profile-supp} and the NFW profile used in the public
+release.  Performing the rescaling before the sum preserves the relative
+normalization of the nine annuli; a single rescaling of an already combined
+likelihood would not.
+
+At each supplied mass, we first sum the complete annular log likelihoods and
+then interpolate in the released signal-strength coordinate.  The resulting
+curves are interpolated between the available Higgsino mass templates.  The
+null likelihood is evaluated at zero signal strength, and no extrapolation
+is used over the mass interval displayed in the Letter.  The fixed theory
+normalization is the full-density thermal-Higgsino continuum template,
+including its coupled electroweak annihilation channels and the
+Sommerfeld-enhanced present-day rate~\cite{Hisano:2004ds,Hisano:2006nn,
+Dessert:2022evk}.  Its contribution is summarized by
+\begin{equation}
+ q_F(m_\chi)=2\ln\frac{
+ {\cal L}^{\rm Ein}_F(m_\chi,\langle\sigma v\rangle_H)}
+ {{\cal L}^{\rm Ein}_F(m_\chi,0)}.
+ \label{eq:fermi-test-statistic-supp}
+\end{equation}
+With this convention, positive \(q_F\) denotes an improvement over the
+no-signal hypothesis, and the joint score in the Letter contains
+\(-q_F\).  At the joint reference point the adopted template gives
+\({q_F=2.110}\).  Its variation over the relic-selected mass interval is small,
+so the Fermi--LAT term tests compatibility with the continuum data but does
+not appreciably localize the preferred \((m_\chi,\delta_m)\) region.
+
+Equation~\eqref{eq:fermi-annulus-reweight-supp} is a halo-template
+reweighting of the public likelihood rather than a new event-level
+Fermi--LAT analysis.  In particular, the diffuse-emission treatment,
+point-source masks, and associated nuisance profiling are inherited from
+the public release.  The halo parameters are fixed rather than profiled, and
+the displayed joint-score differences therefore retain the conditional
+statistical interpretation stated in the Letter.
+
+
+\clearpage
+
+\section{Solar thermalization and the elastic amplitude}
+\label{sec:elastic-thermalization-supp}
+
+The off-diagonal \(Z\) interaction discussed above controls the initial
+inelastic capture in the Sun.  Once further up-scattering becomes
+kinematically inaccessible, however, the migration of the captured
+Higgsinos toward the solar core is controlled by their residual elastic
+interactions.  We focus here on the spin-independent contribution, for
+which the tree-level MSSM amplitude is dominated by light-Higgs exchange.
+In the decoupling limit of the heavy Higgs bosons and sfermions, its signed
+coupling to the lightest neutralino is
+\begin{equation}
+ g_{h\chi\chi}^{\rm tree}
+ =g\,\operatorname{Re}\!\left[
+ (N_{12}-t_WN_{11})
+ (-c_\beta N_{13}+s_\beta N_{14})
+ \right] ,
+ \label{eq:higgs-coupling-tree-supp}
+\end{equation}
+where \(t_W=\tan\theta_W\) and the positive-mass convention of
+Eq.~\eqref{eq:neutralino-diagonalization-supp} is understood.  At momentum
+transfer well below \(m_h\), this gives
+\begin{equation}
+ \mathcal A_{N,h}^{\rm tree}
+ =\frac{m_N f_N^{(h)}}{v m_h^2}\,
+ g_{h\chi\chi}^{\rm tree},
+ \label{eq:tree-si-amplitude-supp}
+\end{equation}
+with \(v=246~{\rm GeV}\) and \(f_N^{(h)}\) the scalar Higgs--nucleon matrix
+element.  Equations
+\eqref{eq:higgs-coupling-tree-supp} and
+\eqref{eq:tree-si-amplitude-supp} make two properties explicit: the tree
+amplitude vanishes in the pure-Higgsino limit, and at finite gaugino mass it
+retains the relative signs of \(M_1\), \(M_2\), and \(\mu\)
+~\cite{Hisano:2004pv}.
+
+The neutral splitting and the elastic Higgs coupling probe different
+combinations of these mixing parameters.  In particular,
+Eq.~\eqref{eq:higgsino-splitting-components-supp} fixes the modulus
+\(\lvert C_B+C_W\rvert\), whereas
+Eq.~\eqref{eq:higgs-coupling-tree-supp} remains a signed linear combination
+of the bino and wino components of the lightest state.  A small splitting
+therefore does not by itself imply a tree-level elastic blind spot.  In the
+common-decoupling region both gaugino components vanish and the tree
+amplitude approaches zero.  On the finite-mass cancellation branches of
+Fig.~\ref{fig:gaugino-topology-supp}, the splitting can instead remain small
+while the tree amplitude is finite and can have either sign.
+
+Electroweak vertex and box diagrams remain finite when the gauginos
+decouple and generate both spin-zero and spin-two quark and gluon
+operators~\cite{Hisano:2004pv,Chen:2019gtm}.  Their matched nucleon
+contribution may be organized as
+\begin{equation}
+ \mathcal A_{N,\rm EW}^{\rm loop}
+ =\mathcal A_{N,\rm EW}^{(0)}
+ +\mathcal A_{N,\rm EW}^{(2)} .
+ \label{eq:loop-si-amplitude-supp}
+\end{equation}
+The pure-Higgsino result is nonzero, although it is itself suppressed by a
+substantial cancellation between the spin-zero and spin-two amplitudes.
+Because of this internal cancellation, its uncertainty is naturally an
+amplitude-level uncertainty rather than a symmetric error on a positive
+cross section.
+
+Figure~\ref{fig:elastic-scales-supp} compares the separately evaluated
+tree-level cooling strengths of the displayed MSSM sample with the adopted
+pure-Higgsino loop reference and its theory range.  The tree-level points
+pass through the loop scale.  This is the necessary magnitude condition for
+tree--loop interference to be important.  The conditional IceCube line is
+included only to indicate the cooling scale at which the solar response
+becomes relevant.  Since the vertical coordinate folds the elastic solar
+response into an SI-equivalent quantity, the comparison is a scale
+diagnostic rather than a universal per-nucleon prediction.
+
+\begin{figure}[t]
+ \centering
+ \includegraphics[width=0.72\textwidth]{figS3_solar_neutrino.pdf}
+ \caption{\textbf{Elastic-cooling scales entering the solar-neutrino
+ test.}  The blue points show the tree-level MSSM cooling proxy as a
+ function of \(\lvert M_1\rvert\).  The black line is the conditional
+ IceCube cooling boundary, while the dashed magenta line and pale band show
+ the adopted pure-Higgsino electroweak-loop reference and its theory range,
+ respectively.  The tree and loop results are displayed separately.  Since
+ each cross section depends only on the modulus squared of its amplitude,
+ their overlap establishes comparability of magnitudes, not their relative
+ sign.  No coherent tree-plus-loop prediction or cancellation contour is
+ shown.}
+ \label{fig:elastic-scales-supp}
+\end{figure}
+
+The physical nucleon cross section instead contains the coherent sum,
+\begin{equation}
+ \sigma_N^{\rm SI}=\frac{4\mu_{\chi N}^2}{\pi}
+ \left|\mathcal A_{N,h}^{\rm tree}
+ +\mathcal A_{N,\rm EW}^{\rm loop}\right|^2 .
+ \label{eq:coherent-si-supp}
+\end{equation}
+For real MSSM parameters, destructive interference requires
+\begin{equation}
+ \mathcal A_{N,h}^{\rm tree}
+ \mathcal A_{N,\rm EW}^{\rm loop}<0,
+ \qquad
+ \left|\mathcal A_{N,h}^{\rm tree}\right|
+ \simeq
+ \left|\mathcal A_{N,\rm EW}^{\rm loop}\right| ,
+ \label{eq:destructive-condition-supp}
+\end{equation}
+with an exact zero only when the two consistently matched amplitudes are
+equal and opposite.  Existing one-loop MSSM calculations explicitly
+exhibit such tree--loop cancellations for restricted parameter choices,
+and related doublet models show how a tree-level blind spot is shifted at
+one loop~\cite{Hisano:2004pv,Han:2018gej}.  The signed tree coupling in
+Eq.~\eqref{eq:higgs-coupling-tree-supp}, together with the scale overlap in
+Fig.~\ref{fig:elastic-scales-supp}, therefore shows that destructive
+interference is parametrically possible on the small-splitting surface.
+
+This argument does not locate a cancellation band.  Doing so requires the
+tree and loop Wilson coefficients to be evaluated point by point in one
+operator basis, Majorana-phase convention, renormalization scheme, and set
+of hadronic inputs,
+followed by the solar capture-and-orbit calculation.  The residual
+spin-dependent interaction must also be retained when translating a
+suppressed spin-independent rate into a thermalization time.  We therefore
+use Fig.~\ref{fig:elastic-scales-supp} only to motivate the interference
+mechanism and do not assign a location or width to an IceCube-allowed
+region.
+
+
+\section{H.E.S.S. and CTAO line and endpoint searches}
+\label{sec:hess-ctao-supp}
+
+The Galactic-center high-energy photon signal is normalized by a common
+Higgsino-template strength \(\mu_\gamma\), with \(\mu_\gamma=1\) denoting
+the canonical full-density thermal prediction.  H.E.S.S.~reports observed
+limits for a monochromatic line and finds no significant line
+excess~\cite{HESS:2026ila}.  We express these limits on the common
+normalization axis as
+\begin{equation}
+ \mu_{\gamma,95}^{\rm HESS}(m_\chi)=
+ \frac{\langle\sigma v\rangle_{\rm line,95}^{\rm HESS}(m_\chi)}
+ {\langle\sigma v\rangle_{\rm line}^{H}(m_\chi)},
+ \label{eq:hess-normalization-supp}
+\end{equation}
+where the denominator is the canonical NLO Higgsino line prediction used in
+the same comparison.  The two curves shown in the Letter retain the
+published Einasto normalizations.  They are line-only overlays: without the
+H.E.S.S.~event-level likelihood, the endpoint contribution cannot be folded
+consistently into these observed limits.
+
+For CTAO we instead propagate the complete photon-number spectrum
+\(\mathrm{d}\langle\sigma v\rangle_\gamma/\mathrm{d}E_t\).  It is
+evaluated with \textsc{DM$\gamma$Spec} and contains the NLO electroweak
+Sommerfeld correction together with the resummed line, endpoint, and
+continuum contributions~\cite{Beneke:2019gtg,Urban:2021cdu,
+Beneke:2022eci}.  For spatial ring \(p\) and reconstructed-energy bin \(k\),
+the \(\mu_\gamma=1\) signal template is
+\begin{equation}
+ s_{pk}^{H}=
+ \frac{J_pT_p}{8\pi m_\chi^2}
+ \int\!\mathrm{d}E_t\,
+ A_{\rm eff}(E_t,p)D_{pk}(E_t)
+ \frac{\mathrm{d}\langle\sigma v\rangle_\gamma}{\mathrm{d}E_t},
+ \label{eq:ctao-signal-supp}
+\end{equation}
+where \(J_p\) is evaluated from the fixed Einasto profile,
+\(A_{\rm eff}\) is the effective area, \(D_{pk}\) is the energy-dispersion
+probability, and \(T_p\) is the exposure.  We use the public Prod5 South
+response~\cite{cherenkov_telescope_array_observatory_2021_5499840}, the four
+\(0.5^\circ\) Galactic-center rings, the published \(3\times3\) pointing
+pattern, and \(500~\mathrm{h}\) total exposure of the CTAO line
+search~\cite{CTAO:2024wvb}.
+
+The public products do not contain the full Galactic-center background cube
+or the collaboration nuisance implementation.  We therefore construct a
+local background-only Asimov likelihood only to compare the response to the
+physical Higgsino spectrum with that to a monochromatic line,
+\begin{equation}
+ \begin{aligned}
+ {\cal L}_{\rm loc}(\mu_\gamma,\boldsymbol\theta)
+ &=\prod_{p,k}{\rm Pois}\!\left[
+ n_{pk}\,\middle|\,
+ \mu_\gamma s_{pk}^{H}
+ +b_{pk}(\beta_p,\gamma_p,\boldsymbol\eta_p)
+ \right]\pi(\boldsymbol\eta_p),\\
+ &\hspace{7.0em}n_{pk}=b_{pk}.
+ \end{aligned}
+ \label{eq:ctao-local-likelihood-supp}
+\end{equation}
+The background normalization \(\beta_p\), spectral slope \(\gamma_p\), and
+correlated response nuisance parameters \(\boldsymbol\eta_p\) are profiled
+independently in each ring.  We apply the same construction to the Higgsino
+and pure-line templates and determine the local one-sided \(95\%\) limits
+from \(q=2.71\)~\cite{Cowan:2010js}.  The absolute Higgsino sensitivity is
+then anchored to the released CTAO pure-line profile likelihood through
+\begin{equation}
+ \mu_{\gamma,95}^{H,\rm match}
+ =\mu_{\gamma,95}^{H,\rm loc}
+ \frac{\langle\sigma v\rangle_{\gamma\gamma,95}^{\rm pub}}
+ {\langle\sigma v\rangle_{\gamma\gamma,95}^{\rm loc}}.
+ \label{eq:ctao-response-match-supp}
+\end{equation}
+The public and local pure-line templates use the same two-photon
+normalization.  This transfer preserves the released line sensitivity while
+including the change in spectral information carried by the Higgsino
+endpoint~\cite{CTAO:2024wvb,bringmann_2024_11422081}.
+
+The released response and profile likelihood correspond to the Alpha
+configuration.  The blue curve in the Letter applies the approximate
+factor-of-two improvement quoted for the full-scope Omega configuration,
+\(\mu_{\gamma,95}^{\rm Omega,est}
+=\mu_{\gamma,95}^{\rm Alpha,match}/2\).  It is therefore a
+response-matched projection, not an official CTAO likelihood or a
+configuration-complete exclusion forecast.  Subject to this mapping, the
+\(500~\mathrm{h}\) exposure, the full-density assumption, and the fixed
+cuspy Einasto halo, the projected Omega sensitivity reaches the thermal
+Higgsino target selected by the joint analysis.
+
+
+% The arXiv versions use one reference list shared with the Letter. References
+% cited only in the supplement must therefore also be included in the main
+% manuscript bibliography; do not create a second bibliography here.
+
+\end{document}

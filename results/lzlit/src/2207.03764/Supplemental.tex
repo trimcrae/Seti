@@ -1,0 +1,84 @@
+\section{Detailed Event Rates}
+
+
+\begin{table}[htbp]
+    \caption{Number of events remaining after each stage of event selection criteria described in the main text.}
+    \label{tab:events}
+    \centering
+    \begin{tabular}{cc}
+    \\
+    \hline
+    \hline
+    Selection description & Events after selection \\
+    \hline
+    All triggers & \num{1.1e8}\\
+    Analysis time hold-offs & \num{6.0e7}\\
+    Single scatter & \num{1.0e7}\\
+    Region-of-interest & \num{1.8e5} \\
+    Analysis cuts for accidentals & \num{3.1e4}\\
+    Fiducial volume & \num{416}\\
+    OD and Skin vetoes & \num{335}\\
+    \hline
+    \hline
+    \end{tabular}
+
+\end{table}
+
+
+
+\section{Tuned Detector and Xenon Response Model Details}
+
+The LZ detector and xenon response models are implemented in a \textsc{nest}-based application that includes effects such as curved electron drift paths from field non-uniformities, finite position reconstruction resolution in the transverse $(x,y)$ and longitudinal $z$ directions, and position-dependence in S1 and S2 areas. The key numerical parameters of the \textsc{nest} model are provided in Table~\ref{tab:NEST}. Additionally, a header file for \textsc{nest} 2.3.7 that will reproduce the ER and NR response models used in this analysis is available online at \url{\supplementalurl}. Note that the extraction field number is known to be an effective value due to multiple models for this effect in \textsc{nest}, and this parameter is tuned such that the extraction efficiency matches the LZ data.
+
+In addition to the parameters below, the width of the predicted ER and NR bands had to be reduced to match LZ calibration data and, as mentioned in the main text, the \textsc{nest} recombination skewness model was turned off. There are detailed instructions for implementing these changes in the provided header file.
+
+\begin{table}[htbp]
+    \caption{\textsc{nest} tuning parameters. Parameters in the top half of the table are input parameters, while bottom half parameters result from \textsc{nest} calculations.}
+    \label{tab:NEST}
+    \centering
+    \begin{tabular}{cc}
+    \\
+    \hline
+    \hline
+    Parameter & Value \\
+    \hline \\[-2.2ex]
+    $g_1^{\text{gas}}$ & \SI{0.0921}{phd/photon}\\
+        $g_1$ & \SI{0.1136}{phd/photon}\\
+    Effective gas extraction field & \SI{8.42}{kV/cm} \\
+    \hline
+    \hline
+    Single electron & \SI{58.5}{phd} \\
+    Extraction Efficiency & \SI{80.5}{\percent}\\
+    $g_2$ & \SI{47.07}{phd/electron}\\
+    \hline
+    \hline
+    \end{tabular}
+
+\end{table}
+
+\section{Limits in terms of number of WIMP events}
+
+The main text reports the limit in the standard form of WIMP cross section vs WIMP mass. In the supplemental material, we provide an alternative view of the result, reporting the limit as the number of WIMP events, for the spin-independent case, as shown in Fig.~\ref{fig:nwimp}.  As described in the main text, the limit is constrained by the power constraint method between \SI{13}{GeV/c\squared} and \SI{36}{GeV/c\squared}. Both the limit before the power constraint and the limit after the power constraint are shown, as well as the expected sensitivity. 
+
+In unified interval analyses such as this, statistical fluctuations in the data create statistical fluctuations in the limit, including to values below the median sensitivity of the experiment; a further discussion of this effect is found in Section VI of~\cite{feldman1998unified}. We report the median expected limit, as well as the 1 and 2$\sigma$ bands around the median, as recommended, to mitigate the cognitive impact of these fluctuations. When comparing experiments or interpreting the compatibility of theory with this result, we recommend consideration of the median expected limit as well.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[ width=0.5\linewidth]{figures/LZ_SI_nsig_limit.pdf}
+  \caption{The \SI{90}{\percent} confidence limit (black line) for the number of WIMP events vs.~WIMP mass in the spin-independent case. The dot-dash line shows the limit before applying the power constraint described in the text. The dotted black line shows the median sensitivity. The green and yellow bands are the $1\sigma$ and $2\sigma$ sensitivity bands. }
+  \label{fig:nwimp}
+\end{figure}
+
+
+\section{Data Release}
+
+Selected data from the following plots from this paper are available at \url{\supplementalurl}.
+
+\begin{itemize}
+    \item Figure~\ref{fig:NRacc}: points representing the total efficiency curve for this analysis (black line).
+    \item Figure~\ref{fig:s1s2wimp}: points in S1-S2 space representing the data used in the WIMP search (black points).
+    \item Figure~\ref{fig:limitplot}: WIMP mass points with measured $\sigma_{\mathrm{SI}}$ 90\% confidence limits and median and 1 and 2 sigma sensitivity bands.
+    \item Figure~\ref{fig:limitplotSDn}: WIMP mass points with measured $\sigma_{\mathrm{SD}}^{n}$ 90\% confidence limits with uncertainty bands, and median and 1 and 2 sigma sensitivity bands. The sensitivity bands are not show in the plot for clarity.
+    \item Figure~\ref{fig:limitplotSDp}: WIMP mass points with measured $\sigma_{\mathrm{SD}}^{p}$ 90\% confidence limits with uncertainty bands, and median and 1 and 2 sigma sensitivity bands. The sensitivity bands are not show in the plot for clarity.
+\end{itemize}
+

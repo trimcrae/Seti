@@ -1,0 +1,1579 @@
+                                                  XENONnT WIMP Search: Signal & Background Modeling and Statistical Inference
+                                                  E. Aprile ,1 J. Aalbers ,2 K. Abe ,3 S. Ahmed Maouloud ,4 L. Althueser ,5 B. Andrieu ,4 E. Angelino ,6, 7
+                                                         D. Antón Martin ,8 F. Arneodo ,9 L. Baudis ,10 M. Bazyk ,11 L. Bellagamba ,12 R. Biondi ,13
+                                                          A. Bismark ,10 K. Boese ,13 A. Brown ,14 G. Bruno ,11 R. Budnik ,15 J. M. R. Cardoso ,16
+                                                       A. P. Cimental Chávez ,10 A. P. Colijn ,17 J. Conrad ,18 J. J. Cuenca-Garcı́a ,10 V. D’Andrea ,7, *
+                                                      L. C. Daniel Garcia ,4 M. P. Decowski ,17 C. Di Donato ,19 P. Di Gangi ,12 S. Diglio ,11 K. Eitel ,20
+                                                          A. Elykov ,20 A. D. Ferella ,19, 7 C. Ferrari ,7 H. Fischer ,14 T. Flehmke ,18 M. Flierman ,17
+                                                      W. Fulgione ,6, 7 C. Fuselli ,17 P. Gaemers ,17 R. Gaior ,4 M. Galloway ,10 F. Gao ,21 S. Ghosh ,22
+                                                         R. Giacomobono ,23 R. Glade-Beucke ,14 L. Grandi ,8 J. Grigat ,14 H. Guan ,22 M. Guida ,13
+                                                         P. Gyorgy ,24 R. Hammann ,13, † A. Higuera ,25 C. Hils,24 L. Hoetzsch ,13, 10, ‡ N. F. Hood ,26
+arXiv:2406.13638v2 [physics.data-an] 3 Jun 2025
+
+
+
+
+                                                       M. Iacovacci ,23 Y. Itow ,27 J. Jakob ,5 F. Joerg ,13 Y. Kaminaga ,3 M. Kara ,20 P. Kavrigin ,15
+                                                         S. Kazama ,27 M. Kobayashi ,27 A. Kopec ,26, § F. Kuger ,14 H. Landsman ,15 R. F. Lang ,22
+                                                   L. Levinson ,15 I. Li ,25 S. Li ,28 S. Liang ,25 Y.-T. Lin ,13 S. Lindemann ,14 M. Lindner ,13 K. Liu ,21
+                                                    J. Loizeau ,11 F. Lombardi ,24 J. Long ,8 J. A. M. Lopes ,16, ¶ T. Luce ,14 Y. Ma ,26 C. Macolino ,19, 7
+                                                  J. Mahlstedt ,18 A. Mancuso ,12 L. Manenti ,9 F. Marignetti ,23 T. Marrodán Undagoitia ,13 K. Martens ,3
+                                                           J. Masbou ,11 E. Masson ,4 S. Mastroianni ,23 A. Melchiorre ,19 M. Messina ,7 A. Michael,5
+                                                      K. Miuchi ,29 A. Molinario ,6 S. Moriyama ,3 K. Morå ,1 Y. Mosbacher,15 M. Murra ,1 J. Müller ,14
+                                                          K. Ni ,26 U. Oberlack ,24 B. Paetsch ,15 Y. Pan ,4 Q. Pellegrini ,4 R. Peres ,10 C. Peters,25
+                                                       J. Pienaar ,8, 15 M. Pierre ,17 G. Plante ,1 T. R. Pollmann ,17 L. Principe ,11 J. Qi ,26 J. Qin ,25
+                                                    D. Ramı́rez Garcı́a ,10, ∥ M. Rajado ,10 R. Singh ,22 L. Sanchez ,25 J. M. F. dos Santos ,16 I. Sarnoff ,9
+                                                         G. Sartorelli ,12 J. Schreiner,13 D. Schulte,5 P. Schulte ,5 H. Schulze Eißing ,5 M. Schumann ,14
+                                                   L. Scotto Lavina ,4 M. Selvi ,12 F. Semeria ,12 P. Shagin ,24 S. Shi ,1 J. Shi,21 M. Silva ,16 H. Simgen ,13
+                                                    A. Takeda ,3 P.-L. Tan ,18 A. Terliuk,13, ** D. Thers ,11 F. Toschi ,20 G. Trinchero ,6 C. D. Tunnell ,25
+                                                           F. Tönnies ,14 K. Valerius ,20 S. Vecchi ,30 S. Vetter ,20 F. I. Villazon Solar,24 G. Volta ,13
+                                                       C. Weinheimer ,5 M. Weiss ,15 D. Wenz ,5 C. Wittweg ,10 V. H. S. Wu ,20 Y. Xing ,11 D. Xu ,1
+                                                        Z. Xu ,1, †† M. Yamashita ,3 L. Yang ,26 J. Ye ,31 L. Yuan ,8 G. Zavattini ,30 and M. Zhong 26
+                                                                                               (XENON Collaboration)‡‡
+                                                                         1
+                                                                                     Physics Department, Columbia University, New York, NY 10027, USA
+                                                            2
+                                                                   Nikhef and the University of Groningen, Van Swinderen Institute, 9747AG Groningen, Netherlands
+                                                        3
+                                                          Kamioka Observatory, Institute for Cosmic Ray Research, and Kavli Institute for the Physics and Mathematics
+                                                                 of the Universe (WPI), University of Tokyo, Higashi-Mozumi, Kamioka, Hida, Gifu 506-1205, Japan
+                                                                                      4
+                                                                                        LPNHE, Sorbonne Université, CNRS/IN2P3, 75005 Paris, France
+                                                                     5
+                                                                       Institut für Kernphysik, Westfälische Wilhelms-Universität Münster, 48149 Münster, Germany
+                                                                                      6
+                                                                                        INAF-Astrophysical Observatory of Torino, Department of Physics,
+                                                                                            University of Torino and INFN-Torino, 10125 Torino, Italy
+                                                                 7
+                                                                   INFN-Laboratori Nazionali del Gran Sasso and Gran Sasso Science Institute, 67100 L’Aquila, Italy
+                                                     8
+                                                       Department of Physics & Kavli Institute for Cosmological Physics, University of Chicago, Chicago, IL 60637, USA
+                                                   9
+                                                     New York University Abu Dhabi - Center for Astro, Particle and Planetary Physics, Abu Dhabi, United Arab Emirates
+                                                                                         10
+                                                                                            Physik-Institut, University of Zürich, 8057 Zürich, Switzerland
+                                                                        11
+                                                                           SUBATECH, IMT Atlantique, CNRS/IN2P3, Université de Nantes, Nantes 44307, France
+                                                              12
+                                                                 Department of Physics and Astronomy, University of Bologna and INFN-Bologna, 40126 Bologna, Italy
+                                                                                        13
+                                                                                           Max-Planck-Institut für Kernphysik, 69117 Heidelberg, Germany
+                                                                                   14
+                                                                                      Physikalisches Institut, Universität Freiburg, 79104 Freiburg, Germany
+                                                            15
+                                                               Department of Particle Physics and Astrophysics, Weizmann Institute of Science, Rehovot 7610001, Israel
+                                                                           16
+                                                                              LIBPhys, Department of Physics, University of Coimbra, 3004-516 Coimbra, Portugal
+                                                                        17
+                                                                           Nikhef and the University of Amsterdam, Science Park, 1098XG Amsterdam, Netherlands
+                                                           18
+                                                              Oskar Klein Centre, Department of Physics, Stockholm University, AlbaNova, Stockholm SE-10691, Sweden
+                                                                            19
+                                                                               Department of Physics and Chemistry, University of L’Aquila, 67100 L’Aquila, Italy
+                                                                  20
+                                                                     Institute for Astroparticle Physics, Karlsruhe Institute of Technology, 76021 Karlsruhe, Germany
+                                                          21
+                                                             Department of Physics & Center for High Energy Physics, Tsinghua University, Beijing 100084, P.R. China
+                                                                       22
+                                                                          Department of Physics and Astronomy, Purdue University, West Lafayette, IN 47907, USA
+                                                               23
+                                                                  Department of Physics “Ettore Pancini”, University of Napoli and INFN-Napoli, 80126 Napoli, Italy
+                                                      24
+                                                         Institut für Physik & Exzellenzcluster PRISMA+ , Johannes Gutenberg-Universität Mainz, 55099 Mainz, Germany
+                                                                             25
+                                                                                Department of Physics and Astronomy, Rice University, Houston, TX 77005, USA
+                                                                           26
+                                                                              Department of Physics, University of California San Diego, La Jolla, CA 92093, USA
+                                                             27
+                                                                Kobayashi-Maskawa Institute for the Origin of Particles and the Universe, and Institute for Space-Earth
+                                                                  Environmental Research, Nagoya University, Furo-cho, Chikusa-ku, Nagoya, Aichi 464-8602, Japan
+                                                                    28
+                                                                        Department of Physics, School of Science, Westlake University, Hangzhou 310030, P.R. China
+                                                                                                                                2
+
+                             29
+                           Department of Physics, Kobe University, Kobe, Hyogo 657-8501, Japan
+            30
+              INFN-Ferrara and Dip. di Fisica e Scienze della Terra, Università di Ferrara, 44122 Ferrara, Italy
+  31
+     School of Science and Engineering, The Chinese University of Hong Kong, Shenzhen, Guangdong, 518172, P.R. China
+                                                  (Dated: June 13, 2025)
+                    The XENONnT experiment searches for weakly-interacting massive particle (WIMP) dark matter
+                 scattering off a xenon nucleus. In particular, XENONnT uses a dual-phase time projection chamber
+                 with a 5.9-tonne liquid xenon target, detecting both scintillation and ionization signals to reconstruct
+                 the energy, position, and type of recoil. A blind search for nuclear recoil WIMPs with an exposure
+                 of 1.1 tonne-years (4.18 t fiducial mass) yielded no signal excess over background expectations, from
+                 which competitive exclusion limits were derived on WIMP-nucleon elastic scatter cross sections,
+                 for WIMP masses ranging from 6 GeV/c2 up to the TeV/c2 scale. This work details the modeling
+                 and statistical methods employed in this search. By means of calibration data, we model the
+                 detector response, which is then used to derive background and signal models. The construction
+                 and validation of these models is discussed, alongside additional purely data-driven backgrounds. We
+                 also describe the statistical inference framework, including the definition of the likelihood function
+                 and the construction of confidence intervals.
+                 Keywords: Dark Matter, Direct Detection, Xenon
+
+
+                     I.   INTRODUCTION                                 A particle interaction in the active 5.9 t liquid xenon
+                                                                       (LXe) target results in prompt vacuum ultraviolet scin-
+   Astrophysical and cosmological observations at var-                 tillation light as well as free ionization electrons. The
+ious scales provide clear evidence for the existence of                instantaneous light signal, called the S1 signal, is de-
+dark matter (DM) as a fundamental building block of                    tected by two arrays of photomultiplier tubes (PMTs)
+our universe [1, 2]. Numerous extensions of the standard               at the top and bottom of the approximately cylindrical
+model of particle physics predict additional fundamental               TPC. An electric field (23 V/cm average electric drift
+particles as potential candidates for DM [3, 4]. Measur-               field during SR0) is applied to the target volume to
+ing the direct interaction of particles from the DM halo               drift the ionization electrons toward the liquid xenon
+of the Milky Way with a suitable detector could pro-                   surface. Here, they are extracted and accelerated into a
+vide conclusive evidence for the particle DM hypothe-                  xenon gas volume above the liquid via a stronger electric
+sis. The XENONnT experiment aims to detect a sig-                      field (2.9 kV/cm electric extraction field in liquid during
+nal from weakly interacting massive particles (WIMPs)                  SR0). The kinetic energy of the accelerated electrons in
+elastically scattering off xenon nuclei with a detector op-            the gas phase is sufficient for the emission of electrolu-
+erated underground at the Istituto Nazionale di Fisica                 minescent light, which is proportional to the number of
+Nucleare (INFN) Laboratori Nazionali del Gran Sasso                    extracted electrons. This second light signal is referred
+(LNGS) in Italy. The collaboration published the first                 to as the S2 signal. The distribution of the S2 signal
+WIMP search results from a data-taking period between                  detected by the PMTs in the top array is used to infer
+July 6th and November 10th 2021 with a total live time                 the position of the initial interaction in the horizontal
+of 95.1 days and a fiducial mass of (4.18 ± 0.13) t, re-               plane (X, Y) parallel to the√liquid surface, which defines
+ferred to as science run 0 (SR0). We performed a blind                 the radial coordinate R = X2 + Y2 . The vertical com-
+analysis and observed no significant excess above back-                ponent Z follows from the drift time of electrons, which
+ground expectations [5]. This led to a minimum upper                   is determined as the time difference between the S1 and
+limit on the spin-independent WIMP-nucleon cross sec-                  S2 signals. This three-dimensional position reconstruc-
+tion of 2.58 × 10−47 cm2 for a WIMP mass of 28 GeV/c2                  tion of the interaction vertex enables the discrimination
+at 90% confidence level (CL).                                          of multi-site events as well as the selection of an inner
+   The detector used for the XENONnT experiment is                     fiducial volume (FV) within the TPC. This volume ben-
+a dual-phase xenon time projection chamber (TPC).                      efits from a particularly low background level thanks to
+                                                                       the excellent self-shielding properties of LXe, given its
+                                                                       high density. Moreover, the relative magnitudes of the
+ * Also at INFN-Roma Tre, 00146 Roma, Italy
+                                                                       S1 and S2 signals can be used to determine if a par-
+ † robert.hammann@mpi-hd.mpg.de                                        ticle interacted with the xenon nucleus (expected from
+ ‡ luisa.hoetzsch@mpi-hd.mpg.de                                        WIMPs) or xenon shell electrons (typical of the dom-
+ § Now at Department of Physics & Astronomy, Bucknell Univer-          inant sources of background), i.e. nuclear recoil (NR)
+  sity, Lewisburg, PA, USA                                             or electronic recoil (ER) events. The electric drift and
+¶ Also at Coimbra Polytechnic - ISEC, 3030-199 Coimbra, Por-
+                                                                       extraction fields are established by three parallel-wire
+  tugal                                                                electrodes (cathode, gate, and anode from bottom to
+∥ diego.ramirez@physik.uzh.ch
+** Also at Physikalisches Institut, Universität Heidelberg, Heidel-   top). To reduce wire sagging, two and four horizontal
+  berg, Germany                                                        perpendicular wires support the gate and anode elec-
+†† zihao.xu@columbia.edu                                               trodes, respectively.
+‡‡ xenon@lngs.infn.it
+                                                                          The TPC is nested in an active neutron veto, which
+                                                                                                                      3
+
+in turn is housed in an active muon veto. Both veto           tion data. The two parts of the detector response model
+systems are water Cherenkov detectors. More details           together with the toy-MC simulation workflow are de-
+on the TPC, the veto systems, and other subsystems of         scribed in Secs. II A and II B, and the fit to ER and NR
+the detector are provided in [6–8].                           calibration data is detailed in Sec. II C.
+   The data analysis chain of the WIMP DM search in
+XENONnT is subdivided into two major parts, like in
+XENON1T [9, 10]. The first part is discussed in [11]                   A.   Liquid Xenon Emission Model
+and comprises signal and event reconstruction, correc-
+tions, event selection, and energy scale calibration. Here       The production of quanta from energy depositions in
+we present the second part of the analysis chain: The         a xenon target is complex and lacks a comprehensive
+detector response to the different interaction types is       description derived from first principles. Thus, a semi-
+modeled based on calibration data and discussed in            empirical parametrization of the emission model is com-
+Sec. II. The derived best-fit models are important in-        monly used. The parametrization used in XENONnT
+puts for the definition of signal and background models,      SR0 is similar to XENON1T [10], which is based on the
+detailed in Sec. III. This section also covers data-driven    Noble Element Simulation Technique (NEST) models
+background models that do not rely on the detector re-        described in [14, 15]. The simulation workflow of the
+sponse. Finally, the statistical methods used to com-         emission model is described in detail in Appendices A
+pute constraints on DM given the XENONnT data are             and B, and is summarized in the following.
+discussed in Sec. IV.                                            In an ER event, the recoil energy is transmitted into
+                                                              the excitation and ionization of xenon atoms. Recoil-
+                                                              ing xenon nuclei from an NR event, on the other hand,
+II.   MODELING THE DETECTOR RESPONSE                          lose a significant amount (roughly 80 %) of their kinetic
+                                                              energy to atomic motion in collisions with other xenon
+   Modeling the detector response to energy depositions       atoms [14]. This thermalization process is undetectable
+allows for a powerful discrimination between NR signal        in LXe TPCs, resulting in an effective signal loss. For
+and ER background in S1–S2 space. NR events are pro-          both recoil types, the total number of detectable quanta
+duced by particles scattering elastically off xenon nuclei,   Nq equals the sum of the number of produced excitons
+while in ER events, particles scatter off xenon shell elec-   Nex and ions Ni . A fraction of ions and electrons recom-
+trons. The different energy loss processes involved after     bine, resulting in the production of additional excitons.
+the two types of recoil cause ER and NR events to form        An exciton can combine with a ground-state xenon atom
+separate populations in S1–S2 space, which is exploited       forming an excimer, which de-excites, producing a scin-
+in the WIMP DM search. The modeling is performed              tillation photon. In an event, Nγ photons are generated,
+in the region of interest (ROI) designated for the SR0        part of which are then detected by PMTs as the S1 sig-
+WIMP search, defined by cS1 in [0, 100] PE (PE = pho-         nal. The Ne electrons that do not recombine are drifted
+toelectron) and cS2 in [102.1 , 104.1 ] PE. This ROI is se-   to the liquid-gas interface and eventually form an S2
+lected to contain the majority of our expected signal (c.f.   signal.
+Figs. 4 and 5). We build the models using calibration            In the SR0 WIMP search ROI, ER interactions have a
+data before unblinding the WIMP search dataset.               much smaller ratio of produced excitons to electron-ion
+   In this section, we describe the TPC response model        pairs than NR interactions (by a factor of up to ∼10 in
+to energy depositions in LXe via ER or NR interactions,       the ROI), while the fraction of electron-ion pairs that
+which is obtained from fits to calibration data. This         recombine is similar for both interaction types given
+detector response model is separated into two parts.          the same number of detectable quanta. The difference
+The first one is the empirically parametrized LXe emis-       in exciton-to-ion ratio dominates, leading to larger ra-
+sion model, which describes the production processes of       tios of S2 to S1 areas for ER interactions, which is the
+the detectable quanta, i.e. the conversion of deposited       principle behind ER-NR discrimination in LXe TPCs.
+energy into scintillation photons and ionization elec-        We parametrize the emission model for ER interactions
+trons. The second part is the detector reconstruction         as in [10], with a constant exciton-to-ion ratio, and a
+model, which covers the conversion from the produced          mean recombination fraction following the Thomas-Imel
+photons and electrons into the observed and spacetime-        box model [16] with an additional Fermi-Dirac term.
+dependence corrected S1 and S2 signals (cS1 and cS2).         For NR interactions, the emission model follows the
+Due to its complexity, it is unfeasible in the fit to sim-    parametrization used in the NEST v1 model detailed in
+ulate processes of photon and electron propagation on         [15]. While there are newer versions of fits available in
+a per-quantum basis. Instead, toy-Monte-Carlo (toy-           the NEST framework that use a different parametriza-
+MC) simulations of the detector reconstruction model          tion for NR interactions (which we refer to as NEST v2
+are used which sample from effective maps provided            in the following), we choose to stay with the previous
+either by data-driven analyses described in [11] or by        version (referred to as NEST v1). The model is simpler,
+simulation-driven analyses using the XENONnT Monte            fits our data well, and the best-fit values and uncertain-
+Carlo (MC) framework [12, 13]. All model parameters           ties of parameters of NEST v2 were not published at
+in the simulations are fit to both ER and NR calibra-         the time of the analysis.
+                                                                                                                           4
+
+        B.    Detector Reconstruction Model                               104
+                                                                                  Not coincident with NV
+   The detector reconstruction model covers all aspects                           Coincident with NV
+of the signal reconstruction, starting from the produced
+scintillation photons and ionization electrons up to the
+measured S1 and S2 signal sizes. The XENONnT de-
+
+
+
+
+                                                               cS2 [PE]
+tector reconstruction model is almost identical to the
+one presented in [10] and is briefly outlined here. The                   103
+detailed simulation workflow of the detector reconstruc-
+tion model is described in Appendix C.
+   For S1 signals, the spatial dependence of geometric
+effects during photon propagation, the photon detec-
+tion efficiency of the PMTs, and the effect of double
+photoelectron emission (DPE) from the PMT photo-
+cathode [17, 18] are all modeled in the simulations. For                  102 1                  10             102
+S2 signals, we model the loss of electrons along their                                            cS1 [PE]
+drift path due to attachment to electronegative impu-
+rities as well as due to electric field effects close to the
+                                                                Figure 1. AmBe neutron calibration events with (red) and
+TPC wall, the efficiency of electron extraction from the        without (gray) a coincident signal in the neutron veto (NV).
+liquid into the gas phase, and the single-electron gain of      Selecting coincident events ensures a clean nuclear recoil
+extracted electrons to detected PE via the electrolumi-         sample for detector response modeling. The accidental co-
+nescence process in gas. In addition to these physical          incidence population (cS1 below 5 PE) and misidentified
+processes, we also account for the influence of software        single-electron S1s (cS1 between 10 and 30 PE) are visible
+reconstruction effects on the signals. For both signal          in the gray population. After applying additional data qual-
+types, the software reconstruction process can introduce        ity selections, approximately 2000 events (Fig. 2, right) are
+biases and fluctuations in the recorded signal size. We         used for band fitting.
+also account for the S1 signal reconstruction efficiency,
+which vanishes at about 3 PE, as we require that at
+least 3 PMTs detect a photon within ±50 ns around the
+maximal amplitude. Finally, we model the uncertainty
+of the event position reconstruction and the acceptances
+of data quality selections [11].                                distinguished based on the separation in spacetime be-
+   The modeling of ER interactions relies on calibra-           tween the energy depositions of the individual scat-
+tion data from sources dissolved in xenon, in particular        ters, but can get (partially) merged if the interaction
+220
+    Rn and 37 Ar. The 220 Rn progeny 212 Pb undergoes           sites are close together. Due to the low drift field of
+a β-decay with a Q-value at about 0.6 MeV [19], giv-            23 V/cm in XENONnT SR0, the Z separation resolu-
+ing an approximately flat ER energy spectrum in the             tion between two S2 signals is reduced with respect to
+WIMP ROI, i.e. below about 10 keV. This dataset is              the design because of the increased drift time O(ms)
+used for the fit of the ER model. The 37 Ar source              and consequently larger S2 spread O(µs) due to the dif-
+provides a mono-energetic ER peak when its K-shell              fusion of electrons. This effect is accounted for in the
+electron capture process leads to a fast cascade of X-          fit of the NR model to the neutron calibration data:
+rays and Auger-Meitner electrons, with a total energy           we first produce the photons and electrons for each en-
+of about 2.8 keV [20]. Both ER sources provide single-          ergy deposition in a MS event separately, based on the
+scatter (SS) events, producing one S1 and one S2 signal         emission model. While the primary scintillation pho-
+for the total deposited energy, and the above-described         tons are summed to produce the merged S1 signal, we
+detector reconstruction processes are simulated accord-         only sum S2 signals that will become part of the largest
+ingly.                                                          S2 signal after going through the remaining detector re-
+   The NR model is calibrated using an external                 construction processes. This information is provided by
+241
+    AmBe neutron source (referred to as AmBe source             PMT waveform simulations of neutron scatters from the
+in the following). It emits fast neutrons via the               AmBe source, using the Monte Carlo (MC) framework
+9
+  Be(α, n)12 C capture reaction. Neutrons often scat-           of XENONnT [12, 13] (see also Sec. III C for details
+ter multiple times in the LXe target in so-called multi-        on neutron simulations). The results of these waveform
+scatter (MS) events, creating distinct energy depositions       simulations are used as inputs to the toy-MC simula-
+at each interaction site, thus the topologies of neutron        tions and fitting framework. Data selections that re-
+events must be considered in the modeling. Since the            move MS events (both resolved and unresolved) are di-
+neutrons travel at about 10 % of the speed of light and         rectly applied to these inputs, because their acceptances
+the S1 width is O(100 ns), the S1 signals from the sepa-        can only be determined from full simulations, and are
+rate energy depositions in a MS event get reconstructed         correspondingly dropped from the selection acceptance
+into one merged S1 signal. The S2 signals might be              curves for the NR fit.
+                                                                                                                         5
+
+             C.    Fit to Calibration Data                     of 23 V/cm, where no literature data on NR yields exist,
+                                                               the validity of the field dependence in the model is un-
+   The parameters in the full detector response model          verified. Therefore, the field dependence in the emission
+are fitted to 220 Rn, 37 Ar, and AmBe calibration data.        model from [15] was modified. Two scaling parameters
+The ROI selection is the same as the SR0 WIMP search           were freed (α and γ in Eq. (B8) and Eq. (B11) in the
+region defined in Sec. II A. All data quality selections are   appendix), and two field dependence parameters (ζ and
+applied to the calibration data within the ROI. For the        δ) were fixed to the reported best-fit values. The widths
+AmBe neutron data, an additional selection is applied          of all other parameter priors were doubled in order to al-
+using coincident gammas detected in the neutron veto.          low more freedom in the fit. Because the dependence of
+In 9 Be(α, n)12 C capture reactions in the AmBe source,        NR signals on the drift field has been shown to be small
+12
+   C is left in the first excited state after neutron emis-    (see also literature measurements shown in Fig. 3), we
+sion in about 50 % of the cases, estimated with neutron        consider this a reasonable choice.
+veto data [21]. The 12 C excited state promptly decays            The fit results of all emission model parameters are
+via the emission of a 4.44 MeV gamma ray, coincident           summarized in Tab. II in the appendix. No signifi-
+with the neutron emission. The requirement of the time         cant tension between the posteriors and the priors of
+coincidence within 250 µs between the 4.44 MeV gamma           any parameter is found. Suitable goodness-of-fit (GOF)
+ray detected in the neutron veto and the event in the          tests are performed to assess whether the best-fit mod-
+TPC, leads to a clean calibration dataset, with only           els adequately describe the 220 Rn and AmBe calibration
+about one expected event from accidental coincidences          data. Specifically, we employ binned Poisson likelihood
+between the two detectors in the dataset (∼0.05 % of           χ2 tests in the cS1–cS2 space. We adopt an equiprob-
+the resulting sample). The events recorded in the ROI          able binning scheme using the GOFevaluation package
+that pass (fail) the neutron veto coincidence selection        [24], ensuring that the number of expected events under
+are shown in red (gray) before applying any additional         the best-fit model is the same in each bin, µbin . In Fig. 2
+data quality selections in Fig. 1.                             the results of the 2D cS1–cS2 Poisson likelihood χ2 test
+   For the fit to the ER data, an additional background        are shown for both the ER and the NR fit, overlaid with
+component is added to account for accidental coinci-           the 220 Rn and the AmBe calibration data, respectively.
+dence (AC, see section III E for details) events formed        The resulting p-values of the tests indicate no signifi-
+by a wrong pairing of S1 and S2 signals in the calibra-        cant discrepancy between the best-fit models and the
+tion dataset.                                                  calibration data. The few outlier events below the NR
+   After all selections, the 220 Rn and AmBe datasets          band in the right panel are modeled by accounting for
+consist of ∼2000 events each. We use a downsampled             S2 charge losses near the TPC walls (see also section C
+dataset of 10 000 37 Ar events to perform a combined           in the appendix).
+220
+    Rn-37 Ar ER fit. With the downsampling we avoid               Figure 3 shows the photon and charge yields as a func-
+overconstraining the fit to the narrow, very low energy        tion of deposited energy for the ER and NR emission
+range of 37 Ar.                                                models using our best-fit parameters (dark red). For
+   For the fit, an affine-invariant Markov chain Monte         comparison, NEST models calculated at a drift field of
+Carlo (MCMC) algorithm [22, 23] is used to sample              23 V/cm and several published measurements at differ-
+from the high-dimensional posterior distribution of the        ent drift fields are shown. For the NR yields, we also
+parameters. In each step of the sampling, a GPU-               compare our results to the NEST v1 model at a drift
+accelerated toy-MC simulation is performed for every           field of 23 V/cm (red dashed lines in Fig. 3) which uses
+set of the ER and NR model parameters, following the           the same parametrization as the model in this work (see
+steps described in the previous two sections, produc-          Sec. II A), showing very good agreement.
+ing a model of the detector response in the space of
+corrected signals, i.e. cS1–cS2. The model parameters
+are described in detail in the appendix and are listed                III.   SIGNAL AND BACKGROUND
+in Tab. II. These toy-MC models are then compared to                              MODELING
+calibration data by calculating the binned Poisson like-
+lihood in cS1–cS2 space. The likelihoods are multiplied           The dominant sources of background in the WIMP
+by the prior distributions of the parameters to yield the      search are ER events from intrinsic β-decays from ma-
+posteriors. After sufficient iterations of the MCMC, the       terials and neutrinos (Sec. III B), NR events from ra-
+samples in the chain then converge to the posterior dis-       diogenic neutrons from detector materials (Sec. III C)
+tribution of the parameters.                                   and coherent neutrino scattering (Sec. III D), AC events
+   In the ER emission model, the parametrization is the        (Sec. III E), and surface background (Sec. III F). Besides
+same as in XENON1T [10] with very wide flat priors,            their total expected rates, the distribution of these back-
+referred to as free priors. For the NR emission model          ground events in the analysis space cS1–cS2–R is de-
+in turn, the parameter priors are taken from [15]. A           rived. In Fig. 4, the distributions of background models
+Gaussian-like distribution with different widths on ei-        in the cS1–cS2 space are shown, compared to the sig-
+ther side is used as the prior of parameters with asym-        nal model for elastic spin-independent scattering of a
+metric uncertainties. However, due to the low drift field      200 GeV/c2 mass WIMP.
+                                                                                                                                                     6
+
+           104                                                             104                                                3
+                     ER model, p-value = 0.42                                        NR model, p-value = 0.39
+                                                                                                                              2
+
+
+
+
+                                                                                                                                  Local -deviation from bin
+                                                                                                                              1
+cS2 [PE]
+
+
+
+
+                                                                cS2 [PE]
+                                                                                                                              0
+           103                                                             103
+                                                                                                                                  1
+                                                                                                                                  2
+
+                 0       20       40     60        80     100                    0         20    40     60      80    100         3
+                                   cS1 [PE]                                                       cS1 [PE]
+ Figure 2. Comparison between calibration data and the best-fit ER (left) and NR (right) models. The equiprobable binning
+ for the 2D binned Poisson likelihood χ2 goodness-of-fit tests is shown. The color scale indicates the deviation of the number
+ of data points (overlaid as black dots) in each bin from the best-fit model expectation µbin in units of sigma, which is 29.3
+ for the ER model and 36.9 for the NR model.
+
+
+                        A.    WIMP Signal Model                              from [49]. Note that the uncertainty on the structure
+                                                                             factor dominates especially for the “neutron-only” case.
+   For non-relativistic, spin-independent elastic WIMP-                      In the XENONnT SR0 analysis, the mean of the struc-
+ nucleus coherent scattering, the event rate RWIMP scales                    ture factor is used.
+ with the square of the atomic mass number A2 of the                            Uncertainties from the posterior distribution of the
+ target and can be written as [40]                                           NR model parameters and other efficiencies can be prop-
+                                                                           agated to the NR rate uncertainty. For a 6 GeV/c2
+          dRWIMP          ρχ       1                                         (50 GeV/c2 ) WIMP, the relative rate uncertainty is
+                    =                 σA2 F 2 (q),    (1)
+             dE        2mχ µ2χN v                                            ∼30% (10%). The NR model shape can also be affected
+                                                                             by the posterior distribution. However, because of the
+ where E is the recoil energy, ρχ is the local DM den-                       low statistics of NR events in SR0 (for both background
+ sity of 0.3 GeV/(c2 cm3 ), mχ is the WIMP mass, µχN                         and signal expectation), the impact of the shape uncer-
+ is the WIMP-nucleon reduced mass, v is the WIMP ve-                         tainty of the NR model is negligible compared to the
+ locity in the lab-frame, σ is the WIMP-nucleon cross                        uncertainty of its absolute rate. Thus, the NR model
+ section, and F (q) is the nuclear form factor as a func-                    shape uncertainty is not propagated to the final likeli-
+ tion of the momentum transfer q to the xenon nucleus                        hood.
+ [41]. The DM velocity distribution is averaged using the
+ parameter values of the standard halo model with val-
+ ues from [42–47], as recommended in [48]. Fig. 5 shows                               B.    Electronic Recoil Background Model
+ the cS1–cS2 distribution of WIMP-nucleus scattering
+ for different WIMP masses. For increasing masses,
+                                                                                ER events are one of the dominant background
+ the 68% contours extend to higher cS1 and cS2 val-
+                                                                             sources in the XENONnT SR0 WIMP search, primarily
+ ues, up to about 200 GeV/c2 , where the shape does not
+                                                                             originating from β-decays of intrinsic radioactive con-
+ change significantly anymore due to kinematic effects.
+                                                                             taminants such as 214 Pb (a product of the 222 Rn decay
+ For this reason, confidence intervals in σ (see Sec. IV)
+                                                                             chain) and 85 Kr. Contributions from 136 Xe double-β
+ for mχ >             2
+         ∼ 200 GeV/c approximately scale proportional                        decays, solar neutrino interactions, and gamma events
+ to the inverse of the assumed WIMP mass mχ .
+                                                                             from the materials are also taken into account. In the
+    For the spin-dependent WIMP-nucleus interaction,
+                                                                             ROI for the WIMP search, the total ER energy spec-
+ assuming natural abundances of xenon isotopes, only
+ 129                                                                         trum is approximately flat. The distribution of ER
+     Xe and 131 Xe can contribute since they are the only
+                                                                             background events in cS1–cS2 space is generated from
+ two stable isotopes of xenon with non-zero nuclear spin
+                                                                             the ER model fitted to 220 Rn and 37 Ar calibration data,
+ J. The cross section is usually written as
+                                                                             as discussed in Sec. II C. The total ER rate is fitted in
+                       dσSD        σ       π                                 the final WIMP likelihood, without applying an addi-
+                             =                  SN (q).          (2)         tional ancillary constraint in order to avoid potential
+                        dq 2   3µ2χN v 2 2J + 1
+                                                                             systematic biases, which will be discussed in Sec. IV.
+ The axial-vector structure factor of xenon SN is taken                         In contrast to the NR model, the uncertainty in the
+                                                                                                                                                                     7
+
+
+                                   XENONnT SR0                                                                    XENONnT SR0 (23 V/cm)
+                           60      220Rn+37Ar (23 V/cm)                                                           NEST v1 (23 V/cm)
+                                   NEST v2 (23 V/cm)                                                              NEST v2 (23 V/cm)
+                           50      PIXeY 37Ar (99 V/cm)                                                  20       XENON1T (81 V/cm)
+                                                                                                                  Aprile 2005 (0 V/cm)
+
+
+
+
+                                                                              NR photon yield [ph/keV]
+ER photon yield [ph/keV]
+
+
+                                   LUX CH3T (105 V/cm)
+                                                                                                                  Aprile 2009 (0 V/cm)
+                                   XENON1T 220Rn (82 V/cm)                                                        Plante 2011 (0 V/cm)
+                           40      XENON1T 37Ar (82 V/cm)                                                15       Manzur 2010 (0 V/cm)
+                                   Xurich II 37Ar (80 V/cm)                                                       LUX 2016 (180 V/cm)
+                                                                                                                  LUX 2022 (400 V/cm)
+                           30
+                                                                                                         10
+                           20
+                                                                                                          5
+                           10
+                                                     Total efficiency > 10%                                                   Total efficiency > 10%
+                            00.1                  1                    10                                 01                      10                             102
+                                                Energy [keV]                                                                  Energy [keV]
+                                                                                                                                          XENONnT SR0 (23 V/cm)
+                                                                                                         14                               NEST v1 (23 V/cm)
+                           80                        Total efficiency > 10%
+                                                                                                                                          NEST v2 (23 V/cm)
+                                                                                                         12                               XENON1T (81 V/cm)
+                                                                                                                                          XENON100 (530 V/cm)
+                                                                              NR charge yield [e /keV]
+ER charge yield [e /keV]
+
+
+
+
+                                                                                                                                          Aprile 2006 (2 kV/cm)
+                           60                                                                            10                               Sorensen 2009 (730 V/cm)
+                                                                                                                                          Manzur 2010 (1 kV/cm)
+                                                                                                                                          LUX 2016 (180 V/cm)
+                                   XENONnT SR0                                                            8                               Lenardo 2019 (220 V/cm)
+                                   220Rn+37Ar (23 V/cm)
+                           40                                                                                                             LUX 2022 (400 V/cm)
+                                   NEST v2 (23 V/cm)
+                                   PIXeY 37Ar (99 V/cm)                                                   6
+                                   LUX 127Xe (180 V/cm)
+                                   LUX CH3T (105 V/cm)
+                           20      XENON1T 220Rn (82 V/cm)                                                4
+                                   XENON1T 37Ar (82 V/cm)
+                                   Xurich II 37Ar (80 V/cm)                                               2                   Total efficiency > 10%
+                            00.1                  1                    10                                     1                   10                             102
+                                                Energy [keV]                                                                  Energy [keV]
+    Figure 3. Photon (top) and charge (bottom) yields as functions of deposited energy for ER events (left) and NR events
+    (right). Dark red lines and shaded bands show the XENONnT liquid xenon emission models with the best-fit parameters
+    and their uncertainties, respectively. The fit results from XENON1T (blue shaded bands) [10, 25], and the models from
+    NEST v1 (black dash-dotted line) and NEST v2 (black solid line), both evaluated at 23 V/cm, are shown as well. Several
+    measurements from literature performed at various drift fields as labeled in the legends (ER yields from [10, 20, 26–29], NR
+    yields from Aprile 2005 [30], Aprile 2006 [31], Aprile 2009 [32], XENON100 [33], Plante 2011 [34], Sorensen 2009 [35], Manzur
+    2010 [36], LUX 2016 [37], Lenardo 2019 [38], and LUX 2022 [39]) are also shown. Note that for the ER yields, a considerable
+    dependence on the electric drift field is expected, as visible in the literature data points. The gray shaded regions mark the
+    energy ranges in which the total detection + selection efficiency in the WIMP analysis is above 10 %.
+
+
+    shape of the ER model can affect the sensitivity of the                                          ing. In XENONnT SR0, a principal component anal-
+    WIMP search. Ideally, the posterior distribution of                                              ysis (PCA) [50] is used to remove correlation among
+    all parameters should be propagated to the ER model                                              parameters from the MCMC sampler. All ER param-
+    as nuisance parameters in the WIMP search likelihood                                             eters shown in Tab. II, together with W , g1 , and g2
+    function. However, an excessive number of correlated                                             (see details in the appendix), are included in the PCA.
+    nuisance parameters becomes computationally challeng-
+                                                                                                                                                              8
+
+
+           104                                 200 GeV/c2 WIMP                                104                            200 GeV/c2 WIMP
+                                                 ER background                                                                 NR background
+cS2 [PE]
+
+
+
+
+                                                                                   cS2 [PE]
+           103                                                                                103
+                   10 keVNR
+
+
+                                     20 keVNR
+
+
+                                                    30 keVNR
+
+
+                                                                  40 keVNR
+
+
+
+
+                                                                                                           10 keVNR
+
+
+                                                                                                                       20 keVNR
+
+
+                                                                                                                                   30 keVNR
+
+
+                                                                                                                                                   40 keVNR
+                    1 keVER
+
+
+                                      4 keVER
+
+
+                                                     6 keVER
+
+
+                                                                   8 keVER
+           102 0     20              40      60                  80          100              102 0        20         40      60              80          100
+                                      cS1 [PE]                                                                         cS1 [PE]
+           104                              200 GeV/c2 WIMP                                   104                            200 GeV/c2 WIMP
+                                          Surface background                                                                   AC background
+cS2 [PE]
+
+
+
+
+                                                                                   cS2 [PE]
+
+           103                                                                                103
+                     10 keVNR
+
+
+                                         20 keVNR
+
+
+                                                      30 keVNR
+
+
+                                                                      40 keVNR
+
+
+
+
+                                                                                                           10 keVNR
+
+
+                                                                                                                       20 keVNR
+
+
+                                                                                                                                   30 keVNR
+
+
+                                                                                                                                                   40 keVNR
+           102 0     20              40      60                  80          100              102 0        20         40      60              80          100
+                                      cS1 [PE]                                                                         cS1 [PE]
+ Figure 4. Distribution of each background component (colored) in cS1–cS2 space. The NR background includes both
+ radiogenic neutron background and NR events by neutrinos. The probability density functions (PDFs) of backgrounds are
+ shown as 1σ (2σ) dark (light) regions, containing 68% (95%) expected events in the ROI. For reference, the contours are
+ also shown for a spin-independent 200 GeV/c2 WIMP as a solid (dashed) dark gray line. The light gray dash-dotted lines
+ are contours of constant NR-equivalent energy (and ER-equivalent energy in the top left panel) in units of keV.
+
+
+ Different from the original PCA, the variance of                                       it was not included to maintain a conservative approach,
+                                                                                        as 220 Rn already provides a sufficiently tight constraint
+                                     X       s2i                                        on the shape uncertainty.
+                                t≡                                           (3)
+                                     i
+                                          si + bi
+
+ along each principal component is used to quantify its
+ importance. Here, si and bi are the probability of a                                                 C.    Neutron Background Model
+ 50 GeV/c2 WIMP and ER background in the ith bin
+ of cS1–cS2 space, respectively. A larger variance of t                                   Radiogenic neutrons are mainly produced through
+ means that the uncertainty of that component can be                                    spontaneous fission and (α, n) reactions in the detec-
+ more impactful for the WIMP sensitivity. In the end,                                   tor materials due to intrinsic traces of radioactive im-
+ the two most important principal components are kept                                   purities. The cosmogenic neutron background is sub-
+ as nuisance parameters. These two shape parameters                                     dominant [51], hence it is neglected in XENONnT
+ are constrained within the 220 Rn ancillary term of the                                SR0 analysis. The neutron yield and energy per iso-
+ WIMP search likelihood function, as shown in Fig. 6.                                   tope and material are calculated with the SOURCES-
+ While adding an additional 37 Ar ancillary term could                                  4A software [52], using the radioactive impurity levels
+ further constrain the shape uncertainty at low energies,                               of the relevant detector components obtained via the
+                                                                                                                                                             9
+
+                                                                                                     detector is simulated with the Geant4 toolkit [55, 56],
+                                                                                d region
+                                                                                                     where the recoil type and energy deposition per interac-
+                                                                     Blinde                          tion in the target are recorded. We compute the number
+                                                                                                     of photons and electrons for a given interaction via the
+           103                                                               1000 GeV/c2             custom-developed epix package [57], which utilizes the
+                                                                             200 GeV/c2              energy-dependent LXe response derived from the SR0
+cS2 [PE]
+
+
+
+
+                                                                             50 GeV/c2               calibrations, shown in Fig. 3. This package also handles
+                                                                             20 GeV/c2               the clustering of the individual energy-depositing steps
+                                                                             10 GeV/c2               at the LXe microphysics scale before the quanta gener-
+                                                                             6 GeV/c2                ation. The photons and electrons produced by epix are
+                                                                                                     passed to the waveform simulator (WFSim) [58], which
+                         10 keVNR
+
+
+                                              20 keVNR
+
+
+                                                                  30 keVNR
+
+
+                                                                                    40 keVNR
+                                                                                                     computes the S1 and S2 signals up to the waveform level,
+                                                                                                     by means of a precise set of simulations- and data-driven
+                                                                                                     corrections which characterize the XENONnT detec-
+           102 0         20               40      60                           80              100   tor response. The event-by-event simulated waveforms
+                                                                                                     share the same data structure as the science data af-
+                                           cS1 [PE]                                                  ter applying PMT and Data Acquisition (DAQ) effects,
+                                                                                                     which allows us to process them with the same software
+ Figure 5. Expected distribution in cS1–cS2 space from spin-                                         used for the real data (straxen [59]), as well as to ap-
+ independent WIMP nuclear recoil for WIMP masses from                                                ply the same data selections. The final SS neutron rate
+ 6 GeV/c2 to 1000 GeV/c2 . The contours contain 68% of ex-                                           arises from weighting the rates obtained via the entire
+ pected events in the ROI. The blinded region, which is ex-
+                                                                                                     waveform simulation pipeline with the specific activi-
+ clusively applied to the WIMP search dataset, is shown for
+ reference as a gray band and dash-dotted lines are constant                                         ties of the corresponding material and isotopic neutron
+ NR-equivalent energy contours.                                                                      yield.
+                                                                                                        When a neutron scatters in the ∼250 kg of LXe be-
+                                                                                                     tween the cathode and the bottom PMT array, only
+                           3.0 k                 3.5 k                  4.0 k                        the scintillation light for these events can be detected.
+           3 × 103              eVER                  eVER                   eVER
+                                                                                                     The electrons, in turn, are lost due to an electric field
+                                                                                                     pointing in the opposite direction to the active vol-
+                                                                                                     ume. Neutron events that consist of scatters above
+           2 × 103                                                                                   and below the cathode are referred to as neutron-X
+                                                                                                     events, where “X” means additional S1 contribution
+cS2 [PE]
+
+
+
+
+                                                                                                     from charge-insensitive scatters. They are modeled as
+                                                                                                     a separate background since they have a larger cS1 to
+                                                                                                     cS2 ratio than normal neutron scatters.
+           1 × 103
+                                                                                    2.5
+
+
+
+
+                                                                                                        The event parameters having discrimination power on
+                                                                                      keV
+                                                                   2.0
+
+
+
+
+                                                                                                     MS interactions, such as S2 pulse shape and PMT hit
+                                                                                          ER
+                                                                       keV
+                                    1.0
+
+
+                                                  1.5
+
+
+
+
+                                                                                                     patterns of S1, are matched and validated with cali-
+                                                                           ER
+                                     keV
+
+
+                                                         keV
+
+
+
+
+                                                                                                     brations, such that the relevant data quality selections
+           6 × 102
+                                         ER
+
+
+
+
+                                                             ER
+
+
+
+
+                                                                                                     can be applied to the simulation outputs. Notably, a
+                     0               5             10                         15                20   validation of the multiple-to-single scatter ratio and to-
+                                                 cS1 [PE]                                            tal rate in the TPC of the AmBe calibration data was
+                                                                                                     conducted, from where we obtained the systematic un-
+ Figure 6. Shape uncertainty of the ER model constrained by                                          certainty associated with the accuracy of the full-chain
+ the 220 Rn calibration data. The blue (gray) solid and dashed                                       simulations.
+ lines represent the contours of ER background (200 GeV/c2                                              With this agreement between simulations and calibra-
+ WIMP) containing 68% and 95% of expected events in the                                              tion data, we decided before unblinding the WIMP ROI
+ ROI. The transparent blue regions show the shape uncer-                                             to proceed with the sideband unblinding of the events
+ tainty by varying the two shape nuisance parameters by ±1σ.                                         tagged by the neutron veto. Initially, this confirmed the
+ Dash-dotted lines are contours of constant ER-equivalent en-                                        simulation-driven neutron background prediction. How-
+ ergy in units of keVER .                                                                            ever, a mistake in the definition of the neutron veto time
+                                                                                                     window was found after the unblinding of the WIMP
+                                                                                                     ROI. After fixing this issue, a mismatch was found, with
+ combined XENON1T and XENONnT radioassay cam-                                                        the neutron background rate being larger than predicted
+ paigns [53, 54]. A full-chain simulation pipeline [12] is                                           in the ROI [5]. We therefore decided to constrain the
+ used to estimate the neutron background rate, the geo-                                              neutron background rate in a purely data-driven way
+ metrical distribution, and the cS1–cS2 distributions for                                            based on the aforementioned sideband unblinding with
+ SR0.                                                                                                the correct neutron veto tagging window. The results of
+   The propagation of the neutrons in the XENONnT                                                    the sideband unblinding are shown in Fig. 7. Based on
+                                                                                                                                           10
+
+           0
+                                                                          104 Tagged by neutron veto
+          20                                                                       WIMP search data
+                                                                                   Neutron background
+          40
+          60
+
+
+
+
+                                                               cS2 [PE]
+Z [cm]
+
+
+
+
+          80                                                              103
+         100
+         120
+
+
+
+
+                                                                                        10 keVNR
+
+
+                                                                                                    20 keVNR
+
+
+                                                                                                                30 keVNR
+
+
+                                                                                                                                40 keVNR
+         140
+               0 20 30      40       50              63                   102 0         20         40      60              80          100
+                                  R [cm]                                                            cS1 [PE]
+ Figure 7. Spatial (left) and cS1–cS2 (right) distribution of events tagged by the neutron veto (red markers). Black dashed
+ and solid lines in the left plot indicate the FV and physical TPC boundary, respectively. The regions containing 68% (95%)
+ of the total expected neutron background are indicated in dark (light) yellow. The neutron veto tagging yields four SS events
+ (circles) and seven MS events, from which three are reconstructed with their largest S2 signals inside the FV (squares) and
+ the other four outside (diamonds). Solid and hollow markers represent the reconstructed positions of the largest and the
+ second-largest S2 signal, respectively. The right plot only shows events inside the FV; from these, the four events within the
+ neutron background band (large markers; one SS and three MS) were used to estimate the neutron background rate. The
+ other three SS events are in agreement with the prediction of falsely tagged ER and surface background events (c.f. Fig. 4).
+ For reference, the events surviving all data selections, not tagged by the neutron veto, are displayed as gray dots. Also here,
+ the right panel displays only those data points within the FV, which correspond to the unblinded WIMP search events.
+
+
+ the multiple-to-single scatter ratio of 2.2, the 53% neu-          nuclei, CEνNS events are expected to be single-scatter
+ tron veto tagging efficiency, and the three observed MS            and spatially uniform.
+ events and one SS neutron event tagged by the neutron                 The recoil energy spectrum of solar CEνNS is almost
+ veto in the fiducial volume, a data-driven prediction of           identical to that of a 6 GeV/c2 spin-independent WIMP
+ 1.1+0.6
+     −0.5 events was derived for the SR0 exposure. We               [60], and the flux is (5.25 ± 0.20) × 106 cm−2 s−1 [61, 62].
+ used the simulation-driven ratio between normal neu-               After applying all selections and their corresponding ef-
+ tron background and neutron+X events to estimate the               ficiencies, the expected number of events is (0.19 ± 0.06)
+ neutron+X event rate shown in Tab. I.                              in SR0, also shown in Tab. I. Atmospheric neutrinos and
+    No further modification was propagated into the anal-           DSN mainly affect the search for heavier WIMPs. Their
+ ysis after the data-simulations rate mismatch was iden-            recoil energy spectra are taken from [51], and the SR0
+ tified: the 250 µs time veto window between the TPC                expectation value is (0.05 ± 0.02) events. Due to the low
+ and the neutron veto, chosen due to the reduced back-              cross section and the similarity to WIMP interactions,
+ ground rate initially predicted, and the fiducial volume           CEνNS background will be the major limitation to the
+ of the WIMP search remained as defined prior to un-                WIMP search sensitivity of the next generation of LXe
+ blinding. An underestimated contamination from some                experiments.
+ of the surrounding materials is considered as a possible
+ cause of the discrepancy between the expected rate and
+ the observed neutron background. Studies to constrain                    E.      Accidental Coincidence Background Model
+ the material’s radiopurity by means of the high-energy
+ gamma rays for specific detector regions are ongoing.
+                                                                       AC events consist of incorrectly paired S1 and S2 sig-
+                                                                    nals. These S1 and S2 signals can occur, for example,
+                                                                    when either the S1 or the S2 signal of a physical event
+               D.   CEνNS Background Model                          is not reconstructed due to detector effects, or when a
+                                                                    single electron S2 signal is misclassified as an S1 signal.
+   Neutrinos can also contribute to the NR back-                    Such signals are referred to as “isolated” S1 and S2 sig-
+ ground via coherent elastic neutrino-nucleus scattering            nals. If an isolated S1 and an isolated S2 fall within the
+ (CEνNS). Signals from solar, atmospheric, and diffuse              event-building time interval [9], they form an AC event.
+ supernova neutrinos (DSN) will be in the WIMP search                  The AC background is modeled with a data-driven
+ ROI. Due to the weak interaction between neutrinos and             approach. Isolated S1 and S2 signals as well as their
+                                                                                                                                  11
+
+surrounding S1 and S2 signals that are close in time
+                                                                                                             Expected
+
+
+
+
+                                                                   Counts / PE
+are sampled and paired into events. S1 signals <150 PE                           20                          Observed
+are selected as isolated S1 signals, and the isolated S2
+signals are taken from events whose S1 area is <150 PE,                          10
+together with all pulses in the event window. The AC
+event rate is computed as
+               RAC = RisoS1 × RisoS2 × ∆t,                (4)
+                                                                           350
+where RisoS1 and RisoS2 are the isolated S1 and S2 rates,
+
+
+
+
+                                                                 S2 [PE]
+and ∆t is the event-building time interval, which is de-
+fined according to the maximum drift time of 2.2 ms                        300
+in XENONnT. Occasionally during SR0, some localized
+high rates of S2 signals appeared in the TPC. Exclud-
+ing these periods from the analysis, RisoS1 and RisoS2                     250
+remained stable throughout SR0 at an average rate of
+1.5 Hz and 80 mHz, respectively. In XENONnT, the iso-
+lated S2 rate is an order of magnitude higher compared                     200                10        20       30        1.5 3.0
+to XENON1T [63]. This can be explained by the lower
+electron extraction efficiency which causes an increased                                           S1 [PE]              Counts / PE
+rate of delayed electrons. The isolated S1 and S2 signals
+are fed into the data processing pipeline [59, 64] to re-                             3      2 1 0 1 2 3
+construct the events. This provides the background dis-
+tribution of all relevant event properties, especially the
+                                                                                          Local -deviation from bin
+distribution in cS1 and cS2, as shown in Fig. 4 (lower
+right).                                                          Figure 8. AC model validation with 37 Ar calibration data in
+   To suppress AC events, a selection criterion based            S2 versus S1 area. The AC model was cross-checked against
+                                                                 this high-statistics dataset using a 2D GOF test evaluated
+on a gradient-boosted decision tree (GBDT) classifier
+                                                                 in an equiprobable binning scheme. The color scale shows
+utilizing the S2 pulse shape and the drift time was de-          the deviation from the predicted number of events in each
+veloped. Due to an insufficient model for the S2 pulse           bin µbin = 14.0 in units of sigma. The projections to S1
+shape near the perpendicular wires, the GBDT classi-             and S2 are shown above and to the right of the 2D plot.
+fier is only applied in the region at least 4.45 cm far from     No significant deviations were observed in the bulk of the
+the wires (far-wire region), while in the region near the        distribution.
+wires (near-wire region), a data-driven S2 shape selec-
+tion is applied instead. The resulting AC background
+rate per ton-year in the near-wire region is about 5.6           tests were also performed on 220 Rn calibration data. All
+times higher compared to the rate in the far-wire re-            these tests show the model and data to be compatible.
+gion. Consequently, the modeling of the TPC response             Due to an over-fitting issue found in the GBDT train-
+is split into two parts.                                         ing process, we conservatively estimated the rate uncer-
+   Validation performed on calibration data provides the         tainty to be 30% for both the near- and far-wire regions.
+rate and shape uncertainty of the AC model. For this,            The expectation value of AC events in the WIMP search
+we used dedicated AC-rich datasets, such as sidebands            dataset in the ROI is (4.3 ± 0.9).
+defined by inverting anti-AC selections. We compared
+the predicted and observed AC events by performing
+both 1D and 2D GOF tests with equiprobable bins in all                                F.     Surface Background Model
+relevant parameters. The AC predictions are provided
+by the AC modeling method discussed above. Because                  In XENONnT, the TPC wall is made of Polytetraflu-
+of the large statistics of 37 Ar calibration data, it delivers   oroethylene (PTFE), which is known to accumulate iso-
+the most stringent constraint on the AC model. 37 Ar             topes from the decay chain of atmospheric 222 Rn, which
+events with S2 areas smaller than 400 PE are selected            decays down to 210 Pb, an isotope with a half-life of 22.2
+to test the AC model. The predicted number of AC                 years. Radioactive decays on the wall surface can re-
+events was 731.6, while 733 events were observed in the          sult in events with reduced S2 signals due to charge
+data. The statistics in the AC model is very large so            losses, which gives rise to a background that can leak
+the uncertainty of the predicted AC rate is neglected            into the WIMP signal region. Three components con-
+in the following GOF tests. The 1D GOF tests in S1,              tribute to the surface background in the WIMP ROI:
+S2, Z, R, and the 2D test in S1–S2 all yield p-values            the two β-decays of 210 Pb and 210 Bi, and the recoil-
+between 0.05 and 0.95. The result of the 2D test with a          ing 206 Pb following the α-decay of 210 Po. Independent
+p-value of 0.61 is shown in Fig. 8. The model was fur-           screening measurements indicate a 210 Po α-decay activ-
+ther validated with events removed by selections target-         ity on the PTFE surface of (20 ± 3) mBq m−2 [54]. Due
+ing the AC background inside the WIMP ROI. Similar               to the complexity of electric field conditions near the
+                                                                                                                               12
+
+                                                                        certainties on the overall measured surface event rate
+                                                                        were also propagated. Uncertainties in the (cS1, cS2)
+                                                        2000            aKDE were neglected, as toy-MC tests were performed
+Normalized rate [1/cm]
+
+                         10 1                                           to show that they had little impact on overall expecta-
+                                                                        tion. For the FV, a maximum radius of 61.35 cm com-
+                                                                        pared to the 63 cm used in [65] was chosen to reduce the
+                                                        1500
+
+
+
+
+                                                              S2 [PE]
+                                                                        number of surface events to (14±3), which improves the
+                                                                        robustness against mismodeling.
+                         10 2
+                                                        1000
+                                                                                  IV.   STATISTICAL INFERENCE
+
+                                                        500                In this section, we describe the statistical methods
+                         10 3                                           used to derive the WIMP search results, which generally
+                                60     65     70                        follow the recommendations formulated in [48]. We first
+                                     R [cm]                             describe the likelihood function used for the search in
+                                                                        Sec. IV A and its nuisance parameters in Sec. IV B, fol-
+                                                                        lowed by an illustration of the procedure for construct-
+    Figure 9. The radial surface background model is shown for          ing confidence intervals and computing the discovery
+    four slices in S2 area. For each slice, a Student’s generalized     significance in Sec. IV C. The GOF test to validate the
+    skew-t distribution is fitted to 210 Po α-events. The outer
+                                                                        best-fit models and the blinding procedure are described
+    radius of the physical TPC as well as of the fiducial volume
+    are shown as a solid and a dashed black line, respectively.         in Sec. IV D. We omit some details already presented in
+                                                                        [10], as the methods here presented build upon that pre-
+                                                                        vious work.
+    surface and the loss of ionization electrons to the detec-
+    tor walls, we employ a data-driven approach to model                     A.    Definition of the Likelihood Function
+    this background component in the space of cS1–cS2–R–
+    Z.
+                                                                           The fundamental ingredient for the statistical analy-
+       The surface background model in the space of R–Z                 sis of our WIMP search data is the likelihood function
+    was developed using 210 Po α-events. These events are               L(σ, θ). It depends on the WIMP-nucleon cross sec-
+    mono-energetic (5.4 MeV) and thus easily identifiable               tion σ ≥ 0, which is our parameter of interest, and
+    through their characteristic S1 signal, yet they present            a set of nuisance parameters θ. The likelihood func-
+    a wide range of S2 sizes due to variable charge loss to the         tion is defined as a product of four terms: two for the
+    walls. The R and Z distributions of 210 Po α-events were            WIMP search dataset (Lnear-wire and Lfar-wire ), one for
+    seen to match those of the lower-energy β-events. The               the 220 Rn calibration dataset (Lcal ), and one for ancil-
+    radial profiles were modeled using a Student’s gener-               lary measurements of nuisance parameters (Lanc ):
+    alized skew-t distribution. The radial distribution was
+    fitted independently for different S2 sizes as shown in
+    Fig. 9 to account for the S2-size dependent position res-                           L(σ, θ) = Lnear-wire (σ, θ)
+    olution [11]. The Z profile was modeled using a linear                                        × Lfar-wire (σ, θ)
+    function, to account for lower rates of surface events                                                                    (5)
+                                                                                                  × Lcal (θ)
+    observed at the bottom of the TPC, likely due to the
+    increased charge insensitivity near the walls at the bot-                                     × Lanc (θ).
+    tom of the detector [7].                                               In the WIMP search data, we categorize events based
+       The cS1–cS2 distribution was modeled using a 2D                  on their proximity to the perpendicular wires of the gate
+    Gaussian adaptive kernel density estimation (aKDE),                 and anode electrodes, distinguishing between those that
+    built using events reconstructed outside the detector               are near (≤4.45 cm, corresponding to about 17% of the
+    walls. The resulting model was then validated against               total FV) and far from the wires in the X–Y plane.
+    the events reconstructed between the walls and the fidu-            This approach allows us to account for the higher AC
+    cial volume, in order to rule out any radial bias in the            rate observed near the wires as discussed in Sec. III E,
+    cS1–cS2 model. Figure 4 (lower left) shows the projec-              without introducing a full position-dependence in the
+    tion of the four-dimensional model on cS1–cS2 in the                likelihood. Other backgrounds, in particular radiogenic
+    ROI. The absolute rate of events in the blinded region              neutron and surface background, exhibit a substantial
+    was inferred from the radial distributions of adjacent,             radial dependence. Thus, the likelihood is modeled and
+    non-blinded regions in cS1–cS2.                                     evaluated in R, in addition to cS1 and cS2. For the
+       Uncertainties in the model were obtained from the R              near-wire region, the radial component is not included in
+    and Z fit parameter uncertainties, as those are the pa-             the modeling. Each WIMP search term is an extended
+    rameters of interest in the development of the FV. Un-              unbinned likelihood function of the form
+                                                                                                                         13
+
+                                                                    The best-fit values from the XENONnT SR0 WIMP
+                                                                 search data [5] for a fit including an unconstrained
+ Lregion (σ, θ) = Pois(N |µtot (σ, θ))                           200 GeV/c2 signal component are given in the last col-
+                                                                 umn of Tab. I. The corresponding uncertainties repre-
+                     N
+                        "                               #
+                    Y     X µc (σ, θ)                      (6)
+                  ×                        × fc (⃗xi |θ) ,       sent the two-sided one-sigma confidence intervals de-
+                    i=1    c
+                              µ tot (σ, θ)                       rived from a profile likelihood scan in the respective
+                                                                 parameter. More details on the construction of confi-
+ where the index “region” runs over “near-wire” and              dence intervals are discussed in the following.
+ “far-wire”. The index i runs over all N observed events
+⃗xi in the WIMP search far-wire (near-wire) dataset,
+ where ⃗xi is a vector with entries cS1, cS2, and R (cS1               C.   Confidence Intervals and Discovery
+ and cS2). The PDFs fc of each signal and background                                 Significance
+ component c with expectation values µc are evaluated
+ for each event.
+              P The total expectation value is given by            The construction of confidence intervals is based on
+ µtot (σ, θ) = c µc (σ, θ).                                      the profile likelihood test statistic
+   The term Lcal (θ) is the extended unbinned likelihood
+ function of the 220 Rn calibration dataset. It depends on                                             ˆ
+                                                                                                  L(σ, θ̂)
+ the two shape parameters introduced in Sec. III B that                            q(σ) ≡ −2 ln               .         (7)
+                                                                                                  L(σ̂, θ̂)
+ parameterize the range of models consistent with the ER
+ calibration data, selected using the PCA method. By             Quantities with a single hat denote the global maximum
+ incorporating this likelihood term, we simultaneously fit                                                    ˆ
+                                                                 likelihood estimator of a parameter, while θ̂ denotes the
+ the shape parameters to the 220 Rn calibration dataset
+                                                                 set of nuisance parameters that maximize the likelihood
+ and the ER background model in the WIMP search
+                                                                 if the cross section is fixed to a given σ. The likeli-
+ dataset. Through this procedure, the constraint from
+                                                                 hood is defined for a specific signal model, for example
+ the calibration data on the shape of the ER model is
+                                                                 a WIMP with a certain mass and interaction type (e.g.
+ propagated to the final inference.
+                                                                 spin-independent or spin-dependent coupling). In our
+   Finally, the ancillary likelihood function Lanc (θ) is a
+                                                                 statistical inference, we consider signal models across a
+ product of constraint terms for some of the nuisance pa-
+                                                                 range of WIMP masses, from 6 GeV/c2 to 500 GeV/c2 .
+ rameters θ, which are detailed in the following section.
+                                                                 For higher WIMP masses, the PDF remains constant
+                                                                 and the flux for a given cross section decreases approx-
+                                                                 imately linearly with mass, as discussed in Sec. III A.
+     B.   Nuisance Parameters and Constraints                    According to this, limits can be extrapolated even be-
+                                                                 yond 500 GeV/c2 .
+   In addition to our parameter of interest σ, we param-            Knowing the distribution of q(σ) under different hy-
+eterize the space of background hypotheses using nui-            potheses is essential for calculating discovery signifi-
+sance parameters θ in the likelihood function of Eq. (5).        cances and confidence intervals. Due to the low rate
+These parameters control both background rates and               of background resembling the signal, asymptotic formu-
+shape. The relative signal efficiency is a special param-        lae as discussed in [66] are not necessarily a good ap-
+eter that quantifies the rate uncertainty of the NR emis-        proximation. Therefore, we primarily use toy-MCs to
+sion model, as described in Sec. III A. By construction,         estimate the distribution g(q(σ)|σ) of the test statis-
+it takes the nominal value of 1.0 for an unconstrained           tic given that σ is the true cross section. We use the
+fit, but it can depart from this value for fits with con-        custom-developed blueice [67] framework to define the
+strained cross sections, leading to a broadening of the          likelihood function. This Python package provides an
+confidence interval. In total, twelve nuisance parame-           efficient interpolation (“template morphing”) between
+ters are defined, which are listed in Tab. I. The uncer-         PDFs evaluated for different discrete values of shape
+tainties of the nominal expectation values correspond            nuisance parameters. This allows shape parameters to
+to the width of a Gaussian constraint term. The an-              be considered for which we have no analytical descrip-
+cillary likelihood function Lanc (θ) is the product of all       tion.
+constraint terms. Most parameters are constrained via               For each signal model considered, we compute the dis-
+ancillary measurements, which are obtained from side-            covery significance and the confidence interval by com-
+bands (e.g. data outside the ROI) or external measure-           paring the measured test statistic q(σ) with the distri-
+ments in combination with simulations. More details              bution under each hypothesis g(q(σ)|σ) [68, 69]. Test-
+on the constraints on neutron, CEνNS, AC, and surface            ing σ = 0 yields the (local) discovery significance, while
+background rates were discussed in Sec. III. The ER rate         confidence intervals are computed by finding the region
+is a free parameter in the fit and is fully constrained by       where σ is rejected at a 90% confidence level given the
+the WIMP search data. The ER shape parameters ob-                data, which is illustrated for three background-only toy-
+tained with PCA are constrained via the simultaneous             MCs (three black parabola-like lines) in Fig. 10 (top).
+fit of the 220 Rn calibration dataset via the term Lcal (θ)      The minimum of each curve corresponds to the respec-
+in Eq. (5).                                                      tive best-fit value σ̂. Upper limits (ULs) and lower limits
+                                                                                                                             14
+
+
+Table I. Parameters of the XENONnT SR0 WIMP search likelihood function and their constraints. The right column
+shows best-fit values with an unconstrained 200 GeV/c2 WIMP signal component (spin-independent coupling). For the rate
+parameters, all values are given in units of “events in the SR0 exposure”. Near and far-wire refers to the region in the X–Y
+plane near and far from the perpendicular wires. In the near-wire region, which constitutes approximately 17% of the total
+FV, the AC expectation value is comparable to the one in the far-wire region due to the higher AC rate near the wires.
+               Rate Parameter                     Constraint                               Nominal     Best Fit
+               ER                                 WIMP search data                             134.5     135+12
+                                                                                                             −11
+               Neutron                            Ancillary measurement                    0.8 ± 0.4 0.8 ± 0.4
+               Neutron-X                          Ancillary measurement                  0.31 ± 0.16 0.30 ± 0.15
+               CEνNS (Solar ν)                    Ancillary measurement                  0.19 ± 0.06 0.19 ± 0.06
+               CEνNS (Atm + DSN)                  Ancillary measurement                  0.05 ± 0.02 0.04 ± 0.02
+               AC (near-wire)                     Ancillary measurement                    2.3 ± 0.7 2.3 ± 0.6
+               AC (far-wire)                      Ancillary measurement                    2.0 ± 0.6 2.1 ± 0.6
+               Surface                            Ancillary measurement                       14 ± 3      12 ± 2
+               220                                220
+                   Rn calibration                     Rn dataset                         2062 ± 210 2052 ± 44
+
+               Shape Parameter                    Constraint                               Nominal     Best Fit
+                                                  220
+               ER shape parameter 1                     Rn dataset                               0.0   0.4 ± 0.2
+               ER shape parameter 2               220
+                                                        Rn dataset                               0.0   −1.8+0.7
+                                                                                                            −0.6
+
+
+
+
+               Signal Parameter                   Constraint                               Nominal     Best Fit
+               Relative signal efficiency       NR model uncertainty          1.00 ± 0.09                   1.0
+               WIMP cross section [10−47 cm−2 ]                      Parameter of interest                 3.22
+
+
+are obtained by finding the cross sections at which q(σ)             igate this issue, various methods have been proposed
+reaches the critical region. The threshold of the 90 %               [70–72]. The XENONnT SR0 WIMP search follows the
+CL critical region is precomputed as the 90th percentile             recommendation of [48] to use power-constrained limits
+of the test statistic distribution from toy-MCs with in-             (PCLs) [72]. In this method, a signal size threshold is se-
+jected signal corresponding to the respective cross sec-             lected, at which the experiment has a “rejection power”
+tion. For low cross sections, it deviates from the asymp-            Mmin – the probability of excluding a given signal under
+totic two-sided threshold indicated as a horizontal gray             the background-only hypothesis. If an UL falls below
+dotted line.                                                         this threshold, the threshold value is reported instead.
+   Repeating this procedure O(1000) times yields the ex-             These thresholds correspond to the quantiles of the UL
+pected distribution of ULs that can be obtained in the               distribution used to compute the sensitivity band illus-
+absence of any signal, shown in Fig. 10 (bottom). The                trated in Fig. 10. For instance, choosing Mmin = 0.16
+experiment’s sensitivity is given by the median of these             sets the threshold to the -1 sigma quantile of the band,
+ULs and the sensitivity band (“Brazil band”) marked                  while Mmin = 0.5 truncates ULs at the band’s median.
+by the ±2-sigma and ±1-sigma quantiles indicates the                 In [48], the fiducial choice of Mmin = 0.16 was sug-
+spread. The distribution of lower limits for background-             gested. However, the choice was erroneously based on
+only toy-MCs is also shown in Fig. 10 (bottom). As rec-              the discovery power, which corresponds to the proba-
+ommended in [48], we decide on a discovery significance              bility of rejecting the background-only hypothesis given
+threshold for reporting two-sided confidence intervals of            an alternative hypothesis with a specific signal size. In
+3 sigma, following [10].                                             the absence of an updated recommendation, we chose
+   Figure 11 shows the three-sigma discovery potential –             the very conservative choice of Mmin = 0.5 for the first
+the expected frequency of achieving a discovery with at              WIMP search of XENONnT.
+least three-sigma significance – as a function of WIMP
+mass and cross section. The asymptotic threshold for
+a three-sigma discovery was applied. Contours indi-                     D.    Goodness of Fit and Blinding Procedure
+cating equal signal event counts in the nominal model
+reveal that the median three-sigma discovery potential                 To verify that the best-fit models describe our WIMP
+corresponds to approximately 10 events at high WIMP                  search data well, we defined a GOF test before unblind-
+masses, decreasing to about 6 events at lower masses.                ing, and after studies to confirm the power to reject
+   Statistical fluctuations as well as mismodeling, such             various forms of mismodeling. The test uses a binned
+as overestimated background rates, can yield arbitrar-               Poisson likelihood χ2 with 15 equiprobable bins in the
+ily low ULs, which may result in the spurious exclusion              cS1–cS2 space, defined from the model being tested.
+of models beyond the experiment’s sensitivity. To mit-               To compute a p-value, the distribution of the χ2 test
+                                                                                                                                                                                           15
+
+                                       Expected number of WIMP events                                                      Median 3 discovery potential
+                                0.0     2.5 5.0 7.5 10.0 12.5 15.0                                                         Median expected upper limit
+
+
+
+
+                                                                               WIMP-nucleon cross section [cm2]
+                           4                                                                                                                         nts
+                                                                                                                                                                         1.00
+PLR test statistic q( )
+                                                                                                                                                  eve
+                                                                                                                  10 45                     100
+
+
+
+
+                                                                                                                                                                            3 discovery frequency
+                           3
+                                                                                                                                                                         0.75
+                           2                                                                                                                                 even
+                                                                                                                                                                  ts
+                                                                                                                                                        10
+
+                           1                                                                                      10 46                                                  0.50
+                                                       200 GeV/c2 WIMP
+                            0                                                                                                                                        t   0.25
+                                                                                                                                                                 ven
+                          1.0                                                                                                                              1e
+Fraction of limits
+
+
+
+
+                          0.8                                                                                     10 47                                                  0.00
+                                                                                                                          10              102
+                          0.6                         Critical region                                                          WIMP mass [GeV/c2]
+                          0.4                         Upper limits (CDF)
+                                                      Lower limits (1 - CDF)
+                          0.2                         1 & 2 sigma bands
+                                                                               Figure 11. Three-sigma discovery potential as a function
+                                                                               of WIMP mass and cross section. The blue line marks the
+                                0       5.0 10 47 1.0 10 46 1.5 10 46          50 % discovery frequency, while the pink line represents the
+                                                                               median expected upper limit from [5]. Thin contour lines
+                                      WIMP-nucleon cross section [cm2]         indicate regions with an equal number of signal events.
+
+
+Figure 10. Illustration of the confidence interval construc-
+tion and distribution of limits on the WIMP-nucleon cross                      and NR bands in cS1 and cS2 based on quantiles in cS2
+section σ of a 200 GeV/c2 WIMP for background-only toy-                        for slices in cS1 of calibration data. In the first step, all
+MCs. Top: The test statistic q(σ) as a function of the cross                   events above 10 keVER and those above the −2 sigma
+section σ is shown for three toy-MCs. The intersections with                   quantile of the ER band were unblinded for the analy-
+the threshold of the critical region (gray line) yield the 90                  sis presented in [65]. The signal region for the WIMP
+% CL upper (blue diamonds) and lower limits (purple dia-                       search (indicated in Fig. 5) remained blinded until the
+monds). Bottom: (Inverse) cumulative distribution function                     analysis procedure was finalized. The unblinded SR0
+(CDF) of upper (lower) limits for background-only toy-MCs.                     WIMP search data showed no significant excess for any
+The bands containing 68 % (green) and 95 % (yellow) of ULs,                    of the tested WIMP masses with local discovery p-values
+as well as the median UL (dashed line), are indicated. Note
+                                                                               ≥ 0.2. For this reason, we reported new ULs on the spin-
+the shared abscissa with the cross section (bottom) and the
+corresponding expected number of signal events (top).                          independent WIMP-nucleon cross section across WIMP
+                                                                               masses ranging from 6 GeV/c2 to 500 GeV/c2 , with a
+                                                                               minimum of 2.58 × 10−47 cm2 at 28 GeV/c2 .
+statistic under the best-fit hypothesis is derived through
+toy-MCs. Specifying the test and acceptance threshold
+(90% CL) before unblinding ensured that the results                                                                             V.   SUMMARY
+were not influenced by statistical fluctuations expected
+from the low-statistic WIMP search dataset. For the                               The XENONnT WIMP dark matter search relies on a
+background-only fit we found a p-value of 0.67 and for                         detector response model as well as simulation- and data-
+a fit with an additional 200 GeV/c2 WIMP signal the                            driven background models. These were combined to
+p-value is 0.63. Both indicate no strong mismodeling in                        construct a statistical model in cS1, cS2, and R, which
+the predefined parameter space. Using GOF tests with                           was used to infer limits on WIMP-nucleus scattering
+well-studied power to discover signal-like mismodeling                         cross sections.
+was also designed to replace the “safeguard” ER shape                             The full detector response model for electronic re-
+parameter defined in [73], due to its computational cost                       coil (ER) and nuclear recoil (NR) interactions, includ-
+and susceptibility to some kinds of mismodeling.                               ing both the xenon emission and detector reconstruc-
+   When searching for new signals in data, it is crucial to                    tion model, was successfully fitted to calibration data.
+avoid the experimenter’s bias on the result [74]. In our                       Accurate simulations of particle interactions up to the
+WIMP search, we adopt a common strategy for bias mit-                          data acquisition waveform level made this possible, in
+igation: blinding the signal region of the WIMP search                         particular, to correctly model the S2 multiplicity of
+dataset until all steps of the data analysis are finalized.                    events with several, potentially unresolved energy de-
+Initially, events in the ER and NR bands of the WIMP                           posits. Using these models, we derived the distributions
+search dataset with a reconstructed ER energy below                            for ER and NR backgrounds, as well as the signals, in
+20 keVER were blinded. This involved defining the ER                           our analysis space. Except for ER, the background rates
+                                                                                                                        16
+
+were constrained with ancillary measurements. The ra-          tion, German Ministry for Education and Research,
+diogenic neutron background rate was constrained by            Max Planck Gesellschaft, Deutsche Forschungsgemein-
+first matching the simulated ratio of multiple-to-single       schaft, Helmholtz Association, Dutch Research Council
+scatter interactions and the neutron veto tagging ef-          (NWO), Fundacao para a Ciencia e Tecnologia, Weiz-
+ficiency with NR calibration data. After unblinding            mann Institute of Science, Binational Science Founda-
+the neutron veto-tagged events, these three inputs were        tion, Région des Pays de la Loire, Knut and Alice Wal-
+combined to derive a prediction for the remaining non-         lenberg Foundation, Kavli Foundation, JSPS Kakenhi,
+vetoed single-scatter neutron background. Two shape            JST FOREST Program, and ERAN in Japan, Tsinghua
+parameters were propagated to the final inference to           University Initiative Scientific Research Program, Do-
+account for the uncertainty of the ER model in cS1–cS2         maine d’intérêt majeur en astrophysique et conditions
+space. Accidental coincidence and surface background           d’apparition de la vie+ (DIM-ACAV+) Région Ile-de-
+were modeled with data-driven approaches. The valid-           France, and Istituto Nazionale di Fisica Nucleare. This
+ity of the models was confirmed in calibration data as         project has received funding/support from the Euro-
+well as science data outside the region of interest of the     pean Union’s Horizon 2020 research and innovation pro-
+WIMP search.                                                   gram under the Marie Sklodowska-Curie grant agree-
+   A blind analysis was performed for the first science        ment No 860881-HIDDeN.
+data from XENONnT. The statistical methods largely
+follow the previous XENON1T approach and commu-
+nity recommendations, by using a toy-MC-calibrated
+profile log-likelihood ratio test statistic. One departure        We gratefully acknowledge support for providing com-
+from these recommendations was raising the minimal             puting and data-processing resources of the Open Sci-
+required power of the power-constrained limit (PCL)            ence Pool and the European Grid Initiative, in the
+threshold from 0.15 to 0.5, corresponding to placing up-       following computing centers: the CNRS/IN2P3 (Lyon
+per limits only at or above the median unconstrained           - France), the Dutch national e-infrastructure with
+upper limit. Both the calibration fits and the final           the support of SURF Cooperative, the Nikhef Data-
+best-fit model were assessed and found acceptable with         Processing Facility (Amsterdam - Netherlands), the
+goodness-of-fit tests that were chosen based on their          INFN Centro Nazionale Analisi Fotogrammi (CNAF)
+mismodeling rejection power, and defined prior to un-          (Bologna - Italy), the San Diego Supercomputer Cen-
+blinding the data. Analysis of the data with an expo-          ter (San Diego - USA) and the Enrico Fermi Institute
+sure of 1.1 tonne-years revealed no signal excess over         (Chicago - USA). We acknowledge the support of the
+backgrounds. Therefore, new upper limits on the spin-          Research Computing Center (RCC) at The University
+independent WIMP-nucleon cross section were derived.           of Chicago for providing computing resources for data
+                                                               analysis.
+
+              ACKNOWLEDGEMENTS
+
+  We gratefully acknowledge support from the National            We are grateful to Laboratori Nazionali del Gran
+Science Foundation, Swiss National Science Founda-             Sasso for hosting and supporting the XENON project.
+
+
+
+
+ [1] G. Bertone and D. Hooper, History of dark matter, Rev.         performance of the field cage for the XENONnT ex-
+     Mod. Phys. 90, 045002 (2018).                                  periment, Eur. Phys. J. C 84, 138 (2024).
+ [2] N. Aghanim et al. (Planck collaboration), Planck 2018      [8] E. Aprile et al. (XENON collaboration), The neutron
+     results: Vi. cosmological parameters, A&A 641, A6              veto of the XENONnT experiment: Results with dem-
+     (2020).                                                        ineralized water, preprint (2024), arXiv:2412.05264
+ [3] G. Bertone, D. Hooper, and J. Silk, Particle dark mat-         [physics.ins-det].
+     ter: evidence, candidates and constraints, Phys. Rept.     [9] E. Aprile et al. (XENON collaboration), XENON1T
+     405, 279 (2005).                                               dark matter data analysis: Signal reconstruction, cal-
+ [4] L. Roszkowski, E. M. Sessolo, and S. Trojanowski,              ibration, and event selection, Phys. Rev. D 100, 052014
+     WIMP dark matter candidates and searches—current               (2019).
+     status and future prospects, Rep. Prog. Phys. 81,         [10] E. Aprile et al. (XENON collaboration), XENON1T
+     066201 (2018).                                                 dark matter data analysis: Signal and background mod-
+ [5] E. Aprile et al. (XENON collaboration), First dark mat-        els and statistical inference, Phys. Rev. D 99, 112009
+     ter search with nuclear recoils from the XENONnT ex-           (2019).
+     periment, Phys. Rev. Lett. 131, 041003 (2023).            [11] E. Aprile et al. (XENON collaboration), XENONnT
+ [6] E. Aprile et al. (XENON collaboration), The                    analysis:    Signal reconstruction, calibration and
+     XENONnT Dark Matter Experiment, Eur. Phys.                     event selection, Phys. Rev. D 111, 062006 (2025),
+     J. C 84, 784 (2024).                                           arXiv:2409.08778 [hep-ex].
+ [7] E. Aprile et al. (XENON collaboration), Design and        [12] D. Ramı́rez Garcı́a, Ph.D. thesis, Albert-Ludwigs-
+                                                                                                                           17
+
+     Universität Freiburg (2022).                                    periment, Phys. Rev. Lett. 97, 081302 (2006).
+[13] T. Zhu, Ph.D. thesis, Columbia University (2022).           [32] E. Aprile et al. (XENON collaboration), New Measure-
+[14] M. Szydagis, N. Barry, K. Kazkaz, J. Mock, D. Stolp,             ment of the Relative Scintillation Efficiency of Xenon
+     M. Sweany, M. Tripathi, S. Uvarov, N. Walsh, and                 Nuclear Recoils Below 10 keV, Phys. Rev. C 79, 045807
+     M. Woods, NEST: a comprehensive model for scintil-               (2009).
+     lation yield in liquid xenon, JINST 6, P10002 (2011).       [33] E. Aprile et al. (XENON collaboration), Response of the
+[15] B. Lenardo, K. Kazkaz, A. Manalaysay, J. Mock,                   XENON100 Dark Matter Detector to Nuclear Recoils,
+     M. Szydagis, and M. Tripathi, A global analysis of light         Phys. Rev. D 88, 012006 (2013).
+     and charge yields in liquid xenon, IEEE TNS 62, 3387        [34] G. Plante, E. Aprile, R. Budnik, B. Choi, K.-L. Giboni,
+     (2015).                                                          L. W. Goetzke, R. F. Lang, K. E. Lim, and A. J. Mel-
+[16] J. Thomas and D. A. Imel, Recombination of electron-             garejo Fernandez, New Measurement of the Scintilla-
+     ion pairs in liquid argon and liquid xenon, Phys. Rev.           tion Efficiency of Low-Energy Nuclear Recoils in Liquid
+     A 36, 614 (1987).                                                Xenon, Phys. Rev. C 84, 045805 (2011).
+[17] B. López Paredes, H. Araújo, F. Froborg, N. Marangou,     [35] P. Sorensen et al. (XENON collaboration), The scintil-
+     I. Olcina, T. Sumner, R. Taylor, A. Tomás, and                  lation and ionization yield of liquid xenon for nuclear
+     A. Vacheret, Response of photomultiplier tubes to                recoils, Nucl. Instrum. Meth. A 601, 339 (2009).
+     xenon scintillation light, Astropart. Phys. 102, 56         [36] A. Manzur, A. Curioni, L. Kastens, D. N. McKinsey,
+     (2018).                                                          K. Ni, and T. Wongjirad, Scintillation efficiency and
+[18] C. Faham, V. Gehman, A. Currie, A. Dobi,                         ionization yield of liquid xenon for mono-energetic nu-
+     P. Sorensen, and R. Gaitskell, Measurements of                   clear recoils down to 4 keV, Phys. Rev. C 81, 025808
+     wavelength-dependent double photoelectron emission               (2010).
+     from single photons in VUV-sensitive photomultiplier        [37] D. S. Akerib et al. (LUX collaboration), Low-energy
+     tubes, JINST 10, P09010 (2015).                                  (0.7-74 keV) nuclear recoil calibration of the LUX dark
+[19] F. Jörg, S. Li, J. Schreiner, H. Simgen, and R. F.              matter experiment using D-D neutron scattering kine-
+     Lang, Characterization of a 220 Rn source for low-energy         matics, preprint (2016), arXiv:1608.05381 [physics.ins-
+     electronic recoil calibration of the XENONnT detector,           det].
+     JINST 18, P11009 (2023).                                    [38] B. G. Lenardo et al., Low-Energy Physics Reach of
+[20] E. Aprile et al. (XENON collaboration), Low-energy               Xenon Detectors for Nuclear-Recoil-Based Dark Mat-
+     calibration of XENON1T with an internal 37 Ar source,            ter and Neutrino Experiments, Phys. Rev. Lett. 123,
+     Eur. Phys. J. C 83, 1 (2023).                                    231106 (2019).
+[21] D. Wenz, Ph.D. thesis, Johannes Gutenberg-Universität      [39] D. S. Akerib et al. (LUX collaboration), Improved Dark
+     Mainz (2023).                                                    Matter Search Sensitivity Resulting from LUX Low-
+[22] D. Foreman-Mackey, D. W. Hogg, D. Lang, and                      Energy Nuclear Recoil Calibration, preprint (2022),
+     J. Goodman, emcee: The MCMC hammer, PASP 125,                    arXiv:2210.05859 [physics.ins-det].
+     306 (2013).                                                 [40] J. Lewin and P. Smith, Review of mathematics, numeri-
+[23] Foreman-Mackey, Daniel and others, emcee v3: A                   cal factors, and corrections for dark matter experiments
+     Python ensemble sampling toolkit for affine-invariant            based on elastic nuclear recoil, Astropart. Phys. 6, 87
+     MCMC, J. Open Source Softw. 4, 1864 (2019),                      (1996).
+     arXiv:1911.07688 [astro-ph.IM].                             [41] R. H. Helm, Inelastic and elastic scattering of 187-MeV
+[24] XENON collaboration, XENONnT/GOFevaluation:                      electrons from selected even-even nuclei, Phys. Rev.
+     v0.1.1 (2022).                                                   104, 1466 (1956).
+[25] E. Aprile et al. (XENON collaboration), Erratum:            [42] J. D. Lewin and P. F. Smith, Review of mathemat-
+     XENON1T Dark Matter Data Analysis: Signal & Back-                ics, numerical factors, and corrections for dark matter
+     ground Models, and Statistical Inference [Phys. Rev. D           experiments based on elastic nuclear recoil, Astropart.
+     99, 112009 (2019)], Phys. Rev. D 111, 059904 (2025).             Phys. 6, 87 (1996).
+[26] L. Baudis, P. Sanchez-Lucas, and K. Thieme, A mea-          [43] M. C. Smith et al., The RAVE Survey: Constraining the
+     surement of the mean electronic excitation energy of             Local Galactic Escape Speed, Mon. Not. Roy. Astron.
+     liquid xenon, Eur. Phys. J. C 81, 1060 (2021).                   Soc. 379, 755 (2007).
+[27] E. M. Boulton et al., Calibration of a two-phase xenon      [44] C. McCabe, The Earth’s velocity for direct detection
+     time projection chamber with a 37 Ar source, JINST 12,           experiments, JCAP 02, 027 (2014).
+     P08004 (2017).                                              [45] R. Schoenrich, J. Binney, and W. Dehnen, Local Kine-
+[28] D. S. Akerib et al. (LUX collaboration), Ultralow en-            matics and the Local Standard of Rest, Mon. Not. Roy.
+     ergy calibration of LUX detector using 127 Xe electron           Astron. Soc. 403, 1829 (2010).
+     capture, Phys. Rev. D 96, 112011 (2017).                    [46] J. Bland-Hawthorn and O. Gerhard, The galaxy in con-
+[29] D. S. Akerib et al. (LUX collaboration), Tritium calibra-        text: Structural, kinematic, and integrated properties,
+     tion of the LUX dark matter experiment, Phys. Rev. D             Annu. Rev. Astron. Astrophys. 54, 529 (2016).
+     93, 072009 (2016).                                          [47] Abuter, R. et al. (GRAVITY Collaboration), Improved
+[30] E. Aprile, K. L. Giboni, P. Majewski, K. Ni, M. Ya-              gravity astrometric accuracy from modeling optical
+     mashita, R. Hasty, A. Manzur, and D. N. McKinsey,                aberrations, A&A 647, A59 (2021).
+     Scintillation response of liquid xenon to low energy nu-    [48] D. Baxter et al., Recommended conventions for report-
+     clear recoils, Phys. Rev. D 72, 072006 (2005).                   ing results from direct dark matter searches, Eur. Phys.
+[31] E. Aprile et al. (XENON collaboration), Simultaneous             J. C 81, 907 (2021).
+     measurement of ionization and scintillation from nuclear    [49] P. Klos, J. Menéndez, D. Gazit, and A. Schwenk, Large-
+     recoils in liquid xenon as target for a dark matter ex-          scale nuclear structure calculations for spin-dependent
+                                                                                                                             18
+
+     wimp scattering with chiral effective field theory cur-           constrained limits, preprint (2011), arXiv:1105.3166
+     rents, Phys. Rev. D 88, 083516 (2013).                            [physics.data-an].
+[50] K. Pearson, LIII. On lines and planes of closest fit to      [73] N. Priel, L. Rauch, H. Landsman, A. Manfredini, and
+     systems of points in space, London Edinburgh Dublin               R. Budnik, A model independent safeguard against
+     Philos. Mag. & J. Sci. 2, 559 (1901).                             background mismodeling for statistical inference, JCAP
+[51] E. Aprile et al. (XENON collaboration), Projected                 2017, 013 (2017).
+     WIMP sensitivity of the XENONnT dark matter ex-              [74] J. R. Klein and A. Roodman, Blind analysis in nuclear
+     periment, JCAP 11, P031 (2020).                                   and particle physics, Annu. Rev. Nucl. Part. Sci. 55,
+[52] D. G. Madland et al., SOURCES 4A: A code for calcu-               141 (2005).
+     lating (alpha,n), spontaneous fission, and delayed neu-      [75] E. Aprile and T. Doke, Liquid Xenon Detectors for Par-
+     tron sources and spectra 10.2172/15215 (1999).                    ticle Physics and Astrophysics, Rev. Mod. Phys. 82,
+[53] E. Aprile et al. (XENON collaboration), Material ra-              2053 (2010).
+     dioassay and selection for the XENON1T dark matter           [76] T. Doke, A. Hitachi, S. Kubota, A. Nakamoto, and
+     experiment, Eur. Phys. J. C 77, 890 (2017).                       T. Takahashi, Estimation of fano factors in liquid argon,
+[54] E. Aprile et al. (XENON collaboration), Material ra-              krypton, xenon and xenon-doped liquid argon, Nucl. In-
+     diopurity control in the XENONnT experiment, Eur.                 str. and Meth. 134, 353 (1976).
+     Phys. J. C 82, 599 (2022).                                   [77] J. Lindhard, M. Scharff, and H. E. Schioett, Range con-
+[55] S. Agostinelli et al. (Geant4 collaboration), Geant4: A           cepts and heavy ion ranges (notes on atomic collisions,
+     Simulation toolkit, Nucl. Instrum. Meth. A 506, 250               II), Kgl. Danske Videnskab. Selskab. Mat. Fys. Medd.
+     (2003).                                                           33, 1 (1963).
+[56] J. Allison et al. (Geant4 collaboration), Recent devel-      [78] J. Thomas and D. A. Imel, Recombination of electron-
+     opments in Geant4, Nucl. Instrum. Meth. A 835, 186                ion pairs in liquid argon and liquid xenon, Phys. Rev.
+     (2016).                                                           A 36, 614 (1987).
+[57] XENON collaboration, XENONnT/epix: v0.3.4 (2023).            [79] D. M. Mei, Z. B. Yin, L. C. Stonehill, and A. Hime, A
+[58] XENON collaboration, XENONnT/WFSim: v1.0.2                        model of nuclear recoil scintillation efficiency in noble
+     (2022).                                                           liquids, Astropart. Phys. 30, 12 (2008).
+[59] XENON collaboration, XENONnT/straxen: v1.8.3
+     (2022).
+[60] E. Aprile et al. (XENON collaboration), Search for Co-        Appendix A: Details on the ER Emission Model
+     herent Elastic Scattering of Solar 8 B Neutrinos in the
+     XENON1T Dark Matter Experiment, Phys. Rev. Lett.
+     126, 091301 (2021).                                            Let E be the recoil energy of an ER event. The to-
+[61] B. Aharmim et al. (SNO collaboration), Combined              tal number of detectable quanta Nq is sampled from a
+     Analysis of all Three Phases of Solar Neutrino Data          normal distribution
+     from the Sudbury Neutrino Observatory, Phys. Rev. C                                        p
+     88, 025501 (2013).                                                        Nq ∼ Norm(E/W, f E/W ).            (A1)
+[62] M. Agostini et al. (BOREXINO collaboration), Com-
+     prehensive measurement of pp-chain solar neutrinos,          W is the mean energy needed to generate a quantum,
+     Nature 562, 505 (2018).                                      and f is the Fano factor of 0.059 [75, 76]. The ER en-
+[63] E. Aprile et al. (XENON collaboration), Dark Matter          ergy deposit will produce both excitons and electron-ion
+     Search Results from a One Tonne×Year Exposure of             pairs. Using the mean ratio between number of excitons
+     XENON1T, Phys. Rev. Lett. 121, 111302 (2018).                and ions ⟨Nex /Ni ⟩, we simulate their numbers from a bi-
+[64] J. Aalbers et al., AxFoundation/strax: v1.2.3 (2022).        nomial distribution:
+[65] E. Aprile et al. (XENON collaboration), Search for new                                                   
+     physics in electronic recoil data from XENONnT, Phys.                                             1
+     Rev. Lett. 129, 161805 (2022).                                          Ni ∼ Binom Nq ,                     ,    (A2)
+                                                                                                1 + ⟨Nex /Ni ⟩
+[66] G. Cowan, K. Cranmer, E. Gross, and O. Vitells,
+     Asymptotic formulae for likelihood-based tests of new
+     physics, Eur. Phys. J. C 71, 1554 (2011).                                          Nex = Nq − Ni .                   (A3)
+[67] J. Aalbers, K. D. Morå, and B. Pelssers, JelleAal-
+     bers/blueice: v1.1.0 (2021).                                 A fraction r of ions recombine with electrons, depending
+[68] G. J. Feldman and R. D. Cousins, Unified approach to         on the electric drift field F . We parametrize the mean
+     the classical statistical analysis of small signals, Phys.   value of r in the same way as in XENON1T [10]:
+     Rev. D 57, 3873 (1998).
+[69] C. Patrignani (Particle Data Group collaboration), Re-
+                                                                                                                  
+                                                                                    1              log(1 + ⟨Ni ⟩ς)
+     view of Particle Physics, Chin. Phys. C40, 100001               ⟨r⟩ = −(E−q )/q           1−                    , (A4)
+                                                                            e       0  1 + 1           ⟨Ni ⟩ς
+     (2016).
+[70] A. L. Read, Presentation of search results: the cls tech-    where
+     nique, J. Phys. G: Nucl. Part. Phys. 28, 2693 (2002).
+[71] V. L. Kashyap, D. A. van Dyk, A. Connors, P. E. Free-                                 1 −E/ω −δ
+     man, A. Siemiginowska, J. Xu, and A. Zezas, On com-                              ς=     γe  F .                      (A5)
+                                                                                           4
+     puting upper limits to source intensities, ApJ 719, 900
+     (2010).                                                      The fluctuation of r is parametrized via
+[72] G. Cowan, K. Cranmer, E. Gross, and O. Vitells, Power-
+                                                                                     ∆r = q2 (1 − e−E/q3 ),               (A6)
+                                                                                                                       19
+
+and the true recombination fraction r is then sampled          where r follows the Thomas-Imel box model [78]
+from
+                                                                                              log(1 + Ni ς)
+                   r ∼ Norm(⟨r⟩, ∆r).                 (A7)                      r =1−                       ,        (B10)
+                                                                                                  Ni ς
+All fitted ER parameters are listed in Tab. II. Finally,
+the numbers of produced electrons and photons are                                       ς = γF −δ .                  (B11)
+given by
+                                                               The number of excitons is further reduced by bi-
+                 Ne ∼ Binom(Ni , 1 − r),              (A8)
+                                                               excitonic and Penning quenching effects [79], such that
+                                                               the number of photons produced from de-excitation be-
+                     Nγ = Nq − Ne .                   (A9)     comes
+
+                                                                                Nγde ∼ Binom(Nex , fl ),             (B12)
+ Appendix B: Details on the NR Emission Model
+                                                               with the scintillation quenching factor
+  Let E be the recoil energy of an NR event. The total
+                                                                                                  1
+number of produced quanta N is                                                         fl =            .             (B13)
+                                                                                               1 + ηϵλ
+                               p
+            N ∼ Norm(E/W, f E/W ).               (B1)
+                                                               Then the final numbers of photons and electrons are
+In contrast to electron recoils, recoiling xenon nuclei lose
+a significant amount of their recoil energy via atomic                               Nγ = Nγde + Nγre ,              (B14)
+motion and collisions with other xenon atoms, which
+are processes that are undetectable in a LXe TPC.
+                                                                                      Ne = Ni − Nγre .               (B15)
+This quanta loss is modeled following the Lindhard the-
+ory [77], with the so-called Lindhard quenching factor
+L, such that the number of detectable quanta becomes
+                                                                 Appendix C: Details on the Detector Response
+                   Nq ∼ Binom(N, L).                   (B2)                         Model
+
+Following the parametrization in [15], the Lindhard fac-         The simulations of S1 and S2 signals from Nγ and Ne
+tor is given by                                                are almost independent of each other.
+                            κ g(ϵ)                               To simulate S1 signals, we first introduce the spatially
+                     L=              ,                 (B3)    dependent scintillation gain g˜1 with DPE excluded:
+                          1 + κ g(ϵ)
+                                                                                       g1
+where g(ϵ) is a function of deposited energy via                  g˜1 (X, Y, Z) =            · S1corr−1 (X, Y, Z),   (C1)
+                                                                                    1 + pDPE
+               g(ϵ) = 3ϵ0.15 + 0.7ϵ0.6 + ϵ,            (B4)    where g1 is the averaged scintillation gain, S1corr is the
+                                                               relative spatial correction factor, and pDPE is the prob-
+                 ϵ = 11.5 Z −7/3 (E/keV),              (B5)    ability of the double photoelectron emission effect [18].
+                                                               Then, for a given number of photons Nγ and the posi-
+with the nuclear charge number Z = 54 for xenon. The           tion of the recoil X, Y, Z, the number of photons de-
+numbers of produced ions and excitons are then simu-           tected by the PMTs is
+lated by
+                                                                        NPhD ∼ Binom(Nγ , g˜1 (X, Y, Z)).          (C2)
+                                 1
+          Ni ∼ Binom Nq ,                   ,   (B6)
+                           1 + ⟨Nex /Ni ⟩                      Now accounting for the DPE effect, the expected num-
+                                                               ber of photoelectrons (PE) in the S1 signal is simulated
+                                                               via
+                     Nex = Nq − Ni ,                   (B7)
+
+with the exciton-to-ion ratio parametrized as                               NDPE ∼ Binom(NPhD , pDPE ),              (C3)
+
+              ⟨Nex /Ni ⟩ = αF −ζ (1 − e−βϵ ).          (B8)
+                                                                               NS1,PE ∼ NPhD + NDPE .                (C4)
+Unlike ERs, the recombination fluctuation in NRs is
+usually small, thus the number of photons produced             However, the S1 is not always equal to the number of
+from the recombination of electron-ion pairs is                PEs due to reconstruction bias. This is modeled as
+
+                  Nγre ∼ Binom(Ni , r),                (B9)               S1/NS1,PE − 1 ∼ Norm(δS1 , ∆S1 ).          (C5)
+                                                                                                                      20
+
+Here, both δS1 , ∆S1 are functions of NPhD obtained from      Finally, the correction is applied to the S2,
+the XENONnT MC. In the end, the relative spatial cor-
+                                                                                                               ′
+rection is applied back to the S1 signal, yielding                     cS2 = S2 · S2corr(X′ , Y′ ) · eZ/τ v .      (C13)
+
+              cS1 = S1 · S1corr(X′ , Y′ , Z),         (C6)    Here, τ ′ is the electron lifetime extracted from data,
+                                                              which is used to define the correction. Note that τ ′
+where X′ , Y′ are the event positions as reconstructed        can be slightly different from the true value τ due to
+in data, which are smeared by the S2-size-dependent           small variations over time or non-uniformities along the
+resolution of the position reconstruction.                    drift path of electrons. The ratio τ ′ /τ is one of the
+   To get the S2 signal from Ne , the first step is to sim-   parameters to fit in the band fitting. In principle this
+ulate the electron loss during the drift. The survival        effect can be absorbed into an additional smearing of
+probability due to attachment to electronegative impu-        S2, however in the fitting framework it is still considered
+rities in LXe is given by                                     separately from others.
+                                                                 For both S1 and S2 signals, data quality selection
+                   ploss (Z) = e−Z/(τ v) ,            (C7)    efficiencies are applied which depend on the respective
+                                                              signal sizes. For S1 signals, we additionally apply the
+where τ is the electron drift survival time (“electron
+                                                              S1 reconstruction efficiency which is a function of the
+lifetime”) and v is the drift velocity of electrons in LXe.
+                                                              number of detected photons NPhD .
+Inside the FV the electric field is uniform enough to
+approximate v as a constant. Electron losses due to              For NR multi-scatter events, the simulation is slightly
+drift field effects close to the wall are accounted for via   altered. Here the total number of detected photons is
+a spatially dependent charge-insensitive-volume (CIV)         defined as the sum of the detected photons for each sin-
+probability function pCIV (R, Z) from field simulations       gle energy deposition i,
+of XENONnT [7]. The number of surviving electrons is                                        X        (i)
+then given by                                                                     NPhD =           NPhD .          (C14)
+                                                                                              i
+    Nsurv ∼ Binom (Ne , ploss (Z) · pCIV (R, Z)) .    (C8)
+                                                              Similarly, we sum over the number of S2 PEs of only
+At the liquid-gas interface, a fraction of electrons are      those scatters that contribute to the S2,
+extracted,
+                                                                                                     (i    )
+                                                                                            X
+                                                                                                      S2
+                                                                                 NS2,PE =          NS2,PE .        (C15)
+             Nextr ∼ Binom(Nsurv , ϵ(X, Y)).          (C9)                                   iS2
+
+The extraction efficiency is X-Y dependent and can be         Reconstruction biases, signal corrections, and selection
+calculated by                                                 efficiencies are correspondingly applied to the merged
+                                                              signals.
+         ϵ(X, Y) = g2 · S2corr−1 (X, Y)/G,           (C10)
+
+where g2 is the averaged ionization gain, S2corr is the
+                                                              Appendix D: Details on the Calibration Fit Results
+relative spatial correction factor, and G ∼ 31 PE/e− is
+the single electron gain. Assuming the fluctuation of
+the secondary scintillation process is Poisson-like, the         The parameters in the ER and NR band fits are sum-
+expected number of S2 PEs is                                  marized in Tab. II, showing both the applied prior and
+                                                              the marginal posterior values. Parameters where prior
+                                                              values are given without uncertainties are fixed in the
+                                 p
+        NS2,PE ∼ Norm(Nextr G, Nextr G).          (C11)
+                                                              fit. The prior for ⟨Nex /Ni ⟩ is a uniform distribution
+Similar to S1, the S2 reconstruction bias is modeled by       in the stated range. For the posteriors, the stated val-
+                                                              ues and uncertainties correspond to the median and the
+        S2/NS2,PE − 1 ∼ Norm(δS2 , ∆S2 ).            (C12)    central 68% of the marginal posterior distributions.
+                                                               21
+
+
+Table II. Prior and marginal posterior distributions of each
+parameter in the ER and NR emission models.
+      Parameter     Prior     Marginal posterior Unit
+      W           13.7 ± 0.2       13.7+0.2
+                                        −0.2      eV
+      f             0.059            0.059          -
+                      ER parameters
+      ⟨Nex /Ni ⟩ 0.06 - 0.20      0.13+0.04
+                                       −0.04        -
+      γ              free         0.13+0.03
+                                       −0.02        -
+                                       +0.07
+      δ              free         0.34−0.07         -
+      ω              free           57+15
+                                       −12       keV
+      q0             free         1.32+0.17
+                                       −0.20     keV
+      q1             free         0.47+0.07
+                                       −0.05     keV
+      q2             free        0.030+0.002
+                                       −0.002       -
+      q3             free         0.47+0.40
+                                       −0.31     keV
+                      NR parameters
+      ζ             0.047            0.047          -
+      δ             0.062            0.062          -
+      α              free         0.92+0.07
+                                       −0.06        -
+      γ              free        0.016+0.001
+                                       −0.001       -
+      β            239+56
+                       −18          334 +40
+                                        −43         -
+      κ          0.139+0.006
+                       −0.005    0.138 +0.005
+                                       −0.006       -
+                      +10.6             +6.8
+      η            3.3−1.4         10.0−5.9         -
+      λ           1.14+0.90
+                       −0.18      1.40+0.61
+                                       −0.38        -
+

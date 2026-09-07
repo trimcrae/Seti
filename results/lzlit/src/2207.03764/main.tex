@@ -1,0 +1,180 @@
+% ****** Start of file apssamp.tex ******
+%
+%   This file is part of the APS files in the REVTeX 4.2 distribution.
+%   Version 4.2a of REVTeX, December 2014
+%
+%   Copyright (c) 2014 The American Physical Society.
+%
+%   See the REVTeX 4 README file for restrictions and more information.
+%
+% TeX'ing this file requires that you have AMS-LaTeX 2.0 installed
+% as well as the rest of the prerequisites for REVTeX 4.2
+%
+% See the REVTeX 4 README file
+% It also requires running BibTeX. The commands are as follows:
+%
+%  1)  latex apssamp.tex
+%  2)  bibtex apssamp
+%  3)  latex apssamp.tex
+%  4)  latex apssamp.tex
+%
+\documentclass[%
+ reprint,
+% linenumbers,
+ superscriptaddress,
+%groupedaddress,
+%unsortedaddress,
+%runinaddress,
+%frontmatterverbose, 
+%preprint,
+%preprintnumbers,
+%nofootinbib,
+%nobibnotes,
+%bibnotes,
+ amsmath,amssymb,
+ prl,
+ %aps,
+%pra,
+%prb,
+%rmp,
+%prstab,
+%prstper,
+floatfix,
+]{revtex4-2}
+
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{array}% table things
+\usepackage[hidelinks]{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+
+%\usepackage[showframe,%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+%%margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+%]{geometry}
+
+\usepackage[
+separate-uncertainty = true,
+multi-part-units=single
+]{siunitx}
+\usepackage{xcolor}
+\usepackage[version=4]{mhchem}
+\usepackage[normalem]{ulem}
+\usepackage{tablefootnote}
+
+% Useful shortcuts -----------------------
+\newcommand{\red}[1]{{\color{red}#1}}
+\newcommand{\blue}[1]{{\color{blue}#1}}
+\newcommand{\green}[1]{{\color{green}#1}}
+\newcommand{\violet}[1]{{\color{violet}#1}}
+\newcommand{\purple}[1]{{\color{purple}#1}}
+\newcommand\sonec{S1${c}$}
+\newcommand\stwoc{S2${c}$}
+\newcommand\logstwoc{Log$_{10}$(S2${c}$)}
+
+% Units ----------------------------------
+\DeclareSIUnit\keVnr{keV_{nr}}
+\DeclareSIUnit\keVee{keV_{ee}}
+
+% Isotopes -------------------------------
+%\newcommand\tritium{C\ce{H_{3}}T}
+\newcommand\tritium{tritium}
+\newcommand\ArThreeSeven{\ce{^{37}Ar}}
+\newcommand\KrEightThreem{\ce{^{83m}Kr}}
+\newcommand\KrEightFive{\ce{^{85}Kr}}
+\newcommand\XeOneTwoFour{\ce{^{124}Xe}}
+\newcommand\XeOneTwoSeven{\ce{^{127}Xe}}
+\newcommand\XeOneTwoNine{\ce{^{129}Xe}}
+\newcommand\XeOneTwoNinem{\ce{^{129m}Xe}}
+\newcommand\XeOneThreeOnem{\ce{^{131m}Xe}}
+\newcommand\XeOneThreeOne{\ce{^{131}Xe}}
+%\newcommand\supplementalurl{https://tinyurl.com/LZDataReleaseRun1}
+\newcommand\supplementalurl{https://doi.org/10.1103/PhysRevLett.131.041002}
+
+\begin{document}
+
+\preprint{APS/123-QED}
+
+\title{First Dark Matter Search Results from the LUX-ZEPLIN (LZ) Experiment}
+\input{authorlist}
+
+\date{\today}% It is always \today, today,
+             %  but any date may be explicitly specified
+
+\begin{abstract}
+The LUX-ZEPLIN experiment is a dark matter detector centered on a
+dual-phase xenon time projection chamber operating at the Sanford Underground Research Facility in Lead, South Dakota, USA. This Letter reports results from LUX-ZEPLIN's first search for weakly interacting massive particles (WIMPs) with an exposure of 60~live days using a fiducial mass of \SI{5.5}{t}. A profile-likelihood ratio analysis shows the data to be consistent with a background-only hypothesis, setting new limits on spin-independent WIMP-nucleon, spin-dependent WIMP-neutron, and spin-dependent WIMP-proton cross sections for WIMP masses above \SI{9}{GeV/c\squared}. The most stringent limit is set for spin-independent scattering at \SI{36}{GeV/c\squared}, rejecting cross sections above \SI{9.2e-48}{cm\squared} at the \SI{90}{\percent} confidence level. 
+
+% Abstract below is for arxiv metadata submission
+%The LUX-ZEPLIN (LZ) experiment is a dark matter detector centered on a dual-phase xenon time projection chamber operating at the Sanford Underground Research Facility in Lead, South Dakota, USA. This Letter reports results from LZ's first search for Weakly Interacting Massive Particles (WIMPs) with an exposure of 60 live days using a fiducial mass of 5.5 t. A profile-likelihood ratio analysis shows the data to be consistent with a background-only hypothesis, setting new limits on spin-independent WIMP-nucleon, spin-dependent WIMP-neutron, and spin-dependent WIMP-proton cross-sections for WIMP masses above 9 GeV/c$^2$. The most stringent limit is set at 30 GeV/c$^2$, excluding cross sections above 6.5$\times 10^{-48}$ cm$^2$ at the 90\% confidence level. 
+\end{abstract}
+
+\keywords{Dark Matter, Direct Detection, Xenon}%Use showkeys class option if keyword
+                              %display desired
+\maketitle
+
+%\tableofcontents
+
+
+\input{introduction}
+
+\input{DetectorOperations}
+
+\input{AnalysisCuts}
+
+\input{BackgroundModel}
+
+\input{Results}
+
+The LZ experiment has achieved the highest sensitivity to spin-independent WIMP-nucleon scattering for masses greater than \SI{9}{GeV/c\squared} due to the successful operation of an integrated detector system containing the largest dual-phase xenon TPC to date. LZ is continuing operations at SURF and will undertake further detector and analysis optimization to search for a broad range of rare-event physics searches, including WIMPs, neutrinoless double-beta decay, solar neutrinos, and solar axions~\cite{akerib2019projected, akerib2020projected, akerib2021projected} over an estimated \SI{1000}{day} exposure.
+
+
+The research supporting this work took place in part at SURF in Lead, South Dakota. Funding for this work is supported by the U.S. Department of Energy, Office of Science, Office of High Energy Physics under award no. DE-AC02-05CH11231, DE-SC0020216, DE-SC0012704, DE-SC0010010, DE-AC02-07CH11359, DE-SC0012161, DE-SC0015910, DE-SC0014223, DE-SC0010813, DE-SC0009999, DE-NA0003180, DE-SC0011702, DE-SC0010072, DE-SC0015708, DE-SC0006605, DE-SC0008475, DE-SC0019193, DE-FG02-10ER46709, UW PRJ82AJ, DE-SC0013542, DE-AC02-76SF00515, DE-SC0018982, DE-SC0019066, DE-SC0015535, DE-SC0019319, DE-AC52-07NA27344, \& DOE-SC0012447.	This research was also supported by U.S. National Science Foundation (NSF); the UKRI’s Science \& Technology Facilities Council under grant no. ST/M003744/1, ST/M003655/1, ST/M003639/1, ST/M003604/1, ST/M003779/1, ST/M003469/1, ST/M003981/1, ST/N000250/1, ST/N000269/1, ST/N000242/1, ST/N000331/1, ST/N000447/1, ST/N000277/1, ST/N000285/1, ST/S000801/1, ST/S000828/1, ST/S000739/1, ST/S000879/1, ST/S000933/1, ST/S000844/1, ST/S000747/1, ST/S000666/1, ST/R003181/1; Portuguese Foundation for Science and Technology (FCT) under grant no. PTDC/FIS-PAR/2831/2020; the Institute for Basic Science, Korea (budget no. IBS-R016-D1). We acknowledge additional support from the STFC Boulby Underground Laboratory in the U.K., the GridPP~\cite{faulkner2005gridpp,britton2009gridpp}  and IRIS collaborations, in particular at Imperial College London and additional support by the University College London (UCL) Cosmoparticle Initiative. We acknowledge additional support from the Center for the Fundamental Physics of the Universe, Brown University. K.T. L. acknowledges the support of Brasenose College and Oxford University. The LZ Collaboration acknowledges key contributions of Dr. Sidney Cahn, Yale University, in the production of calibration sources. We acknowledge Martin Hoferichter and Achim Schwenk for useful discussions. This research used resources of the National Energy Research Scientific Computing Center, a DOE Office of Science User Facility supported by the Office of Science of the U.S. Department of Energy under award no. DE-AC02-05CH11231. We gratefully acknowledge support from GitLab through its GitLab for Education Program. The University of Edinburgh is a charitable body, registered in Scotland, with the registration number SC005336. The assistance of SURF and its personnel in providing physical access and general logistical and technical support is acknowledged. We acknowledge the South Dakota Governor's office, the South Dakota Community Foundation, the South Dakota State University Foundation, and the University of South Dakota Foundation for use of xenon. We also acknowledge the University of Alabama for providing xenon.  We thank the journal reviewers for careful examination of our work, leading to some changes in our analysis and a more robust result. This work has been published as J. Aalbers et al. (LUX-ZEPLIN Collaboration)
+\href{https://doi.org/10.1103/PhysRevLett.131.041002}{Phys. Rev. Lett. \textbf{131}, 041002 (2023)} under the terms of the Creative Commons Attribution 4.0 International license.
+
+%For the purpose of open access, the authors have applied a Creative Commons Attribution (CC BY) licence to any Author Accepted Manuscript version arising from this submission.
+
+\appendix
+\input{Appendix}
+
+\bibliographystyle{apsrev4-2}
+\bibliography{references}% Produces the bibliography via BibTeX.
+
+
+
+
+%\end{document}
+
+%%%%%%%%%% Merge with supplemental materials %%%%%%%%%%
+\clearpage
+\pagebreak
+
+\widetext
+\begin{center}
+\textbf{\large Supplemental Materials}
+\end{center}
+%%%%%%%%%% Merge with supplemental materials %%%%%%%%%%
+%%%%%%%%%% Prefix a "S" to all equations, figures, tables and reset the counter %%%%%%%%%%
+\setcounter{equation}{0}
+\setcounter{figure}{0}
+\setcounter{table}{0}
+\setcounter{page}{1}
+\makeatletter
+\renewcommand{\theequation}{S\arabic{equation}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\bibnumfmt}[1]{[S#1]}
+\renewcommand{\citenumfont}[1]{S#1}
+%%%%%%%%%% Prefix a "S" to all equations, figures, tables and reset the counter %%%%%%%%%%
+
+\input{Supplemental}
+
+
+\end{document}
+%
+% ****** End of file apssamp.tex ******

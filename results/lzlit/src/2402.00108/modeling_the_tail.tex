@@ -1,0 +1,120 @@
+\section{Modeling the Tail}\label{sec:modeling}
+
+We now examine the different models $g(v \mid \mathbf{\theta})$ that have been used in the literature to describe bound kinematic components in the tail of the local speed distribution. We summarize the limitations and prior choices of the single power law model in Sec.~\ref{sec:1pl}, then turn to recent developments with multiple power law components in Sec.~\ref{sec:mpl}. These ameliorate some of the challenges in using single component power laws, but still have remaining limitations, as discussed in Sec.~\ref{sec:limitations_2pl}. We then introduce an alternative more robust functional form which addresses these issues in Sec.~\ref{sec:sepl}. We summarize the priors used for all models in this paper in Sec.~\ref{sec:priors}.
+
+
+\subsection{Single power law (1PL)}
+\label{sec:1pl}
+
+The model proposed by \cite{Leonard1990} is that of a single power law,\footnote{Note that when originally proposed, this model was not used with an outlier distribution.} such that the tail of the speed distribution of a collection of stars at similar Galactocentric radius follows 
+\begin{equation}\label{eq:singlePL}
+    g(v \mid v_\mathrm{esc}, k) \propto (v_\mathrm{esc} - v)^{k},
+\end{equation}
+as in Eq.~\ref{eq:powerlaw}. This distribution can be understood in the following way: Assuming that Jeans theorem \citep{jeans:1915} holds, and that the velocities are isotropic, the asymptotic distribution function of the speeds of the stars is $g(v \mid \epsilon, k) \propto \epsilon^{k}$ for some index $k$ where $\epsilon = -(\Phi + v^2/2)$ is the total (potential + kinetic) energy \citep{kochanek:1996,smith:2007}. We can identify $\Phi$ with $-\vesc^2/2$ yielding 
+\begin{equation}\label{eq:singlePLsquare}
+    g(v \mid v_\mathrm{esc}, k) \propto (v_\mathrm{esc}^2 - v^2)^{k}.
+\end{equation}
+The behavior of this distribution for $v$ close to $\vesc$ is then approximated by Eq.~\ref{eq:singlePL}. Therefore, this single power law model of \cite{Leonard1990} can be understood as the $v\rightarrow \vesc$ limit of the speed distribution of an isotropic system for which Jeans' theorem holds. 
+Eq.~\ref{eq:singlePL} is the distribution if both radial (line-of-sight) and tangential (on-sky) velocities are known. If only radial velocities are used, the power law is modified to $k_r = k+1$, an approach taken in \cite{Piffl2014}. If only tangential velocities are known, then $k_t = k + \frac{1}{2}$ \citep{Monari2018,Koppelman2021}.
+
+For analyses using the power-law model, $\vesc$ is highly correlated with the slope parameter $k$, leading to large uncertainties on the resulting escape velocity estimates. To avoid this, priors of various ranges and shapes have been placed on $k$ with various motivations, which we now summarize briefly.
+
+\cite{Leonard1990} argues for $k\in[1,2]$, with $k=1$ for a collisionally relaxed system and $k=1.5$ for an isolated system that has undergone violent relaxation, and \cite{kochanek:1996} adopts $k\in[0.5,2.5]$ to widen the previously proposed prior range. There have also been many prior ranges motivated by different suites of cosmological simulations: \cite{smith:2007} adopts $k\in[2.7,4.7]$ based on simulations outlined in \cite{abadi:2006}, \cite{Piffl2014} and \cite{Monari2018} argue for $k\in[2.3,3.7]$ based on the Aquarius suite \citep{aquarius:2008, scannapieco:2009}, and \cite{deason:2019} investigates the signature of GSE-like mergers in the Auriga suite \citep{auriga:2017} and concludes that an appropriate range is $k\in[1,2.5]$.
+
+Furthermore, the shape of the prior distribution for both $\vesc$ and $k$ varies across these works. For example a uniform prior in $\log(\vesc)$ is often (but not always) chosen to favor lower values of $\vesc$, and \cite{smith:2007} adopts priors in $\vesc$ and $k$ derived from Jeffreys’ rules \citep{jeffrey:1961}. In \cite{Koppelman2021} a local value of $k$ is obtained and its posterior treated as a prior distribution for determining $\vesc$ at other Galactocentric radii. Since the escape velocity is highly correlated with the $k$ parameter, the chosen prior distribution can strongly influence the escape velocity estimate.
+
+\begin{figure*}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{media/model_shape_comparison.pdf}
+  \caption{Shape comparison of the single power law model (1PL), two-component power law model (2PL) and the stretched exponential power law model (SEPL). All models shown have $v_{\rm{esc}} = 500\,\rm{km}\,\rm{s^{-1}}$. In the 1PL model, the power law index $k$ describes both the steepness of the distribution away from $\vesc$ and the shape of the cutoff near $\vesc$, leading to highly correlated fits for $\vesc$ and $k$.  The 2PL model mitigates this with the introduction of an additional power law-component with index $k_S$. In the SEPL model, the parameter $\beta$ controls  the exponential rise of the distribution away from $\vesc$ while the behavior near $\vesc$ is a power law with index $\gamma=1$.
+  }
+  \label{fig:modelcomp}
+\end{figure*}
+
+In these works, and as described in Sec. \ref{sec:methods}, it has also been necessary to set some lower bound on the speed $\vmin$ in order to model only the tail of the distribution. $\vmin$ is typically chosen close to $300\,\rm{km\,s^{-1}}$ (but lower in the pre-\Gaia~era due to limited statistics) to balance the statistical constraining power of the sample and the fact that Eq. \ref{eq:singlePL} is expected to model the tail of the distribution only. The escape velocities obtained by these analyses are typically of the order $500\,\rm{km\,s^{-1}}$, and it is not clear that Eq. \ref{eq:singlePL} should hold over such a large range of speeds, due to the presence of kinematic substructure, disk contamination, and the fact that this expression is obtained perturbatively in a neighborhood of $\vesc$. Some of these issues were  addressed in \cite{Koppelman2021} and \cite{Necib2022} by implementing aggressive cuts on disk stars, and furthermore in \cite{Necib2022} by repeating the modeling at different $\vmin$, where it was demonstrated that the 1PL modeling was not stable to the choice of $\vmin$. 
+
+Since there exist different choices for priors on $k$ and for $\vmin$ which affect the resulting $\vesc$, the 1PL model may be inappropriate for robust estimation of escape velocities. When strict priors on $k$ are not employed, the resulting escape velocities are highly uncertain due to the strong parameter correlations. As a result, alternative models have been investigated; this is the subject of the following Section.
+
+\subsection{Multiple power law components}
+\label{sec:mpl}
+
+The Milky Way contains kinematic substructure such as the GSE \citep{2018Natur.563...85H,2018MNRAS.478..611B}, and this substructure comprises a significant portion of the speed distribution \citep{Necib:2019a}. It was demonstrated in \cite{grand:2019,Necib2022methods} that the presence of kinematic substructures such as the GSE may significantly bias the determination of the escape velocity, in particular if using the single power law model (Eq. \ref{eq:singlePL}) with a low $\vmin$ such as $300\,\rm{km\,s^{-1}}$. 
+
+Motivated by these considerations, \cite{Necib2022methods} proposed to model the local speed distribution as a sum of multiple bound kinematic components, each described by Eq. \ref{eq:singlePL} with independent slope but common $\vesc$, allowing for more robust estimates of the escape velocity. Via Eq. \ref{eq:multiple_components}, the likelihood for a single star $\alpha$ assuming a sum of two power law components with common $\vesc$ takes the form
+\begin{equation}
+    \begin{aligned}
+    \mathcal{L}_\alpha^{2}=&\,(1-f_\mathrm{out})\, \big[(1-f_S)\, p_\alpha\left(v_\alpha \mid v_\mathrm{esc}, k\right) \\
+    &+ f_S\, p_\alpha\left(v_\alpha \mid v_\mathrm{esc}, k_S\right)\big] +f_\mathrm{out} \,p_\alpha^{\mathrm{out}}\left(v_\alpha \mid \sigma_{\mathrm{out}}\right)
+    \end{aligned}
+\end{equation}
+where each $p_\alpha$ implicitly uses the simple power law model Eq. \ref{eq:singlePL}. $k_{S}$ and $f_S$ are the power law slope and fractional contribution of the substructure component, respectively. Hereafter we will often refer to the single power law and 2-component power law models as ``1PL" and ``2PL", respectively. 
+
+Applying this approach to the \Gaia eDR3 dataset, \cite{Necib2022} found that at low $v_{\rm{min}}$ ($\sim 320\,\rm{km\,s^{-1}}$) a two-component model was largely favored over a single bound component, whereas at $v_{\rm{min}}\gtrsim 360\,\rm{km\,s^{-1}}$ the single component model was slightly preferred, but the different models were not meaningfully distinguishable via the AIC. The three-component model was also found not to be distinguishable from the two-component, and as a result in this article we consider at most 2 bound components. 
+
+\subsection{Limitations of the 2PL model}
+\label{sec:limitations_2pl}
+
+While \cite{Necib2022} found that the 2PL model provided a better fit to the \Gaia eDR3 data, it remained the case that high values of $k$ were preferred for one of the bound components, and even with a high prior limit of $k = 20$ the marginal distribution for $k$ remained unconverged. The 3-component model also exhibited the same convergence issues, suggesting that the source of the problem is a systematic effect of the modeling close to $\vmin$, where there is a steeply rising distribution of stars. 
+
+In Fig. \ref{fig:modelcomp}, we illustrate the 1PL and 2PL models for fixed $\vesc$. In particular, we show how the various slope parameters affect the resulting speed distributions. Here one can see that the 1PL model would be heavily constrained by a steep distribution close to $\vmin$. This would favor high $k$ and thus strongly inform the $\vesc$ estimate. The 2PL model takes a step towards describing these separate parts of the distribution near $\vmin$ and $\vesc$ by allowing for different power law behaviors. However, its flexibility saturates at about $ k \simeq 15$, indicating that continuing to increase the upper prior limit further will not be sufficient. 
+%
+
+Assuming the problem lies only in disk contamination or the inability to model substructure, one approach would be to increase $\vmin$ until this steeply rising feature disappears or until the distribution is indistinguishable from the 1PL fit, as made precise by the AIC (Eq. \ref{eq:AIC}).
+However, if we wish to apply this analysis across many Galactocentric radii, this would require the tuning of $\vmin$ in each radial bin based on some arbitrary convergence or stability criterion. One could replace the $\vmin$ cut by only using the fastest $N$ stars in each radial bin as in \cite{Koppelman2021}, but the choice of an appropriate $N$ is again challenging. As discussed earlier, the number of stars in each radial bin is affected by the selection function and quality cuts such as parallax error, with far fewer stars in the $4-5\,\rm{kpc}$ bin compared to the $7-8\,\rm{kpc}$ bin, for example. Since the statistics vary greatly across Galactocentric radii, $N$ would again require a tuning in each bin.
+
+Even with a high $\vmin$, both the 1PL and 2PL models can estimate potentially unreliable escape velocities past the data region (i.e. much faster than the fastest star observed) depending on the data features. For example, it is observed in \cite{Koppelman2021} that beyond the solar position, escape velocity estimates based on the 1PL model curiously {\emph{rise}} with Galactocentric radius, contrary to the expected shape in realistic potentials. The speed distributions are reported to become steeper with Galactocentric radius, and since $\vesc$ is positively correlated with the slope $k$, this leads to higher $\vesc$. This feature suggests some radially-dependent effect in the shape of the distribution which is not well-modeled by the single power law and is not accounted for by the statistical uncertainties of parameter estimation. 
+
+Given these limitations, it is thus desirable to develop a model that can both closely track the cutoff of a continuous kinematic distribution (i.e., the fastest non-outlier star, accounting for measurement errors) and account for the steeply rising distribution at lower speeds, without tuning $\vmin$. 
+
+\subsection{Stretched exponential power law (SEPL)}
+\label{sec:sepl}
+
+We now introduce a new functional form, motivated by the challenges of fitting the data to a single or two-component power law model. In both cases, the data tends to be fit by increasingly high power law slopes $k$ unless a prior range or strict $\vmin$ are set.  These steep power laws can lead to unreliable extrapolation past the data region and large $\vesc$ estimates. The fundamental reason is that the steepness of the distribution is correlated with the shape of the cutoff near $\vesc$ in power law distributions.  This indicates the need for a model where the steep rise in the distribution away from $\vesc$ is not tied to the shape of the cutoff close to $\vesc$.
+
+We use these facts as motivation to introduce a model that \textit{grows exponentially away} from $v_{\rm{esc}}$, but maintains the characteristics of a power law close to $v_{\rm{esc}}$. This is similar to the motivation for the 2PL model, but allows for a steeper rise at lower speeds. A general distribution satisfying these requirements is 
+\begin{equation}
+    g(v \mid \mathbf{\theta}) \propto (v_\mathrm{esc} - v)^\gamma \exp\left[\left(\frac{v_\mathrm{esc} - v}{\tau}\right)^\beta\right].
+    \label{eq:generalSEPL}
+\end{equation}
+Close to $\vmin$, this distribution rises as a stretched exponential with index $\beta$ and scale $\tau$. Very close to $\vesc$, this distribution gives a power law with index $\gamma$, with lower $\gamma$ giving a more sharp cutoff at $\vesc$. Since we wish to avoid extrapolation of $\vesc$ beyond the data region, we find that choosing a low $\gamma = 1$ gives results for $\vesc$ that most closely track the fastest non-outlier star in the data region. We refer to this model with $\gamma=1$ as a ``stretched exponential power law"\footnote{The stretched exponential usually is written with a negative sign in the exponent, but we wish to model an exponential rise toward $\vmin$ away from $\vesc$, and so we make use of this name in a slightly non-standard way.} (SEPL), with the form
+\begin{equation}\label{eq:SEPL}
+    g(v \mid \mathbf{\theta}) \propto (v_\mathrm{esc} - v) \exp\left[\left(\frac{v_\mathrm{esc} - v}{\tau}\right)^\beta\right],
+\end{equation}
+where $v_\mathrm{esc}, \beta,$ and the scale $\tau$ are treated as free parameters. Here $\beta$ and $\tau$ have limited impact on the precise shape of the cutoff at speeds very close to $\vesc$, but allow for greater flexibility in describing the data at speeds where statistics are greatest. The choice of $\gamma=1$ in Eq. \ref{eq:SEPL} is further validated in Sec. \ref{sec:results} by repeating the analysis for $\gamma \in \{1,2,3\}$ and additionally with $\gamma$ as a free parameter with a wide uniform prior.
+
+We demonstrate the shape of the SEPL model and compare it to the power law models in Fig.~\ref{fig:modelcomp}. Here we show a fixed scale $\tau$, although when fitting we leave this scale as a free parameter. The SEPL model mimics a valuable feature of the 2-component model, which is to describe the tail as the transition between two distinct behaviors (here exponential to power law), but more readily accounts for the steep rise, and ideally further reduces the correlation of any improperly converged parameters with $\vesc$. 
+
+\subsection{Priors}
+\label{sec:priors}
+
+Since the choice of priors in the power law models is a subject of significant uncertainty, we adopt wide uniform priors on \textit{all parameters} of the bound component models, and in line with \cite{Necib2022methods}, we choose uniform priors on the logarithm of the outlier distribution parameters. A summary is given in Table \ref{tab:priors}. The prior limits of the power law models are also chosen in line with \cite{Necib2022methods}, where we maintain the choice that $k$ should label the behavior close to $\vmin$ in all cases, but remain agnostic to the interpretation of each component.
+
+The prior limits in the case of the SEPL model are chosen such that any combination yields a distribution that can be reliably normalized according to Eq.~\ref{eq:normalizeprob}; the exponential nature can cause numerical overflow issues in some parts of the parameter space, though this does not represent any unphysical nature of the modeling. 
+As a result, note that the maximum of the uniform escape velocity prior is lower than that of the power law models, but this upper limit is still significantly higher than existing estimates of $\vesc$ and is never informative for the resulting posterior distributions in this paper. 
+
+\begin{deluxetable}{lcl}
+\tablecaption{Prior distributions for the power law and stretched exponential power law models. The notation $\mathcal U (a,b)$ refers to a uniform prior distribution from $a$ to $b$ and $\mathcal U_{\,\rm{log}}(c,d)$ refers to a uniform prior in the log of that parameter from $c$ to $d$. \label{tab:priors}}
+\tablewidth{\columnwidth}
+\tabletypesize{\small}
+\tablehead{
+    \colhead{Model} &
+    \colhead{Parameter} &
+    \colhead{Prior}
+}
+\startdata
+1-component & $\vesc$ & $\mathcal U (0, 1000)$ \\
+power law (1PL) & $k$ & $\mathcal U (0.1, 20.0)$ \\
+\midrule
+2-component & $\vesc$ & $\mathcal U (0, 1000)$ \\
+power law (2PL) & $k$ & $\mathcal U (0.1, 20.0)$ \\
+& $k_S$ & $\mathcal U (0.1, k)$ \\
+& $f_S$ & $\mathcal U (0, 1)$ \\
+\midrule
+Stretched exponential & $\vesc$ & $\mathcal U (0, 700)$ \\
+power law (SEPL) & $\beta$ & $\mathcal U (1, 3.5)$ \\
+& $\tau$ & $\mathcal U (80, 1000)$ \\
+\midrule
+Outlier model & $f_{\rm{out}}$ & $\mathcal U_{\,\rm{log}}(10^{-6},1)$ \\
+& $\sigma_{\rm{out}}$ & $\mathcal U_{\,\rm{log}}(600,3000)$ \\
+\enddata
+\end{deluxetable}

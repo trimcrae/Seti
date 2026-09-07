@@ -1,0 +1,1182 @@
+                                          Prepared for submission to JCAP
+
+
+
+
+                                          Directional dark matter signatures of
+                                          the Large Magellanic Cloud
+arXiv:2606.12535v1 [hep-ph] 10 Jun 2026
+
+
+
+
+                                          Javier Reynoso-Cordova,a,b Nassim Bozorgnia,b,c and Marie-Cécile
+                                          Pirob
+                                          a Istituto Nazionale di Fisica Nucleare, Sezione di Napoli,
+
+                                           Complesso Universitario di Monte Sant’Angelo, Via Cintia, 80126 Napoli, Italy
+                                          b Department of Physics, University of Alberta, CCIS 4-181,
+
+                                           Edmonton, Alberta T6G 2E1, Canada
+                                          c Theoretical Physics Institute, University of Alberta, CCIS 4-181,
+
+                                           Edmonton, Alberta, Canada
+                                           E-mail: javier.reynoso@na.infn.it, nbozorgnia@ualberta.ca, mariecci@ualberta.ca
+
+                                          Abstract. The Large Magellanic Cloud (LMC), the most massive satellite of the Milky
+                                          Way (MW), can significantly perturb the local dark matter (DM) distribution. We study
+                                          its impact on directional DM detection using the Auriga cosmological simulations of a MW
+                                          analogue hosting an LMC analogue. We find that the LMC induces strong anisotropies in
+                                          directional recoil signals, driven primarily by the non-zero mean azimuthal velocity of the
+                                          local DM distribution. The characteristic ring-like feature predicted in the Standard Halo
+                                          Model (SHM) for heavy DM and low recoil energies is strongly distorted, producing an
+                                          asymmetric recoil pattern concentrated at preferred azimuthal angles. Differences between
+                                          recoil maps for the MW-LMC analogue and the SHM reach up to ∼ 80% near the signal
+                                          maximum. These distortions significantly enhance directional discovery prospects, reducing
+                                          the number of events required to reject isotropy by nearly a factor of five for a 100 GeV DM
+                                          particle in a near-future CYGNUS-like experiment, and by even larger factors for heavier
+                                          DM. Our results highlight the importance of the LMC for interpreting and optimizing future
+                                          directional DM searches.
+Contents
+
+1 Introduction                                                                                1
+
+2 Simulations                                                                                 3
+
+3 Dark matter velocity distribution                                                           3
+
+4 Directional event rate                                                                      5
+  4.1 Radon transform from simulation data                                                    6
+
+5 Directional experiments                                                                     8
+
+6 Results                                                                                     8
+  6.1 Directional signatures                                                                  8
+  6.2 Statistical analysis and isotropy rejection                                            12
+
+7 Discussion and conclusions                                                                 15
+
+A Tests on the numerical integration                                                         16
+
+B Resolution tests                                                                           18
+
+1   Introduction
+
+The nature of dark matter (DM) remains one of the central open problems in particle physics
+and cosmology [1, 2]. Direct detection experiments search for DM by measuring the small
+recoil energy deposited when DM particles scatter off nuclei or electrons in underground
+detectors [3–5]. Directional detection extends this strategy by measuring not only the recoil
+energy but also the direction of the recoiling nucleus.
+      Because the Sun moves through the Galactic halo toward the constellation Cygnus, DM
+particles appear to arrive preferentially from that direction, producing a characteristic dipole
+anisotropy in the recoil distribution [6–12]. The two directional DM signatures easiest to de-
+tect are departure from isotropy and the average recoil direction, while secondary signatures
+include ring-like [13] and aberration features [14] in the recoil rate. These directional sig-
+natures are extremely difficult for backgrounds to mimic and encode rich information about
+the underlying DM velocity distribution and particle physics interaction [10–13]. Directional
+measurements can therefore probe halo substructure, distinguish between interaction models,
+and enhance sensitivity to non-standard scenarios such as inelastic [15] or velocity-dependent
+scattering.
+      Beyond its role as a Galactic signature, directionality is also central to the future of
+direct detection experiments [6]. As experimental sensitivities approach the neutrino fog [16],
+nuclear recoils from Solar and atmospheric neutrinos become an irreducible background when
+only recoil energies are measured. Directional information, however, can separate a Galactic
+DM wind from neutrino induced recoils, whose angular distributions differ significantly in
+Galactic coordinates. This makes directional detection one of the few viable paths to strongly
+identify a DM signal in the presence of irreducible backgrounds. Experimentally, measuring
+
+
+
+
+                                             –1–
+the direction—and ideally the head-tail recognition with suitable angular resolution [11]—of
+keV scale nuclear recoils is challenging due to the extremely short track lengths involved [10–
+12]. This has motivated the development of low-pressure gaseous time projection chambers
+such as DRIFT [17, 18], MIMAC [19, 20], DMTPC [21], and NEWAGE [22–24]; low-pressure
+spherical proportional counter such as NEWS-G [25, 26]; nuclear emulsion detectors like
+NEWSdm [27, 28]; anisotropic scintillators including NaI(Tl) and organic crystals [29, 30];
+and columnar recombination techniques [31, 32]. These technologies are converging toward
+scalable concepts such as the CYGNUS Galactic Recoil Observatory [33–36], positioning
+directional detection as a realistic next generation strategy capable of probing both DM and
+neutrinos.
+     The predicted signals in direct detection experiments, both non-directional and direc-
+tional, depend sensitively on the local DM phase space distribution. The most widely adopted
+model of the DM halo is the Standard Halo Model (SHM) [5], in which the Milky Way (MW)
+halo is modeled as an isotropic, isothermal sphere with a Maxwell-Boltzmann velocity dis-
+tribution in the Galactic frame. Recent high-resolution cosmological simulations show that
+a Maxwellian velocity distribution generally provides a good description of the local DM
+velocity distribution in MW-like halos. However, substantial halo-to-halo scatter is observed
+among simulated galaxies, leading to large astrophysical uncertainties in the predicted local
+DM distribution and consequently the interpretation of direct detection data [37–46].
+      One of the most important modifications to the SHM arises from the impact of the
+Large Magellanic Cloud (LMC) on the local DM phase space distribution. As the most
+massive satellite of the MW, the LMC strongly perturbs both the stellar and the DM halo of
+the MW [47–53]. Both idealized [54, 55] and cosmological [56] simulations indicate that the
+recent infall of the LMC can significantly enhance the high speed tail of the local DM velocity
+distribution. This can shift direct detection exclusion limits by several orders of magnitude
+towards smaller cross sections and DM masses [54, 56], with especially pronounced effects
+for non-standard scenarios such as velocity-dependent interactions and inelastic DM [57].
+Including the effects of the LMC also extends the parameter space accessible to experiments
+searching for ultraheavy DM with masses well above the TeV scale [58].
+      Understanding how astrophysical perturbations induced by the LMC reshape direc-
+tional recoil signatures is therefore essential for fully exploiting the discovery and diagnostic
+potential of future directional experiments. In this work, we use the Auriga cosmological
+magneto-hydrodynamical simulations [59] to investigate the impact of the LMC on the di-
+rectional properties of the local DM flux in a simulated MW-LMC analogue. Building on
+our earlier analyses [56, 57], we quantify the resulting modifications to the directional re-
+coil signal and examine their implications for the projected performance of a CYGNUS-like
+experiment.
+     The paper is structured as follows. In section 2 we present the details of the Auriga
+simulations and the MW-LMC analogue used in this work. In section 3 we present the
+components of the DM velocity distribution in the Solar neighborhood. In section 4 we
+introduce the formalism for computing the directional event rate. In section 5 we discuss
+the details of the directional experiments considered in this work. In section 6 we present
+our results for the directional signatures of the LMC and perform a statistical analysis to
+specify the number of events required in directional experiments to reject isotropy. Finally,
+in section 7 we provide a brief discussion and our conclusions. In appendices A and B, we
+provide additional materials relevant to this work.
+
+
+
+
+                                             –2–
+2   Simulations
+In this work, we analyze the simulated MW-LMC system originally identified in ref. [56]. The
+system is drawn from Auriga magneto-hydrodynamical simulations [59, 60], which consists
+of a set of zoom-in simulations of isolated MW mass halos selected from a periodic volume of
+1003 Mpc3 (L100N1504) from the EAGLE project [61, 62]. The simulations were carried out
+using the moving-mesh code Arepo [63] and incorporate a galaxy formation subgrid model
+which includes star formation, black hole formation, metal cooling, active galactic nuclei and
+supernova feedback, and background UV/X-ray photoionisation radiation [59]. The simula-
+tions successfully reproduce several observed properties of present day MW–mass galaxies,
+such as stellar masses and sizes, rotation curves, star formation rates and metallicities. The
+simulations adopt the Planck-2015 [64] cosmological parameters: Ωm = 0.307, Ωbar = 0.048,
+H0 = 67.77 km s−1 Mpc−1 . We adopt the standard resolution level (Level 4) of the Auriga
+simulations, corresponding to a DM particle mass of mDM ∼ 3 × 105 M⊙ , a baryonic parti-
+cle mass of mb = 5 × 104 M⊙ , and a Plummer equivalent gravitational softening length of
+ε = 370 pc [65, 66].
+       The MW-LMC analogue considered in this work is the re-simulated halo 13 introduced
+in ref. [56], which corresponds to the Auriga 25 halo and its LMC analogue. This system
+was re-simulated with finer snapshots close to the LMC analogue’s pericenter approach. The
+virial mass of the MW analogue is 1.2 × 1012 M⊙ , while the halo mass of LMC analogue at
+infall is 3.2×1011 M⊙ . Further details regarding the selection of this system and its properties
+can be found in ref. [56]. We use the present day MW-LMC snapshot for this system, which
+is the snapshot closest to the present day separation of the observed MW and LMC system.
+The speed of the LMC analogue with respect to the host MW analogue at this snapshot is
+317 km/s, while its distance to host is ∼ 50 kpc, which closely match the observed values.
+       The position and velocity of the Sun within the simulated halo are chosen to repro-
+duce the observed Sun-LMC geometry, following the procedure described in ref. [56]. First,
+we identify orientations of the MW analogue’s stellar disk that yield the same angle with
+the LMC analogue’s orbital plane as observed in the real system. For each allowed disk
+orientation, we then determine candidate Solar positions by matching the angles formed by
+the LMC’s orbital angular momentum with the Sun’s position and velocity vectors in the
+simulation to their observed values. Finally, among these candidates we select the Solar
+position that provides the closest match of the angles between the Sun’s velocity vector and
+the LMC’s position and velocities with their observed values.
+       The Solar region is defined as the intersection of two volumes: a spherical shell extending
+from 6 to 10 kpc from the center of the MW analogue (with the Sun at a galactocentric
+distance of ∼ 8 kpc) and a cone with an opening angle of π/4, whose axis points toward the
+best fit Solar position and whose vertex lies at the galactic center (see figure 2 of ref. [56]).
+This definition ensures that the region remains sensitive to the chosen Solar position while
+still containing several thousand DM particles, as discussed in ref. [56].
+
+3   Dark matter velocity distribution
+The local DM velocity distribution is an important input in the computation of expected
+event rates in directional DM experiments. In this section, we present the components of
+this distribution in the Solar region obtained from the MW-LMC analogue.
+      We adopt a Galactocentric reference frame centered on the Galactic center, with the
+xg -axis directed toward the Galactic center (such that the Sun is at xg ∼ −8 kpc), the yg -axis
+
+
+
+
+                                              –3–
+                                                                                     f(ur)
+                                  0.0025                                             f(u )
+                                                                                     f(u )
+                                  0.0020
+
+
+                  f(ui) [(km/s)] 1]
+                                  0.0015
+
+                                  0.0010
+
+                                  0.0005
+
+                                  0.0000
+                                           600   400   200     0         200   400     600
+                                                         ui [km/s]
+Figure 1. Radial (black), polar (orange), and azimuthal (green) components of the local DM
+velocity distribution in the Galactic frame for the simulated MW analogue. Shaded bands
+correspond to the 1σ Poisson errors in the distributions.
+
+
+oriented in the direction of the Galactic rotation, and the zg -axis pointing toward the North
+Galactic Pole. The orientation of these axes is determined by the best fit position and velocity
+of the Sun that matches the observed Sun-LMC geometry, as discussed in section 2. After
+transforming the positions and velocities of all simulation particles to the Galactic reference
+frame, we convert their Cartesian velocity components into spherical components (ur , uθ ,
+uϕ ) relative to the Galactic center. Here, ur is the radial velocity component, uθ is the polar
+velocity component (where θ is measured from the zg -axis), and uϕ is the azimuthal velocity
+component. With this definition of the Galactic reference frame and the Solar position, a
+particle in the Solar region with negative uϕ would be co-rotating with the stellar disk.
+      Figure 1 shows the radial (black), polar (orange), and azimuthal (green) components
+of the local DM velocity distribution in the Galactic reference frame. The shaded bands
+specify
+R        the 1σ Poisson errors in the distributions. The distributions are normalized such that
+  dui f (ui ) = 1, where i = r, θ, ϕ. Because in the SHM a local circular speed of 220 km/s is
+commonly adopted, the DM velocities in figure 1 are scaled by (220 km/s)/vc , where vc is
+the circular speed of the MW analogue at a Galactocentric distance of 8 kpc, computed from
+the enclosed mass.
+      It is clear from figure 1 that the local DM velocity distribution is anisotropic. While the
+radial and polar velocity distributions peak at velocities close to zero, the azimuthal velocity
+distribution peaks at uϕ ∼ 75 km/s. This indicates that DM particles in the Solar region
+are predominately counter-rotating relative to the stellar disk. This arises because the LMC
+analogue is moving in nearly the opposite direction of the Solar motion. Consequently, both
+DM particles originating from the LMC and MW DM particles boosted by the LMC tend to
+move towards the Sun, producing a counter-rotating azimuthal velocity component.
+      We quantify this behavior with the velocity anisotropy parameter,
+
+                                                         σθ2 + σϕ2
+                                                 β =1−               ,                       (3.1)
+                                                             2σr2
+
+
+
+                                                       –4–
+where σθ , σϕ , and σr are the polar, azimuthal, and radial velocity dispersions respectively,
+which we obtain directly from the local DM velocity distribution of the simulated MW
+analogue. The velocity distribution is isotropic if σθ2 +σϕ2 = 2σr2 and β = 0, radially anisotropic
+if σθ2 + σϕ2 ≪ 2σr2 and β ≈ 1, and tangentially anisotropic if σθ2 + σϕ2 ≫ 2σr2 and β → −∞. For
+the simulated MW analogue, we find β = 0.136, which indicates a mildly radially anisotropic
+local DM velocity distribution.
+
+4   Directional event rate
+
+Directional DM experiments aim to measure both the recoil energy, ER , and the 3D direction
+of a recoiling target nucleus after scattering by a DM particle.
+      We consider a DM particle of mass mχ elastically scattering with a target nucleus
+of mass Mi in an underground detector. For the case of spin-independent scattering, the
+directional differential recoil rate is given by [67]
+
+                        d2 R     ρχ σSI X
+                              =           Ci A2i Fi2 (q) fˆdet (vmin , q̂) ,                 (4.1)
+                      dER dΩq   4πmχ µ2χp
+                                                  i
+
+where ρχ is the DM density in the Solar neighborhood, σSI is the spin-independent DM-
+nucleon scattering cross section, and µχp is the reduced mass of the DM-nucleon system.
+The sum is over the nuclear species i in the target, and Ci and Ai are the mass fraction
+and mass number of nuclide i, respectively. Fi (q) is the nuclear form factor, for which we
+use the Helm [68] form factor. dΩq is an infinitesimal solid angle around the recoil direction
+q̂ = q/q, where q is the recoil momentum in the detector reference frame, and q = |q| is
+the magnitude of the recoil momentum. fˆdet is the 3D Radon transform of the DM velocity
+distribution in the detector reference frame.
+      The minimum speed, vmin , required for a DM particle to transfer a recoil momentum q,
+or equivalently deposit a recoil energy ER to the nucleus of mass M is given by
+                                                  s
+                                            q       M ER
+                                   vmin =       =          ,                             (4.2)
+                                          2µχA      2µ2χA
+
+where µχA is the DM-nucleus reduced mass.
+    The Radon transform in the detector frame is defined as [67]
+                                       Z
+                      ˆ
+                     fdet (vmin , q̂) = δ(v · q̂ − vmin ) fdet (v) d3 v ,                    (4.3)
+
+where v is the velocity of DM with respect to the detector, and fdet (v) denotesR 3the local DM
+velocity distribution in the detector rest frame normalized to one, such that d vfdet (v) = 1.
+     Dark matter distributions are typically defined in the Galactic rest frame. We can relate
+the Radon transform in the Galactic, fˆgal , and detector, fˆdet , frames by [67]
+
+                            fˆdet (vmin , q̂) = fˆgal (vmin + Vlab · q̂, q̂) ,               (4.4)
+
+where Vlab is the velocity of the detector with respect to the Galaxy and can be decomposed
+into four components: the Sun’s circular velocity (or Local Standard of Rest (LSR) velocity),
+the peculiar velocity of the Sun with respect to the LSR, the velocity of Earth’s revolution
+with respect to the Sun, and the velocity of Earth’s rotation around itself.
+
+
+
+
+                                                 –5–
+      To compute the Radon transform in the detector frame, we need to evaluate Vlab ·q̂. This
+requires expressing both Vlab and q̂ in the same reference frame, and therefore transforming
+q̂ from the detector frame to the Galactic frame. The full transformation equations, as well
+as the resulting expression for Vlab · q̂ are given in appendix A of ref. [13].
+      In the SHM, the local DM velocity distribution in the Galactic frame is modeled as
+an isotropic Maxwell-Boltzmann distributionpwith a peak speed equal to the local circular
+speed vc , a 3D velocity dispersion of σv = 3/2 vc , and truncated at the Galactic escape
+speed vesc . The Radon transform for the truncated Maxwellian distribution can be evaluated
+analytically. Applying the transformation in eq. (4.4) yields the Radon transform in the
+detector frame [67],
+                                                   (vmin + q̂ · Vlab )2
+                                                                             2 
+       ˆ                        1                                                v
+        MB
+      fdet (vmin , q̂) =               1/2
+                                             exp −           2
+                                                                          − exp − esc2 ,  (4.5)
+                         Nesc (2πσv2 )                    2σv                    2σv
+if vmin + q̂ · Vlab < vesc , and zero otherwise. Here
+                                              r              2 
+                                         vesc       2 vesc      v
+                           Nesc = erf   √      −           exp − esc2 .                     (4.6)
+                                          2σv       π  σv       2σ v
+
+      From eq. (4.5), it can be seen that if vmin < |Vlab |, the maximum of fˆdet
+                                                                              MB occurs when
+
+−q̂ · Vlab = vmin , i.e. the maximum will happen at an angle γ between q̂ and −Vlab , forming
+a ring in recoil q space around the direction −Vlab [13].
+
+4.1   Radon transform from simulation data
+Next, we compute the Radon transform of the local DM velocity distribution obtained directly
+from the simulations. The DM speed distribution of the simulated MW analogue is boosted
+to higher speeds due to the impact of the LMC and cannot be accurately modeled by a
+Maxwellian distribution. Therefore, the Radon transform, fˆgal (vmin + Vlab · q̂, q̂), must be
+computed numerically.
+     Defining w = vmin + Vlab · q̂ and using the definition of the Radon transform, we write
+                                       Z
+                          ˆ
+                         fgal (w, q̂) = δ (u · q̂ − w) fgal (u) d3 u ,                   (4.7)
+
+where u = v + Vlab is the DM velocity in the Galactic rest frame.
+    The DM velocity vector in Galactic coordinates is
+                              u = u(sin θ cos ϕ, sin θ sin ϕ, cos θ) ,                      (4.8)
+where u = |u|, and θ and ϕ are the polar and azimuthal angles, respectively. The recoil
+direction q̂, defined in the detector reference frame, can be expressed in the Galactic rest
+frame as
+                               q̂ = (cos b cos l, cos b sin l, sin b) ,                (4.9)
+with l and b the Galactic longitude and latitude, respectively.
+     To simplify the integral in eq. (4.7), we introduce a new coordinate system (x′ , y ′ , z ′ )
+in which q̂ is aligned with the z ′ -axis. The transformation from Galactic coordinates to this
+new reference frame is then given by the rotation matrix
+                                                                     
+                                       sin b cos l sin b sin l − cos b
+                             R =  − sin l           cos l        0 .                   (4.10)
+                                       cos b cos l cos b sin l sin b
+
+
+
+                                               –6–
+     By construction, in this frame u · q̂ = u · ẑ′ = u cos θ′ , where θ′ is the polar angle of
+vector u in the primed frame.
+     Equation (4.7) then becomes
+                                  Z
+                    fgal (w, q̂) = δ(u cos θ′ − w)fgal (u) u2 du d cos θ′ dϕ′ ,
+                    ˆ                                                                     (4.11)
+
+where ϕ′ is the azimuthal angle of vector u in the primed frame.
+    Using the properties of the Dirac delta, the integral reduces to
+                                          Z
+                          fˆgal (w, q̂) =    fgal (u, λ, ϕ′ ) u du dϕ′ ,                   (4.12)
+                                            u≥|w|
+
+where λ ≡ arccos(w/u). The condition | cos λ| ≤ 1 (equivalent to u ≥ |w|) sets the lower
+limit of the velocity integral. For each recoil momentum direction q̂, the integrand fgal (u)
+in eq. (4.12) must be evaluated at u = (u, λ, ϕ′ ).
+     In the primed frame, the DM velocity vector can be written as
+                             u = u(sin θ′ cos ϕ′ , sin θ′ sin ϕ′ , cos θ′ ).
+The relation between the Galactic and rotated frames depends on the direction q̂(l, b), and
+is obtained by applying the rotation R,
+                                              u′ = R u ,                                   (4.13)
+with u expressed in Galactic coordinates. By equating the components of u′ with those in
+the primed frame, we obtain the following relations between the angular coordinates,
+                        sin θ′ cos ϕ′ = sin b sin θ cos (l − ϕ) − cos b cos θ ,
+                        sin θ′ sin ϕ′ = − sin θ sin (l − ϕ) ,
+                              cos θ′ = cos b sin θ cos (l − ϕ) + sin b cos θ .             (4.14)
+      The DM velocity distribution extracted from the simulations is given in the Galactic
+reference frame. From this data, we construct a discrete three-dimensional velocity distribu-
+tion, fgal (u), by binning the velocity components into a 3D histogram. We use a bin size of
+50 km/s for each Cartesian velocity component (ux , uy , uz ). To compute the Radon trans-
+form for a given recoil direction q̂(l, b) and minimum speed vmin , we numerically evaluate
+the double integral in eq. (4.12). For each point in the (u, λ, ϕ′ ) integration grid, we use the
+relations in eq. (4.14) to find the corresponding velocity vector in the Galactic frame and
+interpolate the binned distribution fgal to obtain the value of the integrand.
+      We implement the numerical integration using standard Python packages, with the
+angular integration over ϕ′ performed on a grid following the HEALPix convention [69] as
+implemented in the healpy library. We have conducted extensive tests to verify the numerical
+convergence and accuracy of our method. These tests explore the sensitivity of the results to
+the size of the velocity bins in the histogram, the number of integration points in u and ϕ′ , the
+angular resolution (Nside parameter) of the HEALPix grid, and the intrinsic resolution of the
+simulation data. As a validation step, we have compared the numerical Radon transform of
+a Maxwellian velocity distribution generated from mock data with the analytical result from
+eq. (4.5). We find a maximum relative difference of ∼ 7%, which remains stable when varying
+the sample size, bin size, and angular resolution, confirming that our numerical framework
+is robust within these parameter choices. A detailed discussion of these convergence tests is
+presented in appendix A, while appendix B assesses the stability of our results with respect
+to the finite resolution of the simulation sample.
+
+
+
+
+                                                 –7–
+5     Directional experiments
+In this work, we consider the near-future CYGNUS-like detector operated with a gaseous
+mixture at atmospheric pressure and room temperature, located at the Laboratori Nazionali
+del Gran Sasso (LNGS). The corresponding detector specifications are listed in table 1.
+
+                                Parameter          Value
+                                Targets            He:F4 (60–40)
+                                Energy Range       [0.25–10] keV
+                                Exposure           3.65 × 105 kg day
+                                Location           LNGS Gran Sasso
+                                Coordinates        (42.45◦ , 13.57◦ )
+
+            Table 1: Specifications of the CYGNUS-like detector at Gran Sasso.
+
+     We have also verified our results for various underground laboratories and locations,
+as well as for different target materials, as summarized in table 2. Additionally, we have
+tested for hypothetical labs located at the North/South Poles (90◦ N/S) and at the Equator
+(0◦ latitude) for He:SF6 (60–40) target. The impact of the LMC on the directional DM
+signatures is found to be very similar across all of these configurations. We therefore show
+our results for only the CYGNUS-like experiment at Gran Sasso.
+
+          Experiment                 Target                             Lab Location
+          CYGNUS-ANDES               He:SF6 (60–40)                     ANDES, Argentina
+          CYGNUS-Boulby              He:SF6 (60–40)                     Boulby, UK
+          CYGNUS-GranSasso           He:SF6 (60–40)                     LNGS, Italy
+          CYGNUS-Kamioka             He:SF6 (60–40)                     Kamioka, Japan
+          CYGNUS-Stawell             CS2 :O2 (70–30)                    Stawell, Australia
+          CYGNUS-SURF                He:SF6 (60–40)                     SURF, USA
+          MIMAC                      CF4 :CHF3 :C4 H10 (70–28–2)        Modane, France
+          NEWS-G                     He:CH4 (90–10)                     SNOLAB, Canada
+
+                  Table 2: Directional detector configurations and locations.
+
+
+6     Results
+In section 6.1, we present the results of the directional differential recoil rate in a CYGNUS-
+like experiment for the local DM velocity distribution extracted from the simulated MW-LMC
+analogue and compare it to the SHM. In section 6.2, we perform a statistical analysis to find
+the number of events required to reject isotropy, when the impact of the LMC is included.
+
+6.1    Directional signatures
+The directional recoil rate in eq. (4.1) can be written, using eq. (4.4), as
+
+   d2 R
+                                      
+                          events          ρ0.3 σ48 X
+          = 0.048                                      Ci A2i Fi2 (q) fˆgal (vmin +Vlab ·q̂, q̂) , (6.1)
+ dER dΩq            ton · yr · keV · sr 4πmχ µ2χp
+                                                        i
+
+where ρ0.3 = ρχ /(0.3 GeV cm−3 ) and σ48 = σSI /(10−48 cm2 ).
+
+
+
+
+                                                 –8–
+        0.000    0.913     1.826    2.740               0.061     0.079    0.098     0.117
+
+Figure 2. Mollweide equal-area projection maps of the celestial sphere in Galactic coordi-
+nates showing the directional differential recoil rate in a He:F4 (60-40) target at Gran Sasso
+assuming the SHM Maxwellian DM velocity distribution. In the left panel we consider a DM
+particle mass of mχ = 5 GeV and a nuclear recoil energy ER = 3 keV, while the right panel
+shows the case of mχ = 100 GeV and ER = 0.25 keV. The color bars show the values of the
+directional rate in units of 10−4 (ρ0.3 σ48 /ton · yr · keV · sr). The direction of −Vlab is shown
+by a black and white cross in the left and right panels, respectively.
+
+
+      We consider the He:F4 (60-40) target at Gran Sasso and two choices for the nuclear
+recoil energy near the experimental threshold: an ideal target value of ER = 0.25 keV and
+a more feasible threshold of ER = 3 keV [11, 34, 70]. We adopt a local DM density of
+ρχ = 0.3 GeV cm−3 and a DM–nucleon cross section of σSI = 10−48 cm2 , compatible with
+direct detection constraints [71, 72]. We assume a date of June 2, 2026 in order to compute
+the laboratory’s velocity and the recoil rate.
+      Figure 2 shows Mollweide equal-area projection maps of the directional differential recoil
+rate in Galactic coordinates assuming the SHM Maxwellian DM velocity distribution (with
+Radon transform given in eq. (4.5)), with vc = 220 km/s and vesc = 544 km/s. In the left
+panel, we assume a DM mass of mχ = 5 GeV and a recoil energy of ER = 3 keV. This
+corresponds to vmin = 332 km/s and 396 km/s for the He and F target nuclei, respectively.
+Since vmin > |Vlab |, the maximum recoil rate occurs in the direction of the average DM
+velocity, −Vlab , which is shown by a black cross on the map. In the right panel of the figure,
+we assume mχ = 100 GeV and ER = 0.25 keV, resulting in vmin = 57 km/s and 30 km/s
+for He and F, respectively. Since in this case vmin < |Vlab |, a ring of maximum recoil rate
+appears around the direction of −Vlab , which is shown by the white cross on the map.
+      Figure 3 shows the Mollweide map of the directional recoil rate for the same target
+nuclei and parameters used in figure 2, but assuming the local DM velocity distribution
+extracted from the MW-LMC analogue. In the left panel of the figure, we show again the
+case of mχ = 5 GeV and ER = 3 keV. As expected, the maximum recoil rate is in the
+direction of −Vlab , shown by a black cross in the map. This can be understood from the
+Sun-LMC geometry. The LMC is predominately moving in the opposite direction of the
+Sun. As a result, the high speed DM particles of the LMC and the DM particles of the MW
+boosted by the LMC are moving in the direction of −Vlab . This results in the maximum
+recoil rate to still occur in the direction of −Vlab for the simulated MW-LMC analogue, when
+vmin > |Vlab |.
+      In the right panel of figure 3, we show the case of mχ = 100 GeV and ER = 0.25 keV.
+In this case, we observe a clear difference with respect to the recoil map of the Maxwellian
+
+
+
+
+                                              –9–
+        0.000    0.962    1.924       2.885              0.031        0.101      0.172   0.242
+
+Figure 3. Same as figure 2, but for the local DM velocity distribution extracted from the
+simulated MW-LMC analogue.
+
+
+distribution (shown in the right panel of figure 2), as the ring-like signature is replaced
+by a concentration of the maximum recoil rate at specific azimuthal angles around −Vlab .
+This distinct directional signature is primarily driven by the non-zero mean of the azimuthal
+velocity distribution induced by the LMC. We have checked that a directional recoil map
+produced assuming a triaxial Gaussian velocity distribution with the mean velocities fixed to
+the values obtained from the MW-LMC analogue shows generally similar features as those
+seen in the right panel of figure 3.
+      To further quantify the effect of the LMC on the directional differential recoil rate, we
+compute the relative difference between the directional recoil map for the SHM Maxwellian
+velocity distribution and that for the DM velocity distribution extracted from the simulated
+MW-LMC analogue. This relative difference is defined as
+
+                                        d2 R                       d2 R
+                                                                        
+                    ε(q̂) = 1 −                          /                       .               (6.2)
+                                      dER dΩq   MW−LMC           dER dΩq   SHM
+
+
+      In figure 4 we show the relative difference ε(q̂), between the maps shown in figures 2
+and 3. The left panel of the figure shows the case of mχ = 5 GeV and ER = 3 keV, while
+the right panel shows the case of mχ = 100 GeV and ER = 0.25 keV. We use a different
+color palette in this figure to highlight the differences, since ε(q̂) spans from small values of
+∼ 10−5 up to ∼ 1. The minimum of the palette is adjusted to zero in order to provide a
+more gradual color transition. The yellow centered dot indicates the direction at which the
+recoil rate computed assuming the local DM velocity distribution of the MW-LMC analogue
+is maximum. The circles around this maximum rate direction denote angular regions of 5◦
+(white), 10◦ (gray), and 30◦ (black). These correspond to the angular resolutions required by
+the CYGNUS-like experiment (≤ 30◦ ) to achieve event-level reconstruction of nuclear recoil
+directions [11, 35], and represent idealized angular resolution scenarios.
+      In both panels of figure 4, the maximum of the relative difference, ε(q̂), occurs very
+close to the maximum of the differential recoil rate computed assuming the DM velocity
+distribution from the MW-LMC analogue. Comparing the left panels of figures 2 and 3,
+we can see that the main difference between the recoil maps is in and around the direction
+of −Vlab , which results in the relative differences seen in the left panel of figure 4 also
+maximizing in that direction. We also note a considerable difference in regions where fewer
+events are expected. This can be understood by observing that increasing the number of
+
+
+
+
+                                                – 10 –
+           0.00   0.28    0.57   0.85                      0.00    0.36   0.72   1.08
+Figure 4. Absolute relative difference, ε(q̂) (eq. (6.2)), between the directional recoil rate
+in a He:F4 (60-40) target at Gran Sasso computed assuming the SHM Maxwellian velocity
+distribution and the velocity distribution extracted from the simulated MW-LMC analogue.
+In the left panel we consider a DM particle mass of mχ = 5 GeV and a nuclear recoil energy
+ER = 3 keV, while the right panel shows the case of mχ = 100 GeV and ER = 0.25 keV. The
+white, gray and black circles represent the angular regions 5◦ , 10◦ and 30◦ , respectively, from
+the direction where the recoil rate computed assuming the velocity distribution extracted
+from the simulated MW-LMC analogue is maximum (indicated with a yellow centered dot).
+
+
+DM particles with a preferred velocity direction, as in the case of the MW-LMC analogue,
+reduces the fraction of particles scattering in directions nearly opposite to −Vlab .
+      Comparing the right panels of figures 2 and 3, we can see that the numerical value
+of the maximum rate computed assuming the DM velocity distribution from the simulated
+MW-LMC analogue is more than twice the maximum rate computed for the SHM. This leads
+to large relative differences between the maps around the directions where the rate assuming
+the DM velocity distribution of the MW-LMC analogue is large, as seen in the right panel
+of figure 4.
+      To quantify the relative difference, ε(q̂), which can be resolved given the angular res-
+olution of future directional detectors, we produce directional recoil maps assuming a DM
+mass of mχ = 100 GeV and a recoil energy ranging from 0.25 to 50 keV for both the SHM
+and the MW-LMC analogue velocity distribution. We then evaluate the relative difference in
+the two maps using eq. (6.2). We identify the direction where the differential recoil rate for
+the MW-LMC analogue is maximum, and find the average relative difference, ε̄, over angular
+regions of 5◦ , 10◦ , and 30◦ from this maximum rate direction. Notice that we consider recoil
+energies beyond the 10 keV upper limit considered in CYGNUS to study how the average
+relative difference changes for large values of vmin .
+      Figure 5 shows the average relative difference, ε̄, as a function of recoil energy for the
+three angular regions of 5◦ , 10◦ , and 30◦ , shown as orange, green, and gray circles and
+triangles, respectively. Circles correspond to cases in which a ring-like feature is present in
+the recoil map of the SHM distribution, while triangles (noted as “no ring” in the figure)
+correspond to cases where the maximum of the recoil rate is in the direction −Vlab .
+      As shown in figure 5, as the angular resolution of the experiment decreases (i.e. as
+the size of the angular region that we average the relative difference over increases), the
+average relative difference between the rates computed for the SHM and the distribution
+from the MW-LMC analogue decreases. In other words, the experiment becomes less capable
+of resolving the region around the maximum of the directional recoil rate, as expected.
+
+
+
+
+                                             – 11 –
+                   1.0
+                   0.8
+                   0.6
+                   0.4
+                   0.2          5 deg          10 deg          30 deg
+                                no ring        no ring         no ring
+                     10 1                  100         101
+                                              ER [keV]
+Figure 5. Average relative difference, ε̄, of the directional recoil rates computed assuming
+the SHM and the velocity distribution from the simulated MW-LMC analogue, averaged over
+a region of 5◦ (orange), 10◦ (green) and 30◦ (grey) from the direction where the rate computed
+for the MW-LMC analogue is maximum. The DM mass is assumed to be mχ = 100 GeV
+and ε̄ is shown for different recoil energies, ER . The circles and triangles correspond to cases
+in which a ring does and does not appear in the SHM recoil map, respectively.
+
+
+Nevertheless, even with an angular resolution of 30◦ , relative differences can reach ∼ 80%
+for recoil energies less than 10 keV, where the ring exists in the SHM recoil map. For larger
+recoil energies, the maximum of the recoil rate occurs in the direction of −Vlab for both
+the SHM and the MW-LMC analogue, and the average relative difference between the two
+decreases.
+      These results indicate that the impact of the LMC on the local DM velocity distribution
+can produce sizeable and potentially observable modifications in the directional recoil signal,
+especially for vmin < |Vlab |. Even when the detector angular resolution is limited, the
+deviations from the SHM remain significant over a broad range of recoil energies, suggesting
+that future directional experiments could, in principle, be sensitive to such non-standard halo
+features.
+
+6.2   Statistical analysis and isotropy rejection
+We develop a Monte Carlo (MC) likelihood framework to estimate the number of events
+required to distinguish a DM-induced directional signal from an isotropic distribution using
+HEALPix maps. The analysis is based on a likelihood-ratio test applied to simulated event
+samples.
+     Directional recoil maps are discretized in HEALPix format and we interpret them as
+probability distributions on the sphere. Each map is normalized as
+                                                mi
+                                          pi = P     ,
+                                                j mj
+
+
+
+
+                                             – 12 –
+where pi is the probability at pixel i, mi is the value of the directional differential recoil rate
+at pixel i, and the sum in the denominator is over all pixels.
+     For a given probability distribution p, event samples of size N are generated by draw-
+ing pixel indices according to the multinomial probability distribution defined by p. These
+sampled indices constitute a mock dataset {xk } of recoil events. The log-likelihood under a
+model p is then
+                                                N
+                                                X
+                                   log L(p) =      log p(xk ) .
+                                                k=1
+      To test for the presence of a signal component, we define a mixture model including the
+isotropic background, pnull , and the signal map, psig ,
+
+                                  p(µ) = (1 − µ) pnull + µ psig ,
+
+where µ ∈ [0, 1] is the signal fraction. For each dataset, the likelihood is evaluated over a
+grid of µ values uniformly spanning the interval [0, 1].
+     We define the test statistic
+                                                                
+                           TS = 2 max log L(p(µ)) − log L(pnull ) ,
+                                      µ
+
+which quantifies how strongly the data favor the signal-plus-background hypothesis relative
+to the pure background hypothesis.
+      For each event count N , we generate 1000 MC realizations by drawing events from the
+mixture distribution p(µ). For each realization, the TS is computed by maximizing the log-
+likelihood over a grid of µ values uniformly spanning [0, 1]. The isotropic component pnull
+enters the test statistic both as the µ = 0 limit of the mixture model and as the reference
+log-likelihood log L(pnull ). We √ take the median TS over all realizations, TSmed , and define
+the expected significance Z = TSmed . The minimum number of events required to reject
+isotropy is the smallest N for which Z ≥ 3, corresponding to a 3σ significance. More generally,
+we compute Z as a function of N and quote results for different significance thresholds.
+      The results of our likelihood-ratio test are shown in figure 6. First we perform the
+analysis for directional recoil maps at fixed recoil energies. The left panel of figure 6 shows
+the number of events required to reject isotropy at 3σ considering the directional recoil
+map computed assuming the SHM DM velocity distribution (orange) and the DM velocity
+distribution extracted from the simulated MW-LMC analogue (blue) for a DM mass of mχ =
+100 GeV and specific recoil energies, ER .
+      Next, we perform an energy-integrated analysis by stacking the directional recoil maps
+over the recoil energy range [0.25 − 10] keV. The energy-integrated maps are constructed
+pixel-by-pixel using trapezoidal integration across maps at different recoil energies, and then
+normalizing the resulting integrated maps. The right panel of figure 6 shows the expected
+statistical significance as a function of the required number of events in the recoil energy
+interval [0.25 − 10] keV to reject isotropy. The orange and blue curves show the results for
+the SHM and the simulated MW-LMC analogue, respectively.
+      The results of this analysis reveal a significant improvement in the detectability of the
+directional DM signal when the impact of the LMC is included. As shown in the left panel
+of figure 6, rejecting isotropy requires significantly less events for the MW-LMC analogue
+compared to the SHM, across recoil energies less than ∼ 20 keV. For lower recoil energies, the
+ring-like feature is present in the recoil maps for the SHM. However, the local DM distribution
+
+
+
+
+                                              – 13 –
+                                                 MW-LMC                               10       MW-LMC
+
+
+
+
+                                                          Expected Significance [ ]
+                                                 SMH                                           SMH
+Number of Events
+                                                                                      8        3
+               102                                                                             5
+                                                                                      6
+
+                                                                                      4
+
+                                                                                      2
+               101
+                                                                                      0
+                   10 1   100              101                                             0   50     100    150   200   250
+                                ER [keV]                                                            Number of Events
+Figure 6. Left panel: Number of events required to reject isotropy at 3σ considering the
+directional recoil map at specific recoil energies, ER . Right panel: Expected statistical
+significance as a function of the number of events in the recoil energy interval [0.25 − 10] keV
+required to reject isotropy. In both panels we adopt a DM mass of mχ = 100 GeV. The
+orange and blue curves show the results for the SHM and the simulated MW-LMC analogue,
+respectively, while the dashed and dotted horizontal lines in the right panel indicate the 3σ
+and 5σ significance levels, respectively.
+
+
+of the MW-LMC analogue produces distinct directional features in the recoil map (as seen in
+the right panel of figure 3) that are easier to detect compared to the isotropic ring. This trend
+is further confirmed by the energy-integrated analysis shown in the right panel of figure 6.
+For the MW-LMC analogue, isotropy can be rejected at the 3σ and 5σ levels with ∼ 19 and
+∼ 53 events, respectively, while the SHM requires ∼ 93 and ∼ 261 events to reject isotropy
+at the same significance levels.
+      Finally, we extend the energy-integrated analysis across different values of the DM mass.
+Figure 7 shows the number of events required to reject isotropy at 3σ as a function of mχ ,
+for both the SHM (orange) and the MW-LMC analogue (blue) using the energy-integrated
+directional recoil maps over the recoil energy range ER = [0.25 − 10] keV. In both cases, the
+number of required events increases with mχ , which can be understood from the kinematics
+of the scattering. Lighter DM particles require a higher minimum velocity, vmin , to produce
+a detectable recoil, and consequently vmin > |Vlab |. This leads to the maximum recoil rate to
+occur in the direction of −Vlab , creating the dipole feature, which is easier to detect. Larger
+DM masses (mχ ≳ 10 GeV) lead to smaller vmin and produce the the ring-like feature in the
+directional recoil map for the SHM, which requires more events to be detected. For these
+masses, the LMC distorts the ring and the resulting anisotropic feature requires fewer events
+to reject isotropy compared to the SHM. For mχ ≳ 100 GeV, the value of vmin only slightly
+changes and the recoil maps remain similar, leading to a plateau in the curves.
+      In our analysis we adopt an angular resolution corresponding to a HEALPix pixel size
+of ∼ 3◦ . We have also verified that using a coarser resolution of 30◦ yields a required number
+of events to reject isotropy at a given significance level that is in very good agreement with
+our results.
+      These results highlight that the LMC can significantly enhance the prospects for direc-
+tional DM detection, reducing the required number of events to reject isotropy, or equivalently
+the required experimental exposure, by a factor of several compared to the SHM. The impact
+
+
+
+
+                                                      – 14 –
+                            120
+                                         MW-LMC
+                            100          SHM
+             Number of events   80
+                                60
+                                40
+                                20
+                                 0
+                                     1      10             50 100 200   500 1000
+                                                 m [GeV]
+Figure 7. Number of events required to reject isotropy at 3σ as a function of the DM
+mass mχ , for the SHM (orange) and the MW-LMC analogue (blue), using energy-integrated
+directional recoil maps over ER = [0.25 − 10] keV.
+
+
+of the LMC on the directional recoil rate is strongest for large DM masses and low recoil
+energies, where it distorts the ring-like feature in the directional recoil map.
+
+7   Discussion and conclusions
+
+In this work, we have investigated how the presence of the LMC reshapes the directional
+DM signal expected in a future CYGNUS-like directional experiment, using a simulated
+MW-LMC analogue from the Auriga magneto-hydrodynamical simulations. Using the local
+DM velocity distribution extracted from the simulations, we have computed the expected
+directional recoil rate in the CYGNUS-like experiment and compared it to the standard
+expectation obtained from the SHM. Our results show that the LMC leaves a clear and
+potentially observable imprint on the angular distribution of the recoil signal.
+      The local DM velocity distribution in the Galactic frame obtained from the simulated
+MW–LMC analogue is mildly radially anisotropic, with a velocity anisotropy parameter
+of β = 0.136. While this indicates a departure from isotropy, our tests suggest that this
+radial anisotropy alone is not the primary driver of the features observed in the directional
+recoil maps. Instead, the dominant effect appears to arise from the azimuthal component
+of the local velocity distribution. In particular, the azimuthal velocity component peaks at
+uϕ ∼ 75 km/s, indicating a counter-rotating DM component relative to the stellar disk, due
+to the impact of the LMC.
+      The impact of the LMC on the directional recoil signal depends strongly on the minimum
+DM speed, vmin , as compared to the laboratory speed, |Vlab |. For vmin > |Vlab |, the direction
+of the maximum recoil rate remains aligned with −Vlab , as in the SHM. Consequently, the
+relative differences between the recoil maps obtained from the SHM and the MW-LMC
+analogue are concentrated around the direction −Vlab . By contrast, when vmin < |Vlab |, the
+
+
+
+
+                                                  – 15 –
+effect of the LMC is qualitatively different. In the SHM, this regime produces a ring-like
+feature, where the maximum recoil rate occurs in a ring around the direction −Vlab . We find
+that the inclusion of the LMC distorts this ring entirely. Rather than preserving azimuthal
+symmetry around −Vlab , the recoil rate becomes concentrated at preferred azimuthal angles,
+generating a distinct asymmetric pattern.
+      To further quantify these effects, we have computed the relative difference between the
+recoil maps for the MW-LMC analogue and the SHM. We find that such a relative difference
+reaches values as large as ∼ 80% in regions in the directional recoil map close to the maximum
+of the rate, even after averaging over angular regions of 30◦ as seen in figure 4. For a DM
+mass of 100 GeV, the largest deviations occur at recoil energies ≲ 10 keV, where the ring-
+like feature is present in the SHM recoil map. This indicates that the LMC-induced effects
+could potentially be detectable with future directional experiments even for lower angular
+resolutions.
+      We have also quantified the impact of the LMC on the discovery reach of the CYGNUS-
+like experiment through a likelihood-based isotropy rejection analysis. We find that including
+the LMC substantially improves the ability of the experiment to distinguish a DM signal
+from an isotropic background. For a DM mass of mχ = 100 GeV and for the energy-
+integrated analysis over the range of ER = [0.25 − 10] keV, isotropy can be rejected at 3σ
+and 5σ significance with approximately ∼ 19 and ∼ 53 events, respectively, for the MW-LMC
+analogue. In comparison, the SHM requires approximately ∼ 93 and ∼ 261 events to reach
+the same significance levels, respectively. The LMC therefore reduces the required number of
+events to reject isotropy by nearly a factor of 5 for mχ = 100 GeV. This reduction becomes
+even more pronounced at larger DM masses, exceeding a factor of 5. This translates directly
+into a lower required experimental exposure, with the largest gains occurring for high DM
+masses and low recoil energies, where the ring-like feature is present in the SHM but distorted
+due to the impact of the LMC.
+      The analysis presented here is based on a single MW–LMC analogue from the Auriga
+cosmological simulations. Extending this study to a larger sample of simulated halos with
+different LMC orbital histories and masses would help quantify the halo-to-halo variation of
+these effects. Nevertheless, the strong directional signatures found in this work indicate that
+the LMC should be considered an important astrophysical ingredient in future predictions
+for directional DM detection.
+
+Acknowledgments
+
+We thank Azadeh Fattahi for providing the re-simulated Auriga halo studied in this work.
+JRC and NB acknowledge the support of the Natural Sciences and Engineering Research
+Council of Canada (NSERC), funding reference number RGPIN-2020-07138, and the NSERC
+Discovery Launch Supplement, DGECR-2020-00231. JRC acknowledges support from INFN
+through the Senior Research Fellowship program (Grant No. 27076). NB acknowledges the
+support of the Canada Research Chairs Program.
+
+A    Tests on the numerical integration
+
+In this appendix, we present the results of the tests performed to determine the accuracy
+of our numerical approach for integrating the DM velocity distribution obtained from the
+MW-LMC analogue.
+
+
+
+
+                                            – 16 –
+      0.000694 0.001098 0.001501 0.001905              0.000013 0.024656 0.049299 0.073943
+
+Figure 8. Left panel: Molleweide map of fˆdet in Galactic coordinates for a He target at
+Gran Sasso assuming the SHM Maxwellian DM velocity distribution and computed using the
+exact expression in eq. (4.5), for mχ = 100 GeV and ER = 0.25 keV. Right panel: Relative
+difference of the fˆdet maps computed using the numerical integration from mock data created
+from a truncated Maxwellian distribution and the exact expression of eq. (4.5).
+
+
+       Maxwellian distribution. We compare the results of our numerical framework with
+the analytical expression of the Radon transform for the Maxwellian distribution, given in
+eq. (4.5). For this test, we create mock numerical data by sampling N independent values
+of the local DM velocities in the Galactic frame, (ux , uy , uz ), from a truncated Maxwellian
+velocity distribution, and then apply the methodology detailed in section 4.1. We assume a
+DM mass of 100 GeV and a nuclear recoil energy of 0.25 keV as our benchmark case, with
+the specifications of the CYGNUS-like experiment at Gran Sasso for a He target.
+       The Mollweide map of fˆdet (vmin , q̂) computed using eq. (4.5) is shown in the left panel
+of figure 8. We compare this exact result, fˆexact , with the result of our numerical integration,
+fˆnum , by computing their relative difference defined as ε(q̂) = 1 − fˆnum /fˆexact . We show
+this relative difference in the right panel of figure 8. To create the fˆnum map, we use a total
+of 104 DM particles, since this is approximately the size of the simulation sample. As it can
+be seen from the right panel of figure 8, the relative difference between the numerical and
+exact fˆdet maps is at most ∼ 7.4%.
+     Within the same test, we also vary several relevant parameters of the numerical frame-
+work:
+
+   • Number of particles. The sample size of the DM velocity distribution can play an
+     important role in the numerical framework, as a larger number of sampled particles may
+     provide a more accurate reconstruction of the distribution. As mentioned previously,
+     we compute fˆdet (vmin , q̂) from a numerical sample in which each (ux , uy , uz ) component
+     is drawn from a Maxwellian distribution, using 104 particles to match the approximate
+     number of particles in the simulation. We then increase the number of sampled particles
+     up to ∼ 106 . We find that this produces a maximum relative difference of ∼ 7.1% in
+     fˆdet , with respect to the exact solution, which is very close to the maximum value
+     shown in the right panel of figure 8. We therefore conclude that, within this range, the
+     sample size does not significantly affect our results.
+
+   • Bin Size. The size of the velocity bins can also affect the reconstructed numerical
+     velocity distribution obtained from the sampled particles. As described in section 4.1,
+     we adopt a bin size of ∆v = 50 km/s for our benchmark computations. We then
+
+
+
+
+                                             – 17 –
+      vary the bin size and compare the resulting distributions, choosing ∆v = 25 km/s and
+      ∆v = 75 km/s. For N = 104 sampled particles, a bin size of ∆v = 25 km/s yields
+      results very similar to the benchmark case; however, the distribution at small and large
+      velocities is less well-represented because the number of particles per bin decreases. For
+      ∆v = 75 km/s, the numerical computation shows a larger mismatch with respect to the
+      exact solution, with the relative difference reaching a maximum of ∼ 8.3%. We conclude
+      that larger velocity bins reduce the resolution of the reconstructed distribution, leading
+      to a poorer representation of the underlying velocity structure.
+
+    • Integrations points. The computation of the Radon transform in eq. (4.12) requires
+      evaluating a double numerical integral for each pixel in the Mollweide map, which can be
+      computationally expensive. For example, when the angular resolution of the HEALPix
+      grid is ∼ 2◦ , corresponding to Nside = 32, the total number of pixels is 12,288. To keep
+      the computational cost manageable, we use a trapezoidal integration scheme. The total
+      runtime depends strongly on the number of integration points used. We find that using
+      100 integration points is sufficient to ensure convergence, as increasing this number
+      changes the results by no more than O(10−3 %).
+
+    • Nside. We have also verified that the HEALPix angular resolution does not signifi-
+      cantly affect the resulting maps. In particular, we achieve the desired accuracy already
+      at Nside = 16, which further reduces the computational time. Nevertheless, we adopt
+      Nside = 32 in the final results for aesthetic purposes, as it provides a smoother visual
+      representation without altering the physical conclusions.
+
+
+B    Resolution tests
+
+We have argued in appendix A that increasing the number of sampled DM velocities in the
+case of a Maxwellian distribution does not have a significant impact on our results. However,
+this conclusion does not necessarily extend to the DM velocity distribution extracted from
+the simulated MW-LMC analogue. In this case, the simulation resolution imposes an intrinsic
+limitation, preventing us from assessing whether increasing the number of particles would
+significantly affect our results. A higher resolution simulation would be required to fully test
+the stability of our conclusions with respect to the sampling of the underlying DM velocity
+distribution.
+      Nevertheless, using MC techniques, we can artificially increase the number of points
+drawn from the DM velocity distribution obtained from simulations. We obtain the one-
+dimensional DM velocity distributions in ux , uy , and uz , as well as the distribution of the
+speed u in the Galactic frame, directly from the simulations, by binning the velocity data and
+computing the mean value and 1σ Poisson uncertainty in each bin as shown in figure 1. We
+assume that the measured value of each velocity component and of the total speed within a
+given bin follows a Gaussian distribution, with the mean given by the measured mean value
+in each bin and the standard deviation given by the corresponding 1σ Poisson error in that
+bin. Under this assumption, we construct a likelihood of the form
+
+                                      3                  2                       2
+                                     1X        ui − ūi            1       u − ū
+                         log L = −                             −                         ,   (B.1)
+                                     2            σi               2         σ
+                                     i=1
+
+
+
+
+                                                – 18 –
+      0.000228 0.001203 0.002179 0.003154             0.000019 0.101535 0.203051 0.304567
+
+Figure 9. Left panel: Mollweide map of fˆdet in Galactic coordinates for a He target at Gran
+Sasso, computed using the MCMC sampling. Right panel: Relative difference of fˆdet between
+the original distribution obtained from the simulations and the sampled distribution.
+
+
+where ui ∈ [−600, 600] km/s with i = x, y, z, denotes a velocity value within the bin centered
+at ūi , and σi and σ are the corresponding uncertainties for the individual velocity components
+and for the speed u = |u|, respectively.
+     We sample the distribution by generating random values for the individual velocities ui
+and for the speed u, identifying the corresponding velocity bins, and computing the likelihood
+for those values. We use the Python package emcee to perform the Markov Chain MC
+(MCMC) sampling. By increasing the number of accepted steps, or, in the case of emcee,
+the number of independent walkers, we effectively increase the number of particles in the
+reconstructed velocity distributions.
+     In the left panel of figure 9, we show the Mollweide map of fˆdet obtained using the
+sampled distribution, for a DM mass of 100 GeV, nuclear recoil energy of 0.25 keV, and a He
+target at the Gran Sasso laboratory. To further quantify the difference between the sampled
+distribution and the original one computed directly from the simulations data, we compute
+the map of their relative difference; the results are shown in the right panel of figure 9. We
+observe that the relative difference can reach values of up to ∼ 30%, primarily in regions
+where the value of fˆdet is very low. This relatively large difference can be understood by
+noting that the number of particles with the specific velocities required to produce recoils in
+those directions is small, and therefore the MCMC sampling cannot accurately reconstruct
+this low-density regime. On the other hand, the relative difference is at most ∼ 15% in
+regions where fˆdet reaches its maximum value.
+     An additional source of uncertainty introduced by this procedure arises from the as-
+sumption that the individual velocity components (ux , uy , uz ) are independent, as implied
+by the likelihood construction in eq. (B.1). In reality, the simulation provides the full phase
+space information (x, y, z, ux , uy , uz ) of the DM particles, and correlations between velocity
+components are present. Moreover, the components of the velocity distribution as well as the
+speed distribution obtained from the simulations are not exactly Gaussian or Maxwellian,
+and this introduces another source of uncertainty in the procedure.
+     Nevertheless, we argue that even without explicitly accounting for these correlations,
+our results, particularly in the regions where the Radon transform is largest, are not expected
+to change significantly if the number of particles in the numerical sample is increased, as we
+have found a difference of ∼ 10−5 for these regions.
+
+
+
+
+                                             – 19 –
+References
+ [1] M. Cirelli, A. Strumia and J. Zupan, Dark Matter, 2406.01705.
+ [2] N. Bozorgnia, J. Bramante, J.M. Cline, D. Curtin, D. McKeen, D.E. Morrissey et al., Dark
+     matter candidates and searches, Can. J. Phys. 103 (2025) 671 [2410.23454].
+ [3] M.W. Goodman and E. Witten, Detectability of Certain Dark Matter Candidates, Phys. Rev.
+     D 31 (1985) 3059.
+ [4] J.D. Lewin and P.F. Smith, Review of mathematics, numerical factors, and corrections for dark
+     matter experiments based on elastic nuclear recoil, Astropart. Phys. 6 (1996) 87.
+ [5] A.K. Drukier, K. Freese and D.N. Spergel, Detecting cold dark-matter candidates, Phys. Rev. D
+     33 (1986) 3495.
+ [6] D.N. Spergel, The Motion of the Earth and the Detection of Wimps, Phys. Rev. D 37 (1988)
+     1353.
+ [7] M.S. Alenazi and P. Gondolo, Directional recoil rates for WIMP direct detection, Phys. Rev. D
+     77 (2008) 043532 [0712.0053].
+ [8] S. Ahlen et al., The case for a directional dark matter detector and the status of current
+     experimental efforts, Int. J. Mod. Phys. A 25 (2010) 1 [0911.0323].
+ [9] A.M. Green and B. Morgan, The median recoil direction as a WIMP directional detection
+     signal, Phys. Rev. D 81 (2010) 061301 [1002.2717].
+[10] F. Mayet et al., A review of the discovery reach of directional Dark Matter detection, Phys.
+     Rept. 627 (2016) 1 [1602.03781].
+[11] S.E. Vahsen, C.A.J. O’Hare and D. Loomba, Directional Recoil Detection, Ann. Rev. Nucl.
+     Part. Sci. 71 (2021) 189 [2102.04596].
+[12] E. Baracchini, Directional dark matter searches, SciPost Phys. Proc. 12 (2023) 002.
+[13] N. Bozorgnia, G.B. Gelmini and P. Gondolo, Ring-like features in directional dark matter
+     detection, JCAP 06 (2012) 037 [1111.6361].
+[14] N. Bozorgnia, G.B. Gelmini and P. Gondolo, Aberration features in directional dark matter
+     detection, JCAP 08 (2012) 011 [1205.2333].
+[15] N. Bozorgnia, G.B. Gelmini and P. Gondolo, Inverted dipole feature in directional detection of
+     exothermic dark matter, JCAP 01 (2017) 052 [1611.01750].
+[16] C.A.J. O’Hare, New Definition of the Neutrino Floor for Direct Dark Matter Searches, Phys.
+     Rev. Lett. 127 (2021) 251802 [2109.03116].
+[17] D.P. Snowden-Ifft, C.J. Martoff and J.M. Burwell, Low pressure negative ion drift chamber for
+     dark matter search, Phys. Rev. D 61 (2000) 101301 [astro-ph/9904064].
+[18] S. Burgos et al., First results from the DRIFT-IIa dark matter detector, Astropart. Phys. 28
+     (2007) 409 [0707.1488].
+[19] J. Billard, F. Mayet and D. Santos, Directional detection of dark matter with mimac, Journal
+     of Physics: Conference Series 375 (2012) 012008.
+[20] D. Santos, Dark matter directional detection with mimac, Journal of Physics: Conference
+     Series 1029 (2018) 012005.
+[21] S. Ahlen et al., First Dark Matter Search Results from a Surface Run of the 10-L DMTPC
+     Directional Dark Matter Detector, Phys. Lett. B 695 (2011) 124 [1006.2928].
+[22] K. Miuchi et al., First underground results with NEWAGE-0.3a direction-sensitive dark matter
+     detector, Phys. Lett. B 686 (2010) 11 [1002.1794].
+
+
+
+
+                                               – 20 –
+[23] K. Nakamura et al., Direction-sensitive dark matter search with gaseous tracking detector
+     NEWAGE-0.3b’, PTEP 2015 (2015) 043F01.
+[24] T. Shimada et al., Direction-sensitive dark matter search with 3D-vector-type tracking in
+     NEWAGE, PTEP 2023 (2023) 103F01 [2301.04779].
+[25] NEWS-G collaboration, The NEWS-G detector at SNOLAB, JINST 18 (2023) T02005
+     [2205.15433].
+[26] J.-M. Coquillat, Light WIMP search with the NEWS-G experiment, PoS ICRC2025 (2025)
+     477.
+[27] NEWSdm collaboration, Directional Detection of Dark Matter With a Nuclear Emulsion
+     Based Detector, in 18th Lomonosov Conference on Elementary Particle Physics, pp. 314–317,
+     2019, DOI.
+[28] NEWSdm collaboration, Directional Dark Matter Search with the NEWSdm experiment, J.
+     Phys. Conf. Ser. 2156 (2021) 012044.
+[29] Y. Shimizu, M. Minowa, H. Sekiya and Y. Inoue, Directional scintillation detector for the
+     detection of the wind of wimps, Nuclear Instruments and Methods in Physics Research Section
+     A: Accelerators, Spectrometers, Detectors and Associated Equipment 496 (2003) 347.
+[30] P.F. Schuster, Investigating the Anisotropic Scintillation Response in Organic Crystal
+     Scintillator Detectors, Ph.D. thesis, UC, Berkeley (main), 2016.
+[31] D.R. Nygren, Columnar recombination: a tool for nuclear recoil directional sensitivity in a
+     xenon-based direct detection WIMP search, J. Phys. Conf. Ser. 460 (2013) 012006.
+[32] G. Mohlabeng, K. Kong, J. Li, A. Para and J. Yoo, Dark Matter Directionality Revisited with a
+     High Pressure Xenon Gas Detector, JHEP 07 (2015) 092 [1503.03937].
+[33] E. Baracchini et al., CYGNO: a gaseous TPC with optical readout for dark matter directional
+     search, JINST 15 (2020) C07036 [2007.12627].
+[34] S.E. Vahsen et al., CYGNUS: Feasibility of a nuclear recoil observatory with directional
+     sensitivity to dark matter and neutrinos, 2008.12587.
+[35] C. Lisotti et al., CYGνS: detecting solar neutrinos with directional gas time projection
+     chambers, Eur. Phys. J. C 84 (2024) 1021 [2404.03690].
+[36] F.D. Amaro et al., The CYGNO Experiment, Instruments 6 (2022) 6 [2202.05480].
+[37] N. Bozorgnia, F. Calore, M. Schaller, M. Lovell, G. Bertone, C.S. Frenk et al., Simulated Milky
+     Way analogues: implications for dark matter direct searches, JCAP 1605 (2016) 024
+     [1601.04707].
+[38] C. Kelso, C. Savage, M. Valluri, K. Freese, G.S. Stinson and J. Bailin, The impact of baryons
+     on the direct detection of dark matter, JCAP 1608 (2016) 071 [1601.04725].
+[39] J.D. Sloane, M.R. Buckley, A.M. Brooks and F. Governato, Assessing Astrophysical
+     Uncertainties in Direct Detection with Galaxy Simulations, Astrophys. J. 831 (2016) 93
+     [1601.05402].
+[40] N. Bozorgnia and G. Bertone, Implications of hydrodynamical simulations for the interpretation
+     of direct dark matter searches, Int. J. Mod. Phys. A32 (2017) 1730016 [1705.05853].
+[41] N. Bozorgnia, A. Fattahi, C.S. Frenk, A. Cheek, D.G. Cerdeno, F.A. Gómez et al., The dark
+     matter component of the Gaia radially anisotropic substructure, JCAP 07 (2020) 036
+     [1910.07536].
+[42] R. Poole-McKenzie, A.S. Font, B. Boxer, I.G. McCarthy, S. Burdin, S.G. Stafford et al.,
+     Informing dark matter direct detection limits with the ARTEMIS simulations, JCAP 11 (2020)
+     016 [2006.15159].
+
+
+
+
+                                               – 21 –
+[43] G.E. Lawrence, A.R. Duffy, C.A. Blake and P.F. Hopkins, Gusts in the Headwind:
+     Uncertainties in Direct Dark Matter Detection, 2207.07644.
+[44] M. Kuhlen, A. Pillepich, J. Guedes and P. Madau, The Distribution of Dark Matter in the
+     Milky Way’s Disk, Astrophys. J. 784 (2014) 161 [1308.1703].
+[45] T. Lacroix, A. Núñez Castiñeyra, M. Stref, J. Lavalle and E. Nezri, Predicting the dark matter
+     velocity distribution in galactic structures: tests against hydrodynamic cosmological simulations,
+     JCAP 10 (2020) 031 [2005.03955].
+[46] I. Santos-Santos, N. Bozorgnia, A. Fattahi and J.F. Navarro, Are there any extragalactic high
+     speed dark matter particles in the Solar neighborhood?, JCAP 03 (2024) 046 [2308.15388].
+[47] N. Garavito-Camargo, G. Besla, C.F.P. Laporte, K.V. Johnston, F.A. Gómez and
+     L.L. Watkins, Hunting for the Dark Matter Wake Induced by the Large Magellanic Cloud,
+     Astrophys. J. 884 (2019) 51 [1902.05089].
+[48] N. Garavito-Camargo, G. Besla, C.F.P. Laporte, A.M. Price-Whelan, E.C. Cunningham,
+     K.V. Johnston et al., Quantifying the Impact of the Large Magellanic Cloud on the Structure of
+     the Milky Way’s Dark Matter Halo Using Basis Function Expansions, Astrophys. J. 919 (2021)
+     109 [2010.00816].
+[49] C. Conroy, R.P. Naidu, N. Garavito-Camargo, G. Besla, D. Zaritsky, A. Bonaca et al., All-sky
+     dynamical response of the galactic halo to the large magellanic cloud, Nature 592 (2021) 534.
+[50] M.S. Petersen and J. Peñarrubia, Detection of the milky way reflex motion due to the large
+     magellanic cloud infall, Nature Astronomy 5 (2020) 251.
+[51] M.S. Petersen and J. Peñarrubia, Reflex motion in the Milky Way stellar halo resulting from
+     the Large Magellanic Cloud infall, Mon. Not. Roy. Astron. Soc. 494 (2020) L11 [2001.09142].
+[52] E.C. Cunningham, N. Garavito-Camargo, A.J. Deason, K.V. Johnston, D. Erkal,
+     C.F.P. Laporte et al., Quantifying the Stellar Halo’s Response to the LMC’s Infall with
+     Spherical Harmonics, Astrophys. J. 898 (2020) 4 [2006.08621].
+[53] M. Cavieres, J. Chanamé, C. Navarrete, Y. Ordenes-Briceño, N. Garavito-Camargo, G. Besla
+     et al., The Distant Milky Way Halo from the Southern Hemisphere: Characterization of the
+     LMC-induced Dynamical Friction Wake, ApJ 983 (2025) 83 [2410.00114].
+[54] G. Besla, A. Peter and N. Garavito-Camargo, The highest-speed local dark matter particles
+     come from the Large Magellanic Cloud, JCAP 1911 (2019) 013 [1909.04140].
+[55] K. Donaldson, M.S. Petersen and J. Peñarrubia, Effects on the local dark matter distribution
+     due to the Large Magellanic Cloud, Mon. Not. Roy. Astron. Soc. L513 (2022) 46 [2111.15440].
+[56] A. Smith-Orlik et al., The impact of the Large Magellanic Cloud on dark matter direct
+     detection signals, JCAP 10 (2023) 070 [2302.04281].
+[57] J. Reynoso-Cordova, N. Bozorgnia and M.-C. Piro, The Large Magellanic Cloud: expanding the
+     low-mass parameter space of dark matter direct detection, JCAP 12 (2024) 037.
+[58] N. Bozorgnia, J. Bramante and A. Buchanan, High mass dark matter searches with the high
+     speed flux from the Large Magellanic Cloud, JCAP 04 (2026) 065 [2511.21841].
+[59] R.J.J. Grand, F.A. Gómez, F. Marinacci, R. Pakmor, V. Springel, D.J.R. Campbell et al., The
+     Auriga Project: the properties and formation mechanisms of disc galaxies across cosmic time,
+     Mon. Not. Roy. Astron. Soc. 467 (2017) 179 [1610.01159].
+[60] R.J.J. Grand, F. Fragkoudi, F.A. Gómez, A. Jenkins, F. Marinacci, R. Pakmor et al., Overview
+     and public data release of the Auriga Project: cosmological simulations of dwarf and Milky
+     Way-mass galaxies, arXiv e-prints (2024) arXiv:2401.08750 [2401.08750].
+[61] J. Schaye et al., The EAGLE project: Simulating the evolution and assembly of galaxies and
+     their environments, Mon. Not. Roy. Astron. Soc. 446 (2015) 521 [1407.7040].
+
+
+
+
+                                               – 22 –
+[62] R.A. Crain et al., The EAGLE simulations of galaxy formation: calibration of subgrid physics
+     and model variations, Mon. Not. Roy. Astron. Soc. 450 (2015) 1937 [1501.01311].
+[63] V. Springel, E pur si muove: Galiliean-invariant cosmological hydrodynamical simulations on a
+     moving mesh, Mon. Not. Roy. Astron. Soc. 401 (2010) 791 [0901.4107].
+[64] Planck collaboration, Planck 2015 results. XIII. Cosmological parameters, Astron. Astrophys.
+     594 (2016) A13 [1502.01589].
+[65] C. Power, J.F. Navarro, A. Jenkins, C.S. Frenk, S.D.M. White, V. Springel et al., The Inner
+     structure of Lambda CDM halos. 1. A Numerical convergence study, Mon. Not. Roy. Astron.
+     Soc. 338 (2003) 14 [astro-ph/0201544].
+[66] A. Jenkins, A new way of setting the phases for cosmological multiscale Gaussian initial
+     conditions, MNRAS 434 (2013) 2094 [1306.5968].
+[67] P. Gondolo, Recoil momentum spectrum in directional dark matter detectors, Phys. Rev. D 66
+     (2002) 103513 [hep-ph/0209110].
+[68] R.H. Helm, Inelastic and elastic scattering of 187-mev electrons from selected even-even nuclei,
+     Phys. Rev. 104 (1956) 1466.
+[69] K.M. Górski, E. Hivon, A.J. Banday, B.D. Wandelt, F.K. Hansen, M. Reinecke et al.,
+     HEALPix - A Framework for high resolution discretization, and fast analysis of data
+     distributed on the sphere, Astrophys. J. 622 (2005) 759 [astro-ph/0409513].
+[70] E. Baracchini et al., Technical Design Report — TDR CYGNO-04/INITIUM, Tech. Rep.
+     INFN-23-06-LNF, INFN (2023).
+[71] D. Baxter et al., Recommended conventions for reporting results from direct dark matter
+     searches, Eur. Phys. J. C 81 (2021) 907 [2105.00599].
+[72] LZ collaboration, Dark Matter Search Results from 4.2 Tonne-Years of Exposure of the
+     LUX-ZEPLIN (LZ) Experiment, Phys. Rev. Lett. 135 (2025) 011802 [2410.17036].
+
+
+
+
+                                               – 23 –
+

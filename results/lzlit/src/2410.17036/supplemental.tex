@@ -1,0 +1,155 @@
+\section{Data Samples}
+Figure~\ref{fig:allsamples} shows the WS2024 and WS2022 events passing all data selection criteria grouped in their respective sample in the likelihood. Table~\ref{tab:exposures} lists the exposure for each sample in tonne-years.
+
+\begin{figure}[h]
+    \centering
+      \begin{tabular}{cc} \includegraphics[width=0.4\textwidth]{figureS1_high_mix_final.pdf} &  \includegraphics[width=0.4\textwidth]{figureS1_rn_inactive_final.pdf} \\
+    \includegraphics[width=0.4\textwidth]{figureS1_rn_tagged_final.pdf} & \includegraphics[width=0.4\textwidth]{figureS1_rn_untagged_final.pdf} \\
+
+    \includegraphics[width=0.4\textwidth]{figureS1_vetoed.pdf}
+ &    \includegraphics[width=0.4\textwidth]{figureS1_ws2022.pdf}
+    \end{tabular}
+    \caption{
+    Panels show the events used in the WS2024+WS2022 combined analysis organized into the various samples described in the main text. Model contours are the same as those in Fig.~\ref{fig:data}. Red contours in the veto tagged panel display the regions containing 68\% and 95\% of the distribution of tagged neutron backgrounds.}
+    \label{fig:allsamples}
+\end{figure}
+
+\begin{table}[hbtp]
+    \caption{Exposures of the six samples used in the likelihood given in tonne-years.}
+    \label{tab:exposures}
+    \centering
+    \begin{tabular}{c c c c c c}
+    \tabularnewline
+    \hline
+    \hline
+    High-Mixing & Radon Tag & Radon & Radon & Veto & WS2022\\
+    State & Inactive & Tagged & Untagged & Tagged & Only \tabularnewline
+    \hline \tabularnewline[-2.2ex]
+    0.6 & 0.6 & 0.3 & 1.8 & n/a & 0.9 \tabularnewline
+    \hline
+    \hline
+    \end{tabular}
+\end{table}
+
+\section{Details of the Detector Response Model}
+The LZ detector and xenon response models are implemented in a \textsc{nest}-based application that includes effects such as curved electron drift paths from field non-uniformities, finite position reconstruction resolution in the transverse $(x, y)$ and longitudinal $z$ directions, and position-dependence of the S1 and S2 signal sizes. The key detector parameters of the model are provided in Table~\ref{nest_det_params}. A header file for \textsc{nest}~v2.4.0 that reproduce the ER and NR response models used in this analysis is available online at \url{\supplementalurl}.
+
+\begin{table}[h!]
+    \centering
+    \caption{Relevant \textsc{nest} detector parameters. The parameters in the top-half of the table are input parameters, while the bottom-half are results of \textsc{nest} calculations.\\}
+    \begin{tabular}{l c c}
+    \hline
+    \hline
+    Parameter & WS2024 & WS2022 \\ \hline
+    $g_1$~[phd/photon]  &  0.112 & 0.114 \\
+    $g_1^{\rm gas}$~[phd/photon] & 0.076 & 0.092 \\
+    Effective GXe Extraction Field~[kV/cm] & 8.3 & 8.4 \\
+    \hline
+    Single Electron Size~[phd] & 46.9 & 58.5 \\
+    Extraction Efficiency~[\%] & 72.5 & 80.5 \\
+        $g_2$~[phd/electron] &~34.0 & 47.1 \\
+    \hline
+    \hline
+    \end{tabular}
+    \label{nest_det_params}
+\end{table}
+
+Note that NEST has multiple models for extraction efficiency versus gaseous xenon (GXe) electric field strength due to conflicting measurements in the literature~\cite{Xu:2019dqb}, and the default model provides the lower bound of the extraction efficiency for a given field strength. In order to reproduce the observed single electron size and measured extraction efficiency in LZ with this default model, a higher effective value for the GXe field magnitude is used, and thus the value reported in Table~\ref{nest_det_params} does not represent a physical field inside the LZ TPC. Extraction efficiency is measured as the ratio between the best-fit electroluminescence gain ($g_2$) value and the observed single electron signal size. 
+
+In addition to the parameters below, the ER and NR mean yield and fluctuations models have been tuned to minimize the discrepancy between NEST and LZ calibration data. The ER mean yield parameters are provided in Table~\ref{nest_ER_params}, and the NR parameters are shown in Table~\ref{nest_NR_params}. Nomenclature for the individual parameters follows from~\cite{szydagis2022review}. There are detailed instructions for implementing these changes in the provided file referenced above.
+
+\begin{table}[h!]
+    \centering
+    \caption{Default and best-fit model parameters for the \textsc{nest} ER mean charge yield model. The LZ values were found by fitting to the $^3$H and $^{14}$C band means. See Eq.~6 of~\cite{szydagis2022review} for more information regarding the individual $m_i$. \\}
+    \begin{tabular}{l c c}
+    \hline
+    \hline
+    Parameter & \textsc{nest} Default at 97~V/cm & LZ Value \\
+    \hline
+    $m_1$~[keV$^{-1}$] & 14.6 & 12.5 \\
+    $m_2$~[keV$^{-1}$] & 77.3 & 85.0 \\
+    $m_3$~[keV] & 0.8 & 0.6 \\
+    $m_4$ & 2.1 & 2.1 \\
+    $m_5$ [keV$^{-1}$] & 19.3 & 25.7 \\
+    $m_6$ [keV$^{-1}$] & 0 & 0 \\
+    $m_7$ [keV] & 78.0 &  59.7 \\
+    $m_8$ & 4.3 & 3.7 \\
+    $m_9$ & 0.33 & 0.28 \\
+    $m_{10}$ & 0.08 & 0.11 \\
+    \hline
+    \hline
+    \end{tabular}
+    
+    \label{nest_ER_params}
+\end{table}
+
+
+\begin{table}[h!]
+    \centering
+    \caption{Model parameters for the \textsc{nest} NR mean light and charge yields model. The LZ values were found by fitting to the calibrated DD band mean. See Eqs. (10), (12), and (13) of~\cite{szydagis2022review} for more information regarding the individual parameters. The last two parameters ($f_1$ and $f_2$) are not described in~\cite{szydagis2022review}, but are available as free parameters in \textsc{nest}, controlling the asymmetry of the sigmoidal energy dependence for the charge and light yields, respectively. See the \textsc{NEST} function \textsc{GetYieldNR(...)} for the usage of $f_1$ and $f_2$ in calculating NR yields~\cite{nest_2_4_0}. \\}
+    \begin{tabular}{l c c}
+    \hline
+    \hline
+    Parameter & \textsc{nest} Default & LZ Value \\
+    \hline
+    $\alpha$ [keV$^{1/\beta}$] & 11.0 & 10.2 \\
+    $\beta$ & 1.1 & 1.1 \\
+    $\gamma$ [(V/cm)$^{1/\delta}$] & 0.048 & 0.050 \\
+    $\delta$ & -0.0533 & -0.0533 \\
+    $\epsilon$ [keV] & 12.6 & 12.5 \\
+    $\zeta$ [keV] & 0.30 & 0.29 \\
+    $\eta$ & 2.0 & 1.9 \\
+    $\theta$ [keV] & 0.30 & 0.32 \\
+    $\iota$ & 2.0 & 2.1 \\
+    $p$ & 0.50 & 0.51 \\
+    \hline
+    $f_1$ & 1.0 & 0.996 \\ 
+    $f_2$ & 1.0 & 0.999 \\
+    \hline
+    \hline
+    \end{tabular}
+    
+    \label{nest_NR_params}
+\end{table}
+
+\section{WS2024-Only Limit}
+Figure~\ref{fig:ws2024only} shows the SI WIMP-nucleon cross section upper limit obtained using the data and models pertaining to the WS2024, 3.3~tonne-year exposure only.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[ width=0.5\linewidth]{figureS2.pdf}
+  \caption{Upper limits (90\% C.L.) on the spin-independent WIMP-nucleon cross-section as a function of WIMP mass from WS2024 (220.0~live days) only are shown with a solid black line, with a $-1\sigma$ power constraint applied. The gray dot-dash line shows the limits without the power constraint; green and yellow regions show the range of expected upper limits from 68\% and 95\% of background-only experiments, while the dashed black line indicates the median expectation, obtained with post-fit background estimates. The median $3\sigma$ observation significance from the post-fit model is shown as a dotted black line. Also shown are limits from WS2022 only~\cite{SR1WS}, PandaX-4T~\cite{PandaX:2024qfu}, LUX~\cite{akerib2017results}, all power constrained to $-1\sigma$; XENONnT~\cite{XENON:2023cxc}, reinterpreted with a $-1\sigma$ power constraint; XENON1T~\cite{collaboration2018dark}, and DEAP-3600~\cite{DEAP:2019yzn}.}
+  \label{fig:ws2024only}
+\end{figure}
+
+\pagebreak
+\section{Limits in Terms of Number of WIMP Events}
+
+Figure~\ref{fig:nwimp} presents the WS2022+WS2024 combined and WS2024-only upper limits in number of events. 
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width=0.98\textwidth]{figureS3_limit_curve_events_combined.pdf}
+  \end{minipage}\hfill
+  \begin{minipage}{0.49\textwidth}
+        \centering
+        \includegraphics[width=0.98\textwidth]{figureS3_limit_curve_events_ws2024.pdf}
+  \end{minipage}\hfill
+  \caption{The \SI{90}{\percent} confidence limit (solid line) for the number of WIMP events versus WIMP mass in the spin-independent case for the combined analysis (left) and WS2024 only (right). The dot-dash line shows the limit before applying the power constraint described in the text. The dashed line shows the median sensitivity and the dotted line shows the median $3\sigma$ discovery sensitivity. The green and yellow bands are the $1\sigma$ and $2\sigma$ sensitivity bands. }
+  \label{fig:nwimp}
+\end{figure}
+
+\vspace{-0.03cm}
+\RevA{\section{Parameters of the Salting Model}
+As discussed in the main text, the salt is drawn from a distribution consisting of the sum of a WIMP-like exponential and a flat spectrum, as shown in Fig.~\ref{fig:saltdist}. The parameter $E_{max}$ sets the maximum energy of the flat distribution and is drawn from a Gaussian distribution with mean $\mu_{max} = 250$~keV and sigma $\sigma_{max} = 25$~keV. The parameter $E_\mu$ is chosen to mimic the recoil spectrum induced by a WIMP with mass $M_\chi$, which is in turn drawn from a Gaussian with mean $\mu_\chi$ = 80~GeV/c$^2$ and width $\sigma_\chi$ = 20~GeV/c$^2$. The normalization is drawn from a uniform distribution that spans from zero up to a rate that would be consistent with the upper limits from Ref.~\cite{SR1WS}. 
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[trim={0cm 7cm 0 5cm},clip, width=0.45\linewidth]{figureS4.pdf}
+  \caption{Distribution from which the salt events are drawn. The parameters are described in the text.}
+  \label{fig:saltdist}
+\end{figure}
+
+The actual normalization, exponential, and flat spectrum parameters used are still hidden to the collaboration as unveiling them would harm bias mitigation of ongoing analyses. The allowed ranges were chosen to ensure that salt events can plausibly span the WIMP-search energy range, and also reach the highest recoil energies that might be used in a future higher-energy analysis, such as for effective field theories of dark matter.}

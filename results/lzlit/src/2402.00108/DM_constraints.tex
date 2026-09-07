@@ -1,0 +1,82 @@
+\section{Milky Way Halo Constraints}\label{sec:DM}
+
+\begin{deluxetable*}{lcllr}
+\tablecaption{Chosen values for the modeling of different Milky Way components, for the purpose of obtaining a mass profile from an escape velocity profile. The notation $\mathcal{U} (a,b)$ refers to a uniform prior distribution from $a$ to $b$. \label{tab:MW_components}}
+\tablewidth{0.75\textwidth}
+\tabletypesize{\small}
+\tablehead{
+    \colhead{Component} &
+    \colhead{Model} &
+    \colhead{Parameter} &
+    \colhead{Symbol} &
+    \colhead{Value}
+}
+\startdata
+Bulge & Plummer profile & Mass & $\rm{M}_{\text{bulge}}$ & $1.067\times 10^{10}\,\rm{M}_\odot$ \\
+& \citep{plummer:1911} & Scale radius & $b$ & $0.3\,\rm{kpc}$ \\
+\midrule
+Thin disk & Miyamoto-Nagai profile & Mass & $\rm{M}_{\text{thin disk}}$ & $3.944\times 10^{10}\,\rm{M}_\odot$ \\
+& \citep{miyamoto:1975} & Scale radius & $r_{\text{thin disk}}$ & $5.3\,\rm{kpc}$ \\
+& & Scale height & $z_{\text{thin disk}}$ & $0.25\,\rm{kpc}$ \\
+\midrule
+Thick disk & Miyamoto-Nagai profile & Mass & $\rm{M}_{\text{thick disk}}$ & $3.944\times 10^{10}\,\rm{M}_\odot$ \\
+& \citep{miyamoto:1975} & Scale radius & $r_{\text{thick disk}}$ & $2.6\,\rm{kpc}$ \\
+& & Scale height & $z_{\text{thick disk}}$ & $0.8\,\rm{kpc}$ \\
+\midrule
+DM halo & NFW profile & Mass & $\rm{M}_{200c}^{\rm{DM}}$ & $\mathcal U (10^{10}, 10^{13})\rm{M}_\odot$ \\
+& \citep{navarro:1996} & Concentration & $c_{200c}^{\rm{DM}}$ & $\mathcal U (0.1, 50.0)$ \\
+\enddata
+\end{deluxetable*}
+
+
+\subsection{From escape velocity to dark matter}
+
+The escape velocity profile of an isolated, finite, and spherical mass distribution is related to its potential $\Phi(\vert \vec{r} \vert)$ via $\vesc (\vert \vec{r} \vert) = \sqrt{2\Phi (\vert \vec{r} \vert)}$. In practice, however, the Milky Way is neither isolated nor spherical. It is therefore necessary to choose a distance at which we consider a star to be unbound, the choice of which is somewhat arbitrary. To remain consistent with the literature \citep{deason:2019,Necib2022}, we choose $2R_{200\rm{c}}$ as this limiting radius, where $R_{200\rm{c}}$ is the radius within which the galaxy’s mean density is 200 times the critical density of the universe
+\begin{equation}
+    \rho_{\rm{c}} = \frac{3 H^2}{8\pi G},
+\end{equation}
+where $H$ is the Hubble constant, and $G$ is the Newton's constant of gravity.
+In this work, we adopt a Hubble constant of $H = 70\,\rm{km\,s^{-1}\,Mpc^{-1}}$ (although slightly different from recent measurements~\citep{ade:2016}, this value is chosen for consistency with prior analyses). With this assumption, the escape velocity is related to the gravitational potential via 
+\begin{equation}
+    \vesc (r) = \sqrt{2\vert \Phi (r) - \Phi(2R_{200\rm{c}})\vert}
+\end{equation}
+which we evaluate with cylindrical radius ($r$) in the plane of the disk for axisymmetric potentials. One can then obtain the relationship between the potential and density profile via Poisson's equation, establishing the link between $\vesc(r)$ and $\rho(r)$. 
+
+To recover the density profile of the DM, it is necessary to model the density profiles of each of the Milky Way components, namely the bulge, thin disk, thick disk, and DM halo. In this work, we adopt model I of \cite{pouliasis:2017}, which we show in Table \ref{tab:MW_components}, to stay consistent with previous studies \citep{deason:2019, Necib2022}.
+ 
+We consider the Navarro-Frenck-White (NFW) profile \citep{navarro:1996, navarro:1997} for the DM component, with density profile given by 
+\begin{equation}
+    \label{eq:NFW}
+    \rho(r)=\frac{\rho_0}{\frac{r}{R_s}\left(1+\frac{r}{R_s}\right)^2},
+\end{equation}
+where $\rho_0$ is the normalization and $R_s$ is the scale radius. This profile can be formulated in terms of the equivalent pair of parameters $\rm{M}_{200\rm{c}}^{\rm{DM}}$ (DM mass within a sphere of radius $R_{200\rm{c}}$) and concentration $c_{200\rm{c}}^{\rm{DM}} = R_{200\rm{c}}/R_s$. The relation between these parameters is given by integrating the density profile to obtain
+\begin{align}
+\begin{split}
+    \label{eq:NFW_conversion} {\rm{M}}_{200\rm{c}}^{\rm{DM}}&=\int_0^{R_{200{\rm{c}}}} 4 \pi r^2 \rho(r) d r\\
+    &=4 \pi \rho_0 R_s^3\left[\ln (1+c)-\frac{c}{1+c}\right]
+\end{split}
+\end{align}
+wherein $c$ is used as a shorthand for $c_{200\rm{c}}^{\rm{DM}}$. The priors on $\rm{M}_{200\rm{c}}^{\rm{DM}}$ and $c_{200\rm{c}}^{\rm{DM}}$ used in fitting are shown in Table \ref{tab:MW_components}.
+
+\subsection{Milky Way Halo Parameters}
+We now obtain the halo parameters for the Milky Way by simultaneously fitting the entire escape velocity profile for a given speed distribution model, such as the SEPL or 2PL. We use the full $\vesc$ posterior at each Galactocentric radius to evaluate the likelihood of a given set of DM halo parameters at that radius, and assume that each measurement in the profile is independent such that the total likelihood is the product of the individual evaluations of the posteriors. The theoretical escape velocity values at each radius for a given $\rm{M}_{200\rm{c}}^{\rm{DM}}$ and $c_{200\rm{c}}^{\rm{DM}}$ are obtained by modeling the galaxy as the combination of this NFW halo and the baryonic components shown in Table \ref{tab:MW_components}, performed using \texttt{galpy} \citep{2015ApJS..216...29B}. 
+
+We perform the fits using \texttt{emcee} \citep{2013PASP..125..306F} which is also an affine-invariant Markov Chain Monte Carlo sampler. The best fit to the SEPL escape velocity profile is shown in Fig. \ref{fig:litcomp_and_DM_profiles}, and the shaded band is the 68\% confidence interval. We also show the decomposition of the best fit profile into the baryon-only and NFW-only components. 
+Constraints on the NFW parameter space due to the $\vesc$ measurements of both the SEPL and 2PL models are shown in Fig. \ref{fig:NFW_param_constraints}. It can be seen that both models yield consistent constraints, but those of the 2PL model are more uncertain and biased toward slightly higher masses, likely due to overestimation and the large uncertainty on $\vesc$ beyond the solar position for this model. 
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\linewidth]{media/DM_NFW_2panel.pdf}
+    \caption{Left: Constraints on the parameter space of the NFW halo of the Milky Way, as obtained via the escape velocity measurements of both the two-component power law (2PL) and stretched exponential power law (SEPL) models. Right: Combined constraints on the Milky Way NFW halo parameters due to the SEPL escape velocity constraints and the circular velocity constraint at the solar position of \cite{eilers:2019}. Contours correspond to $68\%$ and $95\%$ confidence.}
+    \label{fig:NFW_param_constraints}
+\end{figure*}
+
+To obtain stronger constraints on the NFW parameter space, previous works have combined escape velocity constraints with those of circular velocity measurements \citep{Piffl2014, Monari2018, deason:2019, Koppelman2021, Necib2022}. 
+%
+This is because the escape velocity probes the large-scale mass of the Milky Way, whereas circular velocity measurements are sensitive to the enclosed mass at that position. With the same baryonic model from Table \ref{tab:MW_components}, in line with \cite{Necib2022} we also include the circular velocity measurement at the solar position of \cite{eilers:2019},\footnote{More recent studies, such as \cite{Ou:2023}, have produced new measurements of the circular velocity based on \Gaia DR3. However, we adopt the older study of \cite{eilers:2019} for two reasons: First, it is consistent with \cite{Necib2022}, enabling a more direct comparison, and second, recent studies have shown a significant decline in the rotation curve at large Galactocentric radii that remains to be addressed. We try to avoid such a result affecting our measurements until a full understanding of the new circular velocity curves is established.} namely $v_{\rm{circ}}(r_\odot) = 230^{+10}_{-10}\,\rm{km\,s^{-1}}$. Our combined $\vesc$ and $v_{\rm{circ}}$ constraints on the NFW parameter space are shown in Fig. \ref{fig:NFW_param_constraints}. 
+%
+We obtain a final mass estimate for the DM halo of $\rm{M}_{200\rm{c}}^{\rm{DM}} = 0.55^{+0.15}_{-0.14}\times 10^{12} \, M_\odot$, which corresponds to a total Milky Way mass of $\rm{M}_{200\rm{c}} = 0.64^{+0.15}_{-0.14}\times 10^{12} \, M_\odot$ with this baryonic model.
+
+A comparison of Milky Way mass estimates obtained by fitting both escape velocity and local circular velocity measurements is shown in Fig. \ref{fig:mw_mass_comp}. Here it can be seen that the mass estimates obtained via the SEPL modeling and 2PL modeling are consistent, though the 2PL results are less constrained. Furthermore, these results are consistent with those of \cite{Necib2022} which were obtained via a 2PL measurement of $\vesc$ within 2~kpc of the solar position using \Gaia eDR3 data. The results are also consistent with the uncorrected \cite{Koppelman2021} mass estimate; the correction is motivated by simulations and amounts to increasing all escape velocity estimates by $10\%$. Our results support the trend of  analyses in recent years based on escape velocity modeling, which tend to find a lighter Milky Way of mass $\sim 0.5-1\times 10^{12}\,M_\odot$. This is likely due to the ``overshooting" of the 1PL inflating $\vesc$ measurements in earlier work.
+
+

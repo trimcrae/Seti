@@ -1,0 +1,1001 @@
+                                              High Mass Dark Matter Searches With the High Speed
+                                                    Flux From the Large Magellanic Cloud
+
+                                                    Nassim Bozorgnia1,2 , Joseph Bramante3,4,5 , and Andrew Buchanan3,4
+                                              1
+                                               Department of Physics, University of Alberta, Edmonton, Alberta, Canada
+arXiv:2511.21841v2 [hep-ph] 26 Feb 2026
+
+
+
+
+                                          2
+                                            Theoretical Physics Institute, University of Alberta, Edmonton, Alberta, Canada
+                                          3
+                                            Arthur B. McDonald Canadian Astroparticle Physics Research Institute, 64 Bader
+                                                          Lane, Queen’s University, Kingston, Ontario, Canada
+                                          4
+                                            Department of Physics, Engineering Physics, and Astronomy, Queen’s University,
+                                                                        Kingston, Ontario, Canada
+                                                5
+                                                  Perimeter Institute for Theoretical Physics, Waterloo, Ontario, Canada
+
+                                                                                    February 27, 2026
+
+
+                                                                                          Abstract
+                                                      As the hunt for dark matter progresses, recently there have been advances in the search
+                                                  for heavy dark matter with a mass well above a TeV. We show the importance of properly
+                                                  modeling the local dark matter velocity distribution, beyond the standard Maxwellian halo
+                                                  model, and in particular how the dynamics of the Large Magellanic Cloud and Milky Way
+                                                  may impact heavy dark matter searches. We introduce some new computational techniques
+                                                  for accurately computing the dark matter flux and the associated detector response. As a
+                                                  specific example, we examine the effect of the Large Magellanic Cloud on heavy dark matter
+                                                  bounds obtained from experiments searching for cosmic rays and magnetic monopoles using
+                                                  plastic etch detectors at the Ohya Mine and aboard the Skylab Space Station.
+
+
+                                          1       Introduction
+                                          For decades, astrophysicists have posited the existence of dark matter to explain several astro-
+                                          nomical observations, including galactic rotation curves, the cosmic microwave background, grav-
+                                          itational lensing observations and galactic structure formation. It has long been appreciated
+                                          that the unit mass of dark matter in the galactic halo can be orders of magnitude larger than
+                                          Standard Model particles [1–9]. Such massive states can be formed through dark sector nu-
+                                          cleosynthesis [10–13], dissipative processes in the early universe [14–18], or a first order phase
+                                          transition [1, 19]. Due to their low number density, such heavy halo constituents can have rela-
+                                          tively high cross sections with Standard Model particles without conflicting with known bounds,
+                                          and there are simple models that imply large cross sections for asymmetric composites via a weak
+                                          coupling, for example a Higgs portal coupling to nucleons [20–22]. At large cross sections, dark
+
+                                                                                              1
+matter can scatter multiple times with normal matter as it passes through the detector and over-
+burden material. This means incoming dark matter may lose substantial energy to the overburden
+before reaching an underground detector, motivating searches nearer to the surface and even in
+outer space. Fortuitously, there are no known Standard Model background processes that leave a
+signature similar to that of such heavy dark matter, which deposits many nuclear recoils along a
+very straight trajectory. Because many solid-state multiscatter detectors require a minimum recoil
+energy per unit path length to register successive events, their sensitivity is especially dependent
+on the dark matter velocity distribution. In all prior work, multiscatter searches have assumed
+dark matter follows the Standard Halo Model (SHM).
+    The SHM [23] is the simplest and most commonly adopted model for the dark matter distribu-
+tion in the Galaxy. In the SHM, the dark matter halo is assumed to be isothermal and spherical,
+with an isotropic Maxwell-Boltzmann velocity distribution which has a peak speed equal to the
+local circular speed. However, the actual dark matter distribution may have significant differences
+with respect to the SHM. In particular, high-resolution cosmological simulations that include both
+dark matter and baryons indicate that, while a Maxwellian distribution provides a reasonable fit
+to the local dark matter velocity distribution in simulated Milky Way (MW) analogues, the results
+carry large uncertainties [24–35].
+    One of the most important deviations from the SHM originates from the impact of the Large
+Magellanic Cloud (LMC) on the local dark matter distribution. The LMC is the most massive
+satellite and the most recent merger of the MW. It has recently completed its first pericentric
+passage and is currently at a distance of ∼ 50 kpc, moving at a speed of 321 ± 24 km/s with
+respect to the MW [36–39]. Recent studies employing both cosmological [40,41] and idealized [42,
+43] simulations demonstrate that the LMC significantly boosts the local dark matter velocity
+distribution to velocities above the Milky Way’s escape speed. This boost stems from the presence
+of high-speed dark matter particles originating from the LMC, as well as the gravitational influence
+of the LMC accelerating MW dark matter particles [40, 42]. As a result, the LMC can shift direct
+detection exclusion limits by several orders of magnitude toward smaller dark matter-nucleon cross
+sections and lower dark matter masses, with the most pronounced impact for low-mass dark matter
+particles [40, 41].
+    Previous work [44,45] computed exclusion limits for heavy dark matter, where [45] particularly
+used the SHM in its analysis and identified two existing searches for massive particles, namely the
+Skylab cosmic ray search and a search for monopoles at the Ohya quarry. The remainder of this
+paper is structured as follows. Section 2 describes the simulated MW-LMC analogue used in this
+work and our procedure for selecting a Solar neighborhood consistent with the observed LMC-Sun
+geometry. In Section 3 we lay out the multiscatter detector response formalism, including inter-
+action models (spin-independent nucleon and contact cross sections), energy loss in overburden,
+directional efficiencies, and in Section 4 we use discrete simulation samples to compute fluxes
+and energy thresholds for Ohya and Skylab. We then present the resultant limits in Section 5,
+comparing MW-LMC predictions to the SHM, and compare these to other searches. We conclude
+by summarizing the impact of the LMC-induced high-speed velocity tail on heavy-dark matter
+searches, discussing latitude-dependent flux effects, and outlining applications to future ground
+and orbital multiscatter detectors.
+
+
+
+
+                                                 2
+2     Simulations
+In this section we discuss the simulated MW–LMC analogue that we use to extract the local dark
+matter phase space distribution and the precedure to specify the Solar region.
+
+2.1    MW-LMC analogue
+We use a MW-LMC analogue from the Auriga magneto-hydrodynamical simulations [46, 47]. The
+Auriga project [46] contains a set of cosmological zoom-in simulations of isolated MW-mass halos,
+selected from a (100 Mpc)3 periodic cube (L100N1504) from the EAGLE project [48, 49]. The
+simulations were carried out using the moving-mesh code Arepo [50] and implement a galaxy
+formation subgrid model which includes star formation, supernova feedback, active galactic nuclei,
+black hole formation, metal cooling, and background UV/X-ray photoionisation radiation [46].
+The simulations adopt the Planck-2015 [51] cosmological parameters: Ωm = 0.307, Ωbar = 0.048,
+H0 = 67.77 km s−1 Mpc−1 . We use the standard resolution level (Level 4) of the simulations,
+in which the dark matter particle mass is mDM ∼ 3 × 105 M⊙ , the baryonic particle mass is
+mb = 5 × 104 M⊙ , and the Plummer equivalent gravitational softening length is ϵ = 370 pc [52,53].
+The Auriga simulations reproduce the observed stellar masses, sizes, rotation curves, star formation
+rates and metallicities of present day MW-mass galaxies.
+    The LMC’s first pericenter approach occurred ∼ 50 Myr ago [36] at a distance of ∼ 48 kpc [36],
+and the present-day stellar mass of the LMC from observations is ∼ 2.7 × 109 M⊙ [54]. We use a
+simulated MW-LMC analogue whose properties match those of the observed system. The analogue
+is the re-simulated halo 13 in ref. [40], corresponding to the Auriga 25 MW halo and its LMC
+analogue. This system was selected from a sample of 15 MW-LMC analogues in ref. [40], which
+were identified based on the present-day stellar mass of the LMC and its distance from host
+at first pericenter. Due to the large average time (∼ 150 Myr) between simulation snapshots
+in the 15 MW-LMC analogues, it is difficult to accurately identify their present-day snapshot.
+Therefore, one system (halo 13) was chosen and re-simulated in ref. [40], such that the average
+time between snapshots close to the LMC’s pericenter approach is ∼ 10 Myr, and the present-day
+snapshot closely matches observations. For this system, the virial mass of the MW host halo is
+1.2 × 1012 M⊙ and the halo mass of the LMC analogue at infall is 3.2 × 1011 M⊙ . More details
+on this system are provided in ref. [40]. Finally, we note that we use galactocentric coordinates
+defined such that the DM wind will come from +90 degrees in longitude [24, 40]. We find our
+directional component agrees with prior work, which sometimes uses the opposite convention for
+the galactocentric longitudinal coordinates [43].
+    In this work, we utilize the present day MW-LMC snapshot for this system. This is the
+snapshot closest to the present-day separation of the observed MW and LMC, where the distance
+of the LMC analogue from the host MW analogue is ∼ 50 kpc and its speed is 317 km/s. These
+closely match their corresponding values from observations.
+
+2.2    Solar region
+There is no Solar position in the simulations a priori, and this needs to be specified. As discussed
+in ref. [40], we choose the Sun’s position and velocity in the simulated halo such that it matches
+the observed Sun-LMC geometry. This matching is performed in three steps. In the first step, we
+determine the orientations of the stellar disk in the MW analogue that reproduce the observed
+angle with the orbital plane of the LMC analogue. In the second step, for each allowed disk
+
+                                                 3
+orientation we determine the Sun’s position by requiring that the angles between the LMC’s
+orbital angular momentum and the Sun’s position and velocity vectors in the simulations match
+their observed values. In the third step, we determine the best fit Sun’s position as the one that
+yields the closest match of the angles between the Sun’s velocity vector and the LMC’s position
+and velocities with their observed values.
+    The Solar region is defined as the overlap of two regions: a spherical shell with radii between 6
+to 10 kpc from the MW analogue’s center (with the Sun at a galactocentric distance of ∼ 8 kpc),
+and a cone with its axis aligned with the best fit Sun’s position, vertex at the galactic center, and
+an opening angle of π/4 radians. As detailed in ref. [40], the size of the Solar region is chosen such
+that it would be sensitive to the best fit Sun’s position and also include several thousand dark
+matter particles.
+
+
+3    Heavy Dark Matter and Plastic Etch Detectors
+We now lay out our treatment of heavy dark matter scattering in solid state detectors, and how
+this treatment is adapted to account for the high velocity component of dark matter associated
+with the LMC. Following [45], we consider two different models of dark matter interactions with
+nuclei. The first is a spin-independent nuclear scattering cross section. In this case, omitting
+nuclear form factors, the dark matter-nuclear cross section is defined as
+
+                                                      µ2χA
+                                         σχA = A2          σχn ,                                  (1)
+                                                      µ2χn
+
+where A is the number of nucleons in a nucleus, µχA is the dark matter-nucleus reduced mass,
+µχn is the dark matter-nucleon reduced mass and σχn is the dark matter-nucleon cross section.
+This interaction is appropriate if the dark matter is a loosely-bound composite, so that each dark
+matter constituent interacts coherently with all nucleons in a nucleus. The second model is a
+contact interaction, where the cross section is independent of the nucleus,
+
+                                             σχA = σC .                                           (2)
+
+This reproduces the classical result for a dark matter particle much larger than a nuclei and is
+appropriate for dark matter which is a single particle or a tightly-bound composite.
+   Next, we model the number of particles passing through the detector. At any point in time,
+we model a plastic etch detector as a planar detector with a normal vector n̂(t) pointing out of
+the detector and perpendicular to the plane of the detector and a directional efficiency ϵ(v̂, n̂(t)),
+                                           (
+                                            1 if n̂(t) · v̂ ≤ − cos(θtol ),
+                            ϵ(v̂, n̂(t)) =                                                        (3)
+                                            0 if n̂(t) · v̂ > − cos(θtol ),
+
+where we note that since these are expressed in terms of a dot product between the detector
+normal vector n̂(t) and the dark matter velocity v̂, this quantity is Euclidean frame-independent.
+Here, θtol is the tolerance angle of the detector. The number of particles above a given speed, v0 ,
+which pass through the detector is,
+                                                     Z
+                                            A d T ρχ
+                              N≥v0 (mχ ) =                 d3 v f (v)I(v),                      (4)
+                                              mχ      v>v0
+
+
+                                                  4
+where ρχ = 0.3 GeV/cm3 is the local dark matter density [55], mχ is the dark matter mass, Ad is
+the area of the detector, and T is the observation period for the detector. f (v) is the local dark
+matter velocity distribution in the reference frame of the earth and I(v) is a time average over
+detector quantities,
+                                          1 T
+                                            Z
+                                I(v) = −       dt n̂(t) · v ϵ(v̂, n̂(t)).                         (5)
+                                          T 0
+This is a convenient formalism because it separates the dark matter and detector information, as
+I(v) depends entirely on the properties of the detector and its orientation over time. In particular,
+it will be different for the Skylab and Ohya detectors. Setting v0 = 0 gives the total number of
+particles passing through the detector,
+                                                  Z
+                                            AT ρχ
+                                  N (mχ ) =          d3 v f (v)I(v),                              (6)
+                                              mχ
+where we integrate over the entire velocity distribution.
+   We now describe the energetics of the system. As a dark matter particle crosses through a
+medium M , it will lose energy to background nuclei at a rate of,
+                                    dE    2E X µ2χA
+                                       =−           nA σχA ,                                     (7)
+                                    dx    mχ A∈M mA
+
+where one sums over all nuclei in the material, labeled with mass number A and with number
+density nA . It is helpful to rewrite the energy deposition rate in terms of an effective number
+density ñ, which depends on the medium and the dark matter mass,
+                                          dE
+                                             = −ñM σE,                                          (8)
+                                          dx
+where σ is the cross section to be constrained. For a per-nucleon interaction, σ = σχn and,
+                                              X    A2 µ4χA
+                                    ñM = 2                  nA .                                (9)
+                                              A∈M
+                                                  mχ mA µ2χn
+
+For a contact interaction, σ = σC and,
+                                                X  µ2χA
+                                      ñM = 2           nA .                                    (10)
+                                              A∈M
+                                                  mχ mA
+
+    We now describe the bounds, which are computed using the same method as [45]. The ex-
+periments detected no straight line tracks through the detectors consistent with dark matter. To
+be conservative, we assume that the Ohya and Skylab experiments were unlucky and that tracks
+due to dark matter would have been observed 90% of the time. This sets the average number
+of observed dark matter particles to be Nc = − ln(0.1) = 2.3, assuming Poisson statistics. The
+maximum dark matter mass an experiment excludes can be found by matching the number of
+observed dark matter particles, Nc , with the total expected number passing through the detector,
+N (mχ ). Next, to compute upper and lower bounds on the cross section, we determine the dark
+matter cutoff speed v0 above which one sees Nc particles pass through the detector, though not
+necessarily triggering it. We do so by solving,
+
+                                          Nc = N≥v0 (mχ ).                                      (11)
+
+                                                  5
+Then, we take the initial dark matter energy to conservatively be E0 = 21 mv02 . The incoming
+dark matter must have enough energy to puncture the detector entirely. In this case, the energy
+deposition rate after the particle has passed through the detector must exceed the detector’s
+                                                    ′
+energy threshold. Using Equation 8 and setting Eth     to be the energy threshold for the plastic
+track detector (measured in units of energy per unit length), one gets,
+                                                   Z            
+                               ′
+                             Eth ≤ ñD E0 σ exp −σ        ñ(x)dx ,                         (12)
+                                                                O+D
+
+where we integrate over the path of the dark matter as it passes though the overburden and the
+entirety of the detector. We assume the detector has a constant density and constant isotope ratio
+through the particle’s path. We also assume the overburden has a solid component with constant
+density and isotopic ratio as well as a potential atmospheric component. This gives,
+                                             h                          i
+                            ′
+                           Eth ≤ ñD E0 σ exp −(xD ñD + xS ñS + ÑA )σ .                    (13)
+
+Here, ñD is the effective number density of the detector, given in Equation 9 or 10, and xD is
+                                   R path through the detector. ñS and xS are defined similarly
+length of the dark matter particle’s
+for the solid overburden. ÑA = ñA dx is the effective column density of the atmosphere along
+the particles path. To be conservative, we assume the dark matter will traverse the overburden
+and hit the detector at the largest possible angle: the cutoff angle θtol . In Equation 13, σ denotes
+either the per-nucleon cross section σχn or the contact cross section σC .
+    Equality in Equation 13 is satisfied by two values of the cross section σ. These solutions give
+the upper and lower bounds of the excluded region. They can be found numerically or written
+analytically with the transcendental Lambert-W function:
+                                                                                      !
+                                                                                   ′
+                                     1                 2(xD ñD + xS ñS + ÑA )Eth
+               σupper = −                        W−1 −                                   ,
+                           xD ñD + xS ñS + ÑA                  ñD mχ v02
+                                                                                     !           (14)
+                                                                                 ′
+                                     1                2(xD ñD + xS ñS + ÑA )Eth
+                σlower = −                       W0 −                                  ,
+                           xD ñD + xS ñS + ÑA                ñD mχ v02
+
+where the Wk are branches of the Lambert-W function.
+    For comparison, we will compute the bounds using both the SHM and the local dark matter
+velocity distribution extracted from the simulated MW-LMC analogue. In galactic coordinates1 ,
+we take the local velocity distribution in the Earth frame under the SHM to be,
+
+                                         ∥v − vs ŷ∥2
+                                                     
+                         f (v) ∝ exp −                  Θ(vesc − ∥v − vs ŷ∥),          (15)
+                                             vχ2
+where Θ is the Heaviside step function. We take the escape speed of the MW to be vesc = 503km/s
+[56], the circular velocity at the Sun’s position to be vχ = 222km/s [55] and the sun’s speed relative
+to the galaxy to be vs = 232 km/s [50]. For both the SHM and the LMC data, we neglect the
+Earth’s motion relative to the sun when computing bounds. The dark matter velocities from the
+simulations have been scaled by (220 km/s)/vχsim , where vχsim is the local circular speed of the
+simulated Milky Way analogue. This allows us to compare the results from the simulated MW
+halo with the SHM, assuming a similar local circular speed.
+   1
+    Here referring to the orientation of the axes, while the origin is placed on the Earth. The x-axis points toward
+the centre of the galaxy and the y-axis aligns with the direction of the Sun’s orbital motion.
+
+
+                                                         6
+                                                                                Standard Halo Model
+                      0.0030                                                    Simulation with Large
+                                                                                Magellanic Cloud
+                      0.0025
+Local Halo Fraction
+
+
+                      0.0020
+                      0.0015
+                      0.0010
+                      0.0005
+                      0.0000 0        200              400             600              800
+                                                      Speed [km/s]
+       Figure 1: A comparison of dark matter’s local speed distribution in the Earth reference frame for
+       the SHM (blue) and the simulated MW analogue including the effect of the LMC (red).
+
+           In Figures 1 and 2, we compare the local dark matter distribution predicted by the SHM to
+       that extracted from the simulations. Figure 1 compares their Earth frame speed distributions
+       and Figure 2 shows the scatter plots of the incoming dark matter particles by direction for the
+       two cases. Notice that, regardless of the model, in Figure 2 most of the fast incoming particles
+       have declinations between 15◦ to 45◦ . This is due to the Sun’s orbital motion through the galaxy
+       as it moves toward a point in the sky with ≈ 30◦ declination. Figures 1 and 2 show that, in
+       the Earth frame, the effect of the LMC is both to increase the speed of incoming dark matter
+       and to concentrate the incoming dark matter in a smaller region of the sky. The latter effect, in
+       particular, motivates a careful three dimensional treatment of the incoming dark matter flux.
+
+
+       4               Modelling the Flux
+       We proceed to computing the time average of the directional efficiency, given in Equation 3, for
+       the Ohya and Skylab detectors. In particular, we discuss how we treat the results from the MW-
+       LMC simulated halo, where the local dark matter velocity distribution is extracted from a discrete
+       sample of velocities.
+          The Ohya detector is flush with the Earth’s surface, meaning its orientation oscillates daily in
+       the galactic reference frame. Since the observation takes place over many days (T = 2.1 yrs), we
+       can approximate I(v) as the average over a sidereal day,
+                                                   Z Tside
+                                                1
+                                     I(v) ≈ −              dt n̂(t) · v ϵ(v̂, t).                     (16)
+                                              Tside 0
+          It is easiest to evaluate this integral in equatorial coordinates, which are galactic coordinates
+       rotated so that the x − y plane aligns with the equatorial plane. In these coordinates, the normal
+
+                                                        7
+                       60° 75°
+                45°                                                            800
+          30°
+
+
+
+
+                                                                                  Speed [km/s]
+        15°                                                                    600
+        0°   10 h 8h 6h 4h 2h 0h 22h 20h 18h 16h 14h
+
+       -15°                                                                    400
+         -30°                                                                  200
+             -45°
+                  -60° -75°
+                   60° 75°
+              45°                                                              800
+          30°
+
+
+
+
+                                                                                  Speed [km/s]
+        15°                                                                    600
+        0° 10 8 6 4 2 0 22 20 18 16 14
+                h h h h h h        h h h h h
+
+       -15°                                                                    400
+         -30°                                                                  200
+             -45°
+                  -60° -75°
+Figure 2: Comparison of the speed and direction of origin for incoming dark matter particles
+assuming the results of the MW-LMC simulation (top) and the SHM (bottom). The samples are
+normalized to have approximately the same number of particles. The axes are the declination and
+right ascension of the incoming particle. The color bars specify the speed of the incoming dark
+matter particles in the Earth reference frame.
+
+vector pointing out of the Ohya detector can be parametrized as,
+                                                            
+                                          cos(ϕO ) cos T2πt
+                                                       side  
+                                 n̂(t) =  cos(ϕO ) sin 2πt 
+                                                                 ,                              (17)
+                                                         Tside 
+                                                sin(ϕO )
+where ϕO = 36.6◦ is the latitude of the Ohya quarry. We also write the incoming velocity vector
+in spherical coordinates as,                                   
+                                           v cos(δχ ) cos(αχ )
+                                   v̂ = −  v cos(δχ ) sin(αχ )  ,                        (18)
+                                                v sin(δχ )
+where δχ and αχ are the declination and right ascension of the incoming dark matter in the sky.
+In this case, the integral in Equation 16 can be calculated analytically,
+                               v
+                      I(v) = (sin(δχ ) sin(ϕO )θtol + cos(δχ ) cos(ϕO ) sin(θtol )),       (19)
+                               π
+
+                                                 8
+where we define the angle,
+                  
+                  π                                              if π − |ϕO + δχ | < θtol ,
+                  
+                          
+                                  cos(θtol )−sin(δχ ) sin(ϕO )
+              θmax =     arccos        cos(δχ ) cos(ϕO )
+                                                                   if |ϕO − δχ | ≤ θtol ≤ π − |ϕO + δχ |,   (20)
+                       
+                       
+                       0                                            if θtol < |ϕO − δχ |.
+
+    We note an interesting consequence of this formula. By placing a detector at a latitude match-
+ing the declinations of the fastest incoming particles, one can maximize the flux through the
+detector. In Figure 2, one can see that most of the fast incoming particles have declinations of
+15◦ to 45◦ . Coincidentally, this aligns well with Ohya’s latitude of 36.6◦ , meaning the Ohya de-
+tector was well positioned to maximize the dark matter flux despite being intended as a magnetic
+monopole search.
+    To compute I(v) for the plastic etch detector on the Skylab satellite, we would need detailed
+information about the orientation of the satellite over time and the location of the plastic etch
+detectors in Skylab. Unfortunately, the Sklyab experiment was ran in the 1970s and the cassette
+tapes recording the orientation of the satellite are not accessible.2 So, we will assume that the
+Skylab detector was oriented randomly over all directions. Since the tolerance angle of Skylab was
+large (60◦ ), this is not an unreasonable assumption. So, the time average I(v) is simply a uniform
+average over all directions n̂,
+                                              Z
+                                           1
+                                   I(v) =           dΩ n̂ · v ϵ(v̂, n̂).                        (21)
+                                          4π |n̂|=1
+
+This integral can also be computed analytically and the resulting efficiency factor is
+
+                                                             v sin2 (θtol )
+                                                 I(v) =                     .                               (22)
+                                                                  4
+   Using these formulae, the integrals in Equations 4 and 6 can be directly computed when
+assuming an analytic velocity distribution like the SHM in Equation 15. However, from the
+simulations, we obtain a discrete set of velocities for the local dark matter particles. To perform
+the integrals in this case, we will treat the simulated data as if it were a random Psample     pulled
+                                                                                      M
+from the true velocity distribution f (v), meaning one can approximate f (v) ≈ M1     i=1 δ 3
+                                                                                              (v − vi ),
+where M is the total number of simulated data points. So, the integral in Equations 4 and 6
+become a sum over the M discrete data points. We compute the total flux through the detector
+as
+                                                       M
+                                                AT ρχ X
+                                     N (mχ ) =            I(vi ).                                 (23)
+                                                M mχ i=1
+We can use this value of N (mχ ) to compute the high mass boundary of the bound. Similarly, we
+compute the flux through the detector above a given astronomical cutoff speed v0 ,
+                                                            M
+                                                      AT ρχ X
+                                  N≥v0 (mχ ) =                 Θ(vi − v0 )I(vi ),                           (24)
+                                                      M mχ i=1
+
+where Θ is the Heaviside step function.
+  2
+      We thank the NASA Space Science Data Coordinated Archive (NSSDCA) for their assistance.
+
+
+                                                                 9
+Skylab's Total Accepted Dark Matter                                                                            1021
+
+
+
+
+                                                                               Ohya's Total Accepted Dark Matter
+    Mass Flux Above vmin [GeV]    1017
+
+
+
+
+                                                                                  Mass Flux Above vmin [GeV]
+                                                                                                               1020
+                                  1016
+
+                                                                                                               1019
+                                  1015
+
+                                             Simulation with Large                                             1018       Simulation with Large
+                                  1014       Magellanic Cloud                                                             Magellanic Cloud
+                                             Standard Halo Model                                                          Standard Halo Model
+                                         0   200      400 600 800      1000                                           0   200      400 600 800      1000
+                                                   Speed vmin [km/s]                                                            Speed vmin [km/s]
+        Figure 3: Comparisons of the integrated dark matter mass flux intercepting the Skylab (left)
+        and Ohya (right) detectors above a cutoff speed vmin , between the SHM and the simulated MW
+        analogue including the LMC. Note the significantly increased higher flux at high speeds for the
+        simulated system compared to the SHM.
+
+            This allows us to compute the flux using the data from the simulated MW-LMC system, and
+        it also provides a straightforward way to compute the flux for the SHM. Rather than directly
+        integrating in Equations 4 and 6, one can apply Equations 23 and 24 to an arbitrarily large
+        sample from the velocity distribution.
+            Figure 3 compares the integrated mass flux hitting the Ohya and Skylab detectors above a
+        chosen speed, given by Equation 24, for both the MW-LMC simulation and the SHM. As expected,
+        the presence of the LMC significantly increases the dark matter flux at high speeds.
+            However, we have skipped over a subtlety of this calculation. Due to the discrete nature of the
+        data, N≥v0 (mχ ) is a step function of v0 . To compute the bounds we need to invert N≥v0 (mχ ) to
+        solve for v0 at fixed mχ . To do so, we linearly interpolate N≥v0 (mχ ) between the bottoms of each
+        step in Equation 24. This procedure is shown in Figure 4. Since this effective value for N≥v0 (mχ )
+        is smaller than Equation 24, this is a conservative choice. Figure 3 shows the interpolated value
+        of the flux.
+
+
+        5                             Improved Bounds from Skylab and Ohya
+        In this section, we describe the improvements to the dark matter exclusion plots from plastic etch
+        detectors at the Ohya quarry and onboard the Skylab satellite. The plastic etch detector at Ohya
+        searched for magnetic monopoles. The other was a cosmic ray search for highly charged nuclei
+        aboard the ISS’s predecessor Skylab. Both experiments used detectors made of sheets of plastic
+        polymer. When a particle passes through the plastic, it can damage the molecular bonds. This
+        damage becomes visible as a hole after an acid wash. [45] treated a hole burrowed entirely through
+        the detector in a straight line as the dark matter detection signal, which neither search observed.
+        We present the relevant parameters from the experiments in Table 1.
+            The Ohya detector ran for 2.1 years. It was made of Lexan (C16 H14 O3 ) with an energy threshold
+        of 0.3GeV/cm, a density of 1.2g/cm3 and an effective area of 2442m2 . The detector had a tolerance
+        angle of 18.4◦ and a thickness of 0.66 cm at that tolerance angle. Ohya’s overburden consists of
+
+                                                                              10
+                                    1.570
+      Total Accepted Dark Matter Mass
+         Flux Above vmin [1020 GeV]                                          Discrete Values for Total Mass Flux
+                                                                             Linear Interpolation
+                                    1.565
+
+                                    1.560
+
+                                    1.555
+
+                                    1.550
+
+                                    1.545
+                                            570.8 571.0 571.2 571.4 571.6 571.8 572.0 572.2
+                                                                Speed vmin [km/s]
+Figure 4: A closeup of the right panel of Figure 3, demonstrating the procedure for interpolating
+the flux. The solid blue line is the naive discrete counts for the flux, given by Equation 24. The
+red dotted line is the conservatively interpolated value which was used to compute the bounds.
+
+
+
+
+                                                                    Ohya                              Skylab
+ Area A                                                            2442 m2                            1.17 m2
+ Duration T                                                         2.1 yr                             0.70 yr
+                                                                         ◦
+ Tolerance Angle θtol                                               18.4                                 60◦
+ Overburden Material                                   Atmosphere + 2.7 cmg 3 Crust             2.7 cmg 3 Aluminum
+ Solid Overburden Length at θtol                                    39 m                              0.74 cm
+ Column Density of
+                                                                   960 cmg 2                            0 cmg 2
+ Atmospheric Overburden at θtol
+ Detector Material                                       1.2 cmg 3 Lexan (C16 H14 O3 )      1.34 cmg 3 CR-39 (C12 H18 O7 )
+ Detector Length at θtol                                           0.66 cm                             1.6 cm
+                      ′
+ Detection Threshold Eth                                           0.3 GeV
+                                                                       cm
+                                                                                                       0.5 GeV
+                                                                                                           cm
+
+Table 1: The experimental parameters from the Skylab and Ohya experiments relevant to this
+work. These are taken from [45].
+
+
+
+
+                                                                   11
+the entire atmosphere, then crust with a thickness of 39 m at the tolerance angle. Information on
+the crustal abundances of elements was taken from the Mendeleev package in Python [57], which
+obtained its data from [58]. For Ohya’s atmospheric overburden, we use the isothermal model,
+with atmospheric mass density, ρA , exponentially dependent on altitude h [59],
+                                                          
+                                                        h
+                                     ρA (h) = ρ0 exp −       ,                               (25)
+                                                        h0
+
+where h0 = 7 km is a characteristic height and ρ0 = 1.3 × 10−3 g/cm3 is the atmospheric density at
+ground level. Since the tolerance angle of the detector, θtol , is not close to 90◦ , the column number
+density of dark matter entering at the tolerance angle is hρ0 sec(θtol ) to a very good approximation.
+We also assume that the elemental ratios of the atmosphere are independent of height with values
+from [60], fixed at 75.6% nitrogen, 23.18% oxygen, and 1.2% argon by mass.
+    Now moving to Skylab, its detector made observations for 0.7 years. It was made of CR-39
+(C12 H18 O7 ) with an energy threshold of 0.5 GeV/cm, a density of 1.34 g/cm3 and an effective area
+of 1.17 m2 . The detector had a tolerance angle of 60◦ and a thickness of 1.6 cm at that tolerance
+angle. Skylab’s overburden consists of the aluminum exterior of the satellite, with a thickness of
+0.74 cm at the tolerance angle.
+    To compute the effective number densities in Equations 9 and 10, we sum over all isotopes of
+all elements in the material. For the isotope data, we again use the Mendeleev package, which
+uses isotopic abundance data from [61] and isotopic mass data from [62].
+    Using Equation 14, we can now compute the bounds. In Figure 5, we show the bounds for the
+contact and per-nucleon case for both Ohya and Skylab using the data from the simulated MW-
+LMC analogue, shown in red. For comparison, we also recomputed the bounds using velocities
+drawn from the SHM, shown in blue.
+    We proceed with a brief discussion on the origin of the exclusion lines and the effect of the LMC
+on the bounds. At the high mass end, the bound stops because the flux is too small to trigger
+the detector. The faster particles due to the impact of the LMC increase the flux, improving
+the bound. For higher cross sections, the particle loses too much energy in the overburden and
+can’t trigger the detector. Since the loss in the overburden is exponential (see Equation 12), the
+faster particles due to the LMC have little effect on the bound. At small cross sections, the bound
+breaks down because the interaction is too weak to trigger the detector. Here, the effect of the
+increased flux due to the LMC is the most significant. The effect is most pronounced at low
+masses, where high speed particles more frequently pass through the detector. Figure 6 shows the
+result of including the effect of the LMC on Skylab and Ohya bounds when compared to leading
+bounds for the per-nucleon and contact cases.
+
+
+
+6    Discussion and conclusions
+In this work, we have investigated the effects of the LMC on heavy dark matter bounds, using
+a MW-LMC analogue from the Auriga magneto-hydrodynamical simulations to extract the local
+dark matter velocity distribution, and move beyond the SHM. We recalculated heavy dark matter
+bounds from plastic etch detectors at the Ohya quarry in Japan and aboard the Skylab satellite
+using the updated local dark matter halo distribution and showed that including the effects of the
+LMC extends the parameter space that can be probed by the experiments.
+
+
+                                                  12
+                                10 11
+, n [cm2]
+
+
+
+
+                                                                              , n [cm2]
+                                          Simulation with Large                                                          Simulation with Large
+                                          Magellanic Cloud                                                    10 13      Magellanic Cloud
+                                10 13     Standard Halo Model                                                            Standard Halo Model
+                                                                                                              10 15
+                                10 15
+ DM-Nucleon Cross Section
+
+
+
+
+                                                                               DM-Nucleon Cross Section
+                                10 17                                                                         10 17
+
+                                10 19                                                                         10 19
+
+                                10 21                                                                         10 21
+                                10 23                                                                         10 23
+                                        108     1010 1012 1014 1016                                                    1012     1014 1016 1018         1020
+                                              Dark Matter Mass [GeV]                                                          Dark Matter Mass [GeV]
+
+                                10 6     Simulation with Large                                                10 6       Simulation with Large
+                                         Magellanic Cloud                                                                Magellanic Cloud
+Contact Cross Section C [cm2]
+
+
+
+
+                                                                              Contact Cross Section C [cm2]
+
+
+
+
+                                10 8     Standard Halo Model                                                  10 8       Standard Halo Model
+
+                            10 10                                                                         10 10
+                            10 12                                                                         10 12
+                            10 14                                                                         10 14
+                            10 16                                                                         10 16
+                            10 18                                                                         10 18
+                                        107    109 1011 1013 1015 1017                                                1010 1012 1014 1016 1018 1020
+                                              Dark Matter Mass [GeV]                                                       Dark Matter Mass [GeV]
+         Figure 5: A comparison of the excluded regions from the Skylab (left) and Ohya (right) experiment
+         assuming a per-nucleon (top) or contact (botton) interaction. The bound in light blue assumes
+         the SHM. The bound in red uses a local dark matter velocity distribution extracted from the
+         simulated MW-LMC analogue.
+
+
+
+
+                                                                         13
+                                         10 10
+
+         , n [cm2]
+                                         10 12
+                                         10 14
+         Per-nucleon Cross Section
+
+                                         10 16
+                                         10 18                      Skylab               Ohya
+                                         10 20
+                                         10 22
+                                         10 24
+                                         10 26105   107   109   1011 1013 1015 1017 1019 1021 1023
+                                                                Dark Matter Mass [GeV]
+
+
+                                         10 6
+         Contact Cross Section C [cm2]
+
+
+
+
+                                         10 8
+                                     10 10
+                                     10 12
+                                                                   Skylab                Ohya
+                                     10 14
+                                     10 16
+                                     10 18
+                                     10 20
+                                     10 22105       107   109   1011 1013 1015 1017 1019 1021 1023
+                                                                Dark Matter Mass [GeV]
+
+Figure 6: The bounds from the Skylab and Ohya plastic detectors for a per-nucleon (top) and
+contact (bottom) interaction. In each plot, Skylab’s bound is on the left and Ohya’s is on the
+right. In light blue are the bounds assuming the SHM and in red is the additional parameter space
+using the results from the simulated MW-LMC analogue. These bounds are compared with other
+leading bounds, shown in grey.
+
+
+
+                                                                       14
+    An interesting consequence of our work is that the extent of bounds derived from ground-based
+detectors, and their corresponding dark matter flux sensitivity, differ by latitude. Specifically,
+detectors placed in the northern hemisphere, at a latitude of around 30◦ , experience the highest flux
+due to the Sun’s motion through the galaxy. This effect is present in the SHM, but is exacerbated
+by the influence of the LMC, as can be seen in Figure 2. This is a potential consideration for
+future ground-based heavy dark matter searches.
+    We note that the MW–LMC analogue used in this work is drawn from a fully cosmological
+simulation, which self-consistently follows the joint formation and evolution of MW–mass halos
+and massive satellites in a ΛCDM context. While this system is not explicitly tailored to reproduce
+all detailed constraints of the present day MW–LMC system, the selected LMC analogue broadly
+matches key observed properties, and we have further chosen the position of the Sun in the
+simulations to reproduce the observed Sun–LMC geometry.
+    Recent studies have shown that detailed predictions for the MW–LMC interaction are sensitive
+to modeling uncertainties, including the poorly constrained dark matter distribution in the outer
+MW halo, which affects the LMC’s orbit, and the initial dark matter mass and concentration of the
+LMC halo prior to infall, which affect the amount of tidal stripping and the resulting phase space
+distribution of unbound LMC dark matter particles in the Solar neighborhood (e.g. [63–65]). Nev-
+ertheless, by utilizing a fully cosmological simulation, our results illustrate how a massive satellite
+close to its pericentric passage can impact the inner halo and heavy dark matter searches. While
+this work focuses on a single MW–LMC analogue that reproduces key properties of the observed
+system, exploring a broader ensemble of MW–LMC realizations with future high resolution cos-
+mological simulations will help quantify the associated uncertainties.
+    The procedure outlined in this work is applicable to any aboveground or orbital search for
+multiply interacting dark matter. For modern orbital searches, there will likely be sufficient
+information about the orientation of the detector over time, avoiding the assumption of random
+orientation necessary for the Skylab satellite in Section 4. We can also apply this procedure to
+searches for dark matter in mineral slabs, appropriately averaging over the orientation of the slab
+in the Earth.
+
+
+Acknowledgements
+NB acknowledges the support of the Canada Research Chairs Program, as well as the Natu-
+ral Sciences and Engineering Research Council of Canada (NSERC), funding reference number
+RGPIN-2020-07138 and the NSERC Discovery Launch Supplement, DGECR-2020-00231. JB
+acknowledges support from the Natural Sciences and Engineering Research Council of Canada
+(NSERC), the Ontario Early Researcher Award (ERA), and the Canada Foundation for Innova-
+tion (CFI). This research was undertaken thanks in part to funding from the Arthur B. McDonald
+Canadian Astroparticle Physics Research Institute. We thank Azadeh Fattahi for providing the
+re-simulated Auriga halo used in this work.
+
+
+References
+ [1] E. Witten, Cosmic Separation of Phases, Phys. Rev. D 30 (1984) 272–285.
+
+ [2] E. Farhi and R. Jaffe, Strange Matter, Phys. Rev. D 30 (1984) 2379.
+
+
+                                                  15
+ [3] A. De Rujula and S. Glashow, Nuclearites: A Novel Form of Cosmic Radiation, Nature 312
+     (1984) 734–737.
+
+ [4] M. W. Goodman and E. Witten, Detectability of Certain Dark Matter Candidates, Phys.
+     Rev. D 31 (1985) 3059.
+
+ [5] A. Drukier, K. Freese and D. Spergel, Detecting Cold Dark Matter Candidates, Phys. Rev. D
+     33 (1986) 3495–3508.
+
+ [6] S. Nussinov, Technocosmology: could a technibaryon excess provide a ’natural’ missing mass
+     candidate?, Phys. Lett. B 165 (1985) 55–58.
+
+ [7] J. Bagnasco, M. Dine and S. D. Thomas, Detecting technibaryon dark matter, Phys. Lett. B
+     320 (1994) 99–104, [hep-ph/9310290].
+
+ [8] D. S. M. Alves, S. R. Behbahani, P. Schuster and J. G. Wacker, Composite Inelastic Dark
+     Matter, Phys. Lett. B692 (2010) 323–326, [0903.3945].
+
+ [9] G. D. Kribs, T. S. Roy, J. Terning and K. M. Zurek, Quirky Composite Dark Matter, Phys.
+     Rev. D 81 (2010) 095001, [0909.2034].
+
+[10] G. Krnjaic and K. Sigurdson, Big Bang Darkleosynthesis, Phys. Lett. B751 (2015) 464–468,
+     [1406.1171].
+
+[11] M. B. Wise and Y. Zhang, Stable Bound States of Asymmetric Dark Matter, Phys. Rev. D
+     90 (2014) 055030, [1407.4121].
+
+[12] M. I. Gresham, H. K. Lou and K. M. Zurek, Early Universe synthesis of asymmetric dark
+     matter nuggets, Phys. Rev. D97 (2018) 036003, [1707.02316].
+
+[13] J. F. Acevedo, J. Bramante and A. Goodman, Nuclear fusion inside dark matter, Phys. Rev.
+     D 103 (2021) 123022, [2012.10998].
+
+[14] M. R. Buckley and A. DiFranzo, Collapsed Dark Matter Structures, Phys. Rev. Lett. 120
+     (2018) 051102, [1707.03829].
+
+[15] J. H. Chang, D. Egana-Ugrinovic, R. Essig and C. Kouvaris, Structure Formation and
+     Exotic Compact Objects in a Dissipative Dark Sector, JCAP 03 (2019) 036, [1812.07000].
+
+[16] J. Bramante, M. Diamond and J. L. Kim, The effect of multiple cooling channels on the
+     formation of dark compact objects, JCAP 02 (2024) 002, [2309.13148].
+
+[17] J. Bramante, C. V. Cappiello, M. Diamond, J. L. Kim, Q. Liu and A. C. Vincent,
+     Dissipative dark cosmology: From early matter dominance to delayed compact objects, Phys.
+     Rev. D 110 (2024) 043041, [2405.04575].
+
+[18] Y. Lu, Z. S. C. Picker, S. Profumo and A. Kusenko, Black holes from Fermi ball collapse,
+     Phys. Rev. D 111 (2025) 043005, [2411.17074].
+
+[19] Y. Bai, A. J. Long and S. Lu, Dark Quark Nuggets, Phys. Rev. D 99 (2019) 055047,
+     [1810.04360].
+
+
+                                              16
+[20] J. F. Acevedo, J. Bramante and A. Goodman, Accelerating composite dark matter discovery
+     with nuclear recoils and the Migdal effect, Phys. Rev. D 105 (2022) 023012, [2108.10889].
+
+[21] J. F. Acevedo, Y. Boukhtouchen, J. Bramante, C. Cappiello, G. Mohlabeng and N. Tyagi,
+     Loosely bound composite dark matter, JCAP 03 (2025) 013, [2408.03983].
+
+[22] K. Bleau, Y. Boukhtouchen, J. Bramante and R. Kulkarni, Secluded Dark Composites and
+     Remnant Binding Fields, 2506.04331.
+
+[23] A. K. Drukier, K. Freese and D. N. Spergel, Detecting cold dark-matter candidates, Phys.
+     Rev. D 33 (Jun, 1986) 3495–3508.
+
+[24] N. Bozorgnia, F. Calore, M. Schaller, M. Lovell, G. Bertone, C. S. Frenk et al., Simulated
+     Milky Way analogues: implications for dark matter direct searches, JCAP 1605 (2016) 024,
+     [1601.04707].
+
+[25] C. Kelso, C. Savage, M. Valluri, K. Freese, G. S. Stinson and J. Bailin, The impact of
+     baryons on the direct detection of dark matter, JCAP 1608 (2016) 071, [1601.04725].
+
+[26] J. D. Sloane, M. R. Buckley, A. M. Brooks and F. Governato, Assessing Astrophysical
+     Uncertainties in Direct Detection with Galaxy Simulations, Astrophys. J. 831 (2016) 93,
+     [1601.05402].
+
+[27] N. Bozorgnia and G. Bertone, Implications of hydrodynamical simulations for the
+     interpretation of direct dark matter searches, Int. J. Mod. Phys. A32 (2017) 1730016,
+     [1705.05853].
+
+[28] N. Bozorgnia, A. Fattahi, C. S. Frenk, A. Cheek, D. G. Cerdeno, F. A. Gómez et al., The
+     dark matter component of the Gaia radially anisotropic substructure, JCAP 07 (2020) 036,
+     [1910.07536].
+
+[29] R. Poole-McKenzie, A. S. Font, B. Boxer, I. G. McCarthy, S. Burdin, S. G. Stafford et al.,
+     Informing dark matter direct detection limits with the ARTEMIS simulations, JCAP 11
+     (2020) 016, [2006.15159].
+
+[30] G. E. Lawrence, A. R. Duffy, C. A. Blake and P. F. Hopkins, Gusts in the Headwind:
+     Uncertainties in Direct Dark Matter Detection, 2207.07644.
+
+[31] M. Kuhlen, A. Pillepich, J. Guedes and P. Madau, The Distribution of Dark Matter in the
+     Milky Way’s Disk, Astrophys. J. 784 (2014) 161, [1308.1703].
+
+[32] T. Lacroix, A. Núñez Castiñeyra, M. Stref, J. Lavalle and E. Nezri, Predicting the dark
+     matter velocity distribution in galactic structures: tests against hydrodynamic cosmological
+     simulations, JCAP 10 (2020) 031, [2005.03955].
+
+[33] I. Santos-Santos, N. Bozorgnia, A. Fattahi and J. F. Navarro, Are there any extragalactic
+     high speed dark matter particles in the Solar neighborhood?, JCAP 03 (2024) 046,
+     [2308.15388].
+
+[34] G. Herrera, A. Ibarra and S. Shirai, Enhanced prospects for direct detection of inelastic dark
+     matter from a non-galactic diffuse component, JCAP 04 (2023) 026, [2301.00870].
+
+                                                17
+[35] G. Herrera and A. Ibarra, Direct detection of non-galactic light dark matter, Phys. Lett. B
+     820 (2021) 136551, [2104.04445].
+
+[36] G. Besla, N. Kallivayalil, L. Hernquist, B. Robertson, T. J. Cox, R. P. van der Marel et al.,
+     Are the Magellanic Clouds on their First Passage about the Milky Way?, Astrophys. J. 668
+     (2007) 949–967, [astro-ph/0703196].
+
+[37] N. Kallivayalil, R. P. van der Marel, G. Besla, J. Anderson and C. Alcock, Third-Epoch
+     Magellanic Cloud Proper Motions I: HST/WFC3 data and Orbit Implications, Astrophys. J.
+     764 (2013) 161, [1301.0832].
+
+[38] E. Patel, G. Besla and S. T. Sohn, Orbits of massive satellite galaxies - I. A close look at the
+     Large Magellanic Cloud and a new orbital history for M33, MNRAS 464 (Feb., 2017)
+     3825–3849, [1609.04823].
+
+[39] G. Pietrzyński, D. Graczyk, A. Gallenne, W. Gieren, I. B. Thompson, B. Pilecki et al., A
+     distance to the Large Magellanic Cloud that is precise to one per cent, Nature 567 (Mar.,
+     2019) 200–203, [1903.08096].
+
+[40] A. Smith-Orlik et al., The impact of the Large Magellanic Cloud on dark matter direct
+     detection signals, JCAP 10 (2023) 070, [2302.04281].
+
+[41] J. Reynoso-Cordova, N. Bozorgnia and M.-C. Piro, The Large Magellanic Cloud: expanding
+     the low-mass parameter space of dark matter direct detection, JCAP 12 (2024) 037,
+     [2409.09119].
+
+[42] G. Besla, A. Peter and N. Garavito-Camargo, The highest-speed local dark matter particles
+     come from the Large Magellanic Cloud, JCAP 1911 (2019) 013, [1909.04140].
+
+[43] K. Donaldson, M. S. Petersen and J. Peñarrubia, Effects on the local dark matter
+     distribution due to the large magellanic cloud, Mon. Not. Roy. Astron. Soc. 513 (2022)
+     46–51, [2111.15440].
+
+[44] D. M. Jacobs, G. D. Starkman and B. W. Lynn, Macro Dark Matter, Mon. Not. Roy.
+     Astron. Soc. 450 (2015) 3418–3430, [1410.2236].
+
+[45] A. Bhoonah, J. Bramante, B. Courtman and N. Song, Etched plastic searches for dark
+     matter, Phys. Rev. D 103 (May, 2021) 103001.
+
+[46] R. J. J. Grand, F. A. Gómez, F. Marinacci, R. Pakmor, V. Springel, D. J. R. Campbell
+     et al., The Auriga Project: the properties and formation mechanisms of disc galaxies across
+     cosmic time, Mon. Not. Roy. Astron. Soc. 467 (2017) 179–207, [1610.01159].
+
+[47] R. J. J. Grand, F. Fragkoudi, F. A. Gómez, A. Jenkins, F. Marinacci, R. Pakmor et al.,
+     Overview and public data release of the Auriga Project: cosmological simulations of dwarf
+     and Milky Way-mass galaxies, arXiv e-prints (Jan., 2024) arXiv:2401.08750, [2401.08750].
+
+[48] J. Schaye et al., The EAGLE project: Simulating the evolution and assembly of galaxies and
+     their environments, Mon. Not. Roy. Astron. Soc. 446 (2015) 521–554, [1407.7040].
+
+
+
+                                                 18
+[49] R. A. Crain et al., The EAGLE simulations of galaxy formation: calibration of subgrid
+     physics and model variations, Mon. Not. Roy. Astron. Soc. 450 (2015) 1937–1961,
+     [1501.01311].
+
+[50] V. Springel, E pur si muove: Galiliean-invariant cosmological hydrodynamical simulations
+     on a moving mesh, Mon. Not. Roy. Astron. Soc. 401 (2010) 791, [0901.4107].
+
+[51] Planck collaboration, P. A. R. Ade et al., Planck 2015 results. XIII. Cosmological
+     parameters, Astron. Astrophys. 594 (2016) A13, [1502.01589].
+
+[52] C. Power, J. F. Navarro, A. Jenkins, C. S. Frenk, S. D. M. White, V. Springel et al., The
+     Inner structure of Lambda CDM halos. 1. A Numerical convergence study, Mon. Not. Roy.
+     Astron. Soc. 338 (2003) 14–34, [astro-ph/0201544].
+
+[53] A. Jenkins, A new way of setting the phases for cosmological multiscale Gaussian initial
+     conditions, MNRAS 434 (Sept., 2013) 2094–2120, [1306.5968].
+
+[54] R. P. van der Marel, D. R. Alves, E. Hardy and N. B. Suntzeff, New understanding of large
+     magellanic cloud structure, dynamics and orbit from carbon star kinematics, Astron. J. 124
+     (2002) 2639–2663, [astro-ph/0205161].
+
+[55] A.-C. Eilers, D. W. Hogg, H.-W. Rix and M. K. Ness, The Circular Velocity Curve of the
+     Milky Way from 5 to 25 kpc, The Astrophysical Journal 871 (Jan., 2019) 120, [1810.09466].
+
+[56] A. J. Deason, A. Fattahi, V. Belokurov, N. W. Evans, R. J. J. Grand, F. Marinacci et al.,
+     The local high-velocity tail and the Galactic escape speed, Monthly Notices of the Royal
+     Astronomical Society 485 (May, 2019) 3514–3526, [1901.02016].
+
+[57] L. Mentel, “Mendeleev - a python resource for properties of chemical elements, ions and
+     isotopes.”
+
+[58] W. Haynes, CRC Handbook of Chemistry and Physics. CRC Handbook of Chemistry and
+     Physics. CRC Press, 2014.
+
+[59] P. Dhakal, S. Prohira, C. V. Cappiello, J. F. Beacom, S. Palo and J. Marino, New
+     constraints on macroscopic dark matter using radar meteor detectors, Phys. Rev. D 107
+     (Feb, 2023) 043026.
+
+[60] J. Bramante, J. Kumar, G. Mohlabeng, N. Raj and N. Song, Light dark matter
+     accumulating in planets: Nuclear scattering, Phys. Rev. D 108 (Sep, 2023) 063022.
+
+[61] F. Kondev, M. Wang, W. Huang, S. Naimi and G. Audi, The nubase2020 evaluation of
+     nuclear physics properties *, Chinese Physics C 45 (mar, 2021) 030001.
+
+[62] T. Prohaska, J. Irrgeher, J. Benefield, J. K. Böhlke, L. A. Chesson, T. B. Coplen et al.,
+     Standard atomic weights of the elements 2021 (iupac technical report), Pure and Applied
+     Chemistry 94 (2022) 573–600.
+
+[63] R. Yaaqib, M. S. Petersen and J. Peñarrubia, The radial variation of the LMC-induced
+     reflex motion of the Milky Way disc observed in the stellar halo, MNRAS 531 (July, 2024)
+     3524–3538, [2402.10841].
+
+                                               19
+[64] R. Yaaqib, M. S. Petersen and J. Peñarrubia, Constraining the Milky Way dark matter halo
+     with LMC-induced reflex motion, MNRAS 544 (Dec., 2025) 1820–1831, [2508.04781].
+
+[65] M. S. Petersen, J. Peñarrubia and E. Jones, Tidally stripped halo stars from the Large
+     Magellanic Cloud in the Galactic North, MNRAS 514 (July, 2022) 1266–1273,
+     [2106.13770].
+
+
+
+
+                                               20
+

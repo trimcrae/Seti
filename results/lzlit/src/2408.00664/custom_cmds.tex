@@ -1,0 +1,47 @@
+% !TEX root = ../main.
+
+% --- Text Shortcuts --- %
+
+\newcommand{\insitu}{\textit{in-situ~}}
+
+\newcommand{\PX}{PandaX-4T~}
+\newcommand{\wfsim}{waveform simulation}
+\newcommand{\Geantbased}{G\scriptsize{EANT}\normalsize{4-based}~}
+
+
+% --- Symbol Shortcuts --- %
+
+% For S2b and g2b in text.
+%   eg. S2b -> \btm{S2}; g2 -> \btm{g2}
+\newcommand{\btm}[1]{\ensuremath{#1}$_{\rm b}$}
+
+\newcommand{\SEGb}{SEG$_{\rm b}$}
+\newcommand{\dt}{$t_{\rm{d}}$}
+
+% Units
+\newcommand{\MeV}{MeV/$c^2$\,}
+\newcommand{\GeV}{GeV/$c^2$\,}
+\newcommand{\TeV}{TeV/$c^2$\,}
+
+
+% For nuclides.
+%   eg. Rn222 -> \ncl{Rn-222}; Kr83m -> \nclm{Kr-83}
+%       Xe131* -> \nclm{Xe^*-131}
+\NewDocumentCommand{\ncl}{ >{\SplitArgument{1}{-}}m }{\nclaux#1}
+\NewDocumentCommand{\nclaux}{mm}{\ensuremath{\!{}^{#2}\mathrm{#1}}}
+\NewDocumentCommand{\nclm}{ >{\SplitArgument{1}{-}}m }{\nclmaux#1}
+\NewDocumentCommand{\nclmaux}{mm}{\ensuremath{\!{}^{#2\mathrm{m}}\mathrm{#1}}}
+
+% For Roman numbers
+%   eg. ii -> \rmnum{2}
+%       III -> \Rmnum{3}
+\makeatletter
+\newcommand{\rmnum}[1]{\romannumeral #1}
+\newcommand{\Rmnum}[1]{\expandafter\@slowromancap\romannumeral #1@}
+\makeatother
+
+
+\renewcommand{\labelenumi}{(\arabic{enumi})}  % 顶层列表
+\renewcommand{\labelenumii}{(\alph{enumii})}  % 第二层列表
+\renewcommand{\labelenumiii}{(\roman{enumiii})}  % 第三层列表
+\renewcommand{\labelenumiv}{(\Alph{enumiv})}  % 第四层列表

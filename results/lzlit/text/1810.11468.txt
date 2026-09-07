@@ -1,0 +1,1232 @@
+                                                                                                                                                            KCL-PH-TH-2018-49
+
+                                                    SHM++ : A Refinement of the Standard Halo Model for Dark Matter Searches
+
+                                                                       N. Wyn Evans,1, ∗ Ciaran A. J. O’Hare,2, † and Christopher McCabe3, ‡
+                                                                       1
+                                                                         Institute of Astronomy, Madingley Rd, Cambridge, CB3 0HA, United Kingdom
+                                                       2
+                                                           Departamento de Fı́sica Teórica, Universidad de Zaragoza, Pedro Cerbuna 12, E-50009, Zaragoza, España
+                                                               3
+                                                                 Department of Physics, King’s College London, Strand, London, WC2R 2LS, United Kingdom
+                                                                                                   (Dated: January 1, 2019)
+                                                                 Predicting signals in experiments to directly detect dark matter (DM) requires a form for the
+                                                              local DM velocity distribution. Hitherto, the standard halo model (SHM), in which velocities are
+                                                              isotropic and follow a truncated Gaussian law, has performed this job. New data, however, suggest
+                                                              that a substantial fraction of our stellar halo lies in a strongly radially anisotropic population, the
+                                                              ‘Gaia Sausage’. Inspired by this recent discovery, we introduce an updated DM halo model, the
+arXiv:1810.11468v2 [astro-ph.GA] 30 Dec 2018
+
+
+
+
+                                                              SHM++ , which includes a ‘Sausage’ component, thus better describing the known features of our
+                                                              galaxy. The SHM++ is a simple analytic model with five parameters: the circular speed, local escape
+                                                              speed and local DM density, which we update to be consistent with the latest data, and two new
+                                                              parameters: the anisotropy and the density of DM in the Sausage. The impact of the SHM++ on
+                                                              signal models for WIMPs and axions is rather modest since the multiple changes and updates have
+                                                              competing effects. In particular, this means that the older exclusion limits derived for WIMPS are
+                                                              still reasonably accurate. However, changes do occur for directional detectors, which have sensitivity
+                                                              to the full three-dimensional velocity distribution.
+
+
+                                                                  I.   INTRODUCTION                                new standard halo model, SHM++ , that represents our
+                                                                                                                   current knowledge, yet rivals the SHM in simplicity and
+                                                  Historically, analyses of direct searches for dark mat-          realism.
+                                               ter (DM) have constructed signal models based upon                     The most substantial change brought about by Gaia
+                                               the Gaussian distribution of velocities found in the stan-          data is that the local stellar halo is now known to have
+                                               dard halo model (SHM). This is inspired by isothermal               two components [47–50]. The more metal-poor stars
+                                               spheres, which have asymptotically flat rotation curves.            form a weakly rotating structure that is almost spher-
+                                               They are the only exact, self-gravitating systems with              ical (with axis ratio q ≈ 0.9). This is likely the residue
+                                               Gaussian velocity distributions [1]. Of course, it has              of many ancient accretions from low mass dwarf galaxies
+                                               long been known that the SHM is an idealisation [2–6],              in random directions so that the net angular momentum
+                                               but it provides an excellent trade-off between simplicity           of the accumulated material is almost zero. The more
+                                               and realism. The effects of non-Maxwellian speed dis-               metal-rich stars form a flattened (q ≈ 0.6), highly radi-
+                                               tributions [7–9], triaxiality [10], velocity anisotropy [11–        ally anisotropic structure. This is the “Gaia Sausage”. It
+                                               15], streams [16–21], and other dark substructures [22–             was created by the more recent accretion of a large dwarf
+                                               26] have all received attention using simple elaborations           galaxy of mass ≈ 1010 − 1011 M around 8 to 10 billion
+                                               of the SHM. These studies were speculative and the-                 years ago [47, 51, 52], which will have been accompanied
+                                               oretically motivated given that in the past there was               by a corresponding avalanche of DM.
+                                               sparse knowledge about the true DM velocity distribu-                  Given what we now know about the stellar halo, it
+                                               tion. While it is possible, and in some cases advisable, to         is natural to expect that the local DM halo also has a
+                                               derive exclusion limits on DM particle physics without              bimodal structure, made up from a rounder, isotropic
+                                               any astrophysical assumptions, e.g. Refs. [27–43], this             component with velocity distribution fR and a radially
+                                               often comes at the cost of greater complexity and less              anisotropic Sausage component fS . In ref. [53], the veloc-
+                                               overall constraining power.                                         ity distributions of these two components were inferred
+                                                  The arrival of the second data release from the Gaia             from the velocities of stellar populations. Here, we pro-
+                                               satellite has been transformational for our understanding           vide simple analytic velocity distributions that capture
+                                               of the structure of the Galaxy [44]. The shape of the stel-         the generic features of both components. The fraction of
+                                               lar halo, the local DM density, the local circular speed,           the local DM in the Sausage η is not well known, though
+                                               the escape velocity and the history of accretion have all           we will argue that it lies between 10% and 30%. The
+                                               been the subject of sometimes radical revision in the wake          velocity anisotropy of DM in the Sausage β is also not
+                                               of the new and abundant data [45–47]. Our understand-               known, but the stellar and globular cluster populations
+                                               ing of the DM halo has not been left unscathed by the               associated with the Sausage are all extremely eccentric
+                                               Gaia Revolution, and the time is ripe to put forward a              and so must be the DM.
+                                                                                                                      In Section II, we discuss the shortcomings of the SHM
+                                                                                                                   in the light of recent advances in our knowledge of
+                                               ∗ nwe@ast.cam.ac.uk                                                 Galactic structure. Section III introduces the SHM++ ,
+                                               † ciaran.aj.ohare@gmail.com
+                                                                                                                   which acknowledges explicitly the bimodal structure of
+                                               ‡ christopher.mccabe@kcl.ac.uk
+                                                                                                                   the Galaxy’s dark halo. We also take the opportunity
+                                                                                                                                 2
+
+to update the Galactic constants in the SHM++ , as the                         Local DM density        ρ0     0.3 GeV cm−3
+familiar choices for the SHM represent the state of knowl-                     Circular rotation speed v0     220 km s−1
+edge that is now over a decade or more old. In Section IV,
+                                                                     SHM       Escape speed            vesc   544 km s−1
+we discuss how our model compares with other comple-
+mentary strategies for determining the local velocity dis-                     Velocity distribution   fR (v) Eq. (1)
+tribution of DM. Then, Section V discusses the impli-                          Local DM density        ρ0     0.55 ± 0.17 GeV cm−3
+cations for a range of WIMP and axion direct detection                         Circular rotation speed v0     233 ± 3 km s−1
+experiments. We sum up in Section VI.                                          Escape speed            vesc   528+24     −1
+                                                                                                                 −25 km s
+                                                                     SHM++
+                                                                               Sausage anisotropy      β      0.9 ± 0.05
+                                                                               Sausage fraction        η      0.2 ± 0.1
+   II.   THE SHM: A CRITICAL DISCUSSION
+                                                                               Velocity distribution   f (v) Eq. (3)
+
+   At large radii the rotation curve of the Milky Way is             TABLE I. The astrophysical parameters and functions defin-
+flat to a good approximation [54]. The family of isother-            ing the SHM and the SHM++ . We include a recommenda-
+mal spheres (of which the most familiar example is the               tion for the uncertainty on each parameter for analyses that
+singular isothermal sphere) provide the simplest spheri-             incorporate astrophysical uncertainties. While the uncertain-
+cal models with asymptotically flat rotation curves [55].            ties associated with ρ0 , v0 and vesc are based on direct mea-
+These models all have Gaussian velocity distributions.               surements, the uncertainties associated with β and η are less
+   The SHM was introduced into astroparticle physics                 certain. We refer the reader to the discussion in Section IIIA
+over thirty years ago [56]. It models a smooth round dark            and IIIB respectively for more details.
+halo. The velocity distribution for DM is a Gaussian in
+the Galactic frame, namely
+                                                                     high resolution dissipationless simulations like Aquar-
+                                                      2              ius is rather smooth [57], so a smooth velocity distri-
+                                                         
+                              1               |v|
+         fR (v) =                       exp − 2                      bution is a good assumption. Furthermore, recent hy-
+                     (2πσv2 )3/2 NR,esc        2σv
+                                                                     drodynamic simulations [58–61] have recovered speed
+                                      ×Θ(vesc − |v|) ,         (1)   distributions for DM that are better approximated by
+                                                                     Maxwellian-distributions than their earlier N-body coun-
+where σv is√the isotropic velocity dispersion of the DM              terparts [3, 6–9, 62]. In this light, the assumption in the
+and v0 = 2σv is the value of the asymptotically flat                 SHM of a Gaussian velocity distribution is surprisingly
+rotation curve. The isothermal spheres all have infinite             accurate.
+extent, whereas Galaxy halos are finite. This is achieved               There is, however, a significant shortcoming to the
+in the SHM by truncating the velocity distribution at                SHM. Gaia data has provided significant new informa-
+the escape speed vesc , using the Heaviside function Θ.              tion about the stellar and dark halo of our own Galaxy.
+The constant NR,esc is used to renormalize the velocity              The halo stars in velocity space exhibit abrupt changes
+distribution after truncation,                                       at a metallicity of [Fe/H] ≈ −1.7 [49]. The metal-poor
+                                   r              2              population is isotropic, has prograde rotation (hvφ i ≈ 50
+                     v                   2 vesc      v               km s−1 ), mild radial anisotropy and a roundish morphol-
+  NR,esc = erf       √ esc       −              exp − esc2 .   (2)
+                      2σv                π σv        2σv             ogy (with axis ratio q ≈ 0.9). In contrast, the metal-rich
+                                                                     stellar population has almost no net rotation, is very
+   Hence to describe the velocity distribution of DM in              radially anisotropic and highly flattened with axis ra-
+the galactic frame under the SHM we only need to pre-                tio q ≈ 0.6 − 0.7.
+scribe two parameters, v0 and vesc . The value of v0 is                 The velocity structure of the metal-rich population
+usually taken as equivalent to the velocity of the Local             forms an elongated shape in velocity space, the so-called
+Standard of Rest (or the circular velocity at the Solar po-          “Gaia Sausage” [47, 63]. It is believed to be caused by
+sition). The assumed value of vesc has also typically been           a substantial recent merger [47, 51, 52]. The “Sausage
+inspired by various astronomical determinations. The                 Galaxy” must have collided almost head-on with the
+standard values for these quantities in the SHM are listed           nascent Milky Way to provide the abundance of radi-
+in Table I. These values are, however, now somewhat out              ally anisotropic stars. Even if its orbital plane was orig-
+of date having undergone significant revision in recent              inally inclined, dynamical friction dragged the satellite
+years. One motivation for updating the SHM is to incor-              down into the Galactic plane. Similarly, though its orig-
+porate the more recent values for these parameters.                  inal orbit may only have been moderately eccentric, the
+   The SHM has some successful features that we want                 stripping process created tidal tails that enforced radi-
+to maintain. Current theories of galaxy formation in                 alisation of the orbit [64], giving the residue of highly
+the cold dark matter paradigm envisage the build-up                  eccentric stars in the Gaia Sausage. Therefore, the
+of DM halos through accretion and merger. In the in-                 ∼ 1010 − 1011 M of DM in the Sausage Galaxy [47, 63]
+ner halo (where the Sun is located), the distribution                will have been continuously stripped over a swathe of
+of DM particles extrapolated via sub-grid methods in                 Galactocentric radii, as the satellite sank and disinte-
+                                                                                                                         3
+
+grated under the combined effects of dynamical friction      modelling as (U, V, W ) = (11.1 ± 1.5, 12.2 ± 2, 7.3 ± 1)
+and radialisation.                                           km s−1 from Refs. [77, 78], whilst the latter is harder to
+  The smooth round halo of the SHM cannot account            estimate but is likely close to zero [75]. This gives the
+for the highly radially anisotropic DM associated with       Local Standard of Rest as v0 = 233 ± 3 km s−1 .
+the Gaia Sausage. The SHM must therefore be extended            Most direct detection experiments analyse their results
+to include a DM component with the radially anisotropic      with v0 = 220 kms−1 , for recent examples, see analy-
+kinematics that arise from the Sausage Galaxy merger.        ses by the SuperCDMS [79], XENON [80], LUX [81] and
+Before introducing our refinements in Section III, we re-    LZ [82] Collaborations. Theoretical papers similarly con-
+view the remaining ingredients of the SHM to discuss         tinue to recommend v0 = 220 ± 20 kms−1 [83–85]. As a
+their validity.                                              consequence, the updated value v0 = 233 km s−1 , to-
+                                                             gether with its substantially reduced error bar, are not
+                                                             currently a standard component in the analysis of the
+                    A.   Sphericity                          experimental data.
+
+   The stellar halo is clearly irregular as viewed in maps
+of resolved halo stars [65]. It comprises a hotchpotch of                 C.    Escape Speed at the Sun
+shells and streams, many of which are associated with
+the Gaia Sausage (e.g. the Virgo Overdensity and the
+                                                                The escape speed is directly related to the local poten-
+Hercules-Aquila Cloud [66]). However, analyses of the
+                                                             tial, and hence the mass of the Milky Way DM halo. Any
+kinematic data from Gaia strongly suggest that the dark
+                                                             revisions of the escape speed are therefore important to
+halo is a smoother and rounder super-structure. De-
+                                                             include in refinements of the SHM.
+spite the abundant substructure, the velocity ellipsoid
+                                                                Prior to Gaia, measurements of the escape velocity re-
+of the stellar halo is closely aligned in spherical polar
+                                                             lied on radial velocities of small samples of high veloc-
+coordinates [46, 67]. This is a natural consequence of
+                                                             ity stars. For example, the value of vesc = 544 kms−1
+the gravitational potential – and hence the DM distribu-
+                                                             used in the SuperCDMS [79], XENON [80], LUX [81] and
+tion – being close to spherical [68, 69]. Prior to data
+                                                             LZ [82] analyses is based on the work of Ref. [68], who
+from Gaia, there was a long-standing discrepancy re-
+                                                             used a sample of 12 high velocity RAVE stars. This was
+garding the dark halo shape. Analyses of the kinemat-
+                                                             subsequently revised to vesc = 533+54  −41 kms
+                                                                                                             −1
+                                                                                                                 when the
+ics of streams preferred almost spherical or very weakly
+                                                             sample size was increased to 90 stars [86]. The escape
+oblate shapes [70, 71]. In contrast, Jeans analyses of the
+                                                             speed curve as a function of Galactic radius was mea-
+kinematics of halo stars, which are subject to substan-
+                                                             sured in Ref. [87] using a much larger sample of ∼ 2000
+tial degeneracies between the stellar density, the veloc-
+                                                             main-sequence turn-off, blue horizontal branch and K gi-
+ity anisotropy and the DM density, gave shapes varying
+                                                             ant stars extracted from the SDSS spectroscopic dataset.
+from strongly oblate to prolate [72, 73]. Reassuringly,
+                                                             The local escape speed was found to be 521+46   −30 km s
+                                                                                                                       −1
+                                                                                                                          .
+the most recent Jeans analyses of the kinematics of the
+stellar halo components with Gaia data release 2 (DR2)          However the proper motions in the Gaia data enable
+RR Lyraes find that the DM distribution is nearly spher-     a much improved calculation, as we no longer need to
+ical [46], at least in the innermost 15 kpc. This already    marginalize over the unknown tangential velocities of
+suggests that the DM associated with the Gaia Sausage        stars. Based on the analysis of the velocities of ∼ 2850
+is subdominant. The DM halo must be a smoother and           halo stars from Gaia DR2 with distance errors smaller
+rounder structure than the stellar halo. Therefore, the      than 10 %, the local escape speed has been revised up-
+assumption of near-sphericity in the potential that un-      ward to vesc = 580+63
+                                                                                 −63 km s
+                                                                                            −1
+                                                                                                [88]. However, Ref. [89]
+derlies the SHM continues to be supported by the data.       show that this result is sensitive to the prior chosen to de-
+                                                             scribe the high velocity tail of the distribution function.
+                                                             Using a prior inspired by simulations, and a more local
+          B.   Circular Velocity at the Sun
+                                                             sample of ∼ 2300 high velocity counter-rotating stars,
+                                                             they find the escape speed is 528+24  −25 kms
+                                                                                                            −1
+                                                                                                                [89]. This
+                                                             is compatible with the earlier work of Refs. [68, 87], but
+   The angular velocity of the Sun, derived from the Very-   with much smaller error bars.
+long-baseline interferometry proper motion of Sgr A? as-
+suming it is at rest at the centre of the Galaxy, is known
+accurately as 30.24 ± 0.12 km s−1 kpc−1 [74, 75]. Thanks
+to results from the GRAVITY collaboration [76], the so-                  D.    Local Dark Matter Density
+lar position is pinned firmly down as 8.122 ± 0.031 kpc.
+This corresponds to a tangential velocity of 246 ± 1 km         WIMP direct detection searches have traditionally
+s−1 . The circular velocity of the Local Standard of Rest    taken ρ0 = 0.3 GeV cm−3 for the local DM density. This
+is extracted by correcting for the Solar peculiar motion     is on the recommendation of the Particle Data Group
+and for any streaming velocity induced by the Galactic       Review [90], although the works cited are not especially
+bar. The former is known accurately thanks to careful        recent, e.g. Ref. [91]. On the other hand, axion haloscope
+                                                                                                                                 4
+
+collaborations (ADMX [92–94], HAYSTAC [95–97], OR-              used to cut off the velocity distribution is vesc = 528+24   −25
+GAN [98, 99]) appear to have independently decided on           km s−1 [89].
+the value ρ0 = 0.45 GeV cm−3 .                                    We now turn our attention to a velocity distribution
+   The consensus of recent investigations using the verti-      for the highly radially anisotropic Gaia Sausage. The ve-
+cal kinematics of stars tend to even larger values: in par-     locity dispersion tensor is aligned in spherical polar coor-
+ticular, ρ0 ≈ 0.57 GeV cm−3 with Sloan Digital Sky Sur-         dinates with σ 2 = diag(σr2 , σθ2 , σφ2 ).1 As the gravitational
+vey (SDSS) Stripe 82 dwarf stars [100]; 0.542±0.042 GeV         potential is close to spherical [46, 67], then σθ = σφ . The
+cm−3 with 4600 RAVE red clump stars [101]; 0.48 ± 0.07          anisotropy is parameterized by,
+GeV cm−3 using a model of the Galaxy built from
+200,000 RAVE giants, together with constraints from                                              σθ2 + σφ2
+gas terminal velocities, maser observations and the verti-                            β =1−                ,                    (4)
+                                      +0.07
+                                                                                                    2σr2
+cal stellar density profile [86]; 0.46−0.09 GeV cm−3 with
+the SDSS G dwarfs [102]; 0.69 ± 0.08 GeV cm−3 with              which vanishes for an isotropic dispersion tensor. We
+the Tycho Gaia Astrometric Solution (TGAS) red clump            recall that β = 1 implies that all the orbits are com-
+stars [103]. The statistical errors on each of these mea-       pletely radial and β = −∞ that all the orbits are circu-
+surements are smaller than the scatter between them.            lar. The stellar debris associated with the Gaia Sausage
+This is because the error is dominated by systematics           has β = 0.9 [47, 49]. The Globular Clusters once as-
+(e.g. local gradient of the circular velocity curve, vertical   sociated with the Sausage Galaxy are in fact even more
+density law of disk tracers, treatment of the tilt of the       radially anisotropic with β = 0.95 [63]. The anisotropy
+velocity ellipsoid, see Ref. [104]) and probably amounts        of the Sausage DM is unknown, though it too must be
+to ≈ 30%.                                                       highly radial. We assume it is the same as the stellar
+   Fortunately ρ0 only ever enters into calculations as an      debris β = 0.9 in our standard model and assign an error
+overall scaling. As a good basis for comparison between         of ±0.05.
+the work of different groups, we suggest a suitable choice         The density distribution of the Sausage falls like ∼
+of rounded-off value for ρ0 in the SHM++ is 0.55 GeV            r−3 [105]. The exact solution of the collisionless Boltz-
+cm−3 with a 30% error of ±0.17 GeV cm−3 to account              mann equation for an anisotropic tracer population with
+for systematics.                                                density falling like r−3 in a galaxy with an asymptotically
+                                                                flat rotation curve is [106].
+                                                                                                                         !
+                    III.   THE SHM++                                                1                   vr2    vθ2   vφ2
+                                                                 fS (v) =                        exp − 2 − 2 − 2
+                                                                           (2π)3/2 σr σθ2 NS,esc       2σr    2σθ   2σφ
+  In this section, we introduce the SHM++ by carrying                                                            ×Θ(vesc − |v|) ,
+out two modifications to the SHM. First, and trivially,                                                                      (5)
+the local circular speed v0 , escape velocity vesc and local
+DM density ρ0 are updated in the light of more recent           The velocity dispersions are related to the amplitude of
+data. Second, and more fundamentally, we introduce a            the rotation curve via [106]
+Sausage component to describe the radially anisotropic
+DM particles brought in by the Sausage galaxy.                                   3v02                          3v02 (1 − β)
+                                                                      σr2 =             ,       σθ2 = σφ2 =                 ,   (6)
+                                                                              2(3 − 2β)                        2(3 − 2β)
+
+               A.   Velocity Distributions                      where v0 = 233 kms−1 is the LSR.
+                                                                 The normalisation constant is
+  The velocity distribution of the bimodal dark halo in                                     1/2       2 
+                                                                                vesc      1−β                 v
+the frame of the Galaxy is described by                          NS,esc = erf √       −              exp − esc2
+                                                                                 2σr        β                 2σθ
+             f (v) = (1 − η)fR (v) + ηfS (v) ,           (3)                                              1/2
+                                                                                                               
+                                                                                               vesc     β
+                                                                                        ×erfi √                   , (7)
+                                                                                                 2σr (1 − β)1/2
+where fR is the velocity distribution of the smooth,
+nearly round dark halo that dominates the gravitational         where erfi is the imaginary error function. This is the
+potential in the innermost 20 kpc, whilst fS is the ve-         anisotropic analogue of Eq. (2).
+locity distribution of the Gaia Sausage. The parameter             This completes our description of the velocity distri-
+η is a constant that describes the fraction of DM in the        bution of the SHM++ . It is an entirely analytic model
+Sausage at the solar neighbourhood.                             of a roundish dark halo, together with a highly radially
+  The nearly round dark halo component has a velocity
+distribution in the Galactic frame that is√the familiar
+Gaussian distribution in Eq. (1) with v0 = 2σv = 233±
+3 kms−1 as the speed of the LSR. This relation holds true       1 We use galactocentric spherical coordinates, which are equivalent
+
+provided the rotation curve is flat. The escape velocity          to rectangular coordinates at the Earth’s location.
+                                                                                                                                 5
+
+     200                                                              3.5
+
+     100                                                                                                                   0.3
+                                                                       3
+                                                         6
+       0                                                                                                                   0.2
+                                                         4
+    -100                                                              2.5                                                  0.1
+                                                         2
+    -200                                                                                                                   0
+                                                         0             2
+    -300
+                                                                      1.5
+    -400
+
+    -500                                                               1
+
+    -600
+                                                                      0.5
+    -700
+
+    -800                                                               0
+       -600    -400     -200      0       200     400        600            0   100   200    300   400   500   600   700   800
+
+
+
+
+FIG. 1. Left: Earth frame velocity distribution for the SHM++ in the radial and horizontal directions. We assume a Sausage
+fraction of η = 0.2. The shapes of the round component, fR (v), and Sausage component, fS (v), in velocity space are traced
+with red and blue contours respectively. The radial anisotropy of the Sausage component can be clearly seen. The white point
+marks the inverse of the velocity of the Sun (LSR + peculiar motion) and the white circle indicates the path of the full Earth
+velocity over one year. Right: Earth frame speed distributions for the SHM (red dashed) and the SHM++ (blue). The shade
+of blue indicates the fraction of the halo comprised of Sausage. The lower blue line isolates only 0.2fS (v). The effect of the
+Sausage component is to make the speed distribution colder.
+
+
+anisotropic Sausage component. It depends on the fa-               vary in the range η = 0 (corresponding to only a round
+miliar Galactic constants already present in the SHM,              halo component) to η = 0.3. The solid blue line shows
+namely the local circular speed v0 , the local escape speed        the contribution from only the Sausage component with
+vesc and the local DM density ρ0 . There are two addi-             η = 0.2.
+tional parameters in the SHM++ : the velocity anisotropy              Comparing the SHM and SHM++ distributions, we see
+β ≈ 0.9 ± 0.05 of the Gaia Sausage and the fraction of             that the SHM++ distribution is everywhere shifted to
+DM locally in the Sausage η, which we estimate in the              higher speeds. This is primarily because of the larger
+next section.                                                      value of v0 . Comparing the SHM++ distribution with
+   On Earth, the incoming distribution of DM particles             η = 0 (the lightest edge in the shaded region) to the
+is found by boosting the DM velocities in the galactic             distribution with η 6= 0, we see that the impact of the
+frame by the Earth’s velocity with respect to the Galactic         Sausage component is to increase the peak-height of the
+frame: vE (t) = (0, v0 , 0) + (U, V, W ) + uE (t). Explicitly,     speed distribution while decreasing the overall dispersion
+this means that the Earth frame velocity distribution is           of the distribution, i.e. the Sausage component makes the
+flab (v) = f (v + vE (t)). The Earth’s velocity is time            total speed distribution colder compared to a halo with
+dependent owing to the time dependence of uE (t), the              only the round, isotropic component. The difference in
+Earth’s velocity around the Sun. Expressions for uE (t)            the dispersion arises from the different expressions for
+are given in Refs. [107–109].                                      the velocity dispersions in the Sausage distribution (fS )
+   We plot the Earth frame distribution of velocities and          compared to the round halo (fR ).
+speeds in Fig. 1. The velocity distribution (left panel) is
+displayed as the two-dimensional distribution flab (vr , vθ ),
+where we have marginalised over vφ . The blue contours
+associated with the Sausage component clearly show the
+radial bias in velocity space compared to the circular                                  B.    Constraining η
+red contours associated with the round component of the
+halo. In the Rright panel, we show the speed distribution,
+flab (v) = v 2 dΩflab (v), for the SHM, SHM++ and the                The fraction η of DM locally in the Gaia Sausage is
+isolated Sausage component. For the SHM distribution               not known, but an upper limit can be estimated. The
+(red dashed line), we have used the parameters in the              stellar density distribution of the Sausage is triaxial with
+upper half of Table I. For the SHM++ distribution (blue            axis ratios a = 1, b = 1.27±0.03, c = 0.57±0.02 near the
+shaded), we have used the parameters in the lower half of          Sun, and falls off like ∼ r−3 [105]. As a simple model,
+Table I with the exception of η, which we have allowed to          we assume that the Sausage DM density is stratified on
+                                                                                                                           6
+
+similar concentric ellipsoids with ellipsoidal radius m         of . 3 × 1010 M . Using the density law Eq. (9), we find
+                                                                the fraction of DM in the Solar neighbourhood due to
+                         x02   y 02   z2                        the Sausage is η . 20%.
+                  m2 =       +      +    .                (8)
+                         a2    b2     c2                           There are arguments suggesting that this limit may be
+                                                                an overestimate – for example, the DM is always more ex-
+Here, (x0 , y 0 ) are the Cartesians in the Galactic plane,     tended than the luminous matter in dwarf galaxies. Tidal
+rotated so that the long axis x0 is about 70◦ with respect      stripping of an infalling satellite therefore distributes DM
+to the x-axis which conventionally connects the Sun and         over a much large volume than the luminous matter, so
+the Galactic Centre [105].                                      our use of ∼ 30 kpc inspired by the stellar debris may
+   The DM contribution of the triaxial Sausage cannot           be unwarranted. The density law of the DM may also
+become too high, as it would then cause detectable per-         be different from the r−3 fall-off of the stars. However,
+turbations (in the rotation curve or the kinematics of          there are also arguments suggesting that this may be an
+stars, for example) and would spoil the sphericity of the       underestimate – for example, the velocity distribution of
+potential [46, 67]. For large spirals like the Milky Way,       the stellar debris [114] suggests that the stellar density
+the scatter in the Tully-Fisher relationship severely lim-      is depleted in the very innermost parts. If the same is
+its the ellipticity of the disk [110]. In fact, the ellip-      true of the DM, then our calculation may not ascribe
+ticity of the equipotentials in the Galactic plane of the       enough DM to the solar neighbourhood. Given all the
+Milky Way must be less than 5 % on stellar kinematical          uncertainties, it is therefore prudent to allow η to vary
+grounds [111], almost all of which can be attributed to         within the range 10% to 30% with a preferred value of
+the Galactic bar [112]. Any contribution to the elliptic-       20%. This is consistent with recent numerical work from
+ity of the equipotentials in the Galactic plane from the        the Auriga [115] and the FIRE simulations [116].
+Sausage must be less than ∼ 1%.
+   To estimate the dynamical effects of the Sausage, we
+need to compute the gravitational forces generated by an          IV.   COMPARISONS WITH ALTERNATIVES
+elongated, triaxial figure. For now we assume that the
+DM density falls in the same manner as the stars so the
+Sausage density within m < 30 kpc is modelled by                   Our derivation of the SHM++ is based upon equilib-
+                                                                rium distribution functions, together with a collection of
+                                 ρa ra3                         robust astronomical measurements. The main advantage
+                ρS (m2 ) =                 .              (9)   of our model is that it is both simple and accounts for
+                             (ra + m2 )3/2
+                               2
+                                                                known properties of the Milky Way halo.
+The virtue of this model is that the gravitational poten-          However, it is not the only method that has been used
+tial of the Sausage at any point is then known [113]            to infer the local DM velocity distribution. Recently,
+                                                                there have been attempts to deduce the velocity distri-
+              φ = −4πGρa abcRF (λ, µ, ν) ,            (10)      bution empirically using observations of low metallicity
+                                                                halo stars. We can also resort to numerical simulations to
+where RF is the Carlson elliptic integral and (λ, µ, ν) are     gain more understanding of the behaviour of DM inside
+ellipsoidal coordinates. The total mass within ellipsoidal      galactic halos. We discuss possible overlaps and disagree-
+radius m is                                                     ments with these various methods here.
+                         h         p
+    M (m) = 4πabc ra3 ρa log([m + ra2 + m2 ]/ra ) (11)
+                                          m     i                 A.    Low and Intermediate metallicity halo stars
+                                   −p             .
+                                       ra2 + m2
+                                                                   An alternative suggestion as to an appropriate veloc-
+Although the total mass diverges logarithmically, this is       ity distribution is motivated by the claim that the metal-
+not a problem as by Newton’s theorem, ellipsoidal shells        poor halo stars are effective tracers of the local DM distri-
+of constant density have no dynamical effects inside the        bution [117]. This claim has inspired DM velocity distri-
+shell.                                                          butions based on the empirical properties of the velocities
+   We now constrain the mass of the Sausage within              of the metal-poor stars in RAVE or SDSS-Gaia [53, 118].
+30 kpc, or M (30). The Sausage contributes a monopole           However, if the velocity distributions of any two popu-
+component which provides a small part of the local cir-         lations are the same, and they reside in the same grav-
+cular velocity speed of v0 = 233 kms−1 . The remainder          itational potential, then their orbital properties are also
+is provided by the rest of the Galaxy. This is modelled         the same. In gravitational physics, the density of stars or
+as a logarithmic potential with an amplitude chosen so          DM is built up from their orbits. So, the assumption is
+that, when its circular speed is added in quadrature to         equivalent to assuming that the density of the stars and
+that of the Sausage, the local circular speed of 233 kms−1      DM are the same. This remains true even if the potential
+is correctly reproduced. Requiring the ellipticity of the       is not steady.
+combined equipotentials in the plane to be less than 1%            Hence, the hypothesis of Refs. [53, 117, 118] is equiv-
+imposes an upper limit on the mass of the Sausage M (30)        alent to assuming that the density distributions of the
+                                                                                                                         7
+
+metal-poor halo stars and the DM are the same (up to an        found in Ref. [121].
+overall normalization). This is known to be incorrect, as        Several of these studies confirm that the Maxwellian
+the density of the metal-poor stars (or any stellar com-       speed distribution derived from the SHM is satisfactory
+ponent) falls too quickly with Galactocentric radius to        for the purposes of direct detection signal modelling.
+provide the flatness of the Milky Way’s rotation curve.        Refs. [58, 121] raise the caveat that in some simulations,
+This causes the local velocity distribution of low metal-      the circular speed v0 and peak speed of the distributions
+licity halo stars to be much colder than the DM. Con-          are different, though this was not found in [59].
+sequently, if the DM velocity distribution is assumed to         A key difference in our approach is that we have made
+follow the metal-poor stars, then the dark matter speeds       a bespoke velocity distribution to account for a known
+will be under-estimated (as their orbits no longer provide     merger event in the Milky Way’s recent history. In the fu-
+the density at large radii to make the rotation curve flat).   ture, the complementarity between our approach and nu-
+This leads to the conclusion that the DM is colder than        merical simulations will grow, as we can use simulations
+is really the case. Our argument is corroborated by re-        to understand more about the impact of this merger on
+sults from the Auriga simulations [119], where the speed       the local DM distribution. Ultimately this will put both
+profiles of low metallicity stars in the simulated halos are   data-driven and simulation-driven predictions of experi-
+indeed colder than the DM speed distributions [120].           mental DM signals on more robust grounds.
+   Of course, the DM may have multiple sub-populations,
+some of which track the stellar density distributions and
+some of which do not. In fact, this is seen in some                 V.   EXPERIMENTAL CONSEQUENCES
+of the insightful examples provided in the FIRE simu-
+lations [116]. Then of course the density of stars and
+DM can be different. However, if only a minority of the          The purpose of a standard benchmark halo model is to
+DM tracks the stellar density, then the analogy is of only     facilitate the self-consistent mapping of exclusion limits
+partial help in providing velocity distributions for direct    on the properties of a DM particle candidate. Since all
+detection experiments.                                         detection signals require this input, all are influenced by
+   In the picture of Ref. [53], the correspondence between     changing the model of the local distribution of DM. In
+the metal-poor stars and dark matter pertains only to the      this section, we demonstrate in simple terms the differ-
+oldest luminous mergers that build the smooth, nearly          ences brought about by the bimodal distribution of the
+round dark halo (our fR ). The Sausage stars are of in-        SHM++ . As examples, we consider the two most popular
+termediate metallicity, and here the assumption is that        candidates for DM: weakly interacting massive particles
+they trace the DM brought in by the merger event. The          (WIMPs) and axions. For WIMPs, we show the effect of
+humped structure in f (vr ) with two lobes at vr = ±148        the Sausage on nuclear recoil event rates (Sec. V A) and
+km s−1 is associated with the apocentric pile-up at ∼ 30       cross section limits (Sec. V B), as well as differences in
+kpc that marks the density break in the stellar halo [45].     their directional signals (Sec. V C). For axions (Sec. V D),
+They will not exist for the Sausage DM velocity dis-           the discussion is more straightforward and can be sum-
+tribution, as the DM density profile does not break at         marised with a simple formula encapsulating the conse-
+∼ 30 kpc. The DM from the Sausage Galaxy was origi-            quences of different signal model assumptions.
+nally more extended than the stars in the progenitor and
+so was stripped earlier and is likely sprawled over much
+larger distances. In simulations of sinking and radial-                       A.       Nuclear recoil signals
+izing satellites, the length scale of the DM tidally torn
+from the satellite exceeds that of the stars by typically a       There are many experiments actively searching for the
+factor of a few [e.g., 64, 115]. The density of the tidally    nuclear recoil energy imparted by the collision of a DM
+stripped stars and DM from the Sausage Galaxy will also        particle with a nucleus. For these two-to-two scatter-
+therefore be quite different.                                  ing processes (which could be elastic or inelastic colli-
+                                                               sions [122–124]), the general formula for the differential
+                                                               scattering rate R of nuclear recoil events as a function of
+                    B.   Simulations                           the nuclear recoil energy Er is
+                                                                                   Z
+   Our data-driven work is complementary to the ap-             dR(t)      ρ0                       dσT (v, Er ) 3
+                                                                      = NT                 v f v + vE (t)        d v.
+proach adopted in Refs. [58–61]. Here, simulated halos           dEr       mχ     v>vmin                dEr
+built up from successive merger events are examined to                                                            (12)
+extract better motivated velocity distributions than the       Here, NT is the number of target nuclei in the experi-
+SHM ansatz. In part, this is also an attempt to un-            ment, mχ is the DM mass, v = |v| is the DM speed in
+derstand the connections present between the dark and          the reference frame of the experiment, vmin is the min-
+baryonic matter distributions of galactic halos. A de-         imum DM speed that can induce a recoil of energy Er ,
+tailed summary of the findings of a collection of simula-      σT is the DM–nucleus scattering cross section, which in
+tions and their implications for direct detection can be       general depends on v and Er , and finally f (v + vE (t))
+                                                                                                                                              8
+
+                10-3
+        4                                                                     350
+
+
+      3.5                                                       0.3           300                                               0.3
+
+                                                                0.2                                                             0.2
+        3
+                                                                              250
+                                                                0.1                                                             0.1
+      2.5
+                                                                0                                                               0
+                                                                              200
+        2
+                                                                              150
+      1.5
+
+                                                                              100
+        1
+
+
+      0.5                                                                      50
+
+
+        0                                                                       0
+            0          100   200    300     400   500   600   700     800           0   100   200   300   400    500   600   700      800
+
+
+
+
+FIG. 2. The two halo integrals outlined in the text that enter the rate calculation for nuclear recoil signals: the mean inverse
+speed g(vmin ) (left) and mean speed h(vmin ) (right). We show their shapes for both the SHM and SHM++ as a red line and
+blue region respectively. We take the value of these functions averaged over time. Direct detection event rates are linearly
+proportional to one or both of these integrals. The blue shading indicates the value of the Sausage density fraction, η. The
+Sausage component with η = 0.2 is isolated as a blue line.
+
+
+is the DM velocity distribution boosted to the Earth’s                      known analytic expressions, though they are easily eval-
+frame.                                                                      uated numerically.3 The blue shaded region corresponds
+   For the canonical leading order spin-independent (SI)                    to the SHM++ with the Sausage fraction in the range
+and spin-dependent (SD) DM–nucleus interactions [125],                      0.1 ≤ η ≤ 0.3. The dashed red line shows the result for
+the differential cross section is inversely proportional to                 the SHM with the parameters in Tab I. For the mean
+the square of the DM speed, dσT /dEr ∝ v −2 . For these                     inverse speed, g(vmin ), the SHM++ produces a slightly
+interactions, all of the dependence on the DM velocity                      different shape leading to a suppression of around 10%
+distribution is encapsulated in the function                                for vmin < 200 km s−1 and a much smaller increase over
+                        Z                                                   speeds vmin > 200 km s−1 . The inclusion of the Sausage
+                                f (v + vE (t)) 3                            component leads to a small change in the shape of the
+          g(vmin , t) =                       d v.     (13)
+                         v>vmin       v                                     mean speed integral, h(vmin ), but there is a persistent
+                                                                            increase of around 6% in the SHM++ relative to the
+More general two-to-two DM–nucleus interactions can be                      SHM. This increase reflects the 6% increase in v0 in the
+parameterized in the non-relativistic effective field the-                  SHM++ .
+ory framework for direct detection [126–128], which al-                        At first sight, it may seen surprising that the differ-
+lows for any Galilean invariant and Hermitian interac-                      ences between the SHM and SHM++ models are not
+tion that respects energy and momentum conservation.                        greater. The resolution lies in the fact that we have made
+Within the effective field theory framework, direct detec-                  multiple counter-balancing changes to the SHM. The rel-
+tion signals depend on a linear combination of g(vmin , t)                  ative coldness of the new Sausage DM is counteracted by
+and h(vmin , t),2 which is defined as                                       the increased hotness of the halo DM due to the increase
+                       Z                                                    in v0 .
+         h(vmin , t) =         vf (v + vE (t)) d3 v . (14)                     With g(vmin , t) in hand, we compare the rate and ex-
+                                   v>vmin                                   clusion limits in the SHM and SHM++ for the most com-
+                                                                            monly studied interaction: the spin-independent DM-
+  We show g(vmin , t) and h(vmin , t) in Fig. 2. For the                    nucleus interaction, in which the differential cross section
+SHM, there exist analytic expressions for these integrals                   takes the form:
+(see e.g. [16, 131, 132]). For the SHM++ , there are no
+                                                                                          dσT (v, Er )   mN A2 σpSI 2
+                                                                                                       =           F (Er ) ,                (15)
+                                                                                             dEr          2µ2p v 2
+
+2 Scattering processes that are not two-to-two can have a more
+
+  general velocity dependence that isn’t captured by the non-               3 We have provided a public code to generate these functions. The
+
+  relativistic effective field theory framework, see e.g. [129, 130].         code is available at https://github.com/mccabech/SHMpp/.
+                                                                                                                                         9
+
+                                                                     0.25
+              0   10   20   30   40   50   60   70   80   90                                    6
+          2
+     10
+                                                                                                4
+                                                                      0.2
+                                                                                                2
+
+                                                                                                0
+     100
+                                                                     0.15                       -2
+
+                                                                                                -4
+         -2
+    10                                                                                          -6
+                                                                      0.1
+
+
+
+
+                                                                     0.05
+    10-4
+
+
+                                                                                                             0   0.1        0.2   0.3
+                                                                       0
+         -6
+                                                                            0         10       20       30             40               50
+    10
+
+
+
+
+FIG. 3. Spin-independent differential event rate as a function   FIG. 4. Annual modulation of the SI differential event
+of energy for the SHM (dashed) and SHM++ (shaded, indi-          rate (main) and total rate (inset) for DM with a mass of
+cating a range of η, as in Figs. 1 and 2). The rates for three   20 GeV scattering off a xenon nucleus. The blue shaded
+target nuclei are shown: xenon (green), germanium (purple)       region corresponds to the SHM++ with varying η whereas
+and fluorine (red). We also show results for three different     the dashed red line is the SHM. As in Fig. 3, we have fixed
+values of the DM mass (5, 20 and 100 GeV for rates extend-       ρ0 = 0.3 GeV cm−3 for both the SHM and SHM++ to again
+ing from the lowest to the highest energies shown). We have      isolate the changes brought about by the velocity distribu-
+fixed ρ0 = 0.3 GeV cm3 for the SHM and SHM++ spectra to          tions.
+show only the changes due to the velocity distributions.
+
+                                                                 of η and the blue line shows the contribution from the
+where mN is the nucleus mass, A is the atomic number,            Sausage component with η = 0.2. We have again fixed ρ
+µp is the DM-proton reduced mass, F (Er ) is the nuclear         to be the same for the SHM and SHM++ spectra. As in
+form factor and σpSI is the DM-proton scattering cross           the previous figures, the changes between the two mod-
+section.                                                         els are relatively small. Increasing the contribution of
+                                                                 the Sausage component has the effect of increasing the
+   We show the differential event rate as a function of re-
+                                                                 peak modulation amplitude while slightly decreasing the
+coil energy in Fig. 3 for a three different target nuclei:
+131                                                              higher energy modulation spectrum.
+    Xe (green), 74 Ge (purple) and 19 F (red). In this fig-
+ure, we have temporarily fixed the local DM density at              The inset in Fig. 4 shows the modulation in the total
+ρ0 = 0.3 GeV cm−3 for both models. This is so that we            scattering rate, R, over the course of one year. Impor-
+can highlight only the difference arising from the change        tantly, we note that the Sausage component of the halo is
+in velocity distribution, rather than the simple rescaling       modulating essentially in phase with the isotropic part.
+by the new value of ρ0 . Three different values of the DM        Recall that the modulation of the event rate is controlled
+mass are shown and as in previous figures, the shading           by relative velocity between the motion of the Earth and
+indicates the effect of the Sausage component. Consis-           the direction in velocity space that the distribution is
+tent with the rather minor alterations seen in g(vmin ),         boosted. Since both the halo and the Sausage are cen-
+there are only modest changes in the recoil energy spec-         tred at the origin in velocity space, they are both boosted
+tra, mainly in the high-energy tails of the spectra. The         to the same new centre in the Earth frame (see Fig. 1).
+spectra with only a round halo, corresponding to η = 0,          In fact it is only features that are off-centred in velocity
+and with the updated astrophysical parameters in the             space, such as streams, that can give rise to significant
+lower half of Table I are shown by the lightest colour           phase changes in the annual modulation signal [16, 133].
+in the shaded region. We see that increasing η slightly
+reduces the maximum energy for all cases.
+   The differential modulation event rate, defined as                           B.   Impact on cross section limits
+dR/dEr |max − dR/dEr |min , is shown in the main panel of
+Fig. 4. We assume here a DM mass of 20 GeV scatter-                 The results of direct detection experiments are usu-
+ing with xenon. As in previous figures, the red-dashed           ally summarised in terms of exclusion limits on the SI
+line shows the rate for the SHM, the blue-shaded re-             DM-proton scattering cross section as a function of DM
+gions shows the rate for the SHM++ for different values          mass. In Fig. 5, we illustrate the effects of moving from
+                                                                                                                                10
+
+     10-40                                                             year exposure. As a proxy, we have used the background
+                                                                       rate and efficiency curve reported for LZ [82]. The low
+                                                                       threshold germanium result (purple limits) is a toy ver-
+     10-42                                                             sion of the SuperCDMS [136] or EDELWEISS [137] ex-
+                                                                       periments, where we assume a simple error function pa-
+                                                                       rameterisation for the efficiency curve, which falls sharply
+     10-44                                                             towards a threshold at 0.2 keV. The He:SF6 target (red
+                                                                       limits) is a toy version of the 1000m3 CYGNUS direc-
+                                                                       tional detector using a helium and SF6 gas mixture (dis-
+     10-46
+                                                                       cussed in more detail in Sec. V C). We have also included
+                                                                       realistic estimates of the detector resolutions in our re-
+                                                                       sults.
+     10-48
+                                                                          The upper gray shaded regions in Fig. 5 show the exist-
+                                                                       ing exclusion limits on the SI WIMP-proton cross section
+     10-50                                                             (calculated assuming the SHM with the parameters in the
+                                                           0.3         upper half of Table I). This is an interpolation of the lim-
+         4                                                 0.2         its of (from low to high masses) CRESST [138], DarkSide-
+         3                                                 0.1         50 [139], LUX [140], PandaX [141] and XENON1T [80].
+                                                           0           The lower blue region shows the ‘neutrino floor’ region
+         2                                                             for a xenon target. The neutrino floor delimits cross sec-
+                                                                       tions where the neutrino background saturates the DM
+         1
+                                                                       signal, so is therefore dependent upon the shape of the
+         10-1         100          101           102             103
+                                                                       signal model that is assumed [142]. We calculate the floor
+                                                                       in the same manner as described in Refs. [142–144]
+                                                                          Fig. 5 shows a noticeable shift between the SHM and
+FIG. 5. Top: Using a set of toy experimental setups, we                SHM++ limits. This is mostly due to the different values
+demonstrate the impact of the SHM++ on the sensitivity                 of ρ0 , which can be most clearly seen from examining
+limits for three classes of detectors: a germanium experi-             the ratio between the limits shown in the lower panel.
+ment (purple), a directional He:SF6 experiment (orange) and
+                                                                       The black dotted line in the lower panel indicates the
+a xenon experiment (green). The lower blue shaded region
+shows the neutrino floor for a xenon target while the grey             ratio 0.55/0.3, the ratio of the different ρ0 values. It
+shaded region shows the already excluded parameter space               is only as the limits approach the lowest DM mass to
+(assuming the SHM). The dashed lines indicate the sensitivity          which each experiment is sensitive that the ratio of cross
+assuming the SHM while the solid lines assume the SHM++ .              sections deviate significantly from the black dotted line.
+For the SHM++ limits in the top panel, we have used the                The small impact on the shape of the exclusion limits
+parameters from the lower half of Table I. Bottom: The ra-             can be understood as follows. Contrasting the SHM and
+tio between the SHM and the SHM++ cross sections. The                  SHM++ signals, there are two competing effects which
+shading indicates the ratio for different values of η (η = 0.2         act to push the limits in opposite directions. Increasing
+corresponds to the ratio for the top panel). The black dotted          v0 strengthens the cross section limits because it increases
+line indicates the difference that arises solely from the differ-
+                                                                       the number of recoil events above the finite energy thresh-
+ent values of ρ0 in the SHM and SHM++ ; deviations from this
+line arise from the different velocity distributions.
+                                                                       old. However, the Sausage reverses this effect since, as
+                                                                       we saw in Fig. 3, the Sausage component decreases the
+                                                                       maximum recoil energy so there are fewer events above
+                                                                       the finite energy threshold.
+the SHM to the SHM++ for three hypothetical experi-                       The neutrino floor has a more complicated relationship
+ments using a xenon (green), germanium (purple) and                    with the velocity distribution and the WIMP mass. The
+a He:SF6 (red) target material. In the upper panel, the                cross section of the floor depends upon how much the
+dashed lines show the limits for the SHM with parameters               neutrino background overlaps with a given DM signal.
+in the upper half of Table I, while the solid lines show the           The neutrino source that overlaps most with a DM signal
+limits for the SHM++ with our new recommended values                   depends on mχ . This leads to the non-trivial dependence
+for the astrophysical parameters given in the lower half               of the neutrino floor on the Sausage fraction η shown in
+of Table I. The limits are calculated as median discov-                the lower panel.
+ery limits, where we use the profile likelihood ratio test                Altogether, our refinement of the SHM ultimately leads
+under the Asimov approximation to calculate the cross                  to only slight changes to the cross section limits which,
+sections discoverable at 3σ (see Ref. [134] for more de-               for the most part, are simple to understand. This can
+tails). WIMP 90% CL exclusion limits will follow the                   be considered a positive aspect of our new model, since
+same behaviour as the discovery limits shown in Fig. 5.                while it includes refinements accounting for the most re-
+  The green limits correspond to a toy version of a liquid             cent data, it simultaneously allows existing limits on DM
+xenon experiment like DARWIN [135] with a ∼200 ton-                    particle cross sections to be used with confidence. The
+                                                                                                                                         11
+
+                                                                       4
+most notable difference in the limits arises from the larger            He at 740 torr. Both have a total mass of 0.16 tons for
+value of ρ0 , which can be implemented trivially as an                 a 1000 m3 experiment at room temperature. Based on
+overall scaling. In the event of the positive detection of             these targets we show d2 R/dEr dΩr , for the round halo
+a DM signal, which would lead to closed contours in the                (left), Sausage (middle) and the SHM++ (right) in Fig. 6.
+mass–cross section plane, the use of the wrong model                   Fixing the recoil energy to Er = 5 keV, we display the
+could lead to an incorrect bias in the measurement of                  full-sky map of recoil angles, which clearly show a distinc-
+both the DM mass and cross section.4 Our refinements                   tive pattern for the Sausage component when compared
+to the halo model will be even more important to con-                  with the round halo. Furthermore this effect is preserved
+sider in the context of a discovery so that any bias is                even when the Sausage is a sub-dominant contribution to
+minimised.                                                             the full model.
+                                                                          In Fig. 7, we show the ratio of Rfw to Rbw . Rfw is the
+                                                                       total rate for scattering with fluorine above Er = 3 keV in
+                  C.    Directional signals                            the hemisphere centred around −vE , while Rbw is the to-
+                                                                       tal rate in the opposite hemisphere. This ratio therefore
+   The main difference between the kinematic structures                gives a measure of the anisotropy of the WIMP direc-
+of the round halo and the Sausage are at the level of                  tional signal. Fig. 7 shows that the Sausage component
+the full three-dimensional velocity distribution. Much                 decreases the anisotropy of the WIMP directional signal,
+of this structure is integrated away when computing the                albeit by a modest amount.
+speed distribution and the integrals that depend on it.                   We can also express the same behaviour as a function of
+To appreciate the full impact of the Sausage component,                Niso , which is an approximate lower limit to the number
+we should consider experiments which are not only sen-                 of events required to detect the dipole anisotropy at 3σ.5
+sitive to the speed of incoming DM particles but also                  To detect the anisotropy, we require that the contrast
+their direction. Such directional detectors are well moti-             in event numbers in the forward/backward hemisphere
+vated on theoretical grounds (see Ref. [109] for a review)             (Nfw − Nbw ) is greater than the √ typical 3σ random devi-
+because the signal from an isotropic DM halo gives a                   ation expected under isotropy, 3 Nfw + Nbw . Expressed
+distribution of recoil angles that aligns with Galactic ro-            in terms of event rates gives the formula,
+tation [147], thus clearly distinguishing it from any back-                                                    2
+ground [148–150]. Directional detectors preserve much                                              Rfw + Rbw
+                                                                                        Niso ≈ 3                   .           (17)
+more kinematic information about the full velocity dis-                                            Rfw − Rbw
+tribution [17, 19, 26, 109, 151, 152].
+                                                                       As higher energy recoils typically have smaller scattering
+   For directionally sensitive detectors, the double differ-
+                                                                       angles, more of the anisotropy of the DM flux is preserved
+ential event rate as a function of recoil energy, recoil di-
+                                                                       in the tail of dR/dEr . Hence the anisotropy increases to-
+rection and time is proportional to an analogous halo
+                                                                       ward the lowest masses displayed in Fig. 7, where only
+integral, called the Radon transform [153, 154],
+                                                                       the tail of the recoil energy distribution is above thresh-
+                                                                       old.
+                   Z
+ fˆ(vmin , q̂, t) = δ (v · q̂ − vmin ) f (v + vE (t)) d3 v , (16)         The Sausage component (the blue line in Fig. 7) is
+                                                                       considerably less anisotropic than the round halo. This
+where q̂ is the direction of the recoiling nucleus. This               is because the population of DM in the Sausage is hot-
+enters into an analogous formula to Eq. (12) for the                   ter in the radial direction, meaning a greater number of
+double differential recoil rate with energy and angle,                 recoils scatter away from vE above a given energy thresh-
+d2 R/dEr dΩr .                                                         old. This effect is exaggerated at low masses when the
+   Directional detectors are challenging to build, as                  only observable particles from the Sausage are those with
+Refs. [155, 156] discuss. Many ideas have been pro-                    the most strongly radial orbits. At high masses, when
+posed to develop detector technologies with angular re-                the observable part of the recoil energy spectrum sam-
+coil sensitivity, including nuclear emulsions [157, 158] and           ples a much larger portion of the velocity distribution,
+columnar recombination [159, 160] for nuclear recoils, as              the SHM and SHM++ nearly converge. When looking
+well as several novel engineered materials for electron re-            at the full Radon transform down to much lower vmin ,
+coils [161–163]. Experimentally the most developed tech-               the Sausage signal is only slightly more anisotropic than
+nique for is to use gaseous time projection chambers (see              the round halo. This is for two reasons. Firstly, the
+Refs. [156, 164–170]). A large-scale gaseous time projec-              increased hotness in the radial direction of the triaxial
+tion chamber called CYGNUS has been proposed and a                     Gaussian is compensated by an increased coldness in the
+feasibility study is currently underway [171]. Two gases               tangential direction (aligning with vE ). Secondly, much
+are under investigation for CYGNUS: SF6 at 20 torr and                 of the anisotropy of the signal becomes washed out in the
+                                                                       stochastic process of elastic scattering.
+
+4 Mitigating strategies are possible [26, 145, 146] but they require
+
+  a large number of signal events to be effective.                     5 See Refs. [109, 152, 172] for more sophisticated tests of isotropy.
+                                                                                                                           12
+
+
+
+
+                                           0         20        40        60
+
+
+
+
+FIG. 6. Mollweide projection in galactic coordinates of the value of the double differential angular recoil rate as a function
+of the inverse of the recoil direction −q̂ at a fixed recoil energy of 5 keV. We assume a 20 GeV DM mass and sum the rates
+from both He and SF6 . The panels from left to right show the distributions for distribution of the round halo component, the
+Sausage, and the combined SHM++ respectively. The Sausage component gives rise to a distinctive pattern compared to the
+round halo. We indicate the direction of vE with a white star.
+
+
+  Nevertheless, the Sausage is a noticeably different class      at ω = ma (as in e.g. ADMX [93, 94], MADMAX [177–
+of feature in the angular distribution of recoils. This          179], HAYSTAC [95–97, 180, 181], CULTASK [182–
+means that, in the event of a detection, a directional           184], Orpheus [185], ORGAN [98, 99], KLASH [186] and
+experiment would have a better chance of distinguish-            RADES [187]), or be sensitive to a wide bandwidth of
+ing between the Sausage-less model of the halo and               frequencies simultaneously (e.g. ABRACADABRA [21,
+the SHM++ compared to an experiment with no di-                  188, 189], BEAST [190] and DM-Radio [191]). The ax-
+rectional information. We anticipate that the Sausage            ion signal lineshape has a quality factor of around 106 so
+will also have an impact on higher order directional fea-        even in the best resonant devices, the full axion signal will
+tures [173, 174], the time integrated signal [150], and an-      be measured at once. This means that in both resonant
+gular signatures of operators with transverse velocity de-       and broadband configurations, the sensitivity to axions
+pendence [175, 176], but for brevity we leave these to           is dependent upon how prominently the signal can show
+future studies.                                                  up over a noise floor. For a recent review of experiments
+                                                                 searching for axions see Ref. [192].
+                                                                    The axion spectral density is proportional to the speed
+                 D.    Axion haloscopes                          distribution, up to a change of variables between fre-
+                                                                 quency and speed (see e.g. Refs. [20, 21])
+   The detection of axions is different from WIMPs and                          dP          2
+requires a different procedure to demonstrate the effect                           = πH(ω) gaγ ρ0 flab (ω) ,             (18)
+                                                                                dω
+of the new halo model. To detect axions, the standard
+approach is to attempt to convert them into photons in-          where H(ω) encodes experimental dependent factors and
+side the magnetic field of some instrument. In the event         gaγ is the axion-photon coupling on which the experi-
+of a detection, the electromagnetic response from axion-         ment will set a limit. The shape of the axion signal is
+photon conversion can be measured in such a device as            dominated by the term
+a function of frequency. The frequency of the electro-                                           dv
+magnetic signal is given by ω = ma (1 + v 2 /2), so the                             flab (ω) =      flab (v) ,           (19)
+                                                                                                 dω
+spectral distribution of photons measured over many co-
+herence times of the axion field oscillations will approach      since the frequency dependence of H(ω) in any realis-
+the astrophysical distribution of speeds on Earth, flab (v)      tic experiment will be effectively constant over the small
+(cf. Fig. 1). To identify the frequency of the axion mass,       range of frequencies covered by galactic speeds. We show
+ma , the experiment may either enforce some resonance or         flab (ω) as a function of frequency in Fig. 8. This distribu-
+constructive interference condition for a signal oscillating     tion is similar to flab (v), which was presented in Fig. 1,
+                                                                                                                              13
+
+   20                                                  11
+
+                                        0.3                                                                             0.3
+
+                                        0.2                                                                             0.2
+
+                                        0.1                                                                             0.1
+   15
+                                        0              12                                                               0
+
+
+
+
+                                                       13
+   10
+                                                       14
+
+                                                       15
+                                                       16
+                                                       17
+                                                       18
+                                                       19
+    5                                                                  -1       0        1        2        3       4          5
+          101                   102                  103
+
+
+
+
+FIG. 7. Anisotropy of the WIMP directional signal as a func-    FIG. 8. Spectral lineshape observable in an axion haloscope.
+tion of WIMP mass. We quantify this anisotropy as the ratio     We show only the shape of the signal distribution as a function
+of the total event rate in the forward hemisphere Rfw (point-   of frequency ω, scaled by the axion mass ma . As in previous
+ing towards −vE ) relative to the rate in the backward hemi-    figures the red dashed line shows the SHM, whereas the blue
+sphere Rbw (pointing towards vE ). The blue region corre-       region shows the new signal model from the SHM++ , shaded
+sponds to the SHM++ with η = 0 to 30%. The red dashed           to indicate the range of values of η. We also isolate a 20%
+line shows the anisotropy for the SHM. The anisotropy of the    contribution from the Sausage, shown as a blue line.
+Sausage alone is shown as the blue line. Here we integrate
+above a recoil energy threshold of 3 keV. On the right hand
+axis we indicate the approximate number of events to detect     would set limits on gaγ only around 6% stronger that the
+the anisotropy at the same position on the left hand axis.      same experiment using η = 0.
+                                                                   For the parameters in Table I – modulo the value
+but is now a function of the observable quantity in an          ρ0 = 0.45 GeV cm−3 instead of ρ0 = 0.3 GeV cm−3 in
+axion experiment.                                               the SHM to reflect the preference of haloscope collabo-
+   The statistical methodology of a generic axion DM ex-        rations – constraints on gaγ assuming the SHM++ rel-
+periment consists of the spectral analysis of a series of       ative to the the SHM are around 8% stronger. As in
+electromagnetic time-stream samples. The stacking of            the case of WIMPs , there are several competing effects.
+the Fourier transforms of this time-stream data in most         The increase in v0 acts to broaden the signal line-width
+cases leads to Gaussian noise suppressed by the duration        making constraints weaker. However the inclusion of the
+of the experiment, as well as (ideally) an enhanced ax-         Sausage component, which is a slightly sharper signal,
+ion signal on top. Hence a likelihood function for such         balances against this. Based on the difference in shapes of
+data can be written in terms of a χ2 sum over frequency         flab (v) alone, constraints when using the SHM++ would
+bins which ultimately can be approximated in terms of           be about 2% weaker. The final balancing act comes from
+the integral over the power spectrum squared. Since the         the new increased value of ρ0 . This ultimately has the
+                           2
+power is proportional to gaγ , the minimum discoverable         greatest impact and pushes the SHM++ constraint to be
+value scales with the shape of the signal as [21],              stronger than the SHM.
+                                                                   The sensitivity of axion haloscopes to astrophysics is
+                 r Z ∞                   −1/4                 essentially only controlled by the width of the speed dis-
+                    1                   2
+          gaγ ∝              dω flab (ω)        .    (20)       tribution (rather than moments above some cutoff as is
+                    ρ0   ma
+                                                                the case for WIMPs). Hence it is not surprising that
+This formula encodes the fact that signals that are             the refinements that we have made have little impact
+sharper in frequency are more prominent over white noise        on limits on the axion-photon coupling. As has been
+and hence easier to detect. However, the dependence on          discussed in the past, the only changes that can bring
+the width of flab (ω) and therefore the width of flab (v)       significant changes to the axion signal are cold substruc-
+only enters weakly, as an integral raised to the −1/4           tures like streams, which present highly localised peaks
+power, so although the SHM++ distribution is colder, the        in frequency [12, 20, 21, 133]. One exception may be di-
+overall effect is small. Additionally, the Sausage compo-       rectional axion experiments possessing sensitivity to the
+nent is not especially localized at a given frequency so        full velocity distribution via prominent diurnal modula-
+again, its impact is small. For demonstration, a hypo-          tions [12, 193]. These will be altered significantly by the
+thetical experiment which used an η = 1 signal model            Sausage component, however such experiments remain
+                                                                                                                       14
+
+hypothetical.                                                 gies (Fig. 3). In the context of particle physics measure-
+                                                              ments for WIMPs, the projected exclusion limits, as well
+                                                              as the neutrino floor, are very similar for both SHM and
+                 VI.   CONCLUSIONS                            SHM++ (Fig. 5). In fact, the dominant change here is the
+                                                              factor of ∼ 1.8 increase in sensitivity due to the updated
+   The data from the Gaia satellite [44] has driven many      value of ρ0 from 0.3 to 0.55 GeV cm−3 .
+changes in our picture of the Milky Way Galaxy. Firstly,         Examination of other signals shows a similar pattern.
+more prosaically, it has enabled the uncertainties in many    Like the round halo, the Sausage is centred at the origin
+Galactic parameters to be substantially reduced. The          in velocity space, so the relative velocity between the DM
+halo shape (Sec. II A), circular speed (Sec. II B) and the    and Earth rest frames oscillates with the same phase,
+escape speed (Sec. II C) are now much more securely           and hence the annual modulation signal is left largely
+pinned down than before. Only the local DM density            unchanged (Fig. 4). The instances in which it is most
+(Sec. II D) remains obdurately uncertain, though anal-        important to use the bimodal SHM++ are experiments
+yses in the near future of Gaia Data Release 2 should         that are explicitly sensitive to the three-dimensions of the
+improve constraints on its value.                             velocity distribution. We studied this type of signal for
+   Secondly and more spectacularly, it has provided un-       a future directional WIMP search like CYGNUS [171].
+ambiguous evidence of an ancient head-on collision with a     The Sausage component leaves a distinctive recoil angle
+massive (1010 −1011 M ) satellite galaxy [47, 49, 50, 52],    distribution in directional WIMP searches (Fig. 6). The
+reinforcing earlier suggestions that the local halo is bi-    SHM++ is less anisotropic than the SHM (Fig. 7). This
+modal [48]. The stellar debris from this event encom-         may raise the concern that the SHM++ might weaken
+passes our location, with many of the stars moving on         prospects for the directional discovery of DM but the
+strongly radial orbits. In addition to stars, the satellite   change in the number of events for a detection is only
+galaxy will have disgorged huge amounts of DM, having         marginally increased.
+a radical effect on the velocity distribution.                   As Fig. 5 demonstrates, DM-nucleon cross section lim-
+   The standard halo model (SHM) has provided trusty          its calculated assuming the older SHM are similar to the
+service in astroparticle physics as a representation of the   limits from SHM++ (after the rescaling from the differ-
+Milky Way halo that is both simple and realistic. We          ent values of ρ0 have been taken into account). This
+have put forward here its natural successor, the SHM++ ,      means that older exclusion limits are still reasonably ac-
+in which the Galactic parameters are updated in the light     curate. We find a similar result also holds for axion halo-
+of the advances from Gaia Data Release 2 and the dark         scopes: constraints on the axion-photon coupling would
+halo’s bimodal structure is explicitly acknowledged. Each     be only marginally stronger with the SHM++ . Cru-
+of the two components can be modelled as Gaussian,            cially, since the width of the axion signal (set by the
+though the Sausage is strongly radially anisotropic. The      width of the speed distribution) is similar in the SHM
+combined velocity distribution is of course not Gaussian,     and SHM++ (Fig. 8), there cannot be major changes to
+as illustrated in Fig. 1, but nevertheless it remains easy    signals in axion haloscopes. Our overall recommendation
+to use and manipulate. Compared to the SHM, there are         is that the SHM++ should be adopted in future direct
+two additional parameters, namely the fraction of DM η        detection searches, since it retains much of the simplicity
+and the velocity anisotropy β of the DM in the Sausage.       of the SHM while more accurately capturing the known
+These parameters can be constrained from astrophysical        properties of the Milky Way halo. However, for experi-
+arguments to 10% . η . 30% and β ≈ 0.9 ± 0.05. A              ments without directional sensitivity, acceptable results
+succinct comparison between the SHM and SHM++ is              may be obtained simply by updating the SHM with the
+given in Table I. We have given recommended central           new values for ρ0 , v0 , and vesc .
+values and 1σ uncertainties. For measured parameters,            Finally, while this new model represents a well-
+these are motivated by existing statistical uncertainties,    motivated elaboration of the SHM for the purposes of
+but for the parameters of the dark Sausage we have used       direct detection analyses, it may not be the final word
+theoretical arguments.                                        on the local structure of the DM distribution. Impor-
+   We have computed the effects of the SHM++ on a             tantly there likely will be substructure in the velocity
+range of DM experiments, comparing our results to the         distribution [23, 194] with consequences for direct de-
+benchmark SHM. The addition of the radially anisotropic       tection experiments [16, 17, 19–21, 26]. In fact, the S1
+Sausage makes the velocity distribution colder. However,      tidal stream was recently spotted in Gaia data [195] and
+this is compensated by the increase in the local circular     clearly intersects the Solar position [196]. The poten-
+speed from 220 to 235 kms−1 , making the velocity dis-        tially observable signals in the next generation of DM
+tribution hotter. This explains why the change in the         experiments have been investigated [133] and its effects
+rate of nuclear recoils in direct detection experiments,      may be more significant than the Sausage. This is espe-
+for example, is modest. We demonstrated these effects         cially true for directional WIMP and axion experiments,
+on the halo integrals g(vmin ) and h(vmin ) (Fig. 2) which    as the S1 stellar stream is strongly retrograde and its
+control the halo dependence of direct detection signals,      velocity signature is unlike the smooth halo. We have
+as well as on the observable distribution of recoil ener-     not included the S1 stream in the SHM++ because we
+                                                                                                                          15
+
+cannot currently constrain its contribution to ρ0 . How-        early draft of this paper. NWE thanks Vasily Belokurov
+ever, the next refinement may be to incorporate the S1          and Nicola Amorisco for many interesting Sausage discus-
+stream, though this must await a more complete under-           sions. CAJO is supported by the grant FPA2015-65745-
+standing of the DM component of the stream (as well as          P from the Spanish MINECO and European FEDER.
+the relationship between DM and stellar populations in          CM is supported by the Science and Technology Facil-
+general).                                                       ities Council (STFC) Grant ST/N004663/1. This work
+                                                                was partly performed at the Aspen Center for Physics,
+                                                                which is supported by National Science Foundation grant
+               ACKNOWLEDGMENTS                                  PHY-1607611 and by a grant from the Simons Founda-
+                                                                tion.
+  We thank Henrique Araujo, Nassim Bozorgnia, Anne
+Green and Mariangela Lisanti for their comments on an
+
+
+
+
+  [1] S. Chandrasekhar, An introduction to the study of stel-    [19] C. A. J. O’Hare and A. M. Green, Phys. Rev. D90,
+      lar structure (The University of Chicago Press, 1939).          123511 (2014), arXiv:1410.2749 [astro-ph.CO].
+  [2] N. W. Evans and J. H. An, Phys. Rev. D 73, 023524          [20] C. A. J. O’Hare and A. M. Green, Phys. Rev. D95,
+      (2006), astro-ph/0511687.                                       063017 (2017), arXiv:1701.03118 [astro-ph.CO].
+  [3] M. Vogelsberger, A. Helmi, V. Springel, S. D. M. White,    [21] J. W. Foster, N. L. Rodd, and B. R. Safdi, Phys. Rev.
+      J. Wang, C. S. Frenk, A. Jenkins, A. D. Ludlow, and             D97, 123006 (2018), arXiv:1711.10489 [astro-ph.CO].
+      J. F. Navarro, Mon. Not. Roy. Astron. Soc. 395, 797        [22] T. Bruch, J. Read, L. Baudis, and G. Lake, Astrophys.
+      (2009), arXiv:0812.0362 [astro-ph].                             J. 696, 920 (2009), arXiv:0804.2896 [astro-ph].
+  [4] M. Zemp, J. Diemand, M. Kuhlen, P. Madau, B. Moore,        [23] M. Lisanti, L. E. Strigari, J. G. Wacker,           and
+      D. Potter, J. Stadel, and L. Widrow, Mon. Not. Roy.             R. H. Wechsler, Phys. Rev. D83, 023519 (2011),
+      Astron. Soc. 394, 641 (2009), arXiv:0812.2033.                  arXiv:1010.4300 [astro-ph.CO].
+  [5] M. Kuhlen, N. Weiner, J. Diemand, P. Madau,                [24] M. Lisanti and D. N. Spergel, Phys. Dark Univ. 1, 155
+      B. Moore, D. Potter, J. Stadel, and M. Zemp, JCAP               (2012), arXiv:1105.4166 [astro-ph.CO].
+      2, 030 (2010), arXiv:0912.2358.                            [25] J. Billard, Q. Riffard, F. Mayet, and D. Santos,
+  [6] Y.-Y. Mao, L. E. Strigari, and R. H. Wechsler,                  Phys. Lett. B718, 1171 (2013), arXiv:1207.1050 [astro-
+      Phys. Rev. D89, 063513 (2014), arXiv:1304.6401 [astro-          ph.CO].
+      ph.CO].                                                    [26] B. J. Kavanagh and C. A. J. O’Hare, Phys. Rev. D94,
+  [7] M. Kuhlen, N. Weiner, J. Diemand, P. Madau,                     123009 (2016), arXiv:1609.08630 [astro-ph.CO].
+      B. Moore, D. Potter, J. Stadel, and M. Zemp, JCAP          [27] P. J. Fox, J. Liu, and N. Weiner, Phys. Rev. D83,
+      1002, 030 (2010), arXiv:0912.2358 [astro-ph.GA].                103514 (2011), arXiv:1011.1915 [hep-ph].
+  [8] F. S. Ling, E. Nezri, E. Athanassoula, and R. Teyssier,    [28] C. McCabe, Phys. Rev. D84, 043525 (2011),
+      JCAP 1002, 012 (2010), arXiv:0909.2028 [astro-                  arXiv:1107.0741 [hep-ph].
+      ph.GA].                                                    [29] M. T. Frandsen, F. Kahlhoefer, C. McCabe, S. Sarkar,
+  [9] Y.-Y. Mao, L. E. Strigari, R. H. Wechsler, H.-Y.                and K. Schmidt-Hoberg, JCAP 1201, 024 (2012),
+      Wu, and O. Hahn, Astrophys. J. 764, 35 (2013),                  arXiv:1111.0292 [hep-ph].
+      arXiv:1210.2721 [astro-ph.CO].                             [30] P. Gondolo and G. B. Gelmini, JCAP 1212, 015 (2012),
+ [10] N. W. Evans, C. M. Carollo, and P. T. de Zeeuw,                 arXiv:1202.6359 [hep-ph].
+      Mon. Not. Roy. Astron. Soc. 318, 1131 (2000), astro-       [31] J. Herrero-Garcia, T. Schwetz, and J. Zupan, Phys.
+      ph/0008156.                                                     Rev. Lett. 109, 141301 (2012), arXiv:1205.0134 [hep-
+ [11] M. Fairbairn and T. Schwetz, JCAP 0901, 037 (2009),             ph].
+      arXiv:0808.0704 [hep-ph].                                  [32] M. T. Frandsen, F. Kahlhoefer, C. McCabe, S. Sarkar,
+ [12] S. Knirck, A. J. Millar, C. A. J. O’Hare, J. Redondo,           and K. Schmidt-Hoberg, JCAP 1307, 023 (2013),
+      and F. D. Steffen, (2018), arXiv:1806.05927 [astro-             arXiv:1304.6066 [hep-ph].
+      ph.CO].                                                    [33] N. Bozorgnia, J. Herrero-Garcia, T. Schwetz, and J. Zu-
+ [13] J. March-Russell, C. McCabe, and M. McCullough,                 pan, JCAP 1307, 049 (2013), arXiv:1305.3575 [hep-ph].
+      JHEP 05, 071 (2009), arXiv:0812.1931 [astro-ph].           [34] B. Feldstein and F. Kahlhoefer, JCAP 1408, 065 (2014),
+ [14] N. Bozorgnia, R. Catena, and T. Schwetz, JCAP 1312,             arXiv:1403.4606 [hep-ph].
+      050 (2013), arXiv:1310.0468 [astro-ph.CO].                 [35] P. J. Fox, Y. Kahn, and M. McCullough, JCAP 1410,
+ [15] M. Fornasa and A. M. Green, Phys. Rev. D89, 063531              076 (2014), arXiv:1403.6830 [hep-ph].
+      (2014), arXiv:1311.5477 [astro-ph.CO].                     [36] B. Feldstein and F. Kahlhoefer, JCAP 1412, 052 (2014),
+ [16] C. Savage, K. Freese, and P. Gondolo, Phys. Rev. D74,           arXiv:1409.5446 [hep-ph].
+      043531 (2006), astro-ph/0607121.                           [37] A. J. Anderson, P. J. Fox, Y. Kahn, and M. McCul-
+ [17] S. K. Lee and A. H. G. Peter, JCAP 1204, 029 (2012),            lough, JCAP 1510, 012 (2015), arXiv:1504.03333 [hep-
+      arXiv:1202.5035 [astro-ph.CO].                                  ph].
+ [18] C. W. Purcell, A. R. Zentner, and M.-Y. Wang, JCAP         [38] G. B. Gelmini, J.-H. Huh, and S. J. Witte, JCAP 1610,
+      1208, 027 (2012), arXiv:1203.6617 [astro-ph.GA].                029 (2016), arXiv:1607.02445 [hep-ph].
+                                                                                                                             16
+
+[39] F. Kahlhoefer and S. Wild, JCAP 1610, 032 (2016),              Wyse, M. J. Irwin, M. Fellhauer, P. C. Hewett, N. A.
+     arXiv:1607.04418 [hep-ph].                                     Walton, M. I. Wilkinson, N. Cole, B. Yanny, C. M.
+[40] P. Gondolo and S. Scopel, JCAP 1709, 032 (2017),               Rockosi, T. C. Beers, E. F. Bell, J. Brinkmann, Ž. Ivezić,
+     arXiv:1703.08942 [hep-ph].                                     and R. Lupton, Astrophys. J. 642, L137 (2006), astro-
+[41] G. B. Gelmini, J.-H. Huh, and S. J. Witte, JCAP 1712,          ph/0605025.
+     039 (2017), arXiv:1707.07019 [hep-ph].                    [66] I. T. Simion, V. Belokurov, and S. E. Koposov, ArXiv
+[42] A. Ibarra and A. Rappelt, JCAP 8, 039 (2017),                  e-prints (2018), arXiv:1807.01335.
+     arXiv:1703.09168 [hep-ph].                                [67] N. W. Evans, J. L. Sanders, A. A. Williams, J. An,
+[43] A. Fowlie, JCAP 1710, 002 (2017), arXiv:1708.00181             D. Lynden-Bell, and W. Dehnen, Mon. Not. Roy. As-
+     [hep-ph].                                                      tron. Soc. 456, 4506 (2016).
+[44] Gaia Collaboration et al., Astron. Astrophys. 616, A1     [68] M. C. Smith, N. W. Evans, and J. H. An, Astrophys.
+     (2018), arXiv:1804.09365.                                      J. 698, 1110 (2009), arXiv:0902.2709 [astro-ph.GA].
+[45] L. Lancaster, V. Belokurov, and N. W. Evans, ArXiv        [69] J. An and N. W. Evans, Astrophys. J. 816, 35 (2016),
+     e-prints (2018), arXiv:1804.09181.                             arXiv:1509.09020.
+[46] C. Wegg, O. Gerhard, and M. Bieth, ArXiv e-prints         [70] S. E. Koposov, H.-W. Rix, and D. W. Hogg, Astrophys.
+     (2018), arXiv:1806.09635.                                      J. 712, 260 (2010), arXiv:0907.1085 [astro-ph.GA].
+[47] V. Belokurov, D. Erkal, N. W. Evans, S. E. Koposov,       [71] A. Bowden, V. Belokurov, and N. W. Evans, Mon. Not.
+     and A. J. Deason, Mon. Not. Roy. Astron. Soc. 478, 611         Roy. Astron. Soc. 449, 1391 (2015), arXiv:1502.00484.
+     (2018), arXiv:1802.03414.                                 [72] S. R. Loebman et al., Astrophys. J. 794, 151 (2014),
+[48] D. Carollo et al., Nature (London) 450, 1020 (2007),           arXiv:1408.5388.
+     arXiv:0706.3005.                                          [73] A. Bowden, N. W. Evans, and A. A. Williams,
+[49] G. C. Myeong, N. W. Evans, V. Belokurov, J. L.                 Mon. Not. Roy. Astron. Soc. 460, 329 (2016),
+     Sanders, and S. E. Koposov, Astrophys. J. 856, L26             arXiv:1604.06885.
+     (2018), arXiv:1802.03351.                                 [74] M. J. Reid and A. Brunthaler, Astrophys. J. 616, 872
+[50] J. T. Mackereth et al., ArXiv e-prints          (2018),        (2004), arXiv:astro-ph/0408107 [astro-ph].
+     arXiv:1808.00968.                                         [75] J. Bland-Hawthorn and O. Gerhard, ARA&A 54, 529
+[51] A. Helmi, C. Babusiaux, H. H. Koppelman, D. Mas-               (2016), arXiv:1602.07702.
+     sari, J. Veljanoski, and A. G. A. Brown, ArXiv e-prints   [76] Gravity Collaboration, Astron. Astrophys. 615, L15
+     (2018), arXiv:1806.06038.                                      (2018), arXiv:1807.09409.
+[52] J. M. D. Kruijssen, J. L. Pfeffer, M. Reina-Campos,       [77] R. Schönrich, J. Binney, and W. Dehnen, Mon. Not.
+     R. A. Crain, and N. Bastian, Mon. Not. Roy. Astron.            Roy. Astron. Soc. 403, 1829 (2010), arXiv:0912.3693.
+     Soc. (2018), 10.1093/mnras/sty1609, arXiv:1806.05680.     [78] P. J. McMillan, Mon. Not. Roy. Astron. Soc. 465, 76
+[53] L. Necib, M. Lisanti, and V. Belokurov, (2018),                (2017), arXiv:1608.00971.
+     arXiv:1807.02519 [astro-ph.GA].                           [79] R. Agnese et al. (SuperCDMS), Phys. Rev. Lett. 112,
+[54] Y. Sofue, M. Honma, and T. Omodaka, Publ. Astron.              241302 (2014), arXiv:1402.7137 [hep-ex].
+     Soc. Jap. 61, 227 (2009), arXiv:0811.0859 [astro-ph].     [80] E. Aprile et al. (XENON), Phys. Rev. Lett. 121, 111302
+[55] J. Binney and S. Tremaine, Galactic dynamics (Prince-          (2018), arXiv:1805.12562 [astro-ph.CO].
+     ton University Press, 2007) see Section 4.3.              [81] D. S. Akerib et al., Physical Review Letters 118, 021303
+[56] A. K. Drukier, K. Freese, and D. N. Spergel, Phys. Rev.        (2017), arXiv:1608.07648.
+     D 33, 3495 (1986).                                        [82] D. S. Akerib et al. (LUX-ZEPLIN),                  (2018),
+[57] M. Vogelsberger and S. D. M. White, Mon. Not. Roy.             arXiv:1802.06039 [astro-ph.IM].
+     Astron. Soc. 413, 1419 (2011), arXiv:1002.3162.           [83] L. E. Strigari, Phys Rep 531, 1 (2013), arXiv:1211.7090.
+[58] N. Bozorgnia, F. Calore, M. Schaller, M. Lovell,          [84] A. M. Green, J. Phys. G44, 084001 (2017),
+     G. Bertone, C. S. Frenk, R. A. Crain, J. F. Navarro,           arXiv:1703.10102 [astro-ph.CO].
+     J. Schaye, and T. Theuns, JCAP 1605, 024 (2016),          [85] L. M. Krauss and J. L. Newstead, ArXiv e-prints
+     arXiv:1601.04707 [astro-ph.CO].                                (2018), arXiv:1801.08523 [hep-ph].
+[59] C. Kelso, C. Savage, M. Valluri, K. Freese, G. S.         [86] T. Piffl et al., Mon. Not. Roy. Astron. Soc. 445, 3133
+     Stinson, and J. Bailin, JCAP 1608, 071 (2016),                 (2014), arXiv:1406.4130.
+     arXiv:1601.04725 [astro-ph.GA].                           [87] A. A. Williams, V. Belokurov, A. R. Casey, and N. W.
+[60] J. D. Sloane, M. R. Buckley, A. M. Brooks, and F. Gov-         Evans, Mon. Not. Roy. Astron. Soc. 468, 2359 (2017),
+     ernato, Astrophys. J. 831, 93 (2016), arXiv:1601.05402         arXiv:1701.01444.
+     [astro-ph.GA].                                            [88] G. Monari, B. Famaey, I. Carrillo, T. Piffl, M. Stein-
+[61] E. W. Lentz, T. R. Quinn, L. J. Rosenberg, and                 metz, R. F. G. Wyse, F. Anders, C. Chiappini, and
+     M. J. Tremmel, Astrophys. J. 845, 121 (2017),                  K. Janssen, ArXiv e-prints (2018), arXiv:1807.04565.
+     arXiv:1703.06937 [astro-ph.GA].                           [89] A. Deason, A. Fattahi, V. Belokurov, and N. W. Evans,
+[62] S. H. Hansen, B. Moore, M. Zemp, and J. Stadel, JCAP           Submitted to: MNRAS (2019).
+     0601, 014 (2006), arXiv:astro-ph/0505420 [astro-ph].      [90] C. Amsler et al., Physics Letters B 667, 1 (2008).
+[63] G. C. Myeong, N. W. Evans, V. Belokurov, J. L.            [91] E. I. Gates, G. Gyuk, and M. S. Turner, Astrophys. J.
+     Sanders, and S. E. Koposov, Astrophys. J. 863, L28             449, L123 (1995), arXiv:astro-ph/9505039 [astro-ph].
+     (2018), arXiv:1805.00453.                                 [92] L. D. Duffy, P. Sikivie, D. B. Tanner, S. J. Asztalos,
+[64] N. C. Amorisco, Mon. Not. Roy. Astron. Soc. 464, 2882          C. Hagmann, D. Kinion, L. J. Rosenberg, K. van Bib-
+     (2017), arXiv:1511.08806.                                      ber, D. B. Yu, and R. F. Bradley (ADMX), Phys. Rev.
+[65] V. Belokurov, D. B. Zucker, N. W. Evans, G. Gilmore,           D74, 012006 (2006), arXiv:astro-ph/0603108 [astro-ph].
+     S. Vidrih, D. M. Bramich, H. J. Newberg, R. F. G.
+                                                                                                                             17
+
+ [93] S. J. Asztalos et al. (ADMX), Phys. Rev. Lett. 104,         [119] R. J. J. Grand, F. A. Gomez, F. Marinacci, R. Pakmor,
+      041301 (2010), arXiv:0910.5914 [astro-ph.CO].                     V. Springel, D. J. R. Campbell, C. S. Frenk, A. Jenkins,
+ [94] N. Du et al. (ADMX), Phys. Rev. Lett. 120, 151301                 and S. D. M. White, Mon. Not. Roy. Astron. Soc. 467,
+      (2018), arXiv:1804.05750 [hep-ex].                                179 (2017), arXiv:1610.01159 [astro-ph.GA].
+ [95] B. M. Brubaker, First results from the HAYSTAC axion        [120] N. Bozorgnia, D. Cerdeno, A. Fattahi, C. S. Frenk,
+      search, Ph.D. thesis, Yale U. (2017), arXiv:1801.00835            et al., [In preparation] (2018).
+      [astro-ph.CO].                                              [121] N. Bozorgnia and G. Bertone, Int. J. Mod. Phys. A32,
+ [96] B. M. Brubaker, L. Zhong, S. K. Lamoreaux, K. W.                  1730016 (2017), arXiv:1705.05853 [astro-ph.CO].
+      Lehnert, and K. A. van Bibber, Phys. Rev. D96, 123008       [122] D. Tucker-Smith and N. Weiner, Phys. Rev. D64,
+      (2017), arXiv:1706.08388 [astro-ph.IM].                           043502 (2001), arXiv:hep-ph/0101138 [hep-ph].
+ [97] L. Zhong, B. M. Brubaker, S. B. Cahn, and S. K.             [123] L. Baudis, G. Kessler, P. Klos, R. F. Lang, J. Menendez,
+      Lamoreaux, Springer Proc. Phys. 211, 105 (2018),                  S. Reichard, and A. Schwenk, Phys. Rev. D88, 115014
+      arXiv:1706.03676 [astro-ph.IM].                                   (2013), arXiv:1309.0825 [astro-ph.CO].
+ [98] B. T. McAllister, G. Flower, E. N. Ivanov, M. Gory-         [124] C. McCabe, JCAP 1605, 033 (2016), arXiv:1512.00460
+      achev, J. Bourhill, and M. E. Tobar, Phys. Dark Univ.             [hep-ph].
+      18, 67 (2017), arXiv:1706.00209 [physics.ins-det].          [125] T. Marrodan Undagoitia and L. Rauch, J. Phys. G43,
+ [99] B. T. McAllister, G. Flower, L. E. Tobar, and M. E.               013001 (2016), arXiv:1509.08767 [physics.ins-det].
+      Tobar, Phys. Rev. Applied 9, 014028 (2018), [Phys. Rev.     [126] A. L. Fitzpatrick, W. Haxton, E. Katz, N. Lubbers,
+      Applied.9,014028(2018)], arXiv:1705.06028 [physics.ins-           and Y. Xu, JCAP 1302, 004 (2013), arXiv:1203.3542
+      det].                                                             [hep-ph].
+[100] M. C. Smith, S. H. Whiteoak, and N. W. Evans, Astro-        [127] A. L. Fitzpatrick, W. Haxton, E. Katz, N. Lubbers, and
+      phys J. 746, 181 (2012), arXiv:1111.6920 [astro-ph.GA].           Y. Xu, (2012), arXiv:1211.2818 [hep-ph].
+[101] O. Bienaymé et al., Astron. Astrophys. 571, A92 (2014),    [128] N. Anand, A. L. Fitzpatrick, and W. C. Haxton, Phys.
+      arXiv:1406.6896.                                                  Rev. C89, 065501 (2014), arXiv:1308.6288 [hep-ph].
+[102] S. Sivertsson, H. Silverwood, J. I. Read, G. Bertone,       [129] C. Kouvaris and J. Pradler, Phys. Rev. Lett. 118,
+      and P. Steger, Mon. Not. Roy. Astron. Soc. 478, 1677              031803 (2017), arXiv:1607.01789 [hep-ph].
+      (2018), arXiv:1708.07836 [astro-ph.GA].                     [130] C. McCabe, Phys. Rev. D96, 043010 (2017),
+[103] J. H. J. Hagen and A. Helmi, Astron. Astrophys. 615,              arXiv:1702.04730 [hep-ph].
+      A99 (2018), arXiv:1802.09291.                               [131] C. McCabe, Phys. Rev. D82, 023530 (2010),
+[104] J. I. Read, J. Phys. G41, 063101 (2014),                          arXiv:1005.0579 [hep-ph].
+      arXiv:1404.1938 [astro-ph.GA].                              [132] A. L. Fitzpatrick and K. M. Zurek, Phys. Rev. D82,
+[105] G. Iorio, V. Belokurov, D. Erkal, S. E. Koposov,                  075004 (2010), arXiv:1007.5325 [hep-ph].
+      C. Nipoti, and F. Fraternali, Mon. Not. Roy. Astron.        [133] C. A. J. O’Hare, C. McCabe, N. W. Evans, G. Myeong,
+      Soc. 474, 2142 (2018), arXiv:1707.03833.                          and V. Belokurov, (2018), arXiv:1807.09004 [astro-
+[106] N. W. Evans, R. M. Hafner, and P. T. de Zeeuw, Mon.               ph.CO].
+      Not. Roy. Astron. Soc. 286, 315 (1997), arXiv:astro-        [134] G. Cowan, K. Cranmer, E. Gross, and O. Vitells,
+      ph/9611162 [astro-ph].                                            Eur. Phys. J. C71, 1554 (2011), [Erratum: Eur. Phys.
+[107] S. K. Lee, M. Lisanti, and B. R. Safdi, JCAP 1311,                J.C73,2501(2013)], arXiv:1007.1727 [physics.data-an].
+      033 (2013), arXiv:1307.5323 [hep-ph].                       [135] J. Aalbers et al. (DARWIN), JCAP 1611, 017 (2016),
+[108] C. McCabe, JCAP 1402, 027 (2014), arXiv:1312.1355                 arXiv:1606.07001 [astro-ph.IM].
+      [astro-ph.CO].                                              [136] R. Agnese et al. (SuperCDMS), Phys. Rev. D97, 022002
+[109] F. Mayet et al., Phys. Rept. 627, 1 (2016),                       (2018), arXiv:1707.01632 [astro-ph.CO].
+      arXiv:1602.03781 [astro-ph.CO].                             [137] Q. Arnaud et al. (EDELWEISS), Phys. Rev. D97,
+[110] M. Franx and T. de Zeeuw, Astrophys. J. 392, L47                  022003 (2018), arXiv:1707.04308 [physics.ins-det].
+      (1992).                                                     [138] G. Angloher et al. (CRESST), Eur. Phys. J. C76, 25
+[111] K. Kuijken and S. Tremaine, Astrophys. J. 421, 178                (2016), arXiv:1509.01515 [astro-ph.CO].
+      (1994).                                                     [139] P. Agnes et al. (DarkSide), Phys. Rev. Lett. 121, 111303
+[112] G. Mühlbauer and W. Dehnen, Astron. Astrophys. 401,              (2018), arXiv:1802.06998 [astro-ph.CO].
+      975 (2003).                                                 [140] D. S. Akerib et al. (LUX), Phys. Rev. Lett. 118, 021303
+[113] S. Chandrasekhar, Ellipsoidal figures of equilibrium              (2017), arXiv:1608.07648 [astro-ph.CO].
+      (New York : Dover, 1987).                                   [141] A. Tan et al. (PandaX-II), Phys. Rev. Lett. 117, 121303
+[114] L. Lancaster, S. E. Koposov, V. Belokurov, N. W.                  (2016), arXiv:1607.07400 [hep-ex].
+      Evans, and A. J. Deason, ArXiv e-prints (2018),             [142] C. A. J. O’Hare, Phys. Rev. D94, 063527 (2016),
+      arXiv:1807.04290.                                                 arXiv:1604.03858 [astro-ph.CO].
+[115] A. Fattahi, V. Belokurov, A. Deason, C. S. Frenk, et al.,   [143] J. Billard (SuperCDMS), Proceedings, 15th Interna-
+      (2018), arXiv:1810.07779 [astro-ph.GA].                           tional Workshop on Low Temperature Detectors (LTD-
+[116] L. Necib, M. Lisanti, S. Garrison-Kimmel, A. Wetzel,              15): Pasadena, California, June 24-28, 2013, J. Low
+      R. Sanderson, P. F. Hopkins, C.-A. Faucher-Giguère,              Temp. Phys. 176, 966 (2014), arXiv:1312.7737 [astro-
+      and D. Kereš, ArXiv e-prints (2018), arXiv:1810.12301.           ph.IM].
+[117] J. Herzog-Arbeitman, M. Lisanti, P. Madau, and              [144] F. Ruppin, J. Billard, E. Figueroa-Feliciano,
+      L. Necib, Phys. Rev. Lett. 120, 041102 (2018),                    and L. Strigari, Phys. Rev. D90, 083510 (2014),
+      arXiv:1704.04499 [astro-ph.GA].                                   arXiv:1408.3581 [hep-ph].
+[118] J. Herzog-Arbeitman, M. Lisanti, and L. Necib, JCAP         [145] A. H. G. Peter, Phys. Rev. D83, 125029 (2011),
+      1804, 052 (2018), arXiv:1708.03635 [astro-ph.GA].                 arXiv:1103.5145 [astro-ph.CO].
+                                                                                                                            18
+
+[146] B. J. Kavanagh and A. M. Green, Phys. Rev. Lett. 111,      [172] A. M. Green and B. Morgan, Phys. Rev. D81, 061301
+      031302 (2013), arXiv:1303.6868 [astro-ph.CO].                    (2010), arXiv:1002.2717 [astro-ph.CO].
+[147] D. N. Spergel, Phys. Rev. D37, 1353 (1988).                [173] N. Bozorgnia, G. B. Gelmini, and P. Gondolo, JCAP
+[148] P. Grothaus, M. Fairbairn, and J. Monroe, Phys. Rev.             1206, 037 (2012), arXiv:1111.6361 [astro-ph.CO].
+      D90, 055018 (2014), arXiv:1406.5047 [hep-ph].              [174] N. Bozorgnia, G. B. Gelmini, and P. Gondolo, JCAP
+[149] C. A. J. O’Hare, A. M. Green, J. Billard, E. Figueroa-           1208, 011 (2012), arXiv:1205.2333 [astro-ph.CO].
+      Feliciano, and L. E. Strigari, Phys. Rev. D92, 063518      [175] B. J. Kavanagh, Phys. Rev. D92, 023513 (2015),
+      (2015), arXiv:1505.08061 [astro-ph.CO].                          arXiv:1505.07406 [hep-ph].
+[150] C. A. J. O’Hare, B. J. Kavanagh, and A. M. Green,          [176] R. Catena, JCAP 1507, 026 (2015), arXiv:1505.06441
+      Phys. Rev. D96, 083011 (2017), arXiv:1708.02959                  [hep-ph].
+      [astro-ph.CO].                                             [177] A. Caldwell, G. Dvali, B. Majorovits, A. Millar, G. Raf-
+[151] B. Morgan, A. M. Green, and N. J. C. Spooner, Phys.              felt, J. Redondo, O. Reimann, F. Simon, and F. Stef-
+      Rev. D71, 103507 (2005), astro-ph/0408047.                       fen (MADMAX Working Group), Phys. Rev. Lett. 118,
+[152] J. Billard, F. Mayet, J. F. Macias-Perez, and D. Santos,         091801 (2017), arXiv:1611.05865 [physics.ins-det].
+      Phys. Lett. B691, 156 (2010), arXiv:0911.4086 [astro-      [178] P. Brun et al. (MADMAX interest Group), (2017).
+      ph.CO].                                                    [179] A. J. Millar, G. G. Raffelt, J. Redondo, and F. D.
+[153] P. Gondolo, Phys. Rev. D66, 103513 (2002), hep-                  Steffen, JCAP 1701, 061 (2017), arXiv:1612.07057 [hep-
+      ph/0209110.                                                      ph].
+[154] S. Deans, The Radon transform and some of its appli-       [180] B. M. Brubaker et al., Phys. Rev. Lett. 118, 061302
+      cations (John Wiley and Sons, 1983).                             (2017), arXiv:1610.02580 [astro-ph.CO].
+[155] S. Ahlen et al., Int. J. Mod. Phys. A25, 1 (2010),         [181] N. M. Rapidis, Springer Proc. Phys. 211, 45 (2018),
+      arXiv:0911.0323 [astro-ph.CO].                                   arXiv:1708.04276 [physics.ins-det].
+[156] J. B. R. Battat et al., Journal of Instrumentation 11,     [182] W. Chung, Proceedings, 15th Hellenic School and Work-
+      P10019 (2016), arXiv:1606.05364 [physics.ins-det].               shops on Elementary Particle Physics and Gravity
+[157] D. R. Nygren, Proceedings, 6th Symposium on Large                (CORFU2015): Corfu, Greece, September 1-25, 2015,
+      TPCs for Low Energy Rare Event Detection, J. Phys.               PoS CORFU2015, 047 (2016).
+      Conf. Ser. 460, 012006 (2013).                             [183] S. Lee, Proceedings, 22nd International Conference
+[158] J. Li, Phys. Rev. D92, 043523 (2015), arXiv:1503.07320           on Computing in High Energy and Nuclear Physics
+      [hep-ph].                                                        (CHEP2016): San Francisco, CA, October 14-16, 2016,
+[159] A.     Aleksandrov     et al.     (NEWS),        (2016),         J. Phys. Conf. Ser. 898, 032035 (2017).
+      arXiv:1604.04199 [astro-ph.IM].                            [184] W. Chung, in Proceedings, 12th Patras Workshop on
+[160] N. Agafonova et al. (NEWSdm),                    (2017),         Axions, WIMPs and WISPs (PATRAS 2016): Jeju Is-
+      arXiv:1705.00613 [astro-ph.CO].                                  land, South Korea, June 20-24, 2016 (2017) pp. 30–34,
+[161] S. Griffin, S. Knapen, T. Lin, and K. M. Zurek, (2018),          [,30(2017)].
+      arXiv:1807.10291 [hep-ph].                                 [185] G. Rybka, A. Wagner, A. Brill, K. Ramos, R. Perci-
+[162] Y. Hochberg, Y. Kahn, M. Lisanti, C. G. Tully, and               val, and K. Patel, Phys. Rev. D91, 011701 (2015),
+      K. M. Zurek, (2016), arXiv:1606.08849 [hep-ph].                  arXiv:1403.3121 [physics.ins-det].
+[163] Y. Hochberg, Y. Kahn, M. Lisanti, K. M. Zurek, A. G.       [186] D. Alesini, D. Babusci, D. Di Gioacchino, C. Gatti,
+      Grushin, R. Ilan, S. M. Griffin, Z.-F. Liu, S. F. We-            G. Lamanna, and C. Ligi, (2017), arXiv:1707.06010
+      ber, and J. B. Neaton, Phys. Rev. D97, 015004 (2018),            [physics.ins-det].
+      arXiv:1708.08929 [hep-ph].                                 [187] A. A. Melcon et al., JCAP 1805, 040 (2018),
+[164] E. Daw et al., Proceedings, 3rd Workshop on Directional          arXiv:1803.01243 [hep-ex].
+      Detection of Dark Matter (CYGNUS 2011), EAS Publ.          [188] Y. Kahn, B. R. Safdi, and J. Thaler, Phys. Rev. Lett.
+      Ser. 53, 11 (2012), arXiv:1110.0222 [physics.ins-det].           117, 141801 (2016), arXiv:1602.01086 [hep-ph].
+[165] J. B. R. Battat et al. (DRIFT), Phys. Dark Univ. 9-10,     [189] R. Henning et al. (ABRACADABRA), in Proceedings,
+      1 (2015), arXiv:1410.7821 [hep-ex].                              13th Patras Workshop on Axions, WIMPs and WISPs,
+[166] J. Monroe (DMTPC), Proceedings, 3rd Workshop on                  (PATRAS 2017): Thessaloniki, Greece, 15 May 2017 -
+      Directional Detection of Dark Matter (CYGNUS 2011),              19, 2017 (2018) pp. 28–31.
+      AIP Conf. Proc. 1441, 515 (2012), arXiv:1111.0220          [190] B. T. McAllister, M. Goryachev, J. Bourhill, E. N.
+      [physics.ins-det].                                               Ivanov, and M. E. Tobar, (2018), arXiv:1803.07755
+[167] M. Leyton (DMTPC), Proceedings, 14th International               [physics.ins-det].
+      Conference on Topics in Astroparticle and Underground      [191] M. Silva-Feaver et al., Proceedings, Applied Supercon-
+      Physics (TAUP 2015), J. Phys. Conf. Ser. 718, 042035             ductivity Conference (ASC 2016): Denver, Colorado,
+      (2016).                                                          September 4-9, 2016, IEEE Trans. Appl. Supercond. 27,
+[168] D. Santos et al., Proceedings, 3rd Workshop on Direc-            1400204 (2016), arXiv:1610.09344 [astro-ph.IM].
+      tional Detection of Dark Matter (CYGNUS 2011), EAS         [192] I. G. Irastorza and J. Redondo, Prog. Part. Nucl. Phys.
+      Publ. Ser. 53, 25 (2012), arXiv:1111.1566 [astro-ph.IM].         102, 89 (2018), arXiv:1801.08127 [hep-ph].
+[169] Q. Riffard et al., in Proceedings, 48th Rencontres         [193] I. G. Irastorza and J. A. Garcia, JCAP 1210, 022
+      de Moriond on Very High Energy Phenomena in the                  (2012), arXiv:1207.6129 [physics.ins-det].
+      Universe (2013) pp. 227–230, arXiv:1306.4173 [astro-       [194] M. Vogelsberger and S. D. M. White, Mon. Not. Roy.
+      ph.IM].                                                          Astron. Soc. 413, 1419 (2011), arXiv:1002.3162 [astro-
+[170] K. Nakamura et al., PTEP 2015, 043F01 (2015).                    ph.CO].
+[171] J. B. R. Battat et al., [In preparation] (2018).           [195] G. C. Myeong, N. W. Evans, V. Belokurov, N. C. Amor-
+                                                                       isco, and S. E. Koposov, Mon. Not. Roy. Astron. Soc.
+                                                                                           19
+
+475, 1537 (2018), arXiv:1712.04071.   [196] G. C. Myeong, N. W. Evans, V. Belokurov, J. L.
+                                            Sanders, and S. E. Koposov, Mon. Not. Roy. Astron.
+                                            Soc. 478, 5449 (2018).
+

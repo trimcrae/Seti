@@ -1,0 +1,1185 @@
+% ****** Start of file apssamp.tex ******
+%
+%   This file is part of the APS files in the REVTeX 4.2 distribution.
+%   Version 4.2a of REVTeX, December 2014
+%
+%   Copyright (c) 2014 The American Physical Society.
+%
+%   See the REVTeX 4 README file for restrictions and more information.
+%
+% TeX'ing this file requires that you have AMS-LaTeX 2.0 installed
+% as well as the rest of the prerequisites for REVTeX 4.2
+%
+% See the REVTeX 4 README file
+% It also requires running BibTeX. The commands are as follows:
+%
+%  1)  latex apssamp.tex
+%  2)  bibtex apssamp
+%  3)  latex apssamp.tex
+%  4)  latex apssamp.tex
+%
+\documentclass[%
+ reprint,
+%superscriptaddress,
+%groupedaddress,
+%unsortedaddress,
+%runinaddress,
+%frontmatterverbose, 
+%preprint,
+%preprintnumbers,
+%nofootinbib,
+%nobibnotes,
+%bibnotes,
+ amsmath,amssymb,
+ aps,
+%pra,
+%prb,
+%rmp,
+%prstab,
+%prstper,
+%floatfix,
+]{revtex4-2}
+
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}
+\usepackage{tabularx,booktabs}
+
+
+\providecommand{\apj}{ApJ}
+\providecommand{\jcap}{JCAP}
+
+% Align table columns on decimal point
+\usepackage{bm}% bold math
+%\usepackage{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+
+%\usepackage[showframe,%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+%%margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+%]{geometry}
+
+\begin{document}
+
+\preprint{APS/123-QED}
+
+\title{Flux of Extragalactic Dark Matter in Direct Detection Experiments}% Force line breaks with \\
+
+
+\author{Shokhruz Kakharov}
+ \email{shokhruzbekkakharov@college.harvard.edu}
+ \altaffiliation[Also at ]{Physics Department, Harvard University.}%Lines break automatically or can be forced with \\
+\author{Abraham Loeb}%
+ \email{aloeb@cfa.harvard.edu}
+\affiliation{%
+ Astronomy Department, Harvard University,\\
+ 60 Garden St., Cambridge, MA 02138, USA
+}%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\date{\today}% It is always \today, today,
+             %  but any date may be explicitly specified
+
+\begin{abstract}
+We calculate the contribution of extragalactic dark matter to the local dark matter density and flux in the Milky Way. By analyzing the Galactic escape velocity as a function of direction, we establish a criterion for separating particles bound to the Milky Way from those originating in the Local Group environment. Our analysis finds that about 26\% of local particles are unbound to the Galaxy and contribute about 38\% of the total mass flux. The sky pattern is anisotropic. We provide rate and modulation predictions relevant for current and future direct-detection experiments.
+\end{abstract}
+
+%\keywords{Suggested keywords}%Use showkeys class option if keyword
+                              %display desired
+\maketitle
+
+%\tableofcontents
+
+% \section{\label{sec:level1}First-level heading:\protect\\ The line
+% break was forced \lowercase{via} \textbackslash\textbackslash}
+\section{Introduction}
+
+
+Dark matter constitutes about 85\% of the matter content in our universe, yet its nature remains elusive. Past predictions for the detection rate of laboratory experiments focused on particles that are gravitationally-bound to the Milky Way~\cite{Lewin1996,Jungman1996,Bertone2005,Freese2013}.Here, we show that a significant component originates from beyond our Galaxy. Inclusion of the extragalactic contribution could impact the quantitative interpretation of direct detection experiments.~\cite{2021PhLB..82036551H}
+
+To identify extragalactic dark matter particles, we calculate the escape velocity as a function of direction across the sky. Particles exceeding this threshold cannot be gravitationally bound to the Milky Way and must have an extragalactic origin. This condition provides a method for distinguishing galactic from extragalactic particles; those moving faster than the local escape velocity in a given direction must originate beyond the Milky Way's gravitational influence~\cite{2013ApJ...771..117B}
+
+The extragalactic component primarily originates from the Local Group environment surrounding our Galaxy. The Local Group, dominated by the Milky Way, Andromeda and the intergalactic matter around them, contains of order $\sim 5\times 10^{12}M_{\odot}$ of mass, with the baryonic component representing approximately 17\% of the total~\cite{Rubin2014}. This intergalactic medium supplies high-velocity dark matter particles, potentially detectable in Earth-based experiments. Recent N-body simulations~\cite{DeBrae2025} have demonstrated that the highest velocity dark matter particles (v $>$ 600 km/s) in Milky Way-like halos predominantly originate from fast-moving substructure, particularly Large Magellanic Cloud analogs, rather than from the broader extragalactic environment. Hydrodynamical Local-Group simulations independently confirm this picture and find no evidence for a separate extragalactic high-speed component, with the local velocity distribution well described by a truncated Maxwellian tail~\cite{2024JCAP...03..046S}.This finding suggests a multi-component environment of high-velocity dark matter sources that must be considered in detection experiments.
+
+The angular dependence of the galactic escape velocity results from the non-spherical nature of the Milky Way's gravitational potential and from our motion through the halo. Directions where the threshold for extragalactic particles is lower, enhance their detection potential.
+
+In \S II, we calculate the Galactic escape velocity distribution and find the Local Group dark matter contribution in comparison to the Milky Way's dark matter. Subsequently, we explore the implications for direct detection experiments with quantitative predictions for observable signatures.
+
+
+\section{Galactic Escape Velocity}
+\label{sec:methodology}
+
+
+
+We model the escape velocities in a Galactocentric coordinate system where the x-axis points from the Galactic center toward the Sun, the y-axis points in the direction of Galactic rotation, and the z-axis points toward the North Galactic Pole, forming a right-handed system. In this framework, the Local Standard of Rest (LSR) moves primarily along the positive y-axis with velocity $\vec{v}_{\text{LSR}} = (0, 240, 0)$ km/s\cite{Schoenrich2010}.
+
+For our directional analysis, we use spherical coordinates where:
+\begin{itemize}
+    \item $\theta$ is the polar angle measured from the positive z-axis (North Galactic Pole), with $\theta \in [0, \pi]$
+    \item $\phi$ is the azimuthal angle measured in the x-y plane from the positive x-axis (toward the Sun) in the counterclockwise direction, with $\phi \in [0, 2\pi]$
+\end{itemize}
+
+In these coordinates, the LSR direction corresponds to $\theta = \pi/2$ (Galactic plane) and $\phi = \pi/2$ (90° from the Sun-Galactic center line).
+
+We first model the escape velocities with a dipole term based on the Local Standard of Rest (LSR) velocity \cite{Schoenrich2010}. Escape velocities are calculated using orbital integration with the McMillan (2017) Galactic potential~\cite{McMillan2017} implemented through the GalPot software library~\cite{McMillan2017}.
+
+Subsequently, we fit the residuals using quadrupole moments derived from spherical harmonics. For the quadrupole analysis, we implement the following spherical harmonics:
+
+\begin{itemize}
+    \item $Y_{2,0}(\theta) = 0.5(3\cos^2\theta - 1)$ represents prolate (positive values) or oblate (negative values) deformation along the z-axis. It is independent of the azimuthal angle $\phi$ and shows deformation that preserves axial symmetry around the Galactic pole axis.
+    
+    \item $Y_{2,1}(\theta,\phi) = \sin(\theta)\cos(\theta)\cos(\phi)$ represents asymmetry along a tilted axis, breaking the reflection symmetry across the Galactic plane (xy-plane). This component can indicate asymmetric features between the northern and southern Galactic hemispheres.
+    
+    \item $Y_{2,2}(\theta,\phi) = \sin^2(\theta)\cos(2\phi)$ represents ellipticity in the Galactic plane (x-y plane), showing a 4-fold pattern with two positive and two negative regions. This component can identify deviations from axisymmetry in the Galactic disk, such as bar or spiral arm influences.
+\end{itemize}
+
+The unit vector pointing in direction $(\theta,\phi)$ is given by:
+\begin{equation}
+\hat{d}(\theta,\phi) = 
+\begin{pmatrix}
+\sin\theta \cos\phi \\
+\sin\theta \sin\phi \\
+\cos\theta
+\end{pmatrix}
+\end{equation}
+
+This coordinate system allows us to systematically analyze the directional dependence of escape velocities and relate the observed patterns to physical features of the Galactic potential.
+
+% We first model the escape velocities with a dipole term based on the Local Standard of Rest (LSR) velocity [{\bf Shokhruz:} Please cite a reference for the LSR] ~\cite{Schoenrich2010}. Escape velocities are calculated using orbital integration with the McMillan (2017) Galactic potential~\cite{McMillan2017} implemented through the GalPot software library~\cite{,McMillan2017}.
+% Subsequently, we fit the residuals using quadrupole moments derived from spherical harmonics. For the quadrupole analysis, we implement the following spherical harmonics:
+
+% \begin{itemize}
+%     \item $Y_{2,0}(\theta) = 0.5(3\cos^2\theta - 1)$ represents prolate (positive values) or oblate (negative values) deformation along the z-axis. It is independent of the azimuthal angle $\phi$ and shows deformation that preserves axial symmetry.
+    
+%     \item $Y_{2,1}(\theta,\phi) = \sin(\theta)\cos(\theta)\cos(\phi)$ represents asymmetry along a tilted axis, breaking the reflection symmetry across the xy-plane.
+    
+%     \item $Y_{2,2}(\theta,\phi) = \sin^2(\theta)\cos(2\phi)$ represents ellipticity in the x-y plane, showing a 4-fold pattern with two positive and two negative regions.
+% \end{itemize}
+
+% [{\bf Shokhruz:} Please define the orientation of the axes: x,y,z and the angles theta and phi.]
+
+% Our complete model for the escape velocity includes all of these terms:
+% \begin{equation}
+% \parbox{8cm}{%
+%     $v_{\text{esc}}(\theta,\phi) = \bar{v}_{\text{esc}} + v_{\text{LSR}}\cdot\cos(\text{angle}) + A_{2,0}\cdot Y_{2,0}(\theta) + A_{2,2}\cdot Y_{2,2}(\theta,\phi,\text{phase})$%
+% }
+% \end{equation}
+
+% [{\bf Shokhruz:} Please define the meaning of `angle' in the above equation. Please express it in terms of theta or phi]
+
+Our theoretical model of the smooth potential of the Milky-Way galaxy GalPot model~\cite{McMillan2017} has a significant ellipticity in the x-y plane (strong $Y_{2,2}$ term), some flattening along the z-axis (negative $Y_{2,0}$ coefficient), and the elliptical component is oriented at -90° in the galactic plane.
+
+Our best-fit values are an average escape velocity of 547 km/s, an LSR velocity of 240 km/s, a $Y_{2,0}$ amplitude of -18.3 km/s, a $Y_{2,2}$ amplitude of 27.4 km/s (phase: -90°), and negligible $Y_{2,1}$ terms (of order 0.01 km/s).
+
+While the dipole pattern from the LSR motion explains 98.8\% of the variance, the quadrupole terms account for virtually all remaining variance in the model. Our escape velocity threshold of approximately 520 km/s for identifying extragalactic particles is consistent with recent simulations~\cite{DeBrae2025}, which identify particles exceeding ~600 km/s as predominantly originating from substructure rather than smooth accretion, supporting our criterion for distinguishing galactic and extragalactic components.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=250px]{minv_new.png}
+    \caption{Minimum escape velocity as a function of direction in a spherical projection of Galactic coordinates within our model. The map displays significant angular variation, with the highest escape velocities ($>700$ km/s, yellow region) concentrated around galactic coordinates $(90^{\circ}, 0^{\circ})$ in the eastern hemisphere, while the lowest escape velocities ($<400$ km/s, dark purple) appear in the opposite direction. This anisotropy reflects the LSR motion and the asymmetric gravitational potential of the Milky Way.}
+    \label{fig:min_escape_velocity}
+\end{figure}
+
+
+%The improvement from adding quadrupole terms is substantial: Dipole model mean absolute error: %14.06 km/s; Dipole+Quadrupole mean absolute error: 0.27 km/s; Improvement: 98.1\%.
+
+
+%\begin{figure}[htbp]
+%    \centering
+%    \includegraphics[width=210px]{theoreticalminv.png}
+%    \caption{Estimated escape velocities of (520 km/s - $v_{\text{LSR}}$).
+%    The map illustrates the directional dependence of escape velocities after accounting for the Local Standard of Rest (LSR) motion, with values ranging from $<$300 km/s (dark purple) in the western galactic hemisphere to $>$700 km/s (yellow) in the eastern hemisphere. This asymmetry demonstrates how the observer's reference frame influences the effective gravitational potential experienced by dark matter particles.
+%}
+%    \label{fig:theoretical_escape_velocities}
+%\end{figure}
+
+
+%\begin{figure}[htbp]
+%    \centering
+%    \includegraphics[width=200px]{escape_velocity_residuals.png}
+%    \caption{Comparison of residuals after different spherical harmonic model fits. Top panel shows residuals after dipole model subtraction, revealing significant quadrupole structure with two prominent negative residual regions (blue, $\sim$-25 km/s) at galactic coordinates $(\pm 90^{\circ}, 0^{\circ})$ and positive residuals (red, $\sim$+25 km/s) along the galactic equator. Bottom panel shows residuals after dipole + quadrupole model subtraction, demonstrating that the combined model effectively captures the large-scale angular structure, leaving minimal residuals (near-zero across the sky).}
+%    \label{fig:residuals_comparison}
+%\end{figure}
+
+%While the dipole pattern explains 98.8\% of the variance (due to LSR motion), the quadrupole %terms account for virtually all remaining variance, confirming that the galaxy's non-spherical %shape is significant.
+
+
+\section{Extragalactic Dark Matter Flux}
+\label{sec:darkmatter}
+We adopt the standard radial density profile for dark matter in the Local Group~\cite{Navarro1997,Klypin2002,Rubin2014}:
+\begin{equation}
+\rho(R) = \rho_0 / [(R/R_{\text{vir}}) \cdot (1 + c \cdot R/R_{\text{vir}})^2]
+\end{equation}
+
+% We adopt the standard radial density profile for dark matter in the Local group [{\bf Shokhruz}: Please cite here Rubin \& Loeb, NFW's original paper, as well as Klypin's paper: https://ui.adsabs.harvard.edu/abs/2002ApJ...573..597K/abstract],
+% \begin{equation}
+% \rho(R) = \rho_0 / [(R/R_{\text{vir}}) \cdot (1 + c \cdot R/R_{\text{vir}})^2]
+% \end{equation}
+
+%Our analysis revealed that the uncalibrated profile overestimated the local density by more than an order of magnitude. This finding is consistent with observational constraints on the Local Group mass from kinetic Sunyaev-Zel'dovich studies~\cite{Rubin2014}, which place upper limits on the diffuse baryonic content of the Local Group medium at $2.5-5 \times 10^{12}M_{\odot}$ for highly concentrated halos.
+
+We define "extragalactic" dark matter as particles originating from the broader Local Group environment outside the Milky Way's virial radius. This primarily consists of the medium surrounding the Milky Way within the Local Group, including the contribution from Andromeda (M31). 
+
+\begin{figure}[htbp]
+    \centering 
+    \includegraphics[width=250px]{totaldarkmatterflux.png}
+    \caption{Total mass flux of dark matter ($\rho {\bf v}$) in GeV/cm$^2$/s. The map in galactic coordinates shows a higher flux (yellow) in the western galactic hemisphere.}
+    \label{fig:dark_matter_flux}
+\end{figure}
+
+%The calibration of this profile to match the canonical local dark matter density of 0.3 GeV/cm$^3$ required a significant adjustment of the normalization parameter $\rho_0$. Our analysis revealed that the uncalibrated profile overestimated the local density by more than an order of magnitude. 
+
+Our model of the Local Group explicitly incorporates both the Milky Way and Andromeda halos, along with the diffuse dark matter distribution between them. The combined density exceeds the Milky Way contribution by approximately 10\%, indicating that extragalactic sources make a non-negligible contribution to the local dark matter density. This is consistent with theoretical expectations for the Local Group medium, which is predicted to contain substantial diffuse mass distributed in an NFW profile centered on the Local Group center of mass~\cite{Rubin2014}.
+
+The velocity dispersion of dark matter particles represents a critical parameter in detection experiments. Our comparison between isotropic and anisotropic dispersion models revealed significant differences in the predicted detection rates. The anisotropic model, with its reduced vertical dispersion (170 km/s compared to 270 km/s in the isotropic case), predicts a lower flux from high galactic latitudes, modifying the expected annual modulation signal by approximately 15\%. 
+%This finding underscores the importance of accurate velocity dispersion modeling in interpreting direct detection results.
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=250px]{extragalactic_dark_matter_fraction.png}
+    \caption{The extragalactic dark matter fraction shows a strong dipole asymmetry with significantly higher extragalactic dark matter contribution (yellow/orange) of up to 70\% in the western galactic hemisphere, contrasted with minimal contribution (dark purple) in the eastern hemisphere.}
+    \label{fig:extragalactic_dm_fraction}
+\end{figure}
+
+The integrated velocity distribution across the sky produced a comprehensive flux map that exhibits clear dipole and quadrupole components. The dipole component aligns with the LSR motion as expected, but the quadrupole component reveals structural features in the dark matter distribution that correlate with the non-spherical gravitational potential revealed in the escape velocity analysis. 
+%This correlation provides additional evidence that the dark matter distribution follows the same non-spherical structure as the gravitational potential, supporting theoretical expectations from structure formation simulations.
+
+Andromeda's contribution varies significantly across the sky, reaching a maximum of approximately 5\% of the local density in its direction. This directional dependence introduces measurable anisotropies in the high-velocity tail of incoming dark matter particles, particularly above 600 km/s. 
+%These particles from beyond the Milky Way's virial radius constitute a potentially distinguishable population in next-generation detectors with sufficient energy resolution.
+
+
+
+% \subsection{Cross-Section Constraints for WIMPs}
+% \label{subsec:crosssection}
+
+% We adopt the theoretical framework for dark matter annihilation cross-sections, [{\bf Shokhruz}: Please add references from where you borrowed this relation]
+% \begin{equation}
+% \langle\sigma v\rangle = \frac{8\pi m_{\chi}^2 \cdot N_B}{X_j(\nu)},
+% \end{equation}
+% where ...
+
+% [{\bf Shokhruz:} Please explain the meaning of the different variables in the above equation.]
+
+% The uncertainty in the spectral factor $X_j(\nu)$ dominates the error budget, particularly for diffusion regime B which best fits the observational data. Varying the diffusion parameters within observationally allowed ranges produces a factor of approximately 3 uncertainty in the derived cross-section constraints. This systematic uncertainty exceeds the statistical uncertainty from the signal-strength parameter $N_B$ by nearly an order of magnitude.
+
+% For a canonical Weakly-Interacting Massive Particle (WIMP) mass of 100 GeV, our analysis produces an upper limit on the velocity-weighted annihilation cross-section of approximately $3 \times 10^{-26}$ cm$^3$/s, consistent with thermal relic expectations but significantly more stringent than previous analyses that did not account for the anisotropic velocity distribution. This improvement stems primarily from our more accurate modeling of the high-velocity tail, which contributes disproportionately to the detection rate in experimental setups sensitive to nuclear recoils above a specific energy threshold.
+
+% The comparative analysis of detection prospects for different target materials indicates that xenon-based detectors maintain an advantage for WIMP masses above approximately 50 GeV, while germanium detectors show enhanced sensitivity in the 10-50 GeV range due to more favorable kinematics in this mass range. 
+
+% [{\bf Shokhruz:} Please give references and explain the detection method. Why is annihilation of dark matter relevant for these detectors? I though they are only based on recoil of the target nuclei when the WIMP collides with them.]
+% %The projected sensitivity improvements with next-generation detectors suggest that the parameter space for thermal relic dark matter will be comprehensively probed within the next decade, assuming our velocity distribution models accurately represent the true dark matter kinematics.
+
+
+
+\section{Detection Rate of Extragalactic Dark Matter}
+\label{sec:extragalactic}
+
+%Our analysis of extragalactic dark matter flux reveals significant implications for detection strategies and cosmological models. 
+
+
+For the local dark matter density of 0.42 GeV/cm$^3$~\cite{Read2014,Piffl2014,Bovy2013}, we find that 26\% of dark matter particles in the Solar neighborhood originate from beyond the Milky Way's virial radius. Because of their high characteristic speed these particles account for 38\% of the flux.
+
+The directional dependence of the extragalactic fraction exhibits significant anisotropy across the sky. The fraction reaches a maximum of 71.2\% for $\theta=90.1^{\circ}$, $\phi=90.5^{\circ}$. This arises from the combined effects of the Sun's motion through the halo and the non-spherical gravitational potential. 
+%The perpendicular direction maximizes the observable flux of particles that exceed the local escape velocity, creating a preferred observation window for extragalactic components.
+
+
+%Our analysis reveals that approximately 25.6\% of dark matter particles in the Solar neighborhood originate from beyond the Milky Way's virial radius, contributing nearly 38.0\% of the total mass flux. However, this result requires careful interpretation in light of recent N-body simulations. DeBrae et al.~\cite{DeBrae2025} found that only $\sim 1.3 \times 10^{-5}$ of dark matter particles near Earth's position have velocities exceeding 600 km/s in typical Milky Way-like systems. This apparent discrepancy arises from different definitions of ``extragalactic'' dark matter: our analysis includes all particles beyond the virial radius regardless of velocity, encompassing both bound and unbound populations, while high-velocity studies focus specifically on particles exceeding escape velocity. The distinction is crucial for direct detection experiments, as the highest energy signatures come from the rare, ultra-high-velocity population identified in the simulations.
+
+
+\subsection{Extragalactic Flux Analysis}
+\label{subsec:massflux}
+The total dark matter mass flux, calculated as $\rho {\bf v}$, exhibits a pronounced dipole pattern, including the Local Group's bulk velocity of approximately 627 km/s relative to the cosmic microwave background~\cite{Rubin2014}.
+%, which creates asymmetric flux patterns as we observe dark matter particles from different %directions relative to our motion through the Local Group medium.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=250px]{dark_matter_flux.png}
+    \caption{ The extragalactic dark matter flux in GeV/cm$^2$/s ($\times 10^{6}$), shows significant angular variation with the highest flux values ($\sim 2 \times 10^{7}$ GeV/cm$^2$/s, yellow regions) concentrated in the western galactic hemisphere and a pronounced minimum in the opposite direcction.}
+    \label{fig:extragalactic_dm_flux}
+\end{figure}
+
+
+
+Statistical correlation analysis between the extragalactic fraction and total mass flux reveals a strong positive correlation coefficient of 0.83, indicating that regions of high flux are dominated by the extragalactic contribution. 
+%This finding has significant implications for experimental design: detection strategies that focus on high-flux directions will naturally enhance sensitivity to extragalactic dark matter populations, potentially providing a method to discriminate between galactic and extragalactic components based on their distinct kinematic signatures.
+\subsection{Implications for Detection}
+\label{subsec:detection}
+
+The observed directional dependence of the extragalactic fraction provides new opportunities for experimental design.  The maximum extragalactic fraction of 71\% occurs at coordinates $\theta = 89.7^{\circ}$, $\phi = 91.0^{\circ}$.
+
+The actual detection rates for particles exceeding $700\ \mathrm{km\,s^{-1}}$ may be significantly enhanced by Large-Magellanic-Cloud–like substructure~\cite{2023JCAP...10..070S}. DeBrae \textit{et al.}~\cite{DeBrae2025} predict that LMC analogues can boost high-velocity particle densities by $270$–$480\%$ for heliocentric velocities $>700$–$800\ \mathrm{km\,s^{-1}}$ compared with average Milky-Way–like haloes. 
+
+% The following sentence has been removed because only the motion relative to the Local Standard of Rest (LSR) matters for our flux calculation.
+%\emph{The directional anisotropy we observe reflects both the non-spherical gravitational potential of the Milky Way and the motion of the Local Group through the cosmic microwave background.}
+
+Our analysis indicates that the extragalactic component contributes $38\%$ of the total mass flux while representing only $25\%$ of the particle number density.  This kinematic distinction suggests that energy-selective detection methods could preferentially sample the extragalactic population, even without explicit directional sensitivity.  Specifically, focusing on high-energy nuclear recoils would enhance the relative contribution from extragalactic particles. ~\cite{2023JCAP...04..026H}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=200px]{darkmatter_distribution.png}
+    \caption{Angular dependence of the dark-matter velocity distribution.  Probability-density functions are shown for all particles (blue), the LSR direction (orange), and the anti-LSR direction (green).  The vertical dashed red line indicates the average escape velocity of $520\ \mathrm{km\,s^{-1}}$.}
+    \label{fig:dm_velocity_distribution}
+\end{figure}
+
+The average extragalactic mass flux of $3.3 \times 10^{6}\ \mathrm{GeV\,cm^{-2}\,s^{-1}}$ provides a fundamental input parameter for estimating detection rates in various experimental configurations.  When combined with interaction cross-sections, this flux enables more accurate predictions of event rates in direct-detection experiments.  The distinct velocity distribution of extragalactic particles could potentially be observed as an excess in the high-velocity tail relative to the Standard Halo Model, particularly in experiments with sufficient energy resolution to probe this region of parameter space.
+
+
+\section{Escape-speed uncertainty and extragalactic fractions}
+\label{sec:vesc_uncertainty}
+
+We varied the escape speed between 420 and 650 km s$^{-1}$ and recomputed the sky-averaged fraction of particles classified as extragalactic using the criterion $v \ge v_{\rm esc}(\theta,\phi)$. The mean fractions are 51.1\%, 43.4\%, 36.1\%, 27.4\%, 21.7\%, 16.9\%, 11.7\%, and 8.7\% at $v_{\rm esc} = 420, 450, 480, 520, 550, 580, 620, 650$ km s$^{-1}$, respectively. The maximum directional fractions across the sky over the same set are 70.3\%, 61.4\%, 52.4\%, 40.9\%, 33.1\%, 26.2\%, 18.5\%, and 13.9\%. The extragalactic fraction is therefore strongly anti-correlated with the assumed escape speed (Pearson $r \simeq -0.99$ for the mean values).
+
+For the nominal $v_{\rm esc}=520$ km s$^{-1}$ case, the sky-averaged extragalactic fraction is 27.4\% and the maximum directional fraction is 40.9\%. The total mass flux is largely unchanged by this sweep, while the extragalactic mass-flux component varies at the 30–40\% level across the same range.
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{escape_velocity_uncertainty_analysis.png}
+    \caption{Effect of varying the escape speed on extragalactic dark matter fractions and mass flux. The panels show how key observables respond to uncertainties in the Galactic escape velocity, demonstrating the sensitivity of EGDM component identification to this fundamental parameter. Variations in $v_{\rm esc}$ directly affect the boundary between gravitationally bound and unbound populations, with systematic shifts observable in both the integrated fractions and directional flux distributions.}
+    \label{fig:vesc_uncertainty}
+\end{figure*}
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{egdm_fraction_maps_all_vesc.png}
+    \caption{Extragalactic dark matter fraction maps across the tested escape-speed values. All-sky projections in Mollweide format illustrate how the spatial distribution of EGDM fractions varies with different assumptions for $v_{\rm esc}$. Higher escape velocities incorporate more high-velocity particles into the bound population, systematically reducing the EGDM fraction across all sky directions while preserving the overall angular structure. The consistent dipole-like pattern across all $v_{\rm esc}$ values indicates that the directional anisotropy is robust to escape velocity uncertainties.}
+    \label{fig:egdm_maps_all_vesc}
+\end{figure*}
+
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.95\linewidth]{escape_velocity_uncertainty_analysis.png}
+%     \caption{Effect of varying the escape speed on extragalactic fractions and mass flux.}
+%     \label{fig:vesc_uncertainty}
+% \end{figure}
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.95\linewidth]{egdm_fraction_maps_all_vesc.png}
+%     \caption{Extragalactic fraction maps across the tested escape-speed values.}
+%     \label{fig:egdm_maps_all_vesc}
+% \end{figure}
+
+
+\section{Component separation and flux budget}
+\label{sec:components}
+
+We separate three kinematic components using the escape-speed field: bound Galactic ($v < v_{\rm esc}$), intermediate-speed extragalactic ($v_{\rm esc} \le v < 700$ km s$^{-1}$), and high-speed substructure ($v \ge 700$ km s$^{-1}$). For the nominal model the sky-averaged flux fractions are 66.4\% (Galactic), 26.3\% (extragalactic), and 7.3\% (substructure). The corresponding sky-averaged mass fluxes are 4.839, 3.378, and $0.966\times 10^{6}$ GeV cm$^{-2}$ s$^{-1}$, yielding a total of $9.182\times 10^{6}$ GeV cm$^{-2}$ s$^{-1}$. The extragalactic-to-total mass-flux ratio is about 0.47 in this configuration.
+
+The directional maximum of the extragalactic fraction is about 70\%. The combined extragalactic-plus-substructure fraction averages 33.6\% across the sky.
+
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{separated_dm_components_analysis.png}
+    \caption{K-values Decomposition of dark matter velocity components and their corresponding mass flux distributions. Top row: Velocity component fractions showing the galactic component ($v < v_{\rm esc}$), diffuse EGDM component (v$_{\rm esc}$ $<$ v $<$ 700 km/s), and bound substructure component (v $>$ 700 km/s). Bottom row: Mass flux distributions in units of 10$^{-3}$ GeV cm$^{-2}$ s$^{-1}$ for EGDM and substructure components, along with their flux ratio. The maps reveal the complex angular dependence of dark matter flux arising from the superposition of multiple velocity components in the Galactic halo, with the EGDM/Substructure flux ratio showing spatial variations by factors of 2--6 across the sky.}
+    
+    Decomposition of dark matter velocity components and their corresponding mass flux distributions. Top row: Velocity component fractions showing the galactic component ($v < v_{\rm esc}$), diffuse EGDM component (v$_{\rm esc}$ $<$ v $<$ 700 km/s), and bound substructure component (v $>$ 700 km/s). Bottom row: Mass flux distributions in units of 10$^{-3}$ GeV cm$^{-2}$ s$^{-1}$ for EGDM and substructure components, along with their flux ratio. The maps reveal the complex angular dependence of dark matter flux arising from the superposition of multiple velocity components in the Galactic halo, with the EGDM/Substructure flux ratio showing spatial variations by factors of 2--6 across the sky.
+    \label{fig:components_analysis}
+\end{figure*}
+
+
+\section{Spherical-harmonic content of the flux}
+\label{sec:sh_content}
+
+We expand the flux map in spherical harmonics up to $\ell=4$. Using our sampling, the monopole power is $P_0 \simeq 9.5\times 10^{14}$ (arbitrary units), the dipole power is $P_1 \simeq 1.05\times 10^{15}$, and the quadrupole power is $P_2 \simeq 2.16\times 10^{14}$. The ratios $P_1/P_0 \simeq 1.11$ and $P_2/P_0 \simeq 0.23$ summarize the large-scale anisotropy in this model.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{spherical_harmonic_flux_analysis.png}
+    \caption{Dependence of mean EGDM fraction on Galactic escape velocity. Error bars represent the directional spread (standard deviation) of EGDM fractions across the sky, while the shaded band indicates an additional ±20.8\% systematic uncertainty. The strong inverse correlation demonstrates the sensitivity of extragalactic component identification to $v_{\rm esc}$ measurements}
+    \label{fig:sh_flux}
+\end{figure}
+
+
+\section{Detector sensitivity and sky coverage}
+\label{sec:detector_sensitivity}
+
+We compare the predicted modulation against representative systematic floors: DAMA (0.030 cpd kg$^{-1}$ keV$^{-1}$), ANAIS and COSINE (0.020), a conservative floor (0.020), and an aggressive benchmark (0.010). With our count-rate scaling, the detectable sky fractions are about 30\% (DAMA), 35\% (ANAIS/COSINE/conservative), and 37\% (aggressive). The maximum predicted modulation among detectable directions is about 0.13 cpd kg$^{-1}$ keV$^{-1}$. A year-scale toy simulation of daily counts yields a modulation significance of about $1.5\,\sigma$ for the nominal configuration.
+
+
+\begin{figure*}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{dm_detection.png}
+    \caption{Directional detectability maps for various dark matter direct detection experiments. Sky maps in Mollweide projection showing the detectability (1 = Yes, 0 = No) for five different experimental configurations. Blue regions indicate directions where dark matter signals are detectable, while red regions indicate directions below the detection threshold. The detectability patterns show a clear hemispherical asymmetry, with approximately 50--70\% sky coverage depending on the experimental sensitivity. All experiments exhibit similar overall patterns, with detectability concentrated in one hemisphere, though subtle differences exist in the boundary regions between detectable and undetectable areas, reflecting varying detector sensitivities and background rejection capabilities.}
+    \label{fig:dm_sim}
+\end{figure*}
+
+
+\section{Recoil-energy rate enhancement}
+\label{sec:rate_enhancement}
+
+We evaluate the differential-rate enhancement factor $[1+\Delta R/R]$ by comparing a truncated Maxwellian baseline to a baseline plus an added high-speed component above the escape speed. For WIMP masses of 5, 15, 50, and 200 GeV, the maximal enhancements in the accessible recoil-energy range are approximately 1.88, 2.66, 1.49, and 1.00, respectively. The enhancement turns on once $v_{\min}(E_R)$ approaches the escape-speed threshold for a given mass and remains close to unity at low recoil energies.
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=0.95\linewidth]{velocity_distributions_CORRECTED.png}
+%     \caption{Comparison Maps}
+%     \label{fig:vel_pdfs}
+% \end{figure}
+% \subsection{Implications for Detection}
+% \label{subsec:detection}
+
+% The observed directional dependence of the extragalactic fraction provides new opportunities for experimental design. The maximum extragalactic fraction of 71.2\% occurs at coordinates $\theta=89.7^{\circ}$, $\phi=91.0^{\circ}$.
+
+
+% The actual detection rates for particles exceeding 700 km/s may also be significantly enhanced by Large Magellanic Cloud-like substructure. DeBrae et al.~\cite{DeBrae2025} predict that LMC analogs can boost high-velocity particle densities by 270--480\% for heliocentric velocities $>700$--800 km/s compared to average Milky Way-like halos. 
+% %This suggests that our extragalactic flux estimates may underestimate the contribution from fast-moving substructure, particularly for the highest energy recoils most easily detected in direct detection experiments.
+
+% %The directional anisotropy we observe reflects both the non-spherical gravitational potential of the Milky Way and the motion of the Local Group through the cosmic microwave background. The Local Group's substantial bulk velocity ($\sim 627$ km/s) relative to the CMB rest frame~\cite{Rubin2014} creates systematic directional effects in the observed dark matter flux that could potentially be distinguished from purely galactic signatures in directionally-sensitive dark matter detection experiments.
+
+% [{\bf Shokhruz:} Why did you state that the motion through the CMB matters? All we care is the motion of the Local Group particles relative to the LSR, not the CMB.]
+
+% %Our Local Group model demonstrates that Andromeda's contribution varies significantly across the sky, reaching a maximum of approximately 5\% of the local density in its direction. The center of mass of the Local Group, located approximately 476 kpc from the Galactic center in the direction of M31~\cite{Rubin2014}, provides a natural reference frame for understanding the large-scale velocity structure of the local dark matter distribution.
+
+
+% %Our analysis indicates that the extragalactic component contributes 37.7\% of the total mass flux while representing only 25.3\% of the particle number density. This kinematic distinction suggests that energy-selective detection methods could preferentially sample the extragalactic population, even without explicit directional sensitivity. Specifically, focusing on high-energy nuclear recoils would enhance the relative contribution from extragalactic particles.
+
+% \begin{figure}[htbp]
+%     \centering
+%     \includegraphics[width=200px]{darkmatter_distribution.png}
+%     \caption{Angular dependence of the dark matter velocity distribution. We show the probability density functions for particle velocities in total (blue), LSR direction of motion relative to the Milky-Way center (orange), and anti-LSR direction (green). The vertical dashed red line indicates the average escape velocity of 520 km/s. 
+%     %Note the directional dependence with higher velocities predominant in the LSR direction and significantly lower velocities in the anti-LSR direction.
+%     }
+%     \label{fig:dm_velocity_distribution}
+% \end{figure}
+
+% The average extragalactic mass flux of 3.3$\times$10$^{-4}$ GeV/cm$^2$/s 
+% [{\bf Shokhruz:} this value must be wrong and should be of order $10^6$ instead. Please double check.]
+% provides a fundamental input parameter for estimating detection rates in various experimental configurations. When combined with interaction cross-sections, this flux determination enables more accurate predictions of event rates in direct detection experiments. The distinct velocity distribution of extragalactic particles could potentially be detected as a deviation from the standard halo model in the high-velocity tail, particularly in experiments with sufficient energy resolution to probe this region of parameter space.
+\section{DIRECT DETECTION EXPERIMENTS}
+\label{sec:direct_detection}
+%--------------------------------------------------------------------
+
+Direct searches for Weakly Interacting Massive Particles (WIMPs) rely on measuring the
+nuclear‐recoil signature produced when a halo particle
+scatters elastically off detector nuclei.
+For the spin‐independent (SI) scenario, the
+differential event rate per unit detector mass is given by the
+standard expression~\cite{Lewin1996,Bruch2009DarkDisk},
+\begin{equation}
+  \frac{\mathrm{d}R}{\mathrm{d}E_R}
+  = \frac{\rho_\chi\,\sigma_{(\chi,N)}}{2\,m_\chi\,\mu_N^{2}}
+    F^{2}(E_R)
+    \int_{v_{\min}(E_R)}^{v_{\max}}
+      \frac{f(\mathbf v,t)}{v}\,\mathrm d^{3}v,
+\label{eq:dRdE-standard}
+\end{equation}
+where each term has a standard physical meaning.\footnote{Some authors write \(\sigma_N^{\mathrm{SI}}\) for the WIMP–nucleus cross-section \(\sigma_{(\chi,N)}\), and omit the upper integration limit \(v_{\max}\). The latter is equivalent to integrating to infinity if the velocity distribution \(f(\mathbf v,t)\) is zero for speeds \(v > v_{\mathrm{esc}}\).}
+Here, \(\rho_\chi\) is the local WIMP mass density,
+\(\sigma_{(\chi,N)}\) is the spin-independent WIMP–nucleus cross-section,
+\(m_\chi\) is the WIMP mass,
+and \(\mu_N = m_\chi m_N/(m_\chi + m_N)\) denotes the
+WIMP–nucleus reduced mass for a target nucleus of mass \(m_N\).
+The function \(F(E_R)\) is the nuclear form factor, which accounts
+for the loss of coherence at non-zero momentum transfer.
+The integral runs from the minimum speed \(v_{\min}(E_R)\) needed to
+produce a recoil of energy \(E_R\), up to the maximum possible
+speed for a bound particle, \(v_{\max} \equiv v_{\rm esc}+v_{\rm lab}\),
+where \(v_{\rm esc}\) is the Galactic escape speed and \(v_{\rm lab}\) is
+the speed of the detector in the Galactic frame.
+
+The velocity integral contains the lab-frame WIMP velocity
+distribution \(f(\mathbf v, t)\), which is normalised to unity
+and may be time-dependent due to the Earth's motion.
+In our analysis, \(f(\mathbf v)\) is the sum of a
+Maxwell–Boltzmann halo component and the anisotropic,
+high-speed extragalactic component derived in
+Secs.~\ref{sec:darkmatter} and~\ref{sec:extragalactic}.
+Because the prefactor
+\(\rho_\chi\sigma_{(\chi,N)} /
+  (2 m_\chi \mu_N^{2})\)
+is common to both scenarios (with and without the extragalactic component),
+the quantity of interest
+is the velocity integral, 
+\(\int_{v>v_{\min}} [f(\mathbf v)/v] \,\mathrm d^{3}v\).
+The modification of this term by the extragalactic component is
+the central result presented in Fig.~\ref{fig:ratio_vs_Er}.
+
+The kinematic threshold is given by~\cite{Bruch2009DarkDisk},
+\[
+  v_{\min}(E_R) = \sqrt{\frac{m_N\,E_R}{2\mu_N^{2}}}\;.
+\]
+The fractional change in the differential rate is driven
+entirely by the velocity integral.  Consequently, the
+enhancement factor
+\(1 + \Delta R / R\) shown in Fig.~\ref{fig:ratio_vs_Er}
+is independent of the assumed cross-section and is determined
+solely by the recoil energy \(E_R\) and the chosen WIMP mass.
+
+
+
+\begin{figure}[htbp]
+    \centering
+    % adjust the width to suit your layout; \linewidth keeps the aspect ratio
+    \includegraphics[width=1\linewidth]{figure6.png}
+    \caption{Extragalactic enhancement factor
+             \(\bigl[1 + \Delta R/R\bigr]\) for the
+             spin–independent differential rate,
+             plotted as a function of recoil energy \(E_R\).
+             The four coloured curves correspond to WIMP masses of
+             \(5\ \mathrm{GeV}\) (blue), \(15\ \mathrm{GeV}\) (orange),
+             \(50\ \mathrm{GeV}\) (green) and
+             \(200\ \mathrm{GeV}\) (red).
+             Each curve rises sharply once \(E_R\) exceeds
+             the Milky-Way escape-velocity kinematic threshold
+             for that mass, indicating how the unbound
+             (extragalactic) component boosts the event rate
+             at high recoil energies while leaving the low-energy
+             spectrum essentially unchanged.}
+    \label{fig:ratio_vs_Er}
+\end{figure}
+
+
+Because the Earth's orbital velocity (\(v_\oplus\simeq 30\ \text{km\,s}^{-1}\)) is comparable to the uncertainty in the escape-velocity threshold (Sec.~II), the extragalactic flux exhibits an annual modulation with amplitude \(A \equiv (R_{\max}-R_{\min})/(R_{\max}+R_{\min}) \approx 0.33\) for the fiducial Germanium detector. This is an order-of-magnitude larger than the 6--7\% modulation predicted in the Standard Halo Model (SHM) and is therefore a distinctive signature testable by modulation searches such as ANAIS~\cite{ANAIS2021} and COSINE-100~\cite{COSINE2022}. For a \(250\ \text{kg}\) NaI(Tl) array operated for 7~yr, our flux enhancement would raise the expected modulation significance from \(1.8\sigma\) (SHM only) to \(>3\sigma\).
+
+Gaseous time-projection chambers (e.g.\ DRIFT and the NEWS-dm programme) provide \(\sim30^{\circ}\) angular resolution at sub-\(\text{keV}\) thresholds. Pointing such detectors toward the flux maximum \((\theta,\phi)\simeq(90^{\circ},90^{\circ})\) raises the expected extragalactic fraction in the signal to \(\sim 64\%\), boosting the forward--backward asymmetry by the same factor.
+
+\section{Discussion and Implications}
+
+The complex multi-component structure for the local dark matter environment has important implications for direct detection experiments. We identify three distinct populations contributing to the dark matter flux at Earth: bound Milky Way particles, extragalactic particles from the broader Local Group environment, and high-velocity particles from galactic substructure.
+
+The Local Group environment contributes 26\% by number and 38\% by flux of the local dark matter.We find a strong directional anisotropy, with extragalactic fractions ranging from near zero to 71\% across the sky. In addition, recent N-body simulations~\cite{DeBrae2025} suggest that even higher velocity particles ($>700$ km/s) originate from galactic substructure. This creates a multi-component velocity structure with moderate-velocity extragalactic particles (400--600 km/s) dominating the total flux and rare high-velocity articles from Milky-Way satellite like the Large Magellanic Cloud. Next-generation directionally-sensitive detectors could potentially isolate these different components through their distinct kinematic signatures.
+
+\acknowledgements This work was supported in part by Harvard University, the Black Hole Initiative and the Galileo Project.
+%The Local Group's bulk velocity of approximately 627 km/s relative to the cosmic microwave background~\cite{Rubin2014} creates systematic directional effects in the observed dark matter flux. Our analysis shows that the center of mass of the Local Group, located approximately 476 kpc from the Galactic center in the direction of M31~\cite{Rubin2014}, serves as a natural reference frame for understanding these large-scale velocity patterns.
+
+
+
+%: the smooth extragalactic component would produce steady, directionally-dependent backgrounds, while substructure interactions would create sharper, potentially time-variable signals in specific directions.
+
+%Future direct detection experiments should therefore consider a three-component interpretation framework: (1) the dominant bound Milky Way population providing the baseline signal, (2) the substantial extragalactic background we characterize providing $\sim 38\%$ of the total flux with predictable directional modulation, and (3) episodic enhancements from high-velocity substructure that could temporarily boost detection rates by factors of several.
+
+%This multi-component picture suggests that comprehensive dark matter characterization will require not only total event rate measurements but also detailed analysis of energy spectra, directional distributions, and temporal variations to disentangle the contributions from different populations and fully constrain dark matter properties.
+% \subsection{\label{sec:level2}Second-level heading: Formatting}
+
+% This file may be formatted in either the \texttt{preprint} or
+% \texttt{reprint} style. \texttt{reprint} format mimics final journal output. 
+% Either format may be used for submission purposes. \texttt{letter} sized paper should
+% be used when submitting to APS journals.
+
+% \subsubsection{Wide text (A level-3 head)}
+% The \texttt{widetext} environment will make the text the width of the
+% full page, as on page~\pageref{eq:wideeq}. (Note the use the
+% \verb+\pageref{#1}+ command to refer to the page number.) 
+% \paragraph{Note (Fourth-level head is run in)}
+% The width-changing commands only take effect in two-column formatting. 
+% There is no effect if text is in a single column.
+
+% \subsection{\label{sec:citeref}Citations and References}
+% A citation in text uses the command \verb+\cite{#1}+ or
+% \verb+\onlinecite{#1}+ and refers to an entry in the bibliography. 
+% An entry in the bibliography is a reference to another document.
+
+% \subsubsection{Citations}
+% Because REV\TeX\ uses the \verb+natbib+ package of Patrick Daly, 
+% the entire repertoire of commands in that package are available for your document;
+% see the \verb+natbib+ documentation for further details. Please note that
+% REV\TeX\ requires version 8.31a or later of \verb+natbib+.
+
+% \paragraph{Syntax}
+% The argument of \verb+\cite+ may be a single \emph{key}, 
+% or may consist of a comma-separated list of keys.
+% The citation \emph{key} may contain 
+% letters, numbers, the dash (-) character, or the period (.) character. 
+% New with natbib 8.3 is an extension to the syntax that allows for 
+% a star (*) form and two optional arguments on the citation key itself.
+% The syntax of the \verb+\cite+ command is thus (informally stated)
+% \begin{quotation}\flushleft\leftskip1em
+% \verb+\cite+ \verb+{+ \emph{key} \verb+}+, or\\
+% \verb+\cite+ \verb+{+ \emph{optarg+key} \verb+}+, or\\
+% \verb+\cite+ \verb+{+ \emph{optarg+key} \verb+,+ \emph{optarg+key}\ldots \verb+}+,
+% \end{quotation}\noindent
+% where \emph{optarg+key} signifies 
+% \begin{quotation}\flushleft\leftskip1em
+% \emph{key}, or\\
+% \texttt{*}\emph{key}, or\\
+% \texttt{[}\emph{pre}\texttt{]}\emph{key}, or\\
+% \texttt{[}\emph{pre}\texttt{]}\texttt{[}\emph{post}\texttt{]}\emph{key}, or even\\
+% \texttt{*}\texttt{[}\emph{pre}\texttt{]}\texttt{[}\emph{post}\texttt{]}\emph{key}.
+% \end{quotation}\noindent
+% where \emph{pre} and \emph{post} is whatever text you wish to place 
+% at the beginning and end, respectively, of the bibliographic reference
+% (see Ref.~[\onlinecite{witten2001}] and the two under Ref.~[\onlinecite{feyn54}]).
+% (Keep in mind that no automatic space or punctuation is applied.)
+% It is highly recommended that you put the entire \emph{pre} or \emph{post} portion 
+% within its own set of braces, for example: 
+% \verb+\cite+ \verb+{+ \texttt{[} \verb+{+\emph{text}\verb+}+\texttt{]}\emph{key}\verb+}+.
+% The extra set of braces will keep \LaTeX\ out of trouble if your \emph{text} contains the comma (,) character.
+
+% The star (*) modifier to the \emph{key} signifies that the reference is to be 
+% merged with the previous reference into a single bibliographic entry, 
+% a common idiom in APS and AIP articles (see below, Ref.~[\onlinecite{epr}]). 
+% When references are merged in this way, they are separated by a semicolon instead of 
+% the period (full stop) that would otherwise appear.
+
+% \paragraph{Eliding repeated information}
+% When a reference is merged, some of its fields may be elided: for example, 
+% when the author matches that of the previous reference, it is omitted. 
+% If both author and journal match, both are omitted.
+% If the journal matches, but the author does not, the journal is replaced by \emph{ibid.},
+% as exemplified by Ref.~[\onlinecite{epr}]. 
+% These rules embody common editorial practice in APS and AIP journals and will only
+% be in effect if the markup features of the APS and AIP Bib\TeX\ styles is employed.
+
+% \paragraph{The options of the cite command itself}
+% Please note that optional arguments to the \emph{key} change the reference in the bibliography, 
+% not the citation in the body of the document. 
+% For the latter, use the optional arguments of the \verb+\cite+ command itself:
+% \verb+\cite+ \texttt{*}\allowbreak
+% \texttt{[}\emph{pre-cite}\texttt{]}\allowbreak
+% \texttt{[}\emph{post-cite}\texttt{]}\allowbreak
+% \verb+{+\emph{key-list}\verb+}+.
+
+% \subsubsection{Example citations}
+% By default, citations are numerical\cite{Beutler1994}.
+% Author-year citations are used when the journal is RMP. 
+% To give a textual citation, use \verb+\onlinecite{#1}+: 
+% Refs.~\onlinecite{[][{, and references therein}]witten2001,Bire82}. 
+% By default, the \texttt{natbib} package automatically sorts your citations into numerical order and ``compresses'' runs of three or more consecutive numerical citations.
+% REV\TeX\ provides the ability to automatically change the punctuation when switching between journal styles that provide citations in square brackets and those that use a superscript style instead. This is done through the \texttt{citeautoscript} option. For instance, the journal style \texttt{prb} automatically invokes this option because \textit{Physical 
+% Review B} uses superscript-style citations. The effect is to move the punctuation, which normally comes after a citation in square brackets, to its proper position before the superscript. 
+% To illustrate, we cite several together 
+% \cite{[See the explanation of time travel in ]feyn54,*[The classical relativistic treatment of ][ is a relative classic]epr,witten2001,Berman1983,Davies1998,Bire82}, 
+% and once again in different order (Refs.~\cite{epr,feyn54,Bire82,Berman1983,witten2001,Davies1998}). 
+% Note that the citations were both compressed and sorted. Futhermore, running this sample file under the \texttt{prb} option will move the punctuation to the correct place.
+
+% When the \verb+prb+ class option is used, the \verb+\cite{#1}+ command
+% displays the reference's number as a superscript rather than in
+% square brackets. Note that the location of the \verb+\cite{#1}+
+% command should be adjusted for the reference style: the superscript
+% references in \verb+prb+ style must appear after punctuation;
+% otherwise the reference must appear before any punctuation. This
+% sample was written for the regular (non-\texttt{prb}) citation style.
+% The command \verb+\onlinecite{#1}+ in the \texttt{prb} style also
+% displays the reference on the baseline.
+
+% \subsubsection{References}
+% A reference in the bibliography is specified by a \verb+\bibitem{#1}+ command
+% with the same argument as the \verb+\cite{#1}+ command.
+% \verb+\bibitem{#1}+ commands may be crafted by hand or, preferably,
+% generated by Bib\TeX. 
+% REV\TeX~4.2 includes Bib\TeX\ style files
+% \verb+apsrev4-2.bst+, \verb+apsrmp4-2.bst+ appropriate for
+% \textit{Physical Review} and \textit{Reviews of Modern Physics},
+% respectively.
+
+% \subsubsection{Example references}
+% This sample file employs the \verb+\bibliography+ command, 
+% which formats the \texttt{\jobname .bbl} file
+% and specifies which bibliographic databases are to be used by Bib\TeX\ 
+% (one of these should be by arXiv convention \texttt{\jobname .bib}).
+% Running Bib\TeX\ (via \texttt{bibtex \jobname}) 
+% after the first pass of \LaTeX\ produces the file
+% \texttt{\jobname .bbl} which contains the automatically formatted
+% \verb+\bibitem+ commands (including extra markup information via
+% \verb+\bibinfo+ and \verb+\bibfield+ commands). 
+% If not using Bib\TeX, you will have to create the \verb+thebibiliography+ environment 
+% and its \verb+\bibitem+ commands by hand.
+
+% Numerous examples of the use of the APS bibliographic entry types appear in the bibliography of this sample document.
+% You can refer to the \texttt{\jobname .bib} file, 
+% and compare its information to the formatted bibliography itself.
+
+% \subsection{Footnotes}%
+% Footnotes, produced using the \verb+\footnote{#1}+ command, 
+% usually integrated into the bibliography alongside the other entries.
+% Numerical citation styles do this%
+% \footnote{Automatically placing footnotes into the bibliography requires using BibTeX to compile the bibliography.};
+% author-year citation styles place the footnote at the bottom of the text column.
+% Note: due to the method used to place footnotes in the bibliography, 
+% \emph{you must re-run Bib\TeX\ every time you change any of your document's footnotes}. 
+
+% \section{Math and Equations}
+% Inline math may be typeset using the \verb+$+ delimiters. Bold math
+% symbols may be achieved using the \verb+bm+ package and the
+% \verb+\bm{#1}+ command it supplies. For instance, a bold $\alpha$ can
+% be typeset as \verb+$\bm{\alpha}$+ giving $\bm{\alpha}$. Fraktur and
+% Blackboard (or open face or double struck) characters should be
+% typeset using the \verb+\mathfrak{#1}+ and \verb+\mathbb{#1}+ commands
+% respectively. Both are supplied by the \texttt{amssymb} package. For
+% example, \verb+$\mathbb{R}$+ gives $\mathbb{R}$ and
+% \verb+$\mathfrak{G}$+ gives $\mathfrak{G}$
+
+% In \LaTeX\ there are many different ways to display equations, and a
+% few preferred ways are noted below. Displayed math will center by
+% default. Use the class option \verb+fleqn+ to flush equations left.
+
+% Below we have numbered single-line equations; this is the most common
+% type of equation in \textit{Physical Review}:
+% \begin{eqnarray}
+% \chi_+(p)\alt{\bf [}2|{\bf p}|(|{\bf p}|+p_z){\bf ]}^{-1/2}
+% \left(
+% \begin{array}{c}
+% |{\bf p}|+p_z\\
+% px+ip_y
+% \end{array}\right)\;,
+% \\
+% \left\{%
+%  \openone234567890abc123\alpha\beta\gamma\delta1234556\alpha\beta
+%  \frac{1\sum^{a}_{b}}{A^2}%
+% \right\}%
+% \label{eq:one}.
+% \end{eqnarray}
+% Note the open one in Eq.~(\ref{eq:one}).
+
+% Not all numbered equations will fit within a narrow column this
+% way. The equation number will move down automatically if it cannot fit
+% on the same line with a one-line equation:
+% \begin{equation}
+% \left\{
+%  ab12345678abc123456abcdef\alpha\beta\gamma\delta1234556\alpha\beta
+%  \frac{1\sum^{a}_{b}}{A^2}%
+% \right\}.
+% \end{equation}
+
+% When the \verb+\label{#1}+ command is used [cf. input for
+% Eq.~(\ref{eq:one})], the equation can be referred to in text without
+% knowing the equation number that \TeX\ will assign to it. Just
+% use \verb+\ref{#1}+, where \verb+#1+ is the same name that used in
+% the \verb+\label{#1}+ command.
+
+% Unnumbered single-line equations can be typeset
+% using the \verb+\[+, \verb+\]+ format:
+% \[g^+g^+ \rightarrow g^+g^+g^+g^+ \dots ~,~~q^+q^+\rightarrow
+% q^+g^+g^+ \dots ~. \]
+
+
+% \subsection{Multiline equations}
+
+% Multiline equations are obtained by using the \verb+eqnarray+
+% environment.  Use the \verb+\nonumber+ command at the end of each line
+% to avoid assigning a number:
+% \begin{eqnarray}
+% {\cal M}=&&ig_Z^2(4E_1E_2)^{1/2}(l_i^2)^{-1}
+% \delta_{\sigma_1,-\sigma_2}
+% (g_{\sigma_2}^e)^2\chi_{-\sigma_2}(p_2)\nonumber\\
+% &&\times
+% [\epsilon_jl_i\epsilon_i]_{\sigma_1}\chi_{\sigma_1}(p_1),
+% \end{eqnarray}
+% \begin{eqnarray}
+% \sum \vert M^{\text{viol}}_g \vert ^2&=&g^{2n-4}_S(Q^2)~N^{n-2}
+%         (N^2-1)\nonumber \\
+%  & &\times \left( \sum_{i<j}\right)
+%   \sum_{\text{perm}}
+%  \frac{1}{S_{12}}
+%  \frac{1}{S_{12}}
+%  \sum_\tau c^f_\tau~.
+% \end{eqnarray}
+% \textbf{Note:} Do not use \verb+\label{#1}+ on a line of a multiline
+% equation if \verb+\nonumber+ is also used on that line. Incorrect
+% cross-referencing will result. Notice the use \verb+\text{#1}+ for
+% using a Roman font within a math environment.
+
+% To set a multiline equation without \emph{any} equation
+% numbers, use the \verb+\begin{eqnarray*}+,
+% \verb+\end{eqnarray*}+ format:
+% \begin{eqnarray*}
+% \sum \vert M^{\text{viol}}_g \vert ^2&=&g^{2n-4}_S(Q^2)~N^{n-2}
+%         (N^2-1)\\
+%  & &\times \left( \sum_{i<j}\right)
+%  \left(
+%   \sum_{\text{perm}}\frac{1}{S_{12}S_{23}S_{n1}}
+%  \right)
+%  \frac{1}{S_{12}}~.
+% \end{eqnarray*}
+
+% To obtain numbers not normally produced by the automatic numbering,
+% use the \verb+\tag{#1}+ command, where \verb+#1+ is the desired
+% equation number. For example, to get an equation number of
+% (\ref{eq:mynum}),
+% \begin{equation}
+% g^+g^+ \rightarrow g^+g^+g^+g^+ \dots ~,~~q^+q^+\rightarrow
+% q^+g^+g^+ \dots ~. \tag{2.6$'$}\label{eq:mynum}
+% \end{equation}
+
+% \paragraph{A few notes on \texttt{tag}s} 
+% \verb+\tag{#1}+ requires the \texttt{amsmath} package. 
+% Place the \verb+\tag{#1}+ command before the \verb+\label{#1}+, if any. 
+% The numbering produced by \verb+\tag{#1}+ \textit{does not affect} 
+% the automatic numbering in REV\TeX; 
+% therefore, the number must be known ahead of time, 
+% and it must be manually adjusted if other equations are added. 
+% \verb+\tag{#1}+ works with both single-line and multiline equations. 
+% \verb+\tag{#1}+ should only be used in exceptional cases---%
+% do not use it to number many equations in your paper. 
+% Please note that this feature of the \texttt{amsmath} package
+% is \emph{not} compatible with the \texttt{hyperref} (6.77u) package.
+
+% Enclosing display math within
+% \verb+\begin{subequations}+ and \verb+\end{subequations}+ will produce
+% a set of equations that are labeled with letters, as shown in
+% Eqs.~(\ref{subeq:1}) and (\ref{subeq:2}) below.
+% You may include any number of single-line and multiline equations,
+% although it is probably not a good idea to follow one display math
+% directly after another.
+% \begin{subequations}
+% \label{eq:whole}
+% \begin{eqnarray}
+% {\cal M}=&&ig_Z^2(4E_1E_2)^{1/2}(l_i^2)^{-1}
+% (g_{\sigma_2}^e)^2\chi_{-\sigma_2}(p_2)\nonumber\\
+% &&\times
+% [\epsilon_i]_{\sigma_1}\chi_{\sigma_1}(p_1).\label{subeq:2}
+% \end{eqnarray}
+% \begin{equation}
+% \left\{
+%  abc123456abcdef\alpha\beta\gamma\delta1234556\alpha\beta
+%  \frac{1\sum^{a}_{b}}{A^2}
+% \right\},\label{subeq:1}
+% \end{equation}
+% \end{subequations}
+% Giving a \verb+\label{#1}+ command directly after the \verb+\begin{subequations}+, 
+% allows you to reference all the equations in the \texttt{subequations} environment. 
+% For example, the equations in the preceding subequations environment were
+% Eqs.~(\ref{eq:whole}).
+
+% \subsubsection{Wide equations}
+% The equation that follows is set in a wide format, i.e., it spans the full page. 
+% The wide format is reserved for long equations
+% that cannot easily be set in a single column:
+% \begin{widetext}
+% \begin{equation}
+% {\cal R}^{(\text{d})}=
+%  g_{\sigma_2}^e
+%  \left(
+%    \frac{[\Gamma^Z(3,21)]_{\sigma_1}}{Q_{12}^2-M_W^2}
+%   +\frac{[\Gamma^Z(13,2)]_{\sigma_1}}{Q_{13}^2-M_W^2}
+%  \right)
+%  + x_WQ_e
+%  \left(
+%    \frac{[\Gamma^\gamma(3,21)]_{\sigma_1}}{Q_{12}^2-M_W^2}
+%   +\frac{[\Gamma^\gamma(13,2)]_{\sigma_1}}{Q_{13}^2-M_W^2}
+%  \right)\;. 
+%  \label{eq:wideeq}
+% \end{equation}
+% \end{widetext}
+% This is typed to show how the output appears in wide format.
+% (Incidentally, since there is no blank line between the \texttt{equation} environment above 
+% and the start of this paragraph, this paragraph is not indented.)
+
+% \section{Cross-referencing}
+% REV\TeX{} will automatically number such things as
+% sections, footnotes, equations, figure captions, and table captions. 
+% In order to reference them in text, use the
+% \verb+\label{#1}+ and \verb+\ref{#1}+ commands. 
+% To reference a particular page, use the \verb+\pageref{#1}+ command.
+
+% The \verb+\label{#1}+ should appear 
+% within the section heading, 
+% within the footnote text, 
+% within the equation, or 
+% within the table or figure caption. 
+% The \verb+\ref{#1}+ command
+% is used in text at the point where the reference is to be displayed.  
+% Some examples: Section~\ref{sec:level1} on page~\pageref{sec:level1},
+% Table~\ref{tab:table1},%
+% \begin{table}[b]%The best place to locate the table environment is directly after its first reference in text
+% \caption{\label{tab:table1}%
+% A table that fits into a single column of a two-column layout. 
+% Note that REV\TeX~4 adjusts the intercolumn spacing so that the table fills the
+% entire width of the column. Table captions are numbered
+% automatically. 
+% This table illustrates left-, center-, decimal- and right-aligned columns,
+% along with the use of the \texttt{ruledtabular} environment which sets the 
+% Scotch (double) rules above and below the alignment, per APS style.
+% }
+% \begin{ruledtabular}
+% \begin{tabular}{lcdr}
+% \textrm{Left\footnote{Note a.}}&
+% \textrm{Centered\footnote{Note b.}}&
+% \multicolumn{1}{c}{\textrm{Decimal}}&
+% \textrm{Right}\\
+% \colrule
+% 1 & 2 & 3.001 & 4\\
+% 10 & 20 & 30 & 40\\
+% 100 & 200 & 300.0 & 400\\
+% \end{tabular}
+% \end{ruledtabular}
+% \end{table}
+% and Fig.~\ref{fig:epsart}.%
+% \begin{figure}[b]
+% \includegraphics{fig_1}% Here is how to import EPS art
+% \caption{\label{fig:epsart} A figure caption. The figure captions are
+% automatically numbered.}
+% \end{figure}
+
+% \section{Floats: Figures, Tables, Videos, etc.}
+% Figures and tables are usually allowed to ``float'', which means that their
+% placement is determined by \LaTeX, while the document is being typeset. 
+
+% Use the \texttt{figure} environment for a figure, the \texttt{table} environment for a table.
+% In each case, use the \verb+\caption+ command within to give the text of the
+% figure or table caption along with the \verb+\label+ command to provide
+% a key for referring to this figure or table.
+% The typical content of a figure is an image of some kind; 
+% that of a table is an alignment.%
+% \begin{figure*}
+% \includegraphics{fig_2}% Here is how to import EPS art
+% \caption{\label{fig:wide}Use the figure* environment to get a wide
+% figure that spans the page in \texttt{twocolumn} formatting.}
+% \end{figure*}
+% \begin{table*}
+% \caption{\label{tab:table3}This is a wide table that spans the full page
+% width in a two-column layout. It is formatted using the
+% \texttt{table*} environment. It also demonstates the use of
+% \textbackslash\texttt{multicolumn} in rows with entries that span
+% more than one column.}
+% \begin{ruledtabular}
+% \begin{tabular}{ccccc}
+%  &\multicolumn{2}{c}{$D_{4h}^1$}&\multicolumn{2}{c}{$D_{4h}^5$}\\
+%  Ion&1st alternative&2nd alternative&lst alternative
+% &2nd alternative\\ \hline
+%  K&$(2e)+(2f)$&$(4i)$ &$(2c)+(2d)$&$(4f)$ \\
+%  Mn&$(2g)$\footnote{The $z$ parameter of these positions is $z\sim\frac{1}{4}$.}
+%  &$(a)+(b)+(c)+(d)$&$(4e)$&$(2a)+(2b)$\\
+%  Cl&$(a)+(b)+(c)+(d)$&$(2g)$\footnotemark[1]
+%  &$(4e)^{\text{a}}$\\
+%  He&$(8r)^{\text{a}}$&$(4j)^{\text{a}}$&$(4g)^{\text{a}}$\\
+%  Ag& &$(4k)^{\text{a}}$& &$(4h)^{\text{a}}$\\
+% \end{tabular}
+% \end{ruledtabular}
+% \end{table*}
+
+% Insert an image using either the \texttt{graphics} or
+% \texttt{graphix} packages, which define the \verb+\includegraphics{#1}+ command.
+% (The two packages differ in respect of the optional arguments 
+% used to specify the orientation, scaling, and translation of the image.) 
+% To create an alignment, use the \texttt{tabular} environment. 
+
+% The best place to locate the \texttt{figure} or \texttt{table} environment
+% is immediately following its first reference in text; this sample document
+% illustrates this practice for Fig.~\ref{fig:epsart}, which
+% shows a figure that is small enough to fit in a single column. 
+
+% In exceptional cases, you will need to move the float earlier in the document, as was done
+% with Table~\ref{tab:table3}: \LaTeX's float placement algorithms need to know
+% about a full-page-width float earlier. 
+
+% Fig.~\ref{fig:wide}
+% has content that is too wide for a single column,
+% so the \texttt{figure*} environment has been used.%
+% \begin{table}[b]
+% \caption{\label{tab:table4}%
+% Numbers in columns Three--Five are aligned with the ``d'' column specifier 
+% (requires the \texttt{dcolumn} package). 
+% Non-numeric entries (those entries without a ``.'') in a ``d'' column are aligned on the decimal point. 
+% Use the ``D'' specifier for more complex layouts. }
+% \begin{ruledtabular}
+% \begin{tabular}{ccddd}
+% One&Two&
+% \multicolumn{1}{c}{\textrm{Three}}&
+% \multicolumn{1}{c}{\textrm{Four}}&
+% \multicolumn{1}{c}{\textrm{Five}}\\
+% %\mbox{Three}&\mbox{Four}&\mbox{Five}\\
+% \hline
+% one&two&\mbox{three}&\mbox{four}&\mbox{five}\\
+% He&2& 2.77234 & 45672. & 0.69 \\
+% C\footnote{Some tables require footnotes.}
+%   &C\footnote{Some tables need more than one footnote.}
+%   & 12537.64 & 37.66345 & 86.37 \\
+% \end{tabular}
+% \end{ruledtabular}
+% \end{table}
+
+% The content of a table is typically a \texttt{tabular} environment, 
+% giving rows of type in aligned columns. 
+% Column entries separated by \verb+&+'s, and 
+% each row ends with \textbackslash\textbackslash. 
+% The required argument for the \texttt{tabular} environment
+% specifies how data are aligned in the columns. 
+% For instance, entries may be centered, left-justified, right-justified, aligned on a decimal
+% point. 
+% Extra column-spacing may be be specified as well, 
+% although REV\TeX~4 sets this spacing so that the columns fill the width of the
+% table. Horizontal rules are typeset using the \verb+\hline+
+% §command. The doubled (or Scotch) rules that appear at the top and
+% bottom of a table can be achieved enclosing the \texttt{tabular}
+% environment within a \texttt{ruledtabular} environment. Rows whose
+% columns span multiple columns can be typeset using the
+% \verb+\multicolumn{#1}{#2}{#3}+ command (for example, see the first
+% row of Table~\ref{tab:table3}).%
+
+% Tables~\ref{tab:table1}, \ref{tab:table3}, \ref{tab:table4}, and \ref{tab:table2}%
+% \begin{table}[b]
+% \caption{\label{tab:table2}
+% A table with numerous columns that still fits into a single column. 
+% Here, several entries share the same footnote. 
+% Inspect the \LaTeX\ input for this table to see exactly how it is done.}
+% \begin{ruledtabular}
+% \begin{tabular}{cccccccc}
+%  &$r_c$ (\AA)&$r_0$ (\AA)&$\kappa r_0$&
+%  &$r_c$ (\AA) &$r_0$ (\AA)&$\kappa r_0$\\
+% \hline
+% Cu& 0.800 & 14.10 & 2.550 &Sn\footnotemark[1]
+% & 0.680 & 1.870 & 3.700 \\
+% Ag& 0.990 & 15.90 & 2.710 &Pb\footnotemark[2]
+% & 0.450 & 1.930 & 3.760 \\
+% Au& 1.150 & 15.90 & 2.710 &Ca\footnotemark[3]
+% & 0.750 & 2.170 & 3.560 \\
+% Mg& 0.490 & 17.60 & 3.200 &Sr\footnotemark[4]
+% & 0.900 & 2.370 & 3.720 \\
+% Zn& 0.300 & 15.20 & 2.970 &Li\footnotemark[2]
+% & 0.380 & 1.730 & 2.830 \\
+% Cd& 0.530 & 17.10 & 3.160 &Na\footnotemark[5]
+% & 0.760 & 2.110 & 3.120 \\
+% Hg& 0.550 & 17.80 & 3.220 &K\footnotemark[5]
+% &  1.120 & 2.620 & 3.480 \\
+% Al& 0.230 & 15.80 & 3.240 &Rb\footnotemark[3]
+% & 1.330 & 2.800 & 3.590 \\
+% Ga& 0.310 & 16.70 & 3.330 &Cs\footnotemark[4]
+% & 1.420 & 3.030 & 3.740 \\
+% In& 0.460 & 18.40 & 3.500 &Ba\footnotemark[5]
+% & 0.960 & 2.460 & 3.780 \\
+% Tl& 0.480 & 18.90 & 3.550 & & & & \\
+% \end{tabular}
+% \end{ruledtabular}
+% \footnotetext[1]{Here's the first, from Ref.~\onlinecite{feyn54}.}
+% \footnotetext[2]{Here's the second.}
+% \footnotetext[3]{Here's the third.}
+% \footnotetext[4]{Here's the fourth.}
+% \footnotetext[5]{And etc.}
+% \end{table}
+% show various effects.
+% A table that fits in a single column employs the \texttt{table}
+% environment. 
+% Table~\ref{tab:table3} is a wide table, set with the \texttt{table*} environment. 
+% Long tables may need to break across pages. 
+% The most straightforward way to accomplish this is to specify
+% the \verb+[H]+ float placement on the \texttt{table} or
+% \texttt{table*} environment. 
+% However, the \LaTeXe\ package \texttt{longtable} allows headers and footers to be specified for each page of the table. 
+% A simple example of the use of \texttt{longtable} can be found
+% in the file \texttt{summary.tex} that is included with the REV\TeX~4
+% distribution.
+
+% There are two methods for setting footnotes within a table (these
+% footnotes will be displayed directly below the table rather than at
+% the bottom of the page or in the bibliography). The easiest
+% and preferred method is just to use the \verb+\footnote{#1}+
+% command. This will automatically enumerate the footnotes with
+% lowercase roman letters. However, it is sometimes necessary to have
+% multiple entries in the table share the same footnote. In this case,
+% there is no choice but to manually create the footnotes using
+% \verb+\footnotemark[#1]+ and \verb+\footnotetext[#1]{#2}+.
+% \texttt{\#1} is a numeric value. Each time the same value for
+% \texttt{\#1} is used, the same mark is produced in the table. The
+% \verb+\footnotetext[#1]{#2}+ commands are placed after the \texttt{tabular}
+% environment. Examine the \LaTeX\ source and output for
+% Tables~\ref{tab:table1} and \ref{tab:table2}
+% for examples.
+
+% Video~\ref{vid:PRSTPER.4.010101} 
+% illustrates several features new with REV\TeX4.2,
+% starting with the \texttt{video} environment, which is in the same category with
+% \texttt{figure} and \texttt{table}.%
+% \begin{video}
+% \href{http://prst-per.aps.org/multimedia/PRSTPER/v4/i1/e010101/e010101_vid1a.mpg}{\includegraphics{vid_1a}}%
+%  \quad
+% \href{http://prst-per.aps.org/multimedia/PRSTPER/v4/i1/e010101/e010101_vid1b.mpg}{\includegraphics{vid_1b}}
+%  \setfloatlink{http://link.aps.org/multimedia/PRSTPER/v4/i1/e010101}%
+%  \caption{\label{vid:PRSTPER.4.010101}%
+%   Students explain their initial idea about Newton's third law to a teaching assistant. 
+%   Clip (a): same force.
+%   Clip (b): move backwards.
+%  }%
+% \end{video}
+% The \verb+\setfloatlink+ command causes the title of the video to be a hyperlink to the
+% indicated URL; it may be used with any environment that takes the \verb+\caption+
+% command.
+% The \verb+\href+ command has the same significance as it does in the context of
+% the \texttt{hyperref} package: the second argument is a piece of text to be 
+% typeset in your document; the first is its hyperlink, a URL.
+
+% \textit{Physical Review} style requires that the initial citation of
+% figures or tables be in numerical order in text, so don't cite
+% Fig.~\ref{fig:wide} until Fig.~\ref{fig:epsart} has been cited.
+
+% \begin{acknowledgments}
+% We wish to acknowledge the support of the author community in using
+% REV\TeX{}, offering suggestions and encouragement, testing new versions,
+% \dots.
+% \end{acknowledgments}
+
+% \appendix
+
+% \section{Appendixes}
+
+% To start the appendixes, use the \verb+\appendix+ command.
+% This signals that all following section commands refer to appendixes
+% instead of regular sections. Therefore, the \verb+\appendix+ command
+% should be used only once---to setup the section commands to act as
+% appendixes. Thereafter normal section commands are used. The heading
+% for a section can be left empty. For example,
+% \begin{verbatim}
+% \appendix
+% \section{}
+% \end{verbatim}
+% will produce an appendix heading that says ``APPENDIX A'' and
+% \begin{verbatim}
+% \appendix
+% \section{Background}
+% \end{verbatim}
+% will produce an appendix heading that says ``APPENDIX A: BACKGROUND''
+% (note that the colon is set automatically).
+
+% If there is only one appendix, then the letter ``A'' should not
+% appear. This is suppressed by using the star version of the appendix
+% command (\verb+\appendix*+ in the place of \verb+\appendix+).
+
+% \section{A little more on appendixes}
+
+% Observe that this appendix was started by using
+% \begin{verbatim}
+% \section{A little more on appendixes}
+% \end{verbatim}
+
+% Note the equation number in an appendix:
+% \begin{equation}
+% E=mc^2.
+% \end{equation}
+
+% \subsection{\label{app:subsec}A subsection in an appendix}
+
+% You can use a subsection or subsubsection in an appendix. Note the
+% numbering: we are now in Appendix~\ref{app:subsec}.
+
+% Note the equation numbers in this appendix, produced with the
+% subequations environment:
+% \begin{subequations}
+% \begin{eqnarray}
+% E&=&mc, \label{appa}
+% \\
+% E&=&mc^2, \label{appb}
+% \\
+% E&\agt& mc^3. \label{appc}
+% \end{eqnarray}
+% \end{subequations}
+% They turn out to be Eqs.~(\ref{appa}), (\ref{appb}), and (\ref{appc}).
+
+% The \nocite command causes all entries in a bibliography to be printed out
+% whether or not they are actually referenced in the text. This is appropriate
+% for the sample file to show the different styles of references, but authors
+% most likely will not want to use it.
+\nocite{*}
+
+\bibliography{apssamp}% Produces the bibliography via BibTeX.
+
+\end{document}
+%
+% ****** End of file apssamp.tex ******

@@ -1,0 +1,1309 @@
+                                                           Muon-induced background in a next-generation
+                                                           dark matter experiment based on liquid xenon
+                                          Viktor Pěč1,3,† , Vitaly A. Kudryavtsev1 , Henrique M. Araújo2 , and Timothy J. Sumner2
+                                          1
+                                              Department of Physics and Astronomy, University of Sheffield, Sheffield, S3 7RH, UK
+                                                   2
+                                                     Department of Physics, Imperial College London, London, SW7 2AZ, UK
+                                              3
+                                                FZU – Institute of Physics of the Czech Academy of Sciences, Prague, 182 00, CZE
+
+                                                                                            October 26, 2023
+arXiv:2310.16586v1 [hep-ex] 25 Oct 2023
+
+
+
+
+                                                                                               Abstract
+                                                        Muon-induced neutrons can lead to potentially irreducible backgrounds in rare event
+                                                    search experiments. We have investigated the implication of laboratory depth on the muon-
+                                                    induced background in a future dark matter experiment capable of reaching the so-called
+                                                    neutrino floor. Our simulation study focused on a xenon-based detector with 70 tonnes of
+                                                    active mass, surrounded by additional veto systems plus a water shield. Two locations at the
+                                                    Boulby Underground Laboratory (UK) were analysed as examples: an experimental cavern
+                                                    in salt at a depth of 2850 m w. e. (similar to the location of the existing laboratory), and a
+                                                    deeper laboratory located in polyhalite rock at a depth of 3575 m w. e. Our results show that
+                                                    no cosmogenic background events are likely to survive standard analysis cuts for 10 years of
+                                                    operation at either location. The largest background component we identified comes from
+                                                    beta-delayed neutron emission from 17 N which is produced from 19 F in the fluoropolymer
+                                                    components of the experiment. Our results confirm that a dark matter search with sensi-
+                                                    tivity to the neutrino floor is viable (from the point of view of cosmogenic backgrounds)
+                                                    in underground laboratories at these levels of rock overburden. This work was conducted
+                                                    in 2019–21 in the context of a feasibility study to investigate the possibility of developing
+                                                    the Boulby Underground Laboratory to host a next-generation dark matter experiment;
+                                                    however, our findings are also relevant for other underground laboratories.
+
+
+                                          1        Introduction
+                                          One of the key factors influencing the choice of underground laboratory for a future, high-
+                                          sensitivity experiment for rare event searches is the depth (overburden) of the site. Events
+                                          triggered by cosmic-ray muons can be a background to dark matter and neutrinoless double-
+                                          beta decay (0νββ) searches, as well as to some low-energy neutrino experiments detecting signals
+                                          from nuclear reactors or astrophysical sources. As an example, isolated neutrons produced in
+                                          muon interactions or muon-induced cascades, if scattering only once in the detector, will mimic
+                                          nuclear recoils (NR) caused by Weakly Interacting Massive Particles (WIMPs). Most of the
+                                          (low-energy) events caused by electromagnetic interaction yielding electron recoils (ER) can
+                                          be removed by powerful discrimination techniques focusing on differences in ionization and
+                                          primary scintillation signals caused by electrons and recoiling nuclei. For neutrinoless double-
+                                          beta decay experiments, the muon-induced neutrons may produce a background via radiative
+                                              †
+                                                  corresponding author: viktor.pec@fzu.cz
+
+
+                                                                                                   1
+                 Muon flux [cm-2 s-1]
+                                                         CallioLab 400                             Overburden
+                                             −6
+                                        10                                                           Flat
+                                                                    LSC
+                                                                                                     Mountain
+                                                  CallioLab 660
+                                                                        Kamioka
+                                             −7          Soudan
+                                        10                               CallioLab 990
+                                                                                 LNGS
+                                                         Boulby 1100
+                                             −8                                   CallioLab 1390
+                                        10                   Boulby 1400
+                                                                                         LSM
+                                                                       SURF
+
+                                        10−9
+                                                                                                      CJPL
+                                                                                      SNOLAB
+                                        10−10
+                                                  0   1000   2000      3000   4000    5000    6000   7000    8000
+                                                                                         Vertical depth [m w.e.]
+
+Figure 1: Muon flux as a function of vertical depth in metres water equivalent (m w. e.) for
+laboratories around the world. Black markers represent measurements in laboratories with
+relatively flat surface profile and blue squares represent laboratories under mountains. The red
+curve is based on Monte Carlo simulations of muons propagating through flat overburden of
+‘standard rock’ [1] (⟨Z⟩ = 11, ⟨A⟩ = 22). The red open diamond represents the estimated flux
+at a deeper location at Boulby (1400 m, or 3575 m w. e.). The data points represent the following
+measurements: CallioLab (Pyhäsalmi, Finland) at various depths [2], LSC (Canfranc, Spain)
+[3] (depth taken from [4]), Soudan (MN, USA, no longer operational) [5], Kamioka (Japan) [6]
+(conversion from muon rate to flux based on MC simulations from [7]), Boulby at 1100 m level
+(2850 m w. e.) [8], LNGS (Gran Sasso, Italy) [9], SURF (Lead, USA) [10] (depth taken from
+[11]), LSM (Modane, France) [12], SNOLab (Sudbury, Canada) [13], CJPL (Jingping, China)
+[14]. Reported errors of the measurements are too small to be visible in the plot.1
+
+
+capture processes or inelastic scattering. Activation of detector components mainly by hadrons
+(including neutrons) in muon-induced cascades can add to the background, in particular if this
+activation results in subsequent decays on time scales of a few seconds or more. In this case,
+tagging a background event via the detection of the muon may significantly increase the dead
+time of the experiment, making such tagging inefficient.
+    The muon flux drops rapidly with depth, and a minimum depth requirement is one of the
+main factors that affect the choice of an underground site for an experiment with a specific
+designed sensitivity. Figure 1 shows the muon fluxes as measured in different underground
+laboratories as a function of vertical depth in meters water equivalent (m w. e.), together with a
+calculated depth–intensity curve for standard rock (⟨Z⟩ = 11, ⟨A⟩ = 22). The deviation of some
+of the data points from the calculated curve are mainly due to a) the complex surface profile at
+some locations, and b) different elemental composition of rock above the laboratory.
+    Several underground laboratories have muon fluxes similar to that measured at the existing
+Boulby facility at 1100 m, and a number of deeper sites achieve fluxes up to two orders of
+   1
+    There is an additional uncertainty of about 12 − 20% in the convention used for the flux reporting. The MC
+prediction is for the flux through a spherical detector and so are some measurements (Boulby, LNGS, SURF, etc).
+Some other experiments reported the flux through a horizontal surface. In some references it was not clear what
+convention was used. The difference between the two fluxes decreases with depth and is about 15% at 3 km w. e.
+
+
+                                                                                  2
+magnitude lower. Our study probed whether the depth such as at the Boulby site was sufficient to
+enable a dark matter search reaching the neutrino floor – requiring a peak cross-section sensitivity
+for spin-independent WIMP-nucleon scattering approaching ∼10−49 cm2 . Although other rare
+event searches were considered, our simulation work focused on a liquid xenon experiment with
+70 tonnes of active mass (a 10-fold upscale of LUX-ZEPLIN (LZ) [15]), as this has been the
+leading technology in the field.
+    Neutrons are produced by muons underground by five main processes:
+
+  1. Negative muon capture, dominating at shallow sites with a large fraction of stopping
+     muons;
+
+  2. Direct muon-induced nucleus spallation;
+
+  3. Hadroproduction (including neutron multiplication via neutron inelastic scattering) that
+     originates primarily in the hadronic cascades caused by muon inelastic scattering (also
+     called muon nuclear interaction);
+
+  4. Photoproduction that takes place primarily in electromagnetic cascades generated by
+     muons via bremsstrahlung, e+ e− -pair production and δ-electron emission processes;
+
+  5. Delayed neutrons due to activation of light isotopes by hadrons, followed by a beta decay
+     accompanied by neutron emission; this process can be attributed to hadroproduction but
+     deserves separate consideration due to a non-negligible time delay between the muon and
+     the neutron.
+
+    Neutron production by muons depends on the muon energy and on the composition of the
+material that the muons pass through. Cosmic-ray muons have a broad energy spectrum at
+any underground site (see, for instance, Ref. [1] for calculated spectra at different depths) and
+the mean muon energy is a convenient parameter to characterise the spectrum at a particular
+depth. It has been shown previously (see, for instance, Refs. [16, 17, 18, 19, 20] and references
+therein) that the neutron yield is approximately proportional to Eµ0.7−0.8 , where the mean muon
+energy Eµ can replace the muon spectrum at a particular site. Given the complexity of physics
+processes involved in neutron production, this dependence on muon energy is approximate and
+works only for high-energy muons (above 10 GeV) where negative muon capture can be neglected
+on a scale of a few metres (typical detector size).
+    The dependence of the neutron yield on material composition reflects the contribution of
+various mechanisms to neutron production. This has been studied in a variety of papers (see,
+for instance, Refs. [16, 17, 18, 19, 20] and references therein) and a proportionality of A0.75−0.80
+has been observed, where A is the mean atomic weight of a material. This is only a trend
+and, to calculate neutron production accurately, a detailed simulation including an approximate
+detector geometry and its surroundings needs to be carried out. Note that the contribution of
+different processes to neutron production changes with increasing A, since the probability of
+electromagnetic cascade production per atom rises approximately as Z(Z + 1)/A, whereas that
+for a hadronic cascade slightly decreases as A−0.2 .
+    A number of experiments measured muon-induced neutron production rate underground in
+different targets. Examples include measurements carried out at the Boulby Underground Lab-
+oratory (for lead) [21, 8], LNGS (for scintillator and steel) [22, 23] and Kamioka (for scintillator)
+[24]. Based on the difference between the measured and simulated rates of neutrons reported
+in Ref. [8], the authors concluded that the overall uncertainty in neutron production rate was
+about 25%. Similar conclusions were reported in several other publications.
+
+
+
+                                                 3
+    The variety of neutron production mechanisms and their dependence on muon energy and
+material composition, adding to the complex geometry of the setup that includes the detec-
+tor, shielding, veto systems and the cavern geometry, require full Monte Carlo modelling of all
+particles produced in muon-induced cascades. These simulations should account for the real-
+istic correlations between neutron multiplicities, energies and angles of neutron emission with
+respect to the parent muon, and correlations with other particles able to deposit energy in the
+various detector systems. These correlations are exploited in various techniques of background
+suppression by tagging the primary muon or muon-induced cascade.
+    Below, we describe a set of simulations carried out to characterise cosmogenic backgrounds
+in a next-generation experiment with a large liquid xenon target. We made use of the Geant4
+simulation toolkit [25, 26, 27]. Section 2 presents tests of neutron production as simulated in
+Geant4 version 10.5 and comparisons with previous simulations and data. Section 3 includes
+the description of the simplified xenon detector geometry and the simulation procedure. Results
+are reported in Section 3.4. We considered, as examples, two possible locations at Boulby: a
+site near the existing laboratory in the NaCl layer and a potential site, deeper by 300 m, in a
+polyhalite layer. We draw some generic conclusions in Section 4.
+    This work was conducted in 2019-2021 as part of the STFC-funded project on the feasibility of
+Boulby Underground Laboratory to host a future dark matter experiment, however, its findings
+are also relevant for other underground laboratories. Preliminary results have been reported
+in [28].
+
+
+2    Neutron production in Geant4
+We began by conducting a comparison of neutron production rates against previous simula-
+tions and data in order to validate key physics processes implemented in Geant4. In the
+current modelling of muon events, we have used the version 10.5 of the toolkit (using its data li-
+braries nominal for the toolkit version, i.e. G4NDL4.5 for neutron-related physics below 20 MeV,
+G4PhotonEvaporation-5.3, G4RadioactiveDecay-5.3, etc.) with the ‘Shielding’ physics list, a
+common choice in simulations for low-background experiments.
+    Muons of specified kinetic energies were propagated through a box made from various ref-
+erence materials with square front face with 2000 g/cm2 lateral dimension and 4000 g/cm2 in
+length. The muon propagation started at the centre of the front face and the initial momentum
+pointed along the long axis of the box. Produced neutrons were counted and special care was
+taken not to double-count neutrons after inelastic scattering, for which Geant4 terminates the
+track of the initial neutron and treats all the final-state ones as new particles.2 In order to allow
+the neutron production to reach equilibrium, neutrons were counted only between 1000 g/cm2
+and 3000 g/cm2 along the long axis. Figure 2 shows how the yield stabilizes within the first
+few 100 g/cm2 of various materials. Yield variations along the muon track are due to the small-
+number statistics of large cascades, each containing many neutrons. These variations contribute
+substantially to the uncertainty of neutron yield calculations.
+    Based on our simulations with Geant4 version 10.5, the largest contributor to the neutron
+production in heavier materials is the neutron inelastic scattering off a nucleus while for lighter
+materials, this process has contribution similar to the nuclear photo-production and pion inelastic
+scattering. Figure 3a compares neutron yields for individual processes in different materials for
+280 GeV muons. Surprisingly, the larger number of electromagnetic cascades, expected to be
+produced in lead as compared to the lighter materials, does not result in an enhanced production
+   2
+     In our counting of produced neutrons, we discarded the first daughter neutron as created by Geant4 in the
+inelastic scattering process.
+
+
+
+                                                      4
+   Neutron yield [n /µ /(g/cm2)]       ×10−3                                                                                      ×10−3
+
+
+
+
+                                                                                              Neutron yield [n /µ /(g/cm2)]
+                                                       µ − @ 280 GeV                                                                              µ − @ 1000 GeV
+                                   3                                                                                          3
+                                               CnH2n    H2O       Mg   NaCl                                                               CnH2n    H2O       Mg    NaCl
+                                               Mn       Fe        Cu   Pb×0.6
+
+                                   2                                                                                          2
+
+
+
+
+                                   1                                                                                          1
+
+
+
+                                   0                                                                                          0
+                                       −2000   −1000          0        1000       2000                                            −2000   −1000          0         1000       2000
+                                                                       Distance [g/cm2]                                                                            Distance [g/cm2]
+
+
+                                                        (a)                                                                                        (b)
+
+Figure 2: Neutron production rate along the muon initial direction. 100 000 negatively charged
+muons were propagated through various materials using Geant4 version 10.5. Production rates
+are shown separately for muon initial kinetic energies 280 GeV (a) and 1000 GeV (b). The muon
+starting point was at −2000 g/cm2 . Note that the neutron yield in lead was scaled down by a
+factor of 2 in (a).
+
+
+of neutrons from gammas in version 10.5. We compared these results with simulations with
+Geant4 version 9.5, shown in Figure 3b. There is marked reduction in the gamma-induced
+production in version 10.5 which cannot be explained by the small difference (20 GeV) in initial
+muon energies. Energy spectra of neutrons from individual processes for lead are shown in
+Fig. 4. It can be seen that the significant reduction in neutron yield from photon interactions
+in version 10.5 is responsible for the change in the spectrum at a few MeV. We can conclude
+that the smaller neutron yield from gammas in version 10.5 is responsible for the reduction in
+the total neutron yield when compared to version 9.5. The exact reason for this change is not
+clear and further investigation goes beyond the scope of the current work.
+    Final energy spectrum of neutrons in three different materials is shown in Fig. 5a. The
+neutron production in lead is enhanced compared to the lighter materials but this enhancement
+is substantial mainly at lower neutron energies (below about 50 MeV), whereas the difference
+in spectral shapes and the absolute neutron yields becomes less significant for larger neutron
+energies, as had already been reported in Ref. [20]. The spectrum in polyethylene (Cn H2n ) is
+compared with the results of simulations with Geant4 version 8.2 presented in Ref. [20] and the
+new version gives about 1.5 greater total yield. Figure 5b compares spectra in lead as simulated
+in Geant4 versions 10.5 and 9.5. The changes in neutron production between the two versions
+of the toolkit were discussed in the previous paragraph.
+    We also studied the dependence of neutron yield on the type of material and on the muon
+energy for our nominal Geant4 version 10.5. Figure 6 shows the dependence of the total neutron
+yield on the atomic weight for several materials (Fig. 6a) and the yield dependence on the initial
+muon energy in polyethylene (Cn H2n ) (Fig. 6b). The results are compared to the simulations
+reported in Ref. [20] where various simulation software packages were used. Comparison between
+the Geant4 version 10.5 and previous versions shows continuous development of the neutron
+production models resulting in a noticeable change in neutron yield across multiple materials
+and muon energies. For the yield dependence on muon energy, Fig. 6b, we included data points
+from available measurements in a scintillator with a chemical formula similar to Cn H2n [29, 30,
+31, 32, 33, 22, 24, 23]. A good agreement is seen between data and our simulations for muon
+
+
+                                                                                          5
+                                          −3                                                                                                                   −3
+                                   ×10                                                                                                                  ×10
+      Yn [n / µ /(g/cm2)]
+
+
+
+
+                                                                                                                           Yn [n / µ /(g/cm2)]
+                                                         Geant4 v10.5, 280 GeV                                                                    2.0                         Lead
+                             1.5
+                                                              Lead                                                                                                                 G4 v9.5 (260 GeV)
+                                                              Salt ×3                                                                             1.5                              G4 v10.5 (280 GeV)
+
+                             1.0                              Water ×6
+                                                              CnH2n ×6
+                                                                                                                                                  1.0
+
+
+                             0.5
+                                                                                                                                                  0.5
+
+
+
+                             0.0                                                                                                                  0.0
+                                                                             π - cap
+
+
+
+
+                                                                                                                                                                                                    π - cap
+                                                                                           other
+
+
+
+
+                                                                                                                                                                                                                  other
+                                        n+N
+
+                                               γ +N
+
+                                                      π +N
+
+                                                             p+N
+
+                                                                    µ +N
+
+
+
+
+                                                                                                                                                             n+N
+
+                                                                                                                                                                    γ +N
+
+                                                                                                                                                                           π +N
+
+                                                                                                                                                                                  µ +N
+
+                                                                                                                                                                                           p+N
+                                                             (a)                                                                                                                  (b)
+
+Figure 3: Neutron yield by production process. (a) Contribution of various processes to neutron
+production for 280 GeV muons in different materials as simulated in Geant4 version 10.5. Note
+that the yields of lighter materials are scaled up in order to be visible. (b) Results of simulations
+of 260 GeV and 280 GeV muons in lead with Geant4 versions 9.5 and 10.5, respectively. The
+dominant processes are: neutron inelastic (n+N ), photo-nuclear (γ +N ), pion inelastic (π +N ),
+muon nuclear (µ + N ), proton inelastic (p + N ), and nuclear capture of π − at rest (π − cap).
+  Yn [n /MeV/ µ /(g/cm2)
+
+
+
+
+                                                                                                                       Yn [n /MeV/ µ /(g/cm2)
+
+
+
+
+                             −3                                          G4 v10.5, lead, 280 GeV                                                  −3                                             G4 v9.5, lead, 260 GeV
+                           10                                                                                                                   10
+                                                                                  n+N               γ +N                                                                                                 n+N               γ +N
+                             −4                                                                                                                   −4
+                           10                                                                                                                   10
+                                                                                  π +N              p+N                                                                                                  π +N              p+N
+                           10− 5                                                  µ +N              π - cap                                     10− 5                                                    µ +N              π - cap
+                             −6                                                   other                                                           −6                                                     other
+                           10                                                                                                                   10
+                             −7
+                           10                                                                                                                   10− 7
+
+                           10− 8                                                                                                                10− 8
+
+                           10− 9                                                                                                                10− 9
+
+                                10− 1                                                                                                                10− 1
+                                                                                       3                       5                                                                                              3                       5
+                                               1        10         102         10                  104        10                                                    1        10          102          10                  104        10
+                                                                          Neutron energy [MeV]                                                                                                   Neutron energy [MeV]
+
+                                                             (a)                                                                                                                  (b)
+
+Figure 4: Energy spectra of neutrons produced in lead from different production processes.
+Production spectra (a) from 280 GeV muons were simulated with Geant4 version 10.5 and (b)
+from 260 GeV muons were simulated with version 9.5. The dominant processes are described in
+the caption of Fig. 3.
+
+
+energy close to 280 GeV, equivalent to the mean cosmic-ray muon energy at the depths relevant
+to this work.
+    We summarize neutron yields in polyethylene (or scintillator of similar composition) and lead
+as simulated with different versions of Geant4 in Tab. 1. We also add measurements of yields. It
+can be seen that the simulated yields in polyethylene agreed among each other within 35% in the
+older software and that it has approached the measured yield which varied only within 10%. We
+
+
+                                                                                                                   6
+                         10−2                                                                   10−2
+ Yn [n /MeV/µ/(g/cm2)]
+
+
+
+
+                                                                       Yn [n /MeV/µ /(g/cm2)]
+                           −3
+                         10                                                                     10
+                                                                                                  −3
+
+
+
+
+                           −5
+                         10                                                                     10
+                                                                                                  −5
+                                280 GeV
+                                   Ref. [20], v8.2
+                         10−7      Cn H2n                                                       10−7
+                                   This work, v10.5
+                           −9      CnH2n
+                         10                                                                     10
+                                                                                                  −9
+                                                                                                       Lead
+                                   NaCl
+                                                                                                              v9.5, 260 GeV
+                                   Lead
+                                                                                                          v10.5, 280 GeV
+                     10−11 −1                                3                            10−11 −1
+                        10          1       10        102   10   104                                                                    3
+                                                                                             10                1      10         102   10   104
+                                              Neutron energy [MeV]                                                      Neutron energy [MeV]
+
+                                              (a)                                                                          (b)
+
+Figure 5: Energy spectrum of muon-induced neutrons. (a) Simulations with Geant4 version
+10.5 of 280 GeV muons in Cn H2n , NaCl, and lead are compared, together with Geant4 version
+8.2 simulations in Cn H2n from Ref. [20]. The peak visible at 420 keV for the Cn H2n sample is
+from the π − capture at rest on hydrogen, π − + p → n + π 0 . (b) Simulations of 260 GeV muons
+in lead with Geant4 version 9.5 are compared to simulations of 280 GeV muons with version
+10.5 of the toolkit.
+
+
+need to note here that Refs. [22, 23, 24] evaluated neutron yield for the whole spectrum of muon
+energies corresponding to the depths in question, while we studied neutron yield for fixed muon
+energy. Simulated yield in lead varied more substantially. Two experimental data sets, [21, 8], for
+depths relevant to this work, give significantly different neutron yields even when interpreted with
+the same Geant4 version. Also, data from [21] (1.31 × 10−3 n/µ/(g/cm2 )) were reinterpreted
+with newer version of Geant4 [8] with a different result (3.40 × 10−3 n/µ/(g/cm2 )).
+    We note that the interpretation of data in terms of neutron yield is complicated and is de-
+pendent on full Monte Carlo simulations of the experimental setup, including muon propagation,
+development of cascades, neutron production and detection (via thermal neutron capture). In
+the measurements mentioned in the previous paragraph, it was assumed that the discrepancy
+between measurements and simulations was solely due to the modelling of muon induced neu-
+tron production. It is clear that continuous development and improvements in Geant4 affect
+many models, not just those which affect neutron production, and it will affect the interpre-
+tation of measurements of neutron production yields. The direct comparison between previous
+measurements and current simulations is not straightforward. However, re-analysis of previous
+measurements informed by the newer version of Geant4 is beyond the scope of this work.
+    In conclusion, there seems to be better agreement for lighter elements than for lead where
+the measured neutron yields quoted in Tab. 1 differ by a factor of up to 2.5 from our nominal
+simulations. Our geometry contains mainly light elements and heavy targets like lead are un-
+likely to make up a significant fraction of future experiment’s construction materials (with the
+exception of xenon itself, but the neutron production in xenon can be easily tagged). We can
+use a factor of 2 as a conservative estimate of the systematic uncertainty in cosmogenic neutron
+production in our simulations described in the next section.
+
+
+                                                                       7
+                                                                         Yn [n / µ /(g/cm2)]
+Yn [n / µ /(g/cm2)]
+
+                                                                                                       CnH2n
+                      −2                                                                       −3        This work
+                  10                                                                       10            FLUKA 2008
+                             CnH2n
+
+
+
+
+                                     NaCl
+
+
+
+
+                                                                 Pb
+                                                                                                         GEANT4 v6.2
+                                                                                                         GEANT4 v8.2
+
+                                                                                                         Exp. data
+
+
+
+
+                  10− 3                                                                    10− 4
+                                                      280 GeV
+                                                   This work
+                                                   FLUKA-1999
+                                                   FLUKA-2008
+
+                                                   GEANT4 v6.2
+                                                   GEANT4 v8.2
+                                                                                               −5
+                  10− 4                                                                    10
+                            10                      10 2
+                                                                                                    10                  102             103
+                                                                 〈A〉                                                                E µ [GeV]
+
+                                       (a)                                                                              (b)
+
+Figure 6: Neutron yields as functions of the mean atomic weight ⟨A⟩ of the target material
+(for 280 GeV muons) (a) and of the initial muon energy (b) (for polyethylene). In (a), current
+simulations with Geant4 version 10.5 are compared with Fluka and Geant4 simulations
+from Ref. [20]. In (b), our simulations are compared to previous simulations from Refs. [20, 19].
+Measurements of neutron yields from cosmic muons in organic scintillator at various depths are
+included as black up-triangles for older measurements in Refs. [29, 30, 31, 32, 33] and as blue
+down-triangles for more recent and more accurate measurements at similar depths in Refs. [22,
+24, 23].
+
+Table 1: Neutron yields in simulations with different versions of Geant4 (and one instance of
+Fluka simulation) for Cn H2n (or scintillator of similar composition) and lead for similar muon
+energies. The simulated neutron yield is shown in the third column. The ratio of the referenced
+simulations to our work is in column four. Neutron yields from data interpretation, where
+available, are included in column five. Column six includes the ratio of data and simulations
+from the referenced work.
+
+                       G4 version            Eµ            Yield                   Ratio to our                  Interpreted data      Data/Sims.
+                                                       [n/µ/(g/cm2 )]                 work                        [n/µ/(g/cm2 )]
+ Scintillator/Cn H2n
+             8.2[20]                         280           2.00 × 10−4                          0.65                      -                     -
+ Fluka 2006.3b[24]                           260           2.34 × 10−4                          0.76                 2.80 × 10−4              1.19
+             9.3[23]                         280           2.17 × 10−4                          0.70                 2.90 × 10−4              1.34
+             9.6[22]                         283           3.01 × 10−4                          0.97                 3.10 × 10−4              1.03
+ Our work 10.5                               280           3.10 × 10−4                            -                       -                     -
+ Lead
+           8.2[21]                                         2.37 × 10−3                          0.72                 1.31 × 10−3              0.55
+           9.5[8]                                          4.59 × 10−3                          1.40                 5.78 × 10−3              1.26
+                                             260
+           9.5[21]/[8]                                     4.59 × 10−3                          1.40                 3.40 × 10−3              0.74
+ Our work 10.5                                             3.27 × 10−3                            -                       -                     -
+
+
+
+
+                                                                         8
+    A comparison of neutron capture rate in muon events has also been reported in [34]. An
+agreement within 40% has been found between data and simulations using Fluka and Geant4
+for all isotopes, supporting our conservative approach for systematic uncertainty.
+    One aspect of neutron production worth mentioning is the delayed neutron emission after
+activation of materials by muon-induced showers. This process has previously been observed
+in scintillators [24, 22, 35] and is also included in the physics of Geant4, but has not been
+commonly discussed in the context of dark matter experiments. In addition to the scintillator,
+there are other materials used in detector components which are susceptible to emit delayed
+neutrons, in particular polytetrafluoroethylene (PTFE) used as reflective material which contains
+fluorine. Our simulation with Geant4 predicts cosmogenic production of 17 N from 19 F. The
+17 N radioisotope undergoes β-decay with a half-life of 4.2 s to the metastable state 17∗ O, which
+
+then promptly decays to 16 O emitting the neutron. We determined the neutron yield in PTFE
+from 280 GeV muons to be 0.65 × 10−3 n/µ/(g/cm2 ), of which 0.66% comes from the delayed
+emission mechanism. We have summarised our calculated neutron yields in various materials in
+Table 2.
+Table 2: Neutron yields in various materials for an initial muon energy of 280 GeV as simulated
+with Geant4 version 10.5. The stated errors represent statistical uncertainty estimated by
+dividing the simulated dataset into smaller samples and it is driven by variations in neutron
+production along the muon path due to large cascades (which is also reflected in Fig. 2).
+
+                Material        Neutron yield           Material      Neutron yield
+                             [×10−3 n/µ/(g/cm2 )]                  [×10−3 n/µ/(g/cm2 )]
+                Cn H2n            0.31±0.01             Mg              0.49±0.02
+                H2 O              0.37±0.01             Ti              1.39±0.06
+                polyhalite        0.46±0.02             Mn              1.46±0.04
+                PTFE              0.65±0.03             Fe              1.31±0.05
+                NaCl              0.81±0.03             Cu              1.30±0.05
+                                                        Pb              3.27±0.13
+
+
+
+
+3     Muon background in a next-generation liquid xenon experi-
+      ment
+We carried out simulations to determine the rate of potential background events caused by
+cosmic-ray muons in a next generation dark matter experiment operating at a depth of around
+3 km w. e. The main detector is a dual-phase xenon time projection chamber (hereafter LXe-
+TPC) containing 70 tonnes of active liquid xenon (LXe), corresponding to a ∼10-fold upscale of
+the existing experiments LZ [36] and XENONnT [37]. Our main case study is the existing site
+at the Boulby Underground Laboratory (UK) at a depth of 2850 m w. e., with a muon flux of
+3.75 × 10−8 cm−2 s−1 [8] (this flux is very similar to that at the LNGS in Italy). A potential,
+deeper location was also investigated at a depth of 3575 m w. e. with an estimated muon flux of
+1.13 × 10−8 cm−2 s−1 .
+
+3.1   Simplified geometry model
+A simplified experimental hall and detector geometry model was used in simulations and is
+shown in Fig. 7. The main elements of the experiment were a vacuum cryostat approximately
+4 m in diameter and 5 m in height containing the xenon detector, an anti-coincidence veto system
+
+
+                                                    9
+surrounding the main detector, all located within a water tank with 12 m in diameter for shielding
+of local radioactivity backgrounds. The model was based loosely on the LZ and XENONnT
+designs [36, 37] and scaled to larger mass to meet the required sensitivity: a tenfold improvement
+over that of the current generation of liquid xenon experiments. The main ingredients to the
+design of the simulation were as follows:
+
+   • The rock material around the cavern was included as this allowed starting the propagation
+     of cosmic muons from within the rock. This ensured that production of high-energy cas-
+     cades and fast neutrons in the rock that can propagate down to the shielding, veto system
+     and the detector itself, was taken into account.
+
+   • All materials with significant mass which were expected to play a role in the particle
+     production and propagation in and around the active part of the detector were included.
+
+   • The expected structure of the detection elements and the shielding was modelled to a
+     certain level of detail (e.g. a water tank used to attenuate any external neutrons and
+     gammas, a layer of liquid scintillator which is envisioned as an optional additional external
+     veto system).
+
+   • A realistic layout of the space in the experimental cavern was considered: significant space
+     is required above the water tank and the water tank is expected to be offset from the
+     centre of the cavern in order to make efficient use of space for ancillary subsystems during
+     installation and operation.
+
+
+                                        PMT
+                                        Assembly                             GXe Dome
+
+
+                                            PTFE                             TPC
+
+
+                                     Inner/Outer
+                                     Cryostat
+                                                                             Reversed Field
+                                     Vessel
+                                                                             Region
+
+
+
+
+                 (a)                                           (b)
+
+Figure 7: Visualisations of the simplified geometry model used in the simulations. (a) Cross-
+sectional view of full cylindrical cavern (gray) surrounded by rock material (dark red). The
+water tank (cyan) containing the detector is off-set from the cavern centre. The detector is
+enveloped with a layer of scintillator (green). (b) Labeled cross-sectional view of the detector
+cryostat.
+
+    A visualisation of the full geometry model can be seen in Fig. 7a. The model included a
+cylindrical cavern (diameter and height of 30 m) surrounded by rock. The detector was placed
+at the bottom of the cavern and offset from the centre by ∼4 m. It consisted of a cylindrical
+cryostat containing the TPC and was surrounded by 50 cm of liquid scintillator and placed
+within a water tank (WT) (12 m diameter × 11 m height). The water and the scintillator served
+as both shielding against external radiation and as active veto outside the TPC.
+
+
+                                               10
+    The total shielding thickness was informed by previous experience with the LUX and LZ
+experiments. The neutron flux from radioactivity in the rock can be efficiently attenuated by
+1 m of water for a multi-tonne (>10 tonne) dark matter experiment. LZ simulations [38, 39]
+showed that 3 m of water+scintillator shield are sufficient to attenuate γ-rays from rock to a
+level where this background can be neglected compared to other sources. To account for the
+higher sensitivity of the future experiment and, in particular, to decrease the background for a
+0νββ search with 136 Xe, we increased this thickness to 4 m on all sides except below the detector.
+The water+scintillator thickness there was reduced to 2 m and an additional 30 cm layer of steel
+was placed beneath the water tank, providing the same total areal density of shielding. This
+reduction in height below the heavy cryostat and the scintillator containers will ease the design
+of the support structures.
+    The detector cryostat was approximated as a cylinder with an overall diameter of 3.9 m and a
+height of 4.9 m. The cryostat was made of two titanium vessels 2 cm thick with 5 cm of evacuated
+space in between. The inner cryostat vessel was filled with LXe up to the top of the TPC, topped
+by gaseous xenon (GXe). The active volume of the LXe-TPC (3.5 m diameter × 2.5 m height,
+between a cathode at the bottom and a gate grid just below the liquid surface; neither of which
+were included in the model) was enclosed by a 3 cm thick PTFE ‘field cage’. (Note that the
+thickness of PTFE in the field cage will eventually be determined by the structural analysis
+of the TPC and the outgassing rate, and the current value translating to about 2.8 tonnes of
+PTFE is unlikely to be adopted in a realistic design.) The active volume would be readout by
+two arrays of photomultiplier tubes (PMTs) located at the bottom and top of the field cage, in
+the liquid and gaseous phases, respectively. The arrays were modelled as two uniform volumes of
+steel with reduced density of 0.4 g/cm3 , or about 5% of the standard density of steel, simulating
+metal components of the structure of the arrays and matching its mass. Other materials which
+often appear in such structures were neglected. In addition to the drift volume there was a
+separate volume of Reversed Field Region (RFR) at the bottom of the TPC. A thin layer (8 cm)
+of LXe (‘LXe skin’) was kept between the TPC and the cryostat walls. This layer would be
+used as an additional anti-coincidence system based on detection of scintillation light, similar to
+the LZ design. A closeup of the cross section of the modelled cryostat can be seen in Fig. 7b.
+Dimensions of the main features of the geometry used in the simulations are summarized in
+Table 3. We note that this is not the proposed design of the next-generation experiment, but a
+simplified setup for the presented study.
+    To study the dependence of the results on the rock composition and the size of the cavern, sev-
+eral sets of simulations were carried out. The rock around the lab in the nominal simulations was
+made of either salt (NaCl, for the existing Boulby lab site) or polyhalite (K2 Ca2 Mg(SO4 )4 ·2H2 O),
+as appropriate for a deeper site at 1400 m (3575 m w. e.). In addition to the nominal cavern model
+specified above, an alternative geometry was simulated which included a smaller, cubic cavern
+with a side of 19 m. Two samples of limited statistics with rock made of NaCl and CaCO3 were
+simulated for this alternative geometry. No noticeable differences were found in the nuclear
+recoil (NR) spectra in the main LXe target between the different simulations. The background
+estimations reported here are results of analysis of the simulations with the nominal geometry
+and with salt and polyhalite as the rock materials.
+
+3.2   Simulation of cosmic-ray muons underground
+Distributions of primary energies and directions of cosmic-ray muons were calculated using the
+MUSIC and MUSUN codes [40, 1] (Ref. [1] describes the procedure and muon transport through
+rock down to the experimental site). Muons were sampled on the top and side surfaces of a 40 m
+cube that surrounded the cavern such that they needed to travel through at least 7 m of rock at
+
+
+                                                 11
+Table 3: Summary of the elements in the simulated geometry model. The elements are ordered
+hierarchically from the inner most to the all-including rock volume. Most of the elements were
+modeled as cylindrical and their diameter (D) and height (H) are listed. Where appropriate,
+thickness of a layer of the material is listed. For the rock volume, width of its bottom sides and
+the height are included in the D and H columns. The total amount of LXe contained in the
+geometry model was 108 tonnes (ρXe = 2.953 g/cm3 ), with 70 tonnes in the TPC, 5.7 tonnes in
+the RFR, 31 tonnes in the skin (including 22.5 tonnes in the bottom part of the cryostat). We
+note that this is not the proposed design of the next-generation experiment, but a simplified
+setup for the presented study.
+
+ Volume                D [m]    H [m]            Thickness   Comments
+ Cylindrical
+  LXe-TPC                3.5     2.5
+  field cage (PTFE)                                   3 cm
+  RFR                    3.5     0.2
+  PMT array              3.5     0.4                         on top and at bottom of TPC
+  LXe skin                                     8 cm/70 cm    side/bottom
+  GXe                    3.72    0.93                        starts level with top PTFE
+  Cryo Inner             3.72    4.76                2 cm    inner D and H
+  Cryo Vacuum                                        5 cm
+  Cryo Outer            3.9      4.94                2 cm    outer D and H
+  GdLS                  4.9      5.94               50 cm
+  Water                11.9     10.94   3.5 m/3.5 m/1.5 m    side/top/bottom
+  Steel Shield          6.9      0.3                30 cm    centred below WT
+  Hall                 30       30                           TPC off-set by 4.05 m from centre
+ Box
+  Rock                 40       40           5 m/7 m/3 m     min. amount of rock around the cavern,
+                                                             side/top/bottom
+
+
+the top of the cavern and through at least 5 m of rock on the sides. Production of high-energy
+cascades and fast neutrons in the rock that could propagate into the cavern was expected to
+reach equilibrium with their absorption within that distance.
+    The rate of simulated muons was 0.8759 s−1 for the existing Boulby site within salt at
+2850 m w. e. vertical overburden. The mean muon energy and zenith angle were calculated as
+261 GeV and 30.6°, respectively. The surface profile was assumed to be flat in these simulations
+(in reality, variations in elevation up to 30 m exist on the surface over areas of a few km2 ) but the
+normalisation of the muon flux was done based on the measurements and the overall uncertainty
+is dominated by that from neutron production (see Section 2). For the proposed deeper site in
+polyhalite at 3575 m w. e. vertical overburden, the same muon distributions were used, but the
+equivalent sampling rate was recalculated to be 0.2625 s−1 .
+    Muon transport through the modelled experimental site was done using the Geant4 version
+10.5 simulation toolkit. Physical processes were modelled according to the toolkit’s modular
+physics list Shielding. We have compared this version with other simulations and measurements
+as described in Section 2.
+    In total, 800 million muons were simulated for each rock material, salt and polyhalite. These
+numbers correspond to approximately 29 years and 97 years of live time of the experiment, re-
+spectively, accounting for the larger depth of the site in polyhalite.
+
+
+
+
+                                                 12
+3.3   Analysis of simulated data
+The expected WIMP signature in a typical dark matter experiment, and in a xenon-based
+experiment in particular, consists of a single scatter event at low energy, usually ≲50 keV, in
+anti-coincidence with other detectors (veto systems), which is classified as a nuclear recoil using
+specific discrimination techniques. Here we assumed a nuclear recoil energy threshold of 1 keV.
+For a proper analysis and interpretation of the results (limit setting, at the moment), usually
+the profile likelihood ratio technique is used for signal (and background) estimation, utilising
+probability density functions constructed from detailed signal models plus signal-free ancillary
+data. In this work we adopted instead a simple background counting technique with the potential
+(irreducible) background satisfying the signal conditions described above.
+    We analysed the simulation output in the following way. The detector response (i.e. the
+digitised PMT waveforms resulting from the prompt and delayed scintillation signals from each
+energy deposition in the active volume) was considered only in terms of the characteristic times
+over which signals were collected and the equivalent energy thresholds in the respective active
+volumes – LXe-TPC, LXe skin, liquid scintillator, water tank. Energy depositions by ionising
+particles in the LXe-TPC were summed over 1 ms to accumulate interactions within the TPC
+over the realistic readout time similar to the maximum electron drift time. This is equivalent
+to the collection of all prompt and delayed signals within a single readout. (Note that potential
+background events stored in this way have later been generated again and analysed with a
+much better time resolution to remove multiple scatters.) We distinguished the depositions
+by their origin as xenon nuclear recoils, muon ionisation, electromagnetic activity, and others.
+The simulations and analysis procedure allowed reprocessing of selected events to follow closely
+individual interactions within the time window of 1 ms. Energy depositions in the skin, liquid
+scintillator and water tank were summed over 1 µs, irrespective of their origin. This time window
+is close to the realistic time window from existing experiments for anti-coincidences between
+prompt signals from different systems to remove background events. We chose thresholds of
+100 keV, 200 keV and 200 MeV in the skin, liquid scintillator and water tank, respectively, to
+trigger veto signals. Summed depositions in the LXe-TPC were then tested for anti-coincidence
+with the veto signals by requiring no veto signal to be present within 0.5 ms before or after any
+TPC signal. This time window was chosen to tag the delayed signals from neutron capture. The
+depositions in the LXe-TPC by nuclear recoils were required to be larger than 1 keV while all
+the other depositions were required to be below 10 keV. These requirements gave us pre-selected
+candidates for the background events. The threshold energies and the anti-coincidence window
+are summarised in the upper part of Table 4.
+    To be considered as a background to a WIMP search, events in the LXe-TPC were restricted
+to have only single nuclear recoils above 1 keV, no other energy deposition above 10 keV (this is a
+conservative cut since these depositions would be easily detected and the event rejected), and no
+other nuclear recoils of energy above 0.5 keV (this would be identified as a multi-scatter nuclear
+recoil event and rejected). Since nuclear recoils from neutron scattering (neutrons originated
+from outside the TPC) tend to occur near the periphery, fiducialization helps significantly to
+remove a large fraction of the background events, and we required the nuclear recoils to happen
+further than 5 cm from the boundary of the active volume (yielding fiducial mass of 64 t). These
+applied cuts are summarised in the lower part of Table 4. In summary, events that passed the
+initial cuts (discussed in the previous paragraph and summarised in the upper part of Table 4),
+were re-processed and examined closely and they were considered as background events if they
+passed the cuts from the lower part of Table 4.
+    A geometry model without the presence of the liquid scintillator veto system was also investi-
+gated in order to determine whether this additional detector was needed to suppress backgrounds
+
+
+                                                13
+Table 4: Summary of criteria used to select background events. The top part of the table lists
+criteria used to filter down events based on energy and timing. The bottom part lists conditions
+applied to the events at the single-recoil level. Energy thresholds are listed for depositions in
+individual parts of the detector system, the TPC, the LXe skin, liquid scintillator (LS), and water
+tank (WT). Depositions in the TPC were treated separately for Xe nuclear recoils (NR), and
+all other sources (non-NR). An anti-coincidence time window was applied between depositions
+in the TPC and the other 3 volumes.
+
+                              TPC (NR)    TPC (non-NR)       Skin         LS       WT
+           Threshold
+                                 1 keV         10 keV      100 keV      200 keV   200 MeV
+           Anti-coincidence   ±0.5 ms
+           Fiducial volume       5 cm from LXe boundary
+           Single recoil       >1 keV (no other depositions > 10 keV)
+           No other recoil    >0.5 keV
+
+
+from cosmogenic neutrons. The same simulated data were used and the absence of the scintilla-
+tor was emulated by treating both volumes, scintillator and water, as a single volume of ‘water’
+with the corresponding energy threshold.
+
+3.4   Results
+Simulations of the cosmic-ray muons show that, in the case of the shallower location in NaCl,
+about 380 muons per day pass through the active TPC region while there’s about 4900 muons
+per day passing through the water tank. For the deeper location in polyhalite the numbers are
+115 muons per day and 1500 muons per day, respectively.
+    These muons generated neutrons that may cause unwanted backgrounds, as discussed above.
+Spectra of total energy depositions from nuclear recoils in the active volume of the TPC are
+shown in Fig. 8a (for the standard 2850 m w. e. overburden with NaCl rock). The figure shows
+depositions in events without any selection requirements (most events also contained other energy
+depositions which were not included in the plotted energies) and in events where there were no
+depositions in the TPC other than from the recoils. The vertical black lines indicate 5 events with
+only nuclear recoils and without any coincident signals in the skin, liquid scintillator, or water
+volumes, i.e. these are events passing the first part of the selection as described in Section 3.3
+(also Table 4, upper part; no multiple scatter or fiducial volume cuts applied yet). The sharp
+rise in the number of events at about 10 keV for the histogram labeled ‘All events’ is due to the
+nuclear recoils from muon Coulomb scattering where Geant4 ‘produces’ a recoiling nucleus only
+above a certain energy threshold. This feature is not visible in the other spectra since events
+where muons had deposited energy inside the TPC were rejected. Figure 8b shows the spectra
+of events in the LXe skin (top), liquid scintillator (middle) and water (bottom) in coincidence
+with events in the TPC which have nuclear recoils only.
+    Figure 9 shows the spectra of total energy depositions summed over all deposition types in
+the TPC for the simulation in the polyhalite rock. Distributions for all events and for events with
+only nuclear recoils are compared. Histograms for events after the veto cuts are also included.
+Almost all events below 50 keV are coming from NRs before the veto cut is applied and all events
+below 100 keV are NRs after the veto cut. Hence, considering only NR depositions in further
+analysis is justified.
+    Simulations for the two different types of rock for the two cavern sizes are compared in
+Fig. 10a and Fig. 10b, respectively. Material composition definitely affects the neutron produc-
+tion (see Fig. 5a). However, we expect only the high-energy neutrons produced in the rock to
+
+                                                14
+   Number of events
+
+
+
+
+                                                                                                         Number of events
+                                                                                   All events
+                      105                                                                                                   103                                            Skin
+                                                                                   NR only
+                      104                                                          NR only
+                                                                                   AND Veto
+                      103                                                                                                                                                  LS
+                                                                                                                            103
+                      102                                                                                                                                 Deposited energy [MeV]
+
+                       10
+                                                                                                                                                                             6
+                        1                                                                                                   103                                             10
+                                                                                                                                                                            WT
+                                                                                                                                                          Deposited energy [MeV]
+
+                      10−1
+                        10−3   10−2   10−1         1                   10    102       103      104
+                                        Total NR deposited energy [MeV]
+                                                                                                                                                                           106
+                                                                                                                                                          Deposited energy [MeV]
+
+                                             (a)                                                                                                    (b)
+
+Figure 8: (a) Energy spectrum of energy depositions from nuclear recoils (NR) inside the TPC
+from the simulation with NaCl as the rock material. The solid histogram represents all simulated
+events in the sample with depositions from NR. The dashed histogram shows all events where
+energy depositions other than from NR were below the imposed threshold. Short vertical lines
+mark energies of 5 single events which also passed veto in the skin, scintillator, and water
+tank. Note the histograms are binned in logarithmic scale with 10 bins per decade in energy.
+(b) Energy spectra in the veto detectors: skin, liquid scintillator, and water tank. Events in
+coincidence with NR-only depositions in the TPC are included. Depositions above threshold are
+highlighted with the coloured area.
+                                              Number of events
+
+
+
+
+                                                                            All events
+                                                                 105        NR only
+                                                                            All deps + veto
+                                                                 104        NR + veto
+
+                                                                 103
+
+                                                                 102
+
+                                                                  10
+
+                                                                   1
+
+                                                                 10−1
+                                                                   10−3     10−2     10−1       1         10                      102   103   104
+                                                                                                All deposited energy [MeV]
+
+
+Figure 9: Energy depositions inside the TPC for simulations with polyhalite as the surrounding
+rock material. The distribution from all events with NR depositions is compared to the distri-
+bution from events with only NR. Added are also the same distributions but only for events
+passing the veto. Note the histograms are binned in logarithmic scale with 10 bins per decade
+in energy.
+
+
+reach the TPC. For these, the rock composition is not critical. This is confirmed by the similar
+shape in the distributions of energy depositions and absolute rate of events with only nuclear
+recoils in the TPC for the two rock compositions (after appropriate scaling to the same simulated
+exposure), demonstrated in Fig. 10a.
+
+
+                                                                                                    15
+    Naïvely, the size of the cavern should not affect the neutron background for uniform and
+isotropic neutron emission. However, fast neutron emission (and we are concerned primarily
+with high-energy neutrons) is anisotropic [16] and simple considerations from diffusion theory
+may not apply. Moreover, neutron back-scattering at the cavern walls [41], which is important
+mostly for thermal and low-energy neutrons, may change the neutron distribution for caverns of
+different sizes. No noticeable difference in spectral shapes or absolute numbers were found for
+the nuclear recoil spectra for all events and for events with nuclear recoils only (after appropriate
+scaling to the same simulated exposure, see Fig. 10b).
+   Number of events
+
+
+
+
+                                                                                         Number of events
+                                                     NR only        All events                                                           NR only      All events
+                      105                              NaCl           NaCl                                  105                            Smaller      Smaller
+                                                       Polyhalite     Polyhalite                                                           Nominal      Nominal
+                      104                                                                                   104
+
+                      103                                                                                   103
+
+                      102                                                                                   102
+
+                      10                                                                                    10
+
+                        1                                                                                     1
+
+                            −3
+                       10        10−2   10−1    1      10     102     10 3
+                                                                              104                             10−3   10−2   10−1    1     10    102     103    104
+                                          Total NR deposited energy [MeV]                                                     Total NR deposited energy [MeV]
+
+                                               (a)                                                                                 (b)
+
+Figure 10: Spectra of energy depositions from nuclear recoils (NR) inside the TPC for the
+two types of rock (NaCl and polyhalite) and two cavern sizes. The red and orange histograms
+represent all simulated events in the sample that contain energy depositions from nuclear recoils.
+The blue and green histograms show all events where energy depositions other than from nuclear
+recoils were below the imposed threshold. (a) Results of simulation with NaCl (solid line) and
+polyhalite (dashed line) as the rock material. (b) Results of simulation with the nominal (dashed
+line) and reduced (solid line) cavern sizes with NaCl chosen as the rock material. The sample
+with the smaller geometry was scaled up to the same equivalent exposure as for the nominal
+geometry.
+
+    It was found that only a very small number of produced neutrons reach the TPC volume
+without having any correlated signal in the veto systems (LXe skin, liquid scintillator or water
+tank). A small fraction of those originated directly in the primary muon interactions with the
+surrounding rock or with parts of the detector, and they produce signals in the active TPC
+volume within about 1 ms after the initial muon. A larger fraction of neutrons come from the
+activation of 17 N from 19 F within the PTFE-made field cage. The activation process is similar
+to the production of 9 Li and 8 He in scintillators as reported by the KamLAND [24], Borexino
+[22] and Daya Bay [35] collaborations. In our case, the neutron emission from 9 Li and 8 He in
+the scintillator is easily tagged by the detection of the electron from the beta decay. Also, the
+scintillator is further away from the TPC than the PTFE field cage and the lifetimes of 9 Li
+and 8 He are less than one second, making rejection of these events easier by requiring a delayed
+anti-coincidence with a muon. Neutrons from 17 N decays (4.2 s lifetime) produce signals with a
+significant delay after the direct activity induced by the primary muon, and therefore they avoid
+any efficient veto from the observed muon. The simulation produces about 40 (1.3) delayed
+neutrons per 1 t of PTFE per 10 years at the location in NaCl (in polyhalite). The simulation
+considered approximately 3.3 t of PTFE in the field cage around the active region of the TPC.
+
+                                                                                    16
+Smaller amounts of the material may help in reducing the background rate from this process.
+    The resulting numbers of selected neutron events are summarised in Table 5. After the full
+selection process described in the previous subsection (including multiple-scatter and fiducial-
+volume cut as in Table 4, lower part), no events passed in the sample with NaCl as the material
+of the surrounding rock. A single event passed the selection in the sample with polyhalite. In the
+case where no liquid scintillator is used as an additional veto system, no events were observed
+for the site in salt, and a total of 2 events were observed for the site in polyhalite. The table
+includes the estimated confidence intervals for event rates, based on the statistical uncertainties
+only. The estimated rates in both cases are well below the expected physics background (from
+atmospheric neutrinos and two-neutrino double-beta decay) of a few tens of events in 10 years
+extrapolated from the estimates in Table 6 of Ref. [36].
+
+Table 5: Results of MC simulations for the two considered locations. The column ‘Preselection’
+includes all events with nuclear recoils only (for the exposure time given in the 2nd column)
+before removing multi-scatter events and those which are outside of the fiducial volume. The
+column ‘Observed events’ includes only single scatters in the fiducial volume. The upper part
+of the table refers to the analysis with the liquid scintillator veto. The lower part refers to the
+no-liquid-scintillator case. Unified confidence intervals, as suggested in [42], are given for the
+number of background events in 10 years at 90% CL and include only statistical uncertainty;
+systematic uncertainties in the muon flux and in the neutron production yield were not included
+in this table.
+
+                               Equivalent      Preselection   Observed         Rate
+   Depth/Material            exposure [year]                   events     [per 10 years]   90% CL
+                                                 With liquid scintillator veto
+   2850 m w. e./NaCl               29              5             0                          <0.84
+   3575 m w. e./polyhalite         97              10            1               0.10      0.01–0.45
+                                               Without liquid scintillator veto
+   2850 m w. e./NaCl               29              27            0                          <0.84
+   3575 m w. e./polyhalite         97              38            2               0.21      0.05–0.61
+
+     Conservative systematic uncertainties due to neutron production are about a factor of 2.
+Uncertainties linked to the muon flux are about 10% for the existing site where the flux has been
+measured (but may still be slightly different depending on the exact location of the laboratory)
+and about 20% for a deeper site where the flux has been calculated based on the geophysical
+model of the Boulby mine but the exact location is not determined. We calculated the mean
+muon energies to be 259 GeV and 282 GeV for the 2850 m w. e. and 3575 m w. e. sites, respectively.
+Our simulations did not take this difference in the muon spectra into account and there is a small
+increase in the neutron production yield of (6–7)% associated with such increase in the mean
+muon energy. This change is small compared with the other systematic uncertainties mentioned.
+     A simplified visualisation of example events is shown in Fig. 11. The one event which passed
+all the selection criteria, including the LS veto, for the sample in polyhalite is shown in Fig. 11a.
+The observed nuclear recoils are located at the boundary of the fiducial volume and are caused by
+a delayed neutron from the 17 N activation in PTFE. The activation in a muon-induced hadronic
+shower was a result of π − absorption on 19 F. The small coincident depositions in the veto systems
+never crossed the required threshold. No other delayed activity was recorded within the TPC.
+The event passing our selection for the case with no LS veto is shown in Fig. 11b. The single
+nuclear recoil is at the boundary of the fiducial volume. The coincident energy deposition in
+the LS volume caused it to be rejected in the scenario with the LS veto, however, the 2.7 MeV
+
+                                                  17
+deposition was insufficient to trigger a WT veto. Similarly to the former event, the recoil was
+caused by a delayed neutron from the activation in the PTFE. The activation was due to a
+neutron from a muon-induced hadronic shower within the PTFE. An example event which was
+rejected due to the veto from the WT is shown in Fig. 11c. The nuclear recoils within the
+detector were initiated by a neutron originating from a muon-induced hadronic shower in the
+polyhalite rock. Figure 11d shows an example of an event which was rejected due to the presence
+of multiple nuclear recoils within the TPC.
+                                      Polyhalite            > 1 keV                               Polyhalite            > 1 keV
+                                      TPC bounds            (0.5-1) keV                           TPC bounds            (0.5-1) keV
+                                      5 cm bounds           < 0.5 keV                             5 cm bounds           < 0.5 keV
+                  Z [m]
+
+
+
+
+                                                                              Z [m]
+                                   Eµ = 129 GeV      N recoils:                                 Eµ = 439 GeV      N recoils:
+                           2                                                            2
+                                   2.36 s since µ     > 1 keV: 1                                9.72 s since µ     > 1 keV: 1
+                          1.5                         (0.5-1) keV: 0                  1.5                          (0.5-1) keV: 0
+                                                      < 0.5 keV: 1                                                 < 0.5 keV: 0
+                            1                        Depositions in TPC                 1                         Depositions in TPC
+                                                     Xe:    2.12 keV                                              Xe:    26.8 keV
+                          0.5                                                         0.5
+                                                     Depositions in veto                                          Depositions in veto
+                           0                         Skin :      66 eV                  0                         Skin :    2.5 keV
+                                                     LS :       34 keV                                            LS :     2.7 MeV
+                     −0.5                            LS+WS : 34 keV               −0.5                            WS :       68 keV
+                                                                                                                  LS+WS : 2.7 MeV
+                          −1                                                           −1
+
+                               0    0.5    1 1.5      2   2.5    3     3.5               0       0.5   1 1.5      2    2.5   3      3.5
+                                                                     R [m]                                                        R [m]
+
+                                                    (a)                                                          (b)
+                                     Polyhalite            > 1 keV                                 Polyhalite            > 1 keV
+                                     TPC bounds            (0.5-1) keV                             TPC bounds            (0.5-1) keV
+                                     5 cm bounds           < 0.5 keV                               5 cm bounds           < 0.5 keV
+                 Z [m]
+
+
+
+
+                                                                               Z [m]
+
+
+
+
+                                   Eµ = 7.5 TeV      N recoils:                                 Eµ = 3.8 TeV      N recoils:
+                           2                                                            2
+                                   161 ns since µ     > 1 keV: 1                                866 ms since µ     > 1 keV: 15
+                         1.5                          (0.5-1) keV: 0                   1.5                         (0.5-1) keV: 3
+                                                      < 0.5 keV: 1                                                 < 0.5 keV: 5
+                           1                         Depositions in TPC                  1                        Depositions in TPC
+                                                     Xe:    15.3 keV                                              Xe:      33 keV
+                         0.5                                                           0.5
+                                                     Depositions in veto                                          Depositions in veto
+                           0                         WS :       8 GeV                   0                         Skin :     70 keV
+                                                     LS+WS :    8 GeV
+                    −0.5                                                          −0.5
+                          −1                                                           −1
+
+                            0       0.5   1 1.5      2    2.5   3      3.5                  0    0.5    1 1.5      2   2.5    3     3.5
+                                                                     R [m]                                                        R [m]
+
+                                                    (c)                                                          (d)
+
+Figure 11: Visualisations of individual nuclear recoils in some events of interest. Two events
+passing all signal selection criteria for simulations in polyhalite and within the scenario of no
+LS veto present are shown in (a) and (b). The first event, (a), also passed the selection criteria
+within the scenario where the LS veto was considered. The event shown in (c) was rejected
+based on the large coincident deposition in the WS and event (d) was rejected based on the
+presence of multiple nuclear recoils above the assumed energy threshold of 0.5 keV. Locations of
+individual recoils of Xe nuclei withing the active volume of the TPC are indicated in coloured
+markers. The vertical coordinate Z and radius R from the TPC’s vertical axis are used. The
+colours indicate whether the recoil deposited energy of more than 1 keV (red), between 0.5 keV
+and 1 keV (light blue), or below 0.5 keV (blue). Each event visualisation includes additional
+information: initial energy of the simulated muon Eµ , time of the energy depositions since
+the generation of the primary muon, number of recoils within the ranges of energy depositions
+described above, amounts of energy deposited by the nuclear recoils in the TPC (Xe), and
+amounts of energy deposited in the veto systems (LXe skin, liquid scintillator and water tank)
+if non-zero.
+
+
+
+
+                                                                             18
+4      Conclusions
+The goal of the work presented here was to investigate the implication of laboratory depth
+on the muon-induced background in a future dark matter, xenon-based experiment capable of
+reaching the so-called neutrino floor. As a case study, we considered two locations at the Boulby
+Underground Laboratory (UK): an experimental cavern in salt at a depth of 2850 m w. e., and
+a deeper laboratory located in polyhalite rock at a depth of 3575 m w. e. These depths are
+similar to other underground laboratories around the world, and our conclusions apply to those
+with straightforward scaling for the actual muon flux. We have carried out detailed simulations
+of cosmogenic background in a simplified experimental geometry with the Geant4 simulation
+toolkit.
+    We have tested muon-induced neutron production in Geant4 version 10.5 and compared
+the results to previous versions and available measurements. This allowed us to evaluate a
+conservative systematic uncertainty of our simulations to be about a factor of 2.
+    We have performed simulations for an experiment similar in configuration to an scaled-
+up LZ detector. The detector model contained ∼100 tonnes of LXe with 70 tonnes of active
+mass, surrounded by a LXe ‘skin’ and an additional veto system. We conclude that, after
+applying a standard simplified analysis procedure and cuts, the event rate caused by cosmogenic
+activity stays below 1 event per 10 years in the fiducial volume of the LXe-TPC (64 tonnes).
+This rate is well below the expected background of tens of events from ERs/NRs from physics
+backgrounds such as two-neutrino double beta decay of 136 Xe and solar/atmospheric neutrinos
+with ER events leaking into NR band due to limited discrimination. From the point of view of
+cosmogenic background, a depth of about 3 km w. e. or deeper is sufficient for a next-generation
+dark matter experiment based on liquid xenon. The observed residual background of NR events
+comes from the production and delayed β − n decay of 17 N in PTFE (on fluorine) where only
+neutron scattering is detected. Our material budget contained about 2.8 t of PTFE. Although
+the residual background is very low, the design of a future experiment may need to limit PTFE
+usage to the necessary minimum.
+    We have also investigated two veto system configurations: a default one with instrumented
+liquid scintillator surrounding the cryostat, and an option without the scintillator. No significant
+difference was observed between the two scenarios, which lead us to conclude that the additional
+veto system is not required to suppress cosmogenic backgrounds for the goal sensitivity at the
+studied depth. This conclusion, however, does not apply to other types of backgrounds where
+liquid scintillator is particularly efficient in tagging neutron events from detector components.
+
+
+Acknowledgements
+We acknowledge funding from the UKRI Science & Technology Facilities Council under the 2019
+Opportunities Call to conduct this study (ST/T002786/1, ST/T002107/1).
+   For the purpose of open access, the authors have applied a Creative Commons Attribution
+(CC BY 4.0) licence to any Author Accepted Manuscript version arising from this submission.
+
+
+References
+ [1]   V. A. Kudryavtsev. “Muon simulation codes MUSIC and MUSUN for underground physics”.
+       In: Comput. Phys. Commun. 180 (2009), pp. 339–346. doi: 10.1016/j.cpc.2008.10.013.
+
+
+
+
+                                                19
+ [2]   T. Enqvist et al. “Measurements of muon flux in the Pyhäsalmi underground laboratory”.
+       In: Nucl. Instrum. and Meth. in Phys. Res. A 554.1 (2005), pp. 286–290. issn: 0168-
+       9002. doi: https : / / doi . org / 10 . 1016 / j . nima . 2005 . 08 . 065. url: https : / / www .
+       sciencedirect.com/science/article/pii/S0168900205016761.
+ [3]   W. H. Trzaska et al. “Cosmic-ray muon flux at Canfranc Underground Laboratory”. In:
+       Eur. Phys. J. C 79.8 (2019), p. 721. issn: 1434-6052. doi: 10.1140/epjc/s10052-019-
+       7239-9. url: https://doi.org/10.1140/epjc/s10052-019-7239-9.
+ [4]   J. Morales et al. “THE CANFRANC UNDERGROUND LABORATORY. PRESENT
+       AND FUTURE”. In: The Identification of Dark Matter. Proceedings of the Fifth Inter-
+       national Workshop, Edinburgh, UK, 6–10 September 2004. 2005, pp. 447–452. doi: 10.
+       1142/9789812701848_0067. url: https://doi.org/10.1142/9789812701848_0067.
+ [5]   C. Zhang and D.-M. Mei. “Measuring muon-induced neutrons with liquid scintillation
+       detector at Soudan mine”. In: Phys. Rev. D 90 (12 2014), p. 122003. doi: 10 . 1103 /
+       PhysRevD.90.122003. url: https://link.aps.org/doi/10.1103/PhysRevD.90.122003.
+ [6]   Y. Zhang et al. “First measurement of radioactive isotope production through cosmic-ray
+       muon spallation in Super-Kamiokande IV”. In: Phys. Rev. D 93 (1 2016), p. 012004. doi:
+       10.1103/PhysRevD.93.012004. url: https://link.aps.org/doi/10.1103/PhysRevD.
+       93.012004.
+ [7]   A. Tang et al. “Muon simulations for Super-Kamiokande, KamLAND, and CHOOZ”. In:
+       Phys. Rev. D 74 (5 2006), p. 053007. doi: 10.1103/PhysRevD.74.053007. url: https:
+       //link.aps.org/doi/10.1103/PhysRevD.74.053007.
+ [8]   L. Reichhart et al. “Measurement and simulation of the muon-induced neutron yield in
+       lead”. In: Astropart. Phys. 47 (2013), pp. 67–76. doi: 10.1016/j.astropartphys.2013.
+       06.002.
+ [9]   M. Agostini et al. “Modulations of the cosmic muon signal in ten years of Borexino data”.
+       In: J. Cosmol. Astropart. Phys. 2019.02 (2019), pp. 046–046. doi: 10.1088/1475-7516/
+       2019/02/046. url: https://doi.org/10.1088/1475-7516/2019/02/046.
+[10]   N. Abgrall et al. “Muon flux measurements at the Davis campus of the Sanford Under-
+       ground Research Facility with the Majorana demonstrator veto system”. In: Astropart.
+       Phys. 93 (2017), pp. 70–75. issn: 0927-6505. doi: https : / / doi . org / 10 . 1016 / j .
+       astropartphys . 2017 . 01 . 013. url: https : / / www . sciencedirect . com / science /
+       article/pii/S0927650517300038.
+[11]   M. L. Cherry et al. “Multiple muons in the Homestake underground detector”. In: Phys.
+       Rev. D 27 (7 1983), pp. 1444–1447. doi: 10 . 1103 / PhysRevD . 27 . 1444. url: https :
+       //link.aps.org/doi/10.1103/PhysRevD.27.1444.
+[12]   C. Berger et al. “Experimental study of muon bundles observed in the Fréjus detector”.
+       In: Phys. Rev. D 40 (7 1989), pp. 2163–2171. doi: 10.1103/PhysRevD.40.2163. url:
+       https://link.aps.org/doi/10.1103/PhysRevD.40.2163.
+[13]   B. Aharmim et al. “Measurement of the cosmic ray and neutrino-induced muon flux at the
+       Sudbury Neutrino Observatory”. In: Phys. Rev. D 80 (1 2009), p. 012001. doi: 10.1103/
+       PhysRevD.80.012001. url: https://link.aps.org/doi/10.1103/PhysRevD.80.012001.
+[14]   Z.-Y. Guo et al. “Muon flux measurement at China Jinping Underground Laboratory”. In:
+       Chin. Phys. C 45.2 (2021), p. 025001. doi: 10.1088/1674- 1137/abccae. url: https:
+       //doi.org/10.1088/1674-1137/abccae.
+[15]   B. J. Mount et al. “ LUX-ZEPLIN (LZ) technical design report”. In: arXiv:1703.09144
+       (2017). doi: 10.48550/arXiv.1703.09144.
+
+                                                   20
+[16]   Y.-F. Wang et al. “Predicting neutron production from cosmic-ray muons”. In: Phys. Rev.
+       D 64 (2001), p. 013012. doi: 10.1103/PhysRevD.64.013012.
+[17]   V. A. Kudryavtsev et al. “Simulations of muon induced neutron flux at large depths under-
+       ground”. In: Nucl. Instrum. and Meth. A 505 (2003), pp. 688–698. doi: 10.1016/S0168-
+       9002(03)00983-5.
+[18]   D.-M. Mei and A. Hime. “Muon-induced background study for underground laboratories”.
+       In: Phys. Rev. D 73 (2006), p. 053004. doi: 10.1103/PhysRevD.73.053004.
+[19]   H. M. Araújo et al. “Muon-induced neutron production and detection with GEANT4 and
+       FLUKA”. In: Nucl. Instrum. and Meth. A 545 (2005), pp. 399–411. doi: 10.1016/j.nima.
+       2005.02.004.
+[20]   A. Lindote et al. “Simulation of neutrons produced by high-energy muons underground”. In:
+       Astropart. Phys. 31 (2009), pp. 366–375. doi: 10.1016/j.astropartphys.2009.03.008.
+[21]   H. M. Araújo et al. “Measurements of neutrons produced by high-energy muons at the
+       Boulby Underground Laboratory”. In: Astropart. Phys. 29 (2008), pp. 471–481. doi: 10.
+       1016/j.astropartphys.2008.05.004.
+[22]   G. Bellini et al. “Cosmogenic backgrounds in Borexino at 3800 m water-equivalent depth”.
+       In: J. Cosmol. Astropart. Phys. 08 (2013), p. 049. doi: 10.1088/1475-7516/2013/08/049.
+[23]   R. Persiani et al. “Measurement of the muon-induced neutron yield in liquid scintillator
+       and stainless steel at LNGS with the LVD experiment”. In: AIP Conf. Proc. 1549 (2013),
+       p. 235. doi: 10.1063/1.4818116.
+[24]   S. Abe et al. “Production of radioactive isotopes through cosmic muon spallation in Kam-
+       LAND”. In: Phys. Rev. C 81 (2010), p. 025807. doi: 10.1103/PhysRevC.81.025807.
+[25]   S. Agostinelli et al. “GEANT4—a simulation toolkit”. In: Nucl. Instrum. and Meth. in
+       Phys. Res. A 506 (2003), pp. 250–303. doi: 10.1016/S0168-9002(03)01368-8.
+[26]   J. Allison et al. “Geant4 developments and applications”. In: IEEE Trans. Nucl. Sci. 53
+       (2006), p. 270. doi: 10.1109/TNS.2006.869826.
+[27]   J. Allison et al. “Recent developments in GEANT4”. In: Nucl. Instrum. and Meth. A 835
+       (2016), pp. 186–225. doi: 10.1016/j.nima.2016.06.125.
+[28]   V. Pěč and V. A. Kudryavtsev. “Muon-induced background in a next-generation dark
+       matter experiment based on liquid xenon”. In: AIP Conf. Proc. 2908.1 (2023), p. 090001.
+       doi: 10.1063/5.0161829. arXiv: 2211.07262 [hep-ex].
+[29]   F. Boehm et al. “Neutron production by cosmic-ray muons at shallow depth”. In: Phys.
+       Rev. D 62.9 (2000), p. 092005. doi: 10.1103/physrevd.62.092005.
+[30]   R. Hertenberger, M. Chen, and B. L. Dougherty. “Muon-induced neutron and pion pro-
+       duction in an organic liquid scintillator at a shallow depth”. In: Phys. Rev. C 52.6 (1995),
+       pp. 3449–3459. doi: 10.1103/physrevc.52.3449.
+[31]   L. B. Bezrukov et al. “Investigation of depth intensity curve of nuclear events induced by
+       muons”. In: Yad. Fiz. 17 (1973). Also in Proc. 13th ICRC 3, 1947–1952 (1973), pp. 98–103.
+[32]   R. Enikeev et al. “Hadrons generated by cosmic-ray muons underground”. In: Sov. J. Nucl.
+       Phys. 46.5 (1987), pp. 883–889.
+[33]   M. Aglietta et al. “Neutron flux generated by cosmic-ray mouns at 5200 hg/cm2 s.r. under-
+       ground. Depth-neutron intensity curve”. In: Il Nuovo Cimento C 12.4 (1989), pp. 467–477.
+       doi: 10.1007/bf02525079.
+
+
+                                                21
+[34]   J. B. Albert et al. “Cosmogenic Backgrounds to 0νββ in EXO-200”. In: JCAP 04 (2016),
+       p. 029. doi: 10.1088/1475-7516/2016/04/029. arXiv: 1512.06835 [nucl-ex].
+[35]   F. P. An et al. “Cosmogenic neutron production at Daya Bay”. In: Phys. Rev. D 97.5
+       (2018), p. 052009. doi: 10.1103/PhysRevD.97.052009. arXiv: 1711.00588 [hep-ex].
+[36]   D. S. Akerib et al. “The LUX-ZEPLIN (LZ) Experiment”. In: Nucl. Instrum. Meth. A 953
+       (2020), p. 163047. doi: 10.1016/j.nima.2019.163047. arXiv: 1910.09124 [physics.ins-det].
+[37]   E. Aprile et al. “Projected WIMP sensitivity of the XENONnT dark matter experiment”.
+       In: J. Cosmol. Astropart. Phys. 11 (2020), p. 031. doi: 10.1088/1475-7516/2020/11/031.
+[38]   D. S. Akerib et al. “Projected WIMP sensitivity of the LUX-ZEPLIN dark matter exper-
+       iment”. In: Phys. Rev. D 101 (2020), p. 052002. doi: 10.1103/PhysRevD.101.052002.
+[39]   D. S. Akerib et al. “Simulations of Events for the LUX-ZEPLIN (LZ) Dark Matter Ex-
+       periment”. In: Astropart. Phys. 125 (2021), p. 102480. doi: 10.1016/j.astropartphys.
+       2020.102480.
+[40]   P. Antonioli et al. “A Three-dimensional code for muon propagation through the rock:
+       MUSIC”. In: Astropart. Phys. 7 (1997), pp. 357–368. doi: 10 . 1016 / S0927 - 6505(97 )
+       00035-2. arXiv: hep-ph/9705408.
+[41]   M. J. Carson et al. “Neutron background in large scale xenon detectors for dark matter
+       searches”. In: Astropart. Phys. 21 (2004), pp. 667–687. doi: 10.1016/j.astropartphys.
+       2004.05.001. arXiv: hep-ex/0404042.
+[42]   G. J. Feldman and R. D. Cousins. “Unified approach to the classical statistical analysis of
+       small signals”. In: Phys. Rev. D 57 (Apr. 1998), pp. 3873–3889. doi: 10.1103/PhysRevD.
+       57.3873. arXiv: physics/9711021 [physics.data-an].
+
+
+
+
+                                                22
+

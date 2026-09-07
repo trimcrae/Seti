@@ -151,3 +151,9 @@ Recorded so the next session does not rediscover them:
   spectra, midden, herdsman, herdsman_b, compass, galactic, iso, panspermia,
   lhs1140_origin. `alerts.py` only reads the Rubin channels, so none of these
   is covered by the staleness heartbeat.
+
+## Outside the technosignature programme
+
+| Channel | Question | Data | CLI | Workflow | Doc | Results → current verdict |
+|---|---|---|---|---|---|---|
+| **LZEDGE** (`lzedge`) | The LZ 248 keV nuclear-recoil candidate (arXiv:2609.02823) read as a measurement of the fastest local dark matter: joint likelihood of the event's energy *and date* over (m_χ, δ) for sharp / soft / power-law tails, the published Gaia escape speeds integrated over their uncertainties, and an LMC-boosted tail; reachability calendar; cross-experiment seasonal exposure | The record fetched by `lzlit.yml` (paper text, follow-ups, HEPData tables); no archive query — pure computation | `python -m seti.lzedge.run --stage {kinematics,scan,tails,posterior,vesc,figures,numbers,all}` (or `seti lzedge -- …`) | `lzlit.yml` (record fetch) | `lzedge.md` | **Pending**: built and offline-tested 2026-09-07; `results/lzlit/` fetch in progress; `results/lzedge/` not yet committed |

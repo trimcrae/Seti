@@ -350,3 +350,22 @@ def test_sideband_expectation_is_small_for_an_edge_model_and_large_for_an_unboun
     low = EventModel(shm(238.0, 544.0), 1000.0, 200.0, eff)
     r_low = timing_bayes_factor(low, live, "2023-06-16", 7.0)["mean_rate_livetime"]
     assert sideband_expectation(low, live, 350.0, 680.0, 0.96, 7.0) / r_low < sb / r_win
+
+
+def test_lmc_boosted_gaussian_with_cut_matches_2609_04175_lab_frame_maximum():
+    from seti.lzedge.halo import LMC_DIRECTION, lmc_tail
+    h = lmc_tail(shm(238.0, 544.0), speed_kms=570.0, sigma_kms=100.0, fraction=0.0026, cut_kms=200.0)
+    assert abs(h.total_fraction - 1.0) < 1e-12
+    comp = h.components[-1]
+    assert abs(comp.norm - 0.739) < 0.05                # 2-sigma sphere of an isotropic Gaussian holds 73.9 %
+    vl = v_lab_kms("2023-06-16", 238.0)
+    d = np.asarray(LMC_DIRECTION, float)
+    d = d / np.linalg.norm(d)
+    vmax_expected = float(np.linalg.norm(570.0 * d - vl)) + 200.0   # ~ 980 km/s in June (2609.04175: 982)
+    f = h.lab_speed_distribution(vl)
+    vg = h.v_grid
+    top = vg[f > 1e-9 * f.max()].max()
+    assert abs(top - vmax_expected) < 8.0
+    assert 960 < vmax_expected < 1000
+    g = h.eta(vl)
+    assert g(900.0) > 0.0 and shm(238.0, 544.0).eta(vl)(900.0) == 0.0

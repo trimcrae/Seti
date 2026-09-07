@@ -96,13 +96,15 @@ class Gaussian:
 
     ``mean`` is the bulk velocity (a stream, LMC debris); ``sigma`` the three
     dispersions; ``v_esc`` truncates at the Galactic escape sphere (None for an
-    unbound component).
+    unbound component); ``cut_radius`` instead truncates at |v - mean| < cut
+    (the boosted-Gaussian LMC sub-component of arXiv:2609.04175).
     """
     mean: tuple[float, float, float]
     sigma: tuple[float, float, float]
     v_esc: float | None = 544.0
     fraction: float = 1.0
     name: str = "gaussian"
+    cut_radius: float | None = None
     _norm: float | None = field(default=None, repr=False)
 
     def density_untruncated(self, v_xyz: np.ndarray) -> np.ndarray:
@@ -139,11 +141,18 @@ class Gaussian:
 
 
 def _numeric_lab_speed_distribution(density, v_lab: np.ndarray, v_grid: np.ndarray,
-                                    v_esc: float | None, n_mu: int = 48, n_phi: int = 64) -> np.ndarray:
-    """v² ∫dΩ density(v n̂ + v_lab) with the escape-sphere cap integrated exactly."""
+                                    v_esc: float | None, n_mu: int = 48, n_phi: int = 64,
+                                    centre: np.ndarray | None = None) -> np.ndarray:
+    """v² ∫dΩ density(v n̂ + v_lab) with the truncation-sphere cap integrated exactly.
+
+    The sphere |v_gal - centre| < v_esc (centre = 0: the escape sphere) becomes,
+    in the lab frame, a sphere about (centre - v_lab); the polar axis is taken
+    along v_lab - centre so the cap is a cos(theta) interval for every speed."""
     v = np.asarray(v_grid, dtype=float)
-    vl = float(np.linalg.norm(v_lab))
-    e1, e2, e3 = _orthonormal_frame(v_lab if vl > 0 else np.array([0.0, 0.0, 1.0]))
+    v_lab = np.asarray(v_lab, dtype=float)
+    offset = v_lab - (np.zeros(3) if centre is None else np.asarray(centre, dtype=float))
+    vl = float(np.linalg.norm(offset))
+    e1, e2, e3 = _orthonormal_frame(offset if vl > 0 else np.array([0.0, 0.0, 1.0]))
     x_gl, w_gl = np.polynomial.legendre.leggauss(n_mu)          # on [-1, 1]
     phi = 2.0 * math.pi * (np.arange(n_phi) + 0.5) / n_phi
     out = np.zeros_like(v)
@@ -391,18 +400,30 @@ def with_stream(base: Halo, mean_xyz, sigma: float, fraction: float, v_esc: floa
     return Halo(comps, name=f"{base.name}+{name}")
 
 
+LMC_DIRECTION = (-57.0, -226.0, 221.0)   # LMC Galactocentric velocity direction (Kallivayalil+2013-like);
+                                          # cos(angle to the Sun's velocity) = -0.70, as arXiv:2609.04175 adopts
+
+
 def lmc_tail(base: Halo, speed_kms: float, sigma_kms: float, fraction: float,
-             direction=(0.0, -1.0, 0.0), name: str = "lmc") -> Halo:
-    """``base`` plus an unbound LMC-boosted component: a Gaussian in velocity space
+             direction=LMC_DIRECTION, cut_kms: float | None = None, name: str = "lmc") -> Halo:
+    """``base`` plus an LMC-boosted sub-component: a Gaussian in velocity space
     with bulk speed ``speed_kms`` along ``direction`` in the Galactic frame
-    (default head-on against Galactic rotation, so it is fastest in the lab in
-    June like the halo wind), isotropic dispersion ``sigma_kms`` and density
-    fraction ``fraction``.  No escape-sphere truncation: these particles are not
-    bound to the Milky Way."""
+    (default: the LMC's own velocity direction, 135 deg from the Sun's, which
+    is head-on in the lab and fastest in June like the halo wind), isotropic
+    dispersion ``sigma_kms``, density fraction ``fraction``, and either no
+    truncation (``cut_kms`` None) or a hard cut |v - v_b| < cut_kms as in
+    arXiv:2609.04175 (|v_b| = 570, sigma_b = 100, cut 200 km/s)."""
     d = np.asarray(direction, dtype=float)
     d = d / np.linalg.norm(d)
-    return with_stream(base, mean_xyz=tuple(speed_kms * d), sigma=sigma_kms, fraction=fraction,
-                       v_esc=None, name=name)
+    comps = []
+    for c in base.components:
+        dd = dict(c.__dict__)
+        dd.pop("_norm", None)
+        dd["fraction"] = c.fraction * (1.0 - fraction)
+        comps.append(type(c)(**dd))
+    comps.append(Gaussian(mean=tuple(float(x) for x in speed_kms * d), sigma=(sigma_kms,) * 3,
+                          v_esc=None, fraction=fraction, name=name, cut_radius=cut_kms))
+    return Halo(comps, name=f"{base.name}+{name}")
 
 
 def g_dimensionless(g_s_per_km):

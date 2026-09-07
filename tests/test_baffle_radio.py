@@ -783,7 +783,10 @@ def _field_with_survey_columns(mosaic_of, maskfract=0.0, seed=5):
 
 
 def test_a_mosaic_boundary_or_a_masked_region_is_a_survey_hole_not_a_void():
-    cfg = _cfg()
+    # The mechanism is tested at strict thresholds; the shipped config is looser
+    # (run 34069675444 measured that two overlapping mosaics within 20' is the
+    # norm and that MaskFract's median is 0.47, so those defaults are 2 and off).
+    cfg = dict(_cfg(), max_annulus_mosaics=1, max_annulus_maskfract=0.1)
     # One mosaic everywhere: the hole is a candidate and the record says which mosaic.
     one = _field_with_survey_columns(lambda r, d: "P200+50")
     st = R.void_statistics(one, FIELD_RA, FIELD_DEC, cfg)

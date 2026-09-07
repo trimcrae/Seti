@@ -64,7 +64,8 @@ DATA = OUT / "data"
 for d in (OUT, TEXT, SRC, META, DATA):
     d.mkdir(parents=True, exist_ok=True)
 
-UA = {"User-Agent": "Seti-lzlit/1.0 (mailto:trimcrae@gmail.com)"}
+UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Seti-lzlit/1.1 (mailto:trimcrae@gmail.com)",
+      "Accept": "application/json, text/html, application/pdf, */*"}
 PAUSE = float(os.environ.get("LZLIT_PAUSE", "3.0"))
 TRIES = int(os.environ.get("LZLIT_TRIES", "3"))
 DRYRUN = os.environ.get("LZLIT_DRYRUN", "") == "1"
@@ -189,6 +190,25 @@ BY_ID: dict[str, dict] = {
         "title": "Large Magellanic Cloud"},
     "lamost2025_escape_curve": {"id": "2510.18227", "src": False,
         "title": "Escape Velocity"},
+    # --- from the LZ paper's bibliography (second sweep) --------------------
+    "fu_2609.04673_exo_endo_sideband": {"id": "2609.04673", "src": True,
+        "title": "Inelastic Dark Matter Interpretations at LZ"},
+    "lz2023_sr1_nreft": {"id": "2312.02030", "src": True, "title": "Effective Field Theory"},
+    "lux2021_eft": {"id": "2102.06998", "src": False, "title": "Effective Field Theory"},
+    "pandax2_2019_sd_eft": {"id": "1807.01936", "src": False, "title": "PandaX"},
+    "graham2025_higgsino": {"id": "2409.07768", "src": True, "title": "Higgsino"},
+    "pec2024_muon_neutrons": {"id": "2310.16586", "src": False, "title": "muon"},
+    "kudryavtsev2009_musun": {"id": "0810.4635", "src": False, "title": "MUSUN"},
+    "pico2023_inelastic": {"id": "2301.08993", "src": False, "title": "Inelastic"},
+    "xenonnt2025_wimp_si": {"id": "2502.18005", "src": True, "title": "WIMP"},
+    "pandax4t2025_wimp": {"id": "2408.00664", "src": True, "title": "PandaX-4T"},
+    "barello2014_inelastic_nreft": {"id": "1409.0536", "src": False, "title": "Inelastic"},
+    "anand2014_dmformfactor": {"id": "1308.6288", "src": False, "title": "Effective Field Theory"},
+    "lz2025_radon_tag": {"id": "2508.19117", "src": False, "title": "Radon"},
+    "lz2024_calibrations": {"id": "2406.12874", "src": False, "title": "Calibration"},
+    "xenon1t2018_1ty": {"id": "1805.12562", "src": False, "title": "XENON1T"},
+    "pandax4t2021_si": {"id": "2107.13438", "src": False, "title": "PandaX-4T"},
+    "mccabe2014_earth_velocity": {"id": "1312.1355", "src": True, "title": "Earth"},
 }
 
 # Papers whose arXiv id is not certain: resolved by title search, so the id
@@ -238,11 +258,12 @@ KEYWORD: dict[str, str] = {
     "annual_modulation_inelastic_high_energy": 'abs:"annual modulation" AND abs:inelastic AND abs:"dark matter" AND abs:"high energy"',
 }
 
+MAIN_RECID = "3199115"          # INSPIRE record of arXiv:2609.02823 (read from the first sweep)
 INSPIRE_QUERIES: dict[str, str] = {
-    "refersto_main": f"refersto:arxiv:{MAIN_ID}",
-    "record_main": f"arxiv:{MAIN_ID}",
+    "refersto_main": f"refersto:recid:{MAIN_RECID}",
+    "record_main": f"recid:{MAIN_RECID}",
     "lz_collab_2026": 'collaboration:LZ and date>2025',
-    "lz_248_fulltext": 'fulltext:"248 keV" and fulltext:"LUX-ZEPLIN" and date>2026',
+    "t_lux_zeplin_2026": 't "LUX-ZEPLIN" and date>2026-08',
 }
 
 HEPDATA_SEARCHES: dict[str, str] = {
@@ -254,13 +275,16 @@ HEPDATA_SEARCHES: dict[str, str] = {
 }
 
 ZENODO_QUERIES: dict[str, str] = {
-    "lux_zeplin": '"LUX-ZEPLIN"',
-    "lz_dark_matter_data_release": 'LZ AND "dark matter" AND "data release"',
-    "xenonnt_release": 'XENONnT AND "data release"',
+    "lux_zeplin": 'LUX-ZEPLIN',
+    "lz_extended_window": 'LUX-ZEPLIN extended nuclear recoil',
+    "lz_data_release": 'LZ dark matter data release',
 }
 
 PAGES: dict[str, str] = {
     "lz_lbl_home.html": "https://lz.lbl.gov/",
+    "lz_lbl_results.html": "https://lz.lbl.gov/results/",
+    "lz_lbl_science.html": "https://lz.lbl.gov/science/",
+    "lz_lbl_dataproducts.html": "https://lz.lbl.gov/data-products/",
     "lz_lbl_press.html": "https://lz.lbl.gov/press/",
     "lz_lbl_publications.html": "https://lz.lbl.gov/publications/",
     "lz_lbl_data.html": "https://lz.lbl.gov/data/",
@@ -346,6 +370,24 @@ def parse_atom(data: bytes) -> list[dict]:
             "journal_ref": (e.findtext("arxiv:journal_ref", default="", namespaces=NS) or "").strip(),
         })
     return out
+
+
+def arxiv_abs_meta(aid: str) -> dict | None:
+    """Title / date from the arXiv abstract page (no API, no 429): a fallback for id_list."""
+    data = get(f"https://arxiv.org/abs/{aid}", label=f"abs {aid}", pause=PAUSE)
+    if not data:
+        return None
+    html = data.decode("utf-8", "ignore")
+    m = re.search(r"<title>\s*\[?[^\]]*\]?\s*(.*?)</title>", html, re.S)
+    title = re.sub(r"\s+", " ", m.group(1)).strip() if m else ""
+    title = re.sub(r"^\[\d{4}\.\d{4,5}(v\d+)?\]\s*", "", title)
+    md = re.search(r'name="citation_date" content="([^"]+)"', html)
+    ab = re.search(r'name="citation_abstract" content="([^"]*)"', html, re.S)
+    au = re.findall(r'name="citation_author" content="([^"]+)"', html)
+    (META / f"abs_{aid}.html").write_bytes(data)
+    return {"id": aid, "version": "", "title": title, "abstract": (ab.group(1) if ab else "").strip(),
+            "published": (md.group(1).replace("/", "-") if md else ""), "updated": "", "authors": au,
+            "categories": [], "comment": "", "journal_ref": ""}
 
 
 def arxiv_ids_meta(ids: list[str]) -> dict[str, dict]:
@@ -517,7 +559,7 @@ def hepdata() -> dict:
 def zenodo() -> dict:
     out = {}
     for name, q in ZENODO_QUERIES.items():
-        url = f"https://zenodo.org/api/records?q={urllib.parse.quote(q, safe='')}&size=50&sort=mostrecent"
+        url = f"https://zenodo.org/api/records?q={urllib.parse.quote(q, safe='')}&size=50"
         data = get(url, label=f"zenodo {name}")
         if not data:
             continue
@@ -597,20 +639,22 @@ def main() -> None:
 
     # 1. metadata for the asserted ids, title-checked
     ids = [v["id"] for v in BY_ID.values()]
-    meta = arxiv_ids_meta(ids)
+    meta = arxiv_ids_meta(ids) if os.environ.get("LZLIT_USE_API", "0") == "1" else {}
     papers: dict[str, dict] = {}
     for key, spec in BY_ID.items():
-        ent = meta.get(spec["id"])
+        ent = meta.get(spec["id"]) or arxiv_abs_meta(spec["id"])
         ok = bool(ent) and norm(spec["title"]) in norm(ent["title"])
         id_check["by_id"][key] = {"id": spec["id"], "expected_fragment": spec["title"],
-                                  "fetched_title": ent["title"] if ent else None, "match": ok}
+                                  "fetched_title": ent["title"] if ent else None, "match": ok,
+                                  "verified_via": "api" if spec["id"] in meta else ("abs_page" if ent else "unverified")}
         if not ok:
             id_check["n_id_mismatch"] += 1
-        if ent:
-            papers[spec["id"]] = dict(ent, source_key=key, want_src=spec["src"], id_title_match=ok)
+        # never drop an asserted id: the text is fetched even when the title could not be checked
+        papers[spec["id"]] = dict(ent or {"id": spec["id"], "title": None, "published": ""},
+                                  source_key=key, want_src=spec["src"], id_title_match=ok)
 
-    # 2. title searches
-    for key, spec in BY_TITLE.items():
+    # 2. title searches (API only; skipped by default after the 429s of the first sweep)
+    for key, spec in (BY_TITLE.items() if os.environ.get("LZLIT_USE_API", "0") == "1" else []):
         hits = arxiv_search(f'ti:"{spec["title"]}"', f"title_{key}", max_results=5)
         best = None
         for h in hits:
@@ -629,9 +673,9 @@ def main() -> None:
         if best and found:
             papers.setdefault(best["id"], dict(best, source_key=key, want_src=spec["src"], id_title_match=True))
 
-    # 3. keyword sweeps, newest first
+    # 3. keyword sweeps, newest first (API only)
     kw_hits: dict[str, list[dict]] = {}
-    for name, q in KEYWORD.items():
+    for name, q in (KEYWORD.items() if os.environ.get("LZLIT_USE_API", "0") == "1" else []):
         hits = arxiv_search(q, name, max_results=60, newest=True)
         kw_hits[name] = [{"id": h["id"], "title": h["title"], "published": h["published"]} for h in hits]
         for h in hits:
@@ -640,7 +684,11 @@ def main() -> None:
 
     # 4. INSPIRE citations of the LZ paper: the complete follow-up list
     insp = inspire()
-    for row in insp.get("refersto_main", []):
+    refers = insp.get("refersto_main", [])
+    if len(refers) > 60:
+        print(f"  WARNING: refersto returned {len(refers)} rows -- query likely mis-parsed; ignoring it")
+        refers = []
+    for row in refers:
         for aid in row.get("arxiv") or []:
             if aid not in papers:
                 papers[aid] = {"id": aid, "title": row.get("title"), "abstract": row.get("abstract"),
@@ -663,6 +711,15 @@ def main() -> None:
     (META / "inspire_parsed.json").write_text(json.dumps(insp, indent=2))
     _write_summary({"n_papers": len(papers), "n_followups": len(followups)})
 
+    # 4b. the collaboration's pages first: the Data Release the paper cites lives there, not on arXiv
+    pages_report = pages()
+    (DATA / "pages_report.json").write_text(json.dumps(pages_report, indent=2))
+    for fname, info in pages_report.items():
+        if isinstance(info, dict):
+            for link in info.get("data_like_links", []):
+                if re.search(r"release|data", link, re.I) and link.startswith("http"):
+                    get(link, label=f"data-release link {link[:60]}", pause=1.5)
+
     # 5. full text and sources -- the LZ paper and the follow-ups first
     order = sorted(papers.values(),
                    key=lambda p: (p["id"] != MAIN_ID, not str(p.get("source_key", "")).startswith(("fu_", "kw:", "inspire")),
@@ -673,8 +730,8 @@ def main() -> None:
         p["src_ok"] = fetch_source(aid) if p.get("want_src") else None
         (OUT / "papers.json").write_text(json.dumps(papers, indent=2, sort_keys=True))
 
-    # 6. data releases and pages
-    report = {"hepdata": hepdata(), "zenodo": zenodo(), "pages": pages()}
+    # 6. data releases
+    report = {"hepdata": hepdata(), "zenodo": zenodo(), "pages": pages_report}
     (DATA / "data_release_report.json").write_text(json.dumps(report, indent=2))
     shutil.rmtree(OUT / "_tmp", ignore_errors=True)
     _write_summary({"n_papers": len(papers), "n_followups": len(followups),

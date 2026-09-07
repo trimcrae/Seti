@@ -277,6 +277,15 @@ class Halo:
     name: str = "halo"
     v_grid_max: float = 1500.0
     v_grid_step: float = 1.0
+    _eta_cache: dict = field(default_factory=dict, repr=False)
+
+    def eta_at(self, t, v0_kms: float):
+        """g(v_min) on date ``t`` for lab velocity v_lab(t; v0), cached per date."""
+        from .earth import to_datetime, v_lab_kms
+        key = (to_datetime(t).isoformat(), float(v0_kms))
+        if key not in self._eta_cache:
+            self._eta_cache[key] = self.eta(v_lab_kms(t, v0_kms))
+        return self._eta_cache[key]
 
     @property
     def v_grid(self) -> np.ndarray:

@@ -15,11 +15,11 @@ the calendar whatever its cross section.
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 
-from .earth import date_grid, to_datetime, v_lab_kms, year_grid
+from .earth import date_grid, to_datetime, year_grid
 from .rate import Efficiency, smeared_spectrum, window_rate
 
 
@@ -70,13 +70,9 @@ class EventModel:
     v0_kms: float = 238.0
     sigma_n_cm2: float = 1e-45
     rho_gev_cm3: float = 0.3
-    _eta_cache: dict = field(default_factory=dict, repr=False)
 
     def eta_at(self, t):
-        key = to_datetime(t).isoformat()
-        if key not in self._eta_cache:
-            self._eta_cache[key] = self.halo.eta(v_lab_kms(t, self.v0_kms))
-        return self._eta_cache[key]
+        return self.halo.eta_at(t, self.v0_kms)
 
     def rate(self, t) -> float:
         return window_rate(self.eta_at(t), self.m_chi_gev, self.delta_keV, self.efficiency,

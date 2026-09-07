@@ -1,0 +1,61 @@
+name: lzlit
+
+# LZ 248 keV nuclear-recoil candidate (arXiv:2609.02823): fetch the record on
+# the runner (scripts/lzlit_fetch.py).
+#
+# The sandbox blocks arxiv.org / inspirehep.net / hepdata.net / zenodo.org /
+# lz.lbl.gov; the runner has egress (CLAUDE.md acquisition pattern).  The
+# script pulls the LZ paper, every follow-up that cites it (INSPIRE refersto +
+# newest-first keyword sweeps), the prior high-energy / EFT / inelastic
+# searches, the local-halo kinematics record (Gaia escape speed, SHM++, S1,
+# shards, the LMC-boosted high-speed tail), the seasonal muon-flux record, and
+# the LZ data releases (HEPData tables, Zenodo listing, collaboration pages).
+# PDFs are converted to text on the runner; only text is committed.  Every
+# asserted arXiv id is title-checked (id_title_check.json); every fetch's HTTP
+# status is in summary.json.  Commit-back through scripts/commit_results.sh,
+# which VERIFIES the push.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  lzlit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+          python -m pip install --upgrade pip
+          pip install pypdf
+      - name: Fetch the record (soft 75-min deadline, partials kept)
+        run: |
+          timeout -k 30 4500 python scripts/lzlit_fetch.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== summary ==="
+          python -c "import json;d=json.load(open('results/lzlit/summary.json'));print(d['n_ok'],'ok /',d['n_urls'],'urls;',d.get('n_papers'),'papers,',d.get('n_followups'),'follow-ups,',d.get('n_text_ok'),'texts,',d.get('n_src_ok'),'sources')" || true
+          python -c "import json;d=json.load(open('results/lzlit/id_title_check.json'));print(d['n_id_mismatch'],'id/title mismatches,',d['n_title_search_miss'],'title-search misses')" || true
+          du -sh results/lzlit || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lzlit
+          path: results/lzlit/
+          if-no-files-found: warn
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "lzlit: LZ 248 keV event — paper, follow-ups, halo kinematics, data releases" \
+            results/lzlit

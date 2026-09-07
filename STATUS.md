@@ -49,13 +49,13 @@ over their uncertainties. What came out:
   370–400: for δ ≳ 330 the spectral peak μδ/m_N enters the empty sideband
   (0.23 sideband events per window event at 350, 2.4 at 370, 10 at 380; our
   6.1 at 377 vs 04175's 4.9). With the escape speed integrated over each
-  measurement the *mode* is 330 keV for all six; the measurement governs the
+  measurement the *mode* is 330–340 keV for all six; the measurement governs the
   95 % upper bound: 339 keV (Koppelman-Helmi, Necib-Lin), 362 (Deason), 373
   (Roche), 380 (RAVE/LZ), 394 (Monari). A model needing δ ≳ 370 keV at 1 TeV
   (the thermal Higgsino via Z exchange) is outside the 95 % region for the
   two precise Gaia measurements.
-* **The date factor** is 4.3 at the conventional halo's posterior maximum
-  (1.0 for elastic scattering), and 2.7–4.8 at δ = 370 keV across plausible
+* **The date factor** is 2.3 at the conventional halo's 1 TeV posterior
+  maximum and 4.3 at its 500 GeV one (1.0 for elastic scattering), and 2.7–4.8 at δ = 370 keV across plausible
   live-time masks (uniform 3.4). The reachability calendar: at 1 TeV a 248 keV
   recoil is possible all year for δ ≤ 360, 30 Jan–1 Oct for 370, 22 Mar–12 Aug
   for 380, 21 Apr–12 Jul for 385, never for ≥ 390 keV (v_esc 544).

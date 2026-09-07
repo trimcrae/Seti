@@ -175,3 +175,23 @@ def profile_likelihood(model: EventModel, livetime: LiveTime, E_obs: float, t_ob
     pE = energy_density_marginal_sys(model, E_obs, t_obs, sigma_fn, sigma_sys_keV) / r_obs
     return {"timing": tb["bayes_factor_timing"], "energy": pE,
             "profile": tb["bayes_factor_timing"] * pE, **tb}
+
+
+def sideband_expectation(model: EventModel, livetime: LiveTime, E_lo: float, E_hi: float,
+                         plateau_eff: float = 0.96, step_days: float = 3.0) -> float:
+    """Live-time-averaged rate (events per tonne-year, at the model's sigma_n) in an
+    energy sideband [E_lo, E_hi] assuming the efficiency plateau extends into it.
+
+    LZ validates its background model in an empty high-energy sideband
+    (S1c 800-1700 phd, roughly 350-680 keV nuclear recoil; zero events in the
+    science sample).  For a model normalised to the search-window event, the
+    sideband yield per window event is a shape test of the recoil spectrum
+    above the window -- and, for a halo with particles beyond the escape sphere
+    (an LMC-boosted tail), a direct bound on how far that tail reaches."""
+    from .rate import Efficiency
+    eff = Efficiency.flat(E_lo, E_hi, plateau_eff)
+    sb = EventModel(model.halo, model.m_chi_gev, model.delta_keV, eff, model.v0_kms,
+                    model.sigma_n_cm2, model.rho_gev_cm3)
+    dates, w = livetime.grid(step_days)
+    r = sb.rate_curve(dates)
+    return float(np.sum(r * w) / np.sum(w)) if np.sum(w) > 0 else 0.0

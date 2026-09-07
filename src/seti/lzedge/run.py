@@ -30,6 +30,7 @@ from .timing import (
     LiveTime,
     modulation_summary,
     profile_likelihood,
+    sideband_expectation,
     timing_bayes_factor,
 )
 
@@ -242,6 +243,7 @@ def stage_posterior(cfg: dict, out: pathlib.Path, halos_only: list[str] | None =
         return K.resolution_sigma_keV(E, sig_ref, E_obs)
 
     pc = cfg.get("posterior", {})
+    sbc = cfg.get("sideband", {})
     sigma_ceiling = float(pc.get("sigma_ceiling_cm2", 1e-37))
     masses = pc.get("m_chi_gev", sc["m_chi_gev"])
     d = pc.get("delta_keV", sc["delta_keV"])
@@ -264,11 +266,20 @@ def stage_posterior(cfg: dict, out: pathlib.Path, halos_only: list[str] | None =
                 # ∫ dμ/μ e^{-μ} μ p(E,t) ∝ p(E,t) (1 - e^{-μ_max}),  μ_max = events at the ceiling
                 mu_max = mu1 * (sigma_ceiling / 1e-45)
                 occam = 1.0 - math.exp(-mu_max) if mu_max < 50 else 1.0
+                # the empty high-energy sideband: expected counts per window event, Poisson(0)
+                sb_per_event = 0.0
+                if mu1 > 0 and sbc.get("use", True):
+                    sb_rate = sideband_expectation(model, live, sbc["E_lo_keV"], sbc["E_hi_keV"],
+                                                   sbc.get("plateau_efficiency", 0.96), sc.get("livetime_step_days", 3.0))
+                    sb_per_event = sb_rate / pl["mean_rate_livetime"]
+                sb_factor = math.exp(-sb_per_event * sbc.get("observed_window_events", 1.0))
                 rows.append({"halo": name, "m_chi_gev": m, "delta_keV": float(delta),
                              "timing": pl["timing"], "energy_per_keV": pl["energy"], "profile": pl["profile"],
                              "sigma_n_for_one_event_cm2": sig1,
                              "events_at_ceiling": mu_max,
-                             "marginal": pl["profile"] * occam,
+                             "sideband_per_window_event": sb_per_event,
+                             "sideband_factor": sb_factor,
+                             "marginal": pl["profile"] * occam * sb_factor,
                              "physical": bool(sig1 is not None and sig1 <= sigma_ceiling)})
         print(f"  posterior {name}: {len(rows)} rows, {time.time() - t0:.0f}s")
         (out / "posterior.json").write_text(json.dumps(rows, indent=1))
@@ -339,6 +350,7 @@ def stage_vesc_marginal(cfg: dict, out: pathlib.Path) -> dict:
         return K.resolution_sigma_keV(E, sig_ref, E_obs)
 
     pc = cfg.get("posterior", {})
+    sbc = cfg.get("sideband", {})
     sigma_ceiling = float(pc.get("sigma_ceiling_cm2", 1e-37))
     masses = pc.get("m_chi_gev", sc["m_chi_gev"])
     d = pc.get("delta_keV", sc["delta_keV"])
@@ -364,7 +376,12 @@ def stage_vesc_marginal(cfg: dict, out: pathlib.Path) -> dict:
                 mu1 = pl["mean_rate_livetime"] * run["exposure_tonne_year"]
                 mu_max = mu1 * (sigma_ceiling / 1e-45)
                 occam = 1.0 - math.exp(-mu_max) if mu_max < 50 else 1.0
-                like[i, j, k_] = pl["profile"] * occam
+                sb_factor = 1.0
+                if mu1 > 0 and sbc.get("use", True):
+                    sb_rate = sideband_expectation(model, live, sbc["E_lo_keV"], sbc["E_hi_keV"],
+                                                   sbc.get("plateau_efficiency", 0.96), sc.get("livetime_step_days", 3.0))
+                    sb_factor = math.exp(-(sb_rate / pl["mean_rate_livetime"]) * sbc.get("observed_window_events", 1.0))
+                like[i, j, k_] = pl["profile"] * occam * sb_factor
         print(f"  vesc {vesc:.0f}: {time.time() - t0:.0f}s")
     results = {}
     for name, spec in meas.items():

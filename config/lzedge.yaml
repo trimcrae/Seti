@@ -62,6 +62,13 @@ halo_models:
     v_esc: 600.0
     rho: 0.3
 
+sideband:                         # LZ's empty high-energy sideband (SupplementalMaterial.tex: HE SB
+  use: true                      # 800 < S1c < 1700 phd, ~350-680 keV per Dent & Newstead 2609.04673; 0 science events)
+  E_lo_keV: 350.0
+  E_hi_keV: 680.0
+  plateau_efficiency: 0.96       # assumes the plateau extends (as 2609.04673 does); the 270-350 keV gap is unconstrained
+  observed_window_events: 1.0
+
 posterior:
   sigma_ceiling_cm2: 1.0e-37   # log-uniform prior on sigma_n up to here; Z-exchange (Higgsino-like) is ~1e-39
   m_chi_gev: [100, 200, 500, 1000, 3000, 10000]

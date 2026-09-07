@@ -115,29 +115,40 @@ class Gaussian:
         return np.exp(-0.5 * z2) / ((2.0 * math.pi) ** 1.5 * np.prod(sg))
 
     @property
+    def _sphere(self) -> tuple[np.ndarray, float | None]:
+        """(centre, radius) of the truncation sphere in the Galactic frame."""
+        if self.cut_radius is not None:
+            return np.asarray(self.mean, dtype=float), float(self.cut_radius)
+        return np.zeros(3), self.v_esc
+
+    @property
     def norm(self) -> float:
-        """Fraction of the untruncated Gaussian inside the escape sphere."""
-        if self.v_esc is None:
+        """Fraction of the untruncated Gaussian inside the truncation sphere."""
+        centre, radius = self._sphere
+        if radius is None:
             return 1.0
         if self._norm is None:
-            grid = np.arange(0.0, self.v_esc + 0.5, 1.0)
-            f = _numeric_lab_speed_distribution(self.density_untruncated, np.zeros(3), grid,
-                                                self.v_esc, n_mu=48, n_phi=64)
+            grid = np.arange(0.0, radius + 0.5, 1.0)
+            # speed distribution about the sphere's centre: evaluate at v = centre + v n̂, no boost
+            f = _numeric_lab_speed_distribution(self.density_untruncated, centre, grid,
+                                                radius, n_mu=48, n_phi=64, centre=centre)
             self._norm = float(trapz(f, grid))
         return self._norm
 
     def density(self, v_xyz: np.ndarray) -> np.ndarray:
         f = self.density_untruncated(v_xyz) / self.norm
-        if self.v_esc is not None:
-            v2 = np.sum(np.asarray(v_xyz, dtype=float) ** 2, axis=-1)
-            f = np.where(v2 < self.v_esc ** 2, f, 0.0)
+        centre, radius = self._sphere
+        if radius is not None:
+            d2 = np.sum((np.asarray(v_xyz, dtype=float) - centre) ** 2, axis=-1)
+            f = np.where(d2 < radius ** 2, f, 0.0)
         return f
 
     def lab_speed_distribution(self, v_lab: np.ndarray, v_grid: np.ndarray,
                                n_mu: int = 48, n_phi: int = 64) -> np.ndarray:
+        centre, radius = self._sphere
         return _numeric_lab_speed_distribution(self.density_untruncated, np.asarray(v_lab, float),
-                                               np.asarray(v_grid, float), self.v_esc,
-                                               n_mu=n_mu, n_phi=n_phi) / self.norm
+                                               np.asarray(v_grid, float), radius,
+                                               n_mu=n_mu, n_phi=n_phi, centre=centre) / self.norm
 
 
 def _numeric_lab_speed_distribution(density, v_lab: np.ndarray, v_grid: np.ndarray,

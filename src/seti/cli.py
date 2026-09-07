@@ -1016,6 +1016,11 @@ def _cmd_figures(args, cfg):
         print(f"wrote {p}")
 
 
+def _cmd_lzedge(args, cfg):
+    from .lzedge.run import main as _lzedge_main
+    return _lzedge_main(list(args.rest))
+
+
 def _cmd_metronome(args, cfg):
     from .metronome.run import main as _metronome_main
 
@@ -2127,6 +2132,11 @@ def main(argv=None):
 
     # --- 2026-09-06: three new channels, each also runnable as
     #     `python -m seti.<channel>.run` (which is what their workflows call).
+    p = sub.add_parser("lzedge",
+                       help="LZEDGE: the LZ 248 keV recoil at the kinematic edge; "
+                            "flags are passed through to seti.lzedge.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_lzedge)
     p = sub.add_parser("metronome",
                        help="METRONOME (S28): strict clocks in catalogued flare timing; "
                             "flags are passed through to seti.metronome.run")

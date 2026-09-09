@@ -1,8 +1,9 @@
 {
- "written_utc": "2026-09-09T11:29:17Z",
+ "written_utc": "2026-09-09T12:15:30Z",
  "data_state": "SIMULATIONS_ONLY",
  "data_state_evidence": [
-  "s3:openuniverse2024: simulation bucket nasa-irsa-simulations/openuniverse2024/roman/ lists 2 prefix(es), 0 key(s)"
+  "s3:openuniverse2024: simulation bucket nasa-irsa-simulations/openuniverse2024/roman/ lists 2 prefix(es), 0 key(s)",
+  "sim:roman_ipac_home: index page and its crawl expose 59 data link(s)"
  ],
  "endpoints": {
   "irsa_tap": {
@@ -11,7 +12,7 @@
    "url": "https://irsa.ipac.caltech.edu/TAP/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+table_name%2C+description+FROM+TAP_SCHEMA.tables+WHERE+LOWER%28table_name%29+LIKE+%27%25roman%25%27+OR+LOWER%28description%29+LIKE+%27%25roman%25%27+OR+LOWER%28table_name%29+LIKE+%27%25wfi%25%27+OR+LOWER%28description%29+LIKE+%27%25wfi%25%27+OR+LOWER%28table_name%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28description%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hltds%25%27+OR+LOWER%28description%29+LIKE+%27%25hltds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28description%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28table_name%29+LIKE+%27%25openuniverse%25%27+OR+LOWER%28description%29+LIKE+%27%25openuniverse%25%27",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.293,
+   "latency_s": 0.167,
    "error": null,
    "tables": []
   },
@@ -21,7 +22,7 @@
    "url": "https://irsa.ipac.caltech.edu/SIA?POS=circle+266.4+-28.9+0.01&MAXREC=1",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.365,
+   "latency_s": 0.25,
    "error": null,
    "content_type": "application/x-votable+xml"
   },
@@ -31,7 +32,7 @@
    "url": "https://irsa.ipac.caltech.edu/data/Roman/",
    "status": "http_error",
    "http_status": 404,
-   "latency_s": 0.074,
+   "latency_s": 0.154,
    "error": null,
    "links": [],
    "head_status": 404,
@@ -43,7 +44,7 @@
    "url": "https://nasa-irsa-simulations.s3.amazonaws.com/?list-type=2&prefix=openuniverse2024/roman/&max-keys=200&delimiter=%2F",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.285,
+   "latency_s": 0.266,
    "error": null,
    "bucket": "nasa-irsa-simulations",
    "prefix": "openuniverse2024/roman/",
@@ -62,7 +63,7 @@
    "url": "https://nasa-irsa-roman.s3.amazonaws.com/?list-type=2&prefix=&max-keys=200&delimiter=%2F",
    "status": "http_error",
    "http_status": 404,
-   "latency_s": 0.284,
+   "latency_s": 0.234,
    "error": "NoSuchBucket: The specified bucket does not exist",
    "bucket": "nasa-irsa-roman",
    "prefix": "",
@@ -75,131 +76,77 @@
   "mast:Roman": {
    "name": "mast:Roman",
    "kind": "mast_caom",
-   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+COUNT%28%2A%29+AS+n+FROM+dbo.CaomObservation+WHERE+obs_collection%3D%27Roman%27",
-   "status": "http_error",
-   "http_status": 400,
-   "latency_s": 0.188,
-   "error": "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !",
+   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27Roman%27",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.633,
+   "error": null,
    "collection": "Roman",
-   "count": null,
-   "present": null,
-   "query_form": null,
+   "count": 0,
+   "present": false,
+   "query_form": "top1",
    "attempts": [
     {
      "form": "top1",
-     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+dbo.CaomObservation+WHERE+obs_collection+%3D+%27Roman%27",
-     "http_status": 400,
-     "latency_s": 0.572,
-     "error": "QUERY_STATUS=ERROR: Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]! - Unknown column \"obs_collection\" ! - Unknown column \"obs_collection\" !",
-     "error_body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3\">\n  <DESCRIPTION>MAST VO TAP Service</DESCRIPTION>\n  <RESOURCE type=\"results\">\n  <INFO name=\"QUERY_STATUS\" value=\"ERROR\">\n  Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]!   - Unknown column &quot;obs_collection&quot; !   - Unknown column &quot;obs_collection&quot; !\n  </INFO>\n  </RESOURCE>\n</VOTABLE>",
-     "votable_info": [
-      "QUERY_STATUS=ERROR: Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]! - Unknown column \"obs_collection\" ! - Unknown column \"obs_collection\" !"
-     ]
-    },
-    {
-     "form": "count",
-     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+COUNT%28%2A%29+AS+n+FROM+dbo.CaomObservation+WHERE+obs_collection%3D%27Roman%27",
-     "http_status": 400,
-     "latency_s": 0.188,
-     "error": "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !",
-     "error_body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3\">\n  <DESCRIPTION>MAST VO TAP Service</DESCRIPTION>\n  <RESOURCE type=\"results\">\n  <INFO name=\"QUERY_STATUS\" value=\"ERROR\">\n  Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]!   - Unknown column &quot;obs_collection&quot; !\n  </INFO>\n  </RESOURCE>\n</VOTABLE>",
-     "votable_info": [
-      "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !"
-     ]
+     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27Roman%27",
+     "http_status": 200,
+     "latency_s": 0.633,
+     "error": null,
+     "error_body": null,
+     "votable_info": []
     }
    ],
-   "simulated": false,
-   "votable_info": [
-    "QUERY_STATUS=ERROR: Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]! - Unknown column \"obs_collection\" ! - Unknown column \"obs_collection\" !",
-    "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !"
-   ],
-   "error_body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3\">\n  <DESCRIPTION>MAST VO TAP Service</DESCRIPTION>\n  <RESOURCE type=\"results\">\n  <INFO name=\"QUERY_STATUS\" value=\"ERROR\">\n  Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]!   - Unknown column &quot;obs_collection&quot; !   - Unknown column &quot;obs_collection&quot; !\n  </INFO>\n  </RESOURCE>\n</VOTABLE>"
+   "simulated": false
   },
   "mast:ROMAN": {
    "name": "mast:ROMAN",
    "kind": "mast_caom",
-   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+COUNT%28%2A%29+AS+n+FROM+dbo.CaomObservation+WHERE+obs_collection%3D%27ROMAN%27",
-   "status": "http_error",
-   "http_status": 400,
-   "latency_s": 0.182,
-   "error": "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !",
+   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27ROMAN%27",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.368,
+   "error": null,
    "collection": "ROMAN",
-   "count": null,
-   "present": null,
-   "query_form": null,
+   "count": 0,
+   "present": false,
+   "query_form": "top1",
    "attempts": [
     {
      "form": "top1",
-     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+dbo.CaomObservation+WHERE+obs_collection+%3D+%27ROMAN%27",
-     "http_status": 400,
-     "latency_s": 0.179,
-     "error": "QUERY_STATUS=ERROR: Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]! - Unknown column \"obs_collection\" ! - Unknown column \"obs_collection\" !",
-     "error_body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3\">\n  <DESCRIPTION>MAST VO TAP Service</DESCRIPTION>\n  <RESOURCE type=\"results\">\n  <INFO name=\"QUERY_STATUS\" value=\"ERROR\">\n  Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]!   - Unknown column &quot;obs_collection&quot; !   - Unknown column &quot;obs_collection&quot; !\n  </INFO>\n  </RESOURCE>\n</VOTABLE>",
-     "votable_info": [
-      "QUERY_STATUS=ERROR: Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]! - Unknown column \"obs_collection\" ! - Unknown column \"obs_collection\" !"
-     ]
-    },
-    {
-     "form": "count",
-     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+COUNT%28%2A%29+AS+n+FROM+dbo.CaomObservation+WHERE+obs_collection%3D%27ROMAN%27",
-     "http_status": 400,
-     "latency_s": 0.182,
-     "error": "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !",
-     "error_body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3\">\n  <DESCRIPTION>MAST VO TAP Service</DESCRIPTION>\n  <RESOURCE type=\"results\">\n  <INFO name=\"QUERY_STATUS\" value=\"ERROR\">\n  Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]!   - Unknown column &quot;obs_collection&quot; !\n  </INFO>\n  </RESOURCE>\n</VOTABLE>",
-     "votable_info": [
-      "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !"
-     ]
+     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27ROMAN%27",
+     "http_status": 200,
+     "latency_s": 0.368,
+     "error": null,
+     "error_body": null,
+     "votable_info": []
     }
    ],
-   "simulated": false,
-   "votable_info": [
-    "QUERY_STATUS=ERROR: Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]! - Unknown column \"obs_collection\" ! - Unknown column \"obs_collection\" !",
-    "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !"
-   ],
-   "error_body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3\">\n  <DESCRIPTION>MAST VO TAP Service</DESCRIPTION>\n  <RESOURCE type=\"results\">\n  <INFO name=\"QUERY_STATUS\" value=\"ERROR\">\n  Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]!   - Unknown column &quot;obs_collection&quot; !   - Unknown column &quot;obs_collection&quot; !\n  </INFO>\n  </RESOURCE>\n</VOTABLE>"
+   "simulated": false
   },
   "mast:RomanSim": {
    "name": "mast:RomanSim",
    "kind": "mast_caom",
-   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+COUNT%28%2A%29+AS+n+FROM+dbo.CaomObservation+WHERE+obs_collection%3D%27RomanSim%27",
-   "status": "http_error",
-   "http_status": 400,
-   "latency_s": 0.204,
-   "error": "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !",
+   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27RomanSim%27",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.165,
+   "error": null,
    "collection": "RomanSim",
-   "count": null,
-   "present": null,
-   "query_form": null,
+   "count": 0,
+   "present": false,
+   "query_form": "top1",
    "attempts": [
     {
      "form": "top1",
-     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+dbo.CaomObservation+WHERE+obs_collection+%3D+%27RomanSim%27",
-     "http_status": 400,
-     "latency_s": 0.118,
-     "error": "QUERY_STATUS=ERROR: Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]! - Unknown column \"obs_collection\" ! - Unknown column \"obs_collection\" !",
-     "error_body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3\">\n  <DESCRIPTION>MAST VO TAP Service</DESCRIPTION>\n  <RESOURCE type=\"results\">\n  <INFO name=\"QUERY_STATUS\" value=\"ERROR\">\n  Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]!   - Unknown column &quot;obs_collection&quot; !   - Unknown column &quot;obs_collection&quot; !\n  </INFO>\n  </RESOURCE>\n</VOTABLE>",
-     "votable_info": [
-      "QUERY_STATUS=ERROR: Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]! - Unknown column \"obs_collection\" ! - Unknown column \"obs_collection\" !"
-     ]
-    },
-    {
-     "form": "count",
-     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+COUNT%28%2A%29+AS+n+FROM+dbo.CaomObservation+WHERE+obs_collection%3D%27RomanSim%27",
-     "http_status": 400,
-     "latency_s": 0.204,
-     "error": "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !",
-     "error_body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3\">\n  <DESCRIPTION>MAST VO TAP Service</DESCRIPTION>\n  <RESOURCE type=\"results\">\n  <INFO name=\"QUERY_STATUS\" value=\"ERROR\">\n  Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]!   - Unknown column &quot;obs_collection&quot; !\n  </INFO>\n  </RESOURCE>\n</VOTABLE>",
-     "votable_info": [
-      "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !"
-     ]
+     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27RomanSim%27",
+     "http_status": 200,
+     "latency_s": 0.165,
+     "error": null,
+     "error_body": null,
+     "votable_info": []
     }
    ],
-   "simulated": true,
-   "votable_info": [
-    "QUERY_STATUS=ERROR: Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]! - Unknown column \"obs_collection\" ! - Unknown column \"obs_collection\" !",
-    "QUERY_STATUS=ERROR: Exception translating ADQL: 1 unresolved identifiers: obs_collection [l.1 c.53 - l.1 c.67]! - Unknown column \"obs_collection\" !"
-   ],
-   "error_body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa.net/xml/VOTable/v1.3 http://www.ivoa.net/xml/VOTable/v1.3\">\n  <DESCRIPTION>MAST VO TAP Service</DESCRIPTION>\n  <RESOURCE type=\"results\">\n  <INFO name=\"QUERY_STATUS\" value=\"ERROR\">\n  Exception translating ADQL: 2 unresolved identifiers: obs_collection [l.1 c.14 - l.1 c.28], obs_collection [l.1 c.60 - l.1 c.74]!   - Unknown column &quot;obs_collection&quot; !   - Unknown column &quot;obs_collection&quot; !\n  </INFO>\n  </RESOURCE>\n</VOTABLE>"
+   "simulated": true
   },
   "sim:roman_ipac_home": {
    "name": "sim:roman_ipac_home",
@@ -207,7 +154,7 @@
    "url": "https://roman.ipac.caltech.edu/",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.421,
+   "latency_s": 0.417,
    "error": null,
    "sim_kind": "index",
    "content_type": "text/html; charset=utf-8",
@@ -217,7 +164,7 @@
    "crawl": {
     "n_links_total": 68,
     "n_links_matched": 55,
-    "n_pages_fetched": 15,
+    "n_pages_fetched": 43,
     "capped": true,
     "links_matched": [
      "https://roman.ipac.caltech.edu/page/microlensing",
@@ -286,7 +233,51 @@
       "title": "Microlensing Exoplanets",
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/page/simulation-code",
+        "http_status": 200,
+        "title": "Simulation and Modeling Tools",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/simulations-instrument",
+        "http_status": 200,
+        "title": "Science Simulations by Instrument",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/simulations-topic",
+        "http_status": 200,
+        "title": "Science Simulations by Topic",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/nancy-grace-roman",
+        "http_status": 200,
+        "title": "Nancy Grace Roman",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/roman-space-telescope",
+        "http_status": 200,
+        "title": "Roman Space Telescope",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/ssc-roles",
+        "http_status": 200,
+        "title": "SSC&#39;s Roles and Responsibilities",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/team",
+        "http_status": 200,
+        "title": "IPAC Roman Team",
+        "data_links": []
+       }
+      ]
      },
      {
       "url": "https://roman.ipac.caltech.edu/page/simulation-code",
@@ -297,7 +288,51 @@
       "title": "Simulation and Modeling Tools",
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/docs/PROPER_CGISim_CGI_optics_info_session-20210727_1801-1.mp4?1667850342",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/system/media_files/binaries/208/original/Krist_cgisim_proper_20210727.pdf?1667853456",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://roman-docs.stsci.edu/simulation-tools-handbook-home/stpsf-for-roman",
+        "http_status": 200,
+        "title": "STPSF - Space Telescope Point Spread Functions for Roman - Roman User Documentation",
+        "data_links": []
+       },
+       {
+        "url": "https://roman-docs.stsci.edu/simulation-tools-handbook-home/stips-space-telescope-imaging-product-simulator",
+        "http_status": 200,
+        "title": "STIPS - Space Telescope Imaging Product Simulator - Roman User Documentation",
+        "data_links": []
+       },
+       {
+        "url": "https://sourceforge.net/projects/cgisim/",
+        "http_status": 200,
+        "title": "CGISim download | SourceForge.net",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/nasa-jpl/lowfssim",
+        "http_status": 200,
+        "title": "GitHub - nasa-jpl/lowfssim: Roman-CGI optical model of LOWFS \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "http://axe-info.stsci.edu/simulate/",
+        "http_status": 200,
+        "title": "HSTaXe | STScI",
+        "data_links": []
+       }
+      ]
      },
      {
       "url": "https://roman.ipac.caltech.edu/page/simulations-instrument",
@@ -308,7 +343,51 @@
       "title": "Science Simulations by Instrument",
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/page/nasa-openuniverse-images-2024",
+        "http_status": 200,
+        "title": "NASA OpenUniverse 2024 Simulated Roman &amp; Rubin Images",
+        "data_links": []
+       },
+       {
+        "url": "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O/abstract",
+        "http_status": 405,
+        "title": "Human Verification",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/exoplanet-data-challenges-html",
+        "http_status": 200,
+        "title": "Roman Space Telescope Exoplanet Data Challenges",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/",
+        "http_status": 200,
+        "title": "Roman Microlensing Data Challenge 2026 (RMDC26) - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/mabuls-sim-html",
+        "http_status": 200,
+        "title": "Simulations using GULLS",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/mulensmodel-sim-html",
+        "http_status": 200,
+        "title": "Microlensing Light Curve Fitting with MulensModel",
+        "data_links": []
+       },
+       {
+        "url": "https://www.stsci.edu/contents/events/stsci/2021/april/the-roman-exoplanet-imaging-data-challenge-final-jamboree",
+        "http_status": 200,
+        "title": "The ROMAN Exoplanet Imaging Data Challenge: Final Jamboree | STScI",
+        "data_links": []
+       }
+      ]
      },
      {
       "url": "https://roman.ipac.caltech.edu/page/simulations-topic",
@@ -319,7 +398,112 @@
       "title": "Science Simulations by Topic",
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/page/roman-dc2-simulated-images",
+        "http_status": 200,
+        "title": "Roman High-Latitude Imaging Survey Simulated Images",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/sn-survey-image-sim-html",
+        "http_status": 200,
+        "title": "SN Survey Image Simulations",
+        "data_links": [
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/galaxia_akari.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_truth_gal.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/3dhst_sim_input_cat_v1.5.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_HEAD.FITS",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_PHOT.FITS.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/new_static.fits",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_0.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_11.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_22.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_33.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_1.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_12.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_23.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_34.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_2.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_13.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_24.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_35.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_3.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_14.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_25.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_36.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_4.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_15.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_26.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_37.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_5.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_16.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_27.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_38.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_6.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_17.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_28.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_39.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_7.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_18.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_29.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_40.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_8.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_19.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_30.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_41.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_9.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_20.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_31.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_42.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_10.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_21.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_32.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_43.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_update_truth_gal.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_Y_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_J_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_H_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_F_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/paper_rotate.fits",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_coadd_truth.tar.gz"
+        ]
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/ipac-stsci-goddard-grism-sim-html",
+        "http_status": 200,
+        "title": "Simulations by the IPAC/STScI/Goddard Group",
+        "data_links": [
+         "https://roman.ipac.caltech.edu/data/GRS_effarea_sensitivity.txt"
+        ]
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/galaxy-redshift-survey-sim-html",
+        "http_status": 200,
+        "title": "Simulations of the Galaxy Redshift Survey",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/galsim-imcom-sim-html",
+        "http_status": 200,
+        "title": "HLS Simulations Using GalSim and IMCOM",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/tools/",
+        "http_status": 200,
+        "title": "Tools - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/cgi-polarimetric-sims",
+        "http_status": 200,
+        "title": "Roman Coronagraph Instrument Polarimetric Simulations",
+        "data_links": []
+       }
+      ]
      },
      {
       "url": "https://roman.ipac.caltech.edu/page/nancy-grace-roman",
@@ -443,7 +627,67 @@
       "error": null
      }
     ],
-    "data_links": []
+    "data_links": [
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/galaxia_akari.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_truth_gal.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/3dhst_sim_input_cat_v1.5.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_HEAD.FITS",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_PHOT.FITS.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/new_static.fits",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_0.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_11.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_22.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_33.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_1.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_12.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_23.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_34.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_2.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_13.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_24.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_35.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_3.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_14.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_25.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_36.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_4.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_15.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_26.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_37.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_5.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_16.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_27.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_38.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_6.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_17.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_28.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_39.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_7.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_18.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_29.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_40.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_8.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_19.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_30.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_41.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_9.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_20.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_31.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_42.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_10.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_21.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_32.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_43.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_update_truth_gal.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_Y_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_J_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_H_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_F_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/paper_rotate.fits",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_coadd_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/GRS_effarea_sensitivity.txt"
+    ]
    },
    "head_status": 200
   },
@@ -453,7 +697,7 @@
    "url": "https://roman.ipac.caltech.edu/sims/",
    "status": "http_error",
    "http_status": 404,
-   "latency_s": 0.034,
+   "latency_s": 0.03,
    "error": null,
    "sim_kind": "page",
    "content_type": "text/html; charset=utf-8",
@@ -469,7 +713,7 @@
    "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.036,
+   "latency_s": 0.031,
    "error": null,
    "sim_kind": "index",
    "content_type": "text/html",
@@ -479,7 +723,7 @@
    "crawl": {
     "n_links_total": 16,
     "n_links_matched": 9,
-    "n_pages_fetched": 9,
+    "n_pages_fetched": 33,
     "capped": false,
     "links_matched": [
      "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/index.html",
@@ -502,7 +746,51 @@
       "title": "OpenUniverse 2024 Simulated Roman & Rubin Images",
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/RomanSimulatedCoadd_YHK.png",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/download.html",
+        "http_status": 200,
+        "title": "Simulated Data Information",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/docs/openuniverse2024_preview_documentation.pdf",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O",
+        "http_status": 405,
+        "title": "Human Verification",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/cloud_access/",
+        "http_status": 200,
+        "title": "Cloud Data Access",
+        "data_links": []
+       }
+      ]
      },
      {
       "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/RomanSimulatedCoadd_YHK.png",
@@ -513,7 +801,8 @@
       "title": null,
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": []
      },
      {
       "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/",
@@ -524,7 +813,39 @@
       "title": "Index of /data/theory/openuniverse2024/roman",
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=N;O=D",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=M;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=S;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=D;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/preview/",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman/preview",
+        "data_links": []
+       }
+      ]
      },
      {
       "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/",
@@ -535,7 +856,39 @@
       "title": "Index of /data/theory/openuniverse2024/rubin",
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=N;O=D",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=M;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=S;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=D;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/preview/",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin/preview",
+        "data_links": []
+       }
+      ]
      },
      {
       "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/download.html",
@@ -546,7 +899,51 @@
       "title": "Simulated Data Information",
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-F184.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-H158.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-J129.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-K213.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-R062.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-Y106.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-Z087.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       }
+      ]
      },
      {
       "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/docs/openuniverse2024_preview_documentation.pdf",
@@ -557,7 +954,8 @@
       "title": null,
       "is_data_file": false,
       "data_links": [],
-      "error": null
+      "error": null,
+      "subpages": []
      },
      {
       "url": "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O",
@@ -603,7 +1001,7 @@
    "url": "https://roman-docs.stsci.edu/",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.361,
+   "latency_s": 0.338,
    "error": null,
    "sim_kind": "documentation",
    "content_type": "text/html;charset=UTF-8",

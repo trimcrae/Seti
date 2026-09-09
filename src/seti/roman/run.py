@@ -55,7 +55,7 @@ from .schema import (
 )
 
 CHANNELS = ("lens", "lines", "flash", "statite", "paces")
-KINDS = ("lightcurve", "dq", "spectrum", "cgi")
+KINDS = ("lightcurve", "dq", "spectrum", "cgi", "obseq", "catalog")
 CHANNEL_KINDS = {"lens": ("lightcurve",), "paces": ("lightcurve", "spectrum"),
                  "lines": ("spectrum",), "flash": ("dq",), "statite": ("cgi",)}
 VERDICTS = ("NO_DATA_REACHED", "ROMAN_NOT_YET_PUBLIC", "SIMULATION_PACES_OK",
@@ -200,7 +200,34 @@ def readiness(out_dir: Path, conf: dict) -> dict:
 # ingest
 # ---------------------------------------------------------------------------
 
+# Product kinds that only make sense as a sibling of another product (fetched with it).
+_SIBLING_FORMATS = ("snana_phot", "openuniverse_truth_index")
+# OpenUniverse ``meta.format`` -> ingest kind.
+_FORMAT_KINDS = {"snana_head": "lightcurve", "openuniverse_image": "dq", "obseq": "obseq",
+                 "pointsource": "catalog", "galaxy_catalog": "catalog", "snana_catalog": "catalog"}
+
+
+def _ou_meta(product: dict) -> dict:
+    """The product's ``meta`` with the OpenUniverse facts (``format``, siblings, band)
+    filled in from the filename when the inventory did not record them."""
+    meta = dict(product.get("meta") or {})
+    if meta.get("format"):
+        return meta
+    from .openuniverse import classify_openuniverse_uri
+    inferred = classify_openuniverse_uri(str(product.get("uri") or ""))
+    if inferred:
+        merged = dict(inferred)
+        merged.update(meta)
+        return merged
+    return meta
+
+
 def _kind_of(product: dict) -> str | None:
+    fmt = str(_ou_meta(product).get("format") or "")
+    if fmt in _FORMAT_KINDS:
+        return _FORMAT_KINDS[fmt]
+    if fmt in _SIBLING_FORMATS:
+        return None
     k = str(product.get("kind") or "")
     if k == "lightcurve":
         return "lightcurve"
@@ -210,17 +237,62 @@ def _kind_of(product: dict) -> str | None:
         return "dq"
     if k == "cgi":
         return "cgi"
+    if k == "obseq":
+        return "obseq"
     return None
 
 
+def _merge_calibration(out_dir: Path, updates: dict) -> dict:
+    """Create or update ``results/roman/calibration.json`` (the measured-vs-assumed
+    ledger); other keys are kept, ``written_utc`` is refreshed."""
+    path = Path(out_dir) / "calibration.json"
+    cal = read_json(path, {}) or {}
+    cal.update(updates)
+    cal["written_utc"] = utc_now()
+    write_json(path, cal)
+    return cal
+
+
+def _fetch_sibling(ctx: dict, uri: str) -> Path | None:
+    """Fetch a product's sibling (PHOT table, truth index) through the ingest's
+    fetcher, charging its size to the download budget; local paths pass through."""
+    if not uri:
+        return None
+    fetch = ctx.get("fetch")
+    budget = ctx.get("budget") or {}
+    if fetch is None:
+        p = Path(str(uri))
+        return p if p.exists() else None
+    remaining = None
+    if budget:
+        remaining = max(0.0, float(budget.get("max", 0.0)) - float(budget.get("spent", 0.0)))
+        if remaining <= 0:
+            return None
+    local = fetch(uri, remaining)
+    if local is None:
+        return None
+    try:
+        if budget:
+            budget["spent"] = float(budget.get("spent", 0.0)) + float(Path(local).stat().st_size)
+    except Exception:  # noqa: BLE001
+        pass
+    return Path(local)
+
+
 def ingest(out_dir: Path, conf: dict, kinds=KINDS, limit: int = 200, cache_dir: Path | None = None,
-           inventory_record: dict | None = None, session=None) -> dict:
+           inventory_record: dict | None = None, session=None,
+           max_objects_per_product: int | None = None) -> dict:
     """Pull up to ``limit`` products per kind and normalise them.
 
     Mission products are preferred over simulated ones; a product whose
     reader is unavailable (no ``asdf`` on this machine, an unknown table
     layout) is recorded under ``unreadable`` with the reason -- the count is
-    part of the result, never silently dropped.
+    part of the result, never silently dropped.  Multi-object products (an
+    SNANA HEAD/PHOT pair, an image full of stars) stop after
+    ``max_objects_per_product`` objects (``archive.max_objects_per_product``).
+    OpenUniverse pointing sequences are not objects: their cadence record and
+    the per-image dq-flag census go to ``calibration.json``; the input
+    catalogues are recorded as ``catalog_only`` and not fetched.
     """
     from . import products as P
     from .archive import fetch_to_cache
@@ -232,53 +304,162 @@ def ingest(out_dir: Path, conf: dict, kinds=KINDS, limit: int = 200, cache_dir: 
     funnel = Funnel()
     manifest: list[dict] = []
     unreadable: list[dict] = []
+    catalog_only: list[dict] = []
     per_kind: dict[str, int] = {}
+    n_by_kind: dict[str, int] = {}
     flags, flags_src = P.dq_flags(conf)
-    max_bytes = float((conf.get("archive") or {}).get("max_download_bytes_per_run", 2e10))
-    spent = 0.0
+    arch = conf.get("archive") or {}
+    max_bytes = float(arch.get("max_download_bytes_per_run", 2e10))
+    if max_objects_per_product is None:
+        max_objects_per_product = int(arch.get("max_objects_per_product", 200))
+    budget = {"spent": 0.0, "max": max_bytes}
+    calib_updates: dict = {}
+    census_sum: dict = {"n_images": 0, "n_pixels": 0, "n_nonzero": 0, "per_flag": {}, "images": [],
+                        "dq_flags_source": flags_src}
+    zp_implied: dict[str, list[float]] = {}
+
+    def fetch(uri, remaining=None):
+        kw = {"session": session}
+        if remaining is not None:
+            kw["max_bytes"] = int(remaining)
+        return fetch_to_cache(uri, cache_dir / "raw", **kw)
+
     for prod in sorted(products, key=lambda r: (bool(r.get("simulated")), r.get("size_bytes") or 0)):
         kind = _kind_of(prod)
         if kind is None or kind not in kinds:
+            continue
+        ou_meta = _ou_meta(prod)
+        if kind == "catalog":
+            catalog_only.append({"uri": prod["uri"], "format": ou_meta.get("format"),
+                                 "size_bytes": prod.get("size_bytes")})
+            funnel.bump("catalog_only")
             continue
         if per_kind.get(kind, 0) >= int(limit):
             continue
         funnel.bump(f"selected_{kind}")
         size = float(prod.get("size_bytes") or 0)
-        if spent + size > max_bytes:
+        if budget["spent"] + size > max_bytes:
             funnel.reject("download_budget_exhausted")
             continue
-        local = fetch_to_cache(prod["uri"], cache_dir / "raw", session=session)
+        local = fetch(prod["uri"])
         if local is None:
             unreadable.append({"uri": prod["uri"], "reason": "fetch_failed"})
             funnel.reject("fetch_failed")
             continue
-        spent += size
+        budget["spent"] += size
+        ctx = {"fetch": fetch, "budget": budget, "max_objects": max_objects_per_product, "ou_meta": ou_meta}
+        if kind == "obseq":
+            try:
+                from .openuniverse import read_obseq
+                rec = read_obseq(local, conf)
+                rec["uri"] = prod["uri"]
+                calib_updates["survey_cadence_sim"] = rec
+                funnel.bump("normalised_obseq")
+                per_kind[kind] = per_kind.get(kind, 0) + 1
+            except Exception as exc:  # noqa: BLE001
+                unreadable.append({"uri": prod["uri"], "reason": f"{type(exc).__name__}: {exc}", "needs": []})
+                funnel.reject("reader_unavailable")
+            continue
         try:
-            objs = _normalise(kind, local, prod, conf, P, flags)
+            objs = _normalise(kind, local, prod, conf, P, flags, ctx)
         except Exception as exc:  # noqa: BLE001
             objs = P.ReaderUnavailable(reason=f"{type(exc).__name__}: {exc}", uri=prod["uri"], needs=[])
+        rec = ctx.get("image_record")
+        if rec and rec.get("dq_flag_census"):
+            c = rec["dq_flag_census"]
+            census_sum["n_images"] += 1
+            census_sum["n_pixels"] += int(c.get("n_pixels", 0))
+            census_sum["n_nonzero"] += int(c.get("n_nonzero", 0))
+            for name, n in (c.get("per_flag") or {}).items():
+                census_sum["per_flag"][name] = int(census_sum["per_flag"].get(name, 0)) + int(n)
+            if len(census_sum["images"]) < 200:
+                census_sum["images"].append({k: rec.get(k) for k in (
+                    "image_id", "band", "detector", "mjd", "exptime", "zptmag", "n_stars_in_image",
+                    "n_stars_used", "star_source", "truth_xy_origin", "truth_xy_offset",
+                    "zp_ab_implied_per_e_s", "dq_all_zero")} | {"n_nonzero": int(c.get("n_nonzero", 0)),
+                                                                   "uri": prod["uri"]})
+            if rec.get("zp_ab_implied_per_e_s") is not None and rec.get("band"):
+                zp_implied.setdefault(str(rec["band"]), []).append(float(rec["zp_ab_implied_per_e_s"]))
         if isinstance(objs, P.ReaderUnavailable):
             unreadable.append({"uri": prod["uri"], "reason": objs.reason, "needs": list(objs.needs)})
             funnel.reject("reader_unavailable")
             continue
         for o in objs:
-            manifest.append(save_object(o, kind, store, bool(prod.get("simulated")), prod["uri"]))
+            simulated = bool(prod.get("simulated")) or bool((getattr(o, "meta", None) or {}).get("simulated"))
+            manifest.append(save_object(o, kind, store, simulated, prod["uri"]))
             funnel.bump(f"normalised_{kind}")
+            n_by_kind[kind] = n_by_kind.get(kind, 0) + 1
         per_kind[kind] = per_kind.get(kind, 0) + 1
+    if census_sum["n_images"]:
+        calib_updates["dq_flag_census_sim"] = census_sum
+    if zp_implied:
+        ftab = ((conf.get("instruments") or {}).get("WFI", {}).get("filters") or {})
+        calib_updates["zero_points_sim"] = {
+            b: {"implied_ab_per_e_s_median": float(np.median(v)), "n_images": len(v),
+                "config_zp_ab": (ftab.get(b) or {}).get("zp_ab")} for b, v in zp_implied.items()}
+    if calib_updates:
+        _merge_calibration(out_dir, calib_updates)
     rec = {"stage": "ingest", "written_utc": utc_now(), "kinds": list(kinds), "limit": int(limit),
+           "max_objects_per_product": int(max_objects_per_product),
            "n_products_selected": int(sum(per_kind.values())), "per_kind": per_kind,
-           "n_objects": len(manifest), "n_unreadable": len(unreadable), "unreadable": unreadable[:200],
-           "dq_flags_source": flags_src, "bytes_downloaded": spent,
+           "n_objects": len(manifest), "n_objects_by_kind": n_by_kind,
+           "n_unreadable": len(unreadable), "unreadable": unreadable[:200],
+           "catalog_only": catalog_only[:200], "calibration_records": sorted(calib_updates),
+           "dq_flags_source": flags_src, "bytes_downloaded": budget["spent"],
            "simulated_inputs": (all(m["simulated"] for m in manifest) if manifest else None),
            "funnel": funnel.as_dict(), "store": str(store)}
     write_json(out_dir / "ingest.json", rec)
     write_json(cache_dir / "manifest.json", {"written_utc": utc_now(), "objects": manifest})
     _log(f"ingest: {len(manifest)} objects from {rec['n_products_selected']} products; "
-         f"{len(unreadable)} unreadable")
+         f"{len(unreadable)} unreadable; {len(catalog_only)} catalog-only")
     return rec
 
 
-def _normalise(kind: str, local: Path, prod: dict, conf: dict, P, flags: dict) -> list:
+def _normalise(kind: str, local: Path, prod: dict, conf: dict, P, flags: dict, ctx: dict | None = None) -> list:
+    """One fetched product -> schema objects (or ``ReaderUnavailable``).
+
+    Dispatches first on the OpenUniverse ``meta.format`` (SNANA HEAD + its PHOT
+    sibling; galsim image + its truth index), then on the generic kind.  ``ctx``
+    carries the ingest's fetcher / budget / ``max_objects`` and receives
+    ``image_record`` (header facts and the dq census) for an image.
+    """
+    ctx = ctx if ctx is not None else {}
+    meta = ctx.get("ou_meta") or _ou_meta(prod)
+    fmt = str(meta.get("format") or "")
+    max_objects = ctx.get("max_objects")
+    if fmt == "snana_head":
+        from .openuniverse import iter_snana_lightcurves
+        sib = meta.get("phot_sibling")
+        if not sib:
+            return P.ReaderUnavailable(reason="SNANA HEAD without a PHOT sibling", uri=str(local),
+                                       needs=["phot_sibling"])
+        phot = _fetch_sibling(ctx, str(sib))
+        if phot is None:
+            return P.ReaderUnavailable(reason=f"PHOT sibling not fetched: {sib}", uri=str(local),
+                                       needs=["phot_sibling"])
+        return list(iter_snana_lightcurves(local, phot, conf, max_objects=max_objects, roman_only=True))
+    if fmt == "openuniverse_image":
+        from .openuniverse import read_openuniverse_image
+        cands = list(meta.get("truth_index_candidates") or [])
+        if meta.get("truth_index") and meta["truth_index"] not in cands:
+            cands.insert(0, meta["truth_index"])
+        truth = None
+        for c in cands:
+            truth = _fetch_sibling(ctx, str(c))
+            if truth is not None:
+                break
+        oc = conf.get("openuniverse") or {}
+        rec: dict = {"truth_index": str(truth) if truth else None, "truth_index_candidates": cands}
+        ctx["image_record"] = rec
+        cuts = read_openuniverse_image(local, truth, conf, max_stars=int(oc.get("max_stars_per_image", 2000)),
+                                       mag_limit=float(oc.get("star_mag_limit", 24.0)), image_record=rec,
+                                       flags=flags)
+        if isinstance(cuts, P.ReaderUnavailable):
+            return cuts
+        if truth is None:
+            return P.ReaderUnavailable(reason="no truth index reachable and no star catalogue given",
+                                       uri=str(local), needs=["truth_index"])
+        return cuts[:int(max_objects)] if max_objects is not None else cuts
     if kind == "lightcurve":
         return P.read_lightcurve_table(local, conf=conf, band=prod.get("band"), survey=prod.get("survey") or "")
     if kind == "spectrum":
@@ -682,6 +863,9 @@ def _add_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--channels", default=",".join(CHANNELS), help="assess: comma-separated channels")
     p.add_argument("--kinds", default=",".join(KINDS), help="ingest: comma-separated product kinds")
     p.add_argument("--limit", type=int, default=200, help="ingest: products per kind")
+    p.add_argument("--max-objects-per-product", type=int, default=None,
+                   help="ingest: objects normalised per multi-object product "
+                        "(default archive.max_objects_per_product)")
     p.add_argument("--n-shards", type=int, default=4)
     p.add_argument("--shard", type=int, default=0)
     p.add_argument("--seed", type=int, default=7)
@@ -700,7 +884,8 @@ def run_stage(args) -> dict:
         return readiness(out_dir, conf)
     if args.stage == "ingest":
         kinds = tuple(k.strip() for k in args.kinds.split(",") if k.strip())
-        return ingest(out_dir, conf, kinds=kinds, limit=args.limit, cache_dir=cache_dir)
+        return ingest(out_dir, conf, kinds=kinds, limit=args.limit, cache_dir=cache_dir,
+                      max_objects_per_product=args.max_objects_per_product)
     if args.stage == "screen":
         return screen(out_dir, conf, args.channel, shard=args.shard, n_shards=args.n_shards,
                       cache_dir=cache_dir)

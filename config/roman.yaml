@@ -43,21 +43,80 @@ archive:
     - {name: "roman_mission", bucket: "nasa-irsa-roman", prefix: "",
        kind: "mission", public: true, verify: true,
        note: "Expected flight-data bucket name; existence is what the probe tests"}
-  # Pre-launch simulated products with the GBTDS-like cadence (microlensing).
-  # Each is a URL the probe fetches with HEAD/GET; pages are recorded verbatim.
+  # Pre-launch simulation pages.  Each is a URL the probe fetches with HEAD/GET
+  # and records verbatim.  ``kind: index`` pages are also CRAWLED one level deep:
+  # every href whose URL or anchor text matches `crawl_link_pattern` is fetched
+  # (HEAD, then GET capped at 1 MB), up to `crawl_max_pages` of them, and each
+  # page's title / status / data-file hrefs are recorded.  Run of 2026-09-09:
+  # roman.ipac.caltech.edu/sims/ and .../sims/Microlensing_Data_Challenge.html
+  # answered 404, so the crawl starts from the IPAC home page instead; /sims/
+  # is kept as a plain page in case it returns.
   simulations:
-    - {name: "roman_sims_index", url: "https://roman.ipac.caltech.edu/sims/", kind: "index"}
-    - {name: "microlensing_data_challenge", url: "https://roman.ipac.caltech.edu/sims/Microlensing_Data_Challenge.html",
-       kind: "gbtds_like", note: "2018 WFIRST microlensing data challenge: ~10^4 simulated GBTDS light curves"}
+    - {name: "roman_ipac_home", url: "https://roman.ipac.caltech.edu/", kind: "index",
+       note: "IPAC Roman Science Support Center home; crawled for simulation / data-challenge pages"}
+    - {name: "roman_sims_index", url: "https://roman.ipac.caltech.edu/sims/", kind: "page",
+       note: "404 on 2026-09-09; kept as a plain page in case the tree returns"}
     - {name: "openuniverse_irsa_page", url: "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/",
-       kind: "hltds_like"}
+       kind: "index", note: "IRSA landing page for OpenUniverse 2024 (200, no data links on 2026-09-09)"}
     - {name: "roman_docs_wfi", url: "https://roman-docs.stsci.edu/", kind: "documentation"}
+  # Crawl budget for ``kind: index`` pages (one level deep, HEAD then GET <= 1 MB).
+  crawl_max_pages: 15
+  crawl_link_pattern: "sim|challenge|microlens|openuniverse|data|roman"
+  # Delimiter-based recursive S3 listing (archive.list_s3_tree): every directory
+  # is listed with up to `max_keys_per_dir` sample keys (continuation tokens
+  # honoured, at most `max_pages_per_dir` pages), `max_subdirs_per_dir` of its
+  # NAMED subdirectories (bands, surveys, product types) and only
+  # `max_numeric_subdirs_per_dir` of its NUMBERED ones (pointings, HEALPix
+  # pixels -- OpenUniverse has 2000-5000 per band, all of one layout) are
+  # descended, at most `max_dirs` directories are listed in total, `max_depth`
+  # levels below the probe prefix.  The OpenUniverse bucket needs depth 6 to
+  # reach the per-pointing image files
+  # (full/RomanTDS/images/simple_model/<BAND>/<pointing>/); with these limits
+  # the 2026-09-09 walk from the sandbox cost ~300 requests.
+  s3_tree: {max_depth: 6, max_keys_per_dir: 200, max_dirs: 400, max_subdirs_per_dir: 12,
+            max_numeric_subdirs_per_dir: 2, max_pages_per_dir: 5}
+  # OpenUniverse 2024 (Roman-Rubin sim) band tokens -> WFI filter names.
+  openuniverse_band_map: {R062: F062, Z087: F087, Y106: F106, J129: F129, H158: F158,
+                          F184: F184, K213: F213, W146: F146}
   # Python packages the runner installs for real products; the sandbox has none.
   runner_packages: ["asdf>=3.0", "asdf-astropy", "roman_datamodels", "gwcs", "fsspec", "s3fs", "requests"]
   timeout_s: 60
   retries: 3
   retry_pause_s: 5.0
   max_download_bytes_per_run: 20.0e9
+  # Objects normalised per multi-object product (an SNANA HEAD/PHOT pair holds
+  # 7,471 SNe; an image holds hundreds of stars): ingest stops after this many.
+  max_objects_per_product: 200
+
+# ---------------------------------------------------------------------------
+# OpenUniverse 2024 (pre-launch Roman-Rubin simulation) readers
+# (seti.roman.openuniverse).  Conventions verified from the public files on
+# 2026-09-09: PTROBS pointers 1-based inclusive, one -777 separator row per SN
+# after PTROBS_MAX, truth-index x/y 1-based, mag_ab = truth_mag + ZPTMAG.
+# ---------------------------------------------------------------------------
+openuniverse:
+  # SNANA single-letter filters -> WFI names; LSST letters are kept, prefixed.
+  band_letters: {R: F062, Z: F087, Y: F106, J: F129, W: F146, H: F158, F: F184, K: F213,
+                 u: lsst_u, g: lsst_g, r: lsst_r, i: lsst_i, z: lsst_z, y: lsst_y}
+  # Image FILTER / obseq filter tokens -> WFI names.
+  band_tokens: {R062: F062, Z087: F087, Y106: F106, J129: F129, W146: F146, H158: F158,
+                F184: F184, K213: F213}
+  # The PHOT tables carry noiseless SIM_MAGOBS and no FLUXCALERR: errors are
+  # SYNTHESISED as max(assumed, slope * 10**(0.4 (mag - floor_at))) mag -- a
+  # flat floor at the bright end and a Poisson-like rise past floor_at (a crude
+  # Roman-depth model).  Every such curve carries meta.errors_assumed = true.
+  snana_assumed_mag_err: 0.01
+  snana_err_floor_mag_at: 24.0
+  snana_err_mag_slope: 0.01
+  # Model epochs fainter than this are undetected and dropped (meta.n_dropped_faint).
+  snana_mag_faint_limit: 30.0
+  # Stream-decompress a gzipped PHOT table to disk once so it can be memory-mapped.
+  decompress_phot: true
+  # Stars per image (brightest first) and the AB limit applied to truth_mag + ZPTMAG.
+  max_stars_per_image: 2000
+  star_mag_limit: 24.0
+  # obseq: exposures closer than this are one visit; the revisit gap is between visit starts.
+  obseq_visit_gap_days: 0.5
 
 # ---------------------------------------------------------------------------
 # Instruments

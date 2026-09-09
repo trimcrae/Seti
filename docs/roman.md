@@ -456,7 +456,17 @@ a microlensing peak is a brief *achromatic* brightening, which is the S30
 definition, so in the bulge the specular-glint channel needs the event
 **duration** as a gate (a glint lasts hours; a lensing event lasts days) —
 added as `paces.glint.max_event_duration_d` applied to the measured event
-duration, not only to the cadence.
+duration, not only to the cadence. Run 8 (12:17 PM ET) with that gate:
+**36** glint flags on the same 133 events (from 69), lens tiers 73 / 56 / 4.
+The 36 that remain are the short-timescale events — the challenge seeds
+free-floating-planet lenses whose whole event lasts hours — and they are
+the irreducible confusion between S30 and microlensing in the bulge:
+both are brief, both are achromatic. What separates them is the
+*profile* (a Paczyński curve is smooth and symmetric; a specular glint is a
+geometry-limited spike) and the fact that S40 already fits every curve, so
+`assess` now joins the two channels by star and reports glint flags on stars
+whose lens record reads `LENSING_*` as `glint_flags_lensing_like`, counted
+apart from the flags on stars with no lensing fit.
 
 Also measured: the simulated `DQ` planes carry no flag of any kind
 (33.4 M pixels, `dq_flag_census_sim`, read through `roman_datamodels.dqflags`

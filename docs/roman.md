@@ -144,8 +144,16 @@ reaches both), so the probe now lists the repositories through the Hugging
 Face API, the inventory emits their files as `lightcurve` products of format
 `rmdc26_parquet`, and the light-curve reader resolves the columns at run time,
 maps `W149`/`Z087` to F146/F087 and records what it found. **This is the
-dataset the S40 opaque-lens channel is calibrated on before launch** — the
-first ingest of it, sized by the byte budget, is the next `stage=full` run.
+dataset the S40 opaque-lens channel is calibrated on before launch.** The
+probe of 10:44 AM ET listed the repositories: `Beginner` holds
+`RMDC26_Beginner_Tier_test.parquet` (165 MB), `Experienced` holds
+`RMDC26_Experienced_Tier_test.parquet` (3.1 GB), neither gated nor private,
+and the author listing also carries `RGES-PIT/test` and
+`RGES-PIT/MachineLearning`, now in the config. The same run's ingest never
+reached them — it took the six smallest light-curve products, all SNANA
+headers — so ingest now orders products by a configured format priority
+(`archive.ingest_priority_formats`) before size; the first RMDC26 ingest is
+the next `stage=full` run.
 The 2018 WFIRST data challenge (`ulwdc1_*.dat`, `master_file.txt`) is no
 longer served at its old address (404 on 2026-09-09).
 

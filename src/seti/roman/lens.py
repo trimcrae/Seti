@@ -969,6 +969,44 @@ def hidden_image_fraction(t, f, e, params: dict, min_epochs: int = 10) -> dict |
 # Screening
 # --------------------------------------------------------------------------------------
 
+def time_symmetry_test(t, f, e, t0: float, min_pairs: int = 20) -> dict:
+    """Is the light curve symmetric about ``t0``?  Every lens is; no transient is.
+
+    For each epoch at ``t0 + dt`` (dt > 0) the flux at ``t0 - dt`` is
+    interpolated from the epochs before the peak, where the mirrored time is
+    covered; the reduced chi-square of the differences over those pairs is
+    the statistic.  Gravitational lensing (occulting or not, finite source or
+    not) is time-symmetric about the closest approach, so a large value says
+    the event is not a lens at all -- a supernova (fast rise, slow decline),
+    a nova, a flare.  ``None`` when fewer than ``min_pairs`` mirrored pairs
+    exist (the peak sits at an edge of the coverage).
+    """
+    t = np.asarray(t, float)
+    f = np.asarray(f, float)
+    e = np.asarray(e, float)
+    before = t < t0
+    after = t > t0
+    if before.sum() < 3 or after.sum() < 3:
+        return {"status": "insufficient_coverage", "chi2_red": None, "n_pairs": 0}
+    tb, fb, eb = t[before], f[before], e[before]
+    order = np.argsort(tb)
+    tb, fb, eb = tb[order], fb[order], eb[order]
+    dt = t[after] - t0
+    mirror = t0 - dt
+    ok = (mirror >= tb.min()) & (mirror <= tb.max())
+    if ok.sum() < int(min_pairs):
+        return {"status": "insufficient_coverage", "chi2_red": None, "n_pairs": int(ok.sum())}
+    fm = np.interp(mirror[ok], tb, fb)
+    em = np.interp(mirror[ok], tb, eb)
+    diff = f[after][ok] - fm
+    var = e[after][ok] ** 2 + em ** 2
+    chi2 = float(np.sum(diff ** 2 / np.where(var > 0, var, np.inf)))
+    n = int(ok.sum())
+    return {"status": "ok", "chi2_red": chi2 / max(n, 1), "n_pairs": n,
+            "mean_signed_diff": float(np.mean(diff)),
+            "rise_minus_decline_flux": float(np.mean(diff))}
+
+
 def screen_lightcurve(lc: LightCurve, conf: dict, colour_lc: LightCurve | None = None,
                       theta_star_uas: float | None = None, d_s_kpc: float | None = None,
                       rho_star_prior=None, pi_e: float | None = None) -> dict:
@@ -1041,6 +1079,23 @@ def screen_lightcurve(lc: LightCurve, conf: dict, colour_lc: LightCurve | None =
     if fit["regime"] == "central_hole" and fit["dbic_occult_vs_box"] < dbic_min:
         rejections.append("hole_without_wings")       # a total eclipse, not a lens
         occ_gates = True
+
+    # Time symmetry about t0: a lens of any kind is symmetric; a supernova is not.
+    # Fitted BEFORE the occultation gates are believed: the occulting model is
+    # symmetric too, and on a SN Ia curve it out-fits Paczynski for the wrong
+    # reason (run 34349717932: 1,262 of 2,688 simulated supernovae).
+    t0_best = float(fit["models"][fit["best_occult_kind"]]["params"].get("t0",
+                    fit["models"]["paczynski"]["params"].get("t0", np.median(t))))
+    sym = time_symmetry_test(t, f, e, t0_best,
+                             min_pairs=int(lens_conf.get("time_asymmetry_min_pairs", 20)))
+    out["time_symmetry"] = sym
+    if sym["status"] == "ok" and sym["chi2_red"] > float(lens_conf.get("time_asymmetry_chi2_red_max", 3.0)):
+        rejections.append("time_asymmetric")
+        notes.append("time-asymmetric about t0: a transient, not a lens")
+        out["tier"] = TIER_NOT_LENSING
+        return out
+    if sym["status"] != "ok":
+        pending.append("time_symmetry_not_run")
 
     # Kink symmetry and the two-for-one depth prediction (run whenever there is an event).
     asym_max = float(lens_conf.get("kink_asymmetry_max", 0.15))

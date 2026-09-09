@@ -90,6 +90,22 @@ un-encoded) — rebuilt as a tree listing with OpenUniverse patterns, plus
 run on real simulated products before launch. Selftest on the runner:
 PASS 12/12.
 
+**First full run through the screens (34349717932, 8:12 AM ET):
+`SIMULATION_PACES_OK`, 5,378 simulated objects** (2,688 SN Ia light curves
+in the eight Roman bands, two images, two pointing sequences; an earlier
+run had shipped the manifest without the object store and screened nothing).
+Two lessons the simulations taught, both fixed and tested (`docs/roman.md`
+§4A): a supernova's asymmetric rise/decline lets the *symmetric* occulting
+model out-fit Paczyński — 1,262 of 2,688 came out in the occulting tier —
+so the S40 screen now folds every curve about t₀ and rejects time-asymmetric
+events as `NOT_LENSING` before any occultation gate is believed; and at a
+5-day cadence every transient satisfies the glint definition (1,595 flagged),
+so glint is `not_applicable` above a 1-day cadence and transient-like curves
+are tagged and counted apart. The simulated DQ planes carry no flags, so
+S42's jump path waits for flight data; MAST now answers cleanly (no Roman
+collection); the crawl found the Roman Microlensing Data Challenge 2026
+page, the GBTDS-like stand-in for the next probe.
+
 **Prior art read (34302576338, 645 abstracts).** The occulting-lens
 light-curve morphology is natural-body literature — Agol 2002, a 2003
 astrometric finite-opaque-lens paper, and arXiv:2608.24009 (Aug 2026),

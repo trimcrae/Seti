@@ -58,6 +58,13 @@ archive:
        note: "404 on 2026-09-09; kept as a plain page in case the tree returns"}
     - {name: "openuniverse_irsa_page", url: "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/",
        kind: "index", note: "IRSA landing page for OpenUniverse 2024 (200, no data links on 2026-09-09)"}
+    # Found by the 2026-09-09 crawl: the Roman Microlensing Data Challenge 2026
+    # (RGES PIT) is the GBTDS-like stand-in; its data links are what the next
+    # probe records.
+    - {name: "rmdc26", url: "https://rges-pit.org/data-challenge/", kind: "index",
+       note: "Roman Microlensing Data Challenge 2026 (RGES PIT)"}
+    - {name: "roman_exoplanet_data_challenges", url: "https://roman.ipac.caltech.edu/page/exoplanet-data-challenges-html",
+       kind: "index"}
     - {name: "roman_docs_wfi", url: "https://roman-docs.stsci.edu/", kind: "documentation"}
   # Crawl budget for ``kind: index`` pages (one level deep, HEAD then GET <= 1 MB).
   crawl_max_pages: 15
@@ -252,6 +259,13 @@ lens:
   rho_l_max: 3.0
   # Symmetry test: u_crit on the rising and falling sides must agree.
   kink_asymmetry_max: 0.15
+  # Time symmetry: every lensing light curve (occulting or not) is symmetric
+  # about t0; a supernova, nova or flare is not.  Run 34349717932 on the
+  # OpenUniverse SN Ia curves put 1,262 of 2,688 supernovae in the occulting
+  # tier before this gate existed.  Reduced chi-square of f(t0+dt) against
+  # f(t0-dt) over the overlap above this value is `time_asymmetric`.
+  time_asymmetry_chi2_red_max: 3.0
+  time_asymmetry_min_pairs: 20
   # Achromaticity: a colour-band light curve (F087) sampled inside the deficit
   # must show the same fractional deficit within this many sigma.
   colour_deficit_sigma_max: 3.0
@@ -401,7 +415,16 @@ paces:
   # channels is one GBTDS season, found by gaps, not by 365.25 d.
   season_gap_days: 20.0
   dips: {depth_min: 0.03, k_sigma: 4.0, min_epochs: 200}
-  glint: {bright_min: 0.20, k_sigma: 6.0, min_epochs: 200, max_events: 6, merge_gap_d: 0.05}
+  # A specular glint lasts minutes to hours; a series sampled more coarsely
+  # than max_event_duration_d cannot resolve one and the channel says
+  # `not_applicable` (5-day HLTDS cadence) rather than flagging every
+  # transient as a glint, which run 34349717932 did on 1,595 supernovae.
+  glint: {bright_min: 0.20, k_sigma: 6.0, min_epochs: 200, max_events: 6, merge_gap_d: 0.05,
+          max_event_duration_d: 1.0}
+  # A single dominant, time-asymmetric brightening (rise faster than decline)
+  # marks a light curve `transient_like`; its dip/glint flags are reported
+  # separately because a supernova is not a star with an occulter.
+  transient: {min_excursion_epochs: 5, rise_decline_ratio_max: 0.5, k_sigma: 5.0}
   secular: {min_epochs: 400, min_seasons: 3, season_days: 72.0}
   rust: {season_days: 72.0, min_epochs_season: 100, min_seasons: 4}
   knell: {season_days: 72.0, min_epochs_block: 200, min_blocks: 4, block_mode: "gap",

@@ -214,7 +214,9 @@ def test_one_sided_anomaly_fails_the_symmetry_gate(conf):
 
     lc = L.synthesise_event(t0=T0, tE=TE, u0=0.2, fs=1.0, fb=0.1, seed=5, anomaly=bump)
     res = L.screen_lightcurve(lc, conf, theta_star_uas=1.0)
-    assert "kink_asymmetric" in res["rejections"]
+    # A one-sided bump is time-asymmetric about t0, so the (earlier) time-symmetry
+    # gate may reject it before the kink filter does; either rejection is the point.
+    assert {"kink_asymmetric", "time_asymmetric"} & set(res["rejections"])
     assert TIER_ORDER[res["tier"]] <= TIER_ORDER["OCCULTING_PREFERRED_PENDING_VET"]
 
 
@@ -387,3 +389,29 @@ def test_central_hole_kink_geometry(conf):
     assert kk["regime"] == "central_hole" and kk["status"] == "both_sides"
     assert abs(kk["u_c_measured"] / L.u_crit(rho_l) - 1.0) < 0.05
     assert kk["kink_asymmetry"] < 0.05
+
+
+def test_a_supernova_shaped_transient_is_not_a_lens():
+    """Run 34349717932 put 1,262 of 2,688 simulated SN Ia curves in the occulting
+    tier: the (symmetric) occulting model out-fits Paczynski on an asymmetric
+    transient for the wrong reason.  A fast-rise / slow-decline curve must now
+    fail the time-symmetry gate and come out NOT_LENSING."""
+    conf = load_roman_config()
+    rng = np.random.default_rng(3)
+    t = 60000.0 + np.arange(0, 120, 12.0 / 1440.0 * 60)      # one epoch per hour for 120 d
+    dt = t - 60040.0
+    model = 1.0 + 3.0 * np.where(dt < 0, np.exp(dt / 4.0), np.exp(-dt / 25.0))   # rise 4 d, decline 25 d
+    f = model * (1 + 0.01 * rng.standard_normal(t.size))
+    lc = LightCurve("syn_sn", 10.0, -44.0, "F146", t, f, 0.01 * model, flux_zp_ab=27.7)
+    rec = L.screen_lightcurve(lc, conf)
+    assert rec["tier"] == "NOT_LENSING"
+    assert "time_asymmetric" in rec["rejections"]
+    assert rec["time_symmetry"]["status"] == "ok" and rec["time_symmetry"]["chi2_red"] > 3.0
+
+
+def test_the_time_symmetry_gate_passes_a_real_occulting_event():
+    conf = load_roman_config()
+    lc = L.synthesise_event(rho_l=0.6, u0=0.2, tE=20.0, seed=11, star_id="syn_occ_sym")
+    rec = L.screen_lightcurve(lc, conf)
+    assert "time_asymmetric" not in rec["rejections"]
+    assert rec["time_symmetry"]["status"] == "ok" and rec["time_symmetry"]["chi2_red"] < 3.0

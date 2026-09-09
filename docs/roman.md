@@ -366,6 +366,50 @@ below are verbatim from the fetched records, ids title-checked.
   source as the test is not in the record. Vides et al. 2019 is the prior
   Roman-coronagraph SETI proposal (laser, not reflector) and is cited.
 
+## 4A. What the simulations taught (run 34349717932, 2026-09-09, 8:12 AM ET)
+
+The first `stage=full` run that reached the screen stage (`results/roman/`,
+`SIMULATION_PACES_OK`, 5,378 simulated objects: 2,688 SNANA light curves in
+the eight Roman bands from two HEAD/PHOT pairs, two TDS/WAS images, two
+pointing sequences) exposed two detector behaviours that flight data would
+have exposed later and worse:
+
+* **A supernova out-fits Paczyński with the *occulting* model.** 1,262 of the
+  2,688 SN Ia curves came out `OCCULTING_PREFERRED_PENDING_VET` and none
+  reached the candidate tier (every density and colour test was pending).
+  The reason is not the occultation physics: a fast-rise / slow-decline
+  transient is asymmetric about its peak, a Paczyński curve is symmetric, and
+  the occulting model has the extra freedom to absorb the asymmetry in the
+  wings. Every lens of any kind is time-symmetric about the closest approach,
+  so the screen now folds each curve about the fitted t₀ and rejects a
+  reduced χ² above 3 as `time_asymmetric` before any occultation gate is
+  believed (`lens.time_asymmetry_chi2_red_max`). Supernovae, novae, dwarf
+  novae and flares in the GBTDS fields all fall to this gate; a real
+  occulting event passes it (tested).
+* **At a 5-day cadence every transient is "a glint".** 1,595 of the 1,621
+  curves the glint pace ran on were flagged, and 1,371 by dips: a supernova
+  is a brightening confined to a few epochs on an otherwise flat baseline,
+  which is the glint definition. A specular glint lasts minutes to hours, so
+  the pace now reports `not_applicable` when the series' median cadence
+  exceeds `paces.glint.max_event_duration_d` (1 day), and every light curve
+  carries a `transient_like` tag (one dominant, interior, time-asymmetric
+  brightening) whose flags `assess` counts apart from the flags on stars.
+  The secular, RUST and KNELL paces were `insufficient` on every curve
+  (~300 epochs per band, no 100-epoch seasons at this cadence), which is the
+  honest answer for HLTDS-like sampling.
+
+Also measured: the simulated `DQ` planes carry no flag of any kind
+(33.4 M pixels, `dq_flag_census_sim`, read through `roman_datamodels.dqflags`
+on the runner), so S42's `JUMP_DET` path is exercised only by the synthetic
+selftest until flight Level 2 products exist; the implied F087 zero point of
+the galsim images is 26.40 against the config's 26.5; MAST's ObsCore now
+answers cleanly with no Roman collection (the earlier 400 was a column name);
+and the IPAC crawl reached the **Roman Microlensing Data Challenge 2026
+(RGES PIT)** page, the GBTDS-like stand-in, which the next probe records in
+full. Nothing here is a sky result: `simulated_inputs: true` on every record.
+
+---
+
 ## 5. Operations
 
 * `python -m seti.roman.run probe` — endpoints, packages, `data_state`.

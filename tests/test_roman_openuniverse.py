@@ -472,6 +472,13 @@ def test_obseq_cadence_record(tmp_path, conf):
 # Ingest dispatch through run.py
 # --------------------------------------------------------------------------------------
 
+def _cadence_record(cal):
+    """The cadence record is keyed by survey (one obseq per survey); this test
+    ingests one, so the single value is the record."""
+    rec = cal["survey_cadence_sim"]
+    return rec if "n_exposures" in rec else next(iter(rec.values()))
+
+
 def test_ingest_dispatches_openuniverse_products_and_writes_calibration(tmp_path, monkeypatch, conf):
     from seti.roman import archive, run
     from seti.roman.schema import read_json
@@ -525,8 +532,8 @@ def test_ingest_dispatches_openuniverse_products_and_writes_calibration(tmp_path
     cut = run.load_object(dq_row, cache / "normalized")
     assert isinstance(cut, DQCutout) and cut.band == "F158" and len(cut.stars) >= 1
     cal = json.loads((out / "calibration.json").read_text())
-    assert cal["survey_cadence_sim"]["hltds_like_cadence_days"] == pytest.approx(5.0)
-    assert cal["survey_cadence_sim"]["uri"] == str(obseq)
+    assert _cadence_record(cal)["hltds_like_cadence_days"] == pytest.approx(5.0)
+    assert _cadence_record(cal)["uri"] == str(obseq)
     assert cal["dq_flag_census_sim"]["n_images"] == 1
     assert cal["dq_flag_census_sim"]["per_flag"]["JUMP_DET"] == 2
     assert cal["dq_flag_census_sim"]["images"][0]["truth_xy_origin"] == 1
@@ -538,7 +545,7 @@ def test_ingest_dispatches_openuniverse_products_and_writes_calibration(tmp_path
                max_objects_per_product=2)
     cal2 = json.loads((out / "calibration.json").read_text())
     assert cal2["psf_core_fraction_measured"] == {"F146": 0.2} and "dq_flag_census_sim" in cal2
-    assert cal2["survey_cadence_sim"]["n_exposures"] == 20
+    assert _cadence_record(cal2)["n_exposures"] == 20
 
 
 def test_ingest_records_a_missing_sibling_as_unreadable(tmp_path, monkeypatch, conf):

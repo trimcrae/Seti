@@ -123,7 +123,7 @@ depth exactly A₋(u_c)**, on both sides of an otherwise standard event:
 
 | ρ_L | u_c | step depth A₋(u_c) |
 |---|---|---|
-| 0.3 | 3.03 | 0.7 % |
+| 0.3 | 3.03 | 0.8 % |
 | 0.5 | 1.50 | 6.7 % |
 | 0.7 | 0.73 | 31 % |
 | 0.9 | 0.21 | 190 % |

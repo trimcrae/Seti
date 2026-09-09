@@ -202,9 +202,15 @@ def readiness(out_dir: Path, conf: dict) -> dict:
 
 # Product kinds that only make sense as a sibling of another product (fetched with it).
 _SIBLING_FORMATS = ("snana_phot", "openuniverse_truth_index")
-# OpenUniverse ``meta.format`` -> ingest kind.
+# OpenUniverse / RMDC26 ``meta.format`` -> ingest kind.
 _FORMAT_KINDS = {"snana_head": "lightcurve", "openuniverse_image": "dq", "obseq": "obseq",
-                 "pointsource": "catalog", "galaxy_catalog": "catalog", "snana_catalog": "catalog"}
+                 "pointsource": "catalog", "galaxy_catalog": "catalog", "snana_catalog": "catalog",
+                 "rmdc26_parquet": "lightcurve", "rmdc26_table": "lightcurve",
+                 "rmdc26_truth": "catalog"}
+# Roman Microlensing Data Challenge 2026 tables: every event's epochs in one table
+# (``name`` / ``HJD`` / ``mag`` / ``mag_err`` / ``band``), read per (event, band).
+_RMDC26_FORMATS = ("rmdc26_parquet", "rmdc26_table")
+RMDC26_SURVEY = "GBTDS_sim"
 
 
 def _ou_meta(product: dict) -> dict:
@@ -428,7 +434,9 @@ def _normalise(kind: str, local: Path, prod: dict, conf: dict, P, flags: dict, c
     """One fetched product -> schema objects (or ``ReaderUnavailable``).
 
     Dispatches first on the OpenUniverse ``meta.format`` (SNANA HEAD + its PHOT
-    sibling; galsim image + its truth index), then on the generic kind.  ``ctx``
+    sibling; galsim image + its truth index) and the RMDC26 challenge tables
+    (one table, many events: ``read_lightcurve_table`` with the ingest's
+    ``max_objects`` cap and ``survey="GBTDS_sim"``), then on the generic kind.  ``ctx``
     carries the ingest's fetcher / budget / ``max_objects`` and receives
     ``image_record`` (header facts and the dq census) for an image.
     """
@@ -469,6 +477,13 @@ def _normalise(kind: str, local: Path, prod: dict, conf: dict, P, flags: dict, c
             return P.ReaderUnavailable(reason="no truth index reachable and no star catalogue given",
                                        uri=str(local), needs=["truth_index"])
         return cuts[:int(max_objects)] if max_objects is not None else cuts
+    if fmt in _RMDC26_FORMATS:
+        # simulated=True travels on the product row AND on each curve's meta
+        extra = {"simulated": True, "format": fmt}
+        if meta.get("tier") is not None:
+            extra["tier"] = meta.get("tier")
+        return P.read_lightcurve_table(local, conf=conf, survey=RMDC26_SURVEY, meta=extra,
+                                       max_objects=None if max_objects is None else int(max_objects))
     if kind == "lightcurve":
         return P.read_lightcurve_table(local, conf=conf, band=prod.get("band"), survey=prod.get("survey") or "")
     if kind == "spectrum":

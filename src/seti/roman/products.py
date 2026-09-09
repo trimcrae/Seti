@@ -35,6 +35,16 @@ MAG_ZP_DERIVED = 25.0
 _ANGSTROM_PER_UM = 1.0e4
 _NM_PER_UM = 1.0e3
 _JD_MJD_OFFSET = 2400000.5
+# The "HJD - 2450000" convention of microlensing tables (OGLE, MOA, the Roman
+# Microlensing Data Challenge notebooks): values in this range under a JD-like
+# column name are reduced Julian dates.
+_REDUCED_JD_OFFSET = 2450000.0
+_REDUCED_JD_RANGE = (4000.0, 9999.0)
+# Band names as simulations / challenges write them -> WFI filter names; the config's
+# ``instruments.WFI.band_aliases`` overrides this table at read time.
+WFI_BAND_ALIASES = {"W149": "F146", "W146": "F146", "R062": "F062", "Z087": "F087", "Y106": "F106",
+                    "J129": "F129", "H158": "F158", "K213": "F213", "R": "F062", "Z": "F087",
+                    "Y": "F106", "J": "F129", "W": "F146", "H": "F158", "F": "F184", "K": "F213"}
 
 
 @dataclass
@@ -444,8 +454,8 @@ def read_ramp(uri_or_tree, box=None, conf: dict | None = None) -> Ramp | ReaderU
 
 LC_ROLE_CANDIDATES: dict[str, list[str]] = {
     "star_id": ["star_id", "source_id", "id", "objid", "object_id", "sourceid", "star",
-                "gaia_id", "roman_id", "lc_id", "name"],
-    "time": ["mjd", "MJD", "time", "t", "bjd", "BJD_TDB", "bjd_tdb", "jd", "JD", "hjd",
+                "gaia_id", "roman_id", "lc_id", "name", "event_id", "event", "event_name"],
+    "time": ["mjd", "MJD", "time", "t", "bjd", "BJD_TDB", "bjd_tdb", "jd", "JD", "hjd", "HJD",
              "obsmjd", "mjd_obs", "epoch", "mjd_tdb", "tdb"],
     "flux": ["flux", "f", "flux_e_s", "psf_flux", "aperture_flux", "FLUX", "counts", "rate"],
     "flux_err": ["flux_err", "ferr", "e_flux", "fluxerr", "psf_flux_err", "flux_error",
@@ -545,7 +555,8 @@ def load_table(path_or_df, meta: dict | None = None, asdf_key: str | None = None
             return t.to_pandas(), m
         if suf in (".csv", ".txt", ".dat"):
             comments = _header_comments(path)
-            df = pd.read_csv(path, comment="#", sep=None, engine="python")
+            df, how = _read_delimited(path, pd)
+            comments.update(how)
             comments.update(meta)
             return df, comments
         if suf == ".ecsv":
@@ -597,6 +608,66 @@ def load_table(path_or_df, meta: dict | None = None, asdf_key: str | None = None
         return ru
     except Exception as exc:  # noqa: BLE001
         return ReaderUnavailable(f"table read failed: {exc!r}", uri, [])
+
+
+def _first_lines(path: Path, n: int = 200) -> tuple[list[str], str | None]:
+    """The leading ``#`` comment lines and the first non-comment, non-blank line."""
+    comments: list[str] = []
+    first = None
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for _ in range(n):
+                line = fh.readline()
+                if not line:
+                    break
+                if line.startswith("#"):
+                    comments.append(line.rstrip("\n"))
+                    continue
+                if line.strip():
+                    first = line.rstrip("\n")
+                    break
+    except Exception:  # noqa: BLE001
+        pass
+    return comments, first
+
+
+def _looks_numeric(tok) -> bool:
+    try:
+        float(str(tok))
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _read_delimited(path: Path, pd):
+    """A ``.csv`` / ``.txt`` / ``.dat`` table with ``#`` comments: comma-separated
+    when the first data line carries commas, else whitespace-delimited (the
+    ``pd.read_csv(sep=r"\\s+", comment="#")`` form the RMDC26 notebooks use).
+
+    A file without a header row (its first non-comment line carries a number
+    -- a header row carries none) takes its column names from the last ``#``
+    line when that line has as many tokens as the row (``# HJD mag mag_err
+    band``), else ``col0..colN``.  Returns ``(df, {"delimiter", "header_source"})``.
+    """
+    comments, first = _first_lines(path)
+    sep = "," if (first is not None and "," in first) else r"\s+"
+    how = {"delimiter": "comma" if sep == "," else "whitespace", "header_source": "first_row"}
+    kw = {"comment": "#", "sep": sep} if sep == "," else {"comment": "#", "sep": sep, "engine": "python"}
+    first_toks = [t for t in re.split(r"[\s,]+", (first or "").strip()) if t]
+    if first_toks and any(_looks_numeric(t) for t in first_toks):
+        names = None
+        for line in reversed(comments):
+            toks = [t for t in re.split(r"[\s,]+", line.lstrip("#").strip()) if t]
+            if len(toks) == len(first_toks) and not any(_looks_numeric(t) for t in toks):
+                names = toks
+                break
+        if names is None:
+            names = [f"col{i}" for i in range(len(first_toks))]
+            how["header_source"] = "none"
+        else:
+            how["header_source"] = "comment_line"
+        return pd.read_csv(path, header=None, names=names, **kw), how
+    return pd.read_csv(path, **kw), how
 
 
 def _coerce_meta_value(v):
@@ -682,6 +753,39 @@ def _time_system(colname: str | None, meta: dict) -> str:
     return "unknown"
 
 
+def band_aliases(conf: dict | None = None) -> dict[str, str]:
+    """``instruments.WFI.band_aliases`` (upper-cased keys) over :data:`WFI_BAND_ALIASES`."""
+    out = {str(k).upper(): str(v).upper() for k, v in WFI_BAND_ALIASES.items()}
+    cfg = (((conf or {}).get("instruments") or {}).get("WFI") or {}).get("band_aliases") or {}
+    for k, v in cfg.items():
+        out[str(k).upper()] = str(v).upper()
+    return out
+
+
+def times_to_mjd(t: np.ndarray, colname: str | None) -> tuple[np.ndarray, str]:
+    """Times in MJD and the convention that was assumed.
+
+    * a median above 2.4e6 is a full Julian date whatever the column name
+      (``jd_to_mjd``);
+    * a JD-like column name (``jd`` / ``hjd`` / ``bjd``, not ``mjd``) whose
+      median lies in 4000-9999 is a reduced ``JD - 2450000`` (the microlensing
+      convention; ``reduced_jd_to_mjd``);
+    * a JD-like name with values already in the MJD range is left as it is
+      (``mjd_range_as_is``); anything else is untouched (``as_is``).
+    """
+    t = np.asarray(t, dtype=float)
+    med = float(np.nanmedian(t)) if t.size and np.any(np.isfinite(t)) else float("nan")
+    c = (colname or "").lower()
+    jd_like = "jd" in c and "mjd" not in c
+    if np.isfinite(med) and med > 2.4e6:
+        return t - _JD_MJD_OFFSET, "jd_to_mjd"
+    if jd_like and np.isfinite(med) and _REDUCED_JD_RANGE[0] <= med <= _REDUCED_JD_RANGE[1]:
+        return t + (_REDUCED_JD_OFFSET - _JD_MJD_OFFSET), "reduced_jd_to_mjd"
+    if jd_like:
+        return t, "mjd_range_as_is"
+    return t, "as_is"
+
+
 def _first_finite(series, default=float("nan")) -> float:
     try:
         arr = np.asarray(series, dtype=float)
@@ -711,7 +815,8 @@ def _zero_point(meta: dict, conf: dict | None, band: str, flux_unit: str) -> tup
 
 def read_lightcurve_table(path_or_df, colmap: dict | None = None, conf: dict | None = None,
                           band: str | None = None, survey: str = "", star_id=None,
-                          meta: dict | None = None) -> list[LightCurve] | ReaderUnavailable:
+                          meta: dict | None = None,
+                          max_objects: int | None = None) -> list[LightCurve] | ReaderUnavailable:
     """Level 4 light-curve table(s) -> one :class:`LightCurve` per (star, band).
 
     Roles are resolved by :func:`resolve_roles`; a table with only magnitudes is
@@ -720,6 +825,16 @@ def read_lightcurve_table(path_or_df, colmap: dict | None = None, conf: dict | N
     curve without errors cannot be screened and must not be padded.  The zero
     point comes from the table metadata, else the config filter table (e-/s),
     else ``None`` (relative flux), with ``meta["zp_source"]`` saying which.
+
+    Times become MJD by :func:`times_to_mjd` (full JD, reduced ``JD - 2450000``,
+    or already MJD) and ``meta["time_convention"]`` records which.  Band values
+    are upper-cased and passed through ``instruments.WFI.band_aliases``
+    (``W149`` -> ``F146`` ...) before grouping; ``meta["band_raw"]`` keeps the
+    token as written and ``meta["band_alias_applied"]`` is ``{raw: alias}`` or
+    ``None``.  Curves come out in order of first appearance of their
+    (star, band) pair; ``max_objects`` keeps the first that many, and every
+    returned curve carries ``meta["capped"]`` (True when curves were dropped),
+    ``meta["n_curves_in_table"]`` and ``meta["max_objects"]``.
     """
     loaded = load_table(path_or_df, meta)
     if isinstance(loaded, ReaderUnavailable):
@@ -739,11 +854,7 @@ def read_lightcurve_table(path_or_df, colmap: dict | None = None, conf: dict | N
     if len(df) == 0:
         return []
 
-    t = np.asarray(df[roles["time"]], dtype=float)
-    tcol = roles["time"].lower()
-    if ("jd" in tcol and "mjd" not in tcol) or np.nanmedian(t) > 2.4e6:
-        if np.nanmedian(t) > 2.4e6:
-            t = t - _JD_MJD_OFFSET
+    t, time_convention = times_to_mjd(np.asarray(df[roles["time"]], dtype=float), roles["time"])
     time_system = _time_system(roles["time"], tmeta)
     if use_mag:
         mag = np.asarray(df[roles["mag"]], dtype=float)
@@ -773,26 +884,45 @@ def read_lightcurve_table(path_or_df, colmap: dict | None = None, conf: dict | N
     band_default = str(band or _meta_get(tmeta, "band", "filter", "optical_element",
                                          default="UNKNOWN")).upper()
     sids = df[sid_col].astype(str).to_numpy() if sid_col else np.full(len(df), sid_default)
-    bands = df[band_col].astype(str).str.upper().to_numpy() if band_col \
+    raw_bands = df[band_col].astype(str).str.strip().str.upper().to_numpy() if band_col \
         else np.full(len(df), band_default)
+    aliases = band_aliases(conf)
+    alias_of = {b: aliases.get(b, b) for b in np.unique(raw_bands).tolist()}
+    bands = np.asarray([alias_of[b] for b in raw_bands.tolist()], dtype=object) \
+        if alias_of else raw_bands
     surv = str(survey or _meta_get(tmeta, "survey", default=""))
     out: list[LightCurve] = []
-    keys = sorted(set(zip(sids.tolist(), bands.tolist(), strict=True)))
+    # (star, band) groups in order of first appearance -- the cap is then deterministic
+    import pandas as pd
+    groups = pd.DataFrame({"s": sids, "b": bands}).groupby(["s", "b"], sort=False).indices
+    keys = list(groups.keys())
+    n_keys = len(keys)
+    capped = max_objects is not None and n_keys > int(max_objects)
+    if capped:
+        keys = keys[:max(0, int(max_objects))]
+    raw_by_key = {}
+    for (sid, bnd), idx in groups.items():
+        raw_by_key[(sid, bnd)] = str(raw_bands[idx[0]])
+    ra_all = df[roles["ra"]].to_numpy() if roles["ra"] else None
+    dec_all = df[roles["dec"]].to_numpy() if roles["dec"] else None
     for sid, bnd in keys:
-        sel = (sids == sid) & (bands == bnd)
-        if not np.any(sel):
-            continue
+        sel = np.asarray(groups[(sid, bnd)], dtype=int)      # row positions of this curve
+        raw = raw_by_key[(sid, bnd)]
         if use_mag:
             zp_b, src_b = zp, zp_source
         else:
             zp_b, src_b = _zero_point(tmeta, conf, bnd, flux_unit)
-        ra = _first_finite(df.loc[sel, roles["ra"]]) if roles["ra"] else \
+        ra = _first_finite(ra_all[sel]) if ra_all is not None else \
             float(_meta_get(tmeta, "ra", default=float("nan")) or float("nan"))
-        dec = _first_finite(df.loc[sel, roles["dec"]]) if roles["dec"] else \
+        dec = _first_finite(dec_all[sel]) if dec_all is not None else \
             float(_meta_get(tmeta, "dec", default=float("nan")) or float("nan"))
         m = {"zp_source": src_b, "roles": {k: v for k, v in roles.items() if v},
-             "time_column": roles["time"], "source": uri, "n_rows": int(sel.sum())}
-        for k in ("simulated", "pipeline_version", "survey", "field"):
+             "time_column": roles["time"], "time_convention": time_convention, "source": uri,
+             "n_rows": int(sel.size), "band_raw": raw,
+             "band_alias_applied": ({raw: str(bnd)} if raw != str(bnd) else None),
+             "capped": bool(capped), "n_curves_in_table": int(n_keys),
+             "max_objects": None if max_objects is None else int(max_objects)}
+        for k in ("simulated", "pipeline_version", "survey", "field", "tier"):
             v = _meta_get(tmeta, k)
             if v is not None:
                 m[k] = json_safe(v)
@@ -973,4 +1103,5 @@ __all__ = ["ReaderUnavailable", "dq_flags", "lightcurve_dq_mask", "read_asdf_arr
            "flatten_meta", "dq_cutouts_from_image", "stars_to_pixels", "read_ramp",
            "resultant_mid_times", "read_lightcurve_table", "read_spectrum_table",
            "wavelength_to_um", "resolving_power_for", "resolve_roles", "load_table",
-           "LC_ROLE_CANDIDATES", "SPEC_ROLE_CANDIDATES", "MAG_ZP_DERIVED"]
+           "band_aliases", "times_to_mjd", "LC_ROLE_CANDIDATES", "SPEC_ROLE_CANDIDATES",
+           "MAG_ZP_DERIVED", "WFI_BAND_ALIASES"]

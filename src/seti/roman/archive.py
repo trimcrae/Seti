@@ -5,7 +5,9 @@ of which degrades honestly instead of raising:
 
 :func:`probe`           asks every endpoint in ``config/roman.yaml → archive``
                         (IRSA TAP/SIA2/data root, the public S3 buckets, MAST
-                        CAOM, the IPAC simulation pages) and the runner's own
+                        CAOM, the IPAC simulation pages, the Hugging Face
+                        datasets of the Roman Microlensing Data Challenge 2026
+                        -- :func:`probe_huggingface`) and the runner's own
                         Python environment what exists, records status /
                         latency / what it saw per endpoint, and derives one
                         ``data_state`` with the evidence that drove it.  A
@@ -91,6 +93,15 @@ _OU_OBSEQ_RE = re.compile(r"_obseq_.*\.fits(\.gz)?$", re.I)
 # RomanWAS/images/coadds/<BAND>/Row12/prod_F_12_07_map.fits.gz (preview)
 _OU_COADD_RE = re.compile(r"^prod_([a-z0-9]+)_(\d+)_(\d+)_map\.fits(\.gz)?$", re.I)
 _DOC_EXTENSIONS = (".dump", ".list", ".readme", ".yaml", ".yml", ".pdf", ".png", ".md", ".html")
+# Roman Microlensing Data Challenge 2026 (RGES PIT, Hugging Face): one Parquet per
+# tier, ``RMDC26_<Tier>_Tier_test.parquet`` (tier in {Beginner, Experienced}; the
+# challenge notebooks also name a ``test`` tier of whitespace .csv/.dat files).
+_RMDC_TIER_RE = re.compile(r"^(rmdc\d*)_([a-z0-9]+)_tier[^/]*\.(parquet|pq)$", re.I)
+_RMDC_TABLE_RE = re.compile(r"lc|light_?curves?|rmdc", re.I)
+_RMDC_TRUTH_RE = re.compile(r"master|truth|params?|catalog", re.I)
+_HF_TABLE_EXTENSIONS = (".parquet", ".pq", ".csv", ".dat", ".txt")
+_HF_DOC_EXTENSIONS = (".md", ".json", ".readme", ".txt.license", ".pdf", ".ipynb", ".yaml", ".yml")
+HF_FILE_CAP = 2000
 
 
 # --------------------------------------------------------------------------------------
@@ -677,6 +688,202 @@ def _probe_simulation_page(entry: dict, session, timeout: float, arch: dict | No
     return rec
 
 
+def hf_api_urls(api: str, repo: str) -> dict:
+    """The anonymous Hugging Face endpoints for one dataset repo."""
+    base = str(api).rstrip("/")
+    q = quote(str(repo), safe="/")
+    return {"dataset": f"{base}/api/datasets/{q}",
+            "tree": f"{base}/api/datasets/{q}/tree/main",
+            "resolve": f"{base}/datasets/{q}/resolve/main/"}
+
+
+def hf_resolve_url(api: str, repo: str, path: str) -> str:
+    """``https://huggingface.co/datasets/<repo>/resolve/main/<path>`` (a redirect to the CDN)."""
+    return hf_api_urls(api, repo)["resolve"] + quote(str(path).lstrip("/"), safe="/")
+
+
+def _hf_json(session, url: str, timeout: float, rec: dict):
+    """One GET expected to answer JSON; ``(parsed, text)`` with ``parsed`` None on
+    a non-200 / unparsable answer (the reason goes into ``rec["error"]``)."""
+    r = _http(session, "get", url, timeout, rec)
+    if r is None:
+        return None, ""
+    text = _text(r)
+    if rec.get("http_status") != 200:
+        rec["error"] = (f"http {rec.get('http_status')}: " + " ".join(text[:300].split())).strip()
+        return None, text
+    try:
+        return json.loads(text), text
+    except Exception as exc:  # noqa: BLE001
+        rec["error"] = f"json: {exc!r}"[:300]
+        return None, text
+
+
+def _probe_hf_dataset(hf: dict, repo: str, session, timeout: float) -> dict:
+    """One Hugging Face dataset repo: the dataset record (``siblings``, ``gated``,
+    ``private``, ``lastModified``) and the ``tree/main`` listing (paths with
+    sizes), merged into ``files``.  A 401/403 (gated or private) is recorded
+    on the endpoint -- ``status: http_error`` -- and never raised."""
+    urls = hf_api_urls(hf.get("api") or "https://huggingface.co", repo)
+    rec = _endpoint(f"hf:{repo}", "huggingface_dataset", urls["tree"])
+    rec.update(repo=str(repo), survey=str(hf.get("survey") or ""), files=[], n_files=0,
+               gated=None, private=None, last_modified=None, simulated=True,
+               dataset_status=None, tree_status=None, resolve_base=urls["resolve"])
+    sizes: dict[str, int | None] = {}
+    order: list[str] = []
+    # 1. the dataset record
+    drec: dict = {}
+    dobj, _ = _hf_json(session, urls["dataset"], timeout, drec)
+    rec["dataset_status"] = drec.get("http_status")
+    if isinstance(dobj, dict):
+        g = dobj.get("gated")
+        rec["gated"] = bool(g) if isinstance(g, (bool, str)) else g
+        rec["private"] = dobj.get("private")
+        rec["last_modified"] = dobj.get("lastModified")
+        for sib in dobj.get("siblings") or []:
+            path = str((sib or {}).get("rfilename") or "") if isinstance(sib, dict) else ""
+            if path and path not in sizes:
+                sizes[path] = None
+                order.append(path)
+    # 2. the tree (sizes); the FIRST error is the one worth keeping
+    trec: dict = {}
+    tobj, _ = _hf_json(session, urls["tree"], timeout, trec)
+    rec["tree_status"] = trec.get("http_status")
+    if isinstance(tobj, list):
+        for ent in tobj:
+            if not isinstance(ent, dict) or str(ent.get("type") or "file") == "directory":
+                continue
+            path = str(ent.get("path") or "")
+            if not path:
+                continue
+            try:
+                size = int(ent["size"]) if ent.get("size") is not None else None
+            except Exception:  # noqa: BLE001
+                size = None
+            if path not in sizes:
+                order.append(path)
+            sizes[path] = size
+    rec["http_status"] = trec.get("http_status") if trec.get("http_status") is not None \
+        else drec.get("http_status")
+    rec["latency_s"] = trec.get("latency_s") if trec.get("latency_s") is not None \
+        else drec.get("latency_s")
+    ok = isinstance(dobj, dict) or isinstance(tobj, list)
+    if ok:
+        rec["status"] = "ok"
+        rec["error"] = None if (isinstance(dobj, dict) and isinstance(tobj, list)) else \
+            (drec.get("error") or trec.get("error"))
+    else:
+        rec["status"] = "http_error" if rec["http_status"] is not None else "failed"
+        rec["error"] = drec.get("error") or trec.get("error")
+        if rec["http_status"] in (401, 403) and rec["gated"] is None:
+            rec["gated"] = f"unknown (http {rec['http_status']})"
+    rec["files"] = [{"path": pth, "size": sizes[pth]} for pth in order[:HF_FILE_CAP]]
+    rec["n_files"] = len(order)
+    rec["files_capped"] = len(order) > HF_FILE_CAP
+    return rec
+
+
+def _probe_hf_author(hf: dict, author: str, session, timeout: float) -> dict:
+    """The dataset ids under one Hugging Face author, so a new tier is seen."""
+    base = str(hf.get("api") or "https://huggingface.co").rstrip("/")
+    url = f"{base}/api/datasets?" + urlencode({"author": str(author), "limit": 100})
+    rec = _endpoint(f"hf:author:{author}", "huggingface_author", url)
+    rec.update(author=str(author), datasets=[], n_datasets=0, simulated=True,
+               new_datasets=[])
+    obj, _ = _hf_json(session, url, timeout, rec)
+    if not isinstance(obj, list):
+        if rec["http_status"] is not None:
+            rec["status"] = "http_error"
+        return rec
+    ids = [str(d.get("id")) for d in obj if isinstance(d, dict) and d.get("id")]
+    rec["datasets"] = ids
+    rec["n_datasets"] = len(ids)
+    known = {str(x) for x in (hf.get("datasets") or [])}
+    rec["new_datasets"] = [i for i in ids if i not in known]
+    rec["status"] = "ok"
+    return rec
+
+
+def probe_huggingface(conf: dict, session, timeout: float) -> list[dict]:
+    """Endpoint records for the Hugging Face datasets in ``archive.huggingface``.
+
+    One ``hf:<repo>`` record per configured dataset (``kind:
+    huggingface_dataset``; ``files`` as ``[{path, size}]`` from ``tree/main``,
+    falling back to the dataset record's ``siblings`` without sizes; ``gated``
+    / ``private`` / ``last_modified`` from the dataset record; every one
+    ``simulated: True``) plus one ``hf:author:<author>`` record listing the
+    author's dataset ids (``datasets``; ``new_datasets`` are the ones not in
+    the config, so a new challenge tier is noticed).  A dataset that answers
+    401/403 is recorded with that status, never raised; an empty config block
+    yields no records.
+    """
+    hf = (conf.get("archive") or {}).get("huggingface") or {}
+    if not hf:
+        return []
+    recs = []
+    for repo in hf.get("datasets") or []:
+        try:
+            recs.append(_probe_hf_dataset(hf, str(repo), session, timeout))
+        except Exception as exc:  # noqa: BLE001
+            rec = _endpoint(f"hf:{repo}", "huggingface_dataset", "")
+            rec.update(repo=str(repo), files=[], n_files=0, simulated=True,
+                       error=f"probe step raised: {exc!r}"[:300])
+            recs.append(rec)
+    author = hf.get("author")
+    if author:
+        try:
+            recs.append(_probe_hf_author(hf, str(author), session, timeout))
+        except Exception as exc:  # noqa: BLE001
+            rec = _endpoint(f"hf:author:{author}", "huggingface_author", "")
+            rec.update(author=str(author), datasets=[], simulated=True,
+                       error=f"probe step raised: {exc!r}"[:300])
+            recs.append(rec)
+    return recs
+
+
+def huggingface_match(path: str) -> dict:
+    """Level / kind / meta for one file of an RMDC26 Hugging Face dataset.
+
+    * ``RMDC26_<Tier>_Tier*.parquet``  -> L4 ``lightcurve``, format
+      ``rmdc26_parquet``, ``tier`` (every event's epochs in one table);
+    * another ``.parquet/.csv/.dat/.txt`` whose name carries ``lc`` /
+      ``lightcurve`` / ``RMDC``  -> L4 ``lightcurve``, format ``rmdc26_table``;
+    * ``master`` / ``truth`` / ``params`` / ``catalog`` names -> ``catalog``,
+      format ``rmdc26_truth``;
+    * ``README`` / ``.md`` / ``.json`` -> ``doc``;  anything else ``unknown``.
+    """
+    base = str(path).rsplit("/", 1)[-1]
+    low = base.lower()
+    m = _RMDC_TIER_RE.match(base)
+    if m:
+        return {"level": "L4", "kind": "lightcurve",
+                "meta": {"format": "rmdc26_parquet", "tier": m.group(2).capitalize(),
+                         "challenge": m.group(1).upper()}}
+    stem = low.rsplit(".", 1)[0] if "." in low else low
+    if low.endswith(_HF_TABLE_EXTENSIONS):
+        if _RMDC_TRUTH_RE.search(stem):
+            return {"level": "catalog", "kind": "catalog", "meta": {"format": "rmdc26_truth"}}
+        if _RMDC_TABLE_RE.search(stem):
+            return {"level": "L4", "kind": "lightcurve", "meta": {"format": "rmdc26_table"}}
+    if low.startswith("readme") or low.endswith(_HF_DOC_EXTENSIONS):
+        return {"level": "sim", "kind": "doc",
+                "meta": {"format": "doc", "extension": low.rsplit(".", 1)[-1] if "." in low else ""}}
+    return {"level": "unknown", "kind": "unknown", "meta": {}}
+
+
+def classify_huggingface_product(repo: str, path: str, size_bytes: int | None = None,
+                                 survey: str = "GBTDS", api: str = "https://huggingface.co",
+                                 endpoint: str | None = None) -> RomanProduct:
+    """One file of a Hugging Face dataset as a simulated :class:`RomanProduct`
+    whose ``uri`` is the ``resolve/main`` download URL."""
+    hm = huggingface_match(path)
+    meta = {"repo": str(repo), "path": str(path), "endpoint": endpoint or f"hf:{repo}"}
+    meta.update(hm["meta"])
+    return RomanProduct(uri=hf_resolve_url(api, repo, path), level=hm["level"], kind=hm["kind"],
+                        origin="huggingface", survey=str(survey or ""), instrument="WFI",
+                        band=None, size_bytes=size_bytes, simulated=True, meta=meta)
+
+
 def probe_packages(names=PROBE_PACKAGES) -> dict:
     """Importability and version of each runner package; never raises."""
     out = {}
@@ -711,8 +918,10 @@ def derive_data_state(endpoints: dict) -> tuple[str, list[str]]:
     simulation, ``.asdf`` keys in the mission bucket, or a MAST Roman
     (non-simulation) collection with a count.  Simulations only: a simulation
     bucket that lists, a simulation-labelled IRSA table or MAST collection, or a
-    GBTDS-/HLTDS-like simulation page that answers.  Nothing reached: no endpoint
-    returned an HTTP status at all.
+    GBTDS-/HLTDS-like simulation page that answers, or a Hugging Face challenge
+    dataset (RMDC26) that lists at least one file -- a challenge dataset is
+    simulation evidence and never mission evidence.  Nothing reached: no
+    endpoint returned an HTTP status at all.
     """
     mission, sim = [], []
     for name, rec in endpoints.items():
@@ -750,6 +959,10 @@ def derive_data_state(endpoints: dict) -> tuple[str, list[str]]:
             n_links = len(rec.get("data_links") or []) + len(crawl.get("data_links") or [])
             if n_links:
                 sim.append(f"{name}: index page and its crawl expose {n_links} data link(s)")
+        elif kind == "huggingface_dataset" and rec.get("status") == "ok" \
+                and int(rec.get("n_files") or 0) >= 1:
+            sim.append(f"{name}: Hugging Face dataset {rec.get('repo')} lists "
+                       f"{int(rec.get('n_files') or 0)} file(s) (simulation / data challenge)")
     n_reached = sum(1 for r in endpoints.values() if _reached(r))
     if mission:
         return "MISSION_DATA_PRESENT", mission
@@ -796,6 +1009,7 @@ def probe(conf: dict, session=None, timeout_s: float | None = None) -> dict:
         for entry in arch.get("simulations") or []:
             run(f"sim:{entry.get('name')}",
                 lambda e=entry: _probe_simulation_page(e, session, timeout, arch))
+        run("huggingface", lambda: probe_huggingface(conf, session, timeout))
     packages = probe_packages()
     state, evidence = derive_data_state(endpoints)
     rec = {"written_utc": utc_now(), "data_state": state, "data_state_evidence": evidence,
@@ -1241,7 +1455,10 @@ def inventory(conf: dict, probe_record: dict, session=None, max_listing: int = 5
     each bucket that answered (``archive.s3_tree`` limits; the products are
     the sampled keys of every directory, at most ``max_listing`` of them) --
     the simulation-page data links (including those found by the index
-    crawl), the IRSA data-root links, and IRSA tables (as table products).
+    crawl), the IRSA data-root links, IRSA tables (as table products), and the
+    files of every Hugging Face challenge dataset that listed (one product per
+    file, ``origin: huggingface``, ``uri`` the ``resolve/main`` URL,
+    classified by :func:`huggingface_match`).
     MAST counts are carried as counts, not products.  A bucket that did not
     answer (the not-yet-existing mission bucket) contributes no products but a
     recorded status.  ``tree`` is the per-directory summary (path, keys
@@ -1253,6 +1470,9 @@ def inventory(conf: dict, probe_record: dict, session=None, max_listing: int = 5
     timeout = float(timeout_s if timeout_s is not None else arch.get("timeout_s", 60))
     tree_conf = dict(arch.get("s3_tree") or {})
     band_map = dict(arch.get("openuniverse_band_map") or OPENUNIVERSE_BAND_MAP)
+    hf_conf = arch.get("huggingface") or {}
+    hf_api = str(hf_conf.get("api") or "https://huggingface.co")
+    hf_survey = str(hf_conf.get("survey") or "GBTDS")
     endpoints = (probe_record or {}).get("endpoints") or {}
     products: dict[str, RomanProduct] = {}
     listings: dict[str, dict] = {}
@@ -1326,6 +1546,24 @@ def inventory(conf: dict, probe_record: dict, session=None, max_listing: int = 5
                 add(p)
         elif kind == "mast_caom":
             mast_counts[str(rec.get("collection"))] = rec.get("count")
+        elif kind == "huggingface_dataset":
+            repo = str(rec.get("repo") or name.split(":", 1)[-1])
+            files = list(rec.get("files") or [])
+            listings[name] = {"repo": repo, "origin": "huggingface", "status": rec.get("status"),
+                              "http_status": rec.get("http_status"), "gated": rec.get("gated"),
+                              "private": rec.get("private"), "error": rec.get("error"),
+                              "last_modified": rec.get("last_modified"),
+                              "n_keys": len(files), "n_keys_capped": bool(rec.get("files_capped")),
+                              "tree": None}
+            if rec.get("status") != "ok":
+                continue
+            for f in files:
+                path = str((f or {}).get("path") or "")
+                if not path or path.endswith("/"):
+                    continue
+                add(classify_huggingface_product(repo, path, f.get("size"),
+                                                 survey=str(rec.get("survey") or hf_survey),
+                                                 api=hf_api, endpoint=name))
 
     rows = [p.as_dict() for p in products.values()]
     by_kind: dict[str, int] = {}
@@ -1389,8 +1627,10 @@ def fetch_to_cache(uri: str, cache_dir: Path, session=None, max_bytes: int | Non
 
     A local path is returned as is (with provenance written).  ``max_bytes``
     aborts an oversize transfer and removes the partial file.  A cached file
-    whose provenance matches is not refetched.  Returns ``None`` on failure and
-    says why on stdout; never raises.
+    whose provenance matches is not refetched.  Redirects are followed (a
+    Hugging Face ``resolve/main`` URL answers 302 to its CDN); a 401 / 403
+    (gated dataset) or 404 is a recorded failure with no retry.  Returns
+    ``None`` on failure and says why on stdout; never raises.
     """
     cache_dir = Path(cache_dir)
     src = str(uri)
@@ -1420,10 +1660,12 @@ def fetch_to_cache(uri: str, cache_dir: Path, session=None, max_bytes: int | Non
     last = None
     for i in range(max(1, int(retries))):
         rec = {}
-        r = _http(session, "get", url, timeout, rec, stream=True)
+        r = _http(session, "get", url, timeout, rec, stream=True, allow_redirects=True)
         if r is None or rec.get("http_status") != 200:
             last = rec.get("error") or f"http {rec.get('http_status')}"
             if rec.get("http_status") in (401, 403, 404):
+                if rec.get("http_status") in (401, 403):
+                    last = f"http {rec.get('http_status')} (access denied: gated or private)"
                 break
             time.sleep(pause * (i + 1))
             continue
@@ -1481,4 +1723,5 @@ __all__ = ["probe", "inventory", "plan_shards", "fetch_to_cache", "classify_prod
            "parse_s3_listing", "parse_tap_json", "list_s3_tree", "tree_summary", "list_s3_deep",
            "extract_links", "extract_anchors", "page_title", "crawl_index", "votable_info",
            "mast_query_forms", "s3_listing_url", "to_https", "cache_path_for", "probe_packages",
-           "default_session", "OPENUNIVERSE_BAND_MAP"]
+           "default_session", "OPENUNIVERSE_BAND_MAP", "probe_huggingface", "huggingface_match",
+           "classify_huggingface_product", "hf_api_urls", "hf_resolve_url", "HF_FILE_CAP"]

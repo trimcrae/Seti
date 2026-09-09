@@ -154,10 +154,16 @@ def _body(r, cap: int = MAX_PAGE_BYTES) -> bytes:
                 pass
         if chunks:
             return b"".join(chunks)[:cap]
-    content = getattr(r, "content", None)
-    if content is None:
-        content = str(getattr(r, "text", "") or "").encode("utf-8", "replace")
-    return bytes(content)[:cap]
+    # A streamed response whose iterator raised (the 2026-09-09 probe of the
+    # RMDC26 page: "The content for this response was already consumed") must
+    # not take the whole endpoint down: an empty body is recorded, not raised.
+    try:
+        content = getattr(r, "content", None)
+        if content is None:
+            content = str(getattr(r, "text", "") or "").encode("utf-8", "replace")
+        return bytes(content)[:cap]
+    except Exception:  # noqa: BLE001
+        return b""
 
 
 def _text(r, cap: int = MAX_PAGE_BYTES) -> str:
@@ -645,6 +651,14 @@ def _probe_simulation_page(entry: dict, session, timeout: float, arch: dict | No
     h = _headers(r)
     rec["content_type"] = h.get("content-type")
     body = _body(r)
+    if not body and rec.get("http_status") == 200:
+        # The streamed body came back empty (a consumed stream, a proxy that
+        # buffers): one plain GET before recording an empty page as the answer.
+        rec2: dict = {}
+        r2 = _http(session, "get", url, timeout, rec2, stream=False)
+        if r2 is not None and rec2.get("http_status") == 200:
+            body = _body(r2)
+            rec["refetched_plain"] = True
     rec["bytes"] = int(h["content-length"]) if str(h.get("content-length", "")).isdigit() \
         else len(body)
     html = body.decode("utf-8", "replace")

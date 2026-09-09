@@ -353,7 +353,16 @@ def ingest(out_dir: Path, conf: dict, kinds=KINDS, limit: int = 200, cache_dir: 
                 from .openuniverse import read_obseq
                 rec = read_obseq(local, conf)
                 rec["uri"] = prod["uri"]
-                calib_updates["survey_cadence_sim"] = rec
+                # One record per survey: run 34349717932 ingested the TDS and the WAS
+                # pointing sequences and the second overwrote the first.
+                key = str(prod.get("survey") or ("HLWAS" if "WAS" in str(prod["uri"]).upper()
+                                                 else "HLTDS" if "TDS" in str(prod["uri"]).upper()
+                                                 else "unknown"))
+                existing = calib_updates.get("survey_cadence_sim")
+                if not isinstance(existing, dict) or "n_exposures" in existing:
+                    existing = {}
+                existing[key] = rec
+                calib_updates["survey_cadence_sim"] = existing
                 funnel.bump("normalised_obseq")
                 per_kind[kind] = per_kind.get(kind, 0) + 1
             except Exception as exc:  # noqa: BLE001

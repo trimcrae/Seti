@@ -436,7 +436,21 @@ def pace_glint(lc: LightCurve, conf: dict, colour_lc: LightCurve | None = None) 
               "min_epochs": int(p.get("min_epochs", 200)), "max_events": int(p.get("max_events", 6)),
               "merge_gap_d": float(p.get("merge_gap_d", 0.05))}
     ms = to_mag_series(lc, conf)
-    if ms is None or ms["n_good"] < params["min_epochs"]:
+    if ms is None:
+        return _insufficient("glint", params, ms, "no usable epochs")
+    # A glint lasts minutes to hours.  Sampled more coarsely than the longest
+    # glint, the series cannot resolve one, and every transient in it would be
+    # "a brightening confined to a few epochs" -- which is what happened to
+    # 1,595 simulated supernovae at the 5-day HLTDS cadence.
+    max_dur = float(p.get("max_event_duration_d", 1.0))
+    params["max_event_duration_d"] = max_dur
+    params["cadence_days"] = ms.get("cadence_days")
+    if ms.get("cadence_days") is not None and float(ms["cadence_days"]) > max_dur:
+        return _record("glint", "not_applicable", None, params,
+                       [f"median cadence {ms['cadence_days']:.3g} d exceeds the longest glint "
+                        f"({max_dur:g} d); the series cannot resolve one"],
+                       relative_flux=ms["relative_flux"], n_epochs=ms["n_good"])
+    if ms["n_good"] < params["min_epochs"]:
         return _insufficient("glint", params, ms, "fewer usable epochs than paces.glint.min_epochs")
     res = detect_glints(ms["t"], ms["mag"], ms["magerr"], bright_min=params["bright_min"],
                         k_sigma=params["k_sigma"], min_epochs=params["min_epochs"],
@@ -691,6 +705,49 @@ def channel_flagged(name: str, rec: dict, conf: dict) -> bool:
     return False
 
 
+def transient_like(ms: dict | None, conf: dict) -> dict:
+    """Does one brightening dominate the series, and is it time-asymmetric?
+
+    A supernova rises in days and declines over weeks; a specular glint, a
+    flare or an occultation is what the paces look for on a *star*.  The test
+    takes the brightest epoch, grows the excursion outward while the flux
+    stays ``k_sigma`` above the median, and calls the curve transient-like
+    when that excursion spans at least ``min_excursion_epochs`` and the rise
+    lasts less than ``rise_decline_ratio_max`` of the decline.  Reported, not
+    applied: the flags on such a curve are counted separately by
+    :func:`assess_paces`, since a supernova is not a star with an occulter.
+    """
+    tc = (conf.get("paces") or {}).get("transient") or {}
+    k = float(tc.get("k_sigma", 5.0))
+    min_n = int(tc.get("min_excursion_epochs", 5))
+    ratio_max = float(tc.get("rise_decline_ratio_max", 0.5))
+    if ms is None or ms["n_good"] < min_n + 2:
+        return {"transient_like": False, "status": "insufficient"}
+    t, mag, err = ms["t"], ms["mag"], ms["magerr"]
+    med = float(np.median(mag))
+    bright = (med - mag) / np.where(err > 0, err, np.nanmedian(err[err > 0]) if np.any(err > 0) else 0.02)
+    i = int(np.argmax(bright))
+    if bright[i] < k:
+        return {"transient_like": False, "status": "no_significant_brightening"}
+    lo = i
+    while lo - 1 >= 0 and bright[lo - 1] >= k:
+        lo -= 1
+    hi = i
+    while hi + 1 < bright.size and bright[hi + 1] >= k:
+        hi += 1
+    n_exc = hi - lo + 1
+    rise = float(t[i] - t[lo])
+    decline = float(t[hi] - t[i])
+    ratio = rise / decline if decline > 0 else (np.inf if rise > 0 else 1.0)
+    # The excursion must be interior with a measured rise: a secular fade is
+    # "brightest at the start", which is an edge, not a transient.
+    interior = lo > 0 and hi < bright.size - 1 and lo < i < hi
+    return {"transient_like": bool(interior and n_exc >= min_n and ratio < ratio_max),
+            "status": "ok", "n_excursion_epochs": int(n_exc), "rise_days": rise,
+            "decline_days": decline, "rise_decline_ratio": float(ratio),
+            "peak_sigma": float(bright[i])}
+
+
 def pace_lightcurve(lc: LightCurve, conf: dict, colour_lc: LightCurve | None = None,
                     channels=None) -> dict:
     """Run every bridged light-curve channel (or ``channels``) on one star, one band."""
@@ -708,6 +765,10 @@ def pace_lightcurve(lc: LightCurve, conf: dict, colour_lc: LightCurve | None = N
         "colour_band": None if colour_lc is None else colour_lc.band,
         "channels": {}, "flags": [],
     }
+    tr = transient_like(ms, conf)
+    out["transient"] = tr
+    if tr.get("transient_like"):
+        funnel.bump("transient_like")
     for name in names:
         try:
             rec = PACES[name](lc, conf, colour_lc)
@@ -813,6 +874,8 @@ def assess_paces(records: list[dict], conf: dict) -> dict:
     """
     per_channel: dict[str, dict[str, int]] = {c: {} for c in CHANNELS}
     flags: dict[str, int] = {}
+    flags_on_transients: dict[str, int] = {}
+    n_transient_like = 0
     flagged_stars: list[dict] = []
     n_lc = n_spec = 0
     n_relative = 0
@@ -828,11 +891,17 @@ def assess_paces(records: list[dict], conf: dict) -> dict:
                 st = str((ch or {}).get("status", "error"))
                 d = per_channel.setdefault(name, {})
                 d[st] = d.get(st, 0) + 1
+            is_tr = bool((rec.get("transient") or {}).get("transient_like"))
+            if is_tr:
+                n_transient_like += 1
             for f in rec.get("flags") or []:
-                flags[f] = flags.get(f, 0) + 1
+                if is_tr:
+                    flags_on_transients[f] = flags_on_transients.get(f, 0) + 1
+                else:
+                    flags[f] = flags.get(f, 0) + 1
             if rec.get("flags"):
                 flagged_stars.append({"star_id": rec.get("star_id"), "band": rec.get("band"),
-                                      "flags": list(rec["flags"])})
+                                      "flags": list(rec["flags"]), "transient_like": is_tr})
         elif "n_emission" in rec:
             n_spec += 1
             st = str(rec.get("status", "error"))
@@ -856,6 +925,8 @@ def assess_paces(records: list[dict], conf: dict) -> dict:
         "per_channel_status": per_channel, "spectra_status": spec_status,
         "n_emission_lines": n_em, "n_absorption_lines": n_ab,
         "flags": flags, "flagged": flagged_stars[:500],
+        "n_transient_like": n_transient_like,
+        "flags_on_transient_like": flags_on_transients,
         "flag_levels": _flag_levels(conf),
     })
 

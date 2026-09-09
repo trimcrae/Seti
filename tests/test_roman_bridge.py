@@ -280,3 +280,42 @@ def test_assess_counts_statuses_and_flags(conf):
     assert b["verdict"] == "PACES_FLAGS_PENDING_VET"
     assert b["flags"] == {"secular": 1}
     assert b["flagged"][0]["star_id"] == "f"
+
+
+def test_glint_is_not_applicable_at_a_cadence_coarser_than_a_glint():
+    """At the 5-day HLTDS cadence every transient is 'a brightening confined to
+    a few epochs' (1,595 simulated supernovae flagged in run 34349717932);
+    the channel now says the series cannot resolve a glint."""
+    from seti.roman.bridge import pace_glint, synthesise_gbtds_lightcurve
+    from seti.roman.schema import load_roman_config
+    conf = load_roman_config()
+    rng = np.random.default_rng(5)
+    lc = synthesise_gbtds_lightcurve("coarse", n_seasons=2, season_days=400, cadence_min=5 * 1440,
+                                     gap_days=10, rng=rng, inject={"kind": "glint", "amp": 0.5, "t": 61550.0})
+    rec = pace_glint(lc, conf)
+    assert rec["status"] == "not_applicable"
+    assert rec["params"]["cadence_days"] > 1.0
+    fine = synthesise_gbtds_lightcurve("fine", rng=rng, inject={"kind": "glint", "amp": 0.5, "t": 61530.0})
+    assert pace_glint(fine, conf)["status"] == "ran"
+
+
+def test_a_supernova_shaped_curve_is_tagged_transient_like_and_counted_apart():
+    from seti.roman.bridge import assess_paces, pace_lightcurve, to_mag_series, transient_like
+    from seti.roman.schema import LightCurve, load_roman_config
+    conf = load_roman_config()
+    rng = np.random.default_rng(8)
+    t = 61500.0 + np.arange(0, 300, 5.0)
+    dt = t - 61600.0
+    model = 1.0 + 20.0 * np.where(dt < 0, np.exp(dt / 5.0), np.exp(-dt / 30.0))
+    f = 100.0 * model * (1 + 0.01 * rng.standard_normal(t.size))
+    lc = LightCurve("sn", 10.0, -44.0, "F129", t, f, np.full(t.size, 1.0), flux_zp_ab=26.6)
+    tr = transient_like(to_mag_series(lc, conf), conf)
+    assert tr["transient_like"] is True and tr["rise_decline_ratio"] < 0.5
+    rec = pace_lightcurve(lc, conf, channels=["dips", "glint"])
+    assert rec["transient"]["transient_like"] is True
+    summ = assess_paces([rec], conf)
+    assert summ["n_transient_like"] == 1
+    assert not summ["flags"]                       # nothing flagged on a non-transient star
+    assert all(v >= 0 for v in summ["flags_on_transient_like"].values())
+    flat = synthesise_gbtds_lightcurve("flat", rng=rng)
+    assert transient_like(to_mag_series(flat, conf), conf)["transient_like"] is False

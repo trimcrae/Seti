@@ -112,9 +112,14 @@ Bulge light curves in W149 (F146) and Z087 (F087) with known parameters,
 false positives, parallax and astrometric series — the volume and type of
 the real GBTDS — served from Hugging Face (`RGES-PIT/Beginner`,
 `RGES-PIT/Experienced`, one Parquet per tier). That is the dataset S40 is
-calibrated on before launch; the Hugging Face probe/inventory and the
-reader's column-role and band-alias handling are being added so the next
-`stage=full` run ingests it (`docs/roman.md` §1.4).
+calibrated on before launch, and run 7 (11:29 AM ET) ingested its Beginner
+tier with no unreadable product: 200 curves, 133 F146 + 67 F087 colour
+companions. On genuine simulated microlensing S40 behaves as designed — 75
+`LENSING_NO_OCCULTATION`, 56 `NOT_LENSING`, 2 occulting-pending to read
+against the challenge truth — and every pace ran at the GBTDS-like cadence.
+The glint pace flagged 69 microlensing peaks (a lensing peak *is* a brief
+achromatic brightening), so the glint flag now also requires the event
+duration to be shorter than a glint (`docs/roman.md` §4A).
 
 **Prior art read (34302576338, 645 abstracts).** The occulting-lens
 light-curve morphology is natural-body literature — Agol 2002, a 2003

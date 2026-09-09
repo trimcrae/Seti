@@ -1,0 +1,580 @@
+name: roman
+
+# ROMAN — intake for the Nancy Grace Roman Space Telescope and the four
+# channels only Roman can open (docs/roman.md).
+#
+#   readiness (probe + inventory diff + milestone record; ALWAYS)
+#       └──▶ ingest (stage=full) ──▶ screen (N shards, one JSON per product)
+#                                        └──▶ assess ──▶ commit
+#   assess-only  (reduce_only_run_id set: re-assess a prior run's checkpoints)
+#   selftest     (stage=selftest: the offline synthetic battery, nothing else)
+#
+# Roman is pre-launch.  The archive is asked, never assumed: `readiness` writes
+# results/roman/probe.json with a data_state of NO_ARCHIVE_REACHED /
+# NOT_YET_PUBLIC / SIMULATIONS_ONLY / MISSION_DATA_PRESENT, and the monthly
+# cron keeps asking until MISSION_DATA_PRESENT (then alerts.py raises the
+# milestone as an issue).  A `full` run on simulations is a PACES run -- did
+# the data flow through every stage -- and its verdicts are
+# SIMULATION_PACES_OK / SIMULATION_PACES_FAILED, never a candidate tier; the
+# assess job's guard turns the run red if a simulation ever yields one.
+#
+# Operational design (docs/channel-brief.md §3):
+#  * the probe/inventory runs ONCE and travels as an artifact;
+#  * ingest pulls a bounded set of products and writes a manifest; the screen
+#    shards checkpoint one JSON per product immediately (a killed shard loses
+#    minutes and re-runs skip products already checkpointed);
+#  * fail-fast:false matrix, max-parallel 4 (be a good citizen toward IRSA);
+#  * reduce_only_run_id re-assesses a prior run's artifacts without refetching;
+#  * commit-back goes through scripts/commit_results.sh, which VERIFIES the
+#    push against the remote instead of trusting a zero exit.
+#
+# The Roman packages (asdf, roman_datamodels, gwcs, s3fs) are installed
+# best-effort: pre-launch they may not resolve on the runner, and the readers
+# degrade to a ReaderUnavailable record rather than failing the job.
+#
+# Scheduled runs fire from the DEFAULT BRANCH (GitHub only schedules there)
+# and commit back to whatever ref they ran on.
+
+on:
+  schedule:
+    # 13:17 UTC = 09:17 ET (EDT) on the 3rd of each month.  Monthly until
+    # MISSION_DATA_PRESENT (config/roman.yaml -> readiness.cron_note), then
+    # switch to weekly.  Off the hour to avoid the scheduler's :00 pile-up.
+    - cron: "17 13 3 * *"
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          readiness = probe the archive and record the milestone state;
+          full = readiness + ingest + screen + assess;
+          selftest = the offline synthetic battery only.
+        required: false
+        type: choice
+        options:
+          - readiness
+          - full
+          - selftest
+        default: readiness
+      channels:
+        description: "Comma-separated channels to screen (lens, lines, flash, paces, statite)"
+        required: false
+        default: "lens,lines,flash,paces,statite"
+      kinds:
+        description: "Comma-separated product kinds to ingest (lightcurve, dq, spectrum, cgi)"
+        required: false
+        default: "lightcurve,dq,spectrum"
+      limit:
+        description: "Maximum products ingested per kind"
+        required: false
+        default: "200"
+      n_shards:
+        description: "Number of screen shards"
+        required: false
+        default: "4"
+      reduce_only_run_id:
+        description: "Skip ingest/screen; assess this prior run's artifacts"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  RESULTS_BRANCH: ${{ github.ref_name }}
+  # Scheduled runs carry no inputs; these defaults make a cron firing a
+  # readiness probe with the same parameters a manual dispatch would use.
+  ROMAN_STAGE: ${{ github.event.inputs.stage || 'readiness' }}
+  ROMAN_CHANNELS: ${{ github.event.inputs.channels || 'lens,lines,flash,paces,statite' }}
+  ROMAN_KINDS: ${{ github.event.inputs.kinds || 'lightcurve,dq,spectrum' }}
+  ROMAN_LIMIT: ${{ github.event.inputs.limit || '200' }}
+  ROMAN_N_SHARDS: ${{ github.event.inputs.n_shards || '4' }}
+  ROMAN_REDUCE_ONLY: ${{ github.event.inputs.reduce_only_run_id || '' }}
+
+jobs:
+  # ---------------------------------------------------------------------
+  # 1. readiness -- always.  Probe the archive, diff the inventory, record
+  #    the milestone.  The offline gate runs first: a runner on which the
+  #    synthetic battery fails must not be trusted with a probe either.
+  # ---------------------------------------------------------------------
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -c "import numpy,pandas,requests,yaml; from astropy.io import fits; print('imports OK')"
+      - name: Install the Roman packages (best-effort, pre-launch)
+        run: |
+          pip install asdf asdf-astropy gwcs fsspec s3fs requests roman_datamodels \
+            || echo "roman packages not installable yet"
+          python - <<'PY'
+          import importlib
+          for m in ("asdf", "asdf_astropy", "gwcs", "fsspec", "s3fs", "roman_datamodels"):
+              try:
+                  mod = importlib.import_module(m)
+                  print(f"  {m:18s} {getattr(mod, '__version__', '?')}")
+              except Exception as exc:  # noqa: BLE001
+                  print(f"  {m:18s} NOT IMPORTABLE ({exc!r})")
+          PY
+      - name: Offline gate — the synthetic battery must hold on this runner
+        run: |
+          python -m pytest tests/test_roman_*.py -q -p no:cacheprovider
+          python -m seti.roman.run selftest
+      - name: Readiness — probe the archive, diff the inventory, record the milestone
+        run: python -m seti.roman.run readiness
+      - name: Report the data state
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/roman/probe.json")
+          if not p.exists():
+              print("no probe.json -- the probe did not reach the report stage")
+              raise SystemExit(0)
+          s = json.loads(p.read_text())
+          print("data_state:", s.get("data_state"))
+          ev = s.get("evidence") or s.get("endpoints") or {}
+          print("evidence:")
+          print(json.dumps(ev, indent=2)[:6000])
+          r = pathlib.Path("results/roman/readiness.json")
+          if r.exists():
+              rd = json.loads(r.read_text())
+              print("readiness:", json.dumps({k: rd.get(k) for k in ("data_state", "milestone", "milestone_reached", "inventory_diff") if k in rd}, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roman-readiness
+          path: |
+            results/roman/probe.json
+            results/roman/inventory.json
+            results/roman/readiness.json
+            results/roman/selftest.json
+          if-no-files-found: warn
+      - name: Commit the probe
+        if: always()
+        run: |
+          scripts/commit_results.sh \
+            "roman: readiness probe of the Roman archive" \
+            results/roman/probe.json \
+            results/roman/inventory.json \
+            results/roman/readiness.json \
+            results/roman/selftest.json
+
+  # ---------------------------------------------------------------------
+  # 2. ingest -- stage=full only.  Pull a bounded set of products into the
+  #    four schema structures; the manifest travels to the shards.
+  # ---------------------------------------------------------------------
+  ingest:
+    needs: readiness
+    if: ${{ (github.event.inputs.stage || 'readiness') == 'full' && (github.event.inputs.reduce_only_run_id || '') == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install asdf asdf-astropy gwcs fsspec s3fs requests roman_datamodels \
+            || echo "roman packages not installable yet"
+      - uses: actions/download-artifact@v4
+        with:
+          name: roman-readiness
+          path: results/roman/
+      - name: Free disk
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android 2>/dev/null || true
+          df -h / | tail -1
+      - name: Ingest
+        run: |
+          python -m seti.roman.run ingest --kinds "$ROMAN_KINDS" --limit "$ROMAN_LIMIT"
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/roman/ingest.json")
+          if p.exists():
+              s = json.loads(p.read_text())
+              print(json.dumps({k: s.get(k) for k in ("data_state", "simulated_inputs", "n_products", "funnel", "verdict") if k in s}, indent=2))
+          else:
+              print("no ingest.json")
+          PY
+      - id: plan
+        name: Shard plan
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, pathlib
+          n = max(1, int(os.environ.get("ROMAN_N_SHARDS", "4")))
+          # Never spin up more shards than there are products to screen; the
+          # product count is read from whichever record carries it.
+          n_products = None
+          for cand in ("results/roman/ingest.json", "data/cache/roman/manifest.json"):
+              p = pathlib.Path(cand)
+              if not p.exists():
+                  continue
+              try:
+                  s = json.loads(p.read_text())
+              except Exception:  # noqa: BLE001
+                  continue
+              for key in ("n_products", "n_ingested"):
+                  if isinstance(s.get(key), int):
+                      n_products = s[key]; break
+              if n_products is None and isinstance(s.get("products"), list):
+                  n_products = len(s["products"])
+              if n_products is not None:
+                  break
+          if n_products is not None:
+              n = max(1, min(n, n_products))
+          # An empty matrix is invalid; one shard will report the no-data verdict.
+          print("shards=" + json.dumps([str(i) for i in range(n)]))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roman-ingest
+          path: |
+            results/roman/ingest.json
+            data/cache/roman/manifest.json
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------
+  # 3. screen -- one shard per matrix entry, every channel in turn.  Each
+  #    product's result is checkpointed to its own JSON the moment it is
+  #    done (results/roman/checkpoints/), so a killed shard loses minutes.
+  # ---------------------------------------------------------------------
+  screen:
+    needs: ingest
+    if: ${{ (github.event.inputs.stage || 'readiness') == 'full' && (github.event.inputs.reduce_only_run_id || '') == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 4          # be a good citizen toward IRSA / the S3 buckets
+      matrix:
+        shard: ${{ fromJSON(needs.ingest.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install asdf asdf-astropy gwcs fsspec s3fs requests roman_datamodels \
+            || echo "roman packages not installable yet"
+      - uses: actions/download-artifact@v4
+        with:
+          name: roman-readiness
+          path: results/roman/
+      # The ingest artifact spans two roots (results/roman/ and
+      # data/cache/roman/), so it is laid down at the repository root.
+      - uses: actions/download-artifact@v4
+        with:
+          name: roman-ingest
+          path: .
+      - name: Free disk
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android 2>/dev/null || true
+          df -h / | tail -1
+      - name: Screen shard ${{ matrix.shard }}
+        run: |
+          IFS=',' read -ra CHANNELS <<< "$ROMAN_CHANNELS"
+          failed=0
+          for c in "${CHANNELS[@]}"; do
+            c="$(echo "$c" | tr -d '[:space:]')"
+            [ -z "$c" ] && continue
+            echo "=== channel $c  shard ${{ matrix.shard }}/$ROMAN_N_SHARDS ==="
+            # One channel's failure must not cost the others their checkpoints.
+            if ! python -m seti.roman.run screen \
+                  --channel "$c" \
+                  --shard ${{ matrix.shard }} \
+                  --n-shards "$ROMAN_N_SHARDS"; then
+              echo "::warning::channel $c failed on shard ${{ matrix.shard }}"
+              failed=1
+            fi
+          done
+          echo "=== checkpoints written ==="
+          find results/roman/checkpoints -name '*.json' 2>/dev/null | wc -l
+          exit $failed
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roman-screen-${{ matrix.shard }}
+          path: results/roman/checkpoints/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------
+  # 4. assess -- merge every shard's checkpoints, apply the recurrence
+  #    vetoes, tier, and write the per-channel and top-level summaries.
+  #    Runs even when shards failed (always()) so partial coverage is
+  #    reported as partial coverage rather than lost.
+  # ---------------------------------------------------------------------
+  assess:
+    needs: [readiness, ingest, screen]
+    if: ${{ always() && (github.event.inputs.stage || 'readiness') == 'full' && (github.event.inputs.reduce_only_run_id || '') == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: roman-readiness
+          path: results/roman/
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: roman-ingest
+          path: .
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: roman-screen-*
+          merge-multiple: true
+          path: results/roman/checkpoints/
+      - name: Assess
+        run: |
+          echo "checkpoints: $(find results/roman/checkpoints -name '*.json' 2>/dev/null | wc -l)"
+          python -m seti.roman.run assess
+          echo "=== summary ==="
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/roman/summary.json")
+          if p.exists():
+              s = json.loads(p.read_text())
+              print(json.dumps({k: s.get(k) for k in ("verdict", "data_state", "simulated_inputs", "n_products_analysed", "funnel", "channels", "tiers") if k in s}, indent=2)[:8000])
+          for c in pathlib.Path("results/roman").glob("*/summary.json"):
+              cs = json.loads(c.read_text())
+              print(f"  {c.parent.name:8s} verdict={cs.get('verdict')!r} n={cs.get('n_products_analysed')}")
+          PY
+      # A verdict must never read as a science null when no data was tested,
+      # and a simulation must never read as a candidate.
+      - name: Assert the verdict is not a disguised no-data run
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/roman/summary.json")
+          if not p.exists():
+              print("::error::no summary.json -- assess produced nothing"); sys.exit(1)
+          s = json.loads(p.read_text())
+          v = s.get("verdict")
+          n = s.get("n_products_analysed")
+          if n is None:
+              n = (s.get("funnel") or {}).get("n_products_analysed", 0)
+          sim = bool(s.get("simulated_inputs"))
+          nodata = {"NO_DATA_REACHED", "ROMAN_NOT_YET_PUBLIC"}
+          bad = False
+          if (n or 0) == 0 and v not in nodata:
+              print(f"::error::verdict {v!r} with 0 analysed products is a disguised no-data run")
+              bad = True
+          # Per-channel verdicts: the top-level record and every channel summary.
+          per_channel = {}
+          ch = s.get("channels")
+          if isinstance(ch, dict):
+              for k, cv in ch.items():
+                  per_channel[k] = cv.get("verdict") if isinstance(cv, dict) else cv
+          for c in sorted(pathlib.Path("results/roman").glob("*/summary.json")):
+              cs = json.loads(c.read_text())
+              per_channel.setdefault(c.parent.name, cs.get("verdict"))
+              if cs.get("simulated_inputs"):
+                  sim = True
+          if sim:
+              for k, cv in per_channel.items():
+                  if cv and "CANDIDATE" in str(cv):
+                      print(f"::error::channel {k} verdict {cv!r} on SIMULATED inputs -- a simulation can never produce a candidate tier")
+                      bad = True
+              if v and "CANDIDATE" in str(v):
+                  print(f"::error::top-level verdict {v!r} on SIMULATED inputs")
+                  bad = True
+          if bad:
+              sys.exit(1)
+          print(f"::notice::verdict {v!r}; {n} products analysed; simulated_inputs={sim}; channels={per_channel}")
+          if v in nodata:
+              print(f"::notice::{v}: the archive served nothing real; this is NOT a sky null (docs/roman.md §5)")
+          if sim:
+              print("::notice::SIMULATED INPUTS -- a paces run; verdicts are SIMULATION_PACES_OK/FAILED, never a sky result")
+          for k, cv in per_channel.items():
+              if cv and "PENDING_VET" in str(cv):
+                  print(f"::warning::{k}: {cv} -- see results/roman/{k}/candidates.json")
+          PY
+      - name: Commit results
+        run: |
+          # The per-product checkpoints stay in the run artifact (re-assessable
+          # via reduce_only_run_id); the committed record is the summaries.
+          paths="results/roman/summary.json results/roman/calibration.json"
+          for c in lens lines flash paces statite; do
+            paths="$paths results/roman/$c/summary.json results/roman/$c/candidates.json"
+          done
+          scripts/commit_results.sh \
+            "roman: screen of Roman products — S40 lens, S41 lines, S42 flash, S43 statite, paces" \
+            $paths
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roman-final
+          path: results/roman/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------
+  # 5. assess-only -- reduce_only_run_id set: re-assess a prior run's
+  #    artifacts without touching the archive.
+  # ---------------------------------------------------------------------
+  assess-only:
+    if: ${{ (github.event.inputs.reduce_only_run_id || '') != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Fetch the readiness record from the prior run
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: roman-readiness
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/roman/
+      - name: Fetch the ingest manifest from the prior run
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: roman-ingest
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: .
+      - name: Fetch the checkpoints from the prior run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: roman-screen-*
+          merge-multiple: true
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/roman/checkpoints/
+      - name: Assess
+        run: |
+          echo "checkpoints: $(find results/roman/checkpoints -name '*.json' 2>/dev/null | wc -l)"
+          python -m seti.roman.run assess
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/roman/summary.json")
+          s = json.loads(p.read_text())
+          print(json.dumps({k: s.get(k) for k in ("verdict", "data_state", "simulated_inputs", "n_products_analysed", "funnel", "channels") if k in s}, indent=2)[:8000])
+          PY
+      - name: Assert the verdict is not a disguised no-data run
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          s = json.loads(pathlib.Path("results/roman/summary.json").read_text())
+          v = s.get("verdict")
+          n = s.get("n_products_analysed")
+          if n is None:
+              n = (s.get("funnel") or {}).get("n_products_analysed", 0)
+          if (n or 0) == 0 and v not in {"NO_DATA_REACHED", "ROMAN_NOT_YET_PUBLIC"}:
+              print(f"::error::verdict {v!r} with 0 analysed products is a disguised no-data run"); sys.exit(1)
+          sim = bool(s.get("simulated_inputs")) or any(
+              json.loads(c.read_text()).get("simulated_inputs")
+              for c in pathlib.Path("results/roman").glob("*/summary.json"))
+          if sim:
+              for c in pathlib.Path("results/roman").glob("*/summary.json"):
+                  cv = json.loads(c.read_text()).get("verdict")
+                  if cv and "CANDIDATE" in str(cv):
+                      print(f"::error::{c.parent.name} verdict {cv!r} on SIMULATED inputs"); sys.exit(1)
+          print(f"::notice::verdict {v!r}; {n} products analysed; simulated_inputs={sim}")
+          PY
+      - name: Commit results
+        run: |
+          paths="results/roman/summary.json results/roman/calibration.json"
+          for c in lens lines flash paces statite; do
+            paths="$paths results/roman/$c/summary.json results/roman/$c/candidates.json"
+          done
+          scripts/commit_results.sh \
+            "roman: re-assessment of a prior run's checkpoints" \
+            $paths
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roman-final
+          path: results/roman/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------
+  # 6. selftest -- stage=selftest: the offline synthetic battery on the
+  #    runner (injection recovered, confounders rejected, honest
+  #    degradation), and nothing that touches the archive.
+  # ---------------------------------------------------------------------
+  selftest:
+    if: ${{ (github.event.inputs.stage || 'readiness') == 'selftest' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install asdf asdf-astropy gwcs fsspec s3fs requests roman_datamodels \
+            || echo "roman packages not installable yet"
+      - name: Offline gate
+        run: |
+          python -m pytest tests/test_roman_*.py -q -p no:cacheprovider
+          python -m seti.roman.run selftest
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/roman/selftest.json")
+          if p.exists():
+              s = json.loads(p.read_text())
+              print(json.dumps({k: s.get(k) for k in ("verdict", "n_pass", "n_fail", "cases", "summary") if k in s}, indent=2)[:6000])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: roman-selftest
+          path: results/roman/selftest.json
+          if-no-files-found: warn
+      - name: Commit the selftest record
+        if: always()
+        run: |
+          scripts/commit_results.sh \
+            "roman: offline selftest battery on the runner" \
+            results/roman/selftest.json

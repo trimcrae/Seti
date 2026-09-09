@@ -119,7 +119,11 @@ companions. On genuine simulated microlensing S40 behaves as designed — 75
 against the challenge truth — and every pace ran at the GBTDS-like cadence.
 The glint pace flagged 69 microlensing peaks (a lensing peak *is* a brief
 achromatic brightening), so the glint flag now also requires the event
-duration to be shorter than a glint (`docs/roman.md` §4A).
+duration to be shorter than a glint: run 8 (12:17 PM ET) halved the flags
+to 36, and the rest are the challenge's hours-long free-floating-planet
+events — the irreducible S30/microlensing confusion in the bulge, which
+`assess` now separates by joining each star's S40 lensing fit to its glint
+flag (`docs/roman.md` §4A).
 
 **Prior art read (34302576338, 645 abstracts).** The occulting-lens
 light-curve morphology is natural-body literature — Agol 2002, a 2003

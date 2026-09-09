@@ -690,6 +690,39 @@ def _sum_dicts(dicts) -> dict:
     return out
 
 
+def _cross_channel(out_dir: Path) -> dict:
+    """Join the lens and paces checkpoints by star: a glint flag on a star whose
+    S40 record reads ``LENSING_*`` is a short microlensing event, not a glint.
+
+    Run 34375821691: 36 of 133 RMDC26 events kept a glint flag after the
+    duration gate -- the challenge's hours-long free-floating-planet lenses,
+    brief and achromatic like a glint.  The profile separates them, and S40
+    has already fitted it, so the join is the cheapest honest discriminant.
+    """
+    lens_tier: dict[str, str] = {}
+    for f in glob.glob(str(out_dir / "checkpoints" / "lens" / "*.json")):
+        r = read_json(f)
+        if isinstance(r, dict) and r.get("status") != "error":
+            lens_tier[str(r.get("star_id"))] = str(r.get("tier") or "")
+    n_glint = n_lens_like = n_no_fit = 0
+    lensing_like: list[str] = []
+    for f in glob.glob(str(out_dir / "checkpoints" / "paces" / "*.json")):
+        r = read_json(f)
+        if not isinstance(r, dict) or "glint" not in (r.get("flags") or []):
+            continue
+        n_glint += 1
+        tier = lens_tier.get(str(r.get("star_id")))
+        if tier is None:
+            n_no_fit += 1
+        elif tier.startswith("LENSING") or tier.startswith("OCCULTING"):
+            n_lens_like += 1
+            lensing_like.append(str(r.get("star_id")))
+    return {"glint_flags": n_glint, "glint_flags_lensing_like": n_lens_like,
+            "glint_flags_no_lens_record": n_no_fit,
+            "glint_flags_not_lensing": n_glint - n_lens_like - n_no_fit,
+            "lensing_like_stars": lensing_like[:200]}
+
+
 def assess(out_dir: Path, conf: dict, channels=CHANNELS) -> dict:
     """Cross-object vetoes per channel, then the verdict rules of the module docstring."""
     probe_rec = read_json(out_dir / "probe.json") or {}
@@ -734,6 +767,7 @@ def assess(out_dir: Path, conf: dict, channels=CHANNELS) -> dict:
         if ch_sim is not None:
             any_sim = ch_sim if any_sim is None else (any_sim or ch_sim)
     top["simulated_inputs"] = any_sim
+    top["cross_channel"] = _cross_channel(out_dir)
     verdicts = [c["verdict"] for c in top["channels"].values()]
     if top["n_products_analysed"] == 0:
         top["verdict"] = ("ROMAN_NOT_YET_PUBLIC" if data_state in ("NOT_YET_PUBLIC", "SIMULATIONS_ONLY")

@@ -188,3 +188,24 @@ def test_ingest_orders_priority_formats_before_size(tmp_path, monkeypatch):
     R.ingest(tmp_path, conf, kinds=("lightcurve",), limit=2, cache_dir=tmp_path / "cache")
     assert seen[0].endswith("RMDC26_Beginner_Tier_test.parquet")
     assert len(seen) == 6 or seen[1].endswith("h0_HEAD.FITS.gz")
+
+
+def test_assess_joins_glint_flags_to_the_star_lens_tier(tmp_path):
+    """A glint flag on a star whose S40 record is LENSING_* is a short lensing
+    event (run 34375821691: 36 of 133 RMDC26 events), counted apart."""
+    conf = load_roman_config()
+    (tmp_path / "probe.json").write_text(json.dumps({"data_state": "SIMULATIONS_ONLY"}))
+    fun = Funnel().as_dict()
+    _write_ckpt(tmp_path, "lens", "a", {"object_id": "a", "star_id": "s1", "simulated": True,
+                                        "status": "screened", "tier": "LENSING_NO_OCCULTATION", "funnel": fun})
+    _write_ckpt(tmp_path, "lens", "b", {"object_id": "b", "star_id": "s2", "simulated": True,
+                                        "status": "screened", "tier": "NOT_LENSING", "funnel": fun})
+    for sid, name in (("s1", "p1"), ("s2", "p2"), ("s3", "p3")):
+        _write_ckpt(tmp_path, "paces", name, {"object_id": name, "star_id": sid, "simulated": True,
+                                              "status": "screened", "flags": ["glint"], "channels": {},
+                                              "funnel": fun})
+    top = R.assess(tmp_path, conf, channels=("lens", "paces"))
+    cc = top["cross_channel"]
+    assert cc["glint_flags"] == 3 and cc["glint_flags_lensing_like"] == 1
+    assert cc["glint_flags_not_lensing"] == 1 and cc["glint_flags_no_lens_record"] == 1
+    assert cc["lensing_like_stars"] == ["s1"]

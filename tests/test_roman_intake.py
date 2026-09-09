@@ -1081,3 +1081,272 @@ def test_index_page_crawl_follows_a_simulation_index_one_more_level_when_asked()
     rec1 = A.probe(_crawl_conf(crawl_depth=1), session=FakeSession(routes), timeout_s=1.0)
     crawl1 = rec1["endpoints"]["sim:idx"]["crawl"]
     assert "https://example.org/roman/sims/gbtds_lc.parquet" not in crawl1["data_links"]
+
+
+# --------------------------------------------------------------------------------------
+# Hugging Face: the Roman Microlensing Data Challenge 2026 (RGES PIT)
+# --------------------------------------------------------------------------------------
+
+HF_TREE_BEGINNER = [
+    {"type": "file", "path": ".gitattributes", "size": 2400, "oid": "a"},
+    {"type": "file", "path": "README.md", "size": 5100, "oid": "b"},
+    {"type": "file", "path": "RMDC26_Beginner_Tier_test.parquet", "size": 123456789, "oid": "c"},
+    {"type": "file", "path": "master_params.csv", "size": 8000, "oid": "d"},
+    {"type": "directory", "path": "notebooks", "oid": "e"},
+]
+HF_DATASET_BEGINNER = {
+    "id": "RGES-PIT/Beginner", "private": False, "gated": False,
+    "lastModified": "2026-08-30T12:00:00.000Z",
+    "siblings": [{"rfilename": ".gitattributes"}, {"rfilename": "README.md"},
+                 {"rfilename": "RMDC26_Beginner_Tier_test.parquet"},
+                 {"rfilename": "master_params.csv"},
+                 {"rfilename": "notebooks/lc_demo.dat"}],
+}
+HF_DATASET_EXPERIENCED = {
+    "id": "RGES-PIT/Experienced", "private": False, "gated": False,
+    "lastModified": "2026-08-31T12:00:00.000Z",
+    "siblings": [{"rfilename": "README.md"}, {"rfilename": "RMDC26_Experienced_Tier_test.parquet"}],
+}
+HF_AUTHOR = [{"id": "RGES-PIT/Beginner"}, {"id": "RGES-PIT/Experienced"}, {"id": "RGES-PIT/Advanced"}]
+
+
+def _hf_json(obj, status=200):
+    return FakeResp(status, json.dumps(obj), {"content-type": "application/json"})
+
+
+def _hf_routes(experienced_status=200):
+    # the tree URL contains the dataset URL, so the tree routes come first
+    exp_tree = _hf_json([{"type": "file", "path": "README.md", "size": 10},
+                         {"type": "file", "path": "RMDC26_Experienced_Tier_test.parquet",
+                          "size": 987654321}]) if experienced_status == 200 else \
+        FakeResp(experienced_status, '{"error":"Access to dataset is restricted"}')
+    exp_ds = _hf_json(HF_DATASET_EXPERIENCED) if experienced_status == 200 else \
+        FakeResp(experienced_status, '{"error":"Access to dataset is restricted"}')
+    return [("api/datasets/RGES-PIT/Beginner/tree/main", _hf_json(HF_TREE_BEGINNER)),
+            ("api/datasets/RGES-PIT/Experienced/tree/main", exp_tree),
+            ("api/datasets/RGES-PIT/Beginner", _hf_json(HF_DATASET_BEGINNER)),
+            ("api/datasets/RGES-PIT/Experienced", exp_ds),
+            ("api/datasets?author=RGES-PIT", _hf_json(HF_AUTHOR))]
+
+
+def test_huggingface_probe_records_files_sizes_and_is_simulation_evidence():
+    sess = FakeSession(_hf_routes())
+    rec = A.probe(CONF, session=sess, timeout_s=1.0)
+    assert rec["data_state"] == "SIMULATIONS_ONLY"
+    assert any("RGES-PIT/Beginner" in e for e in rec["data_state_evidence"])
+    assert any("RGES-PIT/Experienced" in e for e in rec["data_state_evidence"])
+    beg = rec["endpoints"]["hf:RGES-PIT/Beginner"]
+    assert beg["kind"] == "huggingface_dataset" and beg["status"] == "ok" and beg["simulated"] is True
+    assert beg["http_status"] == 200 and beg["latency_s"] is not None and beg["error"] is None
+    assert beg["url"].endswith("/api/datasets/RGES-PIT/Beginner/tree/main")
+    assert beg["gated"] is False and beg["private"] is False
+    assert beg["last_modified"] == "2026-08-30T12:00:00.000Z"
+    files = {f["path"]: f["size"] for f in beg["files"]}
+    # the tree gives sizes; a sibling that the top-level tree does not list is kept without one
+    assert files["RMDC26_Beginner_Tier_test.parquet"] == 123456789
+    assert files["notebooks/lc_demo.dat"] is None and "notebooks" not in files
+    assert beg["n_files"] == 5 and beg["files_capped"] is False
+    exp = rec["endpoints"]["hf:RGES-PIT/Experienced"]
+    assert exp["status"] == "ok" and exp["n_files"] == 2
+    author = rec["endpoints"]["hf:author:RGES-PIT"]
+    assert author["kind"] == "huggingface_author" and author["status"] == "ok"
+    assert author["datasets"] == ["RGES-PIT/Beginner", "RGES-PIT/Experienced", "RGES-PIT/Advanced"]
+    assert author["new_datasets"] == ["RGES-PIT/Advanced"]        # a tier the config does not know
+    assert rec["n_endpoints_reached"] == 3 and rec["n_endpoints_tried"] > 3
+    json.dumps(rec)
+
+
+def test_huggingface_gated_dataset_is_recorded_not_raised():
+    sess = FakeSession(_hf_routes(experienced_status=403))
+    rec = A.probe(CONF, session=sess, timeout_s=1.0)
+    exp = rec["endpoints"]["hf:RGES-PIT/Experienced"]
+    assert exp["status"] == "http_error" and exp["http_status"] == 403
+    assert "403" in exp["error"] and "restricted" in exp["error"]
+    assert exp["gated"] == "unknown (http 403)" and exp["files"] == [] and exp["n_files"] == 0
+    # the open tier still carries the evidence; the gated one contributes none
+    assert rec["data_state"] == "SIMULATIONS_ONLY"
+    assert not any("Experienced" in e for e in rec["data_state_evidence"])
+    assert any("Beginner" in e for e in rec["data_state_evidence"])
+    # inventory: no products from the gated repo, a recorded listing for it
+    inv = A.inventory(CONF, rec, session=sess, deep=False)
+    assert inv["listings"]["hf:RGES-PIT/Experienced"]["status"] == "http_error"
+    assert inv["listings"]["hf:RGES-PIT/Experienced"]["http_status"] == 403
+    assert not any("Experienced" in p["uri"] for p in inv["products"])
+
+
+def test_huggingface_probe_is_skipped_without_the_config_block_and_survives_a_dead_network():
+    conf = conf_with(huggingface={})
+    rec = A.probe(conf, session=FakeSession(_hf_routes()), timeout_s=1.0)
+    assert not any(k.startswith("hf:") for k in rec["endpoints"])
+    dead = A.probe(CONF, session=FakeSession(), timeout_s=1.0)
+    beg = dead["endpoints"]["hf:RGES-PIT/Beginner"]
+    assert beg["status"] == "failed" and beg["http_status"] is None and "no route" in beg["error"]
+    assert dead["endpoints"]["hf:author:RGES-PIT"]["status"] == "failed"
+    assert dead["data_state"] == "NO_ARCHIVE_REACHED"
+
+
+def test_huggingface_inventory_products_have_resolve_uris_formats_and_tiers():
+    sess = FakeSession(_hf_routes())
+    probe = A.probe(CONF, session=sess, timeout_s=1.0)
+    inv = A.inventory(CONF, probe, session=sess, deep=False, n_shards=2)
+    assert inv["verdict"] == "INVENTORIED" and inv["data_state"] == "SIMULATIONS_ONLY"
+    hf = [p for p in inv["products"] if p["origin"] == "huggingface"]
+    assert len(hf) == 7 and all(p["simulated"] and p["survey"] == "GBTDS" for p in hf)
+    by_uri = {p["uri"]: p for p in hf}
+    beg = by_uri["https://huggingface.co/datasets/RGES-PIT/Beginner/resolve/main/RMDC26_Beginner_Tier_test.parquet"]
+    assert (beg["level"], beg["kind"]) == ("L4", "lightcurve") and beg["size_bytes"] == 123456789
+    assert beg["meta"]["format"] == "rmdc26_parquet" and beg["meta"]["tier"] == "Beginner"
+    assert beg["meta"]["repo"] == "RGES-PIT/Beginner" and beg["meta"]["endpoint"] == "hf:RGES-PIT/Beginner"
+    exp = by_uri["https://huggingface.co/datasets/RGES-PIT/Experienced/resolve/main/RMDC26_Experienced_Tier_test.parquet"]
+    assert exp["meta"]["tier"] == "Experienced" and exp["size_bytes"] == 987654321
+    demo = by_uri["https://huggingface.co/datasets/RGES-PIT/Beginner/resolve/main/notebooks/lc_demo.dat"]
+    assert demo["kind"] == "lightcurve" and demo["meta"]["format"] == "rmdc26_table" and demo["size_bytes"] is None
+    truth = by_uri["https://huggingface.co/datasets/RGES-PIT/Beginner/resolve/main/master_params.csv"]
+    assert truth["kind"] == "catalog" and truth["meta"]["format"] == "rmdc26_truth"
+    readme = by_uri["https://huggingface.co/datasets/RGES-PIT/Beginner/resolve/main/README.md"]
+    assert readme["kind"] == "doc" and readme["meta"]["format"] == "doc"
+    assert by_uri["https://huggingface.co/datasets/RGES-PIT/Beginner/resolve/main/.gitattributes"]["kind"] == "unknown"
+    assert inv["counts_by_format"]["rmdc26_parquet"] == 2 and inv["counts_by_format"]["rmdc26_table"] == 1
+    assert inv["counts_by_format"]["rmdc26_truth"] == 1 and inv["counts_by_format"]["doc"] == 2
+    lst = inv["listings"]["hf:RGES-PIT/Beginner"]
+    assert lst["origin"] == "huggingface" and lst["n_keys"] == 5 and lst["gated"] is False
+    assert inv["total_bytes"] >= 123456789 + 987654321
+    assert sum(len(s) for s in inv["shards"]) == inv["n_products"]
+    json.dumps(inv)
+    # the classifier on its own, and the resolve-URL builder
+    assert A.huggingface_match("RMDC26_Experienced_Tier_test.parquet")["meta"]["tier"] == "Experienced"
+    assert A.huggingface_match("rmdc26_lightcurves.csv")["meta"]["format"] == "rmdc26_table"
+    assert A.huggingface_match("truth_table.parquet")["kind"] == "catalog"
+    assert A.huggingface_match("data.json")["kind"] == "doc"
+    assert A.hf_resolve_url("https://huggingface.co", "RGES-PIT/Beginner", "a b/x.parquet") == \
+        "https://huggingface.co/datasets/RGES-PIT/Beginner/resolve/main/a%20b/x.parquet"
+
+
+def test_fetch_to_cache_treats_a_gated_huggingface_file_as_a_recorded_failure(tmp_path, capsys):
+    url = "https://huggingface.co/datasets/RGES-PIT/Experienced/resolve/main/RMDC26_Experienced_Tier_test.parquet"
+    sess = FakeSession([("resolve/main", FakeResp(403, "gated"))])
+    out = A.fetch_to_cache(url, tmp_path, session=sess, retries=3, pause=0.0)
+    assert out is None and len(sess.calls) == 1                   # no retry on 403
+    assert "access denied" in capsys.readouterr().out
+    body = b"PAR1" + bytes(64)
+    ok_sess = FakeSession([("resolve/main", FakeResp(200, "", {"content-type": "application/octet-stream"}, body))])
+    got = A.fetch_to_cache(url, tmp_path, session=ok_sess)
+    assert got is not None and got.read_bytes() == body
+    assert got == A.cache_path_for(url, tmp_path)
+
+
+# --------------------------------------------------------------------------------------
+# the RMDC26 table through the light-curve reader
+# --------------------------------------------------------------------------------------
+
+def _rmdc_frame(n_events=4, n_epochs=5, hjd0=2461000.0):
+    rows = []
+    for i in range(n_events):
+        name = f"RMDC26_{i + 1:06d}"
+        for k in range(n_epochs):
+            for band, mag in (("W149", 18.0), ("Z087", 19.5)):
+                rows.append({"name": name, "HJD": hjd0 + k + 0.25 * i, "mag": mag + 0.01 * k,
+                             "mag_err": 0.01 + 0.001 * k, "band": band})
+    return pd.DataFrame(rows)
+
+
+def test_rmdc26_table_reads_one_curve_per_event_and_band_with_aliases_and_mjd():
+    df = _rmdc_frame()
+    lcs = P.read_lightcurve_table(df, conf=CONF, survey="GBTDS_sim")
+    assert isinstance(lcs, list) and len(lcs) == 8
+    assert {lc.band for lc in lcs} == {"F146", "F087"}
+    assert [lc.star_id for lc in lcs][:2] == ["RMDC26_000001", "RMDC26_000001"]   # order of appearance
+    a = lcs[0]
+    assert a.band == "F146" and a.meta["band_raw"] == "W149" and a.meta["band_alias_applied"] == {"W149": "F146"}
+    assert a.meta["time_convention"] == "jd_to_mjd" and a.time_system == "HJD"
+    assert np.allclose(a.mjd, 2461000.0 - 2400000.5 + np.arange(5))
+    assert a.survey == "GBTDS_sim" and a.n == 5 and a.flux_unit == "mag_derived"
+    assert a.meta["roles"] == {"star_id": "name", "time": "HJD", "band": "band", "mag": "mag",
+                               "mag_err": "mag_err"}
+    assert a.meta["capped"] is False and a.meta["n_curves_in_table"] == 8 and a.meta["max_objects"] is None
+    z = next(lc for lc in lcs if lc.band == "F087" and lc.star_id == "RMDC26_000003")
+    assert z.meta["band_alias_applied"] == {"Z087": "F087"} and np.isclose(z.to_mag()[1][0], 19.5)
+    # the cap keeps the first N (event, band) pairs in order of appearance and says so
+    capped = P.read_lightcurve_table(df, conf=CONF, survey="GBTDS_sim", max_objects=3)
+    assert [(lc.star_id, lc.band) for lc in capped] == [("RMDC26_000001", "F146"), ("RMDC26_000001", "F087"),
+                                                        ("RMDC26_000002", "F146")]
+    assert all(lc.meta["capped"] is True and lc.meta["max_objects"] == 3
+               and lc.meta["n_curves_in_table"] == 8 for lc in capped)
+    # a config alias table wins over the built-in one
+    conf2 = copy.deepcopy(CONF)
+    conf2["instruments"]["WFI"]["band_aliases"] = {"w149": "F999"}
+    odd = P.read_lightcurve_table(df.head(2), conf=conf2)
+    assert {lc.band for lc in odd} == {"F999", "F087"}
+
+
+def test_rmdc26_time_conventions_mjd_range_untouched_and_reduced_hjd_lifted():
+    df = _rmdc_frame(n_events=1, hjd0=61000.0)                      # HJD column, MJD-range values
+    lc = P.read_lightcurve_table(df, conf=CONF)[0]
+    assert lc.meta["time_convention"] == "mjd_range_as_is" and np.allclose(lc.mjd, 61000.0 + np.arange(5))
+    df2 = _rmdc_frame(n_events=1, hjd0=9000.0)                      # HJD - 2450000
+    lc2 = P.read_lightcurve_table(df2, conf=CONF)[0]
+    assert lc2.meta["time_convention"] == "reduced_jd_to_mjd"
+    assert np.allclose(lc2.mjd, 9000.0 + 2450000.0 - 2400000.5 + np.arange(5))
+    # a plain mjd column in the 4000-9999 range is not a reduced JD
+    df3 = pd.DataFrame({"mjd": [9000.0, 9001.0], "mag": [18.0, 18.0], "mag_err": [0.01, 0.01]})
+    lc3 = P.read_lightcurve_table(df3, conf=CONF, band="F146")[0]
+    assert lc3.meta["time_convention"] == "as_is" and np.allclose(lc3.mjd, [9000.0, 9001.0])
+    t, how = P.times_to_mjd(np.array([2461000.5]), "bjd")
+    assert how == "jd_to_mjd" and np.isclose(t[0], 61000.0)
+    # event_id is a star-id role too
+    df4 = pd.DataFrame({"event_id": ["e1", "e1"], "HJD": [2461000.0, 2461001.0],
+                        "mag": [18.0, 18.1], "mag_err": [0.01, 0.01], "filt": ["W149", "W149"]})
+    lc4 = P.read_lightcurve_table(df4, conf=CONF)[0]
+    assert lc4.star_id == "e1" and lc4.band == "F146" and lc4.meta["roles"]["band"] == "filt"
+
+
+def test_load_table_reads_whitespace_dat_with_hash_header_lines(tmp_path):
+    # column names in the last '#' line, no header row (pd.read_csv(sep=r'\s+', comment='#') style)
+    dat = tmp_path / "lc_000001.dat"
+    dat.write_text("# RMDC26 event RMDC26_000001\n# tier = Beginner\n# HJD mag mag_err band\n"
+                   "2461000.0  18.00 0.010 W149\n2461001.0  18.01 0.011 W149\n"
+                   "2461000.5  19.50 0.020 Z087\n")
+    df, meta = P.load_table(dat)
+    assert list(df.columns) == ["HJD", "mag", "mag_err", "band"] and len(df) == 3
+    assert meta["delimiter"] == "whitespace" and meta["header_source"] == "comment_line"
+    assert meta["tier"] == "Beginner"
+    lcs = P.read_lightcurve_table(dat, conf=CONF, survey="GBTDS_sim", star_id="RMDC26_000001")
+    assert {(lc.star_id, lc.band, lc.n) for lc in lcs} == {("RMDC26_000001", "F146", 2), ("RMDC26_000001", "F087", 1)}
+    assert all(lc.meta["tier"] == "Beginner" for lc in lcs)
+    # a header row after the comments, whitespace-delimited
+    txt = tmp_path / "lc_000002.txt"
+    txt.write_text("# comment\nHJD mag mag_err band\n2461000.0 18.0 0.01 W149\n2461001.0 18.1 0.01 W149\n")
+    df2, meta2 = P.load_table(txt)
+    assert list(df2.columns) == ["HJD", "mag", "mag_err", "band"] and meta2["header_source"] == "first_row"
+    assert df2["mag"].tolist() == [18.0, 18.1]
+    # headerless and nameless: col0..colN, honestly
+    bare = tmp_path / "bare.dat"
+    bare.write_text("1 2 3\n4 5 6\n")
+    df3, meta3 = P.load_table(bare)
+    assert list(df3.columns) == ["col0", "col1", "col2"] and meta3["header_source"] == "none"
+    # comma files still go the CSV way
+    csv = tmp_path / "lc_3.csv"
+    csv.write_text("# band = F087\nmjd,flux,flux_err\n1,1.0,0.1\n2,1.2,0.1\n")
+    df4, meta4 = P.load_table(csv)
+    assert list(df4.columns) == ["mjd", "flux", "flux_err"] and meta4["delimiter"] == "comma"
+
+
+def test_run_dispatch_reads_rmdc26_parquet_as_capped_simulated_lightcurves(tmp_path):
+    from seti.roman.run import _kind_of, _normalise
+    assert _kind_of({"uri": "x/RMDC26_Beginner_Tier_test.parquet", "kind": "lightcurve",
+                     "meta": {"format": "rmdc26_parquet", "tier": "Beginner"}}) == "lightcurve"
+    assert _kind_of({"uri": "x/lc.dat", "kind": "lightcurve", "meta": {"format": "rmdc26_table"}}) == "lightcurve"
+    assert _kind_of({"uri": "x/master.csv", "kind": "catalog", "meta": {"format": "rmdc26_truth"}}) == "catalog"
+    assert _kind_of({"uri": "x/A_HEAD.FITS.gz", "kind": "unknown", "meta": {}}) == "lightcurve"   # OpenUniverse intact
+    pq = tmp_path / "RMDC26_Beginner_Tier_test.parquet"
+    _rmdc_frame(n_events=3).to_parquet(pq)
+    prod = {"uri": "https://huggingface.co/datasets/RGES-PIT/Beginner/resolve/main/RMDC26_Beginner_Tier_test.parquet",
+            "kind": "lightcurve", "band": None, "survey": "GBTDS", "simulated": True,
+            "meta": {"format": "rmdc26_parquet", "tier": "Beginner", "repo": "RGES-PIT/Beginner"}}
+    ctx = {"fetch": None, "budget": {}, "max_objects": 4, "ou_meta": dict(prod["meta"])}
+    objs = _normalise("lightcurve", pq, prod, CONF, P, {}, ctx)
+    assert isinstance(objs, list) and len(objs) == 4
+    assert all(isinstance(o, LightCurve) and o.survey == "GBTDS_sim" for o in objs)
+    assert all(o.meta["simulated"] is True and o.meta["tier"] == "Beginner" and o.meta["capped"] for o in objs)
+    assert {o.band for o in objs} == {"F146", "F087"} and objs[0].star_id == "RMDC26_000001"
+    assert all(o.meta["time_convention"] == "jd_to_mjd" for o in objs)

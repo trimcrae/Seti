@@ -618,10 +618,10 @@ def selftest(out_dir: Path, conf: dict, seed: int = 7) -> dict:
         kep = synthesise_source("kepler", n_epochs=5, span_yr=1.5, sep_mas=300.0, star_mass=1.0,
                                 distance_pc=10.0, err_mas=2.0, rng=rng)
         rf, rk = screen_source(fixed, conf), screen_source(kep, conf)
-        check("statite: fixed source flagged non-Keplerian",
-              "FIXED" in str(rf.get("astrometric_verdict") or rf.get("verdict")), rf.get("astrometric_verdict"))
-        check("statite: Keplerian source not flagged",
-              "FIXED" not in str(rk.get("astrometric_verdict") or rk.get("verdict")), rk.get("astrometric_verdict"))
+        vf = (rf.get("astrometry") or {}).get("verdict")
+        vk = (rk.get("astrometry") or {}).get("verdict")
+        check("statite: fixed source flagged non-Keplerian", vf == "FIXED_PREFERRED", vf)
+        check("statite: Keplerian source not flagged", vk != "FIXED_PREFERRED", vk)
         stat_objs = [fixed, kep]
     except Exception as exc:  # noqa: BLE001
         check("statite: module ran", False, f"{type(exc).__name__}: {exc}")

@@ -1033,6 +1033,12 @@ def _cmd_baffle(args, cfg):
     return _baffle_cmd(args, cfg)
 
 
+def _cmd_roman(args, cfg):
+    from .roman.run import main as _roman_main
+
+    return _roman_main(list(args.rest))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="seti", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2154,6 +2160,15 @@ def main(argv=None):
                             "(reciprocal absorbing screens); same flags as seti.baffle.run")
     _baffle_args(p)
     p.set_defaults(func=_cmd_baffle)
+
+    # --- 2026-09-09: ROMAN, intake for the Roman Space Telescope and the four
+    #     Roman-only channels (S40-S43); runnable as `python -m seti.roman.run`.
+    p = sub.add_parser("roman",
+                       help="ROMAN: Roman Space Telescope intake and channels S40-S43 "
+                            "(probe/inventory/ingest/screen/assess/selftest/readiness); "
+                            "flags are passed through to seti.roman.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_roman)
 
     from .fallout.run import _add_arguments as _fallout_args
     from .fallout.run import _cmd_fallout

@@ -72,7 +72,11 @@ STALE_DAYS = {"tocsin": 4.0, "loom": 10.0,
               "rubin_outage": 16.0,
               # Twice daily while the backfill from 2026-07-14 catches up, then
               # nightly; two days is a little over two nightly cadences.
-              "tocsin_ztf": 2.5}
+              "tocsin_ztf": 2.5,
+              # ROMAN readiness probe: monthly cron until flight data exist.
+              # Watched so that the month Roman's archive opens is not the
+              # month the probe had quietly stopped asking.
+              "roman": 45.0}
 
 # Which file in a channel's directory carries its run stamp.  Not every channel
 # is named `summary.json`/`screen.json`, and a marker that does not exist is
@@ -86,7 +90,8 @@ STALE_MARKER = {"tocsin": "summary.json",
                 "rubin_outage": "brokers.json",
                 # run.json is written by every run, even one that folded
                 # nothing; summary.json is per window and can be a stale chunk.
-                "tocsin_ztf": "run.json"}
+                "tocsin_ztf": "run.json",
+                "roman": "readiness.json"}
 
 # How far the DATA may fall behind the wall clock before that is a failure.
 #
@@ -698,6 +703,66 @@ def loom_alerts(root: Path) -> list[Alert]:
     return out
 
 
+def roman_alerts(root: Path) -> list[Alert]:
+    """The Roman archive opening, and any candidate tier on FLIGHT data.
+
+    ``results/roman/readiness.json`` is written by every readiness run with the
+    probe's ``data_state``.  The milestone fires once, the first time the
+    state reads ``MISSION_DATA_PRESENT``: from that day the four Roman-only
+    channels and the paces can run on real products, and a human should
+    dispatch ``roman.yml`` with ``stage=full`` rather than wait for the cron.
+    A candidate tier in a channel summary is raised only when the run says
+    its inputs were not simulated -- a simulated candidate is a selftest, not
+    a sky claim, and the workflow refuses to write one.
+    """
+    d = root / "results" / "roman"
+    out: list[Alert] = []
+    ready = _load(d / "readiness.json")
+    if isinstance(ready, dict):
+        state = str(ready.get("data_state") or "")
+        if state == "MISSION_DATA_PRESENT":
+            out.append(Alert(
+                key="roman:milestone:mission_data_present",
+                severity="milestone", channel="roman",
+                title="Roman flight data are in the archive",
+                body=("The readiness probe found Roman mission products "
+                      "(`results/roman/probe.json` -> `data_state_evidence`). "
+                      "Dispatch `roman.yml` with `stage=full` to run the four "
+                      "Roman-only channels (S40-S43) and every bridged channel "
+                      "on them; the cron only re-probes.\n\n"
+                      "Read `docs/roman.md` §1.2 and `results/roman/inventory.json`."),
+                detail={"evidence": ready.get("data_state_evidence"),
+                        "written_utc": ready.get("written_utc")}))
+        elif state == "SIMULATIONS_ONLY" and ready.get("first_seen_simulations"):
+            out.append(Alert(
+                key="roman:milestone:simulations_reachable",
+                severity="milestone", channel="roman",
+                title="Roman pre-launch simulations are reachable; the intake can be exercised",
+                body=("The probe reached simulated Roman products. A `stage=full` "
+                      "dispatch now runs the whole intake on them and reports "
+                      "`SIMULATION_PACES_OK` or `SIMULATION_PACES_FAILED` -- a "
+                      "test of the pipeline, never a sky result."),
+                detail={"evidence": ready.get("data_state_evidence")}))
+    for channel in ("lens", "lines", "flash", "statite", "paces"):
+        summ = _load(d / channel / "summary.json")
+        if not isinstance(summ, dict) or summ.get("simulated_inputs") is not False:
+            continue
+        verdict = str(summ.get("verdict") or "")
+        if "CANDIDATE" in verdict and "NO_CANDIDATE" not in verdict:
+            out.append(Alert(
+                key=f"roman:{channel}:candidates:" + hashlib.sha1(
+                    json.dumps(summ.get("funnel"), sort_keys=True, default=str).encode()
+                ).hexdigest()[:10],
+                severity="candidate", channel="roman",
+                title=f"ROMAN/{channel} reports {verdict}",
+                body=(f"`results/roman/{channel}/summary.json` carries verdict `{verdict}` "
+                      f"on flight data. Read `results/roman/{channel}/candidates.json` "
+                      f"and trace every entry to a systematic (docs/roman.md §2) "
+                      f"before believing it."),
+                detail={"verdict": verdict, "funnel": summ.get("funnel")}))
+    return out
+
+
 def health_alerts(root: Path, now: datetime | None = None) -> list[Alert]:
     """Has something gone quiet -- the channel, or the data reaching it?
 
@@ -1016,7 +1081,7 @@ def scheduler_alerts(root: Path) -> list[Alert]:
 def evaluate(root: Path, now: datetime | None = None) -> list[Alert]:
     """Every alert condition, evaluated against whatever results exist."""
     return [*tocsin_alerts(root), *tocsin_ztf_alerts(root), *loom_alerts(root),
-            *health_alerts(root, now),
+            *roman_alerts(root), *health_alerts(root, now),
             *frontier_recovery_alerts(root, now), *scheduler_alerts(root),
             *feed_alerts(root), *gate_alerts(root)]
 

@@ -3,12 +3,78 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-07.
+next. Last updated: 2026-09-09.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### Roman is coming: the intake and four Roman-only signatures, 2026-09-09: ROMAN (S40–S43)
+
+A new question from the user: *can we prepare to take in Roman Space
+Telescope data when it is ready and put it through all the paces, including
+channels other telescopes could not give us?* Roman is pre-launch (readiness
+committed for no later than May 2027; no proprietary period; archive at
+IRSA with cloud copies). `docs/roman.md` is the design; `seti.roman` is the
+implementation; nothing in it is a measurement of Roman data yet.
+
+**Intake (`roman.archive`, `roman.products`, `roman.schema`).** A probe that
+asks IRSA TAP/SIA, the public S3 buckets (OpenUniverse 2024 simulations; the
+expected flight bucket, whose existence is the test), MAST, the IPAC
+simulation pages and the Python packages, and reduces what it sees to one
+`data_state` (`NO_ARCHIVE_REACHED` / `NOT_YET_PUBLIC` / `SIMULATIONS_ONLY` /
+`MISSION_DATA_PRESENT`) with the evidence listed. Readers that emit four
+structures — `LightCurve`, `Spectrum`, `DQCutout`, `Ramp` — so no detector
+ever sees a Roman file: lazy ASDF reads of the `dq` plane alone, Level 1
+ramp boxes with resultant mid-times from the read pattern, table adapters
+with runtime column-role resolution. A field a product does not carry is
+`None` and the corresponding test is recorded as *not run*, never passed.
+Every summary carries `simulated_inputs`; a run on simulations can only say
+`SIMULATION_PACES_OK` / `SIMULATION_PACES_FAILED`, never a candidate tier
+(enforced in `assess` and asserted by the workflow).
+
+**Four signatures no earlier facility could reach** (taxonomy §X):
+
+* **S40 the opaque lens (`roman.lens`).** A microlens opaque over a fraction
+  ρ_L of its Einstein radius removes the minor image in the wings
+  (u > 1/ρ_L − ρ_L): a *symmetric pair of downward steps of depth exactly
+  A₋(u_c)*, one parameter fixing both where and how deep; a central hole for
+  ρ_L ≥ 1. With θ_E from finite-source effects (or the lower bound from the
+  peak magnification) the implied density is computed over every lens
+  distance, and the window where a natural body could match is confined to
+  tens of parsecs, where the lens is a moving blend Roman sees directly. Needs
+  the GBTDS 12-minute cadence.
+* **S41 the industrial line (`roman.lines`).** An unresolved line on a stellar
+  point source in the 1.00–1.93 µm grism / 0.75–1.80 µm prism — the band every
+  optical laser search stops short of and the band our own high-power lasers
+  occupy (Nd:YAG 1.064, Yb 1.03–1.09, Er-fibre 1.53–1.57 µm). Blind over the
+  band; industrial matches are flags. The slitless ledger: zeroth orders,
+  trace overlap, persistence, recurrent wavelength and pixel, stellar lines,
+  the single-line high-z emitter.
+* **S42 the sub-exposure flash (`roman.flash`).** A pulse shorter than one
+  resultant is a step in the ramp, exactly like a cosmic ray, and the
+  pipeline flags it `JUMP_DET`; the difference is a PSF-shaped cluster centred
+  on a catalogued star, then on the Level 1 ramp the step at one resultant in
+  every PSF pixel with no slope change (a flare keeps rising) and no residual
+  in the next exposure. Optical SETI's pulsed-beacon question on ~10⁸ stars at
+  once, for the first time.
+* **S43 the statite (`roman.statite`).** A CGI reflected-light point source
+  whose position is fixed rather than Keplerian; grey, specular. Tiny
+  population, screened for what no planet-hunter looks for.
+
+**The paces (`roman.bridge`).** Dips, glint, secular fade, RUST, KNELL,
+METRONOME and the narrow-line finders on Roman light curves and spectra with
+GBTDS-season parameters and the F146/F087 achromaticity test.
+
+**Operations.** `roman.yml`: monthly `readiness` cron (probe + inventory +
+diff → `results/roman/readiness.json`); `stage=full` on dispatch runs
+ingest → sharded screen → assess with the no-disguised-null and
+no-simulated-candidate assertions; `roman-lit.yml` is the prior-art sweep.
+`alerts.py` raises a milestone the first time the state reads
+`MISSION_DATA_PRESENT` and a candidate alert only on flight data. Pending:
+the first runner dispatch of `readiness` (the row in `docs/channels.md`
+says so until `results/roman/probe.json` lands).
 
 ### The LZ 248 keV recoil at the kinematic edge, 2026-09-07: LZEDGE
 

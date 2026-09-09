@@ -87,6 +87,17 @@ against the result file before quoting it elsewhere.
 | **Cross-correlation** (`crosscorr`) | Doppler-resolved O₂ / H₂O in LHS 1140 b's transit | ESO archive (ESPRESSO/HARPS/NIRPS), DACE | `crosscorr` | `crosscorr.yml` | none | `results/crosscorr/summary.json`: `NO_ARCHIVAL_IN_TRANSIT_HIRES_SPECTRA_AVAILABLE` |
 | **SETI archive** (`seti_archive`) | Has any targeted radio/optical SETI campaign pointed at LHS 1140, and to what EIRP? | Breakthrough Listen open data, CADC ObsCore | `seti-archive` | `seti-archive.yml` | none | `results/seti_archive/summary.json`: `NO_TARGETED_RADIO_SETI_ON_RECORD` — an observational gap, with representative facility limits |
 
+## Roman Space Telescope (pre-launch intake; built 2026-09-09)
+
+| Channel | Question | Data | CLI | Workflow | Doc | Results → current verdict |
+|---|---|---|---|---|---|---|
+| **ROMAN intake** (`roman.archive`, `roman.products`, `roman.schema`) | Is any Roman product public yet, and can every reader here consume it? IRSA TAP/SIA, the S3 buckets (OpenUniverse 2024 simulations; the expected flight bucket), MAST, the IPAC simulation pages, `roman_datamodels`; lazy ASDF `dq`-only reads, Level 1 ramps, light-curve / spectrum table adapters with runtime column-role resolution | IRSA, AWS S3, MAST (runner only) | `roman {probe,inventory,ingest,readiness}` (or `python -m seti.roman.run`) | `roman.yml` (**monthly cron** `readiness`; `stage=full` on dispatch) | `roman.md` §1 | **Pending**: `results/roman/probe.json` / `readiness.json` written by the first runner dispatch; `data_state` ∈ {NO_ARCHIVE_REACHED, NOT_YET_PUBLIC, SIMULATIONS_ONLY, MISSION_DATA_PRESENT}; `alerts.py` opens an issue on MISSION_DATA_PRESENT |
+| **ROMAN/lens** (`roman.lens`) | S40, the opaque lens: a microlens opaque over a fraction ρ_L of its Einstein radius removes the minor image in the wings (u > 1/ρ_L − ρ_L), a symmetric pair of steps of depth A₋(u_c); implied density below any bound body | GBTDS Level 4 light curves (F146 + F087); pre-launch: the microlensing data-challenge light curves | `roman screen --channel lens` | `roman.yml` | `roman.md` §2.1 | **Pending** (offline injection/rejection battery green) |
+| **ROMAN/lines** (`roman.lines`) | S41, the industrial line: an unresolved emission line on a stellar point source in the 1.00–1.93 µm grism / 0.75–1.80 µm prism, the band holding Nd:YAG 1.064 and Er-fibre 1.55 µm; slitless-contamination vetoes | HLWAS grism, HLTDS prism Level 4 spectra; Euclid NISP as substitute | `roman screen --channel lines` | `roman.yml`, `roman-lit.yml` | `roman.md` §2.2 | **Pending** |
+| **ROMAN/flash** (`roman.flash`) | S42, the sub-exposure flash: PSF-shaped `JUMP_DET` clusters centred on catalogued stars in Level 2 `dq`, confirmed on the Level 1 ramp (one resultant, no slope change, PSF amplitude map) | GBTDS / HLTDS / HLWAS Level 2 `dq`, Level 1 ramps for candidates | `roman screen --channel flash` | `roman.yml` | `roman.md` §2.3 | **Pending** |
+| **ROMAN/statite** (`roman.statite`) | S43, the statite: a CGI reflected-light point source whose astrometry is fixed rather than Keplerian; grey, specular | CGI Level 2–4 products | `roman screen --channel statite` | `roman.yml` | `roman.md` §2.4 | **Pending** |
+| **ROMAN/paces** (`roman.bridge`) | Every existing light-curve / spectrum channel (dips, glint, secular fade, RUST, KNELL, METRONOME, narrow lines) on Roman products with GBTDS-season parameters and the F146/F087 achromaticity test | as above | `roman screen --channel paces` | `roman.yml` | `roman.md` §3 | **Pending** |
+
 ## Infrastructure (not channels)
 
 | Module | Role | CLI / entry | Workflow | Doc | Outputs |
@@ -124,6 +135,7 @@ were run for:
 | `farir_docs`, `farir_stats`, `catrecon` | AKARI-FIS / IRAS far-IR instrument documentation, measured crossmatch systematics and catalogue metadata (CENOTAPH leg 3, EMBER) | `farir-params.yml`, `catrecon.yml` |
 | `survey_recon` | Live probe of what can feed TOCSIN and LOOM while Rubin is dark (`substitute-surveys.md`) | `survey-recon.yml` |
 | `bafflelit` | Prior-art sweep for BAFFLE: mid-IR *deficit* searches, zoo/planetarium-hypothesis observational tests, outer-solar-system occulter/parallax searches, radio voids at stars, concealment arguments (`scripts/bafflelit_fetch.py`) | `bafflelit.yml` |
+| `romanlit` | Prior-art sweep for the four Roman-only signatures S40–S43 and for any Roman/WFIRST SETI proposal (`scripts/romanlit_fetch.py`) | `roman-lit.yml` |
 | `metronomelit`, `lanternlit`, `falloutlit` | Prior-art sweeps for METRONOME, LANTERN and FALLOUT (`scripts/<name>_fetch.py`; run as the `lit` job of each channel's workflow) | `metronome.yml`, `lantern.yml`, `fallout.yml` |
 
 ## Gaps this index exposed

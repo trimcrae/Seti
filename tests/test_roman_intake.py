@@ -615,15 +615,18 @@ def test_mast_400_records_the_votable_info_text_and_the_error_body():
     ep = rec["endpoints"]["mast:Roman"]
     assert ep["status"] == "http_error" and ep["http_status"] == 400 and ep["count"] is None
     assert ep["present"] is None and ep["query_form"] is None
-    assert [a["form"] for a in ep["attempts"]] == ["top1", "count"]
+    # Every form is tried when all fail: ObsCore (obs_collection) and CAOM (collection),
+    # TOP 1 then COUNT on each -- the 2026-09-09 run showed CAOM has no obs_collection.
+    assert [a["form"] for a in ep["attempts"]] == ["top1", "top1_caom", "count", "count_caom"]
     assert ep["attempts"][0]["url"].startswith(CONF["archive"]["mast"]["tap"].rstrip("/") + "/sync?")
-    assert "SELECT+TOP+1+obs_collection" in ep["attempts"][0]["url"]
-    assert "COUNT" in ep["attempts"][1]["url"]
+    assert "SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore" in ep["attempts"][0]["url"]
+    assert "SELECT+TOP+1+collection+FROM+dbo.CaomObservation" in ep["attempts"][1]["url"]
+    assert "COUNT" in ep["attempts"][2]["url"] and "COUNT" in ep["attempts"][3]["url"]
     info = ep["attempts"][0]["votable_info"]
     assert info[0] == ("QUERY_STATUS=ERROR: Column obs_collection is not valid for table "
                        "dbo.CaomObservation")
     assert info[1] == "ERROR_DETAIL=: line 1"
-    assert ep["votable_info"] == info + info and ep["error"] == info[0]
+    assert ep["votable_info"] == info * 4 and ep["error"] == info[0]
     assert ep["error_body"].startswith("<?xml") and len(ep["error_body"]) <= A.MAX_ERROR_BODY
     assert ep["attempts"][0]["error_body"] == MAST_400
     assert rec["data_state"] == "NOT_YET_PUBLIC" and rec["n_endpoints_reached"] == 3
@@ -696,7 +699,7 @@ def test_index_page_crawl_follows_matching_links_one_level_and_ignores_the_rest(
                         ("example.org/data/challenge.html", FakeResp(200, CHALLENGE_HTML)),
                         ("example.org/contact.html", FakeResp(200, "<title>Contact</title>")),
                         ("example.org/roman/", FakeResp(200, INDEX_HTML))])
-    rec = A.probe(_crawl_conf(), session=sess, timeout_s=1.0)
+    rec = A.probe(_crawl_conf(crawl_depth=1), session=sess, timeout_s=1.0)
     ep = rec["endpoints"]["sim:idx"]
     assert ep["status"] == "ok" and ep["title"] == "Roman at Example" and ep["data_links"] == []
     crawl = ep["crawl"]
@@ -1058,3 +1061,23 @@ def test_flatten_meta_is_json_safe():
     m = P.flatten_meta({"a": {"b": np.float32(1.5), "c": np.zeros((3, 3))}, "d": [1, 2], "e": None})
     assert m["a.b"] == 1.5 and m["a.c"].startswith("<array") and m["d"] == [1, 2] and m["e"] is None
     json.dumps(m)
+
+
+def test_index_page_crawl_follows_a_simulation_index_one_more_level_when_asked():
+    """`crawl_depth: 2` follows a page that is itself a simulation index (by title)
+    and collects its data links; depth 1 does not."""
+    deep = ('<title>Simulation index</title><a href="/roman/sims/gbtds.html">GBTDS simulation</a>')
+    leaf = ('<title>GBTDS simulation</title><a href="/roman/sims/gbtds_lc.parquet">light curves</a>')
+    routes = [("example.org/roman/sims/gbtds.html", FakeResp(200, leaf)),
+              ("example.org/roman/sims/", FakeResp(200, deep)),
+              ("example.org/roman/", FakeResp(200, INDEX_HTML)),
+              ("example.org/data/challenge.html", FakeResp(200, CHALLENGE_HTML)),
+              ("example.org/contact.html", FakeResp(200, "<title>Contact</title>"))]
+    rec = A.probe(_crawl_conf(crawl_depth=2), session=FakeSession(routes), timeout_s=1.0)
+    crawl = rec["endpoints"]["sim:idx"]["crawl"]
+    sims = {p["url"]: p for p in crawl["pages"]}["https://example.org/roman/sims/"]
+    assert [sp["url"] for sp in sims["subpages"]] == ["https://example.org/roman/sims/gbtds.html"]
+    assert "https://example.org/roman/sims/gbtds_lc.parquet" in crawl["data_links"]
+    rec1 = A.probe(_crawl_conf(crawl_depth=1), session=FakeSession(routes), timeout_s=1.0)
+    crawl1 = rec1["endpoints"]["sim:idx"]["crawl"]
+    assert "https://example.org/roman/sims/gbtds_lc.parquet" not in crawl1["data_links"]

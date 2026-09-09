@@ -61,6 +61,9 @@ archive:
     - {name: "roman_docs_wfi", url: "https://roman-docs.stsci.edu/", kind: "documentation"}
   # Crawl budget for ``kind: index`` pages (one level deep, HEAD then GET <= 1 MB).
   crawl_max_pages: 15
+  # Follow simulation / data index pages one more level (2026-09-09: the
+  # crawl reached IPAC's 'Science Simulations by Topic' but not its data pages).
+  crawl_depth: 2
   crawl_link_pattern: "sim|challenge|microlens|openuniverse|data|roman"
   # Delimiter-based recursive S3 listing (archive.list_s3_tree): every directory
   # is listed with up to `max_keys_per_dir` sample keys (continuation tokens

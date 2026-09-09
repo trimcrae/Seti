@@ -107,7 +107,14 @@ occulting tier fell from 1,262 to 145 (all pending on an edge-of-coverage
 symmetry test), 2,511 supernovae `NOT_LENSING`, 1,205 tagged transient. The simulated DQ planes carry no flags, so
 S42's jump path waits for flight data; MAST now answers cleanly (no Roman
 collection); the crawl found the Roman Microlensing Data Challenge 2026
-page, the GBTDS-like stand-in for the next probe.
+page, and the next readiness run (10:09 AM ET) read it: simulated Galactic
+Bulge light curves in W149 (F146) and Z087 (F087) with known parameters,
+false positives, parallax and astrometric series — the volume and type of
+the real GBTDS — served from Hugging Face (`RGES-PIT/Beginner`,
+`RGES-PIT/Experienced`, one Parquet per tier). That is the dataset S40 is
+calibrated on before launch; the Hugging Face probe/inventory and the
+reader's column-role and band-alias handling are being added so the next
+`stage=full` run ingests it (`docs/roman.md` §1.4).
 
 **Prior art read (34302576338, 645 abstracts).** The occulting-lens
 light-curve morphology is natural-body literature — Agol 2002, a 2003

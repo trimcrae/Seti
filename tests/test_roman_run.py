@@ -158,3 +158,11 @@ def test_cli_registers_roman_passthrough():
     from seti.cli import main
     with pytest.raises(SystemExit):
         main(["roman", "--help"])
+
+
+def test_the_two_openuniverse_band_maps_agree():
+    """`archive.openuniverse_band_map` (inventory) and `openuniverse.band_tokens`
+    (readers) name the same filters; a drift between them would classify an
+    image under one band and read it under another."""
+    conf = load_roman_config()
+    assert conf["archive"]["openuniverse_band_map"] == conf["openuniverse"]["band_tokens"]

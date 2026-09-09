@@ -99,7 +99,9 @@ archive:
   huggingface:
     api: "https://huggingface.co"
     author: "RGES-PIT"
-    datasets: ["RGES-PIT/Beginner", "RGES-PIT/Experienced"]
+    # The author listing of 2026-09-09 (10:44 AM ET) also found `test` and
+    # `MachineLearning`; `Beginner` is 165 MB, `Experienced` 3.1 GB, neither gated.
+    datasets: ["RGES-PIT/Beginner", "RGES-PIT/Experienced", "RGES-PIT/test", "RGES-PIT/MachineLearning"]
     survey: "GBTDS"
     note: "Roman Microlensing Data Challenge 2026 (RGES PIT): one Parquet per tier, events keyed by `name`, bands W149 (F146) and Z087 (F087); found by the 2026-09-09 crawl of rges-pit.org/data-challenge/"
   # Python packages the runner installs for real products; the sandbox has none.
@@ -110,6 +112,11 @@ archive:
   max_download_bytes_per_run: 20.0e9
   # Objects normalised per multi-object product (an SNANA HEAD/PHOT pair holds
   # 7,471 SNe; an image holds hundreds of stars): ingest stops after this many.
+  # Formats ingested first within each kind (after mission-before-simulation);
+  # everything else follows by size.  The RMDC26 Beginner Parquet (165 MB) is
+  # the GBTDS-like stand-in S40 is calibrated on, so it must not lose to a
+  # hundred 2 MB SNANA headers.
+  ingest_priority_formats: ["rmdc26_parquet", "rmdc26_table", "snana_head", "openuniverse_image"]
   max_objects_per_product: 200
 
 # ---------------------------------------------------------------------------

@@ -166,3 +166,25 @@ def test_the_two_openuniverse_band_maps_agree():
     image under one band and read it under another."""
     conf = load_roman_config()
     assert conf["archive"]["openuniverse_band_map"] == conf["openuniverse"]["band_tokens"]
+
+
+def test_ingest_orders_priority_formats_before_size(tmp_path, monkeypatch):
+    """The RMDC26 Parquet must be selected before a hundred smaller SNANA headers."""
+    conf = load_roman_config()
+    conf["archive"]["ingest_priority_formats"] = ["rmdc26_parquet", "snana_head"]
+    seen = []
+
+    def fake_fetch(uri, cache_dir, session=None, **kw):
+        seen.append(uri)
+        return None                       # fetch "fails": the order is what is tested
+
+    import seti.roman.archive as A
+    monkeypatch.setattr(A, "fetch_to_cache", fake_fetch)
+    products = [{"uri": f"s3://x/h{i}_HEAD.FITS.gz", "kind": "lightcurve", "simulated": True,
+                 "size_bytes": 1000 + i, "meta": {"format": "snana_head"}} for i in range(5)]
+    products.append({"uri": "https://hf/RMDC26_Beginner_Tier_test.parquet", "kind": "lightcurve",
+                     "simulated": True, "size_bytes": 10 ** 8, "meta": {"format": "rmdc26_parquet"}})
+    (tmp_path / "inventory.json").write_text(json.dumps({"products": products}))
+    R.ingest(tmp_path, conf, kinds=("lightcurve",), limit=2, cache_dir=tmp_path / "cache")
+    assert seen[0].endswith("RMDC26_Beginner_Tier_test.parquet")
+    assert len(seen) == 6 or seen[1].endswith("h0_HEAD.FITS.gz")

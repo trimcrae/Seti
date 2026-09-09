@@ -330,7 +330,17 @@ def ingest(out_dir: Path, conf: dict, kinds=KINDS, limit: int = 200, cache_dir: 
             kw["max_bytes"] = int(remaining)
         return fetch_to_cache(uri, cache_dir / "raw", **kw)
 
-    for prod in sorted(products, key=lambda r: (bool(r.get("simulated")), r.get("size_bytes") or 0)):
+    # Order: mission before simulation, then the formats the config names as
+    # priorities (run 34365179373 chose the six smallest light-curve products,
+    # all SNANA HEADs, and never reached the RMDC26 Parquet), then by size.
+    priority = [str(f) for f in (arch.get("ingest_priority_formats") or [])]
+
+    def _rank(r):
+        fmt = str(((r.get("meta") or {}).get("format")) or "")
+        pri = priority.index(fmt) if fmt in priority else len(priority)
+        return (bool(r.get("simulated")), pri, r.get("size_bytes") or 0)
+
+    for prod in sorted(products, key=_rank):
         kind = _kind_of(prod)
         if kind is None or kind not in kinds:
             continue

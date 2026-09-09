@@ -453,7 +453,9 @@ def _channel_assess(channel: str, records: list[dict], conf: dict) -> dict:
         return out
     if channel == "lines":
         from .lines import assess_features
-        return assess_features(records, conf)
+        out = assess_features(records, conf)
+        out.setdefault("verdict", out.get("tier", "NO_DATA_REACHED"))
+        return out
     if channel == "statite":
         from .statite import assess_sources
         return assess_sources(records, conf)

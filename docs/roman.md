@@ -83,6 +83,17 @@ It writes `results/roman/probe.json` with per-endpoint status, and a single
 | `SIMULATIONS_ONLY` | only pre-launch simulations exist — the intake is exercised on them and every result is stamped `simulated_inputs: true` |
 | `MISSION_DATA_PRESENT` | flight products exist — the milestone `alerts.py` turns into a GitHub issue |
 
+**First probe, run 34302574303 on 2026-09-09 (10:16 PM ET), `results/roman/probe.json`:
+`data_state = SIMULATIONS_ONLY`.** Twelve of twelve endpoints answered. IRSA
+TAP and SIA2 are up and carry no Roman table; `irsa.ipac.caltech.edu/data/Roman/`
+is 404; the expected flight bucket `nasa-irsa-roman` does not exist
+(`NoSuchBucket`); MAST CAOM returned HTTP 400 to the `COUNT(*)` query (the
+reason is captured from the second probe onward); the IPAC simulation pages
+assumed in the first config were 404 and are now discovered by crawling the
+site root instead. What *does* exist is the OpenUniverse 2024 bucket, and it
+is richer than the design assumed (§1.4). `asdf`, `roman_datamodels`, `gwcs`,
+`fsspec` and `s3fs` all install on the runner.
+
 `inventory` enumerates what exists into `RomanProduct` rows (level, kind,
 survey, size, simulated) and a shard plan. **A simulated product is never
 reported as a sky result**: every summary carries `simulated_inputs`, and the
@@ -103,6 +114,24 @@ verdicts on simulations are `SIMULATION_PACES_OK` / `SIMULATION_PACES_FAILED`
   `config/roman.yaml`, with the source of the zero point recorded.
 * `dq_flags()` — `roman_datamodels.dqflags.pixel` when importable, else the
   config table; the summary says which.
+
+### 1.4 The pre-launch stand-in: OpenUniverse 2024 (`seti.roman.openuniverse`)
+
+`s3://nasa-irsa-simulations/openuniverse2024/roman/` (anonymous, reachable
+from this sandbox as well as the runner) holds, under `full/` and `preview/`:
+
+| Product | Layout (verified from the files on 2026-09-09) | What it exercises |
+|---|---|---|
+| **SNANA light curves** `ROMAN+LSST_LARGE_SNIa-normal/…_HEAD.FITS.gz` + `…_PHOT.FITS.gz` | 7,471 SNe per file pair; `PHOT` carries only `MJD`, `BAND`, `SIM_MAGOBS` — noiseless model magnitudes in 14 bands (LSST `ugrizy` + Roman `R Z Y J W H F K` = F062 F087 F106 F129 F146 F158 F184 F213), ~295 epochs per band over MJD 61444–63269 (the HLTDS-like 1500-day, 5-day-cadence SIMLIB) | the light-curve reader and every paces channel, at HLTDS cadence in Roman bands; errors are **assumed** from a depth model and every curve says so (`errors_assumed`) |
+| **TDS / WAS images** `RomanTDS/images/simple_model/<BAND>/<pointing>/Roman_TDS_simple_model_<BAND>_<pointing>_<SCA>.fits.gz` | galsim `roman_imsim` output: `PRIMARY` header (EXPTIME 161/302/901 s, MJD-OBS, FILTER, ZPTMAG, SIP WCS), HDUs `SCI` (float64 4088²), `ERR`, `DQ` (uint32) | the `DQCutout` path of S42 end to end; whether the sim `DQ` plane carries any jump flags is recorded as `dq_flag_census` in `calibration.json`, not assumed |
+| **Truth indices** `RomanTDS/truth/<BAND>/<pointing>/Roman_TDS_index_…txt` | per-image table: `object_id ra dec x y realized_flux flux mag obj_type` (star / galaxy / transient) | catalogued-star positions per image without a cross-match; the flight-data path (catalogue + WCS) is the fallback |
+| **Pointing sequence** `Roman_TDS_obseq_11_6_23.fits` | 57,365 exposures, seven filters × 8,195, MJD 62000–63563 | the survey-cadence record the config's `verify` rows are checked against |
+| **Point-source catalogue** `roman_rubin_cats_v1.1.2_faint/pointsource_<healpix>.parquet` | 38,970 stars per pixel with `magnorm`, SED, proper motion, parallax, `variability_model` | the star list for the WCS-based path |
+
+No grism/prism spectra and no CGI products exist in the simulation, so S41 and
+S43 remain exercised only by their synthetic selftests until flight data.
+Everything read from this bucket is stamped `simulated_inputs: true` and can
+only produce `SIMULATION_PACES_OK` / `SIMULATION_PACES_FAILED`.
 
 ---
 
@@ -287,30 +316,55 @@ flux and the record says `relative_flux: true`.
 
 ---
 
-## 4. Novelty — the honest position
+## 4. Novelty — the record, read
 
-To be verified by `romanlit` on the runner (`scripts/romanlit_fetch.py` →
-`results/romanlit/concept_scan.json`); nothing below has been re-read from a
-primary source in this session.
+`romanlit` ran on 2026-09-09 (run 34302576338, 164 fetches, 115 OK, 645
+abstracts scanned, `results/romanlit/concept_scan.json`); abstracts quoted
+below are verbatim from the fetched records, ids title-checked.
 
-* **S40.** Lensing by an occulting body is treated in the literature
-  (Agol 2002, occultation and microlensing; the black-hole-shadow and
-  compact-object lens papers) as a *natural* effect; the question "is any
-  observed lens opaque over a fraction of its Einstein radius, and what
-  density does that imply" appears not to have been asked of any survey. Dyson
-  spheres have been discussed as *lenses* (their mass) but not as *occulters of
-  their own images*.
-* **S41.** Laser searches in the near-infrared have been proposed (the
-  1.06/1.55 µm argument is old) and done on tiny samples with dedicated
-  instruments; no wide-field NIR slitless survey has existed to search.
-* **S42.** Pulsed optical SETI is the Harvard/Berkeley/Lick lineage (nanosecond
-  pulses on ~10³–10⁴ targeted stars). Nobody has used up-the-ramp jump flags as
-  a flash detector, because no wide-field survey had non-destructive reads.
-* **S43.** Statites are an engineering concept (Forward); "non-Keplerian
-  astrometry of a direct-imaging point source" as a technosignature test has,
-  to our knowledge, not been proposed.
-
----
+* **S40.** The *phenomenology* of a lens that occults its own images is
+  published as natural-body physics, and recently: Agol 2002 (occultation and
+  microlensing, title-verified); an astrometric treatment of "a spherical
+  finite-size lens consisting of opaque material" whose image trajectories
+  "can be classified into three types according to occultation of the plus
+  and minus images" (2003, doi:10.1086/377151); and, one month before this
+  channel, **arXiv:2608.24009 (Aug 2026)**, "Occultation of microlensed images
+  by circum-lens disks: Implications for surveys" — "microlensing surveys
+  typically apply automated criteria to exclude lightcurves that depart from
+  time-symmetric and achromatic Paczyński curves … occultation of microlensed
+  images by circum-lens material could lead to underdetection or
+  misclassification of ring- or disk-bearing compact object populations".
+  That paper is the natural-body neighbour and, read carefully, a warning:
+  **the GBTDS pipeline's own anomaly cuts may reject exactly the S40 shape**,
+  so the channel must run on the full light-curve product, not on the
+  pipeline's event catalogue. Nothing in the record turns the occulting
+  radius into a density and asks whether any bound body can supply it, and
+  nothing searches a survey for the symmetric-step signature; those two
+  steps are the claim.
+* **S41.** The near-infrared pulsed/continuous laser lineage is targeted and
+  ground-based: PANOSETI's "optical and near-infrared (350–1650 nm)
+  instrument" for "transient pulsed signals occurring between nanosecond to
+  second time scales" (arXiv:1808.05772), NIROSETI, and Hippke's optimum
+  "λ₀ ≈ 1 µm, Δλ ≈ 1.5 nm" pulses (arXiv:1804.01251). Vides et al. 2019
+  (arXiv:1909.04128) model **WFIRST's coronagraph** as a laser detector at
+  575 nm around nearby stars. No wide-field NIR slitless survey search
+  appears in the record; the RoSETZ white paper (arXiv:2306.10202) is the one
+  Roman SETI proposal found and it is a transit survey of the Earth Transit
+  Zone. The S41 position stands as written.
+* **S42.** Pulsed optical SETI is the Harvard all-sky lineage ("coincident
+  optical pulses of nanosecond timescale", 2000), PANOSETI and the 2026
+  "Cosmic Lighthouses" argument that "our extensive, existing surveys are
+  mostly blind to the µs/ms-second universe". The engineering literature on
+  up-the-ramp jump detection and snowballs is the calibration baseline. No
+  record uses jump flags as an astrophysical flash detector; the S42 position
+  stands.
+* **S43.** The neighbours are Jaiswal 2023 (arXiv:2306.07859), specular
+  glints from artificial *surfaces on a rotating planet* in direct imaging
+  ("the reflected signal is very strong … for surfaces covering only few
+  ppm"), and the statite concept in our own mission design
+  (arXiv:2012.12935). Non-Keplerian astrometry of a direct-imaging point
+  source as the test is not in the record. Vides et al. 2019 is the prior
+  Roman-coronagraph SETI proposal (laser, not reflector) and is cited.
 
 ## 5. Operations
 

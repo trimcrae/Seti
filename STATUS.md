@@ -72,9 +72,33 @@ diff → `results/roman/readiness.json`); `stage=full` on dispatch runs
 ingest → sharded screen → assess with the no-disguised-null and
 no-simulated-candidate assertions; `roman-lit.yml` is the prior-art sweep.
 `alerts.py` raises a milestone the first time the state reads
-`MISSION_DATA_PRESENT` and a candidate alert only on flight data. Pending:
-the first runner dispatch of `readiness` (the row in `docs/channels.md`
-says so until `results/roman/probe.json` lands).
+`MISSION_DATA_PRESENT` and a candidate alert only on flight data.
+
+**First readiness run (34302574303, 10:16 PM ET): `SIMULATIONS_ONLY`.** All
+twelve endpoints answered. No Roman table at IRSA TAP/SIA; `data/Roman/`
+404; the expected flight bucket does not exist; MAST CAOM 400 (reason now
+captured); the two IPAC simulation URLs assumed from memory were 404 and are
+replaced by a crawl of the site root. The OpenUniverse 2024 bucket is real
+and richer than assumed: SNANA HEAD/PHOT light curves (7,471 SNe per pair,
+noiseless model magnitudes in 14 bands, ~295 epochs per band, 5-day cadence),
+galsim TDS/WAS images with SCI/ERR/DQ planes and SIP WCS, per-image truth
+indices with star pixel positions, the 57,365-exposure pointing sequence and
+the point-source catalogue (`docs/roman.md` §1.4). The first inventory
+classified none of it (flat 5,000-key crawl of one directory; `+` in a key
+un-encoded) — rebuilt as a tree listing with OpenUniverse patterns, plus
+`seti.roman.openuniverse` adapters, so the paces and S42's `DQCutout` path
+run on real simulated products before launch. Selftest on the runner:
+PASS 12/12.
+
+**Prior art read (34302576338, 645 abstracts).** The occulting-lens
+light-curve morphology is natural-body literature — Agol 2002, a 2003
+astrometric finite-opaque-lens paper, and arXiv:2608.24009 (Aug 2026),
+which warns that survey anomaly cuts reject such curves, so S40 must run on
+the full GBTDS light-curve product and not on the event catalogue; the
+density inference and the search are ours. No NIR slitless laser search, no
+jump-flag flash detector and no non-Keplerian-astrometry test appear; the
+Roman SETI record is RoSETZ (a transit survey) and Vides+2019 (WFIRST
+coronagraph as a 575 nm laser detector). `docs/roman.md` §4.
 
 ### The LZ 248 keV recoil at the kinematic edge, 2026-09-07: LZEDGE
 

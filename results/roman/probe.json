@@ -1,0 +1,195 @@
+{
+ "written_utc": "2026-09-09T02:18:33Z",
+ "data_state": "SIMULATIONS_ONLY",
+ "data_state_evidence": [
+  "s3:openuniverse2024: simulation bucket nasa-irsa-simulations/openuniverse2024/roman/ lists 2 prefix(es), 0 key(s)",
+  "sim:openuniverse_irsa_page: simulation page answers (0 data link(s))"
+ ],
+ "endpoints": {
+  "irsa_tap": {
+   "name": "irsa_tap",
+   "kind": "irsa_tap",
+   "url": "https://irsa.ipac.caltech.edu/TAP/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+table_name%2C+description+FROM+TAP_SCHEMA.tables+WHERE+LOWER%28table_name%29+LIKE+%27%25roman%25%27+OR+LOWER%28description%29+LIKE+%27%25roman%25%27+OR+LOWER%28table_name%29+LIKE+%27%25wfi%25%27+OR+LOWER%28description%29+LIKE+%27%25wfi%25%27+OR+LOWER%28table_name%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28description%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hltds%25%27+OR+LOWER%28description%29+LIKE+%27%25hltds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28description%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28table_name%29+LIKE+%27%25openuniverse%25%27+OR+LOWER%28description%29+LIKE+%27%25openuniverse%25%27",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.259,
+   "error": null,
+   "tables": []
+  },
+  "irsa_sia2": {
+   "name": "irsa_sia2",
+   "kind": "irsa_sia2",
+   "url": "https://irsa.ipac.caltech.edu/SIA?POS=circle+266.4+-28.9+0.01&MAXREC=1",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.235,
+   "error": null,
+   "content_type": "application/x-votable+xml"
+  },
+  "irsa_data_root": {
+   "name": "irsa_data_root",
+   "kind": "irsa_data_root",
+   "url": "https://irsa.ipac.caltech.edu/data/Roman/",
+   "status": "http_error",
+   "http_status": 404,
+   "latency_s": 0.037,
+   "error": null,
+   "links": [],
+   "head_status": 404,
+   "content_type": "text/html; charset=iso-8859-1"
+  },
+  "s3:openuniverse2024": {
+   "name": "s3:openuniverse2024",
+   "kind": "s3",
+   "url": "https://nasa-irsa-simulations.s3.amazonaws.com/?list-type=2&prefix=openuniverse2024%2Froman%2F&max-keys=200&delimiter=%2F",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.245,
+   "error": null,
+   "bucket": "nasa-irsa-simulations",
+   "prefix": "openuniverse2024/roman/",
+   "s3_kind": "simulation",
+   "prefixes": [
+    "openuniverse2024/roman/full/",
+    "openuniverse2024/roman/preview/"
+   ],
+   "contents": [],
+   "exists": true,
+   "is_truncated": false
+  },
+  "s3:roman_mission": {
+   "name": "s3:roman_mission",
+   "kind": "s3",
+   "url": "https://nasa-irsa-roman.s3.amazonaws.com/?list-type=2&prefix=&max-keys=200&delimiter=%2F",
+   "status": "http_error",
+   "http_status": 404,
+   "latency_s": 0.216,
+   "error": "NoSuchBucket: The specified bucket does not exist",
+   "bucket": "nasa-irsa-roman",
+   "prefix": "",
+   "s3_kind": "mission",
+   "prefixes": [],
+   "contents": [],
+   "exists": false,
+   "is_truncated": false
+  },
+  "mast:Roman": {
+   "name": "mast:Roman",
+   "kind": "mast_caom",
+   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+COUNT%28%2A%29+AS+n+FROM+dbo.CaomObservation+WHERE+obs_collection%3D%27Roman%27",
+   "status": "http_error",
+   "http_status": 400,
+   "latency_s": 0.458,
+   "error": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa",
+   "collection": "Roman",
+   "count": null,
+   "simulated": false
+  },
+  "mast:ROMAN": {
+   "name": "mast:ROMAN",
+   "kind": "mast_caom",
+   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+COUNT%28%2A%29+AS+n+FROM+dbo.CaomObservation+WHERE+obs_collection%3D%27ROMAN%27",
+   "status": "http_error",
+   "http_status": 400,
+   "latency_s": 0.223,
+   "error": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa",
+   "collection": "ROMAN",
+   "count": null,
+   "simulated": false
+  },
+  "mast:RomanSim": {
+   "name": "mast:RomanSim",
+   "kind": "mast_caom",
+   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+COUNT%28%2A%29+AS+n+FROM+dbo.CaomObservation+WHERE+obs_collection%3D%27RomanSim%27",
+   "status": "http_error",
+   "http_status": 400,
+   "latency_s": 0.186,
+   "error": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VOTABLE version=\"1.4\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xmlns=\"http://www.ivoa.net/xml/VOTable/v1.3\"\n  xsi:schemaLocation=\"http://www.ivoa",
+   "collection": "RomanSim",
+   "count": null,
+   "simulated": false
+  },
+  "sim:roman_sims_index": {
+   "name": "sim:roman_sims_index",
+   "kind": "simulation_page",
+   "url": "https://roman.ipac.caltech.edu/sims/",
+   "status": "http_error",
+   "http_status": 404,
+   "latency_s": 0.037,
+   "error": null,
+   "sim_kind": "index",
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 1564,
+   "data_links": [],
+   "head_status": 404
+  },
+  "sim:microlensing_data_challenge": {
+   "name": "sim:microlensing_data_challenge",
+   "kind": "simulation_page",
+   "url": "https://roman.ipac.caltech.edu/sims/Microlensing_Data_Challenge.html",
+   "status": "http_error",
+   "http_status": 404,
+   "latency_s": 0.036,
+   "error": null,
+   "sim_kind": "gbtds_like",
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 1564,
+   "data_links": [],
+   "head_status": 404
+  },
+  "sim:openuniverse_irsa_page": {
+   "name": "sim:openuniverse_irsa_page",
+   "kind": "simulation_page",
+   "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.048,
+   "error": null,
+   "sim_kind": "hltds_like",
+   "content_type": "text/html",
+   "bytes": 8708,
+   "data_links": [],
+   "head_status": 200
+  },
+  "sim:roman_docs_wfi": {
+   "name": "sim:roman_docs_wfi",
+   "kind": "simulation_page",
+   "url": "https://roman-docs.stsci.edu/",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.322,
+   "error": null,
+   "sim_kind": "documentation",
+   "content_type": "text/html;charset=UTF-8",
+   "bytes": 114595,
+   "data_links": [],
+   "head_status": 200
+  }
+ },
+ "packages": {
+  "asdf": {
+   "importable": true,
+   "version": "5.4.0"
+  },
+  "roman_datamodels": {
+   "importable": true,
+   "version": "1.1.0"
+  },
+  "gwcs": {
+   "importable": true,
+   "version": "1.0.3"
+  },
+  "fsspec": {
+   "importable": true,
+   "version": "2026.7.0"
+  },
+  "s3fs": {
+   "importable": true,
+   "version": "2026.7.0"
+  }
+ },
+ "n_endpoints_reached": 12,
+ "n_endpoints_tried": 12,
+ "timeout_s": 60.0,
+ "stage": "probe"
+}

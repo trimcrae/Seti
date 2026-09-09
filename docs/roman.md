@@ -69,8 +69,9 @@ The probe asks, in order and without assuming any answer:
    (OpenUniverse 2024: simulated HLTDS-like and HLWAS-like images with truth
    catalogues) and the *expected* flight bucket, whose existence is the test;
 4. MAST CAOM for a `Roman` collection;
-5. the IPAC simulation pages (the 2018 microlensing data challenge: ~10⁴
-   simulated GBTDS light curves — the GBTDS-like stand-in);
+5. the IPAC simulation pages, crawled from the site root two levels deep,
+   and the RMDC26 data-challenge pages and Hugging Face repositories (the
+   GBTDS-like stand-in; §1.4);
 6. whether `roman_datamodels` / `asdf` install on the runner.
 
 It writes `results/roman/probe.json` with per-endpoint status, and a single
@@ -127,6 +128,26 @@ from this sandbox as well as the runner) holds, under `full/` and `preview/`:
 | **Truth indices** `RomanTDS/truth/<BAND>/<pointing>/Roman_TDS_index_…txt` | per-image table: `object_id ra dec x y realized_flux flux mag obj_type` (star / galaxy / transient) | catalogued-star positions per image without a cross-match; the flight-data path (catalogue + WCS) is the fallback |
 | **Pointing sequence** `Roman_TDS_obseq_11_6_23.fits` | 57,365 exposures, seven filters × 8,195, MJD 62000–63563 | the survey-cadence record the config's `verify` rows are checked against |
 | **Point-source catalogue** `roman_rubin_cats_v1.1.2_faint/pointsource_<healpix>.parquet` | 38,970 stars per pixel with `magnorm`, SED, proper motion, parallax, `variability_model` | the star list for the WCS-based path |
+
+**The GBTDS-like stand-in: RMDC26.** The crawl of the second readiness run
+(10:09 AM ET) reached the **Roman Microlensing Data Challenge 2026** pages
+(`rges-pit.org/data-challenge/`, RGES-PIT), whose data are simulated Galactic
+Bulge light curves in two filters — `W149` (F146) and `Z087` (F087) — with
+known parameters, false positives, binary sources, parallax, orbital motion
+and astrometric series: the volume and type of the real GBTDS. They are served
+from Hugging Face dataset repositories `RGES-PIT/Beginner` and
+`RGES-PIT/Experienced` as one Parquet per tier (`RMDC26_<Tier>_Tier_test.parquet`,
+events keyed by `name`), read by the challenge notebooks with
+`pd.read_parquet` and columns of the `HJD / mag / mag_err / band` kind. Neither
+rges-pit.org nor huggingface.co is reachable from this sandbox (the runner
+reaches both), so the probe now lists the repositories through the Hugging
+Face API, the inventory emits their files as `lightcurve` products of format
+`rmdc26_parquet`, and the light-curve reader resolves the columns at run time,
+maps `W149`/`Z087` to F146/F087 and records what it found. **This is the
+dataset the S40 opaque-lens channel is calibrated on before launch** — the
+first ingest of it, sized by the byte budget, is the next `stage=full` run.
+The 2018 WFIRST data challenge (`ulwdc1_*.dat`, `master_file.txt`) is no
+longer served at its old address (404 on 2026-09-09).
 
 No grism/prism spectra and no CGI products exist in the simulation, so S41 and
 S43 remain exercised only by their synthetic selftests until flight data.

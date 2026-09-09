@@ -196,6 +196,20 @@ lens:
   # Grid for the density bound over lens distance (fraction of D_S).
   distance_grid: 200
   n_source_samples: 64                 # finite-source disk integration
+  # Fitting knobs.  Hard-edged occultation is piecewise-constant in every
+  # parameter, so the point-source fit optimises with a logistic edge of this
+  # width (theta_E units) and is reported on the exact model afterwards.
+  fit_soft_edge: 0.005
+  fit_max_nfev: 120
+  fit_max_nfev_finite: 30
+  rho_l_starts: [0.3, 0.6, 0.9, 1.5]
+  rho_l_hole_starts: [1.2, 1.5, 2.5]
+  rho_star_starts: [0.1, 0.5]
+  rho_star_starts_occult: [0.02, 0.2]
+  # Kink filter: per-side step detection needs this many epochs on the side and
+  # this chi2 improvement; the measured/predicted depth ratio tolerance.
+  kink_min_side_epochs: 20
+  step_depth_ratio_tol: 0.5
   tiers: {interest: "OCCULTING_PREFERRED_PENDING_VET", candidate: "OPAQUE_LENS_CANDIDATE"}
 
 # ---------------------------------------------------------------------------

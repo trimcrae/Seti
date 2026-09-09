@@ -561,8 +561,8 @@ def selftest(out_dir: Path, conf: dict, seed: int = 7) -> dict:
     # --- S40 lens ---------------------------------------------------------------------
     try:
         from .lens import screen_lightcurve, synthesise_event
-        occ = synthesise_event(rho_l=0.6, u0=0.2, t_e=20.0, rng=rng, star_id="syn_occult")
-        pac = synthesise_event(rho_l=None, u0=0.3, t_e=15.0, rng=rng, star_id="syn_paczynski")
+        occ = synthesise_event(rho_l=0.6, u0=0.2, tE=20.0, seed=seed, star_id="syn_occult")
+        pac = synthesise_event(rho_l=None, u0=0.3, tE=15.0, seed=seed + 1, star_id="syn_paczynski")
         r_occ = screen_lightcurve(occ, conf)
         r_pac = screen_lightcurve(pac, conf)
         tiers = (conf.get("lens") or {}).get("tiers") or {}
@@ -632,7 +632,7 @@ def selftest(out_dir: Path, conf: dict, seed: int = 7) -> dict:
     # --- paces ------------------------------------------------------------------------
     try:
         from .bridge import pace_lightcurve, synthesise_gbtds_lightcurve
-        dip = synthesise_gbtds_lightcurve("syn_dip", rng=rng, inject={"kind": "dip", "depth": 0.2, "dur_d": 2.0})
+        dip = synthesise_gbtds_lightcurve("syn_dip", rng=rng, inject={"kind": "dip", "depth": 0.2, "t": 61530.0, "dur_d": 2.0})
         flat = synthesise_gbtds_lightcurve("syn_flat", rng=rng)
         rd, rf2 = pace_lightcurve(dip, conf), pace_lightcurve(flat, conf)
         check("paces: injected dip flagged by dips", "dips" in (rd.get("flags") or []), rd.get("flags"))

@@ -441,6 +441,23 @@ the rest through — `max_event_duration_d` is now 0.5 d, which also keeps the
 12-hour F087 colour series out of a channel built for the 12-minute F146
 series.
 
+**RMDC26 ingested (run 7, 11:29 AM ET, `SIMULATION_PACES_OK`).** The
+Beginner-tier Parquet was fetched from Hugging Face and read with **no
+unreadable product**: 200 (event, band) curves (the per-product cap), 133 in
+F146 and 67 in F087 — the F087 series are reserved as the colour companions
+for the achromaticity tests. On these genuine simulated *microlensing*
+events the S40 screen behaves as designed: 75 `LENSING_NO_OCCULTATION`, 56
+`NOT_LENSING`, and **2 in the occulting tier** (pending, simulated — the two
+to read first when the truth parameters are joined, since the challenge
+seeds false positives, binary sources and parallax). At the GBTDS-like
+cadence every pace ran — dips, glint, secular, RUST, KNELL on all 133 and
+METRONOME on 30 — and the transient tag marked 10. The glint pace flagged 69:
+a microlensing peak is a brief *achromatic* brightening, which is the S30
+definition, so in the bulge the specular-glint channel needs the event
+**duration** as a gate (a glint lasts hours; a lensing event lasts days) —
+added as `paces.glint.max_event_duration_d` applied to the measured event
+duration, not only to the cadence.
+
 Also measured: the simulated `DQ` planes carry no flag of any kind
 (33.4 M pixels, `dq_flag_census_sim`, read through `roman_datamodels.dqflags`
 on the runner), so S42's `JUMP_DET` path is exercised only by the synthetic

@@ -322,3 +322,26 @@ def test_a_supernova_shaped_curve_is_tagged_transient_like_and_counted_apart():
     assert all(v >= 0 for v in summ["flags_on_transient_like"].values())
     flat = synthesise_gbtds_lightcurve("flat", rng=rng)
     assert transient_like(to_mag_series(flat, conf), conf)["transient_like"] is False
+
+
+def test_a_days_long_achromatic_brightening_is_not_a_glint_flag():
+    """A microlensing peak is a brief achromatic brightening by the detector's
+    rule (69 of 133 RMDC26 events flagged in run 34370548921); the flag now
+    also needs the event to be shorter than a glint."""
+    from seti.roman.bridge import channel_flagged, pace_glint, synthesise_gbtds_lightcurve
+    from seti.roman.schema import load_roman_config
+    conf = load_roman_config()
+    rng = np.random.default_rng(21)
+    lc = synthesise_gbtds_lightcurve("lens_like", rng=rng)
+    # A 3-day Paczynski-like bump on the 12-minute series.
+    dt = lc.mjd - 61530.0
+    bump = 1.0 + 1.5 * np.exp(-0.5 * (dt / 1.0) ** 2)
+    lc.flux = lc.flux * bump
+    rec = pace_glint(lc, conf)
+    assert rec["status"] == "ran" and rec["result"]["n_glint_events"] >= 1
+    assert rec["event_duration_h"] > 12.0
+    assert channel_flagged("glint", rec, conf) is False
+    short = synthesise_gbtds_lightcurve("glint", rng=rng, inject={"kind": "glint", "amp": 0.5, "t": 61530.0})
+    rec2 = pace_glint(short, conf)
+    assert rec2["status"] == "ran" and rec2["event_duration_h"] <= 12.0
+    assert channel_flagged("glint", rec2, conf) is True

@@ -461,6 +461,16 @@ def pace_glint(lc: LightCurve, conf: dict, colour_lc: LightCurve | None = None) 
                              "achromatic_test": "not_run", "achromatic_z": None}
     notes: list[str] = []
     if res.n_glint_events >= 1:
+        # The strongest event's duration, whether or not a colour series exists:
+        # run 34370548921 flagged 69 RMDC26 microlensing peaks as glints (a
+        # lensing peak IS a brief achromatic brightening); a glint lasts hours,
+        # a lensing event days, and the flag rule reads this number.
+        ev = _event_epochs(ms, "glint", params["bright_min"], params["k_sigma"],
+                           params["merge_gap_d"])
+        if ev is not None:
+            cad = ms["cadence_days"] if np.isfinite(ms["cadence_days"]) else 0.01
+            extra["event_duration_h"] = 24.0 * (float(ms["t"][ev[-1]]) - float(ms["t"][ev[0]]) + cad)
+            extra["event_n_epochs"] = int(ev.size)
         ach = _achromatic_test(ms, colour_lc, conf, "glint", params["bright_min"],
                                params["k_sigma"], merge_gap_d=params["merge_gap_d"])
         notes.extend(ach.pop("notes", []))
@@ -690,7 +700,17 @@ def channel_flagged(name: str, rec: dict, conf: dict) -> bool:
         return (num("n_dip_events", 0) >= 1 and num("max_event_depth") >= depth_min
                 and num("score") > 0)
     if name == "glint":
-        return num("n_glint_events", 0) >= 1
+        if num("n_glint_events", 0) < 1:
+            return False
+        # Duration gate: longer than the longest glint is a lensing event, a
+        # flare or a transient, whatever its colour.
+        max_h = 24.0 * float(rec.get("params", {}).get("max_event_duration_d", 0.5))
+        dur = rec.get("event_duration_h")
+        try:
+            dur = float(dur) if dur is not None else None
+        except (TypeError, ValueError):
+            dur = None
+        return dur is None or dur <= max_h
     if name == "secular":
         return num("slope_mag_yr") > 0 and num("slope_sigma") >= lv["secular_sigma_min"]
     if name == "rust":

@@ -448,6 +448,8 @@ def _channel_assess(channel: str, records: list[dict], conf: dict) -> dict:
         from .flash import assess_candidates
         flat = [c for r in records for c in (r.get("candidates") or [])]
         out = assess_candidates(flat, conf)
+        tiers = set(((conf.get("flash") or {}).get("tiers") or {}).values())
+        out.setdefault("candidates", [r for r in (out.get("records") or []) if str(r.get("tier")) in tiers])
         out.setdefault("n_cutouts", len(records))
         out.setdefault("labels", _sum_dicts(r.get("labels") for r in records))
         return out
@@ -580,7 +582,7 @@ def selftest(out_dir: Path, conf: dict, seed: int = 7) -> dict:
         flags, _ = P.dq_flags(conf)
         stars = [{"star_id": f"s{i}", "x": float(x), "y": float(y)}
                  for i, (x, y) in enumerate(rng.uniform(20, 236, size=(40, 2)))]
-        dq = synthesise_dq_image((256, 256), stars, 1.1, flash_stars=[0, 1, 2], n_cosmic_rays=150,
+        dq = synthesise_dq_image((256, 256), stars, 1.1, flash_stars=["s0", "s1", "s2"], n_cosmic_rays=150,
                                  n_snowballs=2, rng=rng, flags=flags)
         cut = DQCutout("syn_dq", dq, stars, band="F146", psf_fwhm_px=1.1, mjd=61500.0)
         r = screen_dq_cutout(cut, conf, flags)

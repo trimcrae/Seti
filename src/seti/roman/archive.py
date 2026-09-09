@@ -432,9 +432,16 @@ def mast_query_forms(collection: str) -> list[tuple[str, str]]:
     the simplest possible statement, then the count, and keeps the whole error.
     """
     c = str(collection).replace("'", "''")
-    return [("top1", f"SELECT TOP 1 obs_collection FROM dbo.CaomObservation "
+    # Run 34345611485 (2026-09-09) captured the reason for the 400: MAST's
+    # dbo.CaomObservation has no column ``obs_collection`` (that is the ObsCore
+    # name; the CAOM table calls it ``collection``).  So: ObsCore first, then
+    # CAOM with its own column name, and the count form on each.
+    return [("top1", f"SELECT TOP 1 obs_collection FROM ivoa.ObsCore "
                      f"WHERE obs_collection = '{c}'"),
-            ("count", f"SELECT COUNT(*) AS n FROM dbo.CaomObservation WHERE obs_collection='{c}'")]
+            ("top1_caom", f"SELECT TOP 1 collection FROM dbo.CaomObservation "
+                          f"WHERE collection = '{c}'"),
+            ("count", f"SELECT COUNT(*) AS n FROM ivoa.ObsCore WHERE obs_collection='{c}'"),
+            ("count_caom", f"SELECT COUNT(*) AS n FROM dbo.CaomObservation WHERE collection='{c}'")]
 
 
 def _mast_attempt(session, tap: str, form: str, query: str, timeout: float) -> tuple[dict, list]:
@@ -476,13 +483,16 @@ def _probe_mast(conf: dict, session, timeout: float) -> list[dict]:
                 rec["status"] = "http_error" if att["http_status"] is not None else "failed"
                 continue
             rec["status"], rec["error"], rec["query_form"] = "ok", None, form
-            if form == "top1":
+            if form.startswith("top1"):
                 vals = [_first_value(row) for row in rows]
                 rec["present"] = any(v is not None and str(v).strip() != "" for v in vals)
                 rec["count"] = None if rec["present"] else 0
                 if rec["present"]:
-                    # the number is worth one more request, but its failure is not a failure
-                    att2, rows2 = _mast_attempt(session, mast["tap"], "count", forms[1][1], timeout)
+                    # the number is worth one more request, but its failure is not a failure;
+                    # the count form is the one on the SAME table as the TOP-1 that answered.
+                    count_form = "count" + form[len("top1"):]
+                    count_query = dict(forms).get(count_form, forms[-1][1])
+                    att2, rows2 = _mast_attempt(session, mast["tap"], count_form, count_query, timeout)
                     rec["attempts"].append(att2)
                     if rows2:
                         v = _first_value(rows2[0])
@@ -540,8 +550,12 @@ def _crawl_priority(url: str, text: str) -> tuple:
     return (strongest, -len(hits))
 
 
+CRAWL_DEEP_PATTERN = r"simulat|microlens|challenge|openuniverse|data.?release|catalog"
+
+
 def crawl_index(html: str, base_url: str, session, timeout: float,
-                max_pages: int = CRAWL_MAX_PAGES, pattern: str = CRAWL_LINK_PATTERN) -> dict:
+                max_pages: int = CRAWL_MAX_PAGES, pattern: str = CRAWL_LINK_PATTERN,
+                depth: int = 1, _seen: set | None = None) -> dict:
     """Follow the links of an index page one level deep and record what is there.
 
     Every href is extracted (relative URLs resolved); those whose URL or anchor
@@ -554,10 +568,13 @@ def crawl_index(html: str, base_url: str, session, timeout: float,
     status, content type, title, and the data-file hrefs on it.
     """
     rx = re.compile(pattern, re.I)
+    deep_rx = re.compile(CRAWL_DEEP_PATTERN, re.I)
+    seen = _seen if _seen is not None else {base_url.rstrip("/")}
     anchors = extract_anchors(html, base_url)
     base_norm = base_url.rstrip("/")
     matched = [(u, t) for u, t in anchors
-               if u.rstrip("/") != base_norm and (rx.search(u) or rx.search(t))]
+               if u.rstrip("/") != base_norm and u.rstrip("/") not in seen
+               and (rx.search(u) or rx.search(t))]
     matched.sort(key=lambda ut: _crawl_priority(*ut))
     out = {"n_links_total": len(anchors), "n_links_matched": len(matched),
            "n_pages_fetched": 0, "capped": len(matched) > int(max_pages),
@@ -590,11 +607,26 @@ def crawl_index(html: str, base_url: str, session, timeout: float,
         page["content_type"] = _headers(r).get("content-type")
         body = _body(r, MAX_CRAWL_PAGE_BYTES).decode("utf-8", "replace")
         page["title"] = page_title(body)
+        seen.add(url.rstrip("/"))
         if page["http_status"] == 200:
             page["data_links"] = extract_links(body, url, MAX_SIM_LINKS, data_only=True)
             for d in page["data_links"]:
                 if d not in out["data_links"]:
                     out["data_links"].append(d)
+            # A page that is itself a simulation / data index (by title or URL) is
+            # followed one more level -- the 2026-09-09 crawl reached IPAC's
+            # "Science Simulations by Topic" and "Microlensing Exoplanets" pages
+            # but not the data pages they link to.
+            if depth > 1 and (deep_rx.search(url) or deep_rx.search(page["title"] or "")):
+                sub = crawl_index(body, url, session, timeout,
+                                  max_pages=max(1, int(max_pages) // 2), pattern=pattern,
+                                  depth=depth - 1, _seen=seen)
+                page["subpages"] = [{k: sp.get(k) for k in ("url", "http_status", "title", "data_links")}
+                                    for sp in sub["pages"]]
+                for d in sub["data_links"]:
+                    if d not in out["data_links"]:
+                        out["data_links"].append(d)
+                out["n_pages_fetched"] += sub["n_pages_fetched"]
         out["pages"].append(page)
     return out
 
@@ -624,7 +656,8 @@ def _probe_simulation_page(entry: dict, session, timeout: float, arch: dict | No
             rec["crawl"] = crawl_index(
                 html, url, session, timeout,
                 max_pages=int(arch.get("crawl_max_pages", CRAWL_MAX_PAGES)),
-                pattern=str(arch.get("crawl_link_pattern") or CRAWL_LINK_PATTERN))
+                pattern=str(arch.get("crawl_link_pattern") or CRAWL_LINK_PATTERN),
+                depth=int(arch.get("crawl_depth", 1)))
     else:
         rec["status"] = "http_error"
     return rec

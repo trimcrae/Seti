@@ -247,9 +247,14 @@ jobs:
         if: always()
         with:
           name: roman-ingest
+          # The normalised objects (npz + json sidecars) MUST travel with the
+          # manifest: run 34345611485 shipped the manifest alone and every
+          # screen shard reported "unknown stored class None" for 3,271 objects.
           path: |
             results/roman/ingest.json
+            results/roman/calibration.json
             data/cache/roman/manifest.json
+            data/cache/roman/normalized/
           if-no-files-found: warn
 
   # ---------------------------------------------------------------------

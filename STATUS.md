@@ -100,8 +100,11 @@ model out-fit Paczyński — 1,262 of 2,688 came out in the occulting tier —
 so the S40 screen now folds every curve about t₀ and rejects time-asymmetric
 events as `NOT_LENSING` before any occultation gate is believed; and at a
 5-day cadence every transient satisfies the glint definition (1,595 flagged),
-so glint is `not_applicable` above a 1-day cadence and transient-like curves
-are tagged and counted apart. The simulated DQ planes carry no flags, so
+so glint is `not_applicable` above a 0.5-day cadence (the SNANA curves
+turned out to be sampled daily, from an idealised SIMLIB) and transient-like
+curves are tagged and counted apart. Confirmed in run 4 (9:39 AM ET): the
+occulting tier fell from 1,262 to 145 (all pending on an edge-of-coverage
+symmetry test), 2,511 supernovae `NOT_LENSING`, 1,205 tagged transient. The simulated DQ planes carry no flags, so
 S42's jump path waits for flight data; MAST now answers cleanly (no Roman
 collection); the crawl found the Roman Microlensing Data Challenge 2026
 page, the GBTDS-like stand-in for the next probe.

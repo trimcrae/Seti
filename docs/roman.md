@@ -122,7 +122,7 @@ from this sandbox as well as the runner) holds, under `full/` and `preview/`:
 
 | Product | Layout (verified from the files on 2026-09-09) | What it exercises |
 |---|---|---|
-| **SNANA light curves** `ROMAN+LSST_LARGE_SNIa-normal/…_HEAD.FITS.gz` + `…_PHOT.FITS.gz` | 7,471 SNe per file pair; `PHOT` carries only `MJD`, `BAND`, `SIM_MAGOBS` — noiseless model magnitudes in 14 bands (LSST `ugrizy` + Roman `R Z Y J W H F K` = F062 F087 F106 F129 F146 F158 F184 F213), ~295 epochs per band over MJD 61444–63269 (the HLTDS-like 1500-day, 5-day-cadence SIMLIB) | the light-curve reader and every paces channel, at HLTDS cadence in Roman bands; errors are **assumed** from a depth model and every curve says so (`errors_assumed`) |
+| **SNANA light curves** `ROMAN+LSST_LARGE_SNIa-normal/…_HEAD.FITS.gz` + `…_PHOT.FITS.gz` | 7,471 SNe per file pair; `PHOT` carries only `MJD`, `BAND`, `SIM_MAGOBS` — noiseless model magnitudes in 14 bands (LSST `ugrizy` + Roman `R Z Y J W H F K` = F062 F087 F106 F129 F146 F158 F184 F213), ~295 epochs per band over MJD 61444–63269 from an **idealised 1-day SIMLIB** (`ROMAN+LSST_IDEAL_1500d-1d`; the real 5-day HLTDS revisit is in the pointing sequence, not in these curves) | the light-curve reader and every paces channel in Roman bands at daily sampling; errors are **assumed** from a depth model and every curve says so (`errors_assumed`) |
 | **TDS / WAS images** `RomanTDS/images/simple_model/<BAND>/<pointing>/Roman_TDS_simple_model_<BAND>_<pointing>_<SCA>.fits.gz` | galsim `roman_imsim` output: `PRIMARY` header (EXPTIME 161/302/901 s, MJD-OBS, FILTER, ZPTMAG, SIP WCS), HDUs `SCI` (float64 4088²), `ERR`, `DQ` (uint32) | the `DQCutout` path of S42 end to end; whether the sim `DQ` plane carries any jump flags is recorded as `dq_flag_census` in `calibration.json`, not assumed |
 | **Truth indices** `RomanTDS/truth/<BAND>/<pointing>/Roman_TDS_index_…txt` | per-image table: `object_id ra dec x y realized_flux flux mag obj_type` (star / galaxy / transient) | catalogued-star positions per image without a cross-match; the flight-data path (catalogue + WCS) is the fallback |
 | **Pointing sequence** `Roman_TDS_obseq_11_6_23.fits` | 57,365 exposures, seven filters × 8,195, MJD 62000–63563 | the survey-cadence record the config's `verify` rows are checked against |
@@ -395,8 +395,22 @@ have exposed later and worse:
   carries a `transient_like` tag (one dominant, interior, time-asymmetric
   brightening) whose flags `assess` counts apart from the flags on stars.
   The secular, RUST and KNELL paces were `insufficient` on every curve
-  (~300 epochs per band, no 100-epoch seasons at this cadence), which is the
-  honest answer for HLTDS-like sampling.
+  (~200 usable epochs per band after the faint cut, no 100-epoch seasons
+  separated by gaps), which is the honest answer for these curves.
+
+**Confirmed on the same inputs (run 4, 9:39 AM ET, `SIMULATION_PACES_OK`,
+5,378 objects).** With the time-symmetry gate the lens tiers on the 2,688
+supernovae went from 1,262 occulting / 1,222 not-lensing to **145 occulting
+(pending) / 2,511 not-lensing**; the 145 that remain are curves whose peak
+sits at an edge of the sampled window, where the folded test cannot run and
+the record says `time_symmetry_not_run` — a pending test, never a candidate.
+The transient tag marked 1,205 curves and carried 765 dip and 686 glint flags
+away from the star count. The glint gate itself caught only 349: the SNANA
+curves turn out to be sampled **daily** (the SIMLIB is `1500d-1d`, not the
+5-day HLTDS revisit the pointing sequence shows), and a 1-day threshold let
+the rest through — `max_event_duration_d` is now 0.5 d, which also keeps the
+12-hour F087 colour series out of a channel built for the 12-minute F146
+series.
 
 Also measured: the simulated `DQ` planes carry no flag of any kind
 (33.4 M pixels, `dq_flag_census_sim`, read through `roman_datamodels.dqflags`

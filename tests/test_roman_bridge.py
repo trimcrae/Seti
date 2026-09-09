@@ -295,6 +295,9 @@ def test_glint_is_not_applicable_at_a_cadence_coarser_than_a_glint():
     rec = pace_glint(lc, conf)
     assert rec["status"] == "not_applicable"
     assert rec["params"]["cadence_days"] > 1.0
+    daily = synthesise_gbtds_lightcurve("daily", n_seasons=2, season_days=400, cadence_min=1440,
+                                        gap_days=10, rng=rng, inject={"kind": "glint", "amp": 0.5, "t": 61550.0})
+    assert pace_glint(daily, conf)["status"] == "not_applicable"     # the SNANA 1-day SIMLIB case
     fine = synthesise_gbtds_lightcurve("fine", rng=rng, inject={"kind": "glint", "amp": 0.5, "t": 61530.0})
     assert pace_glint(fine, conf)["status"] == "ran"
 

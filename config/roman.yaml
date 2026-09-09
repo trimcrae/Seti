@@ -419,8 +419,12 @@ paces:
   # than max_event_duration_d cannot resolve one and the channel says
   # `not_applicable` (5-day HLTDS cadence) rather than flagging every
   # transient as a glint, which run 34349717932 did on 1,595 supernovae.
+  # Run 34363... (the fourth) showed the SNANA curves are sampled DAILY (an
+  # idealised 1-day SIMLIB), so a 1-day threshold let 1,467 of them through:
+  # a glint lasts minutes to hours, and 0.5 d keeps the 12-h F087 colour
+  # series out too while the 12-min F146 series passes.
   glint: {bright_min: 0.20, k_sigma: 6.0, min_epochs: 200, max_events: 6, merge_gap_d: 0.05,
-          max_event_duration_d: 1.0}
+          max_event_duration_d: 0.5}
   # A single dominant, time-asymmetric brightening (rise faster than decline)
   # marks a light curve `transient_like`; its dip/glint flags are reported
   # separately because a supernova is not a star with an occulter.

@@ -1,5 +1,5 @@
 {
- "written_utc": "2026-09-09T14:44:07Z",
+ "written_utc": "2026-09-09T15:32:54Z",
  "data_state": "SIMULATIONS_ONLY",
  "data_state_evidence": [
   "s3:openuniverse2024: simulation bucket nasa-irsa-simulations/openuniverse2024/roman/ lists 2 prefix(es), 0 key(s)",
@@ -7,7 +7,9 @@
   "sim:rmdc26: index page and its crawl expose 12 data link(s)",
   "sim:roman_exoplanet_data_challenges: index page and its crawl expose 62 data link(s)",
   "hf:RGES-PIT/Beginner: Hugging Face dataset RGES-PIT/Beginner lists 3 file(s) (simulation / data challenge)",
-  "hf:RGES-PIT/Experienced: Hugging Face dataset RGES-PIT/Experienced lists 3 file(s) (simulation / data challenge)"
+  "hf:RGES-PIT/Experienced: Hugging Face dataset RGES-PIT/Experienced lists 3 file(s) (simulation / data challenge)",
+  "hf:RGES-PIT/test: Hugging Face dataset RGES-PIT/test lists 18 file(s) (simulation / data challenge)",
+  "hf:RGES-PIT/MachineLearning: Hugging Face dataset RGES-PIT/MachineLearning lists 6 file(s) (simulation / data challenge)"
  ],
  "endpoints": {
   "irsa_tap": {
@@ -16,7 +18,7 @@
    "url": "https://irsa.ipac.caltech.edu/TAP/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+table_name%2C+description+FROM+TAP_SCHEMA.tables+WHERE+LOWER%28table_name%29+LIKE+%27%25roman%25%27+OR+LOWER%28description%29+LIKE+%27%25roman%25%27+OR+LOWER%28table_name%29+LIKE+%27%25wfi%25%27+OR+LOWER%28description%29+LIKE+%27%25wfi%25%27+OR+LOWER%28table_name%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28description%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hltds%25%27+OR+LOWER%28description%29+LIKE+%27%25hltds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28description%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28table_name%29+LIKE+%27%25openuniverse%25%27+OR+LOWER%28description%29+LIKE+%27%25openuniverse%25%27",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.534,
+   "latency_s": 0.406,
    "error": null,
    "tables": []
   },
@@ -26,7 +28,7 @@
    "url": "https://irsa.ipac.caltech.edu/SIA?POS=circle+266.4+-28.9+0.01&MAXREC=1",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.336,
+   "latency_s": 0.394,
    "error": null,
    "content_type": "application/x-votable+xml"
   },
@@ -36,7 +38,7 @@
    "url": "https://irsa.ipac.caltech.edu/data/Roman/",
    "status": "http_error",
    "http_status": 404,
-   "latency_s": 0.087,
+   "latency_s": 0.083,
    "error": null,
    "links": [],
    "head_status": 404,
@@ -48,7 +50,7 @@
    "url": "https://nasa-irsa-simulations.s3.amazonaws.com/?list-type=2&prefix=openuniverse2024/roman/&max-keys=200&delimiter=%2F",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.087,
+   "latency_s": 0.113,
    "error": null,
    "bucket": "nasa-irsa-simulations",
    "prefix": "openuniverse2024/roman/",
@@ -67,7 +69,7 @@
    "url": "https://nasa-irsa-roman.s3.amazonaws.com/?list-type=2&prefix=&max-keys=200&delimiter=%2F",
    "status": "http_error",
    "http_status": 404,
-   "latency_s": 0.062,
+   "latency_s": 0.079,
    "error": "NoSuchBucket: The specified bucket does not exist",
    "bucket": "nasa-irsa-roman",
    "prefix": "",
@@ -83,7 +85,7 @@
    "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27Roman%27",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.272,
+   "latency_s": 0.346,
    "error": null,
    "collection": "Roman",
    "count": 0,
@@ -94,7 +96,7 @@
      "form": "top1",
      "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27Roman%27",
      "http_status": 200,
-     "latency_s": 0.272,
+     "latency_s": 0.346,
      "error": null,
      "error_body": null,
      "votable_info": []
@@ -133,7 +135,7 @@
    "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27RomanSim%27",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.162,
+   "latency_s": 0.128,
    "error": null,
    "collection": "RomanSim",
    "count": 0,
@@ -144,7 +146,7 @@
      "form": "top1",
      "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27RomanSim%27",
      "http_status": 200,
-     "latency_s": 0.162,
+     "latency_s": 0.128,
      "error": null,
      "error_body": null,
      "votable_info": []
@@ -158,7 +160,7 @@
    "url": "https://roman.ipac.caltech.edu/",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.507,
+   "latency_s": 0.572,
    "error": null,
    "sim_kind": "index",
    "content_type": "text/html; charset=utf-8",
@@ -701,7 +703,7 @@
    "url": "https://roman.ipac.caltech.edu/sims/",
    "status": "http_error",
    "http_status": 404,
-   "latency_s": 0.078,
+   "latency_s": 0.088,
    "error": null,
    "sim_kind": "page",
    "content_type": "text/html; charset=utf-8",
@@ -717,7 +719,7 @@
    "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.084,
+   "latency_s": 0.087,
    "error": null,
    "sim_kind": "index",
    "content_type": "text/html",
@@ -1688,7 +1690,7 @@
    "url": "https://roman.ipac.caltech.edu/page/exoplanet-data-challenges-html",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.26,
+   "latency_s": 0.257,
    "error": null,
    "sim_kind": "index",
    "content_type": "text/html; charset=utf-8",
@@ -2328,7 +2330,7 @@
    "url": "https://roman-docs.stsci.edu/",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.259,
+   "latency_s": 0.365,
    "error": null,
    "sim_kind": "documentation",
    "content_type": "text/html;charset=UTF-8",
@@ -2344,7 +2346,7 @@
    "url": "https://huggingface.co/api/datasets/RGES-PIT/Beginner/tree/main",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.043,
+   "latency_s": 0.061,
    "error": null,
    "repo": "RGES-PIT/Beginner",
    "survey": "GBTDS",
@@ -2378,7 +2380,7 @@
    "url": "https://huggingface.co/api/datasets/RGES-PIT/Experienced/tree/main",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.06,
+   "latency_s": 0.064,
    "error": null,
    "repo": "RGES-PIT/Experienced",
    "survey": "GBTDS",
@@ -2406,13 +2408,153 @@
    "resolve_base": "https://huggingface.co/datasets/RGES-PIT/Experienced/resolve/main/",
    "files_capped": false
   },
+  "hf:RGES-PIT/test": {
+   "name": "hf:RGES-PIT/test",
+   "kind": "huggingface_dataset",
+   "url": "https://huggingface.co/api/datasets/RGES-PIT/test/tree/main",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.06,
+   "error": null,
+   "repo": "RGES-PIT/test",
+   "survey": "GBTDS",
+   "files": [
+    {
+     "path": ".gitattributes",
+     "size": 3445
+    },
+    {
+     "path": "README.md",
+     "size": 1130
+    },
+    {
+     "path": "data_challenge_0_0_826.det.lc",
+     "size": 10605408
+    },
+    {
+     "path": "data_challenge_0_125_871.det.lc",
+     "size": 10918539
+    },
+    {
+     "path": "data_challenge_0_126_5.det.lc",
+     "size": 10972862
+    },
+    {
+     "path": "data_challenge_0_129_20.det.lc",
+     "size": 10875968
+    },
+    {
+     "path": "data_challenge_0_129_335.det.lc",
+     "size": 12073066
+    },
+    {
+     "path": "data_challenge_0_129_73.det.lc",
+     "size": 11803360
+    },
+    {
+     "path": "data_challenge_0_129_907.det.lc",
+     "size": 11814635
+    },
+    {
+     "path": "data_challenge_0_596_401.det.lc",
+     "size": 10738840
+    },
+    {
+     "path": "data_challenge_0_5_454.det.lc",
+     "size": 11961810
+    },
+    {
+     "path": "data_challenge_f0_lcs.pdf",
+     "size": 935642
+    },
+    {
+     "path": "data_challenge_f125_lcs.pdf",
+     "size": 1445286
+    },
+    {
+     "path": "data_challenge_f126_lcs.pdf",
+     "size": 969826
+    },
+    {
+     "path": "data_challenge_f129_lcs.pdf",
+     "size": 1122506
+    },
+    {
+     "path": "data_challenge_f596_lcs.pdf",
+     "size": 856390
+    },
+    {
+     "path": "data_challenge_f5_lcs.pdf",
+     "size": 499219
+    },
+    {
+     "path": "list.txt",
+     "size": 402
+    }
+   ],
+   "n_files": 18,
+   "gated": false,
+   "private": false,
+   "last_modified": "2026-01-04T11:55:24.000Z",
+   "simulated": true,
+   "dataset_status": 200,
+   "tree_status": 200,
+   "resolve_base": "https://huggingface.co/datasets/RGES-PIT/test/resolve/main/",
+   "files_capped": false
+  },
+  "hf:RGES-PIT/MachineLearning": {
+   "name": "hf:RGES-PIT/MachineLearning",
+   "kind": "huggingface_dataset",
+   "url": "https://huggingface.co/api/datasets/RGES-PIT/MachineLearning/tree/main",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.068,
+   "error": null,
+   "repo": "RGES-PIT/MachineLearning",
+   "survey": "GBTDS",
+   "files": [
+    {
+     "path": ".gitattributes",
+     "size": 2504
+    },
+    {
+     "path": "README.md",
+     "size": 17312
+    },
+    {
+     "path": "RMDC26_ML_Data_epoch.parquet",
+     "size": 4120073
+    },
+    {
+     "path": "RMDC26_ML_Data_meta.parquet",
+     "size": 149194446
+    },
+    {
+     "path": "RMDC26_ML_Data_obs.parquet",
+     "size": 174237365438
+    },
+    {
+     "path": "lightcurves_sample.png",
+     "size": 528428
+    }
+   ],
+   "n_files": 6,
+   "gated": false,
+   "private": false,
+   "last_modified": "2026-08-18T23:12:03.000Z",
+   "simulated": true,
+   "dataset_status": 200,
+   "tree_status": 200,
+   "resolve_base": "https://huggingface.co/datasets/RGES-PIT/MachineLearning/resolve/main/",
+   "files_capped": false
+  },
   "hf:author:RGES-PIT": {
    "name": "hf:author:RGES-PIT",
    "kind": "huggingface_author",
    "url": "https://huggingface.co/api/datasets?author=RGES-PIT&limit=100",
    "status": "ok",
    "http_status": 200,
-   "latency_s": 0.019,
+   "latency_s": 0.032,
    "error": null,
    "author": "RGES-PIT",
    "datasets": [
@@ -2423,10 +2565,7 @@
    ],
    "n_datasets": 4,
    "simulated": true,
-   "new_datasets": [
-    "RGES-PIT/test",
-    "RGES-PIT/MachineLearning"
-   ]
+   "new_datasets": []
   }
  },
  "packages": {
@@ -2451,8 +2590,8 @@
    "version": "2026.7.0"
   }
  },
- "n_endpoints_reached": 17,
- "n_endpoints_tried": 17,
+ "n_endpoints_reached": 19,
+ "n_endpoints_tried": 19,
  "timeout_s": 60.0,
  "stage": "probe"
 }

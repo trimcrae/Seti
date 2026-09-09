@@ -319,9 +319,16 @@ paces:
   secular: {min_epochs: 400, min_seasons: 3, season_days: 72.0}
   rust: {season_days: 72.0, min_epochs_season: 100, min_seasons: 4}
   knell: {season_days: 72.0, min_epochs_block: 200, min_blocks: 4, block_mode: "gap",
-          min_period: 0.02, max_period: 30.0, n_null: 50, n_trials: 50}
+          min_period: 0.02, max_period: 30.0, n_null: 50, n_trials: 50,
+          # KNELL's GLS is a dense (n_freq x n_epoch) grid; the bridge bins in
+          # time until the footprint fits this many cells and raises min_period.
+          max_gls_cells: 2.0e7}
   metronome: {flare_k_sigma: 5.0, flare_bright_min: 0.10, min_flares: 8}
   spectra: {snr_min: 8.0, continuum_window: 61}
+  # Interest-level flag rules per bridged channel.  RUST's exact rank test has
+  # a p-floor of 1/n! (1/720 at six GBTDS seasons), so its flag must sit above
+  # that floor or it can never fire on GBTDS.
+  flags: {rust_p_max: 2.0e-3, secular_sigma_min: 5.0, metronome_p_max: 1.0e-3}
   # Bridged channels that need a magnitude system only run when the product
   # carries a zero point; otherwise they run in relative flux and say so.
   allow_relative_flux: true

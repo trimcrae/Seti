@@ -96,6 +96,44 @@ def test_dubious_is_the_pixel_flag_stand_in():
     assert b.pixel_flag_bad is None
 
 
+def test_the_ztf_floors_are_applied_over_the_shared_block_and_leave_rubin_alone():
+    """Run 17: the first ZTF 'candidate' alerted six times at drb 0.21-0.38 and
+    both candidates were saturated stars, because the funnel inherited the
+    Rubin block's min_reliability 0 and had no saturation rule at all."""
+    from seti.tocsin.run import _thresholds, load_tocsin_config
+    conf = load_tocsin_config()
+    rubin = _thresholds(conf)
+    assert rubin.min_reliability == 0.0 and rubin.saturation_mag is None
+    conf2, z = Z.ztf_config()
+    th = Z.ztf_thresholds(conf2, z)
+    assert th.min_reliability == 0.5
+    assert th.saturation_mag == 13.0
+    # Everything else is the shared block, untouched.
+    assert th.max_grey_z == rubin.max_grey_z and th.match_radius_arcsec == rubin.match_radius_arcsec
+    # A block that switches the cut off gets None, not 0.
+    assert Z.ztf_thresholds(conf2, {**z, "saturation_mag": None}).saturation_mag is None
+
+
+def test_the_northern_list_is_built_without_saturated_stars(monkeypatch, tmp_path):
+    """build_ztf_targets hands the saturation limit to the Gaia build, on the
+    public bands g and r only."""
+    seen = {}
+
+    def fake_build(cfg, out_path=None, dec_min=None, dec_max=None,
+                   bright_limit_mag=None, bright_limit_bands=("g", "r")):
+        seen.update(dec_min=dec_min, dec_max=dec_max, bright_limit_mag=bright_limit_mag,
+                    bright_limit_bands=bright_limit_bands)
+        return {"verdict": "OK", "n_targets": 0}
+
+    import seti.tocsin.run as R
+    monkeypatch.setattr(R, "build_targets", fake_build)
+    cfg, _tp = _prepare(tmp_path)
+    Z.build_ztf_targets(cfg, out_path=tmp_path / "t.parquet")
+    assert seen["bright_limit_mag"] == 13.0
+    assert tuple(seen["bright_limit_bands"]) == ("g", "r")
+    assert seen["dec_min"] == -31.0
+
+
 def test_unknown_filters_and_incomplete_rows_are_dropped_not_guessed():
     rows = [_det(MJD0, fid=9), {**_det(MJD0), "magpsf": None}, {**_det(MJD0), "isdiffpos": "?"},
             _det(MJD0, fid=1)]
@@ -447,6 +485,35 @@ def test_a_window_screens_folds_and_advances_the_watermark(tmp_path):
     # The cap (MJD0 + 2.0) falls inside the next night, which waits.
     rec3 = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
     assert rec3["verdict"] == "NO_NEW_DATA"
+
+
+def test_a_saturated_star_and_a_bogus_alert_are_rejected_by_name_in_a_window(tmp_path):
+    """End to end through screen_window: the two failure modes of run 17."""
+    cfg, tp = _prepare(tmp_path)
+    night_mjd = MJD0 + 0.3
+    # ZTFsat sits on t0 and its own reference says r = 11.6: saturated.
+    # ZTFbogus sits on t1 (r 14.2) with drb 0.3: below the ZTF floor.
+    dets = {"ZTFsat": [_det(night_mjd, fid=2, magpsf=14.0, magpsf_corr=11.5, ra=150.0)],
+            "ZTFbogus": [_det(night_mjd, fid=2, magpsf=16.0, magpsf_corr=14.2, ra=150.3,
+                              drb=0.3, rb=0.3)]}
+    nd = {"ZTFsat": [], "ZTFbogus": []}
+    api = FakeApi([{"oid": "ZTFsat", "meanra": 150.0, "meandec": 30.0, "lastmjd": night_mjd},
+                   {"oid": "ZTFbogus", "meanra": 150.3, "meandec": 30.0, "lastmjd": night_mjd}],
+                  dets, nd, frontier=MJD0 + 2.0)
+    irsa = FakeIrsa(_nights_of_exposures(MJD0, 3), frontier=MJD0 + 2.9)
+    out = tmp_path / "out"
+    rec = Z.screen_window(cfg, targets_path=tp, out_dir=out, api=api, irsa=irsa)
+    assert rec["verdict"] == "OK"
+    assert rec["ztf_thresholds"] == {"min_reliability": 0.5, "saturation_mag": 13.0}
+    assert rec["counts"]["objects_matched"] == 2
+    assert rec["counts"]["rejected_saturated_target"] == 1
+    assert rec["counts"]["rejected_low_reliability"] == 1
+    assert rec["counts"]["events_kept"] == 0
+    rej = pd.read_csv(out / "rejected_latest.csv")
+    assert set(rej["reason"]) == {"saturated_target", "low_reliability"}
+    # The trials are still counted: the funnel cut is per alert; it is the
+    # LIST cut (build_ztf_targets) that removes a saturated star as a trial.
+    assert rec["counts"]["target_nights_screened"] == 2
 
 
 def test_an_event_on_an_unscreened_earlier_night_is_deferred_to_the_sweep(tmp_path):

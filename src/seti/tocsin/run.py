@@ -50,6 +50,7 @@ from .screen import Thresholds, screen_alerts
 from .targets import (
     GAIA_EPOCH,
     build_target_adql,
+    drop_saturated,
     match_alerts_to_targets,
     parallax_shells,
     position_uncertainty_arcsec,
@@ -283,7 +284,9 @@ def probe(cfg=None, out_dir: str | Path | None = None) -> dict:
 # ---------------------------------------------------------------------------
 def build_targets(cfg=None, out_path: str | Path | None = None,
                   max_rows_per_shell: int = 500000,
-                  dec_min: float | None = None, dec_max: float | None = None) -> dict:
+                  dec_min: float | None = None, dec_max: float | None = None,
+                  bright_limit_mag: float | None = None,
+                  bright_limit_bands: tuple[str, ...] = ("g", "r")) -> dict:
     """Fetch the Gaia DR3 nearby-star target list, in parallax shells.  Runner-only.
 
     Chunking is not optional: a single monolithic Gaia query at this row count
@@ -292,6 +295,14 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
 
     ``dec_min``/``dec_max`` override the configured Rubin footprint, for a list
     over another survey's sky (``ztf_live.build_ztf_targets``).
+
+    ``bright_limit_mag`` is that survey's saturation limit: stars brighter than
+    it in Gaia G (in the query) or in any of ``bright_limit_bands`` (GSPC
+    synthetic, after the fetch) are dropped, and ``n_removed_saturated`` in the
+    record says how many.  A saturated star cannot alert validly, so leaving it
+    in the list inflates the denominator with non-trials AND feeds the
+    numerator with subtraction residuals -- the two candidates of run 17
+    (docs/tocsin-ztf.md 8c) were exactly that.
     """
     conf = load_tocsin_config(cfg)
     root = Path(cfg.root) if cfg is not None else _repo_root()
@@ -315,7 +326,8 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
                                   int(tconf["n_parallax_shells"])):
         adql = build_target_adql(
             lo, hi, dec_max=float(tconf["dec_max"]), dec_min=float(tconf["dec_min"]),
-            g_max=float(tconf["g_max"]), max_rows=int(max_rows_per_shell))
+            g_max=float(tconf["g_max"]), max_rows=int(max_rows_per_shell),
+            g_min=bright_limit_mag)
         shell = {"parallax_mas": [lo, hi], "rows": 0}
         for attempt in range(3):
             try:
@@ -336,7 +348,8 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
                                               dec_min=float(tconf["dec_min"]),
                                               g_max=float(tconf["g_max"]),
                                               max_rows=int(max_rows_per_shell),
-                                              require_synthetic=False)
+                                              require_synthetic=False,
+                                              g_min=bright_limit_mag)
                         ).get_results().to_pandas()
                         frames.append(df)
                         shell["rows"] = len(df)
@@ -351,11 +364,16 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
     df = pd.concat(frames, ignore_index=True)
     df.columns = [c.lower() for c in df.columns]
     df = df.drop_duplicates(subset=["source_id"]).reset_index(drop=True)
+    df, n_sat = drop_saturated(df, bright_limit_mag, bright_limit_bands)
+    rec["bright_limit_mag"] = bright_limit_mag
+    rec["n_removed_saturated"] = n_sat
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(out, index=False)
     rec["n_targets"] = int(len(df))
     rec["verdict"] = "OK"
-    print(f"[tocsin] targets: {len(df)} nearby stars -> {out}")
+    print(f"[tocsin] targets: {len(df)} nearby stars -> {out}"
+          + (f" ({n_sat} brighter than {bright_limit_mag} dropped as saturated)"
+             if bright_limit_mag is not None else ""))
     return rec
 
 

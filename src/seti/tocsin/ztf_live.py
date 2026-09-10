@@ -123,9 +123,40 @@ DEFAULTS: dict = {
     #: window: a night that matches thousands of nearby stars is a bad night
     #: (a reference-image change), not a discovery, and it should be looked at.
     "max_matched_objects": 3000,
+    #: ZTF-SPECIFIC FUNNEL FLOORS, applied over the shared `screen:` block.
+    #:
+    #: The Rubin block keeps `min_reliability` at 0 for a reason that does not
+    #: transfer: Rubin's model scores stellar point-source subtractions low
+    #: (DMTN-337) and the stream is already cut at 0.5 upstream.  ZTF's `drb`
+    #: is a different classifier (braai, Duev+2019) and ALeRCE serves every
+    #: detection with no floor at all -- MEASURED run 17: the first ZTF
+    #: "candidate" reached tier on six alerts scored 0.21-0.38.  0.5 is the
+    #: model's own decision threshold; `rb`-only alerts (rare) get the same
+    #: floor, below the 0.65 the survey recommends for that older score.
+    "min_reliability": 0.5,
+    #: ZTF's 30 s exposures saturate at ~12.5-13 mag (Masci+2019).  A star
+    #: brighter than this cannot alert validly: its core is masked or clipped,
+    #: and what the subtraction leaves is a few-percent residual of either
+    #: sign, achromatic, on every visit -- this channel's signal, faked by the
+    #: detector.  Both run-17 candidates were such stars (r 10.6 and 11.5).
+    #: Applied twice: stars brighter than this in Gaia G or in GSPC g or r
+    #: are dropped from the northern list at build time (they are not
+    #: trials), and any alert whose star is brighter than this in the ALERT'S
+    #: band is rejected by the funnel as `saturated_target`.
+    "saturation_mag": 13.0,
     "results_dir": "results/tocsin_ztf",
     "ledger_path": "results/tocsin_ztf/ledger.json",
 }
+
+
+def ztf_thresholds(conf: dict, z: dict):
+    """The shared funnel thresholds with the ZTF-specific floors applied."""
+    import dataclasses
+    th = _thresholds(conf)
+    sat = z.get("saturation_mag")
+    return dataclasses.replace(
+        th, min_reliability=float(z.get("min_reliability", th.min_reliability)),
+        saturation_mag=None if sat is None else float(sat))
 
 
 class ZtfLiveError(RuntimeError):
@@ -894,8 +925,14 @@ def build_ztf_targets(cfg=None, out_path: str | Path | None = None) -> dict:
     conf, z = ztf_config(cfg)
     root = Path(cfg.root) if cfg is not None else _repo_root()
     out = Path(out_path) if out_path else root / ".cache" / "tocsin_ztf" / "targets.parquet"
+    sat = z.get("saturation_mag")
+    # The bright cut is on the PUBLIC survey's bands, g and r: a star saturated
+    # only in i is still a valid trial on every g/r visit, and its i-band
+    # alerts are rejected one by one by the funnel instead.
     return build_targets(cfg, out_path=out, dec_min=float(z["dec_min"]),
-                         dec_max=float(z["dec_max"]))
+                         dec_max=float(z["dec_max"]),
+                         bright_limit_mag=None if sat is None else float(sat),
+                         bright_limit_bands=("g", "r"))
 
 
 # ---------------------------------------------------------------------------
@@ -928,7 +965,7 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     conf, z = ztf_config(cfg)
     root = Path(cfg.root) if cfg is not None else _repo_root()
     out = Path(out_dir) if out_dir else root / z["results_dir"]
-    th = _thresholds(conf)
+    th = ztf_thresholds(conf, z)
     ledger_path = root / z["ledger_path"] if out_dir is None else out / "ledger.json"
     led = Ledger.load(ledger_path)
     explicit = mjd_lo is not None or mjd_hi is not None
@@ -939,7 +976,11 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     now = _now_mjd()
     t0 = time.monotonic()
     summary: dict = {"run_at_utc": _utc(), "explicit_window": explicit, "verdict": "NOT_RUN",
-                     "counts": {}, "notes": [], "timings_s": {}}
+                     "counts": {}, "notes": [], "timings_s": {},
+                     # The floors this run screened with, so a change in them
+                     # is visible in the committed record and not only in git.
+                     "ztf_thresholds": {"min_reliability": th.min_reliability,
+                                        "saturation_mag": th.saturation_mag}}
 
     # THE WINDOW.  Capped at the STREAM's frontier and the wall clock.  MEASURED
     # 2026-09-05: IRSA's public exposure table runs ~60 days behind the stream,
@@ -1341,4 +1382,4 @@ def assess_only(cfg=None, out_dir: str | Path | None = None) -> dict:
 
 __all__ = ["AlerceZtfAPI", "IrsaZtfExposures", "normalize_alerce_ztf_detections",
            "upper_limits", "match_objects", "quadrant_footprint", "proxy_footprint", "probe",
-           "build_ztf_targets", "screen_window", "screen", "assess_only"]
+           "build_ztf_targets", "ztf_thresholds", "screen_window", "screen", "assess_only"]

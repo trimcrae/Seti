@@ -208,7 +208,8 @@ _TARGET_COLS = (
 def build_target_adql(parallax_min_mas: float, parallax_max_mas: float,
                       dec_max: float = 15.0, dec_min: float = -90.0,
                       g_max: float = 21.0, max_rows: int = 500000,
-                      require_synthetic: bool = True) -> str:
+                      require_synthetic: bool = True,
+                      g_min: float | None = None) -> str:
     """ADQL for one parallax shell of the nearby-star target list.
 
     Chunking by parallax shell is the pattern that works on the runner: a single
@@ -219,6 +220,11 @@ def build_target_adql(parallax_min_mas: float, parallax_max_mas: float,
     an alert.  ``require_synthetic`` joins the GSPC synthetic photometry, which
     is the baseline-flux source, but is left optional so a coverage run can
     measure how many targets lack it rather than assuming.
+
+    ``g_min`` is the survey's BRIGHT limit: a star brighter than the detector
+    saturates cannot produce a valid difference-image alert, only a residual,
+    and it is excluded from the list for the same reason a star outside the
+    footprint is -- it is not a trial.  ``None`` applies no bright cut.
     """
     cols = ", ".join(f"g.{c}" for c in _TARGET_COLS)
     if require_synthetic:
@@ -229,13 +235,45 @@ def build_target_adql(parallax_min_mas: float, parallax_max_mas: float,
     else:
         join = ""
         select = f"SELECT TOP {max_rows} {cols}"
+    bright = f" AND g.phot_g_mean_mag > {float(g_min)}" if g_min is not None else ""
     return (
         f"{select} FROM gaiadr3.gaia_source AS g {join} "
         f"WHERE g.parallax >= {parallax_min_mas} AND g.parallax < {parallax_max_mas} "
         f"AND g.parallax_over_error > 10 "
         f"AND g.dec BETWEEN {dec_min} AND {dec_max} "
-        f"AND g.phot_g_mean_mag < {g_max}"
+        f"AND g.phot_g_mean_mag < {g_max}{bright}"
     )
+
+
+def drop_saturated(df, bright_limit_mag: float | None, bands: tuple[str, ...] = ("g", "r")
+                   ) -> tuple[object, int]:
+    """Remove targets brighter than ``bright_limit_mag`` in ANY of ``bands``.
+
+    The ADQL bright cut above is on Gaia G, which for a red dwarf sits between
+    its g and r; saturation is per band, so the list is cut again on the GSPC
+    synthetic magnitude of each band the survey observes in.  A star whose
+    synthetic magnitude is missing is kept (the G cut already applied) -- a cut
+    on an absent value would silently empty the list.  Returns
+    ``(frame, n_removed)``.
+    """
+    if bright_limit_mag is None or df is None or len(df) == 0:
+        return df, 0
+    import numpy as np
+    lim = float(bright_limit_mag)
+    bright = np.zeros(len(df), dtype=bool)
+    for band in bands:
+        col = GSPC_MAG_COLUMN.get(band)
+        if col is None or col not in df:
+            continue
+        m = np.asarray(df[col], dtype=float)
+        bright |= np.isfinite(m) & (m < lim)
+    if "phot_g_mean_mag" in df:
+        g = np.asarray(df["phot_g_mean_mag"], dtype=float)
+        bright |= np.isfinite(g) & (g < lim)
+    n = int(bright.sum())
+    if n:
+        df = df.loc[~bright].reset_index(drop=True)
+    return df, n
 
 
 def parallax_shells(d_max_pc: float, n_shells: int = 6) -> list[tuple[float, float]]:

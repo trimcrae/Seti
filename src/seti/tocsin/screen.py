@@ -30,6 +30,15 @@ The rejection rules, and the systematic each one exists to kill
     Position inconsistent with the proper-motion-propagated stellar position at
     more than ``max_sep_sigma``.  Rubin astrometry is good enough that this is a
     real discriminator, not a formality.
+``saturated_target``
+    The star is brighter than the survey saturates at, in the alert's own band
+    (``saturation_mag``; off by default, set per survey).  A saturated core does
+    not subtract: it leaves a few-percent residual of either sign on every
+    visit, achromatic because it is the same defect in every band, at the same
+    time of night because it follows the cadence --- the exact shape of this
+    channel's signal, which is why it must be cut on the star's brightness and
+    not on the event's properties.  ZTF run 17 promoted two such stars (r 10.6
+    and 11.5, against ZTF's ~12.5-13 mag saturation) to candidate.
 ``chromatic``
     Two or more bands in the same night with fractional amplitudes that differ
     significantly: a stellar flare (flash mode) or reddening dust (dip mode).
@@ -50,6 +59,7 @@ from .photometry import (
     fractional_amplitude,
     grey_excluded_by_nondetection,
     greyness_z,
+    njy_to_ab,
 )
 from .schema import NormalizedAlert, validate
 from .targets import (
@@ -90,6 +100,11 @@ class Thresholds:
     # How far above a band's detection limit the grey hypothesis must predict
     # before that band's silence counts as evidence.  Below it, untestable.
     nondetection_margin: float = 3.0
+    # The survey's bright limit.  An alert on a star brighter than this in its
+    # own band is a saturation residual, not a measurement, and is rejected as
+    # `saturated_target`.  None = no cut (the Rubin block; its list is cut at
+    # build time instead).  ZTF sets it from `ztf.saturation_mag`.
+    saturation_mag: float | None = None
 
 
 @dataclass
@@ -161,6 +176,25 @@ def _baseline_flux(alert: NormalizedAlert, row, band: str, rel_err: float
         return None, None, "no_gaia_synthetic"
     f = float(ab_to_njy(mag))
     return f, f * float(rel_err), "gaia_gspc_synthetic"
+
+
+def _baseline_mag(alert: NormalizedAlert, row, band: str, rel_err: float) -> float | None:
+    """The star's quiescent AB magnitude in ``band`` as the funnel itself sees it.
+
+    The same source order as :func:`_baseline_flux` -- the survey's own
+    reference flux where the alert carries one, else the GSPC synthetic
+    magnitude -- so the saturation test asks about the very flux the amplitude
+    is measured against.  Falls back to Gaia G when neither exists, and to
+    ``None`` (no test possible) when even that is missing.
+    """
+    base, _err, _src = _baseline_flux(alert, row, band, rel_err)
+    if base is not None and np.isfinite(base) and base > 0:
+        return float(njy_to_ab(base))
+    try:
+        g = float(row["phot_g_mean_mag"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return g if np.isfinite(g) else None
 
 
 def _per_alert_flags(alert: NormalizedAlert, th: Thresholds) -> str | None:
@@ -308,11 +342,17 @@ def screen_alerts(alerts: list[NormalizedAlert], targets, th: Thresholds | None 
             continue
         row = targets.iloc[int(ti)] if hasattr(targets, "iloc") else targets[int(ti)]
         tid = str(ids[int(ti)])
+        base_mag = _baseline_mag(a, row, a.band, th.baseline_rel_err)
+        if (th.saturation_mag is not None and base_mag is not None
+                and base_mag < float(th.saturation_mag)):
+            v.reject(a, "saturated_target", target_id=tid,
+                     baseline_mag=round(base_mag, 3), limit_mag=float(th.saturation_mag))
+            continue
         base, base_err, base_src = _baseline_flux(a, row, a.band, th.baseline_rel_err)
         amp = fractional_amplitude(a.dflux_njy, a.dflux_err_njy, base, base_err)
         groups.setdefault((tid, a.night), []).append(
             {"alert": a, "sep": float(sep), "sig": float(sig), "amp": amp,
-             "baseline_source": base_src})
+             "baseline_source": base_src, "baseline_mag": base_mag})
         v.target_positions[tid] = (float(p_ra[int(ti)]), float(p_dec[int(ti)]))
         if a.forced_mjds:
             hist = v.visit_history.setdefault(tid, [])
@@ -416,6 +456,10 @@ def screen_alerts(alerts: list[NormalizedAlert], targets, th: Thresholds | None 
                 "a": float(by_band[b]["amp"].a),
                 "a_err": float(by_band[b]["amp"].a_err),
                 "baseline_source": by_band[b]["baseline_source"],
+                # The star's quiescent magnitude the amplitude was measured
+                # against, so a ledger can be re-screened for saturation
+                # offline without the target list.
+                "baseline_mag": by_band[b]["baseline_mag"],
                 "snr": by_band[b]["alert"].snr,
                 "reliability": by_band[b]["alert"].reliability}
             for b in bands_sorted

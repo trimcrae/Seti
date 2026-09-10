@@ -1,6 +1,20 @@
 {
  "active": [
   {
+   "body": "The live ZTF stellar screen has 2 target(s) at tier `candidate`: repeated achromatic events at a catalogued nearby star's position, surviving the funnel and the trial-corrected cross-night test on the ZTF ledger.\n\nRead `results/tocsin_ztf/assessment.json` and `watchlist.csv`.\n\nBefore believing it: ZTF alerts carry no dipole, trail or solar-system flags, so check the star's ZTF light curve for a reference-image artefact and its position against known variables; and note which nights were counted on the detection-footprint proxy (`denominator_by_night`).",
+   "channel": "tocsin_ztf",
+   "detail": {
+    "n_candidate": 2,
+    "targets": [
+     "2752213329586862976",
+     "4497414466452138496"
+    ]
+   },
+   "key": "tocsin_ztf:candidates:999874840de4",
+   "severity": "candidate",
+   "title": "TOCSIN-ZTF promoted 2 target(s) to candidate"
+  },
+  {
    "body": "`428209 (2006 VC)` exceeds the radiation momentum ceiling (eps = 1.3) with a reliable orbit solution and is not in the channel's explained set.\n\nA2 = 6.5e-13 au/day^2, S/N 3.8, arc 7113.0 d, diameter 341 m (from H).\n\nNext step is `loom-litcheck --name \"428209 (2006 VC)\"`: the dark-comet population is incomplete and most exceedances resolve to it.",
    "channel": "loom",
    "detail": {
@@ -33,36 +47,36 @@
    "title": "LOOM: new unexplained exceedance 428209 (2006 VC)"
   },
   {
-   "body": "The most recent Rubin data `tocsin` has reached is MJD 61235.42, which is 57.4 days behind now. The broker mirror normally lags ~16 days; the limit here is 30.\n\nThe channel itself is fine \u2014 it is running on schedule and committing results. What has stopped is the DATA. A screen re-reading the same frontier every night produces a clean null indefinitely and looks healthy from every other angle, which is why this check exists separately from the staleness check.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream before reading any recent null from this channel.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
+   "body": "The most recent Rubin data `tocsin` has reached is MJD 61235.42, which is 58.3 days behind now. The broker mirror normally lags ~16 days; the limit here is 30.\n\nThe channel itself is fine \u2014 it is running on schedule and committing results. What has stopped is the DATA. A screen re-reading the same frontier every night produces a clean null indefinitely and looks healthy from every other angle, which is why this check exists separately from the staleness check.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream before reading any recent null from this channel.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
    "channel": "tocsin",
    "detail": {
     "frontier_mjd": 61235.41918367943,
-    "lag_days": 57.401860807870364,
+    "lag_days": 58.31874027005787,
     "limit_days": 30.0
    },
    "key": "tocsin:data_frontier:0",
    "severity": "health",
-   "title": "TOCSIN is screening data 57 days old"
+   "title": "TOCSIN is screening data 58 days old"
   },
   {
-   "body": "The most recent Rubin data `loom` has reached is MJD 61235.42, which is 57.4 days behind now. The broker mirror normally lags ~16 days; the limit here is 30.\n\nThe channel itself is fine \u2014 it is running on schedule and committing results. What has stopped is the DATA. A screen re-reading the same frontier every night produces a clean null indefinitely and looks healthy from every other angle, which is why this check exists separately from the staleness check.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream before reading any recent null from this channel.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
+   "body": "The most recent Rubin data `loom` has reached is MJD 61235.42, which is 58.3 days behind now. The broker mirror normally lags ~16 days; the limit here is 30.\n\nThe channel itself is fine \u2014 it is running on schedule and committing results. What has stopped is the DATA. A screen re-reading the same frontier every night produces a clean null indefinitely and looks healthy from every other angle, which is why this check exists separately from the staleness check.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream before reading any recent null from this channel.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
    "channel": "loom",
    "detail": {
     "frontier_mjd": 61235.416274280105,
-    "lag_days": 57.404770207187504,
+    "lag_days": 58.32164966937499,
     "limit_days": 30.0
    },
    "key": "loom:data_frontier:0",
    "severity": "health",
-   "title": "LOOM is screening data 57 days old"
+   "title": "LOOM is screening data 58 days old"
   },
   {
-   "body": "`tocsin` has reported the same newest epoch, MJD 61235.41918, on every run since 2026-07-30T10:26:40Z \u2014 41.4 days, against a limit of 7. Source: `results/tocsin/summary.json` \u2192 `broker_frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
+   "body": "`tocsin` has reported the same newest epoch, MJD 61235.41918, on every run since 2026-07-30T10:26:40Z \u2014 42.3 days, against a limit of 7. Source: `results/tocsin/summary.json` \u2192 `broker_frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
    "channel": "tocsin",
    "detail": {
     "first_seen_utc": "2026-07-30T10:26:40Z",
     "frontier_mjd": 61235.41918,
-    "frozen_days": 41.38585930210648,
+    "frozen_days": 42.30273876429398,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -71,15 +85,15 @@
    },
    "key": "tocsin:frontier_stalled:2",
    "severity": "health",
-   "title": "TOCSIN's data frontier has not advanced in 41 days"
+   "title": "TOCSIN's data frontier has not advanced in 42 days"
   },
   {
-   "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 41.3 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
+   "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 42.2 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
    "channel": "loom",
    "detail": {
     "first_seen_utc": "2026-07-30T13:13:46Z",
     "frontier_mjd": 61235.416274280105,
-    "frozen_days": 41.269817635439814,
+    "frozen_days": 42.18669709762732,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -88,14 +102,14 @@
    },
    "key": "loom:frontier_stalled:2",
    "severity": "health",
-   "title": "LOOM's data frontier has not advanced in 41 days"
+   "title": "LOOM's data frontier has not advanced in 42 days"
   },
   {
    "body": "The `asassn` adapter reached its service but has no usable path to a light curve.\n\nReason recorded by the probe: no cone request was accepted (every variant and format in the matrix above), and the vendor client cannot be imported here -- so there is no path to a light curve, only to metadata\n\nA screen over this feed would run, commit and report nothing found -- which is indistinguishable from a quiet sky and is not a result. Read `results/tocsin_altfeeds/probe.json`; the request matrix there records verbatim what the service answered.",
    "channel": "tocsin_altfeeds",
    "detail": {
     "accepted_request": null,
-    "reached": false,
+    "reached": true,
     "survey": "asassn",
     "verdict": null
    },
@@ -104,17 +118,17 @@
    "title": "ASASSN cannot serve light curves"
   }
  ],
- "alert": false,
+ "alert": true,
  "by_severity": {
-  "candidate": 0,
+  "candidate": 1,
   "health": 0,
   "milestone": 0
  },
- "checked_at_utc": "2026-09-09T19:42:18Z",
+ "checked_at_utc": "2026-09-10T17:42:36Z",
  "frontier": {
   "loom": {
-   "frozen_days": 41.27,
-   "lag_days": 57.405,
+   "frozen_days": 42.187,
+   "lag_days": 58.322,
    "mjd": 61235.416274280105,
    "observed_advance_days": {
     "n_advances": 0
@@ -122,8 +136,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 41.386,
-   "lag_days": 57.402,
+   "frozen_days": 42.303,
+   "lag_days": 58.319,
    "mjd": 61235.41918,
    "observed_advance_days": {
     "n_advances": 0
@@ -131,7 +145,22 @@
    "source": "summary.json:broker_frontier_mjd"
   }
  },
- "n_active": 6,
- "n_new": 0,
- "new": []
+ "n_active": 7,
+ "n_new": 1,
+ "new": [
+  {
+   "body": "The live ZTF stellar screen has 2 target(s) at tier `candidate`: repeated achromatic events at a catalogued nearby star's position, surviving the funnel and the trial-corrected cross-night test on the ZTF ledger.\n\nRead `results/tocsin_ztf/assessment.json` and `watchlist.csv`.\n\nBefore believing it: ZTF alerts carry no dipole, trail or solar-system flags, so check the star's ZTF light curve for a reference-image artefact and its position against known variables; and note which nights were counted on the detection-footprint proxy (`denominator_by_night`).",
+   "channel": "tocsin_ztf",
+   "detail": {
+    "n_candidate": 2,
+    "targets": [
+     "2752213329586862976",
+     "4497414466452138496"
+    ]
+   },
+   "key": "tocsin_ztf:candidates:999874840de4",
+   "severity": "candidate",
+   "title": "TOCSIN-ZTF promoted 2 target(s) to candidate"
+  }
+ ]
 }

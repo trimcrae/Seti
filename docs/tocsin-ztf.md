@@ -238,9 +238,68 @@ Throughput after run 7: six sweep workers and three chunks per run, with a
 second daily firing at 23:25 ET while the backfill catches up (~47 nights to
 go, ~9 nights per run).
 
+### 8c. Run 17 (2026-09-10, 08:15–08:57 UTC): the first two candidates were saturated stars
+
+Run 17 folded nights 61288–61290 and the ledger promoted two stars to
+`candidate`; the alerts workflow opened issue #10 at 17:42 UTC. Both were
+rejected on inspection, and both for the same reason — one the funnel had no
+rule for:
+
+| star (Gaia DR3) | events | amplitude | real/bogus (`drb`) | baseline from the ledger's own `a` and `dF` |
+|---|---|---|---|---|
+| 2752213329586862976 (RA 2.32°, Dec +9.00°) | 6 flashes, g+r+i, all grey | +6 to +10 % | 0.21–0.38 | g 11.3, **r 10.6**, i 9.6 |
+| 4497414466452138496 (RA 274.27°, Dec +13.47°) | 6 flashes, g+r, all grey, plus one i-band outlier at `drb` 0.22 | +1 to +4 % | 0.95–1.00 | g 12.4, **r 11.5** |
+
+ZTF's 30 s exposures saturate at ~12.5–13 mag (Masci et al. 2019). Both stars
+are brighter than that in r; the first is brighter than it in every band. A
+saturated core does not subtract: what is left is a few-percent residual of
+either sign on every visit, achromatic because it is the same defect in every
+band, and at the same time of night because it follows the cadence — the
+timing test found a best period of 1.00 d with Rayleigh concentration 0.93–0.96
+for both, which the cadence-matched null correctly declined to call significant.
+Grey, repeating, at a catalogued star's position: the channel's signal, faked by
+the detector. The first star's alerts were also all below any real/bogus
+threshold, which the funnel was not applying — `min_reliability` was inherited
+from the Rubin block, where it is 0 for a reason (the `screen:` block of
+`config/tocsin.yaml`: Rubin's model scores stellar subtractions low and its
+stream is already cut at 0.5) that does not transfer: ALeRCE's ZTF detections
+carry no floor at all.
+
+Two rules, both in the `ztf:` block of `config/tocsin.yaml`, both recorded in
+each run's `summary.json` under `ztf_thresholds`:
+
+* **`saturation_mag: 13.0`.** Applied twice. The northern list is built without
+  stars brighter than this in Gaia G or in GSPC g or r (`n_removed_saturated`
+  in the build record) — they are not trials, since no visit of them can yield
+  a valid alert. And the funnel rejects any alert whose star is brighter than
+  this in the *alert's own band* as `saturated_target`, using the same baseline
+  the amplitude is measured against (ZTF's reference flux where `corrected`,
+  else the GSPC synthetic magnitude), so an i-band alert on a star saturated
+  only in i is rejected while its g and r visits stay trials. Every event now
+  records `baseline_mag` per band.
+* **`min_reliability: 0.5`.** Braai's own decision threshold (Duev et al.
+  2019) on `drb`, and the same floor on the rare `rb`-only alert.
+
+**The ledger was reset.** The two cuts change the population, not only the
+verdict: with saturated stars in the list the denominator counted non-trials
+and the numerator carried their residuals, so the ensemble rate every
+per-target p-value is measured against was wrong in both directions at once.
+Purging the events and leaving the trials would deflate the rate and make
+every surviving p-value anti-conservative. The backfill restarts at MJD 61235
+against the rebuilt list (the cache key follows the config), at ~18 nights a
+day. The seventy `interest`-tier stars of the old ledger are re-derived by the
+sweep, not carried over.
+
+**The same question for the Rubin list.** Rubin saturates near r ≈ 16 and the
+Rubin target list (`target:` block, `g_max` only) has no bright cut either; the
+funnel's `saturation_mag` is `None` there. That is a change to make before
+Rubin returns, with its own ledger reset, and is not made here.
+
 ## 9. Status
 
 Live since 2026-09-05, twice daily (11:25 and 23:25 ET) until the backfill from
 2026-07-14 reaches the stream, then screening the previous night each morning.
-36 offline tests. Per the charter the objective is a detection; a clean null
-over the season is a reason to change the question, not to write it up.
+Ledger reset on 2026-09-10 (§8c) with the saturation and real/bogus floors; the
+backfill re-runs from 2026-07-14 against the rebuilt list. Per the charter the
+objective is a detection; a clean null over the season is a reason to change
+the question, not to write it up.

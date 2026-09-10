@@ -1,0 +1,481 @@
+# ROMAN — every number the Roman intake and its four channels use (docs/roman.md).
+# Code never hard-codes a value from this file.
+#
+# HONESTY FLAGS.  Roman is pre-launch.  Values marked `verify: true` are taken
+# from the mission's public documentation as of 2026 and MUST be re-read from
+# the delivered product headers / the archive's own metadata by the probe and
+# inventory stages, which record what they actually found in
+# results/roman/probe.json.  Nothing here is a measurement.
+
+mission:
+  name: "Nancy Grace Roman Space Telescope"
+  # NASA's commitment is launch readiness no later than May 2027; the
+  # observatory shipped to the launch site in 2026 with an earlier window in
+  # work.  Data have NO proprietary period; the archive is IRSA (IPAC), with
+  # cloud copies on AWS.
+  launch_no_later_than: "2027-05"
+  proprietary_period_days: 0
+  archive_host: "IRSA (Caltech/IPAC)"
+  science_platform: "Roman Research Nexus"
+  verify: true
+
+# ---------------------------------------------------------------------------
+# Archive endpoints and the pre-launch stand-ins.  The probe tries each and
+# records status, latency and what it saw; nothing downstream assumes any of
+# them exist.  Order matters: the first live mission-data source wins.
+# ---------------------------------------------------------------------------
+archive:
+  irsa:
+    tap: "https://irsa.ipac.caltech.edu/TAP"
+    sia2: "https://irsa.ipac.caltech.edu/SIA"
+    data_root: "https://irsa.ipac.caltech.edu/data/Roman/"
+    # TAP_SCHEMA search: any table whose name or description carries one of these.
+    table_keywords: ["roman", "wfi", "gbtds", "hltds", "hlwas", "openuniverse"]
+  mast:
+    tap: "https://mast.stsci.edu/vo-tap/api/v0.1/caom/"
+    collections: ["Roman", "ROMAN", "RomanSim"]
+  # Public S3 buckets (anonymous GET on the bucket listing endpoint).  The
+  # `mission` entry is the EXPECTED location of flight data and is unverified.
+  s3:
+    - {name: "openuniverse2024", bucket: "nasa-irsa-simulations",
+       prefix: "openuniverse2024/roman/", kind: "simulation", public: true, verify: true,
+       note: "OpenUniverse 2024: simulated Roman TDS (HLTDS-like) and WAS images, with truth catalogues"}
+    - {name: "roman_mission", bucket: "nasa-irsa-roman", prefix: "",
+       kind: "mission", public: true, verify: true,
+       note: "Expected flight-data bucket name; existence is what the probe tests"}
+  # Pre-launch simulation pages.  Each is a URL the probe fetches with HEAD/GET
+  # and records verbatim.  ``kind: index`` pages are also CRAWLED one level deep:
+  # every href whose URL or anchor text matches `crawl_link_pattern` is fetched
+  # (HEAD, then GET capped at 1 MB), up to `crawl_max_pages` of them, and each
+  # page's title / status / data-file hrefs are recorded.  Run of 2026-09-09:
+  # roman.ipac.caltech.edu/sims/ and .../sims/Microlensing_Data_Challenge.html
+  # answered 404, so the crawl starts from the IPAC home page instead; /sims/
+  # is kept as a plain page in case it returns.
+  simulations:
+    - {name: "roman_ipac_home", url: "https://roman.ipac.caltech.edu/", kind: "index",
+       note: "IPAC Roman Science Support Center home; crawled for simulation / data-challenge pages"}
+    - {name: "roman_sims_index", url: "https://roman.ipac.caltech.edu/sims/", kind: "page",
+       note: "404 on 2026-09-09; kept as a plain page in case the tree returns"}
+    - {name: "openuniverse_irsa_page", url: "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/",
+       kind: "index", note: "IRSA landing page for OpenUniverse 2024 (200, no data links on 2026-09-09)"}
+    # Found by the 2026-09-09 crawl: the Roman Microlensing Data Challenge 2026
+    # (RGES PIT) is the GBTDS-like stand-in; its data links are what the next
+    # probe records.
+    - {name: "rmdc26", url: "https://rges-pit.org/data-challenge/", kind: "index",
+       note: "Roman Microlensing Data Challenge 2026 (RGES PIT)"}
+    - {name: "roman_exoplanet_data_challenges", url: "https://roman.ipac.caltech.edu/page/exoplanet-data-challenges-html",
+       kind: "index"}
+    - {name: "roman_docs_wfi", url: "https://roman-docs.stsci.edu/", kind: "documentation"}
+  # Crawl budget for ``kind: index`` pages (one level deep, HEAD then GET <= 1 MB).
+  crawl_max_pages: 15
+  # Follow simulation / data index pages one more level (2026-09-09: the
+  # crawl reached IPAC's 'Science Simulations by Topic' but not its data pages).
+  crawl_depth: 2
+  crawl_link_pattern: "sim|challenge|microlens|openuniverse|data|roman"
+  # Delimiter-based recursive S3 listing (archive.list_s3_tree): every directory
+  # is listed with up to `max_keys_per_dir` sample keys (continuation tokens
+  # honoured, at most `max_pages_per_dir` pages), `max_subdirs_per_dir` of its
+  # NAMED subdirectories (bands, surveys, product types) and only
+  # `max_numeric_subdirs_per_dir` of its NUMBERED ones (pointings, HEALPix
+  # pixels -- OpenUniverse has 2000-5000 per band, all of one layout) are
+  # descended, at most `max_dirs` directories are listed in total, `max_depth`
+  # levels below the probe prefix.  The OpenUniverse bucket needs depth 6 to
+  # reach the per-pointing image files
+  # (full/RomanTDS/images/simple_model/<BAND>/<pointing>/); with these limits
+  # the 2026-09-09 walk from the sandbox cost ~300 requests.
+  s3_tree: {max_depth: 6, max_keys_per_dir: 200, max_dirs: 400, max_subdirs_per_dir: 12,
+            max_numeric_subdirs_per_dir: 2, max_pages_per_dir: 5}
+  # OpenUniverse 2024 (Roman-Rubin sim) band tokens -> WFI filter names.
+  openuniverse_band_map: {R062: F062, Z087: F087, Y106: F106, J129: F129, H158: F158,
+                          F184: F184, K213: F213, W146: F146}
+  # Roman Microlensing Data Challenge 2026 (RGES PIT) on Hugging Face: the
+  # GBTDS-like stand-in (simulated Galactic Bulge light curves in W149 = F146
+  # and Z087 = F087 with known parameters, false positives, binaries, parallax,
+  # orbital motion, astrometric series).  Anonymous API: /api/datasets/<repo>
+  # (siblings, gated, private, lastModified), /api/datasets/<repo>/tree/main
+  # (path, size), /api/datasets?author=<author> (new tiers are discovered);
+  # files resolve at /datasets/<repo>/resolve/main/<path> (redirects to a CDN;
+  # a gated repo answers 401/403 and is recorded, never fatal).
+  huggingface:
+    api: "https://huggingface.co"
+    author: "RGES-PIT"
+    # The author listing of 2026-09-09 (10:44 AM ET) also found `test` and
+    # `MachineLearning`; `Beginner` is 165 MB, `Experienced` 3.1 GB, neither gated.
+    datasets: ["RGES-PIT/Beginner", "RGES-PIT/Experienced", "RGES-PIT/test", "RGES-PIT/MachineLearning"]
+    survey: "GBTDS"
+    note: "Roman Microlensing Data Challenge 2026 (RGES PIT): one Parquet per tier, events keyed by `name`, bands W149 (F146) and Z087 (F087); found by the 2026-09-09 crawl of rges-pit.org/data-challenge/"
+  # Python packages the runner installs for real products; the sandbox has none.
+  runner_packages: ["asdf>=3.0", "asdf-astropy", "roman_datamodels", "gwcs", "fsspec", "s3fs", "requests"]
+  timeout_s: 60
+  retries: 3
+  retry_pause_s: 5.0
+  max_download_bytes_per_run: 20.0e9
+  # Objects normalised per multi-object product (an SNANA HEAD/PHOT pair holds
+  # 7,471 SNe; an image holds hundreds of stars): ingest stops after this many.
+  # Formats ingested first within each kind (after mission-before-simulation);
+  # everything else follows by size.  The RMDC26 Beginner Parquet (165 MB) is
+  # the GBTDS-like stand-in S40 is calibrated on, so it must not lose to a
+  # hundred 2 MB SNANA headers.
+  ingest_priority_formats: ["rmdc26_parquet", "rmdc26_table", "snana_head", "openuniverse_image"]
+  max_objects_per_product: 200
+
+# ---------------------------------------------------------------------------
+# OpenUniverse 2024 (pre-launch Roman-Rubin simulation) readers
+# (seti.roman.openuniverse).  Conventions verified from the public files on
+# 2026-09-09: PTROBS pointers 1-based inclusive, one -777 separator row per SN
+# after PTROBS_MAX, truth-index x/y 1-based, mag_ab = truth_mag + ZPTMAG.
+# ---------------------------------------------------------------------------
+openuniverse:
+  # SNANA single-letter filters -> WFI names; LSST letters are kept, prefixed.
+  band_letters: {R: F062, Z: F087, Y: F106, J: F129, W: F146, H: F158, F: F184, K: F213,
+                 u: lsst_u, g: lsst_g, r: lsst_r, i: lsst_i, z: lsst_z, y: lsst_y}
+  # Image FILTER / obseq filter tokens -> WFI names.
+  band_tokens: {R062: F062, Z087: F087, Y106: F106, J129: F129, W146: F146, H158: F158,
+                F184: F184, K213: F213}
+  # The PHOT tables carry noiseless SIM_MAGOBS and no FLUXCALERR: errors are
+  # SYNTHESISED as max(assumed, slope * 10**(0.4 (mag - floor_at))) mag -- a
+  # flat floor at the bright end and a Poisson-like rise past floor_at (a crude
+  # Roman-depth model).  Every such curve carries meta.errors_assumed = true.
+  snana_assumed_mag_err: 0.01
+  snana_err_floor_mag_at: 24.0
+  snana_err_mag_slope: 0.01
+  # Model epochs fainter than this are undetected and dropped (meta.n_dropped_faint).
+  snana_mag_faint_limit: 30.0
+  # Stream-decompress a gzipped PHOT table to disk once so it can be memory-mapped.
+  decompress_phot: true
+  # Stars per image (brightest first) and the AB limit applied to truth_mag + ZPTMAG.
+  max_stars_per_image: 2000
+  star_mag_limit: 24.0
+  # obseq: exposures closer than this are one visit; the revisit gap is between visit starts.
+  obseq_visit_gap_days: 0.5
+
+# ---------------------------------------------------------------------------
+# Instruments
+# ---------------------------------------------------------------------------
+instruments:
+  WFI:
+    pixel_scale_arcsec: 0.11
+    n_detectors: 18
+    detector_px: 4088
+    fov_deg2: 0.281
+    aperture_m: 2.4
+    effective_area_m2: 3.6          # verify
+    read_noise_e: 12.0              # per-frame CDS-equivalent, verify
+    frame_time_s: 3.04              # full-frame read cadence, verify
+    gain_e_per_dn: 1.8              # verify
+    # Half-maximum wavelength ranges (micron, vacuum) and AB zero points
+    # (magnitude giving 1 e-/s), verify against the delivered throughput curves.
+    filters:
+      F062: {range_um: [0.48, 0.76], zp_ab: 26.9, verify: true}
+      F087: {range_um: [0.76, 0.977], zp_ab: 26.5, verify: true}
+      F106: {range_um: [0.927, 1.192], zp_ab: 26.6, verify: true}
+      F129: {range_um: [1.131, 1.454], zp_ab: 26.6, verify: true}
+      F146: {range_um: [0.927, 2.000], zp_ab: 27.7, verify: true}
+      F158: {range_um: [1.380, 1.774], zp_ab: 26.5, verify: true}
+      F184: {range_um: [1.683, 2.000], zp_ab: 26.0, verify: true}
+      F213: {range_um: [1.950, 2.300], zp_ab: 25.8, verify: true}
+    # Band names as simulations and challenges write them -> WFI filter names
+    # (applied case-insensitively by the light-curve reader before grouping;
+    # every curve records which alias was applied).  RMDC26 writes W149/Z087;
+    # OpenUniverse writes W146/R062/...; SNANA writes single letters.
+    band_aliases: {W149: F146, W146: F146, R062: F062, Z087: F087, Y106: F106, J129: F129,
+                   H158: F158, K213: F213, R: F062, Z: F087, Y: F106, J: F129, W: F146,
+                   H: F158, F: F184, K: F213}
+    # PSF FWHM in pixels per filter (undersampled below ~1.6 um).
+    psf_fwhm_px: {F062: 0.6, F087: 0.7, F106: 0.9, F129: 1.0, F146: 1.1, F158: 1.2, F184: 1.3, F213: 1.5}
+    # Fraction of a point source's flux in its peak pixel (verify from the PSF library).
+    psf_core_fraction: {F146: 0.20, F087: 0.25, F158: 0.18}
+    dispersers:
+      G150: {range_um: [1.00, 1.93], R_per_um: 461, R_note: "R = 461 * lambda[um] per 2 px", verify: true}
+      P127: {range_um: [0.75, 1.80], R_range: [80, 180], verify: true}
+    # Multi-accum defaults per survey (resultants per exposure); verify from L1 headers.
+    ma_tables:
+      GBTDS_F146: {exposure_s: 46.96, n_resultants: 6, verify: true}
+      GBTDS_F087: {exposure_s: 46.96, n_resultants: 6, verify: true}
+      HLTDS: {exposure_s: 100.0, n_resultants: 8, verify: true}
+      HLWAS: {exposure_s: 139.0, n_resultants: 8, verify: true}
+  CGI:
+    # Technology demonstration; ~10 % of the first 18 months, a handful of targets.
+    bands:
+      B1: {center_nm: 575, bw_frac: 0.10, mode: "imaging+polarimetry"}
+      B2: {center_nm: 660, bw_frac: 0.17, mode: "imaging/spectroscopy"}
+      B3: {center_nm: 730, bw_frac: 0.17, mode: "spectroscopy", R: 50}
+      B4: {center_nm: 825, bw_frac: 0.11, mode: "imaging+polarimetry"}
+    iwa_arcsec: 0.15
+    owa_arcsec: 0.45
+    wide_owa_arcsec: 1.4
+    contrast_requirement: 1.0e-8
+    astrometric_precision_mas: 3.0     # per epoch, verify
+    verify: true
+
+# ---------------------------------------------------------------------------
+# Core Community Surveys (definitions published 2025; verify against the
+# as-executed survey files in the archive).
+# ---------------------------------------------------------------------------
+surveys:
+  GBTDS:
+    name: "Galactic Bulge Time Domain Survey"
+    area_deg2: 2.0
+    n_fields: 7
+    primary_band: F146
+    cadence_min: 12.0
+    color_band: F087
+    color_cadence_h: 12.0
+    n_seasons: 6
+    season_days: 72
+    n_stars_monitored: 2.0e8
+    photometric_precision_ppt_at: {H_AB: 21, ppt: 10}
+    verify: true
+  HLTDS:
+    name: "High Latitude Time Domain Survey"
+    area_deg2: 19.0
+    cadence_days: 5.0
+    duration_yr: 2.0
+    bands: [F062, F087, F106, F129, F158, F184]
+    prism: true
+    verify: true
+  HLWAS:
+    name: "High Latitude Wide Area Survey"
+    area_deg2: 2000.0
+    bands: [F106, F129, F158, F184]
+    grism: true
+    depth_ab_5sigma: 26.5
+    verify: true
+  GPS:
+    name: "Galactic Plane Survey"
+    area_deg2: 1000.0
+    hours: 700
+    verify: true
+  CGI:
+    name: "Coronagraph technology demonstration"
+    n_targets_expected: 10
+    verify: true
+
+# WFI data-quality flag bits; `products.dq_flags` prefers roman_datamodels.dqflags
+# when installed and records which table was used.
+dq_flags:
+  DO_NOT_USE: 1
+  SATURATED: 2
+  JUMP_DET: 4
+  DROPOUT: 8
+  PERSISTENCE: 32
+  OUTLIER: 128
+  DEAD: 1024
+  HOT: 2048
+  WARM: 4096
+# Epochs carrying any of these bits are dropped from light curves before screening.
+lightcurve_dq_reject: ["DO_NOT_USE", "SATURATED", "DEAD", "HOT"]
+
+# ---------------------------------------------------------------------------
+# S40 — the opaque lens (seti.roman.lens)
+# ---------------------------------------------------------------------------
+lens:
+  # Least dense natural gravitationally bound object we admit: a "super-puff"
+  # planet (Kepler-51 b, 0.03 g/cc) with a x3 margin.  The implied density is
+  # maximised over every lens distance before comparison, so this is
+  # conservative in the lens's favour.
+  density_floor_g_cc: 0.01
+  # Source distance assumed for bulge sources when no other is available (kpc).
+  source_distance_kpc: 8.0
+  # Fit window and acceptance.
+  min_epochs: 200
+  min_peak_snr: 20.0
+  paczynski_delta_chi2_min: 50.0       # event must be a lensing event at all
+  occult_delta_chi2_min: 25.0          # occulting model preferred over Paczynski by this
+  occult_delta_bic_min: 10.0           # ... and over finite-source and blended alternatives
+  rho_l_min: 0.05                      # smaller occulters produce no measurable kink
+  rho_l_max: 3.0
+  # Symmetry test: u_crit on the rising and falling sides must agree.
+  kink_asymmetry_max: 0.15
+  # Time symmetry: every lensing light curve (occulting or not) is symmetric
+  # about t0; a supernova, nova or flare is not.  Run 34349717932 on the
+  # OpenUniverse SN Ia curves put 1,262 of 2,688 supernovae in the occulting
+  # tier before this gate existed.  Reduced chi-square of f(t0+dt) against
+  # f(t0-dt) over the overlap above this value is `time_asymmetric`.
+  time_asymmetry_chi2_red_max: 3.0
+  time_asymmetry_min_pairs: 20
+  # Achromaticity: a colour-band light curve (F087) sampled inside the deficit
+  # must show the same fractional deficit within this many sigma.
+  colour_deficit_sigma_max: 3.0
+  # Grid for the density bound over lens distance (fraction of D_S).
+  distance_grid: 200
+  n_source_samples: 64                 # finite-source disk integration
+  # Fitting knobs.  Hard-edged occultation is piecewise-constant in every
+  # parameter, so the point-source fit optimises with a logistic edge of this
+  # width (theta_E units) and is reported on the exact model afterwards.
+  fit_soft_edge: 0.005
+  fit_max_nfev: 120
+  fit_max_nfev_finite: 30
+  rho_l_starts: [0.3, 0.6, 0.9, 1.5]
+  rho_l_hole_starts: [1.2, 1.5, 2.5]
+  rho_star_starts: [0.1, 0.5]
+  rho_star_starts_occult: [0.02, 0.2]
+  # Kink filter: per-side step detection needs this many epochs on the side and
+  # this chi2 improvement; the measured/predicted depth ratio tolerance.
+  kink_min_side_epochs: 20
+  step_depth_ratio_tol: 0.5
+  tiers: {interest: "OCCULTING_PREFERRED_PENDING_VET", candidate: "OPAQUE_LENS_CANDIDATE"}
+
+# ---------------------------------------------------------------------------
+# S41 — the industrial line (seti.roman.lines)
+# ---------------------------------------------------------------------------
+lines:
+  snr_min: 8.0
+  min_from_edge_samples: 8
+  # An unresolved line is 1-2 resolution elements wide; above max it is resolved.
+  max_width_resel: 2.0
+  min_width_resel: 0.6
+  continuum_window: 61
+  # Industrial / high-power laser wavelengths, VACUUM microns.  `kind: band`
+  # entries are tunable families; a hit inside them is a flag, not a veto.
+  industrial_lines_um:
+    - {name: "Nd:YAG 1064", um: 1.06440, kind: line}
+    - {name: "Nd:YAG 946", um: 0.94626, kind: line}
+    - {name: "Nd:YAG 1319", um: 1.31910, kind: line}
+    - {name: "Nd:YAG 1338", um: 1.33840, kind: line}
+    - {name: "Yb fibre", um: [1.030, 1.090], kind: band}
+    - {name: "Er fibre C-band", um: [1.5305, 1.5655], kind: band}
+    - {name: "Er fibre L-band", um: [1.5655, 1.6255], kind: band}
+    - {name: "Ti:sapphire", um: [0.70, 1.00], kind: band}
+    - {name: "InGaAs telecom 1310", um: [1.26, 1.36], kind: band}
+  match_tolerance_resel: 1.5
+  # Photospheric / circumstellar emission lines that stars DO show (vacuum um);
+  # a feature within tolerance is `known_stellar_line`.
+  stellar_lines_um:
+    - {name: "Pa-delta", um: 1.00521}
+    - {name: "He I 1083", um: 1.08330}
+    - {name: "Pa-gamma", um: 1.09411}
+    - {name: "Pa-beta", um: 1.28216}
+    - {name: "Br-gamma", um: 2.16612}
+    - {name: "Fe II 1.257", um: 1.25702}
+    - {name: "Fe II 1.644", um: 1.64400}
+    - {name: "H2 1-0 S(1)", um: 2.12183}
+    - {name: "[Fe II] 1.534", um: 1.53389}
+    - {name: "Mg I 1.50", um: 1.50400}
+  stellar_line_tolerance_um: 0.004
+  # Single-line emitters at high redshift: a line with NO stellar continuum,
+  # or on a resolved source, is `possible_high_z_emitter`; both are needed for
+  # a laser claim (point source AND stellar continuum).
+  min_continuum_snr_for_stellar: 5.0
+  # Slitless contamination geometry (detector pixels along the dispersion axis
+  # from a source's direct-image position to its zeroth order, and the trace
+  # length); verify from the delivered grism WCS.
+  zeroth_order_offset_px: {G150: -300, P127: -150}
+  zeroth_order_tolerance_px: 6
+  trace_cross_dispersion_px: 4
+  # Recurrence: the same wavelength (within bin) on >= min_sources unrelated
+  # sources is instrumental; the same detector pixel on >= min_sources is a
+  # defect/persistence.
+  recurrence_bin_um: 0.003
+  recurrence_min_sources: 3
+  pixel_recurrence_min_sources: 2
+  # 2-D mode: a compact blob at the predicted dispersed position of lambda.
+  # Overlap veto on the pipeline's contamination estimate (contam/flux at the feature).
+  overlap_contam_fraction_max: 0.5
+  # Nominal dispersion (micron per pixel) and trace origin for the 2-D mode; verify
+  # from the delivered grism/prism WCS.
+  dispersion_um_per_px: {G150: 10.9e-4, P127: 6.0e-3}
+  trace_origin_px: 0
+  blob_compactness_max: 1.5           # ratio of measured to PSF second moment
+  blob_snr_min: 8.0
+  fdr_alpha: 0.05
+
+# ---------------------------------------------------------------------------
+# S42 — the sub-exposure flash (seti.roman.flash)
+# ---------------------------------------------------------------------------
+flash:
+  jump_flag: JUMP_DET
+  saturated_flag: SATURATED
+  persistence_flag: PERSISTENCE
+  # Cluster size window: a PSF footprint at 5-sigma is ~4-12 px in F146.
+  min_cluster_px: 3
+  max_cluster_px: 40
+  # PSF match: centroid within this many FWHM of a catalogued star, elongation
+  # below max (cosmic-ray tracks are elongated), and at least this fraction of
+  # the PSF footprint (pixels above `footprint_frac` of the peak) flagged.
+  centroid_tolerance_fwhm: 0.75
+  elongation_max: 1.6
+  footprint_frac: 0.10
+  footprint_flagged_min: 0.6
+  # Snowballs: large round clusters with a saturated core.
+  snowball_min_px: 30
+  # Stars with a SATURATED pixel within this radius (px) are excluded.
+  saturation_exclusion_px: 3
+  # Hot-pixel ledger: a pixel flagged in >= this many exposures is a defect.
+  hot_pixel_min_exposures: 3
+  # Level 1 ramp test on candidates: the step must be at ONE resultant in every
+  # PSF pixel, the slope after must equal the slope before (a flare keeps
+  # rising), and the amplitude map must correlate with the PSF.
+  step_snr_min: 5.0
+  slope_change_sigma_max: 3.0
+  psf_amplitude_corr_min: 0.8
+  resultant_coincidence_min_frac: 0.8
+  # The next exposure of the same star must show no residual brightening.
+  next_exposure_residual_sigma_max: 3.0
+  # Sensitivity model for the doc/numbers: photons needed in the peak pixel.
+  n_sigma_trigger: 5.0
+  tiers: {interest: "PSF_JUMP_ON_STAR_PENDING_RAMP", candidate: "SUB_EXPOSURE_FLASH_CANDIDATE"}
+
+# ---------------------------------------------------------------------------
+# S43 — the statite (seti.roman.statite)
+# ---------------------------------------------------------------------------
+statite:
+  min_epochs: 3
+  min_span_fraction_of_period: 0.15   # arc long enough for Kepler to be testable
+  # Keplerian family the fixed model is tested against: e <= kepler_e_max is
+  # the conventional planet population; a second fit to e <= 0.95 looks for
+  # the edge-on near-apastron mimic and reports the baseline that excludes it.
+  kepler_e_max: 0.8
+  fixed_vs_kepler_delta_chi2_min: 25.0
+  fixed_vs_linear_delta_chi2_min: 25.0
+  # Reflectance flatness: grey vs a methane-bearing giant-planet template.
+  grey_vs_planet_delta_chi2_min: 16.0
+  # Phase-function: specular (narrow) vs Lambertian.
+  specular_vs_lambert_delta_chi2_min: 16.0
+  tiers: {interest: "NON_KEPLERIAN_PENDING_VET", candidate: "STATITE_CANDIDATE"}
+
+# ---------------------------------------------------------------------------
+# The paces: every existing light-curve / spectrum channel on Roman products
+# with Roman-appropriate parameters (seti.roman.bridge).
+# ---------------------------------------------------------------------------
+paces:
+  # GBTDS: 72-day seasons separated by ~110 days; "season" for the season-based
+  # channels is one GBTDS season, found by gaps, not by 365.25 d.
+  season_gap_days: 20.0
+  dips: {depth_min: 0.03, k_sigma: 4.0, min_epochs: 200}
+  # A specular glint lasts minutes to hours; a series sampled more coarsely
+  # than max_event_duration_d cannot resolve one and the channel says
+  # `not_applicable` (5-day HLTDS cadence) rather than flagging every
+  # transient as a glint, which run 34349717932 did on 1,595 supernovae.
+  # Run 34363... (the fourth) showed the SNANA curves are sampled DAILY (an
+  # idealised 1-day SIMLIB), so a 1-day threshold let 1,467 of them through:
+  # a glint lasts minutes to hours, and 0.5 d keeps the 12-h F087 colour
+  # series out too while the 12-min F146 series passes.
+  glint: {bright_min: 0.20, k_sigma: 6.0, min_epochs: 200, max_events: 6, merge_gap_d: 0.05,
+          max_event_duration_d: 0.5}
+  # A single dominant, time-asymmetric brightening (rise faster than decline)
+  # marks a light curve `transient_like`; its dip/glint flags are reported
+  # separately because a supernova is not a star with an occulter.
+  transient: {min_excursion_epochs: 5, rise_decline_ratio_max: 0.5, k_sigma: 5.0}
+  secular: {min_epochs: 400, min_seasons: 3, season_days: 72.0}
+  rust: {season_days: 72.0, min_epochs_season: 100, min_seasons: 4}
+  knell: {season_days: 72.0, min_epochs_block: 200, min_blocks: 4, block_mode: "gap",
+          min_period: 0.02, max_period: 30.0, n_null: 50, n_trials: 50,
+          # KNELL's GLS is a dense (n_freq x n_epoch) grid; the bridge bins in
+          # time until the footprint fits this many cells and raises min_period.
+          max_gls_cells: 2.0e7}
+  metronome: {flare_k_sigma: 5.0, flare_bright_min: 0.10, min_flares: 8}
+  spectra: {snr_min: 8.0, continuum_window: 61}
+  # Interest-level flag rules per bridged channel.  RUST's exact rank test has
+  # a p-floor of 1/n! (1/720 at six GBTDS seasons), so its flag must sit above
+  # that floor or it can never fire on GBTDS.
+  flags: {rust_p_max: 2.0e-3, secular_sigma_min: 5.0, metronome_p_max: 1.0e-3}
+  # Bridged channels that need a magnitude system only run when the product
+  # carries a zero point; otherwise they run in relative flux and say so.
+  allow_relative_flux: true
+
+# Readiness cron: how often the probe re-asks the archive, and what counts as
+# the milestone worth a GitHub issue (alerts.py).
+readiness:
+  cron_note: "monthly until launch, weekly after"
+  milestone_state: "MISSION_DATA_PRESENT"

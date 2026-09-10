@@ -219,6 +219,19 @@ ztf:
   # latency per page of 1000, measured; a night is half an hour serially).
   sweep_workers: 6
   max_matched_objects: 3000
+  # ZTF-specific funnel floors, over the shared `screen:` block above.  The
+  # Rubin reasoning for min_reliability 0 does not transfer: ZTF's drb is a
+  # different classifier and ALeRCE serves detections with no floor at all.
+  # Run 17 (2026-09-10) promoted a star to candidate on six alerts scored
+  # 0.21-0.38.  0.5 is braai's own decision threshold (Duev+2019).
+  min_reliability: 0.5
+  # ZTF saturates at ~12.5-13 mag in 30 s (Masci+2019).  Stars brighter than
+  # this in Gaia G or GSPC g/r are not in the northern list (they are not
+  # trials), and an alert on a star brighter than this in its own band is
+  # rejected as `saturated_target`.  Both run-17 candidates were saturated
+  # stars (r 10.6 and 11.5) alerting on their own subtraction residual.
+  # Changing this key changes the target-list cache key, so the list is rebuilt.
+  saturation_mag: 13.0
   results_dir: "results/tocsin_ztf"
   ledger_path: "results/tocsin_ztf/ledger.json"
 

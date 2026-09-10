@@ -3,12 +3,137 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-07.
+next. Last updated: 2026-09-09.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### Roman is coming: the intake and four Roman-only signatures, 2026-09-09: ROMAN (S40–S43)
+
+A new question from the user: *can we prepare to take in Roman Space
+Telescope data when it is ready and put it through all the paces, including
+channels other telescopes could not give us?* Roman is pre-launch (readiness
+committed for no later than May 2027; no proprietary period; archive at
+IRSA with cloud copies). `docs/roman.md` is the design; `seti.roman` is the
+implementation; nothing in it is a measurement of Roman data yet.
+
+**Intake (`roman.archive`, `roman.products`, `roman.schema`).** A probe that
+asks IRSA TAP/SIA, the public S3 buckets (OpenUniverse 2024 simulations; the
+expected flight bucket, whose existence is the test), MAST, the IPAC
+simulation pages and the Python packages, and reduces what it sees to one
+`data_state` (`NO_ARCHIVE_REACHED` / `NOT_YET_PUBLIC` / `SIMULATIONS_ONLY` /
+`MISSION_DATA_PRESENT`) with the evidence listed. Readers that emit four
+structures — `LightCurve`, `Spectrum`, `DQCutout`, `Ramp` — so no detector
+ever sees a Roman file: lazy ASDF reads of the `dq` plane alone, Level 1
+ramp boxes with resultant mid-times from the read pattern, table adapters
+with runtime column-role resolution. A field a product does not carry is
+`None` and the corresponding test is recorded as *not run*, never passed.
+Every summary carries `simulated_inputs`; a run on simulations can only say
+`SIMULATION_PACES_OK` / `SIMULATION_PACES_FAILED`, never a candidate tier
+(enforced in `assess` and asserted by the workflow).
+
+**Four signatures no earlier facility could reach** (taxonomy §X):
+
+* **S40 the opaque lens (`roman.lens`).** A microlens opaque over a fraction
+  ρ_L of its Einstein radius removes the minor image in the wings
+  (u > 1/ρ_L − ρ_L): a *symmetric pair of downward steps of depth exactly
+  A₋(u_c)*, one parameter fixing both where and how deep; a central hole for
+  ρ_L ≥ 1. With θ_E from finite-source effects (or the lower bound from the
+  peak magnification) the implied density is computed over every lens
+  distance, and the window where a natural body could match is confined to
+  tens of parsecs, where the lens is a moving blend Roman sees directly. Needs
+  the GBTDS 12-minute cadence.
+* **S41 the industrial line (`roman.lines`).** An unresolved line on a stellar
+  point source in the 1.00–1.93 µm grism / 0.75–1.80 µm prism — the band every
+  optical laser search stops short of and the band our own high-power lasers
+  occupy (Nd:YAG 1.064, Yb 1.03–1.09, Er-fibre 1.53–1.57 µm). Blind over the
+  band; industrial matches are flags. The slitless ledger: zeroth orders,
+  trace overlap, persistence, recurrent wavelength and pixel, stellar lines,
+  the single-line high-z emitter.
+* **S42 the sub-exposure flash (`roman.flash`).** A pulse shorter than one
+  resultant is a step in the ramp, exactly like a cosmic ray, and the
+  pipeline flags it `JUMP_DET`; the difference is a PSF-shaped cluster centred
+  on a catalogued star, then on the Level 1 ramp the step at one resultant in
+  every PSF pixel with no slope change (a flare keeps rising) and no residual
+  in the next exposure. Optical SETI's pulsed-beacon question on ~10⁸ stars at
+  once, for the first time.
+* **S43 the statite (`roman.statite`).** A CGI reflected-light point source
+  whose position is fixed rather than Keplerian; grey, specular. Tiny
+  population, screened for what no planet-hunter looks for.
+
+**The paces (`roman.bridge`).** Dips, glint, secular fade, RUST, KNELL,
+METRONOME and the narrow-line finders on Roman light curves and spectra with
+GBTDS-season parameters and the F146/F087 achromaticity test.
+
+**Operations.** `roman.yml`: monthly `readiness` cron (probe + inventory +
+diff → `results/roman/readiness.json`); `stage=full` on dispatch runs
+ingest → sharded screen → assess with the no-disguised-null and
+no-simulated-candidate assertions; `roman-lit.yml` is the prior-art sweep.
+`alerts.py` raises a milestone the first time the state reads
+`MISSION_DATA_PRESENT` and a candidate alert only on flight data.
+
+**First readiness run (34302574303, 10:16 PM ET): `SIMULATIONS_ONLY`.** All
+twelve endpoints answered. No Roman table at IRSA TAP/SIA; `data/Roman/`
+404; the expected flight bucket does not exist; MAST CAOM 400 (reason now
+captured); the two IPAC simulation URLs assumed from memory were 404 and are
+replaced by a crawl of the site root. The OpenUniverse 2024 bucket is real
+and richer than assumed: SNANA HEAD/PHOT light curves (7,471 SNe per pair,
+noiseless model magnitudes in 14 bands, ~295 epochs per band, 5-day cadence),
+galsim TDS/WAS images with SCI/ERR/DQ planes and SIP WCS, per-image truth
+indices with star pixel positions, the 57,365-exposure pointing sequence and
+the point-source catalogue (`docs/roman.md` §1.4). The first inventory
+classified none of it (flat 5,000-key crawl of one directory; `+` in a key
+un-encoded) — rebuilt as a tree listing with OpenUniverse patterns, plus
+`seti.roman.openuniverse` adapters, so the paces and S42's `DQCutout` path
+run on real simulated products before launch. Selftest on the runner:
+PASS 12/12.
+
+**First full run through the screens (34349717932, 8:12 AM ET):
+`SIMULATION_PACES_OK`, 5,378 simulated objects** (2,688 SN Ia light curves
+in the eight Roman bands, two images, two pointing sequences; an earlier
+run had shipped the manifest without the object store and screened nothing).
+Two lessons the simulations taught, both fixed and tested (`docs/roman.md`
+§4A): a supernova's asymmetric rise/decline lets the *symmetric* occulting
+model out-fit Paczyński — 1,262 of 2,688 came out in the occulting tier —
+so the S40 screen now folds every curve about t₀ and rejects time-asymmetric
+events as `NOT_LENSING` before any occultation gate is believed; and at a
+5-day cadence every transient satisfies the glint definition (1,595 flagged),
+so glint is `not_applicable` above a 0.5-day cadence (the SNANA curves
+turned out to be sampled daily, from an idealised SIMLIB) and transient-like
+curves are tagged and counted apart. Confirmed in run 4 (9:39 AM ET): the
+occulting tier fell from 1,262 to 145 (all pending on an edge-of-coverage
+symmetry test), 2,511 supernovae `NOT_LENSING`, 1,205 tagged transient. The simulated DQ planes carry no flags, so
+S42's jump path waits for flight data; MAST now answers cleanly (no Roman
+collection); the crawl found the Roman Microlensing Data Challenge 2026
+page, and the next readiness run (10:09 AM ET) read it: simulated Galactic
+Bulge light curves in W149 (F146) and Z087 (F087) with known parameters,
+false positives, parallax and astrometric series — the volume and type of
+the real GBTDS — served from Hugging Face (`RGES-PIT/Beginner`,
+`RGES-PIT/Experienced`, one Parquet per tier). That is the dataset S40 is
+calibrated on before launch, and run 7 (11:29 AM ET) ingested its Beginner
+tier with no unreadable product: 200 curves, 133 F146 + 67 F087 colour
+companions. On genuine simulated microlensing S40 behaves as designed — 75
+`LENSING_NO_OCCULTATION`, 56 `NOT_LENSING`, 2 occulting-pending to read
+against the challenge truth — and every pace ran at the GBTDS-like cadence.
+The glint pace flagged 69 microlensing peaks (a lensing peak *is* a brief
+achromatic brightening), so the glint flag now also requires the event
+duration to be shorter than a glint: run 8 (12:17 PM ET) halved the flags
+to 36, and the rest are the challenge's hours-long free-floating-planet
+events — the irreducible S30/microlensing confusion in the bulge, which
+`assess` now separates by joining each star's S40 lensing fit to its glint
+flag (`docs/roman.md` §4A).
+
+**Prior art read (34302576338, 645 abstracts).** The occulting-lens
+light-curve morphology is natural-body literature — Agol 2002, a 2003
+astrometric finite-opaque-lens paper, and arXiv:2608.24009 (Aug 2026),
+which warns that survey anomaly cuts reject such curves, so S40 must run on
+the full GBTDS light-curve product and not on the event catalogue; the
+density inference and the search are ours. No NIR slitless laser search, no
+jump-flag flash detector and no non-Keplerian-astrometry test appear; the
+Roman SETI record is RoSETZ (a transit survey) and Vides+2019 (WFIRST
+coronagraph as a 575 nm laser detector). `docs/roman.md` §4.
 
 ### The LZ 248 keV recoil at the kinematic edge, 2026-09-07: LZEDGE
 

@@ -254,6 +254,39 @@ def test_target_adql_has_the_quality_and_footprint_cuts():
     assert "BETWEEN -90.0 AND 15.0" in q
 
 
+def test_target_adql_bright_cut_is_optional_and_named():
+    """The Rubin list is unchanged by default; a survey with a saturation limit
+    asks for the cut explicitly and gets it on Gaia G."""
+    assert "phot_g_mean_mag >" not in T.build_target_adql(10.0, 20.0)
+    q = T.build_target_adql(10.0, 20.0, g_min=13.0)
+    assert "g.phot_g_mean_mag > 13.0" in q
+    assert "g.phot_g_mean_mag < 21.0" in q, "the faint cut survives alongside it"
+
+
+def test_saturated_stars_are_dropped_on_any_public_band_not_only_on_g():
+    """The G cut misses a red dwarf that is saturated in r but not in G."""
+    rows = [
+        _target(source_id="faint", mag_g=15.0, mag_r=14.0, phot_g_mean_mag=14.5),
+        _target(source_id="red_sat_in_r", mag_g=13.6, mag_r=12.4, phot_g_mean_mag=13.1),
+        _target(source_id="sat_in_g_only", mag_g=12.9, mag_r=13.5, phot_g_mean_mag=13.4),
+        _target(source_id="no_synthetic", mag_g=float("nan"), mag_r=float("nan"),
+                phot_g_mean_mag=14.0),
+        _target(source_id="bright_in_G", mag_g=float("nan"), mag_r=float("nan"),
+                phot_g_mean_mag=11.0),
+    ]
+    df, n = T.drop_saturated(_targets(*rows), 13.0, bands=("g", "r"))
+    assert n == 3
+    assert set(df["source_id"]) == {"faint", "no_synthetic"}
+    # No limit, no cut; an empty frame is returned as is.
+    same, n0 = T.drop_saturated(_targets(*rows), None)
+    assert n0 == 0 and len(same) == len(rows)
+    # A star saturated only in i is NOT dropped when i is not a list band.
+    df_i, n_i = T.drop_saturated(
+        _targets(_target(source_id="sat_i", mag_g=14.0, mag_r=13.4, phot_g_mean_mag=13.6,
+                         i_sdss_mag=12.8)), 13.0, bands=("g", "r"))
+    assert n_i == 0 and len(df_i) == 1
+
+
 # ---------------------------------------------------------------------------
 # schema
 # ---------------------------------------------------------------------------
@@ -364,6 +397,44 @@ def test_two_bands_in_one_night_are_one_event_not_two():
 # ---------------------------------------------------------------------------
 # screen --- confounders, each rejected by name
 # ---------------------------------------------------------------------------
+def test_a_saturated_star_is_rejected_in_the_band_it_saturates_in_and_only_there():
+    """A saturated core alerts grey on every visit: the channel's signal, faked
+    by the detector.  The cut is on the star's brightness in the ALERT'S band,
+    from the same baseline the amplitude is measured against."""
+    # Red star: g 13.5 (unsaturated at a 13.0 limit), r 12.4 (saturated).
+    tg = _targets(_target(mag_g=13.5, mag_r=12.4, phot_g_mean_mag=12.9))
+    a_g = _alert(band="g", template_flux=None)
+    a_r = _alert(band="r", template_flux=None, mjd=MJD_2026 + 1.0)
+    # Off by default: the Rubin block cuts its list at build time instead.
+    assert len(screen_alerts([a_g, a_r], tg, Thresholds()).events) == 2
+    v = screen_alerts([a_g, a_r], tg, Thresholds(saturation_mag=13.0))
+    assert [e.bands for e in v.events] == [["g"]]
+    assert v.counts["rejected_saturated_target"] == 1
+    rej = v.rejected[0]
+    assert rej["reason"] == "saturated_target" and rej["band"] == "r"
+    assert rej["baseline_mag"] == pytest.approx(12.4, abs=1e-3)
+    assert rej["limit_mag"] == 13.0
+    # The surviving event records the baseline magnitude it was measured against.
+    assert v.events[0].per_band["g"]["baseline_mag"] == pytest.approx(13.5, abs=1e-3)
+
+
+def test_the_saturation_test_uses_the_surveys_own_reference_flux_when_the_alert_carries_one():
+    # GSPC says g = 15 (faint), but the alert's own template flux says the
+    # star is g = 11.9: the template is the same pixels as the difference and
+    # wins, exactly as it does for the amplitude.
+    tg = _targets(_target(mag_g=15.0, mag_r=14.0))
+    bright = float(P.ab_to_njy(11.9))
+    a = _alert(band="g", template_flux=bright, dflux=bright * 0.05, dflux_err=bright * 0.002)
+    v = screen_alerts([a], tg, Thresholds(saturation_mag=13.0))
+    assert v.events == [] and v.rejected[0]["reason"] == "saturated_target"
+    # And a star with no baseline in any form falls back to Gaia G.
+    tg2 = _targets(_target(mag_g=float("nan"), mag_r=float("nan"), phot_g_mean_mag=10.5))
+    a2 = _alert(band="g", template_flux=None)
+    v2 = screen_alerts([a2], tg2, Thresholds(saturation_mag=13.0))
+    assert v2.rejected[0]["reason"] == "saturated_target"
+    assert v2.rejected[0]["baseline_mag"] == pytest.approx(10.5)
+
+
 def test_m_dwarf_flare_is_rejected_as_chromatic():
     """The dominant astrophysical confounder: flares are blue, reflections are not."""
     tg = _targets(_target())

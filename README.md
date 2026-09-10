@@ -39,6 +39,7 @@ workflow, doc, results directory and current verdict — is
 | Gaia XP anomalies | Spectral shapes no normal-stellar model reconstructs, in ~220M BP/RP spectra | `seti.xp` | `xp.yml` |
 | **Rubin nightly alert screen** | **Cross-night recurrence of *achromatic* difference-image events on catalogued nearby stars** — flash (specular/S30) and dip (grey occultation) in one funnel, on the world-public LSST stream. Recurrence at a fixed position is the axis no published alert-stream search uses | `seti.tocsin` | `tocsin.yml` (nightly cron), `tocsin-probe.yml` |
 | **Von Neumann probes in the solar system** | **Cross-object *structure* in Rubin's per-detection ephemeris residuals** — `ssSource.ephOffset*` for every known minor planet, gated by the radiation momentum ceiling (a theorem, not a fit) and decided on the *population*: element clustering, orbital-pole coherence, resonance concentration, photometric homogeneity. Self-replication predicts a population, not one weird asteroid. The only channel here with a **real positive control** (J002E3, WT1190F, 2020 SO) | `seti.loom` | `loom.yml` (weekly cron), `loom-probe.yml` |
+| **Roman Space Telescope intake + four Roman-only signatures** | Built pre-launch so every channel runs on Roman products the day they are public. **S40 opaque lens** (a microlens opaque over a fraction of its Einstein radius: a symmetric pair of steps in the wings, implied density below any bound body), **S41 industrial line** (unresolved NIR line on a star in the 1.0–1.93 µm grism, the band our own lasers use), **S42 sub-exposure flash** (PSF-shaped cosmic-ray jump clusters on stars in up-the-ramp reads), **S43 statite** (a CGI reflector whose astrometry is not Keplerian); plus every existing channel bridged to GBTDS/HLTDS/HLWAS products. A monthly readiness probe alerts the day the archive opens | `seti.roman` | `roman.yml` (monthly `readiness`; `stage=full` on dispatch), `roman-lit.yml` |
 | **The zoo-hypothesis warden's fence** | **Reciprocal shadows of a technosignature screen**: a passive screen that hides our future Dyson swarm's 3–50 µm heat (or our radio leakage) from another star must, by reciprocity, dim that star in the same bands for us — a *mid-infrared deficit* with normal optical/near-IR, in a sharp-edged arcminute patch that moves on an annual parallax ellipse; or a hole in deep radio counts at a nearby star. The inverse of every IR-excess search, and never run | `seti.baffle` | `baffle.yml`, `baffle-radio.yml` |
 
 ## Unattended operation
@@ -76,7 +77,7 @@ python -m seti.cli --help   # all channels: *-run / *-vet / *-triage / *-confirm
 
 ```
 src/seti/        channel packages (acquire, sed, contamination, discriminate,
-                 stats, dimming, spectra, xp, indicators)
+                 stats, dimming, spectra, xp, indicators, ..., roman)
 config/          thresholds, catalogue IDs, paths (no magic numbers in code)
 data/sample/     small committed synthetic sample for tests + CI
 tests/           pytest suite validating every funnel stage offline

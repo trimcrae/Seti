@@ -1,0 +1,2597 @@
+{
+ "written_utc": "2026-09-09T16:21:27Z",
+ "data_state": "SIMULATIONS_ONLY",
+ "data_state_evidence": [
+  "s3:openuniverse2024: simulation bucket nasa-irsa-simulations/openuniverse2024/roman/ lists 2 prefix(es), 0 key(s)",
+  "sim:roman_ipac_home: index page and its crawl expose 59 data link(s)",
+  "sim:rmdc26: index page and its crawl expose 12 data link(s)",
+  "sim:roman_exoplanet_data_challenges: index page and its crawl expose 62 data link(s)",
+  "hf:RGES-PIT/Beginner: Hugging Face dataset RGES-PIT/Beginner lists 3 file(s) (simulation / data challenge)",
+  "hf:RGES-PIT/Experienced: Hugging Face dataset RGES-PIT/Experienced lists 3 file(s) (simulation / data challenge)",
+  "hf:RGES-PIT/test: Hugging Face dataset RGES-PIT/test lists 18 file(s) (simulation / data challenge)",
+  "hf:RGES-PIT/MachineLearning: Hugging Face dataset RGES-PIT/MachineLearning lists 6 file(s) (simulation / data challenge)"
+ ],
+ "endpoints": {
+  "irsa_tap": {
+   "name": "irsa_tap",
+   "kind": "irsa_tap",
+   "url": "https://irsa.ipac.caltech.edu/TAP/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+table_name%2C+description+FROM+TAP_SCHEMA.tables+WHERE+LOWER%28table_name%29+LIKE+%27%25roman%25%27+OR+LOWER%28description%29+LIKE+%27%25roman%25%27+OR+LOWER%28table_name%29+LIKE+%27%25wfi%25%27+OR+LOWER%28description%29+LIKE+%27%25wfi%25%27+OR+LOWER%28table_name%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28description%29+LIKE+%27%25gbtds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hltds%25%27+OR+LOWER%28description%29+LIKE+%27%25hltds%25%27+OR+LOWER%28table_name%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28description%29+LIKE+%27%25hlwas%25%27+OR+LOWER%28table_name%29+LIKE+%27%25openuniverse%25%27+OR+LOWER%28description%29+LIKE+%27%25openuniverse%25%27",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.393,
+   "error": null,
+   "tables": []
+  },
+  "irsa_sia2": {
+   "name": "irsa_sia2",
+   "kind": "irsa_sia2",
+   "url": "https://irsa.ipac.caltech.edu/SIA?POS=circle+266.4+-28.9+0.01&MAXREC=1",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.323,
+   "error": null,
+   "content_type": "application/x-votable+xml"
+  },
+  "irsa_data_root": {
+   "name": "irsa_data_root",
+   "kind": "irsa_data_root",
+   "url": "https://irsa.ipac.caltech.edu/data/Roman/",
+   "status": "http_error",
+   "http_status": 404,
+   "latency_s": 0.085,
+   "error": null,
+   "links": [],
+   "head_status": 404,
+   "content_type": "text/html; charset=iso-8859-1"
+  },
+  "s3:openuniverse2024": {
+   "name": "s3:openuniverse2024",
+   "kind": "s3",
+   "url": "https://nasa-irsa-simulations.s3.amazonaws.com/?list-type=2&prefix=openuniverse2024/roman/&max-keys=200&delimiter=%2F",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.082,
+   "error": null,
+   "bucket": "nasa-irsa-simulations",
+   "prefix": "openuniverse2024/roman/",
+   "s3_kind": "simulation",
+   "prefixes": [
+    "openuniverse2024/roman/full/",
+    "openuniverse2024/roman/preview/"
+   ],
+   "contents": [],
+   "exists": true,
+   "is_truncated": false
+  },
+  "s3:roman_mission": {
+   "name": "s3:roman_mission",
+   "kind": "s3",
+   "url": "https://nasa-irsa-roman.s3.amazonaws.com/?list-type=2&prefix=&max-keys=200&delimiter=%2F",
+   "status": "http_error",
+   "http_status": 404,
+   "latency_s": 0.056,
+   "error": "NoSuchBucket: The specified bucket does not exist",
+   "bucket": "nasa-irsa-roman",
+   "prefix": "",
+   "s3_kind": "mission",
+   "prefixes": [],
+   "contents": [],
+   "exists": false,
+   "is_truncated": false
+  },
+  "mast:Roman": {
+   "name": "mast:Roman",
+   "kind": "mast_caom",
+   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27Roman%27",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.405,
+   "error": null,
+   "collection": "Roman",
+   "count": 0,
+   "present": false,
+   "query_form": "top1",
+   "attempts": [
+    {
+     "form": "top1",
+     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27Roman%27",
+     "http_status": 200,
+     "latency_s": 0.405,
+     "error": null,
+     "error_body": null,
+     "votable_info": []
+    }
+   ],
+   "simulated": false
+  },
+  "mast:ROMAN": {
+   "name": "mast:ROMAN",
+   "kind": "mast_caom",
+   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27ROMAN%27",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.173,
+   "error": null,
+   "collection": "ROMAN",
+   "count": 0,
+   "present": false,
+   "query_form": "top1",
+   "attempts": [
+    {
+     "form": "top1",
+     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27ROMAN%27",
+     "http_status": 200,
+     "latency_s": 0.173,
+     "error": null,
+     "error_body": null,
+     "votable_info": []
+    }
+   ],
+   "simulated": false
+  },
+  "mast:RomanSim": {
+   "name": "mast:RomanSim",
+   "kind": "mast_caom",
+   "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27RomanSim%27",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.103,
+   "error": null,
+   "collection": "RomanSim",
+   "count": 0,
+   "present": false,
+   "query_form": "top1",
+   "attempts": [
+    {
+     "form": "top1",
+     "url": "https://mast.stsci.edu/vo-tap/api/v0.1/caom/sync?REQUEST=doQuery&LANG=ADQL&FORMAT=json&QUERY=SELECT+TOP+1+obs_collection+FROM+ivoa.ObsCore+WHERE+obs_collection+%3D+%27RomanSim%27",
+     "http_status": 200,
+     "latency_s": 0.103,
+     "error": null,
+     "error_body": null,
+     "votable_info": []
+    }
+   ],
+   "simulated": true
+  },
+  "sim:roman_ipac_home": {
+   "name": "sim:roman_ipac_home",
+   "kind": "simulation_page",
+   "url": "https://roman.ipac.caltech.edu/",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.512,
+   "error": null,
+   "sim_kind": "index",
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 26499,
+   "title": "Roman",
+   "data_links": [],
+   "crawl": {
+    "n_links_total": 68,
+    "n_links_matched": 55,
+    "n_pages_fetched": 43,
+    "capped": true,
+    "links_matched": [
+     "https://roman.ipac.caltech.edu/page/microlensing",
+     "https://roman.ipac.caltech.edu/page/simulation-code",
+     "https://roman.ipac.caltech.edu/page/simulations-instrument",
+     "https://roman.ipac.caltech.edu/page/simulations-topic",
+     "https://roman.ipac.caltech.edu/page/nancy-grace-roman",
+     "https://roman.ipac.caltech.edu/page/roman-space-telescope",
+     "https://roman.ipac.caltech.edu/page/ssc-roles",
+     "https://roman.ipac.caltech.edu/page/team",
+     "https://roman.ipac.caltech.edu/page/ipac-members-activities",
+     "https://roman.ipac.caltech.edu/page/contact-us",
+     "https://roman.ipac.caltech.edu/page/partners",
+     "https://roman.ipac.caltech.edu/page/darkenergy",
+     "https://roman.ipac.caltech.edu/page/exosurvey",
+     "https://roman.ipac.caltech.edu/page/core-community-surveys",
+     "https://roman.ipac.caltech.edu/page/gbtds",
+     "https://roman.ipac.caltech.edu/page/hltds",
+     "https://roman.ipac.caltech.edu/page/hlwas",
+     "https://roman.ipac.caltech.edu/page/general-astrophysics",
+     "https://roman.ipac.caltech.edu/page/galactic-plane-survey",
+     "https://roman.ipac.caltech.edu/page/cycle1-gas-programs",
+     "https://roman.ipac.caltech.edu/page/132",
+     "https://roman.ipac.caltech.edu/page/wfi",
+     "https://roman.ipac.caltech.edu/page/cgi",
+     "https://roman.ipac.caltech.edu/page/param-db",
+     "https://roman.ipac.caltech.edu/page/etc",
+     "https://roman.ipac.caltech.edu/page/documents",
+     "https://roman.ipac.caltech.edu/page/intro-slides",
+     "https://roman.ipac.caltech.edu/page/call-for-proposals",
+     "https://roman.ipac.caltech.edu/page/cycle1-approved-programs",
+     "https://roman.ipac.caltech.edu/page/cycle-1",
+     "https://roman.ipac.caltech.edu/page/opportunities-for-scientists",
+     "https://roman.ipac.caltech.edu/page/observations",
+     "https://roman.ipac.caltech.edu/page/science-user-panel",
+     "https://roman.ipac.caltech.edu/images",
+     "https://roman.ipac.caltech.edu/videos",
+     "https://roman.ipac.caltech.edu/page/cgi-cad",
+     "https://roman.ipac.caltech.edu/news",
+     "https://roman.ipac.caltech.edu/events?category=workshops-meetings-and-talks",
+     "https://roman.ipac.caltech.edu/events?category=webinars",
+     "https://roman.ipac.caltech.edu/events?category=virtual-lecture-series",
+     "https://roman.ipac.caltech.edu/events",
+     "https://science.nasa.gov/blogs/roman",
+     "https://roman-docs.ipac.caltech.edu/roman-proposals-home/cycle-1-call-for-proposals",
+     "https://conference.ipac.caltech.edu/roman2026/",
+     "https://roman.ipac.caltech.edu/cycle1-approved-programs",
+     "https://asd.gsfc.nasa.gov/roman/comm_forum/forum_19/ROTAC_Report_Presentation_v2.pdf",
+     "https://asd.gsfc.nasa.gov/roman/comm_forum/",
+     "https://roman-docs.stsci.edu/",
+     "https://outerspace.stsci.edu/display/RSCPUB/Roman+Science+Collaboration+(RSC)+Public+Page+Home",
+     "https://roman.ipac.caltech.edu/event/aug-2026-lecture",
+     "https://roman.ipac.caltech.edu/event/roman-at-the-248th-aas-meeting",
+     "https://roman.ipac.caltech.edu/page/previous-updates",
+     "https://roman.ipac.caltech.edu/news/nasa-roman-s-planet-imager-has-powered-on",
+     "https://stsci.service-now.com/roman",
+     "https://roman.gsfc.nasa.gov"
+    ],
+    "pages": [
+     {
+      "url": "https://roman.ipac.caltech.edu/page/microlensing",
+      "anchor_text": "Microlensing Exoplanets",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Microlensing Exoplanets",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/page/simulation-code",
+        "http_status": 200,
+        "title": "Simulation and Modeling Tools",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/simulations-instrument",
+        "http_status": 200,
+        "title": "Science Simulations by Instrument",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/simulations-topic",
+        "http_status": 200,
+        "title": "Science Simulations by Topic",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/nancy-grace-roman",
+        "http_status": 200,
+        "title": "Nancy Grace Roman",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/roman-space-telescope",
+        "http_status": 200,
+        "title": "Roman Space Telescope",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/ssc-roles",
+        "http_status": 200,
+        "title": "SSC&#39;s Roles and Responsibilities",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/team",
+        "http_status": 200,
+        "title": "IPAC Roman Team",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/simulation-code",
+      "anchor_text": "Simulation and Modeling Tools",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Simulation and Modeling Tools",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/docs/PROPER_CGISim_CGI_optics_info_session-20210727_1801-1.mp4?1667850342",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/system/media_files/binaries/208/original/Krist_cgisim_proper_20210727.pdf?1667853456",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://roman-docs.stsci.edu/simulation-tools-handbook-home/stpsf-for-roman",
+        "http_status": 200,
+        "title": "STPSF - Space Telescope Point Spread Functions for Roman - Roman User Documentation",
+        "data_links": []
+       },
+       {
+        "url": "https://roman-docs.stsci.edu/simulation-tools-handbook-home/stips-space-telescope-imaging-product-simulator",
+        "http_status": 200,
+        "title": "STIPS - Space Telescope Imaging Product Simulator - Roman User Documentation",
+        "data_links": []
+       },
+       {
+        "url": "https://sourceforge.net/projects/cgisim/",
+        "http_status": 200,
+        "title": "CGISim download | SourceForge.net",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/nasa-jpl/lowfssim",
+        "http_status": 200,
+        "title": "GitHub - nasa-jpl/lowfssim: Roman-CGI optical model of LOWFS \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "http://axe-info.stsci.edu/simulate/",
+        "http_status": 200,
+        "title": "HSTaXe | STScI",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/simulations-instrument",
+      "anchor_text": "Science Simulations by Instrument",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Science Simulations by Instrument",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/page/nasa-openuniverse-images-2024",
+        "http_status": 200,
+        "title": "NASA OpenUniverse 2024 Simulated Roman &amp; Rubin Images",
+        "data_links": []
+       },
+       {
+        "url": "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O/abstract",
+        "http_status": 405,
+        "title": "Human Verification",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/exoplanet-data-challenges-html",
+        "http_status": 200,
+        "title": "Roman Space Telescope Exoplanet Data Challenges",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/",
+        "http_status": 200,
+        "title": "Roman Microlensing Data Challenge 2026 (RMDC26) - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/mabuls-sim-html",
+        "http_status": 200,
+        "title": "Simulations using GULLS",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/mulensmodel-sim-html",
+        "http_status": 200,
+        "title": "Microlensing Light Curve Fitting with MulensModel",
+        "data_links": []
+       },
+       {
+        "url": "https://www.stsci.edu/contents/events/stsci/2021/april/the-roman-exoplanet-imaging-data-challenge-final-jamboree",
+        "http_status": 200,
+        "title": "The ROMAN Exoplanet Imaging Data Challenge: Final Jamboree | STScI",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/simulations-topic",
+      "anchor_text": "Science Simulations by Topic",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Science Simulations by Topic",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/page/roman-dc2-simulated-images",
+        "http_status": 200,
+        "title": "Roman High-Latitude Imaging Survey Simulated Images",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/sn-survey-image-sim-html",
+        "http_status": 200,
+        "title": "SN Survey Image Simulations",
+        "data_links": [
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/galaxia_akari.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_truth_gal.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/3dhst_sim_input_cat_v1.5.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_HEAD.FITS",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_PHOT.FITS.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/new_static.fits",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_0.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_11.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_22.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_33.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_1.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_12.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_23.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_34.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_2.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_13.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_24.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_35.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_3.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_14.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_25.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_36.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_4.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_15.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_26.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_37.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_5.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_16.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_27.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_38.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_6.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_17.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_28.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_39.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_7.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_18.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_29.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_40.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_8.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_19.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_30.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_41.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_9.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_20.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_31.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_42.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_10.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_21.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_32.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_43.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_update_truth_gal.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_Y_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_J_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_H_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_F_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/paper_rotate.fits",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_coadd_truth.tar.gz"
+        ]
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/ipac-stsci-goddard-grism-sim-html",
+        "http_status": 200,
+        "title": "Simulations by the IPAC/STScI/Goddard Group",
+        "data_links": [
+         "https://roman.ipac.caltech.edu/data/GRS_effarea_sensitivity.txt"
+        ]
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/galaxy-redshift-survey-sim-html",
+        "http_status": 200,
+        "title": "Simulations of the Galaxy Redshift Survey",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/galsim-imcom-sim-html",
+        "http_status": 200,
+        "title": "HLS Simulations Using GalSim and IMCOM",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/tools/",
+        "http_status": 200,
+        "title": "Tools - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/cgi-polarimetric-sims",
+        "http_status": 200,
+        "title": "Roman Coronagraph Instrument Polarimetric Simulations",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/nancy-grace-roman",
+      "anchor_text": "Nancy Grace Roman",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Nancy Grace Roman",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/roman-space-telescope",
+      "anchor_text": "Roman Space Telescope",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Roman Space Telescope",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/ssc-roles",
+      "anchor_text": "SSC's Roles and Responsibilities",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "SSC&#39;s Roles and Responsibilities",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/team",
+      "anchor_text": "IPAC Roman Team",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "IPAC Roman Team",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/ipac-members-activities",
+      "anchor_text": "IPAC Roman community participation",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "IPAC Roman community participation",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/contact-us",
+      "anchor_text": "Contact Us",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Contact Us",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/partners",
+      "anchor_text": "Partners",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Partners",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/darkenergy",
+      "anchor_text": "Dark Energy and the Universe",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Dark Energy and the Universe",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/exosurvey",
+      "anchor_text": "Exoplanet Coronagraphy",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Exoplanet Coronagraphy",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/core-community-surveys",
+      "anchor_text": "Core Community Surveys",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Core Community Surveys",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/gbtds",
+      "anchor_text": "Galactic Bulge Time Domain Survey",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Galactic Bulge Time Domain Survey",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     }
+    ],
+    "data_links": [
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/galaxia_akari.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_truth_gal.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/3dhst_sim_input_cat_v1.5.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_HEAD.FITS",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_PHOT.FITS.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/new_static.fits",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_0.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_11.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_22.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_33.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_1.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_12.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_23.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_34.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_2.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_13.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_24.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_35.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_3.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_14.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_25.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_36.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_4.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_15.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_26.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_37.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_5.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_16.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_27.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_38.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_6.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_17.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_28.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_39.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_7.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_18.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_29.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_40.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_8.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_19.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_30.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_41.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_9.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_20.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_31.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_42.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_10.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_21.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_32.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_43.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_update_truth_gal.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_Y_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_J_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_H_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_F_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/paper_rotate.fits",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_coadd_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/GRS_effarea_sensitivity.txt"
+    ]
+   },
+   "head_status": 200
+  },
+  "sim:roman_sims_index": {
+   "name": "sim:roman_sims_index",
+   "kind": "simulation_page",
+   "url": "https://roman.ipac.caltech.edu/sims/",
+   "status": "http_error",
+   "http_status": 404,
+   "latency_s": 0.085,
+   "error": null,
+   "sim_kind": "page",
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 1564,
+   "title": "The page you were looking for doesn't exist (404)",
+   "data_links": [],
+   "crawl": null,
+   "head_status": 404
+  },
+  "sim:openuniverse_irsa_page": {
+   "name": "sim:openuniverse_irsa_page",
+   "kind": "simulation_page",
+   "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.087,
+   "error": null,
+   "sim_kind": "index",
+   "content_type": "text/html",
+   "bytes": 8708,
+   "title": "OpenUniverse 2024 Simulated Roman & Rubin Images",
+   "data_links": [],
+   "crawl": {
+    "n_links_total": 16,
+    "n_links_matched": 9,
+    "n_pages_fetched": 33,
+    "capped": false,
+    "links_matched": [
+     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/index.html",
+     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/RomanSimulatedCoadd_YHK.png",
+     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/",
+     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/",
+     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/download.html",
+     "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/docs/openuniverse2024_preview_documentation.pdf",
+     "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O",
+     "https://irsa.ipac.caltech.edu/cloud_access/",
+     "https://roman.gsfc.nasa.gov/"
+    ],
+    "pages": [
+     {
+      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/index.html",
+      "anchor_text": "Roman DC2 Simulated Image Data Access",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html",
+      "title": "OpenUniverse 2024 Simulated Roman & Rubin Images",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/RomanSimulatedCoadd_YHK.png",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/download.html",
+        "http_status": 200,
+        "title": "Simulated Data Information",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/docs/openuniverse2024_preview_documentation.pdf",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O",
+        "http_status": 405,
+        "title": "Human Verification",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/cloud_access/",
+        "http_status": 200,
+        "title": "Cloud Data Access",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/RomanSimulatedCoadd_YHK.png",
+      "anchor_text": "",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "image/png",
+      "title": null,
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": []
+     },
+     {
+      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/",
+      "anchor_text": "Browseable directories of Roman simulated data",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "title": "Index of /data/theory/openuniverse2024/roman",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=N;O=D",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=M;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=S;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/?C=D;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/roman/preview/",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/roman/preview",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/",
+      "anchor_text": "Browseable directories of Rubin simulated data",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "title": "Index of /data/theory/openuniverse2024/rubin",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=N;O=D",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=M;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=S;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/?C=D;O=A",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin",
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/rubin/preview/",
+        "http_status": 200,
+        "title": "Index of /data/theory/openuniverse2024/rubin/preview",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/download.html",
+      "anchor_text": "Download Scripts",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html",
+      "title": "Simulated Data Information",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-F184.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-H158.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-J129.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-K213.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-R062.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-Y106.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/bulk-download-scripts/roman-preview-RomanTDS-images-simple_model-Z087.sh",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://irsa.ipac.caltech.edu/data/theory/openuniverse2024/docs/openuniverse2024_preview_documentation.pdf",
+      "anchor_text": "Description of OpenUniverse 2024 data preview",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "application/pdf",
+      "title": null,
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": []
+     },
+     {
+      "url": "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O",
+      "anchor_text": "OpenUniverse et al. (2025)",
+      "http_status": 405,
+      "head_status": 405,
+      "content_type": "text/html; charset=UTF-8",
+      "title": "Human Verification",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://irsa.ipac.caltech.edu/cloud_access/",
+      "anchor_text": "Cloud data access",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html",
+      "title": "Cloud Data Access",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.gsfc.nasa.gov/",
+      "anchor_text": "",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html",
+      "title": null,
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     }
+    ],
+    "data_links": []
+   },
+   "head_status": 200
+  },
+  "sim:rmdc26": {
+   "name": "sim:rmdc26",
+   "kind": "simulation_page",
+   "url": "https://rges-pit.org/data-challenge/",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.004,
+   "error": null,
+   "sim_kind": "index",
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 6221,
+   "title": "Roman Microlensing Data Challenge 2026 (RMDC26) - RGES PIT",
+   "data_links": [],
+   "crawl": {
+    "n_links_total": 46,
+    "n_links_matched": 17,
+    "n_pages_fetched": 80,
+    "capped": true,
+    "links_matched": [
+     "https://rges-pit.org/science/ulens_planets/",
+     "https://microlens-submit.readthedocs.io/en/latest/",
+     "https://microlens-submit.readthedocs.io/en/latest/submission_manual.html",
+     "https://www.microlensing-source.org/",
+     "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy.git",
+     "https://www.microlensing-source.org/glossary/",
+     "https://github.com/rges-pit/microlens-submit/issues",
+     "https://rges-pit.org/data-challenge/sign-up/",
+     "https://rges-pit.org/data-challenge/help/",
+     "https://rges-pit.org/data-challenge/aas-workshop/",
+     "https://rges-pit.org/data-challenge/data/",
+     "https://rges-pit.org/data-challenge/aas-workshop/1-nexus/",
+     "https://github.com/rges-pit/data-challenge-notebooks/issues",
+     "https://rges-pit.org/data/",
+     "https://huggingface.co/datasets/RGES-PIT/Experienced",
+     "https://huggingface.co/datasets/RGES-PIT/Beginner",
+     "https://roman.science.stsci.edu/"
+    ],
+    "pages": [
+     {
+      "url": "https://rges-pit.org/science/ulens_planets/",
+      "anchor_text": "Microlensing Planets",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Bound Microlensing Planets - RGES PIT",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://rges-pit.org/assets/animations/planetary_microlensing.gif",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/sign-up/",
+        "http_status": 200,
+        "title": "Sign Up - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/help/",
+        "http_status": 200,
+        "title": "Help - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/",
+        "http_status": 200,
+        "title": "Data Challenge AAS Workshop - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data/",
+        "http_status": 200,
+        "title": "RGES Data Products - RGES PIT",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://microlens-submit.readthedocs.io/en/latest/",
+      "anchor_text": "microlens-submit",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Microlensing Data Challenge Submission Toolkit &mdash; microlens-submit 0.17.9 documentation",
+      "is_data_file": false,
+      "data_links": [
+       "https://microlens-submit.readthedocs.io/en/latest/_sources/index.rst.txt"
+      ],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://microlens-submit.readthedocs.io/en/latest/cli_tutorial.html",
+        "http_status": 200,
+        "title": "CLI Tutorial: A Step-by-Step Guide &mdash; microlens-submit 0.17.9 documentation",
+        "data_links": [
+         "https://microlens-submit.readthedocs.io/en/latest/_sources/cli_tutorial.rst.txt"
+        ]
+       },
+       {
+        "url": "https://microlens-submit.readthedocs.io/en/latest/usage_examples.html",
+        "http_status": 200,
+        "title": "Usage Examples &mdash; microlens-submit 0.17.9 documentation",
+        "data_links": [
+         "https://microlens-submit.readthedocs.io/en/latest/_sources/usage_examples.rst.txt"
+        ]
+       },
+       {
+        "url": "https://microlens-submit.readthedocs.io/en/latest/api.html",
+        "http_status": 200,
+        "title": "Python API Reference &mdash; microlens-submit 0.17.9 documentation",
+        "data_links": [
+         "https://microlens-submit.readthedocs.io/en/latest/_sources/api.rst.txt"
+        ]
+       },
+       {
+        "url": "https://microlens-submit.readthedocs.io/en/latest/submission_manual.html",
+        "http_status": 200,
+        "title": "Microlensing Submission Format Manual &mdash; microlens-submit 0.17.9 documentation",
+        "data_links": [
+         "https://microlens-submit.readthedocs.io/en/latest/_sources/submission_manual.rst.txt"
+        ]
+       },
+       {
+        "url": "https://microlens-submit.readthedocs.io/en/latest/_sources/index.rst.txt",
+        "http_status": 200,
+        "title": null,
+        "data_links": [
+         "https://microlens-submit.readthedocs.io/en/latest/_sources/index.rst.txt"
+        ]
+       },
+       {
+        "url": "https://github.com/AmberLee2427/microlens-submit",
+        "http_status": 200,
+        "title": "GitHub - AmberLee2427/microlens-submit: Submission tool for the 2nd Roman microlensing data challenge \u00b7 GitHub",
+        "data_links": [
+         "https://github.com/AmberLee2427/microlens-submit/blob/main/requirements-dev.txt"
+        ]
+       }
+      ]
+     },
+     {
+      "url": "https://microlens-submit.readthedocs.io/en/latest/submission_manual.html",
+      "anchor_text": "detailed specifications",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Microlensing Submission Format Manual &mdash; microlens-submit 0.17.9 documentation",
+      "is_data_file": false,
+      "data_links": [
+       "https://microlens-submit.readthedocs.io/en/latest/_sources/submission_manual.rst.txt"
+      ],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://microlens-submit.readthedocs.io/en/latest/index.html",
+        "http_status": 200,
+        "title": "Microlensing Data Challenge Submission Toolkit &mdash; microlens-submit 0.17.9 documentation",
+        "data_links": [
+         "https://microlens-submit.readthedocs.io/en/latest/_sources/index.rst.txt"
+        ]
+       },
+       {
+        "url": "https://microlens-submit.readthedocs.io/en/latest/_sources/submission_manual.rst.txt",
+        "http_status": 200,
+        "title": null,
+        "data_links": [
+         "https://microlens-submit.readthedocs.io/en/latest/_sources/submission_manual.rst.txt"
+        ]
+       },
+       {
+        "url": "https://github.com/AmberLee2427/microlens-submit/blob/main/validate_submission.py",
+        "http_status": 200,
+        "title": "microlens-submit/validate_submission.py at main \u00b7 AmberLee2427/microlens-submit \u00b7 GitHub",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://www.microlensing-source.org/",
+      "anchor_text": "Microlensing Source",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Microlensing Source",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://www.microlensing-source.org/theory/",
+        "http_status": 200,
+        "title": "What is Microlensing? - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/glossary/",
+        "http_status": 200,
+        "title": "Glossary - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/teaching/",
+        "http_status": 200,
+        "title": "Teaching - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/observations/",
+        "http_status": 200,
+        "title": "Observations - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/resources/",
+        "http_status": 200,
+        "title": "Resources - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/about/",
+        "http_status": 200,
+        "title": "About - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/resources",
+        "http_status": 200,
+        "title": "Resources - Microlensing Source",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy.git",
+      "anchor_text": "TMGTTG",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "GitHub - AmberLee2427/TheMicrolensersGuideToTheGalaxy: The goal of this project is to create an all-encompassing collection of Jupyter notebooks\u2014your trusty companions for engaging exercises related t",
+      "is_data_file": false,
+      "data_links": [
+       "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/blob/main/requirements.txt"
+      ],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2FAmberLee2427%2FTheMicrolensersGuideToTheGalaxy",
+        "http_status": 200,
+        "title": "Sign in to GitHub \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/signup?ref_cta=Sign+up&amp;ref_loc=header+logged+out&amp;ref_page=%2F%3Cuser-name%3E%2F%3Crepo-name%3E&amp;source=header-repo&amp;source_repo=AmberLee2427%2FTheMicrolensersGuideToTheGalaxy",
+        "http_status": 403,
+        "title": "github.com",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy",
+        "http_status": 200,
+        "title": "GitHub - AmberLee2427/TheMicrolensersGuideToTheGalaxy: The goal of this project is to create an all-encompassing collection of Jupyter notebooks\u2014your trusty companions for engaging exercises related t",
+        "data_links": [
+         "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/blob/main/requirements.txt"
+        ]
+       },
+       {
+        "url": "https://github.com/login?return_to=%2FAmberLee2427%2FTheMicrolensersGuideToTheGalaxy",
+        "http_status": 200,
+        "title": "Sign in to GitHub \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/issues",
+        "http_status": 200,
+        "title": "Issues \u00b7 AmberLee2427/TheMicrolensersGuideToTheGalaxy \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/pulls",
+        "http_status": 200,
+        "title": "Pull requests \u00b7 AmberLee2427/TheMicrolensersGuideToTheGalaxy \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/discussions",
+        "http_status": 200,
+        "title": "AmberLee2427/TheMicrolensersGuideToTheGalaxy \u00b7 Discussions \u00b7 GitHub",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://www.microlensing-source.org/glossary/",
+      "anchor_text": "Glossary of Terms",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Glossary - Microlensing Source",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://www.microlensing-source.org/resources/data-challenges/",
+        "http_status": 200,
+        "title": "Data Challenges - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/resources/datasets/",
+        "http_status": 200,
+        "title": "Datasets - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/resources/simulators/",
+        "http_status": 200,
+        "title": "Simulators - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/theory/pspl/",
+        "http_status": 200,
+        "title": "Point Source, Point Lens - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/theory/magnification/",
+        "http_status": 200,
+        "title": "Magnification - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/theory/optical-depth/",
+        "http_status": 200,
+        "title": "Optical Depth - Microlensing Source",
+        "data_links": []
+       },
+       {
+        "url": "https://www.microlensing-source.org/theory/parallax/",
+        "http_status": 200,
+        "title": "Parallax - Microlensing Source",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://github.com/rges-pit/microlens-submit/issues",
+      "anchor_text": "microlens-submit",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Issues \u00b7 rges-pit/microlens-submit \u00b7 GitHub",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Frges-pit%2Fmicrolens-submit%2Fissues",
+        "http_status": 200,
+        "title": "Sign in to GitHub \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/signup?ref_cta=Sign+up&amp;ref_loc=header+logged+out&amp;ref_page=%2F%3Cuser-name%3E%2F%3Crepo-name%3E%2Fissues%2Findex&amp;source=header-repo&amp;source_repo=rges-pit%2Fmicrolens-submit",
+        "http_status": 403,
+        "title": "github.com",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/rges-pit/microlens-submit",
+        "http_status": 200,
+        "title": "GitHub - rges-pit/microlens-submit: Submission tool for the 2nd Roman microlensing data challenge \u00b7 GitHub",
+        "data_links": [
+         "https://github.com/rges-pit/microlens-submit/blob/main/requirements-dev.txt"
+        ]
+       },
+       {
+        "url": "https://github.com/login?return_to=%2Frges-pit%2Fmicrolens-submit",
+        "http_status": 200,
+        "title": "Sign in to GitHub \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/rges-pit/microlens-submit/pulls",
+        "http_status": 200,
+        "title": "Pull requests \u00b7 rges-pit/microlens-submit \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/rges-pit/microlens-submit/actions",
+        "http_status": 200,
+        "title": "Workflow runs \u00b7 rges-pit/microlens-submit \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/rges-pit/microlens-submit/projects",
+        "http_status": 400,
+        "title": null,
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://rges-pit.org/data-challenge/sign-up/",
+      "anchor_text": "Sign Up",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Sign Up - RGES PIT",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://rges-pit.org/data-challenge/data/",
+        "http_status": 200,
+        "title": "RMDC26 Data - RGES PIT",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://rges-pit.org/data-challenge/help/",
+      "anchor_text": "Help",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Help - RGES PIT",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": []
+     },
+     {
+      "url": "https://rges-pit.org/data-challenge/aas-workshop/",
+      "anchor_text": "AAS Workshop",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Data Challenge AAS Workshop - RGES PIT",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/notebooks/microlensing_tools/",
+        "http_status": 200,
+        "title": "Introduction to Microlensing Tools - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/1-nexus/",
+        "http_status": 200,
+        "title": "Introduction to the Roman Research Nexus (The Nexus) - RGES PIT",
+        "data_links": [
+         "https://raw.githubusercontent.com/rges-pit/data-challenge-notebooks/refs/heads/main/requirements.txt"
+        ]
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/2-single-lenses/",
+        "http_status": 200,
+        "title": "Single Lenses and Pipelines - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/3-binary-lenses/",
+        "http_status": 200,
+        "title": "Binary Lenses - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/4-info/",
+        "http_status": 200,
+        "title": "Information Session and Q&amp;A - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/notebooks/workflow/",
+        "http_status": 200,
+        "title": "Data Challenge - Nexus Workflow - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/notebooks/submission-tutorial/",
+        "http_status": 200,
+        "title": "Submission Command Line Tool Tutorial - RGES PIT",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://rges-pit.org/data-challenge/data/",
+      "anchor_text": "Data",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "RMDC26 Data - RGES PIT",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://huggingface.co/datasets/RGES-PIT/Beginner",
+        "http_status": 200,
+        "title": "RGES-PIT/Beginner \u00b7 Datasets at Hugging Face",
+        "data_links": []
+       },
+       {
+        "url": "https://huggingface.co/datasets/RGES-PIT/Experienced",
+        "http_status": 200,
+        "title": "RGES-PIT/Experienced \u00b7 Datasets at Hugging Face",
+        "data_links": []
+       },
+       {
+        "url": "https://huggingface.co/datasets/RGES-PIT/MachineLearning",
+        "http_status": 200,
+        "title": "RGES-PIT/MachineLearning \u00b7 Datasets at Hugging Face",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://rges-pit.org/data-challenge/aas-workshop/1-nexus/",
+      "anchor_text": "Nexus",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Introduction to the Roman Research Nexus (The Nexus) - RGES PIT",
+      "is_data_file": false,
+      "data_links": [
+       "https://raw.githubusercontent.com/rges-pit/data-challenge-notebooks/refs/heads/main/requirements.txt"
+      ],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/1-nexus/`../notebooks/x_microlens-submit_CLI_tutorial.ipynb`",
+        "http_status": 404,
+        "title": "Page Not Found - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/aas-workshop/notebooks/x_microlensing_tools.ipynb",
+        "http_status": 404,
+        "title": "Page Not Found - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/rges-pit/data-challenge-notebooks/blob/main/Extras/Microlensing_Tools.ipynb",
+        "http_status": 200,
+        "title": "data-challenge-notebooks/Extras/Microlensing_Tools.ipynb at main \u00b7 rges-pit/data-challenge-notebooks \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://raw.githubusercontent.com/rges-pit/data-challenge-notebooks/main/Extras/Microlensing_Tools.ipynb",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://colab.research.google.com/github/rges-pit/data-challenge-notebooks/blob/main/Extras/Microlensing_Tools.ipynb",
+        "http_status": 200,
+        "title": "Google Colab",
+        "data_links": []
+       },
+       {
+        "url": "https://microlens-submit.readthedocs.io/en/latest/tutorial.html",
+        "http_status": 200,
+        "title": "Getting Started: A Step-by-Step Tutorial &mdash; microlens-submit 0.17.9 documentation",
+        "data_links": [
+         "https://microlens-submit.readthedocs.io/en/latest/_sources/tutorial.rst.txt"
+        ]
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/roman_notebooks/markdown/teams.md",
+        "http_status": 404,
+        "title": "Page Not Found - RGES PIT",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://github.com/rges-pit/data-challenge-notebooks/issues",
+      "anchor_text": "data-challenge-notebooks",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Issues \u00b7 rges-pit/data-challenge-notebooks \u00b7 GitHub",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Frges-pit%2Fdata-challenge-notebooks%2Fissues",
+        "http_status": 200,
+        "title": "Sign in to GitHub \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/signup?ref_cta=Sign+up&amp;ref_loc=header+logged+out&amp;ref_page=%2F%3Cuser-name%3E%2F%3Crepo-name%3E%2Fissues%2Findex&amp;source=header-repo&amp;source_repo=rges-pit%2Fdata-challenge-notebooks",
+        "http_status": 403,
+        "title": "github.com",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/rges-pit/data-challenge-notebooks",
+        "http_status": 200,
+        "title": "GitHub - rges-pit/data-challenge-notebooks: Notebooks for showcasing open-source microlensing tools \u00b7 GitHub",
+        "data_links": [
+         "https://github.com/rges-pit/data-challenge-notebooks/blob/main/requirements.txt",
+         "https://github.com/rges-pit/data-challenge-notebooks/blob/main/zenodo.txt"
+        ]
+       },
+       {
+        "url": "https://github.com/login?return_to=%2Frges-pit%2Fdata-challenge-notebooks",
+        "http_status": 200,
+        "title": "Sign in to GitHub \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/rges-pit/data-challenge-notebooks/pulls",
+        "http_status": 200,
+        "title": "Pull requests \u00b7 rges-pit/data-challenge-notebooks \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/rges-pit/data-challenge-notebooks/discussions",
+        "http_status": 200,
+        "title": "rges-pit/data-challenge-notebooks \u00b7 Discussions \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/rges-pit/data-challenge-notebooks/actions",
+        "http_status": 200,
+        "title": "Workflow runs \u00b7 rges-pit/data-challenge-notebooks \u00b7 GitHub",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://rges-pit.org/data/",
+      "anchor_text": "Data",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "RGES Data Products - RGES PIT",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://huggingface.co/datasets/RGES-PIT/Experienced",
+      "anchor_text": "Hugging Face",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "RGES-PIT/Experienced \u00b7 Datasets at Hugging Face",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     }
+    ],
+    "data_links": [
+     "https://microlens-submit.readthedocs.io/en/latest/_sources/index.rst.txt",
+     "https://microlens-submit.readthedocs.io/en/latest/_sources/cli_tutorial.rst.txt",
+     "https://microlens-submit.readthedocs.io/en/latest/_sources/usage_examples.rst.txt",
+     "https://microlens-submit.readthedocs.io/en/latest/_sources/api.rst.txt",
+     "https://microlens-submit.readthedocs.io/en/latest/_sources/submission_manual.rst.txt",
+     "https://github.com/AmberLee2427/microlens-submit/blob/main/requirements-dev.txt",
+     "https://github.com/AmberLee2427/TheMicrolensersGuideToTheGalaxy/blob/main/requirements.txt",
+     "https://github.com/rges-pit/microlens-submit/blob/main/requirements-dev.txt",
+     "https://raw.githubusercontent.com/rges-pit/data-challenge-notebooks/refs/heads/main/requirements.txt",
+     "https://microlens-submit.readthedocs.io/en/latest/_sources/tutorial.rst.txt",
+     "https://github.com/rges-pit/data-challenge-notebooks/blob/main/requirements.txt",
+     "https://github.com/rges-pit/data-challenge-notebooks/blob/main/zenodo.txt"
+    ]
+   },
+   "head_status": 200
+  },
+  "sim:roman_exoplanet_data_challenges": {
+   "name": "sim:roman_exoplanet_data_challenges",
+   "kind": "simulation_page",
+   "url": "https://roman.ipac.caltech.edu/page/exoplanet-data-challenges-html",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.258,
+   "error": null,
+   "sim_kind": "index",
+   "content_type": "text/html; charset=utf-8",
+   "bytes": 42596,
+   "title": "Roman Space Telescope Exoplanet Data Challenges",
+   "data_links": [],
+   "crawl": {
+    "n_links_total": 63,
+    "n_links_matched": 54,
+    "n_pages_fetched": 57,
+    "capped": true,
+    "links_matched": [
+     "https://roman.ipac.caltech.edu/system/media_files/binaries/34/original/microlensing_data_challenge_1.jpeg?1619563654",
+     "https://roman.ipac.caltech.edu/system/media_files/binaries/35/original/microlensing_data_challenge_1b.jpeg?1619563679",
+     "http://www.microlensing-source.org/data-challenge/",
+     "https://roman.ipac.caltech.edu/page/microlensing",
+     "https://roman.ipac.caltech.edu/page/microlensing-python-notebook-tutorial",
+     "https://www.stsci.edu/contents/events/stsci/2021/april/the-roman-exoplanet-imaging-data-challenge-final-jamboree",
+     "https://roman.ipac.caltech.edu/system/media_files/binaries/214/original/street_data_challenge1_results.pdf?1667953468",
+     "https://sites.google.com/view/exoplanetimaging",
+     "https://roman.ipac.caltech.edu/page/simulation-code",
+     "https://roman.ipac.caltech.edu/page/simulations-instrument",
+     "https://roman.ipac.caltech.edu/page/simulations-topic",
+     "https://roman.ipac.caltech.edu/",
+     "https://roman.ipac.caltech.edu/page/nancy-grace-roman",
+     "https://roman.ipac.caltech.edu/page/roman-space-telescope",
+     "https://roman.ipac.caltech.edu/page/ssc-roles",
+     "https://roman.ipac.caltech.edu/page/team",
+     "https://roman.ipac.caltech.edu/page/ipac-members-activities",
+     "https://roman.ipac.caltech.edu/page/contact-us",
+     "https://roman.ipac.caltech.edu/page/partners",
+     "https://roman.ipac.caltech.edu/page/darkenergy",
+     "https://roman.ipac.caltech.edu/page/exosurvey",
+     "https://roman.ipac.caltech.edu/page/core-community-surveys",
+     "https://roman.ipac.caltech.edu/page/gbtds",
+     "https://roman.ipac.caltech.edu/page/hltds",
+     "https://roman.ipac.caltech.edu/page/hlwas",
+     "https://roman.ipac.caltech.edu/page/general-astrophysics",
+     "https://roman.ipac.caltech.edu/page/galactic-plane-survey",
+     "https://roman.ipac.caltech.edu/page/cycle1-gas-programs",
+     "https://roman.ipac.caltech.edu/page/132",
+     "https://roman.ipac.caltech.edu/page/wfi",
+     "https://roman.ipac.caltech.edu/page/cgi",
+     "https://roman.ipac.caltech.edu/page/param-db",
+     "https://roman.ipac.caltech.edu/page/etc",
+     "https://roman.ipac.caltech.edu/page/documents",
+     "https://roman.ipac.caltech.edu/page/intro-slides",
+     "https://roman.ipac.caltech.edu/page/call-for-proposals",
+     "https://roman.ipac.caltech.edu/page/cycle1-approved-programs",
+     "https://roman.ipac.caltech.edu/page/cycle-1",
+     "https://roman.ipac.caltech.edu/page/opportunities-for-scientists",
+     "https://roman.ipac.caltech.edu/page/observations",
+     "https://roman.ipac.caltech.edu/page/science-user-panel",
+     "https://roman.ipac.caltech.edu/images",
+     "https://roman.ipac.caltech.edu/videos",
+     "https://roman.ipac.caltech.edu/page/cgi-cad",
+     "https://roman.ipac.caltech.edu/news",
+     "https://roman.ipac.caltech.edu/events?category=workshops-meetings-and-talks",
+     "https://roman.ipac.caltech.edu/events?category=webinars",
+     "https://roman.ipac.caltech.edu/events?category=virtual-lecture-series",
+     "https://roman.ipac.caltech.edu/events",
+     "https://roman.ipac.caltech.edu/system/media_files/binaries/33/original/cdc2_example1.jpeg?1619563620",
+     "https://roman.ipac.caltech.edu/system/media_files/binaries/36/original/cdc1_spectra2.jpeg?1619563707",
+     "https://roman.ipac.caltech.edu/system/media_files/binaries/37/original/CGI_EDC_Cycle_1_Summary_IPAC.jpeg?1619563737",
+     "https://stsci.service-now.com/roman",
+     "https://roman.gsfc.nasa.gov"
+    ],
+    "pages": [
+     {
+      "url": "https://roman.ipac.caltech.edu/system/media_files/binaries/34/original/microlensing_data_challenge_1.jpeg?1619563654",
+      "anchor_text": "",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "image/jpeg",
+      "title": null,
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": []
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/system/media_files/binaries/35/original/microlensing_data_challenge_1b.jpeg?1619563679",
+      "anchor_text": "",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "image/jpeg",
+      "title": null,
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": []
+     },
+     {
+      "url": "http://www.microlensing-source.org/data-challenge/",
+      "anchor_text": "http://www.microlensing-source.org/data-challenge/",
+      "http_status": 404,
+      "head_status": 404,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Microlensing Source",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/microlensing",
+      "anchor_text": "Microlensing Exoplanets",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Microlensing Exoplanets",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/page/simulation-code",
+        "http_status": 200,
+        "title": "Simulation and Modeling Tools",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/simulations-instrument",
+        "http_status": 200,
+        "title": "Science Simulations by Instrument",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/simulations-topic",
+        "http_status": 200,
+        "title": "Science Simulations by Topic",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/",
+        "http_status": 200,
+        "title": "Roman",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/nancy-grace-roman",
+        "http_status": 200,
+        "title": "Nancy Grace Roman",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/roman-space-telescope",
+        "http_status": 200,
+        "title": "Roman Space Telescope",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/ssc-roles",
+        "http_status": 200,
+        "title": "SSC&#39;s Roles and Responsibilities",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/microlensing-python-notebook-tutorial",
+      "anchor_text": "python notebook tutorial",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Microlensing Python Notebook Tutorial",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/sims/microlensing_data_challenge_notebook.ipynb",
+        "http_status": 404,
+        "title": "The page you were looking for doesn't exist (404)",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/sims/WFIRST_1827.dat",
+        "http_status": 404,
+        "title": "The page you were looking for doesn't exist (404)",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/team",
+        "http_status": 200,
+        "title": "IPAC Roman Team",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/ipac-members-activities",
+        "http_status": 200,
+        "title": "IPAC Roman community participation",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/contact-us",
+        "http_status": 200,
+        "title": "Contact Us",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/partners",
+        "http_status": 200,
+        "title": "Partners",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/darkenergy",
+        "http_status": 200,
+        "title": "Dark Energy and the Universe",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://www.stsci.edu/contents/events/stsci/2021/april/the-roman-exoplanet-imaging-data-challenge-final-jamboree",
+      "anchor_text": "Final Jamboree,",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "title": "The ROMAN Exoplanet Imaging Data Challenge: Final Jamboree | STScI",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://www.stsci.edu/files/live/sites/www/files/home/events/event-assets/2021/_documents/2021-workshop-roman-exoplanet-imaging-data-challenge-jamboree-agenda.pdf",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://www.exoplanetdatachallenge.com/",
+        "http_status": 200,
+        "title": "Pathway to HWO",
+        "data_links": []
+       },
+       {
+        "url": "http://www.facebook.com/sharer.php?u=https://www.stsci.edu/contents/events/stsci/2021/april/the-roman-exoplanet-imaging-data-challenge-final-jamboree&amp;t=The%20ROMAN%20Exoplanet%20Imaging%20Data%20Challenge%3A%20Final%20Jamboree",
+        "http_status": 200,
+        "title": "Facebook",
+        "data_links": []
+       },
+       {
+        "url": "http://twitter.com/share?url=https://www.stsci.edu/contents/events/stsci/2021/april/the-roman-exoplanet-imaging-data-challenge-final-jamboree&text=The%20ROMAN%20Exoplanet%20Imaging%20Data%20Challenge%3A%20Final%20Jamboree&hashtags=Www",
+        "http_status": 520,
+        "title": "twitter.com | 520: Web server is returning an unknown error",
+        "data_links": []
+       },
+       {
+        "url": "https://bsky.app/intent/compose?text=The%20ROMAN%20Exoplanet%20Imaging%20Data%20Challenge%3A%20Final%20Jamboree%0Ahttps://www.stsci.edu/contents/events/stsci/2021/april/the-roman-exoplanet-imaging-data-challenge-final-jamboree",
+        "http_status": 200,
+        "title": "Bluesky",
+        "data_links": []
+       },
+       {
+        "url": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools/astronomical-catalogs/simple-stellar-population-atlas",
+        "http_status": 200,
+        "title": "Simple Stellar Population Atlas | STScI",
+        "data_links": []
+       },
+       {
+        "url": "https://www.stsci.edu/jwst/science-planning/proposal-planning-toolbox/simulated-data",
+        "http_status": 200,
+        "title": "Simulated Data | STScI",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/system/media_files/binaries/214/original/street_data_challenge1_results.pdf?1667953468",
+      "anchor_text": "slide package.",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "application/pdf",
+      "title": null,
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": []
+     },
+     {
+      "url": "https://sites.google.com/view/exoplanetimaging",
+      "anchor_text": "data challenge website.",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Pathway to HWO",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/simulation-code",
+      "anchor_text": "Simulation and Modeling Tools",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Simulation and Modeling Tools",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/docs/PROPER_CGISim_CGI_optics_info_session-20210727_1801-1.mp4?1667850342",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/system/media_files/binaries/208/original/Krist_cgisim_proper_20210727.pdf?1667853456",
+        "http_status": 200,
+        "title": null,
+        "data_links": []
+       },
+       {
+        "url": "https://roman-docs.stsci.edu/simulation-tools-handbook-home/stpsf-for-roman",
+        "http_status": 200,
+        "title": "STPSF - Space Telescope Point Spread Functions for Roman - Roman User Documentation",
+        "data_links": []
+       },
+       {
+        "url": "https://roman-docs.stsci.edu/simulation-tools-handbook-home/stips-space-telescope-imaging-product-simulator",
+        "http_status": 200,
+        "title": "STIPS - Space Telescope Imaging Product Simulator - Roman User Documentation",
+        "data_links": []
+       },
+       {
+        "url": "https://sourceforge.net/projects/cgisim/",
+        "http_status": 200,
+        "title": "CGISim download | SourceForge.net",
+        "data_links": []
+       },
+       {
+        "url": "https://github.com/nasa-jpl/lowfssim",
+        "http_status": 200,
+        "title": "GitHub - nasa-jpl/lowfssim: Roman-CGI optical model of LOWFS \u00b7 GitHub",
+        "data_links": []
+       },
+       {
+        "url": "http://axe-info.stsci.edu/simulate/",
+        "http_status": 200,
+        "title": "HSTaXe | STScI",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/simulations-instrument",
+      "anchor_text": "Science Simulations by Instrument",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Science Simulations by Instrument",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/page/nasa-openuniverse-images-2024",
+        "http_status": 200,
+        "title": "NASA OpenUniverse 2024 Simulated Roman &amp; Rubin Images",
+        "data_links": []
+       },
+       {
+        "url": "https://ui.adsabs.harvard.edu/abs/2025arXiv250105632O/abstract",
+        "http_status": 405,
+        "title": "Human Verification",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/data-challenge/",
+        "http_status": 200,
+        "title": "Roman Microlensing Data Challenge 2026 (RMDC26) - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/mabuls-sim-html",
+        "http_status": 200,
+        "title": "Simulations using GULLS",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/mulensmodel-sim-html",
+        "http_status": 200,
+        "title": "Microlensing Light Curve Fitting with MulensModel",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/roman-dc2-simulated-images",
+        "http_status": 200,
+        "title": "Roman High-Latitude Imaging Survey Simulated Images",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/sn-survey-image-sim-html",
+        "http_status": 200,
+        "title": "SN Survey Image Simulations",
+        "data_links": [
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/galaxia_akari.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_truth_gal.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/3dhst_sim_input_cat_v1.5.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_HEAD.FITS",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_PHOT.FITS.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/new_static.fits",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_0.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_11.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_22.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_33.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_1.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_12.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_23.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_34.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_2.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_13.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_24.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_35.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_3.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_14.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_25.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_36.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_4.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_15.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_26.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_37.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_5.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_16.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_27.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_38.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_6.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_17.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_28.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_39.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_7.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_18.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_29.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_40.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_8.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_19.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_30.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_41.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_9.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_20.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_31.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_42.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_10.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_21.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_32.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_43.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_update_truth_gal.fits.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_Y_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_J_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_H_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_F_truth.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/paper_rotate.fits",
+         "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_coadd_truth.tar.gz"
+        ]
+       }
+      ]
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/simulations-topic",
+      "anchor_text": "Science Simulations by Topic",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Science Simulations by Topic",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null,
+      "subpages": [
+       {
+        "url": "https://roman.ipac.caltech.edu/page/ipac-stsci-goddard-grism-sim-html",
+        "http_status": 200,
+        "title": "Simulations by the IPAC/STScI/Goddard Group",
+        "data_links": [
+         "https://roman.ipac.caltech.edu/data/GRS_effarea_sensitivity.txt"
+        ]
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/galaxy-redshift-survey-sim-html",
+        "http_status": 200,
+        "title": "Simulations of the Galaxy Redshift Survey",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/galsim-imcom-sim-html",
+        "http_status": 200,
+        "title": "HLS Simulations Using GalSim and IMCOM",
+        "data_links": []
+       },
+       {
+        "url": "https://rges-pit.org/tools/",
+        "http_status": 200,
+        "title": "Tools - RGES PIT",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/cgi-polarimetric-sims",
+        "http_status": 200,
+        "title": "Roman Coronagraph Instrument Polarimetric Simulations",
+        "data_links": []
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/coronagraph-public-images-html",
+        "http_status": 200,
+        "title": "Roman Space Telescope Coronagraph Instrument Public Simulated Images",
+        "data_links": [
+         "https://roman.ipac.caltech.edu/data/sims/coronagraph/os11/Compiled_OS11_unpolarized.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/coronagraph/os11/Compiled_OS11_xpolarized.tar.gz",
+         "https://roman.ipac.caltech.edu/data/sims/coronagraph/os11/Compiled_OS11_ypolarized.tar.gz"
+        ]
+       },
+       {
+        "url": "https://roman.ipac.caltech.edu/page/cgi-contrast-curves-html",
+        "http_status": 200,
+        "title": "Coronagraph Instrument Simulated Contrast Curves",
+        "data_links": []
+       }
+      ]
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/",
+      "anchor_text": "Roman Science Support Center at IPAC",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Roman",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/nancy-grace-roman",
+      "anchor_text": "Nancy Grace Roman",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Nancy Grace Roman",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/roman-space-telescope",
+      "anchor_text": "Roman Space Telescope",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "Roman Space Telescope",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     },
+     {
+      "url": "https://roman.ipac.caltech.edu/page/ssc-roles",
+      "anchor_text": "SSC's Roles and Responsibilities",
+      "http_status": 200,
+      "head_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "title": "SSC&#39;s Roles and Responsibilities",
+      "is_data_file": false,
+      "data_links": [],
+      "error": null
+     }
+    ],
+    "data_links": [
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/galaxia_akari.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_truth_gal.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/3dhst_sim_input_cat_v1.5.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_HEAD.FITS",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/WFIRST_AKARI_FIXED_PHOT.FITS.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/new_static.fits",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_0.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_11.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_22.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_33.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_1.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_12.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_23.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_34.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_2.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_13.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_24.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_35.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_3.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_14.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_25.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_36.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_4.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_15.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_26.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_37.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_5.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_16.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_27.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_38.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_6.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_17.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_28.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_39.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_7.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_18.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_29.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_40.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_8.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_19.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_30.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_41.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_9.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_20.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_31.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_42.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_10.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_21.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_32.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/static_update_Y106_43.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_update_truth_gal.fits.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_Y_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_J_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_H_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_F_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/paper_rotate.fits",
+     "https://roman.ipac.caltech.edu/data/sims/sn_image_sims/rotate_coadd_truth.tar.gz",
+     "https://roman.ipac.caltech.edu/data/GRS_effarea_sensitivity.txt",
+     "https://roman.ipac.caltech.edu/data/sims/coronagraph/os11/Compiled_OS11_unpolarized.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/coronagraph/os11/Compiled_OS11_xpolarized.tar.gz",
+     "https://roman.ipac.caltech.edu/data/sims/coronagraph/os11/Compiled_OS11_ypolarized.tar.gz"
+    ]
+   },
+   "head_status": 200
+  },
+  "sim:roman_docs_wfi": {
+   "name": "sim:roman_docs_wfi",
+   "kind": "simulation_page",
+   "url": "https://roman-docs.stsci.edu/",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.272,
+   "error": null,
+   "sim_kind": "documentation",
+   "content_type": "text/html;charset=UTF-8",
+   "bytes": 114595,
+   "title": "Roman Documentation Home - Roman User Documentation",
+   "data_links": [],
+   "crawl": null,
+   "head_status": 200
+  },
+  "hf:RGES-PIT/Beginner": {
+   "name": "hf:RGES-PIT/Beginner",
+   "kind": "huggingface_dataset",
+   "url": "https://huggingface.co/api/datasets/RGES-PIT/Beginner/tree/main",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.083,
+   "error": null,
+   "repo": "RGES-PIT/Beginner",
+   "survey": "GBTDS",
+   "files": [
+    {
+     "path": ".gitattributes",
+     "size": 2461
+    },
+    {
+     "path": "README.md",
+     "size": 2240
+    },
+    {
+     "path": "RMDC26_Beginner_Tier_test.parquet",
+     "size": 164912315
+    }
+   ],
+   "n_files": 3,
+   "gated": false,
+   "private": false,
+   "last_modified": "2026-03-26T15:46:44.000Z",
+   "simulated": true,
+   "dataset_status": 200,
+   "tree_status": 200,
+   "resolve_base": "https://huggingface.co/datasets/RGES-PIT/Beginner/resolve/main/",
+   "files_capped": false
+  },
+  "hf:RGES-PIT/Experienced": {
+   "name": "hf:RGES-PIT/Experienced",
+   "kind": "huggingface_dataset",
+   "url": "https://huggingface.co/api/datasets/RGES-PIT/Experienced/tree/main",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.065,
+   "error": null,
+   "repo": "RGES-PIT/Experienced",
+   "survey": "GBTDS",
+   "files": [
+    {
+     "path": ".gitattributes",
+     "size": 2461
+    },
+    {
+     "path": "README.md",
+     "size": 6051
+    },
+    {
+     "path": "RMDC26_Experienced_Tier_test.parquet",
+     "size": 3140911766
+    }
+   ],
+   "n_files": 3,
+   "gated": false,
+   "private": false,
+   "last_modified": "2026-07-23T17:27:50.000Z",
+   "simulated": true,
+   "dataset_status": 200,
+   "tree_status": 200,
+   "resolve_base": "https://huggingface.co/datasets/RGES-PIT/Experienced/resolve/main/",
+   "files_capped": false
+  },
+  "hf:RGES-PIT/test": {
+   "name": "hf:RGES-PIT/test",
+   "kind": "huggingface_dataset",
+   "url": "https://huggingface.co/api/datasets/RGES-PIT/test/tree/main",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.1,
+   "error": null,
+   "repo": "RGES-PIT/test",
+   "survey": "GBTDS",
+   "files": [
+    {
+     "path": ".gitattributes",
+     "size": 3445
+    },
+    {
+     "path": "README.md",
+     "size": 1130
+    },
+    {
+     "path": "data_challenge_0_0_826.det.lc",
+     "size": 10605408
+    },
+    {
+     "path": "data_challenge_0_125_871.det.lc",
+     "size": 10918539
+    },
+    {
+     "path": "data_challenge_0_126_5.det.lc",
+     "size": 10972862
+    },
+    {
+     "path": "data_challenge_0_129_20.det.lc",
+     "size": 10875968
+    },
+    {
+     "path": "data_challenge_0_129_335.det.lc",
+     "size": 12073066
+    },
+    {
+     "path": "data_challenge_0_129_73.det.lc",
+     "size": 11803360
+    },
+    {
+     "path": "data_challenge_0_129_907.det.lc",
+     "size": 11814635
+    },
+    {
+     "path": "data_challenge_0_596_401.det.lc",
+     "size": 10738840
+    },
+    {
+     "path": "data_challenge_0_5_454.det.lc",
+     "size": 11961810
+    },
+    {
+     "path": "data_challenge_f0_lcs.pdf",
+     "size": 935642
+    },
+    {
+     "path": "data_challenge_f125_lcs.pdf",
+     "size": 1445286
+    },
+    {
+     "path": "data_challenge_f126_lcs.pdf",
+     "size": 969826
+    },
+    {
+     "path": "data_challenge_f129_lcs.pdf",
+     "size": 1122506
+    },
+    {
+     "path": "data_challenge_f596_lcs.pdf",
+     "size": 856390
+    },
+    {
+     "path": "data_challenge_f5_lcs.pdf",
+     "size": 499219
+    },
+    {
+     "path": "list.txt",
+     "size": 402
+    }
+   ],
+   "n_files": 18,
+   "gated": false,
+   "private": false,
+   "last_modified": "2026-01-04T11:55:24.000Z",
+   "simulated": true,
+   "dataset_status": 200,
+   "tree_status": 200,
+   "resolve_base": "https://huggingface.co/datasets/RGES-PIT/test/resolve/main/",
+   "files_capped": false
+  },
+  "hf:RGES-PIT/MachineLearning": {
+   "name": "hf:RGES-PIT/MachineLearning",
+   "kind": "huggingface_dataset",
+   "url": "https://huggingface.co/api/datasets/RGES-PIT/MachineLearning/tree/main",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.142,
+   "error": null,
+   "repo": "RGES-PIT/MachineLearning",
+   "survey": "GBTDS",
+   "files": [
+    {
+     "path": ".gitattributes",
+     "size": 2504
+    },
+    {
+     "path": "README.md",
+     "size": 17312
+    },
+    {
+     "path": "RMDC26_ML_Data_epoch.parquet",
+     "size": 4120073
+    },
+    {
+     "path": "RMDC26_ML_Data_meta.parquet",
+     "size": 149194446
+    },
+    {
+     "path": "RMDC26_ML_Data_obs.parquet",
+     "size": 174237365438
+    },
+    {
+     "path": "lightcurves_sample.png",
+     "size": 528428
+    }
+   ],
+   "n_files": 6,
+   "gated": false,
+   "private": false,
+   "last_modified": "2026-08-18T23:12:03.000Z",
+   "simulated": true,
+   "dataset_status": 200,
+   "tree_status": 200,
+   "resolve_base": "https://huggingface.co/datasets/RGES-PIT/MachineLearning/resolve/main/",
+   "files_capped": false
+  },
+  "hf:author:RGES-PIT": {
+   "name": "hf:author:RGES-PIT",
+   "kind": "huggingface_author",
+   "url": "https://huggingface.co/api/datasets?author=RGES-PIT&limit=100",
+   "status": "ok",
+   "http_status": 200,
+   "latency_s": 0.014,
+   "error": null,
+   "author": "RGES-PIT",
+   "datasets": [
+    "RGES-PIT/Experienced",
+    "RGES-PIT/Beginner",
+    "RGES-PIT/test",
+    "RGES-PIT/MachineLearning"
+   ],
+   "n_datasets": 4,
+   "simulated": true,
+   "new_datasets": []
+  }
+ },
+ "packages": {
+  "asdf": {
+   "importable": true,
+   "version": "5.4.0"
+  },
+  "roman_datamodels": {
+   "importable": true,
+   "version": "1.1.0"
+  },
+  "gwcs": {
+   "importable": true,
+   "version": "1.0.3"
+  },
+  "fsspec": {
+   "importable": true,
+   "version": "2026.7.0"
+  },
+  "s3fs": {
+   "importable": true,
+   "version": "2026.7.0"
+  }
+ },
+ "n_endpoints_reached": 19,
+ "n_endpoints_tried": 19,
+ "timeout_s": 60.0,
+ "stage": "probe"
+}

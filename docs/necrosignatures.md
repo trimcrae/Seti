@@ -333,6 +333,38 @@ shared. Full physics in `baffle.md`.*
   are built from co-added full-mission maps in which a source moving 40″
   between surveys is neither a point source nor an entry).
 
+### X. Signatures only Roman can reach — added 2026-09-09
+*Four observables that no facility before the Nancy Grace Roman Space
+Telescope could search at all, built pre-launch so they run the day its
+products are public. Physics, confounders and data in `roman.md`; package
+`seti.roman`.*
+* **S40 The opaque lens.** A microlens whose physical radius is a
+  non-negligible fraction of its Einstein radius. An opaque disc of radius
+  ρ_L (θ_E units) removes the minor image in the wings for u > 1/ρ_L − ρ_L,
+  producing a *symmetric pair of downward steps of depth A₋(u_c)* on both
+  sides of an otherwise standard event (a central hole for ρ_L ≥ 1). One
+  parameter fixes both where and how deep. The implied mean density is
+  orders of magnitude below any gravitationally bound body: a shell or swarm
+  around a dark mass, seen by its **shadow across a background star's
+  images** rather than by its waste heat. Needs the GBTDS 12-minute cadence.
+  → **ROMAN/lens**
+* **S41 The industrial line.** An unresolved emission line on a *stellar*
+  point source in the 1.00–1.93 µm grism / 0.75–1.80 µm prism — the band
+  every optical laser search stops short of, and the band our own high-power
+  lasers occupy (Nd:YAG 1.064 µm, Yb-fibre 1.03–1.09, Er-fibre 1.53–1.57).
+  Blind over the band; the industrial matches are flags, not filters.
+  → **ROMAN/lines**
+* **S42 The sub-exposure flash.** A pulse shorter than one up-the-ramp
+  resultant, found in the pipeline's cosmic-ray jump flags as a PSF-shaped
+  cluster centred on a catalogued star, with the step at one resultant in
+  every PSF pixel and no slope change after it (a flare keeps rising). The
+  pulsed-beacon question of optical SETI asked of ~10⁸ stars at once, in
+  the near-infrared, for the first time. → **ROMAN/flash**
+* **S43 The statite.** A reflecting point source in a Coronagraph
+  Instrument field whose position does not obey Kepler: a hovering
+  reflector, not a planet; grey (no methane band) and specular. A tiny
+  population, screened for what no planet-hunter looks for. → **ROMAN/statite**
+
 ---
 
 ## 3. CENOTAPH — the flagship design

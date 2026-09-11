@@ -128,8 +128,10 @@ def test_passive_seeding_from_the_belt_is_thousands_per_year_before_survival():
     r = P.passive_seeding(2.4e21, 0.5, 2.0, 1.0, g, R_EARTH, M_EARTH, 26 * KM, 1e8 * YR, 5 * GYR)
     assert 1e2 < r["arrivals_per_yr_unsurvived"] < 1e5
     assert r["cumulative_arrivals"] > 0
+    # no gate at the annulus fill time: a 1e6 yr device still lands rate0 * 1e6 yr per planet on average
     short = P.passive_seeding(2.4e21, 0.5, 2.0, 1.0, g, R_EARTH, M_EARTH, 26 * KM, 1e6 * YR, 5 * GYR)
-    assert short["cumulative_arrivals"] < 1e-100 or short["cumulative_arrivals"] < r["cumulative_arrivals"]
+    assert short["cumulative_arrivals"] == pytest.approx(short["arrivals_per_yr_unsurvived"] * 1e6, rel=1e-6)
+    assert short["cumulative_arrivals"] < r["cumulative_arrivals"]
 
 
 def test_blown_fraction_is_between_zero_and_one_and_falls_with_max_size():
@@ -208,10 +210,12 @@ def test_run_all_stages_into_tmp(tmp_path, monkeypatch):
     R.stage_active(cfg)
     R.stage_bayes(cfg)
     R.stage_contact(cfg)
+    R.stage_survival(cfg)
     tex = R.stage_numbers(cfg)
     assert tex.exists()
     txt = tex.read_text()
     assert r"\newcommand{\BeltConvTime}" in txt
+    assert r"\newcommand{\SurvGrainTGalMyr}" in txt
     assert r"\newcommand{\PmargExtPersist}" in txt
     sy = json.loads((tmp_path / "results" / "goo" / "system.json").read_text())
     assert sy["ghat_III"]["fraction_bound_95"] == pytest.approx(3e-5)

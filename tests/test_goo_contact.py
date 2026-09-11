@@ -72,13 +72,17 @@ def test_encounters_connect_the_annulus_in_under_a_gigayear():
     assert enc.rate_strict_natural_per_planet_yr == 0.0
 
 
-def test_functional_survival_scales_r0_by_the_mixing_delay():
+def test_functional_survival_scales_r0_by_the_survival_integral_not_the_mixing_delay():
     cfg = load_cfg()
     rows = {r.name: r for r in CT.run_contact(cfg, 5e9)}
     gr = rows["radiation-pressure grains from a converted belt"]
-    t_mix = cfg["contact"]["t_mix_annulus_yr"]
+    W = 5e9
     for tf, val in gr.R0_strict_functional.items():
-        assert abs(val - gr.R0_strict * math.exp(-t_mix / float(tf))) <= 1e-6 * max(1.0, gr.R0_strict)
+        tau = float(tf)
+        expect = gr.R0_strict * (tau / W) * (1.0 - math.exp(-W / tau))
+        assert abs(val - expect) <= 1e-6 * max(1.0, gr.R0_strict)
+    # a 1e7 yr device still lands ~1e-3 of the infinite-survival count; it does not fall to nothing
+    assert gr.R0_strict_functional["1e+07"] > 1e-4 * gr.R0_strict
 
 
 def test_every_channel_dispatches_to_a_result():

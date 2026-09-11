@@ -182,3 +182,35 @@ contact:
       n_siblings: 1000.0
       source: "Belbruno+2012; Adams & Spergel 2005; Levison+2010 (Oort-cloud capture from siblings); Portegies Zwart 2009 (siblings)"
       verify: false
+
+# ---------------------------------------------------------------------------
+# SURVIVAL SCAN — functional lifetime in interstellar space from 1 kyr to
+# infinity, per carrier class (survival.py).  The landing rate summed over all
+# targets in a uniform stellar field is N_c eta n_* v sigma, independent of
+# mixing; survival sets reach (v_inf tau) and the front speed of a chain of
+# seedings, not whether landings happen.
+# ---------------------------------------------------------------------------
+survival:
+  n_star_pc3: 0.1                  # stellar number density in the solar neighbourhood (Bland-Hawthorn & Gerhard 2016 review scale; the annulus average in contact.py is 0.2)
+  tau_grid_log10: [3.0, 10.0, 71]
+  carriers:
+    - name: "sub-micron devices, blown out (beta ~ 0.6-1.4)"
+      carriers_per_source: 2.3e36  # belt mass as 0.5 um devices (passive.py)
+      radius_um: 0.5
+      v_inf_kms: 18.0              # beta = 1 release from 2.7 AU (passive.py: 7 km/s at beta 0.57, 18 at beta 1)
+      t_conversion_yr: 14.0        # belt conversion time (system.py)
+    - name: "micron dust-sized devices (bound; escape by collisions and stellar loss)"
+      carriers_per_source: 2.3e33  # belt mass as 5 um devices, a tenth released over the window (order of magnitude)
+      radius_um: 5.0
+      v_inf_kms: 5.0               # escape by collisional ejection / planet scattering rather than radiation pressure
+      t_conversion_yr: 14.0
+    - name: "devices inside ejected 100-m planetesimals"
+      carriers_per_source: 1.0e16  # Do+2018 full text: "each star must account for over 1e16 ejected bodies" (formation-era; a mature system's ongoing ejection is far lower)
+      radius_um: 5.0e7
+      v_inf_kms: 5.0               # ejection by giant-planet scattering, a few km/s
+      t_conversion_yr: 14.0
+    - name: "devices inside impact-ejected rocks from a planet"
+      carriers_per_source: 6.0e10  # Siraj & Loeb 2020 full text: 6e10 30-cm objects ejected over 3 Gyr
+      radius_um: 1.5e5
+      v_inf_kms: 5.0
+      t_conversion_yr: 5000.0      # a crust-scale conversion before the next launch (planet.py)

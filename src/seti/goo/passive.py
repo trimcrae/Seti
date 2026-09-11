@@ -31,10 +31,16 @@ machines are once they are loose in space.
 
 5. Seeding.  With N intact devices in the annulus volume V, an Earth-sized
    planet sweeps them up at n v sigma with sigma = pi R^2 (1 + v_esc^2 / v^2).
+   This is the annulus-AVERAGED rate per planet.  It does not wait for phase
+   mixing: the total landing rate over a uniform stellar field, N eta n_* v sigma,
+   is independent of the volume the cloud currently occupies (survival.py), so
+   the mixing time only decides when the rate is the same at every planet, not
+   when landings begin.  Cumulative arrivals per planet are therefore
+   rate0 * tau (1 - e^{-t/tau}) with no gate at the fill time.
 
 The answer these steps give is that a released asteroid belt's worth of
-micron machines delivers ~10^3 intact devices per year to every rocky planet in
-the annulus, before survival losses; the survival factor decides everything.
+micron machines delivers ~10^2 intact devices per year to every rocky planet in
+the annulus, before survival losses; survival sets the reach, not the count.
 """
 from __future__ import annotations
 
@@ -107,13 +113,12 @@ def passive_seeding(M_release_kg: float, radius_um: float, density_gcc: float, f
     V = annulus_volume_m3(galaxy["R_sun_kpc"], galaxy["annulus_width_kpc"], galaxy["scale_height_kpc"])
     rate0 = seeds_per_year(N0, V, v_ms, R_planet_m, M_planet_kg)
     S = survival_fraction(t_elapsed_s, t_survive_s)
-    # cumulative arrivals: integral of rate0 * exp(-t/ts) from the fill time to t_elapsed
+    # cumulative arrivals per planet, annulus-averaged: the integral of rate0 * exp(-t/ts)
+    # from release to t_elapsed.  No gate at the fill time: the landing rate summed over
+    # the planets inside the cloud is volume-independent (see module docstring and survival.py).
     t_fill = annulus_fill_time_s(galaxy["rotation_period_Myr"], galaxy["R_sun_kpc"], galaxy["annulus_width_kpc"])
-    if t_elapsed_s <= t_fill:
-        cum = 0.0
-    else:
-        ts = t_survive_s
-        cum = rate0 * (ts / YR) * (math.exp(-t_fill / ts) - math.exp(-t_elapsed_s / ts))
+    ts = t_survive_s
+    cum = rate0 * (ts / YR) * (1.0 - math.exp(-t_elapsed_s / ts))
     return {
         "device_mass_kg": m,
         "N_released": N0,

@@ -18,8 +18,10 @@ Two questions:
             logistic rate k = r_1 N_sys and takes ~ 2 ln(N_sys) / k to go from
             one to all, after the mixing delay.  R0 = r_1 N_sys W is the number
             of systems one source touches over the window W; below 1 the chain
-            does not propagate.  Functional survival multiplies r_1 by the
-            fraction of carriers still working after the mixing delay.
+            does not propagate.  Functional survival with e-folding time tau
+            replaces W by the integral tau (1 - exp(-W/tau)): landings do not
+            wait for mixing (survival.py), so the factor is (tau/W)(1 - e^{-W/tau}),
+            not exp(-t_mix/tau).
 
 Local channels (stellar encounters, supernova ejecta) do not phase-mix; they
 are contact rates per system with a range, and their epidemic spreads as a
@@ -124,7 +126,9 @@ def mixed_channel(ch: dict, cfg: dict, W_yr: float) -> ChannelResult:
     R0_cap = cap_nat * (W_yr - t_mix) if cap_nat else 0.0
     func = {}
     for tf in ch.get("t_func_survive_yr", [1e12]):
-        S = math.exp(-t_mix / tf)
+        # landings are mixing-independent (survival.py): the window W is replaced by
+        # the integral of the survival curve, tau (1 - e^{-W/tau})
+        S = (tf / W_yr) * (1.0 - math.exp(-W_yr / tf))
         func[f"{tf:g}"] = R0_s * S
     return ChannelResult(
         name=ch["name"], kind=kind,

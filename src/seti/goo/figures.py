@@ -114,32 +114,68 @@ def fig_front(cfg: dict) -> None:
 
 
 # 3. Passive seeding: cumulative intact arrivals per planet vs survival time
-def fig_passive(cfg: dict) -> None:
-    from . import passive as P
-    from .constants import KM, M_EARTH, R_EARTH
-    p = cfg["passive"]
-    r = cfg["replicator"]
-    g = p["galaxy"]
-    v_in = p["inflow_speed_kms"] * KM
-    ts = np.logspace(5, 10, 120)
-    fig, ax = plt.subplots(figsize=(5.2, 3.6))
-    shades = {"1e+15": "#9ccdb3", "2.4e+21": "#2a8a5c", "1.2e+23": "#155c3b"}
-    labels = {"1e+15": "a biosphere (1e15 kg)", "2.4e+21": "the asteroid belt", "1.2e+23": "the Kuiper belt"}
-    for M in p["release_mass_kg"]:
-        cum = np.array([P.passive_seeding(M, r["radius_um"], r["density_gcc"], 1.0, g, R_EARTH, M_EARTH,
-                                          v_in, t * YR, 5 * GYR)["cumulative_arrivals"] for t in ts])
-        k = f"{M:g}"
-        ax.plot(ts, np.maximum(cum, 1e-30), color=shades[k], lw=2)
-        ax.text(ts[-1], max(cum[-1], 1e-30), "  " + labels[k], color=shades[k], va="center", fontsize=7)
-    ax.axhline(1.0, color=COL["ink"], lw=0.8, ls="--")
-    ax.text(1.1e5, 1.3, "one intact device per planet", fontsize=7)
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_ylim(1e-12, 1e18)
-    ax.set_xlabel("functional survival e-folding time in the ISM (yr)")
-    ax.set_ylabel("intact arrivals per Earth-like planet in 5 Gyr")
-    ax.set_title("Passive branch: seeding of the solar annulus")
-    _save(fig, "fig3_passive")
+def fig_survival(cfg: dict) -> None:
+    """The survival scan: reach, planets within reach, R0 and the galaxy-crossing time of
+    a chain of seedings, against the functional e-folding time in interstellar space,
+    from kiloyears to infinity, for the four carrier classes."""
+    d = out_dir()
+    sv = json.loads((d / "survival.json").read_text())
+    shades = ["#2a8a5c", "#1f5fbf", "#c2571a", "#7a3fa0"]
+    short = ["sub-micron, blown out", "micron dust-sized", "in 100-m planetesimals", "in impact-ejected rocks"]
+    fig, axes = plt.subplots(1, 3, figsize=(10.8, 3.5))
+    ax_r, ax_R, ax_t = axes
+    xinf = 3e10   # where the tau = infinity point is drawn
+    for car, col, lab in zip(sv["carriers"], shades, short, strict=True):
+        rows = [r for r in car["rows"] if not np.isinf(r["tau_yr"])]
+        inf_row = [r for r in car["rows"] if np.isinf(r["tau_yr"])][0]
+        tau = np.array([r["tau_yr"] for r in rows])
+        # panel 1: planets within reach (all carriers share the same speed except the first)
+        npl = np.array([r["planets_within_reach"] for r in rows])
+        ax_r.plot(tau, np.maximum(npl, 1e-7), color=col, lw=2)
+        if lab in ("sub-micron, blown out", "in impact-ejected rocks"):
+            i = int(np.searchsorted(tau, 3e6))
+            ax_r.text(tau[i], npl[i] * 4, f"{car['v_inf_kms']:.0f} km/s" +
+                      (" (blown out)" if lab.startswith("sub") else " (all other carriers)"),
+                      color=col, fontsize=7, rotation=52, rotation_mode="anchor", ha="left", va="bottom")
+        # panel 2: R0
+        R0 = np.array([r["R0"] for r in rows])
+        ax_R.plot(tau, R0, color=col, lw=2)
+        ax_R.plot([xinf], [inf_row["R0"]], "o", color=col, ms=4)
+        ax_R.text(xinf * 1.6, inf_row["R0"], lab, color=col, fontsize=7, va="center")
+        # panel 3: time for the chain to cross the Galaxy
+        tg = np.array([r["t_galaxy_yr"] if r["front"] else np.nan for r in rows])
+        ax_t.plot(tau, tg, color=col, lw=2)
+        if inf_row["front"] and np.isfinite(inf_row["t_galaxy_yr"]):
+            ax_t.plot([xinf], [inf_row["t_galaxy_yr"]], "o", color=col, ms=4)
+            ax_t.text(xinf * 1.6, inf_row["t_galaxy_yr"], lab, color=col, fontsize=7, va="center")
+        first = next((r for r in rows if r["front"]), None)
+        if first is not None and first["t_galaxy_yr"] < 1e11:
+            ax_t.axvline(first["tau_yr"], color=col, lw=0.6, ls=":")
+    hop = sv["carriers"][0]["t_hop_yr"]
+    ax_r.axhline(1.0, color=COL["ink"], lw=0.8, ls="--")
+    ax_r.text(1.2e3, 1.4, "one planet in reach", fontsize=7)
+    ax_r.set_ylabel("Earth-like planets within reach $v_\\infty\\tau$")
+    ax_r.set_title("Reach")
+    ax_R.axhline(1.0, color=COL["ink"], lw=0.8, ls="--")
+    ax_R.text(1.2e3, 1.6, "$R_0=1$", fontsize=7)
+    ax_R.set_ylabel("strict landings per source in 5 Gyr, $R_0(\\tau)$")
+    ax_R.set_title("Landings (mixing-independent)")
+    ax_R.set_ylim(1e-12, 1e23)
+    ax_t.axvline(hop, color=COL["ink"], lw=0.8, ls="--")
+    ax_t.text(hop * 1.3, 2.5e9, "hop to the\nnearest star", fontsize=7, va="bottom")
+    ax_t.set_ylabel("time for a chain of seedings to cross the Galaxy (yr)")
+    ax_t.set_title("Front")
+    ax_t.set_ylim(1e8, 1e14)
+    ax_t.text(3e5, 3e12, "rock-borne: no chain below $\\tau\\sim10^{10}$ yr,\nthen one hop per 2 Gyr", fontsize=7)
+    for ax in axes:
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlim(1e3, 2e11)
+        ax.set_xticks([1e3, 1e5, 1e7, 1e9, xinf])
+        ax.set_xticklabels(["$10^3$", "$10^5$", "$10^7$", "$10^9$", "$\\infty$"])
+        ax.set_xlabel("functional survival e-folding time $\\tau$ (yr)")
+    fig.tight_layout()
+    _save(fig, "fig3_survival")
 
 
 # 4. Residue lifetime and the rate bound it implies
@@ -248,7 +284,7 @@ def make_all(cfg: dict | None = None) -> None:
     cfg = cfg or load_cfg()
     fig_ladder(cfg)
     fig_front(cfg)
-    fig_passive(cfg)
+    fig_survival(cfg)
     fig_residue(cfg)
     fig_bayes(cfg)
     fig_branch(cfg)

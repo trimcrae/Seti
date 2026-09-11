@@ -69,7 +69,7 @@ sets how far a goo goes.
 | **system, small bodies** | branching front, transport-limited | belt **14 yr**; Kuiper belt **1 kyr** | a partial/complete swarm at the feedstock's orbital temperature (169 K belt, 44 K Kuiper): a Dyson-scale waste-heat source while alive |
 | **system, planets** | binding energy at the surface radiative ceiling | terrestrial 8 kyr; giant 143 kyr | — |
 | **dead residue** | Lacki 2025 collisional time $P_{\rm orb}/f$; PR drag; blowout | micron devices gone in 4 yr; mm grains 10 kyr; m slabs 10 Myr but at $f=4\times10^{-7}$ | **theorem: a residue above the detection floor $f_{\min}$ lives at most $P_{\rm orb}/f_{\min}$** — 4 kyr at 2.7 AU for $10^{-3}$. Detectable dead goo is short-lived; the surveys bound *live* goo |
-| **galaxy, passive** | radiation-pressure blowout ($\beta = 0.57Q/\rho s$; blowout below 0.57 µm); repulsion at the target star limits arrivals to $\beta < 1.38$, i.e. the **0.21–0.57 µm** window; epicyclic annulus 1.6 kpc; differential rotation phase-mixes it in **1.2 Gyr**; capture $\pi R^2(1+v_{\rm esc}^2/v^2)$ | belt's worth of 0.5 µm devices ($2.3\times10^{36}$) → **~200 intact arrivals/yr per Earth-like planet in the annulus** before survival losses; cumulative in 5 Gyr: $1.5\times10^5$ if the ISM survival time is $10^8$ yr, $6\times10^{10}$ at $10^9$ yr, ~0 at $10^7$ yr | no front — a cloud; each seeded system is visible only while alive |
+| **galaxy, passive** | radiation-pressure blowout ($\beta = 0.57Q/\rho s$; blowout below 0.57 µm); repulsion at the target star limits arrivals to $\beta < 1.38$, i.e. the **0.21–0.57 µm** window; epicyclic annulus 1.6 kpc; differential rotation phase-mixes it in **1.2 Gyr**; capture $\pi R^2(1+v_{\rm esc}^2/v^2)$ | belt's worth of 0.5 µm devices ($2.3\times10^{36}$) → **~200 intact arrivals/yr per Earth-like planet in the annulus** (annulus-averaged; landings do not wait for mixing — the total landing rate of an expanding cloud is volume-independent, §2C); cumulative per planet in 5 Gyr $2\times10^{10}$ at $10^8$ yr survival, $2\times10^{8}$ at $10^6$ yr | survival sets the reach $v_\infty\tau$ and whether a **chain of seedings** forms: none below $\tau \sim 10^5$ yr (lands within a parsec), a front at ~9 km/s crossing the Galaxy in **1.6 Gyr** above $\tau \sim 10^6$ yr — the same time at any longer survival; each seeded system is visible only while alive |
 | **galaxy, active** | $v_f = d/(d/v+\tau_b)$ | 0.64 Myr (0.1c, 10 yr) — 6.4 Myr (0.01c, 100 yr) — 500 Myr (30 km/s, 1 kyr) | Kardashev-III reprocessing while alive |
 | **cosmos** | comoving reach $v\int dt/a$ | event horizon 16.6 Gly; $7\times10^8$ galaxies at 0.5c, $5\times10^9$ at 0.99c | — |
 
@@ -94,7 +94,7 @@ systems its material reaches over 5 Gyr; SI dynamics above R0 = 1).
 | Earth-grazing bodies captured by binaries (Siraj & Loeb 2020: 10⁷–10⁹) | — | 5×10⁻³ | 10⁸ (bound) |
 | free-floating planets, 21 per star (Sumi+2023; Mróz+2017; Goulinski & Ribak 2018: 1 % of stars capture one) | one passage per 12 Gyr | ~0 | 0.33 / 0.01 |
 | interstellar dust, 1.5×10⁻⁴ m⁻² s⁻¹ for 5×10⁻¹⁸–5×10⁻¹⁶ kg (Krüger+2019 full text, Cassini; Grün+1993; Landgraf 2000) | **7×10¹⁷ grains on Earth per year** | 10²⁵ | 10³⁹ |
-| blown-out belt devices (§2) | 200 per planet per year | 7×10¹⁹ (5×10¹⁴ at 10⁸ yr survival; ~0 at 10⁷) | 10³³ |
+| blown-out belt devices (§2) | 200 per planet per year | 7×10¹⁹ (10¹⁸ at 10⁸ yr survival; 10¹⁷ at 10⁷ — linear in τ, never "nothing"; §2C) | 10³³ |
 | stellar flybys within 2×10⁴ AU (Bailer-Jones+2018: 19.7 ± 2.2 per Myr within 1 pc, ∝ d²) | one per 5.4 Myr; all systems linked in 124 Myr | 0 (moves comets inward, not between stars) | 10³ |
 | supernova ejecta (Knie+2004; Wallner+2016; Koll+2019) | one deposition per ~3 Myr | — | — |
 | birth cluster, first 100 Myr (Belbruno+2012 weak transfer: 10¹⁴–3×10¹⁶ bodies to the nearest sibling at capture probability 1.5×10⁻³; Adams & Napier 2022 dynamical capture: ~10⁷; Adams & Spergel 2005: f_imp ~ 10⁻⁴ of captured rocks strike a terrestrial planet, 10⁻³–1.6 lithopanspermia events per cluster; Levison+2010) | — | **~10⁷ per sibling pair (10³–10¹² across the mechanisms)** — Earth has very likely been struck by material that condensed around another star | 10¹¹ (10⁷–3×10¹⁶) |
@@ -103,10 +103,12 @@ systems its material reaches over 5 Gyr; SI dynamics above R0 = 1).
 In the strict single-source sense it is *at threshold* for interstellar
 objects (R0 ≈ 3, generations of Gyr), far below for anything a planet ejects,
 and far above only for dust-sized carriers — which are the ones least able to
-survive. So contact is never the bottleneck for a goo among a system's small
-bodies (size and survival are), and never the route for a goo confined to a
-planet (R0 ≪ 1 through impacts and grazing bodies). The birth-cluster channel
-is the one bulk rock-transfer epoch and no civilisation exists during it.
+survive, though survival cannot bring them below threshold (R0 falls only
+linearly with τ; §2C). So contact is never the bottleneck for a goo among a
+system's small bodies (size sets what it reaches, survival how fast), and never
+the route for a goo confined to a planet (R0 ≪ 1 through impacts and grazing
+bodies). The birth-cluster channel is the one bulk rock-transfer epoch and no
+civilisation exists during it.
 
 ## 2B. Full text, not abstracts (user directive, 2026-09-11)
 
@@ -146,6 +148,43 @@ with no open copy (Melosh 2003, Grün 1993, Jones 1996, Burns 1979, Levison
 their published records, and the numbers the paper takes from them (Burns's
 β formula, Jones's grain lifetime, Moore's 8.5 s doubling, Armstrong &
 Sandberg's galaxy counts) are standard, abstract-level results.
+
+## 2C. The survival scan (`seti.goo.survival`, user request 2026-09-11: "model a range of how long they last in interstellar space, from infinitely to short scales")
+
+**The correction it forced.** The earlier passive-branch treatment gated
+arrivals on the annulus phase-mixing time (1.2 Gyr), so a survival time below
+~10⁸ yr "delivered nothing". That is wrong. For a cloud of N_c carriers
+expanding into a uniform field of stars (n_* = 0.1 pc⁻³, η = 0.1 Earth-like
+planets per star) the total landing rate
+
+    dN_land/dt = N_c(t) η n_* v σ
+
+is independent of the volume the cloud occupies — density falls exactly as
+enclosed targets rise. Mixing decides when the rate is the same at every
+planet, not when landings begin. Survival τ therefore sets (i) the reach
+R = v_∞ τ of one release, (ii) the targets inside it, and (iii) whether a
+chain of seedings can propagate. R0(τ) = rate₀ · τ (1 − e^{−W/τ}) — linear in
+τ below the window, never a cliff. `contact.py`'s functional factor
+exp(−t_mix/τ) was replaced by (τ/W)(1 − e^{−W/τ}); `passive.py`'s cumulative
+count lost its fill-time gate. Paper §5.1 (eqs. 2–4), Table 2, Fig. 3.
+
+| carrier class (config `survival.carriers`) | rate₀ (landings/yr, whole Galaxy) | hop to nearest star | τ = 10⁴ yr | 10⁵ | 10⁶ | 10⁸ | ∞ |
+|---|---|---|---|---|---|---|---|
+| sub-micron devices, blown out, 18 km/s (2.3×10³⁶) | 10¹¹ | 117 kyr | R0 10¹⁵, reach 0.18 pc, 3×10⁻⁴ planets, no chain | reach 1.8 pc, 0.26 planets | reach 18 pc, 261 planets, **front 9 km/s, Galaxy in 1.6 Gyr** | reach 1.8 kpc, 6×10⁷ planets, 1.6 Gyr | 1.6 Gyr |
+| micron dust-sized, 5 km/s (2.3×10³³) | 10⁸ | 421 kyr | no chain | no chain | front 2.5 km/s, 5.9 Gyr | 5.9 Gyr | 5.9 Gyr |
+| inside ejected 100-m planetesimals (10¹⁶, Do+2018) | 4×10⁻¹⁰ | first landing after 2.4 Gyr | R0 4×10⁻⁶ | 4×10⁻⁵ | 4×10⁻⁴ | 0.04 | R0 2.1; one hop per 2 Gyr (2×10¹³ yr to cross) |
+| inside impact-ejected rocks (6×10¹⁰, Siraj & Loeb 2020) | 3×10⁻¹⁵ | — | R0 3×10⁻¹¹ | … | … | 3×10⁻⁷ | 10⁻⁵ — never |
+
+**Reading.** Survival is the passive branch's *threshold*, not its throttle.
+The transition from "lands but seeds nothing" (reach < nearest star) to "a
+galactic front" is one decade wide at τ ~ 10⁵–10⁶ yr, three orders of
+magnitude below the ≳10⁸ yr the mixing-gated reading demanded and below the
+5×10⁸ yr supernova-shock lifetime of silicate grains (Jones+1996). Above the
+threshold the crossing time is 1.6 Gyr for any τ, because the front speed is
+set by the hop and the 14-yr belt conversion, not by survival. Rock-borne
+devices get shielding they cannot use: too few carriers for R0 > 1 at any τ.
+Context number: a 0.5 µm sphere intercepts ~0.25 galactic-cosmic-ray primaries
+per year (~10⁵ per 10⁶-yr hop) — the tolerance a design has to meet.
 
 ## 3. Inference (`seti.goo.bayes`)
 
@@ -188,7 +227,9 @@ galaxy exactly as quiet as the one we see.
   of copying errors before crossing the Galaxy is, for the inference, a
   system-scale goo.
 * The passive branch's ISM survival time has never been measured for a
-  machine; the paper scans it ($10^6$–$10^9$ yr) and says so.
+  machine; the paper scans it from $10^3$ yr to infinity (§2C) and says so.
+  The survival physics itself (cosmic rays, sputtering, thermal cycling of a
+  device) is not modelled — only the cosmic-ray hit count is given as context.
 * The anthropic choice (SSA vs SIA) does not change the conclusion in §3,
   which rests on the external galaxies.
 * Charter note: this paper is not a null-result write-up — it is a propagation
@@ -238,7 +279,8 @@ existential-risk special issues) for the generalised companion, with
 | `src/seti/goo/{planet,system,passive,active,bayes}.py` | the model |
 | `src/seti/goo/run.py`, `figures.py` | stages, `results/goo/*.json`, `paper/goo/numbers.tex`, `results/goo/figures/` |
 | `src/seti/goo/contact.py` | the contact graph (channels, strict/loose/capture touches, natural and epidemic questions) |
-| `tests/test_goo.py`, `tests/test_goo_contact.py` | 36 offline tests against hand calculations |
+| `src/seti/goo/survival.py` | the survival scan (reach, R0(τ), front speed, galaxy-crossing time per carrier class) → `results/goo/survival.json` |
+| `tests/test_goo.py`, `tests/test_goo_contact.py`, `tests/test_goo_survival.py` | 44 offline tests against hand calculations |
 | `scripts/goolit_contact_fetch.py`, `.github/workflows/goolit-contact.yml` | runner-side fetch of the mass-transport literature → `results/goolit_contact/` |
 | `paper/goo/main.tex`, `refs.bib` | the manuscript |
 | `paper/replicators/main.tex` | the generalised companion |

@@ -55,11 +55,16 @@ replicator never designed to travel still leaves its system by
 radiation-pressure blowout if it is smaller than \BlowoutRadiusUm\um, and the
 same radiation pressure lets only the \WindowLoUm--\WindowHiUm\um size class
 reach the habitable zone of the next star; a single asteroid belt's worth of
-such machines, phase-mixed around the solar annulus in $\sim$\AnnulusFillGyr\,Gyr,
-delivers of order \BeltArrivalsUnsurvived intact devices per year to every
-rocky planet in the annulus before survival losses, so that if a machine can
-stay functional in the interstellar medium for $\gtrsim10^{8}$\,yr the passive
-branch seeds a galactic annulus in a gigayear without any spacecraft.  A
+such machines lands on other planets at a rate that does not depend on how far
+the cloud has spread---of order \BeltArrivalsUnsurvived intact devices per
+year on every rocky planet once it is phase-mixed around the solar annulus
+($\sim$\AnnulusFillGyr\,Gyr), and the same total before---so functional
+survival in interstellar space, which we scan from $10^{3}$\,yr to infinity,
+sets not whether the devices land but how far ($v_\infty\tau$) and how fast a
+chain of seedings advances: above a survival time of order the hop to the
+nearest star ($\sim10^{5}$--$10^{6}$\,yr) the passive branch is a front at
+$\sim$\SurvGrainVFront\kms that crosses the Galaxy in \SurvGrainTGalInf, without
+any spacecraft; rock-borne devices never form one.  A
 contact-graph model of every natural channel that moves mass between systems
 (interstellar objects, impact ejecta, free-floating planets, stellar flybys,
 interstellar dust, supernova ejecta, birth-cluster exchange), with every rate
@@ -386,34 +391,133 @@ rotation smears them around it in $(R/\Delta R)$ rotation periods,
 carries them across the disc on $\sim10$\,Gyr.  The passive branch does not
 have a front.  It has a cloud, and the cloud is the annulus.
 
-The belt's mass in \SeedRadiusUm\um devices is \BeltDevicesReleased units; in
-the annulus volume an Earth-sized planet, whose gravitationally focused
-cross-section at 26\kms is \FocusingFactor times its geometric one,
-sweeps up \BeltArrivalsUnsurvived of them per year, and a biosphere's mass
-($10^{15}$\,kg) \BioArrivalsUnsurvived per year.  Survival decides
-everything.  Interstellar silicate grains lose their mass to supernova shocks
-on $\sim5\times10^{8}$\,yr \citep{Jones1996}; a functioning machine is a more
-fragile thing than a grain, and we scan its functional e-folding time from
-$10^{6}$ to $10^{9}$\,yr rather than guess it.  The cumulative number of intact
-arrivals on one planet over 5\,Gyr (Figure~\ref{fig:passive}) is
-\BeltCumulativeHundredMyr for a $10^{8}$\,yr survival time and
-\BeltCumulativeGyr for $10^{9}$\,yr, and effectively zero for $10^{7}$\,yr
-because nothing survives the \AnnulusFillGyr\,Gyr it takes to reach the far
-side of the annulus.  If one intact, general-substrate device suffices to
-seed a planet, the passive branch seeds every rocky planet in the annulus
-within a gigayear of a single belt-scale release, provided the devices survive
-$\gtrsim10^{8}$\,yr in the interstellar medium.
+The belt's mass in \SeedRadiusUm\um devices is \BeltDevicesReleased units; once
+they are spread through the annulus volume an Earth-sized planet, whose
+gravitationally focused cross-section at 26\kms is \FocusingFactor times its
+geometric one, sweeps up \BeltArrivalsUnsurvived of them per year, and a
+biosphere's mass ($10^{15}$\,kg) \BioArrivalsUnsurvived per year.
+
+\subsection{What survival decides}
+\label{sec:survival}
+
+It is tempting to read the mixing time as a waiting time, so that a device
+which stops working in less than \AnnulusFillGyr\,Gyr never lands anywhere.
+That is wrong, and the reason organises the rest of this section.  A cloud of
+$N_{c}$ carriers expanding at $v_\infty$ into a uniform field of stars of
+density $n_{*}$, of which a fraction $\eta$ carry an Earth-sized planet, lands
+on those planets at a total rate
+\begin{equation}
+\frac{dN_{\rm land}}{dt}=N_{c}(t)\,\eta\,n_{*}\,v_{\rm rel}\,\sigma ,
+\label{eq:landrate}
+\end{equation}
+whatever volume the cloud currently fills: the carrier density falls exactly
+as the number of enclosed targets rises.  Mixing decides when the rate is the
+same at every planet, not when landings begin.  Survival therefore enters
+only through $N_{c}(t)=N_{c}e^{-t/\tau}$, and its role is to set three other
+things: the \emph{reach} $R=v_\infty\tau$ of a single release, the number of
+targets inside it, and whether a \emph{chain} of seedings can propagate.  The
+expected number of strict landings from one source over the window $W$ is
+\begin{equation}
+R_{0}(\tau)=N_{c}\,\eta\,n_{*}\,v_{\rm rel}\,\sigma\;\tau\left(1-e^{-W/\tau}\right),
+\label{eq:r0tau}
+\end{equation}
+which is $N_{c}\eta n_{*}v\sigma W$ for an immortal device and falls only
+linearly with $\tau$ below the window.  The first landing anywhere occurs at
+$t_{\rm first}=\max(d_{1}/v_\infty,\,1/\dot N_{\rm land})$, where
+$d_{1}=n_{*}^{-1/3}=\SurvDNearest$\,pc is the nearest-star distance; if
+$R_{0}>1$ and $\tau>t_{\rm first}$ each seeded system re-emits and the chain
+advances as a front at
+\begin{equation}
+v_{\rm front}\simeq\frac{v_\infty}{1+(t_{\rm first}+t_{\rm conv})\,v_\infty/d_{1}},
+\end{equation}
+the passive analogue of the inherited front's $v_f=d/(d/v+\tau_b)$
+(Section~\ref{sec:active}) with the hop replacing the ship and the conversion
+time of the next system's belt (\BeltConvTime) replacing the shipyard.
+
+Table~\ref{tab:survival} and Figure~\ref{fig:survival} scan $\tau$ from
+$10^{3}$\,yr to infinity for four carrier classes: the sub-micron devices of
+this section, blown out at $v_\infty=18$\kms; micron-scale devices too large
+for blowout, which leave at a few\kms by collisional and planetary scattering;
+devices riding inside the $\sim10^{16}$ 100-m planetesimals a system ejects
+during formation \citep{Do2018}; and devices inside the $6\times10^{10}$ rocks
+a planet's surface loses to impacts over gigayears \citep{SirajLoeb2020grazing}.
+For the sub-micron class the landing rate is $\dot N_{\rm land}=\SurvGrainRateZero$
+per year over the whole Galaxy, the hop to the nearest star takes
+\SurvGrainTHop, and so: with $\tau=10^{4}$\,yr the devices land on
+$\SurvGrainRZeroTenKyr$ planets but all of them within \SurvGrainReachTenKyr\,pc,
+which contains no star, so nothing is seeded; with $\tau=10^{5}$\,yr the reach
+is \SurvGrainReachHundredKyr\,pc and \SurvGrainPlanetsHundredKyr\ planets, a
+coin flip; with $\tau=10^{6}$\,yr the reach is \SurvGrainReachMyr\,pc,
+\SurvGrainPlanetsMyr\ planets, and the chain propagates at
+\SurvGrainVFront\kms, crossing the Galaxy in \SurvGrainTGalMyr---the same
+crossing time as for an immortal device, because once $\tau$ exceeds the hop
+time the front speed is set by the hop and the conversion, not by survival.
+The transition from ``lands but seeds nothing'' to ``a galactic front'' is a
+single decade wide and sits at $\tau\sim10^{5}$--$10^{6}$\,yr, three orders of
+magnitude below the $\gtrsim10^{8}$\,yr a mixing-gated reading would demand
+and well below the $\sim5\times10^{8}$\,yr on which supernova shocks destroy
+interstellar silicate grains \citep{Jones1996}.  For scale, a 0.5\um sphere
+outside the heliosphere intercepts \SurvGrainCrHits\ galactic-cosmic-ray
+primaries per year, $\sim10^{5}$ over a $10^{6}$\,yr hop; whether a machine
+tolerates that is a design question we do not prejudge, but it is the number
+a design has to meet.  The micron dust-sized class behaves the same way with a
+slower front (\SurvDustVFront\kms, \SurvDustTGalInf).  The rock-borne classes
+do not: their carriers are so few that $R_{0}$ reaches unity only at
+$\tau\to\infty$ for the planetesimals (\SurvIsoRZeroInf) and never for
+planetary impact ejecta (\SurvRockRZeroInf), so shielding buys them survival
+they cannot use.  Survival, in short, is the passive branch's threshold, not
+its throttle: below $\sim10^{5}$\,yr the branch is a local scattering of
+landings within a parsec, above $\sim10^{6}$\,yr it is a front, and the
+crossing time above the threshold is \SurvGrainTGalInf\ regardless.
+
+\begin{table}
+\centering
+\small
+\caption{The survival scan.  For each carrier class the strict landings from
+one source over 5\,Gyr ($R_{0}$), the reach $v_\infty\tau$ and the Earth-like
+planets inside it, and the time for a chain of seedings to cross the Galaxy
+($R_{\rm gal}=15$\,kpc), at survival e-folding times from $10^{4}$\,yr to
+infinity.  Landings are counted whether or not the annulus has mixed
+(eq.~\ref{eq:landrate}); a front requires $R_{0}>1$ and $\tau$ longer than the
+time to the first landing.  $n_{*}=0.1$\,pc$^{-3}$, $\eta=0.1$.}
+\label{tab:survival}
+\begin{tabular}{lcccccc}
+\toprule
+$\tau$ (yr) & $10^{4}$ & $10^{5}$ & $10^{6}$ & $10^{7}$ & $10^{8}$ & $\infty$ \\
+\midrule
+\multicolumn{7}{l}{\emph{sub-micron devices, blown out} ($v_\infty=18$\kms; hop \SurvGrainTHop; $\dot N_{\rm land}=\SurvGrainRateZero$\,yr$^{-1}$)} \\
+$R_{0}$ & \SurvGrainRZeroTenKyr & \SurvGrainRZeroHundredKyr & \SurvGrainRZeroMyr & \SurvGrainRZeroTenMyr & \SurvGrainRZeroHundredMyr & \SurvGrainRZeroInf \\
+reach (pc) & \SurvGrainReachTenKyr & \SurvGrainReachHundredKyr & \SurvGrainReachMyr & \SurvGrainReachTenMyr & \SurvGrainReachHundredMyr & annulus \\
+planets in reach & \SurvGrainPlanetsTenKyr & \SurvGrainPlanetsHundredKyr & \SurvGrainPlanetsMyr & \SurvGrainPlanetsTenMyr & \SurvGrainPlanetsHundredMyr & \SurvGrainPlanetsGyr \\
+Galaxy crossed in & \SurvGrainTGalTenKyr & \SurvGrainTGalHundredKyr & \SurvGrainTGalMyr & \SurvGrainTGalTenMyr & \SurvGrainTGalHundredMyr & \SurvGrainTGalInf \\
+\midrule
+\multicolumn{7}{l}{\emph{micron dust-sized devices} ($v_\infty=5$\kms; hop \SurvDustTHop)} \\
+$R_{0}$ & \SurvDustRZeroTenKyr & \SurvDustRZeroHundredKyr & \SurvDustRZeroMyr & \SurvDustRZeroTenMyr & \SurvDustRZeroHundredMyr & \SurvDustRZeroInf \\
+planets in reach & \SurvDustPlanetsTenKyr & \SurvDustPlanetsHundredKyr & \SurvDustPlanetsMyr & \SurvDustPlanetsTenMyr & \SurvDustPlanetsHundredMyr & \SurvDustPlanetsGyr \\
+Galaxy crossed in & \SurvDustTGalTenKyr & \SurvDustTGalHundredKyr & \SurvDustTGalMyr & \SurvDustTGalTenMyr & \SurvDustTGalHundredMyr & \SurvDustTGalInf \\
+\midrule
+\multicolumn{7}{l}{\emph{devices inside ejected 100-m planetesimals} ($10^{16}$ per system; first landing after \SurvIsoTFirst)} \\
+$R_{0}$ & \SurvIsoRZeroTenKyr & \SurvIsoRZeroHundredKyr & \SurvIsoRZeroMyr & \SurvIsoRZeroTenMyr & \SurvIsoRZeroHundredMyr & \SurvIsoRZeroInf \\
+Galaxy crossed in & $\infty$ & $\infty$ & $\infty$ & $\infty$ & $\infty$ & \SurvIsoTGalInf \\
+\midrule
+\multicolumn{7}{l}{\emph{devices inside impact-ejected rocks} ($6\times10^{10}$ per planet)} \\
+$R_{0}$ & \SurvRockRZeroTenKyr & \SurvRockRZeroHundredKyr & \SurvRockRZeroMyr & \SurvRockRZeroTenMyr & \SurvRockRZeroHundredMyr & \SurvRockRZeroInf \\
+Galaxy crossed in & $\infty$ & $\infty$ & $\infty$ & $\infty$ & $\infty$ & $\infty$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}
 \centering
-\includegraphics[width=0.75\textwidth]{fig3_passive}
-\caption{Passive branch: intact devices delivered to one Earth-like planet in
-the solar annulus over 5\,Gyr, after a single release of the mass of a
-biosphere, the asteroid belt or the Kuiper belt as \SeedRadiusUm\um machines,
-as a function of their functional survival time in the interstellar medium.
-Nothing arrives before the annulus is phase-mixed (\AnnulusFillGyr\,Gyr), so
-survival below $\sim10^{8}$\,yr delivers nothing.}
-\label{fig:passive}
+\includegraphics[width=\textwidth]{fig3_survival}
+\caption{The survival scan, $\tau$ from $10^{3}$\,yr to infinity.  Left: the
+Earth-like planets within the reach $v_\infty\tau$ of one release, for the
+blown-out class at 18\kms and every other carrier at 5\kms.  Centre: strict
+landings from one source over 5\,Gyr, equation~(\ref{eq:r0tau}); the count
+does not wait for phase mixing.  Right: the time for a chain of seedings to
+cross the Galaxy; a front exists only above the hop time to the nearest star
+and, for rock-borne devices, never on any useful timescale.}
+\label{fig:survival}
 \end{figure}
 
 Two channels we do not compute in detail bracket this one.  Impact ejecta from
@@ -421,8 +525,9 @@ a planetary surface---the lithopanspermia channel
 \citep{Melosh2003,AdamsSpergel2005,Worth2013,Ginsburg2018}---carries
 rock-embedded devices at a far lower rate but with far better shielding; the
 transfer probabilities in that literature apply unchanged to a goo that lives
-in rock.  And a goo whose devices are larger than the blowout size never
-leaves passively at all: dispersal class is decided at the micron.
+in rock, and the last two rows of Table~\ref{tab:survival} show what the
+shielding is worth.  And a goo whose devices are larger than the blowout size
+never leaves passively at all: dispersal class is decided at the micron.
 
 \section{Between stars, actively: the inherited front}
 \label{sec:active}
@@ -485,8 +590,9 @@ N/(nv\sigma)$.  In the \emph{epidemic} case one system is touched first: its
 carriers touch others at $r_{1}=(N_{c}/V)v\sigma$ per target, the number it
 touches over the window is $R_{0}=r_{1}N W$, and susceptible--infected
 dynamics on $N$ systems takes $t_{\rm mix}+2\ln N/(r_{1}N)$ to go from one to
-all, provided $R_{0}>1$.  Functional survival multiplies $R_{0}$ by the
-fraction of carriers still working after the mixing delay.
+all, provided $R_{0}>1$.  Functional survival with e-folding time $\tau$
+replaces $W$ by $\tau(1-e^{-W/\tau})$, equation~(\ref{eq:r0tau}); landings do
+not wait for mixing, so no factor $e^{-t_{\rm mix}/\tau}$ appears.
 
 \begin{table}
 \centering
@@ -623,14 +729,18 @@ material landing on other planets---the graph is at threshold for
 interstellar objects ($R_{0}\approx3$) and far below it for anything a planet
 ejects ($R_{0}\sim10^{-5}$).  The only channels far above threshold are the
 dust-sized ones ($R_{0}\sim10^{19}$ for a converted belt), and those are the
-ones whose carriers are least able to survive the crossing: with a
-$10^{8}$\,yr functional lifetime the belt's $R_{0}$ falls to
-\GrainRZeroFuncHundredMyr, still enormous, but with $10^{7}$\,yr it falls to
-nothing.  For the interstellar-object channel the carrier is a rock and
-survival is not the issue; the number is.  Contact, in other words, is never
-the bottleneck for a goo that is already in a system's small bodies: what it
-reaches is set by whether its units are grains or rocks, and by how long they
-work.  For a goo confined to a planet's surface, the graph confirms the
+ones whose carriers are least able to survive the crossing---but survival
+cannot bring them below threshold: with a $10^{8}$\,yr functional lifetime the
+belt's $R_{0}$ is \GrainRZeroFuncHundredMyr\ and with $10^{7}$\,yr
+\GrainRZeroFuncTenMyr, because $R_{0}$ falls only linearly with $\tau$
+(Section~\ref{sec:survival}).  What survival changes is the reach of each
+landing and hence whether the chain has a front, and the threshold for that
+is the hop time, $\sim10^{5}$--$10^{6}$\,yr.  For the interstellar-object
+channel the carrier is a rock and survival is not the issue; the number is.
+Contact, in other words, is never the bottleneck for a goo that is already in
+a system's small bodies: what it reaches is set by whether its units are
+grains or rocks, and how fast it reaches it by whether they work for longer
+than a hop.  For a goo confined to a planet's surface, the graph confirms the
 planetary-branch conclusion of Section~\ref{sec:planet}: the routes off a
 planet that do not require a spacecraft deliver $R_{0}\ll1$ in the field.
 
@@ -925,10 +1035,13 @@ to that row.  It assumes no competition, and the one study of
 competition argues the other way: \citet{Chen2022} model mutant ``predator''
 probes that consume their ``prey'' siblings with Lotka--Volterra dynamics and
 conclude that predation cannot sufficiently reduce the prey population, so
-competition is not a reliable stop either.  And the passive branch and the contact graph assume a
-functional survival time that no one has measured for anything but grains;
-for rock-borne carriers the paper takes survival for granted and lets the
-number of carriers decide.
+competition is not a reliable stop either.  And the passive branch and the
+contact graph turn on a functional survival time that no one has measured for
+anything but grains; we scan it from $10^{3}$\,yr to infinity rather than
+assume it, and find that the answer changes character in one decade at
+$\tau\sim10^{5}$--$10^{6}$\,yr and not at all above it.  For rock-borne
+carriers the paper takes survival for granted and lets the number of carriers
+decide.
 
 \paragraph{Live versus dead.}  The single most consequential result is
 equation~(\ref{eq:tvis}).  It means that a goo that stops is invisible on any
@@ -974,16 +1087,21 @@ crust is a \CrustGovTime project and its bulk a \BulkGovTime one at any
 doubling time, because the surface cannot shed the heat faster; a planetary
 system's small bodies are transport-limited to \BeltConvTime--\KuiperConvTime;
 the Galaxy is a \FillFastFast--\FillSlowSlow project for an active front and
-a \AnnulusFillGyr\,Gyr one for a passive cloud.  Dispersal class, decided at
-the micron and at the shipyard, sets the reach.
+a \SurvGrainTGalInf\ one for a passive chain of seedings.  Dispersal class,
+decided at the micron and at the shipyard, sets the reach.
 \item A detectable dead residue is a short-lived one: at most
 $P_{\rm orb}/f_{\min}$ above the detection floor.  The waste-heat surveys bound
 live goo; dead goo is invisible on any timescale surveyed.
 \item A replicator smaller than \BlowoutRadiusUm\um leaves its system on
 starlight alone, and the \WindowLoUm--\WindowHiUm\um class reaches the next
-habitable zone; a single belt-scale release seeds every rocky planet in the
-solar annulus within a gigayear if the devices survive $\gtrsim10^{8}$\,yr in
-the interstellar medium.  Passive goo has no front; it has a cloud.
+habitable zone.  Landings do not wait for the annulus to mix: the total
+landing rate of an expanding cloud is independent of its volume.  Functional
+survival in interstellar space sets the reach $v_\infty\tau$ and the front,
+not the count: below $\tau\sim10^{5}$\,yr a release lands within a parsec and
+seeds nothing, above $\tau\sim10^{6}$\,yr a chain of seedings advances at
+$\sim$\SurvGrainVFront\kms and crosses the Galaxy in \SurvGrainTGalInf, the
+same time as for an immortal device.  Rock-borne devices never form a chain
+at any survival time.
 \item The contact graph of the Galaxy is already complete in the mass sense:
 every Earth-sized planet has been struck tens of times by interstellar
 objects, every system is inside every other's planetesimal cloud, and one

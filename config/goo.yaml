@@ -1,0 +1,90 @@
+# GOO — propagation of uncontrolled self-replicating machines across four
+# scales (planet, planetary system, galaxy, observable universe) and the
+# inference from their observational absence to our own risk.
+#
+# Every number in the manuscript is generated from this file by
+# `python -m seti.goo.run --stage all`; nothing numerical is typed into the
+# LaTeX.  Each parameter carries the source it was taken from.  Where a
+# quantity is uncertain by orders of magnitude the model scans it and the
+# paper reports the scan, not a point value.
+
+replicator:
+  # A generic diamondoid / silicon-carbide nanoreplicator.  Freitas (2000,
+  # "Some limits to global ecophagy") and Phoenix & Drexler (2004) use
+  # ~1 micron devices of density ~1-3 g/cc and ~10^7-10^8 J/kg construction
+  # energy (mechanosynthesis at ~1 eV per atom placed).
+  radius_um: 0.5                 # device size scale (scanned 0.05-100 um in passive.py)
+  density_gcc: 2.0               # diamondoid-like
+  e_rep_J_per_kg: 1.0e7          # energy to build 1 kg of replicator from feedstock (~1 eV/atom)
+  tau_doubling_s: [100.0, 1.0e3, 1.0e4, 1.0e5, 3.2e7]   # replication time scan: 100 s ... 1 yr
+  t_operate_max_K: 500.0         # ceiling on the device's own operating temperature (thermal limit)
+  q_pr: 1.0                      # radiation-pressure efficiency (geometric optics)
+
+planet:
+  name: Earth
+  mass_kg: 5.972e24
+  radius_m: 6.371e6
+  t_eq_K: 255.0                  # effective temperature (bond albedo 0.3)
+  absorbed_solar_W: 1.22e17      # (1-A) * S * pi R^2, A = 0.3, S = 1361 W/m^2
+  biomass_dry_kg: 1.1e15         # ~550 Gt C -> ~1.1e15 kg dry biomass (Bar-On, Phillips & Milo 2018)
+  crust_kg: 2.4e22               # continental + oceanic crust
+  ocean_kg: 1.4e21
+  crust_U_Th_kg: 1.0e17          # ~2.8 ppm U + 10 ppm Th in 2.4e22 kg crust -> ~3e17; take 1e17 (accessible)
+  fission_J_per_kg: 8.0e13
+  deuterium_fraction: 1.56e-4    # D/H by number in seawater
+  dd_fusion_J_per_kg: 3.4e14     # per kg of deuterium consumed (rough)
+  surface_T_max_K: [500.0, 1000.0, 2000.0]   # temperatures at which a surface process must radiate its heat
+
+system:
+  star_L_W: 3.828e26
+  star_M_kg: 1.989e30
+  reservoirs:                    # feedstock reservoirs and where they sit
+    - {name: "asteroid belt", mass_kg: 2.4e21, r_AU: 2.7, n_bodies_gt_1km: 1.0e6}
+    - {name: "Kuiper belt", mass_kg: 1.2e23, r_AU: 40.0, n_bodies_gt_1km: 1.0e9}
+    - {name: "terrestrial planets", mass_kg: 1.2e25, r_AU: 1.0, n_bodies_gt_1km: 4}
+    - {name: "giant planets", mass_kg: 2.66e27, r_AU: 5.2, n_bodies_gt_1km: 4}
+  hop_speed_kms: 1.0             # delta-v scale of a body-to-body hop inside a belt
+  branching_per_body: 100.0      # launches per converted body (branching factor of the front)
+  local_saturation_doublings: 100.0   # log2(body mass / seed mass) ~ 100 for a km body from a 1e-16 kg seed
+  swarm_areal_density_kg_m2: [1.0e-3, 1.0, 1.0e3]   # micron film, kg/m^2 sheet, metre-scale slab
+  hephaistos_II_n_stars: 5.0e6   # Suazo et al. 2024, MNRAS 531, 695 (Gaia DR3 x 2MASS x WISE, < 300 pc)
+  hephaistos_II_gamma_min: 0.1   # minimum covering fraction their template grid is sensitive to
+  ghat_III_n_galaxies: 1.0e5     # Griffith et al. 2015, ApJS 217, 25
+  ghat_III_gamma_max: 0.85       # no galaxy with > 85 % of starlight reprocessed
+
+passive:
+  target_r_AU: 1.0               # habitable-zone target orbit
+  inflow_speed_kms: 26.0         # interstellar-medium flow speed through the heliosphere (Ulysses)
+  release_r_AU: 2.7              # where the machines are released (the belt)
+  galaxy:
+    R_sun_kpc: 8.2
+    annulus_width_kpc: 1.6       # 2 x epicyclic amplitude (sigma_R ~ 30 km/s, kappa ~ 37 km/s/kpc)
+    scale_height_kpc: 0.3        # thin disc; the annulus is taken 2h thick
+    rotation_period_Myr: 230.0
+    sigma_v_kms: 30.0
+    n_stars_annulus: 1.0e10      # stars within the annulus (of ~1e11 in the disc)
+    n_earthlike_per_star: 0.1    # eta_Earth-like rocky planets in the HZ per star (order of magnitude)
+  t_survive_yr: [1.0e6, 1.0e7, 1.0e8, 1.0e9]   # e-folding time of a machine's functional survival in the ISM (scan)
+  t_ism_grain_destruction_yr: 5.0e8            # Jones, Tielens & Hollenbach 1996 silicate lifetime (mass)
+  release_mass_kg: [1.0e15, 2.4e21, 1.2e23]    # a biosphere's worth; the asteroid belt; the Kuiper belt
+
+active:
+  d_hop_pc: 1.0                  # nearest-neighbour hop in the solar neighbourhood
+  v_ship_c: [1.0e-4, 1.0e-3, 1.0e-2, 0.1]     # 30 km/s (Voyager x2) ... 0.1 c
+  tau_build_yr: [10.0, 100.0, 1000.0]
+  R_galaxy_kpc: 15.0             # radius to fill from the solar circle (outer disc)
+  cosmology: {H0: 67.7, Om: 0.31}
+  n_gal_per_Mpc3: 0.01           # L* galaxies per comoving Mpc^3 (order of magnitude)
+  v_cosmic_c: [0.1, 0.5, 0.8, 0.99]
+
+inference:
+  window_Gyr: 5.0                # time over which technological civilisations could have arisen in the disc
+  t_fill_active_Myr: 10.0        # galaxy crossing time for the active branch (from active.py, mid case)
+  t_fill_passive_Gyr: 1.5        # annulus phase-mixing time for the passive branch
+  lambda_grid_log10: [-2.0, 6.0, 81]      # expected number of civilisations in the window: 0.01 ... 1e6
+  lambda_points: [0.1, 1.0, 10.0, 100.0, 1.0e3, 1.0e4]
+  p_prior: {kind: loguniform, lo: 1.0e-12, hi: 1.0}
+  p_persist: [1.0e-4, 1.0e-2, 1.0]   # fraction of the window a system/galaxy-scale residue stays visible
+  n_gal_observed: 1.0e5
+  own_galaxy_datum_shadowed: true     # SSA: our own galaxy's state carries no information (anthropic shadow)
+  human_prior_p_goo: [1.0e-4, 1.0e-3, 1.0e-2]   # elicited planet-scale nanotech-accident probabilities to map through

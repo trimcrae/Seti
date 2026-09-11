@@ -1,17 +1,6 @@
 {
  "active": [
   {
-   "body": "`results/tocsin/population.json` reports `NO_TARGET_LIST`. This is not a finding -- the test that is immune to per-object contamination did not run.\n\nThe Gaia nearby-star target list was not on the runner, so the screened parent population could not be rebuilt and the tests did not run. The list lives in the Actions cache, keyed on the target section of `config/tocsin.yaml`; a cache miss triggers a live Gaia pull, and this verdict means that pull failed too (see `results/tocsin/targets.json` for the per-shell errors). Dispatch `tocsin` with `rebuild_targets: true` once Gaia is reachable; until then the population verdict is MISSING, not null.\n\nStage note: target list missing at /home/runner/work/Seti/Seti/.cache/tocsin/targets.parquet; run tocsin-targets",
-   "channel": "tocsin",
-   "detail": {
-    "note": "target list missing at /home/runner/work/Seti/Seti/.cache/tocsin/targets.parquet; run tocsin-targets",
-    "verdict": "NO_TARGET_LIST"
-   },
-   "key": "tocsin:population_unavailable:NO_TARGET_LIST",
-   "severity": "health",
-   "title": "TOCSIN population tests could not run: NO_TARGET_LIST"
-  },
-  {
    "body": "`428209 (2006 VC)` exceeds the radiation momentum ceiling (eps = 1.3) with a reliable orbit solution and is not in the channel's explained set.\n\nA2 = 6.5e-13 au/day^2, S/N 3.8, arc 7113.0 d, diameter 341 m (from H).\n\nNext step is `loom-litcheck --name \"428209 (2006 VC)\"`: the dark-comet population is incomplete and most exceedances resolve to it.",
    "channel": "loom",
    "detail": {
@@ -48,7 +37,7 @@
    "channel": "tocsin",
    "detail": {
     "frontier_mjd": 61235.41918367943,
-    "lag_days": 59.39605529037037,
+    "lag_days": 59.44532584571759,
     "limit_days": 30.0
    },
    "key": "tocsin:data_frontier:0",
@@ -60,7 +49,7 @@
    "channel": "loom",
    "detail": {
     "frontier_mjd": 61235.416274280105,
-    "lag_days": 59.3989646896875,
+    "lag_days": 59.44823524503472,
     "limit_days": 30.0
    },
    "key": "loom:data_frontier:0",
@@ -73,7 +62,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T10:26:40Z",
     "frontier_mjd": 61235.41918,
-    "frozen_days": 43.38005378460648,
+    "frozen_days": 43.4293243399537,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -90,7 +79,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T13:13:46Z",
     "frontier_mjd": 61235.416274280105,
-    "frozen_days": 43.264012117939814,
+    "frozen_days": 43.313282673287034,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -115,17 +104,17 @@
    "title": "ASASSN cannot serve light curves"
   }
  ],
- "alert": true,
+ "alert": false,
  "by_severity": {
   "candidate": 0,
-  "health": 1,
+  "health": 0,
   "milestone": 0
  },
- "checked_at_utc": "2026-09-11T19:33:56Z",
+ "checked_at_utc": "2026-09-11T20:44:53Z",
  "frontier": {
   "loom": {
-   "frozen_days": 43.264,
-   "lag_days": 59.399,
+   "frozen_days": 43.313,
+   "lag_days": 59.448,
    "mjd": 61235.416274280105,
    "observed_advance_days": {
     "n_advances": 0
@@ -133,8 +122,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 43.38,
-   "lag_days": 59.396,
+   "frozen_days": 43.429,
+   "lag_days": 59.445,
    "mjd": 61235.41918,
    "observed_advance_days": {
     "n_advances": 0
@@ -142,19 +131,7 @@
    "source": "summary.json:broker_frontier_mjd"
   }
  },
- "n_active": 7,
- "n_new": 1,
- "new": [
-  {
-   "body": "`results/tocsin/population.json` reports `NO_TARGET_LIST`. This is not a finding -- the test that is immune to per-object contamination did not run.\n\nThe Gaia nearby-star target list was not on the runner, so the screened parent population could not be rebuilt and the tests did not run. The list lives in the Actions cache, keyed on the target section of `config/tocsin.yaml`; a cache miss triggers a live Gaia pull, and this verdict means that pull failed too (see `results/tocsin/targets.json` for the per-shell errors). Dispatch `tocsin` with `rebuild_targets: true` once Gaia is reachable; until then the population verdict is MISSING, not null.\n\nStage note: target list missing at /home/runner/work/Seti/Seti/.cache/tocsin/targets.parquet; run tocsin-targets",
-   "channel": "tocsin",
-   "detail": {
-    "note": "target list missing at /home/runner/work/Seti/Seti/.cache/tocsin/targets.parquet; run tocsin-targets",
-    "verdict": "NO_TARGET_LIST"
-   },
-   "key": "tocsin:population_unavailable:NO_TARGET_LIST",
-   "severity": "health",
-   "title": "TOCSIN population tests could not run: NO_TARGET_LIST"
-  }
- ]
+ "n_active": 6,
+ "n_new": 0,
+ "new": []
 }

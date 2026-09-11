@@ -48,7 +48,7 @@ import urllib.request
 OUT = pathlib.Path(os.environ.get("GOOLIT_FULLTEXT_OUT", "results/goolit_fulltext"))
 OUT.mkdir(parents=True, exist_ok=True)
 (OUT / "fulltext").mkdir(exist_ok=True)
-UA = {"User-Agent": "Seti-goolit-fulltext/1.0 (mailto:trimcrae@gmail.com)"}
+UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) Seti-goolit-fulltext/1.1 (mailto:trimcrae@gmail.com)", "Accept": "application/pdf,text/html,application/xml;q=0.9,*/*;q=0.8"}
 PAUSE = float(os.environ.get("GOOLIT_PAUSE", "3.5"))
 EMAIL = "trimcrae@gmail.com"
 STATUS: list[dict] = []
@@ -167,6 +167,46 @@ def arxiv_fulltext(aid: str) -> tuple[str, str] | None:
     return None
 
 
+def europepmc_fulltext(doi: str) -> tuple[str, str] | None:
+    """Europe PMC full-text XML for papers with a PMC record (Nature, PNAS, eLife, Science, Sci Rep ...)."""
+    q = urllib.parse.quote(f'DOI:"{doi}"')
+    data = fetch(f"https://www.ebi.ac.uk/europepmc/webservices/rest/search?query={q}&format=json&resultType=lite", timeout=60)
+    if not data:
+        return None
+    try:
+        hits = json.loads(data)["resultList"]["result"]
+    except Exception:  # noqa: BLE001
+        return None
+    for h in hits:
+        pmcid = h.get("pmcid")
+        if pmcid:
+            xml = fetch(f"https://www.ebi.ac.uk/europepmc/webservices/rest/{pmcid}/fullTextXML", timeout=90)
+            if xml and len(xml) > 5000:
+                return html_text(xml), f"europepmc:{pmcid}"
+    return None
+
+
+EXPLICIT_PDF: dict[str, list[str]] = {
+    "SnyderBeattie2019": ["https://www.nature.com/articles/s41598-019-47540-7.pdf"],
+    "Noble2018": ["https://elifesciences.org/articles/33423.pdf", "https://cdn.elifesciences.org/articles/33423/elife-33423-v1.pdf"],
+    "Esvelt2014": ["https://elifesciences.org/articles/03401.pdf", "https://cdn.elifesciences.org/articles/03401/elife-03401-v1.pdf"],
+    "ArmstrongSandberg2013": ["https://www.fhi.ox.ac.uk/wp-content/uploads/intergalactic-spreading.pdf", "https://www.aleph.se/papers/Spamming%20the%20universe.pdf"],
+    "Cirkovic2010": ["https://www.fhi.ox.ac.uk/wp-content/uploads/anthropic-shadow.pdf", "https://nickbostrom.com/papers/anthropicshadow.pdf"],
+    "Moore2003": ["https://www.caida.org/catalog/papers/2003_sapphire2/sapphire2.pdf", "https://www.icir.org/vern/papers/sapphire.pdf"],
+    "Spafford1989": ["https://spaf.cerias.purdue.edu/tech-reps/823.pdf"],
+    "Staniford2002": ["https://www.icir.org/vern/papers/cdc-usenix-sec02/cdc.pdf"],
+    "Melosh2003": ["https://www.lpl.arizona.edu/~jmelosh/Melosh_2003_Exchange_of_meteorites.pdf"],
+    "Levison2010": ["https://www.boulder.swri.edu/~hal/PDF/Levison_etal_2010_Science.pdf"],
+    "Hanson1998": ["https://mason.gmu.edu/~rhanson/greatfilter.html", "http://hanson.gmu.edu/greatfilter.html"],
+    "Sandberg2008": ["https://www.fhi.ox.ac.uk/reports/2008-1.pdf", "https://www.global-catastrophic-risks.com/docs/2008-1.pdf"],
+    "Wallner2016": ["https://www.nature.com/articles/nature17196.pdf"],
+    "BarOn2018": ["https://www.pnas.org/doi/pdf/10.1073/pnas.1711842115", "https://europepmc.org/articles/PMC6016768?pdf=render"],
+    "Kriegman2021": ["https://www.pnas.org/doi/pdf/10.1073/pnas.2112672118"],
+    "Koll2019": ["https://arxiv.org/pdf/1908.08000"],
+    "Knie2004": ["https://arxiv.org/pdf/astro-ph/0410000"],
+}
+
+
 def unpaywall_pdf(doi: str) -> tuple[str, str] | None:
     data = fetch(f"https://api.unpaywall.org/v2/{urllib.parse.quote(doi, safe='/')}?email={EMAIL}", timeout=60)
     if not data:
@@ -186,6 +226,16 @@ def unpaywall_pdf(doi: str) -> tuple[str, str] | None:
         pdf = fetch(u)
         if pdf and pdf[:4] == b"%PDF":
             return pdf_text(pdf), f"unpaywall:{u}"
+    # landing page of the best OA location, as a last resort (HTML full text)
+    land = best.get("url") or (j.get("oa_locations") or [{}])[0].get("url")
+    if land:
+        page = fetch(land)
+        if page and page[:4] != b"%PDF":
+            t = html_text(page)
+            if len(t) > 8000:
+                return t, f"unpaywall-html:{land}"
+        elif page:
+            return pdf_text(page), f"unpaywall:{land}"
     return None
 
 
@@ -319,7 +369,14 @@ def main() -> None:
             for r in json.loads(vf.read_text())["refs"]:
                 ids.setdefault(r["key"], {}).update({k: r[k] for k in ("arxiv_id", "doi") if r.get(k)})
     results: dict[str, dict] = {}
+    prev = {}
+    if (OUT / "numbers.json").exists():
+        prev = json.loads((OUT / "numbers.json").read_text())
+    only_missing = os.environ.get("GOOLIT_ONLY_MISSING", "") == "1"
     for key, spec in refs.items():
+        if only_missing and prev.get(key, {}).get("status") == "TEXT":
+            results[key] = prev[key]
+            continue
         print(f"== {key}")
         rec = {"key": key, "status": "NO_TEXT", "how": None, "n_chars": 0, "stored": False,
                "query_terms": QUERIES.get(key, DEFAULT_QUERY), "sentences": [], "number_sentences": []}
@@ -341,6 +398,18 @@ def main() -> None:
                     if len(text) > 2000:
                         break
                     text = None
+        if text is None and key in EXPLICIT_PDF:
+            for u in EXPLICIT_PDF[key]:
+                data = fetch(u)
+                if data:
+                    t = pdf_text(data) if data[:4] == b"%PDF" else html_text(data)
+                    if len(t) > 4000:
+                        text, how = t, f"explicit:{u}"
+                        break
+        if text is None and doi:
+            got = europepmc_fulltext(doi)
+            if got:
+                text, how = got
         if text is None and doi:
             got = unpaywall_pdf(doi)
             if got:
@@ -351,7 +420,7 @@ def main() -> None:
             rec.update({"status": "TEXT", "how": how, "n_chars": len(text)})
             rec["sentences"] = matching(text, QUERIES.get(key, DEFAULT_QUERY))
             rec["number_sentences"] = matching(text, [NUMBER_WORDS])[:40]
-            store = how.startswith("arxiv") or how.startswith("unpaywall") or how.startswith("web")
+            store = how.startswith(("arxiv", "unpaywall", "web", "europepmc", "explicit"))
             if store:
                 (OUT / "fulltext" / f"{key}.txt").write_text(text)
                 rec["stored"] = True

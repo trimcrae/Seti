@@ -129,10 +129,26 @@ during it. Two order-of-magnitude scan variables remain (rocks ejected from a
 system over the age of the Earth; the Ulysses dust flux), marked in
 `config/goo.yaml`.
 
-**Open items.** (1) Freitas 2000's exact ecophagy figures are paraphrased
-conservatively in §3 because the Foresight page is outside both APIs; a
-targeted fetch on the runner would let the paper quote them. (2) A second
-adversarial read of both manuscripts before submission.
+**Full text, not abstracts (user directive ~8:40 AM ET; run 34599794718
+landed ~8:55).** `goolit-fulltext.yml` fetched the full text of 91 of the 145
+references (arXiv e-print LaTeX de-TeXed, arXiv PDFs, Unpaywall OA PDFs, the
+web-only sources) and extracted the sentences each paper contributes against
+per-paper query terms (`results/goolit_fulltext/`). Corrections forced: the
+FHI 2008 nanotech-accident extinction median is **0.5 %** (the paper had
+0.05 % from memory); Chen, Ni & Ong 2022 find predator probes *cannot*
+sufficiently reduce prey probes (the paper had cited them for the opposite);
+Freitas 2000's 100 MJ/kg, 4 °C, 20 months and 100 s are now quoted verbatim;
+the ejecta count is Siraj & Loeb's 6×10¹⁰ (R0 strict 2×10⁻⁵, was 3×10⁻⁴); the
+dust flux is Krüger+2019's Cassini 1.5×10⁻⁴ m⁻² s⁻¹; the birth-cluster channel
+is a 10⁷–3×10¹⁶ range by mechanism with Adams & Spergel's 10⁻⁴ landing
+fraction (R0 strict ~10⁷); Suazo+2022's and Zackrisson+2015's actual limits
+are in Table 2. Second pass (Europe PMC, explicit OA URLs, landing pages)
+dispatched for the 54 without text.
+
+**Open items.** (1) Paywalled full texts without an OA copy (Melosh 2003,
+Grün 1993, Jones 1996, Burns 1979, Wallner 2016, Levison 2010) are cited on
+their abstracts/records only, and the paper says which numbers rest on them.
+(2) A second adversarial read of both manuscripts before submission.
 
 ### Roman is coming: the intake and four Roman-only signatures, 2026-09-09: ROMAN (S40–S43)
 

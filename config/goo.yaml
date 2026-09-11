@@ -15,7 +15,7 @@ replicator:
   # energy (mechanosynthesis at ~1 eV per atom placed).
   radius_um: 0.5                 # device size scale (scanned 0.05-100 um in passive.py)
   density_gcc: 2.0               # diamondoid-like
-  e_rep_J_per_kg: 1.0e7          # energy to build 1 kg of replicator from feedstock (~1 eV/atom)
+  e_rep_J_per_kg: 1.0e7          # energy to build 1 kg of replicator from feedstock (~1 eV/atom); Freitas 2000 (full text) assumes "~100 MJ/kg for chemical transformations" -- every radiative/energy ceiling scales linearly with this, so his value makes them 10x longer
   tau_doubling_s: [100.0, 1.0e3, 1.0e4, 1.0e5, 3.2e7]   # replication time scan: 100 s ... 1 yr
   t_operate_max_K: 500.0         # ceiling on the device's own operating temperature (thermal limit)
   q_pr: 1.0                      # radiation-pressure efficiency (geometric optics)
@@ -110,7 +110,7 @@ contact:
   channels:
     - name: "interstellar objects (>100 m)"
       standing_density_per_AU3: 0.2  # Do, Tucker & Tonry 2018: "n_IS ~ 0.2 au^-3 ... cannot be populated unless every star is contributing"; Jewitt & Seligman 2023: ~0.1 AU^-3, 1e25-1e26 objects in the Milky Way
-      capture_rate_per_yr_natural: 2.0e-3   # Dehnen+2022: "in 1000 years the planets capture ~2 ISOs (while ~17 fall into the Sun)" at n = 0.1 AU^-3; Hands & Dehnen 2020: volume capture rate 0.051 AU^3/yr, steady state ~1e5 captured 'Oumuamua-like rocks
+      capture_rate_per_yr_natural: 2.0e-3   # FULL TEXT, Dehnen+2022: "in 1000 years the planets capture ~2 ISOs (while ~17 fall into the Sun)" at n = 0.1 AU^-3; Hands & Dehnen 2020: "1e4 per Myr for 'Oumuamua-like rocks" (0.051 AU^3/yr x 0.2 AU^-3), i.e. 2e-3 to 1e-2 per yr; the conservative end is used
       speed_kms: 26.0
       t_mass_survive_yr: 1.0e12      # rocks and ices persist
       t_func_survive_yr: [1.0e8, 1.0e9, 1.0e12]   # a device shielded inside a 100 m body
@@ -118,14 +118,14 @@ contact:
       source: "Do+2018 (0.2 AU^-3, verified); Jewitt & Seligman 2023 (verified); Dehnen+2022 and Hands & Dehnen 2020 capture rates (verified); Portegies Zwart+2018: ~3e5 within 100 AU of the Sun at any time (verified)"
       verify: false
     - name: "impact ejecta from a planet (rocks > 1 m)"
-      carriers_per_source: 1.0e12    # order of magnitude for rocks that leave the Solar System over the age of the Earth (Melosh 2003; Worth+2013 abstracts carry no count; kept as the scan variable)
+      carriers_per_source: 6.0e10    # FULL TEXT: Siraj & Loeb 2020: "20 per year of 30-cm objects penetrating the Earth's atmosphere and eventually likely being ejected from the Solar System ... Over 3e9 yr, this translates to 6e10 ejected objects (95% Poisson bounds 2e9-3e11)"; Adams & Napier 2022: "15 biologically active rocks, with masses 1e4 g, should be ejected from an Earth-like planet per year" (previous authors) -> 6e10 over 4 Gyr
       capture_rate_per_yr_natural: 0.0
       speed_kms: 26.0
       t_mass_survive_yr: 1.0e12
       t_func_survive_yr: [1.0e8, 1.0e9, 1.0e12]
       emitted_when: "throughout, in large impacts"
-      source: "Melosh 2003; Worth, Sigurdsson & House 2013; Adams & Napier 2022 (all verified as references; the count is an order of magnitude, scanned)"
-      verify: true
+      source: "Siraj & Loeb 2020 (full text); Adams & Napier 2022 (full text: field capture of rocks per system ~70 over its life, direct strikes on Earth 1e4 times rarer); Melosh 2003; Worth+2013"
+      verify: false
     - name: "Earth-grazing objects captured by binaries"
       carriers_per_source: 1.0e8     # Siraj & Loeb 2020: "10^7-10^9 such objects could have been captured by binary star systems over the lifetime of the Solar System" (verified) -- these are LOOSE (bound) touches of other systems by Earth-touched material
       loose_is_capture_count: true
@@ -145,7 +145,7 @@ contact:
       source: "Sumi+2023; Mroz+2017; Goulinski & Ribak 2018; Perets & Kouwenhoven 2012 (3-6% x f_FFP in clusters) -- all verified"
       verify: false
     - name: "interstellar dust (ISM grains, 0.1-1 um)"
-      standing_flux_per_m2_s: 1.0e-4 # order of magnitude of the interstellar grain flux measured by Ulysses (Grun+1993; Landgraf 2000; Kruger+2019 model agrees with the data within 2-3x); the abstracts fetched carry no flux value, so this is a scan variable
+      standing_flux_per_m2_s: 1.5e-4 # FULL TEXT, Kruger+2019: "The derived average particle flux was 1.5e-4 m^-2 s^-1 in the mass range 5e-18 kg < m_d < 5e-16 kg" (Cassini, 0.7-1.2 AU, 1999); Ulysses/Galileo grains of charge-to-mass 0.5-1.4 C/kg, 0.1-0.7 um (Landgraf 2000 full text)
       speed_kms: 26.0
       t_mass_survive_yr: 5.0e8       # Jones, Tielens & Hollenbach 1996
       t_func_survive_yr: [1.0e6, 1.0e7, 1.0e8]
@@ -174,8 +174,9 @@ contact:
       source: "Wallner+2016; Knie+2004; Koll+2019; Fields+2019"
       verify: true
     - name: "birth-cluster exchange (first ~10-100 Myr)"
-      bodies_transferred_to_nearest_neighbour: 1.0e15   # Belbruno+2012: "the expected number of bodies with mass > 10 kg that could have been transferred between the Sun and its nearest cluster neighbor could be of the order of 1E14-3E16, with transfer timescales of 10s Myr" (verified); geometric middle
-      planet_landing_probability_per_captured_body: 5.0e-11   # an Oort-region body's chance of ever striking an Earth-sized planet: ~50 long-period-comet impacts on Earth over 4.5 Gyr from a ~1e12-body cloud (order of magnitude)
+      bodies_transferred_to_nearest_neighbour: 1.0e11   # FULL TEXT range: Belbruno+2012 weak transfer "1E14-3E16" bodies > 10 kg (weak capture probability 1.5e-3 x N_R 8e16-2e19); Adams & Napier 2022 dynamical capture "N_RC ~ 1e7 from the birth cluster" per star; geometric middle of 1e7-1e15, both ends reported
+      bodies_transferred_range: [1.0e7, 3.0e16]
+      planet_landing_probability_per_captured_body: 1.0e-4   # FULL TEXT, Adams & Spergel 2005: "Only a small fraction (f_imp ~ 1e-4) of the captured rocks impact the surfaces of terrestrial planets, so that N_lps ~ 1e-3 - 1.6 lithopanspermia events are expected (per cluster)"
       captures_per_cluster_range: [10.0, 16000.0]   # Adams & Spergel 2005: "capture of life bearing rocks is expected to occur 10 -- 16,000 times per cluster" (verified)
       t_cluster_Myr: 100.0
       n_siblings: 1000.0

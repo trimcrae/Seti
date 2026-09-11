@@ -292,7 +292,9 @@ def _time(s: float) -> str:
         return f"{two_sig(y / 1e3)}\\,kyr"
     if y < 1e9:
         return f"{two_sig(y / 1e6)}\\,Myr"
-    return f"{two_sig(y / 1e9)}\\,Gyr"
+    if y < 1e12:
+        return f"{two_sig(y / 1e9)}\\,Gyr"
+    return f"{_sci(y, 1)}\\,yr"
 
 
 def stage_numbers(cfg: dict) -> pathlib.Path:

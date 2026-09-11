@@ -1,6 +1,6 @@
 # GOO full-text pass
 
-URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
+URLs fetched: 77 ok / 105 total.  Texts obtained: 100 of 145.
 
 | key | status | how | chars |
 |---|---|---|---|
@@ -30,9 +30,9 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 | Stevens2016 | TEXT | arxiv-eprint-pdf | 76,528 |
 | Cirkovic2004 | TEXT | arxiv-eprint-pdf | 29,129 |
 | Cirkovic2018lotka | TEXT | arxiv-eprint-pdf | 32,756 |
-| Cirkovic2010 | NO_OA_TEXT |  | 0 |
+| Cirkovic2010 | TEXT | explicit:https://nickbostrom.com/papers/anthropicshadow.pdf | 45,455 |
 | Sandberg2018 | TEXT | arxiv-eprint-tex | 37,708 |
-| SnyderBeattie2019 | NO_OA_TEXT |  | 0 |
+| SnyderBeattie2019 | TEXT | europepmc:PMC6667434 | 48,124 |
 | Kipping2020 | TEXT | arxiv-eprint-tex | 48,072 |
 | Olum2004 | NO_OA_TEXT |  | 0 |
 | Wright2014a | TEXT | arxiv-eprint-tex-single | 115,209 |
@@ -76,17 +76,17 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 | BlandHawthorn2016 | TEXT | arxiv-eprint-tex | 227,063 |
 | DehnenBinney1998 | TEXT | arxiv-eprint-tex | 29,823 |
 | PhoenixDrexler2004 | NO_OA_TEXT |  | 0 |
-| BarOn2018 | NO_OA_TEXT |  | 0 |
+| BarOn2018 | TEXT | explicit:https://europepmc.org/articles/PMC6016768?pdf=rende | 45,057 |
 | RudnickGao2003 | NO_OA_TEXT |  | 0 |
 | Kreidberg2019 | TEXT | arxiv-eprint-tex | 36,499 |
 | Greene2023 | TEXT | arxiv-eprint-tex | 43,251 |
 | Zieba2023 | TEXT | arxiv-eprint-tex | 58,846 |
 | Eigen1971 | NO_OA_TEXT |  | 0 |
 | Adamala2024 | TEXT | unpaywall:https://pure.manchester.ac.uk/ws/files/361362332/A | 23,620 |
-| Millett2017 | NO_OA_TEXT |  | 0 |
-| Noble2018 | NO_OA_TEXT |  | 0 |
-| Esvelt2014 | NO_OA_TEXT |  | 0 |
-| Kriegman2021 | NO_OA_TEXT |  | 0 |
+| Millett2017 | TEXT | europepmc:PMC5576214 | 61,469 |
+| Noble2018 | TEXT | explicit:https://elifesciences.org/articles/33423.pdf | 102,184 |
+| Esvelt2014 | TEXT | explicit:https://elifesciences.org/articles/03401.pdf | 93,776 |
+| Kriegman2021 | TEXT | europepmc:PMC8670470 | 52,349 |
 | Moore2003 | NO_OA_TEXT |  | 0 |
 | Spafford1989 | NO_OA_TEXT |  | 0 |
 | Pan2024 | TEXT | arxiv-eprint-tex | 124,955 |
@@ -108,7 +108,7 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 | Hanson1998 | TEXT | web:http://mason.gmu.edu/~rhanson/greatfilter.html | 57,029 |
 | Bostrom2008 | NO_IDENTIFIER |  | 0 |
 | Bostrom2014 | NO_IDENTIFIER |  | 0 |
-| Staniford2002 | NO_IDENTIFIER |  | 0 |
+| Staniford2002 | TEXT | explicit:https://www.icir.org/vern/papers/cdc-usenix-sec02/c | 79,849 |
 | Esvelt2022 | NO_IDENTIFIER |  | 0 |
 | RoyalSociety2004 | NO_IDENTIFIER |  | 0 |
 | Cirkovic2018 | NO_IDENTIFIER |  | 0 |
@@ -141,7 +141,7 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 | Rickman2008 | TEXT | unpaywall:https://arxiv.org/pdf/0804.2560 | 78,442 |
 | Vokrouhlicky2019 | TEXT | arxiv-eprint-tex | 132,692 |
 | Kruger2019 | TEXT | arxiv-eprint-tex | 40,350 |
-| Wallner2016 | NO_OA_TEXT |  | 0 |
+| Wallner2016 | TEXT | europepmc:PMC4892339 | 26,345 |
 | Knie2004 | NO_OA_TEXT |  | 0 |
 | Fields2019 | TEXT | arxiv-eprint-tex | 17,724 |
 | Koll2019 | TEXT | unpaywall:https://openresearch-repository.anu.edu.au/bitstre | 28,680 |
@@ -795,6 +795,44 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 - Tipler, "Extraterrestrial Beings Do Not Exist", Quarterly Journal of the Royal Astronomical Society, 21, pp. 267–281, 1980. 21.
 - Dowd (eds.), The Drake Equation: Estimating the Prevalence of Extraterrestrial Life through the Ages, Cambridge University Press, Cambridge, 2015. 22.
 
+### Cirkovic2010  (explicit:https://nickbostrom.com/papers/anthropicshadow.pdf; 45,455 chars)
+- Risk Analysis, Vol. 30, No. 10, 2010 DOI: 10.1111/j.1539-6924.2010.01460.x Anthropic Shadow: Observation Selection Effects and Human Extinction Risks Milan M. ´Cirkovi´c,1∗ Anders Sandberg,2 and Nick Bostrom 2 We describe a signiﬁcant practical consequence of taking anthropic biases into account in deriving predictions for rare stochastic catastrophic events.
+- (8) Our goal in this article is to study a speciﬁc observation selection effect that inﬂuences estimation of some ER probabilities, threatening to induce an anthropic bias into the risk analysis. 3 Anthropic bias 3 For a summary of the vast literature on anthropic principles and anthropic reasoning in general, see Barrow and Tipler; Balashov; and Bostrom.(56−58) 1495 0272-4332/10/0100-1495$22.00/1 C© 2010 Society for Risk Analysis 1496 ´Cirkovi´c, Sandberg, and Bostrom Fig. 1.
+- A TOY MODEL OF ANTHROPIC BIAS 4 The basis of our approach is Bayes’s formula for conditional probability: P (Bi | E) = P (Bi ) P (E| Bi ) n∑ j=1 P (Bj ) P (E| Bj ) , (1) where P(Bi) is prior probability of hypothesis Bi being true, and P(Bi|E) is the conditional probability of hypothesis Bi being true, given evidence E.
+- We can schematically represent the situation as in Fig. 1: the prior probability of catastrophe is P and the probability of human survival following the catastrophic event is Q.
+- We shall suppose that the two probabilities are: (1) constant, (2) adequately normalized, and (3) apply to a particular interval of past time.
+- The direct application of Bayes’s formula in the form: P(B2 | E) = P(B2) P(E| B2) P(B1) P(E| B1) + P(B2) P(E| B2), (2) Anthropic Shadow: Observation Selection Effects and Human Extinction Risks 1497 yields the posterior probability as: P(B2 | E) = PQ (1 − P) · 1 + PQ = PQ 1 − P + PQ .
+- (5) As η moves beyond 1, our inferences from the past become increasingly unreliable, and we underestimate the probabilities of future catastrophes.
+- For instance, suppose Q = 0.1 and P = 0.5, corresponding to a fair-coin-toss chance that a Toba-scale event occurs once per 1 million (10 6) years (Myr) of human evolution, and that the probability of human survival following such an event is 0.1.
+- The resulting value of the overconﬁdence parameter is η = 5.5, indicating that the actual probability of such an event is 5.5 times our initial estimate.
+- Values of overconﬁdence as a function of severity (as measured by the extinction probability 1 − Q) are shown in Fig. 2.
+- Overconﬁdence parameter as a function of the extinction probability 1−Q in our single-event toy model.
+- As a consequence, we should have no conﬁdence in historically based probability estimates for events that would certainly extinguish humanity (Q = 0).
+- (10) The same reasoning applies to those extremely rare, but still deﬁnitely possible, physical disasters like various strange astronomical occurrences leading to the Earth becoming an unbound planet due to close passage of a normal star (see e.g., Laughlin and Adams for estimates how probable it is in the remaining lifetime of the solar system (11)), or even more exotic objects, like a neutron star or a black hole.
+- Let α be the inherent probability of a disaster, β the probability that it is lethal (in a sufﬁciently generalized sense, which we shall discuss in some detail in Section 5 below), and N the number of possible disasters that could occur.
+- As far as both N and α are small, 5 the probability for an observer to see 5 This assumption is convenient as a working hypothesis— but when we consider interpretation of our results (Section 5) for the real hazards, we shall ﬁnd some broad physical 1498 ´Cirkovi´c, Sandberg, and Bostrom Fig. 3.
+- (7) Under the assumption of uniform prior distribution of the parameters, P(α, β) = 1, it is possible to calculate the probability P(O, k): P(O, k) = ∫ 1 0 ∫ 1 0 P(α, β) (N k ) αk(1 − α)N−k(1 − β)k × dα dβ = 1 (1 + k)( 1 + N), (8) entailing the general formula: P(α, β| O, k) = 1 (1 + k)(1 + N) (N k ) αk(1 − α)N−k(1 − β)k.
+- (9) Consequently, the probability of existence of an observer for a given pair of values α, β is given as: P(O| α, β) = N∑ k=0 P(O, k| α, β) = N∑ k=0 (N k ) αk(1 − α)N−k(1 − β)k.
+- We can think about this situation as involving a set of Earth-like planets with well-deﬁned ages, having biospheres, but subject to different quantitative and qualitative environmental hazards.(12) For example, in case of N = 4, Equation (10) gives the probability of survival as shown in Fig. 4.
+- For k = 0, we have no information about the danger of disasters, so the probability distribution is constant along the β axis.
+- For a special case of this example, N = 4, k = 2, the distribution of probabilities of observing particular values of ( α, β) is shown in Fig. 5.
+- Considering that we have already amassed important knowledge on empirical and semi-empirical probability distributions for particular classes of risks and the enormous practical importance of searching for any kind of bias in risk analysis, (13) there is clearly a lot of room for integration of the existing knowledge in the analysis of the anthropic bias, once we clarify which speciﬁc processes this bias applies to.
+- Anthropic Shadow: Observation Selection Effects and Human Extinction Risks 1499 Fig. 4.
+- The probability of observers P(O| α, β)f o rt h eN = 4 toy model as a function of the ap r i o r iprobability of a global catastrophe α and the extinction probability β.F o rα = β = 0, the world is safe and the density is maximal; as higher values of either parameter are approached, the number of observers decline.
+- Probability P(α, β| O, k)f o rt h e N = 4, k = 2 toy model. 4.
+- The issue of recovery from mass extinctions has been recognized as one of the least understood in paleobiology and evolutionary biology; preliminary results indicate that the recovery timescales are long, measured in tens of Myr.(62,63) space above the boundary lies in what can be called anthropic shadow : the observation selection effect implicit in conditioning on our present existence prevents us from sharply discerning magnitudes of extreme risks close (in both temporal and evolutionary terms) to us.
+- In other words, giant impactors may exist and be a Anthropic Shadow: Observation Selection Effects and Human Extinction Risks 1501 Fig. 6.
+- The absence of points in the upper right area of the diagram is visible; the only clear outlier corresponds to the Chixhulub crater at 65 Myr B.P., a conﬁrmed instance of global catastrophe. signiﬁcant threat for the future, but they leave no traces in the recent past of observers. 7 The pastfuture symmetry is broken by the anthropic shadow. 5.
+- Anthropic shadow bias will downwardly inﬂuence probability estimates of hazards: (1) that could have destroyed our species or its predecessors; (2) that are sufﬁciently uncertain; and (3) for which frequency estimates are largely based on terrestrial records.
+- Anthropic Shadow: Observation Selection Effects and Human Extinction Risks 1503 “normal” times.
+- ANTHROPIC SHADOW AND RISKS FROM PHYSICS DISASTERS An example par excellence of a Q = 0 event is a vacuum phase transition or a comparable quantum ﬁeld collapse.
+- For example, if the probability of a high-energy physics disaster in nature is 10 −50 per year, then a doubling or even 10-fold increase of the risk through deliberate human activities is arguably trivial.
+- This shows that awareness of anthropic shadow effects can enable more reliable estimation of catastrophic risk. 7.
+- CONCLUSIONS Smolin, among others, has claimed that the anthropic principle lacks predictive power and practical importance.(50) By contrast, our results suggest that correcting for the anthropic shadow bias can significantly affect probability estimates for catastrophic events, such as supervolcanic eruptions or asteroidal impacts.
+- It is hardly necessary to emphasize that improvements in the quantitative risk assessment are likely to lead to improved policies of risk mitigation and management.(6) Further research on shape of the anthropic shadow and the magnitude of the resulting anthropic bias is needed, especially related to the changing of survival probability with time, superposition of various ER mechanisms, and the secular evolution of the ap r i o r idistribution function itself.
+- (51−54) For distinct states of evolutionary development separated by stochastic catastrophes, some quite complex modeling formalism, perhaps using probabilistic cellular automata, might be needed to fully capture all the factors that can inﬂuence the magnitude of the bias.
+- (7) Anthropic Shadow: Observation Selection Effects and Human Extinction Risks 1505 GRB—Gamma-ray (or γ -ray) bursts, ﬂashes of gamma-rays, lasting typically a few seconds, associated with the most energetic class of cosmic explosions ever detected.
+
 ### Sandberg2018  (arxiv-eprint-tex; 37,708 chars)
 - As we saw in the toy model, such values of N correspond to probabilities of less than 3.7e-44 that we are alone in our galaxy.
 - To show that this isn't purely driven by outliers, the bootstrap confidence interval for N < 1 is [27\%, 52\%].
@@ -809,6 +847,28 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 - It likewise raises our 38\% credence for being alone in the observable universe to somewhere between 39\% and 85\%.
 - Since there are only six orders of magnitude from the radius of our galaxy to the radius of the observable universe ( e27 ) and infinitely many beyond that, he reaches a conclusion that it is unlikely for two civilizations to arise within the same observable universe.
 - When we update this prior in light of the Fermi observation, we find a substantial probability that we are alone in our galaxy, and perhaps even in our observable universe (53\%--99.6\% and 39\%--85\% respectively). 'Where are they?' --- probably extremely far away, and quite possibly beyond the cosmological horizon and forever unreachable. 20pt Authors’ Contributions: AS, TO. and ED wrote the paper together; AS performed the literature review and simulations.
+
+### SnyderBeattie2019  (europepmc:PMC6667434; 48,124 chars)
+- Using only the information that Homo sapiens has existed at least 200,000 years, we conclude that the probability that humanity goes extinct from natural causes in any given year is almost guaranteed to be less than one in 14,000, and likely to be less than one in 87,000.
+- Using the longer track record of survival for our entire genus Homo produces even tighter bounds, with an annual probability of natural extinction likely below one in 870,000.
+- This corresponds to an annual extinction probability below roughly 1 in 14,000.
+- The relative likelihood for such high extinction rates are below 10 −6 (one in a million) when compared to a rate of 10 −8 .
+- Using the fossil dated to 315 ka as a starting point for humanity gives an upper bound of μ &lt; 4.4 × 10 −5 , corresponding to an annual extinction probability below 1 in 22,800.
+- Using the emergence of Homo as our starting point pushes the initial bound back a full order of magnitude, resulting in an annual extinction probability below 1 in 140,000.
+- An alternative bound would be rates with relative likelihood below 10 −1 (1 in 10) when compared to the baseline rate of 10 −8 .
+- If we assume humanity has lasted 200 kyr, we obtain a bound of μ &lt; 1.2 × 10 −5 , corresponding to an annual extinction probability below 1 in 87,000.
+- Using the 2 Myr origin of Homo strengthens the bound by an order of magnitude in a similar way and produces annual extinction probabilities below 1 in 870,000.
+- We represent this with a Weibull distribution with cumulative distribution function F S ( t ) = 1 − e − ( θ t ) k where k &gt; 1 indicates increasing rate over time (when k = 1, this is the same as the exponential in Model 1).
+- Under this model, humanity successfully surviving long enough to reach observer status is an event with 1 in 200 million chance.
+- But we could ask why a 1 in 200 million chance event could not also include the possibility that modern human observers would emerge unusually rapidly.
+- Language, writing, and modern science are perhaps highly unlikely to develop within ten thousand years of the first modern humans, but it seems exceptionally overconfident to put the odds at fewer than 1 in 200 million.
+- With an increasing rate and these parameters, observerhood has less than a one in a trillion chance of occurring within 10,000 years (3.4 × 10 −14 ), and about 1% chance of occurring within 100,000 years.
+- With multiple steps and these parameters, observerhood has less than one in a trillion chance of occurring within 10,000 years (5.6 × 10 −17 ), and less than a 0.02% chance of occurring within 100,000 years.
+- If we assume human extinction is only threatened by these more severe impacts exceeding 5 km, each of these catastrophe frequencies falls well below even our most optimistic bound of 1 in 870,000 chance of extinction per year.
+- Conclusions Using the fact that humans have survived at least 200 kyr, we can infer that the annual probability of human extinction from natural causes is less than 1 in 87,000 with modest confidence (0.1 relative likelihood) and less than 1 in 14,000 with near certainty (10 −6 relative likelihood).
+- Estimates based on older fossils such as the ones found in Morocco dated to 315 kya result in annual extinction probabilities of less than 1 in 137,000 or 1 in 23,000 (for relative likelihood of 0.1 and 10 −6 , respectively).
+- Using the track record of survival for the entire lineage of Homo , the annual probability of extinction from natural causes falls below 1 in 870,000 (relative likelihood of 0.1).
+- For example, the claim that a natural disease poses a greater than 1 in 1,000 chance of extinction per year would require that anthropogenic conditions have increased the risk of natural disease by a factor of more than 14 to 870 (under our most conservative and optimistic upper bounds, respectively).
 
 ### Kipping2020  (arxiv-eprint-tex; 48,072 chars)
 - Although we consider the Jeffreys prior to be the ideal objective prior for our problem, it is instructive to consider posteriors with n=0 (a uniform prior in f ) as well, which has a -space form of align ( ) &= T e^-T . align Bayes factors independent of the prior Equipped with our likelihood function and prior, one may now sample/integrate the posterior probability distribution to compute marginalized distributions.
@@ -2423,6 +2483,70 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 - The shape of the velocity ellipsoid does not vary significantly with B - V ; to within the errors its axis ratios are constant at _1/ _3 2.2 and _1/ _2 1.6 .
 - Unfortunately, Oort's relation is significantly in error for typical star samples but Cuddeford \& Binney (1994) argue that -B/(A-B) can be accurately determined from _ yy^2/ _ xx^2 if modified rather than normal moments are employed.
 
+### BarOn2018  (explicit:https://europepmc.org/articles/PMC6016768?pdf=render; 45,057 chars)
+- Falkowski, Rutgers, The State University of New Jersey, New Brunswick, NJ, and approved April 13, 2018 (received for review July 3, 20 17) A census of the biomass on Earth is key for understanding the structure and dynamics of the biosphere.
+- Here, we assemble the overall biomass composition of the biosphere, establishing a census of the ≈550 gigatons of carbon (Gt C) of biomass distributed among all of the kingdoms of life.
+- We find that the kingdoms of life concentrate at different locations on the planet; plants ( ≈450 Gt C, the dominant kingdom) are primarily terrestrial, whereas animals ( ≈2G tC ) are mainly marine, and bacteria ( ≈70 Gt C) and archaea ( ≈7G tC ) are predominantly located in deep subsurface environments.
+- We show that terrestrial biomass is about two orders of magnitude higher than marine biomass and estimate a total of ≈6G tCo f marine biota, doubling the previous estimated quantity.
+- A quantitative description of the distribution of biomass is essential for taking stock of biosequestered carbon (1) and modeling global biogeochemical cycles (2), as well as for understanding the historical effects and future impacts of human activities.
+- Earlier efforts to estimate global biomass have mostly focused on plants (3 –5).
+- We are aware of only two attempts at a comprehensive accounting of all biomass components on Earth: Whittaker and Likens (12) made a remarkable effort in the early 1970s, noting even then that their study was “intended for early obsolescence. ” It did not include, for example, bacterial or fungal biomass.
+- In Fig. 1 and Table 1, we report our best estimates for the biomass of each taxon analyzed.
+- We report biomass using the mass of carbon, as this measure is independent of water content and has been used extensively in the literature (6, 16, 17).
+- For ease of discussion, we report biomass in gigatons of carbon, with 1 Gt C = 1015 go f carbon.
+- Published online May 21, 2018. 6506–6511 | PNAS | June 19, 2018 | vol. 115 | no. 25 www.pnas.org/cgi/doi/10.1073/pnas.1711842115 The sum of the biomass across all taxa on Earth is ≈550 Gt C, of which ≈80% ( ≈450 Gt C; SI Appendix , Table S2 ) are plants, dominated by land plants (embryophytes).
+- The second major biomass component is bacteria ( ≈70 Gt C; SI Appendix , Tables S3–S7), constituting ≈15% of the global biomass.
+- Despite the large uncertainty associated with the total biomass of bacteria, we estimate that plants are the dominant kingdom in terms of biomass at an ≈90% probability (more details are provided in the SI Appendix).
+- Aboveground biomass ( ≈320 Gt C) represents ≈60% of global biomass, with belowground biomass composed mainly of plant roots ( ≈130 Gt C) and microbes residing in the soil and deep subsurface ( ≈100 Gt C).
+- Plant biomass includes ≈70% stems and tree trunks, which are mostly woody, and thus relatively metabolically inert.
+- Bacteria include about 90% deep subsurface biomass (mostly in aquifers and below the seafloor), which have very slow metabolic activity and associated turnover times of several months to thousands of years (18 –22).
+- S1 ), mostly consisting of ≈150 Gt C of plant roots and leaves and ≈9 Gt C of terrestrial and marine bacteria whose contribution is on par with the ≈12 Gt C of fungi ( SI Appendix, Table S8 ).
+- Whereas groups like insects dom inate in terms of species richness [with about 1 million de scribed species (23)], their relative biomass fraction is miniscule.
+- For example, the Antarctic krill species Euphausia superba contributes ≈0.05 Gt C to global biomass (24), similar to other prominent species such as humans or cows.
+- The assessment is based on a collection of country reports that detail the area and biomass density of forests in each country (26) using a standardized format and methodology.
+- S1 .( B) Absolute biomass of different animal taxa.
+- Summary of estimated total biomass for abundant taxonomic groups Taxon Mass (Gt C) Uncertainty (-fold) Plants 450 1.2 Bacteria 70 10 Fungi 12 3 Archaea 7 13 Protists 4 4 Animals 2 5 Arthropods, terrestrial 0.2 Arthropods, marine 1 Chordates, fish 0.7 Chordates, livestock 0.1 Chordates, humans 0.06 Chordates, wild mammals 0.007 Chordates, wild birds 0.002 Annelids 0.2 Molluscs 0.2 Cnidarians 0.1 Nematodes 0.02 Viruses 0.2 20 Total 550 1.7 Values are based on an extensive literature survey and data integration as detailed in the SI Appendix .
+- PNAS | June 19, 2018 | vol. 115 | no. 25 | 6507 SYSTEMS BIOLOGY SEE COMMENTARY plant biomass (27 –29).
+- Combining data from independent sources such as these enables a robust assessment of the total plant biomass (17).
+- Today, the biomass of humans ( ≈0.06 Gt C; SI Appendix, Table S9 ) and the biomass of livestock ( ≈0.1 Gt C, dominated by cattle and pigs; SI Appendix, Table S10 ) far surpass that of wild mammals, which has a mass of ≈0.007 Gt C ( SI Appendix, Table S11 ).
+- This is also true for wild and domesticated birds, for which the biomass of domesticated poultry ( ≈0.005 Gt C, dominated by chickens) is about threefold higher than that of wild birds ( ≈0.002 Gt C; SI Appendix, Table S12 ).
+- Even though humans and livestock dominate mammalian biomass, they are a small fraction of the ≈2 Gt C of animal biomass, which primarily comprises arthropods ( ≈1G tC ; SI Appendix , Tables S13 and S14), followed by fish ( ≈0.7 Gt C; SI Appendix , Table S15 ).
+- The biomass of wild land mammals before this period of extinction was estimated by Barnosky (30) at ≈0.02 Gt C.
+- The present-day biomass of wild land mammals is approximately sevenfold lower, at ≈0.003 Gt C ( SI Appendix, Prehuman Biomass and Chordates and Table S11 ).
+- Intense whaling and exploitation of other marine mammals have resulted in an approximately fivefold decrease in marine mammal global biomass [from ≈0.02 Gt C to ≈0.004 Gt C (31)].
+- While the total biomass of wild mammals (both marine and terrestrial) decreased by a factor of ≈6, the total mass of mammals increased approximately fourfold from ≈0.04 Gt C to ≈0.17 Gt C due to the vast increase of the biomass of humanity and its associated livestock.
+- Human activity has also impacted global vertebrate stocks, with a decrease of ≈0.1 Gt C in total fish biomass, an amount similar to the remaining total biomass in fisheries and to the gain in the total mammalian biomass due to livestock husbandry (SI Appendix, Pre-human Biomass ).
+- A worldwide census of the total number of trees (32), as well as a comparison of actual and potential plant biomass (17), has suggested that the total plant biomass (and, by proxy, the total biomass on Earth) has declined approximately twofold relative to its value before the start of human civilization.
+- The total biomass of crops cultivated by humans is estimated at ≈10 Gt C, which accounts for only ≈2% of the extant total plant biomass (17).
+- The ocean covers 71% of the Earth ’s surface and occupies a much larger volume than the terrestrial environment, yet land biomass, at ≈470 Gt C, is about two orders of magnitude higher than the ≈6 Gt C in marine biomass, as shown in Fig. 2 A.
+- Even though there is a large difference in the biomass content of the terrestrial and marine environments, the primary productivity of the two environments is roughly equal (33).
+- For plants, we find that most biomass is concentrated in terrestrial environments (plants have only a small fraction of marine biomass, <1G tC ,i n the form of green algae and seagrass; Fig. 2 B).
+- In stark contrast, in the oceans, ≈1 Gt C of primary producers supports ≈5 Gt C of consumer biomass, resulting in an inverted standing biomass distribution as shown in Fig. 2 C.S u c h inverted biomass distributions can occur when primary producers have a rapid turnover of biomass [on the order of days (34)], while consumer biomass turns over much more slowly [a few years in the case of mesopelagic fish (35)].
+- Previous reports have observed inverted biomass pyramids in local marine environments (36, 37).
+- An additional study noted an inverted consumer/producer ratio for the global plankton biomass (16).
+- The marine environment is primarily occupied by microbes, mainly bacteria and protists, which account for ≈70% of the total marine biomass.
+- The deep subsurface holds ≈15% of the total biomass in the biosphere.
+- It is chiefly composed of bacteria and archaea, which are mostly surface-attached and turn over their biomass every several months to thousands of years (18 –22).
+- Scientists have closely monitored the impact of humans on global biodiversity (39 –41), but less attention has been given to total biomass, resulting in high uncertainty regarding the impact of humanity on the biomass of vertebrates.
+- The biomass of amphibians, which are experiencing a dramatic population decline (42), remains poorly characterized.
+- In the case of prokaryotes, some major improvements were recently realized, with global estimates of marine deep subsurface prokaryote biomass reduced by about two orders of magnitude due to an increased diversity of sampling locations (7).
+- For example, the biomass of parasites, which is not resolved from their hosts in this study, might be larger than the biomass of top predators in some environments (43).
+- For example, the biomass of termites [≈0.05 Gt C (25)] is on par with that of humans but is still around an order of magnitude smaller than that of other taxa, such as fish ( ≈0.7 Gt C; SI Appendix, Table S15 ).
+- Other groups, such as nematodes, surpass any other animal species in terms of number of individuals ( SI Appendix,F i g .S 2) but constitute only about 1% of the total animal biomass.
+- PNAS | June 19, 2018 | vol. 115 | no. 25 | 6509 SYSTEMS BIOLOGY SEE COMMENTARY General Framework for Estimating Global Biomass.
+- Conversion from counts of individuals to biomass is based on either known average weights per individual (e.g., 50 kg of wet weight for a human, which averages over adults and children, or 10 mg of dry weight for a “characteristic” earthworm) or empirical allometric equations that are organism-specific, such as conversion from animal length to biomass.
+- We supplement these kingdoms of living organisms with an estimate for the global biomass of viruses, which are not included in the current tree of life but play a key role in global biogeochemical cycles (49).
+- Integrating across the entire surface of the Earth, we get a global estimate of the biomass of the taxon. 6510 | www.pnas.org/cgi/doi/10.1073/pnas.1711842115 Bar-On et al.
+- Kallmeyer J, Pockalny R, Adhikari RR, Smith DC, D ’Hondt S (2012) Global distribution of microbial abundance and biomass in subseafloor sediment.
+- (2014) Large mesopelagic fishes biomass and trophic efficiency in the open ocean.
+- (2017) Unexpectedly large impact of forest management and grazing on global vegetation biomass.
+- Atkinson A, Siegel V, Pakhomov EA, Jessopp MJ, Loeb V (2009) A re-appraisal of the total biomass and annual production of Antarctic krill.
+- Sanderson MG (1996) Biomass of termites and their emissions of methane and carbon dioxide: A global database.
+- Barnosky AD (2008) Colloquium paper: Megafauna biomass tradeoff as a driver of Quaternary and future extinctions.
+- Dortch Q, Packard TT (1989) Differences in biomass structure between oligotrophic and eutrophic marine ecosystems.
+- Gasol JM, del Giorgio PA, Duarte CM (1997) Biomass distribution in marine planktonic communities.
+- (2008) Ecosystem energetic implications of parasite and free-living biomass in three estuaries.
+
 ### Kreidberg2019  (arxiv-eprint-tex; 36,499 chars)
 - Absence of a thick atmosphere on the terrestrial exoplanet LHS 3844b Laura Kreidberg^1,2 , Daniel D.B.
 - Previous phase curve observations of the super-Earth 55 Cancri e (1.9 Earth radii) showed that its peak brightness is offset from the substellar point --- possibly indicative of atmospheric circulation .
@@ -2542,6 +2666,194 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 - To facilitate greater understanding of the risks associated with mi rror life and further progress on governance, we plan to convene discussions on these topics in 2025.
 - Adamala et al., “Technical Report on Mirror Bacteria: Feasibility and Risks” (2024); https://doi.org/10.25740/cv716pj4036. 2.
 - Bohannon, Mirror -Image Cells Could Transform Science — or Kill Us All, WIRED (2010). https://www.wired.com/2010/11/ff-mirrorlife/. 4.
+
+### Millett2017  (europepmc:PMC5576214; 61,469 chars)
+- Recent controversy has already emerged over a number of scientific experiments that resulted in viruses with enhanced transmissibility, lethality, and/or the ability to overcome therapeutics. 13-17 Other experiments demonstrated that mousepox could be modified to have a 100% case fatality rate and render a vaccine ineffective. 18 In addition to transmissibility and lethality, studies have shown that other disease traits, such as incubation time, environmental survival, and available vectors, could be modified as well. 19-21 Although these experiments had scientific merit and were not conducted with malicious intent, their implications are still worrying.
+- Together they form an overlapping spectrum of increasing impact and decreasing likelihood ( Figure 1 ). * Figure 1.
+- Alternative definitions can be found in previous reports, 33 as well as within this journal issue. 34 The historical use of bioweapons provides useful examples of some categories of biothreats.
+- A 2015 Risk and Benefit Analysis for Gain of Function Research detailed 24 biocrimes between 1990 and 2015 (0.96 per year) and an additional 42 bioterrorism incidents between 1972 and 2014 (1 per year). 36 This is consistent with other estimates of biocrimes and bioterrorism frequency, which range from 0.35 to 3.5 per year (see supplementary material , part 1, at http://online.liebertpub.com/doi/suppl/10.1089/hs.2017.0028 ).
+- For example, the anthrax letter attacks in the United States in 2001, perhaps the most high-profile case in recent years, resulted in only 17 infections with 5 fatalities. 37 The 2015 Risk and Benefit Analysis for Gain of Function Research detailed only a single death from the recorded biocrimes. ** Only 1 of the bioterrorism incidents in the report had associated deaths (the 2001 anthrax letter attacks). 36 Based on this data, for the purposes of this article, we assume that we could expect 1 incident per year resulting in up to tens of deaths.
+- South Africa — 1981-1994 Soviet Union 1920-1945 1945-1992 United Kingdom 1925-1945 1945-1957 United States 1942-1945 1945-1969 The actual use of bioweapons by states is less common: Over the 85 years covered by these histories (1915 to 2000), 18 cases of use (or possible use) were recorded, including outbreaks connected to biological warfare (see supplementary material , part 2, at http://online.liebertpub.com/doi/suppl/10.1089/hs.2017.0028 ).
+- Extrapolating this out (dividing 18 by 85), we would have about a 20% chance per year of biowarfare.
+- Since many of these incidents occurred during infrequent great power wars, we revise our best guess to around 10% chance per year of biowarfare.
+- Combined, these figures provide an estimated impact of between 66 to 330 and 17,000 to 30,000.
+- For the purposes of this analysis, we are assuming the lower boundary figures from biological warfare are indicative of events , with a likelihood of 10% per year and an impact ranging between tens and thousands of fatalities.
+- The upper boundary figures from biological warfare are indicative of disasters , with a likelihood of 1% per year and an impact range of thousands to tens of thousands of fatalities. ‡‡ Global Catastrophic and Existential Risk Unlike standard biothreats, there is no historical record on which to draw when considering global catastrophic or existential risks.
+- Participants had a median risk estimate of 0.05% that a natural pandemic would lead to human extinction by 2100, and a median risk estimate of 2% that an “engineered” pandemic would lead to extinction by 2100. 42 The advantage of the survey is that it directly measures the quantity that we are interested in: probability of extinction from bioweapons.
+- We therefore also turn to other models that, while indirect, provide more objective measures of risk. §§ Model 2: Potentially Pandemic Pathogens Recent controversial experiments on H5N1 influenza prompted discussions as to the risks of deliberately creating potentially pandemic pathogens.
+- These agents are those that are highly transmissible, capable of uncontrollable spread in human populations, highly virulent, and also possibly able to overcome medical countermeasures. 44 Previous work in a comprehensive report done by Gryphon Scientific, Risk and Benefit Analysis of Gain of Function Research, 36 has laid out very detailed risk assessments of potentially pandemic pathogen research, suggesting that the annual probability of a global pandemic resulting from an accident with this type of research in the United States is 0.002% to 0.1%.
+- The report also concluded that risks of deliberate misuse were about as serious as the risks of an accidental outbreak, suggesting a 2-fold increase in risk.
+- Multiplying the probability of an outbreak with the probability of an existential risk gives us an annual risk probability between 1.6 × 10 –8 and 8 × 10 –7 . ††† Model 3: Naive Power Law Extrapolation Previous literature has found that casualty numbers from terrorism and warfare follow a power law distribution, including terrorism from WMDs. 46 Power laws have the property of being scale invariant, meaning that the ratio in likelihood between events that cause the deaths of 10 people and 10,000 people will be the same as that between 10,000 people and 10,000,000 people. ‡‡‡ This property results in a distribution with an exceptionally heavy tail, so that the vast majority of events will have very low casualty rates, with a couple of extreme outliers.
+- Extrapolating the power law out, we find that the probability that an attack kills more than 5 billion will be (5 billion) –0.5 or 0.000014.
+- Assuming 1 attack per year (extrapolated on the current rate of bio-attacks) and assuming that only 10% of such attacks that kill more than 5 billion eventually lead to extinction (due to the breakdown of society, or other knock-on effects), we get an annual existential risk of 0.0000014 (or 1.4 × 10 –6 ).
+- Our estimate assumes that wars will occur with the same frequency as in 1820 to 1997, with 1 new war arising roughly every 2 years.
+- In instances where the probability of a catastrophe is thought to be extremely low (eg, human extinction from bioweapons), greater uncertainty around the estimates will typically imply greater risk of the catastrophe, as we have reduced confidence that the risk is actually at a low level. 48 §§§ Given that our conservative models are based on historical data, they fail to account for the primary source of future risk: technological development that could radically democratize the ability to build advanced bioweapons.
+- The Earth is thought to be habitable for roughly another billion years; 56 our closest relative, homo erectus, lasted over 1.6 million years, 57 and the typical mammalian species also lasts on the order of 1 to 2 million years. 58 Following Matheny, 29 if we were to assume that humanity would otherwise maintain a global population of 10 billion for the next 1.6 million years, human extinction would jeopardize on the order of 1.6 × 10 16 life years.
+- Here we turn to cost-effectiveness analysis, which is one method of prioritizing public projects. 29 Cost-effectiveness analysis is helpful if our goal is to maximize the effect of our resources to achieve a measurable aim (such as life-years saved or cases of disease averted).
+- However, the World Bank estimates that it would cost $1.9 billion to $3.4 billion per year over 5 years to bring all human and animal health systems up to minimal international standards, and it suggests that these measures would prevent at least 20% of pandemics. 60 †††† Many countries do not currently have healthcare systems that meet international standards—for example, in 2014 only 33% of countries reported their national arrangements met those required under the International Health Regulations. 61 These mitigation measures would be adopted to be effective regardless of whether a disease outbreak originates naturally, accidentally, or deliberately. ‡‡‡‡ The ability to rapidly detect and characterize the agent involved helps fast-track public health and R&D responses.
+- Even if we lack existing or candidate vaccines or therapeutics, having the capacity to treat symptoms can have a dramatic impact on case fatality rates. §§§§ We therefore assume that strengthening healthcare systems to meet international standards would have an impact on mitigating all types of disease risk, ranging from incidents and events to existential risks. ***** We extend the World Bank's assumptions to include bioterrorism and biowarfare—that is, we assume that the healthcare infrastructure would reduce bioterrorism and biowarfare fatalities by 20%.
+- We conservatively assume that existential risks will be reduced by only 1%, since any potential existential risk would likely be deliberately designed to overcome medical countermeasures.
+- We calculate that purchasing 1 century's worth of global protection in this form would cost on the order of $250 billion, assuming that subsequent maintenance costs are lower but that the entire system needs intermittent upgrading. ††††† To calculate the cost per life-year saved, we use the equation C/(N × L × R), where C is the cost of reducing risk, N is the number of biothreats we expect to occur in 1 century, L is the number of life-years lost in such an event, and R is the reduction in risk achieved by spending a given amount (specified by C).
+- For nonextinction risks, we increase L 50 times over to denote 50 life-years saved per life.
+- Results Including future generations into our cost-effectiveness calculations demonstrates that reducing existential risks, even if they are improbable, can be incredibly cost-effective in expectation ( Table 2 ).
+- Despite the vast resources spent on counterterrorism, governments may have neglected low-probability, high-impact risks. 65 , 66 This therefore constitutes a critically underdeveloped area of research, for which there is likely low-hanging fruit.
+- If we ignore distant future generations by discounting, the benefits of reducing existential risk fall by between 3 and 5 orders of magnitude (with a 1% to 5% discount rate), which is still far more cost-effective than measures to reduce small-scale casualty events.
+- Under our survey model (Model 1), the cost per life-year varies between $1,300 and $52,000 for a 5% discount rate and between $770 and $30,000 for a 1% discount rate.
+- These costs are even competitive with first-world healthcare spending, where typically anything less than $100,000 per quality adjusted life-year is considered a reasonable purchase. 29 This suggests that even if we are concerned about welfare only in the near term, reducing existential risks from biotechnology is still a cost-effective means of saving expected life if the future chance of an existential risk is anything above 0.0001 per year.
+- Our conservative models (with much lower risk) suggest that existential risk prevention is not cost-effective when compared to basic healthcare spending: Model 2 results in a cost per life-year between $330,000 and $16 million for a 5% discount rate and $190,000 and $9.7 million for a 1% discount rate, while Model 3 results in a cost per life-year of between $190,000 and $500,000 for a 5% discount rate and between $110,000 and $310,000 for a 1% discount rate.
+- Moreover, occasionally there are other opportunities that might be particularly cost-effective—for example, smallpox eradication cost less than $300 million (roughly $1.5 billion in 2017 dollars) and likely saved millions of lives. 68 The conclusion is thus not that we should abandon all other health interventions for the sake of saving future lives, but rather that on balance we should increase investments that reduce these low-probability, high-stakes risks.
+- The near collapse of the 8th Review Conference of the Biological Weapons Convention in December 2016 demonstrates how fragile this regime is and how far current instruments are from the ideal.
+- The current 3-person Implementation Support Unit costs less than $1 million per year to support. 71 In comparison, the 2017 budget for the work of the Organization for the Prohibition of Chemical Weapons is around $77 million (and provides for more than 450 fixed-term posts). 72 Increasing the human capacity currently focusing on biological weapons risks by several orders of magnitude would be notably cheaper than the costs associated with building core capacities in public and animal health.
+- Cambridge, Cambridgeshire : Cambridge University Press ; 2001 4 Rosen W Justinian's Flea: Plague, Empire and the Birth of Europe .
+- Science 1967 ; 155 ( 3767 ): 1231 17847533 10.1126/science.155.3767.1231-a 24 Dando M The impact of the development of modern biology and medicine on the evolution of offensive biological warfare programs in the twentieth century .
+- Comparative Strategy 2008 : 27 ( 4 ): 315 - 323 26 Wheelis M Biological sabotage in World War I .
+- Emerg Infect Dis 1999 ; 5 ( 4 ): 498 - 504 10458952 10.3201/eid0504.990406 PMC2627752 31 Petro JB , Plasse TR , McNulty JA Biotechnology: impact on biological warfare and biodefense .
+- J Risk Res 2010 ; 13 ( 2 ): 191 - 205 48 Rees MJ Our Final Century: Will the Human Race Survive the 21st Century?
+- Soc Choice Welfare 1991 ; 8 ( 1 ): 79 - 88 52 Cowen T Consequentialism implies a zero rate of intergenerational discount .
+- Rutgers University Graduate School , New Brunswick, NJ ; 2013 55 Lenton TM , von Bloh W Biotic feedback extends the life span of the biosphere .
+- Am J Phys Anthropol 2003 ; 122 ( S37 ): 126 - 170 10.1002/ajpa.10399 14666536 57 Avise JC , Walker D , Johns GC Speciation durations and Pleistocene effects on vertebrate phylogeography .
+- Geneva: WHO; 2005 http://www.who.int/csr/ihr/WHA58-en.pdf Accessed 7 20 , 2017 62 Kucharski AJ , Edmunds WJ Case fatality rate for Ebola virus disease in west Africa .
+- Global Policy 2013 ; 4 ( 1 ): 15 - 31 65 Myhrvold N Strategic terrorism: a call to action.
+- Lawfare Research Paper Series . 2013 https://lawfare.s3-us-west-2.amazonaws.com/staging/s3fs-public/uploads/2013/07/Strategic-Terrorism-Myhrvold-7-3-2013.pdf Accessed 7 20 , 2017 66 Cowen T , Parfit D Against the social discount rate .
+- C-21/DEC/CRP.1 , Organization for the Prohibition of Chemical Weapons , The Hague, Netherlands ; 21 10 2016 * While noting that the use of bioweapons can have a wide range of other impacts, including sociopolitical and economic, here we consider their impact purely in terms of fatalities. † There is considerable uncertainty involved with the dataset on the historical use of biological weapons, including considerable variation in key terms and assumptions, likely knowledge gaps, and motivations for both claiming natural events as unnatural, and vice versa.
+- As noted elsewhere in this article, the conclusions drawn are considered by orders of magnitude, which helps to address these uncertainties. ‡ Biocrimes can be considered to be “the use of a biological agent to kill or make ill a single individual or small group of individuals, motivated by revenge or the desire for monetary gain by extortion, rather than by political, ideological, religious or other beliefs.” 35 § Bioterrorism can be considered to be “the deliberate release of viruses, bacteria or other agents used to cause illness or death in people, but also in animals or plants.
+- It is aimed at creating casualties, terror, societal disruption, or economic loss, inspired by ideological, religious or political beliefs.” 35 ** A number of other biocrimes involved deliberately infecting another individual with HIV, the results of which were not evident and have not been included in this analysis. †† Biological warfare can be considered to be the “ability to use biological agents in warfare.” 35 ‡‡ Whilst there are no documented examples, it is possible that if an attack similar to the one that caused the plague epidemic in China were to be carried out in a modern mega-city, even relatively low infectivity and case fatality rates could result in disasters or even crises.
+- A disaster would require around 0.5% of its population to die, and a crisis would equate to 5% of the city's population. §§ A more rigorous survey examined the probability of a bioweapons attack in a 10-year timeframe with more than 100 illnesses 43 and found that opinions varied widely between 1% and 100%, with a mean of 57.5%.
+- To calculate the probability of an extreme event (say, an attack that results in over 5 billion deaths), we need an estimate of α . §§§ For example, let's say our best guess for a risk is 0.01%, and that we are highly uncertain about this.
+- The case fatality rate in West Africa was 51%. 63 The case fatality rate for those treated in Europe and North America was 18.5%. 64 ***** Given the zoonotic nature of many emerging diseases and the recognized importance of adopting a One Health approach when addressing epidemic and pandemic risk, it will be important that both public health and animal health systems are strengthened to meet international standards. ††††† $1.9 billion to $3.4 billion over 5 years is $9.5 billion to $17 billion.
+- If we assume annual maintenance costs are half of those invested ($0.95 billion to $1.7 billion), and a fresh round of reinvestment is needed every 25 years, we get between $114 billion and $204 billion for 100 years of protection.
+
+### Noble2018  (explicit:https://elifesciences.org/articles/33423.pdf; 102,184 chars)
+- Following reports of successful CRISPR gene drive systems in yeast ( DiCarlo et al., 2015 ) and fruit flies ( Gantz and Bier, 2015 ), scientists emphasized the need to employ strategies beyond traditional barrier containment as a laboratory safeguard ( National Academies of Sciences, Engineering, and Medicine, 2016 ; Akbari et al., 2015 ).
+- Recent examinations of the phenomenon by experiments and deterministic models have generated substantial media attention ( Champer et al., 2017 ; Unckless et al., 2017 ; Drury et al., 2017 ; Noble et al., 2017).
+- DOI: https://doi.org/10.7554/eLife.33423 1 of 30 RESEARCH ARTICLE unless additional mitigating strategies are employed ( Burt, 2003 ; Deredec et al., 2008 ; Esvelt et al., 2014 ; Noble et al., 2017 ; Marshall et al., 2017 ).
+- DOI: https://doi.org/10.7554/eLife.33423 3 of 30 Research article Genetics and Genomics Evolutionary Biology (P), or the probability of undergoing homology-directed repair instead of nonhomologous repair, and fitness ( f ), or the relative fecundity or death rate the drive and its cargo confer on their organism compared to the wild-type.
+- Consistent with experiments, we assume that the drive invariably cuts the wild-type allele in the germline of a heterozygous WD individual, converting to a drive allele with probability P, or a resistant allele with probability 1 /C0 P.
+- Each genotype, AB, has a relative reproductive rate, fAB, corresponding to its fitness in deterministic models, normalized such that the wild-type homozygote has fitness one ( fWW ¼ 1), the drive confers a dominant cost ( fDW ¼ fDD ¼ fDR<1), and resistance is neutral (fWR ¼ fRR ¼ 1).
+- Our model consists of five subpopulations C D E Time (generations) 0 0.5 1 D frequency 0 0.5 1 D frequency 0 0.5 1 D frequency 0 0.5 1 D frequency 0 20 40 60 80 100 0 20 40 60 80 100 0 20 40 60 80 100 0 20 40 60 80 100 Homing efficiency 0 0.2 0.4 0.6 0.8 1 0 0.2 0.4 0.6 0.8 1 10 -5 10 -4 10 -3 10 -2 10 -1 10 -5 10 -4 10 -3 10 -2 10 -1 Migration rate Migration rate Escape probability 0 0.2 0.4 0.6 0.8 1 Probability Populations invaded m = 10-1 m = 10-2 m = 10-3 m = 10-4 1 2 3 4 A Subpopulation BPopulation Individual Wild-type Drive Resistant Release Escape Containment Initial pop.
+- ( C) Typical simulations for varying migration rates ( m ¼ 10/C0 1, top, to m ¼ 10/C0 4, bottom), following introduction into a single subpopulation.
+- (E) Probability of invading 1, 2, 3, or 4 additional populations (aside from the originating population, which is typically invaded), assuming a homing efficiency of P ¼ 0:5.
+- Typical dynamics are illustrated in Figure 2C .
+- Figure 2B and D show the escape probability, or the probability of the drive invading (arbitrarily defined as attaining a frequency of 0.1) at least one subpopulation other than its originating one, and Figure 2E shows the probability of invading a varying number of subpopulations.
+- Our results in Figure 2 suggest that if the migration rate is extremely low, then the drive is effectively contained in the initial subpopulation.
+- In the scenario studied in Figure 2 , a migration rate of 10/C0 3, which corresponds to a single migration event every 2 generations on average (Materials and methods), virtually guarantees escape for moderate drive efficiencies (Materials and methods).
+- While varying drive fitness, we find that peak drive is on average greater than 30% across the majority of the regime and almost always greater than 10% (Figure 7 , left)—and, as a technical aside, we find that this is the case whether the fitness cost of the drive manifests itself via a reduction in birth rate or via increase in death rate ( Figure 7 , right).
+- We extended the model to include a probability s of an individual selfing rather than mating with a second individual (Bull, 2017 ).
+- There are a variety of other phenomena that could affect invasiveness, e.g., density dependence (Deredec et al., 2011 ), environment ( Tanaka et al., 2017 ), costly resistance ( Traulsen and Reed, 2012), local ecology, and even mating incompatibilities between some laboratory strains and wild individuals.
+- Additionally, our findings emphasize the importance of the containment strategy known as ‘ecological confinement’, which was proposed previously ( Esvelt et al., 2014 ; Akbari et al., 2015 ).
+- The development of ‘local’, intrinsically self-exhausting gene drive systems (Chen et al., 2007 ; Akbari et al., 2014 ; Noble et al., 2016 ; Magori and Gould, 2006 ; Gould et al., 2008), sensitive methods of monitoring population genetics, and strategies for countering self- Noble et al. eLife 2018;7:e33423.
+- Materials and methods Well-mixed finite population model To model gene drives in finite populations, we introduce a Moran-type model with sexual reproduction (illustrated in Figure 1C ).
+- First, two individuals are chosen without replacement for mating with probabilities proportional to their reproductive rates, so that genotype a is selected with probability faNaP b fbNb : (1) Here Na is the number of individuals having genotype a, and the sum in the denominator is over all six genotypes.
+- Using this notation, the probability that an offspring of genotype g is chosen given a mating between parents of genotypes a and b is given by the quantity qg ab, which is equal to qg1 a qg2 b þ qg2 a qg1 b 1 þ dg1g2 : (2) Here qA a is a gamete production probability—the probability that a parent with genotype a produces a gamete with haplotype A—and dAB is the Kronecker delta, defined by dAB ¼ 1 if A ¼ B (i.e., if the offspring under consideration is a homozygote), and dAB ¼ 0 otherwise.
+- More specifically, one step of the process proceeds as follows (illustrated in Figure 11 ).
+- Or, with probability 1 /C0 m, we initiate a mating event as described in the well-mixed section.
+- We choose this population with probability proportional to the square of its total fitness, since this counts the rate of reproduction for every possible mating pair in the population (as matings occur Noble et al. eLife 2018;7:e33423.
+- DOI: https://doi.org/10.7554/eLife.33423 8 of 30 Research article Genetics and Genomics Evolutionary Biology with rates proportional to the fitness of each parent).
+- To incorporate SGV, we simply alter the initial conditions: rather than introducing i drive homozygotes into a population of N /C0 i wild-type homozygotes, we introduce i drive homozygotes into a population consisting of j resistant homozygotes (we choose resistant homozygotes for simplicity, since 0 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 Initial resistance frequency Peak drive 0 0.1 0.2 0.3 0.4 0.5 Distribution Mean Linear regression of mean R2 = 0.996 Figure 4.
+- For example, if the population has a 0:1 frequency of resistant alleles immediately prior to release, then the population that is susceptible to drive is roughly 90% of the census population size, and the drive undergoes its usual dynamics within this subpopulation.
+- For example, female Anopheles gambiae mosquitoes can lay hundreds of eggs per lifetime ( Hammond et al., 2016).
+- To begin, Hill showed in 1972 that the variance effective population size in the standard Moran model is ( Hill, 1972) Ne ¼ 4N 2 þ s2 X : (4) Here N is the census population size, and s2 X is the variance in the distribution of the total number of offspring produced by an individual over the course of its lifetime ( i.e., its lifetime reproductive success).
+- The left panel corresponds to our standard model, shown in Figure 1C , while the right panel represents a modification: parents are chosen uniformly, and individuals die with probability proportional to the inverse of their fitness.
+- In Figure 5 , we present peak drive distributions (as in Figures 1E and 3) for varying values of k with the effective population size, Ne, and effective release size, ie, both determined by Equation (5) , Selfing rate, s 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 P = 0.15 P = 0.50 P = 0.90 Peak drive Peak drive Peak drive Mean Distribution 0 0.5 1 0 0.5 1 0 0.5 1 Figure 9.
+- For example, an organism which typically has 100 offspring that survive to adulthood would need a release size of roughly 258 to surpass the 10-individual initial release threshold we have observed.
+- Second, the decrease in effective release size, ie, leads to a greater probability of simulations immediately going extinct, i.e., the relative mass of the mode centered around » 0 increases.
+- The probability of a particular egg reaching adulthood is then p ¼ /C18 0/C18 L/C18 P.
+- In each time step, a migration occurs with probability m, or a mating happens with probability 1 /C0 m.
+- However, drive constructs developed for applications are likely to employ resistance-mitigating strategies, such as multiplex targeting of essential genes (Esvelt et al., 2014 ; Noble et al., 2017 ), which essentially increase the fitness cost associated with drive-resistance.
+- However, if the fitness cost of resistance is sufficiently high ( s>1=3), then the improvement in drive spread brought about by increasing the cost of resistance saturates, since the drive can now be less costly than resistance ( f >1 /C0 s) but also too costly to invade ( f <2=3).
+- We then choose the first parent as the second parent as well with probability s; or, with probability 1 /C0 s, we choose a second parent from the remaining population, with probability proportional to its fitness.
+- DOI: https://doi.org/10.7554/eLife.33423 18 of 30 Research article Genetics and Genomics Evolutionary Biology Thus highly effective drive can tolerate inbreeding of F » 0:6 and conservative drive can tolerate F » 0:43.
+- We define a Moran-type process, where in each time step either a reproduction or migration event takes place (illustrated in Figure 11 ).
+- A reproduction event occurs with probability 1 /C0 m and a migration event occurs otherwise.
+- This claim is equivalent to stating that the probability that the drive starting at frequency c0 attains frequency c1 (such that c0<c1<c) before going extinct tends to 1.
+- This behavior is typical of Moran-type models, since the extinction probability of i drive homozygotes rapidly approaches 0, even in an infinite population, as i increases (Marshall, 2009 ).
+- Specifically, if we have i ¼ c0N, then the extinction probability approaches 0 as N becomes large, and moreover, if the drive does not go extinct, then it behaves almost deterministically and will reach frequency c and thus also c1.
+- Let ei;j, be the probability that the drive survives stochastic fluctuations and avoids immediate extinction when Noble et al. eLife 2018;7:e33423.
+- Note that when i or j are O Nð Þ , ei;j is approximately 1, so when i; j /C28 N, we assume that the probability that the drive migrates is approximately 0.
+- We also assume here that the probability that the drive migrates is approximately 0.
+- Finally, we numerically solve a deterministic ODE system representing the dynamics ( Noble et al., 2017 ) to approximate the probability that the drive does not migrate at time t.
+- Thus, P Ef g ¼ P Ejdrive avoids extinctionf g ei;0 þ P Ejdrive does not avoid extinctionf g 1 /C0 ei;0 /C0 /C1 » P Ejdrive avoids extinctionf g ei;0 » ei;0 1 /C0 QT t¼1 P drive does not migrate and invade at time tf g /C18 /C19 ¼ ei;0 1 /C0 QT t¼1 1 /C0 P drive invadesjdrive migrates at time tf g P drive migrates at time tf gð Þ /C18 /C19 ¼ ei;0 1 /C0 QT t¼1 1 /C0 me1;0EPDD t /C0 me0;1 EPWD t þ EPDR t /C0 /C1/C0 /C1/C18 /C19 ; since if the drive avoids extinction it will invade.
+- Note that if m ¼ O 1=Tð Þ and heuristically we replace EPa t in the above expressions with its time average, denoted fa, then ei;0 1 /C0 QT t¼1 1 /C0 me1;0EPDD t /C0 me0;1 EPWD t þ EPDR t /C0 /C1/C0 /C1/C20 /C21 » ei;0 1 /C0 1 /C0 e1;0fDDþe0;1 fWDþfDRð Þ T /C18 /C19 T" # » ei;0 1 /C0 exp /C0 e1;0fDD þ e0;1 fWD þ fDR/C0 /C1/C0 /C1/C2 /C3 : Thus, when the migration rate is on the order of the inverse of the drive extinction time, the invasion probability is order 1.
+- References Akbari OS, Bellen HJ, Bier E, Bullock SL, Burt A, Church GM, Cook KR, Duchek P, Edwards OR, Esvelt KM, Gantz VM, Golic KG, Gratz SJ, Harrison MM, Hayes KR, James AA, Kaufman TC, Knoblich J, Malik HS, Matthews KA, et al. 2015.
+- DOI: https://doi.org/10. 1126/science.1138595, PMID: 17395794 Cong L, Ran FA, Cox D, Lin S, Barretto R, Habib N, Hsu PD, Wu X, Jiang W, Marraffini LA, Zhang F. 2013.
+- Given this complexity, we elaborate here on the specific data we selected for review to produce Appendix 1—table 1 and the reasoning for our choices.
+- The fractional abundance of drive allele was measured by performing qPCR on diploid offspring from wild-type/drive haploid matings; the corresponding data is found in Figure 5b .
+- The fractional abundance of the drive allele was measured to be > 99%, so P>0:99, as for the first construct above.
+- DOI: https://doi.org/10.7554/eLife.33423 25 of 30 Research article Genetics and Genomics Evolutionary Biology The drive efficiency was measured in the same way as that for the cas9 +sgRNA drive (qPCR to calculate fractional abundance of the overwriting drive allele in diploid offspring from haploid matings).
+- The fractional abundance was calculated to be > 99%, so P>0:99, as above.
+
+### Esvelt2014  (explicit:https://elifesciences.org/articles/03401.pdf; 93,776 chars)
+- A discussion of risk governance and regulation intended specifically for policymakers is published separately (Oye et al., 2014).
+- Because copying causes the fraction of offspring that inherit the cassette to be greater than 1/2 (Figure 1B ), these genes can drive through a population even if they reduce the reproductive fitness of the individual organisms that carry them.
+- Austin Burt outlined an elegant strategy involving the use of gene drives to disrupt genes that cause infertility or lethality only when both copies are lost (Burt, 2003).
+- Whether a standard gene drive will spread through a target population depends on molec ular factors such as homing efficiency, fitness cost, and evolutionary stability ( Marshall and Hay, 2012); only the rate of spread is determined by the mating dynamics, generation time, and other characteristics of the target population.
+- In contrast, models suggest that the deleterious and complex effects of genetic load and sexbiasing suppression drives render them more sensitive to population-specific ecological vari ables such as density-dependent selection (Burt, 2003; Schliekelman et al., 2005 ; Huang et al., 2007; Deredec et al., 2008 ; Marshall, 2009 ; Yahara et al., 2009; Deredec et al., 2011; Alphey and Bonsall, 2014).
+- Cas9 is a component of Type II CRISPR acquired immune systems in bacteria, which allow cells to ‘remember’ the sequences of pre viously encountered viral genomes and protect themselves by recognizing and cutting those sequences if encountered again.
+- DOI: 10.7554/eLife.03401 5 of 21 Feature article The process of editing a target gene involves choosing protospacers within the gene, building one or more guide RNAs with matching spac ers, and delivering Cas9, guide RNAs, and an edited repair template lacking those proto spacers into the cell ( Figure 3 ).
+- In principle, RNA-guided gene drives might be capable of spreading almost any genomic alteration that can be generated using Cas9 through sexually reproducing populations.
+- The two least effective guide RNAs indi vidually cut at rates exceeding 12% and 56%, but exhibited cutting rates above 91% when com bined.
+- The notable success of Cas9-based genome engineering in many dif ferent species, including studies that targeted every gene in the genome ( Shalem et al., 2014; Wang et al., 2014 ), demonstrates that most sequences can be efficiently targeted independent of species and cell type.
+- While several studies have reported that Cas9 is prone to cutting off-target sequences that are closely related to the target (Fu et al., 2013; Hsu et al., 2013; Mali et al., 2013a; Pattanayak et al., 2013), more recent developments and strategies designed to improve specificity (Mali et al., 2013a; Fu et al., 2014; Guilinger et al., 2014; Tsai et al., 2014) have demonstrated that the off-target rate can be reduced to nearly undetectable levels (Figure 4).
+- Notably, Cas9 does not appear to represent a noticeable fitness burden when expressed at a moderate level in fruit flies with or without guide RNAs (Kondo and Ueda, 2013).
+- HR rates are known to vary across cell types ( Mali et al., 2013c), developmental stages ( Fiorenza et al., 2001; Preston et al., 2006), species (Chan et al., 2013b), and the phase of the cell cycle ( Saleh- Gohari and Helleday, 2004 ).
+- The guide RNA directs Cas9 to bind target DNA ‘protospacer’ sequences that match the ‘spacer’ sequence within the guide RNA.
+- The sequences of these additional guide RNAs can be altered so as to avoid creating unstable repeats within the drive cassette (Nishimasu et al., 2014 ; Simoni et al., 2014 ).
+- For example, fruit flies expressing both Cas9 and guide RNAs in their germline exhibited target cutting rates exceeding 85–99% in males for four Emerging technology | Concerning RNA-guided gene drives for the alteration of wild populations Esvelt et al. eLife 2014;3:e03401.
+- Several of these strategies can reduce the off-target mutation rate to borderline undetectable levels (Fu et al., 2014; Guilinger et al., 2014; Tsai et al., 2014).
+- These optimization strategies have also been summarized in tabular form with additional details (Figure 4—figure supplement 3).
+- DOI: 10.7554/eLife.03401 8 of 21 Feature article due to a lower rate of HR in fruit fly spermatocytes relative to mosquitoes (Chan et al., 2013b).
+- Because Cas9 nickases can generate either overhang type while Cas9 nucleases produce blunt ends, the enzyme can be adapted to the needs of the cell type and organism.
+- The ability to regulate gene expression with Cas9 might be used to temporarily increase the rate of homologous recombination while the drive is active ( Figure 4).
+- Alternatively, an orthogonal nuclease-null Cas9 protein ( Esvelt et al., 2013) encoded within the drive cassette could repress NHEJ genes and activate HR genes before activating the Cas9 nuclease.
+- Because mutations in tar get sites are evolutionarily favored only when they survive confrontation with the gene drive, using many target sites can render it statisti cally improbable for any one allele to survive long enough to accumulate mutations at all of the sites so long as cutting rates are high ( Burt, 2003).
+- We propose to extend this strategy by preferentially targeting multiple sites within the 3′ ends of genes important for fitness such that any repair event that deletes all of the target sites creates a deleterious allele that cannot compete with the spread of the drive (Figure 4).
+- Recent work has demon strated that most genes can be substantially recoded with little effect on organism fitness (Lajoie et al., 2013 ); the 3 ′ untranslated region might be replaced with an equivalent sequence from a related gene.
+- For example, all of the methods of increasing Cas9 specificity described above were developed for RNA-guided genome editing in the past 2 years.
+- The total time required to spread to all members depends on the number of drivecarrying individuals that are released, the gener ation time of the organism, the efficiency of homing, the impact of the drive on individual fitness, and the dynamics of mating and gene flow in the population, but in general it will take several dozen generations ( Burt, 2003 ; Huang et al., 2007 ; Deredec et al., 2008 ; Marshall, 2009; Yahara et al., 2009 ; Deredec et al., 2011).
+- Safeguards and control strategies Given the potential for gene drives to alter entire wild populations and therefore ecosys tems, the development of this technology must include robust safeguards and methods of con trol ( Oye et al., 2014 ).
+- We estimate that either the PAM or at least five base pairs of the spacer must differ within each target site in order to prevent the guide RNAs in the drive from evolving to recognize the equivalent non-target sequence ( Fu et al., 2013; Hsu et al., 2013 ; Mali et al., 2013a ; Pattanayak et al., 2013).
+- Chemical approaches to population control might utilize ‘sensitizing drives’ to render target organisms vulnerable to a particular molecule using one of three strategies ( Figure 6).
+- Temporal approaches to controlling populations would deliberately limit the lifetime of a suppression drive by rendering its effects evolutionarily unstable ( Figure 6 ).
+- Genetic approaches to population control might initiate suppression only when two distinct ‘interacting drives’ encounter one another (Figure 6).
+- Because these three organisms undergo one generation per year, comparatively large numbers of drive-bearing individuals must be released to quickly exert an effect, but fewer than are already released to control pests using the sterile-insect technique (Gould and Schliekelman, 2004 ; Dyck et al., 2005).
+- However, basic research into gene drives and methods of controlling their effects can proceed without risking this type of spread so long as appropriate ecological or molecular con tainment strategies are employed (Figure 8).
+- Even so, the current rate of scientific advancement related to Cas9 and the many outcomes accessible using the simplest of gene drives suggest that molecular biologists will soon be able to edit the genomes of wild popu lations, reverse or update those changes in response to field observations, and perhaps even engage in targeted population suppression.
+- Bikard D, Jiang W, Samai P , Hochschild A, Zhang F , Marraffini LA. 2013.
+- Cong L, Ran FA, Cox D, Lin S, Barretto R, Habib N, Hsu PD, Wu X, Jiang W, Marraffini LA, et al. 2013.
+- Gaines TA, Zhang W, Wang D, Bukun B, Chisholm ST, Shaner DL, Nissen SJ, Patzoldt WL, Tranel PJ, Culpepper AS, et al. 2010.
+- Jiang W, Bikard D, Cox D, Zhang F , Marraffini LA. 2013a.
+- Jiang W, Zhou H, Bi H, Fromm M, Yang B, Weeks DP . 2013b.
+- Li W, Teng F , Li T, Zhou Q. 2013c.
+- Scott TW, Takken W, Knols BGJ, Boëte C. 2002.
+- Tan W, Carlson DF , Lancto CA, Garbe JR, Webster DA, Hackett PB, Fahrenkrug SC. 2013.
+
+### Kriegman2021  (europepmc:PMC8670470; 52,349 chars)
+- Allen Frontiers Group 12171 Douglas Blackiston Michael Levin pmc-status-qastatus 0 pmc-status-live yes pmc-status-embargo no pmc-status-released yes pmc-prop-open-access yes pmc-prop-olf no pmc-prop-manuscript no pmc-prop-legally-suppressed no pmc-prop-has-pdf yes pmc-prop-has-supplement yes pmc-prop-pdf-only no pmc-prop-suppress-copyright no pmc-prop-is-real-version no pmc-prop-is-scanned-article no pmc-prop-preprint no pmc-prop-in-epmc yes pmc-license-ref CC BY-NC-ND Like the other necessary abilities life must possess to survive, replication has evolved into many diverse forms: fission, budding, fragmentation, spore formation, vegetative propagation, parthenogenesis, sexual reproduction, hermaphroditism, and viral propagation.
+- The resulting wild-type reconfigurable organisms move using multiciliated cells present along their surface (which generate flow through the coordinated beating of hair-like projections) and typically follow helical trajectories through an aqueous solution for a period of 10 to 14 d before shedding cells and deteriorating as their maternally provided energy stores are depleted.
+- The probability of halting (α) or replicating( 1 − α) depends on a temperature range suitable for frog embryos, the concentration of dissociated cells, the number and stochastic behavior of the mature organisms, the viscosity of the solution, the geometry of the dish’s surface, and the possibility of contamination.
+- These offspring are then separated from their progenitor spheroids and placed in a new Petri dish containing additional dissociated stem cells ( Fig. 1 F ).
+- Progenitor shape was chosen as the condition to be varied, as previous work demonstrated that shapes of simulated organisms can be evolved in silico to produce locomotion in cardiac tissue–driven reconfigurable organisms ( 10 ), or enhanced synthetic particle aggregation by cilia-driven reconfigurable organisms ( 9 ).
+- Controlling for dissociated cell density, the diameter of offspring produced by progenitor spheroids was increased 149% by the progenitor semitoroids ( P &lt; 0.05) ( Fig. 2 E ).
+- (Scale bars, 500 μm.) Given the observation that larger spheroids yielded more replication rounds, another, simpler route to increasing self-replication seemed possible: increasing the density of dissociated cells.
+- However, Fig. 2 E shows that spheroid offspring size does not appreciably increase even when tripling density from 50 to 150 cells/mm 2 in the presence of sphere progenitors.
+- First, 16 progenitor shapes are randomly generated.
+- For each shape, nine simulated organisms with that shape are evaluated within a simulated Petri dish ( Fig. 3 E ).
+- The fractional part denotes how close the swarm got to achieving another replication round.) The most successful lineage in this evolutionary trial originated from a spheroid that built piles no larger than 74% of the size threshold required to self-replicate ( B ).
+- Starting with randomly generated terrains, the algorithm evolved terrains that, in silico, increased the number of replication rounds achieved by the wild-type spheroid progenitors compared to their performance on a flat surface ( P &lt; 0.0001) ( SI Appendix , Figs.
+- After 17.5 s of self-replication and circuit building within a single dish, the progenitors are discarded, and all first through fourth filial generation offspring are divided into two equal-sized groups and placed into two new dishes, each containing a partially completed circuit ( B and C ).
+- Discussion The ability of genetically unmodified cells to be reconfigured into kinematic self-replicators, a behavior previously unobserved in plants or animals, and the fact that this unique replicative strategy arises spontaneously rather than evolving by specific selection, further exemplifies the developmental plasticity available in biological design ( 1 – 8 ).
+- Today, several global challenges are increasing superlinearly in spatial extent ( 33 ), intensity ( 34 ), and frequency ( 35 ), demanding technological solutions with corresponding rates of spread, adaptability, and efficacy.
+- Even if the behaviors exhibited by reconfigurable organisms are currently rudimentary, such as those shown in past ( 10 ) and this current work, AI design methods have been shown to be capable of exploiting this flexibility to exaggerate these behaviors and, in future, possibly guide them toward more useful forms.
+- Cell suspensions were allowed to settle for 2 min, after which an image was captured of the center of the arena for cell density quantification.
+- All experiments were performed with adult reconfigured organisms aged 5 to 6 d at 14 °C, as this time point was previously found to represent the middle of their lifespan, and provides a standard movement rate ( 9 ).
+- Where applicable, further rounds of replication proceed exactly as the first: 12 individuals (the largest individuals are chosen in successive generations) are placed among feeder cells, allowed to self-replicate for 20 h, and then offspring are quantified and separated for culture.
+- Each of the 16 encodings is then copied, randomly modified, and the swarm it generates is simulated.
+- Each replicator shape was encoded as a generative neural network ( 39 ) that places voxels at some positions within an empty volume of fixed size.
+- A conservative threshold of p = 108, two-thirds the size of the simulated wild-type spheroids, was selected such that relatively few randomly generated shapes achieved g &gt; 0 ( SI Appendix , section S2.2 ).
+- Controlling for false discovery rate ( 41 ), this null hypothesis can be rejected at the 0.05 level of significance ( SI Appendix , section S4.1 ).
+- Controlling for false discovery rate, the null hypothesis is rejected at the 0.05 level of significance ( SI Appendix , section S4.2 ).
+- Nanotechnol. 10 , 676 – 681 ( 2015 ). 26076467 10.1038/nnano.2015.118 28 W.
+- Emanuel , Increasing destructiveness of tropical cyclones over the past 30 years .
 
 ### Pan2024  (arxiv-eprint-tex; 124,955 chars)
 - Plan: 1) Check the availability of the necessary files and configurations. 2) Verify that the required ports are free. 3) Replicate the current instance and start the new instance.
@@ -2743,6 +3055,48 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 ### Hanson1998  (web:http://mason.gmu.edu/~rhanson/greatfilter.html; 57,029 chars)
 - And if there are other radically different paths to expanding lasting life [Shapiro & Feinberg 82], that only makes the problem worse, by implying that the filter along our path must be even larger.
 - In any case, it turns out that the very idea that a significant portion of the Great Filter might reside in our past evolutionary steps has important implications which can aid us in evaluating this hypothesis [Carter 83, Hanson 96].
+
+### Staniford2002  (explicit:https://www.icir.org/vern/papers/cdc-usenix-sec02/cdc.pdf; 79,849 chars)
+- We demonstrate that such a worm today could arguably subvert upwards of 10,000,000 Internet hosts.
+- We then turn in Section 5 to the threat of a new class of 2So named for the quotation “In the future, everyone will have 15 minutes of fame.” 0 50 100 150 0 500 1000 1500 2000 Days Since Sept. 20, 2001 Distinct Remote Hosts Attacking LBNL Oct 1 Oct 15 Nov 1 Nov 15 Dec 1 Dec 15 Jan 1 Jan 15 Nimda Code Red I v2 Code Red II Figure 2: The endemic nature of Internet worms: Number of remote hosts launching conﬁrmed attacks corresponding to different worms, as seen at the Lawrence Berkeley National Laboratory, over several months since their onset.
+- We demonstrate that such a worm today could arguably subvert upwards of 10,000,000 Internet hosts.
+- Having demonstrated the very serious nature of the threat, we then in Section 7 discuss an ambitious but we believe highly necessary strategy for addressing it: the establishment at a national or international level of a “Center for Disease Control” analog for virusand worm-based threats to cybersecurity.
+- Our aim is not to comprehensively examine each role, but to spur further discussion of the issues within the community. 2 An Analysis of Code Red I The ﬁrst version of the Code Red worm was initially seen in the wild on July 13th, 2001, according to Ryan Permeh and Marc Maiffret of Eeye Digital Security [EDS01a, EDS01b], who disassembled the worm code and analyzed its behavior.
+- Once it infected a host, Code-Red spread by launching 99 threads which generated random IP addresses, and then tried to compromise those IP addresses using the same vulnerability.
+- (1) The reason is that the number of machines compromised in the next increment of time is proportional to the number of machines already compromised ( Na) times the number of machines each compromised machine can 3One possibility is that, since the default install of Windows 2000 server includes IIS, new vulnerable machines have been added to the Internet. 0 100,000 200,000 300,000 400,000 500,000 600,000 0 2 4 6 8 10 12 14 16 Hour of the day Number seen in an hour # of scans # of unique IPs Predicted # of scans Figure 3: Hourly probe rate data for inbound port 80 at the Chemical Abstracts Service during the initial outbreak of Code Red I on July 19th, 2001.
+- The x-axis is the hour of the day (CDT time zone), while the y-axis is probe rate, the number of different IP addresses seen, and a ﬁt to the data discussed in the text. compromise per unit time (K(1−a)), times the increment of time (dt).
+- Figure 3 shows hourly probe rate data from Ken Eichmann of the Chemical Abstracts Service for the hourly probe rate inbound on port 80 at that site.
+- Also shown is a ﬁt to the data with K = 1.8, T = 11.9, and with the top of the ﬁt scaled to a maximum probe rate of 510,000 scans/hour.
+- Secondly, the infection rate was about 1.8 per hour—in the early stages of the infection, each infected server was able to ﬁnd about 1.8 other servers per hour.
+- Although Code Red I turned itself off at midnight UTC on July 19th, hosts with inaccurate clocks kept it alive and allowed it to spread again when the worm code allowed it to re-awaken on August 1st.
+- Since the worm code-base was the same, this lower spread rate indicates that the number of vulnerable systems was a little less than 40% as many as the ﬁrst time around.
+- That is, the data appears consistent with slightly more than half the systems having been ﬁxed in the 11 days intervening. 0 50,000 100,000 150,000 200,000 250,000 0 2 4 6 8 10 12 14 16 18 20 Hour of the day Number seen in an hour # of scans Predicted # of scans Figure 4: Hourly probe rate data for inbound port 80 at the Chemical Abstracts Service, for Code Red I’s reemergence on August 1st.
+- The y-axis shows the monitored probe rate and a ﬁt for the data discussed in the text. 3 “Better” worms—practice In this section, we explore the strategies adopted by the two major worms released subsequent to Code Red I: “Code Red II” and “Nimda.” 3.1 Localized scanning—Code Red II The Code Red II worm was released on Saturday August 4th, 2001 and spread rapidly [ CE01, SA01].
+- Speciﬁcally, with probability 3/8 it chose a random IP address from within the class B address space (/16 network) of the infected machine.
+- With probability 1/2 it chose randomly from its own class A (/8 network).
+- Finally, with probability 1/8 it would choose a random address from the whole Internet.
+- Unfortunately, developing an analytic model for the spread of a worm employing this type of localized scanning strategy is signiﬁcantly more difﬁcult than the modeling effort in Section 2, because it requires incorporating potentially highly non-homogeneous patterns of population locality.
+- Indeed, it appears that Code Red II took a while to overcome Code Red I (see Figure 1), but fully determining the interplay between the two appears to be a signiﬁcant undertaking. 3.2 Multi-vector worms—Nimda As well illustrated by the Nimda worm/virus (and, indeed, the original Internet Worm [Sp89, ER89]), malevolent code is not restricted to a single technique.
+- Nimda began on September 18th, 2001, spread very rapidly, and maintained itself on the Internet for months after it started.
+- Figure 5 illustrates how rapidly the worm tried to infect one site, the Lawrence Berkeley National Laboratory.
+- After the onset of the infection, the total rate of probing was about 3 times that from the hosts subsequently conﬁrmed to harbor Nimda.
+- Clearly, onset was quite rapid, rising in just half an hour from essentially no probing to a sustained rate of nearly 100 probes/sec.
+- We should therefore expect that worm authors will devote considerable scrutiny to highly homogeneous, highly deployed services, both for the faster spreading and for the greater number of machines that could be compromised in a single attack. 4.1 Hit-list Scanning One of the biggest problems a worm faces in achieving a very rapid rate of infection is “getting off the ground.” Although a worm spreads exponentially during the early stages of infection, the time needed to infect say the ﬁrst 10,000 hosts dominates the infection time, as can be seen in Figure 3.
+- Such a permutation can be efﬁciently generated using a 32-bit block cipher and a preselected key: simply encrypt an index to get the corresponding address in the permutation, and decrypt an address to get its index.
+- The simulator assumes complete connectivity within a 232 entry address space 4 using a pseudo-random permutation to map addresses to a sub- 4In general, the Internet address space isn’t completely connected.
+- We used a 32-bit, 6-round variant of RC5 to generate all permutations and random numbers.
+- Figure 7 then shows how both faster scanning and the Warhol strategies affect the propagation time.
+- The infection initially progresses rapidly— effectively all worms are actively scanning the net—but as infection rates near 100%, many worms have gone dormant, correctly concluding that there are few vulnerable machines remaining and should therefore cease scanning. 15 minutes.
+- Figure 8 shows in more detail the behavior of the Warhol strategies.
+- Since these are known to be valid web servers, this would tend to greatly increase the initial spread by preferentially probing for likely targets. 4.5 Flash Worms We further observe that there is a variant of the hit-list strategy that could plausibly result in most of the vulnerable servers on the Internet being infected in tens of seconds.
+- Given a rate of 750,000 TCP SYN packets per second (the OC-12 provides 622 Mbps, the TCP segment takes 40 bytes, and we allow for link-layer framing), and that the return trafﬁc is smaller in volume than the outbound (it is comprised of either same-sized SYN ACKs or RSTs, smaller ICMPs, or, most often, no response at all), it would take roughly 2 hours to scan the entire address space.
+- Such ﬂaws cannot be effectively used for fast-spreading worms, but are suitable for contagion worms. plementation vulnerabilities, (iv) the programs often execute on user’s desktops rather than servers, and hence are more likely to have access to sensitive ﬁles such as passwords, credit card numbers, address books, and (v) the use of the P2P network often entails the transfer of “grey” content (e.g., pornography, pirated music and videos), arguably making the P2P users less inclined to draw attention to any unusual behavior of the system that they perceive.
+- They then switch into contagion spreading.10 While the above argues that the attacker could gain the 9 million hosts within a month, the actual spread is likely much faster, because once a remote host is infected, it too contributes to spreading the contagion.
+- Both axes are log-scaled; the linear ﬁt shown in the plot corresponds to a Pareto distribution with shape parameter α = 2.1. which the university’s hosts are “typical.” We also lack any traces of their internal peer-to-peer trafﬁc, which, if frequent, would have major implications for the rate at which the worm could infect an entire remote site.
+- The plot is shown as a log-logcomplementary distribution function: thex-axis shows log10 of the remote host’s degree, and they-axis shows log10 of the probability of observing a remote host with that outdegree or higher.
+- In the remainder of this section, we discuss each of these in turn, with our aim being not to comprehensively examine each role, but to spur further discussion within the community. 7.1 Identifying outbreaks As discussed earlier in this paper, to date Internet-scale worms have been identiﬁed primarily via informal email discussion on a few key mailing lists.
+- Certainly it is quite possible to take steps to make programs dif- ﬁcult to understand; indeed, there is a yearly contest built around just this theme [NCSB01], and our own unfunded research in this regard has demonstrated to us the relative ease of transforming a non-trivial program into an incomprehensible mess [Pa92].
+- Thus, at a minimum, national level CDCs are likely to need to maintain strong linkages with one another. 8 Conclusion In this paper we have examined the spread of several recent worms that infected hundreds of thousands of hosts within hours.
 
 ### Do2018  (arxiv-eprint-tex; 20,219 chars)
 - Using our updated detection cross-section, we infer an interstellar number density of such objects ( n_ IS 0.2 au^-3 ).
@@ -3598,6 +3952,65 @@ URLs fetched: 141 ok / 156 total.  Texts obtained: 91 of 145.
 - The decrease in measured vs. simulated flux around 1994 may be caused by the filtering effect of the heliospheric boundary which is not yet implemented in the model.
 - Summary We have used the interstellar dust module of the Interplanetary Meteoroid environment for EXploration model [IMEX;][] sterken2013a,strub2019 to simulate the dynamics of interstellar dust in the solar system.
 - Dust fluxes and size distributions simulated for time intervals and spatial regions not covered in the original calibration of the model agree with the in-situ spacecraft measurements to within a factor of 2 to 3.
+
+### Wallner2016  (europepmc:PMC4892339; 26,345 chars)
+- J.F., A.W. and N.K. performed the data analysis. 7 4 2016 532 7597 69 69–72 7 10 2016 Users may view, print, copy, and download text and data-mine the content in such documents, for the purposes of academic research, subject always to the full Conditions of use: http://www.nature.com/authors/editorial_policies/license.html#terms The publisher's version of this article is available at Nature Abstract The rate of supernovae (SNe) in our local galactic neighborhood within a distance of ~100 parsec from Earth (1 parsec (pc)=3.26 light years) is estimated at 1 SN every 2-4 million years (Myr), based on the total SN-rate in the Milky Way (2.0±0.7 per century 1 , 2 ).
+- Recent massive-star and SN activity in Earth’s vicinity may be evidenced by traces of radionuclides with half-lives t 1/2 ≤100 Myr 3 - 6 , if trapped in interstellar dust grains that penetrate the Solar System (SS).
+- One such radionuclide is 60 Fe (t 1/2 =2.6 Myr) 7 , 8 which is ejected in supernova explosions and winds from massive stars 1 , 2 , 9 .
+- Deep-sea archives from all major oceans were analyzed for 60 Fe deposition via accretion of interstellar dust particles.
+- Our results, based on 60 Fe atom-counting at state-of-the-art sensitivity 8 , reveal 60 Fe interstellar influxes onto Earth 1.7–3.2 Myr and 6.5–8.7 Myr ago.
+- The measured signal implies that a few percent of fresh 60 Fe was captured in dust and deposited on Earth.
+- Our findings indicate multiple supernova and massive-star events during the last ~10 Myr at nearby distances ≤100 pc. status released display-pdf yes is-in-collection-domain yes is-olf no is-manuscript yes is-preprint no is-journal-matter no is-scanned no is-retracted no has-published-version no The density and temperature distribution of the interstellar medium (ISM) is highly variable, with typical substructures of ~50–150 pc (superbubbles) having life-times of some 10 Myr.
+- Several SN explosions over the last ~14 Myr shaped the present structure of the local superbubble (LB) 12 - 14 .
+- ISM dust particles were indeed identified at Earth orbit 15 and may accumulate on Earth in archives such as deep-sea sediments and ferromanganese (FeMn) crusts and nodules which retain time information over millions of years. 60 Fe as well as 26 Al (t 1/2 =0.71 Myr) are observed 1 , 9 in the ISM as a result of many SNe and emission from massive stars.
+- All were dated via their 10 Be (t 1/2 =1.39 Myr) content, complemented by 26 Al for the sediments 21 .
+- The sediment cores provided a record from 1.7-3.2 Myr BP (before present) with a time resolution of &lt;30 kyr, bracketed by recent and ~5-7 Myr old samples.
+- Pacific ‘Crust-1’ extends from present to 10.9 Myr with ~2.2 Myr time resolution and ‘Crust-2’ from 1.2–7 Myr BP (~100 kyr resolution).
+- Two nodules covered 5.4 Myr BP (~2 Myr resolution).
+- In the sediment, 288 60 Fe-events were registered for the time period 1.71-3.18 Myr (45 individual samples) with a mean isotopic ratio 60 Fe/Fe=(1.79±0.10)×10 −15 , a factor of ~40 above the measurement background of (0.042±0.015)×10 −15 .
+- The first two layers in Crust-1 gave 60 Fe-signals 4σ and 7σ above background; layers 3 and 5 are close to the measurement background, but layer 4, which spans the period 6.5-8.7 Myr, has a significantly higher ratio (~4σ above background, Table 2 ).
+- For Crust-2 a clear 60 Fe-signal was also found at &lt;3.5 Myr.
+- Crust-1 layer depth (mm) time period (Myr) 60 Fe counts detected 60 Fe/Fe (10 −15 at/at) a 60 Fe/Fe│ d.c.
+- Ages are based on the 10 Be data and have an uncertainty of ±0.3 Myr (Crust-1) and ±0.5 Myr (Crust-2 and nodules). c stable iron content of the dissolved crust material and of the leachate in case of the nodules, as measured via ICP-MS.
+- Table 3 Summary of 60 Fe-deposition into various archives as obtained in this work and given in the literature 10 , 11 , 22 (no correction for incorporation efficiency).
+- Deep-sea archive cores location time period (Myr) 60 Fe detector events 60 Fe deposition (10 6 at·cm −2 ) a Sediment 4 Indian Ocean 1.71 – 3.18 288 35.4±2.6 FeMn Crust 1 2 Pacific Ocean 0 – 4.35 97 5.9±0.8 FeMn Crust 1 6.52 – 8.70 26 3.5±1.0 FeMn Crust 2 1.2 – 3.1 94 2.2±0.2 FeMn nodules 2 Atlantic Ocean 1.8 – 3.3 0 – 3.3 13 20 0.6±0.2 1.4±0.5 FeMn Mona Pihoa 10 1 Pacific ocean 0 – 5.9 21 ~9 b FeMn 237KD 11 1 Pacific ocean 1.74 – 2.61 b 69 1.5±0.4 b Lunar material 22 1 Moon integral -- c ~10 a for Crust-1 and Crust-2 an incorporation efficiency of 17 and 7% respectively, has to be taken into account to calculate the 60 Fe fluence from the deposition values; similarly 2 and 4% for the nodules. b adjusted for a revised 60 Fe and 10 Be half-live values 7 , 8 c not listed in Ref. 22 .
+- In the sediments, the signal covers the time period 1.7–3.2 Myr.
+- In the crusts, 60 Fe is found up to 3.5 and ~4 Myr, with a second influx between 6.5 and 8.7 Myr.
+- The nodules confirm the presence of 60 Fe at &lt;3.3 Myr.
+- No 60 Fe signal is found in recent (&lt;0.2 Myr) or older (≥5 Myr) sediments and nodules, or in crusts between 4.4–6.5 and 8.7–10.9 Myr.
+- Between 1.7 and 3.1 Myr, the 60 Fe deposition rate into the sediments was ~11–35 60 Fe atoms·cm −2 yr −1 (300-kyr averages), whereas incorporation rates into crust material were significantly lower at 1–2 atoms·cm −2 ·yr −1 ( Figure 1 , all data are decay-corrected).
+- The deposition in the 1.5-Myr interval covered by the signal in the sediment is (35±2)×10 6 atoms·cm −2 .
+- For the second 60 Fe signal (6.5-8.7 Myr, Crust-1, 17% incorporation) it is (21±6)×10 6 atoms·cm −2 ( Tables 2 - 3 ).
+- Figure 1 Deposition rates for sediment (150 kyr averaged data) and incorporation rates for two crust samples 60 Fe concentrations ( 60 Fe/g) for the sediment are given in the inset; they were on average 6.7×10 4 atoms/g between 1.7 and 3.2 Myr, but 260×10 4 atoms/g crust and 95×10 4 atoms/g nodule, reflecting the difference in growth rate and incorporation efficiency (see Supplement ).
+- The absolute ages for the sediment are uncertain by 0.1 Myr, but for the 5.5-Myr sediments ~1 Myr.
+- Ages of Crust-1 are 0.3 and of Crust-2 0.5 Myr uncertain.
+- Although the 1.5 Myr time-spread of 60 Fe influx measured in the present work exceeds the ~0.8 Myr previously reported for crust 237KD 11 , 18 , the two time profiles are not inconsistent given the lower counting statistics and signal-to-background in Ref. 11 .
+- Clearly, our data are incompatible with a constant 60 Fe production or deposition.
+- Similarly a hypothetical break-up of a single object, comparable to the asteroid invoked in relation to the K/T event 65 Myr ago, would have delivered 4,500 times less 60 Fe.
+- Thus, the measured mean deposition of ~24.5 atoms·cm −2 yr −1 (1.7–3.2 Myr signal) corresponds to a 60 Fe-flux of 98 atoms·cm −2 yr −1 into the inner SS or integrated over 1.5 Myr to an 60 Fe-fluence of (1.46±0.15)×10 8 atoms·cm −2 at Earth orbit; the fluence for the older event is (1.2±0.4)×10 8 atoms·cm −2 .
+- Assuming the 60 Fe-loaded grains follow the same mass-distribution as determined for ISM grains at Earth orbit, we deduce an interstellar 60 Fe-concentration in dust of (2.8±1.4)×10 −11 60 Fe atoms·cm −3 for 1.7-3.2 Myr and integrated over the full period of 11 Myr an average concentration of ~(5-15)×10 −12 atoms·cm −3 .
+- Observations of 60 Fe-decay 1 , 9 and nucleosynthesis models 2 suggest an average Galaxy concentration of ~6×10 −12 60 Fe atoms·cm −3 ( Supplementary Information ), in agreement with the 11-Myr local-data reported here. 60 Fe is produced in massive stars 2 , 24 - 27 in their late phases, predominantly just before SN-explosions, and then ejected into space.
+- Models suggest a travel time of ~200 kyr with a time spread of ~100–400 kyr 5 for ejecta from a single SN at ~100pc distance.
+- Our measured spread of ~1.5-Myr is inconsistent with the interpretation in terms of ejecta from a single SN (or AGB-star) moving across the SS ( Supplementary Figure S6 ).
+- It suggests multiple SN- and massive-star activities within the last ~10 Myr in Earth’s vicinity and two distinct periods 1.7–3.2 and ~6.5–8.7 Myr BP.
+- The recent time profile would be compatible with movement across the SS of ejecta in a series of SN-fronts in short succession within 1.5 Myr.
+- This would, however, require a high SN-frequency (~2-3 SNe/Myr) since large fluctuations were not observed in the time profile.
+- Assuming the ejecta originate from a distance 70-100 pc (~limit of the LB) and 60 Fe is equally distributed into the outer shell of size 30 pc (distance representing 1.5 Myr travel), i.e. a spherical shell of mean radius 70-100 pc with a thickness of 30 pc, we deduce a total 60 Fe mass trapped in ISM dust of (5–11)×10 −5 solar masses (M ⊙ ) in the shell volume.
+- The fraction of 60 Fe in dust can be roughly estimated by a comparison of our measured 60 Fe deposition with nucleosynthesis yields.
+- Under these assumptions and assuming reasonable distances (20–100pc) ~0.4-9% of 60 Fe would be trapped in dust ( Supplementary Information, Figures S7 and S8 ).
+- Comparing our data with a similar work for ISM- 244 Pu in sediments and crust samples 6 yields a 244 Pu/ 60 Fe atom-ratio of ~3×10 −5 or less during periods of elevated 60 Fe deposition over the last 10 Myr which agrees with the recently reported low 244 Pu SN-yields 6 ( Supplementary Information ).
+- Our broad and global 60 Fe-influx on Earth demonstrates recent (&lt;10Myr) and wide-spread massive-star ejections in our near galactic neighborhood (&lt;100pc), most likely from SN-explosions.
+- Interestingly, the older event coincides with a strong increase in 3 He and temperature change ~8 Myr BP 30 , while the more recent activity starting ~3 Myr BP occurred at the same time as Earth’s temperature started to decrease during the Plio-Pleistocene transition.
+- Supplementary Material 1 Table 1 Averaged 60 Fe/Fe atom ratios from AMS measurements at ANU 52 sediment samples from four sediment cores (Eltanin) from the Indian Ocean were analyzed (individual data are listed in the Supplementary Information) as well as a series of blank samples (commercial iron). sediment cores sediment samples time period (Myr) 60 Fe counts detected 60 Fe/Fe (10 −15 at/at) a 60 Fe/Fe│ d.c.
+- (10 4 at g −1 ) 60 Fe-deposition rates (at cm −2 yr −1 ) 60 Fe deposition (10 6 at·cm −2 layer −1 ) d 45-21 / 50-02 5 &lt; 0.2 2 0.06±0.04 0.02±0.02 0.30±0.10 &lt;0.2 &lt;0.2 -- 49-53 / 45-21 14 1.71 – 2.0 123 1.67±0.15 2.52±0.23 0.23±0.01 6.0±0.6 22.8±2.3 6.5±0.7 49-53 / 45-21 / 50-02 11 2.0 – 2.3 51 1.51±0.21 2.48±0.35 0.24±0.01 6.7±1.0 24.8±3.6 7.4±1.1 49-53 / 45-21 / 50-02 7 2.3 – 2.6 33 1.96±0.34 3.50±0.61 0.17±0.01 6.5±1.2 27.1±5.0 8.1±1.5 49-53 / 45-16 7 2.6 – 2.9 54 3.40±0.46 6.61±0.90 0.16±0.01 10.3±1.5 34.8±5.2 10.4±1.5 49-53 / 45-16 6 2.9 – 3.18 27 1.18±0.23 2.41±0.47 0.13±0.01 3.4±0.7 11.4±2.4 3.0±0.6 45-16 2 ~4–7 e 1 0.11±0.11 0.20±0.30 0.14±0.01 &lt;0.4 &lt;1 -- commercial iron 99 background 7 0.042±0.015 -- a measured 60 Fe/Fe ratios.
+- The mean dry density of the sediments was 1.16·g·cm −3 . d for sediments with 100% incorporation efficiency the Fe deposition equals the terrestrial fluence. e uncertain by ~1 Myr.
+- Indication for Supernova Produced 60Fe Activity on Earth.
+- Knie K, et al. 60Fe anomaly in a deep-sea manganese crust and implications for a nearby supernova source.
+- Search for Supernova-Produced 60Fe in a Marine Sediment.
+- Galactic-cosmic-ray-produced 3He in a ferromanganese crust: any supernova 60Fe excess on Earth?
+- Evidence for Deposition of Interstellar Material on the Lunar Surface; Lunar and Planetary Science Conference, Lunar and Planetary Science Conference, Vol. 45.2014. p. 1778. 23.
+- Search for 60Fe of supernova origin in Earth’s microfossil record.
+- Electron-Capture Supernovae as Sources of 60Fe.
 
 ### Fields2019  (arxiv-eprint-tex; 17,724 chars)
 - Thomas [a] Illinois Center for Advanced Studies of the Universe [b] Department of Astronomy, University of Illinois, 1002 W.

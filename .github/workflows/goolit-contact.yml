@@ -1,0 +1,48 @@
+name: goolit-contact
+
+# GOO contact-graph literature fetch (scripts/goolit_contact_fetch.py): the
+# record on every natural channel that moves mass between planetary systems
+# (impact ejecta, interstellar objects, free-floating planets, stellar
+# encounters, Oort-cloud exchange, interstellar dust, supernova ejecta,
+# birth-cluster exchange), verbatim abstracts and the sentences that carry
+# the rates the model in seti.goo.contact needs.  The sandbox blocks arXiv
+# and Crossref; the runner has egress.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  goolit-contact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch the record (soft 35-min deadline, partials kept)
+        env:
+          GOOLIT_OUT: results/goolit_contact
+        run: |
+          timeout -k 30 2100 python scripts/goolit_contact_fetch.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          python -c "import json;d=json.load(open('results/goolit_contact/verification.json'));print(d['counts'])" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: goolit-contact
+          path: results/goolit_contact/
+          if-no-files-found: warn
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "goolit-contact: contact-graph literature evidence" \
+            results/goolit_contact

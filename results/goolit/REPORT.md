@@ -69,8 +69,8 @@ Abstracts naming goo AND an observational signature or propagation:
 | CarrollNellenback2019 | VERIFIED | The Fermi Paradox and the Aurora Effect: Exo-civilization Settlement, Expansion and Steady States | Jonathan Carroll-Nellenback, Adam Frank, Jason Wright 2019AJ....158..117C |
 | Osmanov2019 | VERIFIED | On the interstellar Von Neumann micro self-reproducing probes | Z. Osmanov International Journal of Astrobiology 19 (2020) 220-223 |
 | Hein2020 | VERIFIED | Near-Term Self-replicating Probes -- A Concept Design | Olivia Borgue, Andreas M. Hein  |
-| ErrorCatastrophe2016 | VERIFIED | Why is there no von Neumann probe on Ceres? Error catastrophe can explain the Fermi-Hart Paradox | Axel Kowald J. British Interplanetary Society 2015, Vol 68 No 12:383-388 |
-| LotkaVolterra2022 | VERIFIED | Lotka-Volterra Models for Extraterrestrial Self-Replicating Probes | Yifan Chen, Jiayi Ni, Yen Chin Ong  |
+| Kowald2015 | VERIFIED | Why is there no von Neumann probe on Ceres? Error catastrophe can explain the Fermi-Hart Paradox | Axel Kowald J. British Interplanetary Society 2015, Vol 68 No 12:383-388 |
+| Chen2022 | VERIFIED | Lotka-Volterra Models for Extraterrestrial Self-Replicating Probes | Yifan Chen, Jiayi Ni, Yen Chin Ong  |
 | Ellery2025 | VERIFIED | Technosignatures of Self-Replicating Probes in the Solar System | Alex Ellery  |
 | Ellery2022a | VERIFIED | Self-replicating probes are imminent – implications for SETI | Ellery, Alex International Journal of Astrobiology 21 212-242 (2022) |
 | Ellery2022b | VERIFIED | Curbing the fruitfulness of self-replicating machines | Ellery, Alex International Journal of Astrobiology 21 243-259 (2022) |
@@ -96,13 +96,13 @@ Abstracts naming goo AND an observational signature or propagation:
 | Lacki2025 | VERIFIED | Ground to Dust: Collisional Cascades and the Fate of Kardashev II Megaswarms | Brian C. Lacki Astrophysical Journal (2025) 985, 191 |
 | Lacki2026 | VERIFIED | Dust to Dust: Prospects for Passive Technosignatures as Relics of ETI | Brian C. Lacki  |
 | Wyatt2007 | VERIFIED | Transience of hot dust around sun-like stars | M. C. Wyatt, R. Smith, J. S. Greaves Astrophys.J.658:569-583,2007 |
-| Wyatt2008 | MISMATCH | Dynamics of small bodies in planetary systems | M. C. Wyatt  |
+| Wyatt2008 | VERIFIED | Evolution of Debris Disks | Wyatt, Mark C. Annual Review of Astronomy and Astrophysics 46 339-383 (2008) |
 | Trilling2008 | VERIFIED | Debris disks around Sun-like stars | D. E. Trilling, G. Bryden, C. A. Beichman Astrophys.J.674:1086-1105,2008 |
 | Eiroa2013 | VERIFIED | DUst Around NEarby Stars. The survey observational results | C. Eiroa, J. P. Marshall, A. Mora  |
 | Sibthorpe2018 | VERIFIED | Analysis of the Herschel DEBRIS Sun-like star sample | B. Sibthorpe, G. M. Kennedy, M. C. Wyatt 2018MNRAS.475.3046S |
 | KennedyWyatt2013 | VERIFIED | The bright end of the exo-Zodi luminosity function: Disk evolution and implications for exo-Earth detectability | Grant M. Kennedy, Mark C. Wyatt  |
 | KennedyWyatt2012 | VERIFIED | Confusion limited surveys: using WISE to quantify the rarity of warm dust around Kepler stars | G. M. Kennedy, M. C. Wyatt  |
-| Moor2021 | MISMATCH | A new sample of warm extreme debris disks from the ALLWISE catalog | Attila Moór, Péter Ábrahám, Gyula Szabó  |
+| Moor2021 | VERIFIED | A new sample of warm extreme debris disks from the ALLWISE catalog | Attila Moór, Péter Ábrahám, Gyula Szabó  |
 | Balog2009 | NOT_FOUND |  |   |
 | Meng2015 | VERIFIED | Planetary Collisions outside the Solar System: Time Domain Characterization of Extreme Debris Disks | Huan Y. A. Meng, Kate Y. L. Su, George H. Rieke Astrophysical Journal, 805, 77 (2015) |
 | Burns1979 | VERIFIED | Radiation forces on small particles in the solar system | Burns, Joseph A., Lamy, Philippe L., Soter, Steven Icarus 40 1-48 (1979) |
@@ -161,5 +161,5 @@ Abstracts naming goo AND an observational signature or propagation:
 | Cirkovic2018 | ASSERTED |  | Cirkovic, M. M. 2018, The Great Silence: The Science and Philosophy of Fermi's Paradox (OUP)  |
 | Omohundro2008 | ASSERTED |  | Omohundro, S. 2008, 'The basic AI drives', in Artificial General Intelligence 2008 (IOS Press)  |
 
-Totals: {'VERIFIED': 85, 'MISMATCH': 5, 'NOT_FOUND': 3, 'ASSERTED': 16}
+Totals: {'VERIFIED': 87, 'MISMATCH': 3, 'NOT_FOUND': 3, 'ASSERTED': 16}
 

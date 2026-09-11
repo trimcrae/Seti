@@ -1,0 +1,53 @@
+name: goolit
+
+# GOO prior-art sweep and reference verification (scripts/goolit_fetch.py).
+#
+# The manuscript in paper/goo/ asks how far an UNCONTROLLED self-replicator
+# propagates beyond its planet, what its astronomical signature is, and what
+# the silence implies for our own risk.  The sandbox blocks arXiv and Crossref;
+# the runner has egress.  Two jobs in one script: phrase queries for the
+# novelty claim (verbatim atom feeds, decoy-aware scan) and a per-reference
+# verification of every citation the manuscript makes (arXiv id title-check,
+# title search, Crossref bibliographic query), so that no reference rests on
+# memory.  Commit-back through scripts/commit_results.sh, which VERIFIES the
+# push.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  goolit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch the record (soft 50-min deadline, partials kept)
+        run: |
+          timeout -k 30 3000 python scripts/goolit_fetch.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== summary ==="
+          python -c "import json;d=json.load(open('results/goolit/summary.json'));print(d['n_ok'],'ok /',d['n_urls'],'urls')" || true
+          python -c "import json;d=json.load(open('results/goolit/verification.json'));print(d['counts'])" || true
+          python -c "import json;d=json.load(open('results/goolit/concept_scan.json'));print(d['n_records'],'abstracts;', len(d['goo_named_anywhere']),'name goo;', len(d['goo_named_and_beyond_planet']),'goo+beyond-planet')" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: goolit
+          path: results/goolit/
+          if-no-files-found: warn
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "goolit: GOO prior-art evidence and reference verification" \
+            results/goolit

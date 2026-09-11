@@ -18,9 +18,28 @@ not, write one, including how the findings (or lack of findings) should change
 our thoughts on the likelihood of us grey-gooing ourselves; a generalised
 version on the other ways we could accidentally kill ourselves with
 self-replicating technology; and a target journal.* `docs/goo.md` is the
-design; `seti.goo` the model (26 offline tests, ruff clean); `paper/goo/` the
-main manuscript (builds, 0 undefined citations, 6 figures, 4 tables) and
+design; `seti.goo` the model (44 offline tests, ruff clean); `paper/goo/` the
+main manuscript (builds, 0 undefined citations, 7 figures, 6 tables, 26 pages) and
 `paper/replicators/` the companion; `paper/goo/JOURNAL.md` the venue analysis.
+
+**The survival scan (user request ~10:40 AM ET, 2026-09-11: "model a range of
+how long they last in interstellar space, from infinitely to short scales").**
+`seti.goo.survival`, 8 tests, paper §5.1 + Table 2 + Fig. 3, `docs/goo.md`
+§2C. It forced a correction: the passive branch had gated arrivals on the
+1.2 Gyr annulus mixing time, so survival below 10⁸ yr "delivered nothing".
+Wrong — the total landing rate of a cloud expanding into a uniform stellar
+field, N_c η n_* v σ, is independent of the cloud's volume, so landings never
+wait for mixing. Survival sets the **reach** v_∞τ and whether a **chain of
+seedings** forms, not the count. Sub-micron blown-out devices (18 km/s): at
+τ = 10⁴ yr they land on 10¹⁵ planets' worth of cross-section but all within
+0.18 pc (no star), at 10⁵ yr the reach is 1.8 pc (0.26 planets), at 10⁶ yr
+18 pc and 261 planets and **a front at 9 km/s crosses the Galaxy in
+1.6 Gyr — the same time as for an immortal device**. The threshold is one
+decade wide at τ ~ 10⁵–10⁶ yr (the hop to the nearest star), 10³× below the
+old ≳10⁸ yr and below the 5×10⁸ yr grain lifetime. Rock-borne devices never
+form a chain (R0 ≤ 2 at τ→∞ for planetesimal-borne, 10⁻⁵ for impact ejecta).
+`contact.py`'s functional factor exp(−t_mix/τ) replaced by (τ/W)(1−e^{−W/τ});
+abstract, §5, §7, discussion and conclusions rewritten accordingly.
 
 **The literature, as far as the record shows.** Two literatures have never
 met: grey goo (Drexler 1986; Freitas 2000 ecophagy; Phoenix & Drexler 2004
@@ -61,9 +80,10 @@ collisional time) — 4 kyr at 2.7 AU for 10⁻³ — so the waste-heat surveys 
 are blown out on starlight (v_∞ 7–18 km/s); repulsion at the target star lets
 only β < 1.38, the **0.21–0.57 µm** window, reach 1 AU; the annulus phase-mixes
 in **1.2 Gyr**; a belt's worth of 0.5 µm devices delivers ~200 intact
-arrivals/yr to every Earth-like planet in the annulus before survival losses —
-1.5×10⁵ cumulative in 5 Gyr if the ISM survival time is 10⁸ yr, ~0 at 10⁷ yr.
-No front; a cloud. *Galaxy, active:* 0.6 Myr (0.1c) – 6.4 Myr (0.01c) – 500 Myr
+arrivals/yr to every Earth-like planet in the annulus, and landings do not
+wait for mixing (see the survival scan above): above a ~10⁶ yr functional
+lifetime the passive branch is a chain of seedings crossing the Galaxy in
+1.6 Gyr. *Galaxy, active:* 0.6 Myr (0.1c) – 6.4 Myr (0.01c) – 500 Myr
 (30 km/s); cosmic reach 7×10⁸ galaxies at 0.5c, event horizon 16.6 Gly.
 
 **Inference (`seti.goo.bayes`, with and without the anthropic shadow).** Three
@@ -121,8 +141,8 @@ interstellar objects, 5×10¹⁷ interstellar grains land per year, one system's
 ejecta are captured by 8×10⁶ others; every system is flyby-linked in 124 Myr.
 For one system's material landing on other planets it is at threshold
 (R0 ≈ 2.8 by interstellar objects, 3×10⁻⁴ by impact ejecta, 10¹⁹ by dust) —
-contact is never the bottleneck for a goo among small bodies (size and survival
-are) and never the route for a planet-bound one.** The birth-cluster channel
+contact is never the bottleneck for a goo among small bodies (size sets what it
+reaches, survival how fast) and never the route for a planet-bound one.** The birth-cluster channel
 gives ~5×10⁴ strict touches per sibling pair (Earth has very likely been struck
 by material that condensed around another star) but no civilisation exists
 during it. Two order-of-magnitude scan variables remain (rocks ejected from a

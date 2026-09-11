@@ -27,6 +27,7 @@ from . import bayes as B
 from . import contact as CT
 from . import passive as P
 from . import planet as PL
+from . import survival as SV
 from . import system as S
 from .constants import GYR, KM, L_SUN, M_EARTH, MYR, R_EARTH, YR, C
 
@@ -255,6 +256,16 @@ def stage_contact(cfg: dict) -> dict:
     return out
 
 
+# --- survival -------------------------------------------------------------------
+def stage_survival(cfg: dict) -> dict:
+    lo, hi, n = cfg["survival"]["tau_grid_log10"]
+    taus = SV.tau_grid(10**lo, 10**hi, int(n))
+    out = {"carriers": [SV.scan(c, cfg, taus) for c in cfg["survival"]["carriers"]],
+           "note": "R0(tau) = rate0 * tau * (1 - exp(-W/tau)); reach = v_inf * tau; front if R0 > 1 and tau > t_first"}
+    _dump("survival.json", out)
+    return out
+
+
 # --- numbers --------------------------------------------------------------------
 def _sci(x: float, sig: int = 2) -> str:
     """LaTeX 'a \\times 10^{b}' with sig significant figures; plain for 0.01..1000."""
@@ -478,6 +489,26 @@ def stage_numbers(cfg: dict) -> pathlib.Path:
     for tf, nm in ((1e8, "HundredMyr"), (1e9, "Gyr"), (1e12, "Rock")):
         cmd(f"IsoRZeroFunc{nm}", _sci(iso["R0_strict_functional"][f"{tf:g}"]))
 
+    sv = json.loads((d / "survival.json").read_text())
+    for car, nm in zip(sv["carriers"], ("Grain", "Dust", "Iso", "Rock"), strict=True):
+        cmd(f"Surv{nm}RateZero", _sci(car["rate0_per_yr"], 1))
+        cmd(f"Surv{nm}THop", _time(car["t_hop_yr"] * YR))
+        cmd(f"Surv{nm}TFirst", _time(car["t_first_yr"] * YR))
+        cmd(f"Surv{nm}CrHits", _sci(car["cosmic_ray_hits_per_yr"], 1))
+        rows = {r["tau_yr"]: r for r in car["rows"]}
+        for tau, tn in ((1e4, "TenKyr"), (1e5, "HundredKyr"), (1e6, "Myr"), (1e7, "TenMyr"), (1e8, "HundredMyr"), (1e9, "Gyr")):
+            key = min(rows, key=lambda t: abs(math.log10(t) - math.log10(tau)) if not math.isinf(t) else 99)
+            r = rows[key]
+            cmd(f"Surv{nm}RZero{tn}", _sci(r["R0"], 1))
+            cmd(f"Surv{nm}Reach{tn}", _sci(r["reach_pc"], 1))
+            cmd(f"Surv{nm}Planets{tn}", _sci(r["planets_within_reach"], 1))
+            cmd(f"Surv{nm}TGal{tn}", _inf(r["t_galaxy_yr"]))
+        inf_row = [r for r in car["rows"] if math.isinf(r["tau_yr"])][0]
+        cmd(f"Surv{nm}RZeroInf", _sci(inf_row["R0"], 1))
+        cmd(f"Surv{nm}VFront", f"{inf_row['v_front_kms']:.0f}")
+        cmd(f"Surv{nm}TGalInf", _inf(inf_row["t_galaxy_yr"]))
+    cmd("SurvDNearest", f"{sv['carriers'][0]['d_nearest_pc']:.1f}")
+
     tex = ROOT / "paper" / "goo" / "numbers.tex"
     tex.parent.mkdir(parents=True, exist_ok=True)
     tex.write_text("\n".join(L) + "\n")
@@ -487,11 +518,11 @@ def stage_numbers(cfg: dict) -> pathlib.Path:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--stage", default="all",
-                    choices=["planet", "system", "passive", "active", "bayes", "contact", "figures", "numbers", "all"])
+                    choices=["planet", "system", "passive", "active", "bayes", "contact", "survival", "figures", "numbers", "all"])
     ap.add_argument("--config", default=None)
     args = ap.parse_args(argv)
     cfg = load_cfg(args.config)
-    stages = [args.stage] if args.stage != "all" else ["planet", "system", "passive", "active", "bayes", "contact", "figures", "numbers"]
+    stages = [args.stage] if args.stage != "all" else ["planet", "system", "passive", "active", "bayes", "contact", "survival", "figures", "numbers"]
     for st in stages:
         if st == "planet":
             stage_planet(cfg)
@@ -505,6 +536,8 @@ def main(argv: list[str] | None = None) -> int:
             stage_bayes(cfg)
         elif st == "contact":
             stage_contact(cfg)
+        elif st == "survival":
+            stage_survival(cfg)
         elif st == "figures":
             from .figures import make_all
             make_all(cfg)

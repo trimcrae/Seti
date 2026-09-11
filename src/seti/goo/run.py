@@ -255,7 +255,7 @@ def _sci(x: float, sig: int = 2) -> str:
     if m_s.startswith("10"):
         e += 1
         m_s = "1.0"
-    return rf"{m_s}\times10^{{{e}}}"
+    return rf"\ensuremath{{{m_s}\times10^{{{e}}}}}"
 
 
 def _time(s: float) -> str:

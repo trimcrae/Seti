@@ -3,12 +3,100 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-09.
+next. Last updated: 2026-09-11.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### Grey goo as a technosignature, 2026-09-11: GOO (S44, S45) and two manuscripts
+
+A new question from the user: *are there papers on how long it would take grey
+goo to propagate through the galaxy / universe and looking for signs of it? If
+not, write one, including how the findings (or lack of findings) should change
+our thoughts on the likelihood of us grey-gooing ourselves; a generalised
+version on the other ways we could accidentally kill ourselves with
+self-replicating technology; and a target journal.* `docs/goo.md` is the
+design; `seti.goo` the model (26 offline tests, ruff clean); `paper/goo/` the
+main manuscript (builds, 0 undefined citations, 6 figures, 4 tables) and
+`paper/replicators/` the companion; `paper/goo/JOURNAL.md` the venue analysis.
+
+**The literature, as far as the record shows.** Two literatures have never
+met: grey goo (Drexler 1986; Freitas 2000 ecophagy; Phoenix & Drexler 2004
+retraction; the risk surveys) stops at the planet, and self-replicating probes
+(Hart 1975 → Tipler 1980 → Freitas 1980 → Newman & Sagan 1981 → Landis 1998 →
+Bjørk 2007 → Cotta & Morales 2009 → Wiley 2011 → Nicholson & Forgan 2013 →
+Carroll-Nellenback+2019; intergalactic: Armstrong & Sandberg 2013, Olson 2015,
+Hanson+2021) assume design and control. Nearest neighbours: Sagan & Newman
+1983 (probes would be "an uncontrollable danger" — a goo argument used against
+Tipler), Stevens, Forgan & O'Malley-James 2016 (grey goo listed among
+self-destruction modes, planetary signature sketched), Ellery 2022a,b / 2025
+(designed probes as solar-system technosignatures and their curbing), Lacki
+2025 (collisional cascades — the residue physics). **No paper computes the
+propagation of an uncontrolled replicator beyond its planet, compiles the
+constraints, or draws the implication for the civilisation asking.** The
+runner sweep `goolit.yml` (28 phrase queries with decoys; per-reference
+verification of all 109 citations via arXiv id title-check / title search /
+Crossref) is the evidence and was dispatched at 7:48 AM ET (run 34595836444);
+its `results/goolit/REPORT.md` is to be read before the novelty sentence is
+believed. The first four in-sandbox literature agents were killed by an
+interruption and the sandbox's proxy blocks arXiv/Crossref/ADS outright, which
+is why the sweep runs on the runner (CLAUDE.md acquisition pattern).
+
+**What the model says (`results/goo/`).** Dispersal, not replication rate,
+sets reach. *Planet, in place:* the surface can only shed
+4πR²σ(T⁴−T_eq⁴), so the crust is a **5 kyr** project and the bulk **1.1 Myr**
+at any doubling time from 100 s to a year (the biosphere is hours, and that is
+the only place the folk "days" number applies); lifting the planet costs its
+binding energy — 7 d at L_⊙ (Dyson's number), 15 kyr at the 2000 K surface
+ceiling, 58 Myr on absorbed sunlight. *System:* the belt is a transport-limited
+branching front, **14 yr**; the Kuiper belt 1 kyr; planets 8 kyr–143 kyr at the
+radiative ceiling; the converted mass is a swarm at the feedstock's orbital
+temperature (169 K belt, 44 K Kuiper) — a Dyson-scale waste-heat source while
+alive. **Theorem (the paper's organising result): a dead residue detectable
+above an excess floor f_min lives at most P_orb / f_min** (Lacki 2025's
+collisional time) — 4 kyr at 2.7 AU for 10⁻³ — so the waste-heat surveys bound
+*live* goo and are blind to dead goo. *Galaxy, passive:* devices below 0.57 µm
+are blown out on starlight (v_∞ 7–18 km/s); repulsion at the target star lets
+only β < 1.38, the **0.21–0.57 µm** window, reach 1 AU; the annulus phase-mixes
+in **1.2 Gyr**; a belt's worth of 0.5 µm devices delivers ~200 intact
+arrivals/yr to every Earth-like planet in the annulus before survival losses —
+1.5×10⁵ cumulative in 5 Gyr if the ISM survival time is 10⁸ yr, ~0 at 10⁷ yr.
+No front; a cloud. *Galaxy, active:* 0.6 Myr (0.1c) – 6.4 Myr (0.01c) – 500 Myr
+(30 km/s); cosmic reach 7×10⁸ galaxies at 0.5c, event horizon 16.6 Gly.
+
+**Inference (`seti.goo.bayes`, with and without the anthropic shadow).** Three
+data tiers: our own belt and biosphere (shadowed, 4 Gyr memory), the
+5×10⁶-star waste-heat null (unshadowed, memory ≤ P_orb/f_min for dead goo),
+the 10⁵-galaxy Ĝ null (unshadowed, indefinite memory for live goo). Prior-free
+95 % bounds on p = p_goo·p_esc per civilisation: own galaxy naive 3/Λ, shadowed
+none; **external persistent 3×10⁻⁷ at Λ = 100** — five decades below the
+own-galaxy bound and immune to the shadow; external dead residue 3×10⁻³.
+**Branch map:** the data touch only the escaping branch, so an elicited
+planet-scale accident probability moves by ×0.990 if 1 % of goo accidents are
+interstellar, ×0.90 at 10 %, ×0.50 at 50 %. A molecular replicator loose on a
+planet is planet-bound; it needs space industry to be system-scale, sub-micron
+size in space to be passive-interstellar, a starship to be active-interstellar.
+**The sky is informative about goo that travels and silent about goo that
+stays home; ours would stay home.** Corollary: a planet-bound goo filter leaves
+a galaxy exactly as quiet as the one we see.
+
+**Charter note.** This is not a null-result write-up: it is a propagation
+calculation, a compiled record, and an inference whose deliverable is the
+branch map. It does report what the record does *not* constrain, because that
+is the question asked. Two new taxonomy entries (S44 ecophagic planet —
+unsearchable, listed with the numbers; S45 feedstock-temperature swarm —
+searchable, and OSSUARY's sample is where the natural background is absent).
+Target journal: **IJA** for the main paper (every nearest neighbour was
+published there), Acta Astronautica as alternative; **Futures** for the
+companion, Risk Analysis as alternative (`paper/goo/JOURNAL.md`).
+
+**Open items.** (1) Read `results/goolit/REPORT.md` when the run lands: fix any
+MISMATCH, fill the two author lists left as placeholders in `refs.bib`
+(arXiv:1605.02169, 2209.14244), and confirm the novelty scan is empty for
+"goo AND beyond-planet". (2) Second full read of both manuscripts against the
+verified record.
 
 ### Roman is coming: the intake and four Roman-only signatures, 2026-09-09: ROMAN (S40–S43)
 

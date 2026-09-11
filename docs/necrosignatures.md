@@ -365,6 +365,30 @@ products are public. Physics, confounders and data in `roman.md`; package
   reflector, not a planet; grey (no methane band) and specular. A tiny
   population, screened for what no planet-hunter looks for. → **ROMAN/statite**
 
+### XI. Replicator residue — added 2026-09-11
+*What an UNCONTROLLED self-replicator leaves, by dispersal class. Physics,
+numbers and the inference in `goo.md` and `paper/goo/`; package `seti.goo`.
+The organising result: a detectable dead residue lives at most
+P_orb / f_min above the detection floor (4 kyr at 2.7 AU for f_min = 10⁻³),
+so every waste-heat survey bounds goo that is still replicating and nothing
+bounds goo that stopped.*
+* **S44 The ecophagic planet.** A temperate rocky planet radiating at its
+  surface ceiling (~500 K for machines that must stay below it) with no
+  atmospheric disequilibrium during conversion, then a refined, uniform,
+  chemically dead surface. The planet-bound branch — the one a civilisation
+  at our stage can actually produce. **Unsearchable at catalogue level** and
+  listed with the numbers that say why: thermal emission exists for a handful
+  of hot rocky planets (LHS 3844 b, TRAPPIST-1 b/c) and temperate surfaces
+  are beyond any funded facility.
+* **S45 The feedstock-temperature swarm.** A waste-heat excess whose colour
+  temperature matches the host's *small-body belt* (170 K at 2.7 AU, 45 K at
+  40 AU) rather than a habitable-zone or engineering optimum: a purposeful
+  swarm sits where its builders want the energy, a goo sits where the rock
+  was. The system-scale branch, alive. Searchable in the same catalogues as
+  every Dyson search; the discriminant is the temperature–orbit pairing,
+  and OSSUARY's old / metal-poor sample is the first place a natural
+  background is absent. → **OSSUARY** (as a re-read of its survivors, if any)
+
 ---
 
 ## 3. CENOTAPH — the flagship design

@@ -21,7 +21,7 @@ URLs fetched: 44 ok / 44 total.
 | Worth2013 | VERIFIED | Seeding Life on the Moons of the Outer Planets via Lithopanspermia | R. J. Worth, Steinn Sigurdsson, Christopher H. House  |
 | AdamsSpergel2005 | VERIFIED | Lithopanspermia in Star Forming Clusters | Fred C. Adams, David N. Spergel  |
 | Ginsburg2018 | VERIFIED | Galactic Panspermia | Idan Ginsburg, Manasvi Lingam, Abraham Loeb The Astrophysical Journal Letters, Volume 868, L12 (2018) |
-| Krijt2017 | MISMATCH | Expecting the Unexpected: Training Detectors for Unusual Pedestrians with Adversarial Imposters | Shiyu Huang, Deva Ramanan  |
+| Krijt2017 | VERIFIED | Fast litho-panspermia in the habitable zone of the TRAPPIST-1 system | Sebastiaan Krijt, Timothy J. Bowling, Richard J. Lyons  |
 | SirajLoeb2020grazing | VERIFIED | Possible Transfer of Life by Earth-Grazing Objects to Exoplanetary Systems | Amir Siraj, Abraham Loeb  |
 | Melosh2003 | VERIFIED | Exchange of Meteorites (and Life?) Between Stellar Systems | Melosh, H. J. Astrobiology |
 | Napier2004 | VERIFIED | A mechanism for interstellar panspermia | Napier, W. M. Monthly Notices of the Royal Astronomical Society |
@@ -35,7 +35,7 @@ URLs fetched: 44 ok / 44 total.
 | BailerJones2018 | VERIFIED | New stellar encounters discovered in the second Gaia data release | C. A. L. Bailer-Jones, J. Rybizki, R. Andrae A&amp;A 616, A37 (2018) |
 | BailerJones2015 | VERIFIED | Close encounters of the stellar kind | C. A. L. Bailer-Jones A&amp;A 575, A35 (2015) |
 | GarciaSanchez2001 | VERIFIED | Stellar encounters with the solar system | García-Sánchez, J., Weissman, P. R., Preston, R. A. Astronomy &amp; Astrophysics |
-| Levison2010 | MISMATCH | Agnostic Active Learning Without Constraints | Alina Beygelzimer, Daniel Hsu, John Langford  |
+| Levison2010 | VERIFIED | Capture of the Sun's Oort Cloud from Stars in Its Birth Cluster | Levison, Harold F., Duncan, Martin J., Brasser, Ramon Science |
 | Rickman2008 | VERIFIED | Injection of Oort Cloud comets: the fundamental role of stellar perturbations | Rickman, Hans, Fouchard, Marc, Froeschlé, Christiane Celestial Mechanics and Dynamical Astronomy |
 | Vokrouhlicky2019 | VERIFIED | Origin and evolution of long-period comets | David Vokrouhlický, David Nesvorný, Luke Dones  |
 | Grun1993 | VERIFIED | Discovery of Jovian dust streams and interstellar grains by the Ulysses spacecraft | Grün, E., Zook, H. A., Baguhl, M. Nature |
@@ -53,11 +53,26 @@ URLs fetched: 44 ok / 44 total.
                     </mml:math>
                     Anomaly in a Deep-Sea Manganese Crust and Implications for a Nearby Supernova Source | Knie, K., Korschinek, G., Faestermann, T. Physical Review Letters |
 | Fields2019 | VERIFIED | Supernova Triggers for End-Devonian Extinctions | Brian D. Fields, Adrian L. Melott, John Ellis PNAS 117, 35, 21008-21010 (2020) |
-| Koll2019 | NOT_FOUND |  |   |
+| Koll2019 | VERIFIED | Interstellar
+                    <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+                      <mml:mrow>
+                        <mml:mmultiscripts>
+                          <mml:mrow>
+                            <mml:mi>Fe</mml:mi>
+                          </mml:mrow>
+                          <mml:mprescripts/>
+                          <mml:none/>
+                          <mml:mrow>
+                            <mml:mn>60</mml:mn>
+                          </mml:mrow>
+                        </mml:mmultiscripts>
+                      </mml:mrow>
+                    </mml:math>
+                    in Antarctica | Koll, Dominik, Korschinek, Gunther, Faestermann, Thomas Physical Review Letters |
 | Frankel2018 | VERIFIED | Measuring Radial Orbit Migration in the Milky Way Disk | Neige Frankel, Hans-Walter Rix, Yuan-Sen Ting  |
 | PortegiesZwart2009 | VERIFIED | The lost siblings of the Sun | S. Portegies Zwart Astrophys.J.696:L13-L16,2009 |
 | Adams2010 | VERIFIED | The Birth Environment of the Solar System | Fred C. Adams  |
-| Pfalzner2013 | MISMATCH | Modular forms, hypergeometric functions and congruences | Matija Kazalicki  |
+| Pfalzner2013 | VERIFIED | Early evolution of the birth cluster of the solar system | Susanne Pfalzner  |
 | Lada2003 | VERIFIED | Embedded Clusters in Molecular Clouds | Charles J. Lada, Elizabeth A. Lada Ann.Rev.Astron.Astrophys.41:57-115,2003 |
 
 ## Sentences carrying numbers (verbatim from the abstracts)
@@ -115,7 +130,9 @@ URLs fetched: 44 ok / 44 total.
 - Velocities between $10-100$ km s$^{-1}$ result in the highest probabilities.
 - However, given large enough survival lifetimes, even hypervelocity objects traveling at over 1000 km s$^{-1}$ have a significant chance of capture, thereby increasing the likelihood of panspermia.
 
-### Krijt2017 — Expecting the Unexpected: Training Detectors for Unusual Pedestrians with Adversarial Imposters (arXiv:1703.06283v2)
+### Krijt2017 — Fast litho-panspermia in the habitable zone of the TRAPPIST-1 system (arXiv:1704.01411v1)
+- With several short-period, Earth-mass planets in the habitable zone, the TRAPPIST-1 system potentially allows litho-panspermia to take place on very short timescales.
+- At these ejection velocities, ${\sim}10\%$ of the ejected material reaches another habitable zone planet within $10^2\mathrm{~yr}$, indicating litho-panspermia can be 4 to 5 orders of magnitude faster in TRAPPIST-1 than in the Solar System.
 
 ### SirajLoeb2020grazing — Possible Transfer of Life by Earth-Grazing Objects to Exoplanetary Systems (arXiv:2001.02235v2)
 - We find that $10^{7}$--$10^{9}$ such objects could have been captured by binary star systems over the lifetime of the Solar System.
@@ -172,7 +189,9 @@ URLs fetched: 44 ok / 44 total.
 
 ### Adams2010 — The Birth Environment of the Solar System (arXiv:1001.5444v2)
 
-### Pfalzner2013 — Modular forms, hypergeometric functions and congruences (arXiv:1301.3303v1)
+### Pfalzner2013 — Early evolution of the birth cluster of the solar system (arXiv:1210.8255v1)
+- Using the now available knowledge of the cluster density at a given cluster age it is demonstrated that in starburst clusters the central densities over the first 5Myr are so high (initially &gt; 10^5 Msun pc^{-3}) that hardly any discs with solar system building potential would survive this phase.
+- It is demonstrated that an encounter determining the characteristic properties existing in our solar systems most likely happened very early on (&lt; 2Myr) in its formation history and that after 5Myr the likelihood of a solar-type star experiencing such an encounter in a leaky cluster is negligible even if it was still part of the bound remnant.
 
 ### Lada2003 — Embedded Clusters in Molecular Clouds (arXiv:0301540v1)
 - We use the catalog to construct the mass function and estimate the birthrate for embedded clusters within roughly 2 Kpc of the Sun.

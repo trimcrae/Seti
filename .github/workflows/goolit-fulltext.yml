@@ -1,0 +1,51 @@
+name: goolit-fulltext
+
+# GOO full-text pass (scripts/goolit_fulltext.py): the FULL TEXT of every
+# reference the two GOO sweeps name -- arXiv e-print sources de-TeXed, arXiv
+# PDFs through pypdf, open-access PDFs through Unpaywall for DOI-only papers,
+# and the web-only sources (Freitas 2000, the FHI 2008 survey, Bostrom 2002,
+# Hanson 1998) -- with the sentences each paper contributes to the model
+# extracted against per-paper query terms.  Paywalled papers are recorded as
+# NO_OA_TEXT, never silently skipped.  The sandbox blocks all of these hosts;
+# the runner has egress.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  goolit-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install pypdf
+      - name: Fetch full texts (soft 105-min deadline, partials kept)
+        run: |
+          timeout -k 30 6300 python scripts/goolit_fulltext.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          python -c "import json;d=json.load(open('results/goolit_fulltext/numbers.json'));import collections;print(collections.Counter(r['status'] for r in d.values()))" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: goolit-fulltext
+          path: results/goolit_fulltext/
+          if-no-files-found: warn
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "goolit-fulltext: full texts and the sentences the model needs" \
+            results/goolit_fulltext

@@ -689,6 +689,13 @@ def _cmd_tocsin_targets(args, cfg):
 
     rec = build_targets(cfg, out_path=args.out)
     print(f"[tocsin] targets verdict={rec['verdict']} n={rec['n_targets']}")
+    if rec["verdict"] != "OK":
+        # A build that produced no list must not pass as a green step: the
+        # workflow decides whether an older cached list can carry the night.
+        for sh in rec.get("shells", []):
+            if sh.get("error"):
+                print(f"[tocsin]   shell {sh.get('parallax_mas')}: {sh['error']}")
+        raise SystemExit(2)
 
 
 def _cmd_tocsin_screen(args, cfg):
@@ -726,6 +733,11 @@ def _cmd_tocsin_ztf_targets(args, cfg):
 
     rec = build_ztf_targets(cfg, out_path=args.out)
     print(f"[tocsin-ztf] targets verdict={rec['verdict']} n={rec.get('n_targets')}")
+    if rec["verdict"] != "OK":
+        for sh in rec.get("shells", []):
+            if sh.get("error"):
+                print(f"[tocsin-ztf]   shell {sh.get('parallax_mas')}: {sh['error']}")
+        raise SystemExit(2)
 
 
 def _cmd_tocsin_ztf_screen(args, cfg):

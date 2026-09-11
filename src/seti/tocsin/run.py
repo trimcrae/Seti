@@ -286,8 +286,15 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
                   max_rows_per_shell: int = 500000,
                   dec_min: float | None = None, dec_max: float | None = None,
                   bright_limit_mag: float | None = None,
-                  bright_limit_bands: tuple[str, ...] = ("g", "r")) -> dict:
+                  bright_limit_bands: tuple[str, ...] = ("g", "r"),
+                  record_path: str | Path | None = None) -> dict:
     """Fetch the Gaia DR3 nearby-star target list, in parallax shells.  Runner-only.
+
+    The build record (per-shell row counts and the verbatim error of every
+    failed attempt) is written to ``record_path`` -- by default
+    ``<results_dir>/targets.json`` -- on EVERY exit, so a failed pull leaves a
+    diagnosis behind.  Run 34629211021 (2026-09-11) spent 84 minutes failing
+    every shell and left nothing but ``n=0`` in the job log.
 
     Chunking is not optional: a single monolithic Gaia query at this row count
     times out on the runner (``docs/channel-brief.md`` §2).  Shells are equal in
@@ -312,13 +319,18 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
     if dec_max is not None:
         tconf["dec_max"] = float(dec_max)
     out = Path(out_path) if out_path else root / ".cache" / "tocsin" / "targets.parquet"
+    rec_path = (Path(record_path) if record_path
+                else root / conf["report"]["results_dir"] / "targets.json")
     rec = {"built_at_utc": _utc(), "shells": [], "n_targets": 0,
-           "verdict": "NOT_RUN", "path": str(out)}
+           "verdict": "NOT_RUN", "path": str(out),
+           "dec_range": [float(tconf["dec_min"]), float(tconf["dec_max"])],
+           "d_max_pc": float(tconf["d_max_pc"]), "g_max": float(tconf["g_max"])}
     try:
         from astroquery.gaia import Gaia
     except ImportError as exc:
         rec["verdict"] = "NO_ASTROQUERY"
         rec["error"] = str(exc)
+        _write_json(rec_path, rec)
         return rec
 
     frames = []
@@ -360,6 +372,9 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
 
     if not frames:
         rec["verdict"] = "NO_DATA_REACHED"
+        rec["note"] = ("every parallax shell failed on all attempts; the target "
+                       "list on disk, if any, is left untouched")
+        _write_json(rec_path, rec)
         return rec
     df = pd.concat(frames, ignore_index=True)
     df.columns = [c.lower() for c in df.columns]
@@ -374,6 +389,7 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
     print(f"[tocsin] targets: {len(df)} nearby stars -> {out}"
           + (f" ({n_sat} brighter than {bright_limit_mag} dropped as saturated)"
              if bright_limit_mag is not None else ""))
+    _write_json(rec_path, rec)
     return rec
 
 

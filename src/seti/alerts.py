@@ -517,6 +517,15 @@ def frontier_recovery_alerts(root: Path, now: datetime | None = None) -> list[Al
 # ---------------------------------------------------------------------------
 # Per-channel conditions
 # ---------------------------------------------------------------------------
+# Population-test verdicts that mean "the test ran and found nothing", per
+# `seti.tocsin.population.population_tests`.  Anything else that is not
+# STRUCTURE_DETECTED is a stage that could not run.
+POPULATION_NULL_VERDICTS = frozenset({
+    "NO_STRUCTURE", "INSUFFICIENT_RESOLUTION", "INSUFFICIENT_POPULATION",
+    "NO_TEST_COULD_RUN",
+})
+
+
 def tocsin_alerts(root: Path) -> list[Alert]:
     """Conditions on the nightly stellar alert screen."""
     out: list[Alert] = []
@@ -546,20 +555,56 @@ def tocsin_alerts(root: Path) -> list[Alert]:
                   f"variable."),
             detail={"n_candidate": n_cand, "targets": names[:20]}))
 
+    # POPULATION TESTS.  The verdict vocabulary has exactly one positive value
+    # (`seti.tocsin.population`), and the candidate alert is keyed on THAT, not
+    # on "anything that is not a null".  Issue #11 (2026-09-11) was the
+    # negative form firing on `NO_TARGET_LIST`: the Actions cache holding the
+    # Gaia list had been evicted by an unrelated config edit, the live Gaia
+    # rebuild failed, and the stage's "I could not run" verdict was paged to a
+    # human as a candidate finding.  A stage that could not run is a HEALTH
+    # condition -- worth telling someone, since every population verdict until
+    # the list is rebuilt is missing rather than null -- but it is not a result.
     pop = _load(d / "population.json") or {}
-    if str(pop.get("verdict", "")).upper() not in ("", "NO_STRUCTURE",
-                                                   "INSUFFICIENT_RESOLUTION",
-                                                   "INSUFFICIENT_POPULATION",
-                                                   "NO_TEST_COULD_RUN"):
+    pv = str(pop.get("verdict", "")).upper()
+    if pv == "STRUCTURE_DETECTED":
         out.append(Alert(
-            key=f"tocsin:population:{pop.get('verdict')}",
+            key=f"tocsin:population:{pv}",
             severity="candidate", channel="tocsin",
-            title=f"TOCSIN population tests: {pop.get('verdict')}",
+            title=f"TOCSIN population tests: {pv}",
             body=("The population-structure tests on the screened stellar sample "
                   "returned something other than a null. This is the test that is "
                   "immune to per-object contamination.\n\n"
                   "Read `results/tocsin/population.json`."),
-            detail={"verdict": pop.get("verdict")}))
+            detail={"verdict": pv, "p_min": pop.get("p_min"),
+                    "n_parent": pop.get("n_parent")}))
+    elif pv and pv not in POPULATION_NULL_VERDICTS:
+        why = {
+            "NO_TARGET_LIST": (
+                "The Gaia nearby-star target list was not on the runner, so the "
+                "screened parent population could not be rebuilt and the tests "
+                "did not run. The list lives in the Actions cache, keyed on the "
+                "target section of `config/tocsin.yaml`; a cache miss triggers a "
+                "live Gaia pull, and this verdict means that pull failed too "
+                "(see `results/tocsin/targets.json` for the per-shell errors). "
+                "Dispatch `tocsin` with `rebuild_targets: true` once Gaia is "
+                "reachable; until then the population verdict is MISSING, not "
+                "null."),
+            "NO_BIN_TRIALS": (
+                "The ledger carries no per-bin trial counts, so the screened "
+                "parent cannot be reconstructed; walk at least one window with "
+                "the footprint denominator enabled."),
+        }.get(pv, "The population stage returned a verdict this notifier does "
+                  "not recognise; read the file and teach `seti.alerts` what it "
+                  "means before trusting either silence or noise from it.")
+        out.append(Alert(
+            key=f"tocsin:population_unavailable:{pv}",
+            severity="health", channel="tocsin",
+            title=f"TOCSIN population tests could not run: {pv}",
+            body=(f"`results/tocsin/population.json` reports `{pv}`. This is not "
+                  f"a finding -- the test that is immune to per-object "
+                  f"contamination did not run.\n\n{why}"
+                  + (f"\n\nStage note: {pop.get('note')}" if pop.get("note") else "")),
+            detail={"verdict": pv, "note": pop.get("note")}))
     return out
 
 

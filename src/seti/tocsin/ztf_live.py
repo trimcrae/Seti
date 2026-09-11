@@ -932,7 +932,8 @@ def build_ztf_targets(cfg=None, out_path: str | Path | None = None) -> dict:
     return build_targets(cfg, out_path=out, dec_min=float(z["dec_min"]),
                          dec_max=float(z["dec_max"]),
                          bright_limit_mag=None if sat is None else float(sat),
-                         bright_limit_bands=("g", "r"))
+                         bright_limit_bands=("g", "r"),
+                         record_path=root / z["results_dir"] / "targets.json")
 
 
 # ---------------------------------------------------------------------------

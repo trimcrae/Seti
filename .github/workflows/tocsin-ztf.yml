@@ -91,16 +91,66 @@ jobs:
         if: always()
         run: python -m seti.cli tocsin-ztf-probe
 
+      # The Gaia target list is ~10^5 rows and changes only when the target
+      # config changes, so it is cached rather than committed (too large for the
+      # repository) and rather than re-pulled nightly (needless Gaia load).
+      #
+      # The cache key hashes ONLY the config keys the list depends on, not the
+      # whole file: run 34629211021 (2026-09-11) lost the Rubin list to a
+      # ZTF-only edit of config/tocsin.yaml, then spent 84 minutes failing to
+      # pull it again from a Gaia that was not answering, and screened nothing
+      # (issue #11).  Restore and save are split so that (a) a key change still
+      # restores the newest list under any older key as a fallback, and (b)
+      # that fallback is never re-saved under the new key -- only a list the
+      # rebuild actually produced is.  A night with no list at all fails loudly.
+      - name: Compute the target-list cache key
+        id: targets-key
+        run: |
+          key=$(python - <<'PY'
+          import hashlib, json, yaml
+          c = yaml.safe_load(open("config/tocsin.yaml"))
+          dep = {"target": c.get("target"), "ztf": {k: (c.get("ztf") or {}).get(k) for k in ("dec_min", "dec_max", "saturation_mag")}}
+          print(hashlib.sha256(json.dumps(dep, sort_keys=True).encode()).hexdigest()[:16])
+          PY
+          )
+          echo "key=tocsin-ztf-targets-${key}-v2" >> "$GITHUB_OUTPUT"
+          echo "target-list cache key: tocsin-ztf-targets-${key}-v2"
+
       - name: Restore the northern nearby-star target list
         id: targets-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .cache/tocsin_ztf
-          key: tocsin-ztf-targets-${{ hashFiles('config/tocsin.yaml') }}-v1
+          key: ${{ steps.targets-key.outputs.key }}
+          restore-keys: |
+            tocsin-ztf-targets-
 
       - name: Build the Gaia DR3 northern nearby-star target list
+        id: targets-build
         if: github.event.inputs.probe_only != 'true' && (steps.targets-cache.outputs.cache-hit != 'true' || github.event.inputs.rebuild_targets == 'true')
+        continue-on-error: true
         run: python -m seti.cli tocsin-ztf-targets
+
+      - name: Save the target list under the current key
+        if: steps.targets-build.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/tocsin_ztf
+          key: ${{ steps.targets-key.outputs.key }}
+
+      - name: Require a target list
+        if: github.event.inputs.probe_only != 'true'
+        run: |
+          if [ "${{ steps.targets-build.outcome }}" = "failure" ]; then
+            echo "::warning::the Gaia rebuild failed; results/tocsin_ztf/targets.json has the per-shell errors"
+          fi
+          if [ ! -s .cache/tocsin_ztf/targets.parquet ]; then
+            echo "::error::no target list on the runner: the cache missed and the Gaia rebuild failed"
+            exit 1
+          fi
+          if [ "${{ steps.targets-build.outcome }}" = "failure" ]; then
+            echo "::warning::screening with the list restored under an older key (${{ steps.targets-cache.outputs.cache-matched-key }})"
+          fi
 
       - name: Screen the window(s)
         if: github.event.inputs.probe_only != 'true'
@@ -174,6 +224,7 @@ jobs:
           scripts/commit_results.sh \
             "tocsin-ztf: nightly ZTF alert screen while Rubin is dark — S30 flash/dip" \
             results/tocsin_ztf/probe.json \
+            results/tocsin_ztf/targets.json \
             results/tocsin_ztf/run.json \
             results/tocsin_ztf/summary.json \
             results/tocsin_ztf/ledger.json \

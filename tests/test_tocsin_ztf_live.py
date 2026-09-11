@@ -120,9 +120,10 @@ def test_the_northern_list_is_built_without_saturated_stars(monkeypatch, tmp_pat
     seen = {}
 
     def fake_build(cfg, out_path=None, dec_min=None, dec_max=None,
-                   bright_limit_mag=None, bright_limit_bands=("g", "r")):
+                   bright_limit_mag=None, bright_limit_bands=("g", "r"),
+                   record_path=None):
         seen.update(dec_min=dec_min, dec_max=dec_max, bright_limit_mag=bright_limit_mag,
-                    bright_limit_bands=bright_limit_bands)
+                    bright_limit_bands=bright_limit_bands, record_path=record_path)
         return {"verdict": "OK", "n_targets": 0}
 
     import seti.tocsin.run as R
@@ -132,6 +133,8 @@ def test_the_northern_list_is_built_without_saturated_stars(monkeypatch, tmp_pat
     assert seen["bright_limit_mag"] == 13.0
     assert tuple(seen["bright_limit_bands"]) == ("g", "r")
     assert seen["dec_min"] == -31.0
+    # The build record lands in the ZTF results dir, not tocsin's.
+    assert str(seen["record_path"]).endswith("results/tocsin_ztf/targets.json")
 
 
 def test_unknown_filters_and_incomplete_rows_are_dropped_not_guessed():

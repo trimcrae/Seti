@@ -47,7 +47,10 @@ explains most of them, and notify about objects published months ago.
 exists for. If it fires monthly, the thresholds are wrong, not the sky.
 
 - TOCSIN put a target at tier `candidate`
-- TOCSIN's population-structure tests returned anything other than a null
+- TOCSIN's population-structure tests returned `STRUCTURE_DETECTED` — the one
+  positive verdict the stage has. The rule is deliberately positive: the
+  negative form ("anything other than a null") paged `NO_TARGET_LIST` as a
+  candidate on 2026-09-11 (issue #11), when the stage had simply not run
 - LOOM put an object at tier `candidate`
 - LOOM's replication tests detected population structure — *this is the
   channel's actual decision criterion*
@@ -64,6 +67,14 @@ exposed to.
   that is fixed.
 - A channel wrote `verdict: NO_DATA_REACHED` — the broker was unreachable or
   answered unusably. That is not a null result and must not be read as one.
+- TOCSIN's population stage could not run (`NO_TARGET_LIST`,
+  `NO_BIN_TRIALS`, or a verdict the notifier does not know). The Gaia target
+  list lives in the Actions cache, keyed on the config keys it depends on; a
+  miss triggers a live Gaia pull, and if that fails too the stage writes
+  `NO_TARGET_LIST` and every population verdict until the next successful
+  rebuild is *missing*, not null. `results/tocsin/targets.json` records the
+  per-shell errors of the last build; dispatch `tocsin` with
+  `rebuild_targets: true` once Gaia answers.
 - A channel has gone quiet (§3).
 - **The data has gone quiet even though the channel has not** (§3).
 
@@ -278,6 +289,7 @@ results/tocsin/ledger.json        cumulative target x night state; the trial den
 results/tocsin/summary.json       the night's screen
 results/tocsin/assessment.json    tiers over the whole ledger
 results/tocsin/population.json    population-structure tests
+results/tocsin/targets.json       the last Gaia target-list build: rows per shell, or why it failed
 results/loom/screen.json          the funnel, the frontier, coverage
 results/loom/objects.csv          per-object tiers and reasons
 results/loom/assessment.json      replication tests, positive controls

@@ -108,6 +108,22 @@ bodies (size and survival are), and never the route for a goo confined to a
 planet (R0 ≪ 1 through impacts and grazing bodies). The birth-cluster channel
 is the one bulk rock-transfer epoch and no civilisation exists during it.
 
+## 2B. Full text, not abstracts (user directive, 2026-09-11)
+
+Abstract-level verification is not enough for the rates the models use, so
+`scripts/goolit_fulltext.py` (`goolit-fulltext.yml`) fetches the **full text**
+of every reference both sweeps name: arXiv e-print LaTeX sources (de-TeXed) or
+PDFs (pypdf), open-access PDFs through the Unpaywall API for DOI-only papers,
+and the web-only sources (Freitas 2000 ecophagy page, the FHI 2008 survey,
+Bostrom 2002, Hanson 1998). Per paper it stores the plain text (arXiv / OA
+licences; paywalled papers are recorded `NO_OA_TEXT` and never silently
+skipped) and the sentences matching that paper's query terms — what the model
+actually needs from it (`QUERIES` in the script). `results/goolit_fulltext/`.
+Every number in `config/goo.yaml` is then re-read against the full-text
+sentence that carries it; the two scan variables (rocks ejected from a system
+over the age of the Earth; the Ulysses dust flux) are replaced where the text
+supplies them.
+
 ## 3. Inference (`seti.goo.bayes`)
 
 $N\sim{\rm Poisson}(\Lambda)$ civilisations in a 5 Gyr window; each makes an

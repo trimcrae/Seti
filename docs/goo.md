@@ -135,6 +135,17 @@ now quoted verbatim; the birth-cluster transfer count is a 10⁷–3×10¹⁶ ra
 across mechanisms with Adams & Spergel's f_imp ~ 10⁻⁴ landing fraction;
 Suazo+2022's actual limits (2×10⁻⁵ within 100 pc, 8×10⁻⁴ within 5 kpc) and
 Zackrisson+2015's 0.3 %/3 % Kardashev-III limits are now in Table 2.
+Second pass (Europe PMC, explicit OA URLs, landing pages): **94 of 145** in
+full — added Ćirković+2010, Snyder-Beattie+2019, Bar-On+2018 (550 Gt C
+confirmed), Wallner+2016 (⁶⁰Fe influxes 1.7–3.2 and 6.5–8.7 Myr ago
+confirmed), Millett & Snyder-Beattie 2017, Noble+2018, Esvelt+2014,
+Kriegman+2021, Staniford+2002. What remains without full text is paywalled
+with no open copy (Melosh 2003, Grün 1993, Jones 1996, Burns 1979, Levison
+2010, Moore 2003, Napier 2004, Mileikowsky 2000, Wyatt 2008, Phoenix & Drexler
+2004, Armstrong & Sandberg 2013) or is a book/report; those are cited on
+their published records, and the numbers the paper takes from them (Burns's
+β formula, Jones's grain lifetime, Moore's 8.5 s doubling, Armstrong &
+Sandberg's galaxy counts) are standard, abstract-level results.
 
 ## 3. Inference (`seti.goo.bayes`)
 

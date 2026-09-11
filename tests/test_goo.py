@@ -207,6 +207,7 @@ def test_run_all_stages_into_tmp(tmp_path, monkeypatch):
     R.stage_passive(cfg)
     R.stage_active(cfg)
     R.stage_bayes(cfg)
+    R.stage_contact(cfg)
     tex = R.stage_numbers(cfg)
     assert tex.exists()
     txt = tex.read_text()

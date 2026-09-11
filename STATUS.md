@@ -104,6 +104,31 @@ JBIS/QJRAS/JET papers marked *asserted* because neither API carries them.
 Limitation stated in `docs/goo.md`: the novelty sweep reaches arXiv abstracts
 only. Both manuscripts rebuilt with 0 undefined citations.
 
+**The contact graph (user reframing, 2026-09-11 ~8:15 AM ET): "how long it
+takes everything in the galaxy to be touched by something that has been
+touched by something else."** `seti.goo.contact`, ten offline tests, paper
+§7, figure 7, table 3; every rate from the record fetched by `goolit-contact.yml`
+(run 34598452720, 44 references, 40 verified, number-bearing sentences
+verbatim in `results/goolit_contact/REPORT.md`). Channels: interstellar
+objects (n = 0.2 AU⁻³, Do+2018; capture 2 per kyr, Dehnen+2022), impact ejecta,
+Earth-grazing bodies captured by binaries (10⁷–10⁹, Siraj & Loeb 2020),
+free-floating planets (21 per star, Sumi+2023; 1 % of stars capture one),
+interstellar dust (~10⁻⁴ m⁻² s⁻¹), blown-out belt devices, stellar flybys
+(19.7 per Myr within 1 pc, Bailer-Jones+2018), supernova ejecta (⁶⁰Fe), the
+birth cluster (10¹⁴–3×10¹⁶ bodies per sibling pair, Belbruno+2012). **In the
+mass sense the graph is complete already: Earth has been struck ~33 times by
+interstellar objects, 5×10¹⁷ interstellar grains land per year, one system's
+ejecta are captured by 8×10⁶ others; every system is flyby-linked in 124 Myr.
+For one system's material landing on other planets it is at threshold
+(R0 ≈ 2.8 by interstellar objects, 3×10⁻⁴ by impact ejecta, 10¹⁹ by dust) —
+contact is never the bottleneck for a goo among small bodies (size and survival
+are) and never the route for a planet-bound one.** The birth-cluster channel
+gives ~5×10⁴ strict touches per sibling pair (Earth has very likely been struck
+by material that condensed around another star) but no civilisation exists
+during it. Two order-of-magnitude scan variables remain (rocks ejected from a
+system over the age of the Earth; the Ulysses dust flux), marked in
+`config/goo.yaml`.
+
 **Open items.** (1) Freitas 2000's exact ecophagy figures are paraphrased
 conservatively in §3 because the Foresight page is outside both APIs; a
 targeted fetch on the runner would let the paper quote them. (2) A second

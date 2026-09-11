@@ -24,6 +24,7 @@ import yaml
 
 from . import active as A
 from . import bayes as B
+from . import contact as CT
 from . import passive as P
 from . import planet as PL
 from . import system as S
@@ -242,6 +243,18 @@ def stage_bayes(cfg: dict) -> dict:
     return out
 
 
+# --- contact --------------------------------------------------------------------
+def stage_contact(cfg: dict) -> dict:
+    W = cfg["inference"]["window_Gyr"] * 1e9
+    rows = [r.__dict__ for r in CT.run_contact(cfg, W)]
+    out = {"window_yr": W, "channels": rows,
+           "iso_impacts_on_earth_over_age": CT.iso_impacts_on_earth_over_age(cfg),
+           "definitions": {"strict": "carrier lands on an Earth-sized planet of the target system",
+                           "loose": f"carrier passes within {cfg['contact']['r_loose_AU']:g} AU of the target star"}}
+    _dump("contact.json", out)
+    return out
+
+
 # --- numbers --------------------------------------------------------------------
 def _sci(x: float, sig: int = 2) -> str:
     """LaTeX 'a \\times 10^{b}' with sig significant figures; plain for 0.01..1000."""
@@ -418,6 +431,51 @@ def stage_numbers(cfg: dict) -> pathlib.Path:
     cmd("BranchRatioHalf", f"{br['ph0.001_pe0.5_lr0.001']['ratio']:.2f}")
     cmd("BranchRatioTenth", f"{br['ph0.001_pe0.1_lr0.001']['ratio']:.2f}")
 
+    ct = json.loads((d / "contact.json").read_text())
+    byname = {r["name"]: r for r in ct["channels"]}
+
+    def _inf(x: float) -> str:
+        return r"$\infty$" if (x == float("inf") or x != x) else _time(x * YR)
+
+    iso = byname["interstellar objects (>100 m)"]
+    cmd("IsoImpactsOnEarth", f"{ct['iso_impacts_on_earth_over_age']:.0f}")
+    cmd("IsoImpactWaitPlanet", _time(YR / iso["rate_strict_natural_per_planet_yr"]))
+    cmd("IsoPassagesPerYr", _sci(iso["rate_loose_natural_per_system_yr"], 1))
+    cmd("IsoRZeroStrict", _sci(iso["R0_strict"]))
+    cmd("IsoRZeroLoose", _sci(iso["R0_loose"]))
+    cmd("IsoEpidemicStrict", _inf(iso["t_epidemic_strict_yr"]))
+    cmd("IsoEpidemicLoose", _inf(iso["t_epidemic_loose_yr"]))
+    cmd("IsoCaptureWait", _time(YR / iso["rate_capture_natural_per_system_yr"]))
+    cmd("IsoRZeroCapture", _sci(iso["R0_capture"]))
+    eg = byname["Earth-grazing objects captured by binaries"]
+    cmd("GrazingRZeroLoose", _sci(eg["R0_loose"], 1))
+    cmd("GrazingRZeroStrict", _sci(eg["R0_strict"], 1))
+    cmd("FfpCaptureWait", _time(YR / byname["free-floating planets"]["rate_capture_natural_per_system_yr"]))
+    ej = byname["impact ejecta from a planet (rocks > 1 m)"]
+    cmd("EjectaRZeroStrict", _sci(ej["R0_strict"]))
+    cmd("EjectaRZeroLoose", _sci(ej["R0_loose"]))
+    cmd("EjectaWaitPlanet", _time(YR / ej["rate_strict_natural_per_planet_yr"]))
+    ffp = byname["free-floating planets"]
+    cmd("FfpWaitSystem", _time(YR / ffp["rate_loose_natural_per_system_yr"]))
+    cmd("FfpRZeroLoose", _sci(ffp["R0_loose"]))
+    dust = byname["interstellar dust (ISM grains, 0.1-1 um)"]
+    cmd("DustGrainsPerYrOnEarth", _sci(dust["rate_strict_natural_per_planet_yr"], 1))
+    gr = byname["radiation-pressure grains from a converted belt"]
+    cmd("GrainRZeroStrict", _sci(gr["R0_strict"], 1))
+    for tf, nm in ((1e7, "TenMyr"), (1e8, "HundredMyr"), (1e9, "Gyr")):
+        cmd(f"GrainRZeroFunc{nm}", _sci(gr["R0_strict_functional"][f"{tf:g}"], 1))
+    cmd("GrainEpidemicStrict", _inf(gr["t_epidemic_strict_yr"]))
+    enc = byname["stellar encounters (within the Oort cloud, 2e4 AU)"]
+    cmd("EncounterWait", _time(YR / enc["rate_loose_natural_per_system_yr"]))
+    cmd("EncounterAllTouched", _inf(enc["t_all_touched_loose_yr"]))
+    sn = byname["supernova ejecta on a planet"]
+    cmd("SupernovaWait", _time(YR / sn["rate_strict_natural_per_planet_yr"]))
+    cl = byname["birth-cluster exchange (first ~10-100 Myr)"]
+    cmd("ClusterRZeroLoose", _sci(cl["R0_loose"]))
+    cmd("ClusterRZeroStrict", _sci(cl["R0_strict"]))
+    for tf, nm in ((1e8, "HundredMyr"), (1e9, "Gyr"), (1e12, "Rock")):
+        cmd(f"IsoRZeroFunc{nm}", _sci(iso["R0_strict_functional"][f"{tf:g}"]))
+
     tex = ROOT / "paper" / "goo" / "numbers.tex"
     tex.parent.mkdir(parents=True, exist_ok=True)
     tex.write_text("\n".join(L) + "\n")
@@ -427,11 +485,11 @@ def stage_numbers(cfg: dict) -> pathlib.Path:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--stage", default="all",
-                    choices=["planet", "system", "passive", "active", "bayes", "figures", "numbers", "all"])
+                    choices=["planet", "system", "passive", "active", "bayes", "contact", "figures", "numbers", "all"])
     ap.add_argument("--config", default=None)
     args = ap.parse_args(argv)
     cfg = load_cfg(args.config)
-    stages = [args.stage] if args.stage != "all" else ["planet", "system", "passive", "active", "bayes", "figures", "numbers"]
+    stages = [args.stage] if args.stage != "all" else ["planet", "system", "passive", "active", "bayes", "contact", "figures", "numbers"]
     for st in stages:
         if st == "planet":
             stage_planet(cfg)
@@ -443,6 +501,8 @@ def main(argv: list[str] | None = None) -> int:
             stage_active(cfg)
         elif st == "bayes":
             stage_bayes(cfg)
+        elif st == "contact":
+            stage_contact(cfg)
         elif st == "figures":
             from .figures import make_all
             make_all(cfg)

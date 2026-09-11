@@ -209,6 +209,41 @@ def fig_branch(cfg: dict) -> None:
     _save(fig, "fig6_branch")
 
 
+# 7. The contact graph: single-source R0 per channel, strict and loose, against the threshold
+def fig_contact(cfg: dict) -> None:
+    d = out_dir()
+    ct = json.loads((d / "contact.json").read_text())
+    rows = [r for r in ct["channels"] if r["R0_loose"] > 0 or r["R0_strict"] > 0]
+    labels = {
+        "interstellar objects (>100 m)": "interstellar objects",
+        "impact ejecta from a planet (rocks > 1 m)": "impact ejecta (rocks)",
+        "free-floating planets": "free-floating planets",
+        "interstellar dust (ISM grains, 0.1-1 um)": "interstellar dust",
+        "radiation-pressure grains from a converted belt": "blown-out belt devices",
+        "stellar encounters (within the Oort cloud, 2e4 AU)": "stellar flybys",
+        "birth-cluster exchange (first ~10-100 Myr)": "birth-cluster rocks",
+    }
+    fig, ax = plt.subplots(figsize=(6.4, 3.9))
+    y = np.arange(len(rows))[::-1]
+    floor = 1e-6
+    for yi, r in zip(y, rows, strict=True):
+        ax.barh(yi + 0.18, max(r["R0_loose"], floor), left=floor, height=0.34, color="#e2a37a")
+        ax.barh(yi - 0.18, max(r["R0_strict"], floor), left=floor, height=0.34, color="#c2571a")
+    ax.set_yticks(y)
+    ax.set_yticklabels([labels.get(r["name"], r["name"]) for r in rows])
+    ax.set_xscale("log")
+    ax.set_xlim(floor, 1e40)
+    ax.axvline(1.0, color=COL["ink"], lw=0.8, ls="--")
+    ax.text(1.3, len(rows) - 0.45, "R0 = 1: chain propagates", fontsize=7, va="top")
+    ax.barh(-10, 1, color="#e2a37a", label="loose: passes within 100 AU")
+    ax.barh(-10, 1, color="#c2571a", label="strict: lands on an Earth-sized planet")
+    ax.set_ylim(-0.7, len(rows) - 0.3)
+    ax.legend(loc="lower right", frameon=False)
+    ax.set_xlabel("systems touched per touched system over 5 Gyr (R0), mass survival only")
+    ax.set_title("The contact graph: what one system's material reaches")
+    _save(fig, "fig7_contact")
+
+
 def make_all(cfg: dict | None = None) -> None:
     cfg = cfg or load_cfg()
     fig_ladder(cfg)
@@ -217,3 +252,4 @@ def make_all(cfg: dict | None = None) -> None:
     fig_residue(cfg)
     fig_bayes(cfg)
     fig_branch(cfg)
+    fig_contact(cfg)

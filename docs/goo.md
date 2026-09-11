@@ -39,7 +39,23 @@ lean on).  Nobody has computed how far an *uncontrolled* replicator goes,
 compiled what the data say, or drawn the implication for the civilisation
 asking.  The runner-side sweep `results/goolit/` (28 phrase queries, decoy-aware
 scan; `scripts/goolit_fetch.py`, `goolit.yml`) is the evidence for that claim
-and must be read before the novelty sentence in the paper is believed.
+and was read on 2026-09-11 (run 34595836444, 121/121 fetches OK): **0 of 58
+arXiv abstracts across the 28 phrase queries name grey/gray goo or ecophagy
+at all**, none pairs uncontrolled replication with interstellar/galactic
+propagation, and the only "self-replicating AND technosignature" hits are
+Ellery's designed-probe papers. Of the manuscript's 109 references, 85 were
+verified against the arXiv or Crossref record (two author lists that had been
+left as placeholders were filled from it: Kowald 2015, JBIS 68, 383 for the
+error-catastrophe paper; Chen, Ni & Ong 2022, EPJ Plus for the Lotka–Volterra
+paper; Hanson+2021's third author corrected to McCarter; three DOIs
+corrected), 16 are books/reports the APIs do not carry, and the JBIS/QJRAS/JET
+papers (Freitas 1980, Landis 1998, Bostrom 2002, Hart 1975, Tipler 1980,
+Sagan & Newman 1983) are marked *asserted* in `refs.bib` because neither index
+carries them. Limitation of the novelty claim: the phrase queries reach arXiv
+abstracts only; a JBIS- or IJA-only paper that never touched arXiv would not
+be seen, and Sagan & Newman 1983 is exactly such a paper — the nearest
+neighbours in the non-arXiv record are known from citation chains, not from
+this sweep.
 
 ## 2. What the model says (all numbers from `results/goo/*.json`)
 

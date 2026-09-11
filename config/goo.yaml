@@ -88,3 +88,96 @@ inference:
   n_gal_observed: 1.0e5
   own_galaxy_datum_shadowed: true     # SSA: our own galaxy's state carries no information (anthropic shadow)
   human_prior_p_goo: [1.0e-4, 1.0e-3, 1.0e-2]   # elicited planet-scale nanotech-accident probabilities to map through
+
+# ---------------------------------------------------------------------------
+# CONTACT GRAPH — every natural channel by which mass moves between planetary
+# systems, and the directed one.  "touch" has two definitions: STRICT = a
+# carrier lands on an Earth-sized planet of the target system; LOOSE = a carrier
+# passes through the target system (within r_loose) or is captured by it.
+# Each channel: carriers per source system over the window (or a standing
+# density for the natural, all-systems-emitting case), speed, mass-survival and
+# functional-survival times, and the cross-sections.  Every number names its
+# source; entries marked verify: true are provisional until the sentence that
+# carries them is read in results/goolit_contact/REPORT.md.
+# ---------------------------------------------------------------------------
+contact:
+  n_systems_annulus: 1.0e10          # stars in the 1.6 kpc x 0.6 kpc solar annulus
+  n_systems_galaxy: 1.0e11
+  n_earthlike_per_star: 0.1          # rocky HZ planets per star, order of magnitude
+  r_loose_AU: 100.0                  # "passes through the system" radius
+  t_mix_annulus_yr: 1.2e9            # differential-rotation phase mixing (passive.py)
+  t_mix_disc_yr: 1.0e10              # radial migration across the disc (Frankel+2018 scale)
+  channels:
+    - name: "interstellar objects (>100 m)"
+      standing_density_per_AU3: 0.2  # Do, Tucker & Tonry 2018: "n_IS ~ 0.2 au^-3 ... cannot be populated unless every star is contributing"; Jewitt & Seligman 2023: ~0.1 AU^-3, 1e25-1e26 objects in the Milky Way
+      capture_rate_per_yr_natural: 2.0e-3   # Dehnen+2022: "in 1000 years the planets capture ~2 ISOs (while ~17 fall into the Sun)" at n = 0.1 AU^-3; Hands & Dehnen 2020: volume capture rate 0.051 AU^3/yr, steady state ~1e5 captured 'Oumuamua-like rocks
+      speed_kms: 26.0
+      t_mass_survive_yr: 1.0e12      # rocks and ices persist
+      t_func_survive_yr: [1.0e8, 1.0e9, 1.0e12]   # a device shielded inside a 100 m body
+      emitted_when: "early (planet formation); ongoing at a low rate"
+      source: "Do+2018 (0.2 AU^-3, verified); Jewitt & Seligman 2023 (verified); Dehnen+2022 and Hands & Dehnen 2020 capture rates (verified); Portegies Zwart+2018: ~3e5 within 100 AU of the Sun at any time (verified)"
+      verify: false
+    - name: "impact ejecta from a planet (rocks > 1 m)"
+      carriers_per_source: 1.0e12    # order of magnitude for rocks that leave the Solar System over the age of the Earth (Melosh 2003; Worth+2013 abstracts carry no count; kept as the scan variable)
+      capture_rate_per_yr_natural: 0.0
+      speed_kms: 26.0
+      t_mass_survive_yr: 1.0e12
+      t_func_survive_yr: [1.0e8, 1.0e9, 1.0e12]
+      emitted_when: "throughout, in large impacts"
+      source: "Melosh 2003; Worth, Sigurdsson & House 2013; Adams & Napier 2022 (all verified as references; the count is an order of magnitude, scanned)"
+      verify: true
+    - name: "Earth-grazing objects captured by binaries"
+      carriers_per_source: 1.0e8     # Siraj & Loeb 2020: "10^7-10^9 such objects could have been captured by binary star systems over the lifetime of the Solar System" (verified) -- these are LOOSE (bound) touches of other systems by Earth-touched material
+      loose_is_capture_count: true
+      speed_kms: 26.0
+      t_mass_survive_yr: 1.0e12
+      t_func_survive_yr: [1.0e8, 1.0e9, 1.0e12]
+      emitted_when: "throughout"
+      source: "Siraj & Loeb 2020 (verified)"
+      verify: false
+    - name: "free-floating planets"
+      carriers_per_source: 21.0      # Sumi+2023: "21 (+23/-13) FFP or very wide orbit planets of mass 0.33 < M/M_earth < 6660 per star" (verified); Mroz+2017: < 0.25 Jupiter-mass per star (verified)
+      capture_rate_per_yr_natural: 2.0e-12   # Goulinski & Ribak 2018: "about 1% of all stars are expected to experience a temporary capture of a free-floating planet during their lifetime" (verified) -> 0.01 / 5 Gyr
+      speed_kms: 26.0
+      t_mass_survive_yr: 1.0e12
+      t_func_survive_yr: [1.0e12]
+      emitted_when: "early (planet-planet scattering)"
+      source: "Sumi+2023; Mroz+2017; Goulinski & Ribak 2018; Perets & Kouwenhoven 2012 (3-6% x f_FFP in clusters) -- all verified"
+      verify: false
+    - name: "interstellar dust (ISM grains, 0.1-1 um)"
+      standing_flux_per_m2_s: 1.0e-4 # order of magnitude of the interstellar grain flux measured by Ulysses (Grun+1993; Landgraf 2000; Kruger+2019 model agrees with the data within 2-3x); the abstracts fetched carry no flux value, so this is a scan variable
+      speed_kms: 26.0
+      t_mass_survive_yr: 5.0e8       # Jones, Tielens & Hollenbach 1996
+      t_func_survive_yr: [1.0e6, 1.0e7, 1.0e8]
+      emitted_when: "continuous (stellar outflows, supernovae, blown-out circumstellar grains)"
+      source: "Grun+1993; Landgraf 2000; Kruger+2019; Jones+1996"
+      verify: true
+    - name: "radiation-pressure grains from a converted belt"
+      carriers_per_source: 2.3e36    # passive.py: belt mass in 0.5 um devices
+      speed_kms: 26.0
+      t_mass_survive_yr: 5.0e8
+      t_func_survive_yr: [1.0e7, 1.0e8, 1.0e9]
+      emitted_when: "on conversion"
+      source: "this paper, Section 5"
+      verify: false
+    - name: "stellar encounters (within the Oort cloud, 2e4 AU)"
+      encounter_rate_per_Myr_within_1pc: 19.7   # Bailer-Jones+2018: "the present rate of encounters within 1 pc to be 19.7 +/- 2.2 per Myr, a quantity expected to scale quadratically with the encounter distance" (verified)
+      r_encounter_AU: 2.0e4
+      speed_kms: 30.0
+      emitted_when: "continuous"
+      source: "Bailer-Jones 2015, 2018 (verified); Garcia-Sanchez+2001"
+      verify: false
+    - name: "supernova ejecta on a planet"
+      events_per_Myr: 0.3            # 60Fe deposition episodes ~2-3 Myr and ~7 Myr ago (Wallner+2016, Knie+2004); live 60Fe accreting now (Koll+2019): ~ one per few Myr
+      speed_kms: 100.0
+      emitted_when: "on the death of a massive star within ~100 pc"
+      source: "Wallner+2016; Knie+2004; Koll+2019; Fields+2019"
+      verify: true
+    - name: "birth-cluster exchange (first ~10-100 Myr)"
+      bodies_transferred_to_nearest_neighbour: 1.0e15   # Belbruno+2012: "the expected number of bodies with mass > 10 kg that could have been transferred between the Sun and its nearest cluster neighbor could be of the order of 1E14-3E16, with transfer timescales of 10s Myr" (verified); geometric middle
+      planet_landing_probability_per_captured_body: 5.0e-11   # an Oort-region body's chance of ever striking an Earth-sized planet: ~50 long-period-comet impacts on Earth over 4.5 Gyr from a ~1e12-body cloud (order of magnitude)
+      captures_per_cluster_range: [10.0, 16000.0]   # Adams & Spergel 2005: "capture of life bearing rocks is expected to occur 10 -- 16,000 times per cluster" (verified)
+      t_cluster_Myr: 100.0
+      n_siblings: 1000.0
+      source: "Belbruno+2012; Adams & Spergel 2005; Levison+2010 (Oort-cloud capture from siblings); Portegies Zwart 2009 (siblings)"
+      verify: false

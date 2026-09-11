@@ -59,7 +59,18 @@ such machines, phase-mixed around the solar annulus in $\sim$\AnnulusFillGyr\,Gy
 delivers of order \BeltArrivalsUnsurvived intact devices per year to every
 rocky planet in the annulus before survival losses, so that if a machine can
 stay functional in the interstellar medium for $\gtrsim10^{8}$\,yr the passive
-branch seeds a galactic annulus in a gigayear without any spacecraft.  The
+branch seeds a galactic annulus in a gigayear without any spacecraft.  A
+contact-graph model of every natural channel that moves mass between systems
+(interstellar objects, impact ejecta, free-floating planets, stellar flybys,
+interstellar dust, supernova ejecta, birth-cluster exchange), with every rate
+from the literature, shows that the Galaxy is already completely connected in
+the mass sense---every Earth-sized planet has been struck tens of times by
+bodies formed around other stars, and one system's ejected planetesimals are
+captured by \IsoRZeroCapture\ other systems---but sits at the percolation
+threshold ($R_{0}\approx\IsoRZeroStrict$) for one system's material landing on
+other planets, so that contact is never the bottleneck for a replicator loose
+among a system's small bodies and never the route for one confined to a
+planet.  The
 active branch---a replicator that inherits interstellar propulsion---fills the
 Galaxy in \FillFastFast--\FillSlowSlow and reaches
 \GalaxiesHalf--\GalaxiesNinetyNine galaxies before the cosmic event horizon
@@ -132,7 +143,10 @@ by goo and identifies dispersal, not replication rate, as the property that
 sets its reach.  Sections~\ref{sec:planet}--\ref{sec:active} compute the
 timescales at the planetary, system, galactic-passive, galactic-active and
 cosmological scales, and in each case say what the residue looks like and how
-long it lasts.  Section~\ref{sec:record} compiles the observational record.
+long it lasts.  Section~\ref{sec:contact} widens the passive branch into a
+contact-graph model of every natural channel by which mass moves between
+systems, and asks how long the Galaxy takes to be touched by something touched
+by something else.  Section~\ref{sec:record} compiles the observational record.
 Section~\ref{sec:inference} does the inference, with and without the anthropic
 shadow, and maps it onto our own risk.  Section~\ref{sec:general} generalises
 to the other self-replicating technologies with which a civilisation could kill
@@ -444,6 +458,161 @@ and \GalaxiesHalf galaxies, at $0.1c$ \ReachTenthGly\,Gly and \GalaxiesTenth
 these numbers; what goo changes is the prior on whether the front is ever
 launched, which is the subject of Section~\ref{sec:inference}.
 
+
+\section{The contact graph of the Galaxy}
+\label{sec:contact}
+
+Sections~\ref{sec:passive} and \ref{sec:active} treated two carriers.  The
+Galaxy moves mass between planetary systems by many more, and the question a
+goo raises is really the general one: \emph{how long does it take for every
+system to be touched by material from a system that was itself touched?}  We
+answer it with a contact-graph model in which every channel is characterised
+by the same four numbers---how many carriers a system emits (or the measured
+standing density of the carrier population), how fast they move, how long they
+survive, and the cross-section of a target---and every rate is taken from the
+literature (Table~\ref{tab:contact}; the sentences carrying each number are
+recorded verbatim in the released repository).  Two definitions of ``touch''
+are carried through: \emph{strict}, a carrier lands on an Earth-sized planet of
+the target system ($\sigma=\pi R_\oplus^{2}(1+v_{\rm esc}^{2}/v^{2})$);
+\emph{loose}, a carrier passes within 100\,AU of the target star.  Where the
+literature gives a rate of bound \emph{capture} we report that as a third
+class.  Two questions are asked of each channel.  In the \emph{natural} case
+every system emits: after phase mixing the standing density is $n$, a target is
+touched at $n v\sigma$, and everything is touched in $t_{\rm mix}+\ln
+N/(nv\sigma)$.  In the \emph{epidemic} case one system is touched first: its
+carriers touch others at $r_{1}=(N_{c}/V)v\sigma$ per target, the number it
+touches over the window is $R_{0}=r_{1}N W$, and susceptible--infected
+dynamics on $N$ systems takes $t_{\rm mix}+2\ln N/(r_{1}N)$ to go from one to
+all, provided $R_{0}>1$.  Functional survival multiplies $R_{0}$ by the
+fraction of carriers still working after the mixing delay.
+
+\begin{table}
+\centering
+\small
+\caption{The contact graph.  Natural rates are for the measured or implied
+standing population (every system emitting); $R_{0}$ is the number of other
+systems one touched system's material reaches over the 5\,Gyr window, counting
+mass only.  Strict: lands on an Earth-sized planet; loose: passes within
+100\,AU; capture: bound, where the literature gives it.  Sources in the text.}
+\label{tab:contact}
+\begin{tabular}{p{3.6cm}p{2.9cm}p{2.5cm}p{1.6cm}p{1.7cm}p{1.6cm}}
+\toprule
+carrier & natural, per planet or system & captured & $R_{0}$ strict & $R_{0}$ loose & $R_{0}$ capture \\
+\midrule
+interstellar objects ($>100$\,m) & one impact per \IsoImpactWaitPlanet; \IsoPassagesPerYr\ passages within 100\,AU per year & one bound per \IsoCaptureWait & \IsoRZeroStrict & \IsoRZeroLoose & \IsoRZeroCapture \\
+impact ejecta (rocks) & one impact per \EjectaWaitPlanet & --- & \EjectaRZeroStrict & \EjectaRZeroLoose & --- \\
+Earth-grazing bodies to binaries & --- & $10^{7}$--$10^{9}$ over 4.5\,Gyr & \GrazingRZeroStrict & \GrazingRZeroLoose & --- \\
+free-floating planets & one passage per \FfpWaitSystem & one per \FfpCaptureWait & $\sim0$ & \FfpRZeroLoose & $10^{-2}$ \\
+interstellar dust (0.1--1\um) & \DustGrainsPerYrOnEarth\ grains on Earth per year & --- & $10^{25}$ & $10^{39}$ & --- \\
+blown-out belt devices (\S\ref{sec:passive}) & \BeltArrivalsUnsurvived\ per planet per year & --- & \GrainRZeroStrict & $10^{33}$ & --- \\
+stellar flybys within $2\times10^{4}$\,AU & one per \EncounterWait; all systems linked in \EncounterAllTouched & --- & 0 & $10^{3}$ & --- \\
+supernova ejecta on a planet & one per \SupernovaWait & --- & --- & --- & --- \\
+birth cluster (first 100\,Myr) & $10^{14}$--$3\times10^{16}$ bodies to the nearest sibling & --- & \ClusterRZeroStrict & \ClusterRZeroLoose & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Interstellar objects.}  The interloper population is measured:
+$n\approx0.2$\,AU$^{-3}$ for `Oumuamua-class bodies ($\gtrsim100$\,m), a mass
+density of $\sim4\,\Mearth$\,pc$^{-3}$ that ``cannot be populated unless every
+star is contributing'' \citep{Do2018}; $10^{25}$--$10^{26}$ such bodies in the
+Milky Way \citep{JewittSeligman2023}; $\sim3\times10^{5}$ within 100\,AU of the
+Sun at any moment and 2--12 passages within 1\,AU per year
+\citep{PortegiesZwart2018}.  At 26\kms onto a gravitationally focused Earth
+that is one interstellar impact per \IsoImpactWaitPlanet, i.e.\
+\IsoImpactsOnEarth\ impacts by bodies formed around other stars over the
+Earth's history---the strict natural touch has already happened here, dozens
+of times, by the largest class alone.  Capture is far commoner than impact:
+the planets bind $\sim2$ interstellar objects per millennium (and $\sim17$ fall
+into the Sun) at $n=0.1$\,AU$^{-3}$ \citep{Dehnen2022}, a volume capture rate
+of $0.051$\,AU$^{3}$\,yr$^{-1}$ that sustains $\sim10^{5}$ bound `Oumuamua-like
+rocks at any time \citep{HandsDehnen2020,Napier2021capture,SirajLoeb2019trapped}.
+Turned around, one system's ejected planetesimals are captured, over the
+window, by \IsoRZeroCapture\ other systems and land on \IsoRZeroStrict\
+Earth-sized planets.  \emph{The strict contact graph of the Galaxy, by
+interstellar objects alone, sits at its percolation threshold:} $R_{0}\approx3$
+over 5\,Gyr, so a chain of planet-to-planet transfers propagates, but each
+generation takes gigayears and the chain does not cross the annulus within the
+age of the universe (\IsoEpidemicStrict).  Loosely, every system is inside
+every other system's ejecta within one mixing time.
+
+\paragraph{Rocks from a planet.}  Impact ejecta that leave a system are far
+fewer than planetesimals ejected during formation---of order $10^{12}$ over
+the age of the Earth is the scale the lithopanspermia literature works with
+\citep{Melosh2003,Worth2013,AdamsNapier2022}---and in the field they land on
+\EjectaRZeroStrict\ other Earths per source: the planet-bound branch does not
+leak into the Galaxy through impacts, as \citet{Melosh2003} concluded.  The
+exception is bound capture: $10^{7}$--$10^{9}$ Earth-grazing bodies could have
+been captured by binary systems over the Solar System's lifetime
+\citep{SirajLoeb2020grazing}, a loose touch of $\sim10^{8}$ systems by
+Earth-derived material, of which a landing fraction of order $10^{-10}$
+survives to the strict count.
+
+\paragraph{The birth cluster.}  The one epoch in which rocks do cross between
+systems in bulk is the first $\sim10^{8}$\,yr, when a star sits among $10^{3}$
+siblings at kilometre-per-second relative speeds and weak transfer moves
+$10^{14}$--$3\times10^{16}$ bodies heavier than 10\,kg between the Sun and its
+nearest neighbour on 10-Myr timescales \citep{Belbruno2012}; the capture of
+life-bearing rocks happens 10--16\,000 times per cluster under favourable
+conditions \citep{AdamsSpergel2005}, and the Sun's own Oort cloud was
+substantially captured from its siblings \citep{Levison2010}.  With an
+Oort-region body's chance of ever striking an Earth-sized planet of order
+$5\times10^{-11}$, that is $R_{0}\approx\ClusterRZeroStrict$ strict touches per
+sibling pair: it is likely that the Earth has been struck by material that
+condensed around another star.  A replicator, however, uses this channel only
+if it exists while its star is still in its cluster, which for any
+civilisation is never.
+
+\paragraph{Free-floating planets, flybys, dust and supernovae.}  Free-floating
+planets are numerous---$21^{+23}_{-13}$ per star between a third of an Earth
+mass and six Jupiters \citep{Sumi2023}, fewer than 0.25 Jupiters per star
+\citep{Mroz2017}---but as carriers they are useless: one passes within 100\,AU
+of a given star per \FfpWaitSystem, and about one per cent of stars ever
+captures one \citep{GoulinskiRibak2018,PeretsKouwenhoven2012}.  Stellar flybys
+within the Oort cloud occur once per \EncounterWait\ (from the measured
+$19.7\pm2.2$ encounters within 1\,pc per Myr, scaling as distance squared;
+\citealt{BailerJones2018,BailerJones2015}) and connect every system to every
+other in \EncounterAllTouched; they move Oort-cloud comets \emph{inward}, not
+between stars, and in the field they transfer nothing.  Interstellar dust is
+the other extreme: at the measured Ulysses flux \citep{Grun1993,Landgraf2000}
+of order $10^{-4}$\,m$^{-2}$\,s$^{-1}$, \DustGrainsPerYrOnEarth\ interstellar
+grains reach the Earth every year, and the blown-out devices of
+Section~\ref{sec:passive} join this population.  Supernova ejecta reach the
+Earth's surface once per few million years, as the $^{60}$Fe layers on the sea
+floor and in Antarctic snow record \citep{Knie2004,Wallner2016,Koll2019}; they
+carry nothing a replicator survives.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{fig7_contact}
+\caption{The contact graph: the number of other systems one touched system's
+material reaches over 5\,Gyr, counting mass only, for each natural channel and
+for the blown-out devices of Section~\ref{sec:passive}.  Strict touches land on
+an Earth-sized planet; loose ones pass within 100\,AU.  The dashed line is the
+percolation threshold $R_{0}=1$.}
+\label{fig:contact}
+\end{figure}
+
+\paragraph{What the graph says.}  In the mass sense the contact graph of the
+Galaxy is already complete: every planet is being touched continuously by
+interstellar grains, every system is inside a bath of every other system's
+planetesimals, and every Earth-sized planet has been struck tens of times by
+bodies from other stars.  In the strict, single-source sense---one system's
+material landing on other planets---the graph is at threshold for
+interstellar objects ($R_{0}\approx3$) and far below it for anything a planet
+ejects ($R_{0}\sim10^{-3}$).  The only channels far above threshold are the
+dust-sized ones ($R_{0}\sim10^{19}$ for a converted belt), and those are the
+ones whose carriers are least able to survive the crossing: with a
+$10^{8}$\,yr functional lifetime the belt's $R_{0}$ falls to
+\GrainRZeroFuncHundredMyr, still enormous, but with $10^{7}$\,yr it falls to
+nothing.  For the interstellar-object channel the carrier is a rock and
+survival is not the issue; the number is.  Contact, in other words, is never
+the bottleneck for a goo that is already in a system's small bodies: what it
+reaches is set by whether its units are grains or rocks, and by how long they
+work.  For a goo confined to a planet's surface, the graph confirms the
+planetary-branch conclusion of Section~\ref{sec:planet}: the routes off a
+planet that do not require a spacecraft deliver $R_{0}\ll1$ in the field.
+
 \section{The observational record}
 \label{sec:record}
 
@@ -615,7 +784,11 @@ interstellar-passive only if it is both in space and below the blowout size,
 and interstellar-active only if it inherits a starship.  For a civilisation at
 our stage $p_{\rm esc}$ is small, and equation~(\ref{eq:branch}) says the
 astronomical silence changes $p_{\rm goo}$ by a factor within a per cent of
-unity.
+unity.  The contact graph of Section~\ref{sec:contact} closes the one loophole
+in that statement: the natural routes off a planet---impact ejecta, grazing
+bodies captured elsewhere---deliver $R_{0}\ll1$ strict touches in the field,
+so a planet-bound goo stays planet-bound unless it is put among the small
+bodies on purpose.
 
 \begin{figure}
 \centering
@@ -728,8 +901,10 @@ generations at least.  A goo that dies of copying errors before it crosses the
 Galaxy is, for our purposes, a system-scale goo, and the inference moves it
 to that row.  It assumes no competition: \citet{Chen2022} show that
 predator--prey dynamics between replicator strains can hold a population far
-below the feedstock limit.  And the passive branch assumes a survival time
-that no one has measured for anything but grains.
+below the feedstock limit.  And the passive branch and the contact graph assume a
+functional survival time that no one has measured for anything but grains;
+for rock-borne carriers the paper takes survival for granted and lets the
+number of carriers decide.
 
 \paragraph{Live versus dead.}  The single most consequential result is
 equation~(\ref{eq:tvis}).  It means that a goo that stops is invisible on any
@@ -785,6 +960,15 @@ starlight alone, and the \WindowLoUm--\WindowHiUm\um class reaches the next
 habitable zone; a single belt-scale release seeds every rocky planet in the
 solar annulus within a gigayear if the devices survive $\gtrsim10^{8}$\,yr in
 the interstellar medium.  Passive goo has no front; it has a cloud.
+\item The contact graph of the Galaxy is already complete in the mass sense:
+every Earth-sized planet has been struck tens of times by interstellar
+objects, every system is inside every other's planetesimal cloud, and one
+system's ejecta are captured by $\sim10^{7}$ others.  For one system's material
+\emph{landing} on other planets the graph is at threshold
+($R_{0}\approx\IsoRZeroStrict$ by interstellar objects, $10^{-3}$ by impact
+ejecta, $10^{19}$ by dust-sized carriers), so contact is never the bottleneck
+for a replicator among a system's small bodies and never the route for one
+confined to a planet; survival and size are.
 \item The observational record constrains, per civilisation,
 $p\lesssim\LbExtPersistLamHundred$ for a persistent galaxy-spanning goo at
 $\Lambda=100$, from the $10^{5}$-galaxy null, which is neither anthropically

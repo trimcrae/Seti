@@ -53,7 +53,7 @@ REFS: dict[str, dict] = {
     "Worth2013": {"mode": "arxiv_title", "title": "Seeding Life on the Moons of the Outer Planets via Lithopanspermia", "expect": "Seeding Life on the Moons of the Outer Planets via Lithopanspermia"},
     "AdamsSpergel2005": {"mode": "arxiv_id", "id": "astro-ph/0504648", "expect": "Lithopanspermia in Star Forming Clusters"},
     "Ginsburg2018": {"mode": "arxiv_id", "id": "1810.04307", "expect": "Galactic Panspermia"},
-    "Krijt2017": {"mode": "arxiv_id", "id": "1703.06283", "expect": "Fast litho-panspermia in the habitable zone of the TRAPPIST-1 system"},
+    "Krijt2017": {"mode": "arxiv_title", "title": "Fast litho-panspermia in the habitable zone of the TRAPPIST-1 system", "expect": "Fast litho-panspermia in the habitable zone of the TRAPPIST-1 system"},
     "SirajLoeb2020grazing": {"mode": "arxiv_id", "id": "2001.02235", "expect": "Possible Transfer of Life by Earth-Grazing Objects to Exoplanetary Systems"},
     "Melosh2003": {"mode": "crossref", "q": "Melosh 2003 Exchange of meteorites (and impact ejecta) between stellar systems Astrobiology", "expect": "Exchange of Meteorites (and Impact Ejecta) between Stellar Systems"},
     "Napier2004": {"mode": "crossref", "q": "Napier 2004 A mechanism for interstellar panspermia Monthly Notices", "expect": "A mechanism for interstellar panspermia"},
@@ -69,7 +69,7 @@ REFS: dict[str, dict] = {
     "BailerJones2018": {"mode": "arxiv_id", "id": "1805.07581", "expect": "New stellar encounters discovered in the second Gaia data release"},
     "BailerJones2015": {"mode": "arxiv_id", "id": "1412.3648", "expect": "Close encounters of the stellar kind"},
     "GarciaSanchez2001": {"mode": "crossref", "q": "Garcia-Sanchez 2001 Stellar encounters with the solar system Astronomy and Astrophysics", "expect": "Stellar encounters with the solar system"},
-    "Levison2010": {"mode": "arxiv_id", "id": "1006.2588", "expect": "Capture of the Sun's Oort Cloud from Stars in Its Birth Cluster"},
+    "Levison2010": {"mode": "crossref", "q": "Levison Duncan Brasser Kaufmann 2010 Capture of the Sun's Oort Cloud from Stars in Its Birth Cluster Science", "expect": "Capture of the Sun's Oort Cloud from Stars in Its Birth Cluster"},
     "Rickman2008": {"mode": "crossref", "q": "Rickman Fouchard Froeschle Valsecchi 2008 Injection of Oort Cloud comets: the fundamental role of stellar perturbations Celestial Mechanics", "expect": "Injection of Oort Cloud comets: the fundamental role of stellar perturbations"},
     "Vokrouhlicky2019": {"mode": "arxiv_title", "title": "Origin and Evolution of Long-period Comets", "expect": "Origin and Evolution of Long-period Comets"},
     # --- interstellar dust and supernova ejecta reaching planets ---
@@ -79,12 +79,12 @@ REFS: dict[str, dict] = {
     "Wallner2016": {"mode": "crossref", "q": "Wallner 2016 Recent near-Earth supernovae probed by global deposition of interstellar radioactive 60Fe Nature", "expect": "Recent near-Earth supernovae probed by global deposition of interstellar radioactive 60Fe"},
     "Knie2004": {"mode": "crossref", "q": "Knie 2004 60Fe anomaly in a deep-sea manganese crust and implications for a nearby supernova source Physical Review Letters", "expect": "60Fe Anomaly in a Deep-Sea Manganese Crust and Implications for a Nearby Supernova Source"},
     "Fields2019": {"mode": "arxiv_title", "title": "Supernova triggers for end-Devonian extinctions", "expect": "Supernova triggers for end-Devonian extinctions"},
-    "Koll2019": {"mode": "arxiv_title", "title": "Interstellar 60Fe in Antarctica", "expect": "Interstellar 60Fe in Antarctica"},
+    "Koll2019": {"mode": "crossref", "q": "Koll Korschinek Faestermann 2019 Interstellar 60Fe in Antarctica Physical Review Letters", "expect": "Interstellar 60Fe in Antarctica"},
     # --- galactic mixing and the birth cluster ---
     "Frankel2018": {"mode": "arxiv_id", "id": "1805.09198", "expect": "Measuring radial orbit migration in the Galactic disk"},
     "PortegiesZwart2009": {"mode": "arxiv_id", "id": "0903.0237", "expect": "The lost siblings of the Sun"},
     "Adams2010": {"mode": "arxiv_id", "id": "1001.5444", "expect": "The Birth Environment of the Solar System"},
-    "Pfalzner2013": {"mode": "arxiv_id", "id": "1301.3303", "expect": "Early evolution of the birth cluster of the solar system"},
+    "Pfalzner2013": {"mode": "arxiv_title", "title": "Early evolution of the birth cluster of the solar system", "expect": "Early evolution of the birth cluster of the solar system"},
     "Lada2003": {"mode": "arxiv_id", "id": "astro-ph/0301540", "expect": "Embedded Clusters in Molecular Clouds"},
 }
 

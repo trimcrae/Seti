@@ -143,7 +143,11 @@ dust flux is Krüger+2019's Cassini 1.5×10⁻⁴ m⁻² s⁻¹; the birth-clust
 is a 10⁷–3×10¹⁶ range by mechanism with Adams & Spergel's 10⁻⁴ landing
 fraction (R0 strict ~10⁷); Suazo+2022's and Zackrisson+2015's actual limits
 are in Table 2. Second pass (Europe PMC, explicit OA URLs, landing pages)
-dispatched for the 54 without text.
+landed ~9:20 AM ET: **94 of 145 in full**; added Ćirković+2010,
+Snyder-Beattie+2019, Bar-On+2018 (550 Gt C confirmed), Wallner+2016 (⁶⁰Fe
+1.7–3.2 and 6.5–8.7 Myr confirmed), Millett & Snyder-Beattie 2017, Noble+2018,
+Esvelt+2014, Kriegman+2021, Staniford+2002. The rest are paywalled with no
+open copy or are books.
 
 **Open items.** (1) Paywalled full texts without an OA copy (Melosh 2003,
 Grün 1993, Jones 1996, Burns 1979, Wallner 2016, Levison 2010) are cited on

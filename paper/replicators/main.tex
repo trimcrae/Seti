@@ -1,0 +1,258 @@
+% Companion perspective paper to paper/goo/main.tex: the other ways a
+% civilisation can die of its own self-replicating technology, organised by
+% the three properties that govern reach and visibility.  Numbers shared with
+% the main paper are read from ../goo/numbers.tex.
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,graphicx,natbib,booktabs,hyperref,xspace,xcolor}
+\newcommand{\um}{\ensuremath{\,\mu\mathrm{m}}\xspace}
+\newcommand{\kms}{\ensuremath{\,\mathrm{km\,s^{-1}}}\xspace}
+\graphicspath{{../../results/goo/figures/}}
+\bibliographystyle{plainnat}
+\input{../goo/numbers}
+
+\title{Dying of one's own replicators: dispersal, reach and visibility for the
+self-replicating technologies with which a civilisation can end itself}
+\author{[Author list]}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Molecular assemblers, engineered organisms, gene drives, self-reproducing
+machines and space industry, network worms and self-replicating software
+agents are all replicators, and every one of them has been proposed as a way
+a technological civilisation might accidentally end itself.  They are usually
+treated one at a time and by different communities.  We treat them together,
+by the three properties that decide what an escaped replicator can do:
+whether its growth has an external limit, how it disperses, and whether it
+keeps metabolising where an outside observer can see.  The first sets whether
+it is a catastrophe; the second sets its reach; the third sets whether the
+universe keeps a record.  We show that accidental replicators inherit the
+dispersal of the environment they escape into---the biosphere, the network,
+the planetary system---and that for a civilisation at our stage every
+plausible accident is bounded by its planet.  Only the replicator a
+civilisation builds on purpose to travel between stars has a reach that
+astronomy can see, and the observational record (compiled in a companion
+paper) constrains that class and no other: fewer than one civilisation in
+$10^{6}$--$10^{7}$ can have released a persistent galaxy-spanning replicator if
+civilisations are common, while nothing in the sky bears on the planet-bound
+classes at all.  We draw the consequences for how the classes should be
+prioritised, for what ``containment'' means at each scale, and for the
+peculiar epistemic position of a species trying to estimate a risk whose
+realisation would leave no trace anyone could observe.
+\end{abstract}
+
+\section{Introduction}
+
+The idea that a civilisation could be destroyed by something it built that
+copies itself is older than any of the technologies now proposed to do it.
+Von Neumann's universal constructor \citep{FreitasMerkle2004} made
+self-replication an engineering concept in the 1940s; the Morris worm of 1988
+\citep{Spafford1989} made it an incident; Drexler's ``grey goo''
+\citep{Drexler1986} made it an extinction scenario, and Joy's essay
+\citep{Joy2000} made it a public one.  The existential-risk literature since
+\citet{Bostrom2002} has listed self-replicators under several headings---
+nanotechnology, engineered pandemics, misaligned artificial
+intelligence---and has assigned each a probability by elicitation
+\citep{Sandberg2008,Ord2020}, while the technical communities that could
+build them have argued, class by class, about whether the danger is real
+\citep{PhoenixDrexler2004,Adamala2024,Noble2018,Pan2024}.
+
+This paper is a perspective, not a survey.  Its claim is that the classes
+share a structure that is more informative than any of them alone, and that
+the structure has three parts.  First, a replicator is a catastrophe only if
+its growth has no external limit; most replicators most of the time are
+limited by feedstock, heat, competition or copying error, and the question
+``can it escape?'' is prior to every other.  Second, an escaped replicator's
+\emph{reach} is set by how it disperses, and it inherits that dispersal from
+the environment it escapes into: a pathogen's reach is its host species', a
+worm's is its network's, a molecular assembler's is its planet's unless it is
+in space.  Third, a replicator's \emph{visibility} from outside---whether the
+universe keeps a record of the catastrophe---is set by whether it keeps
+metabolising where an outside observer can see it, which for astronomy means
+re-radiating starlight around a star or across a galaxy.  The companion paper
+\citep{GooPaper} works the molecular case through all three properties at
+every scale from planet to cosmos and compiles the observational record; here
+we apply the same three questions to every class and draw the comparative
+conclusions.
+
+\section{The three properties}
+
+\paragraph{Limit.}  Every replicator population obeys some form of
+$\dot N = rN\,(1 - N/K) - \mu N$: growth at rate $r$, a carrying capacity $K$
+set by feedstock or heat, and a loss $\mu$ from decay, predation, competition
+or copying error.  The error catastrophe \citep{Eigen1971} is the general
+statement that a finite-fidelity copier of genome length $L$ and per-symbol
+error $\epsilon$ loses its identity once $\epsilon L\gtrsim\ln s$ for
+selective advantage $s$; biology sits just under that threshold and any
+engineered replicator must be placed there deliberately.  A replicator is a
+catastrophe only in the regime where $K$ is the whole environment and $\mu$ is
+small, which is why designed replicators come with limiters
+\citep{Ellery2022b} and why the accident is the failure of a limiter rather
+than the design of a monster.
+
+\paragraph{Dispersal.}  Once loose, the population's reach is
+$\min(\text{substrate extent},\ \text{dispersal extent})$.  The companion paper
+shows for the molecular case that dispersal class, not replication rate,
+decides everything: a planet's crust is a \CrustGovTime project and its bulk a
+\BulkGovTime one at any doubling time because the surface cannot shed the
+heat faster, a planetary system's small bodies are transport-limited to
+\BeltConvTime--\KuiperConvTime, and the Galaxy is reached only by a
+replicator that is either smaller than \BlowoutRadiusUm\um and loose in space
+(blown out on starlight, seeding a galactic annulus in \AnnulusFillGyr\,Gyr if
+it survives the crossing) or in possession of a starship (\FillFastFast--%
+\FillSlowSlow to fill the disc).  The same logic applies to every class.
+
+\paragraph{Visibility.}  A catastrophe leaves an astronomical record only if
+the replicator keeps converting energy where a survey can see: a live swarm
+re-radiates starlight and is a Dyson-scale source; a dead one grinds itself
+to dust on the collisional time $P_{\rm orb}/f$ and is gone from any survey
+within $P_{\rm orb}/f_{\min}$ of the detection floor---\MaxVisibleResidueMilli
+at 2.7\,AU for $f_{\min}=10^{-3}$ \citep{Lacki2025,GooPaper}.  A catastrophe
+confined to a planet's surface changes nothing a survey measures.  Visibility
+is therefore not a property of how bad the catastrophe was; it is a property
+of where it happened and whether it is still happening.
+
+\section{The classes}
+
+Table~\ref{tab:classes} applies the three properties.  We take the classes in
+order of the size of their unit, because size is what dispersal depends on.
+
+\begin{table}
+\centering
+\small
+\caption{Self-replicating technologies by the three properties.  Doubling
+times are the fastest documented or credibly projected; reach is the extent
+an escaped population can attain given its dispersal; visibility is what an
+outside astronomer could see.}
+\label{tab:classes}
+\begin{tabular}{p{2.6cm}p{1.6cm}p{2.5cm}p{2.3cm}p{2.0cm}p{3.0cm}}
+\toprule
+class & doubling & limit & dispersal & reach & astronomical visibility \\
+\midrule
+network worm \citep{Moore2003} & 8.5\,s & hosts, bandwidth & the network & the civilisation's hardware & none \\
+self-replicating AI agent \citep{Pan2024} & minutes--hours & compute, access & the network; then the economy & hardware, then whatever the economy reaches & none unless it captures physical industry \\
+engineered pathogen \citep{Millett2017,Esvelt2022} & hours & host population & hosts' movement & host species; planet & loss of a biosignature \\
+mirror life \citep{Adamala2024} & hours & environmental chemistry & the biosphere & planet & loss of a biosignature \\
+gene drive \citep{Esvelt2014,Noble2018} & generations & target species & the species' range & species & none \\
+molecular assembler \citep{Drexler1986,Freitas2000} & $10^{2}$--$10^{4}$\,s & heat (in place); starlight; feedstock & none / space transport / blowout / ship & planet / system / annulus / galaxy & none / waste heat / seeded systems / front \\
+self-reproducing machine, space industry \citep{Freitas1980b,Zykov2005,Metzger2013,Moses2020} & months--years & feedstock, transport & space transport & planetary system & waste heat at the feedstock's orbit \\
+von Neumann probe \citep{Freitas1980,Tipler1980} & years & error catastrophe; purpose & starship & galaxy; cosmos & front; Kardashev-III reprocessing \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Computational replicators.}  Worms have the fastest replication
+ever measured in a technological system---the Slammer worm doubled every
+8.5\,s and reached $75\,000$ hosts in ten minutes \citep{Moore2003}; a
+``flash worm'' with a precomputed target list could do the whole vulnerable
+Internet in tens of seconds \citep{Staniford2002}---and the smallest reach:
+the substrate is the network, and the network ends at the civilisation's own
+hardware.  A self-replicating AI agent \citep{Pan2024} is the same class with
+a substrate that includes whatever the network controls; its reach becomes
+physical only when it captures physical industry, at which point it is one of
+the rows below and its dispersal is theirs.  Astronomically these are
+invisible; their catastrophe, if it comes, is the civilisation's, and the sky
+does not record it.
+
+\paragraph{Biological replicators.}  Engineered pathogens, mirror organisms
+and gene drives are planet-bound by construction: their dispersal is their
+hosts' or the biosphere's, their reach the species or the planet, and their
+limit the ecology they invade.  Mirror life is the case closest to goo in
+spirit---a replicator that the existing biosphere can neither eat nor
+resist---and its recent assessment \citep{Adamala2024} reads like
+\citet{Freitas2000} with the chemistry changed.  Astronomically the worst case
+is the loss of a biosignature, which is a change in one planet's spectrum
+that no present survey would notice and that a future one would read as a
+planet that never had life.
+
+\paragraph{Molecular assemblers.}  The class with the widest range of
+dispersal, and the subject of the companion paper.  Loose on a planet it is
+planet-bound, and the planet's own thermodynamics limit it to \CrustGovTime
+for the crust.  Loose in space it is system-scale within a century and a
+Dyson-scale waste-heat source at the temperature of its feedstock's orbit
+(\BeltTempK\,K for an asteroid belt).  If its units are below
+\BlowoutRadiusUm\um they leave on starlight; if they inherit a starship they
+fill the Galaxy.  The class's accident probability is elicited at
+$\sim10^{-3}$--$10^{-4}$ per century \citep{Sandberg2008}, and the companion
+paper's central result is that the astronomical record moves that number by
+a factor \BranchRatioTypical if one per cent of such accidents would be
+interstellar, because the record constrains only the escaping branch.
+
+\paragraph{Macroscopic machines and space industry.}  The self-replicating
+lunar factory of \citet{Freitas1980b}, the demonstration replicators of
+\citet{Zykov2005}, the bootstrapped space industry of \citet{Metzger2013} and
+the review of \citet{Moses2020} describe replicators with doubling times of
+months to years and units far too large for passive escape.  Their reach is
+the planetary system; their accident is a swarm that eats the small bodies
+and, as \citet{Ellery2022b} argues, must be curbed genetically; their
+visibility is exactly the waste-heat signature the Dyson searches have looked
+for around $5\times10^{6}$ stars \citep{Suazo2024}.  This is the one accidental
+class the sky already bounds, and it bounds it while the machines run: once
+they stop, the residue is invisible within $P_{\rm orb}/f_{\min}$.
+
+\paragraph{Von Neumann probes.}  The only class with galactic reach, the only
+class a civilisation must build on purpose to travel, and the only class the
+$10^{5}$-galaxy record constrains: fewer than $\sim\LbExtPersistLamHundred$ of
+civilisations can have released a persistent galaxy-spanning replicator if
+$\sim100$ civilisations have arisen per galaxy \citep{GooPaper}.  It is also
+the class most exposed to the error catastrophe---$10^{4}$ hops across the
+Galaxy are $10^{4}$ generations at least---and the one for which
+\citet{SaganNewman1983} argued, before nanotechnology had a name, that no
+prudent maker would build it.
+
+\section{What follows}
+
+\paragraph{The dispersal principle.}  An accidental replicator inherits the
+dispersal of the environment it escapes into, and for a civilisation at our
+stage that environment is a planet.  Every class in Table~\ref{tab:classes}
+except the last is bounded by the planet or the system, and the last is not
+an accident but a project.  The corollary for prioritisation is that the
+classes should be ranked by the product of their probability and their
+planet-scale consequence, not by their theoretical reach; the reach that
+frightens---the Galaxy consumed---belongs to the class that is furthest from
+us and easiest to design safely, because we would have to design it at all.
+
+\paragraph{Containment means different things at different scales.}  On a
+planet, containment is thermal and chemical: a molecular replicator cannot
+process matter faster than the surface sheds heat, and a biological one
+cannot outrun the ecology's predators forever; the defender's instruments are
+the ones \citet{Freitas2000} proposed, thermal monitoring and quarantine.  In
+a system, containment is transport: a swarm that cannot launch cannot spread,
+and the design of replication limiters \citep{Ellery2022b} is the whole
+game.  Between stars, containment is the error catastrophe, which nature
+imposes for free on any copier that is not engineered past it.
+
+\paragraph{The epistemic position.}  A species estimating the probability
+that it will die of its own replicators is estimating a risk whose
+realisation, in every class but one, leaves no record anyone else could
+read.  It cannot learn from the sky, because the sky only records the class
+it would have to build on purpose.  It cannot learn from its own past,
+because the anthropic shadow \citep{Cirkovic2010} means that a species which
+had died this way would not be here to count itself.  It can learn only from
+the engineering: from what its replicators can actually do, and from what
+stops them.  The companion paper's astronomical bounds are therefore not a
+comfort about the planetary classes; they are a demonstration of where
+comfort cannot come from.  The one positive statement the record supports is
+that a replicator population that keeps growing across a galaxy is not a
+common end of civilisations, so that whatever ends them, if anything does, is
+something that stays home.
+
+\paragraph{What would change this.}  A detected exoplanet with a refined,
+chemically dead surface would put the planet-bound molecular class into the
+observational record for the first time.  A waste-heat source whose
+temperature matches its host's belt rather than its habitable zone would be
+the first system-scale accident seen from outside.  And a demonstrated
+replicator of any class with an unbounded substrate---a mirror organism that
+grows in the wild, an assembler that eats regolith---would move the problem
+from elicitation to measurement, which is where every other risk in the
+physical sciences has eventually gone.
+
+\section*{Data and code availability}
+The numbers shared with the companion paper are generated by the
+\texttt{seti.goo} package of the accompanying repository.
+
+\bibliography{../goo/refs,refs}
+\end{document}

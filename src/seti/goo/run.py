@@ -372,7 +372,7 @@ def stage_numbers(cfg: dict) -> pathlib.Path:
     sd = pa["seeding"]
     k = "M2.4e+21_ts1e+08_t5"
     cmd("BeltDevicesReleased", _sci(sd[k]["N_released"]))
-    cmd("BeltArrivalsUnsurvived", _sci(sd[k]["arrivals_per_yr_unsurvived"]))
+    cmd("BeltArrivalsUnsurvived", _sci(float(f"{sd[k]['arrivals_per_yr_unsurvived']:.1g}"), 1))
     for ts, nm in ((1e6, "Myr"), (1e7, "TenMyr"), (1e8, "HundredMyr"), (1e9, "Gyr")):
         kk = f"M2.4e+21_ts{ts:g}_t5"
         cmd(f"BeltCumulative{nm}", _sci(sd[kk]["cumulative_arrivals"]))

@@ -92,11 +92,22 @@ Target journal: **IJA** for the main paper (every nearest neighbour was
 published there), Acta Astronautica as alternative; **Futures** for the
 companion, Risk Analysis as alternative (`paper/goo/JOURNAL.md`).
 
-**Open items.** (1) Read `results/goolit/REPORT.md` when the run lands: fix any
-MISMATCH, fill the two author lists left as placeholders in `refs.bib`
-(arXiv:1605.02169, 2209.14244), and confirm the novelty scan is empty for
-"goo AND beyond-planet". (2) Second full read of both manuscripts against the
-verified record.
+**Sweep read (run 34595836444 landed 8:07 AM ET, 121/121 fetches OK).**
+Novelty: **0 of 58 arXiv abstracts across 28 phrase queries name grey/gray goo
+or ecophagy**; no abstract pairs uncontrolled replication with galactic
+propagation; the "self-replicating AND technosignature" hits are Ellery's
+designed-probe papers. Verification: 85 of 109 references confirmed against
+the arXiv/Crossref record; two placeholder author lists filled (Kowald 2015,
+JBIS 68, 383; Chen, Ni & Ong 2022, EPJ Plus); Hanson+2021's third author and
+three DOIs corrected; Moór+2021's title corrected to the record's; the
+JBIS/QJRAS/JET papers marked *asserted* because neither API carries them.
+Limitation stated in `docs/goo.md`: the novelty sweep reaches arXiv abstracts
+only. Both manuscripts rebuilt with 0 undefined citations.
+
+**Open items.** (1) Freitas 2000's exact ecophagy figures are paraphrased
+conservatively in §3 because the Foresight page is outside both APIs; a
+targeted fetch on the runner would let the paper quote them. (2) A second
+adversarial read of both manuscripts before submission.
 
 ### Roman is coming: the intake and four Roman-only signatures, 2026-09-09: ROMAN (S40–S43)
 

@@ -1,14 +1,15 @@
 {
  "active": [
   {
-   "body": "The population-structure tests on the screened stellar sample returned something other than a null. This is the test that is immune to per-object contamination.\n\nRead `results/tocsin/population.json`.",
+   "body": "`results/tocsin/population.json` reports `NO_TARGET_LIST`. This is not a finding -- the test that is immune to per-object contamination did not run.\n\nThe Gaia nearby-star target list was not on the runner, so the screened parent population could not be rebuilt and the tests did not run. The list lives in the Actions cache, keyed on the target section of `config/tocsin.yaml`; a cache miss triggers a live Gaia pull, and this verdict means that pull failed too (see `results/tocsin/targets.json` for the per-shell errors). Dispatch `tocsin` with `rebuild_targets: true` once Gaia is reachable; until then the population verdict is MISSING, not null.\n\nStage note: target list missing at /home/runner/work/Seti/Seti/.cache/tocsin/targets.parquet; run tocsin-targets",
    "channel": "tocsin",
    "detail": {
+    "note": "target list missing at /home/runner/work/Seti/Seti/.cache/tocsin/targets.parquet; run tocsin-targets",
     "verdict": "NO_TARGET_LIST"
    },
-   "key": "tocsin:population:NO_TARGET_LIST",
-   "severity": "candidate",
-   "title": "TOCSIN population tests: NO_TARGET_LIST"
+   "key": "tocsin:population_unavailable:NO_TARGET_LIST",
+   "severity": "health",
+   "title": "TOCSIN population tests could not run: NO_TARGET_LIST"
   },
   {
    "body": "`428209 (2006 VC)` exceeds the radiation momentum ceiling (eps = 1.3) with a reliable orbit solution and is not in the channel's explained set.\n\nA2 = 6.5e-13 au/day^2, S/N 3.8, arc 7113.0 d, diameter 341 m (from H).\n\nNext step is `loom-litcheck --name \"428209 (2006 VC)\"`: the dark-comet population is incomplete and most exceedances resolve to it.",
@@ -47,7 +48,7 @@
    "channel": "tocsin",
    "detail": {
     "frontier_mjd": 61235.41918367943,
-    "lag_days": 59.38013150307871,
+    "lag_days": 59.39605529037037,
     "limit_days": 30.0
    },
    "key": "tocsin:data_frontier:0",
@@ -59,7 +60,7 @@
    "channel": "loom",
    "detail": {
     "frontier_mjd": 61235.416274280105,
-    "lag_days": 59.38304090239583,
+    "lag_days": 59.3989646896875,
     "limit_days": 30.0
    },
    "key": "loom:data_frontier:0",
@@ -72,7 +73,7 @@
    "detail": {
     "first_seen_utc": "2026-07-30T10:26:40Z",
     "frontier_mjd": 61235.41918,
-    "frozen_days": 43.36412999731481,
+    "frozen_days": 43.38005378460648,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -84,12 +85,12 @@
    "title": "TOCSIN's data frontier has not advanced in 43 days"
   },
   {
-   "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 43.2 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
+   "body": "`loom` has reported the same newest epoch, MJD 61235.41627, on every run since 2026-07-30T13:13:46Z \u2014 43.3 days, against a limit of 7. Source: `results/loom/screen.json` \u2192 `frontier_mjd`.\n\nThe frontier has not yet been observed to advance at all, so there is no measured cadence to compare this against.\n\nThe channel is running and committing normally; what has stopped is the mirror. Every null it reports while this holds means *no new sky*, not *clean sky*, and the two are not the same result.\n\nCheck whether ALeRCE is still ingesting the LSST alert stream. If the pause turns out to be ordinary batching, raise `FRONTIER_STALL_DAYS` using the cadence recorded in `results/alerts/frontier.json` rather than by guessing again.\n\n**Cause established 2026-09-07 by `rubin-outage`: SKY_STOPPED.** Independent brokers stop on the same night (ALeRCE 2026-07-14; fink 2026-07-14), so the alert stream itself stopped and no change to the broker path recovers data that was never taken. Do not relax the threshold on this \u2014 the condition is real. See `docs/rubin-outage.md`. ZTF, the other public wide-field alert stream, is LIVE (newest night 2026-09-05 via alerce_ztf), so `tocsin-altfeeds` has a current feed to lean on.",
    "channel": "loom",
    "detail": {
     "first_seen_utc": "2026-07-30T13:13:46Z",
     "frontier_mjd": 61235.416274280105,
-    "frozen_days": 43.24808833064815,
+    "frozen_days": 43.264012117939814,
     "limit_days": 7.0,
     "observed_advance_days": {
      "n_advances": 0
@@ -116,15 +117,15 @@
  ],
  "alert": true,
  "by_severity": {
-  "candidate": 1,
-  "health": 0,
+  "candidate": 0,
+  "health": 1,
   "milestone": 0
  },
- "checked_at_utc": "2026-09-11T19:11:00Z",
+ "checked_at_utc": "2026-09-11T19:33:56Z",
  "frontier": {
   "loom": {
-   "frozen_days": 43.248,
-   "lag_days": 59.383,
+   "frozen_days": 43.264,
+   "lag_days": 59.399,
    "mjd": 61235.416274280105,
    "observed_advance_days": {
     "n_advances": 0
@@ -132,8 +133,8 @@
    "source": "screen.json:frontier_mjd"
   },
   "tocsin": {
-   "frozen_days": 43.364,
-   "lag_days": 59.38,
+   "frozen_days": 43.38,
+   "lag_days": 59.396,
    "mjd": 61235.41918,
    "observed_advance_days": {
     "n_advances": 0
@@ -145,14 +146,15 @@
  "n_new": 1,
  "new": [
   {
-   "body": "The population-structure tests on the screened stellar sample returned something other than a null. This is the test that is immune to per-object contamination.\n\nRead `results/tocsin/population.json`.",
+   "body": "`results/tocsin/population.json` reports `NO_TARGET_LIST`. This is not a finding -- the test that is immune to per-object contamination did not run.\n\nThe Gaia nearby-star target list was not on the runner, so the screened parent population could not be rebuilt and the tests did not run. The list lives in the Actions cache, keyed on the target section of `config/tocsin.yaml`; a cache miss triggers a live Gaia pull, and this verdict means that pull failed too (see `results/tocsin/targets.json` for the per-shell errors). Dispatch `tocsin` with `rebuild_targets: true` once Gaia is reachable; until then the population verdict is MISSING, not null.\n\nStage note: target list missing at /home/runner/work/Seti/Seti/.cache/tocsin/targets.parquet; run tocsin-targets",
    "channel": "tocsin",
    "detail": {
+    "note": "target list missing at /home/runner/work/Seti/Seti/.cache/tocsin/targets.parquet; run tocsin-targets",
     "verdict": "NO_TARGET_LIST"
    },
-   "key": "tocsin:population:NO_TARGET_LIST",
-   "severity": "candidate",
-   "title": "TOCSIN population tests: NO_TARGET_LIST"
+   "key": "tocsin:population_unavailable:NO_TARGET_LIST",
+   "severity": "health",
+   "title": "TOCSIN population tests could not run: NO_TARGET_LIST"
   }
  ]
 }

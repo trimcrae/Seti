@@ -248,7 +248,8 @@ def _sci(x: float, sig: int = 2) -> str:
     if x == 0:
         return "0"
     if 0.01 <= abs(x) < 1000:
-        return f"{x:.{sig}g}"
+        out = f"{x:.{max(sig, 2)}g}"
+        return f"{x:.0f}" if "e" in out else out
     e = int(math.floor(math.log10(abs(x))))
     m = x / 10**e
     m_s = f"{m:.{sig - 1}f}"
@@ -263,17 +264,22 @@ def _time(s: float) -> str:
     if s < 3600:
         return f"{s:.0f}\\,s"
     if s < 86400 * 3:
-        return f"{s / 3600:.1f}\\,h"
+        return f"{s / 3600:.2g}\\,h"
     if s < YR:
         return f"{s / 86400:.0f}\\,d"
     y = s / YR
+
+    def two_sig(v: float) -> str:
+        out = f"{v:.2g}"
+        return f"{v:.0f}" if "e" in out else out
+
     if y < 1e3:
-        return f"{y:.0f}\\,yr"
+        return f"{two_sig(y)}\\,yr"
     if y < 1e6:
-        return f"{y / 1e3:.0f}\\,kyr"
+        return f"{two_sig(y / 1e3)}\\,kyr"
     if y < 1e9:
-        return f"{y / 1e6:.1f}\\,Myr".replace(".0\\,", "\\,")
-    return f"{y / 1e9:.1f}\\,Gyr"
+        return f"{two_sig(y / 1e6)}\\,Myr"
+    return f"{two_sig(y / 1e9)}\\,Gyr"
 
 
 def stage_numbers(cfg: dict) -> pathlib.Path:

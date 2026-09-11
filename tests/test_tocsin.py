@@ -1489,6 +1489,54 @@ def test_screen_night_without_a_target_list_says_so(tmp_path):
     assert json.loads((out / "summary.json").read_text())["verdict"] == "NO_TARGET_LIST"
 
 
+def test_a_failed_target_build_leaves_a_record_and_no_list(monkeypatch, tmp_path):
+    """Run 34629211021 (2026-09-11) spent 84 minutes failing every Gaia shell
+    and left nothing but `n=0` in the job log; the population stage then wrote
+    NO_TARGET_LIST and the notifier paged it as a candidate (issue #11).  The
+    build must (a) write its record -- with the verbatim per-shell error -- on
+    the failure path, (b) leave any list on disk untouched, and (c) fail the
+    CLI step rather than pass it green."""
+    import sys
+    import types
+
+    class _Gaia:
+        calls = 0
+
+        @classmethod
+        def launch_job_async(cls, adql):
+            cls.calls += 1
+            raise ConnectionError("gea.esac.esa.int: connection timed out")
+
+    mod = types.ModuleType("astroquery.gaia")
+    mod.Gaia = _Gaia
+    monkeypatch.setitem(sys.modules, "astroquery.gaia", mod)
+    import seti.tocsin.run as R
+
+    class _Cfg:
+        root = tmp_path
+    out = tmp_path / ".cache" / "tocsin" / "targets.parquet"
+    out.parent.mkdir(parents=True)
+    out.write_bytes(b"stale-but-usable")
+    rec = R.build_targets(_Cfg(), out_path=out)
+    assert rec["verdict"] == "NO_DATA_REACHED"
+    assert rec["n_targets"] == 0
+    assert rec["shells"] and all("connection timed out" in sh["error"] for sh in rec["shells"])
+    # Three attempts plus the no-synthetic fallback, per shell.
+    assert _Gaia.calls == 4 * len(rec["shells"])
+    # The record is on disk where the workflow commits it ...
+    on_disk = json.loads((tmp_path / "results" / "tocsin" / "targets.json").read_text())
+    assert on_disk["verdict"] == "NO_DATA_REACHED" and on_disk["shells"] == rec["shells"]
+    # ... and the older list was not clobbered by the failure.
+    assert out.read_bytes() == b"stale-but-usable"
+
+    # The CLI turns that into a failed step, so the workflow can decide.
+    from seti import cli as C
+    monkeypatch.setattr(R, "build_targets", lambda cfg, out_path=None: rec)
+    with pytest.raises(SystemExit) as ei:
+        C._cmd_tocsin_targets(types.SimpleNamespace(out=None), _Cfg())
+    assert ei.value.code == 2
+
+
 def test_threshold_dataclass_defaults_mirror_the_shipped_config():
     """Two sources of truth drifting apart is how the greyness test died once."""
     from seti.tocsin.run import _thresholds, load_tocsin_config

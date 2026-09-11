@@ -101,16 +101,62 @@ jobs:
       # The Gaia target list is ~10^5 rows and changes only when the target
       # config changes, so it is cached rather than committed (too large for the
       # repository) and rather than re-pulled nightly (needless Gaia load).
+      #
+      # The cache key hashes ONLY the config keys the list depends on, not the
+      # whole file: run 34629211021 (2026-09-11) lost the Rubin list to a
+      # ZTF-only edit of config/tocsin.yaml, then spent 84 minutes failing to
+      # pull it again from a Gaia that was not answering, and screened nothing
+      # (issue #11).  Restore and save are split so that (a) a key change still
+      # restores the newest list under any older key as a fallback, and (b)
+      # that fallback is never re-saved under the new key -- only a list the
+      # rebuild actually produced is.  A night with no list at all fails loudly.
+      - name: Compute the target-list cache key
+        id: targets-key
+        run: |
+          key=$(python - <<'PY'
+          import hashlib, json, yaml
+          c = yaml.safe_load(open("config/tocsin.yaml"))
+          dep = {"target": c.get("target")}
+          print(hashlib.sha256(json.dumps(dep, sort_keys=True).encode()).hexdigest()[:16])
+          PY
+          )
+          echo "key=tocsin-targets-${key}-v2" >> "$GITHUB_OUTPUT"
+          echo "target-list cache key: tocsin-targets-${key}-v2"
+
       - name: Restore the nearby-star target list
         id: targets-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .cache/tocsin
-          key: tocsin-targets-${{ hashFiles('config/tocsin.yaml') }}-v1
+          key: ${{ steps.targets-key.outputs.key }}
+          restore-keys: |
+            tocsin-targets-
 
       - name: Build the Gaia DR3 nearby-star target list
+        id: targets-build
         if: steps.targets-cache.outputs.cache-hit != 'true' || github.event.inputs.rebuild_targets == 'true'
+        continue-on-error: true
         run: python -m seti.cli tocsin-targets
+
+      - name: Save the target list under the current key
+        if: steps.targets-build.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/tocsin
+          key: ${{ steps.targets-key.outputs.key }}
+
+      - name: Require a target list
+        run: |
+          if [ "${{ steps.targets-build.outcome }}" = "failure" ]; then
+            echo "::warning::the Gaia rebuild failed; results/tocsin/targets.json has the per-shell errors"
+          fi
+          if [ ! -s .cache/tocsin/targets.parquet ]; then
+            echo "::error::no target list on the runner: the cache missed and the Gaia rebuild failed"
+            exit 1
+          fi
+          if [ "${{ steps.targets-build.outcome }}" = "failure" ]; then
+            echo "::warning::screening with the list restored under an older key (${{ steps.targets-cache.outputs.cache-matched-key }})"
+          fi
 
       - name: Screen the night
         env:
@@ -193,6 +239,7 @@ jobs:
             results/tocsin/watchlist.csv \
             results/tocsin/assessment.json \
             results/tocsin/population.json \
+            results/tocsin/targets.json \
             results/tocsin/events_latest.csv \
             results/tocsin/rejected_latest.csv
       - uses: actions/upload-artifact@v4

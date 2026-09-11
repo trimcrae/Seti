@@ -94,6 +94,45 @@ def test_tocsin_candidate_fires_and_keys_on_targets(tmp_path):
     assert tocsin_alerts(tmp_path)[0].key != a[0].key
 
 
+def test_population_stage_that_could_not_run_is_health_not_candidate(tmp_path):
+    """Issue #11 (2026-09-11): the Gaia list was evicted from the Actions cache
+    by an unrelated config edit, the live rebuild failed, and the population
+    stage's NO_TARGET_LIST was paged as a *candidate* finding.  A stage that
+    could not run is a health condition -- worth a human's attention, because
+    every verdict until the list is rebuilt is missing rather than null -- but
+    it is not a result and must never carry the candidate severity."""
+    for v in ("NO_TARGET_LIST", "NO_BIN_TRIALS"):
+        _write(tmp_path, "results/tocsin/population.json",
+               {"verdict": v, "note": "target list missing at x; run tocsin-targets"})
+        a = tocsin_alerts(tmp_path)
+        assert [x.severity for x in a] == ["health"], v
+        assert a[0].key == f"tocsin:population_unavailable:{v}"
+        assert "not a finding" in a[0].body
+        assert "run tocsin-targets" in a[0].body
+
+
+def test_population_candidate_fires_only_on_structure_detected(tmp_path):
+    """The candidate rule is positive: the one verdict that means structure.
+    Every null the stage can return is silent, and a verdict the notifier does
+    not know is health (nothing silently dropped, nothing paged as a result)."""
+    _write(tmp_path, "results/tocsin/population.json",
+           {"verdict": "STRUCTURE_DETECTED", "p_min": 1e-5, "n_parent": 12000})
+    a = tocsin_alerts(tmp_path)
+    assert [x.severity for x in a] == ["candidate"]
+    assert a[0].key == "tocsin:population:STRUCTURE_DETECTED"
+    assert a[0].detail["p_min"] == 1e-5
+
+    for v in ("NO_STRUCTURE", "INSUFFICIENT_RESOLUTION",
+              "INSUFFICIENT_POPULATION", "NO_TEST_COULD_RUN", ""):
+        _write(tmp_path, "results/tocsin/population.json", {"verdict": v})
+        assert tocsin_alerts(tmp_path) == [], v
+
+    _write(tmp_path, "results/tocsin/population.json", {"verdict": "SOMETHING_NEW"})
+    a = tocsin_alerts(tmp_path)
+    assert [x.severity for x in a] == ["health"]
+    assert "not recognise" in a[0].body
+
+
 def test_loom_candidate_and_replication_fire(tmp_path):
     _write(tmp_path, "results/loom/screen.json",
            {"funnel_final": {"n_candidate": 1}, "frontier_mjd": 61000.0})

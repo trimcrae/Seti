@@ -90,14 +90,14 @@ systems its material reaches over 5 Gyr; SI dynamics above R0 = 1).
 | channel (source) | natural | R0 strict | R0 loose / capture |
 |---|---|---|---|
 | interstellar objects, n = 0.2 AU⁻³ (Do+2018; Jewitt & Seligman 2023; Dehnen+2022 capture 2 per kyr; Hands & Dehnen 2020; Portegies Zwart+2018) | **one impact on Earth per 135 Myr → 33 over its history**; 4×10⁴ passages within 100 AU per year; one bound capture per 500 yr | **2.8 — at the percolation threshold**; epidemic time 57 Gyr | 1.3×10¹⁴ / 7.6×10⁶ |
-| impact ejecta from a planet (Melosh 2003; Worth+2013; Adams & Napier 2022) | one impact per 1.2 Tyr | 3×10⁻⁴ — planet-bound stays planet-bound | 1.5×10¹⁰ |
+| impact ejecta from a planet — 6×10¹⁰ over 3 Gyr (Siraj & Loeb 2020 full text: 20 per yr of 30-cm objects eventually ejected; Adams & Napier 2022: 15 rocks/yr, ~70 field rocks captured per system, direct Earth strikes 10⁴× rarer) | never | 2×10⁻⁵ — planet-bound stays planet-bound | 9×10⁸ |
 | Earth-grazing bodies captured by binaries (Siraj & Loeb 2020: 10⁷–10⁹) | — | 5×10⁻³ | 10⁸ (bound) |
 | free-floating planets, 21 per star (Sumi+2023; Mróz+2017; Goulinski & Ribak 2018: 1 % of stars capture one) | one passage per 12 Gyr | ~0 | 0.33 / 0.01 |
-| interstellar dust, ~10⁻⁴ m⁻² s⁻¹ (Grün+1993; Landgraf 2000; Krüger+2019) | **5×10¹⁷ grains on Earth per year** | 10²⁵ | 10³⁹ |
+| interstellar dust, 1.5×10⁻⁴ m⁻² s⁻¹ for 5×10⁻¹⁸–5×10⁻¹⁶ kg (Krüger+2019 full text, Cassini; Grün+1993; Landgraf 2000) | **7×10¹⁷ grains on Earth per year** | 10²⁵ | 10³⁹ |
 | blown-out belt devices (§2) | 200 per planet per year | 7×10¹⁹ (5×10¹⁴ at 10⁸ yr survival; ~0 at 10⁷) | 10³³ |
 | stellar flybys within 2×10⁴ AU (Bailer-Jones+2018: 19.7 ± 2.2 per Myr within 1 pc, ∝ d²) | one per 5.4 Myr; all systems linked in 124 Myr | 0 (moves comets inward, not between stars) | 10³ |
 | supernova ejecta (Knie+2004; Wallner+2016; Koll+2019) | one deposition per ~3 Myr | — | — |
-| birth cluster, first 100 Myr (Belbruno+2012: 10¹⁴–3×10¹⁶ bodies to the nearest sibling; Adams & Spergel 2005: 10–16 000 captures per cluster; Levison+2010) | — | **5×10⁴ per sibling pair** — Earth has very likely been struck by material that condensed around another star | 10¹⁵ |
+| birth cluster, first 100 Myr (Belbruno+2012 weak transfer: 10¹⁴–3×10¹⁶ bodies to the nearest sibling at capture probability 1.5×10⁻³; Adams & Napier 2022 dynamical capture: ~10⁷; Adams & Spergel 2005: f_imp ~ 10⁻⁴ of captured rocks strike a terrestrial planet, 10⁻³–1.6 lithopanspermia events per cluster; Levison+2010) | — | **~10⁷ per sibling pair (10³–10¹² across the mechanisms)** — Earth has very likely been struck by material that condensed around another star | 10¹¹ (10⁷–3×10¹⁶) |
 
 **Reading.** In the mass sense the Galaxy's contact graph is already complete.
 In the strict single-source sense it is *at threshold* for interstellar
@@ -120,9 +120,21 @@ licences; paywalled papers are recorded `NO_OA_TEXT` and never silently
 skipped) and the sentences matching that paper's query terms — what the model
 actually needs from it (`QUERIES` in the script). `results/goolit_fulltext/`.
 Every number in `config/goo.yaml` is then re-read against the full-text
-sentence that carries it; the two scan variables (rocks ejected from a system
-over the age of the Earth; the Ulysses dust flux) are replaced where the text
-supplies them.
+sentence that carries it. First run (34599794718): 91 of 145 references
+yielded full text (67 LaTeX sources, 10 arXiv PDFs, 8 Unpaywall PDFs, 4 web
+pages); the rest are paywalled (Melosh 2003, Grün 1993, Jones 1996, Burns 1979,
+Wallner 2016, Levison 2010, …) or books. **Corrections the full texts forced:**
+the two scan variables are gone (Siraj & Loeb 2020's 6×10¹⁰ ejected 30-cm
+objects replaces the 10¹² guess; Krüger+2019's Cassini flux 1.5×10⁻⁴ m⁻² s⁻¹
+replaces the order-of-magnitude); the FHI 2008 survey's nanotech-accident
+extinction median is **0.5 %**, not the 0.05 % the paper had said from memory;
+Chen, Ni & Ong 2022 conclude that predator probes *cannot* sufficiently reduce
+prey probes (the paper had cited them for the opposite); Freitas 2000's
+assumptions are 100 MJ/kg, 4 °C, 20 months, 100 s minimum replication time,
+now quoted verbatim; the birth-cluster transfer count is a 10⁷–3×10¹⁶ range
+across mechanisms with Adams & Spergel's f_imp ~ 10⁻⁴ landing fraction;
+Suazo+2022's actual limits (2×10⁻⁵ within 100 pc, 8×10⁻⁴ within 5 kpc) and
+Zackrisson+2015's 0.3 %/3 % Kardashev-III limits are now in Table 2.
 
 ## 3. Inference (`seti.goo.bayes`)
 

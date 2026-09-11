@@ -11,6 +11,11 @@ name: goolit-fulltext
 
 on:
   workflow_dispatch:
+    inputs:
+      only_missing:
+        description: "Set to '1' to fetch only references that have no text yet"
+        required: false
+        default: "0"
 
 permissions:
   contents: write
@@ -31,6 +36,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install pypdf
       - name: Fetch full texts (soft 105-min deadline, partials kept)
+        env:
+          GOOLIT_ONLY_MISSING: ${{ github.event.inputs.only_missing || '0' }}
         run: |
           timeout -k 30 6300 python scripts/goolit_fulltext.py \
             || echo "fetcher hit soft deadline or errored; committing partials"

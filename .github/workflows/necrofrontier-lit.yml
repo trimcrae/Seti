@@ -24,6 +24,11 @@ name: necrofrontier-lit
 
 on:
   workflow_dispatch:
+    inputs:
+      groups:
+        description: "Comma-separated query groups to fetch (blank = all), e.g. g13_spot_ceiling,g14_postbio_hosts,g15_insitu_grains"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -42,6 +47,7 @@ jobs:
       - name: Fetch prior-art evidence (soft 75-min deadline, partials kept)
         env:
           ADS_TOKEN: ${{ secrets.ADS_TOKEN }}
+          NECROFRONTIER_GROUPS: ${{ github.event.inputs.groups }}
         run: |
           timeout -k 30 4200 python scripts/necrofrontier_fetch.py \
             || echo "fetcher hit soft deadline or errored; committing partials"

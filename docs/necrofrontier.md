@@ -620,3 +620,47 @@ that left is indistinguishable from plain extinction. The eighteen signatures
 above are the residues of one that **stayed, refined, relocated, and kept
 working** — and every one of them is a catalogue test with a natural
 background whose signature is different in kind, not merely in amplitude.
+
+---
+
+## 5. What the record says (sweep run 3, 2026-09-13, 11:05 AM ET)
+
+`necrofrontier-lit` took three runs to get past the arXiv API's throttling
+(run 1: 429 on 64 of 65 requests; run 2: 429 on 31 of 32, and the ADS
+fallback found the repository's `ADS_TOKEN` secret unset; run 3: keyless
+fallbacks — arXiv abstract pages for ids, OpenAlex for searches). Run 3
+fetched twelve of the fifteen groups before its deadline and the decoy-aware
+scan ran over **1,713 abstracts (1,593 unique)**; groups g13–g15 (spot
+ceiling, post-biological hosts, in-situ grains) were only scanned through the
+other groups' abstracts and are re-fetched by run 4. The record
+(`results/necrofrontier_lit/concept_scan.json`, verbatim abstracts) reads:
+
+| Group | Signature | Decoy-free hits | What they are | Verdict |
+|---|---|---|---|---|
+| g1 isotope purity | S46 | 10 | Catling+2025 (D/H by fusion), Ellery 2025 (Th/Nd from lunar reactors), Carrigan 2010 "Starry Messages" (interstellar archaeology), OpenAlex noise | **Unoccupied**: no paper reads stable-isotope purity in solids |
+| g2 hot swarm | S47 | 4 | Hephaistos I, Lacki "Sunscreen", NO₂ pollution, BL transit anomalies | **Unoccupied**: no hot-exozodi-as-swarm reading |
+| g3 SPHEREx/Euclid line | S48/S49 | 0 | — | **Unoccupied** |
+| g4 century fade | S50 | 12 | the DASCH DR7 paper, plate-archive status papers, J1407, FO Aqr, an RCB star, LBV sleep | **Unoccupied**: no blind DR7 fade / cessation search |
+| g5 WD residue | S51 | 3 | Huang+2026 (the siderophile template), cecilia pipeline | **Occupied only by Huang+2026**; the pair residual and misfit list are not in the record |
+| g6 shattered cradle | S52/S53 | 6 | Lacki 2025 "Ground to Dust", Lacki 2026 "Dust to Dust", the lunar-regolith micron paper | **Unoccupied**: no age- and temperature-gated EDD search, no slag discriminant |
+| g7 artificial molecule | S54 | 9 | generic technosignature reviews; every CFC paper is exoplanet-atmosphere (decoyed) | **Unoccupied**: no ISM line-survey search for industrial species |
+| g8 lunar crypt | S55 | 18 | Davies & Wagner 2013, Benford 2019/2021, Lesnikowski 2020, the Aug 2026 ML lunar-anomaly search, "Is ET Lurking in Our Cosmic Backyard?", Chandrayaan-2 DFSAR (natural), "Unravelling the Mystery of Lunar Anomalous Craters" (radar + IR, natural, ice) | **Unoccupied for thermal/radar**: every artifact search is optical |
+| g9 terrestrial record | S56 | 3 | Schmidt & Frank 2018, Wright 2018 (framing only) | **Unoccupied**: no fission-vector or database test |
+| g10 relay geometry | S60 | 12 | Hippke's network I/II, "Engineering an Interstellar Communications Network by Deploying Relay Probes" (arXiv:2204.08296), Gertz's nodes and landbases, Forgan 2019 transit network, "Exoplanet Occultations as Technosignature Targets", the TRAPPIST-1 ATA search | **Unoccupied**: network *design* papers and single-target occultation searches; no star-pair spillover selection at catalogue scale |
+| g11 growing transit | S57 | 21 | Zuckerman+2023 (single-transit anomalies), Wright+2016 Ĝ IV, spot-induced depth variations (HIP 67522), the J1407 ring "construction zones" pun, exocomet tails | **Unoccupied**: no cross-mission secular-growth search |
+| g12 ignition | S61 | 6 | Metzger+2017 secular *dimming* of KIC 8462852, nearby-excess census, TWA disks | **Unoccupied** |
+| g13 spot ceiling | S59 | 2 (from other groups' abstracts) | Davenport 2016 Kepler flare catalogue | re-fetched by run 4 |
+| g14 post-biological hosts | S62/S63 | 15 (from other groups' abstracts) | the LTT 3780 ATA narrowband search (an M-dwarf planet host, not a post-biological one), Vidal's "pulsar positioning system", "Lens Flare" X-ray-binary beacons, **"The Dyson Minds 2025 Workshop: SETI Around Black Holes" (arXiv:2604.21886)** — the nearest neighbour for the compact-object branch and to be read before S63 is written up | re-fetched by run 4 |
+| g15 in-situ grains | S58 | 1 (from other groups' abstracts) | a Fermi-paradox essay; the composition papers are decoyed natural-dust reviews | re-fetched by run 4 |
+
+**Id verification (`id_title_check.json`).** Seven asserted arXiv ids
+resolved to unrelated papers and were removed from the sweep in favour of
+title searches: the PGD SiC paper, Lin+2010 (Qingzhen SiC), Rieke+2016
+(magnetic trapping), Vides+2019 (WFIRST laser), Hippke+2016 (plate accuracy),
+Lisse+2009 (HD 172555), Wallner+2021 (⁶⁰Fe/²⁴⁴Pu). None of those ids appears
+in this document. Six others carried the expected paper under a title my
+fragment did not match (Absil 2013 = paper III of the FLUOR series at
+1307.2488; Ertel 2014 = paper IV at 1409.6143; Lund 2016; Xu 2013; Kennedy &
+Wyatt 2013; Forgan 2019; the NGC 6447 turn-on) and are confirmed. Pre-arXiv
+journal papers (Whitmire & Wright 1980; Kawka & Vennes 2016) returned no
+arXiv or OpenAlex entry and are cited by journal reference only.

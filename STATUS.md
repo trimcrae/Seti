@@ -108,8 +108,17 @@ Third version (~9:35 AM ET): after the first request the API refuses three
 times, the run goes keyless — arXiv abstract pages for ids, OpenAlex for
 keyword and title searches (the routes lzlit / necrolit / zacklit used) —
 with a `--scan-only` step so a deadline-killed run still yields the concept
-scan. Until that lands, every prior-art position above rests on the agents'
-search-engine records. Build order (charter: novelty,
+scan. **Run 3 (11:05 AM ET, keyless) landed at ~12:20 PM ET: 1,713 abstracts
+scanned across twelve of the fifteen groups (the deadline cut g13–g15,
+re-fetched as run 4 with the new `groups` input). No decoy-free hit occupies
+any new signature; the nearest neighbours the record itself supplied are the
+relay-network design papers (Hippke I/II; "Engineering an Interstellar
+Communications Network by Deploying Relay Probes", arXiv:2204.08296) for S60,
+Huang+2026 for S51, Lacki 2025/2026 for S52, and — new to us — "The Dyson
+Minds 2025 Workshop: SETI Around Black Holes" (arXiv:2604.21886) for the
+compact-object branch of S63. Seven asserted arXiv ids resolved to unrelated
+papers and were replaced by title searches; none is cited in the brief.
+`docs/necrofrontier.md` §5 carries the per-group table.** Build order (charter: novelty,
 then scale, never a null): S46 ISOTOPE → S51 SLAG-WD → S54 ULINE → S61
 IGNITION → S48/S49 SPARK → the rest as listed in `docs/necrofrontier.md` §4.
 

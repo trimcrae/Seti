@@ -81,11 +81,13 @@ TEFF, LOGG, B, A_RS, K = 5800.0, 4.5, 0.3, 15.0, 0.0316
 # synthetic archive tables
 # ---------------------------------------------------------------------------
 def _population(n: int = 20, *, growth: dict | None = None, deficit: float = 0.0,
-                seed: int = 3) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                seed: int = 3, scatter: float = 0.01
+                ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """KOI / TOI / ps tables for ``n`` ordinary planets plus an optional anomaly.
 
     Ordinary planets have TESS depth = Kepler depth x f_LD x (1 - deficit) with
-    a per-planet 1 % scatter, and identical durations.  ``growth`` (a dict
+    a per-planet ``scatter`` fractional scatter, and identical durations.
+    ``growth`` (a dict
     with ``ratio`` and ``precession``) makes planet 0 anomalous: TESS depth
     ratio x f_LD, and a duration either at fixed b with k -> k sqrt(ratio)
     or at fixed k with b -> 0.8.
@@ -98,7 +100,7 @@ def _population(n: int = 20, *, growth: dict | None = None, deficit: float = 0.0
         k = math.sqrt(depth_k * 1e-6)
         t14 = t14_hours(period, A_RS, k, B)
         f_ld, _ = band_ratio(TEFF, LOGG, B, LD)
-        depth_t = depth_k * f_ld * (1.0 - deficit) * (1.0 + 0.01 * rng.standard_normal())
+        depth_t = depth_k * f_ld * (1.0 - deficit) * (1.0 + scatter * rng.standard_normal())
         dur_t = t14
         if growth is not None and i == 0:
             depth_t = depth_k * f_ld * float(growth["ratio"])
@@ -125,7 +127,9 @@ def _population(n: int = 20, *, growth: dict | None = None, deficit: float = 0.0
             "pl_trandurh": dur_t, "pl_trandurherr1": 0.05, "pl_trandurherr2": -0.05,
             "pl_rade": 3.4, "st_teff": TEFF, "st_logg": LOGG, "st_rad": 1.0, "st_tmag": 12.5,
             "ra": 290.0 + 0.01 * i + 1e-5, "dec": 44.0 + 1e-5})
-        ps_rows.append({"pl_name": name, "hostname": name[:-2], "tic_id": 200000 + i,
+        # ``tic_id`` is spelled the way the Exoplanet Archive spells it: a
+        # STRING with a "TIC " prefix (the 2026-09-13 defect).
+        ps_rows.append({"pl_name": name, "hostname": name[:-2], "tic_id": f"TIC {200000 + i}",
                         "default_flag": 1, "pl_ratror": k, "pl_trandep": depth_k / 1e4,
                         "pl_orbper": period, "disc_facility": "Kepler",
                         "pl_refname": "synthetic", "ra": 290.0 + 0.01 * i, "dec": 44.0})
@@ -142,7 +146,8 @@ def _joined(koi, toi, ps):
 
 def _status(joined, ok=True):
     return pd.DataFrame({"planet_key": joined["planet_key"].astype(str),
-                         "neighbours_status": "OK" if ok else "QUERY_FAILED"})
+                         "neighbours_status": "OK" if ok else "QUERY_FAILED",
+                         "neighbours_route": "upload" if ok else ""})
 
 
 def _neighbours(joined, extra: list[dict] | None = None) -> pd.DataFrame:
@@ -434,6 +439,9 @@ def test_period_match_and_aliases():
     assert not acq.period_match(float("nan"), 5.0)[0]
 
 
+ZERO_ROUTES = {"name_planet": 0, "name_host": 0, "position_tic": 0, "position_period": 0}
+
+
 def test_join_routes_are_counted_separately():
     koi = pd.DataFrame([
         {"kepid": 1, "kepoi_name": "K00001.01", "kepler_name": "Kepler-A b", "koi_period": 10.0,
@@ -449,25 +457,156 @@ def test_join_routes_are_counted_separately():
         {"toi": 2.01, "tid": 222, "pl_orbper": 6.0, "ra": 291.0 + 1e-4 / 3.6, "dec": 44.0},
         {"toi": 3.01, "tid": 333, "pl_orbper": 7.0, "ra": 292.0 + 0.01, "dec": 44.0},  # 36" off
         {"toi": 4.01, "tid": 444, "pl_orbper": 9.0, "ra": 293.0, "dec": 44.0}])       # P mismatch
-    ps = pd.DataFrame([{"pl_name": "Kepler-A b", "hostname": "Kepler-A", "tic_id": 111,
+    ps = pd.DataFrame([{"pl_name": "Kepler-A b", "hostname": "Kepler-A", "tic_id": "TIC 111",
                         "default_flag": 1, "pl_ratror": 0.03, "pl_trandep_ppm": 900.0,
-                        "pl_refname": "x"},
-                       {"pl_name": "Kepler-D b", "hostname": "Kepler-D", "tic_id": 444,
+                        "pl_refname": "x", "disc_facility": "Kepler"},
+                       {"pl_name": "Kepler-D b", "hostname": "Kepler-D", "tic_id": "TIC 444",
                         "default_flag": 1, "pl_ratror": 0.03, "pl_trandep_ppm": 900.0,
-                        "pl_refname": "x"}])
+                        "pl_refname": "x", "disc_facility": "Kepler"}])
     j, rep = acq.join_kepler_tess(koi, toi, ps, pos_radius_arcsec=2.0)
-    assert rep["joined_by_route"] == {"tic_id": 1, "position_period": 1}
+    assert rep["joined_by_route"] == {**ZERO_ROUTES, "name_planet": 1, "position_period": 1}
     assert rep["koi_with_tic_id"] == 2 and rep["tic_matched_no_period_match"] == 1
-    assert rep["n_joined"] == 2
+    assert rep["koi_with_tic_by_route"] == {"name_planet": 2, "name_host": 0, "position_tic": 0}
+    assert rep["n_joined"] == 2 and rep["n_koi_with_tess_counterpart"] == 2
+    assert math.isclose(rep["fraction_koi_with_tess_counterpart"], 0.5)
+    assert "2 of 4 KOIs reached a TESS counterpart" in rep["join_statement"]
     a = j[j["kepoi_name"] == "K00001.01"].iloc[0]
-    assert a["join_route"] == "tic_id" and a["tic_id"] == 111 and a["period_alias"] == "1"
-    assert a["ps_pl_ratror"] == 0.03 and a["ps_pl_trandep_ppm"] == 900.0
+    assert a["join_route"] == "name_planet" and a["tic_id"] == 111 and a["period_alias"] == "1"
+    assert a["ps_pl_ratror"] == 0.03 and a["ps_pl_trandep_ppm"] == 900.0 and a["ps_n_refs"] == 1
     b = j[j["kepoi_name"] == "K00002.01"].iloc[0]
     assert b["join_route"] == "position_period" and b["period_alias"] == "2"
     assert b["join_sep_arcsec"] < 2.0 and b["tic_id"] == 222
     assert "K00003.01" not in set(j["kepoi_name"])
     e, rep0 = acq.join_kepler_tess(pd.DataFrame(), toi, ps)
-    assert not len(e) and rep0["joined_by_route"] == {"tic_id": 0, "position_period": 0}
+    assert not len(e) and rep0["joined_by_route"] == ZERO_ROUTES
+
+
+# ---------------------------------------------------------------------------
+# DEFECT 1 --- the tic_id join produced nothing (run 34787801172)
+# ---------------------------------------------------------------------------
+def test_ps_tic_id_is_a_string_and_is_parsed():
+    """``ps.tic_id`` is ``"TIC 122298563"``; a bare to_numeric on it is all-NaN."""
+    assert acq.parse_tic_id("TIC 122298563") == 122298563.0
+    assert acq.parse_tic_id("tic122298563") == 122298563.0
+    assert acq.parse_tic_id(" TIC-122298563 ") == 122298563.0
+    assert acq.parse_tic_id(122298563) == 122298563.0
+    for bad in (None, float("nan"), "", "  ", "TIC", "not a tic", -1):
+        assert math.isnan(acq.parse_tic_id(bad)), bad
+    # the exact failure mode of the 2026-09-13 run
+    assert pd.to_numeric(pd.Series(["TIC 111", "TIC 222"]), errors="coerce").isna().all()
+
+
+def test_name_normalisation_is_punctuation_and_case_proof():
+    for v in ("Kepler-22 b", " kepler-22   B ", "Kepler 22b", "KEPLER22B"):
+        assert acq._norm_name(v) == "kepler22b", v
+    assert acq._norm_name(None) == acq._norm_name(float("nan")) == acq._norm_name("") == ""
+    assert acq.host_of_planet_name("Kepler-22 b") == "kepler22"
+    assert acq.host_of_planet_name("Kepler-22b") == "kepler22"
+    assert acq.host_of_planet_name("Kepler-22") == "kepler22"     # already a host
+    assert acq.host_of_planet_name("KOI-142") == "koi142"
+    assert acq.host_of_planet_name(None) == ""
+
+
+def test_kois_with_an_empty_kepler_name_still_join_through_their_host():
+    """Only confirmed KOIs have a ``kepler_name``; the rest reach TESS by host."""
+    koi = pd.DataFrame([
+        # .01 is confirmed and named; .02 on the SAME star is a bare candidate
+        {"kepid": 7, "kepoi_name": "K00007.01", "kepler_name": "Kepler-22 b",
+         "koi_period": 10.0, "ra": 290.0, "dec": 44.0},
+        {"kepid": 7, "kepoi_name": "K00007.02", "kepler_name": "", "koi_period": 4.0,
+         "ra": 290.0, "dec": 44.0},
+        # a star with no named KOI at all: only the position can reach its TIC
+        {"kepid": 8, "kepoi_name": "K00008.01", "kepler_name": None, "koi_period": 6.0,
+         "ra": 291.0, "dec": 44.0}])
+    toi = pd.DataFrame([
+        {"toi": 1.01, "tid": 111, "pl_orbper": 10.0, "ra": 250.0, "dec": 10.0},
+        {"toi": 1.02, "tid": 111, "pl_orbper": 4.0, "ra": 250.0, "dec": 10.0},
+        {"toi": 2.01, "tid": 222, "pl_orbper": 6.0, "ra": 250.0, "dec": 10.0}])
+    ps = pd.DataFrame([
+        # NOTE: no pl_name row matches "Kepler-22 c"; the host row is all there is
+        {"pl_name": "Kepler-22 b", "hostname": "Kepler-22", "tic_id": "TIC 111",
+         "default_flag": 1, "pl_trandep_ppm": 900.0, "disc_facility": "Kepler",
+         "ra": 290.0, "dec": 44.0},
+        {"pl_name": "Kepler-99 b", "hostname": "Kepler-99", "tic_id": "TIC 222",
+         "default_flag": 1, "pl_trandep_ppm": 800.0, "disc_facility": "Kepler",
+         "ra": 291.0, "dec": 44.0}])
+    j, rep = acq.join_kepler_tess(koi, toi, ps, pos_radius_arcsec=2.0)
+    assert rep["joined_by_route"] == {"name_planet": 1, "name_host": 1, "position_tic": 1,
+                                      "position_period": 0}
+    assert rep["koi_with_tic_id"] == 3
+    assert rep["n_ps_tic_id_parsed"] == 2 and rep["n_ps_tic_id_unparsed"] == 0
+    routes = dict(zip(j["kepoi_name"], j["join_route"], strict=True))
+    assert routes == {"K00007.01": "name_planet", "K00007.02": "name_host",
+                      "K00008.01": "position_tic"}
+    assert set(j["tic_id"]) == {111, 222}
+    # every TOI is used at most once, and the period still picks the planet
+    assert dict(zip(j["kepoi_name"], j["toi"], strict=True))["K00007.02"] == 1.02
+
+
+def test_ps_rows_the_where_did_not_exclude_are_counted_and_dropped():
+    ps = pd.DataFrame([
+        {"pl_name": "Kepler-1 b", "hostname": "Kepler-1", "tic_id": "TIC 1", "default_flag": 1,
+         "disc_facility": "Kepler", "pl_trandep_ppm": 900.0, "ra": 1.0, "dec": 1.0},
+        {"pl_name": "TOI-9 b", "hostname": "TOI-9", "tic_id": "TIC 9", "default_flag": 1,
+         "disc_facility": "Transiting Exoplanet Survey Satellite (TESS)",
+         "pl_trandep_ppm": 900.0, "ra": 2.0, "dec": 2.0}])
+    rep: dict = {}
+    maps = acq.prepare_ps(ps, rep)
+    assert rep["n_ps_rows"] == 2 and rep["n_ps_rows_kepler"] == 1
+    assert rep["n_ps_rows_not_kepler_discovered"] == 1
+    assert set(maps["name_to_tic"]) == {"kepler1b"} and set(maps["host_to_tic"]) == {"kepler1"}
+    assert rep["ps_tic_id_samples"][0] == "TIC 1"
+    # the column absent -> the question is unanswered, not answered "none"
+    rep2: dict = {}
+    acq.prepare_ps(ps.drop(columns=["disc_facility"]), rep2)
+    assert rep2["n_ps_rows_not_kepler_discovered"] is None
+
+
+def test_non_default_ps_rows_are_kept_as_depth_references():
+    ps = pd.DataFrame([
+        {"pl_name": "Kepler-1 b", "hostname": "Kepler-1", "tic_id": "TIC 1", "default_flag": 0,
+         "pl_ratror": 0.02, "pl_trandep_ppm": 700.0, "pl_refname": "old",
+         "disc_facility": "Kepler"},
+        {"pl_name": "Kepler-1 b", "hostname": "Kepler-1", "tic_id": "TIC 1", "default_flag": 1,
+         "pl_ratror": 0.03, "pl_trandep_ppm": 900.0, "pl_refname": "adopted",
+         "disc_facility": "Kepler"},
+        {"pl_name": "Kepler-1 b", "hostname": "Kepler-1", "tic_id": "TIC 1", "default_flag": 0,
+         "pl_ratror": 0.04, "pl_trandep_ppm": 1100.0, "pl_refname": "newer",
+         "disc_facility": "Kepler"}])
+    rep: dict = {}
+    ref = acq.prepare_ps(ps, rep)["ref_by_name"]["kepler1b"]
+    assert rep["n_ps_default_rows"] == 1 and rep["n_ps_distinct_planet_names"] == 1
+    assert ref["ps_refname"] == "adopted" and ref["ps_pl_trandep_ppm"] == 900.0
+    assert ref["ps_n_refs"] == 3
+    assert (ref["ps_trandep_ppm_min"], ref["ps_trandep_ppm_max"]) == (700.0, 1100.0)
+
+
+def test_a_contested_toi_goes_to_the_more_reliable_route():
+    """A TOI is used once, so `name_planet` must claim it before `position_tic`."""
+    koi = pd.DataFrame([
+        # the unnamed KOI comes FIRST in table order and would win a table-order scan
+        {"kepid": 2, "kepoi_name": "K00002.01", "kepler_name": None, "koi_period": 10.0,
+         "ra": 290.0, "dec": 44.0},
+        {"kepid": 1, "kepoi_name": "K00001.01", "kepler_name": "Kepler-A b",
+         "koi_period": 10.0, "ra": 290.0, "dec": 44.0}])
+    toi = pd.DataFrame([{"toi": 1.01, "tid": 111, "pl_orbper": 10.0, "ra": 20.0, "dec": 4.0}])
+    ps = pd.DataFrame([{"pl_name": "Kepler-A b", "hostname": "Kepler-A", "tic_id": "TIC 111",
+                        "default_flag": 1, "disc_facility": "Kepler", "ra": 290.0, "dec": 44.0}])
+    j, rep = acq.join_kepler_tess(koi, toi, ps)
+    assert list(j["kepoi_name"]) == ["K00001.01"] and j["join_route"].iloc[0] == "name_planet"
+    assert rep["tic_matched_no_period_match"] == 1 and rep["n_toi_used"] == 1
+
+
+def test_routes_can_be_switched_off_in_config():
+    koi = pd.DataFrame([{"kepid": 1, "kepoi_name": "K00001.01", "kepler_name": "Kepler-A b",
+                         "koi_period": 10.0, "ra": 290.0, "dec": 44.0}])
+    toi = pd.DataFrame([{"toi": 1.01, "tid": 111, "pl_orbper": 10.0, "ra": 20.0, "dec": 4.0}])
+    ps = pd.DataFrame([{"pl_name": "Kepler-A b", "hostname": "Kepler-A", "tic_id": "TIC 111",
+                        "default_flag": 1, "disc_facility": "Kepler", "ra": 290.0, "dec": 44.0}])
+    _, on = acq.join_kepler_tess(koi, toi, ps)
+    assert on["joined_by_route"]["name_planet"] == 1
+    _, off = acq.join_kepler_tess(koi, toi, ps, routes=("position_period",))
+    assert off["n_joined"] == 0 and off["routes_enabled"] == ["position_period"]
 
 
 def test_ps_depth_percent_is_converted_to_ppm():
@@ -506,6 +645,123 @@ def test_gaia_neighbour_chunks_fail_per_chunk_not_per_run():
     assert status["neighbours_status"].tolist() == ["OK", "OK", "QUERY_FAILED", "QUERY_FAILED", "OK"]
     assert len(neigh) == 3 and "sep_arcsec" in neigh and (neigh["sep_arcsec"] < 1e-6).all()
     assert log.as_dict()["n_query_failed"] == 1 and log.as_dict()["n_ok"] == 2
+    # with no cone fallback the failure is still ATTRIBUTED, not a bare count
+    bad = [s for s in log.stages if s["status"] == "QUERY_FAILED"][0]
+    assert "timeout" in bad["error"] and bad["route"] == "upload"
+    assert bad["attempts"] and "timeout" in bad["attempts"][0]["error"]
+
+
+# ---------------------------------------------------------------------------
+# DEFECT 2 --- Gaia neighbours failed for every target (run 34787801172)
+# ---------------------------------------------------------------------------
+def _stars(n: int = 4) -> pd.DataFrame:
+    return pd.DataFrame({"planet_key": [f"K{i}" for i in range(n)],
+                         "ra": np.linspace(290.0, 291.0, n), "dec": [44.0] * n})
+
+
+def _cone_rows(part, radius, *, attempts=None, fail_keys=()):
+    """A stand-in for the pyvo cone route: one neighbour per reachable target."""
+    rows, failed = [], []
+    for _, t in part.iterrows():
+        if int(t["key"]) in set(fail_keys):
+            failed.append(int(t["key"]))
+            if attempts is not None:
+                attempts.append({"key": int(t["key"]), "transport": "pyvo_sync", "ok": False,
+                                 "error": "DALServiceError('cone 503')"})
+            continue
+        rows.append({"key": int(t["key"]), "source_id": 900 + int(t["key"]), "ra": t["ra"],
+                     "dec": t["dec"], "phot_g_mean_mag": 15.0})
+    return pd.DataFrame(rows, columns=["key", "source_id", "ra", "dec", "phot_g_mean_mag"]), failed
+
+
+def test_gaia_upload_failure_falls_back_to_cones_and_records_the_error_text():
+    """The upload route is refused; the cones carry the chunk, and the text lands."""
+    def upload(part, r):
+        raise acq.GaiaRouteFailed("upload refused", [
+            {"attempt": 1, "transport": "astroquery_async", "ok": False,
+             "error": "HTTPError('Error 500: SQL exception: ERROR: canceling statement "
+                      "due to statement timeout')"},
+            {"attempt": 2, "transport": "astroquery_sync", "ok": False,
+             "error": "HTTPError('Error 500')"}])
+
+    log = acq.AcquisitionLog()
+    neigh, status = acq.fetch_gaia_neighbours(_stars(4), chunk=4, gaia_fn=upload,
+                                              cone_fn=_cone_rows, log=log)
+    assert len(neigh) == 4 and set(neigh["planet_key"]) == {"K0", "K1", "K2", "K3"}
+    assert (status["neighbours_status"] == "OK").all()
+    assert (status["neighbours_route"] == "cones").all()
+    stage = log.stages[0]
+    assert stage["status"] == "OK" and stage["route"] == "cones"
+    # the thing that made run 34787801172 undiagnosable: the exception TEXT
+    assert any("statement timeout" in a["error"] for a in stage["attempts"])
+    from seti.growth.run import _gaia_errors
+    errs = _gaia_errors(log)
+    assert errs and errs[0]["n_failed_attempts"] == 2
+    assert "statement timeout" in errs[0]["attempts"][0]["error"]
+
+
+def test_targets_no_gaia_route_reaches_stay_not_checked():
+    """Upload refused AND the cone refused for one star: that star is not isolated."""
+    def upload(part, r):
+        raise acq.GaiaRouteFailed("upload refused", [{"attempt": 1, "ok": False,
+                                                      "error": "HTTPError('Error 500')"}])
+
+    def cones(part, radius, *, attempts=None):
+        return _cone_rows(part, radius, attempts=attempts, fail_keys=(1,))
+
+    log = acq.AcquisitionLog()
+    neigh, status = acq.fetch_gaia_neighbours(_stars(3), chunk=3, gaia_fn=upload,
+                                              cone_fn=cones, log=log)
+    assert status["neighbours_status"].tolist() == ["OK", "QUERY_FAILED", "OK"]
+    assert status["neighbours_route"].tolist() == ["cones", "", "cones"]
+    assert set(neigh["planet_key"]) == {"K0", "K2"}
+    stage = log.stages[0]
+    assert stage["status"] == "QUERY_FAILED" and stage["n_targets_failed"] == 1
+    assert any("cone 503" in a["error"] for a in stage["attempts"])
+
+
+def test_a_finished_gaia_chunk_is_checkpointed_and_not_requeried(tmp_path):
+    calls = []
+
+    def upload(part, r):
+        calls.append(len(part))
+        return pd.DataFrame({"key": part["key"], "source_id": 1, "ra": part["ra"],
+                             "dec": part["dec"], "phot_g_mean_mag": 12.0})
+
+    kw = {"chunk": 4, "gaia_fn": upload, "checkpoint_dir": tmp_path / "ck"}
+    n1, s1 = acq.fetch_gaia_neighbours(_stars(4), log=acq.AcquisitionLog(), **kw)
+    n2, s2 = acq.fetch_gaia_neighbours(_stars(4), log=(log2 := acq.AcquisitionLog()), **kw)
+    assert calls == [4]                                   # the second run re-queried nothing
+    assert len(n2) == len(n1) == 4 and (s2["neighbours_status"] == "OK").all()
+    assert s2["neighbours_route"].tolist() == ["checkpoint"] * 4
+    assert log2.stages[0]["route"] == "checkpoint"
+
+
+def test_gaia_cone_adql_is_a_small_single_target_cone():
+    q = acq.gaia_cone_adql(290.0, 44.0, 21.0)
+    assert "gaiadr3.gaia_source" in q and "tap_upload" not in q
+    assert "CONTAINS(POINT('ICRS', ra, dec)" in q and "CIRCLE('ICRS', 290.0000000, 44.0000000," in q
+    assert f"{21.0 / 3600.0:.8f}" in q
+    assert acq.GAIA_TAP == "https://gea.esac.esa.int/tap-server/tap"
+
+
+def test_cone_route_retries_each_target_and_reports_the_ones_it_lost():
+    seen = []
+
+    def transport(adql):
+        seen.append(adql)
+        if "291.0000000" in adql:
+            raise RuntimeError("DALServiceError('503')")
+        return pd.DataFrame({"source_id": [7], "ra": [290.0], "dec": [44.0],
+                             "phot_g_mean_mag": [14.0]})
+
+    att: list = []
+    targets = pd.DataFrame({"key": [0, 1], "ra": [290.0, 291.0], "dec": [44.0, 44.0]})
+    neigh, failed = acq.gaia_neighbours_cones(targets, 21.0, retries=2, transport=transport,
+                                              base_sleep=0.0, attempts=att)
+    assert len(seen) == 3                                  # 1 for key 0, 2 tries for key 1
+    assert list(neigh["key"]) == [0] and failed == [1]
+    assert att and "503" in att[0]["error"] and att[0]["key"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -563,8 +819,11 @@ def test_end_to_end_synthetic_run_reaches_candidates(tmp_path):
     fake = _FakeTAP("ok", tables)
     rep = growth_run("all", out_dir=out, query_fn=fake, gaia_fn=_gaia_ok)
     assert rep["verdict"] == VERDICT_CANDIDATES and rep["n_candidates"] == 1
-    assert rep["join"]["joined_by_route"] == {"tic_id": 20, "position_period": 0}
+    assert rep["join"]["joined_by_route"] == {**ZERO_ROUTES, "name_planet": 20}
+    assert "20 of 20 KOIs reached a TESS counterpart" in rep["join_statement"]
     assert rep["gaia"]["n_targets_ok"] == 20 and rep["gaia"]["n_targets_failed"] == 0
+    assert rep["gaia"]["errors"] == [] and rep["gaia"]["by_route"] == {"upload": 20}
+    assert "20 of 20 joined stars have Gaia neighbours" in rep["gaia_statement"]
     assert rep["classes"]["GROWTH_CANDIDATE"] == 1 and rep["classes"]["CONSISTENT"] == 19
     assert rep["degraded"] == []
     assert rep["n_long_period"] == 0
@@ -600,6 +859,68 @@ def test_failed_gaia_cones_degrade_and_veto_rather_than_assume_isolation(tmp_pat
     assert rep["degraded"] == ["gaia_neighbours_not_checked:6"]
     assert rep["rejection_counters"]["first_veto"]["neighbours_not_checked"] == 6
     assert rep["rejection_counters"]["n_would_be_candidate_without_vetoes"] == 1
+    # honest degradation, AND the reason is on the record
+    assert rep["gaia"]["errors"][0]["attempts"][0]["error"].count("Gaia 500")
+    assert "may never be called isolated" in rep["gaia_statement"] or \
+           "not_checked" in rep["gaia_statement"]
+    acqrep = json.loads((out / "acquire.json").read_text())
+    assert "Gaia 500" in json.dumps(acqrep["gaia"]["errors"])
+
+
+def test_a_large_joined_sample_keeps_the_offset_and_the_thresholds_honest(tmp_path):
+    """With the join fixed the sample is ~5x larger; re-check offset and classes.
+
+    400 ordinary planets at the Han et al. 2025 deficit, with an 8 % depth
+    scatter (comparable to the sigma_sys floor, so the tail is real), plus one
+    injected 1.5x growth.  The population median must still land on ln(0.88),
+    the injected planet must still be the only candidate, and the 3-sigma
+    classes must populate the tail without the 5-sigma gate manufacturing
+    candidates out of it.
+    """
+    out = tmp_path / "growth"
+    tables = _population(400, growth={"ratio": 1.5}, deficit=0.12, seed=11, scatter=0.08)
+    rep = growth_run("all", out_dir=out, query_fn=_FakeTAP("ok", tables), gaia_fn=_gaia_ok)
+    assert rep["join"]["joined_by_route"] == {**ZERO_ROUTES, "name_planet": 400}
+    assert rep["n_measured"] == 400
+    # the median is robust to the tail: still the injected offset
+    assert math.isclose(rep["population"]["population_offset"], math.log(0.88), abs_tol=0.02)
+    assert rep["verdict"] == VERDICT_CANDIDATES and rep["n_candidates"] == 1
+    assert rep["classes"]["GROWTH_CANDIDATE"] == 1
+    pop, classes = rep["population"], rep["classes"]
+    # a REAL tail exists at 3 sigma (so the thresholds are being exercised) ...
+    assert classes["DEEPER_TESS"] + classes["SHALLOWER_TESS"] >= 2
+    assert pop["n_z_above_3"] + pop["n_z_below_minus_3"] >= 2
+    # ... and only the injected planet reaches the 5-sigma gate
+    assert pop["n_z_above_5"] == 1
+    assert classes["CONSISTENT"] + classes["DEEPER_TESS"] + classes["SHALLOWER_TESS"] == 399
+    c = pd.read_csv(out / "candidates.csv")
+    assert list(c["kepoi_name"]) == ["K00100.01"]
+
+
+def test_run_wires_the_cone_fallback_when_the_upload_route_is_refused(tmp_path, monkeypatch):
+    """End to end through ``growth_run``: upload refused -> cones -> OK, error kept."""
+    seen: dict = {}
+
+    def upload(part, r):
+        raise acq.GaiaRouteFailed("upload refused", [
+            {"attempt": 1, "transport": "astroquery_async", "ok": False,
+             "error": "HTTPError('Error 500: canceling statement due to statement timeout')"}])
+
+    def cones(part, radius, *, retries=2, tap_url=None, attempts=None, **kw):
+        seen.update(retries=retries, tap_url=tap_url)
+        return _cone_rows(part, radius, attempts=attempts)
+
+    monkeypatch.setattr(acq, "gaia_neighbours_upload", upload)
+    monkeypatch.setattr(acq, "gaia_neighbours_cones", cones)
+    out = tmp_path / "growth"
+    tables = _population(6, growth={"ratio": 1.5})
+    rep = growth_run("all", out_dir=out, query_fn=_FakeTAP("ok", tables))   # gaia_fn=None
+    assert seen["tap_url"] == acq.GAIA_TAP and seen["retries"] == CONF["gaia"]["cone_retries"]
+    assert rep["gaia"]["n_targets_ok"] == 6 and rep["gaia"]["n_targets_failed"] == 0
+    assert rep["gaia"]["by_route"] == {"cones": 6} and rep["degraded"] == []
+    assert "statement timeout" in json.dumps(rep["gaia"]["errors"])
+    assert rep["verdict"] == VERDICT_CANDIDATES         # the dilution term was reached
+    assert (out / "data" / "gaia_checkpoint").exists()
 
 
 def test_long_period_list_covers_joined_and_tess_only():
@@ -645,6 +966,18 @@ def test_config_workflow_and_doc_exist():
         assert k in conf, k
     assert conf["drift"]["n_candidate"] == 5.0 and conf["drift"]["sigma_sys"] == 0.05
     assert conf["gaia"]["neighbour_radius_arcsec"] == 21.0
+    # every new assertion about a column or a service is in the config, with a
+    # `verify` note beside it in the file
+    assert conf["join"]["routes"] == list(acq.JOIN_ROUTES)
+    assert conf["join"]["ps_tic_id_is_string"] is True
+    assert conf["join"]["ps_tic_id_prefix"] == "TIC"
+    assert conf["gaia"]["tap_url"] == acq.GAIA_TAP
+    assert conf["gaia"]["fallback_cones"] is True and conf["gaia"]["cone_retries"] >= 1
+    assert conf["archive"]["ps_require_kepler_in_disc_facility"] is True
+    yml = Path("config/growth.yaml").read_text()
+    for marker in ("ps_tic_id_is_string", "tap_url"):
+        block = yml[max(0, yml.index(marker) - 1400):yml.index(marker)]
+        assert "`verify`" in block, marker
     assert "Kepler-9" in conf["vet"]["ttv_systems"]
     grid = conf["limb_darkening"]["grids"][0]
     assert len(grid["teff"]) == len(grid["kepler"]) == len(grid["tess"])

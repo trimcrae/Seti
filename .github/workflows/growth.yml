@@ -57,8 +57,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+      # The gate covers the injected signal AND the two defects run
+      # 34787801172 exposed: the ps.tic_id string parse (the join produced 0 by
+      # name) and the Gaia upload -> cone fallback with its recorded error text.
       - name: Offline gate — injected growth must be recovered on this runner
-        run: python -m pytest tests/test_growth.py -q -p no:cacheprovider -k "injected or precession or han2025 or no_data"
+        run: python -m pytest tests/test_growth.py -q -p no:cacheprovider -k "injected or precession or han2025 or no_data or tic_id or empty_kepler_name or fall_back or not_checked or large_joined"
       - name: Probe (reachability, column names)
         if: ${{ github.event.inputs.stage != 'assess' }}
         run: |
@@ -80,7 +83,30 @@ jobs:
           python - <<'PY'
           import json
           d = json.load(open("results/growth/acquire.json"))
-          print(json.dumps({k: d[k] for k in ("tables", "join", "gaia")}, indent=2))
+          print(json.dumps({k: d[k] for k in ("tables", "join", "gaia")}, indent=2)[:12000])
+          print("=== join ===");  print(d["join"].get("join_statement", ""))
+          # Every Gaia attempt's exception TEXT, not a bare count (the 2026-09-13
+          # failure mode): if the upload route was refused, this says so and says
+          # whether the per-target cone fallback carried the chunk.
+          for e in d["gaia"].get("errors") or []:
+              print(f"::warning::gaia {e['stage']} route={e.get('route')} "
+                    f"failed={e.get('n_targets_failed')}/{e.get('n_targets')}")
+              for a in e.get("attempts") or []:
+                  print("   ", a.get("transport") or a.get("key"), a.get("error"))
+          PY
+          # The join must not silently collapse to one route again.
+          python - <<'PY'
+          import json, sys
+          j = json.load(open("results/growth/acquire.json"))["join"]
+          by = j.get("joined_by_route") or {}
+          print("::notice::" + j.get("join_statement", ""))
+          if j.get("n_ps_tic_id_parsed", 0) == 0 and j.get("n_ps_rows_kepler", 0) > 0:
+              print("::error::ps.tic_id parsed 0 of %d rows — the column format changed; "
+                    "samples: %r" % (j.get("n_ps_rows_kepler"), j.get("ps_tic_id_samples")))
+              sys.exit(1)
+          if sum(by.get(r, 0) for r in ("name_planet", "name_host", "position_tic")) == 0:
+              print("::error::every TIC route yielded 0 — this is the 2026-09-13 defect again")
+              sys.exit(1)
           PY
       - name: Screen (band ratio, dilution, corrected ratio, duration test)
         if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == '' }}

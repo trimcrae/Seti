@@ -43,8 +43,11 @@ jobs:
         env:
           ADS_TOKEN: ${{ secrets.ADS_TOKEN }}
         run: |
-          timeout -k 30 4500 python scripts/necrofrontier_fetch.py \
+          timeout -k 30 4200 python scripts/necrofrontier_fetch.py \
             || echo "fetcher hit soft deadline or errored; committing partials"
+          # The scan and the id/title check are re-derived from whatever was
+          # fetched, so a run killed at its deadline still leaves both files.
+          python scripts/necrofrontier_fetch.py --scan-only || true
           echo "=== summary ==="
           python -c "import json;d=json.load(open('results/necrofrontier_lit/summary.json'));print(d['n_ok'],'ok /',d['n_urls'],'urls')" || true
           python -c "import json;d=json.load(open('results/necrofrontier_lit/id_title_check.json'));print(d['n_id_mismatch'],'id/title mismatches,',d['n_title_search_miss'],'title-search misses')" || true

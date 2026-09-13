@@ -186,3 +186,23 @@ def test_ads_fetch_without_token_degrades_honestly(fetch, tmp_path):
     assert fetch.ads_fetch("abs:x", tmp_path / "x.atom", 5) is False
     assert fetch.STATUS[before]["ok"] is False
     assert "no ADS_TOKEN" in fetch.STATUS[before]["attempts"][0]["error"]
+
+
+def test_parse_arxiv_abs_page(fetch):
+    page = ('<html><head><title>[2411.18595] Deuterium as a technosignature &amp; more</title>'
+            '<meta name="citation_abstract" content="We show D/H &lt; ISM." /></head></html>')
+    atom = fetch.parse_arxiv_abs_page("2411.18595", page)
+    ents = list(fetch._entries(atom))
+    assert ents == [("http://arxiv.org/abs/2411.18595", "Deuterium as a technosignature & more", "We show D/H < ISM.")]
+    assert "<entry>" not in fetch.parse_arxiv_abs_page("x", "<html></html>")
+
+
+def test_openalex_translation_and_atom(fetch):
+    assert fetch.arxiv_to_openalex_query('abs:"technosignature" AND abs:(isotope OR isotopic)') == '"technosignature" isotope isotopic'
+    works = [{"id": "https://openalex.org/W1", "display_name": "A paper",
+              "abstract_inverted_index": {"Second": [1], "First": [0]},
+              "locations": [{"landing_page_url": "https://arxiv.org/abs/2411.18595v2"}]},
+             {"id": "https://openalex.org/W2", "display_name": "No arXiv", "abstract_inverted_index": None}]
+    ents = list(fetch._entries(fetch.openalex_to_atom(works)))
+    assert ents[0] == ("http://arxiv.org/abs/2411.18595", "A paper", "First Second")
+    assert ents[1][0] == "https://openalex.org/W2" and ents[1][2] == ""

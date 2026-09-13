@@ -103,6 +103,7 @@ PAUSE = float(os.environ.get("NECROFRONTIER_PAUSE", "6.0"))
 TRIES = int(os.environ.get("NECROFRONTIER_TRIES", "3"))
 ARXIV_API = "http://export.arxiv.org/api/query"
 ADS_API = "https://api.adsabs.harvard.edu/v1/search/query"
+OPENALEX_API = "https://api.openalex.org/works"
 ADS_TOKEN = os.environ.get("ADS_TOKEN") or os.environ.get("ADS_API_TOKEN") or ""
 MAX_RESULTS = 60
 # The first run (2026-09-13, run 34754534065) got HTTP 429 from the arXiv API
@@ -112,7 +113,12 @@ MAX_RESULTS = 60
 # with the repository's ADS_TOKEN secret, written in the same Atom shape so
 # the id/title check and the concept scan run unchanged.  Every file records
 # which service produced it.
-BACKOFF = [30.0, 90.0, 270.0]
+BACKOFF = [20.0, 45.0, 45.0]
+# Once the arXiv API has refused a request three times, the rest of the run
+# goes ADS-first: the second run (34756xxx) spent its whole 75-minute budget
+# in backoffs on 31 consecutive 429s and never reached the fallback.
+ARXIV_THROTTLED = False
+ARXIV_FAILS_BEFORE_SWITCH = 1
 
 
 def _write_summary() -> None:
@@ -125,8 +131,19 @@ def _write_summary() -> None:
 
 
 def get(url: str, dest: pathlib.Path, tries: int = TRIES, pause: float = PAUSE) -> bool:
-    """Fetch one URL to ``dest`` verbatim; the HTTP status of every attempt is recorded."""
+    """Fetch one URL to ``dest`` verbatim; the HTTP status of every attempt is recorded.
+
+    When the arXiv API is throttling this run (``ARXIV_THROTTLED``), arXiv URLs
+    are not attempted at all: the record says ``skipped: arxiv throttled`` and the
+    caller goes straight to ADS."""
+    global ARXIV_THROTTLED
     attempts: list[dict] = []
+    if ARXIV_THROTTLED and "export.arxiv.org" in url:
+        STATUS.append({"url": url, "dest": dest.name, "ok": False,
+                       "attempts": [{"try": 0, "http": None, "error": "skipped: arxiv throttled this run"}]})
+        _write_summary()
+        return False
+    throttled_here = 0
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers=UA)
@@ -145,6 +162,7 @@ def get(url: str, dest: pathlib.Path, tries: int = TRIES, pause: float = PAUSE) 
             attempts.append({"try": i + 1, "http": exc.code, "error": str(exc)[:200]})
             print(f"  try {i + 1}/{tries} HTTP {exc.code}: {dest.name}")
             if exc.code in (429, 503):
+                throttled_here += 1
                 ra = exc.headers.get("Retry-After") if exc.headers else None
                 wait = BACKOFF[min(i, len(BACKOFF) - 1)]
                 if ra and str(ra).strip().isdigit():
@@ -158,7 +176,16 @@ def get(url: str, dest: pathlib.Path, tries: int = TRIES, pause: float = PAUSE) 
         time.sleep(pause * (i + 1))
     STATUS.append({"url": url, "dest": dest.name, "ok": False, "attempts": attempts})
     _write_summary()
+    if throttled_here >= tries and "export.arxiv.org" in url:
+        _note_throttled()
     return False
+
+
+def _note_throttled() -> None:
+    global ARXIV_THROTTLED
+    if not ARXIV_THROTTLED:
+        ARXIV_THROTTLED = True
+        print("  !! arXiv API is throttling this run: switching to ADS-first for the remainder")
 
 
 # --------------------------------------------------------------------------
@@ -747,6 +774,99 @@ COMPILED = {g: _compile(spec) for g, spec in GROUPS.items()}
 
 
 # --------------------------------------------------------------------------
+# Keyless fallbacks.  The repository's ADS_TOKEN secret turned out to be unset
+# (run 2: every ADS attempt recorded "no ADS_TOKEN"), so two routes earlier
+# sweeps used without a key come first: the arXiv ABSTRACT PAGE for an id
+# (lzlit: "no API, no 429") and OpenAlex for keyword / title searches
+# (necrolit, zacklit, cenotaph_recon).  ADS remains last, if a token appears.
+# --------------------------------------------------------------------------
+def parse_arxiv_abs_page(aid: str, page: str) -> str:
+    """Pure function: the arXiv abstract page -> one Atom entry (or an empty feed)."""
+    m = re.search(r"<title>(.*?)</title>", page, re.S)
+    title = " ".join(html.unescape(m.group(1)).split()) if m else ""
+    title = re.sub(r"^\[[^\]]+\]\s*", "", title)
+    ab = re.search(r'name="citation_abstract"\s+content="(.*?)"', page, re.S)
+    summ = " ".join(html.unescape(ab.group(1)).split()) if ab else ""
+    head = '<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><source>arxiv-abs-page</source>'
+    if not title:
+        return head + "</feed>"
+    return (head + f"<entry><id>http://arxiv.org/abs/{aid}</id><title>{_xml_escape(title)}</title>"
+            f"<summary>{_xml_escape(summ)}</summary></entry></feed>")
+
+
+def arxiv_abs_fetch(aid: str, dest: pathlib.Path) -> bool:
+    tmp = dest.with_suffix(".abs.html")
+    ok = get(f"https://arxiv.org/abs/{aid}", tmp, tries=2, pause=3.0)
+    if not ok:
+        return False
+    dest.write_text(parse_arxiv_abs_page(aid, tmp.read_text(errors="ignore")))
+    tmp.unlink(missing_ok=True)
+    return "<entry>" in dest.read_text(errors="ignore")
+
+
+def arxiv_to_openalex_query(q: str) -> str:
+    """Pure function: arXiv-API syntax -> OpenAlex plain-text search terms.
+
+    OpenAlex's ``search`` parameter has no field prefixes and no boolean
+    operators, so fields are dropped, quotes kept as phrases, AND/OR removed.
+    The translation is lossy and is recorded verbatim in summary.json."""
+    out = re.sub(r"\b(abs|ti|all|au):", "", q)
+    out = re.sub(r"\b(AND|OR|NOT)\b", " ", out)
+    out = out.replace("(", " ").replace(")", " ")
+    return " ".join(out.split())
+
+
+def _openalex_abstract(inv: dict | None) -> str:
+    if not inv:
+        return ""
+    pos: dict[int, str] = {}
+    for word, idxs in inv.items():
+        for i in idxs:
+            pos[i] = word
+    return " ".join(pos[i] for i in sorted(pos))
+
+
+def openalex_to_atom(works: list[dict]) -> str:
+    """Pure function: OpenAlex works -> the Atom shape ``_entries`` reads."""
+    parts = ['<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">', "<source>openalex</source>"]
+    for w in works:
+        ident = ""
+        urls = []
+        for loc in (w.get("locations") or []) + [w.get("primary_location") or {}]:
+            urls.append(str((loc or {}).get("landing_page_url") or ""))
+            urls.append(str((loc or {}).get("pdf_url") or ""))
+        for u in urls:
+            m = re.search(r"arxiv\.org/(?:abs|pdf)/([0-9]{4}\.[0-9]{4,5}|[a-z\-]+/[0-9]{7})", u)
+            if m:
+                ident = f"http://arxiv.org/abs/{m.group(1)}"
+                break
+        ident = ident or str(w.get("id") or "")
+        parts.append(f"<entry><id>{_xml_escape(ident)}</id><title>{_xml_escape(w.get('display_name') or '')}</title>"
+                     f"<summary>{_xml_escape(_openalex_abstract(w.get('abstract_inverted_index')))}</summary></entry>")
+    parts.append("</feed>")
+    return "".join(parts)
+
+
+def openalex_fetch(q: str, dest: pathlib.Path, rows: int) -> bool:
+    url = (f"{OPENALEX_API}?search={urllib.parse.quote(q)}&per-page={min(rows, 50)}"
+           "&select=id,display_name,abstract_inverted_index,primary_location,locations"
+           "&mailto=trimcrae@gmail.com")
+    tmp = dest.with_suffix(".openalex.json")
+    if not get(url, tmp, tries=2, pause=1.5):
+        return False
+    try:
+        works = json.loads(tmp.read_text(errors="ignore")).get("results") or []
+    except Exception:  # noqa: BLE001
+        return False
+    dest.write_text(openalex_to_atom(works))
+    tmp.unlink(missing_ok=True)
+    STATUS[-1]["source"] = "openalex"
+    STATUS[-1]["n_docs"] = len(works)
+    _write_summary()
+    return True
+
+
+# --------------------------------------------------------------------------
 # ADS fallback: the same question asked of a second service.
 # --------------------------------------------------------------------------
 def arxiv_to_ads_query(q: str) -> str:
@@ -833,7 +953,8 @@ def arxiv_query(group: str, name: str, q: str) -> None:
            f"&start=0&max_results={MAX_RESULTS}&sortBy=relevance&sortOrder=descending")
     dest = OUT / f"arxiv_q_{group}__{name}.atom"
     if not get(url, dest):
-        ads_fetch(arxiv_to_ads_query(q), dest, MAX_RESULTS)
+        if not openalex_fetch(arxiv_to_openalex_query(q), dest, MAX_RESULTS):
+            ads_fetch(arxiv_to_ads_query(q), dest, MAX_RESULTS)
 
 
 def arxiv_title(group: str, name: str, title: str) -> None:
@@ -842,7 +963,8 @@ def arxiv_title(group: str, name: str, title: str) -> None:
            f"&start=0&max_results=5&sortBy=relevance&sortOrder=descending")
     dest = OUT / f"arxiv_q_title_{group}__{name}.atom"
     if not get(url, dest):
-        ads_fetch(arxiv_to_ads_query(q), dest, 5)
+        if not openalex_fetch(title, dest, 5):
+            ads_fetch(arxiv_to_ads_query(q), dest, 5)
 
 
 def arxiv_ids(group: str, named: dict[str, tuple]) -> None:
@@ -869,7 +991,9 @@ def arxiv_ids(group: str, named: dict[str, tuple]) -> None:
                 + (e or "") + "</feed>")
         return
     for name, (aid, _, _) in named.items():
-        ads_fetch(f"identifier:arXiv:{aid}", OUT / f"arxiv_id_{group}__{name}.atom", 1)
+        dest = OUT / f"arxiv_id_{group}__{name}.atom"
+        if not arxiv_abs_fetch(aid, dest):
+            ads_fetch(f"identifier:arXiv:{aid}", dest, 1)
 
 
 def _entries(text: str):
@@ -1023,7 +1147,33 @@ def scan(out_dir: pathlib.Path | None = None) -> dict:
     return out
 
 
-def main() -> None:
+def _finish() -> None:
+    print("== id/title check ==")
+    chk = id_title_check()
+    print(json.dumps({k: v for k, v in chk.items() if k in ("n_id_mismatch", "n_title_search_miss")}))
+    for key, rec in chk["by_id"].items():
+        print(f"  {key}: {rec.get('match')}  {rec.get('title_fetched', '')[:80]!r}")
+    print("== decoy-aware concept scan ==")
+    res = scan()
+    print(json.dumps({"n_abstracts_scanned": res["n_abstracts_scanned"],
+                      "per_group_counts": res["per_group_counts"]}, indent=2))
+    _write_summary()
+    print(f"\n{sum(1 for s in STATUS if s['ok'])}/{len(STATUS)} fetches ok -> {OUT}")
+
+
+def main(argv: list[str] | None = None) -> None:
+    import signal
+    import sys
+    argv = sys.argv[1:] if argv is None else argv
+    if "--scan-only" in argv:
+        # Re-derive the check and the scan from whatever files exist (a run
+        # killed at its deadline leaves the fetched files but no scan).
+        _finish()
+        return
+
+    def _term(signum, frame):  # noqa: ARG001
+        raise SystemExit(f"signal {signum}")
+    signal.signal(signal.SIGTERM, _term)
     try:
         for group, spec in GROUPS.items():
             print(f"==== {group} ====")
@@ -1040,17 +1190,7 @@ def main() -> None:
                 print(f"-- {name}")
                 arxiv_query(group, name, q)
     finally:
-        print("== id/title check ==")
-        chk = id_title_check()
-        print(json.dumps({k: v for k, v in chk.items() if k in ("n_id_mismatch", "n_title_search_miss")}))
-        for key, rec in chk["by_id"].items():
-            print(f"  {key}: {rec.get('match')}  {rec.get('title_fetched', '')[:80]!r}")
-        print("== decoy-aware concept scan ==")
-        res = scan()
-        print(json.dumps({"n_abstracts_scanned": res["n_abstracts_scanned"],
-                          "per_group_counts": res["per_group_counts"]}, indent=2))
-        _write_summary()
-        print(f"\n{sum(1 for s in STATUS if s['ok'])}/{len(STATUS)} fetches ok -> {OUT}")
+        _finish()
 
 
 if __name__ == "__main__":

@@ -606,7 +606,6 @@ GROUPS: dict[str, dict] = {
             "hon2025_bd05": ("2501.05431", "disintegrating", "medium"),
         },
         "by_title": {
-            "kaye_aigrain2025": "Transit timing variations of Kepler and K2 planets observed by TESS",
         },
         "interpretation": ("Wang & Espinoza 2024 (within-TESS TDV) and Zuckerman 2023 (Kepler single-transit "
                            "anomalies) are the nearest executed searches and will fire.  A decoy-free "
@@ -673,7 +672,7 @@ GROUPS: dict[str, dict] = {
             "okamoto2021_superflares": ("2011.02117", "superflare", "medium"),
             "vasilyev2024_science": ("2412.12265", "superflare", "medium"),
             "tu2020_tess": ("1912.11572", "superflare", "medium"),
-            "forgan2013_shkadov": ("1306.1672", "Shkadov", "medium"),
+            "forgan2013_shkadov": ("1306.1672", "Stellar Engines", "high"),
             "lingam_loeb2020_engines": ("2009.08874", "stellar engine", "low"),
             "lingam_loeb2017_shield": ("1709.05348", "flare", "medium"),
             "boro_saikia2018_hk": ("1803.11123", "chromospheric", "medium"),
@@ -717,7 +716,7 @@ GROUPS: dict[str, dict] = {
             "romanovskaya2022_hitchhikers": ("2202.03364", "Hitchhikers", "medium"),
             "fast_trappist_2025": ("2509.06310", "TRAPPIST-1", "low"),
             "garrett2024_ai_filter": ("2405.00042", "artificial intelligence", "high"),
-            "opatrny2017_bh_dyson": ("1601.02897", "Dyson", "medium"),
+            "opatrny2017_bh_dyson": ("1601.02897", "black sun", "high"),
         },
         "by_title": {
             "hsiao2021_bh_dyson": "A Dyson sphere around a black hole",
@@ -751,7 +750,6 @@ GROUPS: dict[str, dict] = {
         "by_id": {
             "lacki2026_dust_to_dust": ("2606.08373", "Dust", "medium"),
             "kruger2015_ulysses_16yr": ("1510.06180", "Ulysses", "low"),
-            "strub2015_ulysses": ("1510.06181", "Ulysses", "low"),
             "lunar_regolith_micron_2026": ("2606.24028", "regolith", "low"),
         },
         "by_title": {

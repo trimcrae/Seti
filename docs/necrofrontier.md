@@ -623,16 +623,15 @@ background whose signature is different in kind, not merely in amplitude.
 
 ---
 
-## 5. What the record says (sweep run 3, 2026-09-13, 11:05 AM ET)
+## 5. What the record says (sweep runs 3 and 4, 2026-09-13)
 
 `necrofrontier-lit` took three runs to get past the arXiv API's throttling
 (run 1: 429 on 64 of 65 requests; run 2: 429 on 31 of 32, and the ADS
 fallback found the repository's `ADS_TOKEN` secret unset; run 3: keyless
 fallbacks — arXiv abstract pages for ids, OpenAlex for searches). Run 3
-fetched twelve of the fifteen groups before its deadline and the decoy-aware
-scan ran over **1,713 abstracts (1,593 unique)**; groups g13–g15 (spot
-ceiling, post-biological hosts, in-situ grains) were only scanned through the
-other groups' abstracts and are re-fetched by run 4. The record
+fetched twelve of the fifteen groups before its deadline; run 4 (groups
+g13–g15 only, 40 of 67 fetches, half through OpenAlex) completed the set, and
+the decoy-aware scan ran over **2,135 abstracts (1,928 unique)**. The record
 (`results/necrofrontier_lit/concept_scan.json`, verbatim abstracts) reads:
 
 | Group | Signature | Decoy-free hits | What they are | Verdict |
@@ -649,9 +648,9 @@ other groups' abstracts and are re-fetched by run 4. The record
 | g10 relay geometry | S60 | 12 | Hippke's network I/II, "Engineering an Interstellar Communications Network by Deploying Relay Probes" (arXiv:2204.08296), Gertz's nodes and landbases, Forgan 2019 transit network, "Exoplanet Occultations as Technosignature Targets", the TRAPPIST-1 ATA search | **Unoccupied**: network *design* papers and single-target occultation searches; no star-pair spillover selection at catalogue scale |
 | g11 growing transit | S57 | 21 | Zuckerman+2023 (single-transit anomalies), Wright+2016 Ĝ IV, spot-induced depth variations (HIP 67522), the J1407 ring "construction zones" pun, exocomet tails | **Unoccupied**: no cross-mission secular-growth search |
 | g12 ignition | S61 | 6 | Metzger+2017 secular *dimming* of KIC 8462852, nearby-excess census, TWA disks | **Unoccupied** |
-| g13 spot ceiling | S59 | 2 (from other groups' abstracts) | Davenport 2016 Kepler flare catalogue | re-fetched by run 4 |
-| g14 post-biological hosts | S62/S63 | 15 (from other groups' abstracts) | the LTT 3780 ATA narrowband search (an M-dwarf planet host, not a post-biological one), Vidal's "pulsar positioning system", "Lens Flare" X-ray-binary beacons, **"The Dyson Minds 2025 Workshop: SETI Around Black Holes" (arXiv:2604.21886)** — the nearest neighbour for the compact-object branch and to be read before S63 is written up | re-fetched by run 4 |
-| g15 in-situ grains | S58 | 1 (from other groups' abstracts) | a Fermi-paradox essay; the composition papers are decoyed natural-dust reviews | re-fetched by run 4 |
+| g13 spot ceiling | S59 | 8 | Davenport 2016 Kepler flare catalogue, Okamoto+2021 statistics, an X-ray superflare on a fast rotator, "Empirical flare energy limits for the largest historical sunspots", "Starspot Activity and Superflares on Solar-type Stars" (the natural bound literature, decoyed by occurrence statistics) | **Unoccupied**: the spot-energy bound is established and never mined as an anomaly set; no flare-as-technosignature paper |
+| g14 post-biological hosts | S62/S63 | 25 | Osmanov 2016/2018 and Kayali+2025 (pulsar Dyson rings, theory), Ćirković & Bradbury 2006, the LTT 3780 ATA narrowband search (an M-dwarf planet host, not a post-biological one), Vidal's "pulsar positioning system", "Lens Flare" X-ray-binary beacons, "Searching for Intelligent Life in Gravitational Wave Signals" (arXiv:2212.02065), multiresonant-system beacons (arXiv:2204.14259), **"The Dyson Minds 2025 Workshop: SETI Around Black Holes" (arXiv:2604.21886)** — the nearest neighbour for the compact-object branch and to be read before S63 is written up | **Unoccupied**: no executed search on pulsar planets, WD/NS ring temperatures, brown dwarfs or free-floating planets; no techno + anti-bio conjunction test |
+| g15 in-situ grains | S58 | 7 | the Stardust ISPE series (VIII, IX, XI and the seven-particle paper), "Compositional Analysis of Interstellar Dust as seen by the Cassini CDA" and Altobelli+2016 (decoyed as flux papers), the IMAP/IDEX instrument paper, the FOSSIL and DuneXpress mission concepts | **Unoccupied**: the composition record exists and no paper reads it for artificial outliers |
 
 **Id verification (`id_title_check.json`).** Seven asserted arXiv ids
 resolved to unrelated papers and were removed from the sweep in favour of
@@ -661,6 +660,11 @@ Lisse+2009 (HD 172555), Wallner+2021 (⁶⁰Fe/²⁴⁴Pu). None of those ids ap
 in this document. Six others carried the expected paper under a title my
 fragment did not match (Absil 2013 = paper III of the FLUOR series at
 1307.2488; Ertel 2014 = paper IV at 1409.6143; Lund 2016; Xu 2013; Kennedy &
-Wyatt 2013; Forgan 2019; the NGC 6447 turn-on) and are confirmed. Pre-arXiv
-journal papers (Whitmire & Wright 1980; Kawka & Vennes 2016) returned no
-arXiv or OpenAlex entry and are cited by journal reference only.
+Wyatt 2013; Forgan 2019; the NGC 6447 turn-on; and from run 4 Forgan 2013 at
+1306.1672, "On the Possibility of Detecting Class A Stellar Engines Using
+Exoplanet Transit Curves", and Opatrný+2017 at 1601.02897, "Life under a black
+sun") and are confirmed. Run 4 found one more wrong id (Strub+2015 Ulysses,
+asserted 1510.06181), removed. Pre-arXiv journal papers (Whitmire & Wright
+1980; Kawka & Vennes 2016) returned no arXiv or OpenAlex entry and are cited
+by journal reference only; the Kaye & Aigrain 2025 title was a guess and is
+dropped.

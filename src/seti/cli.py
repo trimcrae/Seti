@@ -1039,6 +1039,18 @@ def _cmd_metronome(args, cfg):
     return _metronome_main(list(args.rest))
 
 
+def _cmd_isotope(args, cfg):
+    from .isotope.run import main as _isotope_main
+
+    return _isotope_main(list(args.rest))
+
+
+def _cmd_growth(args, cfg):
+    from .growth.run import main as _growth_main
+
+    return _growth_main(list(args.rest))
+
+
 def _cmd_baffle(args, cfg):
     from .baffle.run import _cmd_baffle as _baffle_cmd
 
@@ -2163,6 +2175,20 @@ def main(argv=None):
 
     from .lantern.run import register as _register_lantern
     _register_lantern(sub)
+
+    # --- 2026-09-13: NECROFRONTIER channels (docs/necrofrontier.md), each also
+    #     runnable as `python -m seti.<channel>.run` (what their workflows call).
+    p = sub.add_parser("isotope",
+                       help="ISOTOPE (S46): isotopic purity without a nucleosynthetic "
+                            "package in the Presolar Grain Database; "
+                            "flags are passed through to seti.isotope.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_isotope)
+    p = sub.add_parser("growth",
+                       help="GROWTH (S57): Kepler -> TESS transit-depth drift at fixed "
+                            "impact parameter; flags are passed through to seti.growth.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_growth)
 
     # --- 2026-09-06: BAFFLE, reciprocal mid-IR absorbing screens; runnable as
     #     `python -m seti.baffle.run` (what baffle.yml calls) or `seti baffle`.

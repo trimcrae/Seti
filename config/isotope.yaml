@@ -1,0 +1,115 @@
+# ISOTOPE channel — every threshold, reference value and header pattern in one
+# place.  Signature S46 (docs/necrofrontier.md §2.XII): "the impossible grain".
+#
+# The Presolar Grain Database SiC release (Stephan et al. 2024, ApJS 270, 27;
+# 20,230 grains) is a DOI'd spreadsheet, not an API, and its column headers
+# are NOT known in this sandbox.  Every role below is resolved at runtime by
+# regex over a NORMALISED header (lower-cased, δ/Δ/delta → "d", ± → "pm",
+# σ → "sig", super/subscript digits → digits, everything non-alphanumeric
+# removed: "err[δ(29Si/28Si)]" → "errd29si28si").  A role that matches nothing
+# is None and the test that needs it is recorded as NOT RUN — never passed.
+
+# ---------------------------------------------------------------------------
+# Acquisition routes, tried in this order.  Every route records its outcome.
+# ---------------------------------------------------------------------------
+acquire:
+  timeout_s: 120                # the wustl host timed out at 90 s on the runner (probe.json)
+  retries: 2
+  max_bytes: 400000000          # 400 MB cap on any single download
+  # (3) crawl the database landing page for a spreadsheet link
+  crawl_urls:
+    - "https://presolar.physics.wustl.edu/presolar-grain-database/"
+    - "http://presolar.physics.wustl.edu/presolar-grain-database/"
+    - "https://presolar.physics.wustl.edu/"
+    - "http://presolar.physics.wustl.edu/"
+  link_suffix_regex: "(?i)\\.(xlsx|xls|csv|zip)(\\?.*)?$"
+  # (4) EarthChem Library: HTML search for the release, follow any download link
+  ecl_home: "https://ecl.earthchem.org/home.php"
+  ecl_search_urls:
+    - "https://ecl.earthchem.org/search.php?title=Presolar+Grain+Database"
+    - "https://ecl.earthchem.org/search.php?q=Presolar+Grain+Database"
+    - "https://ecl.earthchem.org/search.php?keyword=Presolar+Grain+Database"
+    - "https://ecl.earthchem.org/searchresults.php?title=Presolar+Grain+Database"
+  ecl_query: "Presolar Grain Database"
+  ecl_record_regex: "(?i)((view|record|detail|dataset)\\.php\\?[^\"'\\s>]*|/(view|record|dataset)/[^\"'\\s>]+)"
+  ecl_download_regex: "(?i)(download|\\.xlsx|\\.xls|\\.csv|\\.zip)"
+  # (5) DataCite: the release is DOI'd through IEDA/EarthChem; the guessed DOI
+  # was wrong (probe run 1), so LOOK IT UP rather than guess it.
+  datacite_api: "https://api.datacite.org/dois"
+  datacite_queries:
+    - 'titles.title:"Presolar Grain Database" AND titles.title:SiC'
+    - 'titles.title:"Presolar Grain Database"'
+    - 'titles.title:"presolar" AND titles.title:"silicon carbide"'
+  datacite_page_size: 25
+  doi_resolver: "https://doi.org/"
+
+# ---------------------------------------------------------------------------
+# Header → role patterns (regex over the normalised header; first pattern with
+# any match wins, then the shortest header among its matches).  Error columns
+# are the same patterns AND the error marker; value columns are the same
+# patterns AND NOT the error marker.
+# ---------------------------------------------------------------------------
+roles:
+  grain_id:   ["^pgdid$", "^pgdid", "^grainid$", "^grainlabel$", "^id$", "^grain$", "^label$", "^name$", "^grainname$"]
+  meteorite:  ["^meteorite$", "^meteorite", "^parentbody$", "^sample$"]
+  grain_type: ["^pgdtype$", "^type$", "^graintype$", "^sictype$", "^grouptype$", "^group$", "^class$", "^classification$", "type$"]
+  d29si:      ["^d29si28si", "^d29si", "^d29", "29si28si", "29si"]
+  d30si:      ["^d30si28si", "^d30si", "^d30", "30si28si", "30si"]
+  c12c13:     ["^12c13c", "^c12c13", "12c13c", "c12c13"]
+  n14n15:     ["^14n15n", "^n14n15", "14n15n", "n14n15"]
+  al26al27:   ["^26al27al", "^al26al27", "26al27al", "al26al27", "^26al"]
+  ti44ti48:   ["^44ti48ti", "^ti44ti48", "44ti48ti", "ti44ti48", "^44ti"]
+  d44ca:      ["^d44ca40ca", "^d44ca", "44ca40ca", "^d44"]
+error_marker: "(err|sig|unc|stdev|(^|[^p])sd|(^|[^p])pm|uncert|error)"
+# a header that carries a unit multiplier: the value is multiplied by the scale
+unit_scales:
+  - {regex: "(?i)(×|x|\\*)?\\s*10\\s*(\\^|\\*\\*)?\\s*[-−–]\\s*3\\b|e-0?3\\b", scale: 0.001, only_roles: ["al26al27", "ti44ti48"]}
+  - {regex: "(?i)(×|x|\\*)?\\s*10\\s*(\\^|\\*\\*)?\\s*[-−–]\\s*4|e-0?4\\b", scale: 0.0001, only_roles: ["al26al27", "ti44ti48"]}
+x_type_regex: "(?i)^\\s*x"          # classified supernova X grains (X, X0, X1, X2, XA...)
+# The nucleosynthetically understood classes set the carbon envelope.  Type D
+# (new in Stephan+2024) and the U / unclassified / unusual residue are
+# deliberately NOT here: they are where a hit would hide and where measurement
+# problems concentrate (necrofrontier.md S46 *Kills*), so they may not define
+# the natural range they are tested against.
+natural_type_regex: "(?i)^\\s*(m|ms|mainstream|x[0-9a-z]*|y|z|ab[0-9]?|n|nova|c)\\b"
+
+# ---------------------------------------------------------------------------
+# Physics: solar references, the X-grain package, thresholds
+# ---------------------------------------------------------------------------
+solar:
+  c12c13: 89.0
+  n14n15: 272.0
+  al26al27: 0.0        # limit: 26Al is extinct; any resolved 26Al/27Al is an anomaly
+  ti44ti48: 0.0221     # per the brief; 44Ti is extinct, an excess is inferred through 44Ca
+  d44ca: 0.0
+  d29si: 0.0
+  d30si: 0.0
+# Fallback X-grain package values (used to test whether a measured partner
+# EXCLUDES the package); overridden by the medians of the database's own X
+# grains when >= x_package_min_n of them carry the ratio.
+x_package:
+  c12c13: 300.0
+  n14n15: 50.0
+  al26al27: 0.1
+  ti44ti48: 0.05
+  d44ca: 300.0
+x_package_min_n: 10
+# Fallback envelope if the table has no classified X grain (Lin et al. 2010,
+# ApJ 709, 1157, the Si/S zone end-member); the summary says which was used.
+envelope_fallback:
+  d29si_min: -650.0
+  d30si_min: -1000.0
+thresholds:
+  envelope_sigma: 3.0            # beyond the envelope in BOTH d29Si and d30Si by > 3σ of own errors
+  partner_sigma: 3.0             # partner "consistent with solar" = |z| <= 3
+  package_sigma: 3.0             # partner "excludes the X package" = |z_package| >= 3
+  al26_limit_max: 0.01           # an upper limit below this excludes the X package (0.1-0.6)
+  min_partners_for_candidate: 2  # fewer measured partners -> INSUFFICIENT_PANEL
+  fractionation_slope: 0.5       # mass-dependent: d29 ≈ 0.5 d30
+  fractionation_max_permil: 60.0 # ... at small amplitude
+  fractionation_min_sigma: 2.0   # ... and resolved from zero
+  wafer_permil: -950.0           # d29 ≈ d30 ≈ -999: CONTAMINATION_SUSPECT if no C and no N measured
+  wafer_equal_permil: 60.0       # |d29 - d30| within this counts as "≈"
+  carbon_envelope_sigma: 3.0     # 12C/13C beyond the most extreme classified natural grain by > 3σ
+  carbon_si_solar_sigma: 3.0     # ... with Si within 3σ of solar
+  frontier_n: 25                 # most 28Si-pure grains listed regardless of class

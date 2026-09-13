@@ -1,0 +1,155 @@
+name: isotope
+
+# ISOTOPE — the impossible grain (docs/isotope.md).  Signature S46.
+#
+#   probe ──▶ acquire (route ledger) ──▶ screen ──▶ assess ──▶ commit-back
+#
+# Isotopic purity WITHOUT a nucleosynthetic package in the Presolar Grain
+# Database SiC release (Stephan et al. 2024, ApJS 270, 27; 20,230 grains).
+# A supernova X grain is 28Si-rich AND carries 44Ti, 26Al, 15N, 12C; refined
+# material is mono-isotopic with solar partners.  Candidate = purity beyond the
+# database's own most extreme classified X grain in BOTH δ29Si and δ30Si by
+# > 3σ AND every measured partner ratio consistent with solar.
+#
+# THE DATA-ACCESS FACT (results/necrofrontier/probe.json, three runs):
+# presolar.physics.wustl.edu does not answer this runner on 443 or 80, the DOI
+# guessed from memory was wrong, ADS is behind a WAF, and ecl.earthchem.org
+# answers.  So the acquire stage walks a ROUTE LEDGER — a human-supplied
+# table_url first, then the wustl crawl (120 s timeout), then an EarthChem
+# Library HTML search, then a DataCite DOI lookup — and reports NO_DATA_REACHED
+# with every route's outcome when nothing lands.  Nothing is fabricated.
+#
+# Column roles (δ29Si, δ30Si and errors, 12C/13C, 14N/15N, 26Al/27Al,
+# 44Ti/48Ti or δ44Ca, type, id, meteorite) are resolved AT RUNTIME by regex over
+# the file's real headers (config/isotope.yaml); a role that is not found makes
+# its test NOT RUN, never passed.  Commit-back through scripts/commit_results.sh,
+# which VERIFIES the push.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          "all" (probe, acquire, screen, assess), "probe" (reachability only —
+          cheap, run this first), or "screen,assess" to re-classify a table
+          already cached under results/isotope/data/.
+        required: false
+        default: "all"
+      table_url:
+        description: >-
+          URL of the PGD SiC table (xlsx / csv / zip) found by a human in the
+          EarthChem Library (ecl.earthchem.org) or obtained from the authors.
+          Tried FIRST when given; the crawl / search routes follow.
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  isotope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          # openpyxl is optional: the channel carries a stdlib xlsx reader, but
+          # openpyxl is broader (styles, dates) if the release uses them.
+          pip install openpyxl || echo "openpyxl not installed; stdlib xlsx reader in use"
+      - name: Offline gate — injected pure grain must be recovered on this runner
+        run: python -m pytest tests/test_isotope.py -q -p no:cacheprovider -k "injected or mainstream or no_data or xlsx"
+      - name: Probe (reachability of every route; no download)
+        run: |
+          TU=""
+          if [ -n "${{ github.event.inputs.table_url }}" ]; then
+            TU="--table-url ${{ github.event.inputs.table_url }}"
+          fi
+          python -m seti.isotope.run --stage probe $TU
+          echo "=== probe ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/isotope/probe.json"))
+          for e in d["endpoints"]:
+              print(e["route"], "REACHED" if e["reached"] else "NOT_REACHED", e["status"], e["bytes"], e["url"])
+          PY
+      - name: Acquire (route ledger) + screen + assess
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          TU=""
+          if [ -n "${{ github.event.inputs.table_url }}" ]; then
+            TU="--table-url ${{ github.event.inputs.table_url }}"
+          fi
+          STAGE="${{ github.event.inputs.stage || 'all' }}"
+          if [ "$STAGE" = "all" ]; then STAGE="acquire,screen,assess"; fi
+          python -m seti.isotope.run --stage "$STAGE" $TU
+          echo "=== acquire ==="
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/isotope/acquire.json")
+          if p.exists():
+              d = json.loads(p.read_text())
+              print("status", d["status"], "route_used", d.get("route_used"), "rows", d.get("n_rows"))
+              for r in d["routes"]:
+                  print(" ", r["route"], r["outcome"], r.get("status"), r.get("url"))
+              rr = d.get("role_resolution") or {}
+              print("roles found:", rr.get("found")); print("roles missing:", rr.get("missing"))
+          PY
+          echo "=== summary ==="
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/isotope/summary.json")
+          if p.exists():
+              s = json.loads(p.read_text())
+              print(json.dumps({k: s[k] for k in s if k not in ("candidates", "frontier", "thresholds")}, indent=2)[:6000])
+          PY
+      # A verdict must never read as a science null when no grain was classified.
+      - name: Assert the verdict is not a disguised no-data run
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/isotope/summary.json")
+          if not p.exists():
+              print("::warning::no summary.json — the assess stage produced nothing"); sys.exit(0)
+          s = json.loads(p.read_text())
+          v, n = s.get("verdict", ""), int(s.get("n_grains", 0))
+          if n == 0 and v != "NO_DATA_REACHED":
+              print(f"::error::verdict {v!r} with 0 grains is a disguised no-data run"); sys.exit(1)
+          if v == "NO_DATA_REACHED":
+              print("::warning::NO_DATA_REACHED — routes tried: " + ", ".join(s["acquisition"]["routes_tried"]) +
+                    ". Locate the Stephan+2024 SiC table in the EarthChem Library and re-dispatch with table_url.")
+          if v == "NO_PURITY_CANDIDATE":
+              print(f"::notice::{n} grains classified, none a purity candidate. A COUNT, NOT AN OCCURRENCE LIMIT — see docs/isotope.md.")
+          if v == "PURITY_CANDIDATES":
+              print(f"::notice::{s.get('n_candidates')} purity candidate(s) of {n} grains — PENDING contamination vet, see results/isotope/candidates.csv")
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          # The push is VERIFIED against the remote by commit_results.sh; the
+          # raw table cache (results/isotope/data/) and the per-grain
+          # grains.csv travel as artifacts, not commits.
+          scripts/commit_results.sh \
+            "isotope: the impossible grain — probe/acquire/screen/assess" \
+            results/isotope/probe.json \
+            results/isotope/acquire.json \
+            results/isotope/screen.json \
+            results/isotope/summary.json \
+            results/isotope/candidates.csv \
+            results/isotope/frontier.csv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isotope-final
+          path: results/isotope/
+          if-no-files-found: warn

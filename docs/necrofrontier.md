@@ -557,27 +557,27 @@ detector on the substitute the channel index already names.
 ## 3. The data-source ledger
 
 Archives this repository has never queried, what each serves, and how a
-runner reaches it (every line is probed by `necrofrontier-probe.yml`; the
-column "state" is filled from `results/necrofrontier/probe.json`):
+runner reaches it (every line is probed by `necrofrontier-probe.yml`; the state column is
+filled from `results/necrofrontier/probe.json` — three runs on 2026-09-13,
+the last reaching 57 of 67 endpoints with the expected product):
 
-| Source | Serves | Access | Signatures | State |
+| Source | Serves | Access | Signatures | State (probe run 3, 2026-09-13 8:01 AM ET) |
 |---|---|---|---|---|
-| SPHEREx QR2 + SPLICES | 102-channel 0.75–5 µm all-sky spectral images; 9 M seed sources | IRSA TAP `spherex.plane`/`artifact`, SIA2 `spherex_qr2`, cutout URL, AWS `spherex-qr` | S48, S61 | probe pending |
-| Euclid Q1 (DR1-F Nov 2026) | 4.3 M NISP 1D spectra + line-feature table | IRSA TAP `euclid_q1_*`, SSA `euclid_DpdSirCombinedSpectra`, `s3://nasa-irsa-euclid-q1` | S49 | probe pending |
-| DASCH DR7 | 252 M century light curves, per-exposure limits | `dasch.cfa.harvard.edu/dr7/web-apis`, `daschlab` | S50 | probe pending |
-| Presolar Grain Database | 20,230 SiC grains with isotope panels | IEDA/EarthChem DOI download (`presolar.physics.wustl.edu`) | S46 | probe pending |
-| PEWDD + PyllutedWD | 1,739 polluted WDs, 24 metals; natural forward model | VizieR J/A+A/691/A352; GitHub | S51 | probe pending |
-| CASSIS | > 11,000 Spitzer/IRS spectra | `cassis.sirtf.com/atlas` | S52, S53 | probe pending |
-| CDMS / JPL / Splatalogue | rotational line lists; which industrial species have entries | `cdms.astro.uni-koeln.de`, `spec.jpl.nasa.gov/ftp/pub/catalog/catdir.cat` | S54 | probe pending |
-| Diviner PCP / Mini-RF / ShadowCam | polar thermal maps 240 m; S-band Stokes; 1.7 m PSR imagery | PDS Geosciences, UCLA mirror, `shadowcam.im-ldi.com` | S55 | probe pending |
-| SGP / EarthChem / GEOROC | sediment geochemistry with ages | `sgp-search.io` API, `ecp.iedadata.org`, `georoc.eu` | S56 | probe pending |
-| Exoplanet Archive KOI / TOI / PS | depths per mission, `tic_id` join | TAP `cumulative`, `toi`, `ps` | S57 | probe pending |
-| Cassini CDA / Ulysses DUST | interstellar-grain composition and flux | PDS SBN | S58 | probe pending |
-| Superflare + rotation tables | E_flare and spot amplitude per star | VizieR (Notsu 2019, Okamoto 2021, Tu 2021, Yang & Liu 2019, McQuillan 2014) | S59 | probe pending |
-| Breakthrough Listen open data | archival GBT/Parkes/MeerKAT products | `seti.berkeley.edu/opendata`, `bldata.berkeley.edu` | S60 | probe pending |
-| NEOWISE single exposures | decade W1/W2 series | IRSA TAP `neowiser_p1bs_psd` | S61 | (already used by VIGIL) |
-| eROSITA DR2 (Jul 2026) | 1.9 M X-ray sources | `erosita.mpe.mpg.de/dr2` | S59 | probe pending |
-| Interferometric exozodi tables | H/K/L/N excesses, polarimetry | VizieR (Absil 2013, Ertel 2014/2020, Nuñez 2017), JMMC OiDB | S47 | probe pending |
+| SPHEREx QR2 + SPLICES | 102-channel 0.75–5 µm all-sky spectral images; the seed list | IRSA TAP `spherex.plane`/`artifact`/`obscore`, `splices`; cutout URL; AWS `spherex-qr` | S48, S61 | **REACHED**: 1,367,432 public spectral-image products in `spherex.obscore`; `splices` holds **9,925,660** sources with 157 columns (2MASS/WISE photometry, designations); the plane→artifact join returns QR2 level-2 URIs |
+| Euclid Q1 (DR1-F Nov 2026) | 4.3 M NISP 1D spectra + line-feature table | IRSA TAP: 26 `euclid_q1_*` tables incl. `euclid_q1_spe_lines_line_features` (`spe_line_snr_gf`, `spe_line_name`, …); SSA; S3 | S49 | **REACHED**, columns as asserted |
+| DASCH DR7 | 252 M century light curves, per-exposure limits | `dasch.cfa.harvard.edu/dr7/web-apis` (querycat → POST lightcurve), column docs, `daschlab` on PyPI | S50 | **REACHED** (all four endpoints) |
+| Presolar Grain Database | 20,230 SiC grains with isotope panels | `presolar.physics.wustl.edu` (DOI'd IEDA release) | S46 | **NOT REACHED from the runner**: connect timeout on both 443 and 80 in three runs; the guessed DOI was wrong; ADS is behind a WAF. The EarthChem Library (`ecl.earthchem.org`) answers and is where the release is DOI'd — the table must be located there by title search or requested from the authors. **This is S46's open item.** Meteoritical Bulletin reached |
+| PEWDD + PyllutedWD | 1,739 polluted WDs, 24 metals; natural forward model | VizieR `J/A+A/691/A352/pewdd` (also Bonsor+2020 `J/MNRAS/492/2683/tablea1`); GitHub `jamietwilliams/PEWDD`, `andrewmbuchan4/PyllutedWD_Public` | S51 | **REACHED** (all) |
+| CASSIS / IRS Enhanced Products | Spitzer/IRS low-res spectra | `cassis.sirtf.com` **times out from the runner (3 runs)**; IRSA TAP `irs_enhv211` "IRS Enhanced Products" answers: **16,986 spectra, 85 columns** (object, RA/Dec, IRAC/MIPS photometry, extraction metadata) | S52, S53 | **PARTIAL → build S53 on `irs_enhv211`**; also Meng+2015 `J/ApJ/805/77` and 15 debris/flare/rotation tables found by prefix; Moór+2021 is not at VizieR (use the erratum table from the paper) |
+| CDMS / JPL / Splatalogue | rotational line lists | `spec.jpl.nasa.gov/ftp/pub/catalog/catdir.cat`; `cdms.astro.uni-koeln.de/classic/entries/` (a script-rendered page; species not in the HTML); Splatalogue | S54 | **REACHED**. JPL directory carries **NF₃, COF₂, CH₂F₂ and CH₃Cl** (by the probe's regexes) and **not** CHF₃, CH₃F, SO₂F₂, CF₃CN, CF₃Cl, CF₂Cl₂, CFCl₃, CHClF₂, CF₂ — those need SPFIT/SPCAT predictions from the published constants (S54 step 1) |
+| Diviner PCP / Mini-RF / ShadowCam | polar thermal maps 240 m; S-band Stokes; 1.7 m PSR imagery | PDS Geosciences `lro-l-dlre-4-rdr-v1/` has **two volumes, `lrodlr_1001` (RDR by year) and `lrodlr_1002`** (the level-3/4 products); ODE PCP description page; Mini-RF page; ShadowCam archive page and SIS (1.6 MB PDF) | S55 | **REACHED** except the UCLA mirror (TLS certificate fails verification; not bypassed) — use the PDS `lrodlr_1002` volume |
+| SGP / EarthChem / GEOROC | sediment geochemistry with ages | `sgp-search.io` (SPA; `env.js` names `archive.sgp-search.io` as the bulk archive — also an SPA, so the API must be read from the app bundle or the SGP paper); `www.earthchem.org`, `portal.earthchem.org`; `georoc.eu` | S56 | **PARTIAL**: sites answer, no documented API path found yet |
+| Exoplanet Archive KOI / TOI / PS | depths per mission, `tic_id` join | TAP `cumulative` (`koi_depth`), `toi` (`pl_trandep`), `ps` (`tic_id`) | S57 | **REACHED** (all three) |
+| Cassini CDA / Ulysses DUST | interstellar-grain composition and flux | SBN dust holdings page lists Ulysses, Cassini (`resource/cocda.html`), Galileo, New Horizons | S58 | **PARTIAL**: CDA resource reached; the Ulysses resource path still unresolved (two guesses 404) |
+| Superflare + rotation tables | E_flare and spot amplitude per star | VizieR: Okamoto+2021 `J/ApJ/906/72/table2`, Tu+2022 `J/ApJ/935/90/table2`, Shibayama+2013 `J/ApJS/209/5`, Yang & Liu `J/ApJS/241/29`, McQuillan `J/ApJS/211/24/table1`, Davenport `J/ApJ/829/23`, Günther `J/AJ/159/60` | S59 | **REACHED**; eROSITA DR1 page reached (DR2 to add) |
+| Breakthrough Listen open data | archival GBT/Parkes/MeerKAT products | `seti.berkeley.edu/opendata` reached; `bldata.berkeley.edu` denies directory listing (products must be addressed by path) | S60 | **PARTIAL**; Gaia TAP returned 266,536 stars within 100 pc with good astrometry in run 1 and HTTP 500 in runs 2–3 (transient) |
+| NEOWISE single exposures | decade W1/W2 series | IRSA TAP `neowiser_p1bs_psd` | S61 | **REACHED** |
+| Interferometric exozodi tables | H/K/L/N excesses, polarimetry | JMMC OiDB reached; VizieR prefix search for Absil 2013 / Ertel 2014 / Nuñez 2017 / Absil 2021 / HOSTS | S47 | **REACHED** (OiDB and the VizieR prefix query answer; the specific tables are read in the S47 build) |
 
 Windows ahead, for the scheduler: Gaia DR4 **2 Dec 2026** (all epoch data —
 S57's astrometric deblending and S63's WD/NS kinematics); Euclid DR1-Foundation

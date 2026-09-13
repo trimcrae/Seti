@@ -3,6 +3,7 @@
   "bl_bldata": {
    "bytes": 29,
    "expect_hits": [],
+   "expect_matched_text": [],
    "final_url": "https://bldata.berkeley.edu/",
    "head": "directory list access denied\n",
    "kind": "rest",
@@ -18,6 +19,9 @@
    "bytes": 21075,
    "expect_hits": [
     "(?i)breakthrough|open\\s*data|listen"
+   ],
+   "expect_matched_text": [
+    "Open Data"
    ],
    "final_url": "http://seti.berkeley.edu/opendata",
    "head": "<!DOCTYPE html>\n<title>Open Data Archive - Breakthrough Listen</title>\n<base href=\"http://seti.berkeley.edu/opendata/\" />\n<meta charset=\"utf-8\">\n<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n<meta name=\"description\" content=\"Open Data Archive\">\n<meta name=\"author\" content=\"Alex Yu/Breakthrough Listen\">\n\n",
@@ -40,12 +44,27 @@
    "status": null,
    "url": "https://cassis.sirtf.com/atlas/",
    "verdict": "NOT_REACHED",
-   "why": "CASSIS: every Spitzer/IRS low-resolution spectrum, the mineralogy corpus for silica-vs-silicate-vs-metal decomposition of warm debris."
+   "why": "CASSIS: every Spitzer/IRS low-resolution spectrum, the mineralogy corpus for silica-vs-silicate-vs-metal decomposition of warm debris.  Run 1: read timeout at 90 s; the root is probed below with a longer budget."
+  },
+  "cassis_root": {
+   "error": "ReadTimeout: HTTPSConnectionPool(host='cassis.sirtf.com', port=443): Read timed out. (read timeout=90.0)",
+   "kind": "rest",
+   "signatures": [
+    "S52",
+    "S53"
+   ],
+   "status": null,
+   "url": "https://cassis.sirtf.com/",
+   "verdict": "NOT_REACHED",
+   "why": "CASSIS site root (run 1 timed out on /atlas/)."
   },
   "cda_pds_sbn": {
    "bytes": 42646,
    "expect_hits": [
     "(?i)cosmic\\s+dust\\s+analy|CDA"
+   ],
+   "expect_matched_text": [
+    "CDA"
    ],
    "final_url": "https://sbn.psi.edu/pds/resource/cocda.html",
    "head": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n     \n    <base href=\"/pds/\" />\n    \n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\">\n    <title>Cassini CDA | PDS SBN Asteroid/Dust Subnode</title>\n    \n    <link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\">\n\n    <link rel=\"stylesheet\" href=\"css/main20210813.css\"",
@@ -64,6 +83,10 @@
     "(?i)CDMS",
     "(?i)molecule|species|entries"
    ],
+   "expect_matched_text": [
+    "cdms",
+    "molecule"
+   ],
    "final_url": "https://cdms.astro.uni-koeln.de/classic/entries/",
    "head": "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\"/>\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <meta name=\"keywords\" content=\"uni-koeln, koeln, cologne\"/>\n  <meta name=\"keywords\" content=\"cdms-classic, spectroscopy\"/>\n  <title>CDMS</title>\n<style>\nbody {\n        margin: 10px auto;\n        max-width: 60em;\n        font-family: sans-serif;\n        color:",
    "kind": "rest",
@@ -81,6 +104,10 @@
     "(?i)lim_mag|limiting",
     "(?i)magcal|mag"
    ],
+   "expect_matched_text": [
+    "limiting",
+    "magcal"
+   ],
    "final_url": "https://dasch.cfa.harvard.edu/dr7/lightcurve-columns/",
    "head": "<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n  <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1\">\n  <title>DASCH: DR7 Lightcurve Data Table Columns</title>\n  <link rel=\"stylesheet\" href='https://dasch.cfa.harvard.edu/style.css'>\n  \n  \n</head",
    "kind": "rest",
@@ -97,6 +124,10 @@
    "expect_hits": [
     "(?i)querycat",
     "(?i)lightcurve"
+   ],
+   "expect_matched_text": [
+    "querycat",
+    "lightcurve"
    ],
    "final_url": "https://dasch.cfa.harvard.edu/dr7/web-apis/",
    "head": "<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n  <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1\">\n  <title>DASCH: DR7 Web API Reference</title>\n  <link rel=\"stylesheet\" href='https://dasch.cfa.harvard.edu/style.css'>\n  \n  \n</head>\n\n<body>\n  ",
@@ -116,6 +147,11 @@
     "(?i)dr\\s*7|data\\s+release",
     "(?i)starglass|daschlab|api"
    ],
+   "expect_matched_text": [
+    "DASCH",
+    "dr7",
+    "starglass"
+   ],
    "final_url": "https://dasch.cfa.harvard.edu/",
    "head": "<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n  <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1\">\n  <title>DASCH: Documentation</title>\n  <link rel=\"stylesheet\" href='https://dasch.cfa.harvard.edu/style.css'>\n  \n  \n</head>\n\n<body>\n  <div cla",
    "kind": "rest",
@@ -133,6 +169,10 @@
     "(?i)\\\"name\\\":\\s*\\\"daschlab\\\"",
     "(?i)version"
    ],
+   "expect_matched_text": [
+    "\"name\":\"daschlab\"",
+    "version"
+   ],
    "final_url": "https://pypi.org/pypi/daschlab/json",
    "head": "{\"info\":{\"author\":\"Peter Williams\",\"author_email\":null,\"bugtrack_url\":null,\"classifiers\":[],\"description\":\"Daschlab is a Python package that assists with the retrieval and astrophysical\\nanalysis of data from [DASCH], the project to scan Harvard College Observatory\u2019s\\ncollection of [astronomical glass plates][agp]. *daschlab* provides access to\\nhundreds of terabytes of scientific data documenting",
    "kind": "rest",
@@ -149,6 +189,10 @@
    "expect_hits": [
     "(?i)polar\\s+cumulative",
     "(?i)240"
+   ],
+   "expect_matched_text": [
+    "Polar Cumulative",
+    "240"
    ],
    "final_url": "https://ode.rsl.wustl.edu/moon/pagehelp/Content/Missions_Instruments/LRO/DIVINER/PCP.htm",
    "head": "<!DOCTYPE html>\r\n<html xmlns:MadCap=\"http://www.madcapsoftware.com/Schemas/MadCap.xsd\" class=\"_Skins_Side_Navigation\" lang=\"en-us\" xml:lang=\"en-us\" data-mc-search-type=\"Stem\" data-mc-help-system-file-name=\"Default.xml\" data-mc-path-to-help-system=\"../../../../\" data-mc-has-content-body=\"True\" data-mc-target-type=\"WebHelp2\" data-mc-runtime-file-type=\"Topic;Default\" data-mc-preload-images=\"false\" da",
@@ -168,15 +212,19 @@
     "S55"
    ],
    "status": null,
-   "url": "https://luna1.diviner.ucla.edu/~jpierre/diviner/level4_polar/pds/",
+   "url": "http://luna1.diviner.ucla.edu/~jpierre/diviner/level4_polar/pds/",
    "verdict": "NOT_REACHED",
-   "why": "UCLA mirror of the level-4 polar products (directory listing = bulk path)."
+   "why": "UCLA mirror of the level-4 polar products (directory listing = bulk path).  Run 1: the https endpoint fails certificate verification (never disabled here); the http listing is tried instead."
   },
   "diviner_pds": {
    "bytes": 39445,
    "expect_hits": [
     "(?i)diviner",
     "(?i)polar|GDR|RDR|temperature"
+   ],
+   "expect_matched_text": [
+    "DIVINER",
+    "Temperature"
    ],
    "final_url": "https://pds-geosciences.wustl.edu/missions/lro/diviner.htm",
    "head": "\u00ef\u00bb\u00bf<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\r\n<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">\r\n<!-- #BeginTemplate \"../../defaultWNav.dwt\" -->\r\n<head>\r\n<!-- #BeginEditable \"keywords\" -->\r\n<meta name=\"keywords\" content=\"Planetary Data System PDS Geosciences Node LRO DIVINER Lunar Reconnaissance Orbiter RAW Derived Online Tools download search display files software speci",
@@ -189,22 +237,91 @@
    "verdict": "REACHED_WITH_PRODUCT",
    "why": "LRO Diviner products at the PDS Geosciences node: the polar bolometric temperature maps and their minimum-temperature products."
   },
-  "earthchem_portal": {
-   "error": "ConnectionError: HTTPSConnectionPool(host='ecp.iedadata.org', port=443): Max retries exceeded with url: / (Caused by NameResolutionError(\"HTTPSConnection(host='ecp.iedadata.org', port=443): Failed to resolve 'ecp.iedadata.org' ([Errno -2] Name or service not known)\"))",
+  "diviner_pds_data_dir": {
+   "bytes": 2058,
+   "expect_hits": [
+    "(?i)gdr|pcp|prp|polar|href"
+   ],
+   "expect_matched_text": [
+    "HREF"
+   ],
+   "final_url": "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/data/",
+   "head": "<html><head><title>pds-geosciences.wustl.edu - /lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/data/</title></head><body><H1>pds-geosciences.wustl.edu - /lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/data/</H1><hr>\r\n\r\n<pre><A HREF=\"/lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/\">[To Parent Directory]</A><br><br> 5/14/2011  6:14 PM        &lt;dir&gt; <A HREF=\"/lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/data/2009/\">2009</A><br> 5/16/20",
+   "kind": "rest",
+   "signatures": [
+    "S55"
+   ],
+   "status": 200,
+   "url": "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/data/",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "Diviner RDR volume data directory listing."
+  },
+  "diviner_pds_volumes": {
+   "bytes": 1791,
+   "expect_hits": [
+    "(?i)dlre"
+   ],
+   "expect_matched_text": [
+    "dlre"
+   ],
+   "final_url": "https://pds-geosciences.wustl.edu/lro/",
+   "head": "<html><head><title>pds-geosciences.wustl.edu - /lro/</title></head><body><H1>pds-geosciences.wustl.edu - /lro/</H1><hr>\r\n\r\n<pre><A HREF=\"/\">[To Parent Directory]</A><br><br> 8/24/2026  9:06 AM        &lt;dir&gt; <A HREF=\"/lro/lro-l-dlre-2-edr-v1/\">lro-l-dlre-2-edr-v1</A><br>12/11/2025  1:27 PM        &lt;dir&gt; <A HREF=\"/lro/lro-l-dlre-4-rdr-v1/\">lro-l-dlre-4-rdr-v1</A><br> 6/12/2026  3:41 PM    ",
+   "kind": "rest",
+   "signatures": [
+    "S55"
+   ],
+   "status": 200,
+   "url": "https://pds-geosciences.wustl.edu/lro/",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "PDS Geosciences LRO directory: which Diviner volumes exist (the polar products live in one of the lrodlr_100x volumes)."
+  },
+  "earthchem_home": {
+   "bytes": 267464,
+   "expect_hits": [
+    "(?i)earthchem"
+   ],
+   "expect_matched_text": [
+    "earthchem"
+   ],
+   "final_url": "https://earthchem.org:443/",
+   "head": "<!DOCTYPE html><html lang=\"en\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"initial-scale=1, width=device-width\"/><link rel=\"icon\" href=\"/_next/static/media/earthchem-favicon.94b0fbf7.png\"/><title>EarthChem | EarthChem Home</title><meta name=\"description\" content=\"Search. Synthesize. Contribute - Community-driven services to preserve, access, visualize and search geochemical data. C",
    "kind": "rest",
    "signatures": [
     "S56"
    ],
-   "status": null,
-   "url": "https://ecp.iedadata.org/",
-   "verdict": "NOT_REACHED",
-   "why": "EarthChem Portal (PetDB, GEOROC mirror, SedDB legacy)."
+   "status": 200,
+   "url": "https://www.earthchem.org/",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "EarthChem home (links to the portal and the library)."
+  },
+  "earthchem_portal": {
+   "bytes": 10193,
+   "expect_hits": [
+    "(?i)earthchem"
+   ],
+   "expect_matched_text": [
+    "EarthChem"
+   ],
+   "final_url": "https://portal.earthchem.org/",
+   "head": "<!DOCTYPE html>\n<html lang=\"en\">\n\t<head>\n\t\t<meta charset=\"utf-8\">\n\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n\t\t<meta name=\"Generator\" content=\"Drupal 8 (https://www.drupal.org)\" />\n\t\t<meta name=\"MobileOptimized\" content=\"width\" />\n\t\t<meta name=\"HandheldFriendly\" content=\"true\" />\n\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\t\t<title>Welcom",
+   "kind": "rest",
+   "signatures": [
+    "S56"
+   ],
+   "status": 200,
+   "url": "https://portal.earthchem.org/",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "EarthChem Portal (PetDB, GEOROC mirror, SedDB legacy).  Run 1: the host ecp.iedadata.org no longer resolves; the current portal host is tried."
   },
   "erosita_dr1": {
    "bytes": 11560,
    "expect_hits": [
     "(?i)erosita",
     "(?i)DR1|catalog"
+   ],
+   "expect_matched_text": [
+    "erosita",
+    "dr1"
    ],
    "final_url": "https://erosita.mpe.mpg.de/dr1/",
    "head": "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n<html>\n\n<head>\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=ISO-8859-1\">\n  <meta http-equiv=\"Content-Style-Type\" content=\"text/css\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <meta name=\"author\" content=\"M. E. Ramos-Ceja and the eSASS team, MPE\">\n  <link rel=\"s",
@@ -222,6 +339,9 @@
    "expect_hits": [
     "(?i)koi_depth"
    ],
+   "expect_matched_text": [
+    "koi_depth"
+   ],
    "final_url": "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+top+5+kepoi_name,koi_depth,koi_depth_err1,koi_period,koi_disposition+from+cumulative&format=json",
    "head": "[\n{\"kepoi_name\": \"K00752.01\",\n\"koi_depth\": 615.8,\n\"koi_depth_err1\": 19.5,\n\"koi_period\": 9.48803557,\n\"koi_disposition\": \"CONFIRMED\"},\n{\"kepoi_name\": \"K00752.02\",\n\"koi_depth\": 874.8,\n\"koi_depth_err1\": 35.5,\n\"koi_period\": 54.4183827,\n\"koi_disposition\": \"CONFIRMED\"},\n{\"kepoi_name\": \"K00753.01\",\n\"koi_depth\": 10829,\n\"koi_depth_err1\": 171,\n\"koi_period\": 19.89913995,\n\"koi_disposition\": \"CANDIDATE\"},\n{\"kep",
    "kind": "rest",
@@ -237,6 +357,9 @@
    "bytes": 781,
    "expect_hits": [
     "(?i)tic_id"
+   ],
+   "expect_matched_text": [
+    "tic_id"
    ],
    "final_url": "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+top+5+pl_name,hostname,disc_facility,pl_trandep,pl_orbper,tic_id+from+ps+where+disc_facility+like+'%25Kepler%25'&format=json",
    "head": "[\n{\"pl_name\": \"Kepler-317 c\",\n\"hostname\": \"Kepler-317\",\n\"disc_facility\": \"Kepler\",\n\"pl_trandep\": null,\n\"pl_orbper\": 8.77500000000,\n\"tic_id\": \"TIC 138890353\"},\n{\"pl_name\": \"Kepler-1513 b\",\n\"hostname\": \"Kepler-1513\",\n\"disc_facility\": \"Kepler\",\n\"pl_trandep\": null,\n\"pl_orbper\": 160.88420000000,\n\"tic_id\": \"TIC 394177315\"},\n{\"pl_name\": \"Kepler-432 b\",\n\"hostname\": \"Kepler-432\",\n\"disc_facility\": \"Kepler\",",
@@ -254,6 +377,9 @@
    "expect_hits": [
     "(?i)pl_trandep"
    ],
+   "expect_matched_text": [
+    "pl_trandep"
+   ],
    "final_url": "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+top+5+toi,tid,pl_trandep,pl_trandeperr1,pl_orbper,tfopwg_disp+from+toi&format=json",
    "head": "[\n{\"toi\": \"1017.01\",\n\"tid\": 182943944,\n\"pl_trandep\": 14177.7000000,\n\"pl_trandeperr1\": 843.7880000,\n\"pl_orbper\": 1.1042200,\n\"tfopwg_disp\": \"FP\"},\n{\"toi\": \"1018.01\",\n\"tid\": 291555748,\n\"pl_trandep\": 7440.0000000,\n\"pl_trandeperr1\": 197.9620000,\n\"pl_orbper\": 4.9591200,\n\"tfopwg_disp\": \"FP\"},\n{\"toi\": \"1019.01\",\n\"tid\": 341420329,\n\"pl_trandep\": 20796.9416293,\n\"pl_trandeperr1\": 50.8036100,\n\"pl_orbper\": 5.23",
    "kind": "rest",
@@ -267,25 +393,23 @@
   },
   "gaia_pairs_geometry_feasibility": {
    "adql": "SELECT COUNT(*) AS n FROM gaiadr3.gaia_source WHERE parallax > 10 AND parallax_over_error > 10 AND ruwe < 1.4",
-   "bytes": 17,
-   "expect_hits": [
-    "\\\"n\\\""
-   ],
-   "head": "[{\"n\": \"266536\"}]",
+   "error": "DALServiceError: 500 Server Error: 500 for url: https://gea.esac.esa.int/tap-server/tap/sync",
    "kind": "tap",
-   "rows": 1,
    "signatures": [
     "S60"
    ],
-   "status": 200,
+   "status": null,
    "url": "https://gea.esac.esa.int/tap-server/tap",
-   "verdict": "REACHED_WITH_PRODUCT",
+   "verdict": "NOT_REACHED",
    "why": "Denominator for the beam-spillover pair geometry: stars within 100 pc with good astrometry."
   },
   "georoc": {
    "bytes": 7764,
    "expect_hits": [
     "(?i)georoc"
+   ],
+   "expect_matched_text": [
+    "georoc"
    ],
    "final_url": "https://georoc.eu/",
    "head": "<HTML XMLNS:O=\"urn:schemas-microsoft-com:office:office\" XMLNS:W=\"urn:schemas-microsoft-com:office:word\" XMLNS:HTML=\"http://www.w3.org/TR/REC-html40\" XMLNS:XMLNS=\"http://www.w3.org/TR/REC-html40\" HTML:NS0=\"urn:schemas-microsoft-com:office:office&quot;=&quot;urn:schemas-microsoft-com:office:word&quot;=&quot;http://www.w3.org/TR/REC-html40&quot;=&quot;http://www.w3.org/TR/REC-html40\" HTML:O HTML:W HT",
@@ -299,19 +423,24 @@
    "why": "GEOROC: precompiled downloadable compilation files."
   },
   "irsa_cassis_tables": {
-   "adql": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%cassis%' OR description LIKE '%IRS%spectr%'",
-   "bytes": 2,
-   "expect_hits": [],
-   "head": "[]",
+   "adql": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%cassis%' OR table_name LIKE '%irs%' OR description LIKE '%IRS %' OR description LIKE '%Spitzer%Enhanced%'",
+   "bytes": 2734,
+   "expect_hits": [
+    "(?i)cassis|irs"
+   ],
+   "expect_matched_text": [
+    "irs"
+   ],
+   "head": "[{\"table_name\": \"irts_nirspsc\", \"description\": \"IRTS NIRS Point Source Catalogue\"}, {\"table_name\": \"irsa_groups\", \"description\": \"IRSA Group Table\"}, {\"table_name\": \"irsa_group_columns\", \"description\": \"IRSA Group Column Table\"}, {\"table_name\": \"irsa_serv_descriptors\", \"description\": \"IRSA DataLink Service Descriptiors\"}, {\"table_name\": \"irsa_serv_descriptor_cols\", \"description\": \"IRSA DataLink Service Descriptor Columns\"}, {\"table_name\": \"irsa_annotators\", \"description\": \"IRSA Annotators Table\"}, {\"table_name\": \"irsa_directory\", \"description\": \"Directory table for new Atlas\"}, {\"table_name\": \"spitzer.seip_images\", \"description\": \"Spitzer Enhanced Imaging Products (SEIP) Images\"}, {\"table_name\": \"spitzer.c2d_irs_cubes\", \"description\": \"Spitzer C2D IRS Cubes\"}, {\"table_name\": \"spitzer.c2d_irs_spec\", \"description\": \"C2D IRS Spectra\"}, {\"table_name\": \"spitzer.sgoods_irs_spitzer\", \"description\": \"Spitzer GOODS IRS Image Metadata\"}, {\"table_name\": \"spitzer.irs_std_spectra\", \"description\": \"Spitzer Spectra of IRS Standard Stars\"}, {\"table_name\": \"spitzer.sage_irs\", \"description\": \"SAGE-Spec IRS Spectra\"}, {\"table_name\": \"spitzer.sage_irs_nods\", \"description\": \"SAGE IRS NODS\"}, {\"table_name\": \"spitzer.sings_irs_spec\", \"description\": \"SINGS IRS Spectra\"}, {\"table_name\": \"spitzer.ssgss_irs_hires\", \"description\": \"SSGSS IRS Hires Spectra\"}, {\"table_name\": \"spitzer.ssgss_irs_ll\", \"description\": \"SSGSS IRS LL Spectra\"}, {\"table_name\": \"spitzer.ssgss_irs_ll_ab_combined\", \"description\": \"SSGSS IRS LL AB Combined Spectra\"}, {\"table_name\": \"spitzer.ssgss_irs_ll_ab_uncombined\", \"description\": \"SSGSS IRS LL AB Uncombined Spectra\"}, {\"table_name\": \"goodsnirs16\", \"description\": \"GOODS-N IRS 16 micron Photometry Catalog\"}, {\"table_name\": \"goodssirs16\", \"description\": \"GOODS-S IRS 16 micron Photometry Catalog\"}, {\"table_name\": \"spitzer.goals_irs_spec\", \"description\": \"GOALS IRS Spectra\"}, {\"table_name\": \"irts.irts_mirspsc\", \"description\": \"IRTS MIR Spectra\"}, {\"table_name\": \"irs_enhv211\", \"description\": \"IRS Enhanced Products\"}, {\"table_name\": \"spitzer.ssgss_irs_lores\", \"description\": \"SSGSS IRS Lores Spectra\"}, {\"table_name\": \"spitzer.ssgss_irs_sh\", \"description\": \"SSGSS IRS SH Spectra\"}, {\"table_name\": \"spitzer.ssgss_irs_sl\", \"description\": \"SSGSS IRS SL Spectra\"}, {\"table_name\": \"spitzer.ssgss_irs_sl_ab_combined\", \"description\": \"SSGSS IRS SL AB Combined Spectra\"}, {\"table_name\": \"spitzer.ssgss_irs_sl_ab_uncombined\", \"description\": \"SSGSS IRS SL AB Uncombined Spectra\"}, {\"ta",
    "kind": "tap",
-   "rows": 0,
+   "rows": 32,
    "signatures": [
     "S52",
     "S53"
    ],
    "status": 200,
    "url": "https://irsa.ipac.caltech.edu/TAP",
-   "verdict": "REACHED_NO_PRODUCT",
+   "verdict": "REACHED_WITH_PRODUCT",
    "why": "CASSIS / IRS spectral products through IRSA TAP."
   },
   "irsa_euclid_spe_lines": {
@@ -320,7 +449,10 @@
    "expect_hits": [
     "(?i)spe_line_snr|spe_line_name"
    ],
-   "head": "[{\"column_name\": \"object_id\", \"datatype\": \"long\"}, {\"column_name\": \"spe_rank\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_id\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_flag\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_name\", \"datatype\": \"char\"}, {\"column_name\": \"spe_line_n_dith\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_central_wl_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_central_wl_err_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_flux_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_flux_err_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_ew_gf\"",
+   "expect_matched_text": [
+    "spe_line_name"
+   ],
+   "head": "[{\"column_name\": \"object_id\", \"datatype\": \"long\"}, {\"column_name\": \"spe_rank\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_id\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_flag\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_name\", \"datatype\": \"char\"}, {\"column_name\": \"spe_line_n_dith\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_central_wl_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_central_wl_err_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_flux_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_flux_err_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_ew_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_ew_err_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_fwhm_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_fwhm_err_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_intvar_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_snr_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_cont_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_cont_err_gf\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_lum_gf\", \"datatype\": \"double\"}, {\"column_name\": \"spe_line_lum_err_gf\", \"datatype\": \"double\"}, {\"column_name\": \"spe_line_qual_gf\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_central_wl_di\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_central_wl_err_di\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_flux_di\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_flux_err_di\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_ew_di\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_ew_err_di\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_snr_di\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_cont_di\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_cont_err_di\", \"datatype\": \"float\"}, {\"column_name\": \"spe_line_lum_di\", \"datatype\": \"double\"}, {\"column_name\": \"spe_line_lum_err_di\", \"datatype\": \"double\"}, {\"column_name\": \"spe_line_qual_di\", \"datatype\": \"long\"}, {\"column_name\": \"spe_line_aon\", \"datatype\": \"float\"}, {\"column_name\": \"cntr\", \"datatype\": \"long\"}]",
    "kind": "tap",
    "rows": 35,
    "signatures": [
@@ -337,7 +469,10 @@
    "expect_hits": [
     "(?i)euclid"
    ],
-   "head": "[{\"table_name\": \"euclid_q1_mer_catalogue\", \"description\": \"Euclid Q1 MER Catalog\"}, {\"table_name\": \"euclid_q1_mer_morphology\", \"description\": \"Euclid Q1 MER Morphology\"}, {\"table_name\": \"euclid_q1_mer_cutouts\", \"description\": \"Euclid Q1 MER Cutouts\"}, {\"table_name\": \"euclid_q1_phz_photo_z\", \"description\": \"Euclid Q1 PHZ Photo-z Catalog\"}, {\"table_name\": \"euclid_q1_phz_star_sed\", \"description\": \"Euclid Q1 PHZ Star SED Catalog\"}, {\"table_name\": \"euclid_q1_phz_galaxy_sed\", \"description\": \"Euclid Q1 PHZ Galaxy SED Catalog\"}, {\"table_name\": \"euclid_q1_phz_classification\", \"description\": \"Euclid Q1 ",
+   "expect_matched_text": [
+    "euclid"
+   ],
+   "head": "[{\"table_name\": \"euclid_q1_mer_catalogue\", \"description\": \"Euclid Q1 MER Catalog\"}, {\"table_name\": \"euclid_q1_mer_morphology\", \"description\": \"Euclid Q1 MER Morphology\"}, {\"table_name\": \"euclid_q1_mer_cutouts\", \"description\": \"Euclid Q1 MER Cutouts\"}, {\"table_name\": \"euclid_q1_phz_photo_z\", \"description\": \"Euclid Q1 PHZ Photo-z Catalog\"}, {\"table_name\": \"euclid_q1_phz_star_sed\", \"description\": \"Euclid Q1 PHZ Star SED Catalog\"}, {\"table_name\": \"euclid_q1_phz_galaxy_sed\", \"description\": \"Euclid Q1 PHZ Galaxy SED Catalog\"}, {\"table_name\": \"euclid_q1_phz_classification\", \"description\": \"Euclid Q1 PHZ Classification Catalog\"}, {\"table_name\": \"euclid_q1_phz_qso_physical_parameters\", \"description\": \"Euclid Q1 PHZ QSO Physical Parameters Catalog\"}, {\"table_name\": \"euclid_q1_phz_nir_physical_parameters\", \"description\": \"Euclid Q1 PHZ NIR Physical Parameters Catalog\"}, {\"table_name\": \"euclid_q1_phz_star_template\", \"description\": \"Euclid Q1 PHZ Star Template Catalog\"}, {\"table_name\": \"euclid_q1_spectro_zcatalog_spe_quality\", \"description\": \"Euclid Q1 SPE Redshift Catalog - Quality\"}, {\"table_name\": \"euclid_q1_spectro_zcatalog_spe_classification\", \"description\": \"Euclid Q1 SPE Redshift Catalog - Classification\"}, {\"table_name\": \"euclid_q1_spectro_zcatalog_spe_galaxy_candidates\", \"description\": \"Euclid Q1 SPE Redshift Catalog - Galaxy Candidates\"}, {\"table_name\": \"euclid_q1_spectro_zcatalog_spe_star_candidates\", \"description\": \"Euclid Q1 SPE Redshift Catalog - Star Candidates\"}, {\"table_name\": \"euclid_q1_spectro_zcatalog_spe_qso_candidates\", \"description\": \"Euclid Q1 SPE Redshift Catalog - QSO Candidates\"}, {\"table_name\": \"euclid_q1_spe_lines_line_features\", \"description\": \"Euclid Q1 SPE Lines Catalog - Spectral Lines\"}, {\"table_name\": \"euclid_q1_spe_lines_continuum_features\", \"description\": \"Euclid Q1 SPE Lines Catalog - Continuum Features\"}, {\"table_name\": \"euclid_q1_spe_lines_atomic_indices\", \"description\": \"Euclid Q1 SPE Lines Catalog - Atomic Indices\"}, {\"table_name\": \"euclid_q1_spe_lines_molecular_indices\", \"description\": \"Euclid Q1 SPE Lines Catalog - Molecular Indices\"}, {\"table_name\": \"euclid_q1_spectro_model_catalog_spe_lines_catalog\", \"description\": \"Euclid Q1 SPE Models Catalog - Lines\"}, {\"table_name\": \"euclid_q1_spectro_model_catalog_spe_star_models\", \"description\": \"Euclid Q1 SPE Star Models Catalog\"}, {\"table_name\": \"euclid.tileid_association_q1\", \"description\": \"Euclid Q1 TILEID to Observation ID Association Table\"}, {\"table_name\": \"euclid.objectid_spe",
    "kind": "tap",
    "rows": 26,
    "signatures": [
@@ -353,6 +488,9 @@
    "expect_hits": [
     "(?i)w1mpro"
    ],
+   "expect_matched_text": [
+    "w1mpro"
+   ],
    "final_url": "https://irsa.ipac.caltech.edu/TAP/sync?QUERY=SELECT+TOP+3+ra,dec,mjd,w1mpro,w2mpro+FROM+neowiser_p1bs_psd+WHERE+CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',10.6847,41.2687,0.01))=1&FORMAT=json",
    "head": "{\n    \"VOTABLE\": {\n        \"<xmlattr>\": {\n            \"version\": \"1.3\",\n            \"xmlns:xsi\": \"http:\\/\\/www.w3.org\\/2001\\/XMLSchema-instance\",\n            \"xmlns\": \"http:\\/\\/www.ivoa.net\\/xml\\/VOTable\\/v1.3\",\n            \"xmlns:stc\": \"http:\\/\\/www.ivoa.net\\/xml\\/STC\\/v1.30\",\n            \"xsi:schemaLocation\": \"http:\\/\\/www.ivoa.net\\/xml\\/VOTable\\/v1.3 http:\\/\\/www.ivoa.net\\/xml\\/VOTable\\/v1.3 ht",
    "kind": "rest",
@@ -364,13 +502,59 @@
    "verdict": "REACHED_WITH_PRODUCT",
    "why": "NEOWISE single-exposure source table (the decade W1/W2 series)."
   },
+  "irsa_seip_docs": {
+   "bytes": 6300,
+   "expect_hits": [
+    "(?i)spitzer",
+    "(?i)enhanced"
+   ],
+   "expect_matched_text": [
+    "Spitzer",
+    "Enhanced"
+   ],
+   "final_url": "https://irsa.ipac.caltech.edu/data/SPITZER/Enhanced/SEIP/",
+   "head": "\n\n    \n\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n    \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n<head>\n    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\"/>\n    <link rel=\"stylesheet\" type=\"text/css\" media=\"screen,projection,print\" href=\"/applications/Atlas/atlas.css\" ",
+   "kind": "rest",
+   "signatures": [
+    "S52",
+    "S53"
+   ],
+   "status": 200,
+   "url": "https://irsa.ipac.caltech.edu/data/SPITZER/Enhanced/SEIP/",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "IRSA Spitzer Enhanced Imaging Products page; the IRS Enhanced Products (extracted low-res spectra) are the IRSA-side mirror of the CASSIS corpus."
+  },
+  "irsa_spherex_obscore_count": {
+   "adql": "SELECT COUNT(*) AS n FROM spherex.obscore",
+   "bytes": 18,
+   "expect_hits": [
+    "\\\"n\\\""
+   ],
+   "expect_matched_text": [
+    "\"n\""
+   ],
+   "head": "[{\"n\": \"1367432\"}]",
+   "kind": "tap",
+   "rows": 1,
+   "signatures": [
+    "S48",
+    "S61"
+   ],
+   "status": 200,
+   "url": "https://irsa.ipac.caltech.edu/TAP",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "How many SPHEREx spectral-image products are public today (the denominator for sky coverage per pass)."
+  },
   "irsa_spherex_plane_columns": {
    "adql": "SELECT column_name, datatype, description FROM TAP_SCHEMA.columns WHERE table_name = 'spherex.plane'",
    "bytes": 6347,
    "expect_hits": [
     "(?i)energy_bandpassname|obs|time"
    ],
-   "head": "[{\"column_name\": \"obsid\", \"datatype\": \"char\", \"description\": \"foreign key: caom.observation.obsid\"}, {\"column_name\": \"planeid\", \"datatype\": \"char\", \"description\": \"unique plane identifier: 32-bit UUID\"}, {\"column_name\": \"productid\", \"datatype\": \"char\", \"description\": \"name of this product\"}, {\"column_name\": \"creatorid\", \"datatype\": \"char\", \"description\": \"unique creator identifier for this product\"}, {\"column_name\": \"metarelease\", \"datatype\": \"char\", \"description\": \"date the metadata for a plane is public (UTC)\"}, {\"column_name\": \"datarelease\", \"datatype\": \"char\", \"description\": \"public releas",
+   "expect_matched_text": [
+    "obs"
+   ],
+   "head": "[{\"column_name\": \"obsid\", \"datatype\": \"char\", \"description\": \"foreign key: caom.observation.obsid\"}, {\"column_name\": \"planeid\", \"datatype\": \"char\", \"description\": \"unique plane identifier: 32-bit UUID\"}, {\"column_name\": \"productid\", \"datatype\": \"char\", \"description\": \"name of this product\"}, {\"column_name\": \"creatorid\", \"datatype\": \"char\", \"description\": \"unique creator identifier for this product\"}, {\"column_name\": \"metarelease\", \"datatype\": \"char\", \"description\": \"date the metadata for a plane is public (UTC)\"}, {\"column_name\": \"datarelease\", \"datatype\": \"char\", \"description\": \"public release date\"}, {\"column_name\": \"calibrationlevel\", \"datatype\": \"short\", \"description\": \"IVOA ObsCore calibration level   (-1,0,1,2,3,4)\"}, {\"column_name\": \"dataproducttype\", \"datatype\": \"char\", \"description\": \"IVOA ObsCore data product type + extensions\"}, {\"column_name\": \"quality_flag\", \"datatype\": \"char\", \"description\": \"flag describing the data quality\"}, {\"column_name\": \"metrics_sourcenumberdensity\", \"datatype\": \"double\", \"description\": \"number density of sources\"}, {\"column_name\": \"metrics_background\", \"datatype\": \"double\", \"description\": \"background intensity\"}, {\"column_name\": \"metrics_backgroundstddev\", \"datatype\": \"double\", \"description\": \"standard deviation in background\"}, {\"column_name\": \"metrics_fluxdensitylimit\", \"datatype\": \"double\", \"description\": \"flux density limit where S:N=5 for point source\"}, {\"column_name\": \"metrics_maglimit\", \"datatype\": \"double\", \"description\": \"AB magnitude limit where S:N=5 for point source\"}, {\"column_name\": \"position_dimension_naxis1\", \"datatype\": \"long\", \"description\": \"dimensions (number of pixels) along one spatial axis\"}, {\"column_name\": \"position_dimension_naxis2\", \"datatype\": \"long\", \"description\": \"dimensions (number of pixels) along other spatial axis\"}, {\"column_name\": \"position_resolution\", \"datatype\": \"double\", \"description\": \"median spatial resolution (FWHM)\"}, {\"column_name\": \"position_samplesize\", \"datatype\": \"double\", \"description\": \"median sample (pixel) size on spatial axes\"}, {\"column_name\": \"position_timedependent\", \"datatype\": \"boolean\", \"description\": \"flag indicating that the position is time-dependent (0=false, 1=true)\"}, {\"column_name\": \"energy_bounds_lower\", \"datatype\": \"double\", \"description\": \"lower bound on energy axis (barycentric wavelength)\"}, {\"column_name\": \"energy_bounds_upper\", \"datatype\": \"double\", \"description\": \"upper bound on energy axis (barycentric wavelength)\"}, {\"column_name\": \"energy_",
    "kind": "tap",
    "rows": 54,
    "signatures": [
@@ -388,7 +572,10 @@
    "expect_hits": [
     "(?i)uri"
    ],
-   "head": "[{\"planeid\": \"9e061420-6471-48df-8726-4322e643905a\", \"energy_bandpassname\": \"SPHEREx-D1\", \"uri\": \"ibe/data/spherex/qr2/level2/2025W45_2A/l2b-v20-2025-314/1/level2_2025W45_2A_0001_1D1_spx_l2b-v20-2025-314.fits\"}, {\"planeid\": \"d081ad92-a6d9-4e35-a830-5917b323102f\", \"energy_bandpassname\": \"SPHEREx-D2\", \"uri\": \"ibe/data/spherex/qr2/level2/2025W45_2A/l2b-v20-2025-314/2/level2_2025W45_2A_0001_1D2_spx_l2b-v20-2025-314.fits\"}, {\"planeid\": \"11373ad6-6d5b-45ba-942c-904f9bd6ddbb\", \"energy_bandpassname\": \"SPHEREx-D3\", \"uri\": \"ibe/data/spherex/qr2/level2/2025W45_2A/l2b-v20-2025-314/3/level2_2025W45_2A_0001",
+   "expect_matched_text": [
+    "uri"
+   ],
+   "head": "[{\"planeid\": \"9e061420-6471-48df-8726-4322e643905a\", \"energy_bandpassname\": \"SPHEREx-D1\", \"uri\": \"ibe/data/spherex/qr2/level2/2025W45_2A/l2b-v20-2025-314/1/level2_2025W45_2A_0001_1D1_spx_l2b-v20-2025-314.fits\"}, {\"planeid\": \"d081ad92-a6d9-4e35-a830-5917b323102f\", \"energy_bandpassname\": \"SPHEREx-D2\", \"uri\": \"ibe/data/spherex/qr2/level2/2025W45_2A/l2b-v20-2025-314/2/level2_2025W45_2A_0001_1D2_spx_l2b-v20-2025-314.fits\"}, {\"planeid\": \"11373ad6-6d5b-45ba-942c-904f9bd6ddbb\", \"energy_bandpassname\": \"SPHEREx-D3\", \"uri\": \"ibe/data/spherex/qr2/level2/2025W45_2A/l2b-v20-2025-314/3/level2_2025W45_2A_0001_1D3_spx_l2b-v20-2025-314.fits\"}, {\"planeid\": \"f92593fa-6297-44fc-9a5a-f95c680adb2d\", \"energy_bandpassname\": \"SPHEREx-D4\", \"uri\": \"ibe/data/spherex/qr2/level2/2025W45_2A/l2b-v20-2025-314/4/level2_2025W45_2A_0001_1D4_spx_l2b-v20-2025-314.fits\"}, {\"planeid\": \"52c0e34d-736d-42a5-9566-f3c5dad43cc7\", \"energy_bandpassname\": \"SPHEREx-D5\", \"uri\": \"ibe/data/spherex/qr2/level2/2025W45_2A/l2b-v20-2025-314/5/level2_2025W45_2A_0001_1D5_spx_l2b-v20-2025-314.fits\"}]",
    "kind": "tap",
    "rows": 5,
    "signatures": [
@@ -406,6 +593,9 @@
    "expect_hits": [
     "(?i)spherex"
    ],
+   "expect_matched_text": [
+    "SPHEREx"
+   ],
    "head": "[{\"table_name\": \"splices\", \"description\": \"The SPHEREx Target List of Ice Sources (SPLICES)\"}, {\"table_name\": \"spherex.obscore\", \"description\": \"IRSA ObsCore table of SPHEREx products\"}, {\"table_name\": \"spherex.observation\", \"description\": \"SPHEREx CAOM Observation Table\"}, {\"table_name\": \"spherex.plane\", \"description\": \"SPHEREx CAOM Plane Table\"}, {\"table_name\": \"spherex.artifact\", \"description\": \"SPHEREx CAOM Artifact Table\"}, {\"table_name\": \"spherex.provenance_input\", \"description\": \"Join tables for SPHEREx calibration files\"}]",
    "kind": "tap",
    "rows": 6,
@@ -418,11 +608,34 @@
    "verdict": "REACHED_WITH_PRODUCT",
    "why": "Is any SPHEREx table served through IRSA TAP yet (spherex.plane / spherex.artifact image metadata; the SPLICES 9-million-source seed list)?"
   },
+  "irsa_splices_columns": {
+   "adql": "SELECT column_name, datatype, description FROM TAP_SCHEMA.columns WHERE table_name = 'splices'",
+   "bytes": 15662,
+   "expect_hits": [
+    "(?i)ra|dec|mag|flux"
+   ],
+   "expect_matched_text": [
+    "ra"
+   ],
+   "head": "[{\"column_name\": \"source_id\", \"datatype\": \"long\", \"description\": \"SPLICES source ID\"}, {\"column_name\": \"designation\", \"datatype\": \"char\", \"description\": \"Source Designation\"}, {\"column_name\": \"ra\", \"datatype\": \"double\", \"description\": \"Right Ascension (J2000)\"}, {\"column_name\": \"dec\", \"datatype\": \"double\", \"description\": \"Declination (J2000)\"}, {\"column_name\": \"gal_long\", \"datatype\": \"double\", \"description\": \"Galactic Longitude\"}, {\"column_name\": \"gal_lat\", \"datatype\": \"double\", \"description\": \"Galactic Latitude\"}, {\"column_name\": \"tmassdesignation\", \"datatype\": \"char\", \"description\": \"2MASS source designation\"}, {\"column_name\": \"tmassra\", \"datatype\": \"double\", \"description\": \"2MASS right ascension\"}, {\"column_name\": \"tmassdec\", \"datatype\": \"double\", \"description\": \"2MASS declination\"}, {\"column_name\": \"j\", \"datatype\": \"float\", \"description\": \"2MASS J magnitude\"}, {\"column_name\": \"jerr\", \"datatype\": \"float\", \"description\": \"2MASS J magnitude uncertainty\"}, {\"column_name\": \"h\", \"datatype\": \"float\", \"description\": \"2MASS H magnitude\"}, {\"column_name\": \"herr\", \"datatype\": \"float\", \"description\": \"2MASS H magnitude uncertainty\"}, {\"column_name\": \"k\", \"datatype\": \"float\", \"description\": \"2MASS K magnitude\"}, {\"column_name\": \"kerr\", \"datatype\": \"float\", \"description\": \"2MASS K magnitude uncertainty\"}, {\"column_name\": \"ph_qual\", \"datatype\": \"char\", \"description\": \"2MASS photometric quality flag\"}, {\"column_name\": \"rd_flg\", \"datatype\": \"long\", \"description\": \"2MASS rd_flg\"}, {\"column_name\": \"prox\", \"datatype\": \"double\", \"description\": \"2MASS prox value\"}, {\"column_name\": \"w1\", \"datatype\": \"float\", \"description\": \"WISE band 1 magnitude\"}, {\"column_name\": \"w1err\", \"datatype\": \"float\", \"description\": \"WISE band 1 magnitude uncertainty\"}, {\"column_name\": \"w2\", \"datatype\": \"float\", \"description\": \"WISE band 2 magnitude\"}, {\"column_name\": \"w2err\", \"datatype\": \"float\", \"description\": \"WISE band 2 magnitude uncertainty\"}, {\"column_name\": \"w3\", \"datatype\": \"float\", \"description\": \"WISE band 3 magnitude\"}, {\"column_name\": \"w3err\", \"datatype\": \"float\", \"description\": \"WISE band 3 magnitude uncertainty\"}, {\"column_name\": \"w4\", \"datatype\": \"float\", \"description\": \"WISE band 4 magnitude\"}, {\"column_name\": \"w4err\", \"datatype\": \"float\", \"description\": \"WISE band 4 magnitude uncertainty\"}, {\"column_name\": \"cc_flags\", \"datatype\": \"char\", \"description\": \"WISE cc_flags\"}, {\"column_name\": \"ext_flg\", \"datatype\": \"long\", \"description\": \"WISE ext_flg\"}, {\"column_name\": \"var_flg\", \"dataty",
+   "kind": "tap",
+   "rows": 157,
+   "signatures": [
+    "S48"
+   ],
+   "status": 200,
+   "url": "https://irsa.ipac.caltech.edu/TAP",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "SPLICES columns: the seed-list photometry and identifiers the forced spectrophotometry needs."
+  },
   "irsa_splices_count": {
    "adql": "SELECT table_name FROM TAP_SCHEMA.tables WHERE table_name LIKE '%splices%' OR description LIKE '%SPLICES%' OR description LIKE '%List of Ices%'",
    "bytes": 27,
    "expect_hits": [
     "(?i)splices|ices"
+   ],
+   "expect_matched_text": [
+    "splices"
    ],
    "head": "[{\"table_name\": \"splices\"}]",
    "kind": "tap",
@@ -435,11 +648,27 @@
    "verdict": "REACHED_WITH_PRODUCT",
    "why": "The SPLICES seed catalogue (added to IRSA Catalog Search May 2026) as a TAP table."
   },
+  "irsa_splices_rows": {
+   "adql": "SELECT COUNT(*) AS n FROM splices",
+   "error": "DALFormatError: ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+   "kind": "tap",
+   "signatures": [
+    "S48"
+   ],
+   "status": null,
+   "url": "https://irsa.ipac.caltech.edu/TAP",
+   "verdict": "NOT_REACHED",
+   "why": "How many SPLICES seed sources the TAP table actually holds (run 1 confirmed the table exists)."
+  },
   "jmmc_oidb": {
    "bytes": 19668,
    "expect_hits": [
     "(?i)oidb",
     "(?i)tap|search"
+   ],
+   "expect_matched_text": [
+    "OiDB",
+    "search"
    ],
    "final_url": "http://oidb.jmmc.fr/index.html",
    "head": "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n    <head>\n        <title data-template=\"config:app-title\">OIData portal</title>\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n        <meta charset=\"UTF-8\" />\n        <meta name=\"description\" content=\"OIData portal\" />\n        <meta name=\"author\" content=\"JMMC OiDB Working Group\" />\n        <link rel=\"shortcut icon\" hr",
@@ -457,6 +686,9 @@
    "expect_hits": [
     "(?i)CH3F|CHF3|NF3|COF2|CF3|SO2F2|CH2F2"
    ],
+   "expect_matched_text": [
+    "CH2F2"
+   ],
    "final_url": "https://spec.jpl.nasa.gov/ftp/pub/catalog/catdir.cat",
    "head": "  1001 H-atom            1 0.6021 0.6021 0.6021 0.6021 0.6021 0.6021 0.6021 1\n  2001 D-atom            1 0.7782 0.7782 0.7782 0.7782 0.7782 0.7782 0.7782 1\n  3001 HD                1 0.7004 0.5864 0.4315 0.1962 0.0406 0.0014 0.0001 2\n  4001 H2D+             32 1.8834 1.6986 1.4401 0.9882 0.4919 0.0846 0.0016 2*\n  7001 Li-6-H           51 1.4493 1.3248 1.1515 0.8603 0.5803 0.3226 0.1138 2*\n  8001 L",
    "kind": "rest",
@@ -472,6 +704,9 @@
    "bytes": 74813,
    "expect_hits": [
     "(?i)meteoritical\\s+bulletin"
+   ],
+   "expect_matched_text": [
+    "Meteoritical Bulletin"
    ],
    "final_url": "https://www.lpi.usra.edu/meteor/metbull.php",
    "head": "<!doctype html>\n<html lang=\"en\">\n<head><script async src='https://www.googletagmanager.com/gtag/js?id=G-ZBEXPWN42L'></script><script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-ZBEXPWN42L');</script>\n\n\t<title>Meteoritical Bulletin&#x3a; Search the Database</title>\n\t<meta name=\"description\" content=\"This&#x20;datab",
@@ -489,6 +724,9 @@
    "expect_hits": [
     "(?i)mini-rf|mini rf"
    ],
+   "expect_matched_text": [
+    "Mini-RF"
+   ],
    "final_url": "https://pds-geosciences.wustl.edu/missions/lro/mrf.htm",
    "head": "\u00ef\u00bb\u00bf<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\r\n<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">\r\n<!-- #BeginTemplate \"../../defaultWNav.dwt\" -->\r\n<head>\r\n<!-- #BeginEditable \"keywords\" -->\r\n<meta name=\"keywords\" content=\"Planetary Data System PDS Geosciences Node Lunar Reconnaissance Orbiter  Miniature Radio Frequency technology demonstration miniaturized multi-mode dual ",
    "kind": "rest",
@@ -505,6 +743,9 @@
    "expect_hits": [
     "(?i)pewdd|white\\s+dwarf"
    ],
+   "expect_matched_text": [
+    "PEWDD"
+   ],
    "final_url": "https://api.github.com/repos/jamietwilliams/PEWDD",
    "head": "{\"id\":767025786,\"node_id\":\"R_kgDOLbfieg\",\"name\":\"PEWDD\",\"full_name\":\"jamietwilliams/PEWDD\",\"private\":false,\"owner\":{\"login\":\"jamietwilliams\",\"id\":116102513,\"node_id\":\"U_kgDOBuuVcQ\",\"avatar_url\":\"https://avatars.githubusercontent.com/u/116102513?v=4\",\"gravatar_id\":\"\",\"url\":\"https://api.github.com/users/jamietwilliams\",\"html_url\":\"https://github.com/jamietwilliams\",\"followers_url\":\"https://api.githu",
    "kind": "rest",
@@ -516,21 +757,42 @@
    "verdict": "REACHED_WITH_PRODUCT",
    "why": "Planetary Enriched White Dwarf Database (Williams+2024, A&A 691, A352) --- repository named in Huang+2026's data-availability statement."
   },
-  "pgd_ieda_doi": {
-   "bytes": 10603,
-   "final_url": "https://doi.org/10.60520/IEDA/113206",
-   "head": "<!DOCTYPE html>\n<html lang=\"en-us\">\n<head>\n\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n    <title>Error: DOI Not Found</title>\n\n\n\n    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css\"\n          rel=\"stylesheet\"\n          integrity=\"sha384-EVSTQN3/azp",
+  "pgd_ads_record": {
+   "bytes": 2203,
+   "final_url": "https://ui.adsabs.harvard.edu/abs/2024ieda.data...96S/abstract",
+   "head": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <title>Human Verification</title>\n    <style>\n        body {\n            font-family: \"Arial\";\n        }\n    </style>\n    <script type=\"text/javascript\">\n    window.awsWafCookieDomainList = ['scixplorer.org','adsabs.harvard.edu','google.com','scixlabs.org'",
    "kind": "rest",
    "signatures": [
     "S46"
    ],
-   "status": 404,
-   "url": "https://doi.org/10.60520/IEDA/113206",
+   "status": 405,
+   "url": "https://ui.adsabs.harvard.edu/abs/2024ieda.data...96S/abstract",
    "verdict": "NOT_REACHED",
-   "why": "The IEDA/EarthChem DOI'd release of the SiC table (asserted from the ADS record 2024ieda.data...96S; the DOI itself is a guess to be corrected from the landing page if this returns NO_PRODUCT)."
+   "why": "The ADS record of the dataset release carries the real DOI."
+  },
+  "pgd_ecl_search": {
+   "bytes": 29271,
+   "expect_hits": [
+    "(?i)earthchem",
+    "(?i)library"
+   ],
+   "expect_matched_text": [
+    "EarthChem",
+    "Library"
+   ],
+   "final_url": "https://ecl.earthchem.org/home.php",
+   "head": "\n<!DOCTYPE html lang=\"en\">\n\n<head>\n \n\n\n    <title>EarthChem Library - Repository | Home to EarthChem Library</title>\n    <meta charset=\"UTF-8\">\n    <meta http-equiv=\"content-type\" content=\"text/html;charset=UTF-8\">\n\n    <!-- Include to not allow iframe from other users, FOR PROTECTION -->\n    <!-- header(\"X-Frame-Options: SAMEORIGIN\"); // FF 3.6.9+ Chrome 4.1+ IE 8+ Safari 4+ Opera 10.5+ -->\n    \n",
+   "kind": "rest",
+   "signatures": [
+    "S46"
+   ],
+   "status": 200,
+   "url": "https://ecl.earthchem.org/home.php",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "EarthChem Library, where the 2024 SiC release is DOI'd (the DOI asserted in run 1 was wrong: 'DOI Not Found').  The record must be found by title search here, not guessed."
   },
   "pgd_landing": {
-   "error": "ConnectTimeout: HTTPSConnectionPool(host='presolar.physics.wustl.edu', port=443): Max retries exceeded with url: /presolar-grain-database/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='presolar.physics.wustl.edu', port=443) at 0x7f179d6bc290>, 'Connection to presolar.physics.wustl.edu timed ",
+   "error": "ConnectTimeout: HTTPSConnectionPool(host='presolar.physics.wustl.edu', port=443): Max retries exceeded with url: /presolar-grain-database/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='presolar.physics.wustl.edu', port=443) at 0x7f44013e6410>, 'Connection to presolar.physics.wustl.edu timed ",
    "kind": "rest",
    "signatures": [
     "S46"
@@ -540,10 +802,24 @@
    "verdict": "NOT_REACHED",
    "why": "Landing page of the Presolar Grain Database (Stephan+2024, 20,230 SiC grains). The signature needs the per-grain delta29Si/delta30Si, 12C/13C, 14N/15N, 26Al/27Al, 44Ti/48Ti columns as a bulk download."
   },
+  "pgd_wustl_root_http": {
+   "error": "ConnectTimeout: HTTPConnectionPool(host='presolar.physics.wustl.edu', port=80): Max retries exceeded with url: / (Caused by ConnectTimeoutError(<HTTPConnection(host='presolar.physics.wustl.edu', port=80) at 0x7f44013fbed0>, 'Connection to presolar.physics.wustl.edu timed out. (connect timeout=90.0)'",
+   "kind": "rest",
+   "signatures": [
+    "S46"
+   ],
+   "status": null,
+   "url": "http://presolar.physics.wustl.edu/",
+   "verdict": "NOT_REACHED",
+   "why": "Run 1: the https landing page timed out at connect.  Plain-http root of the same host, to separate a TLS/port problem from a dead host."
+  },
   "pyllutedwd_github": {
    "bytes": 5746,
    "expect_hits": [
     "(?i)pylluted|white\\s+dwarf|\\\"name\\\""
+   ],
+   "expect_matched_text": [
+    "\"name\""
    ],
    "final_url": "https://api.github.com/repos/andrewmbuchan4/PyllutedWD_Public",
    "head": "{\"id\":428741769,\"node_id\":\"R_kgDOGY4UiQ\",\"name\":\"PyllutedWD_Public\",\"full_name\":\"andrewmbuchan4/PyllutedWD_Public\",\"private\":false,\"owner\":{\"login\":\"andrewmbuchan4\",\"id\":31782087,\"node_id\":\"MDQ6VXNlcjMxNzgyMDg3\",\"avatar_url\":\"https://avatars.githubusercontent.com/u/31782087?v=4\",\"gravatar_id\":\"\",\"url\":\"https://api.github.com/users/andrewmbuchan4\",\"html_url\":\"https://github.com/andrewmbuchan4\",\"fol",
@@ -556,10 +832,32 @@
    "verdict": "REACHED_WITH_PRODUCT",
    "why": "PyllutedWD (Harrison/Buchan forward model of natural pollution) --- the natural-process family the misfit test is calibrated against."
   },
+  "sbn_dust_holdings": {
+   "bytes": 22238,
+   "expect_hits": [
+    "(?i)ulysses|cassini|galileo|dust"
+   ],
+   "expect_matched_text": [
+    "Dust"
+   ],
+   "final_url": "https://sbn.psi.edu/pds/archive/dust.html",
+   "head": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n     \n    <base href=\"/pds/\" />\n    \n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=no\">\n    <title>All Dust Data | PDS SBN Asteroid/Dust Subnode</title>\n    \n    <link href=\"https://fonts.googleapis.com/css?family=Roboto\" rel=\"stylesheet\">\n\n    <link rel=\"stylesheet\" href=\"css/main20210813.cs",
+   "kind": "rest",
+   "signatures": [
+    "S58"
+   ],
+   "status": 200,
+   "url": "https://sbn.psi.edu/pds/archive/dust.html",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "SBN dust-archive listing: the authoritative index of in-situ dust datasets (Ulysses, Galileo, Cassini CDA, Helios, New Horizons SDC)."
+  },
   "sgp_api": {
    "bytes": 623,
    "expect_hits": [
     "(?i)sample|age|interpreted_age|\\\"data\\\""
+   ],
+   "expect_matched_text": [
+    "age"
    ],
    "final_url": "https://sgp-search.io/api/v1/samples?limit=5",
    "head": "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"/><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/><meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\"/><title>Home | Sedimentary Geochemistry and Paleoenvironments Project</title><script src=\"/env.js\"></script><script defer=\"defer\" src=\"/static/js/main.c6328fbb.js\"></script><link href=\"/static/css/main.2da3d8ee.css\" rel",
@@ -572,10 +870,47 @@
    "verdict": "REACHED_WITH_PRODUCT",
    "why": "SGP API (path asserted; corrected from the site if NO_PRODUCT)."
   },
+  "sgp_env_js": {
+   "bytes": 200,
+   "expect_hits": [
+    "(?i)api|url|http"
+   ],
+   "expect_matched_text": [
+    "http"
+   ],
+   "final_url": "https://sgp-search.io/env.js",
+   "head": "window.react_app_env = {\nREACT_APP_HOST_PATH: \"https://sgp-search.io\",\nREACT_APP_G_TAG: \"GTM-KZLP5XT2\",\nREACT_APP_SHOW_PHASE2_ALERT: \"false\",\nREACT_APP_ARCHIVE_URL: \"https://archive.sgp-search.io\",\n}\n",
+   "kind": "rest",
+   "signatures": [
+    "S56"
+   ],
+   "status": 200,
+   "url": "https://sgp-search.io/env.js",
+   "verdict": "REACHED_WITH_PRODUCT",
+   "why": "Run 1: /api/v1/samples served the single-page app, so the API path is unknown.  The app's env.js declares its API base URL; read it here."
+  },
+  "sgp_github": {
+   "bytes": 55,
+   "expect_hits": [],
+   "expect_matched_text": [],
+   "final_url": "https://api.github.com/search/repositories?q=sgp-search+in:name",
+   "head": "{\"total_count\":0,\"incomplete_results\":false,\"items\":[]}",
+   "kind": "rest",
+   "signatures": [
+    "S56"
+   ],
+   "status": 200,
+   "url": "https://api.github.com/search/repositories?q=sgp-search+in:name",
+   "verdict": "REACHED_NO_PRODUCT",
+   "why": "Locate the SGP search application's repository (its README documents the API)."
+  },
   "sgp_search": {
    "bytes": 623,
    "expect_hits": [
     "(?i)sedimentary\\s+geochemistry|SGP"
+   ],
+   "expect_matched_text": [
+    "Sedimentary Geochemistry"
    ],
    "final_url": "https://sgp-search.io/",
    "head": "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"/><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/><meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\"/><title>Home | Sedimentary Geochemistry and Paleoenvironments Project</title><script src=\"/env.js\"></script><script defer=\"defer\" src=\"/static/js/main.c6328fbb.js\"></script><link href=\"/static/css/main.2da3d8ee.css\" rel",
@@ -594,6 +929,10 @@
     "(?i)shadowcam",
     "(?i)release|pds"
    ],
+   "expect_matched_text": [
+    "ShadowCam",
+    "PDS"
+   ],
    "final_url": "https://shadowcam.im-ldi.com/archive",
    "head": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge,chrome=1\">\n    <title>ShadowCam \u2022 Seeing in the Shadows</title>\n    <link rel=\"icon\" href=\"\" type=\"image/icon\"/>\n    <link rel=\"stylesheet\" media=\"all\" href=",
    "kind": "rest",
@@ -608,6 +947,9 @@
   "shadowcam_pds_sis": {
    "bytes": 1656696,
    "expect_hits": [
+    "%PDF"
+   ],
+   "expect_matched_text": [
     "%PDF"
    ],
    "final_url": "https://pds.shadowcam.im-ldi.com/document/archsis.pdf",
@@ -626,6 +968,9 @@
    "expect_hits": [
     "(?i)qr|quick|spherex"
    ],
+   "expect_matched_text": [
+    "spherex"
+   ],
    "final_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/",
    "head": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>IBE File Explorer</title>\n    <script>\n        (() => {\n            // The public path can differ from the prefix the ingress advertises,\n            // because the outer proxy remaps it, so prefer the URL the browser\n            // really used. B",
    "kind": "rest",
@@ -639,23 +984,34 @@
    "why": "IRSA IBE directory listing for SPHEREx image products (bulk access path)."
   },
   "spherex_irsa_docs": {
-   "bytes": 196,
-   "final_url": "https://irsa.ipac.caltech.edu/data/SPHEREx/",
-   "head": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n<h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>\n",
+   "bytes": 2553,
+   "expect_hits": [
+    "(?i)spherex",
+    "(?i)quick\\s*release|QR|spectral\\s+image"
+   ],
+   "expect_matched_text": [
+    "SPHEREx",
+    "QR"
+   ],
+   "final_url": "https://irsa.ipac.caltech.edu/data/SPHEREx/docs/",
+   "head": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">\n<html>\n <head>\n  <title>Index of /data/SPHEREx/docs</title>\n </head>\n <body>\n<h1>Index of /data/SPHEREx/docs</h1>\n<pre><img src=\"/icons/blank.gif\" alt=\"Icon \"> <a href=\"?C=N;O=D\">Name</a>                          <a href=\"?C=M;O=A\">Last modified</a>      <a href=\"?C=S;O=A\">Size</a>  <a href=\"?C=D;O=A\">Description</a><hr><img src=\"/icons/layou",
    "kind": "rest",
    "signatures": [
     "S48",
     "S49"
    ],
-   "status": 404,
-   "url": "https://irsa.ipac.caltech.edu/data/SPHEREx/",
-   "verdict": "NOT_REACHED",
+   "status": 200,
+   "url": "https://irsa.ipac.caltech.edu/data/SPHEREx/docs/",
+   "verdict": "REACHED_WITH_PRODUCT",
    "why": "IRSA SPHEREx holdings page: are Quick Release spectral images (and any per-source spectra) public, and under what product names?"
   },
   "splatalogue": {
    "bytes": 1080,
    "expect_hits": [
     "(?i)splatalogue"
+   ],
+   "expect_matched_text": [
+    "Splatalogue"
    ],
    "final_url": "https://splatalogue.online/",
    "head": "<!DOCTYPE html>\n<html lang=\"en\" data-critters-container>\n\t<head>\n\t\t<!-- <base href=\"/\">-->\n\t\t<meta charset=\"utf-8\">\n        <script>document.write('<base href=\"' + document.location + '\" />');</script>\t\t  \n\t\t<meta http-equiv=\"pragma\" content=\"no-cache\">\n\t\t<link rel=\"icon\" type=\"image/x-icon\" href=\"favicon.ico\">    \n\t\t<!--<title>Splatalogue</title>-->\n\t\n\t\t<!--Bootstrap\n\t\trequired for filters...\n\t\t-",
@@ -670,21 +1026,22 @@
   },
   "ulysses_dust_pds": {
    "bytes": 196,
-   "final_url": "https://sbn.psi.edu/pds/resource/ulydust.html",
+   "final_url": "https://sbn.psi.edu/pds/resource/ulyssesdust.html",
    "head": "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n<h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>\n",
    "kind": "rest",
    "signatures": [
     "S58"
    ],
    "status": 404,
-   "url": "https://sbn.psi.edu/pds/resource/ulydust.html",
+   "url": "https://sbn.psi.edu/pds/resource/ulyssesdust.html",
    "verdict": "NOT_REACHED",
-   "why": "Ulysses DUST detector archive (flux/direction/mass, 1990-2007)."
+   "why": "Ulysses DUST detector archive (flux/direction/mass, 1990-2007).  Run 1: 'ulydust.html' was a 404; alternative resource name tried."
   },
   "vizier_flare_rotation_tables": {
-   "adql": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE table_name IN ('J/ApJS/241/29/flares','J/ApJS/211/24/table1','J/ApJS/253/35/table1','J/ApJ/935/143/table1','J/ApJS/225/15/table1','J/A+A/570/A128/table3','J/AJ/159/177/table1','J/MNRAS/467/4970/table1')",
+   "adql": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE 'J/ApJS/241/29/%' OR table_name LIKE 'J/ApJS/211/24/%' OR table_name LIKE 'J/ApJS/253/35/%' OR table_name LIKE 'J/ApJ/935/143/%' OR table_name LIKE 'J/ApJS/225/15/%' OR table_name LIKE 'J/A+A/570/A128/%' OR table_name LIKE 'J/AJ/159/177/%' OR table_name LIKE 'J/MNRAS/467/4970/%' OR table_name LIKE 'J/A+A/555/A104/%' OR table_name LIKE 'J/A+A/608/A113/%' OR table_name LIKE 'J/A+A/651/A45/%' OR table_name LIKE 'J/ApJ/876/58/%' OR table_name LIKE 'J/ApJ/829/23/%' OR table_name LIKE 'J/AJ/159/60/%'",
    "bytes": 2,
    "expect_hits": [],
+   "expect_matched_text": [],
    "head": "[]",
    "kind": "tap",
    "rows": 0,
@@ -700,9 +1057,10 @@
    "why": "Named VizieR tables the briefs assert exist: Yang & Liu 2019 flares, McQuillan 2014 rotation, TESS flare catalogues, Cotten & Song 2016 debris census, Ertel 2014 PIONIER exozodi, Ertel 2020 HOSTS, Hollands 2017 DZ."
   },
   "vizier_moor2021_edd": {
-   "adql": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE 'J/ApJ/910/27%' OR table_name LIKE 'J/MNRAS/433/2334%' OR table_name LIKE 'J/ApJS/225/15%'",
+   "adql": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE 'J/ApJ/910/27/%' OR table_name LIKE 'J/MNRAS/433/2334/%' OR table_name LIKE 'J/ApJS/225/15/%' OR table_name LIKE 'J/ApJ/805/77/%' OR (description LIKE '%Moor%' AND description LIKE '%debris%')",
    "bytes": 2,
    "expect_hits": [],
+   "expect_matched_text": [],
    "head": "[]",
    "kind": "tap",
    "rows": 0,
@@ -712,13 +1070,16 @@
    "status": 200,
    "url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
    "verdict": "REACHED_NO_PRODUCT",
-   "why": "Mo\u00f3r+2021 EDD table, Kennedy & Wyatt 2013 warm-dust LF, Cotten & Song 2016 census."
+   "why": "Mo\u00f3r+2021 EDD table, Kennedy & Wyatt 2013 warm-dust LF, Cotten & Song 2016 census, Meng+2015 EDD photometry (run 1 found only the last, by description)."
   },
   "vizier_search_debris_extreme": {
    "adql": "SELECT table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%extreme debris%' OR description LIKE '%warm debris%' OR description LIKE '%debris disk%census%' OR description LIKE '%debris disc%census%'",
    "bytes": 275,
    "expect_hits": [
     "(?i)debris"
+   ],
+   "expect_matched_text": [
+    "debris"
    ],
    "head": "[{\"table_name\": \"\\\"J/ApJ/805/77/table2\\\"\", \"description\": \"Spitzer/IRAC photometry of the systems with extreme debris disk ( Meng H.Y.A., Su K.Y.L., Rieke G.H., Rujopakarn W., Myers G., Cook M., Erdelyi E., Maloney C., McMath J., Persha G., Poshyachinda S., Reichart D.E.)\"}]",
    "kind": "tap",
@@ -736,6 +1097,9 @@
    "bytes": 494,
    "expect_hits": [
     "(?i)exozodi|pionier|fluor|hot dust"
+   ],
+   "expect_matched_text": [
+    "PIONIER"
    ],
    "head": "[{\"table_name\": \"\\\"J/ApJS/215/15/comp\\\"\", \"description\": \"SMaSH+ companion detections with  PIONIER (PIO), NACO/SAM (SAM) and NACO FOV (NACO) ( Sana H., Le Bouquin J.-B., Lacour S., Berger J.-P., Duvert G., Gauchet L., Norris B., Olofsson J., Pickel D., Zins G., Absil O., de Koter A., Kratter K., Schnurr O., Zinnecker H.)\"}, {\"table_name\": \"\\\"J/MNRAS/489/1572/tables5\\\"\", \"description\": \"Near-IR spectral light curves corresponding to the hot dust ( Landt H., Ward M.J., Kynoch D., et al.)\"}]",
    "kind": "tap",
@@ -755,6 +1119,10 @@
     "J/A\\+A/691/A352",
     "(?i)white dwarf"
    ],
+   "expect_matched_text": [
+    "J/A+A/691/A352",
+    "white dwarf"
+   ],
    "head": "[{\"table_name\": \"\\\"J/A+A/691/A352/pewdd\\\"\", \"description\": \"PEWDD catalog ( Williams J.T., Gaensicke B.T., Swan A., O'Brien M.W., Izquierdo P., Cutolo A-M., Cunningham T.)\"}, {\"table_name\": \"\\\"J/MNRAS/492/2683/tablea1\\\"\", \"description\": \"The polluted white dwarfs where both calcium and iron were detected, as used in this work ( Bonsor A., Carter P.J., Hollands M., Gansicke B.T., Leinhardt Z., Harrison J.H.D.)\"}, {\"table_name\": \"\\\"J/other/SCPMA/57.176/table5\\\"\", \"description\": \"New DZ white dwarfs ( Si J.M., Luo A.L., Li Y.B., Zhang J.N., Wei P., Wu Y.H., Wu F.C., Zhao Y.H.)\"}]",
    "kind": "tap",
    "rows": 3,
@@ -772,7 +1140,10 @@
    "expect_hits": [
     "(?i)superflare|J/ApJ/906/72|J/ApJ/876/58"
    ],
-   "head": "[{\"table_name\": \"\\\"J/ApJ/906/72/table2\\\"\", \"description\": \"Parameters of superflares on solar-type stars ( Okamoto S., Notsu Y., Maehara H., Namekata K., Honda S., Ikuta K., Nogami D., Shibata K.)\"}, {\"table_name\": \"\\\"J/ApJ/935/90/table2\\\"\", \"description\": \"Information of superflare candidates ( Tu Z.-L., Wu Q., Wang W., Zhang G.Q., Liu Z.-K., Wang F.Y.)\"}, {\"table_name\": \"\\\"J/ApJS/209/5/stars\\\"\", \"description\": \"The 279 G-type dwarfs with superflares (table added by CDS) ( Shibayama T., Maehara H., Notsu S., Notsu Y., Nagao T., Honda S., Ishii T.T., Nogami D., Shibata K.)\"}, {\"table_name\": \"\\",
+   "expect_matched_text": [
+    "J/ApJ/906/72"
+   ],
+   "head": "[{\"table_name\": \"\\\"J/ApJ/906/72/table2\\\"\", \"description\": \"Parameters of superflares on solar-type stars ( Okamoto S., Notsu Y., Maehara H., Namekata K., Honda S., Ikuta K., Nogami D., Shibata K.)\"}, {\"table_name\": \"\\\"J/ApJ/935/90/table2\\\"\", \"description\": \"Information of superflare candidates ( Tu Z.-L., Wu Q., Wang W., Zhang G.Q., Liu Z.-K., Wang F.Y.)\"}, {\"table_name\": \"\\\"J/ApJS/209/5/stars\\\"\", \"description\": \"The 279 G-type dwarfs with superflares (table added by CDS) ( Shibayama T., Maehara H., Notsu S., Notsu Y., Nagao T., Honda S., Ishii T.T., Nogami D., Shibata K.)\"}, {\"table_name\": \"\\\"J/other/Nat/485.478/tables1\\\"\", \"description\": \"List of G-type main sequence stars showing superflares ( Maehara H., Shibayama T., Notsu S., Notsu Y., Nagao T., Kusaba S., Honda S., Nogami D., Shibata K.)\"}]",
    "kind": "tap",
    "rows": 4,
    "signatures": [
@@ -787,6 +1158,9 @@
    "bytes": 14029559,
    "expect_hits": [
     "(?i)tableset|schema|table"
+   ],
+   "expect_matched_text": [
+    "tableset"
    ],
    "final_url": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap/tables",
    "head": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<vosi:tableset xmlns:vosi=\"http://www.ivoa.net/xml/VOSITables/v1.0\" xmlns:vod=\"http://www.ivoa.net/xml/VODataService/v1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.ivoa.net/xml/VODataService/v1.1 http://www.ivoa.net/xml/VODataService/v1.1 http://www.ivoa.net/xml/VOSITables/v1.0 http://vo.ari.uni-heidelberg.de/docs/s",
@@ -803,24 +1177,26 @@
    "why": "VizieR TAP: flare, rotation, exozodi, debris-disk and polluted-WD catalogues are read through it (probed below by ADQL)."
   }
  },
- "probed_at_utc": "2026-09-13T11:39:14Z",
+ "probed_at_utc": "2026-09-13T11:59:33Z",
  "summary": {
   "counts": {
-   "NOT_REACHED": 7,
+   "NOT_REACHED": 9,
    "REACHED_NO_PRODUCT": 4,
-   "REACHED_WITH_PRODUCT": 39
+   "REACHED_WITH_PRODUCT": 50
   },
-  "n_endpoints": 50,
+  "n_endpoints": 63,
   "per_signature": {
    "S46": {
     "endpoints": [
      "pgd_landing",
-     "pgd_ieda_doi",
+     "pgd_wustl_root_http",
+     "pgd_ecl_search",
+     "pgd_ads_record",
      "metbull"
     ],
     "readiness": "PARTIAL",
-    "total": 3,
-    "with_product": 1
+    "total": 5,
+    "with_product": 2
    },
    "S47": {
     "endpoints": [
@@ -837,6 +1213,9 @@
     "endpoints": [
      "spherex_irsa_docs",
      "spherex_ibe",
+     "irsa_splices_rows",
+     "irsa_splices_columns",
+     "irsa_spherex_obscore_count",
      "irsa_spherex_tables",
      "irsa_spherex_plane_columns",
      "irsa_spherex_recent_exposures",
@@ -845,8 +1224,8 @@
      "irsa_euclid_tables"
     ],
     "readiness": "PARTIAL",
-    "total": 8,
-    "with_product": 7
+    "total": 11,
+    "with_product": 10
    },
    "S49": {
     "endpoints": [
@@ -856,9 +1235,9 @@
      "irsa_spherex_plane_columns",
      "irsa_spherex_recent_exposures"
     ],
-    "readiness": "PARTIAL",
+    "readiness": "READY",
     "total": 5,
-    "with_product": 4
+    "with_product": 5
    },
    "S50": {
     "endpoints": [
@@ -886,6 +1265,8 @@
    "S52": {
     "endpoints": [
      "cassis_atlas",
+     "cassis_root",
+     "irsa_seip_docs",
      "vizier_tap_home",
      "vizier_flare_rotation_tables",
      "vizier_moor2021_edd",
@@ -893,17 +1274,19 @@
      "irsa_cassis_tables"
     ],
     "readiness": "PARTIAL",
-    "total": 6,
-    "with_product": 2
+    "total": 8,
+    "with_product": 4
    },
    "S53": {
     "endpoints": [
      "cassis_atlas",
+     "cassis_root",
+     "irsa_seip_docs",
      "irsa_cassis_tables"
     ],
-    "readiness": "BLOCKED",
-    "total": 2,
-    "with_product": 0
+    "readiness": "PARTIAL",
+    "total": 4,
+    "with_product": 2
    },
    "S54": {
     "endpoints": [
@@ -920,24 +1303,29 @@
      "diviner_pds",
      "diviner_pcp_ode",
      "diviner_pcp_ucla",
+     "diviner_pds_volumes",
+     "diviner_pds_data_dir",
      "shadowcam_archive",
      "shadowcam_pds_sis",
      "minirf_pds"
     ],
     "readiness": "PARTIAL",
-    "total": 6,
-    "with_product": 5
+    "total": 8,
+    "with_product": 7
    },
    "S56": {
     "endpoints": [
      "sgp_search",
      "sgp_api",
      "earthchem_portal",
+     "earthchem_home",
+     "sgp_env_js",
+     "sgp_github",
      "georoc"
     ],
     "readiness": "PARTIAL",
-    "total": 4,
-    "with_product": 3
+    "total": 7,
+    "with_product": 6
    },
    "S57": {
     "endpoints": [
@@ -952,11 +1340,12 @@
    "S58": {
     "endpoints": [
      "cda_pds_sbn",
-     "ulysses_dust_pds"
+     "ulysses_dust_pds",
+     "sbn_dust_holdings"
     ],
     "readiness": "PARTIAL",
-    "total": 2,
-    "with_product": 1
+    "total": 3,
+    "with_product": 2
    },
    "S59": {
     "endpoints": [
@@ -977,15 +1366,16 @@
     ],
     "readiness": "PARTIAL",
     "total": 3,
-    "with_product": 2
+    "with_product": 1
    },
    "S61": {
     "endpoints": [
-     "irsa_neowise_tap"
+     "irsa_neowise_tap",
+     "irsa_spherex_obscore_count"
     ],
     "readiness": "READY",
-    "total": 1,
-    "with_product": 1
+    "total": 2,
+    "with_product": 2
    }
   },
   "verdict": "PARTIAL_REACH"

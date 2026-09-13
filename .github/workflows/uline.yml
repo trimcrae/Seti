@@ -1,0 +1,195 @@
+name: uline
+
+# ULINE — industrial fluorine molecules in public unidentified-line lists
+# (docs/uline.md).
+#
+#   probe ──▶ acquire ──▶ screen ──▶ assess ──▶ commit-back
+#
+# Signature S54 (docs/necrofrontier.md §2): no interstellar molecule with more
+# than one fluorine atom has ever been detected; fluorine chemistry terminates
+# at HF and CF+; life makes no N–F, S–F or fully fluorinated bonds.  A
+# rotational line PATTERN of NF3 / CHF3 / CH2F2 / CF3Cl / CF2Cl2 / CFCl3 /
+# CF3CN / COF2 / SO2F2 / CHClF2 / CF2 in a published U-line list is a residue
+# of chemistry, not astrochemistry.
+#
+# THE GOVERNING DISCIPLINES (docs/uline.md §4):
+#  * species are found in JPL / CDMS by name regex at runtime and every fetch
+#    is logged; a species with no line list is reported UNSEARCHABLE, never
+#    faked; a species run on predicted (placeholder-constant) frequencies is
+#    named as such in summary.json;
+#  * U-lines within tolerance of CH3Cl / CH3F (natural organohalogens) or of
+#    CH3OH / CH3CN / HCOOCH3 / C2H5CN lines (the usual U-line explanation:
+#    vibrationally excited states) are VETOED before anything is counted;
+#  * a PATTERN needs >= 3 coincident blended features, LTE-consistent
+#    intensities, no strong predicted line missing where the survey is
+#    sensitive, and a false-alarm probability from >= 1000 rigid random shifts
+#    of the predicted set (internal spacing kept, alignment destroyed);
+#  * VizieR table names carry literal double quotes: discovery uses a leading
+#    % in LIKE and the table is quoted in FROM; no column is queried by a name
+#    not seen in TAP_SCHEMA.columns.
+#
+# Small run: one job, minutes.  Commit-back through scripts/commit_results.sh,
+# which VERIFIES the push.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          Which stage to run: "all" (probe, acquire, screen, assess), "probe"
+          (archive inventory only — cheap, run this first), or "screen"/"assess"
+          with reduce_only_run_id to re-screen a prior run's acquired tables.
+        required: false
+        default: "all"
+      sources:
+        description: "Comma-separated source keys from config/uline.yaml (default: every enabled one)"
+        required: false
+        default: ""
+      species:
+        description: "Comma-separated target species to screen (default: every target)"
+        required: false
+        default: ""
+      n_trials:
+        description: "Shift trials for the false-alarm probability (0 = config, 1000)"
+        required: false
+        default: "0"
+      reduce_only_run_id:
+        description: "Skip probe/acquire; screen+assess from this prior run's data artifact"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Offline gate — injected CHF3 pattern must be recovered on this runner
+        run: python -m pytest tests/test_uline.py -q -p no:cacheprovider -k "injected or without_the_pattern or poisson or dead_archives"
+      - name: Fetch a prior run's acquired tables
+        if: ${{ github.event.inputs.reduce_only_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: uline-data
+          run-id: ${{ github.event.inputs.reduce_only_run_id }}
+          github-token: ${{ github.token }}
+          path: results/uline/
+      - name: Probe (JPL catdir, CDMS roots, VizieR tables and columns)
+        if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+        run: |
+          SRC=""
+          if [ -n "${{ github.event.inputs.sources }}" ]; then SRC="--sources ${{ github.event.inputs.sources }}"; fi
+          python -m seti.uline.run --stage probe $SRC
+          echo "=== probe ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/uline/probe.json"))
+          print("JPL", d["jpl"]["status"], d["jpl"]["n_entries"], "entries; CDMS", d["cdms"]["status"], d["cdms"].get("n_entries"), "entries")
+          for sp, v in d["species_inventory"].items():
+              print(f"  {sp:8s} {v['group']:12s} jpl={v['jpl']} cdms={v['cdms']} predictable={v['predictable']}")
+          for k, v in d["vizier"].items():
+              print(k, v["status"], v.get("table"), v.get("n_rows"), v.get("roles"), "frame:", v.get("frame_hint"))
+          print("discovered 'unidentified' tables:", len(d["discovered_unidentified_tables"]))
+          for t in d["discovered_unidentified_tables"][:20]:
+              print("   ", t)
+          PY
+      - name: Acquire (every matched .cat, every source's full line table)
+        if: ${{ github.event.inputs.reduce_only_run_id == '' && github.event.inputs.stage != 'probe' }}
+        run: |
+          SRC=""
+          if [ -n "${{ github.event.inputs.sources }}" ]; then SRC="--sources ${{ github.event.inputs.sources }}"; fi
+          python -m seti.uline.run --stage acquire $SRC
+          echo "=== acquire ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/uline/acquire.json"))
+          for sp, v in d["species"].items():
+              print(f"  {sp:8s}", {db: v[db]["n_lines"] for db in ("jpl", "cdms") if db in v})
+          for k, v in d["sources"].items():
+              print(k, v["status"], v.get("n_lines"), "lines,", v.get("n_unidentified"), "U;", v.get("freq_scale"), v.get("frame_hint"))
+              print("   ident values:", v.get("ident_values_sample"))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uline-data
+          path: |
+            results/uline/probe.json
+            results/uline/acquire.json
+            results/uline/acquisition_log.json
+            results/uline/data/
+          if-no-files-found: warn
+      - name: Screen (vetoes, coincidences, LTE tests, shift-trial FAP)
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'assess' }}
+        run: |
+          SP=""
+          if [ -n "${{ github.event.inputs.species }}" ]; then SP="--species ${{ github.event.inputs.species }}"; fi
+          NT=""
+          if [ "${{ github.event.inputs.n_trials || '0' }}" != "0" ]; then NT="--n-trials ${{ github.event.inputs.n_trials }}"; fi
+          python -m seti.uline.run --stage screen $SP $NT
+      - name: Assess (verdict, inventory, candidates)
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          python -m seti.uline.run --stage assess
+          echo "=== summary ==="
+          python - <<'PY'
+          import json
+          s = json.load(open("results/uline/summary.json"))
+          print(json.dumps({k: s[k] for k in s if k not in ("acquisition", "match", "pairs", "sources")}, indent=2)[:6000])
+          for k, v in s["pairs"].items():
+              print(f"  {k:28s} {str(v['line_source']):9s} n={v['n_coincident']:2d} vetoed={v['n_coincident_vetoed']:2d} p={v['p_false']} rho={v['spearman_rho']} top5={v['top5_fraction_any']} pattern={v['pattern']}")
+          PY
+      # A verdict must never read as a science null when nothing was compared.
+      - name: Assert the verdict is not a disguised no-data run
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/uline/summary.json")
+          if not p.exists():
+              print("::warning::no summary.json — the assess stage produced nothing"); sys.exit(0)
+          s = json.loads(p.read_text())
+          v, n = s.get("verdict", ""), s.get("n_ulines_total", 0)
+          if n == 0 and v != "NO_DATA_REACHED":
+              print(f"::error::verdict {v!r} with 0 U-lines is a disguised no-data run"); sys.exit(1)
+          if v == "NO_PATTERN":
+              print(f"::notice::{s.get('n_pairs_evaluated')} species×source pairs compared against {n} U-lines; no pattern. A COUNT, NOT AN ABUNDANCE LIMIT — see docs/uline.md.")
+          if v == "PATTERN_CANDIDATE":
+              print(f"::notice::{s.get('n_pattern_candidates')} PATTERN candidate(s) — PENDING line-by-line vet, see results/uline/candidates.csv and coincidences.csv")
+          if s.get("targets_with_predicted_frequencies"):
+              print("::warning::predicted (placeholder-constant) frequencies used for: " + ", ".join(s["targets_with_predicted_frequencies"]))
+          if s.get("targets_unsearchable"):
+              print("::warning::no line list this run for: " + ", ".join(s["targets_unsearchable"]))
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "uline: industrial molecules in U-line lists — probe/acquire/screen/assess" \
+            results/uline/probe.json \
+            results/uline/acquire.json \
+            results/uline/acquisition_log.json \
+            results/uline/screen.json \
+            results/uline/coincidences.csv \
+            results/uline/summary.json \
+            results/uline/candidates.csv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uline-final
+          path: results/uline/
+          if-no-files-found: warn

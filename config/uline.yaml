@@ -1,0 +1,169 @@
+# ULINE channel — every archive root, species regex, source parameter and
+# threshold in one place.
+#
+# Signature S54 (docs/necrofrontier.md §2): the molecule life and chemistry
+# both refuse.  No interstellar molecule with more than one fluorine atom has
+# ever been detected; fluorine chemistry terminates at HF and CF+; life makes
+# no N–F, S–F or fully fluorinated bonds.  A rotational line PATTERN of a polar
+# industrial fluorine species in a public unidentified-line list is a residue
+# of chemistry, not astrochemistry.  CH3Cl (detected, Fayolle+2017) and CH3F
+# are the natural organohalogen baseline.
+#
+# Species are found in the archives by NAME REGEX at runtime (the probe stage
+# reports which regex hit which entry); no catalogue tag is hard-coded.
+
+archives:
+  jpl_catdir_url: "https://spec.jpl.nasa.gov/ftp/pub/catalog/catdir.cat"
+  jpl_cat_url: "https://spec.jpl.nasa.gov/ftp/pub/catalog/c{tag:06d}.cat"
+  # CDMS: the classic entries page is script-rendered (necrofrontier probe);
+  # every root below is fetched and mined by regex for c<tag>.cat links and a
+  # partition-function table.  Nothing beyond these roots is hard-coded.
+  cdms_roots:
+    - "https://cdms.astro.uni-koeln.de/classic/entries/"
+    - "https://cdms.astro.uni-koeln.de/classic/predictions/catalog/"
+    - "https://cdms.astro.uni-koeln.de/classic/predictions/catalog/partition_function.html"
+    - "https://cdms.astro.uni-koeln.de/classic/entries/partition_function.html"
+  cdms_cat_url: "https://cdms.astro.uni-koeln.de/classic/predictions/catalog/c{tag:06d}.cat"
+  vizier_tap: "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+  # When a species has both a CDMS and a JPL entry, the first available in
+  # this order is used for the MATCH; contaminant vetoes use the union.
+  prefer_line_list: ["cdms", "jpl", "predicted"]
+  fetch_retries: 3
+  fetch_timeout_s: 180
+  max_rows: 200000
+  # Also list any VizieR table whose description mentions this word (recorded
+  # in probe.json as further U-line inventories; screened only once they have
+  # a `sources:` entry with v_LSR and linewidth).
+  discover_description_word: "nidentified"
+
+species:
+  # ---- the industrial fluorine set (S54) ---------------------------------
+  targets:
+    NF3:    {patterns: ["^NF3\\b"],                        note: "nitrogen trifluoride (N–F); JPL has an entry per the probe"}
+    CHF3:   {patterns: ["^CHF3\\b", "^HCF3\\b", "^CF3H\\b"], note: "fluoroform; oblate symmetric top; predicted if absent"}
+    CH2F2:  {patterns: ["^CH2F2\\b"],                      note: "difluoromethane; JPL has an entry per the probe"}
+    CF3Cl:  {patterns: ["^CF3Cl\\b", "^CClF3\\b"],         note: "CFC-13; prolate symmetric top; predicted if absent"}
+    CF2Cl2: {patterns: ["^CF2Cl2\\b", "^CCl2F2\\b"],       note: "CFC-12; asymmetric top; no predictor — catalogue only"}
+    CFCl3:  {patterns: ["^CFCl3\\b", "^CCl3F\\b"],         note: "CFC-11; symmetric top but constants not trusted here — catalogue only"}
+    CF3CN:  {patterns: ["^CF3CN\\b"],                      note: "trifluoroacetonitrile; prolate symmetric top; predicted if absent"}
+    COF2:   {patterns: ["^COF2\\b", "^CF2O\\b", "^F2CO\\b"], note: "carbonyl fluoride; JPL has an entry per the probe"}
+    SO2F2:  {patterns: ["^SO2F2\\b"],                      note: "sulfuryl fluoride (S–F); catalogue only"}
+    CHClF2: {patterns: ["^CHClF2\\b", "^CHF2Cl\\b"],       note: "HCFC-22; catalogue only"}
+    CF2:    {patterns: ["^CF2\\b"],                        note: "difluorocarbene radical; catalogue only"}
+  # ---- natural organohalogen baseline: a U-line coinciding with these is not evidence
+  baseline:
+    CH3Cl:  {patterns: ["^CH3Cl\\b", "^CH3-?35Cl", "^CH3-?37Cl", "^CH3\\(35\\)Cl", "^CH3\\(37\\)Cl"], note: "detected: Fayolle+2017 (IRAS 16293, 67P)"}
+    CH3F:   {patterns: ["^CH3F\\b"],                       note: "methyl fluoride; not detected in the ISM but natural"}
+  # ---- the usual U-line explanations: vibrationally excited / torsional
+  #      states and isotopologues of the abundant complex organics
+  contaminants:
+    CH3OH:   {patterns: ["^CH3OH\\b", "^13CH3OH\\b", "^CH3-?18OH"]}
+    CH3CN:   {patterns: ["^CH3CN\\b", "^CH3C-?13-?N", "^13CH3CN"]}
+    HCOOCH3: {patterns: ["^HCOOCH3", "^CH3OCHO", "^HCOOCH3-?[AE]"]}
+    C2H5CN:  {patterns: ["^C2H5CN", "^CH3CH2CN", "^C2H5C-?N"]}
+    # carbon-rich envelope contaminants (only applied to IRC+10216)
+    HC3N:    {patterns: ["^HC3N\\b", "^HCCCN\\b"], only_sources: ["irc10216_he2008"]}
+    SiC2:    {patterns: ["^SiC2\\b", "^SiCC\\b"], only_sources: ["irc10216_he2008"]}
+    C4H:     {patterns: ["^C4H\\b", "^CCCCH\\b"], only_sources: ["irc10216_he2008"]}
+
+# Placeholder rotational constants for the symmetric-top predictor, used ONLY
+# when neither JPL nor CDMS has the species.  Every block is `verify: true`:
+# the values are from memory of the microwave literature, not from a checked
+# source, and the run reports every species that used PREDICTED frequencies.
+# Species not listed here and absent from the archives are simply unsearchable
+# in this run and are reported as such.
+predicted:
+  CHF3:
+    B_mhz: 10348.7
+    DJ_mhz: 0.011
+    DJK_mhz: 0.018
+    axial_mhz: 5673.8        # C0 (oblate top); only sets the K-ladder Boltzmann factor
+    mu_debye: 1.65
+    k3_weight: 2.0           # three equivalent I=1/2 F nuclei: K=3n levels carry 2x spin weight
+    verify: true
+    source: "placeholder (B, DJ, DJK as given in the channel brief; C0 and mu from memory) — verify against the original fit before any claim"
+  CF3Cl:
+    B_mhz: 3335.6            # CF3-35Cl
+    DJ_mhz: null             # unknown here: the error model widens accordingly
+    DJK_mhz: null
+    axial_mhz: null          # A0 unknown here: K ladder taken Boltzmann-flat
+    mu_debye: 0.50
+    k3_weight: 2.0
+    verify: true
+    source: "placeholder B for CF3-35Cl (channel brief); 37Cl isotopologue and Cl hyperfine not modelled"
+  CF3CN:
+    B_mhz: 2945.6
+    DJ_mhz: null
+    DJK_mhz: null
+    axial_mhz: null
+    mu_debye: 1.26
+    k3_weight: 2.0
+    verify: true
+    source: "placeholder B (channel brief); 14N hyperfine not modelled"
+  NF3:
+    B_mhz: 10681.0
+    DJ_mhz: null
+    DJK_mhz: null
+    axial_mhz: null
+    mu_debye: 0.235
+    k3_weight: 2.0
+    verify: true
+    source: "placeholder B (channel brief); fallback only — JPL carries NF3"
+  # error model for predicted frequencies: err = base + rel * nu
+  error_model:
+    base_mhz: 0.5
+    rel_with_distortion: 1.0e-5      # DJ and DJK given
+    rel_without_distortion: 1.0e-4   # DJ/DJK unknown: 4 DJ (J+1)^3 is unmodelled
+
+sources:
+  orion_kl_hifi:
+    label: "Orion KL, Herschel/HIFI 480–1907 GHz line survey (Crockett+2014, ApJ 787, 112)"
+    vizier_like: "J/ApJ/787/112/"
+    v_lsr_km_s: 9.0
+    fwhm_km_s: 4.0
+    # The table is expected to list REST frequencies at the survey's assumed
+    # v_LSR (the probe records the column description's frame hint).  The
+    # velocity components (hot core ~5.5, compact ridge ~7-8, plateau ~8-9,
+    # extended ridge ~9 km/s) then enter as a tolerance, not a shift.
+    frequency_frame: rest
+    v_lsr_uncertainty_km_s: 4.0
+    contaminant_tex_k: 150.0
+    enabled: true
+  irc10216_he2008:
+    label: "IRC+10216, ARO 12 m + SMT 2 mm / 1.3 mm line survey (He+2008, ApJS 177, 275)"
+    vizier_like: "J/ApJS/177/275/"
+    v_lsr_km_s: -26.0
+    fwhm_km_s: 30.0           # expansion velocity ~14.5 km/s: full width ~29 km/s
+    frequency_frame: rest
+    v_lsr_uncertainty_km_s: 0.0
+    contaminant_tex_k: 50.0
+    enabled: true
+
+match:
+  tex_grid_k: [10, 30, 50, 100, 150, 200]
+  top_n_predicted: 40          # strongest predicted features (at T_ex, in coverage) that are tested
+  min_coincidences: 3          # a PATTERN needs >= 3 coincident transitions
+  spearman_min: 0.3            # LTE consistency: rho(pred intensity, observed U-line intensity)
+  min_top5_fraction: 0.6       # of the 5 strongest predicted features, this fraction must coincide with SOME catalogued line
+  p_false_max: 0.01
+  n_trials: 1000               # random rigid shifts of the predicted set
+  shift_min_mhz: 50
+  shift_max_mhz: 500
+  coverage_window_mhz: 1500    # a predicted line is "observable" if the survey catalogued any line within this window
+  veto_dynamic_range_dex: 4.0  # contaminant lines within this many dex of their strongest in-range line can veto
+  seed: 20260913
+
+columns:
+  # role -> ordered regexes over canonicalised (lower-case) TAP column names
+  freq: ["^freq(uency)?$", "^nu$", "^f$", "^freq_?rest$", "^frest$", "^fobs$", "^freqobs$",
+         "^freq_?obs$", "^nu_?rest$", "^rest_?freq$", "^f_?rest$", "^fcen$", "^f_?obs$",
+         "^freq_?mhz$", "^freq_?ghz$", "^nu_?ghz$", "^nu_?mhz$"]
+  freq_err: ["^e_?freq(uency)?$", "^e_?nu$", "^e_?f$", "^freq_?err$", "^efreq$", "^err_?freq$", "^dfreq$", "^e_?frest$"]
+  ident: ["^species$", "^mol(ecule)?$", "^ident(ification)?$", "^id$", "^name$", "^assign(ment)?$",
+          "^line$", "^formula$", "^molec$", "^spec$", "^carrier$", "^mole$", "^spname$", "^molname$"]
+  intensity: ["^t_?a\\*?$", "^ta$", "^tmb$", "^t_?mb$", "^t_?peak$", "^tpk$", "^peak$", "^tpeak$",
+              "^t_?max$", "^i_?peak$", "^ipeak$", "^int(ensity)?$", "^w$", "^area$", "^flux$", "^s$",
+              "^snu$", "^tb$", "^t$", "^amp$", "^tant$", "^tr$", "^t_?r$", "^w_?int$"]
+  transition: ["^trans(ition)?$", "^qn$", "^qns$", "^quantum$", "^levels$", "^qnum$"]
+  # an identification value meaning "unidentified"
+  uline_values: ["^\\s*u\\s*$", "^\\s*u[-_ ]?line", "^\\s*unid", "^\\s*\\?+\\s*$", "^\\s*unknown", "^\\s*u\\s*\\d*\\s*$", "^\\s*u\\s*[-:]"]

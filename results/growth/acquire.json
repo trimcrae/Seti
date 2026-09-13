@@ -1,0 +1,74 @@
+{
+  "stage": "acquire",
+  "generated_utc": "2026-09-13T22:48:46Z",
+  "tables": {
+    "koi": {
+      "status": "OK",
+      "n_rows": 9564
+    },
+    "toi": {
+      "status": "OK",
+      "n_rows": 8148
+    },
+    "ps": {
+      "status": "OK",
+      "n_rows": 28592
+    }
+  },
+  "join": {
+    "n_koi": 9564,
+    "n_toi": 8148,
+    "n_ps_kepler_rows": 28592,
+    "joined_by_route": {
+      "tic_id": 0,
+      "position_period": 108
+    },
+    "tic_matched_no_period_match": 0,
+    "koi_with_tic_id": 0,
+    "position_matched_no_period_match": 50,
+    "n_joined": 108,
+    "n_toi_used": 108
+  },
+  "gaia": {
+    "n_targets": 108,
+    "n_targets_ok": 0,
+    "n_targets_failed": 108,
+    "n_neighbour_rows": 0,
+    "radius_arcsec": 21.0
+  },
+  "acquisition": {
+    "stages": [
+      {
+        "stage": "fetch_koi_cumulative",
+        "status": "OK",
+        "rows": 9564,
+        "query": "select kepid,kepoi_name,kepler_name,koi_disposition,koi_pdisposition,koi_period,koi_period_err1,koi_depth,koi_depth_err1,koi_depth_err2,koi_ror,koi_ror_err1,koi_ror_err2,koi_impact,koi_impact_err1,koi_impact_err2,koi_duration,koi_duration_err1,koi_duration_err2,koi_ingress,koi_dor,koi_steff,koi_slogg,koi_srad,koi_kepmag,ra,dec,koi_fpflag_nt,koi_fpflag_ss,koi_fpflag_co,koi_fpflag_ec,koi_tce_delivname,koi_count from cumulative"
+      },
+      {
+        "stage": "fetch_toi",
+        "status": "OK",
+        "rows": 8148,
+        "query": "select toi,tid,tfopwg_disp,pl_orbper,pl_trandep,pl_trandeperr1,pl_trandeperr2,pl_trandurh,pl_trandurherr1,pl_trandurherr2,pl_rade,st_teff,st_logg,st_rad,st_tmag,ra,dec from toi"
+      },
+      {
+        "stage": "fetch_ps_kepler",
+        "status": "OK",
+        "rows": 28592,
+        "query": "select pl_name,hostname,tic_id,default_flag,pl_ratror,pl_trandep,pl_orbper,disc_facility,pl_refname,ra,dec from ps where disc_facility like '%Kepler%'"
+      },
+      {
+        "stage": "gaia_neighbours_chunk_1of1",
+        "status": "QUERY_FAILED",
+        "rows": 0,
+        "query": "gaia upload xmatch r=21.0\" n=108",
+        "error": "RuntimeError(\"Gaia neighbours failed after 3 attempts: HTTPError('Error 500:\\\\nSQL exception: ERROR: canceling statement due to statement timeout')\")"
+      }
+    ],
+    "n_stages": 4,
+    "n_ok": 3,
+    "n_query_failed": 1,
+    "n_query_returned_zero_rows": 0,
+    "any_query_failed": true,
+    "total_rows": 46304
+  }
+}

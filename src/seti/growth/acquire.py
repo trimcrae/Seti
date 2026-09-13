@@ -566,6 +566,15 @@ def join_kepler_tess(koi: pd.DataFrame, toi: pd.DataFrame, ps: pd.DataFrame | No
     for i, t in toi["tid"].items():
         if np.isfinite(t):
             toi_by_tid.setdefault(int(t), []).append(i)
+    # The ceiling, stated separately from the yield: of the TIC ids the KOIs
+    # resolved, how many TESS ever made a TOI for.  A low join with
+    # ``n_koi_tics_with_a_toi`` also low means TESS has no candidate on that
+    # star (nothing to fix); a low join with it HIGH means the period test is
+    # what is rejecting, which is a different problem.
+    koi_tics = {int(t) for t in tic if np.isfinite(t)}
+    rep["n_distinct_koi_tics"] = int(len(koi_tics))
+    rep["n_koi_tics_with_a_toi"] = int(len(koi_tics & set(toi_by_tid)))
+    rep["n_toi_on_koi_tics"] = int(sum(len(toi_by_tid.get(t, [])) for t in koi_tics))
 
     used_toi: set[int] = set()
     rows: list[dict] = []
@@ -670,8 +679,10 @@ def _join_statement(rep: dict) -> str:
             f"(by route: " + ", ".join(
                 f"{r}={int((rep.get('koi_with_tic_by_route') or {}).get(r, 0))}"
                 for r in TIC_ROUTES)
-            + f"), {int(rep.get('tic_matched_no_period_match', 0))} of those had no TOI whose "
-              f"period matched; {int(rep.get('position_matched_no_period_match', 0))} positional "
+            + f"), of which {int(rep.get('n_koi_tics_with_a_toi', 0))} of "
+              f"{int(rep.get('n_distinct_koi_tics', 0))} distinct TICs have any TOI at all and "
+              f"{int(rep.get('tic_matched_no_period_match', 0))} KOIs had none whose period "
+              f"matched; {int(rep.get('position_matched_no_period_match', 0))} positional "
               "matches failed the period test")
 
 

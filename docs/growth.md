@@ -84,7 +84,11 @@ resolved a TIC id by which route, the KOIs with a TIC id whose TOIs matched no
 period, the positional matches that failed the period test, and the `ps`
 diagnostics (`n_ps_tic_id_parsed` / `n_ps_tic_id_unparsed`, `n_ps_default_rows`,
 `n_ps_rows_not_kepler_discovered`); `summary.json["join_statement"]` says all of
-it in one sentence.
+it in one sentence.  The **ceiling** is reported apart from the yield —
+`n_distinct_koi_tics`, `n_koi_tics_with_a_toi`, `n_toi_on_koi_tics` — so a small
+join can be attributed: few TICs with any TOI means TESS has no candidate on
+those stars and there is nothing to fix, while many TICs with TOIs and a large
+`tic_matched_no_period_match` means the *period test* is what is rejecting.
 
 > **The 2026-09-13 defect (run 34787801172).**  That run reported
 > `joined_by_route: {tic_id: 0, position_period: 108}` and `koi_with_tic_id: 0`

@@ -535,6 +535,9 @@ def test_kois_with_an_empty_kepler_name_still_join_through_their_host():
                                       "position_period": 0}
     assert rep["koi_with_tic_id"] == 3
     assert rep["n_ps_tic_id_parsed"] == 2 and rep["n_ps_tic_id_unparsed"] == 0
+    # the ceiling is reported apart from the yield
+    assert rep["n_distinct_koi_tics"] == 2 and rep["n_koi_tics_with_a_toi"] == 2
+    assert rep["n_toi_on_koi_tics"] == 3
     routes = dict(zip(j["kepoi_name"], j["join_route"], strict=True))
     assert routes == {"K00007.01": "name_planet", "K00007.02": "name_host",
                       "K00008.01": "position_tic"}

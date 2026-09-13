@@ -10,6 +10,47 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### Five NECROFRONTIER channels built, 2026-09-13 (user: "Do it")
+
+Built in parallel by five builders on disjoint paths, each offline-tested and
+wired into the CLI (`seti isotope|growth|arc|ignition|uline`) and the channel
+index; every one is on `main` and dispatched from it (ISOTOPE, GROWTH, ARC,
+ULINE at `stage=all`; IGNITION at `stage=probe` first, as its doc advises):
+
+* **ISOTOPE (S46, 30 tests)** — ²⁸Si / ¹²C purity beyond the Presolar Grain
+  Database's own most extreme classified X grain with every measured
+  nucleosynthetic partner solar. Five acquisition routes recorded per run
+  (human URL, local path, wustl crawl, EarthChem Library search, DataCite DOI
+  lookup by title); a stdlib xlsx reader. Expected first verdict
+  `NO_DATA_REACHED` until the table is located — the wustl host did not
+  answer the runner in three probe runs.
+* **GROWTH (S57, 43 tests)** — Kepler-era vs TESS-era depth of every
+  re-detected Kepler planet after the limb-darkening band ratio and
+  Gaia-neighbour dilution, at fixed impact parameter (duration must change as
+  k, not as b); population median subtracted so "growth" is relative to the
+  Han+2025 deficit; the >30 d list carried for stage 2.
+* **ARC (S59, 28 tests)** — ξ = log E_flare − log[B²/8π A_spot^{3/2}] at f = 1,
+  B = 3 kG, spot area from the rotational amplitude marginalised over
+  latitude (×3 conservative); ≥ 2 independent flares above the ceiling on a
+  companion-free, unblended dwarf; the centroid test is stage 2 and no
+  candidate is claimable before it.
+* **IGNITION (S61, 43 tests)** — a monotonic W1/W2 rise sustained ≥ 5 yr on a
+  Gaia-astrometric, kinematically old, 2010-photospheric field star; the
+  scan-band sinusoid fitted jointly; a sustained-ramp family against
+  step+decay at ΔBIC ≥ 6; VIGIL's field-wide NEOWISE cone reused, and its
+  failure mode (an aggregator reading missing shards as a null) closed by
+  `shards.expected` vs `shards.found`.
+* **ULINE (S54, 27 tests)** — JPL/CDMS line lists (and a symmetric-top
+  predictor with `verify`-flagged constants for CHF₃, CF₃Cl, CF₃CN, NF₃)
+  matched against the Crockett+2014 Orion KL and He+2008 IRC+10216 U-line
+  tables; ≥ 3 coincident features, LTE consistency, a rigid-shift false-alarm
+  probability, contaminant vetoes from the vibrationally excited states of
+  CH₃OH / CH₃CN / HCOOCH₃ / C₂H₅CN and the CH₃Cl / CH₃F baseline.
+
+Their result files are read back into this log as the runs land. Not yet
+built, in the brief's order: S48/S49 SPARK, S50 CENTURY, S52/S53 CRADLE,
+S55 CRYPT, S60 RELAY, S63 RING, S56 GRAVE, S47 FORGE.
+
 ### The residue of a non-biological successor, 2026-09-13: NECROFRONTIER (S46–S63)
 
 A new question from the user: *find exhaustive new ways to search for

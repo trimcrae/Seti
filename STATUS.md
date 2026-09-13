@@ -69,6 +69,26 @@ Presolar Grain Database SiC release (20,230 grains, DOI'd download); PEWDD
 ShadowCam PDS4 (5.6 TiB Aug 2026); eROSITA DR2 (31 Jul 2026, 1.9 M sources);
 SDSS DR20 (3 M MWM spectra); Gaia DR4 dated **2 Dec 2026**.
 
+**The probe ran three times (7:28, ~7:50 and 8:01 AM ET; `results/necrofrontier/`),
+each run correcting the brief: 39/50 → 50/63 → 57/67 endpoints reached
+with the expected product.** What it established: SPHEREx has **1,367,432
+public spectral-image products** and the SPLICES seed table holds
+**9,925,660 sources** (157 columns) — S48 is runnable today; all 26 Euclid Q1
+tables including the line-feature table answer (S49); DASCH DR7's API and
+client answer (S50); PEWDD is at VizieR as `J/A+A/691/A352/pewdd` (S51); the
+three Exoplanet Archive depth tables answer (S57); NEOWISE answers (S61); the
+superflare tables with per-star spot amplitude (Okamoto+2021, Tu+2022,
+Shibayama+2013) and every flare/rotation catalogue answer (S59); JPL carries
+line lists for NF₃, COF₂, CH₂F₂ and CH₃Cl but not CHF₃/CH₃F/SO₂F₂/CF₃CN/CFCs
+(S54 needs SPFIT predictions for those); the Diviner level-3/4 products are
+the second PDS volume `lrodlr_1002` (S55). Two real blockers, stated: the
+**Presolar Grain Database host does not answer the runner on either port
+in three runs** (S46's data must come through the EarthChem Library or the
+authors), and **cassis.sirtf.com times out**, for which IRSA's `irs_enhv211`
+(16,986 IRS Enhanced spectra, 85 columns) is the replacement for S53.
+TAPVizieR lesson recorded in the script: table names carry literal double
+quotes, so a prefix `LIKE` matches nothing — lead with `%`.
+
 **Built and offline-tested (13 new tests, ruff clean):**
 `scripts/necrofrontier_probe.py` + `necrofrontier-probe.yml` (50 endpoints,
 REST and TAP, one verdict each and a per-signature readiness map, committed to

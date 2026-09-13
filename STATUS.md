@@ -96,7 +96,14 @@ REST and TAP, one verdict each and a per-signature readiness map, committed to
 `necrofrontier-lit.yml` (15 query groups, 94 asserted ids title-checked, 23
 title searches, 93 keyword sweeps, decoy-aware concept scan to
 `results/necrofrontier_lit/`). Both dispatched from `main`; their results are
-read before any position above is believed. Build order (charter: novelty,
+read before any position above is believed. **The first sweep run (7:28 AM ET)
+was throttled by the arXiv API — HTTP 429 on 64 of 65 requests at the 3 s pace
+every earlier sweep here used — and delivered one file.** The fetcher now
+paces at 6 s, backs off 30/90/270 s or Retry-After on 429/503, asks for each
+group's asserted ids in one `id_list` call, and falls back to the ADS API with
+the repository's `ADS_TOKEN` secret (same Atom shape, source recorded per
+file); re-dispatched ~8:50 AM ET. Until its `concept_scan.json` lands, every
+prior-art position above rests on the agents' search-engine records. Build order (charter: novelty,
 then scale, never a null): S46 ISOTOPE → S51 SLAG-WD → S54 ULINE → S61
 IGNITION → S48/S49 SPARK → the rest as listed in `docs/necrofrontier.md` §4.
 

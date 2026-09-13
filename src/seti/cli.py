@@ -1057,6 +1057,12 @@ def _cmd_arc(args, cfg):
     return _arc_main(list(args.rest))
 
 
+def _cmd_ignition(args, cfg):
+    from .ignition.run import main as _ignition_main
+
+    return _ignition_main(list(args.rest))
+
+
 def _cmd_baffle(args, cfg):
     from .baffle.run import _cmd_baffle as _baffle_cmd
 
@@ -2200,6 +2206,11 @@ def main(argv=None):
                             "flags are passed through to seti.arc.run")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_arc)
+    p = sub.add_parser("ignition",
+                       help="IGNITION (S61): an infrared excess being born on an old star; "
+                            "flags are passed through to seti.ignition.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_ignition)
 
     # --- 2026-09-06: BAFFLE, reciprocal mid-IR absorbing screens; runnable as
     #     `python -m seti.baffle.run` (what baffle.yml calls) or `seti baffle`.

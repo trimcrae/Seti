@@ -583,3 +583,42 @@ def test_config_workflow_and_doc_exist():
     assert Path("config/arc.yaml").exists()
     assert Path(".github/workflows/arc.yml").exists()
     assert Path("docs/arc.md").exists()
+
+
+def test_tap_query_tries_every_mirror_before_failing(monkeypatch):
+    """A 503 from one VizieR endpoint is routine and must not end the query.
+
+    ARC's first dispatch (run 34787802564) failed all six discovery queries
+    with 503 from the plain-http endpoint while the https one was answering;
+    the helper now walks VIZIER_TAP_MIRRORS and names every endpoint it tried.
+    """
+    import types
+
+    from seti.metronome import acquire as macq
+
+    assert macq.VIZIER_TAP.startswith("https://")
+    assert len(macq.VIZIER_TAP_MIRRORS) >= 2
+
+    tried: list[str] = []
+
+    class _Svc:
+        def __init__(self, url):
+            tried.append(url)
+            self._url = url
+
+        def run_async(self, adql):
+            raise RuntimeError(f"503 Service Unavailable for url: {self._url}")
+
+        def search(self, adql):
+            raise RuntimeError(f"503 Service Unavailable for url: {self._url}")
+
+    monkeypatch.setitem(
+        __import__("sys").modules, "pyvo",
+        types.SimpleNamespace(dal=types.SimpleNamespace(TAPService=_Svc)))
+    monkeypatch.setattr(macq._time, "sleep", lambda *_a, **_k: None)
+
+    with pytest.raises(RuntimeError) as err:
+        macq.tap_query("SELECT 1", retries=1)
+    assert tried == list(macq.VIZIER_TAP_MIRRORS)
+    for endpoint in macq.VIZIER_TAP_MIRRORS:
+        assert endpoint in str(err.value)

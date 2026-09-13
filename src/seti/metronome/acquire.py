@@ -32,7 +32,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-VIZIER_TAP = "http://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+# HTTPS, as every other channel in this repository uses.  The plain-http
+# endpoint answered 503 to all six of ARC's discovery queries on its first
+# dispatch (run 34787802564, 2026-09-13) while the necrofrontier probe reached
+# the https endpoint repeatedly the same day.
+VIZIER_TAP = "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+# Tried in order when the primary answers 503 / refuses: the CDS mirror and the
+# plain-http original.  A mirror that also fails is recorded, never silent.
+VIZIER_TAP_MIRRORS = (
+    "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+    "http://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+)
 
 STATUS_OK = "OK"
 STATUS_FAILED = "QUERY_FAILED"
@@ -94,19 +104,30 @@ def _retry(fn, retries: int = 3, label: str = "query", base_sleep: float = 4.0):
     raise RuntimeError(f"{label} failed after {retries} attempts: {last!r}")
 
 
-def tap_query(adql: str, *, url: str = VIZIER_TAP, retries: int = 3) -> pd.DataFrame:
-    """ADQL against VizieR TAP: async first, sync on the last attempt."""
+def tap_query(adql: str, *, url: str | None = None, retries: int = 3) -> pd.DataFrame:
+    """ADQL against VizieR TAP: async first, sync on the last attempt.
+
+    Every endpoint in ``VIZIER_TAP_MIRRORS`` is tried in turn before the query
+    is called failed, because a 503 from one endpoint is routine and says
+    nothing about the sky.  The failure message names every endpoint tried."""
     import pyvo  # noqa: PLC0415  runner-only; keeps the module importable offline
 
-    def _go():
-        svc = pyvo.dal.TAPService(url)
-        try:
-            return svc.run_async(adql).to_table().to_pandas()
-        except Exception as exc:                          # noqa: BLE001
-            print(f"[metronome/acquire] async TAP failed ({exc!r}); trying sync")
-            return svc.search(adql).to_table().to_pandas()
+    endpoints = [url] if url else list(VIZIER_TAP_MIRRORS)
+    errors: list[str] = []
+    for endpoint in endpoints:
+        def _go(endpoint=endpoint):
+            svc = pyvo.dal.TAPService(endpoint)
+            try:
+                return svc.run_async(adql).to_table().to_pandas()
+            except Exception as exc:                      # noqa: BLE001
+                print(f"[metronome/acquire] async TAP failed ({exc!r}); trying sync")
+                return svc.search(adql).to_table().to_pandas()
 
-    return _retry(_go, retries=retries, label="TAP query")
+        try:
+            return _retry(_go, retries=retries, label=f"TAP query ({endpoint})")
+        except Exception as exc:                          # noqa: BLE001
+            errors.append(f"{endpoint}: {exc!r}")
+    raise RuntimeError("TAP query failed at every endpoint -- " + " | ".join(errors))
 
 
 def unquote_table(name: str) -> str:

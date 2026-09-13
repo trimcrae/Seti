@@ -1,0 +1,61 @@
+name: necrofrontier-lit
+
+# NECROFRONTIER prior-art sweep (scripts/necrofrontier_fetch.py).
+#
+# docs/necrofrontier.md proposes the necrosignatures of a NON-BIOLOGICAL
+# successor that ended its makers (S46 onward) on data sources this repository
+# has never touched.  Fifteen novelty questions, each a query group with its own
+# decoys: isotopic purity in presolar grains; hot swarms vs the hot-exozodi
+# population; single-channel stellar excesses in SPHEREx / Euclid; century-
+# baseline cessation in DASCH; polluted-WD abundance vectors no rock makes;
+# shattered cradles (mature-star extreme debris disks); artificial molecules in
+# ISM line surveys; lunar cold-trap artifacts in Diviner / Mini-RF / ShadowCam;
+# the terrestrial record; star-pair beam spillover; the growing transit; the
+# ignition transient; superflares above the spot-energy ceiling; post-biological
+# hosts; in-situ interstellar-grain composition.
+#
+# The sandbox blocks arxiv.org; the runner has egress (CLAUDE.md acquisition
+# pattern).  Verbatim atom feeds and abstracts only; every asserted arXiv id is
+# title-verified in id_title_check.json; every fetch's HTTP status is in
+# summary.json.  Commit-back through scripts/commit_results.sh, which VERIFIES
+# the push.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  necrofrontier-lit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch prior-art evidence (soft 75-min deadline, partials kept)
+        run: |
+          timeout -k 30 4500 python scripts/necrofrontier_fetch.py \
+            || echo "fetcher hit soft deadline or errored; committing partials"
+          echo "=== summary ==="
+          python -c "import json;d=json.load(open('results/necrofrontier_lit/summary.json'));print(d['n_ok'],'ok /',d['n_urls'],'urls')" || true
+          python -c "import json;d=json.load(open('results/necrofrontier_lit/id_title_check.json'));print(d['n_id_mismatch'],'id/title mismatches,',d['n_title_search_miss'],'title-search misses')" || true
+          python -c "import json;d=json.load(open('results/necrofrontier_lit/concept_scan.json'));print(d['n_abstracts_scanned'],'abstracts');print(json.dumps(d['per_group_counts'],indent=2))" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: necrofrontier-lit
+          path: results/necrofrontier_lit/
+          if-no-files-found: warn
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "necrofrontier-lit: prior-art evidence for S46-S63" \
+            results/necrofrontier_lit

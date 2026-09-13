@@ -1063,6 +1063,12 @@ def _cmd_ignition(args, cfg):
     return _ignition_main(list(args.rest))
 
 
+def _cmd_uline(args, cfg):
+    from .uline.run import main as _uline_main
+
+    return _uline_main(list(args.rest))
+
+
 def _cmd_baffle(args, cfg):
     from .baffle.run import _cmd_baffle as _baffle_cmd
 
@@ -2211,6 +2217,11 @@ def main(argv=None):
                             "flags are passed through to seti.ignition.run")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_ignition)
+    p = sub.add_parser("uline",
+                       help="ULINE (S54): industrial fluorine molecules in public U-line lists; "
+                            "flags are passed through to seti.uline.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_uline)
 
     # --- 2026-09-06: BAFFLE, reciprocal mid-IR absorbing screens; runnable as
     #     `python -m seti.baffle.run` (what baffle.yml calls) or `seti baffle`.

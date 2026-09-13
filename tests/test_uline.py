@@ -35,12 +35,18 @@ from seti.uline.lines import (
     Entry,
     count_unparsed_catdir,
     find_species,
+    formula_key,
     interp_log_q,
+    match_species,
+    normalise_name,
     parse_cat,
     parse_catdir,
+    parse_catdir_report,
     parse_partition_table,
     rescale_lgint,
+    species_match_route,
     symmetric_top_lines,
+    unparsed_catdir_lines,
 )
 from seti.uline.match import (
     C_KM_S,
@@ -170,8 +176,80 @@ def test_catdir_parser_and_species_regexes():
     assert [e.name for e in find_species(ents, conf["targets"]["CF2Cl2"]["patterns"])] == ["CF2Cl2-fake"]
     # CF2 must not match CF2Cl2, and CH3OH must not match CH3OHH-like names
     assert find_species(ents, conf["targets"]["CF2"]["patterns"]) == []
-    inv = acq.jpl_inventory(CATDIR_BLOCK, conf)
+    inv, rep = acq.jpl_inventory(CATDIR_BLOCK, conf)
     assert [e.tag for e in inv["NF3"]] == [71001] and inv["CHF3"] == []
+    assert rep["n_entries"] == 5 and rep["n_unparsed_lines"] == 1
+    assert rep["unparsed_sample"] == ["not a directory line"]
+
+
+# The layout JPL actually publishes (necrofrontier probe, endpoint jpl_catdir):
+# a "2*" / "1* " version column, names with spaces, commas, hyphens and "+",
+# and a version that is sometimes missing.  The old rigid regex dropped 171 of
+# 403 non-blank lines here; every line below except the last must parse.
+CATDIR_AWKWARD = (
+    "  1001 H-atom            1 0.6021 0.6021 0.6021 0.6021 0.6021 0.6021 0.6021 1\n"
+    "  4001 H2D+             32 1.8834 1.6986 1.4401 0.9882 0.4919 0.0846 0.0016 2*\n"
+    " 14003 13CH            648 2.3562 2.2249 2.0368 1.7027 1.3423 0.9177 0.3133 1* \n"
+    " 18005 H2O v2,2v2,v   8608 2.2507 2.0645 1.8040 1.3649 0.9335 0.4819 0.0994 4* \n"
+    " 14002 N-atom-D-st       6 1.4700 1.4676 1.4629 1.4495 1.4246 1.3827 1.3247 3\n"
+    " 71001 NF3            9999 4.1000 3.9000 3.6000 3.2000 2.7000 2.3000 1.8000\n"
+    " 52011 CH2F2-v4       7808 4.7435 4.5317 4.2551 3.8010 3.3502 2.9003 2.4522 1 extra\n"
+    " 99999 Broken --- not a catdir row at all\n"
+)
+
+
+def test_catdir_parser_tolerates_the_real_jpl_layout():
+    ents, unparsed = parse_catdir_report(CATDIR_AWKWARD)
+    assert [e.tag for e in ents] == [1001, 4001, 14003, 18005, 14002, 71001, 52011]
+    by_tag = {e.tag: e for e in ents}
+    assert by_tag[4001].name == "H2D+" and by_tag[4001].version == "2*"       # the "2*" version
+    assert by_tag[14003].name == "13CH" and by_tag[14003].version == "1*"     # trailing blanks
+    assert by_tag[18005].name == "H2O v2,2v2,v" and by_tag[18005].nlines == 8608  # spaces in name
+    assert by_tag[14002].name == "N-atom-D-st" and by_tag[14002].version == "3"
+    assert by_tag[71001].version == ""                                        # version absent
+    assert by_tag[52011].version == "1 extra"                                 # extra columns kept
+    assert by_tag[1001].temps == list(CATDIR_TEMPS) and len(by_tag[1001].qlog) == 7
+    assert np.isclose(by_tag[4001].qlog[-1], 0.0016)
+    # a line that still will not parse is counted and kept verbatim, never dropped
+    assert count_unparsed_catdir(CATDIR_AWKWARD) == 1
+    assert unparsed == [" 99999 Broken --- not a catdir row at all"]
+    assert unparsed_catdir_lines(CATDIR_AWKWARD) == unparsed
+    assert len(unparsed_catdir_lines(CATDIR_AWKWARD * 40, limit=20)) == 20
+
+
+def test_normalised_formula_matching_beats_the_anchored_regexes():
+    # every spelling JPL and CDMS actually use for the same molecule
+    for name in ("CH3Cl", "CH3CL", "CH3-35Cl", "CH3-37Cl", "CH3Cl, v=0", "CH3-35Cl, v=0",
+                 "H3C-Cl", "CH3(35)Cl", "CH 3 Cl", "CH3Cl-35"):
+        assert species_match_route(name, "CH3Cl") is not None, name
+    assert species_match_route("CH3-35Cl, v=0", "CH3Cl") in ("normalised", "atom_counts")
+    assert species_match_route("13CH3OH", "CH3OH") == "isotopologue"
+    assert formula_key("HCCCN") == formula_key("HC3N") == "C3H1N1"
+    assert formula_key("SiCC") == formula_key("SiC2") == "C2Si1"
+    assert formula_key("F2CO") == formula_key("CF2O") == formula_key("COF2") == "C1F2O1"
+    assert formula_key("CO") == "C1O1" and formula_key("Co") == "Co1"   # carbon+oxygen vs cobalt
+    assert formula_key("CF+") != formula_key("CF")                      # charge is kept
+    assert formula_key("H-atom") is None                                # not a formula: no match
+    # and it must NOT over-match
+    assert species_match_route("CF2Cl2", "CF2") is None
+    assert species_match_route("CH3CN", "CH3OH") is None
+    assert normalise_name("CH3-35Cl, v=0") == "ch335clv0"
+
+
+def test_near_miss_names_are_recorded_when_nothing_matches():
+    ents = [Entry(tag=1, name="CF2Cl2, v=0", nlines=1), Entry(tag=2, name="CF2Cl2-fake", nlines=1),
+            Entry(tag=3, name="CH3OH", nlines=1)]
+    m = match_species(ents, "CF2", patterns=[r"^CF2\b"])
+    assert m.entries == [] and m.matched_names == []
+    assert m.near_miss_names == ["CF2Cl2, v=0", "CF2Cl2-fake"]    # the catalogue's own spellings
+    m2 = match_species(ents, "CF2Cl2", patterns=[])
+    assert [e.tag for e in m2.entries] == [1]                    # the v=0 state IS CF2Cl2
+    assert [d["route"] for d in m2.matched_names] == ["atom_counts"]
+    assert m2.near_miss_names == ["CF2Cl2-fake"]                 # a suffix nobody has explained yet
+    # the configured regex stays an ADDITIONAL route
+    m3 = match_species([Entry(tag=4, name="weird-name-for-NF3", nlines=1)], "NF3",
+                       patterns=[r"NF3$"])
+    assert [d["route"] for d in m3.matched_names] == ["regex"]
 
 
 CDMS_HTML = """<html><body><pre>
@@ -507,6 +585,102 @@ def _raw_rows(seed: int = 3, seeded: pd.DataFrame | None = None) -> pd.DataFrame
                          "TA": tab["intensity"], "e_Freq": 0.2})
 
 
+class _QuotedSchemaTAP:
+    """TAPVizieR as it really is: ``table_name`` carries literal double quotes.
+
+    A LIKE without a leading ``%`` therefore matches nothing, and a FROM
+    without quotes is a syntax error — the two mistakes this class refuses.
+    """
+
+    def __init__(self, rows: pd.DataFrame | None = None):
+        self.rows = rows if rows is not None else _raw_rows()
+        self.calls: list[str] = []
+
+    def __call__(self, adql: str) -> pd.DataFrame:
+        self.calls.append(adql)
+        if "TAP_SCHEMA.tables" in adql:
+            if "description LIKE" in adql:
+                return pd.DataFrame(columns=["table_name", "description"])
+            if "LIKE '%J/ApJ/787/112/%'" not in adql:        # no leading % -> no rows, as in reality
+                return pd.DataFrame(columns=["table_name", "description"])
+            return pd.DataFrame({"table_name": ['"J/ApJ/787/112/table2"'],
+                                 "description": ["Unidentified lines in the Orion KL survey"]})
+        if "TAP_SCHEMA.columns" in adql:
+            if "'\"J/ApJ/787/112/table2\"'" not in adql:      # the quoted spelling must be tried
+                return pd.DataFrame(columns=["column_name", "unit", "description"])
+            return pd.DataFrame({"column_name": ["Freq", "Species", "TA"],
+                                 "unit": ["GHz", "", "K"],
+                                 "description": ["Rest frequency", "Species or U", "Peak"]})
+        assert 'FROM "J/ApJ/787/112/table2"' in adql          # quoted when selected from
+        if "COUNT(*)" in adql:
+            return pd.DataFrame({"n": [len(self.rows)]})
+        return self.rows.copy()
+
+
+def test_tapvizier_quoted_table_names_are_found_and_selected_from():
+    tap = _QuotedSchemaTAP()
+    d = acq.discover_line_table("orion_kl_hifi", "J/ApJ/787/112/", query_fn=tap)
+    assert d.status == "OK" and d.table == "J/ApJ/787/112/table2"     # unquoted for downstream use
+    assert d.roles["freq"] == "Freq" and d.roles["ident"] == "Species"
+    assert acq.tables_like_adql("J/ApJ/787/112/").count("LIKE '%") == 1
+    assert d.queries[0]["adql"] == acq.tables_like_adql("J/ApJ/787/112/")
+    assert "LIKE '%J/ApJ/787/112/%'" in d.queries[0]["adql"]          # LEADING %
+    assert not d.errors and d.fallback == {}
+    df = acq.fetch_line_table(d, query_fn=tap)
+    assert len(df) == 500 and df["unidentified"].sum() == 300
+    assert any('FROM "J/ApJ/787/112/table2"' in c for c in tap.calls)
+
+
+class _FailingTAP:
+    def __init__(self, message: str):
+        self.message, self.calls = message, []
+
+    def __call__(self, adql: str):
+        self.calls.append(adql)
+        raise RuntimeError(self.message)
+
+
+def test_a_failed_query_records_its_adql_and_its_error_text():
+    msg = "DALServiceError: 503 Server Error: Service Unavailable for url: .../TAPVizieR/tap/sync"
+    tap = _FailingTAP(msg)
+    d = acq.discover_line_table("orion_kl_hifi", "J/ApJ/787/112/", query_fn=tap,
+                                fallback_terms_all=["unidentified"],
+                                fallback_terms_any=["Orion", "line survey"])
+    assert d.status == "QUERY_FAILED"
+    assert len(d.errors) == 2                                 # the id search and the fallback
+    first = d.errors[0]
+    assert first["adql"] == acq.tables_like_adql("J/ApJ/787/112/") and msg in first["error"]
+    assert d.fallback["status"] == "QUERY_FAILED" and msg in d.fallback["error"]
+    assert "description LIKE '%unidentified%'" in d.fallback["adql"]
+
+
+def test_description_fallback_records_every_table_when_the_asserted_id_is_absent():
+    tables = pd.DataFrame({"table_name": ['"J/ApJS/177/275/table1"', '"J/other/1/2/ulines"'],
+                           "description": ["Unidentified lines, IRC+10216 line survey",
+                                           "Unidentified features"]})
+
+    def tap(adql: str) -> pd.DataFrame:
+        if "TAP_SCHEMA.tables" not in adql:
+            raise AssertionError(adql)
+        return tables.copy() if "description LIKE" in adql else tables.iloc[:0].copy()
+
+    d = acq.discover_line_table("irc10216_he2008", "J/ApJS/177/275/", query_fn=tap,
+                                fallback_terms_all=["unidentified"],
+                                fallback_terms_any=["IRC+10216", "line survey"])
+    assert d.status == "QUERY_RETURNED_ZERO_ROWS" and d.table is None
+    fb = d.fallback
+    adql = fb["adql"]
+    assert adql.count("LIKE '%") == adql.count("LIKE '")       # every LIKE has a leading %
+    for w in ("%unidentified%", "%Unidentified%", "%IRC+10216%", "%line survey%"):
+        assert f"LIKE '{w}'" in adql, w
+    assert " AND " in adql                                     # 'unidentified' AND (Orion | survey)
+    assert fb["n_tables"] == 2
+    assert [t["table_name"] for t in fb["tables"]] == ["J/ApJS/177/275/table1",
+                                                       "J/other/1/2/ulines"]
+    # diagnostic only: nothing is selected from the fallback automatically
+    assert d.table is None and d.roles == {}
+
+
 def test_column_resolution_frequency_scale_and_unidentified_flag():
     cols = pd.DataFrame({"column_name": ["recno", "Freq", "e_Freq", "Species", "TA", "Trans"],
                          "unit": ["", "GHz", "MHz", "", "K", ""], "description": [""] * 6})
@@ -533,8 +707,15 @@ def test_run_with_dead_archives_is_no_data_reached(tmp_path):
     a = json.loads((out / "acquire.json").read_text())
     assert a["acquisition"]["any_query_failed"] and a["n_catalogue_lines"] == 0
     assert all(v["status"] == "QUERY_FAILED" for v in a["sources"].values())
+    # a bare QUERY_FAILED is undiagnosable: every failure carries its ADQL and error
+    for v in a["sources"].values():
+        assert v["errors"], v
+        assert "TAP_SCHEMA.tables" in v["errors"][0]["adql"] and "LIKE '%" in v["errors"][0]["adql"]
+        assert "403" in v["errors"][0]["error"]
+        assert v["fallback"]["status"] == "QUERY_FAILED" and "403" in v["fallback"]["error"]
     s = json.loads((out / "summary.json").read_text())
     assert s["n_ulines_total"] == 0 and any("QUERY_FAILED" in d for d in s["degraded"])
+    assert any("403" in d for d in s["degraded"])              # the reason, not just the status
     assert pd.read_csv(out / "candidates.csv").empty
     assert "says nothing about the sky" in s["note"]
 
@@ -557,7 +738,8 @@ def test_probe_reports_inventory_and_frame_hint(tmp_path):
     assert inv["NF3"]["jpl"] == ["NF3"] and inv["NF3"]["predictable"]
     assert inv["CHF3"]["jpl"] == [] and inv["CHF3"]["cdms"] == ["CHF3, v=0"] and inv["CHF3"]["predictable"]
     assert inv["CH3Cl"]["jpl"] == ["CH3Cl-35"] and inv["CH3Cl"]["group"] == "baseline"
-    assert inv["SO2F2"] == {"group": "targets", "jpl": [], "cdms": [], "predictable": False}
+    assert inv["SO2F2"] == {"group": "targets", "jpl": [], "cdms": [], "predictable": False,
+                            "jpl_near_miss_names": [], "cdms_near_miss_names": []}
     v = rep["vizier"]["orion_kl_hifi"]
     assert v["status"] == "OK" and v["table"] == "J/ApJ/787/112/table2"
     assert v["roles"]["freq"] == "Freq" and v["units"]["freq"] == "GHz"
@@ -576,8 +758,14 @@ def test_acquire_screen_assess_end_to_end_with_scripted_archives(tmp_path):
     a = stage_acquire(conf, out, fetch_fn=web, query_fn=tap)
     assert a["species"]["NF3"]["jpl"]["n_lines"] == 12
     assert a["species"]["CHF3"]["cdms"]["n_lines"] == 2
-    assert a["species"]["CHF3"]["jpl"] == {"entries": [], "n_lines": 0}    # JPL had no CHF3
+    assert a["species"]["CHF3"]["jpl"]["entries"] == []                    # JPL had no CHF3
+    assert a["species"]["CHF3"]["jpl"]["n_lines"] == 0
     assert a["species"]["CF2Cl2"]["jpl"]["entries"][0]["status"] == "QUERY_RETURNED_ZERO_ROWS"
+    # a species that matched nothing still names the catalogue's own spellings
+    assert a["species"]["CF2"]["jpl"]["entries"] == []
+    assert a["species"]["CF2"]["jpl"]["near_miss_names"] == ["CF2Cl2-fake"]
+    assert a["species"]["CH3Cl"]["jpl"]["matched_names"][0]["name"] == "CH3Cl-35"
+    assert a["jpl"]["unparsed_sample"] == ["not a directory line"]
     src = a["sources"]["orion_kl_hifi"]
     assert src["status"] == "OK" and src["freq_scale"] == "unit:GHz"
     assert src["n_unidentified"] == 300 and src["n_lines"] == 500 and src["has_intensity"]
@@ -656,6 +844,13 @@ def test_config_carries_every_species_source_and_threshold():
     for name, s in conf["sources"].items():
         assert s["vizier_like"].startswith("J/") and "v_lsr_km_s" in s and s["fwhm_km_s"] > 0, name
         assert s["frequency_frame"] in ("rest", "sky")
+        # every asserted catalogue id carries a DESCRIPTION fallback, so an id
+        # that is absent from TAP_SCHEMA names the real catalogue next run
+        assert "unidentified" in s["fallback_description_all"], name
+        assert "line survey" in s["fallback_description_any"], name
+    assert conf["archives"]["tap_retries"] >= 3
+    txt = Path("config/uline.yaml").read_text()
+    assert "verify:" in txt and "NOT yet been confirmed against TAP_SCHEMA" in txt
     assert conf["sources"]["orion_kl_hifi"]["v_lsr_km_s"] == 9.0
     assert conf["sources"]["irc10216_he2008"]["v_lsr_km_s"] == -26.0
     m = conf["match"]

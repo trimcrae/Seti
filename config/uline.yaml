@@ -9,8 +9,15 @@
 # of chemistry, not astrochemistry.  CH3Cl (detected, Fayolle+2017) and CH3F
 # are the natural organohalogen baseline.
 #
-# Species are found in the archives by NAME REGEX at runtime (the probe stage
-# reports which regex hit which entry); no catalogue tag is hard-coded.
+# Species are found in the archives by NORMALISED FORMULA at runtime: the
+# catalogue's own name and the species formula are both case-folded and
+# stripped of everything that is not a letter or a digit, and are then compared
+# directly, after a leading isotope mass, and by atom counts ("CH3-35Cl",
+# "CH3Cl, v=0", "H3C-Cl" and "CH3CL" all reduce to the same thing).  The
+# `patterns:` regexes below are an ADDITIONAL route, never the only one, and
+# every entry whose normalised name merely CONTAINS the formula is reported as
+# a `near_miss_names` entry so a miss names the catalogue's real spelling.
+# No catalogue tag is hard-coded.
 
 archives:
   jpl_catdir_url: "https://spec.jpl.nasa.gov/ftp/pub/catalog/catdir.cat"
@@ -30,6 +37,10 @@ archives:
   prefer_line_list: ["cdms", "jpl", "predicted"]
   fetch_retries: 3
   fetch_timeout_s: 180
+  # TAPVizieR returned 503 on every attempt in run 34787988880 (both sources
+  # QUERY_FAILED); the retry budget is separate from the HTTP one because a
+  # 503 there is transient load, not a dead endpoint.
+  tap_retries: 5
   max_rows: 200000
   # Also list any VizieR table whose description mentions this word (recorded
   # in probe.json as further U-line inventories; screened only once they have
@@ -129,6 +140,15 @@ sources:
     v_lsr_uncertainty_km_s: 4.0
     contaminant_tex_k: 150.0
     enabled: true
+    # Fallback when J/ApJ/787/112 is absent from TAP_SCHEMA (run 34787988880
+    # never got an answer at all): a DESCRIPTION search, recorded in full so
+    # the next dispatch can be pointed at the real catalogue.  NOTHING is
+    # selected from it automatically — a table found this way has to be
+    # asserted here as `vizier_like` with its own verify note first.
+    # verify: the ApJ 787,112 VizieR id is asserted from the published paper
+    # and has NOT yet been confirmed against TAP_SCHEMA.
+    fallback_description_all: ["unidentified"]
+    fallback_description_any: ["Orion", "line survey"]
   irc10216_he2008:
     label: "IRC+10216, ARO 12 m + SMT 2 mm / 1.3 mm line survey (He+2008, ApJS 177, 275)"
     vizier_like: "J/ApJS/177/275/"
@@ -138,6 +158,10 @@ sources:
     v_lsr_uncertainty_km_s: 0.0
     contaminant_tex_k: 50.0
     enabled: true
+    # verify: the ApJS 177,275 VizieR id is asserted from the published paper
+    # and has NOT yet been confirmed against TAP_SCHEMA.
+    fallback_description_all: ["unidentified"]
+    fallback_description_any: ["IRC+10216", "line survey"]
 
 match:
   tex_grid_k: [10, 30, 50, 100, 150, 200]

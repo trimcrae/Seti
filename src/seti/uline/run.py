@@ -44,8 +44,6 @@ from . import acquire as A
 from .lines import (
     CATDIR_TEMPS,
     Entry,
-    count_unparsed_catdir,
-    parse_catdir,
     rescale_lgint,
     symmetric_top_lines,
 )
@@ -168,12 +166,13 @@ def _jpl_inventory(conf: dict, *, fetch_fn=None, log: A.AcquisitionLog) -> tuple
                         retries=int(arc.get("fetch_retries", 3)),
                         timeout=float(arc.get("fetch_timeout_s", 180)), log=log, stage="jpl_catdir")
     if text is None:
-        return {}, {"status": A.STATUS_FAILED, "url": arc["jpl_catdir_url"], "n_entries": 0}
-    inv = A.jpl_inventory(text, conf.get("species") or {})
-    n_entries = len(parse_catdir(text))
-    rep = {"status": A.STATUS_OK if n_entries else A.STATUS_ZERO, "url": arc["jpl_catdir_url"],
-           "n_entries": n_entries, "n_unparsed_lines": count_unparsed_catdir(text),
-           "species": {sp: [e.as_dict() for e in ents] for sp, ents in inv.items()}}
+        return {}, {"status": A.STATUS_FAILED, "url": arc["jpl_catdir_url"], "n_entries": 0,
+                    "n_unparsed_lines": 0, "unparsed_sample": [], "matched_names": {},
+                    "near_miss_names": {}}
+    inv, rep = A.jpl_inventory(text, conf.get("species") or {})
+    rep["status"] = A.STATUS_OK if rep["n_entries"] else A.STATUS_ZERO
+    rep["url"] = arc["jpl_catdir_url"]
+    rep["species"] = {sp: [e.as_dict() for e in ents] for sp, ents in inv.items()}
     return inv, rep
 
 
@@ -192,30 +191,48 @@ def _cdms_inventory(conf: dict, *, fetch_fn=None, log: A.AcquisitionLog) -> tupl
     return inv, rep
 
 
+def _tap_query_fn(conf: dict, query_fn=None):
+    """The configured TAP endpoint and retry budget (tests inject ``query_fn``)."""
+    if query_fn is not None:
+        return query_fn
+    arc = conf.get("archives") or {}
+    url = str(arc.get("vizier_tap") or A.VIZIER_TAP)
+    retries = int(arc.get("tap_retries", 5))
+    return lambda adql: A.tap_query(adql, url=url, retries=retries)
+
+
+def _discover(conf: dict, name: str, spec: dict, *, query_fn, log, cols) -> A.LineTableDiscovery:
+    return A.discover_line_table(
+        name, spec["vizier_like"], query_fn=query_fn, log=log, column_patterns=cols,
+        fallback_terms_all=spec.get("fallback_description_all")
+        or [conf["archives"].get("discover_description_word") or "nidentified"],
+        fallback_terms_any=spec.get("fallback_description_any") or [])
+
+
 # ---------------------------------------------------------------------------
 # probe
 # ---------------------------------------------------------------------------
 def stage_probe(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, sources=None,
                 log: A.AcquisitionLog | None = None) -> dict:
     log = log or A.AcquisitionLog(prefix="uline/probe")
-    query_fn = query_fn or A.tap_query
+    query_fn = _tap_query_fn(conf, query_fn)
     _, jpl = _jpl_inventory(conf, fetch_fn=fetch_fn, log=log)
     _, cdms = _cdms_inventory(conf, fetch_fn=fetch_fn, log=log)
     cols = _column_patterns(conf)
     vizier = {}
     for name, spec in _enabled_sources(conf, sources).items():
-        d = A.discover_line_table(name, spec["vizier_like"], query_fn=query_fn, log=log,
-                                  column_patterns=cols)
+        d = _discover(conf, name, spec, query_fn=query_fn, log=log, cols=cols)
         vizier[name] = d.as_dict()
     word = conf["archives"].get("discover_description_word")
     discovered = []
     if word:
+        adql = A.tables_described_adql([str(word)], [])
         try:
             df = A.list_tables_described(str(word), query_fn=query_fn)
-            log.record("tables_described", str(word), rows=int(len(df)))
+            log.record("tables_described", str(word), rows=int(len(df)), extra={"adql": adql})
             discovered = df.to_dict(orient="records")
         except Exception as exc:                              # noqa: BLE001
-            log.record("tables_described", str(word), error=repr(exc))
+            log.record("tables_described", str(word), error=repr(exc), extra={"adql": adql})
     predicted = {sp: {k: v for k, v in blk.items()}
                  for sp, blk in (conf.get("predicted") or {}).items() if sp != "error_model"}
     inventory = {}
@@ -225,6 +242,8 @@ def stage_probe(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, sources=
         inventory[sp] = {"group": _species_group(conf, sp),
                          "jpl": [e["name"] for e in jpl.get("species", {}).get(sp, [])],
                          "cdms": [e["name"] for e in cdms.get("species", {}).get(sp, [])],
+                         "jpl_near_miss_names": (jpl.get("near_miss_names") or {}).get(sp, []),
+                         "cdms_near_miss_names": (cdms.get("near_miss_names") or {}).get(sp, []),
                          "predictable": sp in predicted}
     rep = {"stage": "probe", "generated_utc": _now(), "jpl": jpl, "cdms": cdms,
            "vizier": vizier, "discovered_unidentified_tables": discovered,
@@ -242,7 +261,7 @@ def stage_probe(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, sources=
 def stage_acquire(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, sources=None,
                   log: A.AcquisitionLog | None = None) -> dict:
     log = log or A.AcquisitionLog()
-    query_fn = query_fn or A.tap_query
+    query_fn = _tap_query_fn(conf, query_fn)
     arc = conf["archives"]
     data = out / "data"
     data.mkdir(parents=True, exist_ok=True)
@@ -252,15 +271,20 @@ def stage_acquire(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, source
     entries: dict[str, dict] = {}
     per_species: dict[str, dict] = {}
     frames = []
-    for db, inv, tmpl in (("jpl", jpl_inv, arc["jpl_cat_url"]),
-                          ("cdms", cdms_inv, arc["cdms_cat_url"])):
+    for db, inv, tmpl, dbrep in (("jpl", jpl_inv, arc["jpl_cat_url"], jpl_rep),
+                                 ("cdms", cdms_inv, arc["cdms_cat_url"], cdms_rep)):
         for sp, ents in inv.items():
             table, reps = A.fetch_cats(ents, tmpl, fetch_fn=fetch_fn, log=log,
                                        retries=int(arc.get("fetch_retries", 3)), database=db)
             for e in ents:
                 entries[f"{db}:{e.tag}"] = {**e.as_dict(), "species": sp}
             rec = per_species.setdefault(sp, {"group": _species_group(conf, sp)})
-            rec[db] = {"entries": reps, "n_lines": int(len(table))}
+            # near_miss_names: catalogue entries whose normalised name merely
+            # CONTAINS the formula.  When `entries` is empty this is what says
+            # how the archive actually spells the species.
+            rec[db] = {"entries": reps, "n_lines": int(len(table)),
+                       "matched_names": (dbrep.get("matched_names") or {}).get(sp, []),
+                       "near_miss_names": (dbrep.get("near_miss_names") or {}).get(sp, [])}
             if len(table):
                 table["species"] = sp
                 frames.append(table)
@@ -272,10 +296,11 @@ def stage_acquire(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, source
     per_source: dict[str, dict] = {}
     cols = _column_patterns(conf)
     for name, spec in _enabled_sources(conf, sources).items():
-        d = A.discover_line_table(name, spec["vizier_like"], query_fn=query_fn, log=log,
-                                  column_patterns=cols)
+        d = _discover(conf, name, spec, query_fn=query_fn, log=log, cols=cols)
         rec = {"table": d.table, "roles": d.roles, "units": d.units, "frame_hint": d.frame_hint,
-               "discovery_status": d.status, "n_rows_catalogue": d.n_rows}
+               "discovery_status": d.status, "n_rows_catalogue": d.n_rows,
+               "queries": d.queries, "errors": d.errors, "fallback": d.fallback,
+               "scoreboard": d.scoreboard}
         if d.table is None:
             rec.update({"status": d.status, "n_lines": 0, "n_unidentified": 0})
             per_source[name] = rec
@@ -299,9 +324,10 @@ def stage_acquire(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, source
                     "ident_values_sample": sorted(df["ident"].astype(str).unique().tolist())[:30]})
         per_source[name] = rec
 
+    drop = ("species", "matched_names", "near_miss_names")     # reported per species instead
     rep = {"stage": "acquire", "generated_utc": _now(),
-           "jpl": {k: v for k, v in jpl_rep.items() if k != "species"},
-           "cdms": {k: v for k, v in cdms_rep.items() if k != "species"},
+           "jpl": {k: v for k, v in jpl_rep.items() if k not in drop},
+           "cdms": {k: v for k, v in cdms_rep.items() if k not in drop},
            "species": per_species, "sources": per_source,
            "n_catalogue_lines": int(len(lines)), "acquisition": log.as_dict()}
     _write(out / "acquire.json", rep)
@@ -586,7 +612,13 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
     degraded = []
     for k, v in (acq.get("sources") or {}).items():
         if v.get("status") != A.STATUS_OK:
-            degraded.append(f"source {k}: {v.get('status')}")
+            errs = [str(e.get("error", ""))[:200] for e in (v.get("errors") or [])]
+            why = f" — {errs[0]}" if errs else ""
+            fb = v.get("fallback") or {}
+            if fb.get("n_tables"):
+                why += (f" — description fallback found {fb['n_tables']} table(s): "
+                        + ", ".join(t["table_name"] for t in fb.get("tables", [])[:5]))
+            degraded.append(f"source {k}: {v.get('status')}{why}")
     for k, v in sources.items():
         if v.get("status") != "OK":
             degraded.append(f"source {k}: {v.get('status')}")

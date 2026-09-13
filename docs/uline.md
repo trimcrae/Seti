@@ -65,6 +65,51 @@ which test the *natural* inventory of CDMS/JPL and stop.
 | line lists | CDMS classic roots (entries, predictions/catalog, partition_function) | same `.cat` format; extra Q temperatures | entries page is script-rendered; roots are mined by regex for whatever renders |
 | predictor | `config/uline.yaml` `predicted:` | symmetric-top constants for CHF₃, CF₃Cl, CF₃CN, NF₃ | placeholders, every one `verify: true` |
 
+### 3.1 How a species is found in a catalogue
+
+`catdir.cat` is **not** a fixed-width file.  The name may carry spaces, commas
+and `+` (`H2O v2,2v2,v`, `N-atom-D-st`), the version column may read `1`, `2*`,
+`1␣` or be absent, and extra trailing columns occur.  The parser therefore
+reads each line **by field position from the right** — the trailing run of
+decimal tokens is the log-Q grid, the integer to its left is the line count,
+everything between the tag and that integer is the name — and any line it still
+cannot read is counted and reproduced verbatim (first 20) in
+`acquire.json → jpl.unparsed_sample`.  The rigid regex it replaced dropped
+171 of 403 lines on run 34787988880 (16 of 32 on the head the necrofrontier
+probe captured), which is why every target species came back empty.
+
+Species are then matched by **normalised formula**, not by anchored regex:
+both the catalogue name and the target formula are case-folded and stripped of
+everything that is not a letter or a digit, and a match is declared when the
+two are equal (`normalised`), equal after a leading isotope mass
+(`isotopologue`: `13CH3OH` → `CH3OH`), or have the same atom counts
+(`atom_counts`: `HCCCN` = `HC3N`, `SiCC` = `SiC2`, `F2CO` = `CF2O` = `COF2`,
+`CH3-35Cl, v=0` = `CH3Cl`).  Charge is kept, so `CF+` never matches `CF`, and
+`CF2Cl2` never matches `CF2`.  The `patterns:` regexes in `config/uline.yaml`
+remain an **additional** route, never the only one.  Every entry whose
+normalised name merely *contains* the formula is recorded per species as
+`near_miss_names`, so a species that still matches nothing tells the next
+dispatch the archive's actual spelling instead of leaving it blind.
+
+### 3.2 VizieR TAP discovery
+
+TAPVizieR stores `table_name` **with its literal double quotes**, so every
+`LIKE` opens with a leading `%` (`LIKE '%J/ApJ/787/112/%'`), `TAP_SCHEMA.columns`
+is queried for both the bare and the quoted spelling, and the table is quoted
+in `FROM`.  Every ADQL sent is recorded with its row count, and every failure
+with its **full error text**, in `acquire.json → sources.<name>.queries` /
+`.errors`; run 34787988880 recorded a bare `QUERY_FAILED` and was
+undiagnosable for it (the cause was a TAPVizieR 503).
+
+When an asserted catalogue id returns no table, or none with a usable
+frequency + identification pair, a **description search** runs
+(`description LIKE '%unidentified%'` AND one of `'%Orion%'` / `'%IRC+10216%'` /
+`'%line survey%'`, case variants OR-ed) and **every** table it returns is
+recorded in `sources.<name>.fallback`.  That is diagnostic only: no table is
+ever selected from it automatically — a candidate found this way has to be
+asserted in `config/uline.yaml` as a `vizier_like` with its own `verify` note
+before it is used.
+
 Not yet reachable as tables (listed in S54, deferred): QUIJOTE TMC-1 (1,591
 features, 188 unidentified), GOTHAM, ALCHEMI, PILS, ReMoCA, PRIMOS.  The
 description-word discovery in the probe stage is how they enter: a table that

@@ -106,6 +106,9 @@ ADS_API = "https://api.adsabs.harvard.edu/v1/search/query"
 OPENALEX_API = "https://api.openalex.org/works"
 ADS_TOKEN = os.environ.get("ADS_TOKEN") or os.environ.get("ADS_API_TOKEN") or ""
 MAX_RESULTS = 60
+# Optional comma-separated subset of groups to fetch (run 3 reached its
+# deadline after g12; run 4 fetches g13-g15 only).
+ONLY_GROUPS = {g for g in os.environ.get("NECROFRONTIER_GROUPS", "").split(",") if g}
 # The first run (2026-09-13, run 34754534065) got HTTP 429 from the arXiv API
 # on 64 of 65 requests at a 3 s pace and delivered nothing.  Three defences:
 # a slower base pace; a Retry-After-aware exponential backoff (30 s, 90 s,
@@ -219,14 +222,14 @@ GROUPS: dict[str, dict] = {
             "isotope_stellar_anomaly": 'abs:"isotope ratio" AND abs:(dwarf OR "main sequence") AND abs:(magnesium OR lithium OR titanium)',
         },
         "by_id": {
-            "stephan2024_pgd_sic": ("2308.10186", "Presolar Grain Database", "low"),
             "catling2025_deuterium": ("2411.18595", "deuterium", "high"),
             "ellery2025_probe_technosig": ("2510.00082", "self-replicating", "medium"),
-            "lin2010_qingzhen_sn": ("0911.3868", "Qingzhen", "low"),
         },
         "by_title": {
             "pgd_sic": "The Presolar Grain Database. I. Silicon Carbide",
             "ww1980": "Nuclear waste spectrum as evidence of technological extraterrestrial civilizations",
+            # run 3: the asserted ids for these two resolved to unrelated papers
+            "lin2010_qingzhen": "Isotopic analysis of nanoSIMS-identified presolar SiC and Si3N4 grains from the Qingzhen EH3 chondrite",
         },
         "interpretation": ("A decoy-free hit that pairs isotope purity or isotope separation with a "
                            "technosignature reading is prior art for S46.  Supernova-grain papers are "
@@ -254,19 +257,19 @@ GROUPS: dict[str, dict] = {
             "interferometric_excess_origin": 'abs:"near-infrared excess" AND abs:interferomet AND abs:(origin OR nature)',
         },
         "by_id": {
-            "absil2013_fluor": ("1307.2488", "circumstellar", "medium"),
+            "absil2013_fluor": ("1307.2488", "First statistics", "high"),
             "ertel2014_pionier": ("1409.6143", "PIONIER", "medium"),
             "ertel2025_review": ("2504.00295", "hot exozodiacal", "medium"),
             "kirchschlager2017": ("1701.07271", "hot exozodiacal", "medium"),
             "kirchschlager2020_kappa_tuc": ("2009.02334", "L band", "medium"),
             "stuber2026_kappa_tuc_companion": ("2512.03209", "Tuc", "medium"),
-            "rieke2016_trapping": ("1511.07995", "magnetic", "low"),
             "hephaistos1": ("2201.11123", "Hephaistos", "high"),
             "dyson_hr_2026": ("2602.23270", "Dyson", "low"),
         },
         "by_title": {
             "ertel2016_variability": "A near-infrared interferometric survey of debris-disc stars. V. PIONIER search for variability",
             "marshall2016_polarimetry": "Polarization measurements of hot dust stars and the local interstellar medium",
+            "rieke2016_trapping": "Magnetic Grain Trapping and the Hot Excesses Around Early-type Stars",
         },
         "interpretation": ("Expected: the exozodi literature fires 'hot dust' targets with nanograin decoys; "
                            "a decoy-free hit that names a swarm or technosignature for this population is "
@@ -296,10 +299,10 @@ GROUPS: dict[str, dict] = {
         "by_id": {
             "spherex_pipeline_2025": ("2511.15823", "SPHEREx", "medium"),
             "euclid_q1_overview": ("2503.15302", "Euclid", "medium"),
-            "vides2019_wfirst_laser": ("1904.08404", "laser", "low"),
         },
         "by_title": {
             "spherex_mission": "Cosmology with the SPHEREX All-Sky Spectral Survey",
+            "vides2019_wfirst_laser": "Sensitivity of the WFIRST Coronagraph to Extrasolar Laser Beacons",
         },
         "interpretation": ("Any decoy-free hit pairing SPHEREx/Euclid with a laser or technosignature "
                            "search on stars is prior art for S48/S49.  Vides+2019 and NIROSETI are the "
@@ -329,13 +332,13 @@ GROUPS: dict[str, dict] = {
         "by_id": {
             "dasch_dr7_paper": ("2501.12977", "DASCH", "high"),
             "schaefer2016_kic8462852": ("1601.03256", "KIC 8462852", "medium"),
-            "lund2016_dasch": ("1605.02760", "DASCH", "medium"),
-            "hippke2016_dasch": ("1601.07143", "KIC 8462852", "medium"),
+            "lund2016_dasch": ("1605.02760", "F-star Brightness", "high"),
             "applause_2024": ("2404.17355", "APPLAUSE", "medium"),
             "plate_sensitivity_2026": ("2604.16470", "plate", "low"),
         },
         "by_title": {
-            "dasch_dr7_title": "DASCH DR7: Bringing 100+ years of photographic data into the 21st century",
+            "dasch_dr7_title": "DASCH: Bringing 100+ Years of Photographic Data into the 21st Century and Beyond",
+            "hippke2016_plates": "A statistical analysis of the accuracy of the digitized magnitudes of photometric plates on the time scale of decades",
         },
         "interpretation": ("Expected hits are the KIC 8462852 plate debate (decoy 'tabby') and the "
                            "DR7 description.  A decoy-free blind fade / cessation search on DR7 is prior "
@@ -368,7 +371,7 @@ GROUPS: dict[str, dict] = {
             "pewdd_2024": ("2409.16046", "White Dwarf", "medium"),
             "kaiser2024_lithium": ("2412.01878", "lithium", "medium"),
             "klein2021_beryllium": ("2102.01834", "beryllium", "medium"),
-            "xu2013_pg1225": ("1302.4799", "white dwarf", "medium"),
+            "xu2013_pg1225": ("1302.4799", "Beyond-Primitive", "high"),
             "putirka_xu2021": ("2111.03124", "exoplanet", "medium"),
             "buchan2022_pressure": ("2111.08779", "white dwarf", "medium"),
             "farihi2026_pure_metal": ("2601.16253", "white dwarf", "low"),
@@ -406,17 +409,17 @@ GROUPS: dict[str, dict] = {
         "by_id": {
             "moor2021_edd": ("2103.00568", "extreme debris", "high"),
             "su2026_edd_review": ("2607.06684", "Extreme Debris", "medium"),
-            "kennedy_wyatt2013": ("1305.6607", "warm dust", "medium"),
+            "kennedy_wyatt2013": ("1305.6607", "exo-Zodi luminosity function", "high"),
             "stevens2016_selfdestruct": ("1507.08530", "self-destructive", "high"),
             "lacki2025_ground_to_dust": ("2504.21151", "Dust", "high"),
             "lacki2026_dust_to_dust": ("2606.08373", "Dust", "medium"),
             "weinberger2011_bd20307": ("1010.6218", "BD+20 307", "medium"),
-            "lisse2009_hd172555": ("0906.2019", "HD 172555", "low"),
             "hd15407a_jwst_2026": ("2607.21948", "Fading", "low"),
         },
         "by_title": {
             "wyatt2007_transient": "Transience of hot dust around sun-like stars",
             "melis2012_disappearing": "Rapid disappearance of a warm, dusty circumstellar disk",
+            "lisse2009_hd172555": "Abundant Circumstellar Silica Dust and SiO Gas Created by a Giant Hypervelocity Collision in the ~12 Myr HD172555 System",
         },
         "interpretation": ("Stevens+2016 and Lacki 2025/2026 name the channel and will fire; both "
                            "decline a search.  A decoy-free hit with 'mature' and 'mineralogy' boosters "
@@ -521,12 +524,12 @@ GROUPS: dict[str, dict] = {
         "by_id": {
             "schmidt_frank2018": ("1804.03748", "Silurian", "high"),
             "wright2018_prior_species": ("1704.07263", "Prior Indigenous", "high"),
-            "wallner2021_science": ("2105.13800", "60Fe", "low"),
             "fields2020_devonian_sn": ("2007.01887", "Devonian", "medium"),
         },
         "by_title": {
             "wallner2016_60fe": "Recent near-Earth supernovae probed by global deposition of interstellar radioactive 60Fe",
             "rose2015_scp": "Spheroidal Carbonaceous Fly Ash Particles Provide a Globally Synchronous Stratigraphic Marker for the Anthropocene",
+            "wallner2021_science": "60Fe and 244Pu deposited on Earth constrain the r-process yields of recent nearby supernovae",
         },
         "interpretation": ("Schmidt & Frank 2018 and Wright 2018 are the framing papers and will fire; "
                            "neither proposes the fission vector or a database test.  A decoy-free hit "
@@ -559,7 +562,7 @@ GROUPS: dict[str, dict] = {
             "tusay2024_trappist_ppo": ("2409.08313", "TRAPPIST-1", "medium"),
             "davenport2022_ellipsoid": ("2206.04092", "SETI Ellipsoid", "medium"),
             "hippke2020_network_i": ("2009.01866", "communication network", "low"),
-            "forgan2019_transit_network": ("1707.03730", "communication network", "low"),
+            "forgan2019_transit_network": ("1707.03730", "Communications Network", "high"),
             "kerins2021_mutual": ("2010.04089", "Mutual detectability", "low"),
         },
         "by_title": {
@@ -603,7 +606,7 @@ GROUPS: dict[str, dict] = {
             "hon2025_bd05": ("2501.05431", "disintegrating", "medium"),
         },
         "by_title": {
-            "kaye_aigrain2025": "Kepler and K2 planets re-observed by TESS",
+            "kaye_aigrain2025": "Transit timing variations of Kepler and K2 planets observed by TESS",
         },
         "interpretation": ("Wang & Espinoza 2024 (within-TESS TDV) and Zuckerman 2023 (Kepler single-transit "
                            "anomalies) are the nearest executed searches and will fire.  A decoy-free "
@@ -634,7 +637,7 @@ GROUPS: dict[str, dict] = {
             "kang2025_untimely_variables": ("2511.22071", "unTimely", "high"),
             "onozato_ita2015": ("1501.05721", "brighten", "low"),
             "yso_decade_2025": ("2503.13971", "Young", "low"),
-            "ngc6447_turn_on": ("2602.21502", "NGC 6447", "low"),
+            "ngc6447_turn_on": ("2602.21502", "NGC6447", "high"),
             "contardo_hogg2024": ("2403.18941", "infrared excess", "medium"),
         },
         "by_title": {
@@ -1167,7 +1170,15 @@ def main(argv: list[str] | None = None) -> None:
     argv = sys.argv[1:] if argv is None else argv
     if "--scan-only" in argv:
         # Re-derive the check and the scan from whatever files exist (a run
-        # killed at its deadline leaves the fetched files but no scan).
+        # killed at its deadline leaves the fetched files but no scan).  The
+        # fetch record of that run is kept: run 3 overwrote summary.json with
+        # this process's empty STATUS and reported "0 / 0 fetches".
+        prev = OUT / "summary.json"
+        if prev.exists():
+            try:
+                STATUS.extend(json.loads(prev.read_text()).get("status") or [])
+            except Exception:  # noqa: BLE001
+                pass
         _finish()
         return
 
@@ -1176,6 +1187,8 @@ def main(argv: list[str] | None = None) -> None:
     signal.signal(signal.SIGTERM, _term)
     try:
         for group, spec in GROUPS.items():
+            if ONLY_GROUPS and group not in ONLY_GROUPS:
+                continue
             print(f"==== {group} ====")
             print("== named papers by id (title-checked; one id_list call per group) ==")
             for name, (aid, _, conf) in spec["by_id"].items():

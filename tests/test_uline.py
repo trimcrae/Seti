@@ -524,6 +524,7 @@ def test_run_with_dead_archives_is_no_data_reached(tmp_path):
     out = tmp_path / "uline"
     conf = load_uline_config()
     conf["match"]["n_trials"] = 50
+    conf["archives"]["fetch_retries"] = 1                    # no backoff sleeps in the suite
     rep = uline_run(conf, "all", out_dir=out, fetch_fn=_FakeWeb("fail"), query_fn=_FakeTAP("fail"))
     assert rep["verdict"] == "NO_DATA_REACHED" and rep["n_pattern_candidates"] == 0
     probe = json.loads((out / "probe.json").read_text())

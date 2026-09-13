@@ -172,7 +172,7 @@ REST: dict[str, dict] = {
     # ---- S54 ULINE: artificial molecules in the ISM ----
     "cdms_entries": {
         "url": "https://cdms.astro.uni-koeln.de/classic/entries/",
-        "expect": [r"(?i)CDMS", r"(?i)molecule|species|entries"],
+        "expect": [r"(?i)CDMS"] + ['\\bCH3F\\b', '\\bCHF3\\b', '\\bNF3\\b', '\\bCOF2\\b', '\\bSO2F2\\b', '\\bCH2F2\\b', '\\bCF3CN\\b', '\\bCF3Cl\\b', '\\bCF2Cl2\\b', '\\bCFCl3\\b', '\\bCHClF2\\b', '\\bCF2\\b', '\\bCH3Cl\\b'],
         "signatures": ["S54"],
         "why": "Cologne Database for Molecular Spectroscopy: which industrial species "
                "(NF3, CHF3, CH3F, CH2F2, CF3Cl, CF2Cl2, COF2, SO2F2, CF3CN) have "
@@ -180,10 +180,11 @@ REST: dict[str, dict] = {
     },
     "jpl_catdir": {
         "url": "https://spec.jpl.nasa.gov/ftp/pub/catalog/catdir.cat",
-        "expect": [r"(?i)CH3F|CHF3|NF3|COF2|CF3|SO2F2|CH2F2"],
+        "expect": ['\\bCH3F\\b', '\\bCHF3\\b', '\\bNF3\\b', '\\bCOF2\\b', '\\bSO2F2\\b', '\\bCH2F2\\b', '\\bCF3CN\\b', '\\bCF3Cl\\b', '\\bCF2Cl2\\b', '\\bCFCl3\\b', '\\bCHClF2\\b', '\\bCF2\\b', '\\bCH3Cl\\b'],
         "signatures": ["S54"],
-        "why": "JPL molecular spectroscopy catalogue directory: the species list, "
-               "greppable for the fluorinated industrial molecules.",
+        "why": "JPL molecular spectroscopy catalogue directory: the species list.  One "
+               "expectation per industrial species, so expect_hits IS the inventory of "
+               "which of them have a JPL line list (CH3Cl is the natural baseline).",
     },
     "splatalogue": {
         "url": "https://splatalogue.online/",
@@ -221,6 +222,13 @@ REST: dict[str, dict] = {
         "signatures": ["S55"],
         "why": "PDS Geosciences LRO directory: which Diviner volumes exist (the polar "
                "products live in one of the lrodlr_100x volumes).",
+    },
+    "diviner_rdr_volume_root": {
+        "url": "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/",
+        "expect": [r"(?i)lrodlr_100\d", r"(?i)lrodlr_1002|lrodlr_1003"],
+        "signatures": ["S55"],
+        "why": "Run 2: only the EDR and RDR datasets exist at the PDS node; the level-3/4 "
+               "polar maps must be a second volume of the RDR dataset.  List its volumes.",
     },
     "diviner_pds_data_dir": {
         "url": "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/data/",
@@ -281,6 +289,13 @@ REST: dict[str, dict] = {
         "why": "Run 1: /api/v1/samples served the single-page app, so the API path is "
                "unknown.  The app's env.js declares its API base URL; read it here.",
     },
+    "sgp_archive": {
+        "url": "https://archive.sgp-search.io/",
+        "expect": [r"(?i)sgp|sedimentary|csv|zip|download|archive"],
+        "signatures": ["S56"],
+        "why": "Run 2: the app's env.js names https://archive.sgp-search.io as the "
+               "REACT_APP_ARCHIVE_URL --- the bulk-download side of SGP.",
+    },
     "sgp_github": {
         "url": "https://api.github.com/search/repositories?q=sgp-search+in:name",
         "expect": [r"(?i)sgp"],
@@ -337,10 +352,12 @@ REST: dict[str, dict] = {
     },
     "sbn_dust_holdings": {
         "url": "https://sbn.psi.edu/pds/archive/dust.html",
-        "expect": [r"(?i)ulysses|cassini|galileo|dust"],
+        "expect": [r"(?i)ulysses", r"(?i)cassini", r"(?i)galileo", r"(?i)helios", r"(?i)new horizons",
+                   r'(?i)href="[^"]*uly[^"]*"', r'(?i)href="[^"]*cda[^"]*"'],
         "signatures": ["S58"],
-        "why": "SBN dust-archive listing: the authoritative index of in-situ dust datasets "
-               "(Ulysses, Galileo, Cassini CDA, Helios, New Horizons SDC).",
+        "why": "SBN dust-archive listing: the authoritative index of in-situ dust datasets.  "
+               "One expectation per mission and the two link patterns, so the record names "
+               "the real Ulysses resource path (run 1 and 2 guessed it wrong twice).",
     },
     # ---- S59 ARC: superflares above the spot-energy ceiling ----
     "vizier_tap_home": {
@@ -394,13 +411,13 @@ TAP: dict[str, dict] = {
     "vizier_flare_rotation_tables": {
         "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
         "adql": ("SELECT table_name, description FROM TAP_SCHEMA.tables "
-                 "WHERE table_name LIKE 'J/ApJS/241/29/%' OR table_name LIKE 'J/ApJS/211/24/%' "
-                 "OR table_name LIKE 'J/ApJS/253/35/%' OR table_name LIKE 'J/ApJ/935/143/%' "
-                 "OR table_name LIKE 'J/ApJS/225/15/%' OR table_name LIKE 'J/A+A/570/A128/%' "
-                 "OR table_name LIKE 'J/AJ/159/177/%' OR table_name LIKE 'J/MNRAS/467/4970/%' "
-                 "OR table_name LIKE 'J/A+A/555/A104/%' OR table_name LIKE 'J/A+A/608/A113/%' "
-                 "OR table_name LIKE 'J/A+A/651/A45/%' OR table_name LIKE 'J/ApJ/876/58/%' "
-                 "OR table_name LIKE 'J/ApJ/829/23/%' OR table_name LIKE 'J/AJ/159/60/%'"),
+                 "WHERE table_name LIKE '%J/ApJS/241/29/%' OR table_name LIKE '%J/ApJS/211/24/%' "
+                 "OR table_name LIKE '%J/ApJS/253/35/%' OR table_name LIKE '%J/ApJ/935/143/%' "
+                 "OR table_name LIKE '%J/ApJS/225/15/%' OR table_name LIKE '%J/A+A/570/A128/%' "
+                 "OR table_name LIKE '%J/AJ/159/177/%' OR table_name LIKE '%J/MNRAS/467/4970/%' "
+                 "OR table_name LIKE '%J/A+A/555/A104/%' OR table_name LIKE '%J/A+A/608/A113/%' "
+                 "OR table_name LIKE '%J/A+A/651/A45/%' OR table_name LIKE '%J/ApJ/876/58/%' "
+                 "OR table_name LIKE '%J/ApJ/829/23/%' OR table_name LIKE '%J/AJ/159/60/%'"),
         "expect": [r"J/ApJS/241/29", r"J/ApJS/211/24", r"J/A\+A/570/A128", r"J/A\+A/555/A104",
                    r"J/AJ/159/177", r"J/ApJS/225/15"],
         "signatures": ["S59", "S47", "S52", "S51"],
@@ -420,7 +437,7 @@ TAP: dict[str, dict] = {
     "vizier_search_polluted_wd": {
         "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
         "adql": ("SELECT table_name, description FROM TAP_SCHEMA.tables "
-                 "WHERE table_name LIKE 'J/A+A/691/A352%' "
+                 "WHERE table_name LIKE '%J/A+A/691/A352%' "
                  "OR description LIKE '%polluted%white dwarf%' "
                  "OR description LIKE '%DZ white dwarf%' OR description LIKE '%PEWDD%'"),
         "expect": [r"J/A\+A/691/A352", r"(?i)white dwarf"],
@@ -430,13 +447,31 @@ TAP: dict[str, dict] = {
     "vizier_moor2021_edd": {
         "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
         "adql": ("SELECT table_name, description FROM TAP_SCHEMA.tables "
-                 "WHERE table_name LIKE 'J/ApJ/910/27/%' OR table_name LIKE 'J/MNRAS/433/2334/%' "
-                 "OR table_name LIKE 'J/ApJS/225/15/%' OR table_name LIKE 'J/ApJ/805/77/%' "
+                 "WHERE table_name LIKE '%J/ApJ/910/27/%' OR table_name LIKE '%J/MNRAS/433/2334/%' "
+                 "OR table_name LIKE '%J/ApJS/225/15/%' OR table_name LIKE '%J/ApJ/805/77/%' "
                  "OR (description LIKE '%Moor%' AND description LIKE '%debris%')"),
         "expect": [r"J/ApJ/910/27|J/MNRAS/433/2334|J/ApJS/225/15|J/ApJ/805/77"],
         "signatures": ["S52"],
         "why": "Moór+2021 EDD table, Kennedy & Wyatt 2013 warm-dust LF, Cotten & Song 2016 "
                "census, Meng+2015 EDD photometry (run 1 found only the last, by description).",
+    },
+    "irsa_irs_enhanced_columns": {
+        "service": "https://irsa.ipac.caltech.edu/TAP",
+        "adql": ("SELECT column_name, datatype, description FROM TAP_SCHEMA.columns "
+                 "WHERE table_name = 'irs_enhv211'"),
+        "expect": [r"(?i)ra|wave|flux|aor|object"],
+        "signatures": ["S52", "S53"],
+        "why": "Run 2 found IRSA's 'IRS Enhanced Products' table (irs_enhv211): the "
+               "extracted Spitzer/IRS low-res spectra, reachable when cassis.sirtf.com is "
+               "not (it timed out from the runner in both runs).  Its columns decide "
+               "whether S53 can be built on it.",
+    },
+    "irsa_irs_enhanced_count": {
+        "service": "https://irsa.ipac.caltech.edu/TAP",
+        "adql": "SELECT COUNT(*) AS n FROM irs_enhv211",
+        "expect": [r"\"n\""],
+        "signatures": ["S52", "S53"],
+        "why": "How many IRS Enhanced spectra IRSA serves.",
     },
     "irsa_splices_rows": {
         "service": "https://irsa.ipac.caltech.edu/TAP",
@@ -466,8 +501,8 @@ TAP: dict[str, dict] = {
     "vizier_superflare_tables": {
         "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
         "adql": ("SELECT table_name, description FROM TAP_SCHEMA.tables "
-                 "WHERE table_name LIKE 'J/ApJ/876/58%' OR table_name LIKE 'J/ApJ/906/72%' "
-                 "OR table_name LIKE 'J/ApJS/253/35%' OR description LIKE '%superflare%'"),
+                 "WHERE table_name LIKE '%J/ApJ/876/58%' OR table_name LIKE '%J/ApJ/906/72%' "
+                 "OR table_name LIKE '%J/ApJS/253/35%' OR description LIKE '%superflare%'"),
         "expect": [r"(?i)superflare|J/ApJ/906/72|J/ApJ/876/58"],
         "signatures": ["S59"],
         "why": "Notsu+2019 / Okamoto+2021 / Tu+2021 superflare tables carrying per-star "
@@ -661,7 +696,7 @@ def _get(url: str, timeout: float) -> dict:
         body = resp.text or ""
         rec["bytes"] = len(body)
         rec["body"] = body
-        rec["head"] = body[:400]
+        rec["head"] = body[:2500]
     except Exception as exc:  # noqa: BLE001
         rec["status"] = None
         rec["error"] = f"{type(exc).__name__}: {exc}"[:300]

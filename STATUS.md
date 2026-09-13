@@ -118,7 +118,15 @@ Huang+2026 for S51, Lacki 2025/2026 for S52, and — new to us — "The Dyson
 Minds 2025 Workshop: SETI Around Black Holes" (arXiv:2604.21886) for the
 compact-object branch of S63. Seven asserted arXiv ids resolved to unrelated
 papers and were replaced by title searches; none is cited in the brief.
-`docs/necrofrontier.md` §5 carries the per-group table.** Build order (charter: novelty,
+`docs/necrofrontier.md` §5 carries the per-group table. Run 4 (groups 13–15,
+~12:35 PM ET, 40/67 fetches, half via OpenAlex) completed the set at 2,135
+abstracts: the starspot energy bound is established in the natural literature
+and never mined as an anomaly set (S59); pulsar-ring theory exists (Osmanov;
+Kayali+2025) with no executed search on any post-biological host (S63); the
+in-situ composition record (Stardust ISPE, Cassini CDA, the IMAP/IDEX
+instrument paper) has never been read for artificial outliers (S58). **All
+fifteen groups: unoccupied**, with Huang+2026 (S51) and the relay-network
+design papers (S60) as the nearest executed and proposed neighbours.** Build order (charter: novelty,
 then scale, never a null): S46 ISOTOPE → S51 SLAG-WD → S54 ULINE → S61
 IGNITION → S48/S49 SPARK → the rest as listed in `docs/necrofrontier.md` §4.
 

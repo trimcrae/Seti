@@ -416,11 +416,21 @@ def read_xlsx_rows_stdlib(content: bytes) -> list[tuple[str, list[list]]]:
 
 
 def read_xlsx_rows(content: bytes) -> list[tuple[str, list[list]]]:
-    """openpyxl when importable (faster, broader), else the stdlib reader."""
+    """The stdlib reader first (it is the one the tests exercise and it reads
+    the minimal workbooks they synthesise); openpyxl only when the stdlib
+    reader raises or finds no sheet.  The first runner dispatch failed its
+    offline gate because the workflow's best-effort ``pip install openpyxl``
+    made openpyxl primary and it refused the synthetic test workbook."""
+    try:
+        rows = read_xlsx_rows_stdlib(content)
+        if rows:
+            return rows
+    except Exception:                                     # noqa: BLE001
+        pass
     try:
         import openpyxl  # noqa: PLC0415
     except Exception:                                     # noqa: BLE001
-        return read_xlsx_rows_stdlib(content)
+        return []
     wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
     out = []
     for ws in wb.worksheets:

@@ -60,13 +60,26 @@ REST: dict[str, dict] = {
                "grains). The signature needs the per-grain delta29Si/delta30Si, 12C/13C, "
                "14N/15N, 26Al/27Al, 44Ti/48Ti columns as a bulk download.",
     },
-    "pgd_ieda_doi": {
-        "url": "https://doi.org/10.60520/IEDA/113206",
-        "expect": [r"(?i)presolar", r"(?i)silicon\s+carbide"],
+    "pgd_wustl_root_http": {
+        "url": "http://presolar.physics.wustl.edu/",
+        "expect": [r"(?i)presolar"],
         "signatures": ["S46"],
-        "why": "The IEDA/EarthChem DOI'd release of the SiC table (asserted from the ADS "
-               "record 2024ieda.data...96S; the DOI itself is a guess to be corrected "
-               "from the landing page if this returns NO_PRODUCT).",
+        "why": "Run 1: the https landing page timed out at connect.  Plain-http root of the "
+               "same host, to separate a TLS/port problem from a dead host.",
+    },
+    "pgd_ecl_search": {
+        "url": "https://ecl.earthchem.org/home.php",
+        "expect": [r"(?i)earthchem", r"(?i)library"],
+        "signatures": ["S46"],
+        "why": "EarthChem Library, where the 2024 SiC release is DOI'd (the DOI asserted in "
+               "run 1 was wrong: 'DOI Not Found').  The record must be found by title "
+               "search here, not guessed.",
+    },
+    "pgd_ads_record": {
+        "url": "https://ui.adsabs.harvard.edu/abs/2024ieda.data...96S/abstract",
+        "expect": [r"(?i)presolar", r"(?i)doi"],
+        "signatures": ["S46"],
+        "why": "The ADS record of the dataset release carries the real DOI.",
     },
     # ---- S47 FORGE: hot exozodi as a hot swarm ----
     "jmmc_oidb": {
@@ -78,7 +91,7 @@ REST: dict[str, dict] = {
     },
     # ---- S48 SPARK: SPHEREx single-band stellar excess (industrial NIR line) ----
     "spherex_irsa_docs": {
-        "url": "https://irsa.ipac.caltech.edu/data/SPHEREx/",
+        "url": "https://irsa.ipac.caltech.edu/data/SPHEREx/docs/",
         "expect": [r"(?i)spherex", r"(?i)quick\s*release|QR|spectral\s+image"],
         "signatures": ["S48", "S49"],
         "why": "IRSA SPHEREx holdings page: are Quick Release spectral images (and any "
@@ -140,7 +153,21 @@ REST: dict[str, dict] = {
         "expect": [r"(?i)cassis", r"(?i)IRS|spitzer"],
         "signatures": ["S52", "S53"],
         "why": "CASSIS: every Spitzer/IRS low-resolution spectrum, the mineralogy corpus "
-               "for silica-vs-silicate-vs-metal decomposition of warm debris.",
+               "for silica-vs-silicate-vs-metal decomposition of warm debris.  Run 1: read "
+               "timeout at 90 s; the root is probed below with a longer budget.",
+    },
+    "cassis_root": {
+        "url": "https://cassis.sirtf.com/",
+        "expect": [r"(?i)cassis"],
+        "signatures": ["S52", "S53"],
+        "why": "CASSIS site root (run 1 timed out on /atlas/).",
+    },
+    "irsa_seip_docs": {
+        "url": "https://irsa.ipac.caltech.edu/data/SPITZER/Enhanced/SEIP/",
+        "expect": [r"(?i)spitzer", r"(?i)enhanced"],
+        "signatures": ["S52", "S53"],
+        "why": "IRSA Spitzer Enhanced Imaging Products page; the IRS Enhanced Products "
+               "(extracted low-res spectra) are the IRSA-side mirror of the CASSIS corpus.",
     },
     # ---- S54 ULINE: artificial molecules in the ISM ----
     "cdms_entries": {
@@ -181,10 +208,25 @@ REST: dict[str, dict] = {
                "80-90 deg, channels 3-9, split by season and sub-solar longitude.",
     },
     "diviner_pcp_ucla": {
-        "url": "https://luna1.diviner.ucla.edu/~jpierre/diviner/level4_polar/pds/",
+        "url": "http://luna1.diviner.ucla.edu/~jpierre/diviner/level4_polar/pds/",
         "expect": [r"(?i)polar", r"(?i)\.lbl|\.tab|\.img|href"],
         "signatures": ["S55"],
-        "why": "UCLA mirror of the level-4 polar products (directory listing = bulk path).",
+        "why": "UCLA mirror of the level-4 polar products (directory listing = bulk path).  "
+               "Run 1: the https endpoint fails certificate verification (never disabled "
+               "here); the http listing is tried instead.",
+    },
+    "diviner_pds_volumes": {
+        "url": "https://pds-geosciences.wustl.edu/lro/",
+        "expect": [r"(?i)dlre", r"(?i)lrodlr"],
+        "signatures": ["S55"],
+        "why": "PDS Geosciences LRO directory: which Diviner volumes exist (the polar "
+               "products live in one of the lrodlr_100x volumes).",
+    },
+    "diviner_pds_data_dir": {
+        "url": "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/data/",
+        "expect": [r"(?i)gdr|pcp|prp|polar|href"],
+        "signatures": ["S55"],
+        "why": "Diviner RDR volume data directory listing.",
     },
     "shadowcam_archive": {
         "url": "https://shadowcam.im-ldi.com/archive",
@@ -220,10 +262,30 @@ REST: dict[str, dict] = {
         "why": "SGP API (path asserted; corrected from the site if NO_PRODUCT).",
     },
     "earthchem_portal": {
-        "url": "https://ecp.iedadata.org/",
+        "url": "https://portal.earthchem.org/",
         "expect": [r"(?i)earthchem"],
         "signatures": ["S56"],
-        "why": "EarthChem Portal (PetDB, GEOROC mirror, SedDB legacy).",
+        "why": "EarthChem Portal (PetDB, GEOROC mirror, SedDB legacy).  Run 1: the host "
+               "ecp.iedadata.org no longer resolves; the current portal host is tried.",
+    },
+    "earthchem_home": {
+        "url": "https://www.earthchem.org/",
+        "expect": [r"(?i)earthchem"],
+        "signatures": ["S56"],
+        "why": "EarthChem home (links to the portal and the library).",
+    },
+    "sgp_env_js": {
+        "url": "https://sgp-search.io/env.js",
+        "expect": [r"(?i)api|url|http"],
+        "signatures": ["S56"],
+        "why": "Run 1: /api/v1/samples served the single-page app, so the API path is "
+               "unknown.  The app's env.js declares its API base URL; read it here.",
+    },
+    "sgp_github": {
+        "url": "https://api.github.com/search/repositories?q=sgp-search+in:name",
+        "expect": [r"(?i)sgp"],
+        "signatures": ["S56"],
+        "why": "Locate the SGP search application's repository (its README documents the API).",
     },
     "georoc": {
         "url": "https://georoc.eu/",
@@ -267,10 +329,18 @@ REST: dict[str, dict] = {
                "ionisation mass spectra (composition) of the interstellar grains served?",
     },
     "ulysses_dust_pds": {
-        "url": "https://sbn.psi.edu/pds/resource/ulydust.html",
+        "url": "https://sbn.psi.edu/pds/resource/ulyssesdust.html",
         "expect": [r"(?i)ulysses", r"(?i)dust"],
         "signatures": ["S58"],
-        "why": "Ulysses DUST detector archive (flux/direction/mass, 1990-2007).",
+        "why": "Ulysses DUST detector archive (flux/direction/mass, 1990-2007).  Run 1: "
+               "'ulydust.html' was a 404; alternative resource name tried.",
+    },
+    "sbn_dust_holdings": {
+        "url": "https://sbn.psi.edu/pds/archive/dust.html",
+        "expect": [r"(?i)ulysses|cassini|galileo|dust"],
+        "signatures": ["S58"],
+        "why": "SBN dust-archive listing: the authoritative index of in-situ dust datasets "
+               "(Ulysses, Galileo, Cassini CDA, Helios, New Horizons SDC).",
     },
     # ---- S59 ARC: superflares above the spot-energy ceiling ----
     "vizier_tap_home": {
@@ -324,10 +394,15 @@ TAP: dict[str, dict] = {
     "vizier_flare_rotation_tables": {
         "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
         "adql": ("SELECT table_name, description FROM TAP_SCHEMA.tables "
-                 "WHERE table_name IN ('J/ApJS/241/29/flares','J/ApJS/211/24/table1',"
-                 "'J/ApJS/253/35/table1','J/ApJ/935/143/table1','J/ApJS/225/15/table1',"
-                 "'J/A+A/570/A128/table3','J/AJ/159/177/table1','J/MNRAS/467/4970/table1')"),
-        "expect": [r"J/ApJS/241/29", r"J/ApJS/211/24"],
+                 "WHERE table_name LIKE 'J/ApJS/241/29/%' OR table_name LIKE 'J/ApJS/211/24/%' "
+                 "OR table_name LIKE 'J/ApJS/253/35/%' OR table_name LIKE 'J/ApJ/935/143/%' "
+                 "OR table_name LIKE 'J/ApJS/225/15/%' OR table_name LIKE 'J/A+A/570/A128/%' "
+                 "OR table_name LIKE 'J/AJ/159/177/%' OR table_name LIKE 'J/MNRAS/467/4970/%' "
+                 "OR table_name LIKE 'J/A+A/555/A104/%' OR table_name LIKE 'J/A+A/608/A113/%' "
+                 "OR table_name LIKE 'J/A+A/651/A45/%' OR table_name LIKE 'J/ApJ/876/58/%' "
+                 "OR table_name LIKE 'J/ApJ/829/23/%' OR table_name LIKE 'J/AJ/159/60/%'"),
+        "expect": [r"J/ApJS/241/29", r"J/ApJS/211/24", r"J/A\+A/570/A128", r"J/A\+A/555/A104",
+                   r"J/AJ/159/177", r"J/ApJS/225/15"],
         "signatures": ["S59", "S47", "S52", "S51"],
         "why": "Named VizieR tables the briefs assert exist: Yang & Liu 2019 flares, "
                "McQuillan 2014 rotation, TESS flare catalogues, Cotten & Song 2016 debris "
@@ -355,11 +430,38 @@ TAP: dict[str, dict] = {
     "vizier_moor2021_edd": {
         "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
         "adql": ("SELECT table_name, description FROM TAP_SCHEMA.tables "
-                 "WHERE table_name LIKE 'J/ApJ/910/27%' OR table_name LIKE 'J/MNRAS/433/2334%' "
-                 "OR table_name LIKE 'J/ApJS/225/15%'"),
-        "expect": [r"J/ApJ/910/27|J/MNRAS/433/2334|J/ApJS/225/15"],
+                 "WHERE table_name LIKE 'J/ApJ/910/27/%' OR table_name LIKE 'J/MNRAS/433/2334/%' "
+                 "OR table_name LIKE 'J/ApJS/225/15/%' OR table_name LIKE 'J/ApJ/805/77/%' "
+                 "OR (description LIKE '%Moor%' AND description LIKE '%debris%')"),
+        "expect": [r"J/ApJ/910/27|J/MNRAS/433/2334|J/ApJS/225/15|J/ApJ/805/77"],
         "signatures": ["S52"],
-        "why": "Moór+2021 EDD table, Kennedy & Wyatt 2013 warm-dust LF, Cotten & Song 2016 census.",
+        "why": "Moór+2021 EDD table, Kennedy & Wyatt 2013 warm-dust LF, Cotten & Song 2016 "
+               "census, Meng+2015 EDD photometry (run 1 found only the last, by description).",
+    },
+    "irsa_splices_rows": {
+        "service": "https://irsa.ipac.caltech.edu/TAP",
+        "adql": "SELECT COUNT(*) AS n FROM splices",
+        "expect": [r"\"n\""],
+        "signatures": ["S48"],
+        "why": "How many SPLICES seed sources the TAP table actually holds (run 1 confirmed "
+               "the table exists).",
+    },
+    "irsa_splices_columns": {
+        "service": "https://irsa.ipac.caltech.edu/TAP",
+        "adql": ("SELECT column_name, datatype, description FROM TAP_SCHEMA.columns "
+                 "WHERE table_name = 'splices'"),
+        "expect": [r"(?i)ra|dec|mag|flux"],
+        "signatures": ["S48"],
+        "why": "SPLICES columns: the seed-list photometry and identifiers the forced "
+               "spectrophotometry needs.",
+    },
+    "irsa_spherex_obscore_count": {
+        "service": "https://irsa.ipac.caltech.edu/TAP",
+        "adql": "SELECT COUNT(*) AS n FROM spherex.obscore",
+        "expect": [r"\"n\""],
+        "signatures": ["S48", "S61"],
+        "why": "How many SPHEREx spectral-image products are public today (the denominator "
+               "for sky coverage per pass).",
     },
     "vizier_superflare_tables": {
         "service": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
@@ -440,7 +542,8 @@ TAP: dict[str, dict] = {
     "irsa_cassis_tables": {
         "service": "https://irsa.ipac.caltech.edu/TAP",
         "adql": ("SELECT table_name, description FROM TAP_SCHEMA.tables "
-                 "WHERE table_name LIKE '%cassis%' OR description LIKE '%IRS%spectr%'"),
+                 "WHERE table_name LIKE '%cassis%' OR table_name LIKE '%irs%' "
+                 "OR description LIKE '%IRS %' OR description LIKE '%Spitzer%Enhanced%'"),
         "expect": [r"(?i)cassis|irs"],
         "signatures": ["S52", "S53"],
         "why": "CASSIS / IRS spectral products through IRSA TAP.",
@@ -477,8 +580,14 @@ def classify(rec: dict, expect: list[str]) -> str:
     body = rec.get("body") or ""
     if status is None or not (200 <= int(status) < 300):
         return "NOT_REACHED"
-    hits = [p for p in expect if re.search(p, body)]
+    hits, matched = [], []
+    for p in expect:
+        m = re.search(p, body)
+        if m:
+            hits.append(p)
+            matched.append(m.group(0)[:80])
     rec["expect_hits"] = hits
+    rec["expect_matched_text"] = matched
     return "REACHED_WITH_PRODUCT" if hits else "REACHED_NO_PRODUCT"
 
 
@@ -571,7 +680,7 @@ def _tap(service: str, adql: str, timeout: float, maxrec: int = 200) -> dict:
         body = json.dumps(rows)
         rec["bytes"] = len(body)
         rec["body"] = body
-        rec["head"] = body[:600]
+        rec["head"] = body[:2500]
     except Exception as exc:  # noqa: BLE001
         rec["status"] = None
         rec["error"] = f"{type(exc).__name__}: {exc}"[:400]

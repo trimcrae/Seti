@@ -18,18 +18,68 @@ archive:
     toi: "toi"
     ps: "ps"
   ps_where: "disc_facility like '%Kepler%'"
-  retries: 3
-  timeout_s: 900
+  # The same predicate is re-applied in code (fetch_ps_kepler).  MEASURED (run
+  # 34787801172): the recorded ADQL DID carry the WHERE and the server returned
+  # 28,592 rows — that is the multi-REFERENCE row count over the Kepler-
+  # discovered planets (ps has one row per published solution, `default_flag`
+  # marks the adopted one), not the whole table.  The re-filter makes a dropped
+  # WHERE observable instead of assumed: `join.n_ps_rows_not_kepler_discovered`
+  # in acquire.json is the number of returned rows the predicate excludes.
+  ps_require_kepler_in_disc_facility: true
 
 join:
-  pos_radius_arcsec: 2.0          # KOI <-> TOI positional match when the ps table gives no tic_id
+  pos_radius_arcsec: 2.0          # KOI <-> TOI / KOI <-> ps positional match radius
   period_tol: 1.0e-3              # |ΔP/P| for the same planet
   alias_max: 4                    # integer aliases n / 1/n tried (recorded as period_alias; a veto)
+  # The four routes from a KOI to a TOI, tried in this order and counted
+  # separately in acquire.json["join"]["joined_by_route"].  Drop a name from
+  # this list to switch that route off.
+  #
+  #   name_planet     cumulative.kepler_name == ps.pl_name  -> ps.tic_id
+  #   name_host       the KOI's host (its own kepler_name, or inherited from a
+  #                   sibling KOI on the same kepid) == ps.hostname -> ps.tic_id
+  #   position_tic    KOI position -> nearest ps row with a tic_id (NO names;
+  #                   this is the route for the ~6,800 KOIs that have no
+  #                   kepler_name at all, and needs no column beyond the
+  #                   ra/dec/tic_id already pulled and verified in probe.json)
+  #   position_period KOI position -> TOI position + period (no crossmatch)
+  routes: ["name_planet", "name_host", "position_tic", "position_period"]
+  # `verify` — ASSERTED COLUMN FORMAT.  ps.tic_id is a STRING spelled
+  # "TIC 122298563", not an integer.  This is the 2026-09-13 defect: a bare
+  # pd.to_numeric on it was all-NaN, the dropna that followed emptied the
+  # name -> TIC map, and the run reported koi_with_tic_id: 0 while holding
+  # 28,592 ps rows.  acquire.parse_tic_id accepts "TIC <n>", "tic<n>" and a
+  # bare integer, and acquire.json records n_ps_tic_id_parsed /
+  # n_ps_tic_id_unparsed plus three verbatim samples of the column, so the
+  # assertion is CHECKED on every run instead of trusted.  A format the parser
+  # does not recognise shows up as n_ps_tic_id_unparsed > 0 and a zero yield on
+  # the name routes — a recorded status, never a crash.
+  ps_tic_id_is_string: true
+  ps_tic_id_prefix: "TIC"
+  # toi.tid is numeric (verified in probe.json, run 34787801172) and is the
+  # same TIC id; no parsing needed on that side.
+  toi_tid_is_numeric: true
 
 gaia:
   neighbour_radius_arcsec: 21.0   # one TESS pixel
   chunk: 300                      # targets per upload crossmatch
-  retries: 3
+  retries: 3                      # attempts on the upload route before falling back
+  # `verify` — ASSERTED SERVICE.  MEASURED (run 34787801172): the astroquery
+  # tap_upload crossmatch against gaiadr3.gaia_source returned
+  #   HTTPError('Error 500: SQL exception: ERROR: canceling statement due to
+  #   statement timeout')
+  # on all three attempts for a single 108-target chunk, and every star ended
+  # `not_checked`.  The anonymous ESA queue will not finish an upload JOIN over
+  # the whole gaia_source.  When the upload route raises, each chunk falls back
+  # to per-target SYNC CONES through pyvo against tap_url (the transport
+  # src/seti/baffle/acquire.py uses), retried cone_retries times, with finished
+  # chunks checkpointed under results/growth/data/gaia_checkpoint/.  A target
+  # neither route reaches stays QUERY_FAILED -> `neighbours_not_checked`, and
+  # may never be called isolated.
+  tap_url: "https://gea.esac.esa.int/tap-server/tap"
+  fallback_cones: true
+  cone_retries: 2
+  checkpoint: true
 
 aperture:
   # Aperture-capture weight for a neighbour at separation d:

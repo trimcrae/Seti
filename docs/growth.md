@@ -62,19 +62,69 @@ on that planet, not a detection.
 |---|---|---|---|
 | Kepler-era depth | KOI `cumulative` | Exoplanet Archive TAP sync, `format=csv` | `koi_depth[_err1/2]` (ppm), `koi_ror`, `koi_impact`, `koi_duration[_err1/2]` (h), `koi_dor` (a/R*), `koi_steff`, `koi_slogg`, `koi_kepmag`, `koi_fpflag_{nt,ss,co,ec}`, dispositions, `koi_tce_delivname` |
 | TESS-era depth | `toi` | same | `pl_trandep[err1/2]` (ppm), `pl_trandurh[err1/2]` (h), `tid`, `tfopwg_disp`, `pl_orbper`, `st_*` |
-| Join key | `ps` rows with `disc_facility LIKE '%Kepler%'` | same | `pl_name` ↔ `hostname` ↔ `tic_id`; `pl_ratror`, `pl_trandep` (**percent** → ppm on read), `default_flag` |
-| Dilution | Gaia DR3 `gaia_source` | Gaia TAP, upload crossmatch, chunks of 300 | `phot_g_mean_mag`, separation, within 21″ (one TESS pixel) of the Kepler position |
+| Join key | `ps` rows with `disc_facility LIKE '%Kepler%'` | same | `pl_name` ↔ `hostname` ↔ `tic_id`; `pl_ratror`, `pl_trandep` (**percent** → ppm on read), `default_flag`, `ra`/`dec` |
+| Dilution | Gaia DR3 `gaia_source` | Gaia TAP: upload crossmatch first, **per-target sync cones through `pyvo` against `https://gea.esac.esa.int/tap-server/tap` as the fallback** | `phot_g_mean_mag`, separation, within 21″ (one TESS pixel) of the Kepler position |
 
-**The join** (`acquire.join_kepler_tess`, pure): route `tic_id` —
-`cumulative.kepler_name = ps.pl_name` gives the TIC id, `toi.tid = tic_id`
-gives the TOIs on that star, the period picks the planet; route
-`position_period` — for KOIs the `ps` table cannot key (candidates without a
-Kepler name), the nearest TOI within 2″ whose period matches.  A period match
-is `|ΔP/P| < 10⁻³` or an integer alias `n` / `1/n` (n ≤ 4), recorded as
-`period_alias` (a veto for candidates: the folded events are not the same set
-of transits).  Each TOI is used once.  `summary.json["join"]` carries the count
-by route, the KOIs with a TIC id whose TOIs matched no period, and the
-positional matches that failed the period test.
+**The join** (`acquire.join_kepler_tess`, pure) runs **four routes**, tried in
+order and counted separately in `summary.json["join"]["joined_by_route"]`:
+
+| Route | How it reaches TESS |
+|---|---|
+| `name_planet` | `cumulative.kepler_name` = `ps.pl_name` → `ps.tic_id` |
+| `name_host` | the KOI's **host** — from its own `kepler_name`, or inherited from a sibling KOI on the same `kepid` — = `ps.hostname` → `ps.tic_id`.  This is the route for the KOIs that have no `kepler_name` at all (only *confirmed* planets get one) |
+| `position_tic` | the KOI position → the nearest `ps` row with a TIC id, within 2″.  **No names at all**, and no column beyond the `ra`/`dec`/`tic_id` already verified in `probe.json` |
+| `position_period` | the nearest TOI within 2″ whose period matches — no catalogue crossmatch |
+
+The first three end at a TIC id; `toi.tid = tic_id` then gives the TOIs on that
+star and the period picks the planet.  A period match is `|ΔP/P| < 10⁻³` or an
+integer alias `n` / `1/n` (n ≤ 4), recorded as `period_alias` (a veto for
+candidates: the folded events are not the same set of transits).  Each TOI is
+used once.  `summary.json["join"]` carries the count by route, how many KOIs
+resolved a TIC id by which route, the KOIs with a TIC id whose TOIs matched no
+period, the positional matches that failed the period test, and the `ps`
+diagnostics (`n_ps_tic_id_parsed` / `n_ps_tic_id_unparsed`, `n_ps_default_rows`,
+`n_ps_rows_not_kepler_discovered`); `summary.json["join_statement"]` says all of
+it in one sentence.
+
+> **The 2026-09-13 defect (run 34787801172).**  That run reported
+> `joined_by_route: {tic_id: 0, position_period: 108}` and `koi_with_tic_id: 0`
+> while holding 28,592 `ps` rows.  The cause is that **`ps.tic_id` is a string**
+> — `"TIC 122298563"`, not an integer — so the `pd.to_numeric` on it was
+> all-NaN, the `dropna` that followed emptied the name → TIC map, and the whole
+> join fell through to `position_period`, which only reaches the 108 KOIs whose
+> TOI happens to sit within 2″ *and* share a period.  `acquire.parse_tic_id` is
+> now the only reader of that column, names are normalised to bare
+> alphanumerics (case-folded, punctuation and spacing removed) before any
+> comparison, and the `ps` row count, the parsed/unparsed TIC counts and three
+> verbatim samples of the column are recorded every run so the assertion is
+> checked rather than trusted (`config/growth.yaml`, `join.ps_tic_id_is_string`,
+> marked `verify`).  The recorded ADQL shows the `disc_facility` predicate *was*
+> sent and honoured — 28,592 is the multi-**reference** row count over the
+> Kepler-discovered planets, since `ps` carries one row per published solution
+> and `default_flag` marks the adopted one — and the predicate is now re-applied
+> in code so a dropped `WHERE` would show up as
+> `n_ps_rows_not_kepler_discovered > 0` instead of passing unnoticed.  The
+> `default_flag = 1` row supplies the name → TIC map and the reference
+> ratio/depth; the other rows are kept as depth references (`ps_n_refs`,
+> `ps_trandep_ppm_min/max` per planet).
+
+**The Gaia neighbours, and how they are reached.**  The upload crossmatch
+(`tap_upload.targets` joined to `gaiadr3.gaia_source`) is tried first, chunked
+and retried.  **Run 34787801172 got `Error 500 … canceling statement due to
+statement timeout` on all three attempts for a single 108-target chunk, and
+every star ended `not_checked`** — the anonymous ESA queue will not finish an
+upload JOIN over the whole `gaia_source`.  So: every attempt's exception text is
+now recorded (`acquire.json["gaia"]["errors"]`, with the per-attempt transport
+and message — the previous report carried only `n_targets_failed: 108`, which is
+what made it undiagnosable), and a chunk whose upload route raises falls back to
+**one small sync cone per target through `pyvo`** against
+`https://gea.esac.esa.int/tap-server/tap` (the transport
+`src/seti/baffle/acquire.py` uses), retried, with finished chunks checkpointed
+under `results/growth/data/gaia_checkpoint/` so a re-run does not re-query them.
+A target neither route reaches keeps `neighbours_status = QUERY_FAILED`, is
+reported as `neighbours_not_checked`, and **may never be called isolated** —
+the veto is unchanged.  `summary.json["gaia"]["by_route"]` and
+`summary.json["gaia_statement"]` say which route supplied each star.
 
 **Proper motion:** the Gaia epoch (2016.0) sits between the two missions and
 the search radius is 21″; a 100 mas/yr star moves 1″ over the whole baseline.
@@ -187,7 +237,7 @@ flag raised, the duration verdicts).
 | `koi_false_positive` | `koi_disposition` / `koi_pdisposition` outside {CONFIRMED, CANDIDATE} |
 | `toi_disposition_not_candidate` | `tfopwg_disp` outside {PC, CP, KP} (APC, FP, FA, EB all veto) |
 | `period_alias` | the TESS period is an integer alias of the Kepler one |
-| `neighbours_not_checked` | the Gaia chunk for this star failed: isolation is unknown, not established |
+| `neighbours_not_checked` | **every** Gaia route for this star failed (the chunk's upload crossmatch *and* its per-target cone): isolation is unknown, not established |
 | `neighbour_can_supply_change` | `(ln R_corr + ln(1 − c_max) − offset)/σ < 5`: if every neighbour inside the pixel had already been removed by the pipeline, the growth would fall below the gate |
 
 Report-only flags: `multi_sector_scatter:not_checked` (per-sector TESS depths
@@ -205,12 +255,12 @@ per epoch; the achromaticity claim is stage 2's to make (§7).
 | File | Content |
 |---|---|
 | `probe.json` | reachability and real column names of the three tables |
-| `acquire.json`, `acquisition_log.json` | table statuses (`OK` / `QUERY_FAILED` / `QUERY_RETURNED_ZERO_ROWS` kept apart), join counts by route, Gaia chunk outcomes |
+| `acquire.json`, `acquisition_log.json` | table statuses (`OK` / `QUERY_FAILED` / `QUERY_RETURNED_ZERO_ROWS` kept apart), join counts by route with the `ps` diagnostics and `join_statement`, Gaia chunk outcomes **with every attempt's exception text** (`gaia.errors`) and the route that supplied each star (`gaia.by_route`) |
 | `screened.csv` | every joined planet with every drift quantity |
 | `joined.csv` | the same, vetted and classed |
 | `candidates.csv` | the `GROWTH_CANDIDATE` rows (slim columns) |
 | `long_period.csv` | the stage-2 list |
-| `summary.json` | `verdict`, `join`, `gaia`, `classes`, `rejection_counters`, `population`, `n_long_period`, `degraded`, `checks_not_performed` |
+| `summary.json` | `verdict`, `join`, `join_statement`, `gaia`, `gaia_statement`, `classes`, `rejection_counters`, `population`, `n_long_period`, `degraded`, `checks_not_performed` |
 
 Verdicts: **`NO_DATA_REACHED`** (nothing measured; `reason` says whether an
 archive failed, answered empty, or the join was empty),
@@ -254,7 +304,12 @@ Per candidate (and per long-period planet), from the light curves:
    variance; a chromatic, asymmetric tail on a cold planet has no natural
    model.
 
-Scale: ~500–1,000 joined planets; the light curves are on MAST
+Scale: the joined sample, i.e. the KOIs of the 9,564-row `cumulative` table
+that a TOI re-detects.  Run 34787801172 reached **108** of them — the defect
+above, with only `position_period` working; with the three TIC routes restored
+the expectation is several hundred, and `summary.json["join_statement"]` reports
+the actual number and its breakdown by route, so the figure quoted here is
+never the one a reader has to trust.  The light curves are on MAST
 (`astroquery.mast`; `download_file(dataURI)`, per `channel-brief.md` §2).
 
 ---
@@ -281,6 +336,12 @@ Scale: ~500–1,000 joined planets; the light curves are on MAST
   (too shallow at TESS precision, or with a period longer than the sector
   coverage folds) is absent, so the joined population is biased to deep,
   short-period planets — the population offset is measured on that
-  population and applies to it.
+  population and applies to it.  The four routes bound how much of that
+  incompleteness is *ours*: `join_statement` reports the yield of each, so a
+  route that stops working is visible as a number rather than as a quietly
+  smaller sample.  `position_tic` matches a KOI to a `ps` star within 2″ and
+  inherits that star's TIC id — in a crowded field the nearest `ps` row is not
+  guaranteed to be the KOI's own star, which is one more reason the Gaia
+  neighbour veto is not optional.
 * **`NO_DEPTH_DRIFT_CANDIDATE` is a count**, not an occurrence limit on
   construction around the Kepler planets, and is not written up.

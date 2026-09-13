@@ -1,0 +1,121 @@
+# ARC channel — every physical constant and threshold in one place.
+#
+# Signature S59 (docs/necrofrontier.md §2, "The arc"): superflares ABOVE the
+# starspot energy ceiling.  A flare's energy is bounded by the magnetic energy
+# its spots store, E_mag = f (B^2/8pi) A_spot^(3/2); the spot area follows from
+# the rotational amplitude.  xi = log10 E_flare - log10 E_mag(f = 1, B = 3 kG,
+# A_conservative).  A star with xi > 0 on >= 2 independent flares, that
+# survives the companion / blend / evolved / pulsator vetoes, is a candidate
+# PENDING the stage-2 pixel-centroid test (docs/arc.md §6).
+#
+# Table ids below are PREFERRED seeds.  The probe stage lists every table under
+# each id in VizieR's TAP_SCHEMA, reads the real column names, resolves the
+# roles it needs and falls back to the keyword search when the seed is dead.
+# Nothing is queried by a column name that was not seen in TAP_SCHEMA.columns.
+# TAPVizieR table names carry literal double quotes; the helpers quote them.
+
+physics:
+  b_gauss: 3000.0             # sunspot-umbra field; Okamoto+2021's adopted value
+  f_max: 1.0                  # release efficiency at the ceiling (Okamoto's envelope: ~0.1)
+  geometric_factor: 3.0       # spot-latitude marginalisation: true area <= 3x amplitude-implied
+  independent_gap_days: 0.5   # events closer than this are one energy release
+  fallback_teff_k: 5777.0     # used (and FLAGGED stellar_params_assumed) when the catalogue has none
+  fallback_radius_rsun: 1.0
+  band_fraction_kepler: 0.35  # verify: fraction of L_bol in the Kepler band for a solar-type star
+  amplitude_min_frac: 1.0e-4  # below this the "amplitude" is noise, not spots: unassessable
+
+catalogues:
+  kepler_okamoto2021:
+    mission: kepler
+    kind: flares
+    preferred: "J/ApJ/906/72/table2"   # Okamoto+2021 ApJ 906, 72 — superflares on solar-type stars, per flare
+    keywords: ["superflare", "solar-type"]
+    energy: {kind: bolometric, factor: 1.0, log10: auto}
+    amplitude_unit: auto
+    enabled: true
+  kepler_shibayama2013:
+    mission: kepler
+    kind: flares
+    preferred: "J/ApJS/209/5"          # Shibayama+2013 ApJS 209, 5 — 1547 superflares on 279 G dwarfs
+    keywords: ["superflare", "Kepler"]
+    energy: {kind: bolometric, factor: 1.0, log10: auto}
+    amplitude_unit: auto
+    enabled: true
+  tess_tu2022:
+    mission: tess
+    kind: flares
+    preferred: "J/ApJ/935/90/table2"   # Tu+2022 ApJ 935, 90 — TESS superflare candidates
+    keywords: ["superflare", "TESS"]
+    energy: {kind: bolometric, factor: 1.0, log10: auto}
+    amplitude_unit: auto
+    enabled: true
+  kepler_yang2019:
+    mission: kepler
+    kind: flares
+    preferred: "J/ApJS/241/29/table2"  # Yang & Liu 2019 ApJS 241, 29 — 162,262 flares (bolometric E)
+    keywords: ["flare", "Kepler"]
+    energy: {kind: bolometric, factor: 1.0, log10: auto}
+    amplitude_unit: auto
+    enabled: true
+  tess_gunther2020:
+    mission: tess
+    kind: flares
+    preferred: "J/AJ/159/60/table1"    # Günther+2020 AJ 159, 60 — TESS sectors 1-2 flares (E from 9000 K BB)
+    keywords: ["flare", "TESS"]
+    energy: {kind: bolometric, factor: 1.0, log10: auto}
+    amplitude_unit: auto
+    enabled: true
+  kepler_davenport2016:
+    mission: kepler
+    kind: flares
+    preferred: "J/ApJ/829/23/table1"   # Davenport 2016 ApJ 829, 23 — per-star summary; ED-based
+    keywords: ["flare", "Kepler"]
+    energy: {kind: equivalent_duration, factor: 1.0, log10: auto}   # verify the ED units (s)
+    amplitude_unit: auto
+    enabled: true
+
+# Per-star context by mission, in PRIORITY order for Teff / radius / logg /
+# Prot; the rotational amplitude is the MAX over every source that has one
+# (the amplitude is a lower bound on the spot area, so the largest is the
+# conservative choice — docs/arc.md §3).
+star_catalogues:
+  kepler:
+    - {name: okamoto2021_stars, preferred: "J/ApJ/906/72", keywords: [], amplitude_unit: auto}
+    - {name: shibayama2013_stars, preferred: "J/ApJS/209/5/stars", keywords: [], amplitude_unit: auto}
+    - {name: yang2019_stars, preferred: "J/ApJS/241/29/table1", keywords: [], amplitude_unit: auto}
+    - {name: mcquillan2014, preferred: "J/ApJS/211/24/table1", keywords: [], amplitude_unit: ppm}   # Rper in ppm
+    - {name: santos2021, preferred: "J/ApJS/255/17", keywords: ["rotation", "Kepler"], amplitude_unit: ppm}  # Sph in ppm
+  tess:
+    - {name: gunther2020_stars, preferred: "J/AJ/159/60/table2", keywords: [], amplitude_unit: auto}
+    - {name: tu2022_stars, preferred: "J/ApJ/935/90", keywords: [], amplitude_unit: auto}
+
+# Positions + stellar parameters for the shortlist (assess stage), by id.
+param_tables:
+  kepler: ["J/AJ/159/280/table1", "J/AJ/159/280", "V/133/kic"]   # Berger+2020 Gaia-Kepler, then the KIC
+  tess: ["IV/39/tic82", "IV/38/tic"]
+
+gaia:
+  table: "I/355/gaiadr3"        # RUWE, NSS, Plx, Gmag, VarFlag, neighbours
+  vari_table: "I/358/vclassre"  # Gaia DR3 variability class
+  cone_radius_arcsec: 12.0
+  match_arcsec: 2.0
+
+vet:
+  ruwe_max: 1.4
+  logg_min: 4.0
+  radius_max_rsun: 1.6
+  neighbour_radius_arcsec: 12.0
+  neighbour_dg_max: 3.0
+  min_flares_above: 2
+  pulsator_classes: ["ECL", "DSCT", "GDOR", "SXPHE", "RR", "CEP", "T2CEP", "ACEP", "ACV", "CP",
+                     "MCP", "ROAM", "ROAP", "SXARI", "WD", "AGN", "YSO", "BE", "GCAS", "SDB",
+                     "MICROLENSING", "ELL"]
+  doubtful_flag_patterns: ["doubt", "bin", "contam", "eclips", "pollut", "bad", "^[fF]$", "^[bB]$", "^[dD]$"]
+
+shortlist:
+  max_stars: 3000               # Gaia cones per run (xi_conservative > 0 first, then xi_nominal > 0)
+  include_watch: true
+
+acquire:
+  chunk_rows: 50000
+  max_rows: 0                   # 0 = no cap

@@ -1051,6 +1051,12 @@ def _cmd_growth(args, cfg):
     return _growth_main(list(args.rest))
 
 
+def _cmd_arc(args, cfg):
+    from .arc.run import main as _arc_main
+
+    return _arc_main(list(args.rest))
+
+
 def _cmd_baffle(args, cfg):
     from .baffle.run import _cmd_baffle as _baffle_cmd
 
@@ -2189,6 +2195,11 @@ def main(argv=None):
                             "impact parameter; flags are passed through to seti.growth.run")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_growth)
+    p = sub.add_parser("arc",
+                       help="ARC (S59): superflares above the starspot energy ceiling; "
+                            "flags are passed through to seti.arc.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_arc)
 
     # --- 2026-09-06: BAFFLE, reciprocal mid-IR absorbing screens; runnable as
     #     `python -m seti.baffle.run` (what baffle.yml calls) or `seti baffle`.

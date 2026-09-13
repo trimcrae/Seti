@@ -389,6 +389,57 @@ bounds goo that stopped.*
   and OSSUARY's old / metal-poor sample is the first place a natural
   background is absent. → **OSSUARY** (as a re-read of its survivors, if any)
 
+### XII–XVIII. The residue of a non-biological successor — added 2026-09-13
+*What "an AI killed them" predicts that "they died" does not. If the
+extinction agent persists, the system is not empty afterwards, and six
+consequences follow — purity, relocation, transition, the weapon,
+persistence with machine habits, the archive at home — each with an
+observable class on a data source this repository has never touched. Full
+physics, statistics, contamination ledgers, prior-art positions and the build
+order in `necrofrontier.md`; the sweep `necrofrontier-lit.yml` and the probe
+`necrofrontier-probe.yml` decide the record and the reach.*
+* **S46 The impossible grain** — isotopic purity (δ²⁹Si ≈ δ³⁰Si ≲ −950 ‰ with
+  solar C/N/Al–Mg/Ca–Ti) in the 20,230-grain Presolar Grain Database.
+* **S47 The forge** — the ~1 % H/K-band interferometric excess population
+  ("hot exozodi", ~1500 K) read as a swarm; the Planck-consistent N-band
+  outlier is the only survivable case.
+* **S48/S49 The spark** — a single-channel excess on a stellar SPHEREx
+  spectrum (~10⁷ stars) / an unresolved feature on a Gaia star in the Euclid
+  NISP line table (4.3 M spectra): the industrial NIR line at all-sky scale.
+* **S50 The century** — KNELL / RUST / secular fade on DASCH DR7's 100-year
+  baseline with the Menzel gap modelled as a step.
+* **S51 The refinery vector** — polluted-WD abundance vectors outside the
+  full natural family: the process-orthogonal pair residual and the
+  calibrated misfit list Huang+2026 did not produce.
+* **S52/S53 The shattered cradle** — warm debris at 250–350 K around a
+  > 1 Gyr star above f_max (an empty cell today), with slag-vs-glass
+  mineralogy on CASSIS/JWST.
+* **S54 The molecule life and chemistry both refuse** — polar fluorocarbons,
+  NF₃, SO₂F₂, COF₂ against the public unidentified-line inventories.
+* **S55 The crypt** — anisothermal hot components (ch6/ch7 ≫ ch9) inside
+  lunar permanently shadowed regions in Diviner; point-like CPR > 1 radar
+  reflectors with no boulder.
+* **S56 The grave** — the FALLOUT fission vector and reactor nuclides
+  without r-process partners at Earth's own extinction boundaries (SGP,
+  EarthChem, FeMn crusts).
+* **S57 The growing transit** — secular R_p/R_* growth Kepler → TESS at
+  fixed impact parameter; long-period tailed transits.
+* **S58 The device in the dust** — compositional outliers among in-situ
+  interstellar grains (Cassini CDA; IMAP/IDEX when released).
+* **S59 The arc** — superflares whose energy exceeds the starspot magnetic
+  ceiling on spot-free slow rotators, target-localised.
+* **S60 The relay** — star pairs whose A→B beam spillover cone contains
+  Earth (δ_max = (θ/2)(d_A − d_B)/d_B), re-cut on Breakthrough Listen /
+  MeerKAT archives with a Gaia-derived drift prior.
+* **S61 Ignition** — a monotonic W1/W2 rise ≥ 5 yr on an optically flat,
+  kinematically old field star with no 2010 / 2006 / 1983 excess: the
+  reverse of EMBER.
+* **S62 The dead cradle** — airless above the cosmic shoreline in a system
+  with a technosignature limit (TRAPPIST-1 today; Rocky Worlds DDT next).
+* **S63 Rings around the dead** — 300–700 K rings around WD and NS in
+  Gaia × WISE (W1/W2, below the frozen-W4 ceiling); pulsar planets; Y-dwarf
+  duty cycles.
+
 ---
 
 ## 3. CENOTAPH — the flagship design

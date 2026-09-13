@@ -3,12 +3,82 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-11.
+next. Last updated: 2026-09-13.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### The residue of a non-biological successor, 2026-09-13: NECROFRONTIER (S46–S63)
+
+A new question from the user: *find exhaustive new ways to search for
+necrosignatures — signs of non-biological intelligence having wiped out a
+biological population; new techniques, new data sources, places others have
+not looked.* `docs/necrofrontier.md` is the answer. The sharpening that
+generates new observables: if the killer persists, the system is **not empty
+after the death**, and six things follow — the successor's substrate and
+tailings are *refined* (isotopically, elementally, molecularly); its activity
+*relocates* out of the habitable band; the takeover is a *fast transition*
+visible as a rising signature in decade archives; the *weapon* leaves scars
+(a shattered planet, a sterilised star, a stripped atmosphere); a persisting
+machine communicates by *beam* and outlasts a century; and the nearest
+archives of a Gyr-old artifact or a prior technological extinction are the
+lunar cold traps and Earth's own sedimentary column. Eighteen signatures
+S46–S63 follow, each with its physics, public data source, statistic,
+contamination ledger and prior-art position (taxonomy §XII–XVIII in
+`docs/necrosignatures.md`).
+
+**How the positions were established.** Twelve parallel literature agents
+(a thirteenth trio was stopped at the user's request when their per-article
+fetches became a flood of permission prompts — future sweeps run on the
+runner only). The sandbox blocks every scholarly host, so each position rests
+on search-engine records plus the full texts already cached under
+`results/*lit*/`, and every arXiv id is checked by the runner sweep's
+`id_title_check.json` before it is cited. Headline positions, to be confirmed
+by that sweep: **no proposal anywhere of stable-isotope purity in solids as a
+technosignature** (S46; nearest are Whitmire & Wright 1980, Catling+2025 D/H,
+Ellery 2025 Th/Nd); **no Kepler-vs-TESS transit-depth consistency catalogue
+exists** (S57; Wang & Espinoza 2024 and Zuckerman+2023 are within-mission);
+**no blind DASCH DR7 fade/cessation search** (S50); **no artificial-molecule
+search of any ISM line survey** (S54 — the CFC literature is all exoplanet
+atmospheres, and no molecule with more than one fluorine has ever been
+detected); **no thermal or radar artifact search of lunar PSRs** (S55 — every
+executed search is optical-NAC machine learning, the latest arXiv:2608.09350);
+**no monotonic-mid-IR-rise selection on field stars** (S61 — the YSO and AGN
+communities each did half); **no star-pair beam-spillover selection at
+catalogue scale** (S60 — Tusay+2022/2024 and Hort+2024 are single-target);
+**no executed technosignature search on pulsar planets, brown dwarfs or FFPs**
+(S63); the hot-exozodi population has **never been read as a swarm** (S47),
+though the K-bright/N-faint physics already excludes a grey Planck swarm for
+the well-constrained systems; polluted-WD technosignatures have one executed
+search (Huang+2026, a siderophile template) and **no calibrated misfit list**
+(S51). Checked and **dropped**: planet occurrence vs age (flat; Sayeed+2025,
+PAST IV), 511 keV stacks (a limit channel), AMS anti-helium (unpublished), the
+hypervelocity stellar-engine limit (done), D/H (proposed, not a catalogue
+test).
+
+**New data sources, verified as existing (reach to be measured by the
+probe):** SPHEREx QR2 weekly spectral images since Oct 2025 with the 9-million-
+source SPLICES seed list (IRSA TAP `spherex.plane`/`artifact`, cutout URIs; no
+per-source spectra yet); Euclid Q1's 4,313,551 NISP spectra with a
+pre-computed line-feature table (DR1-Foundation Nov 2026); DASCH DR7
+(252,458,490 century light curves, documented web API + `daschlab`); the
+Presolar Grain Database SiC release (20,230 grains, DOI'd download); PEWDD
+(1,739 WDs, VizieR J/A+A/691/A352); the Diviner Polar Cumulative Product;
+ShadowCam PDS4 (5.6 TiB Aug 2026); eROSITA DR2 (31 Jul 2026, 1.9 M sources);
+SDSS DR20 (3 M MWM spectra); Gaia DR4 dated **2 Dec 2026**.
+
+**Built and offline-tested (13 new tests, ruff clean):**
+`scripts/necrofrontier_probe.py` + `necrofrontier-probe.yml` (50 endpoints,
+REST and TAP, one verdict each and a per-signature readiness map, committed to
+`results/necrofrontier/`) and `scripts/necrofrontier_fetch.py` +
+`necrofrontier-lit.yml` (15 query groups, 94 asserted ids title-checked, 23
+title searches, 93 keyword sweeps, decoy-aware concept scan to
+`results/necrofrontier_lit/`). Both dispatched from `main`; their results are
+read before any position above is believed. Build order (charter: novelty,
+then scale, never a null): S46 ISOTOPE → S51 SLAG-WD → S54 ULINE → S61
+IGNITION → S48/S49 SPARK → the rest as listed in `docs/necrofrontier.md` §4.
 
 ### Grey goo as a technosignature, 2026-09-11: GOO (S44, S45) and two manuscripts
 

@@ -161,3 +161,28 @@ def test_scan_over_synthetic_atom_files(fetch, tmp_path):
     assert out["n_abstracts_scanned"] == 2
     assert out["per_group_counts"]["g10_relay_geometry"]["hits"] >= 1
     assert (tmp_path / "concept_scan.json").exists()
+
+
+def test_arxiv_to_ads_query_translation(fetch):
+    assert fetch.arxiv_to_ads_query('abs:"technosignature" AND abs:isotop') == 'abs:"technosignature" abs:isotop'
+    assert fetch.arxiv_to_ads_query('ti:"Do A-type stars flare?"') == 'title:"Do A-type stars flare?"'
+    assert fetch.arxiv_to_ads_query('all:DASCH AND abs:(fading OR dimming)') == 'DASCH abs:(fading OR dimming)'
+
+
+def test_ads_to_atom_round_trips_through_entries(fetch):
+    docs = [{"bibcode": "2025ApJ...979..137C", "title": ["Deuterium & fusion"],
+             "abstract": "D/H <depleted>", "identifier": ["2024arXiv241118595C", "arXiv:2411.18595"]},
+            {"bibcode": "1980Icar...42..149W", "title": ["Nuclear waste spectrum"], "abstract": "x"}]
+    text = fetch.ads_to_atom(docs)
+    ents = list(fetch._entries(text))
+    assert ents[0][0] == "http://arxiv.org/abs/2411.18595"
+    assert ents[0][1] == "Deuterium & fusion" and ents[0][2] == "D/H <depleted>"
+    assert ents[1][0] == "bibcode:1980Icar...42..149W"
+
+
+def test_ads_fetch_without_token_degrades_honestly(fetch, tmp_path):
+    fetch.ADS_TOKEN = ""
+    before = len(fetch.STATUS)
+    assert fetch.ads_fetch("abs:x", tmp_path / "x.atom", 5) is False
+    assert fetch.STATUS[before]["ok"] is False
+    assert "no ADS_TOKEN" in fetch.STATUS[before]["attempts"][0]["error"]

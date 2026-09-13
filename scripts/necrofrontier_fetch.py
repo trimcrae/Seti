@@ -84,6 +84,7 @@ Outputs under ``results/necrofrontier_lit/``:
 """
 from __future__ import annotations
 
+import html
 import json
 import os
 import pathlib
@@ -98,10 +99,20 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 UA = {"User-Agent": "Seti-necrofrontier/1.0 (mailto:trimcrae@gmail.com)"}
 STATUS: list[dict] = []
-PAUSE = float(os.environ.get("NECROFRONTIER_PAUSE", "3.0"))
+PAUSE = float(os.environ.get("NECROFRONTIER_PAUSE", "6.0"))
 TRIES = int(os.environ.get("NECROFRONTIER_TRIES", "3"))
 ARXIV_API = "http://export.arxiv.org/api/query"
+ADS_API = "https://api.adsabs.harvard.edu/v1/search/query"
+ADS_TOKEN = os.environ.get("ADS_TOKEN") or os.environ.get("ADS_API_TOKEN") or ""
 MAX_RESULTS = 60
+# The first run (2026-09-13, run 34754534065) got HTTP 429 from the arXiv API
+# on 64 of 65 requests at a 3 s pace and delivered nothing.  Three defences:
+# a slower base pace; a Retry-After-aware exponential backoff (30 s, 90 s,
+# 270 s); and, when arXiv still refuses, the same query against the ADS API
+# with the repository's ADS_TOKEN secret, written in the same Atom shape so
+# the id/title check and the concept scan run unchanged.  Every file records
+# which service produced it.
+BACKOFF = [30.0, 90.0, 270.0]
 
 
 def _write_summary() -> None:
@@ -133,6 +144,14 @@ def get(url: str, dest: pathlib.Path, tries: int = TRIES, pause: float = PAUSE) 
         except urllib.error.HTTPError as exc:
             attempts.append({"try": i + 1, "http": exc.code, "error": str(exc)[:200]})
             print(f"  try {i + 1}/{tries} HTTP {exc.code}: {dest.name}")
+            if exc.code in (429, 503):
+                ra = exc.headers.get("Retry-After") if exc.headers else None
+                wait = BACKOFF[min(i, len(BACKOFF) - 1)]
+                if ra and str(ra).strip().isdigit():
+                    wait = max(wait, float(ra))
+                print(f"  throttled; sleeping {wait:.0f}s")
+                time.sleep(wait)
+                continue
         except Exception as exc:  # noqa: BLE001
             attempts.append({"try": i + 1, "http": None, "error": repr(exc)[:200]})
             print(f"  try {i + 1}/{tries} failed: {exc!r}")
@@ -728,24 +747,129 @@ COMPILED = {g: _compile(spec) for g, spec in GROUPS.items()}
 
 
 # --------------------------------------------------------------------------
-# Fetchers
+# ADS fallback: the same question asked of a second service.
+# --------------------------------------------------------------------------
+def arxiv_to_ads_query(q: str) -> str:
+    """Translate an arXiv-API search string into ADS syntax (pure function).
+
+    arXiv: ``abs:foo AND abs:(bar OR baz)``, ``ti:"..."``, ``all:X``.
+    ADS:   fields joined by implicit AND, ``abs:``/``title:`` phrases quoted,
+           ``all:`` dropped (unfielded term).  OR and parentheses pass through.
+    """
+    out = q.replace(" AND ", " ")
+    out = re.sub(r"\bti:", "title:", out)
+    out = re.sub(r"\ball:", "", out)
+    return out.strip()
+
+
+def _xml_escape(t: str) -> str:
+    return (t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+
+
+def ads_to_atom(docs: list[dict]) -> str:
+    """Render ADS documents in the minimal Atom shape ``_entries`` reads.
+
+    The ``<id>`` carries the arXiv id when ADS knows one (``identifier``
+    list), else the bibcode, so the concept scan keys hits the same way."""
+    parts = ['<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">',
+             "<source>ads</source>"]
+    for d in docs:
+        ident = ""
+        for x in d.get("identifier") or []:
+            m = re.match(r"arXiv:(.+)", x)
+            if m:
+                ident = f"http://arxiv.org/abs/{m.group(1)}"
+                break
+        ident = ident or f"bibcode:{d.get('bibcode', '')}"
+        title = " ".join(d.get("title") or [])
+        parts.append(f"<entry><id>{_xml_escape(ident)}</id><title>{_xml_escape(title)}</title>"
+                     f"<summary>{_xml_escape(d.get('abstract') or '')}</summary></entry>")
+    parts.append("</feed>")
+    return "".join(parts)
+
+
+def ads_fetch(q: str, dest: pathlib.Path, rows: int) -> bool:
+    """Query ADS with the token; write Atom-shaped output to ``dest``."""
+    if not ADS_TOKEN:
+        STATUS.append({"url": "ads:" + q, "dest": dest.name, "ok": False,
+                       "attempts": [{"try": 0, "http": None, "error": "no ADS_TOKEN"}]})
+        _write_summary()
+        return False
+    url = (f"{ADS_API}?q={urllib.parse.quote(q)}&rows={rows}"
+           "&fl=bibcode,title,abstract,identifier&sort=score+desc")
+    attempts: list[dict] = []
+    for i in range(TRIES):
+        try:
+            req = urllib.request.Request(url, headers={**UA, "Authorization": f"Bearer {ADS_TOKEN}"})
+            with urllib.request.urlopen(req, timeout=90) as r:
+                data = json.loads(r.read().decode("utf-8", "ignore"))
+            docs = (data.get("response") or {}).get("docs") or []
+            dest.write_text(ads_to_atom(docs))
+            attempts.append({"try": i + 1, "http": 200, "n_docs": len(docs)})
+            STATUS.append({"url": url.split("&fl=")[0], "dest": dest.name, "ok": True,
+                           "bytes": dest.stat().st_size, "source": "ads", "attempts": attempts})
+            _write_summary()
+            print(f"  ok  ADS {len(docs):>3} docs  {dest.name}")
+            time.sleep(1.0)
+            return True
+        except urllib.error.HTTPError as exc:
+            attempts.append({"try": i + 1, "http": exc.code, "error": str(exc)[:200]})
+            print(f"  ADS try {i + 1}/{TRIES} HTTP {exc.code}")
+        except Exception as exc:  # noqa: BLE001
+            attempts.append({"try": i + 1, "http": None, "error": repr(exc)[:200]})
+            print(f"  ADS try {i + 1}/{TRIES} failed: {exc!r}")
+        time.sleep(5.0 * (i + 1))
+    STATUS.append({"url": url.split("&fl=")[0], "dest": dest.name, "ok": False, "source": "ads",
+                   "attempts": attempts})
+    _write_summary()
+    return False
+
+
+# --------------------------------------------------------------------------
+# Fetchers: arXiv first, ADS when arXiv refuses.
 # --------------------------------------------------------------------------
 def arxiv_query(group: str, name: str, q: str) -> None:
     url = (f"{ARXIV_API}?search_query={urllib.parse.quote(q)}"
            f"&start=0&max_results={MAX_RESULTS}&sortBy=relevance&sortOrder=descending")
-    get(url, OUT / f"arxiv_q_{group}__{name}.atom")
+    dest = OUT / f"arxiv_q_{group}__{name}.atom"
+    if not get(url, dest):
+        ads_fetch(arxiv_to_ads_query(q), dest, MAX_RESULTS)
 
 
 def arxiv_title(group: str, name: str, title: str) -> None:
     q = 'ti:"' + title.replace('"', "") + '"'
     url = (f"{ARXIV_API}?search_query={urllib.parse.quote(q)}"
            f"&start=0&max_results=5&sortBy=relevance&sortOrder=descending")
-    get(url, OUT / f"arxiv_q_title_{group}__{name}.atom")
+    dest = OUT / f"arxiv_q_title_{group}__{name}.atom"
+    if not get(url, dest):
+        ads_fetch(arxiv_to_ads_query(q), dest, 5)
 
 
-def arxiv_id(group: str, name: str, aid: str) -> None:
-    get(f"{ARXIV_API}?search_query=&id_list={aid}&start=0&max_results=1",
-        OUT / f"arxiv_id_{group}__{name}.atom")
+def arxiv_ids(group: str, named: dict[str, tuple]) -> None:
+    """One id_list request per group (not one per paper), then split the feed
+    into the per-paper files the id/title check reads; ADS per id on refusal."""
+    if not named:
+        return
+    ids = [aid for aid, _, _ in named.values()]
+    url = (f"{ARXIV_API}?search_query=&id_list={','.join(ids)}&start=0"
+           f"&max_results={len(ids)}")
+    combined = OUT / f"arxiv_idlist_{group}.atom"
+    if get(url, combined):
+        text = combined.read_text(errors="ignore")
+        by_id = {}
+        for m in re.finditer(r"<entry>.*?</entry>", text, re.S):
+            e = m.group(0)
+            mid = re.search(r"<id>http://arxiv.org/abs/([^<v]+)", e)
+            if mid:
+                by_id[mid.group(1)] = e
+        for name, (aid, _, _) in named.items():
+            e = by_id.get(aid)
+            (OUT / f"arxiv_id_{group}__{name}.atom").write_text(
+                '<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">'
+                + (e or "") + "</feed>")
+        return
+    for name, (aid, _, _) in named.items():
+        ads_fetch(f"identifier:arXiv:{aid}", OUT / f"arxiv_id_{group}__{name}.atom", 1)
 
 
 def _entries(text: str):
@@ -754,7 +878,7 @@ def _entries(text: str):
         aid = (re.search(r"<id>(.*?)</id>", e, re.S) or [None, ""])[1].strip()
         title = " ".join((re.search(r"<title>(.*?)</title>", e, re.S) or [None, ""])[1].split())
         summ = " ".join((re.search(r"<summary>(.*?)</summary>", e, re.S) or [None, ""])[1].split())
-        yield aid, title, summ
+        yield aid, html.unescape(title), html.unescape(summ)
 
 
 def _norm(s: str) -> str:
@@ -814,7 +938,7 @@ def id_title_check(out_dir: pathlib.Path | None = None) -> dict:
 # fetched for one group can be prior art for another).
 # --------------------------------------------------------------------------
 def _atom_files(out_dir: pathlib.Path) -> list[pathlib.Path]:
-    return sorted(out_dir.glob("arxiv_*.atom"))
+    return sorted(p for p in out_dir.glob("arxiv_*.atom") if not p.name.startswith("arxiv_idlist_"))
 
 
 def _file_group(name: str) -> str | None:
@@ -903,10 +1027,10 @@ def main() -> None:
     try:
         for group, spec in GROUPS.items():
             print(f"==== {group} ====")
-            print("== named papers by id (title-checked) ==")
+            print("== named papers by id (title-checked; one id_list call per group) ==")
             for name, (aid, _, conf) in spec["by_id"].items():
                 print(f"-- {name} ({aid}, prior confidence {conf})")
-                arxiv_id(group, name, aid)
+            arxiv_ids(group, spec["by_id"])
             print("== named papers by title ==")
             for name, title in spec["by_title"].items():
                 print(f"-- {name}")

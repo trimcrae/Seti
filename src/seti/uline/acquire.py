@@ -38,7 +38,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .lines import Entry, find_species, parse_cat, parse_catdir, parse_partition_table
+from .lines import (
+    Entry,
+    SpeciesMatch,
+    match_species,
+    parse_cat,
+    parse_catdir_report,
+    parse_partition_table,
+    unparsed_catdir_lines,
+)
 
 VIZIER_TAP = "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
 
@@ -65,7 +73,7 @@ class AcquisitionLog:
             status = STATUS_OK
         rec = {"stage": stage, "status": status, "rows": int(rows or 0), "what": str(what)[:2000]}
         if error:
-            rec["error"] = str(error)[:500]
+            rec["error"] = str(error)[:2000]     # the FULL text: a bare status is undiagnosable
         if extra:
             rec.update(extra)
         self.stages.append(rec)
@@ -147,14 +155,31 @@ def tap_query(adql: str, *, url: str = VIZIER_TAP, retries: int = 3) -> pd.DataF
 # ---------------------------------------------------------------------------
 # JPL
 # ---------------------------------------------------------------------------
-def jpl_inventory(catdir_text: str, species_conf: dict) -> dict[str, list[Entry]]:
-    """{species: [matching catdir entries]} for every configured species."""
-    entries = parse_catdir(catdir_text)
-    out: dict[str, list[Entry]] = {}
+def match_all_species(entries: list[Entry], species_conf: dict) -> dict[str, SpeciesMatch]:
+    """{species: :class:`SpeciesMatch`} for every configured species.
+
+    Matching is by NORMALISED FORMULA first (the configured regexes are an
+    additional route, never the only one) and every near miss is kept, so a
+    species that still finds nothing reports the catalogue's own spellings.
+    """
+    out: dict[str, SpeciesMatch] = {}
     for group in ("targets", "baseline", "contaminants"):
         for sp, spec in (species_conf.get(group) or {}).items():
-            out[sp] = find_species(entries, spec.get("patterns") or [rf"^{re.escape(sp)}\b"])
+            formula = str((spec or {}).get("formula") or sp)
+            out[sp] = match_species(entries, formula, (spec or {}).get("patterns") or [])
     return out
+
+
+def jpl_inventory(catdir_text: str, species_conf: dict) -> tuple[dict[str, list[Entry]], dict]:
+    """({species: [catdir entries]}, report) for every configured species."""
+    entries, unparsed = parse_catdir_report(catdir_text)
+    matches = match_all_species(entries, species_conf)
+    inv = {sp: m.entries for sp, m in matches.items()}
+    rep = {"n_entries": len(entries), "n_unparsed_lines": len(unparsed),
+           "unparsed_sample": unparsed_catdir_lines(catdir_text),
+           "matched_names": {sp: m.matched_names for sp, m in matches.items()},
+           "near_miss_names": {sp: m.near_miss_names for sp, m in matches.items()}}
+    return inv, rep
 
 
 # ---------------------------------------------------------------------------
@@ -205,12 +230,12 @@ def cdms_inventory(pages: dict[str, str], species_conf: dict) -> tuple[list[Entr
         report[url] = {"status": STATUS_OK if (parsed or tags or n_loose) else STATUS_ZERO,
                        "n_partition_entries": len(parsed), "n_cat_links": len(tags),
                        "n_loose_tag_names": n_loose, "bytes": len(text)}
-    inv: dict[str, list[Entry]] = {}
     allentries = list(entries.values())
-    for group in ("targets", "baseline", "contaminants"):
-        for sp, spec in (species_conf.get(group) or {}).items():
-            inv[sp] = find_species(allentries, spec.get("patterns") or [rf"^{re.escape(sp)}\b"])
-    return allentries, {"pages": report, "n_entries": len(allentries), "species": inv}
+    matches = match_all_species(allentries, species_conf)
+    inv = {sp: m.entries for sp, m in matches.items()}
+    return allentries, {"pages": report, "n_entries": len(allentries), "species": inv,
+                        "matched_names": {sp: m.matched_names for sp, m in matches.items()},
+                        "near_miss_names": {sp: m.near_miss_names for sp, m in matches.items()}}
 
 
 # ---------------------------------------------------------------------------
@@ -329,30 +354,65 @@ def unquote_table(name: str) -> str:
     return str(name).strip().strip('"').strip()
 
 
+def _tidy_tables(df: pd.DataFrame | None) -> pd.DataFrame:
+    if df is None or not len(df):
+        return pd.DataFrame(columns=["table_name", "description"])
+    df = df.rename(columns={c: str(c).lower() for c in df.columns})
+    if "table_name" not in df:
+        return pd.DataFrame(columns=["table_name", "description"])
+    df = df.copy()
+    df["table_name"] = df["table_name"].map(unquote_table)
+    if "description" not in df:
+        df["description"] = ""
+    return df[["table_name", "description"]]
+
+
+def tables_like_adql(pattern: str, limit: int = 60) -> str:
+    """ADQL for a table-name search.
+
+    **The leading ``%`` is load-bearing.**  TAPVizieR stores ``table_name``
+    *with* its literal double quotes (``"J/ApJ/787/112/table2"``), so
+    ``LIKE 'J/ApJ/787/112/%'`` matches nothing at all; this repository has
+    been bitten by it twice (``scripts/necrofrontier_probe.py``,
+    ``docs/baffle.md``).  Every LIKE here opens with ``%``.
+    """
+    return (f"SELECT TOP {int(limit)} table_name, description FROM TAP_SCHEMA.tables "
+            f"WHERE table_name LIKE '%{pattern}%'")
+
+
+def _like_any(column: str, word: str) -> str:
+    variants = dict.fromkeys([word, word.lower(), word.capitalize(), word.upper()])
+    return "(" + " OR ".join(f"{column} LIKE '%{v}%'" for v in variants) + ")"
+
+
+def tables_described_adql(terms_all=(), terms_any=(), limit: int = 60) -> str:
+    """ADQL for a DESCRIPTION search: every ``terms_all`` AND any ``terms_any``.
+
+    Used when the asserted catalogue id is absent from ``TAP_SCHEMA`` — e.g.
+    ``description LIKE '%unidentified%'`` combined with ``'%Orion%'`` or
+    ``'%line survey%'``.  Case variants are OR-ed because TAPVizieR's LIKE is
+    case-sensitive.
+    """
+    clauses = [_like_any("description", w) for w in terms_all if str(w).strip()]
+    anyw = [_like_any("description", w) for w in terms_any if str(w).strip()]
+    if anyw:
+        clauses.append("(" + " OR ".join(anyw) + ")")
+    where = " AND ".join(clauses) if clauses else "1 = 1"
+    return (f"SELECT TOP {int(limit)} table_name, description FROM TAP_SCHEMA.tables "
+            f"WHERE {where}")
+
+
 def list_tables_like(pattern: str, *, query_fn=None, limit: int = 60) -> pd.DataFrame:
     query_fn = query_fn or tap_query
-    adql = (f"SELECT TOP {int(limit)} table_name, description FROM TAP_SCHEMA.tables "
-            f"WHERE table_name LIKE '%{pattern}%'")
-    df = query_fn(adql)
-    if df is None or not len(df):
-        return pd.DataFrame(columns=["table_name", "description"])
-    df = df.rename(columns={c: c.lower() for c in df.columns})
-    df["table_name"] = df["table_name"].map(unquote_table)
-    return df[["table_name"] + [c for c in ("description",) if c in df]]
+    return _tidy_tables(query_fn(tables_like_adql(pattern, limit)))
 
 
-def list_tables_described(word: str, *, query_fn=None, limit: int = 60) -> pd.DataFrame:
-    """Tables whose description mentions ``word`` (case variants OR-ed)."""
+def list_tables_described(word=None, *, terms_all=(), terms_any=(), query_fn=None,
+                          limit: int = 60) -> pd.DataFrame:
+    """Tables whose description matches (case variants OR-ed)."""
     query_fn = query_fn or tap_query
-    variants = dict.fromkeys([word, word.lower(), word.capitalize(), word.upper()])
-    where = " OR ".join(f"description LIKE '%{v}%'" for v in variants)
-    df = query_fn(f"SELECT TOP {int(limit)} table_name, description FROM TAP_SCHEMA.tables "
-                  f"WHERE {where}")
-    if df is None or not len(df):
-        return pd.DataFrame(columns=["table_name", "description"])
-    df = df.rename(columns={c: c.lower() for c in df.columns})
-    df["table_name"] = df["table_name"].map(unquote_table)
-    return df
+    all_terms = list(terms_all) or ([word] if word else [])
+    return _tidy_tables(query_fn(tables_described_adql(all_terms, terms_any, limit)))
 
 
 def table_columns(table: str, *, query_fn=None) -> pd.DataFrame:
@@ -390,47 +450,83 @@ class LineTableDiscovery:
     status: str = STATUS_ZERO
     scoreboard: list[dict] = field(default_factory=list)
     frame_hint: str = ""
+    #: every ADQL sent, with its row count or its error text
+    queries: list[dict] = field(default_factory=list)
+    #: the DESCRIPTION search run when the asserted catalogue id was absent
+    fallback: dict = field(default_factory=dict)
+
+    @property
+    def errors(self) -> list[dict]:
+        return [q for q in self.queries if q.get("status") == STATUS_FAILED]
 
     def as_dict(self) -> dict:
         return {"source": self.source, "pattern": self.pattern, "table": self.table,
                 "roles": self.roles, "units": self.units, "descriptions": self.descriptions,
                 "n_rows": self.n_rows, "status": self.status, "scoreboard": self.scoreboard,
-                "frame_hint": self.frame_hint}
+                "frame_hint": self.frame_hint, "queries": self.queries,
+                "errors": self.errors, "fallback": self.fallback}
+
+
+def traced_query(query_fn, trace: list[dict], stage: str):
+    """Wrap ``query_fn`` so every ADQL — and the error text of every failure —
+    is recorded verbatim.  A bare ``QUERY_FAILED`` is what made the first
+    dispatch undiagnosable."""
+    def run(adql: str):
+        try:
+            df = query_fn(adql)
+        except Exception as exc:                              # noqa: BLE001
+            trace.append({"stage": stage, "adql": str(adql), "status": STATUS_FAILED,
+                          "rows": 0, "error": repr(exc)[:2000]})
+            raise
+        n = 0 if df is None else int(len(df))
+        trace.append({"stage": stage, "adql": str(adql),
+                      "status": STATUS_OK if n else STATUS_ZERO, "rows": n})
+        return df
+    return run
 
 
 def discover_line_table(source: str, pattern: str, *, query_fn=None,
-                        log: AcquisitionLog | None = None, column_patterns=None
+                        log: AcquisitionLog | None = None, column_patterns=None,
+                        fallback_terms_all=(), fallback_terms_any=(), limit: int = 60
                         ) -> LineTableDiscovery:
     """Pick the table under ``pattern`` that has a frequency and an identification column.
 
     Every candidate's roles and row count go on the scoreboard; the winner is
     the usable table with the most rows.  ``frame_hint`` records whether the
     frequency column's description mentions rest / LSR / observed.
+
+    When the asserted catalogue id yields no table at all — or no *usable*
+    one — a DESCRIPTION search is run and **every** table it returns is
+    recorded in ``fallback`` so the next dispatch can be pointed at the real
+    catalogue.  The fallback is diagnostic only: no table is ever selected
+    from it automatically, and a new catalogue id has to be asserted in
+    ``config/uline.yaml`` with a ``verify`` note first.
     """
     query_fn = query_fn or tap_query
     log = log or AcquisitionLog()
     d = LineTableDiscovery(source=source, pattern=pattern)
+    tabs_q = traced_query(query_fn, d.queries, f"tables_{source}")
+    tabs = pd.DataFrame(columns=["table_name", "description"])
     try:
-        tabs = list_tables_like(pattern, query_fn=query_fn)
-        log.record(f"tables_{source}", pattern, rows=int(len(tabs)))
+        tabs = list_tables_like(pattern, query_fn=tabs_q, limit=limit)
+        log.record(f"tables_{source}", pattern, rows=int(len(tabs)),
+                   extra={"adql": tables_like_adql(pattern, limit)})
     except Exception as exc:                                  # noqa: BLE001
-        log.record(f"tables_{source}", pattern, error=repr(exc))
+        log.record(f"tables_{source}", pattern, error=repr(exc),
+                   extra={"adql": tables_like_adql(pattern, limit)})
         d.status = STATUS_FAILED
-        return d
-    if not len(tabs):
-        d.status = STATUS_ZERO
-        return d
     best = None
     for _, row in tabs.iterrows():
         t = str(row["table_name"])
+        cq = traced_query(query_fn, d.queries, f"columns_{source}")
         try:
-            cols = table_columns(t, query_fn=query_fn)
+            cols = table_columns(t, query_fn=cq)
             roles = resolve_line_columns(cols, column_patterns)
-            n = count_rows(t, query_fn=query_fn) if roles.get("freq") else None
+            n = count_rows(t, query_fn=cq) if roles.get("freq") else None
             log.record(f"columns_{source}", t, rows=int(len(cols)))
         except Exception as exc:                              # noqa: BLE001
             log.record(f"columns_{source}", t, error=repr(exc))
-            d.scoreboard.append({"table": t, "status": STATUS_FAILED, "error": repr(exc)[:200]})
+            d.scoreboard.append({"table": t, "status": STATUS_FAILED, "error": repr(exc)[:2000]})
             continue
         usable = bool(roles.get("freq") and roles.get("ident"))
         entry = {"table": t, "description": str(row.get("description", ""))[:200],
@@ -444,7 +540,11 @@ def discover_line_table(source: str, pattern: str, *, query_fn=None,
                      for r, c in roles.items() if c is not None and (cols["column_name"] == c).any()}
             best = (t, n, roles, units, descs)
     if best is None:
-        d.status = STATUS_ZERO
+        if d.status != STATUS_FAILED:
+            d.status = STATUS_ZERO
+        d.fallback = description_fallback(source, query_fn=query_fn, log=log, trace=d.queries,
+                                          terms_all=fallback_terms_all,
+                                          terms_any=fallback_terms_any, limit=limit)
         return d
     d.table, d.n_rows, d.roles, d.units, d.descriptions = best
     d.status = STATUS_OK
@@ -452,6 +552,38 @@ def discover_line_table(source: str, pattern: str, *, query_fn=None,
     hints = [w for w in ("rest", "lsr", "observed", "sky", "laboratory", "measured") if w in fd]
     d.frame_hint = ",".join(hints)
     return d
+
+
+def description_fallback(source: str, *, query_fn=None, log: AcquisitionLog | None = None,
+                         trace: list[dict] | None = None, terms_all=(), terms_any=(),
+                         limit: int = 60) -> dict:
+    """DESCRIPTION search for the real catalogue behind an absent table id.
+
+    Returns the ADQL, the row count and **every** table the search returned
+    (name + description), or the error text if the query itself failed.
+    """
+    terms_all = [t for t in (terms_all or ()) if str(t).strip()]
+    terms_any = [t for t in (terms_any or ()) if str(t).strip()]
+    if not terms_all and not terms_any:
+        return {"status": "NOT_ATTEMPTED", "reason": "no fallback description terms configured"}
+    query_fn = query_fn or tap_query
+    log = log or AcquisitionLog()
+    adql = tables_described_adql(terms_all, terms_any, limit)
+    out = {"terms_all": terms_all, "terms_any": terms_any, "adql": adql}
+    fq = traced_query(query_fn, trace if trace is not None else [], f"fallback_{source}")
+    try:
+        df = _tidy_tables(fq(adql))
+    except Exception as exc:                                  # noqa: BLE001
+        log.record(f"fallback_{source}", adql, error=repr(exc), extra={"adql": adql})
+        out.update({"status": STATUS_FAILED, "error": repr(exc)[:2000], "n_tables": 0,
+                    "tables": []})
+        return out
+    log.record(f"fallback_{source}", adql, rows=int(len(df)), extra={"adql": adql})
+    out.update({"status": STATUS_OK if len(df) else STATUS_ZERO, "n_tables": int(len(df)),
+                "tables": [{"table_name": str(r["table_name"]),
+                            "description": str(r["description"])[:300]}
+                           for _, r in df.iterrows()]})
+    return out
 
 
 def fetch_line_table(disc: LineTableDiscovery, *, query_fn=None, log: AcquisitionLog | None = None,
@@ -498,7 +630,8 @@ def fetch_line_table(disc: LineTableDiscovery, *, query_fn=None, log: Acquisitio
 
 __all__ = ["DEFAULT_COLUMN_PATTERNS", "DEFAULT_ULINE_PATTERNS", "AcquisitionLog",
            "LineTableDiscovery", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "VIZIER_TAP",
-           "cdms_cat_tags", "cdms_inventory", "count_rows", "discover_line_table", "fetch_cats",
-           "fetch_line_table", "fetch_text", "frequency_scale", "jpl_inventory",
-           "list_tables_described", "list_tables_like", "resolve_line_columns", "table_columns",
-           "tap_query", "unidentified_mask", "unquote_table"]
+           "cdms_cat_tags", "cdms_inventory", "count_rows", "description_fallback",
+           "discover_line_table", "fetch_cats", "fetch_line_table", "fetch_text",
+           "frequency_scale", "jpl_inventory", "list_tables_described", "list_tables_like",
+           "match_all_species", "resolve_line_columns", "table_columns", "tables_described_adql",
+           "tables_like_adql", "tap_query", "traced_query", "unidentified_mask", "unquote_table"]

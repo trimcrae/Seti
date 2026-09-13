@@ -89,34 +89,94 @@ class Entry:
                 "database": self.database, "version": self.version}
 
 
-_FLOAT = r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][-+]?\d+)?"
-_CATDIR_RE = re.compile(
-    rf"^\s*(\d+)\s+(.*?)\s+(\d+)\s+((?:{_FLOAT}\s+){{6}}{_FLOAT})(?:\s+(-?\d+))?\s*$")
+#: A partition-function token: ``-1.2345``, ``---`` (missing) or ``NaN``.
+_Q_TOKEN_RE = re.compile(r"^(?:[-+]?(?:\d+\.\d*|\.\d+)(?:[eE][-+]?\d+)?|-{2,}|[Nn][Aa][Nn])$")
+_INT_TOKEN_RE = re.compile(r"^[-+]?\d+$")
 
 
-def parse_catdir(text: str) -> list[Entry]:
-    """Parse JPL ``catdir.cat``: ``tag name nlines Q(300)…Q(9.375) version``.
+def _q_value(tok: str) -> float:
+    if re.fullmatch(r"-{2,}|[Nn][Aa][Nn]", tok):
+        return float("nan")
+    return float(tok)
 
-    Lines that do not fit the format are skipped and counted on the returned
-    list's ``n_unparsed`` attribute (via :func:`catdir_report`).
+
+def parse_catdir_report(text: str) -> tuple[list[Entry], list[str]]:
+    """Parse JPL ``catdir.cat`` tolerantly; return ``(entries, unparsed lines)``.
+
+    The published layout is ``tag  name  nlines  lg Q(300)…lg Q(9.375)  version``
+    but *none* of those fields is fixed-width in practice:
+
+    * the NAME may contain spaces, commas and punctuation
+      (``H2O v2,2v2,v``, ``N-atom-D-st``, ``CH3OH, vt=0-2``);
+    * the VERSION may be ``1``, ``2*``, ``1* `` (with trailing blanks) or
+      absent altogether — the ``*`` is what made the old rigid regex drop 171
+      of 403 lines on run 34787988880;
+    * extra trailing columns may appear after the version.
+
+    So the line is parsed by *field position from the right*: the trailing run
+    of decimal-point (or ``---``/``NaN``) tokens is the Q grid, the integer
+    immediately to its left is the line count, everything between the tag and
+    that integer is the name, and whatever follows the Q grid is the version
+    plus any extra columns.  A line that still will not parse is returned
+    verbatim in the second element — counted, never silently dropped.
     """
     out: list[Entry] = []
+    unparsed: list[str] = []
     for line in (text or "").splitlines():
         if not line.strip():
             continue
-        m = _CATDIR_RE.match(line)
-        if not m:
+        toks = line.split()
+        if len(toks) < 3 or not _INT_TOKEN_RE.match(toks[0]):
+            unparsed.append(line)
             continue
-        q = [float(x) for x in m.group(4).split()]
-        out.append(Entry(tag=int(m.group(1)), name=m.group(2).strip(), nlines=int(m.group(3)),
-                         temps=list(CATDIR_TEMPS), qlog=q, database="jpl",
-                         version=(m.group(5) or "").strip()))
-    return out
+        # rightmost contiguous run of Q-like tokens
+        end = None
+        for i in range(len(toks) - 1, 0, -1):
+            if _Q_TOKEN_RE.match(toks[i]):
+                end = i
+                break
+        if end is None:
+            unparsed.append(line)
+            continue
+        start = end
+        while start - 1 >= 1 and _Q_TOKEN_RE.match(toks[start - 1]):
+            start -= 1
+        q_toks = toks[start:end + 1]
+        if len(q_toks) > len(CATDIR_TEMPS):                    # extra leading Q columns: keep the grid
+            q_toks = q_toks[-len(CATDIR_TEMPS):]
+            start = end + 1 - len(q_toks)
+        # the integer just left of the Q grid is the line count
+        if start - 1 < 1 or not _INT_TOKEN_RE.match(toks[start - 1]):
+            unparsed.append(line)
+            continue
+        name = " ".join(toks[1:start - 1]).strip()
+        if not name:
+            unparsed.append(line)
+            continue
+        try:
+            q = [_q_value(t) for t in q_toks]
+            entry = Entry(tag=int(toks[0]), name=name, nlines=int(toks[start - 1]),
+                          temps=list(CATDIR_TEMPS[:len(q)]), qlog=q, database="jpl",
+                          version=" ".join(toks[end + 1:]).strip())
+        except ValueError:
+            unparsed.append(line)
+            continue
+        out.append(entry)
+    return out, unparsed
+
+
+def parse_catdir(text: str) -> list[Entry]:
+    """Entries of a JPL ``catdir.cat`` (see :func:`parse_catdir_report`)."""
+    return parse_catdir_report(text)[0]
 
 
 def count_unparsed_catdir(text: str) -> int:
-    return sum(1 for line in (text or "").splitlines()
-               if line.strip() and not _CATDIR_RE.match(line))
+    return len(parse_catdir_report(text)[1])
+
+
+def unparsed_catdir_lines(text: str, limit: int = 20) -> list[str]:
+    """The first ``limit`` lines of ``catdir.cat`` that would not parse, verbatim."""
+    return [ln[:300] for ln in parse_catdir_report(text)[1][:int(limit)]]
 
 
 _QHDR_RE = re.compile(r"lg\s*\(\s*Q\s*\(\s*([0-9.]+)\s*\)\s*\)", re.IGNORECASE)
@@ -176,6 +236,193 @@ def find_species(entries: list[Entry], patterns) -> list[Entry]:
     """Entries whose name matches any of the regexes (``re.search``)."""
     rx = [re.compile(p) for p in patterns]
     return [e for e in entries if any(r.search(e.name) for r in rx)]
+
+
+# ---------------------------------------------------------------------------
+# normalised-formula species matching
+# ---------------------------------------------------------------------------
+#: Element symbols, plus D and T kept distinct from H (an isotopologue of a
+#: *target* must not silently become the target).
+_ELEMENTS: tuple[str, ...] = tuple("""
+H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr
+Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb
+Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm D T
+""".split())
+_ELEMENT_SET = frozenset(_ELEMENTS)
+_ELEMENT_BY_LOWER: dict[str, str] = {s.lower(): s for s in _ELEMENTS}
+
+#: Vibrational / torsional state tags that JPL and CDMS append to a name.
+_STATE_RE = re.compile(r"(?i)\b(?:v|vt|vib|nu|n)\s*\d*\s*=\s*[^\s,;]*")
+_STATE_SUFFIX_RE = re.compile(r"(?i)[\s_-]+v[a-z]?\d*$")
+_ISOTOPE_SUFFIX_RE = re.compile(r"-\d{1,3}$")
+_PAREN_MASS_RE = re.compile(r"\(\s*\d{1,3}\s*\)")
+
+
+def normalise_name(name: str) -> str:
+    """Case-fold and drop everything that is not a letter or a digit.
+
+    ``"CH3-35Cl"``, ``"CH3Cl, v=0"`` and ``"CH3CL"`` reduce to ``ch335cl``,
+    ``ch3clv0`` and ``ch3cl``: comparable strings in which the target formula
+    ``ch3cl`` is either the whole string, the string after a leading isotope
+    mass, or a substring (a *near miss*, reported so the next run can be
+    pointed at the catalogue's actual spelling).
+    """
+    return re.sub(r"[^a-z0-9]+", "", str(name or "").casefold())
+
+
+_LEADING_MASS_RE = re.compile(r"^\d{1,3}")
+
+
+def _strip_state(name: str) -> str:
+    s = str(name or "")
+    s = s.split(",")[0].split(";")[0]              # "CH3Cl, v=0" -> "CH3Cl"
+    s = _STATE_RE.sub(" ", s)                      # "H2CO v=0"   -> "H2CO"
+    s = _PAREN_MASS_RE.sub(" ", s)                 # "CH3(35)Cl"  -> "CH3 Cl"
+    prev = None
+    while prev != s:
+        prev = s
+        s = _STATE_SUFFIX_RE.sub("", s.strip())    # "CH2F2-v4"   -> "CH2F2"
+        s = _ISOTOPE_SUFFIX_RE.sub("", s.strip())  # "C2H5CN-15"  -> "C2H5CN"
+    return s.strip()
+
+
+def _tokenise_formula(s: str) -> dict[str, int] | None:
+    """Atom counts of a chemical formula, or ``None`` if it is not one.
+
+    Backtracking so that both ``CO`` (carbon + oxygen) and ``Co`` (cobalt)
+    read correctly and an all-caps ``CH3CL`` still resolves to ``Cl``; a digit
+    run is a subscript when it follows an element and an isotope mass (ignored)
+    when it does not.
+    """
+    counts: dict[str, int] = {}
+
+    def walk(i: int, last: str | None) -> bool:
+        if i >= len(s):
+            return True
+        ch = s[i]
+        if ch == "|":
+            return walk(i + 1, None)
+        if ch.isdigit():
+            j = i
+            while j < len(s) and s[j].isdigit():
+                j += 1
+            if last is not None:
+                counts[last] += int(s[i:j]) - 1
+                if walk(j, None):
+                    return True
+                counts[last] -= int(s[i:j]) - 1
+                return False
+            return walk(j, None)               # leading isotope mass: ignored
+        two, one = s[i:i + 2], s[i:i + 1]
+        # exact case first (so "CO" is carbon+oxygen and "Co" is cobalt), then
+        # case-insensitively (so an all-caps "CH3CL" still resolves to Cl)
+        cands = [(two, two if two in _ELEMENT_SET else None),
+                 (one, one if one in _ELEMENT_SET else None),
+                 (two, _ELEMENT_BY_LOWER.get(two.lower())),
+                 (one, _ELEMENT_BY_LOWER.get(one.lower()))]
+        seen: set[tuple[int, str]] = set()
+        for cand, sym in cands:
+            if sym is None or (len(cand), sym) in seen:
+                continue
+            seen.add((len(cand), sym))
+            counts[sym] = counts.get(sym, 0) + 1
+            if walk(i + len(cand), sym):
+                return True
+            counts[sym] -= 1
+            if counts[sym] == 0:
+                del counts[sym]
+        return False
+
+    return counts if s and walk(0, None) else None
+
+
+def formula_key(name: str) -> str | None:
+    """Canonical ``element+count`` key of a species name, or ``None``.
+
+    Atom counting is what makes the catalogue's own spellings comparable to a
+    plain formula: ``HCCCN`` and ``HC3N`` both give ``C3H1N1``, ``SiCC`` and
+    ``SiC2`` both give ``C2Si1``, ``F2CO``/``CF2O``/``COF2`` all give
+    ``C1F2O1``, and isotope masses (``CH3-35Cl``) and state tags
+    (``CH3Cl, v=0``) drop out first.  Charge is kept, so ``CF+`` never
+    matches ``CF``.
+    """
+    s = _strip_state(name)
+    if not s:
+        return None
+    charge = ""
+    m = re.search(r"([-+]+)\s*$", s)
+    if m:
+        charge = "+" if m.group(1)[0] == "+" else "-"
+        s = s[:m.start()]
+    # whitespace inside a formula is an artefact of HTML stripping
+    # ("CH<sub>3</sub>OH" -> "CH 3 OH") and is closed up; other punctuation is
+    # a real separator, so a digit after it is an isotope mass, not a subscript
+    s = re.sub(r"\s+", "", s)
+    s = re.sub(r"[^A-Za-z0-9]+", "|", s).strip("|")
+    counts = _tokenise_formula(s)
+    if not counts:
+        return None
+    return "".join(f"{k}{counts[k]}" for k in sorted(counts)) + charge
+
+
+def species_match_route(cat_name: str, formula: str, rx=()) -> str | None:
+    """Why (and whether) a catalogue entry name is the target ``formula``.
+
+    Routes, in the order tried: ``normalised`` (the normalised catalogue name
+    equals the normalised formula), ``isotopologue`` (equal after a leading
+    isotope mass), ``atom_counts`` (same canonical formula key) and ``regex``
+    (a configured pattern — an *additional* route, never the only one).
+    """
+    cat_n, want_n = normalise_name(cat_name), normalise_name(formula)
+    if want_n and cat_n == want_n:
+        return "normalised"
+    if want_n and _LEADING_MASS_RE.sub("", cat_n, count=1) == want_n != cat_n:
+        return "isotopologue"
+    want_k = formula_key(formula)
+    if want_k and formula_key(cat_name) == want_k:
+        return "atom_counts"
+    if any(r.search(str(cat_name)) for r in rx):
+        return "regex"
+    return None
+
+
+@dataclass
+class SpeciesMatch:
+    """Matched catalogue entries for one species, plus the near misses."""
+
+    formula: str
+    entries: list[Entry] = field(default_factory=list)
+    matched_names: list[dict] = field(default_factory=list)
+    near_miss_names: list[str] = field(default_factory=list)
+
+    def as_dict(self) -> dict:
+        return {"formula": self.formula, "matched_names": self.matched_names,
+                "near_miss_names": self.near_miss_names}
+
+
+def match_species(entries: list[Entry], formula: str, patterns=None, *,
+                  near_miss_limit: int = 40) -> SpeciesMatch:
+    """Entries that *are* ``formula``, and entries that merely mention it.
+
+    A ``near_miss`` is an entry whose normalised name **contains** the
+    normalised formula without matching it (``CF2Cl2`` for target ``CF2``,
+    or a spelling the matcher still does not understand).  Recording them is
+    the point: a species with no matches and a populated ``near_miss_names``
+    tells the next run the catalogue's exact spelling instead of leaving it
+    blind, which is what the first dispatch did.
+    """
+    rx = [re.compile(p) for p in (patterns or [])]
+    want_n = normalise_name(formula)
+    out = SpeciesMatch(formula=str(formula))
+    for e in entries:
+        route = species_match_route(e.name, formula, rx)
+        if route is not None:
+            out.entries.append(e)
+            out.matched_names.append({"tag": int(e.tag), "name": e.name, "route": route})
+        elif want_n and want_n in normalise_name(e.name):
+            if len(out.near_miss_names) < int(near_miss_limit):
+                out.near_miss_names.append(e.name)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -340,6 +587,8 @@ def symmetric_top_lines(b_mhz: float, dj_mhz: float = 0.0, djk_mhz: float = 0.0,
 
 
 __all__ = ["C2_CM_K", "CATDIR_TEMPS", "CDMS_TEMPS", "Entry", "JPL_INTENSITY_CONST",
-           "LINE_COLUMNS", "MHZ_PER_CM", "count_unparsed_catdir", "find_species",
-           "interp_log_q", "parse_cat", "parse_catdir", "parse_partition_table",
-           "rescale_lgint", "symmetric_top_lines"]
+           "LINE_COLUMNS", "MHZ_PER_CM", "SpeciesMatch", "count_unparsed_catdir",
+           "find_species", "formula_key", "interp_log_q", "match_species", "normalise_name",
+           "parse_cat", "parse_catdir", "parse_catdir_report", "parse_partition_table",
+           "rescale_lgint", "species_match_route", "symmetric_top_lines",
+           "unparsed_catdir_lines"]

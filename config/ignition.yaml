@@ -1,0 +1,122 @@
+# IGNITION --- an infrared excess being born on an old star (docs/ignition.md, S61).
+#
+# The observable is a MONOTONIC W1/W2 rise sustained for >= 5 yr on a
+# Gaia-astrometric, kinematically old field star that was photospheric in
+# AllWISE 2010, with a flat optical light curve.  Natural born excesses rise in
+# < 1 yr and decay; obscured-AGN turn-ons have no parallax.  Every threshold
+# below exists to separate those time signatures, and every one is read by the
+# offline suite (tests/test_ignition.py).
+
+sample:
+  mode: fields                # fields | allsky (allsky needs the upload route; see probe.json)
+  g_max: 14.5
+  parallax_min_mas: 3.0       # d < 333 pc
+  parallax_over_error_min: 10.0
+  abs_b_min_deg: 15.0
+  ruwe_max: 1.4
+  bp_rp_min: 0.6              # F5 ...
+  bp_rp_max: 2.5              # ... M4 dwarfs
+  # Absolute-magnitude dwarf cut: M_G > intercept + slope * (bp_rp - colour0),
+  # M_G = G + 5 log10(plx) - 10.  Sits ~1.5-3 mag above the main sequence:
+  # removes giants and subgiants, keeps equal-mass binaries.
+  dwarf_cut: {intercept: 2.0, slope: 3.3, colour0: 0.6}
+  w1w2_max: 0.15              # photospheric in 2010 (AllWISE)
+  w1w2_min: -0.10             # a negative W1-W2 is a blend (channel-brief §4)
+  v_tan_old_kms: 25.0         # kinematic-age proxy: a FLAG, not a cut
+  cap_per_shard: 20000        # rows per shard; the pilot's honest denominator
+  parallax_shell_edges_mas: [3.0, 4.0, 5.0, 7.0, 10.0, 15.0, 25.0, 50.0, 1000.0]
+  count_parent: true          # archive COUNT(*) of the full selection = the denominator
+  # AllWISE mirror column names; the probe stage re-resolves them (ext_flag vs ext_flg).
+  allwise_columns: {designation: designation, ext_flag: ext_flag, ph_qual: ph_qual,
+                    cc_flags: cc_flags, var_flag: var_flag}
+  # Fields for mode=fields: high ecliptic latitude (NEOWISE visits pile up
+  # toward the ecliptic poles, so the per-star epoch count is highest) AND
+  # |b| > 15 (cirrus and crowding suppressed at selection).  The north-ecliptic
+  # set is VIGIL's (matched 186/187 stars with one field query each); the
+  # south-ecliptic set doubles the sky.  1-degree radii: ~4x VIGIL's area per
+  # query at a W1 < 13 row cut.
+  fields:
+    - {ra: 266.0, dec: 65.0, radius_deg: 1.0}
+    - {ra: 270.0, dec: 66.5, radius_deg: 1.0}
+    - {ra: 262.0, dec: 63.5, radius_deg: 1.0}
+    - {ra: 274.0, dec: 64.0, radius_deg: 1.0}
+    - {ra: 258.0, dec: 67.0, radius_deg: 1.0}
+    - {ra: 280.0, dec: 65.5, radius_deg: 1.0}
+    - {ra: 253.0, dec: 65.0, radius_deg: 1.0}
+    - {ra: 286.0, dec: 63.0, radius_deg: 1.0}
+    - {ra: 250.0, dec: 61.0, radius_deg: 1.0}
+    - {ra: 290.0, dec: 67.5, radius_deg: 1.0}
+    - {ra: 278.0, dec: 69.5, radius_deg: 1.0}
+    - {ra: 262.0, dec: 69.0, radius_deg: 1.0}
+    - {ra: 90.0, dec: -66.5, radius_deg: 1.0}
+    - {ra: 86.0, dec: -64.0, radius_deg: 1.0}
+    - {ra: 94.0, dec: -64.5, radius_deg: 1.0}
+    - {ra: 82.0, dec: -67.0, radius_deg: 1.0}
+    - {ra: 98.0, dec: -67.5, radius_deg: 1.0}
+    - {ra: 90.0, dec: -70.0, radius_deg: 1.0}
+    - {ra: 78.0, dec: -63.5, radius_deg: 1.0}
+    - {ra: 102.0, dec: -65.0, radius_deg: 1.0}
+
+acquire:
+  route: auto                 # auto (from probe.json) | upload | field | cone
+  cone_radius_arcsec: 2.5
+  match_tol_arcsec: 2.5       # field route: KD-tree radius, widened by half the PM sweep
+  field_w1_max: 13.0          # G < 14.5 FGKM dwarfs sit at W1 < ~13; bounds the row count
+  field_max_rows: 4000000
+  upload_chunk: 200
+  checkpoint_every: 50        # cone route: stars per CSV append
+  epoch_gap_days: 90.0        # > 90 d gap starts a new epoch (visits are ~183 d apart)
+  min_exp_per_epoch: 5
+  epoch_err_floor_mag: 0.005
+  clip_sigma: 5.0             # MAD clip of single bad frames inside an epoch
+  qual_frame_min: 1
+  cc_flags_ok: ["0000"]
+  ph_qual_ok: ["A", "B"]
+  time_budget_s: 18000.0      # per shard; the workflow's timeout is longer
+
+rise:
+  min_epochs: 10
+  min_baseline_yr: 5.0
+  slope_sigma_min: 5.0        # weighted slope significance, error inflated by sqrt(chi2_red)
+  rise_sigma_min: 3.0         # first-minus-last epoch, scan-cleaned
+  tau_p_max: 1.0e-3           # Kendall tau
+  mono_frac_min: 0.6          # fraction of consecutive epochs that brighten (scan-cleaned)
+  dbic_min: 6.0               # BIC(step+decay) - BIC(ramp) must exceed this
+  scan_amp_frac_max: 0.3333   # scan-direction sinusoid amplitude < a third of the rise
+  scan_period_days: [345.0, 385.0]
+  scan_period_step_days: 5.0
+  decay_tau_grid_yr: [0.3, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0]      # the impact model
+  growth_tau_grid_yr: [1.0, 1.5, 2.0, 3.0, 5.0, 8.0, 12.0, 20.0]  # the exponential ramp
+  err_floor_mag: 0.005
+
+vet:
+  parallax_over_error_min: 10.0
+  pm_sig_min: 5.0
+  galactic_latitude_min_deg: 15.0
+  w1_saturation_mag: 8.0
+  w2_saturation_mag: 7.0
+  frac_nb_gt1_max: 0.2
+  frac_na_gt0_max: 0.2
+  ph_qual_cut_frac_max: 0.5
+  agn_w1w2_min: 0.8
+  w1w2_2010_max: 0.15
+  optical_slope_sigma_max: 3.0
+  optical_rms_max: 0.05
+  optical_min_points: 20
+  # Known star-forming regions / young associations (generous boxes, degrees).
+  star_forming_boxes:
+    - {name: Taurus, ra: [60.0, 75.0], dec: [15.0, 32.0]}
+    - {name: Orion, ra: [78.0, 92.0], dec: [-12.0, 12.0]}
+    - {name: Perseus, ra: [50.0, 58.0], dec: [29.0, 34.0]}
+    - {name: Ophiuchus, ra: [243.0, 250.0], dec: [-27.0, -21.0]}
+    - {name: UpperSco, ra: [235.0, 250.0], dec: [-30.0, -15.0]}
+    - {name: Lupus, ra: [232.0, 246.0], dec: [-43.0, -33.0]}
+    - {name: Chamaeleon, ra: [160.0, 172.0], dec: [-80.0, -74.0]}
+    - {name: Serpens, ra: [275.0, 280.0], dec: [-3.0, 3.0]}
+    - {name: CoronaAustralis, ra: [283.0, 288.0], dec: [-39.0, -35.0]}
+    - {name: Cepheus, ra: [310.0, 340.0], dec: [60.0, 72.0]}
+
+sensitivity:
+  amps_mag: [0.1, 0.2, 0.4]   # linear ramps over `over_yr`, injected on both bands
+  over_yr: 10.0
+  max_stars: 200              # per shard

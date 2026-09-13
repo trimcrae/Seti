@@ -10,6 +10,53 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### ISOTOPE's first run: 20,502 presolar grains, no purity without a package, 2026-09-14
+
+**The first NECROFRONTIER channel to reach real data, and it reached it by a
+route the probe said did not exist.** Three probe runs found the Presolar
+Grain Database's own host unreachable from the runner on both ports and the
+guessed DOI wrong. The channel's fifth acquisition route — a DataCite title
+search — found the release on **Zenodo (record 20317007)**, and the run
+screened **20,502 SiC grains** (`results/isotope/`, run 2026-09-13 23:35 UTC).
+Column roles resolved against the real headers (`PGD ID`, `PGD Type`,
+`d(29Si/28Si)`, `err[d(29Si/28Si)]`, `12C/13C`, `14N/15N`, `26Al/27Al`,
+`44Ti/48Ti`, `d(44Ca/40Ca)`) out of 154 columns, with nothing assumed.
+
+**The measurement.** Grain types as the literature has them: 17,066
+mainstream, 1,332 AB, 824 Y, **800 X**, 292 Z, 122 unclassified, 27 N, 25 C,
+14 of the new type D. The **empirical purity frontier**, which is the number
+this channel exists to produce, is set by the database's own most extreme
+supernova grains: δ²⁹Si ≥ **−746.5 ± 16.0 ‰** (SiC-1996-HOP-100001) and
+δ³⁰Si ≥ **−789.5 ± 8.8 ‰** (SiC-2018-HOP-001202), with the joint end-member
+at (−661.5, −770.0) (SiC-2000-HOP-000025). The X package, also measured
+rather than assumed: median ¹²C/¹³C 159, ¹⁴N/¹⁵N 63.9, ²⁶Al/²⁷Al 0.26,
+⁴⁴Ti/⁴⁸Ti 0.0575, δ⁴⁴Ca +110 ‰.
+
+**Verdict `NO_PURITY_CANDIDATE`: zero grains beyond that envelope, so zero
+with purity and no nucleosynthetic partner.** 12,823 ordinary, 6,041
+mass-dependent fractionation, 1,638 without silicon, 0 contamination
+suspects. Every X grain classes `ORDINARY` with reason `inside_envelope` —
+by construction, since the classes past the envelope are unreachable when
+nothing crosses it. Quantum-grade ²⁸Si sits at δ ≈ −999 ‰, so what the run
+establishes is that **the 210 ‰ between the natural frontier and refined
+silicon is empty in every grain humanity has measured**. Per the charter that
+changes the question, not the venue: the next places to ask are the graphite
+and oxide releases (SiC is the only phase released so far), and the carbon
+analogue, whose natural maximum this run also measured (¹²C/¹³C ≤ 21,400,
+SiC-2018-HOP-001803, a type C grain).
+
+**Three infrastructure findings from the same night.** GROWTH's first run
+joined only 108 planets because `ps.tic_id` is the string `"TIC 122298563"`
+and `pd.to_numeric` silently emptied the map, and its Gaia upload join hit
+the anonymous ESA statement timeout (both fixed; four counted join routes and
+per-chunk cones). ULINE's species matcher never fired because JPL's version
+column is `2*`, which the parser's regex rejected, dropping 171 of 403 lines
+(fixed: 403/403, CDMS 1,327 → 5,690 entries, NF₃ now found in a real
+catalogue). **TAPVizieR is returning 503 to the runner over both http and
+https**, which is why ARC and ULINE's U-line sources read `NO_DATA_REACHED` —
+an infrastructure state, recorded verbatim with every endpoint and error, and
+explicitly not a sky result.
+
 ### Five NECROFRONTIER channels built, 2026-09-13 (user: "Do it")
 
 Built in parallel by five builders on disjoint paths, each offline-tested and

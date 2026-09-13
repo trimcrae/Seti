@@ -1,0 +1,128 @@
+# GROWTH channel — every threshold, coefficient and list in one place.
+#
+# Signature S57 (docs/necrofrontier.md §2, "The growing transit"): a shell or
+# swarm being BUILT around a transiting planet grows its transit depth
+# achromatically over years.  Stage 1 compares the Kepler-era depth (KOI
+# cumulative table, 2009–2013) with the TESS-era depth (TOI table, 2018–2026)
+# for every Kepler planet/candidate TESS re-detected, after the deterministic
+# corrections, and flags growth (or shrinkage) at fixed impact parameter.
+#
+# Every number marked `verify` was set from memory of the cited source in a
+# sandbox with no archive egress and must be checked against the source before
+# any candidate is written up.
+
+archive:
+  exoarchive_tap: "https://exoplanetarchive.ipac.caltech.edu/TAP/sync"
+  tables:
+    koi: "cumulative"
+    toi: "toi"
+    ps: "ps"
+  ps_where: "disc_facility like '%Kepler%'"
+  retries: 3
+  timeout_s: 900
+
+join:
+  pos_radius_arcsec: 2.0          # KOI <-> TOI positional match when the ps table gives no tic_id
+  period_tol: 1.0e-3              # |ΔP/P| for the same planet
+  alias_max: 4                    # integer aliases n / 1/n tried (recorded as period_alias; a veto)
+
+gaia:
+  neighbour_radius_arcsec: 21.0   # one TESS pixel
+  chunk: 300                      # targets per upload crossmatch
+  retries: 3
+
+aperture:
+  # Aperture-capture weight for a neighbour at separation d:
+  #   w(d) = 0.5 erfc((d − radius) / (√2 σ_psf))
+  # ~1 well inside, 0.5 at the edge, ~0 a few σ beyond.  Approximate: the real
+  # TESS PRF is undersampled and position-dependent; the UNWEIGHTED sum
+  # (contam_max) is carried alongside as the upper bound and drives the
+  # neighbour veto.
+  radius_arcsec: 21.0
+  psf_sigma_arcsec: 10.5
+
+drift:
+  sigma_sys: 0.05                 # floor on σ(ln R): pipeline-to-pipeline depth heterogeneity
+  sigma_dur_sys: 0.05             # floor on σ(ln T14 ratio)
+  n_consistent: 3.0               # |z| below this: CONSISTENT
+  n_candidate: 5.0                # z at or above this (and every gate): GROWTH_CANDIDATE
+  n_duration: 3.0                 # |z_duration| below this: the change is at fixed b
+  # The TOI depths from SPOC are fitted on PDCSAP flux, which already carries
+  # the CROWDSAP crowding correction; QLP depths are corrected with the TIC
+  # contamination ratio.  Applying the Gaia term as well can double-correct,
+  # which is why the neighbour veto asks a candidate to survive the full
+  # dilution range [0, contam_max].  Set false to compare uncorrected ratios.
+  apply_dilution_to_tess: true
+  # Han et al. 2025: public TESS radii are ~6 % low from residual blending,
+  # i.e. a ~12 % depth deficit is the EXPECTED sign for an ordinary planet.
+  # The population median ln R is measured on the joined sample and subtracted
+  # before classification, so "growth" means growth relative to the
+  # population's own systematic offset.  Both numbers are reported.
+  han2025_expected_deficit: 0.12   # verify against Han et al. 2025
+  subtract_population_median: true
+
+long_period:
+  min_period_days: 30.0           # every joined or TESS-only planet above this is listed for stage 2
+
+limb_darkening:
+  # Quadratic-law coefficients (u1, u2) at [Fe/H] = 0, logg 4.5, for the
+  # Kepler band (Claret & Bloemen 2011, A&A 529, A75 — ATLAS, flux-conserving
+  # method) and the TESS band (Claret 2017, A&A 600, A30).  Values are
+  # approximate and transcribed from memory: `verify` every row against the
+  # VizieR tables (J/A+A/529/A75, J/A+A/600/A30) before a candidate is written
+  # up.  The correction is a few per cent (±4 % between b = 0 and b = 0.9 for
+  # a solar-type star), so an error of 0.05 in u1 moves ln R by ~0.01.
+  source: "Claret & Bloemen 2011 (Kepler); Claret 2017 (TESS) — verify"
+  default_teff: 5800.0
+  grids:
+    - logg: 4.5
+      teff:   [3500, 4000, 4500, 5000, 5500, 5800, 6000, 6500, 7000]
+      kepler: [[0.50, 0.25], [0.60, 0.16], [0.62, 0.13], [0.53, 0.20],
+               [0.45, 0.24], [0.40, 0.26], [0.37, 0.27], [0.31, 0.30], [0.26, 0.32]]
+      tess:   [[0.25, 0.35], [0.42, 0.22], [0.45, 0.20], [0.40, 0.22],
+               [0.34, 0.24], [0.31, 0.25], [0.28, 0.26], [0.23, 0.29], [0.19, 0.31]]
+
+vet:
+  # Known large-TTV Kepler systems (Holczer et al. 2016, ApJS 225, 9 and the
+  # named literature cases).  INCOMPLETE and from memory — `verify`; a system
+  # can be listed by Kepler name, KOI host ("K00142" / "KOI-142") or "KIC n".
+  ttv_systems:
+    - "Kepler-9"
+    - "Kepler-11"
+    - "Kepler-18"
+    - "Kepler-19"
+    - "Kepler-24"
+    - "Kepler-25"
+    - "Kepler-26"
+    - "Kepler-27"
+    - "Kepler-28"
+    - "Kepler-29"
+    - "Kepler-30"
+    - "Kepler-31"
+    - "Kepler-32"
+    - "Kepler-36"
+    - "Kepler-46"
+    - "Kepler-49"
+    - "Kepler-51"
+    - "Kepler-56"
+    - "Kepler-57"
+    - "Kepler-60"
+    - "Kepler-79"
+    - "Kepler-80"
+    - "Kepler-87"
+    - "Kepler-88"
+    - "Kepler-117"
+    - "Kepler-138"
+    - "Kepler-223"
+    - "Kepler-289"
+    - "Kepler-411"
+    - "Kepler-419"
+    - "Kepler-450"
+    - "Kepler-1705"
+    - "KOI-142"
+    - "KOI-984"
+  toi_candidate_dispositions: ["PC", "CP", "KP"]
+  koi_candidate_dispositions: ["CONFIRMED", "CANDIDATE"]
+  # Nodal-precession cases named in the brief; they are caught by `grazing` or
+  # the duration test, listed here so a reader can check they were.
+  precession_reference_cases: ["KOI-120", "Kepler-13", "Kepler-47"]

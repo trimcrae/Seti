@@ -1,0 +1,286 @@
+# GROWTH — the growing transit: construction around a planet, 2009 → 2026
+
+**Signature S57** (`docs/necrofrontier.md` §2, "The growing transit"; sweep
+row g11 in §5).  Stage 1 — the catalogue pass — built 2026-09-13; stage 2
+(light-curve re-fits) is designed in §7 and not built.
+
+---
+
+## 1. The claim
+
+A shell or swarm being **built** around a transiting planet grows the
+planet's transit depth over years, and grows it **achromatically** — a
+structure at the planet's orbit occults the same fraction of the star in
+every band, while the two natural ways a depth changes between epochs are
+each chromatic or geometric: starspots and blends change the depth by
+different amounts in different bands, and nodal precession changes the
+impact parameter, which changes the *duration* in a way a radius change does
+not.  A planet being dissolved or mined adds a chromatic, asymmetric tail
+instead (the long-period branch; stage 2).
+
+The observable is therefore a per-planet **radius-ratio time series** across
+missions: the Kepler-era depth (2009–2013, the KOI `koi_depth`) against the
+TESS-era depth (2018–2026, the TOI `pl_trandep`) for every Kepler planet or
+candidate that TESS re-detected, after the two deterministic band
+corrections, with the duration change as the geometric discriminant.
+
+Haqq-Misra et al. 2022 name "transit depths that change over time due to
+construction" as a technosignature; nobody ran it.
+
+---
+
+## 2. Novelty position (§5 row g11) — stated honestly
+
+`results/necrofrontier_lit/concept_scan.json` (2,135 verbatim abstracts,
+runs 3–4, 2026-09-13) returns 21 decoy-free hits for group g11 and **none is a
+cross-mission secular-growth search**:
+
+| Adjacent work | Why it is not this |
+|---|---|
+| **Wang & Espinoza 2024** | Transit-depth variations *within* TESS on 330 planets; none robust.  Baseline of years, one band, one pipeline. |
+| **Zuckerman et al. 2023** | Single-transit anomalies in 218 Kepler systems; none unexplained.  Event-level, not secular. |
+| **Kaye & Aigrain 2025** | Kepler-vs-TESS *ephemerides* (periods and epochs); depths not compared. |
+| **Wright et al. 2016, Ĝ IV** | Lists changing depth as a signature class; no search. |
+| **HIP 67522 and spot-induced depth variation** | Chromatic, tracks the activity cycle; the `within_han2025_deficit_band` and band-ratio machinery is the baseline for this, not the target. |
+| **Han et al. 2025** | The population-level result that public TESS radii are ~6 % low from residual blending — the *expected offset* this channel measures and subtracts. |
+| **J1407 "construction zones", exocomet tails** | Puns and the natural chromatic-tail case for the long-period branch. |
+
+**What is claimed:** no published work has compared the Kepler-era and
+TESS-era depths of the re-detected Kepler population at fixed impact
+parameter, with the limb-darkening band ratio and the Gaia-neighbour
+dilution term divided out, and asked which planets got *deeper*.
+
+**What must not be over-claimed:** stage 1 compares two heterogeneous
+catalogue numbers (§8).  A `GROWTH_CANDIDATE` here is a reason to run stage 2
+on that planet, not a detection.
+
+---
+
+## 3. Data (all public; reached from the runner by the necrofrontier probe)
+
+| Role | Table | Endpoint | Columns used |
+|---|---|---|---|
+| Kepler-era depth | KOI `cumulative` | Exoplanet Archive TAP sync, `format=csv` | `koi_depth[_err1/2]` (ppm), `koi_ror`, `koi_impact`, `koi_duration[_err1/2]` (h), `koi_dor` (a/R*), `koi_steff`, `koi_slogg`, `koi_kepmag`, `koi_fpflag_{nt,ss,co,ec}`, dispositions, `koi_tce_delivname` |
+| TESS-era depth | `toi` | same | `pl_trandep[err1/2]` (ppm), `pl_trandurh[err1/2]` (h), `tid`, `tfopwg_disp`, `pl_orbper`, `st_*` |
+| Join key | `ps` rows with `disc_facility LIKE '%Kepler%'` | same | `pl_name` ↔ `hostname` ↔ `tic_id`; `pl_ratror`, `pl_trandep` (**percent** → ppm on read), `default_flag` |
+| Dilution | Gaia DR3 `gaia_source` | Gaia TAP, upload crossmatch, chunks of 300 | `phot_g_mean_mag`, separation, within 21″ (one TESS pixel) of the Kepler position |
+
+**The join** (`acquire.join_kepler_tess`, pure): route `tic_id` —
+`cumulative.kepler_name = ps.pl_name` gives the TIC id, `toi.tid = tic_id`
+gives the TOIs on that star, the period picks the planet; route
+`position_period` — for KOIs the `ps` table cannot key (candidates without a
+Kepler name), the nearest TOI within 2″ whose period matches.  A period match
+is `|ΔP/P| < 10⁻³` or an integer alias `n` / `1/n` (n ≤ 4), recorded as
+`period_alias` (a veto for candidates: the folded events are not the same set
+of transits).  Each TOI is used once.  `summary.json["join"]` carries the count
+by route, the KOIs with a TIC id whose TOIs matched no period, and the
+positional matches that failed the period test.
+
+**Proper motion:** the Gaia epoch (2016.0) sits between the two missions and
+the search radius is 21″; a 100 mas/yr star moves 1″ over the whole baseline.
+No propagation is applied; the assumption is stated here.
+
+---
+
+## 4. Method (`src/seti/growth/drift.py`, pure functions)
+
+For each joined planet, `R = depth_TESS / depth_Kepler`.
+
+### 4.1 Limb-darkening band ratio (correction a)
+In the small-planet limit the observed depth is `k² · I(μ)/⟨I⟩` with
+`μ = √(1 − b²)`, `I(μ)/I(1) = 1 − u₁(1 − μ) − u₂(1 − μ)²`,
+`⟨I⟩/I(1) = 1 − u₁/3 − u₂/6` (Mandel & Agol 2002; the small-planet form of
+Csizmadia et al. 2013).  Kepler and TESS have different `(u₁, u₂)`, so the
+*same* `k` gives a different depth in each band; the ratio
+`f_LD = F_TESS(b)/F_Kepler(b)` is divided out at the catalogue `koi_impact`.
+Coefficients are a Teff grid at logg 4.5 in `config/growth.yaml`
+(`limb_darkening`), interpolated linearly in Teff, clamped at the grid ends,
+nearest-logg grid; the source is Claret & Bloemen 2011 (Kepler) and Claret
+2017 (TESS) and **every row is marked `verify`** — the values were transcribed
+from memory in a sandbox with no archive egress.  The correction is small
+(0.963 at b = 0, 1.04 at b = 0.9 for a solar-type star), so a 0.05 error in
+`u₁` moves `ln R` by ~0.01, well inside `σ_sys`.  A missing Teff uses 5800 K
+and is flagged `ld_teff_missing`.
+
+### 4.2 Dilution (correction b)
+`c = Σ_neighbours 10^(−0.4 ΔG) · w(d)` over Gaia DR3 sources within 21″,
+`ΔG = G_neighbour − G_target` (the target is the nearest Gaia source within
+1.5″; else Kp is used and `target_g_source = kepmag`), and
+`w(d) = ½ erfc((d − r_ap)/(√2 σ_psf))` with `r_ap = 21″`, `σ_psf = 10.5″`
+from config — an approximate aperture-capture fraction (the TESS PRF is
+undersampled and position-dependent).  The TESS depth is divided by `(1 − c)`.
+The **unweighted** sum `c_max` is carried alongside as the upper bound.
+
+**The Kepler side is taken as deblended by the pipeline's own flux fraction**:
+the DV depths in `cumulative` are fitted on PDCSAP flux, which carries the
+CROWDSAP crowding correction from the Kepler Input Catalog.  The SPOC TOI
+depths are fitted the same way (CROWDSAP from the TIC), and QLP depths carry a
+TIC contamination-ratio correction — so the Gaia term applied here **can
+double-correct**.  It is applied as specified (`apply_dilution_to_tess: true`)
+because the residual Han et al. 2025 deficit shows the catalogue corrections
+are incomplete, and the ambiguity is handled by the neighbour veto (§5):
+a candidate must survive the *full* range `[0, c_max]`.
+
+### 4.3 The corrected log ratio (correction c)
+`ln R_corr = ln D_T − ln(1 − c) − ln D_K − ln f_LD`,
+`σ² = (e_T/D_T)² + (e_K/D_K)² + σ_sys²`, catalogue errors symmetrised as
+`max(|err1|, |err2|)`, `σ_sys = 0.05` (config) as the floor for
+pipeline-to-pipeline depth heterogeneity.
+
+### 4.4 The duration test (d)
+A depth change by `R` at fixed `b` is `k → k√R`, and the total duration
+changes as `T₁₄'/T₁₄ = √(((1 + k')² − b²)/((1 + k)² − b²))` (the full
+`arcsin` form with `koi_dor` when present).  The observed
+`pl_trandurh / koi_duration` is compared with this at
+`σ² = (e_T/T_T)² + (e_K/T_K)² + σ_dur,sys²`; `|z| < 3` is **`fixed_b`**.  When
+it disagrees, the `b'` that would give the observed ratio at fixed `k` is
+solved: `b'² = (1 + k)² − ratio² ((1 + k)² − b²)`.  A real `b'` means the
+change **`tracks_b`** — nodal precession (KOI-120, Kepler-13Ab, Kepler-47d) or
+a grazing geometry — and is never a candidate; no real `b'` is
+`duration_inconsistent`.  Missing durations are `inconclusive` (flagged, and
+not `fixed_b`, so not a candidate).
+
+### 4.5 The expected sign, and the population offset
+Han et al. 2025 find public TESS planet radii ~6 % low from residual
+blending: a **uniform ~12 % depth deficit is the ordinary outcome** for this
+comparison, so `SHALLOWER_TESS` is the expected direction and `DEEPER_TESS`
+the anomalous one.  The channel measures this on its own sample — the median
+`ln R_corr` over every measured planet (`population.population_offset`,
+reported beside `ln(1 − 0.12) = −0.128`) — and subtracts it before
+classification (`subtract_population_median: true`).  Growth is growth
+*relative to the population's own systematic offset*.  A planet whose raw
+ratio sits within 3σ of the Han deficit is flagged
+`within_han2025_deficit_band` (report only).
+
+### 4.6 Classification (e)
+| Class | Condition |
+|---|---|
+| `CONSISTENT` | `|z| < 3`, `z = (ln R_corr − offset)/σ` |
+| `SHALLOWER_TESS` | `z ≤ −3` |
+| `DEEPER_TESS` | `z ≥ 3` but not a candidate |
+| `GROWTH_CANDIDATE` | `z ≥ 5` **and** `duration_verdict = fixed_b` **and** no veto (§5) — `koi_fpflag_*` all 0, both dispositions candidate/confirmed, no neighbour able to supply the change |
+| `UNMEASURED` | a depth or its error missing |
+
+`would_be_candidate_without_vetoes` is carried for every row so the veto
+ledger has a denominator.
+
+### 4.7 The long-period branch (list only)
+Every joined or TESS-only planet with `P > 30 d` goes to
+`results/growth/long_period.csv` (`source = joined | tess_only`) as the
+stage-2 input for the asymmetry / tailed-transit statistic: no
+photoevaporative engine exists beyond ~0.3 AU, so a tailed cold planet has no
+natural model.  Nothing is computed on it here.
+
+---
+
+## 5. Contamination ledger (`src/seti/growth/vet.py`)
+
+Every veto is a named mechanism with its own counter
+(`summary.json["rejection_counters"]`: first veto, every veto raised, every
+flag raised, the duration verdicts).
+
+| Veto | Mechanism |
+|---|---|
+| `grazing` | `b > 1 − k`: the depth is set by the chord and any precession moves it |
+| `ttv_system` | known large-TTV systems (config list from Holczer et al. 2016 and the named cases — **incomplete, `verify`**); a folded depth is smeared differently by each mission's baseline and cadence.  `koi_tce_delivname` is carried as provenance |
+| `fpflag_nt` / `fpflag_ss` / `fpflag_co` / `fpflag_ec` | the KOI false-positive flags (not transit-like; stellar eclipse; centroid offset; ephemeris-match contamination) |
+| `koi_false_positive` | `koi_disposition` / `koi_pdisposition` outside {CONFIRMED, CANDIDATE} |
+| `toi_disposition_not_candidate` | `tfopwg_disp` outside {PC, CP, KP} (APC, FP, FA, EB all veto) |
+| `period_alias` | the TESS period is an integer alias of the Kepler one |
+| `neighbours_not_checked` | the Gaia chunk for this star failed: isolation is unknown, not established |
+| `neighbour_can_supply_change` | `(ln R_corr + ln(1 − c_max) − offset)/σ < 5`: if every neighbour inside the pixel had already been removed by the pipeline, the growth would fall below the gate |
+
+Report-only flags: `multi_sector_scatter:not_checked` (per-sector TESS depths
+are not in the catalogue — stage 2), `within_han2025_deficit_band`,
+`duration_inconclusive`, `ld_teff_missing`.
+
+Inherited from `docs/channel-brief.md` §4: **a single-band anomaly is an
+artefact until confirmed in a second band.**  Stage 1 has exactly one band
+per epoch; the achromaticity claim is stage 2's to make (§7).
+
+---
+
+## 6. Outputs (`results/growth/`)
+
+| File | Content |
+|---|---|
+| `probe.json` | reachability and real column names of the three tables |
+| `acquire.json`, `acquisition_log.json` | table statuses (`OK` / `QUERY_FAILED` / `QUERY_RETURNED_ZERO_ROWS` kept apart), join counts by route, Gaia chunk outcomes |
+| `screened.csv` | every joined planet with every drift quantity |
+| `joined.csv` | the same, vetted and classed |
+| `candidates.csv` | the `GROWTH_CANDIDATE` rows (slim columns) |
+| `long_period.csv` | the stage-2 list |
+| `summary.json` | `verdict`, `join`, `gaia`, `classes`, `rejection_counters`, `population`, `n_long_period`, `degraded`, `checks_not_performed` |
+
+Verdicts: **`NO_DATA_REACHED`** (nothing measured; `reason` says whether an
+archive failed, answered empty, or the join was empty),
+**`NO_DEPTH_DRIFT_CANDIDATE`** (planets measured, none at the gate — a count,
+not a limit), **`DEPTH_DRIFT_CANDIDATES`** (≥ 1 candidate, pending stage 2).
+`degraded` lists every partial failure separately; the verdict string is never
+decorated.  None of these is written up as a result (CLAUDE.md).
+
+Run: `python -m seti.growth.run --stage {probe,acquire,screen,assess,all}
+[--out-dir results/growth] [--skip-gaia]`; workflow `growth.yml`
+(`workflow_dispatch`, input `stage`).
+
+---
+
+## 7. Stage 2 — design (not built)
+
+Per candidate (and per long-period planet), from the light curves:
+
+1. **Per-epoch `k(t)`.**  Kepler long-cadence PDCSAP (Q0–Q17) and every TESS
+   sector (SPOC 2-min where it exists, else TESS-SPOC / QLP FFI), each fitted
+   with `batman` at **fixed** `(P, T₀, a/R*, b)` from a joint fit and
+   per-band quadratic LD from the *verified* Claret tables, with only `k` and
+   the baseline free per transit (Kepler) or per sector (TESS).  Cadence
+   integration (30 min Kepler, 2/10/30 min TESS) inside the model, not as a
+   correction.
+2. **Fit `k(t) = k₀ + k₁ t`**; require `|k₁|/σ > 5` with the residuals
+   consistent between missions once the per-band `k` are on the same
+   footing (the band ratio must match the LD prediction — this is the
+   achromaticity test, and kills spots and blends).
+3. **Duration and ingress at every epoch**: `T₁₄` and `τ` must change as `k`
+   (not as `b`); a drifting `b` is precession and ends the case.
+4. **Dilution from the pixels**, not the catalogue: re-derive the TESS
+   crowding from Gaia DR3 sources rendered through the sector PRF, and check
+   the Kepler CROWDSAP against the same sources.
+5. **Multi-sector scatter**: the per-sector `k` variance against the
+   photometric expectation (the `multi_sector_scatter` check stage 1 records
+   as `not_checked`).
+6. **Long-period branch**: for `P > 30 d`, an ingress/egress asymmetry
+   statistic (the difference of the fitted ingress and egress durations, and
+   the pre-/post-transit residual power) and the epoch-to-epoch depth
+   variance; a chromatic, asymmetric tail on a cold planet has no natural
+   model.
+
+Scale: ~500–1,000 joined planets; the light curves are on MAST
+(`astroquery.mast`; `download_file(dataURI)`, per `channel-brief.md` §2).
+
+---
+
+## 8. Limits — what stage 1 can and cannot say
+
+* **Catalogue depths are heterogeneous by pipeline and epoch.**  `koi_depth`
+  is a DV fit on Q1–Q17 DR25 long-cadence PDCSAP; `pl_trandep` is whichever
+  pipeline delivered the TOI (SPOC 2-min DV, TESS-SPOC FFI, or QLP), on a
+  different cadence, with a different crowding model, over a different
+  baseline — and is revised as sectors accumulate.  `σ_sys = 0.05` is the
+  channel's stated floor for this, not a measurement of it; the population
+  scatter in `ln R_corr` (`population.ln_ratio_corr_p16/p84`) is the
+  measurement, and is what a reader should compare the candidates against.
+* **The two epochs are each one band.**  Achromaticity — the property that
+  makes a shell different from a spot — is untested at stage 1.
+* **Dilution may be double-counted** (§4.2); the neighbour veto absorbs this
+  in the conservative direction for candidates and the permissive one for the
+  count of `SHALLOWER_TESS`.
+* **The LD grid and the TTV list are unverified transcriptions** (marked in
+  config); both are small corrections at stage 1 and both are replaced by the
+  real tables at stage 2.
+* **The join is incomplete by construction**: a KOI TESS never re-detected
+  (too shallow at TESS precision, or with a period longer than the sector
+  coverage folds) is absent, so the joined population is biased to deep,
+  short-period planets — the population offset is measured on that
+  population and applies to it.
+* **`NO_DEPTH_DRIFT_CANDIDATE` is a count**, not an occurrence limit on
+  construction around the Kepler planets, and is not written up.

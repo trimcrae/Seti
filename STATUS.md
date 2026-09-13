@@ -102,8 +102,14 @@ every earlier sweep here used — and delivered one file.** The fetcher now
 paces at 6 s, backs off 30/90/270 s or Retry-After on 429/503, asks for each
 group's asserted ids in one `id_list` call, and falls back to the ADS API with
 the repository's `ADS_TOKEN` secret (same Atom shape, source recorded per
-file); re-dispatched ~8:50 AM ET. Until its `concept_scan.json` lands, every
-prior-art position above rests on the agents' search-engine records. Build order (charter: novelty,
+file); re-dispatched ~8:50 AM ET. **That run was throttled too (1 of 32) and
+its ADS attempts recorded `no ADS_TOKEN` — the repository's secret is unset.**
+Third version (~9:35 AM ET): after the first request the API refuses three
+times, the run goes keyless — arXiv abstract pages for ids, OpenAlex for
+keyword and title searches (the routes lzlit / necrolit / zacklit used) —
+with a `--scan-only` step so a deadline-killed run still yields the concept
+scan. Until that lands, every prior-art position above rests on the agents'
+search-engine records. Build order (charter: novelty,
 then scale, never a null): S46 ISOTOPE → S51 SLAG-WD → S54 ULINE → S61
 IGNITION → S48/S49 SPARK → the rest as listed in `docs/necrofrontier.md` §4.
 

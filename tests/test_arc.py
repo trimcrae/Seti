@@ -992,3 +992,33 @@ def test_no_assessable_star_is_not_a_ceiling_null(tmp_path, monkeypatch):
 
     src = _pathlib.Path(arun.__file__).read_text()
     assert "n_assessable_now" in src and "VERDICT_NO_DATA" in src
+
+
+def test_build_star_context_joins_flags_with_nan_present():
+    """A real NaN among the per-catalogue flags must not kill the screen.
+
+    Run 34798271601 assessed 266 Okamoto stars against the ceiling and then
+    died on the next catalogue with
+    ``TypeError: sequence item 0: expected str instance, float found``.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from seti.arc.run import build_star_context
+
+    flares = pd.DataFrame({"star_id": ["1", "2", "3"]})
+    star_tables = [
+        ("a", pd.DataFrame({"star_id": ["1", "2", "3"], "prot": [10.0, 12.0, 8.0],
+                            "rot_amplitude": [0.01, 0.02, 0.015],
+                            "teff": [5700.0, 5800.0, 5600.0], "radius": [1.0, 1.0, 1.0],
+                            "flag": ["ok", np.nan, None]}), "fraction"),
+        ("b", pd.DataFrame({"star_id": ["1", "2", "3"], "prot": [np.nan] * 3,
+                            "flag": [np.nan, "dubious", float("nan")]}), "fraction"),
+    ]
+    ctx = build_star_context(flares, star_tables, {})
+    assert "catalogue_flag" in ctx.columns
+    flags = list(ctx["catalogue_flag"])
+    assert all(isinstance(f, str) for f in flags), flags
+    assert "ok" in flags[0] and "nan" not in flags[0].lower()
+    assert "dubious" in flags[1]
+    assert flags[2] == ""

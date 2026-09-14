@@ -364,9 +364,19 @@ def build_star_context(flares: pd.DataFrame, star_tables: list[tuple[str, pd.Dat
         ctx[col] = val
         ctx[f"{col}_source"] = src
     flag_cols = [f"flag_{n}" for n in order if f"flag_{n}" in ctx.columns]
-    ctx["catalogue_flag"] = (ctx[flag_cols].astype(str).replace({"nan": "", "None": ""})
-                             .agg(lambda r: ";".join(x for x in r if x), axis=1)
-                             if flag_cols else "")
+    # ``astype(str)`` leaves a float NaN as the float when the column is
+    # already object-typed with real NaNs mixed in, and the join then raises
+    # ``TypeError: sequence item 0: expected str instance, float found`` --
+    # which is what killed run 34798271601 AFTER it had successfully assessed
+    # 266 Okamoto stars.  Coerce every cell, and drop the null spellings.
+    _nulls = {"nan", "none", "<na>", "nat", ""}
+    ctx["catalogue_flag"] = (
+        ctx[flag_cols]
+        .apply(lambda col: col.map(lambda v: "" if v is None or (isinstance(v, float)
+                                                                 and pd.isna(v))
+                                   else str(v).strip()))
+        .agg(lambda r: ";".join(x for x in r if str(x).strip().lower() not in _nulls), axis=1)
+        if flag_cols else "")
     return ctx
 
 

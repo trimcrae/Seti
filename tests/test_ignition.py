@@ -47,6 +47,8 @@ from seti.ignition.run import (
 )
 from seti.ignition.sample import (
     GAIA_TRANSPORTS,
+    ROUTE_ESA,
+    ROUTE_VIZIER,
     SHAPES,
     GaiaQueryFailed,
     allwise_predicates,
@@ -55,6 +57,7 @@ from seti.ignition.sample import (
     gaia_predicates,
     inner_top,
     parallax_shells,
+    parent_columns,
     run_gaia_query,
     select_parent,
 )
@@ -64,7 +67,31 @@ from seti.ignition.vet import (
     summarise,
     vet_star,
 )
-from seti.vigil.acquire import QueryResult
+from seti.ignition.vizier_route import (
+    ALLWISE_EPOCH,
+    DEFAULT_VIZIER,
+    apply_allwise_predicates,
+    asu_constraints,
+    fetch_unit,
+    gaia_asu_url,
+    match_allwise,
+    probe_route,
+    resolve_columns,
+)
+from seti.vigil.acquire import GAIA_EPOCH, QueryResult, propagate_pm
+
+
+def _asu_dead(url, *_a, **_k):
+    """The VizieR ASU transport, stubbed OFF.
+
+    Every probe and every ``ignition_run`` in this file passes this as
+    ``asu_fetch_fn``.  Without it the second route would reach for the network:
+    here that raises (tests/conftest.py) and the run would look the same, but on
+    the runner VizieR would ANSWER and the verdict would differ --- green here,
+    red in CI, which is the exact failure conftest.py exists to stop.  The
+    VizieR route's own behaviour is exercised by ``_FakeASU`` below.
+    """
+    raise RuntimeError(f"the ASU transport is stubbed off in this test: {url}")
 
 # --------------------------------------------------------------------------
 # Synthetic NEOWISE epoch series
@@ -585,7 +612,7 @@ def test_parse_shard_and_shard_rows():
 
 def test_empty_archive_is_no_data_reached(tmp_path):
     """A failed archive must never read as a science null."""
-    rep = ignition_run("all", out_dir=tmp_path, conf=_config_for_tests(),
+    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(),
                        query_fn=_FakeGaia("fail"), cone_fn=_cone_factory(),
                        upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                              status="QUERY_FAILED",
@@ -601,7 +628,7 @@ def test_empty_archive_is_no_data_reached(tmp_path):
 
 
 def test_neowise_zero_rows_is_no_data_reached_with_the_right_reason(tmp_path):
-    rep = ignition_run("all", out_dir=tmp_path, conf=_config_for_tests(),
+    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(),
                        query_fn=_FakeGaia(), cone_fn=_cone_factory("empty"), route="cone",
                        upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                              status="QUERY_FAILED",
@@ -624,7 +651,7 @@ def test_missing_shard_outputs_are_never_a_clean_null(tmp_path):
 
 def test_end_to_end_synthetic_run_finds_the_injected_ignition(tmp_path):
     conf = _config_for_tests()
-    rep = ignition_run("all", out_dir=tmp_path, conf=conf, query_fn=_FakeGaia(n=6),
+    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=6),
                        cone_fn=_cone_factory("ramp"), route="cone",
                        upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                              status="QUERY_FAILED",
@@ -646,7 +673,7 @@ def test_end_to_end_synthetic_run_finds_the_injected_ignition(tmp_path):
 
 def test_end_to_end_field_of_impacts_yields_no_candidate_and_a_sensitivity(tmp_path):
     conf = _config_for_tests()
-    rep = ignition_run("all", out_dir=tmp_path, conf=conf, query_fn=_FakeGaia(n=5),
+    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=5),
                        cone_fn=_cone_factory("impact"), route="cone",
                        upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                              status="QUERY_FAILED",
@@ -662,7 +689,7 @@ def test_end_to_end_field_of_impacts_yields_no_candidate_and_a_sensitivity(tmp_p
 
 def test_optical_series_directory_is_used_by_assess(tmp_path):
     conf = _config_for_tests()
-    ignition_run("sample,acquire,screen", out_dir=tmp_path, conf=conf, query_fn=_FakeGaia(n=3),
+    ignition_run("sample,acquire,screen", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=3),
                  cone_fn=_cone_factory("ramp"), route="cone")
     odir = tmp_path / "optical"
     odir.mkdir()
@@ -796,7 +823,7 @@ def _upload_fails(*_a, **_k):
 
 def test_probe_tries_the_inner_cone_shape_before_the_flat_one_and_records_it(tmp_path):
     fake = _ShapeGaia(answers=("inner_cone",))
-    rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(), query_fn=fake,
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(), query_fn=fake,
                        cone_fn=_cone_factory(), upload_fn=_upload_fails)
     assert fake.shapes[0] == "inner_cone"                  # first, before anything flat
     assert "flat" not in fake.shapes                       # a shape that answers ends the ladder
@@ -828,7 +855,7 @@ def test_the_sample_stage_reuses_the_shape_the_probe_recorded(tmp_path):
 def test_an_async_queue_failure_falls_back_to_the_next_shape(tmp_path):
     """The statement timeout that killed run 34787803862, verbatim, then a fallback."""
     fake = _ShapeGaia(answers=("inner_cone_postfilter",), error=_TIMEOUT_500)
-    rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(), query_fn=fake,
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(), query_fn=fake,
                        cone_fn=_cone_factory(), upload_fn=_upload_fails)
     assert fake.shapes[:2] == ["inner_cone", "inner_cone_postfilter"]
     assert "flat" not in fake.shapes
@@ -848,7 +875,7 @@ def test_the_probe_budget_expires_into_timed_out_rather_than_hanging(tmp_path):
                      "columns_timeout_s": 0.25, "neowise_timeout_s": 0.25}
     fake = _ShapeGaia(answers=(), delay_s=30.0, delay_shapes=SHAPES)
     t0 = time.monotonic()
-    rep = ignition_run("probe", out_dir=tmp_path, conf=conf, query_fn=fake,
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=fake,
                        cone_fn=_cone_factory(), upload_fn=_upload_fails)
     assert time.monotonic() - t0 < 20.0                    # it did not wait for the query
     stats = [s["status"] for s in rep["gaia_shapes"]]
@@ -864,7 +891,7 @@ def test_the_probe_budget_expires_into_timed_out_rather_than_hanging(tmp_path):
 def test_the_probe_writes_probe_json_even_when_every_route_fails(tmp_path):
     """25 minutes of evidence must not survive only in a log someone reads by hand."""
     fake = _ShapeGaia(answers=())
-    rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(), query_fn=fake,
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(), query_fn=fake,
                        cone_fn=_cone_factory(status="QUERY_FAILED"), upload_fn=_upload_fails)
     p = tmp_path / "probe.json"
     assert p.exists()
@@ -926,11 +953,11 @@ def test_probe_recommends_the_upload_route_when_it_answers(tmp_path):
         return QueryResult(label="neowise_upload", service="irsa", status="OK", n_rows=len(d),
                            query="SELECT ...", data=d)
 
-    rep = ignition_run("probe", out_dir=tmp_path, conf=conf, query_fn=_FakeGaia(n=3),
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=3),
                        cone_fn=_cone_factory(), upload_fn=upload_ok)
     assert rep["verdict"] == "ALL_ROUTES_REACHABLE"
     assert rep["neowise_route_recommended"] == "upload"
-    rep2 = ignition_run("probe", out_dir=tmp_path, conf=conf, query_fn=_FakeGaia(n=3),
+    rep2 = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=3),
                         cone_fn=_cone_factory(),
                         upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                               status="QUERY_FAILED",
@@ -963,3 +990,396 @@ def test_the_workflow_commits_the_probe_and_not_only_an_artifact():
     assert "upload-artifact" in sample_job                    # the artifact is kept as well
     # The artifact upload runs BEFORE the commit, so evidence survives a failed push.
     assert sample_job.index("upload-artifact") < sample_job.index("commit_results.sh")
+
+
+# --------------------------------------------------------------------------
+# The SECOND route to the parent sample: VizieR's non-TAP ASU interface
+#
+# probe.json on main (2026-09-14T00:22Z) records NO_DATA_REACHED with all three
+# query shapes TIMED_OUT and the run before it recording Error 500 (statement
+# timeout) and Error 503 (150 synchronous jobs).  The ESA archive is dark, so
+# the channel needs a second source for the SAME parent sample -- and the tests
+# below are what says "same": identical columns, identical cuts, ESA first.
+# --------------------------------------------------------------------------
+_FIELD = {"ra": 266.0, "dec": 65.0, "radius_deg": 1.0}
+
+_GAIA_TSV_COLS = ("Source", "RA_ICRS", "DE_ICRS", "Plx", "RPlx", "pmRA", "pmDE", "RUWE",
+                  "Gmag", "BP-RP", "VarFlag", "NSS", "Teff", "RandomI")
+_WISE_TSV_COLS = ("AllWISE", "RAJ2000", "DEJ2000", "W1mag", "e_W1mag", "W2mag", "e_W2mag",
+                  "W3mag", "e_W3mag", "ccf", "qph", "ex")
+
+
+def _stars(n=6):
+    """The same six physical stars, to be rendered for either route.
+
+    Four of them are the ESA route's own vetoes (the set
+    ``test_select_parent_applies_dwarf_photospheric_and_kinematic_rules`` uses),
+    so "the two routes cut identically" is a claim with something to cut.
+    """
+    out = []
+    for i in range(n):
+        out.append({"sid": str(10 + i), "ra": 266.0 + 0.01 * i, "dec": 65.0, "plx": 10.0,
+                    "plx_snr": 50.0, "pmra": 60.0, "pmdec": -30.0, "ruwe": 1.0, "g": 11.0,
+                    "bp_rp": 1.0, "var": "NOT_AVAILABLE", "nss": 0, "teff": 5000.0,
+                    "w1": 9.5, "w2": 9.45, "w3": 9.4, "ccf": "0000", "qph": "AAAA", "ex": 0})
+    if n >= 6:
+        out[0]["plx"] = 0.5                    # a giant at 2 kpc pretending to be near
+        out[1]["w2"] = 9.0                     # already an excess in 2010
+        out[2]["w2"] = 9.7                     # negative W1-W2: a blend
+        out[3]["var"] = "VARIABLE"
+    return out
+
+
+def _esa_frame(stars):
+    """What the ESA route's SELECT list returns, in parent_columns order."""
+    from seti.shroud.classify import galactic_latitude
+
+    rows = []
+    for s in stars:
+        rows.append({
+            "source_id": s["sid"], "ra": s["ra"], "dec": s["dec"],
+            "b": float(galactic_latitude(s["ra"], s["dec"])), "parallax": s["plx"],
+            "parallax_over_error": s["plx_snr"], "pmra": s["pmra"], "pmdec": s["pmdec"],
+            "ruwe": s["ruwe"], "phot_g_mean_mag": s["g"], "bp_rp": s["bp_rp"],
+            "phot_variable_flag": s["var"], "non_single_star": s["nss"],
+            "teff_gspphot": s["teff"], "random_index": int(s["sid"]),
+            "allwise_designation": f"J{s['sid']}", "w1mpro": s["w1"], "w1mpro_error": 0.02,
+            "w2mpro": s["w2"], "w2mpro_error": 0.02, "w3mpro": s["w3"], "w3mpro_error": 0.05,
+            "cc_flags": s["ccf"], "ph_qual": s["qph"], "ext_flag": s["ex"],
+            "allwise_sep_arcsec": 0.2, "allwise_n_neighbours": 1,
+        })
+    return pd.DataFrame(rows)[parent_columns()]
+
+
+def _unit_of(col: str) -> str:
+    c = col.lower()
+    if c.startswith(("ra", "de", "_ra", "_de")):
+        return "deg"
+    if c in ("plx",):
+        return "mas"
+    if c in ("pmra", "pmde"):
+        return "mas/yr"
+    return "mag" if c.endswith("mag") else ""
+
+
+def _tsv(cols, rows):
+    """A VizieR ``asu-tsv`` body: #Column metadata, header, units, dashes, data."""
+    head = ["#", "#   VizieR Astronomical Server vizier.cds.unistra.fr"]
+    head += [f"#Column\t{c}\t({_unit_of(c)})\tsynthetic" for c in cols]
+    body = ["\t".join(cols), "\t".join(_unit_of(c) for c in cols),
+            "\t".join("-" * 8 for _ in cols)]
+    body += ["\t".join("" if v is None else str(v) for v in r) for r in rows]
+    return "\n".join([*head, "", *body]) + "\n"
+
+
+def _gaia_tsv(stars):
+    return _tsv(_GAIA_TSV_COLS,
+                [[s["sid"], s["ra"], s["dec"], s["plx"], s["plx_snr"], s["pmra"], s["pmdec"],
+                  s["ruwe"], s["g"], s["bp_rp"], s["var"], s["nss"], s["teff"], int(s["sid"])]
+                 for s in stars])
+
+
+def _wise_tsv(stars, offset_arcsec=0.2, at_epoch=ALLWISE_EPOCH):
+    """AllWISE rows at the stars' PM-propagated 2010.5 positions, nudged 0.2"."""
+    rows = []
+    for s in stars:
+        ra_w, dec_w = propagate_pm(s["ra"], s["dec"], s["pmra"], s["pmdec"],
+                                   GAIA_EPOCH, at_epoch)
+        rows.append([f"J{s['sid']}", float(ra_w), float(dec_w) + offset_arcsec / 3600.0,
+                     s["w1"], 0.02, s["w2"], 0.02, s["w3"], 0.05, s["ccf"], s["qph"], s["ex"]])
+    return _tsv(_WISE_TSV_COLS, rows)
+
+
+class _FakeASU:
+    """A VizieR ASU stand-in: TSV for the two mirrors, an error page otherwise."""
+
+    def __init__(self, stars=None, gaia_body=None, wise_body=None, wise_epoch=ALLWISE_EPOCH,
+                 offset_arcsec=0.2):
+        self.stars = _stars() if stars is None else stars
+        self.gaia_body, self.wise_body = gaia_body, wise_body
+        self.wise_epoch, self.offset_arcsec = wise_epoch, offset_arcsec
+        self.urls: list[str] = []
+
+    def __call__(self, url):
+        self.urls.append(url)
+        if "I/355/gaiadr3" in url:
+            return self.gaia_body if self.gaia_body is not None else _gaia_tsv(self.stars)
+        if "II/328/allwise" in url:
+            return (self.wise_body if self.wise_body is not None
+                    else _wise_tsv(self.stars, self.offset_arcsec, self.wise_epoch))
+        return "#***** Catalog not found\n"
+
+
+class _PickyGaia(_FakeGaia):
+    """An ESA stand-in that answers one field's cone and refuses the other."""
+
+    def __init__(self, dead_ra="270.0", **kw):
+        super().__init__(**kw)
+        self.dead_ra = str(dead_ra)
+
+    def __call__(self, adql):
+        if f"CIRCLE('ICRS', {self.dead_ra}," in adql:
+            self.queries.append(adql)
+            raise RuntimeError(_TIMEOUT_500)
+        return super().__call__(adql)
+
+
+def test_the_asu_parent_query_is_built_with_the_expected_parameters_for_a_chunk():
+    """The ASU request for one cone of the sweep, parameter by parameter."""
+    url = gaia_asu_url(field=_FIELD, max_rows=20000)
+    assert url.startswith("https://vizier.cds.unistra.fr/viz-bin/asu-tsv?")
+    for frag in ("-source=I/355/gaiadr3", "-out.max=20000", "-out.form=TSV",
+                 "-c=266+65", "-c.rd=1", "-c.eq=J2000",
+                 "Gmag=<14.5", "Plx=>3", "RPlx=>10", "RUWE=<1.4", "BP-RP=0.6..2.5"):
+        assert frag in url, frag
+    # every logical Gaia column is requested by name; nothing is left to -out.all
+    for col in _GAIA_TSV_COLS:
+        assert f"-out={col}" in url, col
+    assert "-out.all" not in url
+    # A parallax shell is the other chunking the sample stage uses.
+    shell = asu_constraints(plx_lo=3.0, plx_hi=4.0)
+    assert shell["Plx"] == "3..4" and "-c" not in shell
+    # The cuts that ASU cannot express are absent here and live in select_parent.
+    cone = asu_constraints(field=_FIELD)
+    assert not {k.lower() for k in cone} & {"glat", "b", "varflag", "var"}
+
+
+def test_the_vizier_mirror_tsv_yields_the_esa_columns_and_the_esa_cuts():
+    """Same six stars, two transports, one science: identical columns, identical cuts."""
+    stars = _stars()
+    esa_keep, esa_counters = select_parent(_esa_frame(stars))
+    rows, rec = fetch_unit({"fields": [_FIELD]}, {"field": _FIELD}, fetch_fn=_FakeASU(stars))
+    assert rec["status"] == "OK" and rec["route"] == ROUTE_VIZIER
+    assert list(rows.columns) == parent_columns()        # the ESA select list, in order
+    vz_keep, vz_counters = select_parent(rows)
+    assert list(vz_keep.columns) == list(esa_keep.columns)
+    assert sorted(vz_keep["source_id"]) == sorted(esa_keep["source_id"]) == ["14", "15"]
+    # The AllWISE colour/quality cuts are SQL on the ESA side and pandas here, so
+    # they bite at different moments -- but they remove the SAME stars, which is
+    # what "identical science, different transport" has to mean.
+    assert rec["allwise_cut_counters"]["cut_w1w2_photospheric"] == \
+        esa_counters["cut_w1w2_photospheric"] == 2
+    assert len(rows) == 4 and esa_counters["n_in"] == 6
+    for k in ("cut_parallax", "cut_gaia_variable", "cut_dwarf", "cut_ruwe",
+              "n_out", "n_kinematically_old"):
+        assert vz_counters[k] == esa_counters[k], k
+    # b is computed from the mirror's own RA/Dec rather than requested: same value.
+    assert vz_keep["b"].round(6).tolist() == esa_keep["b"].round(6).tolist()
+    # The cross-match is measured, not read from an archive neighbour table.
+    assert rec["match"]["to_epoch"] == ALLWISE_EPOCH
+    assert (rows["allwise_sep_arcsec"] < 1.0).all()
+    assert rec["row_count_note"].startswith("n_rows is what the ASU -out.max cap")
+
+
+def test_the_allwise_predicates_are_applied_by_the_vizier_route_exactly_as_in_sql():
+    """cc_flags is SQL-only on the ESA side, so this route must apply it itself.
+
+    And the TSV parser turns a clean ``ccf`` column into the INTEGER 0, so a
+    naive ``== '0000'`` would reject every clean source --- the inverse of the
+    archive's predicate.
+    """
+    assert "w.cc_flags = '0000'" in " ".join(allwise_predicates())
+    stars = _stars(3)
+    stars[0]["ccf"] = "0100"                       # contaminated: the archive drops it
+    stars[1]["ex"] = 1                             # an extended source: dropped too
+    rows, rec = fetch_unit({"fields": [_FIELD]}, {"field": _FIELD}, fetch_fn=_FakeASU(stars))
+    assert sorted(rows["source_id"]) == ["12"]
+    c = rec["allwise_cut_counters"]
+    assert c["cut_cc_flags"] == 1 and c["cut_ext_flag"] == 1 and c["cuts_not_applied"] == []
+    # The all-clean case is the one the numeric coercion breaks; it must not.
+    clean = pd.DataFrame({"w1mpro": [9.5], "w2mpro": [9.45], "ext_flag": [0], "cc_flags": [0]})
+    kept, _c = apply_allwise_predicates(clean)
+    assert len(kept) == 1
+
+
+def test_the_allwise_match_is_proper_motion_propagated_back_to_2010():
+    """The same propagation the channel already does, to the AllWISE epoch."""
+    fast = _stars(1)
+    fast[0].update(pmra=900.0, pmdec=-900.0)       # ~7 arcsec of sweep over 5.5 yr
+    ok, rec = fetch_unit({"fields": [_FIELD]}, {"field": _FIELD}, fetch_fn=_FakeASU(fast))
+    assert rec["status"] == "OK" and len(ok) == 1 and rec["match"]["n_matched"] == 1
+    # The SAME star, with AllWISE left at the Gaia 2016 position, is out of radius.
+    missed, rec2 = fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                              fetch_fn=_FakeASU(fast, wise_epoch=GAIA_EPOCH))
+    assert len(missed) == 0 and rec2["match"]["n_unmatched"] == 1
+    assert rec2["status"] == "QUERY_RETURNED_ZERO_ROWS"      # zero rows, never invented ones
+    gaia = pd.DataFrame({"source_id": ["1"], "ra": [266.0], "dec": [65.0],
+                         "pmra": [0.0], "pmdec": [0.0]})
+    wise = pd.DataFrame({"ra": [266.0, 266.00002], "dec": [65.0, 65.0],
+                         "allwise_designation": ["a", "b"]})
+    joined, mrec = match_allwise(gaia, wise)
+    assert joined["allwise_designation"].iloc[0] == "a"      # nearest wins
+    assert int(joined["allwise_n_neighbours"].iloc[0]) == 2  # the blend is still visible
+    assert mrec["match_radius_arcsec"] == DEFAULT_VIZIER["match_radius_arcsec"]
+
+
+def test_the_vizier_route_is_never_called_when_the_esa_archive_answers():
+    """ESA is authoritative and owns the in-archive cross-match: it goes first."""
+    asu = _FakeASU()
+    stars, rep = fetch_parent({"fields": [_FIELD]}, mode="fields", query_fn=_FakeGaia(),
+                              vizier_fetch_fn=asu)
+    assert asu.urls == []                                   # not one request
+    assert rep["routes"] == {ROUTE_ESA: {"units": 1, "rows": 6}}
+    assert rep["route_used"] == ROUTE_ESA and rep["mixed_routes"] is False
+    assert rep["route_fractions"] == {ROUTE_ESA: 1.0}
+    assert rep["degraded"] == []
+    assert set(stars["parent_route"]) == {ROUTE_ESA}
+
+
+def test_the_esa_timeout_falls_through_to_vizier_and_records_the_route():
+    """Exactly probe.json's situation: no shape answers, so the second route runs."""
+    asu = _FakeASU()
+    stars, rep = fetch_parent({"fields": [_FIELD]}, mode="fields",
+                              query_fn=_ShapeGaia(answers=()), vizier_fetch_fn=asu)
+    assert rep["status"] == "OK" and rep["n_units_failed"] == 0
+    # 6 mirror rows, 4 past the AllWISE predicates this route applies itself.
+    assert rep["routes"] == {ROUTE_VIZIER: {"units": 1, "rows": 4}}
+    assert rep["route_used"] == ROUTE_VIZIER and rep["mixed_routes"] is False
+    assert set(stars["parent_route"]) == {ROUTE_VIZIER}
+    assert len(stars) == 2                                  # the same two that survive on ESA
+    assert any("viz-bin/asu-tsv" in u for u in asu.urls)
+    assert any("I/355/gaiadr3" in u for u in asu.urls)
+    assert any("II/328/allwise" in u for u in asu.urls)
+    unit = rep["per_unit"][0]
+    assert unit["route"] == ROUTE_VIZIER and unit["n_rows"] == 4
+    assert unit["shapes_tried"] == list(SHAPES)             # ESA was given every shape first
+    # The ASU cap is reported as what was obtained, never as a complete selection.
+    assert rep["parent_count"] is None and rep["subsample_fraction"] is None
+    assert "-out.max" in rep["route_note"] and "NOT a COUNT(*)" in rep["route_note"]
+
+
+def test_an_out_max_capped_chunk_is_reported_as_capped_not_as_a_complete_sample():
+    asu = _FakeASU(_stars(6))
+    stars, rep = fetch_parent({"fields": [_FIELD], "cap_per_shard": 6},
+                              mode="fields", query_fn=_ShapeGaia(answers=()),
+                              vizier_fetch_fn=asu)
+    assert rep["per_unit"][0]["capped"] is True             # 6 rows against -out.max=6
+    assert rep["vizier_capped_units"] == ["field_ra266.0_dec65.0"]
+    assert any(d.startswith("vizier_out_max_capped:") for d in rep["degraded"])
+    assert len(stars) == 2
+    assert "-out.max=6" in " ".join(u for u in asu.urls if "gaiadr3" in u)
+
+
+def test_a_wrong_vizier_catalogue_id_is_a_recorded_status_not_a_crash():
+    """Both ids are asserted-and-unverified; a wrong one must come back as evidence."""
+    conf = {"fields": [_FIELD], "vizier": {"gaia_catalogue": "I/999/nope"}}
+    rows, rec = fetch_unit(conf, {"field": _FIELD}, fetch_fn=_FakeASU())
+    assert len(rows) == 0
+    assert rec["status"] == "CATALOGUE_NOT_FOUND"
+    assert rec["gaia"]["catalogue"] == "I/999/nope"
+    assert len(rec["gaia"]["attempts"]) == len(rec["endpoints"])   # every mirror named
+    assert "not found" in rec["gaia"]["error"].lower()
+    # A mirror that answers with columns this route cannot use is its own status.
+    thin = _tsv(("Source", "RA_ICRS"), [["10", 266.0]])
+    _r2, rec2 = fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                           fetch_fn=_FakeASU(gaia_body=thin))
+    assert rec2["status"] == "COLUMNS_UNRESOLVED"
+    assert "parallax" in rec2["gaia"]["error"]
+    got, missing = resolve_columns(["Source", "ra_icrs"], DEFAULT_VIZIER["gaia_columns"])
+    assert got["source_id"] == "Source" and got["ra"] == "ra_icrs"   # case-insensitive
+    assert "parallax" in missing
+    # A parallax shell has no cone, so the AllWISE side cannot be fetched: say so.
+    _r3, rec3 = fetch_unit({}, {"plx_lo": 3.0, "plx_hi": 4.0}, fetch_fn=_FakeASU())
+    assert rec3["status"] == "NOT_SUPPORTED_FOR_MODE" and "fabricate" in rec3["reason"]
+
+
+def test_both_parent_routes_failing_stays_no_data_reached_with_every_endpoint_named(tmp_path):
+    """Neither route answered, so nothing was measured --- and the record says where."""
+    rep = ignition_run("all", out_dir=tmp_path, conf=_config_for_tests(),
+                       query_fn=_ShapeGaia(answers=()), asu_fetch_fn=_asu_dead,
+                       cone_fn=_cone_factory(), upload_fn=_upload_fails)
+    assert rep["verdict"] == "NO_DATA_REACHED"
+    ep = rep["endpoints"]
+    assert ep["parent"][ROUTE_ESA] == "https://gea.esac.esa.int/tap-server/tap"
+    assert any("viz-bin/asu-tsv" in u for u in ep["parent"][ROUTE_VIZIER])
+    assert ep["vizier_asu_probe"]["status"] == "QUERY_FAILED"
+    assert ep["vizier_asu_probe"]["usable"] is False
+    assert ep["gaia_shapes_tried"] == list(SHAPES)
+    assert any("stubbed off" in str(e.get("error") or "") for e in ep["errors"])
+    assert any(e.get("route") == ROUTE_VIZIER for e in ep["errors"])
+    assert "NOT a null result" in rep["note"]
+    probe = json.loads((tmp_path / "probe.json").read_text())
+    assert probe["parent_route_recommended"] == "none"
+    assert probe["parent_routes_tried"] == [ROUTE_ESA, ROUTE_VIZIER]
+
+
+def test_a_mixed_route_parent_sample_is_degraded_not_silently_mixed(tmp_path):
+    """Half the sky from the archive's own cross-match, half from a positional one."""
+    conf = _config_for_tests()
+    conf["sample"]["fields"] = [_FIELD, {"ra": 270.0, "dec": 66.5, "radius_deg": 1.0}]
+    # Six clean stars on the second field, so the two routes contribute equally.
+    asu = _FakeASU([dict(s, ra=270.0 + 0.01 * i, dec=66.5, plx=10.0, w2=9.45,
+                         var="NOT_AVAILABLE")
+                    for i, s in enumerate(_stars())])
+    srep = stage_sample(conf, tmp_path, n_shards=1, query_fn=_PickyGaia(), asu_fetch_fn=asu)
+    assert srep["mixed_routes"] is True
+    assert srep["routes"][ROUTE_ESA]["units"] == 1 and srep["routes"][ROUTE_VIZIER]["units"] == 1
+    assert srep["route_fractions"][ROUTE_ESA] == pytest.approx(0.5)
+    assert srep["route_used"] == "mixed"
+    assert "mixed_parent_routes:esa_gaia+vizier_asu" in srep["degraded"]
+    rep = ignition_run("acquire,screen,assess", out_dir=tmp_path, conf=conf,
+                       cone_fn=_cone_factory("ramp"), route="cone", asu_fetch_fn=_asu_dead)
+    assert rep["verdict"].startswith("DEGRADED")
+    assert "mixed_parent_routes:esa_gaia+vizier_asu" in rep["verdict"]
+    assert rep["denominators"]["parent_routes_mixed"] is True
+    assert rep["denominators"]["parent_route_fractions"][ROUTE_VIZIER] == pytest.approx(0.5)
+    assert rep["denominators"]["parent_route_used"] == "mixed"
+
+
+def test_the_probe_tries_and_records_both_parent_routes(tmp_path):
+    """The next dispatch must learn which transport works from probe.json alone."""
+    asu = _FakeASU()
+    rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(),
+                       query_fn=_ShapeGaia(answers=()), asu_fetch_fn=asu,
+                       cone_fn=_cone_factory(), upload_fn=_upload_fails)
+    assert rep["gaia_shape_working"] is None                 # the ESA archive: still dark
+    assert rep["vizier_asu"]["status"] == "OK" and rep["vizier_asu"]["usable"] is True
+    assert rep["vizier_asu"]["catalogues"]["gaia"] == "I/355/gaiadr3"
+    assert rep["vizier_asu"]["catalogues"]["allwise"] == "II/328/allwise"
+    assert "gaia_catalogue" in rep["vizier_asu"]["asserted_unverified"]
+    assert rep["parent_route_recommended"] == ROUTE_VIZIER
+    assert rep["verdict"] == "VIZIER_PARENT_AND_NEOWISE"
+    # With no ESA row to resolve, the NEOWISE routes are tested on a VizieR star.
+    assert rep["neowise_star_from_route"] == ROUTE_VIZIER
+    assert rep["neowise_cone"]["status"] == "OK"
+    saved = json.loads((tmp_path / "probe.json").read_text())
+    assert saved["parent_route_recommended"] == ROUTE_VIZIER
+    assert saved["vizier_asu"]["parent_chunk"]["n_rows"] == 4
+
+
+def test_the_probe_records_vizier_even_when_the_esa_archive_answers(tmp_path):
+    """Probing is not using: ESA answering still keeps ESA as the recommended route."""
+    asu = _FakeASU()
+    rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(),
+                       query_fn=_FakeGaia(n=3), asu_fetch_fn=asu,
+                       cone_fn=_cone_factory(), upload_fn=_upload_fails)
+    assert rep["gaia_shape_working"] == "inner_cone"
+    assert rep["parent_route_recommended"] == ROUTE_ESA
+    assert rep["vizier_asu"]["status"] == "OK"               # recorded, not used
+    assert rep["neowise_star_from_route"] == ROUTE_ESA
+    assert rep["verdict"] in ("GAIA_AND_NEOWISE_REACHABLE", "ALL_ROUTES_REACHABLE")
+
+
+def test_probe_route_records_a_dead_asu_endpoint_verbatim():
+    rep, rows = probe_route({"fields": [_FIELD]}, fetch_fn=_asu_dead)
+    assert len(rows) == 0 and rep["usable"] is False
+    assert rep["status"] == "QUERY_FAILED"
+    assert len(rep["endpoints"]) >= 1
+    assert all("asu-tsv" in e for e in rep["endpoints"])
+    assert "stubbed off" in rep["gaia"]["error"]
+
+
+def test_the_vizier_route_is_configured_and_documented():
+    conf = load_ignition_config()
+    vz = conf["sample"]["vizier"]
+    assert vz["gaia_catalogue"] == "I/355/gaiadr3"
+    assert vz["gaia_params_catalogue"] == "I/355/paramp"
+    assert vz["allwise_catalogue"] == "II/328/allwise"
+    assert vz["enabled"] is True
+    raw = Path("config/ignition.yaml").read_text()
+    vz_block = raw[raw.index("  vizier:"):]
+    assert "verify" in vz_block                       # asserted-and-unverified, in writing
+    doc = Path("docs/ignition.md").read_text()
+    assert "asu-tsv" in doc and "I/355/gaiadr3" in doc and "II/328/allwise" in doc
+    wf = Path(".github/workflows/ignition.yml").read_text()
+    assert "vizier" in wf.lower()

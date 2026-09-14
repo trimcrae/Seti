@@ -697,6 +697,24 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
     }
 
     # --- nothing screened: say which archive did not answer ------------------
+    probe: dict = {}
+    if (out / "probe.json").exists():
+        try:
+            probe = json.loads((out / "probe.json").read_text())
+        except Exception:                              # noqa: BLE001
+            probe = {}
+    # Every endpoint that was asked, whether or not it answered.  With both
+    # parent routes dark this is the whole of what the run learned, so it must
+    # survive into summary.json rather than only into a log.
+    endpoints = {
+        "parent": sample.get("route_endpoints") or {ROUTE_ESA: None, ROUTE_VIZIER: []},
+        "parent_route_recommended_by_probe": probe.get("parent_route_recommended"),
+        "vizier_asu_probe": {k: (probe.get("vizier_asu") or {}).get(k)
+                             for k in ("status", "usable", "endpoints", "catalogues",
+                                       "error", "n_rows")},
+        "gaia_shapes_tried": probe.get("gaia_shapes_tried"),
+        "errors": (sample.get("route_errors") or [])[:40],
+    }
     if n_screened == 0:
         if not sample:
             reason = "no_sample_json: the sample stage did not run or did not write"
@@ -711,6 +729,7 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
         else:
             reason = "neowise_returned_no_usable_epochs"
         summary = {"verdict": VERDICT_NO_DATA, "reason": reason, "generated_utc": _now(),
+                   "endpoints": endpoints,
                    "denominators": denominators, "shards": shards, "degraded": degraded,
                    "veto_counters": {"screen": {}, "vet": {"verdicts": {}, "flags": {}}},
                    "stage_counts": {"screened": 0, "rise_candidates": 0, "vetted": 0,
@@ -765,7 +784,7 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
     if degraded:
         verdict = f"{DEGRADED} ({'; '.join(degraded)}); {verdict}"
     summary = {
-        "verdict": verdict, "generated_utc": _now(),
+        "verdict": verdict, "generated_utc": _now(), "endpoints": endpoints,
         "n_candidates": int(len(survivors)), "n_clean": int(len(gold)),
         "n_candidates_optical_untested": int(len(survivors) - len(gold)),
         "denominators": denominators,
@@ -797,7 +816,8 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
                  n_shards: int = 1, max_stars: int | None = None, route: str | None = None,
                  mode: str | None = None, optical_dir: Path | str | None = None,
                  seed: int = 20260913, conf: dict | None = None, config_path=None,
-                 query_fn=None, cone_fn=None, upload_fn=None, field_fn=None) -> dict:
+                 query_fn=None, cone_fn=None, upload_fn=None, field_fn=None,
+                 asu_fetch_fn=None, vizier: bool = True) -> dict:
     """Run one stage, a comma list, or all of them.  Returns the last report."""
     conf = conf if conf is not None else load_ignition_config(config_path)
     out = Path(out_dir) if out_dir else Path("results") / "ignition"
@@ -807,10 +827,12 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
     t0 = _time.monotonic()
     for s in stages:
         if s == "probe":
-            rep = stage_probe(conf, out, query_fn=query_fn, cone_fn=cone_fn, upload_fn=upload_fn)
+            rep = stage_probe(conf, out, query_fn=query_fn, cone_fn=cone_fn,
+                              upload_fn=upload_fn, asu_fetch_fn=asu_fetch_fn)
         elif s == "sample":
             rep = stage_sample(conf, out, n_shards=n_shards, max_stars=max_stars,
-                               query_fn=query_fn, mode=mode)
+                               query_fn=query_fn, mode=mode, asu_fetch_fn=asu_fetch_fn,
+                               vizier=vizier)
         elif s == "acquire":
             rep = stage_acquire(conf, out, shard=shard, n_shards=n_shards, max_stars=max_stars,
                                 route=route, cone_fn=cone_fn, upload_fn=upload_fn,
@@ -844,6 +866,9 @@ def main(argv=None):
     p.add_argument("--optical-dir", default="",
                    help="directory of <source_id>.csv optical series (ZTF/ASAS-SN) for assess")
     p.add_argument("--config", default="", help="alternative config yaml")
+    p.add_argument("--no-vizier", action="store_true",
+                   help="do not fall back to the VizieR ASU route when the ESA archive "
+                        "does not answer (the ESA route is always tried first either way)")
     p.add_argument("--seed", type=int, default=20260913)
     a = p.parse_args(argv)
     shard, n = parse_shard(a.shard)
@@ -851,7 +876,7 @@ def main(argv=None):
     rep = ignition_run(a.stage, out_dir=a.out_dir or None, shard=shard, n_shards=n_shards,
                        max_stars=a.max_stars or None, route=a.route or None,
                        mode=a.mode or None, optical_dir=a.optical_dir or None, seed=a.seed,
-                       config_path=a.config or None)
+                       config_path=a.config or None, vizier=not a.no_vizier)
     v = rep.get("verdict") if isinstance(rep, dict) else None
     if v:
         print(f"[ignition] verdict: {v}")

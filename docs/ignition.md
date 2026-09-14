@@ -88,6 +88,39 @@ parent is exact; a bare `TOP` returns a HEALPix-contiguous block). The
 archive `COUNT(*)` of the full selection is the denominator in `sample.json`;
 every verdict is a count over what was actually pulled.
 
+**The query plan (fixed after run 34787803862).** That probe asked for
+`SELECT TOP 5` inside a one-degree cone and was killed four times by
+`Error 500 … canceling statement due to statement timeout`, then by
+`Error 503 … maximum number of synchronous queued jobs (150) reached`. Five
+rows cannot be a volume problem, so it was a **plan** problem and a **queue**
+problem: the ADQL was one flat `WHERE` over the three-table join, which leaves
+the planner free to start from the ~750-million-row AllWISE mirror and scan it
+before the Gaia spatial index cuts the cone (`TOP 5` does not help — the hash
+join builds its side first), and the `503` says the request went to the
+*synchronous* endpoint, where the shared 150-job ceiling lives. Both are fixed:
+
+* the cut an index can serve — the cone, the parallax shell, the
+  `random_index` slice — plus **every** other Gaia-only cut now sits in an
+  inner sub-select on `gaiadr3.gaia_source` alone (aliased `gs`), and the two
+  AllWISE tables are joined to that small intermediate result;
+* three **shapes** are tried in order and the one that answered is written to
+  `probe.json` as `gaia_shape_working`, which the `sample` stage then uses
+  instead of re-deriving it:
+
+  | shape | inner sub-select | AllWISE colour/quality cuts |
+  |---|---|---|
+  | `inner_cone` | yes | in the outer SQL `WHERE` |
+  | `inner_cone_postfilter` | yes | **pandas post-filter** (`select_parent` re-applies them to every frame anyway) |
+  | `flat` | no | one flat `WHERE` — what timed out, kept last and still executable |
+
+  The science cuts are identical in all three: `gaia_predicates()` and
+  `allwise_predicates()` are the single source of both, and a shape only
+  decides *where* they are written (`tests/test_ignition.py` asserts the
+  predicate sets match);
+* transport is a ladder — `astroquery` async, `pyvo` async, then the sync
+  endpoints, which bulk queries never touch (`allow_sync=False`). Every
+  attempt is time-boxed and the queue that served the query is recorded.
+
 ### 4.2 Acquisition (`acquire.py`)
 Proper motion propagated to the mission mid-epoch (2019.0) and every match
 radius widened by half the mission-long sweep (VIGIL's `propagate_pm`,
@@ -169,7 +202,8 @@ verdict is `clean_optical_untested`, never `clean` — an unchecked optical is
 not a flat optical. Untested checks are named per star.
 
 ### 4.5 Stages and outputs (`run.py`)
-`probe` → `probe.json` (`neowise_route_recommended`); `sample` →
+`probe` → `probe.json` (`gaia_shapes`, `gaia_shape_working`,
+`neowise_route_recommended`); `sample` →
 `parent.parquet`, `sample.json`; `acquire` (shard `i/n`) →
 `epochs_s{i}of{n}.csv`, `neowise_stars_s{i}of{n}.csv`, `acquire_s{i}of{n}.json`;
 `screen` → `stars_s{i}of{n}.csv`, `screen_s{i}of{n}.json`; `assess` →
@@ -199,6 +233,23 @@ science verdict. Three things are different here:
 3. Per-star cones at ~92 s each (VIGIL's measurement) cannot reach a
    catalogue-scale sample; the field route (VIGIL's own fix, 186/187 stars
    from one query) is the default and the upload join is probed first.
+
+And what this channel's own run 34787803862 taught — a **green** 25-minute
+`--stage probe` that reached nothing and **committed nothing**:
+
+4. **The probe commits.** Its evidence used to live only in an artifact and in
+   the job log, because the commit-back belongs to the `assess` job and that
+   job is skipped for `stage=probe`. The `sample` job now runs
+   `scripts/commit_results.sh` (which verifies the push against
+   `git ls-remote`) on `results/ignition/probe.json` itself, after the artifact
+   upload, so a failed push cannot lose the evidence either.
+5. **The probe is time-boxed.** It spent 1,490 s on four retries of a query
+   that could not succeed. Each candidate shape now gets `probe.budget_s`
+   (~8 min) and the whole stage `probe.total_budget_s`; a shape that overruns
+   is recorded `TIMED_OUT` with its elapsed seconds and the probe moves to the
+   next one. A route that fails keeps its **verbatim** error and the exact
+   ADQL that was sent; `NO_DATA_REACHED` remains the honest verdict when
+   nothing answers.
 
 ---
 

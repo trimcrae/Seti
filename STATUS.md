@@ -10,6 +10,35 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### ULINE reaches IRC+10216: 17 unidentified lines, no industrial pattern, 2026-09-14
+
+The second channel to reach real data, and it took three runs plus a
+four-route VizieR ladder to get there. **TAPVizieR has been answering 503 to
+the runner over both http and https all night**, which is why ARC and ULINE's
+first attempts read `NO_DATA_REACHED` — an infrastructure state, recorded
+with every endpoint and error, never a sky statement. The shared helper now
+walks TAP primary → mirror TAP hosts → the non-TAP ASU TSV interface →
+astroquery, and on ULINE's third run that ladder reached the He+2008
+IRC+10216 line survey.
+
+**The measurement (`results/uline/`, verdict `NO_PATTERN`).** 377 catalogued
+lines over 131.4–267.4 GHz, of which **17 are unidentified**; 14 of those 17
+fall on a predicted transition of a known contaminant and are vetoed
+(HCOOCH₃ 13, C₂H₅CN 5, CH₃OH 3, HC₃N 2, C₄H 1 — a line can be vetoed by more
+than one), leaving **three clean unidentified features**. No industrial
+species produces a ≥ 3-transition pattern among them. JPL now yields real
+line lists after the catdir parser fix (403/403 lines, CDMS 1,327 → 5,690
+entries); NF₃, COF₂, CH₂F₂ and CH₃Cl come from laboratory catalogues, while
+CHF₃, CF₃Cl and CF₃CN still ride on predicted constants, and CF₂Cl₂, CFCl₃,
+SO₂F₂, CHClF₂ and CF₂ have no line list at all and are reported unsearchable
+rather than searched.
+
+**Two limits stated rather than buried.** The He+2008 table carries no
+intensity column, so the LTE consistency test could not run on this source —
+recorded as `untestable`, not passed. And Orion KL (Crockett+2014, ~1,730
+U-lines, the source that actually has the statistics) is still unreached
+while TAPVizieR is down; it is where this channel's real sensitivity lives.
+
 ### ISOTOPE's first run: 20,502 presolar grains, no purity without a package, 2026-09-14
 
 **The first NECROFRONTIER channel to reach real data, and it reached it by a

@@ -616,9 +616,126 @@ def test_tap_query_tries_every_mirror_before_failing(monkeypatch):
         __import__("sys").modules, "pyvo",
         types.SimpleNamespace(dal=types.SimpleNamespace(TAPService=_Svc)))
     monkeypatch.setattr(macq._time, "sleep", lambda *_a, **_k: None)
+    macq.reset_route_state()          # the circuit breaker must not skip a host here
 
     with pytest.raises(RuntimeError) as err:
-        macq.tap_query("SELECT 1", retries=1)
+        macq.tap_query("SELECT 1", retries=1, allow_non_tap=False)
     assert tried == list(macq.VIZIER_TAP_MIRRORS)
     for endpoint in macq.VIZIER_TAP_MIRRORS:
         assert endpoint in str(err.value)
+    macq.reset_route_state()
+
+
+# ---------------------------------------------------------------------------
+# TAP down, VizieR up: ARC gets its rows through the shared route ladder
+# ---------------------------------------------------------------------------
+def _vizier_without_tap(monkeypatch, *, meta: str, rows: str):
+    """A world where every TAPVizieR host 503s and the non-TAP ASU route works."""
+    import types
+
+    from seti.metronome import acquire as macq
+
+    class _Svc:
+        def __init__(self, url):
+            self._url = url
+
+        def _fail(self, adql):
+            raise RuntimeError(f"DALServiceError: 503 Server Error: Service Unavailable "
+                               f"for url: {self._url}/sync")
+
+        run_async = search = _fail
+
+    monkeypatch.setitem(
+        __import__("sys").modules, "pyvo",
+        types.SimpleNamespace(dal=types.SimpleNamespace(TAPService=_Svc)))
+    monkeypatch.setattr(macq._time, "sleep", lambda *_a, **_k: None)
+    urls: list[str] = []
+
+    def fetch(url, timeout=180.0):
+        urls.append(url)
+        if "-meta.all" in url:
+            return meta
+        if url.endswith("/ReadMe"):
+            raise RuntimeError("404 Not Found")
+        return rows
+
+    monkeypatch.setattr(macq, "_asu_http_text", fetch)
+    macq.reset_route_state()
+    return macq, urls
+
+
+ARC_ASU_META = "\n".join([
+    "#RESOURCE=yCat_J/ApJS/241/29",
+    "#Name: J/ApJS/241/29",
+    "#Title: Kepler flare catalogue (Yang+, 2019)",
+    "#Table\tJ_ApJS_241_29_table4:",
+    "#Name: J/ApJS/241/29/table4",
+    "#Title: Flare list",
+    "#Column\tKIC\t()\tKepler Input Catalog identifier",
+    "#Column\tTpeak\t(d)\tFlare peak time",
+    "#Column\tEbol\t(erg)\tBolometric flare energy",
+    "#Column\tRper\t(ppm)\tRotational amplitude",
+])
+
+ARC_ASU_ROWS = "\n".join([
+    "#RESOURCE=yCat_J/ApJS/241/29",
+    "#Name: J/ApJS/241/29/table4",
+    '#Column\t"KIC"\t()\tid',
+    '"KIC"\tTpeak\tEbol\tRper',
+    "\td\terg\tppm",
+    "--------\t--------\t--------\t--------",
+    "1234567\t120.5\t1.0e34\t9500",
+    "1234567\t123.5\t2.0e34\t9500",
+    "7654321\t130.5\t3.0e34\t4200",
+])
+
+
+def test_tap_down_but_asu_up_gives_arc_rows_not_query_failed(monkeypatch):
+    """ARC picks the route ladder up for free through the shared helper.
+
+    ``seti.arc.acquire`` does not know the ASU interface exists: it calls
+    ``list_tables`` / ``table_columns`` / ``count_rows`` / ``tap_query`` from
+    :mod:`seti.metronome.acquire`, and those degrade to the non-TAP route.  So
+    a dispatch made while TAPVizieR is 503ing returns REAL ROWS with a recorded
+    route instead of the ``QUERY_FAILED`` -> ``NO_DATA_REACHED`` that this
+    repository refuses to publish as a sky result.
+    """
+    macq, urls = _vizier_without_tap(monkeypatch, meta=ARC_ASU_META, rows=ARC_ASU_ROWS)
+    log = macq.AcquisitionLog()
+    disc = acq.discover_table("kepler_yang2019", "J/ApJS/241/29", "flares", ("flare", "Kepler"),
+                              query_fn=macq.tap_query, log=log)
+    assert disc.status == "OK" and disc.table == "J/ApJS/241/29/table4"
+    assert disc.roles["star_id"] == "KIC" and disc.roles["energy"] == "Ebol"
+    assert disc.roles["t_peak"] == "Tpeak" and disc.roles["rot_amplitude"] == "Rper"
+    assert disc.n_rows is None                    # COUNT(*) is unknown without TAP, not failed
+    df = acq.fetch_table(disc, query_fn=macq.tap_query, log=log)
+    assert len(df) == 3 and list(df["star_id"]) == ["1234567", "1234567", "7654321"]
+    assert np.allclose(df["energy"].to_numpy(), [1.0e34, 2.0e34, 3.0e34], rtol=1e-12)
+    assert df["t_peak"].tolist() == [120.5, 123.5, 130.5]
+    # the route that served the rows is recorded, with its endpoint
+    summary = macq.route_log_summary()
+    assert summary["served_by"] == "asu_tsv"
+    assert summary["routes"]["asu_tsv"]["n_ok"] >= 2
+    assert summary["routes"]["tap"]["n_failed"] >= len(macq.VIZIER_TAP_MIRRORS)
+    assert any("-meta.all" in u for u in urls) and any("-out.form=TSV" in u for u in urls)
+    macq.reset_route_state()
+
+
+def test_arc_with_every_vizier_route_down_is_still_honestly_query_failed(monkeypatch):
+    """The other half of the contract: no route, no rows, no invention."""
+    def dead(url, timeout=180.0):
+        raise RuntimeError("503 Server Error: Service Unavailable")
+
+    macq, _urls = _vizier_without_tap(monkeypatch, meta="", rows="")
+    monkeypatch.setattr(macq, "_asu_http_text", dead)
+    monkeypatch.setattr(macq, "astroquery_rows", lambda *a, **k: (_ for _ in ()).throw(
+        macq.VizierRouteError("astroquery: no route to host")))
+    log = macq.AcquisitionLog()
+    disc = acq.discover_table("kepler_yang2019", "J/ApJS/241/29", "flares", ("flare", "Kepler"),
+                              query_fn=macq.tap_query, log=log)
+    assert disc.status == "QUERY_FAILED" and disc.table is None
+    assert not len(acq.fetch_table(disc, query_fn=macq.tap_query, log=log))
+    assert log.as_dict()["any_query_failed"] and log.as_dict()["total_rows"] == 0
+    named = " ".join(str(s.get("error", "")) for s in log.stages)
+    assert "503" in named
+    macq.reset_route_state()

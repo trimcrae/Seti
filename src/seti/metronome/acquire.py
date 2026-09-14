@@ -460,7 +460,7 @@ def parse_asu_meta(text: str) -> dict:
         m = re.match(r"^#Name:\s*(.+?)\s*$", ln)
         if m:
             name = unquote_table(m.group(1))
-            if pending or "/" in name and out["catalogue"] and name != out["catalogue"]:
+            if pending or ("/" in name and out["catalogue"] and name != out["catalogue"]):
                 cur = out["tables"].setdefault(name, {"table_name": name, "description": "",
                                                       "columns": [], "units": {},
                                                       "descriptions": {}})
@@ -521,10 +521,6 @@ def parse_readme(text: str, catalogue: str = "") -> dict:
                 cur["columns"].append(label)
                 cur["units"][label] = m.group(2)
                 cur["descriptions"][label] = m.group(4).strip()
-            elif ln.startswith("-" * 10):
-                continue
-            elif ln.strip() == "":
-                cur = cur
     return out
 
 

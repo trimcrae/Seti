@@ -65,6 +65,8 @@ from .sample import (
     DEFAULT_SAMPLE,
     QUERY_FAILED,
     QUERY_TIMED_OUT,
+    ROUTE_ESA,
+    ROUTE_VIZIER,
     SHAPES,
     QueryTimeout,
     build_query,
@@ -90,6 +92,7 @@ DEFAULT_PROBE: dict = {
     "neowise_timeout_s": 300.0,     # each NEOWISE route test
     "cap": 5,                       # TOP n for the join test
     "shapes": list(SHAPES),
+    "vizier_timeout_s": 300.0,      # the SECOND route's probe (VizieR ASU)
 }
 
 DEFAULTS: dict = {
@@ -232,7 +235,7 @@ def _timeboxed(fn, timeout_s: float | None, label: str):
 
 
 def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
-                upload_fn=None) -> dict:
+                upload_fn=None, asu_fetch_fn=None) -> dict:
     """One minimal call per route; decides the acquire architecture.
 
     The Gaia join is tried as each of :data:`~seti.ignition.sample.SHAPES` in
@@ -241,6 +244,13 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
     not re-derive it.  Every shape that did not answer keeps its verbatim error
     and the exact ADQL that was sent.  ``probe.json`` is written whatever
     happens --- a green run that commits nothing is a lost run.
+
+    **BOTH parent routes are probed, always** --- the ESA archive first and then
+    VizieR's non-TAP ASU interface, even when ESA answered --- so the next run's
+    ``probe.json`` names the transport that works instead of re-deriving it.
+    (Probing is not using: the sample stage's fallback still runs only where ESA
+    fails.)  When ESA returns nothing and VizieR does, the NEOWISE route tests
+    below are run on a VizieR-supplied star rather than skipped.
     """
     t_stage = _time.monotonic()
     pc = {**DEFAULT_PROBE, **(conf.get("probe") or {})}
@@ -313,6 +323,30 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
     zero = [s for s in shape_recs if s.get("status") == "QUERY_RETURNED_ZERO_ROWS"]
     rep["gaia_join"] = (ok or zero or shape_recs or [{"status": "NOT_ATTEMPTED"}])[0]
 
+    # 2b. The SECOND route to the same parent sample: VizieR's non-TAP ASU
+    # interface.  Probed on every run, whatever ESA did, because the point of a
+    # probe is to say which transports are alive tonight.
+    from .vizier_route import probe_route
+
+    vz_val, vz_err = _timeboxed(
+        lambda: probe_route(sc, fetch_fn=asu_fetch_fn, cap=cap),
+        _budget(pc.get("vizier_timeout_s"), _left()), "vizier_asu")
+    if vz_val is None:
+        rep["vizier_asu"] = dict(vz_err or {"status": QUERY_FAILED, "error": "no record"})
+        vz_frame = pd.DataFrame()
+    else:
+        rep["vizier_asu"], vz_frame = vz_val
+    rep["vizier_asu"].setdefault("usable", False)
+    vizier_ok = bool(rep["vizier_asu"].get("usable"))
+    print(f"[ignition] probe: vizier_asu {rep['vizier_asu'].get('status')} "
+          f"rows={rep['vizier_asu'].get('n_rows')}")
+    if not len(df) and len(vz_frame):
+        # ESA reached nothing; the NEOWISE tests below still deserve a real star.
+        df = vz_frame.rename(columns={c: str(c).lower() for c in vz_frame.columns})
+        rep["neowise_star_from_route"] = ROUTE_VIZIER
+    elif len(df):
+        rep["neowise_star_from_route"] = ROUTE_ESA
+
     # 3. NEOWISE per-star cone on a resolved star (a bare coordinate tests nothing).
     if cone_fn is None:
         from .acquire import fetch_neowise_cone as cone_fn
@@ -348,13 +382,21 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
     rep["neowise_route_recommended"] = ("upload" if up_ok else
                                         "field" if (cone_ok and fields) else
                                         "cone" if cone_ok else "none")
+    # Which SOURCE the next run should expect the parent from.  ESA stays first
+    # whenever it answers: it is authoritative and owns the in-archive match.
+    rep["parent_route_recommended"] = (ROUTE_ESA if gaia_ok else
+                                       ROUTE_VIZIER if vizier_ok else "none")
+    rep["parent_routes_tried"] = [ROUTE_ESA, ROUTE_VIZIER]
     rep["verdict"] = ("ALL_ROUTES_REACHABLE" if (gaia_ok and cone_ok and up_ok) else
                       "GAIA_AND_NEOWISE_REACHABLE" if (gaia_ok and cone_ok) else
                       "GAIA_ONLY" if gaia_ok else
+                      "VIZIER_PARENT_AND_NEOWISE" if (vizier_ok and cone_ok) else
+                      "VIZIER_PARENT_ONLY" if vizier_ok else
                       "NEOWISE_ONLY" if cone_ok else VERDICT_NO_DATA)
     rep["elapsed_s"] = round(_time.monotonic() - t_stage, 1)
     _write(out / "probe.json", rep)
     print(f"[ignition] probe: {rep['verdict']}; route={rep['neowise_route_recommended']}; "
+          f"parent_route={rep['parent_route_recommended']}; "
           f"gaia_shape={working}; {rep['elapsed_s']} s")
     return rep
 
@@ -363,10 +405,12 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
 # sample
 # ---------------------------------------------------------------------------
 def stage_sample(conf: dict, out: Path, *, n_shards: int = 1, max_stars: int | None = None,
-                 query_fn=None, mode: str | None = None) -> dict:
+                 query_fn=None, mode: str | None = None, asu_fetch_fn=None,
+                 vizier: bool = True) -> dict:
     sc = dict(conf["sample"])
     probe_p = out / "probe.json"
     shape = None
+    probe_parent_route = None
     if probe_p.exists():
         try:
             pr = json.loads(probe_p.read_text())
@@ -376,19 +420,23 @@ def stage_sample(conf: dict, out: Path, *, n_shards: int = 1, max_stars: int | N
             # The probe already paid for finding a plan that returns; use it.
             if pr.get("gaia_shape_working") in SHAPES:
                 shape = pr["gaia_shape_working"]
+            probe_parent_route = pr.get("parent_route_recommended")
         except Exception:                              # noqa: BLE001
             pass
     stars, rep = fetch_parent(sc, mode=mode, n_shards=n_shards,
-                              cap_per_shard=max_stars or None, query_fn=query_fn, shape=shape)
+                              cap_per_shard=max_stars or None, query_fn=query_fn, shape=shape,
+                              vizier=vizier, vizier_fetch_fn=asu_fetch_fn)
     rep = {"stage": "sample", "generated_utc": _now(), "n_shards_planned": int(n_shards),
-           "query_shape_from_probe": shape, **rep}
+           "query_shape_from_probe": shape,
+           "parent_route_from_probe": probe_parent_route, **rep}
     out.mkdir(parents=True, exist_ok=True)
     if len(stars):
         stars.to_parquet(out / "parent.parquet", index=False)
         rep["path"] = str(out / "parent.parquet")
     _write(out / "sample.json", rep)
     print(f"[ignition] sample: {rep['status']} {rep['n_after_local_cuts']} stars "
-          f"(parent COUNT(*) = {rep['parent_count']})")
+          f"(parent COUNT(*) = {rep['parent_count']}); routes={rep.get('routes')}"
+          + (f"; DEGRADED {rep['degraded']}" if rep.get("degraded") else ""))
     return rep
 
 
@@ -616,6 +664,12 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
         degraded.append(f"shards_missing:{len(shards['missing'])}/{n_exp}")
     if sample.get("n_units_failed"):
         degraded.append(f"sample_units_failed:{sample['n_units_failed']}/{sample.get('n_units')}")
+    # A parent drawn from two different sources is DEGRADED, never silently mixed:
+    # the ESA route carries the archive's own cross-match, the VizieR route a
+    # positional one bounded by an -out.max row cap.
+    for d in (sample.get("degraded") or []):
+        if d not in degraded:
+            degraded.append(str(d))
     n_acq_failed = int(sum(int(a.get("n_failed", 0) or 0) for a in acquires))
     if n_acq_failed:
         degraded.append(f"neowise_queries_failed:{n_acq_failed}")
@@ -633,6 +687,13 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
         "n_stars_screened": n_screened,
         "sample_mode": sample.get("mode"),
         "local_cut_counters": sample.get("local_cut_counters"),
+        # Which SOURCE the parent came from, and in what proportion.
+        "parent_routes": sample.get("routes"),
+        "parent_route_fractions": sample.get("route_fractions"),
+        "parent_route_used": sample.get("route_used"),
+        "parent_routes_mixed": bool(sample.get("mixed_routes")),
+        "vizier_capped_units": sample.get("vizier_capped_units"),
+        "route_note": sample.get("route_note"),
     }
 
     # --- nothing screened: say which archive did not answer ------------------

@@ -2,10 +2,18 @@
 
 Stages
 ------
-``probe``    one minimal live call per route: the Gaia x AllWISE join (TOP 5),
-             the AllWISE mirror's column names, a NEOWISE cone on a resolved
-             star, and the ``TAP_UPLOAD`` join on two stars.  Writes
-             ``probe.json`` including ``neowise_route_recommended``.
+``probe``    one minimal live call per route: the AllWISE mirror's column
+             names, the Gaia x AllWISE join (``TOP 5``) tried as each candidate
+             query shape in turn, a NEOWISE cone on a resolved star, and the
+             ``TAP_UPLOAD`` join on two stars.  Every call is time-boxed
+             (``config/ignition.yaml`` -> ``probe``: ``budget_s`` per shape,
+             ``total_budget_s`` for the stage); a shape that overruns is
+             recorded ``TIMED_OUT`` with its elapsed seconds and the probe moves
+             on.  Writes ``probe.json`` with ``gaia_shapes`` (each shape's
+             status, verbatim error and the exact ADQL sent),
+             ``gaia_shape_working`` --- which the ``sample`` stage then reuses
+             --- and ``neowise_route_recommended``.  The workflow commits it:
+             run 34787803862 went green, took 25 minutes and committed nothing.
 ``sample``   the parent sample (``parent.parquet`` + ``sample.json`` with the
              archive ``COUNT(*)`` denominator and the subsample fraction).
 ``acquire``  shard ``i/n`` of the parent: NEOWISE frames -> cleaning -> epochs,

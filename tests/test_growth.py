@@ -987,3 +987,103 @@ def test_config_workflow_and_doc_exist():
     assert Path("config/growth.yaml").exists()
     assert Path(".github/workflows/growth.yml").exists()
     assert Path("docs/growth.md").exists()
+
+
+# ---------------------------------------------------------------------------
+# The cone fallback's wall-clock ceiling (run 34789826297)
+# ---------------------------------------------------------------------------
+def test_cone_fallback_stops_at_its_budget_and_calls_the_rest_not_checked():
+    """Three hours in the fallback would have committed nothing at the 180 min cap.
+
+    A target the budget did not reach must be indistinguishable from one no
+    route reached: QUERY_FAILED, reported ``not_checked``, never isolated.
+    """
+    from seti.growth.acquire import gaia_neighbours_cones
+
+    targets = pd.DataFrame({"key": [0, 1, 2, 3], "ra": [10.0, 11.0, 12.0, 13.0],
+                            "dec": [1.0, 2.0, 3.0, 4.0]})
+    ticks = iter([0.0, 0.0, 100.0, 250.0, 400.0, 400.0, 400.0, 400.0])
+    served: list[str] = []
+
+    def transport(adql: str):
+        served.append(adql)
+        return pd.DataFrame({"source_id": [1], "ra": [10.0], "dec": [1.0],
+                             "phot_g_mean_mag": [12.0]})
+
+    attempts: list[dict] = []
+    neigh, failed = gaia_neighbours_cones(targets, 21.0, transport=transport,
+                                          attempts=attempts, budget_s=300.0,
+                                          clock=lambda: next(ticks))
+    assert len(served) == 3                       # the fourth was past the budget
+    assert failed == [3]
+    assert len(neigh) == 3
+    note = [a for a in attempts if a.get("key") == 3][0]
+    assert "BUDGET_EXHAUSTED" in note["error"]
+
+
+def test_no_budget_means_every_target_is_attempted():
+    from seti.growth.acquire import gaia_neighbours_cones
+
+    targets = pd.DataFrame({"key": [0, 1], "ra": [10.0, 11.0], "dec": [1.0, 2.0]})
+    served: list[str] = []
+
+    def transport(adql: str):
+        served.append(adql)
+        return pd.DataFrame({"source_id": [1], "ra": [10.0], "dec": [1.0],
+                             "phot_g_mean_mag": [12.0]})
+
+    _n, failed = gaia_neighbours_cones(targets, 21.0, transport=transport)
+    assert len(served) == 2 and failed == []
+
+
+def test_the_chunk_driver_hands_the_cone_fallback_its_remaining_budget():
+    """The budget is for the WHOLE fallback, so later chunks get what is left."""
+    from seti.growth.acquire import fetch_gaia_neighbours
+
+    stars = pd.DataFrame({"planet_key": ["a", "b", "c", "d"],
+                          "ra": [10.0, 11.0, 12.0, 13.0], "dec": [1.0, 2.0, 3.0, 4.0]})
+    ticks = iter([0.0, 0.0, 500.0, 500.0])
+    handed: list[float] = []
+
+    def gaia_fn(part, radius):
+        raise RuntimeError("Error 500: canceling statement due to statement timeout")
+
+    def cone_fn(part, radius, *, attempts=None, budget_s=None):
+        handed.append(budget_s)
+        return pd.DataFrame(columns=["source_id", "ra", "dec", "phot_g_mean_mag", "key"]), []
+
+    _n, status = fetch_gaia_neighbours(stars, chunk=2, gaia_fn=gaia_fn, cone_fn=cone_fn,
+                                       budget_s=1200.0, clock=lambda: next(ticks))
+    assert handed == [1200.0, 700.0], handed
+    assert len(status) == 4
+
+
+def test_a_cone_fn_without_a_budget_parameter_is_still_called():
+    """An injected fallback that predates the budget must not start raising."""
+    from seti.growth.acquire import fetch_gaia_neighbours
+
+    stars = pd.DataFrame({"planet_key": ["a"], "ra": [10.0], "dec": [1.0]})
+    calls: list[int] = []
+
+    def gaia_fn(part, radius):
+        raise RuntimeError("refused")
+
+    def cone_fn(part, radius, *, attempts=None):
+        calls.append(len(part))
+        return pd.DataFrame(columns=["source_id", "ra", "dec", "phot_g_mean_mag", "key"]), []
+
+    fetch_gaia_neighbours(stars, gaia_fn=gaia_fn, cone_fn=cone_fn, budget_s=600.0)
+    assert calls == [1]
+
+
+def test_the_cone_transport_carries_a_per_request_timeout():
+    """pyvo's run_sync takes no timeout; the session must supply one."""
+    import inspect
+
+    from seti.growth import acquire as gacq
+
+    assert "timeout_s" in inspect.signature(gacq.pyvo_sync_transport).parameters
+    src = inspect.getsource(gacq._timeout_session)
+    assert "setdefault" in src and "timeout" in src
+    conf = Path("config/growth.yaml").read_text()
+    assert "cone_budget_s" in conf and "cone_timeout_s" in conf

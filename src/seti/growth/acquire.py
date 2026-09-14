@@ -50,6 +50,7 @@ errored) and ``QUERY_RETURNED_ZERO_ROWS`` (it answered, with nothing).
 
 from __future__ import annotations
 
+import inspect as _inspect
 import io
 import json
 import re
@@ -759,13 +760,31 @@ def gaia_cone_adql(ra: float, dec: float, radius_arcsec: float) -> str:
             f"CIRCLE('ICRS', {float(ra):.7f}, {float(dec):.7f}, {r_deg:.8f}))")
 
 
-def pyvo_sync_transport(tap_url: str = GAIA_TAP):
+def _timeout_session(timeout_s: float):
+    """A ``requests`` session that puts a hard timeout on every call pyvo makes.
+
+    ``pyvo``'s ``run_sync`` takes no timeout, so a hung ESA endpoint blocks the
+    whole loop on one target.  Giving the service a session whose ``request``
+    supplies a default timeout bounds every cone without touching pyvo.
+    """
+    import requests  # noqa: PLC0415  runner-only
+
+    class _Session(requests.Session):
+        def request(self, *a, **kw):                      # noqa: D102
+            kw.setdefault("timeout", float(timeout_s))
+            return super().request(*a, **kw)
+
+    return _Session()
+
+
+def pyvo_sync_transport(tap_url: str = GAIA_TAP, *, timeout_s: float = 120.0):
     """``adql -> DataFrame`` through ``pyvo``'s sync endpoint (runner only)."""
 
     def _run(adql: str) -> pd.DataFrame:
         import pyvo  # noqa: PLC0415  runner-only
 
-        df = pyvo.dal.TAPService(tap_url).run_sync(adql).to_table().to_pandas()
+        svc = pyvo.dal.TAPService(tap_url, session=_timeout_session(timeout_s))
+        df = svc.run_sync(adql).to_table().to_pandas()
         return df.rename(columns={c: str(c).lower() for c in df.columns})
 
     return _run
@@ -773,8 +792,9 @@ def pyvo_sync_transport(tap_url: str = GAIA_TAP):
 
 def gaia_neighbours_cones(targets: pd.DataFrame, radius_arcsec: float, *,
                           retries: int = 2, tap_url: str = GAIA_TAP, transport=None,
-                          base_sleep: float = 2.0, attempts: list | None = None
-                          ) -> tuple[pd.DataFrame, list[int]]:
+                          base_sleep: float = 2.0, attempts: list | None = None,
+                          budget_s: float | None = None, clock=None,
+                          timeout_s: float = 120.0) -> tuple[pd.DataFrame, list[int]]:
     """Per-target sync cones --- the fallback when the upload route is refused.
 
     One small ADQL per target through ``pyvo`` against ``tap_url``
@@ -782,13 +802,30 @@ def gaia_neighbours_cones(targets: pd.DataFrame, radius_arcsec: float, *,
     neighbour rows carry the target's ``key`` so the caller can join them back,
     and a target whose every attempt failed is listed in ``failed_keys`` and
     stays ``QUERY_FAILED`` --- it is never silently reported as isolated.
+
+    ``budget_s`` is a WALL-CLOCK ceiling on the whole loop.  Run 34789826297
+    spent three hours in this fallback against an ESA archive that was
+    answering 500 to every other channel the same night, and would have been
+    killed at the workflow's 180-minute cap with nothing committed --- not even
+    the probe.  A target the budget did not reach is listed in ``failed_keys``
+    exactly as an unreachable one is, so it is reported ``not_checked``, never
+    isolated; the ceiling changes what is *attempted*, never what is *claimed*.
     """
-    run = transport or pyvo_sync_transport(tap_url)
+    run = transport or pyvo_sync_transport(tap_url, timeout_s=float(timeout_s))
+    now = clock or _time.monotonic
     rec: list[dict] = attempts if attempts is not None else []
     frames: list[pd.DataFrame] = []
     failed: list[int] = []
+    started = now()
+    budget = None if budget_s is None else float(budget_s)
     for _, t in targets.reset_index(drop=True).iterrows():
         key = int(t["key"])
+        if budget is not None and (now() - started) >= budget:
+            failed.append(key)
+            rec.append({"key": key, "transport": "pyvo_sync", "ok": False,
+                        "error": f"BUDGET_EXHAUSTED: cone budget of {budget:.0f} s spent "
+                                 f"before this target was attempted"})
+            continue
         last = None
         for attempt in range(max(1, int(retries))):
             try:
@@ -827,7 +864,8 @@ def _attach_targets(df: pd.DataFrame, part: pd.DataFrame) -> pd.DataFrame:
 def fetch_gaia_neighbours(stars: pd.DataFrame, *, radius_arcsec: float = 21.0,
                           chunk: int = 300, gaia_fn=None, cone_fn=None,
                           log: AcquisitionLog | None = None,
-                          checkpoint_dir=None) -> tuple[pd.DataFrame, pd.DataFrame]:
+                          checkpoint_dir=None, budget_s: float | None = None,
+                          clock=None) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Neighbours for every star in ``stars`` (``planet_key, ra, dec``), chunked.
 
     Two routes per chunk, in order:
@@ -846,9 +884,22 @@ def fetch_gaia_neighbours(stars: pd.DataFrame, *, radius_arcsec: float = 21.0,
     isolated.  Every attempt's exception text is recorded on the log stage
     (``attempts``), and a finished chunk is written to ``checkpoint_dir`` so a
     re-run does not re-query it.
+
+    ``budget_s`` caps the WALL CLOCK the cone fallback may spend across all
+    chunks.  Whatever the budget does not reach is ``QUERY_FAILED`` and is
+    reported ``not_checked``: a bounded stage that commits its result beats an
+    unbounded one the workflow kills with nothing written (run 34789826297).
     """
     log = log or AcquisitionLog()
     gaia_fn = gaia_fn or gaia_neighbours_upload
+    now = clock or _time.monotonic
+    started = now()
+    takes_budget = False
+    if cone_fn is not None:
+        try:
+            takes_budget = "budget_s" in _inspect.signature(cone_fn).parameters
+        except (TypeError, ValueError):                   # a builtin or a C callable
+            takes_budget = False
     ck = Path(checkpoint_dir) if checkpoint_dir else None
     if ck is not None:
         ck.mkdir(parents=True, exist_ok=True)
@@ -896,9 +947,11 @@ def fetch_gaia_neighbours(stars: pd.DataFrame, *, radius_arcsec: float = 21.0,
             print(f"[growth/acquire] {label}: upload route failed ({exc!r}); "
                   f"falling back to {len(part)} per-target cones")
             route = "cones"
+            kw: dict = {"attempts": attempts}
+            if takes_budget and budget_s is not None:
+                kw["budget_s"] = max(0.0, float(budget_s) - (now() - started))
             try:
-                df, failed_keys = cone_fn(part[["key", "ra", "dec"]], radius_arcsec,
-                                          attempts=attempts)
+                df, failed_keys = cone_fn(part[["key", "ra", "dec"]], radius_arcsec, **kw)
             except Exception as exc2:                     # noqa: BLE001
                 attempts.append({"transport": "cones", "ok": False, "error": repr(exc2)[:500]})
                 log.record(label, query, error=repr(exc2), extra={

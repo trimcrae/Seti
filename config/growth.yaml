@@ -80,6 +80,17 @@ gaia:
   fallback_cones: true
   cone_retries: 2
   checkpoint: true
+  # MEASURED (run 34789826297): the cone fallback ran for THREE HOURS without
+  # finishing and would have been killed by the workflow's 180-minute cap with
+  # nothing committed — not even the probe. pyvo's run_sync takes no timeout,
+  # so one hung ESA request blocks the whole loop. Two ceilings now bound it:
+  #   cone_timeout_s — a hard per-request timeout, imposed through the session;
+  #   cone_budget_s  — wall clock for the WHOLE fallback across all chunks.
+  # A target the budget did not reach is QUERY_FAILED -> `not_checked`, exactly
+  # as an unreachable one is. The ceilings change what is ATTEMPTED, never what
+  # is claimed. Set cone_budget_s to 0 or null for no ceiling.
+  cone_timeout_s: 120.0
+  cone_budget_s: 3600.0
 
 aperture:
   # Aperture-capture weight for a neighbour at separation d:

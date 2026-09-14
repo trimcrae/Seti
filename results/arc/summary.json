@@ -1,6 +1,6 @@
 {
-  "verdict": "NO_CEILING_EXCESS",
-  "generated_utc": "2026-09-14T01:27:04Z",
+  "verdict": "NO_DATA_REACHED",
+  "generated_utc": "2026-09-14T01:36:02Z",
   "n_candidates": 0,
   "n_interest": 0,
   "n_watch": 0,
@@ -80,7 +80,7 @@
       "n_flares_acquired": 100000
     },
     "kepler_okamoto2021": {
-      "acquire_status": "QUERY_FAILED",
+      "acquire_status": "QUERY_RETURNED_ZERO_ROWS",
       "table": null,
       "n_flares_acquired": 0
     },
@@ -90,12 +90,12 @@
       "n_flares_acquired": 0
     },
     "tess_tu2022": {
-      "acquire_status": "QUERY_FAILED",
+      "acquire_status": "QUERY_RETURNED_ZERO_ROWS",
       "table": null,
       "n_flares_acquired": 0
     },
     "tess_gunther2020": {
-      "acquire_status": "QUERY_FAILED",
+      "acquire_status": "QUERY_RETURNED_ZERO_ROWS",
       "table": null,
       "n_flares_acquired": 0
     },
@@ -106,14 +106,15 @@
     }
   },
   "degraded": [
-    "kepler_okamoto2021:QUERY_FAILED",
+    "kepler_okamoto2021:QUERY_RETURNED_ZERO_ROWS",
     "kepler_shibayama2013:QUERY_RETURNED_ZERO_ROWS",
-    "tess_tu2022:QUERY_FAILED",
-    "tess_gunther2020:QUERY_FAILED",
+    "tess_tu2022:QUERY_RETURNED_ZERO_ROWS",
+    "tess_gunther2020:QUERY_RETURNED_ZERO_ROWS",
     "kepler_davenport2016:QUERY_RETURNED_ZERO_ROWS",
-    "stars_kepler_mcquillan2014:QUERY_FAILED",
+    "stars_kepler_mcquillan2014:QUERY_RETURNED_ZERO_ROWS",
     "stars_kepler_santos2021:QUERY_RETURNED_ZERO_ROWS",
-    "stars_tess_gunther2020_stars:QUERY_FAILED"
+    "stars_tess_gunther2020_stars:QUERY_RETURNED_ZERO_ROWS",
+    "no star assessable: 576 stars carried flares but none carried a rotational amplitude, so no ceiling could be computed"
   ],
   "offline": false,
   "gaia_reached_fraction_of_shortlist": NaN,
@@ -177,11 +178,10 @@
       "stages": [
         {
           "stage": "discover_kepler_okamoto2021_preferred",
-          "status": "QUERY_FAILED",
-          "rows": 0,
+          "status": "OK",
+          "rows": 1,
           "query": "TAP_SCHEMA.tables ~ 'J/ApJ/906/72/table2'",
-          "error": "TypeError('arg must be a list, tuple, 1-d array, or Series')",
-          "route": "none",
+          "route": "asu_tsv",
           "route_attempts": []
         },
         {
@@ -196,35 +196,35 @@
               "route": "tap",
               "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%solar-type%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%' OR description LIKE '%solar-type%'",
               "error": "RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync')"
             },
             {
               "route": "tap",
               "endpoint": "https://tapvizier.u-strasbg.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%solar-type%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%' OR description LIKE '%solar-type%'",
               "error": "RuntimeError('TAP query (https://tapvizier.u-strasbg.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync')"
             },
             {
               "route": "tap",
               "endpoint": "https://vizier.cfa.harvard.edu/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%solar-type%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%' OR description LIKE '%solar-type%'",
               "error": "RuntimeError('TAP query (https://vizier.cfa.harvard.edu/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 404 Client Error: Not Found for url: https://vizier.cfa.harvard.edu/TAPVizieR/tap/sync')"
             },
             {
               "route": "tap",
               "endpoint": "http://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%solar-type%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%' OR description LIKE '%solar-type%'",
               "error": "RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: http://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync')"
             },
             {
               "route": "asu_tsv",
               "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%solar-type%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Solar-type%' OR description LIKE '%SOLAR-TYPE%' OR description LIKE '%solar-type%'",
               "error": "a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one"
             }
           ]
@@ -242,53 +242,52 @@
           "status": "QUERY_FAILED",
           "rows": 0,
           "query": "TAP_SCHEMA.tables ~ 'J/ApJS/209/5'",
-          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 44s ago (retried after 45s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 29s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 15s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 1s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
+          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 43s ago (retried after 45s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 27s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 15s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 1s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
           "route": "none",
           "route_attempts": [
             {
               "route": "tap",
               "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 44s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 43s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://tapvizier.u-strasbg.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 29s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 27s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://vizier.cfa.harvard.edu/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
               "error": "skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 15s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "http://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
               "error": "skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 1s ago (retried after 45s)"
             },
             {
               "route": "asu_tsv",
               "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
               "error": "a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one"
             }
           ]
         },
         {
           "stage": "discover_tess_tu2022_preferred",
-          "status": "QUERY_FAILED",
-          "rows": 0,
+          "status": "OK",
+          "rows": 1,
           "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90/table2'",
-          "error": "TypeError('arg must be a list, tuple, 1-d array, or Series')",
-          "route": "none",
+          "route": "asu_tsv",
           "route_attempts": []
         },
         {
@@ -296,42 +295,42 @@
           "status": "QUERY_FAILED",
           "rows": 0,
           "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90/table2'",
-          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 1 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 31s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 18s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 4s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
+          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 43s ago (retried after 45s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 28s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 16s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 2s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
           "route": "none",
           "route_attempts": [
             {
               "route": "tap",
               "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
-              "error": "RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 1 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync')"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "error": "skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 43s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://tapvizier.u-strasbg.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
-              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 31s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 28s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://vizier.cfa.harvard.edu/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
-              "error": "skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 18s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "error": "skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 16s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "http://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
-              "error": "skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 4s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "error": "skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 2s ago (retried after 45s)"
             },
             {
               "route": "asu_tsv",
               "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%SUPERFLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%SUPERFLARE%' OR description LIKE '%Superflare%' OR description LIKE '%superflare%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
               "error": "a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one"
             }
           ]
@@ -354,11 +353,10 @@
         },
         {
           "stage": "discover_tess_gunther2020_preferred",
-          "status": "QUERY_FAILED",
-          "rows": 0,
+          "status": "OK",
+          "rows": 1,
           "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table1'",
-          "error": "TypeError('arg must be a list, tuple, 1-d array, or Series')",
-          "route": "none",
+          "route": "asu_tsv",
           "route_attempts": []
         },
         {
@@ -366,42 +364,42 @@
           "status": "QUERY_FAILED",
           "rows": 0,
           "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table1'",
-          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 7s ago (retried after 45s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 39s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 25s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 11s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
+          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 1s ago (retried after 45s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 35s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 23s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 9s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
           "route": "none",
           "route_attempts": [
             {
               "route": "tap",
               "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
-              "error": "skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 7s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "error": "skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 1s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://tapvizier.u-strasbg.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
-              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 39s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 35s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://vizier.cfa.harvard.edu/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
-              "error": "skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 25s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "error": "skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 23s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "http://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
-              "error": "skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 11s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "error": "skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 9s ago (retried after 45s)"
             },
             {
               "route": "asu_tsv",
               "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Tess%' OR description LIKE '%tess%' OR description LIKE '%TESS%'",
               "error": "a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one"
             }
           ]
@@ -419,42 +417,42 @@
           "status": "QUERY_FAILED",
           "rows": 0,
           "query": "TAP_SCHEMA.tables ~ 'J/ApJ/829/23/table1'",
-          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 8s ago (retried after 45s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 39s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 26s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 12s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
+          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 1s ago (retried after 45s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 36s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 24s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 10s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
           "route": "none",
           "route_attempts": [
             {
               "route": "tap",
               "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 8s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 1s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://tapvizier.u-strasbg.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 39s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 36s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://vizier.cfa.harvard.edu/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 26s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 24s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "http://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 12s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 10s ago (retried after 45s)"
             },
             {
               "route": "asu_tsv",
               "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Flare%' OR description LIKE '%flare%' OR description LIKE '%FLARE%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%flare%' OR description LIKE '%Flare%' OR description LIKE '%FLARE%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
               "error": "a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one"
             }
           ]
@@ -509,11 +507,10 @@
         },
         {
           "stage": "discover_mcquillan2014_preferred",
-          "status": "QUERY_FAILED",
-          "rows": 0,
+          "status": "OK",
+          "rows": 1,
           "query": "TAP_SCHEMA.tables ~ 'J/ApJS/211/24/table1'",
-          "error": "TypeError('arg must be a list, tuple, 1-d array, or Series')",
-          "route": "none",
+          "route": "asu_tsv",
           "route_attempts": []
         },
         {
@@ -529,53 +526,52 @@
           "status": "QUERY_FAILED",
           "rows": 0,
           "query": "TAP_SCHEMA.tables ~ 'J/ApJS/255/17'",
-          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 17s ago (retried after 45s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 1s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 34s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 20s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
+          "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 7s ago (retried after 45s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 42s ago (retried after 45s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 30s ago (retried after 45s) | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 16s ago (retried after 45s) | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
           "route": "none",
           "route_attempts": [
             {
               "route": "tap",
               "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%rotation%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 17s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%rotation%' OR description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 7s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://tapvizier.u-strasbg.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%rotation%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 1s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%rotation%' OR description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 42s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "https://vizier.cfa.harvard.edu/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%rotation%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 34s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%rotation%' OR description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times in this process, 30s ago (retried after 45s)"
             },
             {
               "route": "tap",
               "endpoint": "http://tapvizier.cds.unistra.fr/TAPVizieR/tap",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%rotation%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
-              "error": "skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 20s ago (retried after 45s)"
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%rotation%' OR description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
+              "error": "skipped: http://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 16s ago (retried after 45s)"
             },
             {
               "route": "asu_tsv",
               "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
               "status": "QUERY_FAILED",
-              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%rotation%' OR description LIKE '%kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%Kepler%'",
+              "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE description LIKE '%rotation%' OR description LIKE '%Rotation%' OR description LIKE '%ROTATION%' OR description LIKE '%Kepler%' OR description LIKE '%KEPLER%' OR description LIKE '%kepler%'",
               "error": "a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one"
             }
           ]
         },
         {
           "stage": "discover_gunther2020_stars_preferred",
-          "status": "QUERY_FAILED",
-          "rows": 0,
+          "status": "OK",
+          "rows": 1,
           "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table2'",
-          "error": "TypeError('arg must be a list, tuple, 1-d array, or Series')",
-          "route": "none",
+          "route": "asu_tsv",
           "route_attempts": []
         },
         {
@@ -596,11 +592,11 @@
         }
       ],
       "n_stages": 24,
-      "n_ok": 13,
-      "n_query_failed": 11,
+      "n_ok": 18,
+      "n_query_failed": 6,
       "n_query_returned_zero_rows": 0,
       "any_query_failed": true,
-      "total_rows": 177783,
+      "total_rows": 177788,
       "routes": {
         "routes": {
           "tap": {
@@ -614,8 +610,8 @@
             ]
           },
           "asu_tsv": {
-            "n_ok": 13,
-            "n_failed": 16,
+            "n_ok": 18,
+            "n_failed": 11,
             "endpoints": [
               "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
             ]
@@ -653,7 +649,7 @@
               "ever_ok": true
             }
           },
-          "n_transitions": 6
+          "n_transitions": 5
         }
       },
       "breaker": {
@@ -691,40 +687,34 @@
             "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
             "transition": "closed->open",
             "reason": "2 consecutive failures: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync')",
-            "at_unix": 1789349146.0730221
+            "at_unix": 1789349695.4705672
           },
           {
             "endpoint": "https://tapvizier.u-strasbg.fr/TAPVizieR/tap",
             "transition": "closed->open",
             "reason": "2 consecutive failures: RuntimeError('TAP query (https://tapvizier.u-strasbg.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync')",
-            "at_unix": 1789349161.4754717
+            "at_unix": 1789349711.015953
           },
           {
             "endpoint": "https://vizier.cfa.harvard.edu/TAPVizieR/tap",
             "transition": "closed->open",
             "reason": "2 consecutive failures: RuntimeError('TAP query (https://vizier.cfa.harvard.edu/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 404 Client Error: Not Found for url: https://vizier.cfa.harvard.edu/TAPVizieR/tap/sync')",
-            "at_unix": 1789349174.8692813
+            "at_unix": 1789349723.4352677
           },
           {
             "endpoint": "http://tapvizier.cds.unistra.fr/TAPVizieR/tap",
             "transition": "closed->open",
             "reason": "2 consecutive failures: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: http://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync')",
-            "at_unix": 1789349189.2723746
+            "at_unix": 1789349737.3953774
           },
           {
             "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
             "transition": "open->half_open",
-            "reason": "cooldown of 45s elapsed (46s)",
-            "at_unix": 1789349191.8533895
-          },
-          {
-            "endpoint": "https://tapvizier.u-strasbg.fr/TAPVizieR/tap",
-            "transition": "open->half_open",
-            "reason": "cooldown of 45s elapsed (46s)",
-            "at_unix": 1789349207.7196949
+            "reason": "cooldown of 45s elapsed (49s)",
+            "at_unix": 1789349744.8872073
           }
         ],
-        "n_transitions": 6
+        "n_transitions": 5
       }
     },
     "assess": {

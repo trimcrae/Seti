@@ -75,8 +75,10 @@ from ..metronome.acquire import (
     VIZIER_ASU,
     VIZIER_ASU_MIRRORS,
     VizierRouteError,
+    asu_constraint_ladder,
     asu_rows,
     asu_url,
+    ladder_verdict,
 )
 from ..shroud.classify import galactic_latitude
 from ..vigil.acquire import GAIA_EPOCH, propagate_pm
@@ -606,6 +608,29 @@ def fetch_unit(conf: dict | None = None, unit: dict | None = None, *, cap: int |
     return out, rec
 
 
+def diagnose_zero(catalogue: str, *, columns, constraints: dict, conf: dict | None = None,
+                  fetch_fn=None, cap: int = 5) -> dict:
+    """Why did this ASU request come back empty?  The ladder, and its verdict.
+
+    Run 34796722335 reported ``QUERY_RETURNED_ZERO_ROWS`` for a bare one-degree
+    cone on ``II/328/allwise`` --- a catalogue of 750 million sources, where an
+    empty degree is not a possible sky.  A zero-row response is therefore a
+    request defect until the ladder proves otherwise, and this is what proves
+    it: the bare ``-source`` request first, then the columns, then one
+    constraint at a time, with VizieR's own words recorded at the step that
+    dies.
+    """
+    c = {**DEFAULT_SAMPLE, **(conf or {})}
+    try:
+        steps = asu_constraint_ladder(str(catalogue), columns=_wanted(columns),
+                                      constraints=dict(constraints or {}),
+                                      max_rows=int(cap), fetch_fn=fetch_fn,
+                                      bases=bases_for(c))
+    except Exception as exc:                                # noqa: BLE001
+        return {"status": STATUS_FAILED, "error": repr(exc), "steps": []}
+    return {"catalogue": str(catalogue), "steps": steps, "verdict": ladder_verdict(steps)}
+
+
 def probe_route(conf: dict | None = None, *, fetch_fn=None, cap: int = 5
                 ) -> tuple[dict, pd.DataFrame]:
     """One minimal ASU call per catalogue, so ``probe.json`` names both routes.
@@ -637,6 +662,17 @@ def probe_route(conf: dict | None = None, *, fetch_fn=None, cap: int = 5
     rep["gaia"] = grec
     _w, wrec = fetch_allwise_chunk(c, field=field, fetch_fn=fetch_fn)
     rep["allwise"] = wrec
+    # A request that returned nothing is diagnosed in the SAME run: a probe that
+    # only says "zero rows" costs a whole dispatch cycle to learn nothing.
+    vzc = vizier_conf(c)
+    if str(grec.get("status")) in (STATUS_ZERO, STATUS_COLUMNS) or not grec.get("n_rows"):
+        rep["gaia"]["ladder"] = diagnose_zero(
+            vzc["gaia_catalogue"], columns=vzc["gaia_columns"],
+            constraints=grec.get("constraints") or {}, conf=c, fetch_fn=fetch_fn, cap=int(cap))
+    if str(wrec.get("status")) in (STATUS_ZERO, STATUS_COLUMNS) or not wrec.get("n_rows"):
+        rep["allwise"]["ladder"] = diagnose_zero(
+            vzc["allwise_catalogue"], columns=vzc["allwise_columns"],
+            constraints=wrec.get("constraints") or {}, conf=c, fetch_fn=fetch_fn, cap=int(cap))
     rows, urec = fetch_unit(c, {"field": field}, cap=int(cap), fetch_fn=fetch_fn,
                             label="probe")
     rep["parent_chunk"] = urec
@@ -650,5 +686,6 @@ __all__ = ["ALLWISE_EPOCH", "CUT_ALLWISE", "CUT_GAIA", "DEFAULT_VIZIER", "REQUIR
            "REQUIRED_GAIA", "ROUTE_ESA", "ROUTE_VIZIER", "STATUS_COLUMNS", "STATUS_DISABLED",
            "STATUS_FAILED", "STATUS_NOT_FOUND", "STATUS_OK", "STATUS_UNSUPPORTED", "STATUS_ZERO",
            "allwise_asu_url", "apply_allwise_predicates", "asu_constraints", "bases_for",
+           "diagnose_zero",
            "enabled", "fetch_allwise_chunk", "fetch_gaia_chunk", "fetch_unit", "gaia_asu_url",
            "match_allwise", "probe_route", "resolve_columns", "to_parent_frame", "vizier_conf"]

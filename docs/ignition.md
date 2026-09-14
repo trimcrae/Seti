@@ -62,7 +62,8 @@ transition residue is the necrofrontier document's own.
 
 | Role | Source | Access | State |
 |---|---|---|---|
-| Parent sample | Gaia DR3 `gaia_source` × `allwise_best_neighbour` × `gaiadr1.allwise_original_valid` | ESA Gaia TAP, ADQL, in-archive join | reachable (every Gaia channel here) |
+| Parent sample | Gaia DR3 `gaia_source` × `allwise_best_neighbour` × `gaiadr1.allwise_original_valid` | ESA Gaia TAP, ADQL, in-archive join | **DARK** as of `results/ignition/probe.json` 2026-09-14T00:22Z — all three query shapes `TIMED_OUT` (480/480/420 s), prior run `Error 500` statement timeout and `Error 503` 150-job ceiling |
+| Parent sample, **second route** | VizieR mirrors `I/355/gaiadr3` × `II/328/allwise` (`I/355/paramp` for parameters) | VizieR **non-TAP** ASU, `viz-bin/asu-tsv`, HTTP GET → TSV | the transport that worked the same night (it served ULINE's IRC+10216 table while TAPVizieR itself returned 503); catalogue ids **asserted, unverified** — the probe checks them |
 | The decade series | NEOWISE-R single exposures, `neowiser_p1bs_psd` (2013.9–2024.6) | IRSA TAP | **REACHED** (`results/necrofrontier/probe.json` `irsa_neowise_tap`; VIGIL's probe: 3,873 rows for one star, 21 visits) |
 | Optical flatness | ZTF / ASAS-SN per-star CSV | hook: `--optical-dir <dir>/<source_id>.csv` | not wired to a service; recorded as `optical: not_checked` when absent |
 | 2010 photosphere | AllWISE W1, W2, W3, `ph_qual`, `cc_flags`, `ext_flag` | inside the Gaia join | as above |
@@ -120,6 +121,74 @@ join builds its side first), and the `503` says the request went to the
 * transport is a ladder — `astroquery` async, `pyvo` async, then the sync
   endpoints, which bulk queries never touch (`allow_sync=False`). Every
   attempt is time-boxed and the queue that served the query is recorded.
+
+### 4.1b A second route to the same parent sample (`vizier_route.py`)
+
+The shape ladder above is a fix for a *plan* problem. `probe.json`
+(2026-09-14T00:22Z) says the problem is no longer a plan: **all three shapes
+timed out and both queues were refused**, so the block is at the ESA archive
+itself and nothing about the ADQL can get past it. A channel with no parent
+sample has nothing downstream to run, so IGNITION has a **second source for
+the same sample**: VizieR's **non-TAP ASU interface**
+(`https://vizier.cds.unistra.fr/viz-bin/asu-tsv`), a plain HTTP GET returning
+TSV — no TAP queue, no planner, no statement timeout. It is the route that
+demonstrably worked that night, serving ULINE's IRC+10216 table while
+TAPVizieR itself was returning 503.
+
+**The ladder, per chunk of the sweep.** ESA first, always — it is
+authoritative and owns the in-archive `allwise_best_neighbour` cross-match — and
+every shape is tried before anything else happens. Only for a chunk that no
+shape answered does the VizieR route run. `sample.json` records `routes`
+(units and rows per source), `route_fractions`, `route_used` and a per-row
+`parent_route` column; **a parent assembled from both routes is `DEGRADED`**
+(`mixed_parent_routes:esa_gaia+vizier_asu`), which `assess` carries into
+`summary.json`'s verdict. The `probe` stage tries and records **both** routes
+on every run — probing is not using — so the next dispatch reads
+`parent_route_recommended` from `probe.json` instead of re-deriving it.
+
+**The request.** `-source=<catalogue>`, `-out.max=<n>`, `-out=<column>` per
+column, `-out.form=TSV`, `-out.add=` for computed columns, the chunk as
+`-c=<ra>+<dec>&-c.rd=<deg>&-c.eq=J2000` (or `Plx=lo..hi` for a parallax
+shell), and each expressible Gaia cut as a column constraint —
+`Gmag=<14.5`, `Plx=>3`, `RPlx=>10`, `RUWE=<1.4`, `BP-RP=0.6..2.5`. The body is
+parsed by the **shared** helper `seti.metronome.acquire.parse_asu_tsv` /
+`asu_rows` (mirror walk, breaker, and the rule that an error page never reads
+as zero rows), not by a second parser.
+
+**Identical science, different transport.** Every server-side constraint is an
+*optimisation*: `select_parent` re-applies all of them locally, exactly as it
+does for the ESA route. `|b| > 15°` is computed from the mirror's own RA/Dec
+(IAU 1958 pole) rather than requested, so it does not depend on an unverified
+`-out.add=_Glat`. `apply_allwise_predicates` is the pandas spelling of
+`allwise_predicates` — `−0.1 < W1−W2 < 0.15`, `ext_flag = 0`,
+`cc_flags = '0000'` — and is applied to every chunk, including `cc_flags`,
+which `select_parent` does *not* re-apply. (The TSV parser turns a clean `ccf`
+column into the integer `0`, so the comparison is made on a zero-padded string;
+a naive `== '0000'` would reject every clean source.) `to_parent_frame` emits
+exactly `sample.parent_columns()` in order, so the two routes are
+indistinguishable downstream — asserted on a synthetic mirror TSV in
+`tests/test_ignition.py`.
+
+**What is *not* identical, and is recorded as such.** There is no ASU
+equivalent of `allwise_best_neighbour`, so this route matches positionally:
+Gaia 2016.0 positions are PM-propagated to the AllWISE mean epoch (2010.5)
+with the channel's own `propagate_pm`, nearest neighbour inside
+`match_radius_arcsec = 3″` wins, `allwise_n_neighbours` counts everything
+inside that radius, and an unmatched Gaia row is dropped as the archive's inner
+join drops it. There is no ASU `COUNT(*)`, only `-out.max`: a chunk that comes
+back at the cap is flagged `capped` and its row count is reported as **what was
+obtained**, never as a complete selection. A parallax shell is not a sky chunk,
+so `mode=allsky` is recorded `NOT_SUPPORTED_FOR_MODE` rather than given a
+fabricated cross-match.
+
+**Asserted and unverified** (the sandbox has no network; the probe checks them
+live and writes the answer to `probe.json`): the catalogue ids
+`I/355/gaiadr3`, `I/355/paramp`, `II/328/allwise`; every mirror column name
+(`Source`, `RA_ICRS`, `Plx`, `RPlx`, `BP-RP`, `VarFlag`, `RandomI`; `AllWISE`,
+`W1mag`, `ccf`, `qph`, `ex`); and the ASU parameter spellings above. A wrong id
+is a recorded `CATALOGUE_NOT_FOUND` with the URL and VizieR's own error text, a
+missing column a recorded `COLUMNS_UNRESOLVED` naming the cut that could not be
+applied — a status, never a crash and never a fabricated row.
 
 ### 4.2 Acquisition (`acquire.py`)
 Proper motion propagated to the mission mid-epoch (2019.0) and every match
@@ -202,17 +271,25 @@ verdict is `clean_optical_untested`, never `clean` — an unchecked optical is
 not a flat optical. Untested checks are named per star.
 
 ### 4.5 Stages and outputs (`run.py`)
-`probe` → `probe.json` (`gaia_shapes`, `gaia_shape_working`,
-`neowise_route_recommended`); `sample` →
-`parent.parquet`, `sample.json`; `acquire` (shard `i/n`) →
+`probe` → `probe.json` (`gaia_shapes`, `gaia_shape_working`, `vizier_asu`,
+`parent_route_recommended`, `neowise_route_recommended`); `sample` →
+`parent.parquet`, `sample.json` (with `routes`, `route_fractions`,
+`route_endpoints` and `route_errors`); `acquire` (shard `i/n`) →
 `epochs_s{i}of{n}.csv`, `neowise_stars_s{i}of{n}.csv`, `acquire_s{i}of{n}.json`;
 `screen` → `stars_s{i}of{n}.csv`, `screen_s{i}of{n}.json`; `assess` →
 `stars_vetted.csv`, `candidates.csv`, `summary.json` (verdict, denominators,
 per-stage counts, veto counters for screen and vet, aggregated sensitivity,
-`shards.expected` vs `shards.found`). Verdicts: **`NO_DATA_REACHED`** (with
-`reason`: which archive, and whether it failed or answered empty),
-**`NO_IGNITION_CANDIDATE`**, **`IGNITION_CANDIDATES`**; a `DEGRADED (...)`
-prefix names missing shards, failed sample units or failed NEOWISE queries.
+`shards.expected` vs `shards.found`, and `endpoints` — every parent-route host
+that was asked, the probe's VizieR record and the verbatim per-unit errors).
+Verdicts: **`NO_DATA_REACHED`** (with `reason`: which archive, and whether it
+failed or answered empty — and, with both parent routes dark, `endpoints` is
+the whole of what the run learned), **`NO_IGNITION_CANDIDATE`**,
+**`IGNITION_CANDIDATES`**; a `DEGRADED (...)` prefix names missing shards,
+failed sample units, failed NEOWISE queries, a **mixed-route parent**
+(`mixed_parent_routes:esa_gaia+vizier_asu`) and any chunk that hit the ASU
+`-out.max` cap. The probe's own verdict gains `VIZIER_PARENT_AND_NEOWISE` /
+`VIZIER_PARENT_ONLY` for the case this route exists to cover: the ESA archive
+dark, the parent reachable anyway.
 
 ---
 

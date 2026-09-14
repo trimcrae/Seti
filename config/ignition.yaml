@@ -44,6 +44,76 @@ sample:
   inner_top_max: 2000000
   query_timeout_s: 1200.0     # per attempt; bulk queries run async-only
 
+  # THE SECOND ROUTE to the same parent sample (src/seti/ignition/vizier_route.py).
+  # results/ignition/probe.json (2026-09-14T00:22Z) records NO_DATA_REACHED with
+  # ALL THREE query shapes TIMED_OUT (480/480/420 s) and the run before it
+  # recording `Error 500 ... canceling statement due to statement timeout` and
+  # `Error 503 ... maximum number of synchronous queued jobs (150) reached`: the
+  # block is at the ESA archive itself, so no shape and no queue can get past it.
+  # VizieR's NON-TAP ASU interface (viz-bin/asu-tsv) served ULINE's IRC+10216
+  # table the same night while TAPVizieR itself was answering 503, so it is the
+  # transport that demonstrably works.  ESA STAYS FIRST (it is authoritative and
+  # owns the in-archive allwise_best_neighbour cross-match); this runs only for a
+  # unit no ESA query shape answered, and a sample drawn from both is DEGRADED.
+  #
+  # EVERY id, column name and parameter spelling below is ASSERTED AND
+  # UNVERIFIED (verify): no network in the sandbox, so the probe stage checks
+  # them live and writes the answer to probe.json.  A wrong id comes back as
+  # CATALOGUE_NOT_FOUND / COLUMNS_UNRESOLVED with the URL and VizieR's own error
+  # text -- a recorded status, never a crash and never a fabricated row.
+  vizier:
+    enabled: true
+    gaia_catalogue: I/355/gaiadr3        # verify: VizieR's Gaia DR3 mirror
+    gaia_params_catalogue: I/355/paramp  # verify: the astrophysical-parameters companion
+    allwise_catalogue: II/328/allwise    # verify: VizieR's AllWISE mirror
+    out_max: 150000             # ASU row cap; a chunk that hits it is reported `capped`
+    allwise_out_max: 150000
+    out_add: []                 # verify: extra computed columns, e.g. ["_r"]
+    server_side_constraints: true   # ASU column constraints; select_parent re-applies all
+    cone_pad_arcmin: 1.0        # the AllWISE cone is the Gaia cone plus this
+    match_radius_arcsec: 3.0    # Gaia (2016.0 -> 2010.5, PM-propagated) x AllWISE
+    timeout_s: 300.0
+    bases: []                   # empty -> seti.metronome.acquire.VIZIER_ASU_MIRRORS
+    # verify: the mirrors' column names; first spelling that is present wins, and
+    # a missing one is recorded (a cut that cannot be applied is named, not skipped).
+    gaia_columns:
+      source_id: [Source, DR3Name, GaiaDR3]
+      ra: [RA_ICRS, RAJ2000, _RAJ2000]
+      dec: [DE_ICRS, DEJ2000, _DEJ2000]
+      parallax: [Plx]
+      parallax_over_error: [RPlx]
+      pmra: [pmRA]
+      pmdec: [pmDE]
+      ruwe: [RUWE]
+      phot_g_mean_mag: [Gmag]
+      bp_rp: [BP-RP, BPRP]
+      phot_variable_flag: [VarFlag, Var]
+      non_single_star: [NSS]
+      teff_gspphot: [Teff]
+      random_index: [RandomI, Rand]
+    allwise_columns:
+      allwise_designation: [AllWISE, AllWISEid, designation]
+      ra: [RAJ2000, RA_ICRS, _RAJ2000]
+      dec: [DEJ2000, DE_ICRS, _DEJ2000]
+      w1mpro: [W1mag, w1mpro]
+      w1mpro_error: [e_W1mag, w1sigmpro]
+      w2mpro: [W2mag, w2mpro]
+      w2mpro_error: [e_W2mag, w2sigmpro]
+      w3mpro: [W3mag, w3mpro]
+      w3mpro_error: [e_W3mag, w3sigmpro]
+      cc_flags: [ccf, cc_flags]
+      ph_qual: [qph, ph_qual]
+      ext_flag: [ex, ext_flg, ext_flag]
+    # Which Gaia cut is sent to the server as an ASU constraint.  Each is an
+    # OPTIMISATION only: select_parent re-applies every one of them locally, so a
+    # wrong spelling costs rows, never a silently different selection.
+    constraint_columns:
+      phot_g_mean_mag: Gmag
+      parallax: Plx
+      parallax_over_error: RPlx
+      ruwe: RUWE
+      bp_rp: BP-RP
+
   # Fields for mode=fields: high ecliptic latitude (NEOWISE visits pile up
   # toward the ecliptic poles, so the per-star epoch count is highest) AND
   # |b| > 15 (cirrus and crowding suppressed at selection).  The north-ecliptic
@@ -83,6 +153,7 @@ probe:
   neowise_timeout_s: 300.0    # each NEOWISE route test
   cap: 5                      # TOP n for the join test
   shapes: [inner_cone, inner_cone_postfilter, flat]
+  vizier_timeout_s: 300.0     # the SECOND parent route (VizieR ASU), probed every run
 
 acquire:
   route: auto                 # auto (from probe.json) | upload | field | cone

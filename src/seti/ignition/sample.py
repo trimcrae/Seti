@@ -588,6 +588,15 @@ def _vizier_unit(conf: dict, unit: dict, *, label: str, cap: int | None = None,
                                 "status": QUERY_FAILED, "error": repr(exc)}
 
 
+def _vizier_endpoints(conf: dict) -> list[str]:
+    """Every ASU host the fallback would try, named even when it is never used."""
+    try:
+        from .vizier_route import bases_for
+        return list(bases_for(conf))
+    except Exception:                                      # noqa: BLE001
+        return []
+
+
 def _shape_order(conf: dict, shape: str | None, working: str | None) -> list[str]:
     """Preferred shape first, then the rest of :data:`SHAPES` as fallbacks."""
     pref: list[str] = []
@@ -763,6 +772,11 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
         "n_rows_pulled": n_pulled, "n_after_local_cuts": int(len(stars)),
         "parent_count": parent_count,
         "subsample_fraction": (n_pulled / parent_count if parent_count else None),
+        "route_endpoints": {ROUTE_ESA: GAIA_TAP, ROUTE_VIZIER: _vizier_endpoints(c)},
+        "route_errors": [{"label": e.get("label"), "route": e.get("route", ROUTE_ESA),
+                          "shape": e.get("shape"), "status": e.get("status"),
+                          "error": e.get("error")}
+                         for e in ledger if e.get("status") not in ("OK", QUERY_ZERO)],
         "routes": routes, "route_fractions": fractions, "mixed_routes": bool(mixed),
         "route_used": (next(iter([r for r, v in routes.items() if v["rows"] > 0]), None)
                        if not mixed else "mixed"),

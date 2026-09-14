@@ -714,7 +714,22 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     if offline and short:
         degraded.append("gaia_context:offline")
 
-    verdict = VERDICT_CANDIDATES if cands else VERDICT_NONE
+    # A star without a rotational amplitude has no spot area, so it has no
+    # ceiling and cannot be tested.  Run 34792280736 reached 100,000 flares on
+    # 576 stars and assessed NONE of them, because every rotation catalogue
+    # failed -- and still reported NO_CEILING_EXCESS, which reads as a
+    # measurement of a sky that was never looked at.  Nothing assessable is
+    # NO_DATA_REACHED, whatever else arrived.
+    n_assessable_now = int(sum(1 for r in vetted if r.get("assessable")))
+    if cands:
+        verdict = VERDICT_CANDIDATES
+    elif n_assessable_now > 0:
+        verdict = VERDICT_NONE
+    else:
+        verdict = VERDICT_NO_DATA
+        degraded.append(
+            f"no star assessable: {len(vetted)} stars carried flares but none carried a "
+            "rotational amplitude, so no ceiling could be computed")
     xc = [_x(r, "xi_conservative_max") for r in vetted if r.get("assessable")]
     xn = [_x(r, "xi_nominal_max") for r in vetted if r.get("assessable")]
     per_cat = {}

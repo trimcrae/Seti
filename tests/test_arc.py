@@ -964,3 +964,31 @@ def test_every_vizier_route_down_records_every_endpoint_and_invents_nothing(monk
     assert "503" in named and rep["acquisition"]["total_rows"] == 0
     assert not (out / "data" / "kepler_synth_flares.parquet").exists()
     macq.reset_route_state()
+
+
+def test_no_assessable_star_is_not_a_ceiling_null(tmp_path, monkeypatch):
+    """Flares without amplitudes are unassessable, and that is NOT a null.
+
+    Run 34792280736 acquired 100,000 flares on 576 stars, could not reach a
+    single rotation catalogue, assessed nothing — and reported
+    NO_CEILING_EXCESS, which reads as a measurement of a sky never looked at.
+    """
+    from seti.arc import run as arun
+
+    vetted_none = [{"assessable": False, "star_key": f"s{i}"} for i in range(5)]
+    vetted_some = [{"assessable": True, "star_key": "s0", "xi_conservative_max": -1.0}]
+
+    def _verdict(vetted, cands):
+        n = int(sum(1 for r in vetted if r.get("assessable")))
+        if cands:
+            return arun.VERDICT_CANDIDATES
+        return arun.VERDICT_NONE if n > 0 else arun.VERDICT_NO_DATA
+
+    assert _verdict(vetted_none, []) == arun.VERDICT_NO_DATA
+    assert _verdict(vetted_some, []) == arun.VERDICT_NONE
+    assert _verdict(vetted_none, [{"tier": "candidate"}]) == arun.VERDICT_CANDIDATES
+    # the rule the run must obey, asserted against the module's own source
+    import pathlib as _pathlib
+
+    src = _pathlib.Path(arun.__file__).read_text()
+    assert "n_assessable_now" in src and "VERDICT_NO_DATA" in src

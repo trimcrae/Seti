@@ -233,7 +233,14 @@ def discover_table(catalogue: str, preferred: str, kind: str = "flares", keyword
                     continue
             score, roles, reason = score_table(cols, kind, overrides)
             entry = {"table": t, "route": route, "score": int(score), "reason": reason,
-                     "roles": roles, "n_columns": len(cols)}
+                     "roles": roles, "n_columns": len(cols),
+                     # The NAMES, not just the count: a rejected table that
+                     # records only "no star_id" and "19 columns" cannot be
+                     # fixed without another round trip.  Okamoto+2021's
+                     # table2 scored 0 as a flares table and resolved cleanly
+                     # as a stars table in the same run, which is only
+                     # diagnosable with the header in hand.
+                     "columns": [str(c) for c in cols][:60]}
             if score > 0:
                 try:
                     entry["n_rows"] = count_rows(t, query_fn=query_fn)

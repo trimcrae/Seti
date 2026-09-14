@@ -1248,3 +1248,27 @@ def test_asu_tsv_keeps_a_good_header_row_when_metadata_disagrees_in_width():
     ])
     df = parse_asu_tsv(text)
     assert list(df.columns) == ["KIC", "Prot", "e_Prot"]
+
+
+def test_asu_tsv_never_takes_a_dashed_rule_as_the_header():
+    """A rule is never a header.
+
+    ARC's run 34796629576 came back with columns literally named
+    "--------", "--------__1", ... for McQuillan+2014, Okamoto+2021, Tu+2022
+    and Guenther+2020 — the amplitude sources the channel needs — because the
+    header offset landed on a second dashed rule and every role then failed.
+    """
+    from seti.metronome.acquire import parse_asu_tsv
+
+    text = "\n".join([
+        "#Column\tKIC\t(I8)\tKepler identifier",
+        "",
+        "KIC\tProt\tRper",
+        "--------\t------\t------",          # a first rule ...
+        "--------\t------\t------",          # ... and a second, which the
+        "757076\t13.34\t2345.0",             # offset used to land on
+    ])
+    df = parse_asu_tsv(text)
+    assert not any(str(c).startswith("-") for c in df.columns), df.columns.tolist()
+    assert list(df.columns) == ["KIC", "Prot", "Rper"]
+    assert int(df["KIC"].iloc[0]) == 757076

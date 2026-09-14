@@ -586,6 +586,33 @@ def parse_asu_tsv(text: str) -> pd.DataFrame:
         header_i, data_from = dash - 2, dash + 1
     else:
         header_i, data_from = max(dash - 1, 0), dash + 1
+
+    def _is_rule(line: str) -> bool:
+        cells = [c.strip() for c in line.split("\t")]
+        return bool(cells) and all(re.fullmatch(r"-{2,}", c) for c in cells if c != "")
+
+    # A rule is never a header.  Four of ARC's catalogues -- McQuillan+2014
+    # (the rotational amplitudes the whole channel needs), Okamoto+2021,
+    # Tu+2022 and Guenther+2020 -- came back with columns literally named
+    # "--------", "--------__1", ... because the offset landed on a second
+    # dashed rule, and every role then failed to resolve.  Walk up to the
+    # nearest line that is neither blank nor a rule.
+    if _is_rule(body[header_i]) or not body[header_i].strip():
+        for j in range(header_i - 1, -1, -1):
+            if body[j].strip() and not _is_rule(body[j]):
+                header_i = j
+                break
+        else:
+            for j in range(header_i + 1, min(dash if dash is not None else len(body),
+                                             len(body))):
+                if body[j].strip() and not _is_rule(body[j]):
+                    header_i = j
+                    break
+    # ... and a rule is never data either: ASU emits a second rule under the
+    # units line in some tables, and it used to arrive as the first row.
+    while data_from < len(body) and (not body[data_from].strip()
+                                     or _is_rule(body[data_from])):
+        data_from += 1
     header = [unquote_table(c) for c in body[header_i].split("\t")]
     header = [h if h else (meta_cols[i] if i < len(meta_cols) else f"col{i}")
               for i, h in enumerate(header)]

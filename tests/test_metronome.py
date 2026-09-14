@@ -1272,3 +1272,23 @@ def test_asu_tsv_never_takes_a_dashed_rule_as_the_header():
     assert not any(str(c).startswith("-") for c in df.columns), df.columns.tolist()
     assert list(df.columns) == ["KIC", "Prot", "Rper"]
     assert int(df["KIC"].iloc[0]) == 757076
+
+
+def test_asu_tsv_rule_detection_accepts_a_one_character_rule():
+    """VizieR writes a one-character rule under a one-character column.
+
+    Requiring two dashes meant the rule line was not recognised at all, the
+    parser fell back to body[0] — the rule itself — and McQuillan+2014,
+    Tu+2022 and Guenther+2020 came back with columns named '-', '--', '----'.
+    """
+    from seti.metronome.acquire import parse_asu_tsv
+
+    text = "\n".join([
+        "#Column\tKIC\t(I8)\tKepler identifier",
+        "KIC\tf\tProt",
+        "--------\t-\t------",          # a one-character rule cell
+        "757076\tA\t13.34",
+    ])
+    df = parse_asu_tsv(text)
+    assert list(df.columns) == ["KIC", "f", "Prot"], df.columns.tolist()
+    assert len(df) == 1 and int(df["KIC"].iloc[0]) == 757076

@@ -577,7 +577,10 @@ def parse_asu_tsv(text: str) -> pd.DataFrame:
     dash = None
     for i, ln in enumerate(body[:6]):
         cells = [c.strip() for c in ln.split("\t")]
-        if cells and all(re.fullmatch(r"-{2,}", c) for c in cells if c != ""):
+        # ``-+``, not ``-{2,}``: VizieR writes a one-character rule under a
+        # one-character column, and requiring two dashes meant the rule line
+        # was not recognised at all, so body[0] (the rule) became the header.
+        if cells and all(re.fullmatch(r"-+", c) for c in cells if c != ""):
             dash = i
             break
     if dash is None:
@@ -589,7 +592,7 @@ def parse_asu_tsv(text: str) -> pd.DataFrame:
 
     def _is_rule(line: str) -> bool:
         cells = [c.strip() for c in line.split("\t")]
-        return bool(cells) and all(re.fullmatch(r"-{2,}", c) for c in cells if c != "")
+        return bool(cells) and all(re.fullmatch(r"-+", c) for c in cells if c != "")
 
     # A rule is never a header.  Four of ARC's catalogues -- McQuillan+2014
     # (the rotational amplitudes the whole channel needs), Okamoto+2021,

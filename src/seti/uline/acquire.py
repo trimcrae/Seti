@@ -38,6 +38,22 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from ..metronome.acquire import (
+    ROUTE_ASTROQUERY,
+    ROUTE_ASU,
+    ROUTE_NONE,
+    ROUTE_TAP,
+    VIZIER_ASU,
+    VIZIER_ASU_MIRRORS,
+    VIZIER_TAP_MIRRORS,
+    AdqlNotTranslatable,
+    VizierResult,
+    VizierRouteError,
+    asu_catalogue_tables,
+    reset_route_state,
+    route_log_summary,
+    vizier_table,
+)
 from .lines import (
     Entry,
     SpeciesMatch,
@@ -132,24 +148,34 @@ def fetch_text(url: str, *, fetch_fn=None, retries: int = 3, timeout: float = 18
     return None
 
 
-def tap_query(adql: str, *, url: str = VIZIER_TAP, retries: int = 3) -> pd.DataFrame:
-    """ADQL against VizieR TAP: async first, sync on failure (runner only)."""
-    import pyvo  # noqa: PLC0415
+def tap_endpoints(url: str = VIZIER_TAP) -> list[str]:
+    """The configured TAP host first, then every other host in the ladder."""
+    return [url] + [u for u in VIZIER_TAP_MIRRORS if u != url]
 
-    last = None
-    for attempt in range(max(int(retries), 1)):
-        try:
-            svc = pyvo.dal.TAPService(url)
-            try:
-                return svc.run_async(adql).to_table().to_pandas()
-            except Exception as exc:                          # noqa: BLE001
-                print(f"[uline/acquire] async TAP failed ({exc!r}); trying sync")
-                return svc.search(adql).to_table().to_pandas()
-        except Exception as exc:                              # noqa: BLE001
-            last = exc
-            print(f"[uline/acquire] TAP attempt {attempt + 1}/{retries} failed: {exc!r}")
-            _time.sleep(4.0 * (attempt + 1))
-    raise RuntimeError(f"TAP query failed after {retries} attempts: {last!r}")
+
+def tap_query(adql: str, *, url: str = VIZIER_TAP, retries: int = 3, fetch_fn=None,
+              allow_non_tap: bool = True) -> pd.DataFrame:
+    """ADQL against VizieR TAP, then every other route (runner only).
+
+    Route ladder (each attempt recorded with its endpoint and error text):
+
+    1. the configured TAP host (``url``), async then sync, ``retries`` times;
+    2. every other TAP host in :data:`VIZIER_TAP_MIRRORS` --- a second CDS
+       hostname and the CfA mirror;
+    3. VizieR's NON-TAP ASU interface, by translating the ADQL
+       (:func:`seti.metronome.acquire.asu_query`);
+    4. ``astroquery.vizier`` where the query is a plain table pull.
+
+    On 2026-09-13 TAPVizieR answered 503 to five attempts on each of two
+    spellings and both this channel and ARC reported ``NO_DATA_REACHED`` for an
+    infrastructure reason.  Routes 2-4 exist so that outcome needs the whole of
+    VizieR to be down, not one service.  Every route failing still raises, with
+    every endpoint and every error in the message --- never a fabricated row.
+    """
+    from ..metronome import acquire as _m  # noqa: PLC0415  (shared route ladder)
+
+    return _m.tap_query(adql, url=tap_endpoints(url), retries=retries, fetch_fn=fetch_fn,
+                        allow_non_tap=allow_non_tap)
 
 
 # ---------------------------------------------------------------------------
@@ -431,8 +457,19 @@ def table_columns(table: str, *, query_fn=None) -> pd.DataFrame:
 
 
 def count_rows(table: str, *, query_fn=None) -> int | None:
+    """``COUNT(*)``, or ``None`` when no route can answer it.
+
+    A row count has no non-TAP equivalent, so with TAP down this is *unknown*
+    (``None``), not a failure: the table is still selected on its columns.
+    """
     query_fn = query_fn or tap_query
-    df = query_fn(f'SELECT COUNT(*) AS n FROM "{unquote_table(table)}"')
+    try:
+        df = query_fn(f'SELECT COUNT(*) AS n FROM "{unquote_table(table)}"')
+    except VizierRouteError as exc:
+        if exc.asu_supported:
+            raise
+        print(f"[uline/acquire] row count unavailable without TAP for {table!r}: {exc}")
+        return None
     if df is None or not len(df):
         return None
     return int(df.iloc[0, 0])
@@ -454,17 +491,26 @@ class LineTableDiscovery:
     queries: list[dict] = field(default_factory=list)
     #: the DESCRIPTION search run when the asserted catalogue id was absent
     fallback: dict = field(default_factory=dict)
+    #: which route answered discovery: ``tap`` | ``asu_tsv`` | ``none``
+    route: str = ROUTE_TAP
+    #: every route attempt (TAP host, ASU host, ReadMe), with its error text
+    routes: list[dict] = field(default_factory=list)
 
     @property
     def errors(self) -> list[dict]:
         return [q for q in self.queries if q.get("status") == STATUS_FAILED]
+
+    @property
+    def route_errors(self) -> list[dict]:
+        return [r for r in self.routes if r.get("status") == STATUS_FAILED]
 
     def as_dict(self) -> dict:
         return {"source": self.source, "pattern": self.pattern, "table": self.table,
                 "roles": self.roles, "units": self.units, "descriptions": self.descriptions,
                 "n_rows": self.n_rows, "status": self.status, "scoreboard": self.scoreboard,
                 "frame_hint": self.frame_hint, "queries": self.queries,
-                "errors": self.errors, "fallback": self.fallback}
+                "errors": self.errors, "fallback": self.fallback, "route": self.route,
+                "routes": self.routes, "route_errors": self.route_errors}
 
 
 def traced_query(query_fn, trace: list[dict], stage: str):
@@ -485,10 +531,57 @@ def traced_query(query_fn, trace: list[dict], stage: str):
     return run
 
 
+def non_tap_line_table(source: str, pattern: str, column_patterns=None, *, fetch_fn=None,
+                       log: AcquisitionLog | None = None
+                       ) -> tuple[tuple | None, list[dict], list[dict]]:
+    """Discovery WITHOUT TAP: the catalogue's own ASU metadata (ReadMe as backstop).
+
+    Answers the only question discovery asks --- does this catalogue exist, and
+    which of its tables has a frequency column and an identification column ---
+    from ``viz-bin/asu-tsv?-source=<cat>&-meta.all``, which is served by the
+    VizieR web application and not by TAPVizieR.  Returns
+    ``(best, attempts, scoreboard)``; ``best`` is ``None`` when the metadata
+    could not be reached OR when it exposes no usable table, and the two are
+    told apart by ``attempts``.
+    """
+    try:
+        tabs, attempts = asu_catalogue_tables(pattern, fetch_fn=fetch_fn)
+    except VizierRouteError as exc:
+        if log:
+            log.record(f"tables_{source}_non_tap", f"ASU meta ~ {pattern!r}", error=str(exc),
+                       extra={"route": ROUTE_ASU, "route_attempts": exc.attempts})
+        return None, list(exc.attempts), []
+    except Exception as exc:                                  # noqa: BLE001
+        if log:
+            log.record(f"tables_{source}_non_tap", f"ASU meta ~ {pattern!r}", error=repr(exc),
+                       extra={"route": ROUTE_ASU})
+        return None, [{"route": ROUTE_ASU, "endpoint": VIZIER_ASU, "status": STATUS_FAILED,
+                       "error": repr(exc)[:2000], "what": f"meta {pattern}"}], []
+    board, best = [], None
+    for _, row in tabs.iterrows():
+        cols = [str(c) for c in (row.get("columns") or [])]
+        roles = resolve_line_columns(cols, column_patterns) if cols else {}
+        usable = bool(roles.get("freq") and roles.get("ident"))
+        board.append({"table": str(row["table_name"]), "route": ROUTE_ASU,
+                      "description": str(row.get("description", ""))[:200], "roles": roles,
+                      "n_rows": row.get("n_rows"), "usable": usable, "columns": cols[:60]})
+        if usable and best is None:
+            units = {r: str((row.get("units") or {}).get(c, "")) for r, c in roles.items() if c}
+            descs = {r: str((row.get("descriptions") or {}).get(c, "")) for r, c in roles.items()
+                     if c}
+            best = (str(row["table_name"]), row.get("n_rows"), roles, units, descs)
+    if log:
+        log.record(f"tables_{source}_non_tap", f"ASU meta ~ {pattern!r}", rows=int(len(tabs)),
+                   extra={"route": ROUTE_ASU, "usable": bool(best),
+                          "endpoint": next((a["endpoint"] for a in attempts
+                                            if a["status"] == STATUS_OK), VIZIER_ASU)})
+    return best, list(attempts), board
+
+
 def discover_line_table(source: str, pattern: str, *, query_fn=None,
                         log: AcquisitionLog | None = None, column_patterns=None,
-                        fallback_terms_all=(), fallback_terms_any=(), limit: int = 60
-                        ) -> LineTableDiscovery:
+                        fallback_terms_all=(), fallback_terms_any=(), limit: int = 60,
+                        fetch_fn=None, allow_non_tap: bool = True) -> LineTableDiscovery:
     """Pick the table under ``pattern`` that has a frequency and an identification column.
 
     Every candidate's roles and row count go on the scoreboard; the winner is
@@ -539,7 +632,23 @@ def discover_line_table(source: str, pattern: str, *, query_fn=None,
             descs = {r: str(cols.loc[cols["column_name"] == c, "description"].iloc[0])
                      for r, c in roles.items() if c is not None and (cols["column_name"] == c).any()}
             best = (t, n, roles, units, descs)
+    if best is None and allow_non_tap:
+        # TAP could not name a usable table.  Before falling back to the
+        # DESCRIPTION search (which is also TAP), ask VizieR itself, without
+        # TAP, whether this catalogue exists and what its tables look like.
+        nt_best, nt_attempts, nt_board = non_tap_line_table(
+            source, pattern, column_patterns, fetch_fn=fetch_fn, log=log)
+        d.routes.extend(nt_attempts)
+        d.scoreboard.extend(nt_board)
+        if nt_best is not None:
+            best = nt_best
+            d.route = ROUTE_ASU
+            d.queries.append({"stage": f"tables_{source}", "adql": f"ASU meta -source={pattern}",
+                              "status": STATUS_OK, "rows": len(nt_board), "route": ROUTE_ASU,
+                              "endpoint": next((a["endpoint"] for a in nt_attempts
+                                                if a["status"] == STATUS_OK), VIZIER_ASU)})
     if best is None:
+        d.route = ROUTE_NONE
         if d.status != STATUS_FAILED:
             d.status = STATUS_ZERO
         d.fallback = description_fallback(source, query_fn=query_fn, log=log, trace=d.queries,
@@ -587,8 +696,14 @@ def description_fallback(source: str, *, query_fn=None, log: AcquisitionLog | No
 
 
 def fetch_line_table(disc: LineTableDiscovery, *, query_fn=None, log: AcquisitionLog | None = None,
-                     max_rows: int = 200000, uline_patterns=None) -> pd.DataFrame:
+                     max_rows: int = 200000, uline_patterns=None, fetch_fn=None,
+                     allow_non_tap: bool = True) -> pd.DataFrame:
     """Pull the whole line table through verified columns; canonical columns out.
+
+    TAP first; when it fails, the same non-TAP ladder discovery uses (ASU, then
+    ``astroquery.vizier``).  The route that served the rows is recorded in the
+    acquisition log and in ``df.attrs["route"]`` --- a run that says ``OK``
+    must also say which archive door it came through.
 
     Output columns: ``freq_mhz, freq_err_mhz, ident, intensity, transition,
     unidentified`` plus ``row`` (the original row order).
@@ -601,14 +716,45 @@ def fetch_line_table(disc: LineTableDiscovery, *, query_fn=None, log: Acquisitio
                                                     "transition")) if c]
     sel = ", ".join(f'"{c}"' for c in dict.fromkeys(cols))
     adql = f'SELECT TOP {int(max_rows)} {sel} FROM "{disc.table}"'
+    route, endpoint = ROUTE_TAP, ""
+    df = None
     try:
         df = query_fn(adql)
-        log.record(f"fetch_{disc.source}", adql, rows=int(len(df)) if df is not None else None)
+        log.record(f"fetch_{disc.source}", adql, rows=int(len(df)) if df is not None else None,
+                   extra={"route": ROUTE_TAP})
     except Exception as exc:                                  # noqa: BLE001
-        log.record(f"fetch_{disc.source}", adql, error=repr(exc))
-        return pd.DataFrame()
+        if not allow_non_tap:
+            log.record(f"fetch_{disc.source}", adql, error=repr(exc), extra={"route": ROUTE_TAP})
+            return pd.DataFrame()
+        disc.routes.append({"route": ROUTE_TAP, "endpoint": "query_fn", "status": STATUS_FAILED,
+                            "what": adql, "error": repr(exc)[:2000]})
+        # TAP is down: the same rows, through VizieR's non-TAP doors.
+        res = vizier_table(disc.table, columns=list(dict.fromkeys(cols)), max_rows=max_rows,
+                           tap_urls=(), fetch_fn=fetch_fn, log=log,
+                           stage=f"fetch_{disc.source}_non_tap")
+        disc.routes.extend(res.attempts)
+        if res.route == ROUTE_NONE:
+            log.record(f"fetch_{disc.source}", adql, error=repr(exc), extra={
+                "route": ROUTE_NONE,
+                "route_errors": [f"{a['endpoint']}: {a.get('error', '')}" for a in res.errors]})
+            return pd.DataFrame()
+        df, route, endpoint = res.rows, res.route, res.endpoint
+        disc.queries.append({"stage": f"fetch_{disc.source}", "adql": adql, "status": STATUS_OK,
+                             "rows": int(len(df)), "route": route, "endpoint": endpoint})
     if df is None or not len(df):
         return pd.DataFrame()
+    missing = [c for c in dict.fromkeys(cols) if c not in df.columns]
+    if missing and route != ROUTE_TAP:
+        # A non-TAP route returns the catalogue's own labels; keep only what
+        # really came back rather than renaming something else into the role.
+        for role, col in list(disc.roles.items()):
+            if col in missing:
+                disc.roles[role] = None
+        if not disc.roles.get("freq") or not disc.roles.get("ident"):
+            log.record(f"fetch_{disc.source}", adql, error=(
+                f"route {route} returned columns {list(df.columns)[:20]} without the resolved "
+                f"frequency/identification columns {missing}"), extra={"route": route})
+            return pd.DataFrame()
     out = pd.DataFrame({"row": np.arange(len(df))})
     scale, how = frequency_scale(disc.units.get("freq"), df[disc.roles["freq"]])
     out["freq_mhz"] = pd.to_numeric(df[disc.roles["freq"]], errors="coerce") * scale
@@ -624,14 +770,22 @@ def fetch_line_table(disc: LineTableDiscovery, *, query_fn=None, log: Acquisitio
     out["transition"] = (df[disc.roles["transition"]].astype(str)
                          if disc.roles.get("transition") else "")
     out["unidentified"] = unidentified_mask(out["ident"].tolist(), uline_patterns)
+    scale_how = out.attrs.get("freq_scale")
     out = out[np.isfinite(out["freq_mhz"])].reset_index(drop=True)
+    out.attrs["freq_scale"] = scale_how
+    out.attrs["route"] = route
+    out.attrs["endpoint"] = endpoint
     return out
 
 
-__all__ = ["DEFAULT_COLUMN_PATTERNS", "DEFAULT_ULINE_PATTERNS", "AcquisitionLog",
-           "LineTableDiscovery", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "VIZIER_TAP",
+__all__ = ["DEFAULT_COLUMN_PATTERNS", "DEFAULT_ULINE_PATTERNS", "ROUTE_ASTROQUERY", "ROUTE_ASU",
+           "ROUTE_NONE", "ROUTE_TAP", "VIZIER_ASU", "VIZIER_ASU_MIRRORS", "VIZIER_TAP",
+           "VIZIER_TAP_MIRRORS", "AcquisitionLog", "AdqlNotTranslatable", "LineTableDiscovery",
+           "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "VizierResult", "VizierRouteError",
            "cdms_cat_tags", "cdms_inventory", "count_rows", "description_fallback",
            "discover_line_table", "fetch_cats", "fetch_line_table", "fetch_text",
            "frequency_scale", "jpl_inventory", "list_tables_described", "list_tables_like",
-           "match_all_species", "resolve_line_columns", "table_columns", "tables_described_adql",
-           "tables_like_adql", "tap_query", "traced_query", "unidentified_mask", "unquote_table"]
+           "match_all_species", "non_tap_line_table", "reset_route_state", "resolve_line_columns",
+           "route_log_summary", "table_columns", "tables_described_adql", "tables_like_adql",
+           "tap_endpoints", "tap_query", "traced_query", "unidentified_mask", "unquote_table",
+           "vizier_table"]

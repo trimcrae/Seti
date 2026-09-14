@@ -1207,3 +1207,44 @@ def test_asu_tsv_survives_duplicate_column_names():
     assert df.attrs["asu_renamed_columns"] == ["Prot -> Prot__1"]
     assert float(df["Prot"].iloc[0]) == 13.34
     assert float(df["e_Prot"].iloc[1]) == 0.03
+
+
+def test_asu_tsv_prefers_the_column_metadata_over_a_misplaced_header_row():
+    """``#Column`` names are the service's own and must beat the positional guess.
+
+    ARC's re-run resolved ZERO roles on McQuillan+2014, Tu+2022 and
+    Guenther+2020 -- tables that plainly carry a KIC column -- because the
+    header row was picked by offset from the dashed rule and landed on the
+    units line when the preamble had a different number of lines.
+    """
+    from seti.metronome.acquire import parse_asu_tsv
+
+    text = "\n".join([
+        "#Column\tKIC\t(I8)\tKepler identifier",
+        "#Column\tProt\t(F7.3)\tRotation period",
+        "#Column\tRper\t(F8.1)\tPhotometric range",
+        "",
+        "days\tppm\tmag",                 # a units line where the header is expected
+        "----\t----\t----",
+        "757076\t13.34\t2345.0",
+        "757099\t8.12\t1180.0",
+    ])
+    df = parse_asu_tsv(text)
+    assert list(df.columns) == ["KIC", "Prot", "Rper"], df.columns.tolist()
+    assert len(df) == 2
+    assert int(df["KIC"].iloc[0]) == 757076
+    assert float(df["Rper"].iloc[1]) == 1180.0
+
+
+def test_asu_tsv_keeps_a_good_header_row_when_metadata_disagrees_in_width():
+    """A ``#Column`` block that does not match the table width must not win."""
+    from seti.metronome.acquire import parse_asu_tsv
+
+    text = "\n".join([
+        "#Column\tKIC\t(I8)\tKepler identifier",       # only one meta column ...
+        "KIC\tProt\te_Prot",                            # ... but three real ones
+        "--------\t------\t------",
+        "757076\t13.34\t0.05",
+    ])
+    df = parse_asu_tsv(text)
+    assert list(df.columns) == ["KIC", "Prot", "e_Prot"]

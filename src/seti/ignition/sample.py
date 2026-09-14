@@ -88,6 +88,14 @@ QUERY_ZERO = "QUERY_RETURNED_ZERO_ROWS"
 QUERY_FAILED = "QUERY_FAILED"
 QUERY_TIMED_OUT = "TIMED_OUT"
 
+#: Which SOURCE served a unit of the parent sample.  ``esa_gaia`` is the
+#: authoritative archive and is always tried first; ``vizier_asu`` is the
+#: non-TAP fallback (:mod:`seti.ignition.vizier_route`) and runs only where ESA
+#: did not answer.  Defined here so the fallback module can import them without
+#: a cycle.
+ROUTE_ESA = "esa_gaia"
+ROUTE_VIZIER = "vizier_asu"
+
 #: Candidate query shapes, tried in this order.  See the module docstring.
 SHAPES: tuple[str, ...] = ("inner_cone", "inner_cone_postfilter", "flat")
 
@@ -136,6 +144,25 @@ def _wise_cols(conf: dict) -> tuple[str, dict]:
            f"w.{ac['ext_flag']} AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, "
            f"xw.number_of_neighbours AS allwise_n_neighbours")
     return sel, ac
+
+
+def parent_columns(conf: dict | None = None) -> list[str]:
+    """The lowercase column names the ESA select list produces, in order.
+
+    Derived from :data:`GAIA_COLS` and :func:`_wise_cols` --- the same two
+    strings :func:`build_query` writes into the SELECT --- so the second route
+    (``vizier_route.to_parent_frame``) can be held to exactly this list and the
+    two transports stay indistinguishable downstream.
+    """
+    sel, _ac = _wise_cols({**DEFAULT_SAMPLE, **(conf or {})})
+    out: list[str] = []
+    for item in f"{GAIA_COLS}, {sel}".split(","):
+        piece = item.strip()
+        if not piece:
+            continue
+        name = piece.split(" AS ")[-1] if " AS " in piece else piece.split(".")[-1]
+        out.append(name.strip().lower())
+    return list(dict.fromkeys(out))
 
 
 def gaia_predicates(conf: dict | None = None, *, plx_lo: float | None = None,
@@ -534,6 +561,33 @@ def _count(adql: str, query_fn, ledger: list, label: str, shape: str = "") -> in
         return None
 
 
+def _vizier_unit(conf: dict, unit: dict, *, label: str, cap: int | None = None,
+                 fetch_fn=None, use: bool = True) -> tuple[pd.DataFrame, dict | None]:
+    """The SECOND route for one unit.  Only ever reached when no ESA shape answered.
+
+    Returns ``(rows, record)`` with ``record=None`` when the route was not used
+    at all --- which is what the "ESA answered, so VizieR never ran" contract
+    looks like from the caller's side.  Every other outcome, including an import
+    failure or a wrong catalogue id, is a recorded status rather than a raise.
+    """
+    if not use:
+        return pd.DataFrame(), None
+    try:
+        from .vizier_route import enabled as vizier_enabled
+        from .vizier_route import fetch_unit
+    except Exception as exc:                               # noqa: BLE001
+        return pd.DataFrame(), {"route": ROUTE_VIZIER, "label": label,
+                                "status": QUERY_FAILED, "error": repr(exc)}
+    if not vizier_enabled(conf):
+        return pd.DataFrame(), {"route": ROUTE_VIZIER, "label": label, "status": "DISABLED",
+                                "reason": "config sample.vizier.enabled is false"}
+    try:
+        return fetch_unit(conf, unit, cap=cap, fetch_fn=fetch_fn, label=label)
+    except Exception as exc:                               # noqa: BLE001
+        return pd.DataFrame(), {"route": ROUTE_VIZIER, "label": label,
+                                "status": QUERY_FAILED, "error": repr(exc)}
+
+
 def _shape_order(conf: dict, shape: str | None, working: str | None) -> list[str]:
     """Preferred shape first, then the rest of :data:`SHAPES` as fallbacks."""
     pref: list[str] = []
@@ -546,13 +600,25 @@ def _shape_order(conf: dict, shape: str | None, working: str | None) -> list[str
 def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards: int = 1,
                  cap_per_shard: int | None = None, query_fn=None,
                  fields: list[dict] | None = None,
-                 shape: str | None = None) -> tuple[pd.DataFrame, dict]:
+                 shape: str | None = None, vizier: bool = True,
+                 vizier_fetch_fn=None) -> tuple[pd.DataFrame, dict]:
     """Pull the parent sample and report its denominator honestly.
 
     Returns ``(stars, report)``.  ``report["status"]`` is ``OK``,
     ``QUERY_RETURNED_ZERO_ROWS`` or ``QUERY_FAILED``; ``report["parent_count"]``
     is the archive's ``COUNT(*)`` of the full selection when it could be
     measured, and ``report["subsample_fraction"]`` the fraction actually pulled.
+
+    **Two routes, in order.**  Each unit is first asked of the ESA archive over
+    every query shape (:func:`_shape_order`); ESA is authoritative and owns the
+    in-archive cross-match, so it always goes first and the second route does
+    not run at all for a unit ESA answered.  When no shape answers --- which is
+    what ``results/ignition/probe.json`` records for every shape and both queues
+    --- the unit is retried over VizieR's non-TAP ASU interface
+    (:mod:`seti.ignition.vizier_route`).  ``report["routes"]`` says which source
+    served how many units and rows, ``report["route_fractions"]`` what fraction
+    of the rows each contributed, and a sample assembled from BOTH is
+    ``mixed_routes`` and carries a ``DEGRADED`` entry --- never silently mixed.
     """
     c = {**DEFAULT_SAMPLE, **(conf or {})}
     mode = mode or str(c.get("mode", "fields"))
@@ -566,6 +632,11 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
     n_failed = 0
     parent_count: int | None = 0
     working: str | None = None
+    n_by_route: dict[str, int] = {}
+    units_by_route: dict[str, int] = {}
+    capped_units: list[str] = []
+    cuts_skipped: set[str] = set()
+    use_vizier = bool(vizier)
     t0 = _time.monotonic()
 
     units: list[dict]
@@ -574,6 +645,9 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
     else:
         units = [{"plx_lo": lo, "plx_hi": hi} for lo, hi in parallax_shells(c)]
     total_cap = cap * max(int(n_shards), 1)
+    # The fallback truncates the same way the ESA route's TOP does, so the two
+    # routes are comparable row for row; ASU reports the cap it actually hit.
+    vizier_cap = total_cap if mode == "fields" else None
     per_unit = []
     for u in units:
         label = (f"field_ra{u['field']['ra']}_dec{u['field']['dec']}" if "field" in u
@@ -609,23 +683,53 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
             df = df.rename(columns={x: str(x).lower() for x in df.columns})
             st = "OK" if len(df) else "QUERY_RETURNED_ZERO_ROWS"
             ledger.append({"label": label, "status": st, "n_rows": int(len(df)),
-                           "stride": stride, "shape": sh, "query": q[:2000],
-                           **_transport_note(qrec)})
+                           "stride": stride, "shape": sh, "route": ROUTE_ESA,
+                           "query": q[:2000], **_transport_note(qrec)})
             per_unit.append({"unit": label, "n_parent": n_unit, "n_rows": int(len(df)),
                              "stride": stride, "fraction": (1.0 / stride), "shape": sh,
-                             **_transport_note(qrec)})
+                             "route": ROUTE_ESA, **_transport_note(qrec)})
             working, answered = sh, True
             if len(df):
                 df["sample_unit"] = label
                 df["subsample_stride"] = stride
                 df["query_shape"] = sh
+                df["parent_route"] = ROUTE_ESA
                 frames.append(df)
+            n_by_route[ROUTE_ESA] = n_by_route.get(ROUTE_ESA, 0) + int(len(df))
+            units_by_route[ROUTE_ESA] = units_by_route.get(ROUTE_ESA, 0) + 1
             break
         if not answered:
-            n_failed += 1
-            per_unit.append({"unit": label, "n_parent": n_unit, "n_rows": 0,
-                             "status": "QUERY_FAILED",
-                             "shapes_tried": _shape_order(c, shape, working)})
+            # --- the SECOND route.  Only here: the ESA archive is authoritative,
+            # has the in-archive cross-match, and must be given every shape first.
+            vdf, vrec = _vizier_unit(c, u, label=label, cap=vizier_cap,
+                                     fetch_fn=vizier_fetch_fn, use=use_vizier)
+            if vrec is not None:
+                ledger.append({"label": label, **vrec, "query": vrec.get("gaia", {}).get("url")})
+            if vrec is not None and vrec.get("status") in ("OK", QUERY_ZERO):
+                answered = True
+                per_unit.append({"unit": label, "n_parent": n_unit, "n_rows": int(len(vdf)),
+                                 "stride": 1, "fraction": 1.0, "route": ROUTE_VIZIER,
+                                 "status": vrec["status"], "capped": bool(vrec.get("capped")),
+                                 "shapes_tried": _shape_order(c, shape, working)})
+                if len(vdf):
+                    vdf = vdf.copy()
+                    vdf["sample_unit"] = label
+                    vdf["subsample_stride"] = 1
+                    vdf["query_shape"] = ROUTE_VIZIER
+                    vdf["parent_route"] = ROUTE_VIZIER
+                    frames.append(vdf)
+                n_by_route[ROUTE_VIZIER] = n_by_route.get(ROUTE_VIZIER, 0) + int(len(vdf))
+                units_by_route[ROUTE_VIZIER] = units_by_route.get(ROUTE_VIZIER, 0) + 1
+                if vrec.get("capped"):
+                    capped_units.append(label)
+                cuts_skipped.update(vrec.get("cuts_not_applied") or [])
+            else:
+                n_failed += 1
+                per_unit.append({"unit": label, "n_parent": n_unit, "n_rows": 0,
+                                 "status": "QUERY_FAILED", "route": None,
+                                 "shapes_tried": _shape_order(c, shape, working),
+                                 "vizier_status": (vrec or {}).get("status"),
+                                 "vizier_error": (vrec or {}).get("error")})
 
     raw = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
     if len(raw):
@@ -639,6 +743,19 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
               ("QUERY_FAILED" if n_failed == len(units) and units else
                "QUERY_RETURNED_ZERO_ROWS"))
     n_pulled = int(len(raw))
+    n_routed = sum(n_by_route.values())
+    routes = {r: {"units": units_by_route.get(r, 0), "rows": n_by_route.get(r, 0)}
+              for r in sorted(set(units_by_route) | set(n_by_route))}
+    fractions = {r: (v["rows"] / n_routed if n_routed else None) for r, v in routes.items()}
+    mixed = len([r for r, v in routes.items() if v["rows"] > 0]) > 1
+    degraded: list[str] = []
+    if mixed:
+        degraded.append("mixed_parent_routes:"
+                        + "+".join(r for r, v in routes.items() if v["rows"] > 0))
+    if capped_units:
+        degraded.append(f"vizier_out_max_capped:{len(capped_units)}/{len(units)}")
+    if cuts_skipped:
+        degraded.append("vizier_cuts_not_applied:" + ",".join(sorted(cuts_skipped)))
     report = {
         "status": status, "mode": mode, "n_units": len(units), "n_units_failed": n_failed,
         "query_shape_requested": shape or c.get("query_shape") or "auto",
@@ -646,18 +763,30 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
         "n_rows_pulled": n_pulled, "n_after_local_cuts": int(len(stars)),
         "parent_count": parent_count,
         "subsample_fraction": (n_pulled / parent_count if parent_count else None),
+        "routes": routes, "route_fractions": fractions, "mixed_routes": bool(mixed),
+        "route_used": (next(iter([r for r, v in routes.items() if v["rows"] > 0]), None)
+                       if not mixed else "mixed"),
+        "vizier_capped_units": capped_units, "vizier_cuts_not_applied": sorted(cuts_skipped),
+        "degraded": degraded,
         "per_unit": per_unit, "local_cut_counters": counters, "ledger": ledger,
         "elapsed_s": round(_time.monotonic() - t0, 1),
         "denominator_note": (
             "parent_count is the archive COUNT(*) of the full selection (all units); "
             "n_rows_pulled is what this run actually searched. Any verdict is a count "
             "over n_rows_pulled, never a statement about the parent."),
+        "route_note": (
+            "routes/route_fractions say which SOURCE served each unit: esa_gaia is the "
+            "authoritative ESA archive (with its own allwise_best_neighbour cross-match), "
+            "vizier_asu is the non-TAP VizieR mirror with a positional cross-match. Rows "
+            "obtained over vizier_asu are bounded by the ASU -out.max cap, which is a row "
+            "cap and NOT a COUNT(*); a sample drawn from both routes is DEGRADED."),
     }
     return stars, report
 
 
 __all__ = ["DEFAULT_SAMPLE", "GAIA_COLS", "GAIA_TAP", "GAIA_TRANSPORTS", "QUERY_FAILED",
-           "QUERY_OK", "QUERY_TIMED_OUT", "QUERY_ZERO", "SHAPES", "GaiaQueryFailed",
+           "QUERY_OK", "QUERY_TIMED_OUT", "QUERY_ZERO", "ROUTE_ESA", "ROUTE_VIZIER", "SHAPES",
+           "GaiaQueryFailed",
            "QueryTimeout", "allwise_predicates", "call_with_timeout", "build_query", "fetch_parent", "gaia_predicates",
-           "gaia_query", "inner_top", "parallax_shells", "query_fn_with_record", "run_gaia_query",
-           "select_parent", "unwrap_result"]
+           "gaia_query", "inner_top", "parallax_shells", "parent_columns", "query_fn_with_record",
+           "run_gaia_query", "select_parent", "unwrap_result"]

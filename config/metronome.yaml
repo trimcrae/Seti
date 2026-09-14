@@ -186,3 +186,40 @@ acquire:
   chunk_rows: 50000
   max_rows: 0                       # 0 = no cap
   rotation_max_rows: 0
+
+# The VizieR ROUTE LADDER shared by every channel that imports
+# seti.metronome.acquire (METRONOME, ARC, ULINE).  On 2026-09-13 TAPVizieR
+# answered 503 to five attempts over EACH of https and http, and two channels
+# reported NO_DATA_REACHED for an infrastructure reason.  VizieR is now reached
+# over four routes in order, each recorded with its endpoint and error text:
+#   1. the primary TAP host;
+#   2. the other TAP hosts in tap_mirrors;
+#   3. asu_tsv — the NON-TAP route: VizieR's own ASU interface, served by the
+#      web application rather than the TAP service.  `-source=<cat>&-out.max=<n>
+#      &-out=<col>...&-out.form=TSV` returns the rows as tab-separated text with
+#      `#` metadata; `-source=<cat>&-meta.all` (ReadMe as the backstop) answers
+#      the table-EXISTENCE question and so replaces TAP_SCHEMA discovery while
+#      TAP is down.  A COUNT(*) has no ASU equivalent: the row count is then
+#      reported as unknown, never invented.
+#   4. astroquery.vizier.Vizier (already a declared dependency).
+# This block MIRRORS the module defaults VIZIER_TAP_MIRRORS / VIZIER_ASU_MIRRORS
+# in src/seti/metronome/acquire.py; tests/test_metronome.py pins the two to be
+# identical so the endpoints and their verify status live in one visible place.
+vizier_routes:
+  tap_mirrors:
+    - "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    # verify: historical CDS hostname for the same service (u-strasbg.fr is the
+    # pre-2021 name of the domain that became cds.unistra.fr).  ASSERTED, not
+    # confirmed — there is no egress from the sandbox, so the first runner
+    # dispatch that reaches (or fails to reach) it is what settles it.
+    - "https://tapvizier.u-strasbg.fr/TAPVizieR/tap"
+    # verify: the CfA VizieR mirror.  ASSERTED, unconfirmed until a runner
+    # reaches it; a host that fails is recorded with its error, never dropped.
+    - "https://vizier.cfa.harvard.edu/TAPVizieR/tap"
+    - "http://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+  asu_tsv:
+    - "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
+    # verify: mirror hostnames, ASSERTED and unconfirmed as above.
+    - "https://vizier.u-strasbg.fr/viz-bin/asu-tsv"
+    - "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv"
+  readme: "https://cdsarc.cds.unistra.fr/ftp/{catalogue}/ReadMe"

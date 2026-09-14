@@ -1181,3 +1181,29 @@ def test_config_route_ladder_matches_the_module_constants():
     assert f"{p['max_rows']}={p['existence_rows']}" in url
     assert p["all_columns"] in url and p["form"] in url
     assert p["metadata"] in acq.asu_url("J/ApJ/906/72", meta=True)
+
+
+def test_asu_tsv_survives_duplicate_column_names():
+    """VizieR repeats a column name in some tables; a duplicate label made
+    ``out[c]`` a DataFrame and to_numeric raised
+    TypeError('arg must be a list, tuple, 1-d array, or Series').
+
+    That is the error McQuillan+2014 and Guenther+2020 returned in ARC's run
+    34792280736 while every other catalogue in the same run parsed cleanly.
+    """
+    from seti.metronome.acquire import parse_asu_tsv
+
+    text = "\n".join([
+        "#Column\tKIC\t(I8)\tKepler id",
+        "#Column\tProt\t(F6.3)\tRotation period",
+        "KIC\tProt\tProt\te_Prot",
+        "--------\t------\t------\t------",
+        "757076\t13.34\t13.34\t0.05",
+        "757099\t8.12\t8.12\t0.03",
+    ])
+    df = parse_asu_tsv(text)
+    assert len(df) == 2
+    assert list(df.columns) == ["KIC", "Prot", "Prot__1", "e_Prot"]
+    assert df.attrs["asu_renamed_columns"] == ["Prot -> Prot__1"]
+    assert float(df["Prot"].iloc[0]) == 13.34
+    assert float(df["e_Prot"].iloc[1]) == 0.03

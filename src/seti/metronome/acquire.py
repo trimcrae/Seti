@@ -589,6 +589,25 @@ def parse_asu_tsv(text: str) -> pd.DataFrame:
     header = [unquote_table(c) for c in body[header_i].split("\t")]
     header = [h if h else (meta_cols[i] if i < len(meta_cols) else f"col{i}")
               for i, h in enumerate(header)]
+    # VizieR repeats a column name in some tables (McQuillan+2014 and
+    # Guenther+2020 both did, and both failed ARC's run 34792280736 with
+    # TypeError('arg must be a list, tuple, 1-d array, or Series') -- a
+    # duplicate label makes ``out[c]`` a DataFrame, which to_numeric refuses).
+    # Suffix the repeats so every column is addressable, and record what was
+    # renamed rather than hiding it.
+    seen: dict[str, int] = {}
+    deduped: list[str] = []
+    renamed: list[str] = []
+    for h in header:
+        if h in seen:
+            seen[h] += 1
+            new = f"{h}__{seen[h]}"
+            renamed.append(f"{h} -> {new}")
+            deduped.append(new)
+        else:
+            seen[h] = 0
+            deduped.append(h)
+    header = deduped
     rows = []
     for ln in body[data_from:]:
         if not ln.strip():
@@ -599,10 +618,14 @@ def parse_asu_tsv(text: str) -> pd.DataFrame:
         rows.append(cells[:len(header)])
     out = pd.DataFrame(rows, columns=header)
     for c in out.columns:
-        s = out[c].replace("", None)
+        s = out[c]
+        if isinstance(s, pd.DataFrame):          # belt and braces: never to_numeric a frame
+            continue
+        s = s.replace("", None)
         num = pd.to_numeric(s, errors="coerce")
         out[c] = num if len(s) and num.notna().sum() == s.notna().sum() and s.notna().any() else s
     out.attrs["asu_errors"] = errors
+    out.attrs["asu_renamed_columns"] = renamed
     return out
 
 

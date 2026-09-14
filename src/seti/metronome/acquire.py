@@ -223,14 +223,25 @@ def _circuit_ok(endpoint: str) -> None:
 
 
 def route_note(route: str, endpoint: str, *, status: str, what: str = "",
-               rows: int | None = None, error: str | None = None) -> dict:
-    """Record one route attempt (and return it)."""
+               rows: int | None = None, error: str | None = None,
+               body_head: str | None = None) -> dict:
+    """Record one route attempt (and return it).
+
+    ``body_head`` is the head of the server's own response, recorded whenever a
+    request comes back with no rows.  A zero-row ASU response with no error line
+    is otherwise indistinguishable from an empty sky, and the two demand
+    opposite responses: IGNITION's probe reported ``QUERY_RETURNED_ZERO_ROWS``
+    for a one-degree AllWISE cone, which cannot be an empty sky in a catalogue
+    of 750 million sources, and there was nothing recorded to say why.
+    """
     rec = {"route": str(route), "endpoint": str(endpoint), "status": str(status),
            "what": str(what)[:300]}
     if rows is not None:
         rec["rows"] = int(rows)
     if error is not None:
         rec["error"] = str(error)[:2000]
+    if body_head is not None:
+        rec["body_head"] = str(body_head)[:1200]
     ROUTE_LOG.append(rec)
     del ROUTE_LOG[:-_ROUTE_LOG_MAX]
     return rec
@@ -515,6 +526,19 @@ def asu_url(catalogue: str, *, base: str = VIZIER_ASU, columns=None, max_rows: i
 def _asu_error_lines(text: str) -> list[str]:
     return [ln.strip() for ln in (text or "").splitlines()
             if ln.startswith("#***") or ln.startswith("****")]
+
+
+def asu_body_head(text: str, limit: int = 900) -> str:
+    """The head of an ASU response, with whitespace made visible.
+
+    Tabs and newlines are escaped so a one-line JSON field still shows the
+    record structure, and ``#Column``/``#***`` lines survive intact.  This is
+    what turns "zero rows" from a guess into a reading of what VizieR said.
+    """
+    s = str(text or "")
+    head = s[: int(limit)]
+    out = head.replace("\t", "\\t").replace("\r", "").replace("\n", "\\n")
+    return out + ("..." if len(s) > int(limit) else "")
 
 
 def _parse_column_line(line: str) -> tuple[str, str, str]:
@@ -967,7 +991,8 @@ def asu_rows(catalogue: str, *, columns=None, max_rows: int = 100000, fetch_fn=N
             df = df.iloc[int(lo):int(hi)].reset_index(drop=True)
         attempts.append(route_note(ROUTE_ASU, base,
                                    status=STATUS_OK if len(df) else STATUS_ZERO,
-                                   what=url, rows=int(len(df))))
+                                   what=url, rows=int(len(df)),
+                                   body_head=None if len(df) else asu_body_head(text)))
         df.attrs["route"] = ROUTE_ASU
         df.attrs["endpoint"] = base
         return df, attempts
@@ -975,6 +1000,104 @@ def asu_rows(catalogue: str, *, columns=None, max_rows: int = 100000, fetch_fn=N
         f"the ASU route failed for {table!r} -- " + " | ".join(
             f"{a['endpoint']}: {a.get('error', a['status'])}" for a in attempts),
         attempts=attempts)
+
+
+def asu_constraint_ladder(catalogue: str, *, columns=None, constraints: dict | None = None,
+                          max_rows: int = 5, fetch_fn=None, bases=None,
+                          max_steps: int = 24) -> list[dict]:
+    """Add one ASU parameter at a time and record where the rows stop coming.
+
+    A zero-row ASU response names neither the parameter that killed it nor the
+    reason.  IGNITION's probe run 34796722335 came back
+    ``QUERY_RETURNED_ZERO_ROWS`` for *both* ``I/355/gaiadr3`` under the parent
+    cuts and ``II/328/allwise`` under a bare one-degree cone; the second cannot
+    be an empty sky, so at least one parameter spelling is wrong and nothing in
+    the record said which.  This walks the request up from the barest form that
+    can possibly work:
+
+    ``bare`` (``-source`` and a row cap only) -> ``columns`` (the requested
+    ``-out=`` list) -> one cumulative step per entry of ``constraints``, in the
+    order given, so the cone is separated from the column cuts.
+
+    The first step whose row count drops to zero is the culprit, and every
+    step records the URL and, when it returns nothing, the head of VizieR's
+    own response.  Returns the list of steps; never raises --- a ladder is a
+    diagnostic and must not be able to fail a run.
+    """
+    fetch = fetch_fn or _asu_http_text
+    table = unquote_table(catalogue)
+    cols = [str(c) for c in (columns or []) if str(c).strip()]
+    cons = dict(constraints or {})
+    cap = max(1, int(max_rows))
+
+    plan: list[tuple[str, str, list[str], dict]] = [("bare", "-source + -out.max", [], {})]
+    if cols:
+        plan.append(("columns", f"-out= x{len(cols)}", cols, {}))
+    acc: dict = {}
+    for key, val in cons.items():
+        acc = {**acc, str(key): val}
+        plan.append((f"+{key}", f"{key}={val}", cols, dict(acc)))
+    plan = plan[: max(1, int(max_steps))]
+
+    endpoints = list(bases or VIZIER_ASU_MIRRORS)
+    steps: list[dict] = []
+    base = endpoints[0] if endpoints else VIZIER_ASU
+    for i, (label, added, step_cols, step_cons) in enumerate(plan):
+        url = asu_url(table, base=base, columns=step_cols or None, max_rows=cap,
+                      constraints=step_cons or None)
+        step: dict = {"step": i, "label": label, "added": added, "endpoint": base, "url": url}
+        try:
+            text = fetch(url)
+        except Exception as exc:                          # noqa: BLE001
+            step.update(status=STATUS_FAILED, error=repr(exc))
+            steps.append(step)
+            if i == 0 and len(endpoints) > 1:             # the host, not the request
+                base = endpoints[1]
+            continue
+        try:
+            df = parse_asu_tsv(text)
+        except Exception as exc:                          # noqa: BLE001
+            step.update(status=STATUS_FAILED, error=repr(exc),
+                        body_head=asu_body_head(text))
+            steps.append(step)
+            continue
+        errs = list(df.attrs.get("asu_errors") or [])
+        step["rows"] = int(len(df))
+        step["columns"] = [str(c) for c in df.columns][:40]
+        if errs:
+            step["asu_errors"] = errs[:10]
+        step["status"] = STATUS_OK if len(df) else STATUS_ZERO
+        if not len(df):
+            step["body_head"] = asu_body_head(text)
+        steps.append(step)
+    return steps
+
+
+def ladder_verdict(steps: list[dict]) -> dict:
+    """Which ladder step first lost the rows, stated plainly."""
+    ok = [s for s in (steps or []) if s.get("status") == STATUS_OK]
+    if not steps:
+        return {"status": "NOT_RUN", "note": "no ladder step ran"}
+    if not ok:
+        first = steps[0]
+        return {"status": "BARE_REQUEST_EMPTY",
+                "culprit": first.get("label"),
+                "note": ("even -source with a row cap and no constraint returned nothing, so "
+                         "the catalogue id or the ASU form itself is wrong, not any cut"),
+                "body_head": first.get("body_head"), "asu_errors": first.get("asu_errors")}
+    last_ok = ok[-1]
+    after = [s for s in steps if int(s.get("step", -1)) > int(last_ok.get("step", -1))]
+    if not after:
+        return {"status": "ALL_STEPS_RETURNED_ROWS",
+                "note": "every step of the ladder returned rows; the empty result is elsewhere"}
+    culprit = after[0]
+    return {"status": "CONSTRAINT_ZEROED_THE_QUERY",
+            "last_ok": last_ok.get("label"), "last_ok_rows": last_ok.get("rows"),
+            "culprit": culprit.get("label"), "culprit_added": culprit.get("added"),
+            "culprit_status": culprit.get("status"),
+            "body_head": culprit.get("body_head"), "asu_errors": culprit.get("asu_errors"),
+            "note": (f"rows survived {last_ok.get('label')} and died on "
+                     f"{culprit.get('added')}")}
 
 
 def astroquery_rows(catalogue: str, *, columns=None, max_rows: int = 100000, vizier_fn=None
@@ -1748,9 +1871,10 @@ __all__ = ["BREAKER_LOG", "ROUTE_ASTROQUERY", "ROUTE_ASU", "ROUTE_NONE", "ROUTE_
            "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "VIZIER_ASU",
            "VIZIER_ASU_MIRRORS", "VIZIER_README", "VIZIER_TAP", "VIZIER_TAP_MIRRORS",
            "AdqlNotTranslatable", "AcquisitionLog", "DiscoveredTable", "VizierResult",
-           "VizierRouteError", "astroquery_rows", "asu_catalogue_tables", "asu_meta",
+           "VizierRouteError", "astroquery_rows", "asu_body_head", "asu_catalogue_tables",
+           "asu_constraint_ladder", "asu_meta",
            "asu_query", "asu_rows", "asu_table_columns", "asu_table_exists", "asu_url",
-           "breaker_state", "breaker_summary", "count_rows",
+           "breaker_state", "breaker_summary", "count_rows", "ladder_verdict",
            "discover_and_fetch_rotation", "discover_event_table", "fetch_events",
            "fetch_positions_by_id", "fetch_variable_context", "list_tables",
            "parse_asu_meta", "parse_asu_tsv", "parse_readme", "reset_route_state",

@@ -1383,3 +1383,27 @@ def test_the_vizier_route_is_configured_and_documented():
     assert "asu-tsv" in doc and "I/355/gaiadr3" in doc and "II/328/allwise" in doc
     wf = Path(".github/workflows/ignition.yml").read_text()
     assert "vizier" in wf.lower()
+
+
+def test_a_zero_row_probe_diagnoses_itself_in_the_same_run():
+    """Probe run 34796722335 reported zero rows for a bare one-degree AllWISE cone.
+
+    A catalogue of 750 million sources has no empty degree, so that is a
+    request defect — but the record named neither the parameter nor VizieR's
+    own words, and learning which cost a whole dispatch cycle.  The probe now
+    walks the request up from ``-source`` alone and reports where it dies.
+    """
+    def fetch(url: str, **_kw):
+        if "-c.rd=" in url:
+            return "#Name: II/328/allwise\n#Title: no rows past here\n"
+        return "\n".join(["#Column\tAllWISE\t\tid", "AllWISE\tW1mag",
+                          "-------\t-----", "J000000.00+000000.0\t12.3"])
+
+    rep, _rows = probe_route({"fields": [_FIELD]}, fetch_fn=fetch)
+    for side in ("gaia", "allwise"):
+        ladder = rep[side].get("ladder")
+        assert ladder, f"{side} came back empty with no ladder"
+        verdict = ladder["verdict"]
+        assert verdict["status"] == "CONSTRAINT_ZEROED_THE_QUERY", verdict
+        assert verdict["culprit"] == "+-c.rd", verdict
+        assert "no rows past here" in (verdict.get("body_head") or "")

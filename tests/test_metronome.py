@@ -1292,3 +1292,81 @@ def test_asu_tsv_rule_detection_accepts_a_one_character_rule():
     df = parse_asu_tsv(text)
     assert list(df.columns) == ["KIC", "f", "Prot"], df.columns.tolist()
     assert len(df) == 1 and int(df["KIC"].iloc[0]) == 757076
+
+
+# ---------------------------------------------------------------------------
+# The constraint ladder: which ASU parameter zeroed the query
+# ---------------------------------------------------------------------------
+_LADDER_ROWS = "\n".join([
+    "#Column\tAllWISE\t\tdesignation",
+    "AllWISE\tW1mag",
+    "-------\t-----",
+    "J000000.00+000000.0\t12.3",
+])
+
+
+def _ladder_fetch(zero_on: str):
+    """An ASU server that serves rows until ``zero_on`` appears in the URL."""
+    seen: list[str] = []
+
+    def fetch(url: str, **_kw):
+        seen.append(url)
+        if zero_on and zero_on in url:
+            return "#Name: II/328/allwise\n#Title: t\n"      # metadata only: zero rows
+        return _LADDER_ROWS
+
+    fetch.seen = seen                                        # type: ignore[attr-defined]
+    return fetch
+
+
+def test_constraint_ladder_names_the_parameter_that_zeroed_the_query():
+    """IGNITION's probe reported zero rows for a bare one-degree AllWISE cone.
+
+    A catalogue of 750 million sources has no empty degree, so a zero-row
+    response is a request defect; the ladder is what says which parameter.
+    """
+    fetch = _ladder_fetch("-c.rd=")
+    steps = acq.asu_constraint_ladder(
+        "II/328/allwise", columns=["AllWISE", "W1mag"],
+        constraints={"-c": "266+65", "-c.rd": "1", "-c.eq": "J2000"},
+        max_rows=5, fetch_fn=fetch, bases=["https://example.invalid/viz-bin/asu-tsv"])
+    labels = [s["label"] for s in steps]
+    assert labels == ["bare", "columns", "+-c", "+-c.rd", "+-c.eq"], labels
+    assert [s["status"] for s in steps[:3]] == [acq.STATUS_OK] * 3
+    verdict = acq.ladder_verdict(steps)
+    assert verdict["status"] == "CONSTRAINT_ZEROED_THE_QUERY"
+    assert verdict["culprit"] == "+-c.rd" and verdict["last_ok"] == "+-c"
+    # the server's own words are kept at the step that died
+    assert "II/328/allwise" in (verdict.get("body_head") or "")
+
+
+def test_constraint_ladder_calls_a_dead_bare_request_what_it_is():
+    """Nothing from ``-source`` alone indicts the catalogue id, not any cut."""
+    steps = acq.asu_constraint_ladder(
+        "II/328/allwise_typo", columns=["AllWISE"], constraints={"-c": "266+65"},
+        fetch_fn=_ladder_fetch("-source"),
+        bases=["https://example.invalid/viz-bin/asu-tsv"])
+    verdict = acq.ladder_verdict(steps)
+    assert verdict["status"] == "BARE_REQUEST_EMPTY"
+    assert "catalogue id" in verdict["note"]
+
+
+def test_constraint_ladder_says_so_when_every_step_returns_rows():
+    steps = acq.asu_constraint_ladder(
+        "II/328/allwise", columns=["AllWISE"], constraints={"-c": "266+65"},
+        fetch_fn=_ladder_fetch(""), bases=["https://example.invalid/viz-bin/asu-tsv"])
+    assert acq.ladder_verdict(steps)["status"] == "ALL_STEPS_RETURNED_ROWS"
+    assert acq.ladder_verdict([])["status"] == "NOT_RUN"
+
+
+def test_zero_row_asu_response_records_the_body_head():
+    """``QUERY_RETURNED_ZERO_ROWS`` with nothing else recorded is undiagnosable."""
+    def fetch(url: str, **_kw):
+        return "#Name: II/328/allwise\n#Title: nothing here\n"
+
+    df, attempts = acq.asu_rows("II/328/allwise", fetch_fn=fetch,
+                                bases=["https://example.invalid/viz-bin/asu-tsv"])
+    assert not len(df)
+    assert attempts[-1]["status"] == acq.STATUS_ZERO
+    assert "nothing here" in attempts[-1]["body_head"]
+    assert "\\n" in attempts[-1]["body_head"]        # newlines are made visible

@@ -750,3 +750,252 @@ def test_n_min_boundary(n):
     assert r["status"] == "scanned"
     r = analyze(t[:7], w)
     assert r["status"] == "insufficient_events" and np.isnan(r["p_window"])
+
+
+# ---------------------------------------------------------------------------
+# The VizieR route ladder: TAP -> a second TAP host -> ASU (non-TAP) -> astroquery
+#
+# 2026-09-13: TAPVizieR answered 503 to five attempts over each of https and
+# http, and two channels reported NO_DATA_REACHED for an infrastructure reason.
+# Everything below is offline: every route takes an injectable fetch/query
+# callable, so a dead TAP and a live ASU can be scripted exactly.
+# ---------------------------------------------------------------------------
+ASU_TSV = "\n".join([
+    "#RESOURCE=yCat_J/ApJS/241/29",
+    "#Name: J/ApJS/241/29/table4",
+    "#Title: Flares",
+    "#INFO: -out.max=100000",
+    "#",
+    '#Column\t"KIC"\t()\tKepler Input Catalog identifier\t[ucd=meta.id]',
+    "#Column\tTpeak\t(d)\tFlare peak time\t[ucd=time.epoch]",
+    "#Column\tEbol\t(erg)\tBolometric energy",
+    "#",
+    '"KIC"\tTpeak\tEbol',
+    "\td\terg",
+    "--------\t--------\t--------",
+    "1234567\t120.5\t1.0e34",
+    "1234567\t123.5\t2.0e34",
+    "7654321\t130.5\t",
+])
+
+ASU_META = "\n".join([
+    "#RESOURCE=yCat_J/ApJS/241/29",
+    "#Name: J/ApJS/241/29",
+    "#Title: Kepler flare catalogue (Yang+, 2019)",
+    "#Table\tJ_ApJS_241_29_table4:",
+    "#Name: J/ApJS/241/29/table4",
+    "#Title: Flare list",
+    "#Column\tKIC\t()\tKepler Input Catalog identifier",
+    "#Column\tTpeak\t(d)\tFlare peak time",
+    "#Column\tEbol\t(erg)\tBolometric energy",
+    "#Table\tJ_ApJS_241_29_refs:",
+    "#Name: J/ApJS/241/29/refs",
+    "#Title: References",
+    "#Column\tRef\t()\tReference code",
+])
+
+README = "\n".join([
+    "J/ApJS/241/29    Kepler flare catalogue (Yang+, 2019)",
+    "================================================================================",
+    "File Summary:",
+    "--------------------------------------------------------------------------------",
+    " FileName      Lrecl  Records   Explanations",
+    "--------------------------------------------------------------------------------",
+    "table4.dat       80   162262   Flare list",
+    "--------------------------------------------------------------------------------",
+    "Byte-by-byte Description of file: table4.dat",
+    "--------------------------------------------------------------------------------",
+    "   Bytes Format Units   Label     Explanations",
+    "--------------------------------------------------------------------------------",
+    "   1-  8  I8    ---     KIC       Kepler Input Catalog identifier",
+    "  10- 20  F11.5 d       Tpeak     Flare peak time",
+    "  22- 30  E9.2  erg     Ebol      Bolometric energy",
+])
+
+
+def _asu_web(meta: str = ASU_META, rows: str = ASU_TSV, readme: str = README):
+    """A VizieR that answers over ASU but not over TAP; records every URL."""
+    seen: list[str] = []
+
+    def fetch(url: str) -> str:
+        seen.append(url)
+        if "-meta.all" in url:
+            if meta is None:
+                raise RuntimeError("503 Server Error: Service Unavailable")
+            return meta
+        if url.endswith("/ReadMe"):
+            if readme is None:
+                raise RuntimeError("404 Not Found")
+            return readme
+        if rows is None:
+            raise RuntimeError("503 Server Error: Service Unavailable")
+        return rows
+
+    fetch.urls = seen
+    return fetch
+
+
+def _tap_503(tried: list[str]):
+    def tap_fn(adql: str, endpoint: str):
+        tried.append(endpoint)
+        raise RuntimeError(f"DALServiceError: 503 Server Error: Service Unavailable "
+                           f"for url: {endpoint}/sync")
+    return tap_fn
+
+
+def test_asu_tsv_parser_reads_metadata_units_and_a_quoted_column_header():
+    df = acq.parse_asu_tsv(ASU_TSV)
+    assert list(df.columns) == ["KIC", "Tpeak", "Ebol"]        # the quotes are stripped
+    assert len(df) == 3 and df.attrs["asu_errors"] == []
+    assert list(df["KIC"]) == [1234567, 1234567, 7654321]
+    assert df["Tpeak"].tolist() == [120.5, 123.5, 130.5]
+    assert np.isnan(df["Ebol"].iloc[2]) and df["Ebol"].iloc[0] == 1.0e34
+    # a body with only metadata is zero rows, and an error page is not rows
+    empty = acq.parse_asu_tsv("#Name: x\n#***** nothing found\n")
+    assert not len(empty) and empty.attrs["asu_errors"]
+    # no dash rule, no unit line: the first line is still the header
+    plain = acq.parse_asu_tsv("#Name: x\nA\tB\n1\t2\n")
+    assert list(plain.columns) == ["A", "B"] and len(plain) == 1
+
+
+def test_asu_meta_and_readme_are_the_non_tap_table_existence_check():
+    acq.reset_route_state()
+    web = _asu_web()
+    df, attempts = acq.asu_catalogue_tables("J/ApJS/241/29", fetch_fn=web)
+    assert list(df["table_name"]) == ["J/ApJS/241/29/table4", "J/ApJS/241/29/refs"]
+    assert list(df.iloc[0]["columns"]) == ["KIC", "Tpeak", "Ebol"]
+    assert df.iloc[0]["units"]["Tpeak"] == "d"
+    assert attempts[0]["route"] == "asu_tsv" and attempts[0]["status"] == "OK"
+    assert "-meta.all" in web.urls[0] and "-source=J/ApJS/241/29" in web.urls[0]
+    cols, _ = acq.asu_table_columns("J/ApJS/241/29/table4", fetch_fn=web)
+    assert list(cols["column_name"]) == ["KIC", "Tpeak", "Ebol"]
+    assert list(cols["unit"]) == ["", "d", "erg"]
+    # the ReadMe is the backstop when even the metadata form is down
+    df2, att2 = acq.asu_catalogue_tables("J/ApJS/241/29", fetch_fn=_asu_web(meta=None))
+    assert list(df2["table_name"]) == ["J/ApJS/241/29/table4"]
+    assert df2.iloc[0]["n_rows"] == 162262
+    assert list(df2.iloc[0]["columns"]) == ["KIC", "Tpeak", "Ebol"]
+    assert att2[-1]["route"] == "readme"
+
+
+def test_route_ladder_falls_through_tap_503_to_asu_and_says_which_route_served():
+    acq.reset_route_state()
+    tried: list[str] = []
+    web = _asu_web()
+    res = acq.vizier_table("J/ApJS/241/29/table4", columns=["KIC", "Tpeak"], max_rows=500,
+                           tap_fn=_tap_503(tried), tap_urls=acq.VIZIER_TAP_MIRRORS[:2],
+                           fetch_fn=web)
+    assert tried == list(acq.VIZIER_TAP_MIRRORS[:2])          # TAP 503, second host 503
+    assert res.route == "asu_tsv" and res.status == "OK" and len(res.rows) == 3
+    assert res.endpoint == acq.VIZIER_ASU
+    assert [a["route"] for a in res.attempts] == ["tap", "tap", "asu_tsv"]
+    assert all("503" in a["error"] for a in res.errors)
+    assert "-out.max=500" in web.urls[-1] and "-out=KIC" in web.urls[-1]
+    assert "-out.form=TSV" in web.urls[-1]
+    assert acq.route_log_summary()["served_by"] == "asu_tsv"
+
+
+def test_astroquery_is_the_last_route_when_tap_and_asu_are_both_down():
+    acq.reset_route_state()
+    called = {}
+
+    def vizier_fn(cat, cols, limit):
+        called.update({"cat": cat, "cols": cols, "limit": limit})
+        return pd.DataFrame({"KIC": [1], "Tpeak": [2.0]})
+
+    res = acq.vizier_table("J/ApJS/241/29/table4", columns=["KIC"], tap_fn=_tap_503([]),
+                           tap_urls=acq.VIZIER_TAP_MIRRORS[:1],
+                           fetch_fn=_asu_web(meta=None, rows=None, readme=None),
+                           vizier_fn=vizier_fn)
+    assert res.route == "astroquery" and len(res.rows) == 1
+    assert called["cat"] == "J/ApJS/241/29/table4"
+    assert {a["route"] for a in res.attempts} == {"tap", "asu_tsv", "astroquery"}
+
+
+def test_every_route_failing_names_every_endpoint_and_never_invents_rows():
+    acq.reset_route_state()
+    tried: list[str] = []
+    log = acq.AcquisitionLog()
+
+    def dead_vizier(cat, cols, limit):
+        raise RuntimeError("astroquery: connection refused")
+
+    res = acq.vizier_table("J/ApJS/241/29/table4", tap_fn=_tap_503(tried), fetch_fn=_asu_web(
+        meta=None, rows=None, readme=None), vizier_fn=dead_vizier, log=log)
+    assert res.route == "none" and res.status == "QUERY_FAILED" and not len(res.rows)
+    named = " ".join(f"{a['endpoint']} {a.get('error', '')}" for a in res.errors)
+    for endpoint in acq.VIZIER_TAP_MIRRORS:
+        assert endpoint in named, endpoint
+    for endpoint in acq.VIZIER_ASU_MIRRORS:
+        assert endpoint in named, endpoint
+    assert "astroquery.vizier.Vizier" in named
+    assert "503" in named and "connection refused" in named
+    assert log.as_dict()["any_query_failed"] and log.stages[-1]["route"] == "none"
+
+
+def test_adql_translation_is_narrow_and_says_what_it_cannot_do():
+    t = acq.translate_adql('SELECT TOP 100 "Freq", "Species" FROM "J/ApJ/787/112/table2"')
+    assert t == {"kind": "rows", "table": "J/ApJ/787/112/table2",
+                 "columns": ["Freq", "Species"], "limit": 100, "constraints": {},
+                 "row_slice": None}
+    t = acq.translate_adql("SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables "
+                           "WHERE table_name LIKE '%J/ApJS/241/29%'")
+    assert t["kind"] == "tables" and t["pattern"] == "J/ApJS/241/29"
+    t = acq.translate_adql("SELECT TOP 2000 column_name FROM TAP_SCHEMA.columns "
+                           "WHERE table_name = 'J/ApJS/241/29/table4' OR table_name = '\"x\"'")
+    assert t["kind"] == "columns" and t["table"] == "J/ApJS/241/29/table4"
+    # recno chunking: ASU returns rows in recno order, so the window is exact
+    t = acq.translate_adql('SELECT "KIC" FROM "t" WHERE recno BETWEEN 51 AND 100')
+    assert t["limit"] == 100 and t["row_slice"] == (50, 100)
+    for bad, why in [('SELECT COUNT(*) AS n FROM "t"', "COUNT"),
+                     ("SELECT TOP 5 table_name FROM TAP_SCHEMA.tables WHERE description "
+                      "LIKE '%flare%'", "description"),
+                     ('SELECT "a" FROM "t" WHERE "x" > 3 AND "y" < 4', "WHERE")]:
+        with pytest.raises(acq.AdqlNotTranslatable) as err:
+            acq.translate_adql(bad)
+        assert why in str(err.value)
+
+
+def test_discovery_degrades_to_the_non_tap_existence_check_when_tap_is_down():
+    acq.reset_route_state()
+    web = _asu_web()
+    dead = _FakeTAP("fail")
+    tabs = acq.list_tables("J/ApJS/241/29", query_fn=dead, fetch_fn=web)
+    assert list(tabs["table_name"]) == ["J/ApJS/241/29/table4", "J/ApJS/241/29/refs"]
+    assert tabs.attrs["route"] == "asu_tsv"
+    cols = acq.table_columns("J/ApJS/241/29/table4", query_fn=dead, fetch_fn=web)
+    assert cols == ["KIC", "Tpeak", "Ebol"]
+    # ... and the roles resolve off the non-TAP columns exactly as off TAP's
+    assert acq.resolve_event_columns(cols)["star_id"] == "KIC"
+    # a catalogue that does not exist is a DIFFERENT fact from an outage: the
+    # non-TAP route says so by failing with every endpoint named
+    with pytest.raises(acq.VizierRouteError) as err:
+        acq.list_tables("J/Nope/1/1", query_fn=dead,
+                        fetch_fn=_asu_web(meta=None, rows=None, readme=None))
+    assert "non-TAP" in str(err.value) and acq.VIZIER_ASU in str(err.value)
+
+
+def test_count_rows_is_unknown_rather_than_failed_without_tap():
+    acq.reset_route_state()
+    err = acq.VizierRouteError("every endpoint 503", asu_supported=False)
+
+    def dead(adql: str):
+        raise err
+
+    assert acq.count_rows("J/ApJS/241/29/table4", query_fn=dead) is None
+    with pytest.raises(acq.VizierRouteError):
+        acq.count_rows("J/ApJS/241/29/table4",
+                       query_fn=lambda a: (_ for _ in ()).throw(
+                           acq.VizierRouteError("x", asu_supported=True)))
+
+
+def test_config_route_ladder_matches_the_module_constants():
+    conf = load_metronome_config()
+    routes = conf["vizier_routes"]
+    assert tuple(routes["tap_mirrors"]) == acq.VIZIER_TAP_MIRRORS
+    assert tuple(routes["asu_tsv"]) == acq.VIZIER_ASU_MIRRORS
+    assert routes["readme"] == acq.VIZIER_README
+    assert acq.VIZIER_TAP == acq.VIZIER_TAP_MIRRORS[0]
+    txt = Path("config/metronome.yaml").read_text()
+    # every asserted-but-unreached host is marked, per the repository's rule
+    assert txt.count("# verify:") >= 2 and "ASSERTED" in txt

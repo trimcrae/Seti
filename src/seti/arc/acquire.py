@@ -42,7 +42,9 @@ from ..metronome.acquire import (
     _vizier_cone,
     count_rows,
     list_tables,
+    reset_route_state,
     resolve_columns,
+    route_log_summary,
     search_tables,
     table_columns,
     tap_query,
@@ -167,17 +169,29 @@ class DiscoveredTable:
 
 def discover_table(catalogue: str, preferred: str, kind: str = "flares", keywords=(), *,
                    query_fn=None, log: AcquisitionLog | None = None,
-                   overrides: dict | None = None, exact: bool = False) -> DiscoveredTable:
+                   overrides: dict | None = None, exact: bool = False,
+                   fetch_fn=None) -> DiscoveredTable:
     """List the tables under ``preferred`` (a catalogue id or a full table name),
     score each for ``kind``, fall back to a keyword search.  Row counts break
-    score ties toward the per-flare table."""
+    score ties toward the per-flare table.
+
+    The listing is ``seti.metronome.acquire.list_tables``, which asks
+    ``TAP_SCHEMA.tables`` first and, when no TAP host answers, asks VizieR's
+    NON-TAP ASU interface for one row of ``-source=<preferred>`` instead ---
+    ASU has no ``TAP_SCHEMA``, so a well-formed TSV body is the existence
+    proof and its header is the column list.  Those columns are then handed to
+    :func:`table_columns` as ``known``, so a TAP-down run resolves the roles
+    without a second round trip and without ever inventing a column name.
+    ``fetch_fn`` (URL -> text) is injectable for the offline tests.
+    """
     query_fn = query_fn or tap_query
     board: list[dict] = []
     best: DiscoveredTable | None = None
     best_key: tuple = (-1, -1)
     routes = []
     if preferred:
-        routes.append(("preferred", lambda: list_tables(preferred, query_fn=query_fn)))
+        routes.append(("preferred",
+                       lambda: list_tables(preferred, query_fn=query_fn, fetch_fn=fetch_fn)))
     if keywords:
         routes.append(("keyword", lambda: search_tables(keywords, query_fn=query_fn)))
     any_failed = False
@@ -188,21 +202,35 @@ def discover_table(catalogue: str, preferred: str, kind: str = "flares", keyword
             any_failed = True
             if log:
                 log.record(f"discover_{catalogue}_{route}", f"TAP_SCHEMA.tables ~ {preferred!r}",
-                           error=repr(exc))
+                           error=repr(exc),
+                           extra={"route": "none",
+                                  "route_attempts": list(getattr(exc, "attempts", []))})
             continue
         if log:
             log.record(f"discover_{catalogue}_{route}", f"TAP_SCHEMA.tables ~ {preferred!r}",
-                       rows=int(len(tabs)))
+                       rows=int(len(tabs)),
+                       extra={"route": str(tabs.attrs.get("route", "tap")),
+                              "route_attempts": list(tabs.attrs.get("attempts", []))})
+        listing_route = str(tabs.attrs.get("route", "tap"))
         for _, row in tabs.iterrows():
             t = unquote_table(row["table_name"])
             if exact and route == "preferred" and t != unquote_table(preferred):
                 continue
-            try:
-                cols = table_columns(t, query_fn=query_fn)
-            except Exception as exc:                      # noqa: BLE001
-                board.append({"table": t, "route": route, "score": 0,
-                              "reason": f"columns query failed: {exc!r}"[:200]})
-                continue
+            raw = row["columns"] if "columns" in tabs.columns else None
+            known = [str(c) for c in raw] if isinstance(raw, (list, tuple)) else []
+            if known and listing_route == "asu_tsv":
+                # The non-TAP listing carries the service's own header, which
+                # IS the column list (``-out.all``): asking TAP for
+                # TAP_SCHEMA.columns of the same table would only repeat the
+                # outage that sent us here.
+                cols = known
+            else:
+                try:
+                    cols = table_columns(t, query_fn=query_fn, fetch_fn=fetch_fn, known=known)
+                except Exception as exc:                  # noqa: BLE001
+                    board.append({"table": t, "route": route, "score": 0,
+                                  "reason": f"columns query failed: {exc!r}"[:200]})
+                    continue
             score, roles, reason = score_table(cols, kind, overrides)
             entry = {"table": t, "route": route, "score": int(score), "reason": reason,
                      "roles": roles, "n_columns": len(cols)}
@@ -238,7 +266,13 @@ def fetch_table(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | N
                 chunk_rows: int = 50000, max_rows: int | None = None) -> pd.DataFrame:
     """Pull every resolved role column, in ``recno`` chunks when the table has
     one, renamed to the role names.  Numeric roles are coerced; ``star_id`` is
-    a stripped string."""
+    a stripped string.
+
+    Which ROUTE served each chunk (``tap`` / ``asu_tsv`` / ``astroquery``) is
+    read off the frame the query returned and recorded on every log stage and,
+    for the caller, in ``out.attrs["route"]`` / ``out.attrs["routes"]``: a run
+    that got its rows while TAPVizieR was down must be able to say so.
+    """
     query_fn = query_fn or tap_query
     if disc.table is None or not disc.roles:
         return pd.DataFrame()
@@ -248,7 +282,15 @@ def fetch_table(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | N
     n_total = disc.n_rows
     limit = int(max_rows) if max_rows else None
     frames = []
+    routes: list[str] = []
     label = f"fetch_{disc.catalogue}"
+
+    def _route_extra(df) -> dict:
+        attrs = getattr(df, "attrs", {}) or {}
+        route = str(attrs.get("route") or "unknown")
+        routes.append(route)
+        return {"route": route, "endpoint": str(attrs.get("endpoint", ""))}
+
     if has_recno and n_total and n_total > chunk_rows:
         top = n_total if limit is None else min(n_total, limit)
         lo = 1
@@ -259,12 +301,14 @@ def fetch_table(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | N
                 df = query_fn(adql)
             except Exception as exc:                      # noqa: BLE001
                 if log:
-                    log.record(label, adql, error=repr(exc), extra={"chunk": [lo, hi]})
+                    log.record(label, adql, error=repr(exc),
+                               extra={"chunk": [lo, hi], "route": "none",
+                                      "route_attempts": list(getattr(exc, "attempts", []))})
                 lo = hi + 1
                 continue
             n = int(len(df)) if df is not None else 0
             if log:
-                log.record(label, adql, rows=n, extra={"chunk": [lo, hi]})
+                log.record(label, adql, rows=n, extra={"chunk": [lo, hi], **_route_extra(df)})
             if n:
                 frames.append(df)
             lo = hi + 1
@@ -275,11 +319,13 @@ def fetch_table(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | N
             df = query_fn(adql)
         except Exception as exc:                          # noqa: BLE001
             if log:
-                log.record(label, adql, error=repr(exc))
+                log.record(label, adql, error=repr(exc),
+                           extra={"route": "none",
+                                  "route_attempts": list(getattr(exc, "attempts", []))})
             return pd.DataFrame()
         n = int(len(df)) if df is not None else 0
         if log:
-            log.record(label, adql, rows=n)
+            log.record(label, adql, rows=n, extra=_route_extra(df))
         if n:
             frames.append(df)
     if not frames:
@@ -298,6 +344,9 @@ def fetch_table(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | N
             out[c] = pd.to_numeric(out[c], errors="coerce")
     if "star_id" in out.columns:
         out["star_id"] = out["star_id"].map(_clean_id)
+    seen = list(dict.fromkeys(r for r in routes if r))
+    out.attrs["routes"] = list(routes)
+    out.attrs["route"] = seen[0] if len(seen) == 1 else ("mixed" if seen else "unknown")
     return out
 
 
@@ -491,4 +540,5 @@ def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog |
 __all__ = ["PARAM_TABLES", "ROLE_PATTERNS", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO",
            "VIZIER_TAP", "AcquisitionLog", "DiscoveredTable", "discover_table",
            "fetch_star_params_by_id", "fetch_table", "gaia_context", "parse_gaia_cone",
-           "resolve_arc_columns", "score_table", "tap_query"]
+           "reset_route_state", "resolve_arc_columns", "route_log_summary", "score_table",
+           "tap_query"]

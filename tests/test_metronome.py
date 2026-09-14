@@ -975,6 +975,176 @@ def test_discovery_degrades_to_the_non_tap_existence_check_when_tap_is_down():
     assert "non-TAP" in str(err.value) and acq.VIZIER_ASU in str(err.value)
 
 
+# ---------------------------------------------------------------------------
+# the circuit breaker: an intermittent endpoint must not become a total outage
+# ---------------------------------------------------------------------------
+def test_circuit_breaker_half_opens_after_a_short_cooldown_and_closes_on_success(monkeypatch):
+    """ARC run 34792280736: TAPVizieR answered the FIRST discovery query and
+    503'd the next two, and a five-minute cooldown then skipped all five
+    remaining catalogues --- an intermittent service turned into a total
+    outage.  The cooldown is now short, expiring it half-opens the endpoint,
+    and any success closes it again."""
+    acq.reset_route_state()
+    monkeypatch.setattr(acq._time, "sleep", lambda *_a, **_k: None)
+    ep = "https://tap.example/TAPVizieR/tap"
+    assert acq.breaker_state(ep) == acq.STATE_CLOSED and acq._circuit_open(ep) == ""
+    acq._circuit_fail(ep, "503")
+    assert acq._circuit_open(ep) == ""                 # one failure is not an outage
+    acq._circuit_fail(ep, "503")
+    assert acq.breaker_state(ep) == acq.STATE_OPEN
+    skip = acq._circuit_open(ep)
+    assert skip.startswith("skipped:") and "retried after" in skip
+    assert acq._ROUTE_FAIL_COOLDOWN_S <= 60.0          # seconds, not minutes
+    # the cooldown expires -> ONE live attempt (half open), not a skip
+    acq._ROUTE_FAILS[ep]["at"] -= acq._ROUTE_FAIL_COOLDOWN_S + 1.0
+    assert acq._circuit_open(ep) == ""
+    assert acq.breaker_state(ep) == acq.STATE_HALF_OPEN
+    acq._circuit_ok(ep)                                # ... and a success closes it
+    assert acq.breaker_state(ep) == acq.STATE_CLOSED and acq._circuit_open(ep) == ""
+    moves = [t["transition"] for t in acq.BREAKER_LOG if t["endpoint"] == ep]
+    assert moves == ["closed->open", "open->half_open", "half_open->closed"]
+    # ... and the transitions ride along in the acquisition log, so a dispatch
+    # that was starved by the breaker says so in its artefact
+    blk = acq.AcquisitionLog().as_dict()["breaker"]
+    assert blk["transitions"] == acq.BREAKER_LOG and blk["cooldown_s"] <= 60.0
+    assert blk["endpoints"][ep]["state"] == acq.STATE_CLOSED
+    acq.reset_route_state()
+
+
+def test_an_endpoint_that_answered_once_is_never_skipped_without_a_fresh_attempt(monkeypatch):
+    """The rule the starved run broke: a host that has SERVED in this process
+    is intermittent, not down.  It is never skipped --- every later query gets
+    a genuine attempt --- only degraded to one cheap try instead of the
+    retry ladder."""
+    acq.reset_route_state()
+    monkeypatch.setattr(acq._time, "sleep", lambda *_a, **_k: None)
+    ep = acq.VIZIER_TAP_MIRRORS[0]
+    tried: list[str] = []
+    state = {"up": True}
+
+    def tap_fn(adql: str, endpoint: str):
+        tried.append(endpoint)
+        if not state["up"]:
+            raise RuntimeError(f"DALServiceError: 503 Server Error for url: {endpoint}/sync")
+        return pd.DataFrame({"table_name": ["J/ApJ/906/72/table2"], "description": ["x"]})
+
+    df = acq.tap_query("SELECT 1", url=[ep], retries=1, tap_fn=tap_fn, allow_non_tap=False)
+    assert len(df) == 1 and df.attrs["route"] == "tap" and df.attrs["endpoint"] == ep
+    state["up"] = False
+    for _ in range(2):
+        with pytest.raises(acq.VizierRouteError):
+            acq.tap_query("SELECT 2", url=[ep], retries=1, tap_fn=tap_fn, allow_non_tap=False)
+    assert acq.breaker_state(ep) == acq.STATE_OPEN and len(tried) == 3
+    # every later query STILL reaches the endpoint -- once each, cheaply, even
+    # with retries=3: no catalogue is skipped because an earlier one 503'd
+    for i in range(3):
+        with pytest.raises(acq.VizierRouteError) as err:
+            acq.tap_query(f"SELECT {i + 3}", url=[ep], retries=3, tap_fn=tap_fn,
+                          allow_non_tap=False)
+        assert "skipped:" not in str(err.value)
+        assert len(tried) == 4 + i, "an endpoint that has served was skipped outright"
+    # when the host comes back the very next query is served, and the success
+    # closes the breaker
+    state["up"] = True
+    assert len(acq.tap_query("SELECT 6", url=[ep], retries=1, tap_fn=tap_fn,
+                             allow_non_tap=False)) == 1
+    assert acq.breaker_state(ep) == acq.STATE_CLOSED and len(tried) == 7
+    # a host that has NEVER answered is still skipped after its cooldown opens
+    # the breaker -- that is the cost the breaker exists to save
+    dead = "https://never.example/TAPVizieR/tap"
+    for _ in range(2):
+        acq._circuit_fail(dead, "503")
+    assert acq._circuit_open(dead).startswith("skipped:")
+    acq.reset_route_state()
+
+
+# ---------------------------------------------------------------------------
+# the non-TAP existence check for an EXACT table id (ARC's six catalogues)
+# ---------------------------------------------------------------------------
+OKAMOTO_ASU_ROWS = "\n".join([
+    "#RESOURCE=yCat_J/ApJ/906/72",
+    "#Name: J/ApJ/906/72/table2",
+    "#Title: Superflares on solar-type stars (Okamoto+, 2021)",
+    "#Column\tKIC\t()\tKepler Input Catalog identifier",
+    "#Column\tProt\t(d)\tRotation period",
+    "#Column\tTeff\t(K)\tEffective temperature",
+    "#Column\tRstar\t(Rsun)\tStellar radius",
+    "#Column\tEflare\t(erg)\tBolometric flare energy",
+    "#Column\tTpeak\t(d)\tFlare peak time",
+    "KIC\tProt\tTeff\tRstar\tEflare\tTpeak",
+    "\td\tK\tRsun\terg\td",
+    "--------\t--------\t--------\t--------\t--------\t--------",
+    "1234567\t12.0\t5800\t1.0\t1.0e35\t120.5",
+])
+
+
+def _asu_rows_only(body: str = OKAMOTO_ASU_ROWS):
+    """A VizieR whose ``-meta.all`` form does NOT resolve --- the state ARC's
+    2026-09-14 dispatch actually met --- but whose ``-source=`` rows do."""
+    seen: list[str] = []
+
+    def fetch(url: str, timeout: float = 180.0) -> str:
+        seen.append(url)
+        if "-meta.all" in url or url.endswith("/ReadMe"):
+            raise RuntimeError("404 Client Error: Not Found")
+        return body
+
+    fetch.urls = seen
+    return fetch
+
+
+def test_a_table_id_resolves_over_asu_by_asking_for_one_row_when_tap_is_down():
+    """``TAP_SCHEMA.tables ~ 'J/ApJ/906/72/table2'`` with no TAP: ASU has no
+    TAP_SCHEMA, so the question becomes "give me one row of
+    ``-source=J/ApJ/906/72/table2``" and the answer's header is the columns."""
+    acq.reset_route_state()
+    web = _asu_rows_only()
+    dead = _FakeTAP("fail")
+    tabs = acq.list_tables("J/ApJ/906/72/table2", query_fn=dead, fetch_fn=web)
+    assert list(tabs["table_name"]) == ["J/ApJ/906/72/table2"]
+    assert tabs.attrs["route"] == "asu_tsv"
+    assert list(tabs.iloc[0]["columns"]) == ["KIC", "Prot", "Teff", "Rstar", "Eflare", "Tpeak"]
+    assert "-source=J/ApJ/906/72/table2" in web.urls[0] and "-out.max=1" in web.urls[0]
+    assert "-meta.all" not in web.urls[0]      # the row form is tried FIRST for a table id
+    cols = acq.table_columns("J/ApJ/906/72/table2", query_fn=dead, fetch_fn=web)
+    assert cols == ["KIC", "Prot", "Teff", "Rstar", "Eflare", "Tpeak"]
+    rec, attempts = acq.asu_table_exists("J/ApJ/906/72/table2", fetch_fn=web)
+    assert rec["units"]["Eflare"] == "erg" and rec["description"].startswith("Superflares")
+    assert attempts[-1]["route"] == "asu_tsv" and attempts[-1]["status"] == "OK"
+    acq.reset_route_state()
+
+
+def test_a_bare_catalogue_id_also_falls_back_to_the_one_row_check():
+    """Two of ARC's seeds are catalogue ids (``J/ApJS/209/5``,
+    ``J/ApJS/255/17``).  When ``-meta.all`` and the ReadMe are both down, ASU
+    still serves the catalogue's table, and the body names which table it is."""
+    acq.reset_route_state()
+    body = OKAMOTO_ASU_ROWS.replace("#Name: J/ApJ/906/72/table2",
+                                    "#Name: J/ApJS/209/5/flares")
+    web = _asu_rows_only(body)
+    tabs = acq.list_tables("J/ApJS/209/5", query_fn=_FakeTAP("fail"), fetch_fn=web)
+    assert list(tabs["table_name"]) == ["J/ApJS/209/5/flares"]
+    assert tabs.attrs["route"] == "asu_tsv"
+    # the metadata form is tried FIRST for a bare catalogue id (it lists every
+    # table); the one-row request is the fallback, not the first move
+    assert "-meta.all" in web.urls[0] and "-out.max=1" in web.urls[-1]
+    acq.reset_route_state()
+
+
+def test_an_asu_body_naming_another_catalogue_is_not_existence_evidence():
+    """A mirror that answers with somebody else's table has not shown that
+    ours exists: that is recorded as a failure, not read as rows."""
+    acq.reset_route_state()
+    wrong = _asu_rows_only(ASU_TSV)            # names J/ApJS/241/29/table4
+    rec, attempts = acq.asu_table_exists("J/ApJ/906/72/table2", fetch_fn=wrong)
+    assert rec is None
+    assert all(a["status"] == "QUERY_FAILED" for a in attempts)
+    assert "J/ApJS/241/29/table4" in attempts[0]["error"]
+    with pytest.raises(acq.VizierRouteError):
+        acq.list_tables("J/ApJ/906/72/table2", query_fn=_FakeTAP("fail"), fetch_fn=wrong)
+    acq.reset_route_state()
+
+
 def test_count_rows_is_unknown_rather_than_failed_without_tap():
     acq.reset_route_state()
     err = acq.VizierRouteError("every endpoint 503", asu_supported=False)
@@ -999,3 +1169,15 @@ def test_config_route_ladder_matches_the_module_constants():
     txt = Path("config/metronome.yaml").read_text()
     # every asserted-but-unreached host is marked, per the repository's rule
     assert txt.count("# verify:") >= 2 and "ASSERTED" in txt
+    # the breaker the code runs is the breaker the config documents
+    brk = routes["circuit_breaker"]
+    assert brk["fail_limit"] == acq._ROUTE_FAIL_LIMIT
+    assert brk["cooldown_s"] == acq._ROUTE_FAIL_COOLDOWN_S <= 60.0
+    assert brk["never_skip_after_success"] is True
+    # ... and the ASU spellings it marks `verify` are the ones asu_url emits
+    p = routes["asu_params"]
+    url = acq.asu_url("J/ApJ/906/72/table2", max_rows=int(p["existence_rows"]))
+    assert f"{p['source']}=J/ApJ/906/72/table2" in url
+    assert f"{p['max_rows']}={p['existence_rows']}" in url
+    assert p["all_columns"] in url and p["form"] in url
+    assert p["metadata"] in acq.asu_url("J/ApJ/906/72", meta=True)

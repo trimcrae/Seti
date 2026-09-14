@@ -583,6 +583,15 @@ def test_config_workflow_and_doc_exist():
     assert Path("config/arc.yaml").exists()
     assert Path(".github/workflows/arc.yml").exists()
     assert Path("docs/arc.md").exists()
+    # the non-TAP access path the config asserts is the one the helper emits,
+    # and it is marked `verify` because it cannot be reached from the sandbox
+    from seti.metronome.acquire import asu_url
+    spelled = conf["access"]["non_tap_existence_check"]
+    url = asu_url("J/ApJ/906/72/table2", max_rows=1)
+    for part in spelled.replace("<table>", "J/ApJ/906/72/table2").split("&"):
+        assert part in url, part
+    txt = Path("config/arc.yaml").read_text()
+    assert "# verify:" in txt and "ASSERTED" in txt
 
 
 def test_tap_query_tries_every_mirror_before_failing(monkeypatch):
@@ -738,4 +747,220 @@ def test_arc_with_every_vizier_route_down_is_still_honestly_query_failed(monkeyp
     assert log.as_dict()["any_query_failed"] and log.as_dict()["total_rows"] == 0
     named = " ".join(str(s.get("error", "")) for s in log.stages)
     assert "503" in named
+    macq.reset_route_state()
+
+
+# ---------------------------------------------------------------------------
+# TAPVizieR intermittent / down: no catalogue may be starved, and the rows
+# must still arrive over the non-TAP route (ARC run 34792280736, 2026-09-14)
+# ---------------------------------------------------------------------------
+def _asu_body(table: str, df: pd.DataFrame) -> str:
+    """One VizieR ``asu-tsv`` body for ``df``: ``#Column`` metadata, a header
+    line, a unit line, a rule of dashes, then the rows."""
+    cols = [str(c) for c in df.columns]
+    lines = [f"#RESOURCE=yCat_{table.rsplit('/', 1)[0]}", f"#Name: {table}",
+             "#Title: test fixture"]
+    lines += [f"#Column\t{c}\t(u)\tcolumn {c}" for c in cols]
+    lines.append("\t".join(cols))
+    lines.append("\t".join("u" for _ in cols))
+    lines.append("\t".join("--------" for _ in cols))
+    for _, row in df.iterrows():
+        lines.append("\t".join("" if pd.isna(v) else str(v) for v in row))
+    return "\n".join(lines)
+
+
+def _asu_params(url: str) -> dict:
+    from urllib.parse import unquote
+    out: dict = {}
+    for part in url.partition("?")[2].split("&"):
+        if not part:
+            continue
+        key, _, val = part.partition("=")
+        out.setdefault(key, []).append(unquote(val))
+    return out
+
+
+def _asu_server(tables: dict, *, meta: bool = False):
+    """A VizieR that serves ``-source=<table>`` rows over ASU.
+
+    ``meta=False`` is the world ARC actually met on 2026-09-14: the
+    ``-meta.all`` metadata form did not resolve these catalogues, so the only
+    non-TAP evidence a table exists is a one-row ``-source=`` request.
+    """
+    urls: list[str] = []
+
+    def fetch(url: str, timeout: float = 180.0) -> str:
+        urls.append(url)
+        if url.endswith("/ReadMe"):
+            raise RuntimeError(f"404 Client Error: Not Found for url: {url}")
+        params = _asu_params(url)
+        src = (params.get("-source") or [""])[0]
+        if "-meta.all" in params:
+            if not meta:
+                raise RuntimeError("404 Client Error: Not Found (-meta.all did not resolve)")
+            return "\n".join([f"#Name: {src}", "#Title: fixture catalogue"]
+                             + [f"#Table\t{t}:\n#Name: {t}" for t in tables if t.startswith(src)])
+        if src not in tables:
+            return f"#***** No table found for {src}\n"
+        df = tables[src]
+        cols = [c for c in params.get("-out", []) if c in df.columns] or list(df.columns)
+        n = int((params.get("-out.max") or ["100000"])[0])
+        return _asu_body(src, df[cols].head(n))
+
+    fetch.urls = urls
+    return fetch
+
+
+def _tap_down(monkeypatch, tap_fail: str = "DALServiceError: 503 Server Error: "
+                                           "Service Unavailable"):
+    """Every TAPVizieR host 503s; returns the shared helper module."""
+    import types
+
+    from seti.metronome import acquire as macq
+
+    class _Svc:
+        def __init__(self, url):
+            self._url = url
+
+        def _fail(self, adql):
+            raise RuntimeError(f"{tap_fail} for url: {self._url}/sync")
+
+        run_async = search = _fail
+
+    monkeypatch.setitem(__import__("sys").modules, "pyvo",
+                        types.SimpleNamespace(dal=types.SimpleNamespace(TAPService=_Svc)))
+    monkeypatch.setattr(macq._time, "sleep", lambda *_a, **_k: None)
+    macq.reset_route_state()
+    return macq
+
+
+def _multi_catalogue_conf(preferred: list[str]) -> dict:
+    conf = _conf()
+    conf["catalogues"] = {
+        f"cat{i}": {"mission": "kepler", "kind": "flares", "preferred": p, "keywords": [],
+                    "energy": {"kind": "bolometric", "factor": 1.0, "log10": "auto"}}
+        for i, p in enumerate(preferred)}
+    return conf
+
+
+def test_intermittent_tap_never_skips_a_later_catalogue(monkeypatch, tmp_path):
+    """The starving bug, exactly as the run showed it.
+
+    ``discover_kepler_okamoto2021_preferred`` succeeded and every catalogue
+    after it read ``skipped: ... failed 2 times in this process, 82s ago``.
+    With the breaker's post-success rule, a host that answered once is never
+    skipped again: each of the later catalogues gets a genuine attempt, and
+    the ones asked while the service is up are discovered normally.
+    """
+    from seti.metronome import acquire as macq
+    macq.reset_route_state()
+    monkeypatch.setattr(macq._time, "sleep", lambda *_a, **_k: None)
+    tables, _ = _synthetic_tables()
+    flares = tables["J/ApJ/906/72/table2"]
+    names = ["J/ApJ/906/72/table2", "J/ApJ/935/90/table2", "J/AJ/159/60/table1",
+             "J/ApJ/829/23/table1"]
+    fake = _FakeTAP("ok", {n: flares for n in names})
+    # calls 1-3 serve the first catalogue, 4 and 5 (the second and third
+    # catalogue's listing) 503 and open the breaker, and the fourth catalogue
+    # is asked after that -- the run that starved skipped exactly there
+    state = {"down_from": 4, "down_to": 5}
+    seen: list[tuple[str, str]] = []
+
+    def tap_fn(adql: str, endpoint: str):
+        seen.append((adql, endpoint))
+        if state["down_from"] <= len(seen) <= state["down_to"]:
+            raise RuntimeError(f"DALServiceError: 503 Server Error for url: {endpoint}/sync")
+        return fake(adql)
+
+    def query_fn(adql: str):
+        return macq.tap_query(adql, url=macq.VIZIER_TAP_MIRRORS[:1], retries=1, tap_fn=tap_fn,
+                              allow_non_tap=False)
+
+    def no_asu(url: str, timeout: float = 180.0) -> str:
+        raise RuntimeError("the non-TAP route is not under test here")
+
+    conf = _multi_catalogue_conf(names)
+    conf["star_catalogues"] = {"kepler": []}
+    log = macq.AcquisitionLog()
+    probe = stage_probe(conf, tmp_path / "arc", query_fn=query_fn, log=log, fetch_fn=no_asu)
+
+    # every catalogue reached the endpoint for its OWN discovery query
+    for name in names:
+        assert any(f"'%{name}%'" in adql for adql, _ in seen), f"{name} was never attempted"
+    # the first (served) and the last (asked after the breaker had opened) are found
+    assert probe["catalogues"]["cat0"]["status"] == "OK"
+    assert probe["catalogues"]["cat3"]["status"] == "OK"
+    assert probe["catalogues"]["cat3"]["table"] == "J/ApJ/829/23/table1"
+    assert probe["catalogues"]["cat1"]["status"] == "QUERY_FAILED"
+    # ... and no stage failed because the PRIMARY TAP host was skipped
+    for stage in log.as_dict()["stages"]:
+        assert f"skipped: {macq.VIZIER_TAP}" not in str(stage.get("error", "")), stage["stage"]
+    moves = [t["transition"] for t in macq.BREAKER_LOG]
+    assert "closed->open" in moves and "half_open->closed" in moves
+    macq.reset_route_state()
+
+
+def test_tap_down_asu_up_full_arc_acquisition_reaches_rows_by_route_asu_tsv(monkeypatch,
+                                                                            tmp_path):
+    """The contract for the next dispatch while TAPVizieR is 503ing.
+
+    Every configured catalogue resolves through the one-row ASU existence
+    check, its rows arrive over ``asu_tsv``, the per-catalogue record says so,
+    and the run is NOT ``NO_DATA_REACHED``.
+    """
+    macq = _tap_down(monkeypatch)
+    tables, truth = _synthetic_tables()
+    web = _asu_server(tables)                      # -meta.all does NOT resolve here
+    monkeypatch.setattr(macq, "_asu_http_text", web)
+    out = tmp_path / "arc"
+    conf = _conf()
+
+    probe = stage_probe(conf, out)
+    assert probe["n_usable"] == 1 and probe["n_star_tables_usable"] == 1
+    assert probe["catalogues"]["kepler_synth"]["table"] == "J/ApJ/906/72/table2"
+    assert probe["catalogues"]["kepler_synth"]["roles"]["energy"] == "E"
+
+    rep = stage_acquire(conf, out)
+    cat = rep["catalogues"]["kepler_synth"]
+    assert cat["status"] == "OK" and cat["n_flares"] == 42 and cat["n_stars"] == 15
+    assert cat["route"] == "asu_tsv" and cat["discovery_route"] == "preferred"
+    star = rep["star_catalogues"]["kepler_mcquillan2014"]
+    assert star["status"] == "OK" and star["route"] == "asu_tsv" and star["n_rows"] == 15
+    stages = {s["stage"]: s for s in rep["acquisition"]["stages"]}
+    assert stages["fetch_kepler_synth"]["route"] == "asu_tsv"
+    assert stages["discover_kepler_synth_preferred"]["route"] == "asu_tsv"
+    assert rep["acquisition"]["routes"]["served_by"] == "asu_tsv"
+    assert rep["acquisition"]["breaker"]["endpoints"][macq.VIZIER_TAP]["state"] == "open"
+    assert any("-out.max=1" in u for u in web.urls)        # the existence check
+    assert not any("-meta.all" in u and "/table2" in u for u in web.urls[:1])
+
+    screen = stage_screen(conf, out)
+    assert screen["kepler_synth"]["n_xi_conservative_positive"] == 4
+    summary = stage_assess(conf, out, offline=True)
+    assert summary["verdict"] == VERDICT_CANDIDATES          # NOT no-data-reached
+    assert summary["funnel"]["xi_conservative_positive"] == 4
+    xi_df = pd.read_csv(out / "xi_kepler_synth.csv", dtype={"star_id": str})
+    assert truth["candidate"] in set(xi_df["star_id"])
+    macq.reset_route_state()
+
+
+def test_every_vizier_route_down_records_every_endpoint_and_invents_nothing(monkeypatch,
+                                                                            tmp_path):
+    """Total failure stays honest: QUERY_FAILED, zero rows, every TAP host and
+    every ASU host named with its verbatim error."""
+    macq = _tap_down(monkeypatch)
+
+    def dead(url, timeout=180.0):
+        raise RuntimeError(f"503 Server Error: Service Unavailable for url: {url}")
+
+    monkeypatch.setattr(macq, "_asu_http_text", dead)
+    out = tmp_path / "arc"
+    rep = stage_acquire(_conf(), out)
+    cat = rep["catalogues"]["kepler_synth"]
+    assert cat["status"] == "QUERY_FAILED" and cat["n_flares"] == 0 and cat["route"] == "none"
+    named = json.dumps(rep["acquisition"])
+    for endpoint in list(macq.VIZIER_TAP_MIRRORS) + list(macq.VIZIER_ASU_MIRRORS):
+        assert endpoint in named, endpoint
+    assert "503" in named and rep["acquisition"]["total_rows"] == 0
+    assert not (out / "data" / "kepler_synth_flares.parquet").exists()
     macq.reset_route_state()

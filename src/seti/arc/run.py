@@ -144,7 +144,8 @@ def _star_specs(conf: dict, missions) -> list[tuple[str, dict]]:
 # ---------------------------------------------------------------------------
 # probe
 # ---------------------------------------------------------------------------
-def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None, log=None) -> dict:
+def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None, log=None,
+                fetch_fn=None) -> dict:
     from .acquire import AcquisitionLog, discover_table, tap_query
 
     log = log or AcquisitionLog(prefix="arc/acquire")
@@ -153,7 +154,8 @@ def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None, log=No
     found, stars = {}, {}
     for name, spec in cats.items():
         disc = discover_table(name, spec["preferred"], "flares", tuple(spec.get("keywords") or ()),
-                              query_fn=query_fn, log=log, overrides=spec.get("columns"))
+                              query_fn=query_fn, log=log, overrides=spec.get("columns"),
+                              fetch_fn=fetch_fn)
         d = disc.as_dict()
         d.update({"mission": spec.get("mission"), "preferred": spec["preferred"],
                   "energy": spec.get("energy")})
@@ -161,7 +163,7 @@ def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None, log=No
     for mission, spec in _star_specs(conf, {s.get("mission") for s in cats.values()}):
         disc = discover_table(spec["name"], spec.get("preferred") or "", "stars",
                               tuple(spec.get("keywords") or ()), query_fn=query_fn, log=log,
-                              overrides=spec.get("columns"))
+                              overrides=spec.get("columns"), fetch_fn=fetch_fn)
         d = disc.as_dict()
         d["mission"] = mission
         stars[f"{mission}_{spec['name']}"] = d
@@ -180,7 +182,7 @@ def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None, log=No
 # acquire
 # ---------------------------------------------------------------------------
 def stage_acquire(conf: dict, out: Path, *, catalogues=None, query_fn=None,
-                  max_rows: int | None = None, log=None) -> dict:
+                  max_rows: int | None = None, log=None, fetch_fn=None) -> dict:
     from .acquire import AcquisitionLog, discover_table, fetch_table, tap_query
 
     log = log or AcquisitionLog(prefix="arc/acquire")
@@ -194,16 +196,22 @@ def stage_acquire(conf: dict, out: Path, *, catalogues=None, query_fn=None,
     per_cat = {}
     for name, spec in cats.items():
         disc = discover_table(name, spec["preferred"], "flares", tuple(spec.get("keywords") or ()),
-                              query_fn=query_fn, log=log, overrides=spec.get("columns"))
+                              query_fn=query_fn, log=log, overrides=spec.get("columns"),
+                              fetch_fn=fetch_fn)
+        # ``discovery_route`` is which SEED found the table (the preferred id or
+        # the keyword search); ``route`` is which ACCESS route served its rows
+        # (``tap`` / ``asu_tsv`` / ``astroquery``), which is what a dispatch
+        # made during a TAPVizieR outage has to be able to show.
         rec = {"table": disc.table, "roles": disc.roles, "discovery_status": disc.status,
-               "route": disc.route, "mission": spec.get("mission"),
-               "n_rows_catalogue": disc.n_rows}
+               "discovery_route": disc.route, "route": "none",
+               "mission": spec.get("mission"), "n_rows_catalogue": disc.n_rows}
         if disc.table is None:
             rec.update({"status": disc.status, "n_flares": 0, "n_stars": 0})
             per_cat[name] = rec
             continue
         df = fetch_table(disc, query_fn=query_fn, log=log, chunk_rows=chunk,
                          max_rows=max_rows or None)
+        rec["route"] = str(df.attrs.get("route", "none")) if len(df) else "none"
         if not len(df) or "star_id" not in df.columns:
             failed = any(s["stage"] == f"fetch_{name}" and s["status"] == "QUERY_FAILED"
                          for s in log.stages)
@@ -230,14 +238,16 @@ def stage_acquire(conf: dict, out: Path, *, catalogues=None, query_fn=None,
         key = f"{mission}_{spec['name']}"
         disc = discover_table(spec["name"], spec.get("preferred") or "", "stars",
                               tuple(spec.get("keywords") or ()), query_fn=query_fn, log=log,
-                              overrides=spec.get("columns"))
+                              overrides=spec.get("columns"), fetch_fn=fetch_fn)
         rec = {"table": disc.table, "roles": disc.roles, "mission": mission,
-               "discovery_status": disc.status, "amplitude_unit": spec.get("amplitude_unit", "auto")}
+               "discovery_status": disc.status, "discovery_route": disc.route, "route": "none",
+               "amplitude_unit": spec.get("amplitude_unit", "auto")}
         if disc.table is None:
             rec.update({"status": disc.status, "n_rows": 0})
             star_recs[key] = rec
             continue
         df = fetch_table(disc, query_fn=query_fn, log=log, chunk_rows=chunk)
+        rec["route"] = str(df.attrs.get("route", "none")) if len(df) else "none"
         if not len(df):
             failed = any(s["stage"] == f"fetch_{spec['name']}" and s["status"] == "QUERY_FAILED"
                          for s in log.stages)
@@ -587,7 +597,8 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
                    "rejection_counters": rejection_counters([]),
                    "xi_distribution": {"conservative": {"n": 0}, "nominal": {"n": 0}},
                    "catalogues": {k: {"status": v.get("status"), "n_flares": v.get("n_flares", 0),
-                                      "n_stars": v.get("n_stars", 0), "table": v.get("table")}
+                                      "n_stars": v.get("n_stars", 0), "table": v.get("table"),
+                                      "route": v.get("route", "none")}
                                   for k, v in acq_cats.items()},
                    "acquisition": (acquire_report or {}).get("acquisition", log.as_dict()),
                    "candidates": [], "degraded": [f"{k}:{v.get('status')}" for k, v in
@@ -788,7 +799,8 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
 # entry points
 # ---------------------------------------------------------------------------
 def arc_run(stage: str = "all", *, out_dir=None, catalogues=None, max_rows: int | None = None,
-            offline: bool = False, query_fn=None, cone_fn=None, conf: dict | None = None) -> dict:
+            offline: bool = False, query_fn=None, cone_fn=None, conf: dict | None = None,
+            fetch_fn=None) -> dict:
     conf = conf or load_arc_config()
     out = Path(out_dir) if out_dir else Path("results") / "arc"
     out.mkdir(parents=True, exist_ok=True)
@@ -796,10 +808,11 @@ def arc_run(stage: str = "all", *, out_dir=None, catalogues=None, max_rows: int 
     rep: dict = {}
     for s in stages:
         if s == "probe":
-            rep = stage_probe(conf, out, catalogues=catalogues, query_fn=query_fn)
+            rep = stage_probe(conf, out, catalogues=catalogues, query_fn=query_fn,
+                              fetch_fn=fetch_fn)
         elif s == "acquire":
             rep = stage_acquire(conf, out, catalogues=catalogues, query_fn=query_fn,
-                                max_rows=max_rows)
+                                max_rows=max_rows, fetch_fn=fetch_fn)
         elif s == "screen":
             rep = stage_screen(conf, out, catalogues=catalogues)
         elif s == "assess":

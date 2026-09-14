@@ -223,3 +223,29 @@ vizier_routes:
     - "https://vizier.u-strasbg.fr/viz-bin/asu-tsv"
     - "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv"
   readme: "https://cdsarc.cds.unistra.fr/ftp/{catalogue}/ReadMe"
+  # The NON-TAP existence check.  The ASU interface has no TAP_SCHEMA, so
+  # "does TAP_SCHEMA.tables contain J/ApJ/906/72/table2" becomes "ask ASU for
+  # ONE ROW of -source=J/ApJ/906/72/table2 and read the column names off the
+  # TSV header".  ARC's 2026-09-14 dispatch (run 34792280736) failed because
+  # -meta.all was the only non-TAP route and it did not resolve three of the
+  # six catalogues.
+  # verify: every spelling below is ASSERTED from the VizieR ASU documentation
+  # and is NOT confirmed from this sandbox (there is no egress here).  The
+  # first runner dispatch that gets a well-formed TSV back is what settles it;
+  # a body that comes back as a VizieR error page (#*** lines) or that names a
+  # DIFFERENT catalogue is recorded as a failed attempt, never read as rows.
+  asu_params:
+    source: "-source"           # verify: the catalogue or table id
+    max_rows: "-out.max"        # verify: row cap
+    all_columns: "-out.all"     # verify: every column
+    column: "-out"              # verify: repeated, once per requested column
+    form: "-out.form=TSV"       # verify: tab-separated text
+    metadata: "-meta.all"       # verify: catalogue metadata instead of rows
+    existence_rows: 1           # one row is enough to prove a table exists
+  # Per-endpoint circuit breaker (seti.metronome.acquire).  Short cooldown, and
+  # a host that has ALREADY SERVED a query in this process is never skipped --
+  # it is intermittent, not down, and skipping it is what starved ARC's run.
+  circuit_breaker:
+    fail_limit: 2
+    cooldown_s: 45
+    never_skip_after_success: true

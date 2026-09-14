@@ -58,16 +58,6 @@
   "newest_any_survey_mjd": 61235.41918367943,
   "nightly_counts": [
    {
-    "date": "2026-05-12",
-    "n": 15006,
-    "night_mjd": 61172
-   },
-   {
-    "date": "2026-05-16",
-    "n": 3465,
-    "night_mjd": 61176
-   },
-   {
     "date": "2026-05-17",
     "n": 3261,
     "night_mjd": 61177
@@ -276,14 +266,6 @@
    "nightly_counts_120d": {
     "data": [
      {
-      "n": "15006",
-      "night": 61172.0
-     },
-     {
-      "n": "3465",
-      "night": 61176.0
-     },
-     {
       "n": "3261",
       "night": 61177.0
      },
@@ -428,7 +410,7 @@
       "night": 61235.0
      }
     ],
-    "rows": 38
+    "rows": 36
    },
    "survey_currency": {
     "data": [
@@ -479,34 +461,34 @@
   ],
   "url": "https://tap.alerce.online/tap"
  },
- "checked_at_utc": "2026-09-07T18:21:02Z",
+ "checked_at_utc": "2026-09-14T18:47:47Z",
  "decision": {
   "alerce_frontier_mjd": 61235.41918367943,
   "alerce_frontier_utc": "2026-07-14T10:03:37Z",
   "brokers_ahead_days": {},
   "controls": {
    "alerce_newest_survey": {
-    "days_behind_now": 55.35,
+    "days_behind_now": 62.36,
     "frontier_mjd": 61235.41918367943,
     "frontier_utc": "2026-07-14T10:03:37Z"
    },
    "ztf_alerce_ztf": {
-    "days_behind_now": 2.25,
-    "frontier_mjd": 61288.5166782001,
-    "frontier_utc": "2026-09-05T12:24:00Z"
+    "days_behind_now": 0.34,
+    "frontier_mjd": 61297.4464004999,
+    "frontier_utc": "2026-09-14T10:42:49Z"
    },
    "ztf_antares": {
-    "days_behind_now": 2.25,
-    "frontier_mjd": 61288.5166782001,
-    "frontier_utc": "2026-09-05T12:24:00Z"
+    "days_behind_now": 0.34,
+    "frontier_mjd": 61297.4464004999,
+    "frontier_utc": "2026-09-14T10:42:49Z"
    },
    "ztf_archive": {
-    "days_behind_now": 2.26,
-    "frontier_mjd": 61288.5,
-    "frontier_utc": "2026-09-05T12:00:00Z"
+    "days_behind_now": 0.28,
+    "frontier_mjd": 61297.5,
+    "frontier_utc": "2026-09-14T12:00:00Z"
    }
   },
-  "lag_days": 55.35,
+  "lag_days": 62.36,
   "live_controls": [
    "ztf_archive",
    "ztf_alerce_ztf",
@@ -522,17 +504,17 @@
   "why": "Every broker reached stops on the same night. The alert stream itself stopped, so the channels' nulls mean 'no new sky', and no change to the broker path recovers data that was never taken. Corroborated: ztf_archive, ztf_alerce_ztf, ztf_antares are current on non-LSST data, so the brokers themselves are alive and simply have no LSST alerts to serve.",
   "ztf": {
    "by_source": {
-    "alerce_ztf": 61288.5166782001,
-    "antares": 61288.5166782001,
-    "archive": 61288.5,
+    "alerce_ztf": 61297.4464004999,
+    "antares": 61297.4464004999,
+    "archive": 61297.5,
     "lasair_ztf": null
    },
-   "days_behind_now": 2.25,
-   "newest_mjd": 61288.5166782001,
-   "newest_source": "alerce_ztf",
-   "newest_utc": "2026-09-05T12:24:00Z",
+   "days_behind_now": 0.28,
+   "newest_mjd": 61297.5,
+   "newest_source": "archive",
+   "newest_utc": "2026-09-14T12:00:00Z",
    "status": "LIVE",
-   "why": "ZTF is LIVE: alerce_ztf holds an epoch 2.25 d old and the archive ZTF publishes itself agrees."
+   "why": "ZTF is LIVE: archive holds an epoch 0.28 d old."
   }
  },
  "fink": {
@@ -599,7 +581,7 @@
     "url": "https://api.lsst.fink-portal.org/api/v1/statistics"
    },
    "ztf_statistics": {
-    "error": "ConnectTimeout: HTTPSConnectionPool(host='api.fink-portal.org', port=443): Max retries exceeded with url: /api/v1/statistics (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.fink-portal.org', port=443) at 0x7fe206530ed0>, 'Connection to api.fink-portal.org timed out. (connect timeout=120.0)'))",
+    "error": "ConnectTimeout: HTTPSConnectionPool(host='api.fink-portal.org', port=443): Max retries exceeded with url: /api/v1/statistics (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.fink-portal.org', port=443) at 0x7f3547427cd0>, 'Connection to api.fink-portal.org timed out. (connect timeout=120.0)'))",
     "method": "POST",
     "url": "https://api.fink-portal.org/api/v1/statistics"
    }
@@ -671,59 +653,24 @@
   "skipped": "no LASAIR_TOKEN in the environment",
   "url": "https://api.lasair.lsst.ac.uk/api"
  },
- "now_mjd": 61290.76461,
+ "now_mjd": 61297.78318,
  "ztf": {
   "sources": {
    "alerce_ztf": {
-    "frontier_mjd": 61288.5166782001,
-    "json_head": "{\"total\": null, \"page\": null, \"next\": null, \"has_next\": false, \"prev\": null, \"has_prev\": false, \"items\": [{\"oid\": \"ZTF19ablgqkb\", \"ndethist\": \"995\", \"ncovhist\": 2702, \"mjdstarthist\": 58692.486851899885, \"mjdendhist\": 61288.5166782001, \"corrected\": true, \"stellar\": false, \"ndet\": 299, \"g_r_max\": null, \"g_r_max_corr\": null, \"g_r_mean\": null, \"g_r_mean_corr\": null, \"firstmjd\": 58692.486851899885, \"lastmjd\": 61288.5166782001, \"deltajd\": 2596.0298263002187, \"meanra\": 38.30180562730159, \"meandec\": -12.869977395786956, \"sigmara\": 0.004220374706875076, \"sigmadec\": 0.004114350546540943, \"class\": null, ",
+    "frontier_mjd": 61297.4464004999,
+    "json_head": "{\"total\": null, \"page\": null, \"next\": null, \"has_next\": false, \"prev\": null, \"has_prev\": false, \"items\": [{\"oid\": \"ZTF21abrpplf\", \"ndethist\": \"337\", \"ncovhist\": 2088, \"mjdstarthist\": 59224.26969909994, \"mjdendhist\": 61297.4464004999, \"corrected\": true, \"stellar\": false, \"ndet\": 115, \"g_r_max\": null, \"g_r_max_corr\": null, \"g_r_mean\": null, \"g_r_mean_corr\": null, \"firstmjd\": 59434.44271990005, \"lastmjd\": 61297.4464004999, \"deltajd\": 1863.0036805998534, \"meanra\": 46.43836797367496, \"meandec\": -3.147568444282619, \"sigmara\": 0.006735599682943098, \"sigmadec\": 0.006725438456202111, \"class\": null, \"cl",
     "status": 200,
     "url": "https://api.alerce.online/ztf/v1/objects"
    },
    "antares": {
-    "frontier_mjd": 61288.5166782001,
-    "json_head": "{\"data\": [{\"type\": \"locus_listing\", \"relationships\": {\"alerts\": {\"links\": {\"related\": \"http://api.antares.noirlab.edu/v1/loci/ANT2020rysb2/alerts\"}}}, \"attributes\": {\"properties\": {\"num_alerts\": 801, \"num_mag_values\": 316, \"brightest_alert_id\": \"ztf_candidate:3523496495915010003\", \"brightest_alert_magnitude\": 15.947891235351562, \"brightest_alert_observation_time\": 61277.49649310019, \"newest_alert_id\": \"ztf_candidate:3534516675915010000\", \"newest_alert_magnitude\": 17.20889663696289, \"newest_alert_observation_time\": 61288.5166782001, \"oldest_alert_id\": \"ztf_candidate:626440045915010215\", \"oldest",
+    "frontier_mjd": 61297.4464004999,
+    "json_head": "{\"data\": [{\"type\": \"locus_listing\", \"attributes\": {\"catalogs\": [\"allwise\", \"gaia_dr3_variability\", \"gaia_dr3_gaia_source\", \"bright_guide_star_cat\", \"sdss_stars\"], \"dec\": -6.231211606645246, \"properties\": {\"num_alerts\": 980, \"num_mag_values\": 170, \"brightest_alert_id\": \"ztf_candidate:2877233641415010033\", \"brightest_alert_magnitude\": 19.480100631713867, \"brightest_alert_observation_time\": 60631.233645800035, \"newest_alert_id\": \"ztf_candidate:3543446401415010025\", \"newest_alert_magnitude\": 19.82720184326172, \"newest_alert_observation_time\": 61297.4464004999, \"oldest_alert_id\": \"ztf_candidate:141",
     "status": 200,
     "url": "https://api.antares.noirlab.edu/v1/loci"
    },
    "archive": {
-    "frontier_mjd": 61288.5,
+    "frontier_mjd": 61297.5,
     "last_entries": [
-     {
-      "date": "2026-08-29",
-      "mjd": 61281.5,
-      "size_bytes": 6657199308
-     },
-     {
-      "date": "2026-08-30",
-      "mjd": 61282.5,
-      "size_bytes": 6657199308
-     },
-     {
-      "date": "2026-08-31",
-      "mjd": 61283.5,
-      "size_bytes": 8589934592
-     },
-     {
-      "date": "2026-09-01",
-      "mjd": 61284.5,
-      "size_bytes": 8160437862
-     },
-     {
-      "date": "2026-09-02",
-      "mjd": 61285.5,
-      "size_bytes": 8267812044
-     },
-     {
-      "date": "2026-09-03",
-      "mjd": 61286.5,
-      "size_bytes": 7516192768
-     },
-     {
-      "date": "2026-09-04",
-      "mjd": 61287.5,
-      "size_bytes": 8375186227
-     },
      {
       "date": "2026-09-05",
       "mjd": 61288.5,
@@ -738,12 +685,47 @@
       "date": "2026-09-07",
       "mjd": 61290.5,
       "size_bytes": 74
+     },
+     {
+      "date": "2026-09-08",
+      "mjd": 61291.5,
+      "size_bytes": 1181116006
+     },
+     {
+      "date": "2026-09-09",
+      "mjd": 61292.5,
+      "size_bytes": 3113851289
+     },
+     {
+      "date": "2026-09-10",
+      "mjd": 61293.5,
+      "size_bytes": 7945689497
+     },
+     {
+      "date": "2026-09-11",
+      "mjd": 61294.5,
+      "size_bytes": 6012954214
+     },
+     {
+      "date": "2026-09-12",
+      "mjd": 61295.5,
+      "size_bytes": 5905580032
+     },
+     {
+      "date": "2026-09-13",
+      "mjd": 61296.5,
+      "size_bytes": 6764573491
+     },
+     {
+      "date": "2026-09-14",
+      "mjd": 61297.5,
+      "size_bytes": 8053063680
      }
     ],
-    "last_night": "2026-09-05",
-    "last_tarball_any_size": "2026-09-07",
-    "n_empty_recent": 4,
-    "n_tarballs": 3004,
+    "last_night": "2026-09-14",
+    "last_tarball_any_size": "2026-09-14",
+    "n_empty_recent": 3,
+    "n_tarballs": 3011,
     "status": 200,
     "url": "https://ztf.uw.edu/alerts/public/"
    },
@@ -755,17 +737,17 @@
   },
   "status": {
    "by_source": {
-    "alerce_ztf": 61288.5166782001,
-    "antares": 61288.5166782001,
-    "archive": 61288.5,
+    "alerce_ztf": 61297.4464004999,
+    "antares": 61297.4464004999,
+    "archive": 61297.5,
     "lasair_ztf": null
    },
-   "days_behind_now": 2.25,
-   "newest_mjd": 61288.5166782001,
-   "newest_source": "alerce_ztf",
-   "newest_utc": "2026-09-05T12:24:00Z",
+   "days_behind_now": 0.28,
+   "newest_mjd": 61297.5,
+   "newest_source": "archive",
+   "newest_utc": "2026-09-14T12:00:00Z",
    "status": "LIVE",
-   "why": "ZTF is LIVE: alerce_ztf holds an epoch 2.25 d old and the archive ZTF publishes itself agrees."
+   "why": "ZTF is LIVE: archive holds an epoch 0.28 d old."
   }
  }
 }

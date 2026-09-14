@@ -1,6 +1,6 @@
 {
   "stage": "probe",
-  "generated_utc": "2026-09-13T23:44:39Z",
+  "generated_utc": "2026-09-14T00:23:08Z",
   "catalogues": {
     "kepler_okamoto2021": {
       "catalogue": "kepler_okamoto2021",
@@ -10,9 +10,23 @@
       "columns": [],
       "roles": {},
       "n_rows": null,
-      "status": "QUERY_FAILED",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
       "route": "none",
-      "scoreboard": [],
+      "scoreboard": [
+        {
+          "table": "J/ApJ/906/72/table2",
+          "route": "preferred",
+          "score": 0,
+          "reason": "rejected: no energy / equivalent duration",
+          "roles": {
+            "star_id": "KIC",
+            "prot": "Prot",
+            "teff": "Teff",
+            "radius": "Rstar"
+          },
+          "n_columns": 7
+        }
+      ],
       "note": "no table under 'J/ApJ/906/72/table2' or the keyword search exposes the roles a flares table needs",
       "mission": "kepler",
       "preferred": "J/ApJ/906/72/table2",
@@ -30,9 +44,23 @@
       "columns": [],
       "roles": {},
       "n_rows": null,
-      "status": "QUERY_FAILED",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
       "route": "none",
-      "scoreboard": [],
+      "scoreboard": [
+        {
+          "table": "J/ApJS/209/5/stars",
+          "route": "preferred",
+          "score": 0,
+          "reason": "rejected: no energy / equivalent duration",
+          "roles": {
+            "star_id": "KIC",
+            "prot": "Prot",
+            "teff": "Teff",
+            "radius": "Rad"
+          },
+          "n_columns": 8
+        }
+      ],
       "note": "no table under 'J/ApJS/209/5' or the keyword search exposes the roles a flares table needs",
       "mission": "kepler",
       "preferred": "J/ApJS/209/5",
@@ -110,9 +138,22 @@
       "columns": [],
       "roles": {},
       "n_rows": null,
-      "status": "QUERY_FAILED",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
       "route": "none",
-      "scoreboard": [],
+      "scoreboard": [
+        {
+          "table": "J/ApJ/829/23/table1",
+          "route": "preferred",
+          "score": 0,
+          "reason": "rejected: no energy / equivalent duration",
+          "roles": {
+            "star_id": "KIC",
+            "prot": "Prot",
+            "mass": "Mass"
+          },
+          "n_columns": 7
+        }
+      ],
       "note": "no table under 'J/ApJ/829/23/table1' or the keyword search exposes the roles a flares table needs",
       "mission": "kepler",
       "preferred": "J/ApJ/829/23/table1",
@@ -127,57 +168,174 @@
     "kepler_okamoto2021_stars": {
       "catalogue": "okamoto2021_stars",
       "kind": "stars",
-      "table": null,
-      "n_columns": 0,
-      "columns": [],
-      "roles": {},
+      "table": "J/ApJ/906/72/table2",
+      "n_columns": 7,
+      "columns": [
+        "KIC",
+        "Teff",
+        "e_Teff",
+        "Rstar",
+        "E_Rstar",
+        "e_Rstar",
+        "Prot"
+      ],
+      "roles": {
+        "star_id": "KIC",
+        "prot": "Prot",
+        "teff": "Teff",
+        "radius": "Rstar"
+      },
       "n_rows": null,
-      "status": "QUERY_FAILED",
-      "route": "none",
-      "scoreboard": [],
-      "note": "no table under 'J/ApJ/906/72' or the keyword search exposes the roles a stars table needs",
+      "status": "OK",
+      "route": "preferred",
+      "scoreboard": [
+        {
+          "table": "J/ApJ/906/72/table2",
+          "route": "preferred",
+          "score": 14,
+          "reason": "usable",
+          "roles": {
+            "star_id": "KIC",
+            "prot": "Prot",
+            "teff": "Teff",
+            "radius": "Rstar"
+          },
+          "n_columns": 7,
+          "n_rows": null
+        }
+      ],
+      "note": "",
       "mission": "kepler"
     },
     "kepler_shibayama2013_stars": {
       "catalogue": "shibayama2013_stars",
       "kind": "stars",
-      "table": null,
-      "n_columns": 0,
-      "columns": [],
-      "roles": {},
+      "table": "J/ApJS/209/5/stars",
+      "n_columns": 8,
+      "columns": [
+        "KIC",
+        "Nf",
+        "Teff",
+        "log(g)",
+        "Rad",
+        "Kpmag",
+        "Prot",
+        "FlCat"
+      ],
+      "roles": {
+        "star_id": "KIC",
+        "prot": "Prot",
+        "teff": "Teff",
+        "radius": "Rad"
+      },
       "n_rows": null,
-      "status": "QUERY_FAILED",
-      "route": "none",
-      "scoreboard": [],
-      "note": "no table under 'J/ApJS/209/5/stars' or the keyword search exposes the roles a stars table needs",
+      "status": "OK",
+      "route": "preferred",
+      "scoreboard": [
+        {
+          "table": "J/ApJS/209/5/stars",
+          "route": "preferred",
+          "score": 14,
+          "reason": "usable",
+          "roles": {
+            "star_id": "KIC",
+            "prot": "Prot",
+            "teff": "Teff",
+            "radius": "Rad"
+          },
+          "n_columns": 8,
+          "n_rows": null
+        }
+      ],
+      "note": "",
       "mission": "kepler"
     },
     "kepler_yang2019_stars": {
       "catalogue": "yang2019_stars",
       "kind": "stars",
-      "table": null,
-      "n_columns": 0,
-      "columns": [],
-      "roles": {},
+      "table": "J/ApJS/241/29/table1",
+      "n_columns": 8,
+      "columns": [
+        "KIC",
+        "Nf",
+        "Teff",
+        "logg",
+        "Lum",
+        "Prot",
+        "r_Prot",
+        "NS"
+      ],
+      "roles": {
+        "star_id": "KIC",
+        "prot": "Prot",
+        "teff": "Teff",
+        "logg": "logg"
+      },
       "n_rows": null,
-      "status": "QUERY_FAILED",
-      "route": "none",
-      "scoreboard": [],
-      "note": "no table under 'J/ApJS/241/29/table1' or the keyword search exposes the roles a stars table needs",
+      "status": "OK",
+      "route": "preferred",
+      "scoreboard": [
+        {
+          "table": "J/ApJS/241/29/table1",
+          "route": "preferred",
+          "score": 14,
+          "reason": "usable",
+          "roles": {
+            "star_id": "KIC",
+            "prot": "Prot",
+            "teff": "Teff",
+            "logg": "logg"
+          },
+          "n_columns": 8,
+          "n_rows": null
+        }
+      ],
+      "note": "",
       "mission": "kepler"
     },
     "kepler_mcquillan2014": {
       "catalogue": "mcquillan2014",
       "kind": "stars",
-      "table": null,
-      "n_columns": 0,
-      "columns": [],
-      "roles": {},
+      "table": "J/ApJS/211/24/table1",
+      "n_columns": 8,
+      "columns": [
+        "KIC",
+        "Teff",
+        "log(g)",
+        "Mass",
+        "Prot",
+        "e_Prot",
+        "n_Prot",
+        "Rper"
+      ],
+      "roles": {
+        "star_id": "KIC",
+        "rot_amplitude": "Rper",
+        "prot": "Prot",
+        "teff": "Teff",
+        "mass": "Mass"
+      },
       "n_rows": null,
-      "status": "QUERY_FAILED",
-      "route": "none",
-      "scoreboard": [],
-      "note": "no table under 'J/ApJS/211/24/table1' or the keyword search exposes the roles a stars table needs",
+      "status": "OK",
+      "route": "preferred",
+      "scoreboard": [
+        {
+          "table": "J/ApJS/211/24/table1",
+          "route": "preferred",
+          "score": 17,
+          "reason": "usable",
+          "roles": {
+            "star_id": "KIC",
+            "rot_amplitude": "Rper",
+            "prot": "Prot",
+            "teff": "Teff",
+            "mass": "Mass"
+          },
+          "n_columns": 8,
+          "n_rows": null
+        }
+      ],
+      "note": "",
       "mission": "kepler"
     },
     "kepler_santos2021": {
@@ -188,9 +346,23 @@
       "columns": [],
       "roles": {},
       "n_rows": null,
-      "status": "QUERY_FAILED",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
       "route": "none",
-      "scoreboard": [],
+      "scoreboard": [
+        {
+          "table": "J/ApJS/255/17/table1",
+          "route": "preferred",
+          "score": 0,
+          "reason": "rejected: no rotational amplitude / period / radius",
+          "roles": {
+            "star_id": "KIC",
+            "teff": "Teff",
+            "logg": "logg",
+            "sector": "Q"
+          },
+          "n_columns": 8
+        }
+      ],
       "note": "no table under 'J/ApJS/255/17' or the keyword search exposes the roles a stars table needs",
       "mission": "kepler"
     },
@@ -202,177 +374,214 @@
       "columns": [],
       "roles": {},
       "n_rows": null,
-      "status": "QUERY_FAILED",
+      "status": "QUERY_RETURNED_ZERO_ROWS",
       "route": "none",
-      "scoreboard": [],
+      "scoreboard": [
+        {
+          "table": "J/AJ/159/60/table2",
+          "route": "preferred",
+          "score": 0,
+          "reason": "rejected: no rotational amplitude / period / radius",
+          "roles": {
+            "star_id": "TIC",
+            "sector": "Sec"
+          },
+          "n_columns": 8
+        }
+      ],
       "note": "no table under 'J/AJ/159/60/table2' or the keyword search exposes the roles a stars table needs",
       "mission": "tess"
     },
     "tess_tu2022_stars": {
       "catalogue": "tu2022_stars",
       "kind": "stars",
-      "table": null,
-      "n_columns": 0,
-      "columns": [],
-      "roles": {},
+      "table": "J/ApJ/935/90/table1",
+      "n_columns": 8,
+      "columns": [
+        "ID",
+        "Tmag",
+        "Teff",
+        "logg",
+        "Rad",
+        "Per",
+        "Rvar",
+        "Flag"
+      ],
+      "roles": {
+        "star_id": "ID",
+        "rot_amplitude": "Rvar",
+        "prot": "Per",
+        "teff": "Teff",
+        "radius": "Rad",
+        "logg": "logg",
+        "flag": "Flag"
+      },
       "n_rows": null,
-      "status": "QUERY_FAILED",
-      "route": "none",
-      "scoreboard": [],
-      "note": "no table under 'J/ApJ/935/90' or the keyword search exposes the roles a stars table needs",
+      "status": "OK",
+      "route": "preferred",
+      "scoreboard": [
+        {
+          "table": "J/ApJ/935/90/table1",
+          "route": "preferred",
+          "score": 20,
+          "reason": "usable",
+          "roles": {
+            "star_id": "ID",
+            "rot_amplitude": "Rvar",
+            "prot": "Per",
+            "teff": "Teff",
+            "radius": "Rad",
+            "logg": "logg",
+            "flag": "Flag"
+          },
+          "n_columns": 8,
+          "n_rows": null
+        }
+      ],
+      "note": "",
       "mission": "tess"
     }
   },
   "n_usable": 0,
-  "n_star_tables_usable": 0,
+  "n_star_tables_usable": 5,
   "acquisition": {
     "stages": [
       {
         "stage": "discover_kepler_okamoto2021_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/ApJ/906/72/table2'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/ApJ/906/72/table2'"
       },
       {
         "stage": "discover_kepler_okamoto2021_keyword",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/ApJ/906/72/table2'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 80s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 53s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times"
       },
       {
         "stage": "discover_kepler_shibayama2013_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/209/5'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/209/5'"
       },
       {
         "stage": "discover_kepler_shibayama2013_keyword",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/ApJS/209/5'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 82s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 55s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times"
       },
       {
         "stage": "discover_tess_tu2022_preferred",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90/table2'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "error": "VizierRouteError(\"no route to TAP_SCHEMA.tables ~ 'J/ApJ/935/90/table2': TAP: VizierRouteError('TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 82s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 55s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPVi"
       },
       {
         "stage": "discover_tess_tu2022_keyword",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90/table2'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 84s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 57s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times"
       },
       {
         "stage": "discover_kepler_yang2019_preferred",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/ApJS/241/29/table2'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "error": "VizierRouteError(\"no route to TAP_SCHEMA.tables ~ 'J/ApJS/241/29/table2': TAP: VizierRouteError('TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 84s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 57s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPV"
       },
       {
         "stage": "discover_kepler_yang2019_keyword",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/ApJS/241/29/table2'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 86s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 58s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times"
       },
       {
         "stage": "discover_tess_gunther2020_preferred",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table1'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "error": "VizierRouteError(\"no route to TAP_SCHEMA.tables ~ 'J/AJ/159/60/table1': TAP: VizierRouteError('TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 86s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 58s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPViz"
       },
       {
         "stage": "discover_tess_gunther2020_keyword",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table1'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 87s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 60s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times"
       },
       {
         "stage": "discover_kepler_davenport2016_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/ApJ/829/23/table1'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/ApJ/829/23/table1'"
       },
       {
         "stage": "discover_kepler_davenport2016_keyword",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/ApJ/829/23/table1'",
-        "error": "RuntimeError('TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError(\\'TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync\\') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError(\"TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALFormatError: ConnectionError: (\\'"
+        "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 89s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 62s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times"
       },
       {
         "stage": "discover_okamoto2021_stars_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/ApJ/906/72'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/ApJ/906/72'"
       },
       {
         "stage": "discover_shibayama2013_stars_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/209/5/stars'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/209/5/stars'"
       },
       {
         "stage": "discover_yang2019_stars_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/241/29/table1'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/241/29/table1'"
       },
       {
         "stage": "discover_mcquillan2014_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/211/24/table1'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/211/24/table1'"
       },
       {
         "stage": "discover_santos2021_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/255/17'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/ApJS/255/17'"
       },
       {
         "stage": "discover_santos2021_keyword",
         "status": "QUERY_FAILED",
         "rows": 0,
         "query": "TAP_SCHEMA.tables ~ 'J/ApJS/255/17'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: skipped: https://tapvizier.cds.unistra.fr/TAPVizieR/tap failed 2 times in this process, 98s ago (retried after 300s) | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: skipped: https://tapvizier.u-strasbg.fr/TAPVizieR/tap failed 2 times in this process, 71s ago (retried after 300s) | https://vizier.cfa.harvard.edu/TAPVizieR/tap: skipped: https://vizier.cfa.harvard.edu/TAPVizieR/tap failed 2 times"
       },
       {
         "stage": "discover_gunther2020_stars_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table2'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table2'"
       },
       {
         "stage": "discover_tu2022_stars_preferred",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90'",
-        "error": "RuntimeError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 3 attempts: DALServiceError: 503 Server Error: Ser"
+        "status": "OK",
+        "rows": 1,
+        "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90'"
       }
     ],
     "n_stages": 20,
-    "n_ok": 0,
-    "n_query_failed": 20,
+    "n_ok": 10,
+    "n_query_failed": 10,
     "n_query_returned_zero_rows": 0,
     "any_query_failed": true,
-    "total_rows": 0
+    "total_rows": 10
   }
 }

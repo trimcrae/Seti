@@ -142,10 +142,38 @@ routes in order, each recorded with its endpoint and error text:
    asserted from the hostnames CDS and the CfA publish and *not* confirmed
    from the sandbox, which has no egress — plus the plain-http spelling;
 3. the **non-TAP** ASU interface, `https://vizier.cds.unistra.fr/viz-bin/asu-tsv`
-   (`-source=…&-out.max=…&-out=…&-out.form=TSV` for rows;
-   `-source=<cat>&-meta.all`, ReadMe as backstop, for **table existence** —
-   the replacement for `TAP_SCHEMA` while TAP is down);
+   (`-source=…&-out.max=…&-out=…&-out.form=TSV` for rows; for **table
+   existence** — the replacement for `TAP_SCHEMA` while TAP is down — one row
+   of `-source=<table>&-out.max=1&-out.all`, then `-meta.all`, then the
+   ReadMe);
 4. `astroquery.vizier.Vizier`.
+
+**Table existence without `TAP_SCHEMA`.**  ASU addresses a catalogue as
+`-source=J/ApJ/906/72/table2` and has **no `TAP_SCHEMA` of its own**, so the
+question "does `TAP_SCHEMA.tables` contain this id" has to be re-asked as
+"give me one row of `-source=<id>`": a well-formed TSV body is the existence
+proof and its header *is* the column list, which is what discovery then scores
+(`asu_table_exists`).  The dispatch of 2026-09-14 (run 34792280736) failed
+precisely here — `-meta.all` was the only non-TAP existence route and it did
+not resolve `J/ApJ/935/90/table2`, `J/ApJS/241/29/table2` or
+`J/AJ/159/60/table1`, so those three read `no route to TAP_SCHEMA.tables ~ …`
+while TAP was down.  The one-row check is tried **first** for an exact table
+id (which is how five of the six catalogues are asserted).  A body that comes
+back as a VizieR error page, or that names a *different* catalogue than the
+one asked for, is recorded as a failed attempt — never read as rows.
+
+**The circuit breaker.**  Per endpoint: after two consecutive failures it
+opens and skips that host for a **45 s** cooldown, which then *half-opens* it
+for one cheap attempt (one try, not the retry ladder); any success closes it.
+A host that has **already served a query in this process is never skipped** —
+it is intermittent, not down, and only the next attempt can show it is back.
+That rule is the fix for the other half of run 34792280736: TAPVizieR served
+`discover_kepler_okamoto2021_preferred` and then 503'd twice, and a
+five-minute cooldown skipped all five remaining catalogues
+(`skipped: … failed 2 times in this process, 82 s ago`) — an intermittent
+service turned into a total outage, which is worse than no breaker at all.
+Every breaker transition is recorded in the acquisition log
+(`acquisition.breaker.transitions`).
 
 ARC gets this for free: `discover_table` / `fetch_table` call `list_tables`,
 `table_columns`, `count_rows` and `tap_query` from the shared helper, and
@@ -155,7 +183,10 @@ VizieR-up dispatch returns **real rows** rather than `QUERY_FAILED`
 Two consequences are stated rather than hidden: `COUNT(*)` has no ASU
 equivalent, so `n_rows` is *unknown* (`None`) on that route and tables are
 ranked on their columns alone; and the keyword/description search stays
-TAP-only.  The route that served a run is in the acquisition log stages and in
+TAP-only.  The route that served a run is recorded per catalogue in
+`acquire.json` and `summary.json` (`route: asu_tsv`, beside
+`discovery_route`, which says whether the *seed* or the keyword search found
+the table), on every acquisition-log stage, and in
 `seti.metronome.acquire.route_log_summary()` (`served_by: asu_tsv`).  When
 every route fails, every endpoint and error is recorded and the status stays
 `QUERY_FAILED` — no route invents a row.
@@ -252,11 +283,16 @@ energies on a 5 % amplitude star → `ξ_conservative < 0`, a *watch*; RUWE = 2
 `catalogue_doubtful`; a single exceeding flare → *interest*; a failed or
 empty VizieR → `NO_DATA_REACHED` and never a candidate; the funnel counts in
 order; an end-to-end run through a scripted TAP and Gaia cone; and the route
-ladder in both directions — a TAP-down + ASU-up world yields real rows with
-`served_by: asu_tsv` (discovery off `-meta.all`, rows off `asu-tsv`), while a
-world with *every* route down stays `QUERY_FAILED` with every endpoint and
-error named.  No test opens a socket: every route takes an injectable
-fetch/query callable.
+ladder in every direction — a TAP-down + ASU-up world runs the *whole*
+acquisition to real rows with `route: asu_tsv` per catalogue and a verdict
+that is not `NO_DATA_REACHED` (discovery off the one-row existence check,
+rows off `asu-tsv`), an *intermittent* TAP never skips a later catalogue
+(every catalogue gets a genuine attempt, and one asked after the breaker
+opened is still discovered), the breaker half-opens after its cooldown and
+closes on the first success, an ASU body that names another catalogue is not
+existence evidence, and a world with *every* route down stays `QUERY_FAILED`
+with every endpoint and error named and nothing written.  No test opens a
+socket: every route takes an injectable fetch/query callable.
 
 ## 8. Limits — stated so nobody overclaims
 

@@ -85,43 +85,141 @@ STATUS_ZERO = "QUERY_RETURNED_ZERO_ROWS"
 ROUTE_LOG: list[dict] = []
 _ROUTE_LOG_MAX = 500
 #: Circuit breaker, per endpoint, for the DEFAULT transports only (an injected
-#: ``fetch_fn`` / ``query_fn`` never touches it): ``{endpoint: {n, at}}``.
-#: After ``_ROUTE_FAIL_LIMIT`` consecutive failures an endpoint is skipped for
+#: ``fetch_fn`` never touches it):
+#: ``{endpoint: {n, at, state, ever_ok, grace_used}}``.  After
+#: ``_ROUTE_FAIL_LIMIT`` consecutive failures an endpoint is skipped for
 #: ``_ROUTE_FAIL_COOLDOWN_S`` with a recorded reason, then tried again.  When
 #: TAPVizieR is down for an hour, forty more four-minute retry ladders say
 #: nothing the first two said --- and they cost the run the time the working
-#: route needed.  Any success clears the endpoint's count.
+#: route needed.
+#:
+#: ARC's dispatch of 2026-09-14 (run 34792280736) showed the other failure
+#: mode: TAPVizieR was INTERMITTENT, the first discovery query succeeded, two
+#: later ones 503'd, and a five-minute cooldown then turned a flaky service
+#: into a total outage --- every remaining catalogue read ``skipped: ... failed
+#: 2 times in this process, 82s ago``.  A breaker that does that is worse than
+#: no breaker, so:
+#:
+#: * the cooldown is short (:data:`_ROUTE_FAIL_COOLDOWN_S`, seconds, not
+#:   minutes) and expiring it HALF-OPENS the endpoint --- one live attempt,
+#:   cheap (one try, no retry ladder), and any success closes the breaker;
+#: * an endpoint that has ALREADY SERVED a query in this process is never
+#:   skipped at all: it is intermittent, not down, and the only way to learn
+#:   that it is back is to ask.  It is degraded instead --- one cheap attempt
+#:   per query instead of the retry ladder --- so every later catalogue still
+#:   gets a genuine attempt at the cost of one fast 503;
+#: * every transition is recorded in :data:`BREAKER_LOG`, which rides along in
+#:   ``AcquisitionLog.as_dict()["breaker"]`` so the behaviour is visible in the
+#:   artefact instead of having to be inferred from skip messages.
 _ROUTE_FAILS: dict[str, dict] = {}
 _ROUTE_FAIL_LIMIT = 2
-_ROUTE_FAIL_COOLDOWN_S = 300.0
+_ROUTE_FAIL_COOLDOWN_S = 45.0
+
+STATE_CLOSED = "closed"
+STATE_OPEN = "open"
+STATE_HALF_OPEN = "half_open"
+
+#: Every breaker transition in this process, newest last.
+BREAKER_LOG: list[dict] = []
+_BREAKER_LOG_MAX = 200
 
 
 def reset_route_state() -> None:
-    """Forget the route log and every endpoint's failure count."""
+    """Forget the route log, the breaker log and every endpoint's state."""
     ROUTE_LOG.clear()
     _ROUTE_FAILS.clear()
+    BREAKER_LOG.clear()
+
+
+def _breaker_note(endpoint: str, transition: str, reason: str = "") -> dict:
+    rec = {"endpoint": str(endpoint), "transition": str(transition),
+           "reason": str(reason)[:300], "at_unix": float(_time.time())}
+    BREAKER_LOG.append(rec)
+    del BREAKER_LOG[:-_BREAKER_LOG_MAX]
+    print(f"[metronome/acquire] breaker {endpoint}: {transition}"
+          + (f" ({reason})" if reason else ""))
+    return rec
+
+
+def _breaker_block(endpoint: str) -> dict:
+    return _ROUTE_FAILS.setdefault(str(endpoint), {"n": 0, "at": 0.0, "state": STATE_CLOSED,
+                                                   "ever_ok": False, "pass_noted": False})
+
+
+def breaker_state(endpoint: str) -> str:
+    """``closed`` | ``half_open`` | ``open`` for one endpoint, right now."""
+    blk = _ROUTE_FAILS.get(str(endpoint))
+    if not blk:
+        return STATE_CLOSED
+    return str(blk.get("state", STATE_CLOSED))
+
+
+def breaker_summary() -> dict:
+    """Breaker state per endpoint plus every transition, for the artefact."""
+    return {"fail_limit": int(_ROUTE_FAIL_LIMIT),
+            "cooldown_s": float(_ROUTE_FAIL_COOLDOWN_S),
+            "endpoints": {ep: {"state": blk.get("state", STATE_CLOSED),
+                               "consecutive_failures": int(blk.get("n", 0)),
+                               "ever_ok": bool(blk.get("ever_ok", False))}
+                          for ep, blk in _ROUTE_FAILS.items()},
+            "transitions": list(BREAKER_LOG),
+            "n_transitions": len(BREAKER_LOG)}
 
 
 def _circuit_open(endpoint: str) -> str:
-    """``""`` when the endpoint may be tried, else why it is being skipped."""
-    blk = _ROUTE_FAILS.get(str(endpoint))
+    """``""`` when the endpoint may be tried, else why it is being skipped.
+
+    Not a pure predicate: letting an endpoint through after its cooldown, or
+    because it has already served this process, IS the half-open transition,
+    and it is recorded here so the decision is auditable.
+    """
+    ep = str(endpoint)
+    blk = _ROUTE_FAILS.get(ep)
     if not blk or blk["n"] < _ROUTE_FAIL_LIMIT:
         return ""
     waited = _time.time() - blk["at"]
     if waited >= _ROUTE_FAIL_COOLDOWN_S:
+        # Half-open: one live attempt.  Dropping the count below the limit is
+        # what makes a SUCCESS close the breaker and a fresh failure reopen it.
+        blk["n"] = _ROUTE_FAIL_LIMIT - 1
+        blk["state"] = STATE_HALF_OPEN
+        _breaker_note(ep, f"{STATE_OPEN}->{STATE_HALF_OPEN}",
+                      f"cooldown of {_ROUTE_FAIL_COOLDOWN_S:.0f}s elapsed ({waited:.0f}s)")
+        return ""
+    if blk.get("ever_ok"):
+        # It answered earlier in this process, so it is INTERMITTENT, not down:
+        # never skipped, just degraded to one cheap attempt per query.  This is
+        # the rule ARC run 34792280736 broke -- there the primary served the
+        # first discovery query and every later catalogue was skipped outright.
+        if not blk.get("pass_noted"):
+            blk["pass_noted"] = True
+            _breaker_note(ep, f"{STATE_OPEN}->{STATE_HALF_OPEN}",
+                          "endpoint already served a query in this process: never skipped, "
+                          "one cheap attempt per query until it answers again")
+        blk["state"] = STATE_HALF_OPEN
         return ""
     return (f"skipped: {endpoint} failed {blk['n']} times in this process, "
             f"{waited:.0f}s ago (retried after {_ROUTE_FAIL_COOLDOWN_S:.0f}s)")
 
 
-def _circuit_fail(endpoint: str) -> None:
-    blk = _ROUTE_FAILS.setdefault(str(endpoint), {"n": 0, "at": 0.0})
+def _circuit_fail(endpoint: str, error: str = "") -> None:
+    blk = _breaker_block(endpoint)
     blk["n"] += 1
     blk["at"] = _time.time()
+    if blk["n"] >= _ROUTE_FAIL_LIMIT:
+        was = blk["state"]
+        blk["state"] = STATE_OPEN
+        if was == STATE_CLOSED:      # the open event, once; not every failed probe
+            _breaker_note(endpoint, f"{STATE_CLOSED}->{STATE_OPEN}",
+                          f"{blk['n']} consecutive failures: {error}"[:300])
 
 
 def _circuit_ok(endpoint: str) -> None:
-    _ROUTE_FAILS[str(endpoint)] = {"n": 0, "at": _time.time()}
+    blk = _breaker_block(endpoint)
+    if blk["state"] != STATE_CLOSED or blk["n"]:
+        _breaker_note(endpoint, f"{blk['state']}->{STATE_CLOSED}", "the endpoint answered")
+    blk.update({"n": 0, "at": _time.time(), "state": STATE_CLOSED, "ever_ok": True,
+                "pass_noted": False})
 
 
 def route_note(route: str, endpoint: str, *, status: str, what: str = "",
@@ -148,7 +246,10 @@ def route_log_summary() -> dict:
             blk["endpoints"].append(rec["endpoint"])
     return {"routes": out, "n_attempts": len(ROUTE_LOG),
             "served_by": next((r["route"] for r in reversed(ROUTE_LOG)
-                               if r["status"] == STATUS_OK), ROUTE_NONE)}
+                               if r["status"] == STATUS_OK), ROUTE_NONE),
+            # endpoint states only: the full transition list rides in
+            # AcquisitionLog.as_dict()["breaker"], and once is enough
+            "breaker": {k: v for k, v in breaker_summary().items() if k != "transitions"}}
 
 
 class VizierRouteError(RuntimeError):
@@ -190,7 +291,7 @@ class AcquisitionLog:
         rec = {"stage": stage, "status": status, "rows": int(rows or 0),
                "query": str(query)[:2000]}
         if error:
-            rec["error"] = str(error)[:500]
+            rec["error"] = str(error)[:2000]
         if extra:
             rec.update(extra)
         self.stages.append(rec)
@@ -204,7 +305,10 @@ class AcquisitionLog:
         return {"stages": self.stages, "n_stages": len(self.stages), "n_ok": n_ok,
                 "n_query_failed": n_fail, "n_query_returned_zero_rows": n_zero,
                 "any_query_failed": bool(n_fail > 0),
-                "total_rows": int(sum(s["rows"] for s in self.stages))}
+                "total_rows": int(sum(s["rows"] for s in self.stages)),
+                # the route ladder and the breaker that governed it, so a run
+                # that was served by (or starved by) a fallback says so
+                "routes": route_log_summary(), "breaker": breaker_summary()}
 
     def write(self, path: Path) -> None:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -222,12 +326,13 @@ def _retry(fn, retries: int = 3, label: str = "query", base_sleep: float = 4.0):
         except Exception as exc:                          # noqa: BLE001
             last = exc
             print(f"[metronome/acquire] {label} attempt {attempt + 1}/{retries} failed: {exc!r}")
-            _time.sleep(base_sleep * (attempt + 1))
+            if attempt + 1 < int(retries):       # no sleep after the last attempt
+                _time.sleep(base_sleep * (attempt + 1))
     raise RuntimeError(f"{label} failed after {retries} attempts: {last!r}")
 
 
 def tap_query(adql: str, *, url=None, retries: int = 3, fetch_fn=None,
-              allow_non_tap: bool = True) -> pd.DataFrame:
+              allow_non_tap: bool = True, tap_fn=None) -> pd.DataFrame:
     """ADQL against VizieR TAP: async first, sync on the last attempt.
 
     Every endpoint in ``VIZIER_TAP_MIRRORS`` is tried in turn before the query
@@ -244,9 +349,16 @@ def tap_query(adql: str, *, url=None, retries: int = 3, fetch_fn=None,
     :class:`VizierRouteError` with ``asu_supported=False`` rather than a guess.
 
     ``url`` may be a single endpoint or a sequence of them; the signature and
-    the raise-on-total-failure behaviour are unchanged.
+    the raise-on-total-failure behaviour are unchanged.  ``tap_fn(adql,
+    endpoint) -> DataFrame`` replaces the pyvo transport (the offline tests
+    drive the ladder and the breaker through it); the circuit breaker applies
+    to it exactly as to the default transport, so breaker behaviour is
+    testable without a socket.
     """
-    import pyvo  # noqa: PLC0415  runner-only; keeps the module importable offline
+    if tap_fn is None:
+        import pyvo  # noqa: PLC0415  runner-only; keeps the module importable offline
+    else:
+        pyvo = None
 
     if url is None:
         endpoints = list(VIZIER_TAP_MIRRORS)
@@ -265,6 +377,8 @@ def tap_query(adql: str, *, url=None, retries: int = 3, fetch_fn=None,
             continue
 
         def _go(endpoint=endpoint):
+            if tap_fn is not None:
+                return tap_fn(adql, endpoint)
             svc = pyvo.dal.TAPService(endpoint)
             try:
                 return svc.run_async(adql).to_table().to_pandas()
@@ -272,10 +386,13 @@ def tap_query(adql: str, *, url=None, retries: int = 3, fetch_fn=None,
                 print(f"[metronome/acquire] async TAP failed ({exc!r}); trying sync")
                 return svc.search(adql).to_table().to_pandas()
 
+        # A half-open endpoint gets ONE cheap probe: the point is to find out
+        # whether it is back, not to spend the retry ladder on it again.
+        n_try = 1 if breaker_state(endpoint) == STATE_HALF_OPEN else retries
         try:
-            df = _retry(_go, retries=retries, label=f"TAP query ({endpoint})")
+            df = _retry(_go, retries=n_try, label=f"TAP query ({endpoint})")
         except Exception as exc:                          # noqa: BLE001
-            _circuit_fail(endpoint)
+            _circuit_fail(endpoint, repr(exc))
             errors.append(f"{endpoint}: {exc!r}")
             attempts.append(route_note(ROUTE_TAP, endpoint, status=STATUS_FAILED,
                                        what=adql, error=repr(exc)))
@@ -283,6 +400,9 @@ def tap_query(adql: str, *, url=None, retries: int = 3, fetch_fn=None,
         _circuit_ok(endpoint)
         attempts.append(route_note(ROUTE_TAP, endpoint, status=STATUS_OK, what=adql,
                                    rows=0 if df is None else int(len(df))))
+        if df is not None:
+            df.attrs["route"] = ROUTE_TAP
+            df.attrs["endpoint"] = endpoint
         return df
     asu_supported = True
     if allow_non_tap:
@@ -324,8 +444,25 @@ def split_catalogue(name: str) -> tuple[str, str | None]:
     return cat, (tail or None)
 
 
+def _http_status(exc) -> int | None:
+    """The HTTP status behind a requests exception, when there is one."""
+    resp = getattr(exc, "response", None)
+    code = getattr(resp, "status_code", None)
+    try:
+        return int(code) if code is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 def _asu_http_text(url: str, *, timeout: float = 180.0) -> str:
-    """GET a URL as text (runner only), short-circuiting a dead endpoint."""
+    """GET a URL as text (runner only), short-circuiting a dead endpoint.
+
+    A 4xx is a fact about the REQUEST (a form this host does not serve, a
+    catalogue id it does not know), not about the host, so it is recorded as a
+    failed attempt but never counted against the endpoint: letting a 404 on
+    the ``-meta.all`` form open the breaker would take the ``-source=`` row
+    form --- the one that works --- down with it.
+    """
     import requests  # noqa: PLC0415  runner-only; keeps the module importable offline
 
     base = url.split("?", 1)[0]
@@ -336,8 +473,10 @@ def _asu_http_text(url: str, *, timeout: float = 180.0) -> str:
         r = requests.get(url, timeout=timeout,
                          headers={"User-Agent": "seti-vizier/1.0 (+github actions; astronomy)"})
         r.raise_for_status()
-    except Exception:
-        _circuit_fail(base)
+    except Exception as exc:                              # noqa: BLE001
+        status = _http_status(exc)
+        if status is None or status >= 500:
+            _circuit_fail(base, repr(exc))
         raise
     _circuit_ok(base)
     return r.text
@@ -376,6 +515,33 @@ def asu_url(catalogue: str, *, base: str = VIZIER_ASU, columns=None, max_rows: i
 def _asu_error_lines(text: str) -> list[str]:
     return [ln.strip() for ln in (text or "").splitlines()
             if ln.startswith("#***") or ln.startswith("****")]
+
+
+def _parse_column_line(line: str) -> tuple[str, str, str]:
+    """``#Column\tTpeak\t(d)\tFlare peak time\t[ucd=...]`` -> name, unit, description."""
+    cells = [c.strip() for c in str(line).split("\t") if c.strip() != ""]
+    name = unit = desc = ""
+    for c in cells[1:]:
+        if not name and not c.startswith(("(", "[")):
+            name = unquote_table(c)
+        elif c.startswith("(") and not unit:
+            unit = c.strip("()")
+        elif not c.startswith("[") and name and not desc:
+            desc = c
+    return name, unit, desc
+
+
+def _asu_column_meta(text: str) -> tuple[dict[str, str], dict[str, str]]:
+    """``({column: unit}, {column: description})`` from a body's ``#Column`` lines."""
+    units: dict[str, str] = {}
+    descs: dict[str, str] = {}
+    for ln in (text or "").splitlines():
+        if ln.startswith("#Column"):
+            name, unit, desc = _parse_column_line(ln)
+            if name:
+                units[name] = unit
+                descs[name] = desc
+    return units, descs
 
 
 def parse_asu_tsv(text: str) -> pd.DataFrame:
@@ -476,15 +642,7 @@ def parse_asu_meta(text: str) -> dict:
                 out["title"] = m.group(1)
             continue
         if ln.startswith("#Column") and cur is not None:
-            cells = [c.strip() for c in ln.split("\t") if c.strip() != ""]
-            name, unit, desc = "", "", ""
-            for c in cells[1:]:
-                if not name and not c.startswith(("(", "[")):
-                    name = unquote_table(c)
-                elif c.startswith("(") and not unit:
-                    unit = c.strip("()")
-                elif not c.startswith("[") and name and not desc:
-                    desc = c
+            name, unit, desc = _parse_column_line(ln)
             if name:
                 cur["columns"].append(name)
                 cur["units"][name] = unit
@@ -558,6 +716,86 @@ def asu_meta(catalogue: str, *, fetch_fn=None, bases=None, readme_url: str = VIZ
     return meta, attempts
 
 
+def _asu_body_names(text: str) -> list[str]:
+    """Every ``#Name:`` the ASU body claims for itself."""
+    return [unquote_table(ln.split(":", 1)[1]).strip("/") for ln in (text or "").splitlines()
+            if ln.startswith("#Name:") and ":" in ln]
+
+
+def _asu_identifies(requested: str, text: str) -> str | None:
+    """The body's own name for what it served, or ``None`` if it is not ours.
+
+    A TSV body that names a DIFFERENT catalogue than the ``-source=`` asked
+    for is not evidence that ours exists (a mirror serving a cached or
+    unrelated page), so it is rejected rather than believed.  A body with no
+    ``#Name:`` line contradicts nothing and is taken at face value.
+    """
+    want = unquote_table(requested).strip("/").lower()
+    names = _asu_body_names(text)
+    if not names:
+        return unquote_table(requested).strip("/")
+    for n in names:
+        low = n.lower()
+        if low == want or low.startswith(want + "/"):
+            return n                      # the exact table, or the table under our catalogue
+    if any(want.startswith(n.lower() + "/") for n in names):
+        return unquote_table(requested).strip("/")
+    return None
+
+
+def asu_table_exists(table: str, *, fetch_fn=None, bases=None, max_rows: int = 1
+                     ) -> tuple[dict | None, list[dict]]:
+    """Does this exact table exist, over ASU?  Ask it for ONE ROW.
+
+    The ASU interface addresses a catalogue or table as
+    ``-source=J/ApJ/906/72/table2`` and has no ``TAP_SCHEMA`` of its own, so
+    the non-TAP spelling of "does ``TAP_SCHEMA.tables`` contain X" is "ask ASU
+    for one row of ``-source=X``".  A well-formed TSV body --- a header of
+    column names, no ``#***`` error line --- IS the existence proof, and the
+    column names in that header are the table's real columns (which is all
+    discovery needs; it never interpolates a name it has not seen).
+
+    Returns ``({table_name, description, columns, units, descriptions,
+    n_rows}, attempts)`` or ``(None, attempts)``.  Every endpoint tried is in
+    ``attempts`` with its verbatim error.
+    """
+    fetch = fetch_fn or _asu_http_text
+    name = unquote_table(table)
+    attempts: list[dict] = []
+    for base in (bases or VIZIER_ASU_MIRRORS):
+        url = asu_url(name, base=base, max_rows=int(max_rows))
+        try:
+            text = fetch(url)
+        except Exception as exc:                          # noqa: BLE001
+            attempts.append(route_note(ROUTE_ASU, base, status=STATUS_FAILED,
+                                       what=f"exists? {name}", error=repr(exc)))
+            continue
+        errs = _asu_error_lines(text)
+        df = parse_asu_tsv(text)
+        cols = [str(c) for c in df.columns]
+        if not cols:
+            attempts.append(route_note(
+                ROUTE_ASU, base, status=STATUS_FAILED, what=f"exists? {name}",
+                error="; ".join(errs) or "no column header in the ASU body"))
+            continue
+        served = _asu_identifies(name, text)
+        if served is None:
+            attempts.append(route_note(
+                ROUTE_ASU, base, status=STATUS_FAILED, what=f"exists? {name}",
+                error=f"the ASU body names {_asu_body_names(text)}, not {name!r}"))
+            continue
+        units, descs = _asu_column_meta(text)
+        title = next((ln.split(":", 1)[1].strip() for ln in text.splitlines()
+                      if ln.startswith("#Title:")), "")
+        rec = {"table_name": served, "description": title, "columns": cols,
+               "units": {c: units.get(c, "") for c in cols},
+               "descriptions": {c: descs.get(c, "") for c in cols}, "n_rows": None}
+        attempts.append(route_note(ROUTE_ASU, base, status=STATUS_OK, what=f"exists? {name}",
+                                   rows=int(len(df))))
+        return rec, attempts
+    return None, attempts
+
+
 def asu_catalogue_tables(pattern: str, *, fetch_fn=None, bases=None, limit: int = 60
                          ) -> tuple[pd.DataFrame, list[dict]]:
     """``table_name, description, columns`` for every table under ``pattern``.
@@ -565,18 +803,42 @@ def asu_catalogue_tables(pattern: str, *, fetch_fn=None, bases=None, limit: int 
     The non-TAP replacement for ``SELECT ... FROM TAP_SCHEMA.tables WHERE
     table_name LIKE '%pattern%'``: it answers the only question discovery
     really asks --- does this catalogue exist, and what tables does it have?
+
+    Order of routes.  When ``pattern`` names an EXACT table
+    (``J/ApJ/906/72/table2``, which is how every ARC catalogue is asserted),
+    the one-row existence check (:func:`asu_table_exists`) comes first: it is
+    the ASU form most likely to answer, and its header gives the real columns.
+    Otherwise --- and if that fails --- the catalogue's ``-meta.all`` metadata
+    and then its ReadMe are tried, and a bare catalogue id finally falls back
+    to a one-row request on the catalogue itself.  ARC's 2026-09-14 dispatch
+    failed exactly here: with TAP 503ing, ``-meta.all`` was the ONLY non-TAP
+    route and three catalogues resolved to nothing at all.
     """
     pat = unquote_table(pattern).strip("%")
-    meta, attempts = asu_meta(pat, fetch_fn=fetch_fn, bases=bases)
-    rows = []
-    for name, blk in meta.get("tables", {}).items():
-        if pat and pat.strip("/").lower() not in name.lower():
-            continue
-        rows.append({"table_name": name, "description": blk.get("description", ""),
-                     "columns": list(blk.get("columns") or []),
-                     "units": dict(blk.get("units") or {}),
-                     "descriptions": dict(blk.get("descriptions") or {}),
-                     "n_rows": blk.get("n_rows")})
+    _cat, tail = split_catalogue(pat)
+    attempts: list[dict] = []
+    rows: list[dict] = []
+    if tail:
+        rec, att = asu_table_exists(pat, fetch_fn=fetch_fn, bases=bases)
+        attempts.extend(att)
+        if rec is not None:
+            rows.append(rec)
+    if not rows:
+        meta, meta_attempts = asu_meta(pat, fetch_fn=fetch_fn, bases=bases)
+        attempts.extend(meta_attempts)
+        for name, blk in meta.get("tables", {}).items():
+            if pat and pat.strip("/").lower() not in name.lower():
+                continue
+            rows.append({"table_name": name, "description": blk.get("description", ""),
+                         "columns": list(blk.get("columns") or []),
+                         "units": dict(blk.get("units") or {}),
+                         "descriptions": dict(blk.get("descriptions") or {}),
+                         "n_rows": blk.get("n_rows")})
+    if not rows and not tail:
+        rec, att = asu_table_exists(pat, fetch_fn=fetch_fn, bases=bases)
+        attempts.extend(att)
+        if rec is not None:
+            rows.append(rec)
     df = pd.DataFrame(rows, columns=["table_name", "description", "columns", "units",
                                      "descriptions", "n_rows"])
     if len(df) > int(limit):
@@ -1416,12 +1678,14 @@ def fetch_variable_context(positions: pd.DataFrame, catalogues: dict, *, cone_fn
     return out, reached
 
 
-__all__ = ["ROUTE_ASTROQUERY", "ROUTE_ASU", "ROUTE_NONE", "ROUTE_README", "ROUTE_TAP",
-           "ROUTE_LOG", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "VIZIER_ASU",
+__all__ = ["BREAKER_LOG", "ROUTE_ASTROQUERY", "ROUTE_ASU", "ROUTE_NONE", "ROUTE_README",
+           "ROUTE_TAP", "ROUTE_LOG", "STATE_CLOSED", "STATE_HALF_OPEN", "STATE_OPEN",
+           "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "VIZIER_ASU",
            "VIZIER_ASU_MIRRORS", "VIZIER_README", "VIZIER_TAP", "VIZIER_TAP_MIRRORS",
            "AdqlNotTranslatable", "AcquisitionLog", "DiscoveredTable", "VizierResult",
            "VizierRouteError", "astroquery_rows", "asu_catalogue_tables", "asu_meta",
-           "asu_query", "asu_rows", "asu_table_columns", "asu_url", "count_rows",
+           "asu_query", "asu_rows", "asu_table_columns", "asu_table_exists", "asu_url",
+           "breaker_state", "breaker_summary", "count_rows",
            "discover_and_fetch_rotation", "discover_event_table", "fetch_events",
            "fetch_positions_by_id", "fetch_variable_context", "list_tables",
            "parse_asu_meta", "parse_asu_tsv", "parse_readme", "reset_route_state",

@@ -13,6 +13,21 @@
 # roles it needs and falls back to the keyword search when the seed is dead.
 # Nothing is queried by a column name that was not seen in TAP_SCHEMA.columns.
 # TAPVizieR table names carry literal double quotes; the helpers quote them.
+#
+# ACCESS PATH (shared helper: src/seti/metronome/acquire.py).  Each id is asked
+# of TAPVizieR first, then of every mirror in config/metronome.yaml
+# §vizier_routes.  When NO TAP host answers -- TAPVizieR 503'd for hours on
+# 2026-09-13/14 -- the id is resolved over VizieR's NON-TAP ASU interface
+# instead: ASU has no TAP_SCHEMA, so existence is established by asking for ONE
+# ROW of `-source=<id>` and the real column names are read off the TSV header.
+# The rows are then pulled the same way and every catalogue records the route
+# that served it (`route: asu_tsv`).  A run where nothing answers stays
+# QUERY_FAILED with every endpoint and its verbatim error on the record.
+access:
+  # verify: the ASU parameter spelling is ASSERTED from the VizieR ASU
+  # documentation and unconfirmed from the sandbox (no egress); the canonical
+  # copy, also marked verify, is config/metronome.yaml §vizier_routes.asu_params.
+  non_tap_existence_check: "-source=<table>&-out.max=1&-out.all&-out.form=TSV"
 
 physics:
   b_gauss: 3000.0             # sunspot-umbra field; Okamoto+2021's adopted value

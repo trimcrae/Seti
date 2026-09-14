@@ -589,6 +589,18 @@ def parse_asu_tsv(text: str) -> pd.DataFrame:
     header = [unquote_table(c) for c in body[header_i].split("\t")]
     header = [h if h else (meta_cols[i] if i < len(meta_cols) else f"col{i}")
               for i, h in enumerate(header)]
+    # The ``#Column`` block is the service's OWN column list and is
+    # authoritative; the positional guess above (relative to the dashed rule)
+    # picks the units or the description row whenever a table's preamble has a
+    # different number of lines.  That is why ARC's run 34796... resolved ZERO
+    # roles on tables that plainly carry a KIC column -- McQuillan+2014 (14
+    # columns), Tu+2022 (11), Guenther+2020 (34, 30).  When the metadata names
+    # match the table's width, they win.
+    widest = max((len(ln.split("\t")) for ln in body[data_from:] if ln.strip()), default=0)
+    if meta_cols and widest and len(meta_cols) == widest:
+        if len(header) != widest or not all(
+                h == m for h, m in zip(header, meta_cols, strict=False)):
+            header = list(meta_cols)
     # VizieR repeats a column name in some tables (McQuillan+2014 and
     # Guenther+2020 both did, and both failed ARC's run 34792280736 with
     # TypeError('arg must be a list, tuple, 1-d array, or Series') -- a

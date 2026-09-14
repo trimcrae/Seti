@@ -29,6 +29,21 @@ sample:
   # AllWISE mirror column names; the probe stage re-resolves them (ext_flag vs ext_flg).
   allwise_columns: {designation: designation, ext_flag: ext_flag, ph_qual: ph_qual,
                     cc_flags: cc_flags, var_flag: var_flag}
+  # QUERY PLAN.  Run 34787803862 asked for TOP 5 inside a 1-degree cone and was
+  # killed by `canceling statement due to statement timeout` four times: five
+  # rows is not a volume problem, it is a plan problem.  The flat WHERE over the
+  # three-table join let the planner start from the ~750-million-row AllWISE
+  # mirror; the cone now goes in an inner sub-select on gaia_source ALONE and
+  # AllWISE is joined to that small result.  "auto" tries the shapes in order
+  # (inner_cone, inner_cone_postfilter, flat) and keeps the one that answered;
+  # probe.json's gaia_shape_working seeds the sample stage.  The science cuts are
+  # identical in all three (src/seti/ignition/sample.py: gaia_predicates,
+  # allwise_predicates) --- only where they are written changes.
+  query_shape: auto
+  inner_top_multiplier: 200   # inner TOP = cap x this (capped below); never on COUNT(*)
+  inner_top_max: 2000000
+  query_timeout_s: 1200.0     # per attempt; bulk queries run async-only
+
   # Fields for mode=fields: high ecliptic latitude (NEOWISE visits pile up
   # toward the ecliptic poles, so the per-star epoch count is highest) AND
   # |b| > 15 (cirrus and crowding suppressed at selection).  The north-ecliptic
@@ -56,6 +71,18 @@ sample:
     - {ra: 90.0, dec: -70.0, radius_deg: 1.0}
     - {ra: 78.0, dec: -63.5, radius_deg: 1.0}
     - {ra: 102.0, dec: -65.0, radius_deg: 1.0}
+
+probe:
+  # The probe spent 1,490 s of run 34787803862 on four retries of a query that
+  # could not succeed.  A broken plan now costs minutes: each candidate shape
+  # gets budget_s, after which it is recorded TIMED_OUT with its elapsed seconds
+  # and the probe moves to the next shape.
+  budget_s: 480.0             # per candidate query shape (~8 min)
+  total_budget_s: 1500.0      # the whole probe stage
+  columns_timeout_s: 120.0    # the AllWISE column peek
+  neowise_timeout_s: 300.0    # each NEOWISE route test
+  cap: 5                      # TOP n for the join test
+  shapes: [inner_cone, inner_cone_postfilter, flat]
 
 acquire:
   route: auto                 # auto (from probe.json) | upload | field | cone

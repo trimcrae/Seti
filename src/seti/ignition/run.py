@@ -53,7 +53,18 @@ from .acquire import (
     epochs_to_series,
 )
 from .rise import DEFAULT_RISE, assess_series, sensitivity_from_injections
-from .sample import DEFAULT_SAMPLE, build_query, fetch_parent
+from .sample import (
+    DEFAULT_SAMPLE,
+    QUERY_FAILED,
+    QUERY_TIMED_OUT,
+    SHAPES,
+    QueryTimeout,
+    build_query,
+    call_with_timeout,
+    fetch_parent,
+    run_gaia_query,
+    unwrap_result,
+)
 from .vet import DEFAULT_VET, load_optical_series, summarise, vet_star
 
 VERDICT_NO_DATA = "NO_DATA_REACHED"
@@ -62,11 +73,23 @@ VERDICT_CANDIDATES = "IGNITION_CANDIDATES"
 DEGRADED = "DEGRADED"
 STAGES = ("probe", "sample", "acquire", "screen", "assess")
 
+#: The probe's wall-clock discipline.  Run 34787803862 spent 1,490 s on four
+#: retries of a query that could not succeed; a broken plan must cost minutes.
+DEFAULT_PROBE: dict = {
+    "budget_s": 480.0,              # per candidate query shape
+    "total_budget_s": 1500.0,       # the whole probe stage
+    "columns_timeout_s": 120.0,     # the AllWISE column peek
+    "neowise_timeout_s": 300.0,     # each NEOWISE route test
+    "cap": 5,                       # TOP n for the join test
+    "shapes": list(SHAPES),
+}
+
 DEFAULTS: dict = {
     "sample": dict(DEFAULT_SAMPLE),
     "acquire": dict(DEFAULT_ACQUIRE),
     "rise": dict(DEFAULT_RISE),
     "vet": dict(DEFAULT_VET),
+    "probe": dict(DEFAULT_PROBE),
     "sensitivity": {"amps_mag": [0.1, 0.2, 0.4], "over_yr": 10.0, "max_stars": 200},
 }
 
@@ -120,6 +143,15 @@ def _write(path: Path, obj) -> None:
     path.write_text(json.dumps(obj, indent=2, default=_json_default))
 
 
+def _budget(want: float | None, left: float | None) -> float | None:
+    """The smaller of a step's own timeout and what is left of the stage budget."""
+    want = float(want) if want else None
+    if left is None:
+        return want
+    left = max(float(left), 0.0)
+    return left if want is None else min(want, left)
+
+
 def _tag(shard: int, n_shards: int) -> str:
     return f"s{int(shard)}of{int(n_shards)}"
 
@@ -138,17 +170,87 @@ def parse_shard(s: str | None) -> tuple[int, int]:
 # ---------------------------------------------------------------------------
 # probe
 # ---------------------------------------------------------------------------
+def _probe_query(query_fn, adql: str, timeout_s: float | None,
+                 label: str) -> tuple[pd.DataFrame, dict]:
+    """One time-boxed archive call.  Never raises, never hangs, always records.
+
+    The returned record carries ``status`` (``OK`` / ``QUERY_RETURNED_ZERO_ROWS``
+    / ``QUERY_FAILED`` / ``TIMED_OUT``), ``elapsed_s``, the verbatim ``error``,
+    and --- when the default transport ran it --- which queue served it.
+    """
+    t0 = _time.monotonic()
+    meta: dict = {"timeout_s": (round(float(timeout_s), 1) if timeout_s else None)}
+
+    def _default(q: str):
+        return run_gaia_query(q, label=label, timeout_s=timeout_s, tag="ignition",
+                              deadline=(t0 + float(timeout_s)) if timeout_s else None)
+
+    try:
+        res = call_with_timeout(query_fn or _default, adql, timeout_s)
+    except QueryTimeout as exc:
+        meta.update(status=QUERY_TIMED_OUT, error=repr(exc),
+                    elapsed_s=round(_time.monotonic() - t0, 1))
+        return pd.DataFrame(), meta
+    except Exception as exc:                           # noqa: BLE001
+        meta.update(status=QUERY_FAILED, error=repr(exc),
+                    elapsed_s=round(_time.monotonic() - t0, 1))
+        return pd.DataFrame(), meta
+    df, qrec = unwrap_result(res)
+    df = df.rename(columns={c: str(c).lower() for c in df.columns})
+    meta["elapsed_s"] = round(_time.monotonic() - t0, 1)
+    for k in ("transport", "queue", "attempts"):
+        if qrec.get(k) is not None:
+            meta[k] = qrec[k]
+    if qrec.get("status") in (QUERY_FAILED, QUERY_TIMED_OUT):
+        meta.update(status=qrec["status"], error=qrec.get("error"))
+        return pd.DataFrame(), meta
+    meta.update(status=("OK" if len(df) else "QUERY_RETURNED_ZERO_ROWS"), n_rows=int(len(df)))
+    return df, meta
+
+
+def _timeboxed(fn, timeout_s: float | None, label: str):
+    """Call ``fn()`` under the same time-box; return ``(value, record_or_None)``."""
+    t0 = _time.monotonic()
+    try:
+        val = call_with_timeout(lambda _: fn(), None, timeout_s)
+    except QueryTimeout as exc:
+        return None, {"status": QUERY_TIMED_OUT, "error": repr(exc), "label": label,
+                      "elapsed_s": round(_time.monotonic() - t0, 1),
+                      "timeout_s": (round(float(timeout_s), 1) if timeout_s else None)}
+    except Exception as exc:                           # noqa: BLE001
+        return None, {"status": QUERY_FAILED, "error": repr(exc), "label": label,
+                      "elapsed_s": round(_time.monotonic() - t0, 1)}
+    return val, None
+
+
 def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
                 upload_fn=None) -> dict:
-    """One minimal call per route; decides the acquire architecture."""
-    rep: dict = {"stage": "probe", "generated_utc": _now()}
+    """One minimal call per route; decides the acquire architecture.
+
+    The Gaia join is tried as each of :data:`~seti.ignition.sample.SHAPES` in
+    order, under a per-shape wall-clock budget, and the shape that answered is
+    written to ``probe.json`` as ``gaia_shape_working`` so the sample stage does
+    not re-derive it.  Every shape that did not answer keeps its verbatim error
+    and the exact ADQL that was sent.  ``probe.json`` is written whatever
+    happens --- a green run that commits nothing is a lost run.
+    """
+    t_stage = _time.monotonic()
+    pc = {**DEFAULT_PROBE, **(conf.get("probe") or {})}
+    total_budget = float(pc.get("total_budget_s") or 0.0) or None
+    shape_budget = float(pc.get("budget_s") or 0.0) or None
+    deadline = (t_stage + total_budget) if total_budget else None
+
+    def _left() -> float | None:
+        return None if deadline is None else deadline - _time.monotonic()
+
+    rep: dict = {"stage": "probe", "generated_utc": _now(),
+                 "budget": {"per_shape_s": shape_budget, "total_s": total_budget}}
     sc = conf["sample"]
-    if query_fn is None:
-        from .sample import gaia_query as query_fn
 
     # 1. AllWISE mirror column names (ext_flag vs ext_flg etc.).
-    try:
-        peek = query_fn("SELECT TOP 1 * FROM gaiadr1.allwise_original_valid")
+    peek, meta = _probe_query(query_fn, "SELECT TOP 1 * FROM gaiadr1.allwise_original_valid",
+                              _budget(pc.get("columns_timeout_s"), _left()), "allwise_columns")
+    if meta["status"] in ("OK", "QUERY_RETURNED_ZERO_ROWS"):
         have = {str(c).lower() for c in peek.columns}
         rep["allwise_columns_seen"] = sorted(have)[:80]
         resolved = dict(sc.get("allwise_columns") or {})
@@ -162,53 +264,79 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
                     break
         rep["allwise_columns_resolved"] = resolved
         sc = {**sc, "allwise_columns": resolved}
-    except Exception as exc:                           # noqa: BLE001
-        rep["allwise_columns_resolved"] = {"status": "QUERY_FAILED", "error": repr(exc)}
+    else:
+        rep["allwise_columns_resolved"] = meta
 
-    # 2. The join itself, TOP 5, on the first unit.
+    # 2. The join itself, TOP n, on the first unit --- one candidate shape at a time.
     fields = list(sc.get("fields") or [])
     unit = {"field": fields[0]} if (sc.get("mode", "fields") == "fields" and fields) else {}
-    q = build_query(sc, cap=5, **unit)
-    try:
-        df = query_fn(q)
-        df = df.rename(columns={c: str(c).lower() for c in df.columns})
-        rep["gaia_join"] = {"status": "OK" if len(df) else "QUERY_RETURNED_ZERO_ROWS",
-                            "n_rows": int(len(df)), "query": q[:2000],
-                            "columns": [str(c) for c in df.columns][:60]}
-    except Exception as exc:                           # noqa: BLE001
-        df = pd.DataFrame()
-        rep["gaia_join"] = {"status": "QUERY_FAILED", "error": repr(exc), "query": q[:2000]}
+    cap = int(pc.get("cap") or 5)
+    shapes = [s for s in (pc.get("shapes") or SHAPES) if s in SHAPES] or list(SHAPES)
+    shape_recs: list[dict] = []
+    working: str | None = None
+    df = pd.DataFrame()
+    for sh in shapes:
+        q = build_query(sc, cap=cap, shape=sh, **unit)
+        entry: dict = {"shape": sh, "query": q[:4000]}
+        left = _left()
+        if left is not None and left <= 0:
+            entry.update(status="NOT_ATTEMPTED",
+                         reason=f"probe total budget of {total_budget:.0f} s exhausted",
+                         elapsed_s=round(_time.monotonic() - t_stage, 1))
+            shape_recs.append(entry)
+            print(f"[ignition] probe: shape={sh} NOT_ATTEMPTED (budget exhausted)")
+            continue
+        d, meta = _probe_query(query_fn, q, _budget(shape_budget, left), f"gaia_join[{sh}]")
+        entry.update(meta)
+        shape_recs.append(entry)
+        print(f"[ignition] probe: shape={sh} {entry['status']} "
+              f"in {entry.get('elapsed_s')} s (queue={entry.get('queue')})")
+        if entry["status"] == "OK":
+            working, df = sh, d
+            entry["columns"] = [str(c) for c in d.columns][:60]
+            break
+        # A shape that answered with zero rows has still answered; the next shape
+        # is strictly more permissive, so it is worth the remaining budget.
+
+    rep["gaia_shapes"] = shape_recs
+    rep["gaia_shape_working"] = working
+    rep["gaia_shapes_tried"] = [s["shape"] for s in shape_recs]
+    ok = [s for s in shape_recs if s.get("status") == "OK"]
+    zero = [s for s in shape_recs if s.get("status") == "QUERY_RETURNED_ZERO_ROWS"]
+    rep["gaia_join"] = (ok or zero or shape_recs or [{"status": "NOT_ATTEMPTED"}])[0]
 
     # 3. NEOWISE per-star cone on a resolved star (a bare coordinate tests nothing).
     if cone_fn is None:
         from .acquire import fetch_neowise_cone as cone_fn
+    nw_budget = _budget(pc.get("neowise_timeout_s"), _left())
     if len(df):
         s = df.iloc[0]
-        try:
-            r = cone_fn(float(s["ra"]), float(s["dec"]), float(s.get("pmra", 0.0) or 0.0),
-                        float(s.get("pmdec", 0.0) or 0.0),
-                        radius_arcsec=float(conf["acquire"]["cone_radius_arcsec"]))
-            rep["neowise_cone"] = r.to_ledger() | {"source_id": str(s["source_id"])}
-        except Exception as exc:                       # noqa: BLE001
-            rep["neowise_cone"] = {"status": "QUERY_FAILED", "error": repr(exc)}
+        r, err = _timeboxed(
+            lambda: cone_fn(float(s["ra"]), float(s["dec"]), float(s.get("pmra", 0.0) or 0.0),
+                            float(s.get("pmdec", 0.0) or 0.0),
+                            radius_arcsec=float(conf["acquire"]["cone_radius_arcsec"])),
+            nw_budget, "neowise_cone")
+        rep["neowise_cone"] = err or (r.to_ledger() | {"source_id": str(s["source_id"])})
     else:
-        rep["neowise_cone"] = {"status": "NOT_ATTEMPTED", "reason": "no Gaia row to resolve"}
+        rep["neowise_cone"] = {"status": "NOT_ATTEMPTED",
+                               "reason": "no Gaia row to resolve "
+                                         f"(no query shape answered: {rep['gaia_shapes_tried']})"}
 
     # 4. The TAP_UPLOAD join, two stars.
     if upload_fn is None:
         from .acquire import fetch_neowise_upload as upload_fn
-    if len(df) >= 1:
-        try:
-            r = upload_fn(df.head(2), radius_arcsec=float(conf["acquire"]["cone_radius_arcsec"]))
-            rep["neowise_upload"] = r.to_ledger()
-        except Exception as exc:                       # noqa: BLE001
-            rep["neowise_upload"] = {"status": "QUERY_FAILED", "error": repr(exc)}
+    if len(df):
+        r, err = _timeboxed(
+            lambda: upload_fn(df.head(2),
+                              radius_arcsec=float(conf["acquire"]["cone_radius_arcsec"])),
+            _budget(pc.get("neowise_timeout_s"), _left()), "neowise_upload")
+        rep["neowise_upload"] = err or r.to_ledger()
     else:
         rep["neowise_upload"] = {"status": "NOT_ATTEMPTED", "reason": "no Gaia row to upload"}
 
     cone_ok = rep["neowise_cone"].get("status") == "OK"
     up_ok = rep["neowise_upload"].get("status") == "OK"
-    gaia_ok = rep["gaia_join"].get("status") == "OK"
+    gaia_ok = bool(working)
     rep["neowise_route_recommended"] = ("upload" if up_ok else
                                         "field" if (cone_ok and fields) else
                                         "cone" if cone_ok else "none")
@@ -216,8 +344,10 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
                       "GAIA_AND_NEOWISE_REACHABLE" if (gaia_ok and cone_ok) else
                       "GAIA_ONLY" if gaia_ok else
                       "NEOWISE_ONLY" if cone_ok else VERDICT_NO_DATA)
+    rep["elapsed_s"] = round(_time.monotonic() - t_stage, 1)
     _write(out / "probe.json", rep)
-    print(f"[ignition] probe: {rep['verdict']}; route={rep['neowise_route_recommended']}")
+    print(f"[ignition] probe: {rep['verdict']}; route={rep['neowise_route_recommended']}; "
+          f"gaia_shape={working}; {rep['elapsed_s']} s")
     return rep
 
 
@@ -228,18 +358,22 @@ def stage_sample(conf: dict, out: Path, *, n_shards: int = 1, max_stars: int | N
                  query_fn=None, mode: str | None = None) -> dict:
     sc = dict(conf["sample"])
     probe_p = out / "probe.json"
+    shape = None
     if probe_p.exists():
         try:
             pr = json.loads(probe_p.read_text())
             res = pr.get("allwise_columns_resolved")
             if isinstance(res, dict) and "status" not in res:
                 sc["allwise_columns"] = res
+            # The probe already paid for finding a plan that returns; use it.
+            if pr.get("gaia_shape_working") in SHAPES:
+                shape = pr["gaia_shape_working"]
         except Exception:                              # noqa: BLE001
             pass
     stars, rep = fetch_parent(sc, mode=mode, n_shards=n_shards,
-                              cap_per_shard=max_stars or None, query_fn=query_fn)
+                              cap_per_shard=max_stars or None, query_fn=query_fn, shape=shape)
     rep = {"stage": "sample", "generated_utc": _now(), "n_shards_planned": int(n_shards),
-           **rep}
+           "query_shape_from_probe": shape, **rep}
     out.mkdir(parents=True, exist_ok=True)
     if len(stars):
         stars.to_parquet(out / "parent.parquet", index=False)
@@ -659,6 +793,6 @@ if __name__ == "__main__":                            # pragma: no cover
     raise SystemExit(main())
 
 
-__all__ = ["DEFAULTS", "STAGES", "ignition_run", "load_ignition_config", "main", "parse_shard",
+__all__ = ["DEFAULTS", "DEFAULT_PROBE", "STAGES", "ignition_run", "load_ignition_config", "main", "parse_shard",
            "screen_epochs", "shard_rows", "stage_acquire", "stage_assess", "stage_probe",
            "stage_sample", "stage_screen"]

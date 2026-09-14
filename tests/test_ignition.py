@@ -10,6 +10,7 @@ excess rises in < 1 yr and decays, and the shape test is what separates them.
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 import numpy as np
@@ -42,8 +43,21 @@ from seti.ignition.run import (
     screen_epochs,
     shard_rows,
     stage_assess,
+    stage_sample,
 )
-from seti.ignition.sample import build_query, fetch_parent, parallax_shells, select_parent
+from seti.ignition.sample import (
+    GAIA_TRANSPORTS,
+    SHAPES,
+    GaiaQueryFailed,
+    allwise_predicates,
+    build_query,
+    fetch_parent,
+    gaia_predicates,
+    inner_top,
+    parallax_shells,
+    run_gaia_query,
+    select_parent,
+)
 from seti.ignition.vet import (
     in_star_forming_region,
     optical_flatness,
@@ -310,20 +324,55 @@ def test_positions_are_propagated_to_the_neowise_epoch():
 # The sample
 # --------------------------------------------------------------------------
 def test_gaia_query_carries_every_cut_and_the_subsampling():
-    q = build_query(plx_lo=3.0, plx_hi=4.0, shard=2, n_shards=8, stride=3, cap=None)
-    for frag in ("phot_g_mean_mag < 14.5", "parallax > 3.0", "parallax_over_error > 10.0",
-                 "ABS(g.b) > 15.0", "ruwe < 1.4", "phot_variable_flag != 'VARIABLE'",
-                 "bp_rp > 0.6", "bp_rp < 2.5", "5 * LOG10(g.parallax) - 10",
-                 "w.w1mpro - w.w2mpro < 0.15", "w.w1mpro - w.w2mpro > -0.1", "ext_flag = 0",
-                 "MOD(g.random_index, 24) = 2", "allwise_best_neighbour",
-                 "allwise_original_valid", "g.parallax >= 3.0", "g.parallax < 4.0"):
-        assert frag in q, frag
-    assert "LOWER(" not in q
-    assert "TOP" not in q
-    assert build_query(count_only=True).startswith("SELECT COUNT(*)")
+    """Every science cut is in every shape; only the alias and the level move."""
+    for shape, a in (("inner_cone", "gs"), ("inner_cone_postfilter", "gs"), ("flat", "g")):
+        q = build_query(plx_lo=3.0, plx_hi=4.0, shard=2, n_shards=8, stride=3, cap=None,
+                        shape=shape)
+        for frag in (f"{a}.phot_g_mean_mag < 14.5", f"{a}.parallax > 3.0",
+                     f"{a}.parallax_over_error > 10.0", f"ABS({a}.b) > 15.0",
+                     f"{a}.ruwe < 1.4", f"{a}.phot_variable_flag != 'VARIABLE'",
+                     f"{a}.bp_rp > 0.6", f"{a}.bp_rp < 2.5", f"5 * LOG10({a}.parallax) - 10",
+                     f"MOD({a}.random_index, 24) = 2", f"{a}.parallax >= 3.0",
+                     f"{a}.parallax < 4.0", "allwise_best_neighbour",
+                     "allwise_original_valid"):
+            assert frag in q, (shape, frag)
+        assert "LOWER(" not in q
+        assert "TOP" not in q                       # no cap: nothing is truncated anywhere
+        # The AllWISE cuts are SQL in two shapes and a pandas post-filter in the third.
+        wise = ("w.w1mpro - w.w2mpro < 0.15", "w.w1mpro - w.w2mpro > -0.1", "w.ext_flag = 0",
+                "w.cc_flags = '0000'")
+        assert all((f in q) is (shape != "inner_cone_postfilter") for f in wise), shape
+        assert build_query(count_only=True, shape=shape).startswith("SELECT COUNT(*)")
     qf = build_query(field={"ra": 266.0, "dec": 65.0, "radius_deg": 1.0}, cap=20000)
     assert "CIRCLE('ICRS', 266.0, 65.0, 1.0)" in qf and "SELECT TOP 20000" in qf
     assert parallax_shells()[0] == (3.0, 4.0)
+
+
+def test_the_inner_shapes_cut_the_cone_before_the_allwise_join():
+    """The plan fix: the cone is applied to gaia_source ALONE, then AllWISE is joined."""
+    field = {"ra": 266.0, "dec": 65.0, "radius_deg": 1.0}
+    assert SHAPES[0] == "inner_cone" and SHAPES[-1] == "flat"
+    q = build_query(field=field, cap=5)                      # the default shape
+    inner = q[q.index("FROM (") + 6:q.index(") AS g")]
+    assert "gaiadr3.gaia_source AS gs" in inner
+    assert "CIRCLE('ICRS', 266.0, 65.0, 1.0)" in inner       # the cone is INSIDE
+    assert "allwise" not in inner and "w." not in inner      # AllWISE is NOT
+    inner_where = inner[inner.index("WHERE "):]
+    assert inner_where.index("CIRCLE(") < inner_where.index("gs.phot_g_mean_mag")
+    # The join and the w. predicates hang off the sub-select, not off the base table.
+    outer = q[q.index(") AS g"):]
+    assert "JOIN gaiadr3.allwise_best_neighbour" in outer
+    assert outer.index("WHERE w.w1mpro") > outer.index("allwise_original_valid")
+    # The flat shape (what timed out) has no sub-select at all.
+    assert "FROM (" not in build_query(field=field, cap=5, shape="flat")
+    # Identical science: same predicate set in every shape, only the alias differs.
+    sets = [{p.replace("gs.", "g.") for p in gaia_predicates(field=field)} | set(
+        allwise_predicates()) for _ in SHAPES]
+    assert sets[0] == sets[1] == sets[2]
+    # The inner TOP only ever bounds a capped query, and never a COUNT(*).
+    assert inner_top(None, None) is None
+    assert inner_top({}, 5) == 1000
+    assert "TOP" not in build_query(field=field, count_only=True)
 
 
 def _gaia_rows(n=6, seed=0):
@@ -386,7 +435,8 @@ def test_fetch_parent_reports_the_denominator_and_subsample_fraction():
     stars2, rep2 = fetch_parent({}, mode="allsky", n_shards=1, cap_per_shard=8, query_fn=fake)
     assert rep2["status"] == "OK"
     assert all(u["stride"] >= 1 for u in rep2["per_unit"])
-    assert any("MOD(g.random_index" in q for q in fake.queries)
+    assert any("MOD(gs.random_index" in q for q in fake.queries)
+    assert rep2["query_shape_used"] == "inner_cone"      # the first shape answered
 
 
 def test_fetch_parent_separates_failure_from_zero_rows():
@@ -694,6 +744,179 @@ def test_upload_route_groups_by_uploaded_id(tmp_path):
     assert roll["n_ok"] == 3 and len(store.done) == 3
 
 
+# --------------------------------------------------------------------------
+# The query plan: shapes, the transport ladder, and the probe's budget
+# --------------------------------------------------------------------------
+_TIMEOUT_500 = ("HTTPError('Error 500:\\nSQL exception: ERROR: canceling statement due to "
+                "statement timeout')")
+
+
+def _shape_of(adql: str) -> str:
+    """Recover which of SHAPES an ADQL string is, the way a reader would."""
+    if "FROM (" not in adql:
+        return "flat"
+    return "inner_cone" if "WHERE w.w1mpro" in adql else "inner_cone_postfilter"
+
+
+class _ShapeGaia:
+    """A Gaia stand-in that answers only the shapes it was told to answer.
+
+    The archive's real behaviour on run 34787803862: the flat three-table join
+    is killed by the statement timeout whatever the row cap, so the only way to
+    get an answer is to send a different shape.
+    """
+
+    def __init__(self, answers=("inner_cone",), n=3, error=_TIMEOUT_500, delay_s=0.0,
+                 delay_shapes=()):
+        self.answers = tuple(answers)
+        self.n, self.error = n, error
+        self.delay_s, self.delay_shapes = float(delay_s), tuple(delay_shapes)
+        self.queries: list[str] = []
+        self.shapes: list[str] = []
+
+    def __call__(self, adql):
+        self.queries.append(adql)
+        if adql.lstrip().startswith("SELECT TOP 1 *"):        # the AllWISE column peek
+            return pd.DataFrame({c: [0] for c in ("designation", "ext_flag", "ph_qual",
+                                                  "cc_flags", "w1mpro", "w2mpro")})
+        shape = _shape_of(adql)
+        self.shapes.append(shape)
+        if shape in self.delay_shapes:
+            time.sleep(self.delay_s)
+        if shape not in self.answers:
+            raise RuntimeError(self.error)
+        if adql.startswith("SELECT COUNT"):
+            return pd.DataFrame({"n": [self.n * 10]})
+        return _gaia_rows(self.n)
+
+
+def _upload_fails(*_a, **_k):
+    return QueryResult(label="u", service="irsa", status="QUERY_FAILED", error="synthetic")
+
+
+def test_probe_tries_the_inner_cone_shape_before_the_flat_one_and_records_it(tmp_path):
+    fake = _ShapeGaia(answers=("inner_cone",))
+    rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(), query_fn=fake,
+                       cone_fn=_cone_factory(), upload_fn=_upload_fails)
+    assert fake.shapes[0] == "inner_cone"                  # first, before anything flat
+    assert "flat" not in fake.shapes                       # a shape that answers ends the ladder
+    assert rep["gaia_shape_working"] == "inner_cone"
+    assert [s["shape"] for s in rep["gaia_shapes"]] == ["inner_cone"]
+    assert rep["gaia_shapes"][0]["status"] == "OK"
+    assert "FROM (" in rep["gaia_shapes"][0]["query"]
+    assert rep["gaia_join"]["status"] == "OK"
+    saved = json.loads((tmp_path / "probe.json").read_text())
+    assert saved["gaia_shape_working"] == "inner_cone"     # on disk, for the next run
+    assert saved["budget"]["per_shape_s"] and saved["budget"]["total_s"]
+
+
+def test_the_sample_stage_reuses_the_shape_the_probe_recorded(tmp_path):
+    """The probe already paid for finding a plan that returns; do not re-derive it."""
+    (tmp_path / "probe.json").write_text(json.dumps(
+        {"gaia_shape_working": "inner_cone_postfilter"}))
+    fake = _ShapeGaia(answers=("inner_cone_postfilter",))
+    rep = stage_sample(_config_for_tests(), tmp_path, n_shards=1, query_fn=fake)
+    assert fake.shapes[0] == "inner_cone_postfilter"       # tried first, not third
+    assert rep["query_shape_from_probe"] == "inner_cone_postfilter"
+    assert rep["query_shape_used"] == "inner_cone_postfilter"
+    assert rep["status"] == "OK" and rep["n_after_local_cuts"] == 3
+    # The AllWISE cuts were not in the SQL, so the pandas post-filter carried them.
+    assert all("w.w1mpro - w.w2mpro <" not in q for q in fake.queries)
+    assert rep["local_cut_counters"]["cut_w1w2_photospheric"] == 0
+
+
+def test_an_async_queue_failure_falls_back_to_the_next_shape(tmp_path):
+    """The statement timeout that killed run 34787803862, verbatim, then a fallback."""
+    fake = _ShapeGaia(answers=("inner_cone_postfilter",), error=_TIMEOUT_500)
+    rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(), query_fn=fake,
+                       cone_fn=_cone_factory(), upload_fn=_upload_fails)
+    assert fake.shapes[:2] == ["inner_cone", "inner_cone_postfilter"]
+    assert "flat" not in fake.shapes
+    assert rep["gaia_shape_working"] == "inner_cone_postfilter"
+    recs = {s["shape"]: s for s in rep["gaia_shapes"]}
+    assert recs["inner_cone"]["status"] == "QUERY_FAILED"
+    assert "canceling statement due to statement timeout" in recs["inner_cone"]["error"]
+    assert "CIRCLE('ICRS', 266.0, 65.0, 1.0)" in recs["inner_cone"]["query"]   # the ADQL sent
+    assert recs["inner_cone_postfilter"]["status"] == "OK"
+    assert rep["verdict"] == "GAIA_AND_NEOWISE_REACHABLE"
+
+
+def test_the_probe_budget_expires_into_timed_out_rather_than_hanging(tmp_path):
+    """A broken plan must cost minutes, not the 1,490 s of four blind retries."""
+    conf = _config_for_tests()
+    conf["probe"] = {**conf["probe"], "budget_s": 0.25, "total_budget_s": 0.8,
+                     "columns_timeout_s": 0.25, "neowise_timeout_s": 0.25}
+    fake = _ShapeGaia(answers=(), delay_s=30.0, delay_shapes=SHAPES)
+    t0 = time.monotonic()
+    rep = ignition_run("probe", out_dir=tmp_path, conf=conf, query_fn=fake,
+                       cone_fn=_cone_factory(), upload_fn=_upload_fails)
+    assert time.monotonic() - t0 < 20.0                    # it did not wait for the query
+    stats = [s["status"] for s in rep["gaia_shapes"]]
+    assert stats[0] == "TIMED_OUT"
+    assert set(stats) <= {"TIMED_OUT", "NOT_ATTEMPTED"}
+    assert rep["gaia_shapes"][0]["elapsed_s"] >= 0.25      # the elapsed seconds are recorded
+    assert 0 < rep["gaia_shapes"][0]["timeout_s"] <= 0.25
+    assert rep["gaia_shape_working"] is None
+    assert rep["verdict"] == "NO_DATA_REACHED"
+    assert rep["elapsed_s"] < 20.0
+
+
+def test_the_probe_writes_probe_json_even_when_every_route_fails(tmp_path):
+    """25 minutes of evidence must not survive only in a log someone reads by hand."""
+    fake = _ShapeGaia(answers=())
+    rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(), query_fn=fake,
+                       cone_fn=_cone_factory(status="QUERY_FAILED"), upload_fn=_upload_fails)
+    p = tmp_path / "probe.json"
+    assert p.exists()
+    saved = json.loads(p.read_text())
+    assert saved["verdict"] == "NO_DATA_REACHED" == rep["verdict"]
+    assert saved["neowise_route_recommended"] == "none"
+    assert [s["shape"] for s in saved["gaia_shapes"]] == list(SHAPES)     # all three tried
+    for s in saved["gaia_shapes"]:
+        assert s["status"] == "QUERY_FAILED"
+        assert "canceling statement due to statement timeout" in s["error"]
+        assert s["query"].startswith("SELECT")             # the ADQL sent, not a summary
+    assert saved["gaia_shape_working"] is None
+    assert saved["neowise_cone"]["status"] == "NOT_ATTEMPTED"
+    assert "no query shape answered" in saved["neowise_cone"]["reason"]
+
+
+def test_the_transport_ladder_is_async_first_and_records_the_queue():
+    """The 503 was the sync endpoint's 150-job ceiling; bulk queries never go there."""
+    assert [q for _n, q, _f in GAIA_TRANSPORTS][:2] == ["async", "async"]
+    calls: list[str] = []
+
+    def _mk(name, ok):
+        def _f(_adql):
+            calls.append(name)
+            if not ok:
+                raise RuntimeError(f"{name} refused")
+            return pd.DataFrame({"n": [1]})
+        return _f
+
+    ladder = (("astroquery_async", "async", _mk("astroquery_async", False)),
+              ("pyvo_async", "async", _mk("pyvo_async", True)),
+              ("pyvo_sync", "sync", _mk("pyvo_sync", True)))
+    _df, rec = run_gaia_query("SELECT 1", transports=ladder, retries_per_transport=1,
+                              base_sleep=0.0)
+    assert rec["status"] == "OK" and rec["transport"] == "pyvo_async" and rec["queue"] == "async"
+    assert calls == ["astroquery_async", "pyvo_async"]     # the sync queue was never reached
+
+    calls.clear()
+    _df2, rec2 = run_gaia_query("SELECT 1", transports=ladder[:1] + ladder[2:],
+                                retries_per_transport=1, base_sleep=0.0, allow_sync=False)
+    assert rec2["status"] == "QUERY_FAILED" and "pyvo_sync" not in calls
+    assert any("150-job ceiling" in (a.get("error") or "") for a in rec2["attempts"])
+
+    # A deadline already in the past starts no attempt at all.
+    calls.clear()
+    _df3, rec3 = run_gaia_query("SELECT 1", transports=ladder, retries_per_transport=1,
+                                deadline=time.monotonic() - 1.0)
+    assert rec3["status"] == "TIMED_OUT" and calls == []
+    exc = GaiaQueryFailed({"status": "TIMED_OUT", "error": "boom"})
+    assert "TIMED_OUT" in str(exc) and exc.record["error"] == "boom"
+
+
 def test_probe_recommends_the_upload_route_when_it_answers(tmp_path):
     conf = _config_for_tests()
 
@@ -723,5 +946,20 @@ def test_config_thresholds_are_read_from_yaml_and_files_exist():
     assert conf["sample"]["w1w2_max"] == 0.15
     assert len(conf["sample"]["fields"]) >= 8
     assert conf["vet"]["w1_saturation_mag"] == 8.0
+    assert conf["sample"]["query_shape"] == "auto"
+    assert conf["probe"]["shapes"] == list(SHAPES)
+    assert conf["probe"]["budget_s"] == 480.0        # ~8 min per candidate shape
+    assert conf["probe"]["total_budget_s"] >= conf["probe"]["budget_s"]
     assert Path(".github/workflows/ignition.yml").exists()
     assert Path("docs/ignition.md").exists()
+
+
+def test_the_workflow_commits_the_probe_and_not_only_an_artifact():
+    """Run 34787803862 went green, took 25 min and committed nothing."""
+    wf = Path(".github/workflows/ignition.yml").read_text()
+    sample_job = wf[wf.index("\n  sample:"):wf.index("\n  acquire:")]
+    assert "scripts/commit_results.sh" in sample_job          # the push-verifying script
+    assert "results/ignition/probe.json" in sample_job.split("commit_results.sh")[1]
+    assert "upload-artifact" in sample_job                    # the artifact is kept as well
+    # The artifact upload runs BEFORE the commit, so evidence survives a failed push.
+    assert sample_job.index("upload-artifact") < sample_job.index("commit_results.sh")

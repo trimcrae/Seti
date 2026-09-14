@@ -334,37 +334,79 @@
       "status": "QUERY_FAILED",
       "rows": 0,
       "what": "J/ApJ/787/112/",
-      "error": "RuntimeError('TAP query failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync')",
+      "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.u-strasbg.fr/TAPVizieR/tap) failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync') | https://vizier.cfa.harvard.edu/TAPVizieR/tap: RuntimeError('TAP query (https://vizier.cfa.harvard.edu/TAPVizieR/tap) failed after 5 attempts: DALServiceError: 404 Client Error: Not Found for url: https://vizier.cfa.harvard.edu/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: http://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | https://vizier.cds.unistra.fr/viz-bin/asu-tsv:  | https://vizier.u-strasbg.fr/viz-bin/asu-tsv:  | https://vizier.cfa.harvard.edu/viz-bin/asu-tsv:  | https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/ReadMe: HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/ReadMe')\")",
       "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%J/ApJ/787/112/%'"
+    },
+    {
+      "stage": "tables_orion_kl_hifi_non_tap",
+      "status": "QUERY_FAILED",
+      "rows": 0,
+      "what": "ASU meta ~ 'J/ApJ/787/112/'",
+      "error": "no non-TAP metadata for 'J/ApJ/787/112/' -- https://vizier.cds.unistra.fr/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://vizier.u-strasbg.fr/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://vizier.cfa.harvard.edu/viz-bin/asu-tsv: QUERY_RETURNED_ZERO_ROWS | https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/ReadMe: HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/ReadMe')",
+      "route": "asu_tsv",
+      "route_attempts": [
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+          "status": "QUERY_RETURNED_ZERO_ROWS",
+          "what": "meta J/ApJ/787/112",
+          "rows": 0
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.u-strasbg.fr/viz-bin/asu-tsv",
+          "status": "QUERY_RETURNED_ZERO_ROWS",
+          "what": "meta J/ApJ/787/112",
+          "rows": 0
+        },
+        {
+          "route": "asu_tsv",
+          "endpoint": "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv",
+          "status": "QUERY_RETURNED_ZERO_ROWS",
+          "what": "meta J/ApJ/787/112",
+          "rows": 0
+        },
+        {
+          "route": "readme",
+          "endpoint": "https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/ReadMe",
+          "status": "QUERY_FAILED",
+          "what": "ReadMe J/ApJ/787/112",
+          "error": "HTTPError('404 Client Error: Not Found for url: https://cdsarc.cds.unistra.fr/ftp/J/ApJ/787/112/ReadMe')"
+        }
+      ]
     },
     {
       "stage": "fallback_orion_kl_hifi",
       "status": "QUERY_FAILED",
       "rows": 0,
       "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-      "error": "RuntimeError('TAP query failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync')",
+      "error": "VizierRouteError(\"TAP query failed at every endpoint -- https://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | https://tapvizier.u-strasbg.fr/TAPVizieR/tap: RuntimeError('TAP query (https://tapvizier.u-strasbg.fr/TAPVizieR/tap) failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.u-strasbg.fr/TAPVizieR/tap/sync') | https://vizier.cfa.harvard.edu/TAPVizieR/tap: RuntimeError('TAP query (https://vizier.cfa.harvard.edu/TAPVizieR/tap) failed after 5 attempts: DALServiceError: 404 Client Error: Not Found for url: https://vizier.cfa.harvard.edu/TAPVizieR/tap/sync') | http://tapvizier.cds.unistra.fr/TAPVizieR/tap: RuntimeError('TAP query (http://tapvizier.cds.unistra.fr/TAPVizieR/tap) failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: http://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync') | https://vizier.cds.unistra.fr/viz-bin/asu-tsv (non-TAP): a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text search is not a table service); the catalogue id route is the non-TAP one\")",
       "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
     },
     {
       "stage": "tables_irc10216_he2008",
-      "status": "QUERY_FAILED",
-      "rows": 0,
+      "status": "OK",
+      "rows": 1,
       "what": "J/ApJS/177/275/",
-      "error": "RuntimeError('TAP query failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync')",
       "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE table_name LIKE '%J/ApJS/177/275/%'"
     },
     {
-      "stage": "fallback_irc10216_he2008",
-      "status": "QUERY_FAILED",
-      "rows": 0,
-      "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') AND ((description LIKE '%IRC+10216%' OR description LIKE '%irc+10216%' OR description LIKE '%Irc+10216%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-      "error": "RuntimeError('TAP query failed after 5 attempts: DALServiceError: 503 Server Error: Service Unavailable for url: https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync')",
-      "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') AND ((description LIKE '%IRC+10216%' OR description LIKE '%irc+10216%' OR description LIKE '%Irc+10216%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+      "stage": "columns_irc10216_he2008",
+      "status": "OK",
+      "rows": 8,
+      "what": "J/ApJS/177/275/table4"
+    },
+    {
+      "stage": "fetch_irc10216_he2008",
+      "status": "OK",
+      "rows": 409,
+      "what": "SELECT TOP 200000 \"Freq\", \"e_Freq\", \"Species\", \"Trans\" FROM \"J/ApJS/177/275/table4\"",
+      "route": "tap"
     }
   ],
-  "n_stages": 51,
-  "n_ok": 47,
-  "n_query_failed": 4,
+  "n_stages": 53,
+  "n_ok": 50,
+  "n_query_failed": 3,
   "n_query_returned_zero_rows": 0,
   "any_query_failed": true
 }

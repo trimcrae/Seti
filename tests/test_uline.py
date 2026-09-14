@@ -878,3 +878,136 @@ def test_entry_roundtrip_and_predicted_error_model():
     assert e2.median() > 5 * e1.median()
     assert t["CHF3"]["distortion_known"] and not t["CF3Cl"]["distortion_known"]
     assert t["CHF3"]["axial_known"] and not t["CF3CN"]["axial_known"]
+
+
+# ---------------------------------------------------------------------------
+# The VizieR route ladder (TAPVizieR 503'd every query on 2026-09-13)
+# ---------------------------------------------------------------------------
+ULINE_ASU_META = "\n".join([
+    "#RESOURCE=yCat_J/ApJ/787/112",
+    "#Name: J/ApJ/787/112",
+    "#Title: Herschel/HIFI survey of Orion KL (Crockett+, 2014)",
+    "#Table\tJ_ApJ_787_112_table2:",
+    "#Name: J/ApJ/787/112/table2",
+    "#Title: Line list, including unidentified features",
+    "#Column\tFreq\t(GHz)\tRest frequency at the assumed vLSR",
+    "#Column\te_Freq\t(MHz)\tFrequency uncertainty",
+    "#Column\tSpecies\t()\tSpecies or U for unidentified",
+    "#Column\tTA\t(K)\tPeak antenna temperature",
+    "#Table\tJ_ApJ_787_112_refs:",
+    "#Name: J/ApJ/787/112/refs",
+    "#Title: References",
+    "#Column\tRef\t()\tReference code",
+])
+
+
+def _uline_asu_rows(n: int = 6) -> str:
+    rows = _raw_rows().head(n)
+    body = ["#RESOURCE=yCat_J/ApJ/787/112",
+            "#Name: J/ApJ/787/112/table2",
+            '#Column\t"Freq"\t(GHz)\tRest frequency',
+            "#Column\tSpecies\t()\tSpecies or U",
+            "#Column\tTA\t(K)\tPeak",
+            "#Column\te_Freq\t(MHz)\tError",
+            '"Freq"\tSpecies\tTA\te_Freq',
+            "GHz\t\tK\tMHz",
+            "--------\t--------\t--------\t--------"]
+    for _, r in rows.iterrows():
+        body.append(f"{r['Freq']:.6f}\t{r['Species']}\t{r['TA']:.4f}\t{r['e_Freq']}")
+    return "\n".join(body)
+
+
+def _uline_asu_web(meta=ULINE_ASU_META, rows=None):
+    """VizieR answering over ASU while every TAP host is 503ing."""
+    rows = _uline_asu_rows() if rows is None else rows
+    seen: list[str] = []
+
+    def fetch(url: str) -> str:
+        seen.append(url)
+        if "-meta.all" in url:
+            if meta is None:
+                raise RuntimeError("503 Server Error: Service Unavailable")
+            return meta
+        if url.endswith("/ReadMe"):
+            raise RuntimeError("404 Not Found")
+        if rows is None:
+            raise RuntimeError("503 Server Error: Service Unavailable")
+        return rows
+
+    fetch.urls = seen
+    return fetch
+
+
+def test_uline_discovery_and_fetch_fall_through_tap_503_to_the_asu_route():
+    """TAP down, ASU up: real rows, and the record says which route served them.
+
+    This is the run that produced ``NO_DATA_REACHED`` on 2026-09-13 for an
+    infrastructure reason --- TAPVizieR 503'd five attempts on each of two
+    spellings.  With the ladder, the same dispatch reads the catalogue over
+    VizieR's non-TAP ASU interface instead.
+    """
+    msg = "DALServiceError: 503 Server Error: Service Unavailable for url: .../TAPVizieR/tap/sync"
+    tap, web = _FailingTAP(msg), _uline_asu_web()
+    log = acq.AcquisitionLog()
+    d = acq.discover_line_table("orion_kl_hifi", "J/ApJ/787/112/", query_fn=tap, fetch_fn=web,
+                                log=log, fallback_terms_all=["unidentified"],
+                                fallback_terms_any=["Orion"])
+    assert d.status == "OK" and d.route == "asu_tsv"
+    assert d.table == "J/ApJ/787/112/table2"
+    assert d.roles["freq"] == "Freq" and d.roles["ident"] == "Species"
+    assert d.units["freq"] == "GHz" and "rest" in d.frame_hint
+    assert d.fallback == {}                      # a table was found: no diagnostic search needed
+    # the TAP failure is still on the record, with its ADQL and its error text
+    assert d.errors and msg in d.errors[0]["error"]
+    assert any(r["route"] == "asu_tsv" and r["status"] == "OK" for r in d.routes)
+    assert any(q.get("route") == "asu_tsv" for q in d.queries)
+    assert "-meta.all" in web.urls[0]
+
+    df = acq.fetch_line_table(d, query_fn=tap, fetch_fn=web, log=log)
+    assert len(df) == 6 and df.attrs["route"] == "asu_tsv"
+    assert df["freq_mhz"].min() > 1000.0         # GHz -> MHz off the non-TAP unit metadata
+    assert df["unidentified"].sum() >= 1
+    stages = {s["stage"]: s for s in log.as_dict()["stages"]}
+    assert stages["fetch_orion_kl_hifi_non_tap"]["route"] == "asu_tsv"
+    assert stages["fetch_orion_kl_hifi_non_tap"]["status"] == "OK"
+    assert "-out.form=TSV" in web.urls[-1] and "-out=Freq" in web.urls[-1]
+
+
+def test_uline_route_ladder_reports_every_endpoint_when_every_route_fails():
+    """No route, no rows, no invention --- and a diagnosable record."""
+    acq.reset_route_state()
+    tap, web = _FailingTAP("503 Server Error: Service Unavailable"), _uline_asu_web(meta=None,
+                                                                                   rows=None)
+    log = acq.AcquisitionLog()
+    d = acq.discover_line_table("irc10216_he2008", "J/ApJS/177/275/", query_fn=tap, fetch_fn=web,
+                                log=log, fallback_terms_all=["unidentified"],
+                                fallback_terms_any=["IRC+10216"])
+    assert d.status == "QUERY_FAILED" and d.table is None and d.route == "none"
+    assert len(d.errors) == 2                    # the id search and the description fallback
+    named = " ".join(f"{r['endpoint']} {r.get('error', '')}" for r in d.routes)
+    for endpoint in acq.VIZIER_ASU_MIRRORS:
+        assert endpoint in named, endpoint
+    assert "ReadMe" in named and "503" in named
+    assert not len(acq.fetch_line_table(d, query_fn=tap, fetch_fn=web, log=log))
+    assert acq.route_log_summary()["served_by"] == "none"
+    acq.reset_route_state()
+
+
+def test_uline_tap_endpoints_put_the_configured_host_first():
+    conf = load_uline_config()
+    eps = acq.tap_endpoints(conf["archives"]["vizier_tap"])
+    assert eps[0] == conf["archives"]["vizier_tap"]
+    assert set(eps) == set(acq.VIZIER_TAP_MIRRORS)
+    assert len(eps) == len(set(eps)) >= 2         # a second HOST, not just a second spelling
+    assert len({e.split("//")[1].split("/")[0] for e in eps}) >= 2
+
+
+def test_config_route_ladder_matches_the_module_constants():
+    conf = load_uline_config()
+    arch = conf["archives"]
+    assert tuple(arch["vizier_tap_mirrors"]) == acq.VIZIER_TAP_MIRRORS
+    assert tuple(arch["vizier_asu_tsv"]) == acq.VIZIER_ASU_MIRRORS
+    assert arch["vizier_tap"] == acq.VIZIER_TAP_MIRRORS[0]
+    txt = Path("config/uline.yaml").read_text()
+    assert txt.count("# verify:") >= 2 and "ASSERTED" in txt
+    assert "asu-tsv" in txt and "-meta.all" in txt

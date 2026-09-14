@@ -110,6 +110,61 @@ ever selected from it automatically — a candidate found this way has to be
 asserted in `config/uline.yaml` as a `vizier_like` with its own `verify` note
 before it is used.
 
+### 3.3 The VizieR route ladder (TAP is not the only door)
+
+On 2026-09-13 TAPVizieR answered **503 to five attempts over `https://` and
+five over `http://`** (`results/uline/summary.json → degraded`), and this
+channel and ARC both reported `NO_DATA_REACHED` — for an infrastructure
+reason, which is exactly the failure this repository must never publish as a
+result about the sky.  VizieR is therefore now reached over four routes, tried
+in order, **each recorded with its endpoint and its error text** so a failure
+is always diagnosable (`seti.metronome.acquire`, shared with ARC):
+
+| # | Route | Endpoint | Status |
+|---|---|---|---|
+| 1 | TAP | `https://tapvizier.cds.unistra.fr/TAPVizieR/tap` | current primary |
+| 2 | TAP, second host | `https://tapvizier.u-strasbg.fr/TAPVizieR/tap` | **verify** — historical CDS hostname, asserted, unconfirmed |
+| 2 | TAP, second host | `https://vizier.cfa.harvard.edu/TAPVizieR/tap` | **verify** — CfA mirror, asserted, unconfirmed |
+| 2 | TAP, plain http | `http://tapvizier.cds.unistra.fr/TAPVizieR/tap` | same host, other spelling |
+| 3 | **ASU (not TAP)** | `https://vizier.cds.unistra.fr/viz-bin/asu-tsv` (+ two **verify** mirrors) | the route most likely to work while TAP is down |
+| 4 | astroquery | `astroquery.vizier.Vizier` | declared dependency; last resort |
+
+The endpoints marked **verify** could not be tested from the sandbox (no
+egress); they are asserted from the hostnames CDS and the CfA publish, and the
+first runner dispatch that reaches — or fails to reach — them is what settles
+it.  They are listed with the same note in `config/uline.yaml`, which
+`tests/test_uline.py` pins to the module constants so the two cannot drift.
+
+**Route 3 is the one that matters during an outage.**  `asu-tsv` is served by
+the VizieR web application, not by the TAP service:
+
+* rows: `?-source=<catalogue>/<table>&-out.max=<n>&-out=<column>…&-out.form=TSV`
+  returns tab-separated text whose `#`-prefixed block carries one `#Column`
+  line per column, followed by a header line (column names, sometimes
+  double-quoted), a unit line, a rule of dashes and the data;
+* **table existence**: `?-source=<catalogue>&-meta.all` lists the catalogue's
+  tables and their columns — the non-TAP replacement for `TAP_SCHEMA`, with
+  the catalogue's ReadMe (`cdsarc.cds.unistra.fr/ftp/<cat>/ReadMe`, whose File
+  Summary and Byte-by-byte blocks give tables, row counts and column labels)
+  as the backstop.
+
+The narrow ADQL this repository emits (`SELECT [TOP n] cols FROM "table"
+[WHERE recno BETWEEN a AND b | col IN (…)]`, `TAP_SCHEMA.tables … LIKE`,
+`TAP_SCHEMA.columns … WHERE table_name =`) is translated to those forms
+exactly; a `recno` window becomes "the first `hi` rows, keep the last
+`hi−lo+1`", which is the same rows because ASU returns them in `recno` order.
+Two forms have **no** ASU equivalent and are reported rather than guessed at:
+`COUNT(*)` (the row count becomes *unknown*, and discovery ranks the table on
+its columns alone) and the description search of §3.2 (which stays TAP-only).
+
+A run served by route 3 reports `route: asu_tsv` — in
+`probe.json → vizier.<source>.route`, in the winning entry of
+`acquire.json → sources.<source>.queries`, in the acquisition log stages, and
+in `df.attrs["route"]` — so an `OK` always says which door it came through.
+When **every** route fails, every endpoint and every error text is in
+`sources.<source>.routes` and the status stays an honest `QUERY_FAILED`: no
+route ever fabricates a row.
+
 Not yet reachable as tables (listed in S54, deferred): QUIJOTE TMC-1 (1,591
 features, 188 unidentified), GOTHAM, ALCHEMI, PILS, ReMoCA, PRIMOS.  The
 description-word discovery in the probe stage is how they enter: a table that
@@ -282,4 +337,8 @@ Workflow `.github/workflows/uline.yml` (`workflow_dispatch`: `stage`,
 through `scripts/commit_results.sh`.  Outputs in `results/uline/`:
 `probe.json`, `acquire.json`, `acquisition_log.json`, `screen.json`,
 `coincidences.csv`, `summary.json`, `candidates.csv`.  Offline suite:
-`tests/test_uline.py`.
+`tests/test_uline.py` — which, for §3.3, scripts a TAP that 503s every query
+against a VizieR that answers over ASU (discovery off `-meta.all`, rows off
+`asu-tsv`, reported as `route: asu_tsv`) and the world where every route is
+down (`QUERY_FAILED`, every endpoint named, no rows invented).  No test opens
+a socket: every route takes an injectable fetch/query callable.

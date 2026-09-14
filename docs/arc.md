@@ -124,10 +124,41 @@ stage replaces them with Berger+2020 / TIC values), `has_peak_times`.
 
 ## 4. Data and stages (`src/seti/arc/run.py`)
 
-All VizieR TAP, with runtime column-role discovery (`acquire.py`, built on
+All VizieR, with runtime column-role discovery (`acquire.py`, built on
 `seti.metronome.acquire`; TAPVizieR table names carry literal double quotes,
 so the LIKE has a leading `%` and every table name is quoted).  Nothing is
-queried by a column name that was not seen in `TAP_SCHEMA.columns`.
+queried by a column name that was not seen in the service's own metadata.
+
+**The VizieR route ladder.**  ARC's first dispatch (run 34787802564) lost all
+six discovery queries to 503s, and on 2026-09-13 *every* TAPVizieR spelling
+answered 503 to five attempts each (`results/arc/summary.json →
+acquisition.stages`), leaving the channel at `NO_DATA_REACHED` for an
+infrastructure reason.  `seti.metronome.acquire` now reaches VizieR over four
+routes in order, each recorded with its endpoint and error text:
+
+1. `https://tapvizier.cds.unistra.fr/TAPVizieR/tap` (primary);
+2. a second TAP **host** — `https://tapvizier.u-strasbg.fr/TAPVizieR/tap` and
+   `https://vizier.cfa.harvard.edu/TAPVizieR/tap`, both marked **verify**:
+   asserted from the hostnames CDS and the CfA publish and *not* confirmed
+   from the sandbox, which has no egress — plus the plain-http spelling;
+3. the **non-TAP** ASU interface, `https://vizier.cds.unistra.fr/viz-bin/asu-tsv`
+   (`-source=…&-out.max=…&-out=…&-out.form=TSV` for rows;
+   `-source=<cat>&-meta.all`, ReadMe as backstop, for **table existence** —
+   the replacement for `TAP_SCHEMA` while TAP is down);
+4. `astroquery.vizier.Vizier`.
+
+ARC gets this for free: `discover_table` / `fetch_table` call `list_tables`,
+`table_columns`, `count_rows` and `tap_query` from the shared helper, and
+those degrade to the non-TAP route instead of raising, so a TAP-down +
+VizieR-up dispatch returns **real rows** rather than `QUERY_FAILED`
+(`tests/test_arc.py::test_tap_down_but_asu_up_gives_arc_rows_not_query_failed`).
+Two consequences are stated rather than hidden: `COUNT(*)` has no ASU
+equivalent, so `n_rows` is *unknown* (`None`) on that route and tables are
+ranked on their columns alone; and the keyword/description search stays
+TAP-only.  The route that served a run is in the acquisition log stages and in
+`seti.metronome.acquire.route_log_summary()` (`served_by: asu_tsv`).  When
+every route fails, every endpoint and error is recorded and the status stays
+`QUERY_FAILED` — no route invents a row.
 
 | Role | Tables (preferred seeds; discovery re-resolves them) |
 |---|---|
@@ -220,7 +251,12 @@ energies on a 5 % amplitude star → `ξ_conservative < 0`, a *watch*; RUWE = 2
 `G + 1.5` → `blend`; Gaia `ECL` → `pulsator_or_eb`; a catalogue flag →
 `catalogue_doubtful`; a single exceeding flare → *interest*; a failed or
 empty VizieR → `NO_DATA_REACHED` and never a candidate; the funnel counts in
-order; an end-to-end run through a scripted TAP and Gaia cone.
+order; an end-to-end run through a scripted TAP and Gaia cone; and the route
+ladder in both directions — a TAP-down + ASU-up world yields real rows with
+`served_by: asu_tsv` (discovery off `-meta.all`, rows off `asu-tsv`), while a
+world with *every* route down stays `QUERY_FAILED` with every endpoint and
+error named.  No test opens a socket: every route takes an injectable
+fetch/query callable.
 
 ## 8. Limits — stated so nobody overclaims
 

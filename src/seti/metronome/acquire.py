@@ -37,16 +37,138 @@ import pandas as pd
 # dispatch (run 34787802564, 2026-09-13) while the necrofrontier probe reached
 # the https endpoint repeatedly the same day.
 VIZIER_TAP = "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
-# Tried in order when the primary answers 503 / refuses: the CDS mirror and the
-# plain-http original.  A mirror that also fails is recorded, never silent.
+# Tried in order when the primary answers 503 / refuses.  On 2026-09-13 BOTH
+# the https and the http spelling of tapvizier.cds.unistra.fr answered 503 to
+# five attempts each (results/uline/summary.json, results/arc/summary.json), so
+# a second HOST and a route that is not TAP at all are now part of the ladder.
+#
+# verify: ``tapvizier.u-strasbg.fr`` is the historical CDS hostname for the same
+# service (u-strasbg.fr is the pre-2021 name of the domain that became
+# cds.unistra.fr, and CDS kept the old names resolving); ``vizier.cfa.harvard.edu``
+# is the CfA VizieR mirror.  Neither has been reached from this sandbox --- there
+# is no egress here --- so both are ASSERTED, not confirmed, and the first runner
+# dispatch that reaches (or fails to reach) them is what settles it.  A host that
+# fails is recorded with its error text, never dropped silently.
 VIZIER_TAP_MIRRORS = (
     "https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
+    "https://tapvizier.u-strasbg.fr/TAPVizieR/tap",      # verify: unconfirmed mirror
+    "https://vizier.cfa.harvard.edu/TAPVizieR/tap",      # verify: unconfirmed mirror
     "http://tapvizier.cds.unistra.fr/TAPVizieR/tap",
 )
+
+#: VizieR's ASU interface --- the NON-TAP route.  ``asu-tsv`` is served by the
+#: main VizieR web application, not by the TAP service, so it survives a TAP
+#: outage; it is the route most likely to answer while TAPVizieR is down.
+VIZIER_ASU = "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
+VIZIER_ASU_MIRRORS = (
+    "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+    "https://vizier.u-strasbg.fr/viz-bin/asu-tsv",       # verify: unconfirmed mirror
+    "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv",    # verify: unconfirmed mirror
+)
+#: The catalogue's ReadMe --- the last table-existence check when even the ASU
+#: metadata form does not answer.
+VIZIER_README = "https://cdsarc.cds.unistra.fr/ftp/{catalogue}/ReadMe"
+
+ROUTE_TAP = "tap"
+ROUTE_ASU = "asu_tsv"
+ROUTE_README = "readme"
+ROUTE_ASTROQUERY = "astroquery"
+ROUTE_NONE = "none"
 
 STATUS_OK = "OK"
 STATUS_FAILED = "QUERY_FAILED"
 STATUS_ZERO = "QUERY_RETURNED_ZERO_ROWS"
+
+#: Every route attempt made in this process, newest last: ``{route, endpoint,
+#: status, rows, error, what}``.  A run that was served by a fallback can say
+#: so even when the caller only kept the DataFrame.
+ROUTE_LOG: list[dict] = []
+_ROUTE_LOG_MAX = 500
+#: Circuit breaker, per endpoint, for the DEFAULT transports only (an injected
+#: ``fetch_fn`` / ``query_fn`` never touches it): ``{endpoint: {n, at}}``.
+#: After ``_ROUTE_FAIL_LIMIT`` consecutive failures an endpoint is skipped for
+#: ``_ROUTE_FAIL_COOLDOWN_S`` with a recorded reason, then tried again.  When
+#: TAPVizieR is down for an hour, forty more four-minute retry ladders say
+#: nothing the first two said --- and they cost the run the time the working
+#: route needed.  Any success clears the endpoint's count.
+_ROUTE_FAILS: dict[str, dict] = {}
+_ROUTE_FAIL_LIMIT = 2
+_ROUTE_FAIL_COOLDOWN_S = 300.0
+
+
+def reset_route_state() -> None:
+    """Forget the route log and every endpoint's failure count."""
+    ROUTE_LOG.clear()
+    _ROUTE_FAILS.clear()
+
+
+def _circuit_open(endpoint: str) -> str:
+    """``""`` when the endpoint may be tried, else why it is being skipped."""
+    blk = _ROUTE_FAILS.get(str(endpoint))
+    if not blk or blk["n"] < _ROUTE_FAIL_LIMIT:
+        return ""
+    waited = _time.time() - blk["at"]
+    if waited >= _ROUTE_FAIL_COOLDOWN_S:
+        return ""
+    return (f"skipped: {endpoint} failed {blk['n']} times in this process, "
+            f"{waited:.0f}s ago (retried after {_ROUTE_FAIL_COOLDOWN_S:.0f}s)")
+
+
+def _circuit_fail(endpoint: str) -> None:
+    blk = _ROUTE_FAILS.setdefault(str(endpoint), {"n": 0, "at": 0.0})
+    blk["n"] += 1
+    blk["at"] = _time.time()
+
+
+def _circuit_ok(endpoint: str) -> None:
+    _ROUTE_FAILS[str(endpoint)] = {"n": 0, "at": _time.time()}
+
+
+def route_note(route: str, endpoint: str, *, status: str, what: str = "",
+               rows: int | None = None, error: str | None = None) -> dict:
+    """Record one route attempt (and return it)."""
+    rec = {"route": str(route), "endpoint": str(endpoint), "status": str(status),
+           "what": str(what)[:300]}
+    if rows is not None:
+        rec["rows"] = int(rows)
+    if error is not None:
+        rec["error"] = str(error)[:2000]
+    ROUTE_LOG.append(rec)
+    del ROUTE_LOG[:-_ROUTE_LOG_MAX]
+    return rec
+
+
+def route_log_summary() -> dict:
+    """What served this process, and what failed, per route."""
+    out: dict[str, dict] = {}
+    for rec in ROUTE_LOG:
+        blk = out.setdefault(rec["route"], {"n_ok": 0, "n_failed": 0, "endpoints": []})
+        blk["n_ok" if rec["status"] == STATUS_OK else "n_failed"] += 1
+        if rec["endpoint"] not in blk["endpoints"]:
+            blk["endpoints"].append(rec["endpoint"])
+    return {"routes": out, "n_attempts": len(ROUTE_LOG),
+            "served_by": next((r["route"] for r in reversed(ROUTE_LOG)
+                               if r["status"] == STATUS_OK), ROUTE_NONE)}
+
+
+class VizierRouteError(RuntimeError):
+    """Every route failed.  Carries every endpoint and every error verbatim.
+
+    ``asu_supported`` is False when the query itself has no non-TAP equivalent
+    (a ``COUNT(*)``, a description search): the caller can then degrade to
+    "unknown" instead of treating it as an archive failure.
+    """
+
+    def __init__(self, message: str, *, attempts: list[dict] | None = None,
+                 asu_supported: bool = True, adql: str = ""):
+        super().__init__(message)
+        self.attempts = list(attempts or [])
+        self.asu_supported = bool(asu_supported)
+        self.adql = str(adql)
+
+
+class AdqlNotTranslatable(ValueError):
+    """This ADQL has no ASU equivalent (recorded, never guessed at)."""
 
 
 # ---------------------------------------------------------------------------
@@ -104,17 +226,44 @@ def _retry(fn, retries: int = 3, label: str = "query", base_sleep: float = 4.0):
     raise RuntimeError(f"{label} failed after {retries} attempts: {last!r}")
 
 
-def tap_query(adql: str, *, url: str | None = None, retries: int = 3) -> pd.DataFrame:
+def tap_query(adql: str, *, url=None, retries: int = 3, fetch_fn=None,
+              allow_non_tap: bool = True) -> pd.DataFrame:
     """ADQL against VizieR TAP: async first, sync on the last attempt.
 
     Every endpoint in ``VIZIER_TAP_MIRRORS`` is tried in turn before the query
     is called failed, because a 503 from one endpoint is routine and says
-    nothing about the sky.  The failure message names every endpoint tried."""
+    nothing about the sky.  The failure message names every endpoint tried.
+
+    When every TAP endpoint is down (2026-09-13: all of them, for hours) the
+    query is translated to VizieR's NON-TAP ASU interface by
+    :func:`asu_query` and served from there --- the ADQL this repository emits
+    is a narrow dialect (``SELECT [TOP n] cols FROM "table" [WHERE ...]``,
+    ``TAP_SCHEMA.tables LIKE``, ``TAP_SCHEMA.columns WHERE table_name =``) and
+    every one of those forms has an exact ASU equivalent.  A query with no
+    equivalent (``COUNT(*)``, a description search) raises a
+    :class:`VizierRouteError` with ``asu_supported=False`` rather than a guess.
+
+    ``url`` may be a single endpoint or a sequence of them; the signature and
+    the raise-on-total-failure behaviour are unchanged.
+    """
     import pyvo  # noqa: PLC0415  runner-only; keeps the module importable offline
 
-    endpoints = [url] if url else list(VIZIER_TAP_MIRRORS)
+    if url is None:
+        endpoints = list(VIZIER_TAP_MIRRORS)
+    elif isinstance(url, str):
+        endpoints = [url]
+    else:
+        endpoints = [str(u) for u in url]
     errors: list[str] = []
+    attempts: list[dict] = []
     for endpoint in endpoints:
+        skip = _circuit_open(endpoint)
+        if skip:
+            errors.append(f"{endpoint}: {skip}")
+            attempts.append(route_note(ROUTE_TAP, endpoint, status=STATUS_FAILED, what=adql,
+                                       error=skip))
+            continue
+
         def _go(endpoint=endpoint):
             svc = pyvo.dal.TAPService(endpoint)
             try:
@@ -124,27 +273,657 @@ def tap_query(adql: str, *, url: str | None = None, retries: int = 3) -> pd.Data
                 return svc.search(adql).to_table().to_pandas()
 
         try:
-            return _retry(_go, retries=retries, label=f"TAP query ({endpoint})")
+            df = _retry(_go, retries=retries, label=f"TAP query ({endpoint})")
         except Exception as exc:                          # noqa: BLE001
+            _circuit_fail(endpoint)
             errors.append(f"{endpoint}: {exc!r}")
-    raise RuntimeError("TAP query failed at every endpoint -- " + " | ".join(errors))
+            attempts.append(route_note(ROUTE_TAP, endpoint, status=STATUS_FAILED,
+                                       what=adql, error=repr(exc)))
+            continue
+        _circuit_ok(endpoint)
+        attempts.append(route_note(ROUTE_TAP, endpoint, status=STATUS_OK, what=adql,
+                                   rows=0 if df is None else int(len(df))))
+        return df
+    asu_supported = True
+    if allow_non_tap:
+        try:
+            df, asu_attempts = asu_query(adql, fetch_fn=fetch_fn)
+            attempts.extend(asu_attempts)
+            return df
+        except AdqlNotTranslatable as exc:
+            asu_supported = False
+            errors.append(f"{VIZIER_ASU} (non-TAP): {exc}")
+            attempts.append(route_note(ROUTE_ASU, VIZIER_ASU, status=STATUS_FAILED,
+                                       what=adql, error=str(exc)))
+        except VizierRouteError as exc:
+            errors.extend(f"{a['endpoint']}: {a.get('error', '')}" for a in exc.attempts)
+            attempts.extend(exc.attempts)
+        except Exception as exc:                          # noqa: BLE001
+            errors.append(f"{VIZIER_ASU} (non-TAP): {exc!r}")
+            attempts.append(route_note(ROUTE_ASU, VIZIER_ASU, status=STATUS_FAILED,
+                                       what=adql, error=repr(exc)))
+    raise VizierRouteError("TAP query failed at every endpoint -- " + " | ".join(errors),
+                           attempts=attempts, asu_supported=asu_supported, adql=adql)
+
+
+# ---------------------------------------------------------------------------
+# The NON-TAP route: VizieR's ASU interface (viz-bin/asu-tsv)
+# ---------------------------------------------------------------------------
+def split_catalogue(name: str) -> tuple[str, str | None]:
+    """``"J/ApJ/787/112/table2"`` -> ``("J/ApJ/787/112", "table2")``.
+
+    A journal catalogue id is ``J/<journal>/<volume>/<page>``; every other
+    VizieR catalogue is ``<class>/<number>``.  Whatever follows is the table.
+    """
+    parts = [p for p in unquote_table(name).strip("/").split("/") if p]
+    if not parts:
+        return "", None
+    head = 4 if parts[0].upper() == "J" else 2
+    cat = "/".join(parts[:head])
+    tail = "/".join(parts[head:])
+    return cat, (tail or None)
+
+
+def _asu_http_text(url: str, *, timeout: float = 180.0) -> str:
+    """GET a URL as text (runner only), short-circuiting a dead endpoint."""
+    import requests  # noqa: PLC0415  runner-only; keeps the module importable offline
+
+    base = url.split("?", 1)[0]
+    skip = _circuit_open(base)
+    if skip:
+        raise RuntimeError(skip)
+    try:
+        r = requests.get(url, timeout=timeout,
+                         headers={"User-Agent": "seti-vizier/1.0 (+github actions; astronomy)"})
+        r.raise_for_status()
+    except Exception:
+        _circuit_fail(base)
+        raise
+    _circuit_ok(base)
+    return r.text
+
+
+def asu_url(catalogue: str, *, base: str = VIZIER_ASU, columns=None, max_rows: int = 100000,
+            constraints: dict | None = None, meta: bool = False) -> str:
+    """The ASU request for one catalogue / table.
+
+    ``-source`` is the catalogue or table id, ``-out.max`` the row cap,
+    ``-out.all`` every column (or ``-out=<name>`` per requested column) and
+    ``-out.form=TSV`` the tab-separated text this module parses.  ``meta=True``
+    asks for the METADATA of the catalogue (its tables and their columns)
+    instead of rows --- the table-existence check that replaces TAP_SCHEMA.
+    """
+    from urllib.parse import quote  # noqa: PLC0415
+
+    src = unquote_table(catalogue)
+    parts = [f"-source={quote(src, safe='/+')}"]
+    if meta:
+        parts.append("-meta.all")
+        parts.append("-out.form=TSV")
+        return f"{base}?" + "&".join(parts)
+    parts.append(f"-out.max={int(max_rows)}")
+    cols = [unquote_table(c) for c in (columns or []) if str(c).strip()]
+    if cols:
+        parts.extend(f"-out={quote(c, safe='+_.-')}" for c in dict.fromkeys(cols))
+    else:
+        parts.append("-out.all")
+    parts.append("-out.form=TSV")
+    for col, expr in (constraints or {}).items():
+        parts.append(f"{quote(str(col), safe='+_.-')}={quote(str(expr), safe='+_.-,<>=')}")
+    return f"{base}?" + "&".join(parts)
+
+
+def _asu_error_lines(text: str) -> list[str]:
+    return [ln.strip() for ln in (text or "").splitlines()
+            if ln.startswith("#***") or ln.startswith("****")]
+
+
+def parse_asu_tsv(text: str) -> pd.DataFrame:
+    """Parse an ``asu-tsv`` body into a DataFrame.
+
+    The body is ``#``-prefixed metadata (including one ``#Column`` line per
+    column), then a header line of tab-separated column names, then a unit
+    line, then a line of dashes, then the data.  Column names can carry the
+    literal double quotes VizieR uses for awkward labels, so every header cell
+    is unquoted; a blank header cell falls back to the ``#Column`` name at that
+    position.  VizieR's own error lines (``#***``) are kept in
+    ``df.attrs["asu_errors"]`` --- an error page must never read as zero rows.
+    """
+    lines = (text or "").splitlines()
+    meta_cols: list[str] = []
+    for ln in lines:
+        if ln.startswith("#Column"):
+            cells = [c.strip() for c in ln.split("\t")]
+            name = ""
+            for c in cells[1:]:
+                if c and not (c.startswith("(") or c.startswith("[")):
+                    name = c
+                    break
+            meta_cols.append(unquote_table(name))
+    body = [ln for ln in lines if not ln.startswith("#")]
+    while body and not body[0].strip():
+        body.pop(0)
+    errors = _asu_error_lines(text)
+    if not body:
+        out = pd.DataFrame()
+        out.attrs["asu_errors"] = errors
+        return out
+    dash = None
+    for i, ln in enumerate(body[:6]):
+        cells = [c.strip() for c in ln.split("\t")]
+        if cells and all(re.fullmatch(r"-{2,}", c) for c in cells if c != ""):
+            dash = i
+            break
+    if dash is None:
+        header_i, data_from = 0, 1
+    elif dash >= 2:
+        header_i, data_from = dash - 2, dash + 1
+    else:
+        header_i, data_from = max(dash - 1, 0), dash + 1
+    header = [unquote_table(c) for c in body[header_i].split("\t")]
+    header = [h if h else (meta_cols[i] if i < len(meta_cols) else f"col{i}")
+              for i, h in enumerate(header)]
+    rows = []
+    for ln in body[data_from:]:
+        if not ln.strip():
+            continue
+        cells = [c.strip() for c in ln.split("\t")]
+        if len(cells) < len(header):
+            cells += [""] * (len(header) - len(cells))
+        rows.append(cells[:len(header)])
+    out = pd.DataFrame(rows, columns=header)
+    for c in out.columns:
+        s = out[c].replace("", None)
+        num = pd.to_numeric(s, errors="coerce")
+        out[c] = num if len(s) and num.notna().sum() == s.notna().sum() and s.notna().any() else s
+    out.attrs["asu_errors"] = errors
+    return out
+
+
+def parse_asu_meta(text: str) -> dict:
+    """Parse an ``-meta.all`` body into ``{catalogue, title, tables: {...}}``.
+
+    Each table block opens with ``#Table``/``#Name:`` and carries one
+    ``#Column`` line per column.  This is the table-EXISTENCE check that
+    replaces ``TAP_SCHEMA.tables`` / ``TAP_SCHEMA.columns`` when TAP is down.
+    """
+    out: dict = {"catalogue": "", "title": "", "tables": {}}
+    cur: dict | None = None
+    pending = False
+    for ln in (text or "").splitlines():
+        if not ln.startswith("#"):
+            continue
+        if ln.startswith("#Table"):
+            pending = True
+            cur = None
+            continue
+        m = re.match(r"^#Name:\s*(.+?)\s*$", ln)
+        if m:
+            name = unquote_table(m.group(1))
+            if pending or "/" in name and out["catalogue"] and name != out["catalogue"]:
+                cur = out["tables"].setdefault(name, {"table_name": name, "description": "",
+                                                      "columns": [], "units": {},
+                                                      "descriptions": {}})
+                pending = False
+            elif not out["catalogue"]:
+                out["catalogue"] = name
+            continue
+        m = re.match(r"^#Title:\s*(.*?)\s*$", ln)
+        if m:
+            if cur is not None:
+                cur["description"] = m.group(1)
+            elif not out["title"]:
+                out["title"] = m.group(1)
+            continue
+        if ln.startswith("#Column") and cur is not None:
+            cells = [c.strip() for c in ln.split("\t") if c.strip() != ""]
+            name, unit, desc = "", "", ""
+            for c in cells[1:]:
+                if not name and not c.startswith(("(", "[")):
+                    name = unquote_table(c)
+                elif c.startswith("(") and not unit:
+                    unit = c.strip("()")
+                elif not c.startswith("[") and name and not desc:
+                    desc = c
+            if name:
+                cur["columns"].append(name)
+                cur["units"][name] = unit
+                cur["descriptions"][name] = desc
+    return out
+
+
+def parse_readme(text: str, catalogue: str = "") -> dict:
+    """Tables and column labels from a catalogue ReadMe (the last existence check).
+
+    The *File Summary* lists ``table2.dat`` with its record count; each
+    *Byte-by-byte Description* block names the columns in its ``Label`` field.
+    """
+    out: dict = {"catalogue": catalogue, "title": "", "tables": {}}
+    cur = None
+    for ln in (text or "").splitlines():
+        m = re.match(r"^\s*(\S+?)\.dat\s+\d+\s+(\d+)\s+(.*?)\s*$", ln)
+        if m and not ln.lstrip().startswith("-"):
+            name = f"{catalogue}/{m.group(1)}" if catalogue else m.group(1)
+            out["tables"].setdefault(name, {"table_name": name, "n_rows": int(m.group(2)),
+                                            "description": m.group(3), "columns": [],
+                                            "units": {}, "descriptions": {}})
+            continue
+        m = re.match(r"^Byte-by-byte Description of file:\s*(\S+?)\.dat\s*$", ln)
+        if m:
+            name = f"{catalogue}/{m.group(1)}" if catalogue else m.group(1)
+            cur = out["tables"].setdefault(name, {"table_name": name, "description": "",
+                                                 "columns": [], "units": {}, "descriptions": {}})
+            continue
+        if cur is not None:
+            m = re.match(r"^\s*\d+\s*-?\s*\d*\s+(\S+)\s+(\S+)\s+(\S+)\s*(.*)$", ln)
+            if m and re.match(r"^[A-Za-z_]", m.group(3)):
+                label = m.group(3)
+                cur["columns"].append(label)
+                cur["units"][label] = m.group(2)
+                cur["descriptions"][label] = m.group(4).strip()
+            elif ln.startswith("-" * 10):
+                continue
+            elif ln.strip() == "":
+                cur = cur
+    return out
+
+
+def asu_meta(catalogue: str, *, fetch_fn=None, bases=None, readme_url: str = VIZIER_README
+             ) -> tuple[dict, list[dict]]:
+    """Catalogue metadata over the ASU ``-meta.all`` form, ReadMe as the backstop."""
+    cat, _ = split_catalogue(catalogue)
+    fetch = fetch_fn or _asu_http_text
+    attempts: list[dict] = []
+    for base in (bases or VIZIER_ASU_MIRRORS):
+        url = asu_url(cat, base=base, meta=True)
+        try:
+            text = fetch(url)
+            meta = parse_asu_meta(text)
+        except Exception as exc:                          # noqa: BLE001
+            attempts.append(route_note(ROUTE_ASU, base, status=STATUS_FAILED,
+                                       what=f"meta {cat}", error=repr(exc)))
+            continue
+        if meta["tables"]:
+            attempts.append(route_note(ROUTE_ASU, base, status=STATUS_OK, what=f"meta {cat}",
+                                       rows=len(meta["tables"])))
+            return meta, attempts
+        attempts.append(route_note(ROUTE_ASU, base, status=STATUS_ZERO, what=f"meta {cat}",
+                                   rows=0, error="; ".join(_asu_error_lines(text)) or None))
+    url = readme_url.format(catalogue=cat)
+    try:
+        meta = parse_readme(fetch(url), cat)
+    except Exception as exc:                              # noqa: BLE001
+        attempts.append(route_note(ROUTE_README, url, status=STATUS_FAILED,
+                                   what=f"ReadMe {cat}", error=repr(exc)))
+        return {"catalogue": cat, "title": "", "tables": {}}, attempts
+    attempts.append(route_note(ROUTE_README, url,
+                               status=STATUS_OK if meta["tables"] else STATUS_ZERO,
+                               what=f"ReadMe {cat}", rows=len(meta["tables"])))
+    return meta, attempts
+
+
+def asu_catalogue_tables(pattern: str, *, fetch_fn=None, bases=None, limit: int = 60
+                         ) -> tuple[pd.DataFrame, list[dict]]:
+    """``table_name, description, columns`` for every table under ``pattern``.
+
+    The non-TAP replacement for ``SELECT ... FROM TAP_SCHEMA.tables WHERE
+    table_name LIKE '%pattern%'``: it answers the only question discovery
+    really asks --- does this catalogue exist, and what tables does it have?
+    """
+    pat = unquote_table(pattern).strip("%")
+    meta, attempts = asu_meta(pat, fetch_fn=fetch_fn, bases=bases)
+    rows = []
+    for name, blk in meta.get("tables", {}).items():
+        if pat and pat.strip("/").lower() not in name.lower():
+            continue
+        rows.append({"table_name": name, "description": blk.get("description", ""),
+                     "columns": list(blk.get("columns") or []),
+                     "units": dict(blk.get("units") or {}),
+                     "descriptions": dict(blk.get("descriptions") or {}),
+                     "n_rows": blk.get("n_rows")})
+    df = pd.DataFrame(rows, columns=["table_name", "description", "columns", "units",
+                                     "descriptions", "n_rows"])
+    if len(df) > int(limit):
+        df = df.head(int(limit))
+    df.attrs["route"] = ROUTE_ASU
+    df.attrs["attempts"] = attempts
+    if not len(df):
+        raise VizierRouteError(
+            f"no non-TAP metadata for {pat!r} -- " + " | ".join(
+                f"{a['endpoint']}: {a.get('error', a['status'])}" for a in attempts),
+            attempts=attempts)
+    return df, attempts
+
+
+def asu_table_columns(table: str, *, fetch_fn=None, bases=None) -> tuple[pd.DataFrame, list[dict]]:
+    """``column_name, unit, description`` of one table, without TAP."""
+    name = unquote_table(table)
+    df, attempts = asu_catalogue_tables(name, fetch_fn=fetch_fn, bases=bases, limit=200)
+    hit = df[df["table_name"].str.lower() == name.lower()]
+    if not len(hit):
+        hit = df[df["table_name"].str.lower().str.endswith(name.lower().split("/")[-1])]
+    if not len(hit):
+        out = pd.DataFrame(columns=["column_name", "unit", "description"])
+        out.attrs["route"] = ROUTE_ASU
+        out.attrs["attempts"] = attempts
+        return out, attempts
+    row = hit.iloc[0]
+    cols = list(row["columns"])
+    out = pd.DataFrame({"column_name": cols,
+                        "unit": [row["units"].get(c, "") for c in cols],
+                        "description": [row["descriptions"].get(c, "") for c in cols]})
+    out.attrs["route"] = ROUTE_ASU
+    out.attrs["attempts"] = attempts
+    return out, attempts
+
+
+def asu_rows(catalogue: str, *, columns=None, max_rows: int = 100000, fetch_fn=None,
+             bases=None, constraints: dict | None = None, row_slice=None
+             ) -> tuple[pd.DataFrame, list[dict]]:
+    """Rows of one table over the non-TAP ASU interface."""
+    fetch = fetch_fn or _asu_http_text
+    attempts: list[dict] = []
+    table = unquote_table(catalogue)
+    for base in (bases or VIZIER_ASU_MIRRORS):
+        url = asu_url(table, base=base, columns=columns, max_rows=max_rows,
+                      constraints=constraints)
+        try:
+            text = fetch(url)
+            df = parse_asu_tsv(text)
+        except Exception as exc:                          # noqa: BLE001
+            attempts.append(route_note(ROUTE_ASU, base, status=STATUS_FAILED, what=url,
+                                       error=repr(exc)))
+            continue
+        errs = df.attrs.get("asu_errors") or []
+        if errs and not len(df):
+            attempts.append(route_note(ROUTE_ASU, base, status=STATUS_FAILED, what=url,
+                                       error="; ".join(errs)))
+            continue
+        if row_slice is not None:
+            lo, hi = row_slice
+            df = df.iloc[int(lo):int(hi)].reset_index(drop=True)
+        attempts.append(route_note(ROUTE_ASU, base,
+                                   status=STATUS_OK if len(df) else STATUS_ZERO,
+                                   what=url, rows=int(len(df))))
+        df.attrs["route"] = ROUTE_ASU
+        df.attrs["endpoint"] = base
+        return df, attempts
+    raise VizierRouteError(
+        f"the ASU route failed for {table!r} -- " + " | ".join(
+            f"{a['endpoint']}: {a.get('error', a['status'])}" for a in attempts),
+        attempts=attempts)
+
+
+def astroquery_rows(catalogue: str, *, columns=None, max_rows: int = 100000, vizier_fn=None
+                    ) -> tuple[pd.DataFrame, list[dict]]:
+    """The last route: ``astroquery.vizier.Vizier`` (a declared dependency)."""
+    table = unquote_table(catalogue)
+    endpoint = "astroquery.vizier.Vizier"
+    skip = _circuit_open(endpoint) if vizier_fn is None else ""
+    if skip:
+        raise VizierRouteError(skip, attempts=[
+            route_note(ROUTE_ASTROQUERY, endpoint, status=STATUS_FAILED, what=table, error=skip)])
+
+    def _default(cat, cols, limit):
+        from astroquery.vizier import Vizier  # noqa: PLC0415  runner-only
+
+        v = Vizier(columns=list(cols) if cols else ["**"], row_limit=int(limit))
+        res = v.get_catalogs(cat)
+        if res is None or len(res) == 0:
+            return pd.DataFrame()
+        return res[0].to_pandas()
+
+    fn = vizier_fn or _default
+    try:
+        df = fn(table, list(columns or []), int(max_rows))
+    except Exception as exc:                              # noqa: BLE001
+        if vizier_fn is None:
+            _circuit_fail(endpoint)
+        att = [route_note(ROUTE_ASTROQUERY, endpoint, status=STATUS_FAILED, what=table,
+                          error=repr(exc))]
+        raise VizierRouteError(f"astroquery route failed for {table!r}: {exc!r}",
+                               attempts=att) from exc
+    if vizier_fn is None:
+        _circuit_ok(endpoint)
+    df = pd.DataFrame() if df is None else df
+    att = [route_note(ROUTE_ASTROQUERY, endpoint,
+                      status=STATUS_OK if len(df) else STATUS_ZERO, what=table, rows=int(len(df)))]
+    df.attrs["route"] = ROUTE_ASTROQUERY
+    return df, att
+
+
+# ---------------------------------------------------------------------------
+# ADQL -> ASU translation (the narrow dialect this repository emits)
+# ---------------------------------------------------------------------------
+_SELECT_RE = re.compile(r"^\s*SELECT\s+(?:TOP\s+(\d+)\s+)?(.*?)\s+FROM\s+(.*?)\s*$",
+                        re.IGNORECASE | re.DOTALL)
+
+
+def _split_select(cols: str) -> list[str]:
+    out, depth, cur = [], 0, ""
+    for ch in cols:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        if ch == "," and depth == 0:
+            out.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    out.append(cur)
+    return [unquote_table(c) for c in out if c.strip()]
+
+
+def translate_adql(adql: str) -> dict:
+    """What this ADQL asks for, in ASU terms.
+
+    ``{"kind": "rows"|"tables"|"columns", ...}`` or a raise.  Deliberately
+    narrow: a form that is not recognised is reported, never approximated.
+    """
+    text = " ".join(str(adql).split())
+    m = _SELECT_RE.match(text)
+    if not m:
+        raise AdqlNotTranslatable(f"not a SELECT this translator recognises: {text[:200]!r}")
+    top, cols, tail = m.group(1), m.group(2), m.group(3)
+    parts = re.split(r"\s+WHERE\s+", tail, maxsplit=1, flags=re.IGNORECASE)
+    table = unquote_table(parts[0])
+    where = parts[1] if len(parts) > 1 else ""
+    limit = int(top) if top else None
+    low = table.lower()
+    if low == "tap_schema.tables":
+        if re.search(r"description\s+LIKE", where, re.IGNORECASE):
+            raise AdqlNotTranslatable(
+                "a TAP_SCHEMA description search has no ASU equivalent (VizieR's free-text "
+                "search is not a table service); the catalogue id route is the non-TAP one")
+        pats = re.findall(r"table_name\s+LIKE\s+'([^']*)'", where, re.IGNORECASE)
+        if not pats:
+            raise AdqlNotTranslatable(f"no table_name LIKE pattern in {where[:200]!r}")
+        return {"kind": "tables", "pattern": pats[0].strip("%"), "limit": limit or 60}
+    if low == "tap_schema.columns":
+        names = re.findall(r"table_name\s*=\s*'([^']*)'", where, re.IGNORECASE)
+        if not names:
+            raise AdqlNotTranslatable(f"no table_name = '...' in {where[:200]!r}")
+        return {"kind": "columns", "table": unquote_table(names[0])}
+    if re.search(r"\bCOUNT\s*\(", cols, re.IGNORECASE):
+        raise AdqlNotTranslatable(
+            "COUNT(*) has no ASU equivalent: the non-TAP route reports an unknown row count "
+            "rather than inventing one")
+    select = _split_select(cols)
+    if select == ["*"]:
+        select = []
+    out = {"kind": "rows", "table": table, "columns": select, "limit": limit,
+           "constraints": {}, "row_slice": None}
+    if where:
+        m = re.match(r"^\s*recno\s+BETWEEN\s+(\d+)\s+AND\s+(\d+)\s*$", where, re.IGNORECASE)
+        if m:
+            lo, hi = int(m.group(1)), int(m.group(2))
+            # ASU has no recno window, but it returns rows in recno order, so
+            # "first hi rows, keep the last hi-lo+1" is the SAME rows -- an
+            # exact translation, not an approximation.
+            out["limit"] = hi
+            out["row_slice"] = (lo - 1, hi)
+            return out
+        m = re.match(r"^\s*\"?([A-Za-z_][A-Za-z0-9_]*)\"?\s+IN\s*\((.*)\)\s*$", where,
+                     re.IGNORECASE | re.DOTALL)
+        if m:
+            vals = [v.strip().strip("'") for v in m.group(2).split(",") if v.strip()]
+            # verify: VizieR's ASU takes a comma-separated value list as an OR
+            # constraint on a column.  Asserted from the ASU documentation and
+            # NOT confirmed from here; a run that gets zero rows this way is
+            # recorded as zero rows over route asu_tsv, not as a detection.
+            out["constraints"] = {m.group(1): ",".join(vals)}
+            out["limit"] = out["limit"] or max(len(vals) * 10, 100)
+            return out
+        raise AdqlNotTranslatable(f"WHERE clause has no ASU equivalent: {where[:200]!r}")
+    return out
+
+
+def asu_query(adql: str, *, fetch_fn=None, bases=None) -> tuple[pd.DataFrame, list[dict]]:
+    """Serve one ADQL query over the non-TAP ASU route, or say why it cannot be."""
+    plan = translate_adql(adql)
+    if plan["kind"] == "tables":
+        df, attempts = asu_catalogue_tables(plan["pattern"], fetch_fn=fetch_fn, bases=bases,
+                                            limit=plan["limit"])
+        return df[["table_name", "description", "columns"]].copy(), attempts
+    if plan["kind"] == "columns":
+        return asu_table_columns(plan["table"], fetch_fn=fetch_fn, bases=bases)
+    return asu_rows(plan["table"], columns=plan["columns"], max_rows=plan["limit"] or 100000,
+                    fetch_fn=fetch_fn, bases=bases, constraints=plan["constraints"],
+                    row_slice=plan["row_slice"])
+
+
+# ---------------------------------------------------------------------------
+# The route ladder
+# ---------------------------------------------------------------------------
+@dataclass
+class VizierResult:
+    """Rows plus the route that served them, and every route that did not."""
+
+    rows: pd.DataFrame = field(default_factory=pd.DataFrame)
+    route: str = ROUTE_NONE
+    endpoint: str = ""
+    status: str = STATUS_FAILED
+    attempts: list[dict] = field(default_factory=list)
+
+    @property
+    def errors(self) -> list[dict]:
+        return [a for a in self.attempts if a["status"] == STATUS_FAILED]
+
+    def as_dict(self) -> dict:
+        return {"route": self.route, "endpoint": self.endpoint, "status": self.status,
+                "n_rows": int(len(self.rows)), "attempts": self.attempts,
+                "errors": self.errors}
+
+
+def vizier_table(catalogue: str, *, columns=None, max_rows: int = 100000, adql: str | None = None,
+                 tap_fn=None, tap_urls=None, fetch_fn=None, asu_bases=None, vizier_fn=None,
+                 allow_astroquery: bool = True, log: AcquisitionLog | None = None,
+                 stage: str = "vizier_table") -> VizierResult:
+    """Every route to one VizieR table, in order, each recorded with its error.
+
+    1. TAPVizieR (the current primary), 2. every other TAP host in
+    ``VIZIER_TAP_MIRRORS``, 3. the NON-TAP ASU interface, 4.
+    ``astroquery.vizier``.  The result says which route served the rows
+    (``route == "asu_tsv"`` when TAP is down and ASU answered); when every
+    route fails the rows are empty, the status is ``QUERY_FAILED`` and every
+    endpoint and error is in ``attempts``.  No route ever invents a row.
+    """
+    table = unquote_table(catalogue)
+    cols = [unquote_table(c) for c in (columns or []) if str(c).strip()]
+    sel = ", ".join(f'"{c}"' for c in dict.fromkeys(cols)) if cols else "*"
+    query = adql or f'SELECT TOP {int(max_rows)} {sel} FROM "{table}"'
+    tap_fn = tap_fn or (lambda a, u: tap_query(a, url=u, retries=1, allow_non_tap=False))
+    res = VizierResult()
+    for endpoint in (tap_urls or VIZIER_TAP_MIRRORS):
+        try:
+            df = tap_fn(query, endpoint)
+        except Exception as exc:                          # noqa: BLE001
+            res.attempts.append(route_note(ROUTE_TAP, endpoint, status=STATUS_FAILED,
+                                           what=query, error=repr(exc)))
+            continue
+        df = pd.DataFrame() if df is None else df
+        res.attempts.append(route_note(ROUTE_TAP, endpoint,
+                                       status=STATUS_OK if len(df) else STATUS_ZERO,
+                                       what=query, rows=int(len(df))))
+        res.rows, res.route, res.endpoint = df, ROUTE_TAP, endpoint
+        res.status = STATUS_OK if len(df) else STATUS_ZERO
+        break
+    if res.route == ROUTE_NONE:
+        try:
+            df, attempts = asu_rows(table, columns=cols, max_rows=max_rows, fetch_fn=fetch_fn,
+                                    bases=asu_bases)
+            res.attempts.extend(attempts)
+            res.rows, res.route = df, ROUTE_ASU
+            res.endpoint = str(df.attrs.get("endpoint", VIZIER_ASU))
+            res.status = STATUS_OK if len(df) else STATUS_ZERO
+        except VizierRouteError as exc:
+            res.attempts.extend(exc.attempts)
+    if res.route == ROUTE_NONE and allow_astroquery:
+        try:
+            df, attempts = astroquery_rows(table, columns=cols, max_rows=max_rows,
+                                           vizier_fn=vizier_fn)
+            res.attempts.extend(attempts)
+            res.rows, res.route, res.endpoint = df, ROUTE_ASTROQUERY, "astroquery.vizier.Vizier"
+            res.status = STATUS_OK if len(df) else STATUS_ZERO
+        except VizierRouteError as exc:
+            res.attempts.extend(exc.attempts)
+        except Exception as exc:                          # noqa: BLE001
+            res.attempts.append(route_note(ROUTE_ASTROQUERY, "astroquery.vizier.Vizier",
+                                           status=STATUS_FAILED, what=table, error=repr(exc)))
+    if log is not None:
+        log.record(stage, query, rows=int(len(res.rows)) if res.route != ROUTE_NONE else None,
+                   error=None if res.route != ROUTE_NONE else
+                   " | ".join(f"{a['endpoint']}: {a.get('error', '')}" for a in res.errors)[:2000],
+                   extra={"route": res.route, "endpoint": res.endpoint,
+                          "route_attempts": res.attempts})
+    return res
 
 
 def unquote_table(name: str) -> str:
     return str(name).strip().strip('"').strip()
 
 
-def list_tables(pattern: str, *, query_fn=None, limit: int = 60) -> pd.DataFrame:
-    """Tables in ``TAP_SCHEMA.tables`` whose name contains ``pattern``."""
+def list_tables(pattern: str, *, query_fn=None, limit: int = 60, fetch_fn=None,
+                allow_non_tap: bool = True) -> pd.DataFrame:
+    """Tables in ``TAP_SCHEMA.tables`` whose name contains ``pattern``.
+
+    When TAP cannot answer, this degrades to the NON-TAP existence check
+    (:func:`asu_catalogue_tables`: the catalogue's own ASU metadata, ReadMe as
+    the backstop) rather than raising --- "TAPVizieR is down" is not the same
+    fact as "this catalogue does not exist", and only the second one is about
+    the sky.  ``df.attrs["route"]`` says which route answered.  If the non-TAP
+    route fails too, the raise names every endpoint tried on both.
+    """
     query_fn = query_fn or tap_query
     adql = (f"SELECT TOP {int(limit)} table_name, description FROM TAP_SCHEMA.tables "
             f"WHERE table_name LIKE '%{pattern}%'")
-    df = query_fn(adql)
+    route, attempts = ROUTE_TAP, []
+    try:
+        df = query_fn(adql)
+    except Exception as tap_exc:                          # noqa: BLE001
+        if not allow_non_tap:
+            raise
+        attempts = list(getattr(tap_exc, "attempts", []))
+        try:
+            df, asu_attempts = asu_catalogue_tables(pattern, fetch_fn=fetch_fn, limit=limit)
+        except VizierRouteError as asu_exc:
+            raise VizierRouteError(
+                f"no route to TAP_SCHEMA.tables ~ {pattern!r}: TAP: {tap_exc!r} | "
+                f"non-TAP: {asu_exc}", attempts=attempts + list(asu_exc.attempts)) from tap_exc
+        route, attempts = ROUTE_ASU, attempts + asu_attempts
     if df is None or not len(df):
-        return pd.DataFrame(columns=["table_name", "description"])
-    df = df.rename(columns={c: c.lower() for c in df.columns})
+        out = pd.DataFrame(columns=["table_name", "description"])
+        out.attrs["route"] = route
+        return out
+    df = df.rename(columns={c: str(c).lower() for c in df.columns})
+    df = df.copy()
     df["table_name"] = df["table_name"].map(unquote_table)
-    return df[["table_name"] + [c for c in ("description",) if c in df]]
+    keep = ["table_name"] + [c for c in ("description", "columns") if c in df]
+    out = df[keep]
+    out.attrs["route"] = str(df.attrs.get("route", route))
+    out.attrs["attempts"] = attempts
+    return out
 
 
 def search_tables(keywords, *, query_fn=None, limit: int = 60) -> pd.DataFrame:
@@ -164,22 +943,45 @@ def search_tables(keywords, *, query_fn=None, limit: int = 60) -> pd.DataFrame:
     return df
 
 
-def table_columns(table: str, *, query_fn=None) -> list[str]:
-    """Real column names of one table from ``TAP_SCHEMA.columns``."""
+def table_columns(table: str, *, query_fn=None, fetch_fn=None, known=None,
+                  allow_non_tap: bool = True) -> list[str]:
+    """Real column names of one table from ``TAP_SCHEMA.columns``.
+
+    Degrades, in order, to column names already carried by a non-TAP table
+    listing (``known``) and then to the catalogue's ASU metadata."""
     query_fn = query_fn or tap_query
     t = unquote_table(table)
     adql = ("SELECT TOP 2000 column_name FROM TAP_SCHEMA.columns "
             f"WHERE table_name = '{t}' OR table_name = '\"{t}\"'")
-    df = query_fn(adql)
+    try:
+        df = query_fn(adql)
+    except Exception:                                     # noqa: BLE001
+        if not allow_non_tap:
+            raise
+        if known:
+            return [str(c) for c in known]
+        df, _ = asu_table_columns(t, fetch_fn=fetch_fn)
     if df is None or not len(df):
-        return []
+        return [str(c) for c in (known or [])]
     col = "column_name" if "column_name" in df.columns else df.columns[0]
     return [str(c) for c in df[col].tolist()]
 
 
 def count_rows(table: str, *, query_fn=None) -> int | None:
+    """``COUNT(*)``, or ``None`` when no route can answer it.
+
+    A row count has no ASU equivalent, so when TAP is down this returns
+    ``None`` (*unknown*) instead of raising: discovery then ranks tables on
+    their columns alone, which is what it does for any table whose count fails.
+    """
     query_fn = query_fn or tap_query
-    df = query_fn(f'SELECT COUNT(*) AS n FROM "{unquote_table(table)}"')
+    try:
+        df = query_fn(f'SELECT COUNT(*) AS n FROM "{unquote_table(table)}"')
+    except VizierRouteError as exc:
+        if exc.asu_supported:
+            raise
+        print(f"[metronome/acquire] row count unavailable without TAP for {table!r}: {exc}")
+        return None
     if df is None or not len(df):
         return None
     return int(df.iloc[0, 0])
@@ -618,9 +1420,15 @@ def fetch_variable_context(positions: pd.DataFrame, catalogues: dict, *, cone_fn
     return out, reached
 
 
-__all__ = ["STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "VIZIER_TAP", "AcquisitionLog",
-           "DiscoveredTable", "count_rows", "discover_and_fetch_rotation",
-           "discover_event_table", "fetch_events", "fetch_positions_by_id",
-           "fetch_variable_context", "list_tables", "resolve_columns",
-           "resolve_event_columns", "score_event_table", "search_tables", "table_columns",
-           "tap_query", "unquote_table"]
+__all__ = ["ROUTE_ASTROQUERY", "ROUTE_ASU", "ROUTE_NONE", "ROUTE_README", "ROUTE_TAP",
+           "ROUTE_LOG", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "VIZIER_ASU",
+           "VIZIER_ASU_MIRRORS", "VIZIER_README", "VIZIER_TAP", "VIZIER_TAP_MIRRORS",
+           "AdqlNotTranslatable", "AcquisitionLog", "DiscoveredTable", "VizierResult",
+           "VizierRouteError", "astroquery_rows", "asu_catalogue_tables", "asu_meta",
+           "asu_query", "asu_rows", "asu_table_columns", "asu_url", "count_rows",
+           "discover_and_fetch_rotation", "discover_event_table", "fetch_events",
+           "fetch_positions_by_id", "fetch_variable_context", "list_tables",
+           "parse_asu_meta", "parse_asu_tsv", "parse_readme", "reset_route_state",
+           "resolve_columns", "resolve_event_columns", "route_log_summary", "route_note",
+           "score_event_table", "search_tables", "split_catalogue", "table_columns",
+           "tap_query", "translate_adql", "unquote_table", "vizier_table"]

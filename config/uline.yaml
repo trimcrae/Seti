@@ -32,6 +32,43 @@ archives:
     - "https://cdms.astro.uni-koeln.de/classic/entries/partition_function.html"
   cdms_cat_url: "https://cdms.astro.uni-koeln.de/classic/predictions/catalog/c{tag:06d}.cat"
   vizier_tap: "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+  # ---- the VizieR ROUTE LADDER -------------------------------------------
+  # 2026-09-13: TAPVizieR answered 503 to five attempts over EACH of https and
+  # http (results/uline/summary.json -> degraded), and this channel reported
+  # NO_DATA_REACHED for an infrastructure reason — the one failure mode this
+  # repository must never publish as a sky result.  So VizieR is now reached
+  # over four routes in order, each recorded with its endpoint and error text:
+  #   1. vizier_tap (above), the current primary;
+  #   2. the other TAP hosts below;
+  #   3. vizier_asu_tsv — the NON-TAP route (VizieR's own ASU interface,
+  #      served by the web application, not by the TAP service), which also
+  #      answers the table-EXISTENCE question via `-meta.all` and so replaces
+  #      TAP_SCHEMA discovery while TAP is down;
+  #   4. astroquery.vizier.Vizier (already a declared dependency).
+  # These lists MIRROR the module defaults in src/seti/metronome/acquire.py
+  # (VIZIER_TAP_MIRRORS / VIZIER_ASU_MIRRORS) — src/seti/uline/run.py passes
+  # only `vizier_tap`, and tests/test_uline.py pins the two to be identical, so
+  # the endpoints and their verify status are visible in one place.
+  vizier_tap_mirrors:
+    - "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    # verify: historical CDS hostname for the same service (u-strasbg.fr is the
+    # pre-2021 name of the domain that became cds.unistra.fr).  ASSERTED, not
+    # confirmed — there is no egress from the sandbox, so the first runner
+    # dispatch that reaches (or fails to reach) it is what settles it.
+    - "https://tapvizier.u-strasbg.fr/TAPVizieR/tap"
+    # verify: the CfA VizieR mirror.  ASSERTED, unconfirmed until a runner
+    # reaches it; a host that fails is recorded with its error, never dropped.
+    - "https://vizier.cfa.harvard.edu/TAPVizieR/tap"
+    - "http://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+  vizier_asu_tsv:
+    - "https://vizier.cds.unistra.fr/viz-bin/asu-tsv"
+    # verify: mirror hostnames, ASSERTED and unconfirmed as above.
+    - "https://vizier.u-strasbg.fr/viz-bin/asu-tsv"
+    - "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv"
+  # The ASU row request is `-source=<catalogue>&-out.max=<n>&-out=<col>...
+  # &-out.form=TSV`; the existence check is `-source=<catalogue>&-meta.all`,
+  # with the catalogue's ReadMe (cdsarc.cds.unistra.fr/ftp/<cat>/ReadMe) as the
+  # backstop.  A run served this way reports `route: asu_tsv`, never a bare OK.
   # When a species has both a CDMS and a JPL entry, the first available in
   # this order is used for the MATCH; contaminant vetoes use the union.
   prefer_line_list: ["cdms", "jpl", "predicted"]

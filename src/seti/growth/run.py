@@ -242,18 +242,27 @@ def stage_acquire(conf: dict, out: Path, *, query_fn=None, gaia_fn=None, log=Non
         tap_url = str(g.get("tap_url") or "https://gea.esac.esa.int/tap-server/tap")
         cone_retries = int(g.get("cone_retries", 2))
         fallback = bool(g.get("fallback_cones", True))
+        # Wall-clock ceilings. Run 34789826297 sat three hours in the cone
+        # fallback against an archive that was answering 500 to every other
+        # channel that night, and the workflow's 180-minute cap would have
+        # killed it with nothing committed. What the budget does not reach is
+        # not_checked -- a stated gap, not an assumption of isolation.
+        cone_timeout = float(g.get("cone_timeout_s", 120.0))
+        cone_budget = g.get("cone_budget_s", 3600.0)
+        cone_budget = None if cone_budget in (None, "", 0) else float(cone_budget)
         cone_fn = None
         if fallback and gaia_fn is None:
             # Bound the fallback to the SAME endpoint the config names, and give
             # it its own retry budget; a cone that never answers leaves its
             # target QUERY_FAILED (-> not_checked), never "isolated".
-            def cone_fn(part, radius, *, attempts=None):  # noqa: ANN001
+            def cone_fn(part, radius, *, attempts=None, budget_s=None):  # noqa: ANN001
                 return gaia_neighbours_cones(part, radius, retries=cone_retries,
-                                             tap_url=tap_url, attempts=attempts)
+                                             tap_url=tap_url, attempts=attempts,
+                                             timeout_s=cone_timeout, budget_s=budget_s)
         neigh, status = fetch_gaia_neighbours(
             joined[["planet_key", "ra", "dec"]], gaia_fn=gaia_fn, cone_fn=cone_fn, log=log,
             radius_arcsec=float(g.get("neighbour_radius_arcsec", 21.0)),
-            chunk=int(g.get("chunk", 300)),
+            chunk=int(g.get("chunk", 300)), budget_s=cone_budget,
             checkpoint_dir=(data / "gaia_checkpoint") if g.get("checkpoint", True) else None)
         neigh.to_csv(data / "neighbours.csv", index=False)
         status.to_csv(data / "neighbour_status.csv", index=False)

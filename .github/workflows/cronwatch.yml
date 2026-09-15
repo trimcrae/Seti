@@ -33,6 +33,15 @@ name: cronwatch
 # (seti.cronwatch.SELF_HEAL_ONLY).  There is no race to create: `watchdog`
 # cannot be the competing writer here, because a `watchdog` that were running is
 # a `watchdog` that is not overdue.
+#
+# WHICH NEEDS `actions: write`, and for three weeks it did not have it.  This
+# file was written when the lane only reported, so `actions: read` was right;
+# `--self-heal-only` was added above it and the permission block was not.  The
+# 403 that produced is silent in exactly the wrong way -- the sweep still runs,
+# still reports, still commits its ledger, and the one dispatch it exists to
+# make comes back "Resource not accessible by integration".  Seen on
+# 2026-09-15: `watchdog` missed its 16:17 UTC firing, this lane saw it, and the
+# catch-up died at the API.  `tests/test_workflows.py` now pins the pairing.
 
 on:
   schedule:
@@ -43,7 +52,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
+  # write, not read: this lane dispatches the `watchdog` catch-up (see above).
+  actions: write
   contents: write
 
 jobs:

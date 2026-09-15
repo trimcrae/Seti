@@ -118,3 +118,42 @@ def test_the_altfeeds_job_deadline_matches_its_timeout():
     assert declared == [timeout_min], (
         f"TIMEOUT_MIN {declared} must equal timeout-minutes {timeout_min}")
     assert any("ALTFEEDS_JOB_DEADLINE_UNIX" in r for r in runs)
+
+
+@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+def test_a_lane_that_can_dispatch_is_allowed_to(path):
+    """A sweep that may re-fire a dropped cron needs `actions: write`.
+
+    THE FAILURE THIS PINS.  `cronwatch.yml` was written as a pure reporter, so
+    `actions: read` was correct for it.  `--self-heal-only` was then added to
+    that same job -- the one dispatch `watchdog` cannot make for itself, because
+    the case is that `watchdog` did not run -- and the permission block was left
+    behind.  The result reports normally and fails only at the single API call
+    it exists to make: on 2026-09-15 `watchdog` missed its 16:17 UTC firing,
+    this lane saw it, and the catch-up came back
+
+        dispatch watchdog.yml -> 403 {"message":"Resource not accessible by
+        integration"}
+
+    so the self-heal that had been added three weeks earlier had never once
+    worked.  `actions: read` on a dispatching lane is not a smaller permission,
+    it is a broken one.
+    """
+    doc = yaml.load(path.read_text(), Loader=StrictLoader)
+    runs = [step.get("run") or ""
+            for job in (doc.get("jobs") or {}).values()
+            for step in (job.get("steps") or [])]
+    # The dispatching callers: the scheduler sweep unless it is told not to
+    # dispatch, and the failure sweep, which re-runs jobs through the same
+    # `actions` scope.
+    dispatches = any(
+        ("cron_watch.py" in r and "--no-dispatch" not in r)
+        or "fail_sweep.py" in r
+        for r in runs)
+    if not dispatches:
+        pytest.skip("this workflow neither dispatches nor re-runs")
+    actions = ((doc.get("permissions") or {}).get("actions"))
+    assert actions == "write", (
+        f"{path.name} re-fires or re-runs workflows but grants "
+        f"`actions: {actions}` -- the POST comes back 403 "
+        f"'Resource not accessible by integration'")

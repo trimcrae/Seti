@@ -1370,3 +1370,87 @@ def test_zero_row_asu_response_records_the_body_head():
     assert attempts[-1]["status"] == acq.STATUS_ZERO
     assert "nothing here" in attempts[-1]["body_head"]
     assert "\\n" in attempts[-1]["body_head"]        # newlines are made visible
+
+
+# ---------------------------------------------------------------------------
+# A catalogue has TABLES: the ReadMe is the inventory -meta.all is not
+# ---------------------------------------------------------------------------
+_SHIBAYAMA_README = """\
+J/ApJS/209/5   Superflares on solar-type stars from Kepler  (Shibayama+, 2013)
+================================================================================
+File Summary:
+--------------------------------------------------------------------------------
+ FileName    Lrecl  Records   Explanations
+--------------------------------------------------------------------------------
+ReadMe          80        .   This file
+stars.dat      102      279   Properties of the superflare stars
+flares.dat      66     1547   Superflares detected on solar-type stars
+--------------------------------------------------------------------------------
+
+Byte-by-byte Description of file: flares.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units   Label     Explanations
+--------------------------------------------------------------------------------
+   1-  8  I8    ---     KIC       Kepler identifier
+  10- 20  F11.5 d       Tpeak     Flare peak time
+  22- 32  E11.4 erg     Ebol      Bolometric flare energy
+--------------------------------------------------------------------------------
+"""
+
+_META_ONE_TABLE = "\n".join([
+    "#Name: J/ApJS/209/5",
+    "#Title: Superflares on solar-type stars",
+    "#Table  J_ApJS_209_5_stars:",
+    "#Name: J/ApJS/209/5/stars",
+    "#Title: Properties of the superflare stars",
+    "#Column\tKIC\t(I8)\tKepler identifier",
+    "#Column\tProt\t(d)\tRotation period",
+])
+
+
+def test_a_bare_catalogue_listing_is_completed_from_its_readme():
+    """``-meta.all`` named ONE table for J/ApJS/209/5, losing the flares half.
+
+    ARC then reported Shibayama+2013 as a catalogue exposing no usable flares
+    table at all, when the catalogue plainly has one.  The ReadMe's File
+    Summary is the catalogue's own inventory and settles it.
+    """
+    seen: list[str] = []
+
+    def fetch(url: str, **_kw):
+        seen.append(url)
+        if "ReadMe" in url:
+            return _SHIBAYAMA_README
+        if "-meta.all" in url:
+            return _META_ONE_TABLE
+        raise RuntimeError(f"unexpected request: {url}")
+
+    df, attempts = acq.asu_catalogue_tables("J/ApJS/209/5", fetch_fn=fetch)
+    names = sorted(df["table_name"])
+    assert names == ["J/ApJS/209/5/flares", "J/ApJS/209/5/stars"], names
+    flares = df[df["table_name"] == "J/ApJS/209/5/flares"].iloc[0]
+    # the ReadMe's byte-by-byte block gives the real labels, so the table can be
+    # SCORED without another round trip
+    assert "Ebol" in list(flares["columns"]) and "KIC" in list(flares["columns"])
+    assert int(flares["n_rows"]) == 1547
+    assert any(a["route"] == acq.ROUTE_README for a in attempts)
+
+
+def test_an_exact_table_id_does_not_pay_for_the_readme():
+    """A full table name resolves on the one-row check; no extra round trip."""
+    def fetch(url: str, **_kw):
+        assert "ReadMe" not in url, "the ReadMe is for bare catalogue ids only"
+        return "\n".join(["#Name: J/ApJS/209/5/flares", "KIC\tEbol",
+                          "---\t----", "757076\t1.0e34"])
+
+    df, _att = acq.asu_catalogue_tables("J/ApJS/209/5/flares", fetch_fn=fetch)
+    assert list(df["table_name"]) == ["J/ApJS/209/5/flares"]
+
+
+def test_readme_tables_records_a_dead_readme_rather_than_raising():
+    def fetch(url: str, **_kw):
+        raise RuntimeError("404")
+
+    tables, attempts = acq.asu_readme_tables("J/ApJS/209/5", fetch_fn=fetch)
+    assert tables == {}
+    assert attempts[0]["status"] == acq.STATUS_FAILED and "404" in attempts[0]["error"]

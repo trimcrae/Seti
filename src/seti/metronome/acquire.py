@@ -885,6 +885,30 @@ def asu_table_exists(table: str, *, fetch_fn=None, bases=None, max_rows: int = 1
     return None, attempts
 
 
+def asu_readme_tables(catalogue: str, *, fetch_fn=None, readme_url: str = VIZIER_README
+                      ) -> tuple[dict, list[dict]]:
+    """A catalogue's own table inventory, from its ReadMe's File Summary.
+
+    ``-meta.all`` is not a reliable enumeration: asked for a bare catalogue id
+    it named a single table for both ``J/ApJS/209/5`` and ``J/ApJS/255/17`` on
+    2026-09-14.  The ReadMe lists every ``<name>.dat`` with its record count,
+    and its Byte-by-byte blocks give the real column labels, so a table found
+    this way can be SCORED without a further round trip.
+    """
+    cat, _ = split_catalogue(unquote_table(catalogue).strip("%"))
+    fetch = fetch_fn or _asu_http_text
+    url = readme_url.format(catalogue=cat)
+    try:
+        meta = parse_readme(fetch(url), cat)
+    except Exception as exc:                              # noqa: BLE001
+        return {}, [route_note(ROUTE_README, url, status=STATUS_FAILED,
+                               what=f"ReadMe {cat}", error=repr(exc))]
+    tables = dict(meta.get("tables") or {})
+    return tables, [route_note(ROUTE_README, url,
+                               status=STATUS_OK if tables else STATUS_ZERO,
+                               what=f"ReadMe {cat}", rows=len(tables))]
+
+
 def asu_catalogue_tables(pattern: str, *, fetch_fn=None, bases=None, limit: int = 60
                          ) -> tuple[pd.DataFrame, list[dict]]:
     """``table_name, description, columns`` for every table under ``pattern``.
@@ -912,17 +936,36 @@ def asu_catalogue_tables(pattern: str, *, fetch_fn=None, bases=None, limit: int 
         attempts.extend(att)
         if rec is not None:
             rows.append(rec)
-    if not rows:
-        meta, meta_attempts = asu_meta(pat, fetch_fn=fetch_fn, bases=bases)
-        attempts.extend(meta_attempts)
-        for name, blk in meta.get("tables", {}).items():
+    def _merge(blocks: dict) -> None:
+        have = {str(r["table_name"]).lower() for r in rows}
+        for name, blk in (blocks or {}).items():
             if pat and pat.strip("/").lower() not in name.lower():
+                continue
+            if str(name).lower() in have:
                 continue
             rows.append({"table_name": name, "description": blk.get("description", ""),
                          "columns": list(blk.get("columns") or []),
                          "units": dict(blk.get("units") or {}),
                          "descriptions": dict(blk.get("descriptions") or {}),
                          "n_rows": blk.get("n_rows")})
+            have.add(str(name).lower())
+
+    if not rows:
+        meta, meta_attempts = asu_meta(pat, fetch_fn=fetch_fn, bases=bases)
+        attempts.extend(meta_attempts)
+        _merge(meta.get("tables", {}))
+    if not tail and len(rows) < 2:
+        # A CATALOGUE has tables; ``-meta.all`` on a bare id came back naming
+        # exactly ONE of them on 2026-09-14, which is how ARC lost the flares
+        # half of Shibayama+2013 (it saw only J/ApJS/209/5/stars) and the
+        # rotation half of Santos+2021 (only .../table1, the per-quarter Teff
+        # table).  Both were then reported as catalogues that expose no usable
+        # table at all.  The ReadMe's File Summary is the catalogue's own
+        # inventory, so it is consulted whenever the metadata route named
+        # fewer than two tables, and the two listings are unioned.
+        rm, rm_attempts = asu_readme_tables(pat, fetch_fn=fetch_fn)
+        attempts.extend(rm_attempts)
+        _merge(rm)
     if not rows and not tail:
         rec, att = asu_table_exists(pat, fetch_fn=fetch_fn, bases=bases)
         attempts.extend(att)
@@ -1873,7 +1916,8 @@ __all__ = ["BREAKER_LOG", "ROUTE_ASTROQUERY", "ROUTE_ASU", "ROUTE_NONE", "ROUTE_
            "AdqlNotTranslatable", "AcquisitionLog", "DiscoveredTable", "VizierResult",
            "VizierRouteError", "astroquery_rows", "asu_body_head", "asu_catalogue_tables",
            "asu_constraint_ladder", "asu_meta",
-           "asu_query", "asu_rows", "asu_table_columns", "asu_table_exists", "asu_url",
+           "asu_query", "asu_readme_tables", "asu_rows", "asu_table_columns",
+           "asu_table_exists", "asu_url",
            "breaker_state", "breaker_summary", "count_rows", "ladder_verdict",
            "discover_and_fetch_rotation", "discover_event_table", "fetch_events",
            "fetch_positions_by_id", "fetch_variable_context", "list_tables",

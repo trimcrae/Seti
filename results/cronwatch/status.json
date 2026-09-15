@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-09-15T01:26:22Z",
+ "checked_at_utc": "2026-09-15T05:19:44Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -12,7 +12,7 @@
   "workflow": "ci.yml"
  },
  "n_dispatched": 0,
- "n_overdue": 0,
+ "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 12,
  "ref": "main",
@@ -43,10 +43,10 @@
    "grace_hours": 2.0,
    "has_dispatch": true,
    "hours_late": null,
-   "last_scheduled_run_utc": "2026-09-14T22:01:51Z",
+   "last_scheduled_run_utc": "2026-09-15T05:19:17Z",
    "name": "cronwatch",
    "overdue": false,
-   "status": "WITHIN_GRACE",
+   "status": "OK",
    "workflow": "cronwatch.yml"
   },
   {
@@ -165,19 +165,19 @@
   },
   {
    "cadence_hours": 24.0,
-   "cron_matched": "25 15 * * *",
+   "cron_matched": "25 3 * * *",
    "crons": [
     "25 15 * * *",
     "25 3 * * *"
    ],
-   "expected_last_fire_utc": "2026-09-14T15:25:00Z",
+   "expected_last_fire_utc": "2026-09-15T03:25:00Z",
    "grace_hours": 6.0,
    "has_dispatch": true,
    "hours_late": null,
    "last_scheduled_run_utc": "2026-09-14T19:52:08Z",
    "name": "tocsin-ztf",
    "overdue": false,
-   "status": "OK",
+   "status": "WITHIN_GRACE",
    "workflow": "tocsin-ztf.yml"
   },
   {
@@ -198,18 +198,22 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_error": "dispatch watchdog.yml -> 403 {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event\",\"status\":\"403\"}",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-09-15T01:17:00Z",
+   "expected_last_fire_utc": "2026-09-15T05:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
+   "hours_late": 0.05,
+   "hours_since_last_run": 3.9,
    "last_scheduled_run_utc": "2026-09-15T01:25:54Z",
+   "missed_by": "silence",
    "name": "watchdog",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 3.90 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-09-15T05:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

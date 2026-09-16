@@ -100,8 +100,19 @@ species:
     CF2:    {patterns: ["^CF2\\b"],                        note: "difluorocarbene radical; catalogue only"}
   # ---- natural organohalogen baseline: a U-line coinciding with these is not evidence
   baseline:
-    CH3Cl:  {patterns: ["^CH3Cl\\b", "^CH3-?35Cl", "^CH3-?37Cl", "^CH3\\(35\\)Cl", "^CH3\\(37\\)Cl"], note: "detected: Fayolle+2017 (IRAS 16293, 67P)"}
+    CH3Cl:  {patterns: ["^CH3Cl\\b", "^CH3-?35Cl", "^CH3-?37Cl", "^CH3\\(35\\)Cl", "^CH3\\(37\\)Cl", "^H3C-?Cl"], note: "detected: Fayolle+2017 (IRAS 16293, 67P)"}
     CH3F:   {patterns: ["^CH3F\\b"],                       note: "methyl fluoride; not detected in the ISM but natural"}
+  # AN ALIAS WITH THE SAME EMPIRICAL FORMULA MUST BE DECLARED HERE.
+  # The matcher no longer accepts a catalogue entry just because its atom
+  # counts agree: identical atom counts identify an empirical formula, which
+  # ISOMERS share. Probe run 35039720676 accepted, through that route alone,
+  # HCOCH2OH (glycolaldehyde) as HCOOCH3 (methyl formate), CH3NC as CH3CN, and
+  # HCCNC and HNCCC as HC3N — all C2H4O2 or C3HN, all different molecules with
+  # different spectra — and their frequencies were vetoing unidentified lines
+  # under the target's name. A same-formula entry is now recorded as a near
+  # miss with its reason, and becomes a match only once a pattern below says
+  # so. That is the point: every accepted contaminant identification is a
+  # declaration somebody can audit, not a coincidence of stoichiometry.
   # ---- the usual U-line explanations: vibrationally excited / torsional
   #      states and isotopologues of the abundant complex organics
   contaminants:

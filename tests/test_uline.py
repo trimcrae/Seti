@@ -844,10 +844,15 @@ def test_config_carries_every_species_source_and_threshold():
     for name, s in conf["sources"].items():
         assert s["vizier_like"].startswith("J/") and "v_lsr_km_s" in s and s["fwhm_km_s"] > 0, name
         assert s["frequency_frame"] in ("rest", "sky")
-        # every asserted catalogue id carries a DESCRIPTION fallback, so an id
-        # that is absent from TAP_SCHEMA names the real catalogue next run
-        assert "unidentified" in s["fallback_description_all"], name
-        assert "line survey" in s["fallback_description_any"], name
+        # Every asserted catalogue id carries a DESCRIPTION fallback, so an id
+        # absent from TAP_SCHEMA names the real catalogue next run. The terms
+        # go in `any`, not `all`: requiring "unidentified" in a TABLE
+        # description returned 0 rows in run 35038662696 because that word is
+        # a COLUMN description (see column_census).
+        terms = list(s.get("fallback_description_all") or []) + \
+            list(s.get("fallback_description_any") or [])
+        assert "unidentified" in terms, name
+        assert "line survey" in terms, name
     assert conf["archives"]["tap_retries"] >= 3
     txt = Path("config/uline.yaml").read_text()
     assert "verify:" in txt and "NOT yet been confirmed against TAP_SCHEMA" in txt
@@ -1011,3 +1016,67 @@ def test_config_route_ladder_matches_the_module_constants():
     txt = Path("config/uline.yaml").read_text()
     assert txt.count("# verify:") >= 2 and "ASSERTED" in txt
     assert "asu-tsv" in txt and "-meta.all" in txt
+
+
+# ---------------------------------------------------------------------------
+# The column census: "unidentified" is a COLUMN description, not a table one
+# ---------------------------------------------------------------------------
+def test_column_census_searches_tap_schema_columns_not_tables():
+    """Run 35038662696 got 0 tables for "unidentified" and that is an artefact.
+
+    A VizieR TABLE description is a one-line title ("Spectral survey of Orion
+    KL"); the word "unidentified" is in the description of a COLUMN — the flag
+    that marks a line unassigned. Searching the wrong table reads as "VizieR
+    has no U-line catalogues at all".
+    """
+    from seti.uline import acquire as A
+
+    adql = A.columns_described_adql(["unidentified"], limit=400)
+    assert "FROM TAP_SCHEMA.columns" in adql
+    assert "TAP_SCHEMA.tables" not in adql
+    # case variants OR-ed: TAPVizieR's LIKE is case-sensitive
+    for v in ("%unidentified%", "%Unidentified%", "%UNIDENTIFIED%"):
+        assert v in adql
+    assert "TOP 400" in adql
+
+
+def test_column_census_groups_matching_columns_by_table():
+    from seti.uline import acquire as A
+
+    def query_fn(adql: str):
+        assert "TAP_SCHEMA.columns" in adql
+        return pd.DataFrame({
+            "table_name": ['"J/A+A/517/A96/table2"', '"J/A+A/517/A96/table2"',
+                           '"J/ApJS/259/30/ulines"'],
+            "column_name": ["U", "Note", "Uflag"],
+            "description": ["Unidentified line flag", "unidentified/blend note",
+                            "Unidentified feature"],
+        })
+
+    rep = A.column_census(["unidentified"], query_fn=query_fn, source="orion_kl_hifi")
+    assert rep["status"] == A.STATUS_OK
+    assert rep["n_tables"] == 2 and rep["n_columns"] == 3
+    names = [t["table_name"] for t in rep["tables"]]
+    assert names == ["J/A+A/517/A96/table2", "J/ApJS/259/30/ulines"]   # quotes stripped
+    assert len(rep["tables"][0]["columns"]) == 2
+
+
+def test_column_census_records_a_failure_rather_than_an_empty_sky():
+    from seti.uline import acquire as A
+
+    def query_fn(adql: str):
+        raise RuntimeError("503 Service Unavailable")
+
+    rep = A.column_census(["unidentified"], query_fn=query_fn)
+    assert rep["status"] == A.STATUS_FAILED and "503" in rep["error"]
+    assert rep["n_tables"] == 0
+    # and a census with nothing to ask for says so, rather than querying
+    assert A.column_census([])["status"] == "NOT_ATTEMPTED"
+
+
+def test_orion_kl_is_recorded_as_measured_absent_with_its_three_routes():
+    """One silent route is not an absence claim; three agreeing routes are."""
+    raw = Path("config/uline.yaml").read_text()
+    assert "MEASURED ABSENT" in raw
+    for evidence in ("HTTP 404", "-meta.all", "0 rows"):
+        assert evidence in raw, evidence

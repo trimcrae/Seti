@@ -1,8 +1,10 @@
 name: growth-stage2
 
-# GROWTH stage 2 — MEASURE the TESS depth from the light curve (docs/growth.md §7).
+# GROWTH stage 2 — MEASURE the depth in BOTH ERAS from the light curves
+# (docs/growth.md §7).
 #
-#   probe ──▶ measure (KOI ephemerides + TOI depths + TESS light curves, fit) ──▶ assess ──▶ commit-back
+#   probe ──▶ measure (KOI ephemerides + TOI depths + KEPLER and TESS light
+#             curves, one fitter) ──▶ assess ──▶ commit-back
 #
 # WHY THIS STAGE EXISTS.  Stage 1 compares two heterogeneous CATALOGUE depths,
 # and run 35038510064's own population shows its formal errors are not a sigma
@@ -10,30 +12,50 @@ name: growth-stage2
 # and 37 above 3.  A third of a sample cannot be five-sigma outliers unless the
 # errors fail to describe the pipeline-to-pipeline scatter, so the z = 8.67 on
 # K00897.01 (Kepler-718 b, KIC 7849854, TIC 268924036, TOI 4490.01) is not an
-# 8.67-sigma statement.  Stage 2 does not argue about the error model: it FITS
-# the TESS depth itself and compares THREE numbers —
+# 8.67-sigma statement.
 #
-#   * the Kepler catalogue depth (carried into the TESS band by the LD ratio),
-#   * the TOI catalogue depth,
-#   * the depth this workflow measures from the light curve
+# AND WHY IT WAS EXTENDED.  The first form of this stage fitted the TESS era and
+# then compared it with cumulative.koi_depth — A CATALOGUE NUMBER, from another
+# pipeline, another decade, another aperture.  That is the very heterogeneity
+# the stage exists to escape.  BOTH eras are now fitted HERE, by the SAME code:
+# same fold, same transit-masked local baseline, same exposure-shrunk core, same
+# bootstrap, same dedupe.  Only the archive product and the time system differ
+# (Kepler light curves are BKJD — the system koi_time0bk is already in — so the
+# Kepler era applies NO epoch conversion; the TESS era subtracts 2167 days).
 #
-# — and reports which of the three distinguishable outcomes holds:
-#   MEASURED_DEPTH_MATCHES_KEPLER   the TOI value was wrong; the candidate dies
-#   MEASURED_DEPTH_MATCHES_TOI      the depth really changed; on to the centroid test
-#   MEASURED_DEPTH_MATCHES_NEITHER  said, not resolved — no pick is made
-# plus MEASURED_DEPTH_MATCHES_BOTH (the references are not separated by this
-# measurement) and UNMEASURED (never an agreement with anything).
+# THE PRIMARY VERDICT is therefore the like-for-like one:
+#   MEASURED_DEPTH_CHANGED        our two fits disagree: the change survives a
+#                                 comparison in which nothing but the sky differs
+#   MEASURED_DEPTH_UNCHANGED      they agree AND the comparison had the power to
+#                                 have seen the claimed change: nothing changed,
+#                                 koi_depth is wrong for this object, candidate dies
+#   MEASURED_DEPTH_UNRESOLVED     they agree WITHOUT that power — never a refutation
+#   MEASURED_DEPTH_ERA_UNMEASURED one or both eras produced no depth; an
+#                                 unmeasured era never agrees with anything
+# Either of the first two is valuable and NEITHER IS FAVOURED.
+#
+# The three-number CATALOGUE comparison is kept and is now a diagnostic of the
+# CATALOGUES rather than of the sky — MEASURED_DEPTH_MATCHES_KEPLER / _TOI /
+# _NEITHER / _BOTH say which table is right about the TESS era.  Separately, our
+# Kepler-era fit is checked against koi_depth in the Kepler band (no band
+# ratio): a disagreement is KOI_DEPTH_CONTRADICTED, a finding about the KOI
+# TABLE — stage 1's own input — and is surfaced as an annotation here.
 #
 # THE GOVERNING DISCIPLINES:
-#  * a target whose light curve could not be fetched is UNMEASURED with reason
-#    QUERY_FAILED — and QUERY_RETURNED_ZERO_ROWS stays a different fact;
-#  * WHICH product (SPOC 2-min vs TESS-SPOC / QLP FFI) and WHICH sectors were
-#    used is recorded per target: a 30-minute cadence on a 2-hour transit is
-#    smeared and the record says so rather than reporting a shallow depth;
+#  * an era whose light curves could not be fetched is UNMEASURED with reason
+#    QUERY_FAILED — and QUERY_RETURNED_ZERO_ROWS stays a different fact, as does
+#    KEPLER_ERA_NOT_ATTEMPTED (nothing was ASKED of the archive);
+#  * WHICH product (SPOC 2-min vs TESS-SPOC / QLP FFI; Kepler short vs 29.4-min
+#    long cadence) and WHICH sectors/quarters were used is recorded per target:
+#    a 29.4-minute integration on a 2.078-hour transit is smeared and the record
+#    says so rather than reporting a shallow depth as a depth;
 #  * every network stage has a WALL-CLOCK BUDGET (config/growth.yaml
-#    stage2.mast.budget_s / per_target_budget_s), because an unbounded stage
-#    cost this channel a whole run (34789826297);
-#  * NO_DATA_REACHED is not a null result and is not written up (CLAUDE.md).
+#    stage2.mast.budget_s / per_target_budget_s, and the SEPARATE
+#    kepler_budget_s / kepler_per_target_budget_s so one era cannot starve the
+#    other), because an unbounded stage cost this channel a whole run
+#    (34789826297);
+#  * NO_DATA_REACHED / LIKE_FOR_LIKE_NO_DATA is not a null result and is not
+#    written up (CLAUDE.md).
 #
 # What stage 2 still CANNOT do: a deeper TESS transit cannot be caused by
 # dilution, but a signal ORIGINATING ON A DIFFERENT STAR inside the ~21" TESS
@@ -73,9 +95,12 @@ jobs:
           # this runner actually has.
           pip install -e ".[dev,tess]"
       # The gate is the load-bearing offline test: an injected, KNOWN depth must
-      # be recovered to within the fit's own quoted error on THIS runner, along
-      # with the BKJD->BTJD epoch conversion, the smearing flag, the odd-even EB
-      # signature, and the three-way verdict's three branches.
+      # be recovered to within the fit's own quoted error on THIS runner — at
+      # TESS 2-minute cadence AND at Kepler's 29.4-minute long cadence — along
+      # with the per-era epoch handling (BKJD stays BKJD on the Kepler side; a
+      # double conversion is shown to destroy the fold), the smearing flag, the
+      # short-cadence month-file merge, the odd-even EB signature, and every
+      # branch of the like-for-like and three-way verdicts.
       - name: Offline gate — the injected depth must be recovered on this runner
         run: python -m pytest tests/test_growth_stage2.py -q -p no:cacheprovider
       - name: Probe (which MAST route exists here)
@@ -95,7 +120,7 @@ jobs:
               print("::error::no route to MAST on this runner — neither lightkurve nor "
                     "astroquery.mast+astropy.io.fits imported")
           PY
-      - name: Measure (KOI ephemerides, TOI depths, TESS light curves, depth fit)
+      - name: Measure (KOI ephemerides, TOI depths, KEPLER + TESS light curves, one fitter)
         if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == '' }}
         run: |
           python -m seti.growth.stage2 --stage measure
@@ -110,10 +135,20 @@ jobs:
               if s.get("status") != "OK":
                   print(f"::warning::{s['stage']}: {s['status']} {s.get('error','')}")
           if d.get("budget_exhausted"):
-              print("::warning::the stage-2 wall-clock budget was exhausted; targets it did "
-                    "not reach are UNMEASURED (BUDGET_EXHAUSTED), NOT refuted")
+              print("::warning::the stage-2 TESS wall-clock budget was exhausted; targets it "
+                    "did not reach are UNMEASURED (BUDGET_EXHAUSTED), NOT refuted")
+          if d.get("kepler_budget_exhausted"):
+              print("::warning::the stage-2 KEPLER wall-clock budget was exhausted; the "
+                    "like-for-like comparison it did not reach is ERA_UNMEASURED, NOT refuted")
+          if not d.get("kepler_era_enabled"):
+              print("::error::the Kepler era was not attempted — the PRIMARY (like-for-like) "
+                    "comparison is switched off. Set stage2.mast.kepler_enabled: true in "
+                    "config/growth.yaml.")
+          print("kepler statuses:", d.get("kepler_lc_status_counts"),
+                "routes:", d.get("kepler_lc_routes"),
+                "compared like-for-like:", d.get("n_compared_like_for_like"))
           PY
-      - name: Assess (the three-way verdict)
+      - name: Assess (the like-for-like verdict, then the catalogue diagnostic)
         if: ${{ github.event.inputs.stage != 'probe' }}
         run: |
           python -m seti.growth.stage2 --stage assess
@@ -135,6 +170,76 @@ jobs:
           s = json.loads(p.read_text())
           v, n = s.get("verdict", ""), s.get("n_measured", 0)
           tv = s.get("target_verdicts") or {}
+          pv = s.get("primary_verdict", "")
+          nl = s.get("n_compared_like_for_like", 0)
+          lv = s.get("like_for_like_verdicts") or {}
+          acq = s.get("acquisition") or {}
+
+          # ---- THE PRIMARY VERDICT: our Kepler-era fit vs our TESS-era fit ----
+          if not s.get("primary_verdict_field"):
+              print("::error::summary.json does not say which verdict is primary")
+              sys.exit(1)
+          if s.get("verdict_is_primary"):
+              print("::error::the catalogue verdict is marked primary; the like-for-like "
+                    "comparison is the primary one")
+              sys.exit(1)
+          if acq.get("kepler_era_enabled") is False:
+              print("::error::the Kepler era was not attempted, so there is NO like-for-like "
+                    "comparison: this run repeats the asymmetry stage 2 exists to remove. "
+                    "Set stage2.mast.kepler_enabled: true in config/growth.yaml.")
+              sys.exit(1)
+          if nl == 0 and pv != "LIKE_FOR_LIKE_NO_DATA":
+              print(f"::error::primary verdict {pv!r} with 0 like-for-like comparisons is a "
+                    "disguised no-data run")
+              sys.exit(1)
+          if nl > 0 and pv == "LIKE_FOR_LIKE_NO_DATA":
+              print(f"::error::LIKE_FOR_LIKE_NO_DATA with {nl} comparisons is incoherent")
+              sys.exit(1)
+          # An unresolved comparison may never be counted as a refutation.
+          if pv == "MEASURED_DEPTH_CHANGE_REFUTED" and lv.get("MEASURED_DEPTH_UNRESOLVED"):
+              print("::error::the run is REFUTED while carrying MEASURED_DEPTH_UNRESOLVED "
+                    "targets — an agreement without the power to disagree is not a refutation")
+              sys.exit(1)
+          # An era that was not measured may never be scored as agreeing.
+          for t in s.get("targets") or []:
+              if t.get("like_for_like_verdict") == "MEASURED_DEPTH_ERA_UNMEASURED":
+                  if t.get("measured_eras_agree"):
+                      print(f"::error::{t.get('kepoi_name')} has an unmeasured era and yet its "
+                            "two eras are scored as agreeing — a fabricated agreement")
+                      sys.exit(1)
+                  if not t.get("like_for_like_unmeasured_reason"):
+                      print(f"::error::{t.get('kepoi_name')} has an unmeasured era with no "
+                            "reason given")
+                      sys.exit(1)
+
+          if pv == "LIKE_FOR_LIKE_NO_DATA":
+              print(f"::notice::{s.get('primary_reason')} — NOT a null result and NOT written "
+                    "up (CLAUDE.md); the light curves of at least one era were not reached.")
+          if pv == "MEASURED_DEPTH_CHANGE_CONFIRMED":
+              print(f"::notice::{lv.get('MEASURED_DEPTH_CHANGED')} target(s) changed depth "
+                    "between OUR Kepler-era fit and OUR TESS-era fit — same fitter, same fold, "
+                    "same bootstrap. The change survives a like-for-like comparison. This is "
+                    "STILL NOT A DETECTION: the centroid test is outstanding.")
+          if pv == "MEASURED_DEPTH_CHANGE_REFUTED":
+              print(f"::notice::{lv.get('MEASURED_DEPTH_UNCHANGED')} target(s): our own fit to "
+                    "the KEPLER light curve agrees with our own fit to the TESS light curve. "
+                    "NOTHING CHANGED — the KOI catalogue depth is simply wrong for this object, "
+                    "the stage-1 candidate dies, and the channel has learned something about "
+                    "its stage-1 INPUTS. See summary.json['koi_catalogue_check'].")
+          if pv == "MEASURED_DEPTH_CHANGE_UNRESOLVED":
+              print(f"::notice::{s.get('primary_reason')} — an agreement WITHOUT the power to "
+                    "have seen the change under test is not a refutation; no pick is made.")
+
+          # ---- the KOI table itself -------------------------------------------
+          chk = s.get("koi_catalogue_check") or {}
+          if chk.get("finding"):
+              print(f"::warning::{chk['finding']}")
+              for t in chk.get("targets_contradicting_the_koi_table") or []:
+                  print(f"::warning::{t.get('kepoi_name')}: koi_depth {t.get('koi_depth_ppm')} "
+                        f"ppm vs OUR Kepler-era fit {t.get('our_kepler_depth_ppm')} ppm "
+                        f"(ratio {t.get('ratio')}, z {t.get('z')})")
+
+          # ---- the secondary, catalogue-diagnostic verdict ---------------------
           if n == 0 and v != "NO_DATA_REACHED":
               print(f"::error::verdict {v!r} with 0 measured targets is a disguised no-data run")
               sys.exit(1)
@@ -154,18 +259,20 @@ jobs:
           if v == "NO_DATA_REACHED":
               print(f"::notice::{s.get('reason')} — NOT a null result and NOT written up "
                     "(CLAUDE.md); the light curves were not reached.")
+          # These are statements about the CATALOGUES, not about the sky: the
+          # sky question is the primary verdict above.
           if v == "STAGE1_DEPTH_CHANGE_REFUTED":
-              print(f"::notice::the measured TESS depth agrees with the KEPLER-era depth for "
-                    f"{tv.get('MEASURED_DEPTH_MATCHES_KEPLER')} target(s): the TOI catalogue "
-                    "value was wrong and the stage-1 candidate dies. The channel's error "
-                    "model is catalogue-driven — see docs/growth.md §8.")
+              print(f"::notice::[catalogue diagnostic] our TESS-era fit agrees with the KOI "
+                    f"table's depth for {tv.get('MEASURED_DEPTH_MATCHES_KEPLER')} target(s): "
+                    "the TOI catalogue value is wrong about the TESS era.")
           if v == "STAGE1_DEPTH_CHANGE_CONFIRMED":
-              print(f"::notice::{tv.get('MEASURED_DEPTH_MATCHES_TOI')} target(s) measured at "
-                    "the DEEP value: the depth really did change. This is NOT a detection — "
-                    "the centroid test (a signal originating on a different star inside the "
-                    "TESS pixel) is still outstanding; see checks_not_performed.")
+              print(f"::notice::[catalogue diagnostic] our TESS-era fit agrees with the TOI "
+                    f"table for {tv.get('MEASURED_DEPTH_MATCHES_TOI')} target(s): the TOI "
+                    "value is right about the TESS era. Whether the depth CHANGED is the "
+                    "primary verdict above, not this one.")
           if v == "STAGE1_DEPTH_CHANGE_UNRESOLVED":
-              print(f"::notice::{s.get('reason')} — reported, not resolved; no pick is made.")
+              print(f"::notice::[catalogue diagnostic] {s.get('reason')} — reported, not "
+                    "resolved; no pick is made.")
           for k, c in (s.get("flags") or {}).items():
               print(f"::warning::flag {k}: {c} target(s)")
           for k, c in (s.get("unmeasured_reasons") or {}).items():
@@ -179,7 +286,7 @@ jobs:
           # The push is VERIFIED against the remote (scripts/commit_results.sh);
           # the downloaded FITS products stay in the artifact only.
           scripts/commit_results.sh \
-            "growth stage 2: measured TESS depth vs BOTH catalogue depths — probe/measure/assess" \
+            "growth stage 2: BOTH eras measured with one fitter — like-for-like depth verdict, plus the catalogue diagnostic" \
             results/growth/stage2/probe.json \
             results/growth/stage2/acquire.json \
             results/growth/stage2/acquisition_log.json \

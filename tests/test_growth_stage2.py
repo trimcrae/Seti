@@ -25,6 +25,27 @@ one.  What this suite is the gate for:
 * **the three-way verdict** returns the right branch for each of: the measured
   depth agrees with Kepler (the TOI value was wrong), agrees with the TOI (the
   depth really changed), agrees with neither.
+
+And, since the module measures **both eras with the same fitter**:
+
+* **the BKJD epoch is used unconverted on the Kepler side.**  ``koi_time0bk``
+  is BKJD and so are Kepler light curves; subtracting 2167 days there as well
+  is the obvious bug in a two-era module and would report "no change" while
+  measuring nothing at all.  Both branches of :func:`epoch_in_era` are checked,
+  and a double conversion is shown to destroy the Kepler fold.
+* **a known depth injected at Kepler's 29.4-minute long cadence is recovered**
+  within its quoted error, and that cadence is **flagged smeared** on a
+  2.08-hour transit while 58.85-second short cadence is not.
+* **Kepler short-cadence month-files are merged into quarters** before the
+  dedupe, because three files carry one quarter and keying the dedupe on the
+  quarter without merging would throw two thirds of them away.
+* **a failed Kepler fetch leaves that era unmeasured** and the like-for-like
+  comparison never agrees with anything.
+* **each branch of the like-for-like verdict** --- changed, unchanged,
+  unresolved (agreement WITHOUT the power to have seen the change under test),
+  and one-era-unmeasured.
+* **a disagreement between our Kepler-era fit and ``koi_depth``** is reported
+  as a finding about the KOI table.
 """
 
 from __future__ import annotations
@@ -41,15 +62,31 @@ from seti.growth.stage2 import (
     BKJD_MINUS_BTJD,
     BKJD_OFFSET,
     BTJD_OFFSET,
+    ERA_KEPLER,
+    ERA_TESS,
+    KEPLER_LONG_CADENCE_S,
+    KEPLER_SHORT_CADENCE_S,
+    KOI_DEPTH_CONFIRMED,
+    KOI_DEPTH_CONTRADICTED,
+    KOI_DEPTH_UNCHECKED,
+    LL_CHANGED,
+    LL_ERA_UNMEASURED,
+    LL_UNCHANGED,
+    LL_UNRESOLVED,
     MATCH_BOTH,
     MATCH_KEPLER,
     MATCH_NEITHER,
     MATCH_TOI,
     MATCH_UNMEASURED,
     RUN_CONFIRMED,
+    RUN_LL_CHANGED,
+    RUN_LL_NO_DATA,
+    RUN_LL_UNCHANGED,
+    RUN_LL_UNRESOLVED,
     RUN_NO_DATA,
     RUN_REFUTED,
     RUN_UNRESOLVED,
+    UNMEASURED_KEPLER_DISABLED,
     UNMEASURED_NO_EPHEMERIS,
     UNMEASURED_NO_REFERENCE,
     UNMEASURED_QUERY_FAILED,
@@ -63,18 +100,25 @@ from seti.growth.stage2 import (
     bkjd_to_btjd,
     btjd_to_bkjd,
     combine_transit_depths,
+    compare_kepler_to_catalogue,
+    compare_measured_eras,
     compare_three_depths,
     core_half_width,
+    epoch_in_era,
+    fetch_kepler_lightcurves,
     fetch_koi_ephemerides,
     fetch_lightcurves,
     fetch_toi_depths,
     fit_transits,
     fold,
+    kepler_cadence_label,
     load_shortlist,
     mast_probe,
     measure_one,
     measure_target,
+    merge_kepler_segments,
     propagate_epoch,
+    run_like_for_like_verdict,
     run_verdict,
     stage2_assess,
     stage2_measure,
@@ -562,7 +606,9 @@ def _conf(tmp_path: Path, **stage2) -> dict:
     s2 = {"shortlist_from_candidates_csv": False,
           "shortlist": [{"kepoi_name": "K00897.01", "kepler_name": "Kepler-718 b",
                          "kepid": 7849854, "tic_id": 268924036, "toi": 4490.01}],
-          "mast": {"budget_s": 60.0, "per_target_budget_s": 60.0, "retries": 1},
+          "mast": {"budget_s": 60.0, "per_target_budget_s": 60.0, "retries": 1,
+                   "retry_pause_s": 0.0, "kepler_budget_s": 60.0,
+                   "kepler_per_target_budget_s": 60.0, "kepler_retries": 1},
           "compare": {"n_agree": 3.0, "sigma_sys_ln": 0.05}}
     s2.update(stage2)
     return {"stage2": s2, "archive": {}, "limb_darkening": None}
@@ -861,3 +907,587 @@ def test_the_duplicate_is_dropped_before_the_depth_is_combined():
     two = measure_target([spoc, other], period_days=P, t0_btjd=t0, duration_days=T14_D)
     assert two["n_transits"] > one["n_transits"]
     assert two["n_sectors_dropped_duplicate"] == 0
+
+
+# ---------------------------------------------------------------------------
+# 9. BOTH ERAS, ONE FITTER — the like-for-like comparison
+#
+# Stage 2 used to fit the TESS era and compare it against `koi_depth`, a
+# CATALOGUE number from another pipeline, another decade and another aperture.
+# That is the heterogeneity the stage exists to escape, so the Kepler era is
+# now fitted here too, by the same code.  What follows is the gate for that.
+# ---------------------------------------------------------------------------
+#: The KOI's own transit duration, 2.078 h.  29.4-minute Kepler long cadence is
+#: 0.236 of it -- over `smear_fraction`, which is what makes the flag testable
+#: on the object this stage was built for.
+T14_H_REAL = 2.0778
+T14_D_REAL = T14_H_REAL / 24.0
+
+
+def _kepler_sectors(depth_ppm, *, exptime_s=KEPLER_LONG_CADENCE_S, n_transits=60,
+                    noise_ppm=300.0, seed=51, quarters=(3,), duration_days=T14_D,
+                    odd_depth_ppm=None):
+    """Synthetic Kepler quarters, **in BKJD**: the epoch is used unconverted."""
+    out = []
+    for i, q in enumerate(quarters):
+        out.append(synth_lightcurve(
+            period_days=P, t0_btjd=T0_BKJD + i * 200 * P, duration_days=duration_days,
+            depth=depth_ppm * 1e-6,
+            odd_depth=(odd_depth_ppm * 1e-6 if odd_depth_ppm is not None else None),
+            exptime_s=exptime_s, n_transits=n_transits, noise_ppm=noise_ppm,
+            sector=q, author="Kepler", seed=seed + i))
+    return out
+
+
+def _kepler_lc_fn(depth_ppm, **kw):
+    def lc(_kepid, **_kw):
+        return _kepler_sectors(depth_ppm, **kw)
+    return lc
+
+
+# --- 9.1 the epoch: BKJD stays BKJD ---------------------------------------
+def test_the_kepler_era_uses_the_bkjd_epoch_without_converting_it():
+    """`koi_time0bk` is BKJD and so is a Kepler light curve: no conversion."""
+    assert epoch_in_era(T0_BKJD, ERA_KEPLER) == pytest.approx(T0_BKJD, abs=1e-12)
+    assert epoch_in_era(T0_BKJD, ERA_TESS) == pytest.approx(T0_BKJD - 2167.0, abs=1e-9)
+    # the hand-worked value again, reached through the era selector
+    assert epoch_in_era(170.0, ERA_TESS) == pytest.approx(-1997.0, abs=1e-9)
+    assert epoch_in_era(170.0, ERA_KEPLER) == pytest.approx(170.0, abs=1e-12)
+    # the two eras differ by exactly the constant, and nothing else
+    assert (epoch_in_era(170.0, ERA_KEPLER)
+            - epoch_in_era(170.0, ERA_TESS)) == pytest.approx(2167.0, abs=1e-9)
+    with pytest.raises(ValueError):
+        epoch_in_era(170.0, "k2")
+
+
+def test_converting_the_epoch_twice_destroys_the_kepler_fold():
+    """THE obvious bug in a two-era module, made visible.
+
+    If the Kepler side also subtracted 2167 days the fold would land 2167 days
+    from any transit: no depth at all, reported as a Kepler era that "did not
+    change".  The right epoch recovers the injection; the doubly converted one
+    does not come near it.
+    """
+    secs = _kepler_sectors(14280.6, n_transits=40, seed=61)
+    right = measure_target(secs, period_days=P, t0_btjd=epoch_in_era(T0_BKJD, ERA_KEPLER),
+                           duration_days=T14_D)
+    wrong = measure_target(secs, period_days=P, t0_btjd=bkjd_to_btjd(T0_BKJD),
+                           duration_days=T14_D)
+    assert right["depth_ppm"] == pytest.approx(14280.6, rel=0.05)
+    assert (not np.isfinite(wrong["depth_ppm"])) or abs(wrong["depth_ppm"]) < 1500.0
+
+
+# --- 9.2 the load-bearing test AT KEPLER CADENCE ---------------------------
+@pytest.mark.parametrize("depth_ppm", [14280.6, 30614.0])
+def test_an_injected_depth_is_recovered_at_kepler_long_cadence(depth_ppm):
+    """29.4-minute integration, 2.078-hour transit: the depth still comes back.
+
+    This is the number the whole like-for-like comparison rests on.  The core
+    window is shrunk by half the exposure, so no sample whose integration
+    straddles ingress is counted as flat-bottom flux -- which is exactly why a
+    long-cadence depth is not biased shallow even though it IS smeared.
+    """
+    secs = _kepler_sectors(depth_ppm, exptime_s=KEPLER_LONG_CADENCE_S, n_transits=60,
+                           noise_ppm=300.0, seed=17, duration_days=T14_D_REAL)
+    m = measure_target(secs, period_days=P, t0_btjd=T0_BKJD, duration_days=T14_D_REAL)
+    assert m["n_transits"] == 60
+    assert np.isfinite(m["depth_ppm"]) and m["depth_err_ppm"] > 0
+    assert m["depth_err_ppm"] < 0.05 * depth_ppm          # an informative error
+    assert abs(m["depth_ppm"] - depth_ppm) < 3.0 * m["depth_err_ppm"]
+    assert m["depth_err_method"] == "bootstrap"
+    # and it is FLAGGED, not quietly reported as an unsmeared measurement
+    assert m["smeared"] is True
+    assert m["depth_is_lower_bound"] is False             # a flat core does survive
+
+
+def test_the_quoted_error_at_kepler_cadence_is_calibrated_over_noise_realisations():
+    """The pull distribution at 29.4-minute cadence: unbiased, right-sized."""
+    params = FitParams(bootstrap_draws=400)
+    pulls = []
+    for seed in range(15):
+        secs = _kepler_sectors(14280.6, exptime_s=KEPLER_LONG_CADENCE_S, n_transits=60,
+                               noise_ppm=300.0, seed=seed, duration_days=T14_D_REAL)
+        m = measure_target(secs, period_days=P, t0_btjd=T0_BKJD, duration_days=T14_D_REAL,
+                           params=params)
+        pulls.append((m["depth_ppm"] - 14280.6) / m["depth_err_ppm"])
+    pulls = np.array(pulls)
+    assert abs(pulls.mean()) < 0.6, f"biased at Kepler cadence: mean pull {pulls.mean():+.3f}"
+    assert 0.5 < pulls.std(ddof=1) < 1.8, f"mis-sized error: pull sd {pulls.std(ddof=1):.3f}"
+
+
+def test_kepler_long_cadence_is_smeared_on_a_2_08_hour_transit_and_short_cadence_is_not():
+    """1765.5 s / 2.0778 h = 0.236 > smear_fraction; 58.85 s is 0.008."""
+    assert KEPLER_LONG_CADENCE_S == pytest.approx(1765.5)
+    assert KEPLER_LONG_CADENCE_S / 86400.0 / T14_D_REAL == pytest.approx(0.2361, abs=5e-4)
+    assert kepler_cadence_label(KEPLER_LONG_CADENCE_S) == "long"
+    assert kepler_cadence_label(KEPLER_SHORT_CADENCE_S) == "short"
+    assert kepler_cadence_label(float("nan")) == "unknown"
+
+    lc = measure_target(_kepler_sectors(14280.6, exptime_s=KEPLER_LONG_CADENCE_S, n_transits=40,
+                                        seed=71, duration_days=T14_D_REAL),
+                        period_days=P, t0_btjd=T0_BKJD, duration_days=T14_D_REAL)
+    assert lc["smeared"] is True and "smeared" in str(lc["flags"])
+    assert lc["sectors"].iloc[0]["exptime_over_duration"] == pytest.approx(0.2361, abs=5e-4)
+
+    sc = measure_target(_kepler_sectors(14280.6, exptime_s=KEPLER_SHORT_CADENCE_S, n_transits=12,
+                                        seed=72, duration_days=T14_D_REAL),
+                        period_days=P, t0_btjd=T0_BKJD, duration_days=T14_D_REAL)
+    assert sc["smeared"] is False and "smeared" not in str(sc["flags"])
+    assert abs(sc["depth_ppm"] - 14280.6) < 3.0 * sc["depth_err_ppm"]
+
+
+# --- 9.3 quarters, month-files and the dedupe ------------------------------
+def test_short_cadence_month_files_are_merged_into_one_quarter_not_deduped_away():
+    """Kepler ships short cadence PER MONTH: three files carry one quarter.
+
+    `dedupe_sectors` keeps one light curve per key, so handing it three
+    month-files of the same quarter unchanged would throw two thirds of the
+    short-cadence data away.  They are merged first.
+    """
+    months = [synth_lightcurve(period_days=P, t0_btjd=T0_BKJD + i * 10 * P,
+                               duration_days=T14_D, depth=0.014,
+                               exptime_s=KEPLER_SHORT_CADENCE_S, n_transits=4,
+                               noise_ppm=300.0, sector=9, author="Kepler", seed=80 + i)
+              for i in range(3)]
+    for m in months:
+        m["quarter"] = 9
+        m["cadence"] = "short"
+    merged, prov = merge_kepler_segments(months)
+    assert len(merged) == 1
+    assert merged[0]["n_files_merged"] == 3
+    assert merged[0]["n_points"] == sum(int(m["n_points"]) for m in months)
+    assert prov[0]["quarter"] == 9 and prov[0]["n_files_merged"] == 3
+    # the merged series is monotonic in time and already normalised per file
+    assert np.all(np.diff(merged[0]["time"]) >= 0)
+    assert merged[0]["normalised_per_file"] is True
+    assert float(np.median(merged[0]["flux"])) == pytest.approx(1.0, abs=0.01)
+    # every transit survives the merge
+    m = measure_target(merged, period_days=P, t0_btjd=T0_BKJD, duration_days=T14_D)
+    assert m["n_transits"] == 12
+
+
+def test_a_quarter_served_at_both_cadences_is_counted_once_and_short_cadence_wins():
+    """Long and short cadence of one quarter are the SAME PIXELS.
+
+    The Kepler side goes through the same `dedupe_sectors` as the TESS side:
+    the shorter exposure wins and the duplicate is recorded, so no transit is
+    counted twice and the quoted error is not shrunk by sqrt(2).
+    """
+    long_q = synth_lightcurve(period_days=P, t0_btjd=T0_BKJD, duration_days=T14_D, depth=0.014,
+                              exptime_s=KEPLER_LONG_CADENCE_S, n_transits=10, noise_ppm=300.0,
+                              sector=9, author="Kepler", seed=90)
+    short_q = synth_lightcurve(period_days=P, t0_btjd=T0_BKJD, duration_days=T14_D, depth=0.014,
+                               exptime_s=KEPLER_SHORT_CADENCE_S, n_transits=10, noise_ppm=300.0,
+                               sector=9, author="Kepler", seed=91)
+    merged, _prov = merge_kepler_segments([long_q, short_q])
+    assert len(merged) == 2, "long and short cadence are separate records until the dedupe"
+    one = measure_target([short_q], period_days=P, t0_btjd=T0_BKJD, duration_days=T14_D)
+    both = measure_target(merged, period_days=P, t0_btjd=T0_BKJD, duration_days=T14_D)
+    assert both["n_transits"] == one["n_transits"], "the long-cadence duplicate was stacked"
+    assert both["n_sectors_dropped_duplicate"] == 1
+    assert both["smeared"] is False, "the long-cadence quarter was dropped, so nothing is smeared"
+
+
+def test_the_kepler_fetch_merges_month_files_and_keeps_the_two_statuses_apart():
+    """The fetch returns one light curve per (quarter, cadence), with a status."""
+    months = [synth_lightcurve(period_days=P, t0_btjd=T0_BKJD + i * 10 * P, duration_days=T14_D,
+                               depth=0.014, exptime_s=KEPLER_SHORT_CADENCE_S, n_transits=4,
+                               noise_ppm=300.0, sector=9, author="Kepler", seed=95 + i)
+              for i in range(3)]
+
+    got, status, route, prov = fetch_kepler_lightcurves(
+        7849854, lc_fn=lambda _k, **_kw: months,
+        params=MastParams(kepler_retries=1, retry_pause_s=0.0))
+    assert status == "OK" and route == "injected"
+    assert len(got) == 1 and got[0]["n_files_merged"] == 3
+    assert prov and prov[0]["n_files_merged"] == 3
+
+    def boom(_k, **_kw):
+        raise RuntimeError("MAST said 503")
+
+    got, status, _r, _p = fetch_kepler_lightcurves(
+        7849854, lc_fn=boom, params=MastParams(kepler_retries=1, retry_pause_s=0.0))
+    assert status == UNMEASURED_QUERY_FAILED and got == []
+
+    got, status, _r, _p = fetch_kepler_lightcurves(
+        7849854, lc_fn=lambda _k, **_kw: [],
+        params=MastParams(kepler_retries=1, retry_pause_s=0.0))
+    assert status == UNMEASURED_ZERO_ROWS and status != UNMEASURED_QUERY_FAILED
+    assert got == []
+
+
+def test_the_kepler_fetch_respects_its_own_exhausted_budget():
+    calls = []
+    got, status, _r, _p = fetch_kepler_lightcurves(
+        7849854, lc_fn=lambda _k, **_kw: calls.append(1) or [],
+        params=MastParams(), deadline=Deadline(budget_s=0.0))
+    assert status == UNMEASURED_QUERY_FAILED and got == [] and calls == []
+
+
+# --- 9.4 the like-for-like verdict, branch by branch ------------------------
+def test_like_for_like_changed_when_our_two_fits_disagree():
+    """Case 1: we fit 14,000 ppm in Kepler and 30,000 ppm in TESS."""
+    out = compare_measured_eras(14280.0, 60.0, 30614.0, 1500.0, ld_band_ratio=1.0,
+                                ln_ratio_under_test=0.88)
+    assert out["like_for_like_verdict"] == LL_CHANGED
+    assert out["measured_eras_agree"] is False
+    assert out["z_measured_eras"] > 3.0            # deeper in the TESS era
+    assert out["measured_depth_ratio"] == pytest.approx(30614.0 / 14280.0, rel=1e-9)
+    assert out["like_for_like_unmeasured_reason"] == ""
+
+
+def test_like_for_like_unchanged_kills_the_candidate_and_indicts_the_catalogue():
+    """Case 2: our Kepler-era fit ALSO gives ~30,000 ppm, so nothing changed."""
+    out = compare_measured_eras(30500.0, 200.0, 30614.0, 1500.0, ld_band_ratio=1.0,
+                                ln_ratio_under_test=0.88)
+    assert out["like_for_like_verdict"] == LL_UNCHANGED
+    assert out["measured_eras_agree"] is True
+    assert abs(out["z_measured_eras"]) < 3.0
+    # "unchanged" was earned: the comparison COULD have seen the claimed change
+    assert out["detectable_ln_ratio"] < out["ln_ratio_under_test"]
+
+
+def test_like_for_like_unresolved_when_the_comparison_had_no_power():
+    """Case 3: agreement WITHOUT the power to have seen the change under test.
+
+    A fit too imprecise to tell 14,000 ppm from 30,000 ppm must not "refute"
+    the candidate by failing to measure it -- that is stage 1's error in the
+    opposite direction.
+    """
+    out = compare_measured_eras(20000.0, 18000.0, 22000.0, 16000.0, ld_band_ratio=1.0,
+                                ln_ratio_under_test=0.88)
+    assert out["like_for_like_verdict"] == LL_UNRESOLVED
+    assert out["measured_eras_agree"] is True       # they DO agree...
+    assert out["detectable_ln_ratio"] > out["ln_ratio_under_test"]   # ...powerlessly
+    assert out["like_for_like_verdict"] != LL_UNCHANGED
+    # with a smaller change under test the same numbers ARE a refutation
+    same = compare_measured_eras(20000.0, 18000.0, 22000.0, 16000.0, ld_band_ratio=1.0,
+                                 ln_ratio_under_test=50.0)
+    assert same["like_for_like_verdict"] == LL_UNCHANGED
+
+
+def test_like_for_like_with_an_unmeasured_era_never_agrees_with_anything():
+    """Case 4: one era has no depth.  The reason names WHICH era and why."""
+    out = compare_measured_eras(float("nan"), float("nan"), 30614.0, 1500.0,
+                                kepler_unmeasured_reason=UNMEASURED_QUERY_FAILED)
+    assert out["like_for_like_verdict"] == LL_ERA_UNMEASURED
+    assert out["measured_eras_agree"] is False
+    assert not np.isfinite(out["z_measured_eras"])
+    assert out["like_for_like_unmeasured_reason"] == "KEPLER_ERA:QUERY_FAILED"
+
+    other = compare_measured_eras(14280.0, 60.0, float("nan"), float("nan"),
+                                  tess_unmeasured_reason=UNMEASURED_ZERO_ROWS)
+    assert other["like_for_like_verdict"] == LL_ERA_UNMEASURED
+    assert other["like_for_like_unmeasured_reason"] == "TESS_ERA:QUERY_RETURNED_ZERO_ROWS"
+
+    both = compare_measured_eras(float("nan"), float("nan"), float("nan"), float("nan"),
+                                 kepler_unmeasured_reason=UNMEASURED_KEPLER_DISABLED,
+                                 tess_unmeasured_reason=UNMEASURED_QUERY_FAILED)
+    assert both["like_for_like_unmeasured_reason"] == (
+        "KEPLER_ERA:KEPLER_ERA_NOT_ATTEMPTED;TESS_ERA:QUERY_FAILED")
+
+
+def test_the_band_ratio_is_applied_to_our_kepler_measurement_too():
+    """Both eras are one band each; the Kepler fit is carried into the TESS band."""
+    out = compare_measured_eras(14280.6, 50.0, 14280.6 * 0.97, 50.0, ld_band_ratio=0.97,
+                                ln_ratio_under_test=0.88)
+    assert out["depth_kepler_measured_in_tess_band_ppm"] == pytest.approx(14280.6 * 0.97,
+                                                                          rel=1e-9)
+    assert abs(out["z_measured_eras"]) < 0.5
+    off = compare_measured_eras(14280.6, 50.0, 14280.6 * 0.97, 50.0, ld_band_ratio=0.97,
+                                ln_ratio_under_test=0.88,
+                                params=CompareParams(apply_band_ratio=False))
+    assert off["depth_kepler_measured_in_tess_band_ppm"] == pytest.approx(14280.6, rel=1e-9)
+    assert abs(off["z_measured_eras"]) > abs(out["z_measured_eras"])
+
+
+def test_the_run_level_like_for_like_verdict_follows_the_targets():
+    assert run_like_for_like_verdict(pd.DataFrame())[0] == RUN_LL_NO_DATA
+    assert run_like_for_like_verdict(pd.DataFrame(
+        {"like_for_like_verdict": [LL_ERA_UNMEASURED],
+         "like_for_like_unmeasured_reason": ["KEPLER_ERA:QUERY_FAILED"]}))[0] == RUN_LL_NO_DATA
+    assert run_like_for_like_verdict(pd.DataFrame(
+        {"like_for_like_verdict": [LL_CHANGED]}))[0] == RUN_LL_CHANGED
+    assert run_like_for_like_verdict(pd.DataFrame(
+        {"like_for_like_verdict": [LL_UNCHANGED]}))[0] == RUN_LL_UNCHANGED
+    # an agreement without power is NOT a refutation of the run
+    assert run_like_for_like_verdict(pd.DataFrame(
+        {"like_for_like_verdict": [LL_UNCHANGED, LL_UNRESOLVED]}))[0] == RUN_LL_UNRESOLVED
+    assert run_like_for_like_verdict(pd.DataFrame(
+        {"like_for_like_verdict": [LL_UNRESOLVED]}))[0] == RUN_LL_UNRESOLVED
+
+
+# --- 9.5 what our Kepler fit says about the KOI TABLE -----------------------
+def test_a_kepler_fit_that_disagrees_with_koi_depth_is_reported_as_a_catalogue_finding():
+    """Same band, no ratio: this is a test OF THE KOI TABLE, and is named one."""
+    contra = compare_kepler_to_catalogue(30600.0, 200.0, KEPLER_PPM, KEPLER_ERR)
+    assert contra["koi_depth_verdict"] == KOI_DEPTH_CONTRADICTED
+    assert contra["z_kepler_measured_vs_koi"] > 3.0
+    assert contra["kepler_measured_over_koi_depth"] == pytest.approx(30600.0 / KEPLER_PPM,
+                                                                     rel=1e-9)
+    ok = compare_kepler_to_catalogue(14300.0, 200.0, KEPLER_PPM, KEPLER_ERR)
+    assert ok["koi_depth_verdict"] == KOI_DEPTH_CONFIRMED
+    assert abs(ok["z_kepler_measured_vs_koi"]) < 3.0
+    none = compare_kepler_to_catalogue(float("nan"), float("nan"), KEPLER_PPM, KEPLER_ERR,
+                                       unchecked_reason=UNMEASURED_QUERY_FAILED)
+    assert none["koi_depth_verdict"] == KOI_DEPTH_UNCHECKED
+    assert none["koi_depth_unchecked_reason"] == UNMEASURED_QUERY_FAILED
+    noref = compare_kepler_to_catalogue(14300.0, 200.0, float("nan"), float("nan"))
+    assert noref["koi_depth_verdict"] == KOI_DEPTH_UNCHECKED
+    assert noref["koi_depth_unchecked_reason"] == UNMEASURED_NO_REFERENCE
+
+
+# --- 9.6 through measure_one and the whole stage ----------------------------
+def _koi_row_real():
+    return dict(KOI_ROW)
+
+
+def test_measure_one_fits_both_eras_with_the_same_fitter(tmp_path):
+    """The asymmetry removed: the Kepler number in the record is OURS."""
+    rec, sec, fold_df = measure_one(
+        {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
+        _koi_row_real(), dict(TOI_ROW),
+        lc_fn=_lc_fn_at_depth(TOI_PPM),
+        kepler_lc_fn=_kepler_lc_fn(KEPLER_PPM, n_transits=60, seed=101),
+        mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0),
+        fit=FitParams(), compare=CompareParams())
+    assert rec["lc_status"] == "OK" and rec["kepler_lc_status"] == "OK"
+    assert rec["kepler_lc_route"] == "injected"
+    # OUR Kepler-era depth, not the catalogue's
+    assert abs(rec["depth_kepler_measured_ppm"] - KEPLER_PPM) < (
+        4.0 * rec["depth_kepler_measured_err_ppm"])
+    assert rec["depth_kepler_measured_ppm"] != rec["depth_kepler_ppm"]
+    assert rec["kepler_depth_measured_err_method"] == "bootstrap"
+    # the epoch on the Kepler side is BKJD, close to koi_time0bk, NOT 2167 away
+    assert abs(rec["kepler_t0_bkjd_used"] - T0_BKJD) < 600.0
+    assert abs(rec["t0_btjd_used"] - bkjd_to_btjd(T0_BKJD)) < 3000.0
+    # the primary verdict is the like-for-like one
+    assert rec["like_for_like_verdict"] == LL_CHANGED
+    assert rec["z_measured_eras"] > 3.0
+    # the catalogue comparison survives, as a diagnostic of the catalogues
+    assert rec["verdict"] == MATCH_TOI
+    assert rec["koi_depth_verdict"] == KOI_DEPTH_CONFIRMED
+    # and both eras are in the sector and fold frames, labelled
+    assert set(sec["era"]) == {ERA_KEPLER, ERA_TESS}
+    assert set(fold_df["era"]) == {ERA_KEPLER, ERA_TESS}
+    assert rec["kepler_quarter_list"] == "3"
+    assert rec["kepler_cadences"] == "long"
+    assert rec["kepler_has_short_cadence"] is False
+    assert rec["kepler_smeared"] is True
+
+
+def test_measure_one_reports_unchanged_when_our_kepler_fit_matches_the_tess_one(tmp_path):
+    """The other half of the question, and it must be as easy to reach.
+
+    If our Kepler-era fit ALSO gives ~30,000 ppm then nothing changed: the KOI
+    catalogue depth is simply wrong for this object, and that is what the
+    record must say -- with the contradiction of the KOI table stated, not
+    buried.
+    """
+    rec, _sec, _fold = measure_one(
+        {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
+        _koi_row_real(), dict(TOI_ROW),
+        lc_fn=_lc_fn_at_depth(TOI_PPM),
+        kepler_lc_fn=_kepler_lc_fn(TOI_PPM, n_transits=60, seed=111),
+        mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0),
+        fit=FitParams(), compare=CompareParams())
+    assert rec["like_for_like_verdict"] == LL_UNCHANGED
+    assert abs(rec["z_measured_eras"]) < 3.0
+    # the finding about the CATALOGUE, stated
+    assert rec["koi_depth_verdict"] == KOI_DEPTH_CONTRADICTED
+    assert rec["z_kepler_measured_vs_koi"] > 3.0
+    assert rec["kepler_measured_over_koi_depth"] > 2.0
+    # the change under test is the catalogue separation itself
+    assert rec["catalogue_ln_ratio_under_test"] == pytest.approx(
+        math.log(TOI_PPM / rec["depth_kepler_in_tess_band_ppm"]), rel=1e-9)
+
+
+def test_a_failed_kepler_fetch_leaves_that_era_unmeasured_and_agreeing_with_nothing():
+    """The rule, applied to the new era: no light curve, no comparison."""
+    def boom(_kepid, **_kw):
+        raise OSError("connection reset")
+
+    rec, _sec, _fold = measure_one(
+        {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
+        _koi_row_real(), dict(TOI_ROW), lc_fn=_lc_fn_at_depth(TOI_PPM), kepler_lc_fn=boom,
+        mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0),
+        fit=FitParams(), compare=CompareParams())
+    assert rec["kepler_lc_status"] == UNMEASURED_QUERY_FAILED
+    assert rec["kepler_era_unmeasured_reason"] == UNMEASURED_QUERY_FAILED
+    assert rec["like_for_like_verdict"] == LL_ERA_UNMEASURED
+    assert rec["like_for_like_unmeasured_reason"] == "KEPLER_ERA:QUERY_FAILED"
+    assert rec["measured_eras_agree"] is False
+    assert not np.isfinite(rec["depth_kepler_measured_ppm"])
+    assert not np.isfinite(rec["z_measured_eras"])
+    # the KOI table cannot be checked either, and says so rather than passing it
+    assert rec["koi_depth_verdict"] == KOI_DEPTH_UNCHECKED
+    # ...while the TESS era WAS measured and its catalogue verdict still stands
+    assert rec["lc_status"] == "OK" and rec["verdict"] == MATCH_TOI
+
+
+def test_an_empty_kepler_answer_is_zero_rows_and_not_a_failure():
+    rec, _s, _f = measure_one(
+        {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
+        _koi_row_real(), dict(TOI_ROW), lc_fn=_lc_fn_at_depth(TOI_PPM),
+        kepler_lc_fn=lambda _k, **_kw: [],
+        mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0),
+        fit=FitParams(), compare=CompareParams())
+    assert rec["kepler_lc_status"] == UNMEASURED_ZERO_ROWS
+    assert rec["kepler_lc_status"] != UNMEASURED_QUERY_FAILED
+    assert rec["like_for_like_unmeasured_reason"] == "KEPLER_ERA:QUERY_RETURNED_ZERO_ROWS"
+
+
+def test_the_kepler_era_is_never_reached_without_being_asked_for():
+    """`kepler_enabled` is off by default, and the reason SAYS nothing was asked.
+
+    "The archive did not answer" and "nothing was asked of the archive" are
+    different facts, and a stage whose primary comparison was switched off must
+    not read as one whose primary comparison failed.
+    """
+    calls = []
+    rec, _s, _f = measure_one(
+        {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
+        _koi_row_real(), dict(TOI_ROW), lc_fn=_lc_fn_at_depth(TOI_PPM),
+        kepler_lc_fn=None,
+        mast=MastParams(retries=1, retry_pause_s=0.0, kepler_enabled=False),
+        fit=FitParams(), compare=CompareParams())
+    assert calls == []
+    assert MastParams().kepler_enabled is False
+    assert rec["kepler_lc_status"] == "not_attempted"
+    assert rec["kepler_era_unmeasured_reason"] == UNMEASURED_KEPLER_DISABLED
+    assert rec["like_for_like_verdict"] == LL_ERA_UNMEASURED
+    assert rec["like_for_like_unmeasured_reason"] == "KEPLER_ERA:KEPLER_ERA_NOT_ATTEMPTED"
+
+
+def test_a_missing_kepid_is_zero_rows_for_the_kepler_era():
+    rec, _s, _f = measure_one(
+        {"kepoi_name": "K00897.01", "tic_id": 268924036},           # no kepid
+        _koi_row_real(), dict(TOI_ROW), lc_fn=_lc_fn_at_depth(TOI_PPM),
+        mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0, kepler_enabled=True),
+        fit=FitParams(), compare=CompareParams())
+    assert rec["kepler_lc_status"] == UNMEASURED_ZERO_ROWS
+    assert rec["like_for_like_verdict"] == LL_ERA_UNMEASURED
+
+
+# --- 9.7 end to end, through the real stage code ---------------------------
+@pytest.mark.parametrize(
+    ("kepler_injected", "tess_injected", "expect_target", "expect_run"),
+    [(KEPLER_PPM, TOI_PPM, LL_CHANGED, RUN_LL_CHANGED),
+     (TOI_PPM, TOI_PPM, LL_UNCHANGED, RUN_LL_UNCHANGED)],
+)
+def test_end_to_end_the_like_for_like_verdict_is_the_primary_result(
+        tmp_path, kepler_injected, tess_injected, expect_target, expect_run):
+    out = tmp_path / "stage2"
+    conf = _conf(tmp_path)
+    stage2_measure(conf, out, query_fn=_query_fn, lc_fn=_lc_fn_at_depth(tess_injected),
+                   kepler_lc_fn=_kepler_lc_fn(kepler_injected, n_transits=60, seed=121))
+    meas = pd.read_csv(out / "measurements.csv")
+    row = meas.iloc[0]
+    assert row["kepler_lc_status"] == "OK"
+    assert row["like_for_like_verdict"] == expect_target
+    assert abs(row["depth_kepler_measured_ppm"] - kepler_injected) < (
+        4.0 * row["depth_kepler_measured_err_ppm"])
+
+    summary = stage2_assess(conf, out)
+    # THE PRIMARY VERDICT, and the summary says it is the primary one
+    assert summary["primary_verdict"] == expect_run
+    assert summary["primary_verdict_field"] == "like_for_like_verdict"
+    assert summary["verdict_is_primary"] is False
+    assert "same fitter" in summary["primary_verdict_is"]
+    assert summary["like_for_like_verdicts"][expect_target] == 1
+    assert summary["n_compared_like_for_like"] == 1
+    # the catalogue verdict survives and is labelled as a catalogue diagnostic
+    assert summary["verdict"] in (RUN_CONFIRMED, RUN_REFUTED, RUN_UNRESOLVED)
+    assert "catalogue" in summary["verdict_is"].lower()
+    # the note says the catalogue verdicts are now about the CATALOGUES
+    assert "diagnostic of the CATALOGUES" in summary["note"]
+    # sectors.csv carries both eras
+    sectors = pd.read_csv(out / "sectors.csv")
+    assert set(sectors["era"]) == {ERA_KEPLER, ERA_TESS}
+    t = summary["targets"][0]
+    assert np.isfinite(t["depth_kepler_measured_ppm"])
+    assert t["kepler_lc_route"] == "injected"
+
+
+def test_end_to_end_an_unchanged_depth_indicts_the_koi_table_in_the_summary(tmp_path):
+    """If nothing changed, the KOI catalogue depth is wrong -- stated, not buried."""
+    out = tmp_path / "stage2"
+    conf = _conf(tmp_path)
+    stage2_measure(conf, out, query_fn=_query_fn, lc_fn=_lc_fn_at_depth(TOI_PPM),
+                   kepler_lc_fn=_kepler_lc_fn(TOI_PPM, n_transits=60, seed=131))
+    summary = stage2_assess(conf, out)
+    assert summary["primary_verdict"] == RUN_LL_UNCHANGED
+    chk = summary["koi_catalogue_check"]
+    assert chk["verdict_counts"][KOI_DEPTH_CONTRADICTED] == 1
+    assert chk["finding"]
+    assert "KOI TABLE" in chk["finding"]
+    assert "no limb-darkening band ratio" in chk["what_it_compares"].lower()
+    bad = chk["targets_contradicting_the_koi_table"][0]
+    assert bad["kepoi_name"] == "K00897.01"
+    assert bad["koi_depth_ppm"] == pytest.approx(KEPLER_PPM, rel=1e-6)
+    assert bad["our_kepler_depth_ppm"] > 2.0 * KEPLER_PPM
+
+
+def test_end_to_end_an_unreachable_kepler_era_is_no_like_for_like_data_not_a_refutation(
+        tmp_path):
+    """The failure this channel must never disguise, applied to the new era."""
+    out = tmp_path / "stage2"
+    conf = _conf(tmp_path)
+
+    def boom(_kepid, **_kw):
+        raise RuntimeError("MAST unreachable")
+
+    stage2_measure(conf, out, query_fn=_query_fn, lc_fn=_lc_fn_at_depth(TOI_PPM),
+                   kepler_lc_fn=boom)
+    summary = stage2_assess(conf, out)
+    assert summary["primary_verdict"] == RUN_LL_NO_DATA
+    assert summary["primary_verdict"] != RUN_LL_UNCHANGED
+    assert summary["n_compared_like_for_like"] == 0
+    assert summary["like_for_like_verdicts"][LL_ERA_UNMEASURED] == 1
+    assert summary["like_for_like_unmeasured_reasons"].get("KEPLER_ERA:QUERY_FAILED") == 1
+    # the TESS era still measured, and its catalogue verdict still stands
+    assert summary["n_measured"] == 1
+    t = summary["targets"][0]
+    assert bool(t["measured_eras_agree"]) is False
+    assert t["like_for_like_unmeasured_reason"]
+    assert "not written up" in summary["note"]
+
+
+def test_the_summary_no_longer_lists_the_kepler_refit_as_a_check_not_performed(tmp_path):
+    """It IS performed now; leaving it in the list would be a false disclaimer."""
+    out = tmp_path / "stage2"
+    conf = _conf(tmp_path)
+    stage2_measure(conf, out, query_fn=_query_fn, lc_fn=_lc_fn_at_depth(TOI_PPM),
+                   kepler_lc_fn=_kepler_lc_fn(KEPLER_PPM, n_transits=60, seed=141))
+    summary = stage2_assess(conf, out)
+    joined = " ".join(summary["checks_not_performed"]).lower()
+    assert "kepler_era_lightcurve_refit" not in joined
+    assert "centroid" in joined                       # that one is still outstanding
+    # the acquisition block reports the Kepler era's own budget and statuses
+    acq = summary["acquisition"]
+    assert acq["kepler_era_enabled"] is True
+    assert acq["kepler_lc_status_counts"].get("OK") == 1
+    assert acq["kepler_budget_s"] and acq["kepler_budget_exhausted"] is False
+
+
+def test_stage2_run_all_wires_the_kepler_era_too(tmp_path):
+    out = tmp_path / "stage2"
+    rep = stage2_run("all", out_dir=out, conf=_conf(tmp_path), query_fn=_query_fn,
+                     lc_fn=_lc_fn_at_depth(TOI_PPM),
+                     kepler_lc_fn=_kepler_lc_fn(KEPLER_PPM, n_transits=60, seed=151))
+    assert rep["primary_verdict"] == RUN_LL_CHANGED
+    assert (out / "summary.json").exists()
+
+
+def test_the_repository_config_enables_the_kepler_era_and_bounds_it():
+    """A dropped `kepler_enabled` key would make the primary comparison vanish."""
+    from seti.growth.run import load_growth_config
+
+    conf = load_growth_config()
+    m = MastParams.from_config(conf)
+    assert m.kepler_enabled is True, "config/growth.yaml must enable the Kepler era"
+    assert "Kepler" in m.kepler_authors
+    assert m.kepler_budget_s > 0 and m.kepler_per_target_budget_s > 0
+    assert m.kepler_target_timeout_s > 0 and m.kepler_max_quarters > 0
+    c = CompareParams.from_config(conf)
+    assert c.min_detectable_ln_ratio > 0 and c.koi_check_n_agree >= 3.0

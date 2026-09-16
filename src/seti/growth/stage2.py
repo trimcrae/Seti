@@ -93,11 +93,67 @@ transit) is **flagged**, never quietly corrected: ``smeared`` and
 ``exptime_over_duration`` are columns, and ``depth_is_lower_bound`` marks the
 case where no flat core survives the integration at all.
 
+The asymmetry this module used to carry, and the like-for-like verdict
+--------------------------------------------------------------------
+Run 35041932130 measured the TESS era from the light curve and then compared it
+against ``koi_depth`` --- **a catalogue number**, produced by a different
+pipeline, in a different decade, through a different aperture.  That is exactly
+the heterogeneity that broke stage 1's error model, so the comparison inherited
+the flaw it was built to remove.  Stage 2 therefore measures **both eras with
+the same fitter**: the same fold, the same locally fitted transit-masked
+baseline, the same core-window shrink, the same bootstrap over transits, the
+same :func:`dedupe_sectors`.  Only the archive product and the time system
+differ.  Two more numbers join the table:
+
+======================================  =========================================
+``depth_kepler_measured_ppm``           this module's fit to the KEPLER light curve
+``depth_kepler_measured_in_tess_band_ppm``  the same, carried into the TESS band
+======================================  =========================================
+
+and the **primary** verdict is now the like-for-like one
+(:data:`LIKE_FOR_LIKE_VERDICTS`):
+
+``MEASURED_DEPTH_CHANGED``
+    our Kepler-era fit and our TESS-era fit disagree at or beyond ``n_agree``
+    sigma once the band ratio is applied.  The change survives a comparison in
+    which nothing but the sky differs, and is much harder to dismiss.
+``MEASURED_DEPTH_UNCHANGED``
+    they agree, **and** the comparison had the power to have seen the change
+    under test.  Nothing changed: the KOI catalogue depth is simply wrong for
+    this object, the candidate dies, and stage 1 has learned something about
+    its own inputs.
+``MEASURED_DEPTH_UNRESOLVED``
+    they agree, but the comparison could not have detected the change being
+    claimed (``detectable_ln_ratio > ln_ratio_under_test``).  An agreement
+    without power is not a refutation and is never reported as one.
+``MEASURED_DEPTH_ERA_UNMEASURED``
+    one or both eras produced no depth.  ``like_for_like_unmeasured_reason``
+    names which era and why, and **an era that was not measured never agrees
+    with the other one.**
+
+The old catalogue-vs-measurement verdicts stay, and are now a diagnostic of the
+**CATALOGUES** rather than of the sky: ``MEASURED_DEPTH_MATCHES_TOI`` says the
+TOI table is right about the TESS era, ``MEASURED_DEPTH_MATCHES_KEPLER`` says
+the KOI table is right about it.  ``summary.json`` says which verdict is
+primary.  Separately, our Kepler-era fit is compared with ``koi_depth`` **in
+the Kepler band, with no band ratio** --- if they disagree at high significance
+that is a finding about the KOI table (``KOI_DEPTH_CONTRADICTED``) and it is
+reported as one, not buried.
+
+Time systems, and the bug this arrangement invites
+--------------------------------------------------
+``koi_time0bk`` is in BKJD.  **Kepler light curves are also in BKJD**, so the
+Kepler era applies *no* conversion; the TESS era subtracts 2167 days.  Applying
+the shift on the Kepler side too is the obvious bug --- it would put the fold
+2167 days from any transit and return a depth of zero --- so the choice is made
+by one named function, :func:`epoch_in_era`, and the test suite checks both
+branches.
+
 Everything that touches a service takes an injectable callable (``query_fn``
-for the Exoplanet Archive, ``lc_fn`` for the light curves) and carries a
-**wall-clock budget**, because an unbounded stage has already cost this channel
-a whole run (``config/growth.yaml``, ``gaia.cone_budget_s``).  Nothing here
-reaches the network inside a test.
+for the Exoplanet Archive, ``lc_fn`` for the TESS light curves, ``kepler_lc_fn``
+for the Kepler ones) and carries a **wall-clock budget**, because an unbounded
+stage has already cost this channel a whole run (``config/growth.yaml``,
+``gaia.cone_budget_s``).  Nothing here reaches the network inside a test.
 """
 
 from __future__ import annotations
@@ -126,6 +182,13 @@ BTJD_OFFSET = 2457000.0
 #: ``t_BTJD = t_BKJD + BKJD_MINUS_BTJD``.  Exactly -2167.0 days.
 BKJD_MINUS_BTJD = BKJD_OFFSET - BTJD_OFFSET
 
+#: The two eras this stage fits with the SAME fitter.  The era decides one
+#: thing only: the time system the light curves are in (and therefore whether
+#: ``koi_time0bk`` needs converting at all -- see :func:`epoch_in_era`).
+ERA_KEPLER = "kepler"
+ERA_TESS = "tess"
+ERAS = (ERA_KEPLER, ERA_TESS)
+
 # ---------------------------------------------------------------------------
 # Verdict vocabulary.  Per target (three-way), then per run.
 # ---------------------------------------------------------------------------
@@ -149,14 +212,52 @@ UNMEASURED_BUDGET = "BUDGET_EXHAUSTED"
 #: comparison, not the measurement, and "matches neither" would be a false
 #: statement when there is no "neither" to match.
 UNMEASURED_NO_REFERENCE = "NO_REFERENCE_DEPTH"
+#: The Kepler era was switched off in config (``stage2.mast.kepler_enabled``).
+#: It is a SEPARATE fact from "the archive did not answer": nothing was asked.
+#: ``MastParams.kepler_enabled`` defaults to False so that a caller which has
+#: not thought about the Kepler era cannot silently reach the network; the
+#: repository config turns it on, and ``growth_stage2.yml`` fails the run if the
+#: summary comes back with the primary comparison switched off.
+UNMEASURED_KEPLER_DISABLED = "KEPLER_ERA_NOT_ATTEMPTED"
 UNMEASURED_REASONS = (UNMEASURED_QUERY_FAILED, UNMEASURED_ZERO_ROWS, UNMEASURED_NO_EPHEMERIS,
-                      UNMEASURED_NO_TRANSIT, UNMEASURED_BUDGET, UNMEASURED_NO_REFERENCE)
+                      UNMEASURED_NO_TRANSIT, UNMEASURED_BUDGET, UNMEASURED_NO_REFERENCE,
+                      UNMEASURED_KEPLER_DISABLED)
 
 RUN_NO_DATA = "NO_DATA_REACHED"
 RUN_REFUTED = "STAGE1_DEPTH_CHANGE_REFUTED"
 RUN_CONFIRMED = "STAGE1_DEPTH_CHANGE_CONFIRMED"
 RUN_UNRESOLVED = "STAGE1_DEPTH_CHANGE_UNRESOLVED"
 RUN_VERDICTS = (RUN_NO_DATA, RUN_REFUTED, RUN_CONFIRMED, RUN_UNRESOLVED)
+
+# ---------------------------------------------------------------------------
+# THE PRIMARY VERDICT: our Kepler-era fit against our TESS-era fit.
+# Same fitter, same fold, same baseline treatment, same bootstrap; only the
+# archive product and the time system differ.  Nothing catalogue-derived enters
+# it except the (fixed) ephemeris and the limb-darkening band ratio.
+# ---------------------------------------------------------------------------
+LL_CHANGED = "MEASURED_DEPTH_CHANGED"
+LL_UNCHANGED = "MEASURED_DEPTH_UNCHANGED"
+#: Agreement WITHOUT the power to have seen the change under test.  Not a
+#: refutation, and never reported as one.
+LL_UNRESOLVED = "MEASURED_DEPTH_UNRESOLVED"
+LL_ERA_UNMEASURED = "MEASURED_DEPTH_ERA_UNMEASURED"
+LIKE_FOR_LIKE_VERDICTS = (LL_CHANGED, LL_UNCHANGED, LL_UNRESOLVED, LL_ERA_UNMEASURED)
+
+RUN_LL_NO_DATA = "LIKE_FOR_LIKE_NO_DATA"
+RUN_LL_CHANGED = "MEASURED_DEPTH_CHANGE_CONFIRMED"
+RUN_LL_UNCHANGED = "MEASURED_DEPTH_CHANGE_REFUTED"
+RUN_LL_UNRESOLVED = "MEASURED_DEPTH_CHANGE_UNRESOLVED"
+RUN_LL_VERDICTS = (RUN_LL_NO_DATA, RUN_LL_CHANGED, RUN_LL_UNCHANGED, RUN_LL_UNRESOLVED)
+
+# ---------------------------------------------------------------------------
+# Our Kepler-era fit against the KOI CATALOGUE depth.  Same band (both Kepler),
+# so no band ratio is applied.  A disagreement here is a finding about the KOI
+# table -- stage 1's own input -- and is reported as one.
+# ---------------------------------------------------------------------------
+KOI_DEPTH_CONFIRMED = "KOI_DEPTH_CONFIRMED"
+KOI_DEPTH_CONTRADICTED = "KOI_DEPTH_CONTRADICTED"
+KOI_DEPTH_UNCHECKED = "KOI_DEPTH_UNCHECKED"
+KOI_DEPTH_VERDICTS = (KOI_DEPTH_CONFIRMED, KOI_DEPTH_CONTRADICTED, KOI_DEPTH_UNCHECKED)
 
 STAGES = ("probe", "measure", "assess")
 
@@ -170,6 +271,34 @@ DEFAULT_AUTHORS: tuple[str, ...] = ("SPOC", "TESS-SPOC", "QLP")
 #: TESS-SPOC give ``PDCSAP_FLUX``; QLP has used ``KSPSAP_FLUX`` and, in later
 #: deliveries, ``DET_FLUX``.  Which one was read is recorded per sector.
 FLUX_COLUMNS: tuple[str, ...] = ("PDCSAP_FLUX", "KSPSAP_FLUX", "DET_FLUX", "SAP_FLUX")
+
+#: Kepler light-curve authors at MAST.  There is only one official reduction
+#: (the Kepler pipeline itself); the community products (``K2SFF`` and friends)
+#: are K2, not Kepler, and are deliberately not asked for -- the point of this
+#: stage is that BOTH eras go through THIS fitter, not another pipeline's.
+KEPLER_AUTHORS: tuple[str, ...] = ("Kepler",)
+
+#: Flux columns in a Kepler light-curve FITS product, in order.  PDCSAP first,
+#: exactly as on the TESS side; which one was read is recorded per quarter.
+KEPLER_FLUX_COLUMNS: tuple[str, ...] = ("PDCSAP_FLUX", "SAP_FLUX")
+
+#: Kepler quality is in ``SAP_QUALITY`` (TESS calls the same column ``QUALITY``).
+KEPLER_QUALITY_COLUMNS: tuple[str, ...] = ("SAP_QUALITY", "QUALITY")
+
+#: Kepler cadences, in seconds.  Long cadence is 270 co-added 6.02 s frames =
+#: 1765.5 s = **29.4 minutes**, which on a 2.08-hour transit is 0.24 T14 --- over
+#: ``fit.smear_fraction`` and therefore ``smeared``, which is exactly what the
+#: ``core_half_width`` shrink and the flag exist for.  Short cadence is 9 frames
+#: = 58.85 s and is preferred wherever it exists.
+KEPLER_LONG_CADENCE_S = 1765.5
+KEPLER_SHORT_CADENCE_S = 58.85
+#: Exposures at or below this are called ``short``; above it, ``long``.
+KEPLER_SHORT_CADENCE_MAX_S = 300.0
+
+#: MAST product sub-groups for Kepler time series: long- and short-cadence
+#: light curves.  ``LLC`` / ``SLC`` are the sub-group descriptions; target
+#: pixel files (``TPF``) are not asked for.
+KEPLER_PRODUCT_SUBGROUPS: tuple[str, ...] = ("LLC", "SLC")
 
 ROUTE_LIGHTKURVE = "lightkurve"
 ROUTE_MAST_FITS = "astroquery_mast_fits"
@@ -211,6 +340,29 @@ def btjd_to_bjd(t_btjd):
     """TESS BTJD -> full BJD."""
     return np.asarray(t_btjd, dtype=float) + BTJD_OFFSET if np.ndim(t_btjd) else (
         float(t_btjd) + BTJD_OFFSET)
+
+
+def epoch_in_era(t0_bkjd: float, era: str) -> float:
+    """``koi_time0bk`` expressed in the time system of ``era``'s light curves.
+
+    This exists so the conversion is a *decision made once, by name*, rather
+    than a shift copied into two call sites:
+
+    * ``ERA_TESS`` --- TESS light curves are BTJD, so subtract 2167 days.
+    * ``ERA_KEPLER`` --- **Kepler light curves are already BKJD, and so is**
+      ``koi_time0bk``.  **No conversion at all.**
+
+    Converting on the Kepler side too is the obvious bug in a two-era module:
+    it would place the fold 2167 days from any transit and return a depth of
+    zero (or nothing at all), which reads as "the Kepler era did not change"
+    when in truth nothing was measured.  Both branches are tested.
+    """
+    e = str(era).lower()
+    if e == ERA_KEPLER:
+        return float(t0_bkjd)
+    if e == ERA_TESS:
+        return float(bkjd_to_btjd(t0_bkjd))
+    raise ValueError(f"unknown era {era!r}; choose from {ERAS}")
 
 
 def propagate_epoch(t0_btjd: float, period_days: float, t_ref_btjd: float, *,
@@ -285,6 +437,15 @@ class CompareParams:
     n_agree: float = 3.0                # |z| below this is "agrees with"
     sigma_sys_ln: float = 0.05          # stated floor on ln-depth heterogeneity
     apply_band_ratio: bool = True       # carry the Kepler depth into the TESS band
+    # The like-for-like comparison's POWER floor.  Two measured depths that
+    # agree only say "unchanged" if the comparison could have detected the
+    # change being claimed.  ``ln_ratio_under_test`` (the catalogue
+    # TOI-vs-KOI ln ratio) is used when it is available; this is the fallback
+    # when it is not.  0.10 in ln depth is a 10 % depth change.
+    min_detectable_ln_ratio: float = 0.10
+    # Our Kepler-era fit against ``koi_depth``: both are in the KEPLER band, so
+    # NO band ratio is applied, and the same sigma_sys_ln floor is used.
+    koi_check_n_agree: float = 3.0
 
     @classmethod
     def from_config(cls, conf: dict | None) -> CompareParams:
@@ -311,6 +472,22 @@ class MastParams:
     download_dir: str | None = None
     archive_timeout_s: float = 300.0    # the Exoplanet Archive ephemeris pulls
     archive_retries: int = 3
+    # --- the KEPLER era ----------------------------------------------------
+    # Off by default ON PURPOSE.  A caller that has not thought about the
+    # Kepler era must not silently open a socket to MAST; the repository
+    # config turns it on and the workflow fails the run if it comes back off,
+    # so a dropped key is loud rather than a quietly one-sided comparison.
+    kepler_enabled: bool = False
+    kepler_authors: tuple[str, ...] = KEPLER_AUTHORS
+    #: Wall clock for the WHOLE Kepler side of the measure stage, counted
+    #: separately from ``budget_s`` so that a slow Kepler fetch cannot eat the
+    #: TESS budget (or the reverse).  Same discipline, same reason as
+    #: ``gaia.cone_budget_s`` in ``config/growth.yaml``.
+    kepler_budget_s: float = 5400.0
+    kepler_per_target_budget_s: float = 1800.0
+    kepler_target_timeout_s: float = 1200.0
+    kepler_max_quarters: int = 60
+    kepler_retries: int = 2
 
     @classmethod
     def from_config(cls, conf: dict | None) -> MastParams:
@@ -318,17 +495,38 @@ class MastParams:
         d = cls()
         if m.get("authors"):
             d.authors = tuple(str(a) for a in m["authors"])
+        if m.get("kepler_authors"):
+            d.kepler_authors = tuple(str(a) for a in m["kepler_authors"])
+        if m.get("kepler_enabled") is not None:
+            d.kepler_enabled = bool(m["kepler_enabled"])
         for k in ("target_timeout_s", "per_target_budget_s", "budget_s", "archive_timeout_s",
-                  "retry_pause_s"):
+                  "retry_pause_s", "kepler_budget_s", "kepler_per_target_budget_s",
+                  "kepler_target_timeout_s"):
             if m.get(k) is not None:
                 setattr(d, k, float(m[k]))
-        for k in ("retries", "max_sectors", "archive_retries"):
+        for k in ("retries", "max_sectors", "archive_retries", "kepler_max_quarters",
+                  "kepler_retries"):
             if m.get(k) is not None:
                 setattr(d, k, int(m[k]))
         for k in ("quality_bitmask", "download_dir"):
             if m.get(k) is not None:
                 setattr(d, k, str(m[k]))
         return d
+
+    def kepler_view(self) -> MastParams:
+        """The same ceilings, expressed for the Kepler fetch.
+
+        :func:`fetch_kepler_lightcurves` runs through the same bounded loop as
+        the TESS one, so it is handed a params object whose per-target budget,
+        timeout, retry count and product cap are the Kepler ones.
+        """
+        import dataclasses  # noqa: PLC0415
+
+        return dataclasses.replace(
+            self, authors=tuple(self.kepler_authors),
+            per_target_budget_s=float(self.kepler_per_target_budget_s),
+            target_timeout_s=float(self.kepler_target_timeout_s),
+            max_sectors=int(self.kepler_max_quarters), retries=int(self.kepler_retries))
 
 
 @dataclass
@@ -830,6 +1028,133 @@ def compare_three_depths(depth_measured_ppm: float, err_measured_ppm: float,
     return out
 
 
+def compare_measured_eras(depth_kepler_measured_ppm: float, err_kepler_measured_ppm: float,
+                          depth_tess_measured_ppm: float, err_tess_measured_ppm: float, *,
+                          ld_band_ratio: float = 1.0,
+                          ln_ratio_under_test: float = float("nan"),
+                          params: CompareParams | None = None,
+                          kepler_unmeasured_reason: str | None = None,
+                          tess_unmeasured_reason: str | None = None) -> dict:
+    """**The primary comparison**: OUR Kepler-era depth against OUR TESS-era depth.
+
+    Both numbers come out of :func:`measure_target` --- the same fold, the same
+    transit-masked local baseline, the same exposure-shrunk core window, the
+    same inverse-variance combination and bootstrap over transits.  Nothing
+    catalogue-derived enters except the fixed ephemeris and the limb-darkening
+    band ratio, which is applied to the Kepler-era measurement exactly as
+    :func:`compare_three_depths` applies it to the Kepler *catalogue* depth, so
+    the bandpass difference is not charged to "growth".
+
+    ``z = ln(D_TESS / D_Kepler,in TESS band) / sigma`` with the fractional
+    errors and ``sigma_sys_ln`` added in quadrature; positive means deeper in
+    the TESS era.
+
+    The four branches, and the one that is easy to get wrong:
+
+    * ``MEASURED_DEPTH_CHANGED`` --- ``|z| >= n_agree``.
+    * ``MEASURED_DEPTH_UNCHANGED`` --- ``|z| < n_agree`` **and** the comparison
+      had the power to have detected the change under test, i.e. the smallest
+      log ratio it could have called changed (``n_agree * sigma``) is no larger
+      than ``ln_ratio_under_test`` (the catalogue TOI-vs-KOI separation, or
+      ``params.min_detectable_ln_ratio`` when that is unavailable).
+    * ``MEASURED_DEPTH_UNRESOLVED`` --- ``|z| < n_agree`` but the comparison
+      could not have seen the claimed change anyway.  **An agreement without
+      power is not a refutation**, and reporting it as one would be the same
+      error in the opposite direction from the one this stage exists to fix.
+    * ``MEASURED_DEPTH_ERA_UNMEASURED`` --- one or both eras produced no depth.
+      The reason names the era, and an unmeasured era never agrees with
+      anything.
+    """
+    params = params or CompareParams()
+    fr = float(ld_band_ratio) if (params.apply_band_ratio and np.isfinite(ld_band_ratio)
+                                  and ld_band_ratio > 0) else 1.0
+    dk = float(depth_kepler_measured_ppm) * fr
+    ek = (float(err_kepler_measured_ppm) * fr if np.isfinite(err_kepler_measured_ppm)
+          else float("nan"))
+    out: dict = {
+        "like_for_like_verdict": LL_ERA_UNMEASURED,
+        "like_for_like_unmeasured_reason": "",
+        "depth_kepler_measured_ppm": float(depth_kepler_measured_ppm),
+        "depth_kepler_measured_err_ppm": float(err_kepler_measured_ppm),
+        "depth_kepler_measured_in_tess_band_ppm": dk,
+        "depth_tess_measured_ppm": float(depth_tess_measured_ppm),
+        "depth_tess_measured_err_ppm": float(err_tess_measured_ppm),
+        "like_for_like_ld_band_ratio": float(ld_band_ratio),
+        "z_measured_eras": float("nan"), "sigma_measured_eras": float("nan"),
+        "measured_depth_ratio": float("nan"),
+        "measured_eras_agree": False,
+        "ln_ratio_under_test": float(ln_ratio_under_test),
+        "detectable_ln_ratio": float("nan"),
+        "like_for_like_n_agree": float(params.n_agree),
+    }
+    missing = []
+    if kepler_unmeasured_reason or not (np.isfinite(depth_kepler_measured_ppm)
+                                        and depth_kepler_measured_ppm > 0):
+        missing.append(f"KEPLER_ERA:{kepler_unmeasured_reason or UNMEASURED_NO_TRANSIT}")
+    if tess_unmeasured_reason or not (np.isfinite(depth_tess_measured_ppm)
+                                      and depth_tess_measured_ppm > 0):
+        missing.append(f"TESS_ERA:{tess_unmeasured_reason or UNMEASURED_NO_TRANSIT}")
+    if missing:
+        out["like_for_like_unmeasured_reason"] = ";".join(missing)
+        return out
+    z, sig = _z_ln(float(depth_tess_measured_ppm), float(err_tess_measured_ppm), dk, ek,
+                   params.sigma_sys_ln)
+    out["z_measured_eras"], out["sigma_measured_eras"] = z, sig
+    if dk > 0:
+        out["measured_depth_ratio"] = float(depth_tess_measured_ppm) / dk
+    if not np.isfinite(z):
+        out["like_for_like_unmeasured_reason"] = "Z_NOT_COMPUTABLE"
+        return out
+    detectable = float(params.n_agree) * float(sig)
+    out["detectable_ln_ratio"] = detectable
+    target = (abs(float(ln_ratio_under_test)) if np.isfinite(ln_ratio_under_test)
+              and ln_ratio_under_test != 0 else float(params.min_detectable_ln_ratio))
+    out["ln_ratio_under_test"] = float(target)
+    if abs(z) >= float(params.n_agree):
+        out["like_for_like_verdict"] = LL_CHANGED
+        return out
+    out["measured_eras_agree"] = True
+    out["like_for_like_verdict"] = LL_UNCHANGED if detectable <= target else LL_UNRESOLVED
+    return out
+
+
+def compare_kepler_to_catalogue(depth_measured_ppm: float, err_measured_ppm: float,
+                                koi_depth_ppm: float, koi_depth_err_ppm: float, *,
+                                params: CompareParams | None = None,
+                                unchecked_reason: str | None = None) -> dict:
+    """OUR Kepler-era fit against ``cumulative.koi_depth``.  **Same band, no ratio.**
+
+    Both numbers describe the Kepler bandpass, so applying
+    :func:`seti.growth.drift.band_ratio` here would be wrong --- the band ratio
+    exists to move a Kepler-band number into the TESS band, and there is no
+    band change to correct.  What is left is a direct test of the KOI table on
+    this object, and if it fails at high significance **that is a finding about
+    the catalogue stage 1 is built on** and is reported as
+    ``KOI_DEPTH_CONTRADICTED``, not absorbed into the depth story.
+    """
+    params = params or CompareParams()
+    out = {"koi_depth_verdict": KOI_DEPTH_UNCHECKED, "koi_depth_unchecked_reason": "",
+           "z_kepler_measured_vs_koi": float("nan"), "sigma_kepler_measured_vs_koi": float("nan"),
+           "kepler_measured_over_koi_depth": float("nan"),
+           "koi_check_n_agree": float(params.koi_check_n_agree)}
+    if unchecked_reason or not (np.isfinite(depth_measured_ppm) and depth_measured_ppm > 0):
+        out["koi_depth_unchecked_reason"] = unchecked_reason or UNMEASURED_NO_TRANSIT
+        return out
+    if not (np.isfinite(koi_depth_ppm) and koi_depth_ppm > 0):
+        out["koi_depth_unchecked_reason"] = UNMEASURED_NO_REFERENCE
+        return out
+    z, sig = _z_ln(float(depth_measured_ppm), float(err_measured_ppm), float(koi_depth_ppm),
+                   float(koi_depth_err_ppm), params.sigma_sys_ln)
+    out["z_kepler_measured_vs_koi"], out["sigma_kepler_measured_vs_koi"] = z, sig
+    out["kepler_measured_over_koi_depth"] = float(depth_measured_ppm) / float(koi_depth_ppm)
+    if not np.isfinite(z):
+        out["koi_depth_unchecked_reason"] = "Z_NOT_COMPUTABLE"
+        return out
+    out["koi_depth_verdict"] = (KOI_DEPTH_CONTRADICTED if abs(z) >= float(params.koi_check_n_agree)
+                                else KOI_DEPTH_CONFIRMED)
+    return out
+
+
 def run_verdict(measurements: pd.DataFrame) -> tuple[str, str]:
     """``(verdict, reason)`` for the whole stage from the per-target verdicts."""
     if measurements is None or not len(measurements) or "verdict" not in measurements:
@@ -847,6 +1172,35 @@ def run_verdict(measurements: pd.DataFrame) -> tuple[str, str]:
     return RUN_UNRESOLVED, (f"{int((measured == MATCH_NEITHER).sum())} matched neither, "
                             f"{int((measured == MATCH_BOTH).sum())} matched both, "
                             f"{int((measured == MATCH_KEPLER).sum())} matched Kepler")
+
+
+def run_like_for_like_verdict(measurements: pd.DataFrame) -> tuple[str, str]:
+    """``(verdict, reason)`` for the **primary** comparison over the whole stage.
+
+    ``MEASURED_DEPTH_UNRESOLVED`` rows are never counted as refutations: a
+    stage in which every target agreed *without the power to disagree* is
+    ``MEASURED_DEPTH_CHANGE_UNRESOLVED``, not ``..._REFUTED``.
+    """
+    col = "like_for_like_verdict"
+    if measurements is None or not len(measurements) or col not in measurements:
+        return RUN_LL_NO_DATA, "no_targets"
+    v = measurements[col].fillna(LL_ERA_UNMEASURED).astype(str)
+    resolved = v[v != LL_ERA_UNMEASURED]
+    if not len(resolved):
+        reasons = sorted({str(r) for r in measurements.get(
+            "like_for_like_unmeasured_reason", pd.Series(dtype=str)).fillna("") if str(r)})
+        return RUN_LL_NO_DATA, "no_target_compared_like_for_like:" + ",".join(reasons)
+    n_ch = int((resolved == LL_CHANGED).sum())
+    n_un = int((resolved == LL_UNCHANGED).sum())
+    n_ur = int((resolved == LL_UNRESOLVED).sum())
+    if n_ch:
+        return RUN_LL_CHANGED, (f"{n_ch} target(s) changed depth between OUR Kepler-era and OUR "
+                                f"TESS-era fit of the light curves")
+    if n_un and not n_ur:
+        return RUN_LL_UNCHANGED, (f"all {n_un} like-for-like comparison(s) agree, with the power "
+                                  f"to have seen the change under test")
+    return RUN_LL_UNRESOLVED, (f"{n_ur} comparison(s) agreed without the power to detect the "
+                               f"change under test, {n_un} agreed with it")
 
 
 # ---------------------------------------------------------------------------
@@ -1013,6 +1367,148 @@ def read_tess_lc_fits(path, *, flux_columns=FLUX_COLUMNS) -> dict | None:
                 "bjdref": bjdrefi + bjdreff}
 
 
+def kepler_cadence_label(exptime_s: float) -> str:
+    """``"short"`` / ``"long"`` / ``"unknown"`` from the exposure in seconds."""
+    e = float(exptime_s) if exptime_s is not None else float("nan")
+    if not np.isfinite(e) or e <= 0:
+        return "unknown"
+    return "short" if e <= KEPLER_SHORT_CADENCE_MAX_S else "long"
+
+
+def read_kepler_lc_fits(path, *, flux_columns=KEPLER_FLUX_COLUMNS) -> dict | None:
+    """One Kepler light-curve FITS product -> ``{time (BKJD), flux, flux_err, meta}``.
+
+    The mirror of :func:`read_tess_lc_fits`, with the three differences that
+    actually exist between the two products:
+
+    * the time axis is converted through the file's own ``BJDREFI``/``BJDREFF``
+      to **BKJD** (``BJD - 2454833``) --- the system ``koi_time0bk`` is already
+      in, so nothing downstream converts it (:func:`epoch_in_era`);
+    * quality lives in ``SAP_QUALITY``, not ``QUALITY``;
+    * the segment identifier is the **quarter**, and the cadence (29.4-minute
+      long or 58.85-second short) is recorded, because the two are different
+      measurements of the same transit and the long one is ``smeared``.
+
+    ``sector`` carries the quarter as well, so :func:`dedupe_sectors` and
+    :func:`measure_target` work on Kepler data without being changed.
+    """
+    from astropy.io import fits  # noqa: PLC0415
+
+    with fits.open(str(path), memmap=False) as hdul:
+        hdu = None
+        for h in hdul:
+            try:
+                names = [str(n).upper() for n in h.columns.names]
+            except AttributeError:
+                continue
+            if "TIME" in names:
+                hdu = h
+                break
+        if hdu is None:
+            return None
+        data, hdr = hdu.data, hdu.header
+        cols = [str(n).upper() for n in hdu.columns.names]
+        fcol = next((c for c in flux_columns if c in cols), None)
+        if fcol is None:
+            return None
+        bjdrefi = float(hdr.get("BJDREFI", hdul[0].header.get("BJDREFI", BKJD_OFFSET)) or
+                        BKJD_OFFSET)
+        bjdreff = float(hdr.get("BJDREFF", hdul[0].header.get("BJDREFF", 0.0)) or 0.0)
+        # -> BKJD.  NOT BTJD: this is the Kepler era.
+        t = np.asarray(data["TIME"], dtype=float) + (bjdrefi + bjdreff) - BKJD_OFFSET
+        f = np.asarray(data[fcol], dtype=float)
+        ecol = fcol + "_ERR"
+        fe = (np.asarray(data[ecol], dtype=float) if ecol in cols
+              else np.full(f.shape, np.nan, dtype=float))
+        n_before = int(t.size)
+        qcol = next((c for c in KEPLER_QUALITY_COLUMNS if c in cols), None)
+        if qcol is not None:
+            keep = (np.asarray(data[qcol]) == 0)
+            t, f, fe = t[keep], f[keep], fe[keep]
+        ok = np.isfinite(t) & np.isfinite(f)
+        t, f, fe = t[ok], f[ok], fe[ok]
+        quarter = hdul[0].header.get("QUARTER", hdr.get("QUARTER"))
+        exptime_s = _exptime_from_header(hdr)
+        return {"sector": int(quarter) if quarter is not None else None,
+                "quarter": int(quarter) if quarter is not None else None,
+                "era": ERA_KEPLER, "author": "Kepler",
+                "exptime_s": exptime_s, "cadence": kepler_cadence_label(exptime_s),
+                "obsmode": str(hdul[0].header.get("OBSMODE", hdr.get("OBSMODE", "")) or ""),
+                "flux_column": fcol, "quality_column": qcol,
+                "time": t, "flux": f, "flux_err": fe, "n_points": int(t.size),
+                "n_points_before_quality_mask": n_before,
+                "bjdref": bjdrefi + bjdreff}
+
+
+def merge_kepler_segments(segments) -> tuple[list[dict], list[dict]]:
+    """Kepler month-files -> one light curve per (quarter, cadence).
+
+    **Why this has to happen before :func:`dedupe_sectors`.**  Kepler
+    short-cadence data is delivered *per month*: three files carry one quarter,
+    all stamped with the same ``QUARTER``.  ``dedupe_sectors`` keys on the
+    segment identifier and keeps one light curve per key, so handing it three
+    month-files of Q9 unchanged would throw two thirds of the short-cadence
+    data away.  Merging first makes the key mean what dedupe assumes it means:
+    *one light curve per quarter per pipeline product*.  Long and short cadence
+    of the same quarter stay separate records at this point --- they are the
+    same pixels and it is dedupe's job, not this function's, to prefer the
+    shorter one.
+
+    Each segment is divided by **its own robust median before concatenation**,
+    so a month-to-month flux scale cannot survive into the merged quarter (the
+    per-sector normalisation in :func:`measure_target` then finds a series that
+    is already at unity).  Returns ``(merged, provenance)``.
+    """
+    groups: dict = {}
+    order: list = []
+    for s in segments or []:
+        q = s.get("quarter", s.get("sector"))
+        e = s.get("exptime_s")
+        try:
+            ekey = round(float(e)) if e is not None and np.isfinite(float(e)) else None
+        except (TypeError, ValueError):
+            ekey = None
+        key = (q, ekey) if q is not None else ("__unkeyed__", len(order))
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(s)
+    merged: list[dict] = []
+    prov: list[dict] = []
+    for key in order:
+        parts = groups[key]
+        times, fluxes, errs = [], [], []
+        for s in parts:
+            t = np.asarray(s.get("time"), dtype=float)
+            f = np.asarray(s.get("flux"), dtype=float)
+            fe = (np.asarray(s.get("flux_err"), dtype=float) if s.get("flux_err") is not None
+                  else np.full(t.shape, np.nan))
+            ok = np.isfinite(t) & np.isfinite(f)
+            t, f, fe = t[ok], f[ok], fe[ok]
+            med = float(np.median(f)) if t.size else float("nan")
+            if not np.isfinite(med) or med == 0:
+                continue
+            times.append(t)
+            fluxes.append(f / med)
+            errs.append(fe / med)
+        if not times:
+            merged.append(dict(parts[0]))
+            continue
+        idx = np.argsort(np.concatenate(times))
+        base = dict(parts[0])
+        base.update({"time": np.concatenate(times)[idx],
+                     "flux": np.concatenate(fluxes)[idx],
+                     "flux_err": np.concatenate(errs)[idx],
+                     "n_points": int(idx.size), "n_files_merged": int(len(parts)),
+                     "normalised_per_file": True})
+        base["n_points"] = int(base["time"].size)
+        merged.append(base)
+        prov.append({"quarter": base.get("quarter", base.get("sector")),
+                     "cadence": base.get("cadence"), "exptime_s": base.get("exptime_s"),
+                     "n_files_merged": int(len(parts)), "n_points": int(base["n_points"])})
+    return merged, prov
+
+
 def lightkurve_lc_fn(tic_id, *, authors=DEFAULT_AUTHORS, max_sectors: int = 60,
                      download_dir: str | None = None, **_kw) -> list[dict]:
     """Light curves for one TIC through ``lightkurve`` (runner only).
@@ -1127,27 +1623,165 @@ def default_lc_fn(tic_id, **kw) -> list[dict]:
         return mast_fits_lc_fn(tic_id, **kw)
 
 
-def fetch_lightcurves(tic_id, *, lc_fn=None, params: MastParams | None = None,
-                      log: AcquisitionLog | None = None, deadline: Deadline | None = None,
-                      key: str = "") -> tuple[list[dict], str, str]:
-    """One target's TESS light curves, bounded and recorded.
+# ---------------------------------------------------------------------------
+# The KEPLER era, reached the same two ways
+# ---------------------------------------------------------------------------
+def lightkurve_kepler_lc_fn(kepid, *, authors=KEPLER_AUTHORS, max_sectors: int = 60,
+                            download_dir: str | None = None, **_kw) -> list[dict]:
+    """Kepler light curves for one KIC through ``lightkurve`` (runner only).
 
-    Returns ``(sectors, status, route)``; ``status`` is ``OK`` /
+    ``search_lightcurve("KIC <kepid>", mission="Kepler")``, both cadences.  The
+    time axis is taken as ``Time.jd - 2454833`` (**BKJD**) rather than trusting
+    the object's format string, exactly as the TESS route takes ``jd - 2457000``;
+    quarter, cadence, flux column and exposure are carried through so the record
+    says what was measured on what.  Short cadence is *not* filtered out here:
+    :func:`merge_kepler_segments` merges its month-files into quarters and
+    :func:`dedupe_sectors` then prefers it over the 29.4-minute long cadence.
+    """
+    import lightkurve as lk  # noqa: PLC0415
+
+    sr = lk.search_lightcurve(f"KIC {int(kepid)}", mission="Kepler")
+    if sr is None or len(sr) == 0:
+        return []
+    try:
+        tbl = sr.table
+        auth = np.array([str(a) for a in tbl["author"]])
+        keep = np.isin(auth, list(authors))
+        if keep.any():
+            sr = sr[keep]
+    except Exception:                                     # noqa: BLE001
+        pass
+    out: list[dict] = []
+    for i in range(min(len(sr), int(max_sectors))):
+        try:
+            lc = sr[i].download(download_dir=download_dir)
+        except Exception:                                 # noqa: BLE001
+            continue
+        if lc is None:
+            continue
+        try:
+            lc = lc.remove_nans()
+        except Exception:                                 # noqa: BLE001
+            pass
+        try:
+            t = np.asarray(lc.time.jd, dtype=float) - BKJD_OFFSET
+        except Exception:                                 # noqa: BLE001
+            t = np.asarray(lc.time.value, dtype=float)
+        f = np.asarray(getattr(lc.flux, "value", lc.flux), dtype=float)
+        fe = np.asarray(getattr(getattr(lc, "flux_err", None), "value",
+                                np.full(f.shape, np.nan)), dtype=float)
+        meta = dict(getattr(lc, "meta", {}) or {})
+        exptime = meta.get("TIMEDEL")
+        exptime_s = float(exptime) * 86400.0 if exptime else float("nan")
+        if not np.isfinite(exptime_s) and t.size > 2:
+            exptime_s = float(np.median(np.diff(np.sort(t)))) * 86400.0
+        quarter = meta.get("QUARTER")
+        out.append({"sector": int(quarter) if quarter is not None else None,
+                    "quarter": int(quarter) if quarter is not None else None,
+                    "era": ERA_KEPLER,
+                    "author": str(meta.get("AUTHOR") or meta.get("MISSION") or "Kepler"),
+                    "exptime_s": exptime_s, "cadence": kepler_cadence_label(exptime_s),
+                    "obsmode": str(meta.get("OBSMODE") or ""),
+                    "flux_column": str(meta.get("FLUX_ORIGIN") or "PDCSAP_FLUX"),
+                    "time": t, "flux": f, "flux_err": fe, "n_points": int(t.size)})
+    return out
+
+
+#: The spellings of a Kepler target name tried at MAST, in order.  ``kplr`` +
+#: the nine-digit zero-padded KIC is the archive's own form; the bare integer is
+#: the fallback.  WHICH ONE ANSWERED cannot be established in this sandbox and
+#: is established at runtime -- a spelling that returns nothing is
+#: ``QUERY_RETURNED_ZERO_ROWS``, which is not ``QUERY_FAILED``, so the loop
+#: moves on to the next spelling instead of calling the target unreachable.
+KEPLER_TARGET_NAME_FORMS: tuple[str, ...] = ("kplr{kepid:09d}", "{kepid:d}", "KIC {kepid:d}")
+
+
+def mast_kepler_fits_lc_fn(kepid, *, authors=KEPLER_AUTHORS, max_sectors: int = 60,
+                           download_dir: str | None = None, **_kw) -> list[dict]:
+    """Kepler light curves for one KIC through ``astroquery.mast`` + FITS.
+
+    The fallback when ``lightkurve`` is not installed: query the Kepler
+    timeseries observations for the KIC, keep the ``LLC`` / ``SLC`` products,
+    download by ``dataURI`` and read them with :func:`read_kepler_lc_fits`.
+    """
+    from astroquery.mast import Observations  # noqa: PLC0415
+
+    obs = None
+    for form in KEPLER_TARGET_NAME_FORMS:
+        try:
+            cand = Observations.query_criteria(obs_collection="Kepler",
+                                               dataproduct_type="timeseries",
+                                               target_name=form.format(kepid=int(kepid)))
+        except Exception:                                 # noqa: BLE001
+            continue
+        if cand is not None and len(cand):
+            obs = cand
+            break
+    if obs is None or len(obs) == 0:
+        return []
+    prod = Observations.get_product_list(obs)
+    if prod is None or len(prod) == 0:
+        return []
+    p = prod.to_pandas()
+    if "productSubGroupDescription" in p.columns:
+        want = {s.upper() for s in KEPLER_PRODUCT_SUBGROUPS}
+        sel = p["productSubGroupDescription"].astype(str).str.upper().isin(want)
+        if sel.any():
+            p = p[sel]
+    if "provenance_name" in p.columns and len(authors):
+        wanted = {str(a).upper() for a in authors}
+        sel = p["provenance_name"].astype(str).str.upper().isin(wanted)
+        if sel.any():
+            p = p[sel]
+    p = p.head(int(max_sectors))
+    root = Path(download_dir or ".") / "mast_kepler_lc"
+    root.mkdir(parents=True, exist_ok=True)
+    out: list[dict] = []
+    for _, r in p.iterrows():
+        uri = str(r.get("dataURI") or "")
+        if not uri:
+            continue
+        local = root / str(r.get("productFilename") or Path(uri).name)
+        try:
+            status, _msg, _url = Observations.download_file(uri, local_path=str(local),
+                                                            cache=False)
+            if str(status).upper() != "COMPLETE" or not local.exists():
+                continue
+            rec = read_kepler_lc_fits(local)
+        except Exception:                                 # noqa: BLE001
+            continue
+        if rec is None:
+            continue
+        out.append(rec)
+    return out
+
+
+def default_kepler_lc_fn(kepid, **kw) -> list[dict]:
+    """``lightkurve`` if it is installed, else ``astroquery.mast`` + FITS."""
+    try:
+        import lightkurve  # noqa: PLC0415, F401
+
+        return lightkurve_kepler_lc_fn(kepid, **kw)
+    except ImportError:
+        return mast_kepler_fits_lc_fn(kepid, **kw)
+
+
+def _fetch_lcs(target_id, *, lc_fn, default_fn, params: MastParams, log: AcquisitionLog,
+               deadline: Deadline | None, label: str, query: str
+               ) -> tuple[list[dict], str, str]:
+    """The bounded, recorded fetch loop shared by both eras.
+
+    Returns ``(segments, status, route)``; ``status`` is ``OK`` /
     ``QUERY_RETURNED_ZERO_ROWS`` / ``QUERY_FAILED``, and a failure is **never**
     turned into an empty-but-successful answer.  Retries stop as soon as the
-    wall-clock budget is gone.
+    wall-clock budget is gone.  One loop, so the Kepler era cannot drift away
+    from the TESS era's error handling.
     """
-    params = params or MastParams()
-    log = log or AcquisitionLog()
-    label = f"lightcurves_{key or tic_id}"
     if deadline is not None and deadline.expired():
-        log.record(label, f"TIC {tic_id}", error="budget_exhausted_before_request")
+        log.record(label, query, error="budget_exhausted_before_request")
         return [], STATUS_FAILED, ""
-    if lc_fn is not None:
-        route = "injected"
-    else:
-        route = mast_probe().get("route_preferred") or ""
-    fn = lc_fn or default_lc_fn
+    route = "injected" if lc_fn is not None else (mast_probe().get("route_preferred") or "")
+    fn = lc_fn or default_fn
     last = ""
     own = Deadline(budget_s=float(params.per_target_budget_s))
     n_attempts = max(int(params.retries), 1)
@@ -1160,23 +1794,60 @@ def fetch_lightcurves(tic_id, *, lc_fn=None, params: MastParams | None = None,
             _time.sleep(min(float(params.retry_pause_s) * attempt, own.remaining(),
                             deadline.remaining() if deadline is not None else float("inf")))
         try:
-            secs = fn(tic_id, authors=tuple(params.authors), max_sectors=int(params.max_sectors),
-                      download_dir=params.download_dir)
+            secs = fn(target_id, authors=tuple(params.authors),
+                      max_sectors=int(params.max_sectors), download_dir=params.download_dir)
         except Exception as exc:                          # noqa: BLE001
             last = repr(exc)[:400]
             continue
         secs = [s for s in (secs or []) if s is not None and len(np.asarray(s.get("time"),
                                                                            dtype=float))]
         if not secs:
-            log.record(label, f"TIC {tic_id}", rows=0,
-                       extra={"route": route, "attempt": attempt + 1})
+            log.record(label, query, rows=0, extra={"route": route, "attempt": attempt + 1})
             return [], STATUS_ZERO, route
-        log.record(label, f"TIC {tic_id}", rows=int(sum(int(s.get("n_points") or 0)
-                                                        for s in secs)),
+        log.record(label, query, rows=int(sum(int(s.get("n_points") or 0) for s in secs)),
                    extra={"route": route, "n_sectors": len(secs), "attempt": attempt + 1})
         return secs, STATUS_OK, route
-    log.record(label, f"TIC {tic_id}", error=last or "unknown")
+    log.record(label, query, error=last or "unknown")
     return [], STATUS_FAILED, route
+
+
+def fetch_lightcurves(tic_id, *, lc_fn=None, params: MastParams | None = None,
+                      log: AcquisitionLog | None = None, deadline: Deadline | None = None,
+                      key: str = "") -> tuple[list[dict], str, str]:
+    """One target's TESS light curves, bounded and recorded."""
+    params = params or MastParams()
+    log = log or AcquisitionLog()
+    return _fetch_lcs(tic_id, lc_fn=lc_fn, default_fn=default_lc_fn, params=params, log=log,
+                      deadline=deadline, label=f"lightcurves_{key or tic_id}",
+                      query=f"TIC {tic_id}")
+
+
+def fetch_kepler_lightcurves(kepid, *, lc_fn=None, params: MastParams | None = None,
+                             log: AcquisitionLog | None = None, deadline: Deadline | None = None,
+                             key: str = "") -> tuple[list[dict], str, str, list[dict]]:
+    """One target's KEPLER light curves, through the same bounded loop.
+
+    Returns ``(quarters, status, route, merge_provenance)``.  The archive
+    delivers short cadence per *month*, so the segments are passed through
+    :func:`merge_kepler_segments` before they are returned: what comes back is
+    one light curve per (quarter, cadence), which is the unit
+    :func:`dedupe_sectors` assumes when it prefers the shorter cadence.  The
+    Kepler ceilings (``kepler_per_target_budget_s``, ``kepler_max_quarters``,
+    ``kepler_retries``) are applied through :meth:`MastParams.kepler_view`.
+    """
+    params = params or MastParams()
+    log = log or AcquisitionLog()
+    segs, status, route = _fetch_lcs(kepid, lc_fn=lc_fn, default_fn=default_kepler_lc_fn,
+                                     params=params.kepler_view(), log=log, deadline=deadline,
+                                     label=f"kepler_lightcurves_{key or kepid}",
+                                     query=f"KIC {kepid}")
+    if status != STATUS_OK:
+        return [], status, route, []
+    merged, prov = merge_kepler_segments(segs)
+    merged = [s for s in merged if len(np.asarray(s.get("time"), dtype=float))]
+    if not merged:
+        return [], STATUS_ZERO, route, prov
+    return merged, STATUS_OK, route, prov
 
 
 # ---------------------------------------------------------------------------
@@ -1336,15 +2007,63 @@ def _candidates_csv(out: Path) -> Path:
     return p.parent / "candidates.csv"
 
 
-def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
-                lc_fn=None, mast: MastParams, fit: FitParams, compare: CompareParams,
-                ld_table: dict | None = None, log: AcquisitionLog | None = None,
-                deadline: Deadline | None = None) -> tuple[dict, pd.DataFrame, pd.DataFrame]:
-    """Everything stage 2 has to say about one target.
+#: The measure_target outputs carried into the per-target record for an era.
+_ERA_FIT_FIELDS: tuple[str, ...] = (
+    "depth_err_analytic_ppm", "depth_err_bootstrap_ppm", "depth_err_chi2_scaled_ppm",
+    "chi2", "chi2_per_dof", "n_transits", "n_transits_seen", "oot_scatter_ppm",
+    "n_sectors", "n_sectors_measured", "sector_list", "authors", "exptimes_s",
+    "smeared", "depth_is_lower_bound", "depth_odd_ppm", "depth_odd_err_ppm",
+    "n_transits_odd", "depth_even_ppm", "depth_even_err_ppm", "n_transits_even",
+    "odd_even_diff_ppm", "odd_even_sigma", "sector_scatter_chi2",
+    "sector_scatter_dof", "sector_scatter_chi2_per_dof", "n_sectors_dropped_duplicate",
+    "duplicate_sectors_dropped",
+)
 
-    Returns ``(measurement, sectors_df, fold_df)``.  A target whose light curve
-    could not be fetched comes back ``UNMEASURED`` with the archive's own
-    status as the reason --- never as agreeing with anything.
+
+def _measure_era(segments, *, era: str, period_days: float, t0_bkjd: float,
+                 duration_hours: float, koi_row: dict | None, fit: FitParams
+                 ) -> tuple[dict, dict, str | None]:
+    """Fold and fit ONE era's light curves with :func:`measure_target`.
+
+    The ONLY thing ``era`` changes is the time system the epoch is expressed in
+    (:func:`epoch_in_era`): Kepler light curves are BKJD, so ``koi_time0bk`` is
+    used as it stands; TESS light curves are BTJD, so it is shifted by -2167 d.
+    Everything after that --- the dedupe, the fold, the masked baseline, the
+    exposure-shrunk core, the bootstrap --- is the same code for both, which is
+    the whole point of measuring both eras here.
+
+    Returns ``(fit_result, ephemeris_record, unmeasured_reason_or_None)``.
+    """
+    t0_era = epoch_in_era(t0_bkjd, era)
+    t_all = np.concatenate([np.asarray(s["time"], dtype=float) for s in segments])
+    prop = propagate_epoch(t0_era, period_days, float(np.nanmedian(t_all)),
+                           t0_err_days=sym_err(_f((koi_row or {}).get("koi_time0bk_err1")),
+                                               _f((koi_row or {}).get("koi_time0bk_err2"))),
+                           period_err_days=sym_err(_f((koi_row or {}).get("koi_period_err1")),
+                                                   _f((koi_row or {}).get("koi_period_err2"))))
+    dur_d = float(duration_hours) / 24.0
+    m = measure_target(segments, period_days=period_days, t0_btjd=prop["t0_btjd"],
+                       duration_days=dur_d, params=fit)
+    eph = {"t0_epoch_used": prop["t0_btjd"], "t0_era_epoch": t0_era,
+           "n_epochs_propagated": prop["n_epochs"],
+           "ephemeris_sigma_minutes": prop["sigma_minutes"]}
+    reason = None if (m["n_transits"] and np.isfinite(m["depth_ppm"])) else UNMEASURED_NO_TRANSIT
+    return m, eph, reason
+
+
+def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
+                lc_fn=None, kepler_lc_fn=None, mast: MastParams, fit: FitParams,
+                compare: CompareParams, ld_table: dict | None = None,
+                log: AcquisitionLog | None = None, deadline: Deadline | None = None,
+                kepler_deadline: Deadline | None = None
+                ) -> tuple[dict, pd.DataFrame, pd.DataFrame]:
+    """Everything stage 2 has to say about one target, in BOTH eras.
+
+    Returns ``(measurement, sectors_df, fold_df)``; the sector and fold frames
+    carry an ``era`` column and hold the Kepler and TESS rows together.  An era
+    whose light curves could not be fetched comes back with its own
+    ``QUERY_FAILED`` / ``QUERY_RETURNED_ZERO_ROWS`` and is **never** reported as
+    agreeing with the other one.
     """
     log = log or AcquisitionLog()
     key = str(entry.get("kepoi_name") or entry.get("toi") or entry.get("tic_id"))
@@ -1356,9 +2075,18 @@ def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
                  "period_days": float("nan"), "t0_bkjd": float("nan"),
                  "t0_btjd_kepler_epoch": float("nan"), "t0_btjd_used": float("nan"),
                  "n_epochs_propagated": 0, "ephemeris_sigma_minutes": float("nan"),
-                 "duration_hours": float("nan"), "flags": ""}
+                 "duration_hours": float("nan"), "flags": "",
+                 # --- the Kepler era, measured with the SAME fitter ---------
+                 "kepler_lc_status": "", "kepler_lc_route": "", "kepler_n_quarters": 0,
+                 "kepler_n_quarters_measured": 0, "kepler_quarter_list": "",
+                 "kepler_cadences": "", "kepler_has_short_cadence": False,
+                 "kepler_n_files_merged": 0, "kepler_t0_bkjd_used": float("nan"),
+                 "kepler_n_epochs_propagated": 0,
+                 "kepler_ephemeris_sigma_minutes": float("nan"),
+                 "kepler_depth_measured_err_method": "", "kepler_flags": "",
+                 "tess_era_unmeasured_reason": "", "kepler_era_unmeasured_reason": ""}
     empty_sec = pd.DataFrame()
-    empty_fold = pd.DataFrame(columns=["dt_hours", "flux", "flux_err", "n"])
+    empty_fold = pd.DataFrame(columns=["era", "dt_hours", "flux", "flux_err", "n"])
 
     depth_k = _f((koi_row or {}).get("koi_depth"))
     err_k = sym_err(_f((koi_row or {}).get("koi_depth_err1")),
@@ -1377,70 +2105,171 @@ def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
     dur_h = _f((koi_row or {}).get("koi_duration"))
     rec.update({"period_days": period, "t0_bkjd": t0_bkjd, "duration_hours": dur_h,
                 "b_kepler": b})
-    if not (np.isfinite(period) and period > 0 and np.isfinite(t0_bkjd)
-            and np.isfinite(dur_h) and dur_h > 0):
-        rec.update(compare_three_depths(float("nan"), float("nan"), depth_k, err_k, depth_t,
-                                        err_t, ld_band_ratio=fr, params=compare,
-                                        unmeasured_reason=UNMEASURED_NO_EPHEMERIS))
-        rec["lc_status"] = "not_attempted"
-        return rec, empty_sec, empty_fold
+    # The catalogue separation the like-for-like comparison has to be able to
+    # see: ln(TOI / KOI-in-TESS-band).  This is the change stage 1 claimed, and
+    # a like-for-like agreement only refutes it if it could have detected it.
+    fr_applied = float(fr) if (compare.apply_band_ratio and np.isfinite(fr) and fr > 0) else 1.0
+    ln_under_test = float("nan")
+    if np.isfinite(depth_k) and depth_k > 0 and np.isfinite(depth_t) and depth_t > 0:
+        ln_under_test = math.log(depth_t / (depth_k * fr_applied))
+    rec["catalogue_ln_ratio_under_test"] = ln_under_test
 
-    t0_btjd = float(bkjd_to_btjd(t0_bkjd))
-    rec["t0_btjd_kepler_epoch"] = t0_btjd
-    tic = entry.get("tic_id")
-    secs, status, route = fetch_lightcurves(tic, lc_fn=lc_fn, params=mast, log=log,
-                                            deadline=deadline, key=key)
-    rec["lc_status"], rec["lc_route"] = status, route
-    if status != STATUS_OK:
-        reason = (UNMEASURED_BUDGET if deadline is not None and deadline.expired()
-                  and status == STATUS_FAILED else status)
+    def _unmeasured(reason: str, *, kepler_reason: str) -> tuple[dict, pd.DataFrame,
+                                                                 pd.DataFrame]:
         rec.update(compare_three_depths(float("nan"), float("nan"), depth_k, err_k, depth_t,
                                         err_t, ld_band_ratio=fr, params=compare,
                                         unmeasured_reason=reason))
+        rec.update(compare_measured_eras(float("nan"), float("nan"), float("nan"), float("nan"),
+                                         ld_band_ratio=fr, ln_ratio_under_test=ln_under_test,
+                                         params=compare, kepler_unmeasured_reason=kepler_reason,
+                                         tess_unmeasured_reason=reason))
+        rec.update(compare_kepler_to_catalogue(float("nan"), float("nan"), depth_k, err_k,
+                                               params=compare, unchecked_reason=kepler_reason))
+        rec["tess_era_unmeasured_reason"] = reason
+        rec["kepler_era_unmeasured_reason"] = kepler_reason
         return rec, empty_sec, empty_fold
 
-    t_all = np.concatenate([np.asarray(s["time"], dtype=float) for s in secs])
-    prop = propagate_epoch(t0_btjd, period, float(np.nanmedian(t_all)),
-                           t0_err_days=sym_err(_f((koi_row or {}).get("koi_time0bk_err1")),
-                                               _f((koi_row or {}).get("koi_time0bk_err2"))),
-                           period_err_days=sym_err(_f((koi_row or {}).get("koi_period_err1")),
-                                                   _f((koi_row or {}).get("koi_period_err2"))))
-    rec.update({"t0_btjd_used": prop["t0_btjd"], "n_epochs_propagated": prop["n_epochs"],
-                "ephemeris_sigma_minutes": prop["sigma_minutes"]})
-    dur_d = dur_h / 24.0
-    m = measure_target(secs, period_days=period, t0_btjd=prop["t0_btjd"],
-                       duration_days=dur_d, params=fit)
-    flags = [f for f in str(m["flags"]).split(";") if f]
-    if np.isfinite(prop["sigma_minutes"]) and prop["sigma_minutes"] > 0.1 * dur_h * 60.0:
-        flags.append("ephemeris_drift_over_10pct_of_duration")
-    # The fitted quantities keep their own names; `compare_three_depths` then
-    # adds depth_measured_ppm / depth_measured_err_ppm as the canonical pair.
-    rec["depth_measured_err_method"] = m["depth_err_method"]
-    for k in ("depth_err_analytic_ppm", "depth_err_bootstrap_ppm", "depth_err_chi2_scaled_ppm",
-              "chi2", "chi2_per_dof", "n_transits", "n_transits_seen", "oot_scatter_ppm",
-              "n_sectors", "n_sectors_measured", "sector_list", "authors", "exptimes_s",
-              "smeared", "depth_is_lower_bound", "depth_odd_ppm", "depth_odd_err_ppm",
-              "n_transits_odd", "depth_even_ppm", "depth_even_err_ppm", "n_transits_even",
-              "odd_even_diff_ppm", "odd_even_sigma", "sector_scatter_chi2",
-              "sector_scatter_dof", "sector_scatter_chi2_per_dof"):
-        rec[k] = m[k]
-    reason = None if (m["n_transits"] and np.isfinite(m["depth_ppm"])) else UNMEASURED_NO_TRANSIT
-    rec.update(compare_three_depths(m["depth_ppm"], m["depth_err_ppm"], depth_k, err_k,
-                                    depth_t, err_t, ld_band_ratio=fr, params=compare,
-                                    unmeasured_reason=reason))
+    if not (np.isfinite(period) and period > 0 and np.isfinite(t0_bkjd)
+            and np.isfinite(dur_h) and dur_h > 0):
+        rec["lc_status"] = rec["kepler_lc_status"] = "not_attempted"
+        return _unmeasured(UNMEASURED_NO_EPHEMERIS, kepler_reason=UNMEASURED_NO_EPHEMERIS)
+
+    rec["t0_btjd_kepler_epoch"] = float(epoch_in_era(t0_bkjd, ERA_TESS))
+    sec_frames: list[pd.DataFrame] = []
+    fold_frames: list[pd.DataFrame] = []
+    flags = []
+
+    # ---------------- the TESS era ----------------------------------------
+    tess_reason: str | None = None
+    m_t: dict | None = None
+    secs, status, route = fetch_lightcurves(entry.get("tic_id"), lc_fn=lc_fn, params=mast,
+                                            log=log, deadline=deadline, key=key)
+    rec["lc_status"], rec["lc_route"] = status, route
+    if status != STATUS_OK:
+        tess_reason = (UNMEASURED_BUDGET if deadline is not None and deadline.expired()
+                       and status == STATUS_FAILED else status)
+    else:
+        m_t, eph_t, tess_reason = _measure_era(secs, era=ERA_TESS, period_days=period,
+                                               t0_bkjd=t0_bkjd, duration_hours=dur_h,
+                                               koi_row=koi_row, fit=fit)
+        rec.update({"t0_btjd_used": eph_t["t0_epoch_used"],
+                    "n_epochs_propagated": eph_t["n_epochs_propagated"],
+                    "ephemeris_sigma_minutes": eph_t["ephemeris_sigma_minutes"]})
+        flags = [f for f in str(m_t["flags"]).split(";") if f]
+        if (np.isfinite(eph_t["ephemeris_sigma_minutes"])
+                and eph_t["ephemeris_sigma_minutes"] > 0.1 * dur_h * 60.0):
+            flags.append("ephemeris_drift_over_10pct_of_duration")
+        # The fitted quantities keep their own names; `compare_three_depths`
+        # then adds depth_measured_ppm / depth_measured_err_ppm as the pair.
+        rec["depth_measured_err_method"] = m_t["depth_err_method"]
+        for k in _ERA_FIT_FIELDS:
+            rec[k] = m_t[k]
+        sec_t = m_t["sectors"].copy()
+        if len(sec_t):
+            sec_t.insert(0, "era", ERA_TESS)
+            sec_frames.append(sec_t)
+        if len(m_t["fold"]):
+            ft = m_t["fold"].copy()
+            ft.insert(0, "era", ERA_TESS)
+            fold_frames.append(ft)
+
+    # ---------------- the KEPLER era, SAME fitter --------------------------
+    kepler_reason: str | None = None
+    m_k: dict | None = None
+    if kepler_lc_fn is None and not bool(mast.kepler_enabled):
+        # Nothing was asked of the archive: a different fact from an archive
+        # that did not answer, and it is named as such.
+        kepler_reason = UNMEASURED_KEPLER_DISABLED
+        rec["kepler_lc_status"] = "not_attempted"
+    else:
+        kepid = entry.get("kepid")
+        if kepid is None or not np.isfinite(_f(kepid)):
+            kepler_reason = UNMEASURED_ZERO_ROWS
+            rec["kepler_lc_status"] = STATUS_ZERO
+        else:
+            ksecs, kstatus, kroute, kprov = fetch_kepler_lightcurves(
+                int(_f(kepid)), lc_fn=kepler_lc_fn, params=mast, log=log,
+                deadline=kepler_deadline, key=key)
+            rec["kepler_lc_status"], rec["kepler_lc_route"] = kstatus, kroute
+            rec["kepler_n_files_merged"] = int(sum(int(p.get("n_files_merged") or 0)
+                                                   for p in kprov))
+            if kstatus != STATUS_OK:
+                kepler_reason = (UNMEASURED_BUDGET if kepler_deadline is not None
+                                 and kepler_deadline.expired() and kstatus == STATUS_FAILED
+                                 else kstatus)
+            else:
+                cad = sorted({str(s.get("cadence") or kepler_cadence_label(s.get("exptime_s")))
+                              for s in ksecs})
+                rec["kepler_cadences"] = ",".join(cad)
+                rec["kepler_has_short_cadence"] = bool("short" in cad)
+                m_k, eph_k, kepler_reason = _measure_era(ksecs, era=ERA_KEPLER,
+                                                         period_days=period, t0_bkjd=t0_bkjd,
+                                                         duration_hours=dur_h, koi_row=koi_row,
+                                                         fit=fit)
+                rec.update({"kepler_t0_bkjd_used": eph_k["t0_epoch_used"],
+                            "kepler_n_epochs_propagated": eph_k["n_epochs_propagated"],
+                            "kepler_ephemeris_sigma_minutes": eph_k["ephemeris_sigma_minutes"]})
+                rec["kepler_depth_measured_err_method"] = m_k["depth_err_method"]
+                rec["kepler_n_quarters"] = m_k["n_sectors"]
+                rec["kepler_n_quarters_measured"] = m_k["n_sectors_measured"]
+                rec["kepler_quarter_list"] = m_k["sector_list"]
+                for k in _ERA_FIT_FIELDS:
+                    rec[f"kepler_{k}"] = m_k[k]
+                kflags = [f for f in str(m_k["flags"]).split(";") if f]
+                if (np.isfinite(eph_k["ephemeris_sigma_minutes"])
+                        and eph_k["ephemeris_sigma_minutes"] > 0.1 * dur_h * 60.0):
+                    kflags.append("ephemeris_drift_over_10pct_of_duration")
+                rec["kepler_flags"] = ";".join(kflags)
+                sec_k = m_k["sectors"].copy()
+                if len(sec_k):
+                    sec_k.insert(0, "era", ERA_KEPLER)
+                    sec_frames.append(sec_k)
+                if len(m_k["fold"]):
+                    fk = m_k["fold"].copy()
+                    fk.insert(0, "era", ERA_KEPLER)
+                    fold_frames.append(fk)
+
+    rec["tess_era_unmeasured_reason"] = tess_reason or ""
+    rec["kepler_era_unmeasured_reason"] = kepler_reason or ""
+
+    # ---------------- the comparisons --------------------------------------
+    d_t = m_t["depth_ppm"] if m_t is not None else float("nan")
+    e_t = m_t["depth_err_ppm"] if m_t is not None else float("nan")
+    d_k = m_k["depth_ppm"] if m_k is not None else float("nan")
+    e_k = m_k["depth_err_ppm"] if m_k is not None else float("nan")
+    # Secondary, and now a diagnostic of the CATALOGUES: our TESS depth
+    # against both catalogue numbers.
+    rec.update(compare_three_depths(d_t, e_t, depth_k, err_k, depth_t, err_t,
+                                    ld_band_ratio=fr, params=compare,
+                                    unmeasured_reason=tess_reason))
+    # PRIMARY: our Kepler-era fit against our TESS-era fit.
+    rec.update(compare_measured_eras(d_k, e_k, d_t, e_t, ld_band_ratio=fr,
+                                     ln_ratio_under_test=ln_under_test, params=compare,
+                                     kepler_unmeasured_reason=kepler_reason,
+                                     tess_unmeasured_reason=tess_reason))
+    # And what our Kepler-era fit says about the KOI table itself.
+    rec.update(compare_kepler_to_catalogue(d_k, e_k, depth_k, err_k, params=compare,
+                                           unchecked_reason=kepler_reason))
     rec["flags"] = ";".join(flags)
-    sec = m["sectors"].copy()
+
+    sec = (pd.concat(sec_frames, ignore_index=True) if sec_frames else empty_sec)
     if len(sec):
         sec.insert(0, "kepoi_name", rec["kepoi_name"])
         sec.insert(1, "tic_id", rec["tic_id"])
-    fold_df = m["fold"].copy()
+    fold_df = (pd.concat(fold_frames, ignore_index=True) if fold_frames else empty_fold)
     return rec, sec, fold_df
 
 
-def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None,
+def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn=None,
                    shortlist: pd.DataFrame | None = None, log: AcquisitionLog | None = None
                    ) -> dict:
-    """Fetch the ephemerides and the light curves, fit every shortlisted target."""
+    """Fetch the ephemerides and BOTH eras' light curves, fit every shortlisted target.
+
+    The two eras get **separate wall-clock budgets** (``stage2.mast.budget_s``
+    and ``stage2.mast.kepler_budget_s``) so that a slow fetch on one side
+    cannot silently starve the other and leave the like-for-like comparison
+    one-sided.
+    """
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     log = log or AcquisitionLog(prefix="growth/stage2")
@@ -1464,14 +2293,17 @@ def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None,
     toi_rows = toi.to_dict(orient="records") if len(toi) else []
 
     deadline = Deadline(budget_s=float(mast.budget_s) if mast.budget_s else None)
+    kepler_deadline = Deadline(budget_s=float(mast.kepler_budget_s)
+                               if mast.kepler_budget_s else None)
     recs, secs, folds = [], [], {}
     for entry in shortlist.to_dict(orient="records"):
         k = str(entry.get("kepoi_name"))
         koi_row = koi_by.get(k)
         toi_row = _pick_toi_row(toi_rows, entry, koi_row)
-        rec, sec, fold_df = measure_one(entry, koi_row, toi_row, lc_fn=lc_fn, mast=mast,
+        rec, sec, fold_df = measure_one(entry, koi_row, toi_row, lc_fn=lc_fn,
+                                        kepler_lc_fn=kepler_lc_fn, mast=mast,
                                         fit=fit, compare=cmp_p, ld_table=ld_table, log=log,
-                                        deadline=deadline)
+                                        deadline=deadline, kepler_deadline=kepler_deadline)
         # The table's status and THIS target's status are different facts: a
         # query that succeeded but returned no row for this KOI is ZERO_ROWS
         # for the target even though the table is OK.
@@ -1483,9 +2315,15 @@ def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None,
             secs.append(sec)
         if len(fold_df):
             folds[k] = fold_df
-        print(f"[growth-stage2] {k}: lc={rec['lc_status']} verdict={rec.get('verdict')} "
-              f"depth={rec.get('depth_measured_ppm')} +/- {rec.get('depth_measured_err_ppm')} ppm "
-              f"(Kepler {rec.get('depth_kepler_in_tess_band_ppm')}, TOI {rec.get('depth_toi_ppm')})")
+        print(f"[growth-stage2] {k}: PRIMARY {rec.get('like_for_like_verdict')} "
+              f"(z={rec.get('z_measured_eras')}) | our Kepler-era "
+              f"{rec.get('depth_kepler_measured_ppm')} +/- "
+              f"{rec.get('depth_kepler_measured_err_ppm')} ppm [{rec.get('kepler_lc_status')}] "
+              f"vs our TESS-era {rec.get('depth_measured_ppm')} +/- "
+              f"{rec.get('depth_measured_err_ppm')} ppm [{rec.get('lc_status')}]")
+        print(f"[growth-stage2] {k}: catalogues — {rec.get('verdict')}; KOI table "
+              f"{rec.get('koi_depth_verdict')} (koi_depth {rec.get('depth_kepler_ppm')}, "
+              f"TOI {rec.get('depth_toi_ppm')} ppm)")
     meas = pd.DataFrame(recs)
     meas.to_csv(out / "measurements.csv", index=False)
     sec_df = pd.concat(secs, ignore_index=True) if secs else pd.DataFrame()
@@ -1505,11 +2343,28 @@ def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None,
                          if len(meas) else {}),
            "budget_s": mast.budget_s, "elapsed_s": round(deadline.elapsed(), 1),
            "budget_exhausted": bool(deadline.expired()),
+           # The Kepler era is a SEPARATE network stage with a SEPARATE budget,
+           # and its statuses are reported separately: a run in which only the
+           # TESS side answered has no like-for-like comparison at all, and
+           # that must be visible here rather than inferred from the verdicts.
+           "kepler_era_enabled": bool(mast.kepler_enabled or kepler_lc_fn is not None),
+           "kepler_lc_status_counts": (meas["kepler_lc_status"].map(str).value_counts().to_dict()
+                                       if len(meas) and "kepler_lc_status" in meas else {}),
+           "kepler_lc_routes": (meas["kepler_lc_route"].map(str).value_counts().to_dict()
+                                if len(meas) and "kepler_lc_route" in meas else {}),
+           "kepler_budget_s": mast.kepler_budget_s,
+           "kepler_elapsed_s": round(kepler_deadline.elapsed(), 1),
+           "kepler_budget_exhausted": bool(kepler_deadline.expired()),
+           "n_compared_like_for_like": (
+               int((meas.get("like_for_like_verdict", pd.Series(dtype=str))
+                    != LL_ERA_UNMEASURED).sum()) if len(meas) else 0),
            "acquisition": log.as_dict()}
     _write(out / "acquire.json", rep)
     log.write(out / "acquisition_log.json")
-    print(f"[growth-stage2] measure: {rep['n_measured']}/{rep['n_shortlist']} measured "
-          f"in {rep['elapsed_s']}s (budget {mast.budget_s}s)")
+    print(f"[growth-stage2] measure: {rep['n_measured']}/{rep['n_shortlist']} TESS-era measured "
+          f"in {rep['elapsed_s']}s (budget {mast.budget_s}s); "
+          f"{rep['n_compared_like_for_like']}/{rep['n_shortlist']} compared like-for-like "
+          f"in {rep['kepler_elapsed_s']}s of Kepler budget {mast.kepler_budget_s}s")
     return rep
 
 
@@ -1555,62 +2410,159 @@ def stage2_assess(conf: dict, out: Path, *, measurements: pd.DataFrame | None = 
         except Exception:                                 # noqa: BLE001
             acquire_report = None
     verdict, reason = run_verdict(measurements)
+    ll_verdict, ll_reason = run_like_for_like_verdict(measurements)
     v = (measurements["verdict"].fillna(MATCH_UNMEASURED).astype(str)
          if len(measurements) and "verdict" in measurements else pd.Series(dtype=str))
     counts = {k: int((v == k).sum()) for k in TARGET_VERDICTS}
+    llv = (measurements["like_for_like_verdict"].fillna(LL_ERA_UNMEASURED).astype(str)
+           if len(measurements) and "like_for_like_verdict" in measurements
+           else pd.Series(dtype=str))
+    ll_counts = {k: int((llv == k).sum()) for k in LIKE_FOR_LIKE_VERDICTS}
+    koiv = (measurements["koi_depth_verdict"].fillna(KOI_DEPTH_UNCHECKED).astype(str)
+            if len(measurements) and "koi_depth_verdict" in measurements
+            else pd.Series(dtype=str))
+    koi_counts = {k: int((koiv == k).sum()) for k in KOI_DEPTH_VERDICTS}
     unmeasured = (measurements.loc[v == MATCH_UNMEASURED, "unmeasured_reason"]
                   .fillna("").astype(str).value_counts().to_dict() if len(measurements)
                   and "unmeasured_reason" in measurements else {})
+    ll_unmeasured = (measurements.loc[llv == LL_ERA_UNMEASURED,
+                                      "like_for_like_unmeasured_reason"]
+                     .fillna("").astype(str).value_counts().to_dict()
+                     if len(measurements) and "like_for_like_unmeasured_reason" in measurements
+                     else {})
     flags = {}
-    if len(measurements) and "flags" in measurements:
+    if len(measurements):
         # pandas 3 keeps NaN as a float through .astype(str), so every value
-        # is coerced here rather than assumed to be a string.
-        for row in measurements["flags"]:
-            for fl in str(row if row == row else "").split(";"):
-                if fl:
-                    flags[fl] = flags.get(fl, 0) + 1
+        # is coerced here rather than assumed to be a string.  Both eras'
+        # flags are counted; the Kepler ones are prefixed so a smeared Kepler
+        # long cadence is never read as a smeared TESS sector.
+        for col, pre in (("flags", ""), ("kepler_flags", "kepler:")):
+            if col not in measurements:
+                continue
+            for row in measurements[col]:
+                for fl in str(row if row == row else "").split(";"):
+                    if fl:
+                        flags[pre + fl] = flags.get(pre + fl, 0) + 1
     cmp_p = CompareParams.from_config(conf)
     fit = FitParams.from_config(conf)
     mast = MastParams.from_config(conf)
+    n_contra = koi_counts[KOI_DEPTH_CONTRADICTED]
+    koi_check = {
+        "verdict_counts": koi_counts,
+        "what_it_compares": ("OUR fit to the KEPLER light curve against cumulative.koi_depth, "
+                             "BOTH in the Kepler band, so NO limb-darkening band ratio is "
+                             "applied and nothing but the two numbers is under test"),
+        "targets_contradicting_the_koi_table": [
+            {"kepoi_name": r.get("kepoi_name"),
+             "koi_depth_ppm": r.get("depth_kepler_ppm"),
+             "our_kepler_depth_ppm": r.get("depth_kepler_measured_ppm"),
+             "our_kepler_depth_err_ppm": r.get("depth_kepler_measured_err_ppm"),
+             "ratio": r.get("kepler_measured_over_koi_depth"),
+             "z": r.get("z_kepler_measured_vs_koi")}
+            for r in (measurements.to_dict(orient="records") if len(measurements) else [])
+            if str(r.get("koi_depth_verdict")) == KOI_DEPTH_CONTRADICTED],
+        "finding": ("" if not n_contra else
+                    f"{n_contra} target(s): our fit to the Kepler light curve DISAGREES with "
+                    f"cumulative.koi_depth at or beyond {cmp_p.koi_check_n_agree} sigma. That "
+                    f"is a finding about the KOI TABLE — the stage-1 input — and is reported "
+                    f"as one, not absorbed into the depth story."),
+    }
     summary = {
-        "verdict": verdict, "reason": reason, "generated_utc": _now(),
+        # --- the PRIMARY verdict ------------------------------------------
+        "primary_verdict": ll_verdict,
+        "primary_reason": ll_reason,
+        "primary_verdict_field": "like_for_like_verdict",
+        "primary_verdict_is": ("OUR fit to the Kepler light curve against OUR fit to the TESS "
+                               "light curve — same fitter, same fold, same masked baseline, "
+                               "same exposure-shrunk core, same bootstrap; only the archive "
+                               "product and the time system differ"),
+        "like_for_like_verdicts": ll_counts,
+        "like_for_like_unmeasured_reasons": ll_unmeasured,
+        "n_compared_like_for_like": int(ll_counts[LL_CHANGED] + ll_counts[LL_UNCHANGED]
+                                        + ll_counts[LL_UNRESOLVED]),
+        # --- the SECONDARY verdict, now a diagnostic of the CATALOGUES -----
+        "verdict": verdict, "reason": reason,
+        "verdict_is_primary": False,
+        "verdict_is": ("our TESS-era fit against the two CATALOGUE depths. With both eras now "
+                       "fitted here, this says which catalogue is right about the TESS era — "
+                       "it is a diagnostic of the CATALOGUES, not of the sky"),
+        "generated_utc": _now(),
         "n_shortlist": int(len(measurements)),
         "n_measured": int(counts[MATCH_KEPLER] + counts[MATCH_TOI] + counts[MATCH_NEITHER]
                           + counts[MATCH_BOTH]),
         "target_verdicts": counts,
         "unmeasured_reasons": unmeasured,
+        "koi_catalogue_check": koi_check,
         "flags": flags,
         "targets": (measurements[[c for c in SUMMARY_TARGET_COLUMNS
                                   if c in measurements.columns]].to_dict(orient="records")
                     if len(measurements) else []),
         "acquisition": {k: (acquire_report or {}).get(k) for k in
                         ("koi_ephemeris_status", "toi_status", "lc_status_counts", "lc_routes",
-                         "budget_s", "elapsed_s", "budget_exhausted")},
+                         "budget_s", "elapsed_s", "budget_exhausted", "kepler_era_enabled",
+                         "kepler_lc_status_counts", "kepler_lc_routes", "kepler_budget_s",
+                         "kepler_elapsed_s", "kepler_budget_exhausted")},
         "config": {"compare": {"n_agree": cmp_p.n_agree, "sigma_sys_ln": cmp_p.sigma_sys_ln,
-                               "apply_band_ratio": cmp_p.apply_band_ratio},
+                               "apply_band_ratio": cmp_p.apply_band_ratio,
+                               "min_detectable_ln_ratio": cmp_p.min_detectable_ln_ratio,
+                               "koi_check_n_agree": cmp_p.koi_check_n_agree},
                    "fit": {k: getattr(fit, k) for k in fit.__dataclass_fields__},
                    "mast": {"authors": list(mast.authors), "budget_s": mast.budget_s,
                             "per_target_budget_s": mast.per_target_budget_s,
-                            "target_timeout_s": mast.target_timeout_s}},
+                            "target_timeout_s": mast.target_timeout_s,
+                            "kepler_enabled": mast.kepler_enabled,
+                            "kepler_authors": list(mast.kepler_authors),
+                            "kepler_budget_s": mast.kepler_budget_s,
+                            "kepler_per_target_budget_s": mast.kepler_per_target_budget_s,
+                            "kepler_max_quarters": mast.kepler_max_quarters}},
         "checks_not_performed": [
             "per_pixel_centroid_test (a deeper TESS transit can ORIGINATE on a different "
             "star inside the pixel; nothing here excludes that)",
-            "kepler_era_lightcurve_refit (the Kepler depth is still the catalogue's)",
             "achromaticity (one band per epoch, as at stage 1)",
+            "independent_ephemeris (both eras are folded on the KOI ephemeris, which is "
+            "itself a Kepler-era product; a depth is measured, an ephemeris is not)",
         ],
-        "note": ("stage 2 measures the TESS depth FROM THE LIGHT CURVE and compares it with "
-                 "BOTH catalogue depths; MEASURED_DEPTH_MATCHES_TOI means the depth really "
-                 "changed and the candidate goes on to the centroid test, it is NOT a "
-                 "detection; NO_DATA_REACHED is not a null result and is not written up "
-                 "(CLAUDE.md)"),
+        "note": ("the PRIMARY verdict is the like-for-like one: BOTH eras are fitted here by "
+                 "the SAME code, so MEASURED_DEPTH_CHANGED means the change survives a "
+                 "comparison in which nothing but the sky differs, and MEASURED_DEPTH_UNCHANGED "
+                 "means the KOI catalogue depth is simply wrong for this object. "
+                 "MEASURED_DEPTH_UNRESOLVED is an agreement WITHOUT the power to have seen the "
+                 "change under test and is never a refutation. The catalogue verdicts "
+                 "(MEASURED_DEPTH_MATCHES_KEPLER / _TOI) are kept, and are now a diagnostic of "
+                 "the CATALOGUES rather than of the sky — they say which table is right about "
+                 "the TESS era. A measured change is still NOT a detection: the centroid test "
+                 "is outstanding. NO_DATA_REACHED / LIKE_FOR_LIKE_NO_DATA is not a null result "
+                 "and is not written up (CLAUDE.md)"),
     }
     _write(out / "summary.json", summary)
-    print(f"[growth-stage2] assess: {verdict} — {reason}; {counts}")
+    print(f"[growth-stage2] assess: PRIMARY {ll_verdict} — {ll_reason}; {ll_counts}")
+    print(f"[growth-stage2] assess: catalogues {verdict} — {reason}; {counts}; "
+          f"KOI table {koi_counts}")
     return summary
 
 
 SUMMARY_TARGET_COLUMNS = (
-    "kepoi_name", "kepler_name", "kepid", "tic_id", "toi", "verdict", "unmeasured_reason",
+    "kepoi_name", "kepler_name", "kepid", "tic_id", "toi",
+    # --- THE PRIMARY COMPARISON: our Kepler-era fit vs our TESS-era fit ----
+    "like_for_like_verdict", "like_for_like_unmeasured_reason",
+    "depth_kepler_measured_ppm", "depth_kepler_measured_err_ppm",
+    "depth_kepler_measured_in_tess_band_ppm", "kepler_depth_measured_err_method",
+    "depth_tess_measured_ppm", "depth_tess_measured_err_ppm",
+    "z_measured_eras", "sigma_measured_eras", "measured_depth_ratio", "measured_eras_agree",
+    "ln_ratio_under_test", "detectable_ln_ratio", "catalogue_ln_ratio_under_test",
+    # --- what our Kepler-era fit says about the KOI TABLE ------------------
+    "koi_depth_verdict", "z_kepler_measured_vs_koi", "kepler_measured_over_koi_depth",
+    "koi_depth_unchecked_reason",
+    # --- the Kepler era's provenance --------------------------------------
+    "kepler_lc_status", "kepler_lc_route", "kepler_n_quarters", "kepler_n_quarters_measured",
+    "kepler_quarter_list", "kepler_authors", "kepler_exptimes_s", "kepler_cadences",
+    "kepler_has_short_cadence", "kepler_n_files_merged", "kepler_n_transits",
+    "kepler_t0_bkjd_used", "kepler_n_epochs_propagated", "kepler_ephemeris_sigma_minutes",
+    "kepler_smeared", "kepler_depth_is_lower_bound", "kepler_odd_even_diff_ppm",
+    "kepler_odd_even_sigma", "kepler_sector_scatter_chi2_per_dof",
+    "kepler_n_sectors_dropped_duplicate", "kepler_flags", "kepler_era_unmeasured_reason",
+    # --- the secondary, catalogue-diagnostic comparison --------------------
+    "verdict", "unmeasured_reason", "tess_era_unmeasured_reason",
     "lc_status", "lc_route", "n_sectors", "n_sectors_measured", "sector_list", "authors",
     "exptimes_s", "period_days", "t0_bkjd", "t0_btjd_used", "n_epochs_propagated",
     "ephemeris_sigma_minutes", "duration_hours", "n_transits", "depth_measured_ppm",
@@ -1623,7 +2575,7 @@ SUMMARY_TARGET_COLUMNS = (
 
 
 def stage2_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, query_fn=None,
-               lc_fn=None, shortlist: pd.DataFrame | None = None) -> dict:
+               lc_fn=None, kepler_lc_fn=None, shortlist: pd.DataFrame | None = None) -> dict:
     """Run one stage, a comma list, or all.  Returns the last stage's report."""
     from .run import load_growth_config  # noqa: PLC0415
 
@@ -1636,7 +2588,8 @@ def stage2_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, qu
         if s == "probe":
             rep = stage2_probe(conf, out)
         elif s == "measure":
-            rep = stage2_measure(conf, out, query_fn=query_fn, lc_fn=lc_fn, shortlist=shortlist)
+            rep = stage2_measure(conf, out, query_fn=query_fn, lc_fn=lc_fn,
+                                 kepler_lc_fn=kepler_lc_fn, shortlist=shortlist)
         elif s == "assess":
             rep = stage2_assess(conf, out)
         else:
@@ -1647,15 +2600,20 @@ def stage2_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, qu
 def main(argv=None):
     p = argparse.ArgumentParser(
         prog="seti growth-stage2",
-        description="GROWTH stage 2 (S57): measure the TESS depth from the light curve and "
-                    "compare it with BOTH catalogue depths")
+        description="GROWTH stage 2 (S57): measure BOTH the Kepler-era and the TESS-era depth "
+                    "from the light curves with the SAME fitter (the primary, like-for-like "
+                    "comparison) and keep the catalogue comparison as a diagnostic of the "
+                    "catalogues")
     p.add_argument("--stage", default="all", choices=("probe", "measure", "assess", "all"))
     p.add_argument("--out-dir", default="results/growth/stage2", help="results directory")
     a = p.parse_args(argv)
     rep = stage2_run(a.stage, out_dir=a.out_dir)
-    v = rep.get("verdict") if isinstance(rep, dict) else None
-    if v:
-        print(f"[growth-stage2] verdict: {v}")
+    if isinstance(rep, dict):
+        if rep.get("primary_verdict"):
+            print(f"[growth-stage2] PRIMARY verdict (like-for-like, both eras fitted here): "
+                  f"{rep['primary_verdict']}")
+        if rep.get("verdict"):
+            print(f"[growth-stage2] catalogue verdict (secondary): {rep['verdict']}")
     return 0
 
 
@@ -1665,16 +2623,29 @@ if __name__ == "__main__":                                # pragma: no cover
 
 __all__ = [
     "BKJD_MINUS_BTJD", "BKJD_OFFSET", "BTJD_OFFSET", "CompareParams", "DEFAULT_AUTHORS",
-    "Deadline", "FitParams", "MATCH_BOTH", "MATCH_KEPLER", "MATCH_NEITHER", "MATCH_TOI",
-    "MATCH_UNMEASURED", "MastParams", "RUN_CONFIRMED", "RUN_NO_DATA", "RUN_REFUTED",
+    "Deadline", "ERAS", "ERA_KEPLER", "ERA_TESS", "FitParams", "KEPLER_AUTHORS",
+    "KEPLER_FLUX_COLUMNS", "KEPLER_LONG_CADENCE_S", "KEPLER_PRODUCT_SUBGROUPS",
+    "KEPLER_QUALITY_COLUMNS", "KEPLER_SHORT_CADENCE_MAX_S", "KEPLER_SHORT_CADENCE_S",
+    "KEPLER_TARGET_NAME_FORMS", "KOI_DEPTH_CONFIRMED", "KOI_DEPTH_CONTRADICTED",
+    "KOI_DEPTH_UNCHECKED", "KOI_DEPTH_VERDICTS", "LIKE_FOR_LIKE_VERDICTS", "LL_CHANGED",
+    "LL_ERA_UNMEASURED", "LL_UNCHANGED", "LL_UNRESOLVED",
+    "MATCH_BOTH", "MATCH_KEPLER", "MATCH_NEITHER", "MATCH_TOI",
+    "MATCH_UNMEASURED", "MastParams", "RUN_CONFIRMED", "RUN_LL_CHANGED", "RUN_LL_NO_DATA",
+    "RUN_LL_UNCHANGED", "RUN_LL_UNRESOLVED", "RUN_LL_VERDICTS", "RUN_NO_DATA", "RUN_REFUTED",
     "RUN_UNRESOLVED", "RUN_VERDICTS", "STAGES", "TARGET_VERDICTS", "UNMEASURED_BUDGET",
+    "UNMEASURED_KEPLER_DISABLED",
     "UNMEASURED_NO_EPHEMERIS", "UNMEASURED_NO_REFERENCE", "UNMEASURED_NO_TRANSIT",
     "UNMEASURED_QUERY_FAILED",
     "UNMEASURED_REASONS", "UNMEASURED_ZERO_ROWS", "binned_fold", "bkjd_to_bjd", "bkjd_to_btjd",
-    "btjd_to_bjd", "btjd_to_bkjd", "combine_transit_depths", "compare_three_depths",
-    "core_half_width", "default_lc_fn", "fetch_koi_ephemerides", "fetch_lightcurves",
-    "fetch_toi_depths", "fit_transits", "fold", "lightkurve_lc_fn", "load_shortlist", "main",
-    "mast_fits_lc_fn", "mast_probe", "measure_one", "measure_target", "propagate_epoch",
-    "read_tess_lc_fits", "run_verdict", "stage2_assess", "stage2_measure", "stage2_probe",
+    "btjd_to_bjd", "btjd_to_bkjd", "combine_transit_depths", "compare_kepler_to_catalogue",
+    "compare_measured_eras", "compare_three_depths",
+    "core_half_width", "dedupe_sectors", "default_kepler_lc_fn", "default_lc_fn",
+    "epoch_in_era", "fetch_kepler_lightcurves", "fetch_koi_ephemerides", "fetch_lightcurves",
+    "fetch_toi_depths", "fit_transits", "fold", "kepler_cadence_label",
+    "lightkurve_kepler_lc_fn", "lightkurve_lc_fn", "load_shortlist", "main",
+    "mast_fits_lc_fn", "mast_kepler_fits_lc_fn", "mast_probe", "measure_one", "measure_target",
+    "merge_kepler_segments", "propagate_epoch",
+    "read_kepler_lc_fits", "read_tess_lc_fits", "run_like_for_like_verdict", "run_verdict",
+    "stage2_assess", "stage2_measure", "stage2_probe",
     "stage2_run", "synth_lightcurve", "trapezoid_transit",
 ]

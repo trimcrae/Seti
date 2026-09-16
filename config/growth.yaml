@@ -156,6 +156,16 @@ limb_darkening:
 # catalogue depth (carried into the TESS band by the limb-darkening ratio), the
 # TOI catalogue depth, and the measured one.
 #
+# AND THEN THE ASYMMETRY WAS REMOVED.  Comparing our TESS fit against koi_depth
+# is still a comparison with A CATALOGUE NUMBER, which is the very heterogeneity
+# stage 2 exists to escape.  So BOTH eras are now fitted here by the SAME code
+# (mast.kepler_enabled below), and the PRIMARY result is the like-for-like
+# verdict — MEASURED_DEPTH_CHANGED / _UNCHANGED / _UNRESOLVED / _ERA_UNMEASURED.
+# The three-number catalogue comparison is KEPT and is now a diagnostic of the
+# CATALOGUES rather than of the sky: it says which table is right about the TESS
+# era.  Our Kepler-era fit is separately checked against koi_depth in the Kepler
+# band (no band ratio); a disagreement there is a finding about the KOI TABLE.
+#
 # WHAT IT CANNOT DO.  A deeper TESS transit cannot be caused by dilution
 # (dilution makes a transit SHALLOWER), but a signal ORIGINATING ON A DIFFERENT
 # STAR inside the ~21" TESS pixel produces exactly this.  Nothing in stage 2
@@ -196,6 +206,55 @@ stage2:
     retry_pause_s: 5.0
     max_sectors: 60
     download_dir: null
+
+    # --- THE KEPLER ERA, measured with the SAME fitter --------------------
+    # WHY.  Run 35041932130 fitted the TESS era from the light curve and then
+    # compared it against `cumulative.koi_depth` — A CATALOGUE NUMBER, from a
+    # different pipeline, a different decade and a different aperture.  That is
+    # exactly the heterogeneity that broke stage 1's error model (31 of 108
+    # planets above 5 sigma of the population median), so the comparison
+    # inherited the flaw it existed to remove.  Stage 2 now fits BOTH eras with
+    # the same code — same fold, same transit-masked local baseline, same
+    # exposure-shrunk core, same bootstrap, same dedupe — and the LIKE-FOR-LIKE
+    # verdict (MEASURED_DEPTH_CHANGED / _UNCHANGED / _UNRESOLVED /
+    # _ERA_UNMEASURED) is the PRIMARY result.  Either answer is valuable: if our
+    # Kepler-era fit also gives ~30,000 ppm then nothing changed and koi_depth
+    # is simply wrong for this object; if it gives ~14,000 ppm the change
+    # survives a comparison in which nothing but the sky differs.
+    #
+    # `kepler_enabled` is FALSE in the code's own defaults on purpose: a caller
+    # that has not thought about the Kepler era must not silently open a socket
+    # to MAST (tests/conftest.py raises on any socket, and an exception swallowed
+    # by the retry loop would read as QUERY_FAILED).  IT IS TRUE HERE, and
+    # growth_stage2.yml FAILS THE RUN if summary.json comes back with it off —
+    # so a dropped key is loud rather than a quietly one-sided comparison.
+    kepler_enabled: true
+    # There is one official Kepler reduction (the mission pipeline).  The
+    # community products are K2, not Kepler, and are deliberately not asked
+    # for: the point of this stage is that BOTH eras go through THIS fitter.
+    kepler_authors: ["Kepler"]
+    # SEPARATE wall-clock ceilings from the TESS side, same discipline and same
+    # reason as gaia.cone_budget_s: a slow fetch on one side must not starve the
+    # other and leave the like-for-like comparison one-sided.  Kepler is 18
+    # quarters (and, where short cadence exists, three month-files per quarter),
+    # so the per-target ceiling is larger than the TESS one.  What the budget
+    # does not reach is UNMEASURED with reason BUDGET_EXHAUSTED — never a depth.
+    kepler_budget_s: 5400.0
+    kepler_per_target_budget_s: 1800.0
+    kepler_target_timeout_s: 1200.0
+    kepler_max_quarters: 60
+    kepler_retries: 2
+    # SHORT CADENCE IS PREFERRED WHERE IT EXISTS.  Kepler long cadence is 270
+    # co-added frames = 1765.5 s = 29.4 minutes; on K00897.01's 2.078-hour
+    # transit that is 0.24 T14, above `fit.smear_fraction`, so a long-cadence
+    # quarter carries the `smeared` flag exactly as a 30-minute TESS FFI sector
+    # does.  Nothing is asked of the archive by cadence: every product is
+    # fetched, short-cadence MONTH-files are merged into quarters
+    # (merge_kepler_segments — three files carry one quarter and keying dedupe
+    # on the quarter without merging would throw two thirds of them away), and
+    # dedupe_sectors then keeps the shortest-cadence reduction of each quarter.
+    # WHETHER SHORT CADENCE EXISTS FOR KIC 7849854 IS A RUNNER FACT: it is
+    # recorded per target as `kepler_has_short_cadence` / `kepler_cadences`.
 
   fit:
     # The ephemeris is FIXED to the KOI values (koi_period, koi_time0bk,
@@ -239,7 +298,28 @@ stage2:
     # multiplied by band_ratio(Teff, logg, b) = F_TESS(b)/F_Kepler(b) before any
     # comparison, so the band difference is not charged to "growth".  The LD
     # grid itself is still `verify` (see limb_darkening above).
+    #
+    # The same ratio is applied to OUR Kepler-era MEASUREMENT before the
+    # like-for-like comparison, by the same code and for the same reason.
     apply_band_ratio: true
+    # THE POWER FLOOR for the like-for-like verdict.  Two measured depths that
+    # agree only justify MEASURED_DEPTH_UNCHANGED if the comparison could have
+    # SEEN the change under test: the smallest log ratio it could have called
+    # changed is n_agree * sigma, and that must be no larger than the change
+    # being claimed.  The claim is the catalogue separation itself,
+    # ln(TOI / KOI-in-TESS-band) — ~0.88 for K00897.01 — which is used whenever
+    # both catalogue depths are usable; this number is the fallback when they
+    # are not.  0.10 in ln depth is a 10 % depth change.  Without this floor a
+    # fit too noisy to tell 14,000 ppm from 30,000 ppm would "refute" the
+    # candidate by failing to measure it — stage 1's error in the opposite
+    # direction.  An agreement without power is MEASURED_DEPTH_UNRESOLVED.
+    min_detectable_ln_ratio: 0.10
+    # OUR Kepler-era fit against cumulative.koi_depth.  BOTH are in the Kepler
+    # band, so NO band ratio is applied there — there is no band change to
+    # correct.  |z| at or above this is KOI_DEPTH_CONTRADICTED, which is a
+    # finding about the KOI TABLE (stage 1's own input) and is reported as one
+    # in summary.json["koi_catalogue_check"] rather than buried.
+    koi_check_n_agree: 3.0
 
 vet:
   # Known large-TTV Kepler systems (Holczer et al. 2016, ApJS 225, 9 and the
@@ -285,3 +365,103 @@ vet:
   # Nodal-precession cases named in the brief; they are caught by `grazing` or
   # the duration test, listed here so a reader can check they were.
   precession_reference_cases: ["KOI-120", "Kepler-13", "Kepler-47"]
+
+# ---------------------------------------------------------------------------
+# STAGE 3 — IS THE TRANSIT ON THE TARGET? (src/seti/growth/centroid.py)
+#
+# WHY.  Stage 2 measured K00897.01's TESS-era depth from the light curve at
+# 30,614 +/- 1,195 ppm against a Kepler-era 13,884 ppm in the same band — 2.2x
+# deeper.  DILUTION CANNOT DO THAT: extra light in the aperture makes a transit
+# SHALLOWER, and TESS's ~21" pixels admit more light than Kepler's ~4" ones, so
+# on the same star TESS must read shallower.  The reading that CAN produce it is
+# that the two apertures are not measuring the same source.  Stage 1 counted 7
+# Gaia sources within 21" of this target and the out-of-transit scatter is
+# 56,698 ppm (5.7 %), nearly twice the depth; stage 2 lists
+# per_pixel_centroid_test in checks_not_performed.  This is that test.
+#
+# TWO MEASUREMENTS, NOT AN ASSERTION:
+#   census    every Gaia DR3 source in the aperture, its flux fraction, and THE
+#             DEPTH IT WOULD NEED in its own light to make the observed aperture
+#             depth (depth / flux_fraction).  Above 100 % that is impossible and
+#             the neighbour is excluded by arithmetic alone — no pixel needed.
+#   difference  mean in-transit minus mean out-of-transit image per sector; the
+#             transit source is where the difference peaks.  The offset between
+#             the difference-image centroid and the out-of-transit centroid,
+#             per sector AND combined, with an uncertainty.
+#
+# VERDICTS: TRANSIT_ON_TARGET / TRANSIT_OFFSET_FROM_TARGET / OFFSET_UNRESOLVED /
+# NO_DATA_REACHED.  An offset that cannot be distinguished from zero PRECISELY
+# ENOUGH is OFFSET_UNRESOLVED — never TRANSIT_ON_TARGET.
+centroid:
+  # Empty: inherit stage 2's shortlist (the target whose depth was measured is
+  # the target whose transit gets located).  Entries here win.
+  shortlist: []
+  inherit_stage2_shortlist: true
+
+  census:
+    radius_arcsec: 21.0            # one TESS pixel
+    aperture_radius_arcsec: 21.0   # the erfc capture model (same as `aperture` above)
+    psf_sigma_arcsec: 10.5
+    target_match_arcsec: 1.5       # the Gaia source that IS the target
+    # A star cannot fade by more than all of its light.  A neighbour whose
+    # required depth exceeds this fraction is excluded BY ARITHMETIC, and the
+    # census reports the number that excluded it rather than a verdict word.
+    max_depth_fraction: 1.0
+    # The same ceilings as gaia.cone_budget_s above, for the same reason: a
+    # cone that does not answer is QUERY_FAILED, never "no neighbours".
+    tap_url: "https://gea.esac.esa.int/tap-server/tap"
+    cone_timeout_s: 120.0
+    cone_retries: 2
+    cone_budget_s: 600.0
+
+  difference:
+    in_transit_fraction: 0.7       # the in-transit image is the flat bottom, 0.7 * T14
+    oot_inner_durations: 0.75      # the out-of-transit image starts beyond 0.75 T14 ...
+    oot_outer_durations: 2.5       # ... and ends at 2.5 T14, so it is LOCAL to the transit
+    min_in_cadences: 3
+    min_oot_cadences: 6
+    moment_threshold: 0.2          # pixels above 0.2 * peak enter the first moment
+    min_pixels: 3
+    subtract_background: true
+    err_method: "auto"             # auto | bootstrap | analytic (over CADENCES)
+    bootstrap_draws: 400
+    min_cadences_for_bootstrap: 8
+    # `verify` — ASSERTED FLOOR, not a measurement.  A thresholded first moment
+    # on 21" pixels cannot be trusted below ~1": the PRF is undersampled and
+    # position-dependent, and the direct image's faint wings move its centroid
+    # by a fraction of a pixel that the difference image does not share.
+    # MEASURED on the synthetic gate: an on-target injection gives a 0.12"
+    # offset with a 0.05" cadence-bootstrap error — 2.6 sigma of nothing.  The
+    # floor is added in quadrature per sector AND to the combined error,
+    # because stacking sectors averages down what is random, not what they
+    # share.  Set 0 to see the bare statistical error.
+    centroid_sys_floor_arcsec: 1.0
+    n_offset: 3.0                  # |offset| / sigma at or above this is an OFFSET
+    # TRANSIT_ON_TARGET also requires the measurement to have been able to SEE
+    # the offset that matters: n_offset * sigma must be no larger than the
+    # separation of the nearest neighbour the census could not exclude, or this
+    # value when the census named none.  Otherwise: OFFSET_UNRESOLVED.
+    on_target_max_offset_arcsec: 21.0
+    sector_scatter_chi2_per_dof: 3.0
+    seed: 7
+
+  tpf:
+    # SPOC 2-minute target pixel files where they exist, TESS-SPOC FFI cutouts
+    # otherwise.  QLP publishes no pixel product, so it is absent on purpose.
+    authors: ["SPOC", "TESS-SPOC"]
+    sectors: []                    # empty: whatever the archive has, capped below
+    # TARGET PIXEL FILES ARE LARGE (tens of MB per sector).  The cap and the
+    # budget are the gaia.cone_budget_s discipline: run 34789826297 sat three
+    # hours in an unbounded fetch and would have been killed at the workflow's
+    # cap with nothing committed.  What the budget does not reach is
+    # NO_DATA_REACHED with reason BUDGET_EXHAUSTED — never an offset, and never
+    # an on-target verdict.
+    max_sectors: 8
+    per_target_budget_s: 1800.0
+    budget_s: 5400.0
+    target_timeout_s: 900.0
+    retries: 2
+    retry_pause_s: 5.0
+    download_dir: null
+    archive_timeout_s: 300.0
+    archive_retries: 3

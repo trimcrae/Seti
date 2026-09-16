@@ -3,12 +3,60 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-14.
+next. Last updated: 2026-09-16.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### GROWTH's first valid run: one depth-drift candidate, and why the error model forbids believing it, 2026-09-16
+
+Run 35038510064 is the first GROWTH pass to complete: the `ps.tic_id` string
+parse and the Gaia cone budget both held, the ESA archive was healthy, and all
+108 targets got their neighbours (108/108 by the upload route, 747 neighbour
+rows, nothing `not_checked`). Verdict `DEPTH_DRIFT_CANDIDATES`, one candidate.
+
+**The candidate is Kepler-718 b** (KOI-897.01, KIC 7849854, TIC 268924036,
+TOI 4490.01, P = 2.05234 d, CONFIRMED / TFOPWG `KP`):
+
+| quantity | Kepler 2009-2013 | TESS 2018-2026 |
+|---|---|---|
+| depth | 14,281 ± 18 ppm | 34,476 ± 2,349 ppm |
+
+That is a factor 2.41 in depth, a 1.55× growth in effective radius, at
+z = 8.7. It passes the channel's own geometry discriminator: the duration
+grew by 1.022 against the 1.073 expected for a larger object at fixed impact
+parameter (z = −0.45), so the depth change is not a change in b. It survives
+the dilution ambiguity (7 Gaia neighbours, contamination 0.050 applied,
+0.075 maximum) and carries no veto.
+
+**It is nevertheless not believable yet, and the reason is in the same file.**
+Of 108 measured planets, **31 sit above 5σ** from the population median and 37
+above 3σ. A sample where a third of the objects are five-sigma outliers has an
+error model that is wrong, not a population of anomalies; the quoted σ is the
+catalogue's formal depth error and it plainly does not describe the
+pipeline-to-pipeline scatter. z = 8.7 is therefore not a 8.7σ statement about
+anything. The classes bear this out: 36 DEEPER_TESS against 17 SHALLOWER_TESS,
+around a population offset of +0.228 in ln depth ratio that had to be measured
+and subtracted before anything could be compared at all.
+
+The specific benign reading to close first: with 7 Gaia neighbours inside one
+TESS pixel, a **nearby eclipsing binary at the same period** would put a deep
+eclipse into the TESS aperture that is not the target's. Dilution makes TESS
+*shallower*, so it cannot explain a deeper TESS transit — but a signal that
+originates on a different star can, and the contamination term does not test
+for that. That is a centroid / difference-image test, which is exactly the
+stage-2 test `docs/growth.md` describes and which is **not built**.
+
+**The structural finding is bigger than the candidate.** 108 of 9,564 KOIs
+reached a TESS counterpart: 1.1 %. The bottleneck is named in the join
+statement — 3,055 KOIs resolve a TIC id, but only **94 of 1,975 distinct KOI
+TICs have any TOI at all**. TOI is an *alert* catalogue, not a systematic
+re-measurement of Kepler's planets, so leaning on it costs 99 % of the sample
+*and* imports whichever pipeline produced each alert, which is the same
+heterogeneity that broke the error model. Measuring TESS depths directly from
+the TESS-SPOC / QLP light curves would fix both at once.
 
 ### ARC's first complete run: 5,785 flare stars, a measured ξ distribution, no ceiling excess, 2026-09-14
 

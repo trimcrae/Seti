@@ -66,6 +66,63 @@ Those are the most diagnostic industrial molecules there are, being both
 long-lived and purely artificial; their absence from the catalogues, not from
 the sky, is what excluded them.
 
+### TRACKED DOWN: Kepler-718 b's "growing transit" is a TESS blend, 2026-09-16
+
+Two independent tests converge and the candidate is dead. Run 35047871387 (the
+reduction ensemble) and run 35047873385 (the difference image) agree, and they
+agree on a mechanism rather than merely on a null.
+
+**1. The depth "change" is the crowding correction, not the sky.** Measuring the
+same TESS data under every reduction the archive serves:
+
+| flux column | SPOC | TESS-SPOC | QLP |
+|---|---|---|---|
+| PDCSAP (corrected) | 29,255 ppm | 31,984 ppm | 29,255 ppm |
+| SAP (raw) | **11,196 ppm** | **11,522 ppm** | **11,196 ppm** |
+
+All three pipelines agree with each other and disagree with themselves by a
+factor **2.61** between raw and corrected photometry;
+`sap_minus_pdcsap_z = −19.1`, verdict `BACKGROUND_TEST_DISAGREES`, direction
+`PDC_DEEPER_THAN_SAP`. On the Kepler side the same test gives 13,912 against
+13,893 ppm — the two agree to 0.14 % — so this is a TESS-specific correction,
+not a property of the star.
+
+And the **raw** TESS depth is 0.80 of the Kepler depth. That is the right side of
+one: a bigger aperture admits more contaminating light and must read *shallower*.
+The whole 2.16 "growth" is the crowding correction dividing it back out, by a
+factor the Gaia census says is far too large for a target supplying 95 % of the
+aperture flux.
+
+The verdict reflects this: the ensemble spread is 9,303 ppm — **31.8 %** — which
+swamps the 1,521 ppm bootstrap error. z falls from 10.69 on the statistical
+error to **2.37** on the total, and the primary verdict is
+`MEASURED_DEPTH_CHANGE_UNRESOLVED`. The threshold was 24.7 % and the measured
+spread landed past it, exactly as it was warned it might.
+
+**2. The transit is not on the target.** The difference image puts the transit
+source **29.25 ± 4.18 arcsec** from the out-of-transit centroid — **7.0 sigma**,
+consistent across all 8 sectors, against a detectable floor of 12.55 arcsec.
+
+**This also corrects our own census.** The census excluded all seven Gaia
+neighbours within 21 arcsec and was right to; the source is at 29 arcsec, so it
+was never in the search radius at all. The census answered its question
+correctly and the question was too narrow. Its attribution of the offset to a
+G = 20.76 source at 19.9 arcsec is inconsistent with its own arithmetic — that
+source would need an 899 % eclipse — which is itself the tell that the real
+source lies outside the radius.
+
+**The mechanism, stated plainly.** A diluted eclipse from a source ~29 arcsec
+away leaks into the TESS aperture; the raw depth is accordingly small and
+consistent with Kepler; PDC's crowding correction then multiplies it by 2.6 and
+manufactures a depth that was never there. Nothing grew.
+
+**What this cost, and what it bought.** Four mundane explanations were closed by
+measurement before this one was found: the KOI catalogue is correct, no odd-even
+signature exists in either era, no neighbour within one pixel can supply the
+depth, and both eras agree when fitted by the same code. The one that survived
+was the one nobody had measured — and it was found only because the ensemble
+asked what the same photons say under a different reduction.
+
 ### Kepler-718 b: the change is real in the data, and it is on the target, 2026-09-16
 
 Two runs settled the two open questions. Neither result depends on a catalogue.

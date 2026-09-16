@@ -1,6 +1,6 @@
 {
   "stage": "probe",
-  "generated_utc": "2026-09-16T01:48:35Z",
+  "generated_utc": "2026-09-16T02:25:55Z",
   "mast": {
     "lightkurve": {
       "importable": true,
@@ -14,7 +14,11 @@
       "importable": true
     },
     "route_preferred": "lightkurve",
-    "note": "import reachability only; whether MAST ANSWERS is established by the measure stage and recorded per target as OK / QUERY_FAILED / QUERY_RETURNED_ZERO_ROWS"
+    "note": "import reachability only; whether MAST ANSWERS is established by the measure stage and recorded per target as OK / QUERY_FAILED / QUERY_RETURNED_ZERO_ROWS. The SAME route serves both eras: TESS by TIC (search_lightcurve('TIC n', mission='TESS') / query_criteria(obs_collection='TESS')) and KEPLER by KIC (search_lightcurve('KIC n', mission='Kepler') / query_criteria(obs_collection='Kepler')), so an importable route does NOT imply that both collections answer \u2014 that is a per-era measure-stage fact, recorded as lc_status and kepler_lc_status",
+    "eras": [
+      "kepler",
+      "tess"
+    ]
   },
   "shortlist_size": 1
 }

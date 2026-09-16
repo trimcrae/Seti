@@ -1,28 +1,28 @@
 {
-  "primary_verdict": "MEASURED_DEPTH_CHANGE_CONFIRMED",
-  "primary_reason": "1 target(s) changed depth between OUR Kepler-era and OUR TESS-era fit of the light curves",
+  "primary_verdict": "MEASURED_DEPTH_CHANGE_UNRESOLVED",
+  "primary_reason": "1 comparison(s) agreed without the power to detect the change under test, 0 agreed with it",
   "primary_verdict_field": "like_for_like_verdict",
   "primary_verdict_is": "OUR fit to the Kepler light curve against OUR fit to the TESS light curve \u2014 same fitter, same fold, same masked baseline, same exposure-shrunk core, same bootstrap; only the archive product and the time system differ",
   "like_for_like_verdicts": {
-    "MEASURED_DEPTH_CHANGED": 1,
+    "MEASURED_DEPTH_CHANGED": 0,
     "MEASURED_DEPTH_UNCHANGED": 0,
-    "MEASURED_DEPTH_UNRESOLVED": 0,
+    "MEASURED_DEPTH_UNRESOLVED": 1,
     "MEASURED_DEPTH_ERA_UNMEASURED": 0
   },
   "like_for_like_unmeasured_reasons": {},
   "n_compared_like_for_like": 1,
-  "verdict": "STAGE1_DEPTH_CHANGE_CONFIRMED",
-  "reason": "1 target(s) matched the TOI depth",
+  "verdict": "STAGE1_DEPTH_CHANGE_UNRESOLVED",
+  "reason": "0 matched neither, 1 matched both, 0 matched Kepler",
   "verdict_is_primary": false,
   "verdict_is": "our TESS-era fit against the two CATALOGUE depths. With both eras now fitted here, this says which catalogue is right about the TESS era \u2014 it is a diagnostic of the CATALOGUES, not of the sky",
-  "generated_utc": "2026-09-16T01:49:04Z",
+  "generated_utc": "2026-09-16T02:27:14Z",
   "n_shortlist": 1,
   "n_measured": 1,
   "target_verdicts": {
     "MEASURED_DEPTH_MATCHES_KEPLER": 0,
-    "MEASURED_DEPTH_MATCHES_TOI": 1,
+    "MEASURED_DEPTH_MATCHES_TOI": 0,
     "MEASURED_DEPTH_MATCHES_NEITHER": 0,
-    "MEASURED_DEPTH_MATCHES_BOTH": 0,
+    "MEASURED_DEPTH_MATCHES_BOTH": 1,
     "UNMEASURED": 0
   },
   "unmeasured_reasons": {},
@@ -36,7 +36,109 @@
     "targets_contradicting_the_koi_table": [],
     "finding": ""
   },
+  "reduction_ensemble": {
+    "what_it_is": "the depth measured under EVERY available reduction of the same data \u2014 each (pipeline author, flux column) combination the archive serves \u2014 with the spread over those members entering the total error as a systematic",
+    "what_it_is_not": "it does NOT move the depth. The reported depth is still the DEDUPLICATED one (dedupe_sectors: one sector, one reduction, counted once); re-stacking the ensemble members would count every transit as many times as the archive serves it, which is the error run 35041932130 made. The ensemble sets the ERROR, and only the error.",
+    "spread_definition": "half the range between the 16th and 84th percentiles of the measured members' depths; NaN with status TOO_FEW_MEMBERS below 2 members, never 0",
+    "how_it_enters": "total_err = sqrt(statistical^2 + reduction_spread^2), per era, and the like-for-like verdict is formed from the TOTAL. A spread large enough to swamp the ratio also raises detectable_ln_ratio, so the verdict becomes MEASURED_DEPTH_UNRESOLVED \u2014 never MEASURED_DEPTH_UNCHANGED.",
+    "why": "run 35041932130 measured the same seven TESS sectors under two pipelines: SPOC 2-minute gave 25,425-35,498 ppm and TESS-SPOC FFI gave 33,078-39,798 ppm for the SAME PIXELS \u2014 a 20-30 % disagreement against a quoted error of 1,521 ppm. The out-of-transit scatter is 414 ppm in Kepler and 67,631 ppm in TESS. A quoted error that does not describe the real scatter is exactly what broke stage 1.",
+    "n_targets_with_an_ensemble": 1,
+    "background_test_is": "SAP_FLUX minus PDCSAP_FLUX, paired WITHIN a pipeline author and combined by inverse variance. PDC is where the crowding and background corrections are applied, so this is the direct test of 'an over-subtracted background inflates the depth'.",
+    "background_test_finding": "1 target(s): SAP_FLUX and PDCSAP_FLUX disagree at or beyond 3.0 sigma. 1 of them are PDC_DEEPER_THAN_SAP \u2014 the corrected photometry is DEEPER than the raw aperture photometry, which is what 'the PDC background/crowding correction inflates the depth' predicts, and it is a mundane explanation for the whole result that must be settled before anything else is claimed.",
+    "targets_where_sap_and_pdcsap_disagree": [
+      {
+        "kepoi_name": "K00897.01",
+        "sap_minus_pdcsap_ppm": -18709.20187421866,
+        "z": -19.145876631421032,
+        "direction": "PDC_DEEPER_THAN_SAP"
+      }
+    ],
+    "targets": [
+      {
+        "kepoi_name": "K00897.01",
+        "tess": {
+          "n_members": 12,
+          "n_members_measured": 6,
+          "n_members_unavailable": 6,
+          "depth_reduction_spread_ppm": 9302.60167041287,
+          "depth_reduction_spread_fraction": 0.3179850447066675,
+          "depth_reduction_spread_status": "OK",
+          "depth_reduction_min_ppm": 11195.527324597391,
+          "depth_reduction_max_ppm": 31984.292507876413,
+          "ensemble_incomplete": true,
+          "ensemble_unavailable_reasons": "QUERY_RETURNED_ZERO_ROWS:6",
+          "ensemble_members": "SPOC/PDCSAP_FLUX=29255ppm;SPOC/KSPSAP_FLUX=QUERY_RETURNED_ZERO_ROWS;SPOC/DET_FLUX=QUERY_RETURNED_ZERO_ROWS;SPOC/SAP_FLUX=11196ppm;TESS-SPOC/PDCSAP_FLUX=31984ppm;TESS-SPOC/KSPSAP_FLUX=QUERY_RETURNED_ZERO_ROWS;TESS-SPOC/DET_FLUX=QUERY_RETURNED_ZERO_ROWS;TESS-SPOC/SAP_FLUX=11522ppm;QLP/PDCSAP_FLUX=29255ppm;QLP/KSPSAP_FLUX=QUERY_RETURNED_ZERO_ROWS;QLP/DET_FLUX=QUERY_RETURNED_ZERO_ROWS;QLP/SAP_FLUX=11196ppm",
+          "depth_tess_measured_err_ppm": 1520.8199724641815,
+          "depth_tess_measured_total_err_ppm": 9426.096287807284
+        },
+        "kepler": {
+          "n_members": 2,
+          "n_members_measured": 2,
+          "n_members_unavailable": 0,
+          "depth_reduction_spread_ppm": 6.6403140624470325,
+          "depth_reduction_spread_fraction": 0.0004772936891919,
+          "depth_reduction_spread_status": "OK",
+          "ensemble_incomplete": false,
+          "ensemble_unavailable_reasons": NaN,
+          "ensemble_members": "Kepler/PDCSAP_FLUX=13912ppm;Kepler/SAP_FLUX=13893ppm",
+          "depth_kepler_measured_err_ppm": 30.16097126736893,
+          "depth_kepler_measured_total_err_ppm": 30.883295786541083
+        },
+        "background_test": {
+          "sap_vs_pdcsap_verdict": "BACKGROUND_TEST_DISAGREES",
+          "sap_vs_pdcsap_n_pairs": 3,
+          "sap_vs_pdcsap_authors": "QLP,SPOC,TESS-SPOC",
+          "sap_minus_pdcsap_ppm": -18709.20187421866,
+          "sap_minus_pdcsap_err_ppm": 977.1922296581746,
+          "sap_minus_pdcsap_z": -19.145876631421032,
+          "sap_minus_pdcsap_fraction": -0.6202358434834976,
+          "background_direction": "PDC_DEEPER_THAN_SAP"
+        },
+        "verdict_errors": {
+          "z_measured_eras": 2.3657294242354854,
+          "z_measured_eras_stat_only": 10.689951018423466,
+          "sigma_measured_eras": 0.3260703632633345,
+          "sigma_measured_eras_stat_only": 0.0721606910465514,
+          "detectable_ln_ratio": 0.9782110897900036,
+          "ln_ratio_under_test": 0.9094958424307364,
+          "reduction_systematic_applied": true,
+          "like_for_like_verdict": "MEASURED_DEPTH_UNRESOLVED"
+        }
+      }
+    ],
+    "config": {
+      "enabled": true,
+      "spread_percentile": 84.0,
+      "min_members_for_spread": 2,
+      "background_n_agree": 3.0,
+      "budget_s": 5400.0,
+      "kepler_budget_s": 5400.0,
+      "per_member_budget_s": 600.0,
+      "retries": 2,
+      "tess_authors": [
+        "SPOC",
+        "TESS-SPOC",
+        "QLP"
+      ],
+      "tess_flux_columns": [
+        "PDCSAP_FLUX",
+        "KSPSAP_FLUX",
+        "DET_FLUX",
+        "SAP_FLUX"
+      ],
+      "kepler_authors": [
+        "Kepler"
+      ],
+      "kepler_flux_columns": [
+        "PDCSAP_FLUX",
+        "SAP_FLUX"
+      ]
+    }
+  },
   "flags": {
+    "ensemble_incomplete": 1,
+    "reduction_spread_exceeds_statistical_error": 1,
+    "sap_pdcsap_disagree": 1,
     "kepler:smeared": 1,
     "kepler:sector_scatter": 1
   },
@@ -47,7 +149,7 @@
       "kepid": 7849854,
       "tic_id": 268924036.0,
       "toi": 4490.01,
-      "like_for_like_verdict": "MEASURED_DEPTH_CHANGED",
+      "like_for_like_verdict": "MEASURED_DEPTH_UNRESOLVED",
       "like_for_like_unmeasured_reason": NaN,
       "depth_kepler_measured_ppm": 13912.427951203355,
       "depth_kepler_measured_err_ppm": 30.16097126736893,
@@ -55,13 +157,57 @@
       "kepler_depth_measured_err_method": "bootstrap",
       "depth_tess_measured_ppm": 29254.84020480984,
       "depth_tess_measured_err_ppm": 1520.8199724641815,
-      "z_measured_eras": 10.689951018423466,
-      "sigma_measured_eras": 0.0721606910465514,
+      "depth_kepler_measured_total_err_ppm": 30.883295786541083,
+      "depth_tess_measured_total_err_ppm": 9426.096287807284,
+      "z_measured_eras": 2.3657294242354854,
+      "sigma_measured_eras": 0.3260703632633345,
+      "z_measured_eras_stat_only": 10.689951018423466,
+      "sigma_measured_eras_stat_only": 0.0721606910465514,
+      "reduction_systematic_applied": true,
       "measured_depth_ratio": 2.16277961401371,
-      "measured_eras_agree": false,
+      "measured_eras_agree": true,
       "ln_ratio_under_test": 0.9094958424307364,
-      "detectable_ln_ratio": 0.2164820731396543,
+      "detectable_ln_ratio": 0.9782110897900036,
+      "claim_excluded_sigma": 0.4235330936101713,
       "catalogue_ln_ratio_under_test": 0.9094958424307364,
+      "n_members": 12,
+      "n_members_measured": 6,
+      "n_members_unavailable": 6,
+      "depth_reduction_spread_ppm": 9302.60167041287,
+      "depth_reduction_spread_fraction": 0.3179850447066675,
+      "depth_reduction_spread_status": "OK",
+      "depth_reduction_p16_ppm": 11195.527324597411,
+      "depth_reduction_p84_ppm": 29800.730665423154,
+      "depth_reduction_min_ppm": 11195.527324597391,
+      "depth_reduction_max_ppm": 31984.292507876413,
+      "depth_reduction_median_ppm": 20388.66220319721,
+      "depth_reduction_max_offset_from_primary_ppm": 18059.31288021245,
+      "ensemble_incomplete": true,
+      "ensemble_unavailable_reasons": "QUERY_RETURNED_ZERO_ROWS:6",
+      "ensemble_members": "SPOC/PDCSAP_FLUX=29255ppm;SPOC/KSPSAP_FLUX=QUERY_RETURNED_ZERO_ROWS;SPOC/DET_FLUX=QUERY_RETURNED_ZERO_ROWS;SPOC/SAP_FLUX=11196ppm;TESS-SPOC/PDCSAP_FLUX=31984ppm;TESS-SPOC/KSPSAP_FLUX=QUERY_RETURNED_ZERO_ROWS;TESS-SPOC/DET_FLUX=QUERY_RETURNED_ZERO_ROWS;TESS-SPOC/SAP_FLUX=11522ppm;QLP/PDCSAP_FLUX=29255ppm;QLP/KSPSAP_FLUX=QUERY_RETURNED_ZERO_ROWS;QLP/DET_FLUX=QUERY_RETURNED_ZERO_ROWS;QLP/SAP_FLUX=11196ppm",
+      "kepler_n_members": 2,
+      "kepler_n_members_measured": 2,
+      "kepler_n_members_unavailable": 0,
+      "kepler_depth_reduction_spread_ppm": 6.6403140624470325,
+      "kepler_depth_reduction_spread_fraction": 0.0004772936891919,
+      "kepler_depth_reduction_spread_status": "OK",
+      "kepler_depth_reduction_min_ppm": 13892.897615725567,
+      "kepler_depth_reduction_max_ppm": 13912.427951203355,
+      "kepler_ensemble_incomplete": false,
+      "kepler_ensemble_unavailable_reasons": NaN,
+      "kepler_ensemble_members": "Kepler/PDCSAP_FLUX=13912ppm;Kepler/SAP_FLUX=13893ppm",
+      "sap_vs_pdcsap_verdict": "BACKGROUND_TEST_DISAGREES",
+      "sap_vs_pdcsap_n_pairs": 3,
+      "sap_vs_pdcsap_authors": "QLP,SPOC,TESS-SPOC",
+      "sap_minus_pdcsap_ppm": -18709.20187421866,
+      "sap_minus_pdcsap_err_ppm": 977.1922296581746,
+      "sap_minus_pdcsap_z": -19.145876631421032,
+      "sap_minus_pdcsap_fraction": -0.6202358434834976,
+      "background_direction": "PDC_DEEPER_THAN_SAP",
+      "kepler_sap_vs_pdcsap_verdict": "BACKGROUND_TEST_AGREES",
+      "kepler_sap_minus_pdcsap_ppm": -19.53033547778796,
+      "kepler_sap_minus_pdcsap_z": -0.4394590271342445,
+      "kepler_background_direction": "PDC_DEEPER_THAN_SAP",
       "koi_depth_verdict": "KOI_DEPTH_CONFIRMED",
       "z_kepler_measured_vs_koi": -0.5217347500494303,
       "kepler_measured_over_koi_depth": 0.9742187268884608,
@@ -88,9 +234,10 @@
       "kepler_n_sectors_dropped_duplicate": 0,
       "kepler_flags": "smeared;sector_scatter",
       "kepler_era_unmeasured_reason": NaN,
-      "verdict": "MEASURED_DEPTH_MATCHES_TOI",
+      "verdict": "MEASURED_DEPTH_MATCHES_BOTH",
       "unmeasured_reason": NaN,
       "tess_era_unmeasured_reason": NaN,
+      "depth_measured_total_err_ppm": 9426.096287807284,
       "lc_status": "OK",
       "lc_route": "lightkurve",
       "n_sectors": 7,
@@ -112,19 +259,19 @@
       "depth_kepler_in_tess_band_ppm": 13884.459863600025,
       "depth_toi_ppm": 34476.0907387,
       "ld_band_ratio": 0.9722602596249474,
-      "z_vs_kepler": 10.331093107304582,
-      "z_vs_toi": -1.6550712470900175,
+      "z_vs_kepler": 2.28566182649023,
+      "z_vs_toi": -0.4929991395137641,
       "z_toi_vs_kepler": 10.760216041001865,
       "references_separated": true,
       "n_references_usable": 2,
-      "agrees_with_kepler": false,
+      "agrees_with_kepler": true,
       "agrees_with_toi": true,
       "smeared": false,
       "depth_is_lower_bound": false,
       "odd_even_diff_ppm": -789.198088385765,
       "odd_even_sigma": 0.2541884850038378,
       "sector_scatter_chi2_per_dof": 1.07658423450681,
-      "flags": NaN
+      "flags": "ensemble_incomplete;reduction_spread_exceeds_statistical_error;sap_pdcsap_disagree"
     }
   ],
   "acquisition": {
@@ -137,7 +284,7 @@
       "lightkurve": 1
     },
     "budget_s": 5400.0,
-    "elapsed_s": 23.1,
+    "elapsed_s": 73.0,
     "budget_exhausted": false,
     "kepler_era_enabled": true,
     "kepler_lc_status_counts": {
@@ -147,8 +294,20 @@
       "lightkurve": 1
     },
     "kepler_budget_s": 5400.0,
-    "kepler_elapsed_s": 23.1,
-    "kepler_budget_exhausted": false
+    "kepler_elapsed_s": 73.0,
+    "kepler_budget_exhausted": false,
+    "ensemble_enabled": true,
+    "ensemble_budget_s": 5400.0,
+    "ensemble_elapsed_s": 73.0,
+    "ensemble_budget_exhausted": false,
+    "ensemble_kepler_budget_s": 5400.0,
+    "ensemble_kepler_elapsed_s": 73.0,
+    "ensemble_kepler_budget_exhausted": false,
+    "n_reduction_members": 14,
+    "reduction_member_status_counts": {
+      "OK": 8,
+      "QUERY_RETURNED_ZERO_ROWS": 6
+    }
   },
   "config": {
     "compare": {
@@ -190,12 +349,41 @@
       "kepler_budget_s": 5400.0,
       "kepler_per_target_budget_s": 1800.0,
       "kepler_max_quarters": 60
+    },
+    "ensemble": {
+      "enabled": true,
+      "spread_percentile": 84.0,
+      "min_members_for_spread": 2,
+      "background_n_agree": 3.0,
+      "budget_s": 5400.0,
+      "kepler_budget_s": 5400.0,
+      "per_member_budget_s": 600.0,
+      "retries": 2,
+      "tess_authors": [
+        "SPOC",
+        "TESS-SPOC",
+        "QLP"
+      ],
+      "tess_flux_columns": [
+        "PDCSAP_FLUX",
+        "KSPSAP_FLUX",
+        "DET_FLUX",
+        "SAP_FLUX"
+      ],
+      "kepler_authors": [
+        "Kepler"
+      ],
+      "kepler_flux_columns": [
+        "PDCSAP_FLUX",
+        "SAP_FLUX"
+      ]
     }
   },
   "checks_not_performed": [
     "per_pixel_centroid_test (a deeper TESS transit can ORIGINATE on a different star inside the pixel; nothing here excludes that)",
     "achromaticity (one band per epoch, as at stage 1)",
-    "independent_ephemeris (both eras are folded on the KOI ephemeris, which is itself a Kepler-era product; a depth is measured, an ephemeris is not)"
+    "independent_ephemeris (both eras are folded on the KOI ephemeris, which is itself a Kepler-era product; a depth is measured, an ephemeris is not)",
+    "aperture_photometry_of_our_own (the ensemble measures every reduction the ARCHIVE serves; it does not re-extract the pixels with a different aperture, so a systematic common to every delivered pipeline would not show up in the spread)"
   ],
-  "note": "the PRIMARY verdict is the like-for-like one: BOTH eras are fitted here by the SAME code, so MEASURED_DEPTH_CHANGED means the change survives a comparison in which nothing but the sky differs, and MEASURED_DEPTH_UNCHANGED means the KOI catalogue depth is simply wrong for this object. MEASURED_DEPTH_UNRESOLVED is an agreement WITHOUT the power to have seen the change under test and is never a refutation. The catalogue verdicts (MEASURED_DEPTH_MATCHES_KEPLER / _TOI) are kept, and are now a diagnostic of the CATALOGUES rather than of the sky \u2014 they say which table is right about the TESS era. A measured change is still NOT a detection: the centroid test is outstanding. NO_DATA_REACHED / LIKE_FOR_LIKE_NO_DATA is not a null result and is not written up (CLAUDE.md)"
+  "note": "the PRIMARY verdict is the like-for-like one: BOTH eras are fitted here by the SAME code, so MEASURED_DEPTH_CHANGED means the change survives a comparison in which nothing but the sky differs, and MEASURED_DEPTH_UNCHANGED means the KOI catalogue depth is simply wrong for this object. MEASURED_DEPTH_UNRESOLVED is an agreement WITHOUT the power to have seen the change under test and is never a refutation. The catalogue verdicts (MEASURED_DEPTH_MATCHES_KEPLER / _TOI) are kept, and are now a diagnostic of the CATALOGUES rather than of the sky \u2014 they say which table is right about the TESS era. The primary z is formed from the TOTAL error \u2014 bootstrap and the REDUCTION-ENSEMBLE spread in quadrature \u2014 so a ratio that survives it has survived every reduction the archive serves, and one that does not comes back MEASURED_DEPTH_UNRESOLVED; the DEPTH itself is still the deduplicated one and the ensemble never moves it. A measured change is still NOT a detection: the centroid test is outstanding. NO_DATA_REACHED / LIKE_FOR_LIKE_NO_DATA is not a null result and is not written up (CLAUDE.md)"
 }

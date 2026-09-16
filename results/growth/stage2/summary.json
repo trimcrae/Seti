@@ -1,0 +1,113 @@
+{
+  "verdict": "STAGE1_DEPTH_CHANGE_CONFIRMED",
+  "reason": "1 target(s) matched the TOI depth",
+  "generated_utc": "2026-09-16T00:57:17Z",
+  "n_shortlist": 1,
+  "n_measured": 1,
+  "target_verdicts": {
+    "MEASURED_DEPTH_MATCHES_KEPLER": 0,
+    "MEASURED_DEPTH_MATCHES_TOI": 1,
+    "MEASURED_DEPTH_MATCHES_NEITHER": 0,
+    "MEASURED_DEPTH_MATCHES_BOTH": 0,
+    "UNMEASURED": 0
+  },
+  "unmeasured_reasons": {},
+  "flags": {},
+  "targets": [
+    {
+      "kepoi_name": "K00897.01",
+      "kepler_name": "Kepler-718 b",
+      "kepid": 7849854,
+      "tic_id": 268924036.0,
+      "toi": 4490.01,
+      "verdict": "MEASURED_DEPTH_MATCHES_TOI",
+      "unmeasured_reason": NaN,
+      "lc_status": "OK",
+      "lc_route": "lightkurve",
+      "n_sectors": 14,
+      "n_sectors_measured": 14,
+      "sector_list": "41,54,55,74,75,81,82,41,54,55,74,75,81,82",
+      "authors": "SPOC,TESS-SPOC",
+      "exptimes_s": "120,200,600",
+      "period_days": 2.052349884,
+      "t0_bkjd": 169.890622,
+      "t0_btjd_used": 3336.9479705159997,
+      "n_epochs_propagated": 2599,
+      "ephemeris_sigma_minutes": 0.518274204675207,
+      "duration_hours": 2.0778,
+      "n_transits": 175,
+      "depth_measured_ppm": 30614.380663710523,
+      "depth_measured_err_ppm": 1194.6191666748784,
+      "depth_measured_err_method": "bootstrap",
+      "depth_kepler_ppm": 14280.6,
+      "depth_kepler_in_tess_band_ppm": 13884.459863600025,
+      "depth_toi_ppm": 34476.0907387,
+      "ld_band_ratio": 0.9722602596249474,
+      "z_vs_kepler": 12.46433528173896,
+      "z_vs_toi": -1.2761690125183671,
+      "z_toi_vs_kepler": 10.760216041001865,
+      "references_separated": true,
+      "n_references_usable": 2,
+      "agrees_with_kepler": false,
+      "agrees_with_toi": true,
+      "smeared": false,
+      "depth_is_lower_bound": false,
+      "odd_even_diff_ppm": -464.8646091695555,
+      "odd_even_sigma": 0.1970442758840225,
+      "sector_scatter_chi2_per_dof": 1.5261584882982762,
+      "flags": NaN
+    }
+  ],
+  "acquisition": {
+    "koi_ephemeris_status": "OK",
+    "toi_status": "OK",
+    "lc_status_counts": {
+      "OK": 1
+    },
+    "lc_routes": {
+      "lightkurve": 1
+    },
+    "budget_s": 5400.0,
+    "elapsed_s": 29.8,
+    "budget_exhausted": false
+  },
+  "config": {
+    "compare": {
+      "n_agree": 3.0,
+      "sigma_sys_ln": 0.05,
+      "apply_band_ratio": true
+    },
+    "fit": {
+      "core_fraction": 0.7,
+      "baseline_window_durations": 1.5,
+      "baseline_guard_durations": 0.75,
+      "min_core_points": 2,
+      "min_baseline_points": 8,
+      "require_baseline_both_sides": true,
+      "smear_fraction": 0.2,
+      "bootstrap_draws": 2000,
+      "min_transits_for_bootstrap": 8,
+      "err_method": "auto",
+      "fold_bins": 121,
+      "odd_even_sigma": 3.0,
+      "sector_scatter_chi2_per_dof": 3.0,
+      "seed": 7
+    },
+    "mast": {
+      "authors": [
+        "SPOC",
+        "TESS-SPOC",
+        "QLP"
+      ],
+      "budget_s": 5400.0,
+      "per_target_budget_s": 900.0,
+      "target_timeout_s": 600.0
+    }
+  },
+  "checks_not_performed": [
+    "per_pixel_centroid_test (a deeper TESS transit can ORIGINATE on a different star inside the pixel; nothing here excludes that)",
+    "kepler_era_lightcurve_refit (the Kepler depth is still the catalogue's)",
+    "achromaticity (one band per epoch, as at stage 1)"
+  ],
+  "note": "stage 2 measures the TESS depth FROM THE LIGHT CURVE and compares it with BOTH catalogue depths; MEASURED_DEPTH_MATCHES_TOI means the depth really changed and the candidate goes on to the centroid test, it is NOT a detection; NO_DATA_REACHED is not a null result and is not written up (CLAUDE.md)"
+}

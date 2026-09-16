@@ -39,12 +39,77 @@ sample:
   # probe.json's gaia_shape_working seeds the sample stage.  The science cuts are
   # identical in all three (src/seti/ignition/sample.py: gaia_predicates,
   # allwise_predicates) --- only where they are written changes.
+  #
+  # A FOURTH shape, `gaia_only`, exists and is deliberately NOT one of those
+  # three: it selects from gaiadr3.gaia_source ALONE, with every Gaia cut and no
+  # AllWISE table anywhere in the statement.  probe.json on main (97c3f99) has
+  # ALL THREE joined shapes TIMED_OUT at 420-480 s, and the one thing they have
+  # in common is gaiadr1.allwise_original_valid reached through
+  # gaiadr3.allwise_best_neighbour -- so no rearrangement of the same join can
+  # help and the only shape that can is the one that never touches it.  It is
+  # not a parent sample by itself (no W1/W2), so it is used only by the IRSA
+  # route below, which supplies the other half.
   query_shape: auto
   inner_top_multiplier: 200   # inner TOP = cap x this (capped below); never on COUNT(*)
   inner_top_max: 2000000
   query_timeout_s: 1200.0     # per attempt; bulk queries run async-only
 
-  # THE SECOND ROUTE to the same parent sample (src/seti/ignition/vizier_route.py).
+  # THE SECOND ROUTE to the same parent sample (src/seti/ignition/irsa_route.py).
+  # The Gaia half stays at ESA under the `gaia_only` shape -- an indexed cone on
+  # gaia_source alone, with every Gaia cut still in SQL -- and the AllWISE half
+  # comes from IRSA's own TAP service (https://irsa.ipac.caltech.edu/TAP), the
+  # archive AllWISE actually lives in and the one this channel already uses for
+  # NEOWISE.  So the only thing this route gives up relative to ESA is the
+  # in-archive allwise_best_neighbour cross-match, which it replaces with the
+  # same PM-propagated 2016.0 -> 2010.5 positional match the VizieR route uses
+  # (seti.ignition.vizier_route.match_allwise, reused, not re-written).
+  #
+  # EVERY table and column name below is ASSERTED AND UNVERIFIED (verify): there
+  # is no network in the sandbox, so verify_service() asks IRSA's own
+  # TAP_SCHEMA.tables / TAP_SCHEMA.columns at runtime -- before a single science
+  # row is fetched -- and writes the answer to probe.json.  A wrong table is
+  # CATALOGUE_NOT_FOUND with the table names the service DID return; an
+  # unresolvable column list is COLUMNS_UNRESOLVED with the service's own text.
+  # A TAP_SCHEMA that does not answer is QUERY_FAILED and is NEVER collapsed
+  # into CATALOGUE_NOT_FOUND: a service that did not answer has told you nothing
+  # about the sky.
+  irsa:
+    enabled: true
+    allwise_table: allwise_p3as_psd     # verify: the AllWISE Source Catalogue at IRSA
+    table_candidates:                   # verify: other spellings seen for the same catalogue
+      - allwise_p3as_psd
+      - allwise.allwise_p3as_psd
+      - wise_allwise_p3as_psd
+      - allwise_p3as_psd_v1
+    cone_pad_arcmin: 1.0        # the AllWISE cone is the Gaia cone plus this
+    match_radius_arcsec: 3.0    # Gaia (2016.0 -> 2010.5, PM-propagated) x AllWISE
+    max_rows: 400000            # TOP per cone; a cone at the cap is reported `capped`
+    count_cone: true            # COUNT(*) alongside it, so truncation is MEASURED
+    timeout_s: 900.0
+    allow_sync: true            # IRSA has no 150-job sync ceiling of ESA's kind
+    w1_max: null                # optional server-side W1 bound; null = unfiltered cone
+    # verify: IRSA's column names; first spelling that is present wins, and a
+    # missing one is recorded (a cut that cannot be applied is named, not skipped).
+    # NOTE the colour/flag cuts are NOT sent in the cone's WHERE: filtering the
+    # AllWISE side BEFORE the positional match would let a star whose true
+    # counterpart was cut match a different source inside 3", and would make
+    # allwise_n_neighbours count only the survivors of a cut.  The archive joins
+    # first and filters second; so does this route.
+    columns:
+      allwise_designation: [designation, allwise, source_name]
+      ra: [ra, ra_pm, raj2000]
+      dec: [dec, dec_pm, dej2000]
+      w1mpro: [w1mpro]
+      w1mpro_error: [w1sigmpro]
+      w2mpro: [w2mpro]
+      w2mpro_error: [w2sigmpro]
+      w3mpro: [w3mpro]
+      w3mpro_error: [w3sigmpro]
+      cc_flags: [cc_flags, ccf]
+      ph_qual: [ph_qual, qph]
+      ext_flag: [ext_flg, ext_flag, ex]
+
+  # THE THIRD ROUTE to the same parent sample (src/seti/ignition/vizier_route.py).
   # results/ignition/probe.json (2026-09-14T00:22Z) records NO_DATA_REACHED with
   # ALL THREE query shapes TIMED_OUT (480/480/420 s) and the run before it
   # recording `Error 500 ... canceling statement due to statement timeout` and
@@ -53,8 +118,9 @@ sample:
   # VizieR's NON-TAP ASU interface (viz-bin/asu-tsv) served ULINE's IRC+10216
   # table the same night while TAPVizieR itself was answering 503, so it is the
   # transport that demonstrably works.  ESA STAYS FIRST (it is authoritative and
-  # owns the in-archive allwise_best_neighbour cross-match); this runs only for a
-  # unit no ESA query shape answered, and a sample drawn from both is DEGRADED.
+  # owns the in-archive allwise_best_neighbour cross-match) and the IRSA route
+  # second (it keeps ESA's own Gaia cuts in SQL); this runs only for a unit
+  # neither answered, and a sample drawn from more than one route is DEGRADED.
   #
   # EVERY id, column name and parameter spelling below is ASSERTED AND
   # UNVERIFIED (verify): no network in the sandbox, so the probe stage checks
@@ -148,12 +214,16 @@ probe:
   # gets budget_s, after which it is recorded TIMED_OUT with its elapsed seconds
   # and the probe moves to the next shape.
   budget_s: 480.0             # per candidate query shape (~8 min)
-  total_budget_s: 1500.0      # the whole probe stage
+  total_budget_s: 2400.0      # the whole probe stage (3 joined shapes + 2 fallback routes)
   columns_timeout_s: 120.0    # the AllWISE column peek
   neowise_timeout_s: 300.0    # each NEOWISE route test
   cap: 5                      # TOP n for the join test
-  shapes: [inner_cone, inner_cone_postfilter, flat]
-  vizier_timeout_s: 300.0     # the SECOND parent route (VizieR ASU), probed every run
+  # gaia_only is listed for the record; the probe's shape ladder runs only the
+  # three JOINED shapes (a shape with no W1/W2 cannot be `gaia_shape_working`),
+  # and gaia_only is probed inside the IRSA route, with its AllWISE partner.
+  shapes: [inner_cone, inner_cone_postfilter, flat, gaia_only]
+  irsa_timeout_s: 600.0       # the SECOND parent route (gaia_only x IRSA), probed every run
+  vizier_timeout_s: 300.0     # the THIRD parent route (VizieR ASU), probed every run
 
 acquire:
   route: auto                 # auto (from probe.json) | upload | field | cone

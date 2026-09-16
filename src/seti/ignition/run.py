@@ -12,7 +12,9 @@ Stages
              on.  Writes ``probe.json`` with ``gaia_shapes`` (each shape's
              status, verbatim error and the exact ADQL sent),
              ``gaia_shape_working`` --- which the ``sample`` stage then reuses
-             --- and ``neowise_route_recommended``.  The workflow commits it:
+             --- ``parent_routes_tried`` / ``parent_route_recommended`` over all
+             three parent routes (``esa_gaia``, ``irsa_tap``, ``vizier_asu``),
+             and ``neowise_route_recommended``.  The workflow commits it:
              run 34787803862 went green, took 25 minutes and committed nothing.
 ``sample``   the parent sample (``parent.parquet`` + ``sample.json`` with the
              archive ``COUNT(*)`` denominator and the subsample fraction).
@@ -63,9 +65,11 @@ from .acquire import (
 from .rise import DEFAULT_RISE, assess_series, sensitivity_from_injections
 from .sample import (
     DEFAULT_SAMPLE,
+    JOINED_SHAPES,
     QUERY_FAILED,
     QUERY_TIMED_OUT,
     ROUTE_ESA,
+    ROUTE_IRSA,
     ROUTE_VIZIER,
     SHAPES,
     QueryTimeout,
@@ -87,12 +91,13 @@ STAGES = ("probe", "sample", "acquire", "screen", "assess")
 #: retries of a query that could not succeed; a broken plan must cost minutes.
 DEFAULT_PROBE: dict = {
     "budget_s": 480.0,              # per candidate query shape
-    "total_budget_s": 1500.0,       # the whole probe stage
+    "total_budget_s": 2400.0,       # the whole probe stage
     "columns_timeout_s": 120.0,     # the AllWISE column peek
     "neowise_timeout_s": 300.0,     # each NEOWISE route test
     "cap": 5,                       # TOP n for the join test
     "shapes": list(SHAPES),
-    "vizier_timeout_s": 300.0,      # the SECOND route's probe (VizieR ASU)
+    "irsa_timeout_s": 600.0,        # the SECOND route's probe (gaia_only x IRSA)
+    "vizier_timeout_s": 300.0,      # the THIRD route's probe (VizieR ASU)
 }
 
 DEFAULTS: dict = {
@@ -235,7 +240,7 @@ def _timeboxed(fn, timeout_s: float | None, label: str):
 
 
 def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
-                upload_fn=None, asu_fetch_fn=None) -> dict:
+                upload_fn=None, asu_fetch_fn=None, irsa_fetch_fn=None) -> dict:
     """One minimal call per route; decides the acquire architecture.
 
     The Gaia join is tried as each of :data:`~seti.ignition.sample.SHAPES` in
@@ -245,12 +250,14 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
     and the exact ADQL that was sent.  ``probe.json`` is written whatever
     happens --- a green run that commits nothing is a lost run.
 
-    **BOTH parent routes are probed, always** --- the ESA archive first and then
-    VizieR's non-TAP ASU interface, even when ESA answered --- so the next run's
-    ``probe.json`` names the transport that works instead of re-deriving it.
-    (Probing is not using: the sample stage's fallback still runs only where ESA
-    fails.)  When ESA returns nothing and VizieR does, the NEOWISE route tests
-    below are run on a VizieR-supplied star rather than skipped.
+    **ALL THREE parent routes are probed, always** --- the ESA archive's joined
+    shapes first, then ``gaia_only`` x IRSA (:mod:`seti.ignition.irsa_route`),
+    then VizieR's non-TAP ASU interface, even when ESA answered --- so the next
+    run's ``probe.json`` names the transport that works instead of re-deriving
+    it.  (Probing is not using: the sample stage's fallbacks still run only
+    where the route before them failed.)  When ESA returns nothing and a
+    fallback does, the NEOWISE route tests below are run on a star that fallback
+    supplied rather than skipped.
     """
     t_stage = _time.monotonic()
     pc = {**DEFAULT_PROBE, **(conf.get("probe") or {})}
@@ -289,7 +296,11 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
     fields = list(sc.get("fields") or [])
     unit = {"field": fields[0]} if (sc.get("mode", "fields") == "fields" and fields) else {}
     cap = int(pc.get("cap") or 5)
-    shapes = [s for s in (pc.get("shapes") or SHAPES) if s in SHAPES] or list(SHAPES)
+    # Only the JOINED shapes can serve the parent on their own, so only they are
+    # candidates for `gaia_shape_working`.  `gaia_only` is the IRSA route's own
+    # half and is probed there, below, where its AllWISE partner is also probed.
+    shapes = ([s for s in (pc.get("shapes") or SHAPES) if s in JOINED_SHAPES]
+              or list(JOINED_SHAPES))
     shape_recs: list[dict] = []
     working: str | None = None
     df = pd.DataFrame()
@@ -323,9 +334,32 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
     zero = [s for s in shape_recs if s.get("status") == "QUERY_RETURNED_ZERO_ROWS"]
     rep["gaia_join"] = (ok or zero or shape_recs or [{"status": "NOT_ATTEMPTED"}])[0]
 
-    # 2b. The SECOND route to the same parent sample: VizieR's non-TAP ASU
-    # interface.  Probed on every run, whatever ESA did, because the point of a
-    # probe is to say which transports are alive tonight.
+    # 2b. The SECOND route to the same parent sample: the `gaia_only` shape at
+    # ESA (no AllWISE table anywhere in it --- the one thing every shape above
+    # has in common is the table that timed out) joined to the AllWISE
+    # catalogue at IRSA's own TAP service.  Probed on every run, whatever ESA
+    # did, and it settles the asserted IRSA table/column names against the
+    # service's own TAP_SCHEMA in the same call.
+    from .irsa_route import probe_route as irsa_probe_route
+
+    ir_val, ir_err = _timeboxed(
+        lambda: irsa_probe_route(sc, query_fn=query_fn, fetch_fn=irsa_fetch_fn, cap=cap),
+        _budget(pc.get("irsa_timeout_s"), _left()), ROUTE_IRSA)
+    if ir_val is None:
+        rep[ROUTE_IRSA] = dict(ir_err or {"status": QUERY_FAILED, "error": "no record"})
+        ir_frame = pd.DataFrame()
+    else:
+        rep[ROUTE_IRSA], ir_frame = ir_val
+    rep[ROUTE_IRSA].setdefault("usable", False)
+    irsa_ok = bool(rep[ROUTE_IRSA].get("usable"))
+    print(f"[ignition] probe: {ROUTE_IRSA} {rep[ROUTE_IRSA].get('status')} "
+          f"rows={rep[ROUTE_IRSA].get('n_rows')} "
+          f"table={rep[ROUTE_IRSA].get('table')} "
+          f"gaia_only={rep[ROUTE_IRSA].get('gaia_only_status')}")
+
+    # 2c. The THIRD route: VizieR's non-TAP ASU interface.  Probed on every run
+    # too, because the point of a probe is to say which transports are alive
+    # tonight, not which one the last run happened to use.
     from .vizier_route import probe_route
 
     vz_val, vz_err = _timeboxed(
@@ -340,12 +374,16 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
     vizier_ok = bool(rep["vizier_asu"].get("usable"))
     print(f"[ignition] probe: vizier_asu {rep['vizier_asu'].get('status')} "
           f"rows={rep['vizier_asu'].get('n_rows')}")
-    if not len(df) and len(vz_frame):
-        # ESA reached nothing; the NEOWISE tests below still deserve a real star.
+    if len(df):
+        rep["neowise_star_from_route"] = ROUTE_ESA
+    elif len(ir_frame):
+        # ESA's joined shapes reached nothing; the NEOWISE tests below still
+        # deserve a real star, and this is the route nearest to the archive's.
+        df = ir_frame.rename(columns={c: str(c).lower() for c in ir_frame.columns})
+        rep["neowise_star_from_route"] = ROUTE_IRSA
+    elif len(vz_frame):
         df = vz_frame.rename(columns={c: str(c).lower() for c in vz_frame.columns})
         rep["neowise_star_from_route"] = ROUTE_VIZIER
-    elif len(df):
-        rep["neowise_star_from_route"] = ROUTE_ESA
 
     # 3. NEOWISE per-star cone on a resolved star (a bare coordinate tests nothing).
     if cone_fn is None:
@@ -384,12 +422,17 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
                                         "cone" if cone_ok else "none")
     # Which SOURCE the next run should expect the parent from.  ESA stays first
     # whenever it answers: it is authoritative and owns the in-archive match.
+    # IRSA comes next --- it keeps ESA's own Gaia cuts in SQL and gives up only
+    # the cross-match --- and the VizieR mirror last.
     rep["parent_route_recommended"] = (ROUTE_ESA if gaia_ok else
+                                       ROUTE_IRSA if irsa_ok else
                                        ROUTE_VIZIER if vizier_ok else "none")
-    rep["parent_routes_tried"] = [ROUTE_ESA, ROUTE_VIZIER]
+    rep["parent_routes_tried"] = [ROUTE_ESA, ROUTE_IRSA, ROUTE_VIZIER]
     rep["verdict"] = ("ALL_ROUTES_REACHABLE" if (gaia_ok and cone_ok and up_ok) else
                       "GAIA_AND_NEOWISE_REACHABLE" if (gaia_ok and cone_ok) else
                       "GAIA_ONLY" if gaia_ok else
+                      "IRSA_PARENT_AND_NEOWISE" if (irsa_ok and cone_ok) else
+                      "IRSA_PARENT_ONLY" if irsa_ok else
                       "VIZIER_PARENT_AND_NEOWISE" if (vizier_ok and cone_ok) else
                       "VIZIER_PARENT_ONLY" if vizier_ok else
                       "NEOWISE_ONLY" if cone_ok else VERDICT_NO_DATA)
@@ -406,7 +449,7 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
 # ---------------------------------------------------------------------------
 def stage_sample(conf: dict, out: Path, *, n_shards: int = 1, max_stars: int | None = None,
                  query_fn=None, mode: str | None = None, asu_fetch_fn=None,
-                 vizier: bool = True) -> dict:
+                 vizier: bool = True, irsa_fetch_fn=None, irsa: bool = True) -> dict:
     sc = dict(conf["sample"])
     probe_p = out / "probe.json"
     shape = None
@@ -418,14 +461,17 @@ def stage_sample(conf: dict, out: Path, *, n_shards: int = 1, max_stars: int | N
             if isinstance(res, dict) and "status" not in res:
                 sc["allwise_columns"] = res
             # The probe already paid for finding a plan that returns; use it.
-            if pr.get("gaia_shape_working") in SHAPES:
+            # JOINED_SHAPES, not SHAPES: `gaia_only` returns no W1/W2 and is
+            # never a parent shape on its own (seti.ignition.irsa_route).
+            if pr.get("gaia_shape_working") in JOINED_SHAPES:
                 shape = pr["gaia_shape_working"]
             probe_parent_route = pr.get("parent_route_recommended")
         except Exception:                              # noqa: BLE001
             pass
     stars, rep = fetch_parent(sc, mode=mode, n_shards=n_shards,
                               cap_per_shard=max_stars or None, query_fn=query_fn, shape=shape,
-                              vizier=vizier, vizier_fetch_fn=asu_fetch_fn)
+                              vizier=vizier, vizier_fetch_fn=asu_fetch_fn,
+                              irsa=irsa, irsa_fetch_fn=irsa_fetch_fn)
     rep = {"stage": "sample", "generated_utc": _now(), "n_shards_planned": int(n_shards),
            "query_shape_from_probe": shape,
            "parent_route_from_probe": probe_parent_route, **rep}
@@ -707,8 +753,14 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
     # parent routes dark this is the whole of what the run learned, so it must
     # survive into summary.json rather than only into a log.
     endpoints = {
-        "parent": sample.get("route_endpoints") or {ROUTE_ESA: None, ROUTE_VIZIER: []},
+        "parent": sample.get("route_endpoints") or {ROUTE_ESA: None, ROUTE_IRSA: {},
+                                                    ROUTE_VIZIER: []},
         "parent_route_recommended_by_probe": probe.get("parent_route_recommended"),
+        "parent_routes_tried": probe.get("parent_routes_tried"),
+        "irsa_tap_probe": {k: (probe.get(ROUTE_IRSA) or {}).get(k)
+                           for k in ("status", "usable", "endpoints", "table",
+                                     "table_requested", "gaia_only_status", "error",
+                                     "n_rows")},
         "vizier_asu_probe": {k: (probe.get("vizier_asu") or {}).get(k)
                              for k in ("status", "usable", "endpoints", "catalogues",
                                        "error", "n_rows")},
@@ -817,7 +869,8 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
                  mode: str | None = None, optical_dir: Path | str | None = None,
                  seed: int = 20260913, conf: dict | None = None, config_path=None,
                  query_fn=None, cone_fn=None, upload_fn=None, field_fn=None,
-                 asu_fetch_fn=None, vizier: bool = True) -> dict:
+                 asu_fetch_fn=None, vizier: bool = True, irsa_fetch_fn=None,
+                 irsa: bool = True) -> dict:
     """Run one stage, a comma list, or all of them.  Returns the last report."""
     conf = conf if conf is not None else load_ignition_config(config_path)
     out = Path(out_dir) if out_dir else Path("results") / "ignition"
@@ -828,11 +881,12 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
     for s in stages:
         if s == "probe":
             rep = stage_probe(conf, out, query_fn=query_fn, cone_fn=cone_fn,
-                              upload_fn=upload_fn, asu_fetch_fn=asu_fetch_fn)
+                              upload_fn=upload_fn, asu_fetch_fn=asu_fetch_fn,
+                              irsa_fetch_fn=irsa_fetch_fn)
         elif s == "sample":
             rep = stage_sample(conf, out, n_shards=n_shards, max_stars=max_stars,
                                query_fn=query_fn, mode=mode, asu_fetch_fn=asu_fetch_fn,
-                               vizier=vizier)
+                               vizier=vizier, irsa_fetch_fn=irsa_fetch_fn, irsa=irsa)
         elif s == "acquire":
             rep = stage_acquire(conf, out, shard=shard, n_shards=n_shards, max_stars=max_stars,
                                 route=route, cone_fn=cone_fn, upload_fn=upload_fn,
@@ -866,9 +920,12 @@ def main(argv=None):
     p.add_argument("--optical-dir", default="",
                    help="directory of <source_id>.csv optical series (ZTF/ASAS-SN) for assess")
     p.add_argument("--config", default="", help="alternative config yaml")
+    p.add_argument("--no-irsa", action="store_true",
+                   help="do not fall back to the gaia_only x IRSA route when no ESA query "
+                        "shape answers (the ESA route is always tried first either way)")
     p.add_argument("--no-vizier", action="store_true",
-                   help="do not fall back to the VizieR ASU route when the ESA archive "
-                        "does not answer (the ESA route is always tried first either way)")
+                   help="do not fall back to the VizieR ASU route when neither the ESA "
+                        "archive nor the IRSA route answers")
     p.add_argument("--seed", type=int, default=20260913)
     a = p.parse_args(argv)
     shard, n = parse_shard(a.shard)
@@ -876,7 +933,8 @@ def main(argv=None):
     rep = ignition_run(a.stage, out_dir=a.out_dir or None, shard=shard, n_shards=n_shards,
                        max_stars=a.max_stars or None, route=a.route or None,
                        mode=a.mode or None, optical_dir=a.optical_dir or None, seed=a.seed,
-                       config_path=a.config or None, vizier=not a.no_vizier)
+                       config_path=a.config or None, vizier=not a.no_vizier,
+                       irsa=not a.no_irsa)
     v = rep.get("verdict") if isinstance(rep, dict) else None
     if v:
         print(f"[ignition] verdict: {v}")

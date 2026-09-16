@@ -726,6 +726,57 @@ GROUPS: dict[str, dict] = {
                            "an EXECUTED search on these hosts (booster 'executed') or a techno + anti-bio "
                            "conjunction test is prior art for S62/S63."),
     },
+    # ------------------------------------------------------------------
+    # Added 2026-09-16 to TRACK DOWN one object, not to establish novelty.
+    # GROWTH run 35038510064 flagged Kepler-718 b (KOI-897.01 / TIC 268924036 /
+    # TOI 4490.01) and stage-2 run 35041932130 measured its TESS-era depth at
+    # 30,614 ppm from the light curve against a Kepler-era CATALOGUE depth of
+    # 13,884 ppm in the same band.  Before any pixel is fetched, the cheapest
+    # decisive question is whether somebody has already written this down: a
+    # known blend, a known bad koi_depth, or a documented Kepler-to-TESS depth
+    # offset would end the investigation for nothing.
+    # ------------------------------------------------------------------
+    "g16_transit_depth_offset": {
+        "question": ("Is Kepler-718 b / KOI-897.01 recorded anywhere as a blend, a false "
+                     "positive, or a revised radius?  Is a KEPLER-ERA to TESS-ERA transit "
+                     "DEPTH OFFSET documented as a systematic, and are time-varying transit "
+                     "depths (TDV) reported for any confirmed planet?"),
+        "target": [r"(Kepler-?718|KOI-?897|KIC ?7849854|TOI-?4490|TIC ?268924036)",
+                   r"transit depth.*(variabilit|variation|chang\w+|drift|evolv|secular)",
+                   r"(TESS|transit).*(radi(i|us)).*(systematic|offset|underestimat|overestimat|inflat).*(Kepler|ground)",
+                   r"(blend|contaminat\w+|nearby eclipsing binary|NEB).*(false positive).*(Kepler|TESS)",
+                   r"(depth).*(Kepler).*(TESS).*(compar|discrepan|disagree)"],
+        "decoys": {"ttv": r"transit timing variation|TTV|O-C diagram",
+                   "starspot": r"spot[- ]crossing|starspot anomal|rotational modulation",
+                   "trappist": r"TRAPPIST-1|WASP-|HAT-P-",
+                   "atmosphere": r"transmission spectr|atmospher\w+ (escape|retriev)"},
+        "boosters": {"object": r"Kepler-?718|KOI-?897|7849854|4490",
+                     "depth": r"transit depth|depth ratio|radius ratio|Rp/R",
+                     "revision": r"revis\w+|re-?analys|catalog\w+ error|updated"},
+        "queries": {
+            "kepler718": 'all:"Kepler-718"',
+            "koi897": 'all:"KOI-897"',
+            "toi4490": 'all:"TOI-4490"',
+            "depth_variability": 'abs:"transit depth" AND abs:(variability OR variation OR "long-term")',
+            "kepler_tess_radius_offset": 'abs:(TESS AND Kepler) AND abs:("planet radii" OR "radius ratio") AND abs:(systematic OR offset OR discrepancy)',
+            "neb_false_positive": 'abs:("nearby eclipsing binary" OR "background eclipsing binary") AND abs:(TESS OR Kepler) AND abs:"false positive"',
+            "koi_depth_revision": 'abs:("Kepler Objects of Interest" OR "KOI catalog") AND abs:(revis OR reanalysis OR "uniform fit")',
+            "disintegrating_dusty": 'abs:(disintegrating OR "dusty tail" OR evaporating) AND abs:planet AND abs:"transit depth"',
+        },
+        "by_id": {},
+        "by_title": {
+            # The expected-deficit reference config/growth.yaml already cites; the
+            # sweep checks it exists and says what it actually claims.
+            "han2025_tess_radii": "TESS planet radii are systematically underestimated",
+        },
+        "interpretation": ("A hit naming this object as a blend or false positive ENDS the "
+                           "investigation.  A hit documenting a Kepler-to-TESS depth offset as a "
+                           "systematic reframes it as a population effect rather than an object.  "
+                           "A decoy-free hit reporting genuinely time-varying transit depths in a "
+                           "confirmed planet is the nearest published analogue and must be read "
+                           "before any claim is made.  Finding NOTHING is not evidence the object "
+                           "is interesting --- it is the absence of a cheap exit."),
+    },
     "g15_insitu_grains": {
         "question": ("Has anyone read the in-situ composition of interstellar grains (Cassini CDA, "
                      "Ulysses, Stardust ISPE) for refined / non-condensation-sequence outliers, or "

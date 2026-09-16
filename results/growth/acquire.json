@@ -1,6 +1,6 @@
 {
   "stage": "acquire",
-  "generated_utc": "2026-09-13T22:48:46Z",
+  "generated_utc": "2026-09-16T00:07:02Z",
   "tables": {
     "koi": {
       "status": "OK",
@@ -19,22 +19,63 @@
     "n_koi": 9564,
     "n_toi": 8148,
     "n_ps_kepler_rows": 28592,
+    "routes_enabled": [
+      "name_planet",
+      "name_host",
+      "position_tic",
+      "position_period"
+    ],
     "joined_by_route": {
-      "tic_id": 0,
-      "position_period": 108
+      "name_planet": 81,
+      "name_host": 0,
+      "position_tic": 6,
+      "position_period": 21
     },
-    "tic_matched_no_period_match": 0,
-    "koi_with_tic_id": 0,
+    "koi_with_tic_by_route": {
+      "name_planet": 2697,
+      "name_host": 304,
+      "position_tic": 54
+    },
+    "tic_matched_no_period_match": 2968,
+    "koi_with_tic_id": 3055,
     "position_matched_no_period_match": 50,
+    "n_ps_rows": 28592,
+    "n_ps_rows_kepler": 28592,
+    "n_ps_rows_not_kepler_discovered": 0,
+    "n_ps_default_rows": 2787,
+    "n_ps_tic_id_parsed": 28592,
+    "n_ps_tic_id_unparsed": 0,
+    "n_ps_distinct_planet_names": 2787,
+    "n_ps_distinct_hosts": 1984,
+    "n_ps_stars_with_tic_id": 1984,
+    "ps_tic_id_samples": [
+      "TIC 138890353",
+      "TIC 394177315",
+      "TIC 26817004"
+    ],
+    "n_koi_with_kepler_name": 2748,
+    "n_koi_with_host_name": 3054,
+    "n_distinct_koi_tics": 1975,
+    "n_koi_tics_with_a_toi": 94,
+    "n_toi_on_koi_tics": 97,
     "n_joined": 108,
-    "n_toi_used": 108
+    "n_toi_used": 108,
+    "n_koi_with_tess_counterpart": 108,
+    "fraction_koi_with_tess_counterpart": 0.011292346298619825,
+    "join_statement": "108 of 9564 KOIs reached a TESS counterpart (1.1 %) \u2014 by route: name_planet=81, name_host=0, position_tic=6, position_period=21; 3055 KOIs resolved a TIC id (by route: name_planet=2697, name_host=304, position_tic=54), of which 94 of 1975 distinct TICs have any TOI at all and 2968 KOIs had none whose period matched; 50 positional matches failed the period test"
   },
   "gaia": {
     "n_targets": 108,
-    "n_targets_ok": 0,
-    "n_targets_failed": 108,
-    "n_neighbour_rows": 0,
-    "radius_arcsec": 21.0
+    "n_targets_ok": 108,
+    "n_targets_failed": 0,
+    "n_neighbour_rows": 747,
+    "radius_arcsec": 21.0,
+    "tap_url": "https://gea.esac.esa.int/tap-server/tap",
+    "fallback_cones": true,
+    "by_route": {
+      "upload": 108
+    },
+    "errors": []
   },
   "acquisition": {
     "stages": [
@@ -58,17 +99,21 @@
       },
       {
         "stage": "gaia_neighbours_chunk_1of1",
-        "status": "QUERY_FAILED",
-        "rows": 0,
-        "query": "gaia upload xmatch r=21.0\" n=108",
-        "error": "RuntimeError(\"Gaia neighbours failed after 3 attempts: HTTPError('Error 500:\\\\nSQL exception: ERROR: canceling statement due to statement timeout')\")"
+        "status": "OK",
+        "rows": 747,
+        "query": "gaia neighbours r=21.0\" n=108",
+        "route": "upload",
+        "attempts": [],
+        "n_targets": 108,
+        "n_targets_ok": 108,
+        "n_targets_failed": 0
       }
     ],
     "n_stages": 4,
-    "n_ok": 3,
-    "n_query_failed": 1,
+    "n_ok": 4,
+    "n_query_failed": 0,
     "n_query_returned_zero_rows": 0,
-    "any_query_failed": true,
-    "total_rows": 46304
+    "any_query_failed": false,
+    "total_rows": 47051
   }
 }

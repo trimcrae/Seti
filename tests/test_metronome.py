@@ -1503,3 +1503,44 @@ def test_a_constraint_value_never_puts_a_bare_plus_on_the_wire():
     """A literal '+' in a query string is a SPACE; a sign must be percent-encoded."""
     url = acq.asu_url("I/355/gaiadr3", constraints={"-c": "266.0 +65.0"}, max_rows=5)
     assert "%20%2B65.0" in url and "-c=266.0+65.0" not in url
+
+
+# ---------------------------------------------------------------------------
+# TAPVizieR quotes COLUMN names too (ARC run 35040024670)
+# ---------------------------------------------------------------------------
+def test_tap_schema_column_names_come_back_unquoted():
+    """ARC reached ZERO rows on all five flare catalogues, and nothing about the
+    sky had changed.
+
+    TAPVizieR came back up, so discovery switched from the ASU route (bare
+    header cells) to TAP, and TAP_SCHEMA.columns returns '"KIC"' with the
+    double quotes inside the string. Every role pattern stopped matching and
+    the scoreboard recorded 'rejected: no star_id' for a table whose second
+    column is plainly KIC.
+    """
+    def query_fn(adql: str):
+        assert "TAP_SCHEMA.columns" in adql
+        return pd.DataFrame({"column_name": ['"recno"', '"KIC"', '"Teff"', '"BP-RP"', 'Prot']})
+
+    cols = acq.table_columns("J/ApJ/906/72/table2", query_fn=query_fn)
+    assert cols == ["recno", "KIC", "Teff", "BP-RP", "Prot"], cols
+    # the roles now resolve, which is the whole point
+    roles = acq.resolve_columns(cols, {"star_id": [r"^kic$"], "teff": [r"^teff$"]})
+    assert roles == {"star_id": "KIC", "teff": "Teff"}
+    # and the name that goes into the query is the bare one, which fetch_table
+    # re-quotes itself — a name left quoted here becomes ""KIC"" in the SELECT
+    assert not any(c.startswith('"') for c in cols)
+
+
+def test_a_quoted_column_name_from_any_other_path_still_resolves():
+    """Defence in depth: the canonicaliser strips quotes as well."""
+    roles = acq.resolve_columns(['"KIC"', '"Prot"'], {"star_id": [r"^kic$"], "prot": [r"^prot$"]})
+    assert roles == {"star_id": '"KIC"', "prot": '"Prot"'}
+
+
+def test_known_columns_from_a_non_tap_listing_are_unquoted_too():
+    def query_fn(adql: str):
+        raise RuntimeError("503")
+
+    cols = acq.table_columns("J/X/1/t", query_fn=query_fn, known=['"KIC"', "E"])
+    assert cols == ["KIC", "E"]

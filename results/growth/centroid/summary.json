@@ -1,0 +1,130 @@
+{
+  "verdict": "NO_DATA_REACHED",
+  "reason": "no_target_measured:NOT_ATTEMPTED",
+  "generated_utc": "2026-09-16T01:50:27Z",
+  "n_targets": 1,
+  "target_verdicts": {
+    "TRANSIT_ON_TARGET": 0,
+    "TRANSIT_OFFSET_FROM_TARGET": 0,
+    "OFFSET_UNRESOLVED": 0,
+    "NO_DATA_REACHED": 1
+  },
+  "reasons": {
+    "NOT_ATTEMPTED": 1
+  },
+  "targets": [
+    {
+      "kepoi_name": "K00897.01",
+      "tic_id": 268924036.0,
+      "verdict": "NO_DATA_REACHED",
+      "reason": "NOT_ATTEMPTED",
+      "offset_arcsec": NaN,
+      "offset_err_arcsec": NaN,
+      "offset_sigma": NaN,
+      "n_offset": 3.0,
+      "offset_detectable_arcsec": NaN,
+      "resolution_required_arcsec": NaN,
+      "n_sectors_used": 0,
+      "combined_from_magnitudes": true,
+      "sector_scatter_chi2_per_dof": NaN,
+      "sector_offsets_consistent": false,
+      "census_excludes_all_neighbours": true,
+      "n_neighbours": 7,
+      "n_neighbours_not_excluded": 0,
+      "attributed_source_id": "",
+      "attributed_sep_arcsec": NaN,
+      "attributed_delta_g": NaN,
+      "attributed_required_depth_ppm": NaN,
+      "attribution_note": "",
+      "n_sources_at_that_separation": 0,
+      "attributed_pa_deg": NaN,
+      "verdict_statement": "no offset was measured (NOT_ATTEMPTED); the transit is NOT reported as being on the target",
+      "tpf_status": "",
+      "tpf_route": "",
+      "n_sectors": 0,
+      "n_sectors_measured": 0,
+      "sector_list": "",
+      "gaia_status": "OK",
+      "observed_depth_ppm": 29254.84020480984,
+      "contam_weighted": 0.05039660049033533,
+      "contam_max": 0.07460733568565264,
+      "min_delta_g_that_can_supply_depth": 3.8058157902662697,
+      "census_statement": "all 7 Gaia neighbours within 21.0\" are excluded by arithmetic: each would need more than 100 % of its own light to make the observed depth; a source needs dG <= 3.81 mag of the target to be able to supply 29255 ppm at all"
+    }
+  ],
+  "census": [
+    {
+      "n_sources": 8,
+      "n_neighbours": 7,
+      "target_found_in_gaia": true,
+      "target_g_mag": 15.233003616333008,
+      "target_g_source": "gaia_dr3",
+      "target_sep_arcsec": 0.1665119604935651,
+      "observed_depth_ppm": 29254.84020480984,
+      "observed_depth_err_ppm": 1520.8199724641815,
+      "radius_arcsec": 21.0,
+      "contam_weighted": 0.05039660049033533,
+      "contam_max": 0.07460733568565264,
+      "target_flux_fraction": 0.9509176567370622,
+      "n_neighbours_excluded": 7,
+      "n_neighbours_not_excluded": 0,
+      "census_excludes_all_neighbours": true,
+      "min_delta_g_that_can_supply_depth": 3.8058157902662697,
+      "nearest_unexcluded_sep_arcsec": NaN,
+      "brightest_unexcluded_source_id": "",
+      "brightest_unexcluded_delta_g": NaN,
+      "all_neighbours_required_depth_min_ppm": 2926658.8955086353,
+      "census_statement": "all 7 Gaia neighbours within 21.0\" are excluded by arithmetic: each would need more than 100 % of its own light to make the observed depth; a source needs dG <= 3.81 mag of the target to be able to supply 29255 ppm at all",
+      "kepoi_name": "K00897.01",
+      "tic_id": 268924036.0,
+      "gaia_status": "OK",
+      "ra": 299.56189,
+      "dec": 43.503559
+    }
+  ],
+  "acquisition": {
+    "tpf_status_counts": null,
+    "tpf_routes": null,
+    "budget_s": null,
+    "elapsed_s": null,
+    "budget_exhausted": null,
+    "max_sectors_per_target": null
+  },
+  "config": {
+    "census": {
+      "radius_arcsec": 21.0,
+      "aperture_radius_arcsec": 21.0,
+      "psf_sigma_arcsec": 10.5,
+      "target_match_arcsec": 1.5,
+      "max_depth_fraction": 1.0,
+      "cone_timeout_s": 120.0,
+      "cone_retries": 2,
+      "cone_budget_s": 600.0,
+      "tap_url": "https://gea.esac.esa.int/tap-server/tap"
+    },
+    "difference": {
+      "in_transit_fraction": 0.7,
+      "oot_inner_durations": 0.75,
+      "oot_outer_durations": 2.5,
+      "min_in_cadences": 3,
+      "min_oot_cadences": 6,
+      "moment_threshold": 0.2,
+      "min_pixels": 3,
+      "subtract_background": true,
+      "bootstrap_draws": 400,
+      "min_cadences_for_bootstrap": 8,
+      "err_method": "auto",
+      "centroid_sys_floor_arcsec": 1.0,
+      "n_offset": 3.0,
+      "on_target_max_offset_arcsec": 21.0,
+      "sector_scatter_chi2_per_dof": 3.0,
+      "seed": 7
+    }
+  },
+  "checks_not_performed": [
+    "prf_fit_photocentre (the centroid is a thresholded first moment, not a fitted TESS PRF; a PRF fit would tighten the offset error, not change its sign)",
+    "kepler_era_pixel_centroid (only the TESS pixels are tested here)",
+    "gaia_sources_below_the_catalogue_limit (an unresolved source inside the pixel is not in the census and is therefore neither implicated nor excluded)"
+  ],
+  "note": "the census arithmetic alone can exclude a neighbour: a source supplying fraction f of the aperture flux must fade by depth/f, and above 100 % that is impossible.  NO_DATA_REACHED is not a null result and is not written up (CLAUDE.md); OFFSET_UNRESOLVED is never TRANSIT_ON_TARGET"
+}

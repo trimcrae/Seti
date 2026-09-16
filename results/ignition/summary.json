@@ -1,0 +1,204 @@
+{
+  "verdict": "DEGRADED (neowise_queries_failed:314); NO_IGNITION_CANDIDATE",
+  "generated_utc": "2026-09-16T12:11:30Z",
+  "endpoints": {
+    "parent": {
+      "esa_gaia": "https://gea.esac.esa.int/tap-server/tap",
+      "vizier_asu": [
+        "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+        "https://vizier.u-strasbg.fr/viz-bin/asu-tsv",
+        "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv"
+      ]
+    },
+    "parent_route_recommended_by_probe": "esa_gaia",
+    "parent_routes_tried": [
+      "esa_gaia",
+      "vizier_asu"
+    ],
+    "irsa_tap_probe": {
+      "status": null,
+      "usable": null,
+      "endpoints": null,
+      "table": null,
+      "table_requested": null,
+      "gaia_only_status": null,
+      "error": null,
+      "n_rows": null
+    },
+    "vizier_asu_probe": {
+      "status": "OK",
+      "usable": true,
+      "endpoints": [
+        "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+        "https://vizier.u-strasbg.fr/viz-bin/asu-tsv",
+        "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv"
+      ],
+      "catalogues": {
+        "gaia": "I/355/gaiadr3",
+        "gaia_params": "I/355/paramp",
+        "allwise": "II/328/allwise"
+      },
+      "error": null,
+      "n_rows": 5
+    },
+    "gaia_shapes_tried": [
+      "inner_cone"
+    ],
+    "errors": []
+  },
+  "n_candidates": 0,
+  "n_clean": 0,
+  "n_candidates_optical_untested": 0,
+  "denominators": {
+    "parent_count_archive": 846,
+    "n_rows_pulled": 846,
+    "n_stars_in_parent_file": 846,
+    "subsample_fraction": 1.0,
+    "n_stars_attempted_neowise": 336,
+    "n_stars_with_neowise_rows": 83,
+    "n_stars_screened": 172,
+    "sample_mode": "fields",
+    "local_cut_counters": {
+      "n_in": 846,
+      "cut_g_max": 0,
+      "cut_parallax": 0,
+      "cut_parallax_over_error": 0,
+      "cut_galactic_latitude": 0,
+      "cut_ruwe": 0,
+      "cut_gaia_variable": 0,
+      "cut_colour": 0,
+      "cut_dwarf": 0,
+      "cut_w1w2_photospheric": 0,
+      "cut_ext_flag": 0,
+      "cut_ph_qual": 0,
+      "n_out": 846,
+      "n_kinematically_old": 565
+    },
+    "parent_routes": {
+      "esa_gaia": {
+        "units": 20,
+        "rows": 846
+      }
+    },
+    "parent_route_fractions": {
+      "esa_gaia": 1.0
+    },
+    "parent_route_used": "esa_gaia",
+    "parent_routes_mixed": false,
+    "vizier_capped_units": [],
+    "route_note": "routes/route_fractions say which SOURCE served each unit: esa_gaia is the authoritative ESA archive (with its own allwise_best_neighbour cross-match), vizier_asu is the non-TAP VizieR mirror with a positional cross-match. Rows obtained over vizier_asu are bounded by the ASU -out.max cap, which is a row cap and NOT a COUNT(*); a sample drawn from both routes is DEGRADED."
+  },
+  "stage_counts": {
+    "screened": 172,
+    "rise_candidates": 0,
+    "vetted": 0,
+    "survivors": 0,
+    "clean": 0
+  },
+  "veto_counters": {
+    "screen": {
+      "FADING": 97,
+      "NOT_RISING": 37,
+      "IMPULSIVE_SHAPE": 12,
+      "INSUFFICIENT_EPOCHS": 26
+    },
+    "vet": {
+      "verdicts": {},
+      "flags": {}
+    }
+  },
+  "sensitivity": {
+    "n_stars": 146,
+    "amps": {
+      "0.10": {
+        "n": 146,
+        "n_recovered": 94,
+        "fraction": 0.6438356164383562
+      },
+      "0.20": {
+        "n": 146,
+        "n_recovered": 138,
+        "fraction": 0.9452054794520548
+      },
+      "0.40": {
+        "n": 146,
+        "n_recovered": 146,
+        "fraction": 1.0
+      }
+    },
+    "note": "linear ramps of the stated amplitude over 10 yr injected on both bands of screened, non-rising stars; fraction recovered as IGNITION_CANDIDATE by the rise test alone (before the contaminant ladder)"
+  },
+  "shards": {
+    "expected": 8,
+    "found": 8,
+    "found_tags": [
+      "s0of8",
+      "s1of8",
+      "s2of8",
+      "s3of8",
+      "s4of8",
+      "s5of8",
+      "s6of8",
+      "s7of8"
+    ],
+    "missing": []
+  },
+  "degraded": [
+    "neowise_queries_failed:314"
+  ],
+  "offline": true,
+  "optical_dir": null,
+  "config": {
+    "rise": {
+      "min_epochs": 10,
+      "min_baseline_yr": 5.0,
+      "slope_sigma_min": 5.0,
+      "rise_sigma_min": 3.0,
+      "tau_p_max": 0.001,
+      "mono_frac_min": 0.6,
+      "dbic_min": 6.0,
+      "scan_amp_frac_max": 0.3333,
+      "scan_period_days": [
+        345.0,
+        385.0
+      ],
+      "scan_period_step_days": 5.0,
+      "decay_tau_grid_yr": [
+        0.3,
+        0.5,
+        1.0,
+        1.5,
+        2.0,
+        3.0,
+        5.0
+      ],
+      "growth_tau_grid_yr": [
+        1.0,
+        1.5,
+        2.0,
+        3.0,
+        5.0,
+        8.0,
+        12.0,
+        20.0
+      ],
+      "err_floor_mag": 0.005
+    },
+    "vet": {
+      "parallax_over_error_min": 10.0,
+      "pm_sig_min": 5.0,
+      "galactic_latitude_min_deg": 15.0,
+      "w1_saturation_mag": 8.0,
+      "w2_saturation_mag": 7.0,
+      "frac_nb_gt1_max": 0.2,
+      "frac_na_gt0_max": 0.2,
+      "ph_qual_cut_frac_max": 0.5,
+      "agn_w1w2_min": 0.8,
+      "w1w2_2010_max": 0.15,
+      "optical_slope_sigma_max": 3.0,
+      "optical_rms_max": 0.05,
+      "optical_min_points": 20
+    }
+  },
+  "note": "a candidate here is a star whose W1 and W2 both rise monotonically over >= 5 yr at >= 5 sigma with a ramp preferred over an impulsive born excess, and that survived the contaminant ladder; NO_IGNITION_CANDIDATE is a count over n_stars_screened, not an occurrence limit, and is not written up (CLAUDE.md)"
+}

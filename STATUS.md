@@ -66,6 +66,31 @@ Those are the most diagnostic industrial molecules there are, being both
 long-lived and purely artificial; their absence from the catalogues, not from
 the sky, is what excluded them.
 
+### The isomer veto bug cost six unidentified lines, measured, 2026-09-16
+
+Run 35041128720 re-ran ULINE with the atom-count matching route removed. The
+prediction was that the old veto counts were too high; they were.
+
+| source | clean before | clean after | vetoed before | vetoed after |
+|---|---|---|---|---|
+| Cernicharo+2000 | 10 | **16** | 53 | 47 |
+| He+2008 | 3 | 3 | 14 | 14 |
+
+**Six unidentified lines in Cernicharo+2000 were being discarded on the
+strength of a molecule that was not the one named.** The clean U-line sample
+across both surveys goes from 13 to 19, a 46 % increase, with no new data.
+
+The attribution changed as well as the count. He+2008's vetoes were
+`HCOOCH3 13, C2H5CN 5, CH3OH 3, HC3N 2, C4H 1`; they are now
+`HCOOCH3 12, C2H5CN 5, CH3OH 3, HC3N 1`. C4H's single veto is gone entirely —
+it had been justified by c-C3H, a different molecule — and one of HC3N's two
+came from HCCNC or HNCCC, its isomers.
+
+The verdict is still `NO_PATTERN`: no industrial species has three coincident
+transitions among the 19 clean lines. But a null computed with a veto that
+over-rejects is not the same statement as a null computed with one that does
+not, and only the second was worth having.
+
 ### IGNITION's third route verifies, and confirms which half of ESA was slow, 2026-09-16
 
 Probe run 35040375857 tested the IRSA parent route on the runner. Every name

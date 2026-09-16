@@ -66,6 +66,54 @@ Those are the most diagnostic industrial molecules there are, being both
 long-lived and purely artificial; their absence from the catalogues, not from
 the sky, is what excluded them.
 
+### Kepler-718 b: the change is real in the data, and it is on the target, 2026-09-16
+
+Two runs settled the two open questions. Neither result depends on a catalogue.
+
+**Both eras, fitted by the same code** (run 35045466505). The Kepler light curve
+now goes through the identical fold, masked baseline and bootstrap as the TESS
+one:
+
+| era | our fit | transits | segments |
+|---|---|---|---|
+| Kepler 2009-2013 | **13,912 ± 30 ppm** | 643 | 17 quarters, long cadence |
+| TESS 2021-2024 | **29,255 ± 1,521 ppm** | 87 | 7 sectors, 2-min |
+
+Ratio **2.16**, z = 10.3, primary verdict `MEASURED_DEPTH_CHANGED`. The sector
+deduplication worked: seven duplicate FFI reductions were dropped and the
+transit count fell from 175 to 87, exactly as intended.
+
+**The KOI catalogue is not wrong.** Our own Kepler-era fit reproduces
+`koi_depth` to 2.6 % (ratio 0.974, z = −0.52), so `KOI_DEPTH_CONFIRMED`. The
+catalogue-error escape route is closed by measurement, not by assumption.
+
+**No odd-even signature in either era**: 0.56 sigma in Kepler over 643 transits,
+0.25 sigma in TESS over 87. An eclipsing binary at twice the period is excluded
+in both.
+
+**The transit cannot be on any neighbour** (run 35045467971). The Gaia census
+found the target at G = 15.23 supplying 95.1 % of the aperture flux, and all
+seven neighbours within one TESS pixel at G = 19.6 to 20.8 — 4.4 to 5.5
+magnitudes fainter. Each supplies 0.3 to 1.0 % of the flux, so each would have
+to fade by **293 % to 900 %** of its own light to make a 2.93 % aperture dip.
+Every one is excluded by arithmetic, with no pixel downloaded. A source needs
+to be within 3.81 magnitudes of the target to supply the depth at all, and none
+is.
+
+**What is still open, and it is not small.** The out-of-transit scatter is
+414 ppm in Kepler and **67,631 ppm in TESS** — a factor of 163. At G = 15.2 that
+is a faint, systematics-limited light curve, and the seven FFI reductions that
+deduplication discarded had given systematically DEEPER depths than the 2-minute
+ones for the same sectors (33,078 to 39,798 against 25,425 to 35,498). Two
+reductions of identical pixels disagreeing by 20 to 30 % is a systematic far
+larger than the 1,521 ppm quoted error, and stage 1's whole failure was a quoted
+error that did not describe the real scatter. Until the depth is measured under
+every available reduction and the spread reported as a systematic, the
+2.16 ratio has an error bar nobody has written down.
+
+The other open item is an unresolved companion inside Gaia's resolution, which
+no census and no difference image can see.
+
 ### Tracking down Kepler-718 b: no cheap exit, and four natural mechanisms that do this, 2026-09-16
 
 The targeted sweep `g16_transit_depth_offset` scanned 2,235 abstracts. **No

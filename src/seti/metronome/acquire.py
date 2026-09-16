@@ -519,7 +519,13 @@ def asu_url(catalogue: str, *, base: str = VIZIER_ASU, columns=None, max_rows: i
         parts.append("-out.all")
     parts.append("-out.form=TSV")
     for col, expr in (constraints or {}).items():
-        parts.append(f"{quote(str(col), safe='+_.-')}={quote(str(expr), safe='+_.-,<>=')}")
+        # ``+`` is NOT safe in a constraint VALUE.  A literal ``+`` in a query
+        # string decodes to a SPACE, so ``-c=266+65`` reached VizieR as the
+        # unsigned, dotless pair "266 65" and it could not read that as a
+        # position at all --- it answered with an empty #RESOURCE (IGNITION
+        # probe run 34799195807).  Percent-encoding makes a plus a plus and a
+        # space a space, so a signed declination survives the wire.
+        parts.append(f"{quote(str(col), safe='+_.-')}={quote(str(expr), safe='_.-,<>=')}")
     return f"{base}?" + "&".join(parts)
 
 
@@ -1114,6 +1120,94 @@ def asu_constraint_ladder(catalogue: str, *, columns=None, constraints: dict | N
             step["body_head"] = asu_body_head(text)
         steps.append(step)
     return steps
+
+
+def asu_position_spellings(ra: float, dec: float, radius_deg: float) -> list[tuple[str, dict]]:
+    """Candidate ASU spellings of one cone, most standard first.
+
+    IGNITION's ladder (probe run 34799195807) put the blame on the cone
+    parameter itself: ``-source`` alone served five rows of both
+    ``I/355/gaiadr3`` and ``II/328/allwise``, and adding ``-c=266+65`` --- with
+    no radius, no equinox, no column cut --- took both to zero.  VizieR's reply
+    carried an EMPTY ``#RESOURCE=``/``#Name:``/``#Title:``, which is what it
+    returns when it could not resolve the target at all: the position was not
+    read as a position.  An unsigned, dotless pair is ambiguous with VizieR's
+    sexagesimal form ("266 65" as hours and minutes is not a sky position), so
+    these spellings differ in the decimal point, the explicit declination sign
+    and whether the two coordinates are separate parameters.
+
+    Which one VizieR actually accepts is a MEASUREMENT, not a guess: the ladder
+    sends them all and the record says which returned rows.
+    """
+    ra_f, dec_f, rad = float(ra), float(dec), float(radius_deg)
+    sign = "+" if dec_f >= 0 else "-"
+    adec = abs(dec_f)
+    return [
+        ("decimal_signed", {"-c": f"{ra_f:.6f} {sign}{adec:.6f}", "-c.rd": f"{rad:.6f}",
+                            "-c.eq": "J2000"}),
+        ("decimal_unsigned", {"-c": f"{ra_f:.6f} {dec_f:.6f}", "-c.rd": f"{rad:.6f}",
+                              "-c.eq": "J2000"}),
+        ("split_ra_dec", {"-c.ra": f"{ra_f:.6f}", "-c.dec": f"{dec_f:.6f}",
+                          "-c.rd": f"{rad:.6f}", "-c.eq": "J2000"}),
+        ("radius_arcmin", {"-c": f"{ra_f:.6f} {sign}{adec:.6f}", "-c.rm": f"{rad * 60.0:.4f}",
+                           "-c.eq": "J2000"}),
+        ("bounding_box", {"-c": f"{ra_f:.6f} {sign}{adec:.6f}", "-c.bd": f"{rad * 2:.6f}",
+                          "-c.eq": "J2000"}),
+        ("integer_unsigned", {"-c": f"{ra_f:g} {dec_f:g}", "-c.rd": f"{rad:g}",
+                              "-c.eq": "J2000"}),
+    ]
+
+
+def asu_position_ladder(catalogue: str, *, ra: float, dec: float, radius_deg: float,
+                        columns=None, max_rows: int = 5, fetch_fn=None, bases=None
+                        ) -> dict:
+    """Send every cone spelling and report which one VizieR actually honours.
+
+    Returns ``{steps, working, verdict}``.  ``working`` is the label of the
+    first spelling that came back with rows, or ``None`` --- in which case the
+    catalogue has no reachable cone over ASU at all and the channel must say so
+    rather than report an empty sky.
+    """
+    fetch = fetch_fn or _asu_http_text
+    table = unquote_table(catalogue)
+    cols = [str(c) for c in (columns or []) if str(c).strip()]
+    endpoints = list(bases or VIZIER_ASU_MIRRORS)
+    base = endpoints[0] if endpoints else VIZIER_ASU
+    steps: list[dict] = []
+    working: str | None = None
+    for i, (label, cons) in enumerate(asu_position_spellings(ra, dec, radius_deg)):
+        url = asu_url(table, base=base, columns=cols or None, max_rows=max(1, int(max_rows)),
+                      constraints=cons)
+        step: dict = {"step": i, "label": label, "constraints": cons,
+                      "endpoint": base, "url": url}
+        try:
+            text = fetch(url)
+            df = parse_asu_tsv(text)
+        except Exception as exc:                          # noqa: BLE001
+            step.update(status=STATUS_FAILED, error=repr(exc))
+            steps.append(step)
+            continue
+        errs = list(df.attrs.get("asu_errors") or [])
+        step["rows"] = int(len(df))
+        step["status"] = STATUS_OK if len(df) else STATUS_ZERO
+        if errs:
+            step["asu_errors"] = errs[:10]
+        if not len(df):
+            step["body_head"] = asu_body_head(text, 400)
+        steps.append(step)
+        if len(df) and working is None:
+            working = label
+            break                                        # the first that works is enough
+    if working:
+        verdict = {"status": "SPELLING_FOUND", "working": working,
+                   "note": f"VizieR honours the {working!r} cone spelling; "
+                           "the others above it returned nothing"}
+    else:
+        verdict = {"status": "NO_CONE_SPELLING_WORKS",
+                   "tried": [s["label"] for s in steps],
+                   "note": ("no ASU cone spelling returned a row for this catalogue; the "
+                            "cone route is unavailable here and no empty sky may be inferred")}
+    return {"catalogue": table, "steps": steps, "working": working, "verdict": verdict}
 
 
 def ladder_verdict(steps: list[dict]) -> dict:

@@ -1129,9 +1129,16 @@ def test_the_asu_parent_query_is_built_with_the_expected_parameters_for_a_chunk(
     url = gaia_asu_url(field=_FIELD, max_rows=20000)
     assert url.startswith("https://vizier.cds.unistra.fr/viz-bin/asu-tsv?")
     for frag in ("-source=I/355/gaiadr3", "-out.max=20000", "-out.form=TSV",
-                 "-c=266+65", "-c.rd=1", "-c.eq=J2000",
+                 "-c.rd=1", "-c.eq=J2000",
                  "Gmag=<14.5", "Plx=>3", "RPlx=>10", "RUWE=<1.4", "BP-RP=0.6..2.5"):
         assert frag in url, frag
+    # The cone is percent-encoded, with a decimal point and an explicit sign.
+    # "-c=266+65" is what probe run 34799195807 sent: a literal plus in a query
+    # string decodes to a SPACE, so VizieR received the unsigned dotless pair
+    # "266 65", could not read it as a position, and returned an empty resource
+    # for both I/355/gaiadr3 and II/328/allwise.
+    assert "-c=266+65" not in url
+    assert "-c=266.000000%20%2B65.000000" in url, url
     # every logical Gaia column is requested by name; nothing is left to -out.all
     for col in _GAIA_TSV_COLS:
         assert f"-out={col}" in url, col

@@ -76,6 +76,8 @@ from ..metronome.acquire import (
     VIZIER_ASU_MIRRORS,
     VizierRouteError,
     asu_constraint_ladder,
+    asu_position_ladder,
+    asu_position_spellings,
     asu_rows,
     asu_url,
     ladder_verdict,
@@ -125,6 +127,10 @@ DEFAULT_VIZIER: dict = {
     "out_add": [],                 # extra computed columns, e.g. ["_r"]
     "server_side_constraints": True,
     "cone_pad_arcmin": 1.0,        # AllWISE cone is the Gaia cone plus this pad
+    # Which spelling of the cone VizieR is sent (asu_position_spellings). The
+    # probe's position ladder MEASURES which one the service honours; this is
+    # the one used until a ladder says otherwise.
+    "cone_spelling": "decimal_signed",
     "match_radius_arcsec": 3.0,    # Gaia(2016 -> 2010.5) against AllWISE
     "timeout_s": 300.0,
     "bases": [],                   # empty -> metronome's VIZIER_ASU_MIRRORS
@@ -203,6 +209,29 @@ def _fmt(x: float) -> str:
     return str(int(v)) if v == int(v) else f"{v:g}"
 
 
+def cone_constraints(conf: dict | None = None, field: dict | None = None, *,
+                     pad_deg: float = 0.0) -> dict:
+    """The ``-c`` / radius / equinox trio for one cone, in the configured spelling.
+
+    ``sample.vizier.cone_spelling`` picks one of
+    :func:`seti.metronome.acquire.asu_position_spellings`; the default is
+    ``decimal_signed``.  The spelling is not cosmetic: ``-c=<ra>+<dec>`` put a
+    literal plus on the wire, which a query string decodes to a SPACE, so
+    VizieR received the unsigned dotless pair ``266 65``, failed to read it as
+    a position and answered with an empty resource for BOTH ``I/355/gaiadr3``
+    and ``II/328/allwise`` (probe run 34799195807).  ``probe_route`` runs the
+    whole spelling ladder when a cone returns nothing, so the record says which
+    spelling the service actually honours rather than asserting one.
+    """
+    if field is None:
+        return {}
+    c = {**DEFAULT_SAMPLE, **(conf or {})}
+    want = str(vizier_conf(c).get("cone_spelling") or "decimal_signed")
+    radius = float(field["radius_deg"]) + float(pad_deg or 0.0)
+    spellings = dict(asu_position_spellings(float(field["ra"]), float(field["dec"]), radius))
+    return dict(spellings.get(want) or next(iter(spellings.values())))
+
+
 def asu_constraints(conf: dict | None = None, *, field: dict | None = None,
                     plx_lo: float | None = None, plx_hi: float | None = None) -> dict:
     """The ASU ``<col>=<constraint>`` pairs for one chunk of the sweep.
@@ -217,9 +246,12 @@ def asu_constraints(conf: dict | None = None, *, field: dict | None = None,
     cols = dict(vz.get("constraint_columns") or {})
     out: dict[str, str] = {}
     if field is not None:
-        out["-c"] = f"{_fmt(field['ra'])}+{_fmt(field['dec'])}"
-        out["-c.rd"] = _fmt(field["radius_deg"])
-        out["-c.eq"] = "J2000"
+        # The cone spelling is the shared, MEASURED one (see
+        # asu_position_spellings): a decimal pair with an explicit declination
+        # sign. The old "<ra>+<dec>" form reached VizieR as "266 65" — the
+        # literal plus decodes to a space — and it answered with an empty
+        # resource because it could not read that as a position at all.
+        out.update(cone_constraints(c, field))
     if not vz.get("server_side_constraints", True):
         return out
     if cols.get("phot_g_mean_mag"):
@@ -268,9 +300,7 @@ def allwise_asu_url(conf: dict | None = None, *, field: dict, base: str = VIZIER
     """The ASU URL for the AllWISE side of one chunk (the cone, padded)."""
     vz = vizier_conf({**DEFAULT_SAMPLE, **(conf or {})})
     pad = float(vz.get("cone_pad_arcmin") or 0.0) / 60.0
-    cons = {"-c": f"{_fmt(field['ra'])}+{_fmt(field['dec'])}",
-            "-c.rd": _fmt(float(field["radius_deg"]) + pad),
-            "-c.eq": "J2000"}
+    cons = cone_constraints({**DEFAULT_SAMPLE, **(conf or {})}, field, pad_deg=pad)
     return asu_url(str(vz["allwise_catalogue"]), base=base,
                    columns=_wanted(vz["allwise_columns"]),
                    max_rows=int(max_rows or vz["allwise_out_max"]), constraints=cons)
@@ -514,8 +544,7 @@ def fetch_allwise_chunk(conf: dict | None = None, *, field: dict, fetch_fn=None
     vz = vizier_conf(c)
     max_rows = int(vz["allwise_out_max"])
     pad = float(vz.get("cone_pad_arcmin") or 0.0) / 60.0
-    cons = {"-c": f"{_fmt(field['ra'])}+{_fmt(field['dec'])}",
-            "-c.rd": _fmt(float(field["radius_deg"]) + pad), "-c.eq": "J2000"}
+    cons = cone_constraints(c, field, pad_deg=pad)
     rec: dict = {"catalogue": str(vz["allwise_catalogue"]), "out_max": max_rows,
                  "url": allwise_asu_url(c, field=field, max_rows=max_rows),
                  "constraints": cons, "attempts": [], "errors": []}
@@ -609,7 +638,7 @@ def fetch_unit(conf: dict | None = None, unit: dict | None = None, *, cap: int |
 
 
 def diagnose_zero(catalogue: str, *, columns, constraints: dict, conf: dict | None = None,
-                  fetch_fn=None, cap: int = 5) -> dict:
+                  fetch_fn=None, cap: int = 5, field: dict | None = None) -> dict:
     """Why did this ASU request come back empty?  The ladder, and its verdict.
 
     Run 34796722335 reported ``QUERY_RETURNED_ZERO_ROWS`` for a bare one-degree
@@ -619,6 +648,12 @@ def diagnose_zero(catalogue: str, *, columns, constraints: dict, conf: dict | No
     it: the bare ``-source`` request first, then the columns, then one
     constraint at a time, with VizieR's own words recorded at the step that
     dies.
+
+    When that constraint turns out to be the CONE (run 34799195807: rows
+    survived the column list and died on ``-c``), the position ladder follows,
+    sending every candidate spelling of the same cone until one returns rows.
+    The two together take the record from "zero rows" to "this parameter, in
+    this spelling, is what the service will accept".
     """
     c = {**DEFAULT_SAMPLE, **(conf or {})}
     try:
@@ -628,7 +663,17 @@ def diagnose_zero(catalogue: str, *, columns, constraints: dict, conf: dict | No
                                       bases=bases_for(c))
     except Exception as exc:                                # noqa: BLE001
         return {"status": STATUS_FAILED, "error": repr(exc), "steps": []}
-    return {"catalogue": str(catalogue), "steps": steps, "verdict": ladder_verdict(steps)}
+    out = {"catalogue": str(catalogue), "steps": steps, "verdict": ladder_verdict(steps)}
+    culprit = str(out["verdict"].get("culprit") or "")
+    if field is not None and culprit.startswith(("+-c", "+-c.")):
+        try:
+            out["position_ladder"] = asu_position_ladder(
+                str(catalogue), ra=float(field["ra"]), dec=float(field["dec"]),
+                radius_deg=float(field["radius_deg"]), columns=_wanted(columns),
+                max_rows=int(cap), fetch_fn=fetch_fn, bases=bases_for(c))
+        except Exception as exc:                            # noqa: BLE001
+            out["position_ladder"] = {"status": STATUS_FAILED, "error": repr(exc), "steps": []}
+    return out
 
 
 def probe_route(conf: dict | None = None, *, fetch_fn=None, cap: int = 5
@@ -668,11 +713,13 @@ def probe_route(conf: dict | None = None, *, fetch_fn=None, cap: int = 5
     if str(grec.get("status")) in (STATUS_ZERO, STATUS_COLUMNS) or not grec.get("n_rows"):
         rep["gaia"]["ladder"] = diagnose_zero(
             vzc["gaia_catalogue"], columns=vzc["gaia_columns"],
-            constraints=grec.get("constraints") or {}, conf=c, fetch_fn=fetch_fn, cap=int(cap))
+            constraints=grec.get("constraints") or {}, conf=c, fetch_fn=fetch_fn,
+            cap=int(cap), field=field)
     if str(wrec.get("status")) in (STATUS_ZERO, STATUS_COLUMNS) or not wrec.get("n_rows"):
         rep["allwise"]["ladder"] = diagnose_zero(
             vzc["allwise_catalogue"], columns=vzc["allwise_columns"],
-            constraints=wrec.get("constraints") or {}, conf=c, fetch_fn=fetch_fn, cap=int(cap))
+            constraints=wrec.get("constraints") or {}, conf=c, fetch_fn=fetch_fn,
+            cap=int(cap), field=field)
     rows, urec = fetch_unit(c, {"field": field}, cap=int(cap), fetch_fn=fetch_fn,
                             label="probe")
     rep["parent_chunk"] = urec
@@ -686,6 +733,6 @@ __all__ = ["ALLWISE_EPOCH", "CUT_ALLWISE", "CUT_GAIA", "DEFAULT_VIZIER", "REQUIR
            "REQUIRED_GAIA", "ROUTE_ESA", "ROUTE_VIZIER", "STATUS_COLUMNS", "STATUS_DISABLED",
            "STATUS_FAILED", "STATUS_NOT_FOUND", "STATUS_OK", "STATUS_UNSUPPORTED", "STATUS_ZERO",
            "allwise_asu_url", "apply_allwise_predicates", "asu_constraints", "bases_for",
-           "diagnose_zero",
+           "cone_constraints", "diagnose_zero",
            "enabled", "fetch_allwise_chunk", "fetch_gaia_chunk", "fetch_unit", "gaia_asu_url",
            "match_allwise", "probe_route", "resolve_columns", "to_parent_frame", "vizier_conf"]

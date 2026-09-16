@@ -80,14 +80,14 @@ catalogues:
     energy: {kind: bolometric, factor: 1.0, log10: auto}
     amplitude_unit: auto
     enabled: true
-  kepler_davenport2016:
-    mission: kepler
-    kind: flares
-    preferred: "J/ApJ/829/23/table1"   # Davenport 2016 ApJ 829, 23 — per-star summary; ED-based
-    keywords: ["flare", "Kepler"]
-    energy: {kind: equivalent_duration, factor: 1.0, log10: auto}   # verify the ED units (s)
-    amplitude_unit: auto
-    enabled: true
+  # kepler_davenport2016 was declared here as a FLARES table and is not one.
+  # MEASURED (run 34798862983): J/ApJ/829/23/table1 has columns
+  #   KIC, g-i, Mass, Prot, Nfl, Nfl68, Lfl/Lkp, e_Lfl/Lkp, alpha, beta, M14, C16
+  # — a per-star flare-frequency-distribution summary. `alpha` and `beta` are
+  # the FFD power-law coefficients, `Nfl` a count; there is no per-flare energy
+  # and no equivalent duration in it at all, so it could never have supplied a
+  # flare to the ceiling test and was correctly scored 0. It is moved to
+  # star_catalogues below, where its Prot and Mass are real contributions.
 
 # Per-star context by mission, in PRIORITY order for Teff / radius / logg /
 # Prot; the rotational amplitude is the MAX over every source that has one
@@ -99,7 +99,16 @@ star_catalogues:
     - {name: shibayama2013_stars, preferred: "J/ApJS/209/5/stars", keywords: [], amplitude_unit: auto}
     - {name: yang2019_stars, preferred: "J/ApJS/241/29/table1", keywords: [], amplitude_unit: auto}
     - {name: mcquillan2014, preferred: "J/ApJS/211/24/table1", keywords: [], amplitude_unit: ppm}   # Rper in ppm
+    # Santos+2021 carries Sph for tens of thousands of Kepler stars — by far the
+    # largest source of the rotational amplitude the ceiling needs. Run
+    # 34798862983 lost it because -meta.all named only J/ApJS/255/17/table1 (a
+    # per-quarter Teff table) for the bare catalogue id and the rotation table
+    # was never listed; the ReadMe union in asu_catalogue_tables now enumerates
+    # the whole catalogue. 3,920 of 5,785 stars in that run had NO ceiling for
+    # want of an amplitude, which is what this entry is for.
     - {name: santos2021, preferred: "J/ApJS/255/17", keywords: ["rotation", "Kepler"], amplitude_unit: ppm}  # Sph in ppm
+    # Per-star Prot and Mass only (no amplitude): see the note in `catalogues`.
+    - {name: davenport2016_stars, preferred: "J/ApJ/829/23/table1", keywords: [], amplitude_unit: auto}
   tess:
     - {name: gunther2020_stars, preferred: "J/AJ/159/60/table2", keywords: [], amplitude_unit: auto}
     - {name: tu2022_stars, preferred: "J/ApJ/935/90", keywords: [], amplitude_unit: auto}

@@ -3,12 +3,100 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-13.
+next. Last updated: 2026-09-14.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### ARC's first complete run: 5,785 flare stars, a measured ξ distribution, no ceiling excess, 2026-09-14
+
+Run 34798862983 is the first time S59's statistic has been **measured** rather
+than reported as unreachable. ξ = log E_flare − log E_mag, where
+E_mag = f·(B²/8π)·A_spot^{3/2} is the magnetic energy the star's own spot
+coverage can store; ξ > 0 says a flare released more energy than its spots
+could hold. Four flare catalogues acquired (Okamoto+2021, Yang & Liu 2019,
+Günther+2020, Tu+2022), 5,785 stars carrying flares, **1,865 assessable** —
+a star without a rotational amplitude has no spot area and therefore no
+ceiling, and 3,920 stars had none.
+
+| quantile | ξ conservative (f = 1) | ξ nominal |
+|---|---|---|
+| p1 | −4.25 | −3.53 |
+| p50 | −2.44 | −1.72 |
+| p95 | −1.30 | −0.58 |
+| p99 | −0.80 | −0.09 |
+| max | +0.91 | +1.63 |
+
+**Verdict `NO_CEILING_EXCESS`.** Two stars exceeded the conservative ceiling
+and the gauntlet took both: one `companion_suspect`, one `evolved`. Thirteen
+stars sit in the `watch` tier. The population median flare is ~275× *below*
+its own spot-energy ceiling, which is the reassuring shape — the statistic is
+calibrated, not saturated, and a real excess would stand out rather than
+drown.
+
+**What limits it, and what is being done.** Three catalogues were reported as
+degraded and each had a different cause, all now fixed:
+
+* **Shibayama+2013** (1,547 superflares) and **Santos+2021** (Sph amplitudes
+  for tens of thousands of Kepler stars) were never listed at all. Asked for a
+  bare catalogue id, VizieR's `-meta.all` named exactly **one** table each —
+  the star table, not the flares; the per-quarter Teff table, not the rotation
+  table — and the rest were never scored. `asu_catalogue_tables` now unions the
+  catalogue's **ReadMe** inventory whenever the metadata route names fewer than
+  two tables. Santos is the single biggest lever on the 3,920 stars with no
+  ceiling.
+* **Davenport 2016** was mis-declared. Its columns — KIC, g−i, Mass, Prot,
+  Nfl, α, β — are a per-star flare-frequency-distribution summary with **no
+  per-flare energy at all**, so it could never have fed the ceiling test. It is
+  now a star catalogue, contributing Prot and Mass.
+* **Gaia context reached 57 % of the shortlist**, so some vetoes are unapplied
+  rather than passed; that is recorded per star, never assumed benign.
+
+This is a null and is **not** being written up. It is a reason to enlarge the
+assessable sample and re-measure: Santos alone should multiply it.
+
+### IGNITION: the constraint ladder names the defect — a plus sign that was a space, 2026-09-14
+
+Probe run 34799195807 ran the new ASU constraint ladder against both parent
+catalogues and returned the same verdict for each:
+
+```
+[0] bare      OK    rows=5      -source + -out.max
+[1] columns   OK    rows=5      -out= x15
+[2] +-c       ZERO  rows=0      -c=266+65
+```
+
+`-source` alone served five rows of `I/355/gaiadr3` and of `II/328/allwise`;
+adding the cone — no radius, no equinox, no column cut — took both to zero, and
+VizieR's reply carried an **empty** `#RESOURCE=`/`#Name:`/`#Title:`, which is
+what it returns when it could not resolve the target at all.
+
+The cause is one character. A literal `+` in a query string decodes to a
+**space**, so `-c=266+65` reached the service as the unsigned, dotless pair
+`266 65`, which VizieR does not read as a sky position. Constraint values are
+now percent-encoded (`-c=266.000000%20%2B65.000000`), so a declination sign
+survives the wire, and a new position ladder sends every candidate cone
+spelling — decimal signed, decimal unsigned, split `-c.ra`/`-c.dec`, radius in
+arcmin, bounding box, the old integer form — and records which one the service
+honours. No spelling working is `NO_CONE_SPELLING_WORKS`, never an empty sky.
+
+The ESA Gaia archive remains blocked independently: all three query shapes
+timed out at 480 s and the async queue answered HTTP 500.
+
+### GROWTH: the cone fallback was killed by the clock, 2026-09-14
+
+Run 34789826297 entered the per-target Gaia cone fallback at 23:30 UTC and was
+still in it three hours later, against an archive answering 500 to every other
+channel that night. The workflow's 180-minute cap ended it with only
+`probe.json` committed, so the `ps.tic_id` join fix has **still** not produced
+a result. pyvo's `run_sync` takes no timeout, so one hung request blocks the
+loop indefinitely. Two ceilings now bound it: a 120 s per-request timeout
+imposed through the session, and a 3,600 s wall clock for the whole fallback
+across all chunks. A target the budget does not reach is `QUERY_FAILED` and is
+reported `not_checked` — the ceilings change what is *attempted*, never what
+is claimed.
 
 ### ULINE reaches IRC+10216: 17 unidentified lines, no industrial pattern, 2026-09-14
 

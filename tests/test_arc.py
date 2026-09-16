@@ -1022,3 +1022,26 @@ def test_build_star_context_joins_flags_with_nan_present():
     assert "ok" in flags[0] and "nan" not in flags[0].lower()
     assert "dubious" in flags[1]
     assert flags[2] == ""
+
+
+def test_davenport2016_is_a_star_table_not_a_flares_table():
+    """It has no per-flare energy, so it could never feed the ceiling test.
+
+    Run 34798862983 measured its columns: KIC, g-i, Mass, Prot, Nfl, Nfl68,
+    Lfl/Lkp, alpha, beta — a per-star flare-frequency-distribution summary.
+    It was declared as a flares table, scored 0 every run, and was reported as
+    a degraded acquisition rather than as the star table it is.
+    """
+    import pathlib as _pl
+
+    import yaml
+
+    conf = yaml.safe_load(_pl.Path("config/arc.yaml").read_text())
+    assert "kepler_davenport2016" not in conf["catalogues"]
+    kepler_stars = {s["name"]: s for s in conf["star_catalogues"]["kepler"]}
+    assert kepler_stars["davenport2016_stars"]["preferred"] == "J/ApJ/829/23/table1"
+    # Santos+2021 is the largest source of the amplitude the ceiling needs and
+    # stays in the star list; 3,920 of 5,785 stars had no ceiling without it.
+    assert kepler_stars["santos2021"]["preferred"] == "J/ApJS/255/17"
+    raw = _pl.Path("config/arc.yaml").read_text()
+    assert "no per-flare energy" in raw

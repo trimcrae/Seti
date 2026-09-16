@@ -1051,6 +1051,12 @@ def _cmd_growth(args, cfg):
     return _growth_main(list(args.rest))
 
 
+def _cmd_growth_stage2(args, cfg):
+    from .growth.stage2 import main as _growth_stage2_main
+
+    return _growth_stage2_main(list(args.rest))
+
+
 def _cmd_arc(args, cfg):
     from .arc.run import main as _arc_main
 
@@ -2207,6 +2213,12 @@ def main(argv=None):
                             "impact parameter; flags are passed through to seti.growth.run")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_growth)
+    p = sub.add_parser("growth-stage2",
+                       help="GROWTH stage 2 (S57): measure the TESS depth FROM THE LIGHT "
+                            "CURVE and compare it with BOTH catalogue depths; flags are "
+                            "passed through to seti.growth.stage2")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_growth_stage2)
     p = sub.add_parser("arc",
                        help="ARC (S59): superflares above the starspot energy ceiling; "
                             "flags are passed through to seti.arc.run")

@@ -1,8 +1,11 @@
 # GROWTH — the growing transit: construction around a planet, 2009 → 2026
 
 **Signature S57** (`docs/necrofrontier.md` §2, "The growing transit"; sweep
-row g11 in §5).  Stage 1 — the catalogue pass — built 2026-09-13; stage 2
-(light-curve re-fits) is designed in §7 and not built.
+row g11 in §5).  Stage 1 — the catalogue pass — built 2026-09-13.  **Stage 2A
+— the measured TESS depth (`src/seti/growth/stage2.py`, workflow
+`growth_stage2.yml`) — built 2026-09-16** and described in §7; the rest of
+stage 2 (per-epoch `k(t)`, achromaticity, pixel-level dilution, the long-period
+asymmetry branch) is still design and is §8.
 
 ---
 
@@ -51,7 +54,7 @@ parameter, with the limb-darkening band ratio and the Gaia-neighbour
 dilution term divided out, and asked which planets got *deeper*.
 
 **What must not be over-claimed:** stage 1 compares two heterogeneous
-catalogue numbers (§8).  A `GROWTH_CANDIDATE` here is a reason to run stage 2
+catalogue numbers (§9).  A `GROWTH_CANDIDATE` here is a reason to run stage 2
 on that planet, not a detection.
 
 ---
@@ -279,7 +282,175 @@ Run: `python -m seti.growth.run --stage {probe,acquire,screen,assess,all}
 
 ---
 
-## 7. Stage 2 — design (not built)
+## 7. Stage 2A — the measured TESS depth (`src/seti/growth/stage2.py`, BUILT)
+
+### 7.1 Why, and what it settles
+
+Run 35038510064 returned one `GROWTH_CANDIDATE` — **Kepler-718 b = K00897.01 =
+KIC 7849854 = TIC 268924036 = TOI 4490.01**, `P = 2.0523499 d`, CONFIRMED /
+TFOPWG `KP`, Kepler-era `koi_depth` 14,281 ± 18 ppm against TOI `pl_trandep`
+34,476 ± 2,349 ppm, `ln R_corr = 0.961`, `z = 8.67`, duration ratio 1.022
+observed against 1.073 expected at fixed `b` (`z = −0.45`, so `fixed_b`), 7 Gaia
+neighbours inside 21″ and no veto.  Two things make it untrustworthy as it
+stands, and stage 2A settles the first:
+
+1. **The stage-1 error model is broken.**  The same run's population has
+   **31 of 108 measured planets above 5σ** of the population median and **37
+   above 3σ** (`summary.json["population"]`).  A sample in which a third of the
+   objects are five-sigma outliers has formal errors that do not describe the
+   pipeline-to-pipeline scatter, so `z = 8.67` is **not** an 8.67-sigma
+   statement.  Stage 2A does not try to repair the error model: it removes the
+   dependence on it by **measuring the TESS depth from the light curve**.
+2. **A deeper TESS transit cannot be caused by dilution** — dilution makes a
+   transit *shallower* — **but a signal that originates on a different star
+   inside the ~21″ TESS pixel produces exactly this**, and the `contam` term
+   does not test for it.  That is the centroid test, it is **not** done here,
+   and it is named in `summary.json["checks_not_performed"]`.
+
+### 7.2 The decisive measurement: three numbers, not two
+
+| Number | Where it comes from |
+|---|---|
+| `depth_kepler_ppm` | KOI `cumulative.koi_depth` (**Kepler band**) |
+| `depth_toi_ppm` | TOI `toi.pl_trandep` (**TESS band**) |
+| `depth_measured_ppm` | **this module's fit to the TESS light curve** |
+
+The Kepler depth is multiplied by `f_LD = band_ratio(Teff, logg, b)`
+(§4.1, `F_TESS(b)/F_Kepler(b)`) before any comparison, so the bandpass
+difference is not charged to "growth"; `depth_kepler_in_tess_band_ppm` is
+reported.  Each comparison is `z = ln(D_meas/D_ref)/σ` with
+`σ² = (e_meas/D_meas)² + (e_ref/D_ref)² + σ_sys,ln²`, `σ_sys,ln = 0.05`
+(config, `verify`: a stated floor, not a measurement — a shortlist of one
+cannot measure its own scatter).  `|z| < n_agree` (3.0) is "agrees with".
+
+**The verdict vocabulary** (`stage2.TARGET_VERDICTS`):
+
+| Verdict | Meaning |
+|---|---|
+| `MEASURED_DEPTH_MATCHES_KEPLER` | agrees with Kepler, disagrees with the TOI → **the TOI value was wrong, the candidate dies**, and the channel has learned its stage-1 error model is catalogue-driven |
+| `MEASURED_DEPTH_MATCHES_TOI` | agrees with the deep TOI value, disagrees with Kepler → **the depth really did change**; the candidate survives **to the centroid test**, which is not a detection |
+| `MEASURED_DEPTH_MATCHES_NEITHER` | outside both.  **Said, not resolved** — no pick is made |
+| `MEASURED_DEPTH_MATCHES_BOTH` | the measurement does not separate the two references.  An admission, never a pick; `z_toi_vs_kepler` and `references_separated` say whether the failure is the measurement's precision or the references' own agreement |
+| `UNMEASURED` | no depth was fitted.  `unmeasured_reason` ∈ {`QUERY_FAILED`, `QUERY_RETURNED_ZERO_ROWS`, `EPHEMERIS_UNAVAILABLE`, `NO_USABLE_TRANSIT`, `BUDGET_EXHAUSTED`, `NO_REFERENCE_DEPTH`} — the last of these is a depth that WAS measured with no usable catalogue value to compare it with, which is not the same as disagreeing with one |
+
+**A target whose light curve could not be fetched is `UNMEASURED` and is never
+reported as agreeing with anything**; `QUERY_FAILED` (the service errored) and
+`QUERY_RETURNED_ZERO_ROWS` (it answered with nothing) stay different facts, and
+the workflow fails the run if an `UNMEASURED` row carries an agreement flag or
+no reason.  Run verdicts: `NO_DATA_REACHED`, `STAGE1_DEPTH_CHANGE_REFUTED`
+(every measured target matched Kepler), `STAGE1_DEPTH_CHANGE_CONFIRMED` (≥ 1
+matched the TOI), `STAGE1_DEPTH_CHANGE_UNRESOLVED`.
+
+### 7.3 The ephemeris — the one arithmetic that must not be wrong
+
+The period, epoch and duration are the KOI's own (`koi_period`,
+`koi_time0bk`, `koi_duration`) and are **fixed**: stage 2A measures a *depth*,
+it does not re-derive an ephemeris.  `koi_time0bk` is **not** in the stage-1
+column list, so stage 2A pulls it from `cumulative` itself.  The two missions
+count from different zero points —
+
+* Kepler **BKJD** = BJD − 2454833.0
+* TESS  **BTJD** = BJD − 2457000.0
+* therefore `t_BTJD = t_BKJD − 2167.0` **exactly**
+
+— and the hand-worked value the test suite checks is: BKJD 170.0 = BJD
+2455003.0 = **BTJD −1997.0**.  The epoch is then propagated by an integer
+number of periods to the TESS window and the accumulated uncertainty
+`√(σ_T0² + (n σ_P)²)` is reported in minutes (`ephemeris_sigma_minutes`,
+`n_epochs_propagated`); above 10 % of the duration it raises
+`ephemeris_drift_over_10pct_of_duration`, because a smeared fold is a shallow
+depth and that must be visible rather than absorbed.
+
+### 7.4 The fit
+
+1. **each sector is normalised separately** by its own robust median;
+2. every predicted transit gets a local window `|Δt| ≤ w·T₁₄`; the baseline is
+   a straight line in `Δt` fitted over the **out-of-transit part only** (the
+   transit is masked, with a guard band at `0.75 T₁₄`), and both sides of the
+   transit must be present;
+3. that transit's depth is `1 − ⟨flux/baseline⟩` over a **core** window
+   `|Δt| ≤ 0.35 T₁₄` **shrunk by half the exposure time**, so a sample whose
+   integration straddles ingress is not counted as flat-bottom flux;
+4. **the cadence sets the window, not the other way round**: the outer window
+   is widened until it can hold `min_baseline_points` at the *actual* cadence,
+   and the core requirement drops to one sample when the cadence cannot supply
+   two.  Without this a 30-minute FFI transit would be discarded for want of a
+   baseline rather than measured and flagged;
+5. per-transit depths are combined by inverse variance; the quoted error is a
+   **bootstrap over transits** (≥ 8 transits) or the **analytic** propagation
+   below that, and `depth_measured_err_method` always says which.  The
+   analytic, χ²-scaled and bootstrap errors are all reported.
+
+**Reported beside the depth, per target:** the depth **per sector**
+(`sectors.csv` — a depth that differs between sectors is a systematic, not
+growth; `sector_scatter_chi2_per_dof` and the `sector_scatter` flag), the
+out-of-transit scatter, the **odd–even** depth difference
+(`odd_even_diff_ppm`, `odd_even_sigma`, flag `odd_even_significant` at 3σ) —
+the classic eclipsing-binary signature, nearly free once the fold exists and
+the only handle stage 2A has on the "different star in the pixel" mechanism —
+and a binned fold per target under `folds/`.
+
+**Smearing is flagged, never quietly corrected.**  `exptime_over_duration` and
+`smeared` (exposure > 0.2 T₁₄) are columns; `depth_is_lower_bound` marks the
+case where no flat core survives the integration at all.  `sector_list`,
+`authors` and `exptimes_s` record **which product and which sectors** each
+depth came from, so a 30-minute FFI depth on a 2-hour transit cannot be read as
+if it were a 2-minute SPOC one.
+
+### 7.5 Data access, budgets, outputs
+
+Light curves come from MAST, **SPOC 2-minute where it exists, TESS-SPOC / QLP
+FFI otherwise** (`stage2.mast.authors`).  Two routes, established **at
+runtime** and recorded in `stage2/probe.json`: `lightkurve`
+(`search_lightcurve("TIC n", mission="TESS")`) when it is installed — it is the
+optional `tess` extra in `pyproject.toml`, which `growth_stage2.yml` installs —
+and otherwise `astroquery.mast` `Observations.query_criteria` →
+`get_product_list` → `download_file(dataURI)` with the FITS read directly
+(`PDCSAP_FLUX`, else `KSPSAP_FLUX` / `DET_FLUX` / `SAP_FLUX`, recorded per
+sector; `TIME` converted through the file's own `BJDREFI`/`BJDREFF` rather than
+assumed to be BTJD; `QUALITY != 0` masked).
+
+**Every network stage has a wall-clock budget** — `stage2.mast.budget_s` for
+the whole measure stage, `per_target_budget_s` per target,
+`archive_timeout_s`/`archive_retries` for the Exoplanet Archive pulls — copied
+from the `gaia.cone_budget_s` pattern and for the reason stated there: run
+34789826297 sat three hours in an unbounded fetch loop and would have been
+killed with nothing committed.  What the budget does not reach is `UNMEASURED`
+with reason `BUDGET_EXHAUSTED`, never a depth.
+
+Outputs, `results/growth/stage2/`:
+
+| File | Content |
+|---|---|
+| `probe.json` | which MAST route exists on this machine (imports only) |
+| `acquire.json`, `acquisition_log.json` | the ephemeris/TOI pull statuses, the per-target light-curve status and route, elapsed time against the budget, every failed attempt's exception text |
+| `measurements.csv` | one row per shortlisted target: the three depths, both `z`s, the verdict, the ephemeris record, the per-target flags |
+| `sectors.csv` | per sector: author, exposure, points, transits, depth ± error, `smeared`, `exptime_over_duration` |
+| `folds/<KOI>.csv` | the binned fold, for a human to look at |
+| `summary.json` | `verdict`, `reason`, `target_verdicts`, `unmeasured_reasons`, `flags`, `targets`, `acquisition`, `config`, `checks_not_performed` |
+
+The shortlist and every threshold are in `config/growth.yaml` under `stage2:`
+(`shortlist`, `mast`, `fit`, `compare`), with a `verify:` note on everything
+asserted rather than measured.  Run:
+`python -m seti.growth.stage2 --stage {probe,measure,assess,all}`
+(or `seti growth-stage2 ...`); workflow `growth_stage2.yml`.
+
+### 7.6 What stage 2A cannot say
+
+* **it does not test the centroid.**  A deeper TESS transit cannot come from
+  dilution, but a nearby eclipsing binary at the same period inside the pixel
+  gives exactly this.  `odd_even_significant` catches one flavour; the
+  per-pixel centroid / difference-image test is stage 3.
+* **the Kepler depth is still the catalogue's.**  Only the TESS side is
+  re-measured here, so `MEASURED_DEPTH_MATCHES_TOI` establishes that the TESS
+  depth is what the TOI says, not yet that it differs from a re-fitted Kepler
+  depth.
+* **one band per epoch**, exactly as at stage 1: achromaticity is untested.
+* **`σ_sys,ln = 0.05` is asserted**, not measured (§7.2).
+
+---
+
+## 8. Stage 2B — design (not built)
 
 Per candidate (and per long-period planet), from the light curves:
 
@@ -318,7 +489,7 @@ never the one a reader has to trust.  The light curves are on MAST
 
 ---
 
-## 8. Limits — what stage 1 can and cannot say
+## 9. Limits — what stage 1 can and cannot say
 
 * **Catalogue depths are heterogeneous by pipeline and epoch.**  `koi_depth`
   is a DV fit on Q1–Q17 DR25 long-cadence PDCSAP; `pl_trandep` is whichever

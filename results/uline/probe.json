@@ -1,6 +1,6 @@
 {
   "stage": "probe",
-  "generated_utc": "2026-09-16T00:09:13Z",
+  "generated_utc": "2026-09-16T00:18:47Z",
   "jpl": {
     "n_entries": 403,
     "n_unparsed_lines": 0,
@@ -1520,24 +1520,952 @@
         },
         {
           "stage": "fallback_orion_kl_hifi",
-          "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-          "status": "QUERY_RETURNED_ZERO_ROWS",
-          "rows": 0
+          "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%molecular lines%' OR description LIKE '%Molecular lines%' OR description LIKE '%MOLECULAR LINES%'))",
+          "status": "OK",
+          "rows": 34
+        },
+        {
+          "stage": "fallback_orion_kl_hifi",
+          "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%molecular lines%' OR description LIKE '%Molecular lines%' OR description LIKE '%MOLECULAR LINES%'))",
+          "status": "OK",
+          "rows": 94
         }
       ],
       "errors": [],
       "fallback": {
         "terms_all": [
-          "unidentified"
+          "nidentified"
         ],
         "terms_any": [
           "Orion",
-          "line survey"
+          "line survey",
+          "spectral survey",
+          "unidentified",
+          "molecular lines"
         ],
-        "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-        "status": "QUERY_RETURNED_ZERO_ROWS",
-        "n_tables": 0,
-        "tables": []
+        "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%molecular lines%' OR description LIKE '%Molecular lines%' OR description LIKE '%MOLECULAR LINES%'))",
+        "status": "OK",
+        "n_tables": 34,
+        "tables": [
+          {
+            "table_name": "J/A+A/323/739/table1",
+            "description": "DELTA(VLA-RASS)<40\" unidentified RGB sources ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
+          },
+          {
+            "table_name": "J/A+A/323/739/table2",
+            "description": "40\"<DELTA(VLA-RASS)<100\" unidentified RGB sources ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
+          },
+          {
+            "table_name": "J/A+A/323/739/table3",
+            "description": "DELTA(VLA-RASS)<100\" unidentified RGB sources, low resolution data ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
+          },
+          {
+            "table_name": "J/A+A/323/739/table4",
+            "description": "Previously unidentified RGB sources: VLA empty fields ( Brinkmann W., Siebert J., Feigelson E.D., Kollgaard R.I., Laurent-Muehleisen S.A., Reich W., Fuerst E., Reich P., Voges W., Truemper J., McMahon R.)"
+          },
+          {
+            "table_name": "J/A+A/370/468/table1",
+            "description": "Unidentified 3EG sources without known possible galactic counterparts ( Torres D.F., Romero G.E., Combi J.A., Benaglia P., Andernach H., Punsly B.)"
+          },
+          {
+            "table_name": "J/A+A/370/468/table8",
+            "description": "Variability index I for all low latitude unidentified sources ( Torres D.F., Romero G.E., Combi J.A., Benaglia P., Andernach H., Punsly B.)"
+          },
+          {
+            "table_name": "J/A+A/421/175/tableb1",
+            "description": "Unidentified X-ray source positions and properties ( Pillitteri I., Micela G., Sciortino S., Damiani F., Harnden F.R.JR)"
+          },
+          {
+            "table_name": "J/A+A/423/469/table2",
+            "description": "Unidentified Sources ( Sazonov S.Yu., Revnivtsev M.G.)"
+          },
+          {
+            "table_name": "J/A+A/564/L2/table4",
+            "description": "Unidentified lines in comet Lovejoy ( Agundez M., Biver N., Santos Sanz P., Bockelee-Morvan D., Moreno R.)"
+          },
+          {
+            "table_name": "J/A+A/583/A85/tablea2",
+            "description": "Unresolved or unidentified systems ( Alonso-Floriano F.J., Caballero J.A., Cortes-Contreras M., Solano E., Montes D.)"
+          },
+          {
+            "table_name": "J/A+A/681/A50/tablea4",
+            "description": "All unidentified lines ( Wallstrom S.H.J., Danilovich T., Muller H.S.P., et al.)"
+          },
+          {
+            "table_name": "J/A+AS/133/201/table6",
+            "description": "Spectral type of IRAS unidentified sources which have quality-3 flux density data at 12, 25, and 60{mu}m ( Iyengar K.V.K., MacConnell D.J.)"
+          },
+          {
+            "table_name": "J/A+AS/134/287/table5",
+            "description": "Uncertainty regions for unidentified EXMS entries ( Reynolds A.P., Parmar A.N., Hakala P.J., Pollock A.M.T., Williams O.R., Peacock A., Taylor B.G.)"
+          },
+          {
+            "table_name": "J/A+AS/142/181/table3",
+            "description": "Unidentified lines ( Cernicharo J., Guelin M., Kahane C.)"
+          },
+          {
+            "table_name": "J/ApJ/694/222/table2",
+            "description": "Unidentified point sources from five-year Q-, V-, and W-band ILC (internal linear combination) map ( Chen X., Wright E.L.)"
+          },
+          {
+            "table_name": "J/ApJ/752/61/table2",
+            "description": "Unidentified gamma-ray sources (UGS) associations for 156 2FGL ( Massaro F., D'Abrusco R., Tosti G., Ajello M., Paggi A., Gasparrini D.)"
+          },
+          {
+            "table_name": "J/ApJ/846/L19/table1",
+            "description": "LOFAR survey of unidentified Fermi-LAT sources: source information ( Pleunis Z., Bassa C.G., Hessels J.W.T., Kondratiev V.I., Camilo F., Cognard I., Griessmeier J.-M., Stappers B.W., van Amesfoort A.S., Sanidas S.)"
+          },
+          {
+            "table_name": "J/ApJS/117/427/table46",
+            "description": "Unidentified lines ( Nummelin A., Bergman P., Hjalmarson A., Friberg P., Irvine W.M., Millar T.J., Ohishi M., Saito S.)"
+          },
+          {
+            "table_name": "J/ApJS/156/69/table6",
+            "description": "Blends containing unidentified lines ( Weidenspointner G., Harris M.J., Sturner S., Teegarden B.J., Ferguson C.)"
+          },
+          {
+            "table_name": "J/ApJS/179/306/table3",
+            "description": "Unidentified radio sources ( Russell J., Ryan R.E.Jr, Cohen S.H., Windhorst R.A., Waddington I.)"
+          },
+          {
+            "table_name": "J/ApJS/206/13/ugs",
+            "description": "Unidentified gamma-ray sources without gamma-ray analysis flag photometry (tables 3 and 8) ( Massaro F., D'Abrusco R., Paggi A., Masetti N., Giroletti M., Tosti G., Smith H.A., Funk S.)"
+          },
+          {
+            "table_name": "J/ApJS/206/13/ugsw",
+            "description": "Unidentified gamma-ray sources with gamma-ray analysis flag photometry (tables 4 and 9) ( Massaro F., D'Abrusco R., Paggi A., Masetti N., Giroletti M., Tosti G., Smith H.A., Funk S.)"
+          },
+          {
+            "table_name": "J/ApJS/206/17/table2",
+            "description": "List of correspondences between unidentified 3PBC hard X-ray sources and WISE {gamma}-ray blazar candidates ( Maselli A., Massaro F., Cusumano G., D'Abrusco R., La Parola V., Paggi A., Segreto A., Smith H.A., Tosti G.)"
+          },
+          {
+            "table_name": "J/ApJS/207/4/table2",
+            "description": "Unidentified {gamma}-ray sources (32 unique 2FGL) ( Massaro F., D'Abrusco R., Giroletti M., Paggi A., Masetti N., Tosti G., Nori M., Funk S.)"
+          },
+          {
+            "table_name": "J/ApJS/209/10/ugs",
+            "description": "Unidentified Gamma-ray Sources in the Northern  and Southern samples  and in the SDA sample ( Massaro F., D'Abrusco R., Paggi A., Masetti N., Giroletti M., Tosti G., Smith H.A., Funk S.)"
+          },
+          {
+            "table_name": "J/ApJS/235/4/table2",
+            "description": "Unidentified sources with 2MASS counterpart in the Swift-BAT 105-month catalog ( Oh K., Koss M., Markwardt C.B., Schawinski K., Baumgartner W.H., Barthelmy S.D., Cenko S.B., Gehrels N., Mushotzky R., Petulante A., Ricci C., Lien A., Trakhtenbrot B.)"
+          },
+          {
+            "table_name": "J/ApJS/91/461/table6",
+            "description": "Unidentified lines in solar active region EUV spectrum ( THOMAS R.J., NEUPERT W.M.)"
+          },
+          {
+            "table_name": "J/MNRAS/243/1/table8",
+            "description": "Unidentified Objects ( Boyle B.J., Fong R., Shanks T., Peterson B.A.)"
+          },
+          {
+            "table_name": "J/MNRAS/287/293/tab2-8",
+            "description": "BR photometry for unidentified EUV sources ( Maoz D., Ofek E.O., Shemi A.)"
+          },
+          {
+            "table_name": "J/MNRAS/287/293/table1",
+            "description": "Unidentified EUV sources ( Maoz D., Ofek E.O., Shemi A.)"
+          },
+          {
+            "table_name": "J/MNRAS/412/1853/table1",
+            "description": "Swift XRT observations of unidentified XMM-Newton Slew Survey sources ( Starling R.L.C., Evans P.A., Read A.M., Saxton R.D., Esquej P., Krimm H., O'Brien P.T., Osborne J.P., Mateos S., Warwick R., Wiersema K.)"
+          },
+          {
+            "table_name": "J/MNRAS/500/4749/table3",
+            "description": "Properties of the unidentified sources ( Baldi R.D., Williams D.R.A., McHardy I.M., et al.)"
+          },
+          {
+            "table_name": "J/MNRAS/502/1299/table3",
+            "description": "from 301 previously unidentified stellar variables and related characteristics, not including rotators and unknown variables ( Thiemann H.B., Norton A.J., Dickinson H.J., Mcmaster A., Kolb U.C.)"
+          },
+          {
+            "table_name": "J/other/APh/26.282/tableb5",
+            "description": "Unidentified and weakly identified extragalactic EGRET sources, possibly blazars ( Achterberg A., Ackermann M., Adams J., et al.)"
+          }
+        ],
+        "by_column": {
+          "terms_any": [
+            "nidentified",
+            "Orion",
+            "line survey",
+            "spectral survey",
+            "unidentified",
+            "molecular lines"
+          ],
+          "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%molecular lines%' OR description LIKE '%Molecular lines%' OR description LIKE '%MOLECULAR LINES%'))",
+          "status": "OK",
+          "n_columns": 94,
+          "n_tables": 78,
+          "tables": [
+            {
+              "table_name": "J/A+A/450/993/tablea1",
+              "columns": [
+                {
+                  "column": "\"Un\"",
+                  "description": "[U] U: unidentified source"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+A/461/789/table3",
+              "columns": [
+                {
+                  "column": "\"Species\"",
+                  "description": "Molecule name (or \"Unid\" when the line is unidentified) (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+A/553/A12/table1",
+              "columns": [
+                {
+                  "column": "\"un\"",
+                  "description": "Number of unidentified sources (2)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+A/564/L2/table4",
+              "columns": [
+                {
+                  "column": "\"Freq\"",
+                  "description": "[251766/264753] Frequency of Unidentified line"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+A/629/A114/tablea5",
+              "columns": [
+                {
+                  "column": "\"fMember\"",
+                  "description": "[+z] Flag for membership in sigma Orionis (3)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+A/690/A262/lightabu",
+              "columns": [
+                {
+                  "column": "\"Molecule?\"",
+                  "description": "Is abundance derived from molecular lines, indicating the molecule"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+A/713/A57/tableb1",
+              "columns": [
+                {
+                  "column": "\"SbCluster\"",
+                  "description": "Orion sub-cluster name (cluster_name) (1)"
+                },
+                {
+                  "column": "\"Orion\"",
+                  "description": "Display the vizier orion ancilliary catalogs"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+AS/103/83/table1",
+              "columns": [
+                {
+                  "column": "\"Atom\"",
+                  "description": "Identification: atom and multiplet or molecule and vibrational band or \"?\" for an unidentified line"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+AS/129/541/tableb1",
+              "columns": [
+                {
+                  "column": "\"El\"",
+                  "description": "Ion (UN = unidentified lines)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+AS/142/181/table3",
+              "columns": [
+                {
+                  "column": "\"Name\"",
+                  "description": "Unidentified lines (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/A+AS/143/145/fluxes",
+              "columns": [
+                {
+                  "column": "\"n_Source\"",
+                  "description": "[a] Unidentified source (2)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/128/787/table1",
+              "columns": [
+                {
+                  "column": "\"Field\"",
+                  "description": "Orion flanking field (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/147/140/stars",
+              "columns": [
+                {
+                  "column": "\"Name\"",
+                  "description": "Name of the FU Orionis star"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/147/140/table2",
+              "columns": [
+                {
+                  "column": "\"Name\"",
+                  "description": "Name of the FU Orionis star"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/150/100/yso",
+              "columns": [
+                {
+                  "column": "\"Field\"",
+                  "description": "Field (sigma Orionis or lambda Orionis)"
+                },
+                {
+                  "column": "\"Mm\"",
+                  "description": "Likelihood of membership in the Orion star-forming region (y=yes, m=maybe, n=no, -=unknown) (3)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/150/132/table6",
+              "columns": [
+                {
+                  "column": "\"Star\"",
+                  "description": "Identifier of the variable in the Orion Nebula Cluster (ONC) (ONCvar identifier)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/150/132/table7",
+              "columns": [
+                {
+                  "column": "\"Star\"",
+                  "description": "? Identifier of the variable in the Orion Nebula Cluster (ONC) (ONCvar identifier)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/150/132/variables",
+              "columns": [
+                {
+                  "column": "\"Star\"",
+                  "description": "[1/1227] Identifier of the variable in the Orion Nebula Cluster (ONC) (ONCvar identifier)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/152/198/table3",
+              "columns": [
+                {
+                  "column": "\"CVSO\"",
+                  "description": "[4/1975] Running index number from the Centro de investigaciones de astronomia Variability Survey of Orion (CVSO)"
+                },
+                {
+                  "column": "\"Loc\"",
+                  "description": "Source location in the Orion OB1 star-forming complex (1a, 1b, 25Ori, A cloud, B cloud, or HR1833) (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/152/80/obs",
+              "columns": [
+                {
+                  "column": "\"Dis\"",
+                  "description": "[*] Indicates a discovery or new/unidentified observation"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/154/14/stars",
+              "columns": [
+                {
+                  "column": "\"Star\"",
+                  "description": "[66/158] Internal identifier of the confirmed member of 25 Ori or Orion OB1a"
+                },
+                {
+                  "column": "\"Vmag\"",
+                  "description": "[15.19/20.38]? V band magnitude from the Centro de Investigaciones de Astronomia (CIDA) Deep Survey of Orion (CDSO) (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/154/14/table5",
+              "columns": [
+                {
+                  "column": "\"Imag\"",
+                  "description": "[13/19.5]? I_c_ magnitude from the Centro de Investigaciones de Astronomia (CIDA) Deep Survey of Orion (CDSO) catalog (Downes et al. 2014, Cat. J/MNRAS/444/1793)"
+                },
+                {
+                  "column": "\"I-J\"",
+                  "description": "[0/1.747]? Ic-J color index from the CIDA Deep Survey of Orion (CDSO) and VISTA catalogs"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/156/84/table1",
+              "columns": [
+                {
+                  "column": "\"Group\"",
+                  "description": "Stellar group in Orion (see Table 3)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/156/84/table2",
+              "columns": [
+                {
+                  "column": "\"Group\"",
+                  "description": "Stellar group in Orion (see Table 3)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/156/84/table3",
+              "columns": [
+                {
+                  "column": "\"Group\"",
+                  "description": "Stellar group in Orion"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/157/85/table3",
+              "columns": [
+                {
+                  "column": "\"Loc\"",
+                  "description": "Location within the Orion OB1 association"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/158/235/table2",
+              "columns": [
+                {
+                  "column": "\"CXOU\"",
+                  "description": "Chandra X-ray Observatory Unidentified source (HHMMSS.ss+DDMMSS.s)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/158/235/table3",
+              "columns": [
+                {
+                  "column": "\"CXOU\"",
+                  "description": "Chandra X-ray Observatory Unidentified source (HHMMSS.ss+DDMMSS.s)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/165/205/stars",
+              "columns": [
+                {
+                  "column": "\"CVSO\"",
+                  "description": "CIDA Variability Survey of Orion identifier"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AJ/170/330/table2",
+              "columns": [
+                {
+                  "column": "\"K16\"",
+                  "description": "Display the Orion catalog data within 0.5\" from Kounkel+2016 (J/ApJ/821/8) and Tobin+2009 (J/ApJ/697/1103)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/AZh/71/684/table2",
+              "columns": [
+                {
+                  "column": "\"z(min)\"",
+                  "description": "Photometric redshift or minimum photometric redshift for unidentified objects"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/493/940/masers",
+              "columns": [
+                {
+                  "column": "\"Note\"",
+                  "description": "[ab] a=Orion BN/KL shell maser, b=Orion S outflow maser"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/540/236/table1",
+              "columns": [
+                {
+                  "column": "\"[HC2000]\"",
+                  "description": "Orion Nebula Cluster Identification number (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/661/1119/table2",
+              "columns": [
+                {
+                  "column": "\"CVSO\"",
+                  "description": "CIDA Variability Survey of Orion running number (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/711/619/table5",
+              "columns": [
+                {
+                  "column": "\"Orion\"",
+                  "description": "Esteban et al., 1998MNRAS.295..401E, Orion abundance ratio (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/716/30/blazars",
+              "columns": [
+                {
+                  "column": "\"OClass\"",
+                  "description": "Optical spectrum classification (BL Lac, BZU (blazar of unknown type), FSRQ or Unidentified)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/722/1226/table1",
+              "columns": [
+                {
+                  "column": "\"Xc\"",
+                  "description": "cross-match with other {lambda} Orionis catalogs within 1\""
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/724/748/table5",
+              "columns": [
+                {
+                  "column": "\"Orion\"",
+                  "description": "Esteban et al. (2004MNRAS.355..229E) Orion abundance ratio (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/742/27/agns",
+              "columns": [
+                {
+                  "column": "\"Opt\"",
+                  "description": "[UBQG] Optical classification (B=BL Lac, Q=quasar, G=radio galaxy, U=unidentified)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/752/61/table2",
+              "columns": [
+                {
+                  "column": "\"2FGL\"",
+                  "description": "Unidentified {gamma}-ray source (UGS) identifier (JHHMM.m+DDMM)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/753/149/table1",
+              "columns": [
+                {
+                  "column": "\"ISOY\"",
+                  "description": "Initial Spitzer Orion YSO source name (JHHMMSS.ss+DDMMSS.s)"
+                },
+                {
+                  "column": "\"OCat\"",
+                  "description": "Cross-match within 3\" with Orion catalogs (J/AJ/113/1733, and J/ApJ/733/50)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/755/154/2cd",
+              "columns": [
+                {
+                  "column": "\"OM\"",
+                  "description": "Orion Master Catalog entry number (G1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/755/154/dario",
+              "columns": [
+                {
+                  "column": "\"OM\"",
+                  "description": "Orion Master Catalog entry number (G1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/766/37/table1",
+              "columns": [
+                {
+                  "column": "\"OT\"",
+                  "description": "[GQU] Nature of optical object: G=Galaxy, Q=Quasar, U=Unidentified"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/767/36/obs",
+              "columns": [
+                {
+                  "column": "\"HOPS\"",
+                  "description": "[0/320] Herschel Orion Protostar Survey (HOPS) group name"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/780/85/Nclouds",
+              "columns": [
+                {
+                  "column": "\"Nl\"",
+                  "description": "Number of molecular lines observed for this cloud"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/780/85/Sclouds",
+              "columns": [
+                {
+                  "column": "\"Nl\"",
+                  "description": "Number of molecular lines observed for this cloud"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/821/8/sources",
+              "columns": [
+                {
+                  "column": "\"OCat\"",
+                  "description": "Display the Orion catalogs data within 0.5\" (from Bouy+, 2014, J/A+A/564/A29 and Tobin+, 2009, J/ApJ/697/1103)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/825/91/table1",
+              "columns": [
+                {
+                  "column": "\"HOPS\"",
+                  "description": "[25/382]? Herschel Orion Protostar Survey ID"
+                },
+                {
+                  "column": "\"HClass\"",
+                  "description": "Herschel Orion Protostar Survey classification (2)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/905/119/table2",
+              "columns": [
+                {
+                  "column": "\"Region\"",
+                  "description": "Region within Orion A and B"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/918/27/table9c",
+              "columns": [
+                {
+                  "column": "\"OWave2\"",
+                  "description": "[3187.8/10337]? Observed wavelength in Orion Nebula; Angstroms"
+                },
+                {
+                  "column": "\"Vel2\"",
+                  "description": "[2.8/43.1]? Velocity relative to rest velocity in Orion Nebula"
+                },
+                {
+                  "column": "\"FWHM2\"",
+                  "description": "[5/40.2]? Full-Width at Half-Maximum in Orion Nebula"
+                },
+                {
+                  "column": "\"F/FHb2\"",
+                  "description": "[0.007/313]? Line flux relative to H{beta} in Orion Nebula"
+                },
+                {
+                  "column": "\"I/IHb2\"",
+                  "description": "[0.005/269]? Line intensity relative to H{beta} in Orion Nebula"
+                },
+                {
+                  "column": "\"Error2\"",
+                  "description": "[2/36]? Percent error in Orion Nebula"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/919/27/table2",
+              "columns": [
+                {
+                  "column": "\"Foribar\"",
+                  "description": "[0.02/23.4]? Line flux for the Orion Bar (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/919/27/table4",
+              "columns": [
+                {
+                  "column": "\"lnRoribar\"",
+                  "description": "[-5.4/4.2]? Natural log of Orion Bar ratio (1)"
+                },
+                {
+                  "column": "\"(Nu/Nm)oribar\"",
+                  "description": "[0.3/16.5]? Orion Bar Nu/Nm ratio (2)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/920/132/table7",
+              "columns": [
+                {
+                  "column": "\"Cloud\"",
+                  "description": "Cloud identification (\"Aquila\", \"Auriga/CMC\", \"Cepheus\", \"Chamaeleon\", \"Corona Australis\", \"IC5146\", \"Lupus\", \"Musca\", \"Ophiuchus\", \"Orion\", \"Perseus\", \"Serpens\" & \"Taurus\")"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/924/84/table1",
+              "columns": [
+                {
+                  "column": "\"Region\"",
+                  "description": "Subregion in Lambda Orionis if any (\"B30\", \"B35\" or \"LamOri-1\")"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJ/976/175/tablea",
+              "columns": [
+                {
+                  "column": "\"n_RMT\"",
+                  "description": "[U/I ] U/I for Unidentified line by Nave et al. (1994ApJS...94..221N, Cat. J/ApJS/94/221)."
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/106/463/table3",
+              "columns": [
+                {
+                  "column": "\"Id\"",
+                  "description": "[]? ID status; 1=identified; 0=unidentified"
+                },
+                {
+                  "column": "\"Other\"",
+                  "description": "Result of obs. in other molecular lines"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/117/427/table3",
+              "columns": [
+                {
+                  "column": "\"Ref\"",
+                  "description": "Orion references (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/117/427/table4",
+              "columns": [
+                {
+                  "column": "\"Ref\"",
+                  "description": "Orion references (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/117/427/table5",
+              "columns": [
+                {
+                  "column": "\"Ref\"",
+                  "description": "Orion references (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/119/159/table34",
+              "columns": [
+                {
+                  "column": "\"OName3\"",
+                  "description": "Cross-identification from UV-excess and emission-line surveys (4)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/201/30/catalog",
+              "columns": [
+                {
+                  "column": "\"fID\"",
+                  "description": "[1/100]? Final identification flag (1=secure, 10=ambiguous, blank=unidentified, 100=subthreshold)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/206/9/EGOs",
+              "columns": [
+                {
+                  "column": "\"3mm\"",
+                  "description": "[Y ] Included in the 3mm line survey? (5)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/209/30/table2",
+              "columns": [
+                {
+                  "column": "\"f_RefX\"",
+                  "description": "[a] Remarks for Orion field (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/236/51/cores",
+              "columns": [
+                {
+                  "column": "\"Cloud\"",
+                  "description": "lambda Orionis (Table 2), Orion A (Table 3) or Orion B (Table 4) clouds"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/251/20/table1",
+              "columns": [
+                {
+                  "column": "\"Region\"",
+                  "description": "Region identifier (Orion A, Orion B or lambda-Ori)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/263/27/table1",
+              "columns": [
+                {
+                  "column": "\"q_zspec\"",
+                  "description": "[-3/4] Redshift confidence grade (4=very secure, 3=secure, 2=probable, 1=insecure, 0=unidentified spectrum) (3)"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/280/33/table4",
+              "columns": [
+                {
+                  "column": "\"Nl\"",
+                  "description": "[1/6] Number of molecular lines detected for each core"
+                }
+              ]
+            },
+            {
+              "table_name": "J/ApJS/280/33/table5",
+              "columns": [
+                {
+                  "column": "\"Nl\"",
+                  "description": "[2/291] Number of molecular lines detected for each core"
+                }
+              ]
+            },
+            {
+              "table_name": "J/MNRAS/454/1976/Abund",
+              "columns": [
+                {
+                  "column": "\"[X/Fe]O\"",
+                  "description": "? Average elemental abundance ratio [X/Fe] for the Orion association"
+                }
+              ]
+            },
+            {
+              "table_name": "J/MNRAS/454/1976/table9",
+              "columns": [
+                {
+                  "column": "\"[X/Fe]O\"",
+                  "description": "? Mean abundance ratio [X/Fe] for the Orion association"
+                }
+              ]
+            },
+            {
+              "table_name": "J/MNRAS/524/1826/bdcand",
+              "columns": [
+                {
+                  "column": "\"SpType\"",
+                  "description": "[-] Spectral Type: M1 to M9, \"nonM\" for earlier spectral types and \"N\" for unidentified spectra"
+                }
+              ]
+            },
+            {
+              "table_name": "J/MNRAS/524/1826/colour",
+              "columns": [
+                {
+                  "column": "\"SpType\"",
+                  "description": "Spectral Type: M1 to M9, \"nonM\" for earlier spectral types and \"N\" for unidentified spectra"
+                }
+              ]
+            },
+            {
+              "table_name": "J/MNRAS/524/1826/memcand",
+              "columns": [
+                {
+                  "column": "\"SpType\"",
+                  "description": "Spectral Type: M1 to M9, \"nonM\" for earlier spectral types and \"N\" for unidentified spectra"
+                }
+              ]
+            },
+            {
+              "table_name": "J/PAZh/30/946/table",
+              "columns": [
+                {
+                  "column": "\"Lambda\"",
+                  "description": "Spectral line wavelength of unidentified cometary band"
+                }
+              ]
+            },
+            {
+              "table_name": "V/135A/catalog",
+              "columns": [
+                {
+                  "column": "\"n_G\"",
+                  "description": "[*?] Unnumbered or unidentified star (1)"
+                }
+              ]
+            },
+            {
+              "table_name": "VI/132C/lunarocc",
+              "columns": [
+                {
+                  "column": "\"Double\"",
+                  "description": "[BEFNSUW?] Double star or unidentified star (12)"
+                }
+              ]
+            },
+            {
+              "table_name": "VII/5A/catalog",
+              "columns": [
+                {
+                  "column": "\"Code1\"",
+                  "description": "Unidentified code"
+                },
+                {
+                  "column": "\"Code2\"",
+                  "description": "Unidentified code"
+                },
+                {
+                  "column": "\"Code3\"",
+                  "description": "Unidentified code"
+                }
+              ]
+            }
+          ]
+        }
       },
       "route": "none",
       "routes": [
@@ -2234,10 +3162,17 @@
       },
       {
         "stage": "fallback_orion_kl_hifi",
-        "status": "QUERY_RETURNED_ZERO_ROWS",
-        "rows": 0,
-        "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))",
-        "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%'))"
+        "status": "OK",
+        "rows": 34,
+        "what": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%molecular lines%' OR description LIKE '%Molecular lines%' OR description LIKE '%MOLECULAR LINES%'))",
+        "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') AND ((description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%molecular lines%' OR description LIKE '%Molecular lines%' OR description LIKE '%MOLECULAR LINES%'))"
+      },
+      {
+        "stage": "column_census_orion_kl_hifi",
+        "status": "OK",
+        "rows": 94,
+        "what": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%molecular lines%' OR description LIKE '%Molecular lines%' OR description LIKE '%MOLECULAR LINES%'))",
+        "adql": "SELECT TOP 400 table_name, column_name, description FROM TAP_SCHEMA.columns WHERE ((description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%') OR (description LIKE '%Orion%' OR description LIKE '%orion%' OR description LIKE '%ORION%') OR (description LIKE '%line survey%' OR description LIKE '%Line survey%' OR description LIKE '%LINE SURVEY%') OR (description LIKE '%spectral survey%' OR description LIKE '%Spectral survey%' OR description LIKE '%SPECTRAL SURVEY%') OR (description LIKE '%unidentified%' OR description LIKE '%Unidentified%' OR description LIKE '%UNIDENTIFIED%') OR (description LIKE '%molecular lines%' OR description LIKE '%Molecular lines%' OR description LIKE '%MOLECULAR LINES%'))"
       },
       {
         "stage": "tables_irc10216_he2008",
@@ -2269,10 +3204,10 @@
         "adql": "SELECT TOP 60 table_name, description FROM TAP_SCHEMA.tables WHERE (description LIKE '%nidentified%' OR description LIKE '%Nidentified%' OR description LIKE '%NIDENTIFIED%')"
       }
     ],
-    "n_stages": 12,
-    "n_ok": 9,
+    "n_stages": 13,
+    "n_ok": 11,
     "n_query_failed": 1,
-    "n_query_returned_zero_rows": 2,
+    "n_query_returned_zero_rows": 1,
     "any_query_failed": true
   }
 }

@@ -1288,7 +1288,14 @@ def mast_probe() -> dict:
         rep["route_preferred"] = ROUTE_MAST_FITS
     rep["note"] = ("import reachability only; whether MAST ANSWERS is established by the "
                    "measure stage and recorded per target as OK / QUERY_FAILED / "
-                   "QUERY_RETURNED_ZERO_ROWS")
+                   "QUERY_RETURNED_ZERO_ROWS. The SAME route serves both eras: TESS by "
+                   "TIC (search_lightcurve('TIC n', mission='TESS') / "
+                   "query_criteria(obs_collection='TESS')) and KEPLER by KIC "
+                   "(search_lightcurve('KIC n', mission='Kepler') / "
+                   "query_criteria(obs_collection='Kepler')), so an importable route does "
+                   "NOT imply that both collections answer — that is a per-era measure-stage "
+                   "fact, recorded as lc_status and kepler_lc_status")
+    rep["eras"] = list(ERAS)
     return rep
 
 

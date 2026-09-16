@@ -66,6 +66,40 @@ Those are the most diagnostic industrial molecules there are, being both
 long-lived and purely artificial; their absence from the catalogues, not from
 the sky, is what excluded them.
 
+### Tracking down Kepler-718 b: no cheap exit, and four natural mechanisms that do this, 2026-09-16
+
+The targeted sweep `g16_transit_depth_offset` scanned 2,235 abstracts. **No
+paper names Kepler-718, KOI-897, KIC 7849854, TOI-4490 or TIC 268924036 at
+all**, so the object is not on record as a blend, a false positive or a revised
+radius. The cheap exit did not fire. That is not evidence the object is
+interesting; it is only the absence of a way out for nothing.
+
+What the sweep did return is more useful: **a time-varying transit depth is a
+documented phenomenon with at least four natural causes**, and each comes with
+its own discriminator. These, not "is it a planet", are what S57 has to beat.
+
+| mechanism | example in the hits | what it also does |
+|---|---|---|
+| disintegrating rocky planet with a dust tail | KIC 12557548b, K2-22b | depth varies **epoch to epoch**, transit is asymmetric with a trailing tail, depth tracks the stellar rotation period |
+| oblateness + spin precession | two papers, one titled for the effect | the **duration** changes with the depth |
+| ring system | TESS ring search | duration and ingress shape change |
+| super-puff / inflated envelope | TOI-216 b, titled "Transit Depth Variations Reveal…" | slow, monotonic |
+
+**Two of the four are already disfavoured by data in hand.** Our own TESS fit is
+stable across sectors 41 to 82 — 2021 to 2024 — at 30,614 ppm with
+chi2/dof = 1.53 and an odd-even difference of 0.20 sigma, where a disintegrating
+planet varies stochastically between epochs. And stage 1's duration test puts
+the observed duration ratio at 1.022 against the 1.073 expected for a larger
+object at fixed impact parameter, z = −0.45, where precession and rings change
+the duration along with the depth.
+
+The two that remain open are the ones the running work is aimed at: whether the
+change is real at all (both eras fitted by the same code, rather than ours
+against a catalogue's), and whether the transit is even on the target star.
+
+Nothing here is a detection, and the honest summary of the object is that it has
+survived the cheap tests and not yet met the expensive ones.
+
 ### The isomer veto bug cost six unidentified lines, measured, 2026-09-16
 
 Run 35041128720 re-ran ULINE with the atom-count matching route removed. The

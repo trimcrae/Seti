@@ -69,7 +69,10 @@ on:
         default: "auto"
       parent_route:
         description: >-
-          Parent-sample route: "auto" (ESA Gaia TAP first, VizieR's non-TAP ASU
+          Parent-sample route: "auto" (ESA Gaia TAP first, then the IRSA route
+          — ESA's gaia_source under the gaia_only shape joined positionally to
+          IRSA's own AllWISE table, which avoids the 750M-row AllWISE mirror
+          inside ESA that timed out every joined shape — then VizieR's non-TAP ASU
           mirrors as the fallback for any chunk ESA does not answer) or
           "esa_only" (no fallback).  ESA is tried first either way.
         required: false
@@ -118,7 +121,7 @@ jobs:
           pip install -e ".[dev]"
       - name: Offline gate — injected ramp recovered, impact rejected, on this runner
         run: python -m pytest tests/test_ignition.py -q -p no:cacheprovider -k "injected or impact or no_data or one_band"
-      - name: Probe the archives (Gaia shapes, the VizieR ASU route, NEOWISE, TAP_UPLOAD)
+      - name: Probe the archives (Gaia shapes, the IRSA and VizieR ASU routes, NEOWISE, TAP_UPLOAD)
         # Run 34787803862 spent 1,490 s on four retries of a flat three-table join
         # that could not succeed.  The probe now tries the candidate query shapes
         # in order under a wall-clock budget (config/ignition.yaml -> probe:

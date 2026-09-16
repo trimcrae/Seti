@@ -28,6 +28,20 @@ from seti.ignition.acquire import (
     star_quality,
     upload_query,
 )
+from seti.ignition.irsa_route import (
+    DEFAULT_IRSA,
+    IRSA_TAP,
+    allwise_adql,
+)
+from seti.ignition.irsa_route import (
+    fetch_unit as irsa_fetch_unit,
+)
+from seti.ignition.irsa_route import (
+    probe_route as irsa_probe_route,
+)
+from seti.ignition.irsa_route import (
+    verify_service as irsa_verify_service,
+)
 from seti.ignition.rise import (
     assess_band,
     assess_series,
@@ -46,9 +60,13 @@ from seti.ignition.run import (
     stage_sample,
 )
 from seti.ignition.sample import (
+    GAIA_COLS,
     GAIA_TRANSPORTS,
+    JOINED_SHAPES,
     ROUTE_ESA,
+    ROUTE_IRSA,
     ROUTE_VIZIER,
+    SHAPE_GAIA_ONLY,
     SHAPES,
     GaiaQueryFailed,
     allwise_predicates,
@@ -92,6 +110,20 @@ def _asu_dead(url, *_a, **_k):
     VizieR route's own behaviour is exercised by ``_FakeASU`` below.
     """
     raise RuntimeError(f"the ASU transport is stubbed off in this test: {url}")
+
+
+def _irsa_dead(adql, *_a, **_k):
+    """The IRSA TAP transport, stubbed OFF, for the same reason as ``_asu_dead``.
+
+    The THIRD parent route (``seti.ignition.irsa_route``) is probed on every
+    run and tried for every unit no ESA shape answered, so without this stub a
+    probe test would reach ``irsa.ipac.caltech.edu`` for real: here that raises
+    (tests/conftest.py) and the run looks unchanged, but on the runner IRSA
+    ANSWERS and the verdict differs --- green here, red in CI.  The IRSA route's
+    own behaviour is exercised by ``_FakeIRSA`` below.
+    """
+    raise RuntimeError(f"the IRSA TAP transport is stubbed off in this test: {adql[:80]}")
+
 
 # --------------------------------------------------------------------------
 # Synthetic NEOWISE epoch series
@@ -378,7 +410,8 @@ def test_gaia_query_carries_every_cut_and_the_subsampling():
 def test_the_inner_shapes_cut_the_cone_before_the_allwise_join():
     """The plan fix: the cone is applied to gaia_source ALONE, then AllWISE is joined."""
     field = {"ra": 266.0, "dec": 65.0, "radius_deg": 1.0}
-    assert SHAPES[0] == "inner_cone" and SHAPES[-1] == "flat"
+    assert JOINED_SHAPES == ("inner_cone", "inner_cone_postfilter", "flat")
+    assert SHAPES[0] == "inner_cone" and SHAPES[-1] == SHAPE_GAIA_ONLY
     q = build_query(field=field, cap=5)                      # the default shape
     inner = q[q.index("FROM (") + 6:q.index(") AS g")]
     assert "gaiadr3.gaia_source AS gs" in inner
@@ -394,7 +427,7 @@ def test_the_inner_shapes_cut_the_cone_before_the_allwise_join():
     assert "FROM (" not in build_query(field=field, cap=5, shape="flat")
     # Identical science: same predicate set in every shape, only the alias differs.
     sets = [{p.replace("gs.", "g.") for p in gaia_predicates(field=field)} | set(
-        allwise_predicates()) for _ in SHAPES]
+        allwise_predicates()) for _ in JOINED_SHAPES]
     assert sets[0] == sets[1] == sets[2]
     # The inner TOP only ever bounds a capped query, and never a COUNT(*).
     assert inner_top(None, None) is None
@@ -468,10 +501,12 @@ def test_fetch_parent_reports_the_denominator_and_subsample_fraction():
 
 def test_fetch_parent_separates_failure_from_zero_rows():
     _s, rep = fetch_parent({"fields": [{"ra": 1.0, "dec": 1.0, "radius_deg": 1.0}]},
-                           mode="fields", query_fn=_FakeGaia("fail"))
+                           mode="fields", query_fn=_FakeGaia("fail"),
+                           irsa_fetch_fn=_irsa_dead, vizier_fetch_fn=_asu_dead)
     assert rep["status"] == "QUERY_FAILED" and rep["n_units_failed"] == 1
     _s, rep = fetch_parent({"fields": [{"ra": 1.0, "dec": 1.0, "radius_deg": 1.0}]},
-                           mode="fields", query_fn=_FakeGaia("zero"))
+                           mode="fields", query_fn=_FakeGaia("zero"),
+                           irsa_fetch_fn=_irsa_dead, vizier_fetch_fn=_asu_dead)
     assert rep["status"] == "QUERY_RETURNED_ZERO_ROWS" and rep["n_units_failed"] == 0
 
 
@@ -612,7 +647,7 @@ def test_parse_shard_and_shard_rows():
 
 def test_empty_archive_is_no_data_reached(tmp_path):
     """A failed archive must never read as a science null."""
-    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(),
+    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=_config_for_tests(),
                        query_fn=_FakeGaia("fail"), cone_fn=_cone_factory(),
                        upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                              status="QUERY_FAILED",
@@ -628,7 +663,7 @@ def test_empty_archive_is_no_data_reached(tmp_path):
 
 
 def test_neowise_zero_rows_is_no_data_reached_with_the_right_reason(tmp_path):
-    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(),
+    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=_config_for_tests(),
                        query_fn=_FakeGaia(), cone_fn=_cone_factory("empty"), route="cone",
                        upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                              status="QUERY_FAILED",
@@ -651,7 +686,7 @@ def test_missing_shard_outputs_are_never_a_clean_null(tmp_path):
 
 def test_end_to_end_synthetic_run_finds_the_injected_ignition(tmp_path):
     conf = _config_for_tests()
-    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=6),
+    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=conf, query_fn=_FakeGaia(n=6),
                        cone_fn=_cone_factory("ramp"), route="cone",
                        upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                              status="QUERY_FAILED",
@@ -673,7 +708,7 @@ def test_end_to_end_synthetic_run_finds_the_injected_ignition(tmp_path):
 
 def test_end_to_end_field_of_impacts_yields_no_candidate_and_a_sensitivity(tmp_path):
     conf = _config_for_tests()
-    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=5),
+    rep = ignition_run("all", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=conf, query_fn=_FakeGaia(n=5),
                        cone_fn=_cone_factory("impact"), route="cone",
                        upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                              status="QUERY_FAILED",
@@ -689,7 +724,7 @@ def test_end_to_end_field_of_impacts_yields_no_candidate_and_a_sensitivity(tmp_p
 
 def test_optical_series_directory_is_used_by_assess(tmp_path):
     conf = _config_for_tests()
-    ignition_run("sample,acquire,screen", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=3),
+    ignition_run("sample,acquire,screen", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=conf, query_fn=_FakeGaia(n=3),
                  cone_fn=_cone_factory("ramp"), route="cone")
     odir = tmp_path / "optical"
     odir.mkdir()
@@ -780,6 +815,8 @@ _TIMEOUT_500 = ("HTTPError('Error 500:\\nSQL exception: ERROR: canceling stateme
 
 def _shape_of(adql: str) -> str:
     """Recover which of SHAPES an ADQL string is, the way a reader would."""
+    if "allwise" not in adql.lower():
+        return SHAPE_GAIA_ONLY          # no AllWISE table anywhere: the fourth shape
     if "FROM (" not in adql:
         return "flat"
     return "inner_cone" if "WHERE w.w1mpro" in adql else "inner_cone_postfilter"
@@ -823,10 +860,12 @@ def _upload_fails(*_a, **_k):
 
 def test_probe_tries_the_inner_cone_shape_before_the_flat_one_and_records_it(tmp_path):
     fake = _ShapeGaia(answers=("inner_cone",))
-    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(), query_fn=fake,
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=_config_for_tests(), query_fn=fake,
                        cone_fn=_cone_factory(), upload_fn=_upload_fails)
     assert fake.shapes[0] == "inner_cone"                  # first, before anything flat
     assert "flat" not in fake.shapes                       # a shape that answers ends the ladder
+    # ...and gaia_only was still sent, by the IRSA route, which owns it.
+    assert fake.shapes == ["inner_cone", SHAPE_GAIA_ONLY]
     assert rep["gaia_shape_working"] == "inner_cone"
     assert [s["shape"] for s in rep["gaia_shapes"]] == ["inner_cone"]
     assert rep["gaia_shapes"][0]["status"] == "OK"
@@ -855,10 +894,10 @@ def test_the_sample_stage_reuses_the_shape_the_probe_recorded(tmp_path):
 def test_an_async_queue_failure_falls_back_to_the_next_shape(tmp_path):
     """The statement timeout that killed run 34787803862, verbatim, then a fallback."""
     fake = _ShapeGaia(answers=("inner_cone_postfilter",), error=_TIMEOUT_500)
-    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(), query_fn=fake,
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=_config_for_tests(), query_fn=fake,
                        cone_fn=_cone_factory(), upload_fn=_upload_fails)
     assert fake.shapes[:2] == ["inner_cone", "inner_cone_postfilter"]
-    assert "flat" not in fake.shapes
+    assert "flat" not in fake.shapes                       # a shape that answers ends the ladder
     assert rep["gaia_shape_working"] == "inner_cone_postfilter"
     recs = {s["shape"]: s for s in rep["gaia_shapes"]}
     assert recs["inner_cone"]["status"] == "QUERY_FAILED"
@@ -875,7 +914,7 @@ def test_the_probe_budget_expires_into_timed_out_rather_than_hanging(tmp_path):
                      "columns_timeout_s": 0.25, "neowise_timeout_s": 0.25}
     fake = _ShapeGaia(answers=(), delay_s=30.0, delay_shapes=SHAPES)
     t0 = time.monotonic()
-    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=fake,
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=conf, query_fn=fake,
                        cone_fn=_cone_factory(), upload_fn=_upload_fails)
     assert time.monotonic() - t0 < 20.0                    # it did not wait for the query
     stats = [s["status"] for s in rep["gaia_shapes"]]
@@ -891,14 +930,16 @@ def test_the_probe_budget_expires_into_timed_out_rather_than_hanging(tmp_path):
 def test_the_probe_writes_probe_json_even_when_every_route_fails(tmp_path):
     """25 minutes of evidence must not survive only in a log someone reads by hand."""
     fake = _ShapeGaia(answers=())
-    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=_config_for_tests(), query_fn=fake,
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=_config_for_tests(), query_fn=fake,
                        cone_fn=_cone_factory(status="QUERY_FAILED"), upload_fn=_upload_fails)
     p = tmp_path / "probe.json"
     assert p.exists()
     saved = json.loads(p.read_text())
     assert saved["verdict"] == "NO_DATA_REACHED" == rep["verdict"]
     assert saved["neowise_route_recommended"] == "none"
-    assert [s["shape"] for s in saved["gaia_shapes"]] == list(SHAPES)     # all three tried
+    # All three JOINED shapes tried; `gaia_only` is the IRSA route's own half
+    # and is probed there (rep["irsa_tap"]["gaia"]), not in this ladder.
+    assert [s["shape"] for s in saved["gaia_shapes"]] == list(JOINED_SHAPES)
     for s in saved["gaia_shapes"]:
         assert s["status"] == "QUERY_FAILED"
         assert "canceling statement due to statement timeout" in s["error"]
@@ -953,11 +994,11 @@ def test_probe_recommends_the_upload_route_when_it_answers(tmp_path):
         return QueryResult(label="neowise_upload", service="irsa", status="OK", n_rows=len(d),
                            query="SELECT ...", data=d)
 
-    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=3),
+    rep = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=conf, query_fn=_FakeGaia(n=3),
                        cone_fn=_cone_factory(), upload_fn=upload_ok)
     assert rep["verdict"] == "ALL_ROUTES_REACHABLE"
     assert rep["neowise_route_recommended"] == "upload"
-    rep2 = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, conf=conf, query_fn=_FakeGaia(n=3),
+    rep2 = ignition_run("probe", out_dir=tmp_path, asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead, conf=conf, query_fn=_FakeGaia(n=3),
                         cone_fn=_cone_factory(),
                         upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                               status="QUERY_FAILED",
@@ -1223,9 +1264,11 @@ def test_the_allwise_match_is_proper_motion_propagated_back_to_2010():
 def test_the_vizier_route_is_never_called_when_the_esa_archive_answers():
     """ESA is authoritative and owns the in-archive cross-match: it goes first."""
     asu = _FakeASU()
+    irsa = _FakeIRSA()
     stars, rep = fetch_parent({"fields": [_FIELD]}, mode="fields", query_fn=_FakeGaia(),
-                              vizier_fetch_fn=asu)
+                              vizier_fetch_fn=asu, irsa_fetch_fn=irsa)
     assert asu.urls == []                                   # not one request
+    assert irsa.queries == []                               # nor to IRSA
     assert rep["routes"] == {ROUTE_ESA: {"units": 1, "rows": 6}}
     assert rep["route_used"] == ROUTE_ESA and rep["mixed_routes"] is False
     assert rep["route_fractions"] == {ROUTE_ESA: 1.0}
@@ -1237,7 +1280,8 @@ def test_the_esa_timeout_falls_through_to_vizier_and_records_the_route():
     """Exactly probe.json's situation: no shape answers, so the second route runs."""
     asu = _FakeASU()
     stars, rep = fetch_parent({"fields": [_FIELD]}, mode="fields",
-                              query_fn=_ShapeGaia(answers=()), vizier_fetch_fn=asu)
+                              query_fn=_ShapeGaia(answers=()), vizier_fetch_fn=asu,
+                              irsa_fetch_fn=_irsa_dead)
     assert rep["status"] == "OK" and rep["n_units_failed"] == 0
     # 6 mirror rows, 4 past the AllWISE predicates this route applies itself.
     assert rep["routes"] == {ROUTE_VIZIER: {"units": 1, "rows": 4}}
@@ -1249,7 +1293,9 @@ def test_the_esa_timeout_falls_through_to_vizier_and_records_the_route():
     assert any("II/328/allwise" in u for u in asu.urls)
     unit = rep["per_unit"][0]
     assert unit["route"] == ROUTE_VIZIER and unit["n_rows"] == 4
-    assert unit["shapes_tried"] == list(SHAPES)             # ESA was given every shape first
+    # ESA was given every shape that can serve the parent on its own; `gaia_only`
+    # is not one of them (it has no W1/W2) and belongs to the IRSA route.
+    assert unit["shapes_tried"] == list(JOINED_SHAPES)
     # The ASU cap is reported as what was obtained, never as a complete selection.
     assert rep["parent_count"] is None and rep["subsample_fraction"] is None
     assert "-out.max" in rep["route_note"] and "NOT a COUNT(*)" in rep["route_note"]
@@ -1259,7 +1305,7 @@ def test_an_out_max_capped_chunk_is_reported_as_capped_not_as_a_complete_sample(
     asu = _FakeASU(_stars(6))
     stars, rep = fetch_parent({"fields": [_FIELD], "cap_per_shard": 6},
                               mode="fields", query_fn=_ShapeGaia(answers=()),
-                              vizier_fetch_fn=asu)
+                              vizier_fetch_fn=asu, irsa_fetch_fn=_irsa_dead)
     assert rep["per_unit"][0]["capped"] is True             # 6 rows against -out.max=6
     assert rep["vizier_capped_units"] == ["field_ra266.0_dec65.0"]
     assert any(d.startswith("vizier_out_max_capped:") for d in rep["degraded"])
@@ -1290,24 +1336,28 @@ def test_a_wrong_vizier_catalogue_id_is_a_recorded_status_not_a_crash():
     assert rec3["status"] == "NOT_SUPPORTED_FOR_MODE" and "fabricate" in rec3["reason"]
 
 
-def test_both_parent_routes_failing_stays_no_data_reached_with_every_endpoint_named(tmp_path):
-    """Neither route answered, so nothing was measured --- and the record says where."""
+def test_every_parent_route_failing_stays_no_data_reached_with_every_endpoint_named(tmp_path):
+    """No route answered, so nothing was measured --- and the record says where."""
     rep = ignition_run("all", out_dir=tmp_path, conf=_config_for_tests(),
-                       query_fn=_ShapeGaia(answers=()), asu_fetch_fn=_asu_dead,
+                       query_fn=_ShapeGaia(answers=()), asu_fetch_fn=_asu_dead, irsa_fetch_fn=_irsa_dead,
                        cone_fn=_cone_factory(), upload_fn=_upload_fails)
     assert rep["verdict"] == "NO_DATA_REACHED"
     ep = rep["endpoints"]
     assert ep["parent"][ROUTE_ESA] == "https://gea.esac.esa.int/tap-server/tap"
     assert any("viz-bin/asu-tsv" in u for u in ep["parent"][ROUTE_VIZIER])
+    assert ep["parent"][ROUTE_IRSA]["allwise"] == IRSA_TAP
     assert ep["vizier_asu_probe"]["status"] == "QUERY_FAILED"
     assert ep["vizier_asu_probe"]["usable"] is False
-    assert ep["gaia_shapes_tried"] == list(SHAPES)
+    assert ep["irsa_tap_probe"]["status"] == "QUERY_FAILED"
+    assert ep["irsa_tap_probe"]["usable"] is False
+    assert ep["gaia_shapes_tried"] == list(JOINED_SHAPES)
     assert any("stubbed off" in str(e.get("error") or "") for e in ep["errors"])
     assert any(e.get("route") == ROUTE_VIZIER for e in ep["errors"])
+    assert any(e.get("route") == ROUTE_IRSA for e in ep["errors"])
     assert "NOT a null result" in rep["note"]
     probe = json.loads((tmp_path / "probe.json").read_text())
     assert probe["parent_route_recommended"] == "none"
-    assert probe["parent_routes_tried"] == [ROUTE_ESA, ROUTE_VIZIER]
+    assert probe["parent_routes_tried"] == [ROUTE_ESA, ROUTE_IRSA, ROUTE_VIZIER]
 
 
 def test_a_mixed_route_parent_sample_is_degraded_not_silently_mixed(tmp_path):
@@ -1318,14 +1368,16 @@ def test_a_mixed_route_parent_sample_is_degraded_not_silently_mixed(tmp_path):
     asu = _FakeASU([dict(s, ra=270.0 + 0.01 * i, dec=66.5, plx=10.0, w2=9.45,
                          var="NOT_AVAILABLE")
                     for i, s in enumerate(_stars())])
-    srep = stage_sample(conf, tmp_path, n_shards=1, query_fn=_PickyGaia(), asu_fetch_fn=asu)
+    srep = stage_sample(conf, tmp_path, n_shards=1, query_fn=_PickyGaia(), asu_fetch_fn=asu,
+                        irsa_fetch_fn=_irsa_dead)
     assert srep["mixed_routes"] is True
     assert srep["routes"][ROUTE_ESA]["units"] == 1 and srep["routes"][ROUTE_VIZIER]["units"] == 1
     assert srep["route_fractions"][ROUTE_ESA] == pytest.approx(0.5)
     assert srep["route_used"] == "mixed"
     assert "mixed_parent_routes:esa_gaia+vizier_asu" in srep["degraded"]
     rep = ignition_run("acquire,screen,assess", out_dir=tmp_path, conf=conf,
-                       cone_fn=_cone_factory("ramp"), route="cone", asu_fetch_fn=_asu_dead)
+                       cone_fn=_cone_factory("ramp"), route="cone", asu_fetch_fn=_asu_dead,
+                       irsa_fetch_fn=_irsa_dead)
     assert rep["verdict"].startswith("DEGRADED")
     assert "mixed_parent_routes:esa_gaia+vizier_asu" in rep["verdict"]
     assert rep["denominators"]["parent_routes_mixed"] is True
@@ -1333,17 +1385,21 @@ def test_a_mixed_route_parent_sample_is_degraded_not_silently_mixed(tmp_path):
     assert rep["denominators"]["parent_route_used"] == "mixed"
 
 
-def test_the_probe_tries_and_records_both_parent_routes(tmp_path):
+def test_the_probe_tries_and_records_every_parent_route(tmp_path):
     """The next dispatch must learn which transport works from probe.json alone."""
     asu = _FakeASU()
     rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(),
                        query_fn=_ShapeGaia(answers=()), asu_fetch_fn=asu,
+                       irsa_fetch_fn=_irsa_dead,
                        cone_fn=_cone_factory(), upload_fn=_upload_fails)
     assert rep["gaia_shape_working"] is None                 # the ESA archive: still dark
     assert rep["vizier_asu"]["status"] == "OK" and rep["vizier_asu"]["usable"] is True
     assert rep["vizier_asu"]["catalogues"]["gaia"] == "I/355/gaiadr3"
     assert rep["vizier_asu"]["catalogues"]["allwise"] == "II/328/allwise"
     assert "gaia_catalogue" in rep["vizier_asu"]["asserted_unverified"]
+    # The IRSA route was tried too, and its refusal is recorded, not collapsed.
+    assert rep[ROUTE_IRSA]["status"] == "QUERY_FAILED" and rep[ROUTE_IRSA]["usable"] is False
+    assert rep["parent_routes_tried"] == [ROUTE_ESA, ROUTE_IRSA, ROUTE_VIZIER]
     assert rep["parent_route_recommended"] == ROUTE_VIZIER
     assert rep["verdict"] == "VIZIER_PARENT_AND_NEOWISE"
     # With no ESA row to resolve, the NEOWISE routes are tested on a VizieR star.
@@ -1358,7 +1414,7 @@ def test_the_probe_records_vizier_even_when_the_esa_archive_answers(tmp_path):
     """Probing is not using: ESA answering still keeps ESA as the recommended route."""
     asu = _FakeASU()
     rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(),
-                       query_fn=_FakeGaia(n=3), asu_fetch_fn=asu,
+                       query_fn=_FakeGaia(n=3), asu_fetch_fn=asu, irsa_fetch_fn=_irsa_dead,
                        cone_fn=_cone_factory(), upload_fn=_upload_fails)
     assert rep["gaia_shape_working"] == "inner_cone"
     assert rep["parent_route_recommended"] == ROUTE_ESA
@@ -1414,3 +1470,481 @@ def test_a_zero_row_probe_diagnoses_itself_in_the_same_run():
         assert verdict["status"] == "CONSTRAINT_ZEROED_THE_QUERY", verdict
         assert verdict["culprit"] == "+-c.rd", verdict
         assert "no rows past here" in (verdict.get("body_head") or "")
+
+
+# --------------------------------------------------------------------------
+# The route BETWEEN those two: ESA's gaia_source x IRSA's AllWISE
+#
+# probe.json on main (97c3f99) records all three JOINED shapes TIMED_OUT at
+# 420-480 s and the async queue answering HTTP 500.  What they have in common
+# is not their arrangement -- that is the one thing that differs -- but the
+# table: every one of them reaches gaiadr1.allwise_original_valid through
+# gaiadr3.allwise_best_neighbour.  So a fourth ARRANGEMENT of the same join
+# cannot help, and the only shape that can is `gaia_only`, which never touches
+# it.  These tests are what says the pairing is the SAME science: an ADQL with
+# no AllWISE in it, a frame that is byte-identical to the ESA route's, and a
+# refused service that stays a recorded status rather than an empty sky.
+# --------------------------------------------------------------------------
+_IRSA_COLS = ("designation", "ra", "dec", "w1mpro", "w1sigmpro", "w2mpro", "w2sigmpro",
+              "w3mpro", "w3sigmpro", "cc_flags", "ph_qual", "ext_flg")
+
+
+class _FakeIRSA:
+    """An IRSA TAP stand-in: TAP_SCHEMA, then the AllWISE cone, from ``_stars``.
+
+    Answers the three queries the route actually sends --- the table list, the
+    column list and the cone (plus its ``COUNT(*)``) --- so the asserted names
+    are *resolved against a service's answer* in the test exactly as they will
+    be on the runner, instead of being taken on trust.
+    """
+
+    def __init__(self, stars=None, tables=("allwise_p3as_psd", "allwise_p3as_mep"),
+                 columns=_IRSA_COLS, wise_epoch=ALLWISE_EPOCH, offset_arcsec=0.2,
+                 fail_schema=False, fail_cone=False, zero_cone=False, count_star=None,
+                 no_tap_schema_columns=False):
+        self.stars = _stars() if stars is None else stars
+        self.tables, self.columns = tuple(tables), tuple(columns)
+        self.wise_epoch, self.offset_arcsec = wise_epoch, offset_arcsec
+        self.fail_schema, self.fail_cone = fail_schema, fail_cone
+        self.zero_cone, self.count_star = zero_cone, count_star
+        self.no_tap_schema_columns = no_tap_schema_columns
+        self.queries: list[str] = []
+
+    def _rows(self):
+        rows = []
+        for s in self.stars:
+            ra_w, dec_w = propagate_pm(s["ra"], s["dec"], s["pmra"], s["pmdec"],
+                                       GAIA_EPOCH, self.wise_epoch)
+            rows.append({"designation": f"J{s['sid']}", "ra": float(ra_w),
+                         "dec": float(dec_w) + self.offset_arcsec / 3600.0,
+                         "w1mpro": s["w1"], "w1sigmpro": 0.02, "w2mpro": s["w2"],
+                         "w2sigmpro": 0.02, "w3mpro": s["w3"], "w3sigmpro": 0.05,
+                         "cc_flags": s["ccf"], "ph_qual": s["qph"], "ext_flg": s["ex"]})
+        return pd.DataFrame(rows)
+
+    def __call__(self, adql):
+        self.queries.append(adql)
+        low = adql.lower()
+        if "tap_schema.tables" in low:
+            if self.fail_schema:
+                raise RuntimeError("synthetic IRSA outage: TAP_SCHEMA refused")
+            return pd.DataFrame({"table_name": list(self.tables)})
+        if "tap_schema.columns" in low:
+            if self.fail_schema:
+                raise RuntimeError("synthetic IRSA outage: TAP_SCHEMA refused")
+            if self.no_tap_schema_columns:
+                return pd.DataFrame({"column_name": []})
+            return pd.DataFrame({"column_name": list(self.columns)})
+        if low.startswith("select top 1 *"):
+            return pd.DataFrame({c: [0] for c in self.columns})
+        if self.fail_cone:
+            raise RuntimeError("synthetic IRSA outage: the cone was refused")
+        if "count(*)" in low:
+            n = self.count_star if self.count_star is not None else len(self.stars)
+            return pd.DataFrame({"n": [int(n)]})
+        if self.zero_cone:
+            return pd.DataFrame(columns=list(self.columns))
+        return self._rows()[[c for c in self.columns if c in self._rows().columns]]
+
+
+def _gaia_only_frame(stars):
+    """What the `gaia_only` SELECT list returns: the ESA columns, minus AllWISE."""
+    from seti.shroud.classify import galactic_latitude
+
+    return pd.DataFrame([{
+        "source_id": s["sid"], "ra": s["ra"], "dec": s["dec"],
+        "b": float(galactic_latitude(s["ra"], s["dec"])), "parallax": s["plx"],
+        "parallax_over_error": s["plx_snr"], "pmra": s["pmra"], "pmdec": s["pmdec"],
+        "ruwe": s["ruwe"], "phot_g_mean_mag": s["g"], "bp_rp": s["bp_rp"],
+        "phot_variable_flag": s["var"], "non_single_star": s["nss"],
+        "teff_gspphot": s["teff"], "random_index": int(s["sid"])} for s in stars])
+
+
+def _gaia_only_from(stars):
+    return lambda adql: _gaia_only_frame(stars)
+
+
+class _GaiaOnly(_ShapeGaia):
+    """An ESA stand-in that refuses every joined shape and serves `gaia_only`.
+
+    Which is exactly what ``probe.json`` predicts: every timeout is on the
+    AllWISE mirror reached through ``allwise_best_neighbour``, and a cone on
+    ``gaia_source`` alone is an indexed query the archive serves quickly.
+    """
+
+    def __init__(self, stars=None, joined=(), **kw):
+        super().__init__(answers=joined, **kw)
+        self.stars = _stars() if stars is None else stars
+
+    def __call__(self, adql):
+        if "allwise" not in adql.lower():
+            self.queries.append(adql)
+            self.shapes.append(SHAPE_GAIA_ONLY)
+            if adql.startswith("SELECT COUNT"):
+                return pd.DataFrame({"n": [len(self.stars) * 10]})
+            return _gaia_only_frame(self.stars)
+        return super().__call__(adql)
+
+
+class _PickyGaiaOnly(_FakeGaia):
+    """Answers one field's joined cone and serves the other's over `gaia_only`.
+
+    The mixed-route case with the IRSA route in it: one cone the archive's own
+    cross-match still serves, one it does not.
+    """
+
+    def __init__(self, stars, dead_ra="270.0", **kw):
+        super().__init__(**kw)
+        self.stars, self.dead_ra = stars, str(dead_ra)
+
+    def __call__(self, adql):
+        if f"CIRCLE('ICRS', {self.dead_ra}," in adql:
+            self.queries.append(adql)
+            if "allwise" in adql.lower():
+                raise RuntimeError(_TIMEOUT_500)
+            if adql.startswith("SELECT COUNT"):
+                return pd.DataFrame({"n": [len(self.stars) * 10]})
+            return _gaia_only_frame(self.stars)
+        return super().__call__(adql)
+
+
+def test_the_gaia_only_shape_touches_no_allwise_table_and_carries_every_cut():
+    """The fourth shape: every Gaia cut, and not one AllWISE table anywhere."""
+    field = {"ra": 266.0, "dec": 65.0, "radius_deg": 1.0}
+    q = build_query(field=field, cap=5, shape=SHAPE_GAIA_ONLY)
+    # Not one of the tables that timed out, and not one WISE column.
+    for forbidden in ("allwise_best_neighbour", "allwise_original_valid", "allwise",
+                      "w1mpro", "w2mpro", "cc_flags", "ext_flag", "ph_qual", "w.", "FROM ("):
+        assert forbidden not in q, forbidden
+    assert q.count("FROM") == 1 and "FROM gaiadr3.gaia_source AS g" in q
+    # ...and every Gaia cut, the same ones gaia_predicates gives every shape.
+    for frag in ("CIRCLE('ICRS', 266.0, 65.0, 1.0)", "g.phot_g_mean_mag < 14.5",
+                 "g.parallax > 3.0", "g.parallax_over_error > 10.0", "ABS(g.b) > 15.0",
+                 "g.ruwe < 1.4", "g.phot_variable_flag != 'VARIABLE'",
+                 "g.bp_rp > 0.6 AND g.bp_rp < 2.5",
+                 "5 * LOG10(g.parallax) - 10 > 2.0 + 3.3 * (g.bp_rp - 0.6)"):
+        assert frag in q, frag
+    assert set(gaia_predicates(field=field)) <= set(
+        x.strip() for x in q[q.index("WHERE ") + 6:].split("\n  AND "))
+    assert "SELECT TOP 5 " in q and GAIA_COLS in q
+    # A shell and a shard are expressible too, and LOWER() is still never used.
+    qs = build_query(plx_lo=3.0, plx_hi=4.0, shard=2, n_shards=8, stride=3,
+                     shape=SHAPE_GAIA_ONLY)
+    assert "g.parallax >= 3.0" in qs and "MOD(g.random_index, 24) = 2" in qs
+    assert "LOWER(" not in qs
+    # count_only works for it, and is the count of the UNSUBSAMPLED selection.
+    qc = build_query(field=field, count_only=True, shape=SHAPE_GAIA_ONLY)
+    assert qc.startswith("SELECT COUNT(*) AS n")
+    assert "TOP" not in qc and "MOD(" not in qc and "allwise" not in qc
+    assert "CIRCLE('ICRS', 266.0, 65.0, 1.0)" in qc
+    # The other three shapes are untouched: they still reach both AllWISE tables.
+    for sh in JOINED_SHAPES:
+        assert "gaiadr1.allwise_original_valid" in build_query(field=field, shape=sh)
+    assert SHAPE_GAIA_ONLY in SHAPES and SHAPE_GAIA_ONLY not in JOINED_SHAPES
+
+
+def test_the_esa_route_never_fills_the_parent_from_the_gaia_only_shape():
+    """A frame with no W1/W2 would be cut to nothing, and nothing is not an empty sky."""
+    fake = _GaiaOnly()
+    stars, rep = fetch_parent({"fields": [_FIELD]}, mode="fields", query_fn=fake,
+                              irsa_fetch_fn=_irsa_dead, vizier_fetch_fn=_asu_dead)
+    # The ESA ladder asked for the three joined shapes and stopped there.
+    assert list(dict.fromkeys(s for s in fake.shapes if s in JOINED_SHAPES)) == \
+        list(JOINED_SHAPES)
+    assert rep["per_unit"][0]["shapes_tried"] == list(JOINED_SHAPES)
+    # With IRSA unreachable the route does not even spend an ESA query on the
+    # Gaia half: it verifies the AllWISE side FIRST and records why it stopped.
+    assert SHAPE_GAIA_ONLY not in fake.shapes
+    assert len(stars) == 0 and rep["status"] == "QUERY_FAILED"
+    assert rep["per_unit"][0]["irsa_status"] == "QUERY_FAILED"
+    assert rep["per_unit"][0]["vizier_status"] == "QUERY_FAILED"
+    # With IRSA alive, gaia_only IS sent --- by the IRSA route, which owns it,
+    # and the parent frame it fills carries the W1/W2 the shape itself lacks.
+    live = _GaiaOnly()
+    got, rep2 = fetch_parent({"fields": [_FIELD]}, mode="fields", query_fn=live,
+                             irsa_fetch_fn=_FakeIRSA(), vizier_fetch_fn=_asu_dead)
+    assert live.shapes[-1] == SHAPE_GAIA_ONLY
+    assert rep2["routes"] == {ROUTE_IRSA: {"units": 1, "rows": 4}}
+    assert got["w1mpro"].notna().all() and len(got) == 2
+
+
+def test_the_irsa_route_emits_exactly_the_esa_parent_frame():
+    """Same six stars, ESA's Gaia half and IRSA's AllWISE half: one science."""
+    stars = _stars()
+    esa_keep, esa_counters = select_parent(_esa_frame(stars))
+    irsa = _FakeIRSA(stars)
+    rows, rec = irsa_fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                                query_fn=_gaia_only_from(stars), fetch_fn=irsa)
+    assert rec["status"] == "OK" and rec["route"] == ROUTE_IRSA
+    # Byte-identical columns, in order: no stage downstream can tell the routes apart.
+    assert list(rows.columns) == parent_columns()
+    irsa_keep, irsa_counters = select_parent(rows)
+    assert list(irsa_keep.columns) == list(esa_keep.columns)
+    assert sorted(irsa_keep["source_id"]) == sorted(esa_keep["source_id"]) == ["14", "15"]
+    assert rec["allwise_cut_counters"]["cut_w1w2_photospheric"] == \
+        esa_counters["cut_w1w2_photospheric"] == 2
+    for k in ("cut_parallax", "cut_gaia_variable", "cut_dwarf", "cut_ruwe",
+              "n_out", "n_kinematically_old"):
+        assert irsa_counters[k] == esa_counters[k], k
+    # The Gaia half is the archive's own SQL, with the cuts still in the WHERE.
+    assert rec["gaia"]["shape"] == SHAPE_GAIA_ONLY
+    assert "gaiadr3.gaia_source" in rec["gaia"]["query"] and "allwise" not in rec["gaia"]["query"]
+    # The cross-match is measured here, not read from allwise_best_neighbour.
+    assert rec["match"]["to_epoch"] == ALLWISE_EPOCH and rec["match"]["from_epoch"] == GAIA_EPOCH
+    assert rec["match"]["match_radius_arcsec"] == DEFAULT_IRSA["match_radius_arcsec"]
+    assert (rows["allwise_sep_arcsec"] < 1.0).all()
+    assert (rows["allwise_n_neighbours"] >= 1).all()
+    # The table and every column name were settled against IRSA's own answer.
+    assert rec["verify"]["table"] == "allwise_p3as_psd" and rec["verify"]["verified"] is True
+    got = rec["verify"]["columns_resolved"]
+    assert got["ext_flag"] == "ext_flg" and got["w1mpro_error"] == "w1sigmpro"
+    assert got["allwise_designation"] == "designation"
+    assert rec["cuts_not_applied"] == []
+
+
+def test_the_irsa_cone_is_unfiltered_and_the_cuts_are_applied_after_the_match():
+    """Filtering the AllWISE side first would change which source a star matches."""
+    stars = _stars(3)
+    stars[0]["ccf"] = "0100"                      # contaminated: the archive drops it
+    stars[1]["ex"] = 1                            # an extended source: dropped too
+    irsa = _FakeIRSA(stars)
+    rows, rec = irsa_fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                                query_fn=_gaia_only_from(stars), fetch_fn=irsa)
+    assert sorted(rows["source_id"]) == ["12"]
+    c = rec["allwise_cut_counters"]
+    assert c["cut_cc_flags"] == 1 and c["cut_ext_flag"] == 1 and c["cuts_not_applied"] == []
+    # Nothing that removes a source was sent to IRSA: the cone is the cone.
+    cone = [q for q in irsa.queries if "contains(" in q.lower() and "count(" not in q.lower()]
+    assert len(cone) == 1
+    where = cone[0][cone[0].index("WHERE "):]
+    assert where.count("AND") == 0                        # the cone, and nothing else
+    for forbidden in ("w1mpro", "w2mpro", "cc_flags", "ext_flg", "ph_qual"):
+        assert forbidden not in where, forbidden
+    assert forbidden in cone[0]                           # ...but every one IS selected
+    assert "CIRCLE('ICRS', 266, 65," in where             # the cone, padded
+    assert "allwise_p3as_psd" in cone[0]
+    # ...and the AllWISE cuts are the same four the ESA route writes in SQL.
+    assert "w.cc_flags = '0000'" in " ".join(allwise_predicates())
+    resolved = rec["verify"]["columns_resolved"]
+    direct = allwise_adql(field=_FIELD, table="allwise_p3as_psd", columns=resolved,
+                          max_rows=10)
+    assert direct.startswith("SELECT TOP 10 ") and "FROM allwise_p3as_psd" in direct
+    assert direct.split("WHERE")[1].strip() == where.split("WHERE")[1].strip()
+    counted = allwise_adql(field=_FIELD, table="allwise_p3as_psd", columns=resolved,
+                           count_only=True)
+    assert counted.startswith("SELECT COUNT(*) AS n") and "TOP" not in counted
+
+
+def test_a_refused_irsa_service_is_a_recorded_status_never_an_empty_sky():
+    """QUERY_FAILED and QUERY_RETURNED_ZERO_ROWS are different facts."""
+    # 1. TAP_SCHEMA refused: the service has said NOTHING about the table.
+    v = irsa_verify_service({}, fetch_fn=_FakeIRSA(fail_schema=True))
+    assert v["status"] == "QUERY_FAILED" and v["verified"] is False
+    assert v["status"] != "CATALOGUE_NOT_FOUND"
+    assert "synthetic IRSA outage" in v["error"]
+    assert "NOTHING" in v["reason"] and "CATALOGUE_NOT_FOUND" in v["reason"]
+    rows, rec = irsa_fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                                query_fn=_gaia_only_from(_stars()),
+                                fetch_fn=_FakeIRSA(fail_schema=True))
+    assert len(rows) == 0 and rec["status"] == "QUERY_FAILED"
+    assert rec["n_rows"] == 0 and rec["status"] != "QUERY_RETURNED_ZERO_ROWS"
+    # 2. The cone itself refused, after a clean verification: still QUERY_FAILED.
+    rows2, rec2 = irsa_fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                                  query_fn=_gaia_only_from(_stars()),
+                                  fetch_fn=_FakeIRSA(fail_cone=True))
+    assert len(rows2) == 0 and rec2["status"] == "QUERY_FAILED"
+    assert rec2["verify"]["status"] == "OK"               # the names WERE settled
+    assert "the cone was refused" in rec2["allwise"]["error"]
+    # 3. The cone ANSWERED with no sources: that is a statement about the sky.
+    rows3, rec3 = irsa_fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                                  query_fn=_gaia_only_from(_stars()),
+                                  fetch_fn=_FakeIRSA(zero_cone=True, count_star=0))
+    assert len(rows3) == 0 and rec3["status"] == "QUERY_RETURNED_ZERO_ROWS"
+    assert rec3["allwise"]["status"] == "QUERY_RETURNED_ZERO_ROWS"
+    # 4. The ESA half refused: the route reports THAT, and never a zero-row sky.
+    rows4, rec4 = irsa_fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                                  query_fn=_ShapeGaia(answers=()), fetch_fn=_FakeIRSA())
+    assert len(rows4) == 0 and rec4["status"] == "QUERY_FAILED"
+    assert "statement timeout" in rec4["gaia"]["error"]
+
+
+def test_a_wrong_irsa_table_is_catalogue_not_found_with_the_names_irsa_did_return():
+    """The table name is asserted-and-unverified; a wrong one must come back as evidence."""
+    irsa = _FakeIRSA(tables=("allwise_p3as_mep", "allwise_p3am_cdd"))
+    v = irsa_verify_service({}, fetch_fn=irsa)
+    assert v["status"] == "CATALOGUE_NOT_FOUND" and v["verified"] is False
+    assert v["table"] is None
+    assert "allwise_p3as_psd" in v["error"]              # what was asked for
+    assert "allwise_p3am_cdd" in v["error"]              # what the service answered
+    assert v["tables_seen"] == ["allwise_p3am_cdd", "allwise_p3as_mep"]
+    assert "allwise_table" in v["asserted_unverified"]
+    rows, rec = irsa_fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                                query_fn=_gaia_only_from(_stars()), fetch_fn=irsa)
+    assert len(rows) == 0 and rec["status"] == "CATALOGUE_NOT_FOUND"
+    # A configured alternative spelling IS accepted, and recorded as the one used.
+    alt = _FakeIRSA(tables=("wise_allwise_p3as_psd",))
+    v2 = irsa_verify_service({}, fetch_fn=alt)
+    assert v2["status"] == "OK" and v2["table"] == "wise_allwise_p3as_psd"
+
+
+def test_an_unresolved_irsa_column_list_is_columns_unresolved_with_the_service_text():
+    thin = _FakeIRSA(columns=("designation", "ra", "cntr", "glon"))
+    v = irsa_verify_service({}, fetch_fn=thin)
+    assert v["status"] == "COLUMNS_UNRESOLVED" and v["verified"] is False
+    assert v["table"] == "allwise_p3as_psd"               # the table WAS there
+    for frag in ("dec", "w1mpro", "w2mpro", "allwise_p3as_psd", "cntr", "glon"):
+        assert frag in v["error"], frag                   # the service's own list
+    assert sorted(v["columns_missing"]) == sorted(
+        ["dec", "w1mpro", "w1mpro_error", "w2mpro", "w2mpro_error", "w3mpro",
+         "w3mpro_error", "cc_flags", "ph_qual", "ext_flag"])
+    rows, rec = irsa_fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                                query_fn=_gaia_only_from(_stars()), fetch_fn=thin)
+    assert len(rows) == 0 and rec["status"] == "COLUMNS_UNRESOLVED"
+    # A service that does not serve TAP_SCHEMA.columns is asked the table itself.
+    peeked = _FakeIRSA(no_tap_schema_columns=True)
+    v2 = irsa_verify_service({}, fetch_fn=peeked)
+    assert v2["status"] == "OK" and v2["columns_resolved"]["ext_flag"] == "ext_flg"
+    assert any(q.lower().startswith("select top 1 *") for q in peeked.queries)
+    # A column that carries a cut but is absent NAMES the cut it could not apply.
+    noflag = _FakeIRSA(columns=tuple(c for c in _IRSA_COLS if c != "cc_flags"))
+    v3 = irsa_verify_service({}, fetch_fn=noflag)
+    assert v3["status"] == "OK" and v3["cuts_not_applied"] == ["cc_flags"]
+
+
+def test_the_irsa_cone_measures_its_own_truncation_against_count_star():
+    """ASU has a row cap and no COUNT(*); IRSA has both, so truncation is measured."""
+    stars = _stars()
+    irsa = _FakeIRSA(stars, count_star=999)
+    conf = {"fields": [_FIELD], "irsa": {"max_rows": 6}}
+    rows, rec = irsa_fetch_unit(conf, {"field": _FIELD},
+                                query_fn=_gaia_only_from(stars), fetch_fn=irsa)
+    assert rec["allwise"]["count_star"] == 999
+    assert rec["allwise"]["truncated"] is True and rec["truncated"] is True
+    assert rec["allwise"]["capped"] is True                # 6 rows against TOP 6
+    assert "TOP 6 " in rec["allwise"]["cone_query"]["query"]
+    assert len(rows) == 4                                  # still the real four
+    clean = _FakeIRSA(stars)
+    _r2, rec2 = irsa_fetch_unit({"fields": [_FIELD]}, {"field": _FIELD},
+                                query_fn=_gaia_only_from(stars), fetch_fn=clean)
+    assert rec2["truncated"] is False and rec2["allwise"]["count_star"] == len(stars)
+    assert "COUNT(*)" in rec2["row_count_note"]
+
+
+def test_a_parallax_shell_is_not_a_cone_for_the_irsa_route_either():
+    _r, rec = irsa_fetch_unit({}, {"plx_lo": 3.0, "plx_hi": 4.0}, fetch_fn=_FakeIRSA(),
+                              query_fn=_gaia_only_from(_stars()))
+    assert rec["status"] == "NOT_SUPPORTED_FOR_MODE" and "fabricate" in rec["reason"]
+    _r2, rec2 = irsa_fetch_unit({"irsa": {"enabled": False}}, {"field": _FIELD},
+                                fetch_fn=_FakeIRSA(), query_fn=_gaia_only_from(_stars()))
+    assert rec2["status"] == "DISABLED"
+
+
+def test_the_irsa_route_runs_before_vizier_and_only_when_no_esa_shape_answers():
+    """Order: ESA (authoritative), then IRSA (ESA's own Gaia cuts), then the mirror."""
+    stars = _stars()
+    asu, irsa = _FakeASU(stars), _FakeIRSA(stars)
+    got, rep = fetch_parent({"fields": [_FIELD]}, mode="fields",
+                            query_fn=_GaiaOnly(stars), vizier_fetch_fn=asu,
+                            irsa_fetch_fn=irsa)
+    assert rep["status"] == "OK" and rep["n_units_failed"] == 0
+    assert rep["routes"] == {ROUTE_IRSA: {"units": 1, "rows": 4}}
+    assert rep["route_used"] == ROUTE_IRSA and rep["mixed_routes"] is False
+    assert asu.urls == []                                  # the mirror was never reached
+    assert set(got["parent_route"]) == {ROUTE_IRSA}
+    assert set(got["query_shape"]) == {SHAPE_GAIA_ONLY}
+    assert len(got) == 2                                   # the same two ESA would keep
+    unit = rep["per_unit"][0]
+    assert unit["route"] == ROUTE_IRSA and unit["shapes_tried"] == list(JOINED_SHAPES)
+    assert rep["route_endpoints"][ROUTE_IRSA]["allwise"] == IRSA_TAP
+    assert "irsa_tap" in rep["route_note"]
+    # IRSA's answer about its own names is settled ONCE and carried across units.
+    assert sum(1 for q in irsa.queries if "tap_schema.tables" in q.lower()) == 1
+
+
+def test_the_irsa_verification_is_not_repeated_for_every_cone():
+    conf = {"fields": [_FIELD, {"ra": 270.0, "dec": 66.5, "radius_deg": 1.0}]}
+    irsa = _FakeIRSA(_stars())
+    _got, rep = fetch_parent(conf, mode="fields", query_fn=_GaiaOnly(),
+                             irsa_fetch_fn=irsa, vizier_fetch_fn=_asu_dead)
+    assert rep["routes"][ROUTE_IRSA]["units"] == 2
+    assert sum(1 for q in irsa.queries if "tap_schema" in q.lower()) == 2   # tables + columns
+    assert sum(1 for q in irsa.queries if "contains(" in q.lower()) == 4    # 2 cones + 2 counts
+
+
+def test_a_parent_mixing_esa_and_irsa_is_degraded_not_silently_mixed(tmp_path):
+    """Half the sky from the archive's own cross-match, half from a positional one."""
+    conf = _config_for_tests()
+    second = {"ra": 270.0, "dec": 66.5, "radius_deg": 1.0}
+    conf["sample"]["fields"] = [_FIELD, second]
+    stars = [dict(s, ra=270.0 + 0.01 * i, dec=66.5) for i, s in enumerate(_stars())]
+    srep = stage_sample(conf, tmp_path, n_shards=1, query_fn=_PickyGaiaOnly(stars),
+                        irsa_fetch_fn=_FakeIRSA(stars), asu_fetch_fn=_asu_dead)
+    assert srep["mixed_routes"] is True
+    assert srep["routes"][ROUTE_ESA]["units"] == 1 and srep["routes"][ROUTE_IRSA]["units"] == 1
+    assert srep["route_used"] == "mixed"
+    assert "mixed_parent_routes:esa_gaia+irsa_tap" in srep["degraded"]
+    assert srep["route_fractions"][ROUTE_IRSA] == pytest.approx(4 / 10)
+
+
+def test_the_probe_records_the_irsa_route_and_recommends_it_over_vizier(tmp_path):
+    """Both fallbacks alive: the one that keeps ESA's own Gaia cuts wins."""
+    stars = _stars()
+    rep = ignition_run("probe", out_dir=tmp_path, conf=_config_for_tests(),
+                       query_fn=_GaiaOnly(stars), asu_fetch_fn=_FakeASU(stars),
+                       irsa_fetch_fn=_FakeIRSA(stars),
+                       cone_fn=_cone_factory(), upload_fn=_upload_fails)
+    assert rep["gaia_shape_working"] is None                # the joined shapes: still dark
+    assert rep[ROUTE_IRSA]["status"] == "OK" and rep[ROUTE_IRSA]["usable"] is True
+    assert rep[ROUTE_IRSA]["gaia_shape"] == SHAPE_GAIA_ONLY
+    assert rep[ROUTE_IRSA]["gaia_only_status"] == "OK"      # the fourth shape ANSWERED
+    assert rep[ROUTE_IRSA]["table"] == "allwise_p3as_psd"
+    assert rep[ROUTE_IRSA]["endpoints"]["allwise"] == IRSA_TAP
+    assert "allwise_table" in rep[ROUTE_IRSA]["asserted_unverified"]
+    assert rep[ROUTE_IRSA]["parent_chunk"]["n_rows"] == 4
+    assert rep["vizier_asu"]["usable"] is True              # recorded, and NOT chosen
+    assert rep["parent_route_recommended"] == ROUTE_IRSA
+    assert rep["parent_routes_tried"] == [ROUTE_ESA, ROUTE_IRSA, ROUTE_VIZIER]
+    assert rep["verdict"] == "IRSA_PARENT_AND_NEOWISE"
+    assert rep["neowise_star_from_route"] == ROUTE_IRSA     # a real star for the cone test
+    assert rep["neowise_cone"]["status"] == "OK"
+    saved = json.loads((tmp_path / "probe.json").read_text())
+    assert saved["parent_route_recommended"] == ROUTE_IRSA
+    assert saved[ROUTE_IRSA]["verify"]["columns_resolved"]["ext_flag"] == "ext_flg"
+    # ...and the shape the sample stage reuses is still a JOINED one, never this.
+    assert saved["gaia_shape_working"] is None
+    srep = stage_sample(_config_for_tests(), tmp_path, n_shards=1,
+                        query_fn=_GaiaOnly(stars), irsa_fetch_fn=_FakeIRSA(stars),
+                        asu_fetch_fn=_asu_dead)
+    assert srep["query_shape_from_probe"] is None
+    assert srep["routes"] == {ROUTE_IRSA: {"units": 1, "rows": 4}}
+
+
+def test_a_dead_irsa_service_is_recorded_by_the_probe_and_never_crashes_it(tmp_path):
+    rep, rows = irsa_probe_route({"fields": [_FIELD]}, query_fn=_gaia_only_from(_stars()),
+                                 fetch_fn=_irsa_dead)
+    assert len(rows) == 0 and rep["usable"] is False
+    assert rep["status"] == "QUERY_FAILED"
+    assert rep["endpoints"]["allwise"] == IRSA_TAP
+    assert "stubbed off" in rep["verify"]["error"]
+    # The gaia_only shape is still probed and recorded: whether ESA serves a cone
+    # on gaia_source alone is the fact this route turns on.
+    assert rep["gaia_only_status"] == "OK"
+    assert rep["gaia"]["shape"] == SHAPE_GAIA_ONLY
+
+
+def test_the_irsa_route_is_configured_and_documented():
+    conf = load_ignition_config()
+    ic = conf["sample"]["irsa"]
+    assert ic["allwise_table"] == "allwise_p3as_psd"
+    assert ic["enabled"] is True and ic["count_cone"] is True
+    assert ic["w1_max"] is None                       # the cone is unfiltered
+    assert ic["columns"]["ext_flag"][0] == "ext_flg"
+    assert ic["columns"]["w1mpro_error"] == ["w1sigmpro"]
+    assert conf["probe"]["shapes"] == list(SHAPES)    # gaia_only is on the record
+    assert conf["probe"]["irsa_timeout_s"] >= 300.0
+    raw = Path("config/ignition.yaml").read_text()
+    irsa_block = raw[raw.index("  irsa:"):raw.index("  vizier:")]
+    assert "verify" in irsa_block                     # asserted-and-unverified, in writing
+    doc = Path("docs/ignition.md").read_text()
+    assert "irsa.ipac.caltech.edu/TAP" in doc and "allwise_p3as_psd" in doc
+    assert "gaia_only" in doc

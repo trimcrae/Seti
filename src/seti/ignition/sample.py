@@ -38,8 +38,20 @@ uses the shape that answered instead of re-deriving it:
     AllWISE colour/quality cuts become a pandas post-filter, which
     :func:`select_parent` already applies to every frame regardless.
 ``flat``
-    the original single-``WHERE`` join, kept last so that what failed is still
-    executable and still on the record.
+    the original single-``WHERE`` join, kept last of the joined shapes so that
+    what failed is still executable and still on the record.
+``gaia_only``
+    ``gaiadr3.gaia_source`` **alone**: every Gaia cut, an indexed cone, and *no*
+    AllWISE table anywhere in the statement.  It is not a parent sample by
+    itself --- it has no W1/W2 --- so it is deliberately NOT in
+    :data:`JOINED_SHAPES` and the ESA route never uses it to fill the parent.
+    It is the Gaia half of the THIRD route (:mod:`seti.ignition.irsa_route`),
+    which pairs it with the AllWISE catalogue fetched from IRSA's own TAP
+    service rather than from ESA's 750-million-row mirror.  ``probe.json`` on
+    ``main`` (97c3f99) records all three joined shapes ``TIMED_OUT`` at
+    420--480 s and the async queue answering ``HTTP 500``; the one thing every
+    one of them has in common is ``gaiadr1.allwise_original_valid``, so the only
+    shape change that can help is the one that does not touch it at all.
 
 Transport: :func:`run_gaia_query` walks ``astroquery`` async, ``pyvo`` async,
 then the sync endpoints, time-boxes every attempt, and records which queue
@@ -89,15 +101,29 @@ QUERY_FAILED = "QUERY_FAILED"
 QUERY_TIMED_OUT = "TIMED_OUT"
 
 #: Which SOURCE served a unit of the parent sample.  ``esa_gaia`` is the
-#: authoritative archive and is always tried first; ``vizier_asu`` is the
-#: non-TAP fallback (:mod:`seti.ignition.vizier_route`) and runs only where ESA
-#: did not answer.  Defined here so the fallback module can import them without
-#: a cycle.
+#: authoritative archive and is always tried first; ``irsa_tap`` is ESA's
+#: ``gaia_source`` (the ``gaia_only`` shape) paired with IRSA's own AllWISE
+#: catalogue (:mod:`seti.ignition.irsa_route`); ``vizier_asu`` is the non-TAP
+#: fallback (:mod:`seti.ignition.vizier_route`).  Both alternatives run only
+#: where the route before them did not answer.  Defined here so those modules
+#: can import them without a cycle.
 ROUTE_ESA = "esa_gaia"
+ROUTE_IRSA = "irsa_tap"
 ROUTE_VIZIER = "vizier_asu"
 
 #: Candidate query shapes, tried in this order.  See the module docstring.
-SHAPES: tuple[str, ...] = ("inner_cone", "inner_cone_postfilter", "flat")
+SHAPES: tuple[str, ...] = ("inner_cone", "inner_cone_postfilter", "flat", "gaia_only")
+
+#: The shapes that carry the AllWISE join and can therefore serve the parent
+#: sample **on their own**.  ``gaia_only`` cannot: it has no W1/W2 at all, so a
+#: frame built from it would be cut to nothing by ``select_parent``'s
+#: photospheric-colour test and that emptiness would read as an empty sky.  The
+#: ESA route's ladder (:func:`_shape_order`) is over these three only; the
+#: fourth shape belongs to the IRSA route, which supplies the missing half.
+JOINED_SHAPES: tuple[str, ...] = ("inner_cone", "inner_cone_postfilter", "flat")
+
+#: The Gaia half of the IRSA route, by name.
+SHAPE_GAIA_ONLY = "gaia_only"
 
 _ALIAS_RE = re.compile(r"\bg\.")
 
@@ -269,6 +295,19 @@ def build_query(conf: dict | None = None, *, plx_lo: float | None = None,
     gp = gaia_predicates(c, plx_lo=plx_lo, plx_hi=plx_hi, field=field, mod=mod)
     wp = allwise_predicates(c)
     top = f"TOP {int(cap)} " if (cap and not count_only) else ""
+
+    if shape == SHAPE_GAIA_ONLY:
+        # The THIRD route's Gaia half.  gaiadr3.gaia_source ALONE: no
+        # allwise_best_neighbour, no allwise_original_valid, no w. column
+        # anywhere --- which is the whole point, because that table is the one
+        # thing all three joined shapes had in common when they timed out.  The
+        # AllWISE side comes from IRSA (seti.ignition.irsa_route) and the
+        # colour/flag predicates are applied there, in pandas, exactly as the
+        # `inner_cone_postfilter` shape already leaves them to select_parent.
+        where = "\n  AND ".join(gp)
+        if count_only:
+            return f"SELECT COUNT(*) AS n\nFROM gaiadr3.gaia_source AS g\nWHERE {where}"
+        return f"SELECT {top}{GAIA_COLS}\nFROM gaiadr3.gaia_source AS g\nWHERE {where}"
 
     if shape == "flat":
         where = "\n  AND ".join(gp + wp)
@@ -597,20 +636,66 @@ def _vizier_endpoints(conf: dict) -> list[str]:
         return []
 
 
+def _irsa_unit(conf: dict, unit: dict, *, label: str, cap: int | None = None,
+               query_fn=None, fetch_fn=None, use: bool = True,
+               verified: dict | None = None) -> tuple[pd.DataFrame, dict | None]:
+    """The THIRD route for one unit: ``gaia_only`` at ESA x AllWISE at IRSA.
+
+    Same contract as :func:`_vizier_unit`: ``record=None`` means the route was
+    not used at all, and every other outcome --- an import failure, a refused
+    service, a table that is not there --- is a recorded status rather than a
+    raise.  ``verified`` carries IRSA's own answer about its table and column
+    names forward from an earlier unit so the run does not re-ask per cone.
+    """
+    if not use:
+        return pd.DataFrame(), None
+    try:
+        from .irsa_route import enabled as irsa_enabled
+        from .irsa_route import fetch_unit as irsa_fetch_unit
+    except Exception as exc:                               # noqa: BLE001
+        return pd.DataFrame(), {"route": ROUTE_IRSA, "label": label,
+                                "status": QUERY_FAILED, "error": repr(exc)}
+    if not irsa_enabled(conf):
+        return pd.DataFrame(), {"route": ROUTE_IRSA, "label": label, "status": "DISABLED",
+                                "reason": "config sample.irsa.enabled is false"}
+    try:
+        return irsa_fetch_unit(conf, unit, cap=cap, query_fn=query_fn, fetch_fn=fetch_fn,
+                               label=label, verified=verified)
+    except Exception as exc:                               # noqa: BLE001
+        return pd.DataFrame(), {"route": ROUTE_IRSA, "label": label,
+                                "status": QUERY_FAILED, "error": repr(exc)}
+
+
+def _irsa_endpoints(conf: dict) -> dict:
+    """The two services the third route needs, named even when it is never used."""
+    try:
+        from .irsa_route import IRSA_TAP
+        return {"gaia": GAIA_TAP, "allwise": IRSA_TAP}
+    except Exception:                                      # noqa: BLE001
+        return {"gaia": GAIA_TAP, "allwise": None}
+
+
 def _shape_order(conf: dict, shape: str | None, working: str | None) -> list[str]:
-    """Preferred shape first, then the rest of :data:`SHAPES` as fallbacks."""
+    """Preferred shape first, then the rest of :data:`JOINED_SHAPES` as fallbacks.
+
+    ``gaia_only`` is deliberately absent: it returns no W1/W2, so a parent frame
+    built from it would be cut to nothing and the emptiness would read as an
+    empty sky.  It is reached through :mod:`seti.ignition.irsa_route`, which
+    supplies the AllWISE half, and nowhere else.
+    """
     pref: list[str] = []
     for s in (working, shape, conf.get("query_shape")):
-        if s and s != "auto" and s in SHAPES and s not in pref:
+        if s and s != "auto" and s in JOINED_SHAPES and s not in pref:
             pref.append(s)
-    return pref + [s for s in SHAPES if s not in pref]
+    return pref + [s for s in JOINED_SHAPES if s not in pref]
 
 
 def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards: int = 1,
                  cap_per_shard: int | None = None, query_fn=None,
                  fields: list[dict] | None = None,
                  shape: str | None = None, vizier: bool = True,
-                 vizier_fetch_fn=None) -> tuple[pd.DataFrame, dict]:
+                 vizier_fetch_fn=None, irsa: bool = True,
+                 irsa_fetch_fn=None) -> tuple[pd.DataFrame, dict]:
     """Pull the parent sample and report its denominator honestly.
 
     Returns ``(stars, report)``.  ``report["status"]`` is ``OK``,
@@ -618,16 +703,24 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
     is the archive's ``COUNT(*)`` of the full selection when it could be
     measured, and ``report["subsample_fraction"]`` the fraction actually pulled.
 
-    **Two routes, in order.**  Each unit is first asked of the ESA archive over
-    every query shape (:func:`_shape_order`); ESA is authoritative and owns the
-    in-archive cross-match, so it always goes first and the second route does
-    not run at all for a unit ESA answered.  When no shape answers --- which is
-    what ``results/ignition/probe.json`` records for every shape and both queues
-    --- the unit is retried over VizieR's non-TAP ASU interface
-    (:mod:`seti.ignition.vizier_route`).  ``report["routes"]`` says which source
-    served how many units and rows, ``report["route_fractions"]`` what fraction
-    of the rows each contributed, and a sample assembled from BOTH is
-    ``mixed_routes`` and carries a ``DEGRADED`` entry --- never silently mixed.
+    **Three routes, in order.**  Each unit is first asked of the ESA archive
+    over every joined query shape (:func:`_shape_order`); ESA is authoritative
+    and owns the in-archive cross-match, so it always goes first and no other
+    route runs at all for a unit ESA answered.  When no shape answers --- which
+    is what ``results/ignition/probe.json`` records for every shape and both
+    queues --- the unit is retried over
+
+    #. :mod:`seti.ignition.irsa_route`: the ``gaia_only`` shape at ESA (an
+       indexed cone on ``gaia_source`` alone, which touches none of the tables
+       that timed out) joined positionally to the AllWISE catalogue fetched
+       from **IRSA's own TAP service**, the archive AllWISE actually lives in;
+    #. :mod:`seti.ignition.vizier_route`: VizieR's non-TAP ASU interface, whose
+       Gaia side is a mirror with an ``-out.max`` row cap and no ``COUNT(*)``.
+
+    ``report["routes"]`` says which source served how many units and rows,
+    ``report["route_fractions"]`` what fraction of the rows each contributed,
+    and a sample assembled from more than one is ``mixed_routes`` and carries a
+    ``DEGRADED`` entry --- never silently mixed.
     """
     c = {**DEFAULT_SAMPLE, **(conf or {})}
     mode = mode or str(c.get("mode", "fields"))
@@ -646,6 +739,10 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
     capped_units: list[str] = []
     cuts_skipped: set[str] = set()
     use_vizier = bool(vizier)
+    use_irsa = bool(irsa)
+    # IRSA's own answer about its AllWISE table and column names, carried from
+    # the first unit that asked so the run does not re-ask TAP_SCHEMA per cone.
+    irsa_verified: dict | None = None
     t0 = _time.monotonic()
 
     units: list[dict]
@@ -679,6 +776,7 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
             share = max(int(total_cap / max(len(units), 1)), 1)
             stride = max(int(np.ceil(n_unit / share)), 1)
         answered = False
+        irec: dict | None = None
         for sh in _shape_order(c, shape, working):
             q = build_query(c, stride=stride, shape=sh,
                             cap=(cap * max(int(n_shards), 1) if mode == "fields" else None), **u)
@@ -709,7 +807,42 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
             break
         if not answered:
             # --- the SECOND route.  Only here: the ESA archive is authoritative,
-            # has the in-archive cross-match, and must be given every shape first.
+            # has the in-archive cross-match, and must be given every joined
+            # shape first.  This one keeps ESA for the Gaia half (the gaia_only
+            # shape, with every Gaia cut still in SQL) and goes to IRSA for the
+            # AllWISE half, so the only thing it gives up is the in-archive
+            # cross-match --- strictly less than the VizieR route gives up.
+            idf, irec = _irsa_unit(c, u, label=label,
+                                   cap=(total_cap if mode == "fields" else None),
+                                   query_fn=query_fn, fetch_fn=irsa_fetch_fn, use=use_irsa,
+                                   verified=irsa_verified)
+            if irec is not None:
+                ledger.append({"label": label, **irec})
+                if (irec.get("verify") or {}).get("verified"):
+                    irsa_verified = irec["verify"]
+            if irec is not None and irec.get("status") in ("OK", QUERY_ZERO):
+                answered = True
+                per_unit.append({"unit": label, "n_parent": n_unit, "n_rows": int(len(idf)),
+                                 "stride": 1, "fraction": 1.0, "route": ROUTE_IRSA,
+                                 "status": irec["status"], "capped": bool(irec.get("capped")),
+                                 "truncated": bool(irec.get("truncated")),
+                                 "shape": SHAPE_GAIA_ONLY,
+                                 "shapes_tried": _shape_order(c, shape, working)})
+                if len(idf):
+                    idf = idf.copy()
+                    idf["sample_unit"] = label
+                    idf["subsample_stride"] = 1
+                    idf["query_shape"] = SHAPE_GAIA_ONLY
+                    idf["parent_route"] = ROUTE_IRSA
+                    frames.append(idf)
+                n_by_route[ROUTE_IRSA] = n_by_route.get(ROUTE_IRSA, 0) + int(len(idf))
+                units_by_route[ROUTE_IRSA] = units_by_route.get(ROUTE_IRSA, 0) + 1
+                if irec.get("capped"):
+                    capped_units.append(label)
+                cuts_skipped.update(irec.get("cuts_not_applied") or [])
+
+        if not answered:
+            # --- the THIRD route, for a unit neither of the above answered.
             vdf, vrec = _vizier_unit(c, u, label=label, cap=vizier_cap,
                                      fetch_fn=vizier_fetch_fn, use=use_vizier)
             if vrec is not None:
@@ -737,6 +870,8 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
                 per_unit.append({"unit": label, "n_parent": n_unit, "n_rows": 0,
                                  "status": "QUERY_FAILED", "route": None,
                                  "shapes_tried": _shape_order(c, shape, working),
+                                 "irsa_status": (irec or {}).get("status"),
+                                 "irsa_error": (irec or {}).get("error"),
                                  "vizier_status": (vrec or {}).get("status"),
                                  "vizier_error": (vrec or {}).get("error")})
 
@@ -772,7 +907,8 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
         "n_rows_pulled": n_pulled, "n_after_local_cuts": int(len(stars)),
         "parent_count": parent_count,
         "subsample_fraction": (n_pulled / parent_count if parent_count else None),
-        "route_endpoints": {ROUTE_ESA: GAIA_TAP, ROUTE_VIZIER: _vizier_endpoints(c)},
+        "route_endpoints": {ROUTE_ESA: GAIA_TAP, ROUTE_IRSA: _irsa_endpoints(c),
+                            ROUTE_VIZIER: _vizier_endpoints(c)},
         "route_errors": [{"label": e.get("label"), "route": e.get("route", ROUTE_ESA),
                           "shape": e.get("shape"), "status": e.get("status"),
                           "error": e.get("error")}
@@ -790,16 +926,21 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
             "over n_rows_pulled, never a statement about the parent."),
         "route_note": (
             "routes/route_fractions say which SOURCE served each unit: esa_gaia is the "
-            "authoritative ESA archive (with its own allwise_best_neighbour cross-match), "
-            "vizier_asu is the non-TAP VizieR mirror with a positional cross-match. Rows "
-            "obtained over vizier_asu are bounded by the ASU -out.max cap, which is a row "
-            "cap and NOT a COUNT(*); a sample drawn from both routes is DEGRADED."),
+            "authoritative ESA archive (with its own allwise_best_neighbour cross-match); "
+            "irsa_tap is ESA's gaia_source under the gaia_only shape joined positionally to "
+            "the AllWISE catalogue at IRSA; vizier_asu is the non-TAP VizieR mirror, also "
+            "with a positional cross-match. Rows obtained over vizier_asu are bounded by the "
+            "ASU -out.max cap, which is a row cap and NOT a COUNT(*); irsa_tap reports its "
+            "own COUNT(*) per cone and flags a truncated one. A sample drawn from more than "
+            "one route is DEGRADED."),
     }
     return stars, report
 
 
-__all__ = ["DEFAULT_SAMPLE", "GAIA_COLS", "GAIA_TAP", "GAIA_TRANSPORTS", "QUERY_FAILED",
-           "QUERY_OK", "QUERY_TIMED_OUT", "QUERY_ZERO", "ROUTE_ESA", "ROUTE_VIZIER", "SHAPES",
+__all__ = ["DEFAULT_SAMPLE", "GAIA_COLS", "GAIA_TAP", "GAIA_TRANSPORTS", "JOINED_SHAPES",
+           "QUERY_FAILED",
+           "QUERY_OK", "QUERY_TIMED_OUT", "QUERY_ZERO", "ROUTE_ESA", "ROUTE_IRSA",
+           "ROUTE_VIZIER", "SHAPES", "SHAPE_GAIA_ONLY",
            "GaiaQueryFailed",
            "QueryTimeout", "allwise_predicates", "call_with_timeout", "build_query", "fetch_parent", "gaia_predicates",
            "gaia_query", "inner_top", "parallax_shells", "parent_columns", "query_fn_with_record",

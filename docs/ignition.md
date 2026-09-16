@@ -63,7 +63,8 @@ transition residue is the necrofrontier document's own.
 | Role | Source | Access | State |
 |---|---|---|---|
 | Parent sample | Gaia DR3 `gaia_source` × `allwise_best_neighbour` × `gaiadr1.allwise_original_valid` | ESA Gaia TAP, ADQL, in-archive join | **DARK** as of `results/ignition/probe.json` 2026-09-14T00:22Z — all three query shapes `TIMED_OUT` (480/480/420 s), prior run `Error 500` statement timeout and `Error 503` 150-job ceiling |
-| Parent sample, **second route** | VizieR mirrors `I/355/gaiadr3` × `II/328/allwise` (`I/355/paramp` for parameters) | VizieR **non-TAP** ASU, `viz-bin/asu-tsv`, HTTP GET → TSV | the transport that worked the same night (it served ULINE's IRC+10216 table while TAPVizieR itself returned 503); catalogue ids **asserted, unverified** — the probe checks them |
+| Parent sample, **second route** | Gaia DR3 `gaia_source` **alone** (the `gaia_only` shape) × AllWISE `allwise_p3as_psd` | ESA Gaia TAP for the Gaia half, **IRSA TAP** (`https://irsa.ipac.caltech.edu/TAP`) for the AllWISE half, matched positionally | the shape that touches none of the tables that timed out; the AllWISE table and column names are **asserted, unverified** — `verify_service` settles them against IRSA's own `TAP_SCHEMA` at runtime |
+| Parent sample, **third route** | VizieR mirrors `I/355/gaiadr3` × `II/328/allwise` (`I/355/paramp` for parameters) | VizieR **non-TAP** ASU, `viz-bin/asu-tsv`, HTTP GET → TSV | the transport that worked the same night (it served ULINE's IRC+10216 table while TAPVizieR itself returned 503); catalogue ids **asserted, unverified** — the probe checks them |
 | The decade series | NEOWISE-R single exposures, `neowiser_p1bs_psd` (2013.9–2024.6) | IRSA TAP | **REACHED** (`results/necrofrontier/probe.json` `irsa_neowise_tap`; VIGIL's probe: 3,873 rows for one star, 21 visits) |
 | Optical flatness | ZTF / ASAS-SN per-star CSV | hook: `--optical-dir <dir>/<source_id>.csv` | not wired to a service; recorded as `optical: not_checked` when absent |
 | 2010 photosphere | AllWISE W1, W2, W3, `ph_qual`, `cc_flags`, `ext_flag` | inside the Gaia join | as above |
@@ -122,7 +123,69 @@ join builds its side first), and the `503` says the request went to the
   endpoints, which bulk queries never touch (`allow_sync=False`). Every
   attempt is time-boxed and the queue that served the query is recorded.
 
-### 4.1b A second route to the same parent sample (`vizier_route.py`)
+### 4.1b A second route to the same parent sample (`irsa_route.py`)
+
+The shape ladder above is a fix for a *plan* problem, and `probe.json` on
+`main` (97c3f99) says the plan is no longer the problem: **all three joined
+shapes timed out (480/480/420 s) and both queues were refused.** What those
+three have in common is not their arrangement — that is the one thing that
+differs between them — but the *table*: every one of them reaches
+`gaiadr1.allwise_original_valid`, ESA's ~750-million-row AllWISE mirror,
+through `gaiadr3.allwise_best_neighbour`. No rearrangement of the predicates
+avoids it, so no fourth *arrangement* of the same join can help either. The
+only shape that can help is one that does not touch it at all.
+
+That is **`gaia_only`**, the fourth member of `SHAPES`: an indexed cone on
+`gaiadr3.gaia_source` alone, carrying every cut `gaia_predicates()` gives
+every other shape and **not one WISE column, join or table**. It is not a
+parent sample by itself — it has no W1 and no W2 — so it is deliberately *not*
+in `JOINED_SHAPES`, the ESA route never fills the parent from it, and
+`stage_sample` will not adopt it from `probe.json` even if it is the shape that
+answered. `irsa_route.py` supplies the other half, from the archive AllWISE
+actually lives in: **IRSA's own TAP service**,
+`https://irsa.ipac.caltech.edu/TAP` — the same service this channel already
+uses for the NEOWISE decade series.
+
+**Identical science.** The Gaia cuts stay in ESA's own SQL (this route does not
+hand the Gaia side to a mirror at all). The AllWISE cuts are
+`apply_allwise_predicates`, the VizieR route's pandas spelling of
+`allwise_predicates`, reused unchanged. The cross-match is `match_allwise`,
+also reused unchanged: Gaia 2016.0 PM-propagated to the AllWISE epoch 2010.5,
+nearest neighbour inside `match_radius_arcsec = 3″`, `allwise_n_neighbours`
+counting every source in that radius, an unmatched Gaia row dropped exactly as
+the archive's inner join drops it. `to_parent_frame` emits exactly
+`sample.parent_columns()` in order, so no stage downstream of `sample` can tell
+the three routes apart — asserted column-for-column against the ESA frame in
+`tests/test_ignition.py`.
+
+**The AllWISE cone is fetched *unfiltered*.** The colour and flag predicates
+are deliberately not sent to IRSA in the `WHERE`: cutting the AllWISE side
+before the positional match would let a Gaia star whose true counterpart was
+removed by colour match a *different* source inside 3″, and would make
+`allwise_n_neighbours` — the blend indicator — count only the survivors of a
+cut. The archive joins first and filters second; so does this. IRSA does
+serve `COUNT(*)`, so every cone is counted as well as fetched and a short read
+is flagged `truncated` against that count (the ASU route cannot do this: it has
+a row cap and no count). A parallax shell is not a sky chunk, so `mode=allsky`
+is `NOT_SUPPORTED_FOR_MODE` rather than given a fabricated match.
+
+**Asserted and unverified, then settled at runtime.** The table
+`allwise_p3as_psd` and every column spelling (`designation`, `ra`, `dec`,
+`w1mpro`, `w1sigmpro`, `w2mpro`, `w2sigmpro`, `w3mpro`, `w3sigmpro`,
+`cc_flags`, `ph_qual`, `ext_flg`) are assertions about a service the sandbox
+cannot reach, and `config/ignition.yaml` → `sample.irsa` is marked exactly as
+`sample.vizier` is. Nothing here assumes they are right: `verify_service()`
+asks IRSA's own `TAP_SCHEMA.tables` and `TAP_SCHEMA.columns` (falling back to
+`SELECT TOP 1 *`) **before a single science row is fetched**, once per run and
+carried across cones. A table that is not in the service's own list is
+`CATALOGUE_NOT_FOUND` *with the names it did return*; a column list that
+cannot be resolved is `COLUMNS_UNRESOLVED` with the service's own text; a
+column that carries a cut but is absent names the cut it could not apply. And
+the distinction the record never loses: a `TAP_SCHEMA` that **did not answer**
+is `QUERY_FAILED`, never `CATALOGUE_NOT_FOUND` — a service that did not answer
+has told you nothing about the sky.
+
+### 4.1c A third route to the same parent sample (`vizier_route.py`)
 
 The shape ladder above is a fix for a *plan* problem. `probe.json`
 (2026-09-14T00:22Z) says the problem is no longer a plan: **all three shapes
@@ -137,14 +200,17 @@ TAPVizieR itself was returning 503.
 
 **The ladder, per chunk of the sweep.** ESA first, always — it is
 authoritative and owns the in-archive `allwise_best_neighbour` cross-match — and
-every shape is tried before anything else happens. Only for a chunk that no
-shape answered does the VizieR route run. `sample.json` records `routes`
+every joined shape is tried before anything else happens. Then the IRSA route
+of §4.1b, which keeps ESA's own Gaia cuts in SQL and gives up only the
+cross-match. Only for a chunk neither of those answered does the VizieR route
+run. `sample.json` records `routes`
 (units and rows per source), `route_fractions`, `route_used` and a per-row
 `parent_route` column; **a parent assembled from both routes is `DEGRADED`**
-(`mixed_parent_routes:esa_gaia+vizier_asu`), which `assess` carries into
-`summary.json`'s verdict. The `probe` stage tries and records **both** routes
-on every run — probing is not using — so the next dispatch reads
-`parent_route_recommended` from `probe.json` instead of re-deriving it.
+(e.g. `mixed_parent_routes:esa_gaia+irsa_tap`), which `assess` carries into
+`summary.json`'s verdict. The `probe` stage tries and records **all three**
+routes on every run — probing is not using — so the next dispatch reads
+`parent_route_recommended` (`esa_gaia` > `irsa_tap` > `vizier_asu`) and
+`parent_routes_tried` from `probe.json` instead of re-deriving them.
 
 **The request.** `-source=<catalogue>`, `-out.max=<n>`, `-out=<column>` per
 column, `-out.form=TSV`, `-out.add=` for computed columns, the chunk as
@@ -271,8 +337,9 @@ verdict is `clean_optical_untested`, never `clean` — an unchecked optical is
 not a flat optical. Untested checks are named per star.
 
 ### 4.5 Stages and outputs (`run.py`)
-`probe` → `probe.json` (`gaia_shapes`, `gaia_shape_working`, `vizier_asu`,
-`parent_route_recommended`, `neowise_route_recommended`); `sample` →
+`probe` → `probe.json` (`gaia_shapes`, `gaia_shape_working`, `irsa_tap`,
+`vizier_asu`, `parent_routes_tried`, `parent_route_recommended`,
+`neowise_route_recommended`); `sample` →
 `parent.parquet`, `sample.json` (with `routes`, `route_fractions`,
 `route_endpoints` and `route_errors`); `acquire` (shard `i/n`) →
 `epochs_s{i}of{n}.csv`, `neowise_stars_s{i}of{n}.csv`, `acquire_s{i}of{n}.json`;
@@ -288,7 +355,8 @@ the whole of what the run learned), **`NO_IGNITION_CANDIDATE`**,
 failed sample units, failed NEOWISE queries, a **mixed-route parent**
 (`mixed_parent_routes:esa_gaia+vizier_asu`) and any chunk that hit the ASU
 `-out.max` cap. The probe's own verdict gains `VIZIER_PARENT_AND_NEOWISE` /
-`VIZIER_PARENT_ONLY` for the case this route exists to cover: the ESA archive
+`IRSA_PARENT_ONLY` / `VIZIER_PARENT_ONLY` for the case these routes exist to
+cover: the ESA archive
 dark, the parent reachable anyway.
 
 ---

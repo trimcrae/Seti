@@ -90,6 +90,7 @@ from seti.growth.stage2 import (
     BKJD_MINUS_BTJD,
     BKJD_OFFSET,
     BTJD_OFFSET,
+    ENSEMBLE_NO_AUTHOR,
     ENSEMBLE_NO_FLUX_COLUMN,
     ERA_KEPLER,
     ERA_TESS,
@@ -1855,6 +1856,80 @@ def test_the_ensemble_fetch_records_every_member_and_keeps_the_statuses_apart():
     assert set(msecs["scope"]) == {"ensemble"}
     assert set(msecs["reduction_flux_column"]) == {"PDCSAP_FLUX", "SAP_FLUX", "KSPSAP_FLUX",
                                                    "DET_FLUX"}
+
+
+def test_an_author_that_serves_nothing_does_not_return_another_pipelines_products():
+    """The regression run bcc670c found, on real data.
+
+    QLP serves nothing for TIC 268924036, and ``lightkurve_lc_fn`` drops its
+    author filter when nothing matches it (``if keep.any()``).  So the three QLP
+    members came back carrying SPOC's light curves and entered the ensemble as
+    byte-identical copies of the SPOC members: 29,255 ppm and 11,196 ppm twice
+    over.  That double-weights one reduction in the percentile spread and turns
+    2 genuine SAP/PDCSAP pairs into 3, shrinking the very error the ensemble
+    exists to size.
+
+    It is the same failure as ``FLUX_COLUMN_NOT_PRESENT``, one axis over, and it
+    is caught the same way.
+    """
+    t0 = bkjd_to_btjd(T0_BKJD) + 900 * P
+
+    def lc(_target, *, authors=(), flux_columns=(), **_kw):
+        # the archive's behaviour: asked for QLP, hands back SPOC anyway
+        col = str(flux_columns[0]) if len(flux_columns) else "PDCSAP_FLUX"
+        if col not in ("PDCSAP_FLUX", "SAP_FLUX"):
+            return []
+        s = synth_lightcurve(period_days=P, t0_btjd=t0, duration_days=T14_D,
+                             depth=(30000.0 if col == "PDCSAP_FLUX" else 11000.0) * 1e-6,
+                             exptime_s=120.0, n_transits=16, noise_ppm=250.0, sector=41,
+                             author="SPOC", seed=401)
+        s["flux_column"] = col
+        return [s]
+
+    members, summary, _secs = measure_reduction_ensemble(
+        268924036, era=ERA_TESS, period_days=P, t0_bkjd=T0_BKJD, duration_hours=T14_H,
+        lc_fn=lc, mast=MastParams(retry_pause_s=0.0),
+        ensemble=EnsembleParams(retries=1), fit=FitParams(), enabled=True)
+    by = {(m["author"], m["flux_column"]): m for m in members}
+    # SPOC asked for SPOC and got SPOC: measured.
+    assert by[("SPOC", "PDCSAP_FLUX")]["status"] == "OK"
+    assert by[("SPOC", "SAP_FLUX")]["status"] == "OK"
+    # QLP and TESS-SPOC asked for themselves and got SPOC: NOT measured, and the
+    # reason names what actually happened rather than calling it zero rows.
+    for author in ("QLP", "TESS-SPOC"):
+        for col in ("PDCSAP_FLUX", "SAP_FLUX"):
+            assert by[(author, col)]["status"] == ENSEMBLE_NO_AUTHOR
+            assert not np.isfinite(by[(author, col)]["depth_ppm"])
+            # the record says which pipeline the archive actually handed back
+            assert by[(author, col)]["authors_returned"] == "SPOC"
+    assert ENSEMBLE_NO_AUTHOR != UNMEASURED_ZERO_ROWS != ENSEMBLE_NO_FLUX_COLUMN
+    # exactly TWO distinct reductions survive, so the spread is over two numbers
+    # and the background test has exactly ONE genuine pair — not three
+    assert summary["n_members_measured"] == 2
+    assert summary["sap_vs_pdcsap_n_pairs"] == 1
+    assert summary["sap_vs_pdcsap_authors"] == "SPOC"
+
+
+def test_a_generously_spelled_author_is_still_the_same_pipeline():
+    """Only a real mismatch may drop a member: TESS_SPOC is TESS-SPOC."""
+    t0 = bkjd_to_btjd(T0_BKJD) + 900 * P
+
+    def lc(_target, *, authors=(), flux_columns=(), **_kw):
+        if str(authors[0]) != "TESS-SPOC" or str(flux_columns[0]) != "PDCSAP_FLUX":
+            return []
+        s = synth_lightcurve(period_days=P, t0_btjd=t0, duration_days=T14_D, depth=0.03,
+                             exptime_s=600.0, n_transits=16, noise_ppm=250.0, sector=41,
+                             author="tess_spoc", seed=402)     # the archive's own spelling
+        s["flux_column"] = "PDCSAP_FLUX"
+        return [s]
+
+    members, _s, _sec = measure_reduction_ensemble(
+        268924036, era=ERA_TESS, period_days=P, t0_bkjd=T0_BKJD, duration_hours=T14_H,
+        lc_fn=lc, mast=MastParams(retry_pause_s=0.0),
+        ensemble=EnsembleParams(retries=1), fit=FitParams(), enabled=True)
+    by = {(m["author"], m["flux_column"]): m for m in members}
+    assert by[("TESS-SPOC", "PDCSAP_FLUX")]["status"] == "OK"
+    assert by[("TESS-SPOC", "PDCSAP_FLUX")]["depth_ppm"] == pytest.approx(30000.0, rel=0.05)
 
 
 def test_the_ensemble_is_never_reached_without_being_asked_for():

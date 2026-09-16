@@ -75,17 +75,24 @@ agree on a mechanism rather than merely on a null.
 **1. The depth "change" is the crowding correction, not the sky.** Measuring the
 same TESS data under every reduction the archive serves:
 
-| flux column | SPOC | TESS-SPOC | QLP |
-|---|---|---|---|
-| PDCSAP (corrected) | 29,255 ppm | 31,984 ppm | 29,255 ppm |
-| SAP (raw) | **11,196 ppm** | **11,522 ppm** | **11,196 ppm** |
+| flux column | SPOC | TESS-SPOC |
+|---|---|---|
+| PDCSAP (corrected) | 29,255 ppm | 31,984 ppm |
+| SAP (raw) | **11,196 ppm** | **11,522 ppm** |
 
-All three pipelines agree with each other and disagree with themselves by a
-factor **2.61** between raw and corrected photometry;
-`sap_minus_pdcsap_z = −19.1`, verdict `BACKGROUND_TEST_DISAGREES`, direction
-`PDC_DEEPER_THAN_SAP`. On the Kepler side the same test gives 13,912 against
-13,893 ppm — the two agree to 0.14 % — so this is a TESS-specific correction,
-not a property of the star.
+Both pipelines agree with each other and disagree with themselves by a factor
+**2.61** between raw and corrected photometry; `sap_minus_pdcsap_z = −15.6`,
+verdict `BACKGROUND_TEST_DISAGREES`, direction `PDC_DEEPER_THAN_SAP`. On the
+Kepler side the same test gives 13,912 against 13,893 ppm — the two agree to
+0.14 % — so this is a TESS-specific correction, not a property of the star.
+
+*(An earlier version of this entry showed a third, QLP column repeating SPOC's
+numbers exactly. That was not a QLP measurement: QLP serves nothing for this
+target, and the light-curve fetcher dropped its author filter when nothing
+matched, so SPOC's products came back under the QLP request. Correcting it took
+the members from 6 to 4 and the spread UP from 9,303 to 9,661 ppm — a phantom
+duplicate had been shrinking the very error the ensemble exists to size. The
+verdict is unchanged.)*
 
 And the **raw** TESS depth is 0.80 of the Kepler depth. That is the right side of
 one: a bigger aperture admits more contaminating light and must read *shallower*.
@@ -93,9 +100,9 @@ The whole 2.16 "growth" is the crowding correction dividing it back out, by a
 factor the Gaia census says is far too large for a target supplying 95 % of the
 aperture flux.
 
-The verdict reflects this: the ensemble spread is 9,303 ppm — **31.8 %** — which
+The verdict reflects this: the ensemble spread is 9,661 ppm — **33.0 %** — which
 swamps the 1,521 ppm bootstrap error. z falls from 10.69 on the statistical
-error to **2.37** on the total, and the primary verdict is
+error to **2.28** on the total, and the primary verdict is
 `MEASURED_DEPTH_CHANGE_UNRESOLVED`. The threshold was 24.7 % and the measured
 spread landed past it, exactly as it was warned it might.
 

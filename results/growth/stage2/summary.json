@@ -1,7 +1,21 @@
 {
+  "primary_verdict": "MEASURED_DEPTH_CHANGE_CONFIRMED",
+  "primary_reason": "1 target(s) changed depth between OUR Kepler-era and OUR TESS-era fit of the light curves",
+  "primary_verdict_field": "like_for_like_verdict",
+  "primary_verdict_is": "OUR fit to the Kepler light curve against OUR fit to the TESS light curve \u2014 same fitter, same fold, same masked baseline, same exposure-shrunk core, same bootstrap; only the archive product and the time system differ",
+  "like_for_like_verdicts": {
+    "MEASURED_DEPTH_CHANGED": 1,
+    "MEASURED_DEPTH_UNCHANGED": 0,
+    "MEASURED_DEPTH_UNRESOLVED": 0,
+    "MEASURED_DEPTH_ERA_UNMEASURED": 0
+  },
+  "like_for_like_unmeasured_reasons": {},
+  "n_compared_like_for_like": 1,
   "verdict": "STAGE1_DEPTH_CHANGE_CONFIRMED",
   "reason": "1 target(s) matched the TOI depth",
-  "generated_utc": "2026-09-16T01:05:11Z",
+  "verdict_is_primary": false,
+  "verdict_is": "our TESS-era fit against the two CATALOGUE depths. With both eras now fitted here, this says which catalogue is right about the TESS era \u2014 it is a diagnostic of the CATALOGUES, not of the sky",
+  "generated_utc": "2026-09-16T01:49:04Z",
   "n_shortlist": 1,
   "n_measured": 1,
   "target_verdicts": {
@@ -12,7 +26,20 @@
     "UNMEASURED": 0
   },
   "unmeasured_reasons": {},
-  "flags": {},
+  "koi_catalogue_check": {
+    "verdict_counts": {
+      "KOI_DEPTH_CONFIRMED": 1,
+      "KOI_DEPTH_CONTRADICTED": 0,
+      "KOI_DEPTH_UNCHECKED": 0
+    },
+    "what_it_compares": "OUR fit to the KEPLER light curve against cumulative.koi_depth, BOTH in the Kepler band, so NO limb-darkening band ratio is applied and nothing but the two numbers is under test",
+    "targets_contradicting_the_koi_table": [],
+    "finding": ""
+  },
+  "flags": {
+    "kepler:smeared": 1,
+    "kepler:sector_scatter": 1
+  },
   "targets": [
     {
       "kepoi_name": "K00897.01",
@@ -20,8 +47,50 @@
       "kepid": 7849854,
       "tic_id": 268924036.0,
       "toi": 4490.01,
+      "like_for_like_verdict": "MEASURED_DEPTH_CHANGED",
+      "like_for_like_unmeasured_reason": NaN,
+      "depth_kepler_measured_ppm": 13912.427951203355,
+      "depth_kepler_measured_err_ppm": 30.16097126736893,
+      "depth_kepler_measured_in_tess_band_ppm": 13526.50081185035,
+      "kepler_depth_measured_err_method": "bootstrap",
+      "depth_tess_measured_ppm": 29254.84020480984,
+      "depth_tess_measured_err_ppm": 1520.8199724641815,
+      "z_measured_eras": 10.689951018423466,
+      "sigma_measured_eras": 0.0721606910465514,
+      "measured_depth_ratio": 2.16277961401371,
+      "measured_eras_agree": false,
+      "ln_ratio_under_test": 0.9094958424307364,
+      "detectable_ln_ratio": 0.2164820731396543,
+      "catalogue_ln_ratio_under_test": 0.9094958424307364,
+      "koi_depth_verdict": "KOI_DEPTH_CONFIRMED",
+      "z_kepler_measured_vs_koi": -0.5217347500494303,
+      "kepler_measured_over_koi_depth": 0.9742187268884608,
+      "koi_depth_unchecked_reason": NaN,
+      "kepler_lc_status": "OK",
+      "kepler_lc_route": "lightkurve",
+      "kepler_n_quarters": 17,
+      "kepler_n_quarters_measured": 17,
+      "kepler_quarter_list": "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17",
+      "kepler_authors": "Kepler",
+      "kepler_exptimes_s": 1765,
+      "kepler_cadences": "long",
+      "kepler_has_short_cadence": false,
+      "kepler_n_files_merged": 17,
+      "kepler_n_transits": 643,
+      "kepler_t0_bkjd_used": 857.42783314,
+      "kepler_n_epochs_propagated": 335,
+      "kepler_ephemeris_sigma_minutes": 0.1004145880111052,
+      "kepler_smeared": true,
+      "kepler_depth_is_lower_bound": false,
+      "kepler_odd_even_diff_ppm": -32.975132113684595,
+      "kepler_odd_even_sigma": 0.5557931684598829,
+      "kepler_sector_scatter_chi2_per_dof": 3.5647486702180204,
+      "kepler_n_sectors_dropped_duplicate": 0,
+      "kepler_flags": "smeared;sector_scatter",
+      "kepler_era_unmeasured_reason": NaN,
       "verdict": "MEASURED_DEPTH_MATCHES_TOI",
       "unmeasured_reason": NaN,
+      "tess_era_unmeasured_reason": NaN,
       "lc_status": "OK",
       "lc_route": "lightkurve",
       "n_sectors": 7,
@@ -68,14 +137,26 @@
       "lightkurve": 1
     },
     "budget_s": 5400.0,
-    "elapsed_s": 10.0,
-    "budget_exhausted": false
+    "elapsed_s": 23.1,
+    "budget_exhausted": false,
+    "kepler_era_enabled": true,
+    "kepler_lc_status_counts": {
+      "OK": 1
+    },
+    "kepler_lc_routes": {
+      "lightkurve": 1
+    },
+    "kepler_budget_s": 5400.0,
+    "kepler_elapsed_s": 23.1,
+    "kepler_budget_exhausted": false
   },
   "config": {
     "compare": {
       "n_agree": 3.0,
       "sigma_sys_ln": 0.05,
-      "apply_band_ratio": true
+      "apply_band_ratio": true,
+      "min_detectable_ln_ratio": 0.1,
+      "koi_check_n_agree": 3.0
     },
     "fit": {
       "core_fraction": 0.7,
@@ -101,13 +182,20 @@
       ],
       "budget_s": 5400.0,
       "per_target_budget_s": 900.0,
-      "target_timeout_s": 600.0
+      "target_timeout_s": 600.0,
+      "kepler_enabled": true,
+      "kepler_authors": [
+        "Kepler"
+      ],
+      "kepler_budget_s": 5400.0,
+      "kepler_per_target_budget_s": 1800.0,
+      "kepler_max_quarters": 60
     }
   },
   "checks_not_performed": [
     "per_pixel_centroid_test (a deeper TESS transit can ORIGINATE on a different star inside the pixel; nothing here excludes that)",
-    "kepler_era_lightcurve_refit (the Kepler depth is still the catalogue's)",
-    "achromaticity (one band per epoch, as at stage 1)"
+    "achromaticity (one band per epoch, as at stage 1)",
+    "independent_ephemeris (both eras are folded on the KOI ephemeris, which is itself a Kepler-era product; a depth is measured, an ephemeris is not)"
   ],
-  "note": "stage 2 measures the TESS depth FROM THE LIGHT CURVE and compares it with BOTH catalogue depths; MEASURED_DEPTH_MATCHES_TOI means the depth really changed and the candidate goes on to the centroid test, it is NOT a detection; NO_DATA_REACHED is not a null result and is not written up (CLAUDE.md)"
+  "note": "the PRIMARY verdict is the like-for-like one: BOTH eras are fitted here by the SAME code, so MEASURED_DEPTH_CHANGED means the change survives a comparison in which nothing but the sky differs, and MEASURED_DEPTH_UNCHANGED means the KOI catalogue depth is simply wrong for this object. MEASURED_DEPTH_UNRESOLVED is an agreement WITHOUT the power to have seen the change under test and is never a refutation. The catalogue verdicts (MEASURED_DEPTH_MATCHES_KEPLER / _TOI) are kept, and are now a diagnostic of the CATALOGUES rather than of the sky \u2014 they say which table is right about the TESS era. A measured change is still NOT a detection: the centroid test is outstanding. NO_DATA_REACHED / LIKE_FOR_LIKE_NO_DATA is not a null result and is not written up (CLAUDE.md)"
 }

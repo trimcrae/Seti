@@ -10,6 +10,36 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### IGNITION goes from blocked to a live parent sample, 2026-09-16
+
+The cone-spelling fix landed and the channel came apart in the right direction.
+Probe run 35038504272:
+
+| | before (34799195807) | after |
+|---|---|---|
+| AllWISE, 1 deg cone | 0 rows | **65,745 rows** |
+| ESA `inner_cone` | timed out at 480 s, three times | **answered in 18.5 s** |
+| probe elapsed | 1,503 s | 129 s |
+| verdict | `NO_DATA_REACHED` | `GAIA_AND_NEOWISE_REACHABLE` |
+
+Two things changed at once and the record separates them. The VizieR zero rows
+were **ours**: a literal `+` in a query string decodes to a space, so
+`-c=266+65` reached the service as the unsigned dotless pair `266 65`, which it
+does not read as a sky position — it answered with an empty `#RESOURCE`. The
+ESA timeouts were **theirs**: the same three query shapes that failed at 480 s
+now answer in eighteen seconds, with no change on our side, so that was the
+archive and not the query plan. Only the first of those was a defect to fix.
+
+The sweep then ran: **846 parent stars** over 20 field cones, all served by the
+authoritative ESA route with its own `allwise_best_neighbour` cross-match, no
+mixed routes, 719 s. NEOWISE is reachable through IRSA (4,110 epochs on the
+probe star, field route recommended).
+
+Because the ESA archive was down for most of a day and will be again, a third
+parent route through IRSA's own AllWISE table is being built — the ESA failure
+was in the join against its 750-million-row AllWISE mirror, which no
+rearrangement of the cuts avoids.
+
 ### ULINE: the census found a second U-line list and the sample grew 4.7x, 2026-09-16
 
 Run 35039822190 is the first to search a source this channel found for itself

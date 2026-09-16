@@ -140,6 +140,18 @@ shortlist:
   max_stars: 3000               # Gaia cones per run (xi_conservative > 0 first, then xi_nominal > 0)
   include_watch: true
 
+probe:
+  # MEASURED (run 35038502122): the probe stage ran for FIFTY MINUTES and was
+  # still going. Discovery walks the whole route ladder per catalogue, and a
+  # slow or flaky TAP multiplies that by every catalogue and every candidate
+  # table. Nothing was written until the last catalogue returned, so a run
+  # killed by the workflow cap would have committed nothing at all.
+  # probe.json is now written after EVERY catalogue, and a catalogue the wall
+  # clock did not reach is DISCOVERY_NOT_ATTEMPTED with the reason recorded —
+  # which is NOT the same fact as QUERY_RETURNED_ZERO_ROWS and must never be
+  # read as "this table does not exist". Set to 0 or null for no ceiling.
+  budget_s: 1800.0
+
 acquire:
   chunk_rows: 50000
   max_rows: 0                   # 0 = no cap

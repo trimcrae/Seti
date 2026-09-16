@@ -580,6 +580,42 @@ def binned_fold(rows_time, rows_flux, *, period_days: float, t0_btjd: float,
     return pd.DataFrame(recs, columns=["dt_hours", "flux", "flux_err", "n"])
 
 
+def dedupe_sectors(sectors, *, authors=DEFAULT_AUTHORS) -> tuple[list[dict], list[dict]]:
+    """One light curve per sector: the shortest exposure wins, ties by author order.
+
+    MAST serves a sector under several pipelines and they are reductions of the
+    SAME PIXELS. Stacking two of them counts every transit twice, which does
+    not improve the depth but does shrink its quoted error by sqrt(2) --- a
+    measurement that looks more precise than the photons allow. Returns
+    ``(kept, dropped)``; ``dropped`` records each discarded light curve with the
+    one that displaced it, so the choice is auditable rather than silent.
+    """
+    order = {a: i for i, a in enumerate(authors)}
+
+    def rank(s: dict) -> tuple:
+        e = float(s.get("exptime_s") or np.inf)
+        return (e if np.isfinite(e) else np.inf,
+                order.get(str(s.get("author")), len(order)))
+
+    best: dict = {}
+    for s in sectors or []:
+        key = s.get("sector")
+        if key is None:                                   # no sector id: never merged away
+            best[f"__unkeyed_{len(best)}"] = s
+            continue
+        cur = best.get(key)
+        if cur is None or rank(s) < rank(cur):
+            best[key] = s
+    kept_ids = {id(v) for v in best.values()}
+    dropped = [{"sector": s.get("sector"), "author": s.get("author"),
+                "exptime_s": s.get("exptime_s"),
+                "reason": "same sector already covered by a shorter-cadence pipeline",
+                "kept_author": str((best.get(s.get("sector")) or {}).get("author")),
+                "kept_exptime_s": (best.get(s.get("sector")) or {}).get("exptime_s")}
+               for s in (sectors or []) if id(s) not in kept_ids]
+    return list(best.values()), dropped
+
+
 def measure_target(sectors, *, period_days: float, t0_btjd: float, duration_days: float,
                    params: FitParams | None = None) -> dict:
     """Fit every sector of one target and combine: depth, per-sector, odd-even.
@@ -588,8 +624,17 @@ def measure_target(sectors, *, period_days: float, t0_btjd: float, duration_days
     and metadata (``sector``, ``author``, ``exptime_s``, ``flux_column``).
     Each sector is normalised by its own robust median FIRST, so a sector-level
     flux scale cannot leak into the depth.
+
+    **One sector is counted once.** MAST serves the same sector under more than
+    one pipeline --- SPOC at 120 s and TESS-SPOC at 200 or 600 s are different
+    REDUCTIONS OF THE SAME PIXELS, not independent observations. Run 35041932130
+    measured K00897.01 over "14 sectors" that were seven sectors twice, so every
+    transit entered the stack twice and the quoted error was too small by a
+    factor sqrt(2). :func:`dedupe_sectors` keeps the best-cadence pipeline per
+    sector and records what it dropped.
     """
     params = params or FitParams()
+    sectors, dropped = dedupe_sectors(sectors)
     all_rows: list[dict] = []
     sec_recs: list[dict] = []
     norm_time: list[np.ndarray] = []
@@ -682,6 +727,11 @@ def measure_target(sectors, *, period_days: float, t0_btjd: float, duration_days
         "exptimes_s": ",".join(sorted({f"{float(r['exptime_s']):.0f}" for r in sec_recs
                                        if r.get("exptime_s") and np.isfinite(
                                            float(r["exptime_s"]))})),
+        # Same sector, another pipeline: dropped so no transit is counted twice.
+        "n_sectors_dropped_duplicate": int(len(dropped)),
+        "duplicate_sectors_dropped": ";".join(
+            f"{d['sector']}:{d['author']}@{d['exptime_s']}s->kept "
+            f"{d['kept_author']}@{d['kept_exptime_s']}s" for d in dropped),
         "smeared": bool(smeared_any), "depth_is_lower_bound": bool(lower_bound_any),
         "depth_odd_ppm": odd["depth_ppm"], "depth_odd_err_ppm": odd["depth_err_ppm"],
         "n_transits_odd": odd["n_transits"],

@@ -1080,3 +1080,28 @@ def test_orion_kl_is_recorded_as_measured_absent_with_its_three_routes():
     assert "MEASURED ABSENT" in raw
     for evidence in ("HTTP 404", "-meta.all", "0 rows"):
         assert evidence in raw, evidence
+
+
+def test_the_census_found_source_is_asserted_with_the_same_star_it_already_models():
+    """The census turned up a second IRC+10216 U-line list; nothing new is assumed.
+
+    Run 35039345593's table search returned 34 VizieR tables whose description
+    is a U-line list and the column census 78 carrying a U-line flag. Only one
+    lands on a source this channel already models, so its velocity handling is
+    the existing entry's — the survey is new, the star is not.
+    """
+    import yaml
+
+    conf = yaml.safe_load(Path("config/uline.yaml").read_text())
+    new = conf["sources"]["irc10216_cernicharo2000"]
+    old = conf["sources"]["irc10216_he2008"]
+    assert new["vizier_like"].startswith("J/A+AS/142/181")
+    assert new["enabled"] is True
+    # same star => same systemic velocity, same expansion-broadened width
+    assert new["v_lsr_km_s"] == old["v_lsr_km_s"]
+    assert new["fwhm_km_s"] == old["fwhm_km_s"]
+    assert new["frequency_frame"] == "rest"
+    raw = Path("config/uline.yaml").read_text()
+    # the two the census found that are NOT enabled name what blocks them
+    assert "J/A+A/681/A50" in raw and "per-row source column" in raw
+    assert "J/A+A/564/L2" in raw and "nucleus, not the LSR" in raw

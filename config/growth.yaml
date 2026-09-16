@@ -306,10 +306,19 @@ stage2:
     # Enumerated, NOT chosen.  Most combinations do not exist (QLP has never
     # served PDCSAP_FLUX, SPOC has never served KSPSAP_FLUX); those come back
     # FLUX_COLUMN_NOT_PRESENT, which is a RECORDED ABSENCE and is a different
-    # fact from QUERY_FAILED (the archive errored) and QUERY_RETURNED_ZERO_ROWS
-    # (it answered with nothing).  A member that vanished silently would shrink
-    # the spread, so every one of them keeps its reason in reductions.csv and
-    # the era is flagged `ensemble_incomplete`.
+    # fact from QUERY_FAILED (the archive errored), QUERY_RETURNED_ZERO_ROWS
+    # (it answered with nothing) and AUTHOR_NOT_SERVED (it answered with
+    # ANOTHER PIPELINE'S products).  A member that vanished silently would
+    # shrink the spread, so every one of them keeps its reason in reductions.csv
+    # and the era is flagged `ensemble_incomplete`.
+    #
+    # AUTHOR_NOT_SERVED is not hypothetical: run bcc670c hit it.  QLP serves
+    # nothing for TIC 268924036 and lightkurve drops its author filter when
+    # nothing matches, so the three QLP members came back carrying SPOC's light
+    # curves — byte-identical duplicates that double-weighted one reduction in
+    # the spread (9,303 instead of 9,661 ppm) and turned 2 genuine SAP/PDCSAP
+    # pairs into 3 (error 977 instead of 1,226 ppm).  A member is measured only
+    # if the products really carry BOTH the author and the column asked for.
     tess_authors: ["SPOC", "TESS-SPOC", "QLP"]
     tess_flux_columns: ["PDCSAP_FLUX", "KSPSAP_FLUX", "DET_FLUX", "SAP_FLUX"]
     kepler_authors: ["Kepler"]

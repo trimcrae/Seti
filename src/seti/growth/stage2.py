@@ -324,11 +324,34 @@ KOI_DEPTH_VERDICTS = (KOI_DEPTH_CONFIRMED, KOI_DEPTH_CONTRADICTED, KOI_DEPTH_UNC
 #: member fall back to whatever column the file does carry would put the SAME
 #: reduction into the ensemble twice and shrink the spread.
 ENSEMBLE_NO_FLUX_COLUMN = "FLUX_COLUMN_NOT_PRESENT"
+#: The archive answered, but with ANOTHER pipeline's products.  Run bcc670c made
+#: this real: QLP serves nothing for TIC 268924036, and ``lightkurve_lc_fn``
+#: drops its author filter when nothing matches it (``if keep.any()``), so the
+#: three QLP members came back carrying SPOC's light curves and entered the
+#: ensemble as byte-identical copies of the SPOC members --- 29,255 / 11,196 ppm
+#: twice over.  That double-weights one reduction in the percentile spread and
+#: inflates ``sap_vs_pdcsap_n_pairs`` from 2 to 3, shrinking the very error the
+#: ensemble exists to size.  Same failure as ``FLUX_COLUMN_NOT_PRESENT``, one
+#: axis over, and it is caught the same way: the member is only measured if the
+#: products REALLY carry the author that was asked for.
+ENSEMBLE_NO_AUTHOR = "AUTHOR_NOT_SERVED"
 #: The ensemble was switched off in config, or the era it belongs to produced no
 #: depth at all.  Nothing was asked; that is not a failure either.
 ENSEMBLE_NOT_ATTEMPTED = "ENSEMBLE_NOT_ATTEMPTED"
 ENSEMBLE_MEMBER_STATUSES = (STATUS_OK, STATUS_FAILED, STATUS_ZERO, UNMEASURED_NO_TRANSIT,
-                            UNMEASURED_BUDGET, ENSEMBLE_NO_FLUX_COLUMN, ENSEMBLE_NOT_ATTEMPTED)
+                            UNMEASURED_BUDGET, ENSEMBLE_NO_FLUX_COLUMN, ENSEMBLE_NO_AUTHOR,
+                            ENSEMBLE_NOT_ATTEMPTED)
+
+
+def _same_author(a, b) -> bool:
+    """Author names compared as the archive spells them, not byte for byte.
+
+    ``TESS-SPOC``/``TESS_SPOC``/``tess spoc`` are the same pipeline.  Only an
+    actual mismatch may drop a member, so the normalisation is deliberately
+    generous; what the fetch really returned is kept in ``authors_returned``.
+    """
+    norm = lambda s: "".join(ch for ch in str(s).upper() if ch.isalnum())  # noqa: E731
+    return norm(a) == norm(b)
 
 #: The spread over the ensemble was computed.
 SPREAD_OK = "OK"
@@ -2579,6 +2602,7 @@ def measure_reduction_ensemble(target_id, *, era: str, period_days: float, t0_bk
 
     ``QUERY_FAILED``                the archive errored for that member
     ``QUERY_RETURNED_ZERO_ROWS``    it answered with nothing
+    ``AUTHOR_NOT_SERVED``           it answered with ANOTHER pipeline's products
     ``FLUX_COLUMN_NOT_PRESENT``     the product does not carry that column
     ``NO_USABLE_TRANSIT``           it was fetched but no transit could be fitted
     ``BUDGET_EXHAUSTED``            the ensemble's wall clock ran out first
@@ -2630,12 +2654,20 @@ def measure_reduction_ensemble(target_id, *, era: str, period_days: float, t0_bk
                              and status == STATUS_FAILED else status)
             members.append(rec)
             continue
-        # The product must REALLY carry the column that was asked for.  A member
-        # that fell back to another column would be a duplicate of a member
-        # already in the ensemble and would shrink the spread.
-        kept = [s for s in segs if str(s.get("flux_column") or "").upper() == col.upper()]
+        # The products must REALLY be the reduction that was asked for, on BOTH
+        # axes.  A member that fell back to another author or another column is
+        # a duplicate of a member already in the ensemble: it double-weights one
+        # reduction in the percentile spread and adds a phantom SAP/PDCSAP pair,
+        # shrinking the very error this ensemble exists to size.  Which one it
+        # was is recorded; neither is a failure, and neither is the other.
         rec["authors_returned"] = ",".join(sorted({str(s.get("author")) for s in segs
                                                    if s.get("author")}))
+        by_author = [s for s in segs if _same_author(s.get("author"), author)]
+        if not by_author:
+            rec["status"] = ENSEMBLE_NO_AUTHOR
+            members.append(rec)
+            continue
+        kept = [s for s in by_author if str(s.get("flux_column") or "").upper() == col.upper()]
         if not kept:
             rec["status"] = ENSEMBLE_NO_FLUX_COLUMN
             members.append(rec)
@@ -3570,7 +3602,7 @@ __all__ = [
     "BG_UNAVAILABLE",
     "BKJD_MINUS_BTJD", "BKJD_OFFSET", "BTJD_OFFSET", "CompareParams", "DEFAULT_AUTHORS",
     "Deadline", "ENSEMBLE_MEMBER_COLUMNS", "ENSEMBLE_MEMBER_STATUSES",
-    "ENSEMBLE_NOT_ATTEMPTED", "ENSEMBLE_NO_FLUX_COLUMN", "ERAS", "ERA_KEPLER", "ERA_TESS",
+    "ENSEMBLE_NOT_ATTEMPTED", "ENSEMBLE_NO_AUTHOR", "ENSEMBLE_NO_FLUX_COLUMN", "ERAS", "ERA_KEPLER", "ERA_TESS",
     "EnsembleParams", "FLUX_COLUMNS", "FitParams", "KEPLER_AUTHORS",
     "KEPLER_FLUX_COLUMNS", "KEPLER_LONG_CADENCE_S", "KEPLER_PRODUCT_SUBGROUPS",
     "KEPLER_QUALITY_COLUMNS", "KEPLER_SHORT_CADENCE_MAX_S", "KEPLER_SHORT_CADENCE_S",

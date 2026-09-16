@@ -580,8 +580,20 @@ under **every available reduction** — the full cross product of pipeline autho
 **enumerated, not chosen**: most combinations do not exist at the archive and
 come back `FLUX_COLUMN_NOT_PRESENT`, which is a *recorded absence*, distinct
 from `QUERY_FAILED` (the archive errored), `QUERY_RETURNED_ZERO_ROWS` (it
-answered with nothing) and `BUDGET_EXHAUSTED`.  Every member, measured or not,
+answered with nothing), `AUTHOR_NOT_SERVED` (it answered with **another
+pipeline's** products) and `BUDGET_EXHAUSTED`.  Every member, measured or not,
 is a row in `reductions.csv`.
+
+`AUTHOR_NOT_SERVED` exists because run `bcc670c` produced it on real data: QLP
+serves nothing for TIC 268924036, and `lightkurve_lc_fn` drops its author
+filter when nothing matches it, so the three QLP members came back carrying
+**SPOC's** light curves and entered the ensemble as byte-identical copies of the
+SPOC members (29,255 and 11,196 ppm twice over).  That double-weighted one
+reduction in the percentile spread (9,303 instead of 9,661 ppm) and turned two
+genuine SAP/PDCSAP pairs into three (error 977 instead of 1,226 ppm) — shrinking
+the very error the ensemble exists to size.  A member is now measured only if
+the products really carry **both** the author and the column that were asked
+for.
 
 **The spread, and how it binds.**  `depth_reduction_spread_ppm` is **half the
 range between the 16th and 84th percentiles** of the measured members' depths —

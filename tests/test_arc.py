@@ -1045,3 +1045,89 @@ def test_davenport2016_is_a_star_table_not_a_flares_table():
     assert kepler_stars["santos2021"]["preferred"] == "J/ApJS/255/17"
     raw = _pl.Path("config/arc.yaml").read_text()
     assert "no per-flare energy" in raw
+
+
+# ---------------------------------------------------------------------------
+# The probe's wall clock (run 35038502122)
+# ---------------------------------------------------------------------------
+def test_probe_stops_at_its_budget_and_says_nothing_was_asked(tmp_path):
+    """Fifty minutes in discovery with nothing written is a lost run.
+
+    A catalogue the clock never reached must be DISCOVERY_NOT_ATTEMPTED, which
+    is NOT the same fact as QUERY_RETURNED_ZERO_ROWS: the service was never
+    asked, so nothing at all is known about that table.
+    """
+    from seti.arc.run import STATUS_NOT_PROBED, stage_probe
+
+    conf = {
+        "catalogues": {
+            "a": {"mission": "kepler", "preferred": "J/X/1/t", "energy": {}, "enabled": True},
+            "b": {"mission": "kepler", "preferred": "J/X/2/t", "energy": {}, "enabled": True},
+            "c": {"mission": "kepler", "preferred": "J/X/3/t", "energy": {}, "enabled": True},
+        },
+        "star_catalogues": {"kepler": [{"name": "s1", "preferred": "J/Y/1/t"}]},
+    }
+    seen: list[str] = []
+    ticks = iter([0.0] * 3 + [0.0, 500.0, 900.0, 900.0, 900.0, 900.0, 900.0])
+
+    def fake_discover(name, preferred, kind, keywords, **kw):
+        seen.append(name)
+        from seti.arc.acquire import DiscoveredTable
+        return DiscoveredTable(name, kind, f"{preferred}able", ["KIC", "E"],
+                               {"star_id": "KIC", "energy": "E"}, 10, "OK")
+
+    import seti.arc.acquire as aacq
+    orig = aacq.discover_table
+    aacq.discover_table = fake_discover
+    try:
+        rep = stage_probe(conf, tmp_path, budget_s=600.0, clock=lambda: next(ticks),
+                          query_fn=lambda adql: None)
+    finally:
+        aacq.discover_table = orig
+
+    assert seen == ["a", "b"], seen              # "c" and the star table were past the clock
+    assert rep["catalogues"]["c"]["status"] == STATUS_NOT_PROBED
+    assert "wall clock was spent" in rep["catalogues"]["c"]["reason"]
+    assert rep["star_catalogues"]["kepler_s1"]["status"] == STATUS_NOT_PROBED
+    assert rep["n_not_probed"] == 2
+    # a skipped catalogue is never counted as a usable table
+    assert rep["n_usable"] == 2
+    # and the report survives a killed run: it was written before the end
+    saved = json.loads((tmp_path / "probe.json").read_text())
+    assert saved["stage"] == "probe" and saved["budget_s"] == 600.0
+
+
+def test_probe_with_no_budget_reaches_every_catalogue(tmp_path):
+    from seti.arc.run import stage_probe
+
+    conf = {"catalogues": {n: {"mission": "kepler", "preferred": f"J/X/{n}/t", "energy": {},
+                               "enabled": True} for n in ("a", "b")},
+            "star_catalogues": {}}
+    seen: list[str] = []
+
+    def fake_discover(name, preferred, kind, keywords, **kw):
+        seen.append(name)
+        from seti.arc.acquire import DiscoveredTable
+        return DiscoveredTable(name, kind, "t", ["KIC", "E"],
+                               {"star_id": "KIC", "energy": "E"}, 1, "OK")
+
+    import seti.arc.acquire as aacq
+    orig = aacq.discover_table
+    aacq.discover_table = fake_discover
+    try:
+        rep = stage_probe(conf, tmp_path, budget_s=None, query_fn=lambda adql: None)
+    finally:
+        aacq.discover_table = orig
+    assert seen == ["a", "b"] and rep["n_not_probed"] == 0
+
+
+def test_the_probe_budget_is_configured_with_its_measurement():
+    import pathlib as _pl
+
+    import yaml
+
+    conf = yaml.safe_load(_pl.Path("config/arc.yaml").read_text())
+    assert conf["probe"]["budget_s"] > 0
+    raw = _pl.Path("config/arc.yaml").read_text()
+    assert "DISCOVERY_NOT_ATTEMPTED" in raw
+    assert "QUERY_RETURNED_ZERO_ROWS" in raw      # the two facts are kept apart, in writing

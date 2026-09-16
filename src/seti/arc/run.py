@@ -144,15 +144,62 @@ def _star_specs(conf: dict, missions) -> list[tuple[str, dict]]:
 # ---------------------------------------------------------------------------
 # probe
 # ---------------------------------------------------------------------------
+#: A catalogue the probe's wall clock never got to.  It is NOT the same fact as
+#: ``QUERY_RETURNED_ZERO_ROWS`` (the service answered, with nothing) and must
+#: never be read as one: nothing was asked about this catalogue at all.
+STATUS_NOT_PROBED = "DISCOVERY_NOT_ATTEMPTED"
+
+
 def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None, log=None,
-                fetch_fn=None) -> dict:
+                fetch_fn=None, budget_s: float | None = None, clock=None) -> dict:
+    """Discover one table per configured catalogue, under a wall clock.
+
+    ``budget_s`` bounds the WHOLE probe.  Run 35038502122 sat in this stage for
+    fifty minutes -- discovery walks the full route ladder per catalogue, and a
+    slow or flaky TAP multiplies that by every catalogue and every candidate
+    table -- with nothing written until the last one returned, so a run killed
+    by the workflow cap would have committed nothing at all.  The report is now
+    written after every catalogue, and a catalogue the budget did not reach is
+    ``DISCOVERY_NOT_ATTEMPTED`` with the reason recorded: a stated gap, never a
+    missing table.
+    """
+    import time as _t
+
     from .acquire import AcquisitionLog, discover_table, tap_query
 
     log = log or AcquisitionLog(prefix="arc/acquire")
     query_fn = query_fn or tap_query
+    now = clock or _t.monotonic
+    started = now()
+    budget = None if budget_s in (None, "", 0) else float(budget_s)
     cats = _enabled_catalogues(conf, catalogues)
+    star_specs = list(_star_specs(conf, {s.get("mission") for s in cats.values()}))
     found, stars = {}, {}
+
+    def _spent() -> bool:
+        return budget is not None and (now() - started) >= budget
+
+    def _skipped(kind: str) -> dict:
+        return {"status": STATUS_NOT_PROBED, "table": None, "columns": [], "roles": {},
+                "n_rows": None, "route": "none", "kind": kind,
+                "reason": (f"the probe's {budget:.0f} s wall clock was spent before this "
+                           "catalogue was attempted; nothing was asked about it")}
+
+    def _snapshot() -> dict:
+        return {"stage": "probe", "generated_utc": _now(), "catalogues": found,
+                "star_catalogues": stars,
+                "budget_s": budget, "elapsed_s": round(now() - started, 1),
+                "n_not_probed": sum(1 for d in list(found.values()) + list(stars.values())
+                                    if d.get("status") == STATUS_NOT_PROBED),
+                "n_usable": sum(1 for d in found.values() if d["status"] == "OK"),
+                "n_star_tables_usable": sum(1 for d in stars.values() if d["status"] == "OK"),
+                "acquisition": log.as_dict()}
+
     for name, spec in cats.items():
+        if _spent():
+            found[name] = {**_skipped("flares"), "mission": spec.get("mission"),
+                           "preferred": spec["preferred"], "energy": spec.get("energy")}
+            continue
         disc = discover_table(name, spec["preferred"], "flares", tuple(spec.get("keywords") or ()),
                               query_fn=query_fn, log=log, overrides=spec.get("columns"),
                               fetch_fn=fetch_fn)
@@ -160,21 +207,25 @@ def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None, log=No
         d.update({"mission": spec.get("mission"), "preferred": spec["preferred"],
                   "energy": spec.get("energy")})
         found[name] = d
-    for mission, spec in _star_specs(conf, {s.get("mission") for s in cats.values()}):
+        _write(out / "probe.json", _snapshot())          # survive a killed run
+    for mission, spec in star_specs:
+        key = f"{mission}_{spec['name']}"
+        if _spent():
+            stars[key] = {**_skipped("stars"), "mission": mission}
+            continue
         disc = discover_table(spec["name"], spec.get("preferred") or "", "stars",
                               tuple(spec.get("keywords") or ()), query_fn=query_fn, log=log,
                               overrides=spec.get("columns"), fetch_fn=fetch_fn)
         d = disc.as_dict()
         d["mission"] = mission
-        stars[f"{mission}_{spec['name']}"] = d
-    rep = {"stage": "probe", "generated_utc": _now(), "catalogues": found,
-           "star_catalogues": stars,
-           "n_usable": sum(1 for d in found.values() if d["status"] == "OK"),
-           "n_star_tables_usable": sum(1 for d in stars.values() if d["status"] == "OK"),
-           "acquisition": log.as_dict()}
+        stars[key] = d
+        _write(out / "probe.json", _snapshot())
+    rep = _snapshot()
     _write(out / "probe.json", rep)
     print(f"[arc] probe: {rep['n_usable']}/{len(found)} flare catalogues, "
-          f"{rep['n_star_tables_usable']}/{len(stars)} star tables usable")
+          f"{rep['n_star_tables_usable']}/{len(stars)} star tables usable"
+          + (f", {rep['n_not_probed']} NOT PROBED (wall clock)" if rep["n_not_probed"] else "")
+          + f" in {rep['elapsed_s']:.0f} s")
     return rep
 
 
@@ -834,7 +885,8 @@ def arc_run(stage: str = "all", *, out_dir=None, catalogues=None, max_rows: int 
     for s in stages:
         if s == "probe":
             rep = stage_probe(conf, out, catalogues=catalogues, query_fn=query_fn,
-                              fetch_fn=fetch_fn)
+                              fetch_fn=fetch_fn,
+                              budget_s=(conf.get("probe") or {}).get("budget_s", 1800.0))
         elif s == "acquire":
             rep = stage_acquire(conf, out, catalogues=catalogues, query_fn=query_fn,
                                 max_rows=max_rows, fetch_fn=fetch_fn)

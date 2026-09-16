@@ -807,3 +807,57 @@ def test_the_cli_exposes_growth_stage2():
     with pytest.raises(SystemExit) as exc:
         stage2_main(["--help"])
     assert exc.value.code == 0
+
+
+# ---------------------------------------------------------------------------
+# One sector is counted once (run 35041932130)
+# ---------------------------------------------------------------------------
+def test_the_same_sector_from_two_pipelines_is_not_stacked_twice():
+    """SPOC and TESS-SPOC of one sector are two reductions of the SAME pixels.
+
+    Run 35041932130 measured K00897.01 over "14 sectors" that were seven
+    sectors twice: every transit entered the stack twice, which does not
+    improve the depth but shrinks its quoted error by sqrt(2) — a measurement
+    that looks more precise than the photons allow.
+    """
+    from seti.growth.stage2 import dedupe_sectors
+
+    t0 = bkjd_to_btjd(T0_BKJD)
+    spoc = synth_lightcurve(period_days=P, t0_btjd=t0, duration_days=T14_D, depth=0.030,
+                            exptime_s=120.0, n_transits=6, noise_ppm=500.0, seed=1,
+                            sector=41, author="SPOC")
+    ffi = synth_lightcurve(period_days=P, t0_btjd=t0, duration_days=T14_D, depth=0.030,
+                           exptime_s=600.0, n_transits=6, noise_ppm=500.0, seed=2,
+                           sector=41, author="TESS-SPOC")
+    other = synth_lightcurve(period_days=P, t0_btjd=t0 + 30 * P, duration_days=T14_D,
+                             depth=0.030, exptime_s=600.0, n_transits=6, noise_ppm=500.0,
+                             seed=3, sector=54, author="TESS-SPOC")
+
+    kept, dropped = dedupe_sectors([spoc, ffi, other])
+    assert sorted(k["sector"] for k in kept) == [41, 54]
+    assert {k["author"] for k in kept if k["sector"] == 41} == {"SPOC"}   # shorter cadence wins
+    assert len(dropped) == 1
+    assert dropped[0]["sector"] == 41 and dropped[0]["author"] == "TESS-SPOC"
+    assert dropped[0]["kept_author"] == "SPOC"
+    assert "same sector" in dropped[0]["reason"]
+
+
+def test_the_duplicate_is_dropped_before_the_depth_is_combined():
+    """The transit count, not just the sector list, must stop double-counting."""
+    t0 = bkjd_to_btjd(T0_BKJD)
+    kw = dict(period_days=P, t0_btjd=t0, duration_days=T14_D, depth=0.030,
+              n_transits=6, noise_ppm=500.0)
+    spoc = synth_lightcurve(exptime_s=120.0, seed=1, sector=41, author="SPOC", **kw)
+    ffi = synth_lightcurve(exptime_s=600.0, seed=2, sector=41, author="TESS-SPOC", **kw)
+
+    one = measure_target([spoc], period_days=P, t0_btjd=t0, duration_days=T14_D)
+    both = measure_target([spoc, ffi], period_days=P, t0_btjd=t0, duration_days=T14_D)
+    assert both["n_transits"] == one["n_transits"], "the duplicate sector was stacked"
+    assert both["n_sectors_dropped_duplicate"] == 1
+    assert "41:TESS-SPOC" in both["duplicate_sectors_dropped"]
+    # and with a genuinely different sector the count DOES grow
+    other = synth_lightcurve(exptime_s=120.0, seed=3, sector=54, author="SPOC",
+                             **{**kw, "t0_btjd": t0 + 40 * P})
+    two = measure_target([spoc, other], period_days=P, t0_btjd=t0, duration_days=T14_D)
+    assert two["n_transits"] > one["n_transits"]
+    assert two["n_sectors_dropped_duplicate"] == 0

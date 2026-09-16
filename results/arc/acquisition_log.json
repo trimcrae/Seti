@@ -9,12 +9,12 @@
       "route_attempts": []
     },
     {
-      "stage": "discover_kepler_okamoto2021_keyword",
+      "stage": "fetch_kepler_okamoto2021",
       "status": "OK",
-      "rows": 31,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/906/72/table2'",
+      "rows": 2344,
+      "query": "SELECT \"KIC\", \"E\", \"Prot\", \"Teff\", \"Rstar\", \"Flag\", \"_RA\", \"_DE\", \"Amp\" FROM \"J/ApJ/906/72/table2\"",
       "route": "tap",
-      "route_attempts": []
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
     },
     {
       "stage": "discover_kepler_shibayama2013_preferred",
@@ -25,12 +25,12 @@
       "route_attempts": []
     },
     {
-      "stage": "discover_kepler_shibayama2013_keyword",
+      "stage": "fetch_kepler_shibayama2013",
       "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/209/5'",
+      "rows": 1547,
+      "query": "SELECT \"KIC\", \"E\", \"BVAmp\", \"FAmp\" FROM \"J/ApJS/209/5/table7\"",
       "route": "tap",
-      "route_attempts": []
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
     },
     {
       "stage": "discover_tess_tu2022_preferred",
@@ -41,12 +41,12 @@
       "route_attempts": []
     },
     {
-      "stage": "discover_tess_tu2022_keyword",
+      "stage": "fetch_tess_tu2022",
       "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90/table2'",
+      "rows": 15638,
+      "query": "SELECT \"ID\", \"Energy\", \"Sector\", \"Source\" FROM \"J/ApJ/935/90/table2\"",
       "route": "tap",
-      "route_attempts": []
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
     },
     {
       "stage": "discover_kepler_yang2019_preferred",
@@ -57,12 +57,52 @@
       "route_attempts": []
     },
     {
-      "stage": "discover_kepler_yang2019_keyword",
+      "stage": "fetch_kepler_yang2019",
       "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/241/29/table2'",
+      "rows": 50000,
+      "query": "SELECT \"KIC\", \"End\", \"logE\", \"Q\" FROM \"J/ApJS/241/29/table2\" WHERE recno BETWEEN 1 AND 50000",
+      "chunk": [
+        1,
+        50000
+      ],
       "route": "tap",
-      "route_attempts": []
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    },
+    {
+      "stage": "fetch_kepler_yang2019",
+      "status": "OK",
+      "rows": 50000,
+      "query": "SELECT \"KIC\", \"End\", \"logE\", \"Q\" FROM \"J/ApJS/241/29/table2\" WHERE recno BETWEEN 50001 AND 100000",
+      "chunk": [
+        50001,
+        100000
+      ],
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    },
+    {
+      "stage": "fetch_kepler_yang2019",
+      "status": "OK",
+      "rows": 50000,
+      "query": "SELECT \"KIC\", \"End\", \"logE\", \"Q\" FROM \"J/ApJS/241/29/table2\" WHERE recno BETWEEN 100001 AND 150000",
+      "chunk": [
+        100001,
+        150000
+      ],
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    },
+    {
+      "stage": "fetch_kepler_yang2019",
+      "status": "OK",
+      "rows": 12262,
+      "query": "SELECT \"KIC\", \"End\", \"logE\", \"Q\" FROM \"J/ApJS/241/29/table2\" WHERE recno BETWEEN 150001 AND 162262",
+      "chunk": [
+        150001,
+        162262
+      ],
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
     },
     {
       "stage": "discover_tess_gunther2020_preferred",
@@ -73,12 +113,12 @@
       "route_attempts": []
     },
     {
-      "stage": "discover_tess_gunther2020_keyword",
+      "stage": "fetch_tess_gunther2020",
       "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/AJ/159/60/table1'",
+      "rows": 8695,
+      "query": "SELECT \"TIC\", \"tpeak\", \"Ebol\", \"Prot\", \"Teff\", \"Rad\", \"logg\", \"Sec\", \"Amp\" FROM \"J/AJ/159/60/table1\"",
       "route": "tap",
-      "route_attempts": []
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
     },
     {
       "stage": "discover_okamoto2021_stars_preferred",
@@ -89,12 +129,28 @@
       "route_attempts": []
     },
     {
+      "stage": "fetch_okamoto2021_stars",
+      "status": "OK",
+      "rows": 2344,
+      "query": "SELECT \"KIC\", \"E\", \"Prot\", \"Teff\", \"Rstar\", \"Flag\", \"_RA\", \"_DE\", \"Amp\" FROM \"J/ApJ/906/72/table2\"",
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    },
+    {
       "stage": "discover_shibayama2013_stars_preferred",
       "status": "OK",
       "rows": 1,
       "query": "TAP_SCHEMA.tables ~ 'J/ApJS/209/5/stars'",
       "route": "tap",
       "route_attempts": []
+    },
+    {
+      "stage": "fetch_shibayama2013_stars",
+      "status": "OK",
+      "rows": 279,
+      "query": "SELECT \"KIC\", \"Prot\", \"Teff\", \"Rad\", \"_RA\", \"_DE\" FROM \"J/ApJS/209/5/stars\"",
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
     },
     {
       "stage": "discover_yang2019_stars_preferred",
@@ -105,12 +161,28 @@
       "route_attempts": []
     },
     {
+      "stage": "fetch_yang2019_stars",
+      "status": "OK",
+      "rows": 3420,
+      "query": "SELECT \"KIC\", \"Prot\", \"Teff\", \"logg\", \"_RA\", \"_DE\" FROM \"J/ApJS/241/29/table1\"",
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    },
+    {
       "stage": "discover_mcquillan2014_preferred",
       "status": "OK",
       "rows": 1,
       "query": "TAP_SCHEMA.tables ~ 'J/ApJS/211/24/table1'",
       "route": "tap",
       "route_attempts": []
+    },
+    {
+      "stage": "fetch_mcquillan2014",
+      "status": "OK",
+      "rows": 34030,
+      "query": "SELECT \"KIC\", \"Rper\", \"Prot\", \"Teff\", \"Mass\", \"_RA\", \"_DE\" FROM \"J/ApJS/211/24/table1\"",
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
     },
     {
       "stage": "discover_santos2021_preferred",
@@ -121,12 +193,12 @@
       "route_attempts": []
     },
     {
-      "stage": "discover_santos2021_keyword",
+      "stage": "fetch_santos2021",
       "status": "OK",
-      "rows": 60,
-      "query": "TAP_SCHEMA.tables ~ 'J/ApJS/255/17'",
+      "rows": 39591,
+      "query": "SELECT \"KIC\", \"Sph\", \"Prot\", \"Teff\", \"logg\", \"Mass\", \"Q\", \"_RA\", \"_DE\" FROM \"J/ApJS/255/17/table1\"",
       "route": "tap",
-      "route_attempts": []
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
     },
     {
       "stage": "discover_davenport2016_stars_preferred",
@@ -137,6 +209,14 @@
       "route_attempts": []
     },
     {
+      "stage": "fetch_davenport2016_stars",
+      "status": "OK",
+      "rows": 4041,
+      "query": "SELECT \"KIC\", \"Prot\", \"Mass\", \"_RA\", \"_DE\" FROM \"J/ApJ/829/23/table1\"",
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    },
+    {
       "stage": "discover_gunther2020_stars_preferred",
       "status": "OK",
       "rows": 1,
@@ -145,31 +225,63 @@
       "route_attempts": []
     },
     {
+      "stage": "fetch_gunther2020_stars",
+      "status": "OK",
+      "rows": 1228,
+      "query": "SELECT \"TIC\", \"Prot\", \"Teff\", \"Rad\", \"logg\", \"Sec\", \"_RA\", \"_DE\" FROM \"J/AJ/159/60/table2\"",
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    },
+    {
       "stage": "discover_tu2022_stars_preferred",
       "status": "OK",
       "rows": 2,
       "query": "TAP_SCHEMA.tables ~ 'J/ApJ/935/90'",
       "route": "tap",
       "route_attempts": []
+    },
+    {
+      "stage": "fetch_tu2022_stars",
+      "status": "OK",
+      "rows": 50000,
+      "query": "SELECT \"ID\", \"Rvar\", \"Per\", \"Teff\", \"Rad\", \"logg\", \"Flag\", \"_RA\", \"_DE\" FROM \"J/ApJ/935/90/table1\" WHERE recno BETWEEN 1 AND 50000",
+      "chunk": [
+        1,
+        50000
+      ],
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
+    },
+    {
+      "stage": "fetch_tu2022_stars",
+      "status": "OK",
+      "rows": 21732,
+      "query": "SELECT \"ID\", \"Rvar\", \"Per\", \"Teff\", \"Rad\", \"logg\", \"Flag\", \"_RA\", \"_DE\" FROM \"J/ApJ/935/90/table1\" WHERE recno BETWEEN 50001 AND 71732",
+      "chunk": [
+        50001,
+        71732
+      ],
+      "route": "tap",
+      "endpoint": "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
     }
   ],
-  "n_stages": 19,
-  "n_ok": 19,
+  "n_stages": 30,
+  "n_ok": 30,
   "n_query_failed": 0,
   "n_query_returned_zero_rows": 0,
   "any_query_failed": false,
-  "total_rows": 347,
+  "total_rows": 347167,
   "routes": {
     "routes": {
       "tap": {
-        "n_ok": 366,
+        "n_ok": 59,
         "n_failed": 0,
         "endpoints": [
           "https://tapvizier.cds.unistra.fr/TAPVizieR/tap"
         ]
       }
     },
-    "n_attempts": 366,
+    "n_attempts": 59,
     "served_by": "tap",
     "breaker": {
       "fail_limit": 2,

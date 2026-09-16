@@ -370,20 +370,68 @@ def species_match_route(cat_name: str, formula: str, rx=()) -> str | None:
 
     Routes, in the order tried: ``normalised`` (the normalised catalogue name
     equals the normalised formula), ``isotopologue`` (equal after a leading
-    isotope mass), ``atom_counts`` (same canonical formula key) and ``regex``
-    (a configured pattern — an *additional* route, never the only one).
+    isotope mass) and ``regex`` (a configured pattern).
+
+    **``atom_counts`` is NOT a route, and removing it is a correctness fix.**
+    Identical atom counts do not identify a molecule --- they identify an
+    *empirical formula*, which isomers share. Probe run 35039720676 accepted,
+    through that route alone:
+
+    ======================  ==============================  ==============
+    target                  accepted                        actually
+    ======================  ==============================  ==============
+    ``HCOOCH3``             ``HCOCH2OH`` (JPL 60006)        glycolaldehyde
+    ``CH3CN``               ``CH3NC``    (JPL 41009)        methyl isocyanide
+    ``HC3N``                ``HCCNC``, ``HNCCC``            two isomers
+    ======================  ==============================  ==============
+
+    Methyl formate and glycolaldehyde are both C2H4O2 and have entirely
+    different rotational spectra. These entries' frequencies were being used to
+    VETO unidentified lines *under the target's name*, so a veto could be
+    justified by a molecule that is not the one named and may not even be
+    present in the source. Over-vetoing discards exactly what this search is
+    looking for, so the route is gone.
+
+    Nothing legitimate is lost: ``config/uline.yaml`` already carries an
+    explicit pattern for every real name variant (``^CH3OCHO`` for the JPL
+    spelling of methyl formate, ``^HCCCN\\b``, ``^SiCC\\b``, ``^CCCCH\\b``).
+    A same-formula entry is now recorded as a near miss with its reason, which
+    is how the next run learns of an alias that ought to be configured.
     """
     cat_n, want_n = normalise_name(cat_name), normalise_name(formula)
     if want_n and cat_n == want_n:
         return "normalised"
     if want_n and _LEADING_MASS_RE.sub("", cat_n, count=1) == want_n != cat_n:
         return "isotopologue"
-    want_k = formula_key(formula)
-    if want_k and formula_key(cat_name) == want_k:
-        return "atom_counts"
+    if want_n and normalise_name(undecorate(cat_name)) == want_n:
+        return "decorated"
     if any(r.search(str(cat_name)) for r in rx):
         return "regex"
     return None
+
+
+#: An isotope mass written INSIDE a name: ``CH3-35Cl``, ``CH3(35)Cl``,
+#: ``C-13-H3OH``.  Removed only where it sits immediately before an element
+#: symbol, so the ``3`` of ``CH3`` is never touched.
+_EMBEDDED_MASS_RE = re.compile(r"[-(]\s*\d{1,3}\s*\)?-?(?=[A-Z])")
+
+
+def undecorate(name: str) -> str:
+    """A catalogue name with its STATE and ISOTOPE decorations removed.
+
+    ``"CH3-35Cl, v=0"`` -> ``"CH3Cl"``, ``"C-13-H3OH"`` -> ``"CH3OH"``,
+    ``"CH2F2-v4"`` -> ``"CH2F2"``.  This is a transformation of the NAME, so it
+    can never turn one molecule into another the way an atom-count key can:
+    ``HCOCH2OH`` and ``HCOOCH3`` stay different strings, as they must.
+    """
+    return _EMBEDDED_MASS_RE.sub("", _strip_state(name))
+
+
+def same_formula_not_matched(cat_name: str, formula: str) -> bool:
+    """Same empirical formula, but not accepted as the species: an isomer, or an
+    alias nobody has configured yet.  Recorded, never matched."""
+    want_k = formula_key(formula)
+    return bool(want_k and formula_key(cat_name) == want_k)
 
 
 @dataclass
@@ -419,9 +467,19 @@ def match_species(entries: list[Entry], formula: str, patterns=None, *,
         if route is not None:
             out.entries.append(e)
             out.matched_names.append({"tag": int(e.tag), "name": e.name, "route": route})
+            continue
+        if len(out.near_miss_names) >= int(near_miss_limit):
+            continue
+        if same_formula_not_matched(e.name, formula):
+            # An ISOMER, or an alias nobody has configured. Recorded with its
+            # reason and NEVER matched: this is where HCOCH2OH (glycolaldehyde)
+            # was being accepted as HCOOCH3 (methyl formate), and CH3NC as
+            # CH3CN, and their frequencies were vetoing unidentified lines under
+            # the target's name.
+            out.near_miss_names.append(f"{e.name} [same formula {formula_key(formula)}: "
+                                       "isomer or unconfigured alias, NOT matched]")
         elif want_n and want_n in normalise_name(e.name):
-            if len(out.near_miss_names) < int(near_miss_limit):
-                out.near_miss_names.append(e.name)
+            out.near_miss_names.append(e.name)
     return out
 
 
@@ -589,6 +647,7 @@ def symmetric_top_lines(b_mhz: float, dj_mhz: float = 0.0, djk_mhz: float = 0.0,
 __all__ = ["C2_CM_K", "CATDIR_TEMPS", "CDMS_TEMPS", "Entry", "JPL_INTENSITY_CONST",
            "LINE_COLUMNS", "MHZ_PER_CM", "SpeciesMatch", "count_unparsed_catdir",
            "find_species", "formula_key", "interp_log_q", "match_species", "normalise_name",
+           "same_formula_not_matched",
            "parse_cat", "parse_catdir", "parse_catdir_report", "parse_partition_table",
            "rescale_lgint", "species_match_route", "symmetric_top_lines",
            "unparsed_catdir_lines"]

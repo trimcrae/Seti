@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from pathlib import Path
 
 import numpy as np
@@ -218,11 +219,18 @@ def test_catdir_parser_tolerates_the_real_jpl_layout():
 
 
 def test_normalised_formula_matching_beats_the_anchored_regexes():
-    # every spelling JPL and CDMS actually use for the same molecule
+    # every spelling JPL and CDMS actually use for the same molecule. "H3C-Cl"
+    # reverses the atom order and so needs a DECLARED pattern: an undeclared
+    # same-formula name is a near miss, because atom counts cannot tell a
+    # reversed spelling from an isomer.
+    import yaml as _yaml
+    _pat = _yaml.safe_load(Path("config/uline.yaml").read_text())
+    _ch3cl = [re.compile(p) for p in _pat["species"]["baseline"]["CH3Cl"]["patterns"]]
     for name in ("CH3Cl", "CH3CL", "CH3-35Cl", "CH3-37Cl", "CH3Cl, v=0", "CH3-35Cl, v=0",
                  "H3C-Cl", "CH3(35)Cl", "CH 3 Cl", "CH3Cl-35"):
-        assert species_match_route(name, "CH3Cl") is not None, name
-    assert species_match_route("CH3-35Cl, v=0", "CH3Cl") in ("normalised", "atom_counts")
+        assert species_match_route(name, "CH3Cl", _ch3cl) is not None, name
+    assert species_match_route("H3C-Cl", "CH3Cl") is None        # undeclared: a near miss
+    assert species_match_route("CH3-35Cl, v=0", "CH3Cl") == "decorated"
     assert species_match_route("13CH3OH", "CH3OH") == "isotopologue"
     assert formula_key("HCCCN") == formula_key("HC3N") == "C3H1N1"
     assert formula_key("SiCC") == formula_key("SiC2") == "C2Si1"
@@ -244,7 +252,7 @@ def test_near_miss_names_are_recorded_when_nothing_matches():
     assert m.near_miss_names == ["CF2Cl2, v=0", "CF2Cl2-fake"]    # the catalogue's own spellings
     m2 = match_species(ents, "CF2Cl2", patterns=[])
     assert [e.tag for e in m2.entries] == [1]                    # the v=0 state IS CF2Cl2
-    assert [d["route"] for d in m2.matched_names] == ["atom_counts"]
+    assert [d["route"] for d in m2.matched_names] == ["decorated"]
     assert m2.near_miss_names == ["CF2Cl2-fake"]                 # a suffix nobody has explained yet
     # the configured regex stays an ADDITIONAL route
     m3 = match_species([Entry(tag=4, name="weird-name-for-NF3", nlines=1)], "NF3",
@@ -1105,3 +1113,63 @@ def test_the_census_found_source_is_asserted_with_the_same_star_it_already_model
     # the two the census found that are NOT enabled name what blocks them
     assert "J/A+A/681/A50" in raw and "per-row source column" in raw
     assert "J/A+A/564/L2" in raw and "nucleus, not the LSR" in raw
+
+
+# ---------------------------------------------------------------------------
+# Identical atom counts do not identify a molecule (probe run 35039720676)
+# ---------------------------------------------------------------------------
+def test_isomers_are_never_accepted_as_the_target_species():
+    """The three the atom-count route accepted, and what they really are.
+
+    Methyl formate and glycolaldehyde are both C2H4O2 with entirely different
+    rotational spectra; methyl cyanide and methyl isocyanide are both C2H3N;
+    cyanoacetylene and isocyanoacetylene are both C3HN. Their frequencies were
+    being used to VETO unidentified lines under the target's name, so a veto
+    could be justified by a molecule that is not the one named and need not
+    even be present in the source. Over-vetoing discards exactly what this
+    search looks for.
+    """
+    from seti.uline.lines import same_formula_not_matched, species_match_route
+
+    for cat, target in (("HCOCH2OH", "HCOOCH3"),      # glycolaldehyde vs methyl formate
+                        ("CH3NC", "CH3CN"),           # methyl isocyanide vs methyl cyanide
+                        ("HCCNC", "HC3N"),            # isocyanoacetylene vs cyanoacetylene
+                        ("HNCCC", "HC3N")):
+        assert species_match_route(cat, target, []) is None, f"{cat} accepted as {target}"
+        assert same_formula_not_matched(cat, target), cat   # same formula, and recorded as such
+
+
+def test_a_same_formula_entry_is_a_near_miss_that_names_its_reason():
+    ents = [Entry(tag=60003, name="CH3OCHO", nlines=1),
+            Entry(tag=60006, name="HCOCH2OH", nlines=1)]
+    # with no declared pattern, BOTH are near misses — neither is guessed at
+    m = match_species(ents, "HCOOCH3", patterns=[])
+    assert m.entries == []
+    assert all("isomer or unconfigured alias" in n for n in m.near_miss_names)
+    assert any("HCOCH2OH" in n for n in m.near_miss_names)
+    # the declared spelling is matched, and the isomer still is not
+    m2 = match_species(ents, "HCOOCH3", patterns=[r"^CH3OCHO"])
+    assert [e.tag for e in m2.entries] == [60003]
+    assert [d["route"] for d in m2.matched_names] == ["regex"]
+    assert any("HCOCH2OH" in n for n in m2.near_miss_names)
+
+
+def test_states_and_isotopologues_still_match_through_the_name():
+    """The decorated route is a transformation of the NAME, so it cannot
+    turn one molecule into another the way an atom-count key can."""
+    from seti.uline.lines import species_match_route, undecorate
+
+    assert undecorate("CH3-35Cl, v=0") == "CH3Cl"
+    assert undecorate("C-13-H3OH") == "CH3OH"
+    assert undecorate("CH2F2-v4") == "CH2F2"
+    for cat, target in (("CH3-35Cl, v=0", "CH3Cl"), ("C-13-H3OH", "CH3OH"),
+                        ("CH2F2-v4", "CH2F2"), ("CF2Cl2, v=0", "CF2Cl2")):
+        assert species_match_route(cat, target, []) == "decorated", cat
+    # and it does not undecorate its way into an isomer
+    assert undecorate("HCOCH2OH") == "HCOCH2OH"
+
+
+def test_the_config_says_a_same_formula_alias_must_be_declared():
+    raw = Path("config/uline.yaml").read_text()
+    assert "MUST BE DECLARED HERE" in raw
+    assert "glycolaldehyde" in raw and "isomer" in raw.lower()

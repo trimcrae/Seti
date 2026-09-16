@@ -428,6 +428,47 @@ def tables_described_adql(terms_all=(), terms_any=(), limit: int = 60) -> str:
             f"WHERE {where}")
 
 
+def columns_described_adql(terms_any=(), limit: int = 400) -> str:
+    """ADQL for a COLUMN-description search --- where the word actually lives.
+
+    Run 35038662696 asked ``TAP_SCHEMA.tables`` for a description containing
+    "unidentified" AND (Orion OR "line survey") and got **zero** tables, which
+    reads as "there are no U-line tables in VizieR".  That is wrong: a VizieR
+    TABLE description is a one-line title ("Spectral survey of Orion KL"), and
+    the word "unidentified" lives in the description of a COLUMN --- the flag
+    or note column that marks a line as unassigned.
+
+    Searching ``TAP_SCHEMA.columns`` instead returns the table of every
+    U-line-bearing catalogue in VizieR, whatever its source, which is the
+    population this channel wants rather than one asserted id.  ``table_name``
+    repeats once per matching column and is de-duplicated by the caller.
+    """
+    anyw = [_like_any("description", w) for w in terms_any if str(w).strip()]
+    where = "(" + " OR ".join(anyw) + ")" if anyw else "1 = 1"
+    return (f"SELECT TOP {int(limit)} table_name, column_name, description "
+            f"FROM TAP_SCHEMA.columns WHERE {where}")
+
+
+def list_tables_with_column_described(terms_any=(), *, query_fn=None, limit: int = 400
+                                      ) -> pd.DataFrame:
+    """``table_name, column_name, description`` for every matching COLUMN.
+
+    One row per matching column, so a table with two such columns appears
+    twice; ``n_tables`` in the caller counts distinct names.
+    """
+    query_fn = query_fn or tap_query
+    df = query_fn(columns_described_adql(terms_any, limit))
+    if df is None or not len(df):
+        return pd.DataFrame(columns=["table_name", "column_name", "description"])
+    df = df.rename(columns={c: str(c).lower() for c in df.columns})
+    for c in ("column_name", "description"):
+        if c not in df:
+            df[c] = ""
+    df = df.copy()
+    df["table_name"] = df["table_name"].map(unquote_table)
+    return df[["table_name", "column_name", "description"]]
+
+
 def list_tables_like(pattern: str, *, query_fn=None, limit: int = 60) -> pd.DataFrame:
     query_fn = query_fn or tap_query
     return _tidy_tables(query_fn(tables_like_adql(pattern, limit)))
@@ -692,6 +733,45 @@ def description_fallback(source: str, *, query_fn=None, log: AcquisitionLog | No
                 "tables": [{"table_name": str(r["table_name"]),
                             "description": str(r["description"])[:300]}
                            for _, r in df.iterrows()]})
+    out["by_column"] = column_census(terms_all + terms_any, query_fn=fq, log=log,
+                                     source=source)
+    return out
+
+
+def column_census(terms_any=(), *, query_fn=None, log: AcquisitionLog | None = None,
+                  source: str = "", limit: int = 400) -> dict:
+    """Every VizieR table carrying a COLUMN whose description matches.
+
+    The table-description search is the wrong instrument and run 35038662696
+    proved it: zero tables for "unidentified", which would read as "VizieR has
+    no U-line tables". The word is a COLUMN description. This census is
+    diagnostic only --- nothing is ever selected from it automatically, exactly
+    as with the table search --- but it is what tells the next dispatch which
+    catalogue ids actually exist to be asserted.
+    """
+    terms = [t for t in (terms_any or ()) if str(t).strip()]
+    if not terms:
+        return {"status": "NOT_ATTEMPTED", "reason": "no column-description terms"}
+    query_fn = query_fn or tap_query
+    log = log or AcquisitionLog()
+    adql = columns_described_adql(terms, limit)
+    out: dict = {"terms_any": terms, "adql": adql}
+    try:
+        df = list_tables_with_column_described(terms, query_fn=query_fn, limit=limit)
+    except Exception as exc:                                  # noqa: BLE001
+        log.record(f"column_census_{source}", adql, error=repr(exc), extra={"adql": adql})
+        out.update({"status": STATUS_FAILED, "error": repr(exc)[:2000], "n_tables": 0,
+                    "tables": []})
+        return out
+    log.record(f"column_census_{source}", adql, rows=int(len(df)), extra={"adql": adql})
+    by_table: dict[str, list[dict]] = {}
+    for _, r in df.iterrows():
+        by_table.setdefault(str(r["table_name"]), []).append(
+            {"column": str(r["column_name"]), "description": str(r["description"])[:200]})
+    out.update({"status": STATUS_OK if by_table else STATUS_ZERO,
+                "n_columns": int(len(df)), "n_tables": len(by_table),
+                "tables": [{"table_name": t, "columns": cols[:6]}
+                           for t, cols in sorted(by_table.items())]})
     return out
 
 
@@ -782,9 +862,11 @@ __all__ = ["DEFAULT_COLUMN_PATTERNS", "DEFAULT_ULINE_PATTERNS", "ROUTE_ASTROQUER
            "ROUTE_NONE", "ROUTE_TAP", "VIZIER_ASU", "VIZIER_ASU_MIRRORS", "VIZIER_TAP",
            "VIZIER_TAP_MIRRORS", "AcquisitionLog", "AdqlNotTranslatable", "LineTableDiscovery",
            "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO", "VizierResult", "VizierRouteError",
-           "cdms_cat_tags", "cdms_inventory", "count_rows", "description_fallback",
+           "cdms_cat_tags", "cdms_inventory", "column_census", "columns_described_adql",
+           "count_rows", "description_fallback",
            "discover_line_table", "fetch_cats", "fetch_line_table", "fetch_text",
            "frequency_scale", "jpl_inventory", "list_tables_described", "list_tables_like",
+           "list_tables_with_column_described",
            "match_all_species", "non_tap_line_table", "reset_route_state", "resolve_line_columns",
            "route_log_summary", "table_columns", "tables_described_adql", "tables_like_adql",
            "tap_endpoints", "tap_query", "traced_query", "unidentified_mask", "unquote_table",

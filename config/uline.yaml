@@ -177,15 +177,30 @@ sources:
     v_lsr_uncertainty_km_s: 4.0
     contaminant_tex_k: 150.0
     enabled: true
-    # Fallback when J/ApJ/787/112 is absent from TAP_SCHEMA (run 34787988880
-    # never got an answer at all): a DESCRIPTION search, recorded in full so
-    # the next dispatch can be pointed at the real catalogue.  NOTHING is
-    # selected from it automatically — a table found this way has to be
-    # asserted here as `vizier_like` with its own verify note first.
-    # verify: the ApJ 787,112 VizieR id is asserted from the published paper
-    # and has NOT yet been confirmed against TAP_SCHEMA.
-    fallback_description_all: ["unidentified"]
-    fallback_description_any: ["Orion", "line survey"]
+    # MEASURED ABSENT (run 35038662696, with TAP healthy — the run before it
+    # could not tell an outage from an absence). J/ApJ/787/112 does not exist
+    # in VizieR under that id:
+    #   TAP_SCHEMA.tables LIKE '%J/ApJ/787/112/%'  -> 0 rows
+    #   asu-tsv -meta.all -source=J/ApJ/787/112    -> 0 rows on all 3 mirrors
+    #   cdsarc.../ftp/J/ApJ/787/112/ReadMe         -> HTTP 404
+    # Three independent routes agreeing is an absence claim; one silent route
+    # is not. Crockett+2014's HIFI line list was evidently never deposited at
+    # CDS under the paper's own id.
+    #
+    # The DESCRIPTION search that was supposed to find the real catalogue asked
+    # TAP_SCHEMA.TABLES for a description containing "unidentified" and got 0,
+    # which would read as "VizieR has no U-line tables at all". That is an
+    # artefact of the wrong instrument: a VizieR table description is a
+    # one-line title, and "unidentified" lives in a COLUMN description. The
+    # terms below now search table descriptions for the SOURCE and the SURVEY,
+    # and `column_census` searches TAP_SCHEMA.COLUMNS for the U-line flag
+    # itself — which returns every U-line-bearing catalogue in VizieR, whatever
+    # its source. Both are diagnostic only: NOTHING is selected from either
+    # automatically, and a table found this way has to be asserted here as
+    # `vizier_like` with its own verify note first.
+    fallback_description_all: []
+    fallback_description_any: ["Orion", "line survey", "spectral survey",
+                               "unidentified", "molecular lines"]
   irc10216_he2008:
     label: "IRC+10216, ARO 12 m + SMT 2 mm / 1.3 mm line survey (He+2008, ApJS 177, 275)"
     vizier_like: "J/ApJS/177/275/"
@@ -197,8 +212,12 @@ sources:
     enabled: true
     # verify: the ApJS 177,275 VizieR id is asserted from the published paper
     # and has NOT yet been confirmed against TAP_SCHEMA.
-    fallback_description_all: ["unidentified"]
-    fallback_description_any: ["IRC+10216", "line survey"]
+    # As above: "unidentified" moves from `all` to `any`, because it is a
+    # COLUMN description and requiring it of a TABLE description matches
+    # nothing. `column_census` searches TAP_SCHEMA.columns for it directly.
+    fallback_description_all: []
+    fallback_description_any: ["IRC+10216", "line survey", "spectral survey",
+                               "unidentified", "molecular lines"]
 
 match:
   tex_grid_k: [10, 30, 50, 100, 150, 200]

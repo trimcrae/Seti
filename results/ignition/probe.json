@@ -1,64 +1,152 @@
 {
   "stage": "probe",
-  "generated_utc": "2026-09-14T02:27:12Z",
+  "generated_utc": "2026-09-16T00:06:34Z",
   "budget": {
     "per_shape_s": 480.0,
     "total_s": 1500.0
   },
+  "allwise_columns_seen": [
+    "allwise_oid",
+    "cc_flags",
+    "dec",
+    "dec_error",
+    "designation",
+    "ext_flag",
+    "ph_qual",
+    "ra",
+    "ra_error",
+    "radec_co_error",
+    "tmass_key",
+    "var_flag",
+    "w1gmag",
+    "w1gmag_error",
+    "w1mjd_mean",
+    "w1mpro",
+    "w1mpro_error",
+    "w2gmag",
+    "w2gmag_error",
+    "w2mjd_mean",
+    "w2mpro",
+    "w2mpro_error",
+    "w3gmag",
+    "w3gmag_error",
+    "w3mjd_mean",
+    "w3mpro",
+    "w3mpro_error",
+    "w4gmag",
+    "w4gmag_error",
+    "w4mjd_mean",
+    "w4mpro",
+    "w4mpro_error"
+  ],
   "allwise_columns_resolved": {
-    "timeout_s": 120.0,
-    "elapsed_s": 120.0,
-    "attempts": [
-      {
-        "transport": "astroquery_async",
-        "queue": "async",
-        "ok": false,
-        "error": "QueryTimeout('no answer within 120 s')",
-        "seconds": 120.0
-      }
-    ],
-    "status": "TIMED_OUT",
-    "error": "QueryTimeout('no answer within 120 s')"
+    "designation": "designation",
+    "ext_flag": "ext_flag",
+    "ph_qual": "ph_qual",
+    "cc_flags": "cc_flags",
+    "var_flag": "var_flag"
   },
   "gaia_shapes": [
     {
       "shape": "inner_cone",
       "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM (\n  SELECT TOP 1000 gs.source_id, gs.ra, gs.dec, gs.b, gs.parallax, gs.parallax_over_error, gs.pmra, gs.pmdec, gs.ruwe, gs.phot_g_mean_mag, gs.bp_rp, gs.phot_variable_flag, gs.non_single_star, gs.teff_gspphot, gs.random_index\n  FROM gaiadr3.gaia_source AS gs\n  WHERE 1 = CONTAINS(POINT('ICRS', gs.ra, gs.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n    AND gs.phot_g_mean_mag < 14.5\n    AND gs.parallax > 3.0\n    AND gs.parallax_over_error > 10.0\n    AND ABS(gs.b) > 15.0\n    AND gs.ruwe < 1.4\n    AND gs.phot_variable_flag != 'VARIABLE'\n    AND gs.bp_rp > 0.6 AND gs.bp_rp < 2.5\n    AND gs.phot_g_mean_mag + 5 * LOG10(gs.parallax) - 10 > 2.0 + 3.3 * (gs.bp_rp - 0.6)\n) AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
       "timeout_s": 480.0,
-      "status": "TIMED_OUT",
-      "error": "QueryTimeout('no answer within 480 s')",
-      "elapsed_s": 480.0
-    },
-    {
-      "shape": "inner_cone_postfilter",
-      "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM (\n  SELECT TOP 1000 gs.source_id, gs.ra, gs.dec, gs.b, gs.parallax, gs.parallax_over_error, gs.pmra, gs.pmdec, gs.ruwe, gs.phot_g_mean_mag, gs.bp_rp, gs.phot_variable_flag, gs.non_single_star, gs.teff_gspphot, gs.random_index\n  FROM gaiadr3.gaia_source AS gs\n  WHERE 1 = CONTAINS(POINT('ICRS', gs.ra, gs.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n    AND gs.phot_g_mean_mag < 14.5\n    AND gs.parallax > 3.0\n    AND gs.parallax_over_error > 10.0\n    AND ABS(gs.b) > 15.0\n    AND gs.ruwe < 1.4\n    AND gs.phot_variable_flag != 'VARIABLE'\n    AND gs.bp_rp > 0.6 AND gs.bp_rp < 2.5\n    AND gs.phot_g_mean_mag + 5 * LOG10(gs.parallax) - 10 > 2.0 + 3.3 * (gs.bp_rp - 0.6)\n) AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id",
-      "timeout_s": 480.0,
-      "status": "TIMED_OUT",
-      "error": "QueryTimeout('no answer within 480 s')",
-      "elapsed_s": 480.0
-    },
-    {
-      "shape": "flat",
-      "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM gaiadr3.gaia_source AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE 1 = CONTAINS(POINT('ICRS', g.ra, g.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n  AND g.phot_g_mean_mag < 14.5\n  AND g.parallax > 3.0\n  AND g.parallax_over_error > 10.0\n  AND ABS(g.b) > 15.0\n  AND g.ruwe < 1.4\n  AND g.phot_variable_flag != 'VARIABLE'\n  AND g.bp_rp > 0.6 AND g.bp_rp < 2.5\n  AND g.phot_g_mean_mag + 5 * LOG10(g.parallax) - 10 > 2.0 + 3.3 * (g.bp_rp - 0.6)\n  AND w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
-      "timeout_s": 420.0,
-      "status": "TIMED_OUT",
-      "error": "QueryTimeout('no answer within 420 s')",
-      "elapsed_s": 420.0
+      "elapsed_s": 18.5,
+      "transport": "astroquery_async",
+      "queue": "async",
+      "attempts": [
+        {
+          "transport": "astroquery_async",
+          "queue": "async",
+          "ok": true,
+          "n_rows": 5,
+          "seconds": 18.5
+        }
+      ],
+      "status": "OK",
+      "n_rows": 5,
+      "columns": [
+        "source_id",
+        "ra",
+        "dec",
+        "b",
+        "parallax",
+        "parallax_over_error",
+        "pmra",
+        "pmdec",
+        "ruwe",
+        "phot_g_mean_mag",
+        "bp_rp",
+        "phot_variable_flag",
+        "non_single_star",
+        "teff_gspphot",
+        "random_index",
+        "allwise_designation",
+        "w1mpro",
+        "w1mpro_error",
+        "w2mpro",
+        "w2mpro_error",
+        "w3mpro",
+        "w3mpro_error",
+        "cc_flags",
+        "ph_qual",
+        "ext_flag",
+        "allwise_sep_arcsec",
+        "allwise_n_neighbours"
+      ]
     }
   ],
-  "gaia_shape_working": null,
+  "gaia_shape_working": "inner_cone",
   "gaia_shapes_tried": [
-    "inner_cone",
-    "inner_cone_postfilter",
-    "flat"
+    "inner_cone"
   ],
   "gaia_join": {
     "shape": "inner_cone",
     "query": "SELECT TOP 5 g.source_id, g.ra, g.dec, g.b, g.parallax, g.parallax_over_error, g.pmra, g.pmdec, g.ruwe, g.phot_g_mean_mag, g.bp_rp, g.phot_variable_flag, g.non_single_star, g.teff_gspphot, g.random_index,\n  w.designation AS allwise_designation, w.w1mpro, w.w1mpro_error, w.w2mpro, w.w2mpro_error, w.w3mpro, w.w3mpro_error, w.cc_flags AS cc_flags, w.ph_qual AS ph_qual, w.ext_flag AS ext_flag, xw.angular_distance AS allwise_sep_arcsec, xw.number_of_neighbours AS allwise_n_neighbours\nFROM (\n  SELECT TOP 1000 gs.source_id, gs.ra, gs.dec, gs.b, gs.parallax, gs.parallax_over_error, gs.pmra, gs.pmdec, gs.ruwe, gs.phot_g_mean_mag, gs.bp_rp, gs.phot_variable_flag, gs.non_single_star, gs.teff_gspphot, gs.random_index\n  FROM gaiadr3.gaia_source AS gs\n  WHERE 1 = CONTAINS(POINT('ICRS', gs.ra, gs.dec), CIRCLE('ICRS', 266.0, 65.0, 1.0))\n    AND gs.phot_g_mean_mag < 14.5\n    AND gs.parallax > 3.0\n    AND gs.parallax_over_error > 10.0\n    AND ABS(gs.b) > 15.0\n    AND gs.ruwe < 1.4\n    AND gs.phot_variable_flag != 'VARIABLE'\n    AND gs.bp_rp > 0.6 AND gs.bp_rp < 2.5\n    AND gs.phot_g_mean_mag + 5 * LOG10(gs.parallax) - 10 > 2.0 + 3.3 * (gs.bp_rp - 0.6)\n) AS g\n  JOIN gaiadr3.allwise_best_neighbour AS xw ON xw.source_id = g.source_id\n  JOIN gaiadr1.allwise_original_valid AS w\n    ON w.designation = xw.original_ext_source_id\nWHERE w.w1mpro - w.w2mpro < 0.15\n  AND w.w1mpro - w.w2mpro > -0.1\n  AND w.ext_flag = 0\n  AND w.cc_flags = '0000'",
     "timeout_s": 480.0,
-    "status": "TIMED_OUT",
-    "error": "QueryTimeout('no answer within 480 s')",
-    "elapsed_s": 480.0
+    "elapsed_s": 18.5,
+    "transport": "astroquery_async",
+    "queue": "async",
+    "attempts": [
+      {
+        "transport": "astroquery_async",
+        "queue": "async",
+        "ok": true,
+        "n_rows": 5,
+        "seconds": 18.5
+      }
+    ],
+    "status": "OK",
+    "n_rows": 5,
+    "columns": [
+      "source_id",
+      "ra",
+      "dec",
+      "b",
+      "parallax",
+      "parallax_over_error",
+      "pmra",
+      "pmdec",
+      "ruwe",
+      "phot_g_mean_mag",
+      "bp_rp",
+      "phot_variable_flag",
+      "non_single_star",
+      "teff_gspphot",
+      "random_index",
+      "allwise_designation",
+      "w1mpro",
+      "w1mpro_error",
+      "w2mpro",
+      "w2mpro_error",
+      "w3mpro",
+      "w3mpro_error",
+      "cc_flags",
+      "ph_qual",
+      "ext_flag",
+      "allwise_sep_arcsec",
+      "allwise_n_neighbours"
+    ]
   },
   "vizier_asu": {
     "enabled": true,
@@ -88,10 +176,10 @@
     "gaia": {
       "catalogue": "I/355/gaiadr3",
       "out_max": 5,
-      "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=<14.5&Plx=>3&RPlx=>10&RUWE=<1.4&BP-RP=0.6..2.5",
+      "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266.000000%20%2B65.000000&-c.rd=1.000000&-c.eq=J2000&Gmag=<14.5&Plx=>3&RPlx=>10&RUWE=<1.4&BP-RP=0.6..2.5",
       "constraints": {
-        "-c": "266+65",
-        "-c.rd": "1",
+        "-c": "266.000000 +65.000000",
+        "-c.rd": "1.000000",
         "-c.eq": "J2000",
         "Gmag": "<14.5",
         "Plx": ">3",
@@ -103,377 +191,74 @@
         {
           "route": "asu_tsv",
           "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-          "status": "QUERY_RETURNED_ZERO_ROWS",
-          "what": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=<14.5&Plx=>3&RPlx=>",
-          "rows": 0,
-          "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:13 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:13\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=%3C14.5&Plx=%3E3&RPlx=%3E10&RUWE=%3C1.4&BP-RP=0.6..2.5\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RE..."
+          "status": "OK",
+          "what": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266.000000%20%2B65.000000&-c.rd=1.000000&-c.eq=J200",
+          "rows": 5
         }
       ],
       "errors": [],
       "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-      "columns_resolved": {},
-      "columns_missing": [
-        "source_id",
-        "ra",
-        "dec",
-        "parallax",
-        "parallax_over_error",
-        "pmra",
-        "pmdec",
-        "ruwe",
-        "phot_g_mean_mag",
-        "bp_rp",
-        "phot_variable_flag",
-        "non_single_star",
-        "teff_gspphot",
-        "random_index"
-      ],
-      "status": "COLUMNS_UNRESOLVED",
-      "error": "required Gaia columns missing: ['source_id', 'ra', 'dec', 'parallax', 'parallax_over_error', 'pmra', 'pmdec', 'ruwe', 'phot_g_mean_mag', 'bp_rp']",
-      "n_rows": 0,
-      "ladder": {
-        "catalogue": "I/355/gaiadr3",
-        "steps": [
-          {
-            "step": 0,
-            "label": "bare",
-            "added": "-source + -out.max",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out.all&-out.form=TSV",
-            "rows": 5,
-            "columns": [
-              "DR3Name",
-              "RA_ICRS",
-              "DE_ICRS",
-              "SolID",
-              "Source",
-              "RandomI",
-              "e_RA_ICRS",
-              "e_DE_ICRS",
-              "Plx",
-              "e_Plx",
-              "RPlx",
-              "PM",
-              "pmRA",
-              "e_pmRA",
-              "pmDE",
-              "e_pmDE",
-              "RADEcor",
-              "RAPlxcor",
-              "RApmRAcor",
-              "RApmDEcor",
-              "DEPlxcor",
-              "DEpmRAcor",
-              "DEpmDEcor",
-              "PlxpmRAcor",
-              "PlxpmDEcor",
-              "pmRApmDEcor",
-              "NAL",
-              "NAC",
-              "NgAL",
-              "NbAL",
-              "gofAL",
-              "chi2AL",
-              "epsi",
-              "sepsi",
-              "Solved",
-              "APF",
-              "nueff",
-              "pscol",
-              "e_pscol",
-              "RApscolCorr"
-            ],
-            "status": "OK"
-          },
-          {
-            "step": 1,
-            "label": "columns",
-            "added": "-out= x14",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV",
-            "rows": 5,
-            "columns": [
-              "Source",
-              "RA_ICRS",
-              "DE_ICRS",
-              "Plx",
-              "RPlx",
-              "pmRA",
-              "pmDE",
-              "RUWE",
-              "Gmag",
-              "BP-RP",
-              "VarFlag",
-              "NSS",
-              "Teff",
-              "RandomI"
-            ],
-            "status": "OK"
-          },
-          {
-            "step": 2,
-            "label": "+-c",
-            "added": "-c=266+65",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:18 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:18\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
-          },
-          {
-            "step": 3,
-            "label": "+-c.rd",
-            "added": "-c.rd=1",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:19 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:19\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
-          },
-          {
-            "step": 4,
-            "label": "+-c.eq",
-            "added": "-c.eq=J2000",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:20 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:20\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
-          },
-          {
-            "step": 5,
-            "label": "+Gmag",
-            "added": "Gmag=<14.5",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=<14.5",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:21 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:21\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=%3C14.5\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
-          },
-          {
-            "step": 6,
-            "label": "+Plx",
-            "added": "Plx=>3",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=<14.5&Plx=>3",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:22 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:22\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=%3C14.5&Plx=%3E3\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
-          },
-          {
-            "step": 7,
-            "label": "+RPlx",
-            "added": "RPlx=>10",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=<14.5&Plx=>3&RPlx=>10",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:23 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:23\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=%3C14.5&Plx=%3E3&RPlx=%3E10\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
-          },
-          {
-            "step": 8,
-            "label": "+RUWE",
-            "added": "RUWE=<1.4",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=<14.5&Plx=>3&RPlx=>10&RUWE=<1.4",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:24 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:24\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=%3C14.5&Plx=%3E3&RPlx=%3E10&RUWE=%3C1.4\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n..."
-          },
-          {
-            "step": 9,
-            "label": "+BP-RP",
-            "added": "BP-RP=0.6..2.5",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=<14.5&Plx=>3&RPlx=>10&RUWE=<1.4&BP-RP=0.6..2.5",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:24 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:24\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=%3C14.5&Plx=%3E3&RPlx=%3E10&RUWE=%3C1.4&BP-RP=0.6..2.5\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RE..."
-          }
-        ],
-        "verdict": {
-          "status": "CONSTRAINT_ZEROED_THE_QUERY",
-          "last_ok": "columns",
-          "last_ok_rows": 5,
-          "culprit": "+-c",
-          "culprit_added": "-c=266+65",
-          "culprit_status": "QUERY_RETURNED_ZERO_ROWS",
-          "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:18 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:18\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n",
-          "asu_errors": null,
-          "note": "rows survived columns and died on -c=266+65"
-        }
-      }
+      "columns_resolved": {
+        "source_id": "Source",
+        "ra": "RA_ICRS",
+        "dec": "DE_ICRS",
+        "parallax": "Plx",
+        "parallax_over_error": "RPlx",
+        "pmra": "pmRA",
+        "pmdec": "pmDE",
+        "ruwe": "RUWE",
+        "phot_g_mean_mag": "Gmag",
+        "bp_rp": "BP-RP",
+        "phot_variable_flag": "VarFlag",
+        "non_single_star": "NSS",
+        "teff_gspphot": "Teff",
+        "random_index": "RandomI"
+      },
+      "columns_missing": [],
+      "cuts_not_applied": [],
+      "n_rows": 5,
+      "capped": true,
+      "status": "OK"
     },
     "allwise": {
       "catalogue": "II/328/allwise",
       "out_max": 150000,
-      "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=150000&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65&-c.rd=1.01667&-c.eq=J2000",
+      "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=150000&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266.000000%20%2B65.000000&-c.rd=1.016667&-c.eq=J2000",
       "constraints": {
-        "-c": "266+65",
-        "-c.rd": "1.01667",
+        "-c": "266.000000 +65.000000",
+        "-c.rd": "1.016667",
         "-c.eq": "J2000"
       },
       "attempts": [
         {
           "route": "asu_tsv",
           "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-          "status": "QUERY_RETURNED_ZERO_ROWS",
-          "what": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=150000&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65&-c.rd=1.01667&-c.eq=J2000",
-          "rows": 0,
-          "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:14 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:14\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=150000&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65&-c.rd=1.01667&-c.eq=J2000\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
+          "status": "OK",
+          "what": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=150000&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266.000000%20%2B65.000000&-c.rd=1.016667&-c.eq=J2000",
+          "rows": 65745
         }
       ],
       "errors": [],
       "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-      "columns_resolved": {},
-      "columns_missing": [
-        "allwise_designation",
-        "ra",
-        "dec",
-        "w1mpro",
-        "w1mpro_error",
-        "w2mpro",
-        "w2mpro_error",
-        "w3mpro",
-        "w3mpro_error",
-        "cc_flags",
-        "ph_qual",
-        "ext_flag"
-      ],
-      "status": "COLUMNS_UNRESOLVED",
-      "error": "required AllWISE columns missing: ['allwise_designation', 'ra', 'dec', 'w1mpro', 'w2mpro']",
-      "n_rows": 0,
-      "ladder": {
-        "catalogue": "II/328/allwise",
-        "steps": [
-          {
-            "step": 0,
-            "label": "bare",
-            "added": "-source + -out.max",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=5&-out.all&-out.form=TSV",
-            "rows": 5,
-            "columns": [
-              "AllWISE",
-              "RAJ2000",
-              "DEJ2000",
-              "eeMaj",
-              "eeMin",
-              "eePA",
-              "Im",
-              "W1mag",
-              "e_W1mag",
-              "W2mag",
-              "e_W2mag",
-              "W3mag",
-              "e_W3mag",
-              "W4mag",
-              "e_W4mag",
-              "Jmag",
-              "e_Jmag",
-              "Hmag",
-              "e_Hmag",
-              "Kmag",
-              "e_Kmag",
-              "wx",
-              "wy",
-              "ID",
-              "snr1",
-              "chi2W1",
-              "snr2",
-              "chi2W2",
-              "snr3",
-              "chi2W3",
-              "snr4",
-              "chi2W4",
-              "chi2",
-              "nb",
-              "na",
-              "sat1",
-              "sat2",
-              "sat3",
-              "sat4",
-              "ccf"
-            ],
-            "status": "OK"
-          },
-          {
-            "step": 1,
-            "label": "columns",
-            "added": "-out= x12",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=5&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV",
-            "rows": 5,
-            "columns": [
-              "AllWISE",
-              "RAJ2000",
-              "DEJ2000",
-              "W1mag",
-              "e_W1mag",
-              "W2mag",
-              "e_W2mag",
-              "W3mag",
-              "e_W3mag",
-              "ccf",
-              "qph",
-              "ex"
-            ],
-            "status": "OK"
-          },
-          {
-            "step": 2,
-            "label": "+-c",
-            "added": "-c=266+65",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=5&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:28 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:28\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=5&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
-          },
-          {
-            "step": 3,
-            "label": "+-c.rd",
-            "added": "-c.rd=1.01667",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=5&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65&-c.rd=1.01667",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:29 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:29\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=5&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65&-c.rd=1.01667\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
-          },
-          {
-            "step": 4,
-            "label": "+-c.eq",
-            "added": "-c.eq=J2000",
-            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=5&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65&-c.rd=1.01667&-c.eq=J2000",
-            "rows": 0,
-            "columns": [],
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:29 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:29\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=5&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65&-c.rd=1.01667&-c.eq=J2000\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n"
-          }
-        ],
-        "verdict": {
-          "status": "CONSTRAINT_ZEROED_THE_QUERY",
-          "last_ok": "columns",
-          "last_ok_rows": 5,
-          "culprit": "+-c",
-          "culprit_added": "-c=266+65",
-          "culprit_status": "QUERY_RETURNED_ZERO_ROWS",
-          "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:28 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:28\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=5&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266+65\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RESOURCE=\\n#Name:\\n#Title:\\n",
-          "asu_errors": null,
-          "note": "rows survived columns and died on -c=266+65"
-        }
-      }
+      "columns_resolved": {
+        "allwise_designation": "AllWISE",
+        "ra": "RAJ2000",
+        "dec": "DEJ2000",
+        "w1mpro": "W1mag",
+        "w1mpro_error": "e_W1mag",
+        "w2mpro": "W2mag",
+        "w2mpro_error": "e_W2mag",
+        "w3mpro": "W3mag",
+        "w3mpro_error": "e_W3mag",
+        "cc_flags": "ccf",
+        "ph_qual": "qph",
+        "ext_flag": "ex"
+      },
+      "columns_missing": [],
+      "cuts_not_applied": [],
+      "n_rows": 65745,
+      "capped": false,
+      "status": "OK"
     },
     "parent_chunk": {
       "route": "vizier_asu",
@@ -493,10 +278,10 @@
       "gaia": {
         "catalogue": "I/355/gaiadr3",
         "out_max": 5,
-        "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=<14.5&Plx=>3&RPlx=>10&RUWE=<1.4&BP-RP=0.6..2.5",
+        "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266.000000%20%2B65.000000&-c.rd=1.000000&-c.eq=J2000&Gmag=<14.5&Plx=>3&RPlx=>10&RUWE=<1.4&BP-RP=0.6..2.5",
         "constraints": {
-          "-c": "266+65",
-          "-c.rd": "1",
+          "-c": "266.000000 +65.000000",
+          "-c.rd": "1.000000",
           "-c.eq": "J2000",
           "Gmag": "<14.5",
           "Plx": ">3",
@@ -508,57 +293,140 @@
           {
             "route": "asu_tsv",
             "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-            "status": "QUERY_RETURNED_ZERO_ROWS",
-            "what": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=<14.5&Plx=>3&RPlx=>",
-            "rows": 0,
-            "body_head": "#\\n#   VizieR Astronomical Server vizier.cds.unistra.fr\\n#    Date: 2026-09-14T02:52:30 [V7.6]\\n#   In case of problem, please report to:\\tcds-question@unistra.fr\\n#\\n#\\n#Coosys\\tJ2000:\\teq_FK5 J2000\\n#INFO\\tservice_protocol=ASU\\t  IVOID of the protocol through which the data was retrieved\\n#INFO\\trequest_date=2026-09-14T02:52:30\\t  Query execution date\\n#INFO\\trequest=https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266+65&-c.rd=1&-c.eq=J2000&Gmag=%3C14.5&Plx=%3E3&RPlx=%3E10&RUWE=%3C1.4&BP-RP=0.6..2.5\\t  Full request URL\\n#INFO\\tcontact=cds-question@unistra.fr\\t  Email or URL to contact publisher\\n#INFO\\tserver_software=VizieR/7.6\\t  Software version\\n#INFO\\tpublisher=CDS\\t  Data centre that produced the VOTable\\n\\n#RE..."
+            "status": "OK",
+            "what": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/355/gaiadr3&-out.max=5&-out=Source&-out=RA_ICRS&-out=DE_ICRS&-out=Plx&-out=RPlx&-out=pmRA&-out=pmDE&-out=RUWE&-out=Gmag&-out=BP-RP&-out=VarFlag&-out=NSS&-out=Teff&-out=RandomI&-out.form=TSV&-c=266.000000%20%2B65.000000&-c.rd=1.000000&-c.eq=J200",
+            "rows": 5
           }
         ],
         "errors": [],
         "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
-        "columns_resolved": {},
-        "columns_missing": [
-          "source_id",
-          "ra",
-          "dec",
-          "parallax",
-          "parallax_over_error",
-          "pmra",
-          "pmdec",
-          "ruwe",
-          "phot_g_mean_mag",
-          "bp_rp",
-          "phot_variable_flag",
-          "non_single_star",
-          "teff_gspphot",
-          "random_index"
-        ],
-        "status": "COLUMNS_UNRESOLVED",
-        "error": "required Gaia columns missing: ['source_id', 'ra', 'dec', 'parallax', 'parallax_over_error', 'pmra', 'pmdec', 'ruwe', 'phot_g_mean_mag', 'bp_rp']",
-        "n_rows": 0
+        "columns_resolved": {
+          "source_id": "Source",
+          "ra": "RA_ICRS",
+          "dec": "DE_ICRS",
+          "parallax": "Plx",
+          "parallax_over_error": "RPlx",
+          "pmra": "pmRA",
+          "pmdec": "pmDE",
+          "ruwe": "RUWE",
+          "phot_g_mean_mag": "Gmag",
+          "bp_rp": "BP-RP",
+          "phot_variable_flag": "VarFlag",
+          "non_single_star": "NSS",
+          "teff_gspphot": "Teff",
+          "random_index": "RandomI"
+        },
+        "columns_missing": [],
+        "cuts_not_applied": [],
+        "n_rows": 5,
+        "capped": true,
+        "status": "OK"
       },
-      "status": "COLUMNS_UNRESOLVED",
-      "n_rows": 0,
-      "error": "required Gaia columns missing: ['source_id', 'ra', 'dec', 'parallax', 'parallax_over_error', 'pmra', 'pmdec', 'ruwe', 'phot_g_mean_mag', 'bp_rp']"
+      "allwise": {
+        "catalogue": "II/328/allwise",
+        "out_max": 150000,
+        "url": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=150000&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266.000000%20%2B65.000000&-c.rd=1.016667&-c.eq=J2000",
+        "constraints": {
+          "-c": "266.000000 +65.000000",
+          "-c.rd": "1.016667",
+          "-c.eq": "J2000"
+        },
+        "attempts": [
+          {
+            "route": "asu_tsv",
+            "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+            "status": "OK",
+            "what": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=II/328/allwise&-out.max=150000&-out=AllWISE&-out=RAJ2000&-out=DEJ2000&-out=W1mag&-out=e_W1mag&-out=W2mag&-out=e_W2mag&-out=W3mag&-out=e_W3mag&-out=ccf&-out=qph&-out=ex&-out.form=TSV&-c=266.000000%20%2B65.000000&-c.rd=1.016667&-c.eq=J2000",
+            "rows": 65745
+          }
+        ],
+        "errors": [],
+        "endpoint": "https://vizier.cds.unistra.fr/viz-bin/asu-tsv",
+        "columns_resolved": {
+          "allwise_designation": "AllWISE",
+          "ra": "RAJ2000",
+          "dec": "DEJ2000",
+          "w1mpro": "W1mag",
+          "w1mpro_error": "e_W1mag",
+          "w2mpro": "W2mag",
+          "w2mpro_error": "e_W2mag",
+          "w3mpro": "W3mag",
+          "w3mpro_error": "e_W3mag",
+          "cc_flags": "ccf",
+          "ph_qual": "qph",
+          "ext_flag": "ex"
+        },
+        "columns_missing": [],
+        "cuts_not_applied": [],
+        "n_rows": 65745,
+        "capped": false,
+        "status": "OK"
+      },
+      "match": {
+        "n_gaia": 5,
+        "n_allwise": 65745,
+        "match_radius_arcsec": 3.0,
+        "from_epoch": 2016.0,
+        "to_epoch": 2010.5,
+        "n_matched": 5,
+        "n_unmatched": 0
+      },
+      "allwise_cut_counters": {
+        "n_in": 5,
+        "cuts_not_applied": [],
+        "cut_w1w2_photospheric": 0,
+        "cut_ext_flag": 0,
+        "cut_cc_flags": 0,
+        "n_out": 5
+      },
+      "n_rows": 5,
+      "capped": true,
+      "out_max": {
+        "gaia": 5,
+        "allwise": 150000
+      },
+      "cuts_not_applied": [],
+      "status": "OK",
+      "row_count_note": "n_rows is what the ASU -out.max cap actually returned for this chunk; it is not a COUNT(*) and must never be reported as a complete selection"
     },
-    "n_rows": 0,
-    "status": "COLUMNS_UNRESOLVED",
-    "usable": false
+    "n_rows": 5,
+    "status": "OK",
+    "usable": true
   },
+  "neowise_star_from_route": "esa_gaia",
   "neowise_cone": {
-    "status": "NOT_ATTEMPTED",
-    "reason": "no Gaia row to resolve (no query shape answered: ['inner_cone', 'inner_cone_postfilter', 'flat'])"
+    "label": "neowise_cone_pm0.10as",
+    "service": "https://irsa.ipac.caltech.edu/TAP",
+    "status": "OK",
+    "n_rows": 4110,
+    "count_star": null,
+    "truncated": false,
+    "query": "SELECT ra, dec, mjd, w1mpro, w1sigmpro, w2mpro, w2sigmpro, qual_frame, saa_sep, moon_masked, cc_flags, ph_qual, nb, na FROM neowiser_p1bs_psd WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 267.8618434, 64.6417536, 0.000708122))",
+    "error": "",
+    "elapsed_s": 60.52715258299999,
+    "n_rows_raw": null,
+    "n_rows_cleaned_out": null,
+    "source_id": "1440754308521967872"
   },
   "neowise_upload": {
-    "status": "NOT_ATTEMPTED",
-    "reason": "no Gaia row to upload"
+    "label": "neowise_upload_2",
+    "service": "https://irsa.ipac.caltech.edu/TAP",
+    "status": "QUERY_FAILED",
+    "n_rows": 0,
+    "count_star": null,
+    "truncated": null,
+    "query": "SELECT p.sid, n.ra, n.dec, n.mjd, n.w1mpro, n.w1sigmpro, n.w2mpro, n.w2sigmpro, n.qual_frame, n.saa_sep, n.moon_masked, n.cc_flags, n.ph_qual, n.nb, n.na FROM neowiser_p1bs_psd AS n, TAP_UPLOAD.pos AS p WHERE 1 = CONTAINS(POINT('ICRS', n.ra, n.dec), CIRCLE('ICRS', p.ra, p.dec, p.rad))",
+    "error": "DALQueryError: Query Error: QUERY must be set",
+    "elapsed_s": 27.687516930999976,
+    "n_rows_raw": null,
+    "n_rows_cleaned_out": null
   },
-  "neowise_route_recommended": "none",
-  "parent_route_recommended": "none",
+  "neowise_route_recommended": "field",
+  "parent_route_recommended": "esa_gaia",
   "parent_routes_tried": [
     "esa_gaia",
     "vizier_asu"
   ],
-  "verdict": "NO_DATA_REACHED",
-  "elapsed_s": 1518.4
+  "verdict": "GAIA_AND_NEOWISE_REACHABLE",
+  "elapsed_s": 129.4
 }

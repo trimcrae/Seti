@@ -1528,10 +1528,25 @@ def search_tables(keywords, *, query_fn=None, limit: int = 60) -> pd.DataFrame:
 
 def table_columns(table: str, *, query_fn=None, fetch_fn=None, known=None,
                   allow_non_tap: bool = True) -> list[str]:
-    """Real column names of one table from ``TAP_SCHEMA.columns``.
+    """Real column names of one table from ``TAP_SCHEMA.columns``, UNQUOTED.
 
     Degrades, in order, to column names already carried by a non-TAP table
-    listing (``known``) and then to the catalogue's ASU metadata."""
+    listing (``known``) and then to the catalogue's ASU metadata.
+
+    TAPVizieR quotes awkward labels, and it quotes them in ``TAP_SCHEMA`` for
+    COLUMNS exactly as it does for tables: the rows come back as ``"KIC"``,
+    ``"Teff"``, ``"BP-RP"`` --- the double quotes are part of the string.  That
+    is the whole of ARC run 35040024670, which reached **zero rows on all five
+    flare catalogues** where the run before it had 5,785 stars.  Nothing about
+    the sky changed; TAPVizieR came back up, discovery switched from the ASU
+    route (which returns bare header cells) to TAP, and every role pattern ---
+    ``^kic$`` against ``"KIC"`` --- stopped matching.  The scoreboard recorded
+    ``rejected: no star_id`` for a table whose second column is plainly ``KIC``.
+
+    Unquoting here fixes it for every caller at once, which is the only place
+    it can be fixed once: a role resolver that strips quotes itself would still
+    hand the quoted name on to whoever selects the column.
+    """
     query_fn = query_fn or tap_query
     t = unquote_table(table)
     adql = ("SELECT TOP 2000 column_name FROM TAP_SCHEMA.columns "
@@ -1542,12 +1557,12 @@ def table_columns(table: str, *, query_fn=None, fetch_fn=None, known=None,
         if not allow_non_tap:
             raise
         if known:
-            return [str(c) for c in known]
+            return [unquote_table(c) for c in known]
         df, _ = asu_table_columns(t, fetch_fn=fetch_fn)
     if df is None or not len(df):
-        return [str(c) for c in (known or [])]
+        return [unquote_table(c) for c in (known or [])]
     col = "column_name" if "column_name" in df.columns else df.columns[0]
-    return [str(c) for c in df[col].tolist()]
+    return [unquote_table(c) for c in df[col].tolist()]
 
 
 def count_rows(table: str, *, query_fn=None) -> int | None:
@@ -1597,7 +1612,16 @@ _ROLE_PATTERNS: dict[str, list[str]] = {
 
 
 def _canon(name: str) -> str:
-    return re.sub(r"_+", "_", str(name).strip().lower()).strip("_")
+    """Canonical form of a column name for role matching.
+
+    The leading ``strip('"')`` is defence in depth against TAPVizieR's quoting:
+    ``TAP_SCHEMA.columns`` hands back ``"KIC"`` with the double quotes inside
+    the string, and ``^kic$`` does not match ``"kic"``.  ``table_columns``
+    unquotes at the source, which is where it matters for the query; this makes
+    a quoted name from any other path resolve too, instead of being silently
+    reported as a missing role.
+    """
+    return re.sub(r"_+", "_", str(name).strip().strip('"').strip().lower()).strip("_")
 
 
 def resolve_columns(columns, roles: dict[str, list[str]] | None = None) -> dict[str, str]:

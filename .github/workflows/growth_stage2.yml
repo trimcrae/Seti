@@ -1,0 +1,195 @@
+name: growth-stage2
+
+# GROWTH stage 2 — MEASURE the TESS depth from the light curve (docs/growth.md §7).
+#
+#   probe ──▶ measure (KOI ephemerides + TOI depths + TESS light curves, fit) ──▶ assess ──▶ commit-back
+#
+# WHY THIS STAGE EXISTS.  Stage 1 compares two heterogeneous CATALOGUE depths,
+# and run 35038510064's own population shows its formal errors are not a sigma
+# scale: of 108 measured planets, 31 sit above 5 sigma of the population median
+# and 37 above 3.  A third of a sample cannot be five-sigma outliers unless the
+# errors fail to describe the pipeline-to-pipeline scatter, so the z = 8.67 on
+# K00897.01 (Kepler-718 b, KIC 7849854, TIC 268924036, TOI 4490.01) is not an
+# 8.67-sigma statement.  Stage 2 does not argue about the error model: it FITS
+# the TESS depth itself and compares THREE numbers —
+#
+#   * the Kepler catalogue depth (carried into the TESS band by the LD ratio),
+#   * the TOI catalogue depth,
+#   * the depth this workflow measures from the light curve
+#
+# — and reports which of the three distinguishable outcomes holds:
+#   MEASURED_DEPTH_MATCHES_KEPLER   the TOI value was wrong; the candidate dies
+#   MEASURED_DEPTH_MATCHES_TOI      the depth really changed; on to the centroid test
+#   MEASURED_DEPTH_MATCHES_NEITHER  said, not resolved — no pick is made
+# plus MEASURED_DEPTH_MATCHES_BOTH (the references are not separated by this
+# measurement) and UNMEASURED (never an agreement with anything).
+#
+# THE GOVERNING DISCIPLINES:
+#  * a target whose light curve could not be fetched is UNMEASURED with reason
+#    QUERY_FAILED — and QUERY_RETURNED_ZERO_ROWS stays a different fact;
+#  * WHICH product (SPOC 2-min vs TESS-SPOC / QLP FFI) and WHICH sectors were
+#    used is recorded per target: a 30-minute cadence on a 2-hour transit is
+#    smeared and the record says so rather than reporting a shallow depth;
+#  * every network stage has a WALL-CLOCK BUDGET (config/growth.yaml
+#    stage2.mast.budget_s / per_target_budget_s), because an unbounded stage
+#    cost this channel a whole run (34789826297);
+#  * NO_DATA_REACHED is not a null result and is not written up (CLAUDE.md).
+#
+# What stage 2 still CANNOT do: a deeper TESS transit cannot be caused by
+# dilution, but a signal ORIGINATING ON A DIFFERENT STAR inside the ~21" TESS
+# pixel produces exactly this.  The odd-even statistic catches one flavour of
+# it; the centroid test is stage 3 and is listed in checks_not_performed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          "all" (probe, measure, assess), "probe" (which MAST route exists on
+          the runner — run this first), or "assess" to re-read the committed
+          measurements.csv without touching any archive.
+        required: false
+        default: "all"
+
+permissions:
+  contents: write
+
+jobs:
+  growth-stage2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          # `tess` brings lightkurve; the module falls back to astroquery.mast +
+          # astropy.io.fits if it is absent, and probe.json records which route
+          # this runner actually has.
+          pip install -e ".[dev,tess]"
+      # The gate is the load-bearing offline test: an injected, KNOWN depth must
+      # be recovered to within the fit's own quoted error on THIS runner, along
+      # with the BKJD->BTJD epoch conversion, the smearing flag, the odd-even EB
+      # signature, and the three-way verdict's three branches.
+      - name: Offline gate — the injected depth must be recovered on this runner
+        run: python -m pytest tests/test_growth_stage2.py -q -p no:cacheprovider
+      - name: Probe (which MAST route exists here)
+        if: ${{ github.event.inputs.stage != 'assess' }}
+        run: |
+          python -m seti.growth.stage2 --stage probe
+          echo "=== probe ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/growth/stage2/probe.json"))
+          m = d["mast"]
+          print("route_preferred:", m.get("route_preferred"))
+          for k in ("lightkurve", "astroquery_mast", "astropy_io_fits"):
+              print(" ", k, m[k])
+          print("shortlist:", d.get("shortlist_size"))
+          if not m.get("route_preferred"):
+              print("::error::no route to MAST on this runner — neither lightkurve nor "
+                    "astroquery.mast+astropy.io.fits imported")
+          PY
+      - name: Measure (KOI ephemerides, TOI depths, TESS light curves, depth fit)
+        if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == '' }}
+        run: |
+          python -m seti.growth.stage2 --stage measure
+          echo "=== measure ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/growth/stage2/acquire.json"))
+          print(json.dumps({k: d[k] for k in d if k != "acquisition"}, indent=2)[:8000])
+          # Every failed attempt's exception TEXT, not a bare count — the
+          # 2026-09-13 lesson from the Gaia stage.
+          for s in (d.get("acquisition") or {}).get("stages") or []:
+              if s.get("status") != "OK":
+                  print(f"::warning::{s['stage']}: {s['status']} {s.get('error','')}")
+          if d.get("budget_exhausted"):
+              print("::warning::the stage-2 wall-clock budget was exhausted; targets it did "
+                    "not reach are UNMEASURED (BUDGET_EXHAUSTED), NOT refuted")
+          PY
+      - name: Assess (the three-way verdict)
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          python -m seti.growth.stage2 --stage assess
+          echo "=== summary ==="
+          python - <<'PY'
+          import json
+          s = json.load(open("results/growth/stage2/summary.json"))
+          print(json.dumps({k: s[k] for k in s if k != "config"}, indent=2)[:12000])
+          PY
+      # A verdict must never read as a science statement when nothing was measured.
+      - name: Assert the verdict is not a disguised no-data run
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/growth/stage2/summary.json")
+          if not p.exists():
+              print("::warning::no summary.json — the assess stage produced nothing"); sys.exit(0)
+          s = json.loads(p.read_text())
+          v, n = s.get("verdict", ""), s.get("n_measured", 0)
+          tv = s.get("target_verdicts") or {}
+          if n == 0 and v != "NO_DATA_REACHED":
+              print(f"::error::verdict {v!r} with 0 measured targets is a disguised no-data run")
+              sys.exit(1)
+          if n > 0 and v == "NO_DATA_REACHED":
+              print(f"::error::verdict NO_DATA_REACHED with {n} measured targets is incoherent")
+              sys.exit(1)
+          # An UNMEASURED target may never have been scored as agreeing with anything.
+          for t in s.get("targets") or []:
+              if t.get("verdict") == "UNMEASURED":
+                  if t.get("agrees_with_kepler") or t.get("agrees_with_toi"):
+                      print(f"::error::{t.get('kepoi_name')} is UNMEASURED and yet agrees with "
+                            "a catalogue depth — a fabricated agreement")
+                      sys.exit(1)
+                  if not t.get("unmeasured_reason"):
+                      print(f"::error::{t.get('kepoi_name')} is UNMEASURED with no reason given")
+                      sys.exit(1)
+          if v == "NO_DATA_REACHED":
+              print(f"::notice::{s.get('reason')} — NOT a null result and NOT written up "
+                    "(CLAUDE.md); the light curves were not reached.")
+          if v == "STAGE1_DEPTH_CHANGE_REFUTED":
+              print(f"::notice::the measured TESS depth agrees with the KEPLER-era depth for "
+                    f"{tv.get('MEASURED_DEPTH_MATCHES_KEPLER')} target(s): the TOI catalogue "
+                    "value was wrong and the stage-1 candidate dies. The channel's error "
+                    "model is catalogue-driven — see docs/growth.md §8.")
+          if v == "STAGE1_DEPTH_CHANGE_CONFIRMED":
+              print(f"::notice::{tv.get('MEASURED_DEPTH_MATCHES_TOI')} target(s) measured at "
+                    "the DEEP value: the depth really did change. This is NOT a detection — "
+                    "the centroid test (a signal originating on a different star inside the "
+                    "TESS pixel) is still outstanding; see checks_not_performed.")
+          if v == "STAGE1_DEPTH_CHANGE_UNRESOLVED":
+              print(f"::notice::{s.get('reason')} — reported, not resolved; no pick is made.")
+          for k, c in (s.get("flags") or {}).items():
+              print(f"::warning::flag {k}: {c} target(s)")
+          for k, c in (s.get("unmeasured_reasons") or {}).items():
+              print(f"::warning::unmeasured ({k}): {c} target(s)")
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          # The push is VERIFIED against the remote (scripts/commit_results.sh);
+          # the downloaded FITS products stay in the artifact only.
+          scripts/commit_results.sh \
+            "growth stage 2: measured TESS depth vs BOTH catalogue depths — probe/measure/assess" \
+            results/growth/stage2/probe.json \
+            results/growth/stage2/acquire.json \
+            results/growth/stage2/acquisition_log.json \
+            results/growth/stage2/measurements.csv \
+            results/growth/stage2/sectors.csv \
+            results/growth/stage2/summary.json \
+            results/growth/stage2/folds
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: growth-stage2-final
+          path: results/growth/stage2/
+          if-no-files-found: warn

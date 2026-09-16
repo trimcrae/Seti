@@ -29,7 +29,11 @@ dependencies = [
 dev = ["pytest>=7.0", "pytest-xdist>=3.0", "ruff>=0.1"]
 extinction = ["dustmaps>=1.0"]
 spectra = ["sparclclient>=1.2"]   # SPARCL survey-spectra retrieval (runner only)
-tess = ["lightkurve>=2.4"]        # TESS/K2 light curves via MAST (runner only)
+# TESS/K2 light curves via MAST (runner only).  GROWTH stage 2
+# (src/seti/growth/stage2.py) prefers lightkurve and falls back to
+# astroquery.mast + astropy.io.fits when it is absent, recording which route
+# the machine actually had in results/growth/stage2/probe.json.
+tess = ["lightkurve>=2.4"]
 parallax = ["gaiadr3-zeropoint>=0.0.4"]   # Lindegren+2021 Z5/Z6 tables (CENOTAPH)
 roman = ["asdf>=3.0", "asdf-astropy", "roman_datamodels", "gwcs", "fsspec", "s3fs"]   # Roman ASDF/S3 intake (runner only)
 isotope = ["openpyxl>=3.1"]      # Presolar Grain Database xlsx (a stdlib reader is the fallback)

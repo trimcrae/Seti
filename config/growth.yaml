@@ -143,6 +143,104 @@ limb_darkening:
       tess:   [[0.25, 0.35], [0.42, 0.22], [0.45, 0.20], [0.40, 0.22],
                [0.34, 0.24], [0.31, 0.25], [0.28, 0.26], [0.23, 0.29], [0.19, 0.31]]
 
+# ---------------------------------------------------------------------------
+# STAGE 2 — measure the TESS depth FROM THE LIGHT CURVE (src/seti/growth/stage2.py)
+#
+# WHY.  Stage 1 compares two heterogeneous CATALOGUE depths and its error model
+# is demonstrably not a sigma scale: run 35038510064 measured 108 planets and
+# 31 of them sit above 5 sigma of the population median, 37 above 3.  A third
+# of a sample cannot be five-sigma outliers unless the formal errors fail to
+# describe the pipeline-to-pipeline scatter, so the z = 8.67 on K00897.01
+# (Kepler-718 b) is not an 8.67-sigma statement.  Stage 2 does not argue about
+# that: it FITS the TESS depth itself and compares THREE numbers — the Kepler
+# catalogue depth (carried into the TESS band by the limb-darkening ratio), the
+# TOI catalogue depth, and the measured one.
+#
+# WHAT IT CANNOT DO.  A deeper TESS transit cannot be caused by dilution
+# (dilution makes a transit SHALLOWER), but a signal ORIGINATING ON A DIFFERENT
+# STAR inside the ~21" TESS pixel produces exactly this.  Nothing in stage 2
+# tests that; the odd-even statistic below catches one flavour of it (an EB at
+# twice the period) and the centroid test is stage 3.
+stage2:
+  # The shortlist.  Config entries win over candidates.csv on a duplicate KOI.
+  shortlist_from_candidates_csv: true
+  shortlist:
+    - kepoi_name: "K00897.01"
+      kepler_name: "Kepler-718 b"
+      kepid: 7849854
+      tic_id: 268924036
+      toi: 4490.01
+      # `verify` — ASSERTED IDENTIFICATION, from results/growth/candidates.csv
+      # (run 35038510064, join route name_planet).  Kepler-era koi_depth
+      # 14,280.6 +/- 17.9 ppm; TOI pl_trandep 34,476 +/- 2,349 ppm; the stage-2
+      # job is to say which (if either) the light curve supports.
+      note: "the single stage-1 GROWTH_CANDIDATE of run 35038510064"
+
+  mast:
+    # SPOC 2-minute where it exists, TESS-SPOC / QLP FFI otherwise.  WHICH
+    # product and WHICH sectors were used is recorded per target in
+    # sectors.csv — a depth from a 30-minute FFI cadence on a 2-hour transit is
+    # smeared, and that must be visible in the record, not hidden.
+    authors: ["SPOC", "TESS-SPOC", "QLP"]
+    # WALL-CLOCK CEILINGS, the same discipline as gaia.cone_budget_s above and
+    # for the same reason: run 34789826297 sat three hours in an unbounded
+    # fetch loop and would have been killed with nothing committed.  A target
+    # the budget did not reach is UNMEASURED with reason BUDGET_EXHAUSTED —
+    # never a depth, never an agreement.
+    target_timeout_s: 600.0
+    per_target_budget_s: 900.0
+    budget_s: 5400.0
+    archive_timeout_s: 300.0
+    archive_retries: 3
+    retries: 2
+    retry_pause_s: 5.0
+    max_sectors: 60
+    download_dir: null
+
+  fit:
+    # The ephemeris is FIXED to the KOI values (koi_period, koi_time0bk,
+    # koi_duration): this stage measures a DEPTH, it does not re-derive an
+    # ephemeris.  BKJD = BJD - 2454833 and BTJD = BJD - 2457000, so the epoch
+    # conversion is t_BTJD = t_BKJD - 2167.0 exactly (tested against a
+    # hand-worked value in tests/test_growth_stage2.py).
+    core_fraction: 0.7              # flat-bottom window = 0.7 * T14, centred
+    baseline_window_durations: 1.5  # local window half-width, in T14
+    baseline_guard_durations: 0.75  # the baseline must lie beyond this, in T14
+    min_core_points: 2
+    min_baseline_points: 8
+    require_baseline_both_sides: true
+    # exptime > smear_fraction * T14 sets the `smeared` flag.  The core window
+    # is ALSO shrunk by half the exposure so a point whose integration straddles
+    # ingress is not counted as flat-bottom flux; when nothing survives that
+    # shrink the fit is marked `depth_is_lower_bound`.
+    smear_fraction: 0.2
+    # Errors: the bootstrap over transits once there are enough of them, the
+    # analytic propagation below that.  `depth_measured_err_method` always says
+    # which one was quoted.
+    err_method: "auto"              # auto | bootstrap | analytic | chi2_scaled
+    bootstrap_draws: 2000
+    min_transits_for_bootstrap: 8
+    fold_bins: 121
+    odd_even_sigma: 3.0             # |odd - even| at or above this sigma is flagged
+    sector_scatter_chi2_per_dof: 3.0
+    seed: 7
+
+  compare:
+    # |ln(D_measured / D_reference)| / sigma below n_agree is "agrees with".
+    # sigma^2 = (e_meas/D_meas)^2 + (e_ref/D_ref)^2 + sigma_sys_ln^2.
+    n_agree: 3.0
+    # `verify` — ASSERTED FLOOR, not a measurement.  0.05 in ln depth is the
+    # same stated floor stage 1 uses for pipeline-to-pipeline heterogeneity
+    # (drift.sigma_sys).  It is NOT derived from the stage-2 residuals, because
+    # a shortlist of one cannot measure its own scatter; a larger shortlist
+    # should replace it with the measured spread.
+    sigma_sys_ln: 0.05
+    # The two catalogue depths are in DIFFERENT BANDPASSES.  The Kepler depth is
+    # multiplied by band_ratio(Teff, logg, b) = F_TESS(b)/F_Kepler(b) before any
+    # comparison, so the band difference is not charged to "growth".  The LD
+    # grid itself is still `verify` (see limb_darkening above).
+    apply_band_ratio: true
+
 vet:
   # Known large-TTV Kepler systems (Holczer et al. 2016, ApJS 225, 9 and the
   # named literature cases).  INCOMPLETE and from memory — `verify`; a system

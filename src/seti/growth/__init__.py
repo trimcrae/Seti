@@ -13,9 +13,18 @@ planet or candidate that TESS re-detected, compare the Kepler-era depth
 (KOI ``koi_depth``, 2009--2013) with the TESS-era depth (TOI ``pl_trandep``,
 2018--2026) after the deterministic corrections (limb-darkening band ratio at
 the catalogue impact parameter; Gaia-neighbour dilution; a systematic floor),
-and flag significant growth or shrinkage at fixed impact parameter.  Stage 2
-(per-epoch ``k(t)`` fits on the light curves) is designed in
-``docs/growth.md`` and not built here.
+and flag significant growth or shrinkage at fixed impact parameter.
+
+**Stage 2A** --- :mod:`seti.growth.stage2` --- measures the TESS depth **from
+the light curve** for a shortlist of stage-1 candidates and compares THREE
+numbers instead of two: the Kepler catalogue depth (carried into the TESS band
+by the limb-darkening ratio), the TOI catalogue depth, and its own fit.  It
+exists because stage 1's formal errors are demonstrably not a sigma scale ---
+run 35038510064 measured 108 planets and put 31 of them above 5 sigma of the
+population median --- so the only way past the catalogue is to stop reading it.
+The rest of stage 2 (per-epoch ``k(t)``, achromaticity, pixel-level dilution,
+the long-period asymmetry branch) is designed in ``docs/growth.md`` §8 and not
+built here.
 
 Three disciplines make the pass honest:
 
@@ -38,8 +47,11 @@ Modules
              duration-consistency test, the classification (pure)
 ``vet``      grazing / TTV / EB / disposition / neighbour vetoes (pure)
 ``run``      stage orchestration -> ``results/growth/``
+``stage2``   the MEASURED TESS depth: MAST light curves, a transit-masked
+             depth fit at the fixed KOI ephemeris, per-sector and odd-even
+             statistics, and the three-way verdict -> ``results/growth/stage2/``
 """
 
 from __future__ import annotations
 
-__all__ = ["acquire", "drift", "vet"]
+__all__ = ["acquire", "drift", "stage2", "vet"]

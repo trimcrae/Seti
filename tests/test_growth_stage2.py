@@ -46,6 +46,29 @@ And, since the module measures **both eras with the same fitter**:
   and one-era-unmeasured.
 * **a disagreement between our Kepler-era fit and ``koi_depth``** is reported
   as a finding about the KOI table.
+
+And, since the quoted error must describe the real scatter (the REDUCTION
+ENSEMBLE, section 10):
+
+* **the spread over reductions is half the 16-84 percentile range**, checked on
+  hand-worked numbers, and it is NaN with ``TOO_FEW_MEMBERS`` rather than 0
+  when too few members came back --- a zero spread would assert that every
+  reduction agreed when only one was reached.
+* **an ensemble whose members agree leaves the verdict alone**, and
+* **an ensemble whose members disagree by 25 % flips a would-be
+  ``MEASURED_DEPTH_CHANGED`` to ``MEASURED_DEPTH_UNRESOLVED``.**  This is the
+  load-bearing test of that section: it is what proves the systematic actually
+  BINDS rather than merely being reported.  An inflated error must not buy a
+  ``MEASURED_DEPTH_UNCHANGED`` either, since that verdict kills a candidate.
+* **the primary depth is the deduplicated one and the ensemble does not move
+  it** --- only its error.
+* **a reduction that fails to fetch is recorded** with its own reason and does
+  not silently shrink the spread; ``QUERY_FAILED``,
+  ``QUERY_RETURNED_ZERO_ROWS``, ``FLUX_COLUMN_NOT_PRESENT`` and
+  ``BUDGET_EXHAUSTED`` stay four different facts.
+* **``SAP_FLUX`` vs ``PDCSAP_FLUX``** is surfaced with its significance and its
+  direction, because "the PDC background subtraction inflates the depth" is a
+  specific mundane claim that deserves a number.
 """
 
 from __future__ import annotations
@@ -59,11 +82,18 @@ import pandas as pd
 import pytest
 
 from seti.growth.stage2 import (
+    BG_AGREE,
+    BG_DISAGREE,
+    BG_PDC_DEEPER,
+    BG_SAP_DEEPER,
+    BG_UNAVAILABLE,
     BKJD_MINUS_BTJD,
     BKJD_OFFSET,
     BTJD_OFFSET,
+    ENSEMBLE_NO_FLUX_COLUMN,
     ERA_KEPLER,
     ERA_TESS,
+    FLUX_COLUMNS,
     KEPLER_LONG_CADENCE_S,
     KEPLER_SHORT_CADENCE_S,
     KOI_DEPTH_CONFIRMED,
@@ -86,6 +116,10 @@ from seti.growth.stage2 import (
     RUN_NO_DATA,
     RUN_REFUTED,
     RUN_UNRESOLVED,
+    SPREAD_NOT_ATTEMPTED,
+    SPREAD_OK,
+    SPREAD_TOO_FEW_MEMBERS,
+    UNMEASURED_BUDGET,
     UNMEASURED_KEPLER_DISABLED,
     UNMEASURED_NO_EPHEMERIS,
     UNMEASURED_NO_REFERENCE,
@@ -93,6 +127,7 @@ from seti.growth.stage2 import (
     UNMEASURED_ZERO_ROWS,
     CompareParams,
     Deadline,
+    EnsembleParams,
     FitParams,
     MastParams,
     binned_fold,
@@ -104,6 +139,7 @@ from seti.growth.stage2 import (
     compare_measured_eras,
     compare_three_depths,
     core_half_width,
+    ensemble_member_grid,
     epoch_in_era,
     fetch_kepler_lightcurves,
     fetch_koi_ephemerides,
@@ -115,16 +151,20 @@ from seti.growth.stage2 import (
     load_shortlist,
     mast_probe,
     measure_one,
+    measure_reduction_ensemble,
     measure_target,
     merge_kepler_segments,
     propagate_epoch,
+    reduction_spread,
     run_like_for_like_verdict,
     run_verdict,
+    sap_vs_pdcsap,
     stage2_assess,
     stage2_measure,
     stage2_probe,
     stage2_run,
     synth_lightcurve,
+    total_depth_error,
     trapezoid_transit,
 )
 from seti.growth.stage2 import (
@@ -422,7 +462,8 @@ def test_an_unfetchable_target_is_unmeasured_and_agrees_with_nothing():
            "koi_depth": 14280.6, "koi_depth_err1": 17.9, "koi_depth_err2": -17.9,
            "koi_impact": 0.437, "koi_steff": 5800.0, "koi_slogg": 4.5}
     toi = {"pl_trandep": 34476.0, "pl_trandeperr1": 2349.1, "pl_trandeperr2": -2349.1}
-    rec, sec, fdf = measure_one({"kepoi_name": "K00897.01", "tic_id": 268924036}, koi, toi,
+    rec, sec, fdf, red = measure_one({"kepoi_name": "K00897.01", "tic_id": 268924036},
+                                     koi, toi,
                                 lc_fn=boom, mast=MastParams(retries=1, retry_pause_s=0.0),
                                 fit=FitParams(),
                                 compare=CompareParams())
@@ -441,7 +482,7 @@ def test_a_missing_ephemeris_is_unmeasured_and_the_light_curve_is_not_even_fetch
         calls.append(1)
         return []
 
-    rec, _s, _f = measure_one({"kepoi_name": "K99999.01", "tic_id": 1}, {"koi_period": P},
+    rec, _s, _f, _r = measure_one({"kepoi_name": "K99999.01", "tic_id": 1}, {"koi_period": P},
                               {"pl_trandep": 1000.0}, lc_fn=lc, mast=MastParams(),
                               fit=FitParams(), compare=CompareParams())
     assert rec["verdict"] == MATCH_UNMEASURED
@@ -1244,7 +1285,7 @@ def _koi_row_real():
 
 def test_measure_one_fits_both_eras_with_the_same_fitter(tmp_path):
     """The asymmetry removed: the Kepler number in the record is OURS."""
-    rec, sec, fold_df = measure_one(
+    rec, sec, fold_df, _red = measure_one(
         {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
         _koi_row_real(), dict(TOI_ROW),
         lc_fn=_lc_fn_at_depth(TOI_PPM),
@@ -1284,7 +1325,7 @@ def test_measure_one_reports_unchanged_when_our_kepler_fit_matches_the_tess_one(
     record must say -- with the contradiction of the KOI table stated, not
     buried.
     """
-    rec, _sec, _fold = measure_one(
+    rec, _sec, _fold, _red = measure_one(
         {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
         _koi_row_real(), dict(TOI_ROW),
         lc_fn=_lc_fn_at_depth(TOI_PPM),
@@ -1307,7 +1348,7 @@ def test_a_failed_kepler_fetch_leaves_that_era_unmeasured_and_agreeing_with_noth
     def boom(_kepid, **_kw):
         raise OSError("connection reset")
 
-    rec, _sec, _fold = measure_one(
+    rec, _sec, _fold, _red = measure_one(
         {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
         _koi_row_real(), dict(TOI_ROW), lc_fn=_lc_fn_at_depth(TOI_PPM), kepler_lc_fn=boom,
         mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0),
@@ -1326,7 +1367,7 @@ def test_a_failed_kepler_fetch_leaves_that_era_unmeasured_and_agreeing_with_noth
 
 
 def test_an_empty_kepler_answer_is_zero_rows_and_not_a_failure():
-    rec, _s, _f = measure_one(
+    rec, _s, _f, _r = measure_one(
         {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
         _koi_row_real(), dict(TOI_ROW), lc_fn=_lc_fn_at_depth(TOI_PPM),
         kepler_lc_fn=lambda _k, **_kw: [],
@@ -1345,7 +1386,7 @@ def test_the_kepler_era_is_never_reached_without_being_asked_for():
     not read as one whose primary comparison failed.
     """
     calls = []
-    rec, _s, _f = measure_one(
+    rec, _s, _f, _r = measure_one(
         {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
         _koi_row_real(), dict(TOI_ROW), lc_fn=_lc_fn_at_depth(TOI_PPM),
         kepler_lc_fn=None,
@@ -1360,7 +1401,7 @@ def test_the_kepler_era_is_never_reached_without_being_asked_for():
 
 
 def test_a_missing_kepid_is_zero_rows_for_the_kepler_era():
-    rec, _s, _f = measure_one(
+    rec, _s, _f, _r = measure_one(
         {"kepoi_name": "K00897.01", "tic_id": 268924036},           # no kepid
         _koi_row_real(), dict(TOI_ROW), lc_fn=_lc_fn_at_depth(TOI_PPM),
         mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0, kepler_enabled=True),
@@ -1491,3 +1532,614 @@ def test_the_repository_config_enables_the_kepler_era_and_bounds_it():
     assert m.kepler_target_timeout_s > 0 and m.kepler_max_quarters > 0
     c = CompareParams.from_config(conf)
     assert c.min_detectable_ln_ratio > 0 and c.koi_check_n_agree >= 3.0
+
+
+# ---------------------------------------------------------------------------
+# 10. THE REDUCTION ENSEMBLE — the error that did not describe the scatter
+#
+# The hole this section closes.  The quoted TESS error does not describe the
+# real scatter and there is direct evidence of it in this channel's own output:
+# before `dedupe_sectors` existed, run 35041932130 measured THE SAME SEVEN
+# SECTORS under two pipelines (results/growth/stage2/sectors.csv at commit
+# 050402a).  The 2-minute SPOC reductions gave 25,425-35,498 ppm; the FFI
+# TESS-SPOC reductions OF THE SAME PIXELS gave 33,078-39,798 ppm.  Two
+# reductions of identical photons disagreeing by 20-30 % is a systematic FAR
+# larger than the 1,521 ppm the bootstrap quotes, and the out-of-transit scatter
+# is 414 ppm in Kepler against 67,631 ppm in TESS — a factor of 163.
+#
+# So: measure the depth under EVERY reduction, make the spread a systematic,
+# and let the verdict use the TOTAL error.  The load-bearing test here is
+# `test_a_25_percent_reduction_disagreement_flips_changed_to_unresolved` — it
+# is what proves the systematic actually BINDS rather than merely being
+# reported.
+# ---------------------------------------------------------------------------
+def _member(author, col, depth_ppm, err_ppm=400.0, status="OK"):
+    """One ensemble member record, as `measure_reduction_ensemble` emits it."""
+    return {"era": ERA_TESS, "author": author, "flux_column": col, "status": status,
+            "depth_ppm": float(depth_ppm), "depth_err_ppm": float(err_ppm)}
+
+
+def _agreeing_members(depth_ppm=20000.0, spread_ppm=100.0):
+    """Six members, two pipelines, agreeing to +/- `spread_ppm`."""
+    return ([_member("SPOC", c, depth_ppm - spread_ppm)
+             for c in ("PDCSAP_FLUX", "KSPSAP_FLUX", "DET_FLUX")]
+            + [_member("TESS-SPOC", c, depth_ppm + spread_ppm)
+               for c in ("PDCSAP_FLUX", "KSPSAP_FLUX", "DET_FLUX")])
+
+
+def _disagreeing_members(depth_ppm=20000.0, frac=0.25):
+    """Six members: three at (1 - frac) D and three at (1 + frac) D.
+
+    With the members split into two equal clusters the 16th and 84th
+    percentiles land inside the clusters, so the half-range IS `frac * D`
+    exactly — a 25 % reduction disagreement, in the shape run 35041932130
+    actually showed (one pipeline systematically deeper than the other).
+    """
+    return ([_member("SPOC", c, depth_ppm * (1.0 - frac))
+             for c in ("PDCSAP_FLUX", "KSPSAP_FLUX", "DET_FLUX")]
+            + [_member("TESS-SPOC", c, depth_ppm * (1.0 + frac))
+               for c in ("PDCSAP_FLUX", "KSPSAP_FLUX", "DET_FLUX")])
+
+
+# --- 10.1 the spread itself -------------------------------------------------
+def test_the_spread_is_half_the_16_to_84_percentile_range():
+    """The definition, on numbers worked by hand."""
+    s = reduction_spread(_disagreeing_members(20000.0, 0.25), primary_depth_ppm=20000.0)
+    assert s["depth_reduction_spread_status"] == SPREAD_OK
+    assert s["n_members"] == 6 and s["n_members_measured"] == 6
+    assert s["n_members_unavailable"] == 0 and s["ensemble_incomplete"] is False
+    # three at 15,000 and three at 25,000: p16 = 15,000, p84 = 25,000
+    assert s["depth_reduction_p16_ppm"] == pytest.approx(15000.0)
+    assert s["depth_reduction_p84_ppm"] == pytest.approx(25000.0)
+    assert s["depth_reduction_spread_ppm"] == pytest.approx(5000.0)
+    assert s["depth_reduction_spread_fraction"] == pytest.approx(0.25)
+    assert s["depth_reduction_min_ppm"] == pytest.approx(15000.0)
+    assert s["depth_reduction_max_ppm"] == pytest.approx(25000.0)
+    # agreeing members give a small spread, on the same definition
+    a = reduction_spread(_agreeing_members(20000.0, 100.0), primary_depth_ppm=20000.0)
+    assert a["depth_reduction_spread_ppm"] == pytest.approx(100.0)
+    assert a["depth_reduction_spread_fraction"] == pytest.approx(0.005)
+
+
+def test_too_few_members_gives_no_spread_rather_than_a_spread_of_zero():
+    """A zero spread would assert that every reduction agreed.  Only one was reached."""
+    one = reduction_spread([_member("SPOC", "PDCSAP_FLUX", 20000.0)], primary_depth_ppm=20000.0)
+    assert one["depth_reduction_spread_status"] == SPREAD_TOO_FEW_MEMBERS
+    assert not np.isfinite(one["depth_reduction_spread_ppm"])
+    assert one["depth_reduction_spread_ppm"] != 0
+    none = reduction_spread([])
+    assert none["depth_reduction_spread_status"] == SPREAD_NOT_ATTEMPTED
+    assert not np.isfinite(none["depth_reduction_spread_ppm"])
+    # and a spread that could not be measured contributes nothing to the total
+    assert total_depth_error(1500.0, float("nan")) == pytest.approx(1500.0)
+    assert total_depth_error(1500.0, 5000.0) == pytest.approx(math.hypot(1500.0, 5000.0))
+    assert not np.isfinite(total_depth_error(float("nan"), 5000.0))
+
+
+# --- 10.2 an agreeing ensemble leaves the verdict alone ---------------------
+def test_an_ensemble_whose_members_agree_gives_a_small_spread_and_no_change_of_verdict():
+    """The control for the load-bearing test: agreement must cost nothing."""
+    ln = math.log(20000.0 / 14000.0)
+    bare = compare_measured_eras(14000.0, 100.0, 20000.0, 1990.0, ld_band_ratio=1.0,
+                                 ln_ratio_under_test=ln)
+    assert bare["like_for_like_verdict"] == LL_CHANGED
+    assert bare["reduction_systematic_applied"] is False
+
+    s = reduction_spread(_agreeing_members(20000.0, 100.0), primary_depth_ppm=20000.0)
+    out = compare_measured_eras(14000.0, 100.0, 20000.0, 1990.0, ld_band_ratio=1.0,
+                                ln_ratio_under_test=ln,
+                                tess_reduction_spread_ppm=s["depth_reduction_spread_ppm"])
+    assert out["like_for_like_verdict"] == LL_CHANGED
+    assert out["reduction_systematic_applied"] is True
+    assert out["depth_tess_measured_total_err_ppm"] == pytest.approx(
+        math.hypot(1990.0, 100.0), rel=1e-9)
+    # the total error is barely above the statistical one, so z barely moves
+    assert abs(out["z_measured_eras"] - out["z_measured_eras_stat_only"]) < 0.05
+    assert out["z_measured_eras"] > 3.0
+
+
+# --- 10.3 THE LOAD-BEARING TEST --------------------------------------------
+def test_a_25_percent_reduction_disagreement_flips_changed_to_unresolved():
+    """The test that proves the systematic BINDS, not merely that it is reported.
+
+    Same two depths, same bootstrap errors, same everything: 14,000 +/- 100 ppm
+    in the Kepler era against 20,000 +/- 1,990 ppm in the TESS era is
+    ``z = 3.20`` on the bootstrap alone, and that is ``MEASURED_DEPTH_CHANGED``.
+
+    Now measure the TESS era under six reductions of the same pixels and let
+    them disagree by 25 % (three at 15,000 ppm, three at 25,000 ppm — the shape
+    run 35041932130's duplicated sectors actually showed).  The spread is
+    5,000 ppm, the total error becomes ``sqrt(1990^2 + 5000^2) = 5,382 ppm``,
+    ``z`` falls to 1.30, and the comparison can no longer exclude the change it
+    is testing: ``MEASURED_DEPTH_UNRESOLVED``.
+
+    That is the correct answer.  A ratio that only survives the bootstrap has
+    not survived the reductions, and stage 1's entire failure was a quoted error
+    that did not describe the real scatter.
+    """
+    ln = math.log(20000.0 / 14000.0)
+    members = _disagreeing_members(20000.0, 0.25)
+    s = reduction_spread(members, primary_depth_ppm=20000.0)
+    assert s["depth_reduction_spread_ppm"] == pytest.approx(5000.0)
+    assert s["depth_reduction_spread_fraction"] == pytest.approx(0.25)
+
+    before = compare_measured_eras(14000.0, 100.0, 20000.0, 1990.0, ld_band_ratio=1.0,
+                                   ln_ratio_under_test=ln)
+    assert before["like_for_like_verdict"] == LL_CHANGED
+    assert before["z_measured_eras"] == pytest.approx(3.196, abs=0.01)
+
+    after = compare_measured_eras(14000.0, 100.0, 20000.0, 1990.0, ld_band_ratio=1.0,
+                                  ln_ratio_under_test=ln,
+                                  tess_reduction_spread_ppm=s["depth_reduction_spread_ppm"])
+    assert after["like_for_like_verdict"] == LL_UNRESOLVED
+    assert after["like_for_like_verdict"] != LL_CHANGED
+    # ...and it is NOT a refutation either: an inflated error must never buy one
+    assert after["like_for_like_verdict"] != LL_UNCHANGED
+    assert after["depth_tess_measured_total_err_ppm"] == pytest.approx(
+        math.hypot(1990.0, 5000.0), rel=1e-9)
+    assert after["z_measured_eras"] == pytest.approx(1.303, abs=0.01)
+    # the bootstrap-only number is kept, so the effect of the systematic is visible
+    assert after["z_measured_eras_stat_only"] == pytest.approx(before["z_measured_eras"],
+                                                               rel=1e-9)
+    # the depth itself is untouched: only the error moved
+    assert after["depth_tess_measured_ppm"] == pytest.approx(before["depth_tess_measured_ppm"])
+    assert after["depth_kepler_measured_ppm"] == pytest.approx(before["depth_kepler_measured_ppm"])
+    # and the comparison now says, in a number, that it lost the power it had
+    assert after["detectable_ln_ratio"] > before["detectable_ln_ratio"]
+    assert after["detectable_ln_ratio"] > after["ln_ratio_under_test"]
+
+
+def test_an_inflated_error_never_buys_a_refutation():
+    """`UNCHANGED` kills a candidate, so it needs the claim EXCLUDED, not just |z| < 3.
+
+    Drown a real 2.16 ratio in a reduction systematic and the two eras "agree".
+    They must not thereby REFUTE the change: the observation still sits well
+    inside the claimed change, so the only honest answer is UNRESOLVED.
+    """
+    ln = 0.9095                                   # the catalogue TOI-vs-KOI separation
+    out = compare_measured_eras(13912.0, 30.0, 29255.0, 1521.0, ld_band_ratio=1.0,
+                                ln_ratio_under_test=ln,
+                                tess_reduction_spread_ppm=0.30 * 29255.0)
+    assert out["measured_eras_agree"] is True
+    assert abs(out["z_measured_eras"]) < 3.0
+    assert out["like_for_like_verdict"] == LL_UNRESOLVED
+    assert out["claim_excluded_sigma"] < 3.0
+    # a genuinely unchanged pair, with the same machinery, still reaches UNCHANGED
+    same = compare_measured_eras(30500.0, 200.0, 30614.0, 1500.0, ld_band_ratio=1.0,
+                                 ln_ratio_under_test=0.88, tess_reduction_spread_ppm=300.0)
+    assert same["like_for_like_verdict"] == LL_UNCHANGED
+    assert same["claim_excluded_sigma"] >= 3.0
+
+
+# --- 10.4 the grid, and what happens when a member is unavailable -----------
+def test_the_ensemble_grid_is_the_full_cross_product_of_author_and_flux_column():
+    grid = ensemble_member_grid(ERA_TESS, EnsembleParams())
+    assert len(grid) == 3 * 4
+    assert {g["author"] for g in grid} == {"SPOC", "TESS-SPOC", "QLP"}
+    # SAP_FLUX is in the grid DELIBERATELY: it is the background test
+    assert "SAP_FLUX" in {g["flux_column"] for g in grid}
+    assert set(FLUX_COLUMNS) == {g["flux_column"] for g in grid}
+    kgrid = ensemble_member_grid(ERA_KEPLER, EnsembleParams())
+    assert [(g["author"], g["flux_column"]) for g in kgrid] == [
+        ("Kepler", "PDCSAP_FLUX"), ("Kepler", "SAP_FLUX")]
+    with pytest.raises(ValueError):
+        ensemble_member_grid("k2", EnsembleParams())
+
+
+def test_a_member_that_fails_to_fetch_is_recorded_and_does_not_silently_shrink_the_spread():
+    """An ensemble of two that was meant to be four must SAY so.
+
+    The whole point of the ensemble is that the error describes the real
+    scatter.  An ensemble that quietly lost half its members would report a
+    spread that is too small — the same overconfidence, one level down — so
+    every absent member keeps its own reason and the era is flagged incomplete.
+    """
+    members = [_member("SPOC", "PDCSAP_FLUX", 15000.0),
+               _member("TESS-SPOC", "PDCSAP_FLUX", 25000.0),
+               _member("QLP", "KSPSAP_FLUX", float("nan"), status=UNMEASURED_QUERY_FAILED),
+               _member("QLP", "DET_FLUX", float("nan"), status=UNMEASURED_ZERO_ROWS),
+               _member("SPOC", "KSPSAP_FLUX", float("nan"), status=ENSEMBLE_NO_FLUX_COLUMN)]
+    s = reduction_spread(members, primary_depth_ppm=20000.0)
+    assert s["n_members"] == 5
+    assert s["n_members_measured"] == 2
+    assert s["n_members_unavailable"] == 3
+    assert s["ensemble_incomplete"] is True
+    # the three absences are three DIFFERENT facts and stay apart
+    assert f"{UNMEASURED_QUERY_FAILED}:1" in s["ensemble_unavailable_reasons"]
+    assert f"{UNMEASURED_ZERO_ROWS}:1" in s["ensemble_unavailable_reasons"]
+    assert f"{ENSEMBLE_NO_FLUX_COLUMN}:1" in s["ensemble_unavailable_reasons"]
+    assert UNMEASURED_QUERY_FAILED != UNMEASURED_ZERO_ROWS
+    # the members string names every one of them, present or not
+    assert s["ensemble_members"].count(";") == 4
+    assert "QLP/KSPSAP_FLUX=QUERY_FAILED" in s["ensemble_members"]
+    # the spread is over the members that DID come back, and is not zero
+    assert s["depth_reduction_spread_ppm"] > 0
+
+
+# --- 10.5 the background test ----------------------------------------------
+def test_sap_versus_pdcsap_is_surfaced_with_its_significance():
+    """"The PDC background subtraction inflates the depth" gets a NUMBER."""
+    deep_pdc = [_member("SPOC", "PDCSAP_FLUX", 30000.0, 300.0),
+                _member("SPOC", "SAP_FLUX", 20000.0, 400.0),
+                _member("TESS-SPOC", "PDCSAP_FLUX", 29000.0, 300.0),
+                _member("TESS-SPOC", "SAP_FLUX", 19000.0, 400.0)]
+    bg = sap_vs_pdcsap(deep_pdc)
+    assert bg["sap_vs_pdcsap_n_pairs"] == 2
+    assert bg["sap_minus_pdcsap_ppm"] == pytest.approx(-10000.0, rel=1e-9)
+    assert bg["sap_minus_pdcsap_err_ppm"] == pytest.approx(
+        1.0 / math.sqrt(2.0 / (300.0**2 + 400.0**2)), rel=1e-9)
+    assert bg["sap_minus_pdcsap_z"] < -3.0
+    assert bg["sap_vs_pdcsap_verdict"] == BG_DISAGREE
+    # the DIRECTION is the whole point: PDC deeper than SAP is the mundane case
+    assert bg["background_direction"] == BG_PDC_DEEPER
+    assert bg["sap_minus_pdcsap_fraction"] < 0
+
+    agree = [_member("SPOC", "PDCSAP_FLUX", 30000.0, 300.0),
+             _member("SPOC", "SAP_FLUX", 30100.0, 400.0)]
+    ok = sap_vs_pdcsap(agree)
+    assert ok["sap_vs_pdcsap_verdict"] == BG_AGREE
+    assert abs(ok["sap_minus_pdcsap_z"]) < 3.0
+    assert ok["background_direction"] == BG_SAP_DEEPER
+
+    # no SAP member at all -> the test is UNAVAILABLE, never "agrees"
+    none = sap_vs_pdcsap([_member("SPOC", "PDCSAP_FLUX", 30000.0, 300.0)])
+    assert none["sap_vs_pdcsap_verdict"] == BG_UNAVAILABLE
+    assert none["sap_vs_pdcsap_verdict"] != BG_AGREE
+    assert not np.isfinite(none["sap_minus_pdcsap_ppm"])
+
+
+# --- 10.6 through the fetch loop, with everything injected ------------------
+def _ens_lc_fn(depths, *, t0, fail=(), wrong_column=(), exptime_s=120.0, n_transits=16,
+               noise_ppm=250.0, sector=41, duration_days=T14_D, era=ERA_TESS):
+    """An injected reduction ensemble: a depth per (author, flux column).
+
+    Anything not in `depths` answers with nothing (QUERY_RETURNED_ZERO_ROWS —
+    that combination is simply not served); anything in `fail` raises
+    (QUERY_FAILED); anything in `wrong_column` answers with a DIFFERENT flux
+    column, which must be caught as FLUX_COLUMN_NOT_PRESENT rather than counted
+    as another member.
+    """
+    def lc(_target, *, authors=(), flux_columns=(), **_kw):
+        author = str(authors[0]) if len(authors) else ""
+        col = str(flux_columns[0]) if len(flux_columns) else "PDCSAP_FLUX"
+        if (author, col) in fail:
+            raise RuntimeError(f"MAST said 503 for {author}/{col}")
+        if (author, col) not in depths:
+            return []
+        seed = 300 + (abs(hash((author, col))) % 500)
+        s = synth_lightcurve(period_days=P, t0_btjd=t0, duration_days=duration_days,
+                             depth=depths[(author, col)] * 1e-6, exptime_s=exptime_s,
+                             n_transits=n_transits, noise_ppm=noise_ppm, sector=sector,
+                             author=author, seed=seed)
+        s["flux_column"] = "SOMETHING_ELSE" if (author, col) in wrong_column else col
+        if era == ERA_KEPLER:
+            s["quarter"] = sector
+            s["cadence"] = kepler_cadence_label(exptime_s)
+        return [s]
+    return lc
+
+
+def test_the_ensemble_fetch_records_every_member_and_keeps_the_statuses_apart():
+    t0 = bkjd_to_btjd(T0_BKJD) + 900 * P
+    depths = {("SPOC", "PDCSAP_FLUX"): 30000.0, ("SPOC", "SAP_FLUX"): 29500.0,
+              ("TESS-SPOC", "PDCSAP_FLUX"): 31000.0, ("QLP", "KSPSAP_FLUX"): 30500.0,
+              ("QLP", "DET_FLUX"): 30200.0, ("TESS-SPOC", "DET_FLUX"): 31500.0}
+    lc = _ens_lc_fn(depths, t0=t0, fail=(("TESS-SPOC", "SAP_FLUX"),),
+                    wrong_column=(("TESS-SPOC", "DET_FLUX"),))
+    members, summary, msecs = measure_reduction_ensemble(
+        268924036, era=ERA_TESS, period_days=P, t0_bkjd=T0_BKJD, duration_hours=T14_H,
+        lc_fn=lc, mast=MastParams(retry_pause_s=0.0),
+        ensemble=EnsembleParams(retries=1), fit=FitParams(), enabled=True)
+    by = {(m["author"], m["flux_column"]): m for m in members}
+    assert len(members) == 12                       # the whole grid, measured or not
+    assert by[("SPOC", "PDCSAP_FLUX")]["status"] == "OK"
+    assert by[("SPOC", "PDCSAP_FLUX")]["depth_ppm"] == pytest.approx(30000.0, rel=0.05)
+    # three different absences, three different facts
+    assert by[("TESS-SPOC", "SAP_FLUX")]["status"] == UNMEASURED_QUERY_FAILED
+    assert by[("SPOC", "KSPSAP_FLUX")]["status"] == UNMEASURED_ZERO_ROWS
+    assert by[("TESS-SPOC", "DET_FLUX")]["status"] == ENSEMBLE_NO_FLUX_COLUMN
+    assert UNMEASURED_QUERY_FAILED != UNMEASURED_ZERO_ROWS != ENSEMBLE_NO_FLUX_COLUMN
+    assert summary["n_members"] == 12 and summary["n_members_measured"] == 5
+    assert summary["ensemble_incomplete"] is True
+    assert summary["depth_reduction_spread_status"] == SPREAD_OK
+    # these reductions agree, so the spread is small compared with the depth
+    assert summary["depth_reduction_spread_fraction"] < 0.05
+    # and the SAP member was measured, so the background test has a number
+    assert summary["sap_vs_pdcsap_n_pairs"] == 1
+    assert np.isfinite(summary["sap_minus_pdcsap_ppm"])
+    # each member's PER-SEGMENT breakdown comes back too: it is the table that
+    # made the problem visible at commit 050402a (sector 41 read 29,810 ppm
+    # under SPOC and 33,078 ppm under TESS-SPOC), and it is what separates a
+    # uniform pipeline offset from sector-specific noise
+    assert len(msecs) == 5                      # one sector row per MEASURED member
+    assert set(msecs["scope"]) == {"ensemble"}
+    assert set(msecs["reduction_flux_column"]) == {"PDCSAP_FLUX", "SAP_FLUX", "KSPSAP_FLUX",
+                                                   "DET_FLUX"}
+
+
+def test_the_ensemble_is_never_reached_without_being_asked_for():
+    """`enabled` is False by default: no caller opens a socket by accident."""
+    calls = []
+    assert EnsembleParams().enabled is False
+    members, summary, msecs = measure_reduction_ensemble(
+        268924036, era=ERA_TESS, period_days=P, t0_bkjd=T0_BKJD, duration_hours=T14_H,
+        lc_fn=lambda *_a, **_k: calls.append(1) or [], mast=MastParams(),
+        ensemble=EnsembleParams(), fit=FitParams())
+    assert calls == []
+    assert members == [] and not len(msecs)
+    assert summary["depth_reduction_spread_status"] == SPREAD_NOT_ATTEMPTED
+    assert summary["sap_vs_pdcsap_verdict"] == BG_UNAVAILABLE
+
+
+def test_the_ensemble_respects_its_own_exhausted_budget():
+    """Its own wall clock, and a member it did not reach says BUDGET_EXHAUSTED."""
+    calls = []
+    members, summary, msecs = measure_reduction_ensemble(
+        268924036, era=ERA_TESS, period_days=P, t0_bkjd=T0_BKJD, duration_hours=T14_H,
+        lc_fn=lambda *_a, **_k: calls.append(1) or [], mast=MastParams(),
+        ensemble=EnsembleParams(), fit=FitParams(), enabled=True,
+        deadline=Deadline(budget_s=0.0))
+    assert calls == []
+    assert len(members) == 12
+    assert {m["status"] for m in members} == {UNMEASURED_BUDGET}
+    assert not len(msecs)
+    assert summary["n_members_unavailable"] == 12
+    assert summary["depth_reduction_spread_status"] == SPREAD_TOO_FEW_MEMBERS
+
+
+# --- 10.7 through measure_one: the primary depth must NOT move --------------
+def _measure_one_with_ensemble(ens_depths, **kw):
+    t0 = bkjd_to_btjd(T0_BKJD) + 900 * P
+    return measure_one(
+        {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
+        _koi_row_real(), dict(TOI_ROW),
+        lc_fn=_lc_fn_at_depth(TOI_PPM),
+        kepler_lc_fn=_kepler_lc_fn(KEPLER_PPM, n_transits=60, seed=201),
+        ensemble_lc_fn=_ens_lc_fn(ens_depths, t0=t0, **kw),
+        mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0),
+        fit=FitParams(), compare=CompareParams(),
+        # `enabled` stays False: the injected TESS fn is what turns the TESS
+        # ensemble on, exactly as `kepler_lc_fn` turns the Kepler era on.  The
+        # Kepler ensemble is therefore NOT attempted here, and must say so.
+        ensemble=EnsembleParams(retries=1))
+
+
+def test_the_primary_depth_is_the_deduplicated_one_and_the_ensemble_does_not_move_it():
+    """The ensemble sets the ERROR and only the error.
+
+    Two runs, identical except that the second measures a reduction ensemble
+    whose members are spread over 22,000-46,000 ppm.  The reported TESS depth
+    must be bit-for-bit the same in both: it is the deduplicated measurement,
+    and re-stacking the ensemble members into it would count every transit as
+    many times as the archive serves it — the error run 35041932130 made.
+    """
+    plain, _s, _f, red0 = measure_one(
+        {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
+        _koi_row_real(), dict(TOI_ROW), lc_fn=_lc_fn_at_depth(TOI_PPM),
+        kepler_lc_fn=_kepler_lc_fn(KEPLER_PPM, n_transits=60, seed=201),
+        mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0),
+        fit=FitParams(), compare=CompareParams())
+    assert len(red0) == 0
+    assert plain["depth_reduction_spread_status"] == SPREAD_NOT_ATTEMPTED
+
+    spread_depths = {("SPOC", "PDCSAP_FLUX"): 22000.0, ("SPOC", "SAP_FLUX"): 24000.0,
+                     ("TESS-SPOC", "PDCSAP_FLUX"): 44000.0,
+                     ("QLP", "KSPSAP_FLUX"): 46000.0}
+    rec, _sec, _fold, red = _measure_one_with_ensemble(spread_depths)
+
+    # THE DEPTH IS UNMOVED
+    assert rec["depth_measured_ppm"] == pytest.approx(plain["depth_measured_ppm"], rel=1e-12)
+    assert rec["depth_tess_measured_ppm"] == pytest.approx(plain["depth_tess_measured_ppm"],
+                                                           rel=1e-12)
+    assert rec["n_transits"] == plain["n_transits"]
+    assert rec["sector_list"] == plain["sector_list"]
+    # ...and the statistical error is unmoved too; it is the TOTAL that grew
+    assert rec["depth_measured_err_ppm"] == pytest.approx(plain["depth_measured_err_ppm"],
+                                                          rel=1e-12)
+    assert rec["depth_reduction_spread_ppm"] > 0
+    assert rec["depth_tess_measured_total_err_ppm"] > rec["depth_tess_measured_err_ppm"]
+    assert rec["depth_tess_measured_total_err_ppm"] == pytest.approx(
+        math.hypot(rec["depth_tess_measured_err_ppm"], rec["depth_reduction_spread_ppm"]),
+        rel=1e-9)
+    # the ensemble table is the audit trail, and marks which member is primary
+    assert len(red) == 12                         # the whole TESS grid, measured or not
+    assert set(red["era"]) == {ERA_TESS}
+    assert int(red["is_primary_reduction"].sum()) >= 1
+    assert "reduction_spread_exceeds_statistical_error" in str(rec["flags"])
+
+
+def test_a_disagreeing_ensemble_through_measure_one_reaches_unresolved():
+    """End to end on the object itself: the systematic changes the VERDICT."""
+    tight = {("SPOC", "PDCSAP_FLUX"): TOI_PPM, ("SPOC", "SAP_FLUX"): TOI_PPM * 0.99,
+             ("TESS-SPOC", "PDCSAP_FLUX"): TOI_PPM * 1.01}
+    ok, _s, _f, _r = _measure_one_with_ensemble(tight)
+    assert ok["like_for_like_verdict"] == LL_CHANGED
+    assert ok["depth_reduction_spread_fraction"] < 0.05
+
+    wide = {("SPOC", "PDCSAP_FLUX"): TOI_PPM * 0.55, ("SPOC", "SAP_FLUX"): TOI_PPM * 0.55,
+            ("TESS-SPOC", "PDCSAP_FLUX"): TOI_PPM * 1.45,
+            ("QLP", "KSPSAP_FLUX"): TOI_PPM * 1.45}
+    bad, _s2, _f2, _r2 = _measure_one_with_ensemble(wide)
+    assert bad["depth_reduction_spread_fraction"] > 0.3
+    assert bad["like_for_like_verdict"] == LL_UNRESOLVED
+    assert bad["like_for_like_verdict"] != LL_UNCHANGED
+    assert abs(bad["z_measured_eras"]) < abs(bad["z_measured_eras_stat_only"])
+    # the depth is the same in both; only the error and therefore the verdict moved
+    assert bad["depth_tess_measured_ppm"] == pytest.approx(ok["depth_tess_measured_ppm"],
+                                                           rel=1e-12)
+
+
+def test_a_failed_ensemble_member_is_on_the_record_from_measure_one():
+    depths = {("SPOC", "PDCSAP_FLUX"): TOI_PPM, ("SPOC", "SAP_FLUX"): TOI_PPM * 0.99}
+    rec, _s, _f, red = _measure_one_with_ensemble(depths,
+                                                  fail=(("TESS-SPOC", "PDCSAP_FLUX"),))
+    assert rec["ensemble_incomplete"] is True
+    assert f"{UNMEASURED_QUERY_FAILED}:1" in rec["ensemble_unavailable_reasons"]
+    assert "ensemble_incomplete" in str(rec["flags"])
+    row = red[(red["author"] == "TESS-SPOC") & (red["flux_column"] == "PDCSAP_FLUX")].iloc[0]
+    assert row["status"] == UNMEASURED_QUERY_FAILED
+    assert row["lc_status"] == UNMEASURED_QUERY_FAILED
+    assert not np.isfinite(float(row["depth_ppm"]))
+
+
+def test_a_deep_pdcsap_against_a_shallow_sap_is_a_named_finding_from_measure_one():
+    """The background hypothesis, answered with a number through the real code."""
+    depths = {("SPOC", "PDCSAP_FLUX"): TOI_PPM, ("SPOC", "SAP_FLUX"): TOI_PPM * 0.6,
+              ("TESS-SPOC", "PDCSAP_FLUX"): TOI_PPM,
+              ("TESS-SPOC", "SAP_FLUX"): TOI_PPM * 0.6}
+    rec, _s, _f, _r = _measure_one_with_ensemble(depths, noise_ppm=150.0, n_transits=24)
+    assert rec["sap_vs_pdcsap_n_pairs"] == 2
+    assert rec["sap_minus_pdcsap_ppm"] < 0
+    assert rec["background_direction"] == BG_PDC_DEEPER
+    assert abs(rec["sap_minus_pdcsap_z"]) > 3.0
+    assert rec["sap_vs_pdcsap_verdict"] == BG_DISAGREE
+    assert "sap_pdcsap_disagree" in str(rec["flags"])
+
+
+def test_the_kepler_era_gets_its_own_ensemble_through_the_same_code():
+    """Both eras, one ensemble implementation — as with the fitter itself."""
+    rec, _s, _f, red = measure_one(
+        {"kepoi_name": "K00897.01", "kepid": 7849854, "tic_id": 268924036},
+        _koi_row_real(), dict(TOI_ROW),
+        lc_fn=_lc_fn_at_depth(TOI_PPM),
+        kepler_lc_fn=_kepler_lc_fn(KEPLER_PPM, n_transits=60, seed=211),
+        kepler_ensemble_lc_fn=_ens_lc_fn(
+            {("Kepler", "PDCSAP_FLUX"): KEPLER_PPM,
+             ("Kepler", "SAP_FLUX"): KEPLER_PPM * 1.02},
+            t0=T0_BKJD, exptime_s=KEPLER_LONG_CADENCE_S, n_transits=60, noise_ppm=300.0,
+            sector=3, era=ERA_KEPLER),
+        mast=MastParams(retries=1, kepler_retries=1, retry_pause_s=0.0),
+        fit=FitParams(), compare=CompareParams(),
+        ensemble=EnsembleParams(retries=1))
+    assert rec["kepler_n_members"] == 2
+    assert rec["kepler_n_members_measured"] == 2
+    assert rec["kepler_depth_reduction_spread_status"] == SPREAD_OK
+    assert rec["depth_kepler_measured_total_err_ppm"] > rec["depth_kepler_measured_err_ppm"]
+    assert set(red["era"]) == {ERA_KEPLER}
+    # the TESS side was not asked for, and says so rather than reporting a spread of 0
+    assert rec["depth_reduction_spread_status"] == SPREAD_NOT_ATTEMPTED
+
+
+# --- 10.8 end to end, through the real stage code ---------------------------
+def test_end_to_end_the_ensemble_reaches_reductions_csv_and_the_summary(tmp_path):
+    out = tmp_path / "stage2"
+    conf = _conf(tmp_path, ensemble={"enabled": True, "retries": 1})
+    t0 = bkjd_to_btjd(T0_BKJD) + 900 * P
+    depths = {("SPOC", "PDCSAP_FLUX"): TOI_PPM, ("SPOC", "SAP_FLUX"): TOI_PPM * 0.6,
+              ("TESS-SPOC", "PDCSAP_FLUX"): TOI_PPM * 1.02}
+    stage2_measure(conf, out, query_fn=_query_fn, lc_fn=_lc_fn_at_depth(TOI_PPM),
+                   kepler_lc_fn=_kepler_lc_fn(KEPLER_PPM, n_transits=60, seed=221),
+                   ensemble_lc_fn=_ens_lc_fn(depths, t0=t0, noise_ppm=150.0, n_transits=24),
+                   kepler_ensemble_lc_fn=_ens_lc_fn(
+                       {("Kepler", "PDCSAP_FLUX"): KEPLER_PPM,
+                        ("Kepler", "SAP_FLUX"): KEPLER_PPM * 1.01},
+                       t0=T0_BKJD, exptime_s=KEPLER_LONG_CADENCE_S, n_transits=60,
+                       noise_ppm=300.0, sector=3, era=ERA_KEPLER))
+    assert (out / "reductions.csv").exists()
+    red = pd.read_csv(out / "reductions.csv")
+    assert len(red) == 14                          # 12 TESS grid points + 2 Kepler
+    assert set(red["status"]) >= {"OK", UNMEASURED_ZERO_ROWS}
+    assert list(red.columns)[:2] == ["kepoi_name", "tic_id"]
+
+    # sectors.csv now carries BOTH scopes, and they are labelled: the rows the
+    # depth came from ("primary", the deduplicated reduction) and the rows that
+    # exist only to size the error ("ensemble").  Without the label a reader
+    # could mistake the ensemble's duplicated sectors for extra data.
+    sec = pd.read_csv(out / "sectors.csv")
+    assert set(sec["scope"]) == {"primary", "ensemble"}
+    prim = sec[sec["scope"] == "primary"]
+    assert set(prim["era"]) == {ERA_KEPLER, ERA_TESS}
+    ens_rows = sec[sec["scope"] == "ensemble"]
+    # the per-member, per-segment table that made the problem visible at 050402a
+    assert set(ens_rows["reduction_flux_column"]) == {"PDCSAP_FLUX", "SAP_FLUX"}
+    assert set(ens_rows["reduction_author"]) >= {"SPOC", "TESS-SPOC", "Kepler"}
+
+    acq = json.loads((out / "acquire.json").read_text())
+    assert acq["ensemble_enabled"] is True
+    assert acq["n_reduction_members"] == 14
+    assert acq["ensemble_budget_s"] and acq["ensemble_budget_exhausted"] is False
+    assert acq["ensemble_kepler_budget_s"]
+    assert acq["reduction_member_status_counts"].get("OK") == 5
+
+    summary = stage2_assess(conf, out)
+    ens = summary["reduction_ensemble"]
+    assert ens["n_targets_with_an_ensemble"] == 1
+    assert "does NOT move the depth" in ens["what_it_is_not"]
+    assert "dedupe" in ens["what_it_is_not"].lower()
+    assert "16" in ens["spread_definition"] and "84" in ens["spread_definition"]
+    assert "sqrt(statistical^2 + reduction_spread^2)" in ens["how_it_enters"]
+    # the background test disagreed, and that is a NAMED FINDING
+    assert ens["background_test_finding"]
+    assert BG_PDC_DEEPER in ens["background_test_finding"]
+    assert ens["targets_where_sap_and_pdcsap_disagree"][0]["kepoi_name"] == "K00897.01"
+    t = ens["targets"][0]
+    assert t["tess"]["n_members"] == 12
+    assert t["background_test"]["sap_vs_pdcsap_verdict"] == BG_DISAGREE
+    assert np.isfinite(t["verdict_errors"]["z_measured_eras_stat_only"])
+    # the summary target row carries the total error the verdict used
+    tgt = summary["targets"][0]
+    assert np.isfinite(tgt["depth_tess_measured_total_err_ppm"])
+    assert tgt["depth_tess_measured_total_err_ppm"] >= tgt["depth_tess_measured_err_ppm"]
+    assert summary["config"]["ensemble"]["enabled"] is True
+    assert "SAP_FLUX" in summary["config"]["ensemble"]["tess_flux_columns"]
+    # the ensemble cannot re-extract pixels, and the summary says so
+    assert "aperture" in " ".join(summary["checks_not_performed"]).lower()
+
+
+def test_end_to_end_without_an_ensemble_the_summary_says_it_was_not_attempted(tmp_path):
+    """A run without the ensemble must not look like a run whose ensemble agreed."""
+    out = tmp_path / "stage2"
+    conf = _conf(tmp_path)
+    stage2_measure(conf, out, query_fn=_query_fn, lc_fn=_lc_fn_at_depth(TOI_PPM),
+                   kepler_lc_fn=_kepler_lc_fn(KEPLER_PPM, n_transits=60, seed=231))
+    summary = stage2_assess(conf, out)
+    assert (out / "reductions.csv").exists()
+    assert not len(pd.read_csv(out / "reductions.csv"))
+    t = summary["reduction_ensemble"]["targets"][0]
+    assert t["tess"]["depth_reduction_spread_status"] == SPREAD_NOT_ATTEMPTED
+    assert t["kepler"]["depth_reduction_spread_status"] == SPREAD_NOT_ATTEMPTED
+    assert summary["reduction_ensemble"]["n_targets_with_an_ensemble"] == 0
+    assert summary["acquisition"]["ensemble_enabled"] is False
+    # and the primary verdict is still made, on the statistical error alone
+    assert summary["primary_verdict"] == RUN_LL_CHANGED
+    assert summary["targets"][0]["reduction_systematic_applied"] is False
+
+
+def test_stage2_run_all_wires_the_ensemble_too(tmp_path):
+    out = tmp_path / "stage2"
+    t0 = bkjd_to_btjd(T0_BKJD) + 900 * P
+    rep = stage2_run("all", out_dir=out, conf=_conf(tmp_path,
+                                                    ensemble={"enabled": True, "retries": 1}),
+                     query_fn=_query_fn, lc_fn=_lc_fn_at_depth(TOI_PPM),
+                     kepler_lc_fn=_kepler_lc_fn(KEPLER_PPM, n_transits=60, seed=241),
+                     ensemble_lc_fn=_ens_lc_fn({("SPOC", "PDCSAP_FLUX"): TOI_PPM,
+                                                ("SPOC", "SAP_FLUX"): TOI_PPM * 0.99}, t0=t0),
+                     kepler_ensemble_lc_fn=_ens_lc_fn(
+                         {("Kepler", "PDCSAP_FLUX"): KEPLER_PPM,
+                          ("Kepler", "SAP_FLUX"): KEPLER_PPM * 1.01},
+                         t0=T0_BKJD, exptime_s=KEPLER_LONG_CADENCE_S, n_transits=60,
+                         noise_ppm=300.0, sector=3, era=ERA_KEPLER))
+    assert rep["primary_verdict"] == RUN_LL_CHANGED
+    assert (out / "reductions.csv").exists()
+    red = pd.read_csv(out / "reductions.csv")
+    assert set(red["era"]) == {ERA_KEPLER, ERA_TESS}
+
+
+def test_the_repository_config_enables_the_ensemble_and_bounds_it():
+    """A dropped `ensemble` block would restore the over-precise error bar."""
+    from seti.growth.run import load_growth_config
+
+    conf = load_growth_config()
+    e = EnsembleParams.from_config(conf)
+    assert e.enabled is True, "config/growth.yaml must enable the reduction ensemble"
+    assert EnsembleParams().enabled is False, "the CODE default must stay off"
+    # SAP_FLUX is the background test and must never be dropped from the grid
+    assert "SAP_FLUX" in e.tess_flux_columns
+    assert "PDCSAP_FLUX" in e.tess_flux_columns
+    assert "SAP_FLUX" in e.kepler_flux_columns and "PDCSAP_FLUX" in e.kepler_flux_columns
+    assert set(e.tess_authors) >= {"SPOC", "TESS-SPOC", "QLP"}
+    # its own wall-clock ceilings, separate from the measurement's
+    assert e.budget_s > 0 and e.kepler_budget_s > 0
+    assert e.per_member_budget_s > 0 and e.member_timeout_s > 0
+    assert e.min_members_for_spread >= 2 and 50.0 < e.spread_percentile < 100.0
+    assert e.background_n_agree >= 3.0

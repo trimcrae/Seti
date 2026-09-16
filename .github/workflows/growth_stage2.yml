@@ -41,6 +41,33 @@ name: growth-stage2
 # ratio): a disagreement is KOI_DEPTH_CONTRADICTED, a finding about the KOI
 # TABLE — stage 1's own input — and is surfaced as an annotation here.
 #
+# AND WHY IT WAS EXTENDED AGAIN — THE REDUCTION ENSEMBLE.  The quoted TESS error
+# did not describe the real scatter, and the evidence is in this channel's own
+# output.  Before dedupe_sectors existed, run 35041932130 measured THE SAME
+# SEVEN SECTORS under two pipelines (results/growth/stage2/sectors.csv at commit
+# 050402a): the 2-minute SPOC reductions gave 25,425–35,498 ppm and the FFI
+# TESS-SPOC reductions OF THE SAME PIXELS gave 33,078–39,798 ppm.  Two
+# reductions of identical photons disagreeing by 20–30 % is a systematic FAR
+# larger than the 1,521 ppm the bootstrap quotes; the out-of-transit scatter is
+# 414 ppm in Kepler against 67,631 ppm in TESS, a factor of 163, because at
+# G = 15.23 the TESS light curve is faint and systematics-limited.  Stage 1's
+# entire failure was a quoted error that did not describe the real scatter.
+#
+# So stage 2 now measures the depth under EVERY reduction the archive serves —
+# every (pipeline author, flux column) member of the grid — and folds the spread
+# over those members into the error as a systematic.  THE LIKE-FOR-LIKE VERDICT
+# USES THE TOTAL ERROR.  A ratio that survives the ensemble is a much stronger
+# statement than one that survives only the bootstrap; a ratio that does NOT
+# survive it comes back MEASURED_DEPTH_UNRESOLVED, and that is the correct
+# answer.  The ensemble does NOT move the depth: the reported depth is still the
+# DEDUPLICATED one (one sector, one reduction, counted once) and the ensemble
+# sets its ERROR and only its error.  SAP_FLUX is in the grid deliberately —
+# PDC is where the crowding and background corrections are applied, so
+# "an over-subtracted background inflates the depth" is answered with a number
+# (sap_minus_pdcsap_ppm and its significance) rather than left as a worry.
+# reductions.csv is the audit trail: one row per member, with its own reason
+# when it produced no depth.
+#
 # THE GOVERNING DISCIPLINES:
 #  * an era whose light curves could not be fetched is UNMEASURED with reason
 #    QUERY_FAILED — and QUERY_RETURNED_ZERO_ROWS stays a different fact, as does
@@ -147,6 +174,17 @@ jobs:
           print("kepler statuses:", d.get("kepler_lc_status_counts"),
                 "routes:", d.get("kepler_lc_routes"),
                 "compared like-for-like:", d.get("n_compared_like_for_like"))
+          if not d.get("ensemble_enabled"):
+              print("::error::the REDUCTION ENSEMBLE was not attempted, so the quoted error is "
+                    "the bootstrap alone — the very error model that did not describe the "
+                    "20-30 % SPOC-vs-TESS-SPOC disagreement on this object. Set "
+                    "stage2.ensemble.enabled: true in config/growth.yaml.")
+          if d.get("ensemble_budget_exhausted") or d.get("ensemble_kepler_budget_exhausted"):
+              print("::warning::a reduction-ensemble wall-clock budget was exhausted; the "
+                    "members it did not reach are BUDGET_EXHAUSTED and the spread is therefore "
+                    "a LOWER BOUND on the true reduction systematic")
+          print("ensemble members:", d.get("n_reduction_members"),
+                d.get("reduction_member_status_counts"))
           PY
       - name: Assess (the like-for-like verdict, then the catalogue diagnostic)
         if: ${{ github.event.inputs.stage != 'probe' }}
@@ -230,6 +268,58 @@ jobs:
               print(f"::notice::{s.get('primary_reason')} — an agreement WITHOUT the power to "
                     "have seen the change under test is not a refutation; no pick is made.")
 
+          # ---- THE REDUCTION ENSEMBLE: did the verdict use the total error? ----
+          ens = s.get("reduction_ensemble") or {}
+          if acq.get("ensemble_enabled") is False:
+              print("::error::the reduction ensemble was not attempted, so the like-for-like "
+                    "verdict rests on the BOOTSTRAP ALONE. Run 35041932130 measured the same "
+                    "seven sectors under two pipelines and they disagreed by 20-30 % against a "
+                    "1,521 ppm quoted error. Set stage2.ensemble.enabled: true in "
+                    "config/growth.yaml.")
+              sys.exit(1)
+          for t in s.get("targets") or []:
+              if t.get("like_for_like_verdict") not in ("MEASURED_DEPTH_CHANGED",
+                                                        "MEASURED_DEPTH_UNCHANGED"):
+                  continue
+              # A verdict that decides the question must have carried the
+              # systematic, or it is the stage-1 error one level down.
+              if t.get("reduction_systematic_applied") is False:
+                  print(f"::error::{t.get('kepoi_name')} reached "
+                        f"{t.get('like_for_like_verdict')} WITHOUT a reduction systematic: the "
+                        "quoted error is the bootstrap alone and describes only the photon "
+                        "noise, not the pipeline-to-pipeline scatter")
+                  sys.exit(1)
+              tot = t.get("depth_tess_measured_total_err_ppm")
+              stat = t.get("depth_tess_measured_err_ppm")
+              if tot is not None and stat is not None and tot < stat:
+                  print(f"::error::{t.get('kepoi_name')}: the TOTAL error is smaller than the "
+                        "statistical one, which is arithmetically impossible")
+                  sys.exit(1)
+          for tgt in ens.get("targets") or []:
+              for era in ("tess", "kepler"):
+                  blk = tgt.get(era) or {}
+                  if blk.get("ensemble_incomplete"):
+                      print(f"::warning::{tgt.get('kepoi_name')} [{era}]: "
+                            f"{blk.get('n_members_unavailable')} of {blk.get('n_members')} "
+                            f"reductions produced no depth "
+                            f"({blk.get('ensemble_unavailable_reasons')}) — the spread over the "
+                            "survivors is a LOWER BOUND on the reduction systematic")
+                  if blk.get("depth_reduction_spread_status") == "TOO_FEW_MEMBERS":
+                      print(f"::warning::{tgt.get('kepoi_name')} [{era}]: fewer reductions came "
+                            "back than the ensemble needs, so there is NO spread — the error is "
+                            "the bootstrap alone and is NOT known to describe the real scatter")
+              ve = tgt.get("verdict_errors") or {}
+              print(f"::notice::{tgt.get('kepoi_name')}: z = {ve.get('z_measured_eras')} on the "
+                    f"TOTAL error against {ve.get('z_measured_eras_stat_only')} on the bootstrap "
+                    f"alone — verdict {ve.get('like_for_like_verdict')}")
+          # The background/crowding hypothesis, answered with a number.
+          if ens.get("background_test_finding"):
+              print(f"::warning::{ens['background_test_finding']}")
+              for b in ens.get("targets_where_sap_and_pdcsap_disagree") or []:
+                  print(f"::warning::{b.get('kepoi_name')}: SAP - PDCSAP = "
+                        f"{b.get('sap_minus_pdcsap_ppm')} ppm (z {b.get('z')}), "
+                        f"{b.get('direction')}")
+
           # ---- the KOI table itself -------------------------------------------
           chk = s.get("koi_catalogue_check") or {}
           if chk.get("finding"):
@@ -286,12 +376,13 @@ jobs:
           # The push is VERIFIED against the remote (scripts/commit_results.sh);
           # the downloaded FITS products stay in the artifact only.
           scripts/commit_results.sh \
-            "growth stage 2: BOTH eras measured with one fitter — like-for-like depth verdict, plus the catalogue diagnostic" \
+            "growth stage 2: BOTH eras measured with one fitter, every reduction measured for the systematic — like-for-like depth verdict on the TOTAL error" \
             results/growth/stage2/probe.json \
             results/growth/stage2/acquire.json \
             results/growth/stage2/acquisition_log.json \
             results/growth/stage2/measurements.csv \
             results/growth/stage2/sectors.csv \
+            results/growth/stage2/reductions.csv \
             results/growth/stage2/summary.json \
             results/growth/stage2/folds
       - uses: actions/upload-artifact@v4

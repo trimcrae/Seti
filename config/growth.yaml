@@ -256,6 +256,88 @@ stage2:
     # WHETHER SHORT CADENCE EXISTS FOR KIC 7849854 IS A RUNNER FACT: it is
     # recorded per target as `kepler_has_short_cadence` / `kepler_cadences`.
 
+  # ---------------------------------------------------------------------
+  # THE REDUCTION ENSEMBLE — the systematic that enters the total error
+  # ---------------------------------------------------------------------
+  # WHY.  The quoted TESS error did not describe the real scatter, and the
+  # evidence is in this channel's own output.  Before dedupe_sectors existed,
+  # run 35041932130 measured THE SAME SEVEN SECTORS under two pipelines
+  # (results/growth/stage2/sectors.csv at commit 050402a): the 2-minute SPOC
+  # reductions gave 25,425–35,498 ppm and the FFI TESS-SPOC reductions OF THE
+  # SAME PIXELS gave 33,078–39,798 ppm.  Two reductions of identical photons
+  # disagreeing by 20–30 % is a systematic FAR LARGER than the 1,521 ppm the
+  # bootstrap quotes.  And the out-of-transit scatter is 414 ppm in Kepler
+  # against 67,631 ppm in TESS — a factor of 163: at G = 15.23 the TESS light
+  # curve is faint and systematics-limited.  Stage 1's whole failure was a
+  # quoted error that did not describe the real scatter (31 of 108 planets above
+  # 5 sigma of the population median); repeating that one level down, on a
+  # single object, would be worse.
+  #
+  # WHAT IT DOES.  For each era, for each (pipeline author, flux column)
+  # combination the archive serves, measure the depth.  Report the spread over
+  # those members — half the 16th-to-84th percentile range — and ADD IT IN
+  # QUADRATURE to the statistical error.  THE LIKE-FOR-LIKE VERDICT THEN USES
+  # THE TOTAL.  A ratio that survives the ensemble is a much stronger statement
+  # than one that survives only the bootstrap; a ratio that does NOT survive it
+  # comes back MEASURED_DEPTH_UNRESOLVED, and that is the correct answer.
+  #
+  # WHAT IT DOES NOT DO.  It does not move the depth.  The reported depth stays
+  # the DEDUPLICATED one — dedupe_sectors keeps one reduction per sector and the
+  # primary measurement is unchanged by adding ensemble members.  Re-stacking
+  # the members would count every transit as many times as the archive serves
+  # it, which is exactly the error run 35041932130 made.  The ensemble sets the
+  # ERROR, and only the error.
+  #
+  # SAP_FLUX IS IN THE GRID DELIBERATELY.  PDC is where the crowding and
+  # background corrections are applied, so a faint star in a crowded aperture
+  # with an OVER-SUBTRACTED BACKGROUND yields an INFLATED transit depth — a
+  # specific, testable, entirely mundane explanation for this whole result.  It
+  # is answered with a number (sap_minus_pdcsap_ppm and its significance, paired
+  # within a pipeline author) and a named finding when the two disagree beyond
+  # their errors, rather than left as a worry.
+  #
+  # `enabled` is FALSE in the code's own defaults on purpose, exactly as
+  # mast.kepler_enabled is: the grid multiplies the number of archive requests,
+  # and a caller that has not thought about it must not silently open a socket
+  # (tests/conftest.py raises on any socket use).  IT IS TRUE HERE, and
+  # growth_stage2.yml FAILS THE RUN if summary.json comes back with it off.
+  ensemble:
+    enabled: true
+    # Enumerated, NOT chosen.  Most combinations do not exist (QLP has never
+    # served PDCSAP_FLUX, SPOC has never served KSPSAP_FLUX); those come back
+    # FLUX_COLUMN_NOT_PRESENT, which is a RECORDED ABSENCE and is a different
+    # fact from QUERY_FAILED (the archive errored) and QUERY_RETURNED_ZERO_ROWS
+    # (it answered with nothing).  A member that vanished silently would shrink
+    # the spread, so every one of them keeps its reason in reductions.csv and
+    # the era is flagged `ensemble_incomplete`.
+    tess_authors: ["SPOC", "TESS-SPOC", "QLP"]
+    tess_flux_columns: ["PDCSAP_FLUX", "KSPSAP_FLUX", "DET_FLUX", "SAP_FLUX"]
+    kepler_authors: ["Kepler"]
+    kepler_flux_columns: ["PDCSAP_FLUX", "SAP_FLUX"]
+    # SEPARATE wall-clock ceilings again, and for the same reason as
+    # gaia.cone_budget_s and mast.kepler_budget_s: the ensemble is up to 12
+    # fetches per era where the primary measurement is one, and a SYSTEMATIC
+    # ESTIMATE must never be able to consume the budget of the measurement it
+    # exists to qualify.  A member the budget did not reach is recorded
+    # BUDGET_EXHAUSTED — never silently absent.
+    budget_s: 5400.0
+    kepler_budget_s: 5400.0
+    per_member_budget_s: 600.0
+    member_timeout_s: 600.0
+    retries: 2
+    max_sectors: 60
+    # The spread is half the range between the (100 - p)th and pth percentiles
+    # of the member depths: the robust analogue of one standard deviation, and
+    # not moved by one pathological reduction the way max - min is.  Below
+    # min_members_for_spread the spread is NaN with status TOO_FEW_MEMBERS —
+    # NEVER 0, because a zero spread would assert that every reduction agreed
+    # when in truth only one was reached.
+    spread_percentile: 84.0
+    min_members_for_spread: 2
+    # |SAP - PDCSAP| / sigma at or above this is BACKGROUND_TEST_DISAGREES and
+    # is surfaced as a named finding in summary.json["reduction_ensemble"].
+    background_n_agree: 3.0
+
   fit:
     # The ephemeris is FIXED to the KOI values (koi_period, koi_time0bk,
     # koi_duration): this stage measures a DEPTH, it does not re-derive an

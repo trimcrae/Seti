@@ -312,6 +312,15 @@ The three-number catalogue comparison (§7.2) is **kept**, and is now a
 diagnostic of the **catalogues** rather than of the sky: it says which table is
 right about the TESS era.  `summary.json` states which verdict is primary.
 
+And the error the verdict is formed from is no longer the bootstrap alone.  The
+**reduction ensemble** (§7.5a) measures the depth under *every* reduction the
+archive serves for each era and folds the spread over those members into each
+era's error as a systematic; the like-for-like `z` uses the **total**.  This
+closes the second hole: the quoted TESS error did not describe the real
+scatter, and this channel's own duplicated-sector run proves it (20–30 %
+disagreement between two reductions of the same pixels, against a 1,521 ppm
+quoted error).
+
 ### 7.1 Why, and what it settles
 
 Run 35038510064 returned one `GROWTH_CANDIDATE` — **Kepler-718 b = K00897.01 =
@@ -544,6 +553,95 @@ facts, and `growth_stage2.yml` **fails the run** if `summary.json` comes back
 with the primary comparison switched off — so a dropped key is loud rather than
 a quietly one-sided result.
 
+### 7.5a The reduction ensemble — the error that did not describe the scatter
+
+**The hole.**  The quoted TESS error does not describe the real scatter, and
+the evidence is in this channel's own output.  The out-of-transit scatter is
+**414 ppm in Kepler and 67,631 ppm in TESS** — a factor of 163; at G = 15.23
+the TESS light curve is faint and systematics-limited.  Worse, and decisively:
+before `dedupe_sectors` existed, run 35041932130 measured **the same seven
+sectors** under two pipelines (`results/growth/stage2/sectors.csv` at commit
+`050402a`).  The 2-minute SPOC reductions gave **25,425–35,498 ppm**; the FFI
+TESS-SPOC reductions **of the same pixels** gave **33,078–39,798 ppm**.  Two
+reductions of identical photons disagreeing by 20–30 % is a systematic **far
+larger than the 1,521 ppm quoted error**.  Stage 1's entire failure was a
+quoted error that did not describe the real scatter (31 of 108 planets above
+5 σ of the population median); repeating that one level down, on a single
+object, would be worse.  The direction is not benign either way: a faint star
+in a crowded aperture with an **over-subtracted background** yields an
+*inflated* transit depth, which is a specific, testable, mundane explanation
+for the whole result.
+
+**What is built** (`stage2.measure_reduction_ensemble`, config
+`stage2.ensemble`).  For each era, for each segment, the depth is measured
+under **every available reduction** — the full cross product of pipeline author
+(`SPOC`, `TESS-SPOC`, `QLP`; `Kepler` for the Kepler era) and flux column
+(`PDCSAP_FLUX`, `KSPSAP_FLUX`, `DET_FLUX`, `SAP_FLUX`).  Reductions are
+**enumerated, not chosen**: most combinations do not exist at the archive and
+come back `FLUX_COLUMN_NOT_PRESENT`, which is a *recorded absence*, distinct
+from `QUERY_FAILED` (the archive errored), `QUERY_RETURNED_ZERO_ROWS` (it
+answered with nothing) and `BUDGET_EXHAUSTED`.  Every member, measured or not,
+is a row in `reductions.csv`.
+
+**The spread, and how it binds.**  `depth_reduction_spread_ppm` is **half the
+range between the 16th and 84th percentiles** of the measured members' depths —
+the robust analogue of one σ, not moved by a single pathological reduction the
+way `max − min` is — reported with `min`, `max`, the percentiles, the
+per-member table (`reductions.csv`) and each member's own per-segment
+breakdown (`sectors.csv`, `scope = "ensemble"`), which is what separates a
+uniform pipeline offset from sector-specific noise.  It enters the error as a
+systematic:
+
+```
+depth_*_total_err_ppm = sqrt(statistical² + depth_reduction_spread_ppm²)
+```
+
+**and the like-for-like verdict is formed from the TOTAL**, with
+`z_measured_eras_stat_only` kept beside it so the effect of the systematic is
+visible rather than merely applied.  A ratio that survives the ensemble is a
+much stronger statement than one that survives only the bootstrap; a ratio that
+does **not** survive it comes back `MEASURED_DEPTH_UNRESOLVED`, and that is the
+correct answer.  Below `min_members_for_spread` members there is **no** spread:
+NaN with `depth_reduction_spread_status = TOO_FEW_MEMBERS`, never 0 — a zero
+spread would assert that every reduction agreed when only one was reached.
+
+**What the ensemble does NOT do: it does not move the depth.**  The primary
+measurement stays the **deduplicated** one — `dedupe_sectors` keeps one
+reduction per sector and the reported depth is unchanged by adding ensemble
+members (a test asserts the two are bit-identical).  Re-stacking the members
+would count every transit as many times as the archive serves it, which is
+exactly the error run 35041932130 made.  **The ensemble sets the error, and
+only the error.**
+
+**An inflated error must never buy a refutation.**  `MEASURED_DEPTH_UNCHANGED`
+kills a candidate, so it now requires the claimed change to be *excluded* —
+`claim_excluded_sigma = (ln_ratio_under_test − |ln ratio observed|) / σ ≥
+n_agree` — not merely that `n_agree·σ` is smaller than the claim.  A comparison
+that measures a ratio of 2.16 and can no longer call it significant has refuted
+nothing; the honest answer is `MEASURED_DEPTH_UNRESOLVED`.  The distinction is
+dormant while the errors are small and becomes load-bearing the moment a
+reduction systematic is folded in.
+
+**The background test, by number.**  PDC is where the crowding and background
+corrections are applied, so `SAP_FLUX` is in the grid deliberately and is never
+skipped.  `sap_minus_pdcsap_ppm` pairs the two **within a pipeline author** (so
+the aperture is held fixed) and combines the per-author differences by inverse
+variance; `sap_minus_pdcsap_z` gives the significance and `background_direction`
+the sense.  `PDC_DEEPER_THAN_SAP` beyond `background_n_agree` σ is the case that
+*supports* the mundane explanation, and it is reported as a named finding in
+`summary.json["reduction_ensemble"]["background_test_finding"]`, not left as a
+worry.
+
+The ensemble carries **its own wall-clock budgets** (`stage2.ensemble.budget_s`
+and `kepler_budget_s`, plus `per_member_budget_s` / `member_timeout_s`),
+separate from the measurement's, because the grid multiplies the number of
+requests and a systematic estimate must never be able to consume the budget of
+the measurement it exists to qualify.  `stage2.ensemble.enabled` is **true** in
+`config/growth.yaml` and **false** in the code's own defaults, for exactly the
+reason `kepler_enabled` is; `growth_stage2.yml` **fails the run** if the summary
+comes back with the ensemble off, or if a target reached `CHANGED`/`UNCHANGED`
+with `reduction_systematic_applied: false`.
+
 Outputs, `results/growth/stage2/`:
 
 | File | Content |
@@ -551,13 +649,14 @@ Outputs, `results/growth/stage2/`:
 | `probe.json` | which MAST route exists on this machine (imports only) |
 | `acquire.json`, `acquisition_log.json` | the ephemeris/TOI pull statuses, the per-target light-curve status and route **for each era**, elapsed time against each budget, every failed attempt's exception text |
 | `measurements.csv` | one row per shortlisted target: **both measured depths and the like-for-like verdict**, the KOI-table check, the two catalogue depths, every `z`, the ephemeris record per era, the per-era flags |
-| `sectors.csv` | per sector/quarter, with an **`era`** column: author, exposure, points, transits, depth ± error, `smeared`, `exptime_over_duration` |
+| `sectors.csv` | per sector/quarter, with an **`era`** column and a **`scope`** column: `primary` rows are the deduplicated reduction the reported depth came from; `ensemble` rows are each reduction's own per-segment breakdown (`reduction_author`, `reduction_flux_column`), i.e. the same table that made the problem visible at commit `050402a`. Author, exposure, points, transits, depth ± error, `smeared`, `exptime_over_duration` |
+| `reductions.csv` | **the reduction ensemble**: one row per (`era`, author, flux column), measured or not, with its depth ± error, transit count, segment list and — when it produced no depth — its own status (`QUERY_FAILED` / `QUERY_RETURNED_ZERO_ROWS` / `FLUX_COLUMN_NOT_PRESENT` / `NO_USABLE_TRANSIT` / `BUDGET_EXHAUSTED`), plus `is_primary_reduction` marking the one the reported depth came from |
 | `folds/<KOI>.csv` | the binned fold **per era** (`era` column), for a human to look at |
-| `summary.json` | `primary_verdict` (+ `primary_verdict_field`, `primary_verdict_is`), `like_for_like_verdicts`, `koi_catalogue_check`, then the secondary `verdict` (marked `verdict_is_primary: false`), `target_verdicts`, `unmeasured_reasons`, `flags`, `targets`, `acquisition`, `config`, `checks_not_performed` |
+| `summary.json` | `primary_verdict` (+ `primary_verdict_field`, `primary_verdict_is`), `like_for_like_verdicts`, `koi_catalogue_check`, **`reduction_ensemble`** (the spread definition, how it enters the total error, the per-target members and the background-test finding), then the secondary `verdict` (marked `verdict_is_primary: false`), `target_verdicts`, `unmeasured_reasons`, `flags`, `targets`, `acquisition`, `config`, `checks_not_performed` |
 
 The shortlist and every threshold are in `config/growth.yaml` under `stage2:`
-(`shortlist`, `mast`, `fit`, `compare`), with a `verify:` note on everything
-asserted rather than measured.  Run:
+(`shortlist`, `mast`, `ensemble`, `fit`, `compare`), with a `verify:` note on
+everything asserted rather than measured.  Run:
 `python -m seti.growth.stage2 --stage {probe,measure,assess,all}`
 (or `seti growth-stage2 ...`); workflow `growth_stage2.yml`.
 
@@ -578,9 +677,17 @@ asserted rather than measured.  Run:
   floor it was written for does not strictly apply.  It is kept rather than
   dropped: keeping it can only widen the agreement band, never manufacture a
   change.
+* **it does not re-extract the pixels.**  The reduction ensemble (§7.5a)
+  measures every reduction the *archive serves*; it does not build its own
+  aperture from the target pixel files.  A systematic common to every delivered
+  pipeline — a background model they all share, say — would not appear in the
+  spread.  This is listed in `checks_not_performed` as
+  `aperture_photometry_of_our_own`.
 * **what it no longer cannot do**: the Kepler depth is *not* still the
   catalogue's (§7.0).  `kepler_era_lightcurve_refit` has been removed from
   `checks_not_performed`, because leaving it there would be a false disclaimer.
+  And the quoted error is no longer the bootstrap alone: the reduction spread
+  enters it as a systematic and the verdict uses the total (§7.5a).
 
 ---
 

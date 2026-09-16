@@ -149,9 +149,62 @@ the shift on the Kepler side too is the obvious bug --- it would put the fold
 by one named function, :func:`epoch_in_era`, and the test suite checks both
 branches.
 
+The reduction ensemble, and the error that was not describing the scatter
+------------------------------------------------------------------------
+Run 35041932130 measured the **same seven TESS sectors twice**, once from the
+2-minute SPOC reduction and once from the FFI TESS-SPOC reduction of the *same
+pixels* (``results/growth/stage2/sectors.csv`` at commit ``050402a``).  SPOC
+gave 25,425 to 35,498 ppm; TESS-SPOC gave 33,078 to 39,798 ppm.  **Two
+reductions of identical photons disagreeing by 20 to 30 % is a systematic far
+larger than the 1,521 ppm error the bootstrap quotes**, and at G = 15.23 the
+out-of-transit scatter is 414 ppm in Kepler against 67,631 ppm in TESS --- a
+factor of 163.  Stage 1's whole failure was a quoted error that did not
+describe the real scatter; repeating it one level down, on a single object,
+would be worse.
+
+So stage 2 does not pick a reduction.  It measures the depth under **every
+available reduction** of the same data --- every (pipeline author, flux column)
+combination the archive serves for that era --- and reports the spread over
+that ensemble as a systematic that **enters the comparison**:
+
+======================================  =========================================
+``depth_reduction_spread_ppm``          half the 16th-to-84th percentile range
+                                        over the ensemble members
+``depth_measured_total_err_ppm``        ``sqrt(stat^2 + reduction_spread^2)``
+``sap_minus_pdcsap_ppm``                the background/crowding test, by number
+======================================  =========================================
+
+and **the like-for-like verdict uses the TOTAL error**.  A ratio that survives
+the ensemble is a much stronger statement than one that survives only the
+bootstrap; a ratio that does not survive it comes back
+``MEASURED_DEPTH_UNRESOLVED``, and that is the correct answer rather than a
+disappointment.
+
+Three things about this that are easy to get wrong, and are therefore named:
+
+* **the ensemble never moves the primary depth.**  :func:`dedupe_sectors` still
+  governs the measurement: one sector is counted once, by the best-cadence
+  pipeline.  The ensemble is a *systematic estimate* --- it sets the error, and
+  only the error.  Re-stacking the duplicates into the depth is exactly the
+  double-counting that dedupe exists to stop.
+* **a member that could not be fetched is recorded, not dropped quietly.**  An
+  ensemble of two that was meant to be six has a smaller spread than the truth,
+  so every unavailable member keeps its own reason (``QUERY_FAILED`` /
+  ``QUERY_RETURNED_ZERO_ROWS`` / ``FLUX_COLUMN_NOT_PRESENT`` /
+  ``BUDGET_EXHAUSTED``, all different facts) and the era is flagged
+  ``ensemble_incomplete``.
+* **``SAP_FLUX`` versus ``PDCSAP_FLUX`` is measured, never skipped.**  PDC is
+  where the crowding and background corrections are applied, so a faint star in
+  a crowded aperture with an over-subtracted background yields an *inflated*
+  transit depth --- a specific, testable, entirely mundane explanation for this
+  whole result.  It is answered with a number
+  (``sap_minus_pdcsap_ppm`` and its significance) and a named finding when the
+  two disagree beyond their errors.
+
 Everything that touches a service takes an injectable callable (``query_fn``
 for the Exoplanet Archive, ``lc_fn`` for the TESS light curves, ``kepler_lc_fn``
-for the Kepler ones) and carries a **wall-clock budget**, because an unbounded
+for the Kepler ones, ``ensemble_lc_fn`` / ``kepler_ensemble_lc_fn`` for the
+reduction ensemble) and carries a **wall-clock budget**, because an unbounded
 stage has already cost this channel a whole run (``config/growth.yaml``,
 ``gaia.cone_budget_s``).  Nothing here reaches the network inside a test.
 """
@@ -258,6 +311,46 @@ KOI_DEPTH_CONFIRMED = "KOI_DEPTH_CONFIRMED"
 KOI_DEPTH_CONTRADICTED = "KOI_DEPTH_CONTRADICTED"
 KOI_DEPTH_UNCHECKED = "KOI_DEPTH_UNCHECKED"
 KOI_DEPTH_VERDICTS = (KOI_DEPTH_CONFIRMED, KOI_DEPTH_CONTRADICTED, KOI_DEPTH_UNCHECKED)
+
+# ---------------------------------------------------------------------------
+# THE REDUCTION ENSEMBLE.  One member per (pipeline author, flux column); the
+# spread over the members is the systematic that enters the total error.
+# ---------------------------------------------------------------------------
+#: The requested flux column is not in that product (asking QLP for
+#: ``PDCSAP_FLUX``, or SPOC for ``KSPSAP_FLUX``).  This is a DIFFERENT fact from
+#: "the archive did not answer" and from "the archive answered with nothing":
+#: the product exists and simply does not carry that column, so the member is
+#: absent by construction rather than by failure.  Silently letting such a
+#: member fall back to whatever column the file does carry would put the SAME
+#: reduction into the ensemble twice and shrink the spread.
+ENSEMBLE_NO_FLUX_COLUMN = "FLUX_COLUMN_NOT_PRESENT"
+#: The ensemble was switched off in config, or the era it belongs to produced no
+#: depth at all.  Nothing was asked; that is not a failure either.
+ENSEMBLE_NOT_ATTEMPTED = "ENSEMBLE_NOT_ATTEMPTED"
+ENSEMBLE_MEMBER_STATUSES = (STATUS_OK, STATUS_FAILED, STATUS_ZERO, UNMEASURED_NO_TRANSIT,
+                            UNMEASURED_BUDGET, ENSEMBLE_NO_FLUX_COLUMN, ENSEMBLE_NOT_ATTEMPTED)
+
+#: The spread over the ensemble was computed.
+SPREAD_OK = "OK"
+#: Fewer members came back than ``min_members_for_spread``: there IS no spread
+#: to quote.  It is reported as NaN with this status rather than as zero --- a
+#: zero spread would say "every reduction agreed" when in truth only one was
+#: reached, which is precisely the overconfidence this ensemble exists to stop.
+SPREAD_TOO_FEW_MEMBERS = "TOO_FEW_MEMBERS"
+SPREAD_NOT_ATTEMPTED = ENSEMBLE_NOT_ATTEMPTED
+SPREAD_STATUSES = (SPREAD_OK, SPREAD_TOO_FEW_MEMBERS, SPREAD_NOT_ATTEMPTED)
+
+#: ``SAP_FLUX`` vs ``PDCSAP_FLUX``: the direct test of the hypothesis that the
+#: PDC background/crowding correction is what inflates the depth.
+BG_AGREE = "BACKGROUND_TEST_AGREES"
+BG_DISAGREE = "BACKGROUND_TEST_DISAGREES"
+BG_UNAVAILABLE = "BACKGROUND_TEST_UNAVAILABLE"
+BACKGROUND_VERDICTS = (BG_AGREE, BG_DISAGREE, BG_UNAVAILABLE)
+#: Which way round the disagreement goes.  ``PDC_DEEPER_THAN_SAP`` is the
+#: mundane explanation under test: the corrected photometry is deeper than the
+#: raw aperture photometry, i.e. the correction is adding depth.
+BG_PDC_DEEPER = "PDC_DEEPER_THAN_SAP"
+BG_SAP_DEEPER = "SAP_DEEPER_THAN_PDC"
 
 STAGES = ("probe", "measure", "assess")
 
@@ -527,6 +620,102 @@ class MastParams:
             per_target_budget_s=float(self.kepler_per_target_budget_s),
             target_timeout_s=float(self.kepler_target_timeout_s),
             max_sectors=int(self.kepler_max_quarters), retries=int(self.kepler_retries))
+
+
+@dataclass
+class EnsembleParams:
+    """The reduction ensemble: which reductions to enumerate, and how they bind.
+
+    **Enumerated, not chosen.**  For each era the members are the full cross
+    product of pipeline author and flux column --- ``SPOC`` / ``TESS-SPOC`` /
+    ``QLP`` against ``PDCSAP_FLUX`` / ``KSPSAP_FLUX`` / ``DET_FLUX`` /
+    ``SAP_FLUX`` on the TESS side, ``Kepler`` against ``PDCSAP_FLUX`` /
+    ``SAP_FLUX`` on the Kepler side.  Most combinations do not exist (QLP has
+    never served ``PDCSAP_FLUX``); those come back
+    ``FLUX_COLUMN_NOT_PRESENT``, which is a recorded absence and not a failure.
+    ``SAP_FLUX`` is in the grid deliberately and is never skipped: it is the one
+    member that tests the background/crowding correction directly.
+
+    ``enabled`` is **False in the code's own defaults, on purpose**, exactly as
+    :attr:`MastParams.kepler_enabled` is: the ensemble multiplies the number of
+    archive requests by the size of the grid, and a caller that has not thought
+    about it must not silently open a socket (``tests/conftest.py`` raises on
+    any socket use).  ``config/growth.yaml`` turns it on and
+    ``growth_stage2.yml`` fails the run if the summary comes back with it off,
+    so a dropped key is loud rather than a quietly over-precise error bar.
+
+    ``spread_percentile`` sets the robust spread: the half range between the
+    ``100 - p`` and ``p`` percentiles of the member depths, 16-84 by default.
+    """
+
+    enabled: bool = False
+    tess_authors: tuple[str, ...] = DEFAULT_AUTHORS
+    tess_flux_columns: tuple[str, ...] = FLUX_COLUMNS
+    kepler_authors: tuple[str, ...] = KEPLER_AUTHORS
+    kepler_flux_columns: tuple[str, ...] = KEPLER_FLUX_COLUMNS
+    #: Wall clock for the WHOLE TESS ensemble, counted separately from
+    #: ``MastParams.budget_s`` so the ensemble cannot eat the primary
+    #: measurement's budget (or the reverse).  Same discipline, same reason as
+    #: ``gaia.cone_budget_s`` in ``config/growth.yaml``.
+    budget_s: float = 5400.0
+    #: The same, for the whole Kepler ensemble.
+    kepler_budget_s: float = 5400.0
+    per_member_budget_s: float = 600.0
+    member_timeout_s: float = 600.0
+    retries: int = 2
+    max_sectors: int = 60
+    spread_percentile: float = 84.0
+    min_members_for_spread: int = 2
+    #: |z| at or above this on ``SAP - PDCSAP`` is ``BACKGROUND_TEST_DISAGREES``.
+    background_n_agree: float = 3.0
+
+    @classmethod
+    def from_config(cls, conf: dict | None) -> EnsembleParams:
+        e = ((conf or {}).get("stage2") or {}).get("ensemble") or {}
+        d = cls()
+        for k in ("tess_authors", "tess_flux_columns", "kepler_authors",
+                  "kepler_flux_columns"):
+            if e.get(k):
+                setattr(d, k, tuple(str(v) for v in e[k]))
+        if e.get("enabled") is not None:
+            d.enabled = bool(e["enabled"])
+        for k in ("budget_s", "kepler_budget_s", "per_member_budget_s", "member_timeout_s",
+                  "spread_percentile", "background_n_agree"):
+            if e.get(k) is not None:
+                setattr(d, k, float(e[k]))
+        for k in ("retries", "max_sectors", "min_members_for_spread"):
+            if e.get(k) is not None:
+                setattr(d, k, int(e[k]))
+        return d
+
+    def authors_for(self, era: str) -> tuple[str, ...]:
+        return tuple(self.kepler_authors if str(era).lower() == ERA_KEPLER else self.tess_authors)
+
+    def flux_columns_for(self, era: str) -> tuple[str, ...]:
+        return tuple(self.kepler_flux_columns if str(era).lower() == ERA_KEPLER
+                     else self.tess_flux_columns)
+
+    def budget_for(self, era: str) -> float:
+        return float(self.kepler_budget_s if str(era).lower() == ERA_KEPLER else self.budget_s)
+
+    def member_view(self, mast: MastParams, *, author: str) -> MastParams:
+        """``mast``'s ceilings, narrowed to ONE ensemble member's fetch.
+
+        One author, the ensemble's own per-member budget and timeout, and the
+        ensemble's own retry count --- so a member that hangs cannot consume the
+        whole grid's wall clock, and the primary measurement's budget is
+        untouched either way.
+        """
+        import dataclasses  # noqa: PLC0415
+
+        return dataclasses.replace(
+            mast, authors=(str(author),), kepler_authors=(str(author),),
+            per_target_budget_s=float(self.per_member_budget_s),
+            target_timeout_s=float(self.member_timeout_s),
+            max_sectors=int(self.max_sectors), retries=int(self.retries),
+            kepler_per_target_budget_s=float(self.per_member_budget_s),
+            kepler_target_timeout_s=float(self.member_timeout_s),
+            kepler_max_quarters=int(self.max_sectors), kepler_retries=int(self.retries))
 
 
 @dataclass
@@ -945,6 +1134,195 @@ def measure_target(sectors, *, period_days: float, t0_btjd: float, duration_days
 
 
 # ---------------------------------------------------------------------------
+# The reduction ensemble: the spread over reductions, and what it does to the
+# error.  These four functions are PURE --- they take member records and return
+# numbers, so the load-bearing behaviour (a disagreeing ensemble inflating the
+# error until a CHANGED verdict becomes UNRESOLVED) is testable without any
+# fetch at all.
+# ---------------------------------------------------------------------------
+def ensemble_member_grid(era: str, params: EnsembleParams | None = None) -> list[dict]:
+    """Every (author, flux column) combination to be measured for ``era``.
+
+    The full cross product, **enumerated rather than chosen**.  Most entries do
+    not exist at the archive --- QLP has never served ``PDCSAP_FLUX``, SPOC has
+    never served ``KSPSAP_FLUX`` --- and those come back
+    ``FLUX_COLUMN_NOT_PRESENT``, which is recorded.  The point is that the grid
+    is written down in one place and the *archive* decides what is in it, not
+    the code's opinion about which reduction is best.
+    """
+    params = params or EnsembleParams()
+    e = str(era).lower()
+    if e not in ERAS:
+        raise ValueError(f"unknown era {era!r}; choose from {ERAS}")
+    return [{"era": e, "author": str(a), "flux_column": str(c)}
+            for a in params.authors_for(e) for c in params.flux_columns_for(e)]
+
+
+def total_depth_error(stat_err_ppm: float, reduction_spread_ppm: float) -> float:
+    """``sqrt(statistical^2 + reduction_spread^2)`` --- the error a verdict may use.
+
+    The bootstrap over transits describes the photon noise and the
+    transit-to-transit scatter.  It says **nothing** about two reductions of the
+    same pixels disagreeing by 20 %, which is what run 35041932130's duplicated
+    sectors actually showed.  A spread that could not be measured contributes
+    nothing (it is not silently treated as zero *confidence*; the era carries
+    ``depth_reduction_spread_status`` saying so).
+    """
+    s = float(stat_err_ppm) if np.isfinite(stat_err_ppm) else float("nan")
+    if not np.isfinite(s):
+        return float("nan")
+    r = float(reduction_spread_ppm) if np.isfinite(reduction_spread_ppm) else 0.0
+    return float(math.sqrt(s * s + r * r))
+
+
+def reduction_spread(members, *, primary_depth_ppm: float = float("nan"),
+                     params: EnsembleParams | None = None) -> dict:
+    """The spread over the reduction ensemble, and what is missing from it.
+
+    The spread is **half the range between the 16th and 84th percentiles** of
+    the measured members' depths (``spread_percentile``), which is the robust
+    analogue of one standard deviation and is not moved by one pathological
+    reduction the way ``max - min`` is.  ``min``, ``max``, the percentiles and
+    the full per-member table are reported beside it, so a reader can see
+    whether the spread is a broad scatter or two clusters.
+
+    **A member that did not come back is counted, not dropped.**  An ensemble of
+    two that was meant to be six has a smaller spread than the truth, so
+    ``n_members_unavailable`` and ``ensemble_unavailable_reasons`` are part of
+    the record and ``ensemble_incomplete`` is True.  Below
+    ``min_members_for_spread`` measured members there is no spread at all: the
+    value is NaN with ``depth_reduction_spread_status = TOO_FEW_MEMBERS``,
+    never 0, because a zero spread would assert that every reduction agreed.
+    """
+    params = params or EnsembleParams()
+    rows = [dict(r) for r in (members or [])]
+    usable = [bool(str(r.get("status")) == STATUS_OK and np.isfinite(_f(r.get("depth_ppm")))
+                   and _f(r.get("depth_ppm")) > 0) for r in rows]
+    meas = [r for r, ok in zip(rows, usable, strict=True) if ok]
+    bad = [r for r, ok in zip(rows, usable, strict=True) if not ok]
+    reasons: dict = {}
+    for r in bad:
+        k = str(r.get("status") or "unknown")
+        reasons[k] = reasons.get(k, 0) + 1
+    out = {
+        "n_members": int(len(rows)),
+        "n_members_measured": int(len(meas)),
+        "n_members_unavailable": int(len(bad)),
+        "ensemble_incomplete": bool(bad),
+        "ensemble_unavailable_reasons": ";".join(f"{k}:{v}" for k, v in sorted(reasons.items())),
+        "ensemble_members": ";".join(
+            f"{r.get('author')}/{r.get('flux_column')}="
+            + (f"{_f(r.get('depth_ppm')):.0f}ppm" if ok else str(r.get("status")))
+            for r, ok in zip(rows, usable, strict=True)),
+        "depth_reduction_spread_ppm": float("nan"),
+        "depth_reduction_spread_fraction": float("nan"),
+        "depth_reduction_spread_status": (SPREAD_NOT_ATTEMPTED if not rows
+                                          else SPREAD_TOO_FEW_MEMBERS),
+        "depth_reduction_p16_ppm": float("nan"), "depth_reduction_p84_ppm": float("nan"),
+        "depth_reduction_min_ppm": float("nan"), "depth_reduction_max_ppm": float("nan"),
+        "depth_reduction_median_ppm": float("nan"),
+        "depth_reduction_max_offset_from_primary_ppm": float("nan"),
+        "spread_percentile": float(params.spread_percentile),
+    }
+    if len(meas) < max(int(params.min_members_for_spread), 2):
+        return out
+    d = np.array([_f(r.get("depth_ppm")) for r in meas], dtype=float)
+    hi = float(params.spread_percentile)
+    lo = 100.0 - hi
+    p_lo, p_hi = (float(v) for v in np.percentile(d, [lo, hi]))
+    spread = 0.5 * (p_hi - p_lo)
+    med = float(np.median(d))
+    out.update({
+        "depth_reduction_spread_ppm": float(spread),
+        "depth_reduction_spread_status": SPREAD_OK,
+        "depth_reduction_p16_ppm": p_lo, "depth_reduction_p84_ppm": p_hi,
+        "depth_reduction_min_ppm": float(np.min(d)), "depth_reduction_max_ppm": float(np.max(d)),
+        "depth_reduction_median_ppm": med,
+    })
+    ref = (float(primary_depth_ppm) if np.isfinite(primary_depth_ppm)
+           and primary_depth_ppm > 0 else med)
+    if ref > 0:
+        out["depth_reduction_spread_fraction"] = float(spread / ref)
+        out["depth_reduction_max_offset_from_primary_ppm"] = float(np.max(np.abs(d - ref)))
+    return out
+
+
+def sap_vs_pdcsap(members, *, params: EnsembleParams | None = None) -> dict:
+    """The background test, answered with a number: ``SAP - PDCSAP``.
+
+    PDC is where the crowding and background corrections are applied, so "the
+    PDC background subtraction inflates the depth" is a specific mundane claim
+    about this object --- a faint star in a crowded aperture with an
+    over-subtracted background gives an INFLATED transit depth.  It deserves a
+    measurement rather than a worry.
+
+    The comparison is made **within a pipeline author**, because SPOC's SAP and
+    TESS-SPOC's PDCSAP differ in the aperture as well as in the correction; the
+    per-author differences are then combined by inverse variance.  A negative
+    ``sap_minus_pdcsap_ppm`` means the corrected photometry is DEEPER than the
+    raw aperture photometry --- ``PDC_DEEPER_THAN_SAP``, the direction the
+    mundane explanation predicts.
+    """
+    params = params or EnsembleParams()
+    rows = [r for r in (members or []) if str(r.get("status")) == STATUS_OK
+            and np.isfinite(_f(r.get("depth_ppm"))) and _f(r.get("depth_ppm")) > 0]
+    by_author: dict = {}
+    for r in rows:
+        by_author.setdefault(str(r.get("author")), {})[str(r.get("flux_column")).upper()] = r
+    pairs = []
+    for author in sorted(by_author):
+        cols = by_author[author]
+        sap, pdc = cols.get("SAP_FLUX"), cols.get("PDCSAP_FLUX")
+        if sap is None or pdc is None:
+            continue
+        ds, dp = _f(sap.get("depth_ppm")), _f(pdc.get("depth_ppm"))
+        es, ep = _f(sap.get("depth_err_ppm")), _f(pdc.get("depth_err_ppm"))
+        err = math.sqrt((es if np.isfinite(es) and es > 0 else 0.0) ** 2
+                        + (ep if np.isfinite(ep) and ep > 0 else 0.0) ** 2)
+        pairs.append({"author": author, "sap_ppm": ds, "pdcsap_ppm": dp,
+                      "diff_ppm": ds - dp, "diff_err_ppm": err if err > 0 else float("nan")})
+    out = {
+        "sap_vs_pdcsap_verdict": BG_UNAVAILABLE,
+        "sap_vs_pdcsap_n_pairs": int(len(pairs)),
+        "sap_vs_pdcsap_authors": ",".join(p["author"] for p in pairs),
+        "sap_minus_pdcsap_ppm": float("nan"), "sap_minus_pdcsap_err_ppm": float("nan"),
+        "sap_minus_pdcsap_z": float("nan"),
+        "sap_minus_pdcsap_fraction": float("nan"),
+        "background_direction": "",
+        "background_n_agree": float(params.background_n_agree),
+        "sap_vs_pdcsap_pairs": pairs,
+    }
+    if not pairs:
+        return out
+    diffs = np.array([p["diff_ppm"] for p in pairs], dtype=float)
+    errs = np.array([p["diff_err_ppm"] for p in pairs], dtype=float)
+    good = np.isfinite(errs) & (errs > 0)
+    if good.all():
+        w = 1.0 / errs**2
+        diff = float(np.sum(w * diffs) / np.sum(w))
+        err = float(1.0 / math.sqrt(np.sum(w)))
+    else:
+        # No usable per-member errors: the scatter over the pairs IS the error,
+        # and a single pair without an error cannot be given a significance.
+        diff = float(np.mean(diffs))
+        err = (float(np.std(diffs, ddof=1) / math.sqrt(diffs.size)) if diffs.size > 1
+               else float("nan"))
+    out["sap_minus_pdcsap_ppm"] = diff
+    out["sap_minus_pdcsap_err_ppm"] = err
+    pdc_mean = float(np.mean([p["pdcsap_ppm"] for p in pairs]))
+    if pdc_mean > 0:
+        out["sap_minus_pdcsap_fraction"] = diff / pdc_mean
+    out["background_direction"] = BG_PDC_DEEPER if diff < 0 else BG_SAP_DEEPER
+    if not (np.isfinite(err) and err > 0):
+        return out                                        # a difference without a significance
+    z = diff / err
+    out["sap_minus_pdcsap_z"] = float(z)
+    out["sap_vs_pdcsap_verdict"] = (BG_DISAGREE if abs(z) >= float(params.background_n_agree)
+                                    else BG_AGREE)
+    return out
+
+
+# ---------------------------------------------------------------------------
 # The three-way comparison
 # ---------------------------------------------------------------------------
 def _z_ln(d1: float, e1: float, d2: float, e2: float, sigma_sys: float) -> tuple[float, float]:
@@ -964,7 +1342,8 @@ def compare_three_depths(depth_measured_ppm: float, err_measured_ppm: float,
                          depth_toi_ppm: float, err_toi_ppm: float, *,
                          ld_band_ratio: float = 1.0,
                          params: CompareParams | None = None,
-                         unmeasured_reason: str | None = None) -> dict:
+                         unmeasured_reason: str | None = None,
+                         measured_reduction_spread_ppm: float = float("nan")) -> dict:
     """The decisive comparison: measured TESS depth against BOTH catalogue depths.
 
     The Kepler depth is multiplied by ``ld_band_ratio`` (=
@@ -972,11 +1351,20 @@ def compare_three_depths(depth_measured_ppm: float, err_measured_ppm: float,
     references sit in the TESS band before anything is compared.  Returns the
     verdict, both ``z``s, and ``z_toi_vs_kepler`` --- the separation between the
     two references, without which "agrees with both" cannot be read.
+
+    ``measured_reduction_spread_ppm`` is the reduction-ensemble systematic
+    (:func:`reduction_spread`).  When it is available it is added in quadrature
+    to the statistical error and **the comparison uses the total**, so this
+    diagnostic cannot be more confident about the TESS era than the ensemble
+    allows either.  Both errors stay on the record.
     """
     params = params or CompareParams()
+    err_total = total_depth_error(err_measured_ppm, measured_reduction_spread_ppm)
     out: dict = {"verdict": MATCH_UNMEASURED, "unmeasured_reason": unmeasured_reason or "",
                  "depth_measured_ppm": float(depth_measured_ppm),
                  "depth_measured_err_ppm": float(err_measured_ppm),
+                 "depth_measured_total_err_ppm": float(err_total),
+                 "depth_measured_reduction_spread_ppm": float(measured_reduction_spread_ppm),
                  "depth_kepler_ppm": float(depth_kepler_ppm),
                  "depth_kepler_in_tess_band_ppm": float("nan"),
                  "depth_toi_ppm": float(depth_toi_ppm),
@@ -1009,9 +1397,9 @@ def compare_three_depths(depth_measured_ppm: float, err_measured_ppm: float,
         out["verdict"] = MATCH_UNMEASURED
         out["unmeasured_reason"] = UNMEASURED_NO_REFERENCE
         return out
-    zk, sk = _z_ln(float(depth_measured_ppm), float(err_measured_ppm), dk, ek,
+    zk, sk = _z_ln(float(depth_measured_ppm), float(err_total), dk, ek,
                    params.sigma_sys_ln)
-    zt, st = _z_ln(float(depth_measured_ppm), float(err_measured_ppm), float(depth_toi_ppm),
+    zt, st = _z_ln(float(depth_measured_ppm), float(err_total), float(depth_toi_ppm),
                    float(err_toi_ppm), params.sigma_sys_ln)
     out.update({"z_vs_kepler": zk, "sigma_vs_kepler": sk, "z_vs_toi": zt, "sigma_vs_toi": st})
     ak = bool(np.isfinite(zk) and abs(zk) < params.n_agree)
@@ -1034,7 +1422,9 @@ def compare_measured_eras(depth_kepler_measured_ppm: float, err_kepler_measured_
                           ln_ratio_under_test: float = float("nan"),
                           params: CompareParams | None = None,
                           kepler_unmeasured_reason: str | None = None,
-                          tess_unmeasured_reason: str | None = None) -> dict:
+                          tess_unmeasured_reason: str | None = None,
+                          kepler_reduction_spread_ppm: float = float("nan"),
+                          tess_reduction_spread_ppm: float = float("nan")) -> dict:
     """**The primary comparison**: OUR Kepler-era depth against OUR TESS-era depth.
 
     Both numbers come out of :func:`measure_target` --- the same fold, the same
@@ -1052,11 +1442,18 @@ def compare_measured_eras(depth_kepler_measured_ppm: float, err_kepler_measured_
     The four branches, and the one that is easy to get wrong:
 
     * ``MEASURED_DEPTH_CHANGED`` --- ``|z| >= n_agree``.
-    * ``MEASURED_DEPTH_UNCHANGED`` --- ``|z| < n_agree`` **and** the comparison
-      had the power to have detected the change under test, i.e. the smallest
-      log ratio it could have called changed (``n_agree * sigma``) is no larger
-      than ``ln_ratio_under_test`` (the catalogue TOI-vs-KOI separation, or
-      ``params.min_detectable_ln_ratio`` when that is unavailable).
+    * ``MEASURED_DEPTH_UNCHANGED`` --- ``|z| < n_agree`` **and the change under
+      test is excluded**: the observed log ratio sits at least ``n_agree``
+      sigma BELOW ``ln_ratio_under_test`` (the catalogue TOI-vs-KOI separation,
+      or ``params.min_detectable_ln_ratio`` when that is unavailable), i.e.
+      ``claim_excluded_sigma = (target - |ln ratio observed|) / sigma >=
+      n_agree``.  It is not enough for ``n_agree * sigma`` to be smaller than
+      the claim: a comparison that measures a ratio of 2.16 and merely cannot
+      call it significant has not refuted anything, and "UNCHANGED" says the
+      candidate DIES.  The distinction is dormant while the errors are small
+      (the observed ratio is then either significant or near zero) and becomes
+      load-bearing the moment a reduction systematic is folded in --- which is
+      exactly when an inflated error bar could otherwise buy a refutation.
     * ``MEASURED_DEPTH_UNRESOLVED`` --- ``|z| < n_agree`` but the comparison
       could not have seen the claimed change anyway.  **An agreement without
       power is not a refutation**, and reporting it as one would be the same
@@ -1064,27 +1461,53 @@ def compare_measured_eras(depth_kepler_measured_ppm: float, err_kepler_measured_
     * ``MEASURED_DEPTH_ERA_UNMEASURED`` --- one or both eras produced no depth.
       The reason names the era, and an unmeasured era never agrees with
       anything.
+
+    **The verdict uses the TOTAL error.**  Each era's statistical error (the
+    bootstrap over transits) is added in quadrature to that era's
+    reduction-ensemble spread (:func:`reduction_spread`) before any ``z`` is
+    formed, because two reductions of the same pixels disagreeing by 20 % is a
+    real uncertainty on the depth and the bootstrap does not know about it.
+    ``z_measured_eras_stat_only`` keeps the bootstrap-only number beside it, so
+    the effect of the systematic is visible rather than merely applied.  Note
+    the consequence, which is intended: a large ensemble spread not only pulls
+    ``|z|`` below ``n_agree`` but also raises ``detectable_ln_ratio``, so a
+    comparison drowned in reduction systematics returns
+    ``MEASURED_DEPTH_UNRESOLVED`` --- an honest "this measurement cannot tell"
+    --- and never ``MEASURED_DEPTH_UNCHANGED``.
     """
     params = params or CompareParams()
     fr = float(ld_band_ratio) if (params.apply_band_ratio and np.isfinite(ld_band_ratio)
                                   and ld_band_ratio > 0) else 1.0
     dk = float(depth_kepler_measured_ppm) * fr
-    ek = (float(err_kepler_measured_ppm) * fr if np.isfinite(err_kepler_measured_ppm)
-          else float("nan"))
+    ek_stat = (float(err_kepler_measured_ppm) * fr if np.isfinite(err_kepler_measured_ppm)
+               else float("nan"))
+    ek_tot = total_depth_error(err_kepler_measured_ppm, kepler_reduction_spread_ppm)
+    ek = ek_tot * fr if np.isfinite(ek_tot) else float("nan")
+    et_tot = total_depth_error(err_tess_measured_ppm, tess_reduction_spread_ppm)
+    applied = bool(np.isfinite(kepler_reduction_spread_ppm)
+                   or np.isfinite(tess_reduction_spread_ppm))
     out: dict = {
         "like_for_like_verdict": LL_ERA_UNMEASURED,
         "like_for_like_unmeasured_reason": "",
         "depth_kepler_measured_ppm": float(depth_kepler_measured_ppm),
         "depth_kepler_measured_err_ppm": float(err_kepler_measured_ppm),
+        "depth_kepler_measured_total_err_ppm": float(ek_tot),
         "depth_kepler_measured_in_tess_band_ppm": dk,
         "depth_tess_measured_ppm": float(depth_tess_measured_ppm),
         "depth_tess_measured_err_ppm": float(err_tess_measured_ppm),
+        "depth_tess_measured_total_err_ppm": float(et_tot),
+        "kepler_reduction_spread_ppm": float(kepler_reduction_spread_ppm),
+        "tess_reduction_spread_ppm": float(tess_reduction_spread_ppm),
+        "reduction_systematic_applied": applied,
         "like_for_like_ld_band_ratio": float(ld_band_ratio),
         "z_measured_eras": float("nan"), "sigma_measured_eras": float("nan"),
+        "z_measured_eras_stat_only": float("nan"),
+        "sigma_measured_eras_stat_only": float("nan"),
         "measured_depth_ratio": float("nan"),
         "measured_eras_agree": False,
         "ln_ratio_under_test": float(ln_ratio_under_test),
         "detectable_ln_ratio": float("nan"),
+        "claim_excluded_sigma": float("nan"),
         "like_for_like_n_agree": float(params.n_agree),
     }
     missing = []
@@ -1097,9 +1520,11 @@ def compare_measured_eras(depth_kepler_measured_ppm: float, err_kepler_measured_
     if missing:
         out["like_for_like_unmeasured_reason"] = ";".join(missing)
         return out
-    z, sig = _z_ln(float(depth_tess_measured_ppm), float(err_tess_measured_ppm), dk, ek,
-                   params.sigma_sys_ln)
+    z, sig = _z_ln(float(depth_tess_measured_ppm), float(et_tot), dk, ek, params.sigma_sys_ln)
+    z0, sig0 = _z_ln(float(depth_tess_measured_ppm), float(err_tess_measured_ppm), dk, ek_stat,
+                     params.sigma_sys_ln)
     out["z_measured_eras"], out["sigma_measured_eras"] = z, sig
+    out["z_measured_eras_stat_only"], out["sigma_measured_eras_stat_only"] = z0, sig0
     if dk > 0:
         out["measured_depth_ratio"] = float(depth_tess_measured_ppm) / dk
     if not np.isfinite(z):
@@ -1114,7 +1539,14 @@ def compare_measured_eras(depth_kepler_measured_ppm: float, err_kepler_measured_
         out["like_for_like_verdict"] = LL_CHANGED
         return out
     out["measured_eras_agree"] = True
-    out["like_for_like_verdict"] = LL_UNCHANGED if detectable <= target else LL_UNRESOLVED
+    # How far BELOW the claimed change the observation sits, in sigma.  Note
+    # |z| * sigma is |ln ratio observed|, so this is target/sigma - |z|.  It is
+    # at least as strict as `detectable <= target`: agreeing with zero is not
+    # the same as excluding the claim, and only the second one kills a candidate.
+    sep = (abs(float(target)) - abs(z) * float(sig)) / float(sig) if sig > 0 else float("nan")
+    out["claim_excluded_sigma"] = sep
+    out["like_for_like_verdict"] = (LL_UNCHANGED if np.isfinite(sep)
+                                    and sep >= float(params.n_agree) else LL_UNRESOLVED)
     return out
 
 
@@ -1516,13 +1948,40 @@ def merge_kepler_segments(segments) -> tuple[list[dict], list[dict]]:
     return merged, prov
 
 
+def _select_flux_column(lc, flux_columns):
+    """Switch a ``lightkurve`` light curve to a REQUESTED flux column, or fail.
+
+    Returns ``(lc, column_name)``, or ``(None, "")`` when the product does not
+    carry the requested column.  Failing is the point: an ensemble member that
+    asked for ``SAP_FLUX`` and silently got ``PDCSAP_FLUX`` would put the same
+    reduction into the ensemble twice and shrink the spread, which is the exact
+    overconfidence the ensemble exists to remove.  ``flux_columns=None`` leaves
+    the product's own default alone (the primary measurement's behaviour).
+    """
+    if not flux_columns:
+        meta = dict(getattr(lc, "meta", {}) or {})
+        return lc, str(meta.get("FLUX_ORIGIN") or "PDCSAP_FLUX").upper()
+    for col in flux_columns:
+        name = str(col)
+        try:
+            if name.lower() not in {str(c).lower() for c in getattr(lc, "columns", [])}:
+                continue
+            return lc.select_flux(name.lower()), name.upper()
+        except Exception:                                 # noqa: BLE001
+            continue
+    return None, ""
+
+
 def lightkurve_lc_fn(tic_id, *, authors=DEFAULT_AUTHORS, max_sectors: int = 60,
-                     download_dir: str | None = None, **_kw) -> list[dict]:
+                     download_dir: str | None = None, flux_columns=None,
+                     **_kw) -> list[dict]:
     """Light curves for one TIC through ``lightkurve`` (runner only).
 
     The time axis is taken as ``Time.jd - 2457000`` rather than trusting the
     object's format string, and the author, sector and exposure time of every
     sector are carried through so the record says what was measured on what.
+    ``flux_columns``, when given (the reduction ensemble gives exactly one),
+    selects that column and **drops the product when it does not have it**.
     """
     import lightkurve as lk  # noqa: PLC0415
 
@@ -1545,6 +2004,9 @@ def lightkurve_lc_fn(tic_id, *, authors=DEFAULT_AUTHORS, max_sectors: int = 60,
             continue
         if lc is None:
             continue
+        lc, fcol = _select_flux_column(lc, flux_columns)
+        if lc is None:
+            continue                       # this product has no such column: absent, not failed
         try:
             lc = lc.remove_nans()
         except Exception:                                 # noqa: BLE001
@@ -1563,14 +2025,13 @@ def lightkurve_lc_fn(tic_id, *, authors=DEFAULT_AUTHORS, max_sectors: int = 60,
             exptime_s = float(np.median(np.diff(np.sort(t)))) * 86400.0
         out.append({"sector": int(meta.get("SECTOR")) if meta.get("SECTOR") else None,
                     "author": str(meta.get("AUTHOR") or meta.get("ORIGIN") or "unknown"),
-                    "exptime_s": exptime_s, "flux_column": str(meta.get("FLUX_ORIGIN")
-                                                               or "PDCSAP_FLUX"),
+                    "exptime_s": exptime_s, "flux_column": fcol,
                     "time": t, "flux": f, "flux_err": fe, "n_points": int(t.size)})
     return out
 
 
 def mast_fits_lc_fn(tic_id, *, authors=DEFAULT_AUTHORS, max_sectors: int = 60,
-                    download_dir: str | None = None, **_kw) -> list[dict]:
+                    download_dir: str | None = None, flux_columns=None, **_kw) -> list[dict]:
     """Light curves for one TIC through ``astroquery.mast`` + FITS (runner only).
 
     The fallback when ``lightkurve`` is not installed: query the TESS
@@ -1608,7 +2069,7 @@ def mast_fits_lc_fn(tic_id, *, authors=DEFAULT_AUTHORS, max_sectors: int = 60,
                                                             cache=False)
             if str(status).upper() != "COMPLETE" or not local.exists():
                 continue
-            rec = read_tess_lc_fits(local)
+            rec = read_tess_lc_fits(local, flux_columns=tuple(flux_columns or FLUX_COLUMNS))
         except Exception:                                 # noqa: BLE001
             continue
         if rec is None:
@@ -1634,7 +2095,8 @@ def default_lc_fn(tic_id, **kw) -> list[dict]:
 # The KEPLER era, reached the same two ways
 # ---------------------------------------------------------------------------
 def lightkurve_kepler_lc_fn(kepid, *, authors=KEPLER_AUTHORS, max_sectors: int = 60,
-                            download_dir: str | None = None, **_kw) -> list[dict]:
+                            download_dir: str | None = None, flux_columns=None,
+                            **_kw) -> list[dict]:
     """Kepler light curves for one KIC through ``lightkurve`` (runner only).
 
     ``search_lightcurve("KIC <kepid>", mission="Kepler")``, both cadences.  The
@@ -1666,6 +2128,9 @@ def lightkurve_kepler_lc_fn(kepid, *, authors=KEPLER_AUTHORS, max_sectors: int =
             continue
         if lc is None:
             continue
+        lc, fcol = _select_flux_column(lc, flux_columns)
+        if lc is None:
+            continue                       # this product has no such column: absent, not failed
         try:
             lc = lc.remove_nans()
         except Exception:                                 # noqa: BLE001
@@ -1688,8 +2153,7 @@ def lightkurve_kepler_lc_fn(kepid, *, authors=KEPLER_AUTHORS, max_sectors: int =
                     "era": ERA_KEPLER,
                     "author": str(meta.get("AUTHOR") or meta.get("MISSION") or "Kepler"),
                     "exptime_s": exptime_s, "cadence": kepler_cadence_label(exptime_s),
-                    "obsmode": str(meta.get("OBSMODE") or ""),
-                    "flux_column": str(meta.get("FLUX_ORIGIN") or "PDCSAP_FLUX"),
+                    "obsmode": str(meta.get("OBSMODE") or ""), "flux_column": fcol,
                     "time": t, "flux": f, "flux_err": fe, "n_points": int(t.size)})
     return out
 
@@ -1704,7 +2168,8 @@ KEPLER_TARGET_NAME_FORMS: tuple[str, ...] = ("kplr{kepid:09d}", "{kepid:d}", "KI
 
 
 def mast_kepler_fits_lc_fn(kepid, *, authors=KEPLER_AUTHORS, max_sectors: int = 60,
-                           download_dir: str | None = None, **_kw) -> list[dict]:
+                           download_dir: str | None = None, flux_columns=None,
+                           **_kw) -> list[dict]:
     """Kepler light curves for one KIC through ``astroquery.mast`` + FITS.
 
     The fallback when ``lightkurve`` is not installed: query the Kepler
@@ -1754,7 +2219,8 @@ def mast_kepler_fits_lc_fn(kepid, *, authors=KEPLER_AUTHORS, max_sectors: int = 
                                                             cache=False)
             if str(status).upper() != "COMPLETE" or not local.exists():
                 continue
-            rec = read_kepler_lc_fits(local)
+            rec = read_kepler_lc_fits(
+                local, flux_columns=tuple(flux_columns or KEPLER_FLUX_COLUMNS))
         except Exception:                                 # noqa: BLE001
             continue
         if rec is None:
@@ -1774,15 +2240,20 @@ def default_kepler_lc_fn(kepid, **kw) -> list[dict]:
 
 
 def _fetch_lcs(target_id, *, lc_fn, default_fn, params: MastParams, log: AcquisitionLog,
-               deadline: Deadline | None, label: str, query: str
-               ) -> tuple[list[dict], str, str]:
+               deadline: Deadline | None, label: str, query: str,
+               flux_columns=None) -> tuple[list[dict], str, str]:
     """The bounded, recorded fetch loop shared by both eras.
 
     Returns ``(segments, status, route)``; ``status`` is ``OK`` /
     ``QUERY_RETURNED_ZERO_ROWS`` / ``QUERY_FAILED``, and a failure is **never**
     turned into an empty-but-successful answer.  Retries stop as soon as the
     wall-clock budget is gone.  One loop, so the Kepler era cannot drift away
-    from the TESS era's error handling.
+    from the TESS era's error handling -- and so the reduction ensemble's member
+    fetches go through exactly the same error accounting as the primary one.
+
+    ``flux_columns`` is passed to the fetch function only when it is given, so
+    the primary measurement's call is byte-for-byte what it always was; an
+    ensemble member asks for ONE column and nothing else.
     """
     if deadline is not None and deadline.expired():
         log.record(label, query, error="budget_exhausted_before_request")
@@ -1800,9 +2271,12 @@ def _fetch_lcs(target_id, *, lc_fn, default_fn, params: MastParams, log: Acquisi
             # A backoff, but never one that outlives the budget it sits inside.
             _time.sleep(min(float(params.retry_pause_s) * attempt, own.remaining(),
                             deadline.remaining() if deadline is not None else float("inf")))
+        kw = {"authors": tuple(params.authors), "max_sectors": int(params.max_sectors),
+              "download_dir": params.download_dir}
+        if flux_columns is not None:
+            kw["flux_columns"] = tuple(flux_columns)
         try:
-            secs = fn(target_id, authors=tuple(params.authors),
-                      max_sectors=int(params.max_sectors), download_dir=params.download_dir)
+            secs = fn(target_id, **kw)
         except Exception as exc:                          # noqa: BLE001
             last = repr(exc)[:400]
             continue
@@ -1820,18 +2294,19 @@ def _fetch_lcs(target_id, *, lc_fn, default_fn, params: MastParams, log: Acquisi
 
 def fetch_lightcurves(tic_id, *, lc_fn=None, params: MastParams | None = None,
                       log: AcquisitionLog | None = None, deadline: Deadline | None = None,
-                      key: str = "") -> tuple[list[dict], str, str]:
+                      key: str = "", flux_columns=None) -> tuple[list[dict], str, str]:
     """One target's TESS light curves, bounded and recorded."""
     params = params or MastParams()
     log = log or AcquisitionLog()
     return _fetch_lcs(tic_id, lc_fn=lc_fn, default_fn=default_lc_fn, params=params, log=log,
                       deadline=deadline, label=f"lightcurves_{key or tic_id}",
-                      query=f"TIC {tic_id}")
+                      query=f"TIC {tic_id}", flux_columns=flux_columns)
 
 
 def fetch_kepler_lightcurves(kepid, *, lc_fn=None, params: MastParams | None = None,
                              log: AcquisitionLog | None = None, deadline: Deadline | None = None,
-                             key: str = "") -> tuple[list[dict], str, str, list[dict]]:
+                             key: str = "", flux_columns=None
+                             ) -> tuple[list[dict], str, str, list[dict]]:
     """One target's KEPLER light curves, through the same bounded loop.
 
     Returns ``(quarters, status, route, merge_provenance)``.  The archive
@@ -1847,7 +2322,7 @@ def fetch_kepler_lightcurves(kepid, *, lc_fn=None, params: MastParams | None = N
     segs, status, route = _fetch_lcs(kepid, lc_fn=lc_fn, default_fn=default_kepler_lc_fn,
                                      params=params.kepler_view(), log=log, deadline=deadline,
                                      label=f"kepler_lightcurves_{key or kepid}",
-                                     query=f"KIC {kepid}")
+                                     query=f"KIC {kepid}", flux_columns=flux_columns)
     if status != STATUS_OK:
         return [], status, route, []
     merged, prov = merge_kepler_segments(segs)
@@ -2058,21 +2533,193 @@ def _measure_era(segments, *, era: str, period_days: float, t0_bkjd: float,
     return m, eph, reason
 
 
+#: The per-member columns written to ``reductions.csv``.
+ENSEMBLE_MEMBER_COLUMNS: tuple[str, ...] = (
+    "kepoi_name", "tic_id", "era", "author", "flux_column", "status", "lc_status", "lc_route",
+    "n_segments", "segment_list", "authors_returned", "exptimes_s", "n_transits",
+    "depth_ppm", "depth_err_ppm", "depth_err_method", "oot_scatter_ppm", "smeared",
+    "n_sectors_dropped_duplicate", "is_primary_reduction",
+)
+
+
+def measure_reduction_ensemble(target_id, *, era: str, period_days: float, t0_bkjd: float,
+                               duration_hours: float, koi_row: dict | None = None,
+                               lc_fn=None, mast: MastParams | None = None,
+                               fit: FitParams | None = None,
+                               ensemble: EnsembleParams | None = None,
+                               primary_depth_ppm: float = float("nan"),
+                               primary_author: str = "", primary_flux_column: str = "",
+                               log: AcquisitionLog | None = None,
+                               deadline: Deadline | None = None,
+                               enabled: bool | None = None, key: str = ""
+                               ) -> tuple[list[dict], dict, pd.DataFrame]:
+    """Measure ONE era's depth under EVERY available reduction of the same data.
+
+    This is the systematic estimate, and it is worth being explicit about what
+    it is not: **it does not touch the primary depth.**  Each member is fetched,
+    deduplicated and fitted on its own --- ``SPOC``'s ``PDCSAP_FLUX`` is one
+    measurement, ``TESS-SPOC``'s ``PDCSAP_FLUX`` of the same pixels is another
+    --- and what leaves this function is the *spread* over those numbers.  The
+    depth the stage reports is still the deduplicated one from
+    :func:`measure_one`; :func:`dedupe_sectors` still guarantees that one sector
+    enters the depth once.  Stacking the members instead would count every
+    transit as many times as the archive serves it, which is exactly the error
+    run 35041932130 made.
+
+    Returns ``(member_records, summary, member_sectors)``.  ``member_sectors``
+    is each member's PER-SEGMENT breakdown, which goes into ``sectors.csv``
+    beside the primary rows with ``scope = "ensemble"``: it is the same table
+    that made the problem visible in the first place (``sectors.csv`` at commit
+    ``050402a``, where sector 41 read 29,810 ppm under SPOC and 33,078 ppm
+    under TESS-SPOC), and it is what distinguishes a uniform pipeline offset
+    from sector-specific noise.
+
+    Every grid point produces a record, including the ones that produced no
+    depth, and each keeps its own status:
+
+    ``QUERY_FAILED``                the archive errored for that member
+    ``QUERY_RETURNED_ZERO_ROWS``    it answered with nothing
+    ``FLUX_COLUMN_NOT_PRESENT``     the product does not carry that column
+    ``NO_USABLE_TRANSIT``           it was fetched but no transit could be fitted
+    ``BUDGET_EXHAUSTED``            the ensemble's wall clock ran out first
+
+    all of which are different facts and none of which is allowed to vanish: an
+    ensemble that quietly lost four of its six members would report a spread
+    that is too small, which is the same overconfidence one level down.
+    """
+    mast = mast or MastParams()
+    fit = fit or FitParams()
+    ensemble = ensemble or EnsembleParams()
+    log = log or AcquisitionLog()
+    e = str(era).lower()
+    run = bool(ensemble.enabled if enabled is None else enabled)
+    if not run:
+        # Nothing was ASKED of the archive.  Not a failure, and the spread comes
+        # back NaN with ENSEMBLE_NOT_ATTEMPTED rather than 0.
+        return [], {**reduction_spread([], params=ensemble),
+                    **sap_vs_pdcsap([], params=ensemble)}, pd.DataFrame()
+    members: list[dict] = []
+    sec_frames: list[pd.DataFrame] = []
+    for g in ensemble_member_grid(e, ensemble):
+        author, col = str(g["author"]), str(g["flux_column"])
+        rec = {"era": e, "author": author, "flux_column": col, "status": "",
+               "lc_status": "", "lc_route": "", "n_segments": 0, "segment_list": "",
+               "authors_returned": "", "exptimes_s": "", "n_transits": 0,
+               "depth_ppm": float("nan"), "depth_err_ppm": float("nan"),
+               "depth_err_method": "", "oot_scatter_ppm": float("nan"), "smeared": False,
+               "n_sectors_dropped_duplicate": 0,
+               "is_primary_reduction": bool(str(primary_author) == author
+                                            and str(primary_flux_column).upper() == col.upper())}
+        if deadline is not None and deadline.expired():
+            rec["status"] = UNMEASURED_BUDGET
+            members.append(rec)
+            continue
+        mp = ensemble.member_view(mast, author=author)
+        mkey = f"ens_{e}_{author}_{col}_{key or target_id}"
+        if e == ERA_KEPLER:
+            segs, status, route, _prov = fetch_kepler_lightcurves(
+                target_id, lc_fn=lc_fn, params=mp, log=log, deadline=deadline, key=mkey,
+                flux_columns=(col,))
+        else:
+            segs, status, route = fetch_lightcurves(
+                target_id, lc_fn=lc_fn, params=mp, log=log, deadline=deadline, key=mkey,
+                flux_columns=(col,))
+        rec["lc_status"], rec["lc_route"] = status, route
+        if status != STATUS_OK:
+            rec["status"] = (UNMEASURED_BUDGET if deadline is not None and deadline.expired()
+                             and status == STATUS_FAILED else status)
+            members.append(rec)
+            continue
+        # The product must REALLY carry the column that was asked for.  A member
+        # that fell back to another column would be a duplicate of a member
+        # already in the ensemble and would shrink the spread.
+        kept = [s for s in segs if str(s.get("flux_column") or "").upper() == col.upper()]
+        rec["authors_returned"] = ",".join(sorted({str(s.get("author")) for s in segs
+                                                   if s.get("author")}))
+        if not kept:
+            rec["status"] = ENSEMBLE_NO_FLUX_COLUMN
+            members.append(rec)
+            continue
+        m, _eph, reason = _measure_era(kept, era=e, period_days=period_days, t0_bkjd=t0_bkjd,
+                                       duration_hours=duration_hours, koi_row=koi_row, fit=fit)
+        rec.update({"n_segments": int(m["n_sectors"]), "segment_list": m["sector_list"],
+                    "exptimes_s": m["exptimes_s"], "n_transits": int(m["n_transits"]),
+                    "depth_ppm": float(m["depth_ppm"]),
+                    "depth_err_ppm": float(m["depth_err_ppm"]),
+                    "depth_err_method": str(m["depth_err_method"]),
+                    "oot_scatter_ppm": float(m["oot_scatter_ppm"]),
+                    "smeared": bool(m["smeared"]),
+                    "n_sectors_dropped_duplicate": int(m["n_sectors_dropped_duplicate"]),
+                    "status": reason or STATUS_OK})
+        members.append(rec)
+        ms = m["sectors"].copy()
+        if len(ms):
+            ms.insert(0, "era", e)
+            ms.insert(1, "scope", "ensemble")
+            ms.insert(2, "reduction_author", author)
+            ms.insert(3, "reduction_flux_column", col)
+            sec_frames.append(ms)
+    summary = {**reduction_spread(members, primary_depth_ppm=primary_depth_ppm,
+                                  params=ensemble),
+               **sap_vs_pdcsap(members, params=ensemble)}
+    secs = pd.concat(sec_frames, ignore_index=True) if sec_frames else pd.DataFrame()
+    return members, summary, secs
+
+
+#: The reduction-ensemble fields carried into the per-target record for an era.
+#: ``sap_vs_pdcsap_pairs`` is a list and lives in ``summary.json`` instead of a
+#: CSV cell.
+_ENSEMBLE_RECORD_DROP: frozenset = frozenset({"sap_vs_pdcsap_pairs"})
+
+
+def _ensemble_fields(summary: dict, prefix: str = "") -> dict:
+    """An ensemble summary flattened into ``prefix``-named record columns."""
+    return {f"{prefix}{k}": v for k, v in (summary or {}).items()
+            if k not in _ENSEMBLE_RECORD_DROP}
+
+
+def _primary_reduction(m: dict) -> tuple[str, str]:
+    """``(author, flux_column)`` of the reduction the PRIMARY depth came from.
+
+    Recorded so the ensemble table can mark which of its members is the one the
+    stage actually reports (``is_primary_reduction``) --- which is how a reader
+    checks that the ensemble set the error and did not move the depth.
+    """
+    sec = m.get("sectors")
+    author = str(m.get("authors") or "").split(",")[0]
+    col = ""
+    if sec is not None and len(sec) and "flux_column" in sec:
+        col = str(sec["flux_column"].iloc[0] or "")
+    return author, col
+
+
 def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
-                lc_fn=None, kepler_lc_fn=None, mast: MastParams, fit: FitParams,
-                compare: CompareParams, ld_table: dict | None = None,
+                lc_fn=None, kepler_lc_fn=None, ensemble_lc_fn=None,
+                kepler_ensemble_lc_fn=None, mast: MastParams, fit: FitParams,
+                compare: CompareParams, ensemble: EnsembleParams | None = None,
+                ld_table: dict | None = None,
                 log: AcquisitionLog | None = None, deadline: Deadline | None = None,
-                kepler_deadline: Deadline | None = None
-                ) -> tuple[dict, pd.DataFrame, pd.DataFrame]:
+                kepler_deadline: Deadline | None = None,
+                ensemble_deadline: Deadline | None = None,
+                kepler_ensemble_deadline: Deadline | None = None
+                ) -> tuple[dict, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Everything stage 2 has to say about one target, in BOTH eras.
 
-    Returns ``(measurement, sectors_df, fold_df)``; the sector and fold frames
-    carry an ``era`` column and hold the Kepler and TESS rows together.  An era
-    whose light curves could not be fetched comes back with its own
-    ``QUERY_FAILED`` / ``QUERY_RETURNED_ZERO_ROWS`` and is **never** reported as
-    agreeing with the other one.
+    Returns ``(measurement, sectors_df, fold_df, reductions_df)``; the sector,
+    fold and reduction frames carry an ``era`` column and hold the Kepler and
+    TESS rows together.  An era whose light curves could not be fetched comes
+    back with its own ``QUERY_FAILED`` / ``QUERY_RETURNED_ZERO_ROWS`` and is
+    **never** reported as agreeing with the other one.
+
+    The depth each era reports is the **deduplicated** one --- one sector, one
+    reduction, counted once.  The reduction ensemble
+    (:func:`measure_reduction_ensemble`) is run separately on the same era and
+    sets that depth's **error**, never its value: its spread is added in
+    quadrature to the bootstrap and the like-for-like verdict is formed from the
+    total.
     """
     log = log or AcquisitionLog()
+    ensemble = ensemble or EnsembleParams()
     key = str(entry.get("kepoi_name") or entry.get("toi") or entry.get("tic_id"))
     rec: dict = {"kepoi_name": entry.get("kepoi_name"), "kepler_name": entry.get("kepler_name"),
                  "kepid": entry.get("kepid"), "tic_id": entry.get("tic_id"),
@@ -2092,8 +2739,19 @@ def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
                  "kepler_ephemeris_sigma_minutes": float("nan"),
                  "kepler_depth_measured_err_method": "", "kepler_flags": "",
                  "tess_era_unmeasured_reason": "", "kepler_era_unmeasured_reason": ""}
+    # Every ensemble column exists on every row, measured or not, so a run in
+    # which the ensemble never fired still says so in the CSV rather than
+    # dropping the columns and leaving a reader to guess.
+    rec.update(_ensemble_fields({**reduction_spread([], params=ensemble),
+                                 **sap_vs_pdcsap([], params=ensemble)}))
+    rec.update(_ensemble_fields({**reduction_spread([], params=ensemble),
+                                 **sap_vs_pdcsap([], params=ensemble)}, "kepler_"))
     empty_sec = pd.DataFrame()
     empty_fold = pd.DataFrame(columns=["era", "dt_hours", "flux", "flux_err", "n"])
+    empty_red = pd.DataFrame(columns=list(ENSEMBLE_MEMBER_COLUMNS))
+    red_rows: list[dict] = []
+    ens_t: dict = {}
+    ens_k: dict = {}
 
     depth_k = _f((koi_row or {}).get("koi_depth"))
     err_k = sym_err(_f((koi_row or {}).get("koi_depth_err1")),
@@ -2122,7 +2780,7 @@ def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
     rec["catalogue_ln_ratio_under_test"] = ln_under_test
 
     def _unmeasured(reason: str, *, kepler_reason: str) -> tuple[dict, pd.DataFrame,
-                                                                 pd.DataFrame]:
+                                                                 pd.DataFrame, pd.DataFrame]:
         rec.update(compare_three_depths(float("nan"), float("nan"), depth_k, err_k, depth_t,
                                         err_t, ld_band_ratio=fr, params=compare,
                                         unmeasured_reason=reason))
@@ -2134,7 +2792,7 @@ def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
                                                params=compare, unchecked_reason=kepler_reason))
         rec["tess_era_unmeasured_reason"] = reason
         rec["kepler_era_unmeasured_reason"] = kepler_reason
-        return rec, empty_sec, empty_fold
+        return rec, empty_sec, empty_fold, empty_red
 
     if not (np.isfinite(period) and period > 0 and np.isfinite(t0_bkjd)
             and np.isfinite(dur_h) and dur_h > 0):
@@ -2174,11 +2832,31 @@ def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
         sec_t = m_t["sectors"].copy()
         if len(sec_t):
             sec_t.insert(0, "era", ERA_TESS)
+            # `scope` separates the rows the DEPTH came from (the deduplicated
+            # primary reduction) from the ensemble's rows, which exist only to
+            # size the error.  Without it a reader could mistake the ensemble's
+            # duplicated sectors for extra data.
+            sec_t.insert(1, "scope", "primary")
             sec_frames.append(sec_t)
         if len(m_t["fold"]):
             ft = m_t["fold"].copy()
             ft.insert(0, "era", ERA_TESS)
             fold_frames.append(ft)
+        # --- the TESS reduction ensemble.  The primary depth above is already
+        # fixed; what follows only sets its error.
+        if tess_reason is None:
+            p_author, p_col = _primary_reduction(m_t)
+            t_members, ens_t, t_secs = measure_reduction_ensemble(
+                entry.get("tic_id"), era=ERA_TESS, period_days=period, t0_bkjd=t0_bkjd,
+                duration_hours=dur_h, koi_row=koi_row, lc_fn=ensemble_lc_fn, mast=mast,
+                fit=fit, ensemble=ensemble, primary_depth_ppm=m_t["depth_ppm"],
+                primary_author=p_author, primary_flux_column=p_col,
+                log=log, deadline=ensemble_deadline, key=key,
+                enabled=(True if ensemble_lc_fn is not None else None))
+            red_rows.extend(t_members)
+            if len(t_secs):
+                sec_frames.append(t_secs)
+            rec.update(_ensemble_fields(ens_t))
 
     # ---------------- the KEPLER era, SAME fitter --------------------------
     kepler_reason: str | None = None
@@ -2230,11 +2908,27 @@ def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
                 sec_k = m_k["sectors"].copy()
                 if len(sec_k):
                     sec_k.insert(0, "era", ERA_KEPLER)
+                    sec_k.insert(1, "scope", "primary")
                     sec_frames.append(sec_k)
                 if len(m_k["fold"]):
                     fk = m_k["fold"].copy()
                     fk.insert(0, "era", ERA_KEPLER)
                     fold_frames.append(fk)
+                # --- the KEPLER reduction ensemble, same code, same rules.
+                if kepler_reason is None:
+                    kp_author, kp_col = _primary_reduction(m_k)
+                    k_members, ens_k, k_secs = measure_reduction_ensemble(
+                        int(_f(kepid)), era=ERA_KEPLER, period_days=period, t0_bkjd=t0_bkjd,
+                        duration_hours=dur_h, koi_row=koi_row, lc_fn=kepler_ensemble_lc_fn,
+                        mast=mast, fit=fit, ensemble=ensemble,
+                        primary_depth_ppm=m_k["depth_ppm"],
+                        primary_author=kp_author, primary_flux_column=kp_col,
+                        log=log, deadline=kepler_ensemble_deadline, key=key,
+                        enabled=(True if kepler_ensemble_lc_fn is not None else None))
+                    red_rows.extend(k_members)
+                    if len(k_secs):
+                        sec_frames.append(k_secs)
+                    rec.update(_ensemble_fields(ens_k, "kepler_"))
 
     rec["tess_era_unmeasured_reason"] = tess_reason or ""
     rec["kepler_era_unmeasured_reason"] = kepler_reason or ""
@@ -2244,19 +2938,46 @@ def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
     e_t = m_t["depth_err_ppm"] if m_t is not None else float("nan")
     d_k = m_k["depth_ppm"] if m_k is not None else float("nan")
     e_k = m_k["depth_err_ppm"] if m_k is not None else float("nan")
+    # The reduction systematic each era carries into its error.  NaN when the
+    # ensemble was not attempted or came back with too few members, in which
+    # case the total error is the statistical one and the record says why.
+    spread_t = _f(ens_t.get("depth_reduction_spread_ppm"))
+    spread_k = _f(ens_k.get("depth_reduction_spread_ppm"))
     # Secondary, and now a diagnostic of the CATALOGUES: our TESS depth
     # against both catalogue numbers.
     rec.update(compare_three_depths(d_t, e_t, depth_k, err_k, depth_t, err_t,
                                     ld_band_ratio=fr, params=compare,
-                                    unmeasured_reason=tess_reason))
-    # PRIMARY: our Kepler-era fit against our TESS-era fit.
+                                    unmeasured_reason=tess_reason,
+                                    measured_reduction_spread_ppm=spread_t))
+    # PRIMARY: our Kepler-era fit against our TESS-era fit, on TOTAL errors.
     rec.update(compare_measured_eras(d_k, e_k, d_t, e_t, ld_band_ratio=fr,
                                      ln_ratio_under_test=ln_under_test, params=compare,
                                      kepler_unmeasured_reason=kepler_reason,
-                                     tess_unmeasured_reason=tess_reason))
+                                     tess_unmeasured_reason=tess_reason,
+                                     kepler_reduction_spread_ppm=spread_k,
+                                     tess_reduction_spread_ppm=spread_t))
     # And what our Kepler-era fit says about the KOI table itself.
     rec.update(compare_kepler_to_catalogue(d_k, e_k, depth_k, err_k, params=compare,
                                            unchecked_reason=kepler_reason))
+    # The ensemble's own flags, per era.  A spread that exceeds the bootstrap is
+    # the headline one: it says the quoted error was NOT describing the real
+    # scatter, which is the failure stage 1 made and this ensemble exists to
+    # catch one level down.
+    def _ensemble_flags(ens: dict, stat_err_ppm: float) -> list[str]:
+        marks: list[str] = []
+        sp = _f(ens.get("depth_reduction_spread_ppm"))
+        if ens.get("ensemble_incomplete"):
+            marks.append("ensemble_incomplete")
+        if np.isfinite(sp) and np.isfinite(stat_err_ppm) and stat_err_ppm > 0 and sp > stat_err_ppm:
+            marks.append("reduction_spread_exceeds_statistical_error")
+        if str(ens.get("sap_vs_pdcsap_verdict")) == BG_DISAGREE:
+            marks.append("sap_pdcsap_disagree")
+        return marks
+
+    flags.extend(_ensemble_flags(ens_t, e_t))
+    rec["kepler_flags"] = ";".join(
+        [f for f in str(rec.get("kepler_flags") or "").split(";") if f]
+        + _ensemble_flags(ens_k, e_k))
     rec["flags"] = ";".join(flags)
 
     sec = (pd.concat(sec_frames, ignore_index=True) if sec_frames else empty_sec)
@@ -2264,10 +2985,17 @@ def measure_one(entry: dict, koi_row: dict | None, toi_row: dict | None, *,
         sec.insert(0, "kepoi_name", rec["kepoi_name"])
         sec.insert(1, "tic_id", rec["tic_id"])
     fold_df = (pd.concat(fold_frames, ignore_index=True) if fold_frames else empty_fold)
-    return rec, sec, fold_df
+    red = empty_red
+    if red_rows:
+        red = pd.DataFrame(red_rows)
+        red.insert(0, "kepoi_name", rec["kepoi_name"])
+        red.insert(1, "tic_id", rec["tic_id"])
+        red = red[[c for c in ENSEMBLE_MEMBER_COLUMNS if c in red.columns]]
+    return rec, sec, fold_df, red
 
 
 def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_lc_fn=None,
+                   ensemble_lc_fn=None, kepler_ensemble_lc_fn=None,
                    shortlist: pd.DataFrame | None = None, log: AcquisitionLog | None = None
                    ) -> dict:
     """Fetch the ephemerides and BOTH eras' light curves, fit every shortlisted target.
@@ -2275,7 +3003,10 @@ def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_l
     The two eras get **separate wall-clock budgets** (``stage2.mast.budget_s``
     and ``stage2.mast.kepler_budget_s``) so that a slow fetch on one side
     cannot silently starve the other and leave the like-for-like comparison
-    one-sided.
+    one-sided.  The reduction ensemble gets **two more** of its own
+    (``stage2.ensemble.budget_s`` / ``kepler_budget_s``): the grid multiplies
+    the number of archive requests, and a systematic estimate must never be
+    able to consume the budget of the measurement it is qualifying.
     """
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
@@ -2283,6 +3014,7 @@ def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_l
     mast = MastParams.from_config(conf)
     fit = FitParams.from_config(conf)
     cmp_p = CompareParams.from_config(conf)
+    ens_p = EnsembleParams.from_config(conf)
     ld_table = conf.get("limb_darkening")
     if shortlist is None:
         shortlist = load_shortlist(conf, candidates_csv=_candidates_csv(out))
@@ -2302,15 +3034,20 @@ def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_l
     deadline = Deadline(budget_s=float(mast.budget_s) if mast.budget_s else None)
     kepler_deadline = Deadline(budget_s=float(mast.kepler_budget_s)
                                if mast.kepler_budget_s else None)
-    recs, secs, folds = [], [], {}
+    ens_deadline = Deadline(budget_s=float(ens_p.budget_s) if ens_p.budget_s else None)
+    ens_kepler_deadline = Deadline(budget_s=float(ens_p.kepler_budget_s)
+                                   if ens_p.kepler_budget_s else None)
+    recs, secs, folds, reds = [], [], {}, []
     for entry in shortlist.to_dict(orient="records"):
         k = str(entry.get("kepoi_name"))
         koi_row = koi_by.get(k)
         toi_row = _pick_toi_row(toi_rows, entry, koi_row)
-        rec, sec, fold_df = measure_one(entry, koi_row, toi_row, lc_fn=lc_fn,
-                                        kepler_lc_fn=kepler_lc_fn, mast=mast,
-                                        fit=fit, compare=cmp_p, ld_table=ld_table, log=log,
-                                        deadline=deadline, kepler_deadline=kepler_deadline)
+        rec, sec, fold_df, red_df = measure_one(
+            entry, koi_row, toi_row, lc_fn=lc_fn, kepler_lc_fn=kepler_lc_fn,
+            ensemble_lc_fn=ensemble_lc_fn, kepler_ensemble_lc_fn=kepler_ensemble_lc_fn,
+            mast=mast, fit=fit, compare=cmp_p, ensemble=ens_p, ld_table=ld_table, log=log,
+            deadline=deadline, kepler_deadline=kepler_deadline,
+            ensemble_deadline=ens_deadline, kepler_ensemble_deadline=ens_kepler_deadline)
         # The table's status and THIS target's status are different facts: a
         # query that succeeded but returned no row for this KOI is ZERO_ROWS
         # for the target even though the table is OK.
@@ -2322,6 +3059,17 @@ def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_l
             secs.append(sec)
         if len(fold_df):
             folds[k] = fold_df
+        if len(red_df):
+            reds.append(red_df)
+        print(f"[growth-stage2] {k}: reduction ensemble — TESS "
+              f"{rec.get('n_members_measured')}/{rec.get('n_members')} members, spread "
+              f"{rec.get('depth_reduction_spread_ppm')} ppm "
+              f"[{rec.get('depth_reduction_spread_status')}]; KEPLER "
+              f"{rec.get('kepler_n_members_measured')}/{rec.get('kepler_n_members')} members, "
+              f"spread {rec.get('kepler_depth_reduction_spread_ppm')} ppm "
+              f"[{rec.get('kepler_depth_reduction_spread_status')}]; SAP-PDCSAP "
+              f"{rec.get('sap_minus_pdcsap_ppm')} ppm (z={rec.get('sap_minus_pdcsap_z')}) "
+              f"{rec.get('sap_vs_pdcsap_verdict')}")
         print(f"[growth-stage2] {k}: PRIMARY {rec.get('like_for_like_verdict')} "
               f"(z={rec.get('z_measured_eras')}) | our Kepler-era "
               f"{rec.get('depth_kepler_measured_ppm')} +/- "
@@ -2335,6 +3083,13 @@ def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_l
     meas.to_csv(out / "measurements.csv", index=False)
     sec_df = pd.concat(secs, ignore_index=True) if secs else pd.DataFrame()
     sec_df.to_csv(out / "sectors.csv", index=False)
+    # The ensemble's own table: one row per (era, author, flux column), measured
+    # or not, with the reason when not.  This is the audit trail behind the
+    # spread, and it is written even when it is empty so a reader can tell a
+    # run without an ensemble from a run whose ensemble found nothing.
+    red_df = (pd.concat(reds, ignore_index=True) if reds
+              else pd.DataFrame(columns=list(ENSEMBLE_MEMBER_COLUMNS)))
+    red_df.to_csv(out / "reductions.csv", index=False)
     fdir = out / "folds"
     fdir.mkdir(parents=True, exist_ok=True)
     for k, v in folds.items():
@@ -2365,6 +3120,21 @@ def stage2_measure(conf: dict, out: Path, *, query_fn=None, lc_fn=None, kepler_l
            "n_compared_like_for_like": (
                int((meas.get("like_for_like_verdict", pd.Series(dtype=str))
                     != LL_ERA_UNMEASURED).sum()) if len(meas) else 0),
+           # --- the REDUCTION ENSEMBLE, a third and fourth network stage with
+           # their own budgets.  An ensemble that was never attempted, or that
+           # lost members, must be visible here rather than inferred from a
+           # suspiciously small error bar.
+           "ensemble_enabled": bool(ens_p.enabled or ensemble_lc_fn is not None
+                                    or kepler_ensemble_lc_fn is not None),
+           "ensemble_budget_s": ens_p.budget_s,
+           "ensemble_elapsed_s": round(ens_deadline.elapsed(), 1),
+           "ensemble_budget_exhausted": bool(ens_deadline.expired()),
+           "ensemble_kepler_budget_s": ens_p.kepler_budget_s,
+           "ensemble_kepler_elapsed_s": round(ens_kepler_deadline.elapsed(), 1),
+           "ensemble_kepler_budget_exhausted": bool(ens_kepler_deadline.expired()),
+           "n_reduction_members": int(len(red_df)),
+           "reduction_member_status_counts": (red_df["status"].map(str).value_counts().to_dict()
+                                              if len(red_df) and "status" in red_df else {}),
            "acquisition": log.as_dict()}
     _write(out / "acquire.json", rep)
     log.write(out / "acquisition_log.json")
@@ -2400,6 +3170,129 @@ def _pick_toi_row(toi_rows, entry: dict, koi_row: dict | None) -> dict | None:
         if best is not None and bd < 1e-2:
             return best
     return same[0]
+
+
+def reduction_ensemble_report(measurements: pd.DataFrame,
+                              params: EnsembleParams | None = None) -> dict:
+    """The ensemble block of ``summary.json``: the spread, and the background test.
+
+    Two things are stated here in words as well as numbers, because both are
+    claims a reader would otherwise have to reconstruct:
+
+    * **which error the verdict used.**  The like-for-like ``z`` is formed from
+      ``sqrt(bootstrap^2 + reduction_spread^2)``, and the bootstrap-only ``z``
+      is shown beside it, so the effect of the systematic is visible.
+    * **what SAP minus PDCSAP says.**  "The PDC background subtraction inflates
+      the depth" is a specific mundane explanation for a deeper TESS transit,
+      and it is answered with a number and a direction rather than left as a
+      worry.  ``PDC_DEEPER_THAN_SAP`` beyond ``background_n_agree`` sigma is the
+      case that supports the mundane explanation, and it is reported as a
+      finding.
+    """
+    params = params or EnsembleParams()
+    rows = measurements.to_dict(orient="records") if len(measurements) else []
+    per_target = []
+    disagreeing = []
+    for r in rows:
+        per_target.append({
+            "kepoi_name": r.get("kepoi_name"),
+            "tess": {k: r.get(k) for k in
+                     ("n_members", "n_members_measured", "n_members_unavailable",
+                      "depth_reduction_spread_ppm", "depth_reduction_spread_fraction",
+                      "depth_reduction_spread_status", "depth_reduction_min_ppm",
+                      "depth_reduction_max_ppm", "ensemble_incomplete",
+                      "ensemble_unavailable_reasons", "ensemble_members",
+                      "depth_tess_measured_err_ppm", "depth_tess_measured_total_err_ppm")},
+            "kepler": {k[len("kepler_"):] if k.startswith("kepler_") else k: r.get(k) for k in
+                       ("kepler_n_members", "kepler_n_members_measured",
+                        "kepler_n_members_unavailable", "kepler_depth_reduction_spread_ppm",
+                        "kepler_depth_reduction_spread_fraction",
+                        "kepler_depth_reduction_spread_status", "kepler_ensemble_incomplete",
+                        "kepler_ensemble_unavailable_reasons", "kepler_ensemble_members",
+                        "depth_kepler_measured_err_ppm",
+                        "depth_kepler_measured_total_err_ppm")},
+            "background_test": {k: r.get(k) for k in
+                                ("sap_vs_pdcsap_verdict", "sap_vs_pdcsap_n_pairs",
+                                 "sap_vs_pdcsap_authors", "sap_minus_pdcsap_ppm",
+                                 "sap_minus_pdcsap_err_ppm", "sap_minus_pdcsap_z",
+                                 "sap_minus_pdcsap_fraction", "background_direction")},
+            "verdict_errors": {k: r.get(k) for k in
+                               ("z_measured_eras", "z_measured_eras_stat_only",
+                                "sigma_measured_eras", "sigma_measured_eras_stat_only",
+                                "detectable_ln_ratio", "ln_ratio_under_test",
+                                "reduction_systematic_applied", "like_for_like_verdict")},
+        })
+        if str(r.get("sap_vs_pdcsap_verdict")) == BG_DISAGREE:
+            disagreeing.append({"kepoi_name": r.get("kepoi_name"),
+                                "sap_minus_pdcsap_ppm": r.get("sap_minus_pdcsap_ppm"),
+                                "z": r.get("sap_minus_pdcsap_z"),
+                                "direction": r.get("background_direction")})
+    # A row from an older measurements.csv has no ensemble columns at all; that
+    # is "not attempted", not "attempted and silent".
+    def _attempted(r: dict, key: str) -> bool:
+        v = r.get(key)
+        return bool(v) and str(v) not in (SPREAD_NOT_ATTEMPTED, "nan", "None")
+
+    n_attempted = sum(1 for r in rows
+                      if _attempted(r, "depth_reduction_spread_status")
+                      or _attempted(r, "kepler_depth_reduction_spread_status"))
+    finding = ""
+    if disagreeing:
+        pdc = [d for d in disagreeing if str(d.get("direction")) == BG_PDC_DEEPER]
+        finding = (
+            f"{len(disagreeing)} target(s): SAP_FLUX and PDCSAP_FLUX disagree at or beyond "
+            f"{params.background_n_agree} sigma. "
+            + (f"{len(pdc)} of them are {BG_PDC_DEEPER} — the corrected photometry is DEEPER "
+               "than the raw aperture photometry, which is what 'the PDC background/crowding "
+               "correction inflates the depth' predicts, and it is a mundane explanation for "
+               "the whole result that must be settled before anything else is claimed."
+               if pdc else
+               "All of them are SAP_DEEPER_THAN_PDC, which is the OPPOSITE of the "
+               "background-inflation hypothesis: the correction is making the transit "
+               "shallower, not deeper."))
+    return {
+        "what_it_is": ("the depth measured under EVERY available reduction of the same data — "
+                       "each (pipeline author, flux column) combination the archive serves — "
+                       "with the spread over those members entering the total error as a "
+                       "systematic"),
+        "what_it_is_not": ("it does NOT move the depth. The reported depth is still the "
+                           "DEDUPLICATED one (dedupe_sectors: one sector, one reduction, "
+                           "counted once); re-stacking the ensemble members would count every "
+                           "transit as many times as the archive serves it, which is the error "
+                           "run 35041932130 made. The ensemble sets the ERROR, and only the "
+                           "error."),
+        "spread_definition": (f"half the range between the {100.0 - params.spread_percentile:.0f}"
+                              f"th and {params.spread_percentile:.0f}th percentiles of the "
+                              "measured members' depths; NaN with status TOO_FEW_MEMBERS below "
+                              f"{params.min_members_for_spread} members, never 0"),
+        "how_it_enters": ("total_err = sqrt(statistical^2 + reduction_spread^2), per era, and "
+                          "the like-for-like verdict is formed from the TOTAL. A spread large "
+                          "enough to swamp the ratio also raises detectable_ln_ratio, so the "
+                          "verdict becomes MEASURED_DEPTH_UNRESOLVED — never "
+                          "MEASURED_DEPTH_UNCHANGED."),
+        "why": ("run 35041932130 measured the same seven TESS sectors under two pipelines: SPOC "
+                "2-minute gave 25,425-35,498 ppm and TESS-SPOC FFI gave 33,078-39,798 ppm for "
+                "the SAME PIXELS — a 20-30 % disagreement against a quoted error of 1,521 ppm. "
+                "The out-of-transit scatter is 414 ppm in Kepler and 67,631 ppm in TESS. A "
+                "quoted error that does not describe the real scatter is exactly what broke "
+                "stage 1."),
+        "n_targets_with_an_ensemble": int(n_attempted),
+        "background_test_is": ("SAP_FLUX minus PDCSAP_FLUX, paired WITHIN a pipeline author and "
+                               "combined by inverse variance. PDC is where the crowding and "
+                               "background corrections are applied, so this is the direct test "
+                               "of 'an over-subtracted background inflates the depth'."),
+        "background_test_finding": finding,
+        "targets_where_sap_and_pdcsap_disagree": disagreeing,
+        "targets": per_target,
+        "config": {k: getattr(params, k) for k in
+                   ("enabled", "spread_percentile", "min_members_for_spread",
+                    "background_n_agree", "budget_s", "kepler_budget_s",
+                    "per_member_budget_s", "retries")}
+        | {"tess_authors": list(params.tess_authors),
+           "tess_flux_columns": list(params.tess_flux_columns),
+           "kepler_authors": list(params.kepler_authors),
+           "kepler_flux_columns": list(params.kepler_flux_columns)},
+    }
 
 
 def stage2_assess(conf: dict, out: Path, *, measurements: pd.DataFrame | None = None,
@@ -2453,6 +3346,7 @@ def stage2_assess(conf: dict, out: Path, *, measurements: pd.DataFrame | None = 
     cmp_p = CompareParams.from_config(conf)
     fit = FitParams.from_config(conf)
     mast = MastParams.from_config(conf)
+    ens_p = EnsembleParams.from_config(conf)
     n_contra = koi_counts[KOI_DEPTH_CONTRADICTED]
     koi_check = {
         "verdict_counts": koi_counts,
@@ -2474,6 +3368,7 @@ def stage2_assess(conf: dict, out: Path, *, measurements: pd.DataFrame | None = 
                     f"is a finding about the KOI TABLE — the stage-1 input — and is reported "
                     f"as one, not absorbed into the depth story."),
     }
+    ensemble_block = reduction_ensemble_report(measurements, params=ens_p)
     summary = {
         # --- the PRIMARY verdict ------------------------------------------
         "primary_verdict": ll_verdict,
@@ -2500,6 +3395,7 @@ def stage2_assess(conf: dict, out: Path, *, measurements: pd.DataFrame | None = 
         "target_verdicts": counts,
         "unmeasured_reasons": unmeasured,
         "koi_catalogue_check": koi_check,
+        "reduction_ensemble": ensemble_block,
         "flags": flags,
         "targets": (measurements[[c for c in SUMMARY_TARGET_COLUMNS
                                   if c in measurements.columns]].to_dict(orient="records")
@@ -2508,7 +3404,11 @@ def stage2_assess(conf: dict, out: Path, *, measurements: pd.DataFrame | None = 
                         ("koi_ephemeris_status", "toi_status", "lc_status_counts", "lc_routes",
                          "budget_s", "elapsed_s", "budget_exhausted", "kepler_era_enabled",
                          "kepler_lc_status_counts", "kepler_lc_routes", "kepler_budget_s",
-                         "kepler_elapsed_s", "kepler_budget_exhausted")},
+                         "kepler_elapsed_s", "kepler_budget_exhausted",
+                         "ensemble_enabled", "ensemble_budget_s", "ensemble_elapsed_s",
+                         "ensemble_budget_exhausted", "ensemble_kepler_budget_s",
+                         "ensemble_kepler_elapsed_s", "ensemble_kepler_budget_exhausted",
+                         "n_reduction_members", "reduction_member_status_counts")},
         "config": {"compare": {"n_agree": cmp_p.n_agree, "sigma_sys_ln": cmp_p.sigma_sys_ln,
                                "apply_band_ratio": cmp_p.apply_band_ratio,
                                "min_detectable_ln_ratio": cmp_p.min_detectable_ln_ratio,
@@ -2521,13 +3421,18 @@ def stage2_assess(conf: dict, out: Path, *, measurements: pd.DataFrame | None = 
                             "kepler_authors": list(mast.kepler_authors),
                             "kepler_budget_s": mast.kepler_budget_s,
                             "kepler_per_target_budget_s": mast.kepler_per_target_budget_s,
-                            "kepler_max_quarters": mast.kepler_max_quarters}},
+                            "kepler_max_quarters": mast.kepler_max_quarters},
+                   "ensemble": ensemble_block["config"]},
         "checks_not_performed": [
             "per_pixel_centroid_test (a deeper TESS transit can ORIGINATE on a different "
             "star inside the pixel; nothing here excludes that)",
             "achromaticity (one band per epoch, as at stage 1)",
             "independent_ephemeris (both eras are folded on the KOI ephemeris, which is "
             "itself a Kepler-era product; a depth is measured, an ephemeris is not)",
+            "aperture_photometry_of_our_own (the ensemble measures every reduction the "
+            "ARCHIVE serves; it does not re-extract the pixels with a different aperture, "
+            "so a systematic common to every delivered pipeline would not show up in the "
+            "spread)",
         ],
         "note": ("the PRIMARY verdict is the like-for-like one: BOTH eras are fitted here by "
                  "the SAME code, so MEASURED_DEPTH_CHANGED means the change survives a "
@@ -2537,11 +3442,17 @@ def stage2_assess(conf: dict, out: Path, *, measurements: pd.DataFrame | None = 
                  "change under test and is never a refutation. The catalogue verdicts "
                  "(MEASURED_DEPTH_MATCHES_KEPLER / _TOI) are kept, and are now a diagnostic of "
                  "the CATALOGUES rather than of the sky — they say which table is right about "
-                 "the TESS era. A measured change is still NOT a detection: the centroid test "
-                 "is outstanding. NO_DATA_REACHED / LIKE_FOR_LIKE_NO_DATA is not a null result "
-                 "and is not written up (CLAUDE.md)"),
+                 "the TESS era. The primary z is formed from the TOTAL error — bootstrap and "
+                 "the REDUCTION-ENSEMBLE spread in quadrature — so a ratio that survives it has "
+                 "survived every reduction the archive serves, and one that does not comes back "
+                 "MEASURED_DEPTH_UNRESOLVED; the DEPTH itself is still the deduplicated one and "
+                 "the ensemble never moves it. A measured change is still NOT a detection: the "
+                 "centroid test is outstanding. NO_DATA_REACHED / LIKE_FOR_LIKE_NO_DATA is not "
+                 "a null result and is not written up (CLAUDE.md)"),
     }
     _write(out / "summary.json", summary)
+    if ensemble_block.get("background_test_finding"):
+        print(f"[growth-stage2] assess: {ensemble_block['background_test_finding']}")
     print(f"[growth-stage2] assess: PRIMARY {ll_verdict} — {ll_reason}; {ll_counts}")
     print(f"[growth-stage2] assess: catalogues {verdict} — {reason}; {counts}; "
           f"KOI table {koi_counts}")
@@ -2555,8 +3466,30 @@ SUMMARY_TARGET_COLUMNS = (
     "depth_kepler_measured_ppm", "depth_kepler_measured_err_ppm",
     "depth_kepler_measured_in_tess_band_ppm", "kepler_depth_measured_err_method",
     "depth_tess_measured_ppm", "depth_tess_measured_err_ppm",
-    "z_measured_eras", "sigma_measured_eras", "measured_depth_ratio", "measured_eras_agree",
-    "ln_ratio_under_test", "detectable_ln_ratio", "catalogue_ln_ratio_under_test",
+    "depth_kepler_measured_total_err_ppm", "depth_tess_measured_total_err_ppm",
+    "z_measured_eras", "sigma_measured_eras", "z_measured_eras_stat_only",
+    "sigma_measured_eras_stat_only", "reduction_systematic_applied",
+    "measured_depth_ratio", "measured_eras_agree",
+    "ln_ratio_under_test", "detectable_ln_ratio", "claim_excluded_sigma",
+    "catalogue_ln_ratio_under_test",
+    # --- THE REDUCTION ENSEMBLE: the systematic that enters the total error ---
+    "n_members", "n_members_measured", "n_members_unavailable",
+    "depth_reduction_spread_ppm", "depth_reduction_spread_fraction",
+    "depth_reduction_spread_status", "depth_reduction_p16_ppm", "depth_reduction_p84_ppm",
+    "depth_reduction_min_ppm", "depth_reduction_max_ppm", "depth_reduction_median_ppm",
+    "depth_reduction_max_offset_from_primary_ppm", "ensemble_incomplete",
+    "ensemble_unavailable_reasons", "ensemble_members",
+    "kepler_n_members", "kepler_n_members_measured", "kepler_n_members_unavailable",
+    "kepler_depth_reduction_spread_ppm", "kepler_depth_reduction_spread_fraction",
+    "kepler_depth_reduction_spread_status", "kepler_depth_reduction_min_ppm",
+    "kepler_depth_reduction_max_ppm", "kepler_ensemble_incomplete",
+    "kepler_ensemble_unavailable_reasons", "kepler_ensemble_members",
+    # --- the background/crowding test, by number ---------------------------
+    "sap_vs_pdcsap_verdict", "sap_vs_pdcsap_n_pairs", "sap_vs_pdcsap_authors",
+    "sap_minus_pdcsap_ppm", "sap_minus_pdcsap_err_ppm", "sap_minus_pdcsap_z",
+    "sap_minus_pdcsap_fraction", "background_direction",
+    "kepler_sap_vs_pdcsap_verdict", "kepler_sap_minus_pdcsap_ppm",
+    "kepler_sap_minus_pdcsap_z", "kepler_background_direction",
     # --- what our Kepler-era fit says about the KOI TABLE ------------------
     "koi_depth_verdict", "z_kepler_measured_vs_koi", "kepler_measured_over_koi_depth",
     "koi_depth_unchecked_reason",
@@ -2570,6 +3503,7 @@ SUMMARY_TARGET_COLUMNS = (
     "kepler_n_sectors_dropped_duplicate", "kepler_flags", "kepler_era_unmeasured_reason",
     # --- the secondary, catalogue-diagnostic comparison --------------------
     "verdict", "unmeasured_reason", "tess_era_unmeasured_reason",
+    "depth_measured_total_err_ppm",
     "lc_status", "lc_route", "n_sectors", "n_sectors_measured", "sector_list", "authors",
     "exptimes_s", "period_days", "t0_bkjd", "t0_btjd_used", "n_epochs_propagated",
     "ephemeris_sigma_minutes", "duration_hours", "n_transits", "depth_measured_ppm",
@@ -2582,7 +3516,8 @@ SUMMARY_TARGET_COLUMNS = (
 
 
 def stage2_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, query_fn=None,
-               lc_fn=None, kepler_lc_fn=None, shortlist: pd.DataFrame | None = None) -> dict:
+               lc_fn=None, kepler_lc_fn=None, ensemble_lc_fn=None, kepler_ensemble_lc_fn=None,
+               shortlist: pd.DataFrame | None = None) -> dict:
     """Run one stage, a comma list, or all.  Returns the last stage's report."""
     from .run import load_growth_config  # noqa: PLC0415
 
@@ -2596,7 +3531,9 @@ def stage2_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, qu
             rep = stage2_probe(conf, out)
         elif s == "measure":
             rep = stage2_measure(conf, out, query_fn=query_fn, lc_fn=lc_fn,
-                                 kepler_lc_fn=kepler_lc_fn, shortlist=shortlist)
+                                 kepler_lc_fn=kepler_lc_fn, ensemble_lc_fn=ensemble_lc_fn,
+                                 kepler_ensemble_lc_fn=kepler_ensemble_lc_fn,
+                                 shortlist=shortlist)
         elif s == "assess":
             rep = stage2_assess(conf, out)
         else:
@@ -2629,8 +3566,12 @@ if __name__ == "__main__":                                # pragma: no cover
 
 
 __all__ = [
+    "BACKGROUND_VERDICTS", "BG_AGREE", "BG_DISAGREE", "BG_PDC_DEEPER", "BG_SAP_DEEPER",
+    "BG_UNAVAILABLE",
     "BKJD_MINUS_BTJD", "BKJD_OFFSET", "BTJD_OFFSET", "CompareParams", "DEFAULT_AUTHORS",
-    "Deadline", "ERAS", "ERA_KEPLER", "ERA_TESS", "FitParams", "KEPLER_AUTHORS",
+    "Deadline", "ENSEMBLE_MEMBER_COLUMNS", "ENSEMBLE_MEMBER_STATUSES",
+    "ENSEMBLE_NOT_ATTEMPTED", "ENSEMBLE_NO_FLUX_COLUMN", "ERAS", "ERA_KEPLER", "ERA_TESS",
+    "EnsembleParams", "FLUX_COLUMNS", "FitParams", "KEPLER_AUTHORS",
     "KEPLER_FLUX_COLUMNS", "KEPLER_LONG_CADENCE_S", "KEPLER_PRODUCT_SUBGROUPS",
     "KEPLER_QUALITY_COLUMNS", "KEPLER_SHORT_CADENCE_MAX_S", "KEPLER_SHORT_CADENCE_S",
     "KEPLER_TARGET_NAME_FORMS", "KOI_DEPTH_CONFIRMED", "KOI_DEPTH_CONTRADICTED",
@@ -2639,7 +3580,8 @@ __all__ = [
     "MATCH_BOTH", "MATCH_KEPLER", "MATCH_NEITHER", "MATCH_TOI",
     "MATCH_UNMEASURED", "MastParams", "RUN_CONFIRMED", "RUN_LL_CHANGED", "RUN_LL_NO_DATA",
     "RUN_LL_UNCHANGED", "RUN_LL_UNRESOLVED", "RUN_LL_VERDICTS", "RUN_NO_DATA", "RUN_REFUTED",
-    "RUN_UNRESOLVED", "RUN_VERDICTS", "STAGES", "TARGET_VERDICTS", "UNMEASURED_BUDGET",
+    "RUN_UNRESOLVED", "RUN_VERDICTS", "SPREAD_NOT_ATTEMPTED", "SPREAD_OK", "SPREAD_STATUSES",
+    "SPREAD_TOO_FEW_MEMBERS", "STAGES", "TARGET_VERDICTS", "UNMEASURED_BUDGET",
     "UNMEASURED_KEPLER_DISABLED",
     "UNMEASURED_NO_EPHEMERIS", "UNMEASURED_NO_REFERENCE", "UNMEASURED_NO_TRANSIT",
     "UNMEASURED_QUERY_FAILED",
@@ -2647,12 +3589,15 @@ __all__ = [
     "btjd_to_bjd", "btjd_to_bkjd", "combine_transit_depths", "compare_kepler_to_catalogue",
     "compare_measured_eras", "compare_three_depths",
     "core_half_width", "dedupe_sectors", "default_kepler_lc_fn", "default_lc_fn",
+    "ensemble_member_grid",
     "epoch_in_era", "fetch_kepler_lightcurves", "fetch_koi_ephemerides", "fetch_lightcurves",
     "fetch_toi_depths", "fit_transits", "fold", "kepler_cadence_label",
     "lightkurve_kepler_lc_fn", "lightkurve_lc_fn", "load_shortlist", "main",
-    "mast_fits_lc_fn", "mast_kepler_fits_lc_fn", "mast_probe", "measure_one", "measure_target",
+    "mast_fits_lc_fn", "mast_kepler_fits_lc_fn", "mast_probe", "measure_one",
+    "measure_reduction_ensemble", "measure_target",
     "merge_kepler_segments", "propagate_epoch",
-    "read_kepler_lc_fits", "read_tess_lc_fits", "run_like_for_like_verdict", "run_verdict",
+    "read_kepler_lc_fits", "read_tess_lc_fits", "reduction_ensemble_report",
+    "reduction_spread", "run_like_for_like_verdict", "run_verdict", "sap_vs_pdcsap",
     "stage2_assess", "stage2_measure", "stage2_probe",
-    "stage2_run", "synth_lightcurve", "trapezoid_transit",
+    "stage2_run", "synth_lightcurve", "total_depth_error", "trapezoid_transit",
 ]

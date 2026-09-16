@@ -282,7 +282,35 @@ Run: `python -m seti.growth.run --stage {probe,acquire,screen,assess,all}
 
 ---
 
-## 7. Stage 2A — the measured TESS depth (`src/seti/growth/stage2.py`, BUILT)
+## 7. Stage 2A — the measured depth in BOTH eras (`src/seti/growth/stage2.py`, BUILT)
+
+### 7.0 The asymmetry, and its removal
+
+The first form of this stage fitted the **TESS** era from the light curve and
+then compared it against `cumulative.koi_depth` — **a catalogue number**,
+produced by a different pipeline, in a different decade, through a different
+aperture.  That is precisely the heterogeneity that broke stage 1's error model
+(§7.1), so the comparison inherited the flaw it was built to remove.  Run
+35041932130 therefore measured 30,614 ± ~1,690 ppm in the TESS era and put it
+~10σ from a number nobody had re-derived.
+
+Stage 2A now fits **both eras with the same fitter** — the same fold, the same
+locally fitted transit-masked baseline, the same exposure-shrunk core window,
+the same inverse-variance combination and bootstrap over transits, the same
+`dedupe_sectors`.  Only the archive product and the time system differ.  The
+**primary** result is the like-for-like verdict (§7.2a).  Both answers are
+valuable and neither is favoured:
+
+* if our Kepler-era fit also gives ~30,000 ppm, **nothing changed** — the KOI
+  catalogue depth is simply wrong for this object, the candidate dies, and the
+  channel has learned something load-bearing about its stage-1 *inputs*;
+* if our Kepler-era fit reproduces ~14,000 ppm, the change survives a
+  comparison in which nothing but the sky differs and becomes much harder to
+  dismiss.
+
+The three-number catalogue comparison (§7.2) is **kept**, and is now a
+diagnostic of the **catalogues** rather than of the sky: it says which table is
+right about the TESS era.  `summary.json` states which verdict is primary.
 
 ### 7.1 Why, and what it settles
 
@@ -307,13 +335,60 @@ stands, and stage 2A settles the first:
    does not test for it.  That is the centroid test, it is **not** done here,
    and it is named in `summary.json["checks_not_performed"]`.
 
-### 7.2 The decisive measurement: three numbers, not two
+### 7.2a THE PRIMARY VERDICT — our Kepler-era fit against our TESS-era fit
+
+| Number | Where it comes from |
+|---|---|
+| `depth_kepler_measured_ppm` | **this module's fit to the KEPLER light curve** |
+| `depth_measured_ppm` (= `depth_tess_measured_ppm`) | **this module's fit to the TESS light curve** |
+| `depth_kepler_measured_in_tess_band_ppm` | the former × `band_ratio(Teff, logg, b)` |
+
+`z_measured_eras = ln(D_TESS / D_Kepler,in TESS band) / σ`, positive meaning
+deeper in the TESS era, with the same `σ² = (e₁/D₁)² + (e₂/D₂)² + σ_sys,ln²`
+the catalogue comparison uses.  The band ratio (§4.1) is applied to our Kepler
+**measurement** for the same reason it is applied to the Kepler **catalogue**
+depth: each era is one bandpass, and the band difference must not be charged to
+"growth".
+
+| Verdict (`like_for_like_verdict`) | Meaning |
+|---|---|
+| `MEASURED_DEPTH_CHANGED` | `|z| ≥ n_agree`.  The change survives a comparison in which nothing but the sky differs.  **Still not a detection** — the centroid test is outstanding |
+| `MEASURED_DEPTH_UNCHANGED` | `|z| < n_agree` **and** the comparison had the power to have seen the change under test.  Nothing changed: `koi_depth` is wrong for this object and the candidate dies |
+| `MEASURED_DEPTH_UNRESOLVED` | `|z| < n_agree` but `detectable_ln_ratio = n_agree·σ` exceeds `ln_ratio_under_test`.  **An agreement without power is not a refutation** and is never reported as one |
+| `MEASURED_DEPTH_ERA_UNMEASURED` | one or both eras produced no depth.  `like_for_like_unmeasured_reason` names the era and the reason (`KEPLER_ERA:QUERY_FAILED`, `TESS_ERA:QUERY_RETURNED_ZERO_ROWS`, `KEPLER_ERA:KEPLER_ERA_NOT_ATTEMPTED`, …).  **An unmeasured era never agrees with the other one** |
+
+`ln_ratio_under_test` is the change stage 1 claimed —
+`ln(TOI / KOI-in-TESS-band)`, ≈ 0.88 for K00897.01 — taken from the catalogues
+whenever both are usable, and `compare.min_detectable_ln_ratio` (0.10) when they
+are not.  Without this power floor a fit too noisy to tell 14,000 ppm from
+30,000 ppm would "refute" the candidate by failing to measure it: stage 1's
+error in the opposite direction.
+
+Run verdicts (`primary_verdict`): `LIKE_FOR_LIKE_NO_DATA`,
+`MEASURED_DEPTH_CHANGE_CONFIRMED`, `MEASURED_DEPTH_CHANGE_REFUTED` (every
+comparison agreed **with** the power to disagree), `MEASURED_DEPTH_CHANGE_UNRESOLVED`.
+
+**And what our Kepler-era fit says about the KOI table.**  The same fit is
+compared with `cumulative.koi_depth` **in the Kepler band, with no band ratio**
+— there is no band change to correct — giving `koi_depth_verdict` ∈
+{`KOI_DEPTH_CONFIRMED`, `KOI_DEPTH_CONTRADICTED`, `KOI_DEPTH_UNCHECKED`} and
+`z_kepler_measured_vs_koi`.  A contradiction is a **finding about the KOI
+table**, i.e. about stage 1's own input, and is reported as one in
+`summary.json["koi_catalogue_check"]` — with the offending target, both depths
+and the ratio — not buried in the depth story.
+
+### 7.2 The secondary comparison: three numbers, and what they now diagnose
 
 | Number | Where it comes from |
 |---|---|
 | `depth_kepler_ppm` | KOI `cumulative.koi_depth` (**Kepler band**) |
 | `depth_toi_ppm` | TOI `toi.pl_trandep` (**TESS band**) |
 | `depth_measured_ppm` | **this module's fit to the TESS light curve** |
+
+With both eras now fitted here, this comparison no longer carries the claim
+about the sky.  What it says is **which catalogue is right about the TESS
+era**, and that is worth saying: it is a measurement of the tables stage 1 is
+built on.  `summary.json` marks it `verdict_is_primary: false`.
 
 The Kepler depth is multiplied by `f_LD = band_ratio(Teff, logg, b)`
 (§4.1, `F_TESS(b)/F_Kepler(b)`) before any comparison, so the bandpass
@@ -354,7 +429,20 @@ count from different zero points —
 * therefore `t_BTJD = t_BKJD − 2167.0` **exactly**
 
 — and the hand-worked value the test suite checks is: BKJD 170.0 = BJD
-2455003.0 = **BTJD −1997.0**.  The epoch is then propagated by an integer
+2455003.0 = **BTJD −1997.0**.
+
+**Now that both eras are fitted, the conversion is a per-era decision and is
+made once, by name** (`epoch_in_era(t0_bkjd, era)`):
+
+* `ERA_TESS` — TESS light curves are BTJD, so subtract 2167 d;
+* `ERA_KEPLER` — **Kepler light curves are already BKJD, and so is
+  `koi_time0bk`: no conversion at all.**
+
+Converting on the Kepler side too is the obvious bug in a two-era module.  It
+would put the fold 2167 days from any transit and return no depth — which reads
+as a Kepler era that "did not change" while in truth nothing was measured.
+Both branches are tested, and a test shows the double conversion destroying the
+Kepler fold.  The epoch is then propagated within each era by an integer
 number of periods to the TESS window and the accumulated uncertainty
 `√(σ_T0² + (n σ_P)²)` is reported in minutes (`ephemeris_sigma_minutes`,
 `n_epochs_propagated`); above 10 % of the duration it raises
@@ -410,24 +498,62 @@ and otherwise `astroquery.mast` `Observations.query_criteria` →
 sector; `TIME` converted through the file's own `BJDREFI`/`BJDREFF` rather than
 assumed to be BTJD; `QUALITY != 0` masked).
 
+**Kepler light curves come from the same archive by the same two routes** —
+`lightkurve` `search_lightcurve("KIC 7849854", mission="Kepler")`, else
+`astroquery.mast` `query_criteria(obs_collection="Kepler",
+dataproduct_type="timeseries", target_name=…)` → `get_product_list` →
+`download_file(dataURI)` with the `LLC`/`SLC` products read by
+`read_kepler_lc_fits` (`PDCSAP_FLUX` then `SAP_FLUX`; quality is `SAP_QUALITY`,
+not `QUALITY`; `TIME` converted through the file's own `BJDREFI`/`BJDREFF` to
+**BKJD**).  Which route answered, and which spelling of the target name, is a
+**runtime** fact and is recorded per target (`kepler_lc_route`,
+`kepler_lc_status`).
+
+**Short cadence is preferred where it exists.**  Kepler long cadence is 270
+co-added frames = 1765.5 s = **29.4 min**, which on K00897.01's 2.078-hour
+transit is 0.236 T₁₄ — over `fit.smear_fraction`, so a long-cadence quarter
+carries `smeared` exactly as a 30-minute TESS FFI sector does, and the
+exposure-shrunk core window is what keeps its depth unbiased rather than
+shallow.  Nothing is filtered by cadence at the archive: every product is
+fetched, **short-cadence month-files are merged into quarters first**
+(`merge_kepler_segments` — Kepler ships short cadence three files to a quarter,
+and keying the dedupe on the quarter without merging would throw two thirds of
+them away), and `dedupe_sectors` then keeps the shortest-cadence reduction of
+each quarter, because two cadences of one quarter are **the same pixels**.
+Each month-file is normalised by its own robust median before concatenation.
+Whether short cadence exists for KIC 7849854 is recorded as
+`kepler_has_short_cadence` / `kepler_cadences`.
+
 **Every network stage has a wall-clock budget** — `stage2.mast.budget_s` for
-the whole measure stage, `per_target_budget_s` per target,
+the TESS side of the measure stage and **`kepler_budget_s` for the Kepler
+side**, counted separately so a slow fetch on one side cannot starve the other
+and leave the like-for-like comparison one-sided; `per_target_budget_s` /
+`kepler_per_target_budget_s` per target;
 `archive_timeout_s`/`archive_retries` for the Exoplanet Archive pulls — copied
 from the `gaia.cone_budget_s` pattern and for the reason stated there: run
 34789826297 sat three hours in an unbounded fetch loop and would have been
 killed with nothing committed.  What the budget does not reach is `UNMEASURED`
 with reason `BUDGET_EXHAUSTED`, never a depth.
 
+`stage2.mast.kepler_enabled` is **true** in `config/growth.yaml` and **false**
+in the code's own defaults, deliberately: a caller that has not thought about
+the Kepler era must not silently open a socket (the test suite raises on any
+socket, and an exception swallowed by the retry loop would read as
+`QUERY_FAILED`).  `KEPLER_ERA_NOT_ATTEMPTED` and `QUERY_FAILED` are different
+facts, and `growth_stage2.yml` **fails the run** if `summary.json` comes back
+with the primary comparison switched off — so a dropped key is loud rather than
+a quietly one-sided result.
+
 Outputs, `results/growth/stage2/`:
 
 | File | Content |
 |---|---|
 | `probe.json` | which MAST route exists on this machine (imports only) |
-| `acquire.json`, `acquisition_log.json` | the ephemeris/TOI pull statuses, the per-target light-curve status and route, elapsed time against the budget, every failed attempt's exception text |
-| `measurements.csv` | one row per shortlisted target: the three depths, both `z`s, the verdict, the ephemeris record, the per-target flags |
-| `sectors.csv` | per sector: author, exposure, points, transits, depth ± error, `smeared`, `exptime_over_duration` |
-| `folds/<KOI>.csv` | the binned fold, for a human to look at |
-| `summary.json` | `verdict`, `reason`, `target_verdicts`, `unmeasured_reasons`, `flags`, `targets`, `acquisition`, `config`, `checks_not_performed` |
+| `acquire.json`, `acquisition_log.json` | the ephemeris/TOI pull statuses, the per-target light-curve status and route **for each era**, elapsed time against each budget, every failed attempt's exception text |
+| `measurements.csv` | one row per shortlisted target: **both measured depths and the like-for-like verdict**, the KOI-table check, the two catalogue depths, every `z`, the ephemeris record per era, the per-era flags |
+| `sectors.csv` | per sector/quarter, with an **`era`** column: author, exposure, points, transits, depth ± error, `smeared`, `exptime_over_duration` |
+| `folds/<KOI>.csv` | the binned fold **per era** (`era` column), for a human to look at |
+| `summary.json` | `primary_verdict` (+ `primary_verdict_field`, `primary_verdict_is`), `like_for_like_verdicts`, `koi_catalogue_check`, then the secondary `verdict` (marked `verdict_is_primary: false`), `target_verdicts`, `unmeasured_reasons`, `flags`, `targets`, `acquisition`, `config`, `checks_not_performed` |
 
 The shortlist and every threshold are in `config/growth.yaml` under `stage2:`
 (`shortlist`, `mast`, `fit`, `compare`), with a `verify:` note on everything
@@ -441,12 +567,20 @@ asserted rather than measured.  Run:
   dilution, but a nearby eclipsing binary at the same period inside the pixel
   gives exactly this.  `odd_even_significant` catches one flavour; the
   per-pixel centroid / difference-image test is stage 3.
-* **the Kepler depth is still the catalogue's.**  Only the TESS side is
-  re-measured here, so `MEASURED_DEPTH_MATCHES_TOI` establishes that the TESS
-  depth is what the TOI says, not yet that it differs from a re-fitted Kepler
-  depth.
 * **one band per epoch**, exactly as at stage 1: achromaticity is untested.
-* **`σ_sys,ln = 0.05` is asserted**, not measured (§7.2).
+  Both eras are now *measured*, but each is still a single bandpass, and the
+  band ratio that carries one into the other rests on the `verify` LD grid.
+* **the ephemeris is not re-derived.**  Both eras are folded on the KOI
+  ephemeris, which is itself a Kepler-era product.  Stage 2A measures a depth.
+* **`σ_sys,ln = 0.05` is asserted**, not measured (§7.2), and it is applied to
+  the like-for-like comparison too — where it is the most conservative term,
+  since the two eras go through identical code and the pipeline-to-pipeline
+  floor it was written for does not strictly apply.  It is kept rather than
+  dropped: keeping it can only widen the agreement band, never manufacture a
+  change.
+* **what it no longer cannot do**: the Kepler depth is *not* still the
+  catalogue's (§7.0).  `kepler_era_lightcurve_refit` has been removed from
+  `checks_not_performed`, because leaving it there would be a false disclaimer.
 
 ---
 
@@ -520,3 +654,211 @@ never the one a reader has to trust.  The light curves are on MAST
   neighbour veto is not optional.
 * **`NO_DEPTH_DRIFT_CANDIDATE` is a count**, not an occurrence limit on
   construction around the Kepler planets, and is not written up.
+
+---
+
+## 10. Stage 3 — is the transit ON THE TARGET? (`src/seti/growth/centroid.py`, BUILT)
+
+### 10.1 Why, and what it settles
+
+Stage 2A measured Kepler-718 b's TESS-era depth **from the light curve**:
+**30,614 ± 1,195 ppm** over sectors 41, 54, 55, 74, 75, 81 and 82, against a
+Kepler-era 13,884 ppm carried into the TESS band — a factor 2.2 deeper, and
+`MEASURED_DEPTH_MATCHES_TOI`.
+
+**Dilution cannot produce that.**  Extra light in the aperture makes a transit
+*shallower*, and TESS's ~21″ pixels admit strictly more light than Kepler's
+~4″ ones, so on the same star TESS must read shallower, never deeper.  The one
+reading that *does* produce it is that **the two apertures are not measuring the
+same source**: if the dimming originates on a neighbour, an aperture centred
+differently reports a different depth entirely, and "the depth grew" is a
+statement about two different stars.
+
+Three facts make that pressing for this target:
+
+* stage 1 counted **7 Gaia sources within 21″** (`n_gaia_neighbours`);
+* the out-of-transit scatter in the TESS photometry is **56,698 ppm — 5.7 %**,
+  nearly twice the transit depth, so the aperture is dominated by something
+  noisy;
+* stage 2A lists `per_pixel_centroid_test` in `summary.json["checks_not_performed"]`.
+
+The odd–even depth difference is **0.20 σ**, so an eclipsing binary at *twice*
+the period is already disfavoured.  That does not exclude a source at the
+**same** period on a different star.  Stage 3 answers with two measurements.
+
+### 10.2 The neighbour census — the cheapest decisive test
+
+Every Gaia DR3 source within a configurable radius (default one TESS pixel,
+21″) with `G`, separation and position angle, and its **flux fraction in the
+aperture**
+
+```
+frac_i = 10^(−0.4 (G_i − G_target)) · w(d_i) / Σ_j 10^(−0.4 (G_j − G_target)) · w(d_j)
+```
+
+with `w` the same erfc capture model stage 1 uses (`drift.aperture_weight`,
+`aperture.radius_arcsec` / `psf_sigma_arcsec`).  Then the quantity that settles
+most cases **without touching a pixel**: the depth that neighbour would need *in
+its own light* to produce the observed aperture depth,
+
+```
+required_depth_i = observed_aperture_depth / frac_i .
+```
+
+A required depth above 100 % is **arithmetically impossible** — a star cannot
+fade by more than all of its light — so that neighbour is `excluded_by_arithmetic`
+and the census reports the number that excluded it, per neighbour, rather than a
+verdict word.  For a 30,614 ppm aperture depth a source needs
+`frac_i ≥ 0.0306`, i.e. roughly **ΔG ≤ 3.7 mag** of the target
+(`min_delta_g_that_can_supply_depth`, reported per target); everything fainter
+than that is excluded before a byte of pixel data is downloaded.
+
+**What stage 1's committed numbers already imply for K00897.01, before the
+census is run at all.**  `candidates.csv` (run 35038510064) carries
+`contam_applied = 0.0504` and `contam_max = 0.0746` — the weighted and
+unweighted sums of `10^(−0.4 ΔG)` over the seven neighbours.  With a 30,614 ppm
+aperture depth:
+
+| From the committed aggregate | Value |
+|---|---|
+| flux ratio a single neighbour must have | ≥ 0.0329 of the target (ΔG ≤ **3.71 mag**) |
+| required depth if **all seven together** did it | **44 %** simultaneous eclipse (not impossible — the ensemble is *not* excluded) |
+| how many of the seven can individually clear the bar | **at most 2** (0.0746 / 0.0329), and at most **1** on the weighted sum |
+
+So the arithmetic alone already says the transit source, if it is a neighbour at
+all, is **one of at most two of the seven** — every other neighbour is excluded
+before any pixel is fetched.  *Which* ones requires the per-source `G`, which is
+exactly what the census cone supplies; the sandbox has no Gaia egress, so that
+step runs on the runner.
+
+`census_statement` says in one sentence what the arithmetic did and did not
+settle.  A Gaia cone that fails is `QUERY_FAILED` and **no neighbour is then
+excluded**: an unchecked star is not an isolated one.  Sources below the Gaia
+completeness limit are neither implicated nor excluded, and that is in
+`checks_not_performed`.
+
+### 10.3 The difference image
+
+Per sector, from the TESS **target pixel files**: a mean in-transit image over
+the flat-bottom core (`0.7 T₁₄`, shrunk by half the exposure), a mean
+out-of-transit image over the **local** annulus `0.75 T₁₄ ≤ |Δt| ≤ 2.5 T₁₄`
+(local, so a slowly varying background enters both the same way), and the
+difference `oot − in`, in which the transit source is a **positive peak**.  A
+thresholded flux-weighted centroid (pixels above `0.2 ×` the peak) is fitted to
+the difference image and to the out-of-transit image, and the **offset between
+them** is reported in pixels and arcseconds with an uncertainty — from a
+**bootstrap over cadences** when there are enough of them, the per-pixel
+propagation otherwise, and `centroid_err_method` always says which.
+
+Three things make the offset honest rather than merely computed:
+
+* **a systematic floor**, `centroid_sys_floor_arcsec = 1.0″` (config, `verify`):
+  a thresholded first moment on 21″ pixels cannot be trusted below about an
+  arcsecond, and the direct image's faint wings shift its centroid by a fraction
+  of a pixel that the difference image does not share.  *Measured on the
+  synthetic gate:* an on-target injection gives a **0.124″** offset with a
+  **0.05″** cadence-bootstrap error — 2.6 σ of nothing.  The floor is added in
+  quadrature per sector **and** to the combined error, because stacking sectors
+  averages down what is random, not what every sector shares;
+* **the length is debiased.**  `hypot(dx, dy)` is positive by construction, so
+  averaging several sectors' magnitudes shrinks the error without shrinking the
+  bias and manufactures a significant offset out of noise;
+  `offset_debiased = √(max(r² − σx² − σy², 0))` is what the magnitude
+  combination uses;
+* **sectors are combined in the SKY frame when the file's WCS allows it**
+  (`dRA cos δ, dDec`), because two sectors observe the same star at different
+  roll angles and their pixel `(dx, dy)` are not the same quantity.  Without a
+  WCS the scalar (debiased) magnitudes are combined and
+  `combined_from_magnitudes` says so.
+
+Reported **per sector as well as combined**: a consistent offset across seven
+sectors is a very different fact from a scattered one, and
+`sector_scatter_chi2_per_dof` is the number that tells them apart.  The
+out-of-transit centroid is itself pulled toward a bright neighbour, so the
+offset measured against it is a **lower bound** on the displacement from the
+target; where the WCS gives the target's own pixel, `offset_from_target_*` is
+reported beside it.
+
+### 10.4 The verdict vocabulary (`centroid.TARGET_VERDICTS`)
+
+| Verdict | Meaning |
+|---|---|
+| `TRANSIT_ON_TARGET` | the offset is consistent with zero (`\|offset\|/σ < n_offset`) **and** the measurement could have *seen* the offset that matters: `n_offset · σ ≤` the separation of the nearest neighbour the census could not exclude (or `on_target_max_offset_arcsec` when the census named none) |
+| `TRANSIT_OFFSET_FROM_TARGET` | the offset is significant at `n_offset` σ.  The Gaia source it lands on is named, with the depth that source would need — which may itself be impossible, and then the offset points at something Gaia does not resolve |
+| `OFFSET_UNRESOLVED` | an offset was measured, its error bar spans zero, and the precision was **not** enough to exclude the neighbour that matters — or no centroid could be fitted.  **Never reported as `TRANSIT_ON_TARGET`** |
+| `NO_DATA_REACHED` | no pixels.  `reason` ∈ {`QUERY_FAILED`, `QUERY_RETURNED_ZERO_ROWS`, `EPHEMERIS_UNAVAILABLE`, `NO_TRANSIT_CADENCES`, `BUDGET_EXHAUSTED`, `NOT_ATTEMPTED`} |
+
+`QUERY_FAILED` (the archive errored) and `QUERY_RETURNED_ZERO_ROWS` (it answered
+with nothing) stay different facts, and **a target whose pixels could not be
+fetched is never reported as on target** — the workflow fails the run if a
+`TRANSIT_ON_TARGET` row carries a detectable offset larger than the resolution
+it claims, or a `NO_DATA_REACHED` row carries no reason.  The run verdict is the
+same vocabulary: any target off target ⇒ `TRANSIT_OFFSET_FROM_TARGET`; all
+measured targets on target ⇒ `TRANSIT_ON_TARGET`; otherwise
+`OFFSET_UNRESOLVED`, and `NO_DATA_REACHED` when nothing was measured.
+
+### 10.5 The offline gate
+
+`tests/test_growth_centroid.py`, network-free like the rest of the suite.  The
+load-bearing test is a **synthetic 11×11 pixel stamp with the transit injected
+on a KNOWN pixel** (`centroid.synth_tpf`, a Gaussian-PRF stand-in integrated
+over the ephemeris):
+
+| Injection | Measured |
+|---|---|
+| transit on the **target** at pixel (5, 5) | difference-image centroid **(5.0002, 5.0002)**; offset from the out-of-transit centroid **0.0059 px = 0.124″ ± 1.00″ = 0.12 σ** — consistent with zero |
+| transit on a **neighbour 3 px east** at (8, 5) | difference-image centroid **x = 7.998 ± 0.0023 px** (the injected 8.000, within its own error); offset from the target's pixel **2.998 px = 62.96″**; offset from the out-of-transit centroid **2.74 px = 57.6″ ± 1.0″ = 57 σ** |
+
+The suite also gates: the census arithmetic (a 5-mag-fainter neighbour is
+excluded and the >100 % depth it would have needed is reported; a 1-mag-fainter
+one is *not* excluded); a failed fetch is `QUERY_FAILED` and never an on-target
+verdict, with `QUERY_RETURNED_ZERO_ROWS` kept apart; an error bar spanning zero
+without the precision is `OFFSET_UNRESOLVED`; seven on-target sectors combined
+do not manufacture an offset; the per-target sector cap and the wall-clock
+budget are honoured (`BUDGET_EXHAUSTED`, never a depth).
+
+### 10.6 Data access, budgets, outputs
+
+Gaia comes through the **existing** route — `acquire.gaia_neighbours_cones` over
+`acquire.pyvo_sync_transport` against `gaia.tap_url` — with
+`centroid.census.cone_budget_s` / `cone_timeout_s` bounding it exactly as
+`gaia.cone_budget_s` does.  Target pixel files come from MAST, `lightkurve`
+(`search_targetpixelfile`) where it is installed and `astroquery.mast`
+`query_criteria → get_product_list → download_file(dataURI)` with the FITS read
+directly otherwise (`TIME` carried through the file's own `BJDREFI`/`BJDREFF`,
+`QUALITY != 0` masked, the `APERTURE` extension's WCS supplying `sky_fn` and the
+target's pixel).  Which route the machine has is established at runtime and
+recorded in `centroid/probe.json`.
+
+**Target pixel files are large** (tens of MB per sector), so the fetch carries
+both a wall-clock budget (`centroid.tpf.budget_s`, `per_target_budget_s`) and a
+**per-target sector cap** (`max_sectors`, default 8) — the `gaia.cone_budget_s`
+discipline and the same reason: run 34789826297 sat three hours in an unbounded
+fetch and would have been killed with nothing committed.
+
+Outputs, `results/growth/centroid/`:
+
+| File | Content |
+|---|---|
+| `probe.json` | which routes to MAST and Gaia exist here (imports only) |
+| `census.csv` | one row per Gaia source: `G`, separation, position angle, flux fraction, **required depth**, `excluded_by_arithmetic` and the note that says why |
+| `census.json`, `targets.csv` | the per-target census summary and statement; the ephemeris, position and observed depth used |
+| `sectors.csv` | per sector: cadence counts, both centroids, the offset in px and arcsec with its error, `centroid_err_method`, `offset_from_target_*` |
+| `offsets.csv` | per target: the combined offset, sector scatter, fetch status and route |
+| `verdicts.csv`, `summary.json` | the verdict with the numbers that justify it, `checks_not_performed`, the config used |
+| `acquire.json`, `acquisition_log.json` | every fetch's status and every failed attempt's exception text, elapsed against the budget |
+
+Run: `python -m seti.growth.centroid --stage {probe,census,difference,assess,all}`
+(or `seti growth-centroid ...`); workflow `growth_centroid.yml`.
+
+### 10.7 What stage 3 cannot say
+
+* **it is not a PRF fit.**  The centroid is a thresholded first moment, not a
+  fitted TESS PRF; a PRF fit would tighten the offset error, not change its
+  sign, and the systematic floor is there because the moment is approximate.
+* **Gaia's completeness is the census's completeness.**  An unresolved source
+  inside the pixel is in neither the census nor the exclusions.
+* **only the TESS pixels are tested.**  The Kepler-era pixel centroid (and the
+  `koi_fpflag_co` centroid flag, which is 0 for this target) is a separate
+  statement.
+* `centroid_sys_floor_arcsec` is **asserted**, not measured on real TESS data.

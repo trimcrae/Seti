@@ -66,6 +66,27 @@ Those are the most diagnostic industrial molecules there are, being both
 long-lived and purely artificial; their absence from the catalogues, not from
 the sky, is what excluded them.
 
+### IGNITION's third route verifies, and confirms which half of ESA was slow, 2026-09-16
+
+Probe run 35040375857 tested the IRSA parent route on the runner. Every name
+the module asserted without being able to check it offline came back right:
+
+* table `allwise_p3as_psd` exists at `https://irsa.ipac.caltech.edu/TAP`;
+* all twelve columns resolved as asserted — `designation`, `ra`, `dec`,
+  `w1mpro`, `w1sigmpro`, `w2mpro`, `w2sigmpro`, `w3mpro`, `w3sigmpro`,
+  `cc_flags`, `ph_qual`, `ext_flg`;
+* `gaia_only_status: OK`, four parent rows through the route, `usable: true`.
+
+`parent_routes_tried` now reads `esa_gaia, irsa_tap, vizier_asu`, and ESA stays
+the recommended route while it is healthy.
+
+**The `gaia_only` shape answering settles the diagnosis.** Selecting from
+`gaiadr3.gaia_source` alone is fast; the three shapes that timed out at 420-480
+s all join `gaiadr1.allwise_original_valid`, the ~750-million-row AllWISE
+mirror inside the ESA archive. It was that table, not `gaia_source` and not the
+query plan, and no rearrangement of the cuts could have avoided it. The third
+route exists precisely to sidestep it when the archive is slow again.
+
 ### GROWTH's first valid run: one depth-drift candidate, and why the error model forbids believing it, 2026-09-16
 
 Run 35038510064 is the first GROWTH pass to complete: the `ps.tic_id` string

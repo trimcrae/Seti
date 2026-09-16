@@ -10,6 +10,32 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### ULINE: the census found a second U-line list and the sample grew 4.7x, 2026-09-16
+
+Run 35039822190 is the first to search a source this channel found for itself
+rather than one asserted from a paper. The column census added
+`J/A+AS/142/181/table3` — Cernicharo, Guelin & Kahane's IRAM 30m lambda-2mm
+survey of IRC+10216 — and it delivered:
+
+| source | lines | unidentified | vetoed as known | clean |
+|---|---|---|---|---|
+| Cernicharo+2000 | 380 | 63 | 53 | 10 |
+| He+2008 | 377 | 17 | 14 | 3 |
+
+The U-line sample went from 17 to **80**, and the pairs evaluated from 6 to 12.
+Verdict is still `NO_PATTERN`: no industrial species has three coincident
+transitions. That is a count, not an abundance limit, and is not written up.
+
+**The two limits are now sharper than the result.** Neither table carries an
+intensity column, so the LTE consistency test is `untestable` rather than
+passed — a three-frequency coincidence cannot be checked for Boltzmann
+consistency, which is the test that would separate a real species from an
+accident. And five of the target species — CF2Cl2, CFCl3, SO2F2, CHClF2, CF2 —
+have no rotational line list in JPL or CDMS at all, so they were not searched.
+Those are the most diagnostic industrial molecules there are, being both
+long-lived and purely artificial; their absence from the catalogues, not from
+the sky, is what excluded them.
+
 ### GROWTH's first valid run: one depth-drift candidate, and why the error model forbids believing it, 2026-09-16
 
 Run 35038510064 is the first GROWTH pass to complete: the `ps.tic_id` string

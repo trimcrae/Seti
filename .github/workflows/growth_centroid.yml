@@ -1,0 +1,240 @@
+name: growth-centroid
+
+# GROWTH stage 3 — IS THE TRANSIT ON THE TARGET? (docs/growth.md §10).
+#
+#   probe ──▶ census (Gaia) ──▶ difference (TESS target pixel files) ──▶ assess ──▶ commit-back
+#
+# WHY THIS STAGE EXISTS.  Stage 2 measured K00897.01's TESS-era depth FROM THE
+# LIGHT CURVE — 30,614 +/- 1,195 ppm over sectors 41, 54, 55, 74, 75, 81, 82 —
+# against a Kepler-era 13,884 ppm in the same band.  DILUTION CANNOT EXPLAIN
+# THAT: extra light in the aperture makes a transit SHALLOWER, and TESS's ~21"
+# pixels admit more light than Kepler's ~4" ones, so on the same star TESS must
+# read shallower, not 2.2x deeper.  The reading that CAN produce it is that the
+# two apertures are not measuring the same source — if the dimming originates on
+# a neighbour, an aperture centred differently reports a different depth
+# entirely.  Stage 1 counted 7 Gaia sources within 21" of this target, the
+# out-of-transit scatter is 56,698 ppm (5.7 %, nearly twice the depth), and
+# stage 2 lists per_pixel_centroid_test in checks_not_performed.  This is that
+# test, and it answers with measurements rather than assertions:
+#
+#   CENSUS      every Gaia DR3 source in the aperture with G, separation,
+#               position angle and flux fraction — and THE DEPTH IT WOULD NEED
+#               in its own light to make the observed aperture depth
+#               (depth / flux_fraction).  Above 100 % that is impossible and the
+#               neighbour is excluded by arithmetic alone.  This is the cheapest
+#               decisive test and it may settle the question with no pixel work.
+#   DIFFERENCE  mean in-transit image minus mean out-of-transit image per
+#               sector; the transit source is where the difference peaks.  The
+#               offset between the difference-image centroid and the
+#               out-of-transit centroid, per sector AND combined, with an
+#               uncertainty.
+#
+# THE GOVERNING DISCIPLINES:
+#  * an offset that cannot be distinguished from zero PRECISELY ENOUGH is
+#    OFFSET_UNRESOLVED — NEVER TRANSIT_ON_TARGET;
+#  * a target whose pixels were not reached is NO_DATA_REACHED, and
+#    QUERY_FAILED (the archive errored) stays a different fact from
+#    QUERY_RETURNED_ZERO_ROWS (it answered with nothing);
+#  * target pixel files are LARGE, so the fetch carries a wall-clock budget and
+#    a per-target sector cap (config/growth.yaml centroid.tpf.budget_s /
+#    max_sectors), the same discipline as gaia.cone_budget_s and for the reason
+#    recorded there — run 34789826297 sat three hours in an unbounded fetch;
+#  * NO_DATA_REACHED is not a null result and is not written up (CLAUDE.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          "all" (probe, census, difference, assess), "probe" (which routes to
+          MAST and Gaia exist on the runner — run this first), "census" (the
+          Gaia arithmetic alone; no pixels are downloaded), or "assess" to
+          re-read the committed census/offsets without touching any archive.
+        required: false
+        default: "all"
+
+permissions:
+  contents: write
+
+jobs:
+  growth-centroid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          # `tess` brings lightkurve; the module falls back to astroquery.mast +
+          # astropy.io.fits if it is absent, and probe.json records which route
+          # this runner actually has.
+          pip install -e ".[dev,tess]"
+      # The gate is the load-bearing offline test: a synthetic pixel stamp with
+      # the transit injected on a KNOWN pixel must come back with an offset
+      # consistent with zero when it is on the target, and must recover a
+      # neighbour three pixels away when it is on the neighbour — on THIS
+      # runner.  Plus the census arithmetic, the QUERY_FAILED discipline and the
+      # OFFSET_UNRESOLVED rule.
+      - name: Offline gate — the injected offset must be recovered on this runner
+        run: python -m pytest tests/test_growth_centroid.py -q -p no:cacheprovider
+      - name: Probe (which routes to MAST and Gaia exist here)
+        if: ${{ github.event.inputs.stage != 'assess' }}
+        run: |
+          python -m seti.growth.centroid --stage probe
+          echo "=== probe ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/growth/centroid/probe.json"))
+          m = d["mast"]
+          print("route_preferred:", m.get("route_preferred"))
+          for k in ("lightkurve", "astroquery_mast", "astropy_io_fits", "astropy_wcs", "pyvo"):
+              print(" ", k, m.get(k))
+          print("gaia_tap:", d.get("gaia_tap"), "shortlist:", d.get("shortlist_size"))
+          if not m.get("route_preferred"):
+              print("::error::no route to TESS target pixel files on this runner — neither "
+                    "lightkurve nor astroquery.mast+astropy.io.fits imported")
+          if not (m.get("astropy_wcs") or {}).get("importable"):
+              print("::warning::no astropy.wcs — pixel offsets cannot be turned into sky "
+                    "offsets, so sectors will be combined from magnitudes")
+          PY
+      - name: Census (Gaia neighbours, and the depth each would need)
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'assess' && github.event.inputs.stage != 'difference' }}
+        run: |
+          python -m seti.growth.centroid --stage census
+          echo "=== census ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/growth/centroid/census.json"))
+          print("koi_ephemeris_status:", d.get("koi_ephemeris_status"))
+          for c in d.get("census") or []:
+              print(f"{c.get('kepoi_name')}: gaia={c.get('gaia_status')} "
+                    f"depth={c.get('observed_depth_ppm')} ppm")
+              print("   ", c.get("census_statement"))
+              if c.get("gaia_status") != "OK":
+                  print(f"::warning::{c.get('kepoi_name')}: the Gaia cone returned "
+                        f"{c.get('gaia_status')} — NO neighbour is excluded and none is "
+                        "implicated; this is not an isolated star, it is an unchecked one")
+              elif c.get("census_excludes_all_neighbours"):
+                  print(f"::notice::{c.get('kepoi_name')}: ARITHMETIC ALONE excludes all "
+                        f"{c.get('n_neighbours')} Gaia neighbours — each would need more than "
+                        "100 % of its own light to make the observed depth. This settles the "
+                        "question for every source Gaia resolves; an unresolved source inside "
+                        "the pixel is still not excluded.")
+              else:
+                  print(f"::warning::{c.get('kepoi_name')}: "
+                        f"{c.get('n_neighbours_not_excluded')} of {c.get('n_neighbours')} "
+                        "neighbours could still supply the observed depth — the difference "
+                        "image is required")
+          PY
+      - name: Difference (TESS target pixel files, in/out images, centroid offset)
+        if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == '' || github.event.inputs.stage == 'difference' }}
+        run: |
+          python -m seti.growth.centroid --stage difference
+          echo "=== difference ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/growth/centroid/acquire.json"))
+          print(json.dumps({k: d[k] for k in d if k != "acquisition"}, indent=2)[:8000])
+          for s in (d.get("acquisition") or {}).get("stages") or []:
+              if s.get("status") != "OK":
+                  print(f"::warning::{s['stage']}: {s['status']} {s.get('error','')}")
+          if d.get("budget_exhausted"):
+              print("::warning::the stage-3 wall-clock budget was exhausted; targets it did "
+                    "not reach are NO_DATA_REACHED (BUDGET_EXHAUSTED), NOT on target")
+          PY
+      - name: Assess (the offset verdict)
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          python -m seti.growth.centroid --stage assess
+          echo "=== summary ==="
+          python - <<'PY'
+          import json
+          s = json.load(open("results/growth/centroid/summary.json"))
+          print(json.dumps({k: s[k] for k in s if k != "config"}, indent=2)[:12000])
+          PY
+      # A verdict must never read as a science statement when nothing was measured.
+      - name: Assert the verdict is not a disguised no-data run
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/growth/centroid/summary.json")
+          if not p.exists():
+              print("::warning::no summary.json — the assess stage produced nothing"); sys.exit(0)
+          s = json.loads(p.read_text())
+          v, tv = s.get("verdict", ""), (s.get("target_verdicts") or {})
+          n_measured = sum(int(tv.get(k, 0)) for k in
+                           ("TRANSIT_ON_TARGET", "TRANSIT_OFFSET_FROM_TARGET",
+                            "OFFSET_UNRESOLVED"))
+          if n_measured == 0 and v != "NO_DATA_REACHED":
+              print(f"::error::verdict {v!r} with 0 measured targets is a disguised no-data run")
+              sys.exit(1)
+          if n_measured > 0 and v == "NO_DATA_REACHED":
+              print(f"::error::verdict NO_DATA_REACHED with {n_measured} measured targets is "
+                    "incoherent")
+              sys.exit(1)
+          for t in s.get("targets") or []:
+              k = t.get("kepoi_name")
+              if t.get("verdict") == "NO_DATA_REACHED" and not t.get("reason"):
+                  print(f"::error::{k} is NO_DATA_REACHED with no reason given")
+                  sys.exit(1)
+              # THE RULE: an offset you cannot resolve is never "on target".
+              if t.get("verdict") == "TRANSIT_ON_TARGET":
+                  det, req = t.get("offset_detectable_arcsec"), t.get("resolution_required_arcsec")
+                  if det is None or req is None or det > req:
+                      print(f"::error::{k} is TRANSIT_ON_TARGET but could only have detected "
+                            f"{det}\" against the {req}\" that matters — that is "
+                            "OFFSET_UNRESOLVED, not an on-target verdict")
+                      sys.exit(1)
+                  if not (t.get("offset_sigma") is not None
+                          and t["offset_sigma"] < t.get("n_offset", 3.0)):
+                      print(f"::error::{k} is TRANSIT_ON_TARGET with offset_sigma "
+                            f"{t.get('offset_sigma')} at or above the threshold")
+                      sys.exit(1)
+          if v == "NO_DATA_REACHED":
+              print(f"::notice::{s.get('reason')} — NOT a null result and NOT written up "
+                    "(CLAUDE.md); the pixels were not reached.")
+          if v == "TRANSIT_OFFSET_FROM_TARGET":
+              print("::notice::the transit does NOT originate on the target star. The stage-2 "
+                    "'deeper TESS transit' is then a statement about two different stars, and "
+                    "the GROWTH candidate dies — see the attributed Gaia source.")
+          if v == "TRANSIT_ON_TARGET":
+              print("::notice::the transit IS on the target to the precision measured. This "
+                    "removes the blend explanation for the depth change; it is not by itself a "
+                    "detection, and an unresolved source inside the pixel is still untested.")
+          if v == "OFFSET_UNRESOLVED":
+              print(f"::notice::{s.get('reason')} — reported, not resolved; no pick is made.")
+          for k, c in (s.get("reasons") or {}).items():
+              if k:
+                  print(f"::warning::reason {k}: {c} target(s)")
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          # The push is VERIFIED against the remote (scripts/commit_results.sh);
+          # the downloaded target pixel files stay in the artifact only.
+          scripts/commit_results.sh \
+            "growth stage 3: is the transit on the target? — census/difference/assess" \
+            results/growth/centroid/probe.json \
+            results/growth/centroid/census.json \
+            results/growth/centroid/census.csv \
+            results/growth/centroid/targets.csv \
+            results/growth/centroid/acquire.json \
+            results/growth/centroid/acquisition_log.json \
+            results/growth/centroid/sectors.csv \
+            results/growth/centroid/offsets.csv \
+            results/growth/centroid/verdicts.csv \
+            results/growth/centroid/summary.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: growth-centroid-final
+          path: results/growth/centroid/
+          if-no-files-found: warn

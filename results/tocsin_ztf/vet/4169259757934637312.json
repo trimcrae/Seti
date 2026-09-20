@@ -7,12 +7,14 @@
      "g": {
       "mad": 0.019531660742168444,
       "median": -0.10364857804609343,
-      "n": 67
+      "n": 67,
+      "same_sign_fraction": 1.0
      },
      "r": {
       "mad": 0.016148739100176356,
       "median": -0.12139570520410795,
-      "n": 138
+      "n": 138,
+      "same_sign_fraction": 1.0
      }
     },
     "amplitude_vs_reference": {
@@ -3165,12 +3167,14 @@
      "g": {
       "mad": 0.018088259383696972,
       "median": -0.10303940646975471,
-      "n": 33
+      "n": 33,
+      "same_sign_fraction": 1.0
      },
      "r": {
       "mad": 0.015186066396545711,
       "median": -0.11617303410637744,
-      "n": 71
+      "n": 71,
+      "same_sign_fraction": 1.0
      }
     },
     "amplitude_vs_reference": {
@@ -4805,7 +4809,7 @@
    }
   ]
  },
- "classification": "unexplained",
+ "classification": "systematic:persistent_residual",
  "drift_since_2018_arcsec": 0.03460167371660743,
  "drift_since_reference_epoch_arcsec": 0.03248300159114114,
  "epoch_jyear": 2026.6658868544826,
@@ -4822,8 +4826,15 @@
    -7.670840197915836
   ]
  },
- "explanation": [],
- "flags": [],
+ "explanation": [
+  "ZTF19abaphuv r: a level of -0.12 x the star's Gaia flux on 138 detections (MAD 0.02, 100 % one sign) --- present on every visit, so a residual, not an event",
+  "ZTF19abaphuv g: a level of -0.10 x the star's Gaia flux on 67 detections (MAD 0.02, 100 % one sign) --- present on every visit, so a residual, not an event",
+  "ZTF19aaxmevf r: a level of -0.12 x the star's Gaia flux on 71 detections (MAD 0.02, 100 % one sign) --- present on every visit, so a residual, not an event",
+  "ZTF19aaxmevf g: a level of -0.10 x the star's Gaia flux on 33 detections (MAD 0.02, 100 % one sign) --- present on every visit, so a residual, not an event"
+ ],
+ "flags": [
+  "persistent_level"
+ ],
  "gaia_neighbours": {
   "n": 55,
   "rows": [
@@ -5930,45 +5941,8 @@
   ]
  },
  "irsa_lightcurve": {
-  "n_rows": 1249,
-  "objects": [
-   {
-    "dec": -7.6707407,
-    "filter": "zr",
-    "mag_mad": 0.020286600000000377,
-    "mag_median": 14.3024321,
-    "mjd_max": 60957.1482639,
-    "mjd_min": 58217.4835417,
-    "n": 867,
-    "oid": "382216300062581",
-    "ra": 263.5260917,
-    "sep_arcsec_epoch": 0.3948468349236099
-   },
-   {
-    "dec": -7.6707266,
-    "filter": "zg",
-    "mag_mad": 0.022622550000000352,
-    "mag_median": 15.862824,
-    "mjd_max": 60957.1149769,
-    "mjd_min": 58204.5304282,
-    "n": 378,
-    "oid": "382116300013072",
-    "ra": 263.5261186,
-    "sep_arcsec_epoch": 0.43539648192961633
-   },
-   {
-    "dec": -7.6707782,
-    "filter": "zg",
-    "mag_mad": 0.010226250000000547,
-    "mag_median": 15.88275815,
-    "mjd_max": 60474.2679282,
-    "mjd_min": 59393.3253009,
-    "n": 4,
-    "oid": "1427107300016164",
-    "ra": 263.5260953,
-    "sep_arcsec_epoch": 0.2610714603322912
-   }
-  ]
+  "n_rows": 0,
+  "objects": []
  },
  "ledger": {
   "a_by_band": {
@@ -5984,15 +5958,15 @@
     -0.10485064427650852
    ]
   },
-  "duty_cycle": 0.008823529411764706,
+  "duty_cycle": 0.07894736842105263,
   "n_events": 3,
-  "n_visits": 340,
+  "n_visits": 38,
   "nights": [
    "n61256",
    "n61283",
    "n61296"
   ],
-  "p_binomial": 0.9879496851604815,
+  "p_binomial": 0.06143916703438634,
   "tier": "interest"
  },
  "pm_mas_yr": 4.237344250932563,
@@ -6004,22 +5978,22 @@
  },
  "services": [
   {
-   "elapsed_s": 13.8,
+   "elapsed_s": 4.9,
    "ok": true,
    "service": "gaia_cone"
   },
   {
-   "elapsed_s": 0.6,
+   "elapsed_s": 0.5,
    "ok": true,
    "service": "alerce_cone"
   },
   {
-   "elapsed_s": 1.1,
+   "elapsed_s": 0.8,
    "ok": true,
    "service": "alerce_detections:ZTF19abaphuv"
   },
   {
-   "elapsed_s": 0.9,
+   "elapsed_s": 0.8,
    "ok": true,
    "service": "alerce_non_detections:ZTF19abaphuv"
   },
@@ -6034,7 +6008,7 @@
    "service": "alerce_non_detections:ZTF19aaxmevf"
   },
   {
-   "elapsed_s": 1.0,
+   "elapsed_s": 0.6,
    "ok": true,
    "service": "simbad"
   },
@@ -6044,8 +6018,9 @@
    "service": "vsx"
   },
   {
-   "elapsed_s": 62.3,
-   "ok": true,
+   "elapsed_s": 120.3,
+   "error": "ReadTimeout: HTTPSConnectionPool(host='irsa.ipac.caltech.edu', port=443): Read timed out. (read timeout=120.0)",
+   "ok": false,
    "service": "irsa_lightcurve"
   }
  ],
@@ -6085,7 +6060,7 @@
  },
  "target_source": "target_list",
  "verdict": "OK",
- "vetted_at_utc": "2026-09-20T18:46:09Z",
+ "vetted_at_utc": "2026-09-20T21:33:54Z",
  "vsx": {
   "n": 0,
   "rows": []

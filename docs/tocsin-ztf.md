@@ -409,9 +409,38 @@ rather than silently isolated); the dropped stars are committed to
 Expected cost: of order 10⁻³ of the list.
 
 **Disposition of the candidate:** rejected, `systematic:proper_motion_reference_artefact`;
-removed from the ledger with its 51 visits; issue #15 closed with the vet
-record. Under rule 1 the star remains in the list and is screened for
+SIMBAD (asked at J2000, second vet) names it **LSR J1817+1328**, a catalogued
+white dwarf; removed from the ledger with its 51 visits; issue #15 closed with
+the vet record. Under rule 1 the star remains in the list and is screened for
 departures from its level from the next night on.
+
+**The whole interest tier, vetted the same afternoon** (run 35527685113,
+2:01–3:01 PM EDT, 31 of the 37 promoted stars before the job's hour ran out;
+the rest and the `unexplained` re-vetted afterwards). What the ledger's
+second tier was made of:
+
+| classification | stars | what they are |
+|---|---|---|
+| `systematic:proper_motion_reference_artefact` | **11** (+ 3 at `a` = 1.25–1.7, caught by the `persistent_level` flag added on their account) | high-proper-motion stars (1.1–2.4″/yr: LP 251-35, LSR J0519+4213, LP 758-60, G 32-35, G 30-48, EGGR 45, G 99-33, G 17-28, Wolf 219, LSR J1817+1328, LP 741-20; LP 760-3, L 879-6, 2MASSI J1300425+191235) 8–18″ off their reference, `distnr` 2–12″, a constant `a` on every visit. Run 17's other "saturated" candidate, G 30-48, is among them. |
+| `systematic:persistent_residual` | 2 | still stars with a −11 % and a +10 % level on every one of hundreds of visits over years |
+| `astrophysical:known_variable` | 8 | VSX/SIMBAD rotational variables, YSOs, an eclipsing binary, within 1.7″ |
+| `unexplained` | 7 | one or two events each — a flare-shaped chromatic pair (g 2.2×, r 0.3×), an emission-line star, three-event −10 % dips on a still star, and single flashes |
+
+Everything classified `systematic:` was removed with its trials by rule 3
+(`apply_vet`, run at every assessment from the committed records): 12 stars,
+64 events, 291 trials, on top of the candidate. The known variables and the
+unexplained stay as trials, annotated `vet:…` on the watchlist. The ledger
+after the sweep: **0 candidate, 18 interest, 174 watch**; events 493 against
+1,214,427 trials, an ensemble rate of 4.1 × 10⁻⁴ per star-night.
+
+The pattern is the finding of the day: **fourteen of the twenty-two stars the
+ledger had raised above `watch` for repeated grey flashes were the same
+artefact**, and the ledger's promotion logic — grey, repeating, at a
+catalogued nearby star — is exactly the shape a star walking off its
+reference image produces. A nearby-star sample is a high-proper-motion sample
+by construction, ZTF's references date from 2018–19, and every star past
+~1.5″/yr × (years since) is now, or soon will be, in this state. Rule 1
+handles them from here; the vet names them when they slip through.
 
 ## 9. Status
 

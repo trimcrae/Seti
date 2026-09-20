@@ -136,10 +136,21 @@ for attempt in $(seq 1 "$ATTEMPTS"); do
   # `reset --hard` does not touch untracked files, so anything else this run
   # generated (and did not ask to commit) is still there for later steps.
   git reset --hard --quiet "origin/$BRANCH" || { echo "commit_results: reset failed" >&2; exit 1; }
+  # A FILE is replaced; a DIRECTORY is laid OVER, never replaced.  On
+  # 2026-09-20 a scheduled tocsin-ztf run checked out before two vet runs had
+  # committed 29 records into results/tocsin_ztf/vet/, waited two hours behind
+  # them on the concurrency group, then `rm -rf`'d the directory and put its
+  # own two-file copy back -- deleting every record the newer runs had made.
+  # A run may only assert the files it wrote; files it never saw stay.
   for p in ${present[@]+"${present[@]}"}; do
     mkdir -p "$(dirname "$p")"
-    rm -rf "$p"
-    cp -R "$stage/$p" "$p"
+    if [ -d "$stage/$p" ]; then
+      mkdir -p "$p"
+      cp -R "$stage/$p/." "$p/"
+    else
+      rm -rf "$p"
+      cp -R "$stage/$p" "$p"
+    fi
   done
   # `reset --hard` brought a pruned path back from the branch; this run says it
   # should not be there, so remove it and stage that with `-A`.

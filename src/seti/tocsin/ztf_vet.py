@@ -708,6 +708,12 @@ def vet(cfg=None, source_ids: list[str] | None = None, tiers: tuple[str, ...] = 
     services = services or Services.live(z, float(o["timeout_s"]))
     index = {"vetted_at_utc": _utc(), "tiers": list(tiers), "targets": {},
              "n": len(ids), "n_done": 0}
+    if not ids:
+        # Nothing to vet tonight: leave the last sweep's index in place rather
+        # than replacing it with an empty one (the nightly run of 2026-09-20
+        # did exactly that over the interest-tier sweep's).
+        print("[tocsin-ztf-vet] no targets to vet")
+        return index
     for sid in ids:
         print(f"[tocsin-ztf-vet] {sid}")
         rec = vet_target(sid, z=z, conf=conf, targets=targets, ledger=ledger,

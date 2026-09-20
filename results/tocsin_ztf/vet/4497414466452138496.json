@@ -5100,17 +5100,35 @@
    }
   ]
  },
- "classification": "systematic:reference_missing_target",
+ "classification": "systematic:proper_motion_reference_artefact",
  "drift_since_2018_arcsec": 9.653385246590727,
+ "drift_since_reference_epoch_arcsec": 9.054482084751978,
  "epoch_jyear": 2026.5592204731004,
+ "epochs": {
+  "catalogue_radius_arcsec": 35.98903161838746,
+  "catalogues_j2000": [
+   274.27707067148407,
+   13.473608801826067
+  ],
+  "events": 2026.5592204731004,
+  "irsa_radius_arcsec": 7.791225294709966,
+  "ztf_reference": [
+   274.27470333594397,
+   13.467721158790715
+  ]
+ },
  "explanation": [
   "ZTF25aabynax r: median difference flux is 1.02 x the target's own Gaia flux over 87 detections (MAD 0.01) --- the difference image holds the whole star, i.e. the reference does not",
   "ZTF25aabynax g: median difference flux is 1.03 x the target's own Gaia flux over 96 detections (MAD 0.01) --- the difference image holds the whole star, i.e. the reference does not",
   "ZTF26abftlhy r: median difference flux is 1.02 x the target's own Gaia flux over 78 detections (MAD 0.01) --- the difference image holds the whole star, i.e. the reference does not",
-  "ZTF26abftlhy g: median difference flux is 1.04 x the target's own Gaia flux over 96 detections (MAD 0.01) --- the difference image holds the whole star, i.e. the reference does not"
+  "ZTF26abftlhy g: median difference flux is 1.04 x the target's own Gaia flux over 96 detections (MAD 0.01) --- the difference image holds the whole star, i.e. the reference does not",
+  "proper motion 1198 mas/yr has carried the star 9.1\" since the assumed reference epoch 2019, beyond the 1.5\" match radius",
+  "ZTF25aabynax: nearest reference-catalogue source a median 9.5\" from the detections (corrected on 1 %); ZTF26abftlhy: nearest reference-catalogue source a median 9.7\" from the detections (corrected on 9 %)"
  ],
  "flags": [
-  "self_flux"
+  "self_flux",
+  "high_proper_motion_drift",
+  "no_reference_source_at_position"
  ],
  "gaia_neighbours": {
   "n": 58,
@@ -6331,58 +6349,70 @@
  "pm_mas_yr": 1197.8063236774915,
  "queries": {
   "gaia_cone": "SELECT source_id, ra, dec, parallax, parallax_error, pmra, pmdec, phot_g_mean_mag, phot_bp_mean_mag, phot_rp_mean_mag, bp_rp, ruwe, phot_variable_flag, non_single_star, DISTANCE(POINT('ICRS', ra, dec), POINT('ICRS', 274.2737615, 13.4653787)) * 3600.0 AS sep_arcsec_2016 FROM gaiadr3.gaia_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 274.2737615, 13.4653787, 0.01666667))",
-  "irsa_lightcurve": "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves?POS=CIRCLE 274.273761 13.465379 0.000833&FORMAT=csv"
+  "irsa_lightcurve": "https://irsa.ipac.caltech.edu/cgi-bin/ZTF/nph_light_curves?POS=CIRCLE 274.274703 13.467721 0.002164&FORMAT=csv",
+  "simbad": "SELECT main_id, otype, sp_type, ra, dec, DISTANCE(POINT('ICRS', ra, dec), POINT('ICRS', 274.2770707, 13.4736088)) * 3600.0 AS sep_arcsec FROM basic WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 274.2770707, 13.4736088, 0.00999695))",
+  "vsx": "SELECT * FROM \"B/vsx/vsx\" WHERE 1 = CONTAINS(POINT('ICRS', RAJ2000, DEJ2000), CIRCLE('ICRS', 274.2770707, 13.4736088, 0.00999695))"
  },
  "services": [
   {
-   "elapsed_s": 4.2,
+   "elapsed_s": 34.5,
    "ok": true,
    "service": "gaia_cone"
   },
   {
-   "elapsed_s": 0.5,
+   "elapsed_s": 0.9,
    "ok": true,
    "service": "alerce_cone"
   },
   {
-   "elapsed_s": 1.0,
+   "elapsed_s": 1.2,
    "ok": true,
    "service": "alerce_detections:ZTF25aabynax"
   },
   {
-   "elapsed_s": 0.8,
+   "elapsed_s": 0.7,
    "ok": true,
    "service": "alerce_non_detections:ZTF25aabynax"
   },
   {
-   "elapsed_s": 0.9,
+   "elapsed_s": 1.0,
    "ok": true,
    "service": "alerce_detections:ZTF26abftlhy"
   },
   {
-   "elapsed_s": 0.6,
+   "elapsed_s": 0.7,
    "ok": true,
    "service": "alerce_non_detections:ZTF26abftlhy"
   },
   {
-   "elapsed_s": 0.6,
+   "elapsed_s": 1.1,
    "ok": true,
    "service": "simbad"
   },
   {
-   "elapsed_s": 1.4,
+   "elapsed_s": 1.1,
    "ok": true,
    "service": "vsx"
   },
   {
-   "elapsed_s": 38.0,
-   "ok": true,
+   "elapsed_s": 120.2,
+   "error": "ReadTimeout: HTTPSConnectionPool(host='irsa.ipac.caltech.edu', port=443): Read timed out. (read timeout=120.0)",
+   "ok": false,
    "service": "irsa_lightcurve"
   }
  ],
  "simbad": {
-  "n": 0,
-  "rows": []
+  "n": 1,
+  "rows": [
+   {
+    "dec": 13.473608793955,
+    "main_id": "LSR J1817+1328",
+    "otype": "WD*",
+    "ra": 274.2770707128,
+    "sep_arcsec": 0.0,
+    "sp_type": "DA10"
+   }
+  ]
  },
  "source_id": "4497414466452138496",
  "target": {
@@ -6416,7 +6446,7 @@
  },
  "target_source": "target_list",
  "verdict": "OK",
- "vetted_at_utc": "2026-09-20T17:49:36Z",
+ "vetted_at_utc": "2026-09-20T18:04:36Z",
  "vsx": {
   "n": 0,
   "rows": []

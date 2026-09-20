@@ -28,7 +28,7 @@ def _target(**kw):
 
 
 def _dets(n=40, a_gaia=1.03, corrected_every=2, ref_mag=11.47, start=61200.0,
-          distnr_far=1.6):
+          distnr_far=1.6, isdiffpos="t"):
     """Detections whose difference flux is ``a_gaia`` times the target's Gaia flux,
     with every ``corrected_every``-th r detection carrying a reference of ``ref_mag``;
     uncorrected detections sit ``distnr_far`` from the nearest reference source."""
@@ -38,7 +38,7 @@ def _dets(n=40, a_gaia=1.03, corrected_every=2, ref_mag=11.47, start=61200.0,
         for fid, base in ((1, 16.3178), (2, 15.5796)):
             dm = base - 2.5 * np.log10(a_gaia)
             corr = fid == 2 and corrected_every and (k % corrected_every == 0)
-            out.append({"mjd": mjd, "fid": fid, "magpsf": dm, "isdiffpos": "t",
+            out.append({"mjd": mjd, "fid": fid, "magpsf": dm, "isdiffpos": isdiffpos,
                         "corrected": corr, "magpsf_corr": ref_mag if corr else None,
                         "distnr": 0.9 if corr else distnr_far, "drb": 0.9,
                         "candid": f"{k}{fid}"})
@@ -82,7 +82,7 @@ def test_the_real_candidate_is_a_proper_motion_reference_artefact():
     summ = _obj(_dets(n=90, a_gaia=1.02, corrected_every=0, distnr_far=9.5))
     rec = V.analyse(SID, target, 2026.56, [target], [summ], [], [], [], 13.0, None)
     assert rec["classification"] == "systematic:proper_motion_reference_artefact"
-    assert set(rec["flags"]) == {"self_flux", "high_proper_motion_drift",
+    assert set(rec["flags"]) == {"self_flux", "persistent_level", "high_proper_motion_drift",
                                  "no_reference_source_at_position"}
     assert rec["drift_since_reference_epoch_arcsec"] == pytest.approx(1.198 * 7.56, abs=0.1)
     assert "saturated_neighbour" not in rec
@@ -93,7 +93,7 @@ def test_self_flux_with_a_reference_source_present_is_a_missing_target_not_pm():
     the position but not the star (built in a faint state, or masked)."""
     summ = _obj(_dets(a_gaia=1.0, corrected_every=0, distnr_far=0.3))
     rec = V.analyse(SID, _target(), 2026.55, [_target()], [summ], [], [], [], 13.0, None)
-    assert rec["flags"] == ["self_flux"]
+    assert rec["flags"] == ["self_flux", "persistent_level"]
     assert rec["classification"] == "systematic:reference_missing_target"
 
 
@@ -312,6 +312,14 @@ def test_visit_history_is_restricted_to_the_ledgers_nights():
     assert led.targets["x"]["n_visits"] == 2
     led.assess()
     assert led.targets["x"]["duty_cycle"] == pytest.approx(0.5)
+    # An event night counts as visited even when no visit epoch was merged for it.
+    led.add_night("n61240", [_event("x", "n61240", 61240.9)], target_visits=10,
+                  targets_in_footprint=10, alerts_seen=1)
+    led.targets["x"]["visit_mjds"] = [61235.9]
+    led.restrict_visits_to_ledger_nights()
+    assert led.targets["x"]["visit_nights"] == [61235, 61240]
+    led.assess()
+    assert led.targets["x"]["duty_cycle"] <= 1.0
 
 
 def test_assess_only_removes_on_request_and_restricts_visits(tmp_path, monkeypatch):
@@ -343,3 +351,54 @@ def test_assess_only_removes_on_request_and_restricts_visits(tmp_path, monkeypat
     # x's ONE counted visit went with it: the pre-ledger epoch was dropped by
     # the night restriction before the removal subtracted anything.
     assert saved["n_target_visits"] == 1000 - 1
+
+
+def test_a_constant_level_off_the_reference_is_the_pm_artefact_whatever_its_size():
+    """Three interest-tier stars of the 2026-09-20 sweep: 1.2"/yr, off the reference,
+    a = 1.25-1.7 (very red dwarfs, poor synthetic g/r) constant to 1 %."""
+    target = _target(parallax=91.8, pmra=-1000.0, pmdec=-450.0, phot_g_mean_mag=14.54, bp_rp=4.37)
+    summ = _obj(_dets(n=60, a_gaia=1.3, corrected_every=0, distnr_far=7.7))
+    rec = V.analyse(SID, target, 2026.56, [target], [summ], [], [], [], 13.0, None)
+    assert "self_flux" not in rec["flags"]
+    assert "persistent_level" in rec["flags"]
+    assert rec["classification"] == "systematic:proper_motion_reference_artefact"
+    assert summ["amplitude_vs_gaia"]["r"]["same_sign_fraction"] == 1.0
+
+
+def test_a_constant_ten_percent_dip_on_a_still_star_is_a_persistent_residual():
+    """Two interest-tier stars of the 2026-09-20 sweep: no proper motion to speak
+    of, a reference source in place, and a -10 % dip on every one of dozens of
+    visits --- a reference built in a brighter state, or a PSF mismatch."""
+    summ = _obj(_dets(n=30, a_gaia=0.1, corrected_every=1, ref_mag=15.5, distnr_far=0.4,
+                      isdiffpos="f"))
+    assert summ["amplitude_vs_gaia"]["r"]["median"] == pytest.approx(-0.1, abs=0.005)
+    rec = V.analyse(SID, _target(), 2026.56, [_target()], [summ], [], [], [], 13.0, None)
+    assert rec["flags"] == ["persistent_level"]
+    assert rec["classification"] == "systematic:persistent_residual"
+
+
+def test_apply_vet_removes_systematics_and_annotates_the_rest(tmp_path):
+    import json
+    vet = tmp_path / "vet"
+    vet.mkdir()
+    (vet / "x.json").write_text(json.dumps({"source_id": "x", "verdict": "OK",
+        "classification": "systematic:proper_motion_reference_artefact", "flags": ["self_flux"]}))
+    (vet / "y.json").write_text(json.dumps({"source_id": "y", "verdict": "OK",
+        "classification": "astrophysical:known_variable", "flags": ["known_variable_vsx"]}))
+    (vet / "z.json").write_text(json.dumps({"source_id": "z", "verdict": "NO_TARGET_ROW"}))
+    (vet / "index.json").write_text("{}")
+    led = Ledger()
+    led.add_night("n61235", [_event("x", "n61235", 61235.9), _event("y", "n61235", 61235.8),
+                             _event("z", "n61235", 61235.7)],
+                  target_visits=100, targets_in_footprint=100, alerts_seen=3,
+                  target_positions={"x": (RA, DEC), "y": (10.0, 5.0), "z": (20.0, 5.0)})
+    led.apply_visit_history({"x": [61235.9], "y": [61235.8], "z": [61235.7]})
+    out = V.apply_vet(led, vet)
+    assert set(out["removed"]["targets"]) == {"x"}
+    assert led.removed["x"]["reason"] == "vet:systematic:proper_motion_reference_artefact"
+    assert out["annotated"] == {"y": "astrophysical:known_variable"}
+    assert led.targets["y"]["vet_classification"] == "astrophysical:known_variable"
+    assert "z" in led.targets and "vet_classification" not in led.targets["z"]
+    assert led.n_target_visits == 99 and led.n_events_kept == 2
+    # Idempotent.
+    assert V.apply_vet(led, vet)["removed"]["events"] == 0

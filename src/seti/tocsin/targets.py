@@ -292,3 +292,96 @@ def parallax_shells(d_max_pc: float, n_shells: int = 6) -> list[tuple[float, flo
         shells.append((max(plx, plx_min), hi))
         hi = max(plx, plx_min)
     return [(lo, hi) for lo, hi in shells if hi > lo]
+
+
+# ---------------------------------------------------------------------------
+# Bright neighbours: the saturated star NEXT to a faint target
+# ---------------------------------------------------------------------------
+# ZTF run 17 (docs/tocsin-ztf.md 8c) rejected Gaia DR3 4497414466452138496 as a
+# saturated star because ALeRCE's reference magnitude at its position was r 11.5.
+# Gaia says the target itself is r 15.6.  The r 11.5 flux belongs to a
+# neighbour inside the same ~2" PSF; its saturated core leaves a few-percent
+# residual on every visit, at the faint target's catalogued position, and once
+# the funnel started measuring amplitudes against the target's OWN (faint) Gaia
+# baseline instead of the reference flux, the same residual came back as a
+# +103 % "flash" on 29 nights and reached candidate tier a second time (run of
+# 2026-09-20, issue #15).  The bright cut on the target's own magnitude cannot
+# see this; the cut has to be on what else is inside the aperture.
+#
+# The exclusion radius scales with the neighbour's flux: a saturated star's
+# residual, halo and bleed all grow with brightness.  At the survey's saturation
+# magnitude the radius is `r0` (5", a couple of PSF widths plus the 1.5" match
+# radius and the ~1" centroid jitter of a residual); every 5 magnitudes brighter
+# multiplies it by 10, capped at `cap`.  So G 11.5 -> 10", G 8 -> 50", G 5 ->
+# 120".  Positions are compared at the Gaia epoch; over a decade a nearby star
+# moves at most a few arcsec, which is inside the floor.
+def bright_neighbour_radius_arcsec(neighbour_g, saturation_mag: float,
+                                   r0_arcsec: float = 5.0, cap_arcsec: float = 120.0):
+    """Exclusion radius around a star of magnitude ``neighbour_g`` (0 if not saturated)."""
+    g = np.asarray(neighbour_g, dtype=float)
+    r = r0_arcsec * np.power(10.0, 0.2 * (float(saturation_mag) - g))
+    r = np.minimum(r, float(cap_arcsec))
+    return np.where(np.isfinite(g) & (g < float(saturation_mag)), r, 0.0)
+
+
+def bright_star_adql(ra_lo: float, ra_hi: float, dec_min: float, dec_max: float,
+                     g_max: float, max_rows: int = 2_000_000) -> str:
+    """Every Gaia DR3 source brighter than ``g_max`` in one RA stripe of the footprint."""
+    return (f"SELECT TOP {int(max_rows)} source_id, ra, dec, pmra, pmdec, phot_g_mean_mag "
+            f"FROM gaiadr3.gaia_source WHERE phot_g_mean_mag < {float(g_max)} "
+            f"AND ra >= {float(ra_lo)} AND ra < {float(ra_hi)} "
+            f"AND dec BETWEEN {float(dec_min)} AND {float(dec_max)}")
+
+
+def flag_bright_neighbours(targets, bright, saturation_mag: float,
+                           r0_arcsec: float = 5.0, cap_arcsec: float = 120.0):
+    """Targets that lie inside a brighter-than-saturation star's exclusion radius.
+
+    ``targets`` and ``bright`` are DataFrame-likes with ``source_id, ra, dec,
+    phot_g_mean_mag``.  Returns a DataFrame with one row per flagged target
+    (the CLOSEST-in-radius-units offending neighbour): ``source_id, reason,
+    neighbour_source_id, neighbour_g, sep_arcsec, radius_arcsec``.  A star is
+    never its own neighbour.
+    """
+    import pandas as pd
+    from scipy.spatial import cKDTree
+
+    cols = ["source_id", "reason", "neighbour_source_id", "neighbour_g",
+            "sep_arcsec", "radius_arcsec"]
+    if targets is None or bright is None or len(targets) == 0 or len(bright) == 0:
+        return pd.DataFrame(columns=cols)
+    b_g = np.asarray(bright["phot_g_mean_mag"], dtype=float)
+    b_r = bright_neighbour_radius_arcsec(b_g, saturation_mag, r0_arcsec, cap_arcsec)
+    keep = b_r > 0
+    if not keep.any():
+        return pd.DataFrame(columns=cols)
+    b_ra = np.asarray(bright["ra"], dtype=float)[keep]
+    b_dec = np.asarray(bright["dec"], dtype=float)[keep]
+    b_id = np.asarray(bright["source_id"]).astype(str)[keep]
+    b_g, b_r = b_g[keep], b_r[keep]
+    t_ra = np.asarray(targets["ra"], dtype=float)
+    t_dec = np.asarray(targets["dec"], dtype=float)
+    t_id = np.asarray(targets["source_id"]).astype(str)
+    tree = cKDTree(_unit_vectors(b_ra, b_dec))
+    chord = 2.0 * np.sin(np.radians(float(np.max(b_r)) / 3600.0) / 2.0)
+    hits = tree.query_ball_point(_unit_vectors(t_ra, t_dec), r=chord)
+    rows = []
+    for i, js in enumerate(hits):
+        best = None
+        for j in js:
+            if b_id[j] == t_id[i]:
+                continue
+            # exact separation from the chord length
+            d = np.linalg.norm(_unit_vectors(t_ra[i], t_dec[i])[0]
+                               - _unit_vectors(b_ra[j], b_dec[j])[0])
+            sep = np.degrees(2.0 * np.arcsin(min(1.0, d / 2.0))) * 3600.0
+            if sep <= b_r[j]:
+                score = sep / b_r[j]
+                if best is None or score < best[0]:
+                    best = (score, j, sep)
+        if best is not None:
+            _s, j, sep = best
+            rows.append({"source_id": t_id[i], "reason": "bright_neighbour",
+                         "neighbour_source_id": b_id[j], "neighbour_g": float(b_g[j]),
+                         "sep_arcsec": float(sep), "radius_arcsec": float(b_r[j])})
+    return pd.DataFrame(rows, columns=cols)

@@ -1,0 +1,96 @@
+name: tocsin-ztf-vet
+
+# Vet promoted TOCSIN-ZTF targets against what the nightly funnel cannot see
+# (docs/tocsin-ztf.md 8d): Gaia DR3 neighbours (a saturated star inside the
+# aperture), the FULL ALeRCE history with the reference-distance, correction
+# and reference-magnitude fields, SIMBAD and VSX, and IRSA's ZTF data-release
+# light curve at the position.  Writes results/tocsin_ztf/vet/<source_id>.json
+# and commits it back.  The nightly workflow runs the same step for every
+# candidate-tier target; this one is for dispatching by hand on any star.
+#
+# CREDENTIALS: none.  All five services are public.
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ids:
+        description: "Comma-separated Gaia DR3 source ids (blank = the ledger's candidate tier)"
+        required: false
+        default: ""
+      tiers:
+        description: "Comma-separated ledger tiers to vet as well (blank = none)"
+        required: false
+        default: "candidate"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tocsin-ztf-ledger
+  cancel-in-progress: false
+
+jobs:
+  vet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      # The cached target list supplies the star's Gaia row (with its GSPC
+      # synthetic magnitudes) without a Gaia call; a miss falls back to one
+      # Gaia query per star inside the vet itself.
+      - name: Restore the northern nearby-star target list (optional)
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/tocsin_ztf
+          key: tocsin-ztf-targets-never-match
+          restore-keys: |
+            tocsin-ztf-targets-
+
+      - name: Vet
+        run: |
+          args=""
+          if [ -n "${{ github.event.inputs.source_ids }}" ]; then
+            args="$args --source-id ${{ github.event.inputs.source_ids }}"
+          fi
+          args="$args --tiers '${{ github.event.inputs.tiers }}'"
+          echo "tocsin-ztf-vet$args"
+          eval python -m seti.cli tocsin-ztf-vet $args
+
+      - name: Summarise
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          for p in sorted(pathlib.Path("results/tocsin_ztf/vet").glob("*.json")):
+              if p.name == "index.json":
+                  continue
+              r = json.loads(p.read_text())
+              print(p.stem, r.get("verdict"), r.get("classification"), r.get("flags"))
+              for line in r.get("explanation", []):
+                  print("   ", line)
+              for s in r.get("services", []):
+                  if not s.get("ok"):
+                      print("    service failed:", s.get("service"), s.get("error"))
+          PY
+
+      - name: Commit the vet records
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "tocsin-ztf-vet: vet promoted targets (Gaia neighbours, ALeRCE history, catalogues, IRSA light curve)" \
+            results/tocsin_ztf/vet
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tocsin-ztf-vet
+          path: results/tocsin_ztf/vet/

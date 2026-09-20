@@ -261,6 +261,8 @@ class Ledger:
     bin_trials: dict = field(default_factory=dict)
     bin_events: dict = field(default_factory=dict)
     targets: dict[str, dict] = field(default_factory=dict)
+    #: Targets removed after the fact (`remove_targets`): id -> why and what went.
+    removed: dict[str, dict] = field(default_factory=dict)
     rate_per_visit: float = float("nan")
     fdr_threshold: float = float("nan")
     notes: list[str] = field(default_factory=list)
@@ -557,6 +559,48 @@ class Ledger:
         if tier == "candidate" and float(rec.get("p_timing", 1.0)) <= timing_alpha:
             tier = "alarm"
         rec["tier"] = tier
+
+    def remove_targets(self, reasons: dict[str, str]) -> dict:
+        """Take named targets OUT of the ledger, events and trials alike.
+
+        For a star found (after the fact) to be no trial at all --- one sitting
+        inside a saturated neighbour's exclusion radius, say --- the honest
+        correction is neither to leave its events in (they are residuals, and
+        they raise the ensemble rate every other star is judged against) nor to
+        purge the events and keep the trials (that deflates the rate and makes
+        every surviving p-value anti-conservative; docs/tocsin-ztf.md 8c).  Both
+        go: its ``n_visits`` visited nights are subtracted from the cumulative
+        trial count and from its sky bin, exactly as its events are subtracted
+        from the event count.  What cannot be subtracted is the trials of an
+        excluded star that never alerted --- it has no record --- so a list
+        rebuilt under a stricter rule leaves the past denominator very slightly
+        too large (fewer than one per cent of trials for the bright-neighbour
+        rule); that is conservative for the ensemble rate only in the sense
+        that it lowers it, and the size of the effect is recorded in
+        ``removed``.
+
+        ``reasons`` maps target id -> why.  Returns what was removed.  Targets
+        absent from the ledger are ignored.  Removal is recorded in
+        ``removed`` and is idempotent.
+        """
+        out = {"targets": {}, "events": 0, "visits": 0}
+        for tid, why in reasons.items():
+            rec = self.targets.pop(str(tid), None)
+            if rec is None:
+                continue
+            k = int(rec.get("n_events") or len(rec.get("events") or []))
+            n = int(rec.get("n_visits") or 0) if rec.get("visits_exact") else 0
+            self.n_events_kept = max(0, self.n_events_kept - k)
+            self.n_target_visits = max(0, self.n_target_visits - n)
+            bkey = bin_key(rec.get("ra"), rec.get("dec"))
+            if bkey and bkey in self.bin_trials:
+                self.bin_trials[bkey] = max(0, int(self.bin_trials[bkey]) - n)
+            self.removed[str(tid)] = {"reason": str(why), "n_events": k, "n_visits": n,
+                                      "tier_at_removal": rec.get("tier", "none")}
+            out["targets"][str(tid)] = self.removed[str(tid)]
+            out["events"] += k
+            out["visits"] += n
+        return out
 
     def summary(self) -> dict:
         counts = dict.fromkeys(TIERS, 0)

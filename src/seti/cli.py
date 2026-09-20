@@ -755,6 +755,17 @@ def _cmd_tocsin_ztf_assess(args, cfg):
     print(f"[tocsin-ztf] tiers={rec.get('tier_counts')}")
 
 
+def _cmd_tocsin_ztf_vet(args, cfg):
+    from .tocsin.ztf_vet import vet
+
+    ids = [s.strip() for s in (args.source_id or "").split(",") if s.strip()]
+    tiers = tuple(t.strip() for t in (args.tiers or "").split(",") if t.strip())
+    rec = vet(cfg, source_ids=ids, tiers=tiers, out_dir=args.out_dir, targets_path=args.targets)
+    for sid, r in rec.get("targets", {}).items():
+        print(f"[tocsin-ztf-vet] {sid}: {r.get('verdict')} {r.get('classification')} "
+              f"{r.get('flags')}")
+
+
 def _cmd_tocsin_altfeeds_probe(args, cfg):
     from .tocsin.altfeeds import probe
 
@@ -1530,6 +1541,19 @@ def main(argv=None):
                        help="TOCSIN-ZTF stage 3 (offline): re-assess the ZTF ledger")
     p.add_argument("--out-dir", default=None)
     p.set_defaults(func=_cmd_tocsin_ztf_assess)
+
+    p = sub.add_parser("tocsin-ztf-vet",
+                       help="TOCSIN-ZTF stage 4 (runner-only): vet promoted targets "
+                            "against what the funnel cannot see -- Gaia neighbours, "
+                            "the full ALeRCE history with distnr/corrected/reference "
+                            "magnitude, SIMBAD, VSX and the IRSA ZTF light curve")
+    p.add_argument("--source-id", default="",
+                   help="comma-separated Gaia DR3 source ids to vet explicitly")
+    p.add_argument("--tiers", default="candidate",
+                   help="comma-separated ledger tiers whose targets are vetted too")
+    p.add_argument("--targets", default=None)
+    p.add_argument("--out-dir", default=None)
+    p.set_defaults(func=_cmd_tocsin_ztf_vet)
 
     p = sub.add_parser("tocsin-altfeeds-probe",
                        help="TOCSIN alternative feeds, stage 0 (runner-only): "

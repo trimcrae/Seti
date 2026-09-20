@@ -1526,6 +1526,13 @@ def assess_only(cfg=None, out_dir: str | Path | None = None,
         pruned["targets"].update(gone["targets"])
         print(f"[tocsin-ztf] removed {len(gone['targets'])} target(s) on request: "
               f"{gone['events']} events, {gone['visits']} trials")
+    # The vet's verdicts, applied: a target vetted as a systematic goes out with
+    # its trials, the rest carry their classification (8d).
+    from .ztf_vet import apply_vet
+    vetted = apply_vet(led, out / "vet")
+    for k in ("events", "visits"):
+        pruned[k] += vetted["removed"][k]
+    pruned["targets"].update(vetted["removed"]["targets"])
     lconf = conf["ledger"]
     stats = led.assess(alpha_fdr=float(lconf["alpha_fdr"]),
                        min_visits_for_rate=int(lconf["min_visits_for_rate"]),
@@ -1535,9 +1542,16 @@ def assess_only(cfg=None, out_dir: str | Path | None = None,
                        max_grey_z=float(conf["screen"]["max_grey_z"]),
                        mixed_polarity_requires_grey_both=bool(
                            lconf.get("mixed_polarity_requires_grey_both", True)))
+    # `assess` resets each record's notes; the vet classification is a note
+    # the watchlist should show, so it goes on after.
+    for tid, cls in vetted["annotated"].items():
+        rec_t = led.targets.get(tid)
+        if rec_t is not None:
+            rec_t["notes"] = [n for n in rec_t.get("notes", []) if not n.startswith("vet:")]
+            rec_t["notes"].append(f"vet:{cls}")
     led.save(ledger_path)
     _write_watchlist(out, led, conf)
-    rec = {"assessed_at_utc": _utc(), **stats,
+    rec = {"assessed_at_utc": _utc(), **stats, "vet_annotated": len(vetted["annotated"]),
            "ledger_pruned": {"n_targets": len(pruned["targets"]), "events": pruned["events"],
                              "visits": pruned["visits"]},
            "n_removed_targets": len(led.removed)}

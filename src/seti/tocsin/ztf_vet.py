@@ -73,6 +73,14 @@ DEFAULTS = {
     #: A ZTF reference this much brighter than the target's Gaia magnitude is
     #: another star's flux.
     "reference_mismatch_mag": 2.0,
+    #: A (object, band) series that is a LEVEL, not a light curve: at least
+    #: this many detections, this fraction of one sign, and a MAD below this
+    #: fraction of the median.  The same numbers as the funnel's
+    #: `rebaseline_persistent_residuals`, so the vet names what the funnel
+    #: now subtracts.
+    "level_min_n": 10,
+    "level_same_sign_fraction": 0.9,
+    "level_max_mad_fraction": 0.2,
     "max_detections_recorded": 600,
     "results_subdir": "vet",
     "timeout_s": 120.0,
@@ -331,8 +339,14 @@ def summarise_object(obj: dict, dets: list[dict], nondets: list[dict],
                              for b, v in diff_mag.items()}
     rec["reference_mag"] = {b: dict(zip(("median", "mad"), _median_mad(v), strict=True),
                                     n=len(v)) for b, v in ref_mag.items()}
-    rec["amplitude_vs_gaia"] = {b: dict(zip(("median", "mad"), _median_mad(v), strict=True),
-                                        n=len(v)) for b, v in a_gaia.items()}
+    rec["amplitude_vs_gaia"] = {}
+    for b, v in a_gaia.items():
+        med, mad = _median_mad(v)
+        arr = np.asarray(v, dtype=float)
+        sgn = np.sign(med) if med else 0.0
+        rec["amplitude_vs_gaia"][b] = {
+            "median": med, "mad": mad, "n": len(v),
+            "same_sign_fraction": (float(np.mean(np.sign(arr) == sgn)) if sgn else None)}
     rec["amplitude_vs_reference"] = {b: dict(zip(("median", "mad"), _median_mad(v),
                                                  strict=True), n=len(v))
                                      for b, v in a_ref.items()}
@@ -442,6 +456,25 @@ def analyse(source_id: str, target: dict, epoch_jyear: float,
                            f"a transient")
     if n_self:
         flags.append("self_flux")
+    # A level of ANY size, on every visit: the same rule the funnel subtracts
+    # by.  MEASURED on the interest-tier sweep of 2026-09-20: three
+    # high-proper-motion stars off their reference at a = 1.2-1.7 rather than
+    # ~1.0 (very red dwarfs, whose Gaia synthetic g/r are the least reliable,
+    # and one 3" binary), constant to 1 % over dozens of visits.
+    n_level = 0
+    for rec in objs:
+        for b, s in (rec.get("amplitude_vs_gaia") or {}).items():
+            if (s.get("n", 0) >= int(o["level_min_n"]) and s.get("median")
+                    and s.get("mad") is not None
+                    and (s.get("same_sign_fraction") or 0.0) >= float(o["level_same_sign_fraction"])
+                    and s["mad"] / abs(s["median"]) <= float(o["level_max_mad_fraction"])):
+                n_level += 1
+                why.append(f"{rec['oid']} {b}: a level of {s['median']:+.2f} x the star's Gaia "
+                           f"flux on {s['n']} detections (MAD {s['mad']:.2f}, "
+                           f"{100 * s['same_sign_fraction']:.0f} % one sign) --- present on "
+                           f"every visit, so a residual, not an event")
+    if n_level:
+        flags.append("persistent_level")
     # The proper-motion case: the star has walked off its own reference.  The
     # evidence is the drift since the reference epoch against the match
     # radius, and ALeRCE's own `distnr`: no reference source near the
@@ -542,15 +575,15 @@ def analyse(source_id: str, target: dict, epoch_jyear: float,
         cls = "systematic:saturated_neighbour_residual"
     elif "reference_brighter_than_target" in flags or "dr_photometry_brighter_than_target" in flags:
         cls = "systematic:blended_with_brighter_star"
-    elif "self_flux" in flags and ("high_proper_motion_drift" in flags
-                                   or "no_reference_source_at_position" in flags):
+    elif ("self_flux" in flags or "persistent_level" in flags) and (
+            "high_proper_motion_drift" in flags or "no_reference_source_at_position" in flags):
         cls = "systematic:proper_motion_reference_artefact"
     elif "self_flux" in flags:
         cls = "systematic:reference_missing_target"
+    elif "persistent_level" in flags or "persistent_constant_residual" in flags:
+        cls = "systematic:persistent_residual"
     elif "known_variable_simbad" in flags or "known_variable_vsx" in flags:
         cls = "astrophysical:known_variable"
-    elif "persistent_constant_residual" in flags:
-        cls = "systematic:persistent_residual"
     else:
         cls = "unexplained"
     out["flags"] = flags
@@ -673,7 +706,8 @@ def vet(cfg=None, source_ids: list[str] | None = None, tiers: tuple[str, ...] = 
     tp = Path(targets_path) if targets_path else root / ".cache" / "tocsin_ztf" / "targets.parquet"
     targets = load_targets(tp)
     services = services or Services.live(z, float(o["timeout_s"]))
-    index = {"vetted_at_utc": _utc(), "tiers": list(tiers), "targets": {}}
+    index = {"vetted_at_utc": _utc(), "tiers": list(tiers), "targets": {},
+             "n": len(ids), "n_done": 0}
     for sid in ids:
         print(f"[tocsin-ztf-vet] {sid}")
         rec = vet_target(sid, z=z, conf=conf, targets=targets, ledger=ledger,
@@ -682,13 +716,64 @@ def vet(cfg=None, source_ids: list[str] | None = None, tiers: tuple[str, ...] = 
                                  "classification": rec.get("classification"),
                                  "flags": rec.get("flags", []),
                                  "tier": (ledger.targets.get(sid) or {}).get("tier")}
+        index["n_done"] = len(index["targets"])
+        # Written after EVERY target: the interest-tier sweep of 2026-09-20 ran
+        # past the job's timeout and the index, written only at the end, was
+        # lost while the per-target records survived.
+        _write_json(out / "index.json", index)
         print(f"[tocsin-ztf-vet]   {rec.get('verdict')} {rec.get('classification')} "
               f"{rec.get('flags')}")
-    index["n"] = len(ids)
-    _write_json(out / "index.json", index)
     return index
 
 
+def load_vet_records(vet_dir: str | Path) -> dict[str, dict]:
+    """``source_id -> {classification, flags, vetted_at_utc}`` from the committed records."""
+    import json  # noqa: PLC0415
+    d = Path(vet_dir)
+    out: dict[str, dict] = {}
+    if not d.is_dir():
+        return out
+    for p in sorted(d.glob("*.json")):
+        if p.name == "index.json":
+            continue
+        try:
+            r = json.loads(p.read_text())
+        except Exception:                                    # noqa: BLE001
+            continue
+        if r.get("verdict") != "OK" or not r.get("classification"):
+            continue
+        out[str(r.get("source_id") or p.stem)] = {
+            "classification": str(r["classification"]), "flags": list(r.get("flags") or []),
+            "vetted_at_utc": r.get("vetted_at_utc")}
+    return out
+
+
+def apply_vet(led: Ledger, vet_dir: str | Path) -> dict:
+    """Act on the committed vet records: a target whose record classifies it as a
+    ``systematic:`` is removed from the ledger with its trials
+    (``Ledger.remove_targets``); every other vetted target is annotated with its
+    classification.  Deterministic from committed evidence, so the assessment
+    that follows a vet --- on the runner or offline --- reaches the same ledger.
+    Returns ``{"removed": {...}, "annotated": {id: classification}}``.
+    """
+    recs = load_vet_records(vet_dir)
+    reasons = {tid: f"vet:{r['classification']}" for tid, r in recs.items()
+               if r["classification"].startswith("systematic:") and tid in led.targets}
+    gone = led.remove_targets(reasons) if reasons else {"targets": {}, "events": 0, "visits": 0}
+    annotated = {}
+    for tid, r in recs.items():
+        rec = led.targets.get(tid)
+        if rec is None:
+            continue
+        rec["vet_classification"] = r["classification"]
+        annotated[tid] = r["classification"]
+    if reasons:
+        print(f"[tocsin-ztf] vet: removed {len(gone['targets'])} target(s) classified as a "
+              f"systematic: {gone['events']} events, {gone['visits']} trials")
+    return {"removed": gone, "annotated": annotated}
+
+
 __all__ = ["Services", "analyse", "summarise_object", "vet", "vet_target",
+           "load_vet_records", "apply_vet",
            "gaia_cone_adql", "gaia_target_adql", "simbad_cone_adql", "vsx_cone_adql",
            "irsa_lightcurve_url", "parse_irsa_csv", "alerce_objects_near"]

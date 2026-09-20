@@ -64,6 +64,13 @@ jobs:
           echo "tocsin-ztf-vet$args"
           eval python -m seti.cli tocsin-ztf-vet $args
 
+      # Apply the verdicts to the ledger (docs/tocsin-ztf.md 8d): a target
+      # classified as a systematic leaves with its trials; the rest are
+      # annotated on the watchlist.
+      - name: Re-assess the ledger with the vet applied
+        if: always()
+        run: python -m seti.cli tocsin-ztf-assess || echo "assess skipped (no ledger yet)"
+
       - name: Summarise
         if: always()
         run: |
@@ -88,7 +95,10 @@ jobs:
         run: |
           scripts/commit_results.sh \
             "tocsin-ztf-vet: vet promoted targets (Gaia neighbours, ALeRCE history, catalogues, IRSA light curve)" \
-            results/tocsin_ztf/vet
+            results/tocsin_ztf/vet \
+            results/tocsin_ztf/ledger.json \
+            results/tocsin_ztf/assessment.json \
+            results/tocsin_ztf/watchlist.csv
       - uses: actions/upload-artifact@v4
         if: always()
         with:

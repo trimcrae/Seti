@@ -398,7 +398,15 @@ class Ledger:
         for rec in self.targets.values():
             before = len(rec.get("visit_nights") or [])
             mjds = [float(m) for m in rec.get("visit_mjds") or []]
-            keep = sorted({m for m in mjds if night_of(m) in counted})
+            # An event night is a visited night by definition; a record whose
+            # visit epochs were never merged for that night (MEASURED
+            # 2026-09-20: 5 events on 1 visit) must not read as a duty cycle
+            # above one.
+            for e in rec.get("events") or []:
+                m = _finite(e.get("mjd"))
+                if m is not None and night_of(m) in counted:
+                    mjds.append(m)
+            keep = sorted({round(m, 6) for m in mjds if night_of(m) in counted})
             rec["visit_mjds"] = keep
             rec["visit_nights"] = sorted({night_of(m) for m in keep})
             if rec.get("visits_exact"):

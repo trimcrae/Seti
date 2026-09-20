@@ -55,7 +55,7 @@ from pathlib import Path
 import numpy as np
 
 from .ledger import Ledger, bin_key, night_of
-from .photometry import ab_to_njy
+from .photometry import ab_to_njy, njy_to_ab
 from .run import (
     _finite,
     _now_mjd,
@@ -144,6 +144,17 @@ DEFAULTS: dict = {
     #: trials), and any alert whose star is brighter than this in the ALERT'S
     #: band is rejected by the funnel as `saturated_target`.
     "saturation_mag": 13.0,
+    #: A target inside a saturated NEIGHBOUR's exclusion radius is dropped from
+    #: the list too: this many arcsec at the saturation magnitude, x10 per 5
+    #: magnitudes brighter, capped (docs/tocsin-ztf.md 8d).  The saturation
+    #: rule above sees only the target's own magnitude; a saturated star's
+    #: residual lands wherever its PSF does, including on a faint catalogued
+    #: neighbour.  0 disables the scan.  The dropped stars are committed to
+    #: `excluded_targets_path`, and the screen and the assessment prune the
+    #: ledger from that file.
+    "neighbour_radius_arcsec": 5.0,
+    "neighbour_radius_cap_arcsec": 120.0,
+    "excluded_targets_path": "results/tocsin_ztf/excluded_targets.csv",
     "results_dir": "results/tocsin_ztf",
     "ledger_path": "results/tocsin_ztf/ledger.json",
 }
@@ -678,6 +689,106 @@ def upper_limits(nondets: list[dict]) -> list[tuple[float, str, float]]:
 
 
 # ---------------------------------------------------------------------------
+# Persistent residuals: the star that is missing from its own reference image
+# ---------------------------------------------------------------------------
+#: A (object, band) series with at least this many detections is tested for a
+#: persistent level.
+REBASELINE_MIN_N = 10
+#: ... of which at least this fraction share one sign ...
+REBASELINE_SAME_SIGN_FRACTION = 0.9
+#: ... and whose scatter about the running median is below this fraction of
+#: the median: a level, not a light curve.
+REBASELINE_MAX_MAD_FRACTION = 0.2
+#: Half-width of the running-median window, days.  A high-proper-motion star
+#: separates from its reference over months, so the level drifts; a local
+#: median follows it where a global one would leave a trend behind.
+REBASELINE_WINDOW_D = 60.0
+
+
+def rebaseline_persistent_residuals(alerts: list[NormalizedAlert],
+                                    min_n: int = REBASELINE_MIN_N,
+                                    same_sign_fraction: float = REBASELINE_SAME_SIGN_FRACTION,
+                                    max_mad_fraction: float = REBASELINE_MAX_MAD_FRACTION,
+                                    window_d: float = REBASELINE_WINDOW_D) -> dict:
+    """Subtract, per object and band, a difference flux that is there on EVERY visit.
+
+    MEASURED 2026-09-20 (docs/tocsin-ztf.md 8d).  Gaia DR3 4497414466452138496
+    is a 15 pc star moving 1.2"/yr.  It has left its own ZTF reference image:
+    the nearest reference-catalogue source is ~10" away (``distnr``), no
+    correction is possible (``corrected`` false on 99 % of detections), and the
+    difference image at its current position holds the whole star --- a
+    difference flux of 1.02-1.04 x its Gaia flux in g and r, with its own
+    colour, on 377 detections over twenty months.  ZTF alerts carry no dipole
+    flag, so the funnel saw a grey "+103 % flash" on every visit and the ledger
+    promoted it to candidate.  This is the "proper-motion dipole" the funnel's
+    docstring names as THE systematic of a nearby-star sample, in the form ZTF
+    serves it: the positive lobe, alone, at the propagated position.
+
+    The correction is the one ALeRCE applies where a reference source exists
+    (``magpsf_corr``) and cannot where none does: the persistent level is the
+    star's missing reference flux, so it is subtracted from every alert of that
+    object and band, leaving the alert to carry only the DEPARTURE from the
+    level.  A real event on such a star survives as that departure --- a
+    flash as a > level, a dip as a < level --- so the star stays a trial.  An
+    ordinary visit becomes ~0 +/- MAD and is rejected downstream as
+    ``low_significance``.
+
+    A series qualifies only when it is a level and not a light curve: at least
+    ``min_n`` detections, ``same_sign_fraction`` of them of one sign, and a
+    median absolute deviation about the RUNNING median (``window_d``) below
+    ``max_mad_fraction`` of the median's size.  A variable star crossing its
+    reference mean fails the sign test; a flare fails the scatter test.
+
+    Modifies the alerts in place (``dflux_njy``, ``dflux_err_njy``, ``snr``,
+    ``is_negative``; the level and the original flux go into ``raw``) and
+    returns a record of every series re-baselined.
+    """
+    series: dict[tuple[str, str], list[NormalizedAlert]] = {}
+    for a in alerts:
+        series.setdefault((str(a.object_id), a.band), []).append(a)
+    rec: dict = {"n_series_tested": 0, "n_series_rebaselined": 0,
+                 "n_alerts_rebaselined": 0, "series": []}
+    for (oid, band), rows in series.items():
+        if len(rows) < int(min_n):
+            continue
+        rec["n_series_tested"] += 1
+        rows.sort(key=lambda a: a.mjd)
+        f = np.array([a.dflux_njy for a in rows], dtype=float)
+        t = np.array([a.mjd for a in rows], dtype=float)
+        sign = np.sign(np.median(f))
+        if sign == 0:
+            continue
+        if float(np.mean(np.sign(f) == sign)) < float(same_sign_fraction):
+            continue
+        level = np.empty_like(f)
+        for i, ti in enumerate(t):
+            w = np.abs(t - ti) <= float(window_d)
+            level[i] = np.median(f[w]) if int(w.sum()) >= 3 else np.median(f)
+        resid = f - level
+        mad = float(np.median(np.abs(resid)))
+        scale = float(np.median(np.abs(level)))
+        if scale <= 0 or mad / scale > float(max_mad_fraction):
+            continue
+        for a, lv in zip(rows, level, strict=True):
+            a.raw["dflux_njy_original"] = float(a.dflux_njy)
+            a.raw["rebaselined_level_njy"] = float(lv)
+            a.raw["rebaselined_mad_njy"] = mad
+            a.dflux_njy = float(a.dflux_njy - lv)
+            a.dflux_err_njy = float(math.hypot(a.dflux_err_njy, mad))
+            a.snr = a.dflux_njy / a.dflux_err_njy if a.dflux_err_njy > 0 else None
+            a.is_negative = a.dflux_njy < 0
+        rec["n_series_rebaselined"] += 1
+        rec["n_alerts_rebaselined"] += len(rows)
+        rec["series"].append({"oid": oid, "band": band, "n": len(rows),
+                              "level_njy_median": float(np.median(level)),
+                              "level_mag": float(njy_to_ab(abs(float(np.median(level)))))
+                              if np.median(level) != 0 else None,
+                              "mad_njy": mad, "sign": int(sign),
+                              "mjd_first": float(t[0]), "mjd_last": float(t[-1])})
+    return rec
+
+
+# ---------------------------------------------------------------------------
 # Matching objects to the target list
 # ---------------------------------------------------------------------------
 def _propagated(targets, epoch_jyear: float, th):
@@ -933,7 +1044,30 @@ def build_ztf_targets(cfg=None, out_path: str | Path | None = None) -> dict:
                          dec_max=float(z["dec_max"]),
                          bright_limit_mag=None if sat is None else float(sat),
                          bright_limit_bands=("g", "r"),
-                         record_path=root / z["results_dir"] / "targets.json")
+                         record_path=root / z["results_dir"] / "targets.json",
+                         neighbour_radius_arcsec=float(z.get("neighbour_radius_arcsec") or 0.0),
+                         neighbour_radius_cap_arcsec=float(
+                             z.get("neighbour_radius_cap_arcsec") or 120.0),
+                         excluded_path=root / z["excluded_targets_path"])
+
+
+def prune_excluded(led: Ledger, path: str | Path) -> dict:
+    """Remove from the ledger every target the committed exclusion file names.
+
+    Called wherever the ledger is loaded, so a star excluded after it alerted
+    (the bright-neighbour rule was added after 68 nights had been folded) goes
+    out of the past record as well as the future list, with its trials
+    (``Ledger.remove_targets``).  Idempotent; returns what went.
+    """
+    from .run import load_excluded_targets
+    reasons = {tid: why for tid, why in load_excluded_targets(path).items()
+               if tid in led.targets}
+    if not reasons:
+        return {"targets": {}, "events": 0, "visits": 0}
+    gone = led.remove_targets(reasons)
+    print(f"[tocsin-ztf] pruned {len(gone['targets'])} excluded target(s) from the ledger: "
+          f"{gone['events']} events, {gone['visits']} trials")
+    return gone
 
 
 # ---------------------------------------------------------------------------
@@ -969,6 +1103,8 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     th = ztf_thresholds(conf, z)
     ledger_path = root / z["ledger_path"] if out_dir is None else out / "ledger.json"
     led = Ledger.load(ledger_path)
+    led.restrict_visits_to_ledger_nights()
+    pruned = prune_excluded(led, root / z["excluded_targets_path"])
     explicit = mjd_lo is not None or mjd_hi is not None
     api = api or AlerceZtfAPI(z["alerce_ztf_api"], timeout=float(z["timeout_s"]),
                               page_size=int(z["page_size"]),
@@ -981,7 +1117,9 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
                      # The floors this run screened with, so a change in them
                      # is visible in the committed record and not only in git.
                      "ztf_thresholds": {"min_reliability": th.min_reliability,
-                                        "saturation_mag": th.saturation_mag}}
+                                        "saturation_mag": th.saturation_mag},
+                     "ledger_pruned": {"n_targets": len(pruned["targets"]),
+                                       "events": pruned["events"], "visits": pruned["visits"]}}
 
     # THE WINDOW.  Capped at the STREAM's frontier and the wall clock.  MEASURED
     # 2026-09-05: IRSA's public exposure table runs ~60 days behind the stream,
@@ -1111,6 +1249,12 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
     summary["counts"]["objects_failed"] = n_failed
     summary["counts"]["detections_pulled"] = len(alerts)
     summary["counts"]["upper_limits_pulled"] = sum(len(v) for v in ul_epochs.values())
+    # 3b. A star missing from its own reference alerts on every visit with its
+    #     whole flux (8d); that level is subtracted so only departures remain.
+    rb = rebaseline_persistent_residuals(alerts)
+    summary["counts"]["series_rebaselined"] = rb["n_series_rebaselined"]
+    summary["counts"]["alerts_rebaselined"] = rb["n_alerts_rebaselined"]
+    summary["rebaselined"] = rb["series"][:50]
 
     # 4. The denominator: the public quadrants that covered each star, for the
     #    nights the exposure table has reached; the detection-footprint proxy
@@ -1256,8 +1400,15 @@ def screen_window(cfg=None, mjd_lo: float | None = None, mjd_hi: float | None = 
         hist.setdefault(tid, []).extend(mjds)
     for tid, mjds in verdict.visit_history.items():
         hist.setdefault(tid, []).extend(mjds)
+    # ONLY NIGHTS THE LEDGER COUNTS.  An object's own history reaches back to
+    # its first alert, years before the ledger's first night; those epochs are
+    # not trials (no event on them could be folded) and counting them as
+    # visits dilutes the duty cycle -- MEASURED 2026-09-20 (8d): 83 "visits"
+    # over a 68-night ledger, duty cycle 0.13 for a star alerting on 11 of its
+    # 35 real nights (0.31), which the duty-cycle veto exists to reject.
+    counted = set(led.nights) | window_nights
     for tid in list(hist):
-        hist[tid] = sorted(set(hist[tid]))
+        hist[tid] = sorted({m for m in set(hist[tid]) if night_id(m) in counted})
 
     # 8. Fold.
     if not led.opened_utc:
@@ -1353,13 +1504,28 @@ def screen(cfg=None, chunks: int = 1, max_run_seconds: float | None = None,
     return out
 
 
-def assess_only(cfg=None, out_dir: str | Path | None = None) -> dict:
-    """Recompute tiers over the accumulated ZTF ledger, offline."""
+def assess_only(cfg=None, out_dir: str | Path | None = None,
+                remove: dict[str, str] | None = None) -> dict:
+    """Recompute tiers over the accumulated ZTF ledger, offline.
+
+    ``remove`` maps target id -> reason for targets to take out of the ledger
+    first, events and trials alike (``Ledger.remove_targets``): the record of a
+    star found, on vetting, never to have been a valid trial.
+    """
     conf, z = ztf_config(cfg)
     root = Path(cfg.root) if cfg is not None else _repo_root()
     out = Path(out_dir) if out_dir else root / z["results_dir"]
     ledger_path = root / z["ledger_path"] if out_dir is None else out / "ledger.json"
     led = Ledger.load(ledger_path)
+    led.restrict_visits_to_ledger_nights()
+    pruned = prune_excluded(led, root / z["excluded_targets_path"])
+    if remove:
+        gone = led.remove_targets(remove)
+        for k in ("events", "visits"):
+            pruned[k] += gone[k]
+        pruned["targets"].update(gone["targets"])
+        print(f"[tocsin-ztf] removed {len(gone['targets'])} target(s) on request: "
+              f"{gone['events']} events, {gone['visits']} trials")
     lconf = conf["ledger"]
     stats = led.assess(alpha_fdr=float(lconf["alpha_fdr"]),
                        min_visits_for_rate=int(lconf["min_visits_for_rate"]),
@@ -1371,7 +1537,10 @@ def assess_only(cfg=None, out_dir: str | Path | None = None) -> dict:
                            lconf.get("mixed_polarity_requires_grey_both", True)))
     led.save(ledger_path)
     _write_watchlist(out, led, conf)
-    rec = {"assessed_at_utc": _utc(), **stats}
+    rec = {"assessed_at_utc": _utc(), **stats,
+           "ledger_pruned": {"n_targets": len(pruned["targets"]), "events": pruned["events"],
+                             "visits": pruned["visits"]},
+           "n_removed_targets": len(led.removed)}
     # The promoted targets by id, so `alerts.tocsin_ztf_alerts` keys on WHICH
     # stars were promoted rather than how many.
     for tier in ("candidate", "alarm", "interest"):
@@ -1383,4 +1552,5 @@ def assess_only(cfg=None, out_dir: str | Path | None = None) -> dict:
 
 __all__ = ["AlerceZtfAPI", "IrsaZtfExposures", "normalize_alerce_ztf_detections",
            "upper_limits", "match_objects", "quadrant_footprint", "proxy_footprint", "probe",
-           "build_ztf_targets", "ztf_thresholds", "screen_window", "screen", "assess_only"]
+           "build_ztf_targets", "prune_excluded", "ztf_thresholds", "screen_window", "screen",
+           "assess_only"]

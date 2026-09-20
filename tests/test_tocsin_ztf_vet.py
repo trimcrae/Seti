@@ -27,9 +27,11 @@ def _target(**kw):
     return t
 
 
-def _dets(n=40, a_gaia=1.03, corrected_every=2, ref_mag=11.47, start=61200.0):
+def _dets(n=40, a_gaia=1.03, corrected_every=2, ref_mag=11.47, start=61200.0,
+          distnr_far=1.6):
     """Detections whose difference flux is ``a_gaia`` times the target's Gaia flux,
-    with every ``corrected_every``-th r detection carrying a reference of ``ref_mag``."""
+    with every ``corrected_every``-th r detection carrying a reference of ``ref_mag``;
+    uncorrected detections sit ``distnr_far`` from the nearest reference source."""
     out = []
     for k in range(n):
         mjd = start + 2.0 * k
@@ -38,7 +40,8 @@ def _dets(n=40, a_gaia=1.03, corrected_every=2, ref_mag=11.47, start=61200.0):
             corr = fid == 2 and corrected_every and (k % corrected_every == 0)
             out.append({"mjd": mjd, "fid": fid, "magpsf": dm, "isdiffpos": "t",
                         "corrected": corr, "magpsf_corr": ref_mag if corr else None,
-                        "distnr": 0.9 if corr else 1.6, "drb": 0.9, "candid": f"{k}{fid}"})
+                        "distnr": 0.9 if corr else distnr_far, "drb": 0.9,
+                        "candid": f"{k}{fid}"})
     return out
 
 
@@ -71,10 +74,24 @@ def test_the_run_of_2026_09_20_shape_is_a_saturated_neighbour_residual():
     assert summ["distnr_arcsec"]["max"] == 1.6
 
 
-def test_self_flux_alone_is_a_missing_reference_not_a_neighbour():
-    """A high-proper-motion star absent from the reference: a ~ 1 in every band,
-    no bright neighbour, no reference magnitude at all."""
-    summ = _obj(_dets(a_gaia=1.0, corrected_every=0))
+def test_the_real_candidate_is_a_proper_motion_reference_artefact():
+    """What the runner measured on 2026-09-20: a 15 pc star at 1.2"/yr, a ~ 1.02-1.04
+    in g and r on hundreds of detections, the nearest reference source ~10" away,
+    no bright neighbour, no catalogue entry."""
+    target = _target(parallax=66.1, pmra=-436.2, pmdec=-1115.6, phot_g_mean_mag=15.615)
+    summ = _obj(_dets(n=90, a_gaia=1.02, corrected_every=0, distnr_far=9.5))
+    rec = V.analyse(SID, target, 2026.56, [target], [summ], [], [], [], 13.0, None)
+    assert rec["classification"] == "systematic:proper_motion_reference_artefact"
+    assert set(rec["flags"]) == {"self_flux", "high_proper_motion_drift",
+                                 "no_reference_source_at_position"}
+    assert rec["drift_since_reference_epoch_arcsec"] == pytest.approx(1.198 * 7.56, abs=0.1)
+    assert "saturated_neighbour" not in rec
+
+
+def test_self_flux_with_a_reference_source_present_is_a_missing_target_not_pm():
+    """a ~ 1 with a reference source right there and no drift: the reference has
+    the position but not the star (built in a faint state, or masked)."""
+    summ = _obj(_dets(a_gaia=1.0, corrected_every=0, distnr_far=0.3))
     rec = V.analyse(SID, _target(), 2026.55, [_target()], [summ], [], [], [], 13.0, None)
     assert rec["flags"] == ["self_flux"]
     assert rec["classification"] == "systematic:reference_missing_target"
@@ -206,3 +223,123 @@ def test_remove_targets_takes_trials_with_events_and_is_recorded():
     assert led2.removed["x"]["n_visits"] == 3
     led2.assess()
     assert led2.summary()["events_kept"] == 1
+
+
+# ---------------------------------------------------------------------------
+# the funnel: a persistent level is subtracted, a light curve is not
+# ---------------------------------------------------------------------------
+def _alerts(oid, band, fluxes, mjds, corrected=False):
+    from seti.tocsin.schema import NormalizedAlert
+    out = []
+    for f, m in zip(fluxes, mjds, strict=True):
+        out.append(NormalizedAlert(alert_id=f"{oid}:{m}:{band}", object_id=oid, mjd=float(m),
+                                   band=band, ra=RA, dec=DEC, dflux_njy=float(f),
+                                   dflux_err_njy=abs(float(f)) * 0.03 + 1.0, broker="test",
+                                   ra_err_arcsec=0.25, dec_err_arcsec=0.25,
+                                   snr=float(f) / (abs(float(f)) * 0.03 + 1.0),
+                                   is_negative=float(f) < 0, raw={"corrected": corrected}))
+    return out
+
+
+def test_rebaseline_subtracts_a_persistent_level_and_keeps_the_departure():
+    from seti.tocsin import ztf_live as Z
+    rng = np.random.default_rng(1)
+    level = 2.19e6                                    # the star's own r flux, every visit
+    mjds = 61200.0 + 2.0 * np.arange(40)
+    f = level * (1.0 + 0.01 * rng.standard_normal(40))
+    f[20] = level * 1.6                               # one real 60 % flash on top
+    alerts = _alerts("ZTF26abftlhy", "r", f, mjds)
+    rec = Z.rebaseline_persistent_residuals(alerts)
+    assert rec["n_series_rebaselined"] == 1 and rec["n_alerts_rebaselined"] == 40
+    assert rec["series"][0]["level_mag"] == pytest.approx(15.55, abs=0.05)
+    resid = np.array([a.dflux_njy for a in alerts])
+    # Ordinary visits are now ~0 (below any significance floor)...
+    assert np.median(np.abs(resid[np.arange(40) != 20])) < 0.03 * level
+    assert all(abs(a.snr) < 6 for i, a in enumerate(alerts) if i != 20)
+    # ... and the real departure survives at its true size.
+    assert alerts[20].dflux_njy == pytest.approx(0.6 * level, rel=0.1)
+    assert alerts[20].snr > 6
+    assert alerts[20].raw["dflux_njy_original"] == pytest.approx(1.6 * level)
+    # The record says what was subtracted.
+    assert alerts[0].raw["rebaselined_level_njy"] == pytest.approx(level, rel=0.05)
+
+
+def test_rebaseline_leaves_light_curves_and_short_series_alone():
+    from seti.tocsin import ztf_live as Z
+    mjds = 61200.0 + 2.0 * np.arange(40)
+    # A variable crossing its reference mean: signs alternate -> not a level.
+    var = _alerts("v", "g", 1e6 * np.sin(np.arange(40) / 3.0), mjds)
+    # A flare star whose quiescent flux is not in the reference either: the
+    # constant part is a level and goes; the flares are departures and stay.
+    flares = _alerts("f", "g", 1e5 * (1 + 3 * (np.arange(40) % 5 == 0)), mjds)
+    # A short series: too few to call a level.
+    short = _alerts("s", "g", np.full(5, 1e6), mjds[:5])
+    before = [a.dflux_njy for a in var + short]
+    rec = Z.rebaseline_persistent_residuals(var + flares + short)
+    assert rec["n_series_tested"] == 2
+    assert rec["n_series_rebaselined"] == 1 and rec["series"][0]["oid"] == "f"
+    assert [a.dflux_njy for a in var + short] == before
+    assert all(a.snr > 6 for i, a in enumerate(flares) if i % 5 == 0)
+    assert all(abs(a.snr) < 6 for i, a in enumerate(flares) if i % 5 != 0)
+
+
+def test_rebaseline_follows_a_drifting_level_with_a_running_median():
+    """A star separating from its reference over months: the level grows, and a
+    global median would leave a trend that reads as events at both ends."""
+    from seti.tocsin import ztf_live as Z
+    mjds = 61000.0 + 3.0 * np.arange(120)
+    level = 1e6 * np.linspace(0.6, 1.0, 120)
+    alerts = _alerts("d", "r", level, mjds)
+    rec = Z.rebaseline_persistent_residuals(alerts)
+    assert rec["n_series_rebaselined"] == 1
+    assert max(abs(a.snr) for a in alerts) < 6
+
+
+# ---------------------------------------------------------------------------
+# the ledger: visits are the nights the ledger counts, nothing earlier
+# ---------------------------------------------------------------------------
+def test_visit_history_is_restricted_to_the_ledgers_nights():
+    led = Ledger()
+    led.add_night("n61235", [_event("x", "n61235", 61235.9)], target_visits=10,
+                  targets_in_footprint=10, alerts_seen=1, target_positions={"x": (RA, DEC)})
+    led.add_night("n61236", [], target_visits=10, targets_in_footprint=10, alerts_seen=0)
+    # The object's own history reaches back a year before the ledger opened.
+    led.apply_visit_history({"x": [60900.9, 60950.9, 61100.9, 61235.9, 61236.9, 61237.9]})
+    assert led.targets["x"]["n_visits"] == 6
+    dropped = led.restrict_visits_to_ledger_nights()
+    assert dropped == 4
+    assert led.targets["x"]["visit_nights"] == [61235, 61236]
+    assert led.targets["x"]["n_visits"] == 2
+    led.assess()
+    assert led.targets["x"]["duty_cycle"] == pytest.approx(0.5)
+
+
+def test_assess_only_removes_on_request_and_restricts_visits(tmp_path, monkeypatch):
+    import json
+
+    from seti.tocsin import ztf_live as Z
+
+    class Cfg:
+        root = tmp_path
+    (tmp_path / "config").mkdir()
+    import shutil
+
+    from seti.tocsin.run import _repo_root
+    shutil.copy(_repo_root() / "config" / "tocsin.yaml", tmp_path / "config" / "tocsin.yaml")
+    out = tmp_path / "results" / "tocsin_ztf"
+    out.mkdir(parents=True)
+    led = Ledger()
+    led.add_night("n61235", [_event("x", "n61235", 61235.9), _event("y", "n61235", 61235.8)],
+                  target_visits=1000, targets_in_footprint=1000, alerts_seen=2,
+                  target_positions={"x": (RA, DEC), "y": (10.0, 5.0)})
+    led.apply_visit_history({"x": [60900.9, 61235.9], "y": [61235.8]})
+    led.save(out / "ledger.json")
+    rec = Z.assess_only(Cfg(), out_dir=out, remove={"x": "proper_motion_reference_artefact"})
+    assert rec["ledger_pruned"]["n_targets"] == 1 and rec["ledger_pruned"]["events"] == 1
+    assert rec["n_removed_targets"] == 1
+    saved = json.loads((out / "ledger.json").read_text())
+    assert "x" not in saved["targets"] and saved["removed"]["x"]["reason"].startswith("proper")
+    assert saved["targets"]["y"]["n_visits"] == 1
+    # x's ONE counted visit went with it: the pre-ledger epoch was dropped by
+    # the night restriction before the removal subtracted anything.
+    assert saved["n_target_visits"] == 1000 - 1

@@ -121,9 +121,13 @@ def test_the_northern_list_is_built_without_saturated_stars(monkeypatch, tmp_pat
 
     def fake_build(cfg, out_path=None, dec_min=None, dec_max=None,
                    bright_limit_mag=None, bright_limit_bands=("g", "r"),
-                   record_path=None):
+                   record_path=None, neighbour_radius_arcsec=0.0,
+                   neighbour_radius_cap_arcsec=120.0, excluded_path=None):
         seen.update(dec_min=dec_min, dec_max=dec_max, bright_limit_mag=bright_limit_mag,
-                    bright_limit_bands=bright_limit_bands, record_path=record_path)
+                    bright_limit_bands=bright_limit_bands, record_path=record_path,
+                    neighbour_radius_arcsec=neighbour_radius_arcsec,
+                    neighbour_radius_cap_arcsec=neighbour_radius_cap_arcsec,
+                    excluded_path=excluded_path)
         return {"verdict": "OK", "n_targets": 0}
 
     import seti.tocsin.run as R
@@ -135,6 +139,11 @@ def test_the_northern_list_is_built_without_saturated_stars(monkeypatch, tmp_pat
     assert seen["dec_min"] == -31.0
     # The build record lands in the ZTF results dir, not tocsin's.
     assert str(seen["record_path"]).endswith("results/tocsin_ztf/targets.json")
+    # The bright-neighbour rule (docs/tocsin-ztf.md 8d) rides along, and the
+    # exclusion file is the committed one the screen prunes the ledger from.
+    assert seen["neighbour_radius_arcsec"] == 5.0
+    assert seen["neighbour_radius_cap_arcsec"] == 120.0
+    assert str(seen["excluded_path"]).endswith("results/tocsin_ztf/excluded_targets.csv")
 
 
 def test_unknown_filters_and_incomplete_rows_are_dropped_not_guessed():

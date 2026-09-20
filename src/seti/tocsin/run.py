@@ -282,12 +282,107 @@ def probe(cfg=None, out_dir: str | Path | None = None) -> dict:
 # ---------------------------------------------------------------------------
 # targets
 # ---------------------------------------------------------------------------
+def scan_bright_neighbours(df, dec_min: float, dec_max: float, saturation_mag: float,
+                          r0_arcsec: float, cap_arcsec: float, query_fn,
+                          stripe_deg: float = 10.0, retries: int = 3, sleep=None) -> tuple:
+    """Every target inside a brighter-than-saturation star's exclusion radius.
+
+    The bright stars (Gaia G < ``saturation_mag``, a few million over ZTF's
+    sky) are pulled in RA stripes of ``stripe_deg`` through ``query_fn(adql)
+    -> DataFrame`` and matched to ``df`` with
+    :func:`targets.flag_bright_neighbours`.  Returns ``(flagged, record)``: the
+    flagged rows and a record naming every stripe, its row count, and the
+    verbatim error of any that failed after ``retries``.  A failed stripe is
+    NOT silently isolated: targets in it stay unflagged and the record's
+    verdict is ``INCOMPLETE`` with the stripes named, so the omission is
+    visible in the committed build record rather than inferred from a null.
+    """
+    from .targets import bright_star_adql, flag_bright_neighbours
+    sleep = sleep or time.sleep
+    rec = {"saturation_mag": float(saturation_mag), "r0_arcsec": float(r0_arcsec),
+           "cap_arcsec": float(cap_arcsec), "stripe_deg": float(stripe_deg),
+           "stripes": [], "n_bright": 0, "verdict": "OK"}
+    frames = []
+    edges = np.arange(0.0, 360.0 + 1e-9, float(stripe_deg))
+    for lo, hi in zip(edges[:-1], edges[1:], strict=True):
+        adql = bright_star_adql(lo, hi, dec_min, dec_max, saturation_mag)
+        st = {"ra": [float(lo), float(hi)], "rows": 0}
+        for attempt in range(int(retries)):
+            try:
+                part = query_fn(adql)
+                part.columns = [c.lower() for c in part.columns]
+                frames.append(part)
+                st["rows"] = int(len(part))
+                st.pop("error", None)
+                break
+            except Exception as exc:                      # noqa: BLE001
+                st["error"] = f"{type(exc).__name__}: {exc}"[:300]
+                if attempt + 1 < int(retries):
+                    sleep(5.0 * (attempt + 1))
+        rec["stripes"].append(st)
+    failed = [st for st in rec["stripes"] if st.get("error")]
+    if failed:
+        rec["verdict"] = "INCOMPLETE"
+        rec["failed_stripes"] = [st["ra"] for st in failed]
+    bright = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(
+        columns=["source_id", "ra", "dec", "pmra", "pmdec", "phot_g_mean_mag"])
+    rec["n_bright"] = int(len(bright))
+    flagged = flag_bright_neighbours(df, bright, saturation_mag, r0_arcsec, cap_arcsec)
+    rec["n_flagged"] = int(len(flagged))
+    return flagged, rec
+
+
+def write_excluded_targets(path: Path, flagged, built_at: str) -> int:
+    """Merge newly flagged targets into the committed exclusion file (by source id).
+
+    Rows already present keep their original ``added_utc``; a row present
+    only in the file (added by hand, or by an earlier build) is kept, so the
+    file is a union over builds and never loses an exclusion.
+    """
+    cols = ["source_id", "reason", "neighbour_source_id", "neighbour_g",
+            "sep_arcsec", "radius_arcsec", "added_utc"]
+    new = pd.DataFrame(flagged).copy() if flagged is not None and len(flagged) else \
+        pd.DataFrame(columns=cols[:-1])
+    new["added_utc"] = built_at
+    if path.exists():
+        try:
+            old = pd.read_csv(path, dtype={"source_id": str, "neighbour_source_id": str})
+        except Exception:                                 # noqa: BLE001
+            old = pd.DataFrame(columns=cols)
+        new = pd.concat([old, new[~new["source_id"].astype(str).isin(
+            old["source_id"].astype(str))]], ignore_index=True)
+    new = new.reindex(columns=cols)
+    new["source_id"] = new["source_id"].astype(str)
+    new = new.sort_values("source_id").reset_index(drop=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new.to_csv(path, index=False)
+    return int(len(new))
+
+
+def load_excluded_targets(path: str | Path) -> dict[str, str]:
+    """``source_id -> reason`` from the committed exclusion file (empty if none)."""
+    p = Path(path)
+    if not p.exists():
+        return {}
+    try:
+        df = pd.read_csv(p, dtype={"source_id": str})
+    except Exception:                                     # noqa: BLE001
+        return {}
+    if "source_id" not in df:
+        return {}
+    reasons = df["reason"].astype(str) if "reason" in df else ["excluded"] * len(df)
+    return {str(s): str(r) for s, r in zip(df["source_id"], reasons, strict=True)}
+
+
 def build_targets(cfg=None, out_path: str | Path | None = None,
                   max_rows_per_shell: int = 500000,
                   dec_min: float | None = None, dec_max: float | None = None,
                   bright_limit_mag: float | None = None,
                   bright_limit_bands: tuple[str, ...] = ("g", "r"),
-                  record_path: str | Path | None = None) -> dict:
+                  record_path: str | Path | None = None,
+                  neighbour_radius_arcsec: float = 0.0,
+                  neighbour_radius_cap_arcsec: float = 120.0,
+                  excluded_path: str | Path | None = None) -> dict:
     """Fetch the Gaia DR3 nearby-star target list, in parallax shells.  Runner-only.
 
     The build record (per-shell row counts and the verbatim error of every
@@ -310,6 +405,16 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
     in the list inflates the denominator with non-trials AND feeds the
     numerator with subtraction residuals -- the two candidates of run 17
     (docs/tocsin-ztf.md 8c) were exactly that.
+
+    ``neighbour_radius_arcsec`` > 0 (with ``bright_limit_mag``) also drops every
+    target inside a saturated NEIGHBOUR's exclusion radius
+    (:func:`targets.bright_neighbour_radius_arcsec`, ``r0`` = this value at the
+    saturation magnitude, x10 per 5 mag brighter, capped) --- the faint star
+    that inherits its bright neighbour's residual, which is what the candidate
+    of 2026-09-20 was (docs/tocsin-ztf.md 8d).  The dropped stars are written
+    to ``excluded_path`` (committed, so the screen and the assessment can prune
+    the ledger without this function's network access) and counted as
+    ``n_removed_bright_neighbour``.
     """
     conf = load_tocsin_config(cfg)
     root = Path(cfg.root) if cfg is not None else _repo_root()
@@ -382,12 +487,29 @@ def build_targets(cfg=None, out_path: str | Path | None = None,
     df, n_sat = drop_saturated(df, bright_limit_mag, bright_limit_bands)
     rec["bright_limit_mag"] = bright_limit_mag
     rec["n_removed_saturated"] = n_sat
+    rec["n_removed_bright_neighbour"] = 0
+    if bright_limit_mag is not None and float(neighbour_radius_arcsec) > 0:
+        def _q(adql):
+            return Gaia.launch_job_async(adql).get_results().to_pandas()
+        flagged, nrec = scan_bright_neighbours(
+            df, float(tconf["dec_min"]), float(tconf["dec_max"]), float(bright_limit_mag),
+            float(neighbour_radius_arcsec), float(neighbour_radius_cap_arcsec), _q)
+        rec["neighbour_scan"] = nrec
+        if len(flagged):
+            df = df[~df["source_id"].astype(str).isin(
+                flagged["source_id"].astype(str))].reset_index(drop=True)
+        rec["n_removed_bright_neighbour"] = int(len(flagged))
+        if excluded_path is not None:
+            rec["excluded_path"] = str(excluded_path)
+            rec["n_excluded_on_file"] = write_excluded_targets(
+                Path(excluded_path), flagged, rec["built_at_utc"])
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(out, index=False)
     rec["n_targets"] = int(len(df))
     rec["verdict"] = "OK"
     print(f"[tocsin] targets: {len(df)} nearby stars -> {out}"
-          + (f" ({n_sat} brighter than {bright_limit_mag} dropped as saturated)"
+          + (f" ({n_sat} brighter than {bright_limit_mag} dropped as saturated, "
+             f"{rec['n_removed_bright_neighbour']} inside a saturated neighbour's radius)"
              if bright_limit_mag is not None else ""))
     _write_json(rec_path, rec)
     return rec

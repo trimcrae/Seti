@@ -2,11 +2,10 @@
 
 The ZTF funnel (``ztf_live``) judges each alert on what ALeRCE serves: a
 difference flux, a real/bogus score, a position.  It never sees the reference
-image, the star's neighbours, or the star's own multi-year history.  Those are
-exactly where the two false candidates so far came from (docs/tocsin-ztf.md
-8c, 8d): a saturated star alerting on its own subtraction residual, and a
-faint catalogued star sitting inside a saturated neighbour's PSF and inheriting
-that residual as a "+103 % flash" on every visit.
+image, the star's neighbours, or the star's own multi-year history.  That is
+where the false candidate of 2026-09-20 came from (docs/tocsin-ztf.md 8d): a
+15 pc star moving 1.2"/yr that had walked off its own ZTF reference image and
+appeared whole, as a "+103 % flash" with its own colour, on every visit.
 
 So when the ledger promotes a star, this module pulls, for that one star, what
 the funnel could not afford for a hundred thousand:
@@ -62,6 +61,11 @@ DEFAULTS = {
     "alerce_radius_arcsec": 5.0,
     "catalogue_radius_arcsec": 30.0,
     "irsa_radius_arcsec": 3.0,
+    #: Where ZTF's reference images (and so IRSA's DR object positions) sit in
+    #: time, and how far around it the true epoch may lie: the IRSA cone is
+    #: placed at the target's position then, widened by the drift over the span.
+    "ztf_reference_epoch": 2019.0,
+    "ztf_reference_epoch_span_yr": 4.0,
     #: |a - 1| below this, in a band with at least `self_flux_min_n` detections,
     #: means the difference flux IS the star's own flux: the reference lacks it.
     "self_flux_tolerance": 0.15,
@@ -438,6 +442,25 @@ def analyse(source_id: str, target: dict, epoch_jyear: float,
                            f"a transient")
     if n_self:
         flags.append("self_flux")
+    # The proper-motion case: the star has walked off its own reference.  The
+    # evidence is the drift since the reference epoch against the match
+    # radius, and ALeRCE's own `distnr`: no reference source near the
+    # detections.
+    drift_ref = pm / 1000.0 * (float(epoch_jyear) - float(o["ztf_reference_epoch"]))
+    out["drift_since_reference_epoch_arcsec"] = drift_ref
+    if drift_ref > 1.5:
+        flags.append("high_proper_motion_drift")
+        why.append(f"proper motion {pm:.0f} mas/yr has carried the star {drift_ref:.1f}\" "
+                   f"since the assumed reference epoch {o['ztf_reference_epoch']:.0f}, "
+                   f"beyond the 1.5\" match radius")
+    far = [rec for rec in objs if (rec.get("distnr_arcsec") or {}).get("n", 0) >= 10
+           and (rec["distnr_arcsec"].get("median") or 0.0) > 1.4]
+    if far:
+        flags.append("no_reference_source_at_position")
+        why.append("; ".join(f"{rec['oid']}: nearest reference-catalogue source a median "
+                             f"{rec['distnr_arcsec']['median']:.1f}\" from the detections "
+                             f"(corrected on {100 * (rec.get('corrected_fraction') or 0):.0f} %)"
+                             for rec in far))
 
     # -- catalogues --------------------------------------------------------
     sb = []
@@ -519,6 +542,9 @@ def analyse(source_id: str, target: dict, epoch_jyear: float,
         cls = "systematic:saturated_neighbour_residual"
     elif "reference_brighter_than_target" in flags or "dr_photometry_brighter_than_target" in flags:
         cls = "systematic:blended_with_brighter_star"
+    elif "self_flux" in flags and ("high_proper_motion_drift" in flags
+                                   or "no_reference_source_at_position" in flags):
+        cls = "systematic:proper_motion_reference_artefact"
     elif "self_flux" in flags:
         cls = "systematic:reference_missing_target"
     elif "known_variable_simbad" in flags or "known_variable_vsx" in flags:
@@ -569,6 +595,21 @@ def vet_target(source_id: str, *, z: dict, conf: dict, targets, ledger: Ledger,
                            np.array([_num(target.get("pmdec")) or 0.0]), to_epoch=epoch)
     p_ra, p_dec = float(pr[0]), float(pd_[0])
 
+    # CATALOGUE CONES ARE SEARCHED AT THE CATALOGUE'S EPOCH.  MEASURED on the
+    # first vet (2026-09-20): the target moves 1.2"/yr, so its J2000 SIMBAD/VSX
+    # position is ~32" from its 2026 one and a 30" cone at the 2026 position
+    # found nothing; IRSA's DR objects sit at the ~2018-19 reference epoch, ~10"
+    # away, and a 3" cone found nothing either.  Each service is asked at the
+    # target's position propagated to that service's epoch, with the radius
+    # widened by the drift the epoch is uncertain over.
+    pm_ra, pm_dec = _num(target.get("pmra")) or 0.0, _num(target.get("pmdec")) or 0.0
+    pm_tot = math.hypot(pm_ra, pm_dec) / 1000.0            # arcsec/yr
+    j2000 = propagate_pm(np.array([ra0]), np.array([dec0]), np.array([pm_ra]),
+                         np.array([pm_dec]), to_epoch=2000.0)
+    ref = propagate_pm(np.array([ra0]), np.array([dec0]), np.array([pm_ra]),
+                       np.array([pm_dec]), to_epoch=float(o["ztf_reference_epoch"]))
+    cat_radius = float(o["catalogue_radius_arcsec"]) + pm_tot * 5.0
+    irsa_radius = float(o["irsa_radius_arcsec"]) + pm_tot * float(o["ztf_reference_epoch_span_yr"])
     neigh, _e = services.call("gaia_cone", services.gaia,
                               gaia_cone_adql(p_ra, p_dec, float(o["gaia_radius_arcsec"])))
     objs, _e = services.call("alerce_cone", alerce_objects_near, services.alerce, p_ra, p_dec,
@@ -582,11 +623,12 @@ def vet_target(source_id: str, *, z: dict, conf: dict, targets, ledger: Ledger,
         summaries.append(summarise_object(ob, dets or [], nds or [], target, p_ra, p_dec,
                                           int(o["max_detections_recorded"])))
     sb, _e = services.call("simbad", services.simbad,
-                           simbad_cone_adql(p_ra, p_dec, float(o["catalogue_radius_arcsec"])))
+                           simbad_cone_adql(float(j2000[0][0]), float(j2000[1][0]), cat_radius))
     vs, _e = services.call("vsx", services.vizier,
-                           vsx_cone_adql(p_ra, p_dec, float(o["catalogue_radius_arcsec"])))
+                           vsx_cone_adql(float(j2000[0][0]), float(j2000[1][0]), cat_radius))
     lc_text, _e = services.call("irsa_lightcurve", services.irsa,
-                                irsa_lightcurve_url(p_ra, p_dec, float(o["irsa_radius_arcsec"])))
+                                irsa_lightcurve_url(float(ref[0][0]), float(ref[1][0]),
+                                                    irsa_radius))
     lc_rows = parse_irsa_csv(lc_text or "")
     if lc_text:
         (out_dir / f"{sid}_irsa_lc.csv").write_text(lc_text)
@@ -599,8 +641,15 @@ def vet_target(source_id: str, *, z: dict, conf: dict, targets, ledger: Ledger,
     rec["verdict"] = "OK"
     rec["services"] = list(services.log)
     rec["queries"] = {"gaia_cone": gaia_cone_adql(p_ra, p_dec, float(o["gaia_radius_arcsec"])),
-                      "irsa_lightcurve": irsa_lightcurve_url(p_ra, p_dec,
-                                                             float(o["irsa_radius_arcsec"]))}
+                      "simbad": simbad_cone_adql(float(j2000[0][0]), float(j2000[1][0]),
+                                                 cat_radius),
+                      "vsx": vsx_cone_adql(float(j2000[0][0]), float(j2000[1][0]), cat_radius),
+                      "irsa_lightcurve": irsa_lightcurve_url(float(ref[0][0]), float(ref[1][0]),
+                                                             irsa_radius)}
+    rec["epochs"] = {"events": float(epoch), "catalogues_j2000": [float(j2000[0][0]),
+                                                                    float(j2000[1][0])],
+                     "ztf_reference": [float(ref[0][0]), float(ref[1][0])],
+                     "catalogue_radius_arcsec": cat_radius, "irsa_radius_arcsec": irsa_radius}
     _write_json(out_dir / f"{sid}.json", rec)
     services.log.clear()
     return rec

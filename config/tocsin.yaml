@@ -232,6 +232,17 @@ ztf:
   # stars (r 10.6 and 11.5) alerting on their own subtraction residual.
   # Changing this key changes the target-list cache key, so the list is rebuilt.
   saturation_mag: 13.0
+  # A target inside a saturated NEIGHBOUR's exclusion radius is not a trial
+  # either: the neighbour's residual lands at the target's position.  Radius =
+  # neighbour_radius_arcsec at saturation_mag, x10 per 5 mag brighter, capped
+  # at neighbour_radius_cap_arcsec (G 11.5 -> 10", G 8 -> 50").  Added
+  # 2026-09-20 (docs/tocsin-ztf.md 8d): the saturation cut above sees only the
+  # target's own magnitude, not the saturated star next to it.  0 disables.
+  # Both keys are in the target-list cache key.  The dropped stars are committed
+  # to excluded_targets_path and pruned from the ledger, trials and all.
+  neighbour_radius_arcsec: 5.0
+  neighbour_radius_cap_arcsec: 120.0
+  excluded_targets_path: "results/tocsin_ztf/excluded_targets.csv"
   results_dir: "results/tocsin_ztf"
   ledger_path: "results/tocsin_ztf/ledger.json"
 

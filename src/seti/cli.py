@@ -751,8 +751,12 @@ def _cmd_tocsin_ztf_screen(args, cfg):
 def _cmd_tocsin_ztf_assess(args, cfg):
     from .tocsin.ztf_live import assess_only
 
-    rec = assess_only(cfg, out_dir=args.out_dir)
-    print(f"[tocsin-ztf] tiers={rec.get('tier_counts')}")
+    remove = None
+    if args.remove:
+        ids = [s.strip() for s in args.remove.split(",") if s.strip()]
+        remove = {tid: (args.remove_reason or "removed_on_request") for tid in ids}
+    rec = assess_only(cfg, out_dir=args.out_dir, remove=remove)
+    print(f"[tocsin-ztf] tiers={rec.get('tier_counts')} pruned={rec.get('ledger_pruned')}")
 
 
 def _cmd_tocsin_ztf_vet(args, cfg):
@@ -1540,6 +1544,11 @@ def main(argv=None):
     p = sub.add_parser("tocsin-ztf-assess",
                        help="TOCSIN-ZTF stage 3 (offline): re-assess the ZTF ledger")
     p.add_argument("--out-dir", default=None)
+    p.add_argument("--remove", default="",
+                   help="comma-separated target ids to take out of the ledger first, "
+                        "events and trials alike (a star vetted as no valid trial)")
+    p.add_argument("--remove-reason", default="",
+                   help="why, recorded in the ledger's `removed` record")
     p.set_defaults(func=_cmd_tocsin_ztf_assess)
 
     p = sub.add_parser("tocsin-ztf-vet",

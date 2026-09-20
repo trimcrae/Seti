@@ -631,10 +631,15 @@ def tocsin_ztf_alerts(root: Path) -> list[Alert]:
                   f"`candidate`: repeated achromatic events at a catalogued nearby "
                   f"star's position, surviving the funnel and the trial-corrected "
                   f"cross-night test on the ZTF ledger.\n\n"
-                  f"Read `results/tocsin_ztf/assessment.json` and `watchlist.csv`.\n\n"
+                  f"Read `results/tocsin_ztf/assessment.json`, `watchlist.csv` and the "
+                  f"vet record `results/tocsin_ztf/vet/<source_id>.json` (Gaia "
+                  f"neighbours, the full ALeRCE history with `distnr`/`corrected`/"
+                  f"reference magnitude, SIMBAD, VSX, IRSA light curve; its "
+                  f"`classification` and `flags` name any systematic found).\n\n"
                   f"Before believing it: ZTF alerts carry no dipole, trail or "
                   f"solar-system flags, so check the star's ZTF light curve for a "
-                  f"reference-image artefact and its position against known "
+                  f"reference-image artefact, its neighbours for a saturated star "
+                  f"(docs/tocsin-ztf.md 8d) and its position against known "
                   f"variables; and note which nights were counted on the "
                   f"detection-footprint proxy (`denominator_by_night`)."),
             detail={"n_candidate": n_cand, "targets": names[:20]}))

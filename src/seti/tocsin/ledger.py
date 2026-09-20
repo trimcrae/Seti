@@ -378,6 +378,34 @@ class Ledger:
             rec["n_visits"] = len(rec["visit_nights"])
             rec["visits_exact"] = True
 
+    def restrict_visits_to_ledger_nights(self) -> int:
+        """Drop visit epochs on nights the ledger never folded; returns nights dropped.
+
+        The denominator of every per-target test is the star's visited NIGHTS,
+        and it must count the same nights the numerator could have counted.
+        The ZTF path merges each object's own history into its visit list, and
+        that history begins at the object's first alert --- years before the
+        ledger's first night for a long-alerting star.  MEASURED 2026-09-20
+        (docs/tocsin-ztf.md 8d): 83 visits over a 68-night ledger, a duty cycle
+        of 0.13 that the veto passed, against 0.31 over the nights actually
+        folded.  Applied at every assessment, so an old ledger is corrected in
+        place.
+        """
+        counted = {int(n[1:]) for n in self.nights if isinstance(n, str) and n[1:].isdigit()}
+        if not counted:
+            return 0
+        dropped = 0
+        for rec in self.targets.values():
+            before = len(rec.get("visit_nights") or [])
+            mjds = [float(m) for m in rec.get("visit_mjds") or []]
+            keep = sorted({m for m in mjds if night_of(m) in counted})
+            rec["visit_mjds"] = keep
+            rec["visit_nights"] = sorted({night_of(m) for m in keep})
+            if rec.get("visits_exact"):
+                rec["n_visits"] = len(rec["visit_nights"])
+            dropped += max(0, before - len(rec["visit_nights"]))
+        return dropped
+
     # -- assessment --------------------------------------------------------
     def assess(self, alpha_fdr: float = 0.05, min_visits_for_rate: int = 5,
                max_duty_cycle: float = 0.2, n_null_timing: int = 2000,

@@ -109,7 +109,7 @@ jobs:
           key=$(python - <<'PY'
           import hashlib, json, yaml
           c = yaml.safe_load(open("config/tocsin.yaml"))
-          dep = {"target": c.get("target"), "ztf": {k: (c.get("ztf") or {}).get(k) for k in ("dec_min", "dec_max", "saturation_mag")}}
+          dep = {"target": c.get("target"), "ztf": {k: (c.get("ztf") or {}).get(k) for k in ("dec_min", "dec_max", "saturation_mag", "neighbour_radius_arcsec", "neighbour_radius_cap_arcsec")}}
           print(hashlib.sha256(json.dumps(dep, sort_keys=True).encode()).hexdigest()[:16])
           PY
           )
@@ -174,6 +174,15 @@ jobs:
         if: always() && github.event.inputs.probe_only != 'true'
         run: python -m seti.cli tocsin-ztf-assess || echo "assess skipped (no ledger yet)"
 
+      # STAGE 4 --- vet whatever the ledger promoted, tonight, before the
+      # alert fires: Gaia neighbours, the full ALeRCE history with the
+      # reference fields, SIMBAD, VSX, IRSA's DR light curve
+      # (docs/tocsin-ztf.md 8d).  A failure here never fails the night.
+      - name: Vet candidate-tier targets
+        if: always() && github.event.inputs.probe_only != 'true'
+        continue-on-error: true
+        run: python -m seti.cli tocsin-ztf-vet --tiers candidate
+
       - name: Summarise
         if: always()
         run: |
@@ -231,7 +240,9 @@ jobs:
             results/tocsin_ztf/assessment.json \
             results/tocsin_ztf/watchlist.csv \
             results/tocsin_ztf/events_latest.csv \
-            results/tocsin_ztf/rejected_latest.csv
+            results/tocsin_ztf/rejected_latest.csv \
+            results/tocsin_ztf/excluded_targets.csv \
+            results/tocsin_ztf/vet
       - uses: actions/upload-artifact@v4
         if: always()
         with:

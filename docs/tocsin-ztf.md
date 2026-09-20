@@ -136,7 +136,9 @@ from 2026-01-01 catches up with the frontier, then one night per night. Dispatch
 inputs: `chunks`, `mjd_lo`/`mjd_hi` (an explicit window does not move the
 watermark), `probe_only`, `rebuild_targets`. Outputs committed per run:
 `probe.json`, `summary.json`, `ledger.json`, `assessment.json`,
-`watchlist.csv`, `events_latest.csv`, `rejected_latest.csv`.
+`watchlist.csv`, `events_latest.csv`, `rejected_latest.csv`,
+`excluded_targets.csv` and `vet/<source_id>.json` for every candidate-tier
+target (§8d). `tocsin-ztf-vet.yml` vets any star by id on demand.
 
 ## 7. What the first live runs taught (2026-09-05, runs 1-4)
 
@@ -238,32 +240,37 @@ Throughput after run 7: six sweep workers and three chunks per run, with a
 second daily firing at 23:25 ET while the backfill catches up (~47 nights to
 go, ~9 nights per run).
 
-### 8c. Run 17 (2026-09-10, 08:15–08:57 UTC): the first two candidates were saturated stars
+### 8c. Run 17 (2026-09-10, 08:15–08:57 UTC): the first two candidates — as read then, and as corrected in 8d
 
 Run 17 folded nights 61288–61290 and the ledger promoted two stars to
 `candidate`; the alerts workflow opened issue #10 at 17:42 UTC. Both were
-rejected on inspection, and both for the same reason — one the funnel had no
-rule for:
+rejected on inspection as **saturated stars**, on this reading:
 
-| star (Gaia DR3) | events | amplitude | real/bogus (`drb`) | baseline from the ledger's own `a` and `dF` |
+| star (Gaia DR3) | events | amplitude *as read on 2026-09-10* | real/bogus (`drb`) | baseline *as inferred then* |
 |---|---|---|---|---|
 | 2752213329586862976 (RA 2.32°, Dec +9.00°) | 6 flashes, g+r+i, all grey | +6 to +10 % | 0.21–0.38 | g 11.3, **r 10.6**, i 9.6 |
 | 4497414466452138496 (RA 274.27°, Dec +13.47°) | 6 flashes, g+r, all grey, plus one i-band outlier at `drb` 0.22 | +1 to +4 % | 0.95–1.00 | g 12.4, **r 11.5** |
 
-ZTF's 30 s exposures saturate at ~12.5–13 mag (Masci et al. 2019). Both stars
-are brighter than that in r; the first is brighter than it in every band. A
-saturated core does not subtract: what is left is a few-percent residual of
-either sign on every visit, achromatic because it is the same defect in every
-band, and at the same time of night because it follows the cadence — the
-timing test found a best period of 1.00 d with Rayleigh concentration 0.93–0.96
-for both, which the cadence-matched null correctly declined to call significant.
-Grey, repeating, at a catalogued star's position: the channel's signal, faked by
-the detector. The first star's alerts were also all below any real/bogus
-threshold, which the funnel was not applying — `min_reliability` was inherited
-from the Rubin block, where it is 0 for a reason (the `screen:` block of
-`config/tocsin.yaml`: Rubin's model scores stellar subtractions low and its
-stream is already cut at 0.5) that does not transfer: ALeRCE's ZTF detections
-carry no floor at all.
+**That reading was wrong, and 8d corrects it.** The ledger's `a` for these
+events was 1.03–1.11, not 0.03–0.11: the fractional amplitude was *one hundred
+and three per cent*, measured against the stars' own Gaia synthetic baseline
+(`baseline_source: gaia_gspc_synthetic` on every event, in the pre-reset
+ledger at commit `30c947e`). Reading 1.03 as "+3 %" and dividing the difference
+flux by 0.03 manufactured the "r 11.5" and "r 10.6" baselines; the stars are
+G 15.6 and fainter than 13 in every band (both are in the list rebuilt with the
+G > 13 cut, and the second is on the current ledger at `interest`). Neither is
+saturated. What both had was a difference flux **equal to the star's own
+flux** on every visit — the star absent from its own reference image — which
+is the mechanism 8d establishes for the first with the runner's evidence.
+
+The two rules the run added remain, on their own merits rather than on the
+run-17 evidence: `min_reliability: 0.5` on `drb` (the first star's alerts
+really were scored 0.21–0.38, below braai's own threshold); and
+`saturation_mag: 13.0`, which is correct physics for a 30 s ZTF exposure
+(Masci et al. 2019) even though neither run-17 star was an instance of it
+(`n_removed_saturated: 25` at the rebuild). The timing signature noted then —
+best period 1.00 d, Rayleigh concentration 0.93–0.96 — is real and is the
+signature of *any* per-visit residual, saturated or not.
 
 Two rules, both in the `ztf:` block of `config/tocsin.yaml`, both recorded in
 each run's `summary.json` under `ztf_thresholds`:
@@ -295,11 +302,125 @@ Rubin target list (`target:` block, `g_max` only) has no bright cut either; the
 funnel's `saturation_mag` is `None` there. That is a change to make before
 Rubin returns, with its own ledger reset, and is not made here.
 
+### 8d. 2026-09-20: the candidate that had walked off its own reference image
+
+The nightly run of 04:47 EDT (08:47 UTC) folded night 61301 and the assessment
+at 05:13 EDT promoted **Gaia DR3 4497414466452138496** — the same star as
+run 17's second candidate — to `candidate`: 11 flash events on 11 nights
+between 61234 and 61296, all grey (9 colour-tested, |z| ≤ 1.04), fractional
+amplitude 0.97–1.07 in g and r, "colour temperature" 4590–4900 K, duty cycle
+0.13 over 83 visits, p = 4.2 × 10⁻⁵ against the local rate. The alerts
+workflow opened issue #15 at 1:27 PM EDT.
+
+**What the star is.** Parallax 66.11 mas (15.1 pc), proper motion
+(−436, −1116) mas/yr = **1.20″/yr**, G 15.62, BP−RP 1.15, RUWE 1.02, no
+non-single-star flag; M_G = 14.7 — a cool white dwarf at 15 pc. The Gaia
+synthetic g − r of 0.74 corresponds to ~4700 K, i.e. the "colour temperature"
+of the excess is the colour of the star.
+
+**What the runner measured** (`tocsin-ztf-vet`, run 35527006716, 1:48 PM EDT;
+`results/tocsin_ztf/vet/4497414466452138496.json`):
+
+| | |
+|---|---|
+| ALeRCE objects within 5″ of the propagated position | two: ZTF25aabynax (185 detections, 2025-01-14 → 2026-08-06, 0.09″ off) and ZTF26abftlhy (192 detections, 2026-06-09 → 2026-09-19, 0.39″ off) — ZTF opens a new object as the star walks out of the old one's 1.5″ association |
+| `distnr`, distance to the nearest reference-catalogue source | median **9.5″ and 9.7″** (min 0.5–0.7″); `corrected` on 1 % and 9 % of detections |
+| difference flux / the star's own Gaia flux | g **1.03, 1.04**; r **1.02, 1.02** (MAD 0.01) over 96 + 96 and 87 + 78 detections |
+| `drb` | median 0.99 and 0.98 |
+| Gaia DR3 within 60″ | 58 sources; nearest 10.0″ (G 16.4, parallax 0.26 mas — background); **none brighter than 13** |
+| detections on nights the ledger counts (61235–61302) | **51 of the 51 nights the star was visited** — 11 folded as events, the rest rejected as `bad_pixels` (ALeRCE's `dubious`) or `chromatic` |
+
+The star has moved ~9″ since the ZTF reference epoch. At its present position
+the reference image holds nothing (the nearest catalogued reference source is
+the background star 10″ away), so the difference image holds **the whole
+star**: a "flash" of exactly the star's flux, with exactly the star's colour,
+on every visit, in every band. It is the *proper-motion dipole* the funnel's
+docstring names as the systematic of a nearby-star sample, in the form ZTF
+serves it — the positive lobe alone, at the propagated Gaia position, with no
+dipole flag to reject it on. The nightly funnel kept the nights on which the
+`dubious` flag happened to be clear and g and r happened to agree within 3σ;
+the ledger saw eleven grey repeats and did what it is built to do.
+
+**Why the ledger's own defence did not fire.** The duty-cycle veto exists for
+exactly this — a residual repeats at every visit, an event does not — and it
+reads 11/83 = 0.13 against a limit of 0.2. The 83 "visits" were wrong: the
+object's own history (its upper limits and detections) was being merged into
+the star's visit list *from the object's first alert in January 2025*, months
+before the ledger's first night, so nights on which no event could ever have
+been folded were counted as trials. Over the nights the ledger actually
+counts the star was visited on 51 and alerted on 51, and the veto would have
+rejected it at 11/51 = 0.22. The same inflation touched 195 of the 225
+targets on the ledger (16,523 visit-nights dropped by the correction below).
+
+**Run 17, re-read.** The pre-reset ledger (commit `30c947e`) shows the same
+star with 7 events at a = 1.01–1.06 against `gaia_gspc_synthetic`, and run 17's
+other candidate, 2752213329586862976, with 6 events at a = 1.03–1.11 against
+the same baseline. Neither was "+1 to +4 %" nor "+6 to +10 %", neither had a
+ZTF reference of r 11.5 or r 10.6, and neither is saturated (8c, corrected).
+Both were this mechanism. The second is on the current ledger at `interest`
+and is vetted with this run.
+
+**Four changes, each pinned by a test** (`tests/test_tocsin_ztf_vet.py`):
+
+1. **The funnel subtracts a persistent level** (`rebaseline_persistent_residuals`).
+   Per object and band, a series of ≥ 10 detections that is a *level* and not
+   a light curve — ≥ 90 % one sign, scatter about a 60-day running median
+   below 20 % of the median — has that level subtracted from every alert,
+   with the MAD added to the error. This is ALeRCE's own `magpsf_corr`
+   correction applied where ALeRCE cannot apply it (no reference source
+   within 1.4″): the level *is* the star's missing reference flux. An
+   ordinary visit becomes ~0 ± MAD and fails `low_significance`; a real
+   departure survives at its true size — a flash as a > level, a dip as
+   a < level — so the star **stays a trial**. A variable crossing its
+   reference mean fails the sign test; a flare star keeps its flares.
+2. **Visits are the ledger's nights** (`Ledger.restrict_visits_to_ledger_nights`,
+   and the same filter in `screen_window` before folding). Applied at every
+   assessment, so the existing ledger is corrected in place.
+3. **A star vetted as no valid trial is taken out with its trials**
+   (`Ledger.remove_targets`; `tocsin-ztf-assess --remove ID --remove-reason …`).
+   Under the old funnel every visit of this star was already an "event", so a
+   real flash on it could not have been distinguished; its 51 visits were not
+   trials. Its events and its visits go together — neither purging the events
+   alone (which deflates the ensemble rate, 8c) nor leaving them in (which
+   inflates it). The removal is recorded in the ledger's `removed`.
+4. **Promoted targets are vetted before the alert fires** (`tocsin-ztf-vet`,
+   stage 4 of the nightly workflow, and its own dispatchable workflow):
+   Gaia DR3 within 60″, every ALeRCE object within 5″ with its full history
+   and the `distnr`/`corrected`/reference-magnitude fields the funnel
+   discards, SIMBAD and VSX (at J2000, the radius widened by the proper-motion
+   drift — the first vet asked at the 2026 position and missed a star that
+   has moved 32″ since 2000), and IRSA's DR light curve (at the reference
+   epoch, likewise widened). The record carries named flags and one
+   classification; this star's is `systematic:proper_motion_reference_artefact`
+   on `self_flux`, `high_proper_motion_drift` (9.1″) and
+   `no_reference_source_at_position` (`distnr` 9.5″).
+
+And one rule written on the way that is kept because the mechanism it closes
+is real, though it was not this star's: **a target inside a saturated
+neighbour's exclusion radius is not a trial** (`neighbour_radius_arcsec: 5.0`
+at the saturation magnitude, ×10 per 5 mag brighter, capped at 120″;
+`targets.flag_bright_neighbours`). The saturation cut sees only the target's
+own magnitude; a saturated star's residual lands wherever its PSF does,
+including on a faint catalogued star beside it. The list is rebuilt under the
+new cache key with a Gaia scan for stars brighter than 13 (36 RA stripes; a
+stripe that fails is named in `targets.json` and its targets stay unflagged
+rather than silently isolated); the dropped stars are committed to
+`results/tocsin_ztf/excluded_targets.csv` and pruned from the ledger by rule 3.
+Expected cost: of order 10⁻³ of the list.
+
+**Disposition of the candidate:** rejected, `systematic:proper_motion_reference_artefact`;
+removed from the ledger with its 51 visits; issue #15 closed with the vet
+record. Under rule 1 the star remains in the list and is screened for
+departures from its level from the next night on.
+
 ## 9. Status
 
-Live since 2026-09-05, twice daily (11:25 and 23:25 ET) until the backfill from
-2026-07-14 reaches the stream, then screening the previous night each morning.
-Ledger reset on 2026-09-10 (§8c) with the saturation and real/bogus floors; the
-backfill re-runs from 2026-07-14 against the rebuilt list. Per the charter the
-objective is a detection; a clean null over the season is a reason to change
-the question, not to write it up.
+Live since 2026-09-05, twice daily (11:25 and 23:25 ET); the backfill from
+2026-07-14 caught up with the stream on 2026-09-20 and each run now screens
+the previous night. Ledger reset on 2026-09-10 (§8c) with the saturation and
+real/bogus floors. On 2026-09-20 (§8d) the funnel gained the persistent-level
+subtraction, the ledger's visit denominators were corrected in place, promoted
+targets are vetted nightly before the alert fires, and the list is rebuilt
+under the bright-neighbour rule. Per the charter the objective is a detection;
+a clean null over the season is a reason to change the question, not to write
+it up.

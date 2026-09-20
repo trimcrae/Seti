@@ -297,16 +297,17 @@ def parallax_shells(d_max_pc: float, n_shells: int = 6) -> list[tuple[float, flo
 # ---------------------------------------------------------------------------
 # Bright neighbours: the saturated star NEXT to a faint target
 # ---------------------------------------------------------------------------
-# ZTF run 17 (docs/tocsin-ztf.md 8c) rejected Gaia DR3 4497414466452138496 as a
-# saturated star because ALeRCE's reference magnitude at its position was r 11.5.
-# Gaia says the target itself is r 15.6.  The r 11.5 flux belongs to a
-# neighbour inside the same ~2" PSF; its saturated core leaves a few-percent
-# residual on every visit, at the faint target's catalogued position, and once
-# the funnel started measuring amplitudes against the target's OWN (faint) Gaia
-# baseline instead of the reference flux, the same residual came back as a
-# +103 % "flash" on 29 nights and reached candidate tier a second time (run of
-# 2026-09-20, issue #15).  The bright cut on the target's own magnitude cannot
-# see this; the cut has to be on what else is inside the aperture.
+# The saturation rule (`drop_saturated`, `saturated_target`) looks only at the
+# target's own magnitude.  A saturated star's residual lands wherever its PSF,
+# halo and bleed do --- including on a faint catalogued star a few arcsec away,
+# which then alerts with its bright neighbour's defect at its own position and
+# is judged against its own faint baseline.  This rule cuts on what else is
+# inside the aperture.  (It was written on 2026-09-20 while vetting issue #15,
+# whose star turned out to be the OTHER reference systematic, a
+# high-proper-motion star that had left its own reference image --- see
+# docs/tocsin-ztf.md 8d and `ztf_live.rebaseline_persistent_residuals`; this
+# rule is kept because the mechanism it closes is real and the target's own
+# magnitude cannot see it.)
 #
 # The exclusion radius scales with the neighbour's flux: a saturated star's
 # residual, halo and bleed all grow with brightness.  At the survey's saturation

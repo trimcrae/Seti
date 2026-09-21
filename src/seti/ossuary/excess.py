@@ -241,6 +241,66 @@ def _bb_flux_jy(temp_k: float, band: str, omega: float) -> float:
     return float(omega * planck_bnu(temp_k, band_freq_hz(band)) * 1e26)
 
 
+_COARSE_GRID = np.geomspace(50.0, 3000.0, 300)
+
+
+def _model_matrix(bands, t_grid: np.ndarray) -> np.ndarray:
+    """Blackbody flux density (Jy per sr) on a temperature grid: (n_T, n_bands)."""
+    t = np.asarray(t_grid, float)
+    return np.stack([planck_bnu(t, band_freq_hz(b)) * 1e26 for b in bands], axis=1)
+
+
+def _fit_grid(f: np.ndarray, s: np.ndarray, model: np.ndarray, t_grid: np.ndarray):
+    """Closed-form weighted fit of one blackbody scale per (draw, temperature).
+
+    ``f`` and ``s`` are ``(n_draws, n_bands)``; ``model`` is ``(n_T, n_bands)``.
+    For a linear scale the least-squares solution is ``omega = B / C`` with
+    ``B = sum(f * model * w)`` and ``C = sum(model^2 * w)``, and the residual chi2 is
+    ``A - B^2 / C`` with ``A = sum(f^2 * w)``.  Every draw and every temperature are
+    evaluated in one matrix product, which is what turned a per-star cost of
+    ~10^5 Python calls (the loop that timed out the first catalogue-scale run) into
+    three array operations.  Returns ``(t_best, omega_best, chi2_best)`` per draw;
+    draws whose best scale is not positive come back NaN.
+    """
+    w = 1.0 / s ** 2                                    # (n_draws, n_bands)
+    a = (f ** 2 * w).sum(axis=1)                        # (n_draws,)
+    b = (f * w) @ model.T                               # (n_draws, n_T)
+    c = (model ** 2) @ w.T                              # (n_T, n_draws)
+    c = c.T                                             # (n_draws, n_T)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        omega = b / c
+        chi2 = a[:, None] - b ** 2 / c
+    chi2 = np.where((omega > 0) & np.isfinite(chi2), chi2, np.inf)
+    k = np.argmin(chi2, axis=1)
+    rows = np.arange(len(k))
+    best_chi2 = chi2[rows, k]
+    ok = np.isfinite(best_chi2)
+    t_best = np.where(ok, t_grid[k], np.nan)
+    om_best = np.where(ok, omega[rows, k], np.nan)
+    return t_best, om_best, np.where(ok, best_chi2, np.nan)
+
+
+def fit_excess_blackbody_draws(fluxes: np.ndarray, errors: np.ndarray, bands,
+                               *, refine: bool = True):
+    """Vectorised blackbody fit for many flux draws sharing one band set.
+
+    ``fluxes``/``errors`` are ``(n_draws, n_bands)`` in Jy.  The coarse grid is
+    scanned for every draw at once; when ``refine`` is set the first draw (the
+    point estimate) is re-scanned on a fine grid around its coarse minimum so the
+    grid spacing, not the data, cannot dominate the residual chi2.
+    """
+    f = np.asarray(fluxes, float)
+    s = np.asarray(errors, float)
+    model = _model_matrix(bands, _COARSE_GRID)
+    t, om, chi2 = _fit_grid(f, s, model, _COARSE_GRID)
+    if refine and len(t) and np.isfinite(t[0]):
+        fine = np.linspace(t[0] / 1.05, t[0] * 1.05, 60)
+        tf, omf, c2f = _fit_grid(f[:1], s[:1], _model_matrix(bands, fine), fine)
+        if np.isfinite(c2f[0]) and c2f[0] < chi2[0]:
+            t[0], om[0], chi2[0] = tf[0], omf[0], c2f[0]
+    return t, om, chi2
+
+
 def fit_excess_blackbody(fluxes_jy: dict, errors_jy: dict, *,
                          t_grid: np.ndarray | None = None) -> tuple[float, float, float]:
     """Least-squares single-temperature blackbody fit to the excess fluxes.
@@ -255,34 +315,14 @@ def fit_excess_blackbody(fluxes_jy: dict, errors_jy: dict, *,
              and errors_jy[b] > 0]
     if len(bands) < 2:
         return np.nan, np.nan, np.nan
-    f = np.array([fluxes_jy[b] for b in bands], float)
-    s = np.array([errors_jy[b] for b in bands], float)
-    coarse = np.geomspace(50.0, 3000.0, 300) if t_grid is None else np.asarray(t_grid)
-    w = 1.0 / s ** 2
-
-    def _scan(grid):
-        best = (np.nan, np.nan, np.inf)
-        for t in grid:
-            model = np.array([_bb_flux_jy(t, b, 1.0) for b in bands], float)
-            denom = float((model ** 2 * w).sum())
-            if denom <= 0:
-                continue
-            omega = float((model * f * w).sum() / denom)
-            if omega <= 0:
-                continue
-            chi2 = float((((f - omega * model) / s) ** 2).sum())
-            if chi2 < best[2]:
-                best = (float(t), omega, chi2)
-        return best
-
-    best = _scan(coarse)
-    if not np.isfinite(best[0]) or t_grid is not None:
-        return best
-    # Refine around the coarse minimum: the grid spacing, not the data, would
-    # otherwise dominate the residual chi2 and make a good fit look bad.
-    lo, hi = best[0] / 1.05, best[0] * 1.05
-    fine = _scan(np.linspace(lo, hi, 60))
-    return fine if fine[2] < best[2] else best
+    f = np.array([[fluxes_jy[b] for b in bands]], float)
+    s = np.array([[errors_jy[b] for b in bands]], float)
+    if t_grid is not None:
+        grid = np.asarray(t_grid, float)
+        t, om, chi2 = _fit_grid(f, s, _model_matrix(bands, grid), grid)
+        return float(t[0]), float(om[0]), float(chi2[0])
+    t, om, chi2 = fit_excess_blackbody_draws(f, s, bands, refine=True)
+    return float(t[0]), float(om[0]), float(chi2[0])
 
 
 def _star_solid_angle(anchor_mag: float, anchor_band: str, teff_k: float) -> float:
@@ -296,7 +336,8 @@ def _star_solid_angle(anchor_mag: float, anchor_band: str, teff_k: float) -> flo
 
 def characterise(df: pd.DataFrame, cfg: dict, *, anchor: str = "Ks",
                  bands=("W1", "W2", "W3", "W4"),
-                 rng: np.random.Generator | None = None) -> pd.DataFrame:
+                 rng: np.random.Generator | None = None,
+                 mc_mask: np.ndarray | None = None) -> pd.DataFrame:
     """Fit ``(T_dust, tau)`` per row with Monte-Carlo uncertainties.
 
     ``tau = L_dust / L_star`` from the ratio of blackbody bolometric outputs,
@@ -304,11 +345,17 @@ def characterise(df: pd.DataFrame, cfg: dict, *, anchor: str = "Ks",
     MC redraws every excess flux from its own error and refits, giving honest
     16/84 percentiles rather than a formal curvature error -- which matters here
     because the blackbody fit is strongly non-linear near the low-T end.
+
+    ``mc_mask`` (boolean, aligned to ``df``) restricts the Monte-Carlo to the rows
+    where it can matter -- those still alive after the cheap catalogue gates.
+    Every row gets the point estimate; a row outside the mask gets NaN
+    percentiles rather than a guess.
     """
     rng = rng or np.random.default_rng(20260726)
     n_mc = int(cfg.get("mc_draws", 400))
     out = df.copy()
     n = len(out)
+    do_mc = np.ones(n, bool) if mc_mask is None else np.asarray(mc_mask, bool)
     t_dust = np.full(n, np.nan)
     tau = np.full(n, np.nan)
     t_lo = np.full(n, np.nan)
@@ -327,40 +374,44 @@ def characterise(df: pd.DataFrame, cfg: dict, *, anchor: str = "Ks",
                 if np.isfinite(teff).any():
                     break
 
+    have = [b for b in bands
+            if f"{b}_excess_jy" in out.columns and f"{b}_excess_err_jy" in out.columns]
+    fx = {b: pd.to_numeric(out[f"{b}_excess_jy"], errors="coerce").to_numpy(float)
+          for b in have}
+    ex = {b: pd.to_numeric(out[f"{b}_excess_err_jy"], errors="coerce").to_numpy(float)
+          for b in have}
+
     for i in range(n):
-        f = {b: float(out[f"{b}_excess_jy"].iloc[i])
-             for b in bands if f"{b}_excess_jy" in out.columns}
-        e = {b: float(out[f"{b}_excess_err_jy"].iloc[i])
-             for b in bands if f"{b}_excess_err_jy" in out.columns}
         # Only bands with a positive, significant excess constrain the dust; a
         # band consistent with zero would drag the fit toward an arbitrary T.
-        use = {b: v for b, v in f.items()
-               if np.isfinite(v) and v > 0 and e.get(b, 0) > 0 and v / e[b] >= 1.0}
+        use = [b for b in have
+               if np.isfinite(fx[b][i]) and fx[b][i] > 0 and np.isfinite(ex[b][i])
+               and ex[b][i] > 0 and fx[b][i] / ex[b][i] >= 1.0]
         nb[i] = len(use)
         if len(use) < 2:
             continue
-        eu = {b: e[b] for b in use}
-        t0, om0, c2 = fit_excess_blackbody(use, eu)
-        if not np.isfinite(t0):
+        f0 = np.array([fx[b][i] for b in use], float)
+        e0 = np.array([ex[b][i] for b in use], float)
+        n_draw = n_mc if do_mc[i] else 0
+        draws = np.vstack([f0[None, :],
+                           f0[None, :] + rng.normal(0.0, 1.0, (n_draw, len(use))) * e0])
+        errs = np.broadcast_to(e0, draws.shape)
+        tk, omk, c2k = fit_excess_blackbody_draws(draws, errs, use, refine=True)
+        if not np.isfinite(tk[0]):
             continue
         omega_star = _star_solid_angle(a_mag[i], anchor, teff[i])
-        tau0 = (om0 * t0 ** 4) / (omega_star * teff[i] ** 4) \
-            if np.isfinite(omega_star) and omega_star > 0 else np.nan
-        t_dust[i], tau[i], chi2[i] = t0, tau0, c2
-
-        ts, taus = [], []
-        for _ in range(n_mc):
-            draw = {b: use[b] + rng.normal(0.0, eu[b]) for b in use}
-            tk, omk, _ = fit_excess_blackbody(draw, eu)
-            if not np.isfinite(tk):
-                continue
-            ts.append(tk)
-            if np.isfinite(omega_star) and omega_star > 0:
-                taus.append((omk * tk ** 4) / (omega_star * teff[i] ** 4))
-        if ts:
-            t_lo[i], t_hi[i] = np.percentile(ts, [16, 84])
-        if taus:
-            tau_lo[i], tau_hi[i] = np.percentile(taus, [16, 84])
+        have_star = np.isfinite(omega_star) and omega_star > 0
+        with np.errstate(invalid="ignore", divide="ignore"):
+            tauk = (omk * tk ** 4) / (omega_star * teff[i] ** 4) if have_star \
+                else np.full(len(tk), np.nan)
+        t_dust[i], tau[i], chi2[i] = tk[0], tauk[0], c2k[0]
+        if n_draw:
+            ts = tk[1:][np.isfinite(tk[1:])]
+            taus = tauk[1:][np.isfinite(tauk[1:])]
+            if ts.size:
+                t_lo[i], t_hi[i] = np.percentile(ts, [16, 84])
+            if taus.size:
+                tau_lo[i], tau_hi[i] = np.percentile(taus, [16, 84])
 
     out["t_dust_k"] = t_dust
     out["t_dust_lo_k"] = t_lo
@@ -430,5 +481,6 @@ def select_excess(df: pd.DataFrame, cfg: dict) -> pd.Series:
 
 
 __all__ = ["ColourLocus", "fit_colour_locus", "fit_loci", "compute_excess",
-           "fit_excess_blackbody", "characterise", "select_excess",
+           "fit_excess_blackbody", "fit_excess_blackbody_draws", "characterise",
+           "select_excess",
            "cascade_timescale_yr", "wien_peak_k", "BANDS"]

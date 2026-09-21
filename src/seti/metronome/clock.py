@@ -77,6 +77,14 @@ DEFAULT_SCAN = {
     "m_max": 4, "chunk": 8192, "refine_points": 41, "refine_halfwidth_steps": 2.0,
     "phase_window": 0.05, "gap_tol": 0.05, "harmonic_walk_tol": 0.02,
     "harmonic_walk_max": 12, "decluster_gap_days": 0.1,
+    # The CORE of the phase distribution: events within +-core_window cycle of
+    # the clock phase.  A clock on a star that also flares naturally is a
+    # delta plus a uniform background; the rms jitter over ALL events then
+    # says "not a clock" at 10-15% contamination while the core says what the
+    # ticks themselves do.  Rotational modulation (rate ∝ 1 + cos) puts ~0.20
+    # of its events inside +-0.05 cycle and has a core jitter of ~0.087 over
+    # +-0.15, so the core thresholds in vet.py sit well above it.
+    "core_window": 0.15,
 }
 DEFAULT_NULL = {
     "h_stop": 10, "n_max": 2000, "n_min_trials": 20, "budget_s": 300.0,
@@ -87,7 +95,7 @@ DEFAULT_NULL = {
     # capped here so a strongly rotation-modulated star does not spend the
     # full budget establishing a p-value that cannot change its tier.  The p
     # is still a valid Besag-Clifford p, only coarser.
-    "n_max_not_clock": 200, "Q_watch": 0.6, "jitter_watch": 0.12,
+    "n_max_not_clock": 200, "Q_watch": 0.6, "jitter_watch": 0.12, "f_core_watch": 0.4,
 }
 
 
@@ -164,14 +172,21 @@ def h_statistic(times, freqs, *, m_max: int = 4, chunk: int = 8192) -> np.ndarra
     return out
 
 
-def phase_stats(times, period: float, *, phase_window: float = 0.05) -> dict:
-    """Clock quality at one period, read off the phase distribution."""
+def phase_stats(times, period: float, *, phase_window: float = 0.05,
+                core_window: float = 0.15) -> dict:
+    """Clock quality at one period, read off the phase distribution.
+
+    ``jitter`` / ``Q`` are over every event; ``jitter_core`` and ``n_core``
+    are over the events within ``+-core_window`` cycle of the clock phase ---
+    the ticks themselves, when a natural flare background is mixed in.
+    """
     t = np.asarray(times, dtype=float)
     n = len(t)
     if n == 0 or not np.isfinite(period) or period <= 0:
         return {"n": int(n), "rbar": float("nan"), "Q": float("nan"),
                 "jitter": float("nan"), "f_in_window": float("nan"),
-                "mean_phase": float("nan"), "t0": float("nan")}
+                "mean_phase": float("nan"), "t0": float("nan"),
+                "jitter_core": float("nan"), "n_core": 0, "core_mask": np.zeros(0, dtype=bool)}
     phi = 2.0 * np.pi * np.mod(t / period, 1.0)
     c, s = np.cos(phi).mean(), np.sin(phi).mean()
     rbar = float(np.hypot(c, s))
@@ -182,10 +197,21 @@ def phase_stats(times, period: float, *, phase_window: float = 0.05) -> dict:
     q = float(np.clip(1.0 - dev / dev0, 0.0, 1.0))
     d = np.mod(phi - theta + np.pi, 2.0 * np.pi) - np.pi
     jitter = float(np.sqrt(np.mean(d ** 2)) / (2.0 * np.pi))
-    f_in = float(np.mean(np.abs(d) / (2.0 * np.pi) <= float(phase_window)))
+    dcyc = np.abs(d) / (2.0 * np.pi)
+    f_in = float(np.mean(dcyc <= float(phase_window)))
+    core = dcyc <= float(core_window)
+    if core.sum() >= 2:
+        # the core's own mean phase, so a background does not pull the centre
+        cc, sc = np.cos(phi[core]).mean(), np.sin(phi[core]).mean()
+        theta_c = float(np.arctan2(sc, cc))
+        dc = np.mod(phi[core] - theta_c + np.pi, 2.0 * np.pi) - np.pi
+        jitter_core = float(np.sqrt(np.mean(dc ** 2)) / (2.0 * np.pi))
+    else:
+        jitter_core = float("nan")
     t0 = float((theta / (2.0 * np.pi)) * period)
     return {"n": int(n), "rbar": rbar, "Q": q, "jitter": jitter, "f_in_window": f_in,
-            "mean_phase": float(np.mod(theta / (2.0 * np.pi), 1.0)), "t0": t0}
+            "mean_phase": float(np.mod(theta / (2.0 * np.pi), 1.0)), "t0": t0,
+            "jitter_core": jitter_core, "n_core": int(core.sum()), "core_mask": core}
 
 
 def refine_frequency(times, f0: float, df: float, *, m_max: int = 4,
@@ -305,6 +331,10 @@ class ScanResult:
     t0: float = float("nan")
     gap_integer_frac: float = float("nan")
     n_gaps_used: int = 0
+    jitter_core: float = float("nan")
+    n_core: int = 0
+    gap_integer_frac_core: float = float("nan")
+    n_gaps_core: int = 0
     cycles_span: float = float("nan")
     cycles_hit: int = 0
     cycle_occupancy: float = float("nan")
@@ -349,11 +379,17 @@ def scan(times, windows: Windows | None, conf: dict | None = None) -> ScanResult
                            phase_window=float(c["phase_window"]),
                            max_period=res.max_period_used)
     res.period = float(p)
-    ps = phase_stats(t, p, phase_window=float(c["phase_window"]))
+    ps = phase_stats(t, p, phase_window=float(c["phase_window"]),
+                     core_window=float(c.get("core_window", 0.15)))
     res.Q, res.jitter, res.f_in_window = ps["Q"], ps["jitter"], ps["f_in_window"]
     res.rbar, res.mean_phase, res.t0 = ps["rbar"], ps["mean_phase"], ps["t0"]
+    res.jitter_core, res.n_core = ps["jitter_core"], ps["n_core"]
     res.gap_integer_frac, res.n_gaps_used = gap_integer_fraction(
         t, p, windows, tol=float(c["gap_tol"]))
+    core = ps["core_mask"]
+    if core.sum() >= 2:
+        res.gap_integer_frac_core, res.n_gaps_core = gap_integer_fraction(
+            t[core], p, windows, tol=float(c["gap_tol"]))
     # Cycle bookkeeping: how many ticks of the clock fell in observed time, and
     # how many of those carry an event.  Report-only; a beacon need not tick
     # every cycle, but a reader should see the duty cycle.
@@ -604,8 +640,13 @@ def analyze_star(times, windows: Windows, energies=None, scan_conf: dict | None 
         rec.update({"null_computed": False, "p_window": rec["p_screen_upper"],
                     "p_window_source": "bonferroni_screen", "p_shuffle": float("nan")})
     else:
-        not_clock = not (np.isfinite(r.Q) and r.Q >= float(nc["Q_watch"])
-                         and np.isfinite(r.jitter) and r.jitter <= float(nc["jitter_watch"]))
+        rms_ok = (np.isfinite(r.Q) and r.Q >= float(nc["Q_watch"])
+                  and np.isfinite(r.jitter) and r.jitter <= float(nc["jitter_watch"]))
+        core_ok = (np.isfinite(r.f_in_window)
+                   and r.f_in_window >= float(nc.get("f_core_watch", 0.4))
+                   and np.isfinite(r.jitter_core)
+                   and r.jitter_core <= float(nc["jitter_watch"]))
+        not_clock = not (rms_ok or core_ok)
         nc_run = dict(nc, n_max=min(int(nc["n_max"]), int(nc["n_max_not_clock"]))) \
             if not_clock else nc
         rec["null_budget_mode"] = "not_clock_reduced" if not_clock else "full"

@@ -79,7 +79,8 @@ jobs:
         if: always()
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
-        run: scripts/commit_results.sh "spectra-persist: probe" results/spectra_persist/probe.json
+        run: |
+          scripts/commit_results.sh "spectra-persist probe" results/spectra_persist/probe.json
 
   run:
     if: ${{ always() && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'run') && needs.probe.result != 'failure' }}

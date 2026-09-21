@@ -258,6 +258,20 @@ def ledger_vetoes(row, cfg: dict, fit_dust=None) -> list[str]:
         if plate <= float(p.get("saturation_mag", 12.0)):
             flags.append("PLATE_SATURATED")
 
+    # Artefact flags carried by the catalogues themselves: the plate scan's
+    # diffraction-spike flag, AllWISE's contamination flags for W1/W2, and a
+    # bright Gaia star inside the wide pull (plate halo / spike footprint).
+    fl = str(row.get("usnob_flags", "") or "")
+    if v.get("reject_usnob_spike", True) and fl not in ("", "nan", "None") and "s" in fl:
+        flags.append("USNOB_SPIKE_FLAG")
+    ccf = str(row.get("wise_ccf", "") or "")
+    if (v.get("reject_wise_artifact_flags", True) and ccf not in ("", "nan", "None")
+            and any(ch in "DPHOdpho" for ch in ccf[:2])):
+        flags.append("WISE_ARTIFACT_FLAG")
+    bg = val("bright_nb_gmag")
+    if np.isfinite(bg) and bg <= float(v.get("bright_neighbour_gmag_max", 10.0)):
+        flags.append("BRIGHT_STAR_HALO")
+
     p_chance = val("p_chance_match")
     if np.isfinite(p_chance):
         cm = cfg.get("crossmatch", {})

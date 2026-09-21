@@ -1,0 +1,508 @@
+"""Flare re-detection in MAST light curves for the METRONOME shortlist.
+
+The catalogue stages inherit somebody else's flare finder: its threshold,
+its cadence, its quarter coverage.  For the stars that matter --- every star
+at ``watch`` or better after the assess stage, plus the most active stars in
+each catalogue --- this stage goes back to the pixels' own light curve, finds
+the brief brightenings again with one simple, stated detector, and runs the
+identical clock statistic on the re-detected peak times with the observing
+windows read off the light curve itself (which is the one place the true
+windows are known: every cadence that was downlinked is in the file).
+
+Why this is worth a MAST round trip per star:
+
+* a clock in the catalogue that is NOT in the light curve is a catalogue
+  artefact (a pipeline that snapped times, a quarter-boundary duplication);
+* a clock in the light curve at ticks the catalogue's threshold missed is the
+  sub-threshold regime the catalogue search cannot see;
+* the fraction of catalogued flares the detector recovers is the detector's
+  own calibration, measured on the star in hand.
+
+The detector (:func:`find_flares`) is the classical one: a running-median
+baseline over ``detrend_window_days`` inside each contiguous run of cadences,
+a robust (MAD) sigma per run, and a flare is ``>= n_consecutive`` consecutive
+cadences above ``sigma_lo`` with the peak above ``sigma_hi``.  Its peak time
+is the cadence of maximum residual.  Nothing about the catalogue's own
+detection is reused, so the two measurements are independent.
+
+Everything network-facing goes through :mod:`seti.growth.stage2`'s bounded
+light-curve fetch (``lightkurve`` first, ``astroquery.mast`` + FITS when it is
+absent), with an injectable ``lc_fn`` / ``kepler_lc_fn`` so the offline tests
+never open a socket.
+"""
+
+from __future__ import annotations
+
+import json
+import time as _time
+from datetime import datetime, timezone
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from .acquire import STATUS_FAILED, STATUS_OK, STATUS_ZERO, AcquisitionLog
+from .clock import DEFAULT_SCAN, analyze_star
+from .vet import quality_pass
+from .windows import Windows
+
+DEFAULT_REDETECT: dict = {
+    "enabled": True,
+    "max_stars": 40,                 # MAST round trips per run
+    "tiers": ["candidate", "interest", "watch"],
+    "top_by_events": 12,             # the most flare-rich stars per catalogue, tier or not
+    "detrend_window_days": 0.5,
+    "sigma_lo": 2.5,
+    "sigma_hi": 3.5,
+    "n_consecutive": 3,
+    "gap_days": 0.5,                 # a run of cadences breaks at a gap this long
+    "cadence": "long",               # Kepler: long cadence only (what the catalogues used)
+    "budget_s": 5400.0,
+    "per_target_budget_s": 900.0,
+    "max_quarters": 60,
+    "retries": 2,
+    "match_tol_days": 0.1,           # a catalogued flare is "recovered" within this
+    "period_tol": 0.02,
+    "period_harmonics": [1.0, 0.5, 2.0, 1.0 / 3.0, 3.0],
+    "confirm_p_max": 0.05,
+    "confirm_Q_min": 0.85,
+    "confirm_jitter_max": 0.05,
+}
+
+STATUS_NO_LC = "NO_LIGHTCURVE"
+STATUS_TOO_FEW = "TOO_FEW_FLARES"
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+# ---------------------------------------------------------------------------
+# the detector (pure)
+# ---------------------------------------------------------------------------
+def contiguous_runs(t, *, gap_days: float) -> list[tuple[int, int]]:
+    """``[(i0, i1)]`` half-open index ranges of cadences with no gap >= ``gap_days``."""
+    t = np.asarray(t, dtype=float)
+    if not len(t):
+        return []
+    breaks = np.where(np.diff(t) >= float(gap_days))[0] + 1
+    edges = np.concatenate([[0], breaks, [len(t)]])
+    return [(int(a), int(b)) for a, b in zip(edges[:-1], edges[1:], strict=False) if b > a]
+
+
+def detrend_residuals(t, f, *, cadence_days: float, window_days: float = 0.5,
+                      gap_days: float = 0.5) -> tuple[np.ndarray, np.ndarray]:
+    """Residual from a running-median baseline, and a robust sigma per point.
+
+    The median is taken over ``window_days / cadence_days`` cadences inside
+    each contiguous run, so a flare a few cadences long does not move it; the
+    sigma is ``1.4826 * MAD`` of the residual over the run, which a handful of
+    flare points cannot inflate.
+    """
+    from scipy.ndimage import median_filter
+
+    t = np.asarray(t, dtype=float)
+    f = np.asarray(f, dtype=float)
+    resid = np.full(len(t), np.nan)
+    sig = np.full(len(t), np.nan)
+    size = int(round(float(window_days) / max(float(cadence_days), 1e-6)))
+    size = max(3, size | 1)
+    for i0, i1 in contiguous_runs(t, gap_days=gap_days):
+        seg = f[i0:i1]
+        if len(seg) < 3:
+            continue
+        base = median_filter(seg, size=min(size, len(seg) | 1), mode="nearest")
+        r = seg - base
+        mad = float(np.nanmedian(np.abs(r - np.nanmedian(r))))
+        s = 1.4826 * mad if mad > 0 else float(np.nanstd(r))
+        if not np.isfinite(s) or s <= 0:
+            continue
+        resid[i0:i1] = r
+        sig[i0:i1] = s
+    return resid, sig
+
+
+def find_flares(t, f, *, cadence_days: float, window_days: float = 0.5, sigma_lo: float = 2.5,
+                sigma_hi: float = 3.5, n_consecutive: int = 3, gap_days: float = 0.5
+                ) -> pd.DataFrame:
+    """Brief brightenings: ``>= n_consecutive`` consecutive cadences above
+    ``sigma_lo`` whose peak clears ``sigma_hi``.  Returns one row per flare:
+    ``t_peak, t_start, t_end, amplitude, peak_sigma, n_points, equiv_dur_s``."""
+    t = np.asarray(t, dtype=float)
+    f = np.asarray(f, dtype=float)
+    order = np.argsort(t)
+    t, f = t[order], f[order]
+    resid, sig = detrend_residuals(t, f, cadence_days=cadence_days, window_days=window_days,
+                                   gap_days=gap_days)
+    z = np.where(np.isfinite(sig) & (sig > 0), resid / np.where(sig > 0, sig, 1.0), np.nan)
+    above = np.isfinite(z) & (z > float(sigma_lo))
+    rows = []
+    n = len(t)
+    i = 0
+    max_step = 1.5 * float(cadence_days)
+    while i < n:
+        if not above[i]:
+            i += 1
+            continue
+        j = i
+        while j + 1 < n and above[j + 1] and (t[j + 1] - t[j]) <= max_step:
+            j += 1
+        if (j - i + 1) >= int(n_consecutive):
+            k = i + int(np.nanargmax(resid[i:j + 1]))
+            if z[k] >= float(sigma_hi):
+                rows.append({"t_peak": float(t[k]), "t_start": float(t[i]), "t_end": float(t[j]),
+                             "amplitude": float(resid[k]), "peak_sigma": float(z[k]),
+                             "n_points": int(j - i + 1),
+                             "equiv_dur_s": float(np.nansum(resid[i:j + 1]) * cadence_days
+                                                  * 86400.0)})
+        i = j + 1
+    return pd.DataFrame(rows, columns=["t_peak", "t_start", "t_end", "amplitude", "peak_sigma",
+                                       "n_points", "equiv_dur_s"])
+
+
+def lightcurve_windows(t, *, cadence_days: float, gap_days: float = 0.5,
+                       label: str = "lightcurve") -> Windows:
+    """The observed windows as the light curve itself states them: every
+    stretch of cadences, broken at any gap of ``gap_days`` or more."""
+    t = np.sort(np.asarray(t, dtype=float))
+    t = t[np.isfinite(t)]
+    if not len(t):
+        return Windows(np.zeros(0), np.zeros(0), cadence_days=cadence_days, label=label)
+    starts, stops = [], []
+    for i0, i1 in contiguous_runs(t, gap_days=gap_days):
+        starts.append(float(t[i0]) - 0.5 * cadence_days)
+        stops.append(float(t[i1 - 1]) + 0.5 * cadence_days)
+    return Windows(np.array(starts), np.array(stops), cadence_days=cadence_days, label=label,
+                   t_ref=float(t[0]))
+
+
+def _segment_cadence_days(seg: dict) -> float:
+    e = seg.get("exptime_s")
+    try:
+        e = float(e)
+    except (TypeError, ValueError):
+        e = float("nan")
+    if np.isfinite(e) and e > 0:
+        return e / 86400.0
+    t = np.asarray(seg.get("time"), dtype=float)
+    return float(np.median(np.diff(np.sort(t)))) if len(t) > 2 else float("nan")
+
+
+def stitch_segments(segments, *, cadence: str = "long") -> tuple[np.ndarray, np.ndarray, dict]:
+    """One normalised light curve from the fetched segments.
+
+    ``cadence="long"`` keeps the >5-min products when any exist (the Kepler
+    flare catalogues were built on long cadence, and mixing 1-min and 30-min
+    sampling would give the detector two different sigmas on one star).  Each
+    segment is divided by its own median.
+    """
+    segs = [s for s in (segments or []) if s is not None
+            and len(np.asarray(s.get("time"), dtype=float))]
+    if not segs:
+        return np.zeros(0), np.zeros(0), {"n_segments": 0}
+    cads = np.array([_segment_cadence_days(s) for s in segs])
+    keep = np.ones(len(segs), dtype=bool)
+    if cadence == "long" and np.isfinite(cads).any():
+        long = cads > 300.0 / 86400.0
+        if long.any():
+            keep = long
+    ts, fs = [], []
+    for s, k in zip(segs, keep, strict=False):
+        if not k:
+            continue
+        t = np.asarray(s.get("time"), dtype=float)
+        f = np.asarray(s.get("flux"), dtype=float)
+        ok = np.isfinite(t) & np.isfinite(f)
+        t, f = t[ok], f[ok]
+        med = float(np.median(f)) if len(f) else float("nan")
+        if not np.isfinite(med) or med == 0:
+            continue
+        ts.append(t)
+        fs.append(f / med)
+    if not ts:
+        return np.zeros(0), np.zeros(0), {"n_segments": 0}
+    t = np.concatenate(ts)
+    f = np.concatenate(fs)
+    order = np.argsort(t)
+    t, f = t[order], f[order]
+    # duplicate cadences (a quarter delivered twice) collapse to one
+    uniq = np.concatenate([[True], np.diff(t) > 1e-6])
+    t, f = t[uniq], f[uniq]
+    cad = float(np.nanmedian(cads[keep])) if keep.any() else float("nan")
+    return t, f, {"n_segments": int(keep.sum()), "n_segments_fetched": len(segs),
+                  "cadence_days": cad, "n_points": int(len(t)),
+                  "segments": [int(s.get("sector")) if s.get("sector") is not None else None
+                               for s, k in zip(segs, keep, strict=False) if k]}
+
+
+# ---------------------------------------------------------------------------
+# per star
+# ---------------------------------------------------------------------------
+def _period_agrees(p_new: float, p_cat: float, harmonics, tol: float) -> tuple[bool, float | None]:
+    if not (np.isfinite(p_new) and np.isfinite(p_cat) and p_cat > 0):
+        return False, None
+    for h in harmonics:
+        if abs(p_new / (p_cat * float(h)) - 1.0) <= float(tol):
+            return True, float(h)
+    return False, None
+
+
+def redetect_star(segments, conf: dict, *, scan_conf: dict | None = None,
+                  null_conf: dict | None = None, vet_conf: dict | None = None, rng=None,
+                  catalogue_times=None, period_catalogue: float = float("nan")) -> dict:
+    """Detect flares in one star's light curve and run the clock test on them."""
+    c = dict(DEFAULT_REDETECT, **(conf or {}))
+    t, f, meta = stitch_segments(segments, cadence=str(c["cadence"]))
+    rec: dict = {"lc_" + k: v for k, v in meta.items()}
+    if not len(t):
+        rec.update({"status": STATUS_NO_LC, "n_flares": 0})
+        return rec
+    cad = float(meta.get("cadence_days") or np.nan)
+    if not np.isfinite(cad) or cad <= 0:
+        cad = float(np.median(np.diff(t)))
+    fl = find_flares(t, f, cadence_days=cad, window_days=float(c["detrend_window_days"]),
+                     sigma_lo=float(c["sigma_lo"]), sigma_hi=float(c["sigma_hi"]),
+                     n_consecutive=int(c["n_consecutive"]), gap_days=float(c["gap_days"]))
+    w = lightcurve_windows(t, cadence_days=cad, gap_days=float(c["gap_days"]))
+    rec.update({"n_flares": int(len(fl)), "lc_observed_days": round(w.total, 3),
+                "lc_n_windows": w.n, "lc_span_days": round(w.span, 3),
+                "lc_t_first": float(t[0]), "lc_t_last": float(t[-1])})
+    # detector calibration against the catalogue's own list, on this star
+    if catalogue_times is not None and len(catalogue_times):
+        ct = np.sort(np.asarray(catalogue_times, dtype=float))
+        ct = ct[np.isfinite(ct)]
+        in_lc = w.contains(ct)
+        rec["n_catalogue_flares_in_lc"] = int(in_lc.sum())
+        if len(fl) and in_lc.any():
+            fp = np.sort(fl["t_peak"].to_numpy())
+            idx = np.clip(np.searchsorted(fp, ct[in_lc]), 1, len(fp) - 1) if len(fp) > 1 \
+                else np.zeros(int(in_lc.sum()), dtype=int)
+            near = np.minimum(np.abs(ct[in_lc] - fp[idx]),
+                              np.abs(ct[in_lc] - fp[np.maximum(idx - 1, 0)]))
+            rec["catalogue_recovery_frac"] = float(np.mean(near <= float(c["match_tol_days"])))
+        else:
+            rec["catalogue_recovery_frac"] = 0.0 if in_lc.any() else float("nan")
+    if len(fl) < int(dict(DEFAULT_SCAN, **(scan_conf or {}))["n_min"]):
+        rec.update({"status": STATUS_TOO_FEW})
+        return rec
+    a = analyze_star(fl["t_peak"].to_numpy(), w, fl["amplitude"].to_numpy(),
+                     scan_conf or {}, null_conf or {}, rng)
+    a.pop("windows", None)
+    rec.update({("rd_" + k if k in ("n_events", "period", "Q", "jitter", "f_in_window",
+                                      "gap_integer_frac", "n_gaps_used", "jitter_core",
+                                      "n_core", "gap_integer_frac_core", "n_gaps_core",
+                                      "h_max", "p_window", "p_window_source", "p_shuffle",
+                                      "cycle_occupancy", "t0", "mean_phase", "null_computed",
+                                      "n_freq")
+                 else k): v for k, v in a.items()})
+    rec["status"] = a.get("status", STATUS_OK)
+    agrees, h = _period_agrees(float(a.get("period", np.nan)), float(period_catalogue),
+                               c["period_harmonics"], float(c["period_tol"]))
+    rec["period_catalogue"] = float(period_catalogue)
+    rec["period_agrees_with_catalogue"] = bool(agrees)
+    rec["period_harmonic_of_catalogue"] = h
+    p = float(a.get("p_window", np.nan))
+    # the SAME strict clock quality the catalogue tiers use (rms route or
+    # core route), so "confirmed" means the light curve passes the gate the
+    # catalogue passed, not a private one
+    vconf = dict(vet_conf or {}, Q_min=float(c["confirm_Q_min"]),
+                 jitter_max=float(c["confirm_jitter_max"]))
+    ok_strict, why = quality_pass(a, vconf, strict=True)
+    rec["rd_strict_quality_why"] = ";".join(why)
+    rec["clock_in_lightcurve"] = bool(a.get("status") == "scanned" and np.isfinite(p)
+                                      and p <= float(c["confirm_p_max"]) and ok_strict)
+    rec["confirms_catalogue_clock"] = bool(rec["clock_in_lightcurve"] and agrees)
+    return rec
+
+
+# ---------------------------------------------------------------------------
+# target selection and the stage
+# ---------------------------------------------------------------------------
+def select_targets(vetted: pd.DataFrame, conf: dict, *, max_stars: int | None = None
+                   ) -> list[dict]:
+    """Every star at a listed tier, then the most flare-rich per catalogue."""
+    c = dict(DEFAULT_REDETECT, **(conf or {}))
+    cap = int(max_stars if max_stars is not None else c["max_stars"])
+    if vetted is None or not len(vetted):
+        return []
+    df = vetted.copy()
+    df["star_id"] = df["star_id"].astype(str)
+    out: list[dict] = []
+    seen: set = set()
+
+    def _push(r, why):
+        key = str(r.get("star_key"))
+        if key in seen:
+            return
+        seen.add(key)
+        out.append({"star_key": key, "star_id": str(r.get("star_id")),
+                    "mission": str(r.get("mission")), "catalogue": str(r.get("catalogue")),
+                    "tier": str(r.get("tier")), "why": why,
+                    "n_events": int(r.get("n_events", 0) or 0),
+                    "period_catalogue": float(r.get("period", np.nan)),
+                    "p_window_catalogue": float(r.get("p_window", np.nan)),
+                    "Q_catalogue": float(r.get("Q", np.nan)),
+                    "jitter_catalogue": float(r.get("jitter", np.nan))})
+
+    rank = {"candidate": 0, "interest": 1, "watch": 2}
+    tiers = [t for t in c["tiers"] if t in rank]
+    sel = df[df["tier"].isin(tiers)].copy() if "tier" in df else df.iloc[0:0]
+    if len(sel):
+        sel["_rank"] = sel["tier"].map(rank)
+        sel = sel.sort_values(["_rank", "p_window"], na_position="last")
+        for _, r in sel.iterrows():
+            _push(r, f"tier:{r['tier']}")
+    k = int(c["top_by_events"])
+    if k > 0 and "n_events" in df:
+        for cat, g in df.groupby("catalogue"):
+            for _, r in g.sort_values("n_events", ascending=False).head(k).iterrows():
+                _push(r, f"top_events:{cat}")
+    return out[:cap] if cap > 0 else out
+
+
+def _catalogue_times(out: Path, catalogue: str, star_id: str) -> np.ndarray:
+    p = out / "data" / f"{catalogue}_events.parquet"
+    if not p.exists():
+        return np.zeros(0)
+    try:
+        ev = pd.read_parquet(p, columns=["star_id", "t_peak"])
+    except Exception:                                     # noqa: BLE001
+        return np.zeros(0)
+    ev = ev[ev["star_id"].astype(str) == str(star_id)]
+    return ev["t_peak"].to_numpy(dtype=float)
+
+
+def stage_redetect(conf: dict, out: Path, *, lc_fn=None, kepler_lc_fn=None,
+                   max_stars: int | None = None, seed: int = 20260921, log=None,
+                   targets: list[dict] | None = None, budget_s: float | None = None) -> dict:
+    """Re-detect flares for the shortlist and run the clock test on them."""
+    from ..growth.stage2 import Deadline, MastParams, fetch_kepler_lightcurves, fetch_lightcurves
+
+    rc = dict(DEFAULT_REDETECT, **(conf.get("redetect") or {}))
+    sc, nc = conf.get("scan") or {}, conf.get("null") or {}
+    log = log or AcquisitionLog(prefix="metronome/redetect")
+    out = Path(out)
+    if targets is None:
+        vp = out / "stars_vetted.csv"
+        vetted = pd.read_csv(vp, dtype={"star_id": str, "star_key": str}) if vp.exists() \
+            else pd.DataFrame()
+        targets = select_targets(vetted, rc, max_stars=max_stars)
+    if max_stars is not None and max_stars > 0:
+        targets = targets[:int(max_stars)]
+    params = MastParams(per_target_budget_s=float(rc["per_target_budget_s"]),
+                        kepler_per_target_budget_s=float(rc["per_target_budget_s"]),
+                        max_sectors=int(rc["max_quarters"]),
+                        kepler_max_quarters=int(rc["max_quarters"]),
+                        retries=int(rc["retries"]), kepler_retries=int(rc["retries"]),
+                        download_dir=str(out / "lc_cache"))
+    deadline = Deadline(budget_s=float(budget_s if budget_s is not None else rc["budget_s"]))
+    rng = np.random.default_rng(int(seed))
+    records: list[dict] = []
+    t_start = _time.monotonic()
+    n_fetched = n_no_lc = n_failed = n_budget = 0
+    for i, tg in enumerate(targets):
+        rec = dict(tg)
+        if deadline.expired():
+            rec.update({"status": "NOT_ATTEMPTED", "note": "stage budget exhausted"})
+            n_budget += 1
+            records.append(rec)
+            continue
+        sid = str(tg["star_id"])
+        mission = str(tg.get("mission", "")).lower()
+        try:
+            if mission.startswith("kep"):
+                segs, status, route, _prov = fetch_kepler_lightcurves(
+                    sid, lc_fn=kepler_lc_fn, params=params, log=log, deadline=deadline,
+                    key=tg["star_key"])
+            else:
+                segs, status, route = fetch_lightcurves(
+                    sid, lc_fn=lc_fn, params=params, log=log, deadline=deadline,
+                    key=tg["star_key"])
+        except Exception as exc:                          # noqa: BLE001
+            segs, status, route = [], STATUS_FAILED, ""
+            log.record(f"lightcurves_{tg['star_key']}", sid, error=repr(exc))
+        rec["fetch_status"] = status
+        rec["fetch_route"] = route
+        if status != STATUS_OK:
+            rec["status"] = STATUS_NO_LC if status == STATUS_ZERO else "FETCH_FAILED"
+            if status == STATUS_ZERO:
+                n_no_lc += 1
+            else:
+                n_failed += 1
+            records.append(rec)
+            continue
+        n_fetched += 1
+        ct = _catalogue_times(out, str(tg.get("catalogue")), sid)
+        rec.update(redetect_star(segs, rc, scan_conf=sc, null_conf=nc,
+                                 vet_conf=conf.get("vet") or {}, rng=rng, catalogue_times=ct,
+                                 period_catalogue=float(tg.get("period_catalogue", np.nan))))
+        records.append(rec)
+        print(f"[metronome/redetect] {i + 1}/{len(targets)} {tg['star_key']}: {rec['status']} "
+              f"n_flares={rec.get('n_flares')} P={rec.get('rd_period')} "
+              f"p={rec.get('rd_p_window')} confirms={rec.get('confirms_catalogue_clock')} "
+              f"({_time.monotonic() - t_start:.0f}s)")
+        # checkpoint after every star
+        pd.DataFrame(records).to_csv(out / "stars_redetect.csv", index=False)
+    df = pd.DataFrame(records)
+    if len(df):
+        df.to_csv(out / "stars_redetect.csv", index=False)
+    scanned = [r for r in records if r.get("status") == "scanned"]
+    confirmed = [r for r in records if r.get("confirms_catalogue_clock")]
+    lc_clocks = [r for r in records if r.get("clock_in_lightcurve")]
+    if not targets:
+        verdict = "NO_TARGETS"
+    elif n_fetched == 0:
+        verdict = "NO_DATA_REACHED" if n_failed else "NO_LIGHTCURVES_FOUND"
+    elif confirmed:
+        verdict = f"REDETECT_CONFIRMS_{len(confirmed)}"
+    elif lc_clocks:
+        verdict = f"LIGHTCURVE_CLOCK_WITHOUT_CATALOGUE_AGREEMENT_{len(lc_clocks)}"
+    else:
+        verdict = "REDETECT_CONFIRMS_NONE"
+    rec_frac = [float(r.get("catalogue_recovery_frac", np.nan)) for r in records]
+    rec_frac = [x for x in rec_frac if np.isfinite(x)]
+    rep = {"stage": "redetect", "generated_utc": _now(), "verdict": verdict,
+           "n_targets": len(targets), "n_fetched": n_fetched, "n_no_lightcurve": n_no_lc,
+           "n_fetch_failed": n_failed, "n_not_attempted_budget": n_budget,
+           "n_scanned": len(scanned), "n_too_few_flares": int(sum(
+               1 for r in records if r.get("status") == STATUS_TOO_FEW)),
+           "n_clock_in_lightcurve": len(lc_clocks), "n_confirms_catalogue_clock": len(confirmed),
+           "catalogue_recovery_frac_median": float(np.median(rec_frac)) if rec_frac else None,
+           "detector": {k: rc[k] for k in ("detrend_window_days", "sigma_lo", "sigma_hi",
+                                           "n_consecutive", "gap_days", "cadence")},
+           "targets": [{k: r.get(k) for k in (
+               "star_key", "catalogue", "tier", "why", "status", "n_events", "n_flares",
+               "n_catalogue_flares_in_lc", "catalogue_recovery_frac", "period_catalogue",
+               "rd_period", "rd_Q", "rd_jitter", "rd_f_in_window", "rd_jitter_core",
+               "rd_n_core", "rd_p_window", "rd_p_window_source",
+               "rd_gap_integer_frac", "rd_gap_integer_frac_core", "rd_strict_quality_why",
+               "period_agrees_with_catalogue",
+               "clock_in_lightcurve", "confirms_catalogue_clock", "lc_n_segments",
+               "lc_observed_days", "fetch_route")} for r in records],
+           "elapsed_s": round(_time.monotonic() - t_start, 1),
+           "acquisition": log.as_dict(),
+           "note": ("a catalogue clock is CONFIRMED only when an independent detector on the "
+                    "star's own light curve finds a clock at the same period (or a low "
+                    "harmonic) with strict quality; a light-curve clock the catalogue did not "
+                    "show is reported separately and is not a candidate until vetted")}
+    (out / "redetect.json").write_text(json.dumps(rep, indent=2, default=_json_default))
+    print(f"[metronome/redetect] {verdict}: {n_fetched}/{len(targets)} fetched, "
+          f"{len(scanned)} scanned, {len(confirmed)} confirmed")
+    return rep
+
+
+def _json_default(o):
+    if isinstance(o, (np.integer,)):
+        return int(o)
+    if isinstance(o, (np.floating,)):
+        return None if not np.isfinite(o) else float(o)
+    if isinstance(o, np.ndarray):
+        return o.tolist()
+    if isinstance(o, (np.bool_,)):
+        return bool(o)
+    return str(o)
+
+
+__all__ = ["DEFAULT_REDETECT", "STATUS_NO_LC", "STATUS_TOO_FEW", "contiguous_runs",
+           "detrend_residuals", "find_flares", "lightcurve_windows", "redetect_star",
+           "select_targets", "stage_redetect", "stitch_segments"]

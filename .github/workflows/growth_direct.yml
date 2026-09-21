@@ -1,0 +1,330 @@
+name: growth-direct
+
+# GROWTH stage "direct" — the TESS-era depth of EVERY confirmed/candidate KOI,
+# fitted from the light curves (docs/growth.md §11).
+#
+#   targets ──▶ measure (N shards, checkpointed, each commits its own file)
+#           ──▶ assess (aggregate, population offsets, classify, funnel)
+#           ──▶ vet (stage 2 + stage 3 on every candidate)
+#
+# WHY.  Stage 1 reached 108 of 9,564 KOIs through the TOI alert catalogue.  This
+# stage skips the TOI table: for every KOI with a TIC id it fetches every TESS
+# light-curve product MAST serves (SPOC 2-min, TESS-SPOC and QLP FFI), folds on
+# the KOI ephemeris (searching a small window in phase), fits the depth with the
+# stage-2 fitter on BOTH raw SAP and corrected PDCSAP, profiles the duration and
+# compares with the KOI depth — with the per-planet sensitivity on the record.
+#
+# THE RULE FROM KEPLER-718 b: raw SAP must read SHALLOWER than Kepler, never
+# deeper; a PDCSAP-only change is a crowding-correction case, not growth.
+#
+# Sharding is BY STAR (kepid mod n_shards), so a multi-planet system's planets
+# share one shard and one download.  Every shard checkpoints its CSV after each
+# star and commits it `if: always()`, so a killed shard loses one star, and a
+# re-dispatch with resume=true skips what is already committed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          "all" (targets, measure, assess, vet), "targets", "measure"
+          (needs a targets.csv on the branch or targets_run_id), "assess"
+          (aggregate the committed shard files), or "vet".
+        required: false
+        default: "all"
+      n_shards:
+        description: "Parallel measure shards (by kepid mod n)"
+        required: false
+        default: "24"
+      shard_budget_min:
+        description: "Wall clock per shard inside the job (minutes)"
+        required: false
+        default: "270"
+      resume:
+        description: "Skip targets already in the committed shard files"
+        required: false
+        default: "true"
+      targets_run_id:
+        description: "Reuse the targets artifact from this prior run id (skips the targets job)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: growth-direct-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  targets:
+    if: ${{ (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'targets' || github.event.inputs.stage == '') && github.event.inputs.targets_run_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,tess]"
+      - name: Offline gate — injected depth change recovered on SAP+PDCSAP, PDC-only is crowding, missing LC is not_measured
+        run: python -m pytest tests/test_growth_direct.py -q -p no:cacheprovider
+      - name: Probe + targets (KOI cumulative + ps TIC routes)
+        run: |
+          python -m seti.growth.direct --stage probe,targets
+          echo "=== targets ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/growth/direct/targets.json"))
+          print(json.dumps({k: d[k] for k in d if k != "acquisition"}, indent=2)[:6000])
+          if d.get("koi_status") != "OK":
+              print("::error::the KOI cumulative table was not reached: " + str(d.get("koi_status")))
+          if d.get("ps_status") != "OK":
+              print("::warning::the ps table was not reached; TIC ids rest on the shard fallback")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: growth-direct-targets
+          path: |
+            results/growth/direct/targets.csv
+            results/growth/direct/targets.json
+            results/growth/direct/probe.json
+          if-no-files-found: error
+      - name: Commit targets
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "growth direct: the target list (every confirmed/candidate KOI with its TIC route)" \
+            results/growth/direct/targets.csv \
+            results/growth/direct/targets.json \
+            results/growth/direct/probe.json \
+            results/growth/direct/acquisition_log.json
+
+  plan:
+    if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'measure' || github.event.inputs.stage == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.mk.outputs.shards }}
+    steps:
+      - id: mk
+        run: |
+          python3 -c "import json; print('shards=' + json.dumps(list(range(int('${{ github.event.inputs.n_shards || '24' }}')))))" >> "$GITHUB_OUTPUT"
+
+  measure:
+    needs: [targets, plan]
+    if: ${{ always() && needs.plan.result == 'success' && (needs.targets.result == 'success' || needs.targets.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,tess]"
+      - uses: actions/download-artifact@v4
+        if: ${{ github.event.inputs.targets_run_id != '' || needs.targets.result == 'success' }}
+        with:
+          name: growth-direct-targets
+          run-id: ${{ github.event.inputs.targets_run_id || github.run_id }}
+          github-token: ${{ github.token }}
+          path: results/growth/direct/
+      - name: Refresh the committed shard files (resume)
+        run: |
+          git fetch --quiet origin "${{ github.ref_name }}" || true
+          git checkout --quiet "origin/${{ github.ref_name }}" -- results/growth/direct/shards 2>/dev/null || true
+          ls results/growth/direct/shards 2>/dev/null | head -50 || true
+      - name: Measure shard ${{ matrix.shard }}
+        run: |
+          RESUME=""
+          if [ "${{ github.event.inputs.resume || 'true' }}" != "true" ]; then RESUME="--no-resume"; fi
+          python -m seti.growth.direct --stage measure \
+            --shard ${{ matrix.shard }} \
+            --n-shards ${{ github.event.inputs.n_shards || '24' }} \
+            --budget-s $(( ${{ github.event.inputs.shard_budget_min || '270' }} * 60 )) $RESUME
+          echo "=== shard ${{ matrix.shard }} ==="
+          python - <<'PY'
+          import json, glob
+          for p in sorted(glob.glob("results/growth/direct/shards/shard_*.json")):
+              d = json.load(open(p))
+              if d.get("shard") != ${{ matrix.shard }}:
+                  continue
+              print(json.dumps({k: d[k] for k in d if k not in ("acquisition_failures",)}, indent=2)[:5000])
+              for f in d.get("acquisition_failures") or []:
+                  print(f"::warning::{f.get('stage')}: {f.get('error')}")
+              if d.get("budget_exhausted"):
+                  print(f"::warning::shard {d['shard']} exhausted its budget: "
+                        f"{d.get('n_not_reached_budget')} target(s) NOT reached (re-dispatch with resume)")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: growth-direct-shard-${{ matrix.shard }}
+          path: |
+            results/growth/direct/shards/shard_*.csv
+            results/growth/direct/shards/shard_*.json
+            results/growth/direct/shards/shard_*_folds/
+          if-no-files-found: warn
+      - name: Commit this shard's files
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+          RESULTS_PUSH_ATTEMPTS: "12"
+        run: |
+          S=$(printf "%02d" ${{ matrix.shard }})
+          scripts/commit_results.sh \
+            "growth direct: shard $S measured (checkpointed per star)" \
+            results/growth/direct/shards/shard_${S}.csv \
+            results/growth/direct/shards/shard_${S}.json \
+            results/growth/direct/shards/shard_${S}_members.csv
+
+  assess:
+    needs: [targets, measure]
+    if: ${{ always() && github.event.inputs.stage != 'targets' && (needs.targets.result == 'success' || needs.targets.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,tess]"
+      - name: Refresh the committed shard files
+        run: |
+          git fetch --quiet origin "${{ github.ref_name }}" || true
+          git checkout --quiet "origin/${{ github.ref_name }}" -- results/growth/direct 2>/dev/null || true
+      - uses: actions/download-artifact@v4
+        if: ${{ github.event.inputs.targets_run_id != '' || needs.targets.result == 'success' }}
+        with:
+          name: growth-direct-targets
+          run-id: ${{ github.event.inputs.targets_run_id || github.run_id }}
+          github-token: ${{ github.token }}
+          path: results/growth/direct/
+      - uses: actions/download-artifact@v4
+        if: ${{ needs.measure.result != 'skipped' }}
+        continue-on-error: true
+        with:
+          pattern: growth-direct-shard-*
+          merge-multiple: true
+          path: results/growth/direct/shards/
+      - name: Assess (aggregate, population offsets, classify, funnel)
+        run: |
+          python -m seti.growth.direct --stage assess
+          echo "=== summary ==="
+          python - <<'PY'
+          import json, sys
+          s = json.load(open("results/growth/direct/summary.json"))
+          print(json.dumps({k: s[k] for k in s if k not in ("candidates", "crowding_correction_cases", "transit_not_recovered")}, indent=2)[:12000])
+          print("candidates:", json.dumps(s.get("candidates"), indent=1)[:6000])
+          f = s.get("funnel") or {}
+          if s.get("verdict") == "NO_DATA_REACHED":
+              print("::warning::NO_DATA_REACHED — not a null result, not written up (CLAUDE.md)")
+          for d in s.get("degraded") or []:
+              print(f"::warning::{d}")
+          pop = s.get("population") or {}
+          for fam, sc in (pop.get("z_robust_scatter") or {}).items():
+              if sc and sc > 1.5:
+                  print(f"::warning::{fam}: the population's robust z-scatter is {sc:.2f} — the quoted errors "
+                        "do not describe the scatter; every z was divided by it before the gate")
+          print("::notice::classes " + json.dumps(f.get("classes")))
+          print("::notice::" + str(s.get("verdict")) + " — " + str(s.get("reason")))
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+          RESULTS_PUSH_ATTEMPTS: "12"
+        run: |
+          scripts/commit_results.sh \
+            "growth direct: aggregate — every KOI's TESS depth on SAP and PDCSAP against Kepler, classified" \
+            results/growth/direct/measurements.csv \
+            results/growth/direct/candidates.csv \
+            results/growth/direct/long_period.csv \
+            results/growth/direct/summary.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: growth-direct-final
+          path: results/growth/direct/
+          if-no-files-found: warn
+
+  vet:
+    needs: [assess]
+    if: ${{ always() && needs.assess.result == 'success' && (github.event.inputs.stage == 'all' || github.event.inputs.stage == 'vet' || github.event.inputs.stage == '') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,tess]"
+      - name: Refresh the committed aggregate
+        run: |
+          git fetch --quiet origin "${{ github.ref_name }}" || true
+          git checkout --quiet "origin/${{ github.ref_name }}" -- results/growth/direct 2>/dev/null || true
+      - name: Vet every candidate (stage 2 both eras + ensemble; stage 3 census + difference image)
+        run: |
+          python -m seti.growth.direct --stage vet
+          echo "=== vet ==="
+          python - <<'PY'
+          import json
+          v = json.load(open("results/growth/direct/vet/summary.json"))
+          print(json.dumps(v, indent=2)[:12000])
+          for t in v.get("targets") or []:
+              print(f"::notice::{t.get('kepoi_name')}: direct {t.get('direct_class')} | stage2 "
+                    f"{t.get('stage2_like_for_like_verdict')} z={t.get('stage2_z_measured_eras')} "
+                    f"bg={t.get('stage2_sap_vs_pdcsap_verdict')} | stage3 {t.get('stage3_verdict')} "
+                    f"offset={t.get('stage3_offset_arcsec')}\" | survives={t.get('survives_vet')}")
+          PY
+      - name: Commit vet results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+          RESULTS_PUSH_ATTEMPTS: "12"
+        run: |
+          scripts/commit_results.sh \
+            "growth direct: vet — stage 2 and stage 3 on every candidate" \
+            results/growth/direct/vet/summary.json \
+            results/growth/direct/vet/vetted.csv \
+            results/growth/direct/vet/stage2/measurements.csv \
+            results/growth/direct/vet/stage2/reductions.csv \
+            results/growth/direct/vet/stage2/summary.json \
+            results/growth/direct/vet/stage2/acquire.json \
+            results/growth/direct/vet/centroid/summary.json \
+            results/growth/direct/vet/centroid/verdicts.csv \
+            results/growth/direct/vet/centroid/census.csv \
+            results/growth/direct/vet/centroid/offsets.csv \
+            results/growth/direct/vet/centroid/sectors.csv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: growth-direct-vet
+          path: results/growth/direct/vet/
+          if-no-files-found: warn

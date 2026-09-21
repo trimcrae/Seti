@@ -2184,7 +2184,9 @@ def main(argv=None):
     # --- SPECTRA-PERSIST ---
     p = sub.add_parser("spectra-persist",
                        help="per-exposure persistence + second epoch + rest-frame ID of the "
-                            "narrow-line survivors; flags pass through to seti.spectra.persist")
+                            "narrow-line survivors; flags pass through to seti.spectra.persist "
+                            "(invoke as `seti spectra-persist -- --stage probe`, or call "
+                            "`python -m seti.spectra.persist` directly as the workflow does)")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_spectra_persist)
 

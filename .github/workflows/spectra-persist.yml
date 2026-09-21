@@ -68,7 +68,7 @@ jobs:
       - name: Offline gate
         run: python -m pytest tests/test_spectra_persist.py -q -p no:cacheprovider
       - name: Probe (SPARCL fields, SAS / NERSC URL patterns, range support)
-        run: python -m seti.cli spectra-persist --stage probe
+        run: python -m seti.spectra.persist --stage probe
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -120,8 +120,8 @@ jobs:
           ARGS="--stage run --shard ${{ matrix.shard }} --n-shards ${{ github.event.inputs.n_shards || '4' }}"
           ARGS="$ARGS --top ${{ github.event.inputs.top || '0' }} --max-exposures ${{ github.event.inputs.max_exposures || '10' }}"
           if [ -n "${{ github.event.inputs.release }}" ]; then ARGS="$ARGS --release ${{ github.event.inputs.release }}"; fi
-          echo "seti spectra-persist $ARGS"
-          python -m seti.cli spectra-persist $ARGS
+          echo "seti.spectra.persist $ARGS"
+          python -m seti.spectra.persist $ARGS
           ls results/spectra_persist/ckpt | wc -l
       - uses: actions/upload-artifact@v4
         if: always() && steps.gate.outputs.skip == 'false'
@@ -157,7 +157,7 @@ jobs:
       - name: Reduce (merge checkpoints; SIMBAD; NIST context; rest-frame IDs; summary)
         run: |
           ls results/spectra_persist/ckpt | wc -l
-          python -m seti.cli spectra-persist --stage reduce
+          python -m seti.spectra.persist --stage reduce
           echo "=== summary ==="
           python - <<'PY'
           import json

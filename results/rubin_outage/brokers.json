@@ -58,36 +58,6 @@
   "newest_any_survey_mjd": 61235.41918367943,
   "nightly_counts": [
    {
-    "date": "2026-05-17",
-    "n": 3261,
-    "night_mjd": 61177
-   },
-   {
-    "date": "2026-05-18",
-    "n": 13769,
-    "night_mjd": 61178
-   },
-   {
-    "date": "2026-05-19",
-    "n": 10627,
-    "night_mjd": 61179
-   },
-   {
-    "date": "2026-05-22",
-    "n": 20813,
-    "night_mjd": 61182
-   },
-   {
-    "date": "2026-05-23",
-    "n": 100766,
-    "night_mjd": 61183
-   },
-   {
-    "date": "2026-05-24",
-    "n": 87472,
-    "night_mjd": 61184
-   },
-   {
     "date": "2026-05-25",
     "n": 54928,
     "night_mjd": 61185
@@ -266,30 +236,6 @@
    "nightly_counts_120d": {
     "data": [
      {
-      "n": "3261",
-      "night": 61177.0
-     },
-     {
-      "n": "13769",
-      "night": 61178.0
-     },
-     {
-      "n": "10627",
-      "night": 61179.0
-     },
-     {
-      "n": "20813",
-      "night": 61182.0
-     },
-     {
-      "n": "100766",
-      "night": 61183.0
-     },
-     {
-      "n": "87472",
-      "night": 61184.0
-     },
-     {
       "n": "54928",
       "night": 61185.0
      },
@@ -410,7 +356,7 @@
       "night": 61235.0
      }
     ],
-    "rows": 36
+    "rows": 30
    },
    "survey_currency": {
     "data": [
@@ -461,34 +407,34 @@
   ],
   "url": "https://tap.alerce.online/tap"
  },
- "checked_at_utc": "2026-09-14T18:47:47Z",
+ "checked_at_utc": "2026-09-21T18:51:57Z",
  "decision": {
   "alerce_frontier_mjd": 61235.41918367943,
   "alerce_frontier_utc": "2026-07-14T10:03:37Z",
   "brokers_ahead_days": {},
   "controls": {
    "alerce_newest_survey": {
-    "days_behind_now": 62.36,
+    "days_behind_now": 69.37,
     "frontier_mjd": 61235.41918367943,
     "frontier_utc": "2026-07-14T10:03:37Z"
    },
    "ztf_alerce_ztf": {
-    "days_behind_now": 0.34,
-    "frontier_mjd": 61297.4464004999,
-    "frontier_utc": "2026-09-14T10:42:49Z"
+    "days_behind_now": 0.27,
+    "frontier_mjd": 61304.52090279991,
+    "frontier_utc": "2026-09-21T12:30:06Z"
    },
    "ztf_antares": {
-    "days_behind_now": 0.34,
-    "frontier_mjd": 61297.4464004999,
-    "frontier_utc": "2026-09-14T10:42:49Z"
+    "days_behind_now": 0.27,
+    "frontier_mjd": 61304.52090279991,
+    "frontier_utc": "2026-09-21T12:30:06Z"
    },
    "ztf_archive": {
-    "days_behind_now": 0.28,
-    "frontier_mjd": 61297.5,
-    "frontier_utc": "2026-09-14T12:00:00Z"
+    "days_behind_now": 0.29,
+    "frontier_mjd": 61304.5,
+    "frontier_utc": "2026-09-21T12:00:00Z"
    }
   },
-  "lag_days": 62.36,
+  "lag_days": 69.37,
   "live_controls": [
    "ztf_archive",
    "ztf_alerce_ztf",
@@ -504,17 +450,17 @@
   "why": "Every broker reached stops on the same night. The alert stream itself stopped, so the channels' nulls mean 'no new sky', and no change to the broker path recovers data that was never taken. Corroborated: ztf_archive, ztf_alerce_ztf, ztf_antares are current on non-LSST data, so the brokers themselves are alive and simply have no LSST alerts to serve.",
   "ztf": {
    "by_source": {
-    "alerce_ztf": 61297.4464004999,
-    "antares": 61297.4464004999,
-    "archive": 61297.5,
+    "alerce_ztf": 61304.52090279991,
+    "antares": 61304.52090279991,
+    "archive": 61304.5,
     "lasair_ztf": null
    },
-   "days_behind_now": 0.28,
-   "newest_mjd": 61297.5,
-   "newest_source": "archive",
-   "newest_utc": "2026-09-14T12:00:00Z",
+   "days_behind_now": 0.27,
+   "newest_mjd": 61304.52090279991,
+   "newest_source": "alerce_ztf",
+   "newest_utc": "2026-09-21T12:30:06Z",
    "status": "LIVE",
-   "why": "ZTF is LIVE: archive holds an epoch 0.28 d old."
+   "why": "ZTF is LIVE: alerce_ztf holds an epoch 0.27 d old and the archive ZTF publishes itself agrees."
   }
  },
  "fink": {
@@ -581,7 +527,7 @@
     "url": "https://api.lsst.fink-portal.org/api/v1/statistics"
    },
    "ztf_statistics": {
-    "error": "ConnectTimeout: HTTPSConnectionPool(host='api.fink-portal.org', port=443): Max retries exceeded with url: /api/v1/statistics (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.fink-portal.org', port=443) at 0x7f3547427cd0>, 'Connection to api.fink-portal.org timed out. (connect timeout=120.0)'))",
+    "error": "ConnectTimeout: HTTPSConnectionPool(host='api.fink-portal.org', port=443): Max retries exceeded with url: /api/v1/statistics (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.fink-portal.org', port=443) at 0x7fe63ad953d0>, 'Connection to api.fink-portal.org timed out. (connect timeout=120.0)'))",
     "method": "POST",
     "url": "https://api.fink-portal.org/api/v1/statistics"
    }
@@ -653,59 +599,24 @@
   "skipped": "no LASAIR_TOKEN in the environment",
   "url": "https://api.lasair.lsst.ac.uk/api"
  },
- "now_mjd": 61297.78318,
+ "now_mjd": 61304.78608,
  "ztf": {
   "sources": {
    "alerce_ztf": {
-    "frontier_mjd": 61297.4464004999,
-    "json_head": "{\"total\": null, \"page\": null, \"next\": null, \"has_next\": false, \"prev\": null, \"has_prev\": false, \"items\": [{\"oid\": \"ZTF21abrpplf\", \"ndethist\": \"337\", \"ncovhist\": 2088, \"mjdstarthist\": 59224.26969909994, \"mjdendhist\": 61297.4464004999, \"corrected\": true, \"stellar\": false, \"ndet\": 115, \"g_r_max\": null, \"g_r_max_corr\": null, \"g_r_mean\": null, \"g_r_mean_corr\": null, \"firstmjd\": 59434.44271990005, \"lastmjd\": 61297.4464004999, \"deltajd\": 1863.0036805998534, \"meanra\": 46.43836797367496, \"meandec\": -3.147568444282619, \"sigmara\": 0.006735599682943098, \"sigmadec\": 0.006725438456202111, \"class\": null, \"cl",
+    "frontier_mjd": 61304.52090279991,
+    "json_head": "{\"total\": null, \"page\": null, \"next\": null, \"has_next\": false, \"prev\": null, \"has_prev\": false, \"items\": [{\"oid\": \"ZTF18aaeasjr\", \"ndethist\": \"163\", \"ncovhist\": 684, \"mjdstarthist\": 58229.19010420004, \"mjdendhist\": 61304.52090279991, \"corrected\": true, \"stellar\": true, \"ndet\": 46, \"g_r_max\": null, \"g_r_max_corr\": null, \"g_r_mean\": null, \"g_r_mean_corr\": null, \"firstmjd\": 58284.174351899885, \"lastmjd\": 61304.52090279991, \"deltajd\": 3020.3465509000234, \"meanra\": 154.74391169356676, \"meandec\": 34.60895050388177, \"sigmara\": 0.013807959402070528, \"sigmadec\": 0.011364608383507384, \"class\": null, \"cl",
     "status": 200,
     "url": "https://api.alerce.online/ztf/v1/objects"
    },
    "antares": {
-    "frontier_mjd": 61297.4464004999,
-    "json_head": "{\"data\": [{\"type\": \"locus_listing\", \"attributes\": {\"catalogs\": [\"allwise\", \"gaia_dr3_variability\", \"gaia_dr3_gaia_source\", \"bright_guide_star_cat\", \"sdss_stars\"], \"dec\": -6.231211606645246, \"properties\": {\"num_alerts\": 980, \"num_mag_values\": 170, \"brightest_alert_id\": \"ztf_candidate:2877233641415010033\", \"brightest_alert_magnitude\": 19.480100631713867, \"brightest_alert_observation_time\": 60631.233645800035, \"newest_alert_id\": \"ztf_candidate:3543446401415010025\", \"newest_alert_magnitude\": 19.82720184326172, \"newest_alert_observation_time\": 61297.4464004999, \"oldest_alert_id\": \"ztf_candidate:141",
+    "frontier_mjd": 61304.52090279991,
+    "json_head": "{\"data\": [{\"type\": \"locus_listing\", \"attributes\": {\"grav_wave_events\": [], \"tags\": [\"eyoue_slsn_prefilter\", \"lc_feature_extractor\"], \"ra\": 156.15486585134173, \"catalogs\": [\"allwise\", \"csdr2\", \"asassn_variable_catalog_v2_20190802\", \"2mass_psc\", \"vsx\", \"gaia_dr3_variability\", \"gaia_edr3_distances_bailer_jones\", \"gaia_dr3_gaia_source\", \"ztf_variables_catalog\", \"bright_guide_star_cat\", \"sdss_stars\"], \"properties\": {\"num_alerts\": 1465, \"num_mag_values\": 499, \"brightest_alert_id\": \"ztf_candidate:2104522144315015026\", \"brightest_alert_magnitude\": 16.90410041809082, \"brightest_alert_observation_time\":",
     "status": 200,
     "url": "https://api.antares.noirlab.edu/v1/loci"
    },
    "archive": {
-    "frontier_mjd": 61297.5,
+    "frontier_mjd": 61304.5,
     "last_entries": [
-     {
-      "date": "2026-09-05",
-      "mjd": 61288.5,
-      "size_bytes": 7301444403
-     },
-     {
-      "date": "2026-09-06",
-      "mjd": 61289.5,
-      "size_bytes": 74
-     },
-     {
-      "date": "2026-09-07",
-      "mjd": 61290.5,
-      "size_bytes": 74
-     },
-     {
-      "date": "2026-09-08",
-      "mjd": 61291.5,
-      "size_bytes": 1181116006
-     },
-     {
-      "date": "2026-09-09",
-      "mjd": 61292.5,
-      "size_bytes": 3113851289
-     },
-     {
-      "date": "2026-09-10",
-      "mjd": 61293.5,
-      "size_bytes": 7945689497
-     },
-     {
-      "date": "2026-09-11",
-      "mjd": 61294.5,
-      "size_bytes": 6012954214
-     },
      {
       "date": "2026-09-12",
       "mjd": 61295.5,
@@ -720,12 +631,47 @@
       "date": "2026-09-14",
       "mjd": 61297.5,
       "size_bytes": 8053063680
+     },
+     {
+      "date": "2026-09-15",
+      "mjd": 61298.5,
+      "size_bytes": 6335076761
+     },
+     {
+      "date": "2026-09-16",
+      "mjd": 61299.5,
+      "size_bytes": 8375186227
+     },
+     {
+      "date": "2026-09-17",
+      "mjd": 61300.5,
+      "size_bytes": 7301444403
+     },
+     {
+      "date": "2026-09-18",
+      "mjd": 61301.5,
+      "size_bytes": 5690831667
+     },
+     {
+      "date": "2026-09-19",
+      "mjd": 61302.5,
+      "size_bytes": 6657199308
+     },
+     {
+      "date": "2026-09-20",
+      "mjd": 61303.5,
+      "size_bytes": 4617089843
+     },
+     {
+      "date": "2026-09-21",
+      "mjd": 61304.5,
+      "size_bytes": 695205888
      }
     ],
-    "last_night": "2026-09-14",
-    "last_tarball_any_size": "2026-09-14",
-    "n_empty_recent": 3,
-    "n_tarballs": 3011,
+    "last_night": "2026-09-21",
+    "last_tarball_any_size": "2026-09-21",
+    "n_empty_recent": 2,
+    "n_tarballs": 3018,
     "status": 200,
     "url": "https://ztf.uw.edu/alerts/public/"
    },
@@ -737,17 +683,17 @@
   },
   "status": {
    "by_source": {
-    "alerce_ztf": 61297.4464004999,
-    "antares": 61297.4464004999,
-    "archive": 61297.5,
+    "alerce_ztf": 61304.52090279991,
+    "antares": 61304.52090279991,
+    "archive": 61304.5,
     "lasair_ztf": null
    },
-   "days_behind_now": 0.28,
-   "newest_mjd": 61297.5,
-   "newest_source": "archive",
-   "newest_utc": "2026-09-14T12:00:00Z",
+   "days_behind_now": 0.27,
+   "newest_mjd": 61304.52090279991,
+   "newest_source": "alerce_ztf",
+   "newest_utc": "2026-09-21T12:30:06Z",
    "status": "LIVE",
-   "why": "ZTF is LIVE: archive holds an epoch 0.28 d old."
+   "why": "ZTF is LIVE: alerce_ztf holds an epoch 0.27 d old and the archive ZTF publishes itself agrees."
   }
  }
 }

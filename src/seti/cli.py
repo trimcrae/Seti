@@ -997,6 +997,18 @@ def _cmd_spectra_triage(args, cfg):
                recur_tol=args.recur_tol, recur_min=args.recur_min)
 
 
+# --- SPECTRA-PERSIST ---
+def _cmd_spectra_persist(args, cfg):
+    """Per-exposure persistence of the narrow-line survivors; flags are passed
+    through to seti.spectra.persist (--stage probe|run|reduce, --shard, ...)."""
+    from .spectra.persist import main as persist_main
+
+    rest = list(args.rest)
+    if "--root" not in rest:
+        rest += ["--root", str(cfg.root)]
+    return persist_main(rest)
+
+
 def _cmd_paper_numbers(args, cfg):
     from .report import write_numbers_tex
 
@@ -2168,6 +2180,13 @@ def main(argv=None):
     p.add_argument("--recur-tol", type=float, default=3.0)
     p.add_argument("--recur-min", type=int, default=3)
     p.set_defaults(func=_cmd_spectra_triage)
+
+    # --- SPECTRA-PERSIST ---
+    p = sub.add_parser("spectra-persist",
+                       help="per-exposure persistence + second epoch + rest-frame ID of the "
+                            "narrow-line survivors; flags pass through to seti.spectra.persist")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_spectra_persist)
 
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)

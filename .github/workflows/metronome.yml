@@ -41,13 +41,24 @@ on:
       catalogues:
         description: >-
           Comma-separated catalogue keys from config/metronome.yaml
-          (default: every enabled one).  e.g. "kepler_yang2019,tess_pietras2022"
+          (default: every enabled one).  e.g. "kepler_yang2019,tess_tu2022"
         required: false
-        default: "kepler_yang2019,kepler_davenport2016,tess_pietras2022,tess_gunther2020,tess_tu2020"
+        default: "kepler_yang2019,kepler_okamoto2021,kepler_shibayama2013,tess_gunther2020,tess_tu2022,tess_pietras2022"
       n_shards:
         description: "Shards per catalogue in the screen matrix"
         required: false
-        default: "4"
+        default: "8"
+      run_redetect:
+        description: >-
+          After assess, re-detect flares in the MAST light curves of the
+          shortlist (watch or better + the most flare-rich stars) and rerun
+          the clock test on them (true/false)
+        required: false
+        default: "true"
+      redetect_max_stars:
+        description: "Cap on stars whose light curves are fetched in the redetect job"
+        required: false
+        default: "40"
       max_stars:
         description: "Cap on stars scanned per shard (0 = no cap)"
         required: false
@@ -83,7 +94,7 @@ jobs:
           import json
           raw = """${{ github.event.inputs.catalogues }}""".strip()
           cats = [c.strip() for c in raw.split(",") if c.strip()]
-          n = int("${{ github.event.inputs.n_shards || '4' }}" or 4)
+          n = int("${{ github.event.inputs.n_shards || '8' }}" or 8)
           combos = [{"catalogue": c, "shard": i} for c in cats for i in range(n)]
           print("matrix=" + json.dumps({"include": combos}))
           print("catalogues=" + ",".join(cats))
@@ -117,6 +128,9 @@ jobs:
           d = json.load(open("results/metronome/probe.json"))
           for k, v in d["catalogues"].items():
               print(k, v["status"], v.get("table"), v.get("n_rows"), v.get("time_system_guess"), v.get("roles"))
+              print("   time column:", v.get("time_column"), v.get("time_column_meta"))
+              for b in v.get("scoreboard", [])[:12]:
+                  print("   board:", b.get("table"), b.get("score"), b.get("reason"))
           PY
       - name: Acquire (event tables + rotation tables, chunked, logged)
         if: ${{ github.event.inputs.stage != 'probe' }}
@@ -179,7 +193,7 @@ jobs:
           fi
           python -m seti.metronome.run --stage screen \
             --catalogues "${{ matrix.catalogue }}" \
-            --shard ${{ matrix.shard }} --n-shards ${{ github.event.inputs.n_shards || '4' }} $MS
+            --shard ${{ matrix.shard }} --n-shards ${{ github.event.inputs.n_shards || '8' }} $MS
           ls -la results/metronome/
       - uses: actions/upload-artifact@v4
         if: always()
@@ -261,6 +275,73 @@ jobs:
         with:
           name: metronome-final
           path: results/metronome/
+          if-no-files-found: warn
+
+  # ------------------------------------------------------------------
+  # Flare RE-DETECTION on the shortlist's own light curves (MAST).  Needs
+  # stars_vetted.csv from assess and the data/ parquet from acquire (the
+  # catalogued times are the detector's calibration set).  `tess` extra brings
+  # lightkurve; growth.stage2 falls back to astroquery.mast + FITS without it.
+  # ------------------------------------------------------------------
+  redetect:
+    needs: [acquire, assess]
+    if: ${{ always() && github.event.inputs.run_redetect != 'false' && github.event.inputs.reduce_only_run_id == '' && github.event.inputs.stage != 'probe' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,tess]"
+      - uses: actions/download-artifact@v4
+        with:
+          name: metronome-acquire
+          path: results/metronome/
+      - uses: actions/download-artifact@v4
+        with:
+          name: metronome-final
+          path: results/metronome/
+      - name: Offline gate — the detector must recover injected flares and the clock on them
+        run: python -m pytest tests/test_metronome.py -q -p no:cacheprovider -k "redetect"
+      - name: Re-detect flares and rerun the clock test (bounded)
+        run: |
+          ls results/metronome/ | head -40
+          python -m seti.metronome.run --stage redetect \
+            --max-stars ${{ github.event.inputs.redetect_max_stars || '40' }} \
+            --budget-s 6000
+          echo "=== redetect ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/metronome/redetect.json"))
+          print(d["verdict"], "targets", d["n_targets"], "fetched", d["n_fetched"], "scanned", d["n_scanned"],
+                "confirmed", d["n_confirms_catalogue_clock"], "recovery", d["catalogue_recovery_frac_median"])
+          for t in d["targets"][:60]:
+              print(t["star_key"], t["tier"], t["why"], t["status"], "n_cat", t["n_events"], "n_lc", t["n_flares"],
+                    "rec", t["catalogue_recovery_frac"], "Pcat", t["period_catalogue"], "Plc", t["rd_period"],
+                    "Q", t["rd_Q"], "jit", t["rd_jitter"], "p", t["rd_p_window"], "confirms", t["confirms_catalogue_clock"])
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "metronome: flare re-detection on the shortlist's light curves" \
+            results/metronome/redetect.json \
+            results/metronome/stars_redetect.csv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: metronome-redetect
+          path: |
+            results/metronome/redetect.json
+            results/metronome/stars_redetect.csv
           if-no-files-found: warn
 
   assess-only:

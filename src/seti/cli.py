@@ -389,7 +389,9 @@ def _cmd_shroud(args, cfg):
     from .shroud.run import shroud_run
 
     shroud_run(cfg, stage=args.stage, allow_network=not args.offline,
-               max_sources=args.max_sources, input_parquet=args.input)
+               max_sources=args.max_sources, input_parquet=args.input,
+               n_fields=args.n_fields, field_radius_deg=args.field_radius_deg,
+               field_seed=args.field_seed, acquire_deadline_s=args.acquire_deadline_s)
 
 
 def _cmd_crosscorr(args, cfg):
@@ -1913,6 +1915,15 @@ def main(argv=None):
                         "recorded in the run provenance")
     p.add_argument("--input", default=None,
                    help="analyse this parquet instead of acquiring")
+    p.add_argument("--n-fields", type=int, default=None,
+                   help="USNO-B1.0 reconstruction: number of 0.5-deg fields "
+                        "(default from config/shroud.yaml)")
+    p.add_argument("--field-radius-deg", type=float, default=None,
+                   help="USNO-B1.0 reconstruction: cone radius per field")
+    p.add_argument("--field-seed", type=int, default=None,
+                   help="USNO-B1.0 reconstruction: field-order seed")
+    p.add_argument("--acquire-deadline-s", type=float, default=None,
+                   help="stop starting new field fetches after this many seconds")
     p.set_defaults(func=_cmd_shroud)
 
     p = sub.add_parser(

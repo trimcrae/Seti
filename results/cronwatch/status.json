@@ -1,5 +1,5 @@
 {
- "checked_at_utc": "2026-09-21T10:40:50Z",
+ "checked_at_utc": "2026-09-21T13:19:55Z",
  "gate": {
   "branch": "main",
   "conclusion": "success",
@@ -11,7 +11,7 @@
   "status": "GREEN",
   "workflow": "ci.yml"
  },
- "n_dispatched": 0,
+ "n_dispatched": 1,
  "n_overdue": 1,
  "n_unknown": 0,
  "n_workflows": 12,
@@ -39,17 +39,14 @@
    "crons": [
     "43 */6 * * *"
    ],
-   "expected_last_fire_utc": "2026-09-21T06:43:00Z",
+   "expected_last_fire_utc": "2026-09-21T12:43:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": 3.96,
-   "hours_since_last_run": 5.22,
-   "last_scheduled_run_utc": "2026-09-21T05:27:37Z",
-   "missed_by": "grace",
+   "hours_late": null,
+   "last_scheduled_run_utc": "2026-09-21T13:19:32Z",
    "name": "cronwatch",
-   "note": "cronwatch should have fired at 2026-09-21T06:43:00Z (cron '43 */6 * * *') and its last scheduled run was 2026-09-21T05:27:37Z.  GitHub drops scheduled firings under load; this is that, not a failure -- there is no failed run to retry, which is why the hourly failure sweep cannot see it.",
-   "overdue": true,
-   "status": "MISSED",
+   "overdue": false,
+   "status": "OK",
    "workflow": "cronwatch.yml"
   },
   {
@@ -201,18 +198,22 @@
   },
   {
    "cadence_hours": 1.0,
+   "catchup_dispatched_utc": "2026-09-21T13:19:55Z",
    "cron_matched": "17 * * * *",
    "crons": [
     "17 * * * *"
    ],
-   "expected_last_fire_utc": "2026-09-21T10:17:00Z",
+   "expected_last_fire_utc": "2026-09-21T13:17:00Z",
    "grace_hours": 2.0,
    "has_dispatch": true,
-   "hours_late": null,
-   "last_scheduled_run_utc": "2026-09-21T10:39:50Z",
+   "hours_late": 0.05,
+   "hours_since_last_run": 372.43,
+   "last_scheduled_run_utc": "2026-09-06T00:54:24Z",
+   "missed_by": "silence",
    "name": "watchdog",
-   "overdue": false,
-   "status": "OK",
+   "note": "watchdog has not run on its schedule for 372.43 h (measured from its last run), which is longer than one cadence plus its grace (3.00 h).  Its most recent slot was 2026-09-21T13:17:00Z (cron '17 * * * *').  Lateness against a single slot cannot catch this: a channel firing more often than its own grace window gets a fresh slot before the old one can age out, so only the gap since the last ACTUAL run can see a sustained outage.",
+   "overdue": true,
+   "status": "MISSED",
    "workflow": "watchdog.yml"
   }
  ]

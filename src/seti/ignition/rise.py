@@ -221,6 +221,26 @@ def fit_ramp_scan(t_yr, mag, err, conf: dict | None = None) -> dict:
             "cleaned": m - sinus, "model": ramp + sinus, "t0": t0}
 
 
+def fit_linear_slope(t_yr, mag, err, err_floor: float = 0.005) -> tuple[float, float]:
+    """A bare weighted linear slope (mag/yr) and its error, inflated by sqrt(chi2_red).
+
+    Not the detector --- the screen records it on the *uncorrected* series so
+    the ensemble zero-point correction's effect is on the record star by star.
+    """
+    t = np.asarray(t_yr, float)
+    m = np.asarray(mag, float)
+    e = np.maximum(np.asarray(err, float), err_floor)
+    ok = np.isfinite(t) & np.isfinite(m) & np.isfinite(e)
+    t, m, e = t[ok], m[ok], e[ok]
+    if t.size < 3:
+        return float("nan"), float("nan")
+    X = np.column_stack([np.ones(t.size), t - t.mean()])
+    beta, cov, chi2 = _wls(X, m, 1.0 / e**2)
+    infl = float(np.sqrt(max(1.0, chi2 / max(t.size - 2, 1))))
+    err_b = float(np.sqrt(cov[1, 1])) * infl if np.isfinite(cov[1, 1]) else float("nan")
+    return float(beta[1]), err_b
+
+
 def _step_decay_basis(t: np.ndarray, t0: float, tau: float) -> np.ndarray:
     """Brightening step at ``t0`` relaxing back with e-folding ``tau`` (years)."""
     dt = t - t0
@@ -455,5 +475,6 @@ def sensitivity_from_injections(star_series: list[dict], amps_mag, conf: dict | 
 
 
 __all__ = ["DEFAULT_RISE", "REASON_PRIORITY", "VERDICT_BY_REASON", "BandRise", "StarVerdict",
-           "assess_band", "assess_series", "assess_star", "delta_bic", "fit_ramp_scan",
-           "fit_step_decay", "inject_ramp", "scan_period_grid", "sensitivity_from_injections"]
+           "assess_band", "assess_series", "assess_star", "delta_bic", "fit_linear_slope",
+           "fit_ramp_scan", "fit_step_decay", "inject_ramp", "scan_period_grid",
+           "sensitivity_from_injections"]

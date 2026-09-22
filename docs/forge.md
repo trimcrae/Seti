@@ -68,10 +68,10 @@ interferometry (MATISSE), which is the follow-up every candidate points to.
 |---|---|
 | `NO_NIR_EXCESS` | no H/K excess at ≥ 3σ to extrapolate |
 | `N_UNTESTED` | NIR excess but no N-band measurement of any kind — **never a candidate**; the Planck prediction is recorded so the star is a target, not a result |
-| `COMPANION_TEMPERATURE` | a free grey body hotter than 1800 K is preferred (Δχ² ≥ 9) over both the swarm-range grey body and the small grains: a photosphere (ledger: "T > 1800 K is a companion") |
+| `COMPANION_TEMPERATURE` | the free grey body's temperature is *measured* above 1800 K and beats the swarm-range grey body by Δχ² ≥ 9: a photosphere (ledger: "T > 1800 K is a companion"). See §2.6 for why "measured" is the load-bearing word |
 | `KNOWN_COMPANION` | a catalogued companion inside the interferometric field at Δmag ≤ 6 (WDS, or the embedded companions asset); closure phases do not exclude faint companions at the 1 % level (Tsishchankava et al. 2025) |
 | `UNVERIFIED_INPUT` | the driving values (the NIR anchor and the N measurement) are embedded transcriptions the run did not confirm against an archive |
-| `candidate` | Δχ² ≥ 9, N-band detected at ≥ 3σ, within 2σ of the grey extrapolation, grey fit acceptable, driving values archive-read or archive-verified |
+| `candidate` | Δχ² ≥ 9, N-band detected at ≥ 3σ, within 2σ of the grey extrapolation, grey fit acceptable, driving values archive-read or archive-verified, and **no** competitive photospheric-temperature alternative (§2.6) |
 | `interest` | N band consistent with the grey extrapolation but not significant |
 | `nano_preferred` | Δχ² ≤ −9: K-bright / N-faint (the population's signature) |
 | `inconclusive` / `NEITHER_MODEL_FITS` | N measured, neither family preferred / both rejected |
@@ -149,6 +149,55 @@ order of magnitude worse than interferometry. The leg reports
 `f_k_3sigma_pct` per colour bin and the population median; it can only find
 the rare bright case.
 
+### 2.6 Separating a companion from small grains — and why it is not obvious
+
+The companion kill cannot be written as "a hot grey body beats the small
+grains", which is what it looked like it should be. At the top of its
+temperature range (~2000 K) with β = 1 and a ≪ λ the nano-grain emissivity
+Q ∝ 1/λ cancels most of the Planck slope, so the small-grain family is itself
+nearly flat from H to N and fits a companion photosphere about as well —
+**however precise the data**. Numerically, for a 4600 K companion giving
+H = 0.95, K = 1.00, N = 1.20 %, the best restricted nano fit sits within
+Δχ² ≈ 2–6 of the best free grey fit and does not fall further as the errors
+shrink.
+
+What does separate them is the *shape of the χ² minimum*, not its depth:
+
+* a **K-bright / N-faint** star (the population's signature) is bluer than
+  any unit-emissivity body can be, so the free grey fit runs away to the hot
+  edge of the grid and its "temperature" is an artefact of where the grid
+  stops — Vega and Fomalhaut both peg at 7000 K;
+* a **companion photosphere** gives a nearly flat H-to-N excess and the free
+  grey fit converges on an interior minimum — a real colour temperature.
+
+So `fit_family` reports `t_at_grid_edge`, and `COMPANION_TEMPERATURE`
+requires an interior minimum above 1800 K. The nano degeneracy is not allowed
+to veto the kill; it is reported per star as
+`hot_grey.nano_fits_comparably` with its Δχ², so the reader sees that the
+kill rests on the colour temperature rather than on rejecting grains.
+
+The same logic protects the candidate tier from the other direction. Gate
+`hot_photosphere_alternative`: if a free grey body *above* the sublimation
+ceiling with a measured temperature fits at all better than the swarm-range
+one, the star is `inconclusive`, not a candidate. A genuine 1500 K swarm with
+a detected N band pins its own temperature — the N/K ratio measures it — so
+the free fit lands inside the swarm range and the gate stays quiet on the
+injected signal.
+
+### 2.7 One published number is one datum
+
+The embedded seed rows and the archive rows describe the *same* published
+measurements. Merging them on the citation string ("Akeson+2009 ApJ 691 1896;
+Absil+2013" against the survey key `absil2013`) kept both, so a star with a
+seed *and* its archive table entered χ² twice with its error effectively
+divided by √2. `Measurement` therefore carries a survey id and the merge key
+is `(survey, band)`; the published tables are one row per star per band, and
+genuine repeat epochs come from different surveys (FLUOR 2013 / PIONIER 2014
+/ JouFLU 2017), which are kept apart. On the fake-archive end-to-end this
+moved β Leo's Δχ² from −7.8 to −4.2 — from "nearly nano-preferred" to
+"nothing preferred", which is the honest reading of 0.94 ± 0.26 % in K
+against 1.70 ± 0.30 % in N.
+
 ## 3. Offline tests (`tests/test_forge.py`, the CI gate; no network)
 
 * an injected Planck 1500 K excess with consistent H, K and N is recovered
@@ -160,10 +209,16 @@ the rare bright case.
   shape sits within 2σ of a 2000 K large grain, and the gate stays quiet);
   a catalogued companion is `KNOWN_COMPANION`; embedded, unverified driving
   values are `UNVERIFIED_INPUT` until both the anchor and the N value verify;
+* the broadband confounder ladder: a body much cooler than 1500 K fails the
+  K−W1 / W1−W2 consistency test first and reads `NORMAL` — only a hot
+  component *with* a cold belt reaches `BROADBAND_W3_TOO_BRIGHT`;
 * the end-to-end run on a fake VizieR (three tables, four synthetic stars,
   one discrepant transcription) verifies the asset, adds the archive's stars,
-  recovers the swarm, and flags the 10 % broadband injections while leaving
-  the 1 % ones alone and reading 300 K dust as `BROADBAND_W3_TOO_BRIGHT`;
+  recovers the swarm, separates the flat-spectrum companion from the
+  K-bright/N-faint star (§2.6), counts the seeded and archived copies of one
+  published value as one datum (§2.7), and flags the 15 % broadband
+  injections while leaving the 1 % ones alone and reading a hot component
+  plus a cold belt as `BROADBAND_W3_TOO_BRIGHT`;
 * a dead archive is `NO_DATA_REACHED | DEGRADED (...)`, every embedded row
   `table_not_reached`, no candidate.
 

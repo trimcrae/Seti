@@ -1,0 +1,614 @@
+"""Offline test suite for GROWTH stage ``direct`` --- every Kepler planet's TESS depth (S57).
+
+No network anywhere (``conftest.py`` raises on any socket); every fetch in
+:mod:`seti.growth.direct` takes an injectable callable and every test injects
+one.  What this suite gates:
+
+* **an injected depth change is recovered on synthetic SAP AND PDCSAP** and,
+  with the duration scaled as a fixed impact parameter predicts, comes out a
+  ``growth_candidate`` --- the load-bearing test;
+* **a PDCSAP-only change is ``crowding_correction``** --- the Kepler-718 b
+  lesson, as a rule: the raw aperture depth did not grow, PDC did;
+* **a missing light curve is ``not_measured``** with the archive's own status,
+  and ``QUERY_FAILED`` / ``QUERY_RETURNED_ZERO_ROWS`` / ``TIC_UNRESOLVED`` stay
+  different facts;
+* **a consistent planet states its sensitivity** (what change it could have
+  seen) and a planet TESS cannot reach is ``not_measurable``, never
+  ``consistent``;
+* **the phase search recovers a shifted ephemeris** and a transit that is not
+  there is ``transit_not_recovered``, not ``consistent``;
+* **an eclipsing binary is vetoed by odd-even** and **a duration that tracks
+  ``b`` is vetoed**;
+* **sharding is by star and resume skips what is done**; the aggregate marks
+  targets no shard reached ``NOT_REACHED``; the population scatter scales ``z``.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from seti.growth import direct as D
+from seti.growth.drift import band_ratio, expected_t14_ratio
+from seti.growth.stage2 import bkjd_to_btjd, synth_lightcurve
+
+P = 2.0523499
+T0_BKJD = 131.7513
+T14_H = 2.078
+T14_D = T14_H / 24.0
+K_ROR = 0.10
+B_IMP = 0.30
+KOI_DEPTH = 10000.0
+
+
+def _koi(kepoi="K00897.01", kepid=7849854, tic=268924036.0, **over) -> dict:
+    row = {"kepoi_name": kepoi, "kepler_name": "Kepler-718 b", "kepid": kepid, "tic_id": tic,
+           "tic_route": "name_planet", "koi_disposition": "CONFIRMED",
+           "koi_pdisposition": "CANDIDATE", "koi_period": P, "koi_period_err1": 1e-7,
+           "koi_period_err2": -1e-7, "koi_time0bk": T0_BKJD, "koi_time0bk_err1": 1e-4,
+           "koi_time0bk_err2": -1e-4, "koi_duration": T14_H, "koi_duration_err1": 0.02,
+           "koi_duration_err2": -0.02, "koi_depth": KOI_DEPTH, "koi_depth_err1": 30.0,
+           "koi_depth_err2": -30.0, "koi_ror": K_ROR, "koi_impact": B_IMP, "koi_dor": 7.7,
+           "koi_steff": 5800.0, "koi_slogg": 4.5, "koi_kepmag": 15.2, "koi_fpflag_nt": 0,
+           "koi_fpflag_ss": 0, "koi_fpflag_co": 0, "koi_fpflag_ec": 0, "koi_count": 1,
+           "ra": 285.0, "dec": 43.0}
+    row.update(over)
+    return row
+
+
+def _ref_ppm() -> float:
+    fr, _ = band_ratio(5800.0, 4.5, B_IMP, None)
+    return KOI_DEPTH * fr
+
+
+def _t0_tess() -> float:
+    return bkjd_to_btjd(T0_BKJD) + 900 * P
+
+
+def _products(depth_pdc_ppm, depth_sap_ppm, *, duration_days=T14_D, noise_ppm=300.0,
+              n_transits=16, offset_days=0.0, odd_depth_factor=None, seed=3,
+              authors=(("SPOC", 120.0), ("TESS-SPOC", 600.0)), sectors=(41, 54)) -> list[dict]:
+    """Synthetic products: each (author, sector) carries PDCSAP and SAP columns."""
+    out = []
+    i = 0
+    for si, sec in enumerate(sectors):
+        for author, exptime in authors:
+            t0 = _t0_tess() + offset_days + si * n_transits * P
+            cols = {}
+            for col, dep in (("PDCSAP_FLUX", depth_pdc_ppm), ("SAP_FLUX", depth_sap_ppm)):
+                i += 1
+                lc = synth_lightcurve(period_days=P, t0_btjd=t0, duration_days=duration_days,
+                                      depth=dep * 1e-6, exptime_s=exptime, n_transits=n_transits,
+                                      noise_ppm=noise_ppm, sector=sec, author=author,
+                                      seed=seed + i,
+                                      odd_depth=(dep * odd_depth_factor * 1e-6
+                                                 if odd_depth_factor else None))
+                cols[col] = (lc["flux"], lc["flux_err"])
+                time = lc["time"]
+            out.append({"sector": sec, "author": author, "exptime_s": exptime, "time": time,
+                        "fluxes": cols, "n_points": int(time.size)})
+    return out
+
+
+def _conf(**direct) -> dict:
+    d = {"fetch": {"per_target_budget_s": 30.0, "shard_budget_s": 600.0, "retries": 1,
+                   "retry_pause_s": 0.0, "clean_downloads": False, "tic_fallback": True},
+         "classify": {"min_population_for_offset": 1000}}
+    for k, v in direct.items():
+        d.setdefault(k, {}).update(v)
+    return {"direct": d, "stage2": {"fit": {"bootstrap_draws": 300}}, "limb_darkening": None,
+            "archive": {}}
+
+
+def _measure(products, entry=None, status="OK", conf=None):
+    conf = conf or _conf()
+    entry = entry or _koi()
+    return D.measure_direct_target(
+        entry, products, fetch_status=status, fetch_route="injected",
+        fit=D.FitParams.from_config(conf), ensemble=D.EnsembleParams.from_config(conf),
+        search=D.EpochSearchParams.from_config(conf), duration=D.DurationParams.from_config(conf),
+        classify=D.ClassifyParams.from_config(conf))
+
+
+# ---------------------------------------------------------------------------
+# The load-bearing tests
+# ---------------------------------------------------------------------------
+def test_an_injected_depth_change_is_recovered_in_both_families_and_is_a_growth_candidate():
+    ref = _ref_ppm()
+    ratio = 2.0
+    t14_fac = expected_t14_ratio(K_ROR, B_IMP, ratio)
+    prods = _products(ref * ratio, ref * ratio, duration_days=T14_D * t14_fac)
+    rec, members, sec, fold_df = _measure(prods)
+    assert rec["lc_status"] == "OK" and rec["pdc_status"] == "OK" and rec["sap_status"] == "OK"
+    for fam in ("pdc", "sap"):
+        assert abs(rec[f"{fam}_depth_ppm"] - ref * ratio) < 4.0 * rec[f"{fam}_total_err_ppm"]
+        assert rec[f"{fam}_z"] >= 5.0
+        assert rec[f"{fam}_n_members_measured"] == 2      # SPOC and TESS-SPOC
+        assert rec[f"{fam}_depth_reduction_spread_status"] == "OK"
+        assert rec[f"{fam}_n_sectors_dropped_duplicate"] == 2   # one reduction per sector
+    assert rec["ephemeris_recovered"] and abs(rec["epoch_offset_minutes"]) < 15.0
+    assert rec["duration_verdict"] == "fixed_b"
+    assert abs(rec["t14_factor"] - t14_fac) < 3.0 * rec["t14_factor_err"] + 0.05
+    assert rec["class"] == D.CLASS_GROWTH and rec["vetoes"] == ""
+    assert rec["would_be_candidate_without_vetoes"]
+    assert len(members) == 4 and len(sec) and len(fold_df)
+
+
+def test_a_pdc_only_change_is_a_crowding_correction_case_not_growth():
+    """Kepler-718 b as a rule: PDC deeper than SAP, SAP no deeper than Kepler."""
+    ref = _ref_ppm()
+    prods = _products(ref * 2.0, ref * 0.8)
+    rec, *_ = _measure(prods)
+    assert rec["pdc_z"] >= 5.0
+    assert rec["sap_z"] < 5.0
+    assert rec["background_direction"] == "PDC_DEEPER_THAN_SAP"
+    assert rec["sap_minus_pdcsap_z"] <= -3.0
+    assert rec["class"] == D.CLASS_CROWDING
+    assert "pdc_deeper_than_sap" in rec["flags_classify"]
+
+
+def test_a_missing_light_curve_is_not_measured_and_the_statuses_stay_apart():
+    rec, *_ = _measure([], status="QUERY_FAILED")
+    assert rec["class"] == D.CLASS_NOT_MEASURED
+    assert rec["not_measured_reason"] == "QUERY_FAILED"
+    assert not np.isfinite(rec["pdc_depth_ppm"]) and not np.isfinite(rec["sap_depth_ppm"])
+    rec0, *_ = _measure([], status="QUERY_RETURNED_ZERO_ROWS")
+    assert rec0["class"] == D.CLASS_NOT_MEASURED
+    assert rec0["not_measured_reason"] == "QUERY_RETURNED_ZERO_ROWS"
+    rec1, *_ = _measure([], status="TIC_UNRESOLVED")
+    assert rec1["not_measured_reason"] == "TIC_UNRESOLVED"
+    rec2, *_ = _measure(_products(9000.0, 9000.0), entry=_koi(koi_time0bk=float("nan")))
+    assert rec2["not_measured_reason"] == "EPHEMERIS_UNAVAILABLE"
+
+
+def test_a_consistent_planet_states_what_change_it_could_have_seen():
+    ref = _ref_ppm()
+    rec, *_ = _measure(_products(ref, ref))
+    assert rec["class"] == D.CLASS_CONSISTENT
+    assert abs(rec["pdc_z"]) < 3.0 and abs(rec["sap_z"]) < 3.0
+    for fam in ("pdc", "sap"):
+        assert np.isfinite(rec[f"{fam}_detectable_ln_ratio"]) and rec[f"{fam}_detectable_ln_ratio"] > 0
+        assert rec[f"{fam}_detectable_depth_change_ppm"] > 0
+        assert rec[f"{fam}_expected_snr"] > 3.0
+    assert rec["sap_vs_pdcsap_verdict"] == "BACKGROUND_TEST_AGREES"
+
+
+def test_a_planet_tess_cannot_reach_is_not_measurable_never_consistent():
+    ref = _ref_ppm()
+    prods = _products(ref, ref, noise_ppm=60000.0, n_transits=4, sectors=(41,))
+    rec, *_ = _measure(prods)
+    assert rec["class"] in (D.CLASS_NOT_MEASURABLE, D.CLASS_NOT_RECOVERED)
+    assert rec["class"] != D.CLASS_CONSISTENT
+    # the sensitivity is still a number: what a 5-sigma change would have to be
+    assert np.isfinite(rec["pdc_detectable_ln_ratio"])
+
+
+def test_the_phase_search_recovers_a_shifted_ephemeris():
+    ref = _ref_ppm()
+    shift = 25.0 / 1440.0
+    prods = _products(ref, ref, offset_days=shift)
+    entry = _koi(koi_time0bk_err1=0.02, koi_time0bk_err2=-0.02)     # the window must cover it
+    rec, *_ = _measure(prods, entry=entry)
+    assert rec["ephemeris_recovered"]
+    assert abs(rec["epoch_offset_minutes"] - 25.0) < 8.0
+    assert rec["epoch_search_n_trials"] > 3
+    assert abs(rec["pdc_depth_ppm"] - ref) < 4.0 * rec["pdc_total_err_ppm"]
+    assert rec["class"] == D.CLASS_CONSISTENT
+    # the depth at the NOMINAL ephemeris is shallower: that is what the search guards against
+    assert rec["depth_at_nominal_ephemeris_ppm"] < rec["pdc_depth_ppm"]
+
+
+def test_a_transit_that_is_not_there_is_not_recovered_rather_than_consistent():
+    prods = _products(0.0, 0.0)
+    rec, *_ = _measure(prods)
+    assert not rec["ephemeris_recovered"]
+    assert rec["class"] == D.CLASS_NOT_RECOVERED
+    assert rec["pdc_expected_snr"] > 5.0        # TESS COULD have seen the KOI depth
+
+
+def test_a_halved_depth_in_both_families_is_a_shrink_candidate_with_dilution_flagged():
+    ref = _ref_ppm()
+    ratio = 0.5
+    t14_fac = expected_t14_ratio(K_ROR, B_IMP, ratio)
+    rec, *_ = _measure(_products(ref * ratio, ref * ratio, duration_days=T14_D * t14_fac))
+    assert rec["ephemeris_recovered"]
+    assert rec["pdc_z"] <= -5.0 and rec["sap_z"] <= -5.0
+    assert rec["class"] == D.CLASS_SHRINK
+    assert "dilution_not_excluded" in rec["flags_classify"]
+
+
+def test_an_eclipsing_binary_is_vetoed_by_its_odd_even_signature():
+    ref = _ref_ppm()
+    prods = _products(ref * 2.0, ref * 2.0, odd_depth_factor=0.5,
+                      duration_days=T14_D * expected_t14_ratio(K_ROR, B_IMP, 1.5))
+    rec, *_ = _measure(prods)
+    assert rec["pdc_odd_even_sigma"] >= 3.0
+    assert rec["class"] != D.CLASS_GROWTH
+    assert D.VETO_ODD_EVEN in rec["vetoes"]
+
+
+def test_a_depth_change_whose_duration_tracks_b_is_vetoed():
+    ref = _ref_ppm()
+    # twice the depth but a much SHORTER transit: a chord change, not a radius change
+    prods = _products(ref * 2.0, ref * 2.0, duration_days=T14_D * 0.55)
+    rec, *_ = _measure(prods)
+    assert rec["t14_factor"] < 0.8
+    assert rec["duration_verdict"] in ("tracks_b", "duration_inconsistent")
+    assert rec["class"] != D.CLASS_GROWTH
+    assert D.VETO_DURATION in rec["vetoes"]
+    assert rec["would_be_candidate_without_vetoes"]
+
+
+def test_a_koi_false_positive_flag_vetoes_a_would_be_candidate():
+    ref = _ref_ppm()
+    prods = _products(ref * 2.0, ref * 2.0,
+                      duration_days=T14_D * expected_t14_ratio(K_ROR, B_IMP, 2.0))
+    rec, *_ = _measure(prods, entry=_koi(koi_fpflag_ss=1))
+    assert rec["would_be_candidate_without_vetoes"]
+    assert D.VETO_FPFLAG in rec["vetoes"] and rec["class"] == D.CLASS_DEEPER
+
+
+def test_the_z_falls_back_to_the_linear_form_when_the_depth_is_consistent_with_zero():
+    ref = 10000.0
+    c = D.compare_family(50.0, 400.0, 400.0, ref, 30.0)
+    assert c["z_method"] == "linear" and c["z"] < -5.0
+    assert np.isfinite(c["detectable_ln_ratio"])
+    c2 = D.compare_family(20000.0, 400.0, 400.0, ref, 30.0)
+    assert c2["z_method"] == "ln" and c2["z"] > 5.0
+    c3 = D.compare_family(20000.0, 400.0, 400.0, float("nan"), float("nan"))
+    assert c3["comparison_status"] == D.REASON_NO_REFERENCE
+
+
+def test_the_duration_profile_recovers_an_injected_duration_change():
+    ref = _ref_ppm()
+    for fac in (0.7, 1.0, 1.4):
+        prods = _products(ref, ref, duration_days=T14_D * fac, noise_ppm=200.0)
+        segs, _ = D.dedupe_sectors(D.family_segments(prods, D.FAMILY_PDC))
+        fr = D.detrended_fold(segs, period_days=P, t0_btjd=_t0_tess(), duration_days=T14_D,
+                              params=D.FitParams(), window_durations=2.5, guard_durations=1.25)
+        r = D.fit_duration(fr, duration_days=T14_D, ingress_frac=D.ingress_fraction(K_ROR, B_IMP))
+        assert r["duration_fit_status"] == "OK"
+        assert abs(r["t14_factor"] - fac) < 3.0 * r["t14_factor_err"] + 0.06
+
+
+# ---------------------------------------------------------------------------
+# Targets, sharding, resume, aggregate
+# ---------------------------------------------------------------------------
+def _koi_table() -> pd.DataFrame:
+    rows = [
+        _koi("K00001.01", 1000, float("nan"), kepler_name="Kepler-1 b", ra=280.0, dec=40.0),
+        _koi("K00002.01", 2000, float("nan"), kepler_name="", ra=281.0, dec=41.0),
+        _koi("K00002.02", 2000, float("nan"), kepler_name="Kepler-2 c", ra=281.0, dec=41.0),
+        _koi("K00003.01", 3000, float("nan"), kepler_name="", ra=282.0, dec=42.0),
+        _koi("K00004.01", 4000, float("nan"), kepler_name="", ra=283.0, dec=43.0,
+             koi_disposition="FALSE POSITIVE"),
+        _koi("K00005.01", 5001, float("nan"), kepler_name="", ra=284.0, dec=44.0,
+             koi_period=45.0),
+    ]
+    df = pd.DataFrame(rows).drop(columns=["tic_id", "tic_route"])
+    return df
+
+
+def _ps_table() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"pl_name": "Kepler-1 b", "hostname": "Kepler-1", "tic_id": "TIC 111", "default_flag": 1,
+         "disc_facility": "Kepler", "ra": 280.0, "dec": 40.0},
+        {"pl_name": "Kepler-2 c", "hostname": "Kepler-2", "tic_id": "TIC 222", "default_flag": 1,
+         "disc_facility": "Kepler", "ra": 281.0, "dec": 41.0},
+        {"pl_name": "Kepler-9 b", "hostname": "Kepler-9", "tic_id": "TIC 333", "default_flag": 1,
+         "disc_facility": "Kepler", "ra": 282.0, "dec": 42.0},
+    ])
+
+
+def test_build_targets_resolves_tics_by_every_ps_route_and_keeps_the_unresolved():
+    t, rep = D.build_targets(_koi_table(), _ps_table())
+    assert rep["n_koi"] == 6 and rep["n_confirmed_or_candidate"] == 5
+    by = dict(zip(t["kepoi_name"], t["tic_route"], strict=True))
+    assert by["K00001.01"] == "name_planet"
+    assert by["K00002.02"] == "name_planet" and by["K00002.01"] == "name_host"   # sibling host
+    assert by["K00003.01"] == "position_tic"
+    assert by["K00005.01"] == "" and not np.isfinite(t.set_index("kepoi_name").loc["K00005.01",
+                                                                                      "tic_id"])
+    assert rep["n_with_tic"] == 4 and rep["n_without_tic"] == 1
+    assert rep["n_long_period"] == 1
+    assert "FALSE POSITIVE" not in set(t["koi_disposition"])
+    assert rep["targets_statement"].startswith("5 of 6 KOIs are targets")
+
+
+def test_direct_targets_writes_the_table_and_degrades_on_a_failed_archive(tmp_path):
+    def qf(adql):
+        if "from cumulative" in adql:
+            return _koi_table()
+        if "from ps" in adql:
+            return _ps_table()
+        return pd.DataFrame()
+    rep = D.direct_targets(_conf(), tmp_path, query_fn=qf)
+    assert rep["koi_status"] == "OK" and rep["n_targets"] == 5
+    assert (tmp_path / "targets.csv").exists()
+
+    def boom(_adql):
+        raise RuntimeError("archive down")
+    rep2 = D.direct_targets(_conf(), tmp_path / "b", query_fn=boom)
+    assert rep2["koi_status"] == "QUERY_FAILED" and rep2["n_targets"] == 0
+
+
+def test_shards_are_by_star_and_resume_skips_what_is_done(tmp_path):
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+    calls: list = []
+    ref = _ref_ppm()
+
+    def pf(tic, **_kw):
+        calls.append(int(tic))
+        return _products(ref, ref, n_transits=10, sectors=(41,))
+
+    def tf(kepid, ra, dec, kepmag, **_kw):
+        return 5555.0, "tic_region_kic"
+
+    n_shards = 2
+    conf = _conf()
+    reps = [D.direct_measure(conf, out, shard=s, n_shards=n_shards, products_fn=pf, tic_fn=tf,
+                             resume=True) for s in range(n_shards)]
+    assert sum(r["n_measured_this_run"] for r in reps) == 5
+    # the two planets of star 2000 share ONE download
+    assert calls.count(222) == 1 and len(calls) == 4
+    # the unresolved star went through the fallback and its route is on the record
+    df = pd.concat([D._read_csv(D._shard_paths(out, s)["csv"]) for s in range(n_shards)])
+    assert df.set_index("kepoi_name").loc["K00005.01", "tic_route"] == "tic_region_kic"
+    assert set(df["shard"]) == {0, 1}
+    assert all(D.shard_of(k, n_shards) == s for k, s in zip(df["kepid"], df["shard"], strict=True))
+    # resume: nothing is fetched or measured again
+    n_calls = len(calls)
+    reps2 = [D.direct_measure(conf, out, shard=s, n_shards=n_shards, products_fn=pf, tic_fn=tf,
+                              resume=True) for s in range(n_shards)]
+    assert len(calls) == n_calls
+    assert sum(r["n_measured_this_run"] for r in reps2) == 0
+    assert sum(r["n_skipped_already_done"] for r in reps2) == 5
+
+
+def test_an_unresolvable_tic_is_not_measured_with_its_own_reason(tmp_path):
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+
+    def tf(kepid, ra, dec, kepmag, **_kw):
+        return float("nan"), ""
+
+    def pf(tic, **_kw):
+        return []
+    D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf, tic_fn=tf)
+    df = D._read_csv(D._shard_paths(out, 0)["csv"]).set_index("kepoi_name")
+    assert df.loc["K00005.01", "not_measured_reason"] == "TIC_UNRESOLVED"
+    assert df.loc["K00001.01", "not_measured_reason"] == "QUERY_RETURNED_ZERO_ROWS"
+    assert set(df["class"]) == {D.CLASS_NOT_MEASURED}
+
+
+def test_an_exhausted_shard_budget_leaves_targets_unreached_not_measured(tmp_path):
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+
+    def pf(tic, **_kw):
+        return _products(ref, ref, n_transits=10, sectors=(41,))
+    rep = D.direct_measure(_conf(), out, shard=0, n_shards=1, products_fn=pf,
+                           tic_fn=lambda *a, **k: (5555.0, "tic_region_kic"), budget_s=0.0)
+    assert rep["budget_exhausted"]
+    assert rep["n_measured_this_run"] == 0 and rep["n_not_reached_budget"] >= 1
+    s = D.direct_assess(_conf(), out)
+    assert s["verdict"] == D.RUN_NO_DATA
+    assert s["funnel"]["not_measured_reasons"].get("NOT_REACHED") == 5
+
+
+def test_assess_aggregates_the_shards_and_the_funnel_is_honest(tmp_path):
+    out = tmp_path / "direct"
+    out.mkdir()
+    targets, _ = D.build_targets(_koi_table(), _ps_table())
+    D._write_csv(out / "targets.csv", targets)
+    ref = _ref_ppm()
+    grow = expected_t14_ratio(K_ROR, B_IMP, 2.0)
+
+    def pf(tic, **_kw):
+        if int(tic) == 111:                       # star 1000: grew in both families
+            return _products(ref * 2.0, ref * 2.0, duration_days=T14_D * grow)
+        if int(tic) == 222:                       # star 2000: PDC-only (crowding)
+            return _products(ref * 2.0, ref * 0.8)
+        if int(tic) == 333:                       # star 3000: unchanged
+            return _products(ref, ref)
+        raise RuntimeError("MAST down for this one")
+    # only shard 0 of 2 runs: the other star(s) are NOT_REACHED
+    D.direct_measure(_conf(), out, shard=0, n_shards=2, products_fn=pf,
+                     tic_fn=lambda *a, **k: (5555.0, "tic_region_kic"))
+    s = D.direct_assess(_conf(), out)
+    f = s["funnel"]
+    assert f["n_targets"] == 5
+    assert f["n_not_reached"] >= 1
+    assert f["n_in_shard_files"] + f["n_not_reached"] == 5
+    assert sum(f["classes"].values()) == 5
+    meas = pd.read_csv(out / "measurements.csv").set_index("kepoi_name")
+    reached = meas[meas["not_measured_reason"].fillna("") != "NOT_REACHED"]
+    for _k, r in reached.iterrows():
+        tic = int(r["tic_id"]) if np.isfinite(r["tic_id"]) else -1
+        if tic == 111:
+            assert r["class"] == D.CLASS_GROWTH
+        elif tic == 222:
+            assert r["class"] == D.CLASS_CROWDING
+        elif tic == 333:
+            assert r["class"] == D.CLASS_CONSISTENT
+        elif tic == 5555:
+            assert r["class"] == D.CLASS_NOT_MEASURED and r["not_measured_reason"] == "QUERY_FAILED"
+    if f["classes"][D.CLASS_GROWTH]:
+        assert s["verdict"] == D.RUN_CANDIDATES
+        c = pd.read_csv(out / "candidates.csv")
+        assert set(c["class"]) <= set(D.CANDIDATE_CLASSES)
+    assert (out / "long_period.csv").exists()
+    assert "kepler_era_refit" in " ".join(s["checks_not_performed"])
+    assert all(k in s["sensitivity"] for k in ("pdc", "sap"))
+    assert isinstance(s["population"]["z_robust_scatter"]["pdc"], float)
+
+
+def test_the_population_scatter_scales_z_before_the_gate():
+    rng = np.random.default_rng(1)
+    n = 200
+    ln = rng.normal(0.1, 0.30, n)          # a population whose true scatter is 0.30 ...
+    sig = np.full(n, 0.10)                 # ... against quoted errors of 0.10
+    meas = pd.DataFrame({"pdc_ln_ratio": ln, "pdc_sigma_ln": sig, "pdc_measured_snr": 20.0,
+                         "sap_ln_ratio": ln - 0.2, "sap_sigma_ln": sig, "sap_measured_snr": 20.0,
+                         "ephemeris_recovered": True})
+    off = D.population_offsets(meas, params=D.ClassifyParams(min_population_for_offset=20))
+    assert abs(off["median_ln_ratio"]["pdc"] - 0.1) < 0.05
+    assert 2.3 < off["z_robust_scatter"]["pdc"] < 3.8
+    assert off["pdc_scale"] > 2.0 and abs(off["sap_offset"] - (-0.1)) < 0.05
+    # a 5-sigma-on-the-quoted-error outlier is 5/scale in the population's own units
+    rec = {"lc_status": "OK", "not_measured_reason": "", "pdc_comparison_status": "OK",
+           "sap_comparison_status": "OK", "pdc_expected_snr": 20.0, "ephemeris_recovered": True,
+           "pdc_ln_ratio": 0.1 + 0.5, "pdc_sigma_ln": 0.10, "sap_ln_ratio": 0.5,
+           "sap_sigma_ln": 0.10, "sap_z": 5.0, "duration_verdict": "fixed_b",
+           "koi_disposition": "CONFIRMED"}
+    c = D.classify_direct(rec, params=D.ClassifyParams(), offsets=off)
+    assert c["pdc_z_pop"] == pytest.approx((0.6 - off["pdc_offset"]) / (0.10 * off["pdc_scale"]),
+                                           rel=1e-6)
+    assert c["pdc_z_pop"] < 2.5
+    assert c["class"] != D.CLASS_GROWTH
+    c0 = D.classify_direct(rec, params=D.ClassifyParams(), offsets=None)
+    assert c0["class"] == D.CLASS_GROWTH
+
+
+def test_the_probe_records_the_routes_without_touching_the_network(tmp_path):
+    rep = D.direct_probe(_conf(), tmp_path)
+    assert "mast" in rep and "tic_fallback_importable" in rep
+    assert (tmp_path / "probe.json").exists()
+
+
+def test_the_vet_stage_hands_survivors_to_stage2_and_stage3(tmp_path, monkeypatch):
+    out = tmp_path / "direct"
+    out.mkdir()
+    D._write_csv(out / "candidates.csv", pd.DataFrame([{
+        "kepoi_name": "K00897.01", "kepler_name": "Kepler-718 b", "kepid": 7849854,
+        "tic_id": 268924036.0, "class": D.CLASS_GROWTH, "pdc_z_pop": 7.0, "sap_z": 6.0}]))
+    seen = {}
+
+    def fake_stage2_measure(conf, s2_dir, *, shortlist=None, **kw):
+        seen["s2"] = list(shortlist["kepoi_name"])
+        Path(s2_dir).mkdir(parents=True, exist_ok=True)
+
+    def fake_stage2_assess(conf, s2_dir):
+        return {"primary_verdict": "MEASURED_DEPTH_CHANGE_CONFIRMED",
+                "targets": [{"kepoi_name": "K00897.01",
+                             "like_for_like_verdict": "MEASURED_DEPTH_CHANGED",
+                             "z_measured_eras": 6.0, "sap_vs_pdcsap_verdict": "BACKGROUND_TEST_AGREES"}]}
+
+    def fake_centroid_run(stage, *, out_dir=None, conf=None, shortlist=None, **kw):
+        seen["c3"] = list(shortlist["kepoi_name"])
+        return {"verdict": "TRANSIT_ON_TARGET",
+                "targets": [{"kepoi_name": "K00897.01", "verdict": "TRANSIT_ON_TARGET",
+                             "offset_arcsec": 0.3, "offset_sigma": 0.2}]}
+    import seti.growth.centroid as C
+    import seti.growth.stage2 as S2
+    monkeypatch.setattr(S2, "stage2_measure", fake_stage2_measure)
+    monkeypatch.setattr(S2, "stage2_assess", fake_stage2_assess)
+    monkeypatch.setattr(C, "centroid_run", fake_centroid_run)
+    rep = D.direct_vet(_conf(), out)
+    assert seen["s2"] == ["K00897.01"] and seen["c3"] == ["K00897.01"]
+    assert rep["n_vetted"] == 1 and rep["n_survive_vet"] == 1
+    v = json.loads((out / "vet" / "summary.json").read_text())
+    assert v["targets"][0]["survives_vet"] is True
+    # and with nothing to vet, nothing is fabricated
+    D._write_csv(out / "candidates.csv", pd.DataFrame())
+    rep0 = D.direct_vet(_conf(), out)
+    assert rep0["n_vetted"] == 0
+
+
+def test_the_cli_exposes_growth_direct():
+    from seti.cli import main as cli_main
+    with pytest.raises(SystemExit) as e:
+        cli_main(["growth-direct", "--help"])
+    assert e.value.code == 0
+
+
+def test_the_repository_config_carries_the_direct_block():
+    from seti.growth.run import load_growth_config
+    conf = load_growth_config()
+    d = conf.get("direct") or {}
+    assert d, "config/growth.yaml has no direct: block"
+    assert float(d["fetch"]["shard_budget_s"]) <= 17400.0
+    assert float(d["classify"]["n_candidate"]) == 5.0
+    assert D.FetchParams.from_config(conf).max_products >= 20
+    assert math.isclose(D.ClassifyParams.from_config(conf).sigma_sys_ln, 0.05)
+
+
+# ---------------------------------------------------------------------------
+# The FITS product, through BOTH readers (no network: a file written here)
+# ---------------------------------------------------------------------------
+def _fake_tess_lc_fits(path: Path, *, sector=41, n=3000, exptime_s=120.0) -> np.ndarray:
+    from astropy.io import fits
+    t = 2459400.0 + np.arange(n) * exptime_s / 86400.0        # BJD
+    sap = 1000.0 + np.zeros(n)
+    pdc = 900.0 + np.zeros(n)
+    q = np.zeros(n, dtype=np.int32)
+    q[::100] = 8                                                 # flagged cadences
+    pdc[5] = np.nan
+    cols = fits.ColDefs([
+        fits.Column(name="TIME", format="D", unit="BJD - 2457000, days", array=t - 2457000.0),
+        fits.Column(name="SAP_FLUX", format="E", array=sap),
+        fits.Column(name="SAP_FLUX_ERR", format="E", array=np.full(n, 2.0)),
+        fits.Column(name="PDCSAP_FLUX", format="E", array=pdc),
+        fits.Column(name="PDCSAP_FLUX_ERR", format="E", array=np.full(n, 1.5)),
+        fits.Column(name="QUALITY", format="J", array=q),
+    ])
+    hdu = fits.BinTableHDU.from_columns(cols, name="LIGHTCURVE")
+    hdu.header["BJDREFI"] = 2457000
+    hdu.header["BJDREFF"] = 0.0
+    hdu.header["TIMEDEL"] = exptime_s / 86400.0
+    hdu.header["TIMESYS"] = "TDB"
+    hdu.header["TIMEUNIT"] = "d"
+    pri = fits.PrimaryHDU()
+    pri.header["TELESCOP"] = "TESS"
+    pri.header["SECTOR"] = sector
+    pri.header["TICID"] = 268924036
+    pri.header["ORIGIN"] = "NASA/Ames"
+    pri.header["PROCVER"] = "spoc-test"
+    fits.HDUList([pri, hdu]).writeto(path, overwrite=True)
+    return q
+
+
+def test_a_fits_product_yields_both_families_through_both_readers(tmp_path):
+    lk = pytest.importorskip("lightkurve")
+    from lightkurve.io.tess import read_tess_lightcurve
+    p = tmp_path / "tess-fake-s0041-lc.fits"
+    q = _fake_tess_lc_fits(p)
+    n_good = int((q == 0).sum())
+    # the astroquery route's reader
+    rec = D.read_tess_lc_fits_all(p)
+    assert rec is not None and set(rec["fluxes"]) == {"SAP_FLUX", "PDCSAP_FLUX"}
+    assert rec["sector"] == 41 and rec["n_points"] == n_good
+    assert abs(rec["exptime_s"] - 120.0) < 1e-6
+    # BTJD through BJDREFI/BJDREFF; cadence 0 is flagged, so the first kept point is 120 s on
+    first = 2400.0 + 120.0 / 86400.0
+    assert abs(rec["time"][0] - first) < 1e-6
+    # the lightkurve route: quality-masked by lightkurve, every column kept
+    lc = read_tess_lightcurve(str(p), quality_bitmask="default")
+    prod = D.lightcurve_to_product(lc, fallback_sector=41, fallback_author="SPOC")
+    assert prod is not None and set(prod["fluxes"]) == {"SAP_FLUX", "PDCSAP_FLUX"}
+    assert prod["n_points"] == n_good and prod["author"] == "SPOC"
+    assert abs(prod["exptime_s"] - 120.0) < 1e-3
+    assert abs(prod["time"][0] - first) < 1e-6
+    f, fe = prod["fluxes"]["SAP_FLUX"]
+    assert np.nanmedian(f) == pytest.approx(1000.0) and np.nanmedian(fe) == pytest.approx(2.0)
+    # a NaN stays a NaN (original cadence 5 is index 4 once flagged cadence 0 is dropped)
+    assert np.isnan(prod["fluxes"]["PDCSAP_FLUX"][0][4])
+    # and the family segments pick the right column per family
+    segs = D.family_segments([prod], D.FAMILY_PDC)
+    assert len(segs) == 1 and segs[0]["flux_column"] == "PDCSAP_FLUX"
+    segs = D.family_segments([prod], D.FAMILY_SAP)
+    assert len(segs) == 1 and segs[0]["flux_column"] == "SAP_FLUX"
+    assert lk.__version__

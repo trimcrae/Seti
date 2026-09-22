@@ -157,6 +157,64 @@ def test_hot_photosphere_is_companion_temperature():
     assert weak["tier"] != TIER_CANDIDATE
 
 
+def test_the_companion_kill_rests_on_a_measured_temperature_not_on_beating_grains():
+    """The discriminator of docs/forge.md 2.6.
+
+    A companion photosphere and a K-bright / N-faint star BOTH drive the free
+    grey fit above the sublimation ceiling.  What separates them is that the
+    nano star's fit runs away to the edge of the temperature grid (it is bluer
+    than any unit-emissivity body can be) while the companion's converges.
+    """
+    comp = assess_star(_meas(6000.0, 5000.0, 3.0, bands=(("H", 0.15), ("K", 0.15), ("N", 0.3))), CTX)
+    assert comp["tier"] == TIER_COMPANION_T
+    assert not comp["grey_free"]["t_at_grid_edge"]        # a real colour temperature
+    assert comp["hot_grey"]["temperature_measured"]
+
+    # A fainter, flatter companion (H 0.95, K 1.00, N 1.20 %) is the case the
+    # kill USED to miss: the small-grain family fits it comparably, so a rule
+    # that demanded beating the grains could never fire.  It still dies on the
+    # colour temperature, and the record says the grains were not rejected.
+    flat = assess_star([Measurement("H", 1.65, 0.95, 0.15, verified=True, source="a", epoch="1"),
+                        Measurement("K", 2.2, 1.00, 0.15, verified=True, source="b", epoch="2"),
+                        Measurement("N", 10.5, 1.20, 0.30, verified=True, source="c", epoch="3")],
+                       CTX)
+    assert flat["tier"] == TIER_COMPANION_T
+    assert flat["hot_grey"]["nano_fits_comparably"]
+    assert "small-grain family fits comparably" in flat["reason"]
+    assert 1800.0 < flat["grey_free"]["t_k"] < 7000.0 and not flat["grey_free"]["t_at_grid_edge"]
+
+    nano = assess_star([Measurement("K", 2.2, 1.26, 0.27, verified=True, source="a", epoch="1"),
+                        Measurement("N", 11.1, 0.4, 0.5, verified=True, source="b", epoch="2")],
+                       StarContext("vega-like", 9700.0, companion_assessed=True))
+    assert nano["tier"] == TIER_NANO
+    assert nano["grey_free"]["t_k"] > 1800.0             # hot, but...
+    assert nano["grey_free"]["t_at_grid_edge"]           # ...pegged: not a temperature
+    assert not nano["gates"]["hot_photosphere_alternative"]
+
+
+def test_a_competitive_photosphere_blocks_the_candidate_tier():
+    # the injected swarm's own temperature is pinned by N/K, so the gate is quiet
+    sw = assess_star(_meas(6000.0, 1500.0, 1.0), CTX)
+    assert sw["tier"] == TIER_CANDIDATE
+    assert not sw["gates"]["hot_photosphere_alternative"]
+    assert sw["grey_free"]["t_k"] < 1800.0
+
+
+def test_one_published_number_enters_chi2_once():
+    """A seeded value and its own archive row are the same datum (2.7)."""
+    from seti.forge.tables import merge_measurements
+    emb = {"HD 1": [Measurement("K", 2.2, 0.94, 0.26, source="Akeson+2009; Absil+2013",
+                                survey="absil2013", origin="embedded")]}
+    arc = {"HD 1": [Measurement("K", 2.2, 0.94, 0.26, source="absil2013", survey="absil2013",
+                                verified=True, origin="archive")]}
+    merged = merge_measurements(emb, arc)["HD 1"]
+    assert len(merged) == 1 and merged[0].origin == "archive" and merged[0].verified
+    # a different survey in the same band is a genuine repeat epoch, kept
+    arc["HD 1"].append(Measurement("K", 2.2, 1.40, 0.30, source="nunez2017", survey="nunez2017",
+                                   verified=True, origin="archive"))
+    assert len(merge_measurements(emb, arc)["HD 1"]) == 2
+
+
 def test_known_companion_kills():
     ctx = StarContext("c", 6000.0, known_companion=True, companion_note="WDS 0.4 arcsec",
                       companion_assessed=True)

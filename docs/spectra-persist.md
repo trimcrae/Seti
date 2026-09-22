@@ -464,6 +464,28 @@ where the hand-kept OH list is least complete and the telluric bands live.
   summary with `reduce_skipped` saying why. With nothing to overwrite it reports
   `NO_DATA_REACHED` honestly, as before.
 
+### What each output file holds
+
+| file | what it is |
+|---|---|
+| `summary.json` | the verdict, the funnel, `checkpoint_code_shas` (which commit measured what), `pixel_coincidence` per release, `most_crowded_plates`, and the `alive` records in full |
+| `persistence.csv` | one row per survivor line, every column below |
+| `exposures.json` | the per-exposure measurements behind each row, keyed `spec_id@wavelength` |
+| `ckpt/<spec_id>.json` | one checkpoint per spectrum, with `ckpt_version` and `code_sha` |
+| `control.json` | the control stage: three comparison samples, the epoch series, the profile fit and the background-galaxy scan per surviving line |
+| `diagnose.json` | the side-by-side that found the systematic (SPARCL coadd vs file coadd vs each exposure) |
+| `probe.json` | SPARCL fields served per release and which archive URLs answer |
+
+The columns that decide a verdict, in the order they are applied:
+
+`known_line_match` → `plate_other_fibre_same_wavelength` → `persistence_class` with
+`coadd_sig_cal` → `second_epoch` with `other_best_err_rel`. The columns that should be
+read *beside* a surviving line, none of which is enforced: `combined_sig_raw` next to
+`combined_sig`, `null_exposure_bias_sig` and `null_n_measurements` and `null_calibrated`,
+`stack_sig`, `n_other_candidates_within_3A` and `nearest_other_candidate_dA`,
+`plate_n_other_candidates`, `telluric_band` and `oh_gap_A` and `oh_density_per_100A`,
+`between_band_heads` with the two `band_*` columns, and `n_lines_in_spectrum`.
+
 ### Known limitations, stated rather than hidden
 
 * **The DESI coadd significance is not calibrated.** `desi_measure_at` re-measures the

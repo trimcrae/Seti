@@ -74,6 +74,27 @@ already committed. The new run's first job is `targets`. No
 `results/century/summary.json` exists yet; the channel has produced no sky
 statement.
 
+**A third red test, inherited, not named in the brief.**
+`test_series_change_at_the_transition_is_not_a_cessation` fails, and it fails
+identically on the pre-session commit `cb2dc252` — so it is inherited, not a
+regression. The two tests the brief did name
+(`test_cessation_across_gap_is_flagged_and_mean_flux_deferred`,
+`test_shard_roundtrip_screen_and_assess_end_to_end`) both **pass**; the
+predecessor's work-in-progress commit had already fixed them, and they were
+re-run in isolation to confirm it.
+
+What the red test asserts is right and must not be relaxed: a "cessation"
+whose pre and post blocks share no plate series cannot be told from the plates
+changing. Its *first* assertion holds — the analyzer does not call it a
+cessation. Its second does not: with the series switch placed exactly at the
+stop year, the analyzer returns `no_clean_transition`
+(`fail_pattern`, `intermittent_detection`, `post_isolated_detection`) rather
+than a clean transition at 1932, so the split it reports straddles the switch
+and `series_overlap_frac` comes out non-zero. The question is whether the
+split rule is mislocating the transition — which would matter on real data —
+or whether the synthetic case is degenerate. **This is the next thing to
+settle, and `main` must not take the channel until it is.**
+
 **71 % of the account's queue is CI, not science — and the fix is one merge
 per branch.** At 11:41 EDT there were **87 queued runs, 62 of them `ci`**.
 `ci.yml` on `main` has carried a `concurrency: ci-${{ github.ref }}` group with

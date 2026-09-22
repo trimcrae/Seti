@@ -1793,6 +1793,17 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
                     w, np.asarray(o.get("flux", []), float),
                     np.asarray(o.get("ivar", []), float), lam, rel,
                     str(r.get("search_mode", "emission"))))
+                # SIMBAD has no spectral type for 10 of the 14 lines the first
+                # run left standing, and without one the same-type control
+                # silently degrades to the all-stars control.  The survey's own
+                # classification is right there in the record.
+                if not sub:
+                    for key in ("subclass", "subtype"):
+                        sub = survey_subclass(o.get(key)) or None
+                        if sub:
+                            e["survey_subclass"] = sub
+                            e["subclass_source"] = f"sparcl {key}={o.get(key)}"
+                            break
         except Exception as exc:  # noqa: BLE001
             e["fit_error"] = repr(exc)[:300]
         # Every epoch at the position, one by one, not just the best of them.
@@ -1810,7 +1821,9 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
         # in every repeat observation of the plate, so nothing upstream sees it.
         plate = None
         ident = str(r.get("identifier") or "")
-        m = re.match(r"^(\d{4})-(\d+)-(\d+)$", ident)
+        # Not \d{4}: eBOSS plates run past 9999 and a five-digit plate would
+        # silently lose its same-plate control.
+        m = re.match(r"^(\d+)-(\d+)-(\d+)$", ident)
         if m:
             plate = int(m.group(1))
         samples = [("same_type", sub, None, ""), ("any_star", None, None, "")]

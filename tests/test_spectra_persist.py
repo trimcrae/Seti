@@ -934,6 +934,11 @@ def test_plate_context_counts_company_on_the_plate_and_shared_columns():
     same = persist.plate_context(["2333-53682-0274", "2333-53682-0274"],
                                  [3947.299, 3947.299])
     assert same["plate_other_fibre_same_wavelength"] == [0, 0]
+    # eBOSS plates run past 9999; a five-digit plate must not lose its context.
+    big = persist.plate_context(["10123-56789-0123", "10123-56789-0456"],
+                                [5000.0, 5000.0])
+    assert big["plate_n_other_candidates"] == [1, 1]
+    assert big["plate_other_fibre_same_wavelength"] == [1, 1]
 
 
 def _write_triage(tmp_path, rows):

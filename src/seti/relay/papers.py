@@ -437,9 +437,22 @@ def table_hits(t: ParsedTable, meta: dict, *, max_rows: int = 20000) -> tuple[pd
 # ---------------------------------------------------------------------------
 # arXiv transports
 # ---------------------------------------------------------------------------
+_LAST_CALL = [0.0]
+MIN_INTERVAL_S = 3.0        # arXiv's own rate-limit guidance for scripted access
+
+
+def _be_polite() -> None:
+    """One request every MIN_INTERVAL_S: arXiv answers 403/429 to a faster client."""
+    wait = MIN_INTERVAL_S - (time.monotonic() - _LAST_CALL[0])
+    if wait > 0:
+        time.sleep(wait)
+    _LAST_CALL[0] = time.monotonic()
+
+
 def default_get_bytes(url: str, *, timeout: float = 120.0) -> bytes:
     import requests  # noqa: PLC0415
 
+    _be_polite()
     r = requests.get(url, timeout=timeout, stream=True,
                      headers={"User-Agent": "seti-relay/1.0 (technosignature research; "
                                             "contact via github.com/trimcrae/Seti)"})
@@ -455,10 +468,18 @@ def default_get_bytes(url: str, *, timeout: float = 120.0) -> bytes:
 def default_get_text(url: str, *, timeout: float = 120.0) -> str:
     import requests  # noqa: PLC0415
 
-    r = requests.get(url, timeout=timeout,
-                     headers={"User-Agent": "seti-relay/1.0 (technosignature research)"})
-    r.raise_for_status()
-    return r.text
+    last = None
+    for attempt in range(3):
+        _be_polite()
+        r = requests.get(url, timeout=timeout,
+                         headers={"User-Agent": "seti-relay/1.0 (technosignature research)"})
+        if r.status_code in (429, 503):
+            last = f"HTTP {r.status_code}"
+            time.sleep(5.0 * (attempt + 1))
+            continue
+        r.raise_for_status()
+        return r.text
+    raise OSError(f"arXiv API refused three times ({last}) for {url}")
 
 
 def _api_entries(xml_text: str) -> list[dict]:

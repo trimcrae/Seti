@@ -463,5 +463,19 @@ def test_screen_redoes_stale_checkpoints_and_honours_the_deadline(tmp_path):
     log3 = R.screen(tmp_path, _CONF, shard=0, n_shards=1, download_fn=dl, read_fn=rd,
                     work_dir=tmp_path / "work", deadline_minutes=1e-9)
     assert log3["counts"]["deadline_deferred"] == 1 and len(calls) == 1
+    # The deadline is PREDICTIVE: an exposure whose estimated cost would run
+    # past it is never started, because a checkpoint is only safe once the
+    # shard's artifact uploads and a job that times out loses all of them.
+    # This unit is 10 bytes, so it is deferred only by the size estimate.
+    big = dict(_CONF, acquire=dict(_CONF["acquire"], minutes_per_gb_estimate=1e9))
+    log4 = R.screen(tmp_path, big, shard=0, n_shards=1, download_fn=dl,
+                    read_fn=rd, work_dir=tmp_path / "work", deadline_minutes=5.0)
+    assert log4["counts"]["deadline_deferred"] == 1 and len(calls) == 1
+    assert log4["deferred_bytes"] == 10
+    # With a sane estimate the same unit and the same deadline go through.
+    log5 = R.screen(tmp_path, _CONF, shard=0, n_shards=1, download_fn=dl, read_fn=rd,
+                    work_dir=tmp_path / "work", deadline_minutes=5.0)
+    assert log5["counts"]["analysed"] == 1 and len(calls) == 2
+    ck.unlink()
     summary = R.assess(tmp_path, _CONF)
     assert summary["funnel"]["exposure_checkpoints"] == 0

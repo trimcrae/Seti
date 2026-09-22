@@ -502,6 +502,55 @@ read when it lands is `probe.json`: which of the three join shapes answers,
 whether the three controls resolve and come back through the join, and whether
 `irs_enhv211` and each VizieR table exist. `acquire` reads the working shape
 out of that artifact.
+
+### CRADLE: the runner installs pandas 3, the sandbox has 2.3 — the probe died on its own gate, 2026-09-22
+
+Run 35741356662 started at 10:51 a.m. EDT after 16 minutes queued. Its `probe`
+job reached the runner at 11:03 a.m. and **failed at 11:05 without making one
+archive call**: the offline gate step raised
+
+```
+tests/test_cradle.py::test_ipac_table_parser_reads_a_spectrum
+ValueError: invalid error value specified   (pandas/core/tools/numeric.py:183)
+```
+
+`seti.cradle.mineralogy.parse_ipac_table` called `pd.to_numeric(errors="ignore")`.
+That spelling was deprecated in pandas 2 and **removed in pandas 3 — it now
+raises**. The sandbox venv is **pandas 2.3.3**; `pyproject.toml` asks only for
+`pandas>=2.0`, so the runner's `pip install -e ".[dev]"` fetched **3.0.6**. The
+offline suite was therefore green locally and red on the runner, and it is red
+for the same reason in any other channel that uses a pandas API removed in 3.
+The suite is now run under both: `pip install --target <dir> "pandas>=3"` and
+`PYTHONPATH=<dir>:src pytest` reproduces the runner exactly without touching
+the shared venv.
+
+The parser now coerces and keeps the original strings only when a column is
+not numeric at all, so a missing value becomes NaN instead of poisoning a whole
+column back to text.
+
+Two shard-economics bugs were fixed in the same pass, neither of which changes
+a number but both of which decide whether the numbers are measured at all:
+
+* **A refused join shape cost one timeout per unit, not one per shard.** The
+  probe measures the shapes on one pixel; `acquire` took its answer as a fixed
+  order for all 96 units. When `probe.json` never arrives — which is exactly
+  what happened here, the artifact upload warned "No files were found" — the
+  ladder re-pays the failing shape on every unit. The acquire loop now promotes
+  the shape that actually answered and records `shapes_planned`,
+  `shapes` and every `shape_relearned` event in the rollup.
+* **One pathological pixel could outlast its job.** A timed-out unit splits to
+  `healpix_split_max_level = 6`: unbounded that is `1 + 4 + 16 + 64 = 85`
+  queries at `query_timeout_s = 1200 s`, 28 hours inside a 350-minute job, and
+  every unit the shard had not yet reached would be lost. `fetch_unit` now
+  carries the shard's deadline through the recursion and reports
+  `deadline_exceeded`, which reaches `screen` as
+  `coverage.n_units_deadline_exceeded` and `assess` as a `DEGRADED` reason.
+
+The eight `acquire` shards of 35741356662 were queued at 11:05 a.m. EDT and run
+without a probe; they self-correct their shape now instead of paying for it 96
+times. `results/cradle/summary.json` is still not written — the channel's state
+remains *not yet measured*, not a null.
+
 ### IGNITION: four transports refused identically, so it was never the transport, 2026-09-22
 
 Run 35653615329 produced no shard output at all, and its two failures were

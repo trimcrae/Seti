@@ -129,6 +129,38 @@ def test_uploaded_table_carries_no_unicodechar_column():
     assert "unicodeChar" not in _votable_bytes(t3).decode("utf-8", "replace")
 
 
+def test_the_ladder_downgrades_the_id_column_once_on_a_datatype_refusal():
+    """If the service will not take `long` either, the id is expendable.
+
+    Rows are assigned to stars locally by exact separation, so a 32-bit row
+    index serves the query as well as the Gaia id.  The downgrade is tried
+    ONCE, only on that specific refusal, and never on an ordinary failure.
+    """
+    stars = _gaia_rows(3)
+    seen: list[str] = []
+
+    def picky(q, tbl, timeout_s, **_k):
+        seen.append(str(tbl["sid"].dtype))
+        if tbl["sid"].dtype.kind != "i" or tbl["sid"].dtype.itemsize > 4:
+            raise RuntimeError("INTERNAL_SERVER_ERROR: Unimplemented data type: long")
+        return _rows_at(stars)
+
+    r = fetch_neowise_upload(stars, transports={"pyvo_sync": picky})
+    assert r.status == "OK" and len(seen) == 2
+    assert seen[0] == "int64" and seen[1] == "int32"
+    assert "Unimplemented data type" in r.error      # the refusal is kept on the record
+
+    # An ordinary failure is NOT retried with a different column type.
+    tries = {"n": 0}
+
+    def plain_dead(q, tbl, timeout_s, **_k):
+        tries["n"] += 1
+        raise RuntimeError("HTTP 503 from the service")
+
+    r2 = fetch_neowise_upload(stars, transports={"pyvo_sync": plain_dead})
+    assert r2.status == "QUERY_FAILED" and tries["n"] == 1
+
+
 def test_uws_job_url_is_found_when_there_is_no_location_header():
     """IRSA answered the async submission ``200`` with no ``Location``."""
     from seti.ignition.acquire import IRSA_TAP, _uws_job_url

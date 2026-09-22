@@ -227,13 +227,24 @@ def _load_table(out_dir: Path, cfg: dict, input_csv: str | None = None) -> tuple
     aj = json.loads(ap.read_text())
     path = aj.get("pewdd", {}).get("path")
     if not path or not Path(path).exists():
-        # a path relative to the repo root
-        cand = _repo_root() / str(path) if path else None
-        if cand is not None and cand.exists():
-            path = str(cand)
+        # acquire.json records the absolute path of the checkout that fetched
+        # the rows (on a runner, /home/runner/work/...).  A later stage, a
+        # different checkout or a local replay sees the same file under its own
+        # results directory, so fall back on the basename before giving up.
+        cands = []
+        if path:
+            name = Path(str(path)).name
+            cands += [out_dir / "data" / name, out_dir / name,
+                      _repo_root() / "results" / "slag" / "data" / name,
+                      _repo_root() / str(path).lstrip("/")]
+        found = next((c for c in cands if c.exists()), None)
+        if found is not None:
+            path = str(found)
         else:
             return None, None, {"source": None, "error": "acquired table missing",
-                                "acquire_status": aj.get("status")}
+                                "acquire_status": aj.get("status"),
+                                "recorded_path": path,
+                                "searched": [str(c) for c in cands]}
     df = pd.read_csv(path, low_memory=False)
     roles = aj.get("roles")
     if not roles:

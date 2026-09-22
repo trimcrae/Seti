@@ -254,6 +254,20 @@ def _finite(v) -> bool:
     return np.isfinite(_f(v))
 
 
+def _na(v) -> bool:
+    """One missing-value test for every spelling a CSV cell can arrive in.
+
+    pandas 3 makes ``str`` the default dtype for text columns, so a missing
+    cell is no longer always a float ``nan`` -- it can be ``pd.NA``, which
+    ``np.isnan`` refuses and ``isinstance(v, float)`` misses.
+    """
+    try:
+        out = pd.isna(v)
+    except (TypeError, ValueError):                       # arrays, odd objects
+        return False
+    return bool(out) if isinstance(out, (bool, np.bool_)) else False
+
+
 # ---------------------------------------------------------------------------
 # the shortlist
 # ---------------------------------------------------------------------------
@@ -283,7 +297,10 @@ def vetoed_excess_rows(arc_dir: Path, *, params: Stage2Params) -> list[dict]:
     keep = d[(x > 0) & d.get("first_veto", pd.Series([""] * len(d))).astype(str).isin(hard)]
     rows = []
     for r in keep.to_dict(orient="records"):
-        r = {k: (None if isinstance(v, float) and np.isnan(v) else v) for k, v in r.items()}
+        # pd.isna, not np.isnan on a float: under pandas 3 a missing cell in a
+        # string column can come back as pd.NA, which is not a float and would
+        # otherwise reach json as "<NA>".
+        r = {k: (None if _na(v) else v) for k, v in r.items()}
         r["tier"] = "vetoed_excess"
         rows.append(r)
     rows.sort(key=lambda r: -_f(r.get("xi_conservative_max")))
@@ -316,7 +333,10 @@ def named_rows(arc_dir: Path, keys) -> list[dict]:
         "star_id", pd.Series([""] * len(d))).astype(str).isin(want)
     rows = []
     for r in d[m].to_dict(orient="records"):
-        r = {k: (None if isinstance(v, float) and np.isnan(v) else v) for k, v in r.items()}
+        # pd.isna, not np.isnan on a float: under pandas 3 a missing cell in a
+        # string column can come back as pd.NA, which is not a float and would
+        # otherwise reach json as "<NA>".
+        r = {k: (None if _na(v) else v) for k, v in r.items()}
         r["tier"] = "named"
         rows.append(r)
     rows.sort(key=lambda r: -_f(r.get("xi_conservative_max")))

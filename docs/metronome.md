@@ -716,6 +716,21 @@ per-bin **median**, unlike a mean, leaks signal through.  Those folds carry
 the star's own red noise, gaps and cadence.  `p_empirical` and `z_control`
 are what the vetoes read.
 
+**The vet's answer reaches `summary.json`.**  `reconcile_vetstar` follows
+§4.7c's contract exactly: the vetted star gets a `vetstar` block in
+`candidates.json` whatever the answer, a `candidate` or `interest` star whose
+vet found a mundane explanation is demoted to `none` with one machine-readable
+flag (`vetstar_veto`, ordered `contaminating_variable_at_p` first because a
+catalogued neighbour at the period is the least speculative statement
+available), and the counts, the funnel's `stars_demoted_by_vetstar` and the
+verdict string are recomputed — `CLOCK_CANDIDATES_PENDING_VET` becomes
+`VETSTAR_DEMOTED_n`, with `NO_CLOCK_CANDIDATES` appended only when nothing is
+left.  **Demotion only ever removes a claim.**  A clean vet, and a `DEGRADED`
+one where archives went unreached, both leave every tier exactly as it was;
+an archive that could not answer is not a statement about the star.  Without
+this the overclaim would live on in the file a machine reads
+(`docs/channels.md`, `alerts.py`) and be corrected only in the one it does not.
+
 `stage=vetstar` runs it on one star, one runner, in ~2 minutes.
 
 ---
@@ -737,6 +752,7 @@ star), `flags_raised` (every flag) and `tiers`.
 | `pool_null_explains` | The catalogue's own sampling — its time lattice, its sector duty cycle, its preferred epochs — reproduces the coherence, with nothing modelled | `p_pool ≥ 0.05` against 200 draws from the other stars' event times inside this star's windows |
 | `population_period` | **Unrelated stars of the same mission share this period.** A clock belongs to one star; a period many independent stars agree on to 1% is a property of the mission's sampling. Measured from the run's own scanned population, so it needs no list of instrumental periods and catches the ones nobody wrote down | ≥ 4 other scanned stars within 0.005 dex, Poisson-rarer than 10⁻³ against the local background density over ±0.25 dex. Not applied to a mission with < 50 scanned stars |
 | `few_cycles` | The period repeated too few times inside the observing windows for "recurs" to mean anything — the long-period tail where P approaches the span/3 grid edge and three sector groups phase up | `cycles_span < 10`, where `cycles_span` counts the ticks whose ±0.05-cycle phase window had *any* observing coverage |
+| `vet_*` *(vet, any of the rows below)* | The single-star vet found a mundane explanation. `reconcile_vetstar` demotes the star to `none` in `summary.json` / `candidates.json` with the most mundane reason as the flag, and recomputes the funnel and the verdict | §4.7d |
 | `catalogue_epochs_absent` *(light curve)* | **The catalogued epochs are not brightenings in the star's own photometry.** Whatever pattern they form is a pattern in the catalogue, not in the star | Detrended residual in run-σ at the catalogued times vs. the same at random times inside the same windows; bootstrap p > 0.01 or median < 2σ over ≥ 8 epochs |
 | `photometric_oscillation` *(light curve)* | The re-detected period **is** the star's dominant photometric period: a running median over 0.5 d cannot flatten an oscillation of comparable period with a narrow maximum, and the surviving maxima are detected as a flare train | Lomb–Scargle peak of the flux itself within 2% of P or its ½, 2×, ⅓, 3× |
 | `contaminating_variable_at_p` *(vet)* | **A Gaia source inside the aperture is a catalogued variable at the clock period.**  Not "the amplitude behaves like a blend" but "that star, this far away, is listed at this period" — the least speculative statement available, so the verdict leads with it | Every Gaia DR3 source within 20″ that is brighter than the target or flagged `VARIABLE` is put to the Gaia vari tables and a VSX / ZTF / Gaia-vari cone; a catalogued period within 1% of P, 2P or P/2 |
@@ -1007,6 +1023,7 @@ Outputs: `probe.json`, `acquire.json`, `acquisition_log.json`, `screen_<cat>[_s<
 per-catalogue acquisition log), `candidates.json` (interest + candidate, and the watch list),
 `redetect.json` + `stars_redetect.csv` (the light-curve re-detection of the shortlist,
 including the catalogue-epoch stack), the `redetect` block reconciliation writes back
-into `summary.json` / `candidates.json`, and `vetstar.json` + `vetstar_fold.csv`
+into `summary.json` / `candidates.json`, `vetstar.json` + `vetstar_fold.csv` (and the
+`vetstar` block + demotion the vet writes back into `summary.json` / `candidates.json`)
 (the single-star vet: every catalogue's verbatim answer, the four folded profiles bin by
 bin, the control-period nulls, the event phases and the per-quarter roll table).

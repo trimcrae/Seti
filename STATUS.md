@@ -507,13 +507,32 @@ summary at all.
   numpy 2.4.6, astropy 8.0.1: 24/24 ring and 32/32 ossuary tests green there
   as well as on pandas 2.3.3.
 
-RING run **35747779136** (11:30 ET) is queued on the fixed head, `stage=all`,
-all four legs, 2 NEOWISE shards. The superseded run 35746473758 carried the
-broken commit and was cancelled rather than left to produce a degraded leg.
+**3. The run could not get a runner.** Run 35747779136 sat **queued for over
+two hours** without its five-minute `plan` job ever starting, while GRAVE's
+run — dispatched *two seconds later* — ran to completion. The sharded layout
+is nine scheduling events (plan, probe, four legs, two NEOWISE shards,
+assess) against an account whose queue has been 74–97 runs deep all day, so
+it is nine separate chances to wait. `ring.yml` now defaults to **`solo:
+true`**: probe, all four legs and assess as steps of ONE job, ordered by
+decisiveness per minute (pulsars and their named two-target vet first, then
+the FFPs, then the white-dwarf census, then the NEOWISE series), each leg
+wrapped in `timeout … || true` so a hung leg costs that leg and the rest
+still reach `assess`. Two silent hazards were fixed with it: `probe` had no
+condition and would have burned a second slot, and `assess` carried
+`always()`, which in solo mode means "also when every job I need was
+skipped" — an assess job composing a verdict from an empty `results/ring` and
+racing the solo job's commit.
 
-*General lesson for every channel:* a green local suite is not a green gate.
-The branch CI is the only gate that runs the stack the data-touching jobs
-actually install.
+**In flight:** RING run **35752692549** (12:13 ET), `solo`, all four legs —
+still queued at 13:15 ET. 35747779136 and 35746473758 were cancelled rather
+than left to produce degraded legs. `results/ring/` is still empty; nothing
+about the sky is claimed for this channel yet.
+
+*Two general lessons.* A green local suite is not a green gate — the branch
+CI is the only gate that runs the stack the data-touching jobs install. And a
+workflow that is not on the default branch cannot be dispatched at all: the
+API returns a bare 404, indistinguishable from a typo. Both are now in
+`docs/channel-brief.md` §0.
 
 ### OSSUARY ran at last — and not one of its 584 survivors is a candidate, 2026-09-22
 

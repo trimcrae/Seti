@@ -122,15 +122,33 @@ jobs:
       - name: Pack the work cache for the shards
         if: always()
         run: |
-          mkdir -p work/sextant
-          tar -czf sextant-work.tar.gz \
-            work/sextant/perturbers.npz \
-            work/sextant/sbdb.parquet \
-            work/sextant/sbdb_meta.json \
-            work/sextant/objects_*.json \
-            results/sextant/conventions.json \
-            results/sextant/probe_ephemeris.json 2>/dev/null || \
-          tar -czf sextant-work.tar.gz work/sextant results/sextant/conventions.json
+          # Built from whatever EXISTS, one path at a time.  A single missing
+          # file must not fail the pack: the probe checkpoints after every
+          # query, so a partial cache is still worth handing to the shards
+          # (they re-fetch what is absent), while an empty artifact would make
+          # every shard re-pull 26 Horizons grids and the whole SBDB.  The
+          # per-chunk Gaia parquet under work/sextant/obs is deliberately NOT
+          # packed: it is this shard's own data, and it is large.
+          mkdir -p work/sextant results/sextant
+          : > pack.list
+          for f in work/sextant/perturbers.npz \
+                   work/sextant/sbdb.parquet \
+                   work/sextant/sbdb_meta.json \
+                   work/sextant/objects_gaiafpr.json \
+                   work/sextant/objects_gaiadr3.json \
+                   results/sextant/conventions.json \
+                   results/sextant/probe_ephemeris.json \
+                   results/sextant/controls_greenberg2020.json \
+                   results/sextant/binaries_liberato2024.json; do
+            [ -f "$f" ] && echo "$f" >> pack.list
+          done
+          # GNU tar refuses to create an empty archive, and an absent artifact
+          # would fail every shard's download instead of letting them re-fetch.
+          echo "probe produced: $(wc -l < pack.list) cache files" > work/sextant/PACK_MANIFEST.txt
+          cat pack.list >> work/sextant/PACK_MANIFEST.txt
+          echo work/sextant/PACK_MANIFEST.txt >> pack.list
+          echo "packing:"; cat pack.list
+          tar -czf sextant-work.tar.gz -T pack.list
           ls -la sextant-work.tar.gz
       - uses: actions/upload-artifact@v4
         if: always()

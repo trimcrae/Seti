@@ -513,11 +513,26 @@ read *beside* a surviving line, none of which is enforced: `combined_sig_raw` ne
 | **35751666444** | `control`, 40 comparison spectra per line | 12:04 | queued |
 
 Runner concurrency is the binding constraint on this repository — 18 channels share one
-account — and run 35747997902 (the same `run` stage at 4 shards) sat queued for 98 minutes
-without a single job starting before it was cancelled and re-dispatched smaller. Under the
-old fixed `[0..7]` matrix a 4-shard dispatch asked the scheduler for **eight** runners,
-four of them only to evaluate their own skip condition and exit; the `plan` job now builds
-the matrix from `n_shards`, so 35758868818 asks for three.
+account.
+
+**A correction.** An earlier version of this section said run 35747997902 "sat queued for
+98 minutes without a single job starting". That was wrong, and it was my reason for
+cancelling it. The job timings say otherwise: shard 3 started at 12:16 PM EDT and was
+still running at 1:32, and shard 0 ran 1:05–1:08 PM. Only shards 1, 2 and the no-op
+skips never started. I read the jobs API repeatedly and it returned `queued` for every
+job each time, and I acted on that without cross-checking the per-job `started_at`.
+
+The cancellation cost little in data, for a reason that is luck rather than judgement:
+those shards had checked out `d9070f55`, which is `CKPT_VERSION` **3** — the null
+calibration *before* the thin-null standard-error guard — so a current (version 4) reduce
+would have discarded every checkpoint they wrote regardless. The version guard did the
+work my reasoning did not.
+
+The matrix change stands on its own evidence, independent of that mistake: under the old
+fixed `[0..7]` matrix a 4-shard dispatch asks the scheduler for **eight** runners, and
+run 35747997902's shard 7 is the proof — a job that acquired a runner at 11:48:35 and
+exited at 11:48:38, three seconds spent to evaluate its own skip condition. The `plan` job
+now builds the matrix from `n_shards`, so 35758868818 asks for three.
 
 ### Next decisive action
 

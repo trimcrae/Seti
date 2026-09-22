@@ -3,12 +3,126 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-16.
+next. Last updated: 2026-09-22.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
+
+S52/S53 went from a package that had never been run to a channel with a
+workflow, a doc, CLI wiring and a green offline suite. The target is one cell
+that is empty in the literature: **250 ≤ T_bb ≤ 350 K** (the habitable-zone
+blackbody radius) **and** log(f/f_max) > 3 (three decades above the Wyatt 2007
+collisional maximum) **and** age > 1 Gyr from **two independent** indicators.
+Every known extreme debris disk is young, or — in the two mature cases,
+BD+20 307 and TYC 4479-3-1 — hot (~400 K).
+
+What the offline suite proves before any archive is touched: an injected 300 K
+excess at log(f/f_max) = 4.0 on a 3 Gyr star is recovered into the cell; the
+same excess on a Sco–Cen star is vetoed by position and parallax; a galaxy
+blend is vetoed by `ext_flag` and a Gaia beam neighbour; a star with one old
+indicator is `IN_CELL_AGE_UNDETERMINED`, never a candidate; an empty archive is
+`NO_DATA_REACHED`; a missing ages shard is `DEGRADED`, never a clean null; and
+every one of the seventeen kill rules trips on its own case and has a counter.
+
+Two bugs the suite found in the inherited code, both silent killers:
+
+* `excess.harmonise` **renamed** `ks_m` → `Ksmag`, so the K_s anchor vanished
+  from the shortlist contract and every star downstream came out `KS_MISSING`.
+  It now adds the OSSUARY spellings and keeps the archive ones.
+* `assess` only honoured `--shards` when the stage was `all`, so a sharded
+  production run would have reported a clean null over a partial set of ages
+  shards instead of `DEGRADED (ages_shards_missing:…)`.
+
+Sky coverage is exact rather than sampled: `source_id` carries the level-12
+NESTED HEALPix index, so 768 level-3 pixels are the whole sky as contiguous
+primary-key ranges; pixel *k* goes to shard *k* mod *n*, and a unit that times
+out splits into its four children.
+### IGNITION: four transports refused identically, so it was never the transport, 2026-09-22
+
+Run 35653615329 produced no shard output at all, and its two failures were
+different problems that had been read as one.
+
+**The upload ladder.** The probe walked all four rungs — pyvo's synchronous
+form, a raw `POST` with the parameters in the URL (sync, then async), and
+IRSA's Gator multi-object search — and three of them came back with the *same*
+sentence from IRSA's own TAP: `INTERNAL_SERVER_ERROR: Unimplemented data type:
+unicodeChar`. Four transports cannot fail identically on a transport fault,
+and the server only gets to make that complaint after it has parsed the
+request and read the upload — so those rungs were working. The refusal is
+about a **column type**: `Table.from_pandas` on `source_id.astype(str)` gives a
+numpy `<U19` column, astropy serialises it `datatype="unicodeChar"`, and IRSA
+does not implement that type. `sid` now goes up as `long` (a Gaia `source_id`
+is an integer by construction), a non-numeric id as ASCII `char`, every
+remaining unicode column is converted on the way out, and if a service refuses
+`long` too the ladder downgrades **once** to a 32-bit row index. None of it
+can touch the science: rows are assigned to stars locally, by exact
+unit-vector separation with per-star radii, never by the service's join column.
+
+The same probe showed the hand-rolled async rung getting `200` with **no
+`Location` header**, so the job URL is now also read from the job document in
+the body, and pyvo's own UWS client is a fifth rung.
+
+**The parent sample was a wall clock, not an archive.** That run's `sample`
+step ran **2 h 22 min** over the same 20 one-degree cones without finishing —
+run 35039105536 had pulled the identical 846-star parent in **719 s** — and
+the job was cancelled with the acquire matrix never started. `sample_from_run_id`
+now takes `sample.json` and `parent.parquet` from a prior run's artifact: the
+`sample` job then takes **1 m 48 s** (measured, run 35738088082). The reused
+`probe.json` is dropped rather than committed — a dispatch must not overwrite
+the branch's live probe record with evidence it did not gather.
+
+For the all-sky sweep the same stall is paid in *tiles never reached*, so
+`fetch_parent` takes `unit_budget_s`: attempts begun after a unit has spent it
+are recorded `SKIPPED_ON_UNIT_BUDGET` with the route and shape named, the unit
+is a recorded `QUERY_FAILED`, and `degraded` carries
+`unit_budget_skips:<n>/<units>`. The ladder's **order is untouched** and no
+science cut changes — it bounds only how long one tile may be chased.
+
+**Scale.** The pilot's 20 cones are 62.8 deg². The `tiles` sweep at 4° is
+**2,047 tiles over 32,451 deg²** of the `|b| > 15°` sky — **517× the area** —
+which at the measured 13.5 stars/deg² is an all-sky parent of order **4 × 10⁵**
+stars. Two ways to make that bigger were rejected on the science, not the
+effort: `|b| > 10°` samples stars `vet.py`'s `galactic_plane` rule exists to
+kill, and `G < 15` buys stars at W1 ≈ 13 whose per-epoch scatter is several
+times that of the W1 ≈ 10 stars the measured 0.1 mag/decade sensitivity was
+established on. Scale here comes from **area**, not depth.
+
+### CRYPT built: the thermal and radar axes of the lunar-PSR artifact search, 2026-09-22
+
+S55 (`docs/crypt.md`). Every executed search for artifacts in permanently
+shadowed regions is optical machine learning on NAC/ShadowCam frames (latest
+arXiv:2608.09350); nobody has read the Diviner polar products or the Mini-RF
+mosaics inside PSRs for a *point source*. The channel does both:
+
+- **Thermal.** Inside the Diviner cold-trap mask (all-time bolometric maximum
+  < 110 K, eroded 2 px) a pixel whose channel-6/7 brightness temperature
+  exceeds the channel-9/8 reference by ≥ 5σ — σ measured from the PSR
+  interior itself in 2 K bins of T_ref — in **both** the summer and the
+  winter cumulative product, with the same excess radiance (f·L(T_hot),
+  independent of T_cold), compact, unstriped, ≥ 10 observations, and a
+  two-component spectrum that beats one temperature. A lit rim or scattered
+  light is summer-only and dies as `seasonal`. The band model reproduces the
+  brief's numbers (1 m² at 300 K on a 35 K pixel: channel 6 → 56.9 K,
+  channel 9 → +0.009 K). The floor is not asserted from the instrument
+  paper: sources of 1–10⁴ m² are injected into the *real* maps and the
+  smallest area recovered in ≥ 50 % of trials is quoted.
+- **Radar.** Compact (≤ 4 px) Mini-RF CPR ≥ 1 pixels in a quiet
+  neighbourhood; rock fields and ejecta are extended and elevated.
+- **Optical.** ShadowCam / NAC coverage of every survivor listed through the
+  ODE footprint service, named as the unexcluded step.
+
+Offline: 38 tests, no network — the injected 300 m² source is recovered in
+both seasons, every rule is tripped by its own case, a scripted PDS archive
+runs probe → assess end to end, and an empty archive is `NO_DATA_REACHED`.
+The product naming inside `lrodlr_1002` is unknown here, so the first runner
+pass is an inventory: `probe.json` commits every product name, the label
+fields and the classifier's selection, and the patterns in
+`config/crypt.yaml` are corrected from that evidence. Nothing is a sky
+statement until `results/crypt/summary.json` lands.
 
 ### IGNITION goes from blocked to a live parent sample, 2026-09-16
 

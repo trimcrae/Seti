@@ -375,8 +375,11 @@ def test_positions_are_propagated_to_the_neowise_epoch():
     p = positions_at_neowise_epoch(stars)
     assert float(p["dec_mid"].iloc[0] - 20.0) * 3.6e6 == pytest.approx(-1500.0, rel=1e-6)
     assert p["sweep_arcsec"].iloc[0] > 7.0
-    assert "TAP_UPLOAD.pos" in upload_query() and "CIRCLE('ICRS', p.ra, p.dec, p.rad)" in \
-        upload_query()
+    # The join's radius is one constant per chunk (an index-usable CIRCLE); the
+    # per-star radius (cone + half the sweep) is applied locally by group_by_star.
+    q = upload_query(3.0)
+    assert "TAP_UPLOAD.pos" in q and f"CIRCLE('ICRS', p.ra, p.dec, {3.0 / 3600.0:.9f})" in q
+    assert "p.rad" in upload_query(radius_column=True)
 
 
 # --------------------------------------------------------------------------
@@ -795,15 +798,23 @@ def test_upload_route_groups_by_uploaded_id(tmp_path):
         frames = []
         for i, (_, s) in enumerate(sub.iterrows()):
             d = _frames(seed=i)
+            # Rows are assigned by POSITION, never by trusting the service's join
+            # column: put each star's exposures at its own (PM-propagated) place.
+            d["ra"] = s["ra"] + d["ra"] - 266.0
+            d["dec"] = s["dec"] + d["dec"] - 65.0
             d.insert(0, "sid", str(s["source_id"]))
             frames.append(d)
         df = pd.concat(frames, ignore_index=True)
-        return QueryResult(label="neowise_upload", service="irsa", status="OK", n_rows=len(df),
-                           query="SELECT ...", data=df)
+        return QueryResult(label="neowise_upload[fake]", service="irsa", status="OK",
+                           n_rows=len(df), query="SELECT ...", data=df)
 
     store = EpochStore.open(tmp_path, "s0of1")
     roll = acquire_stars(stars, store, {"upload_chunk": 2}, route="upload", upload_fn=upload_fn)
     assert roll["n_ok"] == 3 and len(store.done) == 3
+    ep = pd.read_csv(tmp_path / "epochs_s0of1.csv", dtype={"source_id": str})
+    assert ep["source_id"].nunique() == 3
+    # The rung that answered is on the ledger.
+    assert any("[fake]" in str(e.get("label")) for e in store.ledger)
 
 
 # --------------------------------------------------------------------------
@@ -1003,7 +1014,12 @@ def test_probe_recommends_the_upload_route_when_it_answers(tmp_path):
                         upload_fn=lambda *a, **k: QueryResult(label="u", service="irsa",
                                                               status="QUERY_FAILED",
                                                               error="synthetic"))
-    assert rep2["neowise_route_recommended"] == "field"      # fields are configured
+    # `field` is never recommended any more (run 35039105536: 2.4-4.7 M rows per
+    # 1-degree cone at the ecliptic poles, broken transfers, TOP truncation);
+    # the concurrent per-star cone is the fallback.
+    assert rep2["neowise_route_recommended"] == "cone"
+    assert rep2["neowise_upload_transport"] is None
+    assert rep["neowise_upload_transport"] is None            # a plain fake has no rung
 
 
 def test_config_thresholds_are_read_from_yaml_and_files_exist():

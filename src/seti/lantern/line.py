@@ -34,6 +34,7 @@ VETO_NAMES = (
     "ramp_correlated", "cosmic_ray_single_integration",
     "insufficient_phase_coverage", "low_snr", "single_pixel_spike",
     "adjacent_to_gap", "drop_not_at_eclipse", "transit_inconsistent",
+    "present_in_drift_control",
 )
 
 _DEFAULT_LINE_CFG: dict = {
@@ -49,6 +50,7 @@ _DEFAULT_DISC_CFG: dict = {
     "continuum_corr_p_max": 0.01, "ramp_taus": [5, 10, 20, 40, 80],
     "ramp_corr_max": 0.5, "timing_tolerance_ingress_units": 2.0,
     "cosmic_ray_top_n": 2, "transit_excess_sigma_max": 3.0,
+    "drift_control_sigma_max": 4.0,
 }
 
 
@@ -98,6 +100,64 @@ def time_average_spectrum(flux, mask, flux_err=None, clip_sigma: float = 5.0) ->
     return {"spec": spec, "spec_err": spec_err,
             "n_used": int(np.nanmedian(n_used)) if n_used.size else 0,
             "scale": float(np.nanmedian(med)) if np.any(np.isfinite(med)) else np.nan}
+
+
+def difference_spectrum(flux, out_mask, in_mask, flux_err=None,
+                        clip_sigma: float = 5.0) -> dict:
+    """``1 + (out-of-eclipse mean - in-eclipse mean)``, both continuum-normalised.
+
+    THE spectrum this channel should search.  Measured on real JWST ``x1d``
+    products, the residual of a time-averaged spectrum around its local
+    continuum sits at ~1% of the continuum level whatever the exposure time:
+    it is not photon noise but the static pixel pattern of the extraction
+    (flat-field residual, undersampled trace, wavelength-solution ripple).
+    A 6-sigma trigger on that spectrum therefore needs a line brighter than
+    ~8% of the continuum -- a sensitivity that makes the search worthless.
+
+    The static pattern is identical in the in-eclipse and out-of-eclipse
+    averages and cancels in their difference exactly.  What is left is what
+    CHANGED when the planet was occulted: the planet's own (broad, smooth)
+    emission spectrum, which the local-quadratic continuum removes, plus any
+    narrow line that vanished.  The difference's noise floor is the photon
+    noise of the two averages, two orders of magnitude below the pattern.
+
+    Offsetting by 1 keeps the continuum near unity, so the residual, the
+    equivalent width and the significance carry the same units and meaning as
+    on the out-of-eclipse spectrum (fraction of the STELLAR continuum).
+    Returns ``spec``, ``spec_err``, ``n_out``, ``n_in``, ``scale`` and the two
+    component spectra.
+    """
+    a_out = time_average_spectrum(flux, out_mask, flux_err, clip_sigma)
+    a_in = time_average_spectrum(flux, in_mask, flux_err, clip_sigma)
+    spec = 1.0 + (a_out["spec"] - a_in["spec"])
+    err = np.hypot(np.asarray(a_out["spec_err"], float), np.asarray(a_in["spec_err"], float))
+    return {"spec": spec, "spec_err": err, "n_out": a_out["n_used"], "n_in": a_in["n_used"],
+            "scale": a_out["scale"], "spec_out": a_out["spec"], "spec_in": a_in["spec"]}
+
+
+def drift_control_masks(out_mask, in_mask) -> tuple[np.ndarray, np.ndarray]:
+    """Split the out-of-eclipse integrations into the block BEFORE the first
+    in-eclipse integration and the block AFTER the last one.
+
+    Their difference is the null of :func:`difference_spectrum`: it spans the
+    same stretch of the visit, and the same detector drift, but NO eclipse
+    happened between them.  A narrow feature that appears there is drift, not
+    a source that went behind the star; one that appears in the eclipse
+    difference and not here is what the channel is looking for.
+    """
+    o = np.asarray(out_mask, bool)
+    i = np.asarray(in_mask, bool)
+    idx = np.flatnonzero(i)
+    if idx.size == 0:
+        half = o.size // 2
+        before, after = o.copy(), o.copy()
+        before[half:] = False
+        after[:half] = False
+        return before, after
+    before, after = o.copy(), o.copy()
+    before[int(idx[0]):] = False
+    after[: int(idx[-1]) + 1] = False
+    return before, after
 
 
 # --- 2. narrow-feature search ---------------------------------------------------
@@ -286,6 +346,26 @@ def feature_snr_in_mask(flux, mask, index: int, flux_err=None, samples_per_resel
     if avg["n_used"] < 2:
         return np.nan
     z = residual_z(avg["spec"], avg["spec_err"], samples_per_resel, c)["z"]
+    lo, hi = max(0, index - halfwidth), min(z.size, index + halfwidth + 1)
+    seg = z[lo:hi]
+    return float(np.nanmax(seg)) if np.any(np.isfinite(seg)) else np.nan
+
+
+def feature_snr_in_difference(flux, out_mask, in_mask, index: int, flux_err=None,
+                              samples_per_resel: float = 2.0, cfg: dict | None = None,
+                              halfwidth: int = 0) -> float:
+    """Significance of a feature at ``index`` on a difference spectrum, with
+    the same masked-quadratic continuum and block noise the search uses.
+
+    With ``out_mask``/``in_mask`` the two halves of :func:`drift_control_masks`
+    this is the drift null; with the real eclipse masks it is the detection
+    statistic re-evaluated after dropping integrations (the cosmic-ray guard).
+    """
+    c = {**_DEFAULT_LINE_CFG, **(cfg or {})}
+    d = difference_spectrum(flux, out_mask, in_mask, flux_err, float(c.get("clip_sigma", 5.0)))
+    if d["n_out"] < 2 or d["n_in"] < 2:
+        return np.nan
+    z = residual_z(d["spec"], d["spec_err"], samples_per_resel, c)["z"]
     lo, hi = max(0, index - halfwidth), min(z.size, index + halfwidth + 1)
     seg = z[lo:hi]
     return float(np.nanmax(seg)) if np.any(np.isfinite(seg)) else np.nan
@@ -527,6 +607,13 @@ def eclipse_discriminant(line, line_err, cont, labels: dict, times=None,
     k = np.asarray(cont, float)
     n = y.size
     inn, out = np.asarray(labels["in_eclipse"], bool), np.asarray(labels["out_eclipse"], bool)
+    # A phase curve holds a transit too: its integrations are out of eclipse
+    # but the continuum is 1-3% down there, which would bias the continuum's
+    # own fractional drop (the tracks-continuum reference) and the line's
+    # out-of-eclipse mean.  They are left out of the "out" group.
+    for key in ("in_transit", "transit_contact"):
+        if key in labels and np.asarray(labels[key]).shape == out.shape:
+            out = out & ~np.asarray(labels[key], bool)
     res: dict = {"n_in": int(inn.sum()), "n_out": int(out.sum())}
     mu_out, s_out, _ = _mean_err(y[out], e[out])
     mu_in, s_in, _ = _mean_err(y[inn], e[inn])
@@ -657,9 +744,17 @@ def known_artefact(wavelength: float, artefact_rows: list[dict] | None,
 
 def cosmic_ray_driven(flux, mask, left: int, right: int, sigma_min: float,
                       top_n: int = 2, samples_per_resel: float = 2.0,
-                      cfg: dict | None = None, flux_err=None) -> dict:
+                      cfg: dict | None = None, flux_err=None, in_mask=None) -> dict:
     """Does the time-averaged feature survive dropping its ``top_n`` brightest
-    integrations?  If not, it was a cosmic ray / single-integration event."""
+    integrations?  If not, it was a cosmic ray / single-integration event.
+
+    ``in_mask`` (the in-eclipse integrations) re-evaluates the feature on the
+    DIFFERENCE spectrum instead of the out-of-eclipse one, which is the
+    spectrum a difference-found feature was detected in: judging it on the
+    out-of-eclipse average would veto every such feature, since the whole
+    reason the difference is searched is that the out-of-eclipse spectrum is
+    static-pattern limited a hundred times above the photon noise.
+    """
     f = np.asarray(flux, float)
     m = np.asarray(mask, bool).copy()
     series = line_flux_series(f, left, right, flux_err, cfg)["line"]
@@ -670,7 +765,12 @@ def cosmic_ray_driven(flux, mask, left: int, right: int, sigma_min: float,
     # re-run of the full guard chain, whose width classification can flip at
     # a boundary and falsely report "no feature".
     centre = int(round(0.5 * (left + right)))
-    snr_after = feature_snr_in_mask(f, m, centre, flux_err, samples_per_resel, cfg, halfwidth=1)
+    if in_mask is not None:
+        snr_after = feature_snr_in_difference(f, m, in_mask, centre, flux_err,
+                                              samples_per_resel, cfg, halfwidth=1)
+    else:
+        snr_after = feature_snr_in_mask(f, m, centre, flux_err, samples_per_resel, cfg,
+                                        halfwidth=1)
     if not np.isfinite(snr_after):
         snr_after = 0.0
     out_series = series[np.asarray(mask, bool)]
@@ -705,6 +805,16 @@ def assess_feature(feature: dict, disc: dict | None, transit: dict | None,
         vetoes.append("cosmic_ray_single_integration")
     if feature.get("fwhm_samples", 2.0) < 1.0:
         vetoes.append("single_pixel_spike")
+    # A feature found in the out-minus-in difference must NOT be present in the
+    # drift null (out-before minus out-after): the same stretch of visit, the
+    # same detector drift, no event in between.  The null is carried on the
+    # feature, so it applies to a transit-difference feature too, where there
+    # is no eclipse discriminant at all.
+    dc = _num(feature.get("drift_control_snr"))
+    if not np.isfinite(dc) and disc is not None:
+        dc = _num(disc.get("drift_control_snr"))
+    if np.isfinite(dc) and abs(dc) > c["drift_control_sigma_max"]:
+        vetoes.append("present_in_drift_control")
     eclipse_tested = disc is not None and phase_class in ("eclipse", "both")
     if not eclipse_tested:
         vetoes.append("insufficient_phase_coverage")
@@ -746,11 +856,18 @@ def assess_feature(feature: dict, disc: dict | None, transit: dict | None,
     tier = "none"
     if not vetoes:
         vs = disc.get("eclipse_vanish_snr", np.nan)
-        # 'Consistent with zero' is judged on the in-eclipse averaged SPECTRUM
-        # when available (bias-free), else on the series mean.
-        zin = disc.get("in_eclipse_spectrum_snr", np.nan)
+        # 'Consistent with zero': the spectrum-level null control.  For a
+        # feature found in the difference spectrum that is the drift null
+        # (out-before minus out-after), which is the matched null for how it
+        # was found; the in-eclipse residual is not, because the static pixel
+        # pattern it carries is present out of eclipse too and would veto a
+        # real line sitting on a pattern bump.  For a feature found on the
+        # out-of-eclipse spectrum it is the in-eclipse residual, as before.
+        zin = _num(disc.get("null_control_snr"))
         if not np.isfinite(zin):
-            zin = abs(disc.get("in_eclipse_sigma", np.nan))
+            zin = _num(disc.get("in_eclipse_spectrum_snr"))
+        if not np.isfinite(zin):
+            zin = abs(_num(disc.get("in_eclipse_sigma")))
         ok_cand = (vs >= c["vanish_snr_candidate"]
                    and disc.get("out_positive_snr", np.nan) >= c["out_positive_snr_min"]
                    and zin <= c["in_eclipse_zero_sigma_max"])
@@ -830,8 +947,10 @@ def vanish_pvalue(snr: float) -> float:
     return float(_stats.norm.sf(snr)) if np.isfinite(snr) else float("nan")
 
 
-__all__ = ["VETO_NAMES", "time_average_spectrum", "running_median",
+__all__ = ["VETO_NAMES", "time_average_spectrum", "difference_spectrum",
+           "drift_control_masks", "running_median",
            "local_poly_continuum", "block_noise", "residual_z", "feature_snr_in_mask",
+           "feature_snr_in_difference",
            "narrow_feature_search", "line_flux_series", "eclipse_discriminant",
            "transit_consistency", "known_artefact", "cosmic_ray_driven",
            "assess_feature", "recurrent_wavelengths", "is_recurrent", "bh_fdr",

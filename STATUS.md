@@ -10,6 +10,59 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### IGNITION: the upload fix holds on IRSA — 846/846, and the zero point is gone, 2026-09-22
+
+Run **35738088082** (`stage=all mode=fields shards=8 route=upload
+sample_from_run_id=35039105536`) is the dispatch that tested the `unicodeChar`
+diagnosis against the real service. All three things it was meant to settle
+came back.
+
+**1. The upload works.** Every acquire shard logged the rung it used:
+`[ignition] upload[pyvo_sync/long] 83 stars -> 253114 rows in 100 s`,
+`upload[pyvo_sync/long] 80 stars -> 281058 rows in 93 s`, and
+`acquire s0of8: OK ok=106 zero=0 failed=0 route=upload`. `pyvo_sync/long` is
+the top rung with `sid` serialised as VOTable `long`. IRSA's TAP accepted it.
+No shard fell to the ASCII `char` rung, none took the one recorded 32-bit
+downgrade, and `Unimplemented data type: unicodeChar` appears nowhere in the
+run. Run 35740159635's probe says it independently from the other side:
+`neowise_upload[pyvo_sync]_2` OK over 7919 rows, `neowise_upload_transport =
+pyvo_sync`, `neowise_route_recommended = upload` — a route that had never
+before been recommended — and `verdict = ALL_ROUTES_REACHABLE`.
+
+**2. The 314 lost stars are back.** 846 of 846 parents attempted, 846 with
+NEOWISE rows, 846 screened, **0 acquire failures**, at two to three minutes of
+wall clock a shard. The previous dispatch reached 172. Reusing run
+35039105536's parent took 1 s in the `sample` job, against the 2 h 22 min that
+killed the dispatch before it.
+
+**3. The ensemble zero-point correction has now been run on real data, and it
+took.** This had never been tested outside synthetic drift. 97 of the previous
+run's 172 screened stars were `FADING` at 5 sigma in *both* bands — not 56% of
+the sky dimming, the survey's own zero point. Over the 846:
+
+| verdict | prev (of 172) | now (of 846) |
+|---|---|---|
+| `FADING` | 97 (56.4%) | **17 (2.0%)** |
+| `NOT_RISING` | 37 | 780 |
+| `IMPULSIVE_SHAPE` | 12 | 25 |
+| `INSUFFICIENT_EPOCHS` | 26 | 23 |
+| `SCAN_SYSTEMATIC` | — | 1 |
+| rise candidates | 0 | **0** |
+
+The veto counts sum to 846 exactly; no star is unaccounted for. 2.0% is what a
+real stellar population gives. 56.4% was the instrument.
+
+**Zero rise candidates over 846 stars.** The channel now works end to end on
+real data — that is what this dispatch was for. 846 stars is a pilot, not an
+answer, and per `CLAUDE.md` a clean result widens the question rather than
+being written up. The scale axis is the `|b| > 15` tiles sweep, run
+**35740159635**, whose probe has landed and whose 12-shard sweep matrix is
+queued behind the account-wide Actions ceiling; continue it with
+`resume_run_id=35740159635` at the **same shard count (12)**.
+
+Also fixed this session: the offline gate now runs at the runner's library
+versions (pandas 3.0.6 / numpy 2.4.6 / astropy 8.0.1), not the sandbox's
+pandas 2.3.3. See `docs/ignition.md` §7.2 and §7.3.
 ### METRONOME has its first real measurement — and its own output names the artefact, 2026-09-22
 
 The channel's brief said it had scanned nothing. That was true of the

@@ -27,6 +27,11 @@ beams:
   - {name: overfilled_5deg,   theta_deg: 5.0}                            # deliberately over-filled
 
 geometry:
+  # wall clock on the WHOLE beam loop.  Beams run narrowest first, so the cheap,
+  # scientifically central ones always finish; a beam the clock cuts short is
+  # recorded as PARTIAL_COUNTS / NOT_COMPUTED and its count is never compared
+  # with the analytic expectation or used in the theta^2 fit.
+  budget_s: 9000
   min_separation_pc: 0.05        # ~10^4 AU: closer is a bound binary, not a field pair
   row_cap: 4000000               # kept rows per beam (artifact only); counts are always exact
   chunk_candidates: 3000000
@@ -101,6 +106,11 @@ hit_catalogues:
     margot2023:   {id: "J/AJ/166/206",   telescope: GBT,    band: L, note: "UCLA, 11,680 stars"}
     choza2024:    {id: "J/AJ/167/10",    telescope: GBT,    band: L, note: "BL nearby stars re-analysis"}
     isaacson2017: {id: "J/PASP/129/54501", telescope: GBT,  band: L, note: "the BL target list itself (1,702 stars)"}
+    # the deep-learning re-analysis and the single-target precedents the brief names
+    ma2023:       {id: "J/other/NatAs/7.492",  telescope: GBT, band: L, note: "Ma+2023 deep-learning search, 820 nearby stars, 8 signals of interest"}
+    sheikh2021:   {id: "J/other/NatAs/5.1153", telescope: Parkes, band: L, note: "Sheikh+2021 BLC1 analysis (Proxima); the 4.2 MHz family"}
+    tusay2022:    {id: "J/AJ/164/116",   telescope: GBT,    band: L, note: "Tusay+2022 alpha Cen SGL antipode — the single-target relay precedent"}
+    tusay2024:    {id: "J/AJ/168/40",    telescope: GBT,    band: L, note: "Tusay+2024 TRAPPIST-1 planet-planet occultations — the intra-system version"}
   keywords: ["technosignature", "Breakthrough Listen", "SETI", "narrowband", "narrow-band", "drift rate"]
   max_rows: 200000
   zero_drift_rfi_hz_s: 0.0093    # |drift| below one resolution element: co-rotating (terrestrial) source

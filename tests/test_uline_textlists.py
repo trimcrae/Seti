@@ -102,7 +102,9 @@ def test_read_fixed_width_applies_a_readme_spec_to_a_separate_dat_file():
 
 def test_canonical_line_table_resolves_roles_and_the_frequency_unit():
     df = canonical_line_table(mrt_table(MRT))
-    assert list(df.columns) >= ["row", "freq_mhz", "ident", "intensity", "unidentified"]
+    # set containment, not `list >= list`, which compares lexicographically and
+    # is true or false for reasons that have nothing to do with the columns
+    assert {"row", "freq_mhz", "ident", "intensity", "unidentified"} <= set(df.columns)
     assert df.attrs["freq_scale"] == "unit:MHz"
     assert df["freq_mhz"].iloc[0] == pytest.approx(555000.100)
     assert list(df["unidentified"]) == [False, True, True, False]
@@ -215,3 +217,67 @@ def test_fetch_text_line_table_rejects_a_body_with_no_byte_by_byte_block():
     rec = fetch_text_line_table({"urls": ["https://x/y.txt"]}, fetch_fn=fake)
     assert rec["status"] == "QUERY_RETURNED_ZERO_ROWS"
     assert "no byte-by-byte description" in rec["error"]
+
+
+def test_numeric_columns_coerce_blanks_without_a_dtype_dependent_replace():
+    """`to_numeric(errors="coerce")` already sends a blank field to NaN.
+
+    Doing `.replace("", np.nan)` first is a step whose behaviour depends on
+    whether a string column is object-with-np.nan (pandas 2) or str-with-pd.NA
+    (pandas 3) — the class of difference that kills a runner job that passed
+    locally.  A blank, a dash and an upper-limit marker must all become NaN
+    without killing the row.
+    """
+    import numpy as np
+
+    from seti.uline.textlists import read_fixed_width
+
+    spec = [{"start": 0, "stop": 8, "format": "F8.2", "unit": "GHz", "label": "Freq",
+             "description": "frequency"},
+            {"start": 9, "stop": 17, "format": "F8.3", "unit": "K", "label": "Tmb",
+             "description": "peak"}]
+    text = "----------\n" + "\n".join([
+        "  480.123    1.250",
+        "  481.456         ",      # blank intensity
+        "  482.789    <0.01",      # an upper-limit marker
+    ])
+    df = read_fixed_width(spec, text)
+    assert len(df) == 3
+    assert list(np.isfinite(df["Freq"])) == [True, True, True]
+    assert list(np.isfinite(df["Tmb"])) == [True, False, False]
+    assert df["Tmb"].iloc[0] == 1.25
+
+
+def test_a_text_route_that_raises_degrades_its_source_instead_of_killing_the_run(tmp_path):
+    """The ladder parses whatever an uncontrolled web server hands back.  A page
+    that is not the table it claimed to be must degrade THAT SOURCE, not kill
+    the job before screen and assess have written a verdict."""
+    from seti.uline import acquire as A
+    from seti.uline import run as R
+
+    conf = R.load_uline_config()
+    spec = dict(conf["sources"]["orion_kl_hifi"])
+    calls = {"n": 0}
+
+    def exploding(*a, **kw):
+        calls["n"] += 1
+        raise RuntimeError("the parser met something it did not expect")
+
+    monkey = R.stage_acquire  # keep a handle so the import is used meaningfully
+    assert monkey is not None and spec.get("text_routes")
+
+    import seti.uline.textlists as TL
+    original = TL.fetch_text_line_table
+    TL.fetch_text_line_table = exploding
+    try:
+        rep = R.stage_acquire(conf, tmp_path, fetch_fn=lambda url, **kw: None,
+                              query_fn=lambda adql: __import__("pandas").DataFrame(),
+                              sources=["orion_kl_hifi"])
+    finally:
+        TL.fetch_text_line_table = original
+    src = rep["sources"]["orion_kl_hifi"]
+    assert calls["n"] == 1
+    assert src["status"] in (A.STATUS_FAILED, A.STATUS_ZERO, "NO_TABLE",
+                             "QUERY_RETURNED_ZERO_ROWS", "QUERY_FAILED")
+    assert src["text_route"]["status"] == A.STATUS_FAILED
+    assert "did not expect" in src["text_route"]["error"]

@@ -352,11 +352,20 @@ def stage_acquire(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, source
             # as machine-readable tables attached to the article.  Same format,
             # different door.
             from .textlists import fetch_text_line_table
-            tr = fetch_text_line_table(dict(spec["text_routes"]), fetch_fn=fetch_fn,
-                                       column_patterns=cols,
-                                       uline_patterns=_uline_patterns(conf), log=log,
-                                       timeout=float(arc.get("fetch_timeout_s", 180)),
-                                       retries=int(arc.get("fetch_retries", 3)))
+            try:
+                tr = fetch_text_line_table(dict(spec["text_routes"]), fetch_fn=fetch_fn,
+                                           column_patterns=cols,
+                                           uline_patterns=_uline_patterns(conf), log=log,
+                                           timeout=float(arc.get("fetch_timeout_s", 180)),
+                                           retries=int(arc.get("fetch_retries", 3)))
+            except Exception as exc:                          # noqa: BLE001
+                # This ladder parses whatever an uncontrolled web server hands
+                # back.  A page that is not the table it claimed to be must
+                # degrade THIS SOURCE, not kill the job before screen and
+                # assess have written a verdict.
+                tr = {"route": "text", "status": A.STATUS_FAILED,
+                      "error": f"{type(exc).__name__}: {exc}"[:1200]}
+                log.record(f"textlist_{name}", "fetch_text_line_table", error=repr(exc))
             df = tr.pop("table", pd.DataFrame())
             rec["text_route"] = tr
             if len(df):

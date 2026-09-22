@@ -107,17 +107,26 @@ def read_fixed_width(spec: list[dict], text: str, *, min_line_len: int | None = 
                      ) -> pd.DataFrame:
     """Apply a byte-by-byte ``spec`` to the data part of ``text``.
 
-    The data are the lines **after the last rule** (``-----``) that are at least
-    as long as the first column's byte range and are not comments.  Numeric
-    columns are coerced with ``errors="coerce"`` so a blank or an upper-limit
-    marker becomes NaN rather than killing the row.
+    The data are the lines **after the last rule** (``-----``) that reach the
+    end of the **first** column and are not comments.  Numeric columns are
+    coerced with ``errors="coerce"`` so a blank or an upper-limit marker
+    becomes NaN rather than killing the row.
+
+    The length test is deliberately the first column's byte range and not the
+    last's.  A U-line table's trailing columns are exactly the ones a
+    publisher leaves blank — an intensity that was not measured, a note that is
+    absent — and trailing blanks are stripped by every text transport, so a
+    test against the widest column silently *drops* the rows with missing
+    intensities.  Those are rows, not noise, and losing them would bias the
+    LTE test towards the lines that happen to be complete.
     """
     if not spec:
         return pd.DataFrame()
     lines = (text or "").splitlines()
     last_rule = max((i for i, ln in enumerate(lines) if _SEP_RE.match(ln)), default=-1)
     data = lines[last_rule + 1:]
-    need = min_line_len if min_line_len is not None else max(c["start"] + 1 for c in spec)
+    need = (min_line_len if min_line_len is not None
+            else min(int(c["stop"]) for c in spec))
     rows = [ln for ln in data if len(ln.rstrip()) >= need and not ln.lstrip().startswith("#")]
     if not rows:
         return pd.DataFrame()
@@ -164,9 +173,10 @@ def fetch_first(urls, *, fetch_fn=None, timeout: float = 120.0, retries: int = 2
     rx = re.compile(must_match, re.IGNORECASE) if must_match else None
     for url in list(urls or []):
         rec = {"url": str(url), "status": STATUS_FAILED}
+        errs: list = []
         try:
             body = fetch_text(str(url), fetch_fn=fetch_fn, retries=int(retries),
-                              timeout=float(timeout))
+                              timeout=float(timeout), errors=errs)
         except Exception as exc:                               # noqa: BLE001
             rec["error"] = repr(exc)[:1200]
             attempts.append(rec)
@@ -177,11 +187,14 @@ def fetch_first(urls, *, fetch_fn=None, timeout: float = 120.0, retries: int = 2
         rec["n_bytes"] = n
         if body is None:
             # fetch_text RETURNS None once its retries are spent; it does not
-            # raise.  A route that came back empty is a failed route.
-            rec["error"] = "no body after retries (fetch_text returned None)"
+            # raise.  It hands back the last exception through ``errors``, and
+            # that text is the whole point: a 403 and a 404 are different
+            # statements about a door.
+            rec["error"] = (errs[-1][:1200] if errs
+                            else "no body after retries (fetch_text returned None)")
             attempts.append(rec)
             if log:
-                log.record(stage, str(url), error="empty body")
+                log.record(stage, str(url), error=rec["error"])
             continue
         if n < int(min_bytes):
             rec.update({"status": STATUS_ZERO, "error": f"only {n} bytes"})
@@ -290,8 +303,13 @@ def fetch_text_line_table(spec: dict, *, fetch_fn=None, column_patterns=None,
                  "urls_tried": [], "n_rows": 0}
     urls = [str(u) for u in (spec.get("urls") or [])]
     for idx in (spec.get("index_urls") or []):
+        # An INDEX page is not a table, so it does not have to be table-sized.
+        # With the data ladder's 200-byte floor a short directory listing — an
+        # ftp index, a CDN revision directory — was rejected before its links
+        # were read, and the source then reported "none found on the index
+        # pages" when the page had in fact arrived and named the file.
         body, url, att = fetch_first([idx], fetch_fn=fetch_fn, timeout=timeout, retries=retries,
-                                     log=log, stage="textlist_index")
+                                     log=log, stage="textlist_index", min_bytes=1)
         rec["attempts"].extend(att)
         if body:
             found = find_links(body, str(spec.get("link_pattern") or r"_mrt\.txt$"), base=url or "")

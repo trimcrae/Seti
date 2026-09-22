@@ -553,7 +553,7 @@ jobs:
       - name: Guard — do not overwrite newer results
         id: guard
         if: always()
-        run: python scripts/metronome_stale_guard.py "${{ github.ref_name }}" results/metronome/vetstar.json
+        run: python scripts/metronome_stale_guard.py "${{ github.ref_name }}" results/metronome/vetstar.json results/metronome/summary.json
       - name: Commit results
         if: ${{ always() && steps.guard.outputs.stale != 'true' }}
         env:
@@ -562,7 +562,9 @@ jobs:
           scripts/commit_results.sh \
             "metronome: the single-star vet on the surviving clock" \
             results/metronome/vetstar.json \
-            results/metronome/vetstar_fold.csv
+            results/metronome/vetstar_fold.csv \
+            results/metronome/summary.json \
+            results/metronome/candidates.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -570,6 +572,8 @@ jobs:
           path: |
             results/metronome/vetstar.json
             results/metronome/vetstar_fold.csv
+            results/metronome/summary.json
+            results/metronome/candidates.json
           if-no-files-found: warn
 
   assess-only:

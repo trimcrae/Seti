@@ -643,6 +643,31 @@ def test_control_sample_separates_observed_frame_from_stellar_frame():
     assert clean["obs_frame"]["frac_ge3"] < 0.2 and clean["star_frame"]["frac_ge3"] < 0.2
 
 
+def test_reduce_refuses_to_overwrite_a_real_summary_with_stale_checkpoints(tmp_path):
+    """A reduce arriving after an estimator change holds only superseded
+    checkpoints.  Writing its empty summary over a real one would replace a
+    measurement with a no-data verdict and commit that back."""
+    tri = tmp_path / "results" / "spectra_triage"
+    tri.mkdir(parents=True)
+    pd.DataFrame([{"spec_id": "x", "wavelength": 5000.0, "significance": 9.0, "ra": 1.0,
+                   "dec": 1.0, "redshift": 0.0, "data_release": "SDSS-DR17",
+                   "search_mode": "emission", "n_lines_in_spectrum": 1, "simbad_otype": "",
+                   "simbad_id": "", "simbad_sptype": ""}]).to_csv(tri / "priority_targets.csv",
+                                                                    index=False)
+    out = tmp_path / "results" / "spectra_persist"
+    ck = out / "ckpt"
+    ck.mkdir(parents=True)
+    (out / "summary.json").write_text(json.dumps(
+        {"verdict": "PERSISTENT_UNIDENTIFIED_LINES_REMAIN", "n_alive": 6}))
+    (ck / "x.json").write_text(json.dumps(
+        {"spec_id": "x", "ckpt_version": persist.CKPT_VERSION - 1, "lines": []}))
+    s = persist.reduce_results(tmp_path, do_simbad=False, do_nist=False)
+    assert s["verdict"] == "PERSISTENT_UNIDENTIFIED_LINES_REMAIN" and s["n_alive"] == 6
+    assert "reduce_skipped" in s
+    # ... and the file on disk is untouched.
+    assert json.loads((out / "summary.json").read_text())["n_alive"] == 6
+
+
 def test_atmospheric_context_flags_a_telluric_band_and_an_oh_list_gap():
     """Five of the six lines left standing after the first run sit in the red,
     where the hand-kept OH list has gaps and the telluric bands are not listed

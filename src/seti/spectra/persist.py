@@ -1792,6 +1792,20 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
                                        "sig", "ew", "peak_sig", "sky_peak_sig", "sky_level",
                                        "n_cosmic", "testable", "reason")}
                 for e in ln.get("exposures", [])]
+    # A reduce that arrives after an estimator change holds only superseded
+    # checkpoints.  Writing its (empty) summary over a real one would replace a
+    # measurement with a no-data verdict and commit that back, which is exactly
+    # what a cancelled run's late reduce would have done here on 2026-09-22.
+    n_current = len({r["spec_id"] for r in rows})
+    if n_stale and n_current == 0 and (out_dir / "summary.json").exists():
+        msg = (f"every checkpoint on hand ({n_stale}) is from a superseded estimator "
+               f"(need ckpt_version {CKPT_VERSION}); refusing to overwrite the existing "
+               f"summary with a no-data verdict")
+        print(f"[persist] {msg}")
+        prev = json.loads((out_dir / "summary.json").read_text())
+        prev["reduce_skipped"] = msg
+        return prev
+
     tab = pd.DataFrame(rows)
     keep = ["spec_id", "wavelength", "significance", "ra", "dec", "redshift", "simbad_id",
             "simbad_otype", "simbad_sptype", "n_lines_in_spectrum"]

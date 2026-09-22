@@ -3,12 +3,63 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-16.
+next. Last updated: 2026-09-22.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### CENTURY (S50) wired to DASCH DR7 — and the Menzel trap caught in our own code, 2026-09-22
+
+The first DASCH stage in this repository. `docs/knell.md` §Plates recorded why
+there had never been one: the Menzel gap (no plates 1954–1970, with a 0.1–0.4
+mag photometric offset across it) manufactures exactly the century-scale
+signal a naive search would report, and it is what gave KIC 8462852 its
+"century dimming" (Hippke et al. 2016; Lund, Pepper, Stassun & Hippke 2016).
+The fix is to model it, which DR7's per-exposure limiting magnitudes now
+allow. `necrofrontier.md` row `g4 century fade` records the search space as
+**unoccupied**: the DASCH literature is the survey papers plus *targeted*
+century light curves, and there is no blind DR7 cessation / fade /
+rising-scatter search.
+
+What exists: `src/seti/century/` (DASCH DR7 REST client with payload-variant
+discovery, censored-injection cessation, the Menzel step model, RUST's moments
+and the secular fade on plates, the gauntlet), `config/century.yaml`,
+`tests/test_century.py`, `.github/workflows/century.yml` (probe → targets →
+sharded acquire+screen → assess), `docs/century.md`.
+
+**The methodological finding of this build.** The gap trap bit *us*, inside
+the cessation statistic, and the test suite caught it. The per-block
+periodogram fires at rate `fap` by construction, and the densest post-gap
+block in DASCH is the first one after 1970 — the likeliest single place in a
+century for a false alarm. The split rule ended the pre-segment at the last
+detected block, so **one** noise detection in the 1970–1972 block moved the
+transition from "at the gap" to 1972. `transition_at_gap` then went False, the
+mean-flux test stopped being deferred to the field ensemble, and the plates'
+own 0.29 mag step was charged to the star, which was scored
+`faded_or_brightened`. That is the Hippke/Lund failure mode with a periodogram
+in front of it, and no amount of care in the fade statistic would have caught
+it, because it lives in the cessation statistic.
+
+Fixed three ways (`docs/century.md` §3.1.1): the split is now chosen by a
+false-alarm test rather than by the last detection (take the *earliest* split
+whose later detections are consistent with noise — at most
+`max(1, ⌈3·fap·n_post⌉)`, never two adjacent, since two adjacent late
+detections are a clock that came back); `mean_shift_across_gap` is a statement
+about where the photometry sits in time rather than about a block index; and
+the pre-transition mean is restricted to one side of the gap when the pre
+blocks straddle it. On the synthetic star the verdict went from
+`faded_or_brightened` with the transition at 1972 to `transition_at_gap` with
+the 0.287 mag shift correctly flagged `mean_flux_gap_uncorrected` and deferred.
+
+**Next decisive action:** the probe stage on a runner. Nothing in this
+repository has ever posted to the DR7 API — `results/necrofrontier/` recorded
+the endpoints as reachable, which is not the same as knowing their payload
+shapes — so `api.py` carries an ordered list of key spellings per endpoint and
+the probe settles them in one cheap job, together with the AFLAGS/BFLAGS bit
+meanings from the `daschlab` source and the real plate density of each
+configured field. The sweep follows.
 
 ### IGNITION goes from blocked to a live parent sample, 2026-09-16
 

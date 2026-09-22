@@ -114,26 +114,47 @@ m31. Three consequences, all about the cessation arm (`docs/century.md` §6.3):
 same list** — split pulsators from eclipsers, require a real catalogued
 amplitude, and choose fields on `limMagApass` p90 as well as plate count.
 
-**A third red test, inherited, not named in the brief.**
-`test_series_change_at_the_transition_is_not_a_cessation` fails, and it fails
-identically on the pre-session commit `cb2dc252` — so it is inherited, not a
-regression. The two tests the brief did name
+**A third red test was inherited, and it was the channel's central statistic.**
+The two tests the brief named
 (`test_cessation_across_gap_is_flagged_and_mean_flux_deferred`,
-`test_shard_roundtrip_screen_and_assess_end_to_end`) both **pass**; the
-predecessor's work-in-progress commit had already fixed them, and they were
-re-run in isolation to confirm it.
+`test_shard_roundtrip_screen_and_assess_end_to_end`) both **pass** — the
+predecessor's work-in-progress commit had already fixed them, confirmed by
+re-running each in isolation rather than inferring it.
+`test_series_change_at_the_transition_is_not_a_cessation` did not, and it
+failed identically on the pre-session commit `cb2dc252`, so it was inherited.
+Instrumenting the failing case block by block showed it was not a broken
+assertion but a real defect in how the transition is located.
 
-What the red test asserts is right and must not be relaxed: a "cessation"
-whose pre and post blocks share no plate series cannot be told from the plates
-changing. Its *first* assertion holds — the analyzer does not call it a
-cessation. Its second does not: with the series switch placed exactly at the
-stop year, the analyzer returns `no_clean_transition`
-(`fail_pattern`, `intermittent_detection`, `post_isolated_detection`) rather
-than a clean transition at 1932, so the split it reports straddles the switch
-and `series_overlap_frac` comes out non-zero. The question is whether the
-split rule is mislocating the transition — which would matter on real data —
-or whether the synthetic case is degenerate. **This is the next thing to
-settle, and `main` must not take the channel until it is.**
+The split rule took the earliest split whose later detections passed a
+false-alarm test. That is safe against **one** stray detection and not against
+two: when the post-transition era holds more false alarms than the test
+tolerates, the earliest split that passes is the first false alarm itself.
+Measured — a clock stopping in 1932 with two noise-level blocks firing at 1951
+and 1977 (amplitude 30 mmag against the real signal's 500):
+
+| | transition | `n_pre` | unexplained pre-misses | `series_pre` | overlap | `series_disjoint` |
+|---|---|---|---|---|---|---|
+| before | **1952.0** | 31 | 9 | `a,mc` | 0.091 | no |
+| after | **1932.0** | 21 | 0 | `a` | 0.0 | **yes** |
+
+Twenty years late, hard against the Menzel gap, with nine genuine
+post-cessation blocks charged to the pre segment and the series, blend and
+mean-flux guards all evaluated at the wrong split — the Hippke/Lund trap
+reopening from a direction the earlier fix did not cover.
+
+The split is now the one leaving the fewest unexplained blocks,
+`cost(s) = excess_late(s) + #{undetected up to s}`, ties to the earlier split.
+`excess_late` counts only detections the false-alarm rate **cannot** account
+for, and that subtraction is load-bearing: charging the raw count reopened the
+trap from the *other* side, because the Menzel gap contains no blocks at all,
+so a false alarm in the first post-gap block has zero undetected blocks behind
+it and scored better than the true pre-gap end. The suite caught it —
+transition 1972.0, `transition_at_gap` false — and the named test was not
+relaxed to accommodate it. A detected block left in the post segment now fails
+the new `no_post_detection` check instead of being silently absorbed.
+
+**Cessation family: 14/14 pass.** Full suite was 42/43 before the fix with
+that one test red; re-running.
 
 **71 % of the account's queue is CI, not science — and the fix is one merge
 per branch.** At 11:41 EDT there were **87 queued runs, 62 of them `ci`**.

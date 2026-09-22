@@ -142,7 +142,32 @@ agreeing to ~0.01 dex), so those rows build a relative library used for every
 other panel. The library shows the embedded mass-scaling law was ~60 % too
 shallow (Mg +0.171 measured against +0.098 assumed), which biased every
 steady-state and declining-phase correction. The source actually used is
-recorded per panel.
+recorded per panel. The library, measured on 95 rows:
+
+| element | log10(τ/τ_Ca) | σ | n |
+|---|---|---|---|
+| Ni | −0.140 | 0.113 | 25 |
+| Mn | −0.128 | 0.091 | 25 |
+| Fe | −0.120 | 0.094 | 39 |
+| V | −0.112 | 0.058 | 14 |
+| Cr | −0.079 | 0.074 | 28 |
+| Ti | −0.076 | 0.039 | 30 |
+| Sc | −0.064 | 0.016 | 13 |
+| S | +0.076 | 0.110 | 12 |
+| P | +0.089 | 0.046 | 7 |
+| Si | +0.118 | 0.047 | 36 |
+| Al | +0.128 | 0.044 | 37 |
+| Na | +0.163 | 0.035 | 28 |
+| Mg | +0.171 | 0.023 | 38 |
+| O | +0.275 | 0.093 | 33 |
+| C | +0.334 | 0.114 | 13 |
+| N | +0.334 | 0.111 | 8 |
+| Li | +0.541 | 0.132 | 8 |
+
+Monotonic in atomic mass, as diffusion requires. The mass-scaling exponent
+refitted to it is **β = 0.713**, against the 0.45 the offline build assumed.
+Elements the library cannot reach (Be, K, Co, Cu, Zn, Sr, Sn, Ba) use that
+refitted exponent rather than the literature guess.
 
 **One star, several rows.** PEWDD distinguishes alternative solutions for one
 star by a name suffix — `PG1225-079 Model 2`, `GD 362 Updated`,
@@ -154,13 +179,20 @@ not fire. Qualifiers are stripped before grouping.
 
 ## 6. The population
 
-From the served table (3547 rows, 2778 distinct stars, VizieR TAP):
+From the served table: 3547 rows, 2778 distinct star strings, **2441 distinct
+objects** once PEWDD's per-solution name qualifiers are stripped.
 
-| n measured elements | rows |
+Counting *detections only* — upper limits excluded, per §5:
+
+| n measured elements | panels (rows) |
 |---|---|
 | 0–1 | 2723 |
-| 2–4 | 615 |
-| **≥ 5 (screened and calibrated)** | **209 rows / 178 stars** |
+| 2–4 | 656 |
+| **≥ 5 (screened and calibrated)** | **168 panels / 137 objects** |
+
+187 panels carry at least one upper limit. (Before the negative-error
+convention was understood, 209 panels appeared to reach ≥ 5 elements — the
+extra 41 were limits read as detections.)
 
 Atmospheres: 3033 He, 514 H, resolved from PEWDD's own `atmosphere` column.
 Abundances are `log(Z/H(e))` throughout — H in a hydrogen atmosphere, He in a

@@ -10,6 +10,67 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### LANTERN: the reader and the phase are fixed, and the sensitivity floor was not photon noise, 2026-09-22
+
+The first LANTERN run (34036760527) analysed 21 of 832 exposure checkpoints —
+`read_failed 656`, and **0** exposures classed as eclipse or transit. Run
+**35737559234** settled both causes on the runner, against real data.
+
+**The reader.** Every `x1dints` product in MAST now carries the
+`TSOMultiSpecModel` layout — one `EXTRACT1D` table per segment and spectral
+order, one *row* per integration, 2-D spectral columns, per-row `TDB-MID`
+times. The old reader took each HDU as one integration. The rewritten one read
+WASP-43 b MIRI/LRS as **9 216 integrations across 30 tables** and WASP-18 b
+NIRISS/SOSS as **2 720 across 6 tables and 3 orders**, both with times sourced
+`row_bjd_tdb`. Re-planning the committed inventory with it drops the
+double-counted level-2 segments the level-3 products already hold: **467
+scheduled exposures, 509 GB** (78 eclipse-class at 123 GB, 265 transit, 124
+unresolved; 632 superseded, 182 proprietary) out of the 1.12 TB first counted.
+
+**The phase.** The labeller now places eclipses correctly on real ephemerides:
+WASP-43 b **6 681 ppm at 15.4σ**, WASP-18 b **1 451 ppm at 23.1σ** with the
+free step 0.007 d from the predicted ingress against a 0.020 d tolerance. (The
+WASP-43 timing check failed for a reason of its own: it is a *phase curve*, and
+a free step fitted over the whole visit locks onto the transit, which is
+deeper. The check now runs inside ±0.25 P of one eclipse with transit
+integrations excluded.)
+
+**The finding that matters.** Both verifications still failed, on the same
+thing: an injected line at **2% of the continuum produced zero features**. The
+reason is physical. On a real `x1d` product the time-averaged spectrum's
+residual around its local continuum sits at **~1% of the continuum however long
+the exposure** — the static pixel pattern of the extraction, not photon noise
+(1.3% on SOSS over 2 720 integrations, 1.1% on LRS over 9 216). A 6σ trigger
+there needs a line brighter than **~8% of the continuum**; the screen would have
+been worthless across 509 GB.
+
+That pattern is identical in and out of eclipse, so the search now runs on
+`1 + (⟨out⟩ − ⟨in⟩)`, where it cancels exactly and what is left is what changed
+when the planet was occulted. Its control is the **drift null** — out-of-event
+integrations before the event minus those after it, the same visit and the same
+drift with no occultation in between — used both as the "consistent with zero"
+statistic and as the veto `present_in_drift_control`. Measured on synthetic
+stacks carrying the 1% pattern: a 2% vanishing line is **invisible** to the old
+search and returns at **109σ** as a clean candidate in the difference; a
+constant stellar line of the same amplitude cancels to nothing; a
+persistence-decaying line is caught by the drift null at 15σ. The 5σ EW limit
+improves **2.8×10⁻⁴ → 8.0×10⁻⁶ µm, a factor of 35**, and the trigger is now
+photon limited (~1.5×10⁻³ of the continuum at 600 integrations).
+
+Transit-class exposures — 265 of the 467 — get the analogous out-of-transit
+minus in-transit difference, reaching the same depth. They can never produce a
+candidate (`insufficient_phase_coverage`, and `transit_inconsistent` for a line
+that changes across transit more than the continuum does), which is correct:
+this channel's signature needs an eclipse.
+
+The full screen is dispatched (run **35741401724**, 10 shards, eclipse-class
+first and cheapest-first within a rank, gated on the known-eclipse
+verification, checkpoints accumulating across dispatches). Checkpoint version
+is now 3; version-2 checkpoints are re-analysed rather than trusted. The honest
+limitation is in the contamination ledger: an *unresolved* emission line from
+the planet's own atmosphere passes every veto this channel has, so a survivor
+is a target for higher-resolution follow-up, not a detection.
+
 ### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
 
 S52/S53 went from a package that had never been run to a channel with a

@@ -474,8 +474,9 @@ def plan_units(inv: dict, conf: dict, n_shards: int = 8) -> dict:
     * a unit with any non-public product is recorded, never scheduled;
     * each scheduled unit gets a predicted phase class from its MAST window
       (:func:`predict_phase_class`) and a rank: eclipse-class 0, transit 1,
-      unresolved 2.  Units are sorted by (rank, -bytes) and dealt round-robin
-      into ``n_shards`` shards, so every shard works eclipses first.
+      unresolved 2.  Units are sorted by (rank, bytes) and dealt round-robin
+      into ``n_shards`` shards, so every shard works eclipses first and, within
+      a rank, the cheapest exposures first.
     """
     acq = conf.get("acquire", {})
     pcfg = conf.get("phase", {})
@@ -550,7 +551,12 @@ def plan_units(inv: dict, conf: dict, n_shards: int = 8) -> dict:
             u["predicted"] = predict_phase_class(eph, jd0, jd1, pcfg, cadence_days=cadence)
             u["rank"] = int(u["predicted"]["rank"])
             units.append(u)
-    units.sort(key=lambda u: (0 if u["scheduled"] else 1, u["rank"], -u["total_bytes"],
+    # Eclipse-class first, then transit, then unresolved; WITHIN a rank the
+    # cheapest exposure first.  Every exposure is an independent target/epoch,
+    # so cost-ascending order maximises the number of independent eclipse tests
+    # a bounded dispatch reaches (the 10 GB phase curves are reached by the
+    # dispatches that follow, since checkpoints accumulate).
+    units.sort(key=lambda u: (0 if u["scheduled"] else 1, u["rank"], u["total_bytes"],
                               u["host"], u["exposure_key"]))
     for i, u in enumerate(units):
         u["unit"] = i

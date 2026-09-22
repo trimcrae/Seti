@@ -50,7 +50,7 @@ import pandas as pd
 
 from .lines import CATDIR_TEMPS
 from .rotor import (
-    DISTORTION_SCALE_REL,
+    DISTORTION_OMEGA_CM,
     QUARTIC,
     SEXTIC,
     RotorConstants,
@@ -235,7 +235,7 @@ def predict_species_lines(assets: dict, species: str, *, fmin_mhz: float = 0.0,
                           fmax_mhz: float = 2.0e6, temps=CATDIR_TEMPS,
                           lgint_floor: float = -9.0, err_base_mhz: float = 0.5,
                           err_rel: float = 1e-5, j_max: int | None = None,
-                          distortion_scale_rel: float = DISTORTION_SCALE_REL,
+                          distortion_omega_cm: float = DISTORTION_OMEGA_CM,
                           ) -> tuple[pd.DataFrame, dict[str, dict], dict]:
     """``(lines, entries, meta)`` for one species, every isotopologue stacked.
 
@@ -263,22 +263,25 @@ def predict_species_lines(assets: dict, species: str, *, fmin_mhz: float = 0.0,
                 lgint_floor=lgint_floor, tag=900000 + i, err_base_mhz=err_base_mhz,
                 err_rel=err_rel, err_per_j_mhz=2.0 * float(iso.abc_uncertainty_mhz),
                 hyperfine=iso.hyperfine, abundance=float(iso.abundance),
-                distortion_scale_mhz=(None if c.quartic_known
-                                      else float(distortion_scale_rel) * 0.5 * (c.B + c.C)))
+                distortion_omega_cm=float(distortion_omega_cm))
         except Exception as exc:                               # noqa: BLE001
             rec.update({"n_lines": 0, "skipped": f"prediction failed: {exc!r}"})
             per_iso.append(rec)
             continue
-        df["entry_id"] = eid
-        df["isotopologue"] = iso.name
-        frames.append(df)
-        entries[eid] = {**ent.as_dict(), "species": species, "isotopologue": iso.name}
+        if len(df):
+            df["entry_id"] = eid
+            df["isotopologue"] = iso.name
+            frames.append(df)
+            # An entry with no line in band would leave a partition function
+            # nothing ever rescales; the inventory below still names it.
+            entries[eid] = {**ent.as_dict(), "species": species, "isotopologue": iso.name}
         rec.update({"n_lines": int(len(df)), "j_max_used": int(df["j_up"].max()) if len(df) else 0,
                     "err_mhz_median": float(df["err_mhz"].median()) if len(df) else None,
                     "err_mhz_p95": float(df["err_mhz"].quantile(0.95)) if len(df) else None,
                     "freq_span_mhz": [float(df["freq_mhz"].min()), float(df["freq_mhz"].max())]
                     if len(df) else None})
         per_iso.append(rec)
+    frames = [f for f in frames if len(f)]
     lines = (pd.concat(frames, ignore_index=True).sort_values("freq_mhz").reset_index(drop=True)
              if frames else pd.DataFrame())
     meta = {
@@ -294,7 +297,7 @@ def predict_species_lines(assets: dict, species: str, *, fmin_mhz: float = 0.0,
                        if q in QUALITY_ORDER else 0) if isos else "unknown",
         "quartic_known": bool(isos) and all(i.constants.quartic_known for i in isos),
         "any_quartic_known": bool(isos) and any(i.constants.any_quartic_known for i in isos),
-        "distortion_scale_rel": float(distortion_scale_rel),
+        "distortion_omega_cm": float(distortion_omega_cm),
     }
     if len(lines):
         meta["err_mhz"] = {"median": float(lines["err_mhz"].median()),
@@ -342,8 +345,7 @@ def rotor_error_model(conf: dict | None) -> dict:
     em = ((conf or {}).get("predicted") or {}).get("error_model") or {}
     return {"base_mhz": float(em.get("base_mhz", 0.5)),
             "rel": float(em.get("rel_with_distortion", 1e-5)),
-            "distortion_scale_rel": float(em.get("distortion_scale_rel",
-                                                 DISTORTION_SCALE_REL))}
+            "distortion_omega_cm": float(em.get("distortion_omega_cm", DISTORTION_OMEGA_CM))}
 
 
 def summarise_assets(assets: dict) -> dict:

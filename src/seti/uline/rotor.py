@@ -95,15 +95,18 @@ from .lines import (
 #: h / (8 π² c) in amu Å² MHz: B[MHz] = ROT_CONST_AMU_A2 / I[amu Å²]  (CODATA 2018)
 ROT_CONST_AMU_A2 = 505379.0096
 
-#: Conservative estimator of an unmeasured ΔJ as a fraction of (B+C)/2.  The
-#: rigid-rotor scaling ΔJ ≈ 4B̄³/ω² with a generic ω = 400 cm⁻¹ overshoots by
-#: ~two orders of magnitude for the molecules of this channel; the ratio is
-#: measured instead on the species whose ΔJ *is* known (SO₂ 6.4e-7, CH₂F₂
-#: 9.7e-7, CF₂ ~1.4e-6 of (B+C)/2), and 3e-6 is a factor ~2–5 upper bound on
-#: that set.  Used only as an ERROR TERM for a species whose quartic constants
-#: are unknown — never as a distortion constant in the Hamiltonian.  The
-#: ``validate`` stage re-measures the ratio on the catalogued species and
-#: reports it next to this number.
+#: Effective vibrational frequency, cm⁻¹, for the order-of-magnitude estimate of
+#: an UNMEASURED quartic constant (below).  The lowest bending fundamental is
+#: what sets centrifugal distortion; 300 cm⁻¹ is at or below the lowest bend of
+#: every species of this channel (SO₂ 518, CH₂F₂ 529, CF₂ 668, SO₂F₂ ~385,
+#: CHClF₂ ~365, CF₂Cl₂ ~260, CFCl₃ ~240), so the estimate errs high, which is
+#: what an error BOUND must do.
+DISTORTION_OMEGA_CM = 300.0
+
+#: Retained for callers that want to set the ΔJ scale directly: the ratio
+#: ΔJ/((B+C)/2) of the species whose ΔJ is known (SO₂ 6.9e-7, CH₂F₂ 1.0e-6,
+#: CF₂ ~1.4e-6), rounded up.  ``predict_lines`` prefers
+#: :func:`quartic_estimates`, which is per-constant.
 DISTORTION_SCALE_REL = 3.0e-6
 
 QUARTIC = ("DJ", "DJK", "DK", "dJ", "dK")
@@ -233,6 +236,37 @@ def spin_weight(rule: dict, ka: int, kc: int) -> float:
     else:
         raise ValueError(f"unknown spin-weight rule {r!r}")
     return float(rule.get("even", 1.0)) if par == 0 else float(rule.get("odd", 1.0))
+
+
+def quartic_estimates(c: RotorConstants, omega_cm: float = DISTORTION_OMEGA_CM
+                      ) -> tuple[float, float, float]:
+    """Order-of-magnitude (ΔJ, ΔJK, ΔK) in MHz for a rotor whose quartic
+    constants were never measured.
+
+    The rigid-molecule scaling is ``Δ ≈ 4 X³ / ω²`` with *X* the rotational
+    constant the term is built from — B̄ = (B+C)/2 for ΔJ, A B̄² for ΔJK, A³ for
+    ΔK.  Using one constant for all three is what made the earlier single-scale
+    estimator wrong in both directions at once: ~80× too large for ΔJ and ~14×
+    too small for ΔK.  Per term, against the species whose constants are known,
+    this lands 2–12× high — conservative, as an error bound should be:
+
+    ======  ========  ========  ========  ========
+    ΔJ      SO₂ est   SO₂ true  CH₂F₂ est CH₂F₂ true
+    ======  ========  ========  ========  ========
+    ΔJ      0.043     0.0066    0.048     0.0103
+    ΔJK     0.27      0.117     0.24      0.0325
+    ΔK      11.1      2.59      5.9       0.50
+    ======  ========  ========  ========  ========
+
+    These are **never** put into the Hamiltonian; they only size the error of a
+    line whose corresponding constant is ``None``.
+    """
+    w2 = float(omega_cm) ** 2
+    a = float(c.A) / MHZ_PER_CM
+    bbar = 0.5 * (float(c.B) + float(c.C)) / MHZ_PER_CM
+    return (4.0 * bbar ** 3 / w2 * MHZ_PER_CM,
+            4.0 * a * bbar ** 2 / w2 * MHZ_PER_CM,
+            4.0 * a ** 3 / w2 * MHZ_PER_CM)
 
 
 # ---------------------------------------------------------------------------
@@ -525,6 +559,7 @@ def predict_lines(c: RotorConstants, *, fmin_mhz: float = 0.0, fmax_mhz: float =
                   tag: int = 0, err_base_mhz: float = 0.5, err_rel: float = 1e-5,
                   err_per_j_mhz: float = 0.0,
                   hyperfine: dict | None = None, distortion_scale_mhz: float | None = None,
+                  distortion_omega_cm: float = DISTORTION_OMEGA_CM,
                   abundance: float = 1.0) -> tuple[pd.DataFrame, Entry]:
     """Every allowed rotational line of the species in ``[fmin, fmax]`` MHz.
 
@@ -537,8 +572,8 @@ def predict_lines(c: RotorConstants, *, fmin_mhz: float = 0.0, fmax_mhz: float =
     propagates the uncertainty of A, B, C into an R-branch line, which grows
     linearly with J), plus — when the quartic constants are unknown — the size
     of the unmodelled distortion ``distortion_scale·[J'²(J'+1)² − J²(J+1)²]``
-    (``distortion_scale`` defaults to
-    :data:`DISTORTION_SCALE_REL`·(B+C)/2), plus the hyperfine blend width when
+    (each missing constant sized by :func:`quartic_estimates`), plus the
+    hyperfine blend width when
     ``hyperfine = {"eQq_mhz": …, "n_nuclei": …}``.  ``abundance`` scales the
     intensities (an isotopologue's fraction).
 
@@ -563,8 +598,12 @@ def predict_lines(c: RotorConstants, *, fmin_mhz: float = 0.0, fmax_mhz: float =
             cache[j] = levels(c, j)
     q300 = 10.0 ** float(np.interp(np.log10(300.0), np.log10(np.asarray(temps, float))[::-1],
                                    np.asarray(qlog, float)[::-1]))
-    if distortion_scale_mhz is None:
-        distortion_scale_mhz = DISTORTION_SCALE_REL * 0.5 * (c.B + c.C)
+    est_dj, est_djk, est_dk = quartic_estimates(c, omega_cm=distortion_omega_cm)
+    if distortion_scale_mhz is not None:
+        # legacy override: the caller sets the ΔJ scale, the other two follow
+        # it in proportion so the three stay physically consistent.
+        f = float(distortion_scale_mhz) / est_dj if est_dj else 1.0
+        est_dj, est_djk, est_dk = est_dj * f, est_djk * f, est_dk * f
     chunks: list[dict] = []
     z_axis = REPRESENTATIONS[c.representation][0]
     lg_min = float(lgint_floor)
@@ -606,12 +645,19 @@ def predict_lines(c: RotorConstants, *, fmin_mhz: float = 0.0, fmax_mhz: float =
                 n = len(iu)
                 f = nu[iu, il]
                 err = err_base_mhz + err_rel * f + err_per_j_mhz * (jp + 1)
+                k_lo = (lo.ka if z_axis != "c" else lo.kc)[il]
+                k_up = (up.ka if z_axis != "c" else up.kc)[iu]
                 if not c.quartic_known:
                     jj_u, jj_l = jp * (jp + 1), j * (j + 1)
-                    err = err + float(distortion_scale_mhz) * abs(jj_u ** 2 - jj_l ** 2)
+                    if c.DJ is None or c.dJ is None:
+                        err = err + est_dj * abs(jj_u ** 2 - jj_l ** 2)
+                    if c.DJK is None or c.dK is None:
+                        err = err + est_djk * np.abs(
+                            jj_u * k_up.astype(float) ** 2 - jj_l * k_lo.astype(float) ** 2)
+                    if c.DK is None:
+                        err = err + est_dk * np.abs(
+                            k_up.astype(float) ** 4 - k_lo.astype(float) ** 4)
                 if hyperfine:
-                    k_lo = (lo.ka if z_axis != "c" else lo.kc)[il]
-                    k_up = (up.ka if z_axis != "c" else up.kc)[iu]
                     hw = np.array([hyperfine_width_mhz(float(hyperfine.get("eQq_mhz", 0.0)),
                                                        int(hyperfine.get("n_nuclei", 1)),
                                                        j, int(a), jp, int(b))
@@ -856,9 +902,9 @@ def fit_constants(c0: RotorConstants, observed: list[tuple[tuple[int, int, int],
     return fitted, rep
 
 
-__all__ = ["DISTORTION_SCALE_REL", "QUARTIC", "REPRESENTATIONS", "ROT_CONST_AMU_A2", "SEXTIC",
+__all__ = ["DISTORTION_OMEGA_CM", "DISTORTION_SCALE_REL", "QUARTIC", "REPRESENTATIONS", "ROT_CONST_AMU_A2", "SEXTIC",
            "SPFIT_CODES", "Levels",
            "RotorConstants", "compare_with_cat", "fit_constants", "hamiltonian_matrix",
            "hyperfine_width_mhz", "isotopologue_constants", "levels", "line_strengths",
-           "moments_of_inertia", "parse_jpl_doc", "partition_function", "predict_lines",
+           "moments_of_inertia", "parse_jpl_doc", "partition_function", "predict_lines", "quartic_estimates",
            "rigid_rotor_energies_j1", "spin_weight", "wang_blocks"]

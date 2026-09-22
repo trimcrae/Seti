@@ -37,8 +37,12 @@ on:
       stage:
         description: >-
           Which stage to run: "all" (probe, acquire, screen, assess), "probe"
-          (archive inventory only — cheap, run this first), or "screen"/"assess"
-          with reduce_only_run_id to re-screen a prior run's acquired tables.
+          (archive inventory only — cheap, run this first), "validate" (the
+          asymmetric-top predictor against the JPL/CDMS entries of SO2, CH2F2
+          and COF2 — about the PREDICTOR, not the sky), "litfetch" (walk every
+          open literature route for the five uncatalogued species and record
+          what answered), or "screen"/"assess" with reduce_only_run_id to
+          re-screen a prior run's acquired tables.
         required: false
         default: "all"
       sources:
@@ -78,6 +82,55 @@ jobs:
           pip install -e ".[dev]"
       - name: Offline gate — injected CHF3 pattern must be recovered on this runner
         run: python -m pytest tests/test_uline.py -q -p no:cacheprovider -k "injected or without_the_pattern or poisson or dead_archives"
+      - name: Offline gate — the asymmetric-top predictor's own physics
+        run: python -m pytest tests/test_uline_rotor.py tests/test_uline_textlists.py -q -p no:cacheprovider
+      # ---- the PREDICTOR, measured against catalogues that do exist --------
+      # This is not about the sky: it is the number behind "the Hamiltonian
+      # reproduces a catalogue to X kHz" and behind the distortion-truncation
+      # error that decides whether an uncatalogued species is searchable at all.
+      - name: Validate the predictor against JPL/CDMS (SO2, CH2F2, COF2)
+        if: ${{ github.event.inputs.stage == 'validate' || github.event.inputs.stage == 'full' }}
+        run: |
+          python -m seti.uline.run --stage validate
+          echo "=== rotor validation ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/uline/rotor_validation.json"))
+          print(json.dumps(d["headline"], indent=2))
+          for k, v in d["species"].items():
+              c = v.get("comparison") or {}
+              r = v.get("refit") or {}
+              t = (v.get("distortion_truncation") or {}).get("residual_mhz") or {}
+              print(f"{k:12s} {v.get('status'):16s} cat={v.get('catalogue_lines')} "
+                    f"matched={c.get('n_matched')} "
+                    f"median|dnu|={(c.get('residual_mhz') or {}).get('median_abs')} MHz "
+                    f"refit_rms={r.get('rms_after_mhz')} MHz "
+                    f"no-quartic={t.get('median_abs')} MHz")
+              for pj in (c.get("per_j") or []):
+                  print("     J", pj["j_range"], "n", pj["n"], "median", round(pj["median_abs_mhz"], 4),
+                        "p95", round(pj["p95_abs_mhz"], 4))
+          PY
+      - name: Literature ladder for the five uncatalogued species
+        if: ${{ github.event.inputs.stage == 'litfetch' || github.event.inputs.stage == 'full' }}
+        run: |
+          SP=""
+          if [ -n "${{ github.event.inputs.species }}" ]; then SP="--species ${{ github.event.inputs.species }}"; fi
+          python -m seti.uline.run --stage litfetch $SP
+          echo "=== literature ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/uline/literature.json"))
+          print(d["n_ok"], "/", d["n_sources"], "routes answered")
+          for s in d["sources"]:
+              print(f"  {str(s.get('species')):8s} {s['kind']:16s} {s['status']:14s} "
+                    f"{s.get('n_bytes', 0):8d} B  {sorted((s.get('constants_mhz') or {}))} "
+                    f"lines={s.get('n_measured_lines', 0)}  {str(s.get('error',''))[:80]}")
+          for sp, blk in d["by_species"].items():
+              print(f"== {sp}: {blk['routes_ok']} ok / {blk['routes_failed']} failed, "
+                    f"{blk['measured_lines']} measured lines")
+              for k, vals in (blk.get("constants") or {}).items():
+                  print(f"     {k:5s} " + "; ".join(f"{v['value_mhz']:.6g} <- {v['from']}" for v in vals[:6]))
+          PY
       - name: Fetch a prior run's acquired tables
         if: ${{ github.event.inputs.reduce_only_run_id != '' }}
         uses: actions/download-artifact@v4
@@ -87,7 +140,7 @@ jobs:
           github-token: ${{ github.token }}
           path: results/uline/
       - name: Probe (JPL catdir, CDMS roots, VizieR tables and columns)
-        if: ${{ github.event.inputs.reduce_only_run_id == '' }}
+        if: ${{ github.event.inputs.reduce_only_run_id == '' && github.event.inputs.stage != 'validate' && github.event.inputs.stage != 'litfetch' }}
         run: |
           SRC=""
           if [ -n "${{ github.event.inputs.sources }}" ]; then SRC="--sources ${{ github.event.inputs.sources }}"; fi
@@ -106,7 +159,7 @@ jobs:
               print("   ", t)
           PY
       - name: Acquire (every matched .cat, every source's full line table)
-        if: ${{ github.event.inputs.reduce_only_run_id == '' && github.event.inputs.stage != 'probe' }}
+        if: ${{ github.event.inputs.reduce_only_run_id == '' && github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'validate' && github.event.inputs.stage != 'litfetch' }}
         run: |
           SRC=""
           if [ -n "${{ github.event.inputs.sources }}" ]; then SRC="--sources ${{ github.event.inputs.sources }}"; fi
@@ -132,7 +185,7 @@ jobs:
             results/uline/data/
           if-no-files-found: warn
       - name: Screen (vetoes, coincidences, LTE tests, shift-trial FAP)
-        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'assess' }}
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'assess' && github.event.inputs.stage != 'validate' && github.event.inputs.stage != 'litfetch' }}
         run: |
           SP=""
           if [ -n "${{ github.event.inputs.species }}" ]; then SP="--species ${{ github.event.inputs.species }}"; fi
@@ -140,7 +193,7 @@ jobs:
           if [ "${{ github.event.inputs.n_trials || '0' }}" != "0" ]; then NT="--n-trials ${{ github.event.inputs.n_trials }}"; fi
           python -m seti.uline.run --stage screen $SP $NT
       - name: Assess (verdict, inventory, candidates)
-        if: ${{ github.event.inputs.stage != 'probe' }}
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'validate' && github.event.inputs.stage != 'litfetch' }}
         run: |
           python -m seti.uline.run --stage assess
           echo "=== summary ==="
@@ -153,7 +206,7 @@ jobs:
           PY
       # A verdict must never read as a science null when nothing was compared.
       - name: Assert the verdict is not a disguised no-data run
-        if: ${{ github.event.inputs.stage != 'probe' }}
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'validate' && github.event.inputs.stage != 'litfetch' }}
         run: |
           python - <<'PY'
           import json, pathlib, sys
@@ -186,7 +239,9 @@ jobs:
             results/uline/screen.json \
             results/uline/coincidences.csv \
             results/uline/summary.json \
-            results/uline/candidates.csv
+            results/uline/candidates.csv \
+            results/uline/rotor_validation.json \
+            results/uline/literature.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

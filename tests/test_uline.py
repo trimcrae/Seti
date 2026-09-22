@@ -746,8 +746,13 @@ def test_probe_reports_inventory_and_frame_hint(tmp_path):
     assert inv["NF3"]["jpl"] == ["NF3"] and inv["NF3"]["predictable"]
     assert inv["CHF3"]["jpl"] == [] and inv["CHF3"]["cdms"] == ["CHF3, v=0"] and inv["CHF3"]["predictable"]
     assert inv["CH3Cl"]["jpl"] == ["CH3Cl-35"] and inv["CH3Cl"]["group"] == "baseline"
-    assert inv["SO2F2"] == {"group": "targets", "jpl": [], "cdms": [], "predictable": False,
-                            "jpl_near_miss_names": [], "cdms_near_miss_names": []}
+    # SO2F2 is in neither catalogue, and is now PREDICTABLE from the rotor
+    # assets (src/seti/data_assets/rotor_constants.yaml) rather than
+    # unsearchable: the probe names the constants it would use.
+    assert inv["SO2F2"]["jpl"] == [] and inv["SO2F2"]["cdms"] == []
+    assert inv["SO2F2"]["group"] == "targets" and inv["SO2F2"]["predictable"]
+    assert inv["SO2F2"]["rotor_constants"]["role"] == "target"
+    assert [i["name"] for i in inv["SO2F2"]["rotor_constants"]["isotopologues"]] == ["SO2F2 v=0"]
     v = rep["vizier"]["orion_kl_hifi"]
     assert v["status"] == "OK" and v["table"] == "J/ApJ/787/112/table2"
     assert v["roles"]["freq"] == "Freq" and v["units"]["freq"] == "GHz"
@@ -787,17 +792,27 @@ def test_acquire_screen_assess_end_to_end_with_scripted_archives(tmp_path):
     assert st["NF3"]["line_source"] == "jpl" and not st["NF3"]["predicted"]
     assert st["CHF3"]["line_source"] == "cdms"             # cdms preferred over predicted
     assert st["CF3Cl"]["line_source"] == "predicted" and st["CF3Cl"]["verify"]
-    assert st["SO2F2"]["line_source"] is None
+    assert st["SO2F2"]["line_source"] == "rotor" and st["SO2F2"]["verify"]
     o = sc["sources"]["orion_kl_hifi"]
     assert o["n_ulines"] == 300 and o["contaminants_applied"] == ["CH3Cl", "CH3F", "CH3OH"]
     assert o["frame"] == "rest" and o["v_unc_km_s"] == 4.0
-    assert sc["results"]["SO2F2|orion_kl_hifi"]["status"] == "NO_LINE_LIST"
+    assert sc["results"]["SO2F2|orion_kl_hifi"]["status"] == "OK"
+    assert sc["results"]["SO2F2|orion_kl_hifi"]["line_source"] == "rotor"
+    # and it says, in the same record, that the prediction is not sharp enough
+    # to be matched at this source's linewidth - the quartic constants are
+    # unknown, and that is the limit, not the absence of a catalogue entry
+    assert sc["results"]["SO2F2|orion_kl_hifi"]["searchability"]["status"] in (
+        "DEGRADED", "FREQUENCY_LIMITED")
     assert (out / "coincidences.csv").exists()
 
     s = stage_assess(conf, out)
     assert s["verdict"] == "NO_PATTERN"
-    assert s["targets_unsearchable"] == ["CH2F2", "CF2Cl2", "CFCl3", "COF2", "SO2F2", "CHClF2", "CF2"]
-    assert s["targets_with_predicted_frequencies"] == ["CF3Cl", "CF3CN"]
+    # NOTHING is unsearchable any more: the five species with no catalogue
+    # entry are predicted from the rotor assets, and CH2F2/COF2 from the
+    # validation blocks of the same file.
+    assert s["targets_unsearchable"] == []
+    assert set(s["targets_with_predicted_frequencies"]) == {
+        "CH2F2", "CF3Cl", "CF2Cl2", "CFCl3", "CF3CN", "COF2", "SO2F2", "CHClF2", "CF2"}
     assert s["species_inventory"]["CF3Cl"]["constants"]["B_mhz"] == 3335.6
     assert s["pairs"]["NF3|orion_kl_hifi"]["line_source"] == "jpl"
     c = pd.read_csv(out / "candidates.csv")
@@ -823,7 +838,7 @@ def test_end_to_end_recovers_a_seeded_pattern_through_the_acquire_path(tmp_path)
     assert s["verdict"] == "NO_PATTERN"
     assert s["pairs"]["CHF3|orion_kl_hifi"]["line_source"] == "cdms"
     assert s["pairs"]["NF3|orion_kl_hifi"]["line_source"] == "predicted"
-    assert s["targets_with_predicted_frequencies"] == ["NF3", "CF3Cl", "CF3CN"]
+    assert set(s["targets_with_predicted_frequencies"]) >= {"NF3", "CF3Cl", "CF3CN"}
     # the pattern is only reachable through the predictor: prefer it and re-screen
     conf["archives"]["prefer_line_list"] = ["predicted", "cdms", "jpl"]
     stage_screen(conf, out, species=["CHF3"])

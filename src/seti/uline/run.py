@@ -48,6 +48,15 @@ from .lines import (
     symmetric_top_lines,
 )
 from .match import DEFAULT_MATCH, SourceLines, apply_vetoes, best_record, evaluate_species
+from .rotorpred import (
+    literature_sources,
+    load_rotor_assets,
+    predict_species_lines,
+    rotor_error_model,
+    searchability,
+    summarise_assets,
+    validation_targets,
+)
 
 VERDICT_NO_DATA = "NO_DATA_REACHED"
 VERDICT_NONE = "NO_PATTERN"
@@ -67,7 +76,8 @@ DEFAULTS: dict = {
     },
     "species": {"targets": {}, "baseline": {}, "contaminants": {}},
     "predicted": {"error_model": {"base_mhz": 0.5, "rel_with_distortion": 1e-5,
-                                  "rel_without_distortion": 1e-4}},
+                                  "rel_without_distortion": 1e-4,
+                                  "distortion_omega_cm": 300.0}},
     "sources": {},
     "match": dict(DEFAULT_MATCH),
     "columns": {},
@@ -235,6 +245,8 @@ def stage_probe(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, sources=
             log.record("tables_described", str(word), error=repr(exc), extra={"adql": adql})
     predicted = {sp: {k: v for k, v in blk.items()}
                  for sp, blk in (conf.get("predicted") or {}).items() if sp != "error_model"}
+    assets = load_rotor_assets()
+    rotor_summary = summarise_assets(assets)
     inventory = {}
     for sp in list((conf.get("species") or {}).get("targets", {})) + \
             list((conf.get("species") or {}).get("baseline", {})) + \
@@ -244,10 +256,12 @@ def stage_probe(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, sources=
                          "cdms": [e["name"] for e in cdms.get("species", {}).get(sp, [])],
                          "jpl_near_miss_names": (jpl.get("near_miss_names") or {}).get(sp, []),
                          "cdms_near_miss_names": (cdms.get("near_miss_names") or {}).get(sp, []),
-                         "predictable": sp in predicted}
+                         "predictable": sp in predicted or sp in rotor_summary,
+                         "rotor_constants": rotor_summary.get(sp)}
     rep = {"stage": "probe", "generated_utc": _now(), "jpl": jpl, "cdms": cdms,
            "vizier": vizier, "discovered_unidentified_tables": discovered,
-           "species_inventory": inventory, "acquisition": log.as_dict()}
+           "species_inventory": inventory, "rotor_assets": rotor_summary,
+           "acquisition": log.as_dict()}
     _write(out / "probe.json", rep)
     n_ok = sum(1 for v in vizier.values() if v["status"] == A.STATUS_OK)
     print(f"[uline] probe: JPL {jpl['status']} ({jpl['n_entries']} entries), CDMS {cdms['status']} "
@@ -301,17 +315,32 @@ def stage_acquire(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, source
                "discovery_status": d.status, "n_rows_catalogue": d.n_rows,
                "queries": d.queries, "errors": d.errors, "fallback": d.fallback,
                "scoreboard": d.scoreboard}
-        if d.table is None:
-            rec.update({"status": d.status, "n_lines": 0, "n_unidentified": 0})
-            per_source[name] = rec
-            continue
-        df = A.fetch_line_table(d, query_fn=query_fn, log=log,
-                                max_rows=int(arc.get("max_rows", 200000)),
-                                uline_patterns=_uline_patterns(conf))
+        df = pd.DataFrame()
+        if d.table is not None:
+            df = A.fetch_line_table(d, query_fn=query_fn, log=log,
+                                    max_rows=int(arc.get("max_rows", 200000)),
+                                    uline_patterns=_uline_patterns(conf))
+        if not len(df) and spec.get("text_routes"):
+            # VizieR has no usable table for this source.  Some published line
+            # lists were never deposited at CDS at all (Crockett+2014 is
+            # measured absent from J/ApJ/787/112 on three routes), and live only
+            # as machine-readable tables attached to the article.  Same format,
+            # different door.
+            from .textlists import fetch_text_line_table
+            tr = fetch_text_line_table(dict(spec["text_routes"]), fetch_fn=fetch_fn,
+                                       column_patterns=cols,
+                                       uline_patterns=_uline_patterns(conf), log=log,
+                                       timeout=float(arc.get("fetch_timeout_s", 180)),
+                                       retries=int(arc.get("fetch_retries", 3)))
+            df = tr.pop("table", pd.DataFrame())
+            rec["text_route"] = tr
+            if len(df):
+                rec["route"] = "text"
         if not len(df):
             failed = any(s["stage"] == f"fetch_{name}" and s["status"] == A.STATUS_FAILED
                          for s in log.stages)
-            rec.update({"status": A.STATUS_FAILED if failed else A.STATUS_ZERO,
+            rec.update({"status": (d.status if d.table is None
+                                   else (A.STATUS_FAILED if failed else A.STATUS_ZERO)),
                         "n_lines": 0, "n_unidentified": 0})
             per_source[name] = rec
             continue
@@ -342,17 +371,25 @@ def stage_acquire(conf: dict, out: Path, *, fetch_fn=None, query_fn=None, source
 # screen
 # ---------------------------------------------------------------------------
 def build_species_tables(conf: dict, lines: pd.DataFrame, entries: dict, *,
-                         fmax_mhz: float) -> dict[str, dict]:
+                         fmax_mhz: float, fmin_mhz: float = 0.0,
+                         assets: dict | None = None) -> dict[str, dict]:
     """{species: {lines, entries, line_source, databases, predicted}} for MATCHING.
 
-    One line list per species, chosen by ``archives.prefer_line_list``; a
-    species absent from both databases but present in ``predicted:`` gets the
-    symmetric-top predictor.  Contaminant vetoes take the *union* of databases
+    One line list per species, chosen by ``archives.prefer_line_list``.  A
+    species absent from both databases is predicted, preferring the **rotor
+    assets** (``src/seti/data_assets/rotor_constants.yaml``: a full asymmetric
+    top, every isotopologue, the published constants with their provenance) over
+    the old single-constant symmetric-top block in ``config/uline.yaml``, which
+    remains only as a fallback for a species the assets do not carry.
+    Contaminant vetoes take the *union* of databases
     (see :func:`contaminant_lines`).
     """
     prefer = list(conf["archives"].get("prefer_line_list") or ["cdms", "jpl", "predicted"])
     pred_conf = conf.get("predicted") or {}
     em = pred_conf.get("error_model") or {}
+    assets = load_rotor_assets() if assets is None else assets
+    rotor_species = set(assets.get("species") or {})
+    emr = rotor_error_model(conf)
     out: dict[str, dict] = {}
     species_all = [s for g in ("targets", "baseline", "contaminants")
                    for s in (conf.get("species") or {}).get(g, {})]
@@ -369,11 +406,13 @@ def build_species_tables(conf: dict, lines: pd.DataFrame, entries: dict, *,
             if db in have:
                 chosen = db
                 break
-            if db == "predicted" and sp in pred_conf and sp != "error_model":
-                chosen = "predicted"
+            if db == "predicted" and sp != "error_model" and (sp in rotor_species
+                                                              or sp in pred_conf):
+                chosen = "rotor" if sp in rotor_species else "predicted"
                 break
         rec = {"group": _species_group(conf, sp), "databases": sorted(have),
-               "line_source": chosen, "predicted": chosen == "predicted", "verify": False}
+               "line_source": chosen, "predicted": chosen in ("predicted", "rotor"),
+               "verify": False}
         if chosen in ("jpl", "cdms"):
             d = have[chosen].reset_index(drop=True)
             rec["lines"] = d
@@ -382,6 +421,25 @@ def build_species_tables(conf: dict, lines: pd.DataFrame, entries: dict, *,
             if missing:
                 rec["entries_missing_partition_function"] = missing
                 rec["lines"] = d[~d["entry_id"].isin(missing)].reset_index(drop=True)
+        elif chosen == "rotor":
+            df, ents, meta = predict_species_lines(
+                assets, sp, fmin_mhz=float(fmin_mhz), fmax_mhz=float(fmax_mhz),
+                temps=CATDIR_TEMPS, err_base_mhz=float(emr["base_mhz"]),
+                err_rel=float(emr["rel"]),
+                distortion_omega_cm=float(emr["distortion_omega_cm"]))
+            rec["lines"] = df
+            rec["entries"] = ents
+            # EVERY rotor block is `verify`: the constants are reconstructed
+            # from the literature, not read off a catalogue.  A candidate that
+            # rests on these lines alone is flagged, never promoted.
+            rec["verify"] = True
+            rec["rotor"] = {k: v for k, v in meta.items() if k != "isotopologues"}
+            rec["rotor_isotopologues"] = meta.get("isotopologues")
+            rec["constants"] = {"assets": "src/seti/data_assets/rotor_constants.yaml",
+                                "quality": meta.get("quality"),
+                                "quartic_known": meta.get("quartic_known"),
+                                "n_isotopologues": meta.get("n_isotopologues")}
+            rec["distortion_known"] = bool(meta.get("quartic_known"))
         elif chosen == "predicted":
             blk = pred_conf[sp]
             has_d = blk.get("DJ_mhz") is not None and blk.get("DJK_mhz") is not None
@@ -436,10 +494,18 @@ def contaminant_lines(conf: dict, lines: pd.DataFrame, entries: dict, species_ta
                     frames.append((grp["freq_mhz"].to_numpy(dtype=float), lg))
             if not frames and species_tables.get(sp, {}).get("predicted"):
                 st = species_tables[sp]
-                ent = next(iter(st["entries"].values()))
-                lg = rescale_lgint(st["lines"]["lgint_300"], st["lines"]["elo_cm"],
-                                   st["lines"]["freq_mhz"], ent["temps"], ent["qlog"], tex_k)
-                frames.append((st["lines"]["freq_mhz"].to_numpy(dtype=float), lg))
+                sl = st["lines"]
+                # A rotor prediction carries one entry (and one partition
+                # function) PER ISOTOPOLOGUE, so rescale each group with its own.
+                groups = (sl.groupby("entry_id") if "entry_id" in sl
+                          else [(next(iter(st["entries"]), None), sl)])
+                for eid, grp in groups:
+                    ent = st["entries"].get(eid) if eid is not None else None
+                    if not ent:
+                        continue
+                    lg = rescale_lgint(grp["lgint_300"], grp["elo_cm"], grp["freq_mhz"],
+                                       ent["temps"], ent["qlog"], tex_k)
+                    frames.append((grp["freq_mhz"].to_numpy(dtype=float), lg))
             if not frames:
                 continue
             f = np.concatenate([x[0] for x in frames])
@@ -450,14 +516,32 @@ def contaminant_lines(conf: dict, lines: pd.DataFrame, entries: dict, species_ta
     return out
 
 
-def source_from_table(name: str, spec: dict, df: pd.DataFrame) -> SourceLines:
+def source_from_table(name: str, spec: dict, df: pd.DataFrame,
+                      coverage: pd.DataFrame | None = None) -> SourceLines:
+    """One survey's :class:`SourceLines`.
+
+    ``all_unidentified`` in the source spec declares that every row of the
+    table is a U-line — the honest reading of a VizieR table whose *published
+    description* is "Unidentified lines", and one that does not depend on
+    parsing a label column whose spelling ("U 130156.3") no regex anticipated.
+    ``coverage`` supplies the survey's full catalogued line list when the
+    U-lines live in a table of their own: the coverage mask asks "was the survey
+    sensitive here?", which the 63 U-lines cannot answer and the 399 identified
+    ones can.
+    """
+    if bool(spec.get("all_unidentified")):
+        df = df.copy()
+        df["unidentified"] = True
     u = df[df["unidentified"].astype(bool)]
+    all_freq = df["freq_mhz"].to_numpy(dtype=float)
+    if coverage is not None and len(coverage):
+        all_freq = np.concatenate([all_freq, coverage["freq_mhz"].to_numpy(dtype=float)])
     return SourceLines(name=name, u_freq=u["freq_mhz"].to_numpy(dtype=float),
                        u_int=u["intensity"].to_numpy(dtype=float) if "intensity" in u
                        else np.full(len(u), np.nan),
                        u_err=u["freq_err_mhz"].to_numpy(dtype=float) if "freq_err_mhz" in u
                        else np.zeros(len(u)),
-                       all_freq=df["freq_mhz"].to_numpy(dtype=float),
+                       all_freq=all_freq,
                        fwhm_km_s=float(spec.get("fwhm_km_s", 5.0)),
                        v_lsr_km_s=float(spec.get("v_lsr_km_s", 0.0)),
                        frame=str(spec.get("frequency_frame", "rest")),
@@ -476,7 +560,11 @@ def screen_all(conf: dict, lines: pd.DataFrame, entries: dict, source_tables: di
     if seed is not None:
         mconf["seed"] = int(seed)
     fmax = max([float(df["freq_mhz"].max()) for df in source_tables.values() if len(df)] or [2.0e6])
-    tables = build_species_tables(conf, lines, entries, fmax_mhz=fmax * 1.001)
+    fmin = min([float(df["freq_mhz"].min()) for df in source_tables.values() if len(df)] or [0.0])
+    # Predicting only inside the surveys' own band saves the J range that no
+    # survey can see; the 2 % margin keeps the coverage mask honest at the edges.
+    tables = build_species_tables(conf, lines, entries, fmax_mhz=fmax * 1.02,
+                                  fmin_mhz=max(0.0, fmin * 0.98))
     targets = [s for s in (conf.get("species") or {}).get("targets", {})
                if not species or s in species]
     rng = np.random.default_rng(int(mconf.get("seed", 20260913)))
@@ -487,7 +575,9 @@ def screen_all(conf: dict, lines: pd.DataFrame, entries: dict, source_tables: di
         if df is None or not len(df):
             per_source[name] = {"status": "NO_TABLE", "n_lines": 0, "n_ulines": 0}
             continue
-        src = source_from_table(name, spec, df)
+        cov_key = spec.get("coverage_from")
+        cov = source_tables.get(str(cov_key)) if cov_key else None
+        src = source_from_table(name, spec, df, coverage=cov)
         cont = contaminant_lines(conf, lines, entries, tables, source=name,
                                  tex_k=float(spec.get("contaminant_tex_k", 100.0)),
                                  frame=src.frame, v_lsr=src.v_lsr_km_s)
@@ -504,7 +594,11 @@ def screen_all(conf: dict, lines: pd.DataFrame, entries: dict, source_tables: di
                             "fmin_mhz": src.fmin_mhz, "fmax_mhz": src.fmax_mhz,
                             "frame": src.frame, "v_lsr_km_s": src.v_lsr_km_s,
                             "fwhm_km_s": src.fwhm_km_s, "v_unc_km_s": src.v_unc_km_s,
-                            "has_intensity": bool(np.isfinite(src.u_int).any())}
+                            "all_unidentified": bool(spec.get("all_unidentified")),
+                            "coverage_from": (str(cov_key) if cov_key else None),
+                            "n_coverage_lines": int(len(cov)) if cov is not None else 0,
+                            "has_intensity": bool(np.isfinite(src.u_int).any()),
+                            "n_ulines_with_intensity": int(np.isfinite(src.u_int).sum())}
         for sp in targets:
             st = tables.get(sp) or {}
             key = f"{sp}|{name}"
@@ -514,9 +608,19 @@ def screen_all(conf: dict, lines: pd.DataFrame, entries: dict, source_tables: di
                 continue
             recs = evaluate_species(st["lines"], st["entries"], src, species=sp,
                                     line_source=st["line_source"], conf=mconf, rng=rng)
-            results[key] = {"species": sp, "source": name, "line_source": st["line_source"],
-                            "predicted": bool(st.get("predicted")), "verify": bool(st.get("verify")),
-                            "status": "OK", "records": recs, "best": best_record(recs)}
+            rr = {"species": sp, "source": name, "line_source": st["line_source"],
+                  "predicted": bool(st.get("predicted")), "verify": bool(st.get("verify")),
+                  "status": "OK", "records": recs, "best": best_record(recs)}
+            if st.get("rotor"):
+                # Is the prediction sharp enough to be matched HERE?  The
+                # source's own linewidth is the tolerance the pattern test
+                # allows; a predicted error far above it means a coincidence
+                # carries no information, and that is a property of the
+                # constants, not of the sky.
+                tol = max(1e-6, src.fwhm_km_s / 299792.458 * float(np.median(
+                    st["lines"]["freq_mhz"]) if len(st["lines"]) else fmax))
+                rr["searchability"] = searchability(st["rotor"], tolerance_mhz=tol)
+            results[key] = rr
     inventory = {sp: {k: v for k, v in st.items() if k not in ("lines", "entries")}
                  for sp, st in tables.items()}
     return {"stage": "screen", "generated_utc": _now(), "match": mconf, "sources": per_source,
@@ -703,9 +807,205 @@ def stage_assess(conf: dict, out: Path, *, screen: dict | None = None,
 
 
 # ---------------------------------------------------------------------------
+# validate — the predictor against catalogues that DO exist
+# ---------------------------------------------------------------------------
+def validate_rotor(assets: dict, cats: dict[str, pd.DataFrame], *, j_max: int = 40,
+                   fmax_mhz: float = 1.0e6, docs: dict | None = None,
+                   refit: bool = True) -> dict:
+    """Predict SO₂, CH₂F₂ and COF₂ and compare line by line with their catalogues.
+
+    ``cats`` maps ``"<database>:<tag>"`` to that catalogue's line table.  For
+    each validation species the embedded constants are run through
+    :func:`seti.uline.rotorpred.predict_species_lines`, matched to the
+    catalogue by quantum numbers, and the residuals reported — and then, when
+    ``refit`` and SciPy are available, A, B, C and the quartic constants are
+    **refitted to the catalogue's own frequencies**.
+
+    The two residuals answer different questions and both are needed:
+    ``residual_mhz`` before the refit measures *the constants*, which are
+    reconstructed from the literature and expected to be off; ``rms_after_mhz``
+    measures *the Hamiltonian*, and is the number behind any claim that this
+    predictor reproduces a catalogue.  ``distortion_truncation`` isolates the
+    third question — how far the frequencies move when the quartic constants
+    are switched off — which is exactly the error a species with unknown
+    quartic constants carries.
+    """
+    from .rotor import compare_with_cat, fit_constants
+    from .rotorpred import species_isotopologues
+
+    out: dict = {"generated_utc": _now(), "species": {}, "j_max": int(j_max)}
+    for va in validation_targets(assets):
+        sp, db, tag = va["species"], va["database"], va["tag"]
+        key = f"{db}:{tag}"
+        cat = cats.get(key)
+        rec: dict = {"species": sp, "database": db, "tag": tag,
+                     "catalogue_lines": int(len(cat)) if cat is not None else 0}
+        if cat is None or not len(cat):
+            rec["status"] = "NO_CATALOGUE"
+            out["species"][key] = rec
+            continue
+        isos = species_isotopologues(assets, sp)
+        if not isos:
+            rec["status"] = "NO_CONSTANTS"
+            out["species"][key] = rec
+            continue
+        iso = isos[0]
+        c = iso.constants
+        rec["constants_embedded"] = c.as_dict()
+        rec["quality"] = iso.quality
+        try:
+            from .rotor import predict_lines
+            pred, _ = predict_lines(c, fmin_mhz=0.0, fmax_mhz=float(fmax_mhz), j_max=int(j_max),
+                                    lgint_floor=-12.0, err_base_mhz=0.0, err_rel=0.0)
+        except Exception as exc:                               # noqa: BLE001
+            rec.update({"status": "PREDICTION_FAILED", "error": repr(exc)[:500]})
+            out["species"][key] = rec
+            continue
+        rec["n_predicted"] = int(len(pred))
+        rec["comparison"] = compare_with_cat(pred, cat, j_max=int(j_max))
+        # The distortion-truncation error: the same constants with the quartic
+        # terms zeroed.  This is the size of the error a species whose quartic
+        # constants are UNKNOWN carries at the same J — measured, not asserted.
+        if c.any_quartic_known:
+            rigid = RotorConstantsRigid(c)
+            try:
+                pred0, _ = predict_lines(rigid, fmin_mhz=0.0, fmax_mhz=float(fmax_mhz),
+                                         j_max=int(j_max), lgint_floor=-12.0,
+                                         err_base_mhz=0.0, err_rel=0.0)
+                rec["distortion_truncation"] = compare_with_cat(pred0, cat, j_max=int(j_max))
+            except Exception as exc:                           # noqa: BLE001
+                rec["distortion_truncation"] = {"error": repr(exc)[:300]}
+        doc = (docs or {}).get(key) or (docs or {}).get(sp)
+        if doc:
+            rec["constants_from_documentation"] = doc
+        obs = []
+        from .rotor import _qn_triplet
+        for r in cat.itertuples():
+            qu, ql = _qn_triplet(r.qn_up), _qn_triplet(r.qn_lo)
+            if qu is None or ql is None or qu[0] > j_max or ql[0] > j_max:
+                continue
+            obs.append((qu, ql, float(r.freq_mhz)))
+        rec["n_fit_lines"] = len(obs)
+        if refit and len(obs) >= 8:
+            try:
+                fitted, report = fit_constants(c, obs, j_max=int(j_max))
+                rec["refit"] = report
+                rec["constants_refitted"] = fitted.as_dict()
+            except Exception as exc:                           # noqa: BLE001
+                rec["refit"] = {"error": repr(exc)[:500]}
+        rec["status"] = "OK"
+        out["species"][key] = rec
+    ok = [r for r in out["species"].values() if r.get("status") == "OK"]
+    res = [r["comparison"]["residual_mhz"]["median_abs"] for r in ok
+           if (r.get("comparison") or {}).get("residual_mhz")]
+    fit = [r["refit"]["rms_after_mhz"] for r in ok
+           if isinstance(r.get("refit"), dict) and "rms_after_mhz" in r["refit"]]
+    out["headline"] = {
+        "n_species_validated": len(ok),
+        "median_abs_residual_mhz_embedded_constants": float(np.median(res)) if res else None,
+        "hamiltonian_floor_rms_mhz_after_refit": float(np.median(fit)) if fit else None,
+        "reading": ("the first number measures the CONSTANTS (reconstructed from the "
+                    "literature); the second measures the HAMILTONIAN itself, refitted to the "
+                    "catalogue's own frequencies"),
+    }
+    return out
+
+
+def RotorConstantsRigid(c):                                   # noqa: N802
+    """``c`` with every distortion constant set to zero (a rigid rotor)."""
+    from .rotor import QUARTIC, SEXTIC, RotorConstants
+    d = c.as_dict()
+    for k in (*QUARTIC, *SEXTIC):
+        d[k] = 0.0
+    return RotorConstants.from_dict(d)
+
+
+def stage_validate(conf: dict, out: Path, *, fetch_fn=None, assets: dict | None = None,
+                   j_max: int = 40, log: A.AcquisitionLog | None = None) -> dict:
+    """Fetch the validation species' catalogues and documentation, then compare."""
+    log = log or A.AcquisitionLog(prefix="uline/validate")
+    assets = load_rotor_assets() if assets is None else assets
+    arc = conf["archives"]
+    cats: dict[str, pd.DataFrame] = {}
+    docs: dict[str, dict] = {}
+    fetch_report = []
+    for va in validation_targets(assets):
+        db, tag, sp = va["database"], int(va["tag"]), va["species"]
+        key = f"{db}:{tag}"
+        tmpl = arc["jpl_cat_url"] if db == "jpl" else arc["cdms_cat_url"]
+        ent = Entry(tag=tag, name=sp, nlines=0, temps=list(CATDIR_TEMPS), qlog=[], database=db)
+        try:
+            table, reps = A.fetch_cats([ent], tmpl, fetch_fn=fetch_fn, log=log,
+                                       retries=int(arc.get("fetch_retries", 3)), database=db)
+        except Exception as exc:                               # noqa: BLE001
+            fetch_report.append({"key": key, "status": A.STATUS_FAILED, "error": repr(exc)[:500]})
+            continue
+        fetch_report.append({"key": key, "status": A.STATUS_OK if len(table) else A.STATUS_ZERO,
+                             "n_lines": int(len(table)), "entries": reps})
+        if len(table):
+            cats[key] = table
+        if db == "jpl":
+            url = str(arc["jpl_cat_url"]).replace("c{tag:06d}.cat", f"doc/d{tag:06d}.cat")
+            try:
+                from .litfetch import fetch_one
+                rec = fetch_one({"name": f"jpl_doc_{sp}", "species": sp, "kind": "jpl_doc",
+                                 "url": url}, fetch_fn=fetch_fn, log=log)
+                docs[key] = rec
+            except Exception as exc:                           # noqa: BLE001
+                docs[key] = {"status": A.STATUS_FAILED, "error": repr(exc)[:300], "url": url}
+    rep = validate_rotor(assets, cats, j_max=int(j_max), docs=docs)
+    rep["fetch"] = fetch_report
+    rep["assets"] = summarise_assets(assets)
+    rep["acquisition"] = log.as_dict()
+    _write(out / "rotor_validation.json", rep)
+    h = rep.get("headline") or {}
+    print(f"[uline] validate: {h.get('n_species_validated')} species; embedded-constant residual "
+          f"{h.get('median_abs_residual_mhz_embedded_constants')} MHz, Hamiltonian floor "
+          f"{h.get('hamiltonian_floor_rms_mhz_after_refit')} MHz")
+    return rep
+
+
+# ---------------------------------------------------------------------------
+# litfetch — the microwave literature, from the runner
+# ---------------------------------------------------------------------------
+def stage_litfetch(conf: dict, out: Path, *, fetch_fn=None, assets: dict | None = None,
+                   species: list[str] | None = None,
+                   log: A.AcquisitionLog | None = None) -> dict:
+    """Walk every literature route for the target species and record what answered."""
+    from .litfetch import run_litfetch, species_query_sources
+
+    log = log or A.AcquisitionLog(prefix="uline/litfetch")
+    assets = load_rotor_assets() if assets is None else assets
+    targets = [sp for sp, blk in (assets.get("species") or {}).items()
+               if str(blk.get("role", "")) == "target" and (not species or sp in species)]
+    srcs = [s for s in literature_sources(assets)
+            if not species or str(s.get("species")) in species]
+    for sp in targets:
+        srcs.extend(species_query_sources(sp))
+    rep = run_litfetch(srcs, fetch_fn=fetch_fn, log=log,
+                       timeout=float(conf["archives"].get("fetch_timeout_s", 180)),
+                       retries=int(conf["archives"].get("fetch_retries", 3)))
+    rep["generated_utc"] = _now()
+    rep["targets"] = targets
+    rep["embedded"] = summarise_assets(assets)
+    rep["acquisition"] = log.as_dict()
+    rep["note"] = ("nothing fetched here overwrites an embedded constant: the two are reported "
+                   "side by side and promoting one is a commit to "
+                   "src/seti/data_assets/rotor_constants.yaml")
+    _write(out / "literature.json", rep)
+    print(f"[uline] litfetch: {rep['n_ok']}/{rep['n_sources']} routes answered; constants found "
+          f"for {sorted(k for k, v in rep['by_species'].items() if v.get('constants'))}")
+    return rep
+
+
+# ---------------------------------------------------------------------------
 # entry points
 # ---------------------------------------------------------------------------
-STAGES = ("probe", "acquire", "screen", "assess")
+STAGES = ("probe", "validate", "litfetch", "acquire", "screen", "assess")
+#: ``--stage all``.  ``validate`` and ``litfetch`` are not in it: they are about
+#: the PREDICTOR, not about the sky, they are slow (dozens of HTTP round trips),
+#: and their outputs change only when the constants do.  Run them explicitly.
+DEFAULT_STAGES = ("probe", "acquire", "screen", "assess")
 
 
 def uline_run(conf: dict | None = None, stage: str = "all", *, out_dir=None, fetch_fn=None,
@@ -714,11 +1014,16 @@ def uline_run(conf: dict | None = None, stage: str = "all", *, out_dir=None, fet
     conf = conf or load_uline_config()
     out = Path(out_dir) if out_dir else Path("results") / "uline"
     out.mkdir(parents=True, exist_ok=True)
-    stages = STAGES if stage in ("all", "", None) else tuple(s.strip() for s in stage.split(","))
+    stages = (DEFAULT_STAGES if stage in ("all", "", None)
+              else tuple(s.strip() for s in stage.split(",")))
     rep: dict = {}
     for s in stages:
         if s == "probe":
             rep = stage_probe(conf, out, fetch_fn=fetch_fn, query_fn=query_fn, sources=sources)
+        elif s == "validate":
+            rep = stage_validate(conf, out, fetch_fn=fetch_fn)
+        elif s == "litfetch":
+            rep = stage_litfetch(conf, out, fetch_fn=fetch_fn, species=species)
         elif s == "acquire":
             rep = stage_acquire(conf, out, fetch_fn=fetch_fn, query_fn=query_fn, sources=sources)
         elif s == "screen":
@@ -735,7 +1040,8 @@ def main(argv=None):
                                 description="ULINE (S54): industrial fluorine molecules in "
                                             "public unidentified-line lists")
     p.add_argument("--stage", default="all", choices=list(STAGES) + ["all"],
-                   help="probe|acquire|screen|assess|all")
+                   help="probe|validate|litfetch|acquire|screen|assess|all "
+                        "(all = probe,acquire,screen,assess)")
     p.add_argument("--out-dir", default="results/uline")
     p.add_argument("--sources", default="", help="comma-separated source keys (default all)")
     p.add_argument("--species", default="", help="comma-separated target species (default all)")
@@ -756,7 +1062,8 @@ if __name__ == "__main__":                                    # pragma: no cover
     raise SystemExit(main())
 
 
-__all__ = ["DEFAULTS", "STAGES", "VERDICT_NONE", "VERDICT_NO_DATA", "VERDICT_PATTERN",
-           "build_species_tables", "contaminant_lines", "load_uline_config", "main",
-           "screen_all", "source_from_table", "stage_acquire", "stage_assess", "stage_probe",
-           "stage_screen", "uline_run"]
+__all__ = ["DEFAULTS", "DEFAULT_STAGES", "STAGES", "VERDICT_NONE", "VERDICT_NO_DATA",
+           "VERDICT_PATTERN", "build_species_tables", "contaminant_lines", "load_uline_config",
+           "main", "screen_all", "source_from_table", "stage_acquire", "stage_assess",
+           "stage_litfetch", "stage_probe", "stage_screen", "stage_validate", "uline_run",
+           "validate_rotor"]

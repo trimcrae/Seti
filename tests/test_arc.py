@@ -1131,3 +1131,199 @@ def test_the_probe_budget_is_configured_with_its_measurement():
     raw = _pl.Path("config/arc.yaml").read_text()
     assert "DISCOVERY_NOT_ATTEMPTED" in raw
     assert "QUERY_RETURNED_ZERO_ROWS" in raw      # the two facts are kept apart, in writing
+
+
+# ---------------------------------------------------------------------------
+# The assess stage's wall clock (run 35675114711 lost 4 h 54 m and wrote nothing)
+# ---------------------------------------------------------------------------
+def test_a_hung_query_is_abandoned_and_raises_rather_than_blocking():
+    """pyvo's run_async polls a remote job forever; the wrapper must not.
+
+    Run 35675114711 sat in the assess stage for 4 h 54 m on one wedged VizieR
+    job and was killed by the workflow cap with no summary.json at all.  A
+    query that does not answer inside its clock is a FAILED query.
+    """
+    import threading
+    import time as _t
+
+    release = threading.Event()
+
+    def hung(adql, **kw):
+        release.wait(30.0)                        # would block the process indefinitely
+        return pd.DataFrame({"x": [1]})
+
+    bounded = acq.timeout_query_fn(hung, timeout_s=0.2)
+    t0 = _t.monotonic()
+    with pytest.raises(acq.ArcQueryTimeout):
+        bounded('SELECT "KIC" FROM "J/X/1/t"')
+    assert _t.monotonic() - t0 < 5.0              # it gave up, it did not wait
+    release.set()
+
+    # a query that answers in time is passed straight through, exception and all
+    assert acq.timeout_query_fn(lambda adql: pd.DataFrame({"x": [2]}),
+                                timeout_s=5.0)("SELECT 1")["x"].iloc[0] == 2
+
+    def boom(adql):
+        raise ValueError("no such table")
+
+    with pytest.raises(ValueError, match="no such table"):
+        acq.timeout_query_fn(boom, timeout_s=5.0)("SELECT 1")
+
+    # timeout_s = 0 restores the unbounded call (the identity wrapper)
+    base = object()
+    assert acq.timeout_query_fn(base, timeout_s=0) is base
+
+
+def test_a_hung_cone_is_abandoned_too():
+    import threading
+
+    release = threading.Event()
+
+    def hung(table, ra, dec, r, **kw):
+        release.wait(30.0)
+        return pd.DataFrame()
+
+    with pytest.raises(acq.ArcQueryTimeout):
+        acq.timeout_cone_fn(hung, timeout_s=0.2)("I/355/gaiadr3", 10.0, 20.0, 12.0)
+    release.set()
+
+
+def test_gaia_context_past_its_deadline_leaves_the_veto_unapplied():
+    """A star the clock did not reach is gaia_reached = False, never a pass."""
+    pos = pd.DataFrame({"star_id": ["1", "2", "3"], "ra": [10.0, 11.0, 12.0],
+                        "dec": [20.0, 21.0, 22.0]})
+    asked: list[float] = []
+    state = {"n": 0}
+
+    def cone(table, ra, dec, r):
+        asked.append(ra)
+        return pd.DataFrame({"RA_ICRS": [ra], "DE_ICRS": [dec], "RUWE": [1.0],
+                             "NSS": [0], "Plx": [5.0], "Gmag": [12.0], "Source": [1]})
+
+    def spent():
+        state["n"] += 1
+        # two calls per star (the Gaia cone and the variability cone): the
+        # first star is inside the clock, the rest are past it
+        return state["n"] > 2
+
+    ctx = acq.gaia_context(pos, cone_fn=cone, vari_table="I/358/vclassre", deadline=spent)
+    assert ctx["1"]["gaia_reached"] is True
+    for sid in ("2", "3"):
+        assert ctx[sid]["gaia_reached"] is False
+        assert ctx[sid]["note"] == "budget spent"
+        assert ctx[sid]["neighbours"] == []
+    assert 11.0 not in asked and 12.0 not in asked
+
+
+def test_assess_stops_at_its_budget_and_still_writes_the_summary(tmp_path):
+    """The run's screening must survive a wedged archive.
+
+    Past the clock the shortlist's Gaia context is simply missing, the run is
+    DEGRADED in writing, and every xi already computed is still reported --
+    the opposite of run 35675114711, which reported nothing at all.
+    """
+    tables, _truth = _synthetic_tables()
+    fake = _FakeTAP("ok", tables)
+    out = tmp_path / "arc"
+    conf = _conf()
+    conf["assess"] = {"budget_s": 0.0001, "query_timeout_s": 5.0}
+
+    stage_probe(conf, out, query_fn=fake)
+    stage_acquire(conf, out, query_fn=fake)
+    stage_screen(conf, out)
+
+    calls: list[str] = []
+
+    def cone(table, ra, dec, r):
+        calls.append(table)
+        return pd.DataFrame()
+
+    s = stage_assess(conf, out, offline=False, query_fn=fake, cone_fn=cone)
+    assert s["context_budget_spent"] is True
+    assert any(d.startswith("assess_context:budget_spent") for d in s["degraded"]), s["degraded"]
+    assert calls == []                            # not one cone was attempted
+    # the science that WAS measured is still on the record
+    assert s["n_stars_assessable"] == 15
+    assert s["funnel"]["xi_conservative_positive"] == 4
+    assert (out / "summary.json").exists() and (out / "xi_table.csv").exists()
+    # and no star was promoted on a veto that was never applied
+    assert s["n_candidates"] == 0
+
+
+def test_the_measured_param_table_replaces_a_catalogue_star_table_not_only_the_fallback(tmp_path):
+    """Berger+2020 beats a flare catalogue's own KIC-era Teff / radius.
+
+    MEASURED (run 35738218021): KIC 9418692, the one star above the
+    conservative ceiling, kept Shibayama's Teff 5378 K / R 1.300 Rsun because
+    `params_assumed` was False, so Berger's 5677.4 K / 1.089 Rsun -- and the
+    0.25 dex HIGHER xi they give -- never reached the record.
+    """
+    from seti.arc.run import stage_assess
+
+    rec = {"record_key": "c:kepler:9418692", "star_key": "kepler:9418692",
+           "star_id": "9418692", "catalogue": "c", "mission": "kepler",
+           "amplitude_frac": 2.007879999999e-4, "amplitude_source": "santos2021",
+           "amplitude_scale": 2.828, "amplitude_scaled": True,
+           "teff_k": 5378.0, "radius_rsun": 1.3, "logg": 4.23,
+           "teff_source": "shibayama2013_stars", "radius_source": "shibayama2013_stars",
+           "params_assumed": False, "assessable": True, "n_flares": 1, "n_independent": 1,
+           "energies_json": json.dumps([9.77912505721236e34]), "t_peaks_json": "",
+           "flares_above": "[]", "catalogue_flag": "",
+           "xi_conservative_max": 0.462301635880209, "xi_nominal_max": 1.177983517959703,
+           "n_above_conservative": 1, "n_above_nominal": 1}
+
+    params = pd.DataFrame([{"star_id": "9418692", "ra": 297.20212, "dec": 45.971088,
+                            "teff": 5677.4, "radius": 1.089, "logg": 4.341, "ruwe": 1.5562,
+                            "teff_source": "J/AJ/159/280/table2",
+                            "radius_source": "J/AJ/159/280/table2"}])
+
+    def fake_fetch(ids, mission, **kw):
+        return params, [{"table": "J/AJ/159/280/table2", "status": "OK", "n_rows": 1}]
+
+    def cone(table, ra, dec, r):
+        return pd.DataFrame()
+
+    import seti.arc.acquire as aacq
+    orig = aacq.fetch_star_params_by_id
+    aacq.fetch_star_params_by_id = fake_fetch
+    try:
+        conf = dict(_conf(), assess={"budget_s": 600.0, "query_timeout_s": 0})
+        out = tmp_path / "arc"
+        out.mkdir(parents=True)
+        s = stage_assess(conf, out, offline=False, query_fn=lambda a: None, cone_fn=cone,
+                         records=[dict(rec)], acquire_report={"catalogues": {"c": {"status": "OK"}}})
+        xi = pd.read_csv(out / "xi_table.csv", dtype={"star_id": str}).iloc[0]
+        assert xi["radius_rsun"] == pytest.approx(1.089)
+        assert xi["teff_k"] == pytest.approx(5677.4)
+        assert xi["radius_source"] == "J/AJ/159/280/table2"
+        # the excess GREW on the better parameters, and what it replaced is kept
+        assert xi["xi_conservative_max"] > 0.7
+        assert xi["radius_rsun_before"] == pytest.approx(1.3)
+        assert xi["params_source_before"] == "shibayama2013_stars"
+        assert xi["xi_conservative_max_before"] == pytest.approx(0.4623, abs=1e-3)
+        assert s["n_stars_assessable"] == 1
+
+        # and the switch restores the old, assumed-only behaviour
+        conf_off = dict(conf, assess=dict(conf["assess"], prefer_measured_params=False))
+        out2 = tmp_path / "arc2"
+        out2.mkdir(parents=True)
+        stage_assess(conf_off, out2, offline=False, query_fn=lambda a: None, cone_fn=cone,
+                     records=[dict(rec)], acquire_report={"catalogues": {"c": {"status": "OK"}}})
+        xi2 = pd.read_csv(out2 / "xi_table.csv", dtype={"star_id": str}).iloc[0]
+        assert xi2["radius_rsun"] == pytest.approx(1.3)
+        assert xi2["xi_conservative_max"] == pytest.approx(0.4623, abs=1e-3)
+    finally:
+        aacq.fetch_star_params_by_id = orig
+
+
+def test_the_assess_budget_is_configured_with_its_measurement():
+    import pathlib as _pl
+
+    import yaml
+
+    raw = _pl.Path("config/arc.yaml").read_text()
+    conf = yaml.safe_load(raw)
+    assert conf["assess"]["budget_s"] > 0 and conf["assess"]["query_timeout_s"] > 0
+    assert conf["assess"]["prefer_measured_params"] is True
+    assert "35675114711" in raw                   # the run the bound was measured on
+    assert "9418692" in raw                       # the star the parameter preference was measured on

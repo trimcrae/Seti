@@ -458,6 +458,7 @@ jobs:
             results/ignition/probe.json \
             results/ignition/sample.json \
             results/ignition/summary.json \
+            $(ls results/ignition/summary_*.json 2>/dev/null) \
             results/ignition/candidates.csv \
             results/ignition/stars_vetted.csv \
             $(ls results/ignition/screen_s*.json 2>/dev/null) \
@@ -522,6 +523,7 @@ jobs:
           scripts/commit_results.sh \
             "ignition: re-assess of a prior run's shards" \
             results/ignition/summary.json \
+            $(ls results/ignition/summary_*.json 2>/dev/null) \
             results/ignition/candidates.csv \
             results/ignition/stars_vetted.csv
       - uses: actions/upload-artifact@v4

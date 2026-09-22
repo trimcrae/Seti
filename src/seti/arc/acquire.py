@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import math
 import re
+import threading
+import time as _time
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -386,6 +388,88 @@ PARAM_VALUE_COLS = ("ra", "dec", "teff", "radius", "logg", "mass", "flag", "gaia
 _NEED = ("ra", "dec", "teff", "radius")
 
 
+class ArcQueryTimeout(TimeoutError):
+    """A query that did not answer inside its wall clock.
+
+    It is a FAILED query, not a statement about the table: the caller records
+    it as ``QUERY_FAILED`` with the elapsed time, never as
+    ``QUERY_RETURNED_ZERO_ROWS``.
+    """
+
+
+def timeout_query_fn(base_fn=None, *, timeout_s: float = 240.0):
+    """Wrap a ``query_fn(adql) -> DataFrame`` so it gives up after ``timeout_s``.
+
+    MEASURED (run 35675114711): the assess stage sat for 4 h 54 m and was
+    killed by the workflow cap with no summary written at all.  The shared
+    helper reaches VizieR over ``pyvo``'s ``run_async``, which polls a remote
+    job with NO time limit -- a wedged async job blocks the process for as
+    long as the runner lives, and everything the stage had already measured is
+    lost with it.  A query is run on a daemon thread here and abandoned when
+    the clock is spent; the thread cannot hold the interpreter open, and the
+    caller sees an ordinary query failure it already knows how to record.
+
+    ``timeout_s`` of 0 or None restores the unbounded behaviour.
+    """
+    base = base_fn or tap_query
+    limit = None if timeout_s in (None, "", 0) else float(timeout_s)
+    if limit is None:
+        return base
+
+    def _bounded(adql: str, **kw):
+        box: dict = {}
+
+        def _work():
+            try:
+                box["df"] = base(adql, **kw)
+            except BaseException as exc:                   # noqa: BLE001
+                box["exc"] = exc
+
+        th = threading.Thread(target=_work, name="arc-query", daemon=True)
+        started = _time.monotonic()
+        th.start()
+        th.join(limit)
+        if th.is_alive():
+            raise ArcQueryTimeout(
+                f"no answer in {limit:.0f} s (abandoned after "
+                f"{_time.monotonic() - started:.0f} s): {adql[:160]}")
+        if "exc" in box:
+            raise box["exc"]
+        return box.get("df")
+
+    return _bounded
+
+
+def timeout_cone_fn(base_fn=None, *, timeout_s: float = 240.0):
+    """The same wall clock for ``cone_fn(table, ra, dec, radius_arcsec)``."""
+    base = base_fn or _vizier_cone
+    limit = None if timeout_s in (None, "", 0) else float(timeout_s)
+    if limit is None:
+        return base
+
+    def _bounded(table, ra, dec, radius_arcsec, **kw):
+        box: dict = {}
+
+        def _work():
+            try:
+                box["df"] = base(table, ra, dec, radius_arcsec, **kw)
+            except BaseException as exc:                   # noqa: BLE001
+                box["exc"] = exc
+
+        th = threading.Thread(target=_work, name="arc-cone", daemon=True)
+        th.start()
+        th.join(limit)
+        if th.is_alive():
+            raise ArcQueryTimeout(
+                f"cone on {table} at ({ra}, {dec}) r={radius_arcsec}\" gave no answer "
+                f"in {limit:.0f} s")
+        if "exc" in box:
+            raise box["exc"]
+        return box.get("df")
+
+    return _bounded
+
+
 def fetch_star_params_by_id(ids, mission: str, *, query_fn=None,
                             log: AcquisitionLog | None = None, chunk: int = 200,
                             tables: dict | None = None) -> tuple[pd.DataFrame, list[dict]]:
@@ -553,14 +637,20 @@ def parse_gaia_cone(df: pd.DataFrame, ra: float, dec: float, *, match_arcsec: fl
 
 def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog | None = None,
                  gaia_table: str = "I/355/gaiadr3", vari_table: str = "I/358/vclassre",
-                 radius_arcsec: float = 12.0, match_arcsec: float = 2.0) -> dict:
+                 radius_arcsec: float = 12.0, match_arcsec: float = 2.0,
+                 deadline=None) -> dict:
     """Per star: ``{gaia_reached, ruwe, nss, plx, gmag, neighbours, vari_class, ...}``.
     A star whose Gaia cone failed carries ``gaia_reached = False`` (the veto
     is then *unapplied*, not passed); a failed variability cone only leaves
-    ``vari_class`` as ``None`` with ``vari_reached = False``."""
+    ``vari_class`` as ``None`` with ``vari_reached = False``.
+
+    ``deadline`` is a zero-argument predicate that returns True when the
+    caller's wall clock is spent.  A star reached after that carries
+    ``gaia_reached = False`` and ``note = "budget spent"`` -- which is the
+    veto left UNAPPLIED, exactly as a failed cone is, and never a pass."""
     cone_fn = cone_fn or _vizier_cone
     out: dict[str, dict] = {}
-    n_ok = n_fail = n_vok = n_vfail = 0
+    n_ok = n_fail = n_vok = n_vfail = n_skipped = 0
     for _, r in positions.iterrows():
         sid = str(r["star_id"])
         ra, dec = float(r.get("ra", np.nan)), float(r.get("dec", np.nan))
@@ -569,6 +659,11 @@ def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog |
                "gmag": float("nan"), "neighbours": [], "target_found": False}
         if not (np.isfinite(ra) and np.isfinite(dec)):
             ctx["note"] = "no position"
+            out[sid] = ctx
+            continue
+        if deadline is not None and deadline():
+            ctx["note"] = "budget spent"
+            n_skipped += 1
             out[sid] = ctx
             continue
         try:
@@ -582,7 +677,7 @@ def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog |
             if log and n_fail <= 3:
                 log.record("gaia_cone", f"cone {gaia_table} ({ra:.5f},{dec:.5f})",
                            error=repr(exc))
-        if vari_table:
+        if vari_table and not (deadline is not None and deadline()):
             try:
                 dv = cone_fn(vari_table, ra, dec, match_arcsec)
                 ctx["vari_reached"] = True
@@ -598,7 +693,8 @@ def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog |
     if log:
         log.record("gaia_cone", f"{n_ok + n_fail} cones on {gaia_table} r={radius_arcsec}\"",
                    rows=n_ok if n_ok else None, error=None if n_ok or not n_fail else
-                   "every cone failed", extra={"n_cones_ok": n_ok, "n_cones_failed": n_fail})
+                   "every cone failed", extra={"n_cones_ok": n_ok, "n_cones_failed": n_fail,
+                                               "n_cones_skipped_budget": n_skipped})
         if vari_table:
             log.record("vari_cone", f"{n_vok + n_vfail} cones on {vari_table} r={match_arcsec}\"",
                        rows=n_vok if n_vok else None,
@@ -608,7 +704,7 @@ def gaia_context(positions: pd.DataFrame, *, cone_fn=None, log: AcquisitionLog |
 
 
 __all__ = ["PARAM_TABLES", "ROLE_PATTERNS", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO",
-           "VIZIER_TAP", "AcquisitionLog", "DiscoveredTable", "discover_table",
-           "fetch_star_params_by_id", "fetch_table", "gaia_context", "parse_gaia_cone",
-           "reset_route_state", "resolve_arc_columns", "route_log_summary", "score_table",
-           "tap_query"]
+           "VIZIER_TAP", "AcquisitionLog", "ArcQueryTimeout", "DiscoveredTable",
+           "discover_table", "fetch_star_params_by_id", "fetch_table", "gaia_context",
+           "parse_gaia_cone", "reset_route_state", "resolve_arc_columns", "route_log_summary",
+           "score_table", "tap_query", "timeout_cone_fn", "timeout_query_fn"]

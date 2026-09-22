@@ -63,6 +63,17 @@ on:
 permissions:
   contents: write
 
+# The model matrices are ~30 x 18.  Threaded BLAS on them is pure overhead,
+# and it costs real time: measured in the sandbox, four screen processes each
+# spawning eight OpenBLAS threads on four cores dropped each process to ~6 %
+# CPU.  One thread per process throughout.
+env:
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+  VECLIB_MAXIMUM_THREADS: "1"
+
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -131,6 +142,13 @@ jobs:
           r = d.get("roles") or {}
           print("roles:", {k: v for k, v in r.items() if k != "elements"})
           print("elements:", {e: v["value"] for e, v in (r.get("elements") or {}).items()})
+          print("sinking-time columns:", r.get("sinking_time_columns"))
+          m = d.get("meteorites") or {}
+          print("meteorite tables:", m.get("n_files"))
+          for f in m.get("files", []):
+              print("   ", f["path"], f.get("status"), f.get("n_rows"), f.get("n_columns"))
+              print("      columns:", f.get("columns"))
+              print("      head:", (f.get("head") or "")[:300].replace("\n", " | "))
           PY
       - uses: actions/upload-artifact@v4
         if: always()
@@ -235,7 +253,13 @@ jobs:
           python - <<'PY'
           import json
           s = json.load(open("results/slag/summary.json"))
-          print(json.dumps({k: s[k] for k in s if k not in ("misfit_list_top", "tier2", "thresholds", "shards")}, indent=2)[:8000])
+          print(json.dumps({k: s[k] for k in s if k not in ("misfit_list_top", "tier2", "thresholds", "shards", "timescale_library")}, indent=2)[:9000])
+          lib = (s.get("timescale_library") or {}).get("elements") or {}
+          print("=== relative sinking timescales from the catalogue's own rows ===")
+          print("  beta refit:", (s.get("timescale_library") or {}).get("beta"),
+                "| rows with the reference:", (s.get("timescale_library") or {}).get("n_rows_with_reference"))
+          for e, v in sorted(lib.items(), key=lambda kv: kv[1]["median"]):
+              print(f"   {e:3s} log10(tau/tau_Ca) = {v['median']:+.3f} +/- {v['sigma']:.3f}  (n={v['n']})")
           print("=== misfit list (top) ===")
           for r in s["misfit_list_top"][:25]:
               print(f"  {r['name']:28s} n={r['n_measured']:2d} p={r['p_misfit']:.3f} full={r['p_misfit_full']} chi2/dof={r['chi2_per_dof']:.2f} {r['phase']:12s} {r['dominant_endmember']:14s} worst={r['worst_element']} {r['max_abs_residual_sigma']:.1f}s {r['misfit_class']}")

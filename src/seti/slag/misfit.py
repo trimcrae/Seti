@@ -153,14 +153,14 @@ class PanelModel:
 
     def __init__(self, fam: NaturalFamily, panel: Panel, tsm: TimescaleModel,
                  settings: FitSettings):
-        self.fam, self.panel, self.s = fam, panel, settings
+        self.fam, self.panel, self.s, self.tsm = fam, panel, settings, tsm
         self.elements = list(panel.elements)
         self.lim_elements = [e for e in panel.limit_elements if e in fam.elements]
         self.all_elements = self.elements + self.lim_elements
         self.X = fam.sub(self.all_elements)                         # (n_all, n_end)
         self.Tc = fam.tc(self.all_elements)
         lt, st, src = tsm.log_tau_rel(self.all_elements, panel.atmosphere, panel.teff,
-                                      panel.logg)
+                                      panel.logg, row_tau=panel.meta.get("sinking_times_s"))
         self.log_tau, self.sig_tau, self.timescale_source = lt, st, src
         self.n_meas = len(self.elements)
         self.y = np.asarray(panel.values, dtype=float)
@@ -328,11 +328,23 @@ def calibrate_misfit(fam: NaturalFamily, panel: Panel, tsm: TimescaleModel, fit:
     these errors).  Each draw is refitted with the same freedom as the data,
     and p is the fraction of draws whose minimum objective is at least the
     data's.
+
+    ``meteorite`` is the hardest and the least self-serving of the three: the
+    draw is a REAL measured meteorite (``fam.measured``, PEWDD's own
+    compilation) given a random sinking phase and the panel's own errors, and
+    it is refitted with the compiled end-member model.  It answers the
+    question the other two cannot --- can this natural model fit a real rock
+    this badly? --- so a small ``posterior`` p beside a large ``meteorite`` p
+    is a statement about the star, while two small p values are a statement
+    about the model.  No condensation lever is applied to the draw: a stone
+    already carries its own volatile depletion.
     """
     s = settings or FitSettings()
     rng = np.random.default_rng(s.seed + 1) if rng is None else rng
     pm = PanelModel(fam, panel, tsm, s)
     n = int(n_draws)
+    if draw_mode == "meteorite":
+        return _calibrate_against_meteorites(fam, pm, fit, s, n, rng)
     if draw_mode == "prior":
         thetas = pm.random_thetas(rng, n)
         base = np.zeros((n, pm.n_meas))
@@ -356,6 +368,92 @@ def calibrate_misfit(fam: NaturalFamily, panel: Panel, tsm: TimescaleModel, fit:
     p = (1.0 + float(np.sum(obj_draw >= fit.nll2))) / (n + 1.0)
     return {"p_misfit": float(p), "n_draws": n, "draw_mode": draw_mode,
             "nll2_obs": float(fit.nll2), "chi2_obs": float(fit.chi2),
+            "nll2_draw_p50": float(np.median(obj_draw)),
+            "nll2_draw_p95": float(np.percentile(obj_draw, 95)),
+            "nll2_draw_max": float(np.max(obj_draw))}
+
+
+#: A meteorite calibration is only attempted with at least this many real
+#: bodies that measure, jointly, every element it calibrates on.
+METEORITE_MIN_BODIES = 20
+
+#: and it is not worth doing on fewer elements than this.
+METEORITE_MIN_ELEMENTS = 4
+
+
+def meteorite_subset(suite, elements, *, min_bodies: int = METEORITE_MIN_BODIES,
+                     min_elements: int = METEORITE_MIN_ELEMENTS):
+    """The largest element subset of ``elements`` that enough real bodies cover.
+
+    Requiring a complete analysis of a 16-element panel leaves almost no
+    meteorites --- the compilations are assembled from papers that each
+    measured what they cared about --- so the calibration would be absent
+    exactly on the rich panels that carry the most information.  The rarest
+    element is dropped until enough bodies measure the whole of what is left,
+    and the data are refitted on the same subset so the comparison stays like
+    for like.  Which elements were used, and which were dropped, travel with
+    the result.
+    """
+    els = [e for e in elements if e in (suite.elements if suite is not None else [])]
+    while len(els) >= int(min_elements):
+        idx = [suite.elements.index(e) for e in els]
+        ok = np.flatnonzero(np.all(np.isfinite(suite.log_ratio[:, idx]), axis=1))
+        if ok.size >= int(min_bodies):
+            return els, ok
+        counts = [int(np.isfinite(suite.log_ratio[:, i]).sum()) for i in idx]
+        els.pop(int(np.argmin(counts)))
+    return [], np.zeros(0, dtype=int)
+
+
+def _calibrate_against_meteorites(fam, pm: PanelModel, fit: FitResult, s: FitSettings,
+                                  n: int, rng) -> dict:
+    """p from draws that are measured meteorites, not model realisations."""
+    suite = getattr(fam, "measured", None)
+    out = {"p_misfit": None, "n_draws": 0, "draw_mode": "meteorite",
+           "nll2_obs": float(fit.nll2), "chi2_obs": float(fit.chi2)}
+    if suite is None:
+        return {**out, "status": "NO_MEASURED_SUITE"}
+    missing = [e for e in pm.elements if e not in suite.elements]
+    els, ok = meteorite_subset(suite, pm.elements)
+    if not els:
+        return {**out, "status": "TOO_FEW_BODIES_COVER_THE_PANEL",
+                "elements_not_in_suite": missing,
+                "n_elements_in_suite": int(len(pm.elements) - len(missing))}
+    dropped = [e for e in pm.elements if e not in els]
+    if dropped:
+        # refit the DATA on the same subset, so p compares like with like
+        sub = pm.panel.subset(dropped)
+        fit = fit_panel(fam, sub, pm.tsm, s, rng=rng)
+        pm = PanelModel(fam, sub, pm.tsm, s)
+        out.update(nll2_obs=float(fit.nll2), chi2_obs=float(fit.chi2))
+    out.update(elements_used=list(els), elements_dropped=dropped,
+               elements_not_in_suite=missing, n_elements_used=len(els))
+    idx = [suite.elements.index(e) for e in els]
+    block = suite.log_ratio[:, idx]
+    pick = rng.choice(ok, size=n, replace=ok.size < n)
+    thetas = pm.random_thetas(rng, n)
+    base = np.zeros((n, pm.n_meas))
+    for j in range(n):
+        _, _, _, t_acc, t_dec = pm.unpack(thetas[j])
+        ph = phase_log_factor(pm.log_tau, t_acc, t_dec)[: pm.n_meas]
+        m = block[pick[j]] + ph
+        base[j] = m + (float(np.mean(pm.y)) - float(np.mean(m)))
+    draws = base + rng.normal(size=(n, pm.n_meas)) * fit.sigma_eff[None, :]
+    starts = pm.random_thetas(rng, s.n_random)
+    obj_mat = pm.batch_objective(starts, draws)
+    obj_draw = np.zeros(n)
+    for j in range(n):
+        i0 = int(np.argmin(obj_mat[:, j]))
+        r = minimize(lambda th, yy=draws[j]: pm.objective(th, y=yy)[0], starts[i0],
+                     method="Nelder-Mead",
+                     options={"maxiter": int(s.refine_maxiter), "xatol": 1e-3, "fatol": 1e-4,
+                              "adaptive": True})
+        obj_draw[j] = min(float(r.fun), float(obj_mat[i0, j]))
+    p = (1.0 + float(np.sum(obj_draw >= fit.nll2))) / (n + 1.0)
+    return {**out, "p_misfit": float(p), "n_draws": n, "status": "OK",
+            "n_bodies_covering_panel": int(ok.size),
+            "n_distinct_bodies_drawn": int(len(set(pick.tolist()))),
+            "classes_drawn": sorted({suite.classes[i] for i in pick.tolist()})[:12],
             "nll2_draw_p50": float(np.median(obj_draw)),
             "nll2_draw_p95": float(np.percentile(obj_draw, 95)),
             "nll2_draw_max": float(np.max(obj_draw))}

@@ -197,21 +197,52 @@ def _is_companion(col: str) -> bool:
     return any(str(col).startswith(p) for p in _VIZIER_PREFIXES)
 
 
-def element_value_column(el: str, columns: list[str], descriptions: dict | None = None
-                         ) -> str | None:
-    """The column carrying log(el/H(e)), by name first, then by description."""
+#: Descriptions/units that disqualify a BARE element-symbol column from being
+#: read as an abundance.  PEWDD's ``B`` is the magnetic field, not boron; an
+#: integer-formatted column is never a log abundance.  Verified on the served
+#: VizieR metadata, run 35737518217.
+_NOT_ABUNDANCE_DESC = re.compile(
+    r"(?i)(magnetic|field\b|\bgauss\b|\bMG\b|magnitude|photometr|band\b|flux|parallax|"
+    r"binar|separation|mass\b|temperature|gravity|epoch|date|\bnote|comment|identifier|"
+    r"bibcode|reference|excess|number|counter)")
+_INTEGER_UNIT = re.compile(r"(?i)^(I\d+|A\d+|\d*I\d+)$")
+
+
+def element_value_column(el: str, columns: list[str], descriptions: dict | None = None,
+                         units: dict | None = None, *, allow_bare: bool = True) -> str | None:
+    """The column carrying log(el/H(e)), by name first, then by description.
+
+    Two tiers, and the order between them is load-bearing.  Tier A is every
+    name that *states* a ratio against the atmosphere's dominant element
+    (``log(Ti/H(e))``, ``Ti/He``, ``[Ti/H]``); tier B is the bare symbol.  Tier
+    A is scanned across ALL columns before tier B is considered, because a
+    table that names abundances explicitly will also contain bare-symbol
+    columns that mean something else entirely --- PEWDD's ``B`` is the
+    magnetic field.  A tier-B match is further refused when the column's unit
+    is an integer format or its description names a non-abundance quantity.
+    """
     descriptions = descriptions or {}
-    name_pats = [
-        rf"^{el}$", rf"^log{el}$", rf"^log\(?{el}/?H\(?e\)?\)?$", rf"^{el}/H\(?e\)?$",
+    units = units or {}
+    ratio_pats = [
+        rf"^log{el}$", rf"^log\(?{el}/?H\(?e\)?\)?$", rf"^{el}/H\(?e\)?$",
         rf"^{el}_?H\(?e\)?$", rf"^\[{el}/H\(?e\)?\]$", rf"^{el}He$", rf"^{el}/He$",
         rf"^{el}_He$", rf"^log\(?{el}/He\)?$", rf"^{el}Hx$", rf"^{el}_x$", rf"^{el}/X$",
         rf"^log{el}H$", rf"^log{el}He$", rf"^{el}abund$", rf"^A{el}$",
     ]
-    for col in columns:
-        if _is_companion(col):
-            continue
-        n = _norm(col)
-        if any(re.fullmatch(p, n, flags=re.IGNORECASE) for p in name_pats):
+    bare_pats = [rf"^{el}$"]
+    tiers = [(ratio_pats, False)] + ([(bare_pats, True)] if allow_bare else [])
+    for pats, bare in tiers:
+        for col in columns:
+            if _is_companion(col):
+                continue
+            n = _norm(col)
+            if not any(re.fullmatch(p, n, flags=re.IGNORECASE) for p in pats):
+                continue
+            if bare:
+                if _INTEGER_UNIT.fullmatch(str(units.get(col, "")).strip()):
+                    continue
+                if _NOT_ABUNDANCE_DESC.search(str(descriptions.get(col, ""))):
+                    continue
             return col
     for col in columns:
         if _is_companion(col):
@@ -221,6 +252,8 @@ def element_value_column(el: str, columns: list[str], descriptions: dict | None 
                 or re.search(rf"(?i)\b{el}\b\s*/\s*H\s*\(?\s*e\s*\)?", d) \
                 or re.search(rf"(?i)abundance\s+of\s+{el}\b", d):
             if re.search(r"(?i)(error|uncertaint|limit|flag)", d):
+                continue
+            if _INTEGER_UNIT.fullmatch(str(units.get(col, "")).strip()):
                 continue
             return col
     return None
@@ -252,6 +285,29 @@ def companion_column(value_col: str, columns: list[str], kind: str,
         if rx.search(d) and re.search(rf"\b{re.escape(el)}\b", d) and col != base:
             return col
     return None
+
+
+def _sinking_time_columns(columns: list[str], elements: list[str],
+                          descriptions: dict | None = None) -> dict:
+    """``{element: column}`` for PEWDD's per-star diffusion timescales.
+
+    PEWDD publishes the sinking timescale of every element it tabulates, for
+    that star's own Teff and log g (``SinTimeCa`` on VizieR,
+    ``Sinking_time_Ca`` in the repository copy).  These are the real Koester
+    timescales the field uses; where a row has them they replace the embedded
+    mass-scaling law, per object, and the result records which was used.
+    """
+    descriptions = descriptions or {}
+    out = {}
+    for el in elements:
+        pats = [rf"^sintime{el}$", rf"^sinking_?time_?{el}$", rf"^tau_?{el}$",
+                rf"^t_?sink_?{el}$", rf"^difftime{el}$"]
+        for c in columns:
+            n = _norm(c)
+            if any(re.fullmatch(p, n, flags=re.IGNORECASE) for p in pats):
+                out[el] = c
+                break
+    return out
 
 
 def resolve_roles(columns: list[str], elements: list[str], *, units: dict | None = None,
@@ -292,18 +348,50 @@ def resolve_roles(columns: list[str], elements: list[str], *, units: dict | None
                      desc_pats=[r"dominant (element|atmospheric)", r"atmosphere (type|composition)"]),
         "hhe": first([r"log\(?h/he\)?", r"h/he", r"logh/he", r"hhe", r"logh", r"h_he"],
                      desc_pats=[r"log\s*\(?\s*H\s*/\s*He"]),
+        # PEWDD's own bookkeeping and contamination metadata (see the module
+        # docstring): the detection / limit counts are the cross-check on the
+        # negative-error convention, the rest travel with every panel.
+        "n_detections": first([r"total_?detections", r"n_?detections", r"ndet"],
+                              desc_pats=[r"(number|total).{0,20}detections"]),
+        "n_upper_limits": first([r"total_?upper_?limits", r"n_?upper_?limits", r"nlim"],
+                                desc_pats=[r"(number|total).{0,20}upper limits"]),
+        "identifier": first([r"identifier", r"ident"], desc_pats=[r"^identifier"]),
+        "binary": first([r"bin", r"binary", r"binarity"], desc_pats=[r"^binar"]),
+        "binary_sep": first([r"binsep", r"binary_?separation", r"sep"],
+                            desc_pats=[r"binary separation"]),
+        "ir_excess": first([r"irexcess", r"infrared_?excess", r"ir_?excess"],
+                           desc_pats=[r"infrared excess"]),
+        "gas_disc": first([r"gascomp", r"gas_?component", r"gas"],
+                          desc_pats=[r"gas(eous)? (component|disc|disk)"]),
+        "bfield": first([r"b", r"magfield", r"mag_?field", r"bfield"],
+                        desc_pats=[r"magnetic field"]),
+        "t_since_acc": first([r"time", r"time_?since_?acc(_?ended)?", r"tsinceacc"],
+                             desc_pats=[r"time since accretion"]),
+        "mixing_zone_mass": first([r"massmz", r"mixing_?zone_?mass", r"mcvz"],
+                                  desc_pats=[r"(mixing|convection) zone mass"]),
     }
+    roles["sinking_time_columns"] = _sinking_time_columns(cols, elements, descriptions)
     if roles["atm"] == roles["hhe"] and roles["atm"] is not None:
         roles["atm"] = None
+    # Pass 1 refuses bare element symbols.  If at least three elements resolve
+    # that way the table states its abundances as ratios, and a bare symbol in
+    # such a table means something else (PEWDD's ``B`` is the magnetic field),
+    # so pass 2 is not run at all.
+    strict = {el: element_value_column(el, cols, descriptions, units, allow_bare=False)
+              for el in elements}
+    n_strict = sum(1 for v in strict.values() if v)
+    ratio_convention = n_strict >= 3
     els = {}
     for el in elements:
-        v = element_value_column(el, cols, descriptions)
+        v = strict[el] if ratio_convention else element_value_column(el, cols, descriptions, units)
         if v is None:
             continue
         els[el] = {"value": v, "error": companion_column(v, cols, "error", descriptions),
                    "limit": companion_column(v, cols, "limit", descriptions),
                    "unit": str(units.get(v, "")), "description": str(descriptions.get(v, ""))}
     roles["elements"] = els
+    roles["ratio_convention_detected"] = bool(ratio_convention)
+    roles["n_elements_strict"] = int(n_strict)
     roles["n_elements_resolved"] = len(els)
     # what the abundance columns say the reference is
     refs = set()
@@ -379,18 +467,177 @@ def _is_limit(v) -> bool:
                                                "<=", "≤")
 
 
+#: Qualifiers PEWDD appends to a star name to distinguish alternative model
+#: fits, revisions and instrument arms of the SAME object ("PG1225-079 Model 2",
+#: "GD 362 Updated", "WDJ0649-7624 (phot)", "Gaia J0347+1624 (Spec, Opt)").
+#: Verified against the served table, run 35737893922.  They must be stripped
+#: before grouping, or one star enters the misfit list several times and the
+#: multi-reference kill never sees its own object's other panels.
+_NAME_QUALIFIER = re.compile(
+    r"(?i)(\s*\((?:phot|spec)[^)]*\)|\s*\bmodel\s*\d+\b|\s*\bupdated\b|\s*\bnew\b"
+    r"|\s*\brevised\b|\s*\bcorrected\b|\s*\bsolution\s*\d+\b|\s*\bfit\s*\d+\b)+\s*$")
+
+
+def strip_name_qualifiers(name: str) -> str:
+    """The star name without PEWDD's per-solution qualifiers."""
+    s = str(name or "").strip()
+    prev = None
+    while prev != s:
+        prev = s
+        s = _NAME_QUALIFIER.sub("", s).strip()
+    return s or str(name or "").strip()
+
+
 def normalise_name(name: str) -> str:
-    s = str(name or "").replace("−", "-").replace("–", "-").replace("—", "-")
+    s = strip_name_qualifiers(name)
+    s = s.replace("−", "-").replace("–", "-").replace("—", "-")
     s = re.sub(r"[\s_]+", "", s).upper()
-    return s
+    # PEWDD writes a stray '?' inside some SDSS designations
+    return s.replace("?", "")
+
+
+OBJECT_MATCH_ARCSEC = 5.0
+
+
+def assign_object_keys(panels: list[Panel], *, arcsec: float = OBJECT_MATCH_ARCSEC) -> dict:
+    """Reconcile PEWDD's star–paper rows into objects ON THE SKY, not on the name.
+
+    PEWDD is one row per star per publication, and the same star is written
+    under whatever designation its paper used: GD 378 and WD 1822+410 are one
+    He-atmosphere DBZ; PG 0843+516, PG 0843+517 and WD0843+516 are one DA.
+    Grouping on the (qualifier-stripped, case- and space-normalised) name
+    leaves those as separate objects, which silently disables every check that
+    compares an object's own sources -- the multi-reference disagreement kill
+    above all -- and inflates the object count.
+
+    Every served row carries RAJ2000/DEJ2000, so objects are built by
+    single-linkage on the sky within ``arcsec`` (3" by default; the count is on
+    a plateau there -- 1610 objects at 1", 1588 at 3", 1576 at 5", 1560 at 10"
+    for the 3547 served rows, against 2441 name groups).  A panel with no
+    usable coordinate keeps its name key, so nothing is lost when the
+    coordinate columns are absent.  The chosen label is the most frequent
+    stripped name in the group, and every designation is kept on the panel.
+
+    5" is the default because PEWDD's positions are transcribed per paper at
+    different epochs and white dwarfs have large proper motions: GD 362's two
+    served positions differ by 3.5".  The object count is flat across the
+    choice (1610 at 1", 1594 at 2", 1588 at 3", 1576 at 5", 1566 at 8", 1559
+    at 12" for the 3547 served rows, against 2441 name groups), and the chance
+    of a false 5" pair among ~1600 objects over the whole sky is ~1e-3.
+    """
+    ra = np.array([p.meta.get("ra", np.nan) for p in panels], dtype=float)
+    dec = np.array([p.meta.get("dec", np.nan) for p in panels], dtype=float)
+    ok = np.isfinite(ra) & np.isfinite(dec)
+    parent = list(range(len(panels)))
+
+    def find(a: int) -> int:
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    n_pairs = 0
+    if ok.sum() >= 2:
+        from scipy.spatial import cKDTree
+
+        idx = np.flatnonzero(ok)
+        r, d = np.radians(ra[idx]), np.radians(dec[idx])
+        xyz = np.c_[np.cos(d) * np.cos(r), np.cos(d) * np.sin(r), np.sin(d)]
+        chord = 2.0 * np.sin(np.radians(float(arcsec) / 3600.0) / 2.0)
+        for a, b in cKDTree(xyz).query_pairs(chord):
+            ia, ib = find(int(idx[a])), find(int(idx[b]))
+            if ia != ib:
+                parent[ia] = ib
+                n_pairs += 1
+    # The name is the UNRELIABLE key and must never link two sky positions.
+    # PEWDD carries rows whose designation belongs to a different star from
+    # their coordinates (two rows called "WD1202-232" sit 40 degrees apart;
+    # rows called "Ross 640" appear at both 16h28m+36 and 07h40m-17).  Joining
+    # on the name as well as the sky chains those into single-linkage blobs of
+    # up to 27 rows and ten unrelated designations.  So rows are joined on the
+    # name ONLY when neither has a usable coordinate.
+    name_groups: dict[str, int] = {}
+    for i, p in enumerate(panels):
+        k = p.meta.get("name_key") or normalise_name(p.name)
+        name_groups.setdefault(k, i)
+        if ok[i]:
+            continue
+        j = name_groups[k]
+        if ok[j]:
+            continue
+        ia, ib = find(j), find(i)
+        if ia != ib:
+            parent[ia] = ib
+    by_name = name_groups
+    groups: dict[int, list[int]] = {}
+    for i in range(len(panels)):
+        groups.setdefault(find(i), []).append(i)
+    n_merged_by_sky = 0
+    used_keys: dict[str, int] = {}
+    for members in sorted(groups.values(), key=lambda m: (-len(m), m[0])):
+        names = [strip_name_qualifiers(panels[i].meta.get("star_raw") or panels[i].name)
+                 for i in members]
+        keys = sorted({panels[i].meta.get("name_key") or normalise_name(panels[i].name)
+                       for i in members})
+        if len(keys) > 1:
+            n_merged_by_sky += 1
+        label = max(sorted(set(names)), key=lambda s: (names.count(s), -len(s)))
+        okey = normalise_name(label) or keys[0]
+        ras = [panels[i].meta.get("ra") for i in members
+               if np.isfinite(panels[i].meta.get("ra", np.nan))]
+        des = [panels[i].meta.get("dec") for i in members
+               if np.isfinite(panels[i].meta.get("dec", np.nan))]
+        # A designation PEWDD reuses for two different sky positions must not
+        # re-merge them downstream: the object key stays unique, tagged by
+        # position, and the clash is visible in the key itself.
+        if okey in used_keys:
+            tag = (f"@{np.mean(ras):.4f}{np.mean(des):+.4f}" if ras
+                   else f"#{used_keys[okey] + 1}")
+            used_keys[okey] += 1
+            okey = okey + tag
+        used_keys.setdefault(okey, 0)
+        for i in members:
+            panels[i].meta["object_key"] = okey
+            panels[i].meta["object_label"] = label
+            panels[i].meta["object_designations"] = keys
+            panels[i].meta["object_n_rows"] = len(members)
+            if ras:
+                panels[i].meta["object_ra"] = float(np.mean(ras))
+                panels[i].meta["object_dec"] = float(np.mean(des))
+    per_name: dict[str, set] = {}
+    for p in panels:
+        per_name.setdefault(p.meta.get("name_key") or "", set()).add(p.meta["object_key"])
+    reused = sorted(k for k, v in per_name.items() if len(v) > 1)
+    return {"match_arcsec": float(arcsec), "n_rows": len(panels),
+            "n_rows_with_coordinates": int(ok.sum()),
+            "n_name_groups": len(by_name), "n_objects": len(groups),
+            "n_objects_merging_designations": n_merged_by_sky,
+            "n_sky_links": n_pairs,
+            "n_designations_reused_across_objects": len(reused),
+            "designations_reused_across_objects": reused[:20]}
 
 
 def build_panels(df: pd.DataFrame, roles: dict, *, default_error_dex: float = 0.2,
-                 error_floor_dex: float = 0.02, elements=None) -> tuple[list[Panel], list[dict]]:
-    """One panel per table row (one white dwarf, one source) from the resolved roles."""
+                 error_floor_dex: float = 0.02, elements=None,
+                 sinking=None, match_arcsec: float = OBJECT_MATCH_ARCSEC,
+                 grouping_out: dict | None = None) -> tuple[list[Panel], list[dict]]:
+    """One panel per table row (one white dwarf, one source) from the resolved roles.
+
+    Upper limits
+    ------------
+    PEWDD does not carry a ``l_`` flag column for the metals: it marks an
+    upper limit by writing a NEGATIVE value (−1) in that element's error
+    column.  This was read off the served table (run 35737893922) and then
+    verified against PEWDD's own ``total_detections`` bookkeeping column,
+    which agrees with "error < 0 means not a detection" on all 3475 rows.
+    Reading such a row as a detection with an assumed error would manufacture
+    exactly the depletion this channel hunts, so a negative error routes the
+    value to the panel's one-sided limit list.
+    """
     panels, diag = [], []
     els = roles.get("elements", {})
     order = [e for e in (elements or list(els)) if e in els]
+    sinking = sinking or {}
     for i, row in df.iterrows():
         name = str(row.get(roles["name"], f"row{i}")) if roles.get("name") else f"row{i}"
         ref = str(row.get(roles["ref"], "")) if roles.get("ref") else ""
@@ -404,29 +651,86 @@ def build_panels(df: pd.DataFrame, roles: dict, *, default_error_dex: float = 0.
             v = _to_float(raw)
             if not np.isfinite(v):
                 continue
-            limit = _is_limit(raw) or (r["limit"] is not None and _is_limit(row.get(r["limit"])))
+            err = _to_float(row.get(r["error"])) if r["error"] else np.nan
+            limit = (np.isfinite(err) and err < 0) or _is_limit(raw) \
+                or (r["limit"] is not None and _is_limit(row.get(r["limit"])))
             if limit:
                 lim_e.append(el)
                 lim_v.append(v)
                 continue
-            err = _to_float(row.get(r["error"])) if r["error"] else np.nan
             if not np.isfinite(err) or err <= 0:
                 err = float(default_error_dex)
                 assumed.append(el)
             meas_e.append(el)
             meas_v.append(v)
             meas_s.append(max(float(err), float(error_floor_dex)))
-        p = Panel(name=name, elements=meas_e, values=np.array(meas_v), errors=np.array(meas_s),
+        meta = {"row": int(i), "atmosphere_how": how, "atmosphere_raw": atm,
+                "errors_assumed_for": assumed,
+                "spt": str(row.get(roles["spt"], "")) if roles.get("spt") else "",
+                "star_raw": name, "name_key": normalise_name(name),
+                "ra": _to_float(row.get(roles["ra"])) if roles.get("ra") else np.nan,
+                "dec": _to_float(row.get(roles["dec"])) if roles.get("dec") else np.nan}
+        meta.update(_provenance_of_row(row, roles))
+        meta["stated_n_detections"] = _stated_count(row, roles, "n_detections")
+        meta["stated_n_upper_limits"] = _stated_count(row, roles, "n_upper_limits")
+        tau = _row_sinking_times(row, sinking, meas_e + lim_e)
+        if tau:
+            meta["sinking_times_s"] = tau
+        p = Panel(name=strip_name_qualifiers(name) or name, elements=meas_e,
+                  values=np.array(meas_v), errors=np.array(meas_s),
                   atmosphere=atm if atm != ATM_UNKNOWN else ATM_HE, teff=teff, logg=logg,
-                  reference=ref, limit_elements=lim_e, limit_values=np.array(lim_v),
-                  meta={"row": int(i), "atmosphere_how": how, "atmosphere_raw": atm,
-                        "errors_assumed_for": assumed, "spt": str(row.get(roles["spt"], ""))
-                        if roles.get("spt") else "", "name_key": normalise_name(name)})
+                  reference=ref, limit_elements=lim_e, limit_values=np.array(lim_v), meta=meta)
         panels.append(p)
         diag.append({"row": int(i), "name": name, "reference": ref, "atmosphere": atm,
                      "atmosphere_how": how, "n_measured": len(meas_e), "n_limits": len(lim_e),
-                     "n_errors_assumed": len(assumed)})
+                     "n_errors_assumed": len(assumed),
+                     "stated_n_detections": meta["stated_n_detections"],
+                     "n_sinking_times": len(tau)})
+    grouping = assign_object_keys(panels, arcsec=match_arcsec)
+    diag_by_row = {d["row"]: d for d in diag}
+    for p in panels:
+        d = diag_by_row.get(p.meta["row"])
+        if d is not None:
+            d["object_key"] = p.meta.get("object_key")
+    if grouping_out is not None:
+        grouping_out.update(grouping)
     return panels, diag
+
+
+def _stated_count(row: pd.Series, roles: dict, key: str) -> int | None:
+    col = roles.get(key)
+    if not col:
+        return None
+    v = _to_float(row.get(col))
+    return int(v) if np.isfinite(v) else None
+
+
+def _provenance_of_row(row: pd.Series, roles: dict) -> dict:
+    """The contamination metadata PEWDD carries per row, kept with the panel."""
+    out: dict = {}
+    for key in ("binary", "binary_sep", "ir_excess", "gas_disc", "bfield", "comment",
+                "t_since_acc", "mixing_zone_mass", "identifier"):
+        col = roles.get(key)
+        if not col:
+            continue
+        v = row.get(col)
+        s = "" if v is None else str(v).strip()
+        if s and s.lower() not in ("nan", "none", "--"):
+            out[key] = s[:200]
+    return out
+
+
+def _row_sinking_times(row: pd.Series, sinking: dict, elements: list[str]) -> dict:
+    """PEWDD's own per-element sinking timescale for this star, where it has one."""
+    out = {}
+    for el in elements:
+        col = sinking.get(el)
+        if not col:
+            continue
+        v = _to_float(row.get(col))
+        if np.isfinite(v) and v > 0:
+            out[el] = float(v)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -514,7 +818,11 @@ def fetch_pewdd(cfg: dict, out_dir: Path, *, fetch_fn=None, tap_fn=None, log: Ac
     # GitHub, also fetched when VizieR served (it carries provenance VizieR may not)
     entries, branch = github_tree(src["github_repo"], fetch_fn=fetch_fn, log=log)
     gh = {"branch": branch, "n_entries": len(entries), "files": []}
-    for e in pick_pewdd_csv(entries)[:3]:
+    # One GitHub copy only: the repository also ships dated snapshots
+    # (PEWDD_Feb2026, PEWDD_oldvers1) that are the same table at an
+    # earlier epoch, and committing several megabytes of duplicate rows
+    # back to the branch buys nothing.
+    for e in pick_pewdd_csv(entries)[: int(src.get("max_github_csv", 1))]:
         url = github_raw_url(src["github_repo"], branch, e["path"])
         text = fetch_text(url, fetch_fn=fetch_fn, retries=2, log=log, stage="github_csv")
         if not text:
@@ -540,6 +848,53 @@ def fetch_pewdd(cfg: dict, out_dir: Path, *, fetch_fn=None, tap_fn=None, log: Ac
         rec["columns"] = [str(c) for c in df.columns]
         rec["n_rows"] = int(len(df))
     return rec
+
+
+def fetch_meteorite_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
+                           log: AcquisitionLog | None = None) -> dict:
+    """PEWDD's own meteorite compilations, which anchor the natural family empirically.
+
+    The PEWDD repository ships ``meteorite_database_Mg.csv`` / ``_Fe.csv`` /
+    ``_Si.csv`` (element ratios of individual measured meteorites, normalised
+    to three different denominators) and ``mass_fractions.csv``.  They are
+    fetched, described and saved; the description is what lets the next
+    dispatch widen the Tier 2 envelopes to the *measured* meteorite spread
+    instead of the fifteen literature end-members alone.  Nothing downstream
+    depends on them being present.
+    """
+    log = log or AcquisitionLog()
+    src = cfg["sources"]["pewdd"]
+    out_dir = Path(out_dir)
+    (out_dir / "data").mkdir(parents=True, exist_ok=True)
+    out: dict = {"repo": src["github_repo"], "files": []}
+    patterns = src.get("meteorite_patterns") or [r"(?i)meteorite[^/]*\.csv$",
+                                                 r"(?i)mass_fractions\.csv$"]
+    entries, branch = github_tree(src["github_repo"], fetch_fn=fetch_fn, log=log)
+    out["branch"] = branch
+    wanted = [e for e in entries if e.get("type") == "blob"
+              and any(re.search(p, str(e["path"])) for p in patterns)]
+    for e in wanted[: int(src.get("max_meteorite_files", 8))]:
+        url = github_raw_url(src["github_repo"], branch, e["path"])
+        text = fetch_text(url, fetch_fn=fetch_fn, retries=2, log=log, stage="meteorite_csv")
+        rec: dict = {"path": e["path"], "size": e.get("size"), "url": url}
+        if not text:
+            rec["status"] = STATUS_FAILED
+            out["files"].append(rec)
+            continue
+        try:
+            mdf = pd.read_csv(io.StringIO(text), low_memory=False)
+        except Exception as exc:                                  # noqa: BLE001
+            rec.update(status=STATUS_FAILED, error=repr(exc)[:300], head=text[:600])
+            out["files"].append(rec)
+            continue
+        local = out_dir / "data" / ("meteorites_" + re.sub(r"[^A-Za-z0-9_.-]", "_", e["path"]))
+        mdf.to_csv(local, index=False)
+        rec.update(status=STATUS_OK, n_rows=int(len(mdf)), n_columns=int(mdf.shape[1]),
+                   columns=[str(c) for c in mdf.columns][:80], local=str(local),
+                   head=text[:600])
+        out["files"].append(rec)
+    out["n_files"] = len(out["files"])
+    return out
 
 
 def discover_timescale_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
@@ -587,6 +942,8 @@ def discover_timescale_tables(cfg: dict, out_dir: Path, *, fetch_fn=None,
 __all__ = ["ATM_H", "ATM_HE", "ATM_UNKNOWN", "STATUS_FAILED", "STATUS_OK", "STATUS_ZERO",
            "VIZIER_ASU", "AcquisitionLog", "atmosphere_from_spt", "atmosphere_of_row",
            "build_panels", "companion_column", "discover_timescale_tables",
-           "element_value_column", "fetch_pewdd", "fetch_text", "github_raw_url",
+           "element_value_column", "fetch_meteorite_tables", "fetch_pewdd", "fetch_text",
+           "github_raw_url",
            "github_tree", "http_text", "normalise_name", "pick_pewdd_csv",
-           "pick_timescale_files", "probe_pewdd", "reset_route_state", "resolve_roles"]
+           "pick_timescale_files", "probe_pewdd", "reset_route_state", "resolve_roles",
+           "strip_name_qualifiers"]

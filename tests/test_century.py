@@ -349,9 +349,13 @@ def test_censored_efficiency_falls_when_plates_are_shallow():
 
 
 def test_injected_cessation_is_recovered():
+    # The series change is put well before the cessation ON PURPOSE: a plate
+    # series that changes AT the transition is a confounder the channel is
+    # required to kill (test_series_change_at_the_transition_is_not_a_cessation),
+    # so injecting one here would test the wrong thing.
     rng = np.random.default_rng(7)
     lc = synth_plates(rng, period=0.57, amp=0.5, stop_year=1931.0, n_per_year=30,
-                      lim_mean=14.0, lim_sd=0.4)
+                      lim_mean=14.0, lim_sd=0.4, series_switch_year=1910.0)
     res = analyze_century(lc, 0.57, **_cess_kwargs(), rng=rng)
     assert res.status == "cessation", (res.status, res.flags)
     assert 1927 < res.transition_year < 1935
@@ -448,6 +452,49 @@ def test_mode_switch_and_blend_transition_are_closed():
     res2 = analyze_century(lc2, 0.57, **_cess_kwargs(), rng=rng)
     assert res2.status != "cessation" or "blend_transition" not in res2.flags
     assert np.isfinite(res2.blend_frac_post) and res2.blend_frac_post > 0.4
+
+
+def test_series_change_at_the_transition_is_not_a_cessation():
+    """Emulsion changes are series changes, and series are clustered in calendar
+    time.  A "cessation" whose pre and post blocks share no plate series cannot
+    be told from the plates changing, so it is not a cessation."""
+    rng = np.random.default_rng(31)
+    lc = synth_plates(rng, period=0.57, amp=0.5, stop_year=1932.0, n_per_year=30,
+                      lim_mean=14.0, lim_sd=0.3, series_switch_year=1932.0)
+    res = analyze_century(lc, 0.57, **_cess_kwargs(), rng=rng)
+    assert res.status != "cessation", (res.status, res.flags)
+    assert "series_disjoint" in res.flags
+    assert res.series_overlap_frac == 0.0 or not np.isfinite(res.series_overlap_frac)
+    # The same star with the series change moved off the transition IS one.
+    lc2 = synth_plates(np.random.default_rng(31), period=0.57, amp=0.5, stop_year=1932.0,
+                       n_per_year=30, lim_mean=14.0, lim_sd=0.3, series_switch_year=1910.0)
+    res2 = analyze_century(lc2, 0.57, **_cess_kwargs(), rng=np.random.default_rng(32))
+    assert "series_disjoint" not in res2.flags
+    assert res2.series_overlap_frac > 0.0
+
+
+def test_a_lone_post_gap_false_alarm_does_not_move_the_transition():
+    """The Hippke/Lund failure mode with a periodogram in front of it.
+
+    The per-block detector fires at rate `fap` by construction and the first
+    block after the Menzel gap is the densest post-gap block in DASCH.  If one
+    such false alarm can end the pre-segment, the transition moves across the
+    gap, the gap's photometric step stops being deferred, and the plates' own
+    offset is charged to the star.
+    """
+    from seti.century.cease import analyze_century as _ac
+
+    rng = np.random.default_rng(9)
+    lc = synth_plates(rng, period=0.57, amp=0.5, stop_year=1960.0, n_per_year=30,
+                      lim_mean=14.0, lim_sd=0.4, step=0.3)
+    res = _ac(lc, 0.57, **_cess_kwargs(), rng=rng)
+    # The signal really stops at the gap: the transition has to be AT the gap
+    # whether or not a post-gap block happened to fire.
+    assert res.transition_at_gap, (res.transition_year, res.flags)
+    assert res.last_detected_year < GAP[0] <= res.first_post_year
+    assert res.mean_shift_across_gap and "mean_flux_gap_uncorrected" in res.flags
+    # And the 0.3 mag step is measured, not absorbed into the star.
+    assert abs(res.mean_shift_mag - 0.3) < 0.1
 
 
 def test_catalogue_period_not_present_is_reported_not_claimed():
@@ -582,7 +629,8 @@ def test_parse_shard():
 
 def test_screen_star_runs_all_three_and_serialises():
     rng = np.random.default_rng(18)
-    lc = synth_plates(rng, period=0.57, amp=0.5, stop_year=1931.0, n_per_year=30, lim_mean=14.0)
+    lc = synth_plates(rng, period=0.57, amp=0.5, stop_year=1931.0, n_per_year=30, lim_mean=14.0,
+                      series_switch_year=1910.0)
     row = screen_star(lc, {"target_id": 1, "name": "x", "kind": "variable", "field": "f",
                            "period_cat": 0.57, "amp_cat": 0.5, "mag_cat": 11.0, "vtype": "RRAB"},
                       _conf(), rng=rng)
@@ -636,7 +684,8 @@ def test_shard_roundtrip_screen_and_assess_end_to_end(tmp_path):
         stop = 1931.0 if i == 0 else None
         lc = synth_plates(np.random.default_rng(400 + i), period=0.57 if i < 3 else 0.0,
                           amp=0.5 if i < 3 else 0.0, stop_year=stop, n_per_year=25,
-                          lim_mean=14.0, step=0.12, mag0=11.0 + 0.05 * i)
+                          lim_mean=14.0, step=0.12, mag0=11.0 + 0.05 * i,
+                          series_switch_year=1910.0)
         lcs[str(i)] = lc
         trows.append({"target_id": i, "name": f"s{i}", "ra": 10.0 + i * 0.01, "dec": 20.0,
                       "kind": "variable" if i < 3 else "bright", "vtype": "RRAB" if i < 3 else "",

@@ -2249,8 +2249,27 @@ def plate_context(identifiers, waves, tol_A: float = 1.0) -> dict:
             "plate_other_fibre_same_wavelength": n_same_pixel}
 
 
+def _pair_offsets(pix, sid, ra, dec, max_offset: int, tol: float) -> tuple[np.ndarray, int]:
+    """Histogram of pixel separations between candidates on DIFFERENT sightlines."""
+    counts = np.zeros(max_offset + 1, np.int64)
+    n_same_object = 0
+    for i in range(pix.size - 1):
+        diff = np.abs(pix[i + 1:] - pix[i])
+        near = np.zeros(diff.shape, bool)
+        if np.isfinite(ra[i]) and np.isfinite(dec[i]):
+            cosd = max(np.cos(np.radians(dec[i])), 1e-3)
+            near = (np.abs(dec[i + 1:] - dec[i]) <= tol) & \
+                   (np.abs(ra[i + 1:] - ra[i]) * cosd <= tol)
+        keep = (sid[i + 1:] != sid[i]) & ~near & (diff <= max_offset)
+        n_same_object += int(np.sum(near & (diff <= max_offset)))
+        diff = diff[keep]
+        if diff.size:
+            counts += np.bincount(diff, minlength=max_offset + 1)
+    return counts, n_same_object
+
+
 def pixel_coincidence(root: Path, release: str = "SDSS-DR17", max_offset: int = 10,
-                      baseline_from: int = 3) -> dict:
+                      baseline_from: int = 3, n_perm: int = 500, seed: int = 17) -> dict:
     """Do unrelated sightlines put candidates on the SAME PIXEL more than chance?
 
     A survey coadd lives on one common wavelength grid, so "the same
@@ -2298,20 +2317,7 @@ def pixel_coincidence(root: Path, release: str = "SDSS-DR17", max_offset: int = 
     # reason, so only genuinely different sightlines count.  2 arcsec, the same
     # tolerance the second-epoch search uses.
     tol = 2.0 / 3600.0
-    counts = np.zeros(max_offset + 1, np.int64)
-    n_same_object = 0
-    for i in range(w.size - 1):
-        diff = np.abs(pix[i + 1:] - pix[i])
-        near = np.zeros(diff.shape, bool)
-        if np.isfinite(ra[i]) and np.isfinite(dec[i]):
-            cosd = max(np.cos(np.radians(dec[i])), 1e-3)
-            near = (np.abs(dec[i + 1:] - dec[i]) <= tol) & \
-                   (np.abs(ra[i + 1:] - ra[i]) * cosd <= tol)
-        keep = (sid[i + 1:] != sid[i]) & ~near & (diff <= max_offset)
-        n_same_object += int(np.sum(near & (diff <= max_offset)))
-        diff = diff[keep]
-        if diff.size:
-            counts += np.bincount(diff, minlength=max_offset + 1)
+    counts, n_same_object = _pair_offsets(pix, sid, ra, dec, max_offset, tol)
     out["n_pairs_same_object_excluded"] = n_same_object
     out["pairs_by_offset"] = {int(k): int(v) for k, v in enumerate(counts)}
     base = float(np.mean(counts[baseline_from:max_offset + 1]))
@@ -2322,6 +2328,33 @@ def pixel_coincidence(root: Path, release: str = "SDSS-DR17", max_offset: int = 
             out[f"excess_{k}px"] = int(counts[k] - round(base))
             out[f"z_{k}px"] = round(float((counts[k] - base) / np.sqrt(base)), 2)
         out["excess_0_or_1px"] = int(counts[0] + counts[1] - round(2 * base))
+    # The Poisson z above assumes the pair counts are independent draws, and
+    # they are not: one candidate is in many pairs.  The null distribution is
+    # got instead by sliding each SIGHTLINE's own set of pixels bodily by a
+    # random offset far larger than the window counted -- that destroys
+    # cross-sightline alignment while keeping how many candidates each sightline
+    # has and roughly where they sit.  (A cluster bootstrap is wrong here:
+    # resampling sightlines with replacement makes duplicate copies of one
+    # sightline, which land on the same pixel by construction.)
+    if n_perm and base > 0:
+        rng = np.random.default_rng(seed)
+        where = {s: (sid == s) for s in set(sid.tolist())}
+        obs = float(counts[0]) - base
+        null = np.empty(int(n_perm), float)
+        for b in range(int(n_perm)):
+            shifted = pix.copy()
+            for m in where.values():
+                shifted[m] += int(rng.integers(-400, 401))
+            c, _ = _pair_offsets(shifted, sid, ra, dec, max_offset, tol)
+            null[b] = float(c[0]) - float(np.mean(c[baseline_from:max_offset + 1]))
+        sd = float(np.std(null))
+        out.update({
+            "n_permutations": int(n_perm), "n_sightlines": len(where),
+            "perm_null_mean": round(float(np.mean(null)), 3),
+            "perm_null_sd": round(sd, 3),
+            "perm_z_0px": round(float((obs - np.mean(null)) / sd), 2) if sd > 0 else None,
+            "perm_p_0px": round(float(np.mean(null >= obs)), 5),
+        })
     return out
 
 

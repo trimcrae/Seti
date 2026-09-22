@@ -1004,9 +1004,13 @@ def test_pixel_coincidence_finds_a_same_pixel_excess_and_not_a_false_one(tmp_pat
     _write_triage(tmp_path, [{"spec_id": f"s{k}", "wavelength": grid[i],
                               "data_release": "SDSS-DR17", "ra": 10.0 + k * 0.5,
                               "dec": 1.0 + k * 0.01} for k, i in enumerate(idx)])
-    clean = persist.pixel_coincidence(tmp_path)
+    clean = persist.pixel_coincidence(tmp_path, n_perm=60)
     assert clean["n_candidates"] == 160
     assert abs(clean.get("z_0px", 0.0)) < 3.0, clean
+    # The permutation null is the statistic that is actually quoted, because
+    # the Poisson z treats dependent pair counts as independent draws.
+    assert abs(clean["perm_z_0px"]) < 3.0, clean
+    assert clean["perm_p_0px"] > 0.01, clean
 
     # Twenty unrelated sightlines spiking on one pixel: a large excess.
     rows = [{"spec_id": f"s{k}", "wavelength": grid[int(i)], "data_release": "SDSS-DR17",
@@ -1015,9 +1019,10 @@ def test_pixel_coincidence_finds_a_same_pixel_excess_and_not_a_false_one(tmp_pat
     rows += [{"spec_id": f"bad{k}", "wavelength": grid[2000], "data_release": "SDSS-DR17",
               "ra": 200.0 + k, "dec": 20.0 + k} for k in range(20)]
     _write_triage(tmp_path, rows)
-    dirty = persist.pixel_coincidence(tmp_path)
+    dirty = persist.pixel_coincidence(tmp_path, n_perm=60)
     assert dirty["pairs_by_offset"][0] >= 190          # C(20,2) = 190
     assert dirty["z_0px"] > 10.0, dirty
+    assert dirty["perm_z_0px"] > 10.0 and dirty["perm_p_0px"] == 0.0, dirty
 
     # Two spectra of the SAME object land on one pixel honestly: not counted.
     _write_triage(tmp_path, rows[:140] + [
@@ -1025,7 +1030,7 @@ def test_pixel_coincidence_finds_a_same_pixel_excess_and_not_a_false_one(tmp_pat
          "ra": 123.4560, "dec": 5.6780},
         {"spec_id": "twinB", "wavelength": grid[2500], "data_release": "SDSS-DR17",
          "ra": 123.4561, "dec": 5.6780}])
-    twins = persist.pixel_coincidence(tmp_path)
+    twins = persist.pixel_coincidence(tmp_path, n_perm=0)
     assert twins["n_pairs_same_object_excluded"] >= 1
 
 

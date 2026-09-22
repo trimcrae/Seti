@@ -1322,6 +1322,66 @@ def test_frequency_limited_species_are_rolled_up_into_the_summary(tmp_path):
 # ---------------------------------------------------------------------------
 # the LTE test lives or dies on the intensity column resolving
 # ---------------------------------------------------------------------------
+def test_two_views_of_one_table_are_not_two_U_line_samples(tmp_path):
+    """Run 35752177872 read J/A+AS/142/181 table2 — whose `Mol` column flags 63
+    lines unidentified — AND table3, which is those same 63 as a standalone
+    U-line table.  Summing per source reported 143 U-lines where there are 80.
+
+    The sample size is the one number a reader quotes, so it is counted on the
+    frequencies themselves and the overlap is named rather than hidden.
+    """
+    shared = [float(100000 + 7 * i) for i in range(63)]
+    other = [float(150000 + 11 * i) for i in range(17)]
+    conf = synth_conf()
+    screen = {
+        "sources": {
+            "cernicharo_table2": {"status": "OK", "n_ulines": 63, "has_intensity": True,
+                                  "uline_freqs_mhz": list(shared)},
+            "cernicharo_table3": {"status": "OK", "n_ulines": 63, "has_intensity": True,
+                                  "uline_freqs_mhz": list(shared)},
+            "he2008": {"status": "OK", "n_ulines": 17, "has_intensity": True,
+                       "uline_freqs_mhz": list(other)},
+        },
+        "species_tables": {}, "results": {}, "match": {}}
+    s = stage_assess(conf, tmp_path, screen=screen, acquire_report={})
+    assert s["n_ulines_per_source_sum"] == 143      # what the naive sum said
+    assert s["n_ulines_total"] == 80                # what is actually there
+    ov = s["uline_source_overlaps"]
+    assert len(ov) == 1
+    assert sorted(ov[0]["sources"]) == ["cernicharo_table2", "cernicharo_table3"]
+    assert ov[0]["n_shared"] == 63 and ov[0]["fraction_of_smaller"] == 1.0
+
+
+def test_a_diverged_refit_is_never_published_as_a_hamiltonian_floor():
+    """Run 35752177872 fitted every parseable SO2 line — including the excited
+    states a ground-state Hamiltonian does not model — and reported a 4 GHz
+    post-fit rms beside a MEASURED 2.7 MHz median residual on the lines that
+    did match.  Quoting that as "the Hamiltonian's floor" says the predictor is
+    worthless when it is good to a few MHz."""
+    from seti.uline.run import partition_refits
+
+    good, bad = partition_refits([
+        # SO2 exactly as run 35752177872 had it: the refit IMPROVED (15 GHz ->
+        # 4 GHz) yet landed three orders of magnitude above the 2.7 MHz the
+        # unfitted constants already reach line by line.  Improvement on a
+        # polluted starting point is not a floor.
+        {"comparison": {"residual_mhz": {"median_abs": 2.7}},
+         "refit": {"rms_before_mhz": 15126.0, "rms_after_mhz": 4015.0, "n_fit_lines": 4317}},
+        # a genuine floor: comparable to the measured residual
+        {"comparison": {"residual_mhz": {"median_abs": 3.0}},
+         "refit": {"rms_before_mhz": 90.0, "rms_after_mhz": 0.9}},
+        {"comparison": {}, "refit": {"rms_after_mhz": 5.0}},     # no reference: taken as given
+        {"comparison": {"residual_mhz": {"median_abs": 2.0}},
+         "refit": {"error": "scipy missing"}},                   # not a fit at all
+    ])
+    assert good == [0.9, 5.0]
+    assert len(bad) == 1
+    assert bad[0]["rms_after_mhz"] == 4015.0
+    assert bad[0]["measured_median_abs_mhz"] == 2.7
+    assert "not this Hamiltonian's floor" in bad[0]["why"]
+    assert partition_refits([]) == ([], [])
+
+
 def test_the_probe_clock_stops_a_slow_source_and_names_the_ones_it_skipped(tmp_path):
     """A budget checked only BETWEEN sources decides whether to *start* the next
     one and can never stop the one already running.

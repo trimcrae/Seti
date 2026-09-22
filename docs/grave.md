@@ -272,10 +272,25 @@ settled the schema:
   invalid code fails the entire request, so acquire sends **only** the probe's
   accepted list — the union with a config body would have poisoned every page.
 * The bundle names the service's own listings (`/api/v1/post/attr`,
-  `/api/v1/get/info/samples`, `/api/defs/lithologies`), which the probe now
-  requests directly; and, notably, the bundle does **not** contain
-  `/api/frontend/post-paged` even though that path serves. The published
-  endpoint and the one the current app uses are not the same.
+  `/api/v1/get/info/samples`, `/api/defs/lithologies`), which the probe
+  requests directly — and every one of them answers **200 with the SPA's own
+  index** (623 bytes of HTML). They are client-side routes, not API endpoints;
+  the probe rejects an HTML body as "not a listing". Notably the bundle does
+  **not** contain `/api/frontend/post-paged` even though that path serves: the
+  published endpoint and the one the current app uses are not the same.
+
+The second probe (run 35739776468) added the two numbers that size the search:
+
+* the response carries its own **`count`**, and for the `[0, 4000]` Ma filter
+  it is **114,688** — that is the corpus this channel screens;
+* a page asked for 5,000 rows returns **5,000**, so the service caps nothing
+  below that: 36 age bins need of order sixty requests. Each page records the
+  service's count and each bin reports whether it got all of it (`complete`),
+  because a bin that ends short is a bug to find, not a sparse record.
+* `ars` → `As (ppm)` was accepted on the retry, taking the panel to 94 codes.
+  `ru`, `rh` and `i` are refused under every spelling tried (`ru_`,
+  `ruthenium`, `rh_`, `rhodium`, `iod`, `iodine`, `i_`), so ruthenium and
+  rhodium are genuinely absent from SGP rather than differently named.
 
 ### 4.3 The other two sources
 
@@ -379,15 +394,38 @@ exactly the rare and decisive elements Ru, Rh, Pd, Te, Ir — is given
 unmeasured scatter is not a small scatter. This is the FALLOUT lesson
 (`docs/fallout.md` §4a) applied where there are no quoted errors at all.
 
-### 5.3 The threshold is set by a shuffled null
+### 5.3 The threshold is set by two nulls, and the report says which bound it
 
-`threshold = max(lr_min, q_0.999 of the shuffled null)`. The null takes control
-samples, shuffles each one's PAAS-normalised *trace* enrichments among the
-trace slots (majors stay in place so the reservoir fractions stay physical) and
-refits. That keeps the per-sample amplitude structure and the element count and
-destroys only the alignment with a real pattern. `shuffled_null` in
-`screen.json` reports n, the quantile, the value and the fraction above
-`lr_min`.
+`threshold = max(lr_min, q_0.999 shuffled, q_0.999 control population)`.
+
+* The **shuffled null** takes control samples, shuffles each one's
+  PAAS-normalised *trace* enrichments among the trace slots (majors stay in
+  place so the reservoir fractions stay physical) and refits. That keeps the
+  per-sample amplitude structure and the element count and destroys only the
+  alignment with a real pattern.
+* The **control-population null** is the empirical `fission_lr` distribution of
+  the same lithology **away from every boundary window** — which is exactly the
+  comparison the brief asks for. The shuffled null cannot carry the correlated
+  deviations real sediments have (an REE set that rises together, a redox suite
+  that rises together); the control population does, at the price of being
+  contaminated if a residue exists off-boundary too. Taking the higher of the
+  two is conservative in the direction that matters.
+
+`screen.json` carries both (`shuffled_null`, `control_population_null`) and
+`threshold_bound_by` names which one set the threshold. If the control
+population lifts the threshold above every candidate, that is the answer and
+the funnel shows it.
+
+### 5.3a The three named ratios, reported explicitly
+
+The likelihood ratio tests the whole vector at once, but the brief and the
+sibling FALLOUT channel speak in three ratios, so every vetted sample carries
+them in `brief_ratios`, three ways: `obs_dex` = log₁₀(X/Y) of the sample;
+`vs_paas` = the same against PAAS's own ratio; and `vs_model` = against *that
+sample's* best natural mixture, which is the discriminating one — it asks
+"given everything natural that can be in this rock, is the ratio still off?".
+Beside them sits `fission_dex`, what the vector alone imposes, computed from
+the yields rather than quoted: **[Nd/Ba] +1.51, [Eu/Nd] −0.03, [Mo/Zr] +2.17**.
 
 ### 5.4 The kills, each a named veto and a counter
 

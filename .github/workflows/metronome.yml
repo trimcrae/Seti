@@ -131,6 +131,11 @@ jobs:
               print("   time column:", v.get("time_column"), v.get("time_column_meta"))
               for b in v.get("scoreboard", [])[:12]:
                   print("   board:", b.get("table"), b.get("score"), b.get("reason"))
+          cen = d.get("census") or {}
+          for name, c in cen.items():
+              print(f"=== census {name}: {c.get('status')} n={c.get('n')}")
+              for r in c.get("rows", [])[:120]:
+                  print("   ", r["table"], "|", r["description"])
           PY
       - name: Acquire (event tables + rotation tables, chunked, logged)
         if: ${{ github.event.inputs.stage != 'probe' }}
@@ -194,6 +199,12 @@ jobs:
           python -m seti.metronome.run --stage screen \
             --catalogues "${{ matrix.catalogue }}" \
             --shard ${{ matrix.shard }} --n-shards ${{ github.event.inputs.n_shards || '8' }} $MS
+          python - <<'PY'
+          import glob, json
+          for p in sorted(glob.glob("results/metronome/screen_*.json")):
+              d = json.load(open(p))
+              print(p, "grid:", d.get("time_grid"), "pool nulls:", d.get("n_pool_null_computed"))
+          PY
           ls -la results/metronome/
       - uses: actions/upload-artifact@v4
         if: always()
@@ -324,7 +335,10 @@ jobs:
           for t in d["targets"][:60]:
               print(t["star_key"], t["tier"], t["why"], t["status"], "n_cat", t["n_events"], "n_lc", t["n_flares"],
                     "rec", t["catalogue_recovery_frac"], "Pcat", t["period_catalogue"], "Plc", t["rd_period"],
-                    "Q", t["rd_Q"], "jit", t["rd_jitter"], "p", t["rd_p_window"], "confirms", t["confirms_catalogue_clock"])
+                    "Q", t["rd_Q"], "jit", t["rd_jitter"], "p", t["rd_p_window"], "confirms", t["confirms_catalogue_clock"],
+                    "Pphot", t.get("phot_period"), "Aphot", t.get("phot_amplitude_frac"),
+                    "is_phot", t.get("period_is_photometric"), "duty", t.get("rd_duty_cycle"),
+                    "rise", t.get("rd_rise_frac_median"))
           PY
       - name: Commit results
         if: always()

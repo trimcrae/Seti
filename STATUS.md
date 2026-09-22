@@ -10,6 +10,55 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### CRYPT: the screen changed because the archive said so — Tbol vs local time inside the PSRs, 2026-09-22
+
+S55 (`docs/crypt.md`). The channel was built but had **never produced a
+measurement**; `results/crypt/` held only a `NO_DATA_REACHED` record. The
+runner's own probe (run 35737908601) corrected the brief:
+
+- **There is no per-channel Diviner polar gridded product.** ODE lists 912
+  Polar Cumulative Products for LRO/DLRE and every one of them is `AVG TBOL`.
+  The multi-channel anisothermality of the original brief cannot be computed
+  from a level-3/4 map product at all. It is retained, not runnable.
+- **What the PCP does carry, and nobody has screened, is the axis it is
+  binned on**: average bolometric temperature per 240 m pixel in local-time
+  bins, separately for lunar summer and winter — a *diurnal curve inside
+  permanent shadow*. Products are PDS3 ASCII tables of ~4.4 M rows (empty
+  bins omitted), 262 MB each, at
+  `urn-nasa-pds-lro_diviner_derived1/data_derived_pcp/diurnal/ltim/pol{n,s}/`.
+
+**The screen.** Inside the LOLA mapped PSR (`LPSR_65{N,S}_240M`, same 240 m
+polar grid) ANDed with the Diviner cold-trap definition and eroded 2 px, the
+statistic is the pixel's **floor** temperature — the minimum over every
+loaded (season, local-time) bin — against a local square annulus with both
+the local level and the local *curvature* bias removed. Every passive
+heating term inside a PSR has a clock: scattered light off a sunlit rim and
+re-radiated IR from surrounding terrain rise and fall with the sun and
+collapse in winter. A minimum over the whole (season, local-time) grid is
+immune by construction to heating that switches off at any point in the
+year; an internal source is not. Flagging is on the floor **or** the all-bin
+mean, so a seasonal or diurnal confounder is *counted* as rejected instead of
+vanishing.
+
+Three corrections were needed before it could run, each read off evidence:
+the workflow still ran the anisothermal stages against products that do not
+exist; the local-time bin count was a guess (now read off ODE's own PCP file
+index, and a bin is used only if it exists in *both* seasons); and the PSR
+mask was cropped about the array centre when `LPSR_65N_240M` is 6420² with
+`LINE_PROJECTION_OFFSET = 3209.5`, a 240 m misregistration of the screened
+interior.
+
+Offline: **86 tests** across `tests/test_crypt.py` (40) and the new
+`tests/test_crypt_diurnal.py` (46) — the diurnal screen had no test suite at
+all. Re-run green against a pandas 3.0.6 / numpy 2.4.6 interpreter, which is
+what the runner installs, not the sandbox's pandas 2.3.3.
+
+**In flight:** run `35747661552` on `claude/goap-crypt` (dispatched
+2026-09-22 11:29 EDT), both poles, 6 local-time bins × 2 seasons per pole.
+Run `35744896637` failed in two seconds because the free-disk step deleted
+`$AGENT_TOOLSDIRECTORY`, which is where `setup-python` had put the
+interpreter the package was installed into; fixed.
+
 ### CRYPT built: the thermal and radar axes of the lunar-PSR artifact search, 2026-09-22
 
 S55 (`docs/crypt.md`). Every executed search for artifacts in permanently

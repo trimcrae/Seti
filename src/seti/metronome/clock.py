@@ -557,7 +557,8 @@ def pool_null(times, windows: Windows, h_obs: float, pool_times, scan_conf: dict
     """
     rng = np.random.default_rng(rng)
     nc = dict(DEFAULT_NULL, **(null_conf or {}))
-    nc = dict(nc, n_max=int(nc.get("n_pool", 200)), h_stop=int(nc["h_stop"]))
+    nc = dict(nc, n_max=min(int(nc.get("n_pool", 200)), int(nc.get("n_max", 200))),
+              h_stop=int(nc["h_stop"]))
     n = int(len(np.asarray(times)))
     pool = np.asarray(pool_times, dtype=float)
     pool = pool[np.isfinite(pool)]
@@ -709,7 +710,9 @@ def analyze_star(times, windows: Windows, energies=None, scan_conf: dict | None 
             nc["shuffle_min_gaps"]) else NullResult(kind="waiting_time_shuffle")
         rec.update({f"sn_{k}": v for k, v in sn.as_dict().items() if k != "kind"})
         rec["p_shuffle"] = sn.p_empirical if sn.n_trials > 0 else float("nan")
-        pn = (pool_null(t, windows, r.h_max, pool_times, sc, nc, rng)
+        # the same reduced budget a star that cannot rank above `none` gets on
+        # null 1: its p can be coarser without changing any tier
+        pn = (pool_null(t, windows, r.h_max, pool_times, sc, nc_run, rng)
               if pool_times is not None else NullResult(kind="pool_resample"))
         rec.update({f"pn_{k}": v for k, v in pn.as_dict().items() if k != "kind"})
         rec["p_pool"] = pn.p if pn.n_trials > 0 else float("nan")

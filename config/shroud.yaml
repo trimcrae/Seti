@@ -140,6 +140,14 @@ acquire:
     abs_glat_min_deg: 20.0
     ndet: 1
     r1_max_mag: 19.3
+    # A field's answer is only usable if it can EXPRESS the selection.  Run
+    # 35738062833 returned 1380-5899 rows from every field and reconstructed
+    # zero sources, because the rows carried positions and no plate magnitudes:
+    # "POSS-I red and nothing else" is a statement about which magnitudes are
+    # present, so a frame without them yields a guaranteed, meaningless zero.
+    # A query form whose answer lacks these is rejected and the next rung of
+    # the ladder is tried.
+    required_columns: ["RAJ2000", "DEJ2000", "R1mag"]
     max_rows_per_field: 200000
     field_timeout_s: 240
     field_retries: 2

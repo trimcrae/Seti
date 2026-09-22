@@ -872,10 +872,22 @@ def fetch_usnob1_field(ra: float, dec: float, radius_deg: float, cfg: dict,
             rec["asu_errors"] = [str(e)[:200] for e in errs[:5]]
         if not len(raw):
             rec["body_head"] = asu_body_head(txt, 1200)
+        rec["columns"] = [str(c) for c in raw.columns][:40]
+        # ROWS ARE NOT ENOUGH.  Run 35738062833 got 1380-5899 rows from every
+        # field and reconstructed ZERO sources, because the answer carried
+        # positions and no photometry at all: the POSS-I-red-only mask is a
+        # statement about which plate magnitudes are present, so a frame
+        # without them cannot express the selection and its "no survivors" is
+        # an artefact of the request, not of the sky.  A rung that answers
+        # without the columns the selection needs is not accepted; the ladder
+        # falls through to the ``-out.all`` rung, which names no columns.
+        need = [str(c) for c in r.get("required_columns", ("RAJ2000", "DEJ2000", "R1mag"))]
+        missing = [c for c in need if c not in raw.columns]
+        rec["missing_required"] = missing
         attempts.append(rec)
-        if len(raw):
+        if len(raw) and not missing:
             return raw, form, attempts
-    return raw, "", attempts
+    return pd.DataFrame(), "", attempts
 
 
 def normalise_usnob1_frame(df: pd.DataFrame, field_id: int = -1,
@@ -961,14 +973,18 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
     meta = usnob1_meta_probe(cfg)
     prov.notes.append(
         f"I/284/out -meta.all: {meta['detail']}; "
-        + (f"{len(meta['columns'])} column(s) reported"
+        + (f"{len(meta['columns'])} column(s) reported: {meta['columns'][:40]}"
            if meta["columns"] else "no column names parsed")
-        + (f"; MISSING from the catalogue: {sorted(meta['missing'])}"
-           if meta["missing"] else "; every requested column exists"))
-    # A name the catalogue does not advertise is dropped rather than sent: one
-    # bad ``-out=`` is enough for ASU to answer with a header and no rows.
-    columns = ([c for c in USNOB1_COLUMNS if c not in set(meta["missing"])]
-               if meta["columns"] else None)
+        + (f"; not mentioned by the probe: {sorted(meta['missing'])}"
+           if meta["missing"] else "; every requested column mentioned")
+        + " (reported only -- the request is not edited from this)")
+    # The probe REPORTS; it does not edit the request.  Run 35738062833 had it
+    # strip every name the -meta.all body failed to mention, and that body
+    # mentioned 8 columns out of ~30 --- so B1mag/R1mag/R2mag/Ndet were all
+    # dropped, the fields came back as bare positions, and the selection could
+    # not be expressed.  A bad column name is handled where it shows up: the
+    # ladder falls through to the ``-out.all`` rung.
+    columns = None
     for _, f in grid.iterrows():
         fid = int(f["field_id"])
         rec = {"field_id": fid, "ra_deg": float(f["ra_deg"]),

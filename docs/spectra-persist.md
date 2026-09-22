@@ -156,8 +156,43 @@ second epoch can see it. Two of the six objects are SIMBAD M1V dwarfs.
 `band_gap_context()` puts the head either side, with its label and distance, on the
 record next to each candidate. It is a hypothesis with a prediction: **other stars of the
 same spectral type should show the same feature at the same wavelength.** That is what
-the same-type control sample measures. If the control comes back clean, this explanation
-is wrong and the candidate is stronger for it.
+the same-type control sample measures.
+
+**And the profiles already argue against it.** `results/spectra/top_candidate_spectra.json`
+stores the 81-pixel coadd window around the top 40 triage candidates, so five of the six
+can be fitted offline. Against the nominal LSF:
+
+| λ_obs (Å) | triage width ratio | fitted FWHM / LSF | peak above continuum |
+|---|---|---|---|
+| 6809.3 | 1.42 | **0.91** | 19.8 vs ~7.7 |
+| 6856.5 | 1.47 | 1.10 | 15.8 vs ~11.3 |
+| 7490.3 | 1.09 | 1.13 | 13.8 vs ~10.3 |
+| 6403.2 | 1.14 | 1.11 | 3.9 vs ~2.2 |
+| 6967.9 | 1.29 | **0.52** | 12.3 vs ~9.2 |
+
+These are **narrow features two to three pixels wide sitting on the local continuum**, not
+the broad relative maxima a molecular band gap produces. The triage's 1.42 was a
+matched-filter width, not a profile fit. So the band-gap flag stays on the record as
+context, and the leading systematic for the strongest candidate is not the star.
+
+A ratio of 0.52 (6967.9 Å) is *narrower than the instrument can make*, which is its own
+verdict: a single-pixel defect or a cosmic ray, not a spectral feature.
+
+## The detector
+
+If the feature is narrow, unresolved and in every exposure and every epoch, the next
+thing it can be is the **detector**. A bad CCD column puts a narrow feature at one
+wavelength in every fibre of an exposure set; it is in every exposure of that plate and in
+every repeat observation of it, so neither the per-exposure test nor a second epoch can
+see it. Two things test it:
+
+* the **same-plate control** — the same wavelength measured in other fibres of the same
+  plate (`control_sample` with an explicit `{"plate": N}` constraint);
+* **which fibre each "epoch" is.** SDSS repeat spectra of one object are very often the
+  *same plate and fibre on another night* — the same CCD column. Eight "independent
+  epochs" that are all one fibre confirm a detector defect exactly as well as they
+  confirm a source, and a best-of second-epoch number cannot say which.
+  `epoch_series()` records plate / MJD / fibre per epoch and reports `n_distinct_fibres`.
 
 ## The control sample — the test the others cannot do
 
@@ -230,20 +265,23 @@ where the hand-kept OH list is least complete and the telluric bands live.
   with 8 further epochs available, no sky line, only one candidate line in the whole
   spectrum. Its EW varies 5.1 → 9.4 → 9.3 → 5.8 → 5.5 Å between exposures, a factor 1.8,
   which is formally consistent (χ²p = 0.16) but is not what a steady source looks like.
-  The object is an M1V dwarf (SIMBAD `LM*`, 2MASS J03095713+0030176) and the line sits
-  in the CaH 6750.7 → 6908.8 Å gap, so **the control sample on other M1 dwarfs is what
-  kills it** — a band gap is persistent in every exposure and every epoch and neither of
-  those tests can see it. Its triage width ratio is 1.42 against a nominal R = 2000,
-  which the LSF-column fit will either confirm as genuinely resolved (fatal for a
-  monochromatic source) or reduce to ~1.
+  The object is an M1V dwarf (SIMBAD `LM*`, 2MASS J03095713+0030176). A profile fit to
+  the stored coadd window gives **FWHM 3.09 Å against a 3.40 Å LSF — unresolved**, a peak
+  of 19.8 on a continuum of ~7.7, two to three pixels wide. So it is not a molecular band
+  gap, and the three things that can still kill it, in order: **the same-plate control**
+  (a bad CCD column in plate 412's red camera would do all of this); **how many distinct
+  fibres its 8 "other epochs" actually are** — if they are all 0412-…-0465 on other
+  nights they are one CCD column, not eight epochs; and the same-type control. All three
+  are in `--stage control`.
 * **3241-54884-0388 @ 8578.3 Å** — 14 exposures over six nights (MJD 54879–54884), every
   one positive, χ²p = 0.76, EW 0.42–0.96 Å, ratio to coadd 0.94. The cleanest persistence
   in the set. Killed by: a same-type control detection; a complete OH atlas covering the
   8548–8621 Å gap; or a species the 792-line list omits near 8578 Å (it is 655 km s⁻¹
   from Paschen 13, so not that).
-* **3327-54951-0356 @ 6967.9 Å** — inside the H₂O 7200 telluric band, `sky_peak_sig` up
-  to 3.1, cosmic-ray flags in 2 of 5 exposures, per-exposure σ only 1.6–2.9. Expected to
-  fall to the calibrated re-measurement on its own.
+* **3327-54951-0356 @ 6967.9 Å** — already dead on the profile: fitted FWHM 0.52 × LSF,
+  narrower than the instrument can make, i.e. a one- or two-pixel defect. It is also
+  inside the H₂O 7200 telluric band, has `sky_peak_sig` up to 3.1 and cosmic-ray flags in
+  2 of 5 exposures, with per-exposure σ of only 1.6–2.9.
 * **2750-54242-0547 @ 6856.5 Å** — an OH line 9.3 Å away at a local density of 4.2 listed
   lines per 100 Å, and only 3 exposures. Killed by the any-star control.
 * **0571-52286-0247 @ 7490.3 Å** and **2076-53442-0329 @ 6403.2 Å** — present in 2/5 and

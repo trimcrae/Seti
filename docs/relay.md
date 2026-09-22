@@ -326,13 +326,39 @@ count whose yield is dominated by the nearest receivers.
 link at 1 µm gives **zero** qualifying pairs in this sample and 3 × 10⁻⁵
 expected: a large-aperture optical network leaves Earth outside every beam, and
 no amount of searching changes that. The interceptable regime is radio with
-modest apertures or deliberately over-filled beams. There the interception is
-*not* leakage: the spillover geometry delivers (|T−R|/|T|)² of what R receives,
-and the between geometry delivers **more** than R receives, so a qualifying pair
-is a strong-signal channel rather than a sidelobe one. The price is stated in
-the same breath — 1.8 × 10⁴ to 1.8 × 10⁷ qualifying pairs per beam is also
-1.8 × 10⁴ to 1.8 × 10⁷ trials, which is why every count in `hits.json` is
-printed beside its `n_expected_by_chance` and `n_trials`.
+modest apertures or deliberately over-filled beams.
+
+There the interception is **not** leakage, and the measurement says so rather
+than the argument. Over the kept pairs of every radio beam the *median* flux
+ratio at Earth versus at the intended receiver is
+
+| beam | spillover, (|T−R|/|T|)² | between |
+|---|---|---|
+| 100 m, 1.42 GHz | **0.547** | **3.89** |
+| 10 m, 8 GHz | 0.517 | 3.82 |
+| 10 m, 1.42 GHz | 0.600 | 3.86 |
+| over-filled 5° | 0.624 | 3.85 |
+
+— Earth gets about **55 % of what the receiver gets** in the spillover geometry
+(2.6 dB down, not a sidelobe) and about **4× more than the receiver** in the
+near-antipodal one, because Earth is then the nearer point on the same beam.
+The median transmitter angle sits at 0.67–0.71 of the cone half-width, i.e. the
+qualifying pairs fill the cone rather than hugging its axis.
+
+The price is stated in the same breath — 1.8 × 10⁴ to 1.8 × 10⁷ qualifying
+pairs per beam is also 1.8 × 10⁴ to 1.8 × 10⁷ trials, which is why every count
+in `hits.json` is printed beside its `n_expected_by_chance` and `n_trials`.
+
+**And the kinematic drift prior is dead, measured.** Over the same pairs the
+median |a_kin| is **5.3 × 10⁻¹⁰ m/s²** and the p99 of |ḟ_kin| at 1.42 GHz is
+**5–7 × 10⁻⁸ Hz/s** — five to six orders below the 0.0093 Hz/s resolution of a
+2.79 Hz × 300 s turboSETI product. The brief's "relative radial acceleration
+gives a Doppler-drift prior" is therefore *false as stated*, and §3 already
+replaced it with the two terms that do carry information: the unremoved
+topocentric Earth term (±0.16 Hz/s at L band, sign set by hour angle) and the
+small-angle leak of the transmitter's own platform acceleration (≤ 0.006 Hz/s),
+plus the rest-frequency offset test, which uses the pair's *velocity* — a
+quantity Gaia measures well — instead of its acceleration.
 
 The near-antipodal "Earth between the nodes" geometry is counted separately
 throughout and is the larger population by ~9–10× at every beam, exactly the

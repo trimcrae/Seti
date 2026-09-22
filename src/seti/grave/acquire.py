@@ -391,6 +391,22 @@ def sgp_probe(conf: dict, *, fetch=http_fetch) -> dict:
                                           filters={"interpreted_age": window}), timeout), "anchor-only keys")
     r0 = _rows_of(fr0) or []
     base_keys = set(r0[0].keys()) if r0 else set()
+    j0 = fr0.json() if fr0.ok else None
+    ledger["anchor_call"] = {"status": fr0.status, "n_rows": len(r0),
+                             "response_keys": sorted(j0.keys()) if isinstance(j0, dict) else None,
+                             "head": fr0.text[:300]}
+    # how many rows does the service actually hand back when asked for many?
+    # A bin must not be judged finished by a page that the SERVER capped.
+    cap = int(s.get("page_size_probe", 5000))
+    frp = rec(_post(fetch, api, sgp_body(s, count=cap, page=1, show=anchor,
+                                         filters={"interpreted_age": window}), timeout),
+              f"page-size probe: ask for {cap} rows and see how many come back")
+    rp = _rows_of(frp) or []
+    jp = frp.json() if frp.ok else None
+    ledger["page_size_probe"] = {"asked": cap, "returned": len(rp), "status": frp.status,
+                                 "response_keys": sorted(jp.keys()) if isinstance(jp, dict) else None,
+                                 "total_field": {k: jp.get(k) for k in ("total", "count", "n", "totalCount")
+                                                 if isinstance(jp, dict) and k in jp}}
     candidates = list(dict.fromkeys(list(s.get("show_candidates", [])) + list(codes_from_bundle)))
     accepted, rejected, dropped = {}, {}, []
     max_tests = int(s.get("max_code_tests", 200))
@@ -438,23 +454,35 @@ def sgp_acquire(conf: dict, *, fetch=http_fetch, show: list[str], out_dir: Path 
                 kind: str | None = None, max_rows: int | None = None) -> tuple[pd.DataFrame, dict]:
     """Page every age bin through ``post-paged``; checkpoint each bin to CSV.
 
-    ``show`` is the accepted code list from the probe.  A bin is finished when
-    a page returns fewer than ``count`` rows (or nothing).  The ledger carries
-    every request and the per-bin row counts; ``status`` is ``NO_DATA_REACHED``
-    if no bin returned a row.
+    ``show`` is the accepted code list from the probe.
+
+    A bin ends when a page comes back **empty**, or when it repeats the
+    previous page's sample identifiers, or at ``max_pages_per_bin``.  It does
+    *not* end merely because a page is shorter than ``count``: if the service
+    caps a page at, say, 1000 rows, that rule would silently truncate every bin
+    at its first page and the run would look like a sparse record instead of a
+    capped request.  The cap the service actually applies is measured by the
+    probe (``page_size_probe``) and recorded here as ``observed_page_size``.
+
+    The ledger carries every request and the per-bin row counts; ``status`` is
+    ``NO_DATA_REACHED`` if no bin returned a row.
     """
     s = conf["sgp"]
     timeout = float(s.get("timeout_s", 180))
     count = int(s.get("page_count", 5000))
     max_pages = int(s.get("max_pages_per_bin", 200))
+    id_key = s.get("id_key", "sample identifier")
     edges = list(s.get("age_bin_edges_ma", [0, 4000]))
     ledger: dict = {"generated_utc": _now(), "source": "sgp", "url": s["post_paged_url"], "type": kind or s.get("type"),
                     "show": list(show), "bins": [], "requests": []}
     frames: list[pd.DataFrame] = []
     total = 0
+    observed_page = 0
     for lo, hi in zip(edges[:-1], edges[1:], strict=True):
         nb = 0
         bin_frames = []
+        seen_ids: set[str] = set()
+        stop = ""
         for page in range(1, max_pages + 1):
             body = sgp_body(s, count=count, page=page, show=show, kind=kind,
                             filters={"interpreted_age": [float(lo), float(hi)]})
@@ -465,13 +493,24 @@ def sgp_acquire(conf: dict, *, fetch=http_fetch, show: list[str], out_dir: Path 
             d["n_rows"] = len(rows) if rows is not None else None
             ledger["requests"].append(d)
             if not rows:
+                stop = "empty_page" if rows is not None else f"no_rows_status_{fr.status}"
                 break
+            observed_page = max(observed_page, len(rows))
+            ids = {str(r.get(id_key)) for r in rows if r.get(id_key) is not None}
+            if ids and ids <= seen_ids:
+                stop = "page_repeated_previous_ids"
+                break
+            seen_ids |= ids
             df = pd.DataFrame(rows)
             bin_frames.append(df)
             nb += len(df)
-            if len(rows) < count or (max_rows and total + nb >= max_rows):
+            if max_rows and total + nb >= max_rows:
+                stop = "max_rows"
                 break
-        ledger["bins"].append({"age_lo": lo, "age_hi": hi, "n_rows": nb, "n_pages": len(bin_frames)})
+        else:
+            stop = "max_pages_per_bin"
+        ledger["bins"].append({"age_lo": lo, "age_hi": hi, "n_rows": nb, "n_pages": len(bin_frames),
+                               "stopped_because": stop})
         if bin_frames:
             bdf = pd.concat(bin_frames, ignore_index=True)
             if out_dir is not None:
@@ -483,8 +522,10 @@ def sgp_acquire(conf: dict, *, fetch=http_fetch, show: list[str], out_dir: Path 
             ledger["truncated_at_max_rows"] = max_rows
             break
     raw = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
-    if "sample identifier" in raw.columns:
-        raw = raw.drop_duplicates(subset=["sample identifier"])
+    ledger["n_rows_before_dedupe"] = int(len(raw))
+    if id_key in raw.columns:
+        raw = raw.drop_duplicates(subset=[id_key])
+    ledger["observed_page_size"] = observed_page
     ledger["n_rows"] = int(len(raw))
     ledger["status"] = STATUS_OK if len(raw) else STATUS_NO_DATA
     return raw, ledger

@@ -1,0 +1,160 @@
+# CRYPT channel — artifacts in lunar permanent shadow (S55, docs/crypt.md).
+# Every threshold, URL and classification pattern in one place.  The product
+# naming inside the Diviner level-3/4 volume is NOT known in the sandbox: the
+# probe stage crawls the volume, downloads the labels and classifies each
+# product by regex over its NAME and LABEL TEXT; the inventory is committed so
+# the patterns below can be corrected from evidence.
+
+acquire:
+  timeout_s: 120
+  listing_timeout_s: 60
+  download_timeout_s: 900
+  retries: 2
+  max_bytes_per_file: 400000000       # 400 MB cap on any single raster
+  max_total_bytes: 6000000000         # 6 GB cap on the whole acquisition
+  max_labels_probe: 400               # labels read at probe (each small)
+  label_max_bytes: 400000
+  crawl_max_depth: 5
+  crawl_max_entries: 8000
+
+  # Diviner level-3/4 (PDS Geosciences; verified reachable 2026-09-13).
+  diviner_volume_roots:
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1002/"
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-dlre-4-rdr-v1/lrodlr_1001/"
+  diviner_data_subdirs: ["data/pcp/", "data/prp/", "data/gdr_l3/", "data/gdr_l4/", "data/gcp/", "data/"]
+  # subdirectories worth descending (skip the by-year RDR tree of lrodlr_1001)
+  diviner_dir_regex: "(?i)^(?!20\\d\\d$)(pcp|prp|gdr|gcp|polar|pole|north|south|n|s|240|cumul|season|summer|winter|all|lbl|img|data|.*pcp.*|.*polar.*|.*pol.*|\\d+m|\\w{1,4})$"
+  # the PDS4 mirror of the same holdings, if the PDS3 tree is empty
+  diviner_pds4_roots:
+    - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/"
+    - "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived2/"
+
+  # Mini-RF (PDS Geosciences): the level-5 mosaics and level-4 CDRs.
+  minirf_roots:
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-5-global-mosaic-v1/"
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-mrflro-4-cdr-v1/"
+  minirf_dir_regex: "(?i)^(?!.*(browse|extras|document|catalog|index)).*$"
+  minirf_product_regex: "(?i)(cpr|s1|stokes|pol|polar|mosaic|_n_|_s_|north|south|80n|80s|85n|85s)"
+
+  # ShadowCam (PDS4, KPLO) and LROC NAC via ODE footprint search.
+  shadowcam_roots:
+    - "https://pds.shadowcam.im-ldi.com/"
+    - "https://pds.shadowcam.im-ldi.com/data/"
+    - "https://shadowcam.im-ldi.com/archive"
+  ode_rest: "https://oderest.rsl.wustl.edu/live2/"
+  ode_instruments:                     # (ihid, iid, pt) guesses; the iipy probe corrects them
+    shadowcam: {ihid: "KPLO", iid: "SHADOWCAM", pt: null}
+    lroc_nac: {ihid: "LRO", iid: "LROC", pt: "EDRNAC4"}
+    minirf: {ihid: "LRO", iid: "MRFLRO", pt: null}
+    diviner: {ihid: "LRO", iid: "DLRE", pt: null}
+  ode_footprint_half_deg: 0.02
+  ode_limit: 25
+
+  # PSR polygons/rasters (LOLA illumination).  Each route is tried and
+  # recorded; when none serves a raster on the Diviner grid the cold-trap
+  # definition (Tmax < psr_tmax_K) stands alone and is recorded as such.
+  psr_routes:
+    - "https://pgda.gsfc.nasa.gov/products/54"
+    - "https://pgda.gsfc.nasa.gov/products/78"
+    - "https://pgda.gsfc.nasa.gov/products/90"
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/"
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/illumination/"
+    - "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/"
+  psr_product_regex: "(?i)(psr|shadow|illum|ill_|_ill|perm|lit|sun)"
+
+# Which products the screen needs, in priority order.  ``channels`` are the
+# Diviner channels used (6 and 7 are the anisothermal discriminant, 8/9 the
+# reference); ``stats`` per season.
+products:
+  poles: ["north", "south"]
+  seasons: ["summer", "winter"]
+  channels: ["6", "7", "8", "9"]
+  stats: ["avg", "count"]
+  mask_products:                       # the cold-trap mask: first that exists
+    - {season: "all", channel: "tbol", stat: "max"}
+    - {season: "summer", channel: "tbol", stat: "max"}
+    - {season: "all", channel: "9", stat: "max"}
+    - {season: "summer", channel: "9", stat: "max"}
+  optional:
+    - {season: "winter", channel: "tbol", stat: "max"}
+    - {season: "summer", channel: "tbol", stat: "avg"}
+    - {season: "winter", channel: "tbol", stat: "avg"}
+
+# Regexes over the product NAME (then label text) → pole / channel / stat /
+# season.  Corrected from the committed inventory after the first probe.
+patterns:
+  pole:
+    north: "(?i)(^|[_\\-.])(n|np|north|npole|80n|85n|75n|\\d{2,4}n)([_\\-.]|$)|north\\s*pol"
+    south: "(?i)(^|[_\\-.])(s|sp|south|spole|80s|85s|75s|\\d{2,4}s)([_\\-.]|$)|south\\s*pol"
+  channel:
+    tbol: "(?i)(^|[_\\-.])(tbol|tb|bol|bolo|bolometric)([_\\-.]|$)|bolometric"
+    "3": "(?i)(^|[_\\-.])(t3|tb3|ch3|c3|ch03|t03|b3)([_\\-.]|$)|channel\\s*0?3\\b"
+    "4": "(?i)(^|[_\\-.])(t4|tb4|ch4|c4|ch04|t04|b4)([_\\-.]|$)|channel\\s*0?4\\b"
+    "5": "(?i)(^|[_\\-.])(t5|tb5|ch5|c5|ch05|t05|b5)([_\\-.]|$)|channel\\s*0?5\\b"
+    "6": "(?i)(^|[_\\-.])(t6|tb6|ch6|c6|ch06|t06|b6)([_\\-.]|$)|channel\\s*0?6\\b"
+    "7": "(?i)(^|[_\\-.])(t7|tb7|ch7|c7|ch07|t07|b7)([_\\-.]|$)|channel\\s*0?7\\b"
+    "8": "(?i)(^|[_\\-.])(t8|tb8|ch8|c8|ch08|t08|b8)([_\\-.]|$)|channel\\s*0?8\\b"
+    "9": "(?i)(^|[_\\-.])(t9|tb9|ch9|c9|ch09|t09|b9)([_\\-.]|$)|channel\\s*0?9\\b"
+  stat:
+    avg: "(?i)(^|[_\\-.])(avg|ave|mean|average)([_\\-.]|$)|average"
+    max: "(?i)(^|[_\\-.])(max|maximum)([_\\-.]|$)|maximum"
+    min: "(?i)(^|[_\\-.])(min|minimum)([_\\-.]|$)|minimum"
+    count: "(?i)(^|[_\\-.])(cnt|count|num|nobs|counts)([_\\-.]|$)|number of obs"
+    std: "(?i)(^|[_\\-.])(std|stdev|sd|sigma)([_\\-.]|$)|standard dev"
+  season:
+    summer: "(?i)(^|[_\\-.])(sum|summer|smr)([_\\-.]|$)|summer"
+    winter: "(?i)(^|[_\\-.])(win|winter|wtr)([_\\-.]|$)|winter"
+    all: "(?i)(^|[_\\-.])(all|yr|year|annual|cum|cumulative|total|tot)([_\\-.]|$)|all seasons|cumulative"
+  resolution_m: "(?i)(^|[_\\-.])(\\d{2,4})m([_\\-.]|$)"
+  subsolar: "(?i)(^|[_\\-.])(ssl|sslon|lon|sl|sub)\\d{2,3}([_\\-.]|$)|sub[- ]?solar"
+
+# The thermal screen (docs/crypt.md §3).
+thermal:
+  psr_tmax_K: 110.0          # cold trap: never warmer than this (Diviner definition)
+  edge_px: 2                 # footprints from the illumination boundary
+  n_min: 10                  # observations per pixel per season
+  z_min: 5.0                 # primary short-channel excess, in empirical sigma
+  z_other_max: 2.5           # below this in the other season → seasonal (lit rim / scatter)
+  max_cluster_px: 6          # larger connected warm patch → extended (rocks, slope)
+  stripe_min: 4              # flagged pixels sharing a row/column → stripe
+  stripe_window: 200
+  dchi2_min: 9.0             # two-component must beat one-component by this
+  f_ratio_max: 3.0           # seasonal excess-radiance ratio beyond which → unstable
+  bin_width_K: 2.0
+  bin_min_n: 50
+  sigma_floor_K: 0.05
+  min_coverage_frac: 0.2
+  t_hot_grid_K: [150, 200, 250, 300, 350, 400, 500, 600, 800]
+  f_grid_log10: [-7.0, 0.0, 71]
+  floor_t_hot_K: 300.0
+  floor_nsigma: 5.0
+
+# Injection-recovery on the real maps (the honest sensitivity statement).
+sensitivity:
+  areas_m2: [1, 3, 10, 30, 100, 300, 1000, 3000, 10000]
+  t_hot_K: [300.0, 500.0]
+  n_per_area: 20
+  seed: 11
+
+radar:
+  cpr_min: 1.0
+  max_cluster_px: 4
+  bg_r_in: 3
+  bg_r_out: 12
+  bg_max: 0.6
+  s1_contrast_min: 3.0
+  edge_px: 2
+  max_rows: 5000
+
+# Human hardware inside the polar caps (flagged, never silently dropped).
+# Coordinates are the published nominal sites; radius is generous.
+hardware:
+  - {name: "LCROSS Centaur impact (Cabeus, 2009-10-09)", lat: -84.675, lon: 311.275, radius_m: 3000}
+  - {name: "LCROSS shepherding spacecraft impact", lat: -84.73, lon: 310.6, radius_m: 3000}
+  - {name: "IM-1 Odysseus (Malapert A, 2024-02-22)", lat: -80.13, lon: 1.44, radius_m: 2000}
+  - {name: "IM-2 Athena (Mons Mouton, 2025-03-06)", lat: -84.76, lon: 29.19, radius_m: 3000}
+  - {name: "Chang'e-7 landing region (2026, south-polar highlands; approximate)", lat: -85.0, lon: 0.0, radius_m: 10000}
+
+vet:
+  ode_half_deg: 0.02
+  max_candidates_vet: 200

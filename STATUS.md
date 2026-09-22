@@ -3,12 +3,45 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-16.
+next. Last updated: 2026-09-22.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### CRYPT built: the thermal and radar axes of the lunar-PSR artifact search, 2026-09-22
+
+S55 (`docs/crypt.md`). Every executed search for artifacts in permanently
+shadowed regions is optical machine learning on NAC/ShadowCam frames (latest
+arXiv:2608.09350); nobody has read the Diviner polar products or the Mini-RF
+mosaics inside PSRs for a *point source*. The channel does both:
+
+- **Thermal.** Inside the Diviner cold-trap mask (all-time bolometric maximum
+  < 110 K, eroded 2 px) a pixel whose channel-6/7 brightness temperature
+  exceeds the channel-9/8 reference by ≥ 5σ — σ measured from the PSR
+  interior itself in 2 K bins of T_ref — in **both** the summer and the
+  winter cumulative product, with the same excess radiance (f·L(T_hot),
+  independent of T_cold), compact, unstriped, ≥ 10 observations, and a
+  two-component spectrum that beats one temperature. A lit rim or scattered
+  light is summer-only and dies as `seasonal`. The band model reproduces the
+  brief's numbers (1 m² at 300 K on a 35 K pixel: channel 6 → 56.9 K,
+  channel 9 → +0.009 K). The floor is not asserted from the instrument
+  paper: sources of 1–10⁴ m² are injected into the *real* maps and the
+  smallest area recovered in ≥ 50 % of trials is quoted.
+- **Radar.** Compact (≤ 4 px) Mini-RF CPR ≥ 1 pixels in a quiet
+  neighbourhood; rock fields and ejecta are extended and elevated.
+- **Optical.** ShadowCam / NAC coverage of every survivor listed through the
+  ODE footprint service, named as the unexcluded step.
+
+Offline: 38 tests, no network — the injected 300 m² source is recovered in
+both seasons, every rule is tripped by its own case, a scripted PDS archive
+runs probe → assess end to end, and an empty archive is `NO_DATA_REACHED`.
+The product naming inside `lrodlr_1002` is unknown here, so the first runner
+pass is an inventory: `probe.json` commits every product name, the label
+fields and the classifier's selection, and the patterns in
+`config/crypt.yaml` are corrected from that evidence. Nothing is a sky
+statement until `results/crypt/summary.json` lands.
 
 ### IGNITION goes from blocked to a live parent sample, 2026-09-16
 

@@ -237,15 +237,61 @@ The probe filters on one configured age window (`sgp.probe_age_window`,
 accepted only if a row comes back carrying its column, so a narrow window that
 happened to hold no samples would have silently rejected the entire schema.
 
+### 4.2a What the first probe run actually learned (run 35738860553)
+
+The first runner probe (2026-09-22, results committed to `results/grave/probe.json`)
+settled the schema:
+
+* The endpoint works. The anchor call returns rows keyed `sample identifier`,
+  `sample original name`, `interpreted age`, `site latitude` — note that the
+  sample identifier and its original name come back **whether or not you ask
+  for them**.
+* **93 field codes were individually accepted.** The trace panel is real:
+  `se rb sr y zr nb mo pd ag cd in sn sb te cs ba la ce pr nd sm eu gd tb dy
+  ho er tm yb lu hf ta w re os ir pt au hg tl pb bi th u`, with units in the
+  display name (`Pd (ppb)`, `Pt (ppb)`, `Os (ppt)`, `Mn (ppm)`, `P (ppm)`,
+  `Al (wt%)`). Plus `toc tic tot_c loi fe_hr_fe_t fe_py_fe_hr` and the full
+  metadata set (`section_name site_type country state_province coord_long
+  height_meters strat_name lithology_name/type/text/comp basin_type basin_name
+  environment_bin meta_bin interpreted_age_notes max_age min_age data_source
+  collector`).
+* **`ru` and `rh` are refused (400).** The two strongest discriminants in the
+  whole vector (+4.77 dex each) are not in the database. The light peak
+  therefore rests on **Mo (+1.43), Pd (+3.57) and Te (+3.03)**, with Zr
+  (−0.74) and Y (−0.75) as the *negative* half of the shape. `as` and `i` are
+  also refused although `ge`, `se`, `in` and `te` are served, so the code for
+  those two is probably not the bare symbol; alternative spellings are in the
+  candidate list for the next pass.
+* **There is no reference, DOI or analytical-method field.** `ref_short`,
+  `ref_long`, `reference`, `ref_doi`, `doi`, `ana_method` all 400;
+  `analytical_method` and `original_name` are silently dropped. Per-sample
+  provenance therefore rests on `data_source`, `collector` and `site_type`,
+  and the doc says so rather than promising a citation the API cannot give.
+* **The published Stockey body itself 400s**: `filter error: fe_t_al is not a
+  valid attribute in this search type` (and `strat_name_long` likewise). One
+  invalid code fails the entire request, so acquire sends **only** the probe's
+  accepted list — the union with a config body would have poisoned every page.
+* The bundle names the service's own listings (`/api/v1/post/attr`,
+  `/api/v1/get/info/samples`, `/api/defs/lithologies`), which the probe now
+  requests directly; and, notably, the bundle does **not** contain
+  `/api/frontend/post-paged` even though that path serves. The published
+  endpoint and the one the current app uses are not the same.
+
 ### 4.3 The other two sources
 
-* **EarthChem Portal** (`portal.earthchem.org/restsearchservice`): GET with
-  `searchtype=count|rowdata|distinctitems`, `outputtype=json`, age filters
-  `minage`/`maxage` in Ma, `level1..level4`/`material`/`keyword` for lithology,
-  `startrow`/`endrow` pages of at most 50 rows, `standarditems=yes` for the
-  standard chemistry columns. The probe runs a count query for every parameter
-  spelling in the config and keeps the one that returns rows, then pulls the
-  boundary windows first and a general sample after.
+* **EarthChem Portal.** The documented REST service
+  (`portal.earthchem.org/restsearchservice`, GET with
+  `searchtype=count|rowdata|distinctitems`, `outputtype=json`, `minage`/`maxage`
+  in Ma, `level1..level4`/`material`/`keyword`, `startrow`/`endrow` pages of at
+  most 50) **answers 404 from Apache for every parameter spelling** (run
+  35738860553). The service moved or was retired; the landing pages answer,
+  which is why the earlier `necrofrontier` probe scored EarthChem as reachable
+  — reaching a web page is not reaching a search. The probe now walks an
+  **endpoint ladder** over ten candidate bases (`ecp.iedadata.org` http and
+  https, `search.earthchem.org`, `api.earthchem.org`, `ecl.earthchem.org`, the
+  portal's own `/api/search`), records what each served, and uses the first
+  that answers with data. A `DEGRADED_SOURCE (earthchem:...)` prefix on the
+  verdict means this ladder found nothing — an access fact, recorded as such.
 * **GEOROC** via the Göttingen Dataverse (`data.goettingen-research-online.de`,
   subtree `digis`): `api/search` lists datasets, `api/datasets/:persistentId`
   lists files, `api/access/datafile/<id>?format=original` serves a CSV with a

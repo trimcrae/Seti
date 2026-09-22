@@ -66,8 +66,38 @@ what `--stage control` is for — the same wavelength measured in 40 unrelated s
 same type and in 40 stars of any type, which separates "this spectral type does this"
 from "the sky or the instrument does this" from "this object does this".
 
+**A contamination result that did not need a runner.** The triage stored the coadd window
+around its top 40 candidates and the full 350-candidate table, so two things could be
+measured offline while the queue was full.
+
+*The profiles are narrow, so the band-gap story is wrong.* Fitting the stored windows
+gives FWHM / LSF of 0.91 (6809.3), 1.10 (6856.5), 1.11 (6403.2), 1.13 (7490.3) and 0.52
+(6967.9) — two-to-three-pixel features on the local continuum, not the broad relative
+maxima a molecular band gap makes. 0.52 is narrower than the instrument can make, which
+is its own verdict. The triage's own `width_ratio` correlates with a profile fit at
+−0.17 across those 40 and should not be leaned on.
+
+*Unrelated sightlines share pixels more than chance allows.* A survey coadd is one common
+grid, so the same wavelength is the same pixel. Histogramming the pixel separation of
+every pair of candidates from different sightlines, and calibrating against separations
+of 3–10 pixels:
+
+| release | candidates | 0 px | baseline | excess |
+|---|---|---|---|---|
+| SDSS-DR17 | 166 | 21 | 9.75 | +11, z = 3.6 |
+| DESI-DR1 | 95 | 11 | 4.62 | +6, z = 3.0 |
+
+About one candidate in eight is on a shared pixel for an instrumental reason. The
+triage's recurrence cut needed *three* spectra within 3 Å, so pairs came through: 114 of
+the 350 triaged candidates are in an exact-wavelength pair, and 76 of the 167 survivors
+have another sightline within 3 Å. None of the six lines left standing is a 0-px
+coincidence; two have a neighbour one pixel away.
+
 Next: land the calibrated full run (35747997902), then the control sample on whatever is
-still standing. The strongest candidate turns on it.
+still standing (35751666444). For the strongest candidate the three live kill paths are
+the same-plate control (a bad column in plate 412's red camera would produce everything
+seen so far), how many *distinct fibres* its eight "other epochs" actually are, and the
+same-type control.
 
 ### IGNITION goes from blocked to a live parent sample, 2026-09-16
 

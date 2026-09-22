@@ -198,6 +198,28 @@ strongest survive the stricter cut and the two weakest do not cleanly.
 line. Reported, not enforced — but a survivor that shares a pixel with another sightline
 should not be read as a detection.
 
+### And it is a measurable excess, not an anecdote
+
+A survey coadd lives on one common wavelength grid, so *the same wavelength* means *the
+same pixel index* for every spectrum in the release. A detector or reduction feature that
+makes narrow spikes makes them at a fixed pixel; a source does not care which pixel it
+lands on.
+
+`pixel_coincidence()` histograms the pixel separation of every pair of candidates from
+**different sightlines** and calibrates itself against separations of 3–10 pixels, which
+carry the same clustering of the search's sensitivity with wavelength and none of the
+same-pixel effect. Pairs from two spectra of the same object within 2″ are excluded.
+
+| release | candidates | 0 px | 1 px | baseline (3–10 px) | excess at 0 px |
+|---|---|---|---|---|---|
+| SDSS-DR17 (log grid 10⁻⁴ dex) | 166 | **21** | 18 | 9.75 | +11, z = 3.6 |
+| DESI-DR1 (linear grid 0.8 Å) | 95 | **11** | 4 | 4.62 | +6, z = 3.0 |
+
+So about 19 SDSS and 6 DESI candidate pairs sit on a shared pixel for an instrumental
+reason — roughly one candidate in eight. **None of the six lines left standing is one of
+them at 0 px**; two have a neighbour one pixel away. The statistic goes in the summary per
+release.
+
 ## The detector
 
 If the feature is narrow, unresolved and in every exposure and every epoch, the next

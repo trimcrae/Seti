@@ -91,9 +91,40 @@ is a fact about the spacecraft and not about the sky, and an intrinsic signal
 diluted by crowding moves with the mask by tens of percent, not by factors.
 Gaia names a candidate source: **2053563953175635712, 13.3″ away (3.3 Kepler
 pixels), G = 14.37 against the target's 14.79 — brighter — and flagged
-`VARIABLE`.**  Establishing that it *is* the source needs pixel-level
-photometry, which this channel has not done; what is established is that the
-0.4233 d signal's amplitude tracks the aperture and not the star.
+`VARIABLE`.**
+
+**And the signal has an owner.**  The Gaia source the roll test pointed at is
+a catalogued RR Lyrae, and three catalogues give its period:
+
+| catalogue | name | type | period |
+|---|---|---|---|
+| VSX | **KIC 5879583** | `RR` | **0.4232946 d**, amplitude 0.575 mag (r) |
+| Gaia DR3 `I/358/vclassre` | 2053563953175635712 | `RR`, score 0.982 | — |
+| ZTF (Chen+2020) | ZTFJ193127.18+410759.8 | `RR` | **0.4232946 d** (g: 0.423297) |
+
+against the clock re-detected in `kepler:5879574`'s photometry at
+0.42328185 d: **agreement to 3.0 × 10⁻⁵**.  And ZTF publishes that star's
+Fourier shape, R₂₁ = 0.326 — against **A₂/A₁ = 0.3168** measured in the fold
+of the *target's* light curve.  The signal in KIC 5879574's aperture has the
+period *and* the harmonic shape of the RR Lyrae 13.3″ away.
+
+A 0.575 mag pulsator diluted into a neighbouring Kepler aperture is an 0.084%
+oscillation; its crests clear the flare detector's running-median σ on some
+cycles; the result is a catalogue of "flares" on a perfect clock.  That is the
+whole of METRONOME's candidate, and the verdict now leads with it:
+`CONTAMINATING_VARIABLE_AT_P:gaia2053563953175635712@13.3arcsec,KIC 5879583,type=RR,P=0.4232946,in=vsx+ztf_chen2020`.
+
+**Why the channel did not catch this before the vet.**  The `periodic_variable`
+veto runs a VSX / Gaia-vari / ZTF cone at **3″** — a radius set by positional
+uncertainty, which is the right radius for asking *is this star a variable*
+and the wrong one for asking *is a variable putting flux in this star's
+aperture*.  A Kepler pixel is 3.98″ and the optimal aperture is several of
+them, so the contaminating radius is 10–20″, and at 13.3″ KIC 5879583 was
+outside every cone the channel ran.  **The fix is a second cone at the
+aperture scale whose hit is a contamination flag rather than an identity
+flag** — the vet does this (`neighbour_context`), the assess stage does not,
+and any future run of this channel should carry it before the shortlist is
+believed.
 
 Per `CLAUDE.md` this is a clean result and is not written up.  It changes the
 question: see §8.
@@ -618,8 +649,13 @@ as a number:
 6. **The aperture.**  Every Gaia DR3 source within 20″ (a Kepler pixel is
    3.98″), proper motion propagated back to the KIC epoch before the
    separation is measured; the brighter and the Gaia-`VARIABLE` ones are put
-   to the same variability tables as the target.  And `roll_season_test`
-   (§5) on the per-quarter folded amplitudes.
+   to the same variability tables as the target, and any of them catalogued at
+   P, 2P or P/2 ends the question (`contaminating_variable_at_p`).  And
+   `roll_season_test` (§5) on the per-quarter folded amplitudes.
+7. **Its own catalogued epochs, without an artifact.**  One star's flare times
+   are a VizieR query, not a download: `catalogue_epochs_for_star` resolves
+   the catalogue's time columns from `TAP_SCHEMA` and takes `t_peak`, or the
+   `Begin`/`End` midpoint where the catalogue has no peak column.
 
 **The folded amplitude is judged against control periods, not against the
 per-bin error.**  With ~600 cadences in a phase bin the standard error is
@@ -655,6 +691,7 @@ star), `flags_raised` (every flag) and `tiers`.
 | `few_cycles` | The period repeated too few times inside the observing windows for "recurs" to mean anything — the long-period tail where P approaches the span/3 grid edge and three sector groups phase up | `cycles_span < 10`, where `cycles_span` counts the ticks whose ±0.05-cycle phase window had *any* observing coverage |
 | `catalogue_epochs_absent` *(light curve)* | **The catalogued epochs are not brightenings in the star's own photometry.** Whatever pattern they form is a pattern in the catalogue, not in the star | Detrended residual in run-σ at the catalogued times vs. the same at random times inside the same windows; bootstrap p > 0.01 or median < 2σ over ≥ 8 epochs |
 | `photometric_oscillation` *(light curve)* | The re-detected period **is** the star's dominant photometric period: a running median over 0.5 d cannot flatten an oscillation of comparable period with a narrow maximum, and the surviving maxima are detected as a flare train | Lomb–Scargle peak of the flux itself within 2% of P or its ½, 2×, ⅓, 3× |
+| `contaminating_variable_at_p` *(vet)* | **A Gaia source inside the aperture is a catalogued variable at the clock period.**  Not "the amplitude behaves like a blend" but "that star, this far away, is listed at this period" — the least speculative statement available, so the verdict leads with it | Every Gaia DR3 source within 20″ that is brighter than the target or flagged `VARIABLE` is put to the Gaia vari tables and a VSX / ZTF / Gaia-vari cone; a catalogued period within 1% of P, 2P or P/2 |
 | `coherent_oscillation_at_p` *(vet)* | **A coherent photometric oscillation sits at the clock period and survives masking every detected event.**  The events are its crests; the detector's running median cannot flatten a cycle of comparable length.  This is `photometric_oscillation` without the requirement that the oscillation be the *dominant* one | Folded amplitude with events masked, against 200 control-period folds of the same light curve: `p_empirical ≤ 0.01` **and** `z_control ≥ 5` |
 | `events_on_the_crest` *(vet)* | The events' mean phase coincides with the fitted photometric maximum: they are that oscillation's peaks being counted as flares | `|offset| ≤ 0.15` cycles, with the oscillation significant |
 | `narrow_dip_at_p` *(vet)* | The fold at P is a narrow **dip**, not a crest — an eclipse | `extremum_is_dip`, `frac_below_half_depth ≤ 0.25`, fold significant against controls |
@@ -787,6 +824,14 @@ get by fitting alone.
 * **Vetting reach.**  P_rot exists for a minority of TESS flare stars; the
   variability cones are run only for the FDR shortlist.  A star at `interest`
   is one whose vet is incomplete, not one that passed.
+* **The periodic-variable cone is at 3″ and the contaminating radius is
+  10–20″.**  A 3″ cone answers *is this star a catalogued variable*; it cannot
+  answer *is a catalogued variable putting flux into this star's aperture*,
+  which on Kepler (3.98″ pixels, several-pixel masks) is the question that
+  matters.  MEASURED: the RR Lyrae that produced the channel's only candidate
+  sits at 13.3″ and was outside every cone the assess stage ran.  The vet runs
+  the aperture-scale cone; the assess stage does not, and until it does no
+  shortlist from this channel should be believed on the variability veto alone.
 * **A low-amplitude oscillation at the clock period is the channel's hardest
   confounder, and it is not screened at scale.**  §4.7d catches it, but §4.7d
   runs on one star at a time and needs that star's whole light curve.  The
@@ -824,12 +869,14 @@ Three of those facts are directions:
    not brightenings at all (§4.7b), and the one star whose epochs *were* real
    turned out to be an oscillation's crests.  Detecting on the photometry
    directly removes both failure modes and recovers the sub-threshold regime.
-2. **The confounder is a population.**  If a 0.084% coherent oscillation at
-   0.42 d, uncatalogued by VSX, Gaia DR3, ZTF and the Kepler EB catalogue, can
-   masquerade as a strict flare clock on the one star that got this far, then
-   the *rate* of such oscillations among flare stars is the thing standing
-   between this signature and any detection — and it is measurable on the
-   Kepler flare sample in one pass.  That is a prerequisite, not a paper.
+2. **The confounder is a population, and it is a mapped one.**  The thing that
+   killed the candidate was not exotic: it was an ordinary RR Lyrae 13″ away,
+   catalogued in VSX, Gaia DR3 and ZTF, that no cone in the channel was wide
+   enough to see.  Every Kepler/TESS flare star with a catalogued variable
+   inside its aperture is a potential false clock, and the crossmatch that
+   finds them is one pass over the flare stars against VSX/Gaia-vari/ZTF at an
+   aperture-scale radius.  Doing that *first* is what would make a survivor
+   mean something.  It is a prerequisite, not a paper.
 3. **Move to an event class with no catalogue in the way**: the ZTF alert
    stream's brief brightenings, or the CHIME-style burst catalogues.  Or test
    weaker structure than a strict clock — arithmetic progressions with a

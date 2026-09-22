@@ -84,6 +84,38 @@ target's 14.79 -- brighter -- and flagged `VARIABLE`.** Proving it is the
 source needs pixel-level photometry, which has not been done; what is
 established is that the amplitude tracks the aperture and not the star.
 
+
+**The signal has an owner: KIC 5879583, an RR Lyrae 13.3" away.** Run
+35796768720's neighbour census put the Gaia source the roll test pointed at to
+the same archives as the target, and three catalogues answered:
+
+| catalogue | name | type | period |
+|---|---|---|---|
+| VSX | **KIC 5879583** | RR | **0.4232946 d**, amplitude 0.575 mag (r) |
+| Gaia DR3 `I/358/vclassre` | 2053563953175635712 | RR, score 0.982 | -- |
+| ZTF (Chen+2020) | ZTFJ193127.18+410759.8 | RR | **0.4232946 d** (g: 0.423297) |
+
+against the clock re-detected in kepler:5879574's own photometry at
+0.42328185 d: **agreement to 3.0e-5**. ZTF also publishes that star's Fourier
+shape, R21 = 0.326 -- against **A2/A1 = 0.3168** measured in the fold of the
+*target's* light curve. The signal in KIC 5879574's aperture has the period
+**and** the harmonic shape of the RR Lyrae next door. A 0.575 mag pulsator
+diluted into a neighbouring Kepler aperture is an 0.084% oscillation; its
+crests clear the flare detector's running-median sigma on some cycles; the
+result is a catalogue of "flares" on a perfect clock.
+
+**Why the channel missed it, and the fix.** The `periodic_variable` veto runs
+its VSX / Gaia-vari / ZTF cone at **3 arcsec** -- a radius set by positional
+uncertainty, which is right for *is this star a variable* and wrong for *is a
+variable putting flux in this star's aperture*. A Kepler pixel is 3.98" and
+the optimal mask is several of them, so the contaminating radius is 10-20";
+at 13.3" the RR Lyrae was outside every cone the assess stage ran. **The fix
+is a second cone at the aperture scale whose hit is a contamination flag, not
+an identity flag.** The vet does this (`neighbour_context`); the assess stage
+does not. Until it does, no shortlist from this channel should be believed on
+the variability veto alone -- and the same question is worth asking of every
+other channel in this repository that vetoes on a positional-uncertainty cone.
+
 Per `CLAUDE.md` this is a clean result and is **not** written up. METRONOME
 has no candidate.
 

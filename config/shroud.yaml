@@ -228,6 +228,35 @@ plate:
   # linearly record; saturation makes the photometry unusable for a budget.
   saturation_mag: 12.0
 
+# The depth kill.  Absence is the whole signature here, so an absence is only
+# as good as the search that failed to find it.  Two ways it goes wrong:
+#   * the modern catalogue was never successfully queried, so every source in
+#     the run gets an empty ps1_r / gaia_g -- and empty reads as GONE;
+#   * the source sits outside that survey's footprint (Pan-STARRS stops at
+#     dec = -30), so only the shallower all-sky catalogue is behind it.
+# A catalogue contributes its depth only if its X-Match actually answered AND
+# the source is inside its footprint; a source nothing covered is excluded
+# from the disappearance count rather than counted as a disappearance.
+modern_optical:
+  require_depth_margin: true
+  # The claim "it vanished" is only as strong as (limit - plate magnitude):
+  # POSS-I E ~ 20.0, so an R1 = 19.3 source absent from Pan-STARRS has faded
+  # by >= 3.9 mag, while the same source absent from Gaia alone has faded by
+  # >= 1.4 mag -- within ordinary stellar variability.  2.0 mag is a factor of
+  # 6.3 in flux and is not reachable by the plate's own photometric scatter.
+  min_depth_margin_mag: 2.0
+  limits:
+    ps1:
+      mag: 23.2            # PS1 DR1 stacked r, 5 sigma (Chambers+2016 Table 11)
+      band: "r"
+      dec_min_deg: -30.0
+      dec_max_deg: 90.0
+    gaia:
+      mag: 20.7            # Gaia DR3 G completeness limit
+      band: "G"
+      dec_min_deg: -90.0
+      dec_max_deg: 90.0
+
 sed:
   # Blackbody temperature grids for the two competing models.
   teff_star_grid_k: [2500, 2800, 3200, 3600, 4000, 4500, 5000, 5800, 6500, 7500, 9000, 11000, 15000, 20000]

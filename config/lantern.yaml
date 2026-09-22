@@ -182,6 +182,12 @@ acquire:
   # least this fraction of their bytes; otherwise the segments are used.
   level3_min_byte_fraction: 0.7
   plan_cadence_minutes: 1.0
+  # A checkpoint is only safe once the shard's artifact uploads, so an exposure
+  # still running when the JOB times out costs the whole shard.  The shard's
+  # deadline is therefore predictive: it refuses to START a unit whose
+  # estimated cost would run past it.  This is the starting estimate, replaced
+  # by the shard's own measured minutes-per-GB after ~2 GB have gone through.
+  minutes_per_gb_estimate: 8.0
 
 verify:
   # Known eclipses run through the real reader and labeller on the runner

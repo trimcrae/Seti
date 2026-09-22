@@ -100,7 +100,10 @@ DEFAULTS: dict = {
                 # combined) over its level-2 segments when it holds at least
                 # this fraction of their bytes.
                 "level3_min_byte_fraction": 0.7,
-                "plan_cadence_minutes": 1.0},
+                "plan_cadence_minutes": 1.0,
+                # Starting estimate for download + read + analysis, until the
+                # shard has measured its own rate (see `screen`'s deadline).
+                "minutes_per_gb_estimate": 8.0},
     "verify": {"cases": [], "min_depth_snr": 5.0, "depth_range": [1e-4, 2e-2],
                "injection_amp": 0.02, "window_fraction_of_period": 0.25,
                "injection_snr_target": 12.0, "max_injection_amp": 0.5},
@@ -273,7 +276,17 @@ def analyse_stack(stack: dict, ephemerides: list[Ephemeris], conf: dict, target:
     # Integrations used for the time-averaged spectrum: everything outside
     # eclipse and outside every contact window.
     if lab is not None:
-        avg_mask = lab["out_eclipse"] & ~lab["transit_contact"]
+        # "The planet is visible and the star is whole": outside eclipse and
+        # its contacts, and outside the TRANSIT too.  Dropping in-transit
+        # integrations matters for a phase curve (a `both` exposure holds a
+        # transit as well as two eclipses): with them in, the out-of-eclipse
+        # average carries the planet's transmission spectrum and the star's
+        # limb-darkened line profiles, and both then appear in the
+        # out-minus-in-eclipse difference as features that have nothing to do
+        # with the occultation.
+        avg_mask = lab["out_eclipse"] & ~lab["transit_contact"] & ~lab["in_transit"]
+        if avg_mask.sum() < 4:
+            avg_mask = lab["out_eclipse"] & ~lab["transit_contact"]
         if avg_mask.sum() < 4:
             avg_mask = np.ones(n_int, bool)
     else:
@@ -904,6 +917,20 @@ def screen(out_dir: Path, conf: dict, shard: int = 0, n_shards: int = 1,
                       "deadline_deferred": 0},
            "bytes_downloaded": 0}
     per_target: dict[str, int] = {}
+    # Cost model for the deadline.  A checkpoint is only safe once the shard's
+    # artifact uploads, so a unit that would still be running when the JOB
+    # times out costs the whole shard, not just itself.  Starting a 10 GB
+    # exposure with ten minutes of slack is exactly that trade, so the deadline
+    # is predictive: the estimate starts at `minutes_per_gb` and is replaced by
+    # this shard's own measured rate once a few units have gone through.
+    mpg0 = float((conf.get("acquire") or {}).get("minutes_per_gb_estimate", 8.0))
+    spent_s, spent_bytes = 0.0, 0
+
+    def _estimate_minutes(nbytes: int) -> float:
+        gb = max(float(nbytes), 0.0) / 1e9
+        rate = (spent_s / (spent_bytes / 1e9)) / 60.0 if spent_bytes > 2e9 else mpg0
+        return gb * max(rate, 0.25) + 1.0     # + fixed per-unit overhead
+
     for ui in my:
         u = units[ui]
         host = u["host"]
@@ -918,12 +945,16 @@ def screen(out_dir: Path, conf: dict, shard: int = 0, n_shards: int = 1,
                 log["counts"]["skipped_checkpoint"] += 1
                 continue
             log["counts"]["stale_checkpoint_redone"] += 1
-        if deadline is not None and time.time() > deadline:
-            log["counts"]["deadline_deferred"] += 1
-            continue
         items = u["items"]
         status, stacks, notes = "analysed", [], []
         total = int(u.get("total_bytes") or 0)
+        # Past the point where THIS unit fits; a cheaper one later in the shard
+        # still might, so the loop continues rather than stopping the shard.
+        if deadline is not None and time.time() + 60.0 * _estimate_minutes(total) > deadline:
+            log["counts"]["deadline_deferred"] += 1
+            log["deferred_bytes"] = int(log.get("deferred_bytes", 0)) + total
+            continue
+        t_unit = time.time()
         big = [i for i in items if int(i.get("size") or 0) > cap]
         if big:
             status = "too_large"
@@ -984,6 +1015,11 @@ def screen(out_dir: Path, conf: dict, shard: int = 0, n_shards: int = 1,
                 rec["analysis_seconds"] = round(time.time() - t0, 1)
                 del grids
         _write_json(ck, rec)
+        if status not in ("too_large", "proprietary"):
+            spent_s += time.time() - t_unit
+            spent_bytes += total
+            log["minutes_per_gb_measured"] = (round((spent_s / (spent_bytes / 1e9)) / 60.0, 2)
+                                              if spent_bytes else None)
         key = rec["status"] if rec["status"] in log["counts"] else "read_failed"
         log["counts"][key] += 1
         log["exposures"].append({"host": host, "exposure_key": ek, "status": rec["status"],

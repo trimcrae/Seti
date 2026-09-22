@@ -10,6 +10,156 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### SEXTANT: dispatched uncapped over all 156,823 objects, on one runner, 2026-09-22
+
+SEXTANT asks LOOM's question — is a minor planet accelerating in a way
+sunlight cannot supply — on Gaia's SSO astrometry, where the residual is
+milliarcseconds rather than arcseconds. Until today only the acquisition probe
+had ever run. Now the whole pipeline exists and is on a runner:
+`.github/workflows/sextant.yml`, `probe` → N `fit` shards → `assess`, wired to
+`python -m seti.cli sextant`.
+
+**In flight: run 35746692260** on `claude/goap-sextant` — `gaiafpr`,
+`max_objects: 0` (every numbered object in the release), the new **solo** path:
+probe, fit and assess as three steps of ONE job on ONE runner, with a
+230-minute in-job clock inside a 350-minute cap.
+
+It is the third dispatch and the first that can realistically start. Run
+35739803943 (8 shards, capped at 800 objects) sat queued 45 minutes at a commit
+predating the independent Greenberg+2020 control and was cancelled; its
+replacement 35744966028 (4 shards, uncapped) sat queued another 15 without its
+single probe job starting, against an account queue of **69 waiting runs**
+across 18 channels. The sharded path needs six separate scheduling events — a
+probe slot, four simultaneous fit slots, an assess slot — and a run that never
+starts measures nothing. The solo path needs one. It reaches roughly a quarter
+of the objects; because a shard fits its controls first and then works a seeded
+shuffle, that quarter is a smaller *unbiased sample of the same catalogue* with
+the same complete control set, not a different sample. `solo: false` still runs
+the sharded path when there is capacity to spend.
+
+Uncapped is now the *safer* choice, not the riskier one, because of two
+changes made before the dispatch. A shard works its **positive controls
+first** and then the rest in a seeded shuffle, so a shard that never finishes
+still has a complete control set — ascending `number_mp` would have reached the
+NEAs last and left the `A2` distribution with nothing to check itself against
+— and any truncation is an unbiased random subsample rather than a sample of
+large main-belt bodies. And the fit stage runs on a clock *inside* the job's
+cap, stopping between chunks, because a job killed by `timeout-minutes` is
+cancelled and a cancelled job does not reliably upload its artifacts. A
+stopped shard reports `OK_PARTIAL_BUDGET` with the chunks it did not attempt,
+and `summary.json`'s `coverage` block says how much of the assigned sample was
+reached, so unmeasured objects can never be read as a null.
+
+**The probe's decisive finding, written down.** `epoch` is **TCB**, and it is
+derived rather than assumed. The probe measured `epoch_utc − epoch` as
+−85.564 s at MJD 56864 and −90.250 s at MJD 58868; computing TCB − UTC from
+`L_B = 1.550519768e-8` plus TT − TAI plus the leap seconds in force gives
+85.564 s and 90.249 s. Both ends agree to under a millisecond, and the 4.686 s
+drift across the mission decomposes as 2.685 s of secular `L_B` and exactly 2 s
+of leap seconds. Nothing but TCB does that. This mattered more than it sounds:
+87 s of time-tag error is ~0.7 arcsec of along-track offset on *every* object
+in proportion to sky rate — a catalogue-wide fake detection shaped exactly like
+the signal. Also settled: the observer state vectors are equatorial
+(`max|z_gaia| = 0.4098 au`, which is `y_ecl·sin 23.44°` and not an ecliptic
+slab); `is_rejected` runs at 0.6304% against a published 0.58%; and the
+DR3/FPR union deduplicates under **both** candidate keys.
+
+**The controls are the falsifiable part, and there are now two of them.** The
+primary is JPL's fitted `A2`, pulled live from SBDB. It has a weakness — JPL's
+solutions saw Gaia DR2/DR3 astrometry at high weight — so the channel now also
+scores against Greenberg+2020 (AJ 159, 92; VizieR `J/AJ/159/92`), 247 `da/dt`
+measurements from optical and radar. The conversion is exact for JPL's
+`g(r) = (1 au/r)²`: `da/dt = 2 A2 / (n a² (1−e²))`, which reproduces Bennu's
+published −19.0 ± 0.1e−4 au/Myr from JPL's `A2 = −4.6e−14 au/day²` to 1%. If
+the Gaia-only fit does not return these in sign and magnitude, nothing else in
+the output is believed, and `assess` stamps `ESTIMATOR_FAILS_CONTROLS` onto the
+run verdict rather than reporting the exceedances.
+
+**What to do next:** read run 35746692260's `results/sextant/controls.json`
+before anything else in `summary.json` — `verdict`, `n_measured` and
+`recovered_fraction`. If it reads `CONTROLS_FAILED_SIGN` or
+`CONTROLS_INCONSISTENT`, the exceedance list is a property of the estimator and
+`assess` will already have stamped `ESTIMATOR_FAILS_CONTROLS` on the run
+verdict; fix the fit before reading anything else. Only if the controls recover
+does `coverage` (how many of the assigned objects were actually reached),
+`a2_distribution` and the population verdict mean anything.
+
+### ARC stage 2 on the pixels: 5 of 21 catalogued flares were on a NEIGHBOUR, 2026-09-22
+
+S59 (`docs/arc.md` §9). The centroid test that decides this channel has now
+run on real target pixel files with the NaN-pixel fix in place (run
+**35738785437**, 21 of 30 stars before it was superseded — the per-star
+checkpoint in `results/arc/stage2/stars.json` holds every one):
+
+| | run 35675112803 | run 35738785437 |
+|---|---|---|
+| `flare_on_target` | 6 | **8** |
+| `flare_on_neighbour` | 1 | **5** |
+| `centroid_ambiguous` | 1 | 5 |
+| `centroid_untestable` | **22** | **3** |
+
+58 flares examined: 21 on target, **5 on a neighbour**, 9 ambiguous, 7 with
+too few pixels, 2 unattributed, 14 untestable. The five misattributions are
+KIC 10288777 (**16.8σ** from the target), KIC 7009116 (14.6σ), KIC 9268205
+(7.0σ), KIC 7174965 (4.8σ) and KIC 9139163 (3.9σ), each consistent with a
+named Gaia DR3 source. That is a statement about the *flare catalogues*
+— their per-star attribution comes from the pipeline aperture — not about
+this channel's candidates.
+
+**The channel's two named candidates are settled, and differently.**
+
+| star | ξ stage 1 | ξ measured | Teff, R★, M★ (Berger+2020 table2) | verdict |
+|---|---|---|---|---|
+| KIC 8487271 | +0.104 | **−0.920** | 5998.6 K, 1.301 R☉, 1.209 M☉ | **`flare_on_target`** |
+| KIC 11507705 | +0.440 | **−1.240** | 6365.3 K, 1.311 R☉, 1.187 M☉ | **`centroid_ambiguous`** |
+
+8487271's flare (4.57e34 erg) put the difference-image centroid **0.171 px
+(1.5σ) from the target**, every neighbour rejected — so it passes the pixel
+test and dissolves on the parameters anyway. 11507705's one testable flare is
+consistent with the target *and* with DR3 2129762445437102464; its own
+quarter amplitude is 2.7× the catalogue value, which is most of the further
+0.65 dex it fell. `stellar_params_assumed` is closed on both: measured Teff /
+R★ / M★ from Berger+2020 `J/AJ/159/280/table2`, 20 of 21 stars measured.
+
+**Stage 1 re-run (run 35741271294, assess, 288 s).** A shortlisted star now
+takes measured parameters whether or not it was flagged assumed. Funnel
+unchanged — 190,486 flares, 8,908 stars, **4,206 assessable**, 4,702 with no
+amplitude and so no ceiling, **1** above the conservative ceiling, 0/0/13
+candidate/interest/watch — but the one excess grew: ξ_conservative,max
+**+0.462 → +0.715**, flares above 4 → 6 (nominal 11 → 12).
+
+**The Santos+2021 lever is measured and it is not the lever STATUS predicted.**
+It was already in the sample (245 of 2,507 Yang & Liu stars, 22 of 279
+Shibayama) and moved the assessable count 4,204 → 4,206. The 4,702 unassessable
+are not waiting on Santos: 1,117 are Günther TESS stars with no amplitude
+anywhere and 913 are Yang & Liu stars in neither McQuillan nor Santos. What
+the lever did instead was **raise the ceiling** — `Sph` → range (×2√2) lifts
+`E_mag` by 0.68 dex — taking conservative positives 5 → 2 → 1.
+
+**KIC 9418692 — and the number that decides it is its amplitude.** ξ = +0.715
+on 6 flares (ξ_nominal +1.431 on 12) of 14 Yang & Liu events, on Santos's
+`Sph` as a range, 2.008e-4. The *same star's* Shibayama record carries
+6.0e-4, and on that amplitude the identical flares give **ξ = +0.002** —
+exactly at the ceiling — because `E_mag ∝ A^{3/2}` turns a factor 3 into 0.71
+dex. Run **35744902798** (queued 11:05 ET) is the first to put its Yang & Liu
+record on the pixels *and* measure its amplitude from its own Kepler light
+curve; `load_shortlist` ranks it first of 13 as `vetoed_excess`. Its only
+remaining killer, Gaia RUWE 1.556, is an astrometric suspicion, not a
+detection.
+
+**Two defects fixed, each measured on real output.** An archive fetch had no
+wall clock of its own — the stage budget is checked *between* stars, so one
+hung MAST request in run 35738785437 held the process from the moment its
+9,000 s budget expired; `_fetch_products` now abandons a fetch after
+`stage2.product_timeout_s` and records `QUERY_FAILED`, never zero rows. And a
+star that leaves every tier when better parameters arrive left every
+shortlist with it (KIC 8487271, +0.104 → −0.920), so `--stars` /
+the workflow's `stars` input reads named rows straight from `xi_table.csv`
+whatever tier they ended in.
+
+**Next decisive action:** read run 35744902798 for KIC 9418692's quarter
+`Rvar` and its centroid verdict; then the Gaia DR3 non-single-star solutions
+and any archival spectroscopy for the RUWE 1.556 companion.
 ### RELAY measured: Earth sits in 1.8e4-1.8e7 node-to-node beams, and none of them optical, 2026-09-22
 
 S60 (`docs/relay.md`). The channel asks a question nobody has asked at catalogue

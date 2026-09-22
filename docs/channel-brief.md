@@ -15,6 +15,15 @@ hard way. Deviating costs runs.
 3. **Never write up a null result.** A clean null changes the question. Compute
    limits as internal honesty checks only.
 4. **Trace every candidate to a systematic before believing it.**
+5. **A green local suite is not a green gate.** The sandbox venv and the runner
+   resolve dependencies independently, and the runner takes the newest release:
+   measured 2026-09-22, the sandbox held pandas 2.3.3 while the runner installed
+   3.0.6. CRADLE lost a whole dispatch to that gap — run 35741356662's probe
+   reached a runner and died in two minutes, before a single archive call, on
+   `pd.to_numeric(errors="ignore")`, a spelling pandas 3 removed. A runner slot
+   costs an hour of queue; a version check costs nothing. Before dispatching,
+   check any API you use against the major version the runner will install, and
+   where a channel is exposed to it, run its suite under both majors.
 
 ## 1. Layout
 

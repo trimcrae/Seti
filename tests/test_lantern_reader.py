@@ -317,6 +317,23 @@ def test_verify_eclipse_stack_on_a_synthetic_eclipse():
     assert not v3["passed"] and not v3["checks"]["depth_positive_and_significant"]
 
 
+def test_out_of_eclipse_average_excludes_in_transit_integrations():
+    """"The planet is visible and the star is whole."  With in-transit
+    integrations left in the out-of-eclipse average, a phase curve's
+    out-minus-in-eclipse difference carries the planet's transmission spectrum
+    and the star's limb-darkened profiles -- features that have nothing to do
+    with the occultation."""
+    s = synthesise_timeseries(line_amp=0.0, centre="transit", transit_depth=0.01)
+    s["meta"] = {"INSTRUME": "NIRSPEC", "GRATING": "G395H"}
+    s["time_source"] = "row_bjd_tdb"
+    lab = label_integrations(np.asarray(s["times"], float), s["ephemeris"], _CONF["phase"])
+    assert lab["in_transit"].sum() > 0
+    rec = R.analyse_stack(s, [s["ephemeris"]], _CONF, "X")
+    want = lab["out_eclipse"] & ~lab["transit_contact"] & ~lab["in_transit"]
+    assert rec["n_averaged_integrations"] == int(want.sum())
+    assert int(want.sum()) < int((lab["out_eclipse"] & ~lab["transit_contact"]).sum())
+
+
 def test_verify_rejects_a_misplaced_ephemeris():
     """The timing check must still fail when the eclipse is NOT where the
     ephemeris says.  A free two-level step is allowed to land off the predicted
@@ -463,5 +480,19 @@ def test_screen_redoes_stale_checkpoints_and_honours_the_deadline(tmp_path):
     log3 = R.screen(tmp_path, _CONF, shard=0, n_shards=1, download_fn=dl, read_fn=rd,
                     work_dir=tmp_path / "work", deadline_minutes=1e-9)
     assert log3["counts"]["deadline_deferred"] == 1 and len(calls) == 1
+    # The deadline is PREDICTIVE: an exposure whose estimated cost would run
+    # past it is never started, because a checkpoint is only safe once the
+    # shard's artifact uploads and a job that times out loses all of them.
+    # This unit is 10 bytes, so it is deferred only by the size estimate.
+    big = dict(_CONF, acquire=dict(_CONF["acquire"], minutes_per_gb_estimate=1e9))
+    log4 = R.screen(tmp_path, big, shard=0, n_shards=1, download_fn=dl,
+                    read_fn=rd, work_dir=tmp_path / "work", deadline_minutes=5.0)
+    assert log4["counts"]["deadline_deferred"] == 1 and len(calls) == 1
+    assert log4["deferred_bytes"] == 10
+    # With a sane estimate the same unit and the same deadline go through.
+    log5 = R.screen(tmp_path, _CONF, shard=0, n_shards=1, download_fn=dl, read_fn=rd,
+                    work_dir=tmp_path / "work", deadline_minutes=5.0)
+    assert log5["counts"]["analysed"] == 1 and len(calls) == 2
+    ck.unlink()
     summary = R.assess(tmp_path, _CONF)
     assert summary["funnel"]["exposure_checkpoints"] == 0

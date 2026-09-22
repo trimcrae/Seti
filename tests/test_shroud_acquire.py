@@ -603,6 +603,53 @@ def test_a_live_catalogue_that_is_only_partly_deep_is_recorded_per_source(sc):
     assert cats.iloc[0] == "gaia"
 
 
+def test_the_svo_probe_ladder_runs_under_a_clock(sc, monkeypatch):
+    """A dead service must not be able to eat the run that would have worked.
+
+    Run 35741075121 spent > 45 min in this one step, because the number of
+    roots is contributed by the registry and by an index scrape, not by this
+    channel.  The route AFTER it is the one that can restore the sample.
+    """
+    t = [0.0]
+
+    def slow_probe(url, cfg_, data=None, timeout=None):
+        t[0] += 25.0                       # every root times out, as they do
+        return None, "URLError: timed out"
+
+    monkeypatch.setattr(acq, "_probe", slow_probe)
+    monkeypatch.setattr(acq.time, "time", lambda: t[0])
+    roots = [f"http://dead-{i}.example" for i in range(200)]
+    root, _url, prov = acq.probe_svo_catalog("vanish_neowise", roots, sc,
+                                             budget_s=300.0)
+    assert root is None
+    d = prov.as_dict()
+    assert d["status"] == "budget_exhausted", d
+    # It stopped early: 200 roots x 5 forms x 25 s is 7 hours.
+    assert len(d["attempts"]) < 40, len(d["attempts"])
+    # And it says so, so a reader cannot mistake the clock for the sky.
+    assert any("not about the service" in n for n in d["notes"]), d["notes"]
+
+
+def test_a_live_root_inside_the_budget_is_still_found(sc, monkeypatch):
+    """The clock must not cost the channel a service that does answer."""
+    def probe(url, cfg_, data=None, timeout=None):
+        if "live" in url and "RA=" in url:
+            return (b"RA\tDEC\tW1mag\tW2mag\n"
+                    b"180.000000\t0.000000\t15.1\t14.8\n"
+                    b"180.001000\t0.001000\t16.2\t15.9\n"), "HTTP 200"
+        if "live" in url:
+            return b"<html><a href='cs.php'>cone</a></html>", "HTTP 200"
+        return None, "URLError: timed out"
+
+    monkeypatch.setattr(acq, "_probe", probe)
+    root, url, prov = acq.probe_svo_catalog(
+        "vanish_neowise", ["http://dead.example", "http://live.example"], sc,
+        budget_s=600.0)
+    assert root == "http://live.example", prov.as_dict()
+    assert "RA=" in url
+    assert prov.status == "ok"
+
+
 # ===========================================================================
 # The second-digitisation reachability probe.
 # ===========================================================================

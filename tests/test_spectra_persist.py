@@ -590,6 +590,49 @@ def _bias_the_exposures(parsed, curvature=1.2e-4):
     return parsed
 
 
+def _desi_collected(lam, amps, noise=0.05, seed=9):
+    """What desi_exposure_measurements keeps while it reads the cframes: one
+    entry per exposure, each holding the arrays of the arms it read."""
+    rng = np.random.default_rng(seed)
+    wave = np.arange(3600.0, 5800.0, 0.8)
+    out = []
+    for k, amp in enumerate(amps):
+        f = 10.0 + rng.normal(0, noise, wave.size)
+        if amp:
+            f = f + _gauss(wave, lam, amp, persist.lsf_fwhm_A(lam, "DESI-DR1", "b") / 2.3548)
+        out.append({"expid": 1000 + k, "night": 20210101, "arms": [
+            {"band": "b", "wave": wave, "flux": f,
+             "ivar": np.full(wave.size, 1 / noise ** 2), "mask": None, "sky": None}]})
+    return out
+
+
+def test_desi_measure_at_reuses_the_frames_and_feeds_the_null():
+    """The DESI route downloads tens of megabytes per exposure, so the null is
+    only affordable if the arrays are reused.  This is the path run on the
+    absorption half of the survivor list, and it had no offline test."""
+    lam = 4500.0
+    at = persist.desi_measure_at(_desi_collected(lam, [1.0] * 4), "emission")
+    coadd, ex = at(lam)
+    assert coadd is None                       # the cframe route has no coadd
+    assert len(ex) == 4 and all(e["testable"] for e in ex), ex
+    assert all(e["sig"] > 4.0 for e in ex), [e["sig"] for e in ex]
+    cls = persist.classify_persistence(None, ex)
+    assert cls["persistence_class"] == "persistent", cls
+
+    # The null re-measures at offsets without any further download, and on a
+    # clean spectrum it is centred on zero.
+    null = persist.offset_null(at, lam, n=16, lo_A=12.0, hi_A=120.0)
+    assert null["n_measured"] >= 12
+    assert abs(null["combined_sig_median"]) < 2.0, null
+    assert null["n_exposure_measurements"] >= 40
+    assert null.get("n_coadd_measurements", 0) == 0     # nothing to calibrate the coadd on
+
+    # A line in one exposure only is transient down the same path.
+    at1 = persist.desi_measure_at(_desi_collected(lam, [4.0, 0.0, 0.0, 0.0]), "emission")
+    _, ex1 = at1(lam)
+    assert persist.classify_persistence(None, ex1)["persistence_class"] == "transient"
+
+
 def test_a_thin_null_cannot_manufacture_a_detection():
     """The bias is subtracted from every measurement, so it is an estimate with
     an uncertainty.  A null built from a handful of offsets can land several

@@ -247,4 +247,44 @@ that failed and every veto that could not be applied.
 
 ## 6. Runs
 
+### 6.0 Offline dry run on the embedded seeds (not a measurement)
+
+Before the first dispatch, `assess_star` was run on the seven embedded seed
+rows that carry a numeric value. **This is not a result**: the seeds are
+transcriptions marked `verify = unverified`, so nothing here may drive a
+candidate. It is reported because it shows the detector behaving as designed
+on real published numbers rather than on injected ones.
+
+| Star | Bands (%) | Tier | Δχ² |
+|---|---|---|---|
+| HD 172167 (Vega) | K 1.26 ± 0.27 | `N_UNTESTED` | — |
+| HD 10700 (τ Cet) | K 0.98 ± 0.19 | `N_UNTESTED` | — |
+| HD 177724 (ζ Aql) | K 1.69 ± 0.27 | `N_UNTESTED` | — |
+| HD 102647 (β Leo) | K 0.94 ± 0.26 | `N_UNTESTED` | — |
+| HD 187642 (Altair) | K 3.07 ± 0.24 | `N_UNTESTED` | — |
+| HD 216956 (Fomalhaut) | K 0.88 ± 0.12, N8 0.35 ± 0.10 | `nano_preferred` | **−21.8** |
+| HD 109085 (η Crv) | N 4.90 ± 0.10 | `NO_NIR_EXCESS` | — |
+
+Two things to read from it. First, **five of the seven best-known hot-exozodi
+hosts are `N_UNTESTED`** — they have a K excess and no N-band measurement of
+any kind, so the Planck test never touches them. Their predicted 10.5 µm
+excesses (6.3 % for τ Cet, 10.3 % for Vega, 23.2 % for Altair) are what an
+N-band observation would have to find and did not look for; that is a target
+list, not a result, and it is the single largest limit on the channel.
+
+Second, **Fomalhaut — the one seed system with both a K excess and an N-band
+measurement — is `nano_preferred` at Δχ² = −21.8** (best fit a = 0.4 µm,
+β = 2). Its K excess of 0.88 % implies 7 % at 10 µm for a grey 1500 K body;
+Keck measures 0.35 ± 0.10 % at 8.5 µm. This is the K-bright / N-faint pattern
+in its purest form, and it is the expected outcome: **the small-grain model is
+expected to win wherever the data actually constrain it.** The channel's
+deliverable is the ranked Planck-consistency list and whatever survives it,
+not the count of stars that behaved as the standard model says.
+
+### 6.1 Runner dispatches
+
+| Run | Stage | Dispatched (EDT) | Verdict |
+|---|---|---|---|
+| [35744731075](https://github.com/trimcrae/Seti/actions/runs/35744731075) | `all`, `skip_population=true` | 2026-09-22 11:04 | in flight |
+
 *(filled in from `results/forge/` after each runner dispatch — see STATUS.md)*

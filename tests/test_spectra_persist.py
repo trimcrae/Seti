@@ -633,6 +633,26 @@ def test_desi_measure_at_reuses_the_frames_and_feeds_the_null():
     assert persist.classify_persistence(None, ex1)["persistence_class"] == "transient"
 
 
+def test_combined_sig_amplifies_a_per_exposure_bias_by_sqrt_n():
+    """Measured on run 35747997902 shard 0: across 24 lines the median MAX
+    per-exposure significance was -0.40 while the median COMBINED was -2.60,
+    and the stack was positive in 24 of 24.  An inverse-variance combination
+    multiplies a residual bias b by sqrt(N), so a harmless per-exposure -0.4
+    becomes -1.7 over 18 exposures with no line anywhere.  median_exposure_sig
+    is the number that does not do that."""
+    for n, b in ((18, -0.4), (18, -1.0), (9, -1.0)):
+        ex = [{"testable": True, "F": b, "err": 1.0} for _ in range(n)]
+        cls = persist.classify_persistence(None, ex)
+        assert abs(cls["median_exposure_sig"] - b) < 1e-6, cls
+        assert abs(cls["combined_sig"] - b * np.sqrt(n)) < 1e-6, cls
+        # ... which is exactly the trap: the combination looks decisive.
+        assert abs(cls["combined_sig"]) > abs(cls["median_exposure_sig"])
+    # And the basis string no longer asserts that the coadd invented a feature.
+    ex = [{"testable": True, "F": -0.4, "err": 1.0} for _ in range(18)]
+    basis = persist.classify_persistence(None, ex)["basis"]
+    assert "median" in basis and "not in its inputs" not in basis, basis
+
+
 def test_a_thin_null_cannot_manufacture_a_detection():
     """The bias is subtracted from every measurement, so it is an estimate with
     an uncertainty.  A null built from a handful of offsets can land several

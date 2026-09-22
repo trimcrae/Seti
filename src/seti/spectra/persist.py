@@ -420,6 +420,15 @@ def classify_persistence(coadd: dict | None, exposures: list[dict],
         "mean_F": Fbar, "mean_err": ebar, "combined_sig": Fbar / ebar,
         "chi2": chi2, "chi2_p": p, "dominant_frac": dominant,
         "sig_without_strongest": sig_rest, "max_exposure_sig": float(sig.max()),
+        # The bias-robust companion to combined_sig.  An inverse-variance
+        # combination multiplies any residual per-exposure bias b by sqrt(N),
+        # so N=18 exposures each reading a harmless -0.4 sigma combine to -1.7,
+        # and each reading -1.0 combine to -4.2 -- with no line and no further
+        # bias anywhere.  The median of the per-exposure significances does not
+        # do that, and is the number to read when combined_sig is large and
+        # negative.  Measured on run 35747997902 shard 0: median per-exposure
+        # -0.40 against a median combined -2.60, over 24 lines.
+        "median_exposure_sig": float(np.median(sig)),
         "sky_corr": corr, "n_cosmic_flagged": n_cos,
     })
     if coadd is not None and coadd.get("testable") and coadd.get("F"):
@@ -455,11 +464,15 @@ def classify_persistence(coadd: dict | None, exposures: list[dict],
     elif n >= 2 and present.sum() == 0 and Fbar / ebar < 2.0 \
             and (not np.isfinite(res["stack_sig"]) or res["stack_sig"] < 4.0):
         cls = "absent_in_exposures"
-        basis = (f"no exposure shows it (max {sig.max():.1f} sigma, combined "
-                 f"{Fbar / ebar:.1f} sigma"
+        # State the numbers; do not state a conclusion the numbers do not carry.
+        # A large negative combined_sig is sqrt(N) times a small residual
+        # per-exposure bias, not evidence that the coadd invented a feature --
+        # which is why the median per-exposure significance is quoted next to it.
+        basis = (f"no exposure shows it (max {sig.max():.1f} sigma, median "
+                 f"{np.median(sig):.1f} sigma, combined {Fbar / ebar:.1f} sigma"
                  + (f", stack of the exposures {res['stack_sig']:.1f} sigma"
                     if np.isfinite(res["stack_sig"]) else "")
-                 + "): the coadd feature is not in its inputs")
+                 + ")")
     elif n >= 2 and present.sum() == 0 and np.isfinite(res["stack_sig"]) \
             and res["stack_sig"] >= 4.0:
         # The exposures are individually too noisy to show it but their own

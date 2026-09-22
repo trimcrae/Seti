@@ -622,7 +622,7 @@ USNOB1_QUERY_FORMS = ("ndet+r1", "ndet", "r1", "none", "none_allcols")
 
 
 def usnob1_field_url(ra: float, dec: float, radius_deg: float, cfg: dict,
-                     form: str = "ndet+r1") -> str:
+                     form: str = "ndet+r1", columns=None) -> str:
     """ASU query for POSS-I-red-only USNO-B1.0 objects inside one cone.
 
     ``-c`` carries an explicit sign and is percent-encoded: a literal ``+``
@@ -641,7 +641,15 @@ def usnob1_field_url(ra: float, dec: float, radius_deg: float, cfg: dict,
     if form == "none_allcols":
         params.append(("-out.all", ""))
     else:
-        params.append(("-out", ",".join(USNOB1_COLUMNS)))
+        # REPEATED ``-out=`` per column, not one comma-joined value: the
+        # comma-joined spelling is what the first sweep sent and every field
+        # came back HTTP 200 with a header and no rows.  Repeated ``-out=`` is
+        # the spelling the METRONOME route has actually been answered on.
+        params.extend(("-out", c) for c in (columns or USNOB1_COLUMNS))
+    # ``asu-tsv`` names the format in the path, but the ASU dispatcher only
+    # emits the tab-separated body when the form is asked for explicitly; a
+    # request without it can be answered as metadata alone.
+    params.append(("-out.form", "TSV"))
     if form in ("ndet+r1", "ndet"):
         params.append(("Ndet", str(int(r.get("ndet", 1)))))
     if form in ("ndet+r1", "r1"):
@@ -650,8 +658,60 @@ def usnob1_field_url(ra: float, dec: float, radius_deg: float, cfg: dict,
         params, quote_via=urllib.parse.quote)
 
 
+def usnob1_meta_url(cfg: dict) -> str:
+    """``-meta.all`` for I/284/out: the catalogue's own column spelling.
+
+    Run 35653059591 asked for columns this channel had *assumed*; one wrong
+    name is enough for ASU to answer with a header and no rows, and nothing in
+    the ledger could tell that apart from an empty sky.  The reconstruction
+    now reads the real names off the service before it trusts a zero.
+    """
+    a = cfg.get("acquire", {})
+    r = a.get("reconstruct", {})
+    src = str(r.get("usnob1_table", "I/284/out"))
+    return (f"{a.get('vizier_asu', VIZIER_ASU)}?"
+            f"-source={urllib.parse.quote(src, safe='/')}&-meta.all&-out.form=TSV")
+
+
+def usnob1_meta_probe(cfg: dict) -> dict:
+    """Ask I/284/out for its own column list before believing any zero.
+
+    Returns ``{url, detail, columns, missing, body_head}``.  ``missing`` is the
+    subset of :data:`USNOB1_COLUMNS` the catalogue does not advertise --- if it
+    is non-empty, a column-list query is asking for a name that does not exist
+    and its empty answer says nothing about the sky.  A failed probe is
+    recorded and the sweep continues: the ladder's ``-out.all`` rung does not
+    name columns at all.
+    """
+    url = usnob1_meta_url(cfg)
+    r = cfg.get("acquire", {}).get("reconstruct", {})
+    body, detail = http_get(url, int(r.get("meta_timeout_s", 60)), retries=1, backoff=5.0)
+    out: dict = {"url": url, "detail": detail, "columns": [], "missing": [],
+                 "body_head": ""}
+    if body is None:
+        return out
+    from ..metronome.acquire import asu_body_head  # noqa: PLC0415
+
+    txt = body.decode("utf-8", "replace")
+    out["body_head"] = asu_body_head(txt, 1500)
+    names: list[str] = []
+    for ln in txt.splitlines():
+        if ln.startswith("#Column"):
+            cells = [c.strip() for c in ln.split("\t") if c.strip()]
+            for c in cells[1:]:
+                if not c.startswith(("(", "[")):
+                    names.append(unquote_table(c))
+                    break
+    out["columns"] = sorted(dict.fromkeys(names))
+    if names:
+        have = {n.lower() for n in names}
+        out["missing"] = [c for c in USNOB1_COLUMNS if c.lower() not in have]
+    return out
+
+
 def fetch_usnob1_field(ra: float, dec: float, radius_deg: float, cfg: dict,
-                       forms=USNOB1_QUERY_FORMS) -> tuple[pd.DataFrame, str, list[dict]]:
+                       forms=USNOB1_QUERY_FORMS, columns=None
+                       ) -> tuple[pd.DataFrame, str, list[dict]]:
     """One field through the query-form ladder; ``(raw, form_used, attempts)``.
 
     The head of every empty or failed body is kept, so "zero rows" is a
@@ -664,7 +724,7 @@ def fetch_usnob1_field(ra: float, dec: float, radius_deg: float, cfg: dict,
     attempts: list[dict] = []
     raw = pd.DataFrame()
     for form in forms:
-        url = usnob1_field_url(ra, dec, radius_deg, cfg, form)
+        url = usnob1_field_url(ra, dec, radius_deg, cfg, form, columns)
         t0 = time.time()
         body, detail = http_get(url, int(r.get("field_timeout_s", 240)),
                                 retries=int(r.get("field_retries", 2)), backoff=10.0)
@@ -745,8 +805,6 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
     Returns ``(sample, provenance, field_ledger)``.  A field already on disk
     is reused, so a re-dispatch with more fields only fetches the new ones.
     """
-    from ..metronome.acquire import parse_asu_tsv  # noqa: PLC0415  (shared parser)
-
     a = cfg.get("acquire", {})
     r = a.get("reconstruct", {})
     n_fields = int(n_fields if n_fields is not None else r.get("n_fields", 40))
@@ -769,6 +827,17 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
     form_used: str | None = None
     ndet_hist: dict = {}
     r1_hist: dict = {}
+    meta = usnob1_meta_probe(cfg)
+    prov.notes.append(
+        f"I/284/out -meta.all: {meta['detail']}; "
+        + (f"{len(meta['columns'])} column(s) reported"
+           if meta["columns"] else "no column names parsed")
+        + (f"; MISSING from the catalogue: {sorted(meta['missing'])}"
+           if meta["missing"] else "; every requested column exists"))
+    # A name the catalogue does not advertise is dropped rather than sent: one
+    # bad ``-out=`` is enough for ASU to answer with a header and no rows.
+    columns = ([c for c in USNOB1_COLUMNS if c not in set(meta["missing"])]
+               if meta["columns"] else None)
     for _, f in grid.iterrows():
         fid = int(f["field_id"])
         rec = {"field_id": fid, "ra_deg": float(f["ra_deg"]),
@@ -788,7 +857,7 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
             ledger.append(rec)
             continue
         raw, form, attempts = fetch_usnob1_field(float(f["ra_deg"]), float(f["dec_deg"]),
-                                                 radius_deg, cfg, forms)
+                                                 radius_deg, cfg, forms, columns)
         rec["seconds"] = round(sum(a["seconds"] for a in attempts), 1)
         rec["detail"] = attempts[-1]["detail"] if attempts else ""
         rec["form"] = form
@@ -842,6 +911,7 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
          "n_fields_ok": sum(1 for x in ledger if x["status"] in ("ok", "cached")),
          "query_form_used": form_used, "r1_max_mag": r1_max, "ndet": ndet,
          "ndet_histogram_raw": ndet_hist, "r1mag_histogram_raw": r1_hist,
+         "meta_probe": meta, "columns_requested": list(columns or USNOB1_COLUMNS),
          "fields": ledger}, indent=1, default=str))
     if not frames:
         prov.status = "unreachable" if n_fail else "empty"

@@ -87,9 +87,45 @@ def test_usnob1_field_url_encodes_the_sign_and_the_constraints(sc):
     assert "-source=I/284/out" in url or "-source=I%2F284%2Fout" in url
     assert "Ndet=1" in url
     assert "R1mag=%3C%3D19.30" in url
-    assert "-c.rd=0.5000" in url and "-out.all=" in url
+    assert "-c.rd=0.5000" in url
+    assert "-out.form=TSV" in url
     url_s = acq.usnob1_field_url(10.0, -12.5, 0.5, sc)
     assert "%20-12.500000" in url_s
+
+
+def test_every_usnob1_query_form_keeps_the_declination_sign_on_the_wire(sc):
+    """The IGNITION bug, defended once per rung of the form ladder.
+
+    A literal ``+`` in a query string decodes to a SPACE, so ``-c=266+65``
+    reaches VizieR as the unsigned pair ``266 65``, which it cannot read as a
+    position: it answers with an empty resource that looks exactly like an
+    empty sky.  Every form must percent-encode the sign, and a negative
+    declination must survive as a minus.
+    """
+    for form in acq.USNOB1_QUERY_FORMS:
+        for ra, dec, want in ((266.4, 65.0, "%2B65.000000"), (10.0, -12.5, "-12.500000")):
+            url = acq.usnob1_field_url(ra, dec, 0.5, sc, form)
+            c_val = url.split("-c=")[1].split("&")[0]
+            assert "+" not in c_val, (form, url)
+            assert c_val.endswith(want), (form, c_val)
+            assert "-out.form=TSV" in url, (form, url)
+            assert "-c.rd=0.5000" in url, (form, url)
+
+
+def test_usnob1_query_forms_drop_constraints_down_the_ladder(sc):
+    """Each rung asks for strictly less, so a rejected constraint cannot end
+    the route: the unconstrained rung is a bare cone and is re-filtered here."""
+    seen = []
+    for form in acq.USNOB1_QUERY_FORMS:
+        u = acq.usnob1_field_url(266.4, 65.0, 0.5, sc, form)
+        seen.append(("Ndet=1" in u, "R1mag=" in u))
+    assert seen[0] == (True, True)                       # most selective first
+    assert seen[-1] == (False, False)                    # bare cone last
+    # the last rung asks for every column, so an unknown column name cannot
+    # empty the response
+    assert "-out.all=" in acq.usnob1_field_url(266.4, 65.0, 0.5, sc, acq.USNOB1_QUERY_FORMS[-1])
+    # and the column-list rungs repeat -out=, the spelling VizieR honours
+    assert acq.usnob1_field_url(266.4, 65.0, 0.5, sc, "ndet+r1").count("-out=") >= 5
 
 
 def _asu_body(rows):
@@ -272,7 +308,16 @@ def test_acquire_end_to_end_with_a_dead_svo_and_a_live_vizier(sc, tmp_path, monk
         if "viz-bin/votable" in url:
             p = load_config().root / "results" / "disaplit2" / "vizier_vasco_2020.xml"
             return (p.read_bytes(), "HTTP 200") if p.exists() else (None, "HTTP 404")
+        if "asu-tsv" in url and "-meta.all" in url:
+            # I/284/out advertises its own columns; 'muPr' is deliberately NOT
+            # among them, so the sweep must stop asking for it.
+            cols = ["USNO-B1.0", "RAJ2000", "DEJ2000", "Epoch", "pmRA", "pmDE", "Ndet",
+                    "Flags", "B1mag", "R1mag", "R1S", "R1f", "R1s/g", "B2mag", "R2mag",
+                    "Imag"]
+            return ("\n".join(f"#Column\t{c}\t(mag)\tsome description" for c in cols)
+                    ).encode(), "HTTP 200"
         if "asu-tsv" in url and "I/284" in urllib.parse.unquote(url):
+            assert "muPr" not in url, "a column the catalogue does not have was requested"
             m = re.search(r"-c=([\d.]+)%20(%2B|-)([\d.]+)", url)
             ra = float(m.group(1))
             dec = float(m.group(3)) * (-1.0 if m.group(2) == "-" else 1.0)
@@ -297,16 +342,24 @@ def test_acquire_end_to_end_with_a_dead_svo_and_a_live_vizier(sc, tmp_path, monk
     assert (tmp_path / "field_ledger.json").exists()
     led = json.loads((tmp_path / "field_ledger.json").read_text())
     assert led["n_fields_ok"] == 3
+    # the catalogue's own column list was read before any zero was believed
+    assert led["meta_probe"]["columns"], led["meta_probe"]
+    assert led["meta_probe"]["missing"] == ["muPr"], led["meta_probe"]
+    assert "muPr" not in led["columns_requested"]
     assert (tmp_path / "sample_positions.parquet").exists()
     routes = {r["route"]: r["status"] for r in prov["routes"]}
     assert routes["vizier_tap_schema_discovery"] == "ok"
     assert routes["usnob1_reconstruction"] == "ok"
     assert prov["vizier_tables_discovered"][0]["table_name"] == "J/AJ/159/8/table2"
-    # A second call reuses the checkpointed fields instead of refetching.
-    n_before = len([u for u, _, _ in calls if "I/284" in urllib.parse.unquote(u)])
+    # A second call reuses the checkpointed fields instead of refetching them.
+    # (The one-off -meta.all probe is not a field fetch and is not counted.)
+    def _n_field_fetches():
+        return len([u for u, _, _ in calls
+                    if "I/284" in urllib.parse.unquote(u) and "-c=" in u])
+
+    n_before = _n_field_fetches()
     acq.acquire_sample(sc, tmp_path, allow_network=True, n_fields=3)
-    n_after = len([u for u, _, _ in calls if "I/284" in urllib.parse.unquote(u)])
-    assert n_after == n_before
+    assert _n_field_fetches() == n_before
 
 
 def test_acquire_reports_no_data_when_every_route_is_dead(sc, tmp_path, monkeypatch):

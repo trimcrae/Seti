@@ -14,11 +14,19 @@ verdict, see **[docs/channels.md](docs/channels.md)**.
 
 S54 (`docs/uline.md`). The channel's previous verdict was `NO_PATTERN` over 80
 U-lines from two IRC+10216 surveys, bounded by two limits. Both are now
-addressed; run **35748462805** (`stage=full`, 2,000 shift trials, branch
-`claude/goap-uline`) is the dispatch that measures the result. Three earlier
-dispatches (35744910528, 35745307702, 35746448791) were cancelled *by this
-session while still queued*, each superseded by a correctness fix below; no
-runner time was consumed.
+addressed; run **35752177872** (`stage=full`, 2,000 shift trials, branch
+`claude/goap-uline`, head `597cb9dd`) is the dispatch that measures the
+result. Four earlier dispatches (35744910528, 35745307702, 35746448791,
+35748462805) were cancelled *by this session while still queued*, each
+superseded by a correctness fix below; no runner time was consumed by any of
+them. The last cancellation is the instructive one: the verdict split made
+`PATTERN_CANDIDATE` mean "on a catalogued line list", and the channel's own
+injected-signal test seeds a **CHF₃** pattern whose constants are the
+placeholder `verify` block — so that test, which is the *first* step of
+`uline.yml`, would have failed and killed the job in two minutes, before a
+single archive call. Same failure shape as CRADLE's pandas-3 death, reached
+by a different road: a local suite that was never run to completion under
+load is not a green gate either.
 
 **Limit 1 — five species were never searched.** CF₂Cl₂, CFCl₃, SO₂F₂, CHClF₂
 and CF₂ have no JPL or CDMS entry, and are the most diagnostic precisely
@@ -68,14 +76,16 @@ description terms, so 78 tables came back of which ~70 were Orion *star*
 catalogues and Chandra "unidentified sources"; it now runs once over
 `TAP_SCHEMA.columns` on phrases only a spectral U-line table carries.
 
-**Reading the run costs no runner time.** It was dispatched from `d264eb40`,
-three commits before the `searchability` roll-up, the SO₂F₂ Hamiltonian
-caveat and the `propose` stage. None of those need the archive: after
-`git pull`, `python -m seti.uline.run --stage assess` re-reduces the run's own
-committed `screen.json` into a `summary.json` carrying all of them, and
-`--stage propose` adjudicates its `literature.json`. Both are offline.
+**Re-reading the run costs no runner time.** It carries every stage in one
+job — probe → acquire → screen → assess → validate → litfetch → propose — in
+that order deliberately: `summary.json` is written *before* the literature
+ladder starts, so a hanging publisher can cost only its own output, never the
+verdict. If the code moves after the run, nothing has to be re-dispatched to
+benefit: `python -m seti.uline.run --stage assess` re-reduces the run's own
+committed `screen.json`, and `--stage propose` re-adjudicates its
+`literature.json`. Both are offline and free.
 
-**Next decisive action.** Read run 35748462805's `literature.json`: if it
+**Next decisive action.** Read run 35752177872's `literature.json`: if it
 returns the published quartic sets for CHClF₂ and CFCl₃, promote them into
 `rotor_constants.yaml` (a commit, never an automatic overwrite) and re-run —
 that is the single step that turns two `FREQUENCY_LIMITED` species into

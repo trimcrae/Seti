@@ -94,6 +94,70 @@ def test_upload_ladder_falls_through_and_records_the_rung():
     assert set(transport_order("http_async")) == set(transport_order(None))
 
 
+def test_uploaded_table_carries_no_unicodechar_column():
+    """Run 35653615329's probe: every rung refused with the SAME server error.
+
+    ``INTERNAL_SERVER_ERROR: Unimplemented data type: unicodeChar`` from IRSA's
+    own TAP on all four rungs is not four transport failures, it is one column
+    type: ``Table.from_pandas`` on ``source_id.astype(str)`` gives a numpy
+    ``<U19`` column that astropy serialises as VOTable ``unicodeChar``.  The
+    uploaded ``sid`` must be a ``long`` (or, failing that, ASCII ``char``), and
+    the serialised VOTable must not contain the word at all.
+    """
+    from astropy.table import Table
+
+    from seti.ignition.acquire import _ascii_string_columns, _upload_table, _votable_bytes
+
+    stars = _gaia_rows(4)
+    tbl, _rad = _upload_table(stars, 2.5)
+    assert tbl["sid"].dtype.kind == "i"                      # a long, not a string
+    assert list(tbl["sid"]) == [int(s) for s in stars["source_id"]]
+    xml = _votable_bytes(tbl).decode("utf-8", "replace")
+    assert "unicodeChar" not in xml
+    assert 'datatype="long"' in xml
+
+    # A non-numeric id still goes up, as ASCII `char` -- never as unicodeChar.
+    odd = stars.copy()
+    odd["source_id"] = [f"NAME-{i}" for i in range(len(odd))]
+    tbl2, _ = _upload_table(odd, 2.5)
+    assert tbl2["sid"].dtype.kind == "S"
+    assert "unicodeChar" not in _votable_bytes(tbl2).decode("utf-8", "replace")
+
+    # And the belt-and-braces guard converts any unicode column a caller adds.
+    t3 = Table({"lbl": np.array(["a", "bb"], dtype="U8"), "x": np.array([1.0, 2.0])})
+    assert _ascii_string_columns(t3)["lbl"].dtype.kind == "S"
+    assert "unicodeChar" not in _votable_bytes(t3).decode("utf-8", "replace")
+
+
+def test_uws_job_url_is_found_when_there_is_no_location_header():
+    """IRSA answered the async submission ``200`` with no ``Location``."""
+    from seti.ignition.acquire import IRSA_TAP, _uws_job_url
+
+    class R:
+        def __init__(self, headers, text, url=""):
+            self.headers, self.text, self.url = headers, text, url
+
+    assert _uws_job_url(R({"Location": f"{IRSA_TAP}/async/abc123/"}, "")) == \
+        f"{IRSA_TAP}/async/abc123"
+    body = '<uws:job xmlns:uws="x"><uws:jobId>j42</uws:jobId></uws:job>'
+    assert _uws_job_url(R({}, body)) == f"{IRSA_TAP}/async/j42"
+    href = f'<a xlink:href="{IRSA_TAP}/async/j43">x</a>'
+    assert _uws_job_url(R({}, href)) == f"{IRSA_TAP}/async/j43"
+    assert _uws_job_url(R({}, "no job here", url=f"{IRSA_TAP}/async?QUERY=x")) is None
+
+
+def test_pyvo_async_is_on_the_ladder_after_the_rung_the_server_parsed():
+    from seti.ignition.acquire import _TRANSPORT_FNS, UPLOAD_TRANSPORTS
+
+    assert "pyvo_async" in UPLOAD_TRANSPORTS
+    assert set(UPLOAD_TRANSPORTS) == set(_TRANSPORT_FNS)
+    order = list(UPLOAD_TRANSPORTS)
+    # The two rungs whose requests IRSA actually parsed come before the two
+    # that never reached the upload table at all.
+    assert order.index("pyvo_sync") < order.index("gator")
+    assert order.index("pyvo_async") < order.index("gator")
+
+
 def test_upload_chunk_falls_back_to_cones_when_no_rung_answers(tmp_path):
     stars = _gaia_rows(5)
     cone_calls = {"n": 0}

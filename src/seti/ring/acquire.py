@@ -45,9 +45,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ..ossuary.acquire import _ALLWISE_WANT, _TMASS_WANT, _TMASS_XMATCH_ID
+from ..ossuary.acquire import _ALLWISE_WANT, _TMASS_WANT, _TMASS_XMATCH_ID, probe_columns
 from ..ossuary.acquire import _run_query as gaia_query
-from ..ossuary.acquire import probe_columns
 from ..vigil.acquire import propagate_pm
 
 # --------------------------------------------------------------------------
@@ -675,8 +674,15 @@ def pulsar_match_positions(psr: pd.DataFrame, cfg: dict, to_epoch: float) -> pd.
     p = cfg["pulsar"]
     pmra = pd.to_numeric(psr["pmra"], errors="coerce").fillna(0.0).to_numpy(float)
     pmdec = pd.to_numeric(psr["pmdec"], errors="coerce").fillna(0.0).to_numpy(float)
-    ra, dec = propagate_pm(psr["ra"].to_numpy(float), psr["dec"].to_numpy(float),
-                           pmra, pmdec, psr["posepoch_yr"].to_numpy(float), to_epoch)
+    # Each pulsar has its own position epoch, so the propagation is per object.
+    dt = float(to_epoch) - pd.to_numeric(psr["posepoch_yr"], errors="coerce") \
+        .fillna(2000.0).to_numpy(float)
+    ra0 = psr["ra"].to_numpy(float)
+    dec0 = psr["dec"].to_numpy(float)
+    cosd = np.cos(np.radians(dec0))
+    cosd = np.where(np.abs(cosd) < 1e-6, 1e-6, cosd)
+    ra = ra0 + (pmra * dt / 3.6e6) / cosd
+    dec = dec0 + pmdec * dt / 3.6e6
     rows = [pd.DataFrame({"source_id": psr["jname"].astype(str) + "|t", "ra": ra, "dec": dec})]
     k = 0
     for off in p["control_offsets_arcsec"]:

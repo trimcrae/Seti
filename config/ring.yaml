@@ -52,7 +52,13 @@ wd:
   chi_w2_min: 5.0
   color_excess_sigma_min: 3.0
   w1_w2_min: -0.05          # LEDGER: negative W1-W2 is a blend
-  w1_w2_agn_max: 1.5        # a 500 K ring alone is W1-W2 ~ 1.4; the AGN wedge for a WD host is above this
+  # The inherited "AGN wedge" colour cut (W1-W2 > 0.8) is NOT applied here: a
+  # pure 500 K blackbody has W1-W2 = 2.15 and a 300 K one is redder, so the
+  # ring band itself sits in the wedge.  The extragalactic discriminant for
+  # this channel is astrometric (registration at the propagated epoch, CatWISE
+  # co-movement, the chance-superposition prior), not colour.  3.5 mag is the
+  # colour of a ~280 K blackbody, the cold edge of the band.
+  w1_w2_agn_max: 3.5
   g_max: 20.0
   bp_rp_min: -0.8
   bp_rp_max: 2.0
@@ -63,10 +69,14 @@ pulsar:
   routes: ["psrqpy", "tarball", "vizier"]
   tarball_url: "https://www.atnf.csiro.au/research/pulsar/psrcat/downloads/psrcat_pkg.tar.gz"
   vizier_table: "B/psr/psr"
-  match_radius_arcsec: 3.0          # floor
+  match_radius_arcsec: 1.5          # floor: ~3x the AllWISE positional error; timing positions are mas
   match_radius_max_arcsec: 8.0      # cap (poorly localised pulsars get up to this)
   position_error_factor: 2.0        # radius = max(floor, factor x quoted position error)
   control_offsets_arcsec: [60.0, 90.0]   # rings of 8 offset positions each
+  # Chance probability per pulsar: an empirical-Bayes estimate, the local
+  # control hits pooled with the global control rate (prior weight = the number
+  # of local controls).  For a ring-band counterpart the relevant rate is that
+  # of control matches WITH a ring-band colour, which is what the verdict uses.
   chance_p_max: 1.0e-2              # a counterpart likelier than this by chance is not evidence
   xmatch_radius_arcsec: 8.0
   two_target_vet:

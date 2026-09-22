@@ -39,7 +39,11 @@ for col in ("ph_qual", "cc_flags", "track", "feh_provenance", "flags_gspspec",
     if col in df.columns and df[col].dtype == object:
         df[col] = df[col].astype("category")
 df.to_parquet(d / "sample.parquet", index=False)
+# Chunks from before 2026-08 carry no row_limit_hit column (DataFrame.get of a
+# missing column is None, which pd.to_numeric collapses to a scalar).
+n_capped = (int(pd.to_numeric(df["row_limit_hit"], errors="coerce").fillna(0).sum())
+            if "row_limit_hit" in df.columns else -1)
 print(f"sample: {len(df):,} stars; {int(df['feh'].notna().sum()):,} with a metallicity; "
-      f"{int(pd.to_numeric(df.get('row_limit_hit'), errors='coerce').fillna(0).sum()):,} "
-      f"from row-limited bands ({time.monotonic() - t0:.0f} s)", flush=True)
+      f"rows from row-limited bands: {n_capped if n_capped >= 0 else 'unknown (old chunks)'} "
+      f"({time.monotonic() - t0:.0f} s)", flush=True)
 PY

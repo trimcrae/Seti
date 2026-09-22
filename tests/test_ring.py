@@ -200,7 +200,10 @@ def test_injected_500K_ring_is_recovered_and_classified(cfg):
 
 def test_debris_disk_and_companion_shapes_are_named(cfg):
     df = make_wd_sample()
-    _inject(df, 1, t_ring=1300.0, tau=3e-3)    # a WD debris disk
+    # A white-dwarf debris disk: sublimation-limited, tau ~ 1e-3 to 1e-2.  At
+    # tau = 3e-3 the W1-W2 colour excess is below the 3-sigma floor (the
+    # channel's sensitivity limit, documented in docs/ring.md); at 1e-2 it is not.
+    _inject(df, 1, t_ring=1300.0, tau=1e-2)
     _inject(df, 2, t_ring=2800.0, tau=0.3)     # an unresolved cool companion
     out, s = _screen(df, cfg)
     disk, comp = out.iloc[1], out.iloc[2]
@@ -396,7 +399,13 @@ def test_pulsar_screen_measures_colour_chance_and_provenance(cfg):
     o = out.set_index("jname")
     good = o.loc["J0001+0002"]
     assert bool(good["allwise_match"]) and good["allwise_n_control_hits"] == 0
-    assert good["allwise_p_chance"] < cfg["pulsar"]["chance_p_max"]
+    # Sixteen local controls cannot measure a 1 % rate; the pooled estimate can.
+    # No control anywhere carries a ring-band colour, so the ring hypothesis is
+    # safe even though random sources of SOME colour are common in this field.
+    assert good["p_chance_ring"] < cfg["pulsar"]["chance_p_max"]
+    assert good["p_chance_any"] > cfg["pulsar"]["chance_p_max"]
+    assert s["n_ring_band_expected_by_chance"] == pytest.approx(0.0)
+    assert s["n_counterparts_expected_by_chance"] > 0.5
     assert good["t_colour_k"] == pytest.approx(500.0, rel=0.05)
     assert good["shape_class"] == "ring_band" and good["verdict"] == "surviving"
     assert bool(good["ring_candidate"])
@@ -500,7 +509,7 @@ def test_ffp_screen_flags_only_planetary_mass_objects_above_the_ceiling(cfg):
         "spt": ["L4", "L7", "L2", "T2", "L5"],
         "group": ["TWA", "TWA", "TWA", "", "beta Pic"],
         "age": [10.0, 10.0, 10.0, np.nan, np.nan],           # Myr
-        "lbol": [-2.6, -4.0, -2.6, -3.0, -3.3],
+        "lbol": [-2.6, -4.0, -2.6, -3.0, -3.8],
         "mass": [8.0, 8.0, 40.0, 8.0, 10.0],                 # M_J
     })
     out, s = rscr.screen_ffp(df, cfg)
@@ -553,7 +562,7 @@ def test_stages_end_to_end_offline(cfg, tmp_path):
     for leg in rrun.LEGS:
         rrun.stage_acquire(cfg, out, leg, fetchers=f)
         rrun.stage_screen(cfg, out, leg, rng=np.random.default_rng(1))
-    s = rrun.stage_assess(cfg, out, followup=True, followup_fetchers={
+    rrun.stage_assess(cfg, out, followup=True, followup_fetchers={
         "fetch_known_disks": lambda p: set(),
         "fetch_neighbours": lambda ra, dec: pd.DataFrame(),
         "fetch_simbad": lambda p: pd.DataFrame(),

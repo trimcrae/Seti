@@ -312,12 +312,15 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
                    .fillna(r_max).to_numpy(float)), r_floor, r_max)
     n_ctrl = 8 * len(p["control_offsets_arcsec"])
 
+    t_lo, t_hi = float(cfg["ring"]["t_min_k"]), float(cfg["ring"]["t_max_k"])
     for key in ("allwise", "catwise"):
         m = matches.get(key)
         out[f"{key}_match"] = False
         out[f"{key}_dist_arcsec"] = np.nan
         out[f"{key}_n_control_hits"] = 0
+        out[f"{key}_n_control_ring_hits"] = 0
         out[f"{key}_p_chance"] = np.nan
+        out[f"{key}_p_chance_ring"] = np.nan
         if m is None or not len(m) or "source_id" not in m.columns:
             continue
         jn, kind = _split_id(m["source_id"])
@@ -327,13 +330,31 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
         rad = out.set_index("jname")["match_radius_arcsec"]
         m = m[m["_jname"].isin(rad.index)]
         m = m[m["_d"] <= m["_jname"].map(rad).to_numpy(float)]
+        w1c = "W1mag" if key == "allwise" else "W1mag_cat"
+        w2c = "W2mag" if key == "allwise" else "W2mag_cat"
+        mcol = pd.to_numeric(m.get(w1c), errors="coerce") - pd.to_numeric(m.get(w2c),
+                                                                          errors="coerce")
+        mt = ph.colour_to_temperature(mcol.to_numpy(float))
+        m = m.assign(_ring=(mt >= t_lo) & (mt <= t_hi))
         tgt = m[m["_kind"] == "t"].sort_values("_d").drop_duplicates("_jname")
         ctrl = m[m["_kind"] != "t"].drop_duplicates(["_jname", "_kind"])
         hits = ctrl.groupby("_jname").size()
-        out[f"{key}_n_control_hits"] = out["jname"].map(hits).fillna(0).astype(int)
-        # Chance probability of >= 1 match inside the radius, from the control rate.
-        rate = (out[f"{key}_n_control_hits"] + 0.5) / (n_ctrl + 1.0)   # Laplace-smoothed
-        out[f"{key}_p_chance"] = rate
+        ring_hits = ctrl[ctrl["_ring"]].groupby("_jname").size()
+        h = out["jname"].map(hits).fillna(0).astype(int)
+        hr = out["jname"].map(ring_hits).fillna(0).astype(int)
+        out[f"{key}_n_control_hits"] = h
+        out[f"{key}_n_control_ring_hits"] = hr
+        # Empirical-Bayes chance probability: the local control hits pooled with
+        # the global control rate, prior weight = the number of local controls.
+        # Sixteen local positions alone cannot measure a rate of 1 %; the whole
+        # control set (16 x N_pulsars positions on the same sky) can.
+        n_pos = float(n_ctrl * len(out))
+        p_g_any = float(h.sum()) / n_pos if n_pos else 0.0
+        p_g_ring = float(hr.sum()) / n_pos if n_pos else 0.0
+        out[f"{key}_p_chance"] = (h + n_ctrl * p_g_any) / (2.0 * n_ctrl)
+        out[f"{key}_p_chance_ring"] = (hr + n_ctrl * p_g_ring) / (2.0 * n_ctrl)
+        out.attrs[f"{key}_global_control_rate"] = p_g_any
+        out.attrs[f"{key}_global_control_ring_rate"] = p_g_ring
         t = tgt.set_index("_jname")
         has = out["jname"].isin(t.index)
         out[f"{key}_match"] = has
@@ -371,9 +392,15 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
                                                       for tok in p["bincomp_veto_tokens"]))
     out["known_counterpart_veto"] = out["jname"].isin(set(p["known_counterpart_veto"]))
     out["globular_cluster"] = assoc.str.contains("GC:")
-    p_chance = out[["allwise_p_chance", "catwise_p_chance"]].min(axis=1)
-    out["p_chance"] = p_chance
-    out["chance_ok"] = p_chance <= float(p["chance_p_max"])
+    # The chance probability that matters is the one for the hypothesis being
+    # tested: for a ring-band counterpart, a random source with a ring-band
+    # colour; for anything else, any random source.
+    p_any = out[["allwise_p_chance", "catwise_p_chance"]].min(axis=1)
+    p_ring = out[["allwise_p_chance_ring", "catwise_p_chance_ring"]].min(axis=1)
+    out["p_chance_any"] = p_any
+    out["p_chance_ring"] = p_ring
+    out["p_chance"] = np.where(out["shape_class"] == "ring_band", p_ring, p_any)
+    out["chance_ok"] = pd.Series(out["p_chance"], index=out.index) <= float(p["chance_p_max"])
 
     # Spin-down power, distance, and the per-host ring sensitivity.
     edot = ph.spin_down_luminosity_w(out["p0_s"].to_numpy(float), out["p1"].to_numpy(float))
@@ -412,6 +439,11 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
         "n_with_any_counterpart": int(has.sum()),
         "control_positions_per_host": n_ctrl,
         "median_allwise_control_hits": float(out["allwise_n_control_hits"].median()),
+        "global_control_rate": {k: float(v) for k, v in out.attrs.items()
+                                if k.endswith("control_rate") or k.endswith("ring_rate")},
+        # The census: counterparts observed against the number the controls predict.
+        "n_counterparts_expected_by_chance": float(np.nansum(p_any.to_numpy(float))),
+        "n_ring_band_expected_by_chance": float(np.nansum(p_ring.to_numpy(float))),
         "shape_counts": {k: int(v) for k, v in out.loc[has, "shape_class"]
                          .value_counts().items()},
         "veto_reasons": {k: int(v) for k, v in out.loc[has, "veto_reason"]
@@ -516,8 +548,11 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
 
 def _group_age_gyr(group, cfg: dict) -> float:
     s = str(group or "").strip().lower()
+    if not s or s in ("nan", "none", "field", "--"):
+        return np.nan
     for k, v in cfg["ffp"]["age_fallback_gyr"].items():
-        if k.lower() in s or s in k.lower() and s:
+        kl = k.lower()
+        if kl in s or s in kl:
             return float(v)
     return np.nan
 
@@ -529,7 +564,8 @@ def screen_ffp(df: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
     out = df.copy().reset_index(drop=True)
     lbol = pd.to_numeric(out.get("lbol"), errors="coerce").to_numpy(float)
     # Accept either log10(L/Lsun) or L/Lsun; a value above zero is not a log.
-    lbol = np.where(lbol > 0, np.log10(lbol), lbol)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        lbol = np.where(lbol > 0, np.log10(np.where(lbol > 0, lbol, 1.0)), lbol)
     out["log_lbol"] = lbol
     age = pd.to_numeric(out.get("age"), errors="coerce").to_numpy(float)
     # Ages catalogued in Myr are the norm for young groups.

@@ -12,9 +12,7 @@ ring at 300-700 K, a W1/W2 excess -- over four host classes:
   is a duty cycle),
 * young free-floating planetary-mass objects (hotter than cooling allows).
 
-See ``docs/ring.md``.
+Entry point: ``python -m seti.ring.run`` (see ``seti.ring.run.run``); the
+function is deliberately not re-exported here so ``seti.ring.run`` stays the
+module.  See ``docs/ring.md``.
 """
-
-from .run import run
-
-__all__ = ["run"]

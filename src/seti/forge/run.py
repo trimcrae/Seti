@@ -230,6 +230,7 @@ def stage_acquire(out_dir: Path, conf: dict, *, names=None, query_fn=None, fetch
     rec: dict = {"stage": "acquire", "started": _now(), "tables": {}, "verification": {},
                  "positions": {}, "companions": {}, "sample_photometry": {}, "population": {}}
     archive: dict[str, list] = {}
+    polarimetry: dict[str, dict] = {}
     reached: dict[str, str] = {}
     for name, spec in tabs.items():
         p = (probe.get("tables") or {}).get(name)
@@ -243,8 +244,23 @@ def stage_acquire(out_dir: Path, conf: dict, *, names=None, query_fn=None, fetch
                                        list(p.get("columns", [])), dict(p.get("roles", {})),
                                        p.get("n_rows"), acq.STATUS_OK, route=p.get("route", ""))
         role = str(spec.get("role", "excess"))
+        if role == "polarimetry":
+            # The polarimetric null is READ and carried per star, but it is not
+            # a term in the likelihood ratio: both families emit thermally at
+            # H/K, so a polarisation limit constrains scattered light rather
+            # than the emissivity law (see acquire.fetch_polarimetry_table).
+            pol, r = acq.fetch_polarimetry_table(disc, spec, targets,
+                                                 query_fn=query_fn, log=log)
+            rec["tables"][name] = {**r, "roles": disc.roles, "route": disc.route,
+                                   "note": "carried per star, not folded into chi^2"}
+            reached[name] = r["status"]
+            for k, v in pol.items():
+                prev = polarimetry.get(k)
+                if prev is None or v["p_ppm"] < prev["p_ppm"]:
+                    polarimetry[k] = v
+            continue
         if role != "excess":
-            # polarimetry and model tables are recorded, not folded into the fit
+            # model tables are recorded only
             rec["tables"][name] = {"role": role, "table": disc.table, "status": disc.status,
                                    "roles": disc.roles, "note": "recorded only"}
             reached[name] = disc.status
@@ -258,6 +274,10 @@ def stage_acquire(out_dir: Path, conf: dict, *, names=None, query_fn=None, fetch
     rec["n_archive_measurements"] = int(sum(len(v) for v in archive.values()))
     _write(data / "archive_measurements.json",
            {k: [m.as_dict() for m in v] for k, v in archive.items()})
+    rec["polarimetry"] = {"n_stars": len(polarimetry),
+                          "n_upper_limits": sum(1 for v in polarimetry.values()
+                                                if v.get("kind") == "upper")}
+    _write(data / "polarimetry.json", polarimetry)
     # --- verification of the embedded rows ---------------------------------
     rows, counts = acq.verify_embedded(excess_asset, archive, reached, targets)
     rec["verification"] = counts
@@ -331,9 +351,10 @@ def _embedded_from_verified(out_dir: Path, targets: TargetTable) -> dict[str, li
     return embedded_measurements(df, targets)
 
 
-def build_contexts(targets: TargetTable, positions: pd.DataFrame, companions: dict
-                   ) -> dict[str, StarContext]:
+def build_contexts(targets: TargetTable, positions: pd.DataFrame, companions: dict,
+                   polarimetry: dict | None = None) -> dict[str, StarContext]:
     pos = positions.set_index("key") if len(positions) else pd.DataFrame()
+    pol = polarimetry or {}
     out = {}
     for _, r in targets.rows.iterrows():
         key = str(r["key"])
@@ -343,10 +364,14 @@ def build_contexts(targets: TargetTable, positions: pd.DataFrame, companions: di
             if sp and sp not in ("nan", ""):
                 teff = teff_from_sptype(sp, teff)
         c = companions.get(key, {})
+        p = pol.get(key) or {}
+        pv = p.get("p_ppm")
         out[key] = StarContext(key=key, teff_k=float(teff),
                                known_companion=bool(c.get("known_companion", False)),
                                companion_note=str(c.get("companion_note", "")),
-                               companion_assessed=bool(c.get("companion_assessed", False)))
+                               companion_assessed=bool(c.get("companion_assessed", False)),
+                               polarimetry_limit_ppm=float(pv) if pv is not None else None,
+                               polarimetry_note=str(p.get("source", "")))
     return out
 
 
@@ -385,6 +410,7 @@ def _star_row(r: dict) -> dict:
             "variable": (r.get("variability") or {}).get("variable"),
             "driving_verified": (r.get("gates") or {}).get("driving_values_verified"),
             "companion_assessed": r.get("companion_assessed"),
+            "polarimetry_ppm": (r.get("polarimetry") or {}).get("limit_ppm"),
             "reason": r.get("reason")}
 
 
@@ -547,7 +573,8 @@ def stage_screen(out_dir: Path, conf: dict) -> dict:
     ppath = data / "positions.csv"
     pos = pd.read_csv(ppath) if ppath.exists() else pd.DataFrame(columns=["key", "ra", "dec", "sptype"])
     comp = _read(data / "companions.json", {}) or {}
-    contexts = build_contexts(targets, pos, comp)
+    pol = _read(data / "polarimetry.json", {}) or {}
+    contexts = build_contexts(targets, pos, comp, pol)
     rows = screen_stars(meas, contexts, conf["physics"])
     table = pd.DataFrame([_star_row(r) for r in rows])
     table.to_csv(out_dir / "star_table.csv", index=False)

@@ -101,6 +101,38 @@ killing only when that epoch was sensitive enough to have seen the line at ≥ 5
   The hand-kept sky list jumps from 6753.3 to 6863.9 Å and carries no telluric bands at
   all, so a "no OH line within 50 Å" has to be read next to "and a forest all around it".
 
+## Is the line even unresolved?
+
+A monochromatic source is by definition **unresolved**: its profile is the instrument's
+LSF. A feature measurably broader than the LSF cannot be a single narrow line whatever
+else it does — and this is the cheapest discriminator in the channel.
+
+The triage recorded a `width_ratio` for every survivor and nothing downstream read it.
+The six lines left standing after the first run carry 1.09, 1.14, 1.29, 1.34, 1.42 and
+1.47; the whole 167 have a median of 1.44. Those numbers could not be used as they stood,
+because they are against a **nominal** R = 2000 while SDSS's real resolution runs from
+about 1500 to 2500 across the spectrum and between fibres — "40 % broader than the LSF"
+against the wrong LSF is not an argument about anything.
+
+`lsf_fwhm_measured()` therefore takes the instrumental FWHM from the pipeline's own
+per-pixel LSF column (SPARCL `wave_sigma`, an SDSS spec file's `wdisp`) at the candidate's
+wavelength, falling back to the nominal value only when the column is not served and
+recording which was used. `fit_line_profile()` fits a Gaussian on a locally-fitted
+continuum and returns the centre, its velocity offset, the FWHM **and its error**, and
+the amplitude significance. Reported, never cut: a 1.4 ± 0.3 must not be read as a
+1.4 ± 0.05.
+
+## Every epoch, not just the best one
+
+`second_epoch` records only the strongest other detection at the position: it answers
+"was it seen again" and nothing else. `epoch_series()` measures the line in every SPARCL
+spectrum within 2″ separately — significance, EW, continuum, the sky model at the
+wavelength, the fitted FWHM against that spectrum's own LSF, the fitted velocity offset —
+and reports the median EW, the fractional MAD spread across epochs, how many reach 4 σ,
+and the range. A line of constant strength across years is a stable property of the star;
+one that varies is a different object. The per-exposure test cannot separate them,
+because both are in every exposure.
+
 ## The control sample — the test the others cannot do
 
 None of the above can reject a feature that the star's **spectral type** produces. A gap
@@ -188,6 +220,23 @@ where the hand-kept OH list is least complete and the telluric bands live.
 * **0571-52286-0247 @ 7490.3 Å** and **2076-53442-0329 @ 6403.2 Å** — present in 2/5 and
   3/7 exposures, EW varying by factors of 2 and 7. These reached `persistent` through the
   low-S/N branch of the classifier and should not survive the null calibration.
+
+### Two guards that came out of this run
+
+* **A sharded run must not be able to split into two estimators.** The shard jobs now
+  check out `github.sha`, the dispatched commit, instead of the branch head; they only
+  upload artifacts, so nothing needs the branch. The step that picks up already-committed
+  checkpoints fetches `results/spectra_persist/ckpt` alone rather than pulling the branch
+  over the pinned code. Every checkpoint records the commit that measured it (`code_sha`)
+  and the summary tallies them (`checkpoint_code_shas`), so a split run is visible in the
+  output instead of having to be reconstructed from job timestamps.
+* **A late reduce must not replace a measurement with a no-data verdict.** A reduce that
+  arrives after a `ckpt_version` bump holds only superseded checkpoints; it would emit
+  `NO_DATA_REACHED` over a real summary and commit it, and the workflow's own assert
+  would pass, because a no-data verdict with nothing measured is exactly what that assert
+  allows. `reduce_results` now leaves the file alone in that case and returns the existing
+  summary with `reduce_skipped` saying why. With nothing to overwrite it reports
+  `NO_DATA_REACHED` honestly, as before.
 
 ### Next decisive action
 

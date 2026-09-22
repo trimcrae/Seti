@@ -120,6 +120,13 @@ are the |b| > 10° cut removing Galactic-plane pixels. **4,990 parent stars from
 one eighth of the sky**, so the all-sky parent is of order 40,000, and a shard
 costs 31.8 minutes against its 300-minute budget.
 
+`screen` is not the bottleneck anyone would guess: timed on 40,000 synthetic
+rows, `select_parent` + `harmonise` + `fit_loci` + `excess_table` + `fit_disk`
+(the 400-point temperature grid with 300 Monte-Carlo draws per star) is **18
+seconds** end to end, against a 120-minute job cap. The expensive stage is
+`ages`, where a NEOWISE cone is ~90 s per star, and that is the one with the
+wall-clock budget and the priority-ordered shortlist.
+
 ## Ages — two indicators or nothing
 
 HD 15407A is the warning written into the mission: a **2.1 Gyr isochrone age

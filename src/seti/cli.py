@@ -1102,6 +1102,13 @@ def _cmd_baffle(args, cfg):
     return _baffle_cmd(args, cfg)
 
 
+# --- SLAG ---
+def _cmd_slag(args, cfg):
+    from .slag.run import main as _slag_main
+
+    return _slag_main(list(args.rest))
+
+
 def _cmd_roman(args, cfg):
     from .roman.run import main as _roman_main
 
@@ -2306,6 +2313,14 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- SLAG ---
+    p = sub.add_parser("slag",
+                       help="SLAG-WD (S51): polluted white dwarfs beyond the natural family — "
+                            "calibrated misfit list and process-orthogonal pair residuals on "
+                            "PEWDD; flags are passed through to seti.slag.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_slag)
 
     args = parser.parse_args(argv)
     cfg = load_config()

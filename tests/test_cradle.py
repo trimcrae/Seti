@@ -804,3 +804,32 @@ def test_ipac_parser_survives_the_pandas_3_removal_of_errors_ignore():
     assert w.tolist() == [8.0, 9.0, 10.0]
     assert f[0] == 1.0 and np.isnan(f[1]) and f[2] == 1.2
     assert e[0] == 0.01
+
+
+def test_a_bytes_cc_flags_column_vetoes_exactly_as_the_text_one_does():
+    """A VOTable ``char`` column reaches pandas as ``bytes`` on some
+    astropy/pyvo paths, and cc_flags is read BY POSITION (0,1 = W1,W2;
+    2,3 = W3,W4).  If those bytes ever rendered as ``"b'00HO'"`` -- seven
+    characters -- every position would shift by two, the W3/W4 veto would read
+    the W1/W2 characters, and a genuinely contaminated ``00HO`` would come out
+    clean and reach the candidate list.  Measured: pandas 2.3.3 and 3.0.6 both
+    DECODE bytes in ``astype(str)``, so this passes today; it is pinned because
+    the failure is silent and the rule is positional."""
+    rows = [
+        {"cc_flags": "0000", "expect_w34": False, "expect_w12": False},   # clean
+        {"cc_flags": "00HO", "expect_w34": True, "expect_w12": False},    # W3 and W4 dirty
+        {"cc_flags": "DH00", "expect_w34": False, "expect_w12": True},    # only W1/W2 dirty
+        {"cc_flags": "000P", "expect_w34": True, "expect_w12": False},    # W4 only
+    ]
+    base = pd.DataFrame([{k: v for k, v in r.items() if k == "cc_flags"} for r in rows])
+    as_text, _ = apply_rules(base.copy(), DEFAULT_VET)
+    as_bytes_df = base.copy()
+    as_bytes_df["cc_flags"] = [s.encode() for s in base["cc_flags"]]
+    assert as_bytes_df["cc_flags"].map(type).eq(bytes).all()
+    as_bytes, _ = apply_rules(as_bytes_df, DEFAULT_VET)
+
+    for i, r in enumerate(rows):
+        assert bool(as_text["rule_cc_flags_w3w4"].iloc[i]) is r["expect_w34"], (i, "text")
+        assert bool(as_bytes["rule_cc_flags_w3w4"].iloc[i]) is r["expect_w34"], (i, "bytes")
+        assert bool(as_text["flag_cc_flags_w1w2"].iloc[i]) is r["expect_w12"], (i, "text w12")
+        assert bool(as_bytes["flag_cc_flags_w1w2"].iloc[i]) is r["expect_w12"], (i, "bytes w12")

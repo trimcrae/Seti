@@ -10,6 +10,56 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### IGNITION: four transports refused identically, so it was never the transport, 2026-09-22
+
+Run 35653615329 produced no shard output at all, and its two failures were
+different problems that had been read as one.
+
+**The upload ladder.** The probe walked all four rungs — pyvo's synchronous
+form, a raw `POST` with the parameters in the URL (sync, then async), and
+IRSA's Gator multi-object search — and three of them came back with the *same*
+sentence from IRSA's own TAP: `INTERNAL_SERVER_ERROR: Unimplemented data type:
+unicodeChar`. Four transports cannot fail identically on a transport fault,
+and the server only gets to make that complaint after it has parsed the
+request and read the upload — so those rungs were working. The refusal is
+about a **column type**: `Table.from_pandas` on `source_id.astype(str)` gives a
+numpy `<U19` column, astropy serialises it `datatype="unicodeChar"`, and IRSA
+does not implement that type. `sid` now goes up as `long` (a Gaia `source_id`
+is an integer by construction), a non-numeric id as ASCII `char`, every
+remaining unicode column is converted on the way out, and if a service refuses
+`long` too the ladder downgrades **once** to a 32-bit row index. None of it
+can touch the science: rows are assigned to stars locally, by exact
+unit-vector separation with per-star radii, never by the service's join column.
+
+The same probe showed the hand-rolled async rung getting `200` with **no
+`Location` header**, so the job URL is now also read from the job document in
+the body, and pyvo's own UWS client is a fifth rung.
+
+**The parent sample was a wall clock, not an archive.** That run's `sample`
+step ran **2 h 22 min** over the same 20 one-degree cones without finishing —
+run 35039105536 had pulled the identical 846-star parent in **719 s** — and
+the job was cancelled with the acquire matrix never started. `sample_from_run_id`
+now takes `sample.json` and `parent.parquet` from a prior run's artifact: the
+`sample` job then takes **1 m 48 s** (measured, run 35738088082). The reused
+`probe.json` is dropped rather than committed — a dispatch must not overwrite
+the branch's live probe record with evidence it did not gather.
+
+For the all-sky sweep the same stall is paid in *tiles never reached*, so
+`fetch_parent` takes `unit_budget_s`: attempts begun after a unit has spent it
+are recorded `SKIPPED_ON_UNIT_BUDGET` with the route and shape named, the unit
+is a recorded `QUERY_FAILED`, and `degraded` carries
+`unit_budget_skips:<n>/<units>`. The ladder's **order is untouched** and no
+science cut changes — it bounds only how long one tile may be chased.
+
+**Scale.** The pilot's 20 cones are 62.8 deg². The `tiles` sweep at 4° is
+**2,047 tiles over 32,451 deg²** of the `|b| > 15°` sky — **517× the area** —
+which at the measured 13.5 stars/deg² is an all-sky parent of order **4 × 10⁵**
+stars. Two ways to make that bigger were rejected on the science, not the
+effort: `|b| > 10°` samples stars `vet.py`'s `galactic_plane` rule exists to
+kill, and `G < 15` buys stars at W1 ≈ 13 whose per-epoch scatter is several
+times that of the W1 ≈ 10 stars the measured 0.1 mag/decade sensitivity was
+established on. Scale here comes from **area**, not depth.
+
 ### CRYPT built: the thermal and radar axes of the lunar-PSR artifact search, 2026-09-22
 
 S55 (`docs/crypt.md`). Every executed search for artifacts in permanently

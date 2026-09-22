@@ -563,11 +563,21 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
             brec["a_kin_abs_p50_m_s2"] = float(np.nanmedian(np.abs(pairs["a_kin_m_s2"])))
             brec["drift_kin_abs_p99_hz_s_at_ref"] = float(np.nanpercentile(
                 np.abs(pairs["drift_kin_hz_s_at_ref"].dropna()), 99)) if pairs["kinematics_complete"].any() else None
+        # THE TRIALS. Pair-line membership is not rare and it is not uniform: a
+        # far transmitter has far more room for a receiver in front of it than a
+        # near one does. So the null a BL target must beat is not "how many
+        # stars are on a pair line" but "how many stars AT THIS DISTANCE are",
+        # and the expected number of BL targets on a pair line by chance is that
+        # rate summed over the targets' own distances.
+        brec["base_rate_on_pair_line"] = _base_rate_by_distance(sample["d_pc"].to_numpy(float),
+                                                                per_t > 0)
         if keep is not None and len(matched):
-            tset = set(int(i) for i in matched["gaia_idx"] if i >= 0)
+            tset = sorted({int(i) for i in matched["gaia_idx"] if i >= 0})
             brec["n_bl_targets_as_transmitter"] = int(sum(1 for i in tset if per_t[i] > 0))
             brec["n_bl_targets_spillover"] = int(sum(1 for i in tset if res.per_transmitter_spill[i] > 0))
             brec["n_bl_targets_between"] = int(sum(1 for i in tset if res.per_transmitter_between[i] > 0))
+            brec["n_bl_targets_expected_by_chance"] = _expected_by_chance(
+                brec["base_rate_on_pair_line"], sample["d_pc"].to_numpy(float)[tset])
         rep["beams"][name] = brec
         # per-transmitter counts for every star travel in the artifact
         try:
@@ -639,6 +649,43 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
     _save()
     print(f"[relay] geometry: {rep['verdict']} in {rep['elapsed_s']} s")
     return rep
+
+
+D_BIN_EDGES_PC = (0.0, 5.0, 10.0, 15.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0)
+
+
+def _base_rate_by_distance(d_pc: np.ndarray, on_line: np.ndarray, edges=D_BIN_EDGES_PC) -> dict:
+    """Fraction of sample stars at each distance that transmit through Earth.
+
+    The matched null for "is this observed star on a pair line?".  A rate is
+    None where the bin holds no star, and such a bin contributes nothing to the
+    expectation rather than a zero.
+    """
+    d_pc = np.asarray(d_pc, float)
+    on_line = np.asarray(on_line, bool)
+    idx = np.digitize(d_pc, np.asarray(edges, float)) - 1
+    rates, counts = [], []
+    for k in range(len(edges) - 1):
+        m = idx == k
+        counts.append(int(m.sum()))
+        rates.append(float(on_line[m].mean()) if m.any() else None)
+    return {"edges_pc": list(edges), "rate": rates, "n_stars": counts,
+            "rate_all": float(on_line.mean()) if len(on_line) else None}
+
+
+def _expected_by_chance(base_rate: dict, d_pc, edges=D_BIN_EDGES_PC) -> float | None:
+    """Expected number of stars at these distances on a pair line, from the base rate."""
+    d_pc = np.asarray(d_pc, float)
+    if not len(d_pc):
+        return 0.0
+    idx = np.digitize(d_pc, np.asarray(edges, float)) - 1
+    rates = base_rate.get("rate") or []
+    total, n_used = 0.0, 0
+    for k in idx:
+        if 0 <= k < len(rates) and rates[k] is not None:
+            total += float(rates[k])
+            n_used += 1
+    return round(total, 4) if n_used else None
 
 
 def _median(df, col, mask) -> float | None:
@@ -790,6 +837,11 @@ def stage_recut(conf: dict, out: Path, *, bl_fetch=None, log=None, beams=None,
             "n_targets_as_transmitter_any": int(((sp > 0) | (bt > 0)).sum()),
             "n_targets_with_in_beam_transmitter": int((nb > 0).sum()),
             "n_target_pairs_spillover": int(sp.sum()), "n_target_pairs_between": int(bt.sum()),
+            # the distance-matched null: how many of THESE stars would be on a
+            # pair line if they were an ordinary draw from the 100 pc sample
+            "n_targets_expected_by_chance":
+                _expected_by_chance(geom_beams.get(name, {}).get("base_rate_on_pair_line") or {},
+                                    sample["d_pc"].to_numpy(float)[tidx]) if tidx else 0.0,
         }
     _write(out / "recut.json", rep)
 
@@ -1113,6 +1165,8 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
                           "n_spillover": g.get("n_spillover"), "n_between": g.get("n_between"),
                           "analytic": g.get("analytic_expectation"),
                           "n_bl_targets_as_transmitter": g.get("n_bl_targets_as_transmitter"),
+                          "n_bl_targets_expected_by_chance": g.get("n_bl_targets_expected_by_chance"),
+                          "base_rate_on_pair_line_all": (g.get("base_rate_on_pair_line") or {}).get("rate_all"),
                           "n_pointings_on_pair_line": r.get("n_pointings_on_pair_line"),
                           "n_hits_on_pair_line": a.get("n_hits_on_pair_line"),
                           "n_candidates": a.get("n_candidates_after_rfi"),

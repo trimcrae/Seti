@@ -589,3 +589,101 @@ def test_control_periods_exclude_the_aliases_that_would_inherit_the_signal():
     assert ctl["control_max"] < ctl["amplitude_ptp"]
     assert ctl["p_empirical"] <= 1.0 / 150.0 + 1e-9
     assert ctl["z_control"] > 10.0
+
+
+# ---------------------------------------------------------------------------
+# the stage end to end, entirely offline
+# ---------------------------------------------------------------------------
+def _stage_conf():
+    from seti.metronome.run import load_metronome_config
+
+    conf = load_metronome_config()
+    conf.setdefault("vetstar", {}).update(
+        {"star_key": "kepler:5879574", "catalogue": "kepler_yang2019",
+         "period_days": PERIOD, "budget_s": 120.0, "per_target_budget_s": 30.0,
+         "max_quarters": 8})
+    conf.setdefault("redetect", {})["retries"] = 1
+    return conf
+
+
+def test_stage_writes_a_verdict_and_a_fold_table(tmp_path):
+    import json
+
+    from seti.metronome.vetstar import stage_vetstar
+
+    segs = eclipsing_binary_segments()
+
+    def kep(kepid, **kw):
+        assert str(kepid) == "5879574"
+        return segs
+
+    def qf(adql):
+        if "TAP_SCHEMA.tables" in adql:
+            return pd.DataFrame({"table_name": ['"J/AJ/151/68/table2"'], "description": [""]})
+        if "TAP_SCHEMA.columns" in adql:
+            return pd.DataFrame({"column_name": ['"KIC"', '"Period"']})
+        return pd.DataFrame()
+
+    def gq(adql):
+        if "gaia_source" in adql:
+            return pd.DataFrame({"source_id": [2050000000000000000], "ra": [290.0],
+                                 "dec": [41.0], "pmra": [1.0], "pmdec": [-2.0],
+                                 "ruwe": [1.05], "non_single_star": [0],
+                                 "phot_g_mean_mag": [13.2]})
+        return pd.DataFrame()
+
+    rep = stage_vetstar(_stage_conf(), tmp_path, kepler_lc_fn=kep, query_fn=qf,
+                        gaia_query_fn=gq, cone_fn=lambda *a: pd.DataFrame(),
+                        position=(290.0, 41.0))
+    assert rep["star_key"] == "kepler:5879574"
+    assert rep["period"] == pytest.approx(PERIOD)
+    assert rep["period_double"] == pytest.approx(2 * PERIOD)
+    assert rep["status"] == "analysed"
+    assert rep["verdict"].startswith("MUNDANE_EXPLANATION_FOUND")
+    assert "UNEQUAL_MINIMA_AT_2P" in rep["verdict"]
+    assert "DEGRADED" not in rep["verdict"]
+    assert rep["gaia"]["match"]["source_id"] == "2050000000000000000"
+    assert (tmp_path / "vetstar.json").exists()
+    fold = pd.read_csv(tmp_path / "vetstar_fold.csv")
+    assert set(fold["fold"]) == {"fold_at_period", "fold_at_period_flares_masked",
+                                 "fold_at_2p", "fold_at_2p_flares_masked"}
+    assert len(fold) == 400
+    assert json.loads((tmp_path / "vetstar.json").read_text())["verdict"] == rep["verdict"]
+
+
+def test_stage_says_no_lightcurve_rather_than_guessing(tmp_path):
+    from seti.metronome.vetstar import stage_vetstar
+
+    def dead(*a, **k):
+        raise RuntimeError("MAST unreachable")
+
+    def down(adql, *a, **k):
+        raise RuntimeError("no route")
+
+    rep = stage_vetstar(_stage_conf(), tmp_path, kepler_lc_fn=dead, query_fn=down,
+                        gaia_query_fn=down, cone_fn=down, position=(290.0, 41.0))
+    assert rep["status"] == "NO_LIGHTCURVE"
+    assert rep["fetch_status"] != "OK"
+    assert rep["verdict"].startswith("DEGRADED(")
+    assert "NO_MUNDANE_EXPLANATION_FOUND" in rep["verdict"]
+    assert "gaia:gaia_source" in rep["unreached"]
+    assert any(u.startswith("vizier_cones:") for u in rep["unreached"])
+    assert (tmp_path / "vetstar.json").exists()
+
+
+def test_stage_reports_a_catalogued_binary_from_a_cone(tmp_path):
+    from seti.metronome.vetstar import stage_vetstar
+
+    def cone(table, ra, dec, radius):
+        if table.startswith("B/vsx"):
+            return pd.DataFrame({"Name": ["V* XY Lyr"], "Type": ["EW"],
+                                 "Period": [2 * PERIOD]})
+        return pd.DataFrame()
+
+    rep = stage_vetstar(_stage_conf(), tmp_path, kepler_lc_fn=lambda *a, **k: [],
+                        query_fn=lambda a: pd.DataFrame(),
+                        gaia_query_fn=lambda a: pd.DataFrame(),
+                        cone_fn=cone, position=(290.0, 41.0))
+    hits = rep["catalogued_binary_hits"]
+    assert [h["source"] for h in hits] == ["vsx"]
+    assert "CATALOGUED_ECLIPSING_BINARY:vsx" in rep["verdict"]

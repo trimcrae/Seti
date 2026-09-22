@@ -1092,6 +1092,14 @@ def _cmd_growth_centroid(args, cfg):
     return _growth_centroid_main(list(args.rest))
 
 
+# --- GROWTH-DIRECT ---
+def _cmd_growth_direct(args, cfg):
+    from .growth.direct import main as _growth_direct_main
+
+    return _growth_direct_main(list(args.rest))
+# --- end GROWTH-DIRECT ---
+
+
 def _cmd_arc(args, cfg):
     from .arc.run import main as _arc_main
 
@@ -1121,6 +1129,13 @@ def _cmd_slag(args, cfg):
     from .slag.run import main as _slag_main
 
     return _slag_main(list(args.rest))
+
+
+# --- RELAY ---
+def _cmd_relay(args, cfg):
+    from .relay.run import main as _relay_main
+
+    return _relay_main(list(args.rest))
 
 
 def _cmd_roman(args, cfg):
@@ -2317,6 +2332,16 @@ def main(argv=None):
                             "through to seti.growth.centroid")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_growth_centroid)
+    # --- GROWTH-DIRECT ---
+    p = sub.add_parser("growth-direct",
+                       help="GROWTH direct (S57): the TESS-era depth of EVERY confirmed/candidate "
+                            "KOI with a TIC id, fitted from the SPOC / TESS-SPOC / QLP light "
+                            "curves on both SAP and PDCSAP against the KOI depth — sharded, "
+                            "checkpointed, per-planet sensitivity; flags are passed through to "
+                            "seti.growth.direct")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_growth_direct)
+    # --- end GROWTH-DIRECT ---
     p = sub.add_parser("arc",
                        help="ARC (S59): superflares above the starspot energy ceiling; "
                             "flags are passed through to seti.arc.run")
@@ -2384,6 +2409,16 @@ def main(argv=None):
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_slag)
     # --- SLAG ---
+
+    # --- RELAY ---
+    p = sub.add_parser("relay",
+                       help="RELAY (S60): intercepting node-to-node beams by geometry — "
+                            "Gaia pair cones, the BL open-data recut and the drift prior; "
+                            "flags are passed through to seti.relay.run "
+                            "(--stage {probe,targets,geometry,recut,assess,all})")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_relay)
+    # --- RELAY ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

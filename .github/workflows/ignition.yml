@@ -98,6 +98,17 @@ on:
           then VizieR's non-TAP ASU mirrors) or "esa_only" (no fallback).
         required: false
         default: "auto"
+      sample_from_run_id:
+        description: >-
+          Skip the probe AND the sample: take probe.json / sample.json /
+          parent.parquet from this prior run's `ignition-sample` artifact and
+          go straight to acquire.  Run 35653615329's sample step ran 2 h 22 min
+          over the same 20 cones without finishing (ESA was slow that night)
+          and the acquire matrix never started; the 846-star parent it needs
+          was already pulled, in 719 s, by run 35039105536.  A parent that is
+          already on disk is not worth re-pulling.
+        required: false
+        default: ""
       resume_run_id:
         description: >-
           Resume each shard from the `ignition-shard-<i>` artifact of this prior
@@ -162,7 +173,37 @@ jobs:
         run: |
           python -m pytest tests/test_ignition.py -q -p no:cacheprovider -k "injected or impact or no_data or one_band"
           python -m pytest tests/test_ignition_scale.py -q -p no:cacheprovider -k "ladder or drift or tile_grid or sweep_stage"
+      - name: Reuse a prior run's parent sample (skip probe + sample)
+        if: ${{ github.event.inputs.sample_from_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ignition-sample
+          run-id: ${{ github.event.inputs.sample_from_run_id }}
+          github-token: ${{ github.token }}
+          path: results/ignition/
+      - name: What the reused sample contains
+        if: ${{ github.event.inputs.sample_from_run_id != '' }}
+        run: |
+          ls -la results/ignition/
+          # The reused artifact's probe.json is an OLDER run's archive record.
+          # Drop it: the branch's own probe.json (the most recent live probe) is
+          # what `--route auto` must read, and it must not be overwritten by a
+          # record this dispatch did not gather.
+          git checkout -- results/ignition/probe.json 2>/dev/null || rm -f results/ignition/probe.json
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/ignition/parent.parquet")
+          if not p.exists():
+              print("::error::run ${{ github.event.inputs.sample_from_run_id }} carried no parent.parquet"); sys.exit(1)
+          import pandas as pd
+          df = pd.read_parquet(p)
+          print(f"reused parent: {len(df)} stars, columns {list(df.columns)[:12]}")
+          s = json.loads(pathlib.Path("results/ignition/sample.json").read_text())
+          print("route_used:", s.get("route_used"), "n_units:", s.get("n_units"),
+                "parent_count:", s.get("parent_count"), "elapsed_s:", s.get("elapsed_s"))
+          PY
       - name: Probe the archives (Gaia shapes, the IRSA and VizieR ASU routes, NEOWISE cone, the upload ladder)
+        if: ${{ github.event.inputs.sample_from_run_id == '' }}
         run: |
           python -m seti.ignition.run --stage probe
           echo "=== probe.json ==="
@@ -189,7 +230,7 @@ jobs:
           PY
       - name: Sample (Gaia DR3 x AllWISE parent — ESA first, IRSA and VizieR ASU as fallbacks)
         # fields/allsky only: in tiles mode every shard samples its own tiles.
-        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.mode != 'tiles' }}
+        if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.mode != 'tiles' && github.event.inputs.sample_from_run_id == '' }}
         run: |
           MS=""
           if [ "${{ github.event.inputs.max_stars || '0' }}" != "0" ]; then
@@ -224,7 +265,10 @@ jobs:
       - name: Commit the probe and sample evidence
         # A GREEN RUN THAT COMMITS NOTHING IS A LOST RUN.  The artifact upload
         # above runs first, so the evidence is safe even if the push cannot land.
-        if: always()
+        # A REUSED sample produced nothing this run, and its probe.json is an
+        # older run's: committing it would overwrite the branch's own record
+        # with evidence this dispatch did not gather.
+        if: ${{ always() && github.event.inputs.sample_from_run_id == '' }}
         env:
           RESULTS_BRANCH: ${{ github.ref_name }}
         run: |

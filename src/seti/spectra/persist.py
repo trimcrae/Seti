@@ -83,11 +83,16 @@ CHI2_P_INCONSISTENT = 0.01
 #   3: per-spectrum offset null (bias and scatter of this estimator where there
 #      is no line) subtracted from every exposure and from the coadd, plus the
 #      inverse-variance stack of the exposure HDUs as a second reference
-CKPT_VERSION = 3
+#   4: the null's own standard error propagated into the corrected error, and
+#      no correction at all from a null too thin to mean anything
+CKPT_VERSION = 4
 
 # Offsets used for the in-spectrum null.  24 is enough to place the median to
 # ~0.3 sigma and costs nothing once the arrays are in memory.
 N_NULL_OFFSETS = 24
+# Per-exposure measurements the null must have before its bias is subtracted
+# from anything.  Below this the median is not an estimate, it is a draw.
+MIN_NULL_MEASUREMENTS = 12
 
 # SDSS SPPIXMASK bits (per-exposure spCFrame masks).
 SDSS_BAD_BITS = (1 << 16) | (1 << 18) | (1 << 22) | (1 << 24) | (1 << 25)
@@ -277,20 +282,51 @@ def combine_measurements(meas: list[dict]) -> dict:
 # Classification
 # ---------------------------------------------------------------------------
 
-def _null_calibration(null: dict | None) -> tuple[float, float, float, float]:
-    """(per-exposure bias in sigma, per-exposure scatter, coadd bias, coadd scatter).
+def _null_calibration(null: dict | None) -> dict:
+    """What this spectrum's own null says the estimator does where there is no line.
+
+    Returns the per-exposure bias and scatter, the coadd's, and -- the part that
+    matters for safety -- the STANDARD ERROR of each bias.  The bias is
+    subtracted from every measurement, so it is itself an estimate with an
+    uncertainty, and that uncertainty has to be propagated: a null built from a
+    handful of offsets can land several sigma from the truth, and subtracting
+    such a number from a deficit would MANUFACTURE a detection.  With the
+    standard error carried through, a thin null widens the error bar instead of
+    inventing signal, and a null too thin to mean anything (fewer than
+    MIN_NULL_MEASUREMENTS) is not applied at all.
 
     The scatter is floored at 1.0: the nominal error already carries unit
-    variance, and a null that happens to come out narrower than nominal is not a
-    licence to call a line more significant than the photon noise allows.
+    variance, and a null that comes out narrower than nominal is not a licence
+    to call a line more significant than the photon noise allows.
     """
+    out = {"bias": 0.0, "sd": 1.0, "se_bias": 0.0,
+           "coadd_bias": 0.0, "coadd_sd": 1.0, "coadd_se_bias": 0.0,
+           "applied": False, "n": 0, "n_coadd": 0}
     if not null:
-        return 0.0, 1.0, 0.0, 1.0
+        return out
+
     def _v(key, default):
         x = null.get(key)
-        return float(x) if x is not None and np.isfinite(x) else default
-    return (_v("exposure_sig_median", 0.0), max(_v("exposure_sig_mad", 1.0), 1.0),
-            _v("coadd_sig_median", 0.0), max(_v("coadd_sig_mad", 1.0), 1.0))
+        try:
+            v = float(x)
+        except (TypeError, ValueError):
+            return default
+        return v if np.isfinite(v) else default
+
+    n = int(_v("n_exposure_measurements", 0))
+    n_co = int(_v("n_coadd_measurements", 0))
+    out["n"], out["n_coadd"] = n, n_co
+    if n < MIN_NULL_MEASUREMENTS:
+        return out
+    mad = max(_v("exposure_sig_mad", 1.0), 1.0)
+    out.update({"bias": _v("exposure_sig_median", 0.0), "sd": mad,
+                # standard error of a median, 1.2533 * sigma / sqrt(n)
+                "se_bias": 1.2533 * mad / np.sqrt(n), "applied": True})
+    if n_co >= MIN_NULL_MEASUREMENTS:
+        co_mad = max(_v("coadd_sig_mad", 1.0), 1.0)
+        out.update({"coadd_bias": _v("coadd_sig_median", 0.0), "coadd_sd": co_mad,
+                    "coadd_se_bias": 1.2533 * co_mad / np.sqrt(n_co)})
+    return out
 
 
 def classify_persistence(coadd: dict | None, exposures: list[dict],
@@ -310,7 +346,9 @@ def classify_persistence(coadd: dict | None, exposures: list[dict],
     """
     from scipy import stats
 
-    bias, sd, co_bias, co_sd = _null_calibration(null)
+    cal = _null_calibration(null)
+    bias, sd, se_bias = cal["bias"], cal["sd"], cal["se_bias"]
+    co_bias, co_sd = cal["coadd_bias"], cal["coadd_sd"]
     tested = [e for e in exposures if e.get("testable")]
     n = len(tested)
     res = {"n_exposures": len(exposures), "n_tested": n, "n_present": 0,
@@ -321,7 +359,8 @@ def classify_persistence(coadd: dict | None, exposures: list[dict],
            "on_sky_line": False, "sky_corr": float("nan"), "n_cosmic_flagged": 0,
            "ratio_to_coadd": float("nan"), "coadd_recovered": None,
            "null_exposure_bias_sig": bias, "null_exposure_scatter": sd,
-           "null_coadd_bias_sig": co_bias, "null_calibrated": bool(null),
+           "null_exposure_bias_se": se_bias, "null_n_measurements": cal["n"],
+           "null_coadd_bias_sig": co_bias, "null_calibrated": bool(cal["applied"]),
            "combined_sig_raw": float("nan"), "coadd_sig_cal": float("nan"),
            "stack_sig": float("nan"), "stack_ew": float("nan"),
            "stack_over_coadd_F": float("nan"),
@@ -347,7 +386,10 @@ def classify_persistence(coadd: dict | None, exposures: list[dict],
     res["combined_sig_raw"] = float(np.sum(F_raw / err_raw ** 2) /
                                     np.sqrt(np.sum(1.0 / err_raw ** 2)))
     F = F_raw - bias * err_raw
-    err = err_raw * sd
+    # The bias is an ESTIMATE.  Its own standard error is a flux uncertainty of
+    # se_bias * err_raw and belongs in the error bar; without it a thin null
+    # could subtract a spurious deficit and manufacture a detection.
+    err = np.sqrt((err_raw * sd) ** 2 + (se_bias * err_raw) ** 2)
     sig = F / err
     present = sig >= PRESENT_SIG
     w = 1.0 / err ** 2
@@ -735,6 +777,7 @@ def offset_null(measure_at, lam0: float, n: int = 24, lo_A: float = 12.0,
         b = np.asarray(exp_sig, float)
         out["exposure_sig_median"] = float(np.median(b))
         out["exposure_sig_mad"] = float(_mad_std(b))
+    out["n_coadd_measurements"] = len(co_sig)
     if co_sig:
         c = np.asarray(co_sig, float)
         out["coadd_sig_median"] = float(np.median(c))

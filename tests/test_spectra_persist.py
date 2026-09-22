@@ -590,6 +590,36 @@ def _bias_the_exposures(parsed, curvature=1.2e-4):
     return parsed
 
 
+def test_a_thin_null_cannot_manufacture_a_detection():
+    """The bias is subtracted from every measurement, so it is an estimate with
+    an uncertainty.  A null built from a handful of offsets can land several
+    sigma from the truth, and subtracting such a number from a deficit would
+    CREATE a line.  Below MIN_NULL_MEASUREMENTS nothing is subtracted at all;
+    above it the bias's own standard error goes into the error bar."""
+    ex = [{"testable": True, "F": 0.0, "err": 1.0} for _ in range(6)]
+    # A null that "measures" a -4 sigma bias from three readings.
+    thin = {"n_exposure_measurements": 3, "exposure_sig_median": -4.0,
+            "exposure_sig_mad": 1.0}
+    cls = persist.classify_persistence(None, ex, null=thin)
+    assert not cls["null_calibrated"], cls
+    assert abs(cls["combined_sig"]) < 0.5, cls        # no correction applied
+
+    # The same bias from plenty of readings IS applied -- and its standard
+    # error widens the bar rather than being ignored.
+    thick = {"n_exposure_measurements": 120, "exposure_sig_median": -4.0,
+             "exposure_sig_mad": 1.0}
+    cal = persist.classify_persistence(None, ex, null=thick)
+    assert cal["null_calibrated"] and cal["null_n_measurements"] == 120
+    assert cal["combined_sig"] > 8.0, cal              # 4 sigma per exposure, 6 of them
+    # With the same bias from only 12 readings the error bar is visibly wider.
+    few = {"n_exposure_measurements": 12, "exposure_sig_median": -4.0,
+           "exposure_sig_mad": 1.0}
+    small = persist.classify_persistence(None, ex, null=few)
+    assert small["null_calibrated"]
+    assert small["combined_sig"] < cal["combined_sig"], (small, cal)
+    assert small["null_exposure_bias_se"] > cal["null_exposure_bias_se"]
+
+
 def test_null_calibration_stops_a_biased_estimator_calling_a_line_absent():
     """With the estimator reading several sigma negative everywhere, an absent
     line must still come out at ~0 sigma once the spectrum's own null is

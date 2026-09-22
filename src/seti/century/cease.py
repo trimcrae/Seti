@@ -461,26 +461,44 @@ def analyze_century(
         return res
 
     # -- transition.  Over a century there can be forty blocks, so a strict
-    # "last detected block" split would let a single false alarm at rate `fap`
-    # among the post blocks reset the transition.  The split is instead the
-    # block that best separates a detected run from a non-detected run:
-    # s* = argmax_s [ sum_{i<=s} det_i + sum_{i>s} (1 - det_i) ].  Detections
-    # after s* are tolerated only as isolated false alarms, at most
-    # max(1, ceil(3 fap n_post)) of them and never two adjacent --- two
-    # adjacent late detections are a clock that came back (Blazhko-like),
-    # which breaks the pattern.
+    # "the last detected block ends the pre segment" split lets a SINGLE false
+    # alarm, which the per-block threshold produces at rate `fap` by
+    # construction, push the transition arbitrarily late.  When that false
+    # alarm lands in the first block after the Menzel gap --- the densest
+    # post-gap block in DASCH, so the likeliest place for one --- the split
+    # moves across the gap, the gap's photometric step stops being deferred,
+    # and the star is charged with the plates' own 0.2--0.4 mag offset.  That
+    # is the Hippke/Lund failure mode with a periodogram in front of it.
+    #
+    # So the split is chosen by a false-alarm test instead of by the last
+    # detection: scan s upward over the detected blocks and take the EARLIEST
+    # split whose later detections are consistent with noise --- at most
+    # max(1, ceil(3 fap n_post)) of them and never two adjacent, since two
+    # adjacent late detections are a clock that came back (Blazhko-like) and
+    # not a false alarm.  s = s_last always satisfies the test (it leaves no
+    # later detections at all), so the scan always terminates; taking the
+    # earliest acceptable s is what makes an isolated post-gap false alarm
+    # cost nothing.  Detections after the accepted split are excluded from the
+    # post blocks rather than believed.
     nb = len(blocks)
-    scores = [int(det[:s + 1].sum()) + int((~det[s + 1:]).sum()) for s in range(nb)]
-    s = int(np.argmax(scores))
     s_last = int(np.max(np.nonzero(det)[0]))
-    late_det = [i for i in range(s + 1, nb) if det[i]]
-    max_fa = max(1, int(np.ceil(3.0 * float(fap) * max(nb - s - 1, 1))))
-    adjacent = any(b - a == 1 for a, b in zip(late_det, late_det[1:], strict=False))
-    if len(late_det) > max_fa or adjacent:
-        s = s_last                      # the run is not clean; fall back to strict
-        late_det = []
-        res.flags.append("late_detections_not_isolated")
-    elif late_det:
+
+    def _late_ok(s_try: int) -> tuple[bool, list[int]]:
+        late = [i for i in range(s_try + 1, nb) if det[i]]
+        n_post_try = max(nb - s_try - 1, 1)
+        max_fa = max(1, int(np.ceil(3.0 * float(fap) * n_post_try)))
+        adjacent = any(b - a == 1 for a, b in zip(late, late[1:], strict=False))
+        return (len(late) <= max_fa and not adjacent), late
+
+    s, late_det = s_last, []
+    for s_try in range(nb):
+        if not det[s_try]:
+            continue                     # a transition begins after a DETECTION
+        ok, late = _late_ok(s_try)
+        if ok:
+            s, late_det = s_try, late
+            break
+    if late_det:
         res.flags.append("post_isolated_detection")
     res.n_post_isolated_detections = len(late_det)
     pre_i, post_i = list(range(0, s + 1)), [i for i in range(s + 1, nb) if i not in late_det]
@@ -588,11 +606,32 @@ def analyze_century(
     cmp_post = informative if informative else post_i
 
     # -- mean flux, variance budget, PDM, blend and series histories
-    res.mean_pre_mag = float(np.median([dets[i].mean_mag for i in pre_i if det[i]]))
+    # The mean flux of the pre-transition state is measured on ONE side of the
+    # Menzel gap.  If the detected pre blocks straddle it, the minority side is
+    # dropped: mixing them averages the plates' own pre/post offset into the
+    # star's "mean magnitude before", which is the quantity the mean-shift test
+    # then compares across the gap.
+    pre_det_i = [i for i in pre_i if det[i]]
+    pre_seg = np.array([0 if dets[i].year_mid < float(gap[0]) else 1 for i in pre_det_i])
+    if pre_det_i and 0 < int(pre_seg.sum()) < len(pre_seg):
+        major = int(np.argmax(np.bincount(pre_seg, minlength=2)))
+        pre_mean_i = [i for i, sg in zip(pre_det_i, pre_seg, strict=False) if sg == major]
+        res.flags.append("mean_pre_restricted_to_one_gap_segment")
+    else:
+        pre_mean_i = pre_det_i
+    res.mean_pre_mag = float(np.median([dets[i].mean_mag for i in pre_mean_i]))
     res.mean_post_mag = float(np.median([dets[i].mean_mag for i in cmp_post]))
     res.mean_shift_mag = res.mean_post_mag - res.mean_pre_mag
-    res.mean_shift_across_gap = bool(res.transition_at_gap or
-                                     (dets[s].year_mid < gap[0] <= dets[cmp_post[0]].year_mid))
+    # Whether the comparison straddles the gap is a statement about WHERE the
+    # two sets of plates are in time, not about a block index: the median of
+    # the years that made mean_pre against the earliest year that made
+    # mean_post.  A single late block among the pre blocks cannot hide the gap.
+    pre_yr_used = [dets[i].year_mid for i in pre_mean_i]
+    post_yr_used = [dets[i].year_mid for i in cmp_post]
+    res.mean_shift_across_gap = bool(
+        res.transition_at_gap
+        or (pre_yr_used and post_yr_used
+            and float(np.median(pre_yr_used)) < float(gap[0]) <= float(np.min(post_yr_used))))
     res.excess_var_pre = float(np.nanmedian([dets[i].excess_var for i in pre_i if det[i]]))
     res.excess_var_post = float(np.nanmedian([dets[i].excess_var for i in cmp_post]))
     if np.isfinite(res.excess_var_pre) and res.excess_var_pre > 0:

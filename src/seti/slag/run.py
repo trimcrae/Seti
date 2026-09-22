@@ -625,6 +625,7 @@ def _match_controls(cfg: dict, panels: list[dict]) -> list[dict]:
                               for p in best.get("pairs", [])],
                        flags=[{k: f.get(k) for k in ("flag", "fired", "z", "kills", "survives",
                                                      "note")} for f in best.get("flags", [])],
+                       per_element=((best.get("misfit") or {}).get("per_element") or {}),
                        max_abs_residual_sigma=(best.get("fit_restricted") or {}).get(
                            "max_abs_residual_sigma"))
         out.append(rec)
@@ -748,6 +749,12 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
             "worst_element": best["elements"][int(np.argmax(np.abs(fr["residual_sigma"])))]
             if best["elements"] else "",
             "misfit_class": best.get("misfit_class"),
+            "per_element_worst": ((best.get("misfit") or {}).get("per_element") or {}
+                                  ).get("_worst", {}).get("element"),
+            "per_element_worst_p": ((best.get("misfit") or {}).get("per_element") or {}
+                                    ).get("_worst", {}).get("p"),
+            "per_element_worst_p_corrected": ((best.get("misfit") or {}).get("per_element") or {}
+                                              ).get("_worst", {}).get("p_min_corrected"),
             "n_sources": len(rows), "trace_measured": " ".join(best.get("trace_elements_measured", [])),
             "n_pairs_exceeding": sum(1 for p in best.get("pairs", []) if p.get("exceeds")),
             "n_flags_fired": sum(1 for f in best.get("flags", []) if f.get("fired")),

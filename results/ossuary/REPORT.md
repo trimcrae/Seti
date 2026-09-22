@@ -31,21 +31,24 @@ Silverberg et al. 2018 measured a ~92% false-positive rate for AllWISE-selected 
 | after_unresolved_companion | 1,985 | 8 |
 | after_astrometric_registration | 1,959 | 26 |
 | after_background_source | 1,764 | 195 |
-| after_galactic_cirrus | 0 | 1764 |
-| after_globular_cluster_sightline | 0 | 0 |
-| after_lambda_boo_or_blue_straggler | 0 | 0 |
-| after_giant_or_unclassified | 0 | 0 |
-| after_not_a_null_reservoir_host | 0 | 0 |
-| surviving | 0 |  |
+| after_galactic_cirrus | 732 | 1032 |
+| after_globular_cluster_sightline | 732 | 0 |
+| after_lambda_boo_or_blue_straggler | 634 | 98 |
+| after_giant_or_unclassified | 629 | 5 |
+| after_not_a_null_reservoir_host | 584 | 45 |
+| surviving | 584 |  |
 
 ### Rejections by first failing gate
 
 * `ledger`: 9,106
 * `wise_quality`: 6,112
-* `galactic_cirrus`: 1,764
+* `galactic_cirrus`: 1,032
 * `background_source`: 195
+* `lambda_boo_or_blue_straggler`: 98
+* `not_a_null_reservoir_host`: 45
 * `astrometric_registration`: 26
 * `unresolved_companion`: 8
+* `giant_or_unclassified`: 5
 
 ### Expected chance extragalactic alignments
 
@@ -57,6 +60,7 @@ Over 6,192,472 stars, within the 1.0" registration radius:
 ## Candidates
 
 * excess-flagged: 17,211
-* surviving the full gauntlet: **0**
+* surviving the full gauntlet: **584**
+* surviving per-object follow-up: **121**
 
 See `docs/ossuary.md` for the claim, the novelty verdict and the contamination model.

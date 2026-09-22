@@ -240,6 +240,17 @@ it through the recursion; past it the split is abandoned, the record carries
 `coverage.n_units_deadline_exceeded` and `assess` as a `DEGRADED` reason.
 Units already done are checkpointed, so what is lost is bounded and named.
 
+### A refused photosphere is not a quiet star
+
+The locus refuses to extrapolate, so a star outside every well-populated colour
+bin gets no predicted photosphere and a NaN `chi` — and then fails
+`excess_significant` for exactly the reason a star with no excess does. On a
+partial sky the bins are thin, so that silence would read as a clean null when
+it is a coverage statement. The screen funnel therefore counts
+`n_photosphere_assigned` and `n_no_photosphere_locus_refused` apart, and
+`assess` raises `DEGRADED (locus_refused_photosphere:n/m)` when more than a
+fifth of the K_s-bearing stars were never placed.
+
 ### Classes
 
 `CANDIDATE` (in the cell, ≥ 2 old indicators, no kill) ·

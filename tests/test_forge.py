@@ -582,6 +582,25 @@ def test_end_to_end_recovers_the_injected_swarm_and_verifies_the_asset(tmp_path)
     # it reaches the candidate record without having moved the statistic: the
     # swarm is a candidate on the same delta chi2 whether or not it is there
     assert cand["key"] == "HD 999001"
+    # --- the deliverable: the ranked Planck-consistency list ---------------
+    rk = pd.read_csv(out / "planck_ranking.csv")
+    # only N-tested stars are ranked; an N_UNTESTED star must not appear at all
+    assert "HD 10700" not in set(rk["key"])          # N_UNTESTED: nothing to test
+    assert s["funnel"]["n_N_UNTESTED"] >= 1
+    # eps Eri has an N band but no H/K detection to extrapolate FROM, so it is
+    # NO_NIR_EXCESS and must not be ranked on a statistic it does not have
+    assert "HD 22049" in set(st["key"]) and "HD 22049" not in set(rk["key"])
+    assert len(rk) == s["n_planck_ranked"] < s["funnel"]["n_with_n_band"]
+    assert rk["delta_chi2"].notna().all()
+    # ordered best-grey first, and the injected swarm tops it
+    assert list(rk["delta_chi2"]) == sorted(rk["delta_chi2"], reverse=True)
+    assert rk.iloc[0]["key"] == "HD 999001" and rk.iloc[0]["rank"] == 1
+    assert bool(rk.iloc[0]["planck_consistent"])
+    # the nano star is on the list too, at the negative end: the list is a
+    # ranking of the whole tested population, not a shortlist of survivors
+    assert "HD 999002" in set(rk["key"])
+    assert float(rk.loc[rk["key"] == "HD 999002", "delta_chi2"].iloc[0]) < 0
+    assert rk["delta_chi2"].min() < 0 < rk["delta_chi2"].max()
 
 
 def test_polarimetry_keeps_the_tightest_limit_and_never_extends_the_sample():

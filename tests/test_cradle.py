@@ -833,3 +833,38 @@ def test_a_bytes_cc_flags_column_vetoes_exactly_as_the_text_one_does():
         assert bool(as_bytes["rule_cc_flags_w3w4"].iloc[i]) is r["expect_w34"], (i, "bytes")
         assert bool(as_text["flag_cc_flags_w1w2"].iloc[i]) is r["expect_w12"], (i, "text w12")
         assert bool(as_bytes["flag_cc_flags_w1w2"].iloc[i]) is r["expect_w12"], (i, "bytes w12")
+
+
+def test_a_star_the_locus_will_not_place_is_counted_apart_from_one_with_no_excess(tmp_path):
+    """The locus refuses to extrapolate.  A star outside every well-populated
+    colour bin gets no predicted photosphere and a NaN chi, so it fails
+    `excess_significant` for exactly the reason a star with no excess does.
+    On a partial sky the bins are thin, and "nothing was significant" must not
+    be readable as a clean null when it is a coverage statement."""
+    rng = np.random.default_rng(51)
+    # the clean sample spans bp_rp 0.50-1.45; this star is inside the archive
+    # cut (0.45-1.85) but outside every well-populated colour bin
+    odd = make_star(990, rng, ks=6.5, bp_rp=1.80, plx=_plx_for_dwarf(6.5, 1.80),
+                    noise=0.0, v_tan_kms=40.0)
+    arch = FakeArchive(make_archive(rng, extra=[odd]))
+    conf = _conf(tmp_path)
+    b = _backends(arch)
+    out = tmp_path / "cradle"
+    cradle_run("acquire", out_dir=out, conf=conf, backends=b)
+    rep = cradle_run("screen", out_dir=out, conf=conf, backends=b)
+
+    f = rep["funnel"]
+    assert f["n_no_photosphere_locus_refused"] >= 1, f
+    assert f["n_photosphere_assigned"] + f["n_no_photosphere_locus_refused"] <= f["n_parent"]
+    # the counts are disjoint and the refused star is NOT hiding inside
+    # "not significant"
+    assert f["n_photosphere_assigned"] >= f["n_excess_significant"]
+
+    # and it is the red star: its W3/W4 photosphere is NaN, not merely quiet
+    screened = pd.read_csv(out / "parent_screened.csv")
+    red = screened[pd.to_numeric(screened["bp_rp"], errors="coerce") > 1.6]
+    assert len(red) == 1, len(red)
+    assert red["excess_significant"].astype(str).str.lower().isin(["false", "0"]).all()
+    assert rep["loci"], "the loci were fitted; the refusal is the bin edge, not a failure"
+    # the same run must still place the ordinary stars
+    assert f["n_photosphere_assigned"] >= 0.9 * (f["n_parent"] - 1)

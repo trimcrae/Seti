@@ -966,72 +966,111 @@ def test_the_contaminating_variable_rule_is_what_the_verdict_leads_with():
 
 # ---------------------------------------------------------------------------
 # the stale-commit guard (scripts/metronome_stale_guard.py)
+#
+# Run against REAL git repositories in tmp_path, because the whole point of
+# the guard is what git says about ancestry, and a mock of that would be a
+# mock of the thing under test.
 # ---------------------------------------------------------------------------
-def _guard(monkeypatch, tmp_path, mine, theirs, name="summary.json"):
-    """Run the guard with `git show` stubbed to return `theirs`."""
-    import json as _json
-    import subprocess
+def _guard_module():
     import sys
-
-    sys.path.insert(0, str(_REPO / "scripts"))
+    if str(_REPO / "scripts") not in sys.path:
+        sys.path.insert(0, str(_REPO / "scripts"))
     import metronome_stale_guard as g
+    return g
 
-    p = tmp_path / name
-    if mine is not None:
-        p.write_text(_json.dumps({"generated_utc": mine}))
 
-    class _R:
-        def __init__(self, out):
-            self.stdout = out
+def _run(*args, cwd):
+    import subprocess
+    return subprocess.run(["git", *args], cwd=str(cwd), check=True,
+                          capture_output=True, text=True).stdout.strip()
 
-    def fake_run(cmd, **kw):
-        if cmd[:2] == ["git", "show"]:
-            if theirs is None:
-                raise subprocess.CalledProcessError(128, cmd)
-            return _R(_json.dumps({"generated_utc": theirs}))
-        return _R("")
 
-    monkeypatch.setattr(g.subprocess, "run", fake_run)
-    out = tmp_path / "gh_output"
+def _repo(tmp_path):
+    """A repo with: base -> (old code) -> (new code) -> (results written).
+
+    `old` is where a queue-delayed run would have checked out; `new` changes
+    the channel's sources; `res` is the bot commit that wrote summary.json.
+    """
+    r = tmp_path / "repo"
+    (r / "src" / "seti" / "metronome").mkdir(parents=True)
+    (r / "results" / "metronome").mkdir(parents=True)
+    _run("init", "-q", "-b", "mainline", cwd=r)
+    _run("config", "user.email", "t@example.com", cwd=r)
+    _run("config", "user.name", "t", cwd=r)
+    (r / "src" / "seti" / "metronome" / "run.py").write_text("v1\n")
+    _run("add", "-A", cwd=r)
+    _run("commit", "-qm", "old code", cwd=r)
+    old = _run("rev-parse", "HEAD", cwd=r)
+    (r / "src" / "seti" / "metronome" / "run.py").write_text("v2 with two more vetoes\n")
+    _run("add", "-A", cwd=r)
+    _run("commit", "-qm", "new code", cwd=r)
+    new = _run("rev-parse", "HEAD", cwd=r)
+    (r / "results" / "metronome" / "summary.json").write_text('{"generated_utc": "x"}')
+    _run("add", "-A", cwd=r)
+    _run("commit", "-qm", "results", cwd=r)
+    res = _run("rev-parse", "HEAD", cwd=r)
+    return r, old, new, res
+
+
+def _call(monkeypatch, repo, sha, files=("results/metronome/summary.json",),
+          branch="mainline"):
+    g = _guard_module()
+    monkeypatch.chdir(repo)
+    monkeypatch.setenv("GITHUB_SHA", sha)
+    out = repo / "gh_out"
     monkeypatch.setenv("GITHUB_OUTPUT", str(out))
-    g.main(["some-branch", str(p)])
-    # GITHUB_OUTPUT is append-only, as the runner's is: read the last line
+    g.main([branch, *files])
     return out.read_text().strip().splitlines()[-1]
 
 
-def test_guard_blocks_a_run_older_than_the_branch(monkeypatch, tmp_path):
-    """Run 35741300225's failure mode: dispatched at 14:34, committed at 23:37,
-    over results generated at 21:42 by a newer run."""
-    assert _guard(monkeypatch, tmp_path,
-                  mine="2026-09-22T23:37:03Z",
-                  theirs="2026-09-22T23:42:31Z") == "stale=true"
+def test_guard_blocks_a_run_whose_code_predates_the_results_on_the_branch(
+        monkeypatch, tmp_path):
+    """Run 35741300225's failure mode exactly: dispatched from an old commit,
+    landing hours later on top of results produced by newer code."""
+    repo, old, _new, _res = _repo(tmp_path)
+    assert _call(monkeypatch, repo, old) == "stale=true"
 
 
-def test_guard_passes_a_run_newer_than_the_branch(monkeypatch, tmp_path):
-    assert _guard(monkeypatch, tmp_path,
-                  mine="2026-09-22T23:42:31Z",
-                  theirs="2026-09-22T21:37:03Z") == "stale=false"
+def test_guard_passes_a_run_at_the_branch_head(monkeypatch, tmp_path):
+    repo, _old, _new, res = _repo(tmp_path)
+    assert _call(monkeypatch, repo, res) == "stale=false"
 
 
-def test_guard_passes_when_the_branch_has_no_copy_yet(monkeypatch, tmp_path):
-    assert _guard(monkeypatch, tmp_path,
-                  mine="2026-09-22T23:42:31Z", theirs=None) == "stale=false"
+def test_guard_passes_a_rerun_of_identical_channel_code(monkeypatch, tmp_path):
+    """The results commit only added files under results/, so a run dispatched
+    from `new` carries the same channel sources as the commit that wrote
+    them -- a re-run, not a regression."""
+    repo, _old, new, _res = _repo(tmp_path)
+    assert _call(monkeypatch, repo, new) == "stale=false"
 
 
-def test_guard_passes_when_this_run_wrote_nothing(monkeypatch, tmp_path):
-    assert _guard(monkeypatch, tmp_path,
-                  mine=None, theirs="2026-09-22T23:42:31Z") == "stale=false"
+def test_guard_passes_when_the_branch_has_never_held_the_file(monkeypatch, tmp_path):
+    repo, old, _new, _res = _repo(tmp_path)
+    assert _call(monkeypatch, repo, old,
+                 files=("results/metronome/vetstar.json",)) == "stale=false"
 
 
-def test_guard_passes_when_a_timestamp_is_unparseable(monkeypatch, tmp_path):
-    """No comparison is possible, so it must not block -- a guard that fires on
-    ignorance would stop every run whose artefact schema changed."""
-    assert _guard(monkeypatch, tmp_path, mine="not-a-date",
-                  theirs="2026-09-22T23:42:31Z") == "stale=false"
+def test_guard_fails_open_on_an_unknown_commit(monkeypatch, tmp_path):
+    """Shallow checkouts are the normal case on a runner; if the history is
+    not there the guard must not block."""
+    repo, _old, _new, _res = _repo(tmp_path)
+    assert _call(monkeypatch, repo, "0" * 40) == "stale=false"
 
 
-def test_guard_accepts_the_timestamp_spellings_the_channel_writes(monkeypatch, tmp_path):
-    assert _guard(monkeypatch, tmp_path, mine="2026-09-22T23:37:03Z",
-                  theirs="2026-09-22T23:42:31.500Z") == "stale=true"
-    assert _guard(monkeypatch, tmp_path, mine="2026-09-22T23:37:03+00:00",
-                  theirs="2026-09-22T23:42:31Z") == "stale=true"
+def test_guard_fails_open_without_a_commit_to_compare(monkeypatch, tmp_path):
+    g = _guard_module()
+    monkeypatch.chdir(tmp_path)          # not a git repo
+    monkeypatch.setenv("GITHUB_SHA", "")
+    out = tmp_path / "gh_out"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    g.main(["mainline", "results/metronome/summary.json"])
+    assert out.read_text().strip().splitlines()[-1] == "stale=false"
+
+
+def test_guard_blocks_only_the_file_whose_writer_is_ahead(monkeypatch, tmp_path):
+    """One stale file is enough to stop the whole commit -- the files are
+    written as a set and half of them would be incoherent."""
+    repo, old, _new, _res = _repo(tmp_path)
+    assert _call(monkeypatch, repo, old,
+                 files=("results/metronome/vetstar.json",
+                        "results/metronome/summary.json")) == "stale=true"

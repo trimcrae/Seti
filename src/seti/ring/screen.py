@@ -66,6 +66,38 @@ def _ph_qual_ok(df: pd.DataFrame, band: str, allowed=("A", "B", "C")) -> np.ndar
     return (ok & e.notna() & (e > 0)).to_numpy(bool)
 
 
+def _achromatic_route(ex: pd.DataFrame, th: dict, w: dict) -> pd.Series:
+    """Admit a bright *achromatic* excess that the colour test would drop.
+
+    The colour requirement in ``select_excess`` guards against an error in the
+    SED anchor: mis-measure Ks and the whole predicted photosphere scales, so
+    W1 and W2 rise together with no colour signal.  A cool companion in the
+    beam does the same thing -- at 2500-3000 K the excess colour is small even
+    when the excess flux is several times the photosphere -- so the companion
+    population would never be flagged, never fitted, and never *named* in the
+    census.  The discriminant is amplitude: an anchor error of 0.02-0.1 mag
+    cannot manufacture an excess fraction of 0.5 (0.44 mag) in both bands.
+
+    This route can only add contaminants, never ring candidates: a 250-800 K
+    ring has W1-W2 > 1.3 mag by construction and therefore always enters by
+    the colour route, and ``screen_wd`` requires ``excess_route == 'colour'``
+    before a row may become a ring candidate.
+    """
+    frac_min = float(w.get("achromatic_excess_frac_min", np.nan))
+    idx = ex.index
+    if not np.isfinite(frac_min):
+        return pd.Series(False, index=idx)
+    e = th["excess"]
+    ok = pd.Series(True, index=idx)
+    for b in ("W1", "W2"):
+        chi = pd.to_numeric(ex.get(f"chi_{b}"), errors="coerce")
+        exc = pd.to_numeric(ex.get(f"{b}_excess_jy"), errors="coerce")
+        pred = pd.to_numeric(ex.get(f"{b}_pred_jy"), errors="coerce")
+        frac = (exc / pred).where(pred > 0)
+        ok = ok & (chi >= float(e[f"chi_{b.lower()}_min"])) & (frac >= frac_min)
+    return ok.fillna(False).astype(bool)
+
+
 def screen_wd(df: pd.DataFrame, cfg: dict, *, rng=None) -> tuple[pd.DataFrame, dict]:
     """Photosphere, excess, ring fit, shape class and the catalogue gates."""
     from ..sed.excess import compute_excess, select_excess
@@ -104,13 +136,20 @@ def screen_wd(df: pd.DataFrame, cfg: dict, *, rng=None) -> tuple[pd.DataFrame, d
                          "chi_w2_min": float(w["chi_w2_min"]),
                          "color_excess_sigma_min": float(w["color_excess_sigma_min"])}}
         ex = compute_excess(sub, th, bands=("W1", "W2"))
-        ex["excess_flag"] = select_excess(ex, th)
+        colour_route = select_excess(ex, th)
+        ex["excess_flag"] = colour_route
+        ex["excess_route"] = np.where(colour_route.to_numpy(bool), "colour", "")
+        achro = _achromatic_route(ex, th, w)
+        ex["excess_flag"] = ex["excess_flag"] | achro
+        ex["excess_route"] = np.where(achro.to_numpy(bool) & ~colour_route.to_numpy(bool),
+                                      "achromatic", ex["excess_route"])
         parts.append(ex)
     none = work[work["sed_anchor"] == "none"].copy()
     if len(none):
         for col in ("chi_W1", "chi_W2", "chi_color", "W1_excess_jy", "W2_excess_jy"):
             none[col] = np.nan
         none["excess_flag"] = False
+        none["excess_route"] = ""
         parts.append(none)
     work = pd.concat(parts).sort_index()
     work["sys_floor_mag_used"] = floor[work.index] if len(work) else floor
@@ -181,8 +220,12 @@ def screen_wd(df: pd.DataFrame, cfg: dict, *, rng=None) -> tuple[pd.DataFrame, d
     flagged_mask = work["excess_flag"].fillna(False).astype(bool)
     work["verdict"] = np.where(~flagged_mask, "no_excess",
                                np.where(work["gate_reason"] == "", "surviving", "rejected"))
+    # A ring in the Osmanov band is red by construction, so it always enters by
+    # the colour route; requiring that here keeps the achromatic admission from
+    # ever producing a candidate.
     work["ring_candidate"] = flagged_mask & (work["verdict"] == "surviving") & \
-        (work["shape_class"] == "ring_band")
+        (work["shape_class"] == "ring_band") & \
+        (work.get("excess_route", pd.Series("colour", index=work.index)) == "colour")
 
     # Per-host sensitivity: the covering fraction a 500 K ring needs at the W2 depth.
     teff_all = pd.to_numeric(work["teff"], errors="coerce").to_numpy(float)
@@ -203,6 +246,8 @@ def screen_wd(df: pd.DataFrame, cfg: dict, *, rng=None) -> tuple[pd.DataFrame, d
         "n_w1_detected": int(work.get("W1_detected", pd.Series(False)).sum()),
         "n_w2_detected": int(work.get("W2_detected", pd.Series(False)).sum()),
         "n_excess_flagged": int(flagged_mask.sum()),
+        "excess_route_counts": {k: int(v) for k, v in
+                                work.loc[flagged_mask, "excess_route"].value_counts().items()},
         "shape_counts": shape_counts,
         "n_surviving_gates": int((flagged_mask & (work["verdict"] == "surviving")).sum()),
         "n_ring_candidates": int(work["ring_candidate"].sum()),
@@ -518,8 +563,14 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
     n_min = int(b["min_epochs"])
     have = out["w2_n_epochs"] >= n_min
     pop_floor = float(np.nanmedian(out.loc[have, "w2_chi2_red"])) if have.any() else np.nan
+    # The median estimates the NEOWISE systematic error floor only when the
+    # tested sample is large enough that a genuine variable cannot be the
+    # median itself; below that the floor is not estimable and applying it
+    # would let one variable object raise the bar above its own signal.
+    pop_n_min = int(b.get("pop_floor_min_n", 0))
+    pop_applied = bool(np.isfinite(pop_floor) and int(have.sum()) >= pop_n_min)
     thr = max(float(b["chi2_red_min"]),
-              float(b["chi2_red_pop_factor"]) * pop_floor if np.isfinite(pop_floor) else 0.0)
+              float(b["chi2_red_pop_factor"]) * pop_floor if pop_applied else 0.0)
     out["w2_chi2_threshold"] = thr
     out["duty_cycle_flag"] = have & (out["w2_chi2_red"] >= thr) & \
         (out["w2_amp_mag"] >= float(b["amp_min_mag"]))
@@ -532,6 +583,8 @@ def screen_bd(epochs: pd.DataFrame, targets: pd.DataFrame, cfg: dict
         "n_with_epochs": int((out["w2_n_epochs"] > 0).sum()),
         "n_tested": int(have.sum()),
         "population_w2_chi2_median": pop_floor if np.isfinite(pop_floor) else None,
+        "population_floor_applied": pop_applied,
+        "population_floor_min_n": pop_n_min,
         "w2_chi2_threshold": thr,
         "n_duty_cycle_flags": int(out["duty_cycle_flag"].sum()),
         "flagged": out.loc[out["duty_cycle_flag"], ["source_id", "spt", "w2_n_epochs",

@@ -51,6 +51,14 @@ wd:
   chi_w1_min: 5.0           # 5 sigma, not 3 (Huang+2025: 5/5 spurious at 3 sigma)
   chi_w2_min: 5.0
   color_excess_sigma_min: 3.0
+  # A cool companion (2500-3000 K) raises W1 and W2 almost together, so it
+  # fails the colour test and would never be flagged, fitted or NAMED -- the
+  # contaminant would simply be invisible in the census.  A second admission
+  # route on amplitude: both bands >= chi_min AND excess/photosphere >= this
+  # in both.  0.5 is 0.44 mag, far beyond the 0.02-0.1 mag anchor error the
+  # colour test exists to catch.  Rows admitted this way are recorded with
+  # excess_route = "achromatic" and can never become ring candidates.
+  achromatic_excess_frac_min: 0.5
   w1_w2_min: -0.05          # LEDGER: negative W1-W2 is a blend
   # The inherited "AGN wedge" colour cut (W1-W2 > 0.8) is NOT applied here: a
   # pure 500 K blackbody has W1-W2 = 2.15 and a 300 K one is redder, so the
@@ -116,6 +124,11 @@ bd:
   amp_min_mag: 0.15                 # W2 peak-to-peak beyond which a duty cycle is claimed
   chi2_red_min: 5.0                 # W2 excess variance over the quoted epoch errors
   chi2_red_pop_factor: 3.0          # ... and over the population's own median chi2 (the systematic floor)
+  # The population median only estimates the NEOWISE error-underestimate floor
+  # when the sample is large enough for a variable object not to BE the median.
+  # Below this many tested objects the floor is not estimable and the threshold
+  # falls back to chi2_red_min alone (summary records which applied).
+  pop_floor_min_n: 8
 
 ffp:
   vizier_catalogue: "J/ApJS/225/10"     # Faherty+2016, young ultracool dwarfs with Lbol, group, age

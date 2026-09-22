@@ -576,7 +576,7 @@ def test_stages_end_to_end_offline(cfg, tmp_path):
     assert js["two_target_vet"][0]["status"] == "VETTED"
     assert (out / "pulsar" / "counterparts.csv").exists()
     assert (out / "wd" / "screened.parquet").exists()
-    assert "Rings around the dead" in (out / "REPORT.md").read_text()
+    assert "rings around the dead" in (out / "REPORT.md").read_text().lower()
 
 
 def test_empty_archives_give_no_data_reached(cfg, tmp_path):

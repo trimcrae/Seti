@@ -332,10 +332,17 @@ FAKE_TABLES = {
                  (3, 999001, "SWARM", 12.0, 0.8), (4, 999002, "NANO", 0.3, 0.4),
                  (5, 999003, "COMP", 1.2, 0.3), (6, 999004, "WDSCOMP", 12.0, 0.8),
                  (7, 22049, "eps Eri", 0.9, 0.3)]},
+    # the polarimetric null: read and carried per star, never a chi^2 term
+    "J/ApJ/825/124/table1": {
+        "cols": ["recno", "HD", "Pol", "e_Pol", "l_Pol"],
+        "rows": [(1, 999001, 18.0, 4.0, ""),        # the swarm: a measured value
+                 (2, 999002, 25.0, 6.0, "<"),       # the nano star: an upper limit
+                 (3, 10700, 11.0, 3.0, "")]},
 }
 FAKE_CATALOGUES = {"J/A+A/555/A104": ["J/A+A/555/A104/table3"],
                    "J/A+A/570/A128": ["J/A+A/570/A128/table2"],
-                   "J/AJ/159/177": ["J/AJ/159/177/table4"]}
+                   "J/AJ/159/177": ["J/AJ/159/177/table4"],
+                   "J/ApJ/825/124": ["J/ApJ/825/124/table1"]}
 
 
 def fake_query(adql: str) -> pd.DataFrame:
@@ -498,7 +505,11 @@ def test_end_to_end_recovers_the_injected_swarm_and_verifies_the_asset(tmp_path)
     assert probe["tables"]["absil2013"]["roles"]["excess"] == "fCSE"
     assert probe["tables"]["ertel2020"]["roles"]["excess"] == "Excess"
     assert probe["tables"]["nunez2017"]["status"] == acq.STATUS_ZERO     # not in the fake archive
-    assert probe["n_tables_usable"] == 3
+    # three excess tables plus the polarimetry one: the probe scores a
+    # polarimetry table on its polarisation column, not on an excess column
+    assert probe["n_tables_usable"] == 4
+    assert probe["tables"]["marshall2016"]["roles"]["polarisation"] == "Pol"
+    assert probe["tables"]["marshall2016"]["roles"]["limit_flag"] == "l_Pol"
     a = res["acquire"]
     assert a["tables"]["absil2013"]["n_rows"] == 9
     assert a["tables"]["absil2013"]["n_added"] == 4        # the four fake stars joined the sample
@@ -559,6 +570,54 @@ def test_end_to_end_recovers_the_injected_swarm_and_verifies_the_asset(tmp_path)
     assert (out / "summary.json").exists() and (out / "star_table.csv").exists()
     st = pd.read_csv(out / "star_table.csv")
     assert set(st.columns) >= {"key", "tier", "delta_chi2", "n_separation_sigma", "reason"}
+    # --- the polarimetric null is READ and carried, and changes no verdict ---
+    assert a["tables"]["marshall2016"]["role"] == "polarimetry"
+    assert a["tables"]["marshall2016"]["n_values"] == 3
+    pol = json.loads((out / "data" / "polarimetry.json").read_text())
+    assert pol["HD 999001"]["p_ppm"] == 18.0 and pol["HD 999001"]["kind"] == "meas"
+    assert pol["HD 999002"]["kind"] == "upper"        # the l_Pol '<' flag was read
+    assert sw["polarimetry"]["limit_ppm"] == 18.0
+    assert sw["polarimetry"]["in_likelihood"] is False
+    assert "polarimetry_ppm" in st.columns
+    # it reaches the candidate record without having moved the statistic: the
+    # swarm is a candidate on the same delta chi2 whether or not it is there
+    assert cand["key"] == "HD 999001"
+
+
+def test_polarimetry_keeps_the_tightest_limit_and_never_extends_the_sample():
+    """Two policy rules the fit depends on, locked here rather than in the e2e.
+
+    A polarimetric null on a star with no measured infrared excess says nothing
+    this channel can use, so such a star must NOT join the sample the way an
+    excess table's rows do; and where a star is listed more than once the
+    tightest constraint is the one carried.
+    """
+    targets = load_targets()
+    before = set(targets.rows["key"])
+    disc = acq.DiscoveredTable("marshall2016", "polarimetry", "J/ApJ/825/124/table1",
+                               ["HD", "Pol", "e_Pol", "l_Pol"],
+                               {"hd": "HD", "polarisation": "Pol",
+                                "polarisation_err": "e_Pol", "limit_flag": "l_Pol"},
+                               3, acq.STATUS_OK)
+
+    def q(adql):
+        return pd.DataFrame(
+            [(10700, 40.0, 5.0, ""),      # tau Cet, loose
+             (10700, 12.0, 3.0, ""),      # tau Cet again, tighter: this one wins
+             (424242, 9.0, 2.0, "")],     # a star the sample does not know
+            columns=["HD", "Pol", "e_Pol", "l_Pol"])
+
+    pol, rec = acq.fetch_polarimetry_table(disc, {"unit": "ppm"}, targets, query_fn=q)
+    assert rec["status"] == acq.STATUS_OK and rec["n_rows"] == 3
+    assert pol["HD 10700"]["p_ppm"] == 12.0            # the tightest of the two
+    assert "HD 424242" not in pol
+    assert set(targets.rows["key"]) == before          # the sample did not grow
+    # a percent-unit table is scaled into ppm rather than silently mis-read
+    pol2, _ = acq.fetch_polarimetry_table(
+        disc, {"unit": "percent"}, targets,
+        query_fn=lambda a: pd.DataFrame([(10700, 0.01, 0.002, "")],
+                                        columns=["HD", "Pol", "e_Pol", "l_Pol"]))
+    assert pol2["HD 10700"]["p_ppm"] == 100.0
 
 
 def test_dead_archive_degrades_to_no_data_and_promotes_nothing(tmp_path):

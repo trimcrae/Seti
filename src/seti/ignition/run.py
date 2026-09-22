@@ -59,10 +59,11 @@ import pandas as pd
 from .acquire import (
     DEFAULT_ACQUIRE,
     EpochStore,
+    _accepts,
     acquire_stars,
     epochs_to_series,
 )
-from .rise import DEFAULT_RISE, assess_series, sensitivity_from_injections
+from .rise import DEFAULT_RISE, assess_series, fit_linear_slope, sensitivity_from_injections
 from .sample import (
     DEFAULT_SAMPLE,
     JOINED_SHAPES,
@@ -79,6 +80,7 @@ from .sample import (
     run_gaia_query,
     unwrap_result,
 )
+from .tiles import DEFAULT_TILES, owns, sky_tiles, tile_field, tiles_for_shard
 from .vet import DEFAULT_VET, load_optical_series, summarise, vet_star
 
 VERDICT_NO_DATA = "NO_DATA_REACHED"
@@ -86,6 +88,30 @@ VERDICT_NONE = "NO_IGNITION_CANDIDATE"
 VERDICT_CANDIDATES = "IGNITION_CANDIDATES"
 DEGRADED = "DEGRADED"
 STAGES = ("probe", "sample", "acquire", "screen", "assess")
+#: ``sweep`` is the tiles-mode shard stage: sample + acquire, tile by tile, under
+#: one wall clock, then the screen.  It is not part of ``all`` (which is the
+#: fields-mode pipeline); the workflow runs it per matrix job.
+EXTRA_STAGES = ("sweep",)
+
+#: The ensemble zero-point correction applied by the screen (``config ->
+#: screen``).  NEOWISE's W1/W2 zero points are not constant over the mission,
+#: and run 35039105536 labelled 97 of 172 stars FADING: a common drift is the
+#: survey, not the stars.  Per band, the median of (mag - star median) over the
+#: shard's stars in each time bin is subtracted when the bin holds enough
+#: stars; the offsets are recorded, and the raw linear slope significance is
+#: kept per star so the correction's effect is on the record.
+DEFAULT_SCREEN: dict = {
+    "ensemble_correct": True,
+    "ensemble_bin_yr": 0.25,
+    "ensemble_min_stars": 8,
+}
+
+#: The tiles-mode shard clock and the per-tile sample time-box.
+DEFAULT_SWEEP: dict = {
+    "time_budget_s": 9000.0,        # the shard stops starting new tiles after this
+    "sample_timeout_s": 900.0,      # one tile's parent query
+    "max_tiles": 0,                 # 0 = every tile of the shard
+}
 
 #: The probe's wall-clock discipline.  Run 34787803862 spent 1,490 s on four
 #: retries of a query that could not succeed; a broken plan must cost minutes.
@@ -107,6 +133,9 @@ DEFAULTS: dict = {
     "vet": dict(DEFAULT_VET),
     "probe": dict(DEFAULT_PROBE),
     "sensitivity": {"amps_mag": [0.1, 0.2, 0.4], "over_yr": 10.0, "max_stars": 200},
+    "tiles": dict(DEFAULT_TILES),
+    "sweep": dict(DEFAULT_SWEEP),
+    "screen": dict(DEFAULT_SCREEN),
 }
 
 
@@ -402,23 +431,40 @@ def stage_probe(conf: dict, out: Path, *, query_fn=None, cone_fn=None,
                                "reason": "no Gaia row to resolve "
                                          f"(no query shape answered: {rep['gaia_shapes_tried']})"}
 
-    # 4. The TAP_UPLOAD join, two stars.
+    # 4. The upload ladder, two stars.  Run 35039105536's probe recorded the one
+    # rung it had (pyvo's multipart form on the async queue) refused with
+    # `QUERY must be set`; every rung is walked now and the one that answered
+    # is written down for the acquire stage to start from.
     if upload_fn is None:
         from .acquire import fetch_neowise_upload as upload_fn
     if len(df):
-        r, err = _timeboxed(
-            lambda: upload_fn(df.head(2),
-                              radius_arcsec=float(conf["acquire"]["cone_radius_arcsec"])),
-            _budget(pc.get("neowise_timeout_s"), _left()), "neowise_upload")
+        radius = float(conf["acquire"]["cone_radius_arcsec"])
+        nw_left = _budget(pc.get("neowise_timeout_s"), _left())
+
+        def _up():
+            if _accepts(upload_fn, "transport"):
+                return upload_fn(df.head(2), radius_arcsec=radius, transport=None,
+                                 timeout_s=float(nw_left or 300.0), ladder=True)
+            return upload_fn(df.head(2), radius_arcsec=radius)
+
+        r, err = _timeboxed(_up, nw_left, "neowise_upload")
         rep["neowise_upload"] = err or r.to_ledger()
+        label = str(rep["neowise_upload"].get("label") or "")
+        rep["neowise_upload_transport"] = (label.split("[", 1)[1].split("]", 1)[0]
+                                           if "[" in label and rep["neowise_upload"].get("status")
+                                           == "OK" else None)
     else:
         rep["neowise_upload"] = {"status": "NOT_ATTEMPTED", "reason": "no Gaia row to upload"}
+        rep["neowise_upload_transport"] = None
 
     cone_ok = rep["neowise_cone"].get("status") == "OK"
     up_ok = rep["neowise_upload"].get("status") == "OK"
     gaia_ok = bool(working)
+    # `field` is never recommended any more: at 1 degree near the ecliptic poles
+    # it is 2.4-4.7 M rows a query and broke every way a transfer can break
+    # (results/ignition/acquire_s*.json, 2026-09-16).  The per-star cone is the
+    # proven fallback and now runs concurrently.
     rep["neowise_route_recommended"] = ("upload" if up_ok else
-                                        "field" if (cone_ok and fields) else
                                         "cone" if cone_ok else "none")
     # Which SOURCE the next run should expect the parent from.  ESA stays first
     # whenever it answers: it is authoritative and owns the in-archive match.
@@ -486,13 +532,48 @@ def stage_sample(conf: dict, out: Path, *, n_shards: int = 1, max_stars: int | N
     return rep
 
 
-def _load_parent(out: Path) -> pd.DataFrame:
-    p = out / "parent.parquet"
+def _load_parent(out: Path, tag: str | None = None) -> pd.DataFrame:
+    """The parent frame: the shard's own (tiles mode) if it exists, else the run's."""
+    cands = ([out / f"parent_{tag}.parquet"] if tag else []) + [out / "parent.parquet"]
+    for p in cands:
+        if p.exists():
+            df = pd.read_parquet(p)
+            df["source_id"] = df["source_id"].astype(str)
+            return df
+    return pd.DataFrame()
+
+
+def _probe_record(out: Path) -> dict:
+    p = out / "probe.json"
     if not p.exists():
-        return pd.DataFrame()
-    df = pd.read_parquet(p)
-    df["source_id"] = df["source_id"].astype(str)
-    return df
+        return {}
+    try:
+        return json.loads(p.read_text())
+    except Exception:                                  # noqa: BLE001
+        return {}
+
+
+def _resolve_route(conf: dict, out: Path, route: str | None) -> tuple[str, str | None]:
+    """The NEOWISE route and the upload transport, from the flag or ``probe.json``."""
+    ac = conf["acquire"]
+    if route in (None, "", "auto"):
+        route = str(ac.get("route", "auto"))
+    pr = _probe_record(out)
+    transport = pr.get("neowise_upload_transport") or None
+    if str(ac.get("upload_transport", "auto")) != "auto":
+        transport = str(ac["upload_transport"])
+    if route == "auto":
+        rec = pr.get("neowise_route_recommended", "cone")
+        route = rec if rec in ("upload", "field", "cone") else "cone"
+    return route, transport
+
+
+def _shard_parent(out: Path, shard: int, n_shards: int) -> pd.DataFrame:
+    """The shard's stars: its own tiles-mode parent if present, else its rows of the run's."""
+    tag = _tag(shard, n_shards)
+    if (out / f"parent_{tag}.parquet").exists():
+        return _load_parent(out, tag)
+    return shard_rows(_load_parent(out), shard, n_shards)
 
 
 def shard_rows(df: pd.DataFrame, shard: int, n_shards: int,
@@ -518,31 +599,22 @@ def stage_acquire(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     tag = _tag(shard, n_shards)
     if stars is None:
         stars = shard_rows(_load_parent(out), shard, n_shards, max_stars)
-    if route in (None, "", "auto"):
-        route = str(ac.get("route", "auto"))
-    if route == "auto":
-        route = "cone"
-        p = out / "probe.json"
-        if p.exists():
-            try:
-                rec = json.loads(p.read_text()).get("neowise_route_recommended", "cone")
-                route = rec if rec in ("upload", "field", "cone") else "cone"
-            except Exception:                          # noqa: BLE001
-                pass
+    route, transport = _resolve_route(conf, out, route)
     fields = list(conf["sample"].get("fields") or [])
     if route == "field" and not fields:
         print("[ignition] route=field but no fields configured; using per-star cones")
         route = "cone"
     store = EpochStore.open(out, tag)
     rep = {"stage": "acquire", "tag": tag, "shard": int(shard), "n_shards": int(n_shards),
-           "generated_utc": _now(), "n_stars_in_shard": int(len(stars)), "route": route}
+           "generated_utc": _now(), "n_stars_in_shard": int(len(stars)), "route": route,
+           "upload_transport_preferred": transport}
     if not len(stars):
         rep["status"] = "NO_PARENT_ROWS"
         store.flush({"rollup": rep})
         print(f"[ignition] acquire {tag}: no parent rows (was `sample` run?)")
         return rep
     roll = acquire_stars(stars, store, ac, route=route, fields=fields, cone_fn=cone_fn,
-                         upload_fn=upload_fn, field_fn=field_fn)
+                         upload_fn=upload_fn, field_fn=field_fn, upload_transport=transport)
     rep.update(roll)
     rep["status"] = ("OK" if roll["n_ok"] else
                      "QUERY_FAILED" if roll["n_failed"] and not roll["n_zero_rows"] else
@@ -555,6 +627,160 @@ def stage_acquire(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
 
 
 # ---------------------------------------------------------------------------
+# sweep: tiles mode --- sample + acquire, tile by tile, under one wall clock
+# ---------------------------------------------------------------------------
+def _sweep_checkpoint(out: Path, tag: str) -> dict:
+    p = out / f"sweep_{tag}.json"
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:                              # noqa: BLE001
+            pass
+    return {"tiles": []}
+
+
+def stage_sweep(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
+                route: str | None = None, query_fn=None, cone_fn=None, upload_fn=None,
+                asu_fetch_fn=None, irsa_fetch_fn=None, vizier: bool = True, irsa: bool = True,
+                time_budget_s: float | None = None, max_tiles: int | None = None) -> dict:
+    """One shard of the all-sky sweep: its tiles, sampled and acquired in turn.
+
+    Every tile is a checkpoint (``sweep_s{i}of{n}.json``): its parent query,
+    ownership cut, and NEOWISE acquisition are recorded before the next tile
+    starts, and a re-run (or a later dispatch resuming from this run's
+    artifact) skips finished tiles.  The shard stops *starting* tiles at
+    ``time_budget_s``; a tile whose acquisition the clock interrupted is
+    ``PARTIAL`` and is re-run next time (its finished stars are in the store).
+    The parent grows in ``parent_s{i}of{n}.parquet``; the screen reads it.
+    """
+    tag = _tag(shard, n_shards)
+    sw = {**DEFAULT_SWEEP, **(conf.get("sweep") or {})}
+    tc = {**DEFAULT_TILES, **(conf.get("tiles") or {})}
+    tc["abs_b_min_deg"] = float(conf["sample"].get("abs_b_min_deg", tc["abs_b_min_deg"]))
+    budget = float(time_budget_s or sw["time_budget_s"])
+    t0 = _time.monotonic()
+    deadline = t0 + budget
+    tiles_all = sky_tiles(tc)
+    mine = tiles_for_shard(tiles_all, shard, n_shards)
+    cap_tiles = int(max_tiles or sw.get("max_tiles") or 0)
+    if cap_tiles:
+        mine = mine.head(cap_tiles)
+    ck = _sweep_checkpoint(out, tag)
+    done_tiles = {str(t.get("tile")) for t in ck.get("tiles", [])
+                  if t.get("status") in ("OK", "QUERY_RETURNED_ZERO_ROWS")}
+    if done_tiles:
+        print(f"[ignition] sweep {tag}: resuming, {len(done_tiles)} tiles already done")
+    parent_p = out / f"parent_{tag}.parquet"
+    parent = _load_parent(out, tag) if parent_p.exists() else pd.DataFrame()
+    route, transport = _resolve_route(conf, out, route)
+    if route == "field":
+        route = "upload" if transport else "cone"
+    pr = _probe_record(out)
+    shape = pr.get("gaia_shape_working") if pr.get("gaia_shape_working") in JOINED_SHAPES else None
+    sc = dict(conf["sample"])
+    if isinstance(pr.get("allwise_columns_resolved"), dict) and \
+            "status" not in pr["allwise_columns_resolved"]:
+        sc["allwise_columns"] = pr["allwise_columns_resolved"]
+    sc["count_parent"] = False          # an uncapped tile's row count IS its count
+    sc["query_timeout_s"] = float(sw["sample_timeout_s"])
+    top = int(sc.get("cap_per_shard") or 20000)
+    store = EpochStore.open(out, tag)
+    ac = conf["acquire"]
+    stopped = False
+    n_new = 0
+    tiles_rec: list[dict] = [t for t in ck.get("tiles", []) if str(t.get("tile")) in done_tiles]
+
+    def _save(extra: dict | None = None) -> None:
+        rec = {"stage": "sweep", "tag": tag, "shard": int(shard), "n_shards": int(n_shards),
+               "generated_utc": _now(), "route": route, "upload_transport": transport,
+               "tiles_assigned": int(len(mine)), "tiles_in_sky": int(len(tiles_all)),
+               "tile_deg": float(tc["dec_step_deg"]), "budget_s": budget,
+               "tiles": tiles_rec}
+        rec.update(_sweep_rollup(tiles_rec, len(mine), len(tiles_all), tiles_all))
+        rec.update(extra or {})
+        _write(out / f"sweep_{tag}.json", rec)
+
+    for _, t in mine.iterrows():
+        tile_id = str(t["tile"])
+        if tile_id in done_tiles:
+            continue
+        if _time.monotonic() > deadline:
+            stopped = True
+            break
+        fld = tile_field(t)
+        ts = _time.monotonic()
+        stars, srep = fetch_parent(sc, mode="fields", fields=[fld], n_shards=1,
+                                   cap_per_shard=top, query_fn=query_fn, shape=shape,
+                                   vizier=vizier, vizier_fetch_fn=asu_fetch_fn,
+                                   irsa=irsa, irsa_fetch_fn=irsa_fetch_fn)
+        n_cone = int(srep.get("n_rows_pulled") or 0)
+        if len(stars):
+            stars = stars[owns(t, stars["ra"].to_numpy(float),
+                               stars["dec"].to_numpy(float))].reset_index(drop=True)
+        rec = {"tile": tile_id, "order": int(t["order"]), "ra_c": float(t["ra_c"]),
+               "dec_c": float(t["dec_c"]), "area_deg2": float(t["area_deg2"]),
+               "status": srep.get("status"), "parent_route": srep.get("route_used"),
+               "shape": srep.get("query_shape_used"), "n_cone_rows": n_cone,
+               "n_parent": int(len(stars)), "capped": bool(n_cone >= top),
+               "sample_s": round(_time.monotonic() - ts, 1),
+               "errors": [e for e in (srep.get("route_errors") or [])[:3]]}
+        if srep.get("status") == "QUERY_FAILED":
+            tiles_rec.append(rec)
+            _save()
+            print(f"[ignition] sweep {tag}: tile {tile_id} QUERY_FAILED", flush=True)
+            continue
+        if len(stars):
+            stars = stars.copy()
+            stars["tile"] = tile_id
+            parent = (pd.concat([parent, stars], ignore_index=True).drop_duplicates("source_id")
+                      if len(parent) else stars)
+            parent.to_parquet(parent_p, index=False)
+            roll = acquire_stars(stars, store, ac, route=route, cone_fn=cone_fn,
+                                 upload_fn=upload_fn, upload_transport=transport,
+                                 deadline=deadline)
+            rec["acquire"] = {k: roll.get(k) for k in ("n_attempted", "n_ok", "n_zero_rows",
+                                                       "n_failed", "n_fallback_cone",
+                                                       "elapsed_s", "stopped_on_budget")}
+            if roll.get("stopped_on_budget"):
+                rec["status"] = "PARTIAL"
+                stopped = True
+        n_new += 1
+        tiles_rec.append(rec)
+        _save()
+        print(f"[ignition] sweep {tag}: tile {tile_id} {rec['status']} parent={rec['n_parent']} "
+              f"acquire={rec.get('acquire')} ({_time.monotonic() - t0:.0f} s elapsed)", flush=True)
+        if stopped:
+            break
+    rep = {"stopped_on_budget": bool(stopped), "tiles_new_this_run": int(n_new),
+           "elapsed_s": round(_time.monotonic() - t0, 1),
+           "n_parent_total": int(len(parent)), "n_done_total": int(len(store.done))}
+    _save(rep)
+    out_rep = json.loads((out / f"sweep_{tag}.json").read_text())
+    print(f"[ignition] sweep {tag}: {out_rep['tiles_done']}/{out_rep['tiles_assigned']} tiles, "
+          f"{out_rep['n_parent_total']} parent stars, {len(store.done)} acquired, "
+          f"route={route}[{transport}], {'STOPPED on budget' if stopped else 'complete'}")
+    return out_rep
+
+
+def _sweep_rollup(tiles_rec: list[dict], n_assigned: int, n_sky: int,
+                  tiles_all: pd.DataFrame | None = None) -> dict:
+    ok = [t for t in tiles_rec if t.get("status") in ("OK", "QUERY_RETURNED_ZERO_ROWS")]
+    failed = [t for t in tiles_rec if t.get("status") == "QUERY_FAILED"]
+    partial = [t for t in tiles_rec if t.get("status") == "PARTIAL"]
+    area_done = float(sum(float(t.get("area_deg2") or 0.0) for t in ok))
+    area_sky = float(tiles_all["area_deg2"].sum()) if tiles_all is not None else None
+    acq = [t.get("acquire") or {} for t in tiles_rec]
+    return {"tiles_done": len(ok), "tiles_failed": len(failed), "tiles_partial": len(partial),
+            "tiles_capped": int(sum(1 for t in ok if t.get("capped"))),
+            "area_done_deg2": round(area_done, 1), "area_sky_deg2": area_sky,
+            "n_parent_done_tiles": int(sum(int(t.get("n_parent") or 0) for t in ok)),
+            "n_stars_attempted": int(sum(int(a.get("n_attempted") or 0) for a in acq)),
+            "n_stars_ok": int(sum(int(a.get("n_ok") or 0) for a in acq)),
+            "n_stars_failed": int(sum(int(a.get("n_failed") or 0) for a in acq)),
+            "n_stars_fallback_cone": int(sum(int(a.get("n_fallback_cone") or 0) for a in acq))}
+
+
+# ---------------------------------------------------------------------------
 # screen
 # ---------------------------------------------------------------------------
 def screen_epochs(epochs: pd.DataFrame, conf: dict, *, quality: pd.DataFrame | None = None,
@@ -563,11 +789,24 @@ def screen_epochs(epochs: pd.DataFrame, conf: dict, *, quality: pd.DataFrame | N
     """Rise statistics per star, the two-band rule, and the injection sensitivity."""
     rc = conf["rise"]
     sens_conf = conf.get("sensitivity") or DEFAULTS["sensitivity"]
+    scr = {**DEFAULT_SCREEN, **(conf.get("screen") or {})}
     rows: list[dict] = []
     series_for_injection: list[dict] = []
+    ens_offsets: dict = {}
     if len(epochs):
         epochs = epochs.copy()
         epochs["source_id"] = epochs["source_id"].astype(str)
+        # The ensemble zero-point correction (seti.ignition.ensemble): what the
+        # rise test sees is the star relative to the shard's constant stars.
+        if scr.get("ensemble_correct", True):
+            from .ensemble import apply_ensemble, ensemble_offsets
+
+            ens_offsets = ensemble_offsets(epochs, bin_yr=float(scr["ensemble_bin_yr"]),
+                                           min_stars=int(scr["ensemble_min_stars"]))
+            epochs = apply_ensemble(epochs, ens_offsets, bin_yr=float(scr["ensemble_bin_yr"]))
+        else:
+            epochs["mag_raw"] = pd.to_numeric(epochs["mag"], errors="coerce")
+            epochs["ensemble_applied"] = False
         for sid, g in epochs.groupby("source_id"):
             series = epochs_to_series(g)
             per_band, verdict = assess_series(series, rc)
@@ -577,6 +816,17 @@ def screen_epochs(epochs: pd.DataFrame, conf: dict, *, quality: pd.DataFrame | N
                     rec.update(per_band[b].as_dict(prefix=f"{b.lower()}_"))
                 else:
                     rec[f"{b.lower()}_n_epochs"] = 0
+                # The uncorrected linear slope, so the correction is auditable per star.
+                gb = g[g["band"] == b].sort_values("t_yr")
+                if len(gb) >= 3:
+                    s_raw, e_raw = fit_linear_slope(gb["t_yr"], gb["mag_raw"], gb["err"],
+                                                    err_floor=float(rc.get("err_floor_mag",
+                                                                           0.005)))
+                    rec[f"{b.lower()}_slope_raw_mag_yr"] = s_raw
+                    rec[f"{b.lower()}_slope_raw_sigma"] = (float(-s_raw / e_raw)
+                                                          if e_raw and e_raw > 0
+                                                          else float("nan"))
+                    rec[f"{b.lower()}_ensemble_frac"] = float(gb["ensemble_applied"].mean())
             rec.update({f"star_{k}": v for k, v in verdict.as_dict().items()})
             rec["is_candidate"] = bool(verdict.is_candidate)
             rec["screen_verdict"] = verdict.verdict
@@ -600,9 +850,29 @@ def screen_epochs(epochs: pd.DataFrame, conf: dict, *, quality: pd.DataFrame | N
     sens = sensitivity_from_injections(series_for_injection, sens_conf["amps_mag"], rc,
                                        over_yr=float(sens_conf["over_yr"]),
                                        max_stars=int(sens_conf["max_stars"]), seed=seed)
+    from .ensemble import summarise_offsets
+
+    raw_fading = raw_rising = 0
+    if len(df) and "w1_slope_raw_sigma" in df and "w2_slope_raw_sigma" in df:
+        s1 = pd.to_numeric(df["w1_slope_raw_sigma"], errors="coerce")
+        s2 = pd.to_numeric(df["w2_slope_raw_sigma"], errors="coerce")
+        thr = float(rc.get("slope_sigma_min", 5.0))
+        raw_fading = int(((s1 <= -thr) & (s2 <= -thr)).sum())
+        raw_rising = int(((s1 >= thr) & (s2 >= thr)).sum())
     rep = {"n_stars_screened": int(len(df)),
            "n_rise_candidates": int(df["is_candidate"].sum()) if len(df) else 0,
            "screen_counts": {str(k): int(v) for k, v in counts.items()},
+           "ensemble": {"applied": bool(scr.get("ensemble_correct", True)),
+                        "bin_yr": float(scr["ensemble_bin_yr"]),
+                        "min_stars": int(scr["ensemble_min_stars"]),
+                        "drift": summarise_offsets(ens_offsets),
+                        "offsets": ens_offsets,
+                        "raw_two_band_fading_5sigma": raw_fading,
+                        "raw_two_band_rising_5sigma": raw_rising,
+                        "note": ("offsets are the per-bin median of (mag - star median) over "
+                                 "the shard's stars, subtracted before the rise test; "
+                                 "raw_* count stars whose UNCORRECTED bare linear slope is "
+                                 ">= slope_sigma_min in both bands")},
            "sensitivity": sens}
     return df, rep
 
@@ -624,7 +894,7 @@ def stage_screen(conf: dict, out: Path, *, shard: int = 0, n_shards: int = 1,
     rep["acquire_rollup"] = acq_status
     epochs = pd.read_csv(ep_p, dtype={"source_id": str}) if ep_p.exists() else pd.DataFrame()
     quality = pd.read_csv(q_p, dtype={"source_id": str}) if q_p.exists() else pd.DataFrame()
-    parent = shard_rows(_load_parent(out), shard, n_shards)
+    parent = _shard_parent(out, shard, n_shards)
     rep["n_stars_in_shard"] = int(len(parent))
     rep["n_stars_with_neowise"] = (int((quality.get("neowise_status", pd.Series(dtype=str))
                                         == "OK").sum()) if len(quality) else 0)
@@ -665,6 +935,63 @@ def _aggregate_sensitivity(screens: list[dict]) -> dict:
                     "by the rise test alone (before the contaminant ladder)"}
 
 
+def _aggregate_ensemble(screens: list[dict]) -> dict:
+    """The zero-point drift each shard measured, and the raw two-band 5-sigma counts."""
+    per = []
+    raw_f = raw_r = 0
+    for s in screens:
+        e = s.get("ensemble") or {}
+        if not e:
+            continue
+        raw_f += int(e.get("raw_two_band_fading_5sigma") or 0)
+        raw_r += int(e.get("raw_two_band_rising_5sigma") or 0)
+        per.append({"tag": s.get("tag"), "drift": e.get("drift")})
+    return {"per_shard_drift": per, "raw_two_band_fading_5sigma": raw_f,
+            "raw_two_band_rising_5sigma": raw_r,
+            "note": ("per-shard median zero-point offsets by 0.25-yr bin were subtracted "
+                     "before the rise test (seti.ignition.ensemble); raw_* count stars whose "
+                     "UNCORRECTED bare linear slope is >= 5 sigma in both bands")}
+
+
+def _coverage(sweeps: list[dict], conf: dict) -> dict:
+    """Which part of the sky the tiles-mode sweep actually finished."""
+    tc = {**DEFAULT_TILES, **(conf.get("tiles") or {})}
+    tc["abs_b_min_deg"] = float(conf["sample"].get("abs_b_min_deg", tc["abs_b_min_deg"]))
+    tiles_all = sky_tiles(tc)
+    n_sky = int(len(tiles_all))
+    area_sky = float(tiles_all["area_deg2"].sum())
+    n_shards = max([int(s.get("n_shards") or 0) for s in sweeps] + [0])
+    tiles_seen: dict[str, dict] = {}
+    routes: dict[str, int] = {}
+    for s in sweeps:
+        for t in s.get("tiles") or []:
+            tiles_seen[str(t.get("tile"))] = t
+            if t.get("status") in ("OK", "QUERY_RETURNED_ZERO_ROWS") and t.get("parent_route"):
+                routes[str(t["parent_route"])] = routes.get(str(t["parent_route"]), 0) + 1
+    recs = list(tiles_seen.values())
+    roll = _sweep_rollup(recs, sum(int(s.get("tiles_assigned") or 0) for s in sweeps),
+                         n_sky, tiles_all)
+    done = [t for t in recs if t.get("status") in ("OK", "QUERY_RETURNED_ZERO_ROWS")]
+    shards_reporting = sorted({str(s.get("tag")) for s in sweeps})
+    return {"mode": "tiles", "tile_deg": float(tc["dec_step_deg"]),
+            "tiles_in_sky": n_sky, "area_sky_deg2": round(area_sky, 1),
+            "tiles_assigned": int(sum(int(s.get("tiles_assigned") or 0) for s in sweeps)),
+            "sky_fraction_done": round(roll["area_done_deg2"] / area_sky, 4) if area_sky else None,
+            "n_shards": n_shards, "shards_reporting": shards_reporting,
+            "shards_stopped_on_budget": [str(s.get("tag")) for s in sweeps
+                                        if s.get("stopped_on_budget")],
+            "parent_routes": routes,
+            "route_used": (next(iter(routes)) if len(routes) == 1 else
+                           ("mixed" if routes else None)),
+            "mixed_routes": len(routes) > 1,
+            "dec_range_done": ([round(min(float(t["dec_c"]) for t in done), 1),
+                                round(max(float(t["dec_c"]) for t in done), 1)] if done else None),
+            **roll,
+            "note": ("a DONE tile is a complete selection over its box (its parent query was "
+                     "uncapped unless `tiles_capped`), so every count here is exact for the "
+                     "area covered and says nothing about the rest of the sky")}
+
+
 def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
                  optical_dir: Path | str | None = None, offline: bool = True) -> dict:
     vc = conf["vet"]
@@ -674,20 +1001,60 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
             sample = json.loads((out / "sample.json").read_text())
         except Exception:                              # noqa: BLE001
             sample = {}
-    screens = []
-    for fp in sorted(glob.glob(str(out / "screen_s*of*.json"))):
+
+    # Which shard files belong to THIS run.  The checkout carries the committed
+    # files of earlier dispatches (a different matrix leaves s0of8 next to
+    # s0of16), so when the expected shard count is known only `*of{n}` files are
+    # read; summing a stale shard's failures into this run's verdict would be a
+    # disguised report of another run.
+    n_hint = int(n_shards_expected or sample.get("n_shards_planned") or 0)
+    sweep_paths = sorted(glob.glob(str(out / "sweep_s*of*.json")))
+    if sweep_paths and not n_shards_expected:
+        # Tiles mode: the sweeps say how many shards there were.
+        ns = []
+        for fp in sweep_paths:
+            try:
+                ns.append(int(json.loads(Path(fp).read_text()).get("n_shards") or 0))
+            except Exception:                          # noqa: BLE001
+                continue
+        n_hint = max(ns + [0])
+
+    def _paths(pattern: str) -> list[str]:
+        ps = sorted(glob.glob(str(out / pattern)))
+        if n_hint:
+            ps = [p for p in ps if Path(p).name.split(".")[0].endswith(f"of{n_hint}")]
+        return ps
+
+    def _load_json(fp: str) -> dict | None:
         try:
-            screens.append(json.loads(Path(fp).read_text()))
+            return json.loads(Path(fp).read_text())
         except Exception:                              # noqa: BLE001
-            continue
-    acquires = []
-    for fp in sorted(glob.glob(str(out / "acquire_s*of*.json"))):
-        try:
-            acquires.append(json.loads(Path(fp).read_text()).get("rollup") or {})
-        except Exception:                              # noqa: BLE001
-            continue
+            return None
+
+    screens = [d for d in (_load_json(fp) for fp in _paths("screen_s*of*.json")) if d]
+    acquires = [(d.get("rollup") or {}) for d in
+                (_load_json(fp) for fp in _paths("acquire_s*of*.json")) if d]
+    sweeps = [d for d in (_load_json(fp) for fp in _paths("sweep_s*of*.json")) if d]
+    coverage = _coverage(sweeps, conf) if sweeps else None
+    if sweeps:
+        # Tiles mode has no run-level sample.json (a sample.json in the checkout
+        # is an earlier fields-mode run's and is ignored): the denominators are
+        # the union of what the shards' finished tiles selected, and they are
+        # complete selections over that area (no TOP cap hit unless `capped`).
+        sample = {"status": "OK" if coverage["n_parent_done_tiles"] else
+                  ("QUERY_FAILED" if coverage["tiles_failed"] and not coverage["tiles_done"]
+                   else "QUERY_RETURNED_ZERO_ROWS"),
+                  "mode": "tiles", "parent_count": coverage["n_parent_done_tiles"],
+                  "n_rows_pulled": coverage["n_parent_done_tiles"],
+                  "n_after_local_cuts": coverage["n_parent_done_tiles"],
+                  "subsample_fraction": 1.0, "n_shards_planned": coverage["n_shards"],
+                  "routes": coverage["parent_routes"], "route_used": coverage["route_used"],
+                  "mixed_routes": coverage["mixed_routes"],
+                  "degraded": (["mixed_parent_routes:" + "+".join(sorted(coverage["parent_routes"]))]
+                               if coverage["mixed_routes"] else []),
+                  "route_endpoints": {ROUTE_ESA: "https://gea.esac.esa.int/tap-server/tap"}}
     frames = []
-    for fp in sorted(glob.glob(str(out / "stars_s*of*.csv"))):
+    for fp in _paths("stars_s*of*.csv"):
         try:
             d = pd.read_csv(fp, dtype={"source_id": str})
         except Exception:                              # noqa: BLE001
@@ -699,8 +1066,7 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
     if len(df):
         df = df.drop_duplicates("source_id")
 
-    n_exp = int(n_shards_expected or sample.get("n_shards_planned") or
-                max([int(s.get("n_shards", 0) or 0) for s in screens] + [0]))
+    n_exp = int(n_hint or max([int(s.get("n_shards", 0) or 0) for s in screens] + [0]))
     found_tags = sorted({str(s.get("tag")) for s in screens})
     shards = {"expected": n_exp, "found": len(found_tags), "found_tags": found_tags,
               "missing": [f"s{i}of{n_exp}" for i in range(n_exp)
@@ -716,12 +1082,21 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
     for d in (sample.get("degraded") or []):
         if d not in degraded:
             degraded.append(str(d))
-    n_acq_failed = int(sum(int(a.get("n_failed", 0) or 0) for a in acquires))
+    if sweeps:
+        # In tiles mode the acquire rollup is per tile inside the sweep record.
+        n_acq_failed = int(coverage["n_stars_failed"])
+        n_attempted = int(coverage["n_stars_attempted"])
+        n_with_nw = int(coverage["n_stars_ok"])
+        if coverage["tiles_failed"]:
+            degraded.append(f"tiles_failed:{coverage['tiles_failed']}")
+        if coverage["tiles_capped"]:
+            degraded.append(f"tiles_capped:{coverage['tiles_capped']}")
+    else:
+        n_acq_failed = int(sum(int(a.get("n_failed", 0) or 0) for a in acquires))
+        n_attempted = int(sum(int(a.get("n_attempted", 0) or 0) for a in acquires))
+        n_with_nw = int(sum(int(a.get("n_ok", 0) or 0) for a in acquires))
     if n_acq_failed:
         degraded.append(f"neowise_queries_failed:{n_acq_failed}")
-
-    n_attempted = int(sum(int(a.get("n_attempted", 0) or 0) for a in acquires))
-    n_with_nw = int(sum(int(a.get("n_ok", 0) or 0) for a in acquires))
     n_screened = int(len(df))
     denominators = {
         "parent_count_archive": sample.get("parent_count"),
@@ -741,6 +1116,7 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
         "vizier_capped_units": sample.get("vizier_capped_units"),
         "route_note": sample.get("route_note"),
     }
+    ensemble = _aggregate_ensemble(screens)
 
     # --- nothing screened: say which archive did not answer ------------------
     probe: dict = {}
@@ -781,7 +1157,7 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
         else:
             reason = "neowise_returned_no_usable_epochs"
         summary = {"verdict": VERDICT_NO_DATA, "reason": reason, "generated_utc": _now(),
-                   "endpoints": endpoints,
+                   "endpoints": endpoints, "coverage": coverage, "ensemble": ensemble,
                    "denominators": denominators, "shards": shards, "degraded": degraded,
                    "veto_counters": {"screen": {}, "vet": {"verdicts": {}, "flags": {}}},
                    "stage_counts": {"screened": 0, "rise_candidates": 0, "vetted": 0,
@@ -845,6 +1221,7 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None,
                          "clean": int(len(gold))},
         "veto_counters": {"screen": screen_counts, "vet": summarise(vets)},
         "sensitivity": _aggregate_sensitivity(screens),
+        "coverage": coverage, "ensemble": ensemble,
         "shards": shards, "degraded": degraded, "offline": bool(offline),
         "optical_dir": str(optical_dir) if optical_dir else None,
         "config": {"rise": conf["rise"], "vet": {k: v for k, v in vc.items()
@@ -870,16 +1247,26 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
                  seed: int = 20260913, conf: dict | None = None, config_path=None,
                  query_fn=None, cone_fn=None, upload_fn=None, field_fn=None,
                  asu_fetch_fn=None, vizier: bool = True, irsa_fetch_fn=None,
-                 irsa: bool = True) -> dict:
+                 irsa: bool = True, n_shards_expected: int | None = None,
+                 time_budget_s: float | None = None, max_tiles: int | None = None,
+                 tile_deg: float | None = None) -> dict:
     """Run one stage, a comma list, or all of them.  Returns the last report."""
     conf = conf if conf is not None else load_ignition_config(config_path)
+    if tile_deg:
+        conf = _deep_update(conf, {"tiles": {"dec_step_deg": float(tile_deg)}})
     out = Path(out_dir) if out_dir else Path("results") / "ignition"
     out.mkdir(parents=True, exist_ok=True)
     stages = STAGES if stage in ("all", "", None) else tuple(s.strip() for s in stage.split(","))
     rep: dict = {}
     t0 = _time.monotonic()
     for s in stages:
-        if s == "probe":
+        if s == "sweep":
+            rep = stage_sweep(conf, out, shard=shard, n_shards=n_shards, route=route,
+                              query_fn=query_fn, cone_fn=cone_fn, upload_fn=upload_fn,
+                              asu_fetch_fn=asu_fetch_fn, irsa_fetch_fn=irsa_fetch_fn,
+                              vizier=vizier, irsa=irsa, time_budget_s=time_budget_s,
+                              max_tiles=max_tiles)
+        elif s == "probe":
             rep = stage_probe(conf, out, query_fn=query_fn, cone_fn=cone_fn,
                               upload_fn=upload_fn, asu_fetch_fn=asu_fetch_fn,
                               irsa_fetch_fn=irsa_fetch_fn)
@@ -894,10 +1281,11 @@ def ignition_run(stage: str = "all", *, out_dir: Path | str | None = None, shard
         elif s == "screen":
             rep = stage_screen(conf, out, shard=shard, n_shards=n_shards, seed=seed)
         elif s == "assess":
-            rep = stage_assess(conf, out, n_shards_expected=n_shards if stage == "all" else None,
-                               optical_dir=optical_dir)
+            n_exp = n_shards_expected or (n_shards if stage == "all" else None)
+            rep = stage_assess(conf, out, n_shards_expected=n_exp, optical_dir=optical_dir)
         else:
-            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES + ('all',)}")
+            raise SystemExit(f"unknown stage {s!r}; choose from "
+                             f"{STAGES + EXTRA_STAGES + ('all',)}")
     print(f"[ignition] {stage}: done in {_time.monotonic() - t0:.0f}s")
     return rep
 
@@ -907,7 +1295,14 @@ def main(argv=None):
                                 description="IGNITION (S61): an infrared excess being born on "
                                             "an old star")
     p.add_argument("--stage", default="all",
-                   help="probe|sample|acquire|screen|assess|all or a comma list")
+                   help="probe|sample|acquire|screen|assess|all or a comma list; "
+                        "`sweep` is the tiles-mode shard stage (sample + acquire per tile)")
+    p.add_argument("--budget-s", type=float, default=0.0,
+                   help="sweep: stop starting tiles after this many seconds "
+                        "(default config sweep.time_budget_s)")
+    p.add_argument("--max-tiles", type=int, default=0, help="sweep: cap on tiles per shard")
+    p.add_argument("--tile-deg", type=float, default=0.0,
+                   help="tiles: box side in degrees (default config tiles.dec_step_deg)")
     p.add_argument("--shard", default="0/1", help="i/n: this shard of n (acquire, screen)")
     p.add_argument("--shards", type=int, default=0,
                    help="number of shards the run is planned for (sample, assess); "
@@ -934,7 +1329,9 @@ def main(argv=None):
                        max_stars=a.max_stars or None, route=a.route or None,
                        mode=a.mode or None, optical_dir=a.optical_dir or None, seed=a.seed,
                        config_path=a.config or None, vizier=not a.no_vizier,
-                       irsa=not a.no_irsa)
+                       irsa=not a.no_irsa, n_shards_expected=(a.shards or None),
+                       time_budget_s=(a.budget_s or None), max_tiles=(a.max_tiles or None),
+                       tile_deg=(a.tile_deg or None))
     v = rep.get("verdict") if isinstance(rep, dict) else None
     if v:
         print(f"[ignition] verdict: {v}")
@@ -945,6 +1342,7 @@ if __name__ == "__main__":                            # pragma: no cover
     raise SystemExit(main())
 
 
-__all__ = ["DEFAULTS", "DEFAULT_PROBE", "STAGES", "ignition_run", "load_ignition_config", "main", "parse_shard",
+__all__ = ["DEFAULTS", "DEFAULT_PROBE", "DEFAULT_SCREEN", "DEFAULT_SWEEP", "EXTRA_STAGES",
+           "STAGES", "ignition_run", "load_ignition_config", "main", "parse_shard",
            "screen_epochs", "shard_rows", "stage_acquire", "stage_assess", "stage_probe",
-           "stage_sample", "stage_screen"]
+           "stage_sample", "stage_screen", "stage_sweep"]

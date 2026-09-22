@@ -46,12 +46,15 @@ import numpy as np
 import pandas as pd
 
 from .clock import DEFAULT_NULL, DEFAULT_SCAN, analyze_star, cross_star_coincidence
+from .redetect import DEFAULT_REDETECT
 from .vet import DEFAULT_VET, assign_tiers, calibrate_jitter, rejection_counters
 from .windows import (
     guess_time_system,
+    intersect_windows,
     kepler_quarter_windows,
     star_windows,
     windows_from_events,
+    windows_from_sectors,
 )
 
 DEFAULTS: dict = {
@@ -70,6 +73,7 @@ DEFAULTS: dict = {
     "null": dict(DEFAULT_NULL),
     "vet": dict(DEFAULT_VET),
     "acquire": {"chunk_rows": 50000, "max_rows": 0, "rotation_max_rows": 0},
+    "redetect": dict(DEFAULT_REDETECT),
 }
 
 VERDICT_NO_DATA = "NO_DATA_REACHED"
@@ -145,7 +149,7 @@ def _enabled_catalogues(conf: dict, catalogues=None) -> dict:
 # ---------------------------------------------------------------------------
 def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None,
                 log=None) -> dict:
-    from .acquire import AcquisitionLog, discover_event_table, tap_query
+    from .acquire import AcquisitionLog, column_descriptions, discover_event_table, tap_query
 
     log = log or AcquisitionLog()
     query_fn = query_fn or tap_query
@@ -160,6 +164,15 @@ def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None,
         # One-row peek to guess the time system, only through a verified column.
         tcol = disc.roles.get("t_peak") or disc.roles.get("t_start")
         if disc.table and tcol:
+            # What the catalogue SAYS the time column is (unit, description),
+            # recorded beside the value-range guess below.
+            try:
+                desc = column_descriptions(disc.table, query_fn=query_fn)
+                d["time_column"] = tcol
+                d["time_column_meta"] = desc.get(tcol, {})
+                d["column_meta"] = {k: desc[k] for k in disc.roles.values() if k in desc}
+            except Exception as exc:                      # noqa: BLE001
+                d["time_column_meta"] = {"error": repr(exc)[:200]}
             try:
                 peek = query_fn(f'SELECT TOP 200 "{tcol}" FROM "{disc.table}"')
                 vals = pd.to_numeric(peek.iloc[:, 0], errors="coerce").to_numpy()
@@ -302,12 +315,31 @@ def build_mission_windows(events: pd.DataFrame, mission: str, conf: dict):
               min_expected_in_gap=float(w.get("min_expected_in_gap", 20.0)),
               cadence_days=cad)
     if len(t) >= int(w.get("min_events_for_data_driven", 2000)):
-        return windows_from_events(t, label=f"{mission}_data_driven", **kw)
-    if mission == "kepler":
-        return kepler_quarter_windows(cadence_days=cad)
-    # TESS with too few events: the catalogue's own event density is still the
-    # best available window model, only coarser; label it so a reader knows.
-    return windows_from_events(t, label=f"{mission}_sparse_data_driven", **kw)
+        base = windows_from_events(t, label=f"{mission}_data_driven", **kw)
+    elif mission == "kepler":
+        base = kepler_quarter_windows(cadence_days=cad)
+    else:
+        # TESS with too few events: the catalogue's own event density is still
+        # the best available window model, only coarser; label it so a reader
+        # knows.
+        base = windows_from_events(t, label=f"{mission}_sparse_data_driven", **kw)
+    # A catalogue that records the sector / quarter of every event states, per
+    # sector, the span of everything it saw.  Intersecting with it cuts the
+    # unobserved stretches a sparse catalogue's density model bridges (a TESS
+    # catalogue of 15k flares over 800 days cannot resolve sector boundaries
+    # from density alone), while the density model keeps resolving the gaps
+    # INSIDE a sector.
+    if "sector" in events.columns and bool(w.get("use_sector_spans", True)):
+        sec = pd.to_numeric(events["sector"], errors="coerce").to_numpy(dtype=float)
+        ok = np.isfinite(sec) & np.isfinite(t)
+        if ok.sum() >= 2 and len(np.unique(sec[ok])) >= 1:
+            spans = windows_from_sectors(t[ok], sec[ok], cadence_days=cad,
+                                         pad_days=float(w.get("sector_pad_days", 0.0)),
+                                         label=f"{mission}_sector_spans")
+            both = intersect_windows(base, spans)
+            if both.n and both.total > 0:
+                return both
+    return base
 
 
 def screen_catalogue(events: pd.DataFrame, name: str, mission: str, conf: dict, *,
@@ -349,6 +381,8 @@ def screen_catalogue(events: pd.DataFrame, name: str, mission: str, conf: dict, 
         rec.update({"star_key": f"{mission}:{sid}", "star_id": sid, "catalogue": name,
                     "mission": mission, "n_windows": w.n, "observed_days": round(w.total, 3),
                     "n_removed_cross_star": int(removed_by_star.get(sid, 0)),
+                    "n_sectors": int(pd.to_numeric(g["sector"], errors="coerce").nunique())
+                    if "sector" in g else 0,
                     "prot_catalogue": float(pd.to_numeric(g["prot"], errors="coerce").median())
                     if "prot" in g else float("nan")})
         records.append(rec)
@@ -615,7 +649,8 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     _write(out / "summary.json", summary)
     slim = ("star_key", "star_id", "catalogue", "mission", "tier", "flags", "first_veto",
             "n_events", "period", "Q", "jitter", "f_in_window", "gap_integer_frac",
-            "n_gaps_used", "cycle_occupancy", "h_max", "p_window", "p_window_source",
+            "n_gaps_used", "jitter_core", "n_core", "gap_integer_frac_core", "n_gaps_core",
+            "cycle_occupancy", "h_max", "p_window", "p_window_source",
             "p_shuffle", "energy_phase_rho", "energy_phase_p", "t0", "mean_phase",
             "prot_catalogue", "wn_n_trials", "wn_n_exceed", "veto_detail")
     _write(out / "candidates.json", {
@@ -633,13 +668,18 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
 # entry points
 # ---------------------------------------------------------------------------
 STAGES = ("probe", "acquire", "screen", "assess")
+#: Runs only when asked: it opens MAST for every shortlisted star.
+STAGE_REDETECT = "redetect"
 
 
 def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int = 0,
                   n_shards: int = 1, max_stars: int | None = None, max_rows: int | None = None,
                   offline: bool = False, seed: int = 20260906, out_root=None,
-                  query_fn=None, cone_fn=None) -> dict:
+                  query_fn=None, cone_fn=None, lc_fn=None, kepler_lc_fn=None,
+                  budget_s: float | None = None) -> dict:
     """Run one stage or all of them.  Returns the last stage's report."""
+    from .redetect import stage_redetect
+
     conf = load_metronome_config(cfg)
     out = _out_root(cfg, out_root)
     out.mkdir(parents=True, exist_ok=True)
@@ -656,15 +696,22 @@ def metronome_run(cfg=None, stage: str = "all", catalogues=None, *, shard: int =
                                max_stars=max_stars, seed=seed)
         elif s == "assess":
             rep = stage_assess(conf, out, offline=offline, query_fn=query_fn, cone_fn=cone_fn)
+        elif s == STAGE_REDETECT:
+            rep = stage_redetect(conf, out, lc_fn=lc_fn, kepler_lc_fn=kepler_lc_fn,
+                                 max_stars=max_stars, seed=seed, budget_s=budget_s)
         else:
-            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES}")
+            raise SystemExit(f"unknown stage {s!r}; choose from {STAGES + (STAGE_REDETECT,)}")
     return rep
 
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="seti metronome",
                                 description="METRONOME: clocks in stellar flare timing (S28)")
-    p.add_argument("--stage", default="all", help="probe|acquire|screen|assess|all or a comma list")
+    p.add_argument("--stage", default="all",
+                   help="probe|acquire|screen|assess|all or a comma list; 'redetect' (MAST "
+                        "light curves for the shortlist) only when named")
+    p.add_argument("--budget-s", type=float, default=-1.0,
+                   help="redetect wall-clock budget in seconds (-1 = config)")
     p.add_argument("--catalogues", default="",
                    help="comma-separated catalogue keys from config/metronome.yaml (default all)")
     p.add_argument("--shard", type=int, default=0)
@@ -680,7 +727,8 @@ def main(argv=None):
     cfg = load_config()
     rep = metronome_run(cfg, stage=a.stage, catalogues=cats, shard=a.shard, n_shards=a.n_shards,
                         max_stars=a.max_stars or None, max_rows=None if a.max_rows < 0 else a.max_rows,
-                        offline=a.offline, seed=a.seed, out_root=a.out_root or None)
+                        offline=a.offline, seed=a.seed, out_root=a.out_root or None,
+                        budget_s=None if a.budget_s < 0 else a.budget_s)
     v = rep.get("verdict") if isinstance(rep, dict) else None
     if v:
         print(f"[metronome] verdict: {v}")
@@ -691,6 +739,6 @@ if __name__ == "__main__":                                # pragma: no cover
     raise SystemExit(main())
 
 
-__all__ = ["DEFAULTS", "STAGES", "load_metronome_config", "main", "metronome_run",
-           "screen_catalogue", "stage_acquire", "stage_assess", "stage_probe",
-           "stage_screen"]
+__all__ = ["DEFAULTS", "STAGE_REDETECT", "STAGES", "build_mission_windows",
+           "load_metronome_config", "main", "metronome_run", "screen_catalogue",
+           "stage_acquire", "stage_assess", "stage_probe", "stage_screen"]

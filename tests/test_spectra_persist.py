@@ -593,6 +593,56 @@ def test_stack_only_is_not_reported_as_absent():
                                   "known_line_match": False}) == "OPEN_stack_only"
 
 
+class _FakeSparcl:
+    """A SPARCL stand-in serving synthetic control spectra."""
+
+    def __init__(self, lam, amp_obs=0.0, amp_star=0.0, n=30, z=0.0005):
+        self.lam, self.amp_obs, self.amp_star, self.n, self.z = lam, amp_obs, amp_star, n, z
+        self._grid, self._wave = _grid(6000.0, 8000.0)
+
+    def find(self, outfields=None, constraints=None, limit=None):
+        return [{"sparcl_id": f"c{k:03d}", "data_release": "SDSS-DR17",
+                 "redshift": self.z, "spectype": "STAR"} for k in range(self.n)]
+
+    def retrieve(self, uuid_list=None, include=None, dataset_list=None):
+        rng = np.random.default_rng(17)
+        out = []
+        for u in uuid_list:
+            f = 10.0 + rng.normal(0, 0.05, self._wave.size)
+            sig = self.lam / 2000.0 / 2.3548
+            if self.amp_obs:
+                f = f + _gauss(self._wave, self.lam, self.amp_obs, sig)
+            if self.amp_star:
+                # Same REST wavelength, placed at this star's own redshift.
+                f = f + _gauss(self._wave, self.lam * (1.0 + self.z), self.amp_star, sig)
+            out.append({"sparcl_id": u, "data_release": "SDSS-DR17", "wavelength": self._wave,
+                        "flux": f, "ivar": np.full(self._wave.size, 1 / 0.05 ** 2)})
+        return out
+
+    def get_all_fields(self, *a, **k):
+        return ["sparcl_id", "wavelength", "flux", "ivar", "redshift", "data_release", "spectype"]
+
+
+def test_control_sample_separates_observed_frame_from_stellar_frame():
+    """A feature at a fixed OBSERVED wavelength (sky, instrument) must light up
+    the observed-frame control; one at a fixed REST wavelength (the spectral
+    type's own structure) must light up the stellar-frame control.  A candidate
+    peculiar to its object lights up neither."""
+    lam = 6809.26
+    sky_like = persist.control_sample(_FakeSparcl(lam, amp_obs=1.0), "SDSS-DR17", lam,
+                                      "emission", z_cand=0.0, n=10)
+    assert sky_like["obs_frame"]["frac_ge5"] > 0.8, sky_like
+    # The two frames only separate when the velocities differ by more than a
+    # resolution element, so the control stars here are put at 3000 km/s.
+    star_like = persist.control_sample(_FakeSparcl(lam, amp_star=1.0, z=0.01), "SDSS-DR17",
+                                       lam, "emission", z_cand=0.0, n=10)
+    assert star_like["star_frame"]["frac_ge5"] > 0.8, star_like
+    assert star_like["obs_frame"]["frac_ge3"] < 0.2, star_like
+    clean = persist.control_sample(_FakeSparcl(lam), "SDSS-DR17", lam, "emission",
+                                   z_cand=0.0, n=10)
+    assert clean["obs_frame"]["frac_ge3"] < 0.2 and clean["star_frame"]["frac_ge3"] < 0.2
+
+
 def test_json_safe_keeps_a_pixel_window_but_drops_a_whole_spectrum():
     """The diagnose stage dumps pixel windows under the same key names the bulk
     arrays use; stripping by name alone silently emptied exactly the evidence

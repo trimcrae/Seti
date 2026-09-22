@@ -1291,6 +1291,160 @@ def second_epoch(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
     return res
 
 
+def _control_stats(meas: list[dict], key: str = "sig") -> dict:
+    v = np.array([m[key] for m in meas if m.get("testable") and np.isfinite(m.get(key, np.nan))],
+                 float)
+    if v.size == 0:
+        return {"n_measured": 0}
+    return {"n_measured": int(v.size), "sig_median": float(np.median(v)),
+            "sig_mad": float(_mad_std(v)), "sig_max": float(np.max(v)),
+            "frac_ge3": float(np.mean(v >= 3.0)), "frac_ge5": float(np.mean(v >= 5.0)),
+            "frac_ge8": float(np.mean(v >= 8.0))}
+
+
+def control_sample(client, release: str, lam0: float, mode: str, z_cand: float,
+                   subclass: str | None = None, n: int = 40,
+                   exclude_ids: tuple = (), seed: int = 0) -> dict:
+    """Measure the same line in unrelated spectra of the same kind of star.
+
+    The per-exposure test and a second epoch cannot reject a feature that the
+    star's spectral TYPE produces -- a gap between molecular band heads in an M
+    dwarf persists in every exposure of that star and in every epoch of it.
+    What rejects it is that other stars of the same type show it too.  Two
+    controls are measured on the same sample and they separate the two ways a
+    candidate can be uninteresting:
+
+    * **observed frame** -- the same observed wavelength in every control star.
+      A feature that is atmospheric (an OH line the list does not carry) or
+      instrumental sits at a fixed observed wavelength and shows up here.
+    * **stellar frame** -- the candidate's rest wavelength, redshifted to each
+      control star's own catalogue redshift.  A photospheric or molecular
+      feature of that spectral type shows up here.
+
+    The two frames only separate when the velocities differ by more than a
+    resolution element: at 6800 A the SDSS line window is +-4 A, so stars within
+    ~180 km/s of each other land in the same window and the two numbers say the
+    same thing.  For Galactic stars that is the usual case, so the frames are
+    reported but the *type* dependence -- the same measurement on a same-type
+    sample and on an all-stars sample, which :func:`controls` runs -- is what
+    separates "this spectral type does this" from "the sky or the instrument
+    does this".
+
+    A candidate that appears in neither control is peculiar to its object.
+    """
+    out = {"release": release, "wavelength": lam0, "subclass": subclass,
+           "n_requested": int(n), "constraint": "", "error": "",
+           "obs_frame": {"n_measured": 0}, "star_frame": {"n_measured": 0}}
+    cons: dict = {"data_release": [release], "spectype": ["STAR"]}
+    fields = ["sparcl_id", "data_release", "redshift", "spectype"]
+    tries = []
+    if subclass:
+        for key in ("subclass", "subtype"):
+            tries.append(({**cons, key: [subclass]}, f"{key}={subclass}"))
+    tries.append((cons, "spectype=STAR"))
+    recs = []
+    for c, label in tries:
+        try:
+            found = _find_with_retry(lambda c=c: client.find(
+                outfields=fields, constraints=c, limit=int(max(n * 6, 120))))
+        except Exception as exc:  # noqa: BLE001
+            out["error"] = repr(exc)[:300]
+            continue
+        recs = [r for r in _records(found)
+                if str(_rget(r, "sparcl_id") or "") not in set(exclude_ids)]
+        if recs:
+            out["constraint"] = label
+            break
+    if not recs:
+        out["error"] = out["error"] or "no control spectra returned"
+        return out
+    rng = np.random.default_rng(seed)
+    idx = rng.permutation(len(recs))[:int(n)]
+    ids = [str(_rget(recs[int(i)], "sparcl_id")) for i in idx]
+    zs = {str(_rget(r, "sparcl_id")): _rget(r, "redshift", 0.0) for r in recs}
+    lam_rest = float(lam0) / (1.0 + float(z_cand or 0.0))
+    obs, star = [], []
+    got = sparcl_retrieve(client, ids, release)
+    out["n_retrieved"] = len(got)
+    for r in got:
+        wave = np.asarray(r.get("wavelength", []), float)
+        flux = np.asarray(r.get("flux", []), float)
+        iv = np.asarray(r.get("ivar", []), float)
+        if wave.size < 50:
+            continue
+        fwhm = lsf_fwhm_A(lam0, release)
+        obs.append(measure_line(wave, flux, iv, lam0, fwhm, mode))
+        try:
+            zc = float(zs.get(str(r.get("sparcl_id")), 0.0) or 0.0)
+        except (TypeError, ValueError):
+            zc = 0.0
+        lam_star = lam_rest * (1.0 + zc)
+        star.append(measure_line(wave, flux, iv, lam_star,
+                                 lsf_fwhm_A(lam_star, release), mode))
+    out["obs_frame"] = _control_stats(obs)
+    out["star_frame"] = _control_stats(star)
+    return out
+
+
+def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persistent_2exp",
+                                                        "stack_only", "partial")) -> dict:
+    """Run the comparison-sample control on every line still standing."""
+    import pandas as pd
+    root = Path(root)
+    out_dir = root / "results" / "spectra_persist"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    p = out_dir / "persistence.csv"
+    if not p.exists():
+        rep = {"error": "no persistence.csv: run the reduce stage first", "entries": []}
+        (out_dir / "control.json").write_text(json.dumps(rep, indent=2))
+        return rep
+    tab = pd.read_csv(p)
+    sel = tab[tab["persistence_class"].astype(str).isin(classes)]
+    sel = sel.sort_values("combined_sig", ascending=False)
+    print(f"[persist] control sample for {len(sel)} lines in classes {classes}")
+    client = _make_client()
+    entries = []
+    for _, r in sel.iterrows():
+        rel = str(r.get("data_release"))
+        sub = r.get("simbad_sptype")
+        sub = None if (sub is None or (isinstance(sub, float) and not np.isfinite(sub))) else str(sub)
+        e = {"spec_id": str(r["spec_id"]), "identifier": r.get("identifier"),
+             "wavelength": float(r["wavelength"]), "search_mode": str(r.get("search_mode")),
+             "persistence_class": str(r.get("persistence_class")),
+             "combined_sig": float(r.get("combined_sig", np.nan)),
+             "coadd_ew_A": float(r.get("coadd_ew_A", np.nan)),
+             "simbad_otype": r.get("simbad_otype"), "simbad_sptype": sub}
+        try:
+            z = float(r.get("redshift", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            z = 0.0
+        # Two samples: stars of this object's own type, and stars of any type.
+        # A feature the spectral TYPE makes appears in the first and not the
+        # second; one the sky or the instrument makes appears in both.
+        for name, sc in (("same_type", sub), ("any_star", None)):
+            if name == "same_type" and not sub:
+                e[name] = {"error": "no spectral type known for this object"}
+                continue
+            try:
+                e[name] = control_sample(client, rel, float(r["wavelength"]),
+                                         str(r.get("search_mode", "emission")), z,
+                                         subclass=sc, n=n,
+                                         exclude_ids=(str(r["spec_id"]),))
+            except Exception as exc:  # noqa: BLE001
+                e[name] = {"error": repr(exc)[:300]}
+            time.sleep(0.5)
+        sa = (e.get("same_type", {}).get("obs_frame") or {})
+        an = (e.get("any_star", {}).get("obs_frame") or {})
+        print(f"[persist] control {e['identifier']} lam={e['wavelength']:.1f} "
+              f"same-type frac>=3: {sa.get('frac_ge3')} (n={sa.get('n_measured')}), "
+              f"any-star frac>=3: {an.get('frac_ge3')} (n={an.get('n_measured')})")
+        entries.append(_json_safe(e))
+        time.sleep(0.5)
+    rep = {"n": len(entries), "n_control_requested": int(n), "entries": entries}
+    (out_dir / "control.json").write_text(json.dumps(_json_safe(rep), indent=2))
+    return rep
+
+
 # ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
@@ -2011,13 +2165,16 @@ def diagnose(root: Path, n: int = 8, release: str = "SDSS") -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="seti.spectra.persist")
-    ap.add_argument("--stage", choices=["probe", "run", "reduce", "diagnose"], default="run")
+    ap.add_argument("--stage", choices=["probe", "run", "reduce", "diagnose", "control"],
+                    default="run")
     ap.add_argument("--root", default=".")
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--n-shards", type=int, default=1)
     ap.add_argument("--top", type=int, default=0, help="0 = every survivor")
     ap.add_argument("--max-exposures", type=int, default=10)
     ap.add_argument("--release", default="", help="only SDSS or DESI survivors")
+    ap.add_argument("--n-control", type=int, default=40,
+                    help="control-stage: comparison spectra per surviving line")
     ap.add_argument("--no-simbad", action="store_true")
     ap.add_argument("--no-nist", action="store_true")
     a = ap.parse_args(argv)
@@ -2026,6 +2183,8 @@ def main(argv=None) -> int:
         probe(root)
     elif a.stage == "diagnose":
         diagnose(root, n=a.top or 8, release=a.release or "SDSS")
+    elif a.stage == "control":
+        controls(root, n=a.n_control)
     elif a.stage == "run":
         st = run_shard(root, a.shard, a.n_shards, a.top, a.max_exposures, a.release)
         print("[persist] shard stats:", json.dumps(st))
@@ -2042,4 +2201,5 @@ __all__ = ["measure_line", "combine_measurements", "classify_persistence", "deco
            "sdss_spec_urls", "parse_sdss_spec", "sdss_exposure_measurements",
            "stack_exposures", "wave_lag", "offset_null",
            "desi_bands_for", "desi_coadd_url", "desi_exposure_rows", "process_spectrum",
-           "run_shard", "reduce_results", "final_verdict", "probe", "diagnose", "main"]
+           "run_shard", "reduce_results", "final_verdict", "probe", "diagnose",
+           "control_sample", "controls", "main"]

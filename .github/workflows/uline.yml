@@ -84,53 +84,6 @@ jobs:
         run: python -m pytest tests/test_uline.py -q -p no:cacheprovider -k "injected or without_the_pattern or poisson or dead_archives"
       - name: Offline gate — the asymmetric-top predictor's own physics
         run: python -m pytest tests/test_uline_rotor.py tests/test_uline_textlists.py -q -p no:cacheprovider
-      # ---- the PREDICTOR, measured against catalogues that do exist --------
-      # This is not about the sky: it is the number behind "the Hamiltonian
-      # reproduces a catalogue to X kHz" and behind the distortion-truncation
-      # error that decides whether an uncatalogued species is searchable at all.
-      - name: Validate the predictor against JPL/CDMS (SO2, CH2F2, COF2)
-        if: ${{ github.event.inputs.stage == 'validate' || github.event.inputs.stage == 'full' }}
-        run: |
-          python -m seti.uline.run --stage validate
-          echo "=== rotor validation ==="
-          python - <<'PY'
-          import json
-          d = json.load(open("results/uline/rotor_validation.json"))
-          print(json.dumps(d["headline"], indent=2))
-          for k, v in d["species"].items():
-              c = v.get("comparison") or {}
-              r = v.get("refit") or {}
-              t = (v.get("distortion_truncation") or {}).get("residual_mhz") or {}
-              print(f"{k:12s} {v.get('status'):16s} cat={v.get('catalogue_lines')} "
-                    f"matched={c.get('n_matched')} "
-                    f"median|dnu|={(c.get('residual_mhz') or {}).get('median_abs')} MHz "
-                    f"refit_rms={r.get('rms_after_mhz')} MHz "
-                    f"no-quartic={t.get('median_abs')} MHz")
-              for pj in (c.get("per_j") or []):
-                  print("     J", pj["j_range"], "n", pj["n"], "median", round(pj["median_abs_mhz"], 4),
-                        "p95", round(pj["p95_abs_mhz"], 4))
-          PY
-      - name: Literature ladder for the five uncatalogued species
-        if: ${{ github.event.inputs.stage == 'litfetch' || github.event.inputs.stage == 'full' }}
-        run: |
-          SP=""
-          if [ -n "${{ github.event.inputs.species }}" ]; then SP="--species ${{ github.event.inputs.species }}"; fi
-          python -m seti.uline.run --stage litfetch $SP
-          echo "=== literature ==="
-          python - <<'PY'
-          import json
-          d = json.load(open("results/uline/literature.json"))
-          print(d["n_ok"], "/", d["n_sources"], "routes answered")
-          for s in d["sources"]:
-              print(f"  {str(s.get('species')):8s} {s['kind']:16s} {s['status']:14s} "
-                    f"{s.get('n_bytes', 0):8d} B  {sorted((s.get('constants_mhz') or {}))} "
-                    f"lines={s.get('n_measured_lines', 0)}  {str(s.get('error',''))[:80]}")
-          for sp, blk in d["by_species"].items():
-              print(f"== {sp}: {blk['routes_ok']} ok / {blk['routes_failed']} failed, "
-                    f"{blk['measured_lines']} measured lines")
-              for k, vals in (blk.get("constants") or {}).items():
-                  print(f"     {k:5s} " + "; ".join(f"{v['value_mhz']:.6g} <- {v['from']}" for v in vals[:6]))
-          PY
       - name: Fetch a prior run's acquired tables
         if: ${{ github.event.inputs.reduce_only_run_id != '' }}
         uses: actions/download-artifact@v4
@@ -229,6 +182,60 @@ jobs:
               print("::warning::predicted (placeholder-constant) frequencies used for: " + ", ".join(s["targets_with_predicted_frequencies"]))
           if s.get("targets_unsearchable"):
               print("::warning::no line list this run for: " + ", ".join(s["targets_unsearchable"]))
+          PY
+      # ---- the PREDICTOR and the LITERATURE, measured AFTER the search -----
+      # These two stages are about the predictor and about the microwave
+      # literature, not about the sky, and the literature ladder is dozens of
+      # HTTP round trips to services this repository does not control.  They
+      # therefore run LAST, after summary.json exists: a slow ladder can then
+      # cost its own output, never the search's.  (It also carries its own
+      # wall clock — config/uline.yaml `litfetch_budget_s`.)
+      #
+      # `validate` is the number behind "the Hamiltonian reproduces a
+      # catalogue to X kHz" and behind the distortion-truncation error that
+      # decides whether an uncatalogued species is searchable at all.
+      - name: Validate the predictor against JPL/CDMS (SO2, CH2F2, COF2)
+        if: ${{ github.event.inputs.stage == 'validate' || github.event.inputs.stage == 'full' }}
+        run: |
+          python -m seti.uline.run --stage validate
+          echo "=== rotor validation ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/uline/rotor_validation.json"))
+          print(json.dumps(d["headline"], indent=2))
+          for k, v in d["species"].items():
+              c = v.get("comparison") or {}
+              r = v.get("refit") or {}
+              t = (v.get("distortion_truncation") or {}).get("residual_mhz") or {}
+              print(f"{k:12s} {v.get('status'):16s} cat={v.get('catalogue_lines')} "
+                    f"matched={c.get('n_matched')} "
+                    f"median|dnu|={(c.get('residual_mhz') or {}).get('median_abs')} MHz "
+                    f"refit_rms={r.get('rms_after_mhz')} MHz "
+                    f"no-quartic={t.get('median_abs')} MHz")
+              for pj in (c.get("per_j") or []):
+                  print("     J", pj["j_range"], "n", pj["n"], "median", round(pj["median_abs_mhz"], 4),
+                        "p95", round(pj["p95_abs_mhz"], 4))
+          PY
+      - name: Literature ladder for the five uncatalogued species
+        if: ${{ github.event.inputs.stage == 'litfetch' || github.event.inputs.stage == 'full' }}
+        run: |
+          SP=""
+          if [ -n "${{ github.event.inputs.species }}" ]; then SP="--species ${{ github.event.inputs.species }}"; fi
+          python -m seti.uline.run --stage litfetch $SP
+          echo "=== literature ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/uline/literature.json"))
+          print(d["n_ok"], "/", d["n_sources"], "routes answered")
+          for s in d["sources"]:
+              print(f"  {str(s.get('species')):8s} {s['kind']:16s} {s['status']:14s} "
+                    f"{s.get('n_bytes', 0):8d} B  {sorted((s.get('constants_mhz') or {}))} "
+                    f"lines={s.get('n_measured_lines', 0)}  {str(s.get('error',''))[:80]}")
+          for sp, blk in d["by_species"].items():
+              print(f"== {sp}: {blk['routes_ok']} ok / {blk['routes_failed']} failed, "
+                    f"{blk['measured_lines']} measured lines")
+              for k, vals in (blk.get("constants") or {}).items():
+                  print(f"     {k:5s} " + "; ".join(f"{v['value_mhz']:.6g} <- {v['from']}" for v in vals[:6]))
           PY
       - name: Commit results
         if: always()

@@ -92,7 +92,12 @@ jobs:
           if-no-files-found: warn
 
   leg:
-    needs: [plan, probe]
+    # Deliberately NOT gated on `probe`.  The probe is a diagnostic — every
+    # fetcher resolves its own columns at run time — and with 18 channels
+    # sharing one account's concurrency, a serial plan -> probe -> leg chain
+    # costs three separate waits in a queue that has been 97 runs deep.  The
+    # legs queue alongside the probe instead; `assess` still needs both.
+    needs: [plan]
     if: ${{ github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'assess' }}
     runs-on: ubuntu-latest
     timeout-minutes: 340
@@ -133,7 +138,7 @@ jobs:
           if-no-files-found: warn
 
   bd:
-    needs: [plan, probe]
+    needs: [plan]
     if: ${{ needs.plan.outputs.has_bd == 'true' && github.event.inputs.stage != 'probe' && github.event.inputs.stage != 'assess' }}
     runs-on: ubuntu-latest
     timeout-minutes: 340

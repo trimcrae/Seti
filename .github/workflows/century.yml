@@ -188,10 +188,14 @@ jobs:
   # ------------------------------------------------------------------
   # targets — VSX/GCVS periodic variables + bright refcat stars per field.
   # ------------------------------------------------------------------
+  # NOT `needs: [probe]`.  The probe produces nothing this job reads, so the
+  # dependency was pure serialisation — and on a starved queue each job waits
+  # for a runner SEPARATELY, so it cost `full` an entire extra queue wait
+  # (70 minutes, measured on run 35745660073) before target selection could
+  # even start.  The two run in parallel; they touch different endpoints.
   targets:
-    needs: [probe]
     if: >-
-      ${{ always() && github.event.inputs.reduce_only_run_id == ''
+      ${{ github.event.inputs.reduce_only_run_id == ''
       && (github.event.inputs.stages == 'targets' || github.event.inputs.stages == 'sweep'
           || github.event.inputs.stages == 'full') }}
     runs-on: ubuntu-latest

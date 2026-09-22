@@ -145,6 +145,9 @@ class Stage2Params:
     #: Wall clock on ONE light-curve / pixel-file fetch (see _fetch_products).
     #: 0 or None restores the unbounded behaviour.
     product_timeout_s: float = 600.0
+    #: Wall clock on ONE TAP query / Gaia cone, as stage 1 uses.  0 or None
+    #: restores pyvo's unbounded run_async.
+    query_timeout_s: float = 240.0
     download_dir: str | None = None
     quality_bitmask: str = "default"
     # flare finder
@@ -1465,6 +1468,20 @@ def stage2_run(conf: dict, out: Path, *, params: Stage2Params | None = None, que
     arc_dir = Path(conf.get("_arc_dir", "results/arc"))
     short = shortlist if shortlist is not None else load_shortlist(arc_dir, params=params)
     deadline = Deadline(budget_s=float(params.budget_s) if params.budget_s else None)
+    # THE TAP QUERIES GET THE SAME WALL CLOCK THE PRODUCT FETCHES DO.  Stage 1
+    # wraps its query / cone callables (arc.acquire.timeout_query_fn, after run
+    # 35675114711 sat 4 h 54 m in one pyvo async job); stage 2 was reaching
+    # pyvo's unbounded run_async directly whenever nothing was injected, so a
+    # wedged catalogue, parameter or Gaia query held the loop past its own
+    # budget with the per-star checkpoint frozen at the last star that finished.
+    # An injected callable is left exactly as the caller passed it.
+    if params.query_timeout_s:
+        from .acquire import timeout_cone_fn, timeout_query_fn
+        qt = float(params.query_timeout_s)
+        if query_fn is None:
+            query_fn = timeout_query_fn(timeout_s=qt)
+        if cone_fn is None:
+            cone_fn = timeout_cone_fn(timeout_s=qt)
     stars: list[dict] = []
     flare_rows: list[dict] = []
     census_rows: list[dict] = []

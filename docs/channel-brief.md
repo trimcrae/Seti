@@ -25,6 +25,21 @@ hard way. Deviating costs runs.
    check any API you use against the major version the runner will install, and
    where a channel is exposed to it, run its suite under both majors.
 
+   A second, quieter one, found the same day by GRAVE and worth knowing because
+   it does **not** look like a version problem: under pandas 3's copy-on-write,
+   `DataFrame.to_numpy()` returns a **read-only** array, so the common idiom
+
+   ```python
+   x = df.to_numpy(dtype=float)
+   x[x <= 0] = np.nan          # ValueError: assignment destination is read-only
+   ```
+
+   raises on the runner and nowhere else. Pass `copy=True` whenever the result
+   is mutated. This one is worse than a removed keyword because it fires
+   *after* the acquisition, deep in a stage the sandbox always ran green. The
+   cheapest check is a throwaway venv on the runner's majors — building one and
+   running `pytest tests/test_<channel>.py` under it takes a couple of minutes.
+
 ## 1. Layout
 
 ```

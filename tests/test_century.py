@@ -480,6 +480,54 @@ def test_exposure_join_never_falls_back_to_the_series_alone():
     assert not np.isfinite(lc2.exptime_min).any()
 
 
+def test_a_shard_rebuilds_the_exposure_table_when_the_artifact_did_not_arrive(monkeypatch):
+    """plate_exptime.csv travels between jobs as an artifact, and the artifact
+    list lives in the workflow file, which is fixed when a run is dispatched.
+
+    A sweep launched from an older workflow, or a reduce-only re-run, would
+    otherwise lose the exposure times silently and leave every smear
+    unmodelled.  The shard asks for them itself: one ``queryexps`` per field it
+    has stars in, at the median position of those stars, because exposure time
+    is a property of the plate and not of the star.
+    """
+    from seti.century import run as crun
+    from seti.century.api import ApiResponse
+
+    calls: list[tuple[float, float]] = []
+
+    def fake_queryexps(ra, dec, **kw):
+        calls.append((round(float(ra), 3), round(float(dec), 3)))
+        lines = ["series,platenum,scannum,mosnum,expnum,solnum,exptime,epoch,limMagApass",
+                 f"a,{100 + len(calls)},0,0,0,1,45.0,1899.5,14.2",
+                 f"mc,{900 + len(calls)},0,0,0,1,75.0,1975.5,15.1"]
+        df = to_frame(lines)
+        return ApiResponse("queryexps", 200, True, 0.1, {}, "", "", len(df),
+                           [str(c) for c in df.columns], df, "POST")
+
+    monkeypatch.setattr("seti.century.targets.queryexps", fake_queryexps)
+    mine = pd.DataFrame([
+        {"target_id": 0, "ra": 10.0, "dec": 20.0, "field": "f1"},
+        {"target_id": 1, "ra": 10.2, "dec": 20.2, "field": "f1"},
+        {"target_id": 2, "ra": 80.0, "dec": -1.0, "field": "f2"},
+    ])
+    log = __import__("seti.knell.acquire", fromlist=["AcquisitionLog"]).AcquisitionLog()
+    conf = _conf()
+    conf["acquire"]["pause_s"] = 0.0
+    et, src = crun._shard_exposure_table(mine, conf, log)
+    # One request per FIELD, at the median of that field's stars -- not one per
+    # star, which would be an extra request for every light curve fetched.
+    assert len(calls) == 2
+    assert (10.1, 20.1) in calls and (80.0, -1.0) in calls
+    assert src == "acquire_stage_rebuild" and len(et) == 4
+    assert set(et["series"]) == {"a", "mc"}
+    # Nothing answering is a degradation, not a guess.
+    monkeypatch.setattr("seti.century.targets.queryexps",
+                        lambda ra, dec, **kw: ApiResponse("queryexps", 503, False, 0.1, {},
+                                                          "HTTP 503", "", 0, [], None, "POST"))
+    et2, src2 = crun._shard_exposure_table(mine, conf, log)
+    assert src2 == "none" and not len(et2)
+
+
 def test_exposure_table_survives_the_csv_round_trip(tmp_path):
     """The table reaches the shards through plate_exptime.csv, not in memory.
 

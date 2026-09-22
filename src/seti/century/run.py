@@ -487,6 +487,44 @@ def _runner_flagdefs(conf: dict, log: AcquisitionLog) -> tuple[FlagDefs, FlagDef
     return a, b, src
 
 
+def _shard_exposure_table(mine: pd.DataFrame, conf: dict,
+                          log: AcquisitionLog) -> tuple[pd.DataFrame, str]:
+    """Rebuild the plate exposure-time table from this shard's own fields.
+
+    Exposure time is a property of the PLATE, so one ``queryexps`` at the
+    median position of the shard's stars in a field covers every star in it.
+    Returns ``(table, source)``; an empty table and ``"none"`` when no field
+    answered, which is a degradation the caller records, never a guess.
+    """
+    if mine is None or not len(mine) or "ra" not in mine.columns:
+        return pd.DataFrame(), "none"
+    frames: list[pd.DataFrame] = []
+    tried = ok = 0
+    fields = (mine.groupby("field")[["ra", "dec"]].median().reset_index()
+              if "field" in mine.columns
+              else pd.DataFrame([{"field": "all", "ra": float(mine["ra"].median()),
+                                  "dec": float(mine["dec"].median())}]))
+    for _, f in fields.iterrows():
+        ra, dec = float(f["ra"]), float(f["dec"])
+        if not (np.isfinite(ra) and np.isfinite(dec)):
+            continue
+        tried += 1
+        collected: list[pd.DataFrame] = []
+        plate_density(ra, dec, log=log, exposures_out=collected,
+                      timeout_s=float(conf["acquire"]["timeout_s"]))
+        if collected:
+            ok += 1
+            frames.extend(collected)
+        _time.sleep(float(conf["acquire"]["pause_s"]))
+    if not frames:
+        log.record("plate_exptime_rebuild", f"{tried} field centres, none answered", rows=0)
+        return pd.DataFrame(), "none"
+    et = pd.concat(frames, ignore_index=True).drop_duplicates(
+        subset=list(EXPOSURE_KEY_COLS), keep="first")
+    log.record("plate_exptime_rebuild", f"{ok}/{tried} field centres answered", rows=int(len(et)))
+    return et, "acquire_stage_rebuild"
+
+
 def _save_shard_lcs(path: Path, store: dict[str, dict], meta: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     arrays = {}
@@ -545,10 +583,25 @@ def stage_acquire(conf: dict, out_root: Path, shard: tuple[int, int], *,
     # as if the later plates smeared exactly as much as the earlier ones.
     epath = out_root / "plate_exptime.csv"
     exp_tab = pd.read_csv(epath) if epath.exists() else pd.DataFrame()
+    exp_source = "targets_stage" if len(exp_tab) else "none"
+    if not len(exp_tab):
+        # The shard builds it itself rather than doing without.  The file
+        # travels between jobs as an artifact, and an artifact list is part of
+        # the workflow file, which is fixed when a run is dispatched — so a
+        # sweep launched from an older workflow, or a reduce-only re-run, would
+        # otherwise silently lose the exposure times and leave every smear
+        # unmodelled.  One queryexps per field the shard actually has stars in,
+        # at the median position of those stars, is six requests, not six
+        # hundred: exposure time is a property of the plate, not of the star.
+        exp_tab, exp_source = _shard_exposure_table(mine, conf, log)
+        if len(exp_tab):
+            epath.parent.mkdir(parents=True, exist_ok=True)
+            exp_tab.to_csv(epath, index=False)
     log.record("plate_exptime", str(epath), rows=len(exp_tab),
-               error=(None if len(exp_tab) else "absent or empty"))
-    meta_exptime = {"table_rows": int(len(exp_tab)), "n_matched_stars": 0,
-                    "match_keys": {}, "unmatched_stars": 0}
+               error=(None if len(exp_tab) else "absent and not rebuildable"),
+               extra={"source": exp_source})
+    meta_exptime = {"table_rows": int(len(exp_tab)), "source": exp_source,
+                    "n_matched_stars": 0, "match_keys": {}, "unmatched_stars": 0}
 
     # Resume from a checkpoint if one exists.
     store: dict[str, dict] = {}

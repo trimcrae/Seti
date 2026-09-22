@@ -197,21 +197,52 @@ def _is_companion(col: str) -> bool:
     return any(str(col).startswith(p) for p in _VIZIER_PREFIXES)
 
 
-def element_value_column(el: str, columns: list[str], descriptions: dict | None = None
-                         ) -> str | None:
-    """The column carrying log(el/H(e)), by name first, then by description."""
+#: Descriptions/units that disqualify a BARE element-symbol column from being
+#: read as an abundance.  PEWDD's ``B`` is the magnetic field, not boron; an
+#: integer-formatted column is never a log abundance.  Verified on the served
+#: VizieR metadata, run 35737518217.
+_NOT_ABUNDANCE_DESC = re.compile(
+    r"(?i)(magnetic|field\b|\bgauss\b|\bMG\b|magnitude|photometr|band\b|flux|parallax|"
+    r"binar|separation|mass\b|temperature|gravity|epoch|date|\bnote|comment|identifier|"
+    r"bibcode|reference|excess|number|counter)")
+_INTEGER_UNIT = re.compile(r"(?i)^(I\d+|A\d+|\d*I\d+)$")
+
+
+def element_value_column(el: str, columns: list[str], descriptions: dict | None = None,
+                         units: dict | None = None, *, allow_bare: bool = True) -> str | None:
+    """The column carrying log(el/H(e)), by name first, then by description.
+
+    Two tiers, and the order between them is load-bearing.  Tier A is every
+    name that *states* a ratio against the atmosphere's dominant element
+    (``log(Ti/H(e))``, ``Ti/He``, ``[Ti/H]``); tier B is the bare symbol.  Tier
+    A is scanned across ALL columns before tier B is considered, because a
+    table that names abundances explicitly will also contain bare-symbol
+    columns that mean something else entirely --- PEWDD's ``B`` is the
+    magnetic field.  A tier-B match is further refused when the column's unit
+    is an integer format or its description names a non-abundance quantity.
+    """
     descriptions = descriptions or {}
-    name_pats = [
-        rf"^{el}$", rf"^log{el}$", rf"^log\(?{el}/?H\(?e\)?\)?$", rf"^{el}/H\(?e\)?$",
+    units = units or {}
+    ratio_pats = [
+        rf"^log{el}$", rf"^log\(?{el}/?H\(?e\)?\)?$", rf"^{el}/H\(?e\)?$",
         rf"^{el}_?H\(?e\)?$", rf"^\[{el}/H\(?e\)?\]$", rf"^{el}He$", rf"^{el}/He$",
         rf"^{el}_He$", rf"^log\(?{el}/He\)?$", rf"^{el}Hx$", rf"^{el}_x$", rf"^{el}/X$",
         rf"^log{el}H$", rf"^log{el}He$", rf"^{el}abund$", rf"^A{el}$",
     ]
-    for col in columns:
-        if _is_companion(col):
-            continue
-        n = _norm(col)
-        if any(re.fullmatch(p, n, flags=re.IGNORECASE) for p in name_pats):
+    bare_pats = [rf"^{el}$"]
+    tiers = [(ratio_pats, False)] + ([(bare_pats, True)] if allow_bare else [])
+    for pats, bare in tiers:
+        for col in columns:
+            if _is_companion(col):
+                continue
+            n = _norm(col)
+            if not any(re.fullmatch(p, n, flags=re.IGNORECASE) for p in pats):
+                continue
+            if bare:
+                if _INTEGER_UNIT.fullmatch(str(units.get(col, "")).strip()):
+                    continue
+                if _NOT_ABUNDANCE_DESC.search(str(descriptions.get(col, ""))):
+                    continue
             return col
     for col in columns:
         if _is_companion(col):
@@ -221,6 +252,8 @@ def element_value_column(el: str, columns: list[str], descriptions: dict | None 
                 or re.search(rf"(?i)\b{el}\b\s*/\s*H\s*\(?\s*e\s*\)?", d) \
                 or re.search(rf"(?i)abundance\s+of\s+{el}\b", d):
             if re.search(r"(?i)(error|uncertaint|limit|flag)", d):
+                continue
+            if _INTEGER_UNIT.fullmatch(str(units.get(col, "")).strip()):
                 continue
             return col
     return None
@@ -295,15 +328,25 @@ def resolve_roles(columns: list[str], elements: list[str], *, units: dict | None
     }
     if roles["atm"] == roles["hhe"] and roles["atm"] is not None:
         roles["atm"] = None
+    # Pass 1 refuses bare element symbols.  If at least three elements resolve
+    # that way the table states its abundances as ratios, and a bare symbol in
+    # such a table means something else (PEWDD's ``B`` is the magnetic field),
+    # so pass 2 is not run at all.
+    strict = {el: element_value_column(el, cols, descriptions, units, allow_bare=False)
+              for el in elements}
+    n_strict = sum(1 for v in strict.values() if v)
+    ratio_convention = n_strict >= 3
     els = {}
     for el in elements:
-        v = element_value_column(el, cols, descriptions)
+        v = strict[el] if ratio_convention else element_value_column(el, cols, descriptions, units)
         if v is None:
             continue
         els[el] = {"value": v, "error": companion_column(v, cols, "error", descriptions),
                    "limit": companion_column(v, cols, "limit", descriptions),
                    "unit": str(units.get(v, "")), "description": str(descriptions.get(v, ""))}
     roles["elements"] = els
+    roles["ratio_convention_detected"] = bool(ratio_convention)
+    roles["n_elements_strict"] = int(n_strict)
     roles["n_elements_resolved"] = len(els)
     # what the abundance columns say the reference is
     refs = set()

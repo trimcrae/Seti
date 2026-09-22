@@ -65,14 +65,24 @@ empty cell turns an identifier column into `float64` while the light curve's
 is `Int64` — a join that matches nothing and reads as a DASCH coverage gap.
 Both sides are now normalised, with a round-trip test.
 
-In flight: run **35748748365**, `stages=full`, 4 shards, 60 variables + 60
-bright per field over the six configured DASCH-dense fields (~720 stars),
-acquire budget 7200 s, screen budget 9000 s, dispatched 11:38 EDT. It replaces
-run 35745660073, dispatched 11:12 EDT, which had still not started its `probe`
-job at 11:38 EDT — a slot that would have been spent re-learning a schema
-already committed. The new run's first job is `targets`. No
-`results/century/summary.json` exists yet; the channel has produced no sky
-statement.
+In flight: run **35745660073**, `stages=full`, 4 shards, dispatched 11:12 EDT.
+Its `targets` job ran 11:46–12:02 EDT and committed `targets.csv` /
+`targets_summary.json`; its four `sweep` shards queued at 12:02 EDT and are
+the live acquisition. No `results/century/summary.json` exists yet; the
+channel has produced no sky statement.
+
+**Cancelling a run does not cancel a job guarded by `if: always()`.** That run
+was cancelled at 11:38 EDT because its `probe` job had sat queued since 11:12
+without starting. The cancel killed the probe — and `targets`, which carries
+`needs: [probe]` *and* `if: always()`, started eight minutes later and ran to
+completion anyway, taking the sweep with it. Meanwhile run **35748748365** had
+been dispatched as its replacement, so for twenty minutes two runs were
+queueing eight shards for the same 384 targets. 35748748365 is now cancelled
+and 35745660073 kept, because its shards were already twenty minutes ahead in
+the queue. The replacement's only advantages were the `plate_exptime.csv`
+artifact passthrough and the widened gate, and the first of those is exactly
+what `stage_acquire`'s rebuild-it-yourself fallback exists to make
+unnecessary. Check a cancelled run's *job* list before assuming it is dead.
 
 **The first real target selection landed, and it reframes the channel.**
 Run 35748748365's `targets` job (`results/century/targets.csv`,

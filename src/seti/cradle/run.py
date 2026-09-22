@@ -480,8 +480,21 @@ def stage_screen(conf: dict, out: Path, *, backends: acq.Backends | None = None)
     ctrl = _as_bool(fit["is_control"])
     short = (sig & above & ks_w1_ok & t.between(slo, shi)) | ctrl
     fit["shortlisted"] = short
+    # The locus REFUSES to extrapolate: a star bluer or redder than any
+    # well-populated colour bin gets no predicted photosphere, and its chi is
+    # NaN, so `excess_significant` is False for exactly the same reason a star
+    # with no excess is.  Counted apart, because on a partial sky the bins are
+    # thin and "nothing was significant" would otherwise read as a clean null
+    # when it is really a coverage statement.
+    has_phot = pd.Series(True, index=fit.index)
+    for b in ("W3", "W4"):
+        col = f"{b}_pred_mag"
+        has_phot &= pd.to_numeric(fit[col], errors="coerce").notna() \
+            if col in fit.columns else False
     rep["funnel"] = {
         "n_parent": int(len(fit)), "n_ks_present": int(d["ks_present"].sum()),
+        "n_photosphere_assigned": int(has_phot.sum()),
+        "n_no_photosphere_locus_refused": int((d["ks_present"].to_numpy() & ~has_phot).sum()),
         "n_ks_w1_photospheric": int((ks_w1_ok & d["ks_present"]).sum()),
         "n_excess_significant": int((sig & ks_w1_ok).sum()),
         "n_above_fmax_3dex": int((sig & above & ks_w1_ok).sum()),
@@ -518,7 +531,10 @@ def stage_screen(conf: dict, out: Path, *, backends: acq.Backends | None = None)
     rep["verdict"] = "SCREENED"
     rep["elapsed_s"] = round(_time.monotonic() - t0, 1)
     _write(out / "screen.json", rep)
-    print(f"[cradle] screen: parent={len(fit)} sig={rep['funnel']['n_excess_significant']} "
+    print(f"[cradle] screen: parent={len(fit)} "
+          f"photosphere={rep['funnel']['n_photosphere_assigned']} "
+          f"no_photosphere={rep['funnel']['n_no_photosphere_locus_refused']} "
+          f"sig={rep['funnel']['n_excess_significant']} "
           f"above_fmax={rep['funnel']['n_above_fmax_3dex']} in_cell={rep['funnel']['n_in_t_cell_photometric']} "
           f"shortlist={rep['n_shortlist']} in {rep['elapsed_s']} s")
     return rep
@@ -710,6 +726,14 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None)
     cov = screen.get("coverage") or {}
     if cov.get("n_units_failed"):
         degraded.append(f"acquire_units_failed:{cov['n_units_failed']}/{cov.get('n_units_planned')}")
+    sf = screen.get("funnel") or {}
+    n_noph = int(sf.get("n_no_photosphere_locus_refused") or 0)
+    n_ksp = int(sf.get("n_ks_present") or 0)
+    if n_ksp and n_noph > 0.2 * n_ksp:
+        # More than a fifth of the K_s-bearing stars never got a photosphere,
+        # so "nothing was significant" is partly a statement about the colour
+        # bins, not about the sky.  Named, not buried.
+        degraded.append(f"locus_refused_photosphere:{n_noph}/{n_ksp}")
     if cov.get("n_units_deadline_exceeded"):
         degraded.append(f"acquire_units_deadline_exceeded:{cov['n_units_deadline_exceeded']}"
                         f"/{cov.get('n_units_planned')}")

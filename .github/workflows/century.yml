@@ -306,8 +306,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Offline gate — the Menzel-step and efficiency nulls must hold here
-        run: python -m pytest tests/test_century.py -q -p no:warnings -k "gap or step or efficiency or censor"
+      # The gate runs on the runner's OWN pandas (3.x from `pandas>=2.0`), not
+      # the sandbox's 2.x, so it is also the version check.  `dr7` and
+      # `exposure` are in the selection because the schema contract — column
+      # spellings, the JD time scale, the exposure-time join — is what fails
+      # first on real data, and failing it here costs a minute instead of an
+      # acquisition budget.
+      - name: Offline gate — the Menzel step, the efficiency nulls, the DR7 schema
+        run: |
+          python -c "import pandas, numpy, astropy; print('versions', pandas.__version__, numpy.__version__, astropy.__version__)"
+          python -m pytest tests/test_century.py -q -p no:warnings \
+            -k "gap or step or efficiency or censor or dr7 or exposure"
       - uses: actions/download-artifact@v4
         with:
           name: century-targets

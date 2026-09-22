@@ -1071,7 +1071,12 @@ def desi_spectra_file_measurements(url: str, targetid: int, lam0: float, mode: s
 # ---------------------------------------------------------------------------
 
 _WANT_FIELDS = ["sparcl_id", "specid", "ra", "dec", "redshift", "spectype", "subtype",
-                "data_release", "wavelength", "flux", "ivar", "mask", "sky",
+                "subclass", "data_release", "wavelength", "flux", "ivar", "mask", "sky",
+                # The pipeline's own per-pixel LSF width.  Without it the
+                # resolved/unresolved test falls back to a nominal R = 2000,
+                # which is exactly the approximation that made the triage's
+                # width ratios unusable.
+                "wave_sigma",
                 "plate", "mjd", "fiberid", "run2d", "specobjid", "plateid",
                 "targetid", "survey", "program", "healpix", "instrument", "dateobs",
                 "dateobs_center", "exptime", "site", "telescope"]

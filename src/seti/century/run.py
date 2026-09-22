@@ -44,6 +44,7 @@ from .api import (
     DASCHLAB_FILES,
     DASCHLAB_RAW,
     DOC_URLS,
+    FLAG_SOURCE_FILES,
     dumps,
     fetch_text,
     html_to_text,
@@ -281,7 +282,7 @@ def stage_probe(conf: dict, out_root: Path) -> dict:
 
     # 2. daschlab source -> flag bits
     src = _fetch_daschlab_source(out_dir, log)
-    a, b = resolve_flagdefs(conf, src.get("lightcurves.py"))
+    a, b = resolve_flagdefs(conf, [src.get(fn) for fn in FLAG_SOURCE_FILES])
     rep["flag_bits"] = {"aflags": a.as_dict(), "bflags": b.as_dict()}
     _write_json(out_dir / "flag_bits.json", rep["flag_bits"])
     # When the bits did not parse, commit the EVIDENCE rather than a silent
@@ -449,12 +450,17 @@ def stage_targets(conf: dict, out_root: Path, *, fields=None, radius_deg: float 
 
 def _runner_flagdefs(conf: dict, log: AcquisitionLog) -> tuple[FlagDefs, FlagDefs, str]:
     """Flag bits from the live daschlab source, else the config, else none."""
-    st, txt, err = fetch_text(DASCHLAB_RAW + "lightcurves.py")
-    a, b = resolve_flagdefs(conf, txt if st == 200 else None)
+    texts, fetched = [], {}
+    for fn in FLAG_SOURCE_FILES:
+        st, txt, err = fetch_text(DASCHLAB_RAW + fn)
+        fetched[fn] = int(st) if st is not None else 0
+        if st == 200 and txt:
+            texts.append(txt)
+    a, b = resolve_flagdefs(conf, texts)
     src = "daschlab_source" if (a.source == "daschlab_source" or b.source == "daschlab_source") \
         else ("config" if (a.available or b.available) else "none")
-    log.record("flag_definitions", DASCHLAB_RAW + "lightcurves.py",
-               rows=len(a.bits) + len(b.bits), extra={"source": src})
+    log.record("flag_definitions", DASCHLAB_RAW + ",".join(FLAG_SOURCE_FILES),
+               rows=len(a.bits) + len(b.bits), extra={"source": src, "http": fetched})
     return a, b, src
 
 

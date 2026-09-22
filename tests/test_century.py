@@ -320,6 +320,82 @@ def test_flag_parsing_from_source_text_and_config_fallback():
     assert not a3.available
 
 
+def test_flag_bits_are_read_from_photometry_not_lightcurves():
+    """The enums live in ``daschlab/photometry.py``; ``lightcurves.py`` imports them.
+
+    The first probe (run 35738717013) fetched only ``lightcurves.py``, parsed
+    nothing, and wrote an empty ``flag_bits.json`` --- i.e. the whole run would
+    have applied NO blend and NO reject cut while reporting a plate light curve
+    as clean.  So: the resolution takes a LIST of source texts, a definition
+    found in any of them beats the config, and ``photometry.py`` is in the list
+    the probe and the acquire stage fetch.
+    """
+    from seti.century.api import DASCHLAB_FILES, FLAG_SOURCE_FILES
+
+    assert "photometry.py" in FLAG_SOURCE_FILES and "photometry.py" in DASCHLAB_FILES
+    lc_src = "from .photometry import AFlags, BFlags\n\ndef _query_lc():\n    pass\n"
+    phot_src = (
+        "from enum import IntFlag\n"
+        "class AFlags(IntFlag):\n    SXT_BLEND = 1 << 26\n    SUSPECTED_DEFECT = 1 << 25\n"
+        "class BFlags(IntFlag):\n    NEIGHBORS = 1\n    BLEND = 2\n    SATURATED = 4\n"
+    )
+    # lightcurves.py alone yields nothing -- exactly the observed failure.
+    a0, b0 = resolve_flagdefs(None, lc_src)
+    assert not a0.available and not b0.available
+    a, b = resolve_flagdefs(None, [lc_src, phot_src])
+    assert a.source == "daschlab_source" and a.blend_mask == 1 << 26
+    assert b.blend_mask == 3 and b.reject_mask == 4
+    # A None in the list (a file that 404'd) is skipped, not fatal.
+    a2, _ = resolve_flagdefs({"flag_bits": {"aflags": {"X_BLEND": 8}, "bflags": {}}},
+                             [None, phot_src])
+    assert a2.source == "daschlab_source" and a2.blend_mask == 1 << 26
+
+
+def test_config_flag_bits_fallback_covers_the_blend_and_reject_cuts():
+    """config/century.yaml must be able to stand in for the live source.
+
+    Committed bits are the offline fallback; if they ever stop naming a blend
+    bit or a reject bit the blending kill is silently off on any runner that
+    cannot reach GitHub.
+    """
+    import pathlib
+
+    import yaml
+
+    conf = yaml.safe_load(
+        (pathlib.Path(__file__).resolve().parents[1] / "config" / "century.yaml").read_text())
+    a, b = resolve_flagdefs(conf, None)
+    assert a.source == "config" and b.source == "config"
+    assert a.blend_mask > 0 and a.reject_mask > 0
+    assert b.blend_mask > 0 and b.reject_mask > 0
+    # The named bits the channel's kills depend on.
+    assert "SXT_BLEND" in a.bits and "CASE_BC_BLEND" in a.bits
+    assert "SUSPECTED_DEFECT" in a.bits and "BAD_PLATE_QUALITY" in a.bits
+    assert "NEIGHBORS" in b.bits and "BLEND" in b.bits and "SATURATED" in b.bits
+
+
+def test_error_column_is_the_one_that_belongs_to_the_magnitude():
+    """DR7 serves several calibrations with their own rms; 99.0 means "none"."""
+    df = pd.DataFrame({
+        "date_jd": [2415020.5, 2415030.5, 2440000.5, 2440010.5],
+        "magcal_magdep": [11.0, 11.1, 11.05, 11.2],
+        "magcal_magdep_rms": [0.10, 99.0, 0.12, 0.11],
+        "magcal_local": [12.0, 12.1, 12.05, 12.2],
+        "magcal_local_rms": [0.50, 0.55, 0.52, 0.51],
+        "limiting_mag_local": [14.0, 14.1, 15.0, 15.1],
+        "series": ["a", "a", "mc", "mc"],
+        "plate_number": [1, 2, 3, 4],
+        "aflags": [0, 0, 0, 0], "bflags": [0, 0, 0, 0],
+    })
+    lc = from_api_frame(df, default_err=0.15)
+    assert lc is not None and lc.n_det == 4
+    # magcal_magdep was chosen, so magcal_magdep_rms is the error -- not the
+    # five-times-larger local rms that pick_column used to reach first.
+    assert abs(lc.err[0] - 0.10) < 1e-9 and abs(lc.err[3] - 0.11) < 1e-9
+    # The 99.0 sentinel becomes the default error, never a 99-mag error bar.
+    assert abs(lc.err[1] - 0.15) < 1e-9
+
+
 def test_margin_mask_is_keyed_to_the_star_not_the_point():
     rng = np.random.default_rng(3)
     lc = synth_plates(rng, lim_mean=13.0, lim_sd=1.0)

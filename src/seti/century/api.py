@@ -49,8 +49,15 @@ DOC_URLS = {
     "openapi_3": "https://docs.api.starglass.cfa.harvard.edu/openapi.json",
 }
 DASCHLAB_RAW = "https://raw.githubusercontent.com/pkgw/daschlab/main/daschlab/"
-DASCHLAB_FILES = ("lightcurves.py", "refcat.py", "exposures.py", "query.py",
-                  "__init__.py", "apiclient.py", "series.py")
+# ``photometry.py`` carries ``class AFlags(IntFlag)`` / ``class BFlags(IntFlag)``
+# --- the per-detection blend and reject bits.  ``lightcurves.py`` only imports
+# them.  The first probe (run 35738717013) fetched lightcurves.py alone, parsed
+# nothing, and wrote an empty flag_bits.json, which silently disables the
+# blending kill; photometry.py is therefore first in the list and is what the
+# flag resolution reads.
+DASCHLAB_FILES = ("photometry.py", "lightcurves.py", "refcat.py", "exposures.py",
+                  "query.py", "__init__.py", "apiclient.py", "series.py")
+FLAG_SOURCE_FILES = ("photometry.py", "lightcurves.py")
 
 # Payload variants, most likely first.  The daschlab client (v1.0) posts the
 # first shape of each; the others cover the obvious renamings so a first run is
@@ -335,6 +342,7 @@ def dumps(obj, **kw) -> str:
 
 
 __all__ = ["API_BASE", "ApiResponse", "DASCHLAB_FILES", "DASCHLAB_RAW", "DOC_URLS",
-           "ENDPOINTS", "csv_lines_to_frame", "dumps", "fetch_text", "html_to_text", "jsonable",
+           "ENDPOINTS", "FLAG_SOURCE_FILES",
+           "csv_lines_to_frame", "dumps", "fetch_text", "html_to_text", "jsonable",
            "lightcurve", "numeric", "pick_column", "post_variants", "querycat",
            "queryexps", "to_frame"]

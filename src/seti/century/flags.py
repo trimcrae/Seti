@@ -155,15 +155,27 @@ def flagdefs_from_config(conf: dict | None) -> tuple[FlagDefs, FlagDefs]:
     return a, b
 
 
-def resolve_flagdefs(conf: dict | None = None, source_text: str | None = None
+def resolve_flagdefs(conf: dict | None = None, source_text=None
                      ) -> tuple[FlagDefs, FlagDefs]:
-    """Parsed source first, config second, nothing third (and say so)."""
-    if source_text:
-        a, b = flagdefs_from_source(source_text)
-        if a.available or b.available:
-            ca, cb = flagdefs_from_config(conf)
-            return (a if a.available else ca), (b if b.available else cb)
-    return flagdefs_from_config(conf)
+    """Parsed source first, config second, nothing third (and say so).
+
+    ``source_text`` may be one text blob or an iterable of them (the daschlab
+    files the probe fetched).  ``AFlags``/``BFlags`` live in ``photometry.py``;
+    ``lightcurves.py`` merely imports them, so passing one file was how the
+    first probe came back with an empty ``flag_bits.json`` and no blend cut at
+    all.  Every blob is tried, and a definition found in any of them wins over
+    the config fallback.
+    """
+    texts = ([source_text] if isinstance(source_text, str)
+             else [t for t in (source_text or []) if isinstance(t, str) and t])
+    a_out, b_out = flagdefs_from_config(conf)
+    for txt in texts:
+        a, b = flagdefs_from_source(txt)
+        if a.available and a_out.source != "daschlab_source":
+            a_out = a
+        if b.available and b_out.source != "daschlab_source":
+            b_out = b
+    return a_out, b_out
 
 
 def apply_masks(aflags: np.ndarray, bflags: np.ndarray, a: FlagDefs, b: FlagDefs

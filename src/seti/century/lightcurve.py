@@ -37,7 +37,22 @@ MJD_J2000 = 51544.5
 
 TIME_COLS = ("time", "date_jd", "jd", "hjd", "date_hjd", "mjd", "date_mjd")
 MAG_COLS = ("magcal_magdep", "magcal_local", "mag", "magnitude")
-ERR_COLS = ("magcal_local_rms", "magcal_magdep_rms", "magcal_rms", "mag_err", "magerr", "err")
+# The error must belong to the MAGNITUDE that was used.  DR7 serves several
+# calibrations side by side (``magcal_magdep``, ``magcal_local``, ``magcal_iso``)
+# each with its own ``*_rms``; pairing ``magcal_magdep`` with ``magcal_local_rms``
+# attaches one calibration's scatter to another's photometry.  ``ERR_FOR_MAG``
+# is consulted first, ``ERR_COLS`` only when the magnitude column is unknown.
+ERR_FOR_MAG = {
+    "magcal_magdep": ("magcal_magdep_rms",),
+    "magcal_local": ("magcal_local_rms", "magcal_local_error"),
+    "magcal_iso": ("magcal_iso_rms",),
+}
+ERR_COLS = ("magcal_magdep_rms", "magcal_local_rms", "magcal_rms", "mag_err", "magerr", "err")
+# daschlab masks ``magcal_magdep_rms == 99.0`` (``extra_mq(..., 99.0)`` in
+# ``daschlab/photometry.py``): 99 is DASCH's "no rms available" sentinel, not a
+# 99-magnitude error bar, and carried through as a number it would give such a
+# point essentially zero weight for ever after instead of the default error.
+ERR_SENTINELS = (99.0, -99.0, 9999.0)
 LIM_COLS = ("limiting_mag_local", "limiting_mag", "lim_mag", "limmag", "limiting_magnitude")
 SERIES_COLS = ("series", "plate_series")
 PLATENUM_COLS = ("platenum", "plate_number", "plate")
@@ -245,7 +260,10 @@ def from_api_frame(df: pd.DataFrame, aflags: FlagDefs | None = None,
         return None
     t = _time_to_mjd(numeric(df, tcol), str(tcol))
     mag = numeric(df, mcol)
-    err = numeric(df, pick_column(df, ERR_COLS))
+    ecol = pick_column(df, ERR_FOR_MAG.get(str(mcol).lower(), ())) or pick_column(df, ERR_COLS)
+    err = numeric(df, ecol)
+    for s in ERR_SENTINELS:
+        err = np.where(np.isclose(err, s), np.nan, err)
     lim = numeric(df, pick_column(df, LIM_COLS))
     exptime = numeric(df, pick_column(df, EXPTIME_COLS))
     unit = exptime_unit

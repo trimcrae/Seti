@@ -317,7 +317,6 @@ def test_acquire_end_to_end_with_a_dead_svo_and_a_live_vizier(sc, tmp_path, monk
             return ("\n".join(f"#Column\t{c}\t(mag)\tsome description" for c in cols)
                     ).encode(), "HTTP 200"
         if "asu-tsv" in url and "I/284" in urllib.parse.unquote(url):
-            assert "muPr" not in url, "a column the catalogue does not have was requested"
             m = re.search(r"-c=([\d.]+)%20(%2B|-)([\d.]+)", url)
             ra = float(m.group(1))
             dec = float(m.group(3)) * (-1.0 if m.group(2) == "-" else 1.0)
@@ -342,10 +341,12 @@ def test_acquire_end_to_end_with_a_dead_svo_and_a_live_vizier(sc, tmp_path, monk
     assert (tmp_path / "field_ledger.json").exists()
     led = json.loads((tmp_path / "field_ledger.json").read_text())
     assert led["n_fields_ok"] == 3
-    # the catalogue's own column list was read before any zero was believed
+    # the catalogue's own column list is READ and recorded, but it does not
+    # edit the request: a thin -meta.all body must not be able to strip the
+    # photometry the selection is defined on (run 35738062833)
     assert led["meta_probe"]["columns"], led["meta_probe"]
     assert led["meta_probe"]["missing"] == ["muPr"], led["meta_probe"]
-    assert "muPr" not in led["columns_requested"]
+    assert "muPr" in led["columns_requested"]
     assert (tmp_path / "sample_positions.parquet").exists()
     routes = {r["route"]: r["status"] for r in prov["routes"]}
     assert routes["vizier_tap_schema_discovery"] == "ok"
@@ -461,3 +462,78 @@ def test_vizier_catalogue_meta_records_an_unreachable_service(sc, monkeypatch):
     tabs, prov = acq.vizier_catalogue_meta("J/MNRAS/515/1380", sc)
     assert tabs == [] and prov.status == "unreachable"
     assert prov.attempts[0]["detail"] == "HTTP 503"
+
+
+# --- run 35738062833: rows that cannot express the selection ----------------
+def _positions_only_body(rows):
+    """What VizieR returned when only positional columns were requested."""
+    hdr = ["USNO-B1.0", "RAJ2000", "DEJ2000", "Epoch", "pmRA", "pmDE"]
+    lines = ["#", "#INFO status=OK", "\t".join(hdr),
+             "\t".join(["", "deg", "deg", "yr", "mas/yr", "mas/yr"]),
+             "\t".join("-" * max(len(h), 1) for h in hdr)]
+    for r in rows:
+        lines.append("\t".join(str(v) for v in r))
+    return "\n".join(lines) + "\n"
+
+
+def test_a_field_without_the_plate_magnitudes_is_rejected_not_counted_as_zero(sc):
+    """The exact shape of run 35738062833: 1380-5899 rows per field, zero
+    reconstructed sources, because the answer carried no photometry.
+
+    'POSS-I red and nothing else' is a statement about which plate magnitudes
+    are PRESENT, so a frame without them yields a guaranteed zero that says
+    nothing about the sky.  Such a rung must be rejected, not believed.
+    """
+    calls = []
+
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        calls.append(url)
+        # every column-list rung answers with positions only; -out.all is full
+        if "-out.all=" in url:
+            return _asu_body([
+                ["1550-0000001", 10.0, 65.0, 1953.7, 0, 0, 1, "", None, 17.2, 1, 100,
+                 11, None, None, None],
+                ["1550-0000002", 10.1, 65.0, 1953.7, 0, 0, 2, "", 18.0, 17.5, 1, 100,
+                 11, None, None, None],
+            ]).encode(), "HTTP 200"
+        return _positions_only_body([
+            ["1550-0000001", 10.0, 65.0, 1953.7, 0, 0],
+            ["1550-0000002", 10.1, 65.0, 1953.7, 0, 0],
+        ]).encode(), "HTTP 200"
+
+    import seti.shroud.acquire as m
+    orig, m.http_get = m.http_get, fake_get
+    try:
+        raw, form, attempts = m.fetch_usnob1_field(10.0, 65.0, 0.5, sc)
+    finally:
+        m.http_get = orig
+
+    # the positions-only rungs were NOT accepted even though they had rows
+    rejected = [a for a in attempts if a["missing_required"]]
+    assert rejected, attempts
+    assert all(a["n_raw"] == 2 for a in rejected)        # rows, but unusable rows
+    assert all("R1mag" in a["missing_required"] for a in rejected)
+    # the ladder fell through to the rung that names no columns
+    assert form == "none_allcols", [a["form"] for a in attempts]
+    assert "R1mag" in raw.columns and len(raw) == 2
+    # and that frame CAN express the selection: one POSS-I-red-only object
+    out = m.normalise_usnob1_frame(raw, 0, r1_max=19.3, ndet=1)
+    assert len(out) == 1 and out["source_id"].iloc[0] == "USNOB-1550-0000001"
+
+
+def test_a_field_with_no_usable_rung_returns_an_empty_frame_not_a_bad_one(sc):
+    """If NO rung can express the selection, the field is empty --- it must not
+    silently hand back the last (unusable) answer as if it were the sample."""
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        return _positions_only_body([["1550-0000001", 10.0, 65.0, 1953.7, 0, 0]]).encode(), \
+            "HTTP 200"
+
+    import seti.shroud.acquire as m
+    orig, m.http_get = m.http_get, fake_get
+    try:
+        raw, form, attempts = m.fetch_usnob1_field(10.0, 65.0, 0.5, sc)
+    finally:
+        m.http_get = orig
+    assert len(raw) == 0 and form == ""
+    assert len(attempts) == len(acq.USNOB1_QUERY_FORMS)
+    assert all(a["n_raw"] == 1 and a["missing_required"] for a in attempts)

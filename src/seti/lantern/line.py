@@ -527,6 +527,13 @@ def eclipse_discriminant(line, line_err, cont, labels: dict, times=None,
     k = np.asarray(cont, float)
     n = y.size
     inn, out = np.asarray(labels["in_eclipse"], bool), np.asarray(labels["out_eclipse"], bool)
+    # A phase curve holds a transit too: its integrations are out of eclipse
+    # but the continuum is 1-3% down there, which would bias the continuum's
+    # own fractional drop (the tracks-continuum reference) and the line's
+    # out-of-eclipse mean.  They are left out of the "out" group.
+    for key in ("in_transit", "transit_contact"):
+        if key in labels and np.asarray(labels[key]).shape == out.shape:
+            out = out & ~np.asarray(labels[key], bool)
     res: dict = {"n_in": int(inn.sum()), "n_out": int(out.sum())}
     mu_out, s_out, _ = _mean_err(y[out], e[out])
     mu_in, s_in, _ = _mean_err(y[inn], e[inn])

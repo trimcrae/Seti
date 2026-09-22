@@ -342,12 +342,28 @@ def build_star_context(flares: pd.DataFrame, star_tables: list[tuple[str, pd.Dat
     """One row per star: the amplitude (MAX over sources, as a fraction), Prot,
     Teff, radius, logg with their sources, and the catalogue flag.
 
-    ``star_tables`` is ``[(name, df, amplitude_unit), ...]`` in priority order
-    for Teff / radius / logg / Prot.  The flare catalogue's own per-star
-    columns (Okamoto, Shibayama and Tu carry them per flare row) come first.
+    ``star_tables`` is ``[(name, df, amplitude_unit[, amplitude_scale]), ...]``
+    in priority order for Teff / radius / logg / Prot.  The flare catalogue's
+    own per-star columns (Okamoto, Shibayama and Tu carry them per flare row)
+    come first.
+
+    ``amplitude_scale`` converts a source's amplitude *statistic* to the
+    peak-to-peak-like range the spot model wants.  Santos+2021 ``Sph`` is a
+    standard deviation (of the light curve over 5 x Prot windows); Notsu's
+    "brightness variation amplitude" and McQuillan's ``Rper`` are ranges
+    (top-1 % minus bottom-1 %, 95th minus 5th percentile).  For a sinusoid
+    ``range = 2 sqrt(2) x std``, so an unscaled Sph understates the spot area
+    by ~2.8, the ceiling by ~4.7 and inflates xi by +0.67 dex --- which is what
+    put both stage-1 interest stars (amplitude_source ``santos2021``) above
+    the conservative ceiling in run 35055720417.  Scaling UP is the
+    conservative direction (a larger amplitude raises the ceiling), and the
+    scale used is recorded per star as ``amplitude_scale``.
     """
     sids = flares["star_id"].astype(str).unique()
     ctx = pd.DataFrame({"star_id": sids})
+    star_tables = [(t[0], t[1], t[2], float(t[3]) if len(t) > 3 and t[3] is not None else 1.0)
+                   for t in star_tables]
+    amp_scales: dict[str, float] = {"own": 1.0}
     # --- the flare table's own per-star columns (median over rows) -----------
     g = flares.groupby(flares["star_id"].astype(str))
     own: dict[str, pd.Series] = {}
@@ -368,7 +384,7 @@ def build_star_context(flares: pd.DataFrame, star_tables: list[tuple[str, pd.Dat
         if col in own:
             ctx[f"{col}_own"] = ctx["star_id"].map(own[col])
     # --- the star tables, in priority order ------------------------------------
-    for name, df, unit in star_tables:
+    for name, df, unit, scale in star_tables:
         if df is None or not len(df) or "star_id" not in df.columns:
             continue
         d = df.copy()
@@ -376,9 +392,10 @@ def build_star_context(flares: pd.DataFrame, star_tables: list[tuple[str, pd.Dat
         d = d.drop_duplicates("star_id", keep="first").set_index("star_id")
         if "rot_amplitude" in d.columns:
             vals, u = normalise_amplitude(d["rot_amplitude"].to_numpy(dtype=float), unit)
-            ctx[f"amp_{name}"] = ctx["star_id"].map(pd.Series(vals, index=d.index))
+            ctx[f"amp_{name}"] = ctx["star_id"].map(pd.Series(vals * float(scale), index=d.index))
             amp_cols.append(f"amp_{name}")
             amp_units[name] = u
+            amp_scales[name] = float(scale)
         for col in ("prot", "teff", "radius", "logg", "flag"):
             if col in d.columns:
                 ctx[f"{col}_{name}"] = ctx["star_id"].map(d[col])
@@ -395,12 +412,15 @@ def build_star_context(flares: pd.DataFrame, star_tables: list[tuple[str, pd.Dat
         ctx["amplitude_unit"] = ctx["amplitude_source"].map(lambda s: amp_units.get(s))
         ctx["amplitude_unit_guessed"] = ctx["amplitude_source"].map(
             lambda s: bool(s) and _unit_was_guessed(s, star_tables, physics))
+        ctx["amplitude_scale"] = ctx["amplitude_source"].map(
+            lambda s: float(amp_scales.get(s, 1.0)) if s else np.nan)
     else:
         ctx["amplitude_frac"] = np.nan
         ctx["amplitude_source"] = None
         ctx["amplitude_unit"] = None
         ctx["amplitude_unit_guessed"] = False
-    order = ["own"] + [n for n, _, _ in star_tables]
+        ctx["amplitude_scale"] = np.nan
+    order = ["own"] + [n for n, _, _, _ in star_tables]
     for col in ("prot", "teff", "radius", "logg"):
         val = pd.Series(np.nan, index=ctx.index, dtype=float)
         src = pd.Series([None] * len(ctx), index=ctx.index, dtype=object)
@@ -434,9 +454,9 @@ def build_star_context(flares: pd.DataFrame, star_tables: list[tuple[str, pd.Dat
 def _unit_was_guessed(source: str, star_tables, physics) -> bool:
     if source == "own":
         return str(physics.get("amplitude_unit_own", "auto")).lower() == "auto"
-    for name, _, unit in star_tables:
-        if name == source:
-            return str(unit or "auto").lower() == "auto"
+    for t in star_tables:
+        if t[0] == source:
+            return str(t[2] or "auto").lower() == "auto"
     return True
 
 
@@ -494,6 +514,10 @@ def screen_catalogue(flares: pd.DataFrame, star_tables: list, name: str, mission
             "star_id": sid, "catalogue": name, "mission": mission,
             "amplitude_source": c["amplitude_source"], "amplitude_unit": c["amplitude_unit"],
             "amplitude_unit_guessed": bool(c["amplitude_unit_guessed"]),
+            "amplitude_scale": (float(c["amplitude_scale"]) if pd.notna(c["amplitude_scale"])
+                                else float("nan")),
+            "amplitude_scaled": bool(pd.notna(c["amplitude_scale"])
+                                     and float(c["amplitude_scale"]) != 1.0),
             "prot": float(c["prot"]) if pd.notna(c["prot"]) else float("nan"),
             "prot_source": c["prot_source"], "teff_source": c["teff_source"],
             "radius_source": c["radius_source"],
@@ -536,7 +560,8 @@ def _load_star_tables(out: Path, mission: str, conf: dict) -> list:
         p = out / "data" / f"{mission}_{spec['name']}_stars.parquet"
         if p.exists():
             try:
-                tabs.append((spec["name"], pd.read_parquet(p), spec.get("amplitude_unit", "auto")))
+                tabs.append((spec["name"], pd.read_parquet(p), spec.get("amplitude_unit", "auto"),
+                             float(spec.get("amplitude_scale", 1.0) or 1.0)))
             except Exception:                             # noqa: BLE001
                 continue
     return tabs
@@ -578,6 +603,27 @@ def stage_screen(conf: dict, out: Path, *, catalogues=None,
 # ---------------------------------------------------------------------------
 # assess
 # ---------------------------------------------------------------------------
+def _apply_stage2_verdicts(vetted: list[dict], stars_json: Path) -> dict:
+    """Carry stage 2's per-star centroid verdict into the ``centroid`` column
+    of any star it tested (``results/arc/stage2/stars.json``); every other star
+    keeps ``not_checked``.  Returns the count per verdict applied."""
+    applied: dict = {}
+    try:
+        d = json.loads(Path(stars_json).read_text())
+    except Exception:                                     # noqa: BLE001
+        return applied
+    by_key = {str(s.get("star_key")): s for s in (d.get("stars") or []) if s.get("star_key")}
+    for r in vetted:
+        s = by_key.get(str(r.get("star_key")))
+        if not s or not s.get("verdict"):
+            continue
+        r["centroid"] = str(s["verdict"])
+        r["centroid_reason"] = str(s.get("verdict_reason", ""))[:200]
+        r["xi_conservative_measured_stage2"] = (s.get("xi") or {}).get("xi_conservative_measured")
+        applied[r["centroid"]] = applied.get(r["centroid"], 0) + 1
+    return applied
+
+
 def _recompute(rec: dict, teff: float, rad: float, phys: dict) -> dict:
     """Re-run the ceiling for one record with better stellar parameters."""
     if not rec.get("energies_json"):
@@ -754,6 +800,7 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
         contexts[key] = ctx
         vetted_in.append(rec)
     vetted = assign_tiers(vetted_in, contexts, vconf)
+    stage2_applied = _apply_stage2_verdicts(vetted, out / "stage2" / "stars.json")
     counters = rejection_counters(vetted)
     fun = funnel(vetted)
 
@@ -808,8 +855,9 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
             "flags", "xi_conservative_max", "xi_nominal_max", "n_above_conservative",
             "n_above_nominal", "n_independent", "n_flares", "e_flare_max_erg",
             "e_mag_conservative_erg", "e_mag_nominal_erg", "amplitude_frac",
-            "amplitude_source", "amplitude_unit", "prot", "prot_source", "teff_k", "radius_rsun",
-            "logg", "t_spot_k", "params_assumed", "catalogue_flag", "centroid")
+            "amplitude_source", "amplitude_unit", "amplitude_scale", "prot", "prot_source",
+            "teff_k", "radius_rsun", "logg", "t_spot_k", "params_assumed", "catalogue_flag",
+            "centroid", "centroid_reason", "xi_conservative_measured_stage2")
     cand_rows = [{k: r.get(k) for k in slim} for r in cands]
     for row, r in zip(cand_rows, cands, strict=True):
         c = contexts.get(r["star_key"], {})
@@ -837,6 +885,7 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
         "catalogues": per_cat,
         "degraded": degraded,
         "offline": bool(offline),
+        "stage2_verdicts_applied": stage2_applied,
         "gaia_reached_fraction_of_shortlist": gaia_reached_frac,
         "param_tables": param_records,
         "physics": phys,

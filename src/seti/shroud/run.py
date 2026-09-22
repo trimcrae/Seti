@@ -39,8 +39,12 @@ def load_shroud_config(cfg: Config | None = None) -> dict:
 
 # --- stages -----------------------------------------------------------------
 def stage_acquire(cfg: Config, sc: dict, out_dir: Path,
-                  allow_network: bool = True) -> tuple[pd.DataFrame, dict]:
-    df, prov = acq.acquire_sample(sc, out_dir, allow_network=allow_network)
+                  allow_network: bool = True, n_fields: int | None = None,
+                  field_radius_deg: float | None = None, field_seed: int | None = None,
+                  deadline_s: float | None = None) -> tuple[pd.DataFrame, dict]:
+    df, prov = acq.acquire_sample(sc, out_dir, allow_network=allow_network,
+                                  n_fields=n_fields, field_radius_deg=field_radius_deg,
+                                  field_seed=field_seed, deadline_s=deadline_s)
     (out_dir / "acquire_verdict.json").write_text(
         json.dumps(prov, indent=2, default=str))
     if len(df):
@@ -67,25 +71,50 @@ def stage_photometry(sc: dict, df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
     merged.to_parquet(out_dir / "photometry.parquet", index=False)
 
     # Offset-position null: the chance-match rate, measured on the real sky.
+    # The real and the null match are counted the SAME way - AllWISE sources
+    # inside the crossmatch radius - or the difference is not a chance rate.
+    r_xm = float(xm.get("radius_arcsec", 5.0))
     n_real = int(len(df))
-    n_real_matched = int((merged.get("n_ir_neighbours", pd.Series(dtype=int))
-                          > 0).sum()) if "n_ir_neighbours" in merged else 0
+    n_real_matched = 0
+    p_aw = out_dir / "xmatch_allwise.parquet"
+    if p_aw.exists():
+        aw = pd.read_parquet(p_aw)
+        d = acq._dist_col(aw)
+        if d is not None and "source_id" in aw.columns:
+            n_real_matched = int(aw.loc[pd.to_numeric(aw[d], errors="coerce") <= r_xm,
+                                        "source_id"].nunique())
+    elif "n_ir_neighbours" in merged:
+        n_real_matched = int((merged["n_ir_neighbours"] > 0).sum())
     n_null = n_null_matched = 0
     cat = sc.get("acquire", {}).get("catalogs", {}).get(
         "allwise", "vizier:II/328/allwise")
+    null_prov = []
     for k in range(int(xm.get("offset_null_realisations", 4))):
+        ck = out_dir / f"xmatch_null_allwise_{k}.parquet"
         off = vetmod.offset_positions(df, float(xm.get("offset_null_arcsec", 45.0)),
                                       seed=k)
         off["source_id"] = off["source_id"].astype(str) + f"_off{k}"
-        res, _ = acq.xmatch_upload(off, cat, float(xm.get("radius_arcsec", 5.0)), sc)
+        if ck.exists():
+            res = pd.read_parquet(ck)
+            null_prov.append({"realisation": k, "status": "cached", "n_rows": int(len(res))})
+        else:
+            res, p = acq.xmatch_upload(off, cat, r_xm, sc)
+            null_prov.append({"realisation": k, **p.as_dict()})
+            if p.status != "ok":
+                continue
+            res.to_parquet(ck, index=False)
         n_null += len(off)
         if len(res) and "source_id" in res.columns:
-            n_null_matched += int(res["source_id"].nunique())
+            d = acq._dist_col(res)
+            sel = res if d is None else res[pd.to_numeric(res[d], errors="coerce") <= r_xm]
+            n_null_matched += int(sel["source_id"].nunique())
     stats = vetmod.chance_match_rate_from_null(n_real_matched, n_real,
                                                n_null_matched, n_null)
     stats.update({"n_real": n_real, "n_real_matched": n_real_matched,
                   "n_null": n_null, "n_null_matched": n_null_matched,
-                  "offset_arcsec": float(xm.get("offset_null_arcsec", 45.0))})
+                  "offset_arcsec": float(xm.get("offset_null_arcsec", 45.0)),
+                  "radius_arcsec": r_xm, "catalog": cat,
+                  "realisations": null_prov})
     (out_dir / "null_stats.json").write_text(json.dumps(stats, indent=2,
                                                         default=str))
 
@@ -113,12 +142,23 @@ def apply_epoch_propagation(df: pd.DataFrame, gaia: pd.DataFrame,
     g = g.rename(columns={ra_c: "ra_deg", dec_c: "dec_deg",
                           pmra_c: "pmra", pmde_c: "pmdec"})
     by_id = {k: v for k, v in g.groupby("source_id")}
+    ep = sc.get("epochs", {})
+    e_lo, e_hi = float(ep.get("poss1_min", 1949.0)) - 1.0, float(ep.get("poss1_max", 1958.0)) + 8.0
     recs = []
     for _, row in df.iterrows():
         sid = str(row["source_id"])
+        # The plate's own epoch when the catalogue supplies one (USNO-B1.0
+        # ``Epoch`` for a single-detection object IS the E-plate date).
+        t0 = None
+        try:
+            e = float(row.get("epoch_poss1", np.nan))
+            if np.isfinite(e) and e_lo <= e <= e_hi:
+                t0 = e
+        except (TypeError, ValueError):
+            t0 = None
         recs.append(vetmod.epoch_propagation_check(
             float(row["ra_deg"]), float(row["dec_deg"]),
-            by_id.get(sid, pd.DataFrame()), sc))
+            by_id.get(sid, pd.DataFrame()), sc, epoch_poss1=t0))
     out = df.copy().reset_index(drop=True)
     for k in recs[0] if recs else []:
         out[k] = [r[k] for r in recs]
@@ -225,11 +265,50 @@ def stage_report(cfg: Config, sc: dict, df: pd.DataFrame, prov: dict,
         if "budget_verdict" in df.columns else 0
 
     keep = [c for c in ("source_id", "ra_deg", "dec_deg", "sample", "class",
-                        "glat_deg", "ecl_lat_deg", "poss1_e", "w1", "w2", "w3",
-                        "w4", "2mass_ks", "n_ir_bands", "tdust_fit_k",
+                        "glat_deg", "ecl_lat_deg", "poss1_e", "epoch_poss1",
+                        "usnob_flags", "r1_sg", "gaia_g", "ps1_r", "w1", "w2", "w3",
+                        "w4", "w3_lim", "w4_lim", "2mass_j", "2mass_ks", "wise_ccf",
+                        "wise_id", "allwise_sep_arcsec", "n_ir_neighbours",
+                        "bright_nb_gmag", "bright_nb_sep_arcsec", "pm_recovered",
+                        "pm_total_mas_yr", "n_ir_bands", "tdust_fit_k",
                         "eta_max", "eta_lo", "eta_hi", "budget_verdict",
-                        "ftk_class", "vet_flags", "p_chance_match")
+                        "ftk_class", "vet_flags", "p_chance_match", "class_reason")
             if c in df.columns]
+
+    # The funnel: how many objects each stage let through, in order.
+    n_with_ir = int(df.apply(lambda r: cls.n_ir_bands(r) > 0, axis=1).sum())
+    n_no_modern = int((~df.apply(cls.has_modern_optical, axis=1)).sum())
+    n_ir_no_modern = int(df.apply(
+        lambda r: cls.n_ir_bands(r) > 0 and not cls.has_modern_optical(r), axis=1).sum())
+    n_resid = int((df["class"] == "RESIDUAL_UNEXPLAINED").sum()) if "class" in df else 0
+    funnel = {
+        "1_sample": int(len(df)),
+        "2_no_modern_optical_within_5arcsec": n_no_modern,
+        "3_with_any_ir_detection": n_with_ir,
+        "4_ir_present_and_optically_absent": n_ir_no_modern,
+        "5_residual_after_population_cascade": n_resid,
+        "6_survive_every_veto": int(len(surv)),
+        "7_energy_conserving_obscuration": int(len(cons)),
+        "7_ir_too_faint": int(len(faint)),
+    }
+    coverage = {}
+    p_led = out_dir / "field_ledger.json"
+    if p_led.exists():
+        try:
+            led = json.loads(p_led.read_text())
+            ok = [f for f in led.get("fields", []) if f.get("status") in ("ok", "cached")]
+            coverage = {
+                "n_fields_ok": len(ok),
+                "n_fields_requested": led.get("n_fields_requested"),
+                "field_radius_deg": led.get("radius_deg"),
+                "area_deg2": round(len(ok) * float(led.get("area_deg2_per_field", 0.0)), 3),
+                "n_usnob1_raw_rows": int(sum(f.get("n_raw", 0) for f in ok)),
+                "n_poss1_red_only": int(sum(f.get("n_poss1_only", 0) for f in ok)),
+                "fields_failed": [f["field_id"] for f in led.get("fields", [])
+                                  if f.get("status") not in ("ok", "cached", "empty")],
+            }
+        except Exception as e:                                 # noqa: BLE001
+            coverage = {"error": str(e)}
     # survivors.csv is committed back, so it is capped; classified.csv is the
     # full table and travels as a workflow artifact only.
     max_csv = 5000
@@ -242,11 +321,20 @@ def stage_report(cfg: Config, sc: dict, df: pd.DataFrame, prov: dict,
     summary = {
         "channel": "shroud",
         "verdict": verdict,
-        "degraded": verdict not in ("VO_ARCHIVE",),
+        # A reconstruction with its own stated selection function is a real
+        # measurement; a 127-row fallback or a half-archive is not.
+        "degraded": verdict not in ("VO_ARCHIVE", "USNOB1_RECONSTRUCTION",
+                                    "VIZIER_SOLANO_TABLE", "LOCAL_INPUT"),
         "acquire_note": prov.get("note", ""),
-        "acquire_per_catalog_rows": prov.get("per_catalog_rows", {}),
+        "acquire_per_sample_rows": prov.get("per_sample_rows",
+                                            prov.get("per_catalog_rows", {})),
         "n_sample": int(len(df)),
+        "funnel": funnel,
+        "sky_coverage": coverage,
         "population": pop.to_dict("records"),
+        "population_by_sample": (
+            df.groupby(["sample", "class"]).size().rename("n").reset_index()
+            .to_dict("records") if {"sample", "class"} <= set(df.columns) else []),
         "obscuration_vs_destruction": ratio,
         "chance_match_null": null_stats or {},
         "budget_verdicts": (df["budget_verdict"].value_counts().to_dict()
@@ -296,8 +384,26 @@ def _report_md(s: dict, sc: dict) -> str:
                      f"({len(r.get('attempts', []))} URL(s) tried)")
         return "\n".join(L) + "\n"
 
-    L += [f"Sample: **{s['n_sample']}** sources.", "",
-          "## Population breakdown", "",
+    L += [f"Sample: **{s['n_sample']}** sources.", ""]
+    per = s.get("acquire_per_sample_rows") or {}
+    if per:
+        L += ["| sample | rows |", "|---|---:|"]
+        L += [f"| {k} | {v} |" for k, v in per.items()]
+        L.append("")
+    cov = s.get("sky_coverage") or {}
+    if cov.get("n_fields_ok"):
+        L += ["## Sky coverage (USNO-B1.0 reconstruction)", "",
+              f"- fields fetched: {cov.get('n_fields_ok')} / {cov.get('n_fields_requested')}"
+              f" of radius {cov.get('field_radius_deg')} deg = "
+              f"**{cov.get('area_deg2')} deg^2**",
+              f"- USNO-B1.0 rows returned (Ndet = 1, R1 <= limit): {cov.get('n_usnob1_raw_rows')}",
+              f"- POSS-I-red-only objects: {cov.get('n_poss1_red_only')}", ""]
+    fun = s.get("funnel") or {}
+    if fun:
+        L += ["## Funnel", "", "| stage | n |", "|---|---:|"]
+        L += [f"| {k} | {v} |" for k, v in fun.items()]
+        L.append("")
+    L += ["## Population breakdown", "",
           "The first population analysis of this sample.", "",
           "| class | n | fraction |", "|---|---:|---:|"]
     for r in s.get("population", []):
@@ -355,7 +461,9 @@ def _report_md(s: dict, sc: dict) -> str:
 # --- driver -----------------------------------------------------------------
 def shroud_run(cfg: Config | None = None, stage: str = "all",
                allow_network: bool = True, max_sources: int = 0,
-               input_parquet: str | Path | None = None) -> dict:
+               input_parquet: str | Path | None = None, n_fields: int | None = None,
+               field_radius_deg: float | None = None, field_seed: int | None = None,
+               acquire_deadline_s: float | None = None) -> dict:
     cfg = cfg or load_config()
     sc = load_shroud_config(cfg)
     out_dir = cfg.root / "results" / "shroud"
@@ -367,7 +475,11 @@ def shroud_run(cfg: Config | None = None, stage: str = "all",
         prov = {"verdict": "LOCAL_INPUT", "routes": [],
                 "note": f"analysing {input_parquet}"}
     elif stage in ("acquire", "all"):
-        df, prov = stage_acquire(cfg, sc, out_dir, allow_network=allow_network)
+        df, prov = stage_acquire(cfg, sc, out_dir, allow_network=allow_network,
+                                 n_fields=n_fields, field_radius_deg=field_radius_deg,
+                                 field_seed=field_seed, deadline_s=acquire_deadline_s)
+        print(f"[shroud] acquire: {prov.get('verdict')} "
+              f"{prov.get('per_sample_rows', {})}")
         if stage == "acquire":
             return {"stage": "acquire", **prov}
     else:

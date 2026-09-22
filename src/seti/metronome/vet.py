@@ -65,6 +65,16 @@ DEFAULT_VET: dict = {
     "jitter_max": 0.05,
     "Q_watch": 0.6,
     "jitter_watch": 0.12,
+    # The CORE route to the same quality: when a natural flare background is
+    # mixed with the ticks, the rms over all events fails while the events at
+    # the clock phase are a perfect clock.  Strict: >= f_core_min of all events
+    # inside +-phase_window (0.05) cycle AND the core jitter <= jitter_max over
+    # >= core_n_min core events; watch: f_core_watch and jitter_watch.
+    # Rotational modulation (rate ∝ 1 + cos) has f_in_window ≈ 0.20 and a core
+    # jitter ≈ 0.087, below both gates.
+    "f_core_min": 0.6,
+    "f_core_watch": 0.4,
+    "core_n_min": 8,
     "energy_p_max": 0.01,
     "instrumental_periods": {
         "kepler": {"long_cadence": 0.020434, "momentum_dump": 3.0,
@@ -129,26 +139,66 @@ def periodic_variable(period: float, catalogued, harmonics=None, tol: float = 0.
     return False, None
 
 
-def quality_pass(rec: dict, conf: dict, *, strict: bool) -> tuple[bool, list[str]]:
-    """Does the phase concentration meet the clock threshold (strict or watch)?"""
-    q, j = float(rec.get("Q", np.nan)), float(rec.get("jitter", np.nan))
+def _f(rec: dict, key: str) -> float:
+    try:
+        return float(rec.get(key, np.nan))
+    except (TypeError, ValueError):
+        return float("nan")
+
+
+def core_pass(rec: dict, conf: dict, *, strict: bool) -> tuple[bool, list[str]]:
+    """The core route: enough events AT the clock phase, and those events a
+    clock.  Robust to a natural flare background the rms route is not."""
+    c = dict(DEFAULT_VET, **(conf or {}))
+    f_in, jc, nc = _f(rec, "f_in_window"), _f(rec, "jitter_core"), int(rec.get("n_core", 0) or 0)
+    f_min = float(c["f_core_min"] if strict else c["f_core_watch"])
+    j_max = float(c["jitter_max"] if strict else c["jitter_watch"])
     why = []
+    if not (np.isfinite(f_in) and f_in >= f_min):
+        why.append(f"f_in_window<{f_min}")
+    if not (np.isfinite(jc) and jc <= j_max):
+        why.append(f"jitter_core>{j_max}")
+    if nc < int(c["core_n_min"]):
+        why.append(f"n_core<{c['core_n_min']}")
+    return (not why), why
+
+
+def quality_pass(rec: dict, conf: dict, *, strict: bool) -> tuple[bool, list[str]]:
+    """Does the phase concentration meet the clock threshold (strict or watch)?
+
+    Two routes, either suffices: the rms route (``Q`` and ``jitter`` over every
+    event) and the core route (:func:`core_pass`).  The integer-gap test, on
+    the strict tier, accepts the core events' gaps as well as everyone's: a
+    background flare between two ticks splits one integer gap into two
+    non-integer ones without the ticks having moved.
+    """
+    c = dict(DEFAULT_VET, **(conf or {}))
+    q, j = _f(rec, "Q"), _f(rec, "jitter")
+    why = []
+    q_min = float(c["Q_min"] if strict else c["Q_watch"])
+    j_max = float(c["jitter_max"] if strict else c["jitter_watch"])
+    rms_why = []
+    if not (np.isfinite(q) and q >= q_min):
+        rms_why.append(f"Q<{q_min}")
+    if not (np.isfinite(j) and j <= j_max):
+        rms_why.append(f"jitter>{j_max}")
+    core_ok, core_why = core_pass(rec, c, strict=strict)
+    if rms_why and not core_ok:
+        why.extend(rms_why)
+        why.extend("core:" + w for w in core_why)
     if strict:
-        if not (np.isfinite(q) and q >= float(conf["Q_min"])):
-            why.append(f"Q<{conf['Q_min']}")
-        if not (np.isfinite(j) and j <= float(conf["jitter_max"])):
-            why.append(f"jitter>{conf['jitter_max']}")
-        gf, ng = float(rec.get("gap_integer_frac", np.nan)), int(rec.get("n_gaps_used", 0) or 0)
-        if ng >= int(conf["gap_min_count"]):
-            if not (np.isfinite(gf) and gf >= float(conf["gap_frac_min"])):
-                why.append(f"gap_integer_frac<{conf['gap_frac_min']}")
+        gf, ng = _f(rec, "gap_integer_frac"), int(rec.get("n_gaps_used", 0) or 0)
+        gfc, ngc = _f(rec, "gap_integer_frac_core"), int(rec.get("n_gaps_core", 0) or 0)
+        best_n = max(ng, ngc)
+        if best_n >= int(c["gap_min_count"]):
+            ok_all = ng >= int(c["gap_min_count"]) and np.isfinite(gf) \
+                and gf >= float(c["gap_frac_min"])
+            ok_core = ngc >= int(c["gap_min_count"]) and np.isfinite(gfc) \
+                and gfc >= float(c["gap_frac_min"])
+            if not (ok_all or ok_core):
+                why.append(f"gap_integer_frac<{c['gap_frac_min']}")
         else:
             why.append("gap_integer_frac_unmeasurable")
-    else:
-        if not (np.isfinite(q) and q >= float(conf["Q_watch"])):
-            why.append(f"Q<{conf['Q_watch']}")
-        if not (np.isfinite(j) and j <= float(conf["jitter_watch"])):
-            why.append(f"jitter>{conf['jitter_watch']}")
     return (not why), why
 
 
@@ -200,14 +250,21 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
     if not reached:
         flags.append("variability_catalogue_unreached")
 
-    p_sh = float(rec.get("p_shuffle", np.nan))
-    gf = float(rec.get("gap_integer_frac", np.nan))
+    p_sh = _f(rec, "p_shuffle")
+    gf = _f(rec, "gap_integer_frac")
     ng = int(rec.get("n_gaps_used", 0) or 0)
+    gfc = _f(rec, "gap_integer_frac_core")
+    ngc = int(rec.get("n_gaps_core", 0) or 0)
+    # clock-like gaps among ALL events or among the CORE events both clear the
+    # star of "bursty"; a background flare between two ticks is not burstiness
+    gaps_clocklike = (ng >= int(c["gap_min_count"]) and np.isfinite(gf)
+                      and gf >= float(c["gap_frac_min"])) or \
+        (ngc >= int(c["gap_min_count"]) and np.isfinite(gfc) and gfc >= float(c["gap_frac_min"]))
     if (np.isfinite(p_sh) and p_sh >= float(c["shuffle_alpha"])
-            and ng >= int(c["gap_min_count"]) and np.isfinite(gf)
-            and gf < float(c["gap_frac_min"])):
+            and ng >= int(c["gap_min_count"]) and not gaps_clocklike):
         flags.append("bursty_random")
-        detail["bursty_random"] = {"p_shuffle": p_sh, "gap_integer_frac": gf}
+        detail["bursty_random"] = {"p_shuffle": p_sh, "gap_integer_frac": gf,
+                                   "gap_integer_frac_core": gfc}
 
     ok_watch, why_watch = quality_pass(rec, c, strict=False)
     if not ok_watch:
@@ -335,5 +392,5 @@ def calibrate_jitter(vetted: list[dict], conf: dict | None = None) -> dict:
 
 
 __all__ = ["DEFAULT_VET", "HARD_VETO_ORDER", "REPORT_FLAGS", "assign_tiers",
-           "cadence_alias", "calibrate_jitter", "periodic_variable", "quality_pass",
-           "rejection_counters", "rotation_alias", "vet_star"]
+           "cadence_alias", "calibrate_jitter", "core_pass", "periodic_variable",
+           "quality_pass", "rejection_counters", "rotation_alias", "vet_star"]

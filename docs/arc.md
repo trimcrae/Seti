@@ -405,16 +405,20 @@ socket: every route takes an injectable fetch/query callable.
 
 ## 9. What the runs measured (2026-09-22)
 
-> **State of the committed stage-2 files.**  Three stage-2 runs wrote into
-> `results/arc/stage2/` and two of them were cancelled, so the files there are
-> **not all from one run**: `stars.json` is run 35744902798 (4 stars, the
-> per-star checkpoint at 15:26:18 UTC before it hung), while `summary.json`,
-> `flares.csv` and `census.csv` are still run 35675112803 (30 stars) because a
-> cancelled run never reaches the code that writes them.  Run 35738785437's
-> 21-star checkpoint — the one §9.1a tabulates — is at commit `c751f006`.  Run
-> **35774408864** re-runs every star named in this section under the three
-> wall clocks and will replace all four files coherently; until it lands, read
-> each file against the run id above it, not against `summary.json`.
+> **State of the committed stage-2 files.**  `summary.json` and `stars.json`
+> are both run **35744902798** (4 stars): the run was cancelled at the job
+> cap, and a cancelled run writes the per-star checkpoint but never reaches
+> the code that writes the summary, so `summary.json` was left behind from run
+> 35675112803 describing 30 *different* stars.  It has been rebuilt from the
+> checkpoint with `arc-stage2 --stage summarise`, and its `summary_source`
+> field names the file and run it came from.  `census.csv` is still run
+> 35675112803.  Run 35738785437's 21-star checkpoint — the one §9.1a
+> tabulates — is at commit `c751f006`.  Run **35774408864** re-runs every star
+> named in this section under the three wall clocks and will replace all four
+> files coherently.
+>
+> **The channel verdict is `NO_CEILING_EXCESS` and that is correct** — see
+> §9.5 before reading §9.4 as anything else.
 
 ### 9.1 The stage-1 funnel
 
@@ -549,7 +553,9 @@ R = 1.089 R☉, replacing the Shibayama star table's 5378 K / 1.300 R☉):
 ### 9.4 KIC 9418692 on the pixels (run 35744902798)
 
 Run **35744902798** put its Yang & Liu record on the target pixel files.  It
-is the first object in this channel to pass **both** tests:
+is the first object in this channel that the ceiling test and the centroid
+test both **failed to exclude** — which is not the same as passing, and §9.5
+is why.  What was measured:
 
 | | |
 |---|---|
@@ -563,8 +569,59 @@ is the first object in this channel to pass **both** tests:
 
 **The amplitude question of §9.3 is settled by the star itself**, and it
 settles *between* the two catalogues: 3.84e-4 sits between Santos's 2.008e-4
-(ξ = +0.715) and Shibayama's 6.0e-4 (ξ = +0.002).  The larger of catalogue and
-quarter is the conservative choice, so +0.292 is the headline.
+(ξ = +0.715) and Shibayama's 6.0e-4 (ξ = +0.002).
+
+### 9.5 Why this is still not a candidate
+
+**ξ = +0.292 is smaller than the systematic on the number it is made of.**
+ξ = log E_flare − log E_mag, so a factor in the flare energy is a dex in ξ
+one-for-one.  Re-measuring the *same catalogued flares* from the *same light
+curves* gives (`flare_energy_scale` in `stage2/summary.json`):
+
+| | |
+|---|---|
+| flares re-measured | 10, across 3 stars |
+| re-measured / catalogue | **0.16 to 3.30**, median **0.55** |
+| median offset | **−0.26 dex** |
+| KIC 9418692's own 6 flares | 0.472, 0.543, 0.503, 0.559, 0.162, 0.566 |
+
+On the re-measured energies the same star gives **ξ = +0.045 on 2 flares** —
+an 11 % excess.  So the honest statement of the measurement is not "+0.292";
+it is **ξ ∈ [+0.045, +0.292] against an energy scale uncertain at ±0.3 dex
+with 0.8 dex excursions**.  That interval is not distinguishable from zero,
+and it is why `results/arc/summary.json` still reads `NO_CEILING_EXCESS` and
+why that verdict is *correct*.
+
+**The pixel test did not clear the veto that excluded this star, and could
+not have.**  `first_veto = companion_suspect` comes from **Gaia RUWE =
+1.5562**.  The centroid clears Gaia-**resolved** neighbours — here the two at
+3.20″ and 5.18″, rejected at > 3σ.  RUWE is a statement about a companion
+inside ~0.1″, which is unresolved by Gaia and by a 4″ Kepler pixel alike, so
+it passes through the pixel test untouched.  **An M dwarf companion is the
+standard mundane explanation for a superflare on a solar-type star**, and it
+is exactly the configuration RUWE 1.556 points at: the flare would be an
+ordinary M-dwarf flare, and attributing its energy to the 1.089 R☉ primary's
+luminosity would overestimate it by orders of magnitude.  `vetoed_excess` is
+therefore the **correct** final tier, and it is not a bookkeeping artefact.
+
+The run-level verdict now says so:
+`CEILING_EXCESS_ON_TARGET_BUT_COMPANION_UNRESOLVED`, not
+`..._PENDING_SPECTROSCOPY`, which read as a clearance.
+
+**What would actually decide it**, in order of decisiveness:
+
+1. **The flare colour.** An M-dwarf flare and a solar-type flare have
+   different `Kp − ...` behaviour; Kepler is single-band, so this needs the
+   short-cadence profile or another mission's simultaneous coverage.
+2. **Gaia DR3 non-single-star solutions** and archival spectroscopy — does
+   the RUWE 1.556 companion exist, and what is it?
+3. **Tracing the 0.26 dex energy offset.** Until the catalogue and the
+   re-measurement agree, no ξ near zero in this channel means anything.
+
+Until at least (3) and one of (1)/(2) land, **the channel has no candidate**,
+and the right reading of ARC's stage 2 is the *methodological* one: the
+centroid test works, it moved 5 of 58 flares onto a neighbour, and it closed
+`stellar_params_assumed` on 20 of 21 stars.
 
 **The census is no longer what carries the argument.**  Inside one Kepler
 pixel the target supplies 99.73 % of the flux and the two neighbours
@@ -593,6 +650,9 @@ from the target across four quarters (Q3, Q9, Q13, Q16).
    ξ in this document by +1 dex and is why the *conservative* spot area, not
    the nominal one, is the headline.
 
-This is not a null and it is not a candidate.  It is **one object that has
-now survived the two tests that killed everything else**, with two named,
-measurable killers left.
+It is **not a candidate** (§9.5): its excess, +0.045 to +0.292 depending on
+which flare energy you believe, is inside the ±0.3 dex systematic on the
+energy scale itself, and the veto that excluded it — an unresolved companion
+at RUWE 1.556 — is the one thing the centroid cannot address.  It is the one
+object the channel has not managed to exclude, which is a reason to measure
+three specific things, not to claim anything.

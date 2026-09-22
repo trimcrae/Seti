@@ -10,11 +10,17 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
-### ARC: KIC 9418692 passed the pixel test and is still above the ceiling, 2026-09-22
+### ARC: NO candidate — KIC 9418692's excess is inside its own energy systematic, 2026-09-22
 
-S59 (`docs/arc.md` §9.4). Run **35744902798** put the channel's one
-ceiling-excess star on its target pixel files. It is **the first object here
-to survive both tests**:
+**Correction to the entry as first written**, which called this star a
+survivor of both tests. It is not. `results/arc/summary.json` reads
+`NO_CEILING_EXCESS` and **that verdict is correct**; §9.5 of `docs/arc.md`
+now carries the reasoning and the stage-2 verdict has been renamed
+`CEILING_EXCESS_ON_TARGET_BUT_COMPANION_UNRESOLVED` so it cannot be read as a
+clearance.
+
+S59. Run **35744902798** put the channel's one ceiling-excess star on its
+target pixel files and measured this:
 
 | | |
 |---|---|
@@ -25,24 +31,51 @@ to survive both tests**:
 | centroid | **5 of 6 tested flares `on_target`**, 0.100–0.266 px (**1.0–2.6σ**), Q3/Q9/Q13/Q16, every Gaia neighbour rejected at > 3σ |
 
 The amplitude ambiguity that dominated this object is settled **by the star
-itself**, and it lands between the catalogues: 3.84e-4 against Santos's
-2.008e-4 (ξ +0.715) and Shibayama's 6.0e-4 (ξ +0.002). The census is no
-longer what carries it — the two neighbours need **287 %** and **305 %**
-brightenings, under the 20× arithmetic threshold and therefore *not* excluded
-by the census; the centroid excludes them directly.
+itself**, between the catalogues: 3.84e-4 against Santos's 2.008e-4 (ξ +0.715)
+and Shibayama's 6.0e-4 (ξ +0.002).
 
-**Three things are open, and none is argued away.** (1) The catalogue
-energies are the dominant systematic: re-measured from the light curve the
-same star gives **ξ = +0.045** on 2 flares of 6 independent events — *at* the
-ceiling. Its significance is a range, **+0.045 to +0.292**, not a number.
-(2) **Gaia RUWE = 1.5562** is unresolved; a companion inside ~0.1″ is
-invisible to Gaia and to the pixels alike, so `flare_on_target` does not
-exclude it. (3) `f = 1` is the channel's founding assumption against
-Okamoto+2021's own f ≈ 0.1.
+**Why that is still not a detection — two reasons, both fatal on their own.**
+
+**1. ξ = +0.292 is smaller than the systematic on the number it is made of.**
+ξ = log E_flare − log E_mag, so a factor in the flare energy is a dex in ξ
+one-for-one. Re-measuring the *same catalogued flares* from the *same light
+curves* gives ratios of **0.16 to 3.30** over 10 flares (median **0.55**,
+−0.26 dex); KIC 9418692's own six are 0.472, 0.543, 0.503, 0.559, 0.162,
+0.566. On the re-measured energies the star gives **ξ = +0.045** — an 11 %
+excess. The honest statement is **ξ ∈ [+0.045, +0.292] against an energy
+scale uncertain at ±0.3 dex**, which is not distinguishable from zero.
+`summary.json` now carries `flare_energy_scale` and both readings per star.
+
+**2. The pixel test did not clear the veto that excluded this star, and could
+not have.** `first_veto = companion_suspect` is **Gaia RUWE = 1.5562**. The
+centroid clears Gaia-*resolved* neighbours — here at 3.20″ and 5.18″, rejected
+at > 3σ. RUWE is about a companion inside **~0.1″**, invisible to Gaia and to
+a 4″ Kepler pixel alike, so it passes the pixel test untouched. **An M dwarf
+companion is the standard mundane reading of a superflare on a solar-type
+star**, and attributing an ordinary M-dwarf flare to the 1.089 R☉ primary's
+luminosity would overestimate its energy by orders of magnitude. So
+**`vetoed_excess` is the correct final tier**, not a bookkeeping artefact.
+
+(`f = 1` is a third, standing assumption against Okamoto+2021's own f ≈ 0.1,
+worth +1 dex on every ξ in this channel.)
+
+**What would decide it:** the flare colour (M-dwarf vs solar-type); Gaia DR3
+non-single-star solutions and archival spectroscopy for the RUWE companion;
+and tracing the 0.26 dex catalogue-vs-remeasured energy offset. Until the
+last of those lands, no ξ near zero in this channel means anything.
 
 **Run 4 (35774408864) is queued** on the fixed clocks, naming KIC 9418692,
 8487271, 11507705 and the five on-neighbour stars so one coherent
 `stars.json` / `summary.json` / `flares.csv` covers all of them.
+
+**The committed files disagreed with each other and now do not.** Both recent
+stage-2 runs were cancelled, and a cancelled run writes the per-star
+`stars.json` checkpoint but never reaches the code that writes the summary —
+so `stage2/summary.json` was left behind from run 35675112803, describing 30
+stars that the 11-hours-newer per-star file contradicted. `summarise_stars`
+is now reachable as `arc-stage2 --stage summarise`, rebuilds the summary from
+the checkpoint, and records in `summary_source` which file and run it came
+from. Regenerated: 4 stars, not 30.
 
 **A third wall clock was missing and is now in.** Run 35744902798 checkpointed
 4 stars in 100 s and then sat for **four hours** on the fifth: `stage2_run`

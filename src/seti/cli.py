@@ -1108,6 +1108,13 @@ def _cmd_roman(args, cfg):
     return _roman_main(list(args.rest))
 
 
+# --- GRAVE ---
+def _cmd_grave(args, cfg):
+    from .grave.run import main as _grave_main
+
+    return _grave_main(list(args.rest))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="seti", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2306,6 +2313,14 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- GRAVE ---
+    p = sub.add_parser("grave",
+                       help="GRAVE (S56): the fission-product and refined-particulate vectors in "
+                            "Earth's sedimentary record (SGP / EarthChem / GEOROC), age-stacked "
+                            "across extinction boundaries; flags are passed through to seti.grave.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_grave)
 
     args = parser.parse_args(argv)
     cfg = load_config()

@@ -71,6 +71,40 @@ standard error, 1.2533 × MAD / √n, goes into the error bar:
 `err = √((err·sd)² + (se_bias·err)²)`. A thin-but-usable null widens the bar instead of
 sharpening a spurious signal.
 
+### 2a. And `combined_sig` was never the evidence it looked like
+
+Run 35747997902's shard 0 finished all 36 of its spectra three minutes before the run was
+cancelled, and its job log preserves one line per measurement. Across its 24
+`absent_in_exposures` lines, **calibrated**:
+
+| statistic | median | range |
+|---|---|---|
+| max per-exposure σ | **−0.40** | −2.1 … +0.9 |
+| combined σ | **−2.60** | −7.6 … +1.0 |
+| stack σ | **+1.30** | +0.3 … +3.8 |
+
+The stack is positive in **24 of 24**; the combined is negative in 23 of 24; the two
+**disagree in sign in 23 of 24**.
+
+The per-exposure significances are consistent with zero — which is what an unbiased
+estimator on a line-free wavelength should give, and after the offset null it is what we
+get. The combined number is not extra evidence on top of them. An inverse-variance
+combination multiplies a residual per-exposure bias *b* by **√N**, and across these lines
+`combined / max` has median 4.2, i.e. N ≈ 18. A harmless −0.4 per exposure becomes −1.7;
+a −1.0 becomes −4.2. No line, and no further bias, anywhere.
+
+So the −2.2 to −10.9 σ figures that drove this channel from its first run — and that were
+twice diagnosed here as a continuum systematic — are largely **√N amplification of a small
+residue**. The continuum fixes were still right: they took the per-exposure bias from
+several sigma down to −0.4. But the headline number was never what it appeared to be, and
+`median_exposure_sig` is now reported beside it for exactly this reason.
+
+**The stack is the statistic the classification should turn on.** It is measured on the
+same exposures with one continuum fit on their combined spectrum, so it carries neither
+the low-S/N continuum bias nor the √N factor. Rebuilding the rules around it is the next
+substantive change, and it was deliberately not made at the end of the session that found
+this, on a rule that decides what gets killed.
+
 ### 3. The stack of the exposures, as a second reference
 
 `stack_exposures()` builds the inverse-variance mean of the exposure HDUs on the coadd's
@@ -543,14 +577,21 @@ now builds the matrix from `n_shards`, so 35758868818 asks for three.
 
 ### Next decisive action
 
-1. Land 35758868818 so all 167 lines are measured once, with the offset null and the
-   stack, by one commit.
-2. Read 35751666444. For the strongest candidate it decides four things at once: whether
+1. **Rebuild the classification around the stack**, now that shard 0 has shown the
+   per-exposure combination to be √N × a residual bias and the stack to be positive in
+   24 of 24 of the same lines. The per-exposure values still answer the question they
+   were introduced for — *distribution* across exposures, transient vs persistent — but
+   they should be compared with each other, not with zero, and presence should be read
+   off the stack. Needs a `CKPT_VERSION` bump and a fresh run.
+2. Land 35758868818 so all 167 lines are measured once, with the offset null and the
+   stack, by one commit. (Its `absent_in_exposures` verdicts will still be kills, so the
+   candidate list is unaffected; what changes under item 1 is what the numbers mean.)
+3. Read 35751666444. For the strongest candidate it decides four things at once: whether
    Hβ (5043.9 Å) and [O III] (5194.9 Å) are there at z = 0.037268; how many **distinct
    fibres** its eight "other epochs" are; whether other fibres of plate 412 spike at
    6809.3 Å; and whether other M1 dwarfs do.
-3. Close the stated limitation: pass the SPARCL coadd arrays into `desi_measure_at` so
+4. Close the stated limitation: pass the SPARCL coadd arrays into `desi_measure_at` so
    the DESI coadd significance is calibrated like the SDSS one. Needs a `CKPT_VERSION`
    bump, so it waits for a moment when no run is in flight.
-4. If 8578.3 Å survives all of it, the next step is outside SDSS: a complete airglow
+5. If 8578.3 Å survives all of it, the next step is outside SDSS: a complete airglow
    atlas for 8500–8700 Å, where the hand-kept list jumps from 8548.5 to 8620.8 Å.

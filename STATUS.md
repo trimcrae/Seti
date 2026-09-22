@@ -121,6 +121,29 @@ outside the window the triage stored: Hβ at 5043.9 Å and [O III] 5008 at 5194.
 either reaches 4 σ, the persistence, the second epoch and the unresolved width are all
 explained at once — a real source in the fibre, just not the star.
 
+**The headline number was never the evidence it looked like.** Run 35747997902's shard 0
+finished all 36 of its spectra three minutes before the run was cancelled, and its job log
+preserves the calibrated measurements. Across its 24 `absent_in_exposures` lines the
+median **max per-exposure** significance is **−0.40** — consistent with zero, which is
+what an unbiased estimator on a line-free wavelength should give — while the median
+**combined** is **−2.60**, and the **stack is positive in 24 of 24**. The combined and the
+stack disagree in *sign* in 23 of 24.
+
+The combined number is not extra evidence: an inverse-variance combination multiplies a
+residual per-exposure bias *b* by **√N**, and `combined / max` has median 4.2 here, i.e.
+N ≈ 18. A harmless −0.4 per exposure becomes −1.7; a −1.0 becomes −4.2, with no line
+anywhere. So the −2.2 to −10.9 σ figures that drove this channel from its first run, and
+that I twice diagnosed as a continuum systematic, are largely √N amplification of a small
+residue. The continuum fixes were still right — they took the per-exposure bias from
+several sigma to −0.4 — but the number quoted on top of them was not what it appeared to
+be. `median_exposure_sig` is now reported beside it, and the `absent_in_exposures` basis
+string no longer asserts "the coadd feature is not in its inputs".
+
+The stack — same exposures, one continuum fit on their combined spectrum, so neither the
+low-S/N continuum bias nor the √N factor — is the statistic the classification should turn
+on. Rebuilding the rules around it is the next substantive change, deliberately not made
+at the end of the session that found it, on a rule that decides what gets killed.
+
 **In flight, and a correction.** I cancelled run 35747997902 — the calibrated full run —
 believing it had sat queued for 98 minutes without a single job starting. That was wrong.
 Its shard 3 started at 12:16 PM EDT and shard 0 ran 1:05–1:08 PM; only shards 1 and 2

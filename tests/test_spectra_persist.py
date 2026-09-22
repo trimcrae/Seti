@@ -456,6 +456,23 @@ def test_final_verdict_map(cls, expect):
         == "KILLED_known_line_rest_frame"
 
 
+def test_absent_in_exposures_splits_on_whether_the_coadd_had_anything():
+    """"The coadd feature is not in its inputs" is the wrong sentence when
+    there was no coadd feature.  A calibrated coadd below 5 sigma means the
+    line was never there; only one the coadd DOES show and the exposures do not
+    is the coaddition artefact."""
+    base = {"persistence_class": "absent_in_exposures", "known_line_match": False}
+    assert persist.final_verdict({**base, "coadd_sig_cal": 1.7}) \
+        == "KILLED_not_significant_in_coadd"
+    assert persist.final_verdict({**base, "coadd_sig_cal": 11.9}) \
+        == "KILLED_absent_in_exposures"
+    # Falls back to the uncalibrated coadd significance when no null was run.
+    assert persist.final_verdict({**base, "coadd_sig": 2.0}) \
+        == "KILLED_not_significant_in_coadd"
+    # And with neither number it stays the conservative label.
+    assert persist.final_verdict(base) == "KILLED_absent_in_exposures"
+
+
 def test_shared_ccd_column_kills_even_a_persistent_line():
     """Two different fibres of one plate with a candidate at the same
     wavelength are two different objects sharing detector columns.  Both cannot

@@ -2448,8 +2448,30 @@ def final_verdict(r) -> str:
             return "KILLED_shared_ccd_column"
     except (TypeError, ValueError):
         pass
-    if cls in ("transient", "absent_in_exposures"):
-        return "KILLED_" + cls
+    if cls == "absent_in_exposures":
+        # Two very different things wear this label.  If the coadd itself does
+        # not reach 5 sigma once measured against its own local scatter, the
+        # line was never there and "the coadd feature is not in its inputs" is
+        # the wrong sentence: there was no coadd feature.  Only a line the
+        # CALIBRATED coadd does show, and the exposures and their stack do not,
+        # is the coaddition artefact this channel exists to catch.  On the
+        # first run's 70 measured lines the calibrated coadd significance is a
+        # median 0.34x the triage's and 51% fall below 3 sigma, so the
+        # distinction covers most of the class.
+        cs = float("nan")
+        for key in ("coadd_sig_cal", "coadd_sig"):
+            try:
+                v = float(r.get(key, float("nan")))
+            except (TypeError, ValueError):
+                v = float("nan")
+            if np.isfinite(v):
+                cs = v
+                break
+        if np.isfinite(cs) and cs < 5.0:
+            return "KILLED_not_significant_in_coadd"
+        return "KILLED_absent_in_exposures"
+    if cls == "transient":
+        return "KILLED_transient"
     if cls == "sky_residual":
         return "KILLED_sky_residual"
     if cls == "persistent":

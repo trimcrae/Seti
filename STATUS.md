@@ -141,6 +141,54 @@ candidate). Stage 2 now shortlists hard-vetoed ceiling-excess stars *first*.
 Liu flares with the Berger radius, plus a Gaia DR3 non-single-star and
 archival-spectroscopy look for the companion RUWE 1.556 only suspects.
 
+### FORGE dispatched — the detector gate is green and the measurement is in flight, 2026-09-22
+
+S47 reads the hot-exozodi population as ~1500 K swarm candidates. The channel
+existed but had never been run, and its injected-signal test was red; both are
+now resolved.
+
+**The gate.** `test_end_to_end_recovers_the_injected_swarm_and_verifies_the_asset`
+passes, and not only locally: CI run **35740042459** on `181dea2f` is green on
+the runner, 32/32 forge tests, ruff clean. Nothing the channel ranks would have
+meant anything until the detector could recover a signal it was handed, so this
+was the precondition for reading any ranking.
+
+**What blocked the measurement was not the science.** `forge.yml` lived only on
+`claude/goap-forge`; GitHub 404s a `workflow_dispatch` for a workflow absent
+from the default branch, so the channel could never be run at all. Merging the
+branch to `main` (`6e2bb280`, purely additive — 15 files, all forge-only plus
+one `docs/channels.md` row and the fenced FORGE block in `cli.py`) registered
+workflow `364339715`. First dispatch: run **35744731075**, `stage=all`,
+`skip_population=true`, queued 11:04 EDT.
+
+**The statistic.** Per star, χ² of a free grey body (T, f) against the
+nano-grain emissivity family Q(λ) = min(1, (2πa/λ)^β), a ≤ 0.5 µm, β ∈ {1, 2},
+over the H/K/L/N excesses plus the polarimetric null, with a per-band
+cross-instrument calibration floor in quadrature and a variability term from
+repeat epochs. Δχ² = χ²_nano − χ²_grey. The Planck arithmetic that defines the
+observable, recomputed and confirmed against the brief: a grey 1500 K body at
+1 % in K gives **6.6 % at 10.5 µm for a G2V star, 7.1 % for F5V, 8.1 % for
+A0V** — and 3.0–3.3 % at L. Sub-micron grains cannot do that, which is the
+whole point of the test.
+
+**Stated plainly, before any result: nano-grain physics is expected to win for
+the well-constrained systems.** The K-bright / N-faint pattern that forces
+small grains is exactly what a Planck swarm cannot produce, so `nano_preferred`
+is the anticipated modal outcome. The deliverable is the ranked
+Planck-consistency list and any survivor of it, not a count of how many stars
+behaved as the standard model says they should.
+
+Kills carried on every candidate: faint companions at the 1 % level (closure
+phases do not exclude them — κ Tuc varied and turned out to be a companion),
+K-vs-N cross-instrument calibration, the cool-nano-grain degeneracy, and the
+sample size (~150 stars with any interferometric excess, far fewer with an
+N-band measurement). A star with no N-band measurement is `N_UNTESTED` and is
+never a candidate; `NO_PLANCK_CONSISTENT_OUTLIER` is a count, not a limit.
+
+Next decisive action: read `results/forge/` from 35744731075 — `probe.json`
+first, for which of the nine VizieR ids actually resolved — then dispatch the
+broadband population leg (`skip_population=false`) separately.
+
 ### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
 
 S52/S53 went from a package that had never been run to a channel with a

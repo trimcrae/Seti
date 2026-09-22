@@ -302,6 +302,25 @@ def test_upload_chunks_shrink_toward_the_ecliptic_poles():
     assert set(pd.concat(c_nep)["source_id"]) == set(nep["source_id"])
 
 
+def test_each_mode_keeps_its_own_summary_beside_the_channel_verdict(tmp_path):
+    """Two dispatches in flight must not overwrite each other's verdict."""
+    import json as _json
+
+    from seti.ignition.run import _write_summary
+
+    f = {"verdict": "NO_IGNITION_CANDIDATE", "denominators": {"sample_mode": "fields"}}
+    t = {"verdict": "IGNITION_CANDIDATES", "denominators": {"sample_mode": "tiles"}}
+    _write_summary(tmp_path, f)
+    _write_summary(tmp_path, t)
+    # summary.json is the CURRENT verdict, and each mode's own record survives.
+    assert _json.loads((tmp_path / "summary.json").read_text())["verdict"] == t["verdict"]
+    assert _json.loads((tmp_path / "summary_fields.json").read_text())["verdict"] == f["verdict"]
+    assert _json.loads((tmp_path / "summary_tiles.json").read_text())["verdict"] == t["verdict"]
+    # An unknown mode gets no tagged copy rather than a file named after nothing.
+    _write_summary(tmp_path, {"verdict": "X", "denominators": {}})
+    assert not (tmp_path / "summary_.json").exists()
+
+
 def test_a_tiles_shard_never_screens_the_fields_mode_parent(tmp_path):
     """A shard whose every tile failed must screen NOTHING, not somebody else's stars.
 

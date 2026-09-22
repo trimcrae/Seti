@@ -821,7 +821,8 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
     pairs_df = pd.DataFrame(pair_rows)
     flags_df = pd.DataFrame(flag_rows)
     if len(pairs_df):
-        pairs_df.sort_values("z_pair", key=lambda s: -s.abs()).to_csv(out_dir / "pairs.csv", index=False)
+        pairs_df.sort_values("z_pair", key=lambda s: -s.abs()).to_csv(out_dir / "pairs.csv",
+                                                                     index=False)
     if len(flags_df):
         flags_df.to_csv(out_dir / "flags.csv", index=False)
     # candidates: anything that exceeded / fired and survives every kill
@@ -842,9 +843,13 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
                              "survives": f.get("survives"), "n_measured": r["n_measured"],
                              "p_misfit": r["misfit"]["p_misfit"], "atmosphere": r["atmosphere"],
                              "teff": r["teff"]})
-    cand_df = pd.DataFrame(cand)
-    if len(cand_df):
-        cand_df.to_csv(out_dir / "candidates.csv", index=False)
+    # Always written, header included: an ABSENT candidates.csv is ambiguous
+    # between "nothing exceeded" and "the assess stage never got here", and
+    # those are not the same statement.
+    cand_cols = ["name", "reference", "kind", "what", "z", "kills", "survives", "n_measured",
+                  "p_misfit", "atmosphere", "teff"]
+    cand_df = pd.DataFrame(cand, columns=cand_cols) if cand else pd.DataFrame(columns=cand_cols)
+    cand_df.to_csv(out_dir / "candidates.csv", index=False)
     survivors = [c for c in cand if c.get("survives")]
     controls = _match_controls(cfg, panels)
     _write_json(out_dir / "controls.json", {"generated_utc": _now(), "controls": controls})

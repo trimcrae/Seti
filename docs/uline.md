@@ -166,11 +166,27 @@ When **every** route fails, every endpoint and every error text is in
 `sources.<source>.routes` and the status stays an honest `QUERY_FAILED`: no
 route ever fabricates a row.
 
-Not yet reachable as tables (listed in S54, deferred): QUIJOTE TMC-1 (1,591
-features, 188 unidentified), GOTHAM, ALCHEMI, PILS, ReMoCA, PRIMOS.  The
-description-word discovery in the probe stage is how they enter: a table that
-appears there gets a `sources:` entry with its v_LSR and linewidth and is
-screened on the next run.
+Not yet reachable as tables (listed in S54, deferred): QUIJOTE TMC-1, GOTHAM,
+ALCHEMI, PILS, ReMoCA, PRIMOS.  The U-line census in the probe stage is how
+they enter: a table that appears there gets a `sources:` entry with its v_LSR
+and linewidth and is screened on the next run.  **No catalogue id is asserted
+blind** — guessing one puts a wrong Doppler shift on every frequency, which
+would show up as `NO_PATTERN` and be indistinguishable from a real absence.
+
+QUIJOTE is the one worth chasing hardest, and the reason is the linewidth, not
+the sample size.  The Yebes 40 m Q-band (31–50 GHz) survey has 1,591 features
+above 1 mK of which **188 remain unidentified** (and ~1,200 unknown features
+above 3σ as of July 2022), and TMC-1 is a cold dark cloud: its lines are
+~0.6 km s⁻¹ wide against Orion KL's 4 and IRC+10216's 30.  The matching
+tolerance there is ~0.06 MHz at 40 GHz, **two orders of magnitude tighter than
+anywhere else in this channel**, so a coincidence carries correspondingly more
+information and a chance alignment is correspondingly rarer.  It is also the
+regime in which the predictor's own error stops being the tolerance and the
+laboratory constants start to matter absolutely — which is the same
+conclusion §4.1a reaches from the other direction.  The published U-line list
+appears to live in conference-proceedings tables rather than a deposited
+catalogue; the census is how it would be found, and `text_routes` is the shape
+of the reader if it is not.
 
 ---
 

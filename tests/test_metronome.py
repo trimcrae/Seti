@@ -61,7 +61,9 @@ from seti.metronome.windows import (
     KEPLER_LC_CADENCE_DAYS,
     Windows,
     guess_time_system,
+    infer_time_grid,
     kepler_quarter_windows,
+    lattice_phase_limits,
     star_windows,
     tess_sector_windows,
     windows_from_events,
@@ -395,7 +397,12 @@ def _sig_record(**kw) -> dict:
     rec = {"status": "scanned", "fdr_significant": True, "fdr_watch": True, "period": 3.137,
            "Q": 0.97, "jitter": 0.005, "f_in_window": 1.0, "gap_integer_frac": 0.95,
            "n_gaps_used": 40, "p_window": 1e-9, "p_shuffle": 0.02, "p_window_source": "empirical",
-           "energy_phase_p": 0.4, "wn_truncated_by_budget": False, "mission": "kepler"}
+           "energy_phase_p": 0.4, "wn_truncated_by_budget": False, "mission": "kepler",
+           # null 3 ran and the star beat it; a record without these is a star
+           # whose pool null could not be run, which is an incomplete vet
+           "p_pool": 0.005, "pn_n_trials": 200, "pn_n_exceed": 0,
+           "jitter_floor": 1e-6, "phase_spacing": 1e-5,
+           "grid_days": KEPLER_LC_CADENCE_DAYS, "grid_source": "measured"}
     rec.update(kw)
     return rec
 
@@ -469,12 +476,15 @@ def test_every_rejection_rule_has_a_counter():
             dict(_sig_record(p_shuffle=0.9, gap_integer_frac=0.05), star_key="k:4"),
             dict(_sig_record(Q=0.2, jitter=0.3), star_key="k:5"),
             dict({"status": "insufficient_events", "star_key": "k:6"}),
-            dict(_sig_record(p_window=0.9), star_key="k:7")]
+            dict(_sig_record(p_window=0.9), star_key="k:7"),
+            dict(_sig_record(p_pool=0.4), star_key="k:8"),
+            dict(_sig_record(pn_n_trials=0, jitter=0.001, jitter_floor=0.001),
+                 star_key="k:9")]
     ctx = {"k:1": {"mission": "tess", "prot": 100.0, "variability_catalogues_reached": True},
            "k:2": {"mission": "kepler", "prot": 11.0, "variability_catalogues_reached": True},
            "k:3": {"mission": "kepler", "prot": 30.0, "variability_catalogues_reached": True,
                    "catalogued_periods": [("vsx", 0.5668, "RRAB")]},
-           "k:4": FULL_CTX, "k:5": FULL_CTX, "k:7": FULL_CTX}
+           "k:4": FULL_CTX, "k:5": FULL_CTX, "k:7": FULL_CTX, "k:8": FULL_CTX, "k:9": FULL_CTX}
     vetted = assign_tiers(recs, ctx, VET)
     first = rejection_counters(vetted)["first_veto"]
     for rule in HARD_VETO_ORDER + ("insufficient_events", "not_significant"):
@@ -482,6 +492,152 @@ def test_every_rejection_rule_has_a_counter():
     flags = rejection_counters(vetted)["flags_raised"]
     for f in REPORT_FLAGS:
         assert f in flags
+
+
+# ---------------------------------------------------------------------------
+# the catalogue's own time lattice, and the null that carries it
+# ---------------------------------------------------------------------------
+def test_infer_time_grid_recovers_a_coarse_lattice_not_the_mission_cadence():
+    """Tu+2022's TESS peak times are spaced by 0.0069 d, five 2-min cadences.
+
+    The mission cadence in configuration says 0.0013889.  A null that snaps to
+    the configured value cannot reproduce the data's lattice, so the lattice
+    has to be MEASURED.
+    """
+    g = 0.0069
+    rng = np.random.default_rng(3)
+    t = 1325.0 + g * np.unique(rng.integers(0, 120000, size=4000))
+    out = infer_time_grid(t)
+    assert out["method"] == "lattice"
+    assert abs(out["grid_days"] / g - 1.0) < 1e-6, out
+    assert out["frac_on_grid"] > 0.999
+
+
+def test_infer_time_grid_reports_no_lattice_for_continuous_times():
+    rng = np.random.default_rng(4)
+    out = infer_time_grid(np.sort(rng.uniform(0.0, 600.0, 3000)))
+    assert not np.isfinite(out["grid_days"])
+    assert out["method"] in ("no_lattice", "too_few_times")
+
+
+def test_lattice_phase_limits_gives_the_jitter_floor_the_rounding_forces():
+    """Rounding peak times to g forces rms phase jitter >= g / (P sqrt 12)."""
+    g = KEPLER_LC_CADENCE_DAYS
+    lim = lattice_phase_limits(0.4232741, g)
+    assert abs(lim["jitter_floor"] - g / 0.4232741 / np.sqrt(12.0)) < 1e-12
+    assert 0.013 < lim["jitter_floor"] < 0.015          # KIC 5879574's floor
+    assert not lim["comb_coarser_than_window"]
+    # a short period against a coarse TESS lattice: the comb IS coarser than
+    # the +-0.05 cycle phase window, so f_in_window is quantised there
+    assert lattice_phase_limits(0.1, 0.0069)["comb_coarser_than_window"]
+    assert not np.isfinite(lattice_phase_limits(3.0, float("nan"))["jitter_floor"])
+
+
+def test_quantisation_limited_is_report_only_and_names_the_floor():
+    # jitter at the floor: flagged, but still a candidate -- the flag says the
+    # tightness is the catalogue's rounding, the pool null says whether to care
+    v = vet_star(_sig_record(jitter=0.001, jitter_floor=0.001), FULL_CTX)
+    assert "quantisation_limited" in v["flags"] and v["tier"] == "candidate"
+    assert v["veto_detail"]["quantisation_limited"]["jitter_floor"] == 0.001
+    v = vet_star(_sig_record(jitter=0.005, jitter_floor=0.0001), FULL_CTX)
+    assert "quantisation_limited" not in v["flags"]
+
+
+def _lattice_catalogue(mission: Windows, grid: float, n_stars: int, n_each: int, seed: int):
+    """Many stars whose events fall at random on ONE coarse lattice.
+
+    Nothing here is periodic: each star's events are uniform over the lattice
+    points inside the windows.  But every event of every star sits at an exact
+    multiple of ``grid``, so at P = grid (and at every rational multiple of it)
+    the phases are identical by construction.  This is the Tu+2022 failure
+    mode with the lattice made coarse enough to see in a unit test.
+    """
+    rng = np.random.default_rng(seed)
+    lat = np.arange(mission.starts[0], mission.stops[-1], grid)
+    lat = lat[mission.contains(lat)]
+    return {i: np.sort(rng.choice(lat, size=n_each, replace=False)) for i in range(n_stars)}
+
+
+def test_pool_null_kills_a_lattice_artefact_that_the_window_null_calls_significant():
+    mission = Windows(np.array([0.0, 220.0]), np.array([180.0, 400.0]),
+                      cadence_days=KEPLER_LC_CADENCE_DAYS, label="two_blocks")
+    grid = 0.7
+    cat = _lattice_catalogue(mission, grid, n_stars=12, n_each=40, seed=7)
+    t = cat[0]
+    pool = np.concatenate([v for k, v in cat.items() if k != 0])
+    w = star_windows(t, mission)
+    rec = analyze_star(t, w, None, dict(SCAN), dict(NULL), np.random.default_rng(5),
+                       pool_times=pool)
+    # The window null snaps to the CONFIGURED cadence (30 min), so it cannot
+    # place an event on the 0.7-d lattice: the star looks like a perfect clock.
+    assert rec["status"] == "scanned"
+    assert rec["jitter"] < 1e-6 and rec["Q"] > 0.999
+    assert rec["p_window"] < 0.05, rec["p_window"]
+    # The pool null draws from the same lattice and is not impressed.
+    assert rec["pool_null_computed"] and rec["pn_n_trials"] > 0
+    assert rec["p_pool"] > 0.05, rec["p_pool"]
+    v = vet_star(dict(rec, fdr_significant=True, fdr_watch=True), FULL_CTX)
+    assert v["first_veto"] == "pool_null_explains", (v["first_veto"], v["flags"])
+    assert v["tier"] == "none"
+
+
+def _clock_on_lattice(mission: Windows, grid: float, period: float, t0: float) -> np.ndarray:
+    k = np.arange(0, int(mission.span / period) + 2)
+    t = np.round((t0 + k * period) / grid) * grid
+    return np.unique(t[mission.contains(t)])
+
+
+def test_pool_null_does_not_kill_a_real_clock_on_the_same_lattice():
+    """The pool is the control: a genuine clock beats it as it beats null 1."""
+    mission = Windows(np.array([0.0, 220.0]), np.array([180.0, 400.0]),
+                      cadence_days=KEPLER_LC_CADENCE_DAYS, label="two_blocks")
+    grid = 0.05
+    cat = _lattice_catalogue(mission, grid, n_stars=12, n_each=60, seed=8)
+    pool = np.concatenate(list(cat.values()))
+    P = 5.23                          # NOT a multiple of the lattice step
+    t = _clock_on_lattice(mission, grid, P, 3.5)
+    assert len(t) >= 40
+    w = star_windows(t, mission)
+    rec = analyze_star(t, w, None, dict(SCAN), dict(NULL), np.random.default_rng(6),
+                       pool_times=pool)
+    assert abs(rec["period"] / P - 1.0) < 1e-3, rec["period"]
+    assert rec["pool_null_computed"] and rec["p_pool"] <= 0.02, rec["p_pool"]
+    v = vet_star(dict(rec, fdr_significant=True, fdr_watch=True), FULL_CTX)
+    assert "pool_null_explains" not in v["flags"]
+    assert v["tier"] in ("candidate", "interest"), (v["tier"], v["flags"])
+
+
+def test_pool_null_that_could_not_run_is_flagged_and_blocks_the_candidate_tier():
+    v = vet_star(_sig_record(pn_n_trials=0, p_pool=float("nan")), FULL_CTX)
+    assert "pool_null_unreached" in v["flags"]
+    assert v["first_veto"] is None and v["tier"] == "interest"
+
+
+def test_screen_measures_the_grid_and_runs_the_pool_null():
+    """The screen stage measures the lattice, and the measurement propagates:
+    into the window model, into the shortest period the scan will entertain
+    (>= n_cadences_min lattice steps), and into the pool null."""
+    mission = Windows(np.array([0.0, 220.0]), np.array([180.0, 400.0]),
+                      cadence_days=KEPLER_LC_CADENCE_DAYS, label="two_blocks")
+    grid = 0.05
+    cat = _lattice_catalogue(mission, grid, n_stars=10, n_each=60, seed=9)
+    rows = [(str(k), v) for k, v in cat.items()]
+    rows.append(("clock", _clock_on_lattice(mission, grid, 5.23, 3.5)))
+    ev = pd.DataFrame({"star_id": np.concatenate([[k] * len(v) for k, v in rows]),
+                       "t_peak": np.concatenate([v for _, v in rows])})
+    conf = load_metronome_config()
+    conf = dict(conf, scan=dict(conf["scan"], **SCAN), null=dict(conf["null"], **NULL))
+    recs, rep = screen_catalogue(ev, "synthetic", "kepler", conf)
+    assert rep["time_grid"]["cadence_source"] == "measured"
+    assert abs(rep["time_grid"]["cadence_used_days"] / grid - 1.0) < 1e-6
+    assert rep["mission_windows"]["cadence_days"] == rep["time_grid"]["cadence_used_days"]
+    assert rep["n_pool_null_computed"] >= 1
+    assert all(np.isfinite(r.get("grid_days", np.nan)) for r in recs)
+    assert all(np.isfinite(r.get("jitter_floor", np.nan)) for r in recs
+               if r.get("status") == "scanned")
+    clock = [r for r in recs if r["star_id"] == "clock"][0]
+    assert abs(clock["period"] / 5.23 - 1.0) < 1e-3
+    assert clock["pool_null_computed"] and clock["p_pool"] <= 0.02
 
 
 def test_calibration_reports_where_thresholds_sit():
@@ -1724,6 +1880,82 @@ def test_redetect_finds_injected_flares_and_the_clock_on_them():
     assert rec["rd_jitter_core"] <= 0.05 and rec["rd_n_core"] >= 8
 
 
+def test_a_sinusoid_does_not_manufacture_flares_but_a_sharp_pulsator_does():
+    """THE confounder of the re-detection stage, measured rather than assumed.
+
+    A running median over ``detrend_window_days`` cannot flatten a photometric
+    oscillation of comparable period, so the worry is that its maxima are
+    re-detected as a train of "flares" at exactly the photometric period ---
+    with the phase stability of the oscillation rather than of any flare
+    mechanism.  KIC 5879574's re-detected period (0.4233 d) sits in that band.
+
+    Measured here, on light curves that contain NO flares at all:
+
+    * a pure SINUSOID does not do it.  The residual is a sinusoid too, and the
+      MAD sigma is set by that same sinusoid, so its maxima sit at ~1.4 sigma,
+      under the 2.5/3.5 sigma gates.  The detector is safe against this case
+      and the assertion records it.
+    * a SHARP-PEAKED periodic signal does.  A pulsator's sawtooth maximum, a
+      heartbeat brightening, an ellipsoidal or contact-binary light curve with
+      a narrow maximum: the bulk of the cycle sets the MAD, the narrow peak
+      clears it every cycle, and out comes a perfect clock at P_phot.
+
+    The second case is what the photometric veto is for.
+    """
+    from seti.metronome.redetect import (
+        find_flares,
+        photometric_period,
+        redetect_star,
+        stitch_segments,
+    )
+
+    P_phot = 0.4233
+    # (a) sinusoid: no manufactured flares
+    segs = _synthetic_kepler_lightcurve([], seed=17, noise=4e-4)
+    for s in segs:
+        s["flux"] = s["flux"] * (1.0 + 0.010 * np.sin(2 * np.pi * s["time"] / P_phot))
+    t, f, meta = stitch_segments(segs)
+    assert len(find_flares(t, f, cadence_days=meta["cadence_days"])) == 0
+
+    # (b) sharp periodic maximum: a manufactured clock
+    segs = _synthetic_kepler_lightcurve([], seed=17, noise=4e-4)
+    for s in segs:
+        ph = (s["time"] / P_phot) % 1.0
+        s["flux"] = s["flux"] * (1.0 + 0.040 * np.exp(-0.5 * (np.minimum(ph, 1.0 - ph)
+                                                              / 0.05) ** 2))
+    t, f, meta = stitch_segments(segs)
+    fl = find_flares(t, f, cadence_days=meta["cadence_days"])
+    assert len(fl) >= 50, len(fl)
+    ph = photometric_period(t, f, cadence_days=meta["cadence_days"])
+    assert abs(ph["period"] / P_phot - 1.0) < 0.02, ph
+    rec = redetect_star(segs, {}, scan_conf=dict(SCAN, min_period_days=0.3),
+                        null_conf=NULL, rng=np.random.default_rng(3),
+                        catalogue_times=np.array([]), period_catalogue=P_phot)
+    assert rec["status"] == "scanned"
+    assert abs(rec["rd_period"] / P_phot - 1.0) < 0.02, rec["rd_period"]
+    assert rec["period_is_photometric"], (rec["rd_period"], rec["phot_period"])
+    assert not rec["clock_in_lightcurve"] and not rec["confirms_catalogue_clock"]
+    # the shape statistics agree with the verdict: a symmetric maximum
+    assert rec["rd_rise_frac_median"] > 0.35, rec["rd_rise_frac_median"]
+
+
+def test_photometric_veto_leaves_a_real_flare_clock_alone():
+    """The control: real flares on a star whose photometric period is nowhere
+    near the clock must still confirm."""
+    from seti.metronome.redetect import redetect_star
+
+    rng = np.random.default_rng(19)
+    P = 3.137                             # the light curve's own sinusoid is 11.3 d
+    ticks = 171.3 + P * np.arange(0, 118)
+    ticks = ticks[rng.random(len(ticks)) < 0.6] + rng.normal(0.0, 0.002, size=None)
+    segs = _synthetic_kepler_lightcurve(np.sort(ticks))
+    rec = redetect_star(segs, {}, scan_conf=SCAN, null_conf=NULL, rng=np.random.default_rng(4),
+                        catalogue_times=np.sort(ticks), period_catalogue=P)
+    assert not rec["period_is_photometric"], (rec["rd_period"], rec["phot_period"])
+    assert rec["clock_in_lightcurve"] and rec["confirms_catalogue_clock"]
+    assert rec["rd_duty_cycle"] < 0.1, rec["rd_duty_cycle"]
+
+
 def test_redetect_reports_no_clock_for_random_flares():
     from seti.metronome.redetect import redetect_star
 
@@ -1799,7 +2031,8 @@ def test_clock_with_a_natural_flare_background_reaches_strict_quality():
     ticks = clock_events(w, P, w.starts[0] + 1.3, duty=0.6, jitter_days=0.002, seed=31)
     noise = poisson_events(w, int(0.45 * len(ticks)), seed=32)
     t = np.sort(np.concatenate([ticks, noise]))
-    r = analyze(t, w, seed=33)
+    pool = np.concatenate([poisson_events(w, 200, seed=400 + i) for i in range(4)])
+    r = analyze(t, w, seed=33, pool_times=pool)
     assert r["status"] == "scanned" and abs(r["period"] / P - 1.0) < 2e-3, r["period"]
     # the ±0.15 core still admits ~30% x 0.3 of the background, so its jitter
     # is not the ticks' 0.002 but stays well under the strict 0.05

@@ -67,6 +67,10 @@ DEFAULT_REDETECT: dict = {
     "confirm_p_max": 0.05,
     "confirm_Q_min": 0.85,
     "confirm_jitter_max": 0.05,
+    # The photometric-periodicity veto: the longest period the flux is asked
+    # about.  A re-detected "clock" at the star's own photometric period is
+    # the residual of an oscillation the running median could not flatten.
+    "phot_max_period_days": 50.0,
 }
 
 STATUS_NO_LC = "NO_LIGHTCURVE"
@@ -247,6 +251,71 @@ def _period_agrees(p_new: float, p_cat: float, harmonics, tol: float) -> tuple[b
     return False, None
 
 
+def photometric_period(t, f, *, cadence_days: float, min_period_days: float = 0.05,
+                       max_period_days: float = 50.0, samples_per_peak: int = 8,
+                       mask=None) -> dict:
+    """The strongest periodicity in the star's own FLUX, flares masked out.
+
+    This is the check the re-detection could not do without it.  The flare
+    finder subtracts a running median over ``detrend_window_days`` (0.5 d) and
+    calls positive excursions flares.  A running median of that length cannot
+    remove a photometric oscillation whose period is comparable to it, and if
+    that oscillation has a NARROW maximum --- a pulsator's sawtooth, a
+    heartbeat brightening, a contact binary --- the bulk of the cycle sets the
+    robust sigma, the peak clears it every cycle, and the detector returns a
+    perfect clock at the photometric period.  (A pure sinusoid does not do
+    this, and the test suite records that: its maxima sit at ~1.4 sigma of a
+    sigma its own residual defines.)
+
+    So the star's flux is asked directly.  ``period`` is the Lomb-Scargle peak
+    of the normalised flux; ``amplitude_frac`` is the peak-to-peak of the
+    best-fit sinusoid there, in units of the median flux.  When the star's
+    DOMINANT photometric periodicity is the re-detected clock period (or a low
+    harmonic of it), the events are that periodicity and not a flare clock.
+
+    The flux is used unmasked, deliberately.  Masking the detected events would
+    punch a hole at exactly the period under test and imprint it on the window
+    function.  The cost is that a genuine flare clock also contributes some
+    power at its own period; the size of that contribution is bounded by the
+    events' duty cycle, which ``redetect_star`` reports beside this.
+    """
+    out = {"period": float("nan"), "power": float("nan"), "amplitude_frac": float("nan"),
+           "n_points": 0}
+    t = np.asarray(t, dtype=float)
+    f = np.asarray(f, dtype=float)
+    ok = np.isfinite(t) & np.isfinite(f)
+    if mask is not None:
+        ok &= ~np.asarray(mask, dtype=bool)
+    t, f = t[ok], f[ok]
+    if len(t) < 50:
+        return out
+    med = float(np.nanmedian(f))
+    if not np.isfinite(med) or med == 0.0:
+        return out
+    y = f / med - 1.0
+    span = float(t[-1] - t[0])
+    p_max = float(min(max_period_days, max(span / 3.0, 2.0 * cadence_days)))
+    p_min = float(max(min_period_days, 2.0 * cadence_days))
+    if not (p_max > p_min):
+        return out
+    try:
+        from astropy.timeseries import LombScargle
+    except Exception:                                     # noqa: BLE001
+        return out
+    ls = LombScargle(t, y)
+    freq = np.arange(1.0 / p_max, 1.0 / p_min,
+                     1.0 / (float(samples_per_peak) * max(span, 1.0)))
+    if not len(freq):
+        return out
+    power = ls.power(freq)
+    i = int(np.nanargmax(power))
+    p = float(1.0 / freq[i])
+    model = ls.model(t, freq[i])
+    out.update({"period": p, "power": float(power[i]), "n_points": int(len(t)),
+                "amplitude_frac": float(np.nanmax(model) - np.nanmin(model))})
+    return out
+
+
 def redetect_star(segments, conf: dict, *, scan_conf: dict | None = None,
                   null_conf: dict | None = None, vet_conf: dict | None = None, rng=None,
                   catalogue_times=None, period_catalogue: float = float("nan")) -> dict:
@@ -309,8 +378,36 @@ def redetect_star(segments, conf: dict, *, scan_conf: dict | None = None,
                  jitter_max=float(c["confirm_jitter_max"]))
     ok_strict, why = quality_pass(a, vconf, strict=True)
     rec["rd_strict_quality_why"] = ";".join(why)
+    # Is the "clock" the detrending residual of a photometric oscillation?
+    # A running median over detrend_window_days cannot flatten a signal whose
+    # period is comparable to it, and the surviving maxima are detected as a
+    # flare train at exactly the photometric period.
+    ph = photometric_period(t, f, cadence_days=cad,
+                            max_period_days=float(c.get("phot_max_period_days", 50.0)))
+    rec.update({"phot_period": ph["period"], "phot_power": ph["power"],
+                "phot_amplitude_frac": ph["amplitude_frac"]})
+    ph_hit, ph_h = _period_agrees(float(a.get("period", np.nan)), float(ph["period"]),
+                                  c["period_harmonics"], float(c["period_tol"]))
+    rec["period_is_photometric"] = bool(ph_hit)
+    rec["period_photometric_harmonic"] = ph_h
+    # Event SHAPE, the other discriminator between a flare and a photometric
+    # maximum re-detected as one: a flare rises in about a cadence and decays
+    # over several (rise_frac well below 0.5) and occupies a small part of the
+    # cycle; a symmetric photometric maximum has rise_frac ~ 0.5 and a duty
+    # cycle of order the oscillation's own width.  Reported, not vetoed on:
+    # at 30-min cadence a 3-point event cannot resolve the asymmetry, so this
+    # is evidence for a reader and for the docs, not a rule.
+    dur = (fl["t_end"] - fl["t_start"]).to_numpy(dtype=float) + cad
+    rise = (fl["t_peak"] - fl["t_start"]).to_numpy(dtype=float) + 0.5 * cad
+    good = np.isfinite(dur) & (dur > 0)
+    rec["rd_duration_days_median"] = float(np.median(dur[good])) if good.any() else float("nan")
+    rec["rd_duty_cycle"] = (float(np.median(dur[good])) / float(a.get("period", np.nan))
+                            if good.any() else float("nan"))
+    rec["rd_rise_frac_median"] = float(np.median(rise[good] / dur[good])) if good.any() \
+        else float("nan")
     rec["clock_in_lightcurve"] = bool(a.get("status") == "scanned" and np.isfinite(p)
-                                      and p <= float(c["confirm_p_max"]) and ok_strict)
+                                      and p <= float(c["confirm_p_max"]) and ok_strict
+                                      and not ph_hit)
     rec["confirms_catalogue_clock"] = bool(rec["clock_in_lightcurve"] and agrees)
     return rec
 
@@ -504,5 +601,5 @@ def _json_default(o):
 
 
 __all__ = ["DEFAULT_REDETECT", "STATUS_NO_LC", "STATUS_TOO_FEW", "contiguous_runs",
-           "detrend_residuals", "find_flares", "lightcurve_windows", "redetect_star",
-           "select_targets", "stage_redetect", "stitch_segments"]
+           "detrend_residuals", "find_flares", "lightcurve_windows", "photometric_period",
+           "redetect_star", "select_targets", "stage_redetect", "stitch_segments"]

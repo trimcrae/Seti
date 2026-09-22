@@ -9,6 +9,13 @@ dullest one:
                             is counted at event level in the screen stage)
 ``not_significant``         the window-resampled null explains the coherence
                             (BH-FDR across every star scanned)
+``pool_null_explains``      the coherence is not rarer than the same statistic
+                            on N times drawn from the OTHER stars' catalogued
+                            event times inside this star's own windows.  That
+                            null carries the catalogue's real time lattice and
+                            epoch structure without modelling either, so a
+                            period that only looks sharp because the catalogue
+                            quantises its peak times dies here
 ``cadence_alias``           P at a named instrumental period or its low
                             harmonics (Kepler cadence / momentum-dump / monthly
                             downlink / quarter; TESS orbit / sector / cadences)
@@ -30,15 +37,20 @@ dullest one:
 Report-only flags never reject: ``energy_incoherent`` (flare energy depends
 on clock phase --- what visibility modulation does and a beacon should not),
 ``rotation_unknown``, ``variability_catalogue_unreached``, ``p_extrapolated``,
-``null_truncated_by_budget``.
+``null_truncated_by_budget``, ``quantisation_limited`` (the measured phase
+jitter is at the floor the catalogue's own time rounding imposes, so the
+tightness is a property of the time stamps rather than evidence about the
+star), ``pool_null_unreached`` (too few other-star times inside the windows to
+run null 3; the star is NOT credited with passing it).
 
 Tiers
 -----
 ``none``       not significant at the watch FDR, or a hard veto tripped
 ``watch``      significant at ``fdr_alpha_watch``, no hard veto, loose quality
 ``interest``   significant at ``fdr_alpha``, strict quality, but a veto could
-               not be applied (no P_rot, or a variability catalogue was not
-               reached) --- candidate-grade statistics with an incomplete vet
+               not be applied (no P_rot, a variability catalogue was not
+               reached, or the pool null could not be run) --- candidate-grade
+               statistics with an incomplete vet
 ``candidate``  significant at ``fdr_alpha``, strict quality, every veto
                applied and passed.  PENDING human/light-curve vet always.
 """
@@ -76,6 +88,19 @@ DEFAULT_VET: dict = {
     "f_core_watch": 0.4,
     "core_n_min": 8,
     "energy_p_max": 0.01,
+    # Null 3.  A star must be rarer than `pool_alpha` against the catalogue's
+    # own event times resampled inside its windows.  The threshold is loose on
+    # purpose: with n_pool = 200 trials the smallest reachable p is ~0.005, and
+    # the job of this null is to kill lattice artefacts, not to re-rank real
+    # clocks that null 1 has already put at p ~ 1e-20.
+    "pool_alpha": 0.05,
+    # A catalogue that rounds its peak times to a lattice of spacing g forces
+    # an rms phase jitter of at least g / (P sqrt(12)) on ANY clock.  A star
+    # whose measured jitter is within `quantisation_factor` of that floor is as
+    # tight as its time stamps allow and no tighter, which is a fact about the
+    # catalogue, not about the star.  Report-only: it says where to look, the
+    # pool null says whether to believe.
+    "quantisation_factor": 1.5,
     "instrumental_periods": {
         "kepler": {"long_cadence": 0.020434, "momentum_dump": 3.0,
                    "monthly_downlink": 31.0, "quarter": 93.0},
@@ -85,10 +110,11 @@ DEFAULT_VET: dict = {
     },
 }
 
-HARD_VETO_ORDER = ("cadence_alias", "rotation_alias", "periodic_variable",
-                   "bursty_random", "jitter_too_large")
+HARD_VETO_ORDER = ("pool_null_explains", "cadence_alias", "rotation_alias",
+                   "periodic_variable", "bursty_random", "jitter_too_large")
 REPORT_FLAGS = ("energy_incoherent", "rotation_unknown", "variability_catalogue_unreached",
-                "p_extrapolated", "null_truncated_by_budget")
+                "p_extrapolated", "null_truncated_by_budget", "quantisation_limited",
+                "pool_null_unreached")
 
 
 def _close(a: float, b: float, tol: float) -> bool:
@@ -228,6 +254,26 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
     mission = str(ctx.get("mission", rec.get("mission", ""))).lower()
     inst = (c.get("instrumental_periods") or {}).get(mission) or {}
 
+    # Null 3 first: it is the most mundane explanation available (the
+    # catalogue's own sampling reproduces the coherence), and unlike the
+    # window null it needs no model of the cadence to say so.
+    p_pool = _f(rec, "p_pool")
+    n_pool = int(rec.get("pn_n_trials", 0) or 0)
+    if n_pool > 0:
+        if np.isfinite(p_pool) and p_pool >= float(c["pool_alpha"]):
+            flags.append("pool_null_explains")
+            detail["pool_null_explains"] = {"p_pool": p_pool, "n_trials": n_pool}
+    else:
+        flags.append("pool_null_unreached")
+    floor, jit = _f(rec, "jitter_floor"), _f(rec, "jitter")
+    jit_used = jit if np.isfinite(jit) else _f(rec, "jitter_core")
+    if np.isfinite(floor) and floor > 0 and np.isfinite(jit_used) \
+            and jit_used <= float(c["quantisation_factor"]) * floor:
+        flags.append("quantisation_limited")
+        detail["quantisation_limited"] = {"jitter": jit_used, "jitter_floor": floor,
+                                          "grid_days": _f(rec, "grid_days"),
+                                          "grid_source": rec.get("grid_source")}
+
     hit, d = cadence_alias(period, inst, c["cadence_harmonics"], float(c["cadence_tol"]))
     if hit:
         flags.append("cadence_alias")
@@ -290,7 +336,8 @@ def vet_star(rec: dict, context: dict | None = None, conf: dict | None = None) -
     detail["strict_quality"] = why_strict
     if bool(rec.get("fdr_significant", False)) and ok_strict:
         complete = ("rotation_unknown" not in flags
-                    and "variability_catalogue_unreached" not in flags)
+                    and "variability_catalogue_unreached" not in flags
+                    and "pool_null_unreached" not in flags)
         out["tier"] = "candidate" if complete else "interest"
     else:
         out["tier"] = "watch"

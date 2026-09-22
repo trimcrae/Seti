@@ -365,7 +365,129 @@ def guess_time_system(times, mission: str = "") -> str:
     return "unknown"
 
 
+# ---------------------------------------------------------------------------
+# The catalogue's OWN time lattice
+# ---------------------------------------------------------------------------
+def infer_time_grid(times, *, tol_frac: float = 0.12, min_on_grid: float = 0.97,
+                    min_unique: int = 40, max_divisor: int = 16,
+                    max_steps: float = 5.0e7) -> dict:
+    """The spacing of the lattice a catalogue's event times actually lie on.
+
+    A published peak time is not a real number: it is the time stamp of a
+    cadence, so every time in a catalogue sits on a grid whose spacing is that
+    catalogue's effective cadence.  The spacing is *not* reliably the mission
+    cadence.  Tu+2022's TESS peak times are spaced by 0.0069 d (9.94 min), five
+    times the 2-min cadence the mission-cadence default assumes; Guenther+2020
+    is on the 2-min grid.  The difference is not cosmetic: the window null
+    snaps its draws to ``Windows.cadence_days``, so a null quantised finer than
+    the data is a null that cannot reproduce the data's own lattice, and every
+    period commensurate with that lattice then looks significant.
+
+    The measurement is deliberately assumption-free: candidate spacings are
+    built from the *smallest observed gaps* between distinct times (and their
+    integer divisors, in case no pair of events ever landed on adjacent
+    cadences), and the largest candidate on which at least ``min_on_grid`` of
+    the distinct times fall within ``tol_frac`` of an integer step wins.  It is
+    then refined by least squares through the origin.
+
+    Returns a dict --- ``grid_days`` is NaN when no lattice is detectable
+    (times genuinely continuous, or barycentric corrections smearing one), and
+    that is reported rather than papered over.
+    """
+    t = np.asarray(times, dtype=float)
+    t = np.unique(t[np.isfinite(t)])
+    out = {"grid_days": float("nan"), "t0": float("nan"), "frac_on_grid": float("nan"),
+           "resid_rms_days": float("nan"), "n_unique": int(len(t)), "method": "none"}
+    if len(t) < int(min_unique):
+        out["method"] = "too_few_times"
+        return out
+    d = np.diff(t)
+    d = d[d > 0]
+    if not len(d):
+        out["method"] = "no_distinct_times"
+        return out
+    # Candidates: the smallest distinct gaps (a gap is an integer number of
+    # steps, so the smallest few are the best estimates of the step) and their
+    # divisors.  Rounded to 1e-9 d to collapse float noise.
+    small = np.unique(np.round(np.sort(d)[: max(50, len(d) // 200)], 9))
+    cands: set[float] = set()
+    for c in small[:50]:
+        for m in range(1, int(max_divisor) + 1):
+            g = float(c) / m
+            if g > 1e-9:
+                cands.add(round(g, 12))
+    span = float(t[-1] - t[0])
+    t0 = float(t[0])
+    best: tuple[float, float, float] | None = None
+    for g in sorted(cands, reverse=True):
+        if span / g > float(max_steps):
+            continue
+        r = (t - t0) / g
+        res = np.abs(r - np.round(r))
+        frac = float(np.mean(res <= float(tol_frac)))
+        if frac >= float(min_on_grid):
+            best = (g, frac, float(np.sqrt(np.mean((res * g) ** 2))))
+            break
+    if best is None:
+        out["method"] = "no_lattice"
+        return out
+    g, frac, rms = best
+    k = np.round((t - t0) / g)
+    denom = float(np.sum(k * k))
+    if denom > 0:
+        g = float(np.sum(k * (t - t0)) / denom)
+        r = (t - t0) / g
+        res = np.abs(r - np.round(r))
+        frac = float(np.mean(res <= float(tol_frac)))
+        rms = float(np.sqrt(np.mean((res * g) ** 2)))
+    out.update({"grid_days": float(g), "t0": t0, "frac_on_grid": frac,
+                "resid_rms_days": rms, "method": "lattice"})
+    return out
+
+
+def lattice_phase_limits(period: float, grid_days: float, *, phase_window: float = 0.05) -> dict:
+    """What the time lattice alone can contribute to a phase concentration.
+
+    A catalogue that rounds its peak times to a lattice of spacing ``g`` cannot
+    place an event's phase more precisely than one lattice step, so at period
+    ``P`` the phases live on a comb of ``P/g`` teeth spaced ``g/P`` cycles
+    apart, and *any* clock --- however perfect --- shows an rms phase jitter of
+    at least ``g / (P sqrt(12))`` from the rounding alone.
+
+    Two numbers come out of that, and they are the honest statement of what
+    quantisation can and cannot do:
+
+    ``jitter_floor``  the rms phase jitter forced by the rounding.  A star
+                      whose measured jitter sits at this floor is as tight as
+                      its time stamps allow and no tighter; the tightness is
+                      then a property of the catalogue's rounding, not
+                      evidence about the star, and it is flagged.
+    ``phase_spacing`` ``g/P``.  When it exceeds the phase window used for
+                      ``f_in_window``, the fraction of the comb that fits
+                      inside the window is quantised and systematically above
+                      the window width, so ``f_in_window`` is inflated.  For
+                      the catalogues in hand this bites only at the short-period
+                      end of the scan (TESS, g = 0.0069 d, P < 0.14 d).
+
+    Note what is NOT claimed: a low-denominator rational P/g is *not* by itself
+    a problem.  With P/g = a/b in lowest terms the comb has ``a`` teeth, not
+    ``b``, so the resonances that matter are small ``a`` --- short periods ---
+    and nothing else.
+    """
+    out = {"n_teeth": float("nan"), "phase_spacing": float("nan"),
+           "jitter_floor": float("nan"), "comb_coarser_than_window": False}
+    p, g = float(period), float(grid_days)
+    if not (np.isfinite(p) and np.isfinite(g) and p > 0 and g > 0):
+        return out
+    spacing = g / p
+    out.update({"n_teeth": p / g, "phase_spacing": spacing,
+                "jitter_floor": spacing / np.sqrt(12.0),
+                "comb_coarser_than_window": bool(spacing > float(phase_window))})
+    return out
+
+
 __all__ = ["KEPLER_LC_CADENCE_DAYS", "KEPLER_QUARTERS_BKJD", "TESS_2MIN_CADENCE_DAYS",
            "TESS_ORBIT_DAYS", "TESS_SECTOR_DAYS", "Windows", "guess_time_system",
-           "intersect_windows", "kepler_quarter_windows", "star_windows",
-           "tess_sector_windows", "windows_from_events", "windows_from_sectors"]
+           "infer_time_grid", "intersect_windows", "kepler_quarter_windows",
+           "lattice_phase_limits", "star_windows", "tess_sector_windows",
+           "windows_from_events", "windows_from_sectors"]

@@ -96,6 +96,12 @@ DEFAULT_NULL = {
     # full budget establishing a p-value that cannot change its tier.  The p
     # is still a valid Besag-Clifford p, only coarser.
     "n_max_not_clock": 200, "Q_watch": 0.6, "jitter_watch": 0.12, "f_core_watch": 0.4,
+    # Null 3 (pool_null): draws from the catalogue's own event times inside the
+    # star's windows.  Cheaper than null 1 per trial is not the point --- it is
+    # the only null that carries the catalogue's real time lattice without
+    # anyone having to model it, so it is run on every star that survives the
+    # screen, with its own (smaller) trial budget.
+    "n_pool": 200, "pool_min_size": 24, "pool_factor": 3,
 }
 
 
@@ -526,6 +532,48 @@ def shuffle_waiting_times(times, windows: Windows, rng) -> np.ndarray | None:
     return np.sort(windows.quantize(windows.real_time(tau_new)))
 
 
+def pool_null(times, windows: Windows, h_obs: float, pool_times, scan_conf: dict | None = None,
+              null_conf: dict | None = None, rng=None, *, quality: bool = True) -> NullResult:
+    """Null 3: the star's N events replaced by N times drawn from the times at
+    which *other stars in the same catalogue* were seen to flare.
+
+    Nulls 1 and 2 model the sampling --- the windows, and a cadence grid taken
+    from configuration.  This one does not model it at all: it resamples the
+    empirical distribution of catalogued event times inside this star's own
+    windows, so whatever lattice the catalogue's times sit on, whatever
+    duty-cycle structure its sectors have, and whatever epochs its detector
+    preferred are carried into the null exactly as they are in the data,
+    without anyone having to know what they are.  The star's own times are
+    excluded by the caller; cross-star coincidences are removed before this
+    stage, so a shared instrumental epoch cannot be laundered through the pool.
+
+    It is the *conservative* null: real epoch structure shared with the pool
+    counts against the star.  Too small a pool returns an empty result rather
+    than a p-value, and is reported as un-run, never as a pass --- ``pool_factor``
+    x N times must lie inside the star's windows.  Three is the floor: a draw of
+    N from 3N has C(3N, N) distinct outcomes, so the null is not degenerate,
+    while demanding more would leave the sparse catalogues without any null at
+    all rather than with a conservative one.
+    """
+    rng = np.random.default_rng(rng)
+    nc = dict(DEFAULT_NULL, **(null_conf or {}))
+    nc = dict(nc, n_max=int(nc.get("n_pool", 200)), h_stop=int(nc["h_stop"]))
+    n = int(len(np.asarray(times)))
+    pool = np.asarray(pool_times, dtype=float)
+    pool = pool[np.isfinite(pool)]
+    if pool.size and windows is not None and windows.n:
+        pool = pool[windows.contains(pool)]
+    res_empty = NullResult(kind="pool_resample")
+    if n <= 1 or pool.size < max(int(nc.get("pool_factor", 3)) * n,
+                                 int(nc.get("pool_min_size", 24))):
+        return res_empty
+
+    def draw():
+        return np.sort(rng.choice(pool, size=n, replace=False))
+
+    return _run_null("pool_resample", h_obs, draw, scan_conf or {}, nc, windows, quality=quality)
+
+
 def shuffle_null(times, windows: Windows, h_obs: float, scan_conf: dict | None = None,
                  null_conf: dict | None = None, rng=None) -> NullResult:
     """Null 2: waiting times permuted; burstiness kept, long-range order destroyed."""
@@ -613,7 +661,8 @@ def cross_star_coincidence(star_ids, times, *, bin_days: float, min_stars: int =
 # Per-star analysis
 # ---------------------------------------------------------------------------
 def analyze_star(times, windows: Windows, energies=None, scan_conf: dict | None = None,
-                 null_conf: dict | None = None, rng=None, *, run_nulls: bool = True) -> dict:
+                 null_conf: dict | None = None, rng=None, *, run_nulls: bool = True,
+                 pool_times=None) -> dict:
     """Scan one star, run the screen, then the nulls only if the screen passes.
 
     Returns a flat dict of everything the vetting and tier stages need.  The
@@ -660,6 +709,11 @@ def analyze_star(times, windows: Windows, energies=None, scan_conf: dict | None 
             nc["shuffle_min_gaps"]) else NullResult(kind="waiting_time_shuffle")
         rec.update({f"sn_{k}": v for k, v in sn.as_dict().items() if k != "kind"})
         rec["p_shuffle"] = sn.p_empirical if sn.n_trials > 0 else float("nan")
+        pn = (pool_null(t, windows, r.h_max, pool_times, sc, nc, rng)
+              if pool_times is not None else NullResult(kind="pool_resample"))
+        rec.update({f"pn_{k}": v for k, v in pn.as_dict().items() if k != "kind"})
+        rec["p_pool"] = pn.p if pn.n_trials > 0 else float("nan")
+        rec["pool_null_computed"] = bool(pn.n_trials > 0)
     rec.update(energy_phase_correlation(t, e, r.period, r.mean_phase))
     return rec
 
@@ -687,5 +741,5 @@ def bh_fdr(pvals, alpha: float = 0.05) -> np.ndarray:
 __all__ = ["DEFAULT_NULL", "DEFAULT_SCAN", "NullResult", "ScanResult", "analyze_star",
            "bh_fdr", "cross_star_coincidence", "decluster", "energy_phase_correlation",
            "frequency_grid", "fundamental_period", "gap_integer_fraction", "gumbel_tail_p",
-           "h_statistic", "phase_stats", "refine_frequency", "scan", "screen_p_upper",
-           "shuffle_null", "shuffle_waiting_times", "window_null"]
+           "h_statistic", "phase_stats", "pool_null", "refine_frequency", "scan",
+           "screen_p_upper", "shuffle_null", "shuffle_waiting_times", "window_null"]

@@ -64,6 +64,7 @@ the real ones.
 from __future__ import annotations
 
 import datetime as _dt
+import json
 import math
 import time as _time
 from pathlib import Path
@@ -1203,6 +1204,133 @@ def vet_verdict(report: dict) -> tuple[str, list[str]]:
     return verdict, surviving
 
 
+#: The vet's vetoes, most-mundane-first.  Each one, on its own, ends a star.
+VETSTAR_VETOES = ("CONTAMINATING_VARIABLE_AT_P", "CATALOGUED_ECLIPSING_BINARY",
+                  "UNEQUAL_MINIMA_AT_2P", "NARROW_DIP_AT_P",
+                  "AMPLITUDE_TRACKS_SPACECRAFT_ROLL", "COHERENT_OSCILLATION_AT_P",
+                  "EVENTS_ON_THE_CREST", "GAIA_NON_SINGLE_STAR", "GAIA_RUWE",
+                  "GAIA_RV_AMPLITUDE", "EVENTS_CLUSTER_MORE_TIGHTLY_AT_2P",
+                  "AMPLITUDE_VARIES_BETWEEN_SEGMENTS")
+
+
+def vetstar_veto(report: dict) -> str | None:
+    """The single most mundane reason the vet found, as a flag name.
+
+    A verdict string is for a human; `summary.json` needs one token so the
+    funnel and the channel index can be read by a machine.
+    """
+    import re
+
+    v = str((report or {}).get("verdict") or "")
+    if not v.startswith("MUNDANE_EXPLANATION_FOUND"):
+        return None
+    # the reasons carry their measurements in several spellings --
+    # NAME:value, NAME=value, NAME alone -- so match the token, not a
+    # separator that happens to follow it
+    for name in VETSTAR_VETOES:
+        if re.search(rf"\b{re.escape(name)}\b", v):
+            return "vet_" + name.lower()
+    return "vet_mundane_explanation_found"
+
+
+def reconcile_vetstar(out: Path, report: dict) -> dict:
+    """Fold the vet's answer back into `summary.json` and `candidates.json`.
+
+    Without this the channel's headline artefact would still read
+    ``CLOCK_CANDIDATES_PENDING_VET`` with one candidate while the vet's own
+    file said the candidate is a neighbouring RR Lyrae — the overclaim living
+    on in the file a machine reads, corrected only in the one it does not.
+    ``reconcile_summary`` does the same job for the re-detection, and this
+    follows it deliberately: **demotion only ever removes a claim.**  Nothing
+    here can promote a star, and a vet that found nothing mundane leaves every
+    tier exactly as it was.
+    """
+    res: dict = {"status": "NO_SUMMARY", "n_annotated": 0, "demoted": []}
+    sp, cp = Path(out) / "summary.json", Path(out) / "candidates.json"
+    if not sp.exists():
+        return res
+    try:
+        summary = json.loads(sp.read_text())
+    except (OSError, ValueError) as exc:                  # noqa: BLE001
+        res["status"] = f"SUMMARY_UNREADABLE:{exc!r}"[:200]
+        return res
+
+    key = str((report or {}).get("star_key") or "")
+    veto = vetstar_veto(report)
+    slim = {k: report.get(k) for k in
+            ("verdict", "period", "period_double", "fetch_status",
+             "n_flares_redetected", "n_catalogue_epochs", "catalogue_epochs_source",
+             "event_phase_offset_from_photometric_max", "unreached",
+             "surviving_explanations", "neighbour_period_matches",
+             "fold_significance_flares_masked", "roll_season", "odd_even",
+             "harmonics_at_period")}
+
+    demoted: list[str] = []
+    cands: list[dict] = []
+    if cp.exists():
+        try:
+            cj = json.loads(cp.read_text())
+        except (OSError, ValueError):
+            cj = None
+        if isinstance(cj, dict):
+            for bucket in ("candidates", "watch"):
+                for row in cj.get(bucket) or []:
+                    if str(row.get("star_key")) == key:
+                        row["vetstar"] = slim
+                        if veto and str(row.get("tier")) in ("candidate", "interest"):
+                            row["tier"] = "none"
+                            row["first_veto"] = veto
+                            row["flags"] = ";".join(
+                                [f for f in str(row.get("flags") or "").split(";") if f]
+                                + [veto])
+                            demoted.append(f"{key}:{veto}")
+                    if bucket == "candidates":
+                        cands.append(row)
+            cp.write_text(json.dumps(cj, indent=2, default=_json_default_r))
+            res["n_annotated"] = sum(len(cj.get(b) or []) for b in ("candidates", "watch"))
+
+    if demoted:
+        summary["n_candidates"] = int(sum(1 for r in cands if r.get("tier") == "candidate"))
+        summary["n_interest"] = int(sum(1 for r in cands if r.get("tier") == "interest"))
+        f = summary.get("funnel") or {}
+        f["stars_candidate"] = summary["n_candidates"]
+        f["stars_interest"] = summary["n_interest"]
+        f["stars_demoted_by_vetstar"] = len(demoted)
+        summary["funnel"] = f
+        base = str(summary.get("verdict") or "")
+        base = base.replace("CLOCK_CANDIDATES_PENDING_VET",
+                            f"VETSTAR_DEMOTED_{len(demoted)}")
+        if f"VETSTAR_DEMOTED_{len(demoted)}" not in base:
+            base = f"{base}; VETSTAR_DEMOTED_{len(demoted)}"
+        if summary["n_candidates"] == 0 and summary["n_interest"] == 0:
+            base = f"{base}; NO_CLOCK_CANDIDATES"
+        summary["verdict"] = base
+    summary["vetstar"] = {
+        "star_key": key, "verdict": slim.get("verdict"), "veto": veto,
+        "n_demoted": len(demoted), "demoted": demoted, "vetoes": list(VETSTAR_VETOES),
+        "note": ("the single-star vet asks every mundane explanation by name and demotes "
+                 "on any of them; NO_CLOCK_CANDIDATES here is a count after vetting and "
+                 "is not an occurrence limit, and per CLAUDE.md is not written up"),
+    }
+    sp.write_text(json.dumps(summary, indent=2, default=_json_default_r))
+    res.update({"status": STATUS_OK, "demoted": demoted, "veto": veto})
+    return res
+
+
+def _json_default_r(o):
+    if isinstance(o, (np.integer,)):
+        return int(o)
+    if isinstance(o, (np.floating,)):
+        v = float(o)
+        return v if np.isfinite(v) else None
+    if isinstance(o, np.ndarray):
+        return o.tolist()
+    if isinstance(o, (np.bool_,)):
+        return bool(o)
+    return str(o)
+
+
+
 # ---------------------------------------------------------------------------
 # stage
 # ---------------------------------------------------------------------------
@@ -1433,6 +1561,7 @@ def stage_vetstar(conf: dict, out: Path, *, star_key: str | None = None,
     rep["acquisition"] = log.as_dict() if hasattr(log, "as_dict") else {}
     rep["elapsed_s"] = round(_time.monotonic() - t_start, 1)
 
+    rep["reconciliation"] = reconcile_vetstar(out, rep)
     (out / "vetstar.json").write_text(_dumps(rep))
     _write_fold_csv(out, rep)
     print(f"[metronome/vetstar] {key}: {verdict}")
@@ -1459,8 +1588,6 @@ def _write_fold_csv(out: Path, rep: dict) -> None:
 
 
 def _dumps(obj) -> str:
-    import json
-
     def default(o):
         if isinstance(o, (np.integer,)):
             return int(o)
@@ -1479,6 +1606,7 @@ def _dumps(obj) -> str:
 
 
 __all__ = ["CATALOGUE_EPOCH", "DEFAULT_VETSTAR", "GAIA_EPOCH", "GAIA_SOURCE_COLUMNS",
+           "VETSTAR_VETOES",
            "GAIA_TAP", "GAIA_VARI_TABLES", "STATUS_ABSENT", "STATUS_OK", "STATUS_UNREACHED",
            "VIZIER_CONE_TABLES", "VIZIER_ID_TABLES",
            "analyse_lightcurve", "angular_separation_arcsec", "catalogue_epochs_for_star",
@@ -1489,5 +1617,6 @@ __all__ = ["CATALOGUE_EPOCH", "DEFAULT_VETSTAR", "GAIA_EPOCH", "GAIA_SOURCE_COLU
            "neighbour_periods_matching", "odd_even_minima",
            "per_segment_amplitude",
            "periodogram_at", "phase_separation", "propagate_position", "rayleigh",
+           "reconcile_vetstar", "vetstar_veto",
            "roll_season_test",
            "stage_vetstar", "vet_verdict", "vizier_by_identifier", "vizier_cone_report"]

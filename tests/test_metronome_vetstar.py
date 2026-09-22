@@ -1074,3 +1074,126 @@ def test_guard_blocks_only_the_file_whose_writer_is_ahead(monkeypatch, tmp_path)
     assert _call(monkeypatch, repo, old,
                  files=("results/metronome/vetstar.json",
                         "results/metronome/summary.json")) == "stale=true"
+
+
+# ---------------------------------------------------------------------------
+# reconciliation: the vet's answer has to reach summary.json
+# ---------------------------------------------------------------------------
+def _summary_pair(tmp_path, tier="candidate"):
+    import json as _json
+
+    (tmp_path / "summary.json").write_text(_json.dumps({
+        "verdict": "DEGRADED_SOURCE (x); CLOCK_CANDIDATES_PENDING_VET",
+        "n_candidates": 1, "n_interest": 1,
+        "funnel": {"stars_scanned": 3131, "stars_candidate": 1, "stars_interest": 1}}))
+    (tmp_path / "candidates.json").write_text(_json.dumps({
+        "candidates": [
+            {"star_key": "kepler:5879574", "tier": tier, "flags": "p_extrapolated",
+             "first_veto": None},
+            {"star_key": "tess:398943781", "tier": "interest", "flags": "", "first_veto": None},
+        ],
+        "watch": [{"star_key": "kepler:9999", "tier": "watch", "flags": ""}]}))
+    return tmp_path / "summary.json", tmp_path / "candidates.json"
+
+
+def _read(p):
+    import json as _json
+    return _json.loads(p.read_text())
+
+
+def test_the_vet_demotes_the_star_in_summary_and_candidates(tmp_path):
+    from seti.metronome.vetstar import reconcile_vetstar
+
+    sp, cp = _summary_pair(tmp_path)
+    rep = {"star_key": "kepler:5879574", "period": PERIOD,
+           "verdict": ("MUNDANE_EXPLANATION_FOUND(CONTAMINATING_VARIABLE_AT_P:"
+                       "gaia1@13.3arcsec,KIC 5879583,type=RR,P=0.4232946,in=vsx)")}
+    res = reconcile_vetstar(tmp_path, rep)
+    assert res["status"] == STATUS_OK
+    assert res["demoted"] == ["kepler:5879574:vet_contaminating_variable_at_p"]
+
+    c = _read(cp)
+    row = next(r for r in c["candidates"] if r["star_key"] == "kepler:5879574")
+    assert row["tier"] == "none"
+    assert row["first_veto"] == "vet_contaminating_variable_at_p"
+    assert "vet_contaminating_variable_at_p" in row["flags"]
+    assert "p_extrapolated" in row["flags"]          # the old flags are kept
+    assert row["vetstar"]["verdict"].startswith("MUNDANE_EXPLANATION_FOUND")
+    # the other stars are untouched
+    assert next(r for r in c["candidates"]
+                if r["star_key"] == "tess:398943781")["tier"] == "interest"
+    assert "vetstar" not in c["watch"][0]
+
+    s = _read(sp)
+    assert s["n_candidates"] == 0
+    assert s["n_interest"] == 1
+    assert s["funnel"]["stars_demoted_by_vetstar"] == 1
+    assert "CLOCK_CANDIDATES_PENDING_VET" not in s["verdict"]
+    assert "VETSTAR_DEMOTED_1" in s["verdict"]
+    assert s["vetstar"]["veto"] == "vet_contaminating_variable_at_p"
+
+
+def test_no_candidates_left_says_so_in_the_verdict(tmp_path):
+    import json as _json
+
+    from seti.metronome.vetstar import reconcile_vetstar
+    sp, cp = _summary_pair(tmp_path)
+    cj = _read(cp)
+    cj["candidates"] = [cj["candidates"][0]]        # only the vetted star remains
+    cp.write_text(_json.dumps(cj))
+    reconcile_vetstar(tmp_path, {
+        "star_key": "kepler:5879574",
+        "verdict": "MUNDANE_EXPLANATION_FOUND(COHERENT_OSCILLATION_AT_P:amp=1)"})
+    s = _read(sp)
+    assert s["n_candidates"] == 0 and s["n_interest"] == 0
+    assert "NO_CLOCK_CANDIDATES" in s["verdict"]
+
+
+def test_a_clean_vet_demotes_nothing(tmp_path):
+    from seti.metronome.vetstar import reconcile_vetstar
+
+    sp, cp = _summary_pair(tmp_path)
+    res = reconcile_vetstar(tmp_path, {
+        "star_key": "kepler:5879574",
+        "verdict": "NO_MUNDANE_EXPLANATION_FOUND [P=0.423282 d]"})
+    assert res["demoted"] == []
+    s, c = _read(sp), _read(cp)
+    assert s["n_candidates"] == 1
+    assert "CLOCK_CANDIDATES_PENDING_VET" in s["verdict"]
+    assert "VETSTAR_DEMOTED" not in s["verdict"]
+    row = next(r for r in c["candidates"] if r["star_key"] == "kepler:5879574")
+    assert row["tier"] == "candidate"               # demotion only ever removes
+    assert row["vetstar"]["verdict"].startswith("NO_MUNDANE")
+
+
+def test_a_degraded_vet_does_not_demote(tmp_path):
+    """UNREACHED archives are not a statement about the star, so a DEGRADED
+    verdict must leave the tier alone."""
+    from seti.metronome.vetstar import reconcile_vetstar
+
+    sp, _cp = _summary_pair(tmp_path)
+    res = reconcile_vetstar(tmp_path, {
+        "star_key": "kepler:5879574",
+        "verdict": "DEGRADED(gaia:gaia_source); NO_MUNDANE_EXPLANATION_FOUND"})
+    assert res["demoted"] == []
+    assert _read(sp)["n_candidates"] == 1
+
+
+def test_reconciliation_without_a_summary_says_so(tmp_path):
+    from seti.metronome.vetstar import reconcile_vetstar
+
+    assert reconcile_vetstar(tmp_path, {"star_key": "x", "verdict": "y"})["status"] \
+        == "NO_SUMMARY"
+
+
+def test_the_veto_name_is_the_most_mundane_one_present():
+    from seti.metronome.vetstar import vetstar_veto
+
+    assert vetstar_veto({"verdict": "MUNDANE_EXPLANATION_FOUND(GAIA_RUWE=2.6)"}) \
+        == "vet_gaia_ruwe"
+    # the catalogued neighbour outranks the light-curve reasons
+    v = ("MUNDANE_EXPLANATION_FOUND(CONTAMINATING_VARIABLE_AT_P:x; "
+         "COHERENT_OSCILLATION_AT_P:y; EVENTS_ON_THE_CREST:z)")
+    assert vetstar_veto({"verdict": v}) == "vet_contaminating_variable_at_p"
+    assert vetstar_veto({"verdict": "NO_MUNDANE_EXPLANATION_FOUND"}) is None
+    assert vetstar_veto({}) is None

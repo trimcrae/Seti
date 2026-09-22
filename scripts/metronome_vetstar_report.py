@@ -122,6 +122,7 @@ def main(argv=None) -> int:
         print("   ", r)
     print("amplitude ratio", d.get("per_segment_amplitude_ratio"))
     print("roll_season", json.dumps(d.get("roll_season"))[:1500])
+    print("reconciliation:", json.dumps(d.get("reconciliation"))[:800])
     print("unreached:", d.get("unreached"))
     print("surviving:", d.get("surviving_explanations"))
     print("elapsed_s", d.get("elapsed_s"))

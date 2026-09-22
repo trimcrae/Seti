@@ -116,8 +116,15 @@ outside the window the triage stored: Hβ at 5043.9 Å and [O III] 5008 at 5194.
 either reaches 4 σ, the persistence, the second epoch and the unresolved width are all
 explained at once — a real source in the fibre, just not the star.
 
-Next: land the calibrated full run (35747997902), then the control sample on whatever is
-still standing (35751666444). For the strongest candidate the four live kill paths are
+**In flight, and the queue is the blocker.** Run 35747997902 — the calibrated full run —
+sat queued for 98 minutes without one job starting, because the fixed `[0..7]` shard
+matrix asked the scheduler for eight runners even for a 4-shard dispatch, four of them
+only to evaluate their own skip condition and exit. The matrix is now built from
+`n_shards`, and the re-dispatch **35758868818** (2 shards, `ckpt_version` 4) asks for
+three. The control stage is **35751666444**.
+
+Next: land 35758868818, then read 35751666444. For the strongest candidate the four live
+kill paths are
 the background-galaxy family at z = 0.0373, how many *distinct fibres* its eight "other
 epochs" actually are, the same-plate control (a bad column in plate 412's red camera
 would produce everything seen so far), and the same-type control.

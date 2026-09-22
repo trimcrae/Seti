@@ -154,7 +154,7 @@ and the range. A line of constant strength across years is a stable property of 
 one that varies is a different object. The per-exposure test cannot separate them,
 because both are in every exposure.
 
-## One explanation that covers the whole surviving set
+## A molecular band gap — an explanation that fitted, and then did not
 
 Checked against each star's own redshift, **all six** lines left standing lie between two
 molecular band heads:

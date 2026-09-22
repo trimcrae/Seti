@@ -57,6 +57,48 @@ def local_time_hours(bin_: int, n_bins: int = 96) -> float:
     return (int(bin_) - 0.5) * 24.0 / float(n_bins)
 
 
+#: ``PCP_AVG_TBOL_POLN_SUM_LTIM01_240.TAB`` and friends
+PCP_NAME_RE = re.compile(r"(?i)^pcp_avg_tbol_(pol[ns])_(sum|win)_ltim(\d+)_240\.(tab|lbl)$")
+_POLE_OF = {"poln": "north", "pols": "south"}
+_SEASON_OF = {"sum": "summer", "win": "winter"}
+
+
+def index_pcp_files(files) -> dict:
+    """ODE's file listing → ``{(pole, season, bin, ext): url}`` for the
+    local-time (LTIM) products only.
+
+    ``files`` is either a ``{name: url}`` mapping or a list of ODE file
+    records.  The point of going through ODE is that neither the directory
+    layout nor the NUMBER of local-time bins has to be assumed: both are read
+    off the archive's own index.
+    """
+    if isinstance(files, dict):
+        items = list(files.items())
+    else:
+        items = [(f.get("name"), f.get("url")) for f in files]
+    out: dict = {}
+    for name, url in items:
+        if not name or not url:
+            continue
+        m = PCP_NAME_RE.match(str(name).strip())
+        if not m:
+            continue
+        out[(_POLE_OF[m.group(1).lower()], _SEASON_OF[m.group(2).lower()],
+             int(m.group(3)), m.group(4).lower())] = url
+    return out
+
+
+def available_bins(index: dict, pole: str, seasons=("summer", "winter"), ext: str = "tab") -> list[int]:
+    """Bins present for EVERY requested season, so a bin is only used when
+    the seasonal comparison it exists for can actually be made."""
+    sets = [{b for (p, s, b, e) in index if p == pole and s == season and e == ext}
+            for season in seasons]
+    if not sets:
+        return []
+    keep = set.intersection(*sets) if len(sets) > 1 else sets[0]
+    return sorted(keep)
+
+
 def pcp_georef(pole: str, half_px: int) -> Georef:
     """The 240 m polar stereographic grid the PCP points fall on.
 
@@ -105,30 +147,42 @@ def read_pcp_tab(path, *, chunk_rows: int = 2_000_000) -> dict:
             "t": np.concatenate(ts)}
 
 
-def _indices(x: np.ndarray, y: np.ndarray, half_px: int, flip_y: bool) -> tuple[np.ndarray, np.ndarray]:
-    X = x * MOON_RADIUS_M / PCP_SCALE_M
-    Y = y * MOON_RADIUS_M / PCP_SCALE_M
+def _indices(x: np.ndarray, y: np.ndarray, half_px: int, flip_y: bool,
+             origin_frac: float = 0.0) -> tuple[np.ndarray, np.ndarray]:
+    X = x * MOON_RADIUS_M / PCP_SCALE_M - float(origin_frac)
+    Y = y * MOON_RADIUS_M / PCP_SCALE_M - float(origin_frac)
     j = np.rint(X).astype(np.int64) + half_px
     i = (half_px + np.rint(Y).astype(np.int64)) if flip_y else (half_px - np.rint(Y).astype(np.int64))
     return i, j
 
 
-def rasterise(tab: dict, pole: str, half_px: int, *, flip_y: bool | None = None) -> dict:
-    """Scatter one PCP table onto the grid, choosing the y sign empirically.
+#: (line-axis sign, origin offset in pixels) tried when scattering a table
+_GRID_HYPOTHESES = ((False, 0.0), (True, 0.0), (False, 0.5), (True, 0.5))
 
-    The label says ``x``/``y`` are distances from the pole but not which way
-    the line axis runs, so both are tried and the one whose reconstructed
-    longitude/latitude match the table's own lon/lat columns is used.  The
-    residual is returned, so a wrong grid can never pass silently.
+
+def rasterise(tab: dict, pole: str, half_px: int, *, flip_y: bool | None = None) -> dict:
+    """Scatter one PCP table onto the grid, choosing the registration empirically.
+
+    The label says ``x``/``y`` are distances from the pole normalised by the
+    mean radius, but not which way the line axis runs nor whether the bin
+    CENTRES sit on the pole or half a pixel off it.  Both signs and both
+    origins are tried and the one whose reconstructed longitude/latitude best
+    match the table's OWN lon/lat columns is used.  The residual and the
+    collision rate (two table rows landing in one pixel, which is what a
+    wrong origin produces) are returned, so a wrong grid can never pass
+    silently.
     """
     if not tab.get("n"):
         return {"status": "EMPTY", "n": 0}
     g = pcp_georef(pole, half_px)
-    best = None
-    for fy in ([bool(flip_y)] if flip_y is not None else [False, True]):
-        i, j = _indices(tab["x"], tab["y"], half_px, fy)
+    hyp = ([(bool(flip_y), 0.0), (bool(flip_y), 0.5)] if flip_y is not None
+           else list(_GRID_HYPOTHESES))
+    best, tried = None, []
+    for fy, off in hyp:
+        i, j = _indices(tab["x"], tab["y"], half_px, fy, off)
         keep = (i >= 0) & (i < g.lines) & (j >= 0) & (j < g.samples)
         if not keep.any():
+            tried.append({"flip_y": fy, "origin_frac": off, "resid_deg": None, "n_on_grid": 0})
             continue
         s = slice(0, min(20000, int(keep.sum())))
         ii, jj = i[keep][s], j[keep][s]
@@ -137,18 +191,28 @@ def rasterise(tab: dict, pole: str, half_px: int, *, flip_y: bool | None = None)
         dlat = np.abs(lat_g - tab["lat"][keep][s].astype(float))
         # near the pole longitude is degenerate; weight it by cos(lat)
         resid = float(np.nanmedian(dlat + dlon * np.cos(np.radians(lat_g))))
+        tried.append({"flip_y": fy, "origin_frac": off, "resid_deg": resid,
+                      "n_on_grid": int(keep.sum())})
         if best is None or resid < best["resid_deg"]:
-            best = {"flip_y": fy, "resid_deg": resid, "i": i, "j": j, "keep": keep}
+            best = {"flip_y": fy, "origin_frac": off, "resid_deg": resid,
+                    "i": i, "j": j, "keep": keep}
     if best is None:
-        return {"status": "OFF_GRID", "n": int(tab["n"])}
+        return {"status": "OFF_GRID", "n": int(tab["n"]), "hypotheses": tried}
     i, j, keep = best["i"], best["j"], best["keep"]
     arr = np.full((g.lines, g.samples), np.nan, dtype=np.float32)
     t = tab["t"][keep]
     good = np.isfinite(t) & (t > 0)
-    arr[i[keep][good], j[keep][good]] = t[good]
+    ii, jj = i[keep][good], j[keep][good]
+    flat = ii.astype(np.int64) * g.samples + jj.astype(np.int64)
+    n_cells = int(np.unique(flat).size) if flat.size else 0
+    arr[ii, jj] = t[good]
+    n_pts = int(good.sum())
     return {"status": "OK", "array": arr, "georef": g, "n": int(tab["n"]),
-            "n_on_grid": int(good.sum()), "n_off_grid": int((~keep).sum()),
-            "flip_y": best["flip_y"], "georef_resid_deg": best["resid_deg"],
+            "n_on_grid": n_pts, "n_off_grid": int((~keep).sum()),
+            "n_cells": n_cells,
+            "collision_frac": float(1.0 - n_cells / n_pts) if n_pts else 0.0,
+            "flip_y": best["flip_y"], "origin_frac": best["origin_frac"],
+            "georef_resid_deg": best["resid_deg"], "hypotheses": tried,
             "t_min": float(np.nanmin(t[good])) if good.any() else float("nan"),
             "t_max": float(np.nanmax(t[good])) if good.any() else float("nan")}
 
@@ -158,22 +222,48 @@ def rasterise(tab: dict, pole: str, half_px: int, *, flip_y: bool | None = None)
 # ---------------------------------------------------------------------------
 LPSR_URL = ("https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/"
             "extras/illumination/release_2014/img/lpsr_{tag}_240m.{ext}")
+#: Both routes answered 200 on the runner (results/crypt/probe.json).  The
+#: 2016-08 re-release is the one ODE indexes as LRO/LOLA/GDRPSR; the 2014
+#: release sits beside it.  Tried in order, and which one was read is
+#: recorded with the result.
+LPSR_URLS = (LPSR_URL,
+             "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/"
+             "extras/illumination/img/lpsr_{tag}_240m_201608.{ext}")
 
 
-def lpsr_url(pole: str, ext: str = "img") -> str:
-    return LPSR_URL.format(tag="65n" if pole == "north" else "65s", ext=ext)
+def lpsr_url(pole: str, ext: str = "img", route: int = 0) -> str:
+    return LPSR_URLS[int(route)].format(tag="65n" if pole == "north" else "65s", ext=ext)
 
 
-def crop_lpsr(psr: np.ndarray, half_px: int) -> np.ndarray:
-    """Crop the 65 deg LPSR raster to the PCP grid.
+def n_lpsr_routes() -> int:
+    return len(LPSR_URLS)
 
-    Both are pixel-registered 240 m polar stereographic true at the pole, so
-    the only transform is a crop about the centre pixel.
+
+def crop_lpsr(psr: np.ndarray, half_px: int, *, pole: str = "north",
+              src_georef: Georef | None = None) -> np.ndarray:
+    """Resample the 65 deg LPSR raster onto the PCP grid.
+
+    Both are 240 m polar stereographic true at the pole on the same radius,
+    so the transform is a pure integer translation — but NOT a crop about the
+    array centre.  ``LPSR_65N_240M`` is 6420 x 6420 with
+    ``LINE_PROJECTION_OFFSET = 3209.5`` (1-based), i.e. the pole sits at
+    0-based pixel 3208.5, one pixel from the array centre at 3209.5.  Taking
+    the centre instead misregisters the shadow mask by 240 m, which at
+    ``edge_px = 2`` erosion is a real shift of the interior.  So the offsets
+    come off the label whenever the label was parsed, and the fallback to the
+    array centre is returned to the caller as a flag, never assumed silently.
     """
     a = np.asarray(psr)
-    ci, cj = (a.shape[0] - 1) / 2.0, (a.shape[1] - 1) / 2.0
     n = 2 * int(half_px) + 1
-    i0, j0 = int(round(ci)) - int(half_px), int(round(cj)) - int(half_px)
+    if (src_georef is not None and np.isfinite(getattr(src_georef, "line_offset", np.nan))
+            and np.isfinite(getattr(src_georef, "sample_offset", np.nan))):
+        ci, cj = float(src_georef.line_offset), float(src_georef.sample_offset)
+    else:
+        ci, cj = (a.shape[0] - 1) / 2.0, (a.shape[1] - 1) / 2.0
+    # dst pixel (i, j) has y = (half_px - i) * s, x = (j - half_px) * s;
+    # the same (x, y) is src line ci - y/s, src sample cj + x/s.
+    i0 = int(round(ci - float(half_px)))
+    j0 = int(round(cj - float(half_px)))
     out = np.zeros((n, n), dtype=bool)
     si0, sj0 = max(i0, 0), max(j0, 0)
     si1, sj1 = min(i0 + n, a.shape[0]), min(j0 + n, a.shape[1])
@@ -197,6 +287,7 @@ def parse_bin_spec(spec, n_bins: int = 96) -> list[int]:
     return [int(x) for x in re.split(r"[,\s]+", s) if x]
 
 
-__all__ = ["MOON_RADIUS_M", "PCP_SCALE_M", "PCP_URL_TEMPLATE", "crop_lpsr", "half_px_for",
-           "local_time_hours", "lpsr_url", "parse_bin_spec", "pcp_georef", "pcp_product_name",
-           "pcp_url", "rasterise", "read_pcp_tab"]
+__all__ = ["LPSR_URL", "LPSR_URLS", "MOON_RADIUS_M", "PCP_NAME_RE", "PCP_SCALE_M",
+           "PCP_URL_TEMPLATE", "available_bins", "crop_lpsr", "half_px_for", "index_pcp_files",
+           "local_time_hours", "lpsr_url", "n_lpsr_routes", "parse_bin_spec", "pcp_georef",
+           "pcp_product_name", "pcp_url", "rasterise", "read_pcp_tab"]

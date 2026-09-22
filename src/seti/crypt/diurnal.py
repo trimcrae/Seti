@@ -487,11 +487,34 @@ def inject(cube: DiurnalCube, pixels, f: float, T_hot: float, *, seasons=None, b
     return out
 
 
+def crop_cube(cube: DiurnalCube, i0: int, j0: int, n: int) -> DiurnalCube:
+    """The ``n x n`` sub-cube whose top-left pixel is ``(i0, j0)``, with the
+    georef carried across so longitudes and latitudes stay correct."""
+    g = cube.georef
+    sub = Georef(projection=g.projection, center_lat=g.center_lat, center_lon=g.center_lon,
+                 map_scale_m=g.map_scale_m, line_offset=g.line_offset - i0,
+                 sample_offset=g.sample_offset - j0, lines=n, samples=n, radius_m=g.radius_m,
+                 map_resolution_ppd=g.map_resolution_ppd, lon_direction=g.lon_direction)
+    out = DiurnalCube(cube.pole, sub, {}, dict(cube.sources))
+    for k, arr in cube.arrays.items():
+        out.arrays[k] = np.ascontiguousarray(arr[i0:i0 + n, j0:j0 + n])
+    return out
+
+
 def sensitivity(cube: DiurnalCube, thr: dict | None, areas_m2, T_hot: float = 300.0, *,
                 n_per_area: int = 20, seed: int = 11, hardware: list | None = None,
-                external_psr: np.ndarray | None = None) -> dict:
+                external_psr: np.ndarray | None = None, window_px: int | None = None) -> dict:
     """Injection–recovery on the real maps: the fraction of injected sources
-    of each area that come back classed ``candidate``."""
+    of each area that come back classed ``candidate``.
+
+    Every statistic the screen uses is LOCAL — the annulus background has
+    radius ``r_out_px`` and the largest neighbourhood rule looks
+    ``stripe_window`` pixels along a row — so a source injected at the centre
+    of a window several times that size is screened with exactly the numbers
+    the full map would give it.  ``window_px`` sets that window; without it
+    the whole map is re-screened per injection, which on the 2535 x 2535
+    polar grid is minutes per trial and not a table anyone would wait for.
+    """
     thr = {**DEFAULT_THRESHOLDS, **(thr or {})}
     m = cold_trap_mask(cube, thr, external=external_psr)
     if m["mask"] is None or m["n_interior"] == 0:
@@ -499,6 +522,13 @@ def sensitivity(cube: DiurnalCube, thr: dict | None, areas_m2, T_hot: float = 30
     ii, jj = np.nonzero(m["interior"])
     if len(ii) == 0:
         return {"status": "NO_PSR_INTERIOR", "rows": []}
+    lines, samples = cube.shape
+    w = int(window_px) if window_px else 0
+    # the window must hold the widest neighbourhood any rule consults
+    w_min = 2 * (int(thr["r_out_px"]) + int(thr["stripe_window"]) // 2 + int(thr["edge_px"])) + 3
+    if w and w < w_min:
+        w = w_min
+    use_window = bool(w) and w < min(lines, samples)
     rng = np.random.default_rng(seed)
     px = float(cube.georef.pixel_area_m2)
     out = []
@@ -509,16 +539,26 @@ def sensitivity(cube: DiurnalCube, thr: dict | None, areas_m2, T_hot: float = 30
         for _ in range(int(n_per_area)):
             k = int(rng.integers(0, len(ii)))
             i, j = int(ii[k]), int(jj[k])
-            rep = screen_pole(inject(cube, [(i, j)], f, T_hot), thr, hardware=hardware,
-                              external_psr=external_psr)
+            if use_window:
+                i0 = int(np.clip(i - w // 2, 0, lines - w))
+                j0 = int(np.clip(j - w // 2, 0, samples - w))
+                sub = crop_cube(cube, i0, j0, w)
+                psr_sub = (None if external_psr is None
+                           else np.asarray(external_psr)[i0:i0 + w, j0:j0 + w])
+                ti, tj = i - i0, j - j0
+            else:
+                sub, psr_sub, ti, tj = cube, external_psr, i, j
+            rep = screen_pole(inject(sub, [(ti, tj)], f, T_hot), thr, hardware=hardware,
+                              external_psr=psr_sub)
             fl = rep.get("flags")
             n_try += 1
             if fl is not None and len(fl):
-                hit = fl[(fl["line"] == i) & (fl["sample"] == j) & (fl["class"] == "candidate")]
+                hit = fl[(fl["line"] == ti) & (fl["sample"] == tj) & (fl["class"] == "candidate")]
                 n_ok += int(len(hit) > 0)
         out.append({"area_m2": float(a), "f": f, "n": n_try, "n_recovered": n_ok,
                     "recovered_frac": (n_ok / n_try) if n_try else float("nan")})
-    return {"status": "OK", "T_hot_K": float(T_hot), "pixel_area_m2": px, "rows": out}
+    return {"status": "OK", "T_hot_K": float(T_hot), "pixel_area_m2": px,
+            "window_px": (w if use_window else None), "rows": out}
 
 
 # ---------------------------------------------------------------------------
@@ -555,6 +595,6 @@ def synthetic_cube(n_px: int = 120, *, pole: str = "south", seed: int = 5,
     return cube, psr
 
 
-__all__ = ["CLASSES", "DEFAULT_THRESHOLDS", "DiurnalCube", "cold_trap_mask",
+__all__ = ["CLASSES", "DEFAULT_THRESHOLDS", "DiurnalCube", "cold_trap_mask", "crop_cube",
            "floor_area_bolometric", "inject", "local_background", "mix_bolometric",
            "screen_pole", "sensitivity", "statistics", "synthetic_cube"]

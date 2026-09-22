@@ -179,6 +179,9 @@ patterns:
 diurnal:
   min_lat_deg: 80.0          # the PCP cap; sets the 2535 x 2535 grid at 240 m
   ltim_bins: "every:16"
+  n_bins_fallback: 96        # used ONLY if ODE cannot be reached; the real bin
+                             # count is read off ODE's own PCP file index
+  max_products_per_pole: 0   # 0 = no cap; a hard ceiling on downloads per pole
   seasons: ["summer", "winter"]
   psr_tmax_K: 110.0
   edge_px: 2
@@ -221,11 +224,16 @@ thermal:
   floor_nsigma: 5.0
 
 # Injection-recovery on the real maps (the honest sensitivity statement).
+# Every rule in the screen is local (annulus r_out_px, stripe_window along a
+# row), so each trial is run in a window that comfortably contains the widest
+# neighbourhood consulted; re-screening the whole 2535 x 2535 grid per trial
+# would be minutes each and the table would never be produced.
 sensitivity:
   areas_m2: [1, 3, 10, 30, 100, 300, 1000, 3000, 10000]
   t_hot_K: [300.0, 500.0]
   n_per_area: 20
   seed: 11
+  window_px: 301
 
 radar:
   cpr_min: 1.0

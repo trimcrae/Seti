@@ -979,29 +979,91 @@ def _read_raster(path: Path, fallback_dtype=">i2") -> tuple[np.ndarray | None, d
 
 
 def _acquire_psr(conf: dict, fetch, pole: str, ddir: Path, half_px: int) -> dict:
-    """The LOLA permanently-shadowed raster, cropped to the PCP grid."""
+    """The LOLA permanently-shadowed raster, resampled onto the PCP grid.
+
+    Every published route is tried in order and each one's outcome recorded;
+    the registration comes off the label's projection offsets, never from the
+    array centre (``pcp.crop_lpsr``).
+    """
     acq = conf["acquire"]
-    rec: dict = {"pole": pole}
+    rec: dict = {"pole": pole, "routes": []}
     ddir.mkdir(parents=True, exist_ok=True)
-    for ext in ("lbl", "img"):
-        url = PCP.lpsr_url(pole, ext)
-        dest = ddir / Path(url).name
-        res = A.download(fetch, url, dest, max_bytes=int(acq.get("max_bytes_per_file", 4e8)),
-                         timeout=float(acq.get("download_timeout_s", 900)))
-        rec[ext] = {"url": url, "status": res.status, "error": res.error, "n_bytes": res.n_bytes}
-        if not res.ok:
-            rec["status"] = "NO_PSR_RASTER"
-            return rec
-    arr, note = _read_raster(ddir / Path(PCP.lpsr_url(pole, "lbl")).name)
-    rec["read"] = note
-    if arr is None:
-        rec["status"] = "PSR_UNREADABLE"
-        return rec
-    rec["full_shape"] = list(arr.shape)
-    rec["n_psr_full"] = int((arr > 0).sum())
-    mask = PCP.crop_lpsr(arr, half_px)
-    rec.update({"status": "OK", "n_psr_cropped": int(mask.sum()), "shape": list(mask.shape)})
-    return {**rec, "mask": mask}
+    for route in range(PCP.n_lpsr_routes()):
+        r: dict = {"route": route}
+        ok = True
+        for ext in ("lbl", "img"):
+            url = PCP.lpsr_url(pole, ext, route)
+            dest = ddir / Path(url).name
+            res = A.download(fetch, url, dest, max_bytes=int(acq.get("max_bytes_per_file", 4e8)),
+                             timeout=float(acq.get("download_timeout_s", 900)))
+            r[ext] = {"url": url, "status": res.status, "error": res.error, "n_bytes": res.n_bytes}
+            ok = ok and bool(res.ok)
+        if not ok:
+            r["outcome"] = "DOWNLOAD_FAILED"
+            rec["routes"].append(r)
+            continue
+        lbl_path = ddir / Path(PCP.lpsr_url(pole, "lbl", route)).name
+        arr, note = _read_raster(lbl_path)
+        r["read"] = note
+        if arr is None:
+            r["outcome"] = "UNREADABLE"
+            rec["routes"].append(r)
+            continue
+        src_georef = None
+        try:
+            src_georef = read_label(lbl_path).georef
+        except Exception as exc:  # noqa: BLE001
+            r["georef_error"] = f"{type(exc).__name__}: {exc}"[:200]
+        r["outcome"] = "OK"
+        r["full_shape"] = list(arr.shape)
+        r["n_psr_full"] = int((arr > 0).sum())
+        r["src_georef"] = src_georef.as_dict() if src_georef is not None else None
+        r["registration"] = ("label_offsets" if (src_georef is not None
+                                                 and np.isfinite(src_georef.line_offset))
+                             else "array_centre_fallback")
+        rec["routes"].append(r)
+        mask = PCP.crop_lpsr(arr, half_px, pole=pole, src_georef=src_georef)
+        rec.update({k: v for k, v in r.items() if k in
+                    ("lbl", "img", "read", "full_shape", "n_psr_full", "registration")})
+        rec.update({"status": "OK", "route_used": route,
+                    "n_psr_cropped": int(mask.sum()), "shape": list(mask.shape)})
+        return {**rec, "mask": mask}
+    rec["status"] = "NO_PSR_RASTER"
+    return rec
+
+
+def resolve_pcp_products(conf: dict, fetch, out: Path) -> dict:
+    """Ask ODE for every PCP file, so neither the directory layout nor the
+    NUMBER of local-time bins is assumed.
+
+    Falls back to the URL template verified on the runner
+    (``results/crypt/probe.json``, ``formats[0]``) when ODE cannot be reached;
+    which route was used is recorded with the result.
+    """
+    acq = conf["acquire"]
+    spec = acq.get("diviner_ode") or {}
+    rep: dict = {"route": None, "n_files": 0, "status": "NOT_TRIED"}
+    index: dict = {}
+    base = acq.get("ode_rest")
+    if base:
+        try:
+            r = A.ode_dataset_files(fetch, base, spec.get("ihid", "LRO"), spec.get("iid", "DLRE"),
+                                    "PCP", limit=int(spec.get("limit", 2000)),
+                                    timeout=float(acq.get("listing_timeout_s", 60)))
+            index = PCP.index_pcp_files(r["files"])
+            rep.update({"url": r.get("url"), "http_status": r.get("status"),
+                        "error": r.get("error"), "n_products": r.get("n_products"),
+                        "n_files": len(r["files"]), "n_ltim_files": len(index)})
+        except Exception as exc:  # noqa: BLE001
+            rep["error"] = f"{type(exc).__name__}: {exc}"[:300]
+    if index:
+        rep.update({"route": "ode", "status": "OK"})
+    else:
+        rep.update({"route": "url_template", "status": "ODE_UNAVAILABLE_USING_TEMPLATE"})
+    rep["bins_available"] = {p: PCP.available_bins(index, p) for p in conf["products"]["poles"]}
+    rep["n_bins_available"] = {p: len(v) for p, v in rep["bins_available"].items()}
+    _write(out / "pcp_index.json", {k: v for k, v in rep.items() if k != "index"})
+    return {**rep, "index": index}
 
 
 def stage_pcp(conf: dict, out: Path, *, fetch=None, shard: str | None = None, poles=None,
@@ -1014,16 +1076,30 @@ def stage_pcp(conf: dict, out: Path, *, fetch=None, shard: str | None = None, po
     dcfg = conf.get("diurnal", {})
     thr = {**D.DEFAULT_THRESHOLDS, **{k: v for k, v in dcfg.items() if k in D.DEFAULT_THRESHOLDS}}
     half_px = PCP.half_px_for(float(dcfg.get("min_lat_deg", 80.0)))
-    bins = PCP.parse_bin_spec(dcfg.get("ltim_bins", "every:16"))
     seasons = list(dcfg.get("seasons", ["summer", "winter"]))
+    resolved = resolve_pcp_products(conf, fetch, out)
+    index = resolved.get("index") or {}
     reports = {}
     for pole in shard_poles(conf, shard, poles):
+        avail = PCP.available_bins(index, pole, seasons) if index else []
+        n_bins = max(avail) if avail else int(dcfg.get("n_bins_fallback", 96))
+        bins = [b for b in PCP.parse_bin_spec(dcfg.get("ltim_bins", "every:16"), n_bins)
+                if (not avail) or b in avail]
+        max_n = int(dcfg.get("max_products_per_pole", 0) or 0)
+        if max_n and len(bins) * len(seasons) > max_n:
+            step = int(np.ceil(len(bins) * len(seasons) / max_n))
+            bins = bins[::step]
         ddir = out / "data" / pole
         ddir.mkdir(parents=True, exist_ok=True)
         rep: dict = {"stage": "pcp", "pole": pole, "generated_utc": _now(), "half_px": half_px,
                      "grid": [2 * half_px + 1] * 2, "ltim_bins": bins, "seasons": seasons,
-                     "local_times_h": [round(PCP.local_time_hours(b), 3) for b in bins],
+                     "n_bins_axis": n_bins,
+                     "n_bins_available": len(avail),
+                     "index": {k: v for k, v in resolved.items() if k not in ("index", "bins_available")},
+                     "local_times_h": [round(PCP.local_time_hours(b, n_bins), 3) for b in bins],
                      "products": {}, "bytes": 0, "degraded": []}
+        if not bins:
+            rep["degraded"].append("no_ltim_bins_resolved")
         psr = _acquire_psr(conf, fetch, pole, ddir, half_px)
         rep["psr"] = {k: v for k, v in psr.items() if k != "mask"}
         if psr.get("status") != "OK":
@@ -1033,7 +1109,7 @@ def stage_pcp(conf: dict, out: Path, *, fetch=None, shard: str | None = None, po
         for season in seasons:
             for b in bins:
                 key = f"{season}/ltim{int(b):02d}"
-                url = PCP.pcp_url(pole, season, b, "tab")
+                url = index.get((pole, season, int(b), "tab")) or PCP.pcp_url(pole, season, b, "tab")
                 dest = ddir / Path(url).name
                 res = A.download(fetch, url, dest, max_bytes=int(acq.get("max_bytes_per_file", 4e8)),
                                  timeout=float(acq.get("download_timeout_s", 900)))
@@ -1085,13 +1161,21 @@ def stage_pcp(conf: dict, out: Path, *, fetch=None, shard: str | None = None, po
         scr["pole"] = pole
         scr["degraded"] = list(scr.get("degraded", [])) + rep["degraded"]
         scr["acquisition"] = {"n_layers": n_ok, "n_missing": rep["n_missing"], "bytes": rep["bytes"],
-                              "ltim_bins": bins, "seasons": seasons}
+                              "ltim_bins": bins, "seasons": seasons, "n_bins_axis": n_bins,
+                              "n_bins_available": len(avail),
+                              "local_times_h": rep["local_times_h"],
+                              "index_route": resolved.get("route"),
+                              "psr": {k: v for k, v in rep.get("psr", {}).items()
+                                      if k in ("status", "route_used", "registration",
+                                               "n_psr_full", "n_psr_cropped", "full_shape")}}
         if run_sensitivity:
             sens = D.sensitivity(cube, thr, conf.get("sensitivity", {}).get("areas_m2", [3, 10, 30, 100]),
                                  float(conf.get("sensitivity", {}).get("t_hot_K", [300.0])[0]),
                                  n_per_area=int(conf.get("sensitivity", {}).get("n_per_area", 20)),
                                  seed=int(conf.get("sensitivity", {}).get("seed", 11)),
-                                 hardware=conf.get("hardware"), external_psr=psr.get("mask"))
+                                 hardware=conf.get("hardware"), external_psr=psr.get("mask"),
+                                 window_px=int(conf.get("sensitivity", {}).get("window_px", 0) or 0)
+                                 or None)
             scr["sensitivity"] = sens
             _write(out / f"diurnal_sensitivity_{pole}.json", sens)
         _write(out / f"diurnal_{pole}.json", scr)

@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import time
 from pathlib import Path
 
 import numpy as np
@@ -601,6 +602,52 @@ def test_end_to_end_recovers_the_injected_swarm_and_verifies_the_asset(tmp_path)
     assert "HD 999002" in set(rk["key"])
     assert float(rk.loc[rk["key"] == "HD 999002", "delta_chi2"].iloc[0]) < 0
     assert rk["delta_chi2"].min() < 0 < rk["delta_chi2"].max()
+
+
+def test_one_slow_catalogue_cannot_eat_the_whole_probe():
+    """A per-table clock, and a truncated discovery is not an empty one.
+
+    Run 35744731075 sat in the probe stage for over 50 minutes against a
+    25-minute stage budget: ``budget_s`` is only checked BETWEEN tables, so
+    one slow catalogue ran its whole route ladder and then a column query plus
+    a row count for every table it listed.  The per-table clock bounds that,
+    and the status it reports must say "this run stopped looking", never
+    "the archive holds nothing".
+    """
+    calls = {"n": 0}
+
+    def slow_query(adql):
+        calls["n"] += 1
+        time.sleep(0.05)
+        return fake_query(adql)
+
+    # a budget that expires part-way through discovery
+    disc = acq.discover_table("absil2013", "J/A+A/555/A104", "excess", ("FLUOR",),
+                              query_fn=slow_query, budget_s=0.01)
+    assert disc.status == acq.STATUS_TRUNCATED
+    assert disc.table is None
+    assert "budget" in disc.note and "not a statement about" in disc.note
+    # it stopped early rather than walking the whole ladder
+    assert calls["n"] <= 2
+    # and with a generous clock the SAME call resolves normally, so the status
+    # difference is the clock and nothing else
+    ok = acq.discover_table("absil2013", "J/A+A/555/A104", "excess", ("FLUOR",),
+                            query_fn=fake_query, budget_s=600.0)
+    assert ok.status == acq.STATUS_OK and ok.table == "J/A+A/555/A104/table3"
+
+
+def test_a_truncated_probe_never_promotes_and_is_not_a_null(tmp_path):
+    """The stage-level consequence: a probe that ran out of clock everywhere
+    must not read as a clean null, and must promote nothing."""
+    conf = _conf()
+    conf["probe"]["budget_s"] = 1e-6      # expires before the first table
+    out = tmp_path / "forge"
+    res = forge_run("probe", out, conf, query_fn=fake_query)
+    statuses = {k: v.get("status") for k, v in res["probe"]["tables"].items()}
+    assert set(statuses.values()) <= {acq.STATUS_NOT_ATTEMPTED, acq.STATUS_TRUNCATED}
+    assert res["probe"]["n_tables_usable"] == 0
+    # nothing here may be mistaken for "the archive has nothing"
+    assert acq.STATUS_ZERO not in set(statuses.values())
 
 
 def test_polarimetry_keeps_the_tightest_limit_and_never_extends_the_sample():

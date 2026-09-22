@@ -1098,9 +1098,9 @@ def _cmd_uline(args, cfg):
 
 # --- CRADLE ---
 def _cmd_cradle(args, cfg):
-    from .cradle.run import main as _cradle_main
+    from .cradle.run import run_from_args as _cradle_run
 
-    return _cradle_main(list(args.rest))
+    return _cradle_run(args, cfg)
 # --- /CRADLE ---
 
 
@@ -2316,11 +2316,12 @@ def main(argv=None):
     p.set_defaults(func=_cmd_fallout)
 
     # --- CRADLE ---
+    from .cradle.run import add_arguments as _cradle_args
     p = sub.add_parser("cradle",
                        help="CRADLE (S52/S53): warm debris at the habitable-zone radius of a "
                             "MATURE star, above the collisional steady-state maximum; "
-                            "flags are passed through to seti.cradle.run")
-    p.add_argument("rest", nargs=argparse.REMAINDER)
+                            "same flags as seti.cradle.run")
+    _cradle_args(p)
     p.set_defaults(func=_cmd_cradle)
     # --- /CRADLE ---
 

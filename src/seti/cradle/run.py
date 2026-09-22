@@ -850,10 +850,8 @@ def cradle_run(stage: str = "all", *, out_dir: Path | str | None = None, shard: 
     return rep
 
 
-def main(argv=None):
-    p = argparse.ArgumentParser(prog="seti cradle",
-                                description="CRADLE (S52/S53): warm debris at the habitable-zone "
-                                            "radius of a mature star, above the collisional maximum")
+def add_arguments(p) -> None:
+    """The channel's flags, so `seti cradle --stage probe` works as itself."""
     p.add_argument("--stage", default="all", help="probe|acquire|screen|ages|assess|all or a comma list")
     p.add_argument("--shard", default="0/1", help="i/n: this shard of n (acquire, ages)")
     p.add_argument("--shards", type=int, default=0,
@@ -863,12 +861,13 @@ def main(argv=None):
                    help="cap on shortlist stars enriched per ages shard (0 = all)")
     p.add_argument("--out-dir", default="", help="results directory (default results/cradle)")
     p.add_argument("--config", default="", help="alternative config yaml")
-    a = p.parse_args(argv)
+
+
+def run_from_args(a, _cfg=None) -> int:
     shard, n = parse_shard(a.shard)
     n_shards = a.shards or n
     conf = load_cradle_config(a.config or None)
     if a.max_stars_per_shard:
-        conf.setdefault("enrich", {})
         conf["enrich"] = {**(conf.get("enrich") or {}),
                           "max_stars_per_shard": int(a.max_stars_per_shard)}
     rep = cradle_run(a.stage, out_dir=a.out_dir or None, shard=shard, n_shards=n_shards,
@@ -879,10 +878,19 @@ def main(argv=None):
     return 0
 
 
+def main(argv=None):
+    p = argparse.ArgumentParser(prog="seti cradle",
+                                description="CRADLE (S52/S53): warm debris at the habitable-zone "
+                                            "radius of a mature star, above the collisional maximum")
+    add_arguments(p)
+    return run_from_args(p.parse_args(argv))
+
+
 if __name__ == "__main__":                                # pragma: no cover
     raise SystemExit(main())
 
 
-__all__ = ["DEFAULTS", "DEFAULT_ENRICH", "DEFAULT_PROBE", "SHORTLIST_COLS", "STAGES", "cradle_run",
-           "load_cradle_config", "main", "parse_shard", "stage_acquire", "stage_ages", "stage_assess",
-           "stage_probe", "stage_screen"]
+__all__ = ["DEFAULTS", "DEFAULT_ENRICH", "DEFAULT_PROBE", "SHORTLIST_COLS", "STAGES",
+           "add_arguments", "cradle_run", "load_cradle_config", "main", "parse_shard",
+           "run_from_args", "stage_acquire", "stage_ages", "stage_assess", "stage_probe",
+           "stage_screen"]

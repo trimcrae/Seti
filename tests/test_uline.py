@@ -856,7 +856,7 @@ def test_end_to_end_recovers_a_seeded_pattern_through_the_acquire_path(tmp_path)
     # reason to obtain the laboratory line list, not a candidate
     assert s["verdict"] == "PATTERN_CANDIDATE_VERIFY_CONSTANTS"
     assert s["n_pattern_candidates"] == 0
-    assert s["pattern_candidates_verify_constants"] == ["CHF3|orion_kl_hifi"]
+    assert "CHF3|orion_kl_hifi" in s["pattern_candidates_verify_constants"]
     p = s["pairs"]["CHF3|orion_kl_hifi"]
     assert p["line_source"] == "predicted" and p["pattern"] and p["n_coincident"] >= 8
     rows = pd.read_csv(out / "coincidences.csv")

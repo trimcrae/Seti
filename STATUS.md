@@ -74,6 +74,36 @@ already committed. The new run's first job is `targets`. No
 `results/century/summary.json` exists yet; the channel has produced no sky
 statement.
 
+**The first real target selection landed, and it reframes the channel.**
+Run 35748748365's `targets` job (`results/century/targets.csv`,
+`targets_summary.json`) over the six fields at radius 1°: 12,517–19,538 plates
+per field, **77,632 exposure durations** collected (median 60 min — the join
+works), and **384 targets: 360 bright, 24 catalogued variables**. Variables by
+field: kepler 15, cygnus 5, orion 4, and **zero** from praesepe, sa57_ngp and
+m31. Three consequences, all about the cessation arm (`docs/century.md` §6.3):
+
+1. **The cessation sample is 24 stars.** The cap was 60 per field; the
+   catalogues delivered a quarter of one field's worth in total. The binding
+   constraint is `mag_max = 13` + `amp ≥ 0.3` + periodic non-LPV, not the cap.
+2. **The median plate is shallower than the targets.** `limMagApass` medians
+   of 12.3–13.2 against a `mag ≤ 13` cut means the typical plate cannot see
+   the typical target. The margin cut and the censored efficiency handle this
+   honestly, but η — which gates every cessation claim at 0.9 — is capped by
+   it. **Raising `mag_max` makes this worse.** Brighter targets, or fields
+   chosen for plate *depth*, is the productive direction.
+3. **Eclipsing binaries dominate, and they are the wrong population.** The 24
+   are EA/EB/EW/E/ELL/RS/ROT plus one Cepheid (V0547 Cyg, P = 6.225 d, amp
+   0.96) and no RR Lyrae. An eclipsing period is a geometric orbit: it cannot
+   cease without destroying the system, so "an eclipse that stopped" is a
+   statement about the photometry. A pulsation can stop.
+   `vet.PERIODIC_TYPE_RE` admits eclipsers on equal terms, and `amp_cat` is
+   NaN for every `KID`/`KIC` entry, so `amp_min` passed them on a missing
+   value rather than on evidence.
+
+**Next decisive action: a target-selection change, not another sweep of the
+same list** — split pulsators from eclipsers, require a real catalogued
+amplitude, and choose fields on `limMagApass` p90 as well as plate count.
+
 **A third red test, inherited, not named in the brief.**
 `test_series_change_at_the_transition_is_not_a_cessation` fails, and it fails
 identically on the pre-session commit `cb2dc252` — so it is inherited, not a

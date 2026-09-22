@@ -347,6 +347,53 @@ reporting "no flag cuts applied" as a **degradation** if neither is available),
 the plate density of every configured field, and one live
 `queryexps → querycat → lightcurve` chain on four bright catalogued variables.
 
+### 6.3 What the first real target selection returned — and why it changes §7
+
+Run 35748748365's `targets` job, over the six configured fields at radius 1°
+(`results/century/targets.csv`, `targets_summary.json`):
+
+| | |
+|---|---|
+| plates per field | 12,517 – 19,538 (`queryexps`) |
+| exposure durations collected | 77,632, median **60 min** |
+| targets | **384**: 360 bright, **24 catalogued variables** |
+| variables by field | kepler 15, cygnus 5, orion 4, **praesepe / sa57_ngp / m31: 0** |
+| median `limMagApass` | 12.27 – 13.17 by field |
+
+Three things follow, and all three are about the *cessation* arm:
+
+**The sample is 24 stars, not 900.** The cap was 60 variables per field and
+the catalogues delivered a quarter of one field's worth in total. Half the
+configured fields contribute no cessation target at all. Whatever the cap is
+set to, `mag_max = 13` with `amp ≥ 0.3` and a periodic non-LPV type is what
+binds, not the cap.
+
+**The median plate is shallower than the targets.** `limMagApass` medians of
+12.3–13.2 against a target cut of `mag ≤ 13` means the *typical* plate cannot
+see the *typical* target. That is not fatal — `margin` already restricts every
+statistic to plates at least `margin` magnitudes deeper than the star, and the
+censored efficiency is measured against each block's own limits — but it does
+mean the epochs that survive the margin cut are a minority of the plates, and
+η (which gates every cessation claim at 0.9) is capped by that. **Raising
+`targets.mag_max` would make this worse, not better.** The productive move is
+the opposite one: brighter targets, or fields chosen for deep series.
+
+**Eclipsing binaries dominate, and they are the wrong population.** Of the 24,
+the types are EA, EB, EW, E, ELL, RS and ROT, with a single Cepheid
+(V0547 Cyg, `DCEP`, P = 6.225 d, amplitude 0.96) and no RR Lyrae. An eclipsing
+period is a geometric orbit: it cannot cease without the system being
+destroyed, so an "eclipse that stopped" is a statement about the photometry,
+not about the star. A *pulsation* can stop. The cessation arm wants
+pulsators — RR Lyrae, Cepheids, δ Scuti, RV Tau — and `vet.PERIODIC_TYPE_RE`
+currently admits eclipsers on equal terms. Note also that `amp_cat` is NaN for
+every `KID`/`KIC` entry VSX returned, so the `amp_min ≥ 0.3` filter passed
+them on a missing value rather than on evidence.
+
+**Next decisive action for this channel** is therefore a target-selection
+change, not another sweep of the same list: separate the pulsator population
+from the eclipsers, require a real catalogued amplitude rather than a NaN, and
+choose fields on plate *depth* (`limMagApass` p90) as well as plate count.
+
 ## 7. Targets
 
 Two populations per field, in this order:

@@ -1131,3 +1131,131 @@ def test_the_probe_budget_is_configured_with_its_measurement():
     raw = _pl.Path("config/arc.yaml").read_text()
     assert "DISCOVERY_NOT_ATTEMPTED" in raw
     assert "QUERY_RETURNED_ZERO_ROWS" in raw      # the two facts are kept apart, in writing
+
+
+# ---------------------------------------------------------------------------
+# The assess stage's wall clock (run 35675114711 lost 4 h 54 m and wrote nothing)
+# ---------------------------------------------------------------------------
+def test_a_hung_query_is_abandoned_and_raises_rather_than_blocking():
+    """pyvo's run_async polls a remote job forever; the wrapper must not.
+
+    Run 35675114711 sat in the assess stage for 4 h 54 m on one wedged VizieR
+    job and was killed by the workflow cap with no summary.json at all.  A
+    query that does not answer inside its clock is a FAILED query.
+    """
+    import threading
+    import time as _t
+
+    release = threading.Event()
+
+    def hung(adql, **kw):
+        release.wait(30.0)                        # would block the process indefinitely
+        return pd.DataFrame({"x": [1]})
+
+    bounded = acq.timeout_query_fn(hung, timeout_s=0.2)
+    t0 = _t.monotonic()
+    with pytest.raises(acq.ArcQueryTimeout):
+        bounded('SELECT "KIC" FROM "J/X/1/t"')
+    assert _t.monotonic() - t0 < 5.0              # it gave up, it did not wait
+    release.set()
+
+    # a query that answers in time is passed straight through, exception and all
+    assert acq.timeout_query_fn(lambda adql: pd.DataFrame({"x": [2]}),
+                                timeout_s=5.0)("SELECT 1")["x"].iloc[0] == 2
+
+    def boom(adql):
+        raise ValueError("no such table")
+
+    with pytest.raises(ValueError, match="no such table"):
+        acq.timeout_query_fn(boom, timeout_s=5.0)("SELECT 1")
+
+    # timeout_s = 0 restores the unbounded call (the identity wrapper)
+    base = object()
+    assert acq.timeout_query_fn(base, timeout_s=0) is base
+
+
+def test_a_hung_cone_is_abandoned_too():
+    import threading
+
+    release = threading.Event()
+
+    def hung(table, ra, dec, r, **kw):
+        release.wait(30.0)
+        return pd.DataFrame()
+
+    with pytest.raises(acq.ArcQueryTimeout):
+        acq.timeout_cone_fn(hung, timeout_s=0.2)("I/355/gaiadr3", 10.0, 20.0, 12.0)
+    release.set()
+
+
+def test_gaia_context_past_its_deadline_leaves_the_veto_unapplied():
+    """A star the clock did not reach is gaia_reached = False, never a pass."""
+    pos = pd.DataFrame({"star_id": ["1", "2", "3"], "ra": [10.0, 11.0, 12.0],
+                        "dec": [20.0, 21.0, 22.0]})
+    asked: list[float] = []
+    state = {"n": 0}
+
+    def cone(table, ra, dec, r):
+        asked.append(ra)
+        return pd.DataFrame({"RA_ICRS": [ra], "DE_ICRS": [dec], "RUWE": [1.0],
+                             "NSS": [0], "Plx": [5.0], "Gmag": [12.0], "Source": [1]})
+
+    def spent():
+        state["n"] += 1
+        # two calls per star (the Gaia cone and the variability cone): the
+        # first star is inside the clock, the rest are past it
+        return state["n"] > 2
+
+    ctx = acq.gaia_context(pos, cone_fn=cone, vari_table="I/358/vclassre", deadline=spent)
+    assert ctx["1"]["gaia_reached"] is True
+    for sid in ("2", "3"):
+        assert ctx[sid]["gaia_reached"] is False
+        assert ctx[sid]["note"] == "budget spent"
+        assert ctx[sid]["neighbours"] == []
+    assert 11.0 not in asked and 12.0 not in asked
+
+
+def test_assess_stops_at_its_budget_and_still_writes_the_summary(tmp_path):
+    """The run's screening must survive a wedged archive.
+
+    Past the clock the shortlist's Gaia context is simply missing, the run is
+    DEGRADED in writing, and every xi already computed is still reported --
+    the opposite of run 35675114711, which reported nothing at all.
+    """
+    tables, _truth = _synthetic_tables()
+    fake = _FakeTAP("ok", tables)
+    out = tmp_path / "arc"
+    conf = _conf()
+    conf["assess"] = {"budget_s": 0.0001, "query_timeout_s": 5.0}
+
+    stage_probe(conf, out, query_fn=fake)
+    stage_acquire(conf, out, query_fn=fake)
+    stage_screen(conf, out)
+
+    calls: list[str] = []
+
+    def cone(table, ra, dec, r):
+        calls.append(table)
+        return pd.DataFrame()
+
+    s = stage_assess(conf, out, offline=False, query_fn=fake, cone_fn=cone)
+    assert s["context_budget_spent"] is True
+    assert any(d.startswith("assess_context:budget_spent") for d in s["degraded"]), s["degraded"]
+    assert calls == []                            # not one cone was attempted
+    # the science that WAS measured is still on the record
+    assert s["n_stars_assessable"] == 15
+    assert s["funnel"]["xi_conservative_positive"] == 4
+    assert (out / "summary.json").exists() and (out / "xi_table.csv").exists()
+    # and no star was promoted on a veto that was never applied
+    assert s["n_candidates"] == 0
+
+
+def test_the_assess_budget_is_configured_with_its_measurement():
+    import pathlib as _pl
+
+    import yaml
+
+    raw = _pl.Path("config/arc.yaml").read_text()
+    conf = yaml.safe_load(raw)
+    assert conf["assess"]["budget_s"] > 0 and conf["assess"]["query_timeout_s"] > 0
+    assert "35675114711" in raw                   # the run the bound was measured on

@@ -152,6 +152,18 @@ shortlist:
   max_stars: 3000               # Gaia cones per run (xi_conservative > 0 first, then xi_nominal > 0)
   include_watch: true
 
+assess:
+  # MEASURED (run 35675114711): the assess stage sat in the parameter / Gaia
+  # block for 4 h 54 m and the workflow cap killed the job with NO summary
+  # written -- the whole run's screening was thrown away for one wedged VizieR
+  # async job.  pyvo's run_async polls a remote job with no time limit, so the
+  # bound has to be imposed here: every query gets query_timeout_s, and the
+  # block as a whole gets budget_s.  A shortlist star the clock did not reach
+  # carries gaia_reached = False (the veto UNAPPLIED, not passed) and the run
+  # is degraded with assess_context:budget_spent -- never silently clean.
+  budget_s: 2400.0              # 40 min for the whole parameter + cone block
+  query_timeout_s: 240.0        # one TAP query / one cone; 0 = unbounded
+
 probe:
   # MEASURED (run 35038502122): the probe stage ran for FIFTY MINUTES and was
   # still going. Discovery walks the whole route ladder per catalogue, and a

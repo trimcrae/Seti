@@ -45,6 +45,31 @@ PHASE_DECLINING = "declining"
 
 SOURCE_SCALING = "embedded_mass_scaling"
 SOURCE_TABLE = "fetched_table"
+#: PEWDD publishes the diffusion timescale of every element it tabulates, for
+#: that star's own Teff and log g (``SinTimeCa`` / ``Sinking_time_Ca``).  When
+#: a row carries them for the whole panel they are the timescales, per object.
+SOURCE_ROW = "pewdd_row_timescales"
+
+#: Dex left open when a row's own timescales are used.  It is not zero: the
+#: tabulated timescales still depend on the convective-overshoot treatment
+#: (PyllutedWD ships ov0 and ov1 grids that differ), on the adopted Teff and
+#: log g, and on the opacity data.  0.05 dex is the spread between the two
+#: overshoot prescriptions at fixed Teff in those grids.
+SIGMA_ROW_DEX = 0.05
+
+#: The relative timescales averaged over every PEWDD row that publishes them.
+#: PEWDD tabulates tau_Z per star for ~95 objects; log10(tau_Z/tau_Ca) is
+#: nearly constant across them (interquartile widths of 0.03--0.15 dex, no
+#: significant Teff trend, H and He agreeing to ~0.01 dex), so those rows
+#: calibrate the lever for the rows that lack it.  Built at run time by
+#: :func:`relative_timescale_library`; ``SOURCE_LIBRARY`` records its use.
+SOURCE_LIBRARY = "pewdd_relative_library"
+
+#: Floor on a library element's scatter: no element is pinned better than the
+#: overshoot prescription allows.
+SIGMA_LIBRARY_FLOOR_DEX = 0.05
+#: Minimum rows before an element enters the library at all.
+LIBRARY_MIN_ROWS = 5
 
 #: Mass-scaling exponents and their per-element scatter, by atmosphere.
 #: ``sigma_dex`` is for the block Koester's tables cover well (``TABULATED``);
@@ -71,12 +96,35 @@ class TimescaleModel:
     source: str = SOURCE_SCALING
     tables: dict = field(default_factory=dict)   # {"H": DataFrame, "He": DataFrame}
     scaling: dict = field(default_factory=lambda: {k: dict(v) for k, v in SCALING.items()})
+    #: {element: {"median": dex, "sigma": dex, "n": rows}} from the catalogue's
+    #: own published timescales; empty until :func:`relative_timescale_library`
+    #: has been run on the acquired table.
+    library: dict = field(default_factory=dict)
+    #: Mass-scaling exponent refitted to ``library`` (used for the elements the
+    #: library is too thin to cover).  ``None`` keeps the literature default.
+    library_beta: float | None = None
+    #: The full library record (counts, per-atmosphere medians, the beta fit).
+    library_meta: dict = field(default_factory=dict)
 
     def log_tau_rel(self, elements: list[str], atmosphere: str, teff: float | None = None,
-                    logg: float | None = None) -> tuple[np.ndarray, np.ndarray, str]:
-        """``(log10 tau_rel, sigma_dex, source_used)`` for ``elements``."""
+                    logg: float | None = None, row_tau: dict | None = None
+                    ) -> tuple[np.ndarray, np.ndarray, str]:
+        """``(log10 tau_rel, sigma_dex, source_used)`` for ``elements``.
+
+        ``row_tau`` is the object's own tabulated timescales (seconds, any
+        common unit --- only ratios are used).  It is preferred over every
+        other source when it covers the whole element list AND the reference,
+        because it is the one source computed for this star's structure.
+        """
         atm = "H" if str(atmosphere).upper().startswith("H") and str(atmosphere).upper() != "HE" \
             else "He"
+        if row_tau and self.reference in row_tau and all(e in row_tau for e in elements):
+            ref = float(row_tau[self.reference])
+            if ref > 0 and all(float(row_tau[e]) > 0 for e in elements):
+                vals = np.array([np.log10(float(row_tau[e]) / ref) for e in elements])
+                sig = np.full(len(elements), float(SIGMA_ROW_DEX))
+                sig[[e == self.reference for e in elements]] = 0.0
+                return vals, sig, SOURCE_ROW
         tab = self.tables.get(atm)
         if tab is not None and teff is not None and np.isfinite(teff):
             vals = _interp_table(tab, elements, self.reference, float(teff), logg)
@@ -86,12 +134,103 @@ class TimescaleModel:
         par = self.scaling[atm]
         A = np.array([self.fam.A[self.fam.index(e)] for e in elements], dtype=float)
         A_ref = self.fam.A[self.fam.index(self.reference)]
-        vals = -float(par["beta"]) * np.log10(A / A_ref)
+        beta = float(self.library_beta) if self.library_beta is not None else float(par["beta"])
+        vals = -beta * np.log10(A / A_ref)
         sig = np.array([float(par["sigma_dex"]) if e in TABULATED
                         else float(par.get("sigma_dex_other", par["sigma_dex"]))
                         for e in elements])
+        used_library = False
+        if self.library:
+            for k, e in enumerate(elements):
+                rec = self.library.get(e)
+                if rec and int(rec.get("n", 0)) >= LIBRARY_MIN_ROWS:
+                    vals[k] = float(rec["median"])
+                    sig[k] = max(float(rec["sigma"]), SIGMA_LIBRARY_FLOOR_DEX)
+                    used_library = True
         sig[[e == self.reference for e in elements]] = 0.0
-        return vals, sig, SOURCE_SCALING
+        return vals, sig, (SOURCE_LIBRARY if used_library else SOURCE_SCALING)
+
+
+def relative_timescale_library(df, sinking_columns: dict, reference: str = "Ca",
+                               atmosphere_column: str | None = None,
+                               min_rows: int = LIBRARY_MIN_ROWS) -> dict:
+    """log10(tau_Z / tau_ref) per element from every row that publishes both.
+
+    The catalogue's own timescale columns are the only in-catalogue statement
+    of the sinking lever.  This reduces them to one robust number and one
+    robust scatter per element (median and 0.7413 x IQR), plus the
+    mass-scaling exponent that best reproduces those medians --- which is what
+    the elements with too few rows fall back on, so that the fallback is
+    anchored to the same tables rather than to a literature guess.
+    """
+    ref_col = sinking_columns.get(reference)
+    if df is None or not ref_col or ref_col not in getattr(df, "columns", []):
+        return {"reference": reference, "elements": {}, "beta": None, "n_rows_with_reference": 0}
+    ref = pd.to_numeric(df[ref_col], errors="coerce")
+    ok_ref = np.isfinite(ref) & (ref > 0)
+    out: dict = {}
+    for el, col in sinking_columns.items():
+        if el == reference or col not in df.columns:
+            continue
+        v = pd.to_numeric(df[col], errors="coerce")
+        m = ok_ref & np.isfinite(v) & (v > 0)
+        if int(m.sum()) < min_rows:
+            continue
+        r = np.log10(v[m].to_numpy() / ref[m].to_numpy())
+        q1, q3 = np.percentile(r, [25, 75])
+        rec = {"median": float(np.median(r)), "sigma": float(max(0.7413 * (q3 - q1), 0.0)),
+               "n": int(m.sum()), "p05": float(np.percentile(r, 5)),
+               "p95": float(np.percentile(r, 95))}
+        if atmosphere_column and atmosphere_column in df.columns:
+            per = {}
+            for atm in ("H", "He"):
+                k = m & (df[atmosphere_column].astype(str).str.strip() == atm)
+                if int(k.sum()) >= 3:
+                    per[atm] = float(np.median(np.log10(v[k].to_numpy() / ref[k].to_numpy())))
+            rec["per_atmosphere_median"] = per
+        out[el] = rec
+    return {"reference": reference, "elements": out, "beta": _fit_beta(out, reference),
+            "n_rows_with_reference": int(ok_ref.sum())}
+
+
+def _fit_beta(library: dict, reference: str) -> float | None:
+    """The mass-scaling exponent that best reproduces the library's medians.
+
+    ``log10(tau_Z/tau_ref) = -beta log10(A_Z/A_ref)``, least squares through
+    the origin over the elements the library covers.  Atomic masses come from
+    the natural-family asset via a small local table so the fit needs no
+    family object.
+    """
+    xs, ys = [], []
+    a_ref = _ATOMIC_MASS.get(reference)
+    if not a_ref:
+        return None
+    for el, rec in library.items():
+        a = _ATOMIC_MASS.get(el)
+        if not a or int(rec.get("n", 0)) < LIBRARY_MIN_ROWS:
+            continue
+        xs.append(np.log10(a / a_ref))
+        ys.append(float(rec["median"]))
+    if len(xs) < 3:
+        return None
+    x = np.asarray(xs)
+    y = np.asarray(ys)
+    denom = float(np.sum(x * x))
+    if denom <= 0:
+        return None
+    return float(-np.sum(x * y) / denom)
+
+
+#: Atomic masses for the beta refit only (the family asset carries the set the
+#: physics uses; this avoids a circular import at module scope).
+_ATOMIC_MASS = {
+    "H": 1.008, "He": 4.003, "Li": 6.94, "Be": 9.012, "B": 10.81, "C": 12.011, "N": 14.007,
+    "O": 15.999, "Na": 22.990, "Mg": 24.305, "Al": 26.982, "Si": 28.085, "P": 30.974,
+    "S": 32.06, "Cl": 35.45, "K": 39.098, "Ca": 40.078, "Sc": 44.956, "Ti": 47.867,
+    "V": 50.942, "Cr": 51.996, "Mn": 54.938, "Fe": 55.845, "Co": 58.933, "Ni": 58.693,
+    "Cu": 63.546, "Zn": 65.38, "Ga": 69.723, "Ge": 72.630, "Sr": 87.62, "Sn": 118.71,
+    "Ba": 137.33, "Pb": 207.2,
+}
 
 
 def _interp_table(tab: pd.DataFrame, elements: list[str], reference: str, teff: float,
@@ -118,13 +257,72 @@ def _interp_table(tab: pd.DataFrame, elements: list[str], reference: str, teff: 
     return np.array(out, dtype=float)
 
 
-def parse_timescale_table(text: str) -> pd.DataFrame | None:
-    """Best-effort parse of a whitespace/CSV table whose header names elements and Teff.
+def _parse_transposed(text: str) -> pd.DataFrame | None:
+    """``T:,5000,5250,...`` / ``Ca:,...`` grids (PyllutedWD's ``data/timescales_*.csv``)."""
+    rows: dict[str, list[float]] = {}
+    grid: list[float] | None = None
+    for ln in (text or "").splitlines():
+        s = ln.strip()
+        if not s or s.startswith("#"):
+            continue
+        cells = [c.strip() for c in s.split(",")]
+        if len(cells) < 4:
+            continue
+        key = cells[0].rstrip(":").strip()
+        if not key:
+            continue
+        try:
+            vals = [float(c) for c in cells[1:] if c not in ("", "--")]
+        except ValueError:
+            continue
+        if len(vals) < 3:
+            continue
+        if grid is None and re.fullmatch(r"(?i)t|teff|temp", key):
+            grid = vals
+            continue
+        if re.fullmatch(r"[A-Z][a-z]?", key):
+            rows[key] = vals
+    if grid is None or len(rows) < 3:
+        return None
+    n = len(grid)
+    out: dict[str, list[float]] = {"Teff": list(grid)}
+    for el, vals in rows.items():
+        if len(vals) != n:
+            continue
+        arr = np.asarray(vals, dtype=float)
+        if np.nanmax(np.abs(arr)) < _LOG_VALUE_CEILING:     # already log10
+            arr = 10.0 ** arr
+        out[el] = arr.tolist()
+    if len(out) < 4:
+        return None
+    return pd.DataFrame(out)
 
-    Returns ``None`` unless the header carries a Teff column and at least
-    three element symbols; the caller records the failure with the head of
-    the text so the next dispatch can see the real format.
+
+#: Above this an element's tabulated value is a timescale in seconds or years;
+#: below it, it is already a base-10 logarithm.  Koester's grids run from
+#: ~1e4 s to ~1e15 s, so no linear timescale is ever this small and no log one
+#: is ever this large.
+_LOG_VALUE_CEILING = 100.0
+
+
+def parse_timescale_table(text: str) -> pd.DataFrame | None:
+    """Best-effort parse of a timescale grid in either orientation.
+
+    Two layouts are handled.  Column-per-element: a header naming ``Teff`` and
+    at least three element symbols, rows one per model.  Row-per-element (the
+    layout PyllutedWD actually ships, seen on run 35737893922): a first line
+    ``T:,5000,5250,...`` giving the temperature grid, then one line per
+    quantity, ``Ca:,<value per temperature>``.  Values that are base-10
+    logarithms are exponentiated so the returned frame is always in linear
+    timescale units --- only ratios are ever used, so the unit itself does not
+    matter, but mixing logs and linears would.
+
+    Returns ``None`` when neither layout is recognised; the caller records the
+    head of the text so the next dispatch can see the real format.
     """
+    tab = _parse_transposed(text)
+    if tab is not None:
+        return tab
     lines = [ln for ln in (text or "").splitlines() if ln.strip()]
     for i, ln in enumerate(lines[:40]):
         raw = ln.lstrip("#").strip()
@@ -198,6 +396,6 @@ def phase_grid(t_acc_range=(0.01, 30.0), t_dec_range=(0.0, 5.0), n_acc: int = 7,
     return [(float(a), float(d)) for a in accs for d in decs]
 
 
-__all__ = ["PHASE_DECLINING", "PHASE_EARLY", "PHASE_STEADY", "SCALING", "SOURCE_SCALING",
-           "SOURCE_TABLE", "TABULATED", "TimescaleModel", "parse_timescale_table", "phase_grid",
+__all__ = ["PHASE_DECLINING", "PHASE_EARLY", "PHASE_STEADY", "SCALING", "SIGMA_ROW_DEX",
+           "SOURCE_ROW", "SOURCE_SCALING", "SOURCE_TABLE", "TABULATED", "TimescaleModel", "parse_timescale_table", "phase_grid",
            "phase_label", "phase_log_factor"]

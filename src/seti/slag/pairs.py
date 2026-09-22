@@ -80,7 +80,8 @@ def rest_phase_set(fam: NaturalFamily, tsm: TimescaleModel, panel: Panel, drop: 
 
 
 def phase_shift_range(tsm: TimescaleModel, a: str, b: str, atmosphere: str, teff, logg,
-                      settings: FitSettings, *, phases=None) -> tuple[float, float]:
+                      settings: FitSettings, *, phases=None, row_tau=None
+                      ) -> tuple[float, float]:
     """Min / max of the sinking shift of log(a/b) over ``phases`` and the pair's tau scatter.
 
     The scatter is applied to the pair's timescale DIFFERENCE (the model's
@@ -88,7 +89,7 @@ def phase_shift_range(tsm: TimescaleModel, a: str, b: str, atmosphere: str, teff
     tables do not pin down is how far apart two neighbouring elements sink,
     and that is one number.
     """
-    lt, st, _ = tsm.log_tau_rel([a, b], atmosphere, teff, logg)
+    lt, st, _ = tsm.log_tau_rel([a, b], atmosphere, teff, logg, row_tau=row_tau)
     sig_pair = float(max(st.max(), 0.0))
     if phases is None:
         phases = phase_grid(settings.t_acc_range, settings.t_dec_range)
@@ -110,7 +111,7 @@ def natural_interval(fam: NaturalFamily, tsm: TimescaleModel, a: str, b: str, pa
     if not np.isfinite(env["lo"]):
         return {**env, "phase_lo": 0.0, "phase_hi": 0.0, "lo_total": np.nan, "hi_total": np.nan}
     plo, phi = phase_shift_range(tsm, a, b, panel.atmosphere, panel.teff, panel.logg, settings,
-                                 phases=phases)
+                                 phases=phases, row_tau=panel.meta.get("sinking_times_s"))
     return {**env, "phase_lo": plo, "phase_hi": phi, "lo_total": env["lo"] + plo,
             "hi_total": env["hi"] + phi}
 
@@ -251,7 +252,8 @@ def refinery_flags(fam: NaturalFamily, tsm: TimescaleModel, panel: Panel, settin
                                      / c[fam.index("Fe")]))
         phases, how = phases_without(["Ti", "Al", "V", "Fe"])
         _plo, phi = phase_shift_range(tsm, "Al", "Fe", panel.atmosphere, panel.teff, panel.logg,
-                                      settings, phases=phases)
+                                      settings, phases=phases,
+                                      row_tau=panel.meta.get("sinking_times_s"))
         hi = float(max(vals)) + phi + 0.3   # +0.3 dex: refractory-enriched natural rocks (CAI-rich)
         z = _z_outside(obs, -np.inf, hi, sig)
         flags.append({"flag": FLAG_ALLOY, "fired": bool(np.isfinite(z) and z > nsig),

@@ -160,7 +160,7 @@ class PanelModel:
         self.X = fam.sub(self.all_elements)                         # (n_all, n_end)
         self.Tc = fam.tc(self.all_elements)
         lt, st, src = tsm.log_tau_rel(self.all_elements, panel.atmosphere, panel.teff,
-                                      panel.logg)
+                                      panel.logg, row_tau=panel.meta.get("sinking_times_s"))
         self.log_tau, self.sig_tau, self.timescale_source = lt, st, src
         self.n_meas = len(self.elements)
         self.y = np.asarray(panel.values, dtype=float)

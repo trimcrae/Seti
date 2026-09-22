@@ -254,6 +254,19 @@ through fake transports finds the injected hit at the prior while a zero-drift
 hit, a recurrent frequency, a hit on a star on no pair line and a hit off the
 window are each rejected by the named rule.
 
+**Run the suite under both pandas majors before dispatching.** The sandbox venv
+holds pandas 2.3.3 and the runner's `pip install -e ".[dev]"` fetches 3.0.6;
+CRADLE lost a whole dispatch to an API pandas 3 removed, dying on its own
+offline gate before one archive call (`docs/channel-brief.md` §0 item 5). All
+50 RELAY tests were run under 3.0.6 as well as 2.3.3 on 2026-09-22, without
+touching the shared venv:
+
+    pip install --target <dir> --no-deps "pandas>=3"
+    PYTHONPATH=<dir>:src pytest tests/test_relay*.py -q
+
+RELAY's only `errors="ignore"` is on `DataFrame.drop`, where the argument
+survives; the numeric conversions all use `errors="coerce"`.
+
 `tests/test_relay_magic.py` (7 tests) pins the rest-frequency test: the window
 is the offset plus the RV tolerance and moves with the pair's velocity; a
 pointing without radial velocities is **not tested** rather than counted as a

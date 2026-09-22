@@ -480,6 +480,45 @@ def test_exposure_join_never_falls_back_to_the_series_alone():
     assert not np.isfinite(lc2.exptime_min).any()
 
 
+def test_the_exposure_join_picks_the_key_that_places_the_most_plates():
+    """A key that matches a handful must not beat one that matches nearly all.
+
+    The two endpoints need not spell ``mosnum``/``expnum`` the same way.  If
+    the four-part key were kept merely because it matched *something*, the
+    plates it missed would be silently unsmeared while the join reported
+    success on the most specific key.
+    """
+    from seti.century.lightcurve import attach_exptime
+    from seti.century.targets import exposure_table
+
+    # The table knows plate a/101 under four different exposure numbers, but
+    # only expnum 0 is the one the light curve names; every other row shares
+    # (series, platenum) with a light-curve point whose expnum differs.
+    lines = ["series,platenum,mosnum,expnum,exptime"]
+    for i in range(6):
+        lines.append(f"a,{200 + i},0,0,45.0")
+    et = exposure_table(to_frame(lines))
+    n = 6
+    df = pd.DataFrame({
+        "date_jd": [2415020.5 + 400 * i for i in range(n)],
+        "magcal_magdep": [11.0 + 0.01 * i for i in range(n)],
+        "magcal_magdep_rms": [0.1] * n,
+        "limiting_mag_local": [14.0] * n,
+        "series": ["a"] * n,
+        "plate_number": [200 + i for i in range(n)],
+        "mosaic_number": [0] * n,
+        # Only the first point agrees with the table on expnum; the rest do not.
+        "exposure_number": [0] + [7] * (n - 1),
+        "aflags": [0] * n, "bflags": [0] * n,
+    })
+    lc = from_api_frame(df)
+    prov = attach_exptime(lc, et)
+    # (series, platenum) places all six; the four-part key places one.
+    assert prov["key"] == "series+platenum"
+    assert prov["matched_det"] == 6
+    assert np.allclose(lc.exptime_min, 45.0)
+
+
 def test_a_shard_rebuilds_the_exposure_table_when_the_artifact_did_not_arrive(monkeypatch):
     """plate_exptime.csv travels between jobs as an artifact, and the artifact
     list lives in the workflow file, which is fixed when a run is dispatched.

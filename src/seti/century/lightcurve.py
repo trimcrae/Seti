@@ -526,24 +526,46 @@ def attach_exptime(lc: CenturyLC, table: pd.DataFrame) -> dict:
     full = [c for c in ("series", "platenum", "mosnum", "expnum") if c in tab.columns]
     keys = [k for k in (full, ["series", "platenum"]) if len(k) > 1]
 
-    def _join(labels) -> tuple[np.ndarray, str]:
+    def _join_on(labels, key) -> np.ndarray:
+        """``exptime_min`` per label under one key, NaN where it did not match."""
+        left = plate_ids(labels)
+        if any(c not in left.columns or left[c].isna().all() for c in key if c != "series"):
+            return np.full(len(labels), np.nan)
+        red = tab.drop_duplicates(subset=key, keep="first")[[*key, "exptime_min"]]
+        return left.merge(red, on=key, how="left")["exptime_min"].to_numpy(dtype=float)
+
+    def _best(labels) -> tuple[np.ndarray, str]:
+        """The key that matches MOST of ``labels``; ties go to the more specific.
+
+        Taking the first key that matches *anything* would keep the four-part
+        key even when the two endpoints spell mosnum/expnum differently and it
+        matches a handful of plates, silently discarding the rest.  The
+        comparison is on how many plates each key actually places.
+        """
         if labels is None or not len(labels):
             return np.array([], dtype=float), "none"
-        left = plate_ids(labels)
+        best_v, best_key, best_n = np.full(len(labels), np.nan), "none", 0
         for key in keys:
-            if any(c not in left.columns or left[c].isna().all()
-                   for c in key if c != "series"):
-                continue
-            red = tab.drop_duplicates(subset=key, keep="first")[[*key, "exptime_min"]]
-            v = left.merge(red, on=key, how="left")["exptime_min"].to_numpy(dtype=float)
-            if np.isfinite(v).any():
-                return v, "+".join(key)
-        return np.full(len(labels), np.nan), "none"
+            v = _join_on(labels, key)
+            n = int(np.isfinite(v).sum())
+            if n > best_n:
+                best_v, best_key, best_n = v, "+".join(key), n
+        return best_v, best_key
 
-    det_exp, key = _join(lc.plate)
+    det_exp, key = _best(lc.plate)
     if key == "none":
         return prov
     prov["key"] = key
+    # The non-detections are joined on the SAME key as the detections: two
+    # different keys would give the two halves of one light curve two different
+    # exposure-time provenances, which is a difference the smear would then
+    # carry into the efficiency.
+    key_cols = key.split("+")
+
+    def _join(labels) -> tuple[np.ndarray, str]:
+        if labels is None or not len(labels):
+            return np.array([], dtype=float), "none"
+        return _join_on(labels, key_cols), key
     if det_exp.size == lc.n_det:
         lc.exptime_min = np.where(np.isfinite(det_exp), det_exp,
                                   lc.exptime_min if lc.exptime_min.size == lc.n_det

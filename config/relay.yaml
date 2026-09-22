@@ -37,7 +37,12 @@ geometry:
   row_cap: 4000000               # kept rows per beam (artifact only); counts are always exact
   chunk_candidates: 3000000
   commit_full_catalogue_max_rows: 150000   # a beam's full directed-pair table is committed only below this
-  commit_target_pairs_max_rows: 250000     # committed rows of the BL-target pair table (widest beams first to go)
+  # committed rows of the BL-target pair table, narrow beams kept whole and the
+  # widest trimmed first.  250k rows of this table gzip to 28 MB (run
+  # 35740854882 on the 264,973-star sample) -- far past the few-MB budget for a
+  # committed artifact -- so the cap buys about 4 MB and the rest stays in the
+  # run's uploaded artifact.
+  commit_target_pairs_max_rows: 40000
 
 drift:
   a_local_max_m_s2: 1.0          # envelope on a transmitter platform's acceleration (HZ planet of an M dwarf ~0.7)

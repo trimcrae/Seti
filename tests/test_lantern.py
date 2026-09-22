@@ -378,7 +378,13 @@ def test_inventory_matches_and_records_proprietary_products(tmp_path):
     assert inv["funnel"]["products_public"] == 1 and inv["funnel"]["products_proprietary_or_unknown"] == 1
     tgt = inv["targets"]["X"]
     assert len(tgt["observations"][0]["exposures"]) == 1          # two segments, one exposure
-    assert inv["shards"] == [["X"]]
+    # One unit, two segments; a proprietary segment keeps the whole exposure
+    # off the schedule (recorded, never fetched).
+    assert len(inv["units"]) == 1 and inv["units"][0]["n_products"] == 2
+    assert inv["units"][0]["scheduled"] is False
+    assert inv["units"][0]["skip_reason"] == "proprietary"
+    assert inv["shards"] == [[]]
+    assert inv["plan"]["by_class"] == {"skipped_proprietary": {"units": 1, "bytes": 2000}}
 
 
 def test_screen_streams_and_checkpoints_and_assess_summarises(tmp_path):
@@ -462,10 +468,15 @@ def test_assess_only_phase_unresolved_is_degraded(tmp_path):
     s["time_source"] = "index_only"
     rec = R.analyse_stack(s, [s["ephemeris"]], _CONF, "X")
     assert rec["phase_class"] == "phase_unresolved"
-    rec.update(status="analysed", exposure_key="e1", total_bytes=1)
+    rec.update(status="analysed", exposure_key="e1", total_bytes=1,
+               checkpoint_version=R.CHECKPOINT_VERSION)
     R._write_json(tmp_path / "obs" / "X" / "e1.json", rec)
+    # A checkpoint from an older reader/analysis version is not evidence.
+    old = dict(rec, checkpoint_version=R.CHECKPOINT_VERSION - 1, exposure_key="e0")
+    R._write_json(tmp_path / "obs" / "X" / "e0.json", old)
     summary = R.assess(tmp_path, _CONF)
     assert summary["verdict"] == "DEGRADED_SOURCE"
+    assert summary["funnel"]["exposure_statuses"] == {"analysed": 1, "stale_checkpoint": 1}
 
 
 def test_selftest_battery_and_cli(tmp_path):

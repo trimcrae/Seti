@@ -164,6 +164,76 @@ continuum is recovered at 185σ with vanish SNR ≫ 5 and in-eclipse residual
 (`low_snr`, `tracks_continuum`); a 1-sample spike, a 14-sample-wide band and
 a null all yield no tier. Analysis is 2–3 s per exposure.
 
+### 3.4a The difference search — why §3.3 alone is not enough
+
+The first runner measurement (run 35737559234, 2026-09-22) verified the reader
+and the phase labels on both known eclipses and still failed verification, on
+the same thing in both cases: an injected line at **2% of the continuum
+produced zero features**.
+
+| Verify case | integrations | eclipse depth | free step vs predicted ingress | injected 2% line |
+|---|---|---|---|---|
+| WASP-43 b MIRI/LRS `jw01366-o011` (phase curve) | 9 216 (30 EXTRACT1D tables, row BJD_TDB) | 6 681 ppm at 15.4σ | 0.402 d (locked onto the **transit**) | 0 features |
+| WASP-18 b NIRISS/SOSS `jw01366-o021` | 2 720 (6 tables, orders 1–3) | 1 451 ppm at 23.1σ | 0.007 d (tolerance 0.020 d) ✓ | 0 features |
+
+The reason is physical. On a real `x1d` product the time-averaged spectrum's
+residual around its local continuum sits at **~1% of the continuum however
+long the exposure** — the static pixel pattern of the extraction (flat-field
+residual, undersampled trace, wavelength-solution ripple), not photon noise.
+Measured from the reported 5σ equivalent-width limits: a noise median of
+**1.3% on SOSS over 2 720 integrations** and **1.1% on LRS over 9 216**. A 6σ
+trigger on that spectrum therefore needs a line brighter than ~8% of the
+continuum, and the screen would have been worthless at scale.
+
+That pattern is **identical in the in-eclipse and out-of-eclipse averages**,
+so it cancels exactly in their difference. What survives is what *changed*
+when the planet was occulted: the planet's own (broad, smooth) emission
+spectrum, which the local quadratic removes, plus any narrow line that
+vanished. So the search runs on
+
+&nbsp;&nbsp;&nbsp;&nbsp;`spec = 1 + (⟨out-of-eclipse⟩ − ⟨in-eclipse⟩)`
+
+with the offset keeping the continuum near unity, so residuals, equivalent
+widths and significances stay in fractions of the *stellar* continuum and the
+whole of §3.3 applies unchanged. The out-of-eclipse search still runs (a very
+bright line is found in both, `found_in = both`); both 5σ EW limits are
+recorded per exposure and the difference's is the quoted sensitivity.
+
+A **transit-class** exposure gets the analogous out-of-transit minus
+in-transit difference. It reaches the same depth, but it is not this channel's
+signature and it can never produce a candidate: with no eclipse there is no
+vanishing test (`insufficient_phase_coverage`), and a line that changes across
+transit more than the continuum does is not a steady source on the planet
+(`transit_inconsistent`).
+
+**The drift null.** A difference is only as good as its control. The
+out-of-event integrations **before** the event, minus those **after** it,
+span the same stretch of visit and the same detector drift with no occultation
+in between — so a narrow feature present there is drift, and one present in
+the event difference but not there is what the channel is looking for. It is
+used twice: as the "consistent with zero" statistic for a difference-found
+feature (the in-eclipse residual is not the matched null there, because the
+static pattern it carries is present out of eclipse too and would veto a real
+line sitting on a pattern bump), and as the veto `present_in_drift_control`.
+`cosmic_ray_driven` likewise re-evaluates on whichever spectrum the feature
+was found in.
+
+Measured on synthetic stacks carrying the 1% pattern (600 integrations,
+600 samples, 2×10⁻³ per-pixel noise):
+
+| Case | out-of-eclipse search | difference search |
+|---|---|---|
+| 2% vanishing line | **0 features** | 109σ, tier `candidate`, no veto |
+| 0.5% vanishing line | 0 features | 26σ, `candidate` |
+| constant stellar line, same amplitude | 0 features | 0 features (it cancels) |
+| persistence-decaying line | 0 features | found, then `present_in_drift_control` at 15σ |
+| no line | 0 features | 0 features |
+| 5σ EW limit | 2.8×10⁻⁴ µm | **8.0×10⁻⁶ µm** (35× deeper) |
+
+The faint-line floor is set by the photon noise of the two averages, as it
+should be: at 600 integrations the difference triggers down to ~1.5×10⁻³ of
+the continuum.
+
 ### 3.5 Vetoes (every one has a counter in `summary.json`)
 
 `known_artefact_wavelength` · `recurrent_across_targets` (same wavelength in
@@ -171,7 +241,7 @@ a null all yield no tier. Analysis is 2–3 s per exposure.
 `ramp_correlated` · `drop_not_at_eclipse` · `cosmic_ray_single_integration`
 (and `single_pixel_spike`, `adjacent_to_gap` at the search stage) ·
 `transit_inconsistent` · `insufficient_phase_coverage` · `low_snr` ·
-`fdr_not_significant`.
+`present_in_drift_control` (§3.4a) · `fdr_not_significant`.
 
 **Tiers:** `none` → `watch` (a clean narrow feature whose phase coverage cannot
 test vanishing; kept for the recurrence census) → `interest` → `candidate`.
@@ -197,7 +267,9 @@ exposure, or most downloads failed). The workflow refuses a verdict other than
 | Detector settling ramp / persistence decay | A monotonic decay looks like a drop when the eclipse sits late in the window | pre-ingress baseline required; `ramp_correlated` (ramp template must not beat the step model); `drop_not_at_eclipse` |
 | Cosmic ray / single-integration event | Present in ≤2 integrations | 5σ clip in the time average; the scatter-based error self-suppresses it; `cosmic_ray_single_integration` |
 | Hot / dead pixel, detector gap edge, order overlap, filter edge | Fixed wavelength, no phase | `single_pixel_spike`, `adjacent_to_gap`, `known_artefact_wavelength` (config table), `recurrent_across_targets` |
-| Fixed-pattern residuals of the extraction | Same wavelength in unrelated targets | `recurrent_across_targets` |
+| Fixed-pattern residuals of the extraction | **Identical in and out of eclipse, so they cancel in the difference the search runs on** (§3.4a); and the same wavelength in unrelated targets | the difference search itself; `recurrent_across_targets` |
+| Drift of that pattern across the visit (the difference's own confounder) | Shows the same step between two out-of-eclipse blocks with no occultation in between | the drift null: `present_in_drift_control` (§3.4a) |
+| The planet's own dayside spectrum (it vanishes in eclipse too, by construction) | Molecular bands are broad; a resolved feature is not an unresolved line | width guard (1–3 resolution elements); the residual band structure is removed by the local quadratic continuum. **A genuinely unresolved planetary emission line would pass every veto here — the channel cannot separate "a narrow line on the planet" from "a beacon on the planet", and a survivor is a target for higher-resolution follow-up, not a detection** |
 | Planet thermal / molecular emission | Vanishes at eclipse — but broad | width guard (1–3 resolution elements); a wide vanishing feature is astrophysics and is counted as `too_wide` |
 | Wrong ephemeris | Contacts misplaced; a real step lands "not at eclipse" | propagated σ_t widens the exclusions; stale ephemerides → `phase_unresolved`, never a candidate |
 | Eccentric-orbit eclipse timing | ω convention ambiguity | widened σ_t; e > 0.05 without ω → `phase_unresolved` |

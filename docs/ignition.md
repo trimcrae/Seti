@@ -361,6 +361,80 @@ dark, the parent reachable anyway.
 
 ---
 
+## 4.6 The two things that stopped run 35653615329, and what each one was
+
+That dispatch produced no shard output at all. Its two failures look like
+different problems and are recorded separately, because each has its own fix.
+
+**The upload ladder was never a transport problem.** The probe walked all four
+rungs — pyvo's synchronous form, a raw `POST` with the parameters in the URL
+(sync, then async), and IRSA's Gator multi-object search — and three of them
+came back with the *same* sentence from IRSA's own TAP service:
+
+```
+INTERNAL_SERVER_ERROR: Unimplemented data type: unicodeChar
+```
+
+Four transports cannot fail identically on a transport fault. The complaint is
+about a **column type in the uploaded table**, and the server only gets to make
+it after it has parsed the request and read the upload — so those rungs were
+working. `Table.from_pandas` on `source_id.astype(str)` produces a numpy `<U19`
+column; astropy serialises that as VOTable `datatype="unicodeChar"`; IRSA does
+not implement that type. A Gaia `source_id` is an integer by construction, so
+`sid` now goes up as `long`, a non-numeric id falls back to ASCII `char`
+(`datatype="char"`, which IRSA does implement), and `_ascii_string_columns`
+converts any remaining unicode column on the way out so no future column can
+reintroduce it. **The uploaded id cannot change the science**: rows are
+assigned to stars locally, by exact unit-vector separation with per-star radii
+(`group_by_star`), and never by the service's own join column — so the only
+thing `sid` does is make the returned table readable.
+
+The same probe showed the hand-rolled async rung getting `200` with **no
+`Location` header**, so `_uws_job_url` now also reads the job document in the
+body (`<uws:jobId>`, an `xlink:href`), and pyvo's own UWS client is a fifth
+rung, `pyvo_async`. The two rungs IRSA demonstrably parsed lead the ladder.
+
+**The parent sample was a wall clock, not an archive.** The same run's `sample`
+step ran **2 h 22 min** over the same 20 one-degree cones without finishing —
+ESA was slow that night; run 35039105536 had pulled the identical 846-star
+parent in **719 s** — and the job was cancelled with the acquire matrix never
+started. Two things follow:
+
+* `sample_from_run_id` takes `sample.json` and `parent.parquet` from a prior
+  run's `ignition-sample` artifact and goes straight to acquire. The reused
+  artifact's `probe.json` is **dropped, not committed**: the branch's own probe
+  record is the most recent live one, and a dispatch must not overwrite it with
+  evidence it did not gather. (Measured: the `sample` job then takes 1 m 48 s.)
+* In the all-sky sweep the same stall is paid for in *tiles never reached*, so
+  `fetch_parent` takes `unit_budget_s` — what one unit may cost across the
+  **whole** route ladder. Attempts begun after it is spent are recorded
+  `SKIPPED_ON_UNIT_BUDGET` with the route and shape named, the unit is a
+  recorded `QUERY_FAILED`, and `degraded` carries `unit_budget_skips:<n>/<u>`.
+  The ladder's **order is untouched** — ESA is authoritative, is still asked
+  first and still answers first — and every science cut is unchanged: this
+  bounds only how long one tile may be chased, never what is selected.
+
+## 4.7 The scale axis, and the one it is deliberately not
+
+The pilot's 20 one-degree cones are **62.8 deg²**. The `tiles` sweep at
+`dec_step_deg = 4` is **2,047 tiles covering 32,451 deg²** of the `|b| > 15°`
+sky — a **517× increase in area**, at a measured parent density of ~13.5
+stars/deg², so an all-sky parent of order **4 × 10⁵ stars** at the present
+cuts. That is the number this channel can honestly reach, and it is smaller
+than the build order's nominal 5 × 10⁶; the difference is stated rather than
+closed, because the two ways to close it both cost the detection:
+
+* **`|b| > 10°` instead of `> 15°`** would add sky, but `vet.py`'s
+  `galactic_plane` rule kills `|b| < 15°` as a YSO/crowding/cirrus contaminant.
+  Sampling stars the contaminant ladder is built to reject is work that cannot
+  produce a survivor, so the sweep keeps `|b| > 15°`.
+* **`G < 15` instead of `< 14.5`** would add ~35 % more stars, at W1 ≈ 13 where
+  the NEOWISE per-epoch scatter is several times the ~0.008 mag of a W1 ≈ 10
+  star. The measured sensitivity (`summary.json["sensitivity"]`) is complete at
+  a 0.2 mag/decade ramp and near-complete at 0.1 mag *at that brightness*; the
+  stars a fainter cut would add cannot carry the signal the channel is looking
+  for. Scale here comes from **area**, not from depth.
+
 ## 5. What VIGIL's failure taught, and what is different here
 
 VIGIL's `results/vigil/summary.json` reads `NO_DATA_REACHED, n_fields_searched: 0`
@@ -434,3 +508,43 @@ star, a short baseline and an empty archive each produce the named
 non-candidate verdict; an accelerating (exponential) rise is recovered
 through the exponential ramp. Dispatch via `.github/workflows/ignition.yml`
 (`stage=probe` first). Run IDs and survivors go to `STATUS.md`.
+
+### 7.1 In flight, 2026-09-22 — and the next decisive action
+
+Two dispatches are queued behind an account-wide GitHub Actions ceiling (11
+runs in flight, 111 queued repo-wide across the parallel channels); neither
+had a runner after four hours, so **neither has yet corrected the brief**:
+
+| run | what it settles | inputs |
+|---|---|---|
+| **35738088082** | Step 1: do the 846 parents get full 10-year series now? | `stage=all mode=fields shards=8 max_parallel=8 route=upload sample_from_run_id=35039105536` |
+| **35740159635** | Step 2: how much of the `\|b\| > 15°` sky one dispatch covers | `stage=all mode=tiles shards=12 max_parallel=12 budget_min=150 route=upload` |
+
+`route=upload` with `upload_fallback_cone: true` is deliberate: it tests the
+`unicodeChar` fix on the real service, and a chunk no rung answers still goes
+to per-star cones, so the run cannot come back empty because of the route.
+
+**What to read first, in order:**
+
+1. The acquire ledger of any shard — `results/ignition/acquire_s*.json`,
+   `ledger[].label`. `neowise_upload[pyvo_sync]_<n>` or
+   `neowise_upload[pyvo_async]_<n>` means the fix landed and the channel scales;
+   `neowise_upload[none]_<n>` with `Unimplemented data type` still in `error`
+   means the service refuses `long` as well and the run will show the one
+   recorded downgrade to a 32-bit row index (`upload[.../int32_index]` in the
+   job log). Anything else there is a new failure and is quoted verbatim.
+2. `summary_fields.json` → `denominators.n_stars_attempted_neowise` /
+   `n_stars_with_neowise_rows` / `n_stars_screened` against the 846, and
+   `degraded` for `neowise_queries_failed:<n>` (314 last time).
+3. `veto_counters.screen`. The previous run's 172 screened stars were
+   `FADING:97, NOT_RISING:37, IMPULSIVE_SHAPE:12, INSUFFICIENT_EPOCHS:26` —
+   97 five-sigma faders in both bands is the survey's zero point, and
+   `ensemble.per_shard_drift` in the new summary says how much of it the
+   ensemble correction removed. A `FADING` count that stays near half the
+   sample means the correction did not take and the *screen input* is still
+   wrong, not the sky.
+4. `summary_tiles.json` → `coverage.tiles_done / tiles_in_sky`,
+   `sky_fraction_done`, `n_parent_done_tiles`, `shards_stopped_on_budget`, and
+   `degraded` for `unit_budget_skips:<n>/<units>`. That is the honest coverage
+   statement for the sweep; a later dispatch continues it with
+   `resume_run_id=35740159635` **at the same shard count (12)**.

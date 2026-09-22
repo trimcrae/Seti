@@ -51,6 +51,9 @@ on:
 
 permissions:
   contents: write
+  # download-artifact@v4 with an explicit run-id goes through the Actions API,
+  # which needs this even for the run's own artifacts.
+  actions: read
 
 concurrency:
   group: growth-direct-${{ github.ref_name }}

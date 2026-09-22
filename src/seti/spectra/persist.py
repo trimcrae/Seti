@@ -727,14 +727,103 @@ def _records(obj):
 
 
 def sparcl_fields(client, release: str) -> list[str]:
+    """Field names SPARCL serves for ``release`` (client API differs by version)."""
     for fn in ("get_all_fields", "get_default_fields"):
-        try:
-            f = getattr(client, fn)([release])
-            if f:
-                return list(f)
-        except Exception as exc:  # noqa: BLE001
-            print(f"[persist] {fn}({release}) failed: {exc!r}")
+        f = getattr(client, fn, None)
+        if f is None:
+            continue
+        for call in (lambda: f(dataset_list=[release]), lambda: f([release]), lambda: f()):
+            try:
+                got = call()
+                if got:
+                    return [str(x) for x in got]
+            except TypeError:
+                continue
+            except Exception as exc:  # noqa: BLE001
+                print(f"[persist] {fn}({release}) failed: {exc!r}")
+                break
     return []
+
+
+# DESI healpix grouping of the spectro pipeline: nside 64, NESTED.
+DESI_HPX_NSIDE = 64
+# (survey, program) combinations that exist in DR1 (iron), most common first.
+DESI_SURVEY_PROGRAMS = [("main", "dark"), ("main", "bright"), ("main", "backup"),
+                        ("sv3", "dark"), ("sv3", "bright"), ("sv3", "backup"),
+                        ("sv1", "dark"), ("sv1", "bright"), ("sv1", "backup"), ("sv1", "other"),
+                        ("sv2", "dark"), ("sv2", "bright"), ("sv2", "backup"),
+                        ("special", "dark"), ("special", "bright"), ("special", "backup"),
+                        ("special", "other"), ("cmx", "other")]
+
+
+def desi_healpix(ra: float, dec: float) -> int:
+    from astropy import units as u
+    from astropy_healpix import HEALPix
+    hp = HEALPix(nside=DESI_HPX_NSIDE, order="nested")
+    return int(hp.lonlat_to_healpix(float(ra) * u.deg, float(dec) * u.deg))
+
+
+def desi_identity(rec: dict) -> dict:
+    """targetid / survey / program / healpix for a SPARCL DESI record.
+
+    SPARCL's ``specid`` for DESI *is* the TARGETID; the healpix follows from the
+    position when the record does not carry it; survey/program are enumerated
+    later by asking the archive which coadd files hold the target.
+    """
+    tid = rec.get("targetid")
+    if tid is None:
+        tid = rec.get("specid")
+    try:
+        tid = int(tid) if tid is not None else None
+    except (TypeError, ValueError):
+        tid = None
+    hpx = rec.get("healpix")
+    if hpx is None and np.isfinite(float(rec.get("ra", np.nan) or np.nan)):
+        try:
+            hpx = desi_healpix(float(rec["ra"]), float(rec["dec"]))
+        except Exception as exc:  # noqa: BLE001
+            print(f"[persist] healpix computation failed: {exc!r}")
+    return {"targetid": tid, "survey": rec.get("survey"), "program": rec.get("program"),
+            "healpix": int(hpx) if hpx is not None else None}
+
+
+def desi_find_exposures(tid: int, hpx: int, survey=None, program=None,
+                        workdir: Path | None = None) -> tuple[list[dict], list[dict]]:
+    """Every (night, expid, petal, fiber) of ``tid`` across the DR1 coadd files
+    of its healpix.  With survey/program unknown, each combination is tried by
+    HEAD and the ones that exist are opened.  Returns (rows, files_tried)."""
+    workdir = workdir or Path(tempfile.mkdtemp(prefix="desi_"))
+    combos = [(survey, program)] if (survey and program) else DESI_SURVEY_PROGRAMS
+    rows, tried, seen = [], [], set()
+    for sv, pg in combos:
+        url = desi_coadd_url(sv, pg, hpx)
+        h = http_head(url)
+        entry = {"survey": sv, "program": pg, "url": url, "status": h.get("status"),
+                 "n_rows": 0}
+        if h.get("status") == 200:
+            hd, how = open_fits_remote(url, workdir)
+            if hd is not None:
+                try:
+                    got = desi_exposure_rows(hd, tid)
+                finally:
+                    hd.close()
+                entry["access"] = how
+                entry["n_rows"] = len(got)
+                for r in got:
+                    key = (r["expid"], r["petal"], r["fiber"])
+                    if key not in seen:
+                        seen.add(key)
+                        r["survey"], r["program"] = sv, pg
+                        rows.append(r)
+            for f in workdir.glob("coadd-*.fits*"):
+                try:
+                    f.unlink()
+                except OSError:
+                    pass
+        tried.append(entry)
+        if rows and (survey and program):
+            break
+    return rows, tried
 
 
 def sparcl_retrieve(client, ids: list[str], release: str) -> list[dict]:
@@ -907,49 +996,45 @@ def process_spectrum(rec: dict, cand_rows: list[dict], release: str, workdir: Pa
                     file_coadd_by_line[lam0] = fc
                     exposures_by_line[lam0] = ex
     elif release.upper().startswith("DESI"):
-        tid = rec.get("targetid")
-        survey, program, hpx = rec.get("survey"), rec.get("program"), rec.get("healpix")
-        out["provenance"] = {"targetid": int(tid) if tid is not None else None,
-                             "survey": survey, "program": program,
-                             "healpix": int(hpx) if hpx is not None else None}
-        if tid is None or survey is None or program is None or hpx is None:
-            out["error"] = "no targetid/survey/program/healpix in SPARCL record"
+        ident = desi_identity(rec)
+        tid, hpx = ident["targetid"], ident["healpix"]
+        out["provenance"] = dict(ident)
+        if tid is None or hpx is None:
+            out["error"] = "no targetid/healpix derivable from the SPARCL record"
         else:
             out["route"] = "desi_cframe"
-            url = desi_coadd_url(str(survey), str(program), int(hpx))
-            hd, how = open_fits_remote(url, workdir)
-            rows = []
-            if hd is not None:
-                try:
-                    rows = desi_exposure_rows(hd, int(tid))
-                finally:
-                    hd.close()
-                out["file_url"] = url
-                out["coadd_access"] = how
+            rows, tried = desi_find_exposures(tid, hpx, ident.get("survey"), ident.get("program"),
+                                              workdir)
+            out["provenance"]["coadd_files"] = tried
+            hit = [t for t in tried if t.get("n_rows")]
+            if hit:
+                out["file_url"] = hit[0]["url"]
+                out["coadd_access"] = hit[0].get("access")
+                out["provenance"]["survey"] = ",".join(sorted({t["survey"] for t in hit}))
+                out["provenance"]["program"] = ",".join(sorted({t["program"] for t in hit}))
             out["n_exposures_in_file"] = len(rows)
             out["provenance"]["exposures"] = [
-                {k: r[k] for k in ("night", "expid", "tileid", "petal", "fiber")} for r in rows]
+                {k: r[k] for k in ("night", "expid", "tileid", "petal", "fiber", "survey", "program")}
+                for r in rows]
             if not rows:
-                out["error"] = "coadd EXP_FIBERMAP unreachable or target absent"
+                out["error"] = "no DR1 coadd file holds the target (EXP_FIBERMAP) in its healpix"
             for c in cand_rows:
                 lam0 = float(c["wavelength"])
                 ex = desi_exposure_measurements(rows, lam0, mode, workdir, max_exposures) if rows else []
                 if rows and not any(e.get("testable") for e in ex):
                     # cframes unreachable: try the per-exposure healpix spectra file.
-                    for surl in desi_spectra_urls(str(survey), str(program), int(hpx)):
-                        ex2 = desi_spectra_file_measurements(surl, int(tid), lam0, mode, workdir,
-                                                             max_exposures)
-                        if ex2:
-                            out["route"] = "desi_spectra_file"
-                            ex = ex2
+                    for t in hit:
+                        for surl in desi_spectra_urls(t["survey"], t["program"], int(hpx)):
+                            ex2 = desi_spectra_file_measurements(surl, int(tid), lam0, mode, workdir,
+                                                                 max_exposures)
+                            if ex2:
+                                out["route"] = "desi_spectra_file"
+                                ex = ex2
+                                break
+                        if out["route"] == "desi_spectra_file":
                             break
                 exposures_by_line[lam0] = ex
                 file_coadd_by_line[lam0] = None
-            for f in workdir.glob("coadd-*.fits*"):
-                try:
-                    f.unlink()
-                except OSError:
-                    pass
     else:
         out["error"] = f"unsupported release {release}"
 
@@ -1267,39 +1352,41 @@ def probe(root: Path, n_each: int = 2) -> dict:
                         if h.get("status") == 200:
                             break
             elif rel.upper().startswith("DESI"):
-                tid, sv, pg, hp = rec.get("targetid"), rec.get("survey"), rec.get("program"), rec.get("healpix")
-                sample["desi_ids"] = {"targetid": tid, "survey": sv, "program": pg, "healpix": hp}
-                if sv and pg and hp is not None:
-                    url = desi_coadd_url(str(sv), str(pg), int(hp))
-                    h = http_head(url)
-                    rep["urls"].append(h)
-                    sample["coadd_head"] = h
-                    for u in desi_spectra_urls(str(sv), str(pg), int(hp)):
-                        hh = http_head(u)
-                        rep["urls"].append(hh)
-                        sample.setdefault("spectra_heads", []).append(hh)
-                        if hh.get("status") == 200:
-                            break
-                    if h.get("status") == 200 and tid is not None:
-                        work = Path(tempfile.mkdtemp(prefix="probe_"))
-                        hd, how = open_fits_remote(url, work)
-                        if hd is not None:
-                            try:
-                                rows = desi_exposure_rows(hd, int(tid))
-                            finally:
-                                hd.close()
-                            sample["coadd_access"] = how
-                            sample["exp_rows"] = rows[:5]
-                            sample["n_exp_rows"] = len(rows)
-                            if rows:
-                                r0 = rows[0]
-                                for kind in ("cframe", "sky"):
-                                    for u in desi_frame_urls(kind, r0["night"], r0["expid"], "r", r0["petal"]):
-                                        hh = http_head(u)
-                                        rep["urls"].append(hh)
-                                        sample.setdefault("frame_heads", []).append(hh)
-                                        if hh.get("status") == 200:
-                                            break
+                ident = desi_identity(rec)
+                sample["desi_ids"] = ident
+                tid, hp = ident["targetid"], ident["healpix"]
+                if tid is not None and hp is not None:
+                    work = Path(tempfile.mkdtemp(prefix="probe_"))
+                    rows, tried = desi_find_exposures(tid, hp, ident.get("survey"),
+                                                      ident.get("program"), work)
+                    sample["coadd_files"] = tried
+                    rep["urls"].extend({k: t.get(k) for k in ("url", "status")} for t in tried)
+                    sample["exp_rows"] = rows[:5]
+                    sample["n_exp_rows"] = len(rows)
+                    hit = [t for t in tried if t.get("n_rows")]
+                    if hit:
+                        for u in desi_spectra_urls(hit[0]["survey"], hit[0]["program"], int(hp)):
+                            hh = http_head(u)
+                            rep["urls"].append(hh)
+                            sample.setdefault("spectra_heads", []).append(hh)
+                            if hh.get("status") == 200:
+                                break
+                    if rows:
+                        r0 = rows[0]
+                        for kind in ("cframe", "sky"):
+                            for u in desi_frame_urls(kind, r0["night"], r0["expid"], "r", r0["petal"]):
+                                hh = http_head(u)
+                                rep["urls"].append(hh)
+                                sample.setdefault("frame_heads", []).append(hh)
+                                if hh.get("status") == 200:
+                                    break
+                        # One real per-exposure measurement, to prove the row read.
+                        lam0 = float(df.loc[df["spec_id"] == str(rec.get("sparcl_id")),
+                                            "wavelength"].iloc[0])
+                        t0 = time.time()
+                        ex = desi_exposure_measurements(rows[:2], lam0, "absorption", work, 2)
+                        sample["exposure_test"] = _json_safe(ex)
+                        sample["exposure_test_s"] = round(time.time() - t0, 1)
             info["samples"].append(sample)
         rep["releases"][rel] = info
     (out_dir / "probe.json").write_text(json.dumps(_json_safe(rep), indent=2, default=str))

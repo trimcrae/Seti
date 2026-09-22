@@ -63,7 +63,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,spectra]"
           pip install --upgrade --force-reinstall --no-cache-dir "numpy>=2.0" pandas pyarrow scipy
-          pip install fsspec aiohttp requests
+          pip install fsspec aiohttp requests astropy-healpix
           python -c "import sparcl.client, fsspec, aiohttp, astropy; print('imports OK')"
       - name: Offline gate
         run: python -m pytest tests/test_spectra_persist.py -q -p no:cacheprovider
@@ -111,7 +111,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,spectra]"
           pip install --upgrade --force-reinstall --no-cache-dir "numpy>=2.0" pandas pyarrow scipy
-          pip install fsspec aiohttp requests
+          pip install fsspec aiohttp requests astropy-healpix
           python -c "import sparcl.client, fsspec, aiohttp, astropy; print('imports OK')"
       - name: Per-exposure measurements (shard ${{ matrix.shard }})
         if: steps.gate.outputs.skip == 'false'

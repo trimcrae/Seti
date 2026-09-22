@@ -3,12 +3,52 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-16.
+next. Last updated: 2026-09-22.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### SEXTANT: the search is built and dispatched, 2026-09-22
+
+SEXTANT asks LOOM's question — is a minor planet accelerating in a way
+sunlight cannot supply — on Gaia's SSO astrometry, where the residual is
+milliarcseconds rather than arcseconds. Until today only the acquisition probe
+had ever run. Now the whole pipeline exists and is on a runner:
+`.github/workflows/sextant.yml`, `probe` → N `fit` shards → `assess`, wired to
+`python -m seti.cli sextant`. First dispatch: run **35739803943** on
+`claude/goap-sextant`, 8 shards, capped at 800 objects.
+
+**The probe's decisive finding, written down.** `epoch` is **TCB**, and it is
+derived rather than assumed. The probe measured `epoch_utc − epoch` as
+−85.564 s at MJD 56864 and −90.250 s at MJD 58868; computing TCB − UTC from
+`L_B = 1.550519768e-8` plus TT − TAI plus the leap seconds in force gives
+85.564 s and 90.249 s. Both ends agree to under a millisecond, and the 4.686 s
+drift across the mission decomposes as 2.685 s of secular `L_B` and exactly 2 s
+of leap seconds. Nothing but TCB does that. This mattered more than it sounds:
+87 s of time-tag error is ~0.7 arcsec of along-track offset on *every* object
+in proportion to sky rate — a catalogue-wide fake detection shaped exactly like
+the signal. Also settled: the observer state vectors are equatorial
+(`max|z_gaia| = 0.4098 au`, which is `y_ecl·sin 23.44°` and not an ecliptic
+slab); `is_rejected` runs at 0.6304% against a published 0.58%; and the
+DR3/FPR union deduplicates under **both** candidate keys.
+
+**The controls are the falsifiable part, and there are now two of them.** The
+primary is JPL's fitted `A2`, pulled live from SBDB. It has a weakness — JPL's
+solutions saw Gaia DR2/DR3 astrometry at high weight — so the channel now also
+scores against Greenberg+2020 (AJ 159, 92; VizieR `J/AJ/159/92`), 247 `da/dt`
+measurements from optical and radar. The conversion is exact for JPL's
+`g(r) = (1 au/r)²`: `da/dt = 2 A2 / (n a² (1−e²))`, which reproduces Bennu's
+published −19.0 ± 0.1e−4 au/Myr from JPL's `A2 = −4.6e−14 au/day²` to 1%. If
+the Gaia-only fit does not return these in sign and magnitude, nothing else in
+the output is believed, and `assess` stamps `ESTIMATOR_FAILS_CONTROLS` onto the
+run verdict rather than reporting the exceedances.
+
+**What to do next:** read run 35739803943's `results/sextant/controls.json`
+before anything else in `summary.json`. If the controls recover, re-dispatch
+uncapped (`max_objects: 0`, 16 shards) over all 156,823 objects in
+`gaiafpr.sso_observation`.
 
 ### IGNITION goes from blocked to a live parent sample, 2026-09-16
 

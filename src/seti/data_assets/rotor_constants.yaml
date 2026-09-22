@@ -1,0 +1,377 @@
+# Rotational constants for the ULINE asymmetric-top predictor (seti.uline.rotor).
+#
+# EVERY BLOCK IS `verify: true`.  The sandbox this file was written in has no
+# network egress, so every number below is what the author could recall or
+# reconstruct of the microwave literature, with its provenance and its
+# uncertainty class stated.  Nothing here is a laboratory line list, and a
+# pattern found on these frequencies is a reason to obtain the laboratory
+# constants, not a detection (docs/uline.md §6).  The runner's `validate` and
+# `litfetch` stages exist to replace the recalled numbers with fetched ones:
+#   * validation molecules (SO2, CH2F2, COF2) are compared line by line with
+#     their JPL entries, with the constants JPL's own documentation files list,
+#     and refitted, so the Hamiltonian's residual floor is measured;
+#   * target species are cross-checked against NIST (CCCBDB experimental
+#     constants, the Triatomic Spectral Database for CF2) and the abstracts of
+#     the papers named below; what comes back is written to
+#     results/uline/literature.json next to the value embedded here.
+#
+# uncertainty classes (`quality`):
+#   lab        - laboratory value quoted from a paper the author is sure of
+#   recalled   - from memory of the literature; digits beyond the stated
+#                abc_uncertainty_mhz are not trusted
+#   snippet    - read off a search-engine excerpt of the cited paper/database
+#                (exact digits as shown, but the excerpt could not be opened)
+#   structure  - derived by scaling a measured isotopologue's constants with
+#                the moments of an approximate geometry (~2e-4 of B)
+#   estimate   - order-of-magnitude (never used as a frequency, only as an
+#                error term)
+#
+# error model per isotopologue: err = base + rel*nu + 2*abc_uncertainty_mhz*(J+1)
+#   + (quartic unknown: distortion_scale*[J'^2(J'+1)^2 - J^2(J+1)^2])
+#   (+ hyperfine blend width in quadrature, Cl/N species)
+
+version: 1
+
+species:
+
+  # ---------------------------------------------------------------- validation
+  SO2:
+    role: validation
+    validate_against:
+      - {database: jpl, tag: 64002}
+      - {database: cdms, tag: 64502}
+    isotopologues:
+      - name: "32SO2 v=0"
+        abundance: 1.0
+        quality: recalled
+        abc_uncertainty_mhz: 0.01
+        source: >-
+          Helminger & De Lucia 1985, J. Mol. Spectrosc. 111, 66 (ground state,
+          A-reduction, Ir); Muller & Brunken 2005, J. Mol. Spectrosc. 232, 213
+          (CDMS entry).  Dipole Patel, Margolese & Dyke 1979, J. Chem. Phys.
+          70, 2740 (1.633 D).  Quartic set corroborated offline by a refit to
+          18 laboratory lines (10 kHz rms).
+        constants:
+          A: 60778.5522
+          B: 10318.0736
+          C: 8799.7023
+          representation: Ir
+          DJ: 0.0065766
+          DJK: -0.117054
+          DK: 2.5898
+          dJ: 0.0017017
+          dK: 0.02534
+          mu_b: 1.633
+        spin_weights: {rule: ka_kc_sum, even: 1, odd: 0}   # 16O spin 0: only Ka+Kc even exists
+
+  CH2F2:
+    role: validation
+    validate_against:
+      - {database: jpl, tag: 52010}
+    isotopologues:
+      - name: "CH2F2 v=0"
+        abundance: 1.0
+        quality: recalled
+        abc_uncertainty_mhz: 0.5
+        source: >-
+          Hirota 1978, J. Mol. Spectrosc. 71, 145 and the JPL entry 52010
+          documentation; dipole 1.978 D (Lide 1952 / CCCBDB).  Quartic
+          constants recalled to one significant figure: the runner replaces
+          them with the JPL documentation values and a refit.
+        constants:
+          A: 49142.85
+          B: 10604.51
+          C: 9249.86
+          representation: Ir
+          DJ: 0.0103
+          DJK: 0.0325
+          DK: 0.50
+          dJ: 0.00105
+          dK: 0.011
+          mu_b: 1.978
+        # C2 axis = b; the double exchange (H1 H2)(F1 F2) is symmetric overall:
+        # Ka+Kc even <-> 3x3+1x1 = 10, odd <-> 3x1+1x3 = 6
+        spin_weights: {rule: ka_kc_sum, even: 10, odd: 6}
+
+  COF2:
+    role: validation
+    validate_against:
+      - {database: jpl, tag: 66001}
+    isotopologues:
+      - name: "COF2 v=0"
+        abundance: 1.0
+        quality: recalled
+        abc_uncertainty_mhz: 1.0
+        source: >-
+          Carpenter, Smith & Whiffen (J. Mol. Spectrosc.) and the JPL entry
+          66001 documentation; near-oblate (kappa ~ +0.98), hence IIIr.  Dipole
+          0.95 D along the C=O (a) axis.  Quartic constants unknown here: the
+          validation is meaningful only after the runner's doc parse / refit.
+        constants:
+          A: 11813.5
+          B: 11753.1
+          C: 5880.9
+          representation: IIIr
+          mu_a: 0.95
+        # C2 axis = a; two equivalent 19F (I=1/2): Ka even 1, Ka odd 3
+        spin_weights: {rule: ka, even: 1, odd: 3}
+
+  # -------------------------------------------------------------------- targets
+  CF2Cl2:
+    role: target
+    formula: CF2Cl2
+    hyperfine: {eQq_mhz: 75.0, n_nuclei: 2, nucleus: "35Cl"}
+    literature:
+      - "Iijima 1978 (structure, three isotopic species): A/B/C as quoted below"
+      - "Wlodarczak et al. 2000, J. Mol. Spectrosc. 200, 43: mm-wave 50-100 GHz, quartic+sextic, hyperfine (PubMed 10712867)"
+    isotopologues:
+      - name: "CF2(35Cl)2"
+        abundance: 0.5739
+        quality: snippet
+        abc_uncertainty_mhz: 0.05
+        source: >-
+          Microwave structure study of three isotopic species (search-engine
+          excerpt of the CCCBDB/NIST WebBook entry for CAS 75-71-8):
+          A = 4118.90, B = 2638.70, C = 2233.72 MHz.  Consistent with the
+          author's structure estimate (4106/2643/2233).  Dipole 0.51 D
+          (b axis = C2).  Quartic constants exist (Wlodarczak+ 2000) but could
+          not be read: unknown here.
+        constants:
+          A: 4118.90
+          B: 2638.70
+          C: 2233.72
+          representation: Ir
+          mu_b: 0.51
+        # C2 = b; (Cl1 Cl2)(F1 F2) double exchange symmetric overall:
+        # Ka+Kc even <-> 10x3+6x1 = 36, odd <-> 10x1+6x3 = 28
+        spin_weights: {rule: ka_kc_sum, even: 36, odd: 28}
+      - name: "CF2(35Cl)(37Cl)"
+        abundance: 0.3671
+        quality: snippet
+        abc_uncertainty_mhz: 0.05
+        source: "same excerpt: A = 4092.07, B = 2582.30, C = 2185.54 MHz; Cs symmetry, no spin statistics"
+        constants:
+          A: 4092.07
+          B: 2582.30
+          C: 2185.54
+          representation: Ir
+          mu_b: 0.51
+        spin_weights: {rule: none}
+      - name: "CF2(37Cl)2"
+        abundance: 0.0587
+        quality: structure
+        abc_uncertainty_mhz: 0.6
+        source: "scaled from CF2(35Cl)2 with the r0 geometry below"
+        scale_from: "CF2(35Cl)2"
+        constants:
+          A: 4118.90
+          B: 2638.70
+          C: 2233.72
+          representation: Ir
+          mu_b: 0.51
+        spin_weights: {rule: ka_kc_sum, even: 36, odd: 28}
+    geometry:
+      # approximate r0 structure (A): C-Cl 1.744, C-F 1.345, ClCCl 112.5, FCF 106.2
+      parent:
+        - [12.000, [0.0, 0.0, 0.0]]
+        - [34.969, [1.450, 0.0, -0.969]]
+        - [34.969, [-1.450, 0.0, -0.969]]
+        - [18.998, [0.0, 1.076, 0.808]]
+        - [18.998, [0.0, -1.076, 0.808]]
+      substituted:
+        "CF2(37Cl)2":
+          - [12.000, [0.0, 0.0, 0.0]]
+          - [36.966, [1.450, 0.0, -0.969]]
+          - [36.966, [-1.450, 0.0, -0.969]]
+          - [18.998, [0.0, 1.076, 0.808]]
+          - [18.998, [0.0, -1.076, 0.808]]
+
+  CFCl3:
+    role: target
+    formula: CFCl3
+    hyperfine: {eQq_mhz: 75.0, n_nuclei: 3, nucleus: "35Cl"}
+    literature:
+      - "Long, Williams & Weatherly 1960, J. Chem. Phys. 33, 508 (B0)"
+      - "Carpenter, Walters & ... 1987, J. Mol. Spectrosc. (ground and v6=1; quadrupole)"
+      - "Nuovo Cimento (1960s): mm-wave centrifugal distortion, DJ = 0.46(1) kHz"
+    isotopologues:
+      - name: "CF(35Cl)3"
+        abundance: 0.4213
+        kind: symmetric
+        quality: recalled
+        abc_uncertainty_mhz: 0.5
+        source: >-
+          Oblate C3v top.  B0 recalled as ~2466 MHz (structure estimate 2487);
+          C0 from the structure (~1735 MHz, only sets the K ladder); DJ =
+          0.46 kHz from the Nuovo Cimento excerpt; DJK unknown; dipole 0.45 D.
+        constants:
+          B: 2466.0
+          DJ: 0.00046
+          DJK: null
+          axial: 1735.0
+          mu: 0.45
+          k3_weight: 1.2      # three equivalent I=3/2 nuclei: A:E = 24:20
+      - name: "CF(35Cl)2(37Cl)"
+        abundance: 0.4043
+        quality: structure
+        abc_uncertainty_mhz: 0.8
+        source: "scaled from the symmetric parent with the r0 geometry below; Cs, slightly asymmetric"
+        scale_from: "CF(35Cl)3"
+        constants:
+          A: 2466.0
+          B: 2466.0
+          C: 1735.0
+          representation: IIIr
+          mu_c: 0.45
+        spin_weights: {rule: none}
+    geometry:
+      # C-Cl 1.754, C-F 1.33, ClCCl 110.7 (A)
+      parent:
+        - [12.000, [0.0, 0.0, 0.0]]
+        - [18.998, [0.0, 0.0, 1.330]]
+        - [34.969, [1.666, 0.0, -0.548]]
+        - [34.969, [-0.833, 1.443, -0.548]]
+        - [34.969, [-0.833, -1.443, -0.548]]
+      substituted:
+        "CF(35Cl)2(37Cl)":
+          - [12.000, [0.0, 0.0, 0.0]]
+          - [18.998, [0.0, 0.0, 1.330]]
+          - [36.966, [1.666, 0.0, -0.548]]
+          - [34.969, [-0.833, 1.443, -0.548]]
+          - [34.969, [-0.833, -1.443, -0.548]]
+
+  SO2F2:
+    role: target
+    formula: SO2F2
+    literature:
+      - "Lide, Mann & Fristrom 1957, J. Chem. Phys. 26, 734 (structure, dipole 1.110(15) D)"
+      - "Sarka et al. 2000, J. Mol. Spectrosc. 200, 55 (all six quartic constants)"
+      - "Margules et al. 2003, J. Mol. Spectrosc. (ground state 10-472 GHz, sextic)"
+    isotopologues:
+      - name: "SO2F2 v=0"
+        abundance: 0.95
+        quality: snippet
+        abc_uncertainty_mhz: 0.5
+        source: >-
+          Search-engine excerpt of Sarka+ 2000 as cited by later work:
+          A = 5134, B = 5075, C = 5057 MHz (rounded to 1 MHz in the excerpt).
+          Near-prolate (kappa ~ -0.53) with the C2 axis = a: a-type spectrum,
+          mu_a = 1.110 D.  Quartic constants exist (six, published) but could
+          not be read: unknown here, and at J ~ 25 the unmodelled distortion
+          is ~100 MHz, which the error model states.
+        constants:
+          A: 5134.0
+          B: 5075.0
+          C: 5057.0
+          representation: Ir
+          mu_a: 1.110
+        # C2 = a; (O1 O2)(F1 F2): O spin 0, F pair antisymmetric overall:
+        # Ka even <-> 1, Ka odd <-> 3
+        spin_weights: {rule: ka, even: 1, odd: 3}
+
+  CHClF2:
+    role: target
+    formula: CHClF2
+    hyperfine: {eQq_mhz: 70.0, n_nuclei: 1, nucleus: "35Cl"}
+    literature:
+      - "Beaudet & Poynter, J. Chem. Phys. (1960s): microwave spectrum, structure, dipole"
+      - "Burczyk et al. 1983, J. Mol. Spectrosc. 97, 39? ground state 70-1280 GHz, J up to 80"
+      - "1997, J. Mol. Spectrosc.: HCFC-22 constants for CHF2(37Cl) and 13CHF2(35Cl)"
+    isotopologues:
+      - name: "CHF2(35Cl)"
+        abundance: 0.7576
+        quality: recalled
+        abc_uncertainty_mhz: 0.5
+        source: >-
+          Recalled: A = 10234.7, B = 4861.2, C = 3507.7 MHz (structure estimate
+          10148/4855/3495 agrees to 1 %); mu_a = 1.29, mu_b = 0.55 D (total
+          1.42 D, Beaudet & Poynter).  Quartic unknown here.
+        constants:
+          A: 10234.7
+          B: 4861.2
+          C: 3507.7
+          representation: Ir
+          mu_a: 1.29
+          mu_b: 0.55
+        spin_weights: {rule: none}      # Cs: the F pair is exchanged by a reflection, not a rotation
+      - name: "CHF2(37Cl)"
+        abundance: 0.2424
+        quality: structure
+        abc_uncertainty_mhz: 1.0
+        source: "scaled from CHF2(35Cl) with the r0 geometry below"
+        scale_from: "CHF2(35Cl)"
+        constants:
+          A: 10234.7
+          B: 4861.2
+          C: 3507.7
+          representation: Ir
+          mu_a: 1.29
+          mu_b: 0.55
+        spin_weights: {rule: none}
+    geometry:
+      # C-Cl 1.747, C-F 1.348, C-H 1.09; FCF 107.9, ClCF 110.3 (A)
+      parent:
+        - [12.000, [0.0, 0.0, 0.0]]
+        - [34.969, [0.0, 0.0, -1.747]]
+        - [18.998, [0.6415, 1.0895, 0.4675]]
+        - [18.998, [0.6415, -1.0895, 0.4675]]
+        - [1.008, [-1.031, 0.0, 0.355]]
+      substituted:
+        "CHF2(37Cl)":
+          - [12.000, [0.0, 0.0, 0.0]]
+          - [36.966, [0.0, 0.0, -1.747]]
+          - [18.998, [0.6415, 1.0895, 0.4675]]
+          - [18.998, [0.6415, -1.0895, 0.4675]]
+          - [1.008, [-1.031, 0.0, 0.355]]
+
+  CF2:
+    role: target
+    formula: CF2
+    literature:
+      - "Kirchhoff, Lide & Powell 1973, J. Mol. Spectrosc. 47, 491 (microwave, J up to 40, dipole 0.469(26) D)"
+      - "Charo & De Lucia 1982, J. Mol. Spectrosc. 94, 363 (mm/submm, Watson A-reduction)"
+      - "NIST Triatomic Spectral Database, CF2 table (constants and measured lines)"
+    isotopologues:
+      - name: "CF2 X1A1 v=0"
+        abundance: 1.0
+        quality: snippet
+        abc_uncertainty_mhz: 0.01
+        source: >-
+          NIST Triatomic Spectral Database excerpt (Watson determinable
+          parameters): A = 88355.0942(66), B = 12507.5392(10), C =
+          10932.3151(9) MHz, tau parameters tau_aaaa = -11.2778, tau_bbbb =
+          -0.0691387, tau_cccc = -0.0340714, tau1 = 0.126447, tau2 =
+          -0.0181803, tau3 = 3.45 MHz.  The tau set is NOT converted to
+          A-reduction constants here (the conversion was not trusted from
+          memory): the runner fetches the same page's measured line table and
+          fits the A-reduced Hamiltonian to it.  Dipole 0.469 D along b (C2).
+        constants:
+          A: 88355.0942
+          B: 12507.5392
+          C: 10932.3151
+          representation: Ir
+          mu_b: 0.469
+        # C2 = b; two equivalent 19F (I=1/2), single exchange antisymmetric:
+        # Ka+Kc even <-> 1, odd <-> 3
+        spin_weights: {rule: ka_kc_sum, even: 1, odd: 3}
+
+# Sources the runner harvests (results/uline/literature.json).  Each entry is
+# fetched, its text head kept, and its constants parsed where a parser exists;
+# nothing fetched replaces an embedded value automatically — the run reports
+# the two side by side and the next commit decides.
+literature:
+  - {name: cccbdb_CF2Cl2,  species: CF2Cl2, kind: cccbdb, url: "https://cccbdb.nist.gov/exp2x.asp?casno=75718&charge=0"}
+  - {name: cccbdb_CFCl3,   species: CFCl3,  kind: cccbdb, url: "https://cccbdb.nist.gov/exp2x.asp?casno=75694&charge=0"}
+  - {name: cccbdb_SO2F2,   species: SO2F2,  kind: cccbdb, url: "https://cccbdb.nist.gov/exp2x.asp?casno=2699798&charge=0"}
+  - {name: cccbdb_CHClF2,  species: CHClF2, kind: cccbdb, url: "https://cccbdb.nist.gov/exp2x.asp?casno=75456&charge=0"}
+  - {name: cccbdb_CF2,     species: CF2,    kind: cccbdb, url: "https://cccbdb.nist.gov/exp2x.asp?casno=2154598&charge=0"}
+  - {name: nist_triatomic_CF2, species: CF2, kind: nist_triatomic, url: "https://physics.nist.gov/PhysRefData/MolSpec/Triatomic/Html/Tables/CF2.html"}
+  - {name: pubmed_CF2Cl2_mmwave, species: CF2Cl2, kind: text, url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=10712867&rettype=abstract&retmode=text"}
+  - {name: pubmed_search_SO2F2, species: SO2F2, kind: text, url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=sulfuryl+fluoride+rotational+spectrum&retmode=json"}
+  - {name: pubmed_search_CHClF2, species: CHClF2, kind: text, url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=chlorodifluoromethane+rotational+spectrum&retmode=json"}
+  - {name: zenodo_SO2F2, species: SO2F2, kind: text, url: "https://zenodo.org/api/records/22338383"}
+  - {name: nsf_par_10585742, species: CF2Cl2, kind: pdf, url: "https://par.nsf.gov/servlets/purl/10585742"}
+  - {name: kean_CFCl3, species: CFCl3, kind: html, url: "http://turbo.kean.edu/~wbailey/CFCl3.html"}
+  - {name: jpl_doc_SO2, species: SO2, kind: jpl_doc, url: "https://spec.jpl.nasa.gov/ftp/pub/catalog/doc/d064002.cat"}
+  - {name: jpl_doc_CH2F2, species: CH2F2, kind: jpl_doc, url: "https://spec.jpl.nasa.gov/ftp/pub/catalog/doc/d052010.cat"}
+  - {name: jpl_doc_COF2, species: COF2, kind: jpl_doc, url: "https://spec.jpl.nasa.gov/ftp/pub/catalog/doc/d066001.cat"}

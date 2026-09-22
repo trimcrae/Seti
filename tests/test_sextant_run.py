@@ -434,6 +434,38 @@ def test_assessment_with_a_sign_flipped_estimator_flags_the_run():
     assert out["verdict"].startswith("ESTIMATOR_FAILS_CONTROLS")
 
 
+def test_a2_distribution_is_quoted_against_the_yarkovsky_expectation():
+    """The headline number is |A2| over what thermal recoil would give."""
+    df = _table(n_exceed=3, exceed_vetoed=False)
+    df["ratio_expected"] = np.abs(df["a2"]) / df["a2_expected_yarkovsky"]
+    d = RUN.assess_frame(df, CONF)["a2_distribution"]
+    r = d["ratio_to_yarkovsky_expectation_detected"]
+    assert r["n"] >= 5 and r["p10"] <= r["median"] <= r["p90"]
+    assert r["epsilon_median_measured"] == CONF["epsilon_median_measured"]
+    # The injected exceedances are 20x the hard ceiling, so the tail must show.
+    assert r["fraction_above_10x"] > 0
+
+
+def test_assessment_survives_a_shard_written_by_an_earlier_build():
+    """A column a previous build did not write degrades that statistic only.
+
+    `assess` gathers shard CSVs that may come from a re-run of one failed shard
+    or from another run's artifacts entirely.  A KeyError there would throw away
+    every shard that did arrive, which is the opposite of what checkpointing is
+    for.
+    """
+    df = _table().drop(columns=["ratio_expected", "a2_absorbed_fraction",
+                                "epsilon_eff", "ratio_realistic",
+                                "a2_expected_yarkovsky"], errors="ignore")
+    out = RUN.assess_frame(df, CONF)
+    assert out["verdict"] == "NO_CEILING_EXCEEDANCE"
+    assert out["controls"]["verdict"] == "CONTROLS_RECOVERED"
+    d = out["a2_distribution"]
+    assert "ratio_to_yarkovsky_expectation_detected" not in d
+    assert "absorbed_fraction_median" not in d
+    assert d["n_with_a2"] == len(df)          # the statistics that CAN run, do
+
+
 def test_dadt_to_a2_conversion_reproduces_bennu():
     """The published literature reports ``da/dt``; JPL reports ``A2``.
 

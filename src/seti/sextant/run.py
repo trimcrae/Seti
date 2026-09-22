@@ -1428,6 +1428,19 @@ def strata_labels(df, n_bins: int = 4) -> np.ndarray:
     return hb * 100 + tb * 10 + ab
 
 
+def _column(frame, name: str) -> np.ndarray:
+    """A float column, or all-NaN if the shard's CSV predates it.
+
+    `assess` gathers shards that may have been written by an earlier build of
+    this module --- the workflow re-runs failed shards, and a run can be
+    assessed from another run's artifacts.  A missing column must degrade that
+    one statistic, not raise and lose the whole assessment.
+    """
+    if name in getattr(frame, "columns", ()):
+        return frame[name].to_numpy(dtype=float)
+    return np.full(len(frame), float("nan"))
+
+
 def assess_frame(df, conf: dict, details: dict | None = None,
                  yarkovsky: dict[int, dict] | None = None) -> dict:
     """The assessment on the gathered per-object table (pure)."""
@@ -1443,9 +1456,9 @@ def assess_frame(df, conf: dict, details: dict | None = None,
         "n_fitted": int(len(fitted)),
         "routes": {str(k): int(v) for k, v in df["route"].value_counts().items()},
     }
-    snr = fitted["a2_snr"].to_numpy(dtype=float)
-    a2 = fitted["a2"].to_numpy(dtype=float)
-    err = fitted["a2_err"].to_numpy(dtype=float)
+    snr = _column(fitted, "a2_snr")
+    a2 = _column(fitted, "a2")
+    err = _column(fitted, "a2_err")
     good = np.isfinite(snr) & np.isfinite(a2) & np.isfinite(err) & (err > 0)
     z = np.where(good, a2 / np.where(err > 0, err, np.nan), np.nan)
     z = z[np.isfinite(z)]
@@ -1464,28 +1477,55 @@ def assess_frame(df, conf: dict, details: dict | None = None,
             "median_a2_err_au_day2": float(np.median(err[good])),
             "p10_a2_err_au_day2": float(np.percentile(err[good], 10)),
         })
-        exp = fitted["a2_expected_yarkovsky"].to_numpy(dtype=float)
+        exp = _column(fitted, "a2_expected_yarkovsky")
         ok = good & np.isfinite(exp) & (exp > 0)
         if ok.any():
             dist["median_sensitivity_over_yarkovsky_expectation"] = float(
                 np.median(err[ok] / exp[ok]))
             dist["n_objects_with_sensitivity_below_expectation"] = int(
                 np.sum(err[ok] < exp[ok]))
-        absorbed = fitted["a2_absorbed_fraction"].to_numpy(dtype=float)
-        dist["absorbed_fraction_median"] = float(np.nanmedian(absorbed))
-        dist["absorbed_fraction_p90"] = float(np.nanpercentile(absorbed, 90))
-        ratio = fitted["ratio_hard"].to_numpy(dtype=float)
+        absorbed = _column(fitted, "a2_absorbed_fraction")
+        if np.any(np.isfinite(absorbed)):
+            dist["absorbed_fraction_median"] = float(np.nanmedian(absorbed))
+            dist["absorbed_fraction_p90"] = float(np.nanpercentile(absorbed, 90))
+        ratio = _column(fitted, "ratio_hard")
         det = good & (np.abs(a2 / err) >= float(conf["min_snr_detection"]))
         dist["n_detected"] = int(det.sum())
         dist["n_detected_above_hard_ceiling"] = int(np.sum(det & (ratio >= 1.0)))
         dist["n_detected_above_realistic"] = int(np.sum(
-            det & (fitted["ratio_realistic"].to_numpy(dtype=float) >= 1.0)))
-        eps = fitted["epsilon_eff"].to_numpy(dtype=float)
+            det & (_column(fitted, "ratio_realistic") >= 1.0)))
+        eps = _column(fitted, "epsilon_eff")
         if np.any(det & np.isfinite(eps)):
             dist["epsilon_eff_detected_median"] = float(np.median(eps[det & np.isfinite(eps)]))
+        # THE A2 DISTRIBUTION AGAINST THE YARKOVSKY EXPECTATION.
+        #
+        # `ratio_expected` is |A2| divided by what thermal recoil at LOOM's
+        # measured median efficiency (epsilon = 0.074, 589 SBDB asteroids)
+        # would give a body of that H.  A population of ordinary asteroids
+        # detected at S/N >= 3 should sit AROUND 1 with a tail to a few: that
+        # is Yarkovsky, and it is the null this channel is looking past.  A
+        # percentile far above 1 is either an anomalous object or --- much more
+        # likely, and to be excluded first --- an error model that is too
+        # small.  Quoted as percentiles rather than a mean because the
+        # distribution is heavy-tailed by construction.
+        rexp = _column(fitted, "ratio_expected")
+        dok = det & np.isfinite(rexp) & (rexp > 0)
+        if dok.sum() >= 5:
+            qs = np.percentile(rexp[dok], [10, 25, 50, 75, 90, 99])
+            dist["ratio_to_yarkovsky_expectation_detected"] = {
+                "n": int(dok.sum()),
+                "p10": float(qs[0]), "p25": float(qs[1]), "median": float(qs[2]),
+                "p75": float(qs[3]), "p90": float(qs[4]), "p99": float(qs[5]),
+                "fraction_above_10x": float(np.mean(rexp[dok] > 10.0)),
+                "epsilon_median_measured": float(conf["epsilon_median_measured"]),
+                "note": ("|A2| over the thermal-recoil expectation at LOOM's measured "
+                         "median efficiency; an ordinary Yarkovsky population sits "
+                         "around 1, and a median far above it indicts the error model "
+                         "before it indicts the sky"),
+            }
         # Quality independence: does |z| track how well the object was observed?
         for col in ("n_transits", "arc_days", "median_sigma_al_mas", "h"):
-            x = fitted[col].to_numpy(dtype=float)
+            x = _column(fitted, col)
             m = good & np.isfinite(x)
             if m.sum() > 30:
                 from scipy.stats import spearmanr

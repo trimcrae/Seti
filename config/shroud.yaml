@@ -21,17 +21,32 @@ acquire:
   # first that returns a parseable table wins and its URL is recorded in the
   # provenance block.  None is reachable from the sandbox (egress 403) - they
   # are probed on the GitHub Actions runner.
+  # Run 35653059591 (2026-09-21): svocats.cab.inta-csic.es times out at the
+  # TCP level (http and https); svo2.cab.inta-csic.es is ALIVE (403 on the
+  # /vocats/ directory listing, 404 on the two catalogue paths in 0.2 s), so
+  # the catalogues are simply not at those paths.  More spellings are probed,
+  # each costing a fifth of a second.
   svo_catalogs:
     vanish_neowise:
       - "http://svocats.cab.inta-csic.es/vanish-neowise"
       - "https://svocats.cab.inta-csic.es/vanish-neowise"
       - "http://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise"
       - "http://svo2.cab.inta-csic.es/vocats/vanish-neowise"
+      - "https://svo2.cab.inta-csic.es/vocats/v2/vanish-neowise"
+      - "http://svo2.cab.inta-csic.es/svocats/vanish-neowise"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanish_neowise"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanish"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vasco"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanishing"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/poss1"
     vanish_possi:
       - "http://svocats.cab.inta-csic.es/vanish-possi"
       - "https://svocats.cab.inta-csic.es/vanish-possi"
       - "http://svo2.cab.inta-csic.es/vocats/v2/vanish-possi"
       - "http://svo2.cab.inta-csic.es/vocats/vanish-possi"
+      - "https://svo2.cab.inta-csic.es/vocats/v2/vanish-possi"
+      - "http://svo2.cab.inta-csic.es/svocats/vanish-possi"
+      - "http://svo2.cab.inta-csic.es/vocats/v2/vanish_possi"
   # Whole-sky dump in one request: SR=180 about (RA,DEC)=(180,0).  The first
   # form is the parameter set used by working production code against another
   # svocats catalogue (jeroenbouwman/CASCADe scripts/check_phase_error.py).
@@ -56,6 +71,11 @@ acquire:
     - "https://svo.cab.inta-csic.es/docs/index.php?pagename=Archives"
     - "http://svocats.cab.inta-csic.es/"
     - "http://svo2.cab.inta-csic.es/vocats/"
+    - "http://svo2.cab.inta-csic.es/"
+    - "http://svo2.cab.inta-csic.es/vocats/v2/"
+    - "http://svo2.cab.inta-csic.es/vocats/v2/index.php"
+    - "https://svo.cab.inta-csic.es/main/index.php"
+    - "http://svo2.cab.inta-csic.es/theory/vosa/"
   # Minnesota APS (MAPS) scan of POSS-I E+O: an INDEPENDENT digitization of the
   # same plates, ~90M objects.  Watters et al. used it as the null-distribution
   # reference; it is the natural artifact control here too (a real object is on

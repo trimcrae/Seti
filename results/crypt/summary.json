@@ -1,6 +1,6 @@
 {
   "verdict": "NO_DATA_REACHED",
-  "generated_utc": "2026-09-22T15:49:56Z",
+  "generated_utc": "2026-09-22T16:40:15Z",
   "screen": "diurnal",
   "synthetic": false,
   "poles_screened": [],
@@ -26,7 +26,7 @@
   "n_candidates": 0,
   "candidates": [],
   "degraded": [
-    "north:NOT_SCREENED",
+    "north:NO_DATA_REACHED",
     "south:NOT_SCREENED"
   ],
   "floor": {},
@@ -35,9 +35,9 @@
   "sensitivity": {},
   "acquisition": {
     "north": {
-      "status": null,
-      "n_layers": null,
-      "n_missing": null
+      "status": "NO_DATA_REACHED",
+      "n_layers": 0,
+      "n_missing": 12
     },
     "south": {
       "status": null,
@@ -47,10 +47,103 @@
   },
   "products": {
     "north": {
-      "ltim_bins": null,
-      "local_times_h": null,
-      "bytes": null,
-      "psr": null
+      "ltim_bins": [
+        1,
+        17,
+        33,
+        49,
+        65,
+        81
+      ],
+      "local_times_h": [
+        0.125,
+        4.125,
+        8.125,
+        12.125,
+        16.125,
+        20.125
+      ],
+      "bytes": 2791668367,
+      "psr": {
+        "pole": "north",
+        "routes": [
+          {
+            "route": 0,
+            "lbl": {
+              "url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/extras/illumination/release_2014/img/lpsr_65n_240m.lbl",
+              "status": 200,
+              "error": null,
+              "n_bytes": 3852
+            },
+            "img": {
+              "url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/extras/illumination/release_2014/img/lpsr_65n_240m.img",
+              "status": 200,
+              "error": null,
+              "n_bytes": 82432800
+            },
+            "read": {
+              "route": "label",
+              "shape": [
+                6420,
+                6420
+              ]
+            },
+            "outcome": "OK",
+            "full_shape": [
+              6420,
+              6420
+            ],
+            "n_psr_full": 476117,
+            "src_georef": {
+              "projection": "polar_stereographic",
+              "center_lat": 90.0,
+              "center_lon": 0.0,
+              "map_scale_m": 240.0,
+              "line_offset": 3209.5,
+              "sample_offset": 3209.5,
+              "lines": 6420,
+              "samples": 6420,
+              "radius_m": 1737400.0,
+              "map_resolution_ppd": 126.347,
+              "lon_direction": "east",
+              "origin_check_px": 0.0
+            },
+            "registration": "label_offsets"
+          }
+        ],
+        "lbl": {
+          "url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/extras/illumination/release_2014/img/lpsr_65n_240m.lbl",
+          "status": 200,
+          "error": null,
+          "n_bytes": 3852
+        },
+        "img": {
+          "url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/extras/illumination/release_2014/img/lpsr_65n_240m.img",
+          "status": 200,
+          "error": null,
+          "n_bytes": 82432800
+        },
+        "read": {
+          "route": "label",
+          "shape": [
+            6420,
+            6420
+          ]
+        },
+        "full_shape": [
+          6420,
+          6420
+        ],
+        "n_psr_full": 476117,
+        "registration": "label_offsets",
+        "status": "OK",
+        "route_used": 0,
+        "n_psr_cropped": 320806,
+        "shape": [
+          2535,
+          2535
+        ]
+      }
     },
     "south": {
       "ltim_bins": null,
@@ -1174,8 +1267,8 @@
   "thresholds": {
     "psr_tmax_K": 110.0,
     "edge_px": 2,
-    "n_bins_min": 8,
-    "n_bins_excess": 5,
+    "n_bins_min": 16,
+    "n_bins_excess": 10,
     "z_min": 5.0,
     "z_bin_min": 3.0,
     "amp_max_K": 2.0,

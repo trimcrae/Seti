@@ -16,6 +16,7 @@ import pandas as pd
 
 from ..ossuary import vet as ovet
 from . import physics as ph
+from . import screen as rscr
 from .acquire import CATWISE_XMATCH_RENAME, normalise_xmatch, xmatch_at_epoch
 
 _WD_HEADLINE = [
@@ -62,13 +63,22 @@ def wd_followup(shortlist: pd.DataFrame, cfg: dict, *, fetch_known_disks=None,
     c = cfg["contamination"]
     ep = cfg["epochs"]
     pos = out[["source_id", "ra", "dec"]].copy()
-    pos["source_id"] = pos["source_id"].astype("int64", errors="ignore")
+    # A Gaia source_id is an integer, but it arrives as a string from an
+    # X-Match and as a float from a CSV round trip.  ``astype(..., errors=
+    # "ignore")`` used to swallow the failure; pandas 3 removed that argument,
+    # so the coercion is done explicitly and a non-numeric id is simply left
+    # alone rather than taking the whole follow-up down with it.
+    _sid = pd.to_numeric(pos["source_id"], errors="coerce")
+    if _sid.notna().all():
+        pos["source_id"] = _sid.astype("int64")
 
     out["known_disk"] = False
     if fetch_known_disks is not None:
         try:
             known = fetch_known_disks(pos)
-            out["known_disk"] = out["source_id"].astype("int64").isin(set(known))
+            ids = pd.to_numeric(out["source_id"], errors="coerce")
+            out["known_disk"] = ids.isin({int(k) for k in known
+                                          if pd.notna(k)}).fillna(False)
         except Exception as exc:                        # noqa: BLE001
             print(f"[ring/wd] known-disk fetch failed: {exc!r}", flush=True)
 
@@ -147,9 +157,9 @@ def wd_followup(shortlist: pd.DataFrame, cfg: dict, *, fetch_known_disks=None,
     reason[f] = "background_source_no_comovement"
     f = ~out["blend_verdict"].isin(["clean", "isolated"]) & (reason == "")
     reason[f] = "beam_blend" if fetch_neighbours is not None else "blend_untested"
-    otype = out["simbad_otype"].astype(str).str.lower()
-    f = otype.str.contains("agn|qso|galaxy|seyfert|cv|nova|\\*\\*|sb|eb", regex=True) & \
-        (reason == "")
+    otype = rscr.text_column(out, "simbad_otype").str.lower()
+    f = otype.str.contains("agn|qso|galaxy|seyfert|cv|nova|\\*\\*|sb|eb",
+                           regex=True).fillna(False).astype(bool) & (reason == "")
     reason[f] = "simbad_identity"
     out["followup_reason"] = reason
     out["followup_verdict"] = np.where(reason == "", "surviving", "rejected")

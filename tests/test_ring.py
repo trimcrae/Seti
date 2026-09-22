@@ -442,6 +442,39 @@ def test_empty_pulsar_table_degrades_honestly(cfg):
     assert s["status"] == "NO_DATA_REACHED"
 
 
+@pytest.mark.parametrize("infer_string", [False, True])
+def test_missing_catalogue_text_is_absence_not_a_crash_or_a_token(cfg, infer_string):
+    """A pulsar with no ``assoc``/``bincomp`` entry must screen as unassociated.
+
+    ATNF leaves those fields empty for most pulsars, and the empty value
+    reaches the screen in three different shapes depending on the pandas
+    build: an object ``None``, an all-float ``NaN`` column, and -- with
+    ``future.infer_string`` on, which is the pandas 3 default and therefore
+    what a fresh runner installs -- an Arrow-backed ``NA`` that survives
+    ``astype(str)``.  The last one made ``tok in s`` raise ``TypeError`` on
+    the runner while the sandbox stayed green; the float one silently tested
+    the veto tokens against the string ``"nan"``.  Both shapes are pinned
+    here, and the veto must still fire for the pulsars that do carry a token.
+    """
+    with pd.option_context("future.infer_string", infer_string):
+        psr, matches = _pulsar_fixture()
+        psr = psr.copy()
+        # Blank every association except the Crab's and M4's, in the two
+        # shapes an absent catalogue field actually arrives in.
+        keep = psr["jname"].isin(["J0534+2200", "J1623-2631"])
+        psr.loc[~keep, "assoc"] = None
+        psr["bincomp"] = np.where(psr["jname"] == "J1623-2631",
+                                  psr["bincomp"], np.nan)
+        out, s = rscr.screen_pulsars(psr, matches, cfg)
+        o = out.set_index("jname")
+        assert not bool(o.loc["J0001+0002"]["assoc_veto"])
+        assert not bool(o.loc["J0001+0002"]["companion_veto"])
+        assert not bool(o.loc["J0001+0002"]["globular_cluster"])
+        assert bool(o.loc["J0534+2200"]["assoc_veto"])
+        assert bool(o.loc["J1623-2631"]["globular_cluster"])
+        assert s["n_ring_candidates"] == 1
+
+
 # ==========================================================================
 # Brown-dwarf leg
 # ==========================================================================

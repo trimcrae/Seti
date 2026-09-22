@@ -51,6 +51,29 @@ from . import physics as ph
 _WISE_ORDER = ("W1", "W2", "W3", "W4")
 
 
+def text_column(df: pd.DataFrame, col: str) -> pd.Series:
+    """A plain ``object``-dtype text column with every missing value as ``""``.
+
+    Catalogue text arrives in three different shapes depending on the pandas
+    build and on whether the column survived a round trip: an ``object``
+    column of Python strings, an all-float column of ``NaN`` when the field was
+    absent, or -- once ``future.infer_string`` is on, which is the default in
+    pandas 3 and therefore what a fresh runner installs -- an Arrow-backed
+    ``str`` column whose missing entries stay ``NA`` through ``astype(str)``.
+
+    Reading such a column with ``.astype(str)`` gives ``"nan"`` in the second
+    case (a token test against it is silently meaningless) and a bare float in
+    the third (``in`` then raises ``TypeError``).  Both are avoided by mapping
+    element by element and sending every missing value to the empty string, so
+    a pulsar with no ``assoc`` entry is simply a pulsar with no association
+    rather than a crash or a phantom token.
+    """
+    s = df[col] if col in df.columns else pd.Series("", index=df.index)
+    s = pd.Series(s, index=df.index)
+    return s.map(lambda v: "" if v is None or v is pd.NA or
+                 (isinstance(v, float) and not np.isfinite(v)) else str(v)).astype(object)
+
+
 def _ph_qual_ok(df: pd.DataFrame, band: str, allowed=("A", "B", "C")) -> np.ndarray:
     """A band is a detection only when its ph_qual letter is a detection grade.
 
@@ -59,7 +82,7 @@ def _ph_qual_ok(df: pd.DataFrame, band: str, allowed=("A", "B", "C")) -> np.ndar
     every faint white dwarf.
     """
     i = _WISE_ORDER.index(band)
-    ph_ = df.get("ph_qual", pd.Series("", index=df.index)).astype(str)
+    ph_ = text_column(df, "ph_qual")
     letter = ph_.str.slice(i, i + 1).str.upper()
     e = pd.to_numeric(df.get(f"e_{band}mag"), errors="coerce")
     ok = letter.isin(allowed) | (ph_.str.len() < i + 1)
@@ -428,15 +451,16 @@ def screen_pulsars(psr: pd.DataFrame, matches: dict, cfg: dict) -> tuple[pd.Data
                                              out["catwise_match"], strict=False)]
 
     # Provenance vetoes: nebulae, clusters, companions, catalogued counterparts.
-    assoc = out.get("assoc", pd.Series("", index=out.index)).astype(str).str.upper()
-    binc = out.get("bincomp", pd.Series("", index=out.index)).astype(str).str.upper()
+    assoc = text_column(out, "assoc").str.upper()
+    binc = text_column(out, "bincomp").str.upper()
     out["assoc_veto"] = assoc.apply(lambda s: any(tok.upper() in s
                                                    for tok in p["assoc_veto_tokens"]))
     out["companion_veto"] = binc.apply(lambda s: any(tok.upper() == s.strip() or
                                                       s.strip().startswith(tok.upper())
                                                       for tok in p["bincomp_veto_tokens"]))
-    out["known_counterpart_veto"] = out["jname"].isin(set(p["known_counterpart_veto"]))
-    out["globular_cluster"] = assoc.str.contains("GC:")
+    out["known_counterpart_veto"] = text_column(out, "jname").isin(
+        set(p["known_counterpart_veto"]))
+    out["globular_cluster"] = assoc.str.contains("GC:", regex=False)
     # The chance probability that matters is the one for the hypothesis being
     # tested: for a ring-band counterpart, a random source with a ring-band
     # colour; for anything else, any random source.

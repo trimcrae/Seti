@@ -317,5 +317,9 @@ screen:
 agestack:
   width_scale: 1.0                      # multiplies each boundary's half-width
   max_span_myr: 20.0
-  cluster_p: 0.01
+  # FAMILY-WISE: the thirteen boundary windows are one search, so p_hypergeom is
+  # Holm-corrected over the testable windows and this threshold is read against
+  # the corrected p_family.  0.05 family-wise is STRICTER than the 0.01
+  # per-window rule it replaces (which ran at FWER ~0.12).
+  cluster_p: 0.05
   histogram_bin_myr: 10.0

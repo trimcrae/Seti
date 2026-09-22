@@ -246,6 +246,49 @@ def test_age_stack_cluster_vs_single_section():
     assert G.assign_boundary(66.5, None, None, b) == "k_pg"
     assert G.assign_boundary(70.0, 64.0, 72.0, b) == "k_pg"        # bracket overlaps
     assert G.assign_boundary(300.0, None, None, b) == ""
+    # the promotion is family-wise: the raw p is paid for over the windows that
+    # were testable at all, and the corrected p is what the status reads
+    kpg = st["boundaries"]["k_pg"]
+    assert st["multiple_testing"] == "holm" and st["cluster_p_is_family_wise"] is True
+    assert 0 < st["n_boundaries_tested"] <= len(b)
+    assert kpg["p_family"] >= kpg["p_hypergeom"] and kpg["p_family"] < st["cluster_p"]
+
+
+def test_holm_adjustment_is_monotone_and_pays_for_the_catalogue():
+    assert G.holm_adjust([]) == []
+    # smallest p is scaled by m, the next by m-1, and the sequence never falls
+    adj = G.holm_adjust([0.001, 0.02, 0.5, 0.04])
+    assert adj[0] == pytest.approx(0.004)         # smallest, x4
+    assert adj[1] == pytest.approx(0.06)          # next, x3
+    assert adj[3] == pytest.approx(0.08)          # next, x2
+    assert adj[2] == pytest.approx(0.5)           # largest, x1
+    # monotone step-down: read in order of raw p, the adjusted values never fall
+    raw = [0.001, 0.30, 0.012, 0.9]
+    seq = [a for _, a in sorted(zip(raw, G.holm_adjust(raw), strict=True))]
+    assert seq == sorted(seq)
+    assert all(x <= 1.0 for x in G.holm_adjust([0.9, 0.95, 1.0]))
+
+
+def test_a_window_significant_only_before_correction_is_not_promoted():
+    """Two candidate sections that a per-window 0.01 rule would have promoted,
+    but which the catalogue-wide correction does not: the status must be
+    ``multi_section_at_background_rate``, not a cluster."""
+    b = G.boundary_table(CONF)
+    # 300 sections, 5 of them carrying a candidate; the K-Pg window holds 10
+    # sections, 2 of which are candidate sections.  Hypergeom(300, 5, 10) puts
+    # P(X >= 2) at 0.0095 -- under a per-window 0.01, over it once paid for.
+    others = ("end_permian", "toarcian", "oae2", "petm", "kellwasser", "capitanian")
+    rows = [{"age": 300.0, "section_key": f"S{i}", "is_candidate": i in (10, 11, 12),
+             "boundary": others[i % len(others)]} for i in range(10, 300)]
+    rows += [{"age": 66.0, "section_key": f"S{i}", "is_candidate": i < 2, "boundary": "k_pg"}
+             for i in range(10)]
+    df = pd.DataFrame(rows)
+    st = G.age_stack(df, b)
+    kpg = st["boundaries"]["k_pg"]
+    assert st["n_candidate_sections_total"] == 5 and st["n_boundaries_tested"] == 7
+    assert kpg["n_candidate_sections"] == 2 and kpg["n_sections"] == 10
+    assert kpg["p_hypergeom"] < 0.01 < kpg["p_family"], kpg
+    assert kpg["status"] == "multi_section_at_background_rate"
 
 
 # ---------------------------------------------------------------------------

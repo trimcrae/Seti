@@ -502,9 +502,32 @@ including the window's own candidates — and tested against
 when every candidate sits at one level, which is the case the channel exists
 to detect. It was replaced.)*
 
+**The catalogue is searched, so the p-value has to be paid for.** Thirteen
+boundary windows are tested at once. A per-window threshold of 0.01 lets a
+spurious cluster appear *somewhere* in the catalogue about 12 % of the time
+(1 − 0.99¹³ = 0.122) — which is precisely the error this channel cannot afford,
+because the one thing that promotes a per-sample anomaly to a boundary-level
+claim is the stack. So `p_hypergeom` is **Holm-corrected** over the windows
+that were testable at all (those holding ≥ 1 sampled section; a boundary the
+corpus never sampled was never a test, and inflating m with it would only cost
+power), and the promotion rule reads the corrected `p_family` at a
+**family-wise** `cluster_p` = 0.05. Both numbers are reported per window, and
+`summary.json` carries `multiple_testing: "holm"`, `n_boundaries_tested` and
+`cluster_p_is_family_wise: true`. Net of the correction this is *stricter*
+than the rule it replaces: FWER 0.05 instead of ≈ 0.12.
+
+Both positive controls survive it with margin. The injected six-section K–Pg
+cluster: p_raw = 3.97 × 10⁻⁴, p_Holm = 5.16 × 10⁻³ over 13 tested windows. The
+chondritic-iridium impact control: p_raw = 7.76 × 10⁻⁴, p_Holm = 7.76 × 10⁻³
+over 10. A window that clears 0.01 raw but not the correction — two candidate
+sections out of ten sampled, against five candidate sections in a 300-section
+corpus, p_raw = 9.5 × 10⁻³, p_Holm = 0.067 over 7 — is held at
+`multi_section_at_background_rate`, and the suite asserts exactly that case.
+
 Statuses: `no_candidate`; `single_section` (**always** — one section is the
 contamination hypothesis, not a find); `STRATIGRAPHIC_CLUSTER` (≥ 2 candidate
-sections and p < `cluster_p` = 0.01); `multi_section_at_background_rate`.
+sections and `p_family` < `cluster_p` = 0.05 family-wise);
+`multi_section_at_background_rate`.
 
 Boundary windows (GTS2020 ages; half-widths are the age-model uncertainty of
 SGP interpreted ages near each boundary, not the duration of the event):

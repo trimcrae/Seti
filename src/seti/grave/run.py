@@ -97,7 +97,7 @@ DEFAULTS: dict = {
                "floor_max_rows": 4000, "null_max_rows": 2000, "max_assess": 5000,
                "min_age_ma": 0.0, "max_age_ma": 4000.0,
                "provenance_flag_regex": r"(?i)core|drill|well|borehole|mine|quarry|tailing"},
-    "agestack": {"width_scale": 1.0, "max_span_myr": 20.0, "cluster_p": 0.01, "histogram_bin_myr": 10.0},
+    "agestack": {"width_scale": 1.0, "max_span_myr": 20.0, "cluster_p": 0.05, "histogram_bin_myr": 10.0},
 }
 
 
@@ -568,7 +568,7 @@ def stage_assess(conf: dict, out: Path) -> dict:
         print(f"[grave] assess: {VERDICT_NO_DATA}")
         return summary
     bounds = G.boundary_table(conf)
-    cluster_p = float((conf.get("agestack") or {}).get("cluster_p", 0.01))
+    cluster_p = float((conf.get("agestack") or {}).get("cluster_p", 0.05))
     main = df[~df["is_reference_only"]].copy()
     stack = G.age_stack(main, bounds, candidate_col="is_candidate", cluster_p=cluster_p)
     main["is_impact"] = main["pge_class"].eq(V.PGE_IMPACT)
@@ -642,19 +642,23 @@ def _report(s: dict, scr: dict, cands: dict, refined: dict, stack: dict | None) 
     L += ["## Vetoes", "", "| veto | n |", "|---|---|"]
     L += [f"| {k} | {v} |" for k, v in (s.get("vetoes") or {}).items()]
     L += ["", "## Age stack (fission candidates)", "",
-          "| boundary | age | samples | sections | cand. | cand. sections | expected | p | status |",
-          "|---|---|---|---|---|---|---|---|---|"]
+          "| boundary | age | samples | sections | cand. | cand. sections | expected | p_raw | p_Holm | status |",
+          "|---|---|---|---|---|---|---|---|---|---|"]
     for b in ((s.get("age_stack") or {}).get("boundaries") or {}).values():
         L.append(f"| {b['name']} | {b['age_ma']} | {b['n_samples']} | {b['n_sections']} | {b['n_candidates']} | "
                  f"{b['n_candidate_sections']} | {b['expected_candidate_sections']} | "
-                 f"{b.get('p_hypergeom')} | {b['status']} |")
+                 f"{b.get('p_hypergeom')} | {b.get('p_family')} | {b['status']} |")
+    _st = s.get("age_stack") or {}
+    L += ["", f"Promotion reads the Holm-corrected `p_family` over the {_st.get('n_boundaries_tested')} "
+              f"testable windows, at a family-wise threshold of {_st.get('cluster_p')}."]
     ic = s.get("impact_positive_control")
     L += ["", "## Impact class as positive control (chondritic PGE, Ir-anchored)", ""]
     if ic:
         for b in ic["boundaries"].values():
             if b["n_candidates"]:
                 L.append(f"- {b['name']}: {b['n_candidates']} impact-class samples in {b['n_candidate_sections']} "
-                         f"sections, p = {b.get('p_hypergeom')} ({b['status']})")
+                         f"sections, p_raw = {b.get('p_hypergeom')}, p_Holm = {b.get('p_family')} "
+                         f"({b['status']})")
     else:
         L.append("No sample carries a PGE panel that classes as impact — the Ir positive control could not run "
                  "on this corpus (state which elements were present: "

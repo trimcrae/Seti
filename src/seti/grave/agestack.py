@@ -95,9 +95,28 @@ def section_key(row: dict) -> str:
     return str(row.get("sample_id") or "unknown")
 
 
+def holm_adjust(pvals: list[float]) -> list[float]:
+    """Holm-Bonferroni step-down adjusted p-values, in the input order.
+
+    Controls the family-wise error rate at the nominal level without the
+    uniform power loss of plain Bonferroni: the k-th smallest raw p is scaled
+    by ``m - k + 1`` and the sequence is made monotone non-decreasing.
+    """
+    m = len(pvals)
+    if m == 0:
+        return []
+    order = sorted(range(m), key=lambda i: pvals[i])
+    adj = [0.0] * m
+    running = 0.0
+    for k, i in enumerate(order):
+        running = max(running, min(1.0, float(pvals[i]) * (m - k)))
+        adj[i] = running
+    return adj
+
+
 def age_stack(df: pd.DataFrame, boundaries: list[dict], *, candidate_col: str = "is_candidate",
               boundary_col: str = "boundary", section_col: str = "section_key",
-              cluster_p: float = 0.01) -> dict:
+              cluster_p: float = 0.05) -> dict:
     """Per boundary: sections sampled, candidates, candidate sections, clustering p.
 
     The unit is the *section*, not the sample: a section with >= 1 candidate
@@ -113,18 +132,26 @@ def age_stack(df: pd.DataFrame, boundaries: list[dict], *, candidate_col: str = 
     Poisson-with-global-rate form estimated the background from a rate the
     window's own candidates had already inflated, which is anticonservative
     for the rate and, worse, loses power exactly when every candidate sits at
-    one level.)  A window with >= 2 candidate sections and ``p < cluster_p``
-    is a *stratigraphic cluster* -- the only thing that promotes a per-sample
-    candidate to a boundary-level claim.  One candidate section is always
-    ``single_section``: that is the contamination hypothesis, not a find.
+    one level.)
+
+    **The catalogue is searched, so the p-value must be paid for.**  Thirteen
+    boundary windows are tested at once; a per-window threshold of 0.01 admits
+    a spurious cluster somewhere in the catalogue about 12 per cent of the
+    time, which is exactly the error this channel cannot afford to make.  The
+    raw ``p_hypergeom`` is therefore Holm-corrected over the windows that were
+    actually testable (those holding at least one sampled section), and it is
+    the corrected ``p_family`` that the promotion rule reads, at a family-wise
+    ``cluster_p`` of 0.05.  A window with >= 2 candidate sections and
+    ``p_family < cluster_p`` is a *stratigraphic cluster* -- the only thing
+    that promotes a per-sample candidate to a boundary-level claim.  One
+    candidate section is always ``single_section``: that is the contamination
+    hypothesis, not a find.
     """
     n_sec_total = int(df[section_col].nunique())
     cand_sec_all = set(df.loc[df[candidate_col].astype(bool), section_col].astype(str))
     cand_sec_total = len(cand_sec_all)
     rate = cand_sec_total / n_sec_total if n_sec_total else 0.0
-    out = {"n_sections_total": n_sec_total, "n_candidate_sections_total": cand_sec_total,
-           "section_candidate_rate": round(float(rate), 6), "test": "hypergeometric_on_sections",
-           "cluster_p": float(cluster_p), "boundaries": {}}
+    rows: list[dict] = []
     for b in boundaries:
         w = df[df[boundary_col] == b["key"]]
         n_sec = int(w[section_col].nunique())
@@ -132,28 +159,40 @@ def age_stack(df: pd.DataFrame, boundaries: list[dict], *, candidate_col: str = 
         in_window = set(cand[section_col].astype(str))
         n_cand_sec = len(in_window)
         exp = (cand_sec_total * n_sec / n_sec_total) if n_sec_total else 0.0
-        if n_cand_sec == 0:
-            p = 1.0
-        elif cand_sec_total <= 0 or n_sec <= 0:
+        if n_cand_sec == 0 or cand_sec_total <= 0 or n_sec <= 0:
             p = 1.0
         else:
             p = float(hypergeom.sf(n_cand_sec - 1, n_sec_total, cand_sec_total, n_sec))
-        if n_cand_sec == 0:
-            status = "no_candidate"
-        elif n_cand_sec == 1:
-            status = "single_section"
-        elif p < cluster_p:
-            status = "STRATIGRAPHIC_CLUSTER"
-        else:
-            status = "multi_section_at_background_rate"
-        out["boundaries"][b["key"]] = {
+        rows.append({
+            "key": b["key"], "testable": n_sec > 0,
             "name": b["name"], "age_ma": b["age_ma"], "half_width_myr": b["half_width_myr"],
             "n_samples": int(len(w)), "n_sections": n_sec, "n_candidates": int(len(cand)),
             "n_candidate_sections": n_cand_sec, "expected_candidate_sections": round(float(exp), 4),
             "n_candidate_sections_elsewhere": int(len(cand_sec_all - in_window)),
-            "p_hypergeom": round(p, 6), "status": status,
+            "p_hypergeom": round(p, 6),
             "candidate_sections": sorted(cand[section_col].astype(str).unique().tolist())[:25],
-        }
+        })
+    # The family is the set of windows that could have produced a result at
+    # all: a boundary with no sampled section was never a test.
+    tested = [r for r in rows if r["testable"]]
+    for r, pa in zip(tested, holm_adjust([r["p_hypergeom"] for r in tested]), strict=True):
+        r["p_family"] = round(float(pa), 6)
+    for r in rows:
+        r.setdefault("p_family", 1.0)
+        if r["n_candidate_sections"] == 0:
+            r["status"] = "no_candidate"
+        elif r["n_candidate_sections"] == 1:
+            r["status"] = "single_section"
+        elif r["p_family"] < cluster_p:
+            r["status"] = "STRATIGRAPHIC_CLUSTER"
+        else:
+            r["status"] = "multi_section_at_background_rate"
+    out = {"n_sections_total": n_sec_total, "n_candidate_sections_total": cand_sec_total,
+           "section_candidate_rate": round(float(rate), 6), "test": "hypergeometric_on_sections",
+           "multiple_testing": "holm", "n_boundaries_tested": len(tested),
+           "cluster_p": float(cluster_p), "cluster_p_is_family_wise": True,
+           "boundaries": {r["key"]: {k: v for k, v in r.items() if k not in ("key", "testable")}
+                          for r in rows}}
     return out
 
 
@@ -168,4 +207,5 @@ def age_histogram(df: pd.DataFrame, *, age_col: str = "age", candidate_col: str 
             for i in range(len(n_all)) if n_all[i] > 0]
 
 
-__all__ = ["BOUNDARIES", "age_histogram", "age_stack", "assign_boundary", "boundary_table", "section_key"]
+__all__ = ["BOUNDARIES", "age_histogram", "age_stack", "assign_boundary", "boundary_table",
+           "holm_adjust", "section_key"]

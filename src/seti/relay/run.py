@@ -44,6 +44,7 @@ from ..herdsman.acquire import apply_rv_zero_point
 from ..metronome.acquire import STATUS_FAILED, STATUS_OK, STATUS_ZERO, AcquisitionLog, tap_query
 from . import acquire as acq
 from . import geometry as geo
+from . import papers as pap
 
 STAGES = ("probe", "targets", "geometry", "recut", "assess")
 
@@ -563,21 +564,11 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
             brec["a_kin_abs_p50_m_s2"] = float(np.nanmedian(np.abs(pairs["a_kin_m_s2"])))
             brec["drift_kin_abs_p99_hz_s_at_ref"] = float(np.nanpercentile(
                 np.abs(pairs["drift_kin_hz_s_at_ref"].dropna()), 99)) if pairs["kinematics_complete"].any() else None
-        # THE TRIALS. Pair-line membership is not rare and it is not uniform: a
-        # far transmitter has far more room for a receiver in front of it than a
-        # near one does. So the null a BL target must beat is not "how many
-        # stars are on a pair line" but "how many stars AT THIS DISTANCE are",
-        # and the expected number of BL targets on a pair line by chance is that
-        # rate summed over the targets' own distances.
-        brec["base_rate_on_pair_line"] = _base_rate_by_distance(sample["d_pc"].to_numpy(float),
-                                                                per_t > 0)
         if keep is not None and len(matched):
-            tset = sorted({int(i) for i in matched["gaia_idx"] if i >= 0})
+            tset = set(int(i) for i in matched["gaia_idx"] if i >= 0)
             brec["n_bl_targets_as_transmitter"] = int(sum(1 for i in tset if per_t[i] > 0))
             brec["n_bl_targets_spillover"] = int(sum(1 for i in tset if res.per_transmitter_spill[i] > 0))
             brec["n_bl_targets_between"] = int(sum(1 for i in tset if res.per_transmitter_between[i] > 0))
-            brec["n_bl_targets_expected_by_chance"] = _expected_by_chance(
-                brec["base_rate_on_pair_line"], sample["d_pc"].to_numpy(float)[tset])
         rep["beams"][name] = brec
         # per-transmitter counts for every star travel in the artifact
         try:
@@ -649,43 +640,6 @@ def stage_geometry(conf: dict, out: Path, *, tap_fn=None, query_fn=None, fetch_f
     _save()
     print(f"[relay] geometry: {rep['verdict']} in {rep['elapsed_s']} s")
     return rep
-
-
-D_BIN_EDGES_PC = (0.0, 5.0, 10.0, 15.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0)
-
-
-def _base_rate_by_distance(d_pc: np.ndarray, on_line: np.ndarray, edges=D_BIN_EDGES_PC) -> dict:
-    """Fraction of sample stars at each distance that transmit through Earth.
-
-    The matched null for "is this observed star on a pair line?".  A rate is
-    None where the bin holds no star, and such a bin contributes nothing to the
-    expectation rather than a zero.
-    """
-    d_pc = np.asarray(d_pc, float)
-    on_line = np.asarray(on_line, bool)
-    idx = np.digitize(d_pc, np.asarray(edges, float)) - 1
-    rates, counts = [], []
-    for k in range(len(edges) - 1):
-        m = idx == k
-        counts.append(int(m.sum()))
-        rates.append(float(on_line[m].mean()) if m.any() else None)
-    return {"edges_pc": list(edges), "rate": rates, "n_stars": counts,
-            "rate_all": float(on_line.mean()) if len(on_line) else None}
-
-
-def _expected_by_chance(base_rate: dict, d_pc, edges=D_BIN_EDGES_PC) -> float | None:
-    """Expected number of stars at these distances on a pair line, from the base rate."""
-    d_pc = np.asarray(d_pc, float)
-    if not len(d_pc):
-        return 0.0
-    idx = np.digitize(d_pc, np.asarray(edges, float)) - 1
-    rates = base_rate.get("rate") or []
-    total, n_used = 0.0, 0
-    for k in idx:
-        if 0 <= k < len(rates) and rates[k] is not None:
-            total += float(rates[k])
-            n_used += 1
-    return round(total, 4) if n_used else None
 
 
 def _median(df, col, mask) -> float | None:
@@ -837,11 +791,6 @@ def stage_recut(conf: dict, out: Path, *, bl_fetch=None, log=None, beams=None,
             "n_targets_as_transmitter_any": int(((sp > 0) | (bt > 0)).sum()),
             "n_targets_with_in_beam_transmitter": int((nb > 0).sum()),
             "n_target_pairs_spillover": int(sp.sum()), "n_target_pairs_between": int(bt.sum()),
-            # the distance-matched null: how many of THESE stars would be on a
-            # pair line if they were an ordinary draw from the 100 pc sample
-            "n_targets_expected_by_chance":
-                _expected_by_chance(geom_beams.get(name, {}).get("base_rate_on_pair_line") or {},
-                                    sample["d_pc"].to_numpy(float)[tidx]) if tidx else 0.0,
         }
     _write(out / "recut.json", rep)
 
@@ -950,8 +899,8 @@ def _sep_arcmin(sample: pd.DataFrame, i: int, j: int) -> float:
 # assess: the published hits against the geometry and the prior
 # ---------------------------------------------------------------------------
 def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=None, log=None,
-                 beams=None, hits_df: pd.DataFrame | None = None, probe: dict | None = None
-                 ) -> dict:
+                 beams=None, hits_df: pd.DataFrame | None = None, probe: dict | None = None,
+                 get_text_fn=None, get_fn=None) -> dict:
     log = log or AcquisitionLog(prefix="relay/assess")
     beams = beams or geo.beam_grid(conf["beams"])
     tap_in = tap_fn
@@ -967,7 +916,11 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
     recut = _read(out / "recut.json") or {}
 
     # --- the hit catalogues ---------------------------------------------------
+    # Two routes, and the second one is the one that works.  VizieR carries the
+    # surveys' target lists; the EVENT tables live only in the papers, so they
+    # are parsed out of the arXiv e-print source (src/seti/relay/papers.py).
     tables = []
+    harvest = None
     if hits_df is None:
         probe = probe or _read(out / "probe.json") or {}
         tables = [t for t in probe.get("hit_tables") or []
@@ -979,13 +932,34 @@ def stage_assess(conf: dict, out: Path, *, query_fn=None, fetch_fn=None, tap_fn=
             t["n_rows_fetched"] = int(len(rows))
             if len(rows):
                 frames.append(acq.standardise_hits(rows))
+        aconf_arxiv = (conf["hit_catalogues"] or {}).get("arxiv") or {}
+        # the e-print route runs when the caller handed in a transport OR when a
+        # runner asked for the default one; a bare stage_assess() in the offline
+        # suite passes neither and opens no socket.
+        if aconf_arxiv and (get_text_fn is not None or get_fn is not None):
+            harvest = pap.harvest_papers(
+                aconf_arxiv, get_text_fn=get_text_fn, get_fn=get_fn, log=log,
+                deadline=time.monotonic() + float(aconf_arxiv.get("budget_s", 1800)))
+            if len(harvest.hits):
+                frames.append(acq.standardise_hits(harvest.hits))
         hits_df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
     else:
         hits_df = acq.standardise_hits(hits_df) if "drift_hz_s" not in hits_df else hits_df
     rep = {"stage": "assess", "generated_utc": _now(), "hit_tables": tables,
            "n_hits": int(len(hits_df)), "beams": {}}
+    if harvest is not None:
+        rep["arxiv"] = {"papers": harvest.papers, "n_hit_tables": harvest.n_hit_tables,
+                        "n_tables_seen": len(harvest.tables),
+                        "hit_tables": [t for t in harvest.tables if t.get("kind") == "hits"],
+                        "n_hit_rows": int(len(harvest.hits))}
     if not len(hits_df):
-        rep["verdict"] = V_NO_HIT_CATALOGUE
+        if harvest is not None:
+            ok = sum(1 for p in harvest.papers if p.get("arxiv_id"))
+            rep["verdict"] = (f"{V_NO_HIT_CATALOGUE} (VizieR: {len(tables)} hit tables; "
+                              f"e-print: {ok} papers read, {len(harvest.tables)} tables parsed, "
+                              f"0 carried a frequency and a drift rate)")
+        else:
+            rep["verdict"] = V_NO_HIT_CATALOGUE
         rep["acquisition"] = log.as_dict()
         _write(out / "hits.json", rep)
         pd.DataFrame().to_csv(out / "hits_crossmatch.csv", index=False)
@@ -1165,8 +1139,6 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
                           "n_spillover": g.get("n_spillover"), "n_between": g.get("n_between"),
                           "analytic": g.get("analytic_expectation"),
                           "n_bl_targets_as_transmitter": g.get("n_bl_targets_as_transmitter"),
-                          "n_bl_targets_expected_by_chance": g.get("n_bl_targets_expected_by_chance"),
-                          "base_rate_on_pair_line_all": (g.get("base_rate_on_pair_line") or {}).get("rate_all"),
                           "n_pointings_on_pair_line": r.get("n_pointings_on_pair_line"),
                           "n_hits_on_pair_line": a.get("n_hits_on_pair_line"),
                           "n_candidates": a.get("n_candidates_after_rfi"),
@@ -1192,7 +1164,7 @@ def _finish(conf, out, assess_rep, geom, recut, beams, started) -> dict:
 # ---------------------------------------------------------------------------
 def relay_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, bl_fetch=None,
               tap_fn=None, query_fn=None, fetch_fn=None, gaia_df=None, max_stars=None,
-              hits_df=None, log=None) -> dict:
+              hits_df=None, log=None, get_text_fn=None, get_fn=None) -> dict:
     conf = conf or load_relay_config()
     out = Path(out_dir) if out_dir else Path("results") / "relay"
     out.mkdir(parents=True, exist_ok=True)
@@ -1215,8 +1187,13 @@ def relay_run(stage: str = "all", *, out_dir=None, conf: dict | None = None, bl_
             # the runner resolves hit names through SIMBAD; the clock comes from
             # _transports, and an injected transport is passed through unchanged
             tap, _q = _transports(conf, tap_fn, query_fn)
+            # the e-print route: the default HTTP transports unless a test injects
+            # its own, so a plain `relay_run("assess")` on the runner DOES read
+            # the papers while the offline suite calls stage_assess directly.
             rep = stage_assess(conf, out, query_fn=query_fn, fetch_fn=fetch_fn, tap_fn=tap,
-                               log=log, hits_df=hits_df)
+                               log=log, hits_df=hits_df,
+                               get_text_fn=get_text_fn or pap.default_get_text,
+                               get_fn=get_fn or pap.default_get_bytes)
         else:
             raise SystemExit(f"unknown stage {s!r}; choose from {STAGES}")
         log.write(out / "acquisition_log.json")

@@ -601,35 +601,6 @@ def test_geometry_beams_run_narrowest_first(conf, sample, tmp_path):
     assert all(b.get("status") == "COMPUTED" for b in rep["beams"].values())
 
 
-def test_pair_line_membership_has_a_distance_matched_null(pipeline, conf, sample):
-    from seti.relay.run import _base_rate_by_distance, _expected_by_chance
-
-    g = json.loads((pipeline["out"] / "geometry.json").read_text())
-    b = g["beams"]["radio_10m_1p4ghz"]
-    br = b["base_rate_on_pair_line"]
-    assert len(br["rate"]) == len(br["edges_pc"]) - 1
-    assert sum(br["n_stars"]) == g["n_stars"]
-    assert 0.0 <= br["rate_all"] <= 1.0
-    # the expectation for the BL targets is a number, and a detection claim has
-    # to beat it rather than the raw count
-    assert b["n_bl_targets_expected_by_chance"] is not None
-    assert 0.0 <= b["n_bl_targets_expected_by_chance"] <= b["n_bl_targets_as_transmitter"] + 5
-
-    # the rate IS distance dependent: far stars have more room for a receiver
-    d = np.array([1.0, 1.0, 95.0, 95.0])
-    rate = _base_rate_by_distance(d, np.array([False, False, True, True]))
-    assert rate["rate"][0] == 0.0 and rate["rate"][-1] == 1.0
-    assert rate["n_stars"][0] == 2 and rate["n_stars"][-1] == 2
-    # one near + one far star is expected to yield 0 + 1 pair-line stars
-    assert _expected_by_chance(rate, [1.0, 95.0]) == 1.0
-    # a bin with no star contributes nothing rather than a zero
-    assert _expected_by_chance(rate, [45.0]) is None
-    assert _expected_by_chance(rate, []) == 0.0
-
-    r = json.loads((pipeline["out"] / "recut.json").read_text())
-    assert r["beams"]["radio_10m_1p4ghz"]["n_targets_expected_by_chance"] is not None
-
-
 # ---------------------------------------------------------------------------
 # a wedged archive call must not hold the stage
 # ---------------------------------------------------------------------------

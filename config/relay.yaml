@@ -116,6 +116,93 @@ hit_catalogues:
   max_rows: 200000
   zero_drift_rfi_hz_s: 0.0093    # |drift| below one resolution element: co-rotating (terrestrial) source
 
+  # The e-print route.  VERIFIED on the runner (run 35738937745): VizieR carries
+  # the surveys' TARGET lists and not one of their EVENT lists -- 73 tables
+  # discovered under the seed ids and by keyword, 0 of kind `hits`.  The event
+  # tables exist only inside the papers, so they are read from the arXiv e-print
+  # source.  `arxiv_id` is a HINT: the Atom title is fetched and must contain
+  # every phrase in `title_contains`, otherwise the id is discarded and the
+  # `query` is used instead; a seed that resolves to nothing is recorded
+  # UNRESOLVED with the titles it saw, never silently dropped.
+  arxiv:
+    budget_s: 1800
+    timeout_s: 120
+    max_rows_per_table: 20000
+    sweep_queries:
+      - 'abs:"drift rate" AND abs:technosignature'
+      - 'abs:"Breakthrough Listen" AND abs:narrowband'
+      - 'abs:technosignature AND abs:"Green Bank Telescope"'
+    sweep_results_per_query: 40
+    sweep_max_papers: 30
+    papers:
+      enriquez2017:
+        arxiv_id: "1709.03491"
+        title_contains: ["Breakthrough Listen", "692"]
+        query: 'all:"Breakthrough Listen" AND all:"692 Nearby Stars"'
+        telescope: GBT
+        band: L
+      price2020:
+        arxiv_id: "1906.07750"
+        title_contains: ["Breakthrough Listen", "1327"]
+        query: 'all:"Breakthrough Listen" AND all:"1327 Nearby Stars"'
+        telescope: GBT
+        band: L
+      sheikh2020_etz:
+        title_contains: ["Earth Transit Zone"]
+        query: 'ti:"Earth Transit Zone"'
+        telescope: GBT
+        band: C
+      margot2021:
+        title_contains: ["Technosignatures", "31 Sun-like Stars"]
+        query: 'ti:"31 Sun-like Stars"'
+        telescope: GBT
+        band: L
+      pinchuk2019:
+        title_contains: ["TRAPPIST-1", "LHS 1140"]
+        query: 'ti:"LHS 1140"  AND all:technosignatures'
+        telescope: GBT
+        band: L
+      traas2021:
+        title_contains: ["Breakthrough Listen", "TESS"]
+        query: 'all:"Breakthrough Listen" AND ti:"TESS Targets"'
+        telescope: GBT
+        band: L
+      gajjar2021:
+        title_contains: ["Galactic Center"]
+        query: 'all:"Breakthrough Listen" AND ti:"Galactic Center"'
+        telescope: GBT
+        band: C
+      franz2022:
+        title_contains: ["Technosignature", "Transit"]
+        query: 'all:"Breakthrough Listen" AND ti:"transit" AND all:technosignature'
+        telescope: GBT
+        band: L
+      margot2023:
+        title_contains: ["Technosignatures", "Green Bank Telescope"]
+        query: 'all:"11,680 stars" AND all:technosignatures'
+        telescope: GBT
+        band: L
+      ma2023:
+        title_contains: ["820 nearby stars"]
+        query: 'ti:"820 nearby stars"'
+        telescope: GBT
+        band: L
+      sheikh2021_blc1:
+        title_contains: ["blc1"]
+        query: 'all:"blc1" AND all:technosignature'
+        telescope: Parkes
+        band: L
+      tusay2022_sgl:
+        title_contains: ["Gravitational Lens"]
+        query: 'all:"solar gravitational lens" AND all:technosignature'
+        telescope: GBT
+        band: L
+      tusay2024_trappist:
+        title_contains: ["TRAPPIST-1"]
+        query: 'ti:"TRAPPIST-1" AND all:technosignature'
+        telescope: ATA
+        band: L
+
 probe:
   budget_s: 1500
   # per-call clock on VizieR/SIMBAD TAP. pyvo's run_async polls a remote job

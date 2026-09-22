@@ -506,6 +506,8 @@ whatever molecule has B = 2903, and nothing was promoted. The SO2F2 and CF2
 correctly flagged `CONFLICTS`. The proposal decided nothing, which is what it
 is for.
 
+**Iteration dispatched: run 35777036397** (`stage=all`, 2,000 trials) carries the comet fix and the deduplicated count; `validate`/`litfetch`/`propose` are not repeated because their outputs are already committed and nothing they read has changed.
+
 **This is a null and is not written up** (CLAUDE.md). It changes the question:
 the channel can now search the five purely-industrial species, but it cannot
 be *sensitive* to them until their published quartic constants are in hand.

@@ -896,7 +896,8 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
             "flags", "xi_conservative_max", "xi_nominal_max", "n_above_conservative",
             "n_above_nominal", "n_independent", "n_flares", "e_flare_max_erg",
             "e_mag_conservative_erg", "e_mag_nominal_erg", "amplitude_frac",
-            "amplitude_source", "amplitude_unit", "amplitude_scale", "prot", "prot_source",
+            "amplitude_source", "amplitude_unit", "amplitude_scale", "amplitude_scaled",
+            "prot", "prot_source",
             "teff_k", "radius_rsun", "logg", "t_spot_k", "params_assumed", "catalogue_flag",
             "centroid", "centroid_reason", "xi_conservative_measured_stage2")
     cand_rows = [{k: r.get(k) for k in slim} for r in cands]

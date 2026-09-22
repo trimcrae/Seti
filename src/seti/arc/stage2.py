@@ -916,8 +916,20 @@ def _xi_block(entry: dict, rows: list[dict], prm: dict, amp_q: dict, remeasured:
     teff, rad = _f(prm.get("teff_k")), _f(prm.get("radius_rsun"))
     amp_cat = _f(entry.get("amplitude_frac"))
     src = str(entry.get("amplitude_source") or "")
+    # THE SCALE IS APPLIED ONCE, BY WHICHEVER STAGE HAS NOT APPLIED IT.
+    # Stage 1 multiplies a Santos Sph by 2 sqrt(2) itself and records the
+    # factor it used as `amplitude_scale` (and `amplitude_scaled`).  Applying
+    # it again here would raise the ceiling by 2.828^1.5 = 4.75, i.e. push xi
+    # DOWN by 0.68 dex on exactly the stars the channel exists to find -- a
+    # candidate quietly hidden, which is the worse direction to be wrong in.
+    # A record that carries neither field predates that stage-1 fix (the
+    # 2026-09-16 candidates.json), and only there is the source-name
+    # heuristic used.
+    recorded = _f(entry.get("amplitude_scale"))
+    stage1_scaled = bool(entry.get("amplitude_scaled", False)) or (np.isfinite(recorded)
+                                                                   and recorded > 0)
     scale = 1.0
-    if src == "santos2021" and not bool(entry.get("amplitude_scaled", False)):
+    if src == "santos2021" and not stage1_scaled:
         scale = float(params.sph_to_range)
     amp_cat_s = amp_cat * scale if np.isfinite(amp_cat) else float("nan")
     amp_rvar = _f(amp_q.get("rvar"))
@@ -945,7 +957,9 @@ def _xi_block(entry: dict, rows: list[dict], prm: dict, amp_q: dict, remeasured:
         "xi_conservative_stage1": _f(entry.get("xi_conservative_max")),
         "teff_k": teff, "radius_rsun": rad, "params_measured": bool(prm.get("measured")),
         "amplitude_catalogue_frac": amp_cat, "amplitude_catalogue_source": src,
-        "amplitude_catalogue_scale_applied": scale, "amplitude_catalogue_as_range": amp_cat_s,
+        "amplitude_catalogue_scale_applied": scale,
+        "amplitude_scale_from_stage1": recorded if np.isfinite(recorded) else None,
+        "amplitude_catalogue_as_range": amp_cat_s,
         "amplitude_quarter_rvar": amp_rvar, "amplitude_quarter_sph": _f(amp_q.get("sph")),
         "amplitude_used": amp_max, "amplitude_used_source": amp_max_src,
         "n_catalogue_flares": int(len(rows)),

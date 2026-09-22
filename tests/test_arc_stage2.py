@@ -587,6 +587,45 @@ def test_stage2_dissolves_when_measured_parameters_close_the_excess(tmp_path):
     assert s["verdict"] == S.VERDICT_S2_DISSOLVED
 
 
+def test_the_sph_range_scale_is_applied_once_whichever_stage_applied_it(tmp_path):
+    """Stage 1 now scales a Santos Sph itself; stage 2 must not scale it again.
+
+    Double-scaling raises the ceiling by 2.828^1.5 = 4.75 and pushes xi DOWN
+    by 0.68 dex — it hides a candidate rather than inventing one, which is
+    the direction that would never be noticed.  A record that carries the
+    scale stage 1 applied is taken as done; only a record from before that
+    fix (no amplitude_scale, no amplitude_scaled) is scaled here.
+    """
+    world = _world()
+    conf = _conf(tmp_path)
+    prm = S.Stage2Params.from_config(conf)
+
+    def _xi(entry):
+        tap, cone, lc_fn, tpf_fn = _scripted(world, tpf_missing_segments=(5, 9))
+        out = tmp_path / f"s2_{abs(hash(json.dumps(entry, sort_keys=True, default=str)))}"
+        S.stage2_run(conf, out, params=prm, query_fn=tap, cone_fn=cone, lc_fn=lc_fn,
+                     tpf_fn=tpf_fn, shortlist=[entry])
+        return json.loads((out / "stars.json").read_text())["stars"][0]["xi"]
+
+    # an OLD record: no scale on it at all -> stage 2 applies 2.828 itself
+    old = _xi(_entry(amplitude_frac=0.000116, amplitude_source="santos2021"))
+    assert old["amplitude_catalogue_scale_applied"] == pytest.approx(prm.sph_to_range)
+    assert old["amplitude_catalogue_as_range"] == pytest.approx(0.000116 * prm.sph_to_range)
+    assert old["amplitude_scale_from_stage1"] is None
+
+    # a NEW record: stage 1 scaled it and says so, twice over
+    for extra in ({"amplitude_scale": 2.828}, {"amplitude_scaled": True},
+                  {"amplitude_scale": 2.828, "amplitude_scaled": True}):
+        new = _xi(_entry(amplitude_frac=0.000116 * prm.sph_to_range,
+                         amplitude_source="santos2021", **extra))
+        assert new["amplitude_catalogue_scale_applied"] == 1.0, extra
+        assert new["amplitude_catalogue_as_range"] == pytest.approx(
+            old["amplitude_catalogue_as_range"])
+        # the same amplitude reaches the ceiling, so the same xi comes out
+        assert new["xi_conservative_measured"] == pytest.approx(
+            old["xi_conservative_measured"], abs=1e-9), extra
+
+
 def test_missing_pixel_file_is_untestable_never_on_target(tmp_path):
     world = _world()
     conf = _conf(tmp_path)

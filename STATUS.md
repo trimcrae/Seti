@@ -3,12 +3,44 @@
 Live per-channel state of the search. Update this file whenever a run,
 vet, or triage changes the candidate picture — it is the single place a
 human (or a fresh agent session) looks to know what is hot and what to do
-next. Last updated: 2026-09-16.
+next. Last updated: 2026-09-22.
 
 New sections are added at the top, so the newest state is first; older
 sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
+
+### CRADLE built and dispatched — the empty cell at 250–350 K, 2026-09-22
+
+S52/S53 went from a package that had never been run to a channel with a
+workflow, a doc, CLI wiring and a green offline suite. The target is one cell
+that is empty in the literature: **250 ≤ T_bb ≤ 350 K** (the habitable-zone
+blackbody radius) **and** log(f/f_max) > 3 (three decades above the Wyatt 2007
+collisional maximum) **and** age > 1 Gyr from **two independent** indicators.
+Every known extreme debris disk is young, or — in the two mature cases,
+BD+20 307 and TYC 4479-3-1 — hot (~400 K).
+
+What the offline suite proves before any archive is touched: an injected 300 K
+excess at log(f/f_max) = 4.0 on a 3 Gyr star is recovered into the cell; the
+same excess on a Sco–Cen star is vetoed by position and parallax; a galaxy
+blend is vetoed by `ext_flag` and a Gaia beam neighbour; a star with one old
+indicator is `IN_CELL_AGE_UNDETERMINED`, never a candidate; an empty archive is
+`NO_DATA_REACHED`; a missing ages shard is `DEGRADED`, never a clean null; and
+every one of the seventeen kill rules trips on its own case and has a counter.
+
+Two bugs the suite found in the inherited code, both silent killers:
+
+* `excess.harmonise` **renamed** `ks_m` → `Ksmag`, so the K_s anchor vanished
+  from the shortlist contract and every star downstream came out `KS_MISSING`.
+  It now adds the OSSUARY spellings and keeps the archive ones.
+* `assess` only honoured `--shards` when the stage was `all`, so a sharded
+  production run would have reported a clean null over a partial set of ages
+  shards instead of `DEGRADED (ages_shards_missing:…)`.
+
+Sky coverage is exact rather than sampled: `source_id` carries the level-12
+NESTED HEALPix index, so 768 level-3 pixels are the whole sky as contiguous
+primary-key ranges; pixel *k* goes to shard *k* mod *n*, and a unit that times
+out splits into its four children.
 
 ### IGNITION goes from blocked to a live parent sample, 2026-09-16
 

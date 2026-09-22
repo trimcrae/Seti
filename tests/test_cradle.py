@@ -68,7 +68,7 @@ def _plx_for_dwarf(ks: float, bp_rp: float) -> float:
 
 
 def make_star(i: int, rng, *, ks: float = 6.5, bp_rp: float = 0.85, plx: float = 20.0,
-              ra: float = 45.0, dec: float = 30.0, l: float = 160.0, b: float = -30.0,
+              ra: float = 45.0, dec: float = 30.0, l: float = 160.0, b: float = -30.0,  # noqa: E741
               v_tan_kms: float = 8.0, rv=np.nan, disk=None, age=(4.0, 2.0, 7.0),
               ext_flag: int = 0, cc_flags: str = "0000", noise: float = 0.02, **over) -> dict:
     lo, _hi = unit_range(3, UNIT_K)
@@ -127,6 +127,9 @@ def make_archive(rng, n_clean: int = 700, extra: list[dict] | None = None) -> pd
                               v_tan_kms=rng.uniform(3, 40)))
     for r in (extra or []):
         rows.append(r)
+    if not rows:                       # an empty archive still has the schema
+        cols = list(make_star(0, np.random.default_rng(0)).keys())
+        return pd.DataFrame({c: pd.Series(dtype="float64") for c in cols})
     df = pd.DataFrame(rows)
     df["source_id"] = df["source_id"].astype(np.int64)
     return df
@@ -142,7 +145,8 @@ class FakeArchive:
         self.timeout_units = timeout_units or set()
 
     def _range(self, adql):
-        m = re.search(r"g\.source_id >= (\d+) AND g\.source_id < (\d+)", adql)
+        # the joined shapes re-alias the inner sub-select to `gs.`
+        m = re.search(r"\bg[s]?\.source_id >= (\d+) AND g[s]?\.source_id < (\d+)", adql)
         return (int(m.group(1)), int(m.group(2))) if m else None
 
     def _cone(self, adql):
@@ -230,7 +234,11 @@ def _neowise(ra, dec, pmra, pmdec, radius_arcsec=2.5, **_k):
 
 
 def _backends(arch: FakeArchive, **over) -> acq.Backends:
-    kw = dict(gaia=arch.gaia, irsa=arch.irsa, simbad=lambda ra, dec: "", simbad_resolve=lambda name: None,
+    def _no_upload(adql, table):
+        raise RuntimeError("no TAP_UPLOAD in the offline suite")
+
+    kw = dict(gaia=arch.gaia, irsa=arch.irsa, gaia_upload=_no_upload,
+              simbad=lambda ra, dec: "PM*", simbad_resolve=lambda name: None,
               ebv=lambda pos: pd.DataFrame({"source_id": pos["source_id"].astype(str), "ebv_sfd": 0.02}),
               neowise=_neowise, asu=lambda url: (_ for _ in ()).throw(RuntimeError("no vizier")),
               http=lambda url: (404, ""))
@@ -619,6 +627,35 @@ def test_acquire_splits_a_timed_out_unit_and_records_failures(tmp_path):
     n_calls = len(arch.calls)
     rep2 = cradle_run("acquire", out_dir=out, conf=conf, backends=b, max_units=12)
     assert rep2["n_units_done"] == 12 and len(arch.calls) == n_calls + 0
+
+
+def test_unit_store_appends_a_differently_ordered_frame_without_shifting_the_header(tmp_path):
+    """The control cones arrive with the same columns in another order.
+
+    Appended raw to the unit CSV they shift every field by two columns, which
+    reads back as *every star is a control* --- the bug that made the whole
+    parent sample a control set.
+    """
+    st = acq.UnitStore.open(tmp_path, "s0of1")
+    unit = pd.DataFrame([{"source_id": 1, "ks_m": 6.0, "unit": "hp3_5", "query_shape": "full",
+                          "is_control": False, "control_name": ""}])
+    ctrl = pd.DataFrame([{"source_id": 2, "ks_m": 7.0, "is_control": True,
+                          "control_name": "BD+20 307", "unit": "control", "query_shape": "full"}])
+    st.write("hp3_5", unit, {"label": "hp3_5"})
+    st.write("controls", ctrl, {"label": "controls"})
+    back = pd.read_csv(st.rows_path)
+    assert list(back["is_control"]) == [False, True]
+    assert list(back["control_name"].fillna("")) == ["", "BD+20 307"]
+    assert list(back["source_id"]) == [1, 2]
+    # a route with an extra column widens the header instead of shifting it
+    wide = ctrl.assign(source_id=3, w3rchi2=1.2)
+    st.write("hp3_9", wide, {"label": "hp3_9"})
+    back = pd.read_csv(st.rows_path)
+    assert list(back["source_id"]) == [1, 2, 3] and list(back["is_control"]) == [False, True, True]
+    assert back["w3rchi2"].tolist()[-1] == pytest.approx(1.2)
+    # and the header survives a reopen (the resume path)
+    st2 = acq.UnitStore.open(tmp_path, "s0of1")
+    assert st2.columns == st.columns and "controls" in st2.done
 
 
 def test_probe_writes_a_record_and_finds_the_controls_by_position(tmp_path):

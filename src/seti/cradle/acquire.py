@@ -762,10 +762,25 @@ def vizier_matches(stars: pd.DataFrame, tables: dict, radius_arcsec: float, *, a
 # ---------------------------------------------------------------------------
 @dataclass
 class UnitStore:
+    """Append-only per-unit checkpoint: one CSV of rows, one JSON of progress.
+
+    The CSV is appended to **without a header** after the first write, so every
+    frame must be written in the SAME column order.  It is not automatic: a
+    unit's rows come out of :func:`fetch_unit` as ``[gaia..., unit,
+    query_shape]`` and then gain ``is_control``/``control_name``, while the
+    control cones come out of :func:`fetch_controls` with those four columns in
+    the other order.  Appending them raw silently shifts every field by two
+    columns --- which reads back as *every star is a control*.  So the header
+    is pinned on the first write, later frames are reindexed onto it, and a
+    genuinely new column (a fallback route with a different product shape)
+    widens the header by rewriting what is already on disk.
+    """
+
     rows_path: Path
     progress_path: Path
     done: set = field(default_factory=set)
     records: list = field(default_factory=list)
+    columns: list | None = None
 
     @classmethod
     def open(cls, out: Path, tag: str) -> UnitStore:
@@ -777,20 +792,43 @@ class UnitStore:
                 p = json.loads(st.progress_path.read_text())
                 st.done = set(str(x) for x in p.get("done", []))
                 st.records = list(p.get("records", []))
+                cols = p.get("columns")
+                st.columns = [str(c) for c in cols] if cols else None
                 print(f"[cradle] resuming {tag}: {len(st.done)} units already done")
             except Exception as exc:                       # noqa: BLE001
                 print(f"[cradle] progress unreadable ({exc!r}); starting fresh")
+        if st.columns is None and st.rows_path.exists():
+            try:
+                st.columns = [str(c) for c in pd.read_csv(st.rows_path, nrows=0).columns]
+            except Exception:                              # noqa: BLE001
+                pass
         return st
 
     def write(self, label: str, rows: pd.DataFrame, record: dict) -> None:
         if len(rows):
+            if self.columns is None:
+                self.columns = [str(c) for c in rows.columns]
+            else:
+                added = [str(c) for c in rows.columns if str(c) not in self.columns]
+                if added:
+                    self.columns = list(self.columns) + added
+                    record["columns_added"] = added[:40]
+                    if self.rows_path.exists():
+                        old = pd.read_csv(self.rows_path, low_memory=False)
+                        old.reindex(columns=self.columns).to_csv(self.rows_path, index=False)
+            missing = [c for c in self.columns if c not in set(str(x) for x in rows.columns)]
+            if missing:
+                record["columns_missing"] = missing[:40]
+            rows = rows.rename(columns={c: str(c) for c in rows.columns}) \
+                       .reindex(columns=self.columns)
             rows.to_csv(self.rows_path, mode="a", index=False, header=not self.rows_path.exists())
         self.done.add(label)
         self.records.append(record)
         self.flush()
 
     def flush(self, extra: dict | None = None) -> None:
-        rec = {"done": sorted(self.done), "n_done": len(self.done), "records": self.records[-2000:]}
+        rec = {"done": sorted(self.done), "n_done": len(self.done), "columns": self.columns,
+               "records": self.records[-2000:]}
         if extra:
             rec.update(extra)
         self.progress_path.write_text(json.dumps(rec, indent=1, default=str))

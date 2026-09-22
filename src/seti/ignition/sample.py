@@ -695,7 +695,8 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
                  fields: list[dict] | None = None,
                  shape: str | None = None, vizier: bool = True,
                  vizier_fetch_fn=None, irsa: bool = True,
-                 irsa_fetch_fn=None) -> tuple[pd.DataFrame, dict]:
+                 irsa_fetch_fn=None,
+                 unit_budget_s: float | None = None) -> tuple[pd.DataFrame, dict]:
     """Pull the parent sample and report its denominator honestly.
 
     Returns ``(stars, report)``.  ``report["status"]`` is ``OK``,
@@ -721,6 +722,18 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
     ``report["route_fractions"]`` what fraction of the rows each contributed,
     and a sample assembled from more than one is ``mixed_routes`` and carries a
     ``DEGRADED`` entry --- never silently mixed.
+
+    **``unit_budget_s`` bounds what one unit may cost, and nothing else.**  The
+    all-sky sweep asks for one unit per tile, and the worst case of the ladder
+    above --- three ESA shapes at ``query_timeout_s`` each, then IRSA, then
+    VizieR --- is tens of minutes for a single tile, which in a time-limited
+    dispatch is paid for in tiles never reached.  With a budget set, the
+    remaining attempts for a unit that has already spent it are recorded as
+    ``SKIPPED_ON_UNIT_BUDGET`` (with the route and shape that were skipped) and
+    the unit ends unanswered.  This changes only *how long a unit may be
+    chased*: the route order is untouched, ESA is still asked first and still
+    answers first, every science cut is unchanged, and a unit cut short is a
+    recorded ``QUERY_FAILED`` --- never an empty answer about the sky.
     """
     c = {**DEFAULT_SAMPLE, **(conf or {})}
     mode = mode or str(c.get("mode", "fields"))
@@ -755,9 +768,17 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
     # routes are comparable row for row; ASU reports the cap it actually hit.
     vizier_cap = total_cap if mode == "fields" else None
     per_unit = []
+    budget = float(unit_budget_s) if unit_budget_s else None
+    skipped: list[dict] = []
+
+    def _spent(t_unit: float) -> bool:
+        """True once this unit has used its budget; the skip is recorded by the caller."""
+        return budget is not None and (_time.monotonic() - t_unit) > budget
+
     for u in units:
         label = (f"field_ra{u['field']['ra']}_dec{u['field']['dec']}" if "field" in u
                  else f"shell_{u['plx_lo']}_{u['plx_hi']}")
+        t_unit = _time.monotonic()
         n_unit = None
         stride = 1
         if c.get("count_parent", True):
@@ -778,6 +799,10 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
         answered = False
         irec: dict | None = None
         for sh in _shape_order(c, shape, working):
+            if _spent(t_unit):
+                skipped.append({"label": label, "route": ROUTE_ESA, "shape": sh,
+                                "status": "SKIPPED_ON_UNIT_BUDGET"})
+                continue
             q = build_query(c, stride=stride, shape=sh,
                             cap=(cap * max(int(n_shards), 1) if mode == "fields" else None), **u)
             try:
@@ -812,10 +837,15 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
             # shape, with every Gaia cut still in SQL) and goes to IRSA for the
             # AllWISE half, so the only thing it gives up is the in-archive
             # cross-match --- strictly less than the VizieR route gives up.
-            idf, irec = _irsa_unit(c, u, label=label,
-                                   cap=(total_cap if mode == "fields" else None),
-                                   query_fn=query_fn, fetch_fn=irsa_fetch_fn, use=use_irsa,
-                                   verified=irsa_verified)
+            if _spent(t_unit):
+                skipped.append({"label": label, "route": ROUTE_IRSA,
+                                "status": "SKIPPED_ON_UNIT_BUDGET"})
+                idf, irec = pd.DataFrame(), None
+            else:
+                idf, irec = _irsa_unit(c, u, label=label,
+                                       cap=(total_cap if mode == "fields" else None),
+                                       query_fn=query_fn, fetch_fn=irsa_fetch_fn, use=use_irsa,
+                                       verified=irsa_verified)
             if irec is not None:
                 ledger.append({"label": label, **irec})
                 if (irec.get("verify") or {}).get("verified"):
@@ -843,8 +873,13 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
 
         if not answered:
             # --- the THIRD route, for a unit neither of the above answered.
-            vdf, vrec = _vizier_unit(c, u, label=label, cap=vizier_cap,
-                                     fetch_fn=vizier_fetch_fn, use=use_vizier)
+            if _spent(t_unit):
+                skipped.append({"label": label, "route": ROUTE_VIZIER,
+                                "status": "SKIPPED_ON_UNIT_BUDGET"})
+                vdf, vrec = pd.DataFrame(), None
+            else:
+                vdf, vrec = _vizier_unit(c, u, label=label, cap=vizier_cap,
+                                         fetch_fn=vizier_fetch_fn, use=use_vizier)
             if vrec is not None:
                 ledger.append({"label": label, **vrec, "query": vrec.get("gaia", {}).get("url")})
             if vrec is not None and vrec.get("status") in ("OK", QUERY_ZERO):
@@ -873,7 +908,10 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
                                  "irsa_status": (irec or {}).get("status"),
                                  "irsa_error": (irec or {}).get("error"),
                                  "vizier_status": (vrec or {}).get("status"),
-                                 "vizier_error": (vrec or {}).get("error")})
+                                 "vizier_error": (vrec or {}).get("error"),
+                                 "unit_elapsed_s": round(_time.monotonic() - t_unit, 1),
+                                 "skipped_on_unit_budget":
+                                     [s for s in skipped if s["label"] == label]})
 
     raw = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
     if len(raw):
@@ -900,6 +938,10 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
         degraded.append(f"vizier_out_max_capped:{len(capped_units)}/{len(units)}")
     if cuts_skipped:
         degraded.append("vizier_cuts_not_applied:" + ",".join(sorted(cuts_skipped)))
+    if skipped:
+        # A unit cut short is a unit whose archives were not all asked; the
+        # count of them is part of the verdict, not an implementation detail.
+        degraded.append(f"unit_budget_skips:{len({s['label'] for s in skipped})}/{len(units)}")
     report = {
         "status": status, "mode": mode, "n_units": len(units), "n_units_failed": n_failed,
         "query_shape_requested": shape or c.get("query_shape") or "auto",
@@ -917,6 +959,7 @@ def fetch_parent(conf: dict | None = None, *, mode: str | None = None, n_shards:
         "route_used": (next(iter([r for r, v in routes.items() if v["rows"] > 0]), None)
                        if not mixed else "mixed"),
         "vizier_capped_units": capped_units, "vizier_cuts_not_applied": sorted(cuts_skipped),
+        "unit_budget_s": budget, "skipped_on_unit_budget": skipped[:200],
         "degraded": degraded,
         "per_unit": per_unit, "local_cut_counters": counters, "ledger": ledger,
         "elapsed_s": round(_time.monotonic() - t0, 1),

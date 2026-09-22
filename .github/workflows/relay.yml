@@ -1,0 +1,146 @@
+name: relay
+
+# RELAY — intercepting node-to-node beams by geometry (docs/relay.md, S60).
+#
+#   probe ──▶ targets ──▶ geometry ──▶ recut ──▶ assess ──▶ commit-back
+#
+# Earth intercepts a T -> R beam when the angle at T between T->R and
+# T->Earth is <= theta/2.  Gaia DR3 gives every directed pair within 100 pc
+# (spillover and the "Earth between the nodes" geometry, counted apart), the
+# Breakthrough Listen open-data API says which transmitters have been pointed
+# at, and the published narrowband hit catalogues are re-cut on that geometry
+# with a per-pointing Doppler-drift prior (the Earth term the pipelines never
+# remove, plus the pair's kinematics).
+#
+# DISCIPLINES (docs/relay.md section 5):
+#  * exact transmitter angle, exact search bounds; counts are exact for the
+#    whole sample and ROWS are kept only where they are needed;
+#  * every archive answer is recorded with its real shape and keys, and a
+#    stage whose input did not arrive is NO_DATA_REACHED, never a null;
+#  * the drift window is a NUMBER per pointing (centre + half-width), and
+#    every chance-match expectation is stated beside every match.
+#
+# One job runs every stage; the parquet intermediates (the Gaia sample, the
+# per-beam pair tables) travel in the artifact; commit-back goes through
+# scripts/commit_results.sh, which VERIFIES the push.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          "all" (probe, targets, geometry, recut, assess) or a comma-separated
+          subset; a later stage reads the earlier stages' files from
+          results/relay/ on the branch (the parquet intermediates are NOT
+          committed, so geometry must run in the same job as recut/assess).
+        required: false
+        default: "all"
+      max_stars:
+        description: "Debug cap on the Gaia sample (0 = the whole 100 pc sample)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: relay-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install pyarrow
+      - name: Offline gate — the injected pair and its drift prior must be recovered on this runner
+        run: python -m pytest tests/test_relay.py -q -p no:cacheprovider
+      - name: Run
+        env:
+          RELAY_STAGE: ${{ github.event.inputs.stage || 'all' }}
+          RELAY_MAX_STARS: ${{ github.event.inputs.max_stars || '0' }}
+        run: |
+          MS=""
+          if [ "$RELAY_MAX_STARS" != "0" ]; then MS="--max-stars $RELAY_MAX_STARS"; fi
+          python -m seti.relay.run --stage "$RELAY_STAGE" $MS
+      - name: Report
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          for name in ("probe", "targets", "geometry", "recut", "hits", "summary"):
+              p = pathlib.Path(f"results/relay/{name}.json")
+              if not p.exists():
+                  print(f"=== {name}: not written ==="); continue
+              d = json.loads(p.read_text())
+              print(f"=== {name}: {d.get('verdict')} ===")
+              if name == "probe":
+                  for k, v in (d.get("endpoints") or {}).items():
+                      print("  ", k, v.get("status"), v.get("shape", ""), str(v.get("error", ""))[:160])
+                      if v.get("keys"): print("     keys:", v["keys"])
+                  for t in d.get("hit_tables") or []:
+                      print("   table", t.get("table"), t.get("status"), t.get("kind"), t.get("roles"))
+              if name == "geometry":
+                  for k, b in (d.get("beams") or {}).items():
+                      print("  ", k, b.get("theta_label"), "spill", b.get("n_spillover"), "between", b.get("n_between"),
+                            "analytic", b.get("analytic_expectation"), "BL-T", b.get("n_bl_targets_as_transmitter"))
+                  print("   scaling", d.get("scaling"), "sample", d.get("sample", {}).get("route"), d.get("sample", {}).get("status"))
+              if name == "summary":
+                  print(json.dumps({k: d[k] for k in ("funnel", "per_beam", "candidates") if k in d}, indent=1, default=str)[:6000])
+          PY
+      - name: Assert the verdict is not a disguised no-data run
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/relay/summary.json")
+          if not p.exists():
+              print("::warning::no summary.json — the assess stage did not run"); sys.exit(0)
+          s = json.loads(p.read_text())
+          v = s.get("verdict", ""); f = s.get("funnel", {})
+          if f.get("n_stars_100pc", 0) == 0 and "NO_DATA_REACHED" not in v:
+              print(f"::error::verdict {v!r} with no Gaia sample is a disguised no-data run"); sys.exit(1)
+          if "PAIRLINE_DRIFT_MATCH" in v:
+              print(f"::notice::{len(s.get('candidates', []))} hit-beam matches inside the prior — see results/relay/hits.json for the chance expectation per beam")
+          if "NO_PAIRLINE_HIT" in v or "PAIRLINE_HITS_OFF_PRIOR" in v:
+              print("::notice::no published hit inside a pair-line prior. A COUNT, NOT AN OCCURRENCE LIMIT — docs/relay.md.")
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          scripts/commit_results.sh \
+            "relay: beam-spillover geometry, BL recut and drift prior — ${{ github.event.inputs.stage || 'all' }}" \
+            results/relay/probe.json \
+            results/relay/targets.json \
+            results/relay/targets.csv \
+            results/relay/targets_matched.csv \
+            results/relay/gaia_sample.json \
+            results/relay/geometry.json \
+            results/relay/recut.json \
+            results/relay/recut_pointings.csv \
+            results/relay/recut_targets.csv \
+            results/relay/hits.json \
+            results/relay/hits_crossmatch.csv \
+            results/relay/summary.json \
+            results/relay/acquisition_log.json \
+            results/relay/pairs_targets.csv.gz \
+            results/relay/bl_files.csv.gz \
+            $(ls results/relay/pairs_full_*.csv.gz 2>/dev/null)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relay-run
+          path: results/relay/
+          if-no-files-found: warn

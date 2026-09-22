@@ -1,0 +1,179 @@
+name: grave
+
+# GRAVE — a technological extinction in Earth's sedimentary record (docs/grave.md).
+# Signature S56.
+#
+#   probe ──▶ acquire ──▶ screen ──▶ assess ──▶ commit-back
+#
+# The fission-yield mass vector (Zr-Mo-Ru light peak, Cs-Ba-La-Ce-Pr-Nd-Sm
+# heavy peak, the Gd cliff, NO Hf/Th/U with it) fitted as one extra
+# non-negative component on top of the best mixture of natural reservoirs
+# (felsic/mafic detritus, zircon, monazite, apatite, carbonate, authigenic
+# redox, Fe-Mn oxide, hydrothermal sulfide, chondrite), on every whole-rock
+# analysis in SGP (+ EarthChem; GEOROC as the ash reference), then age-stacked
+# across extinction boundaries: a residue that is real recurs in independent
+# sections the way the K-Pg iridium does.  Refined-particulate classes (PGE
+# ratios against chondrite; Ta/Nb; W partners) run on every sample with a panel.
+#
+# THE DATA-ACCESS FACT (results/necrofrontier/probe.json; GitHub code search):
+# sgp-search.io's REST path asserted in the brief does not exist; the real API
+# is POST /api/frontend/post-paged with a JSON body whose field codes are only
+# partly published.  The probe stage LEARNS them (bundle scan + one two-row
+# request per candidate code) and records the ledger; acquire then pages every
+# age bin.  EarthChem is 50 rows per request; GEOROC is a Dataverse listing.
+# Commit-back through scripts/commit_results.sh, which VERIFIES the push.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: >-
+          "all" (probe, acquire, screen, assess), "probe" (learn the APIs —
+          cheap, run this first), or "screen,assess" to re-score the canonical
+          tables restored from a prior run's artifact.
+        required: false
+        default: "all"
+      sources:
+        description: "Comma list of sources (default: config = sgp,earthchem,georoc)"
+        required: false
+        default: ""
+      max_rows:
+        description: "Cap on rows per source (0 = config)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: write
+
+jobs:
+  grave:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      # The probe makes no scientific claim — it only asks each service what it
+      # serves — so it runs BEFORE the offline gate: a schema the runner has
+      # learned is worth having even from a run whose detector gate then fails.
+      # Everything downstream of the probe IS gated.
+      - name: Probe (learn the SGP field codes, EarthChem counts, GEOROC files)
+        if: ${{ github.event.inputs.stage == 'all' || github.event.inputs.stage == 'probe' || startsWith(github.event.inputs.stage, 'probe') }}
+        run: |
+          SRC=""
+          if [ -n "${{ github.event.inputs.sources }}" ]; then SRC="--sources ${{ github.event.inputs.sources }}"; fi
+          python -m seti.grave.run --stage probe $SRC
+          echo "=== probe ==="
+          python - <<'PY'
+          import json
+          d = json.load(open("results/grave/probe.json"))
+          print("reached", d["reached"])
+          s = d["sources"].get("sgp") or {}
+          print("SGP base call", s.get("base_call"))
+          print("SGP type variants", s.get("type_variants"))
+          print("SGP accepted", len(s.get("accepted_codes", {})), sorted(s.get("accepted_codes", {}).items())[:80])
+          print("SGP rejected", len(s.get("rejected_codes", {})), "dropped", len(s.get("silently_dropped", [])))
+          for h, v in (s.get("hosts") or {}).items():
+              print(h, "api paths", v.get("api_paths"))
+          e = d["sources"].get("earthchem") or {}
+          print("EarthChem counts", {k: v.get("count") for k, v in (e.get("counts") or {}).items()})
+          print("EarthChem row keys", e.get("row_keys"))
+          g = d["sources"].get("georoc") or {}
+          print("GEOROC datasets", g.get("n_datasets"), "matching files", g.get("n_matching_files"))
+          for f in (g.get("files") or [])[:20]:
+              print("  ", f.get("dataset"), f.get("filename"), f.get("filesize"))
+          PY
+      - name: Acquire + screen + assess
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          SRC=""
+          if [ -n "${{ github.event.inputs.sources }}" ]; then SRC="--sources ${{ github.event.inputs.sources }}"; fi
+          MR=""
+          if [ "${{ github.event.inputs.max_rows || '0' }}" != "0" ]; then MR="--max-rows ${{ github.event.inputs.max_rows }}"; fi
+          STAGE="${{ github.event.inputs.stage || 'all' }}"
+          if [ "$STAGE" = "all" ]; then STAGE="acquire,screen,assess"; fi
+          python -m seti.grave.run --stage "$STAGE" $SRC $MR
+          echo "=== acquisition ==="
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/grave/acquisition.json")
+          if p.exists():
+              d = json.loads(p.read_text())
+              print("status", d["status"], "degraded", d["degraded"])
+              for k, v in d["sources"].items():
+                  r = v.get("resolution") or {}
+                  print(k, v.get("status"), "rows", v.get("n_rows"), "requests", v.get("n_requests"))
+                  print("   meta", r.get("meta"))
+                  print("   census", r.get("census"))
+                  print("   unresolved", (r.get("unresolved") or [])[:40])
+          PY
+          echo "=== summary ==="
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("results/grave/summary.json")
+          if p.exists():
+              s = json.loads(p.read_text())
+              keep = ("verdict", "refined_verdict", "n_samples", "funnel", "vetoes", "class_counts", "threshold",
+                      "shuffled_null", "lr_distribution", "elements_in_design", "stratigraphic_clusters",
+                      "n_survivors", "refined_counts", "degraded", "sources")
+              print(json.dumps({k: s.get(k) for k in keep}, indent=2)[:8000])
+              for k, b in (s.get("age_stack") or {}).get("boundaries", {}).items():
+                  print(k, b["n_samples"], "samples", b["n_sections"], "sections", b["n_candidates"], "cand", b["status"])
+          PY
+      # A verdict must never read as a science null when no sample was screened.
+      - name: Assert the verdict is not a disguised no-data run
+        if: ${{ github.event.inputs.stage != 'probe' }}
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          p = pathlib.Path("results/grave/summary.json")
+          if not p.exists():
+              print("::warning::no summary.json — the assess stage produced nothing"); sys.exit(0)
+          s = json.loads(p.read_text())
+          v, n = s.get("verdict", ""), int(s.get("n_samples", 0))
+          if n == 0 and "NO_DATA_REACHED" not in v:
+              print(f"::error::verdict {v!r} with 0 samples is a disguised no-data run"); sys.exit(1)
+          if "NO_DATA_REACHED" in v:
+              print("::warning::NO_DATA_REACHED — read results/grave/probe.json for what each endpoint served")
+          if "NO_FISSION_VECTOR" in v:
+              print(f"::notice::{n} samples screened, none survives the vet. A COUNT, NOT AN OCCURRENCE LIMIT — see docs/grave.md.")
+          if "STRATIGRAPHIC_CLUSTER" in v:
+              print(f"::notice::stratigraphic cluster(s) {s.get('stratigraphic_clusters')} — PENDING provenance vet, see results/grave/candidates.json")
+          if "SINGLE_SECTION" in v:
+              print(f"::notice::{s.get('n_survivors')} survivor(s), none recurring across sections — contamination hypothesis first")
+          PY
+      - name: Commit results
+        if: always()
+        env:
+          RESULTS_BRANCH: ${{ github.ref_name }}
+        run: |
+          # The push is VERIFIED against the remote by commit_results.sh; the
+          # canonical tables and per-sample pickle (results/grave/data/) travel
+          # as artifacts, not commits.  samples.csv is committed only when small.
+          EXTRA=""
+          if [ -f results/grave/samples.csv ] && [ "$(stat -c %s results/grave/samples.csv)" -lt 4000000 ]; then
+            EXTRA="results/grave/samples.csv"
+          fi
+          scripts/commit_results.sh \
+            "grave: the sedimentary record — ${{ github.event.inputs.stage || 'all' }}" \
+            results/grave/probe.json \
+            results/grave/acquisition.json \
+            results/grave/screen.json \
+            results/grave/candidates.json \
+            results/grave/refined.json \
+            results/grave/summary.json \
+            results/grave/REPORT.md \
+            $EXTRA
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: grave-run
+          path: results/grave/
+          if-no-files-found: warn

@@ -1,0 +1,114 @@
+# RELAY channel (S60) — every threshold, beam, site and seed in one place.
+#
+# The geometry: Earth intercepts a T -> R beam when the angle at T between
+# T->R and T->Earth is <= theta/2.  Two geometries (spillover: T behind R on
+# the same sightline; between: R near T's antipode, the beam passes Earth on
+# its way) are counted separately.  See docs/relay.md.
+
+sample:
+  parallax_min_mas: 10.0          # d <= 100 pc: the GCNS volume
+  parallax_over_error_min: 10.0   # a distance good to 10 % or better
+  ruwe_max: 1.4                   # single-star astrometry (verify: standard DR3 cut)
+  d_max_pc: 100.0
+  rv_err_max_kms: 5.0             # RVs worse than this carry no kinematic prior
+  rv_template_teff_max_k: 8500.0  # Katz+2023 zero-point applies to cool templates only
+  # ESA parallax shells (mas), widest first; a shell that times out is retried
+  # and then recorded as PARTIAL_SAMPLE rather than silently dropped.
+  parallax_shells_mas: [10.0, 11.11, 12.5, 14.29, 16.67, 22.22, 33.33, 100000.0]
+  max_rows_per_shell: 400000
+
+beams:
+  # theta is the FULL beam width 1.22 lambda/D (the FWHM-class number the brief
+  # quotes); the cone half-angle is theta/2.
+  - {name: optical_10m_1um,   aperture_m: 10.0,  wavelength_um: 1.0}     # 0.025 arcsec: un-interceptable
+  - {name: radio_100m_1p4ghz, aperture_m: 100.0, frequency_ghz: 1.42}    # ~9 arcmin (GBT-class link)
+  - {name: radio_10m_8ghz,    aperture_m: 10.0,  frequency_ghz: 8.0}     # 0.26 deg: the theta^2 check point
+  - {name: radio_10m_1p4ghz,  aperture_m: 10.0,  frequency_ghz: 1.42}    # 1.5 deg
+  - {name: overfilled_5deg,   theta_deg: 5.0}                            # deliberately over-filled
+
+geometry:
+  min_separation_pc: 0.05        # ~10^4 AU: closer is a bound binary, not a field pair
+  row_cap: 4000000               # kept rows per beam (artifact only); counts are always exact
+  chunk_candidates: 3000000
+  commit_full_catalogue_max_rows: 150000   # a beam's full directed-pair table is committed only below this
+  commit_target_pairs_max_rows: 250000     # committed rows of the BL-target pair table (widest beams first to go)
+
+drift:
+  a_local_max_m_s2: 1.0          # envelope on a transmitter platform's acceleration (HZ planet of an M dwarf ~0.7)
+  reference_frequency_ghz: 1.42
+  magic_lines_mhz:               # supplementary frequency-offset test (trials stated)
+    HI_1420: 1420.405751768
+    OH_1665: 1665.4018
+    OH_1667: 1667.3590
+  # pipeline drift resolution when the catalogue row carries none (channel / T_obs)
+  sigma_drift_default_hz_s: 0.0093       # 2.79 Hz / 300 s, the BL turboSETI L-band product
+
+telescopes:
+  # HPBW at the band centre (arcmin) -- verify: from the observatory guides;
+  # GBT ~ 12.6'/f_GHz, Parkes ~ 14.4' at 1.4 GHz, MeerKAT primary ~ 1.1 deg/f_GHz.
+  GBT:     {lat_deg: 38.4331,  lon_deg: -79.8398, hpbw_arcmin: {L: 8.7, S: 5.4, C: 2.1, X: 1.4}, default_band: L}
+  Parkes:  {lat_deg: -32.9984, lon_deg: 148.2635, hpbw_arcmin: {L: 14.4, UWL: 14.4, "10cm": 6.4}, default_band: L}
+  MeerKAT: {lat_deg: -30.7130, lon_deg: 21.4430,  hpbw_arcmin: {L: 66.0, UHF: 100.0}, default_band: L}
+  ATA:     {lat_deg: 40.8178,  lon_deg: -121.4733, hpbw_arcmin: {L: 150.0}, default_band: L}
+  APF:     {lat_deg: 37.3414,  lon_deg: -121.6429, hpbw_arcmin: {optical: 0.05}, default_band: optical}
+  FAST:    {lat_deg: 25.6529,  lon_deg: 106.8567, hpbw_arcmin: {L: 2.9}, default_band: L}
+  Arecibo: {lat_deg: 18.3442,  lon_deg: -66.7528, hpbw_arcmin: {L: 3.3}, default_band: L}
+  in_beam_max_arcmin: 8.0        # neighbours within this of a target are candidate in-beam transmitters
+  band_from_frequency_ghz:       # band name from a file's centre frequency
+    - {band: UHF, lo: 0.3,  hi: 1.0}
+    - {band: L,   lo: 1.0,  hi: 2.0}
+    - {band: S,   lo: 2.0,  hi: 4.0}
+    - {band: C,   lo: 4.0,  hi: 8.0}
+    - {band: X,   lo: 8.0,  hi: 12.0}
+
+bl_opendata:
+  base_url: "http://seti.berkeley.edu/opendata"
+  # verify: routes from github.com/ggroode/bl-opendata README (read 2026-09-21):
+  #   api/list-targets, api/list-telescopes, api/list-file-types,
+  #   api/query-files?target=&telescopes=&file-types=&pos-ra=&pos-dec=&pos-rad=&limit=&cadence=
+  routes:
+    targets: "api/list-targets"
+    telescopes: "api/list-telescopes"
+    file_types: "api/list-file-types"
+    query_files: "api/query-files"
+  timeout_s: 60
+  per_target_limit: 200
+  max_targets_for_files: 2500
+  request_sleep_s: 0.15
+  files_budget_s: 5400
+
+resolver:
+  simbad_tap: "https://simbad.cds.unistra.fr/simbad/sim-tap"
+  batch: 120
+  # positional fallback: Gaia positions propagated to J2000 by proper motion
+  match_arcsec: 5.0
+
+hit_catalogues:
+  # verify: VizieR ids ASSERTED from the papers' journal references; the probe
+  # lists whatever tables exist under each id and reads the real columns.  A
+  # table is a HIT table only if it exposes a frequency and a drift rate; one
+  # with names/positions but no frequency is a TARGET table (used as a second
+  # route to the observed-star list).
+  seeds:
+    enriquez2017: {id: "J/ApJ/849/104",  telescope: GBT,    band: L, note: "692 stars, GBT 1.1-1.9 GHz; 11 events"}
+    price2020:    {id: "J/AJ/159/86",    telescope: GBT,    band: L, note: "1,327 stars GBT+Parkes; the events table"}
+    sheikh2020:   {id: "J/AJ/160/29",    telescope: GBT,    band: C, note: "restricted Earth transit zone, 3.95-8 GHz"}
+    margot2021:   {id: "J/AJ/161/55",    telescope: GBT,    band: L, note: "UCLA GBT L-band; candidate signals"}
+    traas2021:    {id: "J/AJ/161/286",   telescope: GBT,    band: L, note: "TESS targets, GBT"}
+    gajjar2021:   {id: "J/AJ/162/33",    telescope: GBT,    band: C, note: "Galactic Centre survey"}
+    franz2022:    {id: "J/AJ/163/104",   telescope: GBT,    band: L, note: "TESS TOIs in transit"}
+    pinchuk2022:  {id: "J/AJ/163/76",    telescope: GBT,    band: L, note: "UCLA GBT, 2022 sample"}
+    margot2023:   {id: "J/AJ/166/206",   telescope: GBT,    band: L, note: "UCLA, 11,680 stars"}
+    choza2024:    {id: "J/AJ/167/10",    telescope: GBT,    band: L, note: "BL nearby stars re-analysis"}
+    isaacson2017: {id: "J/PASP/129/54501", telescope: GBT,  band: L, note: "the BL target list itself (1,702 stars)"}
+  keywords: ["technosignature", "Breakthrough Listen", "SETI", "narrowband", "narrow-band", "drift rate"]
+  max_rows: 200000
+  zero_drift_rfi_hz_s: 0.0093    # |drift| below one resolution element: co-rotating (terrestrial) source
+
+probe:
+  budget_s: 1500
+
+assess:
+  match_window_sigma: 3.0        # a hit matches the prior within this many half-widths (tight)
+  recurrence_khz: 1.0            # a frequency seen on >= 3 unrelated sightlines within this is instrumental
+  recurrence_min_sightlines: 3

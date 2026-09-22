@@ -1,0 +1,157 @@
+{
+  "stage": "spherex",
+  "shard": 3,
+  "n_shards": 4,
+  "generated_at": "2026-09-22T17:19:22Z",
+  "boxes": [
+    {
+      "box": "NEP-3",
+      "ra": 270.0,
+      "dec": 66.2,
+      "degraded": [
+        "every image failed: OSError('No SIMPLE card found, this file does not appear to "
+      ],
+      "seeds": {
+        "route": "irsa:gaia_dr3_source",
+        "status": "OK",
+        "n_rows": 361,
+        "n_in_box_mag_plx": 25,
+        "n_isolated": 20,
+        "n_seeds": 20
+      },
+      "images": {
+        "count_query": {
+          "status": "OK",
+          "seconds": 7.7
+        },
+        "n_products_covering_centre": 25952,
+        "list_query": {
+          "status": "OK",
+          "seconds": 236.2
+        },
+        "n_products": 25952,
+        "n_selected": 360,
+        "per_detector": {
+          "D1": 60,
+          "D2": 60,
+          "D3": 60,
+          "D4": 60,
+          "D5": 60,
+          "D6": 60
+        }
+      },
+      "cutouts": {
+        "n_images_tried": 360,
+        "n_images_ok": 0,
+        "n_images_failed": 360,
+        "n_samples": 0,
+        "n_samples_ok": 0,
+        "route_counts": {},
+        "wavemap_methods": {},
+        "fail_reasons": {
+          "OSError('No SIMPLE card found, this file does not appear to ": 360
+        }
+      },
+      "n_full_downloads": 0,
+      "seconds": 7716.5,
+      "status": "NO_DATA_REACHED"
+    },
+    {
+      "box": "SEP-3",
+      "ra": 90.0,
+      "dec": -66.2,
+      "degraded": [
+        "time budget exhausted during cutouts",
+        "every image failed: OSError('No SIMPLE card found, this file does not appear to "
+      ],
+      "seeds": {
+        "route": "irsa:gaia_dr3_source",
+        "status": "OK",
+        "n_rows": 2966,
+        "n_in_box_mag_plx": 37,
+        "n_isolated": 19,
+        "n_seeds": 19
+      },
+      "images": {
+        "count_query": {
+          "status": "OK",
+          "seconds": 13.3
+        },
+        "n_products_covering_centre": 6611,
+        "list_query": {
+          "status": "OK",
+          "seconds": 80.0
+        },
+        "n_products": 6611,
+        "n_selected": 360,
+        "per_detector": {
+          "D1": 60,
+          "D2": 60,
+          "D3": 60,
+          "D4": 60,
+          "D5": 60,
+          "D6": 60
+        }
+      },
+      "cutouts": {
+        "n_images_tried": 345,
+        "n_images_ok": 0,
+        "n_images_failed": 345,
+        "n_samples": 0,
+        "n_samples_ok": 0,
+        "route_counts": {},
+        "wavemap_methods": {},
+        "fail_reasons": {
+          "OSError('No SIMPLE card found, this file does not appear to ": 345
+        }
+      },
+      "n_full_downloads": 0,
+      "seconds": 7294.4,
+      "status": "NO_DATA_REACHED"
+    }
+  ],
+  "queries": [
+    {
+      "label": "seeds_NEP-3",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 361,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 361,
+          "seconds": 4.3
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 270.000000, 66.200000, 0.192332)) AND phot_g_mean_mag < 19.000"
+    },
+    {
+      "label": "seeds_SEP-3",
+      "route": "irsa:gaia_dr3_source",
+      "status": "OK",
+      "n_rows": 2966,
+      "attempts": [
+        {
+          "route": "irsa:gaia_dr3_source",
+          "ok": true,
+          "n_rows": 2966,
+          "seconds": 7.8
+        }
+      ],
+      "query": "SELECT source_id, ra, dec, pmra, pmdec, parallax, parallax_over_error, phot_g_mean_mag, bp_rp, ruwe, phot_variable_flag, phot_bp_mean_mag, phot_rp_mean_mag FROM gaia_dr3_source WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', 90.000000, -66.200000, 0.192332)) AND phot_g_mean_mag < 19.000"
+    }
+  ],
+  "degraded": [
+    "NEP-3: every image failed: OSError('No SIMPLE card found, this file does not appear to ",
+    "SEP-3: time budget exhausted during cutouts",
+    "SEP-3: every image failed: OSError('No SIMPLE card found, this file does not appear to "
+  ],
+  "elapsed_s": 15010.9,
+  "status": "NO_DATA_REACHED",
+  "screen": {
+    "n_stars_with_samples": 0,
+    "n_channels_tested": 0,
+    "n_survivors": 0
+  }
+}

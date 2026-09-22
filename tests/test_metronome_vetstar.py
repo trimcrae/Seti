@@ -30,6 +30,7 @@ from seti.metronome.vetstar import (
     STATUS_UNREACHED,
     analyse_lightcurve,
     angular_separation_arcsec,
+    catalogue_epochs_for_star,
     catalogued_binary_hits,
     detrend_fractional,
     fold_amplitude_significance,
@@ -38,6 +39,7 @@ from seti.metronome.vetstar import (
     gaia_variability,
     harmonic_content,
     neighbour_context,
+    neighbour_periods_matching,
     odd_even_minima,
     periodogram_at,
     phase_separation,
@@ -802,3 +804,157 @@ def test_neighbour_context_keeps_a_brighter_neighbour_even_when_not_flagged():
 def test_neighbour_context_is_empty_without_a_gaia_answer():
     assert neighbour_context({}, g_target=14.0) == []
     assert neighbour_context({"neighbours": []}, g_target=14.0) == []
+
+
+# ---------------------------------------------------------------------------
+# the catalogued epochs, without a prior run's artifact
+# ---------------------------------------------------------------------------
+_YANG = {"catalogues": {"kepler_yang2019": {"preferred": "J/ApJS/241/29/table2"}}}
+
+
+def test_catalogue_epochs_take_the_midpoint_when_there_is_no_peak_column():
+    """Yang & Liu 2019 publishes Begin/End and no peak, which is what the
+    screen stage folds to a midpoint; the vet must do the same."""
+    seen = {}
+
+    def qf(adql):
+        if "TAP_SCHEMA.tables" in adql:
+            return pd.DataFrame({"table_name": ['"J/ApJS/241/29/table2"'], "description": [""]})
+        if "TAP_SCHEMA.columns" in adql:
+            return pd.DataFrame({"column_name": ['"KIC"', '"Q"', '"Begin"', '"End"',
+                                                 '"logE"']})
+        seen["q"] = adql
+        return pd.DataFrame({"KIC": [5879574] * 3,
+                             "Begin": [131.0, 140.0, 151.0],
+                             "End": [131.1, 140.2, 151.3]})
+
+    t, rec = catalogue_epochs_for_star("kepler_yang2019", "5879574", _YANG, query_fn=qf)
+    assert rec["status"] == STATUS_OK
+    assert rec["role"] == "midpoint(t_start,t_end)"
+    assert rec["n_rows"] == 3
+    assert list(np.round(t, 3)) == [131.05, 140.1, 151.15]
+    assert '"KIC" = 5879574' in seen["q"]
+    assert '"Begin"' in seen["q"] and '"End"' in seen["q"]
+
+
+def test_catalogue_epochs_prefer_a_real_peak_column():
+    conf = {"catalogues": {"tess_tu2022": {"preferred": "J/ApJ/935/90/table2"}}}
+
+    def qf(adql):
+        if "TAP_SCHEMA.tables" in adql:
+            return pd.DataFrame({"table_name": ['"J/ApJ/935/90/table2"'], "description": [""]})
+        if "TAP_SCHEMA.columns" in adql:
+            return pd.DataFrame({"column_name": ['"ID"', '"Sector"', '"PDate"', '"Energy"']})
+        return pd.DataFrame({"ID": [1, 1], "PDate": [1348.8, 1396.6]})
+
+    t, rec = catalogue_epochs_for_star("tess_tu2022", "1", conf, query_fn=qf)
+    assert rec["role"] == "t_peak"
+    assert list(t) == [1348.8, 1396.6]
+
+
+def test_catalogue_epochs_degrade_honestly():
+    def down(adql):
+        raise RuntimeError("TAPVizieR 503")
+
+    t, rec = catalogue_epochs_for_star("kepler_yang2019", "5879574", _YANG, query_fn=down)
+    assert len(t) == 0
+    # UNREACHED, never NOT_LISTED: a dead service is not a statement about the
+    # star.  The message is whatever the route ladder ended on, so only its
+    # presence is asserted, not its text.
+    assert rec["status"] == STATUS_UNREACHED
+    assert rec["error"]
+
+    def empty(adql):
+        if "TAP_SCHEMA.tables" in adql:
+            return pd.DataFrame({"table_name": ['"J/ApJS/241/29/table2"'], "description": [""]})
+        if "TAP_SCHEMA.columns" in adql:
+            return pd.DataFrame({"column_name": ['"KIC"', '"Begin"', '"End"']})
+        return pd.DataFrame()
+
+    t2, rec2 = catalogue_epochs_for_star("kepler_yang2019", "9", _YANG, query_fn=empty)
+    assert len(t2) == 0
+    assert rec2["status"] == STATUS_ABSENT
+
+    t3, rec3 = catalogue_epochs_for_star("nosuch", "9", _YANG, query_fn=empty)
+    assert rec3["status"] == "NO_SEED"
+    assert len(t3) == 0
+
+
+def test_stage_falls_back_to_vizier_for_the_epochs(tmp_path):
+    from seti.metronome.vetstar import stage_vetstar
+
+    def qf(adql):
+        if "TAP_SCHEMA.tables" in adql:
+            return pd.DataFrame({"table_name": ['"J/ApJS/241/29/table2"'], "description": [""]})
+        if "TAP_SCHEMA.columns" in adql:
+            return pd.DataFrame({"column_name": ['"KIC"', '"Begin"', '"End"']})
+        if "J/ApJS/241/29/table2" in adql:
+            return pd.DataFrame({"KIC": [5879574] * 4,
+                                 "Begin": [140.0, 150.0, 160.0, 170.0],
+                                 "End": [140.1, 150.1, 160.1, 170.1]})
+        return pd.DataFrame()
+
+    rep = stage_vetstar(_stage_conf(), tmp_path, kepler_lc_fn=lambda *a, **k: [],
+                        query_fn=qf, gaia_query_fn=lambda a: pd.DataFrame(),
+                        cone_fn=lambda *a: pd.DataFrame(), position=(290.0, 41.0))
+    assert rep["n_catalogue_epochs"] == 4
+    assert rep["catalogue_epochs_source"] == "vizier"
+    assert rep["catalogue_epochs_query"]["role"] == "midpoint(t_start,t_end)"
+
+
+# ---------------------------------------------------------------------------
+# a neighbour catalogued at the clock period
+# ---------------------------------------------------------------------------
+def _rr_neighbour(period=0.4232946):
+    return [{
+        "source_id": "2053563953175635712", "sep_arcsec": 13.3,
+        "phot_g_mean_mag": 14.37, "why": "gaia_variable",
+        "gaia_variability": {
+            "gaiadr3.vari_summary": {"status": STATUS_OK,
+                                     "row": {"source_id": 2053563953175635712}},
+            "gaiadr3.vari_eclipsing_binary": {"status": STATUS_ABSENT, "row": None}},
+        "vizier_cones": {
+            "vsx": {"table": "B/vsx/vsx", "status": STATUS_OK,
+                    "rows": [{"Name": "KIC 5879583", "Type": "RR", "Period": period,
+                              "max": 14.363, "min": 0.575}]},
+            "ztf_chen2020": {"table": "J/ApJS/249/18", "status": STATUS_OK,
+                             "rows": [{"ID": "ZTFJ193127.18+410759.8", "Per": period,
+                                       "R21": 0.326, "rmag": 14.363}]}},
+    }]
+
+
+def test_a_neighbour_catalogued_at_the_clock_period_is_named():
+    hits = neighbour_periods_matching(_rr_neighbour(), PERIOD)
+    assert len(hits) == 1
+    assert hits[0]["source_id"] == "2053563953175635712"
+    got = {(m["source"], round(m["period"], 7)) for m in hits[0]["matches"]}
+    assert ("vsx", 0.4232946) in got
+    assert ("ztf_chen2020", 0.4232946) in got
+    assert hits[0]["matches"][0]["type"] == "RR"
+    assert hits[0]["matches"][0]["name"] == "KIC 5879583"
+
+
+def test_a_neighbour_at_an_unrelated_period_is_not_a_match():
+    assert neighbour_periods_matching(_rr_neighbour(period=3.71), PERIOD) == []
+    assert neighbour_periods_matching([], PERIOD) == []
+
+
+def test_a_neighbour_at_twice_or_half_the_clock_period_still_matches():
+    assert neighbour_periods_matching(_rr_neighbour(period=2 * PERIOD), PERIOD)
+    assert neighbour_periods_matching(_rr_neighbour(period=0.5 * PERIOD), PERIOD)
+
+
+def test_the_contaminating_variable_rule_is_what_the_verdict_leads_with():
+    rep = {"period": PERIOD, "catalogued_binary_hits": [],
+           "neighbours": _rr_neighbour()}
+    verdict, surviving = vet_verdict(rep)
+    assert verdict.startswith("MUNDANE_EXPLANATION_FOUND(CONTAMINATING_VARIABLE_AT_P:")
+    assert "KIC 5879583" in verdict
+    assert "type=RR" in verdict
+    assert "13.3arcsec" in verdict
+    assert "vsx+ztf_chen2020" in verdict
+    assert rep["neighbour_period_matches"]
+    # and a clean neighbourhood leaves the verdict alone
+    rep2 = {"period": PERIOD, "catalogued_binary_hits": [], "neighbours": []}
+    assert "CONTAMINATING_VARIABLE_AT_P" not in vet_verdict(rep2)[0]
+    assert surviving is not None

@@ -647,6 +647,89 @@ def flare_mask(t, flares, *, pad_days: float = 0.0) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # archives
 # ---------------------------------------------------------------------------
+def catalogue_epochs_for_star(catalogue: str, star_id: str, conf: dict, *, query_fn=None,
+                              log: AcquisitionLog | None = None) -> tuple[np.ndarray, dict]:
+    """This one star's catalogued flare times, straight from VizieR.
+
+    The vet is about a single star, so it has no business depending on a
+    previous run's multi-megabyte event parquet being reachable --- and it was
+    not: run 35796061650 silently got nothing, because the workflow's
+    permissions block had dropped ``actions: read`` and the cross-run artifact
+    download 403'd.  One row per flare for one star is a query, not a
+    download, so the parquet is now only a shortcut and this is the fallback.
+
+    The table's columns are read from ``TAP_SCHEMA`` first, as everywhere in
+    this channel, and the time role resolved from them: ``t_peak`` when the
+    catalogue has a peak column, otherwise the midpoint of ``t_start`` and
+    ``t_end`` --- which is what the screen stage does with Yang & Liu 2019's
+    ``Begin``/``End``.
+    """
+    from .acquire import list_tables, table_columns, tap_query
+    from .acquire import resolve_columns as _resolve
+
+    qf = query_fn or tap_query
+    spec = ((conf.get("catalogues") or {}).get(str(catalogue)) or {})
+    seed = spec.get("preferred")
+    rec = {"catalogue": str(catalogue), "seed": seed, "status": STATUS_UNREACHED,
+           "table": None, "query": "", "error": None, "n_rows": 0, "role": None}
+    if not seed:
+        rec["status"] = "NO_SEED"
+        return np.zeros(0), rec
+    tables = [seed]
+    try:
+        found = list_tables(seed, query_fn=qf)
+        if found is not None and len(found) and "table_name" in found:
+            tables = [str(v) for v in found["table_name"]] or tables
+    except Exception as exc:                              # noqa: BLE001
+        rec["error"] = repr(exc)
+    sid = clean_star_id(star_id)
+    for tname in tables:
+        try:
+            cols = table_columns(tname, query_fn=qf)
+        except Exception as exc:                          # noqa: BLE001
+            rec["error"] = repr(exc)
+            continue
+        roles = _resolve(cols)
+        if "star_id" not in roles or not ({"t_peak", "t_start"} & set(roles)):
+            continue
+        want = [roles["star_id"]]
+        for r in ("t_peak", "t_start", "t_end"):
+            if r in roles and roles[r] not in want:
+                want.append(roles[r])
+        sel = ", ".join(f'"{c}"' for c in want)
+        adql = f'SELECT {sel} FROM "{tname}" WHERE "{roles["star_id"]}" = {sid}'
+        rec.update({"table": tname, "query": adql})
+        try:
+            df = qf(adql)
+        except Exception as exc:                          # noqa: BLE001
+            rec["error"] = repr(exc)
+            if log:
+                log.record(f"vetstar_epochs_{catalogue}", adql[:300], error=repr(exc))
+            continue
+        n = 0 if df is None else int(len(df))
+        rec["n_rows"] = n
+        rec["status"] = STATUS_OK if n else STATUS_ABSENT
+        if log:
+            log.record(f"vetstar_epochs_{catalogue}", adql[:300], rows=n)
+        if not n:
+            continue
+        if "t_peak" in roles and roles["t_peak"] in df.columns:
+            t = pd.to_numeric(df[roles["t_peak"]], errors="coerce").to_numpy(dtype=float)
+            rec["role"] = "t_peak"
+        elif "t_start" in roles and "t_end" in roles:
+            a = pd.to_numeric(df[roles["t_start"]], errors="coerce").to_numpy(dtype=float)
+            b = pd.to_numeric(df[roles["t_end"]], errors="coerce").to_numpy(dtype=float)
+            t = 0.5 * (a + b)
+            rec["role"] = "midpoint(t_start,t_end)"
+        else:
+            t = pd.to_numeric(df[roles["t_start"]], errors="coerce").to_numpy(dtype=float)
+            rec["role"] = "t_start"
+        t = t[np.isfinite(t)]
+        rec["n_rows"] = int(len(t))
+        return t, rec
+    return np.zeros(0), rec
+
+
 def _gaia_query(adql: str) -> pd.DataFrame:               # pragma: no cover - network
     from astroquery.gaia import Gaia
 
@@ -848,6 +931,50 @@ def neighbour_context(gaia: dict, *, g_target: float = float("nan"),
     return out
 
 
+def neighbour_periods_matching(neighbours, period: float, *, tol: float = 0.01) -> list[dict]:
+    """Neighbours a catalogue gives a period equal to the clock's.
+
+    This is the end of the line for a contamination hypothesis: not "the
+    amplitude behaves like a blend" but "that star, this far away, is a
+    catalogued variable at this period".  Periods are matched against P, 2P
+    and P/2, since a catalogue may list either the pulsation or the orbit.
+    """
+    import re
+
+    out = []
+    for n in neighbours or []:
+        hits = []
+        sources = dict(n.get("vizier_cones") or {})
+        for t, rec in (n.get("gaia_variability") or {}).items():
+            sources[t] = {"table": t, "status": rec.get("status"),
+                          "rows": [rec["row"]] if rec.get("row") else []}
+        for name, rec in sources.items():
+            for row in (rec.get("rows") or []):
+                for k, v in row.items():
+                    if not isinstance(v, (int, float)) or not v or not np.isfinite(v):
+                        continue
+                    if not re.fullmatch(r"per|per-?[a-z]|period|porb|pf|p", str(k), re.I):
+                        continue
+                    for h in (0.5, 1.0, 2.0):
+                        if abs(float(v) / (period * h) - 1.0) <= float(tol):
+                            hits.append({"source": name, "column": str(k),
+                                         "period": float(v), "harmonic": h,
+                                         "type": next((str(x) for kk, x in row.items()
+                                                       if isinstance(x, str) and x.strip()
+                                                       and re.fullmatch(
+                                                           r"type|class|vartype|best_?class_?name",
+                                                           str(kk), re.I)), ""),
+                                         "name": next((str(x) for kk, x in row.items()
+                                                       if isinstance(x, str)
+                                                       and re.fullmatch(r"name|id",
+                                                                        str(kk), re.I)), "")})
+                            break
+        if hits:
+            out.append({"source_id": n.get("source_id"), "sep_arcsec": n.get("sep_arcsec"),
+                        "phot_g_mean_mag": n.get("phot_g_mean_mag"), "matches": hits})
+    return out
+
+
 def vizier_by_identifier(star_id: str, mission: str, specs=None, *, query_fn=None,
                          log: AcquisitionLog | None = None) -> dict:
     """Identifier lookups in catalogues indexed by KIC/TIC.
@@ -962,6 +1089,18 @@ def vet_verdict(report: dict) -> tuple[str, list[str]]:
     reasons: list[str] = []
     surviving: list[str] = []
     p = _f(report.get("period"))
+
+    # A neighbour catalogued at the clock period is the end of the line: the
+    # signal has an owner, and it is not the target.
+    nb = neighbour_periods_matching(report.get("neighbours") or [], p)
+    report["neighbour_period_matches"] = nb
+    for h in nb:
+        best = h["matches"][0]
+        reasons.append(
+            f"CONTAMINATING_VARIABLE_AT_P:gaia{h['source_id']}@{_f(h['sep_arcsec']):.1f}arcsec,"
+            f"{best['name'] or best['source']},type={best['type'] or '?'},"
+            f"P={best['period']:.7f},in="
+            + "+".join(sorted({m["source"] for m in h["matches"]})))
 
     hits = report.get("catalogued_binary_hits") or []
     if hits:
@@ -1273,6 +1412,12 @@ def stage_vetstar(conf: dict, out: Path, *, star_key: str | None = None,
         ct = _catalogue_times(out, str(vc.get("catalogue")), sid)
     except Exception as exc:                              # noqa: BLE001
         rep["catalogue_times_error"] = repr(exc)
+    rep["catalogue_epochs_source"] = "prior run's event parquet" if len(ct) else None
+    if not len(ct):
+        ct, erec = catalogue_epochs_for_star(str(vc.get("catalogue")), sid, conf,
+                                             query_fn=query_fn, log=log)
+        rep["catalogue_epochs_query"] = erec
+        rep["catalogue_epochs_source"] = "vizier" if len(ct) else None
     rep["n_catalogue_epochs"] = int(len(ct))
 
     if status == "OK" and segs:
@@ -1336,10 +1481,12 @@ def _dumps(obj) -> str:
 __all__ = ["CATALOGUE_EPOCH", "DEFAULT_VETSTAR", "GAIA_EPOCH", "GAIA_SOURCE_COLUMNS",
            "GAIA_TAP", "GAIA_VARI_TABLES", "STATUS_ABSENT", "STATUS_OK", "STATUS_UNREACHED",
            "VIZIER_CONE_TABLES", "VIZIER_ID_TABLES",
-           "analyse_lightcurve", "angular_separation_arcsec", "catalogued_binary_hits",
+           "analyse_lightcurve", "angular_separation_arcsec", "catalogue_epochs_for_star",
+           "catalogued_binary_hits",
            "detrend_fractional", "flare_mask", "fold_amplitude_significance",
            "fold_profile", "gaia_neighbourhood",
-           "gaia_variability", "harmonic_content", "neighbour_context", "odd_even_minima",
+           "gaia_variability", "harmonic_content", "neighbour_context",
+           "neighbour_periods_matching", "odd_even_minima",
            "per_segment_amplitude",
            "periodogram_at", "phase_separation", "propagate_position", "rayleigh",
            "roll_season_test",

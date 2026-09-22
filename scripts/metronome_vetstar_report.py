@@ -43,7 +43,9 @@ def main(argv=None) -> int:
           "lc", json.dumps(d.get("lightcurve", {}))[:400])
     print("n_flares_redetected", d.get("n_flares_redetected"),
           "masked_fraction", d.get("masked_fraction"),
-          "n_catalogue_epochs", d.get("n_catalogue_epochs"))
+          "n_catalogue_epochs", d.get("n_catalogue_epochs"),
+          "from", d.get("catalogue_epochs_source"),
+          json.dumps(d.get("catalogue_epochs_query") or {})[:400])
 
     print("\n--- what every catalogue says, verbatim ---")
     g = d.get("gaia") or {}
@@ -93,6 +95,14 @@ def main(argv=None) -> int:
         print(k, d.get(k))
     print("offset from photometric max", d.get("event_phase_offset_from_photometric_max"),
           "(binned)", d.get("event_phase_offset_from_photometric_max_binned"))
+
+    print("\n--- neighbours catalogued AT the clock period ---")
+    for h in (d.get("neighbour_period_matches") or []):
+        print(f"  gaia {h.get('source_id')} at {h.get('sep_arcsec')}\" "
+              f"G={h.get('phot_g_mean_mag')}")
+        for m in h.get("matches") or []:
+            print(f"     {m['source']}.{m['column']} = {m['period']} "
+                  f"(x{m['harmonic']}) type={m['type']!r} name={m['name']!r}")
 
     print("\n--- the neighbours that could be the real source ---")
     for n in (d.get("neighbours") or []):

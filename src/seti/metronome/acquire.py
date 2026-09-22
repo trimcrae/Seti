@@ -1592,14 +1592,22 @@ _ROLE_PATTERNS: dict[str, list[str]] = {
     # order within a role = preference
     "star_id": [r"^kic$", r"^kic_?id$", r"^kepid$", r"^tic$", r"^tic_?id$", r"^ticid$",
                 r"^epic$", r"^id$", r"^star$", r"^name$", r"^source$"],
+    # MEASURED column names (ARC run 35040...: results/arc/probe.json), which
+    # the first METRONOME dispatch never saw because TAP_SCHEMA's quoting hid
+    # every column: Okamoto+2021 and Shibayama+2013 carry the flare PEAK time
+    # as ``Date`` (BJD-2454833), Tu+2022 as ``PDate`` (peak date, BTJD),
+    # Guenther+2020 as ``tpeak``; Yang & Liu 2019 carry no peak at all, only
+    # ``Begin`` / ``End`` --- and ``^t_?beg(in)?$`` never matched ``begin``.
     "t_peak": [r"^t_?peak$", r"^tpk$", r"^peak_?time$", r"^bjd_?peak$", r"^peak$",
-               r"^tmax$", r"^t_?max$", r"^time$", r"^bjd$", r"^tflare$"],
-    "t_start": [r"^t_?start$", r"^t_?beg(in)?$", r"^start$", r"^bjd_?start$", r"^tstart$",
-                r"^t_?ini$", r"^t1$", r"^t0$"],
+               r"^p_?date$", r"^peak_?date$", r"^date$", r"^tmax$", r"^t_?max$", r"^time$",
+               r"^bjd$", r"^tflare$", r"^t_?fl$"],
+    "t_start": [r"^t_?start$", r"^t_?beg(in)?$", r"^beg(in)?$", r"^start$", r"^bjd_?start$",
+                r"^bjd_?beg(in)?$", r"^tstart$", r"^start_?time$", r"^t_?ini$", r"^t1$",
+                r"^t0$"],
     "t_end": [r"^t_?end$", r"^t_?stop$", r"^end$", r"^stop$", r"^bjd_?end$", r"^t2$",
-              r"^tend$"],
+              r"^tend$", r"^end_?time$", r"^fin(ish)?$"],
     "energy": [r"^e$", r"^energy$", r"^e_?flare$", r"^ebol$", r"^log_?e$", r"^loge$",
-               r"^ed$", r"^e_?bol$"],
+               r"^log_?ebol$", r"^ekp$", r"^e_?kp$", r"^eflare$", r"^ed$", r"^e_?bol$"],
     "amplitude": [r"^amp(l|litude)?$", r"^a$", r"^fpeak$", r"^f_?peak$", r"^dflux$",
                   r"^rel_?amp$"],
     "sector": [r"^sector$", r"^sec$", r"^sectors$", r"^quarter$", r"^q$", r"^camp(aign)?$"],
@@ -1648,6 +1656,41 @@ def resolve_columns(columns, roles: dict[str, list[str]] | None = None) -> dict[
 
 def resolve_event_columns(columns) -> dict[str, str]:
     return resolve_columns(columns)
+
+
+def clean_star_id(v) -> str:
+    """One spelling of a star id across every table: ``"KIC 757099"``,
+    ``757099.0`` and ``757099`` are the same star, and a rotation table that
+    spells it one way must join a flare table that spells it another."""
+    s = str(v).strip()
+    if re.fullmatch(r"\d+\.0", s):
+        s = s[:-2]
+    return re.sub(r"^(KIC|TIC|EPIC)\s*", "", s, flags=re.I).strip()
+
+
+def column_descriptions(table: str, *, query_fn=None) -> dict[str, dict]:
+    """``{column: {unit, description}}`` from ``TAP_SCHEMA.columns``.
+
+    Used by the probe to record what the catalogue SAYS its time column is
+    (``BJD-2454833``, ``BTJD``, ...) beside the value-range guess, so a wrong
+    time system is visible in the artefact rather than discovered in a
+    candidate.  Empty when the service does not answer; never required.
+    """
+    query_fn = query_fn or tap_query
+    t = unquote_table(table)
+    adql = ("SELECT TOP 2000 column_name, unit, description FROM TAP_SCHEMA.columns "
+            f"WHERE table_name = '{t}' OR table_name = '\"{t}\"'")
+    df = query_fn(adql)
+    out: dict[str, dict] = {}
+    if df is None or not len(df):
+        return out
+    cols = {str(c).lower(): c for c in df.columns}
+    name_c = cols.get("column_name", df.columns[0])
+    for _, r in df.iterrows():
+        name = unquote_table(r[name_c])
+        out[name] = {"unit": str(r[cols["unit"]]) if "unit" in cols else "",
+                     "description": str(r[cols["description"]]) if "description" in cols else ""}
+    return out
 
 
 def score_event_table(columns) -> tuple[int, dict[str, str], str]:
@@ -1839,7 +1882,9 @@ def fetch_events(disc: DiscoveredTable, *, query_fn=None, log: AcquisitionLog | 
         if c in out.columns:
             out[c] = pd.to_numeric(out[c], errors="coerce")
     if "star_id" in out.columns:
-        out["star_id"] = out["star_id"].astype(str).str.strip()
+        out["star_id"] = out["star_id"].map(clean_star_id)
+    if "sector" in out.columns:
+        out["sector"] = pd.to_numeric(out["sector"], errors="coerce")
     return out
 
 
@@ -1900,7 +1945,7 @@ def discover_and_fetch_rotation(catalogue: str, preferred: str, keywords=(), *,
                 "status": STATUS_OK if n else STATUS_ZERO, "n_rows": n})
     if not n:
         return pd.DataFrame(), rec
-    out = pd.DataFrame({"star_id": df.iloc[:, 0].astype(str).str.strip(),
+    out = pd.DataFrame({"star_id": df.iloc[:, 0].map(clean_star_id),
                         "prot": pd.to_numeric(df.iloc[:, 1], errors="coerce")})
     out["prot_source"] = catalogue
     return out, rec
@@ -1950,7 +1995,7 @@ def fetch_positions_by_id(ids, mission: str, *, query_fn=None,
             if log:
                 log.record(f"positions_{mission}", adql[:300], rows=n)
             if n:
-                frames.append(pd.DataFrame({"star_id": df.iloc[:, 0].astype(str).str.strip(),
+                frames.append(pd.DataFrame({"star_id": df.iloc[:, 0].map(clean_star_id),
                                             "ra": pd.to_numeric(df.iloc[:, 1], errors="coerce"),
                                             "dec": pd.to_numeric(df.iloc[:, 2], errors="coerce")}))
         if frames:
@@ -2036,7 +2081,8 @@ __all__ = ["BREAKER_LOG", "ROUTE_ASTROQUERY", "ROUTE_ASU", "ROUTE_NONE", "ROUTE_
            "asu_constraint_ladder", "asu_meta",
            "asu_query", "asu_readme_tables", "asu_rows", "asu_table_columns",
            "asu_table_exists", "asu_url",
-           "breaker_state", "breaker_summary", "count_rows", "ladder_verdict",
+           "breaker_state", "breaker_summary", "clean_star_id", "column_descriptions",
+           "count_rows", "ladder_verdict",
            "discover_and_fetch_rotation", "discover_event_table", "fetch_events",
            "fetch_positions_by_id", "fetch_variable_context", "list_tables",
            "parse_asu_meta", "parse_asu_tsv", "parse_readme", "reset_route_state",

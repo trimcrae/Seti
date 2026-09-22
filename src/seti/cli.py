@@ -389,7 +389,9 @@ def _cmd_shroud(args, cfg):
     from .shroud.run import shroud_run
 
     shroud_run(cfg, stage=args.stage, allow_network=not args.offline,
-               max_sources=args.max_sources, input_parquet=args.input)
+               max_sources=args.max_sources, input_parquet=args.input,
+               n_fields=args.n_fields, field_radius_deg=args.field_radius_deg,
+               field_seed=args.field_seed, acquire_deadline_s=args.acquire_deadline_s)
 
 
 def _cmd_crosscorr(args, cfg):
@@ -995,6 +997,18 @@ def _cmd_spectra_triage(args, cfg):
                recur_tol=args.recur_tol, recur_min=args.recur_min)
 
 
+# --- SPECTRA-PERSIST ---
+def _cmd_spectra_persist(args, cfg):
+    """Per-exposure persistence of the narrow-line survivors; flags are passed
+    through to seti.spectra.persist (--stage probe|run|reduce, --shard, ...)."""
+    from .spectra.persist import main as persist_main
+
+    rest = list(args.rest)
+    if "--root" not in rest:
+        rest += ["--root", str(cfg.root)]
+    return persist_main(rest)
+
+
 def _cmd_paper_numbers(args, cfg):
     from .report import write_numbers_tex
 
@@ -1113,6 +1127,19 @@ def _cmd_roman(args, cfg):
     from .roman.run import main as _roman_main
 
     return _roman_main(list(args.rest))
+
+
+# --- CRYPT ---
+def _cmd_crypt(args, cfg):
+    from .crypt.run import main as _crypt_main
+
+    return _crypt_main(list(args.rest))
+# --- CRYPT ---
+# --- ARC stage 2 ---
+def _cmd_arc_stage2(args, cfg):
+    from .arc.stage2 import main as _arc_stage2_main
+
+    return _arc_stage2_main(list(args.rest))
 
 
 def main(argv=None):
@@ -1908,6 +1935,15 @@ def main(argv=None):
                         "recorded in the run provenance")
     p.add_argument("--input", default=None,
                    help="analyse this parquet instead of acquiring")
+    p.add_argument("--n-fields", type=int, default=None,
+                   help="USNO-B1.0 reconstruction: number of 0.5-deg fields "
+                        "(default from config/shroud.yaml)")
+    p.add_argument("--field-radius-deg", type=float, default=None,
+                   help="USNO-B1.0 reconstruction: cone radius per field")
+    p.add_argument("--field-seed", type=int, default=None,
+                   help="USNO-B1.0 reconstruction: field-order seed")
+    p.add_argument("--acquire-deadline-s", type=float, default=None,
+                   help="stop starting new field fetches after this many seconds")
     p.set_defaults(func=_cmd_shroud)
 
     p = sub.add_parser(
@@ -2165,6 +2201,15 @@ def main(argv=None):
     p.add_argument("--recur-min", type=int, default=3)
     p.set_defaults(func=_cmd_spectra_triage)
 
+    # --- SPECTRA-PERSIST ---
+    p = sub.add_parser("spectra-persist",
+                       help="per-exposure persistence + second epoch + rest-frame ID of the "
+                            "narrow-line survivors; flags pass through to seti.spectra.persist "
+                            "(invoke as `seti spectra-persist -- --stage probe`, or call "
+                            "`python -m seti.spectra.persist` directly as the workflow does)")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_spectra_persist)
+
     p = sub.add_parser("contamination-budget")
     p.add_argument("--seed", type=int, default=11)
     p.set_defaults(func=_cmd_contamination_budget)
@@ -2314,6 +2359,23 @@ def main(argv=None):
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
 
+    # --- CRYPT ---
+    p = sub.add_parser("crypt",
+                       help="CRYPT (S55): anisothermal hot components and compact radar anomalies "
+                            "inside lunar permanently shadowed regions (Diviner PCP, Mini-RF, "
+                            "ShadowCam); --stage {probe,acquire,screen,assess,all} --shard i/n; "
+                            "flags are passed through to seti.crypt.run")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_crypt)
+    # --- CRYPT ---
+    # --- ARC stage 2 ---
+    p = sub.add_parser("arc-stage2",
+                       help="ARC stage 2 (S59): IS THE FLARE ON THE TARGET? Kepler/TESS pixel "
+                            "centroids per exceeding flare, the Gaia census, Berger+2020 / "
+                            "FLAME parameters and xi recomputed; flags pass to seti.arc.stage2")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_arc_stage2)
+
     # --- RELAY ---
     p = sub.add_parser("relay",
                        help="RELAY (S60): intercepting node-to-node beams by geometry — "
@@ -2322,6 +2384,7 @@ def main(argv=None):
                             "(--stage {probe,targets,geometry,recut,assess,all})")
     p.add_argument("rest", nargs=argparse.REMAINDER)
     p.set_defaults(func=_cmd_relay)
+    # --- RELAY ---
 
     args = parser.parse_args(argv)
     cfg = load_config()

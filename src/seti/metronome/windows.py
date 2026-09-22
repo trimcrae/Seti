@@ -212,7 +212,14 @@ def windows_from_events(all_times, *, bin_days: float = 0.1, min_gap_days: float
     t0 = np.floor(t.min() / bin_days) * bin_days
     nb = int(np.ceil((t.max() - t0) / bin_days)) + 1
     occ = np.bincount(((t - t0) / bin_days).astype(int), minlength=nb) > 0
-    rate = len(t) / max(occ.sum() * bin_days, bin_days)      # events per day, occupied time
+    # Events per day over the whole SPAN, gaps included: a lower bound on the
+    # true rate, so the gap length it demands is an upper bound and an empty
+    # run is only ever called a gap when even the conservative rate predicts
+    # >= min_expected_in_gap events in it.  Measured over occupied bins
+    # instead, a sparse catalogue (60 events over two TESS sectors) rated
+    # itself at ~10/day and cut every two-day lull inside a sector into a
+    # "gap"; for a mission-scale catalogue the two definitions agree.
+    rate = len(t) / max(float(t.max() - t.min()), bin_days)
     gap_days_needed = max(float(min_gap_days), float(min_expected_in_gap) / max(rate, 1e-9))
     min_run = max(1, int(np.ceil(gap_days_needed / bin_days)))
     label = f"{label}|min_gap={gap_days_needed:.2f}d"
@@ -238,6 +245,56 @@ def windows_from_events(all_times, *, bin_days: float = 0.1, min_gap_days: float
         i = j
     return Windows(np.array(starts), np.array(stops), cadence_days=cadence_days,
                    label=label)
+
+
+def windows_from_sectors(all_times, sectors, *, cadence_days: float = KEPLER_LC_CADENCE_DAYS,
+                         pad_days: float = 0.0, label: str = "sector_spans") -> Windows:
+    """One window per catalogued sector / quarter: the span of its events.
+
+    A flare catalogue that records the sector (TESS) or quarter (Kepler) of
+    every event states, per sector, the earliest and latest time at which
+    *anything* was seen; the union of those spans is the observed time to
+    within the first and last event of each sector.  It cannot resolve the
+    gaps INSIDE a sector (the TESS perigee gap, a Kepler monthly downlink),
+    which is what :func:`windows_from_events` is for; the two are intersected
+    by :func:`intersect_windows`.
+    """
+    t = np.asarray(all_times, dtype=float)
+    s = np.asarray(sectors)
+    ok = np.isfinite(t)
+    try:
+        sf = np.asarray(s, dtype=float)
+        ok &= np.isfinite(sf)
+        s = sf
+    except (TypeError, ValueError):
+        pass
+    t, s = t[ok], s[ok]
+    if not len(t):
+        return Windows(np.zeros(0), np.zeros(0), cadence_days=cadence_days, label=label)
+    starts, stops = [], []
+    for val in np.unique(s):
+        sel = s == val
+        starts.append(float(t[sel].min()) - float(pad_days))
+        stops.append(float(t[sel].max()) + float(pad_days))
+    return Windows(np.array(starts), np.array(stops), cadence_days=cadence_days, label=label)
+
+
+def intersect_windows(a: Windows, b: Windows, label: str | None = None) -> Windows:
+    """The observed time common to two window models."""
+    starts, stops = [], []
+    j = 0
+    for s0, e0 in zip(a.starts, a.stops, strict=False):
+        while j < b.n and b.stops[j] <= s0:
+            j += 1
+        k = j
+        while k < b.n and b.starts[k] < e0:
+            lo, hi = max(s0, float(b.starts[k])), min(e0, float(b.stops[k]))
+            if hi > lo:
+                starts.append(lo)
+                stops.append(hi)
+            k += 1
+    return Windows(np.array(starts), np.array(stops), cadence_days=a.cadence_days,
+                   t_ref=a.t_ref, label=label if label is not None else f"{a.label}&{b.label}")
 
 
 def star_windows(times, mission: Windows, *, pad_days: float = 0.5,
@@ -310,5 +367,5 @@ def guess_time_system(times, mission: str = "") -> str:
 
 __all__ = ["KEPLER_LC_CADENCE_DAYS", "KEPLER_QUARTERS_BKJD", "TESS_2MIN_CADENCE_DAYS",
            "TESS_ORBIT_DAYS", "TESS_SECTOR_DAYS", "Windows", "guess_time_system",
-           "kepler_quarter_windows", "star_windows", "tess_sector_windows",
-           "windows_from_events"]
+           "intersect_windows", "kepler_quarter_windows", "star_windows",
+           "tess_sector_windows", "windows_from_events", "windows_from_sectors"]

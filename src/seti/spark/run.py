@@ -1062,7 +1062,8 @@ def assess(conf: dict, out_dir: Path) -> dict:
 def spark_run(stage: str = "all", out_dir: Path | str = "results/spark", *, shard: str | None = None,
               config: dict | None = None, fields: list[str] | None = None, boxes: list[str] | None = None,
               max_images: int | None = None, max_seeds: int | None = None, max_units: int | None = None,
-              no_denominator: bool = False, offline: bool = False) -> dict:
+              no_denominator: bool = False, offline: bool = False,
+              probe_skip_spherex: bool = False) -> dict:
     conf = config or load_spark_config()
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -1080,7 +1081,8 @@ def spark_run(stage: str = "all", out_dir: Path | str = "results/spark", *, shar
             return r.text if r.status_code == 200 else f"HTTP {r.status_code}"
     result: dict = {}
     if stage in ("probe", "all"):
-        result["probe"] = probe(conf, out, irsa_query=irsa, esa_query=esa, fetch_fn=fetch, http_get=http)
+        result["probe"] = probe(conf, out, irsa_query=irsa, esa_query=esa, fetch_fn=fetch, http_get=http,
+                                skip_spherex=probe_skip_spherex)
     if stage in ("euclid", "all"):
         result["euclid"] = euclid_stage(conf, out, shard=i, n_shards=n, irsa_query=irsa, esa_query=esa,
                                         fields=fields, max_units=max_units, with_denominator=not no_denominator)
@@ -1106,6 +1108,8 @@ def _add_arguments(p: argparse.ArgumentParser) -> None:
     p.add_argument("--max-units", type=int, default=None, help="cap on (field, strip) units per shard")
     p.add_argument("--no-denominator", action="store_true", help="skip the stars-with-spectra strip queries")
     p.add_argument("--offline", action="store_true", help="no network (writes NO_DATA_REACHED ledgers)")
+    p.add_argument("--probe-skip-spherex", action="store_true",
+                   help="probe stage: Euclid + Gaia only (no SPHEREx product download)")
 
 
 def _cmd_spark(args, _cfg=None):
@@ -1113,7 +1117,8 @@ def _cmd_spark(args, _cfg=None):
                     fields=[x for x in args.fields.split(",") if x] or None,
                     boxes=[x for x in args.boxes.split(",") if x] or None,
                     max_images=args.max_images, max_seeds=args.max_seeds, max_units=args.max_units,
-                    no_denominator=args.no_denominator, offline=args.offline)
+                    no_denominator=args.no_denominator, offline=args.offline,
+                    probe_skip_spherex=getattr(args, "probe_skip_spherex", False))
     if "summary" in res:
         s = res["summary"]
         print(json.dumps({"verdict": s.get("verdict"), "stage_counts": s.get("stage_counts"),

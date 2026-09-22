@@ -1544,3 +1544,281 @@ def test_known_columns_from_a_non_tap_listing_are_unquoted_too():
 
     cols = acq.table_columns("J/X/1/t", query_fn=query_fn, known=['"KIC"', "E"])
     assert cols == ["KIC", "E"]
+
+
+# ---------------------------------------------------------------------------
+# The MEASURED VizieR column names (results/arc/probe.json), which the first
+# dispatch never saw: Yang & Liu's Begin/End, Okamoto's and Shibayama's Date,
+# Tu+2022's PDate.  A pattern set that cannot name these cannot scan a star.
+# ---------------------------------------------------------------------------
+def test_measured_vizier_flare_tables_resolve_their_time_columns():
+    yang = ["recno", "KIC", "Q", "Begin", "End", "logE"]
+    score, r, why = acq.score_event_table(yang)
+    assert score > 0 and why == "usable", (score, r, why)
+    assert r["star_id"] == "KIC" and r["t_start"] == "Begin" and r["t_end"] == "End"
+    assert r["energy"] == "logE" and r["sector"] == "Q" and "t_peak" not in r
+    tu = ["recno", "ID", "Sector", "Source", "PeakNum", "Label", "PDate", "Lum", "Energy",
+          "Duration", "File"]
+    score, r, _ = acq.score_event_table(tu)
+    assert score > 0 and r["star_id"] == "ID" and r["t_peak"] == "PDate"
+    assert r["sector"] == "Sector" and r["energy"] == "Energy" and r["duration"] == "Duration"
+    okamoto = ["recno", "KIC", "Teff", "e_Teff", "Rstar", "E_Rstar", "e_Rstar", "Prot", "e_Prot",
+               "Amp", "Kemag", "Aspot", "Date", "Dur", "E", "Flag", "_RA", "_DE"]
+    score, r, _ = acq.score_event_table(okamoto)
+    assert score > 0 and r["t_peak"] == "Date" and r["prot"] == "Prot" and r["energy"] == "E"
+    assert r["ra"] == "_RA" and r["dec"] == "_DE"
+    shibayama = ["recno", "KIC", "BVAmp", "Date", "FAmp", "Dur", "E"]
+    score, r, _ = acq.score_event_table(shibayama)
+    assert score > 0 and r["t_peak"] == "Date"
+    gunther = ["recno", "TIC", "Sec", "Outbst", "Flare", "tpeak", "e_tpeak", "E_tpeak", "Amp",
+               "Ebol", "Tmag", "Teff", "Rad", "logg", "SpT", "Prot-t", "Prot-k", "Prot", "Dup"]
+    score, r, _ = acq.score_event_table(gunther)
+    assert score > 0 and r["t_peak"] == "tpeak" and r["star_id"] == "TIC"
+    assert r["energy"] == "Ebol" and r["prot"] == "Prot" and r["sector"] == "Sec"
+    # Davenport 2016 table1 is a per-star FFD summary, not an event list
+    dav = ["recno", "KIC", "g-i", "Mass", "Prot", "Nfl", "Nfl68", "Lfl/Lkp", "e_Lfl/Lkp",
+           "alpha", "beta", "M14", "C16", "_RA", "_DE"]
+    score, _, why = acq.score_event_table(dav)
+    assert score == 0 and "t_peak/t_start" in why
+    # the rotation tables join on the same id
+    r = acq.resolve_columns(["recno", "ID", "Tmag", "Teff", "logg", "Rad", "Per", "Rvar",
+                             "Flag", "Nflares", "_RA", "_DE"])
+    assert r["star_id"] == "ID" and r["prot"] == "Per"
+
+
+def test_clean_star_id_gives_one_spelling_per_star():
+    assert acq.clean_star_id("KIC 757099") == "757099"
+    assert acq.clean_star_id(757099.0) == "757099"
+    assert acq.clean_star_id(" 757099 ") == "757099"
+    assert acq.clean_star_id("TIC 1234") == "1234"
+    ev = pd.DataFrame({"KIC": ["KIC 1", "1.0", "2"], "Begin": [100.0, 103.0, 110.0],
+                       "End": [100.1, 103.1, 110.2], "Q": [2, 2, 3]})
+    d = acq.discover_event_table("k", "J/ApJS/241/29", query_fn=_FakeTAP("ok", ev))
+    df = acq.fetch_events(d, query_fn=_FakeTAP("ok", ev))
+    assert list(df["star_id"]) == ["1", "1", "2"]
+    assert (df["t_peak_source"] == "t_start").all() and list(df["sector"]) == [2, 2, 3]
+
+
+def test_probe_records_what_the_catalogue_says_its_time_column_is(tmp_path):
+    ev = pd.DataFrame({"KIC": ["1"] * 10, "Tpeak": np.linspace(200.0, 300.0, 10)})
+
+    class TAP(_FakeTAP):
+        def __call__(self, adql):
+            if "TAP_SCHEMA.columns" in adql and "description" in adql:
+                return pd.DataFrame({"column_name": ['"KIC"', '"Tpeak"'], "unit": ["", "d"],
+                                     "description": ["KIC number", "Flare peak (BJD-2454833)"]})
+            return super().__call__(adql)
+
+    from seti.metronome.run import stage_probe
+    conf = load_metronome_config()
+    conf["catalogues"] = {"k": {"mission": "kepler", "preferred": "J/ApJS/241/29",
+                                "keywords": [], "enabled": True}}
+    rep = stage_probe(conf, tmp_path, query_fn=TAP("ok", ev))
+    d = rep["catalogues"]["k"]
+    assert d["time_column"] == "Tpeak"
+    assert "2454833" in d["time_column_meta"]["description"] and d["time_column_meta"]["unit"] == "d"
+    assert d["time_system_guess"] == "BKJD"
+
+
+# ---------------------------------------------------------------------------
+# sector spans: the windows a catalogue's own sector column states
+# ---------------------------------------------------------------------------
+def test_sector_spans_cut_what_the_density_model_bridges():
+    from seti.metronome.run import build_mission_windows
+    from seti.metronome.windows import intersect_windows, windows_from_sectors
+
+    rng = np.random.default_rng(3)
+    # two TESS sectors 40 days apart, 30 sparse events each: too few for the
+    # density model to see the boundary
+    t1 = np.sort(rng.uniform(1325.0, 1352.0, 30))
+    t2 = np.sort(rng.uniform(1392.0, 1419.0, 30))
+    ev = pd.DataFrame({"t_peak": np.concatenate([t1, t2]),
+                       "sector": [1] * 30 + [3] * 30, "star_id": ["a"] * 60})
+    spans = windows_from_sectors(ev["t_peak"], ev["sector"], cadence_days=0.0014)
+    assert spans.n == 2 and spans.starts[0] == t1.min() and spans.stops[1] == t2.max()
+    conf = load_metronome_config()
+    conf["windows"]["min_events_for_data_driven"] = 10 ** 9   # force the sparse route
+    w = build_mission_windows(ev, "tess", conf)
+    assert w.n == 2 and w.total < 60.0, w.as_dict()
+    assert not w.contains(np.array([1370.0]))[0]
+    # the sparse density model alone must not invent gaps INSIDE a sector: at
+    # 60 events over 94 days the conservative rate demands a ~30-day empty run
+    dens = windows_from_events(ev["t_peak"].to_numpy(), cadence_days=0.0014)
+    assert dens.n == 2, dens.as_dict()
+    # without the sector column the same events never claim LESS observed
+    # time than the spans allow
+    w0 = build_mission_windows(ev.drop(columns=["sector"]), "tess", conf)
+    assert w0.total >= w.total
+    # intersection geometry
+    a = Windows(np.array([0.0, 10.0]), np.array([5.0, 20.0]))
+    b = Windows(np.array([3.0, 12.0, 18.0]), np.array([4.0, 15.0, 30.0]))
+    i = intersect_windows(a, b)
+    assert np.allclose(i.starts, [3.0, 12.0, 18.0]) and np.allclose(i.stops, [4.0, 15.0, 20.0])
+
+
+# ---------------------------------------------------------------------------
+# flare re-detection on a light curve, and the clock test on what it finds
+# ---------------------------------------------------------------------------
+def _synthetic_kepler_lightcurve(flare_times, *, seed=5, amp=0.012, noise=1e-3,
+                                 decay_days=0.05):
+    """Four quarters of 30-min cadence with monthly 1-day downlinks, a slow
+    sinusoidal variability and flares at ``flare_times`` with a one-cadence
+    linear rise and an exponential decay (the classical template shape)."""
+    rng = np.random.default_rng(seed)
+    cad = KEPLER_LC_CADENCE_DAYS
+    segs = []
+    for q, (s, e) in enumerate([(170.0, 258.0), (261.0, 349.0), (353.0, 442.0), (444.0, 538.0)]):
+        t = np.arange(s, e, cad)
+        # monthly downlink gaps of a day
+        for g in np.arange(s + 30.0, e, 30.0):
+            t = t[(t < g) | (t > g + 1.0)]
+        f = 1.0 + 0.004 * np.sin(2 * np.pi * t / 11.3) + rng.normal(0.0, noise, len(t))
+        for tf in flare_times:
+            dt = t - tf
+            sel = (dt >= -cad) & (dt < 0.4)
+            shape = np.where(dt[sel] < 0, 1.0 + dt[sel] / cad,
+                             np.exp(-np.clip(dt[sel], 0, None) / decay_days))
+            f[sel] += amp * shape
+        segs.append({"sector": q + 2, "quarter": q + 2, "exptime_s": cad * 86400.0,
+                     "cadence": "long", "time": t, "flux": f * 1e4,
+                     "flux_err": np.full(len(t), noise * 1e4), "n_points": len(t)})
+    return segs
+
+
+def test_redetect_finds_injected_flares_and_the_clock_on_them():
+    from seti.metronome.redetect import (
+        find_flares,
+        lightcurve_windows,
+        redetect_star,
+        stitch_segments,
+    )
+
+    rng = np.random.default_rng(9)
+    P = 3.137
+    ticks = 171.3 + P * np.arange(0, 118)
+    ticks = ticks[rng.random(len(ticks)) < 0.6]
+    ticks = ticks + rng.normal(0.0, 0.002, size=len(ticks))
+    randoms = np.sort(rng.uniform(172.0, 536.0, 25))
+    injected = np.sort(np.concatenate([ticks, randoms]))
+    segs = _synthetic_kepler_lightcurve(injected)
+    t, f, meta = stitch_segments(segs)
+    assert meta["n_segments"] == 4 and abs(meta["cadence_days"] - KEPLER_LC_CADENCE_DAYS) < 1e-6
+    fl = find_flares(t, f, cadence_days=meta["cadence_days"])
+    # every injected flare that fell in observed time is recovered within a cadence
+    w = lightcurve_windows(t, cadence_days=meta["cadence_days"])
+    assert w.n >= 4                                   # quarters split at monthly gaps
+    inj = injected[w.contains(injected)]
+    near = np.array([np.min(np.abs(fl["t_peak"].to_numpy() - x)) for x in inj])
+    assert np.mean(near <= 0.05) >= 0.9, np.mean(near <= 0.05)
+    # and few spurious ones
+    spurious = np.array([np.min(np.abs(inj - x)) > 0.1 for x in fl["t_peak"]])
+    assert spurious.sum() <= 0.1 * len(inj), spurious.sum()
+    rec = redetect_star(segs, {}, scan_conf=SCAN, null_conf=NULL, rng=np.random.default_rng(1),
+                        catalogue_times=injected, period_catalogue=P)
+    assert rec["status"] == "scanned" and rec["catalogue_recovery_frac"] >= 0.9
+    assert abs(rec["rd_period"] / P - 1.0) < 2e-3, rec["rd_period"]
+    assert rec["period_agrees_with_catalogue"] and rec["clock_in_lightcurve"]
+    # 25 of 83 events are random flares: the rms Q is ~0.5 and it is the CORE
+    # route (f_in_window ~0.75, core jitter ~0.002) that confirms the clock
+    assert rec["confirms_catalogue_clock"] and rec["rd_f_in_window"] >= 0.6
+    assert rec["rd_jitter_core"] <= 0.05 and rec["rd_n_core"] >= 8
+
+
+def test_redetect_reports_no_clock_for_random_flares():
+    from seti.metronome.redetect import redetect_star
+
+    rng = np.random.default_rng(11)
+    injected = np.sort(rng.uniform(172.0, 536.0, 60))
+    segs = _synthetic_kepler_lightcurve(injected, seed=12)
+    rec = redetect_star(segs, {}, scan_conf=SCAN, null_conf=NULL, rng=np.random.default_rng(2),
+                        catalogue_times=injected, period_catalogue=3.137)
+    assert rec["status"] == "scanned" and rec["n_flares"] >= 40
+    assert not rec["clock_in_lightcurve"] and not rec["confirms_catalogue_clock"]
+
+
+def test_redetect_stage_degrades_honestly_and_selects_the_shortlist(tmp_path):
+    from seti.metronome.redetect import select_targets, stage_redetect
+
+    vetted = pd.DataFrame({
+        "star_key": ["kepler:1", "kepler:2", "kepler:3", "tess:9"],
+        "star_id": ["1", "2", "3", "9"], "mission": ["kepler"] * 3 + ["tess"],
+        "catalogue": ["k"] * 3 + ["t"], "tier": ["none", "watch", "interest", "none"],
+        "n_events": [500, 20, 30, 9], "period": [1.0, 2.0, 3.0, 4.0],
+        "p_window": [0.5, 0.01, 0.001, 0.9], "Q": [0.1, 0.7, 0.9, 0.2],
+        "jitter": [0.3, 0.1, 0.02, 0.3], "status": ["scanned"] * 4})
+    conf = load_metronome_config()
+    conf["redetect"].update({"top_by_events": 1, "retries": 1, "budget_s": 60.0,
+                             "per_target_budget_s": 10.0})
+    tg = select_targets(vetted, conf["redetect"])
+    assert [t["star_key"] for t in tg] == ["kepler:3", "kepler:2", "kepler:1", "tess:9"]
+    assert tg[0]["why"] == "tier:interest" and tg[2]["why"] == "top_events:k"
+    vetted.to_csv(tmp_path / "stars_vetted.csv", index=False)
+
+    def dead(*a, **k):
+        raise RuntimeError("MAST unreachable")
+
+    rep = stage_redetect(conf, tmp_path, lc_fn=dead, kepler_lc_fn=dead)
+    assert rep["verdict"] == "NO_DATA_REACHED" and rep["n_fetched"] == 0
+    assert rep["n_fetch_failed"] == 4 and rep["n_confirms_catalogue_clock"] == 0
+    assert (tmp_path / "redetect.json").exists()
+
+    def empty(*a, **k):
+        return []
+
+    rep = stage_redetect(conf, tmp_path, lc_fn=empty, kepler_lc_fn=empty)
+    assert rep["verdict"] == "NO_LIGHTCURVES_FOUND" and rep["n_no_lightcurve"] == 4
+    assert all(t["status"] == "NO_LIGHTCURVE" for t in rep["targets"])
+
+    # a real light curve for one star, nothing for the rest: the per-star
+    # record says which, and the stage verdict is a count
+    rng = np.random.default_rng(21)
+    injected = np.sort(rng.uniform(172.0, 536.0, 40))
+
+    def one(kepid, **k):
+        return _synthetic_kepler_lightcurve(injected, seed=22) if str(kepid) == "2" else []
+
+    conf["scan"].update(SCAN)
+    conf["null"].update(NULL)
+    rep = stage_redetect(conf, tmp_path, lc_fn=empty, kepler_lc_fn=one, max_stars=3)
+    assert rep["n_targets"] == 3 and rep["n_fetched"] == 1 and rep["n_scanned"] == 1
+    assert rep["verdict"] == "REDETECT_CONFIRMS_NONE"
+    got = {t["star_key"]: t for t in rep["targets"]}
+    assert got["kepler:2"]["status"] == "scanned" and got["kepler:3"]["status"] == "NO_LIGHTCURVE"
+    assert (tmp_path / "stars_redetect.csv").exists()
+
+
+def test_clock_with_a_natural_flare_background_reaches_strict_quality():
+    """A beacon on a star that also flares: 30% of the events are random.
+
+    MEASURED before the core route existed: Q = 0.49, jitter = 0.13 --- failing
+    even the watch thresholds at p ~ 1e-64 --- and gap_integer_frac 0.56, which
+    would have tripped bursty_random.  The core numbers say what the ticks do.
+    """
+    w = kepler_windows_short()
+    P = 3.137
+    ticks = clock_events(w, P, w.starts[0] + 1.3, duty=0.6, jitter_days=0.002, seed=31)
+    noise = poisson_events(w, int(0.45 * len(ticks)), seed=32)
+    t = np.sort(np.concatenate([ticks, noise]))
+    r = analyze(t, w, seed=33)
+    assert r["status"] == "scanned" and abs(r["period"] / P - 1.0) < 2e-3, r["period"]
+    # the ±0.15 core still admits ~30% x 0.3 of the background, so its jitter
+    # is not the ticks' 0.002 but stays well under the strict 0.05
+    assert r["f_in_window"] >= 0.6 and r["jitter_core"] <= 0.05 and r["n_core"] >= 8
+    assert r["p_window"] < 1e-3
+    assert r["gap_integer_frac_core"] >= 0.6
+    r["fdr_significant"] = r["fdr_watch"] = True
+    v = vet_star(r, {"mission": "kepler", "prot": 11.0, "catalogued_periods": [],
+                     "variability_catalogues_reached": True})
+    assert v["tier"] == "candidate", (v, r["Q"], r["jitter"], r["gap_integer_frac"])
+    assert "bursty_random" not in v["flags"] and "jitter_too_large" not in v["flags"]
+    # and the rotator is still nothing like a clock on the core route
+    rot = rotation_events(w, 2.5, 200, seed=34)
+    rr = analyze(rot, w, seed=35)
+    assert rr["f_in_window"] < 0.4 or rr["jitter_core"] > 0.05, (rr["f_in_window"],
+                                                                 rr["jitter_core"])
+
+
+def test_redetect_is_never_part_of_stage_all():
+    from seti.metronome.run import STAGE_REDETECT, STAGES
+
+    assert STAGE_REDETECT not in STAGES

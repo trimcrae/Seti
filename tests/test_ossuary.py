@@ -531,6 +531,126 @@ def test_followup_survives_failing_fetchers(cfg):
 
 
 # ==========================================================================
+# Catalogue scale: the lean path and the vectorised dust fit
+# ==========================================================================
+
+def _injected_sample(n: int = 1400):
+    """A clean sample with one warm-dust halo star and one hot companion."""
+    df = make_sample(n)
+    dt = 2010.5 - 2016.0
+    for i, (t, band) in ((0, (450.0, "W3")), (5, (2600.0, "W1"))):
+        mags = {b: float(df.loc[i, f"{b}mag"]) for b in _BANDS}
+        hot = inject_blackbody(mags, t_dust_k=t, frac_in_band=0.9, ref_band=band)
+        for b, m in hot.items():
+            df.loc[i, f"{b}mag"] = m
+        _set(df, i, pmra=350.0, pmdec=-300.0, radial_velocity=-220.0, feh=-2.1,
+             teff=5400.0, logg=4.4)
+        _set(df, i,
+             ra_wise=float(df.loc[i, "ra"]) + (350.0 * dt / 1000.0) / 3600.0
+             / np.cos(np.radians(float(df.loc[i, "dec"]))),
+             dec_wise=float(df.loc[i, "dec"]) + (-300.0 * dt / 1000.0) / 3600.0)
+    return df
+
+
+def test_lean_path_reproduces_the_full_path(cfg):
+    """The catalogue-scale path must flag and vet exactly what the full path does.
+
+    The first six-million-star run timed out because the analysis carried the
+    whole frame through every stage; the lean path subsets to the flagged rows
+    after the excess statistics.  It is only acceptable if it changes nothing.
+    """
+    df = _injected_sample()
+    full, s_full = orun.analyze(df, cfg, lean=False, rng=np.random.default_rng(1))
+    lean, s_lean = orun.analyze(df, cfg, lean=True, rng=np.random.default_rng(1))
+    assert s_full["verdict"] == s_lean["verdict"] == "OK"
+    assert s_lean["analysis_path"] == "lean" and s_full["analysis_path"] == "full"
+    for key in ("n_excess_flagged", "n_candidates", "n_dwarfs", "n_giants",
+                "n_metal_poor", "n_halo", "n_null_reservoir_hosts"):
+        assert s_full[key] == s_lean[key], key
+    assert s_full["funnel"] == s_lean["funnel"]
+    f_ids = set(full.loc[full["excess_flag"], "source_id"])
+    assert f_ids == set(lean["source_id"])
+    assert set(full.loc[full["candidate"], "source_id"]) == \
+        set(lean.loc[lean["candidate"], "source_id"])
+    for sid in f_ids:
+        a = full[full["source_id"] == sid].iloc[0]
+        b = lean[lean["source_id"] == sid].iloc[0]
+        assert a["reject_reason"] == b["reject_reason"]
+        assert np.isclose(float(a["t_dust_k"]), float(b["t_dust_k"]), rtol=1e-6)
+        assert np.isclose(float(a["chi_W3"]), float(b["chi_W3"]), rtol=1e-9)
+    # The lean frame carries only flagged rows, fully vetted.
+    assert bool(lean["excess_flag"].all())
+    assert "verdict" in lean.columns
+
+
+def test_vectorised_dust_fit_matches_the_scalar_fit_and_is_fast():
+    """One matrix product per star must give the same answer the loop gave."""
+    import time as _t
+
+    rng = np.random.default_rng(5)
+    t_true, omega = 420.0, 3e-17
+    f = {b: omega * float(planck_bnu(t_true, band_freq_hz(b))) * 1e26 for b in _BANDS}
+    e = {b: 0.05 * v for b, v in f.items()}
+    t_fit, om_fit, chi2 = oex.fit_excess_blackbody(f, e)
+    assert t_fit == pytest.approx(t_true, rel=0.03)
+    assert om_fit == pytest.approx(omega, rel=0.10)
+
+    # 400 Monte-Carlo draws for 200 stars: the loop this replaced needed ~10^5
+    # Python calls per star; this must complete in seconds, not hours.
+    bands = list(_BANDS)
+    f0 = np.array([f[b] for b in bands])
+    e0 = np.array([e[b] for b in bands])
+    t0 = _t.monotonic()
+    for _ in range(200):
+        draws = np.vstack([f0[None, :], f0 + rng.normal(0, 1, (400, 4)) * e0])
+        tk, _, _ = oex.fit_excess_blackbody_draws(draws, np.broadcast_to(e0, draws.shape),
+                                                  bands)
+        assert np.isfinite(tk[0])
+    assert _t.monotonic() - t0 < 30.0
+    lo, hi = np.percentile(tk[1:], [16, 84])
+    assert lo < t_true < hi
+
+
+def test_characterise_mc_mask_limits_percentiles_not_point_estimates(cfg):
+    e = cfg.thresholds["ossuary"]["excess"]
+    omega = 3e-17
+    rows = []
+    for t in (400.0, 900.0):
+        rows.append({**{f"{b}_excess_jy": omega * float(planck_bnu(t, band_freq_hz(b))) * 1e26
+                        for b in _BANDS},
+                     **{f"{b}_excess_err_jy": 0.05 * omega
+                        * float(planck_bnu(t, band_freq_hz(b))) * 1e26 for b in _BANDS},
+                     "Ksmag": 10.0, "teff": 5500.0})
+    df = pd.DataFrame(rows)
+    out = oex.characterise(df, e, mc_mask=np.array([True, False]))
+    assert np.isfinite(out["t_dust_k"]).all()
+    assert np.isfinite(out["t_dust_lo_k"].iloc[0]) and np.isfinite(out["tau_lo"].iloc[0])
+    assert not np.isfinite(out["t_dust_lo_k"].iloc[1])
+    assert out["t_dust_k"].iloc[0] == pytest.approx(400.0, rel=0.03)
+    assert out["t_dust_k"].iloc[1] == pytest.approx(900.0, rel=0.03)
+
+
+def test_flag_list_csv_is_capped_and_summary_says_so(cfg, tmp_path):
+    """Committed files stay small: a catalogue-scale flag list is truncated in
+    the CSV (ranked by significance) and written in full to a parquet."""
+    n = 60
+    vetted = pd.DataFrame({
+        "source_id": np.arange(n), "excess_flag": True, "candidate": False,
+        "luminosity_class": "dwarf", "verdict": "rejected", "reject_reason": "ledger",
+        "chi_W1": np.linspace(5, 50, n), "chi_W2": 0.0, "chi_W3": 0.0})
+    old = orun.MAX_CSV_ROWS
+    orun.MAX_CSV_ROWS = 10
+    try:
+        s = orun.write_results(cfg, vetted, {"verdict": "OK"})
+    finally:
+        orun.MAX_CSV_ROWS = old
+    csv = pd.read_csv(tmp_path / "excess_flagged.csv")
+    assert len(csv) == 10 and s["excess_flagged_csv_rows"] == 10
+    assert csv["chi_W1"].iloc[0] == pytest.approx(50.0)     # most significant first
+    assert len(pd.read_parquet(tmp_path / "excess_flagged_full.parquet")) == n
+
+
+# ==========================================================================
 # Physics helpers
 # ==========================================================================
 

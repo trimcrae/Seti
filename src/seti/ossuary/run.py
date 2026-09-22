@@ -17,6 +17,7 @@ would read like a null result.
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 import numpy as np
@@ -117,15 +118,109 @@ def _pick_anchor(df: pd.DataFrame) -> str:
     return "G"
 
 
+def _log(msg: str) -> None:
+    """Timestamped progress line, flushed: the runner's stdout is a pipe, and the
+    first catalogue-scale run printed nothing in four hours before it was killed."""
+    print(f"[ossuary {time.strftime('%H:%M:%S')}] {msg}", flush=True)
+
+
+# Above this many rows the analysis runs its memory-lean path: kinematics on a
+# slim frame, excess in chunks, the gauntlet on flagged rows only.  Below it the
+# whole frame is carried (which the offline tests inspect row by row).  Both
+# paths compute identical flags and verdicts; a test asserts that.
+LEAN_ABOVE_ROWS = 300_000
+_EXCESS_CHUNK = 500_000
+
+_KIN_COLS = ("ra", "dec", "parallax", "parallax_error", "parallax_over_error",
+             "pmra", "pmdec", "pmra_error", "pmdec_error",
+             "radial_velocity", "radial_velocity_error", "rv",
+             "phot_g_mean_mag", "g_mag", "logg", "logg_gspspec", "logg_gspphot")
+_KIN_OUT = ("dist_pc", "has_rv", "U_lsr_kms", "V_lsr_kms", "W_lsr_kms",
+            "v_tot_lsr_kms", "v_tan_lsr_kms", "v_tot_err_kms", "kinematic_method",
+            "v_tot_or_bound_kms", "population", "halo_flag")
+
+
+def _kinematics(work: pd.DataFrame, k: dict, s: dict) -> pd.DataFrame:
+    """Kinematics computed on a slim frame and written back as columns.
+
+    ``kinematics.classify`` copies its input twice; on a six-million-row frame
+    with fifty columns that is several gigabytes per copy, so only the columns
+    the calculation reads travel through it.
+    """
+    slim = work[[c for c in _KIN_COLS if c in work.columns]]
+    res = kin.classify(slim, k)
+    for col in _KIN_OUT:
+        if col in res.columns:
+            work[col] = res[col].to_numpy()
+    work["luminosity_class"] = kin.luminosity_class(slim, s).to_numpy()
+    work["M_G"] = kin.absolute_g(slim).to_numpy()
+    work["reduced_pm"] = kin.reduced_proper_motion(slim).to_numpy()
+    return work
+
+
+def _excess_lean(work: pd.DataFrame, usable: dict, e: dict, anchor: str,
+                 chunk: int = _EXCESS_CHUNK) -> tuple[pd.Series, pd.DataFrame]:
+    """Excess statistics in chunks; returns the flag for every row and the
+    full excess columns for the flagged rows only."""
+    flag = pd.Series(False, index=work.index)
+    parts = []
+    n = len(work)
+    for start in range(0, n, chunk):
+        sub = work.iloc[start:start + chunk]
+        ex = exc.compute_excess(sub, usable, e, anchor=anchor)
+        f = exc.select_excess(ex, e)
+        flag.iloc[start:start + chunk] = f.to_numpy()
+        if f.any():
+            parts.append(ex[f])
+        _log(f"excess: rows {min(start + chunk, n):,}/{n:,}, flagged so far "
+             f"{int(flag.sum()):,}")
+    flagged = pd.concat(parts) if parts else work.iloc[0:0].copy()
+    return flag, flagged
+
+
+def _characterise(flagged: pd.DataFrame, c: dict, s: dict, e: dict, anchor: str,
+                  rng) -> pd.DataFrame:
+    """Dust fit for the flagged rows.
+
+    The point estimate is computed for every flagged row.  The Monte-Carlo
+    percentiles are computed only for rows that survive the cheap catalogue
+    gates (WISE quality, the inherited ledger), because those are the only rows
+    whose (T_dust, tau) uncertainty can still influence a verdict -- and a
+    catalogue-scale flag list is dominated by the rows those gates remove.
+    """
+    if not len(flagged):
+        return flagged
+    wq = vetting.wise_quality_gate(flagged, c)["wise_quality_ok"]
+    lg = vetting.ledger_gate(flagged, e, s)["ledger_ok"]
+    mc_mask = (wq & lg).fillna(False).to_numpy(bool)
+    _log(f"dust fit: {len(flagged):,} flagged rows, Monte-Carlo on "
+         f"{int(mc_mask.sum()):,} that pass the catalogue gates")
+    return exc.characterise(flagged, e, anchor=anchor, rng=rng, mc_mask=mc_mask)
+
+
+_DUST_COLS = ("t_dust_k", "t_dust_lo_k", "t_dust_hi_k", "tau", "tau_lo",
+              "tau_hi", "dust_fit_chi2", "n_excess_bands")
+
+
 def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
-            rng: np.random.Generator | None = None) -> tuple[pd.DataFrame, dict]:
-    """Kinematics -> locus -> excess -> dust -> gauntlet.  Pure and offline."""
+            rng: np.random.Generator | None = None,
+            lean: bool | None = None) -> tuple[pd.DataFrame, dict]:
+    """Kinematics -> locus -> excess -> dust -> gauntlet.  Pure and offline.
+
+    ``lean`` selects the catalogue-scale path (default: above
+    ``LEAN_ABOVE_ROWS``).  In lean mode the returned frame holds only the
+    excess-flagged rows, fully vetted; population counts in the summary still
+    cover the whole input.
+    """
     th = cfg.thresholds["ossuary"]
     s, k, e, c = th["sample"], th["kinematics"], th["excess"], th["contamination"]
 
     if df is None or not len(df):
         return pd.DataFrame(), {"verdict": "NO_DATA_REACHED", "n_input": 0,
                                 "note": "empty sample table"}
+    lean = (len(df) > LEAN_ABOVE_ROWS) if lean is None else bool(lean)
+    t0 = time.monotonic()
+    _log(f"analyze: {len(df):,} rows, {'lean' if lean else 'full'} path")
 
     work = df.copy()
     if "G" not in work.columns and "phot_g_mean_mag" in work.columns:
@@ -134,10 +229,8 @@ def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
     anchor = anchor or _pick_anchor(work)
 
     # --- kinematics -------------------------------------------------------
-    work = kin.classify(work, k)
-    work["luminosity_class"] = kin.luminosity_class(work, s)
-    work["M_G"] = kin.absolute_g(work)
-    work["reduced_pm"] = kin.reduced_proper_motion(work)
+    work = _kinematics(work, k, s)
+    _log(f"kinematics done ({time.monotonic() - t0:.0f} s)")
 
     # --- empirical photosphere locus -------------------------------------
     bands = [b for b in ("W1", "W2", "W3", "W4") if f"{b}mag" in work.columns]
@@ -150,6 +243,9 @@ def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
         ref = work
     loci = exc.fit_loci(ref, e, bands=tuple(bands + nir), anchor=anchor)
     usable = {b: loc for b, loc in loci.items() if loc.n_bins > 0}
+    _log(f"locus fitted on {len(ref):,} reference stars: "
+         f"{ {b: loc.n_bins for b, loc in usable.items()} } bins "
+         f"({time.monotonic() - t0:.0f} s)")
 
     if not usable:
         return work, {"verdict": "NO_LOCUS", "n_input": int(len(df)),
@@ -157,56 +253,87 @@ def analyze(df: pd.DataFrame, cfg: Config, *, anchor: str | None = None,
                       "note": "no colour bin reached the minimum occupancy; "
                               "the empirical photosphere could not be built"}
 
-    work = exc.compute_excess(work, usable, e, anchor=anchor)
-    work["excess_flag"] = exc.select_excess(work, e)
+    # Population counts over the WHOLE input, before any subsetting.
+    feh_all = pd.to_numeric(work.get("feh"), errors="coerce")
+    metal_poor_all = (feh_all <= s["feh_max"]).fillna(False)
+    halo_all = work["halo_flag"].fillna(False).astype(bool)
+    population = {
+        "n_dwarfs": int((work["luminosity_class"] == "dwarf").sum()),
+        "n_giants": int((work["luminosity_class"] == "giant").sum()),
+        "n_metal_poor": int(metal_poor_all.sum()),
+        "n_halo": int(halo_all.sum()),
+        "n_null_reservoir_hosts": int((metal_poor_all | halo_all).sum()),
+        "population_counts": {k2: int(v) for k2, v in
+                              work["population"].value_counts().items()},
+        "kinematic_method_counts": {k2: int(v) for k2, v in
+                                    work["kinematic_method"].value_counts().items()},
+    }
 
-    # Dust characterisation only where an excess was flagged (the fit is a
-    # 400-draw Monte Carlo per star and is wasted on the other 99.99%).
-    flagged = work[work["excess_flag"]].copy()
-    if len(flagged):
-        flagged = exc.characterise(flagged, e, anchor=anchor, rng=rng)
-        for col in ("t_dust_k", "t_dust_lo_k", "t_dust_hi_k", "tau", "tau_lo",
-                    "tau_hi", "dust_fit_chi2", "n_excess_bands"):
-            work[col] = np.nan
-            work.loc[flagged.index, col] = flagged[col]
+    if lean:
+        flag, flagged = _excess_lean(work, usable, e, anchor)
+        work["excess_flag"] = flag
+        flagged["excess_flag"] = True
+        flagged = _characterise(flagged, c, s, e, anchor, rng)
+        vetted = vetting.vet(flagged, c, s, e, k) if len(flagged) else flagged
+        n_all = len(work)
+        del work
+    else:
+        work = exc.compute_excess(work, usable, e, anchor=anchor)
+        work["excess_flag"] = exc.select_excess(work, e)
+        # Dust characterisation only where an excess was flagged (the fit is a
+        # 400-draw Monte Carlo per star and is wasted on the other 99.99%).
+        flagged = work[work["excess_flag"]].copy()
+        if len(flagged):
+            flagged = _characterise(flagged, c, s, e, anchor, rng)
+            for col in _DUST_COLS:
+                work[col] = np.nan
+                work.loc[flagged.index, col] = flagged[col]
+        vetted = vetting.vet(work, c, s, e, k)
+        n_all = len(vetted)
+    _log(f"gauntlet done on {int(vetted['excess_flag'].sum()) if len(vetted) else 0:,} "
+         f"flagged rows ({time.monotonic() - t0:.0f} s)")
 
-    # --- contamination gauntlet ------------------------------------------
-    vetted = vetting.vet(work, c, s, e, k)
-    vetted["candidate"] = vetted["excess_flag"] & (vetted["verdict"] == "surviving")
-
-    counts = vetting.funnel_counts(vetted[vetted["excess_flag"]])
-    cirrus = vetting.cirrus_correlation_test(vetted)
+    if len(vetted):
+        vetted["candidate"] = vetted["excess_flag"] & (vetted["verdict"] == "surviving")
+        n_flagged = int(vetted["excess_flag"].sum())
+        counts = vetting.funnel_counts(vetted[vetted["excess_flag"]])
+        rejects = {k2: int(v) for k2, v in
+                   vetted.loc[vetted["excess_flag"], "reject_reason"]
+                   .value_counts().items() if k2}
+        n_cand = int(vetted["candidate"].sum())
+        cirrus = vetting.cirrus_correlation_test(vetted) if not lean else \
+            {"tested": False, "reason": "lean path carries flagged rows only; "
+                                        "tested at follow-up", "n": 0}
+    else:
+        vetted = pd.DataFrame(columns=["excess_flag", "candidate", "verdict",
+                                       "reject_reason", "luminosity_class"])
+        n_flagged, n_cand = 0, 0
+        counts = vetting.funnel_counts(vetted)
+        rejects = {}
+        cirrus = {"tested": False, "reason": "no flagged rows", "n": 0}
 
     summary = {
         "verdict": "OK",
         "anchor": anchor,
+        "analysis_path": "lean" if lean else "full",
         "n_input": int(len(df)),
         # Sky-coverage honesty: rows from declination bands that hit the ADQL row
         # cap are an arbitrary subset (no ORDER BY), so their sky is biased.
         "n_from_row_limited_bands": int(
             pd.to_numeric(df.get("row_limit_hit"), errors="coerce").fillna(0).sum())
         if "row_limit_hit" in df.columns else 0,
-        "n_dwarfs": int((vetted["luminosity_class"] == "dwarf").sum()),
-        "n_giants": int((vetted["luminosity_class"] == "giant").sum()),
-        "n_metal_poor": int(vetted["metal_poor"].sum()),
-        "n_halo": int(vetted["halo_flag"].sum()),
-        "n_null_reservoir_hosts": int(vetted["null_reservoir_host"].sum()),
-        "population_counts": {k2: int(v) for k2, v in
-                              vetted["population"].value_counts().items()},
-        "kinematic_method_counts": {k2: int(v) for k2, v in
-                                    vetted["kinematic_method"].value_counts().items()},
-        "n_excess_flagged": int(vetted["excess_flag"].sum()),
+        **population,
+        "n_excess_flagged": n_flagged,
         "funnel": counts,
-        "reject_reasons": {k2: int(v) for k2, v in
-                           vetted.loc[vetted["excess_flag"], "reject_reason"]
-                           .value_counts().items() if k2},
-        "n_candidates": int(vetted["candidate"].sum()),
+        "reject_reasons": rejects,
+        "n_candidates": n_cand,
         "cirrus_correlation": cirrus,
-        "chance_alignment_budget": vetting.expected_chance_alignments(
-            int(len(vetted)), c),
+        "chance_alignment_budget": vetting.expected_chance_alignments(int(n_all), c),
         "wien_peak_k": {b: exc.wien_peak_k(b) for b in ("W1", "W2", "W3", "W4")},
         "locus": {b: loc.to_dict() for b, loc in usable.items()},
+        "elapsed_s": round(time.monotonic() - t0, 1),
     }
+    _log(f"analyze complete: {n_flagged:,} flagged, {n_cand:,} candidates")
     return vetted, summary
 
 
@@ -284,6 +411,20 @@ _HEADLINE = [
 ]
 
 
+# Committed CSVs stay small: a catalogue-scale flag list is written in full to a
+# parquet that the workflow keeps as an artifact, and the CSV carries the most
+# significant rows.  The summary records both counts.
+MAX_CSV_ROWS = 20_000
+
+
+def _rank_by_significance(df: pd.DataFrame) -> pd.DataFrame:
+    chi = [c for c in ("chi_W1", "chi_W2", "chi_W3") if c in df.columns]
+    if not chi:
+        return df
+    score = df[chi].apply(pd.to_numeric, errors="coerce").max(axis=1)
+    return df.assign(_score=score).sort_values("_score", ascending=False).drop(columns="_score")
+
+
 def write_results(cfg: Config, vetted: pd.DataFrame, summary: dict,
                   followup: pd.DataFrame | None = None) -> dict:
     d = out_dir(cfg)
@@ -292,14 +433,19 @@ def write_results(cfg: Config, vetted: pd.DataFrame, summary: dict,
     if len(vetted):
         flagged = vetted[vetted.get("excess_flag", False)]
         if len(flagged):
-            flagged[cols].to_csv(d / "excess_flagged.csv", index=False)
+            ranked = _rank_by_significance(flagged)
+            ranked[cols].head(MAX_CSV_ROWS).to_csv(d / "excess_flagged.csv", index=False)
+            if len(flagged) > MAX_CSV_ROWS:
+                ranked[cols].to_parquet(d / "excess_flagged_full.parquet", index=False)
+            summary["excess_flagged_csv_rows"] = int(min(len(flagged), MAX_CSV_ROWS))
         cands = vetted[vetted.get("candidate", False)]
         if len(cands):
-            cands[cols].to_csv(d / "candidates.csv", index=False)
+            _rank_by_significance(cands)[cols].to_csv(d / "candidates.csv", index=False)
         giants = vetted[(vetted.get("luminosity_class") == "giant")
                         & vetted.get("excess_flag", False)]
         if len(giants):
-            giants[cols].to_csv(d / "giants_excess.csv", index=False)
+            _rank_by_significance(giants)[cols].head(MAX_CSV_ROWS).to_csv(
+                d / "giants_excess.csv", index=False)
 
     if followup is not None and len(followup):
         fcols = [c for c in _HEADLINE + ["followup_verdict", "neighbour_over_excess",
@@ -416,13 +562,21 @@ def run(cfg: Config | None = None, *, stage: str = "all",
 
     df = pd.read_parquet(sample_path)
     vetted, summary = analyze(df, cfg)
+    del df
     if summary.get("verdict") != "OK":
         return write_results(cfg, vetted, summary)
+
+    # Checkpoint the measurement BEFORE the per-object follow-up: the follow-up
+    # talks to three services per candidate and can fail or run long, and the
+    # first catalogue-scale run lost everything to a step that never finished.
+    write_results(cfg, vetted, summary)
+    _log("summary.json checkpointed before follow-up")
 
     followup = None
     if do_followup and stage in ("followup", "all", "analyze"):
         cands = vetted[vetted["candidate"]].head(max_followup)
         if len(cands):
+            _log(f"follow-up on {len(cands):,} candidates (cap {max_followup})")
             followup = stage_followup(cfg, cands)
     return write_results(cfg, vetted, summary, followup)
 

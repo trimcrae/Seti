@@ -61,6 +61,16 @@ allow). `combined_sig` is therefore an excess over what this spectrum returns fo
 *nothing at all*; `combined_sig_raw` keeps the uncorrected number so the correction is
 visible rather than hidden.
 
+**The bias is subtracted, so it must not be treated as exact.** A null from a handful of
+offsets can land several sigma from the truth, and subtracting such a number from a
+deficit does not merely mis-state a significance — it *creates* a line. The calibration
+exists to stop the estimator inventing absences; it must not be allowed to invent
+presences. So below 12 per-exposure readings nothing is subtracted at all
+(`null_calibrated` says so, next to `null_n_measurements`), and above it the bias's own
+standard error, 1.2533 × MAD / √n, goes into the error bar:
+`err = √((err·sd)² + (se_bias·err)²)`. A thin-but-usable null widens the bar instead of
+sharpening a spurious signal.
+
 ### 3. The stack of the exposures, as a second reference
 
 `stack_exposures()` builds the inverse-variance mean of the exposure HDUs on the coadd's

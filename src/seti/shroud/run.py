@@ -85,6 +85,9 @@ def stage_photometry(sc: dict, df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
     r_xm = float(xm.get("radius_arcsec", 5.0))
     n_real = int(len(df))
     n_real_matched = 0
+    # Nearest-match separation per source, kept so the excess can be measured
+    # as a FUNCTION of radius rather than at one radius chosen in advance.
+    real_sep = np.array([], dtype=float)
     p_aw = out_dir / "xmatch_allwise.parquet"
     if p_aw.exists():
         aw = pd.read_parquet(p_aw)
@@ -92,9 +95,12 @@ def stage_photometry(sc: dict, df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
         if d is not None and "source_id" in aw.columns:
             n_real_matched = int(aw.loc[pd.to_numeric(aw[d], errors="coerce") <= r_xm,
                                         "source_id"].nunique())
+            real_sep = (pd.to_numeric(aw[d], errors="coerce")
+                        .groupby(aw["source_id"]).min().to_numpy(dtype=float))
     elif "n_ir_neighbours" in merged:
         n_real_matched = int((merged["n_ir_neighbours"] > 0).sum())
     n_null = n_null_matched = 0
+    null_sep = np.array([], dtype=float)
     cat = sc.get("acquire", {}).get("catalogs", {}).get(
         "allwise", "vizier:II/328/allwise")
     null_prov = []
@@ -117,12 +123,21 @@ def stage_photometry(sc: dict, df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
             d = acq._dist_col(res)
             sel = res if d is None else res[pd.to_numeric(res[d], errors="coerce") <= r_xm]
             n_null_matched += int(sel["source_id"].nunique())
+            if d is not None:
+                null_sep = np.concatenate([null_sep, (
+                    pd.to_numeric(res[d], errors="coerce")
+                    .groupby(res["source_id"]).min().to_numpy(dtype=float))])
+    radii = [float(x) for x in xm.get(
+        "excess_radii_arcsec", [1.0, 1.5, 2.0, 3.0, 4.0, 5.0])
+        if float(x) <= r_xm]
+    by_radius = vetmod.excess_by_radius(real_sep, null_sep, n_real, n_null, radii)
     stats = vetmod.chance_match_rate_from_null(n_real_matched, n_real,
                                                n_null_matched, n_null)
     stats.update({"n_real": n_real, "n_real_matched": n_real_matched,
                   "n_null": n_null, "n_null_matched": n_null_matched,
                   "offset_arcsec": float(xm.get("offset_null_arcsec", 45.0)),
                   "radius_arcsec": r_xm, "catalog": cat,
+                  "by_radius": by_radius, "best_radius": vetmod.best_radius(by_radius),
                   "realisations": null_prov})
     (out_dir / "null_stats.json").write_text(json.dumps(stats, indent=2,
                                                         default=str))

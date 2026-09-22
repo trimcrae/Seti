@@ -10,6 +10,55 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### GRAVE: the age stack now pays for the catalogue it searches, 2026-09-22
+
+S56 asks whether any horizon in Earth's sedimentary record carries a
+fission-product residue that no non-negative mixture of twelve natural
+reservoirs can build. The screen is per-sample, but nothing is a claim until
+the **age stack** says it recurs at one stratigraphic level across independent
+sections, the way the K–Pg iridium does. That makes the stack the only load
+path to a detection — and it was carrying an uncorrected p.
+
+Thirteen boundary windows were tested at once and any window with
+`p_hypergeom` < 0.01 was promoted. Family-wise that is 1 − 0.99¹³ = **0.122**:
+a spurious "stratigraphic cluster" somewhere in the catalogue about one run in
+eight. `p_hypergeom` is now **Holm-corrected** over the windows that were
+testable at all (those holding ≥ 1 sampled section — a boundary the corpus
+never sampled was never a test, and padding *m* with it only costs power), and
+the promotion rule reads the corrected `p_family` at a family-wise
+`cluster_p` = 0.05. Net of the change the channel is **stricter** than before:
+FWER 0.05, not 0.122. Both p values are reported per window; `summary.json`
+carries `multiple_testing`, `n_boundaries_tested`, `cluster_p_is_family_wise`.
+
+Both positive controls survive with margin — a correction that killed the K–Pg
+iridium would be the wrong correction:
+
+| control | sections | p_raw | p_Holm | m |
+|---|---|---|---|---|
+| injected six-section K–Pg fission cluster | 6 of 9 | 3.97e-4 | 5.16e-3 | 13 |
+| chondritic Ir-anchored impact layer | 5 of 10 | 7.76e-4 | 7.76e-3 | 10 |
+
+and a window that clears 0.01 raw but not the correction (2 candidate sections
+of 10 sampled, against 5 candidate sections in a 300-section corpus,
+p_raw = 9.5e-3 → p_Holm = 0.067 over 7 tested windows) is now held at
+`multi_section_at_background_rate`. The suite asserts that case explicitly.
+26 offline tests pass, ruff clean.
+
+**Data state.** The SGP schema is established on the runner (runs 35738860553,
+35739776468): `POST sgp-search.io/api/frontend/post-paged`, 94 field codes
+accepted, **114,688 samples** behind the [0, 4000] Ma filter, pages of 5,000
+not capped. Ru and Rh are *not served*, so the light peak rests on Mo, Pd and
+Te. EarthChem's REST service is gone (ten-rung endpoint ladder recorded);
+GEOROC/DIGIS supplies the tephra reference. **No screen has run yet**: the
+full-corpus run `35742065160` was dispatched 10:41 EDT and was still *queued*
+at 11:50 EDT behind the shared Actions concurrency. `results/grave/` holds
+`probe.json` only — there is no verdict about the sedimentary record yet, and
+nothing here is a statement about it.
+
+Next decisive action: land 35742065160 and read `summary.json` — the funnel,
+which of the eleven named vetoes fired and how often, and whether any boundary
+window reaches `STRATIGRAPHIC_CLUSTER` under the corrected p.
+
 ### ARC closed out: 4,206 stars on the ceiling, one left standing (KIC 9418692), 2026-09-22
 
 S59 (`docs/arc.md`, §9 carries every number). The stage-1 assess stage had

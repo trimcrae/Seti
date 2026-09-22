@@ -572,3 +572,71 @@ Independently confirmed on the metal: run 35738088082's eight acquire+screen
 shards each installed pandas 3.0.6 on the runner and completed, so the acquire,
 ensemble-correction and rise-test paths are proven at that version against real
 archive data, not only in tests.
+
+### 7.3 Run 35738088082 — the upload fix on the real service, and 846/846
+
+Dispatched `stage=all mode=fields shards=8 route=upload
+sample_from_run_id=35039105536`. The parent was the 846-star Gaia DR3 x AllWISE
+sample already pulled by run 35039105536; reusing it took 1 s in the `sample`
+job instead of the 2 h 22 min that killed the previous dispatch.
+
+**The upload question is settled.** Every acquire shard logged the rung it
+used:
+
+```
+[ignition] upload[pyvo_sync/long] 83 stars -> 253114 rows in 100 s   (shard 0)
+[ignition] upload[pyvo_sync/long] 80 stars -> 281058 rows in  93 s   (shard 2)
+[ignition] acquire s0of8: OK ok=106 zero=0 failed=0 route=upload
+[ignition] acquire s2of8: OK ok=106 zero=0 failed=0 route=upload
+```
+
+`pyvo_sync/long` is the top rung of the ladder with `sid` serialised as VOTable
+`long`. IRSA's TAP accepted it. No shard fell through to the `char` rung, none
+took the one recorded 32-bit downgrade, and `Unimplemented data type:
+unicodeChar` does not appear anywhere in the run. The same conclusion comes
+independently from run 35740159635's probe, which walked the ladder live:
+
+```
+neowise_upload.label   = neowise_upload[pyvo_sync]_2   status OK   7919 rows
+neowise_upload_transport = pyvo_sync
+neowise_route_recommended = upload        (it had never been recommended before)
+verdict = ALL_ROUTES_REACHABLE
+```
+
+**And the 314 lost stars are back.** Denominators, against the 846:
+
+| | run 35039105536 | run 35738088082 |
+|---|---|---|
+| parents attempted | 336 of 846 | **846 of 846** |
+| stars with NEOWISE rows | 172 | **846** |
+| stars screened | 172 | **846** |
+| acquire failures | 314 | **0** |
+
+Per-shard: 106,106,106,106,106,106,105,105 screened = 846, with `ok=N zero=0
+failed=0` on every shard. A shard's whole star list now comes back in two to
+three minutes of wall clock.
+
+**The ensemble zero-point correction has now been tested on real data, and it
+holds.** That was the open question: 97 of the previous run's 172 screened
+stars were `FADING` at 5 sigma in *both* bands, which is not 56% of the sky
+dimming but the survey's own zero point, and the ensemble correction that was
+built to remove it had only ever been exercised against synthetic drift.
+Across the 846:
+
+| verdict | run 35039105536 (of 172) | run 35738088082 (of 846) |
+|---|---|---|
+| `FADING` | 97 (56.4%) | **17 (2.0%)** |
+| `NOT_RISING` | 37 | 780 |
+| `IMPULSIVE_SHAPE` | 12 | 25 |
+| `INSUFFICIENT_EPOCHS` | 26 | 23 |
+| `SCAN_SYSTEMATIC` | — | 1 |
+| rise candidates | 0 | 0 |
+
+The veto counts sum to 846 exactly, so no star is unaccounted for. A `FADING`
+fraction of 2.0% is what a real population of stars should give; 56.4% was the
+instrument. The correction took.
+
+**What the run did not find.** Zero rise candidates in 846 stars. That is a
+clean result on a channel that now demonstrably works end to end, and per
+`CLAUDE.md` it is a reason to widen the question, not a deliverable: 846 stars
+is a pilot, and the `|b| > 15` tiles sweep is the scale axis that follows.

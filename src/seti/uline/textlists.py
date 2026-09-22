@@ -108,12 +108,13 @@ def read_fixed_width(spec: list[dict], text: str, *, min_line_len: int | None = 
     """Apply a byte-by-byte ``spec`` to the data part of ``text``.
 
     The data are the lines **after the last rule** (``-----``) that reach the
-    end of the **first** column and are not comments.  Numeric columns are
-    coerced with ``errors="coerce"`` so a blank or an upper-limit marker
-    becomes NaN rather than killing the row.
+    end of the **narrowest** column — in a byte-by-byte block, the first one —
+    and are not comments.  Numeric columns are coerced with
+    ``errors="coerce"`` so a blank or an upper-limit marker becomes NaN rather
+    than killing the row.
 
-    The length test is deliberately the first column's byte range and not the
-    last's.  A U-line table's trailing columns are exactly the ones a
+    The length test is deliberately that column's byte range and not the
+    widest's.  A U-line table's trailing columns are exactly the ones a
     publisher leaves blank — an intensity that was not measured, a note that is
     absent — and trailing blanks are stripped by every text transport, so a
     test against the widest column silently *drops* the rows with missing

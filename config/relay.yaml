@@ -27,6 +27,11 @@ beams:
   - {name: overfilled_5deg,   theta_deg: 5.0}                            # deliberately over-filled
 
 geometry:
+  # wall clock on the WHOLE beam loop.  Beams run narrowest first, so the cheap,
+  # scientifically central ones always finish; a beam the clock cuts short is
+  # recorded as PARTIAL_COUNTS / NOT_COMPUTED and its count is never compared
+  # with the analytic expectation or used in the theta^2 fit.
+  budget_s: 9000
   min_separation_pc: 0.05        # ~10^4 AU: closer is a bound binary, not a field pair
   row_cap: 4000000               # kept rows per beam (artifact only); counts are always exact
   chunk_candidates: 3000000

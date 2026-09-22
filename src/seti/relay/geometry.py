@@ -48,6 +48,7 @@ it whenever the Earth term is resolved.
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -245,18 +246,24 @@ class PairSearchResult:
     truncated: bool
     per_transmitter_spill: np.ndarray
     per_transmitter_between: np.ndarray
+    counts_complete: bool = True
+    n_receivers_done: int = 0
+    n_receivers: int = 0
 
     def as_dict(self) -> dict:
         return {"n_spillover": int(self.n_spillover), "n_between": int(self.n_between),
                 "n_directed_pairs": int(self.n_spillover + self.n_between),
                 "n_candidates_tested": int(self.n_candidates_tested),
-                "n_kept_rows": int(self.n_kept_rows), "rows_truncated": bool(self.truncated)}
+                "n_kept_rows": int(self.n_kept_rows), "rows_truncated": bool(self.truncated),
+                "counts_complete": bool(self.counts_complete),
+                "n_receivers_done": int(self.n_receivers_done),
+                "n_receivers": int(self.n_receivers)}
 
 
 def find_pairs(xyz: np.ndarray, theta_rad: float, *, d_max_pc: float | None = None,
                keep_transmitters=None, row_cap: int = 5_000_000,
                chunk_candidates: int = 4_000_000, min_separation_pc: float = 0.0,
-               progress=None) -> PairSearchResult:
+               progress=None, deadline: float | None = None) -> PairSearchResult:
     """Every directed pair (T, R) whose transmitter angle is ``<= theta/2``.
 
     ``xyz`` is (N, 3) in parsecs.  Counts are exact for the whole set; ROWS are
@@ -265,6 +272,12 @@ def find_pairs(xyz: np.ndarray, theta_rad: float, *, d_max_pc: float | None = No
     without storing (``truncated`` says so).  ``min_separation_pc`` drops pairs
     closer than a bound-binary scale (the brief's field-star network, not a
     binary talking to itself).
+
+    ``deadline`` is a ``time.monotonic()`` value past which the receiver loop
+    stops.  The counts are then over the receivers actually processed, NOT over
+    the sample, and ``counts_complete`` is False --- such a count is not a
+    measurement of the sky and every caller must say so rather than compare it
+    with the analytic expectation.
     """
     from scipy.spatial import cKDTree
 
@@ -290,7 +303,8 @@ def find_pairs(xyz: np.ndarray, theta_rad: float, *, d_max_pc: float | None = No
     truncated = False
 
     if n == 0:
-        return PairSearchResult(_empty_pairs(), 0, 0, 0, 0, False, per_t_spill, per_t_between)
+        return PairSearchResult(_empty_pairs(), 0, 0, 0, 0, False, per_t_spill, per_t_between,
+                                True, 0, 0)
 
     # Search radii around each RECEIVER: the exact bounds at the widest allowed
     # d_T (a superset of every qualifying separation; the exact angle decides).
@@ -301,7 +315,12 @@ def find_pairs(xyz: np.ndarray, theta_rad: float, *, d_max_pc: float | None = No
     order = np.argsort(d)               # nearby receivers have the widest caps
     starts = _chunk_starts(exp_per_r[order], chunk_candidates)
 
+    complete = True
+    done = 0
     for c0, c1 in zip(starts[:-1], starts[1:], strict=False):
+        if deadline is not None and time.monotonic() >= deadline:
+            complete = False
+            break
         rows_r = order[c0:c1]
         for geom, centres, radii in (
             (GEOM_SPILLOVER, u[rows_r], r_spill[rows_r]),
@@ -358,12 +377,13 @@ def find_pairs(xyz: np.ndarray, theta_rad: float, *, d_max_pc: float | None = No
                 kept.append(_pair_frame(t_idx[sel], r_idx[sel], alpha[sel], sep[sel],
                                         d, xyz, geom, theta_rad))
                 n_kept += int(sel.sum())
+        done = int(c1)
         if progress is not None:
-            progress(int(c1), n, n_spill, n_between)
+            progress(done, n, n_spill, n_between)
 
     pairs = pd.concat(kept, ignore_index=True) if kept else _empty_pairs()
     return PairSearchResult(pairs, n_spill, n_between, n_tested, n_kept, truncated,
-                            per_t_spill, per_t_between)
+                            per_t_spill, per_t_between, complete, done, n)
 
 
 def _chunk_starts(expected: np.ndarray, budget: int) -> list[int]:

@@ -1108,6 +1108,13 @@ def _cmd_roman(args, cfg):
     return _roman_main(list(args.rest))
 
 
+# --- ARC stage 2 ---
+def _cmd_arc_stage2(args, cfg):
+    from .arc.stage2 import main as _arc_stage2_main
+
+    return _arc_stage2_main(list(args.rest))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="seti", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2306,6 +2313,14 @@ def main(argv=None):
                             "cool-dwarf photospheres (GALAH DR4 / APOGEE DR17)")
     _fallout_args(p)
     p.set_defaults(func=_cmd_fallout)
+
+    # --- ARC stage 2 ---
+    p = sub.add_parser("arc-stage2",
+                       help="ARC stage 2 (S59): IS THE FLARE ON THE TARGET? Kepler/TESS pixel "
+                            "centroids per exceeding flare, the Gaia census, Berger+2020 / "
+                            "FLAME parameters and xi recomputed; flags pass to seti.arc.stage2")
+    p.add_argument("rest", nargs=argparse.REMAINDER)
+    p.set_defaults(func=_cmd_arc_stage2)
 
     args = parser.parse_args(argv)
     cfg = load_config()

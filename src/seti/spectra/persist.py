@@ -1608,9 +1608,18 @@ def epoch_series(client, ra: float, dec: float, exclude_id: str, lam0: float, mo
 
 
 def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persistent_2exp",
-                                                        "stack_only", "partial")) -> dict:
-    """Run the comparison-sample control on every line still standing."""
+                                                        "stack_only", "partial"),
+             max_seconds: float = 8400.0) -> dict:
+    """Run the comparison-sample control on every line still standing.
+
+    Writes ``control.json`` after every line and stops when ``max_seconds`` is
+    spent, so a job that runs long commits what it measured instead of being
+    killed with nothing: three samples of 40 spectra plus an epoch series per
+    line is a lot of SPARCL traffic and the number of lines is not known in
+    advance.
+    """
     import pandas as pd
+    t_start = time.time()
     root = Path(root)
     out_dir = root / "results" / "spectra_persist"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -1716,8 +1725,23 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
               f"any-star frac>=3: {an.get('frac_ge3')} (n={an.get('n_measured')}), "
               f"same-plate frac>=3: {sp.get('frac_ge3')} (n={sp.get('n_measured')})")
         entries.append(_json_safe(e))
+        # Commit-what-you-have after every line: the job has a wall-clock cap
+        # and the traffic per line is not known in advance.
+        rep = {"n": len(entries), "n_lines_selected": int(len(sel)),
+               "n_control_requested": int(n), "elapsed_s": round(time.time() - t_start, 1),
+               "stopped_early": False, "entries": entries}
+        (out_dir / "control.json").write_text(json.dumps(_json_safe(rep), indent=2))
+        if time.time() - t_start > max_seconds:
+            rep["stopped_early"] = True
+            rep["stopped_reason"] = (f"time budget {max_seconds:.0f}s spent after "
+                                     f"{len(entries)} of {len(sel)} lines")
+            print(f"[persist] {rep['stopped_reason']}")
+            (out_dir / "control.json").write_text(json.dumps(_json_safe(rep), indent=2))
+            return rep
         time.sleep(0.5)
-    rep = {"n": len(entries), "n_control_requested": int(n), "entries": entries}
+    rep = {"n": len(entries), "n_lines_selected": int(len(sel)),
+           "n_control_requested": int(n), "elapsed_s": round(time.time() - t_start, 1),
+           "stopped_early": False, "entries": entries}
     (out_dir / "control.json").write_text(json.dumps(_json_safe(rep), indent=2))
     return rep
 

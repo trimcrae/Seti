@@ -724,6 +724,25 @@ class _EpochSparcl(_FakeSparcl):
         return out
 
 
+def test_controls_writes_after_every_line_and_stops_on_its_clock(tmp_path, monkeypatch):
+    """Three samples of 40 spectra plus an epoch series per line is a lot of
+    traffic and the number of lines is not known in advance.  A job that runs
+    long must commit what it measured, not be killed with nothing."""
+    out = tmp_path / "results" / "spectra_persist"
+    out.mkdir(parents=True)
+    pd.DataFrame([{"spec_id": f"s{k}", "identifier": f"041{k}-51942-0465",
+                   "wavelength": 6800.0 + k, "search_mode": "emission",
+                   "persistence_class": "persistent", "combined_sig": 10.0 - k,
+                   "coadd_ew_A": 1.0, "data_release": "SDSS-DR17", "redshift": 0.0,
+                   "simbad_otype": "LM*", "simbad_sptype": "M1V"} for k in range(4)]
+                 ).to_csv(out / "persistence.csv", index=False)
+    monkeypatch.setattr(persist, "_make_client", lambda *a, **k: _FakeSparcl(6800.0))
+    rep = persist.controls(tmp_path, n=3, max_seconds=0.0)
+    assert rep["stopped_early"] and rep["n"] == 1 and rep["n_lines_selected"] == 4
+    on_disk = json.loads((out / "control.json").read_text())
+    assert on_disk["n"] == 1 and on_disk["entries"][0]["identifier"] == "0410-51942-0465"
+
+
 def test_control_sample_takes_an_explicit_constraint_for_the_same_plate():
     """The same-plate sample is not about stars: it asks whether OTHER FIBRES
     of the same exposure set show the feature at the same wavelength, which is

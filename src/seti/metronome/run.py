@@ -566,6 +566,30 @@ def _prot_for(row, rot: pd.DataFrame) -> tuple[float, str | None]:
     return float("nan"), None
 
 
+def _fill_positions_from_rotation(pos: pd.DataFrame, ids, rot: pd.DataFrame) -> pd.DataFrame:
+    """Add positions from the acquired rotation / star tables for the ids the
+    KIC / TIC round trip did not return.  Pure; returns a new frame."""
+    cols = ["star_id", "ra", "dec"]
+    have = pos if pos is not None and len(pos) else pd.DataFrame(columns=cols)
+    if len(have):
+        have = have.dropna(subset=["ra", "dec"])
+    known = set(have["star_id"].astype(str)) if len(have) else set()
+    want = [str(i) for i in ids if str(i) not in known]
+    if not want or rot is None or not len(rot) or not {"ra", "dec"} <= set(rot.columns):
+        return have[cols] if len(have) else have
+    r = rot.copy()
+    r["star_id"] = r["star_id"].astype(str)
+    r = r[r["star_id"].isin(want)]
+    extra = pd.DataFrame({"star_id": r["star_id"].to_numpy(),
+                          "ra": pd.to_numeric(r["ra"], errors="coerce").to_numpy(),
+                          "dec": pd.to_numeric(r["dec"], errors="coerce").to_numpy()})
+    extra = extra.dropna(subset=["ra", "dec"]).drop_duplicates("star_id")
+    if not len(extra):
+        return have[cols] if len(have) else have
+    out = pd.concat([have[cols], extra[cols]], ignore_index=True) if len(have) else extra[cols]
+    return out.drop_duplicates("star_id", keep="first").reset_index(drop=True)
+
+
 def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None, cone_fn=None,
                  records: list[dict] | None = None, log=None,
                  acquire_report: dict | None = None) -> dict:
@@ -651,6 +675,16 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
             ids = sorted({str(r["star_id"]) for r in shortlist if str(r["mission"]) == mission})
             pos = fetch_positions_by_id(ids, mission, query_fn=query_fn, log=log,
                                         tables=conf.get("position_tables"))
+            # The star tables of the flare catalogues themselves carry
+            # positions (Tu+2022's table1 has 71,732 rows with _RA/_DE), and
+            # they are already on disk from the acquire stage.  Using them for
+            # whatever the TIC/KIC round trip missed is what decides whether
+            # the periodic-variable veto can be applied at all: the 2026-09-21
+            # run reached 45.3% of its shortlist, and 13 of its 14 `interest`
+            # stars carried `variability_catalogue_unreached` for want of a
+            # position -- a gap in the VET, not a fact about the stars.
+            pos = _fill_positions_from_rotation(pos, ids,
+                                                rot_by_mission.get(mission, pd.DataFrame()))
             if not len(pos):
                 continue
             v, rch = fetch_variable_context(pos, conf.get("variability_catalogues") or {},

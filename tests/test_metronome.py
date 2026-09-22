@@ -787,6 +787,30 @@ def test_cone_failure_is_per_star_not_per_catalogue():
     assert v["a"] == [("vsx", 0.5, "RRAB")] and "b" not in v
 
 
+def test_positions_fall_back_to_the_acquired_star_tables():
+    """The TIC/KIC round trip reached 45% of the 2026-09-21 shortlist, and the
+    stars it missed could not have the periodic-variable veto applied at all.
+    The flare catalogues' own star tables carry positions and are already on
+    disk, so they fill the gap; the round trip's answer still wins."""
+    from seti.metronome.run import _fill_positions_from_rotation
+
+    pos = pd.DataFrame({"star_id": ["1"], "ra": [10.0], "dec": [1.0]})
+    rot = pd.DataFrame({"star_id": ["1", "2", "3", "4"], "prot": [1.0, 2.0, 3.0, 4.0],
+                        "ra": [99.0, 20.0, 30.0, np.nan],
+                        "dec": [99.0, 2.0, 3.0, np.nan]})
+    out = _fill_positions_from_rotation(pos, ["1", "2", "3", "4"], rot)
+    assert list(out.columns) == ["star_id", "ra", "dec"]
+    assert set(out["star_id"]) == {"1", "2", "3"}          # "4" has no position
+    assert float(out.loc[out["star_id"] == "1", "ra"].iloc[0]) == 10.0   # round trip wins
+    assert float(out.loc[out["star_id"] == "2", "ra"].iloc[0]) == 20.0
+    # a rotation table without positions changes nothing, and neither does an
+    # empty round trip with no rotation table
+    assert len(_fill_positions_from_rotation(pos, ["1", "2"], rot[["star_id", "prot"]])) == 1
+    empty = pd.DataFrame(columns=["star_id", "ra", "dec"])
+    assert len(_fill_positions_from_rotation(empty, ["2"], pd.DataFrame())) == 0
+    assert len(_fill_positions_from_rotation(empty, ["2", "3"], rot)) == 2
+
+
 def test_run_with_empty_archive_is_zero_rows_not_a_null(tmp_path):
     out = tmp_path / "metronome"
     rep = metronome_run(None, stage="all", out_root=out, query_fn=_FakeTAP("zero"),

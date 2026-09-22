@@ -191,12 +191,22 @@ def stage_probe(conf: dict, out: Path, *, fetch_fn=None) -> dict:
             rep["sources"][src] = {"reached": False, "error": repr(exc)[:300]}
     rep["reached"] = {k: bool(v.get("reached")) for k, v in rep["sources"].items()}
     sgp = rep["sources"].get("sgp") or {}
-    # ONLY codes the API individually accepted.  A single invalid code makes the
-    # whole request 400 ("... is not a valid attribute in this search type"), so
-    # the union with the published body would poison every page.
-    acc = sorted(sgp.get("accepted_codes", {}))
-    rep["sgp_show_recommended"] = acc or sorted(conf["sgp"].get("base_show", []))
-    rep["sgp_show_source"] = "probe_accepted_codes" if acc else "config_base_show_fallback"
+    # What acquire may ask for, by what the probe PROVED about each code:
+    #   accepted        -> the API answered and the column appeared: send it.
+    #   silently dropped-> the API answered 200 and ignored it.  Harmless to
+    #                      send, and NOT proof the code is invalid: a valid
+    #                      column that is null in the two sampled rows looks
+    #                      exactly like this.  Send it.
+    #   rejected (400)  -> "... is not a valid attribute in this search type",
+    #                      and one such code fails the WHOLE request.  Never.
+    #   anchor          -> proven by the anchor call itself, which is why the
+    #                      code loop skips them; they must still be requested
+    #                      or the pull comes back with no age and no latitude.
+    acc = set(sgp.get("accepted_codes", {})) | set(sgp.get("silently_dropped", []))
+    acc |= set(conf["sgp"].get("anchor_show", []))
+    acc -= set(sgp.get("rejected_codes", {}))
+    rep["sgp_show_recommended"] = sorted(acc) or sorted(conf["sgp"].get("base_show", []))
+    rep["sgp_show_source"] = "probe_accepted_plus_dropped_plus_anchor" if acc else "config_base_show_fallback"
     rep["verdict"] = "REACHED" if any(rep["reached"].values()) else VERDICT_NO_DATA
     _write(out / "probe.json", rep)
     print(f"[grave] probe: {rep['reached']}; SGP codes accepted: {len(sgp.get('accepted_codes', {}))}")

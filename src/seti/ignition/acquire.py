@@ -83,7 +83,12 @@ IRSA_GATOR = "https://irsa.ipac.caltech.edu/cgi-bin/Gator/nph-query"
 #: one; ``http_sync`` / ``http_async`` put every TAP parameter in the URL and
 #: only the VOTable in the multipart body; ``gator`` is IRSA's own multi-object
 #: search (``spatial=Upload`` with an IPAC table), which is not TAP at all.
-UPLOAD_TRANSPORTS: tuple[str, ...] = ("pyvo_sync", "http_sync", "http_async", "gator")
+#: ``pyvo_async`` is pyvo's own UWS client, added after run 35653615329's probe
+#: showed the hand-rolled async rung getting ``200`` with no ``Location`` header.
+#: The rung order puts the two that the server actually parsed (it reached the
+#: upload table and complained about its *column type*) first.
+UPLOAD_TRANSPORTS: tuple[str, ...] = ("pyvo_sync", "pyvo_async", "http_sync",
+                                      "http_async", "gator")
 
 DEFAULT_ACQUIRE: dict = {
     "route": "auto",              # auto | upload | field | cone
@@ -375,23 +380,62 @@ def upload_query(radius_arcsec: float = 2.5, max_rows: int | None = None,
             f"CIRCLE('ICRS', p.ra, p.dec, {rad}))")
 
 
+def _sid_column(source_id: pd.Series) -> np.ndarray:
+    """``sid`` as a type IRSA's TAP will accept for an uploaded table.
+
+    Run 35653615329's probe walked every rung of the ladder and each one came
+    back with the *same* server-side complaint --- ``INTERNAL_SERVER_ERROR:
+    Unimplemented data type: unicodeChar`` --- so the refusal was never the
+    transport: ``Table.from_pandas`` turned ``source_id.astype(str)`` into a
+    numpy ``<U19`` column, which astropy serialises as VOTable
+    ``datatype="unicodeChar"``, and IRSA's TAP does not implement that type.
+    A Gaia ``source_id`` is an integer by construction, so it goes up as
+    ``long``; anything that will not parse as one falls back to a **byte**
+    string (``datatype="char"``), which IRSA does implement.  The uploaded id
+    is a convenience column only --- rows are assigned to stars locally by
+    exact separation in :func:`group_by_star` --- so neither spelling can
+    change which frames belong to which star.
+    """
+    s = pd.Series(source_id).astype(str)
+    try:
+        return s.astype("int64").to_numpy()
+    except (ValueError, TypeError, OverflowError):
+        return np.array([v.encode("ascii", "replace") for v in s], dtype="S32")
+
+
 def _upload_table(stars: pd.DataFrame, radius_arcsec: float):
     """The positions table (astropy) and the chunk-wide radius in arcsec."""
     from astropy.table import Table
 
     pos = positions_at_neowise_epoch(stars)
     rad = (float(radius_arcsec) + 0.5 * pos["sweep_arcsec"]).astype(float)
-    tbl = Table.from_pandas(pd.DataFrame({
-        "sid": pos["source_id"].astype(str), "ra": pos["ra_mid"].astype(float),
-        "dec": pos["dec_mid"].astype(float), "rad": rad / 3600.0}))
+    tbl = Table()
+    tbl["sid"] = _sid_column(pos["source_id"])
+    tbl["ra"] = pos["ra_mid"].astype(float).to_numpy()
+    tbl["dec"] = pos["dec_mid"].astype(float).to_numpy()
+    tbl["rad"] = (rad / 3600.0).to_numpy()
     return tbl, float(rad.max()) if len(rad) else float(radius_arcsec)
+
+
+def _ascii_string_columns(tbl):
+    """Any remaining unicode column -> ASCII bytes (VOTable ``char``, not ``unicodeChar``).
+
+    Belt and braces for the same refusal: a caller-supplied table, or a future
+    column, must not be able to reintroduce ``unicodeChar``.
+    """
+    out = tbl.copy()
+    for name in out.colnames:
+        if out[name].dtype.kind == "U":
+            out[name] = np.array([str(v).encode("ascii", "replace") for v in out[name]],
+                                 dtype="S64")
+    return out
 
 
 def _votable_bytes(tbl) -> bytes:
     from astropy.io.votable import from_table, writeto
 
     buf = io.BytesIO()
-    writeto(from_table(tbl), buf)
+    writeto(from_table(_ascii_string_columns(tbl)), buf)
     return buf.getvalue()
 
 
@@ -431,7 +475,33 @@ def _t_pyvo_sync(q: str, tbl, timeout_s: float) -> pd.DataFrame:
     import pyvo  # noqa: PLC0415  runner-only
 
     svc = pyvo.dal.TAPService(IRSA_TAP)
-    df = svc.run_sync(q, uploads={"pos": tbl}).to_table().to_pandas()
+    df = svc.run_sync(q, uploads={"pos": _ascii_string_columns(tbl)}).to_table().to_pandas()
+    df.columns = [str(c).lower() for c in df.columns]
+    return df
+
+
+def _t_pyvo_async(q: str, tbl, timeout_s: float) -> pd.DataFrame:
+    """pyvo's own UWS client, which knows how to create, run and poll the job.
+
+    The hand-rolled :func:`_t_http_async` rung got ``200`` with no ``Location``
+    header from IRSA's ``/async`` and so could not find the job URL; pyvo
+    submits the job the way the service expects and follows it itself.
+    """
+    import pyvo  # noqa: PLC0415  runner-only
+
+    svc = pyvo.dal.TAPService(IRSA_TAP)
+    job = svc.submit_job(q, uploads={"pos": _ascii_string_columns(tbl)}, maxrec=None)
+    try:
+        job.run()
+        job.wait(phases=["COMPLETED", "ERROR", "ABORTED"], timeout=float(timeout_s))
+        if str(job.phase).upper() != "COMPLETED":
+            raise RuntimeError(f"UWS job {job.phase}: {str(getattr(job, 'error', ''))[:400]}")
+        df = job.fetch_result().to_table().to_pandas()
+    finally:
+        try:
+            job.delete()
+        except Exception:                              # noqa: BLE001, S110
+            pass
     df.columns = [str(c).lower() for c in df.columns]
     return df
 
@@ -454,6 +524,29 @@ def _t_http_sync(q: str, tbl, timeout_s: float) -> pd.DataFrame:
     return _parse_votable(r.content)
 
 
+def _uws_job_url(r) -> str | None:
+    """The UWS job URL of an ``/async`` submission, from wherever the service put it.
+
+    The 303 ``Location`` header is the standard place, but run 35653615329's
+    probe got ``200`` from IRSA with no ``Location`` at all, so the job
+    document in the body is also read (``<uws:jobId>`` or an ``xlink:href``).
+    """
+    import re  # noqa: PLC0415
+
+    loc = r.headers.get("Location") or ""
+    if "/async/" in loc:
+        return loc.rstrip("/")
+    body = r.text[:8000] if isinstance(getattr(r, "text", None), str) else ""
+    m = re.search(r"<(?:uws:)?jobId>\s*([^<\s]+)\s*</(?:uws:)?jobId>", body)
+    if m:
+        return f"{IRSA_TAP}/async/{m.group(1)}"
+    m = re.search(r'xlink:href="([^"]*/async/[^"]+)"', body)
+    if m:
+        return m.group(1).rstrip("/")
+    url = getattr(r, "url", "") or ""
+    return url.rstrip("/") if "/async/" in url else None
+
+
 def _t_http_async(q: str, tbl, timeout_s: float) -> pd.DataFrame:
     """The same request on the UWS queue, then poll the phase and fetch the result."""
     import requests  # noqa: PLC0415
@@ -464,10 +557,10 @@ def _t_http_async(q: str, tbl, timeout_s: float) -> pd.DataFrame:
                       timeout=(60.0, 300.0), allow_redirects=False)
     if r.status_code >= 400:
         raise RuntimeError(f"HTTP {r.status_code} from {IRSA_TAP}/async: {r.text[:400]}")
-    job = r.headers.get("Location") or r.url
-    if "/async/" not in job:
-        raise RuntimeError(f"no UWS job URL in the async answer: {r.status_code} {job}")
-    job = job.rstrip("/")
+    job = _uws_job_url(r)
+    if job is None:
+        raise RuntimeError(f"no UWS job URL in the async answer: {r.status_code} "
+                           f"{r.headers.get('Location') or r.url} body={r.text[:300]}")
     r = requests.post(f"{job}/phase", data={"PHASE": "RUN"}, timeout=(60.0, 120.0),
                       allow_redirects=False)
     t0 = _time.monotonic()
@@ -517,8 +610,9 @@ def _t_gator(q: str, tbl, timeout_s: float, radius_arcsec: float = 2.5) -> pd.Da
     return df
 
 
-_TRANSPORT_FNS = {"pyvo_sync": _t_pyvo_sync, "http_sync": _t_http_sync,
-                  "http_async": _t_http_async, "gator": _t_gator}
+_TRANSPORT_FNS = {"pyvo_sync": _t_pyvo_sync, "pyvo_async": _t_pyvo_async,
+                  "http_sync": _t_http_sync, "http_async": _t_http_async,
+                  "gator": _t_gator}
 
 
 def transport_order(preferred: str | None = None) -> list[str]:
@@ -548,30 +642,48 @@ def fetch_neowise_upload(stars: pd.DataFrame, radius_arcsec: float = 2.5, *,
     order = transport_order(transport) if ladder else [transport or UPLOAD_TRANSPORTS[0]]
     t0 = _time.monotonic()
     errors: list[str] = []
-    for name in order:
-        fn = fns.get(name)
-        if fn is None:
-            continue
-        ta = _time.monotonic()
-        try:
-            if name == "gator":
-                df = fn(q, tbl, timeout_s, radius_arcsec=rad)
-            else:
-                df = fn(q, tbl, timeout_s)
-            n = int(len(df))
-            trunc = bool(max_rows and n >= int(max_rows))
-            print(f"[ignition] upload[{name}] {len(tbl)} stars -> {n} rows in "
-                  f"{_time.monotonic() - ta:.0f} s" + (" TRUNCATED" if trunc else ""),
-                  flush=True)
-            return QueryResult(label=f"neowise_upload[{name}]_{len(tbl)}", service=IRSA_TAP,
-                               status="OK" if n else "QUERY_RETURNED_ZERO_ROWS", n_rows=n,
-                               truncated=trunc, query=q, elapsed_s=_time.monotonic() - t0,
-                               error="; ".join(errors), data=df, n_rows_raw=n)
-        except Exception as exc:                       # noqa: BLE001
-            err = f"{name}: {exc!r}"[:600]
-            errors.append(err)
-            print(f"[ignition] upload[{name}] failed after {_time.monotonic() - ta:.0f} s: "
-                  f"{err[:300]}", flush=True)
+    variants = [("long", tbl)]
+    for vname, vtbl in variants:
+        for name in order:
+            fn = fns.get(name)
+            if fn is None:
+                continue
+            ta = _time.monotonic()
+            try:
+                if name == "gator":
+                    df = fn(q, vtbl, timeout_s, radius_arcsec=rad)
+                else:
+                    df = fn(q, vtbl, timeout_s)
+                n = int(len(df))
+                trunc = bool(max_rows and n >= int(max_rows))
+                print(f"[ignition] upload[{name}/{vname}] {len(vtbl)} stars -> {n} rows in "
+                      f"{_time.monotonic() - ta:.0f} s" + (" TRUNCATED" if trunc else ""),
+                      flush=True)
+                return QueryResult(label=f"neowise_upload[{name}]_{len(vtbl)}",
+                                   service=IRSA_TAP,
+                                   status="OK" if n else "QUERY_RETURNED_ZERO_ROWS", n_rows=n,
+                                   truncated=trunc, query=q,
+                                   elapsed_s=_time.monotonic() - t0,
+                                   error="; ".join(errors), data=df, n_rows_raw=n)
+            except Exception as exc:                   # noqa: BLE001
+                err = f"{name}[{vname}]: {exc!r}"[:600]
+                errors.append(err)
+                print(f"[ignition] upload[{name}/{vname}] failed after "
+                      f"{_time.monotonic() - ta:.0f} s: {err[:300]}", flush=True)
+        # The whole ladder refused on the TYPE of a column, not on the query.
+        # `sid` is already a `long` (the fix for `Unimplemented data type:
+        # unicodeChar`); if this service does not implement that either, the
+        # one type left that every VOTable reader has is a 32-bit int, and the
+        # id is expendable -- rows are assigned to stars locally by exact
+        # separation, so a row index serves the query just as well.  Tried ONCE,
+        # only on that specific refusal, and the downgrade is recorded.
+        if vname == "long" and len(variants) == 1 and \
+                any("nimplemented data type" in e for e in errors):
+            alt = vtbl.copy()
+            alt["sid"] = np.arange(len(alt), dtype="int32")
+            variants.append(("int32_index", alt))
+            print("[ignition] upload: the service refused the sid column type; "
+                  "retrying the ladder with a 32-bit row index", flush=True)
     return QueryResult(label=f"neowise_upload[none]_{len(tbl)}", service=IRSA_TAP,
                        status="QUERY_FAILED", query=q, error=" | ".join(errors),
                        elapsed_s=_time.monotonic() - t0)

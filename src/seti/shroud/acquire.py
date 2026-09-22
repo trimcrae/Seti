@@ -190,9 +190,108 @@ def unquote_table(name: str) -> str:
 
     ``TAP_SCHEMA.tables.table_name`` comes back as ``"J/AJ/159/8/table2"`` —
     *including* the quote characters; interpolating that into a query yields
-    ``""J/AJ/159/8/table2""``, which every table rejects.
+    ``""J/AJ/159/8/table2""``, which every table rejects.  Run 35653059591
+    showed the CSV form of the same answer wrapped in SINGLE quotes
+    (``'J/AJ/159/8/table2'``), and three follow-up pulls were mis-spelled.
     """
-    return str(name).strip().strip('"').strip()
+    return str(name).strip().strip("\"'").strip("\"'").strip()
+
+
+# --- route 0: ask the IVOA registry where the service actually is -----------
+#: RegTAP mirrors.  The registry is the authoritative index of every published
+#: VO service, so it answers "where is the VASCO cone search" without guessing
+#: URL paths --- which is all runs 30203741898 and 35653059591 could do, and
+#: they spent themselves on 404s from ``svo2`` and TCP timeouts from
+#: ``svocats``.  A moved or renamed service is found here or nowhere.
+REGTAP_ENDPOINTS = (
+    "https://reg.g-vo.org/tap/sync",
+    "http://dc.g-vo.org/tap/sync",
+    "https://registry.euro-vo.org/regtap/tap/sync",
+)
+
+#: The RegTAP idiom: resource, its capabilities, their interfaces.  Matching is
+#: on title/description/ivoid because the SVO publishes under names this
+#: channel cannot predict.
+REGTAP_ADQL = (
+    "SELECT DISTINCT ivoid, short_name, res_title, access_url, standard_id "
+    "FROM rr.resource NATURAL JOIN rr.capability NATURAL JOIN rr.interface "
+    "WHERE res_title LIKE '%anish%' OR res_title LIKE '%VASCO%' "
+    "OR res_description LIKE '%VASCO%' OR res_description LIKE '%anishing%' "
+    "OR ivoid LIKE '%vanish%' OR ivoid LIKE '%vasco%'"
+)
+
+
+def tap_sync_at(base: str, adql: str, cfg: dict, timeout: int | None = None
+                ) -> tuple[pd.DataFrame, str, str]:
+    """One synchronous ADQL query against an arbitrary TAP ``/sync``."""
+    a = cfg.get("acquire", {})
+    q = urllib.parse.urlencode({"REQUEST": "doQuery", "LANG": "ADQL",
+                                "FORMAT": "csv", "MAXREC": 2000, "QUERY": adql})
+    full = f"{base}?{q}"
+    body, detail = http_get(full, int(timeout or a.get("tap_timeout_s", 120)),
+                            retries=1, backoff=5.0)
+    if body is None:
+        return pd.DataFrame(), full, detail
+    try:
+        df = pd.read_csv(io.StringIO(body.decode("utf-8", "replace")))
+    except Exception as e:                                     # noqa: BLE001
+        return pd.DataFrame(), full, f"{detail}; parse: {e}"
+    return df, full, detail
+
+
+def _root_of_access_url(url: str) -> str:
+    """A VO ``access_url`` reduced to the root :func:`_svo_urls` expects.
+
+    A cone-search access URL is a base that already ends at the query string
+    (``.../vanish-possi/cs.php?``); the probe builds its own query, so the
+    trailing ``?``/``&`` and the script name come off again.
+    """
+    u = str(url).split("#")[0].rstrip("&?")
+    if "?" in u:
+        u = u.split("?")[0]
+    u = re.sub(r"/(cs|cs\.php|conesearch|scs\.php|search|query)$", "", u, flags=re.I)
+    return u.rstrip("/")
+
+
+def discover_registry_services(cfg: dict) -> tuple[list[str], Provenance]:
+    """Roots for anything the IVOA registry knows about VASCO / vanishing.
+
+    Returns ``(roots, provenance)``; cone-search interfaces come first because
+    those are the ones :func:`probe_svo_catalog` can actually exercise.  Every
+    mirror tried and every error is recorded verbatim --- an unreachable
+    registry is a statement about the registry, never about the sky.
+    """
+    a = cfg.get("acquire", {})
+    prov = Provenance(route="registry_regtap_discovery")
+    endpoints = list(a.get("regtap_endpoints", REGTAP_ENDPOINTS))
+    cone: list[str] = []
+    other: list[str] = []
+    for base in endpoints:
+        df, url, detail = tap_sync_at(base, a.get("regtap_adql", REGTAP_ADQL), cfg)
+        prov.record(url, len(df) > 0, detail, len(df))
+        if not len(df) or "access_url" not in df.columns:
+            continue
+        for _, row in df.iterrows():
+            std = str(row.get("standard_id", "")).lower()
+            root = _root_of_access_url(row.get("access_url", ""))
+            if not root:
+                continue
+            (cone if "conesearch" in std else other).append(root)
+        prov.notes.append("registry rows: " + "; ".join(
+            f"{str(r.get('short_name') or r.get('ivoid'))[:40]} "
+            f"[{str(r.get('standard_id', '')).split('/')[-1][:20]}] "
+            f"{str(r.get('access_url'))[:90]}"
+            for _, r in df.head(12).iterrows())[:1500])
+        break                     # the first mirror that answers is enough
+    roots = list(dict.fromkeys(cone + other))
+    # "empty" only if a mirror actually ANSWERED and knew of no such service;
+    # if none answered, the verdict is about the registry, not about the sky.
+    answered = any(a["ok"] for a in prov.attempts)
+    prov.status = "ok" if roots else ("empty" if answered else "unreachable")
+    prov.n_rows = len(roots)
+    if not roots:
+        prov.notes.append("no VO registry mirror returned a vanishing/VASCO service")
+    return roots, prov
 
 
 # --- route 1: the Solano+2022 VO archive ------------------------------------
@@ -278,15 +377,42 @@ def _looks_tabular(body: bytes) -> bool:
     return len(lines) >= 2 and any(sep in lines[0] for sep in (",", "|", "\t"))
 
 
-def probe_svo_catalog(name: str, roots, cfg: dict) -> tuple[str | None, str, Provenance]:
+def probe_svo_catalog(name: str, roots, cfg: dict, budget_s: float | None = None
+                      ) -> tuple[str | None, str, Provenance]:
     """Find the live root for one named SVO catalogue.
 
     Probes the index page and a small cone with SHORT timeouts, records the
     HTTP status of every form and mines the index for bulk-download links.
     Returns ``(root, working_url_form, provenance)``.
+
+    **The ladder runs under a clock.** Each probe is short, but the number of
+    roots is not bounded by this channel: the RegTAP route contributes however
+    many the registry publishes, and the index scrape contributes however many
+    links it mines, so *roots x 5 URL forms x 25 s* grows without limit ---
+    200 roots is seven hours. The route that follows it, the USNO-B1.0
+    reconstruction, is handed ``max(deadline - elapsed, 60)``, so the only
+    route that can restore the channel's scale gets whatever the ladder
+    leaves it. A probe ladder that cannot find a service must not be able to
+    consume the run that would have worked without it. This is a bound on a
+    cost that has none, not a fix for an overrun that was observed.
     """
     prov = Provenance(route=f"probe_svo:{name}")
-    for root in roots:
+    t0 = time.time()
+    budget = float(budget_s if budget_s is not None
+                   else cfg.get("acquire", {}).get("svo_probe_budget_s", 600.0))
+
+    def _spent() -> bool:
+        return budget > 0 and (time.time() - t0) >= budget
+
+    roots = list(roots)
+    for i, root in enumerate(roots):
+        if _spent():
+            prov.status = "budget_exhausted"
+            prov.notes.append(
+                f"probe budget of {budget:.0f}s spent after {i} of {len(roots)} "
+                f"root(s); {len(roots) - i} not tried. This is a statement about "
+                "the time the ladder was given, not about the service")
+            return None, "", prov
         body, detail = _probe(root + "/", cfg)
         prov.record(root + "/", body is not None, detail, 0)
         if body is not None:
@@ -297,6 +423,13 @@ def probe_svo_catalog(name: str, roots, cfg: dict) -> tuple[str | None, str, Pro
             if links:
                 prov.notes.append(f"links on {root}/: {links[:12]}")
         for url in _svo_urls(root, cfg, ra=180.0, dec=0.0, sr=5.0):
+            if _spent():
+                prov.status = "budget_exhausted"
+                prov.notes.append(
+                    f"probe budget of {budget:.0f}s spent inside root {i + 1} of "
+                    f"{len(roots)}. This is a statement about the time the "
+                    "ladder was given, not about the service")
+                return None, "", prov
             body, detail = _probe(url, cfg)
             ok = _looks_tabular(body) if body else False
             prov.record(url, ok, detail, 0)
@@ -478,12 +611,132 @@ def _solano_candidates(tables: pd.DataFrame) -> list[str]:
     out = []
     for t, d in zip(tables.get("table_name", []), tables.get("description", []),
                     strict=False):
-        t, d = str(t), str(d)
+        t, d = unquote_table(t), str(d)
         if "J/AJ/159/8" in t:
             continue
-        if re.search(r"vanish|VASCO|515/1380|Solano", t + " " + d, re.I):
+        # Word-bounded and case-sensitive for VASCO: the keyword search also
+        # returns "Vasco D." and "Vasconcelos" (run 35653059591).
+        if (re.search(r"vanish", t + " " + d, re.I) or re.search(r"\bVASCO\b", t + " " + d)
+                or "515/1380" in t or re.search(r"Solano E\.", d)):
             out.append(t)
     return out
+
+
+def probe_second_digitisation(cfg: dict) -> Provenance:
+    """Is an INDEPENDENT scan of the same POSS-I plates reachable?
+
+    The single strongest kill available to this channel is not astrophysical.
+    A POSS-I-red-only detection that a *second, independent digitisation of
+    the same glass* does not see is almost certainly a scan artefact of the
+    first digitisation rather than a source that was on the plate --- which is
+    precisely how Solano+2022 classified 3 592 of their 298 165 objects, using
+    SuperCOSMOS against the USNO-B1.0-era scans.  Hambly & Blair 2024 argue
+    the VASCO transients are emulsion artefacts, so a plate-level confirmation
+    is the difference between a candidate and a speck of dust.
+
+    This is a REACHABILITY probe only: it reports which of the candidate
+    routes answers, and touches no science.  The kill itself needs a route
+    that answers, and the answer has to be recorded before it can be used.
+
+    Note the asymmetry that governs how the result may ever be read.  Presence
+    in a second digitisation CONFIRMS a plate image.  Absence is informative
+    only where the second scan is demonstrably deeper than the magnitude
+    claimed for the source --- a source missing from a shallower catalogue is
+    not missing, and treating it as missing is the same depth error the
+    modern-optical kill already closes.
+    """
+    a = cfg.get("acquire", {})
+    s = a.get("second_digitisation", {})
+    prov = Provenance(route="second_digitisation_probe")
+    found: list[str] = []
+
+    kws = list(s.get("discovery_keywords",
+                     ["SuperCOSMOS", "Hambly", "MNRAS/326/1279"]))
+    clauses = []
+    for k in kws:
+        for variant in dict.fromkeys((k, k.lower(), k.upper())):
+            clauses.append(f"description LIKE '%{variant}%'")
+            clauses.append(f"table_name LIKE '%{variant}%'")
+    adql = ("SELECT TOP 100 table_name, description FROM TAP_SCHEMA.tables WHERE "
+            + " OR ".join(dict.fromkeys(clauses)))
+    df, url, detail = tap_sync(adql, cfg)
+    prov.record(url, len(df) > 0, detail, len(df))
+    if len(df) and "table_name" in df.columns:
+        names = [unquote_table(t) for t in df["table_name"]]
+        found.extend(names)
+        prov.notes.append("VizieR TAP_SCHEMA: " + "; ".join(
+            f"{t} ({str(d)[:60]})"
+            for t, d in zip(names, df.get("description", names), strict=False))[:1200])
+    else:
+        prov.notes.append("VizieR TAP_SCHEMA knows no SuperCOSMOS-like table")
+
+    # The WFAU SuperCOSMOS Science Archive is served from Edinburgh, not CDS,
+    # so it is probed on its own endpoints rather than assumed absent.
+    for base in s.get("ssa_tap_urls", []):
+        q = urllib.parse.urlencode(
+            {"REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "csv", "MAXREC": 1,
+             "QUERY": "SELECT TOP 1 table_name FROM TAP_SCHEMA.tables"})
+        full = f"{base}?{q}"
+        body, detail = http_get(full, int(s.get("probe_timeout_s", 25)),
+                                retries=1, backoff=3.0)
+        ok = bool(body) and _looks_tabular(body)
+        prov.record(full, ok, detail, 1 if ok else 0)
+        if ok:
+            found.append(base)
+            break
+
+    # Any literal VizieR id the keyword sweep cannot reach, asked by name.
+    for cat in s.get("candidate_tables", []):
+        table = str(cat.get("table", cat) if isinstance(cat, dict) else cat)
+        tabs, p_m = vizier_catalogue_meta(table, cfg)
+        prov.attempts.extend(p_m.attempts)
+        if tabs:
+            found.extend(tabs)
+            prov.notes.append(f"{table} is in VizieR as {tabs[:6]}")
+        else:
+            prov.notes.append(f"{table}: {p_m.status}")
+
+    prov.n_rows = len(dict.fromkeys(found))
+    prov.status = "ok" if found else "unreachable"
+    if not found:
+        prov.notes.append("no independent digitisation of the POSS-I plates "
+                          "answered; the plate-confirmation kill is NOT "
+                          "available and no source may be vetoed for lacking it")
+    return prov
+
+
+def vizier_catalogue_meta(cat: str, cfg: dict) -> tuple[list[str], Provenance]:
+    """Does VizieR hold ``cat`` at all, and under what table names?
+
+    ``-meta.all`` returns the catalogue's tables and columns instead of rows.
+    This separates the two answers a bare row query confuses: *the catalogue
+    is not in VizieR* and *the catalogue is there but the query was wrong*.
+    Used for the literal ids keyword discovery cannot reach --- the
+    Solano+2022 by-product tables are published under a bibcode-derived name
+    whose description carries neither 'vanish' nor a bare 'VASCO', so the
+    TAP_SCHEMA keyword sweep of run 35653059591 returned only 'Vasco D.' and
+    'Vasconcelos' and never looked the catalogue up by name.
+    """
+    a = cfg.get("acquire", {})
+    prov = Provenance(route=f"vizier_meta:{cat}")
+    url = (f"{a.get('vizier_asu', VIZIER_ASU)}?"
+           f"-source={urllib.parse.quote(cat, safe='/')}&-meta.all&-out.form=TSV")
+    body, detail = http_get(url, int(a.get("tap_timeout_s", 120)), retries=1, backoff=5.0)
+    prov.record(url, body is not None, detail)
+    if body is None:
+        prov.status = "unreachable"
+        return [], prov
+    txt = body.decode("utf-8", "replace")
+    errs = [ln.strip() for ln in txt.splitlines()
+            if ln.startswith("#***") or ln.startswith("****")]
+    tables = sorted({unquote_table(m) for m in
+                     re.findall(rf"{re.escape(cat)}/[A-Za-z0-9_.+-]+", txt)})
+    if errs:
+        prov.notes.append("ASU: " + " | ".join(errs)[:400])
+    prov.status = "ok" if tables else ("asu_error" if errs else "absent")
+    prov.n_rows = len(tables)
+    prov.notes.append(f"tables reported for {cat}: {tables[:20] or 'none'}")
+    return tables, prov
 
 
 def fetch_vizier_table_asu(table: str, cfg: dict, out_dir: Path,
@@ -602,7 +855,22 @@ def field_grid(n_fields: int, cfg: dict, seed: int = 0) -> pd.DataFrame:
                          "glat_deg": glat[take]})
 
 
-def usnob1_field_url(ra: float, dec: float, radius_deg: float, cfg: dict) -> str:
+#: Columns the reconstruction needs from I/284/out, in VizieR's spelling.
+USNOB1_COLUMNS = ("USNO-B1.0", "RAJ2000", "DEJ2000", "Epoch", "pmRA", "pmDE", "muPr",
+                  "Ndet", "Flags", "B1mag", "R1mag", "R1S", "R1f", "R1s/g", "B2mag",
+                  "R2mag", "Imag")
+
+#: Query forms for one USNO-B1.0 field, most selective first.  Which form the
+#: service actually honours is DISCOVERED on the first field, not assumed:
+#: run 35653059591 got HTTP 200 and zero rows from every field with the
+#: fully-constrained form and nothing else was tried.  A form's server-side
+#: constraint is always re-applied locally, so a form that ignores a
+#: constraint (and returns more) is merely slower, never wrong.
+USNOB1_QUERY_FORMS = ("ndet+r1", "ndet", "r1", "none", "none_allcols")
+
+
+def usnob1_field_url(ra: float, dec: float, radius_deg: float, cfg: dict,
+                     form: str = "ndet+r1", columns=None) -> str:
     """ASU query for POSS-I-red-only USNO-B1.0 objects inside one cone.
 
     ``-c`` carries an explicit sign and is percent-encoded: a literal ``+``
@@ -616,16 +884,137 @@ def usnob1_field_url(ra: float, dec: float, radius_deg: float, cfg: dict) -> str
         ("-c", f"{ra:.6f} {dec:+.6f}"),
         ("-c.eq", "J2000"),
         ("-c.rd", f"{radius_deg:.4f}"),
-        ("-out.all", ""),
         ("-out.max", str(int(r.get("max_rows_per_field", 200000)))),
-        ("Ndet", str(int(r.get("ndet", 1)))),
-        ("R1mag", f"<={float(r.get('r1_max_mag', 19.3)):.2f}"),
     ]
+    if form == "none_allcols":
+        params.append(("-out.all", ""))
+    else:
+        # REPEATED ``-out=`` per column, not one comma-joined value: the
+        # comma-joined spelling is what the first sweep sent and every field
+        # came back HTTP 200 with a header and no rows.  Repeated ``-out=`` is
+        # the spelling the METRONOME route has actually been answered on.
+        params.extend(("-out", c) for c in (columns or USNOB1_COLUMNS))
+    # ``asu-tsv`` names the format in the path, but the ASU dispatcher only
+    # emits the tab-separated body when the form is asked for explicitly; a
+    # request without it can be answered as metadata alone.
+    params.append(("-out.form", "TSV"))
+    if form in ("ndet+r1", "ndet"):
+        params.append(("Ndet", str(int(r.get("ndet", 1)))))
+    if form in ("ndet+r1", "r1"):
+        params.append(("R1mag", f"<={float(r.get('r1_max_mag', 19.3)):.2f}"))
     return f"{a.get('vizier_asu', VIZIER_ASU)}?" + urllib.parse.urlencode(
         params, quote_via=urllib.parse.quote)
 
 
-def normalise_usnob1_frame(df: pd.DataFrame, field_id: int = -1) -> pd.DataFrame:
+def usnob1_meta_url(cfg: dict) -> str:
+    """``-meta.all`` for I/284/out: the catalogue's own column spelling.
+
+    Run 35653059591 asked for columns this channel had *assumed*; one wrong
+    name is enough for ASU to answer with a header and no rows, and nothing in
+    the ledger could tell that apart from an empty sky.  The reconstruction
+    now reads the real names off the service before it trusts a zero.
+    """
+    a = cfg.get("acquire", {})
+    r = a.get("reconstruct", {})
+    src = str(r.get("usnob1_table", "I/284/out"))
+    return (f"{a.get('vizier_asu', VIZIER_ASU)}?"
+            f"-source={urllib.parse.quote(src, safe='/')}&-meta.all&-out.form=TSV")
+
+
+def usnob1_meta_probe(cfg: dict) -> dict:
+    """Ask I/284/out for its own column list before believing any zero.
+
+    Returns ``{url, detail, columns, missing, body_head}``.
+
+    ``missing`` is the subset of :data:`USNOB1_COLUMNS` this body does not
+    mention.  Read it as a HINT, never as a fact about the catalogue: the
+    ``-meta.all`` + ``-out.form=TSV`` body carries ``#Column`` lines for the
+    catalogue's DEFAULT output columns, and I/284/out's defaults are the eight
+    astrometric ones, so run 35738062833's probe reported B1mag, R1mag, R2mag,
+    Imag and Ndet as "missing" from a catalogue that plainly has them.  That
+    probe then edited the request and every field came back as bare positions;
+    it now reports only.  A wrong column name is handled where it shows up ---
+    the ladder falls through to the ``-out.all`` rung, which names none.
+    """
+    url = usnob1_meta_url(cfg)
+    r = cfg.get("acquire", {}).get("reconstruct", {})
+    body, detail = http_get(url, int(r.get("meta_timeout_s", 60)), retries=1, backoff=5.0)
+    out: dict = {"url": url, "detail": detail, "columns": [], "missing": [],
+                 "body_head": ""}
+    if body is None:
+        return out
+    from ..metronome.acquire import asu_body_head  # noqa: PLC0415
+
+    txt = body.decode("utf-8", "replace")
+    out["body_head"] = asu_body_head(txt, 1500)
+    names: list[str] = []
+    for ln in txt.splitlines():
+        if ln.startswith("#Column"):
+            cells = [c.strip() for c in ln.split("\t") if c.strip()]
+            for c in cells[1:]:
+                if not c.startswith(("(", "[")):
+                    names.append(unquote_table(c))
+                    break
+    out["columns"] = sorted(dict.fromkeys(names))
+    if names:
+        have = {n.lower() for n in names}
+        out["missing"] = [c for c in USNOB1_COLUMNS if c.lower() not in have]
+    return out
+
+
+def fetch_usnob1_field(ra: float, dec: float, radius_deg: float, cfg: dict,
+                       forms=USNOB1_QUERY_FORMS, columns=None
+                       ) -> tuple[pd.DataFrame, str, list[dict]]:
+    """One field through the query-form ladder; ``(raw, form_used, attempts)``.
+
+    The head of every empty or failed body is kept, so "zero rows" is a
+    reading of what VizieR said rather than a guess.  Returns the first form
+    that yields rows (or the last attempt's empty frame).
+    """
+    from ..metronome.acquire import asu_body_head, parse_asu_tsv  # noqa: PLC0415
+
+    r = cfg.get("acquire", {}).get("reconstruct", {})
+    attempts: list[dict] = []
+    raw = pd.DataFrame()
+    for form in forms:
+        url = usnob1_field_url(ra, dec, radius_deg, cfg, form, columns)
+        t0 = time.time()
+        body, detail = http_get(url, int(r.get("field_timeout_s", 240)),
+                                retries=int(r.get("field_retries", 2)), backoff=10.0)
+        rec = {"form": form, "url": url, "detail": detail,
+               "seconds": round(time.time() - t0, 1), "n_raw": 0}
+        if body is None:
+            attempts.append(rec)
+            continue
+        txt = body.decode("utf-8", "replace")
+        raw = parse_asu_tsv(txt)
+        errs = raw.attrs.get("asu_errors", [])
+        rec["n_raw"] = int(len(raw))
+        if errs:
+            rec["asu_errors"] = [str(e)[:200] for e in errs[:5]]
+        if not len(raw):
+            rec["body_head"] = asu_body_head(txt, 1200)
+        rec["columns"] = [str(c) for c in raw.columns][:40]
+        # ROWS ARE NOT ENOUGH.  Run 35738062833 got 1380-5899 rows from every
+        # field and reconstructed ZERO sources, because the answer carried
+        # positions and no photometry at all: the POSS-I-red-only mask is a
+        # statement about which plate magnitudes are present, so a frame
+        # without them cannot express the selection and its "no survivors" is
+        # an artefact of the request, not of the sky.  A rung that answers
+        # without the columns the selection needs is not accepted; the ladder
+        # falls through to the ``-out.all`` rung, which names no columns.
+        need = [str(c) for c in r.get("required_columns", ("RAJ2000", "DEJ2000", "R1mag"))]
+        missing = [c for c in need if c not in raw.columns]
+        rec["missing_required"] = missing
+        attempts.append(rec)
+        if len(raw) and not missing:
+            return raw, form, attempts
+    return pd.DataFrame(), "", attempts
+
+
+def normalise_usnob1_frame(df: pd.DataFrame, field_id: int = -1,
+                           r1_max: float | None = None,
+                           ndet: int | None = None) -> pd.DataFrame:
     """USNO-B1.0 columns -> channel schema, keeping only POSS-I-E-only rows.
 
     ``R1mag`` present and ``B1/B2/R2/I`` absent is the definition; ``Ndet``
@@ -660,6 +1049,12 @@ def normalise_usnob1_frame(df: pd.DataFrame, field_id: int = -1) -> pd.DataFrame
     out["field_id"] = int(field_id)
     only = (out["poss1_e"].notna() & out["poss1_o"].isna() & out["poss2_j"].isna()
             & out["poss2_f"].isna() & out["poss2_n"].isna())
+    # The server-side constraints are re-applied here, so a query form that
+    # ignored one of them still yields exactly the intended selection.
+    if r1_max is not None:
+        only &= out["poss1_e"] <= float(r1_max)
+    if ndet is not None:
+        only &= out["usnob_ndet"].isna() | (out["usnob_ndet"] == int(ndet))
     out = out[only & out["ra_deg"].notna() & out["dec_deg"].notna()].copy()
     out["source_id"] = "USNOB-" + out["usnob_id"].astype(str)
     out["sample"] = "usnob1_poss1_red_only"
@@ -675,8 +1070,6 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
     Returns ``(sample, provenance, field_ledger)``.  A field already on disk
     is reused, so a re-dispatch with more fields only fetches the new ones.
     """
-    from ..metronome.acquire import parse_asu_tsv  # noqa: PLC0415  (shared parser)
-
     a = cfg.get("acquire", {})
     r = a.get("reconstruct", {})
     n_fields = int(n_fields if n_fields is not None else r.get("n_fields", 40))
@@ -691,17 +1084,42 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
     frames: list[pd.DataFrame] = []
     t_start = time.time()
     n_fail = 0
+    r1_max = float(r.get("r1_max_mag", 19.3))
+    ndet = int(r.get("ndet", 1))
+    # The query form is discovered on the first live field and then reused;
+    # a form that returned rows there is tried first everywhere after.
+    forms: list[str] = list(USNOB1_QUERY_FORMS)
+    form_used: str | None = None
+    ndet_hist: dict = {}
+    r1_hist: dict = {}
+    meta = usnob1_meta_probe(cfg)
+    prov.notes.append(
+        f"I/284/out -meta.all: {meta['detail']}; "
+        + (f"{len(meta['columns'])} column(s) reported: {meta['columns'][:40]}"
+           if meta["columns"] else "no column names parsed")
+        + (f"; not mentioned by the probe: {sorted(meta['missing'])}"
+           if meta["missing"] else "; every requested column mentioned")
+        + " (reported only -- the request is not edited from this; the "
+          "-meta.all body lists the catalogue's DEFAULT output columns, so "
+          "'not mentioned' does NOT mean 'absent from the catalogue')")
+    # The probe REPORTS; it does not edit the request.  Run 35738062833 had it
+    # strip every name the -meta.all body failed to mention, and that body
+    # mentioned 8 columns out of ~30 --- so B1mag/R1mag/R2mag/Ndet were all
+    # dropped, the fields came back as bare positions, and the selection could
+    # not be expressed.  A bad column name is handled where it shows up: the
+    # ladder falls through to the ``-out.all`` rung.
+    columns = None
     for _, f in grid.iterrows():
         fid = int(f["field_id"])
         rec = {"field_id": fid, "ra_deg": float(f["ra_deg"]),
                "dec_deg": float(f["dec_deg"]), "glat_deg": float(f["glat_deg"]),
                "radius_deg": radius_deg, "n_raw": 0, "n_poss1_only": 0,
-               "status": "", "detail": "", "seconds": 0.0}
+               "status": "", "detail": "", "seconds": 0.0, "form": ""}
         ck = raw_dir / f"field_{fid:04d}.parquet"
         if ck.exists():
             df = pd.read_parquet(ck)
-            rec.update({"status": "cached", "n_raw": int(df.attrs.get("n_raw", len(df)))
-                        if hasattr(df, "attrs") else len(df), "n_poss1_only": len(df)})
+            rec.update({"status": "cached", "n_raw": int(len(df)),
+                        "n_poss1_only": int(len(df))})
             frames.append(df)
             ledger.append(rec)
             continue
@@ -709,36 +1127,51 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
             rec["status"] = "skipped_deadline"
             ledger.append(rec)
             continue
-        url = usnob1_field_url(float(f["ra_deg"]), float(f["dec_deg"]), radius_deg, cfg)
-        t0 = time.time()
-        body, detail = http_get(url, int(r.get("field_timeout_s", 240)),
-                                retries=int(r.get("field_retries", 2)), backoff=10.0)
-        rec["seconds"] = round(time.time() - t0, 1)
-        rec["detail"] = detail
-        if body is None:
+        raw, form, attempts = fetch_usnob1_field(float(f["ra_deg"]), float(f["dec_deg"]),
+                                                 radius_deg, cfg, forms, columns)
+        rec["seconds"] = round(sum(a["seconds"] for a in attempts), 1)
+        rec["detail"] = attempts[-1]["detail"] if attempts else ""
+        rec["form"] = form
+        rec["attempts"] = attempts
+        if not raw.attrs.get("asu_errors") and not len(raw) and all(
+                a.get("detail", "").startswith(("URLError", "HTTP 5", "TimeoutError"))
+                or "HTTP 200" not in a.get("detail", "") for a in attempts):
             rec["status"] = "unreachable"
             n_fail += 1
-            prov.record(url, False, detail, 0)
+            for a in attempts:
+                prov.record(a["url"], False, a["detail"], 0)
             ledger.append(rec)
             if n_fail >= int(r.get("max_consecutive_failures", 6)) and not frames:
                 prov.notes.append("aborting the field sweep: the first "
                                   f"{n_fail} fields all failed")
                 break
             continue
-        raw = parse_asu_tsv(body.decode("utf-8", "replace"))
-        errs = raw.attrs.get("asu_errors", [])
-        if errs:
-            rec["detail"] += " | ASU: " + " | ".join(map(str, errs))[:300]
+        errs = raw.attrs.get("asu_errors", []) if hasattr(raw, "attrs") else []
         rec["n_raw"] = int(len(raw))
-        df = normalise_usnob1_frame(raw, fid)
+        df = normalise_usnob1_frame(raw, fid, r1_max=r1_max, ndet=ndet)
         rec["n_poss1_only"] = int(len(df))
         rec["status"] = "ok" if len(raw) else ("asu_error" if errs else "empty")
-        prov.record(url, len(raw) > 0, rec["detail"], len(df))
+        if len(raw) and "Ndet" in raw.columns:
+            h = pd.to_numeric(raw["Ndet"], errors="coerce").value_counts().to_dict()
+            for k, v in h.items():
+                ndet_hist[str(int(k))] = ndet_hist.get(str(int(k)), 0) + int(v)
+        if len(raw) and "R1mag" in raw.columns:
+            h = pd.cut(pd.to_numeric(raw["R1mag"], errors="coerce"),
+                       [0, 12, 14, 16, 17, 18, 19, 19.3, 20, 25]).value_counts().to_dict()
+            for k, v in h.items():
+                r1_hist[str(k)] = r1_hist.get(str(k), 0) + int(v)
+        if form and form_used != form:
+            form_used = form
+            forms = [form] + [x for x in USNOB1_QUERY_FORMS if x != form]
+            prov.notes.append(f"query form '{form}' returned rows on field {fid}; "
+                              "using it first from here on")
+        prov.record(attempts[-1]["url"] if attempts else "", len(raw) > 0,
+                    rec["detail"], len(df))
         if len(df):
             df.to_parquet(ck, index=False)
             frames.append(df)
-        elif len(raw) == 0 and not errs:
-            # A genuinely empty cone is a valid (recorded) outcome.
+        elif len(raw) > 0:
+            # A real cone with no POSS-I-red-only object: recorded, cached.
             pd.DataFrame(columns=["source_id", "ra_deg", "dec_deg"]).to_parquet(ck, index=False)
         ledger.append(rec)
         time.sleep(float(r.get("pause_s", 0.5)))
@@ -747,6 +1180,9 @@ def reconstruct_from_usnob1(cfg: dict, out_dir: Path, n_fields: int | None = Non
         {"n_fields_requested": n_fields, "radius_deg": radius_deg, "seed": seed,
          "area_deg2_per_field": math.pi * radius_deg ** 2,
          "n_fields_ok": sum(1 for x in ledger if x["status"] in ("ok", "cached")),
+         "query_form_used": form_used, "r1_max_mag": r1_max, "ndet": ndet,
+         "ndet_histogram_raw": ndet_hist, "r1mag_histogram_raw": r1_hist,
+         "meta_probe": meta, "columns_requested": list(columns or USNOB1_COLUMNS),
          "fields": ledger}, indent=1, default=str))
     if not frames:
         prov.status = "unreachable" if n_fail else "empty"
@@ -1007,6 +1443,44 @@ def join_xmatch_photometry(positions: pd.DataFrame,
     return out
 
 
+def modern_optical_depth(positions: pd.DataFrame, provs: dict, cfg: dict
+                         ) -> tuple[pd.Series, pd.Series]:
+    """Per source: the deepest modern-optical limit actually ESTABLISHED there.
+
+    ``(depth_mag, catalogues)``.  A catalogue contributes only if its X-Match
+    really answered (``ok``/``cached``) **and** the source lies inside that
+    survey's footprint --- Pan-STARRS stops at dec = -30, so a southern source
+    has only Gaia behind its "absence", three magnitudes shallower.
+
+    This exists because absence is the whole signature, and an absence is only
+    as good as the search that failed to find it.  Without this, a Pan-STARRS
+    X-Match that simply errored would hand every source in the run an empty
+    ``ps1_r`` --- and empty reads as *gone*.  A catalogue that was never
+    successfully queried has established nothing, so its sources get NaN here
+    and are excluded from the disappearance count rather than counted as
+    disappearances.
+    """
+    mo = cfg.get("modern_optical", {})
+    limits = mo.get("limits", {})
+    dec = pd.to_numeric(positions.get("dec_deg"), errors="coerce")
+    depth = pd.Series(np.nan, index=positions.index, dtype=float)
+    names = pd.Series("", index=positions.index, dtype=object)
+    for name, spec in limits.items():
+        st = str((provs.get(name) or {}).get("status", "")).lower()
+        if st not in ("ok", "cached"):
+            continue
+        inside = ((dec >= float(spec.get("dec_min_deg", -90.0)))
+                  & (dec <= float(spec.get("dec_max_deg", 90.0))))
+        mag = float(spec.get("mag", np.nan))
+        if not np.isfinite(mag):
+            continue
+        better = inside & (depth.isna() | (mag > depth))
+        depth = depth.where(~better, mag)
+        names = names.where(~inside, names.str.cat(pd.Series(
+            [name] * len(names), index=names.index), sep=",").str.strip(","))
+    return depth, names
+
+
 def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
                            ) -> tuple[pd.DataFrame, dict]:
     """Attach POSS-I, modern-optical and infrared photometry to a position list.
@@ -1053,6 +1527,24 @@ def build_photometry_table(positions: pd.DataFrame, cfg: dict, out_dir: Path
         xmatches[name] = df
     merged = join_xmatch_photometry(positions, xmatches, cfg,
                                     phot_radius={"gaia": r_match})
+    # How deep the search that found nothing actually went, per source.  An
+    # absence is only as good as the search behind it.
+    depth, cats = modern_optical_depth(merged, provs, cfg)
+    merged["modern_depth_mag"] = depth.to_numpy()
+    merged["modern_depth_cats"] = cats.to_numpy()
+    plate = pd.to_numeric(merged.get("poss1_e"), errors="coerce")
+    if "poss1_o" in merged.columns:
+        plate = plate.fillna(pd.to_numeric(merged["poss1_o"], errors="coerce"))
+    merged["modern_depth_margin_mag"] = (depth.to_numpy()
+                                         - plate.to_numpy())
+    provs["_modern_optical_depth"] = {
+        "route": "derived", "status": "ok",
+        "n_rows": int(np.isfinite(depth.to_numpy()).sum()),
+        "catalogues_that_answered": sorted(
+            n for n in cfg.get("modern_optical", {}).get("limits", {})
+            if str((provs.get(n) or {}).get("status", "")).lower() in ("ok", "cached")),
+        "n_sources_with_no_modern_coverage": int((~np.isfinite(depth.to_numpy())).sum()),
+    }
     (out_dir / "acquire_provenance.json").write_text(
         json.dumps(provs, indent=2, default=str))
     return merged, provs
@@ -1091,13 +1583,31 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
     got: dict[str, int] = {}
     routes_ok: list[str] = []
 
+    # Route 0: the IVOA registry — where the service says it lives, rather
+    # than where this channel guessed it lived.
+    reg_roots: list[str] = []
+    if cfg.get("acquire", {}).get("try_registry", True):
+        reg_roots, p_reg = discover_registry_services(cfg)
+        prov["routes"].append(p_reg.as_dict())
+        prov["registry_roots"] = reg_roots[:40]
+
     # Route 1: the published SVO catalogues (short probes; long fetch only if live).
     if cfg.get("acquire", {}).get("try_svo", True):
         for cat, sample in (("vanish_neowise", "solano2022_ir_present"),
                             ("vanish_possi", "solano2022_no_counterpart")):
             roots, p_disc = discover_vo_archive(cfg, cat, out_dir)
             prov["routes"].append(p_disc.as_dict())
-            root, _, p_probe = probe_svo_catalog(cat, roots, cfg)
+            # A registry-published root is tried FIRST: it is the only one of
+            # these that any service actually claims to be at.
+            roots = list(dict.fromkeys(reg_roots + list(roots)))
+            # The probe ladder gets a bounded slice of the acquisition, never
+            # the whole of it: the route that follows it is the one that can
+            # restore the channel's scale.
+            budget = float(cfg.get("acquire", {}).get("svo_probe_budget_s", 600.0))
+            if deadline_s is not None:
+                left = deadline_s - (time.time() - t_start)
+                budget = max(60.0, min(budget, 0.25 * left))
+            root, _, p_probe = probe_svo_catalog(cat, roots, cfg, budget_s=budget)
             prov["routes"].append(p_probe.as_dict())
             if not root:
                 continue
@@ -1115,7 +1625,16 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
     tables, p_tap = discover_vizier_tables(cfg)
     prov["routes"].append(p_tap.as_dict())
     prov["vizier_tables_discovered"] = tables.to_dict("records") if len(tables) else []
-    for t in _solano_candidates(tables)[:4]:
+    # Look the literal ids up by NAME as well: a keyword sweep can only find a
+    # catalogue whose description happens to carry the keyword.
+    named: list[str] = []
+    for cat in cfg.get("acquire", {}).get("vizier_direct_catalogues", []):
+        found, p_m = vizier_catalogue_meta(str(cat), cfg)
+        prov["routes"].append(p_m.as_dict())
+        named.extend(found)
+    candidates = list(dict.fromkeys(_solano_candidates(tables) + named))
+    prov["vizier_direct_tables_found"] = named
+    for t in candidates[:8]:
         df_t, p_t = fetch_vizier_table_asu(t, cfg, out_dir)
         prov["routes"].append(p_t.as_dict())
         if len(df_t):
@@ -1129,6 +1648,13 @@ def acquire_sample(cfg: dict, out_dir: Path, allow_network: bool = True,
     if len(df_v):
         got["vasco2020_surviving_candidates"] = len(df_v)
         frames.append(df_v)
+
+    # Route 2b: is a SECOND, independent digitisation of the same POSS-I glass
+    # reachable?  Reported, never assumed: the plate-confirmation kill is the
+    # strongest one this channel could have and it may only be applied on a
+    # route that has actually answered.
+    if cfg.get("acquire", {}).get("second_digitisation", {}).get("probe", True):
+        prov["routes"].append(probe_second_digitisation(cfg).as_dict())
 
     # Route 3: own the selection function — USNO-B1.0 POSS-I-red-only objects.
     if cfg.get("acquire", {}).get("reconstruct", {}).get("enabled", True):

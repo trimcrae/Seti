@@ -1,0 +1,134 @@
+# SLAG-WD channel (S51, docs/necrofrontier.md; docs/slag.md) — every source,
+# element list, model range and threshold in one place.
+#
+# The refinery vector: a polluted white dwarf whose abundance vector no natural
+# parcel (meteorite / planetary mixture, condensation fractionation, sinking
+# phase) reproduces (Tier 1, the calibrated misfit list), or whose
+# process-orthogonal element pair sits outside the whole natural envelope while
+# the rest of its panel is natural (Tier 2, the pair residual).
+
+sources:
+  pewdd:
+    # Williams+2024, A&A 691, A352.  VizieR is the primary route; the table's
+    # columns are read from its own ASU metadata before any row is requested.
+    vizier_catalogue: "J/A+A/691/A352"
+    vizier_table: "J/A+A/691/A352/pewdd"
+    # Second route: the database's own repository (named in the paper's
+    # data-availability statement; reached by necrofrontier-probe 2026-09-13).
+    github_repo: "jamietwilliams/PEWDD"
+    max_rows: 20000
+    # The repository also ships the meteorite compilations PEWDD itself
+    # compares against.  They are fetched and described so the natural
+    # family can later be anchored to measured meteorites rather than to
+    # fifteen literature end-members alone.
+    meteorite_patterns: ["(?i)meteorite[^/]*\\.csv$", "(?i)mass_fractions\\.csv$"]
+    max_meteorite_files: 8
+  pyllutedwd:
+    # The natural forward model's repository; its diffusion-timescale files, if
+    # any are found by name, are parsed and used in place of the embedded
+    # mass-scaling law (results record which).
+    github_repo: "andrewmbuchan4/PyllutedWD_Public"
+    max_files: 12
+    # verify: Koester's astrophysics page (the source of every timescale table
+    # in the field).  Probed for links only; nothing is asserted about its
+    # layout until the runner has seen it.
+    koester_urls:
+      - "https://www.astrophysik.uni-kiel.de/~koester/astrophysics/astrophysics.html"
+      - "http://www1.astrophysik.uni-kiel.de/~koester/astrophysics/astrophysics.html"
+
+elements:
+  # every element the natural-family asset carries (src/seti/data_assets/slag_natural_family.csv)
+  all: [Li, Be, B, C, N, O, Na, Mg, Al, Si, P, S, K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn, Sr, Sn, Ba, Pb]
+  # the trace panel the brief names (reported per object)
+  trace_panel: [Sc, V, Co, Cu, Sr, Zn, Be, Li, K]
+
+panels:
+  min_elements: 5            # fewer measured elements -> INFORMATION_LIMITED, never a candidate
+  # PEWDD is one row per star per paper and each paper uses its own designation
+  # (GD 378 = WD 1822+410; PG 0843+516 = PG 0843+517 = WD0843+516).  Objects are
+  # therefore built by single-linkage on RAJ2000/DEJ2000 within this radius, not
+  # on the name.  The object count is flat across the choice: 1610 at 1", 1588
+  # at 3", 1576 at 5", 1566 at 8" for the 3547 served rows (2441 name groups).
+  # 5" because PEWDD's positions are per-paper transcriptions at different
+  # epochs and these stars have large proper motions (GD 362's two served
+  # positions differ by 3.5"); a false 5" pair among ~1600 objects is ~1e-3.
+  object_match_arcsec: 5.0
+  default_error_dex: 0.2     # a measurement with no error column gets this, and is flagged
+  error_floor_dex: 0.02
+
+fit:
+  sigma_sys: 0.15            # dex, added in quadrature to every measurement (model + line physics)
+  n_random: 400              # random-search starting points per fit
+  n_refine: 2                # Nelder-Mead refinements per fit
+  refine_maxiter: 500
+  t_cut_max_restricted: 1400 # K: the headline model fractionates only below this (moderately volatile)
+  depth_range: [-1.5, 4.0]   # dex: volatile depletion (+) or enrichment (-)
+  t_acc_range: [0.01, 30.0]  # accretion duration / tau_ref: early (<0.3) ... steady (>3)
+  t_dec_range: [0.0, 3.0]    # time since accretion stopped / tau_ref (declining phase)
+  fractionation_width_K: 100
+  phase_delta: 4.0           # objective window defining the acceptable phase set
+  n_cal: 150                 # injected natural draws per calibrated panel
+  draw_mode: posterior       # or prior
+  calibrate_full_below_p: 0.10   # also calibrate the free-fractionation model when restricted p is below this
+  # The second, harder calibration: the draw is a REAL measured meteorite from
+  # PEWDD's own compilation (~1,200 bodies), given a random sinking phase and
+  # this panel's errors, refitted with the same compiled end-member model.  It
+  # separates "this star is odd" from "this model cannot fit a rock".  0 = off.
+  n_cal_meteorite: 50
+
+tier2:
+  pairs: [[Ti, Al], [Sc, Ca], [Ca, Al], [Sr, Ca], [Mn, Cr], [Ni, Co]]
+  z_threshold: 4.0
+  rest_p_min: 0.01           # the rest of the panel must fit at naive p above this
+  nsig_flags: 4.0
+  exotic_mantle_margin_dex: 0.5   # Putirka & Xu 2021: reduced / Mercury-like mantles
+  teff_cool_he_K: 7000       # below this, He-atmosphere Ca/Na/K/Li line physics is a kill
+  multi_ref_sigma: 3.0       # two sources disagreeing by more than this on an element
+  free_fractionation_p_min: 0.05
+
+thresholds:
+  p_misfit_unexplained: 0.01   # the calibrated "unexplainable" list
+  p_misfit_watch: 0.05
+
+# The literature outliers to run first (positive / negative controls).  Names
+# are matched after normalisation (case, spaces, unicode minus) against every
+# alias AND against every designation the sky reconciliation put on the same
+# object; a control not found is reported CONTROL_NOT_FOUND with the nearest
+# names in the table so the alias list can be corrected from the record.  Each
+# alias list below is the set of designations PEWDD actually serves at that
+# object's position, read off the acquired table -- not guessed from the
+# literature.  The position is quoted so a wrong match is visible.
+controls:
+  - name: "PG 1225-079"                      # served at 186.9473 -8.2439, 8 rows, best 11 elements
+    aliases: ["PG1225-079", "PG 1225-079 Updated", "PG1225-079 Model 1", "PG1225-079 Model 2",
+               "PG1225-079 Model 3", "K 789-37", "WD 1225-079", "WD1225-079"]
+    expectation: "Ca/Sc/Ti/V x2-3 at bulk-Earth Fe-peak; 'no single meteorite' (Xu+2013, Klein+2011)"
+  - name: "LHS 2534"                        # served at 183.7349 -2.5675, 4 rows, best 7 elements
+    # NOT WD 1214+032: PEWDD serves this star as WD 1212-022 / SDSS J121456.39-023402.7.
+    aliases: ["LHS2534", "WD 1212-022", "WD1212-022", "SDSS J121456.39-023402.7",
+               "J1214-0234"]
+    expectation: "Li/Na/K cool DZ; 'defies all three hypotheses' (Kaiser+2024) -- COOL_HE_LINE_PHYSICS kill expected"
+  - name: "GALEX J2339-0424"                # served at 354.8210 -4.4069, 1 row, 9 elements
+    aliases: ["GALEXJ2339", "GALEXJ2339-0424", "GALEX J233917.0-042425", "J2339-0424",
+               "WD 2336-046", "WDJ233917.0-042425"]
+    expectation: "Be +2 dex (Klein+2021); spallation with Li/B partners (Doyle+2021) -> BE flag must NOT fire if Li/B present"
+  - name: "GD 378"                          # served at 275.9042 +41.0679, 8 rows, best 13 elements
+    aliases: ["GD378", "WD 1822+410", "WD1822+410"]
+    expectation: "Be +2 dex (Klein+2021)"
+  - name: "NLTT 19868"
+    # NOT WD/PG 0843+516 (131.7595 +51.4815) -- that is a different polluted DA.
+    # PEWDD serves NLTT 19868 at 129.0070 -10.1021 (Kawka 2016).
+    aliases: ["NLTT19868", "NLTT 19868"]     # served at 129.0070 -10.1021, 1 row, 4 elements
+    expectation: "extreme Fe-poor (Kawka & Vennes 2016) -> FE_MG_BELOW_MANTLE probe"
+  - name: "WD 0106-328"                     # served at 17.1501 -32.6287, 5 rows, best 4 elements
+    aliases: ["WD0106-328", "HE 0106-3253", "HE0106-3253", "J0108-3233",
+               "WDJ010857.51-323329.0"]
+    expectation: "Fe delivered as pure metal (Farihi 2026) -> core end-member should fit"
+  - name: "GD 362"                          # served at 262.8931 +37.0881, 5 rows, best 16 elements
+    aliases: ["GD362", "GD 362 Updated", "J1731+3705", "WD 1729+371", "WD1729+371"]
+    expectation: "richest panel (17 elements); natural; the Tier 2 calibration anchor"
+
+run:
+  results_dir: "results/slag"
+  fetch_retries: 3
+  fetch_timeout_s: 180

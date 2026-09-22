@@ -1,0 +1,329 @@
+# GRAVE — a technological extinction in Earth's sedimentary record (docs/grave.md).
+# Signature S56.  Every threshold the channel uses lives here; the reservoir
+# vectors and their citations live in src/seti/grave/references.py.
+
+sources: [sgp, earthchem, georoc]      # georoc is the volcanic reference, never a candidate source
+
+# ---------------------------------------------------------------------------
+# SGP — Sedimentary Geochemistry and Paleoenvironments Project (sgp-search.io)
+# The API shape was established from the published Stockey et al. 2024 call
+# and the Macrostrat integration (see acquire.py); the field codes are LEARNED
+# by the probe, one two-row request per candidate code.
+# ---------------------------------------------------------------------------
+sgp:
+  hosts: ["https://sgp-search.io", "https://archive.sgp-search.io"]
+  post_paged_url: "https://sgp-search.io/api/frontend/post-paged"
+  archive_post_paged_url: "https://archive.sgp-search.io/api/frontend/post-paged"
+  type: "samples"                       # the Macrostrat call; "nhhxrf" = no hand-held XRF (Stockey)
+  type_variants: ["samples", "nhhxrf"]
+  timeout_s: 180
+  # the window every probe request filters on.  Wide on purpose: a code is
+  # accepted only if a row comes back carrying its column, so a narrow window
+  # that happens to hold no samples would silently reject the whole schema.
+  probe_age_window: [0, 4000]
+  # The published Stockey body, minus the two codes the service refuses
+  # (run 35738860553: "filter error: fe_t_al is not a valid attribute in this
+  # search type"; strat_name_long likewise 400s).  One bad code fails the whole
+  # request, which is why acquire uses the probe's accepted list, never this.
+  base_show: [height_meters, section_name, fe, fe_hr_fe_t, fe_py_fe_hr, toc, alu, mo, u,
+              site_type, coord_lat, coord_long, basin_type, meta_bin, strat_name,
+              environment_bin, interpreted_age, max_age, min_age, lithology_name]
+  anchor_show: [interpreted_age, coord_lat]
+  max_code_tests: 240
+  # paths the app bundle names (run 35738860553); asked for their own listing of
+  # the valid attributes, which is the authoritative answer to "what can I ask for"
+  attribute_paths: ["/api/v1/post/attr", "/api/v1/get/info/samples", "/api/v1/get/info/results",
+                    "/api/defs/lithologies", "/api/v1/get/info/countries"]
+  # candidate field codes, each tested on the runner; accepted ones are pulled
+  show_candidates:
+    # metadata
+    - sample_name
+    - original_name
+    - original_sample_name
+    - sample_identifier
+    - section_name
+    - site_type
+    - site_name
+    - country
+    - state_province
+    - coord_lat
+    - coord_long
+    - height_meters
+    - strat_name
+    - strat_name_long
+    - lithology_name
+    - lithology_type
+    - lithology_text
+    - lithology_comp
+    - basin_type
+    - basin_name
+    - environment_bin
+    - meta_bin
+    - interpreted_age
+    - interpreted_age_notes
+    - max_age
+    - min_age
+    - age_iss
+    - ref_short
+    - ref_long
+    - reference
+    - ref_doi
+    - doi
+    - data_source
+    - analytical_method
+    - ana_method
+    - run_id
+    - batch
+    - project
+    - collector
+    - collection_year
+    # majors / bulk
+    - alu
+    - al
+    - si
+    - ti
+    - fe
+    - mn
+    - mg
+    - ca
+    - na
+    - k
+    - p
+    - s
+    - c
+    - toc
+    - tic
+    - tot_c
+    - loi
+    - fe_hr_fe_t
+    - fe_py_fe_hr
+    - fe_t_al
+    # trace: the fission panel, the reservoir tracers, the PGE/alloy panel
+    - li
+    - be
+    - b
+    - sc
+    - v
+    - cr
+    - co
+    - ni
+    - cu
+    - zn
+    - ga
+    - ge
+    - as
+    - se
+    - rb
+    - sr
+    - y
+    - zr
+    - nb
+    - mo
+    - ru
+    - rh
+    - pd
+    - ag
+    - cd
+    - in
+    - sn
+    - sb
+    - te
+    - i
+    - cs
+    - ba
+    - la
+    - ce
+    - pr
+    - nd
+    - sm
+    - eu
+    - gd
+    - tb
+    - dy
+    - ho
+    - er
+    - tm
+    - yb
+    - lu
+    - hf
+    - ta
+    - w
+    - re
+    - os
+    - ir
+    - pt
+    - au
+    - hg
+    - tl
+    - pb
+    - bi
+    - th
+    - u
+    # spellings retried after run 35738860553 refused the obvious ones: `as`
+    # (arsenic) and `i` (iodine) 400 although Ge, Se, In and Te are served, so
+    # the code is probably not the bare symbol; Ru and Rh 400 outright, which
+    # costs the two strongest light-peak discriminants (+4.77 dex) and leaves
+    # the light peak resting on Mo, Pd and Te.
+    - ars
+    - arsenic
+    - as_
+    - iod
+    - iodine
+    - i_
+    - ru_
+    - ruthenium
+    - rh_
+    - rhodium
+  # bulk pull: pages of page_count rows per age bin; a bin ends when a page is short
+  page_count: 5000
+  max_pages_per_bin: 60
+  age_bin_edges_ma: [0, 20, 40, 60, 80, 100, 130, 160, 200, 240, 280, 320, 360, 400, 440, 480,
+                     520, 560, 600, 650, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000, 2200,
+                     2400, 2600, 2800, 3000, 3300, 3600, 4000]
+
+# ---------------------------------------------------------------------------
+# EarthChem Portal REST search service (50-row pages; sedimentary via level/keyword)
+# ---------------------------------------------------------------------------
+earthchem:
+  # The documented path is 404 from Apache for every parameter spelling
+  # (run 35738860553).  The ladder asks each candidate base in turn and the
+  # probe records exactly what each served.
+  rest_url: "https://portal.earthchem.org/restsearchservice"
+  rest_url_candidates:
+    - url: "https://ecp.iedadata.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "http://ecp.iedadata.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "https://portal.earthchem.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "https://search.earthchem.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "https://www.earthchem.org/restsearchservice"
+      params: {searchtype: count, outputtype: json, keyword: shale}
+    - url: "https://search.earthchem.org/api/v1/samples"
+      params: {keyword: shale, limit: 5}
+    - url: "https://api.earthchem.org/v1/samples"
+      params: {keyword: shale, limit: 5}
+    - url: "https://ecl.earthchem.org/api/datasets"
+      params: {keyword: shale, limit: 5}
+    - url: "https://portal.earthchem.org/api/search"
+      params: {keyword: shale, limit: 5}
+    - url: "https://amsearch.earthchem.org/api/search"
+      params: {keyword: shale, limit: 5}
+    # api.earthchem.org answers (a 146-byte HTML shell) but not at /v1/samples,
+    # so the host exists and the path is wrong: ask it to describe itself.
+    - url: "https://api.earthchem.org/openapi.json"
+      params: {}
+    - url: "https://api.earthchem.org/"
+      params: {}
+    - url: "https://api.earthchem.org/v1/search"
+      params: {keyword: shale, limit: 5}
+    - url: "https://www.earthchem.org/api/search"
+      params: {keyword: shale, limit: 5}
+    - url: "https://www.earthchem.org/api/samples"
+      params: {keyword: shale, limit: 5}
+  timeout_s: 120
+  page_size: 50
+  max_rows: 20000                       # general pull cap (400 requests)
+  max_rows_per_window: 1500             # per boundary window
+  window_half_width_myr: 5.0
+  count_queries:
+    level1_sedimentary: {level1: sedimentary}
+    level2_sedimentary: {level2: sedimentary}
+    material_sedimentary: {material: sedimentary}
+    keyword_shale: {keyword: shale}
+    keyword_mudstone: {keyword: mudstone}
+    keyword_black_shale: {keyword: "black shale"}
+    keyword_boundary_clay: {keyword: "boundary clay"}
+    keyword_iridium: {keyword: iridium}
+    level3_shale: {level3: shale}
+    level4_shale: {level4: shale}
+  distinct_items: [level1, level2, level3, material]
+  distinct_base_params: {keyword: shale}
+
+# ---------------------------------------------------------------------------
+# GEOROC via the Goettingen Dataverse (DIGIS); igneous — the ash reference
+# ---------------------------------------------------------------------------
+georoc:
+  dataverse_api: "https://data.goettingen-research-online.de/api"
+  subtree: digis
+  search_q: "*"
+  max_datasets: 500
+  dataset_regex: "(?i)rock types|sediment|ocean|volcanic|intraplate|rift|plateau"
+  # widened after run 35738860553 matched one file in 30 datasets: what the ash
+  # reference actually needs is the silicic end (rhyolite, dacite, ignimbrite)
+  file_regex: "(?i)sediment|tuff|tephra|ash|pyroclast|volcaniclast|rhyolit|dacit|ignimbrit|obsidian"
+  max_filenames_recorded: 150
+  max_files: 12
+  max_total_bytes: 150000000
+  timeout_s: 300
+
+# ---------------------------------------------------------------------------
+# Detector thresholds (mirrored in seti.grave.vectors.GraveConfig)
+# ---------------------------------------------------------------------------
+detector:
+  horizon_yr: 1000000.0                 # 1 Myr: the pattern that outlives its makers (Tc -> Ru)
+  anchor: Nd
+  sigma_major_dex: 0.05
+  sigma_trace_dex: 0.10
+  sigma_ultratrace_dex: 0.20
+  systematic_dex: 0.05
+  ultratrace_ppm: 0.05
+  min_elements: 8
+  min_fission_elements: 4
+  lr_min: 8.0
+  ambiguity_margin: 2.0
+  max_reduced_chi2: 4.0
+  refine_lr: 2.0
+  null_quantile: 0.999
+  n_heavy: 2
+  n_light: 1
+  peak_sigma: 2.0
+  redox_ef_u: 3.0
+  redox_ef_v: 3.0
+  redox_toc_pct: 2.0
+  femn_ef_mn: 5.0
+  zr_hf_natural: [25.0, 60.0]
+  # distal tephra: the HFSE came in as glass, so Hf rides with Zr and Ta with Nb
+  # at crustal ratios.  A fission residue brings neither, so this cannot veto it.
+  ash_ef_hfse: 2.0
+  ash_drivers: [Zr, Hf, Nb, Ta, Th, Y, Rb, Cs, Ba, La, Ce, Pr, Nd, Sm, Eu, U]
+  monazite_th_ef: 3.0
+  hydro_ef_ba: 5.0
+  pge_ef_anom: 10.0
+  pge_ratio_tol: 3.0
+  ipge_pd_ir_max: 0.3
+  ta_ef_anom: 10.0
+  nb_ta_natural: [5.0, 40.0]
+  w_ef_anom: 20.0
+  w_partner_ef_max: 3.0
+  dl_repeat_min: 20
+  dl_floor_fraction: 0.5
+
+screen:
+  min_element_count: 50                 # a common element enters the design if >= this many samples carry it
+  min_panel_element_count: 5            # ... but a fission / PGE / alloy panel element enters at this count:
+                                        # Ru, Rh, Pd, Te, Ir, Pt are the decisive elements and the rarest
+  unmeasured_floor_dex: 0.30            # sigma for an element whose control scatter could not be measured
+  floor_max_rows: 4000
+  null_max_rows: 2000
+  # Above-threshold samples put through the full vet, highest LR first.  The vet
+  # costs ~2 x n_elements refined fits per sample (leave-one-out), so this is a
+  # wall-clock cap, not a scientific one: the funnel records `above_threshold`
+  # in full alongside `assessed`, and a gap between them means the threshold is
+  # mis-calibrated, which is itself the finding.
+  max_assess: 2000
+  min_age_ma: 0.0
+  max_age_ma: 4000.0
+  # site types whose samples carry a modern-contamination provenance flag (not a kill)
+  provenance_flag_regex: "(?i)core|drill|well|borehole|mine|quarry|tailing"
+
+agestack:
+  width_scale: 1.0                      # multiplies each boundary's half-width
+  max_span_myr: 20.0
+  # FAMILY-WISE: the thirteen boundary windows are one search, so p_hypergeom is
+  # Holm-corrected over the testable windows and this threshold is read against
+  # the corrected p_family.  0.05 family-wise is STRICTER than the 0.01
+  # per-window rule it replaces (which ran at FWER ~0.12).
+  cluster_p: 0.05
+  histogram_bin_myr: 10.0

@@ -89,9 +89,36 @@ _produced() {
   ! git diff --quiet HEAD -- "$path"
 }
 
+# A run that reached no data must not overwrite one that did.
+#
+# On 2026-09-22 a superseded `shroud` run was cancelled; its `analyze` job runs
+# `if: always()`, so it started with no artifact, wrote NO_DATA_REACHED over a
+# summary carrying 127 real sources, and committed that.  The empty file was
+# not a measurement of an empty sky -- it was the absence of a measurement, and
+# per CLAUDE.md that is never a statement about the sky.
+#
+# So: a summary that declares it reached nothing may only land where the branch
+# has no better one.  Where it would replace a real measurement, the branch's
+# summary stays and the attempt is kept beside it as `summary_attempt.json`, so
+# the run's own record is preserved and nothing is silently discarded.
+_declares_no_data() {
+  python3 - "$1" <<'PY' 2>/dev/null
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception:
+    sys.exit(1)                      # unreadable: not a claim of emptiness
+if not isinstance(d, dict):
+    sys.exit(1)
+v = str(d.get("verdict", "")).upper()
+sys.exit(0 if ("NO_DATA_REACHED" in v or "NO_SHARD_OUTPUTS" in v) else 1)
+PY
+}
+
 stage="$(mktemp -d)"
 present=()
 prune=()
+attempts=()
 mode="keep"
 for p in "$@"; do
   if [ "$p" = "--prune" ]; then mode="prune"; continue; fi
@@ -142,16 +169,36 @@ for attempt in $(seq 1 "$ATTEMPTS"); do
   # them on the concurrency group, then `rm -rf`'d the directory and put its
   # own two-file copy back -- deleting every record the newer runs had made.
   # A run may only assert the files it wrote; files it never saw stay.
+  attempts=()
+  keep=()
   for p in ${present[@]+"${present[@]}"}; do
     mkdir -p "$(dirname "$p")"
     if [ -d "$stage/$p" ]; then
       mkdir -p "$p"
       cp -R "$stage/$p/." "$p/"
-    else
-      rm -rf "$p"
-      cp -R "$stage/$p" "$p"
+      keep+=("$p")
+      continue
     fi
+    # `reset --hard` has just put the branch's own version at $p, so this
+    # compares what we are about to write against what the branch already has.
+    if [ "$(basename "$p")" = "summary.json" ] && [ -f "$p" ] \
+       && _declares_no_data "$stage/$p" && ! _declares_no_data "$p"; then
+      att="${p%.json}_attempt.json"
+      cp "$stage/$p" "$att"
+      attempts+=("$att")
+      echo "commit_results: $p reached no data but $BRANCH holds a measured one;"
+      echo "                keeping the branch's and recording this run as $att"
+      continue
+    fi
+    rm -rf "$p"
+    cp -R "$stage/$p" "$p"
+    keep+=("$p")
   done
+  present=(${keep[@]+"${keep[@]}"} ${attempts[@]+"${attempts[@]}"})
+  if [ "${#present[@]}" -eq 0 ] && [ "${#prune[@]}" -eq 0 ]; then
+    echo "commit_results: nothing left to commit after the no-data guard"
+    exit 0
+  fi
   # `reset --hard` brought a pruned path back from the branch; this run says it
   # should not be there, so remove it and stage that with `-A`.
   for p in ${prune[@]+"${prune[@]}"}; do

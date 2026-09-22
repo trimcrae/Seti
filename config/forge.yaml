@@ -1,0 +1,182 @@
+# FORGE channel (S47, docs/forge.md) — every threshold in one place.
+#
+# Hot exozodis read as ~1500 K swarm candidates.  Per star, a grey Planck body
+# (T free within the swarm range, f free) is fitted against the nano-grain
+# emissivity family (a < 0.5 um, beta = 1 or 2) over every H/K/L/N excess
+# measurement; the observable is the OUTLIER whose N-band excess IS consistent
+# with the Planck extrapolation of its K excess (1 % in K -> ~8 % at 10 um).
+#
+# Table ids are PREFERRED seeds, all marked verify: the probe stage lists what
+# TAP_SCHEMA / the ReadMe inventory actually hold under each id, reads the real
+# column names, and falls back to a keyword search.  Nothing is queried by a
+# column name that was not seen in the archive's own listing.
+
+physics:
+  t_grid_k: [400.0, 7000.0, 110]        # the free grey fit must reach a companion photosphere
+  f_grid_pct: [0.02, 60.0, 90]
+  grain_sizes_um: [0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5]
+  betas: [1.0, 2.0]
+  swarm_t_range_k: [700.0, 1800.0]      # above 1800 K nothing solid survives: a photosphere (ledger)
+  # verify: the temperature range the published small-grain fits occupy
+  # (grains at / just outside sublimation: Kirchschlager+2017, Lebreton+2013).
+  # A cooler nano-grain population reproduces the K/N ratio of a 1500 K grey
+  # body, so Delta chi2 is ALSO reported at each floor in nano_t_floors_k.
+  nano_t_range_k: [1500.0, 2000.0]     # ceiling: carbon sublimation; hotter is not a grain
+  nano_t_floors_k: [1000.0, 1200.0, 1500.0]
+  delta_chi2_min: 9.0
+  nir_detection_sigma: 3.0
+  n_detection_sigma: 3.0
+  planck_consistency_sigma: 2.0
+  grey_fit_p_min: 0.01
+  # verify: cross-instrument absolute-calibration floors, added in quadrature
+  # (FLUOR / PIONIER / JouFLU visibilities vs LBTI / KIN nulls are not tied).
+  calibration_floor_pct: {H: 0.1, K: 0.1, L: 0.3, N: 0.3, N8: 0.3, N11: 0.3}
+  upper_limit_sigma: 3.0
+  variability_sigma: 3.0
+
+# Published excess tables.  ``band`` / ``wl_um`` / ``unit`` describe what the
+# table's excess column means; ``columns`` are optional role overrides that
+# win only when the named column exists.  ``unit: percent`` or ``fraction``.
+tables:
+  absil2013:
+    preferred: "J/A+A/555/A104"       # Absil+2013 A&A 555 A104: CHARA/FLUOR K band, 42 stars
+    keywords: ["FLUOR", "exozodi"]
+    band: K
+    wl_um: 2.2
+    unit: percent
+    instrument: CHARA/FLUOR
+    epoch: "2013"
+    enabled: true
+  ertel2014:
+    preferred: "J/A+A/570/A128"       # Ertel+2014 A&A 570 A128: VLTI/PIONIER H band, 92 stars
+    keywords: ["PIONIER", "exozodi"]
+    band: H
+    wl_um: 1.65
+    unit: percent
+    instrument: VLTI/PIONIER
+    epoch: "2014"
+    enabled: true
+  nunez2017:
+    preferred: "J/A+A/608/A113"       # Nunez+2017 A&A 608 A113: CHARA/JouFLU K band, 44 stars
+    keywords: ["JouFLU", "exozodi"]
+    band: K
+    wl_um: 2.2
+    unit: percent
+    instrument: CHARA/JouFLU
+    epoch: "2017"
+    enabled: true
+  absil2021:
+    preferred: "J/A+A/651/A45"        # Absil+2021 A&A 651 A45: PIONIER H band, 52 new stars
+    keywords: ["PIONIER", "hot exozodi"]
+    band: H
+    wl_um: 1.65
+    unit: percent
+    instrument: VLTI/PIONIER
+    epoch: "2021"
+    enabled: true
+  ertel2018:
+    preferred: "J/AJ/155/194"         # Ertel+2018 AJ 155 194: HOSTS / LBTI N band, first 30 stars
+    keywords: ["HOSTS", "LBTI"]
+    band: N
+    wl_um: 11.1
+    unit: percent
+    instrument: LBTI
+    epoch: "2018"
+    enabled: true
+  ertel2020:
+    preferred: "J/AJ/159/177"         # Ertel+2020 AJ 159 177: HOSTS complete, 38 stars
+    keywords: ["HOSTS", "nulling"]
+    band: N
+    wl_um: 11.1
+    unit: percent
+    instrument: LBTI
+    epoch: "2020"
+    enabled: true
+  mennesson2014:
+    preferred: "J/ApJ/797/119"        # Mennesson+2014 ApJ 797 119: Keck nuller 8-13 um, 47 stars
+    keywords: ["Keck", "nuller"]
+    band: N
+    wl_um: 10.0
+    unit: percent
+    instrument: KIN
+    epoch: "2014"
+    enabled: true
+  millangabet2011:
+    preferred: "J/ApJ/734/67"         # Millan-Gabet+2011 ApJ 734 67: Keck nuller, 25 stars
+    keywords: ["Keck Interferometer", "exozodiacal"]
+    band: N
+    wl_um: 10.0
+    unit: percent
+    instrument: KIN
+    epoch: "2011"
+    enabled: true
+  marshall2016:
+    preferred: "J/ApJ/825/124"        # Marshall+2016 ApJ 825 124: HIPPI polarimetry of exozodi hosts
+    keywords: ["polarimetr", "exozodi"]
+    band: pol
+    unit: ppm
+    instrument: HIPPI
+    epoch: "2016"
+    role: polarimetry
+    enabled: true
+  kirchschlager2017:
+    preferred: "J/MNRAS/467/1614"     # Kirchschlager+2017 MNRAS 467 1614: modelled hot-dust systems
+    keywords: ["hot exozodiacal", "grain"]
+    band: model
+    unit: none
+    role: models
+    enabled: true
+
+# Star positions and spectral types for every key (Simbad TAP, chunked IN lists).
+positions:
+  simbad_tap: "https://simbad.cds.unistra.fr/simbad/sim-tap"
+  chunk: 60
+
+# Companion context per star: WDS within the interferometric field, Gaia DR3
+# RUWE / NSS / neighbours where Gaia has the star at all (it is missing or
+# saturated for the brightest of these).
+companions:
+  wds_table: "B/wds/wds"
+  wds_radius_arcsec: 3.0
+  wds_sep_max_arcsec: 1.5      # inside a FLUOR/PIONIER field; LBTI's aperture is wider
+  wds_dmag_max: 6.0            # a companion fainter than this cannot make a 1 % excess
+  gaia_table: "I/355/gaiadr3"
+  gaia_radius_arcsec: 12.0
+  gaia_match_arcsec: 3.0
+  ruwe_max: 1.4
+
+# The broadband (scale) leg: K-W1 vs W1-W2 (and W2-W3) for the sample and for
+# the < 30 pc main-sequence population.  Sensitivity is ~10x worse than the
+# interferometric leg and is REPORTED in the same unit (the K excess).
+broadband:
+  sample_tmass_table: "II/246/out"
+  sample_allwise_table: "II/328/allwise"
+  cone_arcsec: 5.0
+  population:
+    parallax_min_mas: 33.333     # < 30 pc
+    parallax_over_error_min: 10.0
+    ruwe_max: 1.4
+    g_max: 15.0
+    bp_rp_range: [0.3, 3.5]      # main sequence F to M; giants cut by absolute G below
+    dec_band_deg: 30
+    top_per_band: 200000
+  saturation:                    # brighter than this the catalogue photometry is unreliable
+    ks_min: 4.5
+    w1_min: 8.0
+    w2_min: 7.0
+    w3_min: 3.8
+  locus_bins: 25
+  sigma_min: 3.0
+  hot_t_k: 1500.0
+
+probe:
+  budget_s: 1500.0
+  # A clock on ONE table's discovery, not just on the stage.  budget_s only
+  # decides whether to START a table; without this a single slow catalogue
+  # runs its whole route ladder (TAP mirrors, ASU, astroquery, each retrying)
+  # and then a column query plus a row count for every table it lists, and
+  # the cheap probe eats the job's 240 minutes.  Run 35744731075 sat in probe
+  # for over 50 minutes on a 25-minute stage budget for exactly this reason.
+  # A truncated discovery reports DISCOVERY_TRUNCATED_BY_BUDGET and is never
+  # read as "the catalogue holds nothing usable".
+  table_budget_s: 240.0

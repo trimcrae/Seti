@@ -1128,7 +1128,7 @@ def _cmd_sextant(args, cfg):
 
     _sextant_run(args.stage, shard=args.shard, cfg=cfg, out_dir=args.out_dir,
                  work_dir=args.work_dir, route=args.route,
-                 max_objects=args.max_objects,
+                 max_objects=args.max_objects, release=args.release,
                  n_shards_for_all=args.n_shards)
 # --- end SEXTANT ---
 
@@ -2373,6 +2373,13 @@ def main(argv=None):
                         "objects; horizons is the reference it is measured against")
     p.add_argument("--max-objects", type=int, default=None,
                    help="0 = every numbered object in the release")
+    p.add_argument("--release", default=None, choices=["gaiafpr", "gaiadr3"],
+                   help="which Gaia SSO table (default from config/sextant.yaml: "
+                        "gaiafpr, the 66-month re-reduction, 46.3M observations of "
+                        "156,823 objects).  The 2026-09-03 probe measured that the "
+                        "two releases form an overlapping union that deduplicates "
+                        "under both candidate keys, so this picks one, it does not "
+                        "pool them")
     p.add_argument("--out-dir", default=None)
     p.add_argument("--work-dir", default=None,
                    help="cache for the perturber grids, the SBDB catalogue and the "

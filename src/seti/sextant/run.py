@@ -1563,10 +1563,14 @@ def stage_assess(conf: dict, paths: Paths, log=print) -> dict:
 # ---------------------------------------------------------------------------
 def run(stage: str, shard: str = "0/1", cfg=None, out_dir=None, work_dir=None,
         route: str | None = None, max_objects: int | None = None,
-        n_shards_for_all: int = 1, log=print) -> dict:
+        n_shards_for_all: int = 1, release: str | None = None, log=print) -> dict:
     conf = load_config(cfg)
     if max_objects is not None:
         conf["max_objects"] = int(max_objects)
+    if release:
+        if release not in ("gaiafpr", "gaiadr3"):
+            raise ValueError(f"unknown release {release!r}; expected gaiafpr or gaiadr3")
+        conf["release"] = release
     paths = Paths.make(out_dir, work_dir)
     try:
         i, n = (int(x) for x in str(shard).split("/"))

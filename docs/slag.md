@@ -37,11 +37,44 @@ diffusion timescales — has a narrow natural envelope. Six such pairs are
 tested: Ti/Al, Sc/Ca, Ca/Al, Sr/Ca, Mn/Cr, Ni/Co.
 
 The channel does **not** assume the brief's claim that all six stay inside
-~0.3 dex. Each envelope is computed from the family and reported
-(`summary.json["pair_statistics"]`). Ti/Al, Ca/Al and Sc/Ca are genuinely
-tight; Sr/Ca, Mn/Cr and Ni/Co open by 1–1.5 dex once continental crust and
-core-formation residues are in the family. A wide envelope makes a pair a
-weak test, not a wrong one, and the number is in the record.
+~0.3 dex. Each envelope is computed and reported
+(`summary.json["pair_statistics"]`, `["measured_meteorites"]["pairs"]`), from
+two sources:
+
+* the **compiled end-members** (18 averaged vectors) moved by the
+  condensation lever — the envelope the brief's claim describes;
+* the **measured meteorites**: 1,227 individually analysed bodies from the
+  compilations PEWDD itself ships (`jamietwilliams/PEWDD`,
+  `meteorite_database_{Si,Fe,Mg}.csv`, the same analyses against three
+  reference elements, merged), read as log₁₀ number ratios.
+
+They do not agree, and the measured ones are what the envelope uses, because
+they can only widen it:
+
+| pair | end-members | measured (n bodies) | total | widest single class |
+|---|---|---|---|---|
+| Ti/Al | 0.31 dex | 2.95 (1096) | 2.95 | EUC 2.04 |
+| Ca/Al | 0.79 | 3.63 (1200) | 3.72 | CH 0.91 |
+| Mn/Cr | 2.91 | 3.21 (1038) | 3.86 | EUC 1.68 |
+| Ni/Co | 1.43 | 3.53 (737) | 3.53 | CL 1.18 |
+| Sc/Ca | 0.77 | 0.08 (8) | 0.77 | — |
+| Sr/Ca | 1.23 | — (0) | 1.23 | — |
+
+**The brief's process-orthogonality premise does not survive the measured
+meteorites.** Ti/Al is 0.31 dex across the compiled end-members and 2.95 dex
+across real stones; Ca/Al reaches +2.97 in pallasites, where Al is a trace
+element in an olivine–metal rock, against a compiled maximum of +0.04. Even
+inside one class Ti/Al spans ~1 dex. Part of that width is real chemistry in
+metal-rich bodies and part is analytical scatter on trace elements in single
+small samples — and both belong in the envelope, because both are what a
+"natural meteorite" is allowed to look like when one falls onto a white
+dwarf. Tier 2 exceedances computed against the compiled end-members alone
+would have been artefacts of the compilation.
+
+The two pairs that stay narrow, Sc/Ca and Sr/Ca, are narrow *in the
+compilation only*: 8 and 0 measured bodies carry both elements. Their
+narrowness is a statement about coverage, not about nature, and the record
+says so rather than trading on it.
 
 ---
 
@@ -69,6 +102,19 @@ Two details are load-bearing:
   the fraction of draws whose minimum objective is at least the observed one.
   A low `p` therefore means: the natural family, with all its freedom,
   reproduces this star worse than it reproduces its own draws.
+
+There is a **second, harder calibration** with the same machinery and a
+different null (`misfit_meteorite`, `fit.n_cal_meteorite` draws): the draw is
+a *real measured meteorite* from the compilation above, given a random
+sinking phase and this panel's own errors, refitted with the compiled
+end-member model. No condensation lever is applied to it — a stone already
+carries its own volatile depletion. It separates the two readings of a small
+`p`: small posterior `p` **and** large meteorite `p` says the star is unlike
+the model *and* the model handles real rocks, so the star is odd; both small
+says the model cannot fit a rock either, and the misfit is the model's. A
+panel whose elements the compilation does not cover reports
+`SUITE_LACKS_ELEMENTS` or `TOO_FEW_BODIES_COVER_THE_PANEL` and is not
+calibrated this way — never silently given a p.
 
 `p < 0.01` is `UNEXPLAINED`, `p < 0.05` is `WATCH`. **A low `p` is a
 measurement about the natural family's reach, not a technosignature** — that
@@ -175,12 +221,43 @@ star by a name suffix — `PG1225-079 Model 2`, `GD 362 Updated`,
 and never saw its own object's other panels, so the multi-reference kill could
 not fire. Qualifiers are stripped before grouping.
 
+**One star, several designations — the object is a position, not a name.**
+Stripping qualifiers is not enough: PEWDD is one row per star per paper, and
+each paper writes the star the way its own field does. `GD 378` and
+`WD 1822+410` are one He-atmosphere DBZ; `PG 0843+516`, `PG 0843+517` and
+`WD0843+516` are one DA. Name grouping gave 2441 objects for 3547 rows.
+
+All 3547 rows carry `RAJ2000`/`DEJ2000`, so objects are built by
+single-linkage **on the sky** within 5″: **1576 objects**, 633 of which merge
+more than one designation. The radius is on a plateau (1610 at 1″, 1594 at
+2″, 1588 at 3″, 1576 at 5″, 1566 at 8″, 1559 at 12″); 5″ rather than 3″
+because PEWDD's positions are per-paper transcriptions at different epochs
+and these stars have large proper motions — GD 362's two served positions are
+3.5″ apart and were split at 3″. A false 5″ pair among ~1600 objects over the
+whole sky is ~10⁻³.
+
+The name deliberately does **not** link two sky positions. PEWDD carries rows
+whose designation belongs to a different star from their coordinates — two
+rows called `WD1202-232` sit 40° apart, and rows called `L745-46A` carry Ross
+640's position. Joining on the name as well as the sky chained those into
+single-linkage blobs, one of them 27 rows over ten unrelated designations,
+which would have pooled unrelated stars' abundances into one object. Names
+link only rows with no coordinate at all, and a designation PEWDD reuses for
+two positions keeps two object keys, each tagged by its position. The count
+of such reuses is in `summary.json["object_grouping"]`.
+
+This matters beyond bookkeeping: the shard unit, the misfit list's
+one-row-per-object choice, and above all the `MULTI_REFERENCE_DISAGREEMENT`
+kill all compare an object's own sources, and under name grouping 633
+objects' sources were never compared.
+
 ---
 
 ## 6. The population
 
-From the served table: 3547 rows, 2778 distinct star strings, **2441 distinct
-objects** once PEWDD's per-solution name qualifiers are stripped.
+From the served table: 3547 rows, 2778 distinct star strings, 2441 distinct
+name keys once PEWDD's per-solution qualifiers are stripped, and **1576
+objects** once those names are reconciled on the sky (§5).
 
 Counting *detections only* — upper limits excluded, per §5:
 
@@ -231,4 +308,6 @@ python -m seti.slag.run --stage assess     # misfit_list.csv, pairs.csv, flags.c
 ```
 
 or `seti slag --stage all`. On the runner: dispatch `slag.yml` with
-`stage=all`, `shards=8`.
+`stage=all`, `shards=4` — four is enough (168 panels carry the calibration
+cost; the other 3379 are seconds) and eight takes eight runner slots from the
+other channels for no wall-clock gain.

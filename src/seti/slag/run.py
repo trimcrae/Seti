@@ -45,7 +45,12 @@ import numpy as np
 import pandas as pd
 
 from . import acquire as A
-from .family import load_family, ratio_envelope
+from .family import (
+    load_family,
+    load_measured_meteorites,
+    measured_suite_report,
+    ratio_envelope,
+)
 from .misfit import FitSettings, Panel, calibrate_misfit, fit_panel, naive_p
 from .pairs import (
     KILL_INFORMATION_LIMITED,
@@ -77,6 +82,7 @@ DEFAULTS: dict = {
                  "trace_panel": ["Sc", "V", "Co", "Cu", "Sr", "Zn", "Be", "Li", "K"]},
     "panels": {"min_elements": 5, "default_error_dex": 0.2, "error_floor_dex": 0.02},
     "fit": {"sigma_sys": 0.15, "n_random": 400, "n_refine": 2, "refine_maxiter": 500,
+            "n_cal_meteorite": 50,
             "t_cut_max_restricted": 1400.0, "depth_range": [-1.5, 4.0],
             "t_acc_range": [0.01, 30.0], "t_dec_range": [0.0, 3.0],
             "fractionation_width_K": 100.0, "phase_delta": 4.0, "n_cal": 150,
@@ -170,13 +176,19 @@ def stage_probe(cfg: dict, out_dir: Path, *, fetch_fn=None, query_fn=None) -> di
     pew = A.probe_pewdd(cfg, fetch_fn=fetch_fn, query_fn=query_fn, log=log)
     ts = A.discover_timescale_tables(cfg, out_dir, fetch_fn=fetch_fn, log=log)
     fam = load_family()
+    measured = _attach_measured_meteorites(fam, out_dir, cfg)
     envs = {}
     for a, b in cfg["tier2"]["pairs"]:
         e = ratio_envelope(fam, a, b, t_cut_max=float(cfg["fit"]["t_cut_max_restricted"]))
-        envs[f"{a}/{b}"] = {k: e[k] for k in ("lo", "hi", "width_dex", "unfractionated_lo",
+        envs[f"{a}/{b}"] = {k: e[k] for k in ("lo", "hi", "width_dex", "endmember_lo",
+                                              "endmember_hi", "measured_n", "measured_lo",
+                                              "measured_hi", "measured_trim_lo",
+                                              "measured_trim_hi", "envelope_source",
+                                              "unfractionated_lo",
                                               "unfractionated_hi") if k in e}
     out = {"generated_utc": _now(), "elapsed_s": round(_time.time() - t0, 1), "pewdd": pew,
            "timescales": ts, "pair_envelopes_restricted": envs,
+           "measured_meteorites": measured,
            "family_endmembers": fam.endmembers, "family_elements": fam.elements,
            "acquisition": log.as_dict()}
     _write_json(out_dir / "probe.json", out)
@@ -251,6 +263,40 @@ def _load_table(out_dir: Path, cfg: dict, input_csv: str | None = None) -> tuple
         roles = A.resolve_roles([str(c) for c in df.columns], cfg["elements"]["all"])
     prov.update(source=aj["pewdd"].get("route"), path=path, n_rows=int(len(df)))
     return df, roles, prov
+
+
+
+def _attach_measured_meteorites(fam, out_dir: Path, cfg: dict) -> dict:
+    """Attach PEWDD's own meteorite compilations to the family, if they landed.
+
+    They widen the Tier 2 envelopes to what nature has been MEASURED to do
+    (docs/slag.md): the compiled end-members are eighteen averaged vectors,
+    and individual stones and irons reach a long way past them.  When nothing
+    parses, the run says so and the envelopes come from the end-members alone
+    --- which is a narrower, more permissive test and is recorded as such.
+    """
+    rep: dict = {}
+    paths = sorted(glob.glob(str(out_dir / "data" / "meteorite*.csv")))
+    paths += sorted(glob.glob(str(out_dir / "data" / "meteorites_*.csv")))
+    ap = out_dir / "acquire.json"
+    if ap.exists():
+        try:
+            for f in (json.loads(ap.read_text()).get("meteorites") or {}).get("files", []):
+                lp = f.get("local")
+                if lp:
+                    cand = Path(lp)
+                    if not cand.exists():
+                        cand = out_dir / "data" / cand.name
+                    if cand.exists():
+                        paths.append(str(cand))
+        except Exception:                                     # noqa: BLE001
+            pass
+    paths = sorted(set(paths))
+    suite = load_measured_meteorites(paths, report=rep) if paths else None
+    fam.measured = suite
+    out = {"attached": suite is not None, "paths": paths, **rep}
+    out.update(measured_suite_report(suite, [tuple(p) for p in cfg["tier2"]["pairs"]]))
+    return out
 
 
 def _timescale_model(fam, out_dir: Path, *, df=None, roles: dict | None = None) -> TimescaleModel:
@@ -375,6 +421,7 @@ def screen_panel(fam, tsm, panel: Panel, cfg: dict, *, others: list[Panel] | Non
     rec["fit_full"]["p_naive"] = naive_p(ff.chi2, ff.n_measured - 1)
     rec["misfit"] = None
     rec["misfit_full"] = None
+    rec["misfit_meteorite"] = None
     rec["pairs"] = []
     rec["flags"] = []
     rec["two_parcel"] = None
@@ -386,6 +433,12 @@ def screen_panel(fam, tsm, panel: Panel, cfg: dict, *, others: list[Panel] | Non
         if rec["misfit"]["p_misfit"] < float(cfg["fit"].get("calibrate_full_below_p", 0.1)):
             rec["misfit_full"] = calibrate_misfit(fam, panel, tsm, ff, s_full, n_draws=n_cal,
                                                   rng=rng, draw_mode=str(cfg["fit"]["draw_mode"]))
+        # the second, harder calibration: real measured meteorites as the null
+        n_met = int(cfg["fit"].get("n_cal_meteorite", 0) or 0)
+        if n_met > 0:
+            rec["misfit_meteorite"] = calibrate_misfit(fam, panel, tsm, fr, s_res,
+                                                       n_draws=n_met, rng=rng,
+                                                       draw_mode="meteorite")
         pairs = pair_residuals(fam, tsm, panel, s_res,
                                pairs=[tuple(p) for p in t2["pairs"]],
                                t_cut_max=float(cfg["fit"]["t_cut_max_restricted"]),
@@ -437,11 +490,13 @@ def stage_screen(cfg: dict, out_dir: Path, *, shard: str = "1/1", input_csv: str
                  n_cal: int | None = None, names: list[str] | None = None,
                  max_panels: int | None = None) -> dict:
     fam = load_family()
+    measured = _attach_measured_meteorites(fam, out_dir, cfg)
     df, roles, prov = _load_table(out_dir, cfg, input_csv)
     tsm = _timescale_model(fam, out_dir, df=df, roles=roles)
     i, n = (int(x) for x in shard.split("/"))
     out: dict = {"generated_utc": _now(), "shard": shard, "provenance": prov,
-                 "timescale_source": tsm.source, "panels": [], "status": A.STATUS_FAILED}
+                 "timescale_source": tsm.source, "measured_meteorites": measured,
+                 "panels": [], "status": A.STATUS_FAILED}
     if df is None or roles is None or not roles.get("elements"):
         out["error"] = prov.get("error", "no table or no element columns resolved")
         _write_json(out_dir / f"screen_{i}of{n}.json", out)
@@ -559,6 +614,8 @@ def _match_controls(cfg: dict, panels: list[dict]) -> list[dict]:
                        elements=best.get("elements"), misfit_class=best.get("misfit_class"),
                        p_misfit=(best.get("misfit") or {}).get("p_misfit"),
                        p_misfit_full=(best.get("misfit_full") or {}).get("p_misfit"),
+                       p_misfit_meteorite=(best.get("misfit_meteorite") or {}).get("p_misfit"),
+                       meteorite_cal_status=(best.get("misfit_meteorite") or {}).get("status"),
                        chi2_restricted=(best.get("fit_restricted") or {}).get("chi2"),
                        phase=(best.get("fit_restricted") or {}).get("phase"),
                        dominant_endmember=(best.get("fit_restricted") or {}).get("dominant_endmember"),
@@ -622,6 +679,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
     ts_source = None
     ts_library: dict = {}
     obj_grouping: dict = {}
+    measured_rep: dict = {}
     limit_book: dict = {}
     for s in shards:
         try:
@@ -634,6 +692,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
                            "provenance": d.get("provenance"), "error": d.get("error")})
         ts_source = d.get("timescale_source", ts_source)
         obj_grouping = d.get("object_grouping") or obj_grouping
+        measured_rep = d.get("measured_meteorites") or measured_rep
         ts_library = d.get("timescale_library") or ts_library
         if d.get("limit_bookkeeping"):
             lb = d["limit_bookkeeping"]
@@ -677,6 +736,10 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
             "elements": " ".join(best["elements"]),
             "p_misfit": best["misfit"]["p_misfit"],
             "p_misfit_full": (best.get("misfit_full") or {}).get("p_misfit"),
+            "p_misfit_meteorite": (best.get("misfit_meteorite") or {}).get("p_misfit"),
+            "meteorite_cal_status": (best.get("misfit_meteorite") or {}).get("status"),
+            "n_bodies_covering_panel": (best.get("misfit_meteorite") or {}).get(
+                "n_bodies_covering_panel"),
             "chi2": fr["chi2"], "chi2_per_dof": fr["chi2_per_dof"], "p_naive": fr.get("p_naive"),
             "phase": fr["phase"], "t_dec": fr["t_dec_over_tau_ref"],
             "dominant_endmember": fr["dominant_endmember"], "dominant_weight": fr["dominant_weight"],
@@ -785,6 +848,7 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
         "acquisition": acq, "timescale_source": ts_source,
         "timescale_library": ts_library, "limit_bookkeeping": limit_book,
         "object_grouping": obj_grouping,
+        "measured_meteorites": measured_rep,
         "timescale_source_per_panel": _count_by(screened, "timescale_source"),
         "panels_with_own_timescales": sum(1 for r in screened
                                           if int(r.get("n_row_sinking_times") or 0) > 0),
@@ -805,7 +869,8 @@ def stage_assess(cfg: dict, out_dir: Path) -> dict:
         "controls": [{k: c.get(k) for k in ("name", "status", "matched_key", "designations",
                                              "ra", "dec", "teff", "atmosphere", "n_sources",
                                              "n_measured",
-                                             "p_misfit", "p_misfit_full", "misfit_class", "phase",
+                                             "p_misfit", "p_misfit_full", "p_misfit_meteorite",
+                                             "meteorite_cal_status", "misfit_class", "phase",
                                              "dominant_endmember", "max_abs_residual_sigma")}
                      for c in controls],
         "shards": shard_meta,

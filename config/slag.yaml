@@ -70,6 +70,11 @@ fit:
   n_cal: 150                 # injected natural draws per calibrated panel
   draw_mode: posterior       # or prior
   calibrate_full_below_p: 0.10   # also calibrate the free-fractionation model when restricted p is below this
+  # The second, harder calibration: the draw is a REAL measured meteorite from
+  # PEWDD's own compilation (~1,200 bodies), given a random sinking phase and
+  # this panel's errors, refitted with the same compiled end-member model.  It
+  # separates "this star is odd" from "this model cannot fit a rock".  0 = off.
+  n_cal_meteorite: 50
 
 tier2:
   pairs: [[Ti, Al], [Sc, Ca], [Ca, Al], [Sr, Ca], [Mn, Cr], [Ni, Co]]

@@ -2070,6 +2070,45 @@ def _recurrence_counts(root: Path, waves, spec_ids, tol_A: float = 3.0) -> dict:
                                            for x in d_near]}
 
 
+def plate_context(identifiers, waves, tol_A: float = 1.0) -> dict:
+    """How much company each candidate has on its own plate.
+
+    An SDSS plate is one exposure set on one pair of CCDs.  A plate that
+    contributes many candidates is telling you about the plate, not about the
+    sky, and two FIBRES of one plate with a candidate at the same wavelength
+    are telling you about a CCD column: the fibres are different objects but
+    the same detector columns.
+
+    On the first run's 71 measured lines this separates the set cleanly --
+    plate 2333 alone contributes 11, with two exact-wavelength fibre pairs and
+    every one of them below 3.3 sigma once the coadd is measured against its
+    own local scatter, while the strongest candidate's plate contributes
+    exactly one.
+    """
+    ids = [str(x) if x is not None else "" for x in identifiers]
+    w = [float(x) if x is not None and np.isfinite(float(x)) else float("nan")
+         for x in waves]
+    plate, fibre = [], []
+    for s in ids:
+        m = re.match(r"^(\d+)-(\d+)-(\d+)$", s)
+        plate.append(m.group(1) if m else "")
+        fibre.append(m.group(3) if m else "")
+    n_on_plate, n_same_pixel = [], []
+    for i, p in enumerate(plate):
+        if not p:
+            n_on_plate.append(0)
+            n_same_pixel.append(0)
+            continue
+        same = [j for j in range(len(plate)) if plate[j] == p and j != i]
+        n_on_plate.append(len(same))
+        n_same_pixel.append(sum(
+            1 for j in same
+            if fibre[j] and fibre[j] != fibre[i]
+            and np.isfinite(w[i]) and np.isfinite(w[j]) and abs(w[i] - w[j]) <= tol_A))
+    return {"plate_n_other_candidates": n_on_plate,
+            "plate_other_fibre_same_wavelength": n_same_pixel}
+
+
 def pixel_coincidence(root: Path, release: str = "SDSS-DR17", max_offset: int = 10,
                       baseline_from: int = 3) -> dict:
     """Do unrelated sightlines put candidates on the SAME PIXEL more than chance?
@@ -2283,6 +2322,10 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     rec = _recurrence_counts(root, tab["wavelength"], tab["spec_id"])
     for k, v in rec.items():
         tab[k] = v
+    # How much company the candidate has on its own plate, and whether another
+    # FIBRE of that plate has one at the same wavelength (a CCD column).
+    for k, v in plate_context(tab["identifier"], tab["wavelength"]).items():
+        tab[k] = v
 
     # SIMBAD for every unique position (refresh; the triage table has gaps).
     if do_simbad:
@@ -2328,6 +2371,13 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
         "verdict_counts": {k: int(v) for k, v in vcounts.items()},
         "route_counts": {k: int(v) for k, v in
                          tab["route"].astype(object).fillna("").value_counts().items()},
+        "n_with_other_fibre_same_wavelength": int(
+            (pd.to_numeric(tab["plate_other_fibre_same_wavelength"],
+                           errors="coerce").fillna(0) > 0).sum()),
+        "most_crowded_plates": {
+            str(k): int(v) for k, v in
+            tab["identifier"].astype(str).str.extract(r"^(\d+)-")[0]
+            .dropna().value_counts().head(5).items()},
         "pixel_coincidence": {rel: pixel_coincidence(root, rel)
                               for rel in sorted(set(df["data_release"].astype(str)))},
         "n_with_another_candidate_within_3A": int(
@@ -2352,6 +2402,7 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
                              "between_band_heads", "band_blue_label", "band_blue_dA",
                              "band_red_label", "band_red_dA",
                              "n_other_candidates_within_3A", "nearest_other_candidate_dA",
+                             "plate_n_other_candidates", "plate_other_fibre_same_wavelength",
                              "second_epoch")
                             if c in alive.columns]].to_dict("records")],
         "verdict": ("PERSISTENT_UNIDENTIFIED_LINES_REMAIN" if len(alive)

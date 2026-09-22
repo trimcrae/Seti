@@ -819,6 +819,24 @@ def test_recurrence_counts_other_sightlines_at_the_same_wavelength(tmp_path):
     assert empty["n_other_candidates_within_3A"] == [0]
 
 
+def test_plate_context_counts_company_on_the_plate_and_shared_columns():
+    """An SDSS plate is one exposure set on one pair of CCDs.  A plate that
+    contributes many candidates is telling you about the plate; two FIBRES of
+    one plate with a candidate at the same wavelength are telling you about a
+    CCD column -- different objects, same detector columns."""
+    ids = ["2333-53682-0274", "2333-53682-0339", "2333-53682-0170",
+           "0412-51942-0465", "bad-identifier"]
+    waves = [3947.299, 3947.299, 4820.588, 6809.261, 5000.0]
+    got = persist.plate_context(ids, waves)
+    assert got["plate_n_other_candidates"] == [2, 2, 2, 0, 0]
+    # The two plate-2333 fibres at one wavelength see each other; the third does not.
+    assert got["plate_other_fibre_same_wavelength"] == [1, 1, 0, 0, 0]
+    # The same fibre listed twice is one spectrum, not a shared column.
+    same = persist.plate_context(["2333-53682-0274", "2333-53682-0274"],
+                                 [3947.299, 3947.299])
+    assert same["plate_other_fibre_same_wavelength"] == [0, 0]
+
+
 def _write_triage(tmp_path, rows):
     tri = tmp_path / "results" / "spectra_triage"
     tri.mkdir(parents=True, exist_ok=True)

@@ -508,3 +508,43 @@ star, a short baseline and an empty archive each produce the named
 non-candidate verdict; an accelerating (exponential) rise is recovered
 through the exponential ramp. Dispatch via `.github/workflows/ignition.yml`
 (`stage=probe` first). Run IDs and survivors go to `STATUS.md`.
+
+### 7.1 In flight, 2026-09-22 — and the next decisive action
+
+Two dispatches are queued behind an account-wide GitHub Actions ceiling (11
+runs in flight, 111 queued repo-wide across the parallel channels); neither
+had a runner after four hours, so **neither has yet corrected the brief**:
+
+| run | what it settles | inputs |
+|---|---|---|
+| **35738088082** | Step 1: do the 846 parents get full 10-year series now? | `stage=all mode=fields shards=8 max_parallel=8 route=upload sample_from_run_id=35039105536` |
+| **35740159635** | Step 2: how much of the `\|b\| > 15°` sky one dispatch covers | `stage=all mode=tiles shards=12 max_parallel=12 budget_min=150 route=upload` |
+
+`route=upload` with `upload_fallback_cone: true` is deliberate: it tests the
+`unicodeChar` fix on the real service, and a chunk no rung answers still goes
+to per-star cones, so the run cannot come back empty because of the route.
+
+**What to read first, in order:**
+
+1. The acquire ledger of any shard — `results/ignition/acquire_s*.json`,
+   `ledger[].label`. `neowise_upload[pyvo_sync]_<n>` or
+   `neowise_upload[pyvo_async]_<n>` means the fix landed and the channel scales;
+   `neowise_upload[none]_<n>` with `Unimplemented data type` still in `error`
+   means the service refuses `long` as well and the run will show the one
+   recorded downgrade to a 32-bit row index (`upload[.../int32_index]` in the
+   job log). Anything else there is a new failure and is quoted verbatim.
+2. `summary_fields.json` → `denominators.n_stars_attempted_neowise` /
+   `n_stars_with_neowise_rows` / `n_stars_screened` against the 846, and
+   `degraded` for `neowise_queries_failed:<n>` (314 last time).
+3. `veto_counters.screen`. The previous run's 172 screened stars were
+   `FADING:97, NOT_RISING:37, IMPULSIVE_SHAPE:12, INSUFFICIENT_EPOCHS:26` —
+   97 five-sigma faders in both bands is the survey's zero point, and
+   `ensemble.per_shard_drift` in the new summary says how much of it the
+   ensemble correction removed. A `FADING` count that stays near half the
+   sample means the correction did not take and the *screen input* is still
+   wrong, not the sky.
+4. `summary_tiles.json` → `coverage.tiles_done / tiles_in_sky`,
+   `sky_fraction_done`, `n_parent_done_tiles`, `shards_stopped_on_budget`, and
+   `degraded` for `unit_budget_skips:<n>/<units>`. That is the honest coverage
+   statement for the sweep; a later dispatch continues it with
+   `resume_run_id=35740159635` **at the same shard count (12)**.

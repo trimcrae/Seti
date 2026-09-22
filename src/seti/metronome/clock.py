@@ -96,6 +96,12 @@ DEFAULT_NULL = {
     # full budget establishing a p-value that cannot change its tier.  The p
     # is still a valid Besag-Clifford p, only coarser.
     "n_max_not_clock": 200, "Q_watch": 0.6, "jitter_watch": 0.12, "f_core_watch": 0.4,
+    # Null 3 (pool_null): draws from the catalogue's own event times inside the
+    # star's windows.  Cheaper than null 1 per trial is not the point --- it is
+    # the only null that carries the catalogue's real time lattice without
+    # anyone having to model it, so it is run on every star that survives the
+    # screen, with its own (smaller) trial budget.
+    "n_pool": 200, "pool_min_size": 24, "pool_factor": 3,
 }
 
 
@@ -343,8 +349,15 @@ class ScanResult:
         return asdict(self)
 
 
-def scan(times, windows: Windows | None, conf: dict | None = None) -> ScanResult:
-    """Full period scan of one event list; every number the tiers need."""
+def scan(times, windows: Windows | None, conf: dict | None = None, *,
+         cycles: bool = True) -> ScanResult:
+    """Full period scan of one event list; every number the tiers need.
+
+    ``cycles=False`` skips the cycle bookkeeping, which nothing but the
+    observed scan reads.  At the short end of the grid that block allocates
+    span/P ticks per call (~7,000 for P = 0.2 d over the Kepler baseline),
+    which a null running thousands of trials per star pays for nothing.
+    """
     c = dict(DEFAULT_SCAN, **(conf or {}))
     t = np.sort(np.asarray(times, dtype=float))
     t = t[np.isfinite(t)]
@@ -390,19 +403,32 @@ def scan(times, windows: Windows | None, conf: dict | None = None) -> ScanResult
     if core.sum() >= 2:
         res.gap_integer_frac_core, res.n_gaps_core = gap_integer_fraction(
             t[core], p, windows, tol=float(c["gap_tol"]))
-    # Cycle bookkeeping: how many ticks of the clock fell in observed time, and
-    # how many of those carry an event.  Report-only; a beacon need not tick
-    # every cycle, but a reader should see the duty cycle.
-    if windows is not None and windows.n:
-        k0 = np.floor((windows.starts[0] - res.t0) / p)
-        k1 = np.ceil((windows.stops[-1] - res.t0) / p)
+    # Cycle bookkeeping: how many ticks of the clock had an OPPORTUNITY to be
+    # seen, and how many of those carry an event.
+    #
+    # The opportunity is not the tick instant landing inside an observing
+    # window --- a tick whose instant falls in a gap while its phase window is
+    # half covered is still a chance to see the clock, and a tick whose instant
+    # is covered can still have its events land in the gap on either side.
+    # Counting instants made ``cycles_hit`` exceed ``cycles_span`` (occupancy
+    # above 1 was measured on the 2026-09-21 run) and, at long periods, made
+    # the denominator two or three when the search had only ever had two or
+    # three chances.  So a cycle counts as observed when any part of its phase
+    # window [tick - w P, tick + w P] is inside an observing window, and a hit
+    # counts only among the cycles so observed.  ``cycles_span`` is then the
+    # number of repeats the period claim actually rests on, which is what the
+    # ``few_cycles`` veto reads.
+    if cycles and windows is not None and windows.n:
+        w = float(c["phase_window"]) * p
+        k0 = np.floor((windows.starts[0] - res.t0 - w) / p)
+        k1 = np.ceil((windows.stops[-1] - res.t0 + w) / p)
         ks = np.arange(k0, k1 + 1)
         ticks = res.t0 + ks * p
-        in_obs = windows.contains(ticks)
-        res.cycles_span = float(in_obs.sum())
+        observed = windows.overlaps(ticks - w, ticks + w)
+        res.cycles_span = float(observed.sum())
         hit = np.unique(np.round((t - res.t0) / p))
-        res.cycles_hit = int(len(hit))
-        res.cycle_occupancy = float(len(hit) / max(in_obs.sum(), 1))
+        res.cycles_hit = int(np.isin(ks[observed], hit).sum())
+        res.cycle_occupancy = float(res.cycles_hit / max(observed.sum(), 1))
     return res
 
 
@@ -460,7 +486,7 @@ def _run_null(kind: str, h_obs: float, draw, scan_conf: dict, null_conf: dict,
         tt = draw()
         if tt is None or len(tt) < 2:
             break
-        r = scan(tt, windows, scan_conf)
+        r = scan(tt, windows, scan_conf, cycles=False)
         n += 1
         hs.append(r.h_max)
         if quality:
@@ -524,6 +550,49 @@ def shuffle_waiting_times(times, windows: Windows, rng) -> np.ndarray | None:
     tau_new = tau0 + np.concatenate([[0.0], np.cumsum(gaps)])
     tau_new = np.clip(tau_new, 0.0, max(total - 1e-9, 0.0))
     return np.sort(windows.quantize(windows.real_time(tau_new)))
+
+
+def pool_null(times, windows: Windows, h_obs: float, pool_times, scan_conf: dict | None = None,
+              null_conf: dict | None = None, rng=None, *, quality: bool = True) -> NullResult:
+    """Null 3: the star's N events replaced by N times drawn from the times at
+    which *other stars in the same catalogue* were seen to flare.
+
+    Nulls 1 and 2 model the sampling --- the windows, and a cadence grid taken
+    from configuration.  This one does not model it at all: it resamples the
+    empirical distribution of catalogued event times inside this star's own
+    windows, so whatever lattice the catalogue's times sit on, whatever
+    duty-cycle structure its sectors have, and whatever epochs its detector
+    preferred are carried into the null exactly as they are in the data,
+    without anyone having to know what they are.  The star's own times are
+    excluded by the caller; cross-star coincidences are removed before this
+    stage, so a shared instrumental epoch cannot be laundered through the pool.
+
+    It is the *conservative* null: real epoch structure shared with the pool
+    counts against the star.  Too small a pool returns an empty result rather
+    than a p-value, and is reported as un-run, never as a pass --- ``pool_factor``
+    x N times must lie inside the star's windows.  Three is the floor: a draw of
+    N from 3N has C(3N, N) distinct outcomes, so the null is not degenerate,
+    while demanding more would leave the sparse catalogues without any null at
+    all rather than with a conservative one.
+    """
+    rng = np.random.default_rng(rng)
+    nc = dict(DEFAULT_NULL, **(null_conf or {}))
+    nc = dict(nc, n_max=min(int(nc.get("n_pool", 200)), int(nc.get("n_max", 200))),
+              h_stop=int(nc["h_stop"]))
+    n = int(len(np.asarray(times)))
+    pool = np.asarray(pool_times, dtype=float)
+    pool = pool[np.isfinite(pool)]
+    if pool.size and windows is not None and windows.n:
+        pool = pool[windows.contains(pool)]
+    res_empty = NullResult(kind="pool_resample")
+    if n <= 1 or pool.size < max(int(nc.get("pool_factor", 3)) * n,
+                                 int(nc.get("pool_min_size", 24))):
+        return res_empty
+
+    def draw():
+        return np.sort(rng.choice(pool, size=n, replace=False))
+
+    return _run_null("pool_resample", h_obs, draw, scan_conf or {}, nc, windows, quality=quality)
 
 
 def shuffle_null(times, windows: Windows, h_obs: float, scan_conf: dict | None = None,
@@ -613,7 +682,8 @@ def cross_star_coincidence(star_ids, times, *, bin_days: float, min_stars: int =
 # Per-star analysis
 # ---------------------------------------------------------------------------
 def analyze_star(times, windows: Windows, energies=None, scan_conf: dict | None = None,
-                 null_conf: dict | None = None, rng=None, *, run_nulls: bool = True) -> dict:
+                 null_conf: dict | None = None, rng=None, *, run_nulls: bool = True,
+                 pool_times=None) -> dict:
     """Scan one star, run the screen, then the nulls only if the screen passes.
 
     Returns a flat dict of everything the vetting and tier stages need.  The
@@ -660,6 +730,13 @@ def analyze_star(times, windows: Windows, energies=None, scan_conf: dict | None 
             nc["shuffle_min_gaps"]) else NullResult(kind="waiting_time_shuffle")
         rec.update({f"sn_{k}": v for k, v in sn.as_dict().items() if k != "kind"})
         rec["p_shuffle"] = sn.p_empirical if sn.n_trials > 0 else float("nan")
+        # the same reduced budget a star that cannot rank above `none` gets on
+        # null 1: its p can be coarser without changing any tier
+        pn = (pool_null(t, windows, r.h_max, pool_times, sc, nc_run, rng)
+              if pool_times is not None else NullResult(kind="pool_resample"))
+        rec.update({f"pn_{k}": v for k, v in pn.as_dict().items() if k != "kind"})
+        rec["p_pool"] = pn.p if pn.n_trials > 0 else float("nan")
+        rec["pool_null_computed"] = bool(pn.n_trials > 0)
     rec.update(energy_phase_correlation(t, e, r.period, r.mean_phase))
     return rec
 
@@ -687,5 +764,5 @@ def bh_fdr(pvals, alpha: float = 0.05) -> np.ndarray:
 __all__ = ["DEFAULT_NULL", "DEFAULT_SCAN", "NullResult", "ScanResult", "analyze_star",
            "bh_fdr", "cross_star_coincidence", "decluster", "energy_phase_correlation",
            "frequency_grid", "fundamental_period", "gap_integer_fraction", "gumbel_tail_p",
-           "h_statistic", "phase_stats", "refine_frequency", "scan", "screen_p_upper",
-           "shuffle_null", "shuffle_waiting_times", "window_null"]
+           "h_statistic", "phase_stats", "pool_null", "refine_frequency", "scan",
+           "screen_p_upper", "shuffle_null", "shuffle_waiting_times", "window_null"]

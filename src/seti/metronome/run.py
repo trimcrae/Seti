@@ -50,8 +50,10 @@ from .redetect import DEFAULT_REDETECT
 from .vet import DEFAULT_VET, assign_tiers, calibrate_jitter, rejection_counters
 from .windows import (
     guess_time_system,
+    infer_time_grid,
     intersect_windows,
     kepler_quarter_windows,
+    lattice_phase_limits,
     star_windows,
     windows_from_events,
     windows_from_sectors,
@@ -66,7 +68,8 @@ DEFAULTS: dict = {
     "windows": {"bin_days": 0.1, "min_gap_days": 0.5, "min_expected_in_gap": 20.0,
                 "min_events_for_data_driven": 2000,
                 "pad_days": 0.5, "drop_expected": 5.0,
-                "cadence_days": {"kepler": 0.020434, "tess": 0.0013889}},
+                "cadence_days": {"kepler": 0.020434, "tess": 0.0013889},
+                "grid_tol_frac": 0.12, "grid_min_on_grid": 0.97},
     "cross_star": {"bin_days": {"kepler": 0.0409, "tess": 0.0069}, "min_stars": 5,
                    "tail_p": 1e-6},
     "scan": dict(DEFAULT_SCAN),
@@ -147,6 +150,62 @@ def _enabled_catalogues(conf: dict, catalogues=None) -> dict:
 # ---------------------------------------------------------------------------
 # probe
 # ---------------------------------------------------------------------------
+CENSUS_QUERIES: dict[str, str] = {
+    # Every VizieR table whose description mentions flares, with its row count
+    # left to the caller: the inventory of what a per-flare TIME could still be
+    # pulled from.  METRONOME needs times, and the largest flare catalogue it
+    # has (Yang+2019, 162k events) publishes start/end but no peak; knowing
+    # which other tables exist is the difference between "this is all there is"
+    # and "we did not look".
+    "flare_tables": (
+        "SELECT TOP 400 table_name, description FROM TAP_SCHEMA.tables "
+        "WHERE description LIKE '%flare%' OR description LIKE '%Flare%' "
+        "OR description LIKE '%superflare%' OR description LIKE '%Superflare%'"),
+    # Pietras+2022 (ApJ 935, 143) returned zero rows under its bibcode id and
+    # under an author keyword on 2026-09-06 and again on 2026-09-21.  Listing
+    # the whole ApJ-935 block settles whether the catalogue is in VizieR at all
+    # under a different table id, or genuinely absent (in which case that is
+    # recorded as an absence, not retried forever).
+    "apj_935": ("SELECT TOP 200 table_name, description FROM TAP_SCHEMA.tables "
+                "WHERE table_name LIKE '%J/ApJ/935/%'"),
+}
+
+
+def flare_table_census(*, query_fn=None, log=None) -> dict:
+    """Inventory of VizieR tables that could carry per-flare times.
+
+    Diagnostic only --- nothing downstream depends on it --- but it is the
+    cheapest way to turn "the preferred table id returned zero rows" into a
+    statement about what VizieR does and does not hold.  Every query is
+    recorded; a failure is recorded as a failure and never as an absence.
+    """
+    from .acquire import tap_query, unquote_table
+
+    query_fn = query_fn or tap_query
+    out: dict = {}
+    for name, adql in CENSUS_QUERIES.items():
+        try:
+            df = query_fn(adql)
+        except Exception as exc:                          # noqa: BLE001
+            out[name] = {"status": "QUERY_FAILED", "error": repr(exc)[:300], "n": 0, "rows": []}
+            if log:
+                log.record(f"census_{name}", adql, error=repr(exc))
+            continue
+        if df is None or not len(df):
+            out[name] = {"status": "QUERY_RETURNED_ZERO_ROWS", "n": 0, "rows": []}
+            if log:
+                log.record(f"census_{name}", adql, rows=0)
+            continue
+        df = df.rename(columns={c: str(c).lower() for c in df.columns})
+        rows = [{"table": unquote_table(str(r.get("table_name", ""))),
+                 "description": str(r.get("description", ""))[:200]}
+                for _, r in df.iterrows()]
+        out[name] = {"status": "OK", "n": len(rows), "rows": rows}
+        if log:
+            log.record(f"census_{name}", adql, rows=len(rows))
+    return out
+
+
 def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None,
                 log=None) -> dict:
     from .acquire import AcquisitionLog, column_descriptions, discover_event_table, tap_query
@@ -187,6 +246,7 @@ def stage_probe(conf: dict, out: Path, *, catalogues=None, query_fn=None,
         found[name] = d
     rep = {"stage": "probe", "generated_utc": _now(), "catalogues": found,
            "n_usable": sum(1 for d in found.values() if d["status"] == "OK"),
+           "census": flare_table_census(query_fn=query_fn, log=log),
            "acquisition": log.as_dict()}
     _write(out / "probe.json", rep)
     print(f"[metronome] probe: {rep['n_usable']}/{len(found)} catalogues usable")
@@ -305,10 +365,31 @@ def stage_acquire(conf: dict, out: Path, *, catalogues=None, query_fn=None,
 # ---------------------------------------------------------------------------
 # screen
 # ---------------------------------------------------------------------------
-def build_mission_windows(events: pd.DataFrame, mission: str, conf: dict):
+def measure_time_grid(events: pd.DataFrame, mission: str, conf: dict) -> dict:
+    """The lattice this catalogue's own peak times lie on (see
+    :func:`seti.metronome.windows.infer_time_grid`), falling back to the
+    configured mission cadence when no lattice is detectable."""
+    w = conf.get("windows") or {}
+    cad_cfg = float((w.get("cadence_days") or {}).get(mission, 0.020434))
+    g = infer_time_grid(events["t_peak"].to_numpy(dtype=float),
+                        tol_frac=float(w.get("grid_tol_frac", 0.12)),
+                        min_on_grid=float(w.get("grid_min_on_grid", 0.97)))
+    g["cadence_config_days"] = cad_cfg
+    if np.isfinite(g.get("grid_days", np.nan)) and g["grid_days"] > 0:
+        g["cadence_used_days"] = float(g["grid_days"])
+        g["cadence_source"] = "measured"
+    else:
+        g["cadence_used_days"] = cad_cfg
+        g["cadence_source"] = "config_mission_cadence"
+    return g
+
+
+def build_mission_windows(events: pd.DataFrame, mission: str, conf: dict, *,
+                          cadence_days: float | None = None):
     """Data-driven windows from the whole catalogue, or the published fallback."""
     w = conf.get("windows") or {}
-    cad = float((w.get("cadence_days") or {}).get(mission, 0.020434))
+    cad = float(cadence_days) if cadence_days else \
+        float((w.get("cadence_days") or {}).get(mission, 0.020434))
     t = events["t_peak"].to_numpy(dtype=float)
     kw = dict(bin_days=float(w.get("bin_days", 0.5)),
               min_gap_days=float(w.get("min_gap_days", 0.5)),
@@ -356,7 +437,9 @@ def screen_catalogue(events: pd.DataFrame, name: str, mission: str, conf: dict, 
                                 tail_p=float(cs.get("tail_p", 1e-6)))
     removed_by_star = ev.loc[cc["remove"], "star_id"].value_counts()
     ev = ev.loc[~cc["remove"]]
-    mission_w = build_mission_windows(ev, mission, conf)
+    grid = measure_time_grid(ev, mission, conf)
+    mission_w = build_mission_windows(ev, mission, conf,
+                                      cadence_days=grid["cadence_used_days"])
     wconf = conf.get("windows") or {}
     sc, nc = conf.get("scan") or {}, conf.get("null") or {}
     n_min = int(sc.get("n_min", 8))
@@ -370,14 +453,33 @@ def screen_catalogue(events: pd.DataFrame, name: str, mission: str, conf: dict, 
     grouped = ev.groupby("star_id")
     records: list[dict] = []
     t_start = _time.monotonic()
+    # The pool the empirical null resamples: every catalogued event time in
+    # this catalogue (the star's own removed per star below), capped so the
+    # per-star window filter stays cheap on a 160k-event catalogue.
+    pool_cap = int((conf.get("null") or {}).get("pool_max_times", 120000))
+    pool_t_all = ev["t_peak"].to_numpy(dtype=float)
+    pool_sid_all = ev["star_id"].to_numpy()
+    if len(pool_t_all) > pool_cap:
+        keep = np.random.default_rng(int(seed)).choice(len(pool_t_all), size=pool_cap,
+                                                       replace=False)
+        pool_t_all, pool_sid_all = pool_t_all[keep], pool_sid_all[keep]
     for i, sid in enumerate(stars):
         g = grouped.get_group(sid)
         t = g["t_peak"].to_numpy(dtype=float)
         e = g["energy"].to_numpy(dtype=float) if "energy" in g else None
         w = star_windows(t, mission_w, pad_days=float(wconf.get("pad_days", 0.5)),
                          drop_expected=float(wconf.get("drop_expected", 5.0)))
-        rec = analyze_star(t, w, e, sc, nc, rng)
+        pool = pool_t_all[pool_sid_all != sid]
+        rec = analyze_star(t, w, e, sc, nc, rng, pool_times=pool)
         rec.pop("windows", None)
+        lim = lattice_phase_limits(float(rec.get("period", np.nan)),
+                                   grid["cadence_used_days"],
+                                   phase_window=float(sc.get("phase_window", 0.05)))
+        rec.update({"grid_days": grid["cadence_used_days"],
+                    "grid_source": grid["cadence_source"],
+                    "jitter_floor": lim["jitter_floor"],
+                    "phase_spacing": lim["phase_spacing"],
+                    "comb_coarser_than_window": lim["comb_coarser_than_window"]})
         rec.update({"star_key": f"{mission}:{sid}", "star_id": sid, "catalogue": name,
                     "mission": mission, "n_windows": w.n, "observed_days": round(w.total, 3),
                     "n_removed_cross_star": int(removed_by_star.get(sid, 0)),
@@ -397,6 +499,8 @@ def screen_catalogue(events: pd.DataFrame, name: str, mission: str, conf: dict, 
            "n_stars_with_n_min": int((counts >= n_min).sum()),
            "n_stars_scanned_this_shard": int(len(records)),
            "n_null_computed": int(sum(1 for r in records if r.get("null_computed"))),
+           "n_pool_null_computed": int(sum(1 for r in records if r.get("pool_null_computed"))),
+           "time_grid": grid,
            "mission_windows": mission_w.as_dict(),
            "elapsed_s": round(_time.monotonic() - t_start, 1)}
     return records, rep
@@ -460,6 +564,30 @@ def _prot_for(row, rot: pd.DataFrame) -> tuple[float, str | None]:
     if np.isfinite(p) and p > 0:
         return p, "flare_catalogue"
     return float("nan"), None
+
+
+def _fill_positions_from_rotation(pos: pd.DataFrame, ids, rot: pd.DataFrame) -> pd.DataFrame:
+    """Add positions from the acquired rotation / star tables for the ids the
+    KIC / TIC round trip did not return.  Pure; returns a new frame."""
+    cols = ["star_id", "ra", "dec"]
+    have = pos if pos is not None and len(pos) else pd.DataFrame(columns=cols)
+    if len(have):
+        have = have.dropna(subset=["ra", "dec"])
+    known = set(have["star_id"].astype(str)) if len(have) else set()
+    want = [str(i) for i in ids if str(i) not in known]
+    if not want or rot is None or not len(rot) or not {"ra", "dec"} <= set(rot.columns):
+        return have[cols] if len(have) else have
+    r = rot.copy()
+    r["star_id"] = r["star_id"].astype(str)
+    r = r[r["star_id"].isin(want)]
+    extra = pd.DataFrame({"star_id": r["star_id"].to_numpy(),
+                          "ra": pd.to_numeric(r["ra"], errors="coerce").to_numpy(),
+                          "dec": pd.to_numeric(r["dec"], errors="coerce").to_numpy()})
+    extra = extra.dropna(subset=["ra", "dec"]).drop_duplicates("star_id")
+    if not len(extra):
+        return have[cols] if len(have) else have
+    out = pd.concat([have[cols], extra[cols]], ignore_index=True) if len(have) else extra[cols]
+    return out.drop_duplicates("star_id", keep="first").reset_index(drop=True)
 
 
 def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None, cone_fn=None,
@@ -547,6 +675,16 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
             ids = sorted({str(r["star_id"]) for r in shortlist if str(r["mission"]) == mission})
             pos = fetch_positions_by_id(ids, mission, query_fn=query_fn, log=log,
                                         tables=conf.get("position_tables"))
+            # The star tables of the flare catalogues themselves carry
+            # positions (Tu+2022's table1 has 71,732 rows with _RA/_DE), and
+            # they are already on disk from the acquire stage.  Using them for
+            # whatever the TIC/KIC round trip missed is what decides whether
+            # the periodic-variable veto can be applied at all: the 2026-09-21
+            # run reached 45.3% of its shortlist, and 13 of its 14 `interest`
+            # stars carried `variability_catalogue_unreached` for want of a
+            # position -- a gap in the VET, not a fact about the stars.
+            pos = _fill_positions_from_rotation(pos, ids,
+                                                rot_by_mission.get(mission, pd.DataFrame()))
             if not len(pos):
                 continue
             v, rch = fetch_variable_context(pos, conf.get("variability_catalogues") or {},
@@ -610,9 +748,29 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
                                  if "min_period_used" in vdf},
         "observed_days_median": float(vdf["observed_days"].median()) if "observed_days" in vdf
         else float("nan"),
+        # What lattice each catalogue's published peak times actually lie on,
+        # and therefore what the null had to reproduce.  A measured grid that
+        # differs from the mission cadence is the single most important number
+        # here: it is what the window null was previously getting wrong.
+        "time_grid": {s.get("catalogue"): s.get("time_grid") for s in screens
+                      if s.get("time_grid")},
+        "n_pool_null_computed": int(sum(1 for r in records if r.get("pool_null_computed"))),
+        # The long-period reach.  ``few_cycles`` requires the best period to
+        # have ticked ``cycles_min`` times inside the observing windows, so
+        # the channel's longest believable period on a given star is
+        # observed span / cycles_min -- shorter than the span/3 search grid.
+        # Stated as a number per mission so a reader can see what the veto
+        # costs rather than inferring it.
+        "cycles_min": float(vconf.get("cycles_min", 10.0)),
+        "max_period_credible_days": {
+            m: float(vdf.loc[vdf["mission"] == m, "span_days"].median()
+                     / float(vconf.get("cycles_min", 10.0)))
+            for m in vdf["mission"].dropna().unique() if "span_days" in vdf},
         "note": ("coverage is bounded by each catalogue's own flare-detection threshold and "
                  "cadence: a clock whose ticks fall below the catalogue's amplitude/energy "
-                 "threshold, or shorter than ~10 cadences, is invisible here by construction"),
+                 "threshold, or shorter than ~10 cadences, is invisible here by construction; "
+                 "at the long end few_cycles bounds it at span/cycles_min, because a period "
+                 "seen two or three times is not a measured recurrence"),
     }
     summary = {
         "verdict": verdict, "generated_utc": _now(),
@@ -650,8 +808,12 @@ def stage_assess(conf: dict, out: Path, *, offline: bool = False, query_fn=None,
     slim = ("star_key", "star_id", "catalogue", "mission", "tier", "flags", "first_veto",
             "n_events", "period", "Q", "jitter", "f_in_window", "gap_integer_frac",
             "n_gaps_used", "jitter_core", "n_core", "gap_integer_frac_core", "n_gaps_core",
-            "cycle_occupancy", "h_max", "p_window", "p_window_source",
-            "p_shuffle", "energy_phase_rho", "energy_phase_p", "t0", "mean_phase",
+            "cycles_span", "cycles_hit", "cycle_occupancy",
+            "pop_n_near", "pop_expected", "pop_p",
+            "h_max", "p_window", "p_window_source",
+            "p_shuffle", "p_pool", "pn_n_trials", "pn_n_exceed", "grid_days", "grid_source",
+            "jitter_floor", "phase_spacing", "comb_coarser_than_window",
+            "energy_phase_rho", "energy_phase_p", "t0", "mean_phase",
             "prot_catalogue", "wn_n_trials", "wn_n_exceed", "veto_detail")
     _write(out / "candidates.json", {
         "generated_utc": summary["generated_utc"], "verdict": verdict,

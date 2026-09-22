@@ -118,6 +118,13 @@ windows:
   # boundaries it cannot resolve from density alone.
   use_sector_spans: true
   sector_pad_days: 0.0
+  # The cadence above is a FALLBACK.  The screen stage measures the lattice the
+  # catalogue's own peak times lie on (windows.infer_time_grid) and uses that
+  # when one is detectable; grid_tol_frac is the fraction of a step a time may
+  # miss the lattice by, grid_min_on_grid the fraction of distinct times that
+  # must be on it.
+  grid_tol_frac: 0.12
+  grid_min_on_grid: 0.97
 
 cross_star:
   # Epochs at which anomalously many DISTINCT stars have an event are
@@ -166,6 +173,17 @@ null:
   screen_p_max: 0.5
   n_shuffle: 100
   shuffle_min_gaps: 4
+  # NULL 3, the empirical one: N times drawn from the OTHER stars' catalogued
+  # event times inside this star's own windows.  It models nothing -- it
+  # resamples the catalogue's real time lattice, sector duty cycle and epoch
+  # preferences as they are.  Nulls 1 and 2 both snap to a cadence taken from
+  # configuration; when that cadence is wrong (Tu+2022's peak times are spaced
+  # by 0.0069 d, five 2-min cadences) every period commensurate with the true
+  # lattice looks significant, and only this null notices.
+  n_pool: 200
+  pool_min_size: 24
+  pool_factor: 3           # need >= 3N other-star times inside the star's windows
+  pool_max_times: 120000   # cap on the resampling pool per catalogue
   # A star whose Q / jitter already fail the WATCH thresholds (vet: below)
   # can never rank above tier `none`, whatever its p, so its null is capped at
   # n_max_not_clock trials.  Exact restatement of the tier condition, not a
@@ -186,6 +204,19 @@ vet:
   fdr_alpha: 0.05
   fdr_alpha_watch: 0.25
   shuffle_alpha: 0.05
+  # A star must be rarer than pool_alpha against null 3 as well.  Loose on
+  # purpose: with n_pool = 200 the smallest reachable p is ~0.005, and this
+  # null exists to kill lattice artefacts, not to re-rank clocks that null 1
+  # already puts at p ~ 1e-20.
+  pool_alpha: 0.05
+  # Report-only.  A catalogue that rounds peak times to a lattice of spacing g
+  # forces an rms phase jitter >= g / (P sqrt(12)) on any clock whatever.  A
+  # star within quantisation_factor of that floor is as tight as its time
+  # stamps allow and no tighter: the tightness is the catalogue's rounding, not
+  # the star.  (KIC 5879574: g = 0.0204 d, P = 0.4233 d -> floor 0.0139 cycles
+  # against a measured 0.0431, so NOT quantisation-limited -- the flag is meant
+  # to catch the cases where it is.)
+  quantisation_factor: 1.5
   # STRICT clock quality (candidate / interest).  Rotational modulation with
   # rate ∝ 1+cos gives jitter ~0.15-0.3 in units of P; a 30-min-cadence clock
   # at P = 1 d cannot do worse than ~0.006.  The assess stage reports where

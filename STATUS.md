@@ -10,6 +10,120 @@ sections below are dated but not strictly ordered. This file is a *log*; for
 the one-line-per-channel map of what exists, where it lives, and its current
 verdict, see **[docs/channels.md](docs/channels.md)**.
 
+### METRONOME has its first real measurement — and its own output names the artefact, 2026-09-22
+
+The channel's brief said it had scanned nothing. That was true of the
+2026-09-06 run; **run 35652897914 (2026-09-21) read 1,523,888 catalogued
+flare times and scanned 3,131 stars**, from Yang+2019 (162,262 flares),
+Okamoto+2021, Shibayama+2013, Gunther+2020 and Tu+2022. Pietras+2022 returns
+`QUERY_RETURNED_ZERO_ROWS` under its bibcode and under an author keyword and
+is recorded as absent, not assumed. Davenport 2016 has no per-flare table and
+is a rotation source. Funnel: 3,131 scanned -> 225 at the watch FDR -> 141 at
+alpha 0.05 -> 53 watch, 14 interest, 1 candidate.
+
+**The channel's own output identified the dominant confounder.** 154 of 2,548
+Kepler stars put their best period in 355-389 d and 73 of 583 TESS stars in
+234-257 d. Unrelated stars cannot share a clock: the TESS group sits at
+period/span = 0.32 +- 0.02 against the span/3 search edge, the Kepler group at
+the 372.5 d spacecraft year, and every one of them had had 1-5 chances to
+repeat. Two new hard vetoes, both counted:
+
+* `population_period` -- per mission, >= 4 other scanned stars within 0.005 dex
+  and Poisson-rarer than 1e-3 against the local background density. It needs no
+  list of instrumental periods, which is the point.
+* `few_cycles` -- the period must have ticked >= 10 times inside the observing
+  windows. This bounds the believable long-period reach at span/10 (~145 d for
+  the median Kepler star, ~76 d for TESS), stated in `coverage`.
+
+Replayed offline on that run: **877 of 3,131 scanned stars and 20 of the 68
+survivors die**, every one of the 20 a watch star at 195-381 d with 1-5 cycles
+or in the 0.21-0.23 d Kepler grid-floor pile-up. The 14 interest stars and the
+candidate are untouched. Also fixed: `cycles_span` counted tick *instants*
+inside windows, which let occupancy read 2.0; it now counts ticks whose phase
+window had any coverage, so occupancy is a fraction.
+
+**What is hot.** `kepler:5879574`, P = 0.4232741 d, 21 catalogued flares over
+1,231 d. The `redetect` job fetched its Kepler light curve and an independent
+detector found **74 flares of its own** forming a clock at P = 0.4232819 d --
+agreement to 2e-5 -- at p ~ 1e-54 with strict quality. The clock is in the
+photometry, not only in the catalogue. **The open question is whether
+0.42327 d is the star's own dominant photometric period**: that is the
+contact-binary / fast-rotator range, the Kepler survivors pile up across
+0.21-0.83 d, and the 2026-09-21 run predates the photometric veto. It has no
+catalogued P_rot, so `rotation_alias` could not be applied either.
+
+**What is not yet a rejection.** The 14 interest stars are all `tess_tu2022`,
+and 13 of them recover **0.000** of their catalogued flares in their own light
+curves while the detector finds 8-51 flares of its own there. Median recovery
+over all 40 fetched stars is 0.064. A detector that misses 94% of a catalogue
+cannot reject anything, so a threshold-free test was added:
+`catalogue_epoch_response` stacks the detrended residual, in run sigmas, at the
+catalogue's own epochs against random epochs in the same windows, and scans
+time offsets (including +-2400000.5) so a wrong time system names itself.
+`reconcile_summary` folds the light curve back into summary.json and
+candidates.json and demotes on `catalogue_epochs_absent` or
+`photometric_oscillation`; demotion only ever removes a claim.
+
+**In flight** (2026-09-22, dispatched 10:35-11:23 EDT, all still QUEUED at
+11:40 EDT behind a saturated runner pool):
+
+* **35746944111** -- `stage=redetect`, `reduce_only_run_id=35652897914`. ONE
+  runner, MAST only, no archive and no screen matrix. This is the decisive
+  one: it runs the epoch stack and the photometric veto over the 40-star
+  shortlist and reconciles summary.json / candidates.json.
+* **35741300225** -- the full pipeline (probe+acquire, 48-shard screen,
+  assess, redetect, lit). Slowest but definitive: its acquire is the only one
+  that pulls the flare catalogues' own star positions, which is what lets the
+  `periodic_variable` veto reach the 13 interest stars that could not be
+  vetted at all.
+* 35745637197 (assess-only over the 2026-09-21 shards) was **cancelled**: its
+  shards predate the pool null, and had it landed after 35746944111 it would
+  have overwritten the reconciled summary.json with an unreconciled one.
+
+Every dispatch checks out the branch head when it starts, so all of the above
+run the current code, not the code they were dispatched at.
+
+**A design assumption the run falsified, and it is the most important number
+here.** The channel's own calibration reports
+`fraction_of_rotation_population_below_jitter_max` = **0.857**: 24 of the 28
+stars the run itself rejected as `rotation_alias` are inside BOTH strict
+quality gates (Q >= 0.85, jitter <= 0.05). The fitted jitter falls steeply
+toward small N -- population medians 0.030 at N = 8-11, 0.039 at 12-15, 0.059
+at 16-23, 0.079 at 24-39, 0.147 at 40-79, 0.217 at N >= 80 -- because the
+period is free on a ~1e4-point grid and a handful of times phase up whatever
+they are. That trend is a population median, not a per-star law: three of the
+24 inside the gate have N = 83, 83, 115 and the four outside it have N = 13,
+16, 28, 30. The gate is weak across the whole range and weakest at small N.
+
+The nulls are NOT fooled: they maximise over the same grid, so the window
+null's own best fit reaches Q ~ 0.25 and jitter ~ 0.18 and lands inside the
+strict gate for 0.8% of stars on jitter and 0% on Q. `p_window` and the
+BH-FDR on it are therefore honest, and they are what the tiers rest on. The
+consequence is now stated rather than papered over: below
+`n_quality_informative` = 35 events the strict quality pass carries no
+discriminating power, the star gets the report flag `quality_uninformative`,
+and its case rests on the null alone. 13 of the 15 interest/candidate stars
+have N <= 33; `tess:149573659` (N = 105) is the only one in the regime where
+the population's own fitted jitter is nowhere near the gate, so its 0.036 is
+the one quality number in the shortlist that is hard to get by fitting alone.
+`summary.json.jitter_calibration` now carries the by-N table and the null's
+own best fit beside the thresholds.
+
+**Runner-version gate (the repo-wide pandas 3 warning).** The sandbox venv
+holds pandas 2.3.3; the runner installs 3.0.6. METRONOME was checked against
+the real thing rather than audited: a `--system-site-packages` venv with
+`pandas==3.0.6` runs the **whole** 114-test metronome suite green
+(`python -m venv --system-site-packages <dir> && <dir>/bin/pip install
+pandas==3.0.6`, then `PYTHONPATH=src <dir>/bin/python -m pytest
+tests/test_metronome.py`). The package uses no `errors="ignore"`, no
+`applymap`, no `inplace=`, no chained assignment and no removed numpy alias.
+
+**Next decisive action.** Read 35746944111: `cat_epoch_sigma_median` vs
+`cat_control_sigma_median` and `phot_period` for kepler:5879574 and the 14
+Tu+2022 stars. If 0.42327 d is the star's photometric period it is a contact
+binary and dies honestly; if it is not, and the epoch stack is significant, it
+is the first object this channel has that the photometry, the catalogue and
+the timing statistic all agree on.
 ### CRYPT: the screen changed because the archive said so — Tbol vs local time inside the PSRs, 2026-09-22
 
 S55 (`docs/crypt.md`). The channel was built but had **never produced a

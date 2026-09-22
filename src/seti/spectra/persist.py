@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import re
 import tempfile
 import time
@@ -1714,6 +1715,10 @@ def run_shard(root: Path, shard: int = 0, n_shards: int = 1, top: int = 0,
                     stats["n_failed"] += 1
             res["elapsed_s"] = round(time.time() - t0, 1)
             res["ckpt_version"] = CKPT_VERSION
+            # Which commit measured this. A sharded run whose jobs queue for an
+            # hour can otherwise check out two different estimators and merge
+            # them into one summary without leaving a trace.
+            res["code_sha"] = os.environ.get("GITHUB_SHA", "")[:12]
             (ckpt / f"{s}.json").write_text(json.dumps(_json_safe(res)))
             stats["n_processed"] += 1
             for ln in res.get("lines", []):
@@ -1736,8 +1741,11 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
     rows = []
     per_exp = {}
     n_stale = 0
+    code_shas: dict[str, int] = {}
     for p in sorted(ckpt.glob("*.json")):
         r = json.loads(p.read_text())
+        sha = str(r.get("code_sha", "") or "unrecorded")
+        code_shas[sha] = code_shas.get(sha, 0) + 1
         # A checkpoint from a superseded estimator is not evidence; it is a
         # stale number that would otherwise be merged in as though it were.
         if int(r.get("ckpt_version", 1)) != CKPT_VERSION:
@@ -1860,6 +1868,7 @@ def reduce_results(root: Path, do_simbad: bool = True, do_nist: bool = True) -> 
         "n_checkpointed_spectra": int(len(list(ckpt.glob("*.json")))),
         "ckpt_version": CKPT_VERSION,
         "n_checkpoints_stale_ignored": int(n_stale),
+        "checkpoint_code_shas": dict(sorted(code_shas.items(), key=lambda kv: -kv[1])),
         "persistence_class_counts": {k: int(v) for k, v in counts.items()},
         "verdict_counts": {k: int(v) for k, v in vcounts.items()},
         "route_counts": {k: int(v) for k, v in

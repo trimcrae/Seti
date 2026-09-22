@@ -139,7 +139,8 @@ def locus_reference_mask(d: pd.DataFrame, cfg: dict) -> pd.Series:
         m &= d["cc_flags"].astype(str).str.strip().str.replace(r"^0+$", "0000", regex=True) \
             .isin(["0000", "0"])
     if "is_control" in d:
-        m &= ~d["is_control"].fillna(False).astype(bool)
+        from .sample import _as_bool  # noqa: PLC0415
+        m &= ~_as_bool(d["is_control"])
     return m.fillna(False)
 
 

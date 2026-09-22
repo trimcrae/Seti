@@ -67,6 +67,28 @@ def _str(d: pd.DataFrame, col: str) -> np.ndarray:
     return d[col].fillna("").astype(str).str.strip().to_numpy(dtype=object)
 
 
+_TRUE = {"true", "t", "yes", "y", "1", "1.0"}
+
+
+def as_bool(d: pd.DataFrame, col: str) -> np.ndarray:
+    """A boolean column that survives a CSV round trip.
+
+    Every one of these frames is written to CSV and read back between stages.
+    A column with a single NaN comes back as ``object`` holding the STRINGS
+    ``"True"`` / ``"False"``, and ``astype(bool)`` on ``"False"`` is ``True``
+    --- which would turn every non-significant star into an in-cell one.  So
+    the text is parsed, not cast.
+    """
+    if col not in d.columns:
+        return np.zeros(len(d), bool)
+    s = d[col]
+    if s.dtype == bool:
+        return s.to_numpy(bool)
+    if pd.api.types.is_numeric_dtype(s):
+        return (pd.to_numeric(s, errors="coerce").fillna(0) != 0).to_numpy(bool)
+    return s.astype(str).str.strip().str.lower().isin(_TRUE).to_numpy(bool)
+
+
 def _cc(flags: np.ndarray) -> np.ndarray:
     """Normalise cc_flags to four characters (an integer 0 arrives as '0')."""
     out = []
@@ -156,8 +178,7 @@ def apply_rules(df: pd.DataFrame, cfg: dict) -> tuple[pd.DataFrame, dict]:
     ipd = _num(out, "ipd_frac_multi_peak")
     flags["ipd_multi_peak"] = np.isfinite(ipd) & (ipd > 10)
     flags["previously_catalogued_excess"] = _num(out, "n_known_disk_matches") > 0
-    flags["neowise_variable"] = np.array([bool(x) for x in out.get("neowise_variable",
-                                                                    pd.Series([False] * n))])
+    flags["neowise_variable"] = as_bool(out, "neowise_variable")
 
     reasons = [[] for _ in range(n)]
     for name, m in kills.items():
@@ -204,12 +225,11 @@ def classify(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     out = df.copy()
     tlo, thi = (float(x) for x in c["t_cell_k"])
     t = _num(out, "t_bb_k")
-    sig = out["excess_significant"].fillna(False).to_numpy(bool) if "excess_significant" in out \
-        else np.zeros(n, bool)
+    sig = as_bool(out, "excess_significant")
     lff_lo = _num(out, "log_f_fmax_1gyr_lo")
     above = np.isfinite(lff_lo) & (lff_lo > float(c["log_f_fmax_min"]))
     ks = np.isfinite(_num(out, "ks_m"))
-    killed = out["killed"].to_numpy(bool) if "killed" in out else np.zeros(n, bool)
+    killed = as_bool(out, "killed")
     age = _str(out, "age_class")
     in_cell = sig & above & np.isfinite(t) & (t >= tlo) & (t <= thi)
     cls = np.full(n, "NOT_SIGNIFICANT", dtype=object)
@@ -220,7 +240,7 @@ def classify(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     cls[ks & in_cell & killed] = "IN_CELL_KILLED"
     cls[ks & in_cell & ~killed & (age != "MATURE_2PLUS")] = "IN_CELL_AGE_UNDETERMINED"
     cls[ks & in_cell & ~killed & (age == "MATURE_2PLUS")] = "CANDIDATE"
-    ctrl = out["is_control"].fillna(False).to_numpy(bool) if "is_control" in out else np.zeros(n, bool)
+    ctrl = as_bool(out, "is_control")
     cls = np.where(ctrl, np.char.add("CONTROL:", cls.astype(str)), cls).astype(object)
     out["in_cell"] = in_cell & ks
     out["cradle_class"] = cls
@@ -244,4 +264,4 @@ def not_excluded(row: pd.Series) -> list[str]:
     return out
 
 
-__all__ = ["DEFAULT_VET", "apply_rules", "classify", "not_excluded"]
+__all__ = ["DEFAULT_VET", "apply_rules", "as_bool", "classify", "not_excluded"]

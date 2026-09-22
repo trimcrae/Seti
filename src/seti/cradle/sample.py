@@ -344,6 +344,22 @@ def parent_columns() -> list[str]:
 # Local re-application (belt and braces; the only place the cuts live for a
 # fallback route)
 # ---------------------------------------------------------------------------
+_TRUE = {"true", "t", "yes", "y", "1", "1.0"}
+
+
+def _as_bool(s: pd.Series) -> pd.Series:
+    """Parse a boolean column that has been through a CSV.
+
+    ``astype(bool)`` on the string ``"False"`` is ``True``, and one NaN is
+    enough to make pandas read the whole column as strings.
+    """
+    if s.dtype == bool:
+        return s
+    if pd.api.types.is_numeric_dtype(s):
+        return pd.to_numeric(s, errors="coerce").fillna(0) != 0
+    return s.astype(str).str.strip().str.lower().isin(_TRUE)
+
+
 def _num(df: pd.DataFrame, col: str) -> pd.Series:
     return pd.to_numeric(df.get(col, pd.Series(np.nan, index=df.index)), errors="coerce")
 
@@ -368,7 +384,7 @@ def select_parent(df: pd.DataFrame, conf: dict | None = None, *,
     d = d.reset_index(drop=True)
     if "is_control" not in d:
         d["is_control"] = False
-    d["is_control"] = d["is_control"].fillna(False).astype(bool)
+    d["is_control"] = _as_bool(d["is_control"])
     plx = _num(d, "parallax")
     d["abs_g"] = _num(d, "phot_g_mean_mag") + 5.0 * np.log10(plx.clip(lower=1e-6)) - 10.0
     mu = np.hypot(_num(d, "pmra").fillna(0.0), _num(d, "pmdec").fillna(0.0))

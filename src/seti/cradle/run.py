@@ -57,13 +57,14 @@ from .sample import (
     DEFAULT_SAMPLE,
     JOINED_SHAPES,
     SHAPE_GAIA_ONLY,
+    _as_bool,
     build_query,
     healpix_units,
     select_parent,
     shard_units,
     unit_label,
 )
-from .vet import DEFAULT_VET, apply_rules, classify, not_excluded
+from .vet import DEFAULT_VET, apply_rules, as_bool, classify, not_excluded
 
 STAGES: tuple[str, ...] = ("probe", "acquire", "screen", "ages", "assess")
 
@@ -389,7 +390,7 @@ def _read_parents(out: Path) -> tuple[pd.DataFrame, dict]:
     if len(df) and "source_id" in df:
         df["source_id"] = df["source_id"].astype(str)
         if "is_control" in df:
-            df["is_control"] = df["is_control"].fillna(False).astype(bool)
+            df["is_control"] = _as_bool(df["is_control"])
             df["control_name"] = df.get("control_name", "").fillna("")
             # a control that also fell in its unit: keep one row, marked as the control
             ctrl = df[df["is_control"]].drop_duplicates("source_id")
@@ -450,12 +451,12 @@ def stage_screen(conf: dict, out: Path, *, backends: acq.Backends | None = None)
     ex = excess_table(d, loci, ec)
     fit = fit_disk(ex, ec)
     ks_w1_ok = (pd.to_numeric(fit["ks_w1"], errors="coerce") < float(ec["ks_w1_max"])).fillna(False)
-    sig = fit["excess_significant"].fillna(False).astype(bool)
-    above = fit["above_fmax_3dex"].fillna(False).astype(bool)
+    sig = _as_bool(fit["excess_significant"])
+    above = _as_bool(fit["above_fmax_3dex"])
     t = pd.to_numeric(fit["t_bb_k"], errors="coerce")
     slo, shi = (float(x) for x in ec["shortlist_t_k"])
     tlo, thi = (float(x) for x in ec["t_cell_k"])
-    ctrl = fit["is_control"].fillna(False).astype(bool)
+    ctrl = _as_bool(fit["is_control"])
     short = (sig & above & ks_w1_ok & t.between(slo, shi)) | ctrl
     fit["shortlisted"] = short
     rep["funnel"] = {
@@ -476,7 +477,22 @@ def stage_screen(conf: dict, out: Path, *, backends: acq.Backends | None = None)
         rep["t_bb_histogram_above_fmax"] = {"edges_k": edges, "counts": [int(x) for x in hist]}
     cols = [c for c in SHORTLIST_COLS if c in fit.columns]
     fit[cols + ["shortlisted"]].to_csv(out / "parent_screened.csv", index=False)
-    fit.loc[short, cols].to_csv(out / "shortlist.csv", index=False)
+    # Enrichment is the expensive stage (a NEOWISE cone is ~90 s a star) and it
+    # runs under a wall-clock budget, so the shortlist is written in PRIORITY
+    # order: the controls, then the stars already inside the strict T cell,
+    # then everything else by how far above f_max it sits.  Sharding is `i mod
+    # n` over this order, so every shard starts on its own best stars and a
+    # budget that runs out costs the least interesting ones.
+    sl = fit.loc[short, cols].copy()
+    if len(sl):
+        rank = pd.DataFrame({
+            "c": (~ctrl[short]).astype(int).to_numpy(),
+            "t": (~t[short].between(tlo, thi).fillna(False)).astype(int).to_numpy(),
+            "f": -pd.to_numeric(fit.loc[short, "log_f_fmax_1gyr"], errors="coerce")
+            .fillna(-np.inf).to_numpy(),
+        }, index=sl.index)
+        sl = sl.loc[rank.sort_values(["c", "t", "f"], kind="stable").index]
+    sl.to_csv(out / "shortlist.csv", index=False)
     rep["n_shortlist"] = int(short.sum())
     rep["verdict"] = "SCREENED"
     rep["elapsed_s"] = round(_time.monotonic() - t0, 1)
@@ -700,10 +716,11 @@ def stage_assess(conf: dict, out: Path, *, n_shards_expected: int | None = None)
     rep["vet_counters"] = counters
     classes = {str(k): int(v) for k, v in vetted["cradle_class"].value_counts().items()} if len(vetted) else {}
     rep["classes"] = classes
-    ctrl_mask = vetted["is_control"].fillna(False).astype(bool) if len(vetted) else pd.Series(dtype=bool)
+    ctrl_mask = pd.Series(as_bool(vetted, "is_control"), index=vetted.index) \
+        if len(vetted) else pd.Series(dtype=bool)
     sci = vetted[~ctrl_mask] if len(vetted) else vetted
     cand = sci[sci["cradle_class"] == "CANDIDATE"] if len(sci) else sci
-    in_cell = sci[sci["in_cell"].fillna(False).astype(bool)] if len(sci) else sci
+    in_cell = sci[as_bool(sci, "in_cell")] if len(sci) else sci
     rep["n_candidates"] = int(len(cand))
     funnel = dict(screen.get("funnel") or {})
     funnel.update({

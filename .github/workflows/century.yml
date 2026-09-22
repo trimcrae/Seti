@@ -78,7 +78,14 @@ on:
       time_budget_s:
         description: "Per-shard DASCH wall-clock budget (s)"
         required: false
-        default: "12000"
+        default: "9000"
+      screen_budget_s:
+        description: >-
+          Per-shard SCREEN wall-clock budget (s).  Acquire + screen share one
+          job's timeout-minutes; the sum of the two budgets must leave room for
+          the install and the upload.
+        required: false
+        default: "9000"
       pause_s:
         description: "Pause between DASCH requests (s)"
         required: false
@@ -308,7 +315,7 @@ jobs:
           fi
           python -m seti.century.run --stage acquire \
             --shard "${{ matrix.shard }}" \
-            --time-budget-s ${{ github.event.inputs.time_budget_s || '12000' }} \
+            --time-budget-s ${{ github.event.inputs.time_budget_s || '9000' }} \
             --pause-s ${{ github.event.inputs.pause_s || '0.5' }} \
             $MT
           echo "=== acquire summary ==="
@@ -316,7 +323,8 @@ jobs:
       - name: Screen shard ${{ matrix.shard }}
         if: always()
         run: |
-          python -m seti.century.run --stage screen --shard "${{ matrix.shard }}"
+          python -m seti.century.run --stage screen --shard "${{ matrix.shard }}" \
+            --screen-budget-s ${{ github.event.inputs.screen_budget_s || '9000' }}
           echo "=== screen summary ==="
           cat results/century/shards/*/screen_summary.json || true
       - name: Shard tag

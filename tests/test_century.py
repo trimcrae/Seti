@@ -868,3 +868,42 @@ def test_shard_roundtrip_screen_and_assess_end_to_end(tmp_path):
     # Re-running the screen skips what is done (checkpoint semantics).
     rep2 = stage_screen(_conf(), tmp_path, (0, 1))
     assert rep2["n_screened_now"] == 0 and rep2["n_previously_done"] == 10
+
+
+def test_screen_stops_on_its_wall_clock_and_resumes(tmp_path):
+    """The sweep job shares one ``timeout-minutes`` between acquire and screen.
+
+    A censored injection-efficiency measurement in every block of a
+    century-long light curve costs of order a minute per periodic star, so a
+    shard that drew more variables than expected must stop on its own clock
+    and upload what it has --- not be killed by the runner with nothing
+    written.  ``screen.jsonl`` is appended per star, so the next dispatch
+    resumes instead of restarting.
+    """
+    lcs, trows = {}, []
+    for i in range(6):
+        lc = synth_plates(np.random.default_rng(600 + i), period=0.57, amp=0.5,
+                          n_per_year=25, lim_mean=14.0, mag0=11.0 + 0.05 * i,
+                          series_switch_year=1910.0)
+        lcs[str(i)] = lc
+        trows.append({"target_id": i, "name": f"s{i}", "ra": 10.0 + i * 0.01, "dec": 20.0,
+                      "kind": "variable", "vtype": "RRAB", "period_cat": 0.57,
+                      "mag_cat": 11.0 + 0.05 * i, "amp_cat": 0.5, "source": "vsx",
+                      "field": "f", "gsc_bin_index": 1, "ref_number": i,
+                      "pm_total_masyr": np.nan, "colour": np.nan, "n_det_cat": np.nan})
+    _fake_shard(tmp_path, lcs, pd.DataFrame(trows),
+                {"stage": "acquire", "shard": [0, 1], "n_targets": 6, "n_fetched": 6,
+                 "n_failed": 0, "n_empty": 0, "n_resumed": 0, "truncated": False,
+                 "flag_source": "config", "service_probe_ok": True,
+                 "verdict": "LIGHTCURVES_FETCHED"})
+    # A budget the first star alone exceeds.  One star is screened anyway ---
+    # a clock that can stop a run before its first star is a shard that never
+    # finishes, however many re-dispatches it is given.
+    rep = stage_screen(_conf(), tmp_path, (0, 1), time_budget_s=1e-6)
+    assert rep["n_screened_now"] == 1 and rep["truncated"] is True
+    assert rep["n_not_screened"] == 5
+    assert (tmp_path / "shards" / "0_of_1" / "screen.jsonl").exists()
+    # The next dispatch resumes from the checkpoint rather than restarting.
+    rep2 = stage_screen(_conf(), tmp_path, (0, 1), time_budget_s=0)
+    assert rep2["n_previously_done"] == 1 and rep2["n_screened_now"] == 5
+    assert rep2["truncated"] is False and rep2["n_not_screened"] == 0

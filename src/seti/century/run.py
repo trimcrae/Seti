@@ -102,6 +102,9 @@ DEFAULTS: dict = {
                 "pre_rank_p_max": 0.01, "pre_slope_sigma_min": 3.0, "pre_loo_min": 2.0,
                 "robust_sigma_min": 2.0},
     "ensemble": {"min_stars": 8, "mag_bin": 1.0},
+    # A wall clock for the screen stage, inside the job's timeout-minutes, so an
+    # overrun still uploads the stars it did screen instead of being killed.
+    "screen": {"time_budget_s": 9000},
     "vet": {"pm_max_masyr": 50.0, "bright_limit_mag": 8.0, "lpv_colour_min": 1.5,
             "mean_shift_max_mag": 0.10, "gaia_radius_arcsec": 5.0},
     "flag_bits": {"aflags": {}, "bflags": {}},
@@ -731,7 +734,20 @@ def screen_star(lc: CenturyLC, target: dict, conf: dict, *, rng=None,
 
 
 def stage_screen(conf: dict, out_root: Path, shard: tuple[int, int], *, seed: int = 20260921,
-                 max_stars: int | None = None) -> dict:
+                 max_stars: int | None = None, time_budget_s: float | None = None) -> dict:
+    """Screen every fetched light curve in the shard, under a wall clock.
+
+    The cessation statistic is a censored injection-efficiency measurement in
+    every block of a century-long light curve; a single bright RR Lyrae costs
+    of order a minute.  Without a clock a shard that drew more periodic
+    variables than expected runs past the job's ``timeout-minutes`` and the
+    runner is killed with its screen.jsonl uploaded by nobody.  The budget is
+    checked BEFORE each star (screen_star is not interruptible), screen.jsonl
+    is appended per star, and ``truncated`` says the shard is incomplete --- so
+    a re-dispatch resumes from the checkpoint instead of starting over.  One
+    star is always screened, whatever the budget: a clock that can stop a run
+    before its first star is a shard that never finishes.
+    """
     sd = _shard_dir(out_root, shard)
     sd.mkdir(parents=True, exist_ok=True)
     lcs, meta = load_shard_lcs(sd)
@@ -750,10 +766,24 @@ def stage_screen(conf: dict, out_root: Path, shard: tuple[int, int], *, seed: in
     rng = np.random.default_rng(seed + shard[0])
     n = n_cess = n_fade = n_rust = 0
     t0 = _time.monotonic()
+    budget = conf.get("screen", {}).get("time_budget_s") if time_budget_s is None \
+        else time_budget_s
+    budget = float(budget) if budget else 0.0
+    truncated = False
+    n_remaining = 0
     for tid, lc in lcs.items():
         if tid in done:
             continue
         if max_stars and n >= int(max_stars):
+            break
+        # ``n > 0``: one star always runs.  A budget smaller than a single
+        # star's cost must not make every re-dispatch screen nothing --- that
+        # is a shard that can never finish, however many runs it is given.
+        if budget > 0 and n > 0 and _time.monotonic() - t0 > budget:
+            truncated = True
+            n_remaining = sum(1 for k in lcs if k not in done) - n
+            print(f"[century/screen] shard {shard}: wall-clock budget {budget:.0f}s spent "
+                  f"after {n} stars; {n_remaining} not screened (resumable).")
             break
         tgt = tmap.get(tid, {"target_id": int(tid), "name": tid, "kind": "unknown"})
         info = meta.get("stars", {}).get(tid, {})
@@ -773,7 +803,9 @@ def stage_screen(conf: dict, out_root: Path, shard: tuple[int, int], *, seed: in
         n_rust += int(bool(row.get("rust_is_rust")))
     rep = {"stage": "screen", "shard": list(shard), "n_lightcurves": len(lcs),
            "n_screened_now": n, "n_previously_done": len(done), "n_cessation": n_cess,
-           "n_fade": n_fade, "n_rust": n_rust, "elapsed_s": round(_time.monotonic() - t0, 1)}
+           "n_fade": n_fade, "n_rust": n_rust, "elapsed_s": round(_time.monotonic() - t0, 1),
+           "truncated": bool(truncated), "n_not_screened": int(n_remaining),
+           "time_budget_s": budget}
     _write_json(sd / "screen_summary.json", rep)
     print(f"[century/screen] shard {shard}: screened={n} cess={n_cess} fade={n_fade} "
           f"rust={n_rust} in {rep['elapsed_s']}s")
@@ -1142,7 +1174,10 @@ def add_arguments(p: argparse.ArgumentParser) -> None:
     p.add_argument("--max-bright", type=int, default=None, help="per field (0 = none)")
     p.add_argument("--max-targets", type=int, default=None, help="cap per shard (acquire)")
     p.add_argument("--max-stars", type=int, default=None, help="cap per shard (screen)")
-    p.add_argument("--time-budget-s", type=float, default=None)
+    p.add_argument("--time-budget-s", type=float, default=None,
+                   help="acquire: DASCH wall-clock budget (s)")
+    p.add_argument("--screen-budget-s", type=float, default=None,
+                   help="screen: wall-clock budget (s); 0 = no clock")
     p.add_argument("--pause-s", type=float, default=None)
     p.add_argument("--no-confirm", action="store_true")
     p.add_argument("--no-gaia", action="store_true")
@@ -1190,7 +1225,8 @@ def run_args(args) -> int:
         stage_acquire(conf, out_root, shard, time_budget_s=args.time_budget_s,
                       max_targets=args.max_targets, pause_s=args.pause_s)
     if st in ("screen", "all"):
-        stage_screen(conf, out_root, shard, seed=args.seed, max_stars=args.max_stars)
+        stage_screen(conf, out_root, shard, seed=args.seed, max_stars=args.max_stars,
+                     time_budget_s=getattr(args, "screen_budget_s", None))
     if st == "assess":
         stage_assess(conf, out_root, confirm=not args.no_confirm, gaia=not args.no_gaia,
                      seed=args.seed)

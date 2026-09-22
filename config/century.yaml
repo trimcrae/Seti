@@ -116,6 +116,15 @@ ensemble:
   min_stars: 8
   mag_bin: 1.0
 
+screen:
+  # A wall clock INSIDE the sweep job's timeout-minutes.  The cessation
+  # statistic is a censored injection-efficiency measurement in every block of
+  # a century-long light curve and costs of order a minute per periodic star,
+  # so a shard that drew more variables than expected would otherwise run past
+  # the job timeout and be killed with nothing uploaded.  screen.jsonl is
+  # appended per star, so a truncated shard resumes rather than restarts.
+  time_budget_s: 9000
+
 vet:
   pm_max_masyr: 50.0         # 5" per century at plate scales of 60–600"/mm
   bright_limit_mag: 8.0

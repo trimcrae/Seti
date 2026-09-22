@@ -2224,6 +2224,10 @@ def direct_assess(conf: dict, out: Path) -> dict:
                     if x:
                         key = f"{col.split('_')[0]}:{x}" if col != "flags_classify" else x
                         flag_counts[key] = flag_counts.get(key, 0) + 1
+    n_pending_tic = int(sum(1 for r in meas.to_dict(orient="records")
+                            if record_tic_is_unverified(r)))
+    tic_routes = (meas["tic_route"].fillna("").map(_s).replace("", "none").value_counts().to_dict()
+                  if "tic_route" in meas else {})
     measured = meas[cls.isin((CLASS_GROWTH, CLASS_SHRINK, CLASS_DEEPER, CLASS_SHALLOWER,
                               CLASS_CONSISTENT, CLASS_CROWDING))]
     sens = {}
@@ -2274,6 +2278,12 @@ def direct_assess(conf: dict, out: Path) -> dict:
         "flags": flag_counts,
         "n_long_period": int(len(lp)),
         "long_period_classes": lp["class"].map(str).value_counts().to_dict() if len(lp) else {},
+        # Rows still carrying a TIC id nobody checked against the sky --- written
+        # before the truncation repair existed.  Their non-detections are facts
+        # about a mangled number, not about the star, so the funnel must not
+        # present them as coverage that was tried and failed.
+        "n_rows_pending_tic_recheck": n_pending_tic,
+        "tic_routes": tic_routes,
     }
     shard_stats = [{k: r.get(k) for k in ("shard", "n_targets_in_shard", "n_rows",
                                           "n_measured_this_run", "n_not_reached_budget",
@@ -2287,6 +2297,11 @@ def direct_assess(conf: dict, out: Path) -> dict:
         degraded.append(f"{lc_status[STATUS_FAILED]} target(s) QUERY_FAILED at MAST")
     if any(r.get("budget_exhausted") for r in shard_reports):
         degraded.append("at least one shard exhausted its wall-clock budget")
+    if n_pending_tic:
+        degraded.append(
+            f"{n_pending_tic} row(s) still rest on a TIC id that was never checked against the "
+            "sky (written before the truncation repair); their status is NOT a statement about "
+            "the star --- re-dispatch measure with resume=true to redo them")
     summary = {
         "verdict": verdict, "reason": reason, "generated_utc": _now(),
         "what_was_measured": ("the TESS-era transit depth of every confirmed/candidate KOI with a "

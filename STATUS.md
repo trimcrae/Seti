@@ -255,6 +255,48 @@ that run commits one.
 
 Offline: 40 tests, green under **both** pandas 2.3.3 (sandbox) and 3.0.6 (what
 the runner installs), per `docs/channel-brief.md` §0 item 5.
+### GROWTH direct: the TIC repair is confirmed on the runner, and the method recovers Kepler-1520 b, 2026-09-22
+
+Shard 12 of run 35738702139 ran with the fixes; shard 1 ran without them. Same
+pipeline, same target list, one shard apart:
+
+| | shard 01 (before) | shard 12 (after) |
+|---|---|---|
+| stars with TESS products | 115 of 213 — **54 %** | 178 of 203 — **88 %** |
+| stars serving nothing | 98 | 25 |
+| planets with a fitted depth (both families) | 3 | **19** |
+| `consistent` / `shallower_tess` | 3 / 0 | 16 / 3 |
+
+`n_tic_suspect_truncation = 85`, `n_tic_repaired = 79`. The route breakdown of
+shard 12's measured rows says how bad the catalogue id was: **98** rows came
+through `tic_kic_crossid_over_name_planet` — the sky disagreed with the
+catalogue TIC and won — against only **8** `_confirms_`. So of the suspect ids
+checked, 98 of 106 were in fact wrong. Every one of those was either a star
+that would have been recorded as a non-detection, or worse, a star whose light
+curve would have been fitted as the target's.
+
+**A positive control fell out of it.** `K03794.01` is **Kepler-1520 b**
+(KIC 12557548), the disintegrating planet whose dust tail makes its transit
+depth vary from transit to transit — the one KOI in the catalogue that is
+*known* to change depth. The stage found it unprompted: PDCSAP 3,529 ± 580 ppm
+and SAP 2,938 ± 414 ppm against a Kepler depth of 6,088 ppm in the TESS band,
+i.e. z = −3.17 and −4.87, shallower in **both** families. It is vetoed
+(`duration_not_fixed_b`: its duration tracks impact parameter) and it is a
+known natural mechanism, so it is not a candidate — but a depth-change search
+that could not see Kepler-1520 b would not be worth running, and this one sees
+it without being told where to look.
+
+**The Kepler-718 b discriminator holds across the population.** Shard 12:
+`background_direction` is **116 `PDC_DEEPER_THAN_SAP` against 21
+`SAP_DEEPER_THAN_PDC`** — crowding's direction, since a bigger aperture admits
+more contaminating light and raw SAP must read shallower. The three
+`shallower_tess` rows (`K00607.01`, `K03689.01`, `K00199.01`/Kepler-490 b) are
+that effect at its strongest: PDCSAP agrees with Kepler to within 0.1σ while
+SAP reads 8.7–18.5σ shallower. They are dilution, not shrinkage, and they are
+classed accordingly.
+
+**Zero growth candidates so far**, on any row: `would_be_candidate_without_vetoes`
+is False for all 255 of shard 12. Nothing is being claimed.
 
 ### GROWTH direct: the scale step is running, and a format string was holding it to 40 %, 2026-09-22
 

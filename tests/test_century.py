@@ -150,7 +150,7 @@ def test_window_freqs_and_smear():
     assert 0.9 < s < 1.0
     s2 = smear_factor(1.0 / 0.05, [60.0])[0]    # 1 h exposure at P = 1.2 h
     assert s2 < 0.7
-    assert np.isnan(smear_factor(1.0, [np.nan])[0]) is False
+    assert not np.isnan(smear_factor(1.0, [np.nan])[0])
 
 
 def test_calendar_blocks_carry_nondetections_and_drop_thin_blocks():
@@ -563,7 +563,6 @@ def test_empty_api_gives_no_data_reached(tmp_path):
 
 
 def test_shard_roundtrip_screen_and_assess_end_to_end(tmp_path):
-    rng = np.random.default_rng(19)
     lcs, trows = {}, []
     for i in range(10):
         stop = 1931.0 if i == 0 else None

@@ -278,7 +278,10 @@ class CenturyCessation:
     amp_pre_sigma_mmag: float = float("nan")
     amp_post_mmag: float = float("nan")
     amp_post_sigma_mmag: float = float("nan")
+    amp_post_sq_mmag2: float = float("nan")
+    amp_post_sq_sigma_mmag2: float = float("nan")
     amp_post_over_sigma: float = float("nan")
+    n_post_isolated_detections: int = 0
     drop_sigma: float = float("nan")
     amp_injected_mmag: float = float("nan")
     smear_pre: float = 1.0
@@ -457,9 +460,30 @@ def analyze_century(
             d.role = "pre_detected"
         return res
 
-    # -- transition: the last detected block splits pre from post
-    s = int(np.max(np.nonzero(det)[0]))
-    pre_i, post_i = list(range(0, s + 1)), list(range(s + 1, len(blocks)))
+    # -- transition.  Over a century there can be forty blocks, so a strict
+    # "last detected block" split would let a single false alarm at rate `fap`
+    # among the post blocks reset the transition.  The split is instead the
+    # block that best separates a detected run from a non-detected run:
+    # s* = argmax_s [ sum_{i<=s} det_i + sum_{i>s} (1 - det_i) ].  Detections
+    # after s* are tolerated only as isolated false alarms, at most
+    # max(1, ceil(3 fap n_post)) of them and never two adjacent --- two
+    # adjacent late detections are a clock that came back (Blazhko-like),
+    # which breaks the pattern.
+    nb = len(blocks)
+    scores = [int(det[:s + 1].sum()) + int((~det[s + 1:]).sum()) for s in range(nb)]
+    s = int(np.argmax(scores))
+    s_last = int(np.max(np.nonzero(det)[0]))
+    late_det = [i for i in range(s + 1, nb) if det[i]]
+    max_fa = max(1, int(np.ceil(3.0 * float(fap) * max(nb - s - 1, 1))))
+    adjacent = any(b - a == 1 for a, b in zip(late_det, late_det[1:], strict=False))
+    if len(late_det) > max_fa or adjacent:
+        s = s_last                      # the run is not clean; fall back to strict
+        late_det = []
+        res.flags.append("late_detections_not_isolated")
+    elif late_det:
+        res.flags.append("post_isolated_detection")
+    res.n_post_isolated_detections = len(late_det)
+    pre_i, post_i = list(range(0, s + 1)), [i for i in range(s + 1, nb) if i not in late_det]
     res.n_pre, res.n_post = len(pre_i), len(post_i)
     res.n_pre_detected = int(det[:s + 1].sum())
     res.last_detected_year = dets[s].year_mid
@@ -469,6 +493,8 @@ def analyze_century(
         for i in pre_i:
             dets[i].role = "pre_detected" if det[i] else "pre_miss_untested"
         return res
+    for i in late_det:
+        dets[i].role = "post_isolated_detection"
     res.first_post_year = dets[post_i[0]].year_mid
     res.transition_year = 0.5 * (dets[s].year_hi + dets[post_i[0]].year_lo)
     res.transition_at_gap = bool(dets[s].year_hi <= float(gap[0]) + 1e-6
@@ -543,13 +569,22 @@ def analyze_century(
         res.p_persist_upper = pp["p_persist_upper"]
         res.p_pinned_at_floor = bool(pp["pinned_at_floor"])
         res.p_resolution_floor = pp["resolution_floor"]
-        a_post, sa_post = _wmean([dets[i].amp_mmag for i in informative],
-                                 [dets[i].amp_sigma_mmag for i in informative])
-        res.amp_post_mmag, res.amp_post_sigma_mmag = a_post, sa_post
-        res.amp_post_over_sigma = (a_post / sa_post) if (np.isfinite(sa_post) and sa_post > 0) \
-            else float("nan")
-        den = float(np.sqrt(np.nansum([sa_pre ** 2, sa_post ** 2])))
-        res.drop_sigma = ((a_pre - a_post) / den) if den > 0 else float("nan")
+        # A fitted sine amplitude is Rayleigh-distributed under the null, so an
+        # average of many post-block amplitudes is biased positive by ~1.25
+        # sigma_A per block and its "significance" grows as sqrt(n_post).
+        # Average the DEBIASED squared amplitude instead: E[A^2] = A_true^2 +
+        # 2 sigma_A^2, Var[A^2 | null] = 4 sigma_A^4.
+        a2, sa2 = _wmean([dets[i].amp_mmag ** 2 - 2.0 * dets[i].amp_sigma_mmag ** 2
+                          for i in informative],
+                         [2.0 * dets[i].amp_sigma_mmag ** 2 for i in informative])
+        res.amp_post_sq_mmag2, res.amp_post_sq_sigma_mmag2 = a2, sa2
+        res.amp_post_mmag = float(np.sqrt(max(a2, 0.0))) if np.isfinite(a2) else float("nan")
+        res.amp_post_sigma_mmag = (float(np.sqrt(sa2)) if np.isfinite(sa2) and sa2 > 0
+                                   else float("nan"))
+        res.amp_post_over_sigma = (a2 / sa2) if (np.isfinite(sa2) and sa2 > 0) else float("nan")
+        # Drop significance on the squared amplitudes: sigma(A_pre^2) ~ 2 A_pre sigma_pre.
+        den = float(np.sqrt(np.nansum([(2.0 * a_pre * sa_pre) ** 2, sa2 ** 2])))
+        res.drop_sigma = ((a_pre ** 2 - a2) / den) if den > 0 else float("nan")
     cmp_post = informative if informative else post_i
 
     # -- mean flux, variance budget, PDM, blend and series histories
@@ -625,7 +660,9 @@ def analyze_century(
                           and res.amp_post_over_sigma <= float(post_amp_sigma_max)),
         "drop_significant": (np.isfinite(res.drop_sigma)
                              and res.drop_sigma >= float(drop_sigma_min)),
-        "pdm_pre": (np.isfinite(res.pdm_p_pre) and res.pdm_p_pre <= float(pdm_p_pre_max)),
+        # The permutation p-value cannot resolve below 1/(n_null + 1).
+        "pdm_pre": (np.isfinite(res.pdm_p_pre)
+                    and res.pdm_p_pre <= max(float(pdm_p_pre_max), 1.0 / (int(pdm_null) + 1))),
         "pdm_post": (np.isfinite(res.pdm_p_post) and res.pdm_p_post >= float(pdm_p_post_min)),
         "variance_dropped": (np.isfinite(res.excess_var_ratio)
                              and res.excess_var_ratio <= float(var_drop_frac)),

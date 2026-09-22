@@ -666,6 +666,46 @@ def test_fit_line_profile_tells_an_unresolved_line_from_a_resolved_one():
     assert not np.isfinite(persist.lsf_fwhm_measured(w, None, lam))
 
 
+class _EpochSparcl(_FakeSparcl):
+    """Several epochs at one position, with the line at a chosen strength each."""
+
+    def __init__(self, lam, amps):
+        super().__init__(lam)
+        self.amps = list(amps)
+
+    def find(self, outfields=None, constraints=None, limit=None):
+        return [{"sparcl_id": f"e{k}", "ra": 1.0, "dec": 1.0, "data_release": "SDSS-DR17",
+                 "dateobs_center": f"200{k}-01-01"} for k in range(len(self.amps))]
+
+    def retrieve(self, uuid_list=None, include=None, dataset_list=None):
+        rng = np.random.default_rng(23)
+        out = []
+        for u in uuid_list:
+            amp = self.amps[int(u[1:])]
+            sig = self.lam / 2000.0 / 2.3548
+            f = 10.0 + _gauss(self._wave, self.lam, amp, sig) + rng.normal(0, 0.03,
+                                                                          self._wave.size)
+            out.append({"sparcl_id": u, "data_release": "SDSS-DR17", "wavelength": self._wave,
+                        "flux": f, "ivar": np.full(self._wave.size, 1 / 0.03 ** 2)})
+        return out
+
+
+def test_epoch_series_measures_every_epoch_not_just_the_best():
+    """`second_epoch` keeps only the strongest detection, which answers "was it
+    seen again" and nothing else.  A line of constant strength across years is
+    a stable property of the star; one that varies is a different object."""
+    lam = 6809.26
+    steady = persist.epoch_series(_EpochSparcl(lam, [1.0] * 5), 1.0, 1.0, "e0", lam,
+                                  "emission")
+    assert steady["n_measured"] == 5 and steady["n_sig_ge4"] == 5
+    assert steady["ew_spread_frac"] < 0.15, steady
+    varying = persist.epoch_series(_EpochSparcl(lam, [0.2, 1.0, 2.0, 0.3, 1.5]),
+                                   1.0, 1.0, "e0", lam, "emission")
+    assert varying["n_measured"] == 5
+    assert varying["ew_spread_frac"] > 0.3, varying
+    assert any(e["is_self"] for e in steady["epochs"])
+
+
 def test_reduce_refuses_to_overwrite_a_real_summary_with_stale_checkpoints(tmp_path):
     """A reduce arriving after an estimator change holds only superseded
     checkpoints.  Writing its empty summary over a real one would replace a

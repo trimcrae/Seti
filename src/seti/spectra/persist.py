@@ -1471,6 +1471,78 @@ def control_sample(client, release: str, lam0: float, mode: str, z_cand: float,
     return out
 
 
+def epoch_series(client, ra: float, dec: float, exclude_id: str, lam0: float, mode: str,
+                 tol_arcsec: float = 2.0, max_epochs: int = 20) -> dict:
+    """Every SPARCL spectrum at the position, measured one by one.
+
+    ``second_epoch`` keeps only the best of them, which answers "was it seen
+    again" and nothing else.  The series answers the question that follows: a
+    line of constant strength across years is a stable property of the star;
+    one that varies is either a real variable or a reduction artefact, and
+    which of those it is depends on how it varies.  Kept out of the per-exposure
+    checkpoints on purpose, so adding it cannot invalidate a run in flight.
+    """
+    d = tol_arcsec / 3600.0
+    cosd = max(np.cos(np.radians(dec)), 1e-3)
+    cons = {"ra": [ra - d / cosd, ra + d / cosd], "dec": [dec - d, dec + d]}
+    out = {"n_found": 0, "epochs": [], "error": ""}
+    try:
+        found = _find_with_retry(lambda: client.find(
+            outfields=["sparcl_id", "ra", "dec", "data_release", "dateobs_center"],
+            constraints=cons, limit=50))
+    except Exception as exc:  # noqa: BLE001
+        out["error"] = repr(exc)[:300]
+        return out
+    recs = list(_records(found))
+    out["n_found"] = len(recs)
+    by_rel: dict[str, list[str]] = {}
+    when: dict[str, str] = {}
+    for r in recs:
+        sid = str(_rget(r, "sparcl_id") or "")
+        rel = str(_rget(r, "data_release", ""))
+        if not sid:
+            continue
+        when[sid] = str(_rget(r, "dateobs_center", ""))
+        by_rel.setdefault(rel, []).append(sid)
+    for rel, ids in by_rel.items():
+        for got in (sparcl_retrieve(client, ids[:max_epochs], rel),):
+            for r in got:
+                sid = str(r.get("sparcl_id"))
+                w = np.asarray(r.get("wavelength", []), float)
+                if w.size < 50:
+                    continue
+                lsf = lsf_fwhm_measured(w, r.get("wave_sigma"), lam0)
+                if not np.isfinite(lsf):
+                    lsf = lsf_fwhm_A(lam0, rel)
+                m = measure_line(w, np.asarray(r.get("flux", []), float),
+                                 np.asarray(r.get("ivar", []), float), lam0, lsf, mode,
+                                 sky=r.get("sky"))
+                fit = fit_line_profile(w, np.asarray(r.get("flux", []), float),
+                                       np.asarray(r.get("ivar", []), float), lam0, lsf, mode)
+                out["epochs"].append(_json_safe({
+                    "spec_id": sid, "is_self": sid == str(exclude_id),
+                    "data_release": rel, "dateobs_center": when.get(sid, ""),
+                    "testable": m.get("testable"), "reason": m.get("reason"),
+                    "sig": m.get("sig"), "ew": m.get("ew"), "cont": m.get("cont"),
+                    "sky_peak_sig": m.get("sky_peak_sig"),
+                    "fit_fwhm_A": fit.get("fit_fwhm_A"), "lsf_fwhm_A": lsf,
+                    "fwhm_over_lsf": (float(fit["fit_fwhm_A"]) / lsf
+                                      if fit.get("fit_ok") and lsf > 0 else None),
+                    "fit_dv_kms": fit.get("fit_dv_kms"),
+                }))
+    ok = [e for e in out["epochs"] if e.get("testable") and e.get("ew") is not None]
+    if ok:
+        ew = np.array([float(e["ew"]) for e in ok], float)
+        sg = np.array([float(e["sig"]) for e in ok], float)
+        out["n_measured"] = len(ok)
+        out["ew_median"] = float(np.median(ew))
+        out["ew_spread_frac"] = (float(_mad_std(ew) / abs(np.median(ew)))
+                                 if np.median(ew) else float("nan"))
+        out["n_sig_ge4"] = int(np.sum(sg >= 4.0))
+        out["sig_min"], out["sig_max"] = float(np.min(sg)), float(np.max(sg))
+    return out
+
+
 def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persistent_2exp",
                                                         "stack_only", "partial")) -> dict:
     """Run the comparison-sample control on every line still standing."""
@@ -1527,6 +1599,13 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
                     e["fwhm_over_lsf_err"] = round(float(fit["fit_fwhm_err_A"]) / lsf, 3)
         except Exception as exc:  # noqa: BLE001
             e["fit_error"] = repr(exc)[:300]
+        # Every epoch at the position, one by one, not just the best of them.
+        try:
+            e["epoch_series"] = epoch_series(
+                client, float(r["ra"]), float(r["dec"]), str(r["spec_id"]),
+                float(r["wavelength"]), str(r.get("search_mode", "emission")))
+        except Exception as exc:  # noqa: BLE001
+            e["epoch_series"] = {"error": repr(exc)[:300]}
         # Two samples: stars of this object's own type, and stars of any type.
         # A feature the spectral TYPE makes appears in the first and not the
         # second; one the sky or the instrument makes appears in both.
@@ -1544,9 +1623,13 @@ def controls(root: Path, n: int = 40, classes: tuple = ("persistent", "persisten
             time.sleep(0.5)
         sa = (e.get("same_type", {}).get("obs_frame") or {})
         an = (e.get("any_star", {}).get("obs_frame") or {})
+        es = e.get("epoch_series", {})
         print(f"[persist] control {e['identifier']} lam={e['wavelength']:.1f} "
               f"fwhm/lsf={e.get('fwhm_over_lsf')}+-{e.get('fwhm_over_lsf_err')} "
               f"({e.get('lsf_source')}); "
+              f"epochs {es.get('n_measured')}/{es.get('n_found')} "
+              f"sig {es.get('sig_min')}..{es.get('sig_max')} "
+              f"EW spread {es.get('ew_spread_frac')}; "
               f"same-type frac>=3: {sa.get('frac_ge3')} (n={sa.get('n_measured')}), "
               f"any-star frac>=3: {an.get('frac_ge3')} (n={an.get('n_measured')})")
         entries.append(_json_safe(e))
@@ -2345,4 +2428,5 @@ __all__ = ["measure_line", "combine_measurements", "classify_persistence", "deco
            "stack_exposures", "wave_lag", "offset_null",
            "desi_bands_for", "desi_coadd_url", "desi_exposure_rows", "process_spectrum",
            "run_shard", "reduce_results", "final_verdict", "probe", "diagnose",
-           "control_sample", "controls", "fit_line_profile", "lsf_fwhm_measured", "main"]
+           "control_sample", "controls", "fit_line_profile", "lsf_fwhm_measured",
+           "epoch_series", "main"]

@@ -41,6 +41,16 @@ Sky coverage is exact rather than sampled: `source_id` carries the level-12
 NESTED HEALPix index, so 768 level-3 pixels are the whole sky as contiguous
 primary-key ranges; pixel *k* goes to shard *k* mod *n*, and a unit that times
 out splits into its four children.
+
+**Run 35741356662** (`stage=all`, 8 acquire shards over the 768 units, 4 ages
+shards, branch `claude/goap-cradle`) was dispatched at 10:35 a.m. EDT and is
+**queued**: the account's Actions concurrency is fully occupied. Nothing has
+been measured on the sky yet, and `results/cradle/` is empty — the channel's
+verdict is not `NO_CRADLE_CANDIDATE`, it is *not yet run*. The first thing to
+read when it lands is `probe.json`: which of the three join shapes answers,
+whether the three controls resolve and come back through the join, and whether
+`irs_enhv211` and each VizieR table exist. `acquire` reads the working shape
+out of that artifact.
 ### IGNITION: four transports refused identically, so it was never the transport, 2026-09-22
 
 Run 35653615329 produced no shard output at all, and its two failures were

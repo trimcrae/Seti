@@ -93,6 +93,21 @@ the fix landed), so the shape-learning path was never exercised — it did not
 need to be, because `full` answered on the first unit. `results/cradle/` is
 still empty: `screen` waits on all eight shards.
 
+**The separate `stage=probe` run 35745911273 was cancelled at 11:59 a.m. EDT,
+deliberately.** It was dispatched at 11:14 to recover the read-order artifact
+the dead probe never wrote, but by 11:46 shard 3's own log had answered its
+headline question — `shape=full`, ~25 s a pixel — and its `plan` job was still
+queued 45 minutes later, competing for the scarce Actions slots that the five
+remaining acquire shards need. Its other answers are not on the critical path:
+the three controls come through **`acquire` shard 0**, which fetches them over
+the same join (`stage_acquire`, `if int(shard) == 0`), and `ages` degrades
+gracefully without `probe.json` — the VizieR block is wrapped in a `try`, so a
+missing file simply means no table is pre-skipped and each is tried live and
+recorded. What is genuinely lost is only the *pre-flight* inventory of IRSA's
+`irs_enhv211` columns and the VizieR table existence check. Re-dispatch
+`stage=probe` once the acquire matrix has drained; do not re-dispatch it while
+shards are queued.
+
 ### CRADLE is on the sky: eight shards acquiring, and three ways the verdict could have been faked, 2026-09-22
 
 **State at 11:40 a.m. EDT.** Run **35741356662** (`stage=all`, 8 acquire shards

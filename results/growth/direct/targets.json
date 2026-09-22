@@ -1,0 +1,67 @@
+{
+  "n_koi": 9564,
+  "dispositions": [
+    "CONFIRMED",
+    "CANDIDATE"
+  ],
+  "n_by_disposition": {
+    "FALSE POSITIVE": 4839,
+    "CONFIRMED": 2748,
+    "CANDIDATE": 1977
+  },
+  "n_confirmed_or_candidate": 4725,
+  "n_ps_rows": 28592,
+  "n_ps_rows_kepler": 28592,
+  "n_ps_rows_not_kepler_discovered": 0,
+  "n_ps_default_rows": 2787,
+  "n_ps_tic_id_parsed": 28592,
+  "n_ps_tic_id_unparsed": 0,
+  "n_ps_distinct_planet_names": 2787,
+  "n_ps_distinct_hosts": 1984,
+  "n_ps_stars_with_tic_id": 1984,
+  "ps_tic_id_samples": [
+    "TIC 138890353",
+    "TIC 394177315",
+    "TIC 26817004"
+  ],
+  "n_with_tic": 2993,
+  "tic_by_route": {
+    "name_planet": 2697,
+    "name_host": 257,
+    "position_tic": 39
+  },
+  "n_without_tic": 1732,
+  "n_without_ephemeris": 0,
+  "n_without_depth": 107,
+  "n_long_period": 1481,
+  "n_distinct_stars": 3611,
+  "n_distinct_tics": 1964,
+  "n_targets": 4725,
+  "targets_statement": "4725 of 9564 KOIs are targets (4725 confirmed/candidate); 2993 carry a TIC id from the ps routes name_planet=2697, name_host=257, position_tic=39; 1732 have none and are left to the shard's TIC fallback; 3611 distinct stars; 1481 with P > 30 d",
+  "stage": "targets",
+  "generated_utc": "2026-09-22T14:22:49Z",
+  "koi_status": "OK",
+  "ps_status": "OK",
+  "acquisition": {
+    "stages": [
+      {
+        "stage": "fetch_koi_cumulative",
+        "status": "OK",
+        "rows": 9564,
+        "query": "select kepid,kepoi_name,kepler_name,koi_disposition,koi_pdisposition,koi_period,koi_period_err1,koi_depth,koi_depth_err1,koi_depth_err2,koi_ror,koi_ror_err1,koi_ror_err2,koi_impact,koi_impact_err1,koi_impact_err2,koi_duration,koi_duration_err1,koi_duration_err2,koi_ingress,koi_dor,koi_steff,koi_slogg,koi_srad,koi_kepmag,ra,dec,koi_fpflag_nt,koi_fpflag_ss,koi_fpflag_co,koi_fpflag_ec,koi_tce_delivname,koi_count,koi_period_err2,koi_time0bk,koi_time0bk_err1,koi_time0bk_err2 from cumulative"
+      },
+      {
+        "stage": "fetch_ps_kepler",
+        "status": "OK",
+        "rows": 28592,
+        "query": "select pl_name,hostname,tic_id,default_flag,pl_ratror,pl_trandep,pl_orbper,disc_facility,pl_refname,ra,dec from ps where disc_facility like '%Kepler%'"
+      }
+    ],
+    "n_stages": 2,
+    "n_ok": 2,
+    "n_query_failed": 0,
+    "n_query_returned_zero_rows": 0,
+    "any_query_failed": false,
+    "total_rows": 38156
+  }
+}

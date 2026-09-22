@@ -30,6 +30,15 @@ from . import sed as sedmod
 from . import vet as vetmod
 
 
+def _read_json(path: Path) -> dict:
+    """A JSON file if it is there and readable, else ``{}`` (never a guess)."""
+    try:
+        out = json.loads(path.read_text())
+    except Exception:                                          # noqa: BLE001
+        return {}
+    return out if isinstance(out, dict) else {}
+
+
 def load_shroud_config(cfg: Config | None = None) -> dict:
     cfg = cfg or load_config()
     p = cfg.root / "config" / "shroud.yaml"
@@ -272,7 +281,9 @@ def stage_report(cfg: Config, sc: dict, df: pd.DataFrame, prov: dict,
                         "bright_nb_gmag", "bright_nb_sep_arcsec", "pm_recovered",
                         "pm_total_mas_yr", "n_ir_bands", "tdust_fit_k",
                         "eta_max", "eta_lo", "eta_hi", "budget_verdict",
-                        "ftk_class", "vet_flags", "p_chance_match", "class_reason")
+                        "ftk_class", "vet_flags", "p_chance_match",
+                        "modern_depth_mag", "modern_depth_cats",
+                        "modern_depth_margin_mag", "class_reason")
             if c in df.columns]
 
     # The funnel: how many objects each stage let through, in order.
@@ -281,9 +292,23 @@ def stage_report(cfg: Config, sc: dict, df: pd.DataFrame, prov: dict,
     n_ir_no_modern = int(df.apply(
         lambda r: cls.n_ir_bands(r) > 0 and not cls.has_modern_optical(r), axis=1).sum())
     n_resid = int((df["class"] == "RESIDUAL_UNEXPLAINED").sum()) if "class" in df else 0
+    # The disappearance is only claimed where the search that failed to find
+    # the source was real and deeper than the plate that found it.
+    mo = sc.get("modern_optical", {})
+    margin_min = float(mo.get("min_depth_margin_mag", 2.0))
+    depth = pd.to_numeric(df.get("modern_depth_mag"), errors="coerce") \
+        if "modern_depth_mag" in df.columns else pd.Series(np.nan, index=df.index)
+    dmargin = pd.to_numeric(df.get("modern_depth_margin_mag"), errors="coerce") \
+        if "modern_depth_margin_mag" in df.columns else pd.Series(np.nan, index=df.index)
+    absent_mask = (~df.apply(cls.has_modern_optical, axis=1)) if len(df) else pd.Series(
+        dtype=bool)
+    established = absent_mask & depth.notna() & (dmargin >= margin_min)
     funnel = {
         "1_sample": int(len(df)),
         "2_no_modern_optical_within_5arcsec": n_no_modern,
+        "2b_absence_established_deeper_than_the_plate": int(established.sum()),
+        "2c_no_modern_catalogue_covered_the_position": int(
+            (absent_mask & depth.isna()).sum()),
         "3_with_any_ir_detection": n_with_ir,
         "4_ir_present_and_optically_absent": n_ir_no_modern,
         "5_residual_after_population_cascade": n_resid,
@@ -331,6 +356,11 @@ def stage_report(cfg: Config, sc: dict, df: pd.DataFrame, prov: dict,
         "n_sample": int(len(df)),
         "funnel": funnel,
         "sky_coverage": coverage,
+        "modern_optical_depth": {
+            **(_read_json(out_dir / "photometry_provenance.json")
+               .get("_modern_optical_depth", {})),
+            "min_depth_margin_mag": margin_min,
+        },
         "population": pop.to_dict("records"),
         "population_by_sample": (
             df.groupby(["sample", "class"]).size().rename("n").reset_index()
@@ -398,6 +428,18 @@ def _report_md(s: dict, sc: dict) -> str:
               f"**{cov.get('area_deg2')} deg^2**",
               f"- USNO-B1.0 rows returned (Ndet = 1, R1 <= limit): {cov.get('n_usnob1_raw_rows')}",
               f"- POSS-I-red-only objects: {cov.get('n_poss1_red_only')}", ""]
+    dep = s.get("modern_optical_depth") or {}
+    if dep:
+        L += ["## How deep the search that found nothing actually went", "",
+              "An absence is only as good as the search behind it: a catalogue",
+              "that was never successfully queried leaves every source with an",
+              "empty magnitude, and empty reads as *gone*.", "",
+              f"- modern catalogues that answered: "
+              f"{', '.join(dep.get('catalogues_that_answered') or []) or 'NONE'}",
+              f"- sources no modern catalogue covered: "
+              f"{dep.get('n_sources_with_no_modern_coverage')}",
+              f"- required depth margin: {dep.get('min_depth_margin_mag')} mag "
+              "below the plate detection", ""]
     fun = s.get("funnel") or {}
     if fun:
         L += ["## Funnel", "", "| stage | n |", "|---|---:|"]

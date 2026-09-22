@@ -44,7 +44,11 @@ def _enshrouded_row(plate_mag=17.0, t_dust=350.0, ir_scale_factor=1.0,
     scale = ir_scale_factor * f_bol_then * math.pi / (SIGMA_SB * t_dust ** 4)
     row = {"source_id": source_id, "ra_deg": 190.0, "dec_deg": 42.0,
            "poss1_e": plate_mag, "sample": "usnob1_poss1_red_only",
-           "n_ir_neighbours": 1, "ir_local_density_per_deg2": 2000.0}
+           "n_ir_neighbours": 1, "ir_local_density_per_deg2": 2000.0,
+           # The modern search that found nothing was real and 3.9 mag deeper
+           # than the plate detection (Pan-STARRS r = 23.2 vs POSS-I E ~ 20).
+           "modern_depth_mag": 23.2, "modern_depth_cats": "ps1,gaia",
+           "modern_depth_margin_mag": 23.2 - plate_mag}
     for b in ("w1", "w2", "w3", "w4"):
         row[b] = S.fnu_to_mag(b, scale * S.planck_fnu(t_dust, S.BANDS[b][0]))
         row[f"{b}_err"] = 0.03
@@ -56,7 +60,9 @@ def _enshrouded_row(plate_mag=17.0, t_dust=350.0, ir_scale_factor=1.0,
 def _plate_defect_row(source_id="DEFECT"):
     return {"source_id": source_id, "ra_deg": 12.0, "dec_deg": 70.0,
             "poss1_e": 19.8, "sample": "usnob1_poss1_red_only",
-            "n_ir_neighbours": 0, "ir_local_density_per_deg2": 1500.0}
+            "n_ir_neighbours": 0, "ir_local_density_per_deg2": 1500.0,
+            "modern_depth_mag": 23.2, "modern_depth_cats": "ps1,gaia",
+            "modern_depth_margin_mag": 3.4}
 
 
 def test_field_grid_is_deterministic_and_inside_the_poss1_footprint(sc):
@@ -87,9 +93,45 @@ def test_usnob1_field_url_encodes_the_sign_and_the_constraints(sc):
     assert "-source=I/284/out" in url or "-source=I%2F284%2Fout" in url
     assert "Ndet=1" in url
     assert "R1mag=%3C%3D19.30" in url
-    assert "-c.rd=0.5000" in url and "-out.all=" in url
+    assert "-c.rd=0.5000" in url
+    assert "-out.form=TSV" in url
     url_s = acq.usnob1_field_url(10.0, -12.5, 0.5, sc)
     assert "%20-12.500000" in url_s
+
+
+def test_every_usnob1_query_form_keeps_the_declination_sign_on_the_wire(sc):
+    """The IGNITION bug, defended once per rung of the form ladder.
+
+    A literal ``+`` in a query string decodes to a SPACE, so ``-c=266+65``
+    reaches VizieR as the unsigned pair ``266 65``, which it cannot read as a
+    position: it answers with an empty resource that looks exactly like an
+    empty sky.  Every form must percent-encode the sign, and a negative
+    declination must survive as a minus.
+    """
+    for form in acq.USNOB1_QUERY_FORMS:
+        for ra, dec, want in ((266.4, 65.0, "%2B65.000000"), (10.0, -12.5, "-12.500000")):
+            url = acq.usnob1_field_url(ra, dec, 0.5, sc, form)
+            c_val = url.split("-c=")[1].split("&")[0]
+            assert "+" not in c_val, (form, url)
+            assert c_val.endswith(want), (form, c_val)
+            assert "-out.form=TSV" in url, (form, url)
+            assert "-c.rd=0.5000" in url, (form, url)
+
+
+def test_usnob1_query_forms_drop_constraints_down_the_ladder(sc):
+    """Each rung asks for strictly less, so a rejected constraint cannot end
+    the route: the unconstrained rung is a bare cone and is re-filtered here."""
+    seen = []
+    for form in acq.USNOB1_QUERY_FORMS:
+        u = acq.usnob1_field_url(266.4, 65.0, 0.5, sc, form)
+        seen.append(("Ndet=1" in u, "R1mag=" in u))
+    assert seen[0] == (True, True)                       # most selective first
+    assert seen[-1] == (False, False)                    # bare cone last
+    # the last rung asks for every column, so an unknown column name cannot
+    # empty the response
+    assert "-out.all=" in acq.usnob1_field_url(266.4, 65.0, 0.5, sc, acq.USNOB1_QUERY_FORMS[-1])
+    # and the column-list rungs repeat -out=, the spelling VizieR honours
+    assert acq.usnob1_field_url(266.4, 65.0, 0.5, sc, "ndet+r1").count("-out=") >= 5
 
 
 def _asu_body(rows):
@@ -272,6 +314,14 @@ def test_acquire_end_to_end_with_a_dead_svo_and_a_live_vizier(sc, tmp_path, monk
         if "viz-bin/votable" in url:
             p = load_config().root / "results" / "disaplit2" / "vizier_vasco_2020.xml"
             return (p.read_bytes(), "HTTP 200") if p.exists() else (None, "HTTP 404")
+        if "asu-tsv" in url and "-meta.all" in url:
+            # I/284/out advertises its own columns; 'muPr' is deliberately NOT
+            # among them, so the sweep must stop asking for it.
+            cols = ["USNO-B1.0", "RAJ2000", "DEJ2000", "Epoch", "pmRA", "pmDE", "Ndet",
+                    "Flags", "B1mag", "R1mag", "R1S", "R1f", "R1s/g", "B2mag", "R2mag",
+                    "Imag"]
+            return ("\n".join(f"#Column\t{c}\t(mag)\tsome description" for c in cols)
+                    ).encode(), "HTTP 200"
         if "asu-tsv" in url and "I/284" in urllib.parse.unquote(url):
             m = re.search(r"-c=([\d.]+)%20(%2B|-)([\d.]+)", url)
             ra = float(m.group(1))
@@ -297,16 +347,31 @@ def test_acquire_end_to_end_with_a_dead_svo_and_a_live_vizier(sc, tmp_path, monk
     assert (tmp_path / "field_ledger.json").exists()
     led = json.loads((tmp_path / "field_ledger.json").read_text())
     assert led["n_fields_ok"] == 3
+    # the catalogue's own column list is READ and recorded, but it does not
+    # edit the request: a thin -meta.all body must not be able to strip the
+    # photometry the selection is defined on (run 35738062833)
+    assert led["meta_probe"]["columns"], led["meta_probe"]
+    assert led["meta_probe"]["missing"] == ["muPr"], led["meta_probe"]
+    assert "muPr" in led["columns_requested"]
     assert (tmp_path / "sample_positions.parquet").exists()
     routes = {r["route"]: r["status"] for r in prov["routes"]}
     assert routes["vizier_tap_schema_discovery"] == "ok"
     assert routes["usnob1_reconstruction"] == "ok"
+    # every route is recorded even when it returns nothing: a dead registry and
+    # an absent catalogue are findings, not silence
+    assert routes["registry_regtap_discovery"] == "unreachable"
+    for cat in sc["acquire"]["vizier_direct_catalogues"]:
+        assert f"vizier_meta:{cat}" in routes, routes
     assert prov["vizier_tables_discovered"][0]["table_name"] == "J/AJ/159/8/table2"
-    # A second call reuses the checkpointed fields instead of refetching.
-    n_before = len([u for u, _, _ in calls if "I/284" in urllib.parse.unquote(u)])
+    # A second call reuses the checkpointed fields instead of refetching them.
+    # (The one-off -meta.all probe is not a field fetch and is not counted.)
+    def _n_field_fetches():
+        return len([u for u, _, _ in calls
+                    if "I/284" in urllib.parse.unquote(u) and "-c=" in u])
+
+    n_before = _n_field_fetches()
     acq.acquire_sample(sc, tmp_path, allow_network=True, n_fields=3)
-    n_after = len([u for u, _, _ in calls if "I/284" in urllib.parse.unquote(u)])
-    assert n_after == n_before
+    assert _n_field_fetches() == n_before
 
 
 def test_acquire_reports_no_data_when_every_route_is_dead(sc, tmp_path, monkeypatch):
@@ -324,3 +389,215 @@ def test_solano_candidates_exclude_the_villarroel_table():
                                          "POSS I vanishing sources (Solano+ 2022)"]})
     assert acq._solano_candidates(tabs) == ["J/MNRAS/515/1380/vanish"]
     assert acq.unquote_table('"J/AJ/159/8"') == "J/AJ/159/8"
+
+
+# --- route 0: the IVOA registry ---------------------------------------------
+_REGTAP_CSV = (
+    b"ivoid,short_name,res_title,access_url,standard_id\n"
+    b"ivo://cab.inta-csic.es/vanish-possi,vanish-possi,POSS I vanishing sources,"
+    b"http://svocats.cab.inta-csic.es/vanish-possi/cs.php?,"
+    b"ivo://ivoa.net/std/ConeSearch\n"
+    b"ivo://cab.inta-csic.es/vanish-neowise,vanish-neowise,VASCO NEOWISE counterparts,"
+    b"http://example.org/vanish-neowise/cs.php?,ivo://ivoa.net/std/ConeSearch\n"
+    b"ivo://cab.inta-csic.es/vasco-web,vasco,VASCO project page,"
+    b"http://example.org/vasco/,ivo://ivoa.net/std/TAP\n"
+)
+
+
+def test_root_of_access_url_strips_the_script_and_query():
+    f = acq._root_of_access_url
+    assert f("http://svocats.cab.inta-csic.es/vanish-possi/cs.php?") == \
+        "http://svocats.cab.inta-csic.es/vanish-possi"
+    assert f("http://h/x/conesearch?RA=1&DEC=2") == "http://h/x"
+    assert f("http://h/vanish-neowise/") == "http://h/vanish-neowise"
+    assert f("") == ""
+
+
+def test_registry_discovery_returns_cone_services_first(sc, monkeypatch):
+    seen = []
+
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        seen.append(url)
+        if "reg.g-vo.org" in url:
+            return _REGTAP_CSV, "HTTP 200"
+        return None, "URLError: timed out"
+
+    monkeypatch.setattr(acq, "http_get", fake_get)
+    roots, prov = acq.discover_registry_services(sc)
+    assert prov.status == "ok"
+    # the two ConeSearch interfaces come before the TAP one
+    assert roots[:2] == ["http://svocats.cab.inta-csic.es/vanish-possi",
+                         "http://example.org/vanish-neowise"]
+    assert "http://example.org/vasco" in roots
+    # the first mirror that answered was enough: no second mirror was queried
+    assert sum(1 for u in seen if "g-vo.org" in u or "euro-vo" in u) == 1
+    # the ADQL asked the registry, not a guessed path
+    assert "rr.resource" in urllib.parse.unquote(seen[0])
+
+
+def test_registry_discovery_is_honest_when_every_mirror_is_dead(sc, monkeypatch):
+    monkeypatch.setattr(acq, "http_get",
+                        lambda *a, **k: (None, "URLError: connection refused"))
+    roots, prov = acq.discover_registry_services(sc)
+    assert roots == []
+    assert prov.status == "unreachable"
+    assert len(prov.attempts) == len(sc["acquire"]["regtap_endpoints"])
+    assert all(not a["ok"] for a in prov.attempts)
+
+
+# --- looking a VizieR catalogue up BY NAME ----------------------------------
+def test_vizier_catalogue_meta_separates_absent_from_present(sc, monkeypatch):
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        if "J%2FMNRAS%2F515%2F1380" in url or "J/MNRAS/515/1380" in url:
+            return (b"#RESOURCE=J/MNRAS/515/1380\n"
+                    b"#Table\tJ/MNRAS/515/1380/vanish\tthe by-product\n"
+                    b"#Table\tJ/MNRAS/515/1380/table1\tsummary\n"), "HTTP 200"
+        return b"#***Nothing found in the metadata\n", "HTTP 200"
+
+    monkeypatch.setattr(acq, "http_get", fake_get)
+    tabs, prov = acq.vizier_catalogue_meta("J/MNRAS/515/1380", sc)
+    assert prov.status == "ok"
+    assert tabs == ["J/MNRAS/515/1380/table1", "J/MNRAS/515/1380/vanish"]
+    tabs2, prov2 = acq.vizier_catalogue_meta("J/NOPE/1/1", sc)
+    assert tabs2 == [] and prov2.status == "asu_error"
+    assert any("Nothing found" in n for n in prov2.notes)
+
+
+def test_vizier_catalogue_meta_records_an_unreachable_service(sc, monkeypatch):
+    monkeypatch.setattr(acq, "http_get", lambda *a, **k: (None, "HTTP 503"))
+    tabs, prov = acq.vizier_catalogue_meta("J/MNRAS/515/1380", sc)
+    assert tabs == [] and prov.status == "unreachable"
+    assert prov.attempts[0]["detail"] == "HTTP 503"
+
+
+# --- run 35738062833: rows that cannot express the selection ----------------
+def _positions_only_body(rows):
+    """What VizieR returned when only positional columns were requested."""
+    hdr = ["USNO-B1.0", "RAJ2000", "DEJ2000", "Epoch", "pmRA", "pmDE"]
+    lines = ["#", "#INFO status=OK", "\t".join(hdr),
+             "\t".join(["", "deg", "deg", "yr", "mas/yr", "mas/yr"]),
+             "\t".join("-" * max(len(h), 1) for h in hdr)]
+    for r in rows:
+        lines.append("\t".join(str(v) for v in r))
+    return "\n".join(lines) + "\n"
+
+
+def test_a_field_without_the_plate_magnitudes_is_rejected_not_counted_as_zero(sc):
+    """The exact shape of run 35738062833: 1380-5899 rows per field, zero
+    reconstructed sources, because the answer carried no photometry.
+
+    'POSS-I red and nothing else' is a statement about which plate magnitudes
+    are PRESENT, so a frame without them yields a guaranteed zero that says
+    nothing about the sky.  Such a rung must be rejected, not believed.
+    """
+    calls = []
+
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        calls.append(url)
+        # every column-list rung answers with positions only; -out.all is full
+        if "-out.all=" in url:
+            return _asu_body([
+                ["1550-0000001", 10.0, 65.0, 1953.7, 0, 0, 1, "", None, 17.2, 1, 100,
+                 11, None, None, None],
+                ["1550-0000002", 10.1, 65.0, 1953.7, 0, 0, 2, "", 18.0, 17.5, 1, 100,
+                 11, None, None, None],
+            ]).encode(), "HTTP 200"
+        return _positions_only_body([
+            ["1550-0000001", 10.0, 65.0, 1953.7, 0, 0],
+            ["1550-0000002", 10.1, 65.0, 1953.7, 0, 0],
+        ]).encode(), "HTTP 200"
+
+    import seti.shroud.acquire as m
+    orig, m.http_get = m.http_get, fake_get
+    try:
+        raw, form, attempts = m.fetch_usnob1_field(10.0, 65.0, 0.5, sc)
+    finally:
+        m.http_get = orig
+
+    # the positions-only rungs were NOT accepted even though they had rows
+    rejected = [a for a in attempts if a["missing_required"]]
+    assert rejected, attempts
+    assert all(a["n_raw"] == 2 for a in rejected)        # rows, but unusable rows
+    assert all("R1mag" in a["missing_required"] for a in rejected)
+    # the ladder fell through to the rung that names no columns
+    assert form == "none_allcols", [a["form"] for a in attempts]
+    assert "R1mag" in raw.columns and len(raw) == 2
+    # and that frame CAN express the selection: one POSS-I-red-only object
+    out = m.normalise_usnob1_frame(raw, 0, r1_max=19.3, ndet=1)
+    assert len(out) == 1 and out["source_id"].iloc[0] == "USNOB-1550-0000001"
+
+
+def test_a_field_with_no_usable_rung_returns_an_empty_frame_not_a_bad_one(sc):
+    """If NO rung can express the selection, the field is empty --- it must not
+    silently hand back the last (unusable) answer as if it were the sample."""
+    def fake_get(url, timeout=300, retries=4, backoff=8.0, data=None, headers=None):
+        return _positions_only_body([["1550-0000001", 10.0, 65.0, 1953.7, 0, 0]]).encode(), \
+            "HTTP 200"
+
+    import seti.shroud.acquire as m
+    orig, m.http_get = m.http_get, fake_get
+    try:
+        raw, form, attempts = m.fetch_usnob1_field(10.0, 65.0, 0.5, sc)
+    finally:
+        m.http_get = orig
+    assert len(raw) == 0 and form == ""
+    assert len(attempts) == len(acq.USNOB1_QUERY_FORMS)
+    assert all(a["n_raw"] == 1 and a["missing_required"] for a in attempts)
+
+
+# --- the depth kill: an absence is only as good as the search behind it -----
+def test_a_failed_modern_xmatch_is_not_a_disappearance(sc):
+    """The dominant way this channel could fabricate a detection.
+
+    If the Pan-STARRS and Gaia X-Matches simply error, every source in the run
+    comes out with an empty ps1_r / gaia_g -- and empty reads as *gone*.  The
+    depth record must make that impossible: a catalogue that did not answer
+    establishes nothing.
+    """
+    pos = pd.DataFrame({"source_id": ["A", "B"], "ra_deg": [10.0, 20.0],
+                        "dec_deg": [40.0, -50.0]})
+    dead = {"ps1": {"status": "unreachable"}, "gaia": {"status": "unreachable"}}
+    depth, cats = acq.modern_optical_depth(pos, dead, sc)
+    assert depth.isna().all(), depth
+    assert (cats == "").all()
+    # ... and every such source trips the veto rather than surviving
+    for sid, d in zip(pos["source_id"], depth, strict=False):
+        flags = V.ledger_vetoes({"source_id": sid, "poss1_e": 18.0,
+                                 "modern_depth_mag": d,
+                                 "modern_depth_margin_mag": float("nan")}, sc)
+        assert "MODERN_OPTICAL_NOT_SEARCHED" in flags, flags
+
+
+def test_depth_follows_the_footprint_not_just_the_query_status(sc):
+    """Pan-STARRS stops at dec = -30, so a southern source has only Gaia --
+    three magnitudes shallower -- behind its absence."""
+    pos = pd.DataFrame({"source_id": ["north", "south"], "ra_deg": [10.0, 20.0],
+                        "dec_deg": [40.0, -50.0]})
+    live = {"ps1": {"status": "ok"}, "gaia": {"status": "ok"}}
+    depth, cats = acq.modern_optical_depth(pos, live, sc)
+    lim = sc["modern_optical"]["limits"]
+    assert depth.iloc[0] == lim["ps1"]["mag"]        # PS1 is the deeper one
+    assert depth.iloc[1] == lim["gaia"]["mag"]       # outside the PS1 footprint
+    assert "ps1" in cats.iloc[0] and "ps1" not in cats.iloc[1]
+
+
+def test_a_shallow_absence_is_vetoed_and_a_deep_one_is_not(sc):
+    """POSS-I E ~ 20.  Absent from Gaia (G = 20.7) alone means it faded by
+    0.7 mag -- ordinary variability.  Absent from Pan-STARRS means >= 3 mag."""
+    base = {"source_id": "S", "ra_deg": 10.0, "dec_deg": 40.0, "poss1_e": 20.0}
+    shallow = V.ledger_vetoes({**base, "modern_depth_mag": 20.7,
+                               "modern_depth_margin_mag": 0.7}, sc)
+    assert "MODERN_DEPTH_INSUFFICIENT" in shallow, shallow
+    deep = V.ledger_vetoes({**base, "modern_depth_mag": 23.2,
+                            "modern_depth_margin_mag": 3.2}, sc)
+    assert "MODERN_DEPTH_INSUFFICIENT" not in deep, deep
+    assert "MODERN_OPTICAL_NOT_SEARCHED" not in deep, deep
+
+
+def test_a_live_catalogue_that_is_only_partly_deep_is_recorded_per_source(sc):
+    """One catalogue up, one down: the depth is whatever ACTUALLY answered."""
+    pos = pd.DataFrame({"source_id": ["a"], "ra_deg": [10.0], "dec_deg": [40.0]})
+    depth, cats = acq.modern_optical_depth(
+        pos, {"ps1": {"status": "unreachable"}, "gaia": {"status": "cached"}}, sc)
+    assert depth.iloc[0] == sc["modern_optical"]["limits"]["gaia"]["mag"]
+    assert cats.iloc[0] == "gaia"

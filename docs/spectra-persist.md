@@ -349,10 +349,14 @@ where the hand-kept OH list is least complete and the telluric bands live.
   in the set. Killed by: a same-type control detection; a complete OH atlas covering the
   8548–8621 Å gap; or a species the 792-line list omits near 8578 Å (it is 655 km s⁻¹
   from Paschen 13, so not that).
-* **3327-54951-0356 @ 6967.9 Å** — already dead on the profile: fitted FWHM 0.52 × LSF,
-  narrower than the instrument can make, i.e. a one- or two-pixel defect. It is also
-  inside the H₂O 7200 telluric band, has `sky_peak_sig` up to 3.1 and cosmic-ray flags in
-  2 of 5 exposures, with per-exposure σ of only 1.6–2.9.
+* **3327-54951-0356 @ 6967.9 Å** — already dead three ways. Its fitted FWHM is 0.52 × LSF,
+  narrower than the instrument can make, i.e. a one- or two-pixel defect. It is inside the
+  H₂O 7200 telluric band, with `sky_peak_sig` up to 3.1, cosmic-ray flags in 2 of 5
+  exposures and per-exposure σ of only 1.6–2.9. And **2027-53433-0246 carries a candidate
+  at 6969.474 Å — 1.605 Å away, which at this wavelength is exactly one SDSS pixel**
+  (Δλ = λ ln10 × 10⁻⁴ = 1.604 Å), on an unrelated sightline, also inside the telluric band
+  and also classified `persistent`. Two unrelated fibres spiking one pixel apart in a
+  telluric band is the 1-pixel coincidence excess in the flesh.
 * **2750-54242-0547 @ 6856.5 Å** — an OH line 9.3 Å away at a local density of 4.2 listed
   lines per 100 Å, and only 3 exposures. Killed by the any-star control.
 * **0571-52286-0247 @ 7490.3 Å** and **2076-53442-0329 @ 6403.2 Å** — present in 2/5 and

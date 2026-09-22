@@ -330,9 +330,10 @@ modest apertures or deliberately over-filled beams.
 
 There the interception is **not** leakage, and the measurement says so rather
 than the argument. Over the kept pairs of every radio beam the *median* flux
-ratio at Earth versus at the intended receiver is
+ratio at Earth versus at the intended receiver — `(|T-R|/|T|)^2`, below 1 for
+spillover and above 1 for the between geometry — is
 
-| beam | spillover, (|T−R|/|T|)² | between |
+| beam | spillover | between |
 |---|---|---|
 | 100 m, 1.42 GHz | **0.547** | **3.89** |
 | 10 m, 8 GHz | 0.517 | 3.82 |

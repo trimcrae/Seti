@@ -49,6 +49,21 @@ itself is not already contaminated. The locus refuses to extrapolate: a star
 bluer or redder than any well-populated colour bin gets no photosphere and is
 not assigned one.
 
+**Two different significances, and they are not the same number.** The
+archive cut is a *detection* significance — W3 and W4 each measured at ≥ 5σ,
+spelled `wXmpro_error < 1.0857/5` because the ESA mirror carries magnitude
+errors and no SNR column. The screen then applies an *excess* significance —
+`chi_W3 ≥ 3` **and** `chi_W4 ≥ 3` over the empirical photosphere, with the
+star-to-star scatter of the locus, the photometric error and a 0.03 mag
+systematic floor all in the denominator. A star can be a 20σ W4 *detection*
+and a 0σ W4 *excess*; only the second is a disk.
+
+**Two windows.** `shortlist.csv` is deliberately wider than the cell —
+180–450 K, so that the hot and cold shoulders are enriched and reported and
+the cell's edges are visible rather than assumed. The strict 250–350 K cell is
+applied at `assess`, and stars either side come out `ABOVE_FMAX_HOT` /
+`ABOVE_FMAX_COLD`.
+
 **The cell.** A candidate needs all three, simultaneously:
 
 ```

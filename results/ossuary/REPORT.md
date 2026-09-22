@@ -61,6 +61,6 @@ Over 6,192,472 stars, within the 1.0" registration radius:
 
 * excess-flagged: 17,211
 * surviving the full gauntlet: **584**
-* surviving per-object follow-up: **121**
+* surviving per-object follow-up: **251**
 
 See `docs/ossuary.md` for the claim, the novelty verdict and the contamination model.

@@ -539,6 +539,12 @@ def test_cycle_bookkeeping_counts_opportunities_not_tick_instants():
     r2 = scan(t, star_windows(t, w), dict(SCAN, min_period_days=100.0,
                                           max_period_days=400.0))
     assert r2.cycles_span < 20.0
+    # the null runs the same scan thousands of times per star and reads none
+    # of these, so it skips them; everything else must be identical
+    sw = star_windows(t, w)
+    a, b = scan(t, sw, dict(SCAN)), scan(t, sw, dict(SCAN), cycles=False)
+    assert b.cycles_hit == 0 and not np.isfinite(b.cycles_span)
+    assert (a.period, a.h_max, a.Q, a.jitter) == (b.period, b.h_max, b.Q, b.jitter)
 
 
 def test_window_overlap_is_not_window_containment():

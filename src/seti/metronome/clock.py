@@ -349,8 +349,15 @@ class ScanResult:
         return asdict(self)
 
 
-def scan(times, windows: Windows | None, conf: dict | None = None) -> ScanResult:
-    """Full period scan of one event list; every number the tiers need."""
+def scan(times, windows: Windows | None, conf: dict | None = None, *,
+         cycles: bool = True) -> ScanResult:
+    """Full period scan of one event list; every number the tiers need.
+
+    ``cycles=False`` skips the cycle bookkeeping, which nothing but the
+    observed scan reads.  At the short end of the grid that block allocates
+    span/P ticks per call (~7,000 for P = 0.2 d over the Kepler baseline),
+    which a null running thousands of trials per star pays for nothing.
+    """
     c = dict(DEFAULT_SCAN, **(conf or {}))
     t = np.sort(np.asarray(times, dtype=float))
     t = t[np.isfinite(t)]
@@ -411,7 +418,7 @@ def scan(times, windows: Windows | None, conf: dict | None = None) -> ScanResult
     # counts only among the cycles so observed.  ``cycles_span`` is then the
     # number of repeats the period claim actually rests on, which is what the
     # ``few_cycles`` veto reads.
-    if windows is not None and windows.n:
+    if cycles and windows is not None and windows.n:
         w = float(c["phase_window"]) * p
         k0 = np.floor((windows.starts[0] - res.t0 - w) / p)
         k1 = np.ceil((windows.stops[-1] - res.t0 + w) / p)
@@ -479,7 +486,7 @@ def _run_null(kind: str, h_obs: float, draw, scan_conf: dict, null_conf: dict,
         tt = draw()
         if tt is None or len(tt) < 2:
             break
-        r = scan(tt, windows, scan_conf)
+        r = scan(tt, windows, scan_conf, cycles=False)
         n += 1
         hs.append(r.h_max)
         if quality:

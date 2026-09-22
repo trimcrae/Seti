@@ -218,11 +218,22 @@ table counted as a hit table only when a frequency column and a drift column
 both resolve and at least one row parses as numbers. 13 offline tests, no
 socket.
 
-**In flight:** run **35745111146**, `stage=all` on `claude/goap-relay`, the
-first full-scale pass with the e-print route: probe -> targets -> geometry ->
-recut -> assess -> `results/relay/summary.json`. The smoke pass
-(24,878-star debug cap) already committed a summary; this one replaces it at
-full scale.
+**In flight:** run **35745111146**, `stage=all` on `claude/goap-relay`,
+dispatched 11:07 a.m. EDT, executing since 11:11 a.m. and still in its Run step
+at 1:15 p.m. -- probe -> targets -> geometry -> recut -> assess ->
+`results/relay/summary.json`. The long pole is recut, which asks the BL
+open-data API for the files of all 1,959 in-sample targets under a 90-minute
+budget; assess then has a 30-minute budget for the e-prints. The in-job hard
+clock is 300 minutes and the commit-back runs `if: always()`, so whatever
+stages finish are committed to the branch either way. The smoke pass
+(24,878-star debug cap) already committed a summary.json; this run replaces it
+at full scale.
+
+Note for whoever reads it: this run carries `papers.py` but NOT the arXiv rate
+limiting (3 s between calls, retry on 429/503) or the rest-frequency test, both
+of which landed after it started. If `hits.json.arxiv.papers[]` shows HTTP
+refusals rather than parsed tables, that is the reason and a re-dispatch of
+`stage=all` on the current head fixes it.
 
 **Next decisive action:** read 35745111146's `hits.json` -- specifically
 `arxiv.papers[]` (which papers resolved, which e-prints downloaded, which

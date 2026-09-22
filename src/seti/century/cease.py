@@ -282,6 +282,9 @@ class CenturyCessation:
     amp_post_sq_sigma_mmag2: float = float("nan")
     amp_post_over_sigma: float = float("nan")
     n_post_isolated_detections: int = 0
+    # Unexplained blocks left by the chosen split: detections after it plus
+    # non-detections before it.  0 is a clean transition.
+    split_cost: int = -1
     drop_sigma: float = float("nan")
     amp_injected_mmag: float = float("nan")
     smear_pre: float = 1.0
@@ -472,34 +475,64 @@ def analyze_century(
     # and the star is charged with the plates' own 0.2--0.4 mag offset.  That
     # is the Hippke/Lund failure mode with a periodogram in front of it.
     #
-    # So the split is chosen by a false-alarm test instead of by the last
-    # detection: scan s upward over the detected blocks and take the EARLIEST
-    # split whose later detections are consistent with noise --- at most
-    # max(1, ceil(3 fap n_post)) of them and never two adjacent, since two
+    # So the split is chosen by EVIDENCE rather than by index order.  An
+    # earlier rule took the earliest s whose later detections passed a
+    # false-alarm test, and that rule fails whenever the post-transition era
+    # contains MORE false alarms than the test tolerates: the earliest s that
+    # passes is then the first false alarm itself, and the split slides
+    # forwards onto it.  Measured on the synthetic series-change case
+    # (``test_series_change_at_the_transition_is_not_a_cessation``): a clock
+    # that stopped in 1932, with two 30 mmag noise-level blocks firing at 1951
+    # and 1977 against a 500 mmag real signal, had its transition placed at
+    # **1952** --- twenty years late, hard against the Menzel gap, with the
+    # nine genuine post-cessation blocks charged to the pre segment as
+    # unexplained misses and the series, blend and mean-flux guards all
+    # evaluated at the wrong split.
+    #
+    # The split is now the one that leaves the fewest unexplained blocks:
+    #
+    #     cost(s) = #{detected blocks after s} + #{undetected blocks up to s}
+    #
+    # Both terms are things a true transition at s does not produce.  For the
+    # case above, s = 1932 costs 2 (the two false alarms) while s = 1952 costs
+    # 10 (one false alarm plus nine real misses), so 1932 wins.  For a single
+    # isolated post-gap false alarm --- the Hippke/Lund failure mode --- the
+    # true end costs 1 and the false alarm costs one per undetected block
+    # between, so the true end still wins, and ties go to the EARLIER split.
+    #
+    # Whether the detections after the chosen split are consistent with noise
+    # is then a separate question, answered by the same test as before: at
+    # most max(1, ceil(3 fap n_post)) of them and never two adjacent, since two
     # adjacent late detections are a clock that came back (Blazhko-like) and
-    # not a false alarm.  s = s_last always satisfies the test (it leaves no
-    # later detections at all), so the scan always terminates; taking the
-    # earliest acceptable s is what makes an isolated post-gap false alarm
-    # cost nothing.  Detections after the accepted split are excluded from the
-    # post blocks rather than believed.
+    # not a false alarm.  If they pass they are excluded from the post blocks;
+    # if they do NOT, they stay in the post segment where the adjudication can
+    # see them, and ``fail_no_post_detection`` refuses the cessation --- they
+    # are never silently absorbed into the pre segment.
     nb = len(blocks)
     s_last = int(np.max(np.nonzero(det)[0]))
 
+    def _late(s_try: int) -> list[int]:
+        return [i for i in range(s_try + 1, nb) if det[i]]
+
     def _late_ok(s_try: int) -> tuple[bool, list[int]]:
-        late = [i for i in range(s_try + 1, nb) if det[i]]
+        late = _late(s_try)
         n_post_try = max(nb - s_try - 1, 1)
         max_fa = max(1, int(np.ceil(3.0 * float(fap) * n_post_try)))
         adjacent = any(b - a == 1 for a, b in zip(late, late[1:], strict=False))
         return (len(late) <= max_fa and not adjacent), late
 
-    s, late_det = s_last, []
+    s, best_cost = s_last, None
     for s_try in range(nb):
         if not det[s_try]:
             continue                     # a transition begins after a DETECTION
-        ok, late = _late_ok(s_try)
-        if ok:
-            s, late_det = s_try, late
-            break
+        cost = len(_late(s_try)) + int(np.sum(~det[:s_try + 1]))
+        if best_cost is None or cost < best_cost:
+            s, best_cost = s_try, cost
+    res.split_cost = int(best_cost) if best_cost is not None else -1
+    ok, late_det = _late_ok(s)
+    if not ok:
+        res.flags.append("post_detections_not_noise")
+        late_det = []
     if late_det:
         res.flags.append("post_isolated_detection")
     res.n_post_isolated_detections = len(late_det)
@@ -726,6 +759,12 @@ def analyze_century(
         "series_overlap": (np.isfinite(res.series_overlap_frac) and res.series_overlap_frac > 0),
         "no_mode_switch": (res.post_blind_periodic <= res.post_blind_max_false_alarms
                            and not res.post_blind_adjacent),
+        # A block in the POST segment at which the catalogued period was
+        # detected is the clock still running.  Detections consistent with the
+        # false-alarm rate are excluded from post_i as isolated false alarms
+        # before this is evaluated; anything left is not noise, and a cessation
+        # cannot be claimed over it.
+        "no_post_detection": not any(bool(det[i]) for i in post_i),
     }
     res.flags.extend(f"fail_{k}" for k, v in checks.items() if not v)
     if res.mean_shift_across_gap and not mean_flux_ok:
